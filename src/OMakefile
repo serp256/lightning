@@ -1,0 +1,34 @@
+
+OCAMLPACKS[] += 
+	xmlm
+	lablgles
+	extlib
+
+CLIBS[] =
+	mlwrapper
+	
+
+FILES[] =
+	MList
+	Point
+	Rectangle
+	Matrix
+	LightCommon 
+	Touch
+	Event
+	EventDispatcher
+	RenderSupport
+	DisplayObject
+	Sprite
+	Texture
+	TextureAtlas
+	Quad
+	Image
+	Stage
+	BitmapFont
+	TextField
+	Lightning
+
+LIB = lightning
+
+OCamlLibrary($(LIB),$(FILES))
