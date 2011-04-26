@@ -1,9 +1,9 @@
-
+include Makefile.include
 all:
 	$(MAKE) -C src
 
 install: 
-	$(OCAMLFIND) install lightning META lightning/lightning.cmxa lightning/lightning.a lightning/*.cmi lightning/*.mli 
+	$(OCAMLFIND) install lightning META src/lightning.cmxa src/lightning.a src/*.cmi src/*.mli 
 
 clean: 
 	$(MAKE) -C src clean
