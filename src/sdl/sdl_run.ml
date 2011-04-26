@@ -15,9 +15,9 @@ value handle_events frameRate stage =
   loop 0 None False where
     rec loop lastTicks touch quit = 
     (
-      let dticks = (Timer.get_ticks())  - lastTicks in
-      if dticks < ticksRate then Timer.delay (ticksRate - dticks) else ();
-      let ticks = Timer.get_ticks () in
+      let dticks = (Sdl.Timer.get_ticks())  - lastTicks in
+      if dticks < ticksRate then Sdl.Timer.delay (ticksRate - dticks) else ();
+      let ticks = Sdl.Timer.get_ticks () in
       (
         stage#advanceTime ((float (ticks - lastTicks)) /. 1e3);
         stage#render();

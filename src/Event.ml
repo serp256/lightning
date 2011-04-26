@@ -13,6 +13,13 @@ type t 'etype 'data 'target 'current_target =
     data:'data;
   } constraint 'eype = [> ] constraint 'data = [> dataEmpty ] constraint 'target = < .. > constraint 'current_target = < .. >;
 
+
+value stopImmediatePropagation event = 
+  (
+    event.stopImmediatePropagation := True;
+    event.stopPropagation := True;
+  );
+
 value create etype ?(bubbles=False) ?(data=`Empty) () = 
   { 
     etype; stopImmediatePropagation = False; stopPropagation = False; bubbles; data;

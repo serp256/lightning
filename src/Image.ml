@@ -29,8 +29,11 @@ class c [ 'event_type, 'event_data ] texture =
         RenderSupport.convertColors vertexColors.(i) alpha (Bigarray.Array1.sub Quad.gl_quad_colors (i*4) 4);
        done;
 *)
+(*
       let alphaBits =  Int32.shift_left (Int32.of_float (alpha *. 255.)) 24 in
       Array.iteri (fun i c -> Quad.gl_quad_colors.{i} := Int32.logor (Int32.of_int c) alphaBits) vertexColors;
+*)
+      Array.iteri (fun i c -> Quad.gl_quad_colors.{i} := RenderSupport.convertColor c alpha) vertexColors;
       Array.iteri (fun i a -> Bigarray.Array1.unsafe_set gl_tex_coords i a) texCoords;
       texture#adjustTextureCoordinates gl_tex_coords;
       glEnableClientState gl_texture_coord_array;

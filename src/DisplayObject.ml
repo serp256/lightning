@@ -8,9 +8,64 @@ type hidden 'a = 'a;
 class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
   object(self:'self)
     type 'displayObject = _c 'event_type 'event_data 'parent;
-    inherit EventDispatcher.c [ 'event_type , 'event_data, 'displayObject ];
     type 'event_type = [> eventType ];
     value mutable scaleX = 1.0;
+
+    value mutable parent : option 'parent = None;
+    method parent = parent;
+    method setParent p = parent := Some p;
+    method clearParent () = parent := None;
+
+    (* Events *)
+    type 'event = Event.t 'event_type 'event_data 'displayObject 'self;
+    type 'listener = 'event -> unit;
+    value listeners: Hashtbl.t 'event_type 'listener = Hashtbl.create 0;
+    method addEventListener eventType listener = Hashtbl.add listeners eventType listener;
+    method dispatchEvent' event =
+      let open Event in 
+      let listeners = 
+        try
+          let listeners = Hashtbl.find_all listeners event.etype in
+          Some listeners
+        with [ Not_found -> None ]
+      in
+      match (event.bubbles,listeners) with
+      [ (False,None) -> ()
+      | (_,lstnrs) -> 
+          (
+            match lstnrs with
+            [ Some listeners -> 
+              let event = {(event) with currentTarget = Some self} in
+              ignore(
+                List.for_all begin fun l ->
+                  (
+                    l event;
+                    event.stopImmediatePropagation;
+                  )
+                end listeners 
+              )
+            | None -> ()
+            ];
+            match event.bubbles && not event.stopPropagation with
+            [ True -> 
+              match parent with
+              [ Some p -> 
+                let event = {(event) with currentTarget = None } in
+                p#dispatchEvent' event
+              | None -> ()
+              ]
+            | False -> ()
+            ]
+          )
+      ];
+  
+    (* всегда ставить таргет в себя и соответственно current_target *)
+    method dispatchEvent (event:'event) = 
+      let event = {(event) with Event.target = Some self#asDisplayObject} in
+      self#dispatchEvent' event;
+
+    method hasEventListeners eventType = Hashtbl.mem listeners eventType;
+
 
 
     method scaleX = scaleX;
@@ -40,10 +95,6 @@ class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
 
     method setPos (x',y') = (x := x'; y := y');
 
-    value mutable parent : option 'parent = None;
-    method parent = parent;
-    method setParent p = parent := Some p;
-    method clearParent () = parent := None;
 
 (*     method virtual boundsInSpace: !'target. option ((#_c 'et 'ed 'p) as 'target) -> Rectangle.t; *)
 
@@ -233,15 +284,6 @@ class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
       ];(*}}}*)
    
     method virtual render: unit -> unit;
-
-    method private upcast = (self :> _c _ _ _);
-    method private bubbleEvent event = 
-      match parent with
-      [ Some p -> 
-        let event = {(event) with Event.target = Some self#asDisplayObject; currentTarget = None } in
-        p#dispatchEvent' event
-      | None -> ()
-      ];
 
 
     (*

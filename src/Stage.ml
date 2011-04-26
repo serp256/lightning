@@ -10,6 +10,12 @@ exception Restricted_operation;
 
 module TimersQueue = PriorityQueue.Make (struct type t = (float*int); value order (t1,_) (t2,_) = t1 >= t2; end);
 
+class type inner_timer ['event_type,'event_data] = 
+  object
+    inherit Timer.c  ['event_type,'event_data];
+    method fire: unit -> unit;
+  end;
+
 class c ['event_type,'event_data ] (width:float) (height:float) =
   object(self)
     inherit DisplayObject.container ['event_type,'event_data ] as super;
@@ -28,37 +34,58 @@ class c ['event_type,'event_data ] (width:float) (height:float) =
     method! isStage = True;
 
     value mutable time = 0.;
-    value timers = Hashtbl.create 0;
-    value timersQueue = TimersQueue.make ();
     value mutable timerID = 0;
+    value timersQueue = TimersQueue.make ();
+    value timers : Hashtbl.t int (inner_timer 'event_type 'event_data) = Hashtbl.create 0;
 
     method createTimer ?(repeatCount=0) delay = 
-      object(timer)
-        inherit EventDispatcher.c ['event_type,'event_data,Timer.c 'event_type 'event_data];
-        value id = let id = timerID in (timerID := timerID + 1; id);
-        value mutable running = False;
-        method private upcast = (timer :> Timer.c _ _);
-        method private bubbleEvent _ = ();
-        method delay = delay;
-        method repeatCount = repeatCount;
-        method start () = 
-          match running with
-          [ False ->
-            (
-              TimersQueue.add timersQueue ((time +. delay),id);
-              Hashtbl.add timers id self;
-              running := True
-            )
-          | True -> failwith "Timer alredy started"
-          ];
-
-        method stop () = 
-          match running with
-          [ True -> assert False
-          | False -> failwith "Timer alredy stopped"
-          ];
-        method reset () = assert False;
-      end;
+      let o = 
+        object(timer)
+          type 'timer = Timer.c 'event_type 'event_data;
+          inherit EventDispatcher.simple ['event_type,'event_data,'timer];
+          value id = let id = timerID in (timerID := timerID + 1; id);
+          value mutable running = False;
+          value mutable currentCount = 0;
+          method private bubbleEvent _ = ();
+          method delay = delay;
+          method repeatCount = repeatCount;
+          method fire () = 
+          (
+            let event = Event.create `TIMER () in
+            timer#dispatchEvent event; 
+            currentCount := currentCount + 1;
+            if repeatCount <= 0 || currentCount < repeatCount
+            then
+              TimersQueue.add timersQueue ((time +. delay),id)
+            else 
+              (
+                running := False;
+                Hashtbl.remove timers id;
+                let event = Event.create `TIMER_COMPLETE () in
+                timer#dispatchEvent event
+              )
+          );
+          method start () = 
+            match running with
+            [ False ->
+              (
+                TimersQueue.add timersQueue ((time +. delay),id);
+                Hashtbl.add timers id timer;
+                currentCount := repeatCount;
+                running := True
+              )
+            | True -> failwith "Timer alredy started"
+            ];
+          method stop () = 
+            match running with
+            [ True -> assert False
+            | False -> failwith "Timer alredy stopped"
+            ];
+          method private asEventTarget = (timer : inner_timer _ _ :> Timer.c _ _);
+          method reset () = assert False;
+        end
+      in
+      (o :> Timer.c _ _ );
 
     method processTouches (touches:list Touch.t) = (*{{{*)
       let () = Printf.eprintf "process touches %d\n%!" (List.length touches) in
@@ -122,9 +149,25 @@ class c ['event_type,'event_data ] (width:float) (height:float) =
       #endif
       *)
     );
+
     method advanceTime (seconds:float) = 
     (
+      time := time +. seconds;
       (* jugler here *)
+      (* timers *)
+      let rec run_timers () = 
+        match TimersQueue.first timersQueue with
+        [ (t,id) when t <= time ->
+          (
+            TimersQueue.remove_first timersQueue;
+            let timer = Hashtbl.find timers id in
+            timer#fire();
+            run_timers ();
+          )
+        | _ -> ()
+        ]
+      in
+      run_timers ();
       (* dispatch EnterFrameEvent *)
       let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
       self#dispatchEventOnChildren enterFrameEvent;

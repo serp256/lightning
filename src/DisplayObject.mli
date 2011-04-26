@@ -5,13 +5,18 @@ type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE ];
 type hidden 'a;
 
 class virtual _c [ 'event_type, 'event_data, 'parent ] : 
-  object
+  object('self)
     type 'event_type = [> eventType ];
     type 'parent = < asDisplayObject: _c _ _ _; removeChild': _c _ _ _ -> unit; dispatchEvent': Event.t 'event_type 'event_data _ _ -> unit; name: string; .. >;
-    inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _];
+(*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
-    method private upcast: _c _ _ _;
-    method private bubbleEvent: _;
+    type 'displayObject = _c 'event_type 'event_data 'parent;
+    type 'event = Event.t 'event_type 'event_data 'displayObject 'self;
+    type 'listener = 'event -> unit;
+    method addEventListener: 'event_type -> 'listener -> unit;
+    method dispatchEvent: 'event -> unit;
+    method dispatchEvent': 'event -> unit;
+    method hasEventListeners: 'event_type -> bool;
 
     value name: string;
     method name: string;
