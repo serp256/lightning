@@ -1,4 +1,4 @@
-include /Users/serp/Projects/osparrow/Makefile.ios
+include /Users/serp/Projects/osparrow/Makefile.macos
 
 MLPPOPT = 
 MLFLAGS = -package camlp4,camlp4.macro -syntax camlp4r -w +7+9 -g

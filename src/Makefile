@@ -27,6 +27,7 @@ else
 	LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
 endif
 
+
 MOBS += $(gl)/gl_stub.o 
 MLOBS += $(gl)/gl.cmx \
 				MList.cmx ObjMemo.cmx LightCommon.cmx Event.cmx EventDispatcher.cmx Point.cmx Rectangle.cmx Matrix.cmx RenderSupport.cmx \
@@ -39,12 +40,13 @@ MLFLAGS += -package extlib -I $(gl)
 XMLMFILES = TextureAtlas.ml BitmapFont.ml LightCommon.ml
 $(XMLMFILES:.ml=.cmo) $(XMLMFILES:.ml=.cmx) $(XMLMFILES:.ml=.cmi): MLFLAGS += -package xmlm
 	
-lightning.cmxa : $(MOBS) $(MLOBS)
+lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
 	$(OCAMLLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
 
-depend::
-	$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend
+MLDepend.$(PLATFORM):
+	$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend.$(PLATFORM)
 
+-include MLDepend.$(PLATFORM)
 
 .DEFAULT_GOAL := lightning.cmxa 
 
@@ -52,4 +54,3 @@ depend::
 clean: 
 	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.{cmx,o,cmi} $(gl)/*.{o,cmx,cmi}
 
--include MLDepend

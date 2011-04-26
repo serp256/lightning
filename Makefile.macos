@@ -1,3 +1,4 @@
+PLATFORM = sdl
 #PLAT = /Developer/Platforms/MaxOSX.platform
 #SDK = /Developer/SDKs/iPhoneOS4.3.sdk
 SDK = /Developer/SDKs/MacOSX10.6.sdk

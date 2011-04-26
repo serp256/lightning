@@ -5,9 +5,12 @@ open Touch;
 type eventType = [= DisplayObject.eventType | `TOUCH ];
 type eventData 'event_type 'event_data = [= Event.dataEmpty | `Touch of (list (Touch.et 'event_type 'event_data)) ];
 
+
 exception Restricted_operation;
 
-class c ['event_type,'event_data ] (width:float) (height:float) = (*{{{*)
+module TimersQueue = PriorityQueue.Make (struct type t = (float*int); value order (t1,_) (t2,_) = t1 >= t2; end);
+
+class c ['event_type,'event_data ] (width:float) (height:float) =
   object(self)
     inherit DisplayObject.container ['event_type,'event_data ] as super;
     method! width = width;
@@ -24,7 +27,41 @@ class c ['event_type,'event_data ] (width:float) (height:float) = (*{{{*)
 
     method! isStage = True;
 
-    method processTouches (touches:list Touch.t) =
+    value mutable time = 0.;
+    value timers = Hashtbl.create 0;
+    value timersQueue = TimersQueue.make ();
+    value mutable timerID = 0;
+
+    method createTimer ?(repeatCount=0) delay = 
+      object(timer)
+        inherit EventDispatcher.c ['event_type,'event_data,Timer.c 'event_type 'event_data];
+        value id = let id = timerID in (timerID := timerID + 1; id);
+        value mutable running = False;
+        method private upcast = (timer :> Timer.c _ _);
+        method private bubbleEvent _ = ();
+        method delay = delay;
+        method repeatCount = repeatCount;
+        method start () = 
+          match running with
+          [ False ->
+            (
+              TimersQueue.add timersQueue ((time +. delay),id);
+              Hashtbl.add timers id self;
+              running := True
+            )
+          | True -> failwith "Timer alredy started"
+          ];
+
+        method stop () = 
+          match running with
+          [ True -> assert False
+          | False -> failwith "Timer alredy stopped"
+          ];
+        method reset () = assert False;
+      end;
+
+    method processTouches (touches:list Touch.t) = (*{{{*)
+      let () = Printf.eprintf "process touches %d\n%!" (List.length touches) in
       let processedTouches = 
         List.fold_left begin fun processedTouches touch ->
           (*let () = 
@@ -60,15 +97,17 @@ class c ['event_type,'event_data ] (width:float) (height:float) = (*{{{*)
             touch.tapCount (string_of_touchPhase touch.phase)
             (match t.target with [ None -> "none" | Some t -> t#name ])
         end processedTouches;
-        let event = Event.create `TOUCH ~bubbles:True ~data:(`Touch processedTouches) () in
-        List.iter begin fun touch ->
-          match touch.target with
-          [ Some t -> t#dispatchEvent event
+        let event = Event.create `TOUCH ~bubbles:True () in
+        List.iter begin fun etouch ->
+          match etouch.target with
+          [ Some t -> 
+            let event = {(event) with Event.data = `Touch (etouch.touch,processedTouches)} in
+            t#dispatchEvent event
           | None -> ()
           ]
         end processedTouches;
         currentTouches := processedTouches;
-      );
+      );(*}}}*)
 
     method !render () =
     (
@@ -106,4 +145,4 @@ class c ['event_type,'event_data ] (width:float) (height:float) = (*{{{*)
           ]
       ];
     
-  end;(*}}}*)
+  end;

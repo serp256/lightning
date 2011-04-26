@@ -41,7 +41,7 @@ class c ['event_type,'event_data] ?downstate ?text upstate =
       | True -> 
           let open Touch in
           match touchEvent.Event.data with
-          [ `Touch touches -> 
+          [ `Touch _ touches -> 
             match touchesWithTarget touches self with
             [ [ touch :: _ ] ->
               match touch.phase with

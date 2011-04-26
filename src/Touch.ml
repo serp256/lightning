@@ -30,7 +30,7 @@ type et 'event_type 'event_data =
   {
     touch: t;
     target: option (DisplayObject.c 'event_type 'event_data)
-  } constraint 'event_type = [> `TOUCH ] constraint 'event_data = [> `Touch of (list (et 'event_type 'event_data)) ];
+  } constraint 'event_type = [> `TOUCH ] constraint 'event_data = [> `Touch of (t * (list (et 'event_type 'event_data))) ];
 
 
 value touchesWithTarget touches ?phase target = 
