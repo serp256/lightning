@@ -30,7 +30,7 @@ endif
 
 MOBS += $(gl)/gl_stub.o 
 MLOBS += $(gl)/gl.cmx \
-				MList.cmx ObjMemo.cmx LightCommon.cmx Event.cmx EventDispatcher.cmx Point.cmx Rectangle.cmx Matrix.cmx RenderSupport.cmx \
+				MList.cmx PriorityQueue.cmx ObjMemo.cmx LightCommon.cmx Event.cmx EventDispatcher.cmx Point.cmx Rectangle.cmx Matrix.cmx RenderSupport.cmx \
 				DisplayObject.cmx Sprite.cmx Quad.cmx GLTexture.cmx Texture.cmx TextureAtlas.cmx Image.cmx Touch.cmx CompiledSprite.cmx BitmapFont.cmx TextField.cmx Button.cmx Stage.cmx Lightning.cmx
 
 
