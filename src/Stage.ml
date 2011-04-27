@@ -154,20 +154,23 @@ class c ['event_type,'event_data ] (width:float) (height:float) =
     (
       time := time +. seconds;
       (* jugler here *)
-      (* timers *)
-      let rec run_timers () = 
-        match TimersQueue.first timersQueue with
-        [ (t,id) when t <= time ->
-          (
-            TimersQueue.remove_first timersQueue;
-            let timer = Hashtbl.find timers id in
-            timer#fire();
-            run_timers ();
-          )
-        | _ -> ()
-        ]
-      in
-      run_timers ();
+      if TimersQueue.is_empty timersQueue then
+	()
+      else
+		(* timers *)
+		let rec run_timers () = 
+		match TimersQueue.first timersQueue with
+		[ (t,id) when t <= time ->
+		  (
+		    TimersQueue.remove_first timersQueue;
+		    let timer = Hashtbl.find timers id in
+		    timer#fire();
+		    run_timers ();
+		  )
+		| _ -> ()
+		]
+	      in
+	      run_timers ();
       (* dispatch EnterFrameEvent *)
       let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
       self#dispatchEventOnChildren enterFrameEvent;
