@@ -11,6 +11,8 @@ class type c =
     method adjustTextureCoordinates: float_array -> unit;
   end;
 
+
+
 IFDEF SDL THEN
 value loadImage ~path ~contentScaleFactor = 
   let surface = Sdl_image.load (LightCommon.resource_path path 1.) in
@@ -36,29 +38,43 @@ ELSE
 external loadImage: ~path:string -> ~contentScaleFactor:float -> GLTexture.textureInfo = "ml_loadImage";
 ENDIF;
 
+module Cache = WeakHashtbl.Make (struct
+  type t = string;
+  value equal = (=);
+  value hash = Hashtbl.hash;
+end);
+
+value cache = Cache.create 11;
+
 value createFromFile path : c = 
-  let textureInfo = loadImage path 1. in
-  let textureID = GLTexture.create textureInfo in
-  let width = float textureInfo.GLTexture.width
-  and height = float textureInfo.GLTexture.height
-  and hasPremultipliedAlpha = textureInfo.GLTexture.premultipliedAlpha
-  and scale = textureInfo.GLTexture.scale 
-  in
-  let res = 
-    object
-      method width = width;
-      method height = height;
-      method hasPremultipliedAlpha = hasPremultipliedAlpha;
-      method scale = scale;
-      method textureID = textureID;
-      method base = None;
-      method adjustTextureCoordinates texCoords = ();
-    end
-  in
-  (
-    Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
-    res;
-  );
+  try
+    Cache.find cache path
+  with 
+  [ Not_found ->
+    let textureInfo = loadImage path 1. in
+    let textureID = GLTexture.create textureInfo in
+    let width = float textureInfo.GLTexture.width
+    and height = float textureInfo.GLTexture.height
+    and hasPremultipliedAlpha = textureInfo.GLTexture.premultipliedAlpha
+    and scale = textureInfo.GLTexture.scale 
+    in
+    let res = 
+      object
+        method width = width;
+        method height = height;
+        method hasPremultipliedAlpha = hasPremultipliedAlpha;
+        method scale = scale;
+        method textureID = textureID;
+        method base = None;
+        method adjustTextureCoordinates texCoords = ();
+      end
+    in
+    (
+      Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
+      Cache.add cache path res;
+      res;
+    )
+  ];
 
 
 (*

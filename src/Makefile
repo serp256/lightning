@@ -1,7 +1,7 @@
-include ../Makefile.include
+include ../Makefile.common
 
 %.o: %.c
-	$(OCAMLOPT) -g -ccopt '-o $@' -c $<
+	$(OCAMLOPT) -verbose -g -ccopt '-o $@' -c $<
 
 MOBS = 
 MLOBS = 
@@ -30,7 +30,7 @@ endif
 
 MOBS += $(gl)/gl_stub.o 
 MLOBS += $(gl)/gl.cmx \
-				MList.cmx PriorityQueue.cmx ObjMemo.cmx LightCommon.cmx Event.cmx EventDispatcher.cmx Point.cmx Rectangle.cmx Matrix.cmx RenderSupport.cmx \
+				MList.cmx PriorityQueue.cmx WeakHashtbl.cmx ObjMemo.cmx LightCommon.cmx Event.cmx EventDispatcher.cmx Point.cmx Rectangle.cmx Matrix.cmx RenderSupport.cmx \
 				DisplayObject.cmx Sprite.cmx Quad.cmx GLTexture.cmx Texture.cmx TextureAtlas.cmx Image.cmx Touch.cmx CompiledSprite.cmx BitmapFont.cmx TextField.cmx Button.cmx Stage.cmx Lightning.cmx
 
 
@@ -41,7 +41,7 @@ XMLMFILES = TextureAtlas.ml BitmapFont.ml LightCommon.ml
 $(XMLMFILES:.ml=.cmo) $(XMLMFILES:.ml=.cmx) $(XMLMFILES:.ml=.cmi): MLFLAGS += -package xmlm
 	
 lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
-	$(OCAMLLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
+	$(OCAMLMKLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend.$(PLATFORM)
@@ -53,4 +53,3 @@ MLDepend.$(PLATFORM):
 .PHONY : clean
 clean: 
 	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.{cmx,o,cmi} $(gl)/*.{o,cmx,cmi}
-
