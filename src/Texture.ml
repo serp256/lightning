@@ -14,24 +14,45 @@ class type c =
 
 
 IFDEF SDL THEN
+value rec nextPowerOfTwo number =
+  let rec loop result = 
+    if result < number 
+    then loop (result * 2)
+    else result
+  in 
+  loop 1;
+
 value loadImage ~path ~contentScaleFactor = 
   let surface = Sdl_image.load (LightCommon.resource_path path 1.) in
-  let textureInfo = 
-    let open GLTexture in 
-    {
-      texFormat = TextureFormatRGBA;
-      width = Sdl.Video.surface_width surface;
-      height = Sdl.Video.surface_height surface;
-      numMipmaps = 0;
-      generateMipmaps = True;
-      premultipliedAlpha = True;
-      scale = 1.0; (* FIXME: *)
-      imgData = Sdl.Video.surface_pixels surface
-    }
-  in
+  let bpp = Sdl.Video.surface_bpp surface in
+  let () = assert (bpp = 32) in
+  let width = Sdl.Video.surface_width surface in
+  let legalWidth = nextPowerOfTwo width in
+  let height = Sdl.Video.surface_height surface in
+  let legalHeight = nextPowerOfTwo height in
+  let rgbSurface = Sdl.Video.create_rgb_surface [Sdl.Video.SWSURFACE] legalWidth legalHeight bpp in
   (
-    Gc.finalise (fun _ -> Sdl.Video.free_surface surface) textureInfo;
-    textureInfo
+    Sdl.Video.blit_surface surface None rgbSurface None;
+    Sdl.Video.free_surface surface;
+    let textureInfo = 
+      let open GLTexture in 
+      {
+        texFormat = TextureFormatRGBA;
+        realWidth = width;
+        width = legalWidth;
+        realHeight = height;
+        height = legalHeight;
+        numMipmaps = 0;
+        generateMipmaps = True;
+        premultipliedAlpha = True;
+        scale = 1.0; (* FIXME: *)
+        imgData = Sdl.Video.surface_pixels rgbSurface
+      }
+    in
+    (
+      Gc.finalise (fun _ -> Sdl.Video.free_surface rgbSurface) textureInfo;
+      textureInfo
+    );
   );
 
 ELSE
@@ -43,60 +64,6 @@ module Cache = WeakHashtbl.Make (struct
   value equal = (=);
   value hash = Hashtbl.hash;
 end);
-
-value cache = Cache.create 11;
-
-value createFromFile path : c = 
-  try
-    Cache.find cache path
-  with 
-  [ Not_found ->
-    let textureInfo = loadImage path 1. in
-    let textureID = GLTexture.create textureInfo in
-    let width = float textureInfo.GLTexture.width
-    and height = float textureInfo.GLTexture.height
-    and hasPremultipliedAlpha = textureInfo.GLTexture.premultipliedAlpha
-    and scale = textureInfo.GLTexture.scale 
-    in
-    let res = 
-      object
-        method width = width;
-        method height = height;
-        method hasPremultipliedAlpha = hasPremultipliedAlpha;
-        method scale = scale;
-        method textureID = textureID;
-        method base = None;
-        method adjustTextureCoordinates texCoords = ();
-      end
-    in
-    (
-      Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
-      Cache.add cache path res;
-      res;
-    )
-  ];
-
-
-(*
-value createFromFile path : c =
-  let (width,height,hasPremultipliedAlpha,scale,textureID) = _createFromFile path 1. in
-  let res = 
-    object
-      method width = width;
-      method height = height;
-      method hasPremultipliedAlpha = hasPremultipliedAlpha;
-      method scale = scale;
-      method textureID = textureID;
-      method base = None;
-      method adjustTextureCoordinates texCoords = ();
-    end
-  in
-  (
-    Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
-    res;
-  );
-*)
-
 
 value createSubTexture region baseTexture = 
   let tw = baseTexture#width
@@ -133,3 +100,68 @@ value createSubTexture region baseTexture =
         
     end;
   );
+
+value cache = Cache.create 11;
+
+value createFromFile path : c = 
+  try
+    Cache.find cache path
+  with 
+  [ Not_found ->
+    let open GLTexture in
+    let textureInfo = loadImage path 1. in
+    let textureID = GLTexture.create textureInfo in
+    let width = float textureInfo.width
+    and height = float textureInfo.height
+    and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
+    and scale = textureInfo.scale 
+    in
+    let res = 
+      object
+        method width = width;
+        method height = height;
+        method hasPremultipliedAlpha = hasPremultipliedAlpha;
+        method scale = scale;
+        method textureID = textureID;
+        method base = None;
+        method adjustTextureCoordinates texCoords = ();
+      end
+    in
+    (
+      Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
+      let res = 
+        if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
+        then
+          createSubTexture (Rectangle.create 0. 0. (float textureInfo.realHeight) (float textureInfo.realWidth)) res
+        else
+          res
+      in
+      (
+        Cache.add cache path res;
+        res;
+      );
+    )
+  ];
+
+
+(*
+value createFromFile path : c =
+  let (width,height,hasPremultipliedAlpha,scale,textureID) = _createFromFile path 1. in
+  let res = 
+    object
+      method width = width;
+      method height = height;
+      method hasPremultipliedAlpha = hasPremultipliedAlpha;
+      method scale = scale;
+      method textureID = textureID;
+      method base = None;
+      method adjustTextureCoordinates texCoords = ();
+    end
+  in
+  (
+    Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
+    res;
+  );
+*)
+
+

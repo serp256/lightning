@@ -33,7 +33,7 @@ DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_TAB = 9;
 
 value createText t ~width ~height ?(size=t.size) ~color ?(border=False) ?hAlign ?vAlign text =
-  let () = Printf.eprintf "create text: [%s]\n%!" text in
+(*   let () = Printf.eprintf "create text: [%s]\n%!" text in *)
   let lineContainer = Sprite.create ()
   and scale = size /. t.size in
   let containerWidth = width /. scale
@@ -98,7 +98,7 @@ value createText t ~width ~height ?(size=t.size) ~color ?(border=False) ?hAlign 
               else
                 let bitmapChar = Image.create bchar.charTexture in
                 (
-                  bitmapChar#setName (Printf.sprintf "letter: %d" index);
+(*                   bitmapChar#setName (Printf.sprintf "letter: %d" index); *)
                   bitmapChar#setX (currentX +. bchar.xOffset);
                   bitmapChar#setY bchar.yOffset;
                   bitmapChar#setColor color;
@@ -117,7 +117,7 @@ value createText t ~width ~height ?(size=t.size) ~color ?(border=False) ?hAlign 
             let lastChar = line#getLastChild in
             let lineWidth = lastChar#x +. lastChar#width in
             let widthDiff = containerWidth -. lineWidth in
-            let () = Printf.printf "lastChar#x: %f, lastChar#width: %f, lineWidth: %f, widthDiff: %f\n%!" lastChar#x lastChar#width lineWidth widthDiff in
+(*             let () = Printf.printf "lastChar#x: %f, lastChar#width: %f, lineWidth: %f, widthDiff: %f\n%!" lastChar#x lastChar#width lineWidth widthDiff in *)
             line#setX begin
               match halign with
               [ `HAlignRight -> widthDiff

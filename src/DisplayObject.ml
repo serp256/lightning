@@ -9,6 +9,7 @@ class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
   object(self:'self)
     type 'displayObject = _c 'event_type 'event_data 'parent;
     type 'event_type = [> eventType ];
+    type 'parent = < asDisplayObject: _c _ _ _; removeChild': _c _ _ _ -> unit; dispatchEvent': Event.t 'event_type 'event_data _ _ -> unit; name: string; .. >;
     value mutable scaleX = 1.0;
 
     value mutable parent : option 'parent = None;
@@ -220,7 +221,7 @@ class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
                 targetMatrix
               )
           | _ ->
-              let () = Printf.eprintf "self: [%s], parent: [%s], targetCoordinateSpace: [%s]\n%!" name (match parent with [ None -> "NONE" | Some s -> s#name ]) targetCoordinateSpace#name in
+(*               let () = Printf.eprintf "self: [%s], parent: [%s], targetCoordinateSpace: [%s]\n%!" name (match parent with [ None -> "NONE" | Some s -> s#name ]) targetCoordinateSpace#name in *)
               match parent with
               [ Some parent when parent#asDisplayObject = targetCoordinateSpace -> self#transformationMatrix (* optimization *) 
               | _ ->
@@ -236,7 +237,7 @@ class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
                       in
                       [ currentObject :: next ] 
                 in
-                let () = Printf.eprintf "ancessors: [%s]\n%!" (String.concat ";" (List.map (fun o -> o#name) ancessors)) in
+(*                 let () = Printf.eprintf "ancessors: [%s]\n%!" (String.concat ";" (List.map (fun o -> o#name) ancessors)) in *)
                 let commonParent = 
                   loop targetCoordinateSpace where
                     rec loop currentObject = 

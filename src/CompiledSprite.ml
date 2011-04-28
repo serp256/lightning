@@ -31,7 +31,6 @@ value collectInfo obj = (*{{{*)
                 in
                 let (x,y) = Matrix.transformPoint currentMatrix (x,y) in
                 (
-                  Printf.eprintf "%s = %s\n" quad#name (Point.to_string (x,y));
                   IO.write_real_i32 vertexData (Int32.bits_of_float x);
                   IO.write_real_i32 vertexData (Int32.bits_of_float y);
                 )
@@ -115,7 +114,7 @@ class c ['event_type,'event_data] =
       let (vertexData,colorData',texCoordData,textures) = collectInfo self in
       (
         glGenBuffers 4 buffers;
-        let () = Printf.eprintf "buffers: [ %s ]\n" (String.concat ";" (List.map string_of_int (Array.to_list buffers))) in
+(*         let () = Printf.eprintf "buffers: [ %s ]\n" (String.concat ";" (List.map string_of_int (Array.to_list buffers))) in *)
         let numVerticies = String.length vertexData / 4 / 2 in
         let numQuads = numVerticies / 4 in
         let indexBufferSize = numQuads * 6 in (*  4 + 2 for degenerate triangles *)
@@ -163,7 +162,7 @@ class c ['event_type,'event_data] =
 (*         Printf.eprintf "textures len: %d\n" (List.length textures); *)
         textureSwitches := textures;
         colorData := colorData';
-        prerr_endline "compiled";
+(*         prerr_endline "compiled"; *)
         compiled := True;
 
       );

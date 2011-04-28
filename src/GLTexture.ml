@@ -15,7 +15,9 @@ type textureFormat =
 type textureInfo = 
   {
     texFormat: textureFormat;
+    realWidth: int;
     width: int;
+    realHeight: int;
     height: int;
     numMipmaps: int;
     generateMipmaps: bool;
