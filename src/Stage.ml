@@ -2,8 +2,8 @@
 open Touch;
 
 
-type eventType = [= DisplayObject.eventType | `TOUCH ];
-type eventData 'event_type 'event_data = [= Event.dataEmpty | `Touch of (list (Touch.et 'event_type 'event_data)) ];
+type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME | `TIMER  | `TIMER_COMPLETE ];
+type eventData 'event_type 'event_data = [= Event.dataEmpty | `Touch of (list (Touch.et 'event_type 'event_data)) | `PassedTime of float ];
 
 
 exception Restricted_operation;
@@ -38,7 +38,7 @@ class c ['event_type,'event_data ] (width:float) (height:float) =
     value timersQueue = TimersQueue.make ();
     value timers : Hashtbl.t int (inner_timer 'event_type 'event_data) = Hashtbl.create 0;
 
-    method createTimer ?(repeatCount=0) delay = 
+    method createTimer ?(repeatCount=0) delay = (*{{{*)
       let o = 
         object(timer)
           type 'timer = Timer.c 'event_type 'event_data;
@@ -85,7 +85,7 @@ class c ['event_type,'event_data ] (width:float) (height:float) =
           method reset () = assert False;
         end
       in
-      (o :> Timer.c _ _ );
+      (o :> Timer.c _ _ );(*}}}*)
 
     method processTouches (touches:list Touch.t) = (*{{{*)
       let () = Printf.eprintf "process touches %d\n%!" (List.length touches) in
@@ -154,23 +154,23 @@ class c ['event_type,'event_data ] (width:float) (height:float) =
     (
       time := time +. seconds;
       (* jugler here *)
-      if TimersQueue.is_empty timersQueue then
-	()
-      else
-		(* timers *)
-		let rec run_timers () = 
-		match TimersQueue.first timersQueue with
-		[ (t,id) when t <= time ->
-		  (
-		    TimersQueue.remove_first timersQueue;
-		    let timer = Hashtbl.find timers id in
-		    timer#fire();
-		    run_timers ();
-		  )
-		| _ -> ()
-		]
-	      in
-	      run_timers ();
+      (* timers *)
+      if not (TimersQueue.is_empty timersQueue)
+      then
+        let rec run_timers () = 
+        match TimersQueue.first timersQueue with
+        [ (t,id) when t <= time ->
+          (
+            TimersQueue.remove_first timersQueue;
+            let timer = Hashtbl.find timers id in
+            timer#fire();
+            run_timers ();
+          )
+        | _ -> ()
+        ]
+        in
+        run_timers ()
+      else ();
       (* dispatch EnterFrameEvent *)
       let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
       self#dispatchEventOnChildren enterFrameEvent;

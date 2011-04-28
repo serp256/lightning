@@ -9,7 +9,9 @@ type valign = [= `VAlignTop | `VAlignCenter | `VAlignBottom ];
 value pi  =  3.14159265359;
 value two_pi =  6.28318530718;
 
+exception File_not_exists of string;
 IFDEF IOS THEN
+Callback.register_exception "File_not_exists" (File_not_exists "");
 external resource_path: string -> float -> string = "ml_resourcePath";
 ELSE
 value resource_path path scale = 

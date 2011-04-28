@@ -11,6 +11,7 @@
 #import <caml/memory.h>
 #import <caml/mlvalues.h>
 #import <caml/fail.h>
+#import <caml/callback.h>
 
 int nextPowerOfTwo(int number) {
     int result = 1;
@@ -272,6 +273,7 @@ value loadPvrFile(NSString *path) {
 }
 
 NSString *pathForResource(NSString *path, float contentScaleFactor) {
+	printf("get path for resource: %s\n",[path cStringUsingEncoding:NSASCIIStringEncoding]);
     NSString *fullPath = NULL;
     if ([path isAbsolutePath]) {
         fullPath = path; 
@@ -288,7 +290,8 @@ NSString *pathForResource(NSString *path, float contentScaleFactor) {
     
     if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath])
     {
-        caml_failwith("resource file not exists"); // FIXME: raise specific exception
+			const char *fname = [path cStringUsingEncoding:NSASCIIStringEncoding];
+			caml_raise_with_string(*caml_named_value("File_not_exists"), fname);
     }
     return fullPath;
 }
