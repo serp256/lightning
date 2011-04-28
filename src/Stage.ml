@@ -3,7 +3,7 @@ open Touch;
 
 
 type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME | `TIMER  | `TIMER_COMPLETE ];
-type eventData 'event_type 'event_data = [= Event.dataEmpty | `Touch of (list (Touch.et 'event_type 'event_data)) | `PassedTime of float ];
+type eventData 'event_type 'event_data = [= Event.dataEmpty | `Touch of (Touch.t * (list (Touch.et 'event_type 'event_data))) | `PassedTime of float ];
 
 
 exception Restricted_operation;
@@ -191,4 +191,11 @@ class c ['event_type,'event_data ] (width:float) (height:float) =
           ]
       ];
     
+  end;
+
+
+
+class default width height = 
+  object
+    inherit c [ eventType, eventData eventType _] width height;
   end;

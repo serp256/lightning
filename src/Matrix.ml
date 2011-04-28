@@ -13,14 +13,15 @@ value scaleByXY m sx sy =
 );
 
 value concat m matrix =
-(
-  m.a := matrix.a *. m.a +. matrix.c *. m.b;
-  m.b := matrix.b *. m.a +. matrix.d *. m.b;
-  m.c := matrix.a *. m.c +. matrix.c *. m.d;
-  m.d := matrix.b *. m.c +. matrix.d *. m.d;
-  m.tx := matrix.a *. m.tx +. matrix.c *. m.ty +. matrix.tx *. W;
-  m.ty := matrix.b *. m.tx +. matrix.d *. m.ty +. matrix.ty *. W;
-);
+  let (a,b,c,d,tx,ty) = (m.a,m.b,m.c,m.d,m.tx,m.ty) in
+  (
+    m.a := matrix.a *. a +. matrix.c *. b;
+    m.b := matrix.b *. a +. matrix.d *. b;
+    m.c := matrix.a *. c +. matrix.c *. d;
+    m.d := matrix.b *. c +. matrix.d *. d;
+    m.tx := matrix.a *. tx +. matrix.c *. ty +. matrix.tx *. W;
+    m.ty := matrix.b *. tx +. matrix.d *. ty +. matrix.ty *. W;
+  );
 
 value rotate m angle = 
   let c = cos(angle)
