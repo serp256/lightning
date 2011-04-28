@@ -103,6 +103,8 @@ class c ['event_type,'event_data] =
         )
       ];
 
+    method invalidate () = compiled := False;
+
     method compile () = (*{{{*)
     (
 (*       prerr_endline "compile"; *)
