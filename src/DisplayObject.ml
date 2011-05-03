@@ -1,15 +1,19 @@
 open Gl;
 open LightCommon;
 
-type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE ];
+type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE ]; 
+
+module Make(P:sig 
+  type evType = private [> eventType ];
+  type evData = private [> Event.dataEmpty ];
+end) = struct
 
 type hidden 'a = 'a;
 
-class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
+class virtual _c [ 'parent ] = (*{{{*)
   object(self:'self)
-    type 'displayObject = _c 'event_type 'event_data 'parent;
-    type 'event_type = [> eventType ];
-    type 'parent = < asDisplayObject: _c _ _ _; removeChild': _c _ _ _ -> unit; dispatchEvent': Event.t 'event_type 'event_data _ _ -> unit; name: string; .. >;
+    type 'displayObject = _c 'parent;
+    type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': Event.t P.evType P.evData _ _ -> unit; name: string; .. >;
     value mutable scaleX = 1.0;
 
     value mutable parent : option 'parent = None;
@@ -18,10 +22,10 @@ class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
     method clearParent () = parent := None;
 
     (* Events *)
-    type 'event = Event.t 'event_type 'event_data 'displayObject 'self;
+    type 'event = Event.t P.evType P.evData 'displayObject 'self;
     type 'listener = 'event -> unit;
-    value listeners: Hashtbl.t 'event_type 'listener = Hashtbl.create 0;
-    method addEventListener eventType listener = Hashtbl.add listeners eventType listener;
+    value listeners: Hashtbl.t P.evType 'listener = Hashtbl.create 0;
+    method addEventListener evType listener = Hashtbl.add listeners evType listener;
     method dispatchEvent' event =
       let open Event in 
       let listeners = 
@@ -99,7 +103,7 @@ class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
 
 (*     method virtual boundsInSpace: !'target. option ((#_c 'et 'ed 'p) as 'target) -> Rectangle.t; *)
 
-    method virtual boundsInSpace: option (_c 'event_type 'event_data 'parent) -> Rectangle.t;
+    method virtual boundsInSpace: option (_c 'parent) -> Rectangle.t;
 
 (*     method bounds = self#boundsInSpace (parent :> option (_c 'event_type 'event_data 'parent)); *)
 
@@ -164,7 +168,7 @@ class virtual _c [ 'event_type, 'event_data , 'parent ] = (*{{{*)
     method setName n = name := n;
 
     value lastTouchTimestamp = 0.;
-    method asDisplayObject = (self :> _c 'event_type 'event_data 'parent);
+    method asDisplayObject = (self :> _c 'parent);
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
     method isStage = False;
     method transformationMatrix = 
@@ -460,17 +464,16 @@ value dllist_find_map_back f node =
 (*}}}*)
 
 
-class virtual container [ 'event_type, 'event_data ] = (*{{{*)
+class virtual container = (*{{{*)
   object(self:'self)
-    inherit _c [ 'event_type, 'event_data , container 'event_type 'event_data ] as super;
-    type 'displayObject = _c 'event_type 'event_data (container 'event_type 'event_data);
-    type 'displayObjectContainer = container 'event_type 'event_data;
+    inherit _c [ container ] as super;
+    type 'displayObject = _c container;
     (* пока на листах, потом видно будет *)
     value mutable children : option (Dllist.node_t 'displayObject) = None;
     value mutable numChildren = 0;
     method children = match children with [ None -> Enum.empty () | Some children -> Dllist.enum children];
     method numChildren = numChildren;
-    method asDisplayObjectContainer = (self :> container 'event_type 'event_data);
+    method asDisplayObjectContainer = (self :> container);
     method dcast = `Container self#asDisplayObjectContainer;
 
     method dispatchEventOnChildren event =
@@ -495,7 +498,7 @@ class virtual container [ 'event_type, 'event_data ] = (*{{{*)
       ];
     
 
-    method addChild: !'child. ?index:int -> ((#_c 'event_type 'event_data 'dislpayObjectContainer) as 'child) -> unit = fun  ?index child ->
+    method addChild: !'child. ?index:int -> ((#_c container) as 'child) -> unit = fun  ?index child ->
       let child = child#asDisplayObject in
       (
           match children with
@@ -583,7 +586,7 @@ class virtual container [ 'event_type, 'event_data ] = (*{{{*)
           self#removeChild'' n
       ];
 
-    method removeChild: !'child. ((#_c 'event_type 'event_data 'displayObjectContainer) as 'child) -> unit = fun child -> (* чекать сцука надо блядь *)
+    method removeChild: !'child. ((#_c container) as 'child) -> unit = fun child -> (* чекать сцука надо блядь *)
       let child = child#asDisplayObject in
       self#removeChild' child;
 
@@ -615,7 +618,7 @@ class virtual container [ 'event_type, 'event_data ] = (*{{{*)
         end children
       ];
 
-    method containsChild: !'child. ((#_c 'event_type 'event_data 'displayObjectContainer) as 'child) -> bool = fun child ->
+    method containsChild: !'child. ((#_c container) as 'child) -> bool = fun child ->
       let child = child#asDisplayObject in
       self#containsChild' child;
 
@@ -681,8 +684,10 @@ class virtual container [ 'event_type, 'event_data ] = (*{{{*)
 
 
 
-class virtual c [ 'event_type, 'event_data ] = 
+class virtual c =
   object(self)
-    inherit _c [ 'event_type, 'event_data, (container 'event_type 'event_data) ];
+    inherit _c [ container ];
     method dcast = `Object self#asDisplayObject;
   end;
+
+end;
