@@ -1,8 +1,9 @@
 
+module Make(D:DisplayObjectT.M): sig
 
-class c [ 'event_type, 'event_data ]:  [ ?fontName:string ] -> [ ?fontSize:float ] -> [ ?color:int ] -> [ ~width:float ] -> [ ~height:float ] -> [ string ] ->
+class c :  [ ?fontName:string ] -> [ ?fontSize:float ] -> [ ?color:int ] -> [ ~width:float ] -> [ ~height:float ] -> [ string ] ->
   object
-    inherit DisplayObject.container ['event_type,'event_data];
+    inherit D.container;
     method setText: string -> unit;
     method setFontName: string -> unit;
     method setFontSize: option float -> unit;
@@ -14,4 +15,5 @@ class c [ 'event_type, 'event_data ]:  [ ?fontName:string ] -> [ ?fontSize:float
   end;
 
 
-value create: ?fontName:string -> ?fontSize:float -> ?color:int -> ~width:float -> ~height:float -> string -> c _ _;
+  value create: ?fontName:string -> ?fontSize:float -> ?color:int -> ~width:float -> ~height:float -> string -> c;
+end;

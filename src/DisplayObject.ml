@@ -2,13 +2,18 @@ open Gl;
 open LightCommon;
 
 type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE ]; 
+type eventData = Event.dataEmpty;
 
-module Make(P:sig 
+module type Param = sig
   type evType = private [> eventType ];
   type evData = private [> Event.dataEmpty ];
-end) = struct
+end;
+
+module Make(P:Param) = struct
 
 type hidden 'a = 'a;
+type evType = P.evType;
+type evData = P.evData;
 
 class virtual _c [ 'parent ] = (*{{{*)
   object(self:'self)
@@ -675,6 +680,7 @@ class virtual container = (*{{{*)
             RenderSupport.transformMatrixForObject child;
             child#setAlpha (childAlpha *. alpha);
             child#render ();
+            child#setAlpha childAlpha;
             glPopMatrix();
           )
           else ()

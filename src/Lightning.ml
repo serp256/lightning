@@ -1,4 +1,21 @@
 
+module Make(Param:sig type evType = private [> Stage.eventType ]; type evData = private [> Stage.eventData ]; end) = struct (*{{{*)
+  module DisplayObject = DisplayObject.Make Param;
+  module Quad = Quad.Make DisplayObject;
+  module Image = Image.Make DisplayObject;
+  module Sprite = Sprite.Make DisplayObject;
+  module TextField = TextField.Make DisplayObject;
+  module FPS = FPS.Make DisplayObject;
+  module Stage = Stage.Make DisplayObject;
+end;
+
+
+module Default = Make (struct type evType = Stage.eventType; type evData = Stage.eventData; end);
+
+(* добавлю с таймерами отдельно чтоли ? *)
+
+
+
 type stage_constructor =
   float -> float -> 
     <
@@ -14,7 +31,9 @@ IFDEF SDL THEN
 value init s = Sdl_run.run s;
 ELSE
 value _stage : ref (option stage_constructor) = ref None;
-value init s = _stage.val := Some s;
+value init s = 
+  let s = (s :> stage_constructor) in
+  _stage.val := Some s;
 value stage_create width height = 
   match _stage.val with
   [ None -> failwith "Stage not initialized"
@@ -22,7 +41,6 @@ value stage_create width height =
   ];
 value () = 
 (
-(*   Callback.register "clear_texture" RenderSupport.clearTexture; *)
   Callback.register "stage_create" stage_create;
 );
 ENDIF;

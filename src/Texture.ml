@@ -22,6 +22,32 @@ value rec nextPowerOfTwo number =
   in 
   loop 1;
 
+(*
+value loadImage ~path ~contentScaleFactor = 
+  let surface = Sdl_image.load (LightCommon.resource_path path 1.) in
+  let width = Sdl.Video.surface_width surface in
+  let height = Sdl.Video.surface_height surface in
+  let textureInfo = 
+    let open GLTexture in 
+    {
+        texFormat = TextureFormatRGBA;
+        realWidth = width;
+        width = width;
+        realHeight = height;
+        height = height;
+        numMipmaps = 0;
+        generateMipmaps = True;
+        premultipliedAlpha = True;
+        scale = 1.0; (* FIXME: *)
+        imgData = Sdl.Video.surface_pixels surface
+    }
+  in
+  (
+    Gc.finalise (fun _ -> Sdl.Video.free_surface surface) textureInfo;
+    textureInfo
+  );
+*)
+
 value loadImage ~path ~contentScaleFactor = 
   let surface = Sdl_image.load (LightCommon.resource_path path 1.) in
   let bpp = Sdl.Video.surface_bpp surface in
@@ -30,8 +56,9 @@ value loadImage ~path ~contentScaleFactor =
   let legalWidth = nextPowerOfTwo width in
   let height = Sdl.Video.surface_height surface in
   let legalHeight = nextPowerOfTwo height in
-  let rgbSurface = Sdl.Video.create_rgb_surface [Sdl.Video.SWSURFACE] legalWidth legalHeight bpp in
+  let rgbSurface = Sdl.Video.create_rgb_surface [Sdl.Video.HWSURFACE] legalWidth legalHeight bpp in
   (
+    Sdl.Video.set_alpha surface [] 0;
     Sdl.Video.blit_surface surface None rgbSurface None;
     Sdl.Video.free_surface surface;
     let textureInfo = 
@@ -110,6 +137,7 @@ value createFromFile path : c =
   [ Not_found ->
     let open GLTexture in
     let textureInfo = loadImage path 1. in
+    let () = Printf.eprintf "load texture: %s [%d->%d; %d->%d]\n%!" path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height in
     let textureID = GLTexture.create textureInfo in
     let width = float textureInfo.width
     and height = float textureInfo.height
@@ -132,7 +160,7 @@ value createFromFile path : c =
       let res = 
         if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
         then
-          createSubTexture (Rectangle.create 0. 0. (float textureInfo.realHeight) (float textureInfo.realWidth)) res
+          createSubTexture (Rectangle.create 0. 0. (float textureInfo.realWidth) (float textureInfo.realHeight)) res
         else
           res
       in

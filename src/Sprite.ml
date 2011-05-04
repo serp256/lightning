@@ -1,9 +1,11 @@
 
+module Make(D:DisplayObjectT.M) = struct
 
-class c ['event_type,'event_data] =
-  object(self)
-    inherit DisplayObject.container ['event_type,'event_data] as super;
-  end;
+  class c =
+    object(self)
+      inherit D.container; 
+    end;
 
-value create () = new c;
+  value create () = new c;
+end;
 

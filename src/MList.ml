@@ -153,6 +153,28 @@ value replace_assoc k v lst =
   );
 
 
+value add_assoc k v lst = 
+  let rec loop dst = fun
+    [ [] -> dst.tl := inj { hd = (k,[v]); tl = [] }
+    | [ (k',vls) :: tl ] when k' = k ->
+        let r = { hd = (k, [ v :: vls] ); tl = tl } in
+        dst.tl := inj r
+    | [ h :: tl ] ->
+      let r = { hd = h; tl = [] } in
+      (
+        dst.tl := inj r;
+        loop r tl
+      )
+    ]
+  in
+  let dummy = dummy_node () in
+  (
+    loop dummy lst;
+    dummy.tl;
+  );
+
+
+
 
 (* requires HSet 
 

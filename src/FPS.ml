@@ -1,8 +1,11 @@
 
+module Make(D:DisplayObjectT.M with type evType = private [> `ENTER_FRAME | DisplayObjectT.eventType ] and type evData = private [> `PassedTime of float | DisplayObjectT.eventData] )= struct
 
-class c ['event_type,'event_data] ?fontSize ?color () = 
+  module TextField = TextField.Make D;
+
+class c ?fontSize ?color () = 
   object(self)
-    inherit TextField.c ['event_type,'event_data] ?fontSize ?color ~width:100. ~height:30. "";
+    inherit TextField.c ?fontSize ?color ~width:100. ~height:30. "";
     value mutable frames = 0;
     value mutable time = 0.;
 
@@ -30,3 +33,5 @@ class c ['event_type,'event_data] ?fontSize ?color () =
   end;
 
 value create = new c;
+
+end;

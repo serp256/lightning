@@ -32,6 +32,76 @@ DEFINE CHAR_NEWLINE = 10;
 DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_TAB = 9;
 
+value register path = (*{{{*)
+  let path = resource_path path 1. in
+  let input = open_in path in
+  let xmlinput = Xmlm.make_input ~strip:True (`Channel input) in
+  let () = ignore(Xmlm.input xmlinput) in (* ignore dtd *)
+  let parse_info () = 
+    let res = parse_xml_element xmlinput "info" [ "face"; "size"] in
+    (List.assoc "face" res,float_of_string (List.assoc "size" res))
+  and parse_common () = 
+    let res = parse_xml_element xmlinput "common" [ "lineHeight"] in
+    float_of_string ( List.assoc "lineHeight" res)
+  and parse_page () = 
+    match Xmlm.input xmlinput with
+    [ `El_start ((_,"pages"),_) ->
+      let res = parse_xml_element xmlinput "page" [ "file"] in
+      (
+        match Xmlm.input xmlinput with
+        [ `El_end -> List.assoc "file" res
+        | _ -> failwith "Bitmap fonts with multiple pages are not supported"
+        ]
+      )
+    | _ -> assert False
+    ]
+  and parse_chars texture = 
+    match Xmlm.input xmlinput with
+    [ `El_start ((_,"chars"),attributes) ->
+      let count = get_xml_attribute "count" attributes in
+      let chars = Hashtbl.create (int_of_string count) in
+      let rec loop () =
+        match Xmlm.peek xmlinput with
+        [ `El_end -> (ignore(Xmlm.input xmlinput); chars)
+        | _ ->
+          (
+            let res = parse_xml_element xmlinput "char" ["id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance"] in
+            let charID = int_of_string (List.assoc "id" res) in
+            let get_float x = float_of_string (List.assoc x res) in
+            let bc = 
+              let region = Rectangle.create (get_float "x") (get_float "y") (get_float "width") (get_float "height") in
+              let charTexture = Texture.createSubTexture region texture in
+              { charID ; xOffset = get_float "xoffset"; yOffset = get_float "yoffset"; xAdvance = get_float "xadvance"; charTexture }
+            in
+            Hashtbl.add chars charID bc;
+            loop ()
+          )
+        ]
+      in
+      loop ()
+    | _ -> assert False
+    ]
+  in
+  match Xmlm.input xmlinput with
+  [ `El_start ((_,"font"),_) -> 
+    let (name,size) = parse_info () in
+    let lineHeight = parse_common () in
+    let imgFile = parse_page () in
+    let texture = Texture.createFromFile imgFile in
+    let chars = parse_chars texture in
+    let bf = { texture; chars; name; size; lineHeight } in
+    let () = Printf.printf "register font %s\n%!" name in
+    Hashtbl.add fonts name bf
+  | _ -> assert False 
+  ];(*}}}*)
+
+
+module Make(D:DisplayObjectT.M) = struct
+
+  module Sprite = Sprite.Make D;
+  module Image = Image.Make D;
+  module Quad = Quad.Make D;
+
 value createText t ~width ~height ?(size=t.size) ~color ?(border=False) ?hAlign ?vAlign text =
 (*   let () = Printf.eprintf "create text: [%s]\n%!" text in *)
   let lineContainer = Sprite.create ()
@@ -130,7 +200,7 @@ value createText t ~width ~height ?(size=t.size) ~color ?(border=False) ?hAlign 
       | _ -> Queue.iter lineContainer#addChild lines
       ];
     );
-    let outerContainer = CompiledSprite.create () in (* FIXME: must be compiled sprite *)
+    let outerContainer = Sprite.create () in (* FIXME: must be compiled sprite *)
     (
       outerContainer#addChild lineContainer;
       match vAlign with
@@ -171,65 +241,4 @@ value createText t ~width ~height ?(size=t.size) ~color ?(border=False) ?hAlign 
     )
   );
 
-value register path = (*{{{*)
-  let path = resource_path path 1. in
-  let input = open_in path in
-  let xmlinput = Xmlm.make_input ~strip:True (`Channel input) in
-  let () = ignore(Xmlm.input xmlinput) in (* ignore dtd *)
-  let parse_info () = 
-    let res = parse_xml_element xmlinput "info" [ "face"; "size"] in
-    (List.assoc "face" res,float_of_string (List.assoc "size" res))
-  and parse_common () = 
-    let res = parse_xml_element xmlinput "common" [ "lineHeight"] in
-    float_of_string ( List.assoc "lineHeight" res)
-  and parse_page () = 
-    match Xmlm.input xmlinput with
-    [ `El_start ((_,"pages"),_) ->
-      let res = parse_xml_element xmlinput "page" [ "file"] in
-      (
-        match Xmlm.input xmlinput with
-        [ `El_end -> List.assoc "file" res
-        | _ -> failwith "Bitmap fonts with multiple pages are not supported"
-        ]
-      )
-    | _ -> assert False
-    ]
-  and parse_chars texture = 
-    match Xmlm.input xmlinput with
-    [ `El_start ((_,"chars"),attributes) ->
-      let count = get_xml_attribute "count" attributes in
-      let chars = Hashtbl.create (int_of_string count) in
-      let rec loop () =
-        match Xmlm.peek xmlinput with
-        [ `El_end -> (ignore(Xmlm.input xmlinput); chars)
-        | _ ->
-          (
-            let res = parse_xml_element xmlinput "char" ["id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance"] in
-            let charID = int_of_string (List.assoc "id" res) in
-            let get_float x = float_of_string (List.assoc x res) in
-            let bc = 
-              let region = Rectangle.create (get_float "x") (get_float "y") (get_float "width") (get_float "height") in
-              let charTexture = Texture.createSubTexture region texture in
-              { charID ; xOffset = get_float "xoffset"; yOffset = get_float "yoffset"; xAdvance = get_float "xadvance"; charTexture }
-            in
-            Hashtbl.add chars charID bc;
-            loop ()
-          )
-        ]
-      in
-      loop ()
-    | _ -> assert False
-    ]
-  in
-  match Xmlm.input xmlinput with
-  [ `El_start ((_,"font"),_) -> 
-    let (name,size) = parse_info () in
-    let lineHeight = parse_common () in
-    let imgFile = parse_page () in
-    let texture = Texture.createFromFile imgFile in
-    let chars = parse_chars texture in
-    let bf = { texture; chars; name; size; lineHeight } in
-    let () = Printf.printf "register font %s\n%!" name in
-    Hashtbl.add fonts name bf
-  | _ -> assert False 
-  ];(*}}}*)
+end;

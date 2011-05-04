@@ -238,14 +238,14 @@ value createTextureInfo(float width, float height, float scale, drawingBlock dra
 		res = caml_alloc_tuple(8);
 		Store_field(res,0,Val_int(textureFormat));
 		Store_field(res,1,Val_int((unsigned int)width));
-    Store_field(res,1,Val_int(legalWidth));
+    Store_field(res,2,Val_int(legalWidth));
 		Store_field(res,3,Val_int((unsigned int)height));
-    Store_field(res,2,Val_int(legalHeight));
-    Store_field(res,3,Val_int(0));
-    Store_field(res,4,Val_int(1));
-    Store_field(res,5,Val_int(premultipliedAlpha));
-    Store_field(res,6,caml_copy_double(scale));
-    Store_field(res,7,oImgData);
+    Store_field(res,4,Val_int(legalHeight));
+    Store_field(res,5,Val_int(0));
+    Store_field(res,6,Val_int(1));
+    Store_field(res,7,Val_int(premultipliedAlpha));
+    Store_field(res,8,caml_copy_double(scale));
+    Store_field(res,9,oImgData);
 
 
     /*

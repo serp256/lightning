@@ -1,10 +1,13 @@
 open LightCommon;
 
+module Make(D:DisplayObjectT.M) = struct
 
-class c [ 'event_type, 'event_data ] ?fontName ?fontSize ?color ~width ~height text = 
+  module Quad = Quad.Make D;
+  module BF = BitmapFont.Make D;
+class c ?fontName ?fontSize ?color ~width ~height text = 
   let _fontName = Option.default "Helvetica" fontName in
   object(self)
-    inherit DisplayObject.container [ 'event_type, 'event_data ] as super;
+    inherit D.container as super;
 
     value mutable fontSize = fontSize;
     value mutable color = Option.default color_black color;
@@ -102,7 +105,7 @@ class c [ 'event_type, 'event_data ] ?fontName ?fontSize ?color ~width ~height t
     method private createRenderedContents () = assert False;
     method private createComposedContents () =
       let bitmapFont = BitmapFont.get fontName in
-      let contents = BitmapFont.createText bitmapFont ~width ~height ?size:fontSize ~color ~border ~hAlign ~vAlign text in
+      let contents = BF.createText bitmapFont ~width ~height ?size:fontSize ~color ~border ~hAlign ~vAlign text in
       let bounds = contents#bounds in
       (
         hitArea#setX bounds.Rectangle.x; hitArea#setY bounds.Rectangle.y;
@@ -147,4 +150,6 @@ class c [ 'event_type, 'event_data ] ?fontName ?fontSize ?color ~width ~height t
   end;
 
 
-value create = new c;
+  value create = new c;
+
+end;

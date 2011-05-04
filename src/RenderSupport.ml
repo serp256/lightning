@@ -162,12 +162,3 @@ value checkForOpenGLError () =
     if error <> 0 then Printf.eprintf "Warning: There was an OpenGL error: #%d\n%!" error else ();
     error
   );
-
-  
-(*
-      return (GLubyte)SP_COLOR_PART_RED(color) |
-             (GLubyte)SP_COLOR_PART_GREEN(color) lsl 8 |
-             (GLubyte)SP_COLOR_PART_BLUE(color) lsl 16 |
-             (GLubyte)(alpha * 255) lsl 24;
-*)
-

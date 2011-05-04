@@ -1,8 +1,10 @@
 
-class c ['event_type,'event_data]:
-  object
-    inherit DisplayObject.container ['event_type,'event_data];
-  end;
+module Make(D:DisplayObjectT.M): sig
 
+  class c:
+    object
+      inherit D.container;
+    end;
 
-value create: unit -> c 'event_type 'event_data;
+  value create: unit -> c;
+end;

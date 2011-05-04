@@ -1,10 +1,16 @@
 
 type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE ]; 
+type eventData = Event.dataEmpty;
 
-module Make(P:sig 
+module type Param = sig
   type evType = private [> eventType ];
   type evData = private [> Event.dataEmpty ];
-end): sig
+end;
+
+module Make(P:Param): DisplayObjectT.M with type evType = P.evType and type evData = P.evData;
+
+(*
+= sig
 
 type hidden 'a;
 
@@ -108,3 +114,4 @@ class virtual c :
   end;
 
 end;
+*)
