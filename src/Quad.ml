@@ -8,13 +8,9 @@ value gl_quad_colors = make_word_array 4;
 module Make(D:DisplayObjectT.M) = struct
 
 
-  value memo = ObjMemo.create 1;
-
-  class c ?(color=color_white) width height = (*{{{*)
+  class _c color width height = (*{{{*)
     object(self)
       inherit D.c as super;
-
-      initializer ObjMemo.add memo (self :> < >);
 
       value vertexCoords = 
         let a = make_float_array 8 in
@@ -104,6 +100,16 @@ module Make(D:DisplayObjectT.M) = struct
       
     end;(*}}}*)
 
+  value memo : WeakMemo.c _c = new WeakMemo.c 1;
+
+  class c ?(color=color_white) width height = (*{{{*)
+    object(self)
+      inherit _c color width height;
+      initializer memo#add (self :> c);
+    end;
+
+  value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
+
   (*
   value cast: #DisplayObject.c 'event_type 'event_data -> option (c 'event_type 'event_data) = 
     fun q ->
@@ -114,4 +120,5 @@ module Make(D:DisplayObjectT.M) = struct
     *)
 
   value create = new c;
+
 end;

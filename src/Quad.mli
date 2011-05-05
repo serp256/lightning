@@ -16,6 +16,6 @@ module Make(D:DisplayObjectT.M) : sig
       method render: unit -> unit;
     end;
 
-(*   value cast: #DisplayObject.c 'event_type 'event_data -> option (c 'event_type 'event_data); *)
+  value cast: #D.c -> option c; 
   value create: ?color:int -> float -> float -> c;
 end;

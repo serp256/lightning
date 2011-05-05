@@ -1,16 +1,15 @@
 open Gl;
 open LightCommon;
 
-value memo = ObjMemo.create 1;
 value gl_tex_coords = make_float_array 8;
 
 module Make(D:DisplayObjectT.M) = struct
+
   module Q = Quad.Make D;
 
-  class c  texture =
+  class _c  texture =
     object(self)
       inherit Q.c texture#width texture#height as super;
-      initializer ObjMemo.add memo (self :> < >);
       value mutable texture: Texture.c = texture;
       method texture = texture;
       method setTexture nt = texture := nt;
@@ -53,6 +52,15 @@ module Make(D:DisplayObjectT.M) = struct
 
     end;
 
+  value memo : WeakMemo.c _c = new WeakMemo.c 1;
+
+  class c texture = 
+    object(self)
+      inherit _c texture;
+      initializer memo#add (self :> c);
+    end;
+
+  value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
 
   (*
   value cast: #DisplayObject.c 'event_type 'event_data -> option (c 'event_type 'event_data) = 

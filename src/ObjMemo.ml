@@ -5,5 +5,4 @@ struct
   value equal = (=);
   value hash = Hashtbl.hash;
 end;
-
-include (Weak.Make EmptyHashed);
+include (WeakHashtbl.Make EmptyHashed);
