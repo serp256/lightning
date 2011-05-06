@@ -14,13 +14,18 @@ module Make(P:Param) = struct
 type hidden 'a = 'a;
 type evType = P.evType;
 type evData = P.evData;
+module Listeners = EventDispatcher.Listeners;
 
 class virtual _c [ 'parent ] = (*{{{*)
   object(self:'self)
     type 'displayObject = _c 'parent;
-    type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': Event.t P.evType P.evData _ _ -> unit; name: string; .. >;
-    value mutable scaleX = 1.0;
+    inherit EventDispatcher.base [ P.evType,P.evData,'displayObject,'self];
 
+    type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; name: string; .. >;
+
+    value mutable changed = False;
+
+    value mutable scaleX = 1.0;
     value mutable parent : option 'parent = None;
     method parent = parent;
     method setParent p = parent := Some p;
@@ -29,15 +34,52 @@ class virtual _c [ 'parent ] = (*{{{*)
     (* Events *)
     type 'event = Event.t P.evType P.evData 'displayObject 'self;
     type 'listener = 'event -> unit;
-    value listeners: Hashtbl.t P.evType 'listener = Hashtbl.create 0;
-    method addEventListener evType listener = Hashtbl.add listeners evType listener;
-    method dispatchEvent' event =
+(*     value listeners: option (EventsTbl.t P.evType (int * 'listener)) = None; (* Hashtbl.create 0; *) (* make it optional - remove event listener - id ? how to remove ? *)  *)
+(*     value listeners: Listeners.t P.evType P.evData 'displayObject 'self = Listeners.empty (); *)
+
+(*     method addEventListener (evType:P.evType) (listener:'listener) = Listeners.add evType listener listeners; *)
+
+    (*
+      match listeners with
+      [ None -> 
+        let lstnrs = Hashtbl.create 1 in
+        (
+          Hashtbl.add lstnrs evType listener;
+          listeners := Some lstnrs;
+        )
+      | Some lstnrs -> Hashtbl.add lstnrs evType listener
+      ];
+    *)
+
+    method! addEventListener (eventType:P.evType) (listener: 'listener) = 1;
+    method dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit = fun event -> (*{{{*)
+      (
+        try
+          let l = List.assoc event.Event.etype listeners in
+          let event = {(event) with Event.currentTarget = Some self} in
+          ignore(List.for_all (fun (_,l) -> (l event; event.Event.propagation = `StopImmediate)) l.EventDispatcher.lstnrs);
+        with [ Not_found -> () ];
+        match event.Event.bubbles && event.Event.propagation = `Propagate with
+        [ True -> 
+          match parent with
+          [ Some p -> p#dispatchEvent' event
+          | None -> ()
+          ]
+        | False -> ()
+        ]
+      );
+
+      (*
       let open Event in 
       let listeners = 
-        try
-          let listeners = Hashtbl.find_all listeners event.etype in
-          Some listeners
-        with [ Not_found -> None ]
+        match listeners with
+        [ None -> None
+        | Some listeners ->
+          try
+            let listeners = Hashtbl.find_all listeners event.etype in
+            Some listeners
+          with [ Not_found -> None ]
+        ]
       in
       match (event.bubbles,listeners) with
       [ (False,None) -> ()
@@ -50,13 +92,13 @@ class virtual _c [ 'parent ] = (*{{{*)
                 List.for_all begin fun l ->
                   (
                     l event;
-                    event.stopImmediatePropagation;
+                    event.propagation = `StopImmediate;
                   )
                 end listeners 
               )
             | None -> ()
             ];
-            match event.bubbles && not event.stopPropagation with
+            match event.bubbles && event.propagation = `Propagate with
             [ True -> 
               match parent with
               [ Some p -> 
@@ -67,16 +109,16 @@ class virtual _c [ 'parent ] = (*{{{*)
             | False -> ()
             ]
           )
-      ];
+      ];(*}}}*)
+    *)
   
     (* всегда ставить таргет в себя и соответственно current_target *)
     method dispatchEvent (event:'event) = 
-      let event = {(event) with Event.target = Some self#asDisplayObject} in
+      let event = {(event) with Event.target = Some self#asDisplayObject; currentTarget = None} in
       self#dispatchEvent' event;
 
-    method hasEventListeners eventType = Hashtbl.mem listeners eventType;
-
-
+(*     method hasEventListeners eventType = Listeners.has eventType listeners; *)
+(*     method removeEventListener eventType listenerID = Listeners.remove eventType listenerID listeners; *)
 
     method scaleX = scaleX;
     method setScaleX ns = scaleX := ns;
@@ -195,7 +237,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method stage = 
       let root = self#root in
-      match root#isStage with
+      match root#isStage with (* это хак но хуй с ним *)
       [ True -> Some root
       | False -> None
       ];
@@ -223,7 +265,7 @@ class virtual _c [ 'parent ] = (*{{{*)
         then Matrix.create ()
         else 
           match targetCoordinateSpace#parent with
-          [ Some targetParent when targetParent#asDisplayObject = self#asDisplayObject -> (* optimization *)
+          [ Some targetParent when targetParent#asDisplayObject = self#asDisplayObject -> (* optimization  - this is our child *)
               let targetMatrix = targetCoordinateSpace#transformationMatrix in
               (
                 Matrix.invert targetMatrix;
@@ -232,7 +274,7 @@ class virtual _c [ 'parent ] = (*{{{*)
           | _ ->
 (*               let () = Printf.eprintf "self: [%s], parent: [%s], targetCoordinateSpace: [%s]\n%!" name (match parent with [ None -> "NONE" | Some s -> s#name ]) targetCoordinateSpace#name in *)
               match parent with
-              [ Some parent when parent#asDisplayObject = targetCoordinateSpace -> self#transformationMatrix (* optimization *) 
+              [ Some parent when parent#asDisplayObject = targetCoordinateSpace -> self#transformationMatrix (* optimization  - this is our parent *) 
               | _ ->
                 (* 1.: Find a common parent of self and the target coordinate space  *)
                 let ancessors = 
@@ -293,7 +335,56 @@ class virtual _c [ 'parent ] = (*{{{*)
           ]
       ];(*}}}*)
    
-    method virtual render: unit -> unit;
+
+    value mutable mask: option (array (float*float)) = None;
+    value mutable maskOnSelf = True;
+    method setMask rect = 
+      let open Rectangle in 
+      mask := Some [| (rect.x,rect.y) ; (rect.x, rect.y +. rect.height); (rect.x +. rect.width,rect.y); (rect.x +. rect.width, rect.y +. rect.height) |];
+
+    method virtual private render': unit -> unit;
+
+    method render () = 
+      match mask with
+      [ None -> self#render' ()
+      | Some mask ->
+          (* хитровыебанные манипуляции нах - пока не оптимально нихуя бля *)
+          match self#stage with
+          [ Some stage ->
+            match maskOnSelf with
+            [ True ->
+              (* какие-то хитровыебанные системы таки кэширования это дрочи наверно нужны бля *)
+              let matrix = self#transformationMatrixToSpace None in
+              let (minX,maxX,minY,maxY) = 
+                Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
+                  let (tx,ty) = Matrix.transformPoint matrix p in
+                  (
+                    if minX > tx then tx else minX,
+                    if maxX < tx then tx else maxX,
+                    if minY > ty then ty else minY,
+                    if maxY < ty then ty else maxY
+                  )
+                end (max_float,~-.max_float,max_float,~-.max_float) mask
+              in
+              (* теперь еще перевести вместо верхнего в нижний сцука угол бля *)
+              let sheight = stage#height in
+              let minY = sheight -. maxY
+              and maxY = sheight -. minY 
+              in
+              (
+                Printf.eprintf "[%F,%F,%F,%F]\n%!" minX minY (maxX -. minX) (maxY -. minY);
+                glPushMatrix();
+                glEnable gl_scissor_test;
+                glScissor (int_of_float minX) (int_of_float minY) ((int_of_float maxX) - (int_of_float minX)) ((int_of_float maxY) - (int_of_float minY));
+                self#render'();
+                glDisable gl_scissor_test;
+                glPopMatrix();
+              )
+            | False -> ()
+            ]
+          | _ -> assert False
+          ]
+      ];
 
 
     (*
@@ -667,7 +758,7 @@ class virtual container = (*{{{*)
           ]
       ];
     
-    method render () = (* А здесь нужно наоборот сцука *)
+    method private render' () = (* А здесь нужно наоборот сцука *)
       match children with
       [ None -> ()
       | Some children -> 

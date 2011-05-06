@@ -23,7 +23,7 @@ module Make(D:DisplayObjectT.M) = struct
       method virtual copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
       method copyTexCoords dest = Array.iteri (fun i a -> Bigarray.Array1.unsafe_set dest i a) texCoords;
 
-      method! render () = 
+      method! private render' () = 
       (
         RenderSupport.bindTexture texture;
   (*

@@ -75,7 +75,7 @@ module Make(D:DisplayObjectT.M) = struct
         ];
 
 
-      method render () = 
+      method private render' () = 
       (
         RenderSupport.clearTexture();
         (* optimize it!  

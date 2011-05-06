@@ -13,7 +13,7 @@ module Make(D:DisplayObjectT.M) : sig
       method color: int;
       method vertexColors: Enum.t int;
       method boundsInSpace: option D.c -> Rectangle.t;
-      method render: unit -> unit;
+      method private render': unit -> unit;
     end;
 
   value cast: #D.c -> option c; 
