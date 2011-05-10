@@ -21,7 +21,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     type 'displayObject = _c 'parent;
     inherit EventDispatcher.base [ P.evType,P.evData,'displayObject,'self];
 
-    type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; name: string; .. >;
+    type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; .. >;
 
     value mutable changed = False;
 
@@ -51,13 +51,13 @@ class virtual _c [ 'parent ] = (*{{{*)
       ];
     *)
 
-    method! addEventListener (eventType:P.evType) (listener: 'listener) = 1;
+(*     method! addEventListener (eventType:P.evType) (listener: 'listener) = 1; *)
     method dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit = fun event -> (*{{{*)
       (
         try
           let l = List.assoc event.Event.etype listeners in
           let event = {(event) with Event.currentTarget = Some self} in
-          ignore(List.for_all (fun (_,l) -> (l event; event.Event.propagation = `StopImmediate)) l.EventDispatcher.lstnrs);
+          ignore(List.for_all (fun (lid,l) -> (l event lid; event.Event.propagation = `StopImmediate)) l.EventDispatcher.lstnrs);
         with [ Not_found -> () ];
         match event.Event.bubbles && event.Event.propagation = `Propagate with
         [ True -> 
@@ -336,54 +336,61 @@ class virtual _c [ 'parent ] = (*{{{*)
       ];(*}}}*)
    
 
-    value mutable mask: option (array (float*float)) = None;
-    value mutable maskOnSelf = True;
-    method setMask rect = 
+    (* если придумать какое-то кэширование ? *)
+    value mutable mask: option (bool * (array (float*float))) = None;
+    method setMask ?(onSelf=True) rect = 
       let open Rectangle in 
-      mask := Some [| (rect.x,rect.y) ; (rect.x, rect.y +. rect.height); (rect.x +. rect.width,rect.y); (rect.x +. rect.width, rect.y +. rect.height) |];
+      mask := Some (onSelf, [| (rect.x,rect.y) ; (rect.x, rect.y +. rect.height); (rect.x +. rect.width,rect.y); (rect.x +. rect.width, rect.y +. rect.height) |]);
+
+    method private maskRect onSelf mask =
+      (* хитровыебанные манипуляции нах - пока не оптимально нихуя бля *)
+      match self#stage with
+      [ Some stage ->
+        let matrix = 
+          match onSelf with
+          [ True -> self#transformationMatrixToSpace None
+          | False -> 
+              match parent with
+              [ Some parent -> parent#transformationMatrixToSpace None
+              | None -> assert False 
+              ]
+          ]
+        in
+        let (minX,maxX,minY,maxY) = 
+          Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
+            let (tx,ty) = Matrix.transformPoint matrix p in
+            (
+              if minX > tx then tx else minX,
+              if maxX < tx then tx else maxX,
+              if minY > ty then ty else minY,
+              if maxY < ty then ty else maxY
+            )
+          end (max_float,~-.max_float,max_float,~-.max_float) mask
+        in
+        (* теперь еще перевести вместо верхнего в нижний сцука угол бля *)
+        let sheight = stage#height in
+        let minY = sheight -. maxY
+        and maxY = sheight -. minY 
+        in
+        ((int_of_float minX),(int_of_float minY),((int_of_float maxX) - (int_of_float minX)),((int_of_float maxY) - (int_of_float minY)))
+      | None -> assert False
+      ];
 
     method virtual private render': unit -> unit;
 
     method render () = 
       match mask with
       [ None -> self#render' ()
-      | Some mask ->
-          (* хитровыебанные манипуляции нах - пока не оптимально нихуя бля *)
-          match self#stage with
-          [ Some stage ->
-            match maskOnSelf with
-            [ True ->
-              (* какие-то хитровыебанные системы таки кэширования это дрочи наверно нужны бля *)
-              let matrix = self#transformationMatrixToSpace None in
-              let (minX,maxX,minY,maxY) = 
-                Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
-                  let (tx,ty) = Matrix.transformPoint matrix p in
-                  (
-                    if minX > tx then tx else minX,
-                    if maxX < tx then tx else maxX,
-                    if minY > ty then ty else minY,
-                    if maxY < ty then ty else maxY
-                  )
-                end (max_float,~-.max_float,max_float,~-.max_float) mask
-              in
-              (* теперь еще перевести вместо верхнего в нижний сцука угол бля *)
-              let sheight = stage#height in
-              let minY = sheight -. maxY
-              and maxY = sheight -. minY 
-              in
-              (
-                Printf.eprintf "[%F,%F,%F,%F]\n%!" minX minY (maxX -. minX) (maxY -. minY);
-                glPushMatrix();
-                glEnable gl_scissor_test;
-                glScissor (int_of_float minX) (int_of_float minY) ((int_of_float maxX) - (int_of_float minX)) ((int_of_float maxY) - (int_of_float minY));
-                self#render'();
-                glDisable gl_scissor_test;
-                glPopMatrix();
-              )
-            | False -> ()
-            ]
-          | _ -> assert False
-          ]
+      | Some (onSelf,mask) ->
+          let (sx,sy,swidth,sheight) = self#maskRect onSelf mask in
+          (
+            glPushMatrix();
+            glEnable gl_scissor_test;
+            glScissor sx sy swidth sheight;
+            self#render'();
+            glDisable gl_scissor_test;
+            glPopMatrix();
+          )
       ];
 
 

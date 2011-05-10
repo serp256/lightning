@@ -9,9 +9,12 @@ class c ?fontSize ?color () =
     value mutable frames = 0;
     value mutable time = 0.;
 
-    initializer self#addEventListener `ENTER_FRAME self#onEnterFrame;
+    value mutable listenerID: int = 0;
 
-    method private onEnterFrame event = 
+    initializer ignore(self#addEventListener `ENTER_FRAME self#onEnterFrame);
+
+
+    method private onEnterFrame event _ = 
       match event.Event.data with
       [ `PassedTime dt -> 
         let osecs = int_of_float time in

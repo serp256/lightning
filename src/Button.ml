@@ -42,10 +42,10 @@ module Make(D:DisplayObjectT.M with
         contents#addChild background;
         match textField with [ Some tf -> contents#addChild tf | None -> () ];
         self#addChild contents;
-        self#addEventListener `TOUCH self#onTouch;
+        ignore(self#addEventListener `TOUCH self#onTouch);
       );
 
-      method private onTouch touchEvent = (*{{{*)
+      method private onTouch touchEvent _ = (*{{{*)
         match enabled with
         [ False -> ()
         | True -> 

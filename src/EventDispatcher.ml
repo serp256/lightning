@@ -95,13 +95,13 @@ type lst 'eventType 'eventData 'target 'currentTarget =
   {
     counter: mutable int;
 (*     lstnrs: mutable list (int * (listener 'eventType 'eventData 'target 'currentTarget)); *)
-    lstnrs: mutable list (int * (Event.t 'eventType 'eventData 'target 'currentTarget -> unit));
+    lstnrs: mutable list (int * (Event.t 'eventType 'eventData 'target 'currentTarget -> int -> unit));
   };
 
 value fire event lst = 
   try
     let l = List.assoc event.Event.etype lst in
-    ignore(List.for_all (fun (_,l) -> (l event; event.Event.propagation = `StopImmediate)) l.lstnrs);
+    ignore(List.for_all (fun (lid,l) -> (l event lid; event.Event.propagation = `StopImmediate)) l.lstnrs);
     True
   with [ Not_found -> False ];
 

@@ -10,13 +10,15 @@ type evData = private [> eventData ];
 
 class virtual _c [ 'parent ]:
   object('self)
-    type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t evType evData _ 'ct -> unit; name: string; .. >;
+    type 'displayObject = _c 'parent;
+    type 'parent = 
+      < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t evType evData _ 'ct -> unit; name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; .. >;
 (*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
-    type 'displayObject = _c 'parent;
     type 'event = Event.t evType evData 'displayObject 'self;
-    type 'listener = 'event -> unit;
+    type 'listener = 'event -> int -> unit;
     method addEventListener: evType -> 'listener -> int;
+    method removeEventListener: evType -> int -> unit;
     method dispatchEvent: 'event -> unit;
     method dispatchEvent': !'ct. Event.t evType evData 'displayObject 'ct -> unit;
     method hasEventListeners: evType -> bool;
@@ -64,7 +66,7 @@ class virtual _c [ 'parent ]:
     method virtual boundsInSpace: option (_c _) -> Rectangle.t;
     method globalToLocal: Point.t -> Point.t;
     method localToGlobal: Point.t -> Point.t;
-    method setMask: Rectangle.t -> unit;
+    method setMask: ?onSelf:bool -> Rectangle.t -> unit;
     method virtual private render': unit -> unit;
     method render: unit -> unit;
     method asDisplayObject: _c _;
