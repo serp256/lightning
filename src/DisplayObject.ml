@@ -16,6 +16,19 @@ type evType = P.evType;
 type evData = P.evData;
 module Listeners = EventDispatcher.Listeners;
 
+
+(* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
+value transform_points points matrix = 
+  Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
+    let (tx,ty) = Matrix.transformPoint matrix p in
+    (
+      if minX > tx then tx else minX,
+      if maxX < tx then tx else maxX,
+      if minY > ty then ty else minY,
+      if maxY < ty then ty else maxY
+    )
+  end (max_float,~-.max_float,max_float,~-.max_float) points;
+
 class virtual _c [ 'parent ] = (*{{{*)
   object(self:'self)
     type 'displayObject = _c 'parent;
@@ -342,7 +355,8 @@ class virtual _c [ 'parent ] = (*{{{*)
       let open Rectangle in 
       mask := Some (onSelf, [| (rect.x,rect.y) ; (rect.x, rect.y +. rect.height); (rect.x +. rect.width,rect.y); (rect.x +. rect.width, rect.y +. rect.height) |]);
 
-    method private maskRect onSelf mask =
+    (*
+    method private maskRect onSelf mask = (* для hitTestPoint другая логика нужна бля *)
       (* хитровыебанные манипуляции нах - пока не оптимально нихуя бля *)
       match self#stage with
       [ Some stage ->
@@ -356,25 +370,11 @@ class virtual _c [ 'parent ] = (*{{{*)
               ]
           ]
         in
-        let (minX,maxX,minY,maxY) = 
-          Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
-            let (tx,ty) = Matrix.transformPoint matrix p in
-            (
-              if minX > tx then tx else minX,
-              if maxX < tx then tx else maxX,
-              if minY > ty then ty else minY,
-              if maxY < ty then ty else maxY
-            )
-          end (max_float,~-.max_float,max_float,~-.max_float) mask
-        in
-        (* теперь еще перевести вместо верхнего в нижний сцука угол бля *)
-        let sheight = stage#height in
-        let minY = sheight -. maxY
-        and maxY = sheight -. minY 
-        in
-        ((int_of_float minX),(int_of_float minY),((int_of_float maxX) - (int_of_float minX)),((int_of_float maxY) - (int_of_float minY)))
+        let (minX,maxX,minY,maxY) = transform_points mask matrix in
+        Rectangle.create minX minY (maxX - minX) (maxY - minY);
       | None -> assert False
       ];
+    *)
 
     method virtual private render': unit -> unit;
 
@@ -382,15 +382,34 @@ class virtual _c [ 'parent ] = (*{{{*)
       match mask with
       [ None -> self#render' ()
       | Some (onSelf,mask) ->
-          let (sx,sy,swidth,sheight) = self#maskRect onSelf mask in
-          (
-            glPushMatrix();
-            glEnable gl_scissor_test;
-            glScissor sx sy swidth sheight;
-            self#render'();
-            glDisable gl_scissor_test;
-            glPopMatrix();
-          )
+          match self#stage with
+          [ Some stage ->
+            let matrix = 
+              match onSelf with
+              [ True -> self#transformationMatrixToSpace None
+              | False -> 
+                  match parent with
+                  [ Some parent -> parent#transformationMatrixToSpace None
+                  | None -> assert False 
+                  ]
+              ]
+            in
+            let (minX,maxX,minY,maxY) = transform_points mask matrix in
+            let sheight = stage#height in
+            (
+              let minY = sheight -. maxY
+              and maxY = sheight -. minY in
+              (
+    (*             glPushMatrix(); *)
+                glEnable gl_scissor_test;
+                glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
+                self#render'();
+                glDisable gl_scissor_test;
+    (*             glPopMatrix(); *)
+              )
+            )
+        | None -> assert False
+        ]
       ];
 
 
@@ -437,15 +456,33 @@ class virtual _c [ 'parent ] = (*{{{*)
     *)
 
 
-    method hitTestPoint localPoint isTouch = 
+    method private hitTestPoint' localPoint isTouch = 
 (*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
+      match Rectangle.containsPoint (self#boundsInSpace (Some self#asDisplayObject)) localPoint with
+      [ True -> Some self#asDisplayObject
+      | False -> None
+      ];
+
+    method hitTestPoint localPoint isTouch = 
       (* on a touch test, invisible or untouchable objects cause the test to fail *)
       match (isTouch && (not visible || not touchable)) with
       [ True -> None
-      | False ->
-        match Rectangle.containsPoint (self#boundsInSpace (Some self#asDisplayObject)) localPoint with
-        [ True -> Some self#asDisplayObject
-        | False -> None
+      | False -> 
+        match mask with
+        [ None -> self#hitTestPoint' localPoint isTouch
+        | Some (onSelf,mask) ->
+            let matrix = 
+              match onSelf with
+              [ True -> Matrix.create ()
+              | False -> let m = self#transformationMatrix in (Matrix.invert m; m)
+              ]
+            in
+            let (minX,maxX,minY,maxY) = transform_points mask matrix in
+            let maskRect = Rectangle.create minX minY (maxX -. minX) (maxY -. minY) in
+            match Rectangle.containsPoint maskRect localPoint with
+            [ True -> self#hitTestPoint' localPoint isTouch
+            | False -> None
+            ]
         ]
       ];
 
@@ -745,24 +782,20 @@ class virtual container = (*{{{*)
           Rectangle.create minX minY (maxX -. minX) (maxY -. minY)
       ];
 
-    method! hitTestPoint localPoint isTouch = 
-      match isTouch && (not visible || not touchable) with
-      [ True -> None
-      | False -> (* бля это правда важно с конца сцука нахуй *)
-          match children with
-          [ None -> None
-          | Some children -> 
-            try
-              let res = 
-                dllist_find_map_back begin fun child ->
-                  let transformationMatrix = self#transformationMatrixToSpace (Some child) in
-                  let transformedPoint = Matrix.transformPoint transformationMatrix localPoint in
-                  child#hitTestPoint transformedPoint isTouch
-                end children
-              in
-              Some res
-            with [ Not_found -> None ]
-          ]
+    method! private  hitTestPoint' localPoint isTouch = 
+      match children with
+      [ None -> None
+      | Some children -> 
+        try
+          let res = 
+            dllist_find_map_back begin fun child ->
+              let transformationMatrix = self#transformationMatrixToSpace (Some child) in
+              let transformedPoint = Matrix.transformPoint transformationMatrix localPoint in
+              child#hitTestPoint transformedPoint isTouch
+            end children
+          in
+          Some res
+        with [ Not_found -> None ]
       ];
     
     method private render' () = (* А здесь нужно наоборот сцука *)

@@ -1,9 +1,10 @@
 
-module Make(Param:sig type evType = private [> Stage.eventType ]; type evData = private [> Stage.eventData ]; end) = struct (*{{{*)
+module Make(Param:sig type evType = private [> Stage.eventType ]; type evData = private [> Stage.eventData ]; end) = struct
   module DisplayObject = DisplayObject.Make Param;
   module Quad = Quad.Make DisplayObject;
   module Image = Image.Make DisplayObject;
   module Sprite = Sprite.Make DisplayObject;
+  module MovieClip = MovieClip.Make DisplayObject;
   module TextField = TextField.Make DisplayObject;
   module FPS = FPS.Make DisplayObject;
   module Stage = Stage.Make DisplayObject;

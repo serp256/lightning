@@ -115,7 +115,7 @@ class base [ 'eventType,'eventData,'target,'currentTarget ] = (*{{{*)
       (
         listeners := 
           MList.update_assoc eventType begin fun 
-            [ None -> {counter = 1; lstnrs = [ (1,listener) ]}
+            [ None -> {counter = 1; lstnrs = [ (0,listener) ]}
             | Some l ->
                 (
                   l.lstnrs := [ (l.counter,listener) :: l.lstnrs ];
@@ -140,9 +140,10 @@ class base [ 'eventType,'eventData,'target,'currentTarget ] = (*{{{*)
 
     method removeEventListener eventType listenerID = 
       try
+        let () = Printf.eprintf "removeEventListener: %d" listenerID in
         let l = List.assoc eventType listeners in
         (
-          l.lstnrs := List.remove_assoc listenerID l.lstnrs;
+          l.lstnrs := try MList.remove_assoc_exn listenerID l.lstnrs with [ Not_found -> raise Listener_not_found ];
           match l.lstnrs with
           [ [] -> listeners := List.remove_assoc eventType listeners 
           | _ -> ()

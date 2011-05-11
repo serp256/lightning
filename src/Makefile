@@ -31,13 +31,13 @@ endif
 MOBS += $(gl)/gl_stub.o 
 MLOBS += $(gl)/gl.cmx \
 				MList.cmx PriorityQueue.cmx WeakHashtbl.cmx WeakMemo.cmx LightCommon.cmx Event.cmx EventDispatcher.cmx Point.cmx Rectangle.cmx Matrix.cmx RenderSupport.cmx \
-				DisplayObject.cmx Sprite.cmx Quad.cmx GLTexture.cmx Texture.cmx TextureAtlas.cmx Image.cmx CompiledSprite.cmx Touch.cmx BitmapFont.cmx TextField.cmx FPS.cmx EventTouch.cmx Stage.cmx Button.cmx Lightning.cmx
+				DisplayObject.cmx Sprite.cmx Quad.cmx GLTexture.cmx Texture.cmx TextureAtlas.cmx Image.cmx CompiledSprite.cmx Touch.cmx BitmapFont.cmx TextField.cmx FPS.cmx EventTouch.cmx Stage.cmx Button.cmx MovieClip.cmx Lightning.cmx
 
 
 MLFLAGS += -package extlib -I $(gl)
 
 
-XMLMFILES = TextureAtlas.ml BitmapFont.ml LightCommon.ml
+XMLMFILES = TextureAtlas.ml BitmapFont.ml LightCommon.ml MovieClip.ml
 $(XMLMFILES:.ml=.cmo) $(XMLMFILES:.ml=.cmx) $(XMLMFILES:.ml=.cmi): MLFLAGS += -package xmlm
 	
 lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)

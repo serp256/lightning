@@ -32,57 +32,61 @@ DEFINE CHAR_NEWLINE = 10;
 DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_TAB = 9;
 
-value register path = (*{{{*)
-  let path = resource_path path 1. in
-  let input = open_in path in
-  let xmlinput = Xmlm.make_input ~strip:True (`Channel input) in
-  let () = ignore(Xmlm.input xmlinput) in (* ignore dtd *)
+value register xmlpath = (*{{{*)
+  let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
+  let floats = XmlParser.floats in
+  let () = XmlParser.accept (`Dtd None) in
   let parse_info () = 
-    let res = parse_xml_element xmlinput "info" [ "face"; "size"] in
-    (List.assoc "face" res,float_of_string (List.assoc "size" res))
-  and parse_common () = 
-    let res = parse_xml_element xmlinput "common" [ "lineHeight"] in
-    float_of_string ( List.assoc "lineHeight" res)
-  and parse_page () = 
-    match Xmlm.input xmlinput with
-    [ `El_start ((_,"pages"),_) ->
-      let res = parse_xml_element xmlinput "page" [ "file"] in
-      (
-        match Xmlm.input xmlinput with
-        [ `El_end -> List.assoc "file" res
-        | _ -> failwith "Bitmap fonts with multiple pages are not supported"
-        ]
-      )
+    match XmlParser.parse_element "info" [ "face"; "size"] with
+    [ Some [ face; size ] _ -> (face,floats size)
+    | None -> XmlParser.error "font->info not found"
     | _ -> assert False
     ]
+  and parse_common () = 
+    match XmlParser.parse_element "common" ["lineHeight"] with
+    [ Some [ lineHeight ] _ -> floats lineHeight
+    | None -> XmlParser.error "font->common not found"
+    | _ -> assert False
+    ]
+  and parse_page () = 
+    match XmlParser.next () with
+    [ `El_start ((_,"pages"),_) ->
+      match XmlParser.parse_element "page" [ "file"] with
+      [ Some [ file ] _ -> 
+        let () = XmlParser.accept `El_end in
+        file
+      | None -> XmlParser.error "font->pages->page not found"
+      | _ -> assert False
+      ]
+    | _ -> XmlParser.error "font->pages not found"
+    ]
   and parse_chars texture = 
-    match Xmlm.input xmlinput with
+    match XmlParser.next () with
     [ `El_start ((_,"chars"),attributes) ->
-      let count = get_xml_attribute "count" attributes in
-      let chars = Hashtbl.create (int_of_string count) in
+      let count = match XmlParser.get_attribute "count" attributes with [ Some count -> int_of_string count | None -> 0] in
+      let chars = Hashtbl.create count in
       let rec loop () =
-        match Xmlm.peek xmlinput with
-        [ `El_end -> (ignore(Xmlm.input xmlinput); chars)
-        | _ ->
+        match XmlParser.parse_element "char" ["id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance"] with
+        [ Some [ id;x;y;width;height;xoffset;yoffset;xadvance ] _ ->
           (
-            let res = parse_xml_element xmlinput "char" ["id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance"] in
-            let charID = int_of_string (List.assoc "id" res) in
-            let get_float x = float_of_string (List.assoc x res) in
+            let charID = int_of_string id in
             let bc = 
-              let region = Rectangle.create (get_float "x") (get_float "y") (get_float "width") (get_float "height") in
+              let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
               let charTexture = Texture.createSubTexture region texture in
-              { charID ; xOffset = get_float "xoffset"; yOffset = get_float "yoffset"; xAdvance = get_float "xadvance"; charTexture }
+              { charID ; xOffset = floats xoffset; yOffset = floats yoffset; xAdvance = floats xadvance; charTexture }
             in
             Hashtbl.add chars charID bc;
             loop ()
           )
+        | None -> chars
+        | _ -> assert False
         ]
       in
       loop ()
-    | _ -> assert False
+    | _ -> XmlParser.error "font->chars not found"
     ]
   in
-  match Xmlm.input xmlinput with
+  match XmlParser.next () with
   [ `El_start ((_,"font"),_) -> 
     let (name,size) = parse_info () in
     let lineHeight = parse_common () in
@@ -92,7 +96,7 @@ value register path = (*{{{*)
     let bf = { texture; chars; name; size; lineHeight } in
     let () = Printf.printf "register font %s\n%!" name in
     Hashtbl.add fonts name bf
-  | _ -> assert False 
+  | _ -> XmlParser.error "font not found"
   ];(*}}}*)
 
 

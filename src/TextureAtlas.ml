@@ -7,43 +7,34 @@ type t =
     texture: Texture.c;
   };
 
-value createFromFile file = 
-  let path = resource_path file 1. in
-  let input = open_in path in
-  let xmlinput = Xmlm.make_input ~strip:True (`Channel input) in
+value createFromFile xmlpath = 
+  let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
   let regions = Hashtbl.create 3 in
   let rec parseSubTextures () =
-    match Xmlm.input xmlinput with
-    [ `El_start ((_,"SubTexture"),attributes) ->
+    match XmlParser.parse_element "SubTexture" ["name";"x";"y";"width";"height"] with
+    [ Some [ name;x;y;width;height] _ ->
       (
-        let name = get_xml_attribute "name" attributes 
-        and x = get_xml_attribute "x" attributes
-        and y = get_xml_attribute "y" attributes
-        and width = get_xml_attribute "width" attributes
-        and height = get_xml_attribute "height" attributes
-        in
         Hashtbl.add regions name (Rectangle.create (float_of_string x) (float_of_string y) (float_of_string width) (float_of_string height));
-        match Xmlm.input xmlinput with
-        [ `El_end -> parseSubTextures()
-        | _ -> assert False
-        ]
+        parseSubTextures ()
       )
-    | `El_end -> ()
+    | None -> ()
     | _ -> assert False
     ]
   in
-  let rec parse () = 
-    match Xmlm.input xmlinput with
+  let () = XmlParser.accept (`Dtd None) in
+  let imagePath = 
+    match XmlParser.next () with
     [ `El_start ((_,"TextureAtlas"),attributes) ->
-      let image_path = get_xml_attribute "imagePath" attributes in
-      let () = parseSubTextures () in
-      image_path
-    | `Dtd _ -> parse ()
-    | _ -> assert False
+      match XmlParser.get_attribute "imagePath" attributes with
+      [ Some image_path ->
+        let () = parseSubTextures () in
+        image_path
+      | _ -> XmlParser.error "not found imagePath"
+      ]
+    | _ -> XmlParser.error "TextureAtlas not found"
     ]
   in
-  let imagePath = parse () in
-  let () = close_in input in
+  let () = XmlParser.close () in
   {regions; texture = Texture.createFromFile imagePath};
 
 value textureByName atlas name = 

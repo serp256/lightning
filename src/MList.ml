@@ -79,6 +79,26 @@ value remove_if_exn f l =
   );
 
 
+value remove_assoc_exn x lst = 
+  let rec loop dst = fun
+    [ [] -> raise Not_found
+    | [ ((a,_) as pair) :: t ] ->
+      if a = x
+      then dst.tl := t
+      else
+        let r = { hd = pair; tl = [] } in
+        (
+          dst.tl := inj r;
+          loop r t
+        )
+    ]
+  in
+  let dummy = dummy_node () in
+  (
+    loop dummy lst;
+    dummy.tl;
+  );
+
 value pop_assoc x lst =
   let rec loop dst = fun
     [ [] -> raise Not_found

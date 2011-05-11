@@ -59,7 +59,8 @@ class virtual _c [ 'parent ]:
     value parent: option 'parent;
     method parent: option 'parent;
     method removeFromParent: unit -> unit;
-    method hitTestPoint: Point.t -> bool -> option (_c _ );
+    method private hitTestPoint': Point.t -> bool -> option (_c _);
+    method hitTestPoint: Point.t -> bool -> option (_c _) ;
     method bounds: Rectangle.t;
     method transformationMatrix: Matrix.t;
     method transformationMatrixToSpace: option (_c _) -> Matrix.t;
@@ -102,6 +103,7 @@ class virtual container:
     method dispatchEventOnChildren: Event.t evType evData 'displayObject 'displayObject -> unit;
     method boundsInSpace: option 'displayObject -> Rectangle.t;
     method private render': unit -> unit;
+    method private hitTestPoint': Point.t -> bool -> option ('displayObject);
   end;
 
 

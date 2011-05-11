@@ -21,24 +21,58 @@ value resource_path path scale =
   ];
 ENDIF;
 
-exception Xml_attribute_not_found of string;
-value get_xml_attribute local_name attributes = 
-  try
-    MList.find_map (fun ((_,ln),v) -> match ln = local_name with [ True -> Some v | False -> None ]) attributes;
-  with [ Not_found -> raise (Xml_attribute_not_found local_name) ];
+exception Xml_error of string and string;
 
-(* допилить пока так сойдет *)
-value parse_xml_element xmlinput tag_name attributes =
-  match Xmlm.input xmlinput with
-  [ `El_start ((_,tname),attrs) when tname = tag_name ->
-    let res = 
-      List.map begin fun att_name ->
-        (att_name,get_xml_attribute att_name attrs) 
-      end attributes
-    in
+module MakeXmlParser(P:sig value path: string; end) = struct
+
+
+  value input = 
+    let xml = resource_path P.path 1. in
+    open_in xml;
+
+  value xmlinput = Xmlm.make_input ~strip:True (`Channel input);
+
+  value error fmt = 
+    let (line,column) = Xmlm.pos xmlinput in
+    (
+      close_in input;
+      Printf.kprintf (fun s -> raise (Xml_error (Printf.sprintf "%s:%d:%d" P.path line column) s)) fmt;
+    );
+
+
+  value accept tag = if Xmlm.input xmlinput = tag then () else error "not accepted";
+  value next () = Xmlm.input xmlinput;
+
+  value close () = close_in input;
+
+  value floats x = 
+    try float_of_string x with [ Failure _ -> error "float_of_string: %s" x ];
+
+  value get_attribute name attributes = 
+    try
+      let (_,v) = List.find (fun ((_,ln),v) -> ln = name) attributes in
+      Some v
+    with [ Not_found -> None ];
+
+  value get_attributes tag_name names attributes : list string = 
+    List.map begin fun name ->
+      try
+        let (_,v) = List.find (fun ((_,ln),v) -> ln = name) attributes in v
+      with [ Not_found -> error "attribute %s not found in element %s" name tag_name ]
+    end names;
+
+(*   value get_attr name (tag_name,assoc) = try List.assoc name assoc with [ Not_found -> error "can't find attribute %s" name ]; *)
+
+  value parse_element tag_name attr_names =
     match Xmlm.input xmlinput with
-    [ `El_end -> res
-    | _ -> assert False 
-    ]
-  | _ -> assert False
-  ];
+    [ `El_start ((_,tname),attributes) when tname = tag_name ->
+      let res = get_attributes tname attr_names attributes in
+      match Xmlm.input xmlinput with
+      [ `El_end -> Some (res,attributes)
+      | _ -> error "Unspecified element in %s" tag_name
+      ]
+    | `El_end -> None
+    | _ -> error "Not an element %s" tag_name
+    ];
+
+end;
