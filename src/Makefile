@@ -24,7 +24,11 @@ else
 	MLFLAGS += -I sdl
 	MLDEPFLAGS += -I sdl sdl/*.ml sdl/*.mli
 	MLPPOPT += -DSDL
-	LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+	ifeq ($(OS),macos)
+		LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+	else
+		LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lOpenGL'
+	endif
 endif
 
 
