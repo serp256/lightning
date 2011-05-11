@@ -1,0 +1,10 @@
+<MovieClip>
+	<Textures><Texture path="boom.png"/></Textures>
+	<Frames>
+		<Frame imageID="0" x="0" y="0" width="796" height="614" posX="350" posY="300"/>
+		<Frame imageID="0" x="800" y="0" width="740" height="614" posX="350" posY="300"/>
+		<Frame imageID="0" x="1600" y="0" width="660" height="614" posX="350" posY="300"/>
+		<Frame imageID="0" x="0" y="620" width="796" height="560" posX="350" posY="300"/>
+		<Frame imageID="0" x="800" y="620" width="740" height="560" posX="350" posY="300"/>
+	</Frames>
+</MovieClip>
