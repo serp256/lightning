@@ -23,6 +23,14 @@ module Make(D:DisplayObjectT.M) = struct
           a
         );
 
+      method updateSize width height = 
+      (
+        vertexCoords.{2} := width;
+        vertexCoords.{5} := height;
+        vertexCoords.{6} := width;
+        vertexCoords.{7} := height;
+      );
+
       method copyVertexCoords dest = Bigarray.Array1.blit vertexCoords dest;
 
         (*

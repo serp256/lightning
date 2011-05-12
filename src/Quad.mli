@@ -8,6 +8,7 @@ module Make(D:DisplayObjectT.M) : sig
       inherit D.c; 
       value vertexColors: array int;
       value vertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout;
+      method updateSize: float -> float -> unit;
       method copyVertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
       method setColor: int -> unit;
       method color: int;

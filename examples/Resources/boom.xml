@@ -1,10 +1,18 @@
 <MovieClip>
-	<Textures><Texture path="boom.png"/></Textures>
+	<Textures>
+		<Texture path="Boom.png"/>
+	</Textures>
 	<Frames>
-		<Frame imageID="0" x="0" y="0" width="796" height="614" posX="350" posY="300"/>
-		<Frame imageID="0" x="800" y="0" width="740" height="614" posX="350" posY="300"/>
-		<Frame imageID="0" x="1600" y="0" width="660" height="614" posX="350" posY="300"/>
-		<Frame imageID="0" x="0" y="620" width="796" height="560" posX="350" posY="300"/>
-		<Frame imageID="0" x="800" y="620" width="740" height="560" posX="350" posY="300"/>
+		<Frame textureID="0" x="0" y="0" width="58" height="47" posX="3" posY="6" label="moving"/>
+		<Frame textureID="0" x="58" y="0" width="103" height="61" posX="-21.5" posY="-11.75" duration="2" label="moving"/>
+		<Frame textureID="0" x="161" y="0" width="162" height="79" posX="-45.75" posY="-26" duration="1" label="moving"/>
+		<Frame textureID="0" x="323" y="0" width="227" height="119" posX="-79" posY="-60.3" duration="1" label="moving"/>
+		<Frame textureID="0" x="550" y="0" width="318" height="172" posX="-134.5" posY="-104" duration="1" label="moving"/>
+		<Frame textureID="0" x="0" y="172" width="317" height="203" posX="-134.5" posY="-133" duration="3" label="moving"/>
+		<Frame textureID="0" x="317" y="172" width="317" height="202" posX="-133.75" posY="-132" duration="4" label="moving"/>
+		<Frame textureID="0" x="634" y="172" width="276" height="201" posX="-101.3" posY="-132" duration="2" label="moving"/>
+		<Frame textureID="0" x="0" y="375" width="277" height="201" posX="-101.3" posY="-132" duration="2" label="moving"/>
+		<Frame textureID="0" x="277" y="375" width="276" height="201" posX="-101.3" posY="-132" duration="4" label="moving"/>
+		<Frame textureID="0" x="553" y="375" width="202" height="94" posX="-65.45" posY="-23" duration="2" label="moving"/>
 	</Frames>
 </MovieClip>

@@ -343,15 +343,6 @@ value glstub_glBlendEquationSeparate(value v0, value v1)
 	CAMLreturn(Val_unit);
 }
 
-value glstub_glBlendEquationSeparateEXT(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLenum lv0 = Int_val(v0);
-	GLenum lv1 = Int_val(v1);
-	glBlendEquationSeparateEXT(lv0, lv1);
-	CAMLreturn(Val_unit);
-}
-
 value glstub_glBlendFunc(value v0, value v1)
 {
 	CAMLparam2(v0, v1);
@@ -442,15 +433,6 @@ value glstub_glCallLists(value v0, value v1, value v2)
 	GLenum lv1 = Int_val(v1);
 	GLvoid* lv2 = (GLvoid *)(Is_long(v2) ? (void*)Long_val(v2) : ((Tag_val(v2) == String_tag)? (String_val(v2)) : (Data_bigarray_val(v2))));
 	glCallLists(lv0, lv1, lv2);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glClampColorARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLenum lv0 = Int_val(v0);
-	GLenum lv1 = Int_val(v1);
-	glClampColorARB(lv0, lv1);
 	CAMLreturn(Val_unit);
 }
 
@@ -2809,18 +2791,6 @@ value glstub_glGetTexParameteriv(value v0, value v1, value v2)
 	CAMLreturn(Val_unit);
 }
 
-value glstub_glGetUniformBufferSizeEXT(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	CAMLlocal1(result);
-	GLuint lv0 = Int_val(v0);
-	GLint lv1 = Int_val(v1);
-	GLint ret;
-	ret = glGetUniformBufferSizeEXT(lv0, lv1);
-	result = Val_int(ret);
-	CAMLreturn(result);
-}
-
 value glstub_glGetUniformLocation(value v0, value v1)
 {
 	CAMLparam2(v0, v1);
@@ -2829,18 +2799,6 @@ value glstub_glGetUniformLocation(value v0, value v1)
 	GLchar* lv1 = String_val(v1);
 	GLint ret;
 	ret = glGetUniformLocation(lv0, lv1);
-	result = Val_int(ret);
-	CAMLreturn(result);
-}
-
-value glstub_glGetUniformOffsetEXT(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	CAMLlocal1(result);
-	GLuint lv0 = Int_val(v0);
-	GLint lv1 = Int_val(v1);
-	GLintptr ret;
-	ret = glGetUniformOffsetEXT(lv0, lv1);
 	result = Val_int(ret);
 	CAMLreturn(result);
 }
@@ -6349,16 +6307,6 @@ value glstub_glUniform4ivARB(value v0, value v1, value v2)
 	CAMLreturn(Val_unit);
 }
 
-value glstub_glUniformBufferEXT(value v0, value v1, value v2)
-{
-	CAMLparam3(v0, v1, v2);
-	GLuint lv0 = Int_val(v0);
-	GLint lv1 = Int_val(v1);
-	GLuint lv2 = Int_val(v2);
-	glUniformBufferEXT(lv0, lv1, lv2);
-	CAMLreturn(Val_unit);
-}
-
 value glstub_glUniformMatrix2fv(value v0, value v1, value v2, value v3)
 {
 	CAMLparam4(v0, v1, v2, v3);
@@ -7480,14 +7428,6 @@ value glstub_glVertexAttribPointerARB_byte(value * argv, int n)
 	return glstub_glVertexAttribPointerARB(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }
 
-value glstub_glVertexBlendARB(value v0)
-{
-	CAMLparam1(v0);
-	GLint lv0 = Int_val(v0);
-	glVertexBlendARB(lv0);
-	CAMLreturn(Val_unit);
-}
-
 value glstub_glVertexPointer(value v0, value v1, value v2, value v3)
 {
 	CAMLparam4(v0, v1, v2, v3);
@@ -7507,89 +7447,6 @@ value glstub_glViewport(value v0, value v1, value v2, value v3)
 	GLsizei lv2 = Int_val(v2);
 	GLsizei lv3 = Int_val(v3);
 	glViewport(lv0, lv1, lv2, lv3);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightPointerARB(value v0, value v1, value v2, value v3)
-{
-	CAMLparam4(v0, v1, v2, v3);
-	GLint lv0 = Int_val(v0);
-	GLenum lv1 = Int_val(v1);
-	GLsizei lv2 = Int_val(v2);
-	GLvoid* lv3 = (GLvoid *)(Is_long(v3) ? (void*)Long_val(v3) : ((Tag_val(v3) == String_tag)? (String_val(v3)) : (Data_bigarray_val(v3))));
-	glWeightPointerARB(lv0, lv1, lv2, lv3);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightbvARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLint lv0 = Int_val(v0);
-	GLbyte* lv1 = Data_bigarray_val(v1);
-	glWeightbvARB(lv0, lv1);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightdvARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLint lv0 = Int_val(v0);
-	GLdouble* lv1 = (Tag_val(v1) == Double_array_tag)? (double *)v1: Data_bigarray_val(v1);
-	glWeightdvARB(lv0, lv1);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightfvARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLint lv0 = Int_val(v0);
-	GLfloat* lv1 = Data_bigarray_val(v1);
-	glWeightfvARB(lv0, lv1);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightivARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLint lv0 = Int_val(v0);
-	GLint* lv1 = Data_bigarray_val(v1);
-	glWeightivARB(lv0, lv1);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightsvARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLint lv0 = Int_val(v0);
-	GLshort* lv1 = Data_bigarray_val(v1);
-	glWeightsvARB(lv0, lv1);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightubvARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLint lv0 = Int_val(v0);
-	GLubyte* lv1 = Data_bigarray_val(v1);
-	glWeightubvARB(lv0, lv1);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightuivARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLint lv0 = Int_val(v0);
-	GLuint* lv1 = Data_bigarray_val(v1);
-	glWeightuivARB(lv0, lv1);
-	CAMLreturn(Val_unit);
-}
-
-value glstub_glWeightusvARB(value v0, value v1)
-{
-	CAMLparam2(v0, v1);
-	GLint lv0 = Int_val(v0);
-	GLushort* lv1 = Data_bigarray_val(v1);
-	glWeightusvARB(lv0, lv1);
 	CAMLreturn(Val_unit);
 }
 

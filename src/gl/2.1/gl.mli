@@ -320,53 +320,6 @@ value gl_texture31_arb : int;
 value gl_active_texture_arb : int;
 value gl_client_active_texture_arb : int;
 value gl_max_texture_units_arb : int;
-value gl_max_vertex_units_arb : int;
-value gl_active_vertex_units_arb : int;
-value gl_weight_sum_unity_arb : int;
-value gl_vertex_blend_arb : int;
-value gl_current_weight_arb : int;
-value gl_weight_array_type_arb : int;
-value gl_weight_array_stride_arb : int;
-value gl_weight_array_size_arb : int;
-value gl_weight_array_pointer_arb : int;
-value gl_weight_array_arb : int;
-value gl_modelview0_arb : int;
-value gl_modelview1_arb : int;
-value gl_modelview2_arb : int;
-value gl_modelview3_arb : int;
-value gl_modelview4_arb : int;
-value gl_modelview5_arb : int;
-value gl_modelview6_arb : int;
-value gl_modelview7_arb : int;
-value gl_modelview8_arb : int;
-value gl_modelview9_arb : int;
-value gl_modelview10_arb : int;
-value gl_modelview11_arb : int;
-value gl_modelview12_arb : int;
-value gl_modelview13_arb : int;
-value gl_modelview14_arb : int;
-value gl_modelview15_arb : int;
-value gl_modelview16_arb : int;
-value gl_modelview17_arb : int;
-value gl_modelview18_arb : int;
-value gl_modelview19_arb : int;
-value gl_modelview20_arb : int;
-value gl_modelview21_arb : int;
-value gl_modelview22_arb : int;
-value gl_modelview23_arb : int;
-value gl_modelview24_arb : int;
-value gl_modelview25_arb : int;
-value gl_modelview26_arb : int;
-value gl_modelview27_arb : int;
-value gl_modelview28_arb : int;
-value gl_modelview29_arb : int;
-value gl_modelview30_arb : int;
-value gl_modelview31_arb : int;
-value gl_rgba_float_mode_arb : int;
-value gl_clamp_vertex_color_arb : int;
-value gl_clamp_fragment_color_arb : int;
-value gl_clamp_read_color_arb : int;
-value gl_fixed_only_arb : int;
 value gl_depth_component16_arb : int;
 value gl_depth_component24_arb : int;
 value gl_depth_component32_arb : int;
@@ -672,12 +625,6 @@ value gl_422_rev_average_ext : int;
 value gl_abgr_ext : int;
 value gl_bgr_ext : int;
 value gl_bgra_ext : int;
-value gl_max_vertex_bindable_uniforms_ext : int;
-value gl_max_fragment_bindable_uniforms_ext : int;
-value gl_max_geometry_bindable_uniforms_ext : int;
-value gl_max_bindable_uniform_size_ext : int;
-value gl_uniform_buffer_binding_ext : int;
-value gl_uniform_buffer_ext : int;
 value gl_constant_color_ext : int;
 value gl_one_minus_constant_color_ext : int;
 value gl_constant_alpha_ext : int;
@@ -1702,8 +1649,6 @@ external glBlendEquationEXT : int -> unit = "glstub_glBlendEquationEXT"
   "glstub_glBlendEquationEXT";
 external glBlendEquationSeparate : int -> int -> unit =
   "glstub_glBlendEquationSeparate" "glstub_glBlendEquationSeparate";
-external glBlendEquationSeparateEXT : int -> int -> unit =
-  "glstub_glBlendEquationSeparateEXT" "glstub_glBlendEquationSeparateEXT";
 external glBlendFunc : int -> int -> unit = "glstub_glBlendFunc"
   "glstub_glBlendFunc";
 external glBlendFuncSeparate : int -> int -> int -> int -> unit =
@@ -1721,8 +1666,6 @@ external glBufferSubDataARB : int -> int -> int -> 'a -> unit =
 external glCallList : int -> unit = "glstub_glCallList" "glstub_glCallList";
 external glCallLists : int -> int -> 'a -> unit = "glstub_glCallLists"
   "glstub_glCallLists";
-external glClampColorARB : int -> int -> unit = "glstub_glClampColorARB"
-  "glstub_glClampColorARB";
 external glClear : int -> unit = "glstub_glClear" "glstub_glClear";
 external glClearAccum : float -> float -> float -> float -> unit =
   "glstub_glClearAccum" "glstub_glClearAccum";
@@ -2093,12 +2036,8 @@ value glGetTexLevelParameterfv : int -> int -> int -> array float -> unit;
 value glGetTexLevelParameteriv : int -> int -> int -> array int -> unit;
 value glGetTexParameterfv : int -> int -> array float -> unit;
 value glGetTexParameteriv : int -> int -> array int -> unit;
-external glGetUniformBufferSizeEXT : int -> int -> int =
-  "glstub_glGetUniformBufferSizeEXT" "glstub_glGetUniformBufferSizeEXT";
 external glGetUniformLocation : int -> string -> int =
   "glstub_glGetUniformLocation" "glstub_glGetUniformLocation";
-external glGetUniformOffsetEXT : int -> int -> int =
-  "glstub_glGetUniformOffsetEXT" "glstub_glGetUniformOffsetEXT";
 value glGetUniformfv : int -> int -> array float -> unit;
 value glGetUniformiv : int -> int -> array int -> unit;
 external glGetVertexAttribPointerv : int -> int -> 'a -> unit =
@@ -2703,8 +2642,6 @@ external glUniform4iARB : int -> int -> int -> int -> int -> unit =
   "glstub_glUniform4iARB" "glstub_glUniform4iARB";
 value glUniform4iv : int -> int -> array int -> unit;
 value glUniform4ivARB : int -> int -> array int -> unit;
-external glUniformBufferEXT : int -> int -> int -> unit =
-  "glstub_glUniformBufferEXT" "glstub_glUniformBufferEXT";
 value glUniformMatrix2fv : int -> int -> bool -> array float -> unit;
 value glUniformMatrix2fvARB : int -> int -> bool -> array float -> unit;
 value glUniformMatrix2x3fv : int -> int -> bool -> array float -> unit;
@@ -2880,23 +2817,10 @@ external glVertexAttribPointer :
 external glVertexAttribPointerARB :
   int -> int -> int -> bool -> int -> 'a -> unit =
   "glstub_glVertexAttribPointerARB_byte" "glstub_glVertexAttribPointerARB";
-external glVertexBlendARB : int -> unit = "glstub_glVertexBlendARB"
-  "glstub_glVertexBlendARB";
 external glVertexPointer : int -> int -> int -> 'a -> unit =
   "glstub_glVertexPointer" "glstub_glVertexPointer";
 external glViewport : int -> int -> int -> int -> unit = "glstub_glViewport"
   "glstub_glViewport";
-external glWeightPointerARB : int -> int -> int -> 'a -> unit =
-  "glstub_glWeightPointerARB" "glstub_glWeightPointerARB";
-value glWeightbvARB : int -> array int -> unit;
-external glWeightdvARB : int -> array float -> unit = "glstub_glWeightdvARB"
-  "glstub_glWeightdvARB";
-value glWeightfvARB : int -> array float -> unit;
-value glWeightivARB : int -> array int -> unit;
-value glWeightsvARB : int -> array int -> unit;
-value glWeightubvARB : int -> array int -> unit;
-value glWeightuivARB : int -> array int -> unit;
-value glWeightusvARB : int -> array int -> unit;
 external glWindowPos2d : float -> float -> unit = "glstub_glWindowPos2d"
   "glstub_glWindowPos2d";
 external glWindowPos2dARB : float -> float -> unit =

@@ -16,9 +16,10 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method fire: unit -> unit;
     end;
 
-  class c (width:float) (height:float) =
+  class virtual c (width:float) (height:float) =
     object(self)
       inherit D.container as super;
+      value virtual color: int;
       method! width = width;
       method! setWidth _ = raise Restricted_operation;
       method! height = height;
@@ -146,7 +147,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method !render () =
       (
         RenderSupport.clearTexture ();
-        RenderSupport.clearWithColorAlpha 0x0 1.0;
+        RenderSupport.clear color 1.0;
         RenderSupport.setupOrthographicRendering 0. width height 0.;
         super#render();
         ignore(RenderSupport.checkForOpenGLError());

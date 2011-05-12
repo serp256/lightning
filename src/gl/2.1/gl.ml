@@ -316,53 +316,6 @@ value gl_texture31_arb = 0x000084df;
 value gl_active_texture_arb = 0x000084e0;
 value gl_client_active_texture_arb = 0x000084e1;
 value gl_max_texture_units_arb = 0x000084e2;
-value gl_max_vertex_units_arb = 0x000086a4;
-value gl_active_vertex_units_arb = 0x000086a5;
-value gl_weight_sum_unity_arb = 0x000086a6;
-value gl_vertex_blend_arb = 0x000086a7;
-value gl_current_weight_arb = 0x000086a8;
-value gl_weight_array_type_arb = 0x000086a9;
-value gl_weight_array_stride_arb = 0x000086aa;
-value gl_weight_array_size_arb = 0x000086ab;
-value gl_weight_array_pointer_arb = 0x000086ac;
-value gl_weight_array_arb = 0x000086ad;
-value gl_modelview0_arb = 0x00001700;
-value gl_modelview1_arb = 0x0000850a;
-value gl_modelview2_arb = 0x00008722;
-value gl_modelview3_arb = 0x00008723;
-value gl_modelview4_arb = 0x00008724;
-value gl_modelview5_arb = 0x00008725;
-value gl_modelview6_arb = 0x00008726;
-value gl_modelview7_arb = 0x00008727;
-value gl_modelview8_arb = 0x00008728;
-value gl_modelview9_arb = 0x00008729;
-value gl_modelview10_arb = 0x0000872a;
-value gl_modelview11_arb = 0x0000872b;
-value gl_modelview12_arb = 0x0000872c;
-value gl_modelview13_arb = 0x0000872d;
-value gl_modelview14_arb = 0x0000872e;
-value gl_modelview15_arb = 0x0000872f;
-value gl_modelview16_arb = 0x00008730;
-value gl_modelview17_arb = 0x00008731;
-value gl_modelview18_arb = 0x00008732;
-value gl_modelview19_arb = 0x00008733;
-value gl_modelview20_arb = 0x00008734;
-value gl_modelview21_arb = 0x00008735;
-value gl_modelview22_arb = 0x00008736;
-value gl_modelview23_arb = 0x00008737;
-value gl_modelview24_arb = 0x00008738;
-value gl_modelview25_arb = 0x00008739;
-value gl_modelview26_arb = 0x0000873a;
-value gl_modelview27_arb = 0x0000873b;
-value gl_modelview28_arb = 0x0000873c;
-value gl_modelview29_arb = 0x0000873d;
-value gl_modelview30_arb = 0x0000873e;
-value gl_modelview31_arb = 0x0000873f;
-value gl_rgba_float_mode_arb = 0x00008820;
-value gl_clamp_vertex_color_arb = 0x0000891a;
-value gl_clamp_fragment_color_arb = 0x0000891b;
-value gl_clamp_read_color_arb = 0x0000891c;
-value gl_fixed_only_arb = 0x0000891d;
 value gl_depth_component16_arb = 0x000081a5;
 value gl_depth_component24_arb = 0x000081a6;
 value gl_depth_component32_arb = 0x000081a7;
@@ -668,12 +621,6 @@ value gl_422_rev_average_ext = 0x000080cf;
 value gl_abgr_ext = 0x00008000;
 value gl_bgr_ext = 0x000080e0;
 value gl_bgra_ext = 0x000080e1;
-value gl_max_vertex_bindable_uniforms_ext = 0x00008de2;
-value gl_max_fragment_bindable_uniforms_ext = 0x00008de3;
-value gl_max_geometry_bindable_uniforms_ext = 0x00008de4;
-value gl_max_bindable_uniform_size_ext = 0x00008ded;
-value gl_uniform_buffer_binding_ext = 0x00008def;
-value gl_uniform_buffer_ext = 0x00008dee;
 value gl_constant_color_ext = 0x00008001;
 value gl_one_minus_constant_color_ext = 0x00008002;
 value gl_constant_alpha_ext = 0x00008003;
@@ -1709,8 +1656,6 @@ external glBlendEquationEXT : int -> unit = "glstub_glBlendEquationEXT"
   "glstub_glBlendEquationEXT";
 external glBlendEquationSeparate : int -> int -> unit =
   "glstub_glBlendEquationSeparate" "glstub_glBlendEquationSeparate";
-external glBlendEquationSeparateEXT : int -> int -> unit =
-  "glstub_glBlendEquationSeparateEXT" "glstub_glBlendEquationSeparateEXT";
 external glBlendFunc : int -> int -> unit = "glstub_glBlendFunc"
   "glstub_glBlendFunc";
 external glBlendFuncSeparate : int -> int -> int -> int -> unit =
@@ -1728,8 +1673,6 @@ external glBufferSubDataARB : int -> int -> int -> 'a -> unit =
 external glCallList : int -> unit = "glstub_glCallList" "glstub_glCallList";
 external glCallLists : int -> int -> 'a -> unit = "glstub_glCallLists"
   "glstub_glCallLists";
-external glClampColorARB : int -> int -> unit = "glstub_glClampColorARB"
-  "glstub_glClampColorARB";
 external glClear : int -> unit = "glstub_glClear" "glstub_glClear";
 external glClearAccum : float -> float -> float -> float -> unit =
   "glstub_glClearAccum" "glstub_glClearAccum";
@@ -2466,12 +2409,8 @@ value glGetTexParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetTexParameteriv p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
-external glGetUniformBufferSizeEXT : int -> int -> int =
-  "glstub_glGetUniformBufferSizeEXT" "glstub_glGetUniformBufferSizeEXT";
 external glGetUniformLocation : int -> string -> int =
   "glstub_glGetUniformLocation" "glstub_glGetUniformLocation";
-external glGetUniformOffsetEXT : int -> int -> int =
-  "glstub_glGetUniformOffsetEXT" "glstub_glGetUniformOffsetEXT";
 external glGetUniformfv : int -> int -> float_array -> unit =
   "glstub_glGetUniformfv" "glstub_glGetUniformfv";
 value glGetUniformfv p0 p1 p2 =
@@ -3464,8 +3403,6 @@ external glUniform4ivARB : int -> int -> word_array -> unit =
 value glUniform4ivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glUniform4ivARB p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
-external glUniformBufferEXT : int -> int -> int -> unit =
-  "glstub_glUniformBufferEXT" "glstub_glUniformBufferEXT";
 external glUniformMatrix2fv : int -> int -> bool -> float_array -> unit =
   "glstub_glUniformMatrix2fv" "glstub_glUniformMatrix2fv";
 value glUniformMatrix2fv p0 p1 p2 p3 =
@@ -3855,51 +3792,10 @@ external glVertexAttribPointer :
 external glVertexAttribPointerARB :
   int -> int -> int -> bool -> int -> 'a -> unit =
   "glstub_glVertexAttribPointerARB_byte" "glstub_glVertexAttribPointerARB";
-external glVertexBlendARB : int -> unit = "glstub_glVertexBlendARB"
-  "glstub_glVertexBlendARB";
 external glVertexPointer : int -> int -> int -> 'a -> unit =
   "glstub_glVertexPointer" "glstub_glVertexPointer";
 external glViewport : int -> int -> int -> int -> unit = "glstub_glViewport"
   "glstub_glViewport";
-external glWeightPointerARB : int -> int -> int -> 'a -> unit =
-  "glstub_glWeightPointerARB" "glstub_glWeightPointerARB";
-external glWeightbvARB : int -> byte_array -> unit = "glstub_glWeightbvARB"
-  "glstub_glWeightbvARB";
-value glWeightbvARB p0 p1 =
-  let np1 = to_byte_array p1 in
-  let r = glWeightbvARB p0 np1 in let _ = copy_byte_array np1 p1 in r;
-external glWeightdvARB : int -> array float -> unit = "glstub_glWeightdvARB"
-  "glstub_glWeightdvARB";
-external glWeightfvARB : int -> float_array -> unit = "glstub_glWeightfvARB"
-  "glstub_glWeightfvARB";
-value glWeightfvARB p0 p1 =
-  let np1 = to_float_array p1 in
-  let r = glWeightfvARB p0 np1 in let _ = copy_float_array np1 p1 in r;
-external glWeightivARB : int -> word_array -> unit = "glstub_glWeightivARB"
-  "glstub_glWeightivARB";
-value glWeightivARB p0 p1 =
-  let np1 = to_word_array p1 in
-  let r = glWeightivARB p0 np1 in let _ = copy_word_array np1 p1 in r;
-external glWeightsvARB : int -> short_array -> unit = "glstub_glWeightsvARB"
-  "glstub_glWeightsvARB";
-value glWeightsvARB p0 p1 =
-  let np1 = to_short_array p1 in
-  let r = glWeightsvARB p0 np1 in let _ = copy_short_array np1 p1 in r;
-external glWeightubvARB : int -> ubyte_array -> unit =
-  "glstub_glWeightubvARB" "glstub_glWeightubvARB";
-value glWeightubvARB p0 p1 =
-  let np1 = to_ubyte_array p1 in
-  let r = glWeightubvARB p0 np1 in let _ = copy_ubyte_array np1 p1 in r;
-external glWeightuivARB : int -> word_array -> unit = "glstub_glWeightuivARB"
-  "glstub_glWeightuivARB";
-value glWeightuivARB p0 p1 =
-  let np1 = to_word_array p1 in
-  let r = glWeightuivARB p0 np1 in let _ = copy_word_array np1 p1 in r;
-external glWeightusvARB : int -> ushort_array -> unit =
-  "glstub_glWeightusvARB" "glstub_glWeightusvARB";
-value glWeightusvARB p0 p1 =
-  let np1 = to_ushort_array p1 in
-  let r = glWeightusvARB p0 np1 in let _ = copy_ushort_array np1 p1 in r;
 external glWindowPos2d : float -> float -> unit = "glstub_glWindowPos2d"
   "glstub_glWindowPos2d";
 external glWindowPos2dARB : float -> float -> unit =

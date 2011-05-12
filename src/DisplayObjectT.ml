@@ -32,7 +32,9 @@ class virtual _c [ 'parent ]:
     value y:float;
     method y: float;
     method setY: float -> unit;
+    method pos: Point.t;
     method setPos: Point.t -> unit;
+    method private updatePos: Point.t -> unit;
     method width: float;
     method setWidth: float -> unit;
     method height: float;
@@ -62,6 +64,7 @@ class virtual _c [ 'parent ]:
     method private hitTestPoint': Point.t -> bool -> option (_c _);
     method hitTestPoint: Point.t -> bool -> option (_c _) ;
     method bounds: Rectangle.t;
+    method transformGLMatrix: unit -> unit;
     method transformationMatrix: Matrix.t;
     method transformationMatrixToSpace: option (_c _) -> Matrix.t;
     method virtual boundsInSpace: option (_c _) -> Rectangle.t;

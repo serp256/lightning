@@ -11,7 +11,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
     {
       region: Rectangle.t;
       hotpos: Point.t;
-      imageID: int;
+      textureID: int;
       texture: mutable option Texture.c;
     };
 
@@ -33,13 +33,13 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
       ]
     in
     let rec parse_frames i result = 
-      match XmlParser.parse_element "Frame" [ "imageID"; "x"; "y"; "width"; "height"; "posX"; "posY" ] with
-      [ Some [ imageID; x; y; width; height; posX; posY ] attributes -> 
+      match XmlParser.parse_element "Frame" [ "textureID"; "x"; "y"; "width"; "height"; "posX"; "posY" ] with
+      [ Some [ textureID; x; y; width; height; posX; posY ] attributes -> 
         let frame = 
           {
             region = Rectangle.create (floats x) (floats y) (floats width) (floats height);
             hotpos = ((floats posX),(floats posY));
-            imageID = int_of_string imageID;
+            textureID = int_of_string textureID;
             texture = None;
           }
         in
@@ -49,14 +49,18 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
           | None -> ()
           ];
           let result = [ KeyFrame frame :: result ] in
+          let ni = ref (i + 1) in
           let result = 
             match XmlParser.get_attribute "duration" attributes with
             [ None -> result
-            | Some duration when duration = "1" -> result
-            | Some duration -> (ExtList.List.make ((int_of_string duration) - 1) (Frame i)) @ result
+            | Some duration -> 
+                match int_of_string duration with
+                [ 0 -> result
+                | d -> (ni.val := !ni + d; (ExtList.List.make d (Frame i)) @ result)
+                ]
             ]
           in
-          parse_frames (i+1) result
+          parse_frames !ni result
         )
       | None -> result
       | _ -> assert False
@@ -91,7 +95,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
     let (textures,frames,labels) = parse_xml xmlpath in
     let textures = Array.of_list textures and frames = Array.of_list frames in
     let first_frame = match frames.(0) with [ KeyFrame frame -> frame | Frame _ -> assert False ] in
-    let first_texture = Texture.createSubTexture first_frame.region (textures.(first_frame.imageID)) in
+    let first_texture = Texture.createSubTexture first_frame.region (textures.(first_frame.textureID)) in
     let () = first_frame.texture := Some first_texture in
   object(self)
     inherit Image.c first_texture as super;
@@ -105,6 +109,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
     method! setX nx = super#setX (nx +. (fst hotpos));
     method! y = y -. (snd hotpos);
     method! setY ny = super#setX (ny +. (snd hotpos));
+    method !pos = Point.subtractPoint (x,y) hotpos;
+    method! setPos p = super#setPos (Point.addPoint p hotpos);
     value mutable loop = False;
     method loop = loop;
     method setLoop l = loop := l;
@@ -115,6 +121,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
 (*     method virtual setFps: int -> unit; *)
     method totalFrames = Array.length frames;
     method play () = eventID := Some (self#addEventListener `ENTER_FRAME self#onEnterFrame);
+    method isPlaying = match eventID with [ None -> False | Some _ -> True ];
     initializer 
       (
         Printf.eprintf "frameTime: %F\n%!" frameTime;
@@ -159,17 +166,20 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
           in
           (
             match frame.texture with
-            [ Some t -> texture := t
+            [ Some t -> self#setTexture t
             | None -> 
-                let t = Texture.createSubTexture frame.region (textures.(frame.imageID)) in
+                let t = Texture.createSubTexture frame.region (textures.(frame.textureID)) in
                 (
                   frame.texture := Some t;
-                  texture := t;
+                  self#setTexture t;
                 )
             ];
-            hotpos := frame.hotpos;
+            let pos = self#pos in
+            (
+              hotpos := frame.hotpos;
+              self#setPos pos;
+            )
           );
-          self#setPos (x,y);
         with [ Exit -> () ];
         currentFrameID := cf;
       );

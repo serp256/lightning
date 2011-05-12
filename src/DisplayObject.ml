@@ -158,7 +158,9 @@ class virtual _c [ 'parent ] = (*{{{*)
     method y = y;
     method setY y' = y := y';
 
+    method pos = (x,y);
     method setPos (x',y') = (x := x'; y := y');
+    method private updatePos (x',y') = (x := x';y := y');
 
 
 (*     method virtual boundsInSpace: !'target. option ((#_c 'et 'ed 'p) as 'target) -> Rectangle.t; *)
@@ -231,6 +233,13 @@ class virtual _c [ 'parent ] = (*{{{*)
     method asDisplayObject = (self :> _c 'parent);
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
     method isStage = False;
+    method transformGLMatrix () = 
+    (
+      if x <> 0.0 || y <> 0.0 then glTranslatef x y 0. else ();
+      if rotation <> 0.0 then glRotatef (rotation /. pi *. 180.0) 0. 0. 1.0 else ();
+      if scaleX <> 0.0 || scaleY <> 0.0 then glScalef scaleX scaleY 1.0 else ();
+    );
+
     method transformationMatrix = 
       let matrix = Matrix.create () in
       (
@@ -808,7 +817,8 @@ class virtual container = (*{{{*)
           then
           (
             glPushMatrix();
-            RenderSupport.transformMatrixForObject child;
+            child#transformGLMatrix ();
+(*             RenderSupport.transformMatrixForObject child; *)
             child#setAlpha (childAlpha *. alpha);
             child#render ();
             child#setAlpha childAlpha;

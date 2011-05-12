@@ -12,7 +12,12 @@ module Make(D:DisplayObjectT.M) = struct
       inherit Q.c texture#width texture#height as super;
       value mutable texture: Texture.c = texture;
       method texture = texture;
-      method setTexture nt = texture := nt;
+      method setTexture nt = 
+      (
+        self#updateSize nt#width nt#height;
+        texture := nt;
+      );
+
       value texCoords = 
         let res = Array.make 8 0. in
         (

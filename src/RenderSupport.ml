@@ -62,6 +62,7 @@ value clearTexture () =
   | None -> ()
   ];
 
+(*
 value transformMatrixForObject obj = 
   let x = obj#x
   and y = obj#y 
@@ -74,8 +75,9 @@ value transformMatrixForObject obj =
     if rotation <> 0.0 then glRotatef (SP_R2D(rotation)) 0. 0. 1.0 else ();
     if scaleX <> 0.0 || scaleY <> 0.0 then glScalef scaleX scaleY 1.0 else ();
   );
+*)
 
-value clearWithColorAlpha color alpha = 
+value clear color alpha = 
   let red = SP_COLOR_PART_RED(color)
   and green = SP_COLOR_PART_GREEN(color)
   and blue = SP_COLOR_PART_BLUE(color)

@@ -97,16 +97,19 @@ let stage width height =
   let () = Printf.printf "stage with %f:%f\n%!" width height in
   object(self)
     inherit Stage.c width height;
+    value color = 0xCCCCCC;
 
     initializer 
       (
         BitmapFont.register "Helvetica.fnt";
+        (*
         self#setName "stage";
         let q = new Quad.c ~color:0x0000FF 100. 100. in
         (
           q#setName "red quad";
           self#addChild q;
         );
+        *)
         (*
         let q = new Quad.c ~color:0x00FF00 200. 100. in
         (
@@ -137,6 +140,7 @@ let stage width height =
           )
         );
         *)
+        (*
         let atlasScene = new atlasScene in
         (
           atlasScene#setPos (100.,150.);
@@ -144,13 +148,15 @@ let stage width height =
 (*           atlasScene#setMask (Rectangle.create 10. 10. 100. 100.); *)
           self#addChild atlasScene;
         );
+        *)
 (*
         let quadScene = new quadScene in 
         self#addChild quadScene;
 *)
+(*
         BitmapFont.register "test_font.fnt";
         print_endline "font regisred";
-        let tf = TextField.create ~fontName:"Helvetica" ~color:LightCommon.color_white ~width:200. ~height:400. "Hello from ocaml " in
+        let tf = TextField.create ~fontName:"Helvetica" ~color:LightCommon.color_white ~width:200. ~height:400. "Now your can use cast, but ... " in
         (
           tf#setBorder True;
           tf#setHAlign `HAlignCenter;
@@ -158,18 +164,38 @@ let stage width height =
           tf#setPos (300.,400.);
           self#addChild tf;
         );
+*)
+
+
+        (*
         let butTexture = Texture.createFromFile "button.png" in
         let button = Button.create ~text:"Кликай нах!" butTexture in
         (
           button#setPos (200.,400.);
-          button#addEventListener `TRIGGERED (fun _ _ -> print_endline "button clicked");
+          button#addEventListener `TRIGGERED (fun _ -> print_endline "button clicked");
           button#setName "first button";
           self#addChild button;
         );
+        *)
 
-        let clip = MovieClip.create "boom.xml" in
+        let clip = MovieClip.create ~fps:20 "Boom.xml" in
         (
+          clip#setPos (200.,200.);
           clip#setLoop True;
+          clip#addEventListener `TOUCH begin fun tEv _ ->
+            match tEv.Event.data with
+            [ `Touches [ touch :: _ ] ->
+              match touch.Touch.phase with
+              [ Touch.TouchPhaseEnded -> 
+                match clip#isPlaying with
+                [ True -> clip#stop ()
+                | False -> clip#play ()
+                ]
+              | _ -> ()
+              ]
+            | _ -> assert False
+            ]
+          end;
           self#addChild clip;
         );
 
