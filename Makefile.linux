@@ -1,0 +1,3 @@
+
+include config.linux
+include Makefile.in
