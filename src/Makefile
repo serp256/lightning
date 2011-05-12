@@ -1,7 +1,10 @@
 include ../Makefile.common
 
+
 %.o: %.c
-	$(OCAMLOPT) -verbose -g -ccopt '-o $@' -c $<
+	$(OCAMLOPT) -verbose -g -ccopt '-fPIC' -ccopt '-DGL_GLEXT_PROTOTYPES' -ccopt '-o $@' -c $<
+
+
 
 MOBS = 
 MLOBS = 
@@ -27,7 +30,7 @@ else
 	ifeq ($(OS),macos)
 		LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
 	else
-		LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lOpenGL'
+		LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
 	endif
 endif
 
@@ -56,4 +59,4 @@ MLDepend.$(PLATFORM):
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.{cmx,o,cmi} $(gl)/*.{o,cmx,cmi}
+	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi
