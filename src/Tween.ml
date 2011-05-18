@@ -1,7 +1,6 @@
 open LightCommon;
 
 
-
 module Transitions = struct
 
   type t = 
@@ -124,7 +123,6 @@ module Transitions = struct
     | `easeOutBounce -> easeOutBounce
     | `easeInOutBounce -> easeInOutBounce
     | `easeOutInBounce -> easeOutInBounce
-    | _ -> assert False
     ];
 
 end;
@@ -139,6 +137,7 @@ type action =
   };
 
 type loop = [= `LoopNone | `LoopRepeat | `LoopReverse ];
+type prop = ((unit -> float) * (float -> unit));
 
 class c ?(transition=`linear) ?(loop=`LoopNone) time = 
   object(self)

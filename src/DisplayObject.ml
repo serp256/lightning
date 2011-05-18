@@ -14,7 +14,6 @@ module Make(P:Param) = struct
 type hidden 'a = 'a;
 type evType = P.evType;
 type evData = P.evData;
-module Listeners = EventDispatcher.Listeners;
 
 
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)

@@ -1,92 +1,5 @@
 open Event;
 
-module type Listeners = sig
-
-  type listener 'eventType 'eventData 'target 'currentTarget = Event.t 'eventType 'eventData 'target 'currentTarget -> unit;
-(*   type listeners 'eventType 'eventData 'target 'currentTarget constraint 'eventData = [> Event.dataEmpty ] constraint 'target = < .. > constraint 'currentTarget = < .. >; *)
-  type t 'eventType 'eventData 'target 'currentTarget 
-    constraint 'eventType = [> ]
-    constraint 'eventData = [> Event.dataEmpty ] 
-    constraint 'target = < .. >
-    constraint 'currentTarget = < .. >;
-
-  value empty: unit -> t 'a 'b 'c 'd;
-  value add: 'eventType -> listener 'eventType 'eventData 'target 'currentTarget -> t 'eventType 'eventData 'target 'currentTarget -> int;
-(*   value get: 'eventType -> t 'eventType 'eventData 'target 'currentTarget -> option (listeners 'eventType 'eventData 'target 'currentTarget); *)
-  value remove: 'eventType -> int -> t 'eventType 'eventData 'target 'currentTarget -> unit;
-  value fire: Event.t 'eventType 'eventData 'target _ -> 'currentTarget -> t 'eventType 'eventData 'target 'currentTarget -> bool;
-  value has: 'eventType -> t 'eventType _ _ _ -> bool;
-
-end;
-
-module Listeners : Listeners = struct (*{{{*)
-
-  exception Listener_not_found;
-
-  type listener 'eventType 'eventData 'target 'currentTarget = Event.t 'eventType 'eventData 'target 'currentTarget -> unit;
-  type listeners 'eventType 'eventData 'target 'currentTarget = list (int * (listener 'eventType 'eventData 'target 'currentTarget));
-  type lst 'eventType 'eventData 'target 'currentTarget = 
-    {
-      counter: mutable int;
-      lstnrs: mutable listeners 'eventType 'eventData 'target 'currentTarget;
-    };
-
-  type t 'eventType 'eventData 'target 'currentTarget = ref (list ('eventType * (lst 'eventType 'eventData 'target 'currentTarget)));
-
-  value empty () = ref [];
-
-  value add eventType listener t =
-    let res = ref 0 in
-    (
-      t.val := 
-        MList.update_assoc eventType begin fun 
-          [ None -> {counter = 1; lstnrs = [ (1,listener) ]}
-          | Some l ->
-              (
-                l.lstnrs := [ (l.counter,listener) :: l.lstnrs ];
-                l.counter := l.counter + 1;
-                res.val := l.counter;
-                l
-              )
-          ]
-        end !t;
-      !res;
-    );
-
-  (*
-  value get eventType t = 
-    try
-      let l = List.assoc eventType !t in
-      Some l.lstnrs
-    with [ Not_found -> None ];
-  *)
-
-  value remove eventType listenerID t = 
-    try
-      let l = List.assoc eventType !t in
-      (
-        l.lstnrs := List.remove_assoc listenerID l.lstnrs;
-        match l.lstnrs with
-        [ [] -> t.val := List.remove_assoc eventType !t
-        | _ -> ()
-        ]
-      )
-    with [ Not_found  -> raise Listener_not_found ];
-
-
-  value fire event currentTarget t = 
-    try
-      let l = List.assoc event.Event.etype !t in
-      let event = {(event) with Event.currentTarget = Some currentTarget } in
-      ignore(List.for_all (fun (_,l) -> (l event; event.Event.propagation = `StopImmediate)) l.lstnrs);
-      True
-    with [ Not_found -> False ];
-
-  value has eventType t = List.mem_assoc eventType !t;
-
-end; (*}}}*)
-
-
 exception Listener_not_found;
 
 type listener 'eventType 'eventData 'target 'currentTarget = Event.t 'eventType 'eventData 'target 'currentTarget -> unit;
@@ -156,6 +69,7 @@ class base [ 'eventType,'eventData,'target,'currentTarget ] = (*{{{*)
   end;(*}}}*)
 
 
+(*
 class type virtual c [ 'eventType,'eventData,'target,'currentTarget ] = 
   object
     type 'event = Event.t 'eventType 'eventData 'target 'currentTarget;
@@ -167,6 +81,7 @@ class type virtual c [ 'eventType,'eventData,'target,'currentTarget ] =
     method removeEventListener: 'eventType -> int -> unit;
     method hasEventListeners: 'eventType -> bool;
   end;
+*)
 
 
 class virtual simple [ 'eventType , 'eventData , 'target ]  =
@@ -174,7 +89,7 @@ class virtual simple [ 'eventType , 'eventData , 'target ]  =
     inherit base ['eventType,'eventData,'target,'target];
     type 'event = Event.t 'eventType 'eventData 'target 'target;
 
-    method private dispatchEvent' event = fire event listeners;
+(*     method private dispatchEvent' event = fire event listeners; *)
   
     method virtual private asEventTarget: 'target;
 
@@ -182,7 +97,10 @@ class virtual simple [ 'eventType , 'eventData , 'target ]  =
     method dispatchEvent (event:'event) = 
       let t = self#asEventTarget in 
       let event = {(event) with target = Some t; currentTarget = Some t } in
-      ignore(fire event listeners);
+      try
+        let l = List.assoc event.Event.etype listeners in
+        ignore(List.for_all (fun (lid,l) -> (l event lid; event.Event.propagation = `StopImmediate)) l.lstnrs);
+      with [ Not_found -> () ];
 
   end;
 
