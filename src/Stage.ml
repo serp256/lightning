@@ -10,9 +10,15 @@ module TimersQueue = PriorityQueue.Make (struct type t = (float*int); value orde
 
 module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and type evData = private [> eventData ]) = struct (*{{{*)
 
+
+  type tween = < process: float -> bool >;
+  value tweens : Queue.t  tween = Queue.create ();
+  value addTween tween = Queue.push (tween :> tween) tweens;
+
   class type inner_timer =
     object
-  (*     inherit Timer.c;  *)
+      inherit Timer.c [ D.evType, D.evData ]; 
+      method private asEventTarget: Timer.c D.evType D.evData;
       method fire: unit -> unit;
     end;
 
@@ -38,7 +44,6 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       value timersQueue = TimersQueue.make ();
       value timers (* : Hashtbl.t int (inner_timer 'event_type 'event_data) *) = Hashtbl.create 0;
 
-      (*
       method createTimer ?(repeatCount=0) delay = (*{{{*)
         let o = 
           object(timer)
@@ -46,10 +51,11 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
             inherit EventDispatcher.simple ['event_type,'event_data,'timer];
             value id = let id = timerID in (timerID := timerID + 1; id);
             value mutable running = False;
+            method running = running;
             value mutable currentCount = 0;
-            method private bubbleEvent _ = ();
             method delay = delay;
             method repeatCount = repeatCount;
+            method currentCount = currentCount;
             method fire () = 
             (
               let event = Event.create `TIMER () in
@@ -82,12 +88,11 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               [ True -> assert False
               | False -> failwith "Timer alredy stopped"
               ];
-            method private asEventTarget = (timer : inner_timer _ _ :> Timer.c _ _);
+            method private asEventTarget = (timer : inner_timer :> Timer.c _ _);
             method reset () = assert False;
           end
         in
         (o :> Timer.c _ _ );(*}}}*)
-      *)
 
       value mutable currentTouches = []; (* FIXME: make it weak for target *)
       method processTouches (touches:list Touch.t) = (*{{{*)
@@ -158,10 +163,11 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         *)
       );
 
+      value tmptweens = Queue.create ();
+
       method advanceTime (seconds:float) = 
       (
         time := time +. seconds;
-        (* jugler here *)
         (* timers *)
         if not (TimersQueue.is_empty timersQueue)
         then
@@ -179,6 +185,15 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           in
           run_timers ()
         else ();
+        (* jugler here *)
+        while not (Queue.is_empty tweens) do
+          let tween = Queue.take tweens in
+          match tween#process seconds with
+          [ True -> Queue.push tween tmptweens
+          | False -> ()
+          ]
+        done;
+        Queue.transfer tmptweens tweens;
         (* dispatch EnterFrameEvent *)
         let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
         self#dispatchEventOnChildren enterFrameEvent;

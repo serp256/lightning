@@ -38,7 +38,7 @@ endif
 MOBS += $(gl)/gl_stub.o 
 MLOBS += $(gl)/gl.cmx \
 				MList.cmx PriorityQueue.cmx WeakHashtbl.cmx WeakMemo.cmx LightCommon.cmx Event.cmx EventDispatcher.cmx Point.cmx Rectangle.cmx Matrix.cmx RenderSupport.cmx \
-				DisplayObject.cmx Sprite.cmx Quad.cmx GLTexture.cmx Texture.cmx TextureAtlas.cmx Image.cmx CompiledSprite.cmx Touch.cmx BitmapFont.cmx TextField.cmx FPS.cmx EventTouch.cmx Stage.cmx Button.cmx MovieClip.cmx Lightning.cmx
+				DisplayObject.cmx Sprite.cmx Quad.cmx GLTexture.cmx Texture.cmx TextureAtlas.cmx Image.cmx CompiledSprite.cmx Touch.cmx BitmapFont.cmx TextField.cmx FPS.cmx Stage.cmx Button.cmx MovieClip.cmx Tween.cmx Lightning.cmx
 
 
 MLFLAGS += -package extlib -I $(gl)
@@ -53,10 +53,16 @@ lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend.$(PLATFORM)
 
+
+doc:
+	$(OCAMLFIND) ocamldoc -short-functors -html -package camlp4,camlp4.macro,xmlm,extlib -d docs -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) \
+		MList.ml PriorityQueue.mli WeakHashtbl.mli WeakMemo.mli LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml DisplayObjectT.ml DisplayObject.mli Sprite.mli Quad.mli \
+		Texture.mli TextureAtlas.ml Image.mli CompiledSprite.ml Touch.ml BitmapFont.mli TextField.mli Stage.mli Button.mli MovieClip.mli Tween.mli Lightning.ml
+
 -include MLDepend.$(PLATFORM)
 
 .DEFAULT_GOAL := lightning.cmxa 
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi
+	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css

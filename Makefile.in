@@ -5,6 +5,9 @@ all:
 install: all
 	$(OCAMLFIND) install lightning META src/lightning.cmxa src/lightning.a src/liblightning.a src/*.cmi src/*.mli 
 
+doc:
+	$(MAKE) -C src doc
+
 clean: 
 	$(MAKE) -C src clean
 

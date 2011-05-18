@@ -37,6 +37,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; .. >;
 
     value mutable changed = False;
+    value mutable transfromPoint = (0.,0.);
 
     value mutable scaleX = 1.0;
     value mutable parent : option 'parent = None;
@@ -235,7 +236,9 @@ class virtual _c [ 'parent ] = (*{{{*)
     method isStage = False;
     method transformGLMatrix () = 
     (
-      if x <> 0.0 || y <> 0.0 then glTranslatef x y 0. else ();
+      if transfromPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
+        let (x,y) = Point.addPoint (x,y) transfromPoint in
+        glTranslatef x y 0. else ();
       if rotation <> 0.0 then glRotatef (rotation /. pi *. 180.0) 0. 0. 1.0 else ();
       if scaleX <> 0.0 || scaleY <> 0.0 then glScalef scaleX scaleY 1.0 else ();
     );
@@ -245,7 +248,9 @@ class virtual _c [ 'parent ] = (*{{{*)
       (
         if scaleX <> 1.0 || scaleY <> 1.0 then Matrix.scaleByXY matrix scaleX scaleY else ();
         if rotation <> 0.0 then Matrix.rotate matrix rotation else ();
-        if x <> 0.0 || y <> 0.0 then Matrix.translateByXY matrix x y else ();
+        if transfromPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
+          let (x,y) = Point.addPoint transfromPoint (x,y) in
+          Matrix.translateByXY matrix x y else ();
         matrix
       );
 
@@ -360,7 +365,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     (* если придумать какое-то кэширование ? *)
     value mutable mask: option (bool * (array (float*float))) = None;
-    method setMask ?(onSelf=True) rect = 
+    method setMask ?(onSelf=False) rect = 
       let open Rectangle in 
       mask := Some (onSelf, [| (rect.x,rect.y) ; (rect.x, rect.y +. rect.height); (rect.x +. rect.width,rect.y); (rect.x +. rect.width, rect.y +. rect.height) |]);
 

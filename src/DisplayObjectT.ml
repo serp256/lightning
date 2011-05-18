@@ -26,6 +26,7 @@ class virtual _c [ 'parent ]:
     value name: string;
     method name: string;
     method setName: string -> unit;
+    value mutable transfromPoint: Point.t;
     value x:float;
     method x: float;
     method setX: float -> unit;

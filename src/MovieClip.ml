@@ -6,12 +6,16 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
 
   module Image = Image.Make D;
 
+  exception Frame_not_found;
+
+  type frameLink = [= `num of int | `label of string ];
 
   type keyFrame = 
     {
       region: Rectangle.t;
       hotpos: Point.t;
       textureID: int;
+      label: option string;
       texture: mutable option Texture.c;
     };
 
@@ -35,16 +39,17 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
     let rec parse_frames i result = 
       match XmlParser.parse_element "Frame" [ "textureID"; "x"; "y"; "width"; "height"; "posX"; "posY" ] with
       [ Some [ textureID; x; y; width; height; posX; posY ] attributes -> 
+        let label =  XmlParser.get_attribute "label" attributes in
         let frame = 
           {
             region = Rectangle.create (floats x) (floats y) (floats width) (floats height);
             hotpos = ((floats posX),(floats posY));
             textureID = int_of_string textureID;
-            texture = None;
+            label; texture = None;
           }
         in
         (
-          match XmlParser.get_attribute "label" attributes with
+          match frame.label with
           [ Some label -> Hashtbl.add labels label i
           | None -> ()
           ];
@@ -104,14 +109,14 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
     value frames = frames;
     value labels = labels;
     value mutable currentFrameID = 0;
-    value mutable hotpos: Point.t = first_frame.hotpos;
-    method! x = x -. (fst hotpos);
-    method! setX nx = super#setX (nx +. (fst hotpos));
-    method! y = y -. (snd hotpos);
-    method! setY ny = super#setX (ny +. (snd hotpos));
-    method !pos = Point.subtractPoint (x,y) hotpos;
-    method! setPos p = super#setPos (Point.addPoint p hotpos);
+    method currentFrame = currentFrameID;
+    method currentFrameLabel = 
+      match frames.(currentFrameID) with
+      [ KeyFrame frame -> frame.label
+      | _ -> None
+      ];
     value mutable loop = False;
+    value! mutable transfromPoint = first_frame.hotpos;
     method loop = loop;
     method setLoop l = loop := l;
     value mutable fps = fps;
@@ -120,23 +125,27 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
     method fps = fps;
 (*     method virtual setFps: int -> unit; *)
     method totalFrames = Array.length frames;
-    method play () = eventID := Some (self#addEventListener `ENTER_FRAME self#onEnterFrame);
+    method play () = 
+      match eventID with 
+      [ None -> eventID := Some (self#addEventListener `ENTER_FRAME self#onEnterFrame)
+      | _ -> ()
+      ];
+
     method isPlaying = match eventID with [ None -> False | Some _ -> True ];
     initializer 
       (
-        Printf.eprintf "frameTime: %F\n%!" frameTime;
-        self#setPos (0.,0.);
+(*         Printf.eprintf "frameTime: %F\n%!" frameTime; *)
         self#play ();
       );
 
     method stop () = 
     (
-      Printf.eprintf "stop\n";
+(*       Printf.eprintf "stop\n"; *)
       match eventID with
       [ None -> ()
       | Some evID ->
         (
-          prerr_endline "hey i'am stoped";
+(*           prerr_endline "hey i'am stoped"; *)
           elapsedTime := 0.;
           self#removeEventListener `ENTER_FRAME evID;
           eventID := None;
@@ -144,11 +153,31 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
       ]
     );
 
-    method gotoAndStop () = ();
-    method gotoAndPlay () = ();
+    method private changeFrame f = 
+      let cf = 
+        match f with
+        [ `label label -> try Hashtbl.find labels label with [ Not_found -> raise Frame_not_found ]
+        | `num n when n >= 0 && n < Array.length frames -> n
+        | _ -> raise Frame_not_found
+        ]
+      in
+      self#setCurrentFrame cf;
+
+    method gotoAndStop (f:frameLink) =
+    (
+      self#changeFrame f;
+      self#stop();
+    );
+
+    method gotoAndPlay (f:frameLink) = 
+    (
+      self#changeFrame f;
+      self#play();
+    );
+
 
     method private setCurrentFrame cf = 
-      let () = Printf.eprintf "setCurrentFrame: %d\n%!" cf in
+(*       let () = Printf.eprintf "setCurrentFrame: %d\n%!" cf in *)
       (
         try
           let frame = 
@@ -174,11 +203,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
                   self#setTexture t;
                 )
             ];
-            let pos = self#pos in
-            (
-              hotpos := frame.hotpos;
-              self#setPos pos;
-            )
+            transfromPoint := frame.hotpos;
           );
         with [ Exit -> () ];
         currentFrameID := cf;
@@ -189,12 +214,12 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
       [  `PassedTime dt ->
         (
           elapsedTime := elapsedTime +. dt;
-          Printf.eprintf "elapsedTime: %F\n%!" elapsedTime;
+(*           Printf.eprintf "elapsedTime: %F\n%!" elapsedTime; *)
           match int_of_float (elapsedTime /. frameTime) with
           [  0 -> ()
           | n -> 
             (
-              Printf.eprintf "play %d frames\n%!" n;
+(*               Printf.eprintf "play %d frames\n%!" n; *)
               elapsedTime := elapsedTime -. ((float n) *. frameTime);
               let cFrame = currentFrameID + n in
               let currentFrame = 
