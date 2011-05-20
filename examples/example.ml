@@ -1,12 +1,10 @@
-module ED = EventDispatcher;
 
 module Light = Lightning.Make (struct
-  type evType = [= Stage.eventType | `TRIGGERED ];
-  type evData = Stage.eventData;
+  type evType = [= Lightning.eventType |  `MyEvent ];
+  type evData = Lightning.eventData;
 end);
 
 open Light;
-module Button = Button.Make DisplayObject;
 
 class atlasScene =
   object(self)
@@ -19,7 +17,7 @@ class atlasScene =
       ];
 
     initializer 
-      let atlas = TextureAtlas.createFromFile "atlas.xml" in
+      let atlas = TextureAtlas.create "atlas.xml" in
       (
        let q = new Quad.c ~color:0xFF0000 100. 200. in
         (
@@ -27,34 +25,34 @@ class atlasScene =
           q#setName "green quad";
           self#addChild q;
         );
-       let image1 = new Image.c (TextureAtlas.textureByName atlas "walk_00") in
+       let image1 = new Image.c (TextureAtlas.texture atlas "walk_00") in
         (
           image1#setPos (30.,30.);
           image1#setName "atlas image 1";
           ignore(image1#addEventListener `TOUCH self#onTouch);
           self#addChild image1;
         );
-        let image2 = new Image.c (TextureAtlas.textureByName atlas "walk_01") in
+        let image2 = new Image.c (TextureAtlas.texture atlas "walk_01") in
         (
           image2#setPos (90.,110.);
           image2#setName "atlas image 2";
           ignore(image2#addEventListener `TOUCH self#onTouch);
           self#addChild image2;
         );
-        let image3 = new Image.c (TextureAtlas.textureByName atlas "walk_03") in
+        let image3 = new Image.c (TextureAtlas.texture atlas "walk_03") in
         (
           image3#setPos (150.,100.);
           image3#setName "atlas image 3";
           image3#setScaleX 2.;
           self#addChild image3;
         );
-        let image4 = new Image.c (TextureAtlas.textureByName atlas "walk_05") in
+        let image4 = new Image.c (TextureAtlas.texture atlas "walk_05") in
         (
           image4#setPos (210.,270.);
           image4#setName "atlas image 4";
           self#addChild image4;
         );
-        let egg = new Image.c (TextureAtlas.textureByName atlas "benchmark_object") in
+        let egg = new Image.c (TextureAtlas.texture atlas "benchmark_object") in
         (
           egg#setPos (500.,300.);
           egg#setName "egg";
