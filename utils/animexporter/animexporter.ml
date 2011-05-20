@@ -28,7 +28,7 @@ value animations = JSObjAnim.init_animations (dataDir /// (libsettings "animatio
 value frames_dir = JSObjAnim.init_frames_dir (dataDir /// "frames_dir.json");
 
 type new_frame_desc_item = {
-  xmlId:int;
+  texId:int;
   recId:int;
   nxi:int;
   nyi:int;
@@ -116,6 +116,7 @@ value (=|=) k v = (("",k),v);
 value (=.=) k v = k =|= string_of_float v;
 value (=*=) k v = k =|= string_of_int v;
 
+(*
 value write_animations animations dir = 
   let out = open_out (dir /// "animations.xml") in
   let xml = Xmlm.make_output (`Channel out) in
@@ -143,9 +144,29 @@ value write_animations animations dir =
     Xmlm.output xml `El_end;
     close_out out;
   );
+*)
+
+value write_animations animations dir = 
+  let out = BatFile.open_out (dir /// "animations.dat") in
+  (
+    List.iter begin fun (objname,animation) ->
+    (
+      BatIO.write_string out objname;
+      BatIO.write_ui16 out (List.length animation);
+      List.iter begin fun (anim_name,frames) ->
+      (
+        BatIO.write_string out anim_name;
+        BatIO.write_ui16 out (Array.length frames);
+        Array.iter (fun frame -> BatIO.write_i32 out frame) frames;
+      )
+      end animation;
+    )
+    end animations;
+    BatIO.close_out out;
+  );
 
 value write_frames_and_animations new_obj dir =
-  let file_out = BatFile.open_out (dir /// "frames.swf") in
+  let file_out = BatFile.open_out (dir /// "frames.dat") in
   let (_,animations) = Hashtbl.fold begin fun key anims (index,animations) -> (
     let _ = print_endline (Printf.sprintf "write_frames_and_anim_json obj: %s" key) in
     let (i,animation) =
@@ -163,7 +184,7 @@ value write_frames_and_animations new_obj dir =
             BatIO.write_byte file_out (List.length frame.nitems);
             List.iter begin fun item ->
             (
-              BatIO.write_byte file_out item.xmlId;
+              BatIO.write_byte file_out item.texId;
               BatIO.write_i32 file_out item.recId;
               BatIO.write_i16 file_out item.nxi;
               BatIO.write_i16 file_out item.nyi;
@@ -184,10 +205,6 @@ value write_frames_and_animations new_obj dir =
   end new_obj (0,[])
   in
   write_animations animations dir;
-  (*
-  let _ = JSObjAnim.animations_to_json animations dir in
-  ();
-  *)
 
 value object_items : Hashtbl.t string (list (string*string*int*frame_desc_item*Images.t))= Hashtbl.create 0;
 
@@ -215,6 +232,86 @@ value object_items_create obj frames_desc =
     Hashtbl.find object_items obj;
   );
 
+(* Возвращает картинки которые влезли в этот w h  *)
+(*
+value hold_in_size size imgs = 
+  let sx = ref 0
+  and sy = ref 0
+  and mh = ref 0
+  MList.span begin fun (_,_,_,_,img) ->
+    let (iw,ih) = Images.size img in
+    if iw > w || ih > h
+    then False
+    else 
+      let (nsx,nsy,nmh) = if !sx + iw >= w then (0,!sy+!mh,0) else (sx,sy,max ih !mh) in
+      if nsy + ih >= h
+      then False
+      else 
+      (
+        sx.val := nsx;
+        sy.val := nsy;
+        mh.val := nmh;
+        True
+      );
+  end imgs;
+*)
+
+
+value hold_in_size (w,h) imgs = 
+  let () = Printf.eprintf "hold to [%d:%d]\n" w h in
+  let rec loop sx sy mh input =
+    match input with
+    [ [] -> ([],[])
+    | [ (p1,p2,p3,p4,img) :: tl ] -> 
+        let (iw,ih) = Images.size img in
+        let () = Printf.eprintf "hold to [%d:%d - %d [%d:%d]]\n" sx sy mh iw ih in
+        if iw > w || ih > h
+        then ([],input)
+        else 
+          let (nsx,sy,mh) = if sx + iw >= w then (0,sy + mh,ih) else (sx + iw,sy,max ih mh) in
+          if sy + ih >= h
+          then ([],input )
+          else 
+            let (holded,notholded) = loop nsx sy mh tl in
+            ( [ (p1,p2,p3,p4,(sx,sy,img)) :: holded ] , notholded )
+    ]
+  in
+  loop 0 0 0 imgs;
+
+value rec blit_by_textures imgs = 
+  let () = Printf.eprintf "blit %d images\n" (List.length imgs) in
+  try
+    let res = 
+      BatList.find_map begin fun size ->
+        let (holded,notholded) = hold_in_size size imgs in
+        match notholded with
+        [ [] -> let () = Printf.eprintf "size [%d:%d] OK\n" (fst size) (snd size) in Some (size,holded)
+        | _ -> None
+        ]
+      end [(64,64);(128,128);(256,256);(512,512)]
+    in
+    [ res ]
+  with [ Not_found ->
+    let maxsize = (1024,1024) in
+    let (holded,notholded) = hold_in_size maxsize imgs in
+    let hd = 
+      match holded with
+      [ [] -> failwith "Can't hold it in max texture"
+      | _ -> (maxsize,holded)
+      ]
+    in
+    let tl = 
+      match notholded with
+      [ [] -> []
+      | _ -> blit_by_textures notholded
+      ]
+    in
+    [ hd :: tl ]
+  ];
+
+ 
+
+(*
 value get_size imgs =
   let (w,h) =
     try
@@ -241,16 +338,17 @@ value get_size imgs =
             end (0,0,0,1) imgs
           in
           cnt = 1
-        with [Images.Out_of_image -> False]
+        with [ Images.Out_of_image -> False ]
       end [(64,64);(128,128);(256,256);(512,512);(1024,1024)]
-    with [Not_found -> (1024,1024)]
+    with [Not_found -> failwith ("many textures not implemented") ]
   in
   (w,h);
+*)
 
 value create_texture obj imgs oframes =
   let new_obj : Hashtbl.t string (list (string*(list (int*new_frame_desc)))) = Hashtbl.create 0 in
-  let add_in_new_obj (objn,animn,indexf,old_item,xmlId,recId) =
-    let item = {xmlId=xmlId;recId=recId;nxi=old_item.xi;nyi=old_item.yi;nflip=old_item.flip;nalpha=old_item.alpha} in
+  let add_in_new_obj (objn,animn,indexf,old_item,texId,recId) =
+    let item = {texId;recId;nxi=old_item.xi;nyi=old_item.yi;nflip=old_item.flip;nalpha=old_item.alpha} in
     try
       let anims = Hashtbl.find new_obj objn in
       try
@@ -294,15 +392,38 @@ value create_texture obj imgs oframes =
       compare ih1 ih2
     ) imgs
   in
-  let (w,h) = get_size imgs in
-  let _ = print_endline (Printf.sprintf "create_texture obj: %s, length imgs: %d" obj (List.length imgs)) in
-  let rgb = Rgba32.make w h  {Color.color={Color.r=0;g=0;b=0}; alpha=0;} in
-  let new_img = (Images.Rgba32 rgb) in
+  let fname cnt ext = (string_of_int cnt) ^ "." ^ ext in
+  let texInfo = BatFile.open_out (dir /// "texInfo.dat") in
+  (
+    let textures = blit_by_textures imgs in
+    BatList.iteri begin fun cnt ((w,h),imgs) ->
+      let () = Printf.eprintf "write [%d:%d]\n" w h in
+      let () = BatIO.write_string texInfo ((string_of_int cnt) ^ ".png") in
+      let () = BatIO.write_ui16 texInfo (List.length imgs) in
+      let rgb = Rgba32.make w h  {Color.color={Color.r=0;g=0;b=0}; alpha=0;} in
+      let new_img = Images.Rgba32 rgb in
+      (
+        BatList.iteri begin fun i (objn,animn,frame_index,old_item,(sx,sy,img)) ->
+        (
+          let (iw,ih) = Images.size img in
+          let () = Printf.eprintf "blit img to [%d:%d:%d:%d]..." sx sy iw ih in
+          Images.blit img 0 0 new_img sx sy iw ih;
+          prerr_endline "blited";
+          add_in_new_obj (objn,animn,frame_index,old_item,cnt,i);
+        )
+        end imgs;
+        Images.save (dir /// (fname cnt "png")) (Some Images.Png) [] new_img;
+      )
+    end textures;
+    BatIO.close_out texInfo;
+    write_frames_and_animations new_obj dir;
+  );
+
+  (*
   let out = open_out (dir /// "1.xml") in
   let xml = Xmlm.make_output (`Channel out) in
   let () = Xmlm.output xml (`Dtd None) in
   let () = Xmlm.output xml (`El_start (("","Texture"),[ "imagPath" =|= "1.png" ])) in
-  let fname cnt ext = (string_of_int cnt) ^ "." ^ ext in
   let (_,_,_,new_img,cnt,_,xml,out) =
     List.fold_left begin fun (sx,sy,mh,new_img,cnt,i_rec,xml,out) (objn,animn,frame_index,old_item,img) ->
       let (iw,ih) = Images.size img in
@@ -340,6 +461,7 @@ value create_texture obj imgs oframes =
     Images.save (dir /// (fname cnt "png")) (Some Images.Png) [] new_img;
     write_frames_and_animations new_obj dir;
   );
+*)
 
 value get_objects_for_lib lib =
    List.filter begin fun (oname,info) ->
