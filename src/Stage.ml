@@ -11,7 +11,7 @@ module TimersQueue = PriorityQueue.Make (struct type t = (float*int); value orde
 module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and type evData = private [> eventData ]) = struct (*{{{*)
 
 
-  type tween = < process: float -> bool >;
+  class type tween = object method process: float -> bool; end;
   value tweens : Queue.t  tween = Queue.create ();
   value addTween tween = Queue.push (tween :> tween) tweens;
 

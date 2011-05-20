@@ -10,6 +10,11 @@ MOBS =
 MLOBS = 
 MLDEPFLAGS =
 
+
+all: lightning.cmxa pa_prop.cmo
+
+pa_prop.cmo: MLFLAGS += -package camlp4.lib,camlp4.quotations.r
+
 ifeq ($(PLATFORM),ios)
 	gl = gl/es
 	CFLAGS += -I .
@@ -62,7 +67,7 @@ doc:
 
 -include MLDepend.$(PLATFORM)
 
-.DEFAULT_GOAL := lightning.cmxa 
+.DEFAULT_GOAL := all
 
 .PHONY : clean
 clean: 

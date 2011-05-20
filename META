@@ -2,3 +2,7 @@ version="0.01"
 archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm"
+
+package "syntax" {
+	description = "Syntactic sugars for Lwt"
+}

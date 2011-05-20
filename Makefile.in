@@ -2,6 +2,9 @@
 all: 
 	$(MAKE) -C src
 
+%.cmo: 
+	$(MAKE) -C src $@
+
 install: all
 	$(OCAMLFIND) install lightning META src/lightning.cmxa src/lightning.a src/liblightning.a src/*.cmi src/*.mli 
 

@@ -153,7 +153,7 @@ class c ?(transition=`linear) ?(loop=`LoopNone) time =
     method animate (getValue,setValue) endValue = actions := [ {startValue = 0.; endValue; getValue ; setValue}  :: actions ];
 
     method process dt = 
-      let () = Printf.eprintf "tween process %F\n%!" dt in
+(*       let () = Printf.eprintf "tween process %F\n%!" dt in *)
       let start = currentTime = 0. in
       let () = currentTime := min totalTime (currentTime +. dt) in
       (
