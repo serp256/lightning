@@ -6,7 +6,7 @@ all:
 	$(MAKE) -C src $@
 
 install: all
-	$(OCAMLFIND) install lightning META src/lightning.cmxa src/lightning.a src/liblightning.a src/*.cmi src/*.mli 
+	$(OCAMLFIND) install lightning META src/lightning.cmxa src/lightning.a src/liblightning.a src/*.cmi src/*.mli src/pa_prop.cmo
 
 uninstall:
 	$(OCAMLFIND) remove lightning
