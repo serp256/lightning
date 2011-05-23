@@ -85,7 +85,12 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               ];
             method stop () = 
               match running with
-              [ True -> assert False
+              [ True -> 
+                (
+                  TimersQueue.remove_if (fun (_,id') -> id'= id) timersQueue;
+                  Hashtbl.remove timers id;
+                  running := False;
+                )
               | False -> failwith "Timer alredy stopped"
               ];
             method private asEventTarget = (timer : inner_timer :> Timer.c _ _);
