@@ -1,5 +1,8 @@
 
-module Make(Param:sig type evType = private [> Stage.eventType ]; type evData = private [> Stage.eventData ]; end) = struct
+type eventType = [= Stage.eventType | `TRIGGERED ];
+type eventData = Stage.eventData;
+
+module Make(Param:sig type evType = private [> eventType ]; type evData = private [> eventData ]; end) = struct
   module DisplayObject = DisplayObject.Make Param;
   module Quad = Quad.Make DisplayObject;
   module Image = Image.Make DisplayObject;
@@ -7,11 +10,12 @@ module Make(Param:sig type evType = private [> Stage.eventType ]; type evData = 
   module MovieClip = MovieClip.Make DisplayObject;
   module TextField = TextField.Make DisplayObject;
   module FPS = FPS.Make DisplayObject;
+  module Button = Button.Make DisplayObject;
   module Stage = Stage.Make DisplayObject;
 end;
 
 
-module Default = Make (struct type evType = Stage.eventType; type evData = Stage.eventData; end);
+module Default = Make (struct type evType = eventType; type evData = eventData; end);
 
 (* добавлю с таймерами отдельно чтоли ? *)
 

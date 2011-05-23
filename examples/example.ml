@@ -1,12 +1,11 @@
 module  ED = EventDispatcher;
 
 module Light = Lightning.Make (struct
-  type evType = [= Stage.eventType | `TRIGGERED ];
-  type evData = Stage.eventData;
+  type evType = [= Lightning.eventType |  `MyEvent ];
+  type evData = Lightning.eventData;
 end);
 
 open Light;
-module Button = Button.Make DisplayObject;
 
 class atlasScene =
   object(self)
