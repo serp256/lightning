@@ -13,10 +13,16 @@ exception File_not_exists of string;
 IFDEF IOS THEN
 Callback.register_exception "File_not_exists" (File_not_exists "");
 (* external resource_path: string -> float -> string = "ml_resourcePath"; *)
-external bundle_path_for_resource: string -> string = "ml_bundle_path_for_resource";
+external bundle_path_for_resource: string -> option string = "ml_bundle_path_for_resource";
 
 ELSE
-value bundle_path_for_resource fname = Filename.concat "Resources" path;
+value bundle_path_for_resource fname = 
+  let path = Filename.concat "Resources" path in
+  match Filename.file_eixsts path with
+  [ True -> Some path
+  | False -> None
+  ];
+
 (*
 value resource_path path scale = 
   match Filename.is_relative path with
@@ -27,15 +33,13 @@ value resource_path path scale =
 ENDIF;
 
 value resource_path ?dir path = 
-  let fullPath = 
-    match Filename.is_relative path with
-    [ True -> (* тут еще со скейлом надо заморочица нах *) bundle_path_for_resource path
-    | False ->  path
-    ];
-  in
-  match Sys.file_exists fullPath with
-  [ True -> fullPath
-  | False -> raise (File_not_exists path)
+  match Filename.is_relative path with
+  [ True -> match bundle_path_for_resource path with [ Some p -> p | None -> raise (File_not_exists path) ]
+  | False -> 
+    match Sys.file_exists fullPath with
+    [ True -> fullPath
+    | False -> raise (File_not_exists path)
+    ]
   ];
 
 exception Xml_error of string and string;
