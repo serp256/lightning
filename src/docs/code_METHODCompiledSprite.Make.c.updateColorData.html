@@ -1,0 +1,83 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of class attributes" rel=Appendix href="index_attributes.html">
+<link title="Index of class methods" rel=Appendix href="index_methods.html">
+<link title="Index of classes" rel=Appendix href="index_classes.html">
+<link title="Index of class types" rel=Appendix href="index_class_types.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="MList" rel="Chapter" href="MList.html">
+<link title="PriorityQueue" rel="Chapter" href="PriorityQueue.html">
+<link title="WeakHashtbl" rel="Chapter" href="WeakHashtbl.html">
+<link title="WeakMemo" rel="Chapter" href="WeakMemo.html">
+<link title="Event" rel="Chapter" href="Event.html">
+<link title="EventDispatcher" rel="Chapter" href="EventDispatcher.html">
+<link title="Point" rel="Chapter" href="Point.html">
+<link title="Rectangle" rel="Chapter" href="Rectangle.html">
+<link title="Matrix" rel="Chapter" href="Matrix.html">
+<link title="DisplayObjectT" rel="Chapter" href="DisplayObjectT.html">
+<link title="DisplayObject" rel="Chapter" href="DisplayObject.html">
+<link title="Sprite" rel="Chapter" href="Sprite.html">
+<link title="Quad" rel="Chapter" href="Quad.html">
+<link title="Texture" rel="Chapter" href="Texture.html">
+<link title="TextureAtlas" rel="Chapter" href="TextureAtlas.html">
+<link title="Image" rel="Chapter" href="Image.html">
+<link title="CompiledSprite" rel="Chapter" href="CompiledSprite.html">
+<link title="Touch" rel="Chapter" href="Touch.html">
+<link title="BitmapFont" rel="Chapter" href="BitmapFont.html">
+<link title="TextField" rel="Chapter" href="TextField.html">
+<link title="Stage" rel="Chapter" href="Stage.html">
+<link title="Button" rel="Chapter" href="Button.html">
+<link title="MovieClip" rel="Chapter" href="MovieClip.html">
+<link title="Tween" rel="Chapter" href="Tween.html">
+<link title="Lightning" rel="Chapter" href="Lightning.html"><title>CompiledSprite.Make.c.updateColorData</title>
+</head>
+<body>
+<code class="code"><span class="keyword">method</span>&nbsp;<span class="keyword">private</span>&nbsp;updateColorData&nbsp;()&nbsp;=&nbsp;<span class="comment">(*{{{*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;currentColors&nbsp;=&nbsp;<span class="constructor">IO</span>.output_string&nbsp;()&nbsp;<span class="comment">(*&nbsp;String.create&nbsp;(String.length&nbsp;colorData)&nbsp;*)</span>&nbsp;<span class="comment">(*&nbsp;TODO:&nbsp;may&nbsp;be&nbsp;optimize&nbsp;this&nbsp;allocation?&nbsp;*)</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;offset&nbsp;=&nbsp;ref&nbsp;0&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.iter&nbsp;<span class="keyword">begin</span>&nbsp;<span class="keyword">fun</span>&nbsp;(texture,numVerticies)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;()&nbsp;=&nbsp;Printf.eprintf&nbsp;"texture:%d,num:%d\n%!"&nbsp;(match&nbsp;texture&nbsp;with&nbsp;[&nbsp;None&nbsp;-&gt;&nbsp;0&nbsp;|&nbsp;Some&nbsp;t&nbsp;-&gt;&nbsp;t#textureID&nbsp;])&nbsp;numVerticies&nbsp;in&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pma&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;texture&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<span class="constructor">Some</span>&nbsp;texture&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;texture<span class="keywordsign">#</span>hasPremultipliedAlpha<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">False</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">for</span>&nbsp;i&nbsp;=&nbsp;0&nbsp;<span class="keyword">to</span>&nbsp;numVerticies&nbsp;-&nbsp;1&nbsp;<span class="keyword">do</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;j&nbsp;=&nbsp;offset.<span class="keyword">val</span>&nbsp;+&nbsp;i&nbsp;*&nbsp;4&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vertexAlpha&nbsp;=&nbsp;(float_of_int&nbsp;(int_of_char&nbsp;colorData.[j&nbsp;+&nbsp;3]))&nbsp;/.&nbsp;255.&nbsp;*.&nbsp;alpha&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;blue&nbsp;=&nbsp;int_of_char&nbsp;colorData.[j]&nbsp;<span class="keyword">and</span>&nbsp;green&nbsp;=&nbsp;int_of_char&nbsp;colorData.[j+1]&nbsp;<span class="keyword">and</span>&nbsp;red&nbsp;=&nbsp;int_of_char&nbsp;colorData.[j+2]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;newColors&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;c&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;pma&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<span class="constructor">True</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int_of_float&nbsp;((float&nbsp;red)&nbsp;*.&nbsp;vertexAlpha))&nbsp;<span class="keyword">lor</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int_of_float&nbsp;((float&nbsp;green)&nbsp;*.&nbsp;vertexAlpha)&nbsp;<span class="keyword">lsl</span>&nbsp;8)&nbsp;<span class="keyword">lor</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int_of_float&nbsp;((float&nbsp;blue)&nbsp;*.&nbsp;vertexAlpha)&nbsp;<span class="keyword">lsl</span>&nbsp;16)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">False</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;red&nbsp;<span class="keyword">lor</span>&nbsp;(green&nbsp;<span class="keyword">lsl</span>&nbsp;8)&nbsp;<span class="keyword">lor</span>&nbsp;(blue&nbsp;<span class="keyword">lsl</span>&nbsp;16)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Int32</span>.logor&nbsp;(<span class="constructor">Int32</span>.of_int&nbsp;c)&nbsp;(<span class="constructor">Int32</span>.shift_left&nbsp;(<span class="constructor">Int32</span>.of_float&nbsp;(vertexAlpha&nbsp;*.&nbsp;255.))&nbsp;24)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">IO</span>.write_real_i32&nbsp;currentColors&nbsp;newColors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">done</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;offset.<span class="keyword">val</span>&nbsp;:=&nbsp;!offset&nbsp;+&nbsp;(numVerticies&nbsp;*&nbsp;4)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>&nbsp;textureSwitches;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;update&nbsp;buffer&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBindBuffer&nbsp;gl_array_buffer&nbsp;buffers.(2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;currentColors&nbsp;=&nbsp;<span class="constructor">IO</span>.close_out&nbsp;currentColors&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;()&nbsp;=&nbsp;Printf.eprintf&nbsp;"currentColors:&nbsp;[%s]\n%!"&nbsp;(String.concat&nbsp;","&nbsp;(ExtString.String.fold_right&nbsp;(fun&nbsp;x&nbsp;res&nbsp;-&gt;&nbsp;[&nbsp;string_of_int&nbsp;(int_of_char&nbsp;x)&nbsp;::&nbsp;res&nbsp;])&nbsp;currentColors&nbsp;[]))&nbsp;in&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBufferSubData&nbsp;gl_array_buffer&nbsp;0&nbsp;(<span class="constructor">String</span>.length&nbsp;currentColors)&nbsp;currentColors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBindBuffer&nbsp;gl_array_buffer&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorsUpdated&nbsp;:=&nbsp;<span class="constructor">True</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</code></body></html>

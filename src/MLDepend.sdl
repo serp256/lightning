@@ -1,0 +1,116 @@
+gl/2.1/gl.cmo: gl/2.1/gl.cmi
+gl/2.1/gl.cmx: gl/2.1/gl.cmi
+gl/2.1/gl.cmi:
+sdl/sdl.cmo: sdl/sdl.cmi
+sdl/sdl.cmx: sdl/sdl.cmi
+sdl/sdl_image.cmo: sdl/sdl.cmi
+sdl/sdl_image.cmx: sdl/sdl.cmx
+sdl/sdl_run.cmo: Touch.cmo sdl/sdl_image.cmo sdl/sdl.cmi gl/2.1/gl.cmi \
+    Event.cmo
+sdl/sdl_run.cmx: Touch.cmx sdl/sdl_image.cmx sdl/sdl.cmx gl/2.1/gl.cmx \
+    Event.cmx
+sdl/sdl.cmi:
+BitmapFont.cmo: Texture.cmi Sprite.cmi Rectangle.cmo Quad.cmi LightCommon.cmo \
+    Image.cmi DisplayObjectT.cmo BitmapFont.cmi
+BitmapFont.cmx: Texture.cmx Sprite.cmx Rectangle.cmx Quad.cmx LightCommon.cmx \
+    Image.cmx DisplayObjectT.cmx BitmapFont.cmi
+Button.cmo: Touch.cmo Texture.cmi TextField.cmi Sprite.cmi Rectangle.cmo \
+    Image.cmi Event.cmo DisplayObjectT.cmo Button.cmi
+Button.cmx: Touch.cmx Texture.cmx TextField.cmx Sprite.cmx Rectangle.cmx \
+    Image.cmx Event.cmx DisplayObjectT.cmx Button.cmi
+CompiledSprite.cmo: Sprite.cmi RenderSupport.cmo Quad.cmi Matrix.cmo \
+    Image.cmi gl/2.1/gl.cmi DisplayObjectT.cmo
+CompiledSprite.cmx: Sprite.cmx RenderSupport.cmx Quad.cmx Matrix.cmx \
+    Image.cmx gl/2.1/gl.cmx DisplayObjectT.cmx
+DisplayObject.cmo: Rectangle.cmo Point.cmo Matrix.cmo LightCommon.cmo \
+    gl/2.1/gl.cmi EventDispatcher.cmi Event.cmo DisplayObject.cmi
+DisplayObject.cmx: Rectangle.cmx Point.cmx Matrix.cmx LightCommon.cmx \
+    gl/2.1/gl.cmx EventDispatcher.cmx Event.cmx DisplayObject.cmi
+DisplayObjectT.cmo: Rectangle.cmo Point.cmo Matrix.cmo Event.cmo
+DisplayObjectT.cmx: Rectangle.cmx Point.cmx Matrix.cmx Event.cmx
+Event.cmo:
+Event.cmx:
+EventDispatcher.cmo: MList.cmo Event.cmo EventDispatcher.cmi
+EventDispatcher.cmx: MList.cmx Event.cmx EventDispatcher.cmi
+EventTouch.cmo: Touch.cmo DisplayObjectT.cmo
+EventTouch.cmx: Touch.cmx DisplayObjectT.cmx
+FPS.cmo: TextField.cmi Event.cmo DisplayObjectT.cmo
+FPS.cmx: TextField.cmx Event.cmx DisplayObjectT.cmx
+GLTexture.cmo: gl/2.1/gl.cmi
+GLTexture.cmx: gl/2.1/gl.cmx
+Image.cmo: WeakMemo.cmi Texture.cmi RenderSupport.cmo Quad.cmi \
+    LightCommon.cmo gl/2.1/gl.cmi DisplayObjectT.cmo Image.cmi
+Image.cmx: WeakMemo.cmx Texture.cmx RenderSupport.cmx Quad.cmx \
+    LightCommon.cmx gl/2.1/gl.cmx DisplayObjectT.cmx Image.cmi
+LightCommon.cmo:
+LightCommon.cmx:
+Lightning.cmo: Touch.cmo TextField.cmi Stage.cmi Sprite.cmi sdl/sdl_run.cmo \
+    Quad.cmi MovieClip.cmi Image.cmi FPS.cmo DisplayObject.cmi
+Lightning.cmx: Touch.cmx TextField.cmx Stage.cmx Sprite.cmx sdl/sdl_run.cmx \
+    Quad.cmx MovieClip.cmx Image.cmx FPS.cmx DisplayObject.cmx
+MList.cmo:
+MList.cmx:
+Matrix.cmo:
+Matrix.cmx:
+MovieClip.cmo: Texture.cmi Rectangle.cmo Point.cmo LightCommon.cmo Image.cmi \
+    Event.cmo DisplayObjectT.cmo MovieClip.cmi
+MovieClip.cmx: Texture.cmx Rectangle.cmx Point.cmx LightCommon.cmx Image.cmx \
+    Event.cmx DisplayObjectT.cmx MovieClip.cmi
+ObjMemo.cmo: WeakHashtbl.cmi
+ObjMemo.cmx: WeakHashtbl.cmx
+Point.cmo:
+Point.cmx:
+PriorityQueue.cmo: PriorityQueue.cmi
+PriorityQueue.cmx: PriorityQueue.cmi
+Quad.cmo: WeakMemo.cmi RenderSupport.cmo Rectangle.cmo Matrix.cmo \
+    LightCommon.cmo gl/2.1/gl.cmi DisplayObjectT.cmo Quad.cmi
+Quad.cmx: WeakMemo.cmx RenderSupport.cmx Rectangle.cmx Matrix.cmx \
+    LightCommon.cmx gl/2.1/gl.cmx DisplayObjectT.cmx Quad.cmi
+Rectangle.cmo:
+Rectangle.cmx:
+RenderSupport.cmo: LightCommon.cmo gl/2.1/gl.cmi
+RenderSupport.cmx: LightCommon.cmx gl/2.1/gl.cmx
+Sprite.cmo: DisplayObjectT.cmo Sprite.cmi
+Sprite.cmx: DisplayObjectT.cmx Sprite.cmi
+Stage.cmo: Touch.cmo Timer.cmo RenderSupport.cmo Rectangle.cmo \
+    PriorityQueue.cmi MList.cmo EventDispatcher.cmi Event.cmo \
+    DisplayObjectT.cmo DisplayObject.cmi Stage.cmi
+Stage.cmx: Touch.cmx Timer.cmx RenderSupport.cmx Rectangle.cmx \
+    PriorityQueue.cmx MList.cmx EventDispatcher.cmx Event.cmx \
+    DisplayObjectT.cmx DisplayObject.cmx Stage.cmi
+TextField.cmo: Rectangle.cmo Quad.cmi LightCommon.cmo DisplayObjectT.cmo \
+    BitmapFont.cmi TextField.cmi
+TextField.cmx: Rectangle.cmx Quad.cmx LightCommon.cmx DisplayObjectT.cmx \
+    BitmapFont.cmx TextField.cmi
+Texture.cmo: WeakHashtbl.cmi sdl/sdl_image.cmo sdl/sdl.cmi Rectangle.cmo \
+    LightCommon.cmo gl/2.1/gl.cmi GLTexture.cmo Texture.cmi
+Texture.cmx: WeakHashtbl.cmx sdl/sdl_image.cmx sdl/sdl.cmx Rectangle.cmx \
+    LightCommon.cmx gl/2.1/gl.cmx GLTexture.cmx Texture.cmi
+TextureAtlas.cmo: Texture.cmi Rectangle.cmo LightCommon.cmo TextureAtlas.cmi
+TextureAtlas.cmx: Texture.cmx Rectangle.cmx LightCommon.cmx TextureAtlas.cmi
+Timer.cmo: EventDispatcher.cmi
+Timer.cmx: EventDispatcher.cmx
+Touch.cmo:
+Touch.cmx:
+Tween.cmo: LightCommon.cmo Tween.cmi
+Tween.cmx: LightCommon.cmx Tween.cmi
+WeakHashtbl.cmo: WeakHashtbl.cmi
+WeakHashtbl.cmx: WeakHashtbl.cmi
+WeakMemo.cmo: WeakHashtbl.cmi WeakMemo.cmi
+WeakMemo.cmx: WeakHashtbl.cmx WeakMemo.cmi
+BitmapFont.cmi: Sprite.cmi LightCommon.cmo DisplayObjectT.cmo
+Button.cmi: Touch.cmo Texture.cmi Rectangle.cmo DisplayObjectT.cmo
+DisplayObject.cmi: Event.cmo DisplayObjectT.cmo
+EventDispatcher.cmi: Event.cmo
+Image.cmi: Texture.cmi Quad.cmi DisplayObjectT.cmo
+MovieClip.cmi: Image.cmi DisplayObjectT.cmo
+PriorityQueue.cmi:
+Quad.cmi: Rectangle.cmo DisplayObjectT.cmo
+Sprite.cmi: DisplayObjectT.cmo
+Stage.cmi: Touch.cmo Timer.cmo DisplayObjectT.cmo DisplayObject.cmi
+TextField.cmi: Rectangle.cmo LightCommon.cmo DisplayObjectT.cmo
+Texture.cmi: Rectangle.cmo gl/2.1/gl.cmi
+TextureAtlas.cmi: Texture.cmi
+Tween.cmi:
+WeakHashtbl.cmi:
+WeakMemo.cmi:
