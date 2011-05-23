@@ -181,16 +181,19 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         if not (TimersQueue.is_empty timersQueue)
         then
           let rec run_timers () = 
-          match TimersQueue.first timersQueue with
-          [ (t,id) when t <= time ->
-            (
-              TimersQueue.remove_first timersQueue;
-              let timer = Hashtbl.find timers id in
-              timer#fire();
-              run_timers ();
-            )
-          | _ -> ()
-          ]
+            match TimersQueue.first timersQueue with
+            [ (t,id) when t <= time ->
+              (
+                TimersQueue.remove_first timersQueue;
+                let timer = Hashtbl.find timers id in
+                timer#fire();
+                match TimersQueue.is_empty timersQueue with
+                [ True -> ()
+                | False -> run_timers ()
+                ]
+              )
+            | _ -> ()
+            ]
           in
           run_timers ()
         else ();
