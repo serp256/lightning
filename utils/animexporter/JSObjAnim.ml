@@ -5,7 +5,7 @@ and frames = int array
 
 
 type json obj_info = (string*oinfo) assoc
-and oinfo = {sizex: int; sizey: int; ?hps: hp list option; lib: string}
+and oinfo = {sizex: int; sizey: int; ?hps: hp list option; ?lib: string option}
 and hp = {p: (int*int); d: string}
 
 type json frames_dir = {paths: string array}

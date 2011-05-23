@@ -5,27 +5,32 @@ module GENIMAGE = Genimage;
 value (///) = Filename.concat;
 
 (* FIXME: make it configurable *)
-value dataDir = "/Volumes/newdata/data";
-value img_dir = "/Volumes/newdata/img";
-value outputDir = "/tmp/img";
+value dataDir = ref "/Volumes/newdata/data";
+value img_dir = ref "/Volumes/newdata/img";
+value outputDir = ref "output";
 
-value file_frames = dataDir /// "frames1L.swf";
+value file_frames () = !dataDir /// "frames1L.swf";
+value (!!) l = Lazy.force l; 
 
-value libsettings = 
-  match Json_io.load_json (dataDir /// "libsettings.json") with
-  [ Json_type.Object lst -> 
-    fun key ->
-      match List.assoc key lst with
-      [ Json_type.String s -> s
-      | _ -> failwith (Printf.sprintf "bad setting: %s" key)
-      ]
-  | _ -> assert False
-  ];
+value _libsettings = 
+  lazy (
+    match Json_io.load_json (!dataDir /// "libsettings.json") with
+    [ Json_type.Object lst -> 
+      fun key ->
+        match List.assoc key lst with
+        [ Json_type.String s -> s
+        | _ -> failwith (Printf.sprintf "bad setting: %s" key)
+        ]
+    | _ -> assert False
+    ]
+  );
+
+value libsettings param = (Lazy.force _libsettings) param;
 
 
-value info_obj = JSObjAnim.init_obj_info (dataDir /// (libsettings "info"));
-value animations = JSObjAnim.init_animations (dataDir /// (libsettings "animations"));
-value frames_dir = JSObjAnim.init_frames_dir (dataDir /// "frames_dir.json");
+value info_obj = lazy (JSObjAnim.init_obj_info (!dataDir /// (libsettings  "info")));
+value animations = lazy (JSObjAnim.init_animations (!dataDir /// (libsettings  "animations")));
+value frames_dir = lazy (JSObjAnim.init_frames_dir (!dataDir /// "frames_dir.json"));
 
 type new_frame_desc_item = {
   texId:int;
@@ -72,7 +77,7 @@ value read_boolean input =
   else False;
 
 value read_frames () =
-  let input = BatFile.open_in file_frames in
+  let input = BatFile.open_in (file_frames()) in
   let rec loop index res =
      try
       let w = BatIO.read_i16 input in
@@ -209,7 +214,7 @@ value write_frames_and_animations new_obj dir =
 value object_items : Hashtbl.t string (list (string*string*int*frame_desc_item*Images.t))= Hashtbl.create 0;
 
 value object_items_create obj frames_desc =
-  let anims = List.assoc obj animations in
+  let anims = List.assoc obj (!!animations) in
   let () = Hashtbl.add object_items obj [] in
   (
     List.iter begin fun (animn,frames) ->
@@ -219,9 +224,9 @@ value object_items_create obj frames_desc =
         let frame_desc = frames_desc.(index_frame) in
         BatList.iteri begin fun index_item item ->
           let _ = print_endline (Printf.sprintf "item libId: %d, pngId %d, urlId: %d" item.libId item.pngId item.urlId) in
-          let png_path = frames_dir.JSObjAnim.paths.(item.urlId) in
+          let png_path = !!frames_dir.JSObjAnim.paths.(item.urlId) in
           let _ = print_endline (Printf.sprintf "png_path: %s" png_path) in
-          let img = Images.load (img_dir /// png_path) [] in
+          let img = Images.load (!img_dir /// png_path) [] in
           try
             let items = Hashtbl.find object_items obj in
             Hashtbl.replace object_items obj [(obj,animn,index_frame,item,img)::items]
@@ -378,7 +383,7 @@ value create_texture obj imgs oframes =
       Hashtbl.add new_obj objn [(animn,[(indexf,nfd)])]
     ]
   in
-  let dir = outputDir /// obj in
+  let dir = !outputDir /// obj in
   let () =
     if not (Sys.file_exists dir)
     then
@@ -469,41 +474,75 @@ value get_objects_for_lib lib =
      [ Some l when lib = l-> True
      | _ -> False
      ]
-   end info_obj;
+   end !!info_obj;
 
 value () =
 (
-  let frames = read_frames () in
-  List.iter begin fun (oname,info) ->
-    let () = print_endline (Printf.sprintf "oname: %s" oname) in
-    try
-      ignore(Hashtbl.find object_items oname)
-    with [Not_found ->
-      match info.JSObjAnim.lib with
-      [ Some l ->
-        let () = print_endline (Printf.sprintf "lib: %s" l) in
-        let list_img =
-          List.fold_left (fun res (oname,_) ->
-            res @ (object_items_create oname frames)
-          ) [] (get_objects_for_lib l)
-        in
-        create_texture l list_img frames
-      | None ->
-        let () = print_endline (Printf.sprintf "obj: %s" oname) in
-        let list_img = object_items_create oname frames in
-        create_texture oname list_img frames
+  let force = ref False in
+  (
+    Arg.parse 
+      [ 
+        ("-f", Arg.Set force, "force delete exists output"); 
+        ("-data",Arg.Set_string dataDir,"data dir"); 
+        ("-img",Arg.Set_string img_dir, "img dir"); 
+        ("-o",Arg.Set_string outputDir,"output dir");
+     ] (fun _ -> ()) "";
+    match Sys.file_exists !outputDir with
+    [ True -> 
+      match !force with
+      [ True -> 
+          match Sys.command (Printf.sprintf "rm -rf %s" !outputDir) with
+          [ 0 -> Unix.mkdir !outputDir 0o755
+          | n -> exit n
+          ]
+      | False -> Printf.eprintf "Directory '%s' alredy exists" !outputDir
       ]
-    ]
-  end info_obj;
+    | False -> Unix.mkdir !outputDir 0o755
+    ];
+  );
+  let frames = read_frames () in
   (* convert info objects to xml *)
-  let out = open_out (outputDir /// "info_objects.xml") in
+  let out = open_out (!outputDir /// "info_objects.xml") in
   let xml = Xmlm.make_output (`Channel out) in
   (
     let () = Xmlm.output xml (`Dtd None) in
     let () = Xmlm.output xml (`El_start (("","Objects"),[])) in
-    List.iter begin fun (objname,info) ->
-      Xmlm.output 
-    end info_obj;
+    List.iter begin fun (oname,info) ->
+    (
+      let () = print_endline (Printf.sprintf "oname: %s" oname) in
+      match Hashtbl.mem object_items oname with
+      [ False -> 
+        let attribs = [ "sizex" =*= info.JSObjAnim.sizex; "sizey" =*= info.JSObjAnim.sizey ] in
+        let lib = 
+          match info.JSObjAnim.lib with
+          [ Some l when False ->
+            let () = print_endline (Printf.sprintf "lib: %s" l) in
+            let list_img =
+              List.fold_left (fun res (oname,_) ->
+                res @ (object_items_create oname frames)
+              ) [] (get_objects_for_lib l)
+            in
+            (
+              create_texture l list_img frames;
+              l
+            )
+          | _ ->
+            let () = print_endline (Printf.sprintf "obj: %s" oname) in
+            let list_img = object_items_create oname frames in
+            (
+              create_texture oname list_img frames;
+              oname
+            )
+          ]
+        in
+        let attribs = [ "lib" =|= lib :: attribs ] in
+        let () = Xmlm.output xml (`El_start (("","Object"),attribs)) in
+        Xmlm.output xml `El_end
+      | True -> ()
+      ]
+    )
+    end !!info_obj;
     Xmlm.output xml `El_end;
+    close_out out;
   );
 );
