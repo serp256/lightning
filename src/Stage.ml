@@ -61,16 +61,20 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               let event = Event.create `TIMER () in
               timer#dispatchEvent event; 
               currentCount := currentCount + 1;
-              if repeatCount <= 0 || currentCount < repeatCount
-              then
-                TimersQueue.add timersQueue ((time +. delay),id)
-              else 
-                (
-                  running := False;
-                  Hashtbl.remove timers id;
-                  let event = Event.create `TIMER_COMPLETE () in
-                  timer#dispatchEvent event
-                )
+              match running with
+              [ True -> 
+                if repeatCount <= 0 || currentCount < repeatCount
+                then
+                  TimersQueue.add timersQueue ((time +. delay),id)
+                else 
+                  (
+                    running := False;
+                    Hashtbl.remove timers id;
+                    let event = Event.create `TIMER_COMPLETE () in
+                    timer#dispatchEvent event
+                  )
+              | False -> ()
+              ]
             );
             method start () = 
               match running with
