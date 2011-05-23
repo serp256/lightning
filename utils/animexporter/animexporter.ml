@@ -268,11 +268,11 @@ value hold_in_size (w,h) imgs =
         if iw > w || ih > h
         then ([],input)
         else 
-          let (nsx,sy,mh) = if sx + iw >= w then (0,sy + mh,ih) else (sx + iw,sy,max ih mh) in
+          let (sx,sy,mh) = if sx + iw >= w then (0,sy + mh,ih) else (sx,sy,max ih mh) in
           if sy + ih >= h
           then ([],input )
           else 
-            let (holded,notholded) = loop nsx sy mh tl in
+            let (holded,notholded) = loop (sx + iw) sy mh tl in
             ( [ (p1,p2,p3,p4,(sx,sy,img)) :: holded ] , notholded )
     ]
   in
@@ -472,6 +472,7 @@ value get_objects_for_lib lib =
    end info_obj;
 
 value () =
+(
   let frames = read_frames () in
   List.iter begin fun (oname,info) ->
     let () = print_endline (Printf.sprintf "oname: %s" oname) in
@@ -494,3 +495,15 @@ value () =
       ]
     ]
   end info_obj;
+  (* convert info objects to xml *)
+  let out = open_out (outputDir /// "info_objects.xml") in
+  let xml = Xmlm.make_output (`Channel out) in
+  (
+    let () = Xmlm.output xml (`Dtd None) in
+    let () = Xmlm.output xml (`El_start (("","Objects"),[])) in
+    List.iter begin fun (objname,info) ->
+      Xmlm.output 
+    end info_obj;
+    Xmlm.output xml `El_end;
+  );
+);
