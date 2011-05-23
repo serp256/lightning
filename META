@@ -4,5 +4,6 @@ archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm"
 
 package "syntax" {
-	description = "Syntactic sugars for Lwt"
+	description = "Syntactic sugars make obj props for tween"
+	archive(syntax,preprocessor) = "pa_prop.cmo"
 }
