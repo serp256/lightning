@@ -1,3 +1,4 @@
+module  ED = EventDispatcher;
 
 module Light = Lightning.Make (struct
   type evType = [= Lightning.eventType |  `MyEvent ];
@@ -176,7 +177,7 @@ let stage width height =
         );
         *)
 
-        let clip = MovieClip.create ~fps:20 "Boom.xml" in
+        let clip = MovieClip.create ~fps:20 "Background.xml" in
         (
           clip#setPos (200.,200.);
           clip#setLoop True;

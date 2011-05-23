@@ -1,0 +1,103 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of class attributes" rel=Appendix href="index_attributes.html">
+<link title="Index of class methods" rel=Appendix href="index_methods.html">
+<link title="Index of classes" rel=Appendix href="index_classes.html">
+<link title="Index of class types" rel=Appendix href="index_class_types.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="MList" rel="Chapter" href="MList.html">
+<link title="PriorityQueue" rel="Chapter" href="PriorityQueue.html">
+<link title="WeakHashtbl" rel="Chapter" href="WeakHashtbl.html">
+<link title="WeakMemo" rel="Chapter" href="WeakMemo.html">
+<link title="Event" rel="Chapter" href="Event.html">
+<link title="EventDispatcher" rel="Chapter" href="EventDispatcher.html">
+<link title="Point" rel="Chapter" href="Point.html">
+<link title="Rectangle" rel="Chapter" href="Rectangle.html">
+<link title="Matrix" rel="Chapter" href="Matrix.html">
+<link title="DisplayObjectT" rel="Chapter" href="DisplayObjectT.html">
+<link title="DisplayObject" rel="Chapter" href="DisplayObject.html">
+<link title="Sprite" rel="Chapter" href="Sprite.html">
+<link title="Quad" rel="Chapter" href="Quad.html">
+<link title="Texture" rel="Chapter" href="Texture.html">
+<link title="TextureAtlas" rel="Chapter" href="TextureAtlas.html">
+<link title="Image" rel="Chapter" href="Image.html">
+<link title="CompiledSprite" rel="Chapter" href="CompiledSprite.html">
+<link title="Touch" rel="Chapter" href="Touch.html">
+<link title="BitmapFont" rel="Chapter" href="BitmapFont.html">
+<link title="TextField" rel="Chapter" href="TextField.html">
+<link title="Stage" rel="Chapter" href="Stage.html">
+<link title="Button" rel="Chapter" href="Button.html">
+<link title="MovieClip" rel="Chapter" href="MovieClip.html">
+<link title="Tween" rel="Chapter" href="Tween.html">
+<link title="Lightning" rel="Chapter" href="Lightning.html"><title>CompiledSprite.Make.c.compile</title>
+</head>
+<body>
+<code class="code"><span class="keyword">method</span>&nbsp;compile&nbsp;()&nbsp;=&nbsp;<span class="comment">(*{{{*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prerr_endline&nbsp;"compile";&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self<span class="keywordsign">#</span>deleteBuffers();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;textureSwitches&nbsp;:=&nbsp;[];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorData&nbsp;:=&nbsp;<span class="string">""</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorsUpdated&nbsp;:=&nbsp;<span class="constructor">False</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;(vertexData,colorData',texCoordData,textures)&nbsp;=&nbsp;collectInfo&nbsp;self&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glGenBuffers&nbsp;4&nbsp;buffers;<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;()&nbsp;=&nbsp;Printf.eprintf&nbsp;"buffers:&nbsp;[&nbsp;%s&nbsp;]\n"&nbsp;(String.concat&nbsp;";"&nbsp;(List.map&nbsp;string_of_int&nbsp;(Array.to_list&nbsp;buffers)))&nbsp;in&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;numVerticies&nbsp;=&nbsp;<span class="constructor">String</span>.length&nbsp;vertexData&nbsp;/&nbsp;4&nbsp;/&nbsp;2&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;numQuads&nbsp;=&nbsp;numVerticies&nbsp;/&nbsp;4&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indexBufferSize&nbsp;=&nbsp;numQuads&nbsp;*&nbsp;6&nbsp;<span class="keyword">in</span>&nbsp;<span class="comment">(*&nbsp;&nbsp;4&nbsp;+&nbsp;2&nbsp;for&nbsp;degenerate&nbsp;triangles&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indices&nbsp;=&nbsp;<span class="constructor">Gl</span>.make_ushort_array&nbsp;indexBufferSize&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pos&nbsp;=&nbsp;ref&nbsp;0&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">for</span>&nbsp;i&nbsp;=&nbsp;0&nbsp;<span class="keyword">to</span>&nbsp;numQuads&nbsp;-&nbsp;1&nbsp;<span class="keyword">do</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;indices.{!pos}&nbsp;:=&nbsp;i*4;&nbsp;incr&nbsp;pos;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">for</span>&nbsp;j&nbsp;=&nbsp;0&nbsp;<span class="keyword">to</span>&nbsp;3&nbsp;<span class="keyword">do</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;indices.{!pos}&nbsp;:=&nbsp;i*4&nbsp;+&nbsp;j;&nbsp;incr&nbsp;pos;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">done</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;indices.{!pos}&nbsp;:=&nbsp;i*4&nbsp;+&nbsp;3;&nbsp;incr&nbsp;pos;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">done</span>;<br>
+<br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;i&nbsp;=&nbsp;0&nbsp;to&nbsp;indexBufferSize&nbsp;-&nbsp;1&nbsp;do&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Printf.eprintf&nbsp;"indices&nbsp;%d&nbsp;=&nbsp;%d\n"&nbsp;i&nbsp;indices.{i};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;done;<br>
+&nbsp;&nbsp;*)</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;index&nbsp;buffer&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBindBuffer&nbsp;gl_element_array_buffer&nbsp;buffers.(0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBufferData&nbsp;gl_element_array_buffer&nbsp;(indexBufferSize&nbsp;*&nbsp;2)&nbsp;indices&nbsp;gl_static_draw;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBindBuffer&nbsp;gl_element_array_buffer&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;vertex&nbsp;buffer&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBindBuffer&nbsp;gl_array_buffer&nbsp;buffers.(1);<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Printf.eprintf&nbsp;"vertexData:&nbsp;%d=[%s]\n"&nbsp;(String.length&nbsp;vertexData)&nbsp;(String.concat&nbsp;","&nbsp;(ExtString.String.fold_right&nbsp;(fun&nbsp;x&nbsp;res&nbsp;-&gt;&nbsp;[&nbsp;string_of_int&nbsp;(int_of_char&nbsp;x)&nbsp;::&nbsp;res&nbsp;])&nbsp;vertexData&nbsp;[]));&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBufferData&nbsp;gl_array_buffer&nbsp;(<span class="constructor">String</span>.length&nbsp;vertexData)&nbsp;vertexData&nbsp;gl_static_draw;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;color&nbsp;buffer&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBindBuffer&nbsp;gl_array_buffer&nbsp;buffers.(2);<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Printf.eprintf&nbsp;"colorData:&nbsp;%d=[%s]\n"&nbsp;(String.length&nbsp;colorData')&nbsp;(String.concat&nbsp;","&nbsp;(ExtString.String.fold_right&nbsp;(fun&nbsp;x&nbsp;res&nbsp;-&gt;&nbsp;[&nbsp;string_of_int&nbsp;(int_of_char&nbsp;x)&nbsp;::&nbsp;res&nbsp;])&nbsp;colorData'&nbsp;[]));&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBufferData&nbsp;gl_array_buffer&nbsp;(<span class="constructor">String</span>.length&nbsp;colorData')&nbsp;colorData'&nbsp;gl_dynamic_draw;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;texture&nbsp;coordinate&nbsp;buffer&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBindBuffer&nbsp;gl_array_buffer&nbsp;buffers.(3);<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Printf.eprintf&nbsp;"texCoordData:&nbsp;%d\n"&nbsp;(String.length&nbsp;texCoordData);&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBufferData&nbsp;gl_array_buffer&nbsp;(<span class="constructor">String</span>.length&nbsp;texCoordData)&nbsp;texCoordData&nbsp;gl_static_draw;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glBindBuffer&nbsp;gl_array_buffer&nbsp;0;<br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Printf.eprintf&nbsp;"textures&nbsp;len:&nbsp;%d\n"&nbsp;(List.length&nbsp;textures);&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;textureSwitches&nbsp;:=&nbsp;textures;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorData&nbsp;:=&nbsp;colorData';<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prerr_endline&nbsp;"compiled";&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compiled&nbsp;:=&nbsp;<span class="constructor">True</span>;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</code></body></html>
