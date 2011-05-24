@@ -11,6 +11,11 @@ install: all
 uninstall:
 	$(OCAMLFIND) remove lightning
 
+
+reinstall: uninstall install
+
+.PHONY: install uninstall reinstall 
+
 doc:
 	$(MAKE) -C src doc
 
