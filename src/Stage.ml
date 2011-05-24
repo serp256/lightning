@@ -143,13 +143,15 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           end [] touches
         in
         (
+          (*
           List.iter begin fun (target,touch) ->
-(*             Printf.printf "touch: %f [%f:%f], [%f:%f], %d, %s, [ %s ]\n%!"  *)
+            Printf.printf "touch: %f [%f:%f], [%f:%f], %d, %s, [ %s ]\n%!" 
               touch.timestamp touch.globalX touch.globalY 
               touch.previousGlobalX touch.previousGlobalY
               touch.tapCount (string_of_touchPhase touch.phase)
               target#name
           end processedTouches;
+          *)
           let fireTouches = 
             (* группируем их по таргетам и вперед *)
             List.fold_left (fun res (target,touch) -> MList.add_assoc target touch res) [] processedTouches
