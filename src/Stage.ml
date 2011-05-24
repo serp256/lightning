@@ -6,7 +6,7 @@ type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `Passed
 
 
 exception Restricted_operation;
-module TimersQueue = PriorityQueue.Make (struct type t = (float*int); value order (t1,_) (t2,_) = t1 >= t2; end);
+
 
 module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and type evData = private [> eventData ]) = struct (*{{{*)
 
@@ -21,6 +21,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method private asEventTarget: Timer.c D.evType D.evData;
       method fire: unit -> unit;
     end;
+
+  module TimersQueue = PriorityQueue.Make (struct type t = (float*inner_timer); value order (t1,_) (t2,_) = t1 <= t2; end);
 
   class virtual c (width:float) (height:float) =
     object(self)
@@ -42,14 +44,14 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       value mutable time = 0.;
       value mutable timerID = 0;
       value timersQueue = TimersQueue.make ();
-      value timers (* : Hashtbl.t int (inner_timer 'event_type 'event_data) *) = Hashtbl.create 0;
+(*       value timers (* : Hashtbl.t int (inner_timer 'event_type 'event_data) *) = Hashtbl.create 0; *)
 
       method createTimer ?(repeatCount=0) delay = (*{{{*)
         let o = 
           object(timer)
             type 'timer = Timer.c 'event_type 'event_data;
             inherit EventDispatcher.simple ['event_type,'event_data,'timer];
-            value id = let id = timerID in (timerID := timerID + 1; id);
+(*             value id = let id = timerID in (timerID := timerID + 1; id); *)
             value mutable running = False;
             method running = running;
             value mutable currentCount = 0;
@@ -58,6 +60,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
             method currentCount = currentCount;
             method fire () = 
             (
+              prerr_endline "fire timer";
               let event = Event.create `TIMER () in
               timer#dispatchEvent event; 
               currentCount := currentCount + 1;
@@ -65,11 +68,11 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               [ True -> 
                 if repeatCount <= 0 || currentCount < repeatCount
                 then
-                  TimersQueue.add timersQueue ((time +. delay),id)
+                  TimersQueue.add timersQueue ((time +. delay),(timer :> inner_timer))
                 else 
                   (
                     running := False;
-                    Hashtbl.remove timers id;
+(*                     Hashtbl.remove timers id; *)
                     let event = Event.create `TIMER_COMPLETE () in
                     timer#dispatchEvent event
                   )
@@ -80,9 +83,10 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               match running with
               [ False ->
                 (
-                  TimersQueue.add timersQueue ((time +. delay),id);
-                  Hashtbl.add timers id timer;
-                  currentCount := repeatCount;
+(*                   Printf.eprintf "add timers for time: %F\n%!" (time +. delay); *)
+                  TimersQueue.add timersQueue ((time +. delay),(timer :> inner_timer));
+(*                   Hashtbl.add timers id timer; *)
+                  currentCount := 0;
                   running := True
                 )
               | True -> failwith "Timer alredy started"
@@ -91,8 +95,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               match running with
               [ True -> 
                 (
-                  TimersQueue.remove_if (fun (_,id') -> id'= id) timersQueue;
-                  Hashtbl.remove timers id;
+                  TimersQueue.remove_if (fun (_,o) -> o = timer) timersQueue;
+(*                   Hashtbl.remove timers id; *)
                   running := False;
                 )
               | False -> failwith "Timer alredy stopped"
@@ -105,7 +109,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       value mutable currentTouches = []; (* FIXME: make it weak for target *)
       method processTouches (touches:list Touch.t) = (*{{{*)
-        let () = Printf.eprintf "process touches %d\n%!" (List.length touches) in
+(*         let () = Printf.eprintf "process touches %d\n%!" (List.length touches) in *)
         let processedTouches = 
           List.fold_left begin fun processedTouches touch ->
             (*let () = 
@@ -140,7 +144,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         in
         (
           List.iter begin fun (target,touch) ->
-            Printf.printf "touch: %f [%f:%f], [%f:%f], %d, %s, [ %s ]\n%!" 
+(*             Printf.printf "touch: %f [%f:%f], [%f:%f], %d, %s, [ %s ]\n%!"  *)
               touch.timestamp touch.globalX touch.globalY 
               touch.previousGlobalX touch.previousGlobalY
               touch.tapCount (string_of_touchPhase touch.phase)
@@ -177,15 +181,16 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method advanceTime (seconds:float) = 
       (
         time := time +. seconds;
+(*         Printf.eprintf "%F. timers length: %d\n%!" time (TimersQueue.length timersQueue); *)
         (* timers *)
         if not (TimersQueue.is_empty timersQueue)
         then
           let rec run_timers () = 
             match TimersQueue.first timersQueue with
-            [ (t,id) when t <= time ->
+            [ (t,timer) when t <= time ->
               (
                 TimersQueue.remove_first timersQueue;
-                let timer = Hashtbl.find timers id in
+(*                 let timer = Hashtbl.find timers id in *)
                 timer#fire();
                 match TimersQueue.is_empty timersQueue with
                 [ True -> ()

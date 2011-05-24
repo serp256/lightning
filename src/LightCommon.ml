@@ -17,8 +17,8 @@ external bundle_path_for_resource: string -> option string = "ml_bundle_path_for
 
 ELSE
 value bundle_path_for_resource fname = 
-  let path = Filename.concat "Resources" path in
-  match Filename.file_eixsts path with
+  let path = Filename.concat "Resources" fname in
+  match Sys.file_exists path with
   [ True -> Some path
   | False -> None
   ];
@@ -32,12 +32,12 @@ value resource_path path scale =
 *)
 ENDIF;
 
-value resource_path ?dir path = 
+value resource_path path _ = 
   match Filename.is_relative path with
   [ True -> match bundle_path_for_resource path with [ Some p -> p | None -> raise (File_not_exists path) ]
   | False -> 
-    match Sys.file_exists fullPath with
-    [ True -> fullPath
+    match Sys.file_exists path with
+    [ True -> path
     | False -> raise (File_not_exists path)
     ]
   ];

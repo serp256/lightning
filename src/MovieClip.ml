@@ -31,7 +31,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
     let labels = Hashtbl.create 0 in
     let rec parse_textures result = 
       match XmlParser.parse_element "Texture" [ "path" ] with
-      [ Some [ path ] _ -> parse_textures [ Texture.createFromFile path :: result ]
+      [ Some [ path ] _ -> parse_textures [ Texture.createFromFile (Filename.concat (Filename.dirname xmlpath) path) :: result ]
       | None -> result
       | _ -> assert False
       ]
