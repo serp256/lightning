@@ -19,7 +19,7 @@ class virtual _c [ 'parent ]:
     type 'listener = 'event -> int -> unit;
     method addEventListener: evType -> 'listener -> int;
     method removeEventListener: evType -> int -> unit;
-    method dispatchEvent: 'event -> unit;
+    method dispatchEvent: !'ct. Event.t evType evData 'displayObject 'ct -> unit;
     method dispatchEvent': !'ct. Event.t evType evData 'displayObject 'ct -> unit;
     method hasEventListeners: evType -> bool;
 
@@ -104,7 +104,7 @@ class virtual container:
     (* need to be hidden *)
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;
-    method dispatchEventOnChildren: Event.t evType evData 'displayObject 'displayObject -> unit;
+    method dispatchEventOnChildren: !'ct. Event.t evType evData 'displayObject 'ct -> unit;
     method boundsInSpace: option 'displayObject -> Rectangle.t;
     method private render': unit -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);

@@ -182,7 +182,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
             List.fold_left (fun res (target,touch) -> MList.add_assoc target touch res) [] processedTouches
           in
           let event = Event.create `TOUCH ~bubbles:True () in
-          List.iter begin fun (target,touches) ->
+          List.iter begin fun ((target:D.c),touches) ->
             let event = {(event) with Event.data = `Touches touches} in
             target#dispatchEvent event
           end fireTouches;

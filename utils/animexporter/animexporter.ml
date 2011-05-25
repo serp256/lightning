@@ -32,6 +32,7 @@ value info_obj = lazy (JSObjAnim.init_obj_info (!dataDir /// (libsettings  "info
 value animations = lazy (JSObjAnim.init_animations (!dataDir /// (libsettings  "animations")));
 value frames_dir = lazy (JSObjAnim.init_frames_dir (!dataDir /// "frames_dir.json"));
 
+(*
 type new_frame_desc_item = {
   texId:int;
   recId:int;
@@ -48,6 +49,7 @@ type new_frame_desc = {
  ny:int;
  nitems: list new_frame_desc_item;
 };
+*)
 
 type frame_desc_item = {
  libId:int;
@@ -89,7 +91,7 @@ value read_frames () =
 (*       let _ = print_endline (Printf.sprintf "fields: %d, %d, %d, %d" field1 field2 field3 field4) in *)
       let frame = {w;h;x;y;icon_x;icon_y;items=[]} in
       let count = BatIO.read_byte input in
-      let _ = print_endline ("count: " ^ (string_of_int count)) in
+(*       let _ = print_endline ("count: " ^ (string_of_int count)) in *)
       let rec loop1 i frame =
           if i <= count
           then
@@ -151,6 +153,7 @@ value write_animations animations dir =
   );
 *)
 
+(*
 value write_animations animations dir = 
   let out = BatFile.open_out (dir /// "animations.dat") in
   (
@@ -233,6 +236,7 @@ value object_items_create obj frames_desc =
     end anims;
     Hashtbl.find object_items obj;
   );
+*)
 
 (* Возвращает картинки которые влезли в этот w h  *)
 (*
@@ -260,13 +264,13 @@ value hold_in_size size imgs =
 
 
 value hold_in_size (w,h) imgs = 
-  let () = Printf.eprintf "hold to [%d:%d]\n" w h in
+(*   let () = Printf.eprintf "hold to [%d:%d]\n" w h in *)
   let rec loop sx sy mh input =
     match input with
     [ [] -> ([],[])
-    | [ (p1,p2,p3,p4,img) :: tl ] -> 
+    | [ (p1,img) :: tl ] -> 
         let (iw,ih) = Images.size img in
-        let () = Printf.eprintf "hold to [%d:%d - %d [%d:%d]]\n" sx sy mh iw ih in
+(*         let () = Printf.eprintf "hold to [%d:%d - %d [%d:%d]]\n" sx sy mh iw ih in *)
         if iw > w || ih > h
         then ([],input)
         else 
@@ -275,19 +279,19 @@ value hold_in_size (w,h) imgs =
           then ([],input )
           else 
             let (holded,notholded) = loop (sx + iw) sy mh tl in
-            ( [ (p1,p2,p3,p4,(sx,sy,img)) :: holded ] , notholded )
+            ( [ (p1,(sx,sy,img)) :: holded ] , notholded )
     ]
   in
   loop 0 0 0 imgs;
 
 value rec blit_by_textures imgs = 
-  let () = Printf.eprintf "blit %d images\n" (List.length imgs) in
+(*   let () = Printf.eprintf "blit %d images\n" (List.length imgs) in *)
   try
     let res = 
       BatList.find_map begin fun size ->
         let (holded,notholded) = hold_in_size size imgs in
         match notholded with
-        [ [] -> let () = Printf.eprintf "size [%d:%d] OK\n" (fst size) (snd size) in Some (size,holded)
+        [ [] -> Some (size,holded)
         | _ -> None
         ]
       end [(64,64);(128,128);(256,256);(512,512)]
@@ -347,6 +351,7 @@ value get_size imgs =
   (w,h);
 *)
 
+(*
 value create_texture obj imgs oframes =
   let new_obj : Hashtbl.t string (list (string*(list (int*new_frame_desc)))) = Hashtbl.create 0 in
   let add_in_new_obj (objn,animn,indexf,old_item,texId,recId) =
@@ -426,6 +431,7 @@ value create_texture obj imgs oframes =
     BatIO.close_out texInfo;
     write_frames_and_animations new_obj dir;
   );
+  *)
 
   (*
   let out = open_out (dir /// "1.xml") in
@@ -479,17 +485,15 @@ value get_objects_for_lib lib =
      ]
    end !!info_obj;
 
-value collect_lib_info frames libobjects = 
-(
+value make_frames framesMap frames libobjects = 
   let framesIds = HSet.create 0 in
-  List.iter begin fun (objname,animname) ->
-    let frms = List.assoc animname (List.assoc objname %animations) in
-    Array.iter (fun i -> HSet.add framesIds i)) frms
-  end libobjects;
-  (* Сформировали массив фреймов нах *)
-  let framesIds = HSet.to_list framesIds in
-  let framesMap = Hashtbl.create 0 in
-  let frames = 
+  (
+    List.iter begin fun (objname,animname) ->
+      let frms = List.assoc animname (List.assoc objname !!animations) in
+      Array.iter (fun i -> HSet.add framesIds i) frms
+    end libobjects;
+    (* Сформировали массив фреймов нах *)
+    let framesIds = HSet.to_list framesIds in
     BatList.mapi begin fun i fid ->
       let frame = frames.(fid) in
       (
@@ -497,30 +501,148 @@ value collect_lib_info frames libobjects =
         frame
       )
     end framesIds 
-  in
-  (* анимации составить с учетом новых фреймов *)
-
-  (* теперь зачитать картинки *)
-  let imageUrls = HSet.create 0 in
-  (
-    List.iter (fun frame -> (List.iter begin fun index_item item -> HSet.add imageUrls item.urlId) frame.items) frames;
-    let images = 
-      HSet.fold begin fun urlId res ->
-        let png_path = !!frames_dir.JSObjAnim.paths.(urlId) in
-        let img = Images.load (!img_dir /// png_path) [] in
-        [ (urlId,img) :: res ]
-      end imageUrls []
-    in
   );
-);
+
+value write_textures imagesMap frames outdir = 
+  let images = 
+    let imageUrls = HSet.create 0 in
+    (
+      List.iter (fun frame -> List.iter (fun item -> HSet.add imageUrls item.urlId) frame.items) frames;
+      let imgs = 
+        HSet.fold begin fun urlId res ->
+          let png_path = !!frames_dir.JSObjAnim.paths.(urlId) in
+          let img = Images.load (!img_dir /// png_path) [] in
+          [ (urlId,img) :: res ]
+        end imageUrls []
+      in
+      List.sort (fun (_,img1) (_,img2) ->
+        let (_,ih1) = Images.size img1 in
+        let (_,ih2) = Images.size img2 in
+        compare ih1 ih2
+      ) imgs
+    )
+  in
+  let texInfo = BatFile.open_out (outdir /// "texInfo.dat") in
+  (
+    let textures = blit_by_textures images in
+    let () = BatIO.write_ui16 texInfo (List.length textures) in
+    BatList.iteri begin fun cnt ((w,h),imgs) ->
+(*       let () = Printf.eprintf "texture [%d:%d]\n%!" w h in *)
+      let () = BatIO.write_string texInfo ((string_of_int cnt) ^ ".png") in
+      let () = BatIO.write_ui16 texInfo (List.length imgs) in
+      let rgb = Rgba32.make w h {Color.color={Color.r=0;g=0;b=0}; alpha=0;} in
+      let new_img = Images.Rgba32 rgb in
+      (
+        BatList.iteri begin fun i (urlId,(sx,sy,img)) ->
+        (
+          let (iw,ih) = Images.size img in
+          (
+            try
+              Images.blit img 0 0 new_img sx sy iw ih;
+            with [ Invalid_argument _ -> 
+              (
+                match img with
+                [ Images.Index8 _ -> prerr_endline "index8"
+                | Images.Rgb24 _ -> prerr_endline "rgb24"
+                | Images.Rgba32 _ -> prerr_endline "rgba32"
+                | _ -> prerr_endline "other"
+                ];
+                raise Exit;
+              )
+            ];
+            BatIO.write_ui16 texInfo sx;
+            BatIO.write_ui16 texInfo sy;
+            BatIO.write_ui16 texInfo iw;
+            BatIO.write_ui16 texInfo ih;
+          );
+          Hashtbl.add imagesMap urlId (cnt,i);
+        )
+        end imgs;
+        Images.save (outdir /// ((string_of_int cnt) ^ ".png")) (Some Images.Png) [] new_img;
+      )
+    end textures;
+    BatIO.close_out texInfo;
+  );
+
+
+value write_frames imagesMap frames outdir = 
+  let out = BatFile.open_out (outdir /// "frames.dat") in
+  (
+    let () = BatIO.write_i32 out (List.length frames) in
+    List.iter begin fun frame ->
+      (
+        BatIO.write_i16 out frame.w;
+        BatIO.write_i16 out frame.h;
+        BatIO.write_i16 out frame.x;
+        BatIO.write_i16 out frame.y;
+        BatIO.write_byte out (List.length frame.items);
+        List.iter begin fun item ->
+          (
+            let (texId,recId) = Hashtbl.find imagesMap item.urlId in
+            (
+              BatIO.write_byte out texId;
+              BatIO.write_i32 out recId;
+            );
+            BatIO.write_i16 out item.xi;
+            BatIO.write_i16 out item.yi;
+            BatIO.write_byte out (if item.flip then 1 else 0);
+            BatIO.write_i32 out item.alpha;
+          )
+        end frame.items
+      )
+    end frames;
+    BatIO.close_out out;
+  );
+
+value write_lib libname libobjects frames = 
+  let () = Printf.eprintf "make lib: %s\n%!" libname in
+  let framesMap = Hashtbl.create 0 in
+  let frames = make_frames framesMap frames libobjects in
+  (* анимации составить с учетом новых фреймов *)
+  let animations = 
+    List.fold_left begin fun res (objname,animname) ->
+      let frms = List.assoc animname (List.assoc objname !!animations) in
+      let frms = Array.map (fun i -> Hashtbl.find framesMap i) frms in
+      let anims = 
+        try
+          List.assoc objname res
+        with [ Not_found -> [ ] ]
+      in
+      let res = List.remove_assoc objname res in
+      [ (objname,[(animname,frms) :: anims]) :: res]
+    end [] libobjects
+  in
+  let outdir = !outputDir /// libname in
+  (* теперь зачитать картинки *)
+  let () = Unix.mkdir outdir 0o755  in
+  let imagesMap = Hashtbl.create 0 in
+  let () = write_textures imagesMap frames outdir in
+  let () = write_frames imagesMap frames outdir in
+  let anim_out = BatFile.open_out (outdir /// "animations.dat") in
+  (
+    List.iter begin fun (objname,animation) ->
+    (
+      BatIO.write_string anim_out objname;
+      BatIO.write_ui16 anim_out (List.length animation);
+      List.iter begin fun (anim_name,frames) ->
+      (
+        BatIO.write_string anim_out anim_name;
+        BatIO.write_ui16 anim_out (Array.length frames);
+        Array.iter (fun frame -> BatIO.write_i32 anim_out frame) frames;
+      )
+      end animation;
+    )
+    end animations;
+    BatIO.close_out anim_out;
+  );
 
 value group_by_objects (oname,info) res =
   (* Взять все анимации для объекта и это будет отдельная либа *)
   try
     let anims = List.assoc oname !!animations in
-    let res = List.map (fun (animname,_) -> (oname,animname)) anims in
-    Hashtbl.add res oname res;
-    oname
+    let items = List.map (fun (animname,_) -> (oname,animname)) anims in
+    Hashtbl.add res oname items;
+    Some oname
   with [ Not_found -> None ];
 
 value () =
@@ -542,7 +664,7 @@ value () =
           [ 0 -> Unix.mkdir !outputDir 0o755
           | n -> exit n
           ]
-      | False -> Printf.eprintf "Directory '%s' alredy exists" !outputDir
+      | False -> (Printf.eprintf "Directory '%s' alredy exists\n" !outputDir; exit 1)
       ]
     | False -> Unix.mkdir !outputDir 0o755
     ];
@@ -553,21 +675,27 @@ value () =
   (
     let () = Xmlm.output xml (`Dtd None) in
     let () = Xmlm.output xml (`El_start (("","Objects"),[])) in
+    let group_libs = group_by_objects in
     let libs = Hashtbl.create 1 in
     (
       List.iter begin fun ((oname,info) as infobj) ->
         let () = print_endline (Printf.sprintf "oname: %s" oname) in
-        let lib = group_libs libs infobj in
-        let attribs = [ "sizex" =*= info.JSObjAnim.sizex; "sizey" =*= info.JSObjAnim.sizey ; "lib" =|= lib ] in
-        let () = Xmlm.output xml (`El_start (("","Object"),attribs)) in
-        Xmlm.output xml `El_end
+        match group_libs infobj libs with
+        [ None -> ()
+        | Some lib ->
+          let attribs = [ "sizex" =*= info.JSObjAnim.sizex; "sizey" =*= info.JSObjAnim.sizey ; "lib" =|= lib ] in
+          let () = Xmlm.output xml (`El_start (("","Object"),attribs)) in
+          Xmlm.output xml `El_end
+        ]
      end !!info_obj;
      (* Начинаем хуячить нахуй *)
      let frames = read_frames () in
-     List.iter begin fun (libname,elements) ->
-       let lib = collect_lib_info elements in
-     end libs
-    )
+     Hashtbl.iter begin fun libname elements -> 
+       try
+         write_lib libname elements frames
+       with [ Exit -> Printf.eprintf "failed to make lib: %s\n%!" libname ]
+      end libs
+    );
     Xmlm.output xml `El_end;
     close_out out;
   );

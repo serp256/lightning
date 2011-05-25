@@ -126,7 +126,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     *)
   
     (* всегда ставить таргет в себя и соответственно current_target *)
-    method dispatchEvent (event:'event) = 
+    method dispatchEvent: !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit = fun event -> 
       let event = {(event) with Event.target = Some self#asDisplayObject; currentTarget = None} in
       self#dispatchEvent' event;
 
@@ -629,7 +629,7 @@ class virtual container = (*{{{*)
     method asDisplayObjectContainer = (self :> container);
     method dcast = `Container self#asDisplayObjectContainer;
 
-    method dispatchEventOnChildren event =
+    method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit = fun event ->
       let rec loop obj = 
         let res = Enum.empty () in
         (
@@ -647,7 +647,7 @@ class virtual container = (*{{{*)
 (*       let event = (event :> Event.t 'event_type 'event_data 'displayObject) in *)
       match Enum.is_empty listeners with
       [ True -> ()
-      | False -> Enum.iter (fun listener -> listener#dispatchEvent event) listeners
+      | False -> Enum.iter (fun (listener: 'displayObject) -> listener#dispatchEvent event) listeners
       ];
     
 
@@ -677,7 +677,8 @@ class virtual container = (*{{{*)
           [ Some _ -> 
             let event = Event.create `ADDED_TO_STAGE () in
             match child#dcast with
-            [ `Container cont -> cont#dispatchEventOnChildren event
+            [ `Container (cont:container) -> 
+              cont#dispatchEventOnChildren event
             | `Object _ -> child#dispatchEvent event
             ]
           | None -> ()
@@ -701,7 +702,7 @@ class virtual container = (*{{{*)
       ];
 
     (* FIXME: защиту от зацикливаний бы поставить нах *)
-    method private removeChild'' child_node =
+    method private removeChild'' (child_node:Dllist.node_t 'displayObject) =
       let child = Dllist.get child_node in
       (
         let event = Event.create `REMOVED () in
@@ -710,7 +711,7 @@ class virtual container = (*{{{*)
         [ Some _ -> 
           let event = Event.create `REMOVED_FROM_STAGE () in
           match child#dcast with
-          [ `Container cont -> cont#dispatchEventOnChildren event
+          [ `Container cont -> () (* cont#dispatchEventOnChildren event *)
           | `Object _ -> child#dispatchEvent event
           ]
         | None -> ()
