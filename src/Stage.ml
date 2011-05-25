@@ -15,14 +15,6 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
   value tweens : Queue.t  tween = Queue.create ();
   value addTween tween = Queue.push (tween :> tween) tweens;
 
-  class type inner_timer =
-    object
-      inherit Timer.c [ D.evType, D.evData ]; 
-      method private asEventTarget: Timer.c D.evType D.evData;
-      method fire: unit -> unit;
-    end;
-
-  module TimersQueue = PriorityQueue.Make (struct type t = (float*inner_timer); value order (t1,_) (t2,_) = t1 <= t2; end);
 
   class virtual c (width:float) (height:float) =
     object(self)
@@ -41,11 +33,14 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       method! isStage = True;
 
+      (*
       value mutable time = 0.;
       value mutable timerID = 0;
       value timersQueue = TimersQueue.make ();
+      *)
 (*       value timers (* : Hashtbl.t int (inner_timer 'event_type 'event_data) *) = Hashtbl.create 0; *)
 
+      (*
       method createTimer ?(repeatCount=0) delay = (*{{{*)
         let o = 
           object(timer)
@@ -135,6 +130,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           end
         in
         (o :> Timer.c _ _ );(*}}}*)
+      *)
 
       value mutable currentTouches = []; (* FIXME: make it weak for target *)
       method processTouches (touches:list Touch.t) = (*{{{*)
@@ -212,28 +208,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method advanceTime (seconds:float) = 
       (
         debug "advance time";
-        time := time +. seconds;
-(*         Printf.eprintf "%F. timers length: %d\n%!" time (TimersQueue.length timersQueue); *)
-        (* timers *)
-        if not (TimersQueue.is_empty timersQueue)
-        then
-          let rec run_timers () = 
-            match TimersQueue.first timersQueue with
-            [ (t,timer) when t <= time ->
-              (
-                TimersQueue.remove_first timersQueue;
-(*                 let timer = Hashtbl.find timers id in *)
-                timer#fire();
-                match TimersQueue.is_empty timersQueue with
-                [ True -> ()
-                | False -> run_timers ()
-                ]
-              )
-            | _ -> ()
-            ]
-          in
-          run_timers ()
-        else ();
+        Timers.run seconds;
         (* jugler here *)
         while not (Queue.is_empty tweens) do
           let tween = Queue.take tweens in
@@ -262,6 +237,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           | res -> res
           ]
       ];
+
+    initializer Timers.init 0.;
     
   end;
 

@@ -45,7 +45,7 @@ endif
 MOBS += $(gl)/gl_stub.o 
 
 MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
-					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Stage.ml Button.ml MovieClip.ml Tween.ml Lightning.ml
+					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml Stage.ml Button.ml MovieClip.ml Tween.ml Lightning.ml
 
 MLFLAGS += -package extlib,xmlm -I $(gl)
 
@@ -76,4 +76,4 @@ doc:
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css
+	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.*
