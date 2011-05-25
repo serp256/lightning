@@ -4,6 +4,12 @@ archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm"
 
 package "syntax" (
-	description = "Syntactic sugars make obj props for tween"
-	archive(syntax,preprocessor) = "pa_prop.cmo"
+	package "proto" (
+		description = "Syntactic sugars make obj props for tween"
+		archive(syntax,preprocessor) = "pa_prop.cmo"
+	)
+	package "debug" (
+		description = "Syntactic sugars make obj props for tween"
+		archive(syntax,preprocessor) = "pa_debug.cmo"
+	)
 )

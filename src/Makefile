@@ -7,13 +7,15 @@ include ../Makefile.common
 
 
 MOBS = 
-MLOBS = 
+MLSOURCES = 
 MLDEPFLAGS =
 
+release: lightning.cmxa syntax/pa_prop.cmo
+debug: release
 
-all: lightning.cmxa pa_prop.cmo
-
-pa_prop.cmo: MLFLAGS += -package camlp4.lib,camlp4.quotations.r
+SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
+$(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend -syntax camlp4r 
+$(SYNTAX): MLPPOPT :=
 
 ifeq ($(PLATFORM),ios)
 	gl = gl/es
@@ -28,7 +30,7 @@ ifeq ($(PLATFORM),ios)
 else
 	gl = gl/2.1
 	MOBS += sdl/sdl_stub.o sdl/sdl_image_stub.o
-	MLOBS += sdl/sdl.cmx sdl/sdl_image.cmx sdl/sdl_run.cmx
+	MLSOURCES += sdl/sdl.ml sdl/sdl_image.ml sdl/sdl_run.ml
 	MLFLAGS += -I sdl
 	MLDEPFLAGS += -I sdl sdl/*.ml sdl/*.mli
 	MLPPOPT += -DSDL
@@ -41,16 +43,19 @@ endif
 
 
 MOBS += $(gl)/gl_stub.o 
-MLOBS += $(gl)/gl.cmx \
-				MList.cmx PriorityQueue.cmx WeakHashtbl.cmx WeakMemo.cmx LightCommon.cmx Event.cmx EventDispatcher.cmx Point.cmx Rectangle.cmx Matrix.cmx RenderSupport.cmx \
-				DisplayObject.cmx Sprite.cmx Quad.cmx GLTexture.cmx Texture.cmx TextureAtlas.cmx Image.cmx CompiledSprite.cmx Touch.cmx BitmapFont.cmx TextField.cmx FPS.cmx Stage.cmx Button.cmx MovieClip.cmx Tween.cmx Lightning.cmx
 
+MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
+					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Stage.ml Button.ml MovieClip.ml Tween.ml Lightning.ml
 
-MLFLAGS += -package extlib -I $(gl)
+MLFLAGS += -package extlib,xmlm -I $(gl)
 
+#XMLMFILES = TextureAtlas.ml BitmapFont.ml LightCommon.ml MovieClip.ml
+#$(XMLMFILES:.ml=.cmo) $(XMLMFILES:.ml=.cmx) $(XMLMFILES:.ml=.cmi): MLFLAGS += -package xmlm
 
-XMLMFILES = TextureAtlas.ml BitmapFont.ml LightCommon.ml MovieClip.ml
-$(XMLMFILES:.ml=.cmo) $(XMLMFILES:.ml=.cmx) $(XMLMFILES:.ml=.cmi): MLFLAGS += -package xmlm
+MLOBS = $(MLSOURCES:.ml=.cmx)
+
+$(MLOBS): syntax/pa_debug.cmo 
+$(MLOBS): MLPPOPT += syntax/pa_debug.cmo -enable-debug default
 	
 lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
 	$(OCAMLMKLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
@@ -67,7 +72,7 @@ doc:
 
 -include MLDepend.$(PLATFORM)
 
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL := release
 
 .PHONY : clean
 clean: 

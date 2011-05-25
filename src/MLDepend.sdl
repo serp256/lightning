@@ -22,6 +22,8 @@ CompiledSprite.cmo: Sprite.cmi RenderSupport.cmo Quad.cmi Matrix.cmo \
     Image.cmi gl/2.1/gl.cmi DisplayObjectT.cmo
 CompiledSprite.cmx: Sprite.cmx RenderSupport.cmx Quad.cmx Matrix.cmx \
     Image.cmx gl/2.1/gl.cmx DisplayObjectT.cmx
+Debug.cmo:
+Debug.cmx:
 DisplayObject.cmo: Rectangle.cmo Point.cmo Matrix.cmo LightCommon.cmo \
     gl/2.1/gl.cmi EventDispatcher.cmi Event.cmo DisplayObject.cmi
 DisplayObject.cmx: Rectangle.cmx Point.cmx Matrix.cmx LightCommon.cmx \
@@ -38,6 +40,8 @@ FPS.cmo: TextField.cmi Event.cmo DisplayObjectT.cmo
 FPS.cmx: TextField.cmx Event.cmx DisplayObjectT.cmx
 GLTexture.cmo: gl/2.1/gl.cmi
 GLTexture.cmx: gl/2.1/gl.cmx
+Hhtbl.cmo: Hhtbl.cmi
+Hhtbl.cmx: Hhtbl.cmi
 Image.cmo: WeakMemo.cmi Texture.cmi RenderSupport.cmo Quad.cmi \
     LightCommon.cmo gl/2.1/gl.cmi DisplayObjectT.cmo Image.cmi
 Image.cmx: WeakMemo.cmx Texture.cmx RenderSupport.cmx Quad.cmx \
@@ -45,9 +49,11 @@ Image.cmx: WeakMemo.cmx Texture.cmx RenderSupport.cmx Quad.cmx \
 LightCommon.cmo:
 LightCommon.cmx:
 Lightning.cmo: Touch.cmo TextField.cmi Stage.cmi Sprite.cmi sdl/sdl_run.cmo \
-    Quad.cmi MovieClip.cmi Image.cmi FPS.cmo DisplayObject.cmi
+    Quad.cmi MovieClip.cmi Image.cmi FPS.cmo DisplayObject.cmi Button.cmi
 Lightning.cmx: Touch.cmx TextField.cmx Stage.cmx Sprite.cmx sdl/sdl_run.cmx \
-    Quad.cmx MovieClip.cmx Image.cmx FPS.cmx DisplayObject.cmx
+    Quad.cmx MovieClip.cmx Image.cmx FPS.cmx DisplayObject.cmx Button.cmx
+MHashtbl.cmo:
+MHashtbl.cmx:
 MList.cmo:
 MList.cmx:
 Matrix.cmo:
@@ -70,6 +76,8 @@ Rectangle.cmo:
 Rectangle.cmx:
 RenderSupport.cmo: LightCommon.cmo gl/2.1/gl.cmi
 RenderSupport.cmx: LightCommon.cmx gl/2.1/gl.cmx
+RenderTexture.cmo:
+RenderTexture.cmx:
 Sprite.cmo: DisplayObjectT.cmo Sprite.cmi
 Sprite.cmx: DisplayObjectT.cmx Sprite.cmi
 Stage.cmo: Touch.cmo Timer.cmo RenderSupport.cmo Rectangle.cmo \
@@ -102,6 +110,7 @@ BitmapFont.cmi: Sprite.cmi LightCommon.cmo DisplayObjectT.cmo
 Button.cmi: Touch.cmo Texture.cmi Rectangle.cmo DisplayObjectT.cmo
 DisplayObject.cmi: Event.cmo DisplayObjectT.cmo
 EventDispatcher.cmi: Event.cmo
+Hhtbl.cmi:
 Image.cmi: Texture.cmi Quad.cmi DisplayObjectT.cmo
 MovieClip.cmi: Image.cmi DisplayObjectT.cmo
 PriorityQueue.cmi:
@@ -114,3 +123,4 @@ TextureAtlas.cmi: Texture.cmi
 Tween.cmi:
 WeakHashtbl.cmi:
 WeakMemo.cmi:
+_DisplayObject.cmi: Rectangle.cmo Point.cmo Matrix.cmo Event.cmo

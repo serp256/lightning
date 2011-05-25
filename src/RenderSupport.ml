@@ -83,7 +83,7 @@ value clear color alpha =
   and blue = SP_COLOR_PART_BLUE(color)
   in
   (
-    glClearColor (float red) (float green) (float blue) alpha;
+    glClearColor ((float red) /. 255.) ((float green) /. 255.) ((float blue) /. 255.) alpha;
     glClear gl_color_buffer_bit;
   );
 

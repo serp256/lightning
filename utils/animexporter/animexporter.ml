@@ -172,44 +172,42 @@ value write_animations animations dir =
 
 value write_frames_and_animations new_obj dir =
   let file_out = BatFile.open_out (dir /// "frames.dat") in
-  let (_,animations) = Hashtbl.fold begin fun key anims (index,animations) -> (
-    let _ = print_endline (Printf.sprintf "write_frames_and_anim_json obj: %s" key) in
-    let (i,animation) =
-      List.fold_left begin fun (i,animation) (animn,frames) ->
-        let _ = print_endline (Printf.sprintf "write_frames_and_anim_json animn: %s" animn) in
-(*         let a = Array.make (List.length frames) 0 in *)
-        (
-        let (cnt,f) =
-          List.fold_left begin fun (cnt,f) (index,frame) ->
-          (
-            BatIO.write_i16 file_out frame.nw;
-            BatIO.write_i16 file_out frame.nh;
-            BatIO.write_i16 file_out frame.nx;
-            BatIO.write_i16 file_out frame.ny;
-            BatIO.write_byte file_out (List.length frame.nitems);
-            List.iter begin fun item ->
+  let (_,animations) = 
+    Hashtbl.fold begin fun key anims (index,animations) ->
+      let _ = print_endline (Printf.sprintf "write_frames_and_anim_json obj: %s" key) in
+      let (i,animation) =
+        List.fold_left begin fun (i,animation) (animn,frames) ->
+          let _ = print_endline (Printf.sprintf "write_frames_and_anim_json animn: %s" animn) in
+          let (cnt,f) =
+            List.fold_left begin fun (cnt,f) (index,frame) ->
             (
-              BatIO.write_byte file_out item.texId;
-              BatIO.write_i32 file_out item.recId;
-              BatIO.write_i16 file_out item.nxi;
-              BatIO.write_i16 file_out item.nyi;
-              BatIO.write_byte file_out (if item.nflip then 1 else 0);
-              BatIO.write_i32 file_out item.nalpha;
+              BatIO.write_i16 file_out frame.nw;
+              BatIO.write_i16 file_out frame.nh;
+              BatIO.write_i16 file_out frame.nx;
+              BatIO.write_i16 file_out frame.ny;
+              BatIO.write_byte file_out (List.length frame.nitems);
+              List.iter begin fun item ->
+              (
+                BatIO.write_byte file_out item.texId;
+                BatIO.write_i32 file_out item.recId;
+                BatIO.write_i16 file_out item.nxi;
+                BatIO.write_i16 file_out item.nyi;
+                BatIO.write_byte file_out (if item.nflip then 1 else 0);
+                BatIO.write_i32 file_out item.nalpha;
+              )
+              end frame.nitems;
+              (cnt+1,[cnt::f])
             )
-            end frame.nitems;
-            (cnt+1,[cnt::f])
-          )
-          end (i,[]) frames
-        in
-        (cnt,[(animn,(Array.of_list f))::animation])
-        )
-      end (index,[]) anims
-    in
-    (i,[(key,animation)::animations])
-  )
+            end (i,[]) frames
+          in
+          (cnt,[(animn,(Array.of_list f))::animation])
+        end (index,[]) anims
+      in
+      (i,[(key,animation)::animations])
   end new_obj (0,[])
   in
   write_animations animations dir;
+
 
 value object_items : Hashtbl.t string (list (string*string*int*frame_desc_item*Images.t))= Hashtbl.create 0;
 
@@ -220,7 +218,6 @@ value object_items_create obj frames_desc =
     List.iter begin fun (animn,frames) ->
       let _ = print_endline (Printf.sprintf "anim_name: %s" animn) in
       Array.iter begin fun index_frame ->
-    (*            let _ = print_endline (Printf.sprintf "frame index: %d" index) in *)
         let frame_desc = frames_desc.(index_frame) in
         BatList.iteri begin fun index_item item ->
           let _ = print_endline (Printf.sprintf "item libId: %d, pngId %d, urlId: %d" item.libId item.pngId item.urlId) in
@@ -401,6 +398,7 @@ value create_texture obj imgs oframes =
   let texInfo = BatFile.open_out (dir /// "texInfo.dat") in
   (
     let textures = blit_by_textures imgs in
+    let () = BatIO.write_ui16 texInfo (List.length textures) in
     BatList.iteri begin fun cnt ((w,h),imgs) ->
       let () = Printf.eprintf "write [%d:%d]\n" w h in
       let () = BatIO.write_string texInfo ((string_of_int cnt) ^ ".png") in
@@ -411,9 +409,14 @@ value create_texture obj imgs oframes =
         BatList.iteri begin fun i (objn,animn,frame_index,old_item,(sx,sy,img)) ->
         (
           let (iw,ih) = Images.size img in
-          let () = Printf.eprintf "blit img to [%d:%d:%d:%d]..." sx sy iw ih in
-          Images.blit img 0 0 new_img sx sy iw ih;
-          prerr_endline "blited";
+          (
+            let () = Printf.eprintf "blit img to [%d:%d:%d:%d]..." sx sy iw ih in
+            Images.blit img 0 0 new_img sx sy iw ih;
+            BatIO.write_ui16 texInfo sx;
+            BatIO.write_ui16 texInfo sy;
+            BatIO.write_ui16 texInfo iw;
+            BatIO.write_ui16 texInfo ih;
+          );
           add_in_new_obj (objn,animn,frame_index,old_item,cnt,i);
         )
         end imgs;
@@ -476,6 +479,37 @@ value get_objects_for_lib lib =
      ]
    end !!info_obj;
 
+value collect_lib_info frames libobjects = 
+(
+  let res = HSet.create 0 in
+  List.iter begin fun (objname,animname) ->
+    let frms = List.assoc animname (List.assoc objname %animations) in
+    Array.iter (fun i -> HSet.add res frames.(i)) frms
+  end libobjects;
+  (* Сформировали массив фреймов нах *)
+  let frames = HSet.to_list res in
+  (* теперь зачитать картинки *)
+  let imageUrls = HSet.create 0 in
+  (
+    List.iter (fun frame -> (List.iter begin fun index_item item -> HSet.add imageUrls item.urlId) frame.items) frames;
+    let images = Hashtbl.create (HSet.length imageUrls) in
+    HSet.iter begin fun urlId ->
+      let png_path = !!frames_dir.JSObjAnim.paths.(urlId) in
+      let img = Images.load (!img_dir /// png_path) [] in
+      Hashtbl.add images urlId img
+    end imageUrls;
+  );
+);
+
+value group_by_objects (oname,info) res =
+  (* Взять все анимации для объекта и это будет отдельная либа *)
+  try
+    let anims = List.assoc oname !!animations in
+    let res = List.map (fun (animname,_) -> (oname,animname)) anims in
+    Hashtbl.add res oname res;
+    oname
+  with [ Not_found -> None ];
+
 value () =
 (
   let force = ref False in
@@ -500,48 +534,27 @@ value () =
     | False -> Unix.mkdir !outputDir 0o755
     ];
   );
-  let frames = read_frames () in
   (* convert info objects to xml *)
   let out = open_out (!outputDir /// "info_objects.xml") in
   let xml = Xmlm.make_output (`Channel out) in
   (
     let () = Xmlm.output xml (`Dtd None) in
     let () = Xmlm.output xml (`El_start (("","Objects"),[])) in
-    List.iter begin fun (oname,info) ->
+    let libs = Hashtbl.create 1 in
     (
-      let () = print_endline (Printf.sprintf "oname: %s" oname) in
-      match Hashtbl.mem object_items oname with
-      [ False -> 
-        let attribs = [ "sizex" =*= info.JSObjAnim.sizex; "sizey" =*= info.JSObjAnim.sizey ] in
-        let lib = 
-          match info.JSObjAnim.lib with
-          [ Some l when False ->
-            let () = print_endline (Printf.sprintf "lib: %s" l) in
-            let list_img =
-              List.fold_left (fun res (oname,_) ->
-                res @ (object_items_create oname frames)
-              ) [] (get_objects_for_lib l)
-            in
-            (
-              create_texture l list_img frames;
-              l
-            )
-          | _ ->
-            let () = print_endline (Printf.sprintf "obj: %s" oname) in
-            let list_img = object_items_create oname frames in
-            (
-              create_texture oname list_img frames;
-              oname
-            )
-          ]
-        in
-        let attribs = [ "lib" =|= lib :: attribs ] in
+      List.iter begin fun ((oname,info) as infobj) ->
+        let () = print_endline (Printf.sprintf "oname: %s" oname) in
+        let lib = group_libs libs infobj in
+        let attribs = [ "sizex" =*= info.JSObjAnim.sizex; "sizey" =*= info.JSObjAnim.sizey ; "lib" =|= lib ] in
         let () = Xmlm.output xml (`El_start (("","Object"),attribs)) in
         Xmlm.output xml `El_end
-      | True -> ()
-      ]
+     end !!info_obj;
+     (* Начинаем хуячить нахуй *)
+     let frames = read_frames () in
+     List.iter begin fun (libname,elements) ->
+       let lib = collect_lib_info elements in
+     end libs
     )
-    end !!info_obj;
     Xmlm.output xml `El_end;
     close_out out;
   );

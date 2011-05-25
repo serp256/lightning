@@ -182,6 +182,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       method advanceTime (seconds:float) = 
       (
+        debug "advance time";
         time := time +. seconds;
 (*         Printf.eprintf "%F. timers length: %d\n%!" time (TimersQueue.length timersQueue); *)
         (* timers *)
