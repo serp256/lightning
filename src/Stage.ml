@@ -79,30 +79,59 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               | False -> ()
               ]
             );
+
+            method private start' () = 
+            (
+                TimersQueue.add timersQueue ((time +. delay),(timer :> inner_timer));
+                running := True
+            );
+
             method start () = 
               match running with
-              [ False ->
-                (
-(*                   Printf.eprintf "add timers for time: %F\n%!" (time +. delay); *)
-                  TimersQueue.add timersQueue ((time +. delay),(timer :> inner_timer));
-(*                   Hashtbl.add timers id timer; *)
-                  currentCount := 0;
-                  running := True
-                )
+              [ False -> timer#start'()
               | True -> failwith "Timer alredy started"
               ];
+
+            method private stop' () = 
+             (
+               TimersQueue.remove_if (fun (_,o) -> o = timer) timersQueue;
+               running := False;
+             );
+
             method stop () = 
+              match running with
+              [ True -> timer#stop'()
+              | False -> failwith "Timer alredy stopped"
+              ];
+
+            method private asEventTarget = (timer : inner_timer :> Timer.c _ _);
+
+            method reset () = 
+            (
+              currentCount := 0;
+              match running with
+              [ False -> ()
+              | True -> timer#stop'() 
+              ];
+            );
+
+            method restart ~reset = 
+            (
               match running with
               [ True -> 
                 (
-                  TimersQueue.remove_if (fun (_,o) -> o = timer) timersQueue;
-(*                   Hashtbl.remove timers id; *)
-                  running := False;
+                  match reset with
+                  [ True -> currentCount := 0
+                  | False -> ()
+                  ];
+                  timer#stop'()
                 )
-              | False -> failwith "Timer alredy stopped"
+              | False -> ()
               ];
-            method private asEventTarget = (timer : inner_timer :> Timer.c _ _);
-            method reset () = assert False;
+              timer#start'();
+            );
+
+
           end
         in
         (o :> Timer.c _ _ );(*}}}*)

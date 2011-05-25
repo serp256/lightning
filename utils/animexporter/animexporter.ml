@@ -481,23 +481,36 @@ value get_objects_for_lib lib =
 
 value collect_lib_info frames libobjects = 
 (
-  let res = HSet.create 0 in
+  let framesIds = HSet.create 0 in
   List.iter begin fun (objname,animname) ->
     let frms = List.assoc animname (List.assoc objname %animations) in
-    Array.iter (fun i -> HSet.add res frames.(i)) frms
+    Array.iter (fun i -> HSet.add framesIds i)) frms
   end libobjects;
   (* Сформировали массив фреймов нах *)
-  let frames = HSet.to_list res in
+  let framesIds = HSet.to_list framesIds in
+  let framesMap = Hashtbl.create 0 in
+  let frames = 
+    BatList.mapi begin fun i fid ->
+      let frame = frames.(fid) in
+      (
+        Hashtbl.add framesMap fid i;
+        frame
+      )
+    end framesIds 
+  in
+  (* анимации составить с учетом новых фреймов *)
+
   (* теперь зачитать картинки *)
   let imageUrls = HSet.create 0 in
   (
     List.iter (fun frame -> (List.iter begin fun index_item item -> HSet.add imageUrls item.urlId) frame.items) frames;
-    let images = Hashtbl.create (HSet.length imageUrls) in
-    HSet.iter begin fun urlId ->
-      let png_path = !!frames_dir.JSObjAnim.paths.(urlId) in
-      let img = Images.load (!img_dir /// png_path) [] in
-      Hashtbl.add images urlId img
-    end imageUrls;
+    let images = 
+      HSet.fold begin fun urlId res ->
+        let png_path = !!frames_dir.JSObjAnim.paths.(urlId) in
+        let img = Images.load (!img_dir /// png_path) [] in
+        [ (urlId,img) :: res ]
+      end imageUrls []
+    in
   );
 );
 

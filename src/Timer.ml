@@ -10,5 +10,6 @@ class type virtual c ['event_type, 'event_data] =
     method start: unit -> unit;
     method stop: unit -> unit;
     method reset: unit -> unit; 
+    method restart: ~reset:bool -> unit;
   end;
 
