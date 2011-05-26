@@ -277,13 +277,14 @@ value loadPvrFile(NSString *path) {
 CAMLprim value ml_bundle_path_for_resource(value mlpath) {
 	CAMLparam1(mlpath);
 	CAMLlocal1(res);
+	fprintf(stderr,"ml_bundle_path: %s\n",String_val(mlpath));
 	NSString *path = [NSString stringWithCString:String_val(mlpath) encoding:NSASCIIStringEncoding];
 	NSString *bundlePath = [[NSBundle mainBundle] pathForResource:path ofType:nil];
 	if (bundlePath == nil) {
+		res = Val_int(0);
+	} else {
 		res = caml_alloc_tuple(1);
 		Store_field(res,0,caml_copy_string([bundlePath cStringUsingEncoding:NSASCIIStringEncoding]));
-	} else {
-		res = Val_int(0);
 	}
 	CAMLreturn(res);
 }
