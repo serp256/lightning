@@ -12,15 +12,15 @@ class virtual _c [ 'parent ]:
   object('self)
     type 'displayObject = _c 'parent;
     type 'parent = 
-      < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t evType evData _ 'ct -> unit; name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; .. >;
+      < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t evType evData _ (< .. > as 'ct) -> unit; name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; .. >;
 (*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
     type 'event = Event.t evType evData 'displayObject 'self;
     type 'listener = 'event -> int -> unit;
     method addEventListener: evType -> 'listener -> int;
     method removeEventListener: evType -> int -> unit;
-    method dispatchEvent: !'ct. Event.t evType evData 'displayObject 'ct -> unit;
-    method dispatchEvent': !'ct. Event.t evType evData 'displayObject 'ct -> unit;
+    method dispatchEvent: !'ct. Event.t evType evData 'displayObject (< .. > as 'ct) -> unit;
+    method dispatchEvent': !'ct. Event.t evType evData 'displayObject (< .. > as 'ct) -> unit;
     method hasEventListeners: evType -> bool;
 
     value name: string;
@@ -104,7 +104,7 @@ class virtual container:
     (* need to be hidden *)
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;
-    method dispatchEventOnChildren: !'ct. Event.t evType evData 'displayObject 'ct -> unit;
+    method dispatchEventOnChildren: !'ct. Event.t evType evData 'displayObject (< .. > as 'ct) -> unit;
     method boundsInSpace: option 'displayObject -> Rectangle.t;
     method private render': unit -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);

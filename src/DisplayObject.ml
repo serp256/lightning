@@ -65,7 +65,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     *)
 
 (*     method! addEventListener (eventType:P.evType) (listener: 'listener) = 1; *)
-    method dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit = fun event -> (*{{{*)
+    method dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> (*{{{*)
       (
         try
           let l = List.assoc event.Event.etype listeners in
@@ -126,7 +126,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     *)
   
     (* всегда ставить таргет в себя и соответственно current_target *)
-    method dispatchEvent: !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit = fun event -> 
+    method dispatchEvent: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> 
       let event = {(event) with Event.target = Some self#asDisplayObject; currentTarget = None} in
       self#dispatchEvent' event;
 
@@ -369,7 +369,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       mask := Some (onSelf, [| (rect.x,rect.y) ; (rect.x, rect.y +. rect.height); (rect.x +. rect.width,rect.y); (rect.x +. rect.width, rect.y +. rect.height) |]);
 
     (*
-    method private maskRect onSelf mask = (* для hitTestPoint другая логика нужна бля *)
+    method private maskRect onSelf mask) = (* для hitTestPoint другая логика нужна бля *)
       (* хитровыебанные манипуляции нах - пока не оптимально нихуя бля *)
       match self#stage with
       [ Some stage ->
@@ -629,7 +629,7 @@ class virtual container = (*{{{*)
     method asDisplayObjectContainer = (self :> container);
     method dcast = `Container self#asDisplayObjectContainer;
 
-    method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit = fun event ->
+    method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event ->
       let rec loop obj = 
         let res = Enum.empty () in
         (
@@ -647,7 +647,7 @@ class virtual container = (*{{{*)
 (*       let event = (event :> Event.t 'event_type 'event_data 'displayObject) in *)
       match Enum.is_empty listeners with
       [ True -> ()
-      | False -> Enum.iter (fun (listener: 'displayObject) -> listener#dispatchEvent event) listeners
+      | False -> Enum.iter (fun (listener:'displayObject) -> listener#dispatchEvent event) listeners
       ];
     
 
@@ -662,7 +662,7 @@ class virtual container = (*{{{*)
             ]
           | Some chldrn -> 
               match index with
-              [ None -> (* добавить с канец *) (child#removeFromParent(); Dllist.add (Dllist.prev chldrn) child )
+              [ None -> (* добавить в канец *) (child#removeFromParent(); Dllist.add (Dllist.prev chldrn) child )
               | Some idx when idx > 0 && idx < numChildren -> (child#removeFromParent(); Dllist.add (Dllist.skip chldrn (idx-1)) child)
               | Some idx when idx = 0 -> (child#removeFromParent(); children := Some (Dllist.prepend chldrn child))
               | Some idx when idx = numChildren -> (child#removeFromParent(); Dllist.add (Dllist.prev chldrn) child)
@@ -677,7 +677,8 @@ class virtual container = (*{{{*)
           [ Some _ -> 
             let event = Event.create `ADDED_TO_STAGE () in
             match child#dcast with
-            [ `Container (cont:container) -> 
+            [ `Container cont -> 
+              let cont = (cont :> < dispatchEventOnChildren: !'a. Event.t P.evType P.evData 'displayObject (< .. > as 'a) -> unit >) in
               cont#dispatchEventOnChildren event
             | `Object _ -> child#dispatchEvent event
             ]
@@ -711,7 +712,7 @@ class virtual container = (*{{{*)
         [ Some _ -> 
           let event = Event.create `REMOVED_FROM_STAGE () in
           match child#dcast with
-          [ `Container cont -> () (* cont#dispatchEventOnChildren event *)
+          [ `Container cont -> cont#dispatchEventOnChildren event
           | `Object _ -> child#dispatchEvent event
           ]
         | None -> ()
