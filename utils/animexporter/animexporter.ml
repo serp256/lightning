@@ -586,7 +586,7 @@ value write_frames imagesMap frames outdir =
             BatIO.write_i16 out item.xi;
             BatIO.write_i16 out item.yi;
             BatIO.write_byte out (if item.flip then 1 else 0);
-            BatIO.write_i32 out item.alpha;
+            BatIO.write_byte out item.alpha;
           )
         end frame.items
       )

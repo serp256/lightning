@@ -38,5 +38,6 @@ value run dt =
         run_timers ()
       else ();
     )
+  | None -> failwith "Timers not initialized"
   ];
 

@@ -1,5 +1,6 @@
 
 type t = {x:mutable float; y:mutable float; width:mutable float; height:mutable float;};
+value empty () = {x=0.;y=0.;width=0.;height=0.};
 value create x y width height = {x;y;width;height};
 value copy r = {x=r.x;y=r.y;width=r.width;height=r.height};
 value containsPoint rect (x,y) = 

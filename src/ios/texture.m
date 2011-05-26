@@ -274,13 +274,13 @@ value loadPvrFile(NSString *path) {
     return 0;
 }
 
-CAMLprim value ml_path_for_resource(value mlpath) {
+CAMLprim value ml_bundle_path_for_resource(value mlpath) {
 	CAMLparam1(mlpath);
-	CAMLlocal(res);
-	NSString *path = [[NSString stringWithCString:String_val(mlpath) encoding:NSASCIIStringEncoding];
+	CAMLlocal1(res);
+	NSString *path = [NSString stringWithCString:String_val(mlpath) encoding:NSASCIIStringEncoding];
 	NSString *bundlePath = [[NSBundle mainBundle] pathForResource:path ofType:nil];
 	if (bundlePath == nil) {
-		res = caml_alloc(1);
+		res = caml_alloc_tuple(1);
 		Store_field(res,0,caml_copy_string([bundlePath cStringUsingEncoding:NSASCIIStringEncoding]));
 	} else {
 		res = Val_int(0);
@@ -289,7 +289,6 @@ CAMLprim value ml_path_for_resource(value mlpath) {
 }
 
 NSString *pathForResource(NSString *path, float contentScaleFactor) {
-	printf("get path for resource: %s\n",[path cStringUsingEncoding:NSASCIIStringEncoding]);
     NSString *fullPath = NULL;
     if ([path isAbsolutePath]) {
         fullPath = path; 
