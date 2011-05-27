@@ -137,12 +137,12 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 (*         let () = Printf.eprintf "process touches %d\n%!" (List.length touches) in *)
         let processedTouches = 
           List.fold_left begin fun processedTouches touch ->
-            (*let () = 
-              Printf.printf "touch: %f [%f:%f], [%f:%f], %d, %s\n%!" 
+            let () = 
+              debug "touch: %f [%f:%f], [%f:%f], %d, %s\n%!" 
                 touch.timestamp touch.globalX touch.globalY 
                 touch.previousGlobalX touch.previousGlobalY
                 touch.tapCount (string_of_touchPhase touch.phase)
-            in*)
+            in
             try
               let (target,_) =
                 List.find begin fun (target,eTouch) ->
@@ -207,7 +207,6 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       method advanceTime (seconds:float) = 
       (
-        debug "advance time";
         Timers.run seconds;
         (* jugler here *)
         while not (Queue.is_empty tweens) do

@@ -107,7 +107,7 @@ value read_frames () =
 (*             let _ = print_endline (Printf.sprintf "ifields: %d, %d, %d, %d, %d, %d" ifield1 ifield2 ifield3 ifield4 ifield6 ifield7) in  *)
             let item = {libId;pngId;xi;yi;flip;alpha;urlId} in
             loop1 (i+1) {(frame) with items = [item::frame.items]}
-          else frame
+          else {(frame) with items = List.rev frame.items}
       in
       let frame = loop1 1 frame in
       (
@@ -571,10 +571,12 @@ value write_frames imagesMap frames outdir =
     let () = BatIO.write_i32 out (List.length frames) in
     List.iter begin fun frame ->
       (
-        BatIO.write_i16 out frame.w;
-        BatIO.write_i16 out frame.h;
+(*         BatIO.write_i16 out frame.w; *)
+(*         BatIO.write_i16 out frame.h; *)
         BatIO.write_i16 out frame.x;
         BatIO.write_i16 out frame.y;
+        BatIO.write_i16 out frame.icon_x;
+        BatIO.write_i16 out frame.icon_y;
         BatIO.write_byte out (List.length frame.items);
         List.iter begin fun item ->
           (
@@ -620,6 +622,7 @@ value write_lib libname libobjects frames =
   let () = write_frames imagesMap frames outdir in
   let anim_out = BatFile.open_out (outdir /// "animations.dat") in
   (
+    BatIO.write_ui16 anim_out (List.length animations);
     List.iter begin fun (objname,animation) ->
     (
       BatIO.write_string anim_out objname;

@@ -5,7 +5,7 @@ module Id = struct
   value version = "1.0";
 end;
 
-value debug = ref False;
+value debug = ref True;
 
 module MakeFilter (AstFilters : Camlp4.Sig.AstFilters) = struct
   open AstFilters;
@@ -148,7 +148,7 @@ module MakeParser (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
   END;
 
 
-  Camlp4.Options.add "-ldebug" (Arg.Set debug) "Enable debug actions and logs";
+  Camlp4.Options.add "-disable-all-debugs" (Arg.Set debug) "Disable all debug actions and logs";
   Camlp4.Options.add "-enable-debug" (Arg.String enable_label) "Enable debug label";
   Camlp4.Options.add "-disable-debug" (Arg.String disable_label) "Disable debug label";
 

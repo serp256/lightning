@@ -70,10 +70,11 @@ doc:
 		MList.ml PriorityQueue.mli WeakHashtbl.mli WeakMemo.mli LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml DisplayObjectT.ml DisplayObject.mli Sprite.mli Quad.mli \
 		Texture.mli TextureAtlas.mli Image.mli CompiledSprite.ml Touch.ml BitmapFont.mli TextField.mli Stage.mli Button.mli MovieClip.mli Tween.mli Lightning.ml
 
--include MLDepend.$(PLATFORM)
 
 .DEFAULT_GOAL := release
 
 .PHONY : clean
 clean: 
 	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.*
+
+-include MLDepend.$(PLATFORM)
