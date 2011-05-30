@@ -1,7 +1,7 @@
 
 open Touch;
 
-type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME | `TIMER  | `TIMER_COMPLETE ];
+type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME  ];
 type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `PassedTime of float ];
 
 
@@ -138,7 +138,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         let processedTouches = 
           List.fold_left begin fun processedTouches touch ->
             let () = 
-              debug "touch: %f [%f:%f], [%f:%f], %d, %s\n%!" 
+              debug "touch: %ld, %f [%f:%f], [%f:%f], %d, %s\n%!" touch.tid
                 touch.timestamp touch.globalX touch.globalY 
                 touch.previousGlobalX touch.previousGlobalY
                 touch.tapCount (string_of_touchPhase touch.phase)

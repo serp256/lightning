@@ -1,5 +1,5 @@
 
-type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME | `TIMER  | `TIMER_COMPLETE ];
+type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME ];
 type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `PassedTime of float ];
 
 

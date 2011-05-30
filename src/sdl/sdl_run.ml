@@ -9,6 +9,9 @@ value init_gl width height =
 
 
 
+
+value touchid = ref 0;
+
 value handle_events frameRate stage =
   let ticksRate = 1000 / frameRate in
   let open Event in
@@ -34,7 +37,8 @@ value handle_events frameRate stage =
                   [ None when mb.buttonstate = PRESSED -> (* tap begin *)
                     let touch = 
                       {
-                        Touch.timestamp = 0.;
+                        Touch.tid = (let r = !touchid in (touchid.val := r + 1; Int32.of_int r));
+                        timestamp = float (Sdl.Timer.get_ticks()); (* FIXME *)
                         globalX = float mb.bx; globalY = float mb.by;
                         previousGlobalX = float mb.bx; previousGlobalY = float mb.by;
                         tapCount = 1; phase = Touch.TouchPhaseBegan;
@@ -46,7 +50,7 @@ value handle_events frameRate stage =
                     )
                   | Some touch when mb.buttonstate = RELEASED -> (* FIXME: what about multi touch ? *)
                       let touch = 
-                        {(touch) with Touch.timestamp = 0.; globalX = float mb.bx; globalY = float mb.by; previousGlobalX = touch.Touch.globalX; previousGlobalY = touch.Touch.globalY; phase = Touch.TouchPhaseEnded} in
+                        {(touch) with Touch.timestamp = float (Sdl.Timer.get_ticks()); globalX = float mb.bx; globalY = float mb.by; previousGlobalX = touch.Touch.globalX; previousGlobalY = touch.Touch.globalY; phase = Touch.TouchPhaseEnded} in
                       (
                         stage#processTouches [ touch ];
                         event_loop None
@@ -56,7 +60,7 @@ value handle_events frameRate stage =
               | Event.Motion mm -> 
                   match touch with
                   [ Some touch ->
-                    let touch = {(touch) with Touch.timestamp = 0.; globalX = float mm.mx; globalY = float mm.my; previousGlobalX = touch.Touch.globalX; previousGlobalY = touch.Touch.globalY; phase = Touch.TouchPhaseMoved} in
+                    let touch = {(touch) with Touch.timestamp = float (Sdl.Timer.get_ticks()); globalX = float mm.mx; globalY = float mm.my; previousGlobalX = touch.Touch.globalX; previousGlobalY = touch.Touch.globalY; phase = Touch.TouchPhaseMoved} in
                     (
                       stage#processTouches [ touch ];
                       event_loop (Some touch)

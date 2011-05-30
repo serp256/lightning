@@ -17,6 +17,7 @@ value string_of_touchPhase = fun
 
 type t =
   { 
+    tid: int32;
     timestamp:float;
     globalX:float;
     globalY:float;

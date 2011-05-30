@@ -55,7 +55,8 @@ MLFLAGS += -package extlib,xmlm -I $(gl)
 MLOBS = $(MLSOURCES:.ml=.cmx)
 
 $(MLOBS): syntax/pa_debug.cmo 
-$(MLOBS): MLPPOPT += syntax/pa_debug.cmo -enable-debug default
+#$(MLOBS): MLPPOPT += syntax/pa_debug.cmo -enable-debug default
+$(MLOBS): MLPPOPT += syntax/pa_debug.cmo
 	
 lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
 	$(OCAMLMKLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
