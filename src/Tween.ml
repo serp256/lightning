@@ -145,12 +145,18 @@ class c ?(transition=`linear) ?(loop=`LoopNone) time =
     value mutable actions = [];
     value delay = 0.;
     value mutable currentTime = 0.;
-    value mutable totalTime = time;
+    value totalTime = time;
     value loop: loop = loop; 
     value transition = Transitions.get transition;
     value mutable invertTransition = False;
 
     method animate (getValue,setValue) endValue = actions := [ {startValue = 0.; endValue; getValue ; setValue}  :: actions ];
+
+    method reset () = 
+    (
+      currentTime := 0.;
+      invertTransition := False;
+    );
 
     method process dt = 
 (*       let () = Printf.eprintf "tween process %F\n%!" dt in *)

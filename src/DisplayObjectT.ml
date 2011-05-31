@@ -104,6 +104,7 @@ class virtual container:
     (* need to be hidden *)
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;
+    method removeChildren: unit -> unit;
     method dispatchEventOnChildren: !'ct. Event.t evType evData 'displayObject (< .. > as 'ct) -> unit;
     method boundsInSpace: option 'displayObject -> Rectangle.t;
     method private render': unit -> unit;

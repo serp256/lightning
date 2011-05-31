@@ -14,6 +14,18 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
   class type tween = object method process: float -> bool; end;
   value tweens : Queue.t  tween = Queue.create ();
   value addTween tween = Queue.push (tween :> tween) tweens;
+  value removeTween tween = (* Not best for perfomance realisation *)
+    let tmpqueue = Queue.create () in
+    (
+      while not (Queue.is_empty tweens) do
+        let t = Queue.pop tweens in
+        match t = tween with
+        [ False -> Queue.push t  tmpqueue 
+        | True -> ()
+        ]
+      done;
+      Queue.transfer tmpqueue tweens;
+    );
 
 
   class virtual c (width:float) (height:float) =
@@ -145,9 +157,11 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
             in
             try
               let (target,_) =
-                List.find begin fun (target,eTouch) ->
+                List.find begin fun (target,eTouch) -> eTouch.tid = touch.tid
+                (*
                   (eTouch.globalX = touch.previousGlobalX && eTouch.globalY = touch.previousGlobalY) ||
                   (eTouch.globalX = touch.globalX && eTouch.globalY = touch.globalY) (* - ЭТО НЕ ОЧЕНЬ ПОНЯТНО ПОЧЕМУ *)
+                *)
                 end currentTouches
               in
               match target#stage with

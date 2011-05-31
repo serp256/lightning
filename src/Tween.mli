@@ -19,4 +19,5 @@ class c: [?transition:Transitions.t] -> [?loop:loop] -> [float] ->
   object
     method animate: prop -> float -> unit;
     method process: float -> bool;
+    method reset: unit -> unit;
   end;

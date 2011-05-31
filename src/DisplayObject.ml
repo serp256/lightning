@@ -706,17 +706,6 @@ class virtual container = (*{{{*)
     method private removeChild'' (child_node:Dllist.node_t 'displayObject) =
       let child = Dllist.get child_node in
       (
-        let event = Event.create `REMOVED () in
-        child#dispatchEvent event;
-        match self#stage with
-        [ Some _ -> 
-          let event = Event.create `REMOVED_FROM_STAGE () in
-          match child#dcast with
-          [ `Container cont -> cont#dispatchEventOnChildren event
-          | `Object _ -> child#dispatchEvent event
-          ]
-        | None -> ()
-        ];
         child#clearParent();
         match children with
         [ Some chldrn ->
@@ -731,6 +720,17 @@ class virtual container = (*{{{*)
         | None -> assert False
         ];
         numChildren := numChildren - 1;
+        let event = Event.create `REMOVED () in
+        child#dispatchEvent event;
+        match self#stage with
+        [ Some _ -> 
+          let event = Event.create `REMOVED_FROM_STAGE () in
+          match child#dcast with
+          [ `Container cont -> cont#dispatchEventOnChildren event
+          | `Object _ -> child#dispatchEvent event
+          ]
+        | None -> ()
+        ];
       );
 
     method removeChild' child = 
@@ -755,6 +755,33 @@ class virtual container = (*{{{*)
           self#removeChild'' n
         | False -> raise Invalid_index 
         ]
+      ];
+
+    method removeChildren () = 
+      match children with
+      [ None -> ()
+      | Some chldrn -> 
+        let evs = 
+          let event = Event.create `REMOVED () in 
+          match self#stage with
+          [ Some _ -> 
+            let sevent = Event.create `REMOVED_FROM_STAGE () in
+            fun (child:'displayObject) -> 
+              (
+                child#dispatchEvent event;
+                match child#dcast with
+                [ `Container cont -> cont#dispatchEventOnChildren sevent
+                | `Object _ -> child#dispatchEvent sevent
+                ]
+              )
+          | None -> fun child -> child#dispatchEvent event
+          ]
+        in
+        (
+          children := None;
+          numChildren := 0;
+          Dllist.iter (fun (child:'displayObject) -> (evs child; child#clearParent())) chldrn;
+        )
       ];
 
     method containsChild' child = 
