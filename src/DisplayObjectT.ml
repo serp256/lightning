@@ -12,7 +12,9 @@ class virtual _c [ 'parent ]:
   object('self)
     type 'displayObject = _c 'parent;
     type 'parent = 
-      < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t evType evData _ (< .. > as 'ct) -> unit; name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; .. >;
+      < 
+        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t evType evData _ (< .. > as 'ct) -> unit; 
+        name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; stage: option 'parent; height: float; .. >;
 (*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
     type 'event = Event.t evType evData 'displayObject 'self;
@@ -79,9 +81,8 @@ class virtual _c [ 'parent ]:
     method root: _c _;
     (* need to be hidden *)
     method clearParent: hidden unit -> unit;
-    method isStage: bool;
     method setParent: hidden 'parent -> unit;
-    method stage: option (_c _);
+    method stage: option 'parent;
   end;
 
 

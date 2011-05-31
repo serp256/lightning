@@ -43,8 +43,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method! setRotation _ = raise Restricted_operation;
 
 
-      method! isStage = True;
-
+      method! stage = Some self#asDisplayObjectContainer;
       (*
       value mutable time = 0.;
       value mutable timerID = 0;

@@ -33,7 +33,11 @@ class virtual _c [ 'parent ] = (*{{{*)
     type 'displayObject = _c 'parent;
     inherit EventDispatcher.base [ P.evType,P.evData,'displayObject,'self];
 
-    type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; .. >;
+    type 'parent = 
+      < 
+        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; 
+        name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; stage: option 'parent; .. 
+      >;
 
     value mutable changed = False;
     value mutable transfromPoint = (0.,0.);
@@ -42,6 +46,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     value mutable parent : option 'parent = None;
     method parent = parent;
     method setParent p = parent := Some p;
+
     method clearParent () = parent := None;
 
     (* Events *)
@@ -163,18 +168,16 @@ class virtual _c [ 'parent ] = (*{{{*)
     method private updatePos (x',y') = (x := x';y := y');
 
 
-(*     method virtual boundsInSpace: !'target. option ((#_c 'et 'ed 'p) as 'target) -> Rectangle.t; *)
-
-    method virtual boundsInSpace: option (_c 'parent) -> Rectangle.t;
-
-(*     method bounds = self#boundsInSpace (parent :> option (_c 'event_type 'event_data 'parent)); *)
+    method virtual boundsInSpace': option (_c 'parent) -> Rectangle.t;
 
     method bounds = 
       (* бага типовыводилки здеся *)
       match parent with
-      [ None -> self#boundsInSpace None
-      | Some parent -> self#boundsInSpace (Some parent#asDisplayObject)
+      [ None -> self#boundsInSpace' None
+      | Some parent -> self#boundsInSpace' (Some parent#asDisplayObject)
       ]; 
+
+    method virtual bounds: Rectangle.t;
     
 
     method width = self#bounds.Rectangle.width;
@@ -232,7 +235,6 @@ class virtual _c [ 'parent ] = (*{{{*)
     value lastTouchTimestamp = 0.;
     method asDisplayObject = (self :> _c 'parent);
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
-    method isStage = False;
     method transformGLMatrix () = 
     (
       if transfromPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
@@ -261,13 +263,11 @@ class virtual _c [ 'parent ] = (*{{{*)
           | Some p -> loop p#asDisplayObject
           ];
 
-    method stage = 
-      let root = self#root in
-      match root#isStage with (* это хак но хуй с ним *)
-      [ True -> Some root
-      | False -> None
+    method stage : option 'parent = 
+      match parent with
+      [ None -> None
+      | Some p -> p#stage
       ];
-
 
     method transformationMatrixToSpace: option 'displayObject -> Matrix.t = fun targetCoordinateSpace -> (*{{{*)
       match targetCoordinateSpace with
@@ -469,9 +469,10 @@ class virtual _c [ 'parent ] = (*{{{*)
     *)
 
 
+
     method private hitTestPoint' localPoint isTouch = 
 (*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
-      match Rectangle.containsPoint (self#boundsInSpace (Some self#asDisplayObject)) localPoint with
+      match Rectangle.containsPoint (self#boundsInSpace' (Some self#asDisplayObject)) localPoint with
       [ True -> Some self#asDisplayObject
       | False -> None
       ];
@@ -628,6 +629,30 @@ class virtual container = (*{{{*)
     method numChildren = numChildren;
     method asDisplayObjectContainer = (self :> container);
     method dcast = `Container self#asDisplayObjectContainer;
+
+
+    (*
+    method! setParent parent =
+      match (stage,parent#stage) with
+      [ (Some _,None) -> Dllist.iter (fun c -> c#clearStage()) children
+      | (None,Some s) -> Dllist.iter (fun c -> c#
+      | None -> parent := Some parent
+      ];
+
+    method! clearParent () = 
+    (
+      match stage with
+      [ Some _ -> 
+        (
+          stage := None;
+          Dllist.iter (fun c -> c#clearStage ()) children;
+        )
+      | None -> ();
+      ]
+      parent := None;
+    );
+  *)
+
 
     method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event ->
       let rec loop obj = 
@@ -804,15 +829,15 @@ class virtual container = (*{{{*)
       let child = child#asDisplayObject in
       self#containsChild' child;
 
-    method boundsInSpace targetCoordinateSpace = 
+    method boundsInSpace' targetCoordinateSpace =
       match children with
       [ None -> Rectangle.create 0. 0. 0. 0.
-      | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace targetCoordinateSpace
+      | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace' targetCoordinateSpace
       | Some children -> 
           let (minX,maxX,minY,maxY) = 
             let open Rectangle in
             Dllist.fold_left begin fun (minX,maxX,minY,maxY) child ->
-              let childBounds = child#boundsInSpace targetCoordinateSpace in
+              let childBounds = child#boundsInSpace' targetCoordinateSpace in
               (
                 min minX childBounds.x,
                 max maxX (childBounds.x +. childBounds.width),
@@ -868,6 +893,11 @@ class virtual c =
   object(self)
     inherit _c [ container ];
     method dcast = `Object self#asDisplayObject;
+    method boundsInSpace: !'space. option ((#_c container) as 'space) -> Rectangle.t = fun space -> 
+      match space with
+      [ Some space -> self#boundsInSpace' (Some space#asDisplayObject)
+      | None -> self#boundsInSpace' None
+      ];
   end;
 
 end;
