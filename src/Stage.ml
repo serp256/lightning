@@ -15,6 +15,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
   value tweens : Queue.t  tween = Queue.create ();
   value addTween tween = Queue.push (tween :> tween) tweens;
   value removeTween tween = (* Not best for perfomance realisation *)
+    let tween = (tween :> tween) in
     let tmpqueue = Queue.create () in
     (
       while not (Queue.is_empty tweens) do
