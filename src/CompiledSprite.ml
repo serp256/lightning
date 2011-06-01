@@ -1,10 +1,24 @@
 open Gl;
 
+module type S = sig
 
-module Make(D:DisplayObjectT.M) = struct
+  module Sprite: Sprite.S;
 
-  module Quad = Quad.Make D;
-  module Image = Image.Make D;
+  class c:
+    object
+      inherit Sprite.c;
+      method compile: unit -> unit;
+      method invalidate: unit -> unit;
+    end;
+
+
+  value create: unit -> c;
+
+end;
+
+module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
+  module Sprite = Sprite;
+  module Quad = Image.Q;
 
   value collectInfo obj = (*{{{*)
     let scratchBuf = Gl.make_float_array 8 
@@ -16,6 +30,7 @@ module Make(D:DisplayObjectT.M) = struct
       match obj#alpha = 0.0 || not obj#visible with
       [ True -> textures
       | False -> 
+        let () = debug:compile "compile: '%s'" obj#name in
         match obj#dcast with
         [ `Container cont ->
           Enum.fold begin fun child textures ->
@@ -85,8 +100,6 @@ module Make(D:DisplayObjectT.M) = struct
     let textures = loop obj#asDisplayObject (Matrix.create()) 1.0 [] in
     (IO.close_out vertexData,IO.close_out colorData,IO.close_out texCoordData,List.rev textures);
   (*}}}*)
-
-  module Sprite = Sprite.Make D;
 
   class c =
     object(self)
@@ -220,7 +233,7 @@ module Make(D:DisplayObjectT.M) = struct
           colorsUpdated := True;
         );(*}}}*)
 
-      method! render () = 
+      method! private render' () = 
       (
         if not compiled then self#compile () else ();
         if not colorsUpdated then self#updateColorData () else ();

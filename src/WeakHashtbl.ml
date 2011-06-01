@@ -90,6 +90,7 @@ module Make (H : Hashtbl.HashedType) : S with type key = H.t =
             (accu + (if (check b1 i) && (check b2 i) then 1 else 0))
       in Array.fold_right (count_bucket 0) t.table 0;
     value next_sz n = min (((3 * n) / 2) + 3) (Sys.max_array_length - 1);
+
     value rec resize t =
       let oldlen = Array.length t.table in
       let newlen = next_sz oldlen
@@ -133,6 +134,7 @@ module Make (H : Hashtbl.HashedType) : S with type key = H.t =
           else (set bucket1 i (Some k); set bucket2 i (Some e))
       in loop 0
     and add t k e = add_aux t k e (get_index t k);
+
     value find_or t d ifnotfound =
       let index = get_index t d in
       let (bucket1, bucket2) = t.table.(index) in

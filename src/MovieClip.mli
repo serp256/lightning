@@ -1,6 +1,10 @@
 
 
-module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.eventType | `ENTER_FRAME ] and type evData = private [> `PassedTime of float | DisplayObjectT.eventData ]): sig
+module Make
+  (D:DisplayObjectT.M with type evType = private [> DisplayObjectT.eventType | `ENTER_FRAME ] and type evData = private [> `PassedTime of float | DisplayObjectT.eventData ])
+  (Image: Image.S with module Q.D = D)
+
+  : sig
 
   exception Frame_not_found;
 
@@ -8,7 +12,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> DisplayObjectT.even
 
   class c: [ ?fps:int ] -> [ string ] ->
     object
-      inherit (Image.Make(D)).c;
+      inherit Image.c;
       method loop: bool;
       method setLoop: bool -> unit;
       method fps: int;

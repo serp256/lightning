@@ -3,9 +3,28 @@ open LightCommon;
 
 value gl_tex_coords = make_float_array 8;
 
-module Make(D:DisplayObjectT.M) = struct
+module type S = sig
 
-  module Q = Quad.Make D;
+  module Q: Quad.S;
+
+  class c : [ Texture.c ] ->
+    object
+      inherit Q.c; 
+      value texture: Texture.c;
+      method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
+      method texture: Texture.c;
+      method setTexture: Texture.c -> unit;
+    end;
+
+  value cast: #Q.D.c -> option c;
+
+  value createFromFile: string -> c;
+  value create: Texture.c -> c;
+end;
+
+module Make(Q:Quad.S) = struct
+
+  module Q = Q;
 
   class _c  texture =
     object(self)
@@ -65,7 +84,7 @@ module Make(D:DisplayObjectT.M) = struct
       initializer memo#add (self :> c);
     end;
 
-  value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
+  value cast: #Q.D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
 
   (*
   value cast: #DisplayObject.c 'event_type 'event_data -> option (c 'event_type 'event_data) = 
