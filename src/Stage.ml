@@ -15,6 +15,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
   value tweens : Queue.t  tween = Queue.create ();
   value addTween tween = Queue.push (tween :> tween) tweens;
   value removeTween tween = (* Not best for perfomance realisation *)
+    let tween = (tween :> tween) in
     let tmpqueue = Queue.create () in
     (
       while not (Queue.is_empty tweens) do
@@ -190,16 +191,15 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               target#name
           end processedTouches;
           *)
-          let fireTouches = 
-            (* группируем их по таргетам и вперед *)
+          let fireTouches = (* группируем их по таргетам и вперед *)
             List.fold_left (fun res (target,touch) -> MList.add_assoc target touch res) [] processedTouches
           in
-          let event = Event.create `TOUCH ~bubbles:True () in
+          let event = Event.create ~bubbles:True `TOUCH () in
           List.iter begin fun ((target:D.c),touches) ->
             let event = {(event) with Event.data = `Touches touches} in
             target#dispatchEvent event
           end fireTouches;
-          currentTouches := processedTouches;
+          currentTouches := List.filter (fun (_,t) -> match t.phase with [ TouchPhaseEnded -> False | _ -> True ]) processedTouches;
         );(*}}}*)
 
       method !render () =

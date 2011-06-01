@@ -7,6 +7,7 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
   module Quad = Quad.Make DisplayObject;
   module Image = Image.Make DisplayObject;
   module Sprite = Sprite.Make DisplayObject;
+  module CompiledSprite = CompiledSprite.Make DisplayObject;
   module MovieClip = MovieClip.Make DisplayObject;
   module TextField = TextField.Make DisplayObject;
   module FPS = FPS.Make DisplayObject;

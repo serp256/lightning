@@ -27,7 +27,6 @@ value create ?(repeatCount=0) delay = (*{{{*)
       method currentCount = currentCount;
       method fire () = 
       (
-        prerr_endline "fire timer";
         let event = Event.create `TIMER () in
         self#dispatchEvent event; 
         currentCount := currentCount + 1;
