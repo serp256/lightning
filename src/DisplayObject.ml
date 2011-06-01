@@ -907,6 +907,7 @@ class virtual container = (*{{{*)
       )
       else ();
 
+    (*
     method! render () =
       let () = debug:render "container '%s'" name in
       match children with
@@ -957,6 +958,7 @@ class virtual container = (*{{{*)
             ]
         ]
       ];
+    *)
 
   end;(*}}}*)
 

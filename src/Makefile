@@ -16,6 +16,7 @@ debug: release
 SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
 $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend -syntax camlp4r 
 $(SYNTAX): MLPPOPT :=
+$(SYNTAX): OCAMLC = ocamlfind ocamlc
 
 ifeq ($(PLATFORM),ios)
 	gl = gl/es
@@ -54,7 +55,7 @@ MLFLAGS += -package extlib,xmlm -I $(gl)
 
 MLOBS = $(MLSOURCES:.ml=.cmx)
 
-$(MLOBS): syntax/pa_debug.cmo 
+$(MLOBS) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
 #$(MLOBS): MLPPOPT += syntax/pa_debug.cmo 
 $(MLOBS) MLDepend.$(PLATFORM): MLPPOPT += syntax/pa_debug.cmo 
 -include debug.conf
@@ -78,7 +79,7 @@ doc:
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.*
+	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi
 
 -include MLDepend.$(PLATFORM)
 -include debug.conf
