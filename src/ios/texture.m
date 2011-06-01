@@ -235,7 +235,7 @@ value createTextureInfo(float width, float height, float scale, drawingBlock dra
         .textureID = textureID
     };*/
 
-		res = caml_alloc_tuple(8);
+		res = caml_alloc_tuple(10);
 		Store_field(res,0,Val_int(textureFormat));
 		Store_field(res,1,Val_int((unsigned int)width));
     Store_field(res,2,Val_int(legalWidth));
@@ -323,12 +323,12 @@ CAMLprim value ml_resourcePath(value opath, value ocontentScaleFactor) {
 
 CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
     CAMLparam2(opath,ocontentScaleFactor);
-    CAMLlocal1(res);
    
     NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
     NSString *fullPath = pathForResource(path,Double_val(ocontentScaleFactor));
     NSString *imgType = [[path pathExtension] lowercaseString];
     
+		value res;
     if ([imgType rangeOfString:@"pvr"].location == 0)
         res = loadPvrFile(fullPath);
     else

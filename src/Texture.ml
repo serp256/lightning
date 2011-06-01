@@ -137,6 +137,7 @@ value createFromFile path : c =
   [ Not_found ->
     let open GLTexture in
     let textureInfo = loadImage path 1. in
+    let () = Gc.compact () in
     let () = Printf.eprintf "load texture: %s [%d->%d; %d->%d]\n%!" path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height in
     let textureID = GLTexture.create textureInfo in
     let width = float textureInfo.width
