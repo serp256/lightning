@@ -18,7 +18,7 @@ module type S = sig
       method setColor: int -> unit;
       method color: int;
       method vertexColors: Enum.t int;
-      method boundsInSpace: option D.c -> Rectangle.t;
+      method boundsInSpace: !'space. option (<asDisplayObject: D.c; ..> as 'space) -> Rectangle.t;
       method private render': unit -> unit;
     end;
 

@@ -211,7 +211,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           RenderSupport.setupOrthographicRendering 0. width height 0.;
           super#render();
           ProfTimer.stop timer;
-          debug:render "Stage rendered: %F" (Timer.length timer);
+          debug:render "Stage rendered: %F" (ProfTimer.length timer);
         );
         ignore(RenderSupport.checkForOpenGLError());
         (*
