@@ -1,14 +1,15 @@
 
 DEFINE MAX_DRAG_DIST = 40.;
 
-module Make(D:DisplayObjectT.M with 
-  type evType = private [> `TRIGGERED | `TOUCH | DisplayObjectT.eventType ] and
-  type evData = private [> `Touches of list Touch.t | DisplayObjectT.eventData ]
-) = struct
-
-  module Sprite = Sprite.Make D;
-  module Image = Image.Make D;
-  module TextField = TextField.Make D;
+module Make
+  (D:DisplayObjectT.M with 
+    type evType = private [> `TRIGGERED | `TOUCH | DisplayObjectT.eventType ] and
+    type evData = private [> `Touches of list Touch.t | DisplayObjectT.eventData ]
+  )
+  (Sprite: Sprite.S with module D = D)
+  (Image: Image.S with module Q.D = D)
+  (TextField: TextField.S with module D = D)
+  = struct
 
   class c  ?downstate ?text upstate = 
     let width = upstate#width and height = upstate#height in

@@ -205,10 +205,15 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       method !render () =
       (
-        RenderSupport.clearTexture ();
-        RenderSupport.clear color 1.0;
-        RenderSupport.setupOrthographicRendering 0. width height 0.;
-        super#render();
+        let timer = ProfTimer.start () in
+        (
+          RenderSupport.clearTexture ();
+          RenderSupport.clear color 1.0;
+          RenderSupport.setupOrthographicRendering 0. width height 0.;
+          super#render();
+          ProfTimer.stop timer;
+          debug:render "Stage rendered: %F" (Timer.length timer);
+        );
         ignore(RenderSupport.checkForOpenGLError());
         (*
         #if DEBUG

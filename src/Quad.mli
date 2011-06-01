@@ -1,7 +1,9 @@
 
 value gl_quad_colors: Bigarray.Array1.t int32 Bigarray.int32_elt Bigarray.c_layout;
 
-module Make(D:DisplayObjectT.M) : sig
+module type S = sig
+
+  module D : DisplayObjectT.M;
 
   class c: [ ?color:int] -> [ float ] -> [ float ] ->
     object
@@ -19,4 +21,7 @@ module Make(D:DisplayObjectT.M) : sig
 
   value cast: #D.c -> option c; 
   value create: ?color:int -> float -> float -> c;
+
 end;
+
+module Make(D:DisplayObjectT.M) : S with module D = D;

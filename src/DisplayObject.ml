@@ -654,6 +654,7 @@ class virtual container = (*{{{*)
     method addChild: !'child. ?index:int -> ((#_c container) as 'child) -> unit = fun  ?index child ->
       let child = child#asDisplayObject in
       (
+          debug:container "%s: addChild '%s'" name child#name;
           match children with
           [ None -> 
             match index with

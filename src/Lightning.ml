@@ -5,13 +5,14 @@ type eventData = Stage.eventData;
 module Make(Param:sig type evType = private [> eventType ]; type evData = private [> eventData ]; end) = struct
   module DisplayObject = DisplayObject.Make Param;
   module Quad = Quad.Make DisplayObject;
-  module Image = Image.Make DisplayObject;
+  module Image = Image.Make Quad;
   module Sprite = Sprite.Make DisplayObject;
-  module CompiledSprite = CompiledSprite.Make DisplayObject;
-  module MovieClip = MovieClip.Make DisplayObject;
-  module TextField = TextField.Make DisplayObject;
-  module FPS = FPS.Make DisplayObject;
-  module Button = Button.Make DisplayObject;
+  module CompiledSprite = CompiledSprite.Make Image Sprite;
+  module MovieClip = MovieClip.Make DisplayObject Image;
+  module BitmapFontCreator = BitmapFont.MakeCreator Image CompiledSprite;
+  module TextField = TextField.Make Quad BitmapFontCreator; 
+  module FPS = FPS.Make DisplayObject TextField;
+  module Button = Button.Make DisplayObject Sprite Image TextField;
   module Stage = Stage.Make DisplayObject;
 end;
 

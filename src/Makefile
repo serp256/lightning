@@ -44,7 +44,7 @@ endif
 
 MOBS += $(gl)/gl_stub.o 
 
-MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
+MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml ProfTimer.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
 					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml Stage.ml Button.ml MovieClip.ml Tween.ml Lightning.ml
 
 MLFLAGS += -package extlib,xmlm -I $(gl)
@@ -56,21 +56,23 @@ MLOBS = $(MLSOURCES:.ml=.cmx)
 
 $(MLOBS): syntax/pa_debug.cmo 
 #$(MLOBS): MLPPOPT += syntax/pa_debug.cmo 
-$(MLOBS): MLPPOPT += syntax/pa_debug.cmo 
+$(MLOBS) MLDepend.$(PLATFORM): MLPPOPT += syntax/pa_debug.cmo 
+-include debug.conf
 	#-enable-debug default
 	
 lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
 	$(OCAMLMKLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
 
+#$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend.$(PLATFORM)
 MLDepend.$(PLATFORM):
-	$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES) *.mli > MLDepend.$(PLATFORM)
 
 
 doc:
 	mkdir -p docs
 	$(OCAMLFIND) ocamldoc -short-functors -html -d docs $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLFLAGS) \
 		MList.ml PriorityQueue.mli WeakHashtbl.mli WeakMemo.mli LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml DisplayObjectT.ml DisplayObject.mli Sprite.mli Quad.mli \
-		Texture.mli TextureAtlas.mli Image.mli CompiledSprite.ml Touch.ml BitmapFont.mli TextField.mli Stage.mli Button.mli MovieClip.mli Tween.mli Lightning.ml
+		Texture.mli TextureAtlas.mli Image.mli CompiledSprite.mli Touch.ml BitmapFont.mli TextField.mli Stage.mli Button.mli MovieClip.mli Tween.mli Lightning.ml
 
 
 .DEFAULT_GOAL := release

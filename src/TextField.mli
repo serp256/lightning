@@ -1,7 +1,7 @@
 
-module Make(D:DisplayObjectT.M): sig
-
-class c :  [ ?fontName:string ] -> [ ?fontSize:float ] -> [ ?color:int ] -> [ ~width:float ] -> [ ~height:float ] -> [ string ] ->
+module type S = sig
+  module D: DisplayObjectT.M;
+  class c :  [ ?fontName:string ] -> [ ?fontSize:float ] -> [ ?color:int ] -> [ ~width:float ] -> [ ~height:float ] -> [ string ] ->
   object
     inherit D.container;
     method setText: string -> unit;
@@ -17,3 +17,6 @@ class c :  [ ?fontName:string ] -> [ ?fontSize:float ] -> [ ?color:int ] -> [ ~w
 
   value create: ?fontName:string -> ?fontSize:float -> ?color:int -> ~width:float -> ~height:float -> string -> c;
 end;
+
+
+module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSprite.Sprite.D = Quad.D): S with module D = Quad.D;

@@ -1,5 +1,6 @@
 
-module Make(D:DisplayObjectT.M): sig
+module type S = sig
+  module D : DisplayObjectT.M;
 
   class c:
     object
@@ -7,4 +8,7 @@ module Make(D:DisplayObjectT.M): sig
     end;
 
   value create: unit -> c;
+
 end;
+
+module Make(D:DisplayObjectT.M): S with module D = D;
