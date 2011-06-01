@@ -57,7 +57,6 @@ MLOBS = $(MLSOURCES:.ml=.cmx)
 $(MLOBS): syntax/pa_debug.cmo 
 #$(MLOBS): MLPPOPT += syntax/pa_debug.cmo 
 $(MLOBS): MLPPOPT += syntax/pa_debug.cmo 
-	#-enable-debug default
 	
 lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
 	$(OCAMLMKLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
@@ -80,3 +79,4 @@ clean:
 	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.*
 
 -include MLDepend.$(PLATFORM)
+-include debug.conf

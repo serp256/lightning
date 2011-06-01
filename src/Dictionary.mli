@@ -5,11 +5,10 @@ value create : unit -> t;
 value newProp: unit -> prop 'a;
 
 value define: t -> 'a -> prop 'a; 
-value call: t -> prop 'a -> 'a;
+value set: t -> prop 'a -> 'a -> unit;
+value get: t -> prop 'a -> option 'a;
+value get_exn: t -> prop 'a -> 'a;
 value (%):  t -> prop 'a -> 'a;
 
 (* props *)
-value newProp : unit -> prop 'a;
-value setProp: t -> prop 'a -> 'a -> unit;
-value getProp: t -> prop 'a -> option 'a;
 

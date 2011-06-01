@@ -36,7 +36,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     type 'parent = 
       < 
         asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; 
-        name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; stage: option 'parent; .. 
+        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; .. 
       >;
 
     value mutable changed = False;
@@ -168,14 +168,18 @@ class virtual _c [ 'parent ] = (*{{{*)
     method private updatePos (x',y') = (x := x';y := y');
 
 
-    method virtual boundsInSpace': option (_c 'parent) -> Rectangle.t;
+(*     method virtual boundsInSpace: option (_c 'parent) -> Rectangle.t; *)
+(*     method virtual boundsInSpace: option (DisplayObjectT.M._c 'parent) -> Rectangle.t; *)
+    method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
-    method bounds = 
+    method bounds = self#boundsInSpace parent;
+    (*
       (* бага типовыводилки здеся *)
       match parent with
-      [ None -> self#boundsInSpace' None
-      | Some parent -> self#boundsInSpace' (Some parent#asDisplayObject)
+      [ None -> self#boundsInSpace None
+      | Some parent -> self#boundsInSpace (Some parent#asDisplayObject)
       ]; 
+    *)
 
     method virtual bounds: Rectangle.t;
     
@@ -269,7 +273,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       | Some p -> p#stage
       ];
 
-    method transformationMatrixToSpace: option 'displayObject -> Matrix.t = fun targetCoordinateSpace -> (*{{{*)
+    method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t = fun targetCoordinateSpace -> (*{{{*)
       match targetCoordinateSpace with
       [ None -> 
         let matrix = Matrix.create () in
@@ -287,7 +291,8 @@ class virtual _c [ 'parent ] = (*{{{*)
           matrix
         )
       | Some targetCoordinateSpace -> 
-        if targetCoordinateSpace#asDisplayObject = self#asDisplayObject
+        let targetCoordinateSpace = targetCoordinateSpace#asDisplayObject in
+        if targetCoordinateSpace = self#asDisplayObject
         then Matrix.create ()
         else 
           match targetCoordinateSpace#parent with
@@ -472,7 +477,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method private hitTestPoint' localPoint isTouch = 
 (*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
-      match Rectangle.containsPoint (self#boundsInSpace' (Some self#asDisplayObject)) localPoint with
+      match Rectangle.containsPoint (self#boundsInSpace (Some self#asDisplayObject)) localPoint with
       [ True -> Some self#asDisplayObject
       | False -> None
       ];
@@ -614,7 +619,7 @@ value dllist_find_map_back f node =
       in
       loop (Dllist.prev node)
   ];
-
+  
 (*}}}*)
 
 
@@ -829,15 +834,15 @@ class virtual container = (*{{{*)
       let child = child#asDisplayObject in
       self#containsChild' child;
 
-    method boundsInSpace' targetCoordinateSpace =
+    method boundsInSpace targetCoordinateSpace =
       match children with
       [ None -> Rectangle.create 0. 0. 0. 0.
-      | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace' targetCoordinateSpace
+      | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace targetCoordinateSpace
       | Some children -> 
           let (minX,maxX,minY,maxY) = 
             let open Rectangle in
-            Dllist.fold_left begin fun (minX,maxX,minY,maxY) child ->
-              let childBounds = child#boundsInSpace' targetCoordinateSpace in
+            Dllist.fold_left begin fun (minX,maxX,minY,maxY) (child:'displayObject) ->
+              let childBounds = child#boundsInSpace targetCoordinateSpace in
               (
                 min minX childBounds.x,
                 max maxX (childBounds.x +. childBounds.width),
@@ -885,6 +890,73 @@ class virtual container = (*{{{*)
           else ()
         end children
       ];
+
+    method private renderChild child = 
+      let childAlpha = child#alpha in
+      if (childAlpha > 0.0 && child#visible) 
+      then
+      (
+        glPushMatrix();
+        child#transformGLMatrix ();
+(*             RenderSupport.transformMatrixForObject child; *)
+        child#setAlpha (childAlpha *. alpha);
+        child#render ();
+        child#setAlpha childAlpha;
+        glPopMatrix();
+      )
+      else ();
+
+    method! render () =
+      let () = debug:render "container '%s'" name in
+      match children with
+      [ None -> ()
+      | Some children ->
+        match mask with
+        [ None -> self#render' ()
+        | Some (onSelf,mask) ->
+            match self#stage with
+            [ Some stage ->
+              let (scissorMatrix,matrix) = 
+                match onSelf with
+                [ True -> (self#transformationMatrixToSpace None, Matrix.create ())
+                | False -> 
+                  (
+                    match parent with
+                    [ Some parent -> parent#transformationMatrixToSpace None
+                    | None -> assert False 
+                    ],
+                    let m = self#transformationMatrix in (Matrix.invert m; m)
+                  )
+                ]
+              in
+              (
+                let (minX,maxX,minY,maxY) = transform_points mask scissorMatrix in
+                let sheight = stage#height in
+                (
+                  let minY = sheight -. maxY
+                  and maxY = sheight -. minY in
+                  (
+        (*             glPushMatrix(); *)
+                    glEnable gl_scissor_test;
+                    glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
+                  )
+                );
+                let (minX,maxX,minY,maxY) = transform_points mask matrix in
+                let maskRect = Rectangle.create minX minY (maxX -. minX) (maxY -. minY) in
+                Dllist.iter begin fun (child:'displayObject) ->
+                  let bounds = child#boundsInSpace (Some self) in
+                  match Rectangle.intersection maskRect bounds with
+                  [ Some _ -> let () = debug:render "container '%s', render: '%s'" name child#name in self#renderChild child
+                  | None ->  debug:render "container '%s', not render: '%s'" name child#name
+                  ]
+                end children;
+                glDisable gl_scissor_test;
+              )
+            | None -> assert False
+            ]
+        ]
+      ];
+
   end;(*}}}*)
 
 
@@ -893,11 +965,6 @@ class virtual c =
   object(self)
     inherit _c [ container ];
     method dcast = `Object self#asDisplayObject;
-    method boundsInSpace: !'space. option ((#_c container) as 'space) -> Rectangle.t = fun space -> 
-      match space with
-      [ Some space -> self#boundsInSpace' (Some space#asDisplayObject)
-      | None -> self#boundsInSpace' None
-      ];
   end;
 
 end;

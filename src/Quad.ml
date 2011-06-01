@@ -55,10 +55,9 @@ module Make(D:DisplayObjectT.M) = struct
 
       method color = vertexColors.(0);
 
-      method boundsInSpace targetCoordinateSpace = 
-  (*       let () = Printf.printf "bounds in space %s\n" name in *)
+      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
         match targetCoordinateSpace with
-        [ Some ts when ts = self#asDisplayObject -> Rectangle.create 0. 0. vertexCoords.{6} vertexCoords.{7} (* optimization *)
+        [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. vertexCoords.{6} vertexCoords.{7} (* optimization *)
         | _ -> 
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
           let rec loop (minX,maxX,minY,maxY) i =

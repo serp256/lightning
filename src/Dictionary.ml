@@ -23,11 +23,11 @@ value newProp () =
   (set, get);
 
 
-value setProp t (set',_) f = set' t f;
-value getProp t (_,get') = get' t;
+value set t (set',_) f = set' t f;
+value get t (_,get') = get' t;
 
-value call obj sel = 
-  match getProp obj sel with
+value get_opt obj sel = 
+  match get obj sel with
   [ Some s -> s
   | None -> raise Selector_not_found
   ];
@@ -37,8 +37,6 @@ value (%) = call;
 value define obj f =
   let prop = newProp () in
   (
-    setProp obj prop f;
+    set obj prop f;
     prop;
   );
-
-
