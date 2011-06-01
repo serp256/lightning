@@ -165,6 +165,7 @@ value create textureInfo =
           done
         )
       ];
+      debug "bind texture";
       glBindTexture gl_texture_2d 0;
       textureID;
     );
