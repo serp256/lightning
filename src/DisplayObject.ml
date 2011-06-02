@@ -68,37 +68,24 @@ class virtual _c [ 'parent ] = (*{{{*)
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; .. 
       >;
 
-    value mutable changed = False;
+    value intcache = Dictionary.create ();
+
+    value mutable name = "";
+    initializer  name := Printf.sprintf "instance%d" (Oo.id self);
+    method name = name;
+    method setName n = name := n;
+
     value mutable transfromPoint = (0.,0.);
 
-    value mutable scaleX = 1.0;
     value mutable parent : option 'parent = None;
     method parent = parent;
-    method setParent p = parent := Some p;
-
-    method clearParent () = parent := None;
+    method setParent p = (parent := Some p; Dictionary.clear intcache);
+    method clearParent () = (parent := None; Dictionary.clear intcache);
 
     (* Events *)
     type 'event = Event.t P.evType P.evData 'displayObject 'self;
     type 'listener = 'event -> unit;
-(*     value listeners: option (EventsTbl.t P.evType (int * 'listener)) = None; (* Hashtbl.create 0; *) (* make it optional - remove event listener - id ? how to remove ? *)  *)
-(*     value listeners: Listeners.t P.evType P.evData 'displayObject 'self = Listeners.empty (); *)
 
-(*     method addEventListener (evType:P.evType) (listener:'listener) = Listeners.add evType listener listeners; *)
-
-    (*
-      match listeners with
-      [ None -> 
-        let lstnrs = Hashtbl.create 1 in
-        (
-          Hashtbl.add lstnrs evType listener;
-          listeners := Some lstnrs;
-        )
-      | Some lstnrs -> Hashtbl.add lstnrs evType listener
-      ];
-    *)
-
-(*     method! addEventListener (eventType:P.evType) (listener: 'listener) = 1; *)
     method dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> (*{{{*)
       (
         try
@@ -116,49 +103,6 @@ class virtual _c [ 'parent ] = (*{{{*)
         ]
       );
 
-      (*
-      let open Event in 
-      let listeners = 
-        match listeners with
-        [ None -> None
-        | Some listeners ->
-          try
-            let listeners = Hashtbl.find_all listeners event.etype in
-            Some listeners
-          with [ Not_found -> None ]
-        ]
-      in
-      match (event.bubbles,listeners) with
-      [ (False,None) -> ()
-      | (_,lstnrs) -> 
-          (
-            match lstnrs with
-            [ Some listeners -> 
-              let event = {(event) with currentTarget = Some self} in
-              ignore(
-                List.for_all begin fun l ->
-                  (
-                    l event;
-                    event.propagation = `StopImmediate;
-                  )
-                end listeners 
-              )
-            | None -> ()
-            ];
-            match event.bubbles && event.propagation = `Propagate with
-            [ True -> 
-              match parent with
-              [ Some p -> 
-                let event = {(event) with currentTarget = None } in
-                p#dispatchEvent' event
-              | None -> ()
-              ]
-            | False -> ()
-            ]
-          )
-      ];(*}}}*)
-    *)
-  
     (* всегда ставить таргет в себя и соответственно current_target *)
     method dispatchEvent: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> 
       let event = {(event) with Event.target = Some self#asDisplayObject; currentTarget = None} in
@@ -167,14 +111,15 @@ class virtual _c [ 'parent ] = (*{{{*)
 (*     method hasEventListeners eventType = Listeners.has eventType listeners; *)
 (*     method removeEventListener eventType listenerID = Listeners.remove eventType listenerID listeners; *)
 
+    value mutable scaleX = 1.0;
     method scaleX = scaleX;
-    method setScaleX ns = scaleX := ns;
+    method setScaleX ns = (scaleX := ns; Dictionary.clear intcache);
 
     value mutable scaleY = 1.0;
     method scaleY = scaleY;
-    method setScaleY ns = scaleY := ns;
+    method setScaleY ns = (scaleY := ns; Dictionary.clear intcache);
 
-    method setScale s = (self#setScaleX s; self#setScaleY s);
+    method setScale s = (scaleX := s; scaleY := s; Dictionary.clear intcache);
 
     value mutable visible = True;
     method visible = visible;
@@ -186,32 +131,38 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     value mutable x = 0.0;
     method x = x;
-    method setX x' = x := x';
+    method setX x' = ( x := x'; Dictionary.clear intcache);
 
     value mutable y = 0.0;
     method y = y;
-    method setY y' = y := y';
+    method setY y' = (y := y'; Dictionary.clear intcache);
 
     method pos = (x,y);
-    method setPos (x',y') = (x := x'; y := y');
-    method private updatePos (x',y') = (x := x';y := y');
+    method setPos (x',y') = (x := x'; y := y';Dictionary.clear intcache);
 
-
-(*     method virtual boundsInSpace: option (_c 'parent) -> Rectangle.t; *)
-(*     method virtual boundsInSpace: option (DisplayObjectT.M._c 'parent) -> Rectangle.t; *)
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
-    method bounds = self#boundsInSpace parent;
-    (*
-      (* бага типовыводилки здеся *)
-      match parent with
-      [ None -> self#boundsInSpace None
-      | Some parent -> self#boundsInSpace (Some parent#asDisplayObject)
-      ]; 
-    *)
-
-    method virtual bounds: Rectangle.t;
-    
+    value mutable boundsCacheSelector = None;
+    method bounds = 
+      match boundsCacheSelector with
+      [ None -> 
+        let bounds = self#boundsInSpace parent in
+        let sel = Dictionary.define intcache bounds in
+        (
+          boundsCacheSelector := Some sel;
+          bounds
+        )
+      | Some sel -> 
+          match Dictionary.get intcache sel with
+          [ Some bounds -> let () = debug:intcache "bounds from cache %s" name in bounds
+          | None -> 
+             let bounds = self#boundsInSpace parent in
+             (
+               Dictionary.set intcache sel bounds;
+               bounds
+             )
+          ]
+      ];
 
     method width = self#bounds.Rectangle.width;
 
@@ -254,16 +205,15 @@ class virtual _c [ 'parent ] = (*{{{*)
         then loop nr where rec loop nr = let nr = nr -. two_pi in if nr > pi then loop nr else nr
         else nr
       in
-      rotation := nr;
+      (
+        rotation := nr;
+        Dictionary.clear intcache;
+      );
 
     value mutable alpha = 1.0;
     method alpha = alpha;
     method setAlpha na = alpha := max 0.0 (min 1.0 na);
 
-    value mutable name = "";
-    initializer  name := Printf.sprintf "instance%d" (Oo.id self);
-    method name = name;
-    method setName n = name := n;
 
     value lastTouchTimestamp = 0.;
     method asDisplayObject = (self :> _c 'parent);
@@ -405,29 +355,32 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual private render': option Rectangle.t -> unit;
 
     method render rect = 
-      match mask with
-      [ None -> self#render' rect 
-      | Some (onSelf,maskRect,maskPoints) ->
-          let maskRect = 
-            match onSelf with
-            [ True -> maskRect
-            | False -> 
-                let m = self#transformationMatrix in 
-                (
-                  Matrix.invert m;
-                  Matrix.transformRectangle m maskRect
-                )
-            ]
-          in
-          match rect with
-          [ None -> RENDER_WITH_MASK (self#render' (Some maskRect))
-          | Some rect -> 
-              match Rectangle.intersection maskRect rect with
-              [ Some inRect -> RENDER_WITH_MASK (self#render' (Some inRect))
-              | None -> ()
+      proftimer:render ("render %s" name)
+      (
+        match mask with
+        [ None -> self#render' rect 
+        | Some (onSelf,maskRect,maskPoints) ->
+            let maskRect = 
+              match onSelf with
+              [ True -> maskRect
+              | False -> 
+                  let m = self#transformationMatrix in 
+                  (
+                    Matrix.invert m;
+                    Matrix.transformRectangle m maskRect
+                  )
               ]
-          ]
-      ];
+            in
+            match rect with
+            [ None -> RENDER_WITH_MASK (self#render' (Some maskRect))
+            | Some rect -> 
+                match Rectangle.intersection maskRect rect with
+                [ Some inRect -> RENDER_WITH_MASK (self#render' (Some inRect))
+                | None -> ()
+                ]
+            ]
+        ];
+      );
 
 
     (*
@@ -636,6 +589,7 @@ class virtual container = (*{{{*)
     method numChildren = numChildren;
     method asDisplayObjectContainer = (self :> container);
     method dcast = `Container self#asDisplayObjectContainer;
+    method renderPrepare () = ();
 
 
     (*
@@ -857,6 +811,8 @@ class virtual container = (*{{{*)
           Rectangle.create minX minY (maxX -. minX) (maxY -. minY)
       ];
 
+(*    method bounds = self#boundsInSpace parent; *)
+
     method! private  hitTestPoint' localPoint isTouch = 
       match children with
       [ None -> None
@@ -908,8 +864,7 @@ class virtual container = (*{{{*)
     *)
 
 
-    (* оптимизация рендеринга пустых хуйней ? *)
-    method private render' rect = (* А здесь нужно наоборот сцука *)
+    method private render' rect = 
       match children with
       [ None -> ()
       | Some children -> 
@@ -934,7 +889,7 @@ class virtual container = (*{{{*)
               let childAlpha = child#alpha in
               if (childAlpha > 0.0 && child#visible) 
               then
-                let bounds = child#boundsInSpace (Some self) in
+                let bounds = child#bounds in
                 match Rectangle.intersection rect bounds with
                 [ Some intRect -> 
                   (
@@ -965,6 +920,29 @@ class virtual c =
   object(self)
     inherit _c [ container ];
     method dcast = `Object self#asDisplayObject;
+    (*
+    value mutable boundsCacheSelector = None;
+    method bounds = 
+      match boundsCacheSelector with
+      [ None -> 
+        let bounds = self#boundsInSpace parent in
+        let sel = Dictionary.define intcache bounds in
+        (
+          boundsCacheSelector := Some sel;
+          bounds
+        )
+      | Some sel -> 
+          match Dictionary.get intcache sel with
+          [ Some bounds -> let () = debug:intcache "bounds from cache %s" name in bounds
+          | None -> 
+             let bounds = self#boundsInSpace parent in
+             (
+               Dictionary.set intcache sel bounds;
+               bounds
+             )
+          ]
+      ];
+      *)
   end;
 
 end;

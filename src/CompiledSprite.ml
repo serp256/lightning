@@ -30,9 +30,9 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
       match obj#alpha = 0.0 || not obj#visible with
       [ True -> textures
       | False -> 
-        let () = debug:compile "compile: '%s'" obj#name in
         match obj#dcast with
         [ `Container cont ->
+          let () = cont#renderPrepare () in
           Enum.fold begin fun child textures ->
             let childMatrix = child#transformationMatrix in
             (
@@ -126,8 +126,8 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
       method invalidate () = compiled := False;
 
       method compile () = (*{{{*)
+        let timer = ProfTimer.start () in
       (
-  (*       prerr_endline "compile"; *)
         self#deleteBuffers();
         textureSwitches := [];
         colorData := "";
@@ -150,12 +150,6 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
               indices.{!pos} := i*4 + 3; incr pos;
             done;
 
-
-  (*
-            for i = 0 to indexBufferSize - 1 do 
-              Printf.eprintf "indices %d = %d\n" i indices.{i};
-            done;
-  *)
 
             (* index buffer *)
             glBindBuffer gl_element_array_buffer buffers.(0);
@@ -185,8 +179,9 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
           colorData := colorData';
   (*         prerr_endline "compiled"; *)
           compiled := True;
-
         );
+        ProfTimer.stop timer;
+        debug:compile "compiled: %F" (ProfTimer.length timer);
       ); (*}}}*)
 
       method private updateColorData () = (*{{{*)

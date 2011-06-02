@@ -204,3 +204,6 @@ class c ?(transition=`linear) ?(loop=`LoopNone) time =
       );
 
   end;
+
+
+value create = new c;

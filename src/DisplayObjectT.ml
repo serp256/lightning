@@ -117,7 +117,6 @@ class virtual _c [ 'parent ]:
     method setY: float -> unit;
     method pos: Point.t;
     method setPos: Point.t -> unit;
-    method private updatePos: Point.t -> unit;
     method width: float;
     method setWidth: float -> unit;
     method height: float;
@@ -146,7 +145,7 @@ class virtual _c [ 'parent ]:
     method removeFromParent: unit -> unit;
     method private hitTestPoint': Point.t -> bool -> option (_c _);
     method hitTestPoint: Point.t -> bool -> option (_c _) ;
-    method bounds: Rectangle.t;
+    method virtual bounds: Rectangle.t;
     method transformGLMatrix: unit -> unit;
     method transformationMatrix: Matrix.t;
     method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t;
@@ -173,6 +172,7 @@ class virtual container:
 
     method dcast: [= `Object of 'displayObject | `Container of container ];
 
+    method bounds: Rectangle.t;
     method asDisplayObjectContainer: container;
     method children: Enum.t 'displayObject;
     method addChild: !'child. ?index:int -> (#_c container as 'child) -> unit;
@@ -190,6 +190,7 @@ class virtual container:
     method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
+    method renderPrepare: unit -> unit;
   end;
 
 
@@ -197,5 +198,6 @@ class virtual c:
   object
     inherit _c  [ container ];
     method dcast: [= `Object of c | `Container of container ];
+    method bounds: Rectangle.t;
   end;
 end;

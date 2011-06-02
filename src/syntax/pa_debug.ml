@@ -51,9 +51,13 @@ module MakeParser (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
   open Camlp4.Sig;
   include Syntax;
 
-  value rec conv_expr = fun
-    [ Ast.ExApp _loc e p -> Ast.ExApp _loc (conv_expr e) p
-    | Ast.ExStr _loc s -> <:expr<Debug.d $str:s$>>
+  value rec conv_expr l = fun
+    [ Ast.ExApp _loc e p -> Ast.ExApp _loc (conv_expr l e) p
+    | Ast.ExStr _loc s -> 
+        match l with
+        [ None -> <:expr<Debug.d $str:s$>>
+        | Some label -> <:expr<Debug.d ~l:$str:label$ $str:s$>>
+        ]
     | e -> e
     ];
 
@@ -66,6 +70,10 @@ module MakeParser (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
       Hashtbl.find enabled_labels l
     with 
     [ Not_found -> False ];
+
+  value gentimerid =
+    let timerid = ref 0 in
+    fun () -> let r = !timerid in (incr timerid; r);
 
 
   EXTEND Gram 
@@ -114,20 +122,21 @@ module MakeParser (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
             | Some e -> e
             ]
           in
-          if !debug 
-          then 
-            let expr = conv_expr expr in
-            let (label,expr) = 
-              match l with 
-              [ Some label -> (label, (Ast.map_expr (fun [ <:expr<Debug.d>> -> <:expr<Debug.d ~l:$str:label$>> | e -> e ]))#expr expr) 
-              | None -> ("default",expr) 
-              ] 
-            in
-            match check label with
-            [ True -> expr
-            | False -> els_expr els
-            ]
+          let label = match l with [ None -> "default" | Some l -> l] in
+          if !debug && (check label)
+          then conv_expr l expr
           else els_expr els
+        ]
+        |
+        [ "proftimer" ; l = OPT [ ":" ; l = a_LIDENT -> l ] ; res = expr LEVEL "simple"; expr = SELF  ->
+          let label = match l with [ None -> "default" | Some l -> l] in
+          if !debug && (check label)
+          then
+            let timerid = gentimerid () in
+            let tname = Printf.sprintf "timer%d__" timerid in
+            let res = conv_expr l res in
+            <:expr<let $lid:tname$ = ProfTimer.start () in ($expr$; ProfTimer.stop $lid:tname$; $res$ (ProfTimer.length $lid:tname$))>>
+          else expr
         ]
       ];
 

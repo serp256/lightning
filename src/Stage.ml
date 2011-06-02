@@ -32,6 +32,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
   class virtual c (width:float) (height:float) =
     object(self)
       inherit D.container as super;
+      initializer self#setName "STAGE";
       value virtual color: int;
       method! width = width;
       method! setWidth _ = raise Restricted_operation;
@@ -203,17 +204,12 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         );(*}}}*)
 
       method !render _ =
-      (
-        let timer = ProfTimer.start () in
         (
           RenderSupport.clearTexture ();
           RenderSupport.clear color 1.0;
           RenderSupport.setupOrthographicRendering 0. width height 0.;
-          super#render None;
-          ProfTimer.stop timer;
-          debug:render "Stage rendered: %F" (ProfTimer.length timer);
-        );
-        ignore(RenderSupport.checkForOpenGLError());
+          proftimer:render "STAGE rendered %F" (super#render None);
+          ignore(RenderSupport.checkForOpenGLError());
         (*
         #if DEBUG
         [SPRenderSupport checkForOpenGLError];

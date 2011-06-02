@@ -159,6 +159,8 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSpri
         super#render' rect;
       );
 
+      method! renderPrepare () = if requiresRedraw then self#redrawContents () else ();
+
       method textBounds = 
       (
         if requiresRedraw then self#redrawContents () else ();

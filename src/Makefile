@@ -45,7 +45,7 @@ endif
 
 MOBS += $(gl)/gl_stub.o 
 
-MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml ProfTimer.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
+MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml ProfTimer.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml Dictionary.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
 					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml Stage.ml Button.ml MovieClip.ml Tween.ml Lightning.ml
 
 MLFLAGS += -package extlib,xmlm -I $(gl)
