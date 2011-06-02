@@ -202,14 +202,14 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           currentTouches := List.filter (fun (_,t) -> match t.phase with [ TouchPhaseEnded -> False | _ -> True ]) processedTouches;
         );(*}}}*)
 
-      method !render () =
+      method !render _ =
       (
         let timer = ProfTimer.start () in
         (
           RenderSupport.clearTexture ();
           RenderSupport.clear color 1.0;
           RenderSupport.setupOrthographicRendering 0. width height 0.;
-          super#render();
+          super#render None;
           ProfTimer.stop timer;
           debug:render "Stage rendered: %F" (ProfTimer.length timer);
         );

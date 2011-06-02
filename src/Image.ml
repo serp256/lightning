@@ -47,7 +47,7 @@ module Make(Q:Quad.S) = struct
       method virtual copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
       method copyTexCoords dest = Array.iteri (fun i a -> Bigarray.Array1.unsafe_set dest i a) texCoords;
 
-      method! private render' () = 
+      method! private render' _ = 
       (
         RenderSupport.bindTexture texture;
   (*

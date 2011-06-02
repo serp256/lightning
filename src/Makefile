@@ -65,7 +65,7 @@ lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
 
 #$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend.$(PLATFORM)
 MLDepend.$(PLATFORM):
-	$(OCAMLFIND) ocamldep $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES) *.mli > MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) > MLDepend.$(PLATFORM)
 
 
 doc:

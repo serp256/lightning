@@ -28,6 +28,35 @@ value transform_points points matrix =
     )
   end (max_float,~-.max_float,max_float,~-.max_float) points;
 
+DEFINE RENDER_WITH_MASK(call_render) = 
+  match self#stage with
+  [ Some stage ->
+    let matrix = 
+      match onSelf with
+      [ True -> self#transformationMatrixToSpace None
+      | False -> 
+          match parent with
+          [ Some parent -> parent#transformationMatrixToSpace None
+          | None -> assert False 
+          ]
+      ]
+    in
+    let (minX,maxX,minY,maxY) = transform_points maskPoints matrix in
+    let sheight = stage#height in
+    (
+      let minY = sheight -. maxY
+      and maxY = sheight -. minY in
+      (
+        glEnable gl_scissor_test;
+        glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
+        call_render;
+        glDisable gl_scissor_test;
+      )
+    )
+  | None -> failwith "render without stage"
+  ];
+
+
 class virtual _c [ 'parent ] = (*{{{*)
   object(self:'self)
     type 'displayObject = _c 'parent;
@@ -368,66 +397,36 @@ class virtual _c [ 'parent ] = (*{{{*)
    
 
     (* если придумать какое-то кэширование ? *)
-    value mutable mask: option (bool * (array (float*float))) = None;
+    value mutable mask: option (bool * Rectangle.t * (array (float*float))) = None;
     method setMask ?(onSelf=False) rect = 
       let open Rectangle in 
-      mask := Some (onSelf, [| (rect.x,rect.y) ; (rect.x, rect.y +. rect.height); (rect.x +. rect.width,rect.y); (rect.x +. rect.width, rect.y +. rect.height) |]);
+      mask := Some (onSelf, rect, Rectangle.points rect); (* если будет система кэширования можно сразу преобразовать этот рект и закэшировать нах *)
 
-    (*
-    method private maskRect onSelf mask) = (* для hitTestPoint другая логика нужна бля *)
-      (* хитровыебанные манипуляции нах - пока не оптимально нихуя бля *)
-      match self#stage with
-      [ Some stage ->
-        let matrix = 
-          match onSelf with
-          [ True -> self#transformationMatrixToSpace None
-          | False -> 
-              match parent with
-              [ Some parent -> parent#transformationMatrixToSpace None
-              | None -> assert False 
+    method virtual private render': option Rectangle.t -> unit;
+
+    method render rect = 
+      match mask with
+      [ None -> self#render' rect 
+      | Some (onSelf,maskRect,maskPoints) ->
+          let maskRect = 
+            match onSelf with
+            [ True -> maskRect
+            | False -> 
+                let m = self#transformationMatrix in 
+                (
+                  Matrix.invert m;
+                  Matrix.transformRectangle m maskRect
+                )
+            ]
+          in
+          match rect with
+          [ None -> RENDER_WITH_MASK (self#render' (Some maskRect))
+          | Some rect -> 
+              match Rectangle.intersection maskRect rect with
+              [ Some inRect -> RENDER_WITH_MASK (self#render' (Some inRect))
+              | None -> ()
               ]
           ]
-        in
-        let (minX,maxX,minY,maxY) = transform_points mask matrix in
-        Rectangle.create minX minY (maxX - minX) (maxY - minY);
-      | None -> assert False
-      ];
-    *)
-
-    method virtual private render': unit -> unit;
-
-    method render () = 
-      match mask with
-      [ None -> self#render' ()
-      | Some (onSelf,mask) ->
-          match self#stage with
-          [ Some stage ->
-            let matrix = 
-              match onSelf with
-              [ True -> self#transformationMatrixToSpace None
-              | False -> 
-                  match parent with
-                  [ Some parent -> parent#transformationMatrixToSpace None
-                  | None -> assert False 
-                  ]
-              ]
-            in
-            let (minX,maxX,minY,maxY) = transform_points mask matrix in
-            let sheight = stage#height in
-            (
-              let minY = sheight -. maxY
-              and maxY = sheight -. minY in
-              (
-    (*             glPushMatrix(); *)
-                glEnable gl_scissor_test;
-                glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
-                self#render'();
-                glDisable gl_scissor_test;
-    (*             glPopMatrix(); *)
-              )
-            )
-        | None -> assert False
-        ]
       ];
 
 
@@ -489,15 +488,18 @@ class virtual _c [ 'parent ] = (*{{{*)
       | False -> 
         match mask with
         [ None -> self#hitTestPoint' localPoint isTouch
-        | Some (onSelf,mask) ->
-            let matrix = 
+        | Some (onSelf,maskRect,maskPoints) ->
+            let maskRect = 
               match onSelf with
-              [ True -> Matrix.create ()
-              | False -> let m = self#transformationMatrix in (Matrix.invert m; m)
+              [ True -> maskRect
+              | False -> 
+                  let m = self#transformationMatrix in 
+                  (
+                    Matrix.invert m;
+                    Matrix.transformRectangle m maskRect;
+                  )
               ]
             in
-            let (minX,maxX,minY,maxY) = transform_points mask matrix in
-            let maskRect = Rectangle.create minX minY (maxX -. minX) (maxY -. minY) in
             match Rectangle.containsPoint maskRect localPoint with
             [ True -> self#hitTestPoint' localPoint isTouch
             | False -> None
@@ -872,9 +874,8 @@ class virtual container = (*{{{*)
       ];
 
 
-    (* FIXME: здесь вызвать сцука маскирование каким-то хуем надо нахуй - поможет кододубликация ? *)
+    (*
     method renderInRect rect = 
-      (* если у меня нет маски то просто перевести рект в свои координаты и пиздец. А если есть тогда ? Сделать все то что делает обычный рендер плюс фсю хуйню *)
       match children with
       [ None -> ()
       | Some children ->
@@ -904,14 +905,15 @@ class virtual container = (*{{{*)
             else ()
           end children
       ];
+    *)
 
 
     (* оптимизация рендеринга пустых хуйней ? *)
-    method private render' () = (* А здесь нужно наоборот сцука *)
+    method private render' rect = (* А здесь нужно наоборот сцука *)
       match children with
       [ None -> ()
       | Some children -> 
-        match mask with
+        match rect with
         [ None -> 
           Dllist.iter begin fun child ->
             let childAlpha = child#alpha in
@@ -921,44 +923,29 @@ class virtual container = (*{{{*)
               glPushMatrix();
               child#transformGLMatrix ();
               child#setAlpha (childAlpha *. alpha);
-              child#render ();
+              child#render None; 
               child#setAlpha childAlpha;
               glPopMatrix();
             )
             else ()
           end children
-        | Some (onSelf,mask) ->
-            let matrix = 
-              match onSelf with
-              [ True -> Matrix.create ()
-              | False -> 
-                  let m = self#transformationMatrix in 
-                  (
-                    Matrix.invert m; 
-                    m
-                  )
-              ]
-            in
-            let (minX,maxX,minY,maxY) = transform_points mask matrix in
-            let maskRect = Rectangle.create minX minY (maxX -. minX) (maxY -. minY) in
+        | Some rect ->
             Dllist.iter begin fun (child:'displayObject) ->
               let childAlpha = child#alpha in
               if (childAlpha > 0.0 && child#visible) 
               then
                 let bounds = child#boundsInSpace (Some self) in
-                match Rectangle.intersection maskRect bounds with
+                match Rectangle.intersection rect bounds with
                 [ Some intRect -> 
                   (
                     glPushMatrix();
                     child#transformGLMatrix ();
                     child#setAlpha (childAlpha *. alpha);
                     match child#dcast with
-                    [ `Object _ -> child#render ()
-                    | `Container c -> c#render ()
-                    (*
+                    [ `Object _ -> child#render None (* FIXME: по идее нужно вызывать таки с ректом, но здесь оптимайзинг, убрать если надо! *)
+                    | `Container c -> 
                       let childMatrix = self#transformationMatrixToSpace (Some child) in
-                      c#renderInRect (Matrix.transformRect childMatrix intRect)
-                    *)
+                      c#render (Some (Matrix.transformRectangle childMatrix intRect))
                     ];
                     child#setAlpha childAlpha;
                     glPopMatrix();

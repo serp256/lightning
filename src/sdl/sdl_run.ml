@@ -23,7 +23,7 @@ value handle_events frameRate stage =
       let ticks = Sdl.Timer.get_ticks () in
       (
         stage#advanceTime ((float (ticks - lastTicks)) /. 1e3);
-        stage#render();
+        stage#render None;
         SDLGL.swap_buffers();
         match quit with
         [ True -> ()

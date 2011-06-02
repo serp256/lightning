@@ -43,7 +43,7 @@ value transformPoint m (x,y) =
 );
 
 
-value transformRect m rect = 
+value transformRectangle m rect = 
   let points = Rectangle.points rect in
   let (minX,maxX,minY,maxY) = 
     Array.fold_left begin fun (minX,maxX,minY,maxY) p ->

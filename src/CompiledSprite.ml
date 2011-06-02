@@ -233,7 +233,7 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
           colorsUpdated := True;
         );(*}}}*)
 
-      method! private render' () = 
+      method! private render' _ = 
       (
         if not compiled then self#compile () else ();
         if not colorsUpdated then self#updateColorData () else ();
