@@ -7,6 +7,8 @@ value containsPoint rect (x,y) =
   x >= rect.x && y >= rect.y && x <= rect.x +. rect.width && y <= rect.y +. rect.height;
 
 
+value points r = [| (r.x,r.y) ; (r.x, r.y +. r.height); (r.x +. r.width,r.y); (r.x +. r.width, r.y +. r.height) |];
+
 value intersection rect1 rect2 = 
   let left = max rect1.x rect2.x
   and right = min (rect1.x +. rect1.width) (rect2.x +. rect2.width) in

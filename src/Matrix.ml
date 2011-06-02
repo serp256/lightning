@@ -42,6 +42,22 @@ value transformPoint m (x,y) =
   m.b*.x +. m.d*.y +. m.ty
 );
 
+
+value transformRect m rect = 
+  let points = Rectangle.points rect in
+  let (minX,maxX,minY,maxY) = 
+    Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
+      let (tx,ty) = transformPoint m p in
+      (
+        if minX > tx then tx else minX,
+        if maxX < tx then tx else maxX,
+        if minY > ty then ty else minY,
+        if maxY < ty then ty else maxY
+      )
+    end (max_float,~-.max_float,max_float,~-.max_float) points
+  in
+  Rectangle.create minX minY (maxX -. minX) (maxY -. minY);
+
 (* value identity () = {a=1.0; b = 0.0; c=0.0; d=1.0; tx=0.0; ty=0.0}; *)
 
 value determinant m = m.a *. m.d -. m.c *. m.b;

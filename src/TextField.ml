@@ -122,7 +122,7 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSpri
           )
         else ();
           
-      method private createRenderedContents () = assert False;
+      method private createRenderedContents () = failwith "Native fonts not supported yet";
       method private createComposedContents () =
         let bitmapFont = BitmapFont.get fontName in
         let contents = BF.createText bitmapFont ~width ~height ?size:fontSize ~color ~border ~hAlign ~vAlign text in
@@ -153,11 +153,17 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSpri
           requiresRedraw := False;
         );
 
+      method! renderInRect rect = 
+      (
+        if requiresRedraw then self#redrawContents () else ();
+        super#renderInRect rect;
+      );
+
       method! render () = 
-        (
-          if requiresRedraw then self#redrawContents () else ();
-          super#render();
-        );
+      (
+        if requiresRedraw then self#redrawContents () else ();
+        super#render();
+      );
 
       method textBounds = 
       (

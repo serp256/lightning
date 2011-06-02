@@ -870,95 +870,105 @@ class virtual container = (*{{{*)
           Some res
         with [ Not_found -> None ]
       ];
-    
+
+
+    (* FIXME: здесь вызвать сцука маскирование каким-то хуем надо нахуй - поможет кододубликация ? *)
+    method renderInRect rect = 
+      (* если у меня нет маски то просто перевести рект в свои координаты и пиздец. А если есть тогда ? Сделать все то что делает обычный рендер плюс фсю хуйню *)
+      match children with
+      [ None -> ()
+      | Some children ->
+          (* Еще учесть маску вдруг нету с ней пересечения у rect *)
+          Dllist.iter begin fun (child:'displayObject) ->
+            let childAlpha = child#alpha in
+            if (childAlpha > 0.0 && child#visible) 
+            then
+              let bounds = child#boundsInSpace (Some self) in
+              match Rectangle.intersection rect bounds with
+              [ Some intRect -> 
+                (
+                  glPushMatrix();
+                  child#transformGLMatrix ();
+                  child#setAlpha (childAlpha *. alpha);
+                  match child#dcast with
+                  [ `Object _ -> child#render ()
+                  | `Container c -> 
+                      let childMatrix = self#transformationMatrixToSpace (Some child) in
+                      c#renderInRect (Matrix.transformRect childMatrix intRect)
+                  ];
+                  child#setAlpha childAlpha;
+                  glPopMatrix();
+                )
+              | None ->  debug:render "container '%s', not render: '%s'" name child#name
+              ]
+            else ()
+          end children
+      ];
+
+
+    (* оптимизация рендеринга пустых хуйней ? *)
     method private render' () = (* А здесь нужно наоборот сцука *)
       match children with
       [ None -> ()
       | Some children -> 
-        Dllist.iter begin fun child ->
-          let childAlpha = child#alpha in
-          if (childAlpha > 0.0 && child#visible) 
-          then
-          (
-            glPushMatrix();
-            child#transformGLMatrix ();
-(*             RenderSupport.transformMatrixForObject child; *)
-            child#setAlpha (childAlpha *. alpha);
-            child#render ();
-            child#setAlpha childAlpha;
-            glPopMatrix();
-          )
-          else ()
-        end children
-      ];
-
-    method private renderChild child = 
-      let childAlpha = child#alpha in
-      if (childAlpha > 0.0 && child#visible) 
-      then
-      (
-        glPushMatrix();
-        child#transformGLMatrix ();
-(*             RenderSupport.transformMatrixForObject child; *)
-        child#setAlpha (childAlpha *. alpha);
-        child#render ();
-        child#setAlpha childAlpha;
-        glPopMatrix();
-      )
-      else ();
-
-    (*
-    method! render () =
-      let () = debug:render "container '%s'" name in
-      match children with
-      [ None -> ()
-      | Some children ->
         match mask with
-        [ None -> self#render' ()
+        [ None -> 
+          Dllist.iter begin fun child ->
+            let childAlpha = child#alpha in
+            if (childAlpha > 0.0 && child#visible) 
+            then
+            (
+              glPushMatrix();
+              child#transformGLMatrix ();
+              child#setAlpha (childAlpha *. alpha);
+              child#render ();
+              child#setAlpha childAlpha;
+              glPopMatrix();
+            )
+            else ()
+          end children
         | Some (onSelf,mask) ->
-            match self#stage with
-            [ Some stage ->
-              let (scissorMatrix,matrix) = 
-                match onSelf with
-                [ True -> (self#transformationMatrixToSpace None, Matrix.create ())
-                | False -> 
+            let matrix = 
+              match onSelf with
+              [ True -> Matrix.create ()
+              | False -> 
+                  let m = self#transformationMatrix in 
                   (
-                    match parent with
-                    [ Some parent -> parent#transformationMatrixToSpace None
-                    | None -> assert False 
-                    ],
-                    let m = self#transformationMatrix in (Matrix.invert m; m)
+                    Matrix.invert m; 
+                    m
                   )
+              ]
+            in
+            let (minX,maxX,minY,maxY) = transform_points mask matrix in
+            let maskRect = Rectangle.create minX minY (maxX -. minX) (maxY -. minY) in
+            Dllist.iter begin fun (child:'displayObject) ->
+              let childAlpha = child#alpha in
+              if (childAlpha > 0.0 && child#visible) 
+              then
+                let bounds = child#boundsInSpace (Some self) in
+                match Rectangle.intersection maskRect bounds with
+                [ Some intRect -> 
+                  (
+                    glPushMatrix();
+                    child#transformGLMatrix ();
+                    child#setAlpha (childAlpha *. alpha);
+                    match child#dcast with
+                    [ `Object _ -> child#render ()
+                    | `Container c -> c#render ()
+                    (*
+                      let childMatrix = self#transformationMatrixToSpace (Some child) in
+                      c#renderInRect (Matrix.transformRect childMatrix intRect)
+                    *)
+                    ];
+                    child#setAlpha childAlpha;
+                    glPopMatrix();
+                  )
+                | None ->  debug:render "container '%s', not render: '%s'" name child#name
                 ]
-              in
-              (
-                let (minX,maxX,minY,maxY) = transform_points mask scissorMatrix in
-                let sheight = stage#height in
-                (
-                  let minY = sheight -. maxY
-                  and maxY = sheight -. minY in
-                  (
-        (*             glPushMatrix(); *)
-                    glEnable gl_scissor_test;
-                    glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
-                  )
-                );
-                let (minX,maxX,minY,maxY) = transform_points mask matrix in
-                let maskRect = Rectangle.create minX minY (maxX -. minX) (maxY -. minY) in
-                Dllist.iter begin fun (child:'displayObject) ->
-                  let bounds = child#boundsInSpace (Some self) in
-                  match Rectangle.intersection maskRect bounds with
-                  [ Some _ -> let () = debug:render "container '%s', render: '%s'" name child#name in self#renderChild child
-                  | None ->  debug:render "container '%s', not render: '%s'" name child#name
-                  ]
-                end children;
-                glDisable gl_scissor_test;
-              )
-            | None -> assert False
-            ]
+              else ()
+            end children
         ]
       ];
-    *)
 
   end;(*}}}*)
 
