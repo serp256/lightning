@@ -10,7 +10,12 @@ module Make
 
   type frameLink = [= `num of int | `label of string ];
 
-  class c: [ ?fps:int ] -> [ string ] ->
+
+  type descriptor;
+
+  value createDescriptor: string -> descriptor;
+
+  class c: [ ?fps:int ] -> [ descriptor ] ->
     object
       inherit Image.c;
       method loop: bool;
@@ -27,6 +32,6 @@ module Make
     end;
 
 
-  value create: ?fps:int -> string -> c;
+  value create: ?fps:int -> descriptor -> c;
 
 end;

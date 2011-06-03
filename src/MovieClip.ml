@@ -27,8 +27,9 @@ module Make
     | Frame of int
     ];
 
+  type descriptor = (array Texture.c * array frame * Hashtbl.t string int);
 
-  value parse_xml xmlpath = (*{{{*)
+  value createDescriptor xmlpath : descriptor = (*{{{*)
     let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
     let () = XmlParser.accept (`Dtd None) in
     let labels = Hashtbl.create 0 in
@@ -96,15 +97,18 @@ module Make
       | _ -> XmlParser.error "MovieClip not found"
       ]
     in
-    (List.rev textures,List.rev frames,labels);(*}}}*)
+    let textures = Array.of_list (List.rev textures) in
+    let frames = Array.of_list (List.rev frames) in
+    (
+      let first_frame = match frames.(0) with [ KeyFrame frame -> frame | Frame _ -> assert False ] in
+      let first_texture = Texture.createSubTexture first_frame.region (textures.(first_frame.textureID)) in
+      first_frame.texture := Some first_texture;
+      (textures,frames,labels)
+    );(*}}}*)
 
-  class c ?(fps=10) xmlpath = 
-    (* parse xml *)
-    let (textures,frames,labels) = parse_xml xmlpath in
-    let textures = Array.of_list textures and frames = Array.of_list frames in
+  class c ?(fps=10) (textures,frames,labels) = 
     let first_frame = match frames.(0) with [ KeyFrame frame -> frame | Frame _ -> assert False ] in
-    let first_texture = Texture.createSubTexture first_frame.region (textures.(first_frame.textureID)) in
-    let () = first_frame.texture := Some first_texture in
+    let first_texture = Option.get first_frame.texture in
   object(self)
     inherit Image.c first_texture as super;
     value mutable frameTime = 1. /. (float fps); 

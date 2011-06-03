@@ -779,7 +779,7 @@ class virtual container = (*{{{*)
           Rectangle.create minX minY (maxX -. minX) (maxY -. minY)
       ];
 
-   method bounds = self#boundsInSpace parent;
+    method! bounds = self#boundsInSpace parent;
 
     method! private  hitTestPoint' localPoint isTouch = 
       match children with
