@@ -73,7 +73,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     type 'parent = 
       < 
         asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; 
-        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; .. 
+        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; modified: unit -> unit; .. 
       >;
 
 (*     value intcache = Dictionary.create (); *)
@@ -83,7 +83,15 @@ class virtual _c [ 'parent ] = (*{{{*)
     method name = name;
     method setName n = name := n;
 
-    value mutable transfromPoint = (0.,0.);
+    value mutable transformPoint = (0.,0.);
+    method setTransformPoint p = 
+      if p <> transformPoint
+      then
+      (
+        transformPoint := p;
+        self#modified ();
+      )
+      else ();
 
     value mutable parent : option 'parent = None;
     method parent = parent;
@@ -121,13 +129,13 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     value mutable scaleX = 1.0;
     method scaleX = scaleX;
-    method setScaleX ns = (scaleX := ns; self#modified'' );
+    method setScaleX ns = (scaleX := ns; self#modified () );
 
     value mutable scaleY = 1.0;
     method scaleY = scaleY;
-    method setScaleY ns = (scaleY := ns; self#modified'' );
+    method setScaleY ns = (scaleY := ns; self#modified () );
 
-    method setScale s = (scaleX := s; scaleY := s; self#modified'' );
+    method setScale s = (scaleX := s; scaleY := s; self#modified () );
 
     value mutable visible = True;
     method visible = visible;
@@ -139,14 +147,14 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     value mutable x = 0.0;
     method x = x;
-    method setX x' = ( x := x'; self#modified'');
+    method setX x' = ( x := x'; self#modified ());
 
     value mutable y = 0.0;
     method y = y;
-    method setY y' = (y := y'; self#modified'');
+    method setY y' = (y := y'; self#modified ());
 
     method pos = (x,y);
-    method setPos (x',y') = (x := x'; y := y'; self#modified'');
+    method setPos (x',y') = (x := x'; y := y'; self#modified ());
 
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
@@ -227,7 +235,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       in
       (
         rotation := nr;
-        self#modified'';
+        self#modified ();
       );
 
     value mutable alpha = 1.0;
@@ -240,15 +248,15 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
     method transformGLMatrix () = 
     (
-      if transfromPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
-        let (x,y) = Point.addPoint (x,y) transfromPoint in
+      if transformPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
+        let (x,y) = Point.addPoint (x,y) transformPoint in
         glTranslatef x y 0. else ();
       if rotation <> 0.0 then glRotatef (rotation /. pi *. 180.0) 0. 0. 1.0 else ();
       if scaleX <> 0.0 || scaleY <> 0.0 then glScalef scaleX scaleY 1.0 else ();
     );
 
     method transformationMatrix = 
-      let translate = Point.addPoint (x,y) transfromPoint in
+      let translate = Point.addPoint (x,y) transformPoint in
       Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate (); (* Может быть стоит закэшировать нах. *)
 
     method root = 
@@ -437,7 +445,14 @@ class virtual _c [ 'parent ] = (*{{{*)
       in
       Matrix.transformPoint (Matrix.invert matrix) globalPoint;
 
-    method private modified'' = boundsCache := None;
+    method modified () = 
+    (
+      boundsCache := None;
+      match parent with
+      [ Some p -> p#modified ()
+      | None -> ()
+      ];
+    );
 
   end;(*}}}*)
 
@@ -594,6 +609,7 @@ class virtual container = (*{{{*)
               ]
           ];
           numChildren := numChildren + 1;
+          self#modified();
           child#setParent self#asDisplayObjectContainer;
           let event = Event.create `ADDED () in
           child#dispatchEvent event;
@@ -644,6 +660,7 @@ class virtual container = (*{{{*)
         | None -> assert False
         ];
         numChildren := numChildren - 1;
+        self#modified();
         let event = Event.create `REMOVED () in
         child#dispatchEvent event;
         match self#stage with
@@ -748,7 +765,7 @@ class virtual container = (*{{{*)
           Rectangle.create minX minY (maxX -. minX) (maxY -. minY)
       ];
 
-    method! bounds = self#boundsInSpace parent;
+(*     method! bounds = self#boundsInSpace parent; *)
 
     method! private  hitTestPoint' localPoint isTouch = 
       match children with

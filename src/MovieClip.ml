@@ -123,7 +123,6 @@ module Make
       | _ -> None
       ];
     value mutable loop = False;
-    value! mutable transfromPoint = first_frame.hotpos;
     method loop = loop;
     method setLoop l = loop := l;
     value mutable fps = fps;
@@ -142,6 +141,7 @@ module Make
     initializer 
       (
 (*         Printf.eprintf "frameTime: %F\n%!" frameTime; *)
+        self#setTransformPoint first_frame.hotpos;
         self#play ();
       );
 
@@ -210,7 +210,7 @@ module Make
                   self#setTexture t;
                 )
             ];
-            transfromPoint := frame.hotpos;
+            self#setTransformPoint frame.hotpos;
           );
         with [ Exit -> () ];
         currentFrameID := cf;

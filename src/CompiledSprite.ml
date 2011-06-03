@@ -123,7 +123,6 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
       method invalidate () = compiled := False;
 
       method compile () = (*{{{*)
-        let timer = ProfTimer.start () in
       (
         self#deleteBuffers();
         textureSwitches := [];
@@ -177,8 +176,6 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
   (*         prerr_endline "compiled"; *)
           compiled := True;
         );
-        ProfTimer.stop timer;
-        debug:compile "compiled: %F" (ProfTimer.length timer);
       ); (*}}}*)
 
       method private updateColorData () = (*{{{*)
