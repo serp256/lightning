@@ -18,15 +18,20 @@ type evData = P.evData;
 
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
 value transform_points points matrix = 
-  Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
-    let (tx,ty) = Matrix.transformPoint matrix p in
-    (
-      if minX > tx then tx else minX,
-      if maxX < tx then tx else maxX,
-      if minY > ty then ty else minY,
-      if maxY < ty then ty else maxY
-    )
-  end (max_float,~-.max_float,max_float,~-.max_float) points;
+  let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+  (
+    for i = 0 to (Array.length points) - 1 do
+      let p = points.(i) in
+      let (tx,ty) = Matrix.transformPoint matrix p in
+      (
+        if ar.(0) > tx then ar.(0) := tx else ();
+        if ar.(1) < tx then ar.(1) := tx else ();
+        if ar.(2) > ty then ar.(2) := ty else ();
+        if ar.(3) < ty then ar.(3) := ty else ();
+      )
+    done;
+    ar
+  );
 
 DEFINE RENDER_WITH_MASK(call_render) = 
   match self#stage with
@@ -41,18 +46,21 @@ DEFINE RENDER_WITH_MASK(call_render) =
           ]
       ]
     in
-    let (minX,maxX,minY,maxY) = transform_points maskPoints matrix in
-    let sheight = stage#height in
-    (
-      let minY = sheight -. maxY
-      and maxY = sheight -. minY in
+    match transform_points maskPoints matrix with
+    [ [| minX; maxX; minY; maxY |] ->
+      let sheight = stage#height in
       (
-        glEnable gl_scissor_test;
-        glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
-        call_render;
-        glDisable gl_scissor_test;
+        let minY = sheight -. maxY
+        and maxY = sheight -. minY in
+        (
+          glEnable gl_scissor_test;
+          glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
+          call_render;
+          glDisable gl_scissor_test;
+        )
       )
-    )
+    | _ -> assert False
+    ]
   | None -> failwith "render without stage"
   ];
 
@@ -228,15 +236,8 @@ class virtual _c [ 'parent ] = (*{{{*)
     );
 
     method transformationMatrix = 
-      let matrix = Matrix.create () in
-      (
-        if scaleX <> 1.0 || scaleY <> 1.0 then Matrix.scaleByXY matrix scaleX scaleY else ();
-        if rotation <> 0.0 then Matrix.rotate matrix rotation else ();
-        if transfromPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
-          let (x,y) = Point.addPoint transfromPoint (x,y) in
-          Matrix.translateByXY matrix x y else ();
-        matrix
-      );
+      let translate = Point.addPoint (x,y) transfromPoint in
+      Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate (); (* Может быть стоит закэшировать нах. *)
 
     method root = 
       loop self#asDisplayObject where
@@ -255,32 +256,23 @@ class virtual _c [ 'parent ] = (*{{{*)
     method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t = fun targetCoordinateSpace -> (*{{{*)
       match targetCoordinateSpace with
       [ None -> 
-        let matrix = Matrix.create () in
-        let rec loop currentObject = 
-          (
-            Matrix.concat matrix currentObject#transformationMatrix;
-            match currentObject#parent with
-            [ Some parent -> loop parent#asDisplayObject
-            | None -> ()
-            ]
-          )
+        let rec loop currentObject matrix = 
+          let matrix = Matrix.concat matrix currentObject#transformationMatrix in
+          match currentObject#parent with
+          [ Some parent -> loop parent#asDisplayObject matrix
+          | None -> matrix
+          ]
         in
-        (
-          loop self#asDisplayObject;
-          matrix
-        )
+        loop self#asDisplayObject Matrix.identity
       | Some targetCoordinateSpace -> 
         let targetCoordinateSpace = targetCoordinateSpace#asDisplayObject in
         if targetCoordinateSpace = self#asDisplayObject
-        then Matrix.create ()
+        then Matrix.identity
         else 
           match targetCoordinateSpace#parent with
           [ Some targetParent when targetParent#asDisplayObject = self#asDisplayObject -> (* optimization  - this is our child *)
               let targetMatrix = targetCoordinateSpace#transformationMatrix in
-              (
-                Matrix.invert targetMatrix;
-                targetMatrix
-              )
+              Matrix.invert targetMatrix
           | _ ->
 (*               let () = Printf.eprintf "self: [%s], parent: [%s], targetCoordinateSpace: [%s]\n%!" name (match parent with [ None -> "NONE" | Some s -> s#name ]) targetCoordinateSpace#name in *)
               match parent with
@@ -312,35 +304,24 @@ class virtual _c [ 'parent ] = (*{{{*)
                       ]
                 in
                 let move_up obj = 
-                  let matrix = Matrix.create () in
-                  (
-                    loop obj where
-                      rec loop currentObject =
+                    loop obj Matrix.identity where
+                      rec loop currentObject matrix =
                         match currentObject = commonParent with
-                        [ True -> ()
+                        [ True -> matrix
                         | False ->
-                          (
-                            Matrix.concat matrix currentObject#transformationMatrix;
                             match currentObject#parent with
-                            [ Some p -> loop p#asDisplayObject
+                            [ Some p -> loop p#asDisplayObject (Matrix.concat matrix currentObject#transformationMatrix)
                             | None -> assert False
                             ]
-                          )
-                        ];
-                      matrix;
-                    )
+                        ]
                 in
                 (* 2.: Move up from self to common parent *)
                 let selfMatrix = move_up self#asDisplayObject
                 (* 3.: Move up from target to common parent *)
                 and targetMatrix = move_up targetCoordinateSpace
                 in
-                (
-                   (* 4.: Combine the two matrices *)
-                   Matrix.invert targetMatrix;
-                   Matrix.concat selfMatrix targetMatrix;
-                   selfMatrix;
-                )
+                 (* 4.: Combine the two matrices *)
+                 Matrix.concat selfMatrix (Matrix.invert targetMatrix)
               ]
           ]
       ];(*}}}*)
@@ -365,10 +346,7 @@ class virtual _c [ 'parent ] = (*{{{*)
               [ True -> maskRect
               | False -> 
                   let m = self#transformationMatrix in 
-                  (
-                    Matrix.invert m;
-                    Matrix.transformRectangle m maskRect
-                  )
+                  Matrix.transformRectangle (Matrix.invert m) maskRect
               ]
             in
             match rect with
@@ -447,10 +425,7 @@ class virtual _c [ 'parent ] = (*{{{*)
               [ True -> maskRect
               | False -> 
                   let m = self#transformationMatrix in 
-                  (
-                    Matrix.invert m;
-                    Matrix.transformRectangle m maskRect;
-                  )
+                  Matrix.transformRectangle (Matrix.invert m) maskRect
               ]
             in
             match Rectangle.containsPoint maskRect localPoint with
@@ -470,37 +445,30 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method localToGlobal localPoint = 
       (* move up until parent is nil *)
-      let matrix = Matrix.create () in
-      (
-        loop self#asDisplayObject where
-          rec loop currentObject =
-            (
-              Matrix.concat matrix currentObject#transformationMatrix;
-              match currentObject#parent with
-              [ None -> ()
-              | Some p -> loop p#asDisplayObject
-              ]
-            );
-        Matrix.transformPoint matrix localPoint;
-      );
+      let matrix = 
+        loop self#asDisplayObject Matrix.identity where
+          rec loop currentObject matrix =
+            let matrix = Matrix.concat matrix currentObject#transformationMatrix in
+            match currentObject#parent with
+            [ None -> matrix
+            | Some p -> loop p#asDisplayObject matrix
+            ]
+      in
+      Matrix.transformPoint matrix localPoint;
 
 
     method globalToLocal globalPoint = 
       (* move up until parent is nil, then invert matrix *)
-      let matrix = Matrix.create () in
-      (
-        loop self#asDisplayObject where
-          rec loop currentObject = 
-            (
-              Matrix.concat matrix currentObject#transformationMatrix;
-              match currentObject#parent with
-              [ None -> ()
-              | Some p -> loop p#asDisplayObject
-              ]
-            );
-         Matrix.invert matrix;
-         Matrix.transformPoint matrix globalPoint;
-      );
+      let matrix = 
+        loop self#asDisplayObject Matrix.identity where
+          rec loop currentObject matrix = 
+            let matrix = Matrix.concat matrix currentObject#transformationMatrix in
+            match currentObject#parent with
+            [ None -> matrix
+            | Some p -> loop p#asDisplayObject matrix
+            ]
+      in
+      Matrix.transformPoint (Matrix.invert matrix) globalPoint;
 
   end;(*}}}*)
 
@@ -811,7 +779,7 @@ class virtual container = (*{{{*)
           Rectangle.create minX minY (maxX -. minX) (maxY -. minY)
       ];
 
-(*    method bounds = self#boundsInSpace parent; *)
+   method bounds = self#boundsInSpace parent;
 
     method! private  hitTestPoint' localPoint isTouch = 
       match children with
@@ -828,40 +796,6 @@ class virtual container = (*{{{*)
           Some res
         with [ Not_found -> None ]
       ];
-
-
-    (*
-    method renderInRect rect = 
-      match children with
-      [ None -> ()
-      | Some children ->
-          (* Еще учесть маску вдруг нету с ней пересечения у rect *)
-          Dllist.iter begin fun (child:'displayObject) ->
-            let childAlpha = child#alpha in
-            if (childAlpha > 0.0 && child#visible) 
-            then
-              let bounds = child#boundsInSpace (Some self) in
-              match Rectangle.intersection rect bounds with
-              [ Some intRect -> 
-                (
-                  glPushMatrix();
-                  child#transformGLMatrix ();
-                  child#setAlpha (childAlpha *. alpha);
-                  match child#dcast with
-                  [ `Object _ -> child#render ()
-                  | `Container c -> 
-                      let childMatrix = self#transformationMatrixToSpace (Some child) in
-                      c#renderInRect (Matrix.transformRect childMatrix intRect)
-                  ];
-                  child#setAlpha childAlpha;
-                  glPopMatrix();
-                )
-              | None ->  debug:render "container '%s', not render: '%s'" name child#name
-              ]
-            else ()
-          end children
-      ];
-    *)
 
 
     method private render' rect = 

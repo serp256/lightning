@@ -125,8 +125,8 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
         match strLength with
         [ 0 -> ()
         | _ ->
-            let lastWhiteSpace = ref None in
-            let rec add_line currentLine index = 
+          let lastWhiteSpace = ref None in
+          let rec add_line currentLine index = 
             (
               Queue.add currentLine lines;
               match index with
@@ -202,6 +202,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
                 | `HAlignCenter -> widthDiff /. 2.
                 ]
               end;
+              debug "Add line with y = %F" line#y;
               lineContainer#addChild line
             )
           end lines 

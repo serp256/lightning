@@ -1,27 +1,63 @@
 
 DEFINE W = 1.;
-type t = { a:mutable float; b:mutable float; c:mutable float; d: mutable float; tx: mutable float; ty: mutable float};
-value create () = {a=1.0;b=0.;c=0.;d=1.;tx=0.;ty=0.};
-value scaleByXY m sx sy = 
-(
-  m.a := m.a *. sx;
-  m.b := m.b *. sy;
-  m.c := m.c *. sx;
-  m.d := m.d *. sy;
-  m.tx := m.tx *. sx;
-  m.ty := m.ty *. sy;
-);
+type t = { a:float; b:float; c:float; d: float; tx: float; ty: float};
 
-value concat m matrix =
-  let (a,b,c,d,tx,ty) = (m.a,m.b,m.c,m.d,m.tx,m.ty) in
+value identity = {a=1.0;b=0.;c=0.;d=1.;tx=0.;ty=0.};
+
+value create ?(translate=(0.,0.)) ?(scale=(1.,1.)) ?(rotation=0.) () : t = 
+  let (tx,ty) = translate in 
+  let ar = [| 1.; 0.; 0.; 1.; tx; ty |] in
+  let (sx,sy) = scale in
   (
-    m.a := matrix.a *. a +. matrix.c *. b;
-    m.b := matrix.b *. a +. matrix.d *. b;
-    m.c := matrix.a *. c +. matrix.c *. d;
-    m.d := matrix.b *. c +. matrix.d *. d;
-    m.tx := matrix.a *. tx +. matrix.c *. ty +. matrix.tx *. W;
-    m.ty := matrix.b *. tx +. matrix.d *. ty +. matrix.ty *. W;
+    if sx <> 1.0 || sy <> 1.0 
+    then
+    (
+      ar.(0) := sx;
+      ar.(3) := sy;
+      ar.(4) := tx *. sx;
+      ar.(5) := ty *. sy;
+    )
+    else ();
+    if rotation <> 0.0 
+    then 
+      let c = cos(rotation)
+      and s = sin(rotation) in
+      (
+        ar.(0) := sx *. c;
+        ar.(1) := s *. sx;
+        ar.(2) := sy *. ~-.s;
+        ar.(3) := sy *. c;
+        let tx = ar.(4) in
+        let ty = ar.(5) in
+        (
+          ar.(4) := c *. tx +. ~-.s *. ty;
+          ar.(5) := s *. tx +. c *. ty;
+        );
+      )
+    else ();
+    Obj.magic ar;
   );
+
+
+value scale m (sx,sy) = 
+  {
+    a = m.a *. sx;
+    b = m.b *. sy;
+    c = m.c *. sx;
+    d = m.d *. sy;
+    tx = m.tx *. sx;
+    ty = m.ty *. sy;
+  };
+
+value concat m1 m2 =
+  {
+    a = m2.a *. m1.a +. m2.c *. m1.b;
+    b = m2.b *. m1.a +. m2.d *. m1.b;
+    c = m2.a *. m1.c +. m2.c *. m1.d;
+    d = m2.b *. m1.c +. m2.d *. m1.d;
+    tx = m2.a *. m1.tx +. m2.c *. m1.ty +. m2.tx *. W;
+    ty = m2.b *. m1.tx +. m2.d *. m1.ty +. m2.ty *. W;
+  };
 
 value rotate m angle = 
   let c = cos(angle)
@@ -30,47 +66,50 @@ value rotate m angle =
   let rotm = { a = c; b = s; c = ~-.s; d = c ; tx = 0.; ty = 0. } in
   concat m rotm;
 
-value translateByXY m dx dy = 
-(
-  m.tx := m.tx +. dx;
-  m.ty := m.ty +. dy;
-);
+value translate m (dx,dy) = 
+  { (m) with
+    tx = m.tx +. dx;
+    ty = m.ty +. dy;
+  };
 
 value transformPoint m (x,y) = 
-(
-  m.a*.x +. m.c*.y +. m.tx,
-  m.b*.x +. m.d*.y +. m.ty
-);
-
+  (
+    m.a*.x +. m.c*.y +. m.tx,
+    m.b*.x +. m.d*.y +. m.ty
+  );
 
 value transformRectangle m rect = 
   let points = Rectangle.points rect in
-  let (minX,maxX,minY,maxY) = 
-    Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
+  let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+  (
+    for i = 0 to 3 do
+      let p = points.(i) in
       let (tx,ty) = transformPoint m p in
       (
-        if minX > tx then tx else minX,
-        if maxX < tx then tx else maxX,
-        if minY > ty then ty else minY,
-        if maxY < ty then ty else maxY
+        if ar.(0) > tx then ar.(0) := tx else ();
+        if ar.(1) < tx then ar.(1) := tx else ();
+        if ar.(2) > ty then ar.(2) := ty else ();
+        if ar.(3) < ty then ar.(3) := ty else ();
       )
-    end (max_float,~-.max_float,max_float,~-.max_float) points
-  in
-  Rectangle.create minX minY (maxX -. minX) (maxY -. minY);
-
-(* value identity () = {a=1.0; b = 0.0; c=0.0; d=1.0; tx=0.0; ty=0.0}; *)
+    done;
+    Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2));
+  );
 
 value determinant m = m.a *. m.d -. m.c *. m.b;
 
 value invert m = 
   let det = determinant m in
-  let a = m.d/.det
-  and b = ~-.(m.b/.det)
-  and c = ~-.(m.c/.det)
-  and d = m.a/.det
-  and tx = (m.c*.m.ty-.m.d*.m.tx)/.det
-  and ty = (m.b*.m.tx-.m.a*.m.ty)/.det
-  in
-  ( m.a :=  a; m.b := b; m.c := c; m.d := d; m.tx := tx; m.ty := ty);
+  {
+    a = m.d/.det;
+    b = ~-.(m.b/.det);
+    c = ~-.(m.c/.det);
+    d = m.a/.det;
+    tx = (m.c*.m.ty-.m.d*.m.tx)/.det;
+    ty = (m.b*.m.tx-.m.a*.m.ty)/.det
+  };
 
 value to_string m = Printf.sprintf "[a:%f,b:%f,c:%f,d:%f,tx:%f,ty:%f]" m.a m.b m.c m.d m.tx m.ty;
+
+
+
+

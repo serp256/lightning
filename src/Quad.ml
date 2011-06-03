@@ -84,6 +84,7 @@ module Make(D:DisplayObjectT.M) = struct
         [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. vertexCoords.{6} vertexCoords.{7} (* optimization *)
         | _ -> 
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
+          (* Здеся тоже через итер круче *)
           let rec loop (minX,maxX,minY,maxY) i =
             let p = (vertexCoords.{2*i},vertexCoords.{2*i+1}) in
             let (tx,ty) = Matrix.transformPoint transformationMatrix p in

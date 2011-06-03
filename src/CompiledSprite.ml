@@ -35,10 +35,7 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
           let () = cont#renderPrepare () in
           Enum.fold begin fun child textures ->
             let childMatrix = child#transformationMatrix in
-            (
-              Matrix.concat childMatrix currentMatrix;
-              loop child childMatrix (alpha *. child#alpha) textures
-            )
+            loop child (Matrix.concat childMatrix currentMatrix) (alpha *. child#alpha) textures
           end textures cont#children 
         | `Object obj ->
             match Quad.cast obj with
@@ -97,7 +94,7 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
         ]
       ]
     in
-    let textures = loop obj#asDisplayObject (Matrix.create()) 1.0 [] in
+    let textures = loop obj#asDisplayObject Matrix.identity 1.0 [] in
     (IO.close_out vertexData,IO.close_out colorData,IO.close_out texCoordData,List.rev textures);
   (*}}}*)
 
