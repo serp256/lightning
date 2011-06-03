@@ -120,63 +120,65 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
           )
         ];
 
-      method invalidate () = compiled := False;
+      method invalidate () = let () = debug:compile "invalidate %s" name in compiled := False;
 
       method compile () = (*{{{*)
-      (
-        self#deleteBuffers();
-        textureSwitches := [];
-        colorData := "";
-        colorsUpdated := False;
-        let (vertexData,colorData',texCoordData,textures) = collectInfo self in
+        proftimer:compile "Compile time: %F"
         (
-          glGenBuffers 4 buffers;
-  (*         let () = Printf.eprintf "buffers: [ %s ]\n" (String.concat ";" (List.map string_of_int (Array.to_list buffers))) in *)
-          let numVerticies = String.length vertexData / 4 / 2 in
-          let numQuads = numVerticies / 4 in
-          let indexBufferSize = numQuads * 6 in (*  4 + 2 for degenerate triangles *)
-          let indices = Gl.make_ushort_array indexBufferSize in
+          self#deleteBuffers();
+          textureSwitches := [];
+          colorData := "";
+          colorsUpdated := False;
+          let (vertexData,colorData',texCoordData,textures) = collectInfo self in
           (
-            let pos = ref 0 in
-            for i = 0 to numQuads - 1 do
-              indices.{!pos} := i*4; incr pos;
-              for j = 0 to 3 do
-                indices.{!pos} := i*4 + j; incr pos;
+            glGenBuffers 4 buffers;
+    (*         let () = Printf.eprintf "buffers: [ %s ]\n" (String.concat ";" (List.map string_of_int (Array.to_list buffers))) in *)
+            let numVerticies = String.length vertexData / 4 / 2 in
+            let numQuads = numVerticies / 4 in
+            let indexBufferSize = numQuads * 6 in (*  4 + 2 for degenerate triangles *)
+            let indices = Gl.make_ushort_array indexBufferSize in
+            (
+              let pos = ref 0 in
+              for i = 0 to numQuads - 1 do
+                indices.{!pos} := i*4; incr pos;
+                for j = 0 to 3 do
+                  indices.{!pos} := i*4 + j; incr pos;
+                done;
+                indices.{!pos} := i*4 + 3; incr pos;
               done;
-              indices.{!pos} := i*4 + 3; incr pos;
-            done;
 
 
-            (* index buffer *)
-            glBindBuffer gl_element_array_buffer buffers.(0);
-            glBufferData gl_element_array_buffer (indexBufferSize * 2) indices gl_static_draw;
-            glBindBuffer gl_element_array_buffer 0;
+              (* index buffer *)
+              glBindBuffer gl_element_array_buffer buffers.(0);
+              glBufferData gl_element_array_buffer (indexBufferSize * 2) indices gl_static_draw;
+              glBindBuffer gl_element_array_buffer 0;
+            );
+
+            (* vertex buffer *)
+            glBindBuffer gl_array_buffer buffers.(1);
+    (*         Printf.eprintf "vertexData: %d=[%s]\n" (String.length vertexData) (String.concat "," (ExtString.String.fold_right (fun x res -> [ string_of_int (int_of_char x) :: res ]) vertexData [])); *)
+            glBufferData gl_array_buffer (String.length vertexData) vertexData gl_static_draw;
+
+            (* color buffer *)
+            glBindBuffer gl_array_buffer buffers.(2);
+    (*         Printf.eprintf "colorData: %d=[%s]\n" (String.length colorData') (String.concat "," (ExtString.String.fold_right (fun x res -> [ string_of_int (int_of_char x) :: res ]) colorData' [])); *)
+            glBufferData gl_array_buffer (String.length colorData') colorData' gl_dynamic_draw;
+
+            (* texture coordinate buffer *)
+            glBindBuffer gl_array_buffer buffers.(3);
+    (*         Printf.eprintf "texCoordData: %d\n" (String.length texCoordData); *)
+            glBufferData gl_array_buffer (String.length texCoordData) texCoordData gl_static_draw;
+
+            glBindBuffer gl_array_buffer 0;
+
+    (*         Printf.eprintf "textures len: %d\n" (List.length textures); *)
+            textureSwitches := textures;
+            debug:compile "TextureSwitches: %d" (List.length textures);
+            colorData := colorData';
+    (*         prerr_endline "compiled"; *)
+            compiled := True;
           );
-
-          (* vertex buffer *)
-          glBindBuffer gl_array_buffer buffers.(1);
-  (*         Printf.eprintf "vertexData: %d=[%s]\n" (String.length vertexData) (String.concat "," (ExtString.String.fold_right (fun x res -> [ string_of_int (int_of_char x) :: res ]) vertexData [])); *)
-          glBufferData gl_array_buffer (String.length vertexData) vertexData gl_static_draw;
-
-          (* color buffer *)
-          glBindBuffer gl_array_buffer buffers.(2);
-  (*         Printf.eprintf "colorData: %d=[%s]\n" (String.length colorData') (String.concat "," (ExtString.String.fold_right (fun x res -> [ string_of_int (int_of_char x) :: res ]) colorData' [])); *)
-          glBufferData gl_array_buffer (String.length colorData') colorData' gl_dynamic_draw;
-
-          (* texture coordinate buffer *)
-          glBindBuffer gl_array_buffer buffers.(3);
-  (*         Printf.eprintf "texCoordData: %d\n" (String.length texCoordData); *)
-          glBufferData gl_array_buffer (String.length texCoordData) texCoordData gl_static_draw;
-
-          glBindBuffer gl_array_buffer 0;
-
-  (*         Printf.eprintf "textures len: %d\n" (List.length textures); *)
-          textureSwitches := textures;
-          colorData := colorData';
-  (*         prerr_endline "compiled"; *)
-          compiled := True;
-        );
-      ); (*}}}*)
+        ); (*}}}*)
 
       method private updateColorData () = (*{{{*)
         let currentColors = IO.output_string () (* String.create (String.length colorData) *) (* TODO: may be optimize this allocation? *) in
