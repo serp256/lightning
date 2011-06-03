@@ -76,7 +76,7 @@ class virtual _c [ 'parent ] = (*{{{*)
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; .. 
       >;
 
-    value intcache = Dictionary.create ();
+(*     value intcache = Dictionary.create (); *)
 
     value mutable name = "";
     initializer  name := Printf.sprintf "instance%d" (Oo.id self);
@@ -87,8 +87,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     value mutable parent : option 'parent = None;
     method parent = parent;
-    method setParent p = (parent := Some p; Dictionary.clear intcache);
-    method clearParent () = (parent := None; Dictionary.clear intcache);
+    method setParent p = (parent := Some p;);
+    method clearParent () = (parent := None;); 
 
     (* Events *)
     type 'event = Event.t P.evType P.evData 'displayObject 'self;
@@ -121,13 +121,13 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     value mutable scaleX = 1.0;
     method scaleX = scaleX;
-    method setScaleX ns = (scaleX := ns; Dictionary.clear intcache);
+    method setScaleX ns = (scaleX := ns; self#modified'' );
 
     value mutable scaleY = 1.0;
     method scaleY = scaleY;
-    method setScaleY ns = (scaleY := ns; Dictionary.clear intcache);
+    method setScaleY ns = (scaleY := ns; self#modified'' );
 
-    method setScale s = (scaleX := s; scaleY := s; Dictionary.clear intcache);
+    method setScale s = (scaleX := s; scaleY := s; self#modified'' );
 
     value mutable visible = True;
     method visible = visible;
@@ -139,18 +139,19 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     value mutable x = 0.0;
     method x = x;
-    method setX x' = ( x := x'; Dictionary.clear intcache);
+    method setX x' = ( x := x'; self#modified'');
 
     value mutable y = 0.0;
     method y = y;
-    method setY y' = (y := y'; Dictionary.clear intcache);
+    method setY y' = (y := y'; self#modified'');
 
     method pos = (x,y);
-    method setPos (x',y') = (x := x'; y := y';Dictionary.clear intcache);
+    method setPos (x',y') = (x := x'; y := y'; self#modified'');
 
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
-    value mutable boundsCacheSelector = None;
+    value mutable boundsCache = None;
+    (*
     method bounds = 
       match boundsCacheSelector with
       [ None -> 
@@ -170,6 +171,17 @@ class virtual _c [ 'parent ] = (*{{{*)
                bounds
              )
           ]
+      ];
+    *)
+    method bounds = 
+      match boundsCache with
+      [ None -> 
+          let bounds = self#boundsInSpace parent in
+          (
+            boundsCache := Some bounds;
+            bounds
+          )
+      | Some bounds -> bounds
       ];
 
     method width = self#bounds.Rectangle.width;
@@ -215,7 +227,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       in
       (
         rotation := nr;
-        Dictionary.clear intcache;
+        self#modified'';
       );
 
     value mutable alpha = 1.0;
@@ -360,51 +372,6 @@ class virtual _c [ 'parent ] = (*{{{*)
         ];
       );
 
-
-    (*
-    type 'event = Event.t 'event_type 'event_data 'displayObject 'self;
-    value listeners: Hashtbl.t 'event_type 'listener = Hashtbl.create 0;
-    method hasEventListeners eventType = Hashtbl.mem listeners eventType;
-    method private dispatchEvent' event = 
-      let listeners = 
-        try
-          let listeners = Hashtbl.find_all listeners event.Event.etype in
-          Some listeners
-        with [ Not_found -> None ]
-      in
-      match (event.Event.bubbles,listeners) with
-      [ (False,None) -> ()
-      | (_,lstnrs) -> 
-          (
-            match lstnrs with
-            [ Some listeners -> 
-(*               let event = {(event) with Event.currentTarget = Some self } in *)
-              ignore(
-                List.for_all begin fun l ->
-                  (
-                    l event;
-                    event.Event.stopImmediatePropagation;
-                  )
-                end listeners 
-              )
-            | None -> ()
-            ];
-            (*
-            match event.Event.bubbles && not event.Event.stopPropagation with
-            [ True -> self#bubbleEvent event
-            | False -> ()
-            ]
-            *)
-          )
-      ];
-  
-    method dispatchEvent (event:'event) = 
-      let event = {(event) with Event.target = Some self#asDisplayObject} in
-      self#dispatchEvent' event;
-    *)
-
-
-
     method private hitTestPoint' localPoint isTouch = 
 (*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
       match Rectangle.containsPoint (self#boundsInSpace (Some self#asDisplayObject)) localPoint with
@@ -469,6 +436,8 @@ class virtual _c [ 'parent ] = (*{{{*)
             ]
       in
       Matrix.transformPoint (Matrix.invert matrix) globalPoint;
+
+    method private modified'' = boundsCache := None;
 
   end;(*}}}*)
 
