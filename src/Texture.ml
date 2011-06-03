@@ -71,7 +71,7 @@ value loadImage ~path ~contentScaleFactor =
         height = legalHeight;
         numMipmaps = 0;
         generateMipmaps = True;
-        premultipliedAlpha = True;
+        premultipliedAlpha = False;
         scale = 1.0; (* FIXME: *)
         imgData = Sdl.Video.surface_pixels rgbSurface
       }
