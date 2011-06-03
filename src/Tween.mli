@@ -21,3 +21,6 @@ class c: [?transition:Transitions.t] -> [?loop:loop] -> [float] ->
     method process: float -> bool;
     method reset: unit -> unit;
   end;
+
+
+value create: ?transition:Transitions.t -> ?loop:loop -> float -> c;

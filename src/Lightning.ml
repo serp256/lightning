@@ -26,7 +26,7 @@ module Default = Make (struct type evType = eventType; type evData = eventData; 
 type stage_constructor =
   float -> float -> 
     <
-      render: unit -> unit;
+      render: option Rectangle.t -> unit;
       processTouches: list Touch.t -> unit;
       advanceTime: float -> unit;
       name: string;
@@ -35,7 +35,9 @@ type stage_constructor =
 (* value _stage: ref (option (float -> float -> stage eventTypeDisplayObject eventEmptyData)) = ref None; *)
 
 IFDEF SDL THEN
-value init s = Sdl_run.run s;
+value init s = 
+  let s = (s :> stage_constructor) in
+  Sdl_run.run s;
 ELSE
 value _stage : ref (option stage_constructor) = ref None;
 value init s = 

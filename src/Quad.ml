@@ -18,8 +18,8 @@ module type S = sig
       method setColor: int -> unit;
       method color: int;
       method vertexColors: Enum.t int;
-      method boundsInSpace: option D.c -> Rectangle.t;
-      method private render': unit -> unit;
+      method boundsInSpace: !'space. option (<asDisplayObject: D.c; ..> as 'space) -> Rectangle.t;
+      method private render': option Rectangle.t -> unit;
     end;
 
   value cast: #D.c -> option c; 
@@ -79,12 +79,12 @@ module Make(D:DisplayObjectT.M) = struct
 
       method color = vertexColors.(0);
 
-      method boundsInSpace targetCoordinateSpace = 
-  (*       let () = Printf.printf "bounds in space %s\n" name in *)
+      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
         match targetCoordinateSpace with
-        [ Some ts when ts = self#asDisplayObject -> Rectangle.create 0. 0. vertexCoords.{6} vertexCoords.{7} (* optimization *)
+        [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. vertexCoords.{6} vertexCoords.{7} (* optimization *)
         | _ -> 
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
+          (* Здеся тоже через итер круче *)
           let rec loop (minX,maxX,minY,maxY) i =
             let p = (vertexCoords.{2*i},vertexCoords.{2*i+1}) in
             let (tx,ty) = Matrix.transformPoint transformationMatrix p in
@@ -107,7 +107,7 @@ module Make(D:DisplayObjectT.M) = struct
         ];
 
 
-      method private render' () = 
+      method private render' _ = 
       (
         RenderSupport.clearTexture();
         (* optimize it!  

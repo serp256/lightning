@@ -16,6 +16,7 @@ debug: release
 SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
 $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend -syntax camlp4r 
 $(SYNTAX): MLPPOPT :=
+$(SYNTAX): OCAMLC = ocamlfind ocamlc
 
 ifeq ($(PLATFORM),ios)
 	gl = gl/es
@@ -44,7 +45,7 @@ endif
 
 MOBS += $(gl)/gl_stub.o 
 
-MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml ProfTimer.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
+MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml ProfTimer.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml Dictionary.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
 					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml Stage.ml Button.ml MovieClip.ml Tween.ml Lightning.ml
 
 MLFLAGS += -package extlib,xmlm -I $(gl)
@@ -54,18 +55,17 @@ MLFLAGS += -package extlib,xmlm -I $(gl)
 
 MLOBS = $(MLSOURCES:.ml=.cmx)
 
-$(MLOBS): syntax/pa_debug.cmo 
+$(MLOBS) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
 #$(MLOBS): MLPPOPT += syntax/pa_debug.cmo 
 $(MLOBS) MLDepend.$(PLATFORM): MLPPOPT += syntax/pa_debug.cmo 
 -include debug.conf
-	#-enable-debug default
 	
 lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
 	$(OCAMLMKLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
 
 #$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend.$(PLATFORM)
 MLDepend.$(PLATFORM):
-	$(OCAMLFIND) ocamldep $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES) *.mli > MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) > MLDepend.$(PLATFORM)
 
 
 doc:
@@ -79,6 +79,7 @@ doc:
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.*
+	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi
 
 -include MLDepend.$(PLATFORM)
+-include debug.conf

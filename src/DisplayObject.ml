@@ -18,53 +18,82 @@ type evData = P.evData;
 
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
 value transform_points points matrix = 
-  Array.fold_left begin fun (minX,maxX,minY,maxY) p ->
-    let (tx,ty) = Matrix.transformPoint matrix p in
-    (
-      if minX > tx then tx else minX,
-      if maxX < tx then tx else maxX,
-      if minY > ty then ty else minY,
-      if maxY < ty then ty else maxY
-    )
-  end (max_float,~-.max_float,max_float,~-.max_float) points;
+  let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+  (
+    for i = 0 to (Array.length points) - 1 do
+      let p = points.(i) in
+      let (tx,ty) = Matrix.transformPoint matrix p in
+      (
+        if ar.(0) > tx then ar.(0) := tx else ();
+        if ar.(1) < tx then ar.(1) := tx else ();
+        if ar.(2) > ty then ar.(2) := ty else ();
+        if ar.(3) < ty then ar.(3) := ty else ();
+      )
+    done;
+    ar
+  );
+
+DEFINE RENDER_WITH_MASK(call_render) = 
+  match self#stage with
+  [ Some stage ->
+    let matrix = 
+      match onSelf with
+      [ True -> self#transformationMatrixToSpace None
+      | False -> 
+          match parent with
+          [ Some parent -> parent#transformationMatrixToSpace None
+          | None -> assert False 
+          ]
+      ]
+    in
+    match transform_points maskPoints matrix with
+    [ [| minX; maxX; minY; maxY |] ->
+      let sheight = stage#height in
+      (
+        let minY = sheight -. maxY
+        and maxY = sheight -. minY in
+        (
+          glEnable gl_scissor_test;
+          glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
+          call_render;
+          glDisable gl_scissor_test;
+        )
+      )
+    | _ -> assert False
+    ]
+  | None -> failwith "render without stage"
+  ];
+
 
 class virtual _c [ 'parent ] = (*{{{*)
   object(self:'self)
     type 'displayObject = _c 'parent;
     inherit EventDispatcher.base [ P.evType,P.evData,'displayObject,'self];
 
-    type 'parent = < asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; name: string; transformationMatrixToSpace: option (_c _) -> Matrix.t; .. >;
+    type 'parent = 
+      < 
+        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject 'ct -> unit; 
+        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; .. 
+      >;
 
-    value mutable changed = False;
+    value intcache = Dictionary.create ();
+
+    value mutable name = "";
+    initializer  name := Printf.sprintf "instance%d" (Oo.id self);
+    method name = name;
+    method setName n = name := n;
+
     value mutable transfromPoint = (0.,0.);
 
-    value mutable scaleX = 1.0;
     value mutable parent : option 'parent = None;
     method parent = parent;
-    method setParent p = parent := Some p;
-    method clearParent () = parent := None;
+    method setParent p = (parent := Some p; Dictionary.clear intcache);
+    method clearParent () = (parent := None; Dictionary.clear intcache);
 
     (* Events *)
     type 'event = Event.t P.evType P.evData 'displayObject 'self;
     type 'listener = 'event -> unit;
-(*     value listeners: option (EventsTbl.t P.evType (int * 'listener)) = None; (* Hashtbl.create 0; *) (* make it optional - remove event listener - id ? how to remove ? *)  *)
-(*     value listeners: Listeners.t P.evType P.evData 'displayObject 'self = Listeners.empty (); *)
 
-(*     method addEventListener (evType:P.evType) (listener:'listener) = Listeners.add evType listener listeners; *)
-
-    (*
-      match listeners with
-      [ None -> 
-        let lstnrs = Hashtbl.create 1 in
-        (
-          Hashtbl.add lstnrs evType listener;
-          listeners := Some lstnrs;
-        )
-      | Some lstnrs -> Hashtbl.add lstnrs evType listener
-      ];
-    *)
-
-(*     method! addEventListener (eventType:P.evType) (listener: 'listener) = 1; *)
     method dispatchEvent': !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> (*{{{*)
       (
         try
@@ -82,49 +111,6 @@ class virtual _c [ 'parent ] = (*{{{*)
         ]
       );
 
-      (*
-      let open Event in 
-      let listeners = 
-        match listeners with
-        [ None -> None
-        | Some listeners ->
-          try
-            let listeners = Hashtbl.find_all listeners event.etype in
-            Some listeners
-          with [ Not_found -> None ]
-        ]
-      in
-      match (event.bubbles,listeners) with
-      [ (False,None) -> ()
-      | (_,lstnrs) -> 
-          (
-            match lstnrs with
-            [ Some listeners -> 
-              let event = {(event) with currentTarget = Some self} in
-              ignore(
-                List.for_all begin fun l ->
-                  (
-                    l event;
-                    event.propagation = `StopImmediate;
-                  )
-                end listeners 
-              )
-            | None -> ()
-            ];
-            match event.bubbles && event.propagation = `Propagate with
-            [ True -> 
-              match parent with
-              [ Some p -> 
-                let event = {(event) with currentTarget = None } in
-                p#dispatchEvent' event
-              | None -> ()
-              ]
-            | False -> ()
-            ]
-          )
-      ];(*}}}*)
-    *)
-  
     (* всегда ставить таргет в себя и соответственно current_target *)
     method dispatchEvent: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> 
       let event = {(event) with Event.target = Some self#asDisplayObject; currentTarget = None} in
@@ -133,14 +119,15 @@ class virtual _c [ 'parent ] = (*{{{*)
 (*     method hasEventListeners eventType = Listeners.has eventType listeners; *)
 (*     method removeEventListener eventType listenerID = Listeners.remove eventType listenerID listeners; *)
 
+    value mutable scaleX = 1.0;
     method scaleX = scaleX;
-    method setScaleX ns = scaleX := ns;
+    method setScaleX ns = (scaleX := ns; Dictionary.clear intcache);
 
     value mutable scaleY = 1.0;
     method scaleY = scaleY;
-    method setScaleY ns = scaleY := ns;
+    method setScaleY ns = (scaleY := ns; Dictionary.clear intcache);
 
-    method setScale s = (self#setScaleX s; self#setScaleY s);
+    method setScale s = (scaleX := s; scaleY := s; Dictionary.clear intcache);
 
     value mutable visible = True;
     method visible = visible;
@@ -152,30 +139,38 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     value mutable x = 0.0;
     method x = x;
-    method setX x' = x := x';
+    method setX x' = ( x := x'; Dictionary.clear intcache);
 
     value mutable y = 0.0;
     method y = y;
-    method setY y' = y := y';
+    method setY y' = (y := y'; Dictionary.clear intcache);
 
     method pos = (x,y);
-    method setPos (x',y') = (x := x'; y := y');
-    method private updatePos (x',y') = (x := x';y := y');
+    method setPos (x',y') = (x := x'; y := y';Dictionary.clear intcache);
 
+    method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
-(*     method virtual boundsInSpace: !'target. option ((#_c 'et 'ed 'p) as 'target) -> Rectangle.t; *)
-
-    method virtual boundsInSpace: option (_c 'parent) -> Rectangle.t;
-
-(*     method bounds = self#boundsInSpace (parent :> option (_c 'event_type 'event_data 'parent)); *)
-
+    value mutable boundsCacheSelector = None;
     method bounds = 
-      (* бага типовыводилки здеся *)
-      match parent with
-      [ None -> self#boundsInSpace None
-      | Some parent -> self#boundsInSpace (Some parent#asDisplayObject)
-      ]; 
-    
+      match boundsCacheSelector with
+      [ None -> 
+        let bounds = self#boundsInSpace parent in
+        let sel = Dictionary.define intcache bounds in
+        (
+          boundsCacheSelector := Some sel;
+          bounds
+        )
+      | Some sel -> 
+          match Dictionary.get intcache sel with
+          [ Some bounds -> let () = debug:intcache "bounds from cache %s" name in bounds
+          | None -> 
+             let bounds = self#boundsInSpace parent in
+             (
+               Dictionary.set intcache sel bounds;
+               bounds
+             )
+          ]
+      ];
 
     method width = self#bounds.Rectangle.width;
 
@@ -218,21 +213,19 @@ class virtual _c [ 'parent ] = (*{{{*)
         then loop nr where rec loop nr = let nr = nr -. two_pi in if nr > pi then loop nr else nr
         else nr
       in
-      rotation := nr;
+      (
+        rotation := nr;
+        Dictionary.clear intcache;
+      );
 
     value mutable alpha = 1.0;
     method alpha = alpha;
     method setAlpha na = alpha := max 0.0 (min 1.0 na);
 
-    value mutable name = "";
-    initializer  name := Printf.sprintf "instance%d" (Oo.id self);
-    method name = name;
-    method setName n = name := n;
 
     value lastTouchTimestamp = 0.;
     method asDisplayObject = (self :> _c 'parent);
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
-    method isStage = False;
     method transformGLMatrix () = 
     (
       if transfromPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
@@ -243,15 +236,8 @@ class virtual _c [ 'parent ] = (*{{{*)
     );
 
     method transformationMatrix = 
-      let matrix = Matrix.create () in
-      (
-        if scaleX <> 1.0 || scaleY <> 1.0 then Matrix.scaleByXY matrix scaleX scaleY else ();
-        if rotation <> 0.0 then Matrix.rotate matrix rotation else ();
-        if transfromPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
-          let (x,y) = Point.addPoint transfromPoint (x,y) in
-          Matrix.translateByXY matrix x y else ();
-        matrix
-      );
+      let translate = Point.addPoint (x,y) transfromPoint in
+      Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate (); (* Может быть стоит закэшировать нах. *)
 
     method root = 
       loop self#asDisplayObject where
@@ -261,42 +247,32 @@ class virtual _c [ 'parent ] = (*{{{*)
           | Some p -> loop p#asDisplayObject
           ];
 
-    method stage = 
-      let root = self#root in
-      match root#isStage with (* это хак но хуй с ним *)
-      [ True -> Some root
-      | False -> None
+    method stage : option 'parent = 
+      match parent with
+      [ None -> None
+      | Some p -> p#stage
       ];
 
-
-    method transformationMatrixToSpace: option 'displayObject -> Matrix.t = fun targetCoordinateSpace -> (*{{{*)
+    method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t = fun targetCoordinateSpace -> (*{{{*)
       match targetCoordinateSpace with
       [ None -> 
-        let matrix = Matrix.create () in
-        let rec loop currentObject = 
-          (
-            Matrix.concat matrix currentObject#transformationMatrix;
-            match currentObject#parent with
-            [ Some parent -> loop parent#asDisplayObject
-            | None -> ()
-            ]
-          )
+        let rec loop currentObject matrix = 
+          let matrix = Matrix.concat matrix currentObject#transformationMatrix in
+          match currentObject#parent with
+          [ Some parent -> loop parent#asDisplayObject matrix
+          | None -> matrix
+          ]
         in
-        (
-          loop self#asDisplayObject;
-          matrix
-        )
+        loop self#asDisplayObject Matrix.identity
       | Some targetCoordinateSpace -> 
-        if targetCoordinateSpace#asDisplayObject = self#asDisplayObject
-        then Matrix.create ()
+        let targetCoordinateSpace = targetCoordinateSpace#asDisplayObject in
+        if targetCoordinateSpace = self#asDisplayObject
+        then Matrix.identity
         else 
           match targetCoordinateSpace#parent with
           [ Some targetParent when targetParent#asDisplayObject = self#asDisplayObject -> (* optimization  - this is our child *)
               let targetMatrix = targetCoordinateSpace#transformationMatrix in
-              (
-                Matrix.invert targetMatrix;
-                targetMatrix
-              )
+              Matrix.invert targetMatrix
           | _ ->
 (*               let () = Printf.eprintf "self: [%s], parent: [%s], targetCoordinateSpace: [%s]\n%!" name (match parent with [ None -> "NONE" | Some s -> s#name ]) targetCoordinateSpace#name in *)
               match parent with
@@ -328,102 +304,61 @@ class virtual _c [ 'parent ] = (*{{{*)
                       ]
                 in
                 let move_up obj = 
-                  let matrix = Matrix.create () in
-                  (
-                    loop obj where
-                      rec loop currentObject =
+                    loop obj Matrix.identity where
+                      rec loop currentObject matrix =
                         match currentObject = commonParent with
-                        [ True -> ()
+                        [ True -> matrix
                         | False ->
-                          (
-                            Matrix.concat matrix currentObject#transformationMatrix;
                             match currentObject#parent with
-                            [ Some p -> loop p#asDisplayObject
+                            [ Some p -> loop p#asDisplayObject (Matrix.concat matrix currentObject#transformationMatrix)
                             | None -> assert False
                             ]
-                          )
-                        ];
-                      matrix;
-                    )
+                        ]
                 in
                 (* 2.: Move up from self to common parent *)
                 let selfMatrix = move_up self#asDisplayObject
                 (* 3.: Move up from target to common parent *)
                 and targetMatrix = move_up targetCoordinateSpace
                 in
-                (
-                   (* 4.: Combine the two matrices *)
-                   Matrix.invert targetMatrix;
-                   Matrix.concat selfMatrix targetMatrix;
-                   selfMatrix;
-                )
+                 (* 4.: Combine the two matrices *)
+                 Matrix.concat selfMatrix (Matrix.invert targetMatrix)
               ]
           ]
       ];(*}}}*)
    
 
     (* если придумать какое-то кэширование ? *)
-    value mutable mask: option (bool * (array (float*float))) = None;
+    value mutable mask: option (bool * Rectangle.t * (array (float*float))) = None;
     method setMask ?(onSelf=False) rect = 
       let open Rectangle in 
-      mask := Some (onSelf, [| (rect.x,rect.y) ; (rect.x, rect.y +. rect.height); (rect.x +. rect.width,rect.y); (rect.x +. rect.width, rect.y +. rect.height) |]);
+      mask := Some (onSelf, rect, Rectangle.points rect); (* если будет система кэширования можно сразу преобразовать этот рект и закэшировать нах *)
 
-    (*
-    method private maskRect onSelf mask) = (* для hitTestPoint другая логика нужна бля *)
-      (* хитровыебанные манипуляции нах - пока не оптимально нихуя бля *)
-      match self#stage with
-      [ Some stage ->
-        let matrix = 
-          match onSelf with
-          [ True -> self#transformationMatrixToSpace None
-          | False -> 
-              match parent with
-              [ Some parent -> parent#transformationMatrixToSpace None
-              | None -> assert False 
-              ]
-          ]
-        in
-        let (minX,maxX,minY,maxY) = transform_points mask matrix in
-        Rectangle.create minX minY (maxX - minX) (maxY - minY);
-      | None -> assert False
-      ];
-    *)
+    method virtual private render': option Rectangle.t -> unit;
 
-    method virtual private render': unit -> unit;
-
-    method render () = 
-      match mask with
-      [ None -> self#render' ()
-      | Some (onSelf,mask) ->
-          match self#stage with
-          [ Some stage ->
-            let matrix = 
+    method render rect = 
+      proftimer:render ("render %s" name)
+      (
+        match mask with
+        [ None -> self#render' rect 
+        | Some (onSelf,maskRect,maskPoints) ->
+            let maskRect = 
               match onSelf with
-              [ True -> self#transformationMatrixToSpace None
+              [ True -> maskRect
               | False -> 
-                  match parent with
-                  [ Some parent -> parent#transformationMatrixToSpace None
-                  | None -> assert False 
-                  ]
+                  let m = self#transformationMatrix in 
+                  Matrix.transformRectangle (Matrix.invert m) maskRect
               ]
             in
-            let (minX,maxX,minY,maxY) = transform_points mask matrix in
-            let sheight = stage#height in
-            (
-              let minY = sheight -. maxY
-              and maxY = sheight -. minY in
-              (
-    (*             glPushMatrix(); *)
-                glEnable gl_scissor_test;
-                glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
-                self#render'();
-                glDisable gl_scissor_test;
-    (*             glPopMatrix(); *)
-              )
-            )
-        | None -> assert False
-        ]
-      ];
+            match rect with
+            [ None -> RENDER_WITH_MASK (self#render' (Some maskRect))
+            | Some rect -> 
+                match Rectangle.intersection maskRect rect with
+                [ Some inRect -> RENDER_WITH_MASK (self#render' (Some inRect))
+                | None -> ()
+                ]
+            ]
+        ];
+      );
 
 
     (*
@@ -469,6 +404,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     *)
 
 
+
     method private hitTestPoint' localPoint isTouch = 
 (*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
       match Rectangle.containsPoint (self#boundsInSpace (Some self#asDisplayObject)) localPoint with
@@ -483,15 +419,15 @@ class virtual _c [ 'parent ] = (*{{{*)
       | False -> 
         match mask with
         [ None -> self#hitTestPoint' localPoint isTouch
-        | Some (onSelf,mask) ->
-            let matrix = 
+        | Some (onSelf,maskRect,maskPoints) ->
+            let maskRect = 
               match onSelf with
-              [ True -> Matrix.create ()
-              | False -> let m = self#transformationMatrix in (Matrix.invert m; m)
+              [ True -> maskRect
+              | False -> 
+                  let m = self#transformationMatrix in 
+                  Matrix.transformRectangle (Matrix.invert m) maskRect
               ]
             in
-            let (minX,maxX,minY,maxY) = transform_points mask matrix in
-            let maskRect = Rectangle.create minX minY (maxX -. minX) (maxY -. minY) in
             match Rectangle.containsPoint maskRect localPoint with
             [ True -> self#hitTestPoint' localPoint isTouch
             | False -> None
@@ -509,37 +445,30 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method localToGlobal localPoint = 
       (* move up until parent is nil *)
-      let matrix = Matrix.create () in
-      (
-        loop self#asDisplayObject where
-          rec loop currentObject =
-            (
-              Matrix.concat matrix currentObject#transformationMatrix;
-              match currentObject#parent with
-              [ None -> ()
-              | Some p -> loop p#asDisplayObject
-              ]
-            );
-        Matrix.transformPoint matrix localPoint;
-      );
+      let matrix = 
+        loop self#asDisplayObject Matrix.identity where
+          rec loop currentObject matrix =
+            let matrix = Matrix.concat matrix currentObject#transformationMatrix in
+            match currentObject#parent with
+            [ None -> matrix
+            | Some p -> loop p#asDisplayObject matrix
+            ]
+      in
+      Matrix.transformPoint matrix localPoint;
 
 
     method globalToLocal globalPoint = 
       (* move up until parent is nil, then invert matrix *)
-      let matrix = Matrix.create () in
-      (
-        loop self#asDisplayObject where
-          rec loop currentObject = 
-            (
-              Matrix.concat matrix currentObject#transformationMatrix;
-              match currentObject#parent with
-              [ None -> ()
-              | Some p -> loop p#asDisplayObject
-              ]
-            );
-         Matrix.invert matrix;
-         Matrix.transformPoint matrix globalPoint;
-      );
+      let matrix = 
+        loop self#asDisplayObject Matrix.identity where
+          rec loop currentObject matrix = 
+            let matrix = Matrix.concat matrix currentObject#transformationMatrix in
+            match currentObject#parent with
+            [ None -> matrix
+            | Some p -> loop p#asDisplayObject matrix
+            ]
+      in
+      Matrix.transformPoint (Matrix.invert matrix) globalPoint;
 
   end;(*}}}*)
 
@@ -613,7 +542,7 @@ value dllist_find_map_back f node =
       in
       loop (Dllist.prev node)
   ];
-
+  
 (*}}}*)
 
 
@@ -628,6 +557,31 @@ class virtual container = (*{{{*)
     method numChildren = numChildren;
     method asDisplayObjectContainer = (self :> container);
     method dcast = `Container self#asDisplayObjectContainer;
+    method renderPrepare () = ();
+
+
+    (*
+    method! setParent parent =
+      match (stage,parent#stage) with
+      [ (Some _,None) -> Dllist.iter (fun c -> c#clearStage()) children
+      | (None,Some s) -> Dllist.iter (fun c -> c#
+      | None -> parent := Some parent
+      ];
+
+    method! clearParent () = 
+    (
+      match stage with
+      [ Some _ -> 
+        (
+          stage := None;
+          Dllist.iter (fun c -> c#clearStage ()) children;
+        )
+      | None -> ();
+      ]
+      parent := None;
+    );
+  *)
+
 
     method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event ->
       let rec loop obj = 
@@ -805,14 +759,14 @@ class virtual container = (*{{{*)
       let child = child#asDisplayObject in
       self#containsChild' child;
 
-    method boundsInSpace targetCoordinateSpace = 
+    method boundsInSpace targetCoordinateSpace =
       match children with
       [ None -> Rectangle.create 0. 0. 0. 0.
       | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace targetCoordinateSpace
       | Some children -> 
           let (minX,maxX,minY,maxY) = 
             let open Rectangle in
-            Dllist.fold_left begin fun (minX,maxX,minY,maxY) child ->
+            Dllist.fold_left begin fun (minX,maxX,minY,maxY) (child:'displayObject) ->
               let childBounds = child#boundsInSpace targetCoordinateSpace in
               (
                 min minX childBounds.x,
@@ -824,6 +778,8 @@ class virtual container = (*{{{*)
           in
           Rectangle.create minX minY (maxX -. minX) (maxY -. minY)
       ];
+
+    method! bounds = self#boundsInSpace parent;
 
     method! private  hitTestPoint' localPoint isTouch = 
       match children with
@@ -840,27 +796,56 @@ class virtual container = (*{{{*)
           Some res
         with [ Not_found -> None ]
       ];
-    
-    method private render' () = (* А здесь нужно наоборот сцука *)
+
+
+    method private render' rect = 
       match children with
       [ None -> ()
       | Some children -> 
-        Dllist.iter begin fun child ->
-          let childAlpha = child#alpha in
-          if (childAlpha > 0.0 && child#visible) 
-          then
-          (
-            glPushMatrix();
-            child#transformGLMatrix ();
-(*             RenderSupport.transformMatrixForObject child; *)
-            child#setAlpha (childAlpha *. alpha);
-            child#render ();
-            child#setAlpha childAlpha;
-            glPopMatrix();
-          )
-          else ()
-        end children
+        match rect with
+        [ None -> 
+          Dllist.iter begin fun child ->
+            let childAlpha = child#alpha in
+            if (childAlpha > 0.0 && child#visible) 
+            then
+            (
+              glPushMatrix();
+              child#transformGLMatrix ();
+              child#setAlpha (childAlpha *. alpha);
+              child#render None; 
+              child#setAlpha childAlpha;
+              glPopMatrix();
+            )
+            else ()
+          end children
+        | Some rect ->
+            Dllist.iter begin fun (child:'displayObject) ->
+              let childAlpha = child#alpha in
+              if (childAlpha > 0.0 && child#visible) 
+              then
+                let bounds = child#bounds in
+                match Rectangle.intersection rect bounds with
+                [ Some intRect -> 
+                  (
+                    glPushMatrix();
+                    child#transformGLMatrix ();
+                    child#setAlpha (childAlpha *. alpha);
+                    match child#dcast with
+                    [ `Object _ -> child#render None (* FIXME: по идее нужно вызывать таки с ректом, но здесь оптимайзинг, убрать если надо! *)
+                    | `Container c -> 
+                      let childMatrix = self#transformationMatrixToSpace (Some child) in
+                      c#render (Some (Matrix.transformRectangle childMatrix intRect))
+                    ];
+                    child#setAlpha childAlpha;
+                    glPopMatrix();
+                  )
+                | None ->  debug:render "container '%s', not render: '%s'" name child#name
+                ]
+              else ()
+            end children
+        ]
       ];
+
   end;(*}}}*)
 
 
@@ -869,6 +854,29 @@ class virtual c =
   object(self)
     inherit _c [ container ];
     method dcast = `Object self#asDisplayObject;
+    (*
+    value mutable boundsCacheSelector = None;
+    method bounds = 
+      match boundsCacheSelector with
+      [ None -> 
+        let bounds = self#boundsInSpace parent in
+        let sel = Dictionary.define intcache bounds in
+        (
+          boundsCacheSelector := Some sel;
+          bounds
+        )
+      | Some sel -> 
+          match Dictionary.get intcache sel with
+          [ Some bounds -> let () = debug:intcache "bounds from cache %s" name in bounds
+          | None -> 
+             let bounds = self#boundsInSpace parent in
+             (
+               Dictionary.set intcache sel bounds;
+               bounds
+             )
+          ]
+      ];
+      *)
   end;
 
 end;

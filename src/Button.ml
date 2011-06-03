@@ -13,7 +13,6 @@ module Make
 
   class c  ?downstate ?text upstate = 
     let width = upstate#width and height = upstate#height in
-    let () = Printf.eprintf "create button with [%f:%f]\n%!" width height in
     object(self)
       inherit D.container;
       value upState:Texture.c = upstate;
