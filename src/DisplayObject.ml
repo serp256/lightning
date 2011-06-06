@@ -750,19 +750,25 @@ class virtual container = (*{{{*)
       [ None -> Rectangle.create 0. 0. 0. 0.
       | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace targetCoordinateSpace
       | Some children -> 
-          let (minX,maxX,minY,maxY) = 
+          let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+          (
             let open Rectangle in
-            Dllist.fold_left begin fun (minX,maxX,minY,maxY) (child:'displayObject) ->
-              let childBounds = child#boundsInSpace targetCoordinateSpace in
+(*             let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in *)
+            let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
+            Dllist.iter begin fun (child:'displayObject) ->
+(*               let childBounds = child#boundsInSpace targetCoordinateSpace in *)
+              let childBounds = Matrix.transformRectangle matrix child#bounds in
               (
-                min minX childBounds.x,
-                max maxX (childBounds.x +. childBounds.width),
-                min minY childBounds.y,
-                max maxY (childBounds.y +. childBounds.height)
+                if childBounds.x < ar.(0) then ar.(0) := childBounds.x else ();
+                let rightX = childBounds.x +. childBounds.width in
+                if rightX > ar.(1) then ar.(1) := rightX else ();
+                if childBounds.y < ar.(2) then ar.(2) := childBounds.y else ();
+                let downY = childBounds.y +. childBounds.height in
+                if downY > ar.(3) then ar.(3) := downY else ();
               )
-            end (max_float,~-.max_float,max_float,~-.max_float) children
-          in
-          Rectangle.create minX minY (maxX -. minX) (maxY -. minY)
+            end children;
+            Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
+          )
       ];
 
 (*     method! bounds = self#boundsInSpace parent; *)
@@ -819,8 +825,8 @@ class virtual container = (*{{{*)
                     match child#dcast with
                     [ `Object _ -> child#render None (* FIXME: по идее нужно вызывать таки с ректом, но здесь оптимайзинг, убрать если надо! *)
                     | `Container c -> 
-                      let childMatrix = self#transformationMatrixToSpace (Some child) in
-                      c#render (Some (Matrix.transformRectangle childMatrix intRect))
+                        let childMatrix = self#transformationMatrixToSpace (Some child) in
+                        c#render (Some (Matrix.transformRectangle childMatrix intRect))
                     ];
                     child#setAlpha childAlpha;
                     glPopMatrix();

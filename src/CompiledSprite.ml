@@ -228,6 +228,8 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
       (
         if not compiled then self#compile () else ();
         if not colorsUpdated then self#updateColorData () else ();
+        proftimer ("GL render compiled sprite %s: %F" name)
+        (
         glBindBuffer gl_element_array_buffer buffers.(0);
 
         let vertexOffset = ref 0 in
@@ -265,6 +267,7 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
         end textureSwitches;
         glBindBuffer gl_array_buffer 0;
         glBindBuffer gl_element_array_buffer 0;
+        );
       );
 
 

@@ -134,8 +134,9 @@ module MakeParser (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
           then
             let timerid = gentimerid () in
             let tname = Printf.sprintf "timer%d__" timerid in
-            let res = conv_expr l res in
-            <:expr<let $lid:tname$ = ProfTimer.start () in ($expr$; ProfTimer.stop $lid:tname$; $res$ (ProfTimer.length $lid:tname$))>>
+            let resname = Printf.sprintf "res%d__" timerid in
+            let print_prof = conv_expr l res in
+            <:expr<let $lid:tname$ = ProfTimer.start () in let $lid:resname$ = $expr$ in (ProfTimer.stop $lid:tname$; $print_prof$ (ProfTimer.length $lid:tname$); $lid:resname$)>>
           else expr
         ]
       ];

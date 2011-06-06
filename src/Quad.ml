@@ -84,26 +84,20 @@ module Make(D:DisplayObjectT.M) = struct
         [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. vertexCoords.{6} vertexCoords.{7} (* optimization *)
         | _ -> 
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
-          (* Здеся тоже через итер круче *)
-          let rec loop (minX,maxX,minY,maxY) i =
-            let p = (vertexCoords.{2*i},vertexCoords.{2*i+1}) in
-            let (tx,ty) = Matrix.transformPoint transformationMatrix p in
-  (*           let () = Printf.printf "%s -> %s\n%!" (Point.to_string p) (Point.to_string (tx,ty)) in *)
-            let res = 
+          let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+          (
+            for i = 0 to 3 do
+              let p = (vertexCoords.{2*i},vertexCoords.{2*i+1}) in
+              let (tx,ty) = Matrix.transformPoint transformationMatrix p in
               (
-                if minX > tx then tx else minX,
-                if maxX < tx then tx else maxX,
-                if minY > ty then ty else minY,
-                if maxY < ty then ty else maxY
+                if ar.(0) > tx then ar.(0) := tx else ();
+                if ar.(1) < tx then ar.(1) := tx else ();
+                if ar.(2) > ty then ar.(2) := ty else ();
+                if ar.(3) < ty then ar.(3) := ty else ();
               )
-            in
-            if i > 2
-            then res
-            else loop res (i+1)
-          in
-          let (minX,maxX,minY,maxY) = loop (max_float,~-.max_float,max_float,~-.max_float) 0 in
-  (*         let () = Printf.printf "result: [%F,%F,%F,%F]\n%!" minX minX (maxX -. minX) (maxY -. minY) in *)
-          Rectangle.create minX minY (maxX -. minX) (maxY -. minY)
+            done;
+            Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2));
+          )
         ];
 
 

@@ -159,7 +159,6 @@
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, mFramebuffer);
     glViewport(0, 0, mWidth, mHeight);
     
-    //mlrender_clearTexture();
     mlstage_render(mStage);
     
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, mRenderbuffer);
