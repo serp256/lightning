@@ -233,10 +233,9 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           done;
           Queue.transfer tmptweens tweens;
           (* dispatch EnterFrameEvent *)
-          (*
-          let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
-          self#dispatchEventOnChildren enterFrameEvent;
-          *)
+          proftimer "Enter frame: %F"
+            let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
+            self#dispatchEventOnChildren enterFrameEvent;
         );
 
     method! hitTestPoint localPoint isTouch =

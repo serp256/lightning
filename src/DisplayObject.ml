@@ -569,33 +569,36 @@ class virtual container = (*{{{*)
     );
   *)
 
-    method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> ();
+(*     method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> (); *)
 
-    (*
     method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event ->
-      let objs = ref [ self#asDisplayObject ] in
+      let objs = ref [ [ self#asDisplayObject ] ] in
       let rec loop () =
         match !objs with
-        [ [ [ obj :: objs ] :: tl ] ->
+        [ [ [ obj :: objs' ] :: tl ] ->
           (
-            match obj#dcast with
-            [ `Container cont -> objs.val := [ ExtList.List.of_enum cont#children ; objs ] @ tl
-            | _ -> ()
-            ];
+            objs.val := 
+              match obj#dcast with
+              [ `Container cont -> [ ExtList.List.of_enum cont#children ; objs' ] @ tl
+              | _ -> 
+                  match objs' with
+                  [ [] -> tl
+                  | _ -> [ objs' :: tl ]
+                  ]
+              ];
             if obj#hasEventListeners event.Event.etype 
             then obj
             else loop ()
           )
-        | [] -> raise Enum.No_more_elements
+        | [ ] | [ [] :: _ ] -> raise Enum.No_more_elements
         ]
       in
-      let listeners = Enum.make make_enum in
+      let listeners = Enum.from loop in
 (*       let event = (event :> Event.t 'event_type 'event_data 'displayObject) in *)
       match Enum.is_empty listeners with
       [ True -> ()
       | False -> Enum.iter (fun (listener:'displayObject) -> listener#dispatchEvent event) listeners
       ];
-      *)
     
 
     method addChild: !'child. ?index:int -> ((#_c container) as 'child) -> unit = fun  ?index child ->
