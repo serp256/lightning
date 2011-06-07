@@ -4,6 +4,7 @@ type t = { a:float; b:float; c:float; d: float; tx: float; ty: float};
 
 value identity = {a=1.0;b=0.;c=0.;d=1.;tx=0.;ty=0.};
 
+(*
 value create ?(translate=(0.,0.)) ?(scale=(1.,1.)) ?(rotation=0.) () : t = 
   let (tx,ty) = translate in 
   let ar = [| 1.; 0.; 0.; 1.; tx; ty |] in
@@ -14,8 +15,6 @@ value create ?(translate=(0.,0.)) ?(scale=(1.,1.)) ?(rotation=0.) () : t =
     (
       ar.(0) := sx;
       ar.(3) := sy;
-      ar.(4) := tx *. sx;
-      ar.(5) := ty *. sy;
     )
     else ();
     if rotation <> 0.0 
@@ -37,7 +36,35 @@ value create ?(translate=(0.,0.)) ?(scale=(1.,1.)) ?(rotation=0.) () : t =
     else ();
     Obj.magic ar;
   );
+*)
 
+value create ?(rotation=0.) ?(scale=(1.,1.)) ?(translate=(0.,0.)) () : t = 
+  let (tx,ty) = translate in 
+  let ar = [| 1.; 0.; 0.; 1.; tx; ty |] in
+  (
+    if rotation <> 0.0 
+    then 
+      let c = cos(rotation)
+      and s = sin(rotation) in
+      (
+        ar.(0) := c;
+        ar.(1) := s;
+        ar.(2) := ~-.s;
+        ar.(3) := c;
+      )
+    else ();
+    let (sx,sy) = scale in
+    if sx <> 1.0 || sy <> 1.0 
+    then
+    (
+      ar.(0) := ar.(0) *. sx;
+      ar.(1) := ar.(1) *. sy;
+      ar.(2) := ar.(2) *. sx;
+      ar.(3) := ar.(3) *. sy;
+    )
+    else ();
+    Obj.magic ar;
+  );
 
 value scale m (sx,sy) = 
   {

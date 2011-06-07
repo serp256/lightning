@@ -96,7 +96,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     value mutable parent : option 'parent = None;
     method parent = parent;
     method setParent p = (parent := Some p;);
-    method clearParent () = (parent := None;); 
+    method clearParent () = (parent := None;);
 
     (* Events *)
     type 'event = Event.t P.evType P.evData 'displayObject 'self;
@@ -181,6 +181,7 @@ class virtual _c [ 'parent ] = (*{{{*)
           ]
       ];
     *)
+
     method bounds = 
       match boundsCache with
       [ None -> 
@@ -199,6 +200,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       (* this method calls 'self.scaleX' instead of changing mScaleX directly.
           that way, subclasses reacting on size changes need to override only the scaleX method. *)
       scaleX := 1.0;
+      boundsCache := None;
       let actualWidth = self#width in
       if actualWidth <> 0.0
       then
@@ -211,6 +213,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setHeight nh = 
     (
       scaleY := 1.0;
+      boundsCache := None;
       let actualHeight = self#height in
       if actualHeight <> 0.0
       then
@@ -382,7 +385,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method private hitTestPoint' localPoint isTouch = 
 (*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
-      match Rectangle.containsPoint (self#boundsInSpace (Some self#asDisplayObject)) localPoint with
+      match Rectangle.containsPoint (self#boundsInSpace (Some self)) localPoint with
       [ True -> Some self#asDisplayObject
       | False -> None
       ];
@@ -566,27 +569,33 @@ class virtual container = (*{{{*)
     );
   *)
 
+    method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> ();
 
+    (*
     method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event ->
-      let rec loop obj = 
-        let res = Enum.empty () in
-        (
-          if obj#hasEventListeners event.Event.etype then Enum.push res obj else ();
-          match obj#dcast with
-          [ `Container cont ->
-            Enum.fold begin fun child res -> 
-              Enum.append res (loop child)
-            end res cont#children
-          | _ -> res
-          ]
-        )
+      let objs = ref [ self#asDisplayObject ] in
+      let rec loop () =
+        match !objs with
+        [ [ [ obj :: objs ] :: tl ] ->
+          (
+            match obj#dcast with
+            [ `Container cont -> objs.val := [ ExtList.List.of_enum cont#children ; objs ] @ tl
+            | _ -> ()
+            ];
+            if obj#hasEventListeners event.Event.etype 
+            then obj
+            else loop ()
+          )
+        | [] -> raise Enum.No_more_elements
+        ]
       in
-      let listeners = loop self#asDisplayObject in
+      let listeners = Enum.make make_enum in
 (*       let event = (event :> Event.t 'event_type 'event_data 'displayObject) in *)
       match Enum.is_empty listeners with
       [ True -> ()
       | False -> Enum.iter (fun (listener:'displayObject) -> listener#dispatchEvent event) listeners
       ];
+      *)
     
 
     method addChild: !'child. ?index:int -> ((#_c container) as 'child) -> unit = fun  ?index child ->
@@ -609,8 +618,8 @@ class virtual container = (*{{{*)
               ]
           ];
           numChildren := numChildren + 1;
-          self#modified();
           child#setParent self#asDisplayObjectContainer;
+          child#modified();
           let event = Event.create `ADDED () in
           child#dispatchEvent event;
           match self#stage with
@@ -647,6 +656,7 @@ class virtual container = (*{{{*)
       let child = Dllist.get child_node in
       (
         child#clearParent();
+        child#modified();
         match children with
         [ Some chldrn ->
           if chldrn == child_node
