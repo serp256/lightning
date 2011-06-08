@@ -34,6 +34,7 @@ mlstage *mlstage_create(float width,float height) {
 
 void mlstage_destroy(mlstage *mlstage) {
 	caml_remove_global_root(&mlstage->stage);
+	caml_gc_compaction(Val_int(0));
 	free(mlstage);
 }
 

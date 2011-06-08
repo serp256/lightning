@@ -1,7 +1,6 @@
 open Gl;
 open LightCommon;
 
-(* value gl_quad_colors = make_ubyte_array 16; *)
 value gl_quad_colors = make_word_array 4;
 
 module type S = sig

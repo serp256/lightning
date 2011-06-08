@@ -25,6 +25,7 @@ end;
 module Make(Q:Quad.S) = struct
 
   module Q = Q;
+  print_endline "Make NEW Image module";
 
   class _c  texture =
     object(self)

@@ -17,7 +17,10 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
 end;
 
 
-module Default = Make (struct type evType = eventType; type evData = eventData; end);
+module DefaultParam = struct
+  type evType = eventType;
+  type evData = eventData;
+end;
 
 (* добавлю с таймерами отдельно чтоли ? *)
 
