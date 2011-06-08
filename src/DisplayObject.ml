@@ -124,9 +124,6 @@ class virtual _c [ 'parent ] = (*{{{*)
       let event = {(event) with Event.target = Some self#asDisplayObject; currentTarget = None} in
       self#dispatchEvent' event;
 
-(*     method hasEventListeners eventType = Listeners.has eventType listeners; *)
-(*     method removeEventListener eventType listenerID = Listeners.remove eventType listenerID listeners; *)
-
     value mutable scaleX = 1.0;
     method scaleX = scaleX;
     method setScaleX ns = (scaleX := ns; self#modified () );
@@ -579,7 +576,12 @@ class virtual container = (*{{{*)
           (
             objs.val := 
               match obj#dcast with
-              [ `Container cont -> [ ExtList.List.of_enum cont#children ; objs' ] @ tl
+              [ `Container cont -> 
+                let children = ExtList.List.of_enum cont#children in
+                match objs' with
+                [ [] -> [ children ] @ tl
+                | _ -> [ children ; objs' ] @ tl
+                ]
               | _ -> 
                   match objs' with
                   [ [] -> tl
