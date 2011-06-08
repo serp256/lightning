@@ -3,12 +3,15 @@ open LightCommon;
 
 module Transitions = struct
 
-  type t = 
+  type t = float -> float;
+
+  type kind = 
     [= `linear 
     | `easeIn | `easeOut | `easeInOut | `easeOutIn 
     | `easeInBack | `easeOutBack | `easeInOutBack | `easeOutInBack 
     | `easeInElastic | `easeOutElastic | `easeInOutElastic | `easeOutInElastic
     | `easeInBounce | `easeOutBounce | `easeInOutBounce | `easeOutInBounce
+    | `transitionFun of t
     ];
 
   value linear ratio = ratio;
@@ -105,7 +108,7 @@ module Transitions = struct
     then 0.5 *. (easeOutBounce (ratio *. 2.0))
     else 0.5 *. (easeInBounce ((ratio -. 0.5) *. 2.0)) +. 0.5;
 
-  value get : t -> (float -> float) = fun
+  value get : kind -> t = fun 
     [ `linear -> linear
     | `easeIn -> easeIn
     | `easeOut -> easeOut
@@ -123,6 +126,7 @@ module Transitions = struct
     | `easeOutBounce -> easeOutBounce
     | `easeInOutBounce -> easeInOutBounce
     | `easeOutInBounce -> easeOutInBounce
+    | `transitionFun f -> f
     ];
 
 end;
@@ -149,8 +153,10 @@ class c ?(transition=`linear) ?(loop=`LoopNone) time =
     value loop: loop = loop; 
     value transition = Transitions.get transition;
     value mutable invertTransition = False;
+    value mutable onComplete = None;
 
     method animate (getValue,setValue) endValue = actions := [ {startValue = 0.; endValue; getValue ; setValue}  :: actions ];
+    method setOnComplete f = onComplete := Some f;
 
     method reset () = 
     (
@@ -198,7 +204,14 @@ class c ?(transition=`linear) ?(loop=`LoopNone) time =
               currentTime := 0.;
               True
             )
-          | _ -> False (* it's completed *)
+          | _ -> 
+            (
+              match onComplete with
+              [ Some f -> f ()
+              | None -> ()
+              ];
+              False (* it's completed *)
+            )
           ]
         else True
       );
