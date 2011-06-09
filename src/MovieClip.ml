@@ -27,7 +27,7 @@ module Make
     | Frame of int
     ];
 
-  type descriptor = (array Texture.c * array frame * Hashtbl.t string int);
+  type descriptor = (string * array Texture.c * array frame * Hashtbl.t string int);
 
   value createDescriptor xmlpath : descriptor = (*{{{*)
     let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
@@ -103,18 +103,16 @@ module Make
       let first_frame = match frames.(0) with [ KeyFrame frame -> frame | Frame _ -> assert False ] in
       let first_texture = Texture.createSubTexture first_frame.region (textures.(first_frame.textureID)) in
       first_frame.texture := Some first_texture;
-      (textures,frames,labels)
+      debug "[%s] cntFrames: %d, labels: %s" xmlpath (Array.length frames) (String.concat ";" (Hashtbl.fold (fun label frame res -> [ (Printf.sprintf "%s: %d" label frame) :: res ]) labels []));
+      (xmlpath,textures,frames,labels)
     );(*}}}*)
 
-  class c ?(fps=10) (textures,frames,labels) = 
+  class c ?(fps=10) (clipname,textures,frames,labels) = 
     let first_frame = match frames.(0) with [ KeyFrame frame -> frame | Frame _ -> assert False ] in
     let first_texture = Option.get first_frame.texture in
   object(self)
     inherit Image.c first_texture as super;
     value mutable frameTime = 1. /. (float fps); 
-    value textures = textures;
-    value frames = frames;
-    value labels = labels;
     value mutable currentFrameID = 0;
     method currentFrame = currentFrameID;
     method currentFrameLabel = 
@@ -172,19 +170,21 @@ module Make
 
     method gotoAndStop (f:frameLink) =
     (
+      debug "[%s] gotoAndStop: %s" clipname (match f with [ `label l -> Printf.sprintf "label:%s" l | `num n -> Printf.sprintf "num: %d" n ]);
       self#changeFrame f;
       self#stop();
     );
 
     method gotoAndPlay (f:frameLink) = 
     (
+      debug "[%s] gotoAndPlay: %s" clipname (match f with [ `label l -> Printf.sprintf "label:%s" l | `num n -> Printf.sprintf "num: %d" n ]);
       self#changeFrame f;
       self#play();
     );
 
 
     method private setCurrentFrame cf = 
-(*       let () = Printf.eprintf "setCurrentFrame: %d\n%!" cf in *)
+      let () = debug "Clip: [%s] - setCurrentFrame: %d" clipname cf in
       (
         try
           let frame = 
@@ -217,6 +217,7 @@ module Make
       );
 
     method private onEnterFrame event _ = 
+      let () = debug "onEnterFrame: [%s], currentFrame: %d" clipname currentFrameID in
       match event.Event.data with
       [  `PassedTime dt ->
         (
@@ -234,7 +235,10 @@ module Make
                 then 
                 (
                   match loop with
-                  [ True -> cFrame - (Array.length frames)
+                  [ True -> 
+                    let len = Array.length frames in
+                    let num = cFrame / len in
+                    cFrame - (num * len)
                   | False -> 
                     (
                       self#stop();
