@@ -11,11 +11,12 @@ module Make
   (TextField: TextField.S with module D = D)
   = struct
 
-  class c  ?downstate ?text upstate = 
+  class c  ?disabled ?downstate ?text upstate = 
     let width = upstate#width and height = upstate#height in
     object(self)
       inherit D.container;
       value upState:Texture.c = upstate;
+      value disabledState:Texture.c = match disabled with [ None -> upstate | Some ds -> ds ];
       value downState:Texture.c = match downstate with [ None -> upstate | Some ds -> ds ];
       value contents = Sprite.create ();
       value background = Image.create upstate;
@@ -44,6 +45,7 @@ module Make
         self#addChild contents;
         ignore(self#addEventListener `TOUCH self#onTouch);
       );
+
 
       method private onTouch touchEvent _ = (*{{{*)
         match enabled with
@@ -127,6 +129,28 @@ module Make
       method setFontSize size = 
         let tf = self#textField in
         tf#setFontSize size;
+
+
+      method isEnabled = enabled;
+
+
+      method setEnabled e = 
+        match (enabled, e) with
+        [ (True, True) | (False, False) -> ()
+        | (True, False) -> 
+          (
+            enabled := False;
+            background#setTexture disabledState;
+            background#setColor (match disabled with [None -> 0xbbbbbb | _ -> 0xffffff]);
+          )
+          
+        | (False, True) -> 
+          (
+            enabled := True;
+            background#setTexture upState;
+            background#setColor 0xffffff;
+          )
+        ];
 
       method setTextBounds bounds = textBounds := bounds;
 

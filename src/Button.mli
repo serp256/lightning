@@ -10,7 +10,7 @@ module Make
   
   : sig
 
-  class c:  [?downstate:Texture.c] -> [?text:string] -> [Texture.c] ->
+  class c:  [?disabled:Texture.c] -> [?downstate:Texture.c] -> [?text:string] -> [Texture.c] ->
     object
       inherit D.container;
       method setText: string -> unit;
@@ -18,9 +18,12 @@ module Make
       method setFontColor: int -> unit;
       method setFontSize: option float -> unit;
       method setTextBounds: Rectangle.t -> unit;
+      method isEnabled: bool;
+      method setEnabled: bool -> unit;
+      
     end;
 
 
-  value create: ?downstate:Texture.c -> ?text:string -> Texture.c -> c;
+  value create: ?disabled:Texture.c -> ?downstate:Texture.c -> ?text:string -> Texture.c -> c;
 
 end;
