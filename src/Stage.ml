@@ -222,7 +222,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method advanceTime (seconds:float) = 
         proftimer "Stage advanceTime: %F"
         (
-          Timers.run seconds;
+          Timers.process seconds;
           (* jugler here *)
           while not (Queue.is_empty tweens) do
             let tween = Queue.take tweens in

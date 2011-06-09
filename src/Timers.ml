@@ -1,19 +1,26 @@
 
-type timer = <fire: unit -> unit>;
-module TimersQueue = PriorityQueue.Make (struct type t = (float*timer); value order (t1,_) (t2,_) = t1 <= t2; end);
+type timer = unit -> unit;
+module TimersQueue = PriorityQueue.Make (struct type t = (float*int*timer); value order (t1,_,_) (t2,_,_) = t1 <= t2; end);
 value time = ref None;
+value timer_id = ref 0;
 value queue = TimersQueue.make ();
-value add delay timer =
+value start delay f =
   match !time with
-  [ Some time -> TimersQueue.add queue ((time +. delay),(timer :> timer))
+  [ Some time -> 
+    let id = !timer_id in
+    (
+      TimersQueue.add queue ((time +. delay),id,f);
+      incr timer_id;
+      id
+    )
   | None -> failwith "Timers not initialized"
   ];
 
-value remove timer = TimersQueue.remove_if (fun (_,o) -> o = (timer :> timer)) queue;
+value stop id = TimersQueue.remove_if (fun (_,id',_) -> id = id') queue;
 
 value init t = time.val := Some t;
 
-value run dt = 
+value process dt = 
   match !time with
   [ Some t ->
     let t = t +. dt in
@@ -23,10 +30,10 @@ value run dt =
       then
         let rec run_timers () = 
           match TimersQueue.first queue with
-          [ (t',timer) when t' <= t ->
+          [ (t',_,timer) when t' <= t ->
             (
               TimersQueue.remove_first queue; 
-              timer#fire();
+              timer ();
               match TimersQueue.is_empty queue with
               [ True -> ()
               | False -> run_timers ()
