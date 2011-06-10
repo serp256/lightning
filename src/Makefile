@@ -48,7 +48,7 @@ else
 endif
 
 
-MOBS += $(gl)/gl_stub.o 
+MOBJS += $(gl)/gl_stub.o 
 
 MLCONTAINERS = containers/MList.ml containers/HSet.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml
 MLSOURCES += $(gl)/gl.ml Debug.ml ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \

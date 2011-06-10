@@ -643,7 +643,20 @@ class virtual container = (*{{{*)
 
 (*     method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> (); *)
 
+    (* Сделать enum устойчивым к модификациям и переписать на полное использование енумов или щас ? *)
     method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event ->
+(*     method dispatchEventOnChildren event =  *)
+    (
+      self#dispatchEvent event;
+      Enum.iter begin fun (child:'displayObject) ->
+        match child#dcast with
+        [ `Container cont -> 
+          (cont :> < dispatchEventOnChildren: !'a. Event.t P.evType P.evData 'displayObject (< .. > as 'a) -> unit >)#dispatchEventOnChildren event
+        | `Object obj -> obj#dispatchEvent event
+        ]
+      end self#children;
+    );
+      (*
       let objs = ref [ [ self#asDisplayObject ] ] in
       let rec loop () =
         match !objs with
@@ -676,6 +689,7 @@ class virtual container = (*{{{*)
       [ True -> ()
       | False -> Enum.iter (fun (listener:'displayObject) -> listener#dispatchEvent event) listeners
       ];
+      *)
     
 
     method addChild: !'child. ?index:int -> ((#_c container) as 'child) -> unit = fun  ?index child ->

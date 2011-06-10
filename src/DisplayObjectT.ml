@@ -126,6 +126,7 @@ type hidden 'a;
 type evType = private [> eventType ];
 type evData = private [> eventData ];
 
+value dispatchEnterFrame: float -> unit;
 class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
 
   object('self)

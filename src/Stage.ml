@@ -217,25 +217,28 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         *)
       );
 
-      value tmptweens = Queue.create ();
+      value runtweens = Queue.create ();
 
       method advanceTime (seconds:float) = 
         proftimer "Stage advanceTime: %F"
         (
           Timers.process seconds;
           (* jugler here *)
-          while not (Queue.is_empty tweens) do
-            let tween = Queue.take tweens in
+          Queue.transfer tweens runtweens;
+          while not (Queue.is_empty runtweens) do
+            let tween = Queue.take runtweens in
             match tween#process seconds with
-            [ True -> Queue.push tween tmptweens
+            [ True -> Queue.push tween tweens
             | False -> ()
             ]
           done;
-          Queue.transfer tmptweens tweens;
           (* dispatch EnterFrameEvent *)
+          proftimer "Enter frame: %F" D.dispatchEnterFrame seconds;
+(*
           proftimer "Enter frame: %F"
             let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
             self#dispatchEventOnChildren enterFrameEvent;
+*)
         );
 
     method! hitTestPoint localPoint isTouch =
