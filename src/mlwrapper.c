@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <caml/memory.h>
 #include <caml/callback.h>
+#include <caml/alloc.h>
 #include "mlwrapper.h"
 
 #define NIL Val_int(0)

@@ -8,8 +8,10 @@ debug:
 %.cmo: 
 	$(MAKE) -C src $@
 
+
+INSTALL_OPTS = 
 install: release
-	$(OCAMLFIND) install lightning META src/lightning.cmxa src/lightning.a src/liblightning.a src/*.cmi src/*.mli src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo
+	$(OCAMLFIND) install lightning META src/lightning.cmxa src/lightning.a src/liblightning.a src/*.cmi src/*.mli src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo $(INSTALL_OPTS) 
 
 uninstall:
 	$(OCAMLFIND) remove lightning

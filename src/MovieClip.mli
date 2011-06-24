@@ -13,7 +13,7 @@ module Make
 
   type descriptor;
 
-  value createDescriptor: string -> descriptor;
+  value load: string -> descriptor;
 
   class c: [ ?fps:int ] -> [ descriptor ] ->
     object

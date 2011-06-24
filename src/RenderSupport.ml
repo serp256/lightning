@@ -161,6 +161,6 @@ value convertColors ?(pma=premultiplyAlpha.val) color alpha dest =
 value checkForOpenGLError () = 
   let error = glGetError() in
   (
-    if error <> 0 then Printf.eprintf "Warning: There was an OpenGL error: #%x\n%!" error else ();
+    if error <> 0 then Debug.e "Warning: There was an OpenGL error: #%x\n%!" error else ();
     error
   );

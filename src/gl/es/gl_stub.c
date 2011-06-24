@@ -27,7 +27,11 @@
 
 #include <stdio.h>
 #include <string.h> 
+#ifdef ANDROID
+#include <GLES/gl.h>
+#else // this is IOS
 #include <OpenGLES/ES1/gl.h>
+#endif
 
  
 #include <caml/mlvalues.h>

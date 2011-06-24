@@ -51,8 +51,14 @@ value stage_create width height =
   [ None -> failwith "Stage not initialized"
   | Some stage -> stage width height
   ];
+
+IFDEF ANDROID THEN (* for link mlwrapper_android *)
+external jni_onload: unit -> unit = "JNI_OnLoad";
+ENDIF;
+
 value () = 
 (
+  Printexc.record_backtrace True;
   Callback.register "stage_create" stage_create;
 );
 ENDIF;

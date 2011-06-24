@@ -686,7 +686,7 @@ value () =
         match group_libs infobj libs with
         [ None -> ()
         | Some lib ->
-          let attribs = [ "sizex" =*= info.JSObjAnim.sizex; "sizey" =*= info.JSObjAnim.sizey ; "lib" =|= lib ] in
+          let attribs = [ "name" =|= oname; "sizex" =*= info.JSObjAnim.sizex; "sizey" =*= info.JSObjAnim.sizey ; "lib" =|= lib ] in
           let () = Xmlm.output xml (`El_start (("","Object"),attribs)) in
           Xmlm.output xml `El_end
         ]

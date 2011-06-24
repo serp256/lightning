@@ -14,7 +14,7 @@ module type S = sig
 
   value cast: #Q.D.c -> option c;
 
-  value createFromFile: string -> c;
+  value load: string -> c;
   value create: Texture.c -> c;
 end;
 

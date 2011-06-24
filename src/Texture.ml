@@ -82,8 +82,12 @@ value loadImage ~path ~contentScaleFactor =
     );
   );
 
-ELSE
+ELSE IFDEF IOS THEN
 external loadImage: ~path:string -> ~contentScaleFactor:float -> GLTexture.textureInfo = "ml_loadImage";
+ELSE IFDEF ANDROID THEN
+external loadImage: ~path:string -> ~contentScaleFactor:float -> GLTexture.textureInfo = "ml_loadImage";
+ENDIF;
+ENDIF;
 ENDIF;
 
 module Cache = WeakHashtbl.Make (struct
@@ -130,14 +134,13 @@ value createSubTexture region baseTexture =
 
 value cache = Cache.create 11;
 
-value createFromFile path : c = 
+value load path : c = 
   try
     Cache.find cache path
   with 
   [ Not_found ->
     let open GLTexture in
     let textureInfo = loadImage path 1. in
-    let () = Gc.compact () in
     let () = Printf.eprintf "load texture: %s [%d->%d; %d->%d]\n%!" path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height in
     let textureID = GLTexture.create textureInfo in
     let width = float textureInfo.width

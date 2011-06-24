@@ -4,7 +4,7 @@ open Unix;
 
 
 value min_columns = 174;
-IFNDEF IOS THEN
+IFDEF SDL THEN
 value columns : int = 
   let tput = Unix.open_process_in "tput cols 2>/dev/null" in
   try
@@ -19,13 +19,27 @@ ELSE
 value columns = 80;
 END;
 
+IFDEF ANDROID THEN
+external fail_writer: string -> exn = "android_debug_output_error";
+external e_writer: string -> unit = "android_debug_output_error";
+external w_writer: string -> unit = "android_debug_output_warn";
+external i_writer: string -> unit = "android_debug_output_info";
+external d_writer: option string -> string -> unit = "android_debug_output";
+ELSE
 value fail_writer = (fun s -> failwith s);
-value e_writer = ref (fun s -> prerr_endline s);
-value w_writer = ref (fun s -> prerr_endline s);
-value d_writer = ref (fun s -> prerr_endline s);
-value _flush = ref (fun () -> ());
+value e_writer = (fun s -> (prerr_string "[ERROR]"; prerr_endline s));
+value w_writer = (fun s -> (prerr_string "[WARN]"; prerr_endline s));
+value i_writer = (fun s -> (prerr_string "[INFO]"; prerr_endline s));
+value d_writer l = 
+  let l = 
+    match l with
+    [ None -> "DEFAULT"
+    | Some l -> l
+    ]
+  in
+  fun s -> (Printf.eprintf "[DEBUG:%s]" l; prerr_endline s);
 value null_writer = (fun _ -> ());
-value flush () = !_flush();
+END;
 
 
 (* Временно дату вырезал нах
@@ -40,6 +54,7 @@ value timestamp () =
   let t = Unix.gettimeofday() in
   string_of_timestamp t;
 
+(*
 value out writer level mname mline s = 
   let t = Unix.gettimeofday() in
   let tm = Unix.localtime t in
@@ -54,28 +69,30 @@ value out writer level mname mline s =
     else message ^ "\n" ^ (String.make (columns - (String.length place)) ' ') ^ place (* Здесь бы ещё вставить кол-во пробелов чтобы справо было *)
   in
   writer line;
+*)
+value out writer mname mline message = 
+  let line = 
+    let place = sprintf "[%s:%d]" mname mline in
+    let module UTF = UTF8 in
+    let message_length = try (UTF.length message) mod columns with [UTF.Malformed_code -> String.length message] in
+    let spaces_cnt = columns - message_length - (String.length place) in
+    if spaces_cnt > 0 
+    then message ^ (String.make spaces_cnt ' ') ^ place
+    else message ^ "\n" ^ (String.make (columns - (String.length place)) ' ') ^ place (* Здесь бы ещё вставить кол-во пробелов чтобы справо было *)
+  in
+  writer line;
 
-value simple_out writer s = 
-  writer (sprintf "[%s] %s" (timestamp()) s);
-                    
 value fail mname mline fmt = 
-  kprintf (out fail_writer "FAIL" mname mline) fmt; 
+  kprintf (out fail_writer mname mline) fmt; 
 
 value e mname mline fmt =
-  kprintf (out !e_writer "ERROR" mname mline) fmt; 
+  kprintf (out e_writer mname mline) fmt; 
 
 value w mname mline fmt =
-  kprintf (out !w_writer "WARN" mname mline) fmt; 
+  kprintf (out w_writer mname mline) fmt; 
 
-value d mname mline ?l fmt =
-  let l = 
-    match l with
-    [ Some l -> "D:"^l
-    | None -> "D"
-    ]
-  in
-  ksprintf (out !d_writer l mname mline) fmt;
+value d mname mline ?l fmt = ksprintf (out (d_writer l) mname mline) fmt;
 
-value m m = !e_writer m;
-value msg fmt = ksprintf (simple_out !w_writer) fmt;
-value smsg = simple_out !w_writer;
+value m m = i_writer m;
+value msg fmt = ksprintf i_writer fmt;
+value smsg = i_writer;

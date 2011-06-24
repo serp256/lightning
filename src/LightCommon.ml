@@ -11,29 +11,53 @@ value two_pi =  6.28318530718;
 
 exception File_not_exists of string;
 IFDEF IOS THEN
-Callback.register_exception "File_not_exists" (File_not_exists "");
-(* external resource_path: string -> float -> string = "ml_resourcePath"; *)
-external bundle_path_for_resource: string -> option string = "ml_bundle_path_for_resource";
 
-ELSE
+Callback.register_exception "File_not_exists" (File_not_exists "");
+external bundle_path_for_resource: string -> option string = "ml_bundle_path_for_resource";
+value open_resource path scale =
+  match bundle_path_for_resource path scale with
+  [ None -> raise (File_not_exists path)
+  | Some p -> open_in p
+  ];
+
+ELSE IFDEF ANDROID THEN
+
+(*
+value resPath  = ref "";
+Callback.register "setResourcesBase" (fun str -> resPath.val := str);
 value bundle_path_for_resource fname = 
-  let path = Filename.concat "Resources" fname in
+  let path = Filename.concat !resPath fname in
   match Sys.file_exists path with
   [ True -> Some path
   | False -> None
   ];
-
-(*
-value resource_path path scale = 
-  match Filename.is_relative path with
-  [ True -> Filename.concat "Resources" path
-  | False ->  path
-  ];
 *)
+
+external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
+
+value open_resource path _ = 
+  match bundle_fd_of_resource path with
+  [ None -> raise (File_not_exists path)
+  | Some (fd,length) -> Unix.in_channel_of_descr fd
+  ];
+
+
+ELSE IFDEF SDL THEN
+
+value open_resource fname _ = 
+  let path = Filename.concat "Resources" fname in
+  match Sys.file_exists path with
+  [ True -> open_in path
+  | False -> None
+  ];
+
+ENDIF;
+ENDIF;
 ENDIF;
 
+(*
 value resource_path path _ = 
-  match Filename.is_relative path with
+  match Filename.is_relative path with (* убрать нах эту логику нах. *)
   [ True -> match bundle_path_for_resource path with [ Some p -> p | None -> raise (File_not_exists path) ]
   | False -> 
     match Sys.file_exists path with
@@ -41,15 +65,14 @@ value resource_path path _ =
     | False -> raise (File_not_exists path)
     ]
   ];
+*)
 
 exception Xml_error of string and string;
 
 module MakeXmlParser(P:sig value path: string; end) = struct
 
 
-  value input = 
-    let xml = resource_path P.path 1. in
-    open_in xml;
+  value input = open_resource P.path 1.;
 
   value xmlinput = Xmlm.make_input ~strip:True (`Channel input);
 

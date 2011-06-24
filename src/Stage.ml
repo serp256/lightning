@@ -209,7 +209,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           RenderSupport.clear color 1.0;
           RenderSupport.setupOrthographicRendering 0. width height 0.;
           proftimer:render "STAGE rendered %F" (super#render None);
-          ignore(RenderSupport.checkForOpenGLError());
+          debug:errors ignore(RenderSupport.checkForOpenGLError());
         (*
         #if DEBUG
         [SPRenderSupport checkForOpenGLError];

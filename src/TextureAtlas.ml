@@ -7,7 +7,7 @@ type t =
     texture: Texture.c;
   };
 
-value create xmlpath = 
+value load xmlpath = 
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
   let regions = Hashtbl.create 3 in
   let rec parseSubTextures () =
@@ -35,7 +35,7 @@ value create xmlpath =
     ]
   in
   let () = XmlParser.close () in
-  {regions; texture = Texture.createFromFile imagePath};
+  {regions; texture = Texture.load imagePath};
 
 value texture atlas name = 
   let region = 

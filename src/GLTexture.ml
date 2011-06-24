@@ -47,11 +47,7 @@ value create textureInfo =
       }
     in
     match textureInfo.texFormat with (*{{{*)
-    [ TextureFormatRGBA ->
-      {(info) with
-        bitsPerPixel = 8;
-        glTexFormat = gl_rgba
-      }
+    [ TextureFormatRGBA -> info
     | TextureFormatAlpha ->
         {(info)  with
           bitsPerPixel = 8;

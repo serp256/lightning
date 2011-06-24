@@ -47,12 +47,16 @@ module Make(D:DisplayObjectT.M) = struct
         );
 
       method updateSize width height = 
-      (
-        vertexCoords.{2} := width;
-        vertexCoords.{5} := height;
-        vertexCoords.{6} := width;
-        vertexCoords.{7} := height;
-      );
+        if (vertexCoords.{2} <> width || vertexCoords.{5} <> height) 
+        then
+        (
+          vertexCoords.{2} := width;
+          vertexCoords.{5} := height;
+          vertexCoords.{6} := width;
+          vertexCoords.{7} := height;
+          self#modified();
+        )
+        else ();
 
       method copyVertexCoords dest = Bigarray.Array1.blit vertexCoords dest;
 
@@ -102,6 +106,7 @@ module Make(D:DisplayObjectT.M) = struct
 
       method private render' _ = 
       (
+        debug "render quad";
         RenderSupport.clearTexture();
         (* optimize it!  
         for i = 0 to 3 do

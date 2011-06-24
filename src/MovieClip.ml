@@ -29,13 +29,13 @@ module Make
 
   type descriptor = (string * array Texture.c * array frame * Hashtbl.t string int);
 
-  value createDescriptor xmlpath : descriptor = (*{{{*)
+  value load xmlpath : descriptor = (*{{{*)
     let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
     let () = XmlParser.accept (`Dtd None) in
     let labels = Hashtbl.create 0 in
     let rec parse_textures result = 
       match XmlParser.parse_element "Texture" [ "path" ] with
-      [ Some [ path ] _ -> parse_textures [ Texture.createFromFile (Filename.concat (Filename.dirname xmlpath) path) :: result ]
+      [ Some [ path ] _ -> parse_textures [ Texture.load (Filename.concat (Filename.dirname xmlpath) path) :: result ]
       | None -> result
       | _ -> assert False
       ]

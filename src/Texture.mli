@@ -11,5 +11,5 @@ class type c =
   end;
 
 
-value createFromFile: string -> c;
+value load: string -> c;
 value createSubTexture: Rectangle.t -> c -> c;

@@ -1,10 +1,10 @@
 include ../Makefile.common
 
-
 %.o: %.c
-	$(OCAMLOPT) -verbose -g -ccopt '-fPIC' -ccopt '-DGL_GLEXT_PROTOTYPES' -ccopt '-o $@' -c $<
+	$(OCAMLOPT) -I . -verbose -g -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 
+GLPARAM = 
 
 MOBJS = 
 MLOBJSFLAGS = 
@@ -34,21 +34,34 @@ ifeq ($(PLATFORM),ios)
 						 -cclib '-framework\ AudioToolbox' \
 						 -cclib '-framework\ OpenAL'
 else
-	gl = gl/2.1
-	MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o
-	MLSOURCES += sdl/sdl.ml sdl/sdl_image.ml sdl/sdl_run.ml
-	MLOBJSFLAGS = -I sdl
-	MLDEPFLAGS += -I sdl sdl/*.ml sdl/*.mli
-	MLPPOPT += -DSDL
-	ifeq ($(OS),macos)
-		LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+	ifeq ($(PLATFORM),android)
+		gl = gl/es
+		CFLAGS += -I .
+		MLPPOPT += -DGLES -DANDROID 
+		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
+		GLPARAM = -D__ANDROID__
+		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng'
 	else
-		LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
+		gl = gl/2.1
+		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o
+		MLSOURCES += sdl/sdl.ml sdl/sdl_image.ml sdl/sdl_run.ml
+		MLOBJSFLAGS = -I sdl
+		MLDEPFLAGS += -I sdl sdl/*.ml sdl/*.mli
+		MLPPOPT += -DSDL
+		ifeq ($(OS),macos)
+			LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+		else
+			LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
+		endif
+		GLPARAM = -DGL_GLEXT_PROTOTYPES'
 	endif
 endif
 
 
 MOBJS += $(gl)/gl_stub.o 
+
+$(gl)/gl_stub.o: $(gl)/gl_stub.c
+	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),-ccopt $(GLPARAM)) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
 
 MLCONTAINERS = containers/MList.ml containers/HSet.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml
 MLSOURCES += $(gl)/gl.ml Debug.ml ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
