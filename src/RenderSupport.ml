@@ -10,10 +10,17 @@ DEFINE SP_R2D(rad) = (rad /. pi *. 180.0);
 value boundTextureID = ref None;
 value premultiplyAlpha = ref False;
 
+value checkForOpenGLError () = 
+  let error = glGetError() in
+  (
+    if error <> 0 then Debug.e "Warning: There was an OpenGL error: #%x\n%!" error else ();
+    error
+  );
+
 value bindTexture texture = 
   let newTextureID = texture#textureID
   and newPMA = texture#hasPremultipliedAlpha in
-(*   let () = Printf.eprintf "bindTexture: %d\n%!" newTextureID in *)
+  let () =  debug "bindTexture: %d\n%!" newTextureID in
   DEFINE bind = glBindTexture gl_texture_2d newTextureID IN
   DEFINE apply_pma =
     match newPMA with
@@ -135,7 +142,6 @@ value convertColor ?(pma=premultiplyAlpha.val) color alpha =
   Int32.logor (Int32.of_int c) (Int32.shift_left (Int32.of_float (alpha *. 255.)) 24);
 
 
-
 (*
 value convertColors ?(pma=premultiplyAlpha.val) color alpha dest = 
   match pma with
@@ -157,10 +163,3 @@ value convertColors ?(pma=premultiplyAlpha.val) color alpha dest =
 *)
 
 
-
-value checkForOpenGLError () = 
-  let error = glGetError() in
-  (
-    if error <> 0 then Debug.e "Warning: There was an OpenGL error: #%x\n%!" error else ();
-    error
-  );

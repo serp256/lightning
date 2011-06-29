@@ -163,6 +163,7 @@ value create textureInfo =
       ];
       debug "bind texture";
       glBindTexture gl_texture_2d 0;
+      ignore(RenderSupport.checkForOpenGLError());
       textureID;
     );
   );

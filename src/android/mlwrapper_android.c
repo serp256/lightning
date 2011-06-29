@@ -7,6 +7,7 @@
 #include <caml/alloc.h>
 #include "mlwrapper.h"
 #include "mlwrapper_android.h"
+#include "GLES/gl.h"
 
 static JavaVM *gJavaVM;
 static mlstage *stage = NULL;
@@ -35,6 +36,10 @@ void android_debug_output_warn(value msg) {
 
 void android_debug_output_error(value msg) {
 	__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING",String_val(msg));
+}
+
+void android_debug_output_fatal(value msg) {
+	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",String_val(msg));
 }
 
 
@@ -135,11 +140,23 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobje
 
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererInit(JNIEnv *env, jobject jrenderer, jfloat width, jfloat height) {
+	DEBUG("lightRender init");
+}
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+	DEBUGF("GL Changed: %i:%i",width,height);
 	if (stage) {
 		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","stage alredy initialized");
 		return;
 	}
-	stage = mlstage_create(width,height); 
+	/*glViewport(0, 0, width, height);
+  glMatrixMode(GL_PROJECTION);
+  const float ratio=width/(float)height;
+  glLoadIdentity();
+  glOrthof(0, 15, 15/ratio, 0, -1, 1);
+  glMatrixMode(GL_MODELVIEW); */
+	stage = mlstage_create((float)width,(float)height); 
 }
 
 

@@ -20,7 +20,7 @@ value columns = 80;
 END;
 
 IFDEF ANDROID THEN
-external fail_writer: string -> exn = "android_debug_output_error";
+external fail_writer: string -> exn = "android_debug_output_fatal";
 external e_writer: string -> unit = "android_debug_output_error";
 external w_writer: string -> unit = "android_debug_output_warn";
 external i_writer: string -> unit = "android_debug_output_info";

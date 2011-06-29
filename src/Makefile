@@ -1,7 +1,7 @@
 include ../Makefile.common
 
 %.o: %.c
-	$(OCAMLOPT) -I . -verbose -g -ccopt '-fPIC' -ccopt '-o $@' -c $<
+	$(OCAMLOPT) -I . -verbose -g -ccopt '-D__ANDROID__' -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 
 GLPARAM = 
@@ -36,7 +36,7 @@ ifeq ($(PLATFORM),ios)
 else
 	ifeq ($(PLATFORM),android)
 		gl = gl/es
-		CFLAGS += -I .
+		CFLAGS += -I . 
 		MLPPOPT += -DGLES -DANDROID 
 		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__

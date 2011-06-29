@@ -60,19 +60,19 @@ module Make(Q:Quad.S) = struct
         let alphaBits =  Int32.shift_left (Int32.of_float (alpha *. 255.)) 24 in
         Array.iteri (fun i c -> Quad.gl_quad_colors.{i} := Int32.logor (Int32.of_int c) alphaBits) vertexColors;
   *)
-        Array.iteri (fun i c -> Quad.gl_quad_colors.{i} := RenderSupport.convertColor c alpha) vertexColors;
+(*         Array.iteri (fun i c -> Quad.gl_quad_colors.{i} := RenderSupport.convertColor c alpha) vertexColors; *)
         Array.iteri (fun i a -> Bigarray.Array1.unsafe_set gl_tex_coords i a) texCoords;
         texture#adjustTextureCoordinates gl_tex_coords;
         glEnableClientState gl_texture_coord_array;
         glEnableClientState gl_vertex_array;
-        glEnableClientState gl_color_array;
+(*         glEnableClientState gl_color_array; *)
         glTexCoordPointer 2 gl_float 0 gl_tex_coords;
         glVertexPointer 2 gl_float 0 vertexCoords;
-        glColorPointer 4 gl_unsigned_byte 0 Quad.gl_quad_colors;
+(*         glColorPointer 4 gl_unsigned_byte 0 Quad.gl_quad_colors; *)
         glDrawArrays gl_triangle_strip 0 4;
         glDisableClientState gl_texture_coord_array;
         glDisableClientState gl_vertex_array;
-        glDisableClientState gl_color_array;
+(*         glDisableClientState gl_color_array; *)
       );
 
     end;

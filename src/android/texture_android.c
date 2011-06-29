@@ -60,19 +60,23 @@ value load_png_image(resource *rs) { //{{{
 		failwith_oversized("png");
 	} */
 
+	/*
 	if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) png_set_gray_to_rgb(png_ptr);
 	if (color_type & PNG_COLOR_TYPE_PALETTE ) png_set_expand(png_ptr);
 	if (bit_depth == 16 ) png_set_strip_16(png_ptr);
 	if (color_type & PNG_COLOR_MASK_ALPHA ) png_set_strip_alpha(png_ptr);
+	*/
 
 	png_read_update_info(png_ptr, info_ptr);
 	png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
 
-	if ( color_type != PNG_COLOR_TYPE_RGB || bit_depth != 8 ) {
+	/*
+	if (color_type != PNG_COLOR_TYPE_RGB || bit_depth != 8 ) {
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 		fclose(fp);
 		failwith("png: unsupported color type");
 	}
+	*/
 
 	rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 
@@ -92,7 +96,7 @@ value load_png_image(resource *rs) { //{{{
 	int dataLen = rowbytes * height;
 	buf = stat_alloc(dataLen);
 	for( i = 0; i < height; i ++ ){
-		row_pointers[i] = buf + rowbytes * i;
+		row_pointers[height - i - 1] = buf + rowbytes * i;
 	}
 
 	/*
@@ -139,8 +143,17 @@ value load_png_image(resource *rs) { //{{{
 	dims[0] = dataLen;
 	oImgData = caml_ba_alloc(CAML_BA_MANAGED | CAML_BA_UINT8, 1, buf, dims); 
 
+	/*
+	int k,l;
+	for (k = 0; k < height; k++) {
+		for (l = 0; l < width; l++) {
+			int j = ((k * width) + l)*4;
+			DEBUGF("[%hhd:%hhd:%hhd:%hhd]",buf[j],buf[j+1],buf[j+2],buf[j+3]);
+		}
+	};
+	*/
+	
 
-	DEBUGF("png loaded: [%hhd : %hhd : %hhd : %hhd]",buf[0],buf[1],buf[2],buf[3]);
 	result = caml_alloc_tuple(10);
 	Store_field(result,0,Val_int(SPTextureFormatRGBA));
 	Store_field(result,1,Val_int((unsigned int)width));
