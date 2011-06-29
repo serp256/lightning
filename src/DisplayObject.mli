@@ -1,10 +1,10 @@
 
-type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE ]; 
-type eventData = Event.dataEmpty;
+type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE | `ENTER_FRAME ]; 
+type eventData = [= Event.dataEmpty | `PassedTime of float ];
 
 module type Param = sig
   type evType = private [> eventType ];
-  type evData = private [> Event.dataEmpty ];
+  type evData = private [> eventData ];
 end;
 
 module Make(P:Param): DisplayObjectT.M with type evType = P.evType and type evData = P.evData;

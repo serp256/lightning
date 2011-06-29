@@ -6,7 +6,9 @@ include ../Makefile.common
 
 
 
-MOBS = 
+MOBJS = 
+MLOBJSFLAGS = 
+MLFLAGS +=  -package extlib -I containers
 MLSOURCES = 
 MLDEPFLAGS =
 
@@ -18,10 +20,11 @@ $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.exten
 $(SYNTAX): MLPPOPT :=
 $(SYNTAX): OCAMLC = ocamlfind ocamlc
 
+
 ifeq ($(PLATFORM),ios)
 	gl = gl/es
 	CFLAGS += -I .
-	MOBS += mlwrapper.o ios/mlwrapper_ios.o ios/LightView.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o
+	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightView.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o
 	MLPPOPT += -DGLES -DIOS
 	LIBFLAGS = -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
@@ -32,9 +35,9 @@ ifeq ($(PLATFORM),ios)
 						 -cclib '-framework\ OpenAL'
 else
 	gl = gl/2.1
-	MOBS += sdl/sdl_stub.o sdl/sdl_image_stub.o
+	MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o
 	MLSOURCES += sdl/sdl.ml sdl/sdl_image.ml sdl/sdl_run.ml
-	MLFLAGS += -I sdl
+	MLOBJSFLAGS = -I sdl
 	MLDEPFLAGS += -I sdl sdl/*.ml sdl/*.mli
 	MLPPOPT += -DSDL
 	ifeq ($(OS),macos)
@@ -45,35 +48,36 @@ else
 endif
 
 
-MOBS += $(gl)/gl_stub.o 
+MOBJS += $(gl)/gl_stub.o 
 
-MLSOURCES += $(gl)/gl.ml Debug.ml MList.ml ProfTimer.ml PriorityQueue.ml WeakHashtbl.ml WeakMemo.ml Dictionary.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
+MLCONTAINERS = containers/MList.ml containers/HSet.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml
+MLSOURCES += $(gl)/gl.ml Debug.ml ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
 					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml Lightning.ml
 
-MLFLAGS += -package extlib,xmlm -I $(gl)
 
 #XMLMFILES = TextureAtlas.ml BitmapFont.ml LightCommon.ml MovieClip.ml
 #$(XMLMFILES:.ml=.cmo) $(XMLMFILES:.ml=.cmx) $(XMLMFILES:.ml=.cmi): MLFLAGS += -package xmlm
 
-MLOBS = $(MLSOURCES:.ml=.cmx)
+MLCONTAINERSOBJS = $(MLCONTAINERS:.ml=.cmx)
+MLOBJS = $(MLSOURCES:.ml=.cmx)
+$(MLOBJS): MLFLAGS += -package xmlm -I $(gl) $(MLOBJSFLAGS)
 
-$(MLOBS) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
-#$(MLOBS): MLPPOPT += syntax/pa_debug.cmo 
-$(MLOBS) MLDepend.$(PLATFORM): MLPPOPT += syntax/pa_debug.cmo 
+$(MLOBJS) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
+$(MLOBJS) MLDepend.$(PLATFORM): MLPPOPT += syntax/pa_debug.cmo 
 -include debug.conf
 	
-lightning.cmxa: MLDepend.$(PLATFORM) $(MOBS) $(MLOBS)
-	$(OCAMLMKLIB) -verbose -o lightning $(MOBS) $(MLOBS) $(LIBFLAGS) 
+lightning.cmxa: MLDepend.$(PLATFORM) $(MLCONTAINERSOBJS) $(MOBJS) $(MLOBJS)
+	$(OCAMLMKLIB) -verbose -o lightning $(MOBJS) $(MLCONTAINERSOBJS) $(MLOBJS) $(LIBFLAGS) 
 
-#$(OCAMLFIND) ocamldep -package camlp4,camlp4.macro -syntax camlp4r $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -I $(gl) $(gl)/*.ml $(gl)/*.mli $(MLDEPFLAGS) *.ml *.mli  > MLDepend.$(PLATFORM)
 MLDepend.$(PLATFORM):
-	$(OCAMLFIND) ocamldep $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) > MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLFLAGS) -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
 
 
 doc:
 	mkdir -p docs
 	$(OCAMLFIND) ocamldoc -short-functors -html -d docs $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLFLAGS) \
-		MList.ml PriorityQueue.mli WeakHashtbl.mli WeakMemo.mli LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml DisplayObjectT.ml DisplayObject.mli Sprite.mli Quad.mli \
+		containers/MList.ml containers/HSet.mli PriorityQueue.mli WeakHashtbl.mli WeakMemo.mli LightCommon.ml Event.ml EventDispatcher.mli Point.ml Rectangle.ml Matrix.ml DisplayObjectT.ml DisplayObject.mli Sprite.mli Quad.mli \
 		Texture.mli TextureAtlas.mli Image.mli CompiledSprite.mli Touch.ml BitmapFont.mli TextField.mli Stage.mli Button.mli MovieClip.mli Tween.mli Lightning.ml
 
 
@@ -81,7 +85,7 @@ doc:
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi
+	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi
 
 -include MLDepend.$(PLATFORM)
 -include debug.conf
