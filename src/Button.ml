@@ -20,6 +20,10 @@ module Make
       value downState:Texture.c = match downstate with [ None -> upstate | Some ds -> ds ];
       value contents = Sprite.create ();
       value background = Image.create upstate;
+      value mutable textOffsetY = 0.0;
+      value mutable textOffsetX = 0.0;
+      value mutable fontColor = 0xffffff;
+      value mutable disabledFontColor = 0x555555;
       value mutable textBounds: Rectangle.t = Rectangle.create 0. 0. width height;
       value scaleWhenDown: float = match downstate with [ None -> 0.9 | _ -> 1.0 ];
       value alphaWhenDisabled: float = 0.5;
@@ -123,8 +127,21 @@ module Make
         tf#setFontName fname;
 
       method setFontColor color = 
-        let tf = self#textField in
-        tf#setColor color;
+        let tf = self#textField in (
+          fontColor := color;
+          if enabled then
+            tf#setColor color
+          else ();
+        );
+
+      method setDisabledFontColor color = 
+        let tf = self#textField in (
+          disabledFontColor := color;
+          if not enabled then
+            tf#setColor color
+          else ();
+        );
+
 
       method setFontSize size = 
         let tf = self#textField in
@@ -142,6 +159,8 @@ module Make
             enabled := False;
             background#setTexture disabledState;
             background#setColor (match disabled with [None -> 0xbbbbbb | _ -> 0xffffff]);
+            let tf = self#textField in 
+            tf#setColor disabledFontColor;
           )
           
         | (False, True) -> 
@@ -149,10 +168,29 @@ module Make
             enabled := True;
             background#setTexture upState;
             background#setColor 0xffffff;
+            let tf = self#textField in
+            tf#setColor fontColor;
           )
         ];
 
       method setTextBounds bounds = textBounds := bounds;
+
+
+      (* *)
+      method setTextOffsetX offset = 
+        let tf = self#textField in (
+          tf#setX (tf#x -. textOffsetX +. offset);
+          textOffsetX := offset;
+        );
+      
+
+      (* *)
+      method setTextOffsetY offset = 
+        let tf = self#textField in (
+          tf#setY (tf#y -. textOffsetY +. offset);
+          textOffsetY := offset;
+        );
+
 
     end;
 
