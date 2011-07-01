@@ -208,10 +208,6 @@ value createTextureInfo(float width, float height, float scale, drawingBlock dra
 		intnat dims[1];
 		dims[0] = dataLen;
     
-		for (int i = 0; i < 10; i ++ ) {
-			int j = i * 4;
-			printf("%d: [%hhd : %hhd : %hhd : %hhd]",i,buf[j],buf[j+1],buf[j+2],buf[j+3]);
-		};
 		oImgData = caml_ba_alloc(CAML_BA_MANAGED | CAML_BA_UINT8, 1, imageData, dims); 
 
 		/*

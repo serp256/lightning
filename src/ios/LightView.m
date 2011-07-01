@@ -32,7 +32,7 @@
 
 - (void)initStage;
 - (void)renderStage;
-- (void)processTouchEvent:(UIEvent*)event;
+//- (void)processTouchEvent:(UIEvent*)event;
 
 @end
 
@@ -279,10 +279,12 @@
     PROCESS_TOUCH_EVENT;
 }
 
+/*
 - (void)processTouchEvent:(UIEvent*)event
 {
 	PROCESS_TOUCH_EVENT;
 }
+*/
 
 - (void)dealloc 
 {    

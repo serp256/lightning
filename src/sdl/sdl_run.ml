@@ -28,49 +28,50 @@ value handle_events frameRate stage =
         match quit with
         [ True -> ()
         | False ->
-            let rec event_loop touch = 
-              match Event.poll_event () with
-              [ Quit -> loop ticks touch True
-              | NoEvent -> loop ticks touch False
-              | Button ({Event.mousebutton = LEFT;_} as mb) -> 
-                  match touch with
-                  [ None when mb.buttonstate = PRESSED -> (* tap begin *)
-                    let touch = 
-                      {
-                        Touch.tid = (let r = !touchid in (touchid.val := r + 1; Int32.of_int r));
-                        timestamp = float (Sdl.Timer.get_ticks()); (* FIXME *)
-                        globalX = float mb.bx; globalY = float mb.by;
-                        previousGlobalX = float mb.bx; previousGlobalY = float mb.by;
-                        tapCount = 1; phase = Touch.TouchPhaseBegan;
-                      }
-                    in
-                    (
-                      stage#processTouches [touch];
-                      event_loop (Some touch)
-                    )
-                  | Some touch when mb.buttonstate = RELEASED -> (* FIXME: what about multi touch ? *)
+            let rec event_loop touch cnt = 
+              if cnt > 3 then ()
+              else
+                match Event.poll_event () with
+                [ Quit -> loop ticks touch True
+                | NoEvent -> loop ticks touch False
+                | Button ({Event.mousebutton = LEFT;_} as mb) -> 
+                    match touch with
+                    [ None when mb.buttonstate = PRESSED -> (* tap begin *)
                       let touch = 
-                        {(touch) with Touch.timestamp = float (Sdl.Timer.get_ticks()); globalX = float mb.bx; globalY = float mb.by; previousGlobalX = touch.Touch.globalX; previousGlobalY = touch.Touch.globalY; phase = Touch.TouchPhaseEnded} in
+                        {
+                          Touch.n_tid = (let r = !touchid in (touchid.val := r + 1; Int32.of_int r));
+                          n_timestamp = 0.;
+                          n_globalX = float mb.bx; n_globalY = float mb.by;
+                          n_previousGlobalX = None; n_previousGlobalY = None;
+                          n_tapCount = 1; n_phase = Touch.TouchPhaseBegan;
+                        }
+                      in
+                      (
+                        stage#processTouches [touch];
+                        event_loop (Some touch) (cnt+1)
+                      )
+                    | Some touch when mb.buttonstate = RELEASED -> (* FIXME: what about multi touch ? *)
+                        let touch = {(touch) with Touch.n_globalX = float mb.bx; n_globalY = float mb.by; n_phase = Touch.TouchPhaseEnded} in
+                        (
+                          stage#processTouches [ touch ];
+                          event_loop None (cnt+1)
+                        )
+                    | _ -> let () = prerr_endline "fixme Button event" in loop ticks touch False
+                    ]
+                | Event.Motion mm -> 
+                    match touch with
+                    [ Some touch ->
+                      let touch = {(touch) with Touch.n_globalX = float mm.mx; n_globalY = float mm.my; n_phase = Touch.TouchPhaseMoved} in
                       (
                         stage#processTouches [ touch ];
-                        event_loop None
+                        event_loop (Some touch) (cnt+1)
                       )
-                  | _ -> let () = prerr_endline "fixme Button event" in loop ticks touch False
-                  ]
-              | Event.Motion mm -> 
-                  match touch with
-                  [ Some touch ->
-                    let touch = {(touch) with Touch.timestamp = float (Sdl.Timer.get_ticks()); globalX = float mm.mx; globalY = float mm.my; previousGlobalX = touch.Touch.globalX; previousGlobalY = touch.Touch.globalY; phase = Touch.TouchPhaseMoved} in
-                    (
-                      stage#processTouches [ touch ];
-                      event_loop (Some touch)
-                    )
-                  | None -> event_loop None (* FIXME проверить выход за границы *)
-                  ]
-              | _ -> event_loop touch
-              ]
+                    | None -> event_loop None (cnt + 1)(* FIXME проверить выход за границы *)
+                    ]
+                | _ -> event_loop touch (cnt + 1)
+                ]
             in
-            event_loop touch
+            event_loop touch 0
         ];
       )
     );

@@ -10,10 +10,11 @@ value pi  =  3.14159265359;
 value two_pi =  6.28318530718;
 
 exception File_not_exists of string;
+
 IFDEF IOS THEN
 
 Callback.register_exception "File_not_exists" (File_not_exists "");
-external bundle_path_for_resource: string -> option string = "ml_bundle_path_for_resource";
+external bundle_path_for_resource: string -> float -> option string = "ml_bundle_path_for_resource";
 value open_resource path scale =
   match bundle_path_for_resource path scale with
   [ None -> raise (File_not_exists path)
@@ -44,12 +45,14 @@ value open_resource path _ =
 
 ELSE IFDEF SDL THEN
 
-value open_resource fname _ = 
+value resource_path fname _ = 
   let path = Filename.concat "Resources" fname in
   match Sys.file_exists path with
-  [ True -> open_in path
-  | False -> None
+  [ True -> path
+  | False -> raise (File_not_exists fname)
   ];
+
+value open_resource fname scale = open_in (resource_path fname scale);
 
 ENDIF;
 ENDIF;
