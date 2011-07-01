@@ -30,7 +30,7 @@ type stage_constructor =
   float -> float -> 
     <
       render: option Rectangle.t -> unit;
-      processTouches: list Touch.t -> unit;
+      processTouches: list Touch.n -> unit;
       advanceTime: float -> unit;
       name: string;
     >;

@@ -18,12 +18,12 @@ public class LightView extends GLSurfaceView {
 
 	private LightRenderer renderer;
 
-	public LightView(Context context,String apkSourcePath, float width,float height) {
+	public LightView(Context context,int width,int height) {
 		super(context);
 		initView(width,height);
 	}
 
-	protected void initView(float width,float height) {
+	protected void initView(int width,int height) {
 		lightInit();
 		renderer = new LightRenderer(width,height);
 		setFocusableInTouchMode(true);
@@ -39,13 +39,6 @@ public class LightView extends GLSurfaceView {
 		} catch (IOException e) {res =  null;};
 		return res;
 	}
-
-	 /*
-	 public LightView(Context context, AttributeSet attrs) {
-		 super(context, attrs);
-		 initView();
-	 }*/
-
 
 	 public void onPause(){
 		 queueEvent(new Runnable() {
@@ -71,52 +64,10 @@ public class LightView extends GLSurfaceView {
 
 	public boolean onTouchEvent(final MotionEvent event) {
 		Log.d("EVENT","Touch event");
+
 		// these data are used in ACTION_MOVE and ACTION_CANCEL
-		//dumpMotionEvent(event);
-		switch (event.getAction() & MotionEvent.ACTION_MASK) {
-			case MotionEvent.ACTION_UP: 
-				AssetManager mgr = getContext().getAssets();
-				try { 
-					AssetFileDescriptor afd = mgr.openFd("ball.png"); 
-					Log.d("ASSET","length: " + afd.getLength() + ", offset: " + afd.getStartOffset());
-				} catch (IOException e) {
-				  throw new RuntimeException("Can't get res....");
-				}
-				/*
-				String[] lst;
-				try { 
-					lst = mgr.list("");
-				} catch (IOException e) {
-				  throw new RuntimeException("Can't get lst....");
-				};
-				Log.d("ASSETS","lst = " + lst.length);
-				for (int i = 0; i < lst.length; i++) {
-					Log.d("ASSETS","File: '" + lst[i] + "'");
-				}
-				final int id = event.getAction() >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-				try {
-					InputStream is = new BufferedInputStream(getContext().getAssets().open("e_cactus.png"));
-					LightTexture.loadImage(is);
-				} catch (IOException e) {
-				  throw new RuntimeException("Unable to locate assets, aborting...");
-				};
-				*/
-				/*
-				Bitmap bmp = BitmapFactory.decodeResource(getContext().getResources(),0x7f020000);
-				Log.d("TEST","Decoded res [" + bmp.getWidth() + ":" + bmp.getHeight() + "]");
-				queueEvent(new Runnable() {
-					@Override
-					public void run() {
-						renderer.handleTouches(id);
-					}
-				});
-				*/
-				break;
-		}
-
-
-
-/*		final int pointerNumber = event.getPointerCount();
+		dumpMotionEvent(event);
+		final int pointerNumber = event.getPointerCount();
 		final int[] ids = new int[pointerNumber];
 		final float[] xs = new float[pointerNumber];
 		final float[] ys = new float[pointerNumber];
@@ -137,7 +88,7 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						mRenderer.handleActionDown(idPointerDown, xPointerDown, yPointerDown);
+						renderer.handleActionDown(idPointerDown, xPointerDown, yPointerDown);
 					}
 				});
 				break;
@@ -151,7 +102,7 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 							@Override
 							public void run() {
-									mRenderer.handleActionDown(idDown, xDown, yDown);
+									renderer.handleActionDown(idDown, xDown, yDown);
 							}
 					});
 					break;
@@ -160,7 +111,7 @@ public class LightView extends GLSurfaceView {
 					queueEvent(new Runnable() {
 						@Override
 						public void run() {
-							mRenderer.handleActionMove(ids, xs, ys);
+							renderer.handleActionMove(ids, xs, ys);
 						}
 					});
 					break;
@@ -173,7 +124,7 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						mRenderer.handleActionUp(idPointerUp, xPointerUp, yPointerUp);
+						renderer.handleActionUp(idPointerUp, xPointerUp, yPointerUp);
 					}
 				});
 				break;
@@ -187,7 +138,7 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						mRenderer.handleActionUp(idUp, xUp, yUp);
+						renderer.handleActionUp(idUp, xUp, yUp);
 					}
 				});
 				break;
@@ -196,14 +147,11 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						mRenderer.handleActionCancel(ids, xs, ys);
+						renderer.handleActionCancel(ids, xs, ys);
 					}
 				});
 				break;
 		}
-		if (debug){
-		}
-		*/
 		return true;
 	}
 

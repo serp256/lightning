@@ -8,6 +8,7 @@ int nextPowerOfTwo(int number) {
 typedef enum 
 {
     SPTextureFormatRGBA,
+    SPTextureFormatRGB,
     SPTextureFormatAlpha,
     SPTextureFormatPvrtcRGB2,
     SPTextureFormatPvrtcRGBA2,

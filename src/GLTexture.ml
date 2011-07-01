@@ -2,6 +2,7 @@ open Gl;
 
 type textureFormat = 
   [ TextureFormatRGBA
+  | TextureFormatRGB
   | TextureFormatAlpha
   | TextureFormatPvrtcRGB2
   | TextureFormatPvrtcRGBA2
@@ -48,6 +49,7 @@ value create textureInfo =
     in
     match textureInfo.texFormat with (*{{{*)
     [ TextureFormatRGBA -> info
+    | TextureFormatRGB -> {(info) with glTexFormat = gl_rgb }
     | TextureFormatAlpha ->
         {(info)  with
           bitsPerPixel = 8;
@@ -161,7 +163,6 @@ value create textureInfo =
           done
         )
       ];
-      debug "bind texture";
       glBindTexture gl_texture_2d 0;
       ignore(RenderSupport.checkForOpenGLError());
       textureID;

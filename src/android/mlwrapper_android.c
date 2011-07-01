@@ -22,8 +22,13 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	return JNI_VERSION_1_6; // Check this
 }
 
-void android_debug_output(value tag, value msg) {
-	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING",String_val(msg));
+void android_debug_output(value mtag, value msg) {
+	char buf[255];
+	char *tag;
+	if (mtag == Val_int(0)) tag = "DEFAULT";
+	else tag = String_val(Field(mtag,0));
+	sprintf(buf,"LIGHTNING[%s]",tag);
+	__android_log_write(ANDROID_LOG_DEBUG,buf,String_val(msg));
 }
 
 void android_debug_output_info(value msg) {
@@ -139,32 +144,110 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobje
 }
 
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererInit(JNIEnv *env, jobject jrenderer, jfloat width, jfloat height) {
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererInit(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUG("lightRender init");
+	if (stage) {
+		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","stage alredy initialized");
+		caml_callback(*caml_named_value("realodTextures"),Val_int(0));
+		// we need reload textures
+		return;
+	}
+	DEBUGF("create stage: [%d:%d]",width,height);
+	stage = mlstage_create((double)width,(double)height); 
 }
 
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUGF("GL Changed: %i:%i",width,height);
-	if (stage) {
-		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","stage alredy initialized");
-		return;
+}
+
+
+
+static value run_method = 1;//None
+void mlstage_run(double timePassed) {
+	if (run_method == 1) // None
+		run_method = caml_hash_variant("run");
+	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,caml_copy_double(timePassed));
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRender(JNIEnv *env, jobject thiz, jlong interval) {
+	double timePassed = (double)interval / 1000000000L;
+	mlstage_run(timePassed);
+}
+
+
+// Touches 
+
+void fireTouch(jint id, jfloat x, jfloat y, int phase) {
+	value touch,touches = 1;
+	Begin_roots1(touch);
+	touch = caml_alloc_tuple(8);
+	Store_field(touch,0,caml_copy_int32(id));
+	Store_field(touch,1,caml_copy_double(0.));
+	Store_field(touch,2,caml_copy_double(x));
+	Store_field(touch,3,caml_copy_double(y));
+	Store_field(touch,4,1);// None
+	Store_field(touch,5,1);// None
+	Store_field(touch,6,Val_int(1));// tap_count
+	Store_field(touch,7,Val_int(phase)); 
+	touches = caml_alloc_small(2,0);
+	Field(touches,0) = touch;
+	Field(touches,1) = 1; // None
+	End_roots();
+  mlstage_processTouches(stage,touches);
+}
+
+void fireTouches(JNIEnv *env, jintArray ids, jfloatArray xs, jfloatArray ys, int phase) {
+	int size = (*env)->GetArrayLength(env,ids);
+	jint id[size];
+	jfloat x[size];
+	jfloat y[size];
+	(*env)->GetIntArrayRegion(env,ids,0,size,id);
+	(*env)->GetFloatArrayRegion(env,xs,0,size,x);
+	(*env)->GetFloatArrayRegion(env,ys,0,size,y);
+	value touch,lst_el,touches;
+	Begin_roots2(touch,touches);
+	int i = 0;
+	touches = 1;
+	for (i = 0; i < size; i++) {
+		touch = caml_alloc_tuple(8);
+		Store_field(touch,0,caml_copy_int32(id[i]));
+		Store_field(touch,1,caml_copy_double(0.));
+		Store_field(touch,2,caml_copy_double(x[i]));
+		Store_field(touch,3,caml_copy_double(y[i]));
+		Store_field(touch,4,1);// None
+		Store_field(touch,5,1);// None
+		Store_field(touch,6,Val_int(1));// tap_count
+		Store_field(touch,7,Val_int(phase)); 
+		lst_el = caml_alloc_small(2,0);
+    Field(lst_el,0) = touch;
+    Field(lst_el,1) = touches;
+    touches = lst_el;
 	}
-	/*glViewport(0, 0, width, height);
-  glMatrixMode(GL_PROJECTION);
-  const float ratio=width/(float)height;
-  glLoadIdentity();
-  glOrthof(0, 15, 15/ratio, 0, -1, 1);
-  glMatrixMode(GL_MODELVIEW); */
-	stage = mlstage_create((float)width,(float)height); 
+	End_roots();
+  mlstage_processTouches(stage,touches);
 }
 
-
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRender(JNIEnv *env, jobject thiz) {
-	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","lightRender");
-	mlstage_render(stage);
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionDown(JNIEnv *env, jobject thiz, jint id, jfloat x, jfloat y) {
+	fireTouch(id,x,y,0);//TouchePhaseBegan = 0
 }
 
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionUp(JNIEnv *env, jobject thiz, jint id, jfloat x, jfloat y) {
+	fireTouch(id,x,y,3);//TouchePhaseEnded = 3
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionCancel(JNIEnv *env, jobject thiz, jarray ids, jarray xs, jarray ys) {
+	fireTouches(env,ids,xs,ys,4);//TouchePhaseCanceled = 4
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionMove(JNIEnv *env, jobject thiz, jarray ids, jarray xs, jarray ys) {
+	fireTouches(env,ids,xs,ys,1);//TouchePhaseMoved = 1
+}
+
+/*
+JNIEXPORT void Java_ru_redspell_lightning_lightRenderer_handlekeydown(int keycode) {
+}
+*/
 
 // that's all now :-)
 

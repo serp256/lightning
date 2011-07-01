@@ -216,21 +216,18 @@
     {
         mLastFrameTimestamp = CACurrentMediaTime();
         
-        if (mDisplayLinkSupported)
+				if (mDisplayLinkSupported)
         {
-            mDisplayLink = [NSClassFromString(@"CADisplayLink") 
-                            displayLinkWithTarget:self selector:@selector(renderStage)];
-            
-			[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
-			[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+            mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
+						[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
+						[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
         }
         else 
         {
             // timer used as a fallback
-            self.timer = [NSTimer scheduledTimerWithTimeInterval:(1.0f / mFrameRate) 
-                target:self selector:@selector(renderStage) userInfo:nil repeats:YES];            
+            self.timer = [NSTimer scheduledTimerWithTimeInterval:(1.0f / mFrameRate) target:self selector:@selector(renderStage) userInfo:nil repeats:YES];            
         }
-    }    
+    }
 }
 
 - (void)stop
@@ -259,7 +256,7 @@
     return [CAEAGLLayer class];
 }
 
-#define PROCESS_TOUCH_EVENT if (self.isStarted && mLastTouchTimestamp != event.timestamp) { process_touches(self,event,mStage); mLastTouchTimestamp = event.timestamp; }    
+#define PROCESS_TOUCH_EVENT if (self.isStarted && mLastTouchTimestamp != event.timestamp) { process_touches(self,touches,event,mStage); mLastTouchTimestamp = event.timestamp; }    
 
 - (void) touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event 
 {   

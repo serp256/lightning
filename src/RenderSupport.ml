@@ -20,7 +20,6 @@ value checkForOpenGLError () =
 value bindTexture texture = 
   let newTextureID = texture#textureID
   and newPMA = texture#hasPremultipliedAlpha in
-  let () =  debug "bindTexture: %d\n%!" newTextureID in
   DEFINE bind = glBindTexture gl_texture_2d newTextureID IN
   DEFINE apply_pma =
     match newPMA with

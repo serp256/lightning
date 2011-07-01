@@ -13,9 +13,9 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	private long last;
 	
 
-	private float screenWidth;
-	private float screenHeight;
-	public LightRenderer(float width,float height) {
+	private int screenWidth;
+	private int screenHeight;
+	public LightRenderer(int width,int height) {
 		super();
 		screenWidth = width;
 		screenHeight = height;
@@ -27,8 +27,8 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	}
 
 	public void onSurfaceChanged(GL10 gl, int w, int h) {  	
-		gl.glViewport(0,0,w,h);
-		Log.d("LightRenderer", "onSurfaceChanged");
+		Log.d("LIGHTNING","size: " + w + ":" + h);
+		lightRendererChanged(w,h);
 	}
     
 	public void onDrawFrame(GL10 gl) {
@@ -38,7 +38,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		
 		// should render a frame when onDrawFrame() is called
 		// or there is a "ghost"
-		lightRender();   	
+		lightRender(interval);   	
 	
 		// fps controlling
 		if (interval < animationInterval){ 
@@ -51,9 +51,6 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		last = now;
 	}
     
-
-	public void handleTouches(int id) {
-	}
 
 	/*
 	public void handleactiondown(int id, float x, float y)
@@ -83,12 +80,18 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	
 	*/
 
+	public native void handleActionDown(int id, float x, float y);
+	public native void handleActionUp(int id, float x, float y);
+	public native void handleActionCancel(int[] id, float[] x, float[] y);
+	public native void handleActionMove(int[] id, float[] x, float[] y);
+
 	public void handleOnPause(){
 		//nativeonpause();
 	}
 	
 	public void handleOnResume(){
 		//nativeonresume();
+		last = System.nanoTime();
 	}
 	
 	public static void setAnimationInterval(double interval){
@@ -96,8 +99,9 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	}
 
 
-	private static native void lightRendererInit(float width,float height);
-	private static native void lightRender();
+	private static native void lightRendererInit(int width, int height);
+	private static native void lightRendererChanged(int width,int height);
+	private static native void lightRender(long nanoseconds);
 
 	/*
 	private static native void nativeTouchesBegin(int id, float x, float y);
@@ -110,4 +114,5 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	private static native void nativeOnPause();
 	private static native void nativeOnResume();
 	*/
+
 }

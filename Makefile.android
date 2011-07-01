@@ -1,0 +1,4 @@
+
+include config.android
+include Makefile.in
+INSTALL_OPTS = src/android/libpng/libpng.a

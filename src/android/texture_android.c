@@ -10,24 +10,38 @@
 #include "libpng/png.h"
 #include "texture.h"
 
-value load_png_image(resource *rs) { //{{{
+
+
+#define CC_RGB_PREMULTIPLY_APLHA(vr, vg, vb, va) \
+    (unsigned)(((unsigned)((unsigned char)(vr) * ((unsigned char)(va) + 1)) >> 8) | \
+    ((unsigned)((unsigned char)(vg) * ((unsigned char)(va) + 1) >> 8) << 8) | \
+    ((unsigned)((unsigned char)(vb) * ((unsigned char)(va) + 1) >> 8) << 16) | \
+    ((unsigned)(unsigned char)(va) << 24))
+
+
+value load_png_image(resource *rs) {
 	CAMLparam0();
 	CAMLlocal2(oImgData,result);
-	png_structp png_ptr;
-	png_infop info_ptr;
-	png_uint_32 width, height;
-	int bit_depth, color_type, interlace_type;
+	//png_byte        header[8]   = {0};
+	png_structp     png_ptr     =   0;
+	png_infop       info_ptr    = 0;
+	unsigned char * pImateData  = 0;
 	FILE *fp = fdopen(rs->fd,"rb");
-	size_t rowbytes;
 
-	 png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	// (void *)user_error_ptr, user_error_fn, user_warning_fn);
+	// png header len is 8 bytes
+	//CC_BREAK_IF(nDatalen < 8);
 
+	// check the data is png or not
+	//memcpy(header, pData, 8);
+	//CC_BREAK_IF(png_sig_cmp(header, 0, 8));
+
+	// init png_struct
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
 	if( png_ptr == NULL ){
 		fclose(fp);
 		failwith("png: can't allocate png read struct");
 	}
-
+	// init png_info
 	info_ptr = png_create_info_struct(png_ptr);
 	if(info_ptr == NULL ){
 		fclose(fp);
@@ -35,138 +49,82 @@ value load_png_image(resource *rs) { //{{{
 		failwith("png: can't create info struct");
 	}
 
-	// error handling 
-	if (setjmp(png_jmpbuf(png_ptr))) {
-		// Free all of the memory associated with the png_ptr and info_ptr
-		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-		fclose(fp);
-		// If we get here, we had a problem reading the file 
-		failwith("png: read error");
-	}
-
-	// use standard C stream
+	// set the read call back function
 	png_init_io(png_ptr, fp);
 
-	// png_set_sig_bytes(png_ptr, sig_read (= 0) );
+	// read png
+	// PNG_TRANSFORM_EXPAND: perform set_expand()
+	// PNG_TRANSFORM_PACKING: expand 1, 2 and 4-bit samples to bytes
+	// PNG_TRANSFORM_STRIP_16: strip 16-bit samples to 8 bits
+	// PNG_TRANSFORM_GRAY_TO_RGB: expand grayscale samples to RGB (or GA to RGBA)
+	png_read_png(png_ptr, info_ptr, 
+			PNG_TRANSFORM_EXPAND | PNG_TRANSFORM_PACKING | PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB, 
+			0
+	);
 
-	png_read_info(png_ptr, info_ptr);
+	int         color_type  = 0;
+	png_uint_32 width = 0;
+	png_uint_32 height = 0;
+	int         bitsPerComponent = 0;
+	png_get_IHDR(png_ptr, info_ptr, &width, &height, &bitsPerComponent, &color_type, 0, 0, 0);
 
-	png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
+	// init image info
+	int preMulti = 1;
+	int hasAlpha = ( png_get_color_type(png_ptr, info_ptr) & PNG_COLOR_MASK_ALPHA ) ? 1 : 0;
 
-	/*
-	if (oversized(width, height)){
-		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-		fclose(fp);
-		failwith_oversized("png");
-	} */
+	// allocate memory and read data
+	int bytesPerComponent = 3;
+	if (hasAlpha) bytesPerComponent = 4;
+	int dataLen = height * width * bytesPerComponent;
+	pImateData = caml_stat_alloc(dataLen);
 
-	/*
-	if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) png_set_gray_to_rgb(png_ptr);
-	if (color_type & PNG_COLOR_TYPE_PALETTE ) png_set_expand(png_ptr);
-	if (bit_depth == 16 ) png_set_strip_16(png_ptr);
-	if (color_type & PNG_COLOR_MASK_ALPHA ) png_set_strip_alpha(png_ptr);
-	*/
+	png_bytep * rowPointers = png_get_rows(png_ptr, info_ptr);
 
-	png_read_update_info(png_ptr, info_ptr);
-	png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
-
-	/*
-	if (color_type != PNG_COLOR_TYPE_RGB || bit_depth != 8 ) {
-		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-		fclose(fp);
-		failwith("png: unsupported color type");
+	// copy data to image info
+	int bytesPerRow = width * bytesPerComponent;
+	unsigned int i,j;
+	if(hasAlpha)
+	{
+		unsigned int *tmp = (unsigned int *)pImateData;
+		for(i = 0; i < height; i++)
+		{
+			for(j = 0; j < bytesPerRow; j += 4)
+			{
+				*tmp++ = CC_RGB_PREMULTIPLY_APLHA( rowPointers[i][j], rowPointers[i][j + 1], rowPointers[i][j + 2], rowPointers[i][j + 3] );
+			}
+		}
 	}
-	*/
-
-	rowbytes = png_get_rowbytes(png_ptr, info_ptr);
-
-	// rowbytes * height should be the maximum malloc size in this function
-	/*
-	if (oversized(rowbytes, height) || oversized(sizeof(png_bytep), height)){
-		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-		fclose(fp);
-		failwith("png error: image contains oversized or bogus width and height");
-	}*/
-	
-	int i;
-	png_bytep *row_pointers;
-	unsigned char * buf;
-
-	row_pointers = (png_bytep*) stat_alloc(sizeof(png_bytep) * height);
-	int dataLen = rowbytes * height;
-	buf = stat_alloc(dataLen);
-	for( i = 0; i < height; i ++ ){
-		row_pointers[height - i - 1] = buf + rowbytes * i;
+	else
+	{
+		for (j = 0; j < height; ++j)
+		{
+			memcpy(pImateData + j * bytesPerRow, rowPointers[j], bytesPerRow);
+		}
 	}
 
-	/*
-	png_set_rows(png_ptr, info_ptr, row_pointers);
-
-	// Later, we can return something 
-	if (setjmp(png_jmpbuf(png_ptr))) {
-		// Free all of the memory associated with the png_ptr and info_ptr
-		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-		fclose(fp);
-		// If we get here, we had a problem reading the file
-		//fprintf(stderr, "png short file\n");
-		stat_free(row_pointers);
-		stat_free(buf);
-		caml_failwith("png: short file");
-		CAMLreturn(result);
-	}*/
-
-	png_read_image(png_ptr, row_pointers);
-	png_read_end(png_ptr, info_ptr);
-	png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-
-	/*
-	r = alloc_tuple(height);
-	for( i = 0; i < height; i ++ ){
-		tmp = caml_alloc_string(rowbytes);
-		memcpy(String_val(tmp), buf+rowbytes*i, rowbytes);
-		Store_field( r, i, tmp );
-	}
-	res = alloc_tuple(3);
-	Store_field( res, 0, Val_int(width) );
-	Store_field( res, 1, Val_int(height) );
-	Store_field( res, 2, r );
-	*/
-
-	/* close the file */
+	png_destroy_read_struct(&png_ptr, &info_ptr, 0);
 	fclose(fp);
 
-	stat_free((void*)row_pointers);
-	int legalWidth = width;
-	int legalHeight = height;
-
+	/* TODO: nextPowerTwo here */
 	intnat dims[1];
 	dims[0] = dataLen;
-	oImgData = caml_ba_alloc(CAML_BA_MANAGED | CAML_BA_UINT8, 1, buf, dims); 
+	oImgData = caml_ba_alloc(CAML_BA_MANAGED | CAML_BA_UINT8, 1, pImateData, dims); 
 
-	/*
-	int k,l;
-	for (k = 0; k < height; k++) {
-		for (l = 0; l < width; l++) {
-			int j = ((k * width) + l)*4;
-			DEBUGF("[%hhd:%hhd:%hhd:%hhd]",buf[j],buf[j+1],buf[j+2],buf[j+3]);
-		}
-	};
-	*/
-	
-
+	int legalWidth = width;
+	int legalHeight = height;
 	result = caml_alloc_tuple(10);
-	Store_field(result,0,Val_int(SPTextureFormatRGBA));
+	Store_field(result,0,Val_int(hasAlpha ? SPTextureFormatRGBA : SPTextureFormatRGB));
 	Store_field(result,1,Val_int((unsigned int)width));
 	Store_field(result,2,Val_int(legalWidth));
 	Store_field(result,3,Val_int((unsigned int)height));
 	Store_field(result,4,Val_int(legalHeight));
 	Store_field(result,5,Val_int(0));
 	Store_field(result,6,Val_int(1));
-	Store_field(result,7,Val_int(0));
+	Store_field(result,7,Val_int(preMulti));
 	Store_field(result,8,caml_copy_double(1.));
 	Store_field(result,9,oImgData);
 	CAMLreturn(result);
-} //}}}
+}
 
 CAMLprim value ml_loadImage(value fname, value scale) { // scale unused here
 	CAMLparam2(fname,scale);

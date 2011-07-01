@@ -14,7 +14,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       inherit D.container;
       value virtual color: int;
 (*       method createTimer: ?repeatCount:int -> float -> Timer.c D.evType D.evData; *)
-      method processTouches: list Touch.t -> unit;
+      method processTouches: list Touch.n -> unit;
       method advanceTime: float -> unit;
+      method run: float -> unit; (* combine advanceTime and processTouches *)
     end;
 end;

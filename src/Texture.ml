@@ -85,7 +85,8 @@ value loadImage ~path ~contentScaleFactor =
 ELSE IFDEF IOS THEN
 external loadImage: ~path:string -> ~contentScaleFactor:float -> GLTexture.textureInfo = "ml_loadImage";
 ELSE IFDEF ANDROID THEN
-(* external loadImage: ~path:string -> ~contentScaleFactor:float -> GLTexture.textureInfo = "ml_loadImage"; *)
+external loadImage: ~path:string -> ~contentScaleFactor:float -> GLTexture.textureInfo = "ml_loadImage";
+(*
 value loadImage ~path ~contentScaleFactor = 
   let ba =  (* Gl.make_ubyte_array (8 * 8 * 4) in *)
     Bigarray.Array1.of_array Bigarray.int8_unsigned Bigarray.c_layout 
@@ -111,6 +112,7 @@ value loadImage ~path ~contentScaleFactor =
       imgData = ba
     };
   );
+*)
 ENDIF;
 ENDIF;
 ENDIF;
@@ -157,11 +159,40 @@ value createSubTexture region baseTexture =
     end;
   );
 
+class type r = 
+  object
+    inherit c;
+    method setTextureID: int -> unit;
+  end;
+
+type cachedTexture =
+  [ Real of r
+  | Sub of (c * r)
+  ];
+
 value cache = Cache.create 11;
+
+
+
+IFDEF ANDROID THEN
+value reloadTextures () = 
+  let () = debug:android "reload textures" in
+  Cache.iter begin fun path t ->
+    let textureInfo = loadImage path 1. in
+    let textureID = GLTexture.create textureInfo in
+    t#setTextureID textureID
+  end;
+
+Callback.register "realodTextures" reloadTextures;
+ENDIF;
+
 
 value load path : c = 
   try
-    Cache.find cache path
+    match Cache.find cache path with
+    [ Real r -> (r :> c)
+    | Sub s _ -> s
+    ]
   with 
   [ Not_found ->
     let open GLTexture in
@@ -173,12 +204,14 @@ value load path : c =
     and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
     and scale = textureInfo.scale 
     in
-    let res = 
+    let res : r = 
       object
         method width = width;
         method height = height;
         method hasPremultipliedAlpha = hasPremultipliedAlpha;
         method scale = scale;
+        value mutable textureID = textureID;
+        method setTextureID tid = textureID := tid;
         method textureID = textureID;
         method base = None;
         method adjustTextureCoordinates texCoords = ();
@@ -186,39 +219,19 @@ value load path : c =
     in
     (
       Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
-      let res = 
-        if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
-        then
-          createSubTexture (Rectangle.create 0. 0. (float textureInfo.realWidth) (float textureInfo.realHeight)) res
-        else
-          res
-      in
+      if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
+      then
+        let t = createSubTexture (Rectangle.create 0. 0. (float textureInfo.realWidth) (float textureInfo.realHeight)) (res :> c) in
+        (
+          Cache.add cache path (Sub (t,res));
+          t
+        )
+      else
       (
-        Cache.add cache path res;
-        res;
-      );
+        Cache.add cache path (Real res);
+        (res :> c)
+      )
     )
   ];
-
-
-(*
-value createFromFile path : c =
-  let (width,height,hasPremultipliedAlpha,scale,textureID) = _createFromFile path 1. in
-  let res = 
-    object
-      method width = width;
-      method height = height;
-      method hasPremultipliedAlpha = hasPremultipliedAlpha;
-      method scale = scale;
-      method textureID = textureID;
-      method base = None;
-      method adjustTextureCoordinates texCoords = ();
-    end
-  in
-  (
-    Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
-    res;
-  );
-*)
 
 

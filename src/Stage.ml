@@ -29,6 +29,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
     );
 
 
+  exception Touch_not_found;
+
   class virtual c (width:float) (height:float) =
     object(self)
       inherit D.container as super;
@@ -44,183 +46,81 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method! setScaleY _ = raise Restricted_operation;
       method! setRotation _ = raise Restricted_operation;
 
-
       method! stage = Some self#asDisplayObjectContainer;
-      (*
-      value mutable time = 0.;
-      value mutable timerID = 0;
-      value timersQueue = TimersQueue.make ();
-      *)
-(*       value timers (* : Hashtbl.t int (inner_timer 'event_type 'event_data) *) = Hashtbl.create 0; *)
-
-      (*
-      method createTimer ?(repeatCount=0) delay = (*{{{*)
-        let o = 
-          object(timer)
-            type 'timer = Timer.c 'event_type 'event_data;
-            inherit EventDispatcher.simple ['event_type,'event_data,'timer];
-(*             value id = let id = timerID in (timerID := timerID + 1; id); *)
-            value mutable running = False;
-            method running = running;
-            value mutable currentCount = 0;
-            method delay = delay;
-            method repeatCount = repeatCount;
-            method currentCount = currentCount;
-            method fire () = 
-            (
-              prerr_endline "fire timer";
-              let event = Event.create `TIMER () in
-              timer#dispatchEvent event; 
-              currentCount := currentCount + 1;
-              match running with
-              [ True -> 
-                if repeatCount <= 0 || currentCount < repeatCount
-                then
-                  TimersQueue.add timersQueue ((time +. delay),(timer :> inner_timer))
-                else 
-                  (
-                    running := False;
-(*                     Hashtbl.remove timers id; *)
-                    let event = Event.create `TIMER_COMPLETE () in
-                    timer#dispatchEvent event
-                  )
-              | False -> ()
-              ]
-            );
-
-            method private start' () = 
-            (
-                TimersQueue.add timersQueue ((time +. delay),(timer :> inner_timer));
-                running := True
-            );
-
-            method start () = 
-              match running with
-              [ False -> timer#start'()
-              | True -> failwith "Timer alredy started"
-              ];
-
-            method private stop' () = 
-             (
-               TimersQueue.remove_if (fun (_,o) -> o = timer) timersQueue;
-               running := False;
-             );
-
-            method stop () = 
-              match running with
-              [ True -> timer#stop'()
-              | False -> failwith "Timer alredy stopped"
-              ];
-
-            method private asEventTarget = (timer : inner_timer :> Timer.c _ _);
-
-            method reset () = 
-            (
-              currentCount := 0;
-              match running with
-              [ False -> ()
-              | True -> timer#stop'() 
-              ];
-            );
-
-            method restart ~reset = 
-            (
-              match running with
-              [ True -> 
-                (
-                  match reset with
-                  [ True -> currentCount := 0
-                  | False -> ()
-                  ];
-                  timer#stop'()
-                )
-              | False -> ()
-              ];
-              timer#start'();
-            );
-
-
-          end
-        in
-        (o :> Timer.c _ _ );(*}}}*)
-      *)
 
       value mutable currentTouches = []; (* FIXME: make it weak for target *)
-      method processTouches (touches:list Touch.t) = (*{{{*)
-(*         let () = Printf.eprintf "process touches %d\n%!" (List.length touches) in *)
-        let processedTouches = 
-          List.fold_left begin fun processedTouches touch ->
-            let () = 
-              debug "touch: %ld, %f [%f:%f], [%f:%f], %d, %s\n%!" touch.tid
-                touch.timestamp touch.globalX touch.globalY 
-                touch.previousGlobalX touch.previousGlobalY
-                touch.tapCount (string_of_touchPhase touch.phase)
-            in
-            try
-              let (target,_) =
-                List.find begin fun (target,eTouch) -> eTouch.tid = touch.tid
-                (*
-                  (eTouch.globalX = touch.previousGlobalX && eTouch.globalY = touch.previousGlobalY) ||
-                  (eTouch.globalX = touch.globalX && eTouch.globalY = touch.globalY) (* - ЭТО НЕ ОЧЕНЬ ПОНЯТНО ПОЧЕМУ *)
-                *)
-                end currentTouches
-              in
-              match target#stage with
-              [ None -> 
-                match self#hitTestPoint (touch.globalX,touch.globalY) True with
-                [ None -> processedTouches
-                | Some target -> [ (target,touch) :: processedTouches ]
-                ]
-              | Some _ -> let () = print_endline "this is exists touch" in [ (target,touch) :: processedTouches ]
-              ]
-            with 
-              [ Not_found -> 
-                match self#hitTestPoint (touch.globalX,touch.globalY) True with
-                [ Some target -> [ (target,touch) :: processedTouches ]
-                | None -> processedTouches
+      method processTouches (touches:list Touch.n) = (*{{{*)
+        match touchable with
+        [ True -> 
+          let () = debug:touches "process touches %d\n%!" (List.length touches) in
+          let now = Unix.gettimeofday() in
+          let cTouches = ref currentTouches in
+          let processedTouches = 
+            List.map begin fun nt ->
+              let () = nt.n_timestamp := now in
+              try
+                let ((target,touch),cts) = try MList.pop_if (fun (target,eTouch) -> eTouch.n_tid = nt.n_tid) !cTouches with [ Not_found -> raise Touch_not_found ] in 
+                (
+                  cTouches.val := cts;
+                  nt.n_previousGlobalX := Some touch.n_globalX; 
+                  nt.n_previousGlobalY := Some touch.n_globalY; 
+                  match target#stage with
+                  [ None -> 
+                    match self#hitTestPoint (nt.n_globalX,nt.n_globalY) True with
+                    [ None -> assert False
+                    | Some target -> (target,nt)
+                    ]
+                  | Some _ -> (target,nt) 
+                  ]
+                )
+              with 
+              [  Touch_not_found -> 
+                match self#hitTestPoint (nt.n_globalX,nt.n_globalY) True with
+                [ Some target -> (target,nt)
+                | None -> assert False
                 ]
               ]
-          end [] touches
-        in
-        (
-          (*
-          List.iter begin fun (target,touch) ->
-            Printf.printf "touch: %f [%f:%f], [%f:%f], %d, %s, [ %s ]\n%!" 
-              touch.timestamp touch.globalX touch.globalY 
-              touch.previousGlobalX touch.previousGlobalY
-              touch.tapCount (string_of_touchPhase touch.phase)
-              target#name
-          end processedTouches;
-          *)
-          let fireTouches = (* группируем их по таргетам и вперед *)
-            List.fold_left (fun res (target,touch) -> MList.add_assoc target touch res) [] processedTouches
+            end touches
           in
-          let event = Event.create ~bubbles:True `TOUCH () in
-          List.iter begin fun ((target:D.c),touches) ->
-            let event = {(event) with Event.data = `Touches touches} in
-            target#dispatchEvent event
-          end fireTouches;
-          currentTouches := List.filter (fun (_,t) -> match t.phase with [ TouchPhaseEnded -> False | _ -> True ]) processedTouches;
-        );(*}}}*)
+          let otherTouches = !cTouches in
+          (
+            List.iter (fun (_,tch) -> tch.n_phase := TouchPhaseStationary) otherTouches;
+            let () = debug:touches
+                let fstr = fun [ None -> "NONE" | Some f -> string_of_float f ] in
+                List.iter begin fun (target,touch) ->
+                  debug:touches "touch: %f [%f:%f], [%s:%s], %d, %s, [ %s ]\n%!" 
+                    touch.n_timestamp touch.n_globalX touch.n_globalY 
+                    (fstr touch.n_previousGlobalX) (fstr touch.n_previousGlobalY)
+                    touch.n_tapCount (string_of_touchPhase touch.n_phase)
+                    target#name
+                end (processedTouches @ otherTouches)
+            in
+            (* группируем их по таргетам и вперед *) 
+            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) [] processedTouches in
+            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) fireTouches otherTouches in
+            let event = Event.create ~bubbles:True `TOUCH () in
+            List.iter begin fun ((target:D.c),touches) ->
+              let event = {(event) with Event.data = `Touches touches} in
+              target#dispatchEvent event
+            end fireTouches;
+            currentTouches := (List.filter (fun (_,t) -> match t.n_phase with [ TouchPhaseEnded -> False | _ -> True ]) processedTouches) @ otherTouches
+          )
+        | False -> ()
+        ];(*}}}*)
 
       method !render _ =
-        (
-          RenderSupport.clearTexture ();
-          RenderSupport.clear color 1.0;
-          RenderSupport.setupOrthographicRendering 0. width height 0.;
-          proftimer:render "STAGE rendered %F" (super#render None);
-          debug:errors ignore(RenderSupport.checkForOpenGLError());
-        (*
-        #if DEBUG
-        [SPRenderSupport checkForOpenGLError];
-        #endif
-        *)
+      (
+        RenderSupport.clearTexture ();
+        RenderSupport.clear color 1.0;
+        RenderSupport.setupOrthographicRendering 0. width height 0.;
+        proftimer:render "STAGE rendered %F" (super#render None);
+        debug:errors ignore(RenderSupport.checkForOpenGLError());
       );
 
       value runtweens = Queue.create ();
 
       method advanceTime (seconds:float) = 
-        proftimer "Stage advanceTime: %F"
+        proftimer:perfomance "Stage advanceTime: %F"
         (
           Timers.process seconds;
           (* jugler here *)
@@ -233,13 +133,14 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
             ]
           done;
           (* dispatch EnterFrameEvent *)
-          proftimer "Enter frame: %F" D.dispatchEnterFrame seconds;
-(*
-          proftimer "Enter frame: %F"
-            let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
-            self#dispatchEventOnChildren enterFrameEvent;
-*)
+          proftimer:perfomance "Enter frame: %F" D.dispatchEnterFrame seconds;
         );
+
+      method run seconds = 
+      (
+        self#advanceTime seconds;
+        self#render None;
+      );
 
     method! hitTestPoint localPoint isTouch =
       match isTouch && (not visible || not touchable) with
