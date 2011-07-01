@@ -33,7 +33,7 @@ value create ?(repeatCount=0) delay = (*{{{*)
           if repeatCount <= 0 || currentCount < repeatCount
           then
           (
-            running := Some (Timers.start delay self#fire)
+            running := Some (Timers.start delay self#fire);
             let event = Event.create `TIMER () in
             self#dispatchEvent event; 
           )
