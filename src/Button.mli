@@ -16,11 +16,13 @@ module Make
       method setText: string -> unit;
       method setFontName: string -> unit;
       method setFontColor: int -> unit;
+      method setDisabledFontColor: int -> unit;
       method setFontSize: option float -> unit;
       method setTextBounds: Rectangle.t -> unit;
       method isEnabled: bool;
       method setEnabled: bool -> unit;
-      
+      method setTextOffsetX : float -> unit;
+      method setTextOffsetY : float -> unit;
     end;
 
 
