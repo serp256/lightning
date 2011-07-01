@@ -27,20 +27,24 @@ value create ?(repeatCount=0) delay = (*{{{*)
       method currentCount = currentCount;
       method fire () = 
       (
-        let event = Event.create `TIMER () in
-        self#dispatchEvent event; 
         currentCount := currentCount + 1;
         match running with
         [ Some _ -> 
           if repeatCount <= 0 || currentCount < repeatCount
           then
+          (
             running := Some (Timers.start delay self#fire)
+            let event = Event.create `TIMER () in
+            self#dispatchEvent event; 
+          )
           else 
-            (
-              running := None;
-              let event = Event.create `TIMER_COMPLETE () in
-              self#dispatchEvent event
-            )
+          (
+            running := None;
+            let event = Event.create `TIMER () in
+            self#dispatchEvent event; 
+            let event = Event.create `TIMER_COMPLETE () in
+            self#dispatchEvent event
+          )
         | None -> assert False
         ]
       );
