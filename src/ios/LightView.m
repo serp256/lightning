@@ -256,7 +256,8 @@
     return [CAEAGLLayer class];
 }
 
-#define PROCESS_TOUCH_EVENT if (self.isStarted && mLastTouchTimestamp != event.timestamp) { process_touches(self,touches,event,mStage); mLastTouchTimestamp = event.timestamp; }    
+//#define PROCESS_TOUCH_EVENT if (self.isStarted && mLastTouchTimestamp != event.timestamp) { process_touches(self,touches,event,mStage); mLastTouchTimestamp = event.timestamp; }    
+#define PROCESS_TOUCH_EVENT if (self.isStarted) process_touches(self,touches,event,mStage);
 
 - (void) touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event 
 {   

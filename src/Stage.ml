@@ -83,6 +83,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
             end touches
           in
           let otherTouches = !cTouches in
+          let () = debug:touches "Length of other touches: %d" (List.length otherTouches) in
           (
             List.iter (fun (_,tch) -> tch.n_phase := TouchPhaseStationary) otherTouches;
             let () = debug:touches
@@ -96,8 +97,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
                 end (processedTouches @ otherTouches)
             in
             (* группируем их по таргетам и вперед *) 
-            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) [] processedTouches in
-            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) fireTouches otherTouches in
+            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) [] otherTouches in
+            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) fireTouches processedTouches in
             let event = Event.create ~bubbles:True `TOUCH () in
             List.iter begin fun ((target:D.c),touches) ->
               let event = {(event) with Event.data = `Touches touches} in
