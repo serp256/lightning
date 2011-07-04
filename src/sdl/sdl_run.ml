@@ -44,7 +44,7 @@ value handle_events frameRate stage =
                           Touch.n_tid = (let r = !touchid in (touchid.val := r + 1; Int32.of_int r));
                           n_timestamp = 0.;
                           n_globalX = globalX; n_globalY = globalY;
-                          n_previousGlobalX = None; n_previousGlobalY = None;
+                          n_previousGlobalX = globalX; n_previousGlobalY = globalY;
                           n_tapCount = 1; n_phase = Touch.TouchPhaseBegan;
                         }
                       in
