@@ -149,6 +149,11 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method name: string;
     method setName: string -> unit;
     value transformPoint: Point.t;
+    method transformPointX: float;
+    method setTransformPointX: float -> unit;
+    method transformPointY: float;
+    method setTransformPointY: float -> unit;
+    method transformPoint: Point.t;
     method setTransformPoint: Point.t -> unit;
     value x:float;
     method x: float;

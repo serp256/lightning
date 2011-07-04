@@ -94,6 +94,29 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setName n = name := n;
 
     value mutable transformPoint = (0.,0.);
+
+    method transformPointX = fst transformPoint;
+    method setTransformPointX nv = 
+      if nv <> fst transformPoint
+      then
+        (
+          transformPoint := (nv,snd transformPoint);
+          self#modified();
+        )
+      else ();
+
+    method transformPointY = snd transformPoint;
+    method setTransformPointY nv =
+      if nv <> snd transformPoint
+      then
+        (
+          transformPoint := (fst transformPoint,nv);
+          self#modified();
+        )
+      else ();
+
+
+    method transformPoint = transformPoint;
     method setTransformPoint p = 
       if p <> transformPoint
       then
