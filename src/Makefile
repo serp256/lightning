@@ -53,7 +53,7 @@ else
 		else
 			LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
 		endif
-		GLPARAM = -DGL_GLEXT_PROTOTYPES'
+		GLPARAM = -DGL_GLEXT_PROTOTYPES
 	endif
 endif
 
