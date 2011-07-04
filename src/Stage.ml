@@ -62,8 +62,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
                 let ((target,touch),cts) = try MList.pop_if (fun (target,eTouch) -> eTouch.n_tid = nt.n_tid) !cTouches with [ Not_found -> raise Touch_not_found ] in 
                 (
                   cTouches.val := cts;
-                  nt.n_previousGlobalX := Some touch.n_globalX; 
-                  nt.n_previousGlobalY := Some touch.n_globalY; 
+                  nt.n_previousGlobalX := touch.n_globalX; 
+                  nt.n_previousGlobalY := touch.n_globalY; 
                   match target#stage with
                   [ None -> 
                     match self#hitTestPoint (nt.n_globalX,nt.n_globalY) True with
@@ -87,11 +87,10 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           (
             List.iter (fun (_,tch) -> tch.n_phase := TouchPhaseStationary) otherTouches;
             let () = debug:touches
-                let fstr = fun [ None -> "NONE" | Some f -> string_of_float f ] in
                 List.iter begin fun (target,touch) ->
-                  debug:touches "touch: %f [%f:%f], [%s:%s], %d, %s, [ %s ]\n%!" 
+                  debug:touches "touch: %f [%f:%f], [%F:%F], %d, %s, [ %s ]\n%!" 
                     touch.n_timestamp touch.n_globalX touch.n_globalY 
-                    (fstr touch.n_previousGlobalX) (fstr touch.n_previousGlobalY)
+                    touch.n_previousGlobalX touch.n_previousGlobalY
                     touch.n_tapCount (string_of_touchPhase touch.n_phase)
                     target#name
                 end (processedTouches @ otherTouches)

@@ -21,8 +21,8 @@ type n =
     n_timestamp: mutable float;
     n_globalX:float;
     n_globalY:float;
-    n_previousGlobalX:mutable (option float);
-    n_previousGlobalY:mutable (option float);
+    n_previousGlobalX:mutable float;
+    n_previousGlobalY:mutable float;
     n_tapCount:int;
     n_phase: mutable touchPhase;
   };
@@ -34,8 +34,8 @@ type t =
     timestamp:float;
     globalX:float;
     globalY:float;
-    previousGlobalX: option float;
-    previousGlobalY: option float;
+    previousGlobalX: float;
+    previousGlobalY: float;
     tapCount:int;
     phase: touchPhase;
   };

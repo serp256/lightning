@@ -205,18 +205,20 @@ void fireTouches(JNIEnv *env, jintArray ids, jfloatArray xs, jfloatArray ys, int
 	(*env)->GetIntArrayRegion(env,ids,0,size,id);
 	(*env)->GetFloatArrayRegion(env,xs,0,size,x);
 	(*env)->GetFloatArrayRegion(env,ys,0,size,y);
-	value touch,lst_el,touches;
-	Begin_roots2(touch,touches);
+	value touch,globalX,globalY,lst_el,touches;
+	Begin_roots2(touch,touches,globalX,globalY);
 	int i = 0;
 	touches = 1;
 	for (i = 0; i < size; i++) {
+		globalX = caml_copy_double(x[i]);
+		globalY = caml_copy_double(y[i]);
 		touch = caml_alloc_tuple(8);
 		Store_field(touch,0,caml_copy_int32(id[i]));
 		Store_field(touch,1,caml_copy_double(0.));
-		Store_field(touch,2,caml_copy_double(x[i]));
-		Store_field(touch,3,caml_copy_double(y[i]));
-		Store_field(touch,4,1);// None
-		Store_field(touch,5,1);// None
+		Store_field(touch,2,globalX);
+		Store_field(touch,3,globalY);
+		Store_field(touch,4,globalX);
+		Store_field(touch,5,globalY);
 		Store_field(touch,6,Val_int(1));// tap_count
 		Store_field(touch,7,Val_int(phase)); 
 		lst_el = caml_alloc_small(2,0);
