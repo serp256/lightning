@@ -101,4 +101,3 @@ clean:
 	rm -f *.o *.cm[iox] *.a *.cmxa *.so ios/*.o sdl/*.cmx sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi
 
 -include MLDepend.$(PLATFORM)
--include debug.conf

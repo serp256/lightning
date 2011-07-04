@@ -32,8 +32,8 @@ type t =
   { 
     tid: int32;
     timestamp:float;
-    globalX:float;
-    globalY:float;
+    globalX:option float;
+    globalY:option float;
     previousGlobalX:float;
     previousGlobalY:float;
     tapCount:int;
