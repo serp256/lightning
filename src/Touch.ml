@@ -32,10 +32,10 @@ type t =
   { 
     tid: int32;
     timestamp:float;
-    globalX:option float;
-    globalY:option float;
-    previousGlobalX:float;
-    previousGlobalY:float;
+    globalX:float;
+    globalY:float;
+    previousGlobalX: option float;
+    previousGlobalY: option float;
     tapCount:int;
     phase: touchPhase;
   };
