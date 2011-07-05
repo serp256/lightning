@@ -15,10 +15,6 @@
 #import "LightView.h"
 #import "mlwrapper_ios.h"
 
-#define SP_CREATE_POOL(pool)        NSAutoreleasePool *(pool) = [[NSAutoreleasePool alloc] init];
-#define SP_RELEASE_POOL(pool)       [(pool) release];
-
-
 // --- private interface ---------------------------------------------------------------------------
 
 @interface LightView ()
@@ -90,27 +86,21 @@
     if (!mContext || ![EAGLContext setCurrentContext:mContext])        
         NSLog(@"Could not create render context");    
     
-    //mRenderSupport = [[SPRenderSupport alloc] init];
 }
 
 - (void)layoutSubviews 
 {
-    NSLog(@"layout Subviews");
     [self destroyFramebuffer]; // reset framebuffer (scale factor could have changed)
     [self createFramebuffer];
     [self renderStage];        // fill buffer immediately to avoid flickering
 }
 
 
-- (void)initStageWithWidth:(float)width height:(float)height
-{
-	mStage = mlstage_create(width,height);
-}
-
 -(void)initStage 
 {
-	CGSize screenSize = [UIScreen mainScreen].bounds.size;
-	[self initStageWithWidth:screenSize.width height:screenSize.height];
+	//CGSize screenSize = [UIScreen mainScreen].bounds.size;
+	CGRect rect = self.frame;
+	mStage = mlstage_create(rect.size.width - rect.origin.x,rect.size.height - rect.origin.y);
 }
 
 - (void)createFramebuffer 
@@ -144,8 +134,8 @@
         NSLog(@"buffers not yet initialized");
         return; // buffers not yet initialized
     }
-    
-    SP_CREATE_POOL(pool); 
+
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     
     double now = CACurrentMediaTime();
     double timePassed = now - mLastFrameTimestamp;
@@ -164,7 +154,7 @@
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, mRenderbuffer);
     [mContext presentRenderbuffer:GL_RENDERBUFFER_OES];
     
-    SP_RELEASE_POOL(pool);
+		[pool release];
 }
 
 - (void)setTimer:(NSTimer *)newTimer 

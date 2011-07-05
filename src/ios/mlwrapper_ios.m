@@ -5,10 +5,12 @@
 #import <caml/memory.h>
 #import <caml/mlvalues.h>
 #import <caml/alloc.h>
+#import <caml/threads.h>
 #import "mlwrapper_ios.h"
 
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
+	caml_leave_blocking_section();
 	value mltouch,mltouches,globalX,globalY,lst_el;
   Begin_roots4(mltouch,globalX,globalY,mltouches);
   CGSize viewSize = view.bounds.size;
@@ -39,5 +41,6 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
   }
 	End_roots();
   mlstage_processTouches(mlstage,mltouches);
+	caml_enter_blocking_section();
 }
 

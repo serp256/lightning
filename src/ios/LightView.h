@@ -67,7 +67,7 @@
 /// @name Methods
 /// -------------
 
-- (void)initStageWithWidth:(float)width height:(float)height;
+//- (void)initStageWithWidth:(float)width height:(float)height;
 - (void)initStage;
 
 /// Starts rendering and event handling.
