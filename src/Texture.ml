@@ -123,41 +123,6 @@ module Cache = WeakHashtbl.Make (struct
   value hash = Hashtbl.hash;
 end);
 
-value createSubTexture region baseTexture = 
-  let tw = baseTexture#width
-  and th = baseTexture#height in
-  let open Rectangle in 
-  let clipping = Rectangle.create (region.x /. tw) (region.y /. th) (region.width /. tw)  (region.height /. th) in
-  let rootClipping = Rectangle.copy clipping in
-  (
-    adjustClipping baseTexture where
-      rec adjustClipping texture =
-      match texture#base with
-      [ None -> ()
-      | Some (baseTexture,baseClipping) ->
-          (
-            rootClipping.x := baseClipping.x +. rootClipping.x *. baseClipping.width;
-            rootClipping.y := baseClipping.y +. rootClipping.y *. baseClipping.height;
-            rootClipping.width := rootClipping.width *. baseClipping.width;
-            rootClipping.height := rootClipping.height *. baseClipping.height;
-            adjustClipping baseTexture
-          )
-      ];
-    object
-      method width = baseTexture#width *. clipping.width;
-      method height = baseTexture#height *. clipping.height;
-      method textureID = baseTexture#textureID;
-      method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
-      method scale = baseTexture#scale;
-      method base = Some (baseTexture,clipping);
-      method adjustTextureCoordinates texCoords = 
-        for i = 0 to (Bigarray.Array1.dim texCoords) / 2 - 1 do
-          texCoords.{2*i} := rootClipping.x +. texCoords.{2*i} *. rootClipping.width;
-          texCoords.{2*i+1} := rootClipping.y +. texCoords.{2*i+1} *. rootClipping.height;
-        done;
-        
-    end;
-  );
 
 class type r = 
   object
@@ -165,10 +130,49 @@ class type r =
     method setTextureID: int -> unit;
   end;
 
-type cachedTexture =
-  [ Real of r
-  | Sub of (c * r)
-  ];
+class subtexture region (baseTexture:c) = 
+  let tw = baseTexture#width
+  and th = baseTexture#height in
+  let clipping = Rectangle.create (region.Rectangle.x /. tw) (region.Rectangle.y /. th) (region.Rectangle.width /. tw)  (region.Rectangle.height /. th) in
+  let rootClipping = Rectangle.copy clipping in
+  let () = 
+    let open Rectangle in
+    adjustClipping baseTexture where
+      rec adjustClipping texture =
+        match texture#base with
+        [ None -> ()
+        | Some (baseTexture,baseClipping) ->
+            (
+              rootClipping.x := baseClipping.x +. rootClipping.x *. baseClipping.width;
+              rootClipping.y := baseClipping.y +. rootClipping.y *. baseClipping.height;
+              rootClipping.width := rootClipping.width *. baseClipping.width;
+              rootClipping.height := rootClipping.height *. baseClipping.height;
+              adjustClipping baseTexture
+            )
+        ]
+  in
+  object
+    method width = baseTexture#width *. clipping.Rectangle.width;
+    method height = baseTexture#height *. clipping.Rectangle.height;
+    method textureID = baseTexture#textureID;
+    method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
+    method scale = baseTexture#scale;
+    method base = Some (baseTexture,clipping);
+    method adjustTextureCoordinates (texCoords:float_array) = 
+      for i = 0 to (Bigarray.Array1.dim texCoords) / 2 - 1 do
+        texCoords.{2*i} := rootClipping.Rectangle.x +. texCoords.{2*i} *. rootClipping.Rectangle.width;
+        texCoords.{2*i+1} := rootClipping.Rectangle.y +. texCoords.{2*i+1} *. rootClipping.Rectangle.height;
+      done;
+  end;
+
+value createSubTexture = new subtexture;
+
+value _createSubTexture region (baseTexture:r) =
+  object 
+    inherit subtexture region (baseTexture :> c);
+    method setTextureID tid = baseTexture#setTextureID tid;
+  end;
+
 
 value cache = Cache.create 11;
 
@@ -189,10 +193,7 @@ ENDIF;
 
 value load path : c = 
   try
-    match Cache.find cache path with
-    [ Real r -> (r :> c)
-    | Sub s _ -> s
-    ]
+    ((Cache.find cache path) :> c)
   with 
   [ Not_found ->
     let open GLTexture in
@@ -219,18 +220,14 @@ value load path : c =
     in
     (
       Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
-      if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
-      then
-        let t = createSubTexture (Rectangle.create 0. 0. (float textureInfo.realWidth) (float textureInfo.realHeight)) (res :> c) in
-        (
-          Cache.add cache path (Sub (t,res));
-          t
-        )
-      else
+      let res = 
+        if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
+        then _createSubTexture (Rectangle.create 0. 0. (float textureInfo.realWidth) (float textureInfo.realHeight)) res
+        else res
+      in
       (
-        Cache.add cache path (Real res);
+        Cache.add cache path res);
         (res :> c)
-      )
     )
   ];
 
