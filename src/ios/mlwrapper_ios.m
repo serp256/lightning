@@ -39,8 +39,8 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
     Field(lst_el,1) = mltouches;
     mltouches = lst_el;
   }
-	End_roots();
   mlstage_processTouches(mlstage,mltouches);
+	End_roots();
 	caml_enter_blocking_section();
 }
 

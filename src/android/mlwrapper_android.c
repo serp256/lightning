@@ -226,8 +226,8 @@ void fireTouches(JNIEnv *env, jintArray ids, jfloatArray xs, jfloatArray ys, int
     Field(lst_el,1) = touches;
     touches = lst_el;
 	}
-	End_roots();
   mlstage_processTouches(stage,touches);
+	End_roots();
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionDown(JNIEnv *env, jobject thiz, jint id, jfloat x, jfloat y) {

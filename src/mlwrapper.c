@@ -64,11 +64,8 @@ void mlstage_render(mlstage *mlstage) {
 static value processTouches_method = NIL;
 
 void mlstage_processTouches(mlstage *mlstage, value touches) {
-    PRINT_DEBUG("mlstage_processTouches");
-    CAMLparam1(touches);
+	PRINT_DEBUG("mlstage_processTouches");
 	// вызвать у stage метод который процессит тачи
-	if (processTouches_method == NIL) 
-		processTouches_method = caml_hash_variant("processTouches");
+	if (processTouches_method == NIL) processTouches_method = caml_hash_variant("processTouches");
 	caml_callback2(caml_get_public_method(mlstage->stage,processTouches_method),mlstage->stage,touches);
-	CAMLreturn0;
 }

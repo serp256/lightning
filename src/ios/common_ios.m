@@ -3,6 +3,7 @@
 #import <caml/mlvalues.h>
 #import <caml/memory.h>
 #import <caml/callback.h>
+#import <caml/alloc.h>
 #import <caml/fail.h>
 
 NSString *pathForResource(NSString *path, float contentScaleFactor) {
@@ -43,4 +44,12 @@ CAMLprim value ml_bundle_path_for_resource(value mlpath) {
 		Store_field(res,0,caml_copy_string([bundlePath cStringUsingEncoding:NSASCIIStringEncoding]));
 	}
 	CAMLreturn(res);
+}
+
+
+CAMLprim value ml_storage_path(value p) {
+	CAMLparam0();
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	value result = caml_copy_string([[paths objectAtIndex:0] cStringUsingEncoding:NSASCIIStringEncoding]);
+	CAMLreturn(result);
 }
