@@ -16,7 +16,7 @@ value columns : int =
     )
   with [ End_of_file -> min_columns ];
 ELSE
-value columns = 80;
+value columns = 120;
 END;
 
 IFDEF ANDROID THEN
@@ -27,9 +27,9 @@ external i_writer: string -> unit = "android_debug_output_info";
 external d_writer: option string -> string -> unit = "android_debug_output";
 ELSE
 value fail_writer = (fun s -> failwith s);
-value e_writer = (fun s -> (prerr_string "[ERROR]"; prerr_endline s));
-value w_writer = (fun s -> (prerr_string "[WARN]"; prerr_endline s));
-value i_writer = (fun s -> (prerr_string "[INFO]"; prerr_endline s));
+value e_writer = (fun s -> (prerr_string "[ERROR] "; prerr_endline s));
+value w_writer = (fun s -> (prerr_string "[WARN] "; prerr_endline s));
+value i_writer = (fun s -> (prerr_string "[INFO] "; prerr_endline s));
 value d_writer l = 
   let l = 
     match l with
@@ -37,7 +37,7 @@ value d_writer l =
     | Some l -> l
     ]
   in
-  fun s -> (Printf.eprintf "[DEBUG:%s]" l; prerr_endline s);
+  fun s -> (Printf.eprintf "[DEBUG:%s] " l; prerr_endline s);
 value null_writer = (fun _ -> ());
 END;
 

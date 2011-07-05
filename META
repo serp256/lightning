@@ -1,7 +1,7 @@
 version="0.01"
 archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
-requires="bigarray extlib xmlm"
+requires="bigarray extlib xmlm dbm"
 
 package "syntax" (
 	package "prop" (
