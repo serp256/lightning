@@ -12,6 +12,7 @@
 #import <caml/mlvalues.h>
 #import <caml/fail.h>
 #import <caml/callback.h>
+#import <caml/threads.h>
 
 
 #import "common_ios.h"
@@ -132,52 +133,39 @@ uint createGLTexture(SPTextureFormat format, int width, int height, int numMipma
     glBindTexture(GL_TEXTURE_2D, 0);
     return mTextureID;
 } //}}}
+*/
 
 typedef struct {
-    float width;
-    float height;
-    BOOL premultipliedAlpha;
-    float scale;
-    uint textureID;
+	int format;
+	float width;
+	float realWidth;
+	float height;
+	float realHeight;
+	BOOL premultipliedAlpha;
+	float scale;
+	unsigned int dataLen;
+	unsigned char* imgData;
 } textureInfo;
-
-
-value toMLResult(textureInfo *texInfo) {
-    CAMLparam0();
-    CAMLlocal1(res);
-    res = caml_alloc_tuple(5);
-    Store_field(res,0,caml_copy_double(texInfo->width));
-    Store_field(res,1,caml_copy_double(texInfo->height));
-    Store_field(res,2,Val_int(texInfo->premultipliedAlpha));
-    Store_field(res,3,caml_copy_double(texInfo->scale));
-    Store_field(res,4,Val_long(texInfo->textureID));
-    CAMLreturn(res);
-}
-*/
 
 
 
 typedef void (*drawingBlock)(CGContextRef context,void *data);
 
-value createTextureInfo(float width, float height, float scale, drawingBlock draw, void *data) {
-		CAMLparam0();
-		CAMLlocal2(oImgData,res);
+void createTextureInfo(float width, float height, float scale, drawingBlock draw, void *data,textureInfo *tInfo) {
 		int legalWidth  = nextPowerOfTwo(width  * scale);
 		int legalHeight = nextPowerOfTwo(height * scale);
     
-    SPTextureFormat textureFormat;
     CGColorSpaceRef cgColorSpace;
     CGBitmapInfo bitmapInfo;
-    BOOL premultipliedAlpha;
     int bytesPerPixel;
 
     /*if (colorSpace == SPColorSpaceRGBA)
     {*/
         bytesPerPixel = 4;
-        textureFormat = SPTextureFormatRGBA;
+        tInfo->format = SPTextureFormatRGBA;
         cgColorSpace = CGColorSpaceCreateDeviceRGB();
         bitmapInfo = kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
-        premultipliedAlpha = YES;
+        tInfo->premultipliedAlpha = YES;
     /*}
     else
     {
@@ -203,43 +191,13 @@ value createTextureInfo(float width, float height, float scale, drawingBlock dra
     
     //uint textureID = createGLTexture(textureFormat,legalWidth,legalHeight,0,YES,premultipliedAlpha,imageData,scale);
     CGContextRelease(context);
-    //caml_stat_free(imageData);    
-
-		intnat dims[1];
-		dims[0] = dataLen;
-    
-		oImgData = caml_ba_alloc(CAML_BA_MANAGED | CAML_BA_UINT8, 1, imageData, dims); 
-
-		/*
-    textureInfo texInfo = {
-        .width = width,
-        .height = height,
-        .premultipliedAlpha = premultipliedAlpha,
-        .scale = scale,
-        .textureID = textureID
-    };*/
-
-		res = caml_alloc_tuple(10);
-		Store_field(res,0,Val_int(textureFormat));
-		Store_field(res,1,Val_int((unsigned int)width));
-    Store_field(res,2,Val_int(legalWidth));
-		Store_field(res,3,Val_int((unsigned int)height));
-    Store_field(res,4,Val_int(legalHeight));
-    Store_field(res,5,Val_int(0));
-    Store_field(res,6,Val_int(1));
-    Store_field(res,7,Val_int(premultipliedAlpha));
-    Store_field(res,8,caml_copy_double(scale));
-    Store_field(res,9,oImgData);
-
-
-    /*
-    SPRectangle *region = [SPRectangle rectangleWithX:0 y:0 width:width height:height];
-    SPTexture *subTexture = [[SPTexture alloc] initWithRegion:region ofTexture:glTexture];
-    [glTexture release];
-    return subTexture;*/
-
-    //return toMLResult(&texInfo);
-		CAMLreturn(res);
+		tInfo->width = legalWidth;
+		tInfo->realWidth = width;
+		tInfo->height = legalHeight;
+		tInfo->realHeight = height;
+		tInfo->scale = scale;
+		tInfo->dataLen = dataLen;
+		tInfo->imgData = imageData;
 }
 
 void drawImage(CGContextRef context, void* data) {
@@ -247,15 +205,14 @@ void drawImage(CGContextRef context, void* data) {
 	[image drawAtPoint:CGPointMake(0, 0)];
 }
 
-value loadImageFile(UIImage *image) {
-    float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
-    float width = image.size.width;
-    float height = image.size.height;
-		return createTextureInfo(width,height,scale,*drawImage,(void*)image);
+void loadImageFile(UIImage *image, textureInfo *tInfo) {
+	float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
+	float width = image.size.width;
+	float height = image.size.height;
+	createTextureInfo(width,height,scale,*drawImage,(void*)image,tInfo);
 }
 
-value loadPvrFile(NSString *path) {
-    return 0;
+void loadPvrFile(NSString *path,textureInfo *tIfno) {
 }
 
 /*
@@ -270,17 +227,42 @@ CAMLprim value ml_resourcePath(value opath, value ocontentScaleFactor) {
 
 CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
     CAMLparam2(opath,ocontentScaleFactor);
+		CAMLlocal2(oImgData,res);
    
     NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
     NSString *fullPath = pathForResource(path,Double_val(ocontentScaleFactor));
+
+		caml_release_runtime_system();
+
+		textureInfo tInfo;
+
     NSString *imgType = [[path pathExtension] lowercaseString];
     
-		value res;
     if ([imgType rangeOfString:@"pvr"].location == 0)
-        res = loadPvrFile(fullPath);
+        loadPvrFile(fullPath, &tInfo);
     else
-        res = loadImageFile([UIImage imageWithContentsOfFile:fullPath]);
-    CAMLreturn(res);
+        loadImageFile([UIImage imageWithContentsOfFile:fullPath], &tInfo);
+
+		caml_acquire_runtime_system();
+
+		intnat dims[1];
+		dims[0] = tInfo.dataLen;
+    
+		oImgData = caml_ba_alloc(CAML_BA_MANAGED | CAML_BA_UINT8, 1, tInfo.imgData, dims); 
+
+		res = caml_alloc_tuple(10);
+		Store_field(res,0,Val_int(tInfo.format));
+		Store_field(res,1,Val_int((unsigned int)tInfo.realWidth));
+    Store_field(res,2,Val_int(tInfo.width));
+		Store_field(res,3,Val_int((unsigned int)tInfo.realHeight));
+    Store_field(res,4,Val_int(tInfo.height));
+    Store_field(res,5,Val_int(0));
+    Store_field(res,6,Val_int(1));
+    Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
+    Store_field(res,8,caml_copy_double(tInfo.scale));
+    Store_field(res,9,oImgData);
+
+		CAMLreturn(res);
 }
 
 CAMLprim value ml_textureWithText(value text) {

@@ -1,7 +1,10 @@
 include ../Makefile.common
 
+
+
+MLCFLAGS = 
 %.o: %.c
-	$(OCAMLOPT) -I . -verbose -g -ccopt '-D__ANDROID__' -ccopt '-fPIC' -ccopt '-o $@' -c $<
+	$(OCAMLOPT) -I . -verbose -g  $(if $(MLCOPTSS),$(patsubst %,-ccopt %,$(MLCOPTS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 
 GLPARAM = 
@@ -23,7 +26,7 @@ $(SYNTAX): OCAMLC = ocamlfind ocamlc
 
 ifeq ($(PLATFORM),ios)
 	gl = gl/es
-	CFLAGS += -I .
+	CFLAGS += -I . -DDEBUG
 	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightView.o ios/LightViewController.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o
 	MLPPOPT += -DGLES -DIOS
 	LIBFLAGS = -cclib '-framework\ Foundation' \
@@ -39,6 +42,7 @@ else
 		gl = gl/es
 		CFLAGS += -I . 
 		MLPPOPT += -DGLES -DANDROID 
+		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng'
