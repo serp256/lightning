@@ -3,45 +3,53 @@ exception Texture_not_found of string;
 
 type t = 
   {
-    regions: Hashtbl.t string Rectangle.t;
-    texture: Texture.c;
+    regions: Hashtbl.t string (int * Rectangle.t);
+    textures: array Texture.c;
   };
 
 value load xmlpath = 
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
   let regions = Hashtbl.create 3 in
-  let rec parseSubTextures () =
-    match XmlParser.parse_element "SubTexture" ["name";"x";"y";"width";"height"] with
-    [ Some [ name;x;y;width;height] _ ->
-      (
-        Hashtbl.add regions name (Rectangle.create (float_of_string x) (float_of_string y) (float_of_string width) (float_of_string height));
-        parseSubTextures ()
-      )
-    | None -> ()
-    | _ -> assert False
-    ]
-  in
   let () = XmlParser.accept (`Dtd None) in
-  let imagePath = 
+  let textures = 
     match XmlParser.next () with
-    [ `El_start ((_,"TextureAtlas"),attributes) ->
-      match XmlParser.get_attribute "imagePath" attributes with
-      [ Some image_path ->
-        let () = parseSubTextures () in
-        image_path
-      | _ -> XmlParser.error "not found imagePath"
-      ]
-    | _ -> XmlParser.error "TextureAtlas not found"
+    [ `El_start ((_,"TextureAtlases"),_) ->
+      parseTextures 0 [] where
+        rec parseTextures cnt textures = 
+          match XmlParser.next () with
+          [ `El_start ((_,"TextureAtlas"),attributes) ->
+            match XmlParser.get_attribute "imagePath" attributes with
+            [ Some image_path ->
+              (
+                parseSubTextures () where
+                  rec parseSubTextures () = 
+                    match XmlParser.parse_element "SubTexture" ["name";"x";"y";"width";"height"] with
+                    [ Some [ name;x;y;width;height] _ ->
+                      (
+                        Hashtbl.add regions name (cnt,(Rectangle.create (float_of_string x) (float_of_string y) (float_of_string width) (float_of_string height)));
+                        parseSubTextures ()
+                      )
+                    | None -> ()
+                    | _ -> assert False
+                    ];
+                parseTextures (cnt + 1) [ Texture.load image_path :: textures ]
+              )
+            | _ -> XmlParser.error "not found imagePath"
+            ]
+          | `El_end -> textures
+          | _ -> XmlParser.error "TextureAtlas not found"
+          ]
+    | _ -> XmlParser.error "not found TextureAtlases"
     ]
   in
   let () = XmlParser.close () in
-  {regions; texture = Texture.load imagePath};
+  {regions; textures = Array.of_list (List.rev textures)};
 
 value texture atlas name = 
-  let region = 
+  let (num,region) = 
     try
       Hashtbl.find atlas.regions name
     with [ Not_found -> raise (Texture_not_found name) ]
   in
-  Texture.createSubTexture region atlas.texture;
+  Texture.createSubTexture region atlas.textures.(num);
 
