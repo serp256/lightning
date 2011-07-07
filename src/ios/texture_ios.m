@@ -212,7 +212,87 @@ void loadImageFile(UIImage *image, textureInfo *tInfo) {
 	createTextureInfo(width,height,scale,*drawImage,(void*)image,tInfo);
 }
 
-void loadPvrFile(NSString *path,textureInfo *tIfno) {
+// --- PVR structs & enums -------------------------------------------------------------------------
+
+#define PVRTEX_IDENTIFIER 0x21525650 // = the characters 'P', 'V', 'R'
+
+typedef struct
+{
+  uint headerSize;          // size of the structure
+  uint height;              // height of surface to be created
+  uint width;               // width of input surface
+  uint numMipmaps;          // number of mip-map levels requested
+  uint pfFlags;             // pixel format flags
+  uint textureDataSize;     // total size in bytes
+  uint bitCount;            // number of bits per pixel
+  uint rBitMask;            // mask for red bit
+  uint gBitMask;            // mask for green bits
+  uint bBitMask;            // mask for blue bits
+  uint alphaBitMask;        // mask for alpha channel
+  uint pvr;                 // magic number identifying pvr file
+  uint numSurfs;            // number of surfaces present in the pvr
+} PVRTextureHeader;
+
+enum PVRPixelType
+{
+  OGL_RGBA_4444 = 0x10,
+  OGL_RGBA_5551,
+  OGL_RGBA_8888,
+  OGL_RGB_565,
+  OGL_RGB_555,
+  OGL_RGB_888,
+  OGL_I_8,
+  OGL_AI_88,
+  OGL_PVRTC2,
+  OGL_PVRTC4
+};
+
+
+int loadPvrFile(NSString *path,textureInfo *tIfno) {
+	//NSData *fileData = gzCompressed ? [SPTexture decompressPvrFile:path] : [NSData dataWithContentsOfFile:path];
+
+	NSData *fileData = [NSData dataWithContentsOfFile:path];
+  PVRTextureHeader *header = (PVRTextureHeader *)[fileData bytes];
+  bool hasAlpha = header->alphaBitMask ? YES : NO;
+  
+	tInfo->width = tInfo->realWidth = header->width;
+	tInfo->height = tInfo->realHeight = header->height;
+	tInfo->numMipmaps = header->numMipmaps;
+	tInfo->premultipliedAlpha = NO;
+  
+  switch (header->pfFlags & 0xff)
+  {
+      case OGL_RGB_565:
+        tInfo->format = SPTextureFormat565;
+        break;
+      case OGL_RGBA_5551:
+				tInfo->format = SPTextureFormat5551;
+				break;
+      case OGL_RGBA_4444:
+				tInfo->format = SPTextureFormat4444;
+				break;
+      case OGL_RGBA_8888:
+				tInfo->format = SPTextureFormatRGBA;
+				break;
+      case OGL_PVRTC2:
+				tInfo->format = hasAlpha ? SPTextureFormatPvrtcRGBA2 : SPTextureFormatPvrtcRGB2;
+				break;
+      case OGL_PVRTC4:
+				tInfo->format = hasAlpha ? SPTextureFormatPvrtcRGBA4 : SPTextureFormatPvrtcRGB4;
+				break;
+      default:
+				return 0;
+  }
+
+  void *imageData = (unsigned char *)header + header->headerSize;
+	tInfo->imgData = header + header->headerSize;
+  NSString *baseFilename = [[path lastPathComponent] stringByDeletingFullPathExtension];
+  if ([baseFilename rangeOfString:@"@2x"].location == baseFilename.length - 3)
+      glTexture.scale = 2.0f;
+
+  SP_RELEASE_POOL(pool);
+
+  return glTexture
 }
 
 /*
