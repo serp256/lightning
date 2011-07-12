@@ -95,15 +95,22 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
                     target#name
                 end (processedTouches @ otherTouches)
             in
-            (* группируем их по таргетам и вперед *) 
-            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) [] otherTouches in
-            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) fireTouches processedTouches in
+            (* группируем их по таргетам и вперед - incorrect *) 
+            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) []processedTouches in
+            let fireTouches = 
+              List.fold_left begin fun res (target,touch) -> 
+                try
+                  let touches = List.assoc target res in
+                  MList.replace_assoc target (touches @ [ Touch.t_of_n touch ]) res
+                with [ Not_found -> res ]
+              end fireTouches otherTouches 
+            in
             let event = Event.create ~bubbles:True `TOUCH () in
             List.iter begin fun ((target:D.c),touches) ->
               let event = {(event) with Event.data = `Touches touches} in
               target#dispatchEvent event
             end fireTouches;
-            currentTouches := (List.filter (fun (_,t) -> match t.n_phase with [ TouchPhaseEnded -> False | _ -> True ]) processedTouches) @ otherTouches
+            currentTouches := (List.filter (fun (_,t) -> match t.n_phase with [ TouchPhaseEnded | TouchPhaseCancelled -> False | _ -> True ]) processedTouches) @ otherTouches
           )
         | False -> ()
         ];(*}}}*)
