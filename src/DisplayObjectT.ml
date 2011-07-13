@@ -103,7 +103,7 @@ class type virtual container [ 'evType, 'evData ]=
     (* need to be hidden *)
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;
-    method removeChildren: unit -> unit;
+    method clearChildren: unit -> unit;
     method dispatchEventOnChildren: !'ct. Event.t 'evType 'evData 'displayObject (< .. > as 'ct) -> unit;
     method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': option Rectangle.t -> unit;
@@ -233,7 +233,7 @@ class virtual container:
     (* need to be hidden *)
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;
-    method removeChildren: unit -> unit;
+    method clearChildren: unit -> unit;
     method dispatchEventOnChildren: !'ct. Event.t evType evData 'displayObject (< .. > as 'ct) -> unit;
     method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': option Rectangle.t -> unit;
