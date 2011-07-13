@@ -222,12 +222,10 @@ module Make
       [  `PassedTime dt ->
         (
           elapsedTime := elapsedTime +. dt;
-(*           Printf.eprintf "elapsedTime: %F\n%!" elapsedTime; *)
           match int_of_float (elapsedTime /. frameTime) with
           [  0 -> ()
           | n -> 
             (
-(*               Printf.eprintf "play %d frames\n%!" n; *)
               elapsedTime := elapsedTime -. ((float n) *. frameTime);
               let cFrame = currentFrameID + n in
               let currentFrame = 

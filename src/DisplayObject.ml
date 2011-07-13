@@ -825,7 +825,7 @@ class virtual container = (*{{{*)
         ]
       ];
 
-    method removeChildren () = 
+    method clearChildren () = 
       match children with
       [ None -> ()
       | Some chldrn -> 

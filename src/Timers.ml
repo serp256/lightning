@@ -3,6 +3,12 @@ type timer = unit -> unit;
 module TimersQueue = PriorityQueue.Make (struct type t = (float*int*timer); value order (t1,_,_) (t2,_,_) = t1 <= t2; end);
 value time = ref None;
 value timer_id = ref 0;
+value getTime () = 
+  match !time with
+  [ None -> failwith "Time not initialized"
+  | Some time -> time
+  ];
+
 value queue = TimersQueue.make ();
 value start delay f =
   match !time with
