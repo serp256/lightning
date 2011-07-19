@@ -7,6 +7,8 @@ module type S = sig
     object
       inherit Q.c; 
       value texture: Texture.c;
+      method flipX: bool;
+      method setFlipX: bool -> unit;
       method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
       method texture: Texture.c;
       method setTexture: Texture.c -> unit;
