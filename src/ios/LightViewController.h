@@ -9,12 +9,19 @@
 #import <UIKit/UIKit.h>
 #import <GameKit/GameKit.h>
 
-@interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate>
+@protocol OrientationDelegate 
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
+@end
+
+@interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate> {
+	id<OrientationDelegate> _orientationDelegate;
+}
 
 +(LightViewController*)sharedInstance;
 -(void)stop;
 -(void)start;
 -(void)showLeaderboard;
 -(void)showAchievements;
+@property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
 
 @end

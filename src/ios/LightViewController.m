@@ -11,6 +11,8 @@
 
 @implementation LightViewController
 
+@synthesize orientationDelegate=_orientationDelegate;
+
 static LightViewController *instance = NULL;
 
 +(LightViewController*)sharedInstance {
@@ -75,6 +77,30 @@ static LightViewController *instance = NULL;
 }
 */
 
+
+////////////////////
+//// URLConnection
+
+- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
+
+}
+
+
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
+
+}
+
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+
+}
+
+
+- (void)connectionDidFinishLoading:(NSURLConnection *)connection {
+}
+
+// end URL connection
+// ////////////////////
+
 - (void)viewDidUnload
 {
     [super viewDidUnload];
@@ -84,7 +110,9 @@ static LightViewController *instance = NULL;
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-    // Return YES for supported orientations
+	// Return YES for supported orientations
+	if (_orientationDelegate) return [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
+	else
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 

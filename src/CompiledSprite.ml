@@ -71,7 +71,7 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
                   in
                   ( (*  texture vertexes  *)
                     image#copyTexCoords scratchBuf;
-                    texture#adjustTextureCoordinates scratchBuf;
+(*                     texture#adjustTextureCoordinates scratchBuf; *)
                     for i = 0 to 3 do
                       IO.write_real_i32 texCoordData (Int32.bits_of_float scratchBuf.{2*i});
                       IO.write_real_i32 texCoordData (Int32.bits_of_float scratchBuf.{2*i + 1});

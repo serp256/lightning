@@ -42,102 +42,11 @@
 #include <caml/bigarray.h>
 
 
-#ifdef _WIN32
-#include <windows.h>
-
-static HMODULE lib=NULL;
-
-static void init_lib()
-{
-	if(lib)return;
-	lib = LoadLibrary("opengl32.dll");
-	if(lib == NULL) failwith("error loading opengl32.dll");
-}
-
-static void *get_proc_address(char *fname)
-{
-	return GetProcAddress(lib, fname);
-}
-
-#endif
-
-#ifdef __unix__
-#ifndef APIENTRY
-#define APIENTRY
-#endif
-#include <dlfcn.h>
-#include <stdio.h>
-
-static void* lib=NULL;
-
-static void init_lib()
-{
-	if(lib)return;
-	lib = dlopen("libGL.so.1",RTLD_LAZY);
-	if(lib == NULL) failwith("error loading libGL.so.1");
-}
-
-static void *get_proc_address(char *fname)
-{
-	return dlsym(lib, fname);
-}
-
-#endif
-
-#if defined(__APPLE__) && defined(__GNUC__)
-#ifndef APIENTRY
-#define APIENTRY
-#endif
-#include <dlfcn.h>
-#include <stdio.h>
-
-static void* lib=NULL;
-
-static void init_lib()
-{
-	if(lib)return;
-	lib = dlopen("libGL.dylib",RTLD_LAZY);
-	if(lib == NULL) failwith("error loading libGL.dylib");
-}
-
-static void *get_proc_address(char *fname)
-{
-	return dlsym(lib, fname);
-}
-#endif
-
 value unsafe_coercion(value v)
 {
         CAMLparam1(v);
         CAMLreturn(v);
 }
-
-
-#define DECLARE_FUNCTION(func, args, ret)						\
-typedef ret APIENTRY (*pstub_##func)args;						\
-static pstub_##func stub_##func = NULL;							\
-static int loaded_##func = 0;
-
-
-
-#define LOAD_FUNCTION(func) 									\
-	if(!loaded_##func)											\
-	{															\
-		init_lib ();											\
-		stub_##func = (pstub_##func)get_proc_address(#func);	\
-		if(stub_##func)											\
-		{														\
-			loaded_##func = 1;									\
-		}														\
-		else													\
-		{														\
-			char fn[256], buf[300];								\
-			strncpy(fn, #func, 255);							\
-			sprintf(buf, "Unable to load %s", fn);			\
-			caml_failwith(buf);									\
-		}														\
-	}
-
 
 
 value glstub_glAccum(value v0, value v1)

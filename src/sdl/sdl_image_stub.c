@@ -23,5 +23,7 @@ CAMLprim value ml_IMG_Load(value path) {
 	CAMLparam1(path);
 	SDL_Surface* s = IMG_Load(String_val(path));
 	if (s == NULL) raise_failure();
-	CAMLreturn((value)s);
+	value r = caml_alloc_small(1,Abstract_tag);
+	Field(r,0) = (value)s;
+	CAMLreturn(r);
 }
