@@ -45,14 +45,12 @@ value open_resource path _ =
 
 ELSE IFDEF SDL THEN
 
-(*
 value resource_path fname _ = 
   let path = Filename.concat "Resources" fname in
   match Sys.file_exists path with
   [ True -> path
   | False -> raise (File_not_exists fname)
   ];
-*)
 
 value open_resource fname scale = open_in (resource_path fname scale);
 

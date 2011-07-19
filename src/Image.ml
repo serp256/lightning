@@ -3,6 +3,29 @@ open LightCommon;
 
 (* value gl_tex_coords = make_float_array 8; *)
 
+DEFINE SWAP_TEX_COORDS(c1,c2) = 
+  let tmpX = texCoords.{c1*2} 
+  and tmpY = texCoords.{c1*2+1} in
+  (
+    texCoords.{c1*2} := texCoords.{c2*2};
+    texCoords.{c1*2+1} := texCoords.{c2*2+1};
+    texCoords.{c2*2} := tmpX;
+    texCoords.{c2*2+1} := tmpY;
+  );
+DEFINE TEX_COORDS_ROTATE_RIGHT = 
+  (
+    SWAP_TEX_COORDS(0,2);
+    SWAP_TEX_COORDS(1,2);
+    SWAP_TEX_COORDS(2,3);
+  );
+DEFINE TEX_COORDS_ROTATE_LEFT = 
+  (
+    SWAP_TEX_COORDS(0,1);
+    SWAP_TEX_COORDS(1,3);
+    SWAP_TEX_COORDS(2,3);
+  );
+
+
 module type S = sig
 
   module Q: Quad.S;
@@ -13,8 +36,12 @@ module type S = sig
       value texture: Texture.c;
       method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
       method texture: Texture.c;
-      method flipX: bool;
-      method setFlipX: bool -> unit;
+      method texFlipX: bool;
+      method setTexFlipX: bool -> unit;
+      method texFlipY: bool;
+      method setTexFlipY: bool -> unit;
+      method texRotation: option [= `left | `right];
+      method setTexRotation: option [= `left | `right] -> unit;
       method setTexture: Texture.c -> unit;
     end;
 
@@ -44,17 +71,24 @@ module Make(Q:Quad.S) = struct
         let a = make_float_array 8 in
         (
           flushTexCoords a;
-          (* {{{ remove it
-          res.(0) := 1.0; res.(1) := 0.;
-          res.(2) := 1.0; res.(3) := 1.0;
-          res.(4) := 0.; res.(5) := 0.;
-          res.(6) := 0.; res.(7) := 1.;
+          (* {{{ remove it *) 
+          (*
+          a.{0} := 1.0; a.{1} := 0.;
+          a.{2} := 1.0; a.{3} := 1.0;
+          a.{4} := 0.; a.{5} := 0.;
+          a.{6} := 0.; a.{7} := 1.; 
           *)
           (*
-          res.(0) := 0.; res.(1) := 1.;
-          res.(2) := 1.0; res.(3) := 1.0;
-          res.(4) := 0.; res.(5) := 0.;
-          res.(6) := 1.; res.(7) := 0.;
+          a.{0} := 0.; a.{1} := 1.;
+          a.{2} := 0.; a.{3} := 0.;
+          a.{4} := 1.; a.{5} := 1.;
+          a.{6} := 1.; a.{7} := 0.; 
+          *)
+          (*
+          a.{0} := 0.; a.{1} := 1.;
+          a.{2} := 1.0; a.{3} := 1.0;
+          a.{4} := 0.; a.{5} := 0.;
+          a.{6} := 1.; a.{7} := 0.;
           *)
           (*
           res.(0) := 1.0; res.(1) := 0.;
@@ -74,10 +108,13 @@ module Make(Q:Quad.S) = struct
         Bigarray.Array1.blit texCoords dest;
 
 
-      value mutable flipX = False;
-      method flipX = flipX;
-      method private applyFlipX () = 
+      value mutable texFlipX = False;
+      method texFlipX = texFlipX;
+      method private applyTexFlipX () = 
       (
+        SWAP_TEX_COORDS(0,1);
+        SWAP_TEX_COORDS(2,3);
+        (*
         let tmpX = texCoords.{0} 
         and tmpY = texCoords.{1} in
         (
@@ -94,15 +131,79 @@ module Make(Q:Quad.S) = struct
           texCoords.{6} := tmpX;
           texCoords.{7} := tmpY;
         )
+        *)
       );
-      method setFlipX nv = 
-        if nv <> flipX
+      method setTexFlipX nv = 
+        if nv <> texFlipX
         then 
         (
-          self#applyFlipX ();
-          flipX := nv;
+          self#applyTexFlipX ();
+          texFlipX := nv;
         )
         else ();
+
+      value mutable texFlipY = False;
+      method texFlipY = texFlipY;
+      method private applyTexFlipY () = 
+      (
+        SWAP_TEX_COORDS(0,2);
+        SWAP_TEX_COORDS(1,3);
+        (*
+        let tmpX = texCoords.{0} 
+        and tmpY = texCoords.{1} in
+        (
+          texCoords.{0} := texCoords.{4};
+          texCoords.{1} := texCoords.{5};
+          texCoords.{4} := tmpX;
+          texCoords.{5} := tmpY;
+        );
+        let tmpX = texCoords.{2} 
+        and tmpY = texCoords.{3} in
+        (
+          texCoords.{2} := texCoords.{6};
+          texCoords.{3} := texCoords.{7};
+          texCoords.{6} := tmpX;
+          texCoords.{7} := tmpY;
+        )
+        *)
+      );
+
+      method setTexFlipY nv = 
+        if nv <> texFlipY
+        then 
+        (
+          self#applyTexFlipY ();
+          texFlipY := nv;
+        )
+        else ();
+
+
+      value mutable texRotation : option [= `left |  `right ] = None ;
+      method texRotation = texRotation;
+
+      method setTexRotation r = 
+        match texRotation with
+          [ None ->
+            match r with
+            [ Some `right -> (TEX_COORDS_ROTATE_RIGHT; texRotation := r)
+            | Some `left -> (TEX_COORDS_ROTATE_LEFT; texRotation := r)
+            | None -> ()
+            ]
+          | Some `left -> 
+              match r with
+              [ None -> (TEX_COORDS_ROTATE_RIGHT; texRotation := r)
+              | Some `right -> assert False
+              | Some `left -> ()
+              ]
+          | Some `right ->
+              match r with
+              [ None ->  (TEX_COORDS_ROTATE_LEFT; texRotation := r)
+              | Some `left -> assert False
+              | Some `right -> ()
+              ]
+          ];
+
+
 
       method setTexture nt = 
       (
@@ -110,7 +211,13 @@ module Make(Q:Quad.S) = struct
         texture := nt;
         flushTexCoords texCoords;
         texture#adjustTextureCoordinates texCoords;
-        if flipX then self#applyFlipX() else ();
+        if texFlipX then self#applyTexFlipX() else ();
+        if texFlipY then self#applyTexFlipY() else ();
+        match texRotation with
+        [ None -> ()
+        | Some `left -> TEX_COORDS_ROTATE_LEFT
+        | Some `right -> TEX_COORDS_ROTATE_RIGHT
+        ];
       );
 
       method! private render' _ = 
