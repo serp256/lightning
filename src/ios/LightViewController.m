@@ -9,6 +9,12 @@
 #import "LightViewController.h"
 #import "LightView.h"
 
+#import <caml/mlvalues.h>
+#import <caml/memory.h>
+#import <caml/alloc.h>
+#import <caml/callback.h>
+#import <caml/threads.h>
+
 @implementation LightViewController
 
 @synthesize orientationDelegate=_orientationDelegate;
@@ -81,21 +87,54 @@ static LightViewController *instance = NULL;
 ////////////////////
 //// URLConnection
 
-- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-
+static value *ml_url_response = NULL;
+- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSHTTPURLResponse *)response {
+	caml_acquire_runtime_system();
+	if (ml_url_response == NULL) 
+		ml_url_response = caml_named_value("url_response");
+	value args[4];
+	args[0] = (value)connection;
+	args[1] = Val_int(response.statusCode);
+	args[2] = caml_copy_int64(response.expectedContentLength);
+	args[3] = 1;
+	caml_callbackN(*ml_url_response,4,args);
+	caml_release_runtime_system();
 }
 
-
+static value *ml_url_data = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-
+	caml_acquire_runtime_system();
+	if (ml_url_data == NULL) 
+		ml_url_data = caml_named_value("url_data");
+	int size = data.length;
+	value mldata = caml_alloc_string(size);
+	memcpy(String_val(mldata),data.bytes,size);
+	caml_callback2(*ml_url_data,(value)connection,mldata);
+	caml_release_runtime_system();
 }
 
+static value *ml_url_failed = NULL;
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-
+	caml_acquire_runtime_system();
+	if (ml_url_failed == NULL)
+		ml_url_failed = caml_named_value("url_failed");
+	NSString *errdesc = [error localizedDescription];
+	value errmessage = caml_copy_string([errdesc cStringUsingEncoding:NSUTF8StringEncoding]);
+	NSLog(@"connection didFailWithError with [%s]",String_val(errmessage));
+	caml_callback3(*ml_url_failed,(value)connection,Val_int(error.code),errmessage);
+	[connection release];
+	caml_release_runtime_system();
 }
 
 
+static value *ml_url_complete = NULL;
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
+	caml_acquire_runtime_system();
+	if (ml_url_complete == NULL)
+		ml_url_complete = caml_named_value("url_complete");
+	caml_callback(*ml_url_complete,(value)connection);
+	[connection release];
+	caml_release_runtime_system();
 }
 
 // end URL connection

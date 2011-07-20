@@ -18,10 +18,10 @@ value ml_game_center_init(value param) {
 	if ([currSysVer compare:reqSysVer options:NSNumericSearch] == NSOrderedAscending) return Val_int(0);
 	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
 	[localPlayer authenticateWithCompletionHandler:^(NSError *error) {
-			 NSLog(@"Initialized");
-			 caml_leave_blocking_section();
-			 caml_callback(*caml_named_value("game_center_initialized"),Val_int(localPlayer.isAuthenticated));
-			 caml_enter_blocking_section();
+		NSLog(@"Initialized");
+		caml_leave_blocking_section();
+		caml_callback(*caml_named_value("game_center_initialized"),Val_int(localPlayer.isAuthenticated));
+		caml_enter_blocking_section();
 	 }];
 	return Val_int(1);
 }

@@ -12,12 +12,14 @@ DEFINE SWAP_TEX_COORDS(c1,c2) =
     texCoords.{c2*2} := tmpX;
     texCoords.{c2*2+1} := tmpY;
   );
+
 DEFINE TEX_COORDS_ROTATE_RIGHT = 
   (
     SWAP_TEX_COORDS(0,2);
     SWAP_TEX_COORDS(1,2);
     SWAP_TEX_COORDS(2,3);
   );
+
 DEFINE TEX_COORDS_ROTATE_LEFT = 
   (
     SWAP_TEX_COORDS(0,1);
