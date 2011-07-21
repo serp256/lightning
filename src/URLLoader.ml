@@ -33,8 +33,49 @@ type eventData = [= Event.dataEmpty | `HTTPBytes of int | `IOError of (int * str
 
 exception Incorrect_request;
 
-IFDEF IOS THEN
-type ns_connection;
+
+
+value prepare_request r = 
+  match r.httpMethod with
+  [ `POST -> 
+      let data = 
+        match r.data with
+        [ Some d ->
+          let data = 
+            match d with
+            [ `Buffer b -> Buffer.contents b 
+            | `String s -> s
+            | `URLVariables vars -> 
+              (
+                match get_header "content-type" r.headers with
+                [ None -> r.headers := [ ("content-type","application/x-www-form-urlencoded; charset=utf-8") :: r.headers ]
+                | _ -> ()
+                ];
+                UrlEncoding.mk_url_encoded_parameters vars
+              )
+            ]
+          in
+          Some data
+        | None -> None
+        ]
+      in
+      (r.url,data)
+  | `GET -> 
+      let url = 
+        match r.data with
+        [ None -> r.url
+        | Some (`URLVariables variables) -> 
+            let params = UrlEncoding.mk_url_encoded_parameters variables in
+            match r.url.[String.length r.url - 1] with
+            [ '&' -> r.url ^ params
+            | _ -> r.url ^ "?" ^ params
+            ]
+        | _ -> raise Incorrect_request
+        ]
+      in
+      (url,None)
+  ];
+
 type loader_wrapper = 
   {
     onResponse: int -> int64 -> list (string*string) -> unit;
@@ -42,6 +83,8 @@ type loader_wrapper =
     onComplete: unit -> unit;
     onError: int -> string -> unit
   };
+IFDEF IOS THEN (*{{{*)
+type ns_connection;
 value loaders = Hashtbl.create 1;
 
 external url_connection: string -> string -> list (string*string) -> option string -> ns_connection = "ml_URLConnection";
@@ -86,54 +129,56 @@ value url_failed ns_connection code msg =
 Callback.register "url_failed" url_failed;
 
 value start_load wrappers r = 
-  let (url,data) = 
-    match r.httpMethod with
-    [ `POST -> 
-        let data = 
-          match r.data with
-          [ Some d ->
-            let data = 
-              match d with
-              [ `Buffer b -> Buffer.contents b 
-              | `String s -> s
-              | `URLVariables vars -> 
-                (
-                  match get_header "content-type" r.headers with
-                  [ None -> r.headers := [ ("content-type","application/x-www-form-urlencoded; charset=utf-8") :: r.headers ]
-                  | _ -> ()
-                  ];
-                  UrlEncoding.mk_url_encoded_parameters vars
-                )
-              ]
-            in
-            Some data
-          | None -> None
-          ]
-        in
-        (r.url,data)
-    | `GET -> 
-        let url = 
-          match r.data with
-          [ None -> r.url
-          | Some (`URLVariables variables) -> 
-              let params = UrlEncoding.mk_url_encoded_parameters variables in
-              match r.url.[String.length r.url - 1] with
-              [ '&' -> r.url ^ params
-              | _ -> r.url ^ "?" ^ params
-              ]
-          | _ -> raise Incorrect_request
-          ]
-        in
-        (url,None)
-    ]
-  in
+  let (url,data) = prepare_request r in
   let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
   Hashtbl.add loaders ns_connection wrappers;
+
+ELSE (*}}}*)
+IFDEF SDL THEN
+
+value curl_initialized = ref False;
+
+value start_load wrapper r = 
+(
+  match !curl_initialized with
+  [ False -> (Curl.global_init Curl.CURLINIT_GLOBALNOTHING; curl_initialized.val := True)
+  | True -> ()
+  ];
+  (* пока без тридов создаем каждый раз этот курл *)
+  let (url,data) = prepare_request r in
+  let ccon = Curl.init () in
+  (
+    Curl.set_url ccon url;
+    let headers = List.map (fun (n,v) -> Printf.sprintf "%s:%s" n v) r.headers in
+    match headers with
+    [ [] -> ()
+    | _ -> Curl.set_httpheader ccon headers
+    ];
+    match r.httpMethod with
+    [ `POST -> Curl.set_post ccon True
+    | _ -> ()
+    ];
+    match data with
+    [ Some d -> Curl.set_postfields ccon d
+    | None -> ()
+    ];
+    (*
+    Curl.set_headerfunction ccon (fun str -> (Printf.printf "headerf with: [%s]\n%!" str; String.length str));
+    Curl.set_writefunction ccon (fun str -> (Printf.printf "writef with: [%s]\n%!" str; String.length str));
+    *)
+    Curl.perform ccon;
+    print_endline "curl performed";
+    wrapper.onResponse (Curl.get_httpcode ccon) (Int64.of_float (Curl.get_contentlengthdownload ccon)) [];
+    Curl.cleanup ccon;
+    wrapper.onComplete ();
+  );
+);
 
 ELSE
 
 value start_load wrappers r = failwith "Net not implemented on this platform yet";
 
+ENDIF;
 ENDIF;
 
 type state = [ Init | Loading | Complete ];
@@ -188,6 +233,7 @@ class loader ?request () =
       state := Complete;
       let event = Event.create `COMPLETE () in
       self#dispatchEvent event
+      debug "event fired";
     );
 
     method load r =

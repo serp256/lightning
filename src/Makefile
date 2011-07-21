@@ -53,6 +53,7 @@ else
 		MLOBJSFLAGS = -I sdl
 		MLDEPFLAGS += -I sdl sdl/*.ml sdl/*.mli
 		MLPPOPT += -DSDL
+		MLFLAGS += -package curl
 		ifeq ($(OS),macos)
 			LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
 		else
@@ -61,6 +62,7 @@ else
 		GLPARAM = -DGL_GLEXT_PROTOTYPES
 	endif
 endif
+
 
 
 MOBJS += $(gl)/gl_stub.o 
