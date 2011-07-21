@@ -235,7 +235,6 @@ class virtual container:
     method containsChild': 'displayObject -> bool;
     method clearChildren: unit -> unit;
     method dispatchEventOnChildren: !'ct. Ev.t evType evData 'displayObject (< .. > as 'ct) -> unit;
-    method dispatchEventOnChildren: !'ct. Event.t evType evData 'displayObject (< .. > as 'ct) -> unit;
     method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
