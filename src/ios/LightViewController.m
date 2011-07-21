@@ -89,20 +89,26 @@ static LightViewController *instance = NULL;
 
 static value *ml_url_response = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSHTTPURLResponse *)response {
+	NSLog(@"did revieve response");
 	caml_acquire_runtime_system();
 	if (ml_url_response == NULL) 
 		ml_url_response = caml_named_value("url_response");
+	value contentType;
+  Begin_roots1(contentType);
+	contentType = caml_copy_string([[response MIMEType] cStringUsingEncoding:NSUTF8StringEncoding]);
 	value args[4];
 	args[0] = (value)connection;
 	args[1] = Val_int(response.statusCode);
-	args[2] = caml_copy_int64(response.expectedContentLength);
-	args[3] = 1;
+	args[3] = caml_copy_int64(response.expectedContentLength);
+	args[2] = contentType;
 	caml_callbackN(*ml_url_response,4,args);
+	End_roots();
 	caml_release_runtime_system();
 }
 
 static value *ml_url_data = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
+	NSLog(@"did revieve data");
 	caml_acquire_runtime_system();
 	if (ml_url_data == NULL) 
 		ml_url_data = caml_named_value("url_data");
@@ -115,6 +121,7 @@ static value *ml_url_data = NULL;
 
 static value *ml_url_failed = NULL;
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+	NSLog(@"did fail with error");
 	caml_acquire_runtime_system();
 	if (ml_url_failed == NULL)
 		ml_url_failed = caml_named_value("url_failed");
@@ -129,6 +136,7 @@ static value *ml_url_failed = NULL;
 
 static value *ml_url_complete = NULL;
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
+	NSLog(@"did finish loading");
 	caml_acquire_runtime_system();
 	if (ml_url_complete == NULL)
 		ml_url_complete = caml_named_value("url_complete");

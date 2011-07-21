@@ -218,7 +218,7 @@ module Make
 
     method private onEnterFrame event _ = 
       let () = debug "onEnterFrame: [%s], currentFrame: %d" clipname currentFrameID in
-      match event.Event.data with
+      match event.Ev.data with
       [  `PassedTime dt ->
         (
           elapsedTime := elapsedTime +. dt;

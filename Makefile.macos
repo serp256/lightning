@@ -1,3 +1,4 @@
 
 include config.macos
+META=META.sdl
 include Makefile.in

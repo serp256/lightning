@@ -12,7 +12,6 @@ GLPARAM =
 MOBJS = 
 MLOBJSFLAGS = 
 MLFLAGS +=  -package extlib -I containers -I utils
-MLSOURCES = 
 MLDEPFLAGS =
 
 release: lightning.cmxa syntax/pa_prop.cmo
@@ -49,11 +48,11 @@ else
 	else
 		gl = gl/2.1
 		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o
-		MLSOURCES += sdl/sdl.ml sdl/sdl_image.ml sdl/sdl_run.ml
+		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
+		AMLSOURCES = sdl/sdl_run.ml
 		MLOBJSFLAGS = -I sdl
-		MLDEPFLAGS += -I sdl sdl/*.ml sdl/*.mli
 		MLPPOPT += -DSDL
-		MLFLAGS += -package curl
+		MLCOMPFLAGS += -package curl,threads -thread
 		ifeq ($(OS),macos)
 			LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
 		else
@@ -64,17 +63,16 @@ else
 endif
 
 
-
 MOBJS += $(gl)/gl_stub.o 
 
+MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) Debug.ml ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
+					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml \
+					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
 	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),-ccopt $(GLPARAM)) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
 
 MLCONTAINERS = containers/MList.ml containers/HSet.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml
 MLUTILS = utils/UrlEncoding.ml
-MLSOURCES += $(gl)/gl.ml Debug.ml ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Event.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml \
-					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml \
-					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml Lightning.ml
 
 
 #XMLMFILES = TextureAtlas.ml BitmapFont.ml LightCommon.ml MovieClip.ml
@@ -84,6 +82,7 @@ MLCONTAINERSOBJS = $(MLCONTAINERS:.ml=.cmx)
 MLUTILSOBJS = $(MLUTILS:.ml=.cmx)
 MLOBJS = $(MLSOURCES:.ml=.cmx)
 $(MLOBJS): MLFLAGS += -package xmlm -I $(gl) $(MLOBJSFLAGS)
+$(MLOBJS): Debug.cmx
 
 $(MLOBJS) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
 $(MLOBJS) MLDepend.$(PLATFORM): MLPPOPT += syntax/pa_debug.cmo 
@@ -95,7 +94,7 @@ lightning.cmxa: MLDepend.$(PLATFORM) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS)
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLFLAGS) -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLFLAGS) -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
-	$(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
 
 
 doc:
