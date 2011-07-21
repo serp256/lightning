@@ -56,7 +56,7 @@ module Make
         [ False -> ()
         | True -> 
             let open Touch in
-            match touchEvent.Event.data with
+            match touchEvent.Ev.data with
             [ `Touches touches -> 
               match touches with
               [ [ touch :: _ ] ->
@@ -83,7 +83,7 @@ module Make
                 | TouchPhaseEnded when isDown ->
                     (
                       self#resetContents ();
-                      self#dispatchEvent (Event.create `TRIGGERED ());
+                      self#dispatchEvent (Ev.create `TRIGGERED ());
                     )
                 | TouchPhaseCancelled when isDown -> self#resetContents ()
                 | _ -> ()

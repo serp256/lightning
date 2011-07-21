@@ -217,7 +217,7 @@ value sdlstub_get_error(value u){
 
 value sdlstub_must_lock(value s) {
 	CAMLparam1(s);
-	int b = SDL_MUSTLOCK(((SDL_Surface*) s));
+	int b = SDL_MUSTLOCK(((SDL_Surface*) Field(s,0)));
 	CAMLreturn (Val_bool(b));
 }
 
@@ -233,7 +233,6 @@ value sdlstub_video_mode_ok(value vw, value vh, value vbpp, value vf) {
 
 value sdlstub_set_video_mode(value vw, value vh, value vbpp, value vf) {
 	CAMLparam4(vw, vh, vbpp, vf);
-	CAMLlocal1(r);		 
 	int w = Int_val(vw);
 	int h = Int_val(vh);
 	int bpp = Int_val(vbpp);
@@ -241,7 +240,9 @@ value sdlstub_set_video_mode(value vw, value vh, value vbpp, value vf) {
 	SDL_Surface* s;
 	
 	if ((s = SDL_SetVideoMode(w,h,bpp,flags)) == NULL) raise_failure();
-	r = (value)s;
+	//r = (value)s;
+	value r = caml_alloc(1,Abstract_tag);
+	Field(r,0) = (value)s;
 	CAMLreturn (r);
 }
 
@@ -251,14 +252,17 @@ value sdlstub_load_bmp(value vfile) {
 	SDL_Surface* s;
 	
 	if ((s = SDL_LoadBMP(file)) == NULL) raise_failure();
-	CAMLreturn ((value) s);
+	value r = caml_alloc_small(1,Abstract_tag);
+	Field(r,0) = (value)s;
+	CAMLreturn(r);
 }
 
 value sdlstub_save_bmp(value s, value vfile) {
 	CAMLparam2(s, vfile);
 	char * file = String_val(vfile);
 	
-	if (SDL_SaveBMP((SDL_Surface*) s, file) < 0) raise_failure();
+	SDL_Surface *srf = (SDL_Surface*)Field(s,0);
+	if (SDL_SaveBMP(srf, file) < 0) raise_failure();
 	CAMLreturn (Val_unit);
 }
 
@@ -305,13 +309,15 @@ SDL_Surface * GLLoadBMP(char *filename)
 
 value sdlstub_GL_load_bmp(value f) {
 	CAMLparam1(f);
-	CAMLreturn ((value)GLLoadBMP(String_val(f)));
+	value r = caml_alloc_small(1,Abstract_tag);
+	Field(r,0) = (value)GLLoadBMP(String_val(f));
+	CAMLreturn(r);
 }
 
 value sdlstub_string_of_pixels(value s) {
 	CAMLparam1(s);
 	CAMLlocal1(v);
-	SDL_Surface * surf = (SDL_Surface *) s;
+	SDL_Surface * surf = (SDL_Surface *)Field(s,0);
 	int n = surf->w * surf->h * surf->format->BytesPerPixel;
 	v = alloc_string(n);
 	memcpy(String_val(v), surf->pixels, n);
@@ -323,7 +329,8 @@ value sdlstub_set_color_key(value s, value vf, value vk) {
 	int flag = video_flag_val(vf);
 	unsigned int key = Int32_val(vk);
 	
-	if (SDL_SetColorKey((SDL_Surface*) s, flag, key) < 0) raise_failure();
+	SDL_Surface *surf = (SDL_Surface*) Field(s,0);
+	if (SDL_SetColorKey(surf, flag, key) < 0) raise_failure();
 	CAMLreturn( Val_unit);
 }
 
@@ -332,7 +339,8 @@ value sdlstub_set_alpha(value s, value vf, value va) {
 	int flags = video_flag_val(vf);
 	int alpha = Int_val(va);
 	
-	if (SDL_SetAlpha((SDL_Surface*) s, flags, alpha) < 0) raise_failure();
+	SDL_Surface *surf = (SDL_Surface*) Field(s,0);
+	if (SDL_SetAlpha(surf, flags, alpha) < 0) raise_failure();
 	CAMLreturn( Val_unit);
 }
 
@@ -345,7 +353,8 @@ value sdlstub_set_clipping(value s, value vtop, value vleft,
 	r.y = Int_val(vtop);
 	r.w = Int_val(abs(vright - vleft));
 	r.h = Int_val(abs(vbottom - vtop));
-	SDL_SetClipRect((SDL_Surface*) s, &r);
+	SDL_Surface *surf = (SDL_Surface*) Field(s,0);
+	SDL_SetClipRect(surf, &r);
 	CAMLreturn (Val_unit);
 }
 
@@ -353,12 +362,13 @@ value sdlstub_display_format(value s) {
 	CAMLparam1(s);
 	SDL_Surface* n;
 	if ((n = SDL_DisplayFormat((SDL_Surface*) s)) == NULL)raise_failure();
-	CAMLreturn ((value) n);
+	value r = caml_alloc_small(1,Abstract_tag);
+	Field(r,0) = (value) n;
+	CAMLreturn (r);
 }
 
 value sdlstub_create_rgb_surface(value vflags, value vw, value vh, value vdepth) {
 	CAMLparam4(vflags, vw, vh, vdepth);
-	CAMLlocal1(r);
 	SDL_Surface* s;
 	Uint32 flags = Int_val(vflags);
 	int width = Int_val(vw);
@@ -421,73 +431,74 @@ value sdlstub_create_rgb_surface(value vflags, value vw, value vh, value vdepth)
 	s = SDL_CreateRGBSurface(flags, width, height, depth, 
 		 		        rmask, gmask, bmask, amask); 
 	if (s == NULL) raise_failure(); 
-	r = (value)s;
+	value r = caml_alloc_small(1,Abstract_tag);
+	Field(r,0) = (value)s;
 	CAMLreturn(r);
 }
 
 
 value sdlstub_free_surface(value s) {
 	CAMLparam1(s);		 
-	SDL_FreeSurface((SDL_Surface*) s);
+	SDL_FreeSurface((SDL_Surface*) Field(s,0));
 	CAMLreturn (Val_unit);
 }
 
 value sdlstub_lock_surface(value s) {
 	CAMLparam1(s);		 
-	if (SDL_LockSurface((SDL_Surface*) s) < 0) raise_failure();
+	if (SDL_LockSurface((SDL_Surface*) Field(s,0)) < 0) raise_failure();
 	CAMLreturn (Val_unit);
 }
 
 value sdlstub_unlock_surface(value s) {
 	CAMLparam1(s);		 
-	SDL_UnlockSurface((SDL_Surface*) s);
+	SDL_UnlockSurface((SDL_Surface*) Field(s,0));
 	CAMLreturn (Val_unit);
 }
 
 value sdlstub_surface_pixels(value ps) {
 	CAMLparam1(ps);
-	SDL_Surface *s = ((SDL_Surface*) ps);
+	SDL_Surface *s = ((SDL_Surface*) Field(ps,0));
 	CAMLreturn (alloc_bigarray_dims(BIGARRAY_UINT8 | BIGARRAY_C_LAYOUT, 1, s->pixels, s->w * s->h * (s->format->BitsPerPixel/8)));
 }
 
 value sdlstub_surface_width(value s) {
 	CAMLparam1(s);		   
-	CAMLreturn (Val_int(((SDL_Surface*) s)->w));
+	CAMLreturn (Val_int(((SDL_Surface*) Field(s,0))->w));
 }
 
 value sdlstub_surface_height(value s) {
 	CAMLparam1(s);		 
-	CAMLreturn (Val_int(((SDL_Surface*) s)->h));
+	CAMLreturn (Val_int(((SDL_Surface*) Field(s,0))->h));
 }
 
 value sdlstub_surface_flags(value s) {
 	CAMLparam1(s);		 
-	CAMLreturn (val_video_flag(((SDL_Surface*) s)->flags));
+	CAMLreturn (val_video_flag(((SDL_Surface*) Field(s,0))->flags));
 }
 
 value sdlstub_surface_bpp(value s) {
 	CAMLparam1(s);		 
-	CAMLreturn (Val_int(((SDL_Surface*) s)->format->BitsPerPixel));
+	CAMLreturn (Val_int(((SDL_Surface*) Field(s,0))->format->BitsPerPixel));
 }
 
 value sdlstub_surface_rmask(value s) {
 	CAMLparam1(s);		 
-	CAMLreturn (Val_int(((SDL_Surface*) s)->format->Rmask));
+	CAMLreturn (Val_int(((SDL_Surface*) Field(s,0))->format->Rmask));
 }
 
 value sdlstub_surface_gmask(value s) {
 	CAMLparam1(s);		 
-	CAMLreturn (Val_int(((SDL_Surface*) s)->format->Gmask));
+	CAMLreturn (Val_int(((SDL_Surface*) Field(s,0))->format->Gmask));
 }
 
 value sdlstub_surface_bmask(value s) {
 	CAMLparam1(s);		 
-	CAMLreturn (Val_int(((SDL_Surface*) s)->format->Bmask));
+	CAMLreturn (Val_int(((SDL_Surface*) Field(s,0))->format->Bmask));
 }
 
 value sdlstub_surface_amask(value s) {
 	CAMLparam1(s);		 
-	CAMLreturn (Val_int(((SDL_Surface*) s)->format->Amask));
+	CAMLreturn (Val_int(((SDL_Surface*) Field(s,0))->format->Amask));
 }
 
 value sdlstub_map_rgb(value s, value vr, value vg, value vb) {
@@ -496,7 +507,7 @@ value sdlstub_map_rgb(value s, value vr, value vg, value vb) {
 	int r = Int_val(vr);
 	int g = Int_val(vg);
 	int b = Int_val(vb);
-	int pixel = SDL_MapRGB(((SDL_Surface*) s)->format, r, g, b);
+	int pixel = SDL_MapRGB(((SDL_Surface*) Field(s,0))->format, r, g, b);
 	rs = caml_copy_int32(pixel);
 	CAMLreturn(rs);
 }
@@ -509,7 +520,7 @@ value sdlstub_map_rgba(value s, value vr, value vg, value vb, value va) {
 	int b = Int_val(vb);
 	int a = Int_val(va);
 	int pixel = 0;
-	pixel = SDL_MapRGBA(((SDL_Surface*) s)->format, r, g, b, a);
+	pixel = SDL_MapRGBA(((SDL_Surface*) Field(s,0))->format, r, g, b, a);
 	rs = caml_copy_int32(pixel);
 	CAMLreturn(rs);
 }
@@ -518,7 +529,7 @@ value sdlstub_get_rgb(value s, value pixel){
 	CAMLparam2(s,pixel);
 	CAMLlocal1(result);
 	Uint8 r =0, g=0, b=0;
-	SDL_GetRGB(Int32_val(pixel), ((SDL_Surface *)s)->format, &r, &g, &b);
+	SDL_GetRGB(Int32_val(pixel), ((SDL_Surface *) Field(s,0))->format, &r, &g, &b);
 	result = caml_alloc(3,0);
 	Store_field(result, 0, Val_int(r));
 	Store_field(result, 1, Val_int(g));
@@ -530,7 +541,7 @@ value sdlstub_get_rgba(value s, value pixel){
 	CAMLparam2(s,pixel);
 	CAMLlocal1(result);
 	Uint8 r =0, g=0, b=0, a=0;
-	SDL_GetRGBA(Int32_val(pixel), ((SDL_Surface *)s)->format, &r, &g, &b, &a);
+	SDL_GetRGBA(Int32_val(pixel), ((SDL_Surface *) Field(s,0))->format, &r, &g, &b, &a);
 	result = caml_alloc(4,0);
 	Store_field(result, 0, Val_int(r));
 	Store_field(result, 1, Val_int(g));
@@ -554,7 +565,7 @@ value sdlstub_delay(value vms) {
 value sdlstub_fill_surface(value s, value vc) {
 	CAMLparam2(s,vc);
 	int c = Int32_val(vc);
-	if (SDL_FillRect((SDL_Surface*) s, NULL, c) < 0) raise_failure();
+	if (SDL_FillRect((SDL_Surface*) Field(s,0), NULL, c) < 0) raise_failure();
 	CAMLreturn(Val_unit);
 }
 
@@ -566,13 +577,13 @@ value sdlstub_fill_rect(value s, value vr, value vc) {
 	r.y = Int_val(Field(vr,1));
 	r.w = Int_val(Field(vr,2));
 	r.h = Int_val(Field(vr,3));
-	if (SDL_FillRect((SDL_Surface*) s, &r, c) < 0) raise_failure();
+	if (SDL_FillRect((SDL_Surface*) Field(s,0), &r, c) < 0) raise_failure();
 	CAMLreturn(Val_unit);
 }
 
 value sdlstub_update_surface(value s) {
 	CAMLparam1(s);
-	SDL_UpdateRect((SDL_Surface*) s, 0, 0, 0, 0);
+	SDL_UpdateRect((SDL_Surface*) Field(s,0), 0, 0, 0, 0);
 	CAMLreturn (Val_unit);
 }
 
@@ -583,7 +594,7 @@ value sdlstub_update_rect(value s, value vx, value vy, value vw, value vh) {
 	int w = Int_val(vw);
 	int h = Int_val(vh);
 	
-	SDL_UpdateRect((SDL_Surface*) s, x, y, w, h);
+	SDL_UpdateRect((SDL_Surface*) Field(s,0), x, y, w, h);
 	CAMLreturn (Val_unit);
 }
 
@@ -603,14 +614,14 @@ value sdlstub_update_rects(value s, value vn, value arr){
 		rects[i].w = Int_val(Field(v,2));
 		rects[i].h = Int_val(Field(v,3));
 	};
-	SDL_UpdateRects((SDL_Surface*) s, n, rects);
+	SDL_UpdateRects((SDL_Surface*) Field(s,0), n, rects);
 	free(rects);
 	CAMLreturn (Val_unit);
 }
 
 value sdlstub_flip(value s) {
 	CAMLparam1(s);
-	if (SDL_Flip((SDL_Surface*) s) < 0) raise_failure();
+	if (SDL_Flip((SDL_Surface*) Field(s,0)) < 0) raise_failure();
 	CAMLreturn(Val_unit);
 }
 
@@ -649,7 +660,7 @@ value sdlstub_blit_surface(value src, value srcr, value dst, value dstr) {
 	srp = rect_from_option(srcr,&sr);
 	drp = rect_from_option(dstr,&dr);
 	
-	if (SDL_BlitSurface((SDL_Surface*) src, srp, (SDL_Surface*) dst, drp) < 0)
+	if (SDL_BlitSurface((SDL_Surface*) Field(src,0), srp, (SDL_Surface*) Field(dst,0), drp) < 0)
 		raise_failure();
 	if (! (srp == NULL)) update_rect_option(srcr,srp);
 	if (! (drp == NULL)) update_rect_option(dstr,drp);
@@ -674,7 +685,7 @@ value sdlstub_set_colors(value s, value arr, value vfirst, value vn) {
 		colors[i].g = Int_val(Field(v,1));
 		colors[i].b = Int_val(Field(v,2));
 	};
-	result = SDL_SetColors((SDL_Surface*) s, colors, firstcolor, ncolors);
+	result = SDL_SetColors((SDL_Surface*) Field(s,0), colors, firstcolor, ncolors);
 	free(colors);
 	CAMLreturn (Val_bool(result));
 }
@@ -1066,7 +1077,7 @@ value sdlstub_get_caption(value u)
 value sdlstub_set_icon(value s)
 {
 	CAMLparam1(s);
-	SDL_WM_SetIcon((SDL_Surface *)s, NULL);
+	SDL_WM_SetIcon((SDL_Surface *)Field(s,0), NULL);
 	CAMLreturn(Val_unit);	
 }
 
@@ -1080,7 +1091,7 @@ value sdlstub_iconify_window(value u)
 value sdlstub_toggle_fullscreen(value s)
 {
 	CAMLparam1(s);
-	SDL_WM_ToggleFullScreen((SDL_Surface *)s);
+	SDL_WM_ToggleFullScreen((SDL_Surface *)Field(s,0));
 	CAMLreturn(Val_unit);	
 }
 
@@ -1330,7 +1341,7 @@ value sdldraw_put_pixel(value s, value vx, value vy, value vc) {
 	Uint16 x = Int_val(vx);
 	Uint16 y = Int_val(vy);
 	Uint32 pixel = Int32_val(vc);
-	SDL_Surface* dst = (SDL_Surface*) s;
+	SDL_Surface* dst = (SDL_Surface*) Field(s,0);
 	Uint8 *pix;
 	int shift;
 	
@@ -1369,7 +1380,7 @@ value sdldraw_get_pixel(value s, value vx, value vy) {
 	Uint16 x = Int_val(vx);
 	Uint16 y = Int_val(vy);
 	Uint32 pixel = 0;
-	SDL_Surface* dst = (SDL_Surface*) s;
+	SDL_Surface* dst = (SDL_Surface*) Field(s,0);
 	Uint8 *pix;
 	int shift;
 	

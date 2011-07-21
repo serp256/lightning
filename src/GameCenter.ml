@@ -68,6 +68,8 @@ value init ?callback () =
 
 
 value report_leaderboard_failed category score = Debug.e "report leaderboard failed";
+Callback.register "report_leaderboard_failed" report_leaderboard_failed;
+
 external report_leaderboard: string -> int64 -> unit = "ml_report_leaderboard";
 value reportLeaderboard category score = 
   match !state with
@@ -105,6 +107,7 @@ value showLeaderboard () =
 external report_achivement: string -> float -> unit = "ml_report_achivement";
 
 value report_achivement_failed identifier percentComplete = Debug.e "report achivement failed";
+Callback.register "report_achivement_failed" report_achivement_failed;
 
 value reportAchivement identifier percentComplete = 
   match !state with

@@ -16,7 +16,7 @@ module Make
 
 
       method private onEnterFrame event _ = 
-        match event.Event.data with
+        match event.Ev.data with
         [ `PassedTime dt -> 
           let osecs = int_of_float time in
           (

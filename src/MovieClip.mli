@@ -8,7 +8,7 @@ module Make
 
   exception Frame_not_found;
 
-  type frameLink = [= `num of int | `label of string ];
+  type frameID = [= `num of int | `label of string ];
 
 
   type descriptor;
@@ -27,8 +27,9 @@ module Make
       method play: unit -> unit;
       method isPlaying: bool;
       method stop: unit -> unit;
-      method gotoAndPlay: frameLink -> unit;
-      method gotoAndStop: frameLink -> unit;
+      method gotoAndPlay: frameID -> unit;
+      method gotoAndStop: frameID -> unit;
+      method playRange: frameID -> frameID -> unit;
     end;
 
 

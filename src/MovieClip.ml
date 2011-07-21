@@ -11,7 +11,7 @@ module Make
 
   exception Frame_not_found;
 
-  type frameLink = [= `num of int | `label of string ];
+  type frameID = [= `num of int | `label of string ];
 
   type keyFrame = 
     {
@@ -28,6 +28,8 @@ module Make
     ];
 
   type descriptor = (string * array Texture.c * array frame * Hashtbl.t string int);
+
+  DEFINE FRAME_TO_STRING(f) = match f with [ `label l -> Printf.sprintf "label:%s" l | `num n -> Printf.sprintf "num: %d" n ];
 
   value load xmlpath : descriptor = (*{{{*)
     let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
@@ -110,6 +112,7 @@ module Make
   class c ?(fps=10) (clipname,textures,frames,labels) = 
     let first_frame = match frames.(0) with [ KeyFrame frame -> frame | Frame _ -> assert False ] in
     let first_texture = Option.get first_frame.texture in
+    let framesLength = Array.length frames in
   object(self)
     inherit Image.c first_texture as super;
     value mutable frameTime = 1. /. (float fps); 
@@ -123,34 +126,35 @@ module Make
     value mutable loop = False;
     method loop = loop;
     method setLoop l = loop := l;
+    value mutable startFrame = 0;
+    value mutable endFrame = framesLength - 1;
     value mutable fps = fps;
     value mutable elapsedTime = 0.;
     value mutable eventID = None;
     method fps = fps;
 (*     method virtual setFps: int -> unit; *)
-    method totalFrames = Array.length frames;
+    method totalFrames = framesLength;
     method play () = 
       match eventID with 
-      [ None -> eventID := Some (self#addEventListener `ENTER_FRAME self#onEnterFrame)
+      [ None -> 
+        (
+          startFrame := 0;
+          endFrame := framesLength - 1;
+          elapsedTime := ~-.1.;
+          eventID := Some (self#addEventListener `ENTER_FRAME self#onEnterFrame)
+        )
       | _ -> ()
       ];
 
     method isPlaying = match eventID with [ None -> False | Some _ -> True ];
-    initializer 
-      (
-(*         Printf.eprintf "frameTime: %F\n%!" frameTime; *)
-        self#setTransformPoint first_frame.hotpos;
-        self#play ();
-      );
+    initializer self#setTransformPoint first_frame.hotpos;
 
     method stop () = 
     (
-(*       Printf.eprintf "stop\n"; *)
       match eventID with
       [ None -> ()
       | Some evID ->
         (
-(*           prerr_endline "hey i'am stoped"; *)
           elapsedTime := 0.;
           self#removeEventListener `ENTER_FRAME evID;
           eventID := None;
@@ -158,30 +162,46 @@ module Make
       ]
     );
 
+    method private resolveFrame = fun
+      [ `label label -> try Hashtbl.find labels label with [ Not_found -> raise Frame_not_found ]
+      | `num n when n >= 0 && n < Array.length frames -> n
+      | _ -> raise Frame_not_found
+      ];
+
     method private changeFrame f = 
-      let cf = 
-        match f with
-        [ `label label -> try Hashtbl.find labels label with [ Not_found -> raise Frame_not_found ]
-        | `num n when n >= 0 && n < Array.length frames -> n
-        | _ -> raise Frame_not_found
-        ]
-      in
+      let cf = self#resolveFrame f in
       self#setCurrentFrame cf;
 
-    method gotoAndStop (f:frameLink) =
+    method gotoAndStop (f:frameID) =
     (
-      debug "[%s] gotoAndStop: %s" clipname (match f with [ `label l -> Printf.sprintf "label:%s" l | `num n -> Printf.sprintf "num: %d" n ]);
+      debug "[%s] gotoAndStop: %s" clipname (FRAME_TO_STRING(f));
       self#changeFrame f;
       self#stop();
     );
 
-    method gotoAndPlay (f:frameLink) = 
+    method gotoAndPlay (f:frameID) = 
     (
-      debug "[%s] gotoAndPlay: %s" clipname (match f with [ `label l -> Printf.sprintf "label:%s" l | `num n -> Printf.sprintf "num: %d" n ]);
+      debug "[%s] gotoAndPlay: %s" clipname (FRAME_TO_STRING(f));
       self#changeFrame f;
-      self#play();
+      self#play(); (* FIXME: we need skip current rendering *)
     );
 
+    method playRange f1 f2 = 
+    (
+      debug "[%s] playRange '%s' to '%s'" clipname (FRAME_TO_STRING(f1)) (FRAME_TO_STRING(f2));
+      let sf = self#resolveFrame f1 in
+      (
+        startFrame := sf;
+        self#setCurrentFrame sf;
+      );
+      endFrame := self#resolveFrame f2;
+      if (endFrame < startFrame) then failwith("Incorrect range") else ();
+      elapsedTime := ~-.1.;
+      match eventID with 
+      [ None -> eventID := Some (self#addEventListener `ENTER_FRAME self#onEnterFrame)
+      | _ -> ()
+      ];
+    );
 
     method private setCurrentFrame cf = 
       let () = debug "Clip: [%s] - setCurrentFrame: %d" clipname cf in
@@ -218,43 +238,42 @@ module Make
 
     method private onEnterFrame event _ = 
       let () = debug "onEnterFrame: [%s], currentFrame: %d" clipname currentFrameID in
-      match event.Event.data with
-      [  `PassedTime dt ->
-        (
-          elapsedTime := elapsedTime +. dt;
-(*           Printf.eprintf "elapsedTime: %F\n%!" elapsedTime; *)
-          match int_of_float (elapsedTime /. frameTime) with
-          [  0 -> ()
-          | n -> 
-            (
-(*               Printf.eprintf "play %d frames\n%!" n; *)
-              elapsedTime := elapsedTime -. ((float n) *. frameTime);
-              let cFrame = currentFrameID + n in
-              let currentFrame = 
-                if cFrame >= (Array.length frames)
-                then 
-                (
-                  match loop with
-                  [ True -> 
-                    let len = Array.length frames in
-                    let num = cFrame / len in
-                    cFrame - (num * len)
-                  | False -> 
-                    (
-                      self#stop();
-                      (Array.length frames - 1);
-                    )
-                  ]
-                )
-                else cFrame
-              in
-              self#setCurrentFrame currentFrame
-            )
-          ]
-        )
-      | _ -> assert False
-      ];
-
+      if elapsedTime = ~-.1. then elapsedTime := 0.
+      else
+        match event.Ev.data with
+        [  `PassedTime dt ->
+          (
+            elapsedTime := elapsedTime +. dt;
+            match int_of_float (elapsedTime /. frameTime) with
+            [  0 -> ()
+            | n -> 
+              (
+                elapsedTime := elapsedTime -. ((float n) *. frameTime);
+                let cFrame = currentFrameID + n in
+                let currentFrame = 
+                  if cFrame > endFrame
+                  then 
+                  (
+                    match loop with
+                    [ True -> 
+                      let len = endFrame - startFrame in
+                      let num = cFrame / len in
+                      startFrame + (cFrame - (num * len))
+                    | False -> 
+                      (
+                        self#stop();
+                        endFrame
+                      )
+                    ]
+                  )
+                  else cFrame
+                in
+                self#setCurrentFrame currentFrame
+              )
+            ]
+          )
+        | _ -> assert False
+        ];
   end;
 
   value create = new c;
