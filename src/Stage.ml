@@ -105,9 +105,9 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
                 with [ Not_found -> res ]
               end fireTouches otherTouches 
             in
-            let event = Event.create ~bubbles:True `TOUCH () in
+            let event = Ev.create ~bubbles:True `TOUCH () in
             List.iter begin fun ((target:D.c),touches) ->
-              let event = {(event) with Event.data = `Touches touches} in
+              let event = {(event) with Ev.data = `Touches touches} in
               target#dispatchEvent event
             end fireTouches;
             currentTouches := (List.filter (fun (_,t) -> match t.n_phase with [ TouchPhaseEnded | TouchPhaseCancelled -> False | _ -> True ]) processedTouches) @ otherTouches

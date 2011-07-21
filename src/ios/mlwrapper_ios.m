@@ -20,7 +20,6 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
   for (UITouch *uiTouch in touches) // [event touchesForView:view])
   {
     CGPoint location = [uiTouch locationInView:view];
-    CGPoint previousLocation = [uiTouch previousLocationInView:view];
 		globalX = caml_copy_double(location.x * xConversion);
 		globalY = caml_copy_double(location.y * yConversion);
     value mltouch = caml_alloc_tuple(8);
@@ -42,5 +41,11 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
   mlstage_processTouches(mlstage,mltouches);
 	End_roots();
 	caml_enter_blocking_section();
+}
+
+
+
+static ml_url_response = 1;
+void http_response_to_ml(NSURLConnection *connection, NSHTTPURLResponse *response) {
 }
 

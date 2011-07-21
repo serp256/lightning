@@ -1,6 +1,6 @@
 
 type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE | `ENTER_FRAME ]; 
-type eventData = [= Event.dataEmpty | `PassedTime of float ];
+type eventData = [= Ev.dataEmpty | `PassedTime of float ];
 
 (* {{{
 class type virtual _c' [ 'evType, 'evData, 'parent ] =
@@ -133,16 +133,16 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     type 'displayObject = _c 'parent;
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Event.t evType evData _ (< .. > as 'ct) -> unit; 
+        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Ev.t evType evData _ (< .. > as 'ct) -> unit; 
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; modified: unit -> unit; .. >;
 (*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
-    type 'event = Event.t evType evData 'displayObject 'self;
+    type 'event = Ev.t evType evData 'displayObject 'self;
     type 'listener = 'event -> int -> unit;
     method addEventListener: evType -> 'listener -> int;
     method removeEventListener: evType -> int -> unit;
-    method dispatchEvent: ! 't 'ct. Event.t evType evData ( < .. > as 't) (< .. > as 'ct) -> unit;
-    method dispatchEvent': !'ct. Event.t evType evData 'displayObject (< .. > as 'ct) -> unit;
+    method dispatchEvent: ! 't 'ct. Ev.t evType evData ( < .. > as 't) (< .. > as 'ct) -> unit;
+    method dispatchEvent': !'ct. Ev.t evType evData 'displayObject (< .. > as 'ct) -> unit;
     method hasEventListeners: evType -> bool;
 
     value name: string;
@@ -234,6 +234,7 @@ class virtual container:
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;
     method clearChildren: unit -> unit;
+    method dispatchEventOnChildren: !'ct. Ev.t evType evData 'displayObject (< .. > as 'ct) -> unit;
     method dispatchEventOnChildren: !'ct. Event.t evType evData 'displayObject (< .. > as 'ct) -> unit;
     method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': option Rectangle.t -> unit;

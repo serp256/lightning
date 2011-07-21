@@ -1,6 +1,6 @@
 
 type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE | `ENTER_FRAME ]; 
-type eventData = [= Event.dataEmpty | `PassedTime of float ];
+type eventData = [= Ev.dataEmpty | `PassedTime of float ];
 
 module type Param = sig
   type evType = private [> eventType ];

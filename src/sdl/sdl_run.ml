@@ -28,52 +28,58 @@ value handle_events frameRate stage =
         match quit with
         [ True -> ()
         | False ->
-            let rec event_loop touch cnt = 
-              if cnt > 3 then ()
-              else
-                match Event.poll_event () with
-                [ Quit -> loop ticks touch True
-                | NoEvent -> loop ticks touch False
-                | Button ({Event.mousebutton = LEFT;_} as mb) -> 
-                    match touch with
-                    [ None when mb.buttonstate = PRESSED -> (* tap begin *)
-                      let globalX = float mb.bx
-                      and globalY = float mb.by in
-                      let touch = 
-                        {
-                          Touch.n_tid = (let r = !touchid in (touchid.val := r + 1; Int32.of_int r));
-                          n_timestamp = 0.;
-                          n_globalX = globalX; n_globalY = globalY;
-                          n_previousGlobalX = globalX; n_previousGlobalY = globalY;
-                          n_tapCount = 1; n_phase = Touch.TouchPhaseBegan;
-                        }
-                      in
-                      (
-                        stage#processTouches [touch];
-                        event_loop (Some touch) (cnt+1)
-                      )
-                    | Some touch when mb.buttonstate = RELEASED -> (* FIXME: what about multi touch ? *)
-                        let touch = {(touch) with Touch.n_globalX = float mb.bx; n_globalY = float mb.by; n_phase = Touch.TouchPhaseEnded} in
-                        (
-                          stage#processTouches [ touch ];
-                          event_loop None (cnt+1)
-                        )
-                    | _ -> let () = prerr_endline "fixme Button event" in loop ticks touch False
-                    ]
-                | Event.Motion mm -> 
-                    match touch with
-                    [ Some touch ->
-                      let touch = {(touch) with Touch.n_globalX = float mm.mx; n_globalY = float mm.my; n_phase = Touch.TouchPhaseMoved} in
+          (
+            URLLoader.process_events();
+            let rec next_event touch ticks =
+              let cticks = Sdl.Timer.get_ticks() in
+              if cticks - ticks < ticksRate 
+              then event_loop touch cticks
+              else loop cticks touch False
+            and event_loop touch ticks = 
+              match Event.poll_event () with
+              [ Quit -> loop ticks touch True
+              | NoEvent -> loop ticks touch False
+              | Button ({Event.mousebutton = LEFT;_} as mb) -> 
+                  match touch with
+                  [ None when mb.buttonstate = PRESSED -> (* tap begin *)
+                    let globalX = float mb.bx
+                    and globalY = float mb.by in
+                    let touch = 
+                      {
+                        Touch.n_tid = (let r = !touchid in (touchid.val := r + 1; Int32.of_int r));
+                        n_timestamp = 0.;
+                        n_globalX = globalX; n_globalY = globalY;
+                        n_previousGlobalX = globalX; n_previousGlobalY = globalY;
+                        n_tapCount = 1; n_phase = Touch.TouchPhaseBegan;
+                      }
+                    in
+                    (
+                      stage#processTouches [touch];
+                      next_event (Some touch) ticks
+                    )
+                  | Some touch when mb.buttonstate = RELEASED -> (* FIXME: what about multi touch ? *)
+                      let touch = {(touch) with Touch.n_globalX = float mb.bx; n_globalY = float mb.by; n_phase = Touch.TouchPhaseEnded} in
                       (
                         stage#processTouches [ touch ];
-                        event_loop (Some touch) (cnt+1)
+                        next_event None ticks
                       )
-                    | None -> event_loop None (cnt + 1)(* FIXME проверить выход за границы *)
-                    ]
-                | _ -> event_loop touch (cnt + 1)
-                ]
+                  | _ -> let () = prerr_endline "fixme Button event" in loop ticks touch False
+                  ]
+              | Event.Motion mm -> 
+                  match touch with
+                  [ Some touch ->
+                    let touch = {(touch) with Touch.n_globalX = float mm.mx; n_globalY = float mm.my; n_phase = Touch.TouchPhaseMoved} in
+                    (
+                      stage#processTouches [ touch ];
+                      event_loop (Some touch) ticks
+                    )
+                  | None -> next_event None ticks
+                  ]
+              | _ -> next_event touch ticks
+              ]
             in
-            event_loop touch 0
+            event_loop touch ticks
+          )
         ];
       )
     );

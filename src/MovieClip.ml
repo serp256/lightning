@@ -240,7 +240,7 @@ module Make
       let () = debug "onEnterFrame: [%s], currentFrame: %d" clipname currentFrameID in
       if elapsedTime = ~-.1. then elapsedTime := 0.
       else
-        match event.Event.data with
+        match event.Ev.data with
         [  `PassedTime dt ->
           (
             elapsedTime := elapsedTime +. dt;
@@ -274,7 +274,6 @@ module Make
           )
         | _ -> assert False
         ];
-
   end;
 
   value create = new c;
