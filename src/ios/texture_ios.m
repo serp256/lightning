@@ -213,6 +213,10 @@ int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
 	float width = image.size.width;
 	float height = image.size.height;
+	/*
+	CGImageRef  CGImage = uiImage.CGImage;
+	CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
+	size_t bpp = CGImageGetBitsPerComponent(CGImage); */
 	createTextureInfo(width,height,scale,*drawImage,(void*)image,tInfo);
 	return 1;
 }
