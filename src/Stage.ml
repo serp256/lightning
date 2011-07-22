@@ -130,7 +130,6 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         proftimer:perfomance "Stage advanceTime: %F"
         (
           Timers.process seconds;
-          (* jugler here *)
           Queue.transfer tweens runtweens;
           while not (Queue.is_empty runtweens) do
             let tween = Queue.take runtweens in

@@ -37,6 +37,7 @@ type tinfo =
   };
 
 value create textureInfo = 
+  let () = debug "create GLTexture" in
   let repeat = False in
   let info =
     let info = 
@@ -56,6 +57,7 @@ value create textureInfo =
           glTexFormat = gl_alpha
         }
     | TextureFormatPvrtcRGBA2 ->
+        let () = debug "format: PvrtcRGBA2" in
         IFDEF GLES THEN
           {(info) with
             compressed = True;
@@ -64,6 +66,7 @@ value create textureInfo =
           }
         ELSE failwith "PVRTC not supported on this platform" END
     | TextureFormatPvrtcRGB2 ->
+        let () = debug "format: PvrtcRGB2" in
         IFDEF GLES THEN
           {(info) with
             compressed = True;
@@ -72,6 +75,7 @@ value create textureInfo =
           }
         ELSE failwith "PVRTC not supported on this platform" END
     | TextureFormatPvrtcRGBA4 ->
+        let () = debug "format: PvrtcRGBA4" in
         IFDEF GLES THEN
           {(info) with
             compressed = True;
@@ -80,6 +84,7 @@ value create textureInfo =
           }
         ELSE failwith "PVRTC not supported on this platform" END
     | TextureFormatPvrtcRGB4 ->
+        let () = debug "format: PvrtcRGB4" in
         IFDEF GLES THEN
           {(info) with
             compressed = True;
@@ -88,18 +93,21 @@ value create textureInfo =
           }
         ELSE failwith "PVRTC not supported on this platform" END
     | TextureFormat565 ->
+        let () = debug "format: 565" in
         {(info) with
           bitsPerPixel = 16;
           glTexFormat = gl_rgb;
           glTexType = gl_unsigned_short_5_6_5
         }
     | TextureFormat5551 ->
+        let () = debug "format: 5551" in
         {(info) with
           bitsPerPixel = 16;
           glTexFormat = gl_rgba;
           glTexType = gl_unsigned_short_5_5_5_1
         }
     | TextureFormat4444 ->
+        let () = debug "format: 4444" in
         {(info) with
           bitsPerPixel = 16;
           glTexFormat = gl_rgba;
@@ -153,6 +161,7 @@ value create textureInfo =
             (
               let size = max 32 (!levelWidth * !levelHeight * info.bitsPerPixel / 8) in
               (
+                debug "levelWidth: %d, levelHeight: %d, size: %d" !levelWidth !levelHeight size;
                 let levelData = Bigarray.Array1.sub textureInfo.imgData !levelPtr size in
                 glCompressedTexImage2D gl_texture_2d level info.glTexFormat !levelWidth !levelHeight 0 size levelData;
                 levelPtr.val := !levelPtr + size;

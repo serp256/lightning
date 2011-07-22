@@ -1,5 +1,7 @@
 
 // iOS specific bindings
+#import <fcntl.h>
+#import <sys/stat.h>
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
@@ -13,6 +15,7 @@
 #import <caml/fail.h>
 #import <caml/callback.h>
 #import <caml/threads.h>
+
 
 
 #import "common_ios.h"
@@ -141,6 +144,7 @@ typedef struct {
 	float realWidth;
 	float height;
 	float realHeight;
+	int numMipmaps;
 	BOOL premultipliedAlpha;
 	float scale;
 	unsigned int dataLen;
@@ -151,7 +155,7 @@ typedef struct {
 
 typedef void (*drawingBlock)(CGContextRef context,void *data);
 
-void createTextureInfo(float width, float height, float scale, drawingBlock draw, void *data,textureInfo *tInfo) {
+void createTextureInfo(float width, float height, float scale, drawingBlock draw, void *data, textureInfo *tInfo) {
 		int legalWidth  = nextPowerOfTwo(width  * scale);
 		int legalHeight = nextPowerOfTwo(height * scale);
     
@@ -189,12 +193,12 @@ void createTextureInfo(float width, float height, float scale, drawingBlock draw
 		draw(context,data);
     UIGraphicsPopContext();        
     
-    //uint textureID = createGLTexture(textureFormat,legalWidth,legalHeight,0,YES,premultipliedAlpha,imageData,scale);
     CGContextRelease(context);
 		tInfo->width = legalWidth;
 		tInfo->realWidth = width;
 		tInfo->height = legalHeight;
 		tInfo->realHeight = height;
+		tInfo->numMipmaps = 0;
 		tInfo->scale = scale;
 		tInfo->dataLen = dataLen;
 		tInfo->imgData = imageData;
@@ -205,11 +209,12 @@ void drawImage(CGContextRef context, void* data) {
 	[image drawAtPoint:CGPointMake(0, 0)];
 }
 
-void loadImageFile(UIImage *image, textureInfo *tInfo) {
+int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
 	float width = image.size.width;
 	float height = image.size.height;
 	createTextureInfo(width,height,scale,*drawImage,(void*)image,tInfo);
+	return 1;
 }
 
 // --- PVR structs & enums -------------------------------------------------------------------------
@@ -248,19 +253,39 @@ enum PVRPixelType
 };
 
 
-int loadPvrFile(NSString *path,textureInfo *tIfno) {
+int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	//NSData *fileData = gzCompressed ? [SPTexture decompressPvrFile:path] : [NSData dataWithContentsOfFile:path];
 
-	NSData *fileData = [NSData dataWithContentsOfFile:path];
-  PVRTextureHeader *header = (PVRTextureHeader *)[fileData bytes];
-  bool hasAlpha = header->alphaBitMask ? YES : NO;
+	// we need read it with c style functions
+	//NSData *fileData = [NSData dataWithContentsOfFile:path];
+	int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
+	if (fildes < 0) return 0;
+	//printf("fildes opened\n");
+	/*
+	struct stat s;
+	int res = fstat(fildes,&s);
+	if (res != 0) {close(fildes);return 0;};
+	//printf("fstat readed\n");
+	off_t fsize = s.st_size;
+	if (fsize < sizeof(PVRTextureHeader)) {close(fildes);return 0;};
+	*/
+
+	PVRTextureHeader header;
+
+	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader));
+	if ((readed != sizeof(PVRTextureHeader)) || (header.pvr != PVRTEX_IDENTIFIER)) {close(fildes); return 0;};
+
+  int hasAlpha = header.alphaBitMask ? 1 : 0;
+
+	//printf("hasAlpha: %d\n",hasAlpha);
   
-	tInfo->width = tInfo->realWidth = header->width;
-	tInfo->height = tInfo->realHeight = header->height;
-	tInfo->numMipmaps = header->numMipmaps;
+	tInfo->width = tInfo->realWidth = header.width;
+	tInfo->height = tInfo->realHeight = header.height;
+	//printf("width: %d, height: %d\n",header.width,header.height);
+	tInfo->numMipmaps = header.numMipmaps;
 	tInfo->premultipliedAlpha = NO;
   
-  switch (header->pfFlags & 0xff)
+  switch (header.pfFlags & 0xff)
   {
       case OGL_RGB_565:
         tInfo->format = SPTextureFormat565;
@@ -281,18 +306,24 @@ int loadPvrFile(NSString *path,textureInfo *tIfno) {
 				tInfo->format = hasAlpha ? SPTextureFormatPvrtcRGBA4 : SPTextureFormatPvrtcRGB4;
 				break;
       default:
+				close(fildes);
 				return 0;
   }
 
-  void *imageData = (unsigned char *)header + header->headerSize;
-	tInfo->imgData = header + header->headerSize;
+	tInfo->dataLen = header.textureDataSize;
+	// make buffer
+	tInfo->imgData = (unsigned char*)malloc(header.textureDataSize);
+	if (!tInfo->imgData) {close(fildes);return 0;};
+	readed = read(fildes,tInfo->imgData,tInfo->dataLen);
+	if (readed != header.textureDataSize) {close(fildes);free(tInfo->imgData);return 0;};
+	/*
   NSString *baseFilename = [[path lastPathComponent] stringByDeletingFullPathExtension];
   if ([baseFilename rangeOfString:@"@2x"].location == baseFilename.length - 3)
       glTexture.scale = 2.0f;
-
-  SP_RELEASE_POOL(pool);
-
-  return glTexture
+	*/
+	tInfo->scale = 1.;
+	close(fildes);
+	return 1;
 }
 
 /*
@@ -318,12 +349,15 @@ CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
 
     NSString *imgType = [[path pathExtension] lowercaseString];
     
+		int r;
     if ([imgType rangeOfString:@"pvr"].location == 0)
-        loadPvrFile(fullPath, &tInfo);
+        r = loadPvrFile(fullPath, &tInfo);
     else
-        loadImageFile([UIImage imageWithContentsOfFile:fullPath], &tInfo);
+        r = loadImageFile([UIImage imageWithContentsOfFile:fullPath], &tInfo);
 
 		caml_acquire_runtime_system();
+
+		if (!r) caml_failwith("Can't load image");
 
 		intnat dims[1];
 		dims[0] = tInfo.dataLen;
@@ -336,7 +370,7 @@ CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
     Store_field(res,2,Val_int(tInfo.width));
 		Store_field(res,3,Val_int((unsigned int)tInfo.realHeight));
     Store_field(res,4,Val_int(tInfo.height));
-    Store_field(res,5,Val_int(0));
+    Store_field(res,5,Val_int(tInfo.numMipmaps));
     Store_field(res,6,Val_int(1));
     Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
     Store_field(res,8,caml_copy_double(tInfo.scale));

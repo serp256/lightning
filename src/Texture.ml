@@ -198,7 +198,12 @@ value load path : c =
   [ Not_found ->
     let open GLTexture in
     let textureInfo = loadImage path 1. in
-    let () = Printf.eprintf "load texture: %s [%d->%d; %d->%d] = %d\n%!" path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height (Bigarray.Array1.dim textureInfo.imgData) in
+    let () = 
+      debug
+        "load texture: %s [%d->%d; %d->%d] [pma=%s] [bytes=%d]\n%!" 
+        path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
+        (string_of_bool textureInfo.premultipliedAlpha) (Bigarray.Array1.dim textureInfo.imgData) 
+    in
     let () = print_endline "now create gl texture" in
     let textureID = GLTexture.create textureInfo in
     let () = print_endline "GLTexture loaded" in
