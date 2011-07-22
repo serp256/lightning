@@ -1,0 +1,15 @@
+version="0.01"
+archive(byte)="lightning.cma"
+archive(native)="lightning.cmxa"
+requires="bigarray extlib xmlm dbm"
+
+package "syntax" (
+	package "prop" (
+		description = "Syntactic sugars make obj props for tween"
+		archive(syntax,preprocessor) = "pa_prop.cmo"
+	)
+	package "debug" (
+		description = "Syntactic sugars make obj props for tween"
+		archive(syntax,preprocessor) = "pa_debug.cmo"
+	)
+)
