@@ -20,7 +20,10 @@ value ml_game_center_init(value param) {
 	[localPlayer authenticateWithCompletionHandler:^(NSError *error) {
 		NSLog(@"Initialized");
 		caml_leave_blocking_section();
-		caml_callback(*caml_named_value("game_center_initialized"),Val_int(localPlayer.isAuthenticated));
+		value res = Val_false;
+		if (localPlayer.isAuthenticated) res = Val_true;
+
+		caml_callback(*caml_named_value("game_center_initialized"),res);
 		caml_enter_blocking_section();
 	 }];
 	return Val_int(1);

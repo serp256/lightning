@@ -218,7 +218,7 @@ int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
 	size_t bpp = CGImageGetBitsPerComponent(CGImage); */
 	createTextureInfo(width,height,scale,*drawImage,(void*)image,tInfo);
-	return 1;
+	return 0;
 }
 
 // --- PVR structs & enums -------------------------------------------------------------------------
@@ -263,7 +263,7 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	// we need read it with c style functions
 	//NSData *fileData = [NSData dataWithContentsOfFile:path];
 	int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
-	if (fildes < 0) return 0;
+	if (fildes < 0) return 1;
 	//printf("fildes opened\n");
 	/*
 	struct stat s;
@@ -277,7 +277,7 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	PVRTextureHeader header;
 
 	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader));
-	if ((readed != sizeof(PVRTextureHeader)) || (header.pvr != PVRTEX_IDENTIFIER)) {close(fildes); return 0;};
+	if ((readed != sizeof(PVRTextureHeader)) || (header.pvr != PVRTEX_IDENTIFIER)) {close(fildes); return 1;};
 
   int hasAlpha = header.alphaBitMask ? 1 : 0;
 
@@ -311,15 +311,15 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 				break;
       default:
 				close(fildes);
-				return 0;
+				return 1;
   }
 
 	tInfo->dataLen = header.textureDataSize;
 	// make buffer
 	tInfo->imgData = (unsigned char*)malloc(header.textureDataSize);
-	if (!tInfo->imgData) {close(fildes);return 0;};
+	if (!tInfo->imgData) {close(fildes);return 1;};
 	readed = read(fildes,tInfo->imgData,tInfo->dataLen);
-	if (readed != header.textureDataSize) {close(fildes);free(tInfo->imgData);return 0;};
+	if (readed != header.textureDataSize) {close(fildes);free(tInfo->imgData);return 1;};
 	/*
   NSString *baseFilename = [[path lastPathComponent] stringByDeletingFullPathExtension];
   if ([baseFilename rangeOfString:@"@2x"].location == baseFilename.length - 3)
@@ -327,7 +327,7 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	*/
 	tInfo->scale = 1.;
 	close(fildes);
-	return 1;
+	return 0;
 }
 
 /*
@@ -340,28 +340,90 @@ CAMLprim value ml_resourcePath(value opath, value ocontentScaleFactor) {
     CAMLreturn(res);
 }*/
 
+/*
+NSString *pathForImage(NSString *path, float contentScaleFactor) {
+    if ([path isAbsolutePath]) {
+        fullPath = path; 
+    } else {
+        if (contentScaleFactor != 1.0f)
+        {
+            NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
+            NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", suffix, [path pathExtension]];
+            fullPath = [bundle pathForResource:fname ofType:nil];
+        }
+        if (!fullPath) fullPath = [bundle pathForResource:path ofType:nil];
+    }
+    
+    if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath])
+    {
+			const char *fname = [path cStringUsingEncoding:NSASCIIStringEncoding];
+			caml_raise_with_string(*caml_named_value("File_not_exists"), fname);
+    }
+    return fullPath;
+}*/
+
+
 CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
     CAMLparam2(opath,ocontentScaleFactor);
 		CAMLlocal2(oImgData,res);
    
+		printf("ml_loade image: %s\n",String_val(opath));
     NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
-    NSString *fullPath = pathForResource(path,Double_val(ocontentScaleFactor));
 
 		caml_release_runtime_system();
 
 		textureInfo tInfo;
 
+    NSString *fullPath = NULL;
     NSString *imgType = [[path pathExtension] lowercaseString];
-    
+		NSBundle *bundle = [NSBundle mainBundle];
+		float contentScaleFactor = Double_val(ocontentScaleFactor);
+
 		int r;
-    if ([imgType rangeOfString:@"pvr"].location == 0)
-        r = loadPvrFile(fullPath, &tInfo);
-    else
-        r = loadImageFile([UIImage imageWithContentsOfFile:fullPath], &tInfo);
+    if ([imgType rangeOfString:@"pvr"].location == 0) {
+			if (contentScaleFactor != 1.0f) {
+				NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
+				NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", suffix, imgType];
+				fullPath = [bundle pathForResource:fname ofType:nil];
+			};
+			if (!fullPath) fullPath = [bundle pathForResource:path ofType:nil];
+			if (!fullPath) r = 2;
+			else r = loadPvrFile(fullPath, &tInfo);
+		} else {
+			// Try pvr first with right scale factor
+			int is_pvr = 0;
+			do {
+				NSString *fname = NULL;
+				NSString *pathWithoutExt = [path stringByDeletingPathExtension];
+				if (contentScaleFactor != 1.0f) {
+						NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
+						fname = [pathWithoutExt stringByAppendingFormat:@"%@.%@", suffix, @"pvr"];
+						fullPath = [bundle pathForResource:fname ofType:nil];
+						if (fullPath) {is_pvr = 1; break; }
+						// try original ext with this scale factor
+						fname = [pathWithoutExt stringByAppendingFormat:@"%@.%@", suffix, imgType];
+						fullPath = [bundle pathForResource:fname ofType:nil];
+						if (fullPath) break;
+				} 
+				// try pvr 
+				fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
+				fullPath = [bundle pathForResource:fname ofType:nil];
+				if (fullPath) {is_pvr = 1; break;};
+				fullPath = [bundle pathForResource:path ofType:nil];
+			} while (0);
+			if (!fullPath) r = 2;
+			else {
+				if (is_pvr) r = loadPvrFile(fullPath,&tInfo);
+				else r = loadImageFile([UIImage imageWithContentsOfFile:fullPath], &tInfo);
+			}
+		}
 
 		caml_acquire_runtime_system();
 
-		if (!r) caml_failwith("Can't load image");
+		if (r) {
+			if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
+			caml_failwith("Can't load image");
+		};
 
 		intnat dims[1];
 		dims[0] = tInfo.dataLen;
