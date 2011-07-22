@@ -115,7 +115,7 @@ value reportAchivement identifier percentComplete =
   | Initializing callbacks ->
       let c = fun
         [ True -> report_achivement identifier percentComplete
-        | False -> ()
+        | False -> report_achivement_failed identifier percentComplete
         ]
       in
       Queue.push c callbacks
