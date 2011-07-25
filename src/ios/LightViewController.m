@@ -30,9 +30,21 @@ static LightViewController *instance = NULL;
 
 #pragma mark - View lifecycle
 - (void)loadView {
-	LightView * lightView = [[LightView alloc] initWithFrame:[UIScreen mainScreen].applicationFrame];
-	[lightView initStage];
+	UIInterfaceOrientation orient = self.interfaceOrientation;
+	CGRect rect = [UIScreen mainScreen].applicationFrame;
+	switch (orient) {
+		case UIInterfaceOrientationLandscapeLeft:
+		case UIInterfaceOrientationLandscapeRight: {
+			float tmp = rect.size.width;
+			rect.size.width = rect.size.height;
+			rect.size.height = tmp;
+			break;
+	  }
+		default: break;
+	};
+	LightView * lightView = [[LightView alloc] initWithFrame:rect];
 	self.view = lightView;
+	[lightView initStage];
 	[lightView release];
 }
 
