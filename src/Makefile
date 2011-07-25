@@ -58,7 +58,7 @@ else
 		else
 			LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
 		endif
-		GLPARAM = -DGL_GLEXT_PROTOTYPES
+		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	endif
 endif
 
@@ -69,7 +69,7 @@ MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) Debug.ml ProfTimer.ml  WeakMemo.ml Diction
 					DisplayObject.ml Sprite.ml Quad.ml GLTexture.ml Texture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml \
 					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
-	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),-ccopt $(GLPARAM)) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
+	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),$(patsubst %,-ccopt %,$(GLPARAM))) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
 
 MLCONTAINERS = containers/MList.ml containers/HSet.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml
 MLUTILS = utils/UrlEncoding.ml

@@ -1,8 +1,8 @@
 export PLATFORM = sdl
 export OS = linux
 OCAMLDIR = /usr/local/
-export OCAMLFIND = /usr/local/bin/ocamlfind
+export OCAMLFIND = ocamlfind
 OCAMLBINDIR = $(OCAMLDIR)/bin/
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
-export OCAMLMKLIB = /usr/local/bin/ocamlmklib
+export OCAMLMKLIB = ocamlmklib
