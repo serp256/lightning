@@ -25,6 +25,13 @@ end;
 (* добавлю с таймерами отдельно чтоли ? *)
 
 
+IFDEF IOS THEN
+external showNativeWaiter: Point.t -> unit = "ml_showActivityIndicator";
+external hideNativeWaiter: unit -> unit = "ml_hideActivityIndicator";
+ELSE
+value showNativeWaiter _pos = ();
+value hideNativeWaiter () = ();
+ENDIF;
 
 type stage_constructor =
   float -> float -> 
@@ -62,3 +69,8 @@ value () =
   Callback.register "stage_create" stage_create;
 );
 ENDIF;
+
+
+
+
+

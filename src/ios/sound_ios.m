@@ -90,13 +90,27 @@ struct custom_operations albuffer_ops = {
 };
 
 
+NSString* pathForResource(NSString *path) {
+	NSString *fullPath = NULL;
+	if ([path isAbsolutePath]) {
+			fullPath = path; 
+	} else {
+		fullPath = [[NSBundle mainBundle] pathForResource:path ofType:nil];
+	}
+	if (!fullPath)
+	{
+		const char *fname = [path cStringUsingEncoding:NSASCIIStringEncoding];
+		caml_raise_with_string(*caml_named_value("File_not_exists"), fname);
+	}
+	return fullPath;
+}
 
 CAMLprim value ml_albuffer_create(value mlpath) {
 	CAMLparam1(mlpath);
 	CAMLlocal2(mlBufferID,mlres);
 
 	NSString *path = [NSString stringWithCString:String_val(mlpath) encoding:NSASCIIStringEncoding];
-	NSString *fullPath = pathForResource(path,1.);
+	NSString *fullPath = pathForResource(path);
 
 	AudioFileID fileID = 0;
 	void *soundBuffer = NULL;
@@ -234,7 +248,6 @@ CAMLprim value ml_alsource_create(value mlAlBufferID) {
 }
 
 void ml_alsource_play(value mlAlSourceID) {
-	fprintf(stderr,"play sound\n");
 	alSourcePlay(*ALSOURCEID(mlAlSourceID));
 	// remove after debug
 	ALenum errorCode = alGetError();

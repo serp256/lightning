@@ -9,7 +9,6 @@
 
 CAMLprim value ml_URLConnection(value url, value method, value headers, value data) {
 	CAMLparam4(url,method,headers,data);
-	fprintf(stderr,"start create ns connection on [%s]\n",String_val(url));
 	NSURL *nsurl = [[NSURL alloc] initWithString:[NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding]];
 	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:nsurl];
 	[request setHTTPMethod:[NSString stringWithCString:String_val(method) encoding:NSASCIIStringEncoding]];
@@ -31,7 +30,6 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request delegate:[LightViewController sharedInstance] startImmediately:YES];
 	[nsurl release];
 	[request release];
-	fprintf(stderr,"ns connection created\n");
 	CAMLreturn((value)connection);
 }
 

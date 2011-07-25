@@ -113,8 +113,7 @@ static value *ml_url_data = NULL;
 	if (ml_url_data == NULL) 
 		ml_url_data = caml_named_value("url_data");
 	int size = data.length;
-	value mldata = caml_alloc_string(size);
-	memcpy(String_val(mldata),data.bytes,size);
+	value mldata = caml_alloc_string(size); memcpy(String_val(mldata),data.bytes,size);
 	caml_callback2(*ml_url_data,(value)connection,mldata);
 	caml_release_runtime_system();
 }
@@ -147,6 +146,22 @@ static value *ml_url_complete = NULL;
 
 // end URL connection
 // ////////////////////
+
+
+
+-(void)showActivityIndicator:(CGPoint)pos {
+	if (!activityIndicator) activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+	activityIndicator.center = pos;
+	self.view.userInteractionEnabled = NO;
+	[self.view addSubview:activityIndicator];
+	[activityIndicator startAnimating];
+}
+
+-(void)hideActivityIndicator {
+	[activityIndicator stopAnimating];
+	[activityIndicator removeFromSuperview];
+	self.view.userInteractionEnabled = YES;
+}
 
 - (void)viewDidUnload
 {

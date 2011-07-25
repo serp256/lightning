@@ -7,6 +7,7 @@
 #import <caml/alloc.h>
 #import <caml/threads.h>
 #import "mlwrapper_ios.h"
+#import "LightViewController.h"
 
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
@@ -44,8 +45,14 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
 }
 
 
-
-static ml_url_response = 1;
-void http_response_to_ml(NSURLConnection *connection, NSHTTPURLResponse *response) {
+void ml_showActivityIndicator(value mlpos) {
+	CAMLparam1(mlpos);
+	LightViewController *c = [LightViewController sharedInstance];
+	CGPoint pos = CGPointMake(Double_val(Field(mlpos,0)),Double_val(Field(mlpos,1)));
+	[c showActivityIndicator:pos];
+	CAMLreturn0;
 }
 
+void ml_hideActivityIndicator(value p) {
+	[[LightViewController sharedInstance] hideActivityIndicator];
+}

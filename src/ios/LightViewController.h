@@ -15,6 +15,7 @@
 
 @interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate> {
 	id<OrientationDelegate> _orientationDelegate;
+	UIActivityIndicatorView*	activityIndicator;
 }
 
 +(LightViewController*)sharedInstance;
@@ -22,6 +23,8 @@
 -(void)start;
 -(void)showLeaderboard;
 -(void)showAchievements;
+-(void)showActivityIndicator:(CGPoint)pos;
+-(void)hideActivityIndicator;
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
 
 @end
