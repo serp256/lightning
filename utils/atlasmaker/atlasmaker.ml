@@ -82,7 +82,7 @@ value croppedImageRect img =
         while !x < i.Rgba32.width do 
           match vlineEmpty i !x !y (!y + !h - 1) with
           [ True    -> incr x
-          | False   -> raise
+          | False   -> raise Break_loop
           ]
         done        
       with [Break_loop -> ()];      
