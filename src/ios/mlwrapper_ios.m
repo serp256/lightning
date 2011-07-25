@@ -11,7 +11,7 @@
 
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
-	caml_acqurie_runtime_system();
+	caml_acquire_runtime_system();
 	value mltouch,mltouches,globalX,globalY,lst_el;
   Begin_roots4(mltouch,globalX,globalY,mltouches);
   CGSize viewSize = view.bounds.size;
@@ -41,7 +41,7 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
   }
   mlstage_processTouches(mlstage,mltouches);
 	End_roots();
-	caml_release_runtime_systen();
+	caml_release_runtime_system();
 }
 
 
