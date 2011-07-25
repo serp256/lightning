@@ -200,7 +200,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       try
         let l = List.assoc event.Ev.etype listeners in
         let event = {(event) with Ev.currentTarget = Some self} in
-        ignore(List.for_all (fun (lid,l) -> (l event lid; event.Ev.propagation = `StopImmediate)) l.EventDispatcher.lstnrs);
+        ignore(List.for_all (fun (lid,l) -> (l event lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs);
       with [ Not_found -> () ];
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with
       [ True -> 
