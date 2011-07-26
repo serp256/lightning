@@ -204,9 +204,7 @@ value load path : c =
         path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
         (string_of_bool textureInfo.premultipliedAlpha) (Bigarray.Array1.dim textureInfo.imgData) 
     in
-    let () = print_endline "now create gl texture" in
     let textureID = GLTexture.create textureInfo in
-    let () = print_endline "GLTexture loaded" in
     let width = float textureInfo.width
     and height = float textureInfo.height
     and hasPremultipliedAlpha = textureInfo.premultipliedAlpha

@@ -29,7 +29,6 @@ end;
 module Make(D:DisplayObjectT.M) = struct
 
   module D = D;
-  print_endline "Make NEW Quad module";
 
   class _c color width height = (*{{{*)
     object(self)

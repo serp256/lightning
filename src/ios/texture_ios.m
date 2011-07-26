@@ -367,7 +367,7 @@ CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
     CAMLparam2(opath,ocontentScaleFactor);
 		CAMLlocal2(oImgData,res);
    
-		printf("ml_loade image: %s\n",String_val(opath));
+		//printf("ml_loade image: %s\n",String_val(opath));
     NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
 
 		caml_release_runtime_system();

@@ -114,7 +114,6 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
         [ True -> ()
         | False -> 
           (
-            prerr_endline "delete buffers";
             glDeleteBuffers 4 buffers;
             for i = 0 to 3 do buffers.(i) := 0; done;
           )

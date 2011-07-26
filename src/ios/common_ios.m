@@ -11,7 +11,7 @@
 CAMLprim value ml_bundle_path_for_resource(value mlpath) {
 	CAMLparam1(mlpath);
 	CAMLlocal1(res);
-	fprintf(stderr,"ml_bundle_path: %s\n",String_val(mlpath));
+	//fprintf(stderr,"ml_bundle_path: %s\n",String_val(mlpath));
 	NSString *path = [NSString stringWithCString:String_val(mlpath) encoding:NSASCIIStringEncoding];
 	NSString *bundlePath = [[NSBundle mainBundle] pathForResource:path ofType:nil];
 	if (bundlePath == nil) {

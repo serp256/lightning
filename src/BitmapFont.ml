@@ -94,7 +94,6 @@ value register xmlpath = (*{{{*)
     let texture = Texture.load imgFile in
     let chars = parse_chars texture in
     let bf = { texture; chars; name; size; lineHeight } in
-    let () = Printf.printf "register font %s\n%!" name in
     Hashtbl.add fonts name bf
   | _ -> XmlParser.error "font not found"
   ];(*}}}*)

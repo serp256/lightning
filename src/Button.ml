@@ -71,7 +71,6 @@ module Make
                   )
                 | TouchPhaseMoved when isDown ->
                     let open Rectangle in
-                    let () = Printf.eprintf "self: %s, parent: %s\n%!" name (match parent with [ None -> "NONE" | Some p -> p#name ]) in
                     let buttonRect = self#boundsInSpace self#stage in
                     if (touch.globalX < buttonRect.x -. MAX_DRAG_DIST) ||
                       (touch.globalY < buttonRect.y -. MAX_DRAG_DIST) ||
