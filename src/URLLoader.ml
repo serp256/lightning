@@ -163,7 +163,11 @@ value curl_thread (inch,outch) =
         | _ -> ()
         ];
         match body with
-        [ Some b -> Curl.set_postfields ccon b
+        [ Some b -> 
+          (
+            Curl.set_postfields ccon b;
+            Curl.set_postfieldsize ccon (String.length b);
+          )
         | None -> ()
         ];
         Curl.set_writefunction ccon dataf;
@@ -187,6 +191,7 @@ value start_load wrapper r =
   | True -> ()
   ];
   let (url,data) = prepare_request r in
+  let () = debug "data after prepare: [%s]" (match data with [ None -> "NONE" | Some d -> d]) in
   let ((_,outch) as channels) = 
     match Queue.is_empty free_threads with
     [ True -> 

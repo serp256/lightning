@@ -134,7 +134,9 @@ module Make
     method fps = fps;
 (*     method virtual setFps: int -> unit; *)
     method totalFrames = framesLength;
-    method play () = 
+    value mutable completeHandler = None;
+    method play ?onComplete () = 
+    (
       match eventID with 
       [ None -> 
         (
@@ -145,6 +147,8 @@ module Make
         )
       | _ -> ()
       ];
+      completeHandler := onComplete;
+    );
 
     method isPlaying = match eventID with [ None -> False | Some _ -> True ];
     initializer self#setTransformPoint first_frame.hotpos;
@@ -158,8 +162,9 @@ module Make
           elapsedTime := 0.;
           self#removeEventListener `ENTER_FRAME evID;
           eventID := None;
+          completeHandler := None;
         )
-      ]
+      ];
     );
 
     method private resolveFrame = fun
@@ -179,14 +184,14 @@ module Make
       self#stop();
     );
 
-    method gotoAndPlay (f:frameID) = 
+    method gotoAndPlay ?onComplete (f:frameID) = 
     (
       debug "[%s] gotoAndPlay: %s" clipname (FRAME_TO_STRING(f));
       self#changeFrame f;
-      self#play(); (* FIXME: we need skip current rendering *)
+      self#play ?onComplete (); (* FIXME: we need skip current rendering *)
     );
 
-    method playRange f1 f2 = 
+    method playRange ?onComplete f1 f2 = 
     (
       debug "[%s] playRange '%s' to '%s'" clipname (FRAME_TO_STRING(f1)) (FRAME_TO_STRING(f2));
       let sf = self#resolveFrame f1 in
@@ -201,6 +206,7 @@ module Make
       [ None -> eventID := Some (self#addEventListener `ENTER_FRAME self#onEnterFrame)
       | _ -> ()
       ];
+      completeHandler := onComplete;
     );
 
     method private setCurrentFrame cf = 
@@ -250,7 +256,7 @@ module Make
               (
                 elapsedTime := elapsedTime -. ((float n) *. frameTime);
                 let cFrame = currentFrameID + n in
-                let currentFrame = 
+                let (currentFrame,complete) = 
                   if cFrame > endFrame
                   then 
                   (
@@ -258,17 +264,25 @@ module Make
                     [ True -> 
                       let len = endFrame - startFrame in
                       let num = cFrame / len in
-                      startFrame + (cFrame - (num * len))
-                    | False -> 
-                      (
-                        self#stop();
-                        endFrame
-                      )
+                      (startFrame + (cFrame - (num * len)),False)
+                    | False -> (endFrame,True)
                     ]
                   )
-                  else cFrame
+                  else (cFrame,False)
                 in
-                self#setCurrentFrame currentFrame
+                (
+                  self#setCurrentFrame currentFrame;
+                  if complete then 
+                    let cf = completeHandler in
+                    (
+                      self#stop(); 
+                      match cf with
+                      [ None -> ()
+                      | Some ch -> ch()
+                      ]
+                    )
+                  else ();
+                )
               )
             ]
           )

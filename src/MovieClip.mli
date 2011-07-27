@@ -24,12 +24,12 @@ module Make
       method currentFrame: int;
       method currentFrameLabel: option string;
       method totalFrames: int;
-      method play: unit -> unit;
+      method play: ?onComplete:(unit -> unit) -> unit -> unit;
       method isPlaying: bool;
       method stop: unit -> unit;
-      method gotoAndPlay: frameID -> unit;
+      method gotoAndPlay: ?onComplete:(unit -> unit) -> frameID -> unit;
       method gotoAndStop: frameID -> unit;
-      method playRange: frameID -> frameID -> unit;
+      method playRange: ?onComplete:(unit -> unit) -> frameID -> frameID -> unit;
     end;
 
 
