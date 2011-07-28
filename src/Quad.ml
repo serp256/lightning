@@ -26,7 +26,7 @@ module type S = sig
 
 end;
 
-module Make(D:DisplayObjectT.M) = struct
+module Make(D:DisplayObjectT.M) : S with module D = D = struct
 
   module D = D;
 
@@ -135,7 +135,7 @@ module Make(D:DisplayObjectT.M) = struct
     object(self)
       inherit _c color width height;
       initializer let () = debug:quad "add to memo: %s" name in memo#add (self :> c);
-    end;
+    end; (*}}}*)
 
   value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
 

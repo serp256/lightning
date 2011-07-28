@@ -1,14 +1,12 @@
 
 type dataEmpty = [= `Empty ];
 
-type t 'etype 'data 'target 'currentTarget =
+type t 'etype 'data =
   {
     etype:'etype ;
     propagation:mutable [= `Propagate | `Stop | `StopImmediate ];
     bubbles:bool;
 (*     eventPhase: [= `AT_TARGET | `BUBBLING_PHASE ]; *)
-    target: option 'target;
-    currentTarget: option 'currentTarget;
     data:'data;
   } constraint 'etype = [> ] constraint 'data = [> dataEmpty ] constraint 'target = < .. > constraint 'currentTarget = < .. >;
 
@@ -21,4 +19,4 @@ value stopPropagaion event =
   | _ -> ()
   ];
 
-value create etype ?(bubbles=False) ?(data=`Empty) () = { etype; propagation = `Propagate; bubbles; data; target = None; currentTarget = None };
+value create etype ?(bubbles=False) ?(data=`Empty) () = { etype; propagation = `Propagate; bubbles; data};

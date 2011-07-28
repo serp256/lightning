@@ -51,7 +51,7 @@ module Make
       );
 
 
-      method private onTouch touchEvent _ = (*{{{*)
+      method private onTouch touchEvent _ _ = (*{{{*)
         match enabled with
         [ False -> ()
         | True -> 

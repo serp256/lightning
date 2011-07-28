@@ -66,7 +66,7 @@ DEFINE RENDER_WITH_MASK(call_render) =
 
 class type dispObj = 
   object
-    method dispatchEvent: ! 'a 'b. Ev.t P.evType P.evData ( < .. > as 'a) ( < .. > as 'b) -> unit;
+    method dispatchEvent: Ev.t P.evType P.evData -> unit;
   end;
 
 value onEnterFrameObjects : HSet.t dispObj = HSet.empty ();
@@ -82,7 +82,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': !'ct. Ev.t P.evType P.evData 'displayObject 'ct -> unit; 
+        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent: Ev.t P.evType P.evData -> unit;
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; modified: unit -> unit; .. 
       >;
 
@@ -132,10 +132,9 @@ class virtual _c [ 'parent ] = (*{{{*)
     method clearParent () = (parent := None;);
 
     (* Events *)
-    type 'event = Ev.t P.evType P.evData 'displayObject 'self;
-    type 'listener = 'event -> unit;
+(*     type 'listener = Ev.t P.evType P.evData 'displayObject 'self -> int -> unit; *)
 
-    method private enterFrameListenerRemovedFromStage  _ lid =
+    method private enterFrameListenerRemovedFromStage  _ _ lid =
       let _ = self#removeEventListener `REMOVED_FROM_STAGE lid in
       match self#hasEventListeners `ENTER_FRAME with
       [ True -> 
@@ -146,7 +145,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       | False -> ()
       ];
 
-    method private enterFrameListenerAddedToStage _ lid = 
+    method private enterFrameListenerAddedToStage _ _ lid = 
       (
         match self#hasEventListeners `ENTER_FRAME with
         [ True -> self#listenEnterFrame ()
@@ -161,7 +160,7 @@ class virtual _c [ 'parent ] = (*{{{*)
         ignore(self#addEventListener `REMOVED_FROM_STAGE self#enterFrameListenerRemovedFromStage);
       );
 
-    method! addEventListener eventType listener = 
+    method! addEventListener (eventType:P.evType) (listener:'listener) = 
     (
       match eventType with
       [ `ENTER_FRAME -> 
@@ -178,7 +177,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       super#addEventListener eventType listener;
     );
 
-    method! removeEventListener eventType lid = 
+    method! removeEventListener (eventType:P.evType) (lid:int) = 
     (
       super#removeEventListener eventType lid;
       match eventType with
@@ -195,27 +194,22 @@ class virtual _c [ 'parent ] = (*{{{*)
       ];
     );
 
-    method dispatchEvent': !'ct. Ev.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> (*{{{*)
+    method dispatchEvent event = (*{{{*)
     (
       try
         let l = List.assoc event.Ev.etype listeners in
-        let event = {(event) with Ev.currentTarget = Some self} in
-        ignore(List.for_all (fun (lid,l) -> (l event lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs);
+        let evd = (self#asDisplayObject,self) in
+        ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs);
       with [ Not_found -> () ];
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with
       [ True -> 
         match parent with
-        [ Some p -> p#dispatchEvent' event
+        [ Some p -> p#dispatchEvent event
         | None -> ()
         ]
       | False -> ()
       ]
     ); (*}}}*)
-
-    (* всегда ставить таргет в себя и соответственно current_target *)
-    method dispatchEvent: ! 't 'ct. Ev.t P.evType P.evData ( < .. > as 't)  (< .. > as 'ct) -> unit = fun event -> 
-      let event = {(event) with Ev.target = Some self#asDisplayObject; currentTarget = None} in
-      self#dispatchEvent' event;
 
     value mutable scaleX = 1.0;
     method scaleX = scaleX;
@@ -336,7 +330,6 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setAlpha na = alpha := max 0.0 (min 1.0 na);
 
 
-    value lastTouchTimestamp = 0.;
     method asDisplayObject = (self :> _c 'parent);
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
     method transformGLMatrix () = 
@@ -509,8 +502,6 @@ class virtual _c [ 'parent ] = (*{{{*)
       | None -> ()
       ];
 
-(*     method dispatchEventOnChildren event = self#dispatchEvent event; *)
-
     method localToGlobal localPoint = 
       (* move up until parent is nil *)
       let matrix = 
@@ -664,17 +655,15 @@ class virtual container = (*{{{*)
     );
   *)
 
-(*     method dispatchEventOnChildren: !'ct. Event.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event -> (); *)
 
     (* Сделать enum устойчивым к модификациям и переписать на полное использование енумов или щас ? *)
-    method dispatchEventOnChildren: !'ct. Ev.t P.evType P.evData 'displayObject (< .. > as 'ct) -> unit = fun event ->
-(*     method dispatchEventOnChildren event =  *)
+    method dispatchEventOnChildren event = 
     (
       self#dispatchEvent event;
       Enum.iter begin fun (child:'displayObject) ->
         match child#dcast with
-        [ `Container cont -> 
-          (cont :> < dispatchEventOnChildren: !'a. Ev.t P.evType P.evData 'displayObject (< .. > as 'a) -> unit >)#dispatchEventOnChildren event
+        [ `Container cont -> cont#dispatchEventOnChildren event
+(*           (cont :> < dispatchEventOnChildren: !'a. Ev.t eventType eventData 'displayObject (< .. > as 'a) -> unit >)#dispatchEventOnChildren event *)
         | `Object obj -> obj#dispatchEvent event
         ]
       end self#children;
@@ -744,7 +733,7 @@ class virtual container = (*{{{*)
             let event = Ev.create `ADDED_TO_STAGE () in
             match child#dcast with
             [ `Container cont -> 
-              let cont = (cont :> < dispatchEventOnChildren: !'a. Ev.t P.evType P.evData 'displayObject (< .. > as 'a) -> unit >) in
+(*               let cont = (cont :> < dispatchEventOnChildren: !'a. Ev.t eventType eventData 'displayObject (< .. > as 'a) -> unit >) in *)
               cont#dispatchEventOnChildren event
             | `Object _ -> child#dispatchEvent event
             ]
@@ -972,82 +961,8 @@ class virtual container = (*{{{*)
 class virtual c =
   object(self)
     inherit _c [ container ];
-    method dcast = `Object self#asDisplayObject;
+    method dcast = `Object (self :> c);
   end;
 
-(*
-value onEnterFrameObjects : HSet.t c = HSet.empty ();
-
-value rec listenerRemovedFromStage  ev lid =
-  let obj = Option.get (ev.Event.target) in
-  let _ = obj#removeEventListener `REMOVED_FROM_STAGE lid in
-  match obj#hasEventListeners `ENTER_FRAME with
-  [ True -> 
-    (
-      HSet.remove onEnterFrameObjects obj;
-      ignore(obj#addEventListener `ADDED_TO_STAGE listenerAddedToStage)
-    )
-  | False -> ()
-  ]
-
-and listenerAddedToStage: !'a. (Event.t P.evType P.evData c (#c as 'a)) -> int -> unit = fun ev lid ->
-  let obj = Option.get (ev.Event.target) in
-  (
-    match obj#hasEventListeners `ENTER_FRAME with
-    [ True -> listenEnterFrame obj
-    | False -> () 
-    ];
-    obj#removeEventListener `ADDED_TO_STAGE lid
-  )
-
-and listenEnterFrame obj =
-  (
-    HSet.add onEnterFrameObjects obj;
-    ignore(obj#addEventListener `REMOVED_FROM_STAGE listenerRemovedFromStage);
-  );
-
-value dispatchEnterFrame seconds = 
-  let enterFrameEvent = Event.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
-  HSet.iter (fun (obj:c) -> obj#dispatchEvent enterFrameEvent) onEnterFrameObjects;
-
-class virtual base =
-  object(self)
-    inherit c as super;
-
-    method! addEventListener eventType listener = 
-    (
-      match eventType with
-      [ `ENTER_FRAME -> 
-        match self#hasEventListeners `ENTER_FRAME with
-        [ False ->
-          match self#stage with
-          [ None -> ignore(self#addEventListener `ADDED_TO_STAGE listenerAddedToStage)
-          | Some _ -> listenEnterFrame self#asDisplayObject
-          ]
-        | True -> ()
-        ]
-      | _ -> ()
-      ];
-      super#addEventListener eventType listener;
-    );
-
-    method! removeEventListener eventType lid = 
-    (
-      super#removeEventListener eventType lid;
-      match eventType with
-      [ `ENTER_FRAME ->
-          match self#hasEventListeners `ENTER_FRAME with
-          [ False ->
-            match self#stage with
-            [ None -> ()
-            | Some _ -> HSet.remove onEnterFrameObjects self#asDisplayObject
-            ]
-          | True -> ()
-          ]
-      | _ -> ()
-      ];
-    );
-  end;
-  *)
 
 end;

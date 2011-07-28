@@ -2,6 +2,17 @@
 type eventType = [= Stage.eventType | `TRIGGERED ];
 type eventData = Stage.eventData;
 
+
+(*
+module type Display = sig
+  module DisplayObject: DisplayObjectT.M;
+  module Quad : Quad.S;
+  module Image : Image.S;
+  module Sprite: Sprite.S;
+  module CompiledSprite: CompiledSprite.S;
+end;
+*)
+
 module Make(Param:sig type evType = private [> eventType ]; type evData = private [> eventData ]; end) = struct
   module DisplayObject = DisplayObject.Make Param;
   module Quad = Quad.Make DisplayObject;

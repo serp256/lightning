@@ -15,7 +15,7 @@ module Make
       initializer ignore(self#addEventListener `ENTER_FRAME self#onEnterFrame);
 
 
-      method private onEnterFrame event _ = 
+      method private onEnterFrame event _ _ = 
         match event.Ev.data with
         [ `PassedTime dt -> 
           let osecs = int_of_float time in

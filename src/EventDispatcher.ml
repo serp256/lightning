@@ -2,21 +2,23 @@ open Ev;
 
 exception Listener_not_found;
 
-type listener 'eventType 'eventData 'target 'currentTarget = Ev.t 'eventType 'eventData 'target 'currentTarget -> unit;
-type listeners 'eventType 'eventData 'target 'currentTarget = list (int * (listener 'eventType 'eventData 'target 'currentTarget));
+(* type listener 'eventType 'eventData 'target 'currentTarget = Ev.t 'eventType 'eventData 'target 'currentTarget -> unit; *)
+(* type listeners 'eventType 'eventData 'target 'currentTarget = list (int * (listener 'eventType 'eventData 'target 'currentTarget)); *)
 type lst 'eventType 'eventData 'target 'currentTarget = 
   {
     counter: mutable int;
 (*     lstnrs: mutable list (int * (listener 'eventType 'eventData 'target 'currentTarget)); *)
-    lstnrs: mutable list (int * (Ev.t 'eventType 'eventData 'target 'currentTarget -> int -> unit));
+    lstnrs: mutable list (int * (Ev.t 'eventType 'eventData -> ('target * 'currentTarget ) -> int -> unit));
   };
 
+(*
 value fire event lst = 
   try
     let l = List.assoc event.Ev.etype lst in
     ignore(List.for_all (fun (lid,l) -> (l event lid; event.Ev.propagation = `StopImmediate)) l.lstnrs);
     True
   with [ Not_found -> False ];
+*)
 
 
 class base [ 'eventType,'eventData,'target,'currentTarget ] = (*{{{*)
@@ -86,7 +88,7 @@ class type virtual c [ 'eventType,'eventData,'target,'currentTarget ] =
 class virtual simple [ 'eventType , 'eventData , 'target ]  =
   object(self)
     inherit base ['eventType,'eventData,'target,'target];
-    type 'event = Ev.t 'eventType 'eventData 'target 'target;
+    type 'event = Ev.t 'eventType 'eventData;
 
 (*     method private dispatchEvent' event = fire event listeners; *)
   
@@ -95,10 +97,10 @@ class virtual simple [ 'eventType , 'eventData , 'target ]  =
     (* всегда ставить таргет в себя и соответственно current_target *)
     method dispatchEvent (event:'event) = 
       let t = self#asEventTarget in 
-      let event = {(event) with target = Some t; currentTarget = Some t } in
+      let evd = (t,t) in
       try
         let l = List.assoc event.Ev.etype listeners in
-        ignore(List.for_all (fun (lid,l) -> (l event lid; event.Ev.propagation = `StopImmediate)) l.lstnrs);
+        ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation = `StopImmediate)) l.lstnrs);
       with [ Not_found -> () ];
 
   end;

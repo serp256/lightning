@@ -242,7 +242,7 @@ module Make
         currentFrameID := cf;
       );
 
-    method private onEnterFrame event _ = 
+    method private onEnterFrame event _ _ = 
       let () = debug "onEnterFrame: [%s], currentFrame: %d" clipname currentFrameID in
       if elapsedTime = ~-.1. then elapsedTime := 0.
       else
