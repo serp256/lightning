@@ -34,8 +34,8 @@ class base [ 'eventType,'eventData,'target,'currentTarget ] = (*{{{*)
             | Some l ->
                 (
                   l.lstnrs := [ (l.counter,listener) :: l.lstnrs ];
-                  l.counter := l.counter + 1;
                   res.val := l.counter;
+                  l.counter := l.counter + 1;
                   l
                 )
             ]
