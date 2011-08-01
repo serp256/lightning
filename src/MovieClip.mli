@@ -29,7 +29,7 @@ module Make
       method stop: unit -> unit;
       method gotoAndPlay: ?onComplete:(unit -> unit) -> frameID -> unit;
       method gotoAndStop: frameID -> unit;
-      method playRange: ?onComplete:(unit -> unit) -> frameID -> frameID -> unit;
+      method playRange: ?onChangeFrame:(unit->unit) -> ?onComplete:(unit -> unit) -> frameID -> frameID -> unit;
     end;
 
 

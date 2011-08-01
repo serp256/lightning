@@ -135,6 +135,7 @@ module Make
 (*     method virtual setFps: int -> unit; *)
     method totalFrames = framesLength;
     value mutable completeHandler = None;
+    value mutable changeHandler = None;
     method play ?onComplete () = 
     (
       match eventID with 
@@ -162,6 +163,7 @@ module Make
           elapsedTime := 0.;
           self#removeEventListener `ENTER_FRAME evID;
           eventID := None;
+          changeHandler := None;
           completeHandler := None;
         )
       ];
@@ -191,7 +193,7 @@ module Make
       self#play ?onComplete (); (* FIXME: we need skip current rendering *)
     );
 
-    method playRange ?onComplete f1 f2 = 
+    method playRange ?onChangeFrame ?onComplete  f1 f2 = 
     (
       debug "[%s] playRange '%s' to '%s'" clipname (FRAME_TO_STRING(f1)) (FRAME_TO_STRING(f2));
       let sf = self#resolveFrame f1 in
@@ -206,6 +208,7 @@ module Make
       [ None -> eventID := Some (self#addEventListener `ENTER_FRAME self#onEnterFrame)
       | _ -> ()
       ];
+      changeHandler := onChangeFrame;
       completeHandler := onComplete;
     );
 
@@ -272,6 +275,10 @@ module Make
                 in
                 (
                   self#setCurrentFrame currentFrame;
+                  match changeHandler with
+                  [ Some ch -> ch ()
+                  | _ -> ()
+                  ];
                   if complete then 
                     let cf = completeHandler in
                     (
