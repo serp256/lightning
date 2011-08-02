@@ -175,6 +175,10 @@ type size_metrics = {
     y_ppem : int;
     x_scale : float;
     y_scale : float;
+    ascender: float;
+    descender: float;
+    height: float;
+    max_advance: float;
   };;
 
 let get_size_metrics face =
@@ -182,7 +186,12 @@ let get_size_metrics face =
   { x_ppem = low.Ftlow.x_ppem;
     y_ppem = low.Ftlow.y_ppem;
     x_scale = float_of_intfrac16 low.Ftlow.x_scale;
-    y_scale = float_of_intfrac16 low.Ftlow.y_scale; };;
+    y_scale = float_of_intfrac16 low.Ftlow.y_scale; 
+    ascender = float_of_intfrac6 low.Ftlow.ascender;
+    descender = float_of_intfrac6 low.Ftlow.descender;
+    height = float_of_intfrac6 low.Ftlow.height;
+    max_advance = float_of_intfrac6 low.Ftlow.max_advance;
+  };;
 
 (* outline info *)
 type outline_tag = Ftlow.outline_tag =

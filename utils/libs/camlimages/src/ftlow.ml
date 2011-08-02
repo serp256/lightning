@@ -81,6 +81,10 @@ type size_metrics = {
     y_ppem : int;
     x_scale : int; (* 16.16 *)
     y_scale : int; (* 16.16 *)
+    ascender: int;
+    descender: int;
+    height: int;
+    max_advance: int;
   };;
 
 (* outline info *)

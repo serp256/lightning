@@ -129,6 +129,10 @@ type size_metrics = {
     y_ppem: int;
     x_scale: float;
     y_scale: float;
+    ascender: float;
+    descender: float;
+    height: float;
+    max_advance: float;
   };;
 
 val get_size_metrics : face -> size_metrics;;

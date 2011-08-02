@@ -17,6 +17,25 @@ value fontFile = ref "DejaVuSerif.ttf";
 value sizes = ref [ 24. ; 100.0 ]; (* add support for multisize *)
 value dpi = ref 72;
 
+
+value make_size face xmlout size =
+(
+   Freetype.set_char_size face size 0. !dpi 0;
+   let letters = ref [] in
+   (
+     UTF8.iter begin fun uchar ->
+     (
+       let code = UChar.code uchar in
+       let char_index = Freetype.glyph_index_of_int code in
+       let (xadv,yadv) = Freetype.render_glyph face char_index [] Freetype.Render_Normal in
+       let bi = Freetype.get_bitmap_info face in
+       (* take bitmap as is for now *)
+       let open Freetype in
+     )
+     end !pattern;
+   )
+);
+
 (* use xmlm for writing xml *)
 let t = Freetype.init () in
 let (face,face_info) = Freetype.new_face t !fontFile 0 in
@@ -27,23 +46,11 @@ let xmlout = Xmlm.make_output (open_out xmlfname) in
    let fattribs = 
      [ "face" =|= face_info.Ft.family_name
      | "style" =|= face_info.Ft.style_name
-     | "kerning" =|= (string_of_bool face_info.Ft.has_kerning)
+     | "kerning" =*= (if face_info.Ft.has_kerning then 1 else 0)
      ]
    in
    Xmlm.output xmlout (`El_start ("Font",fattribs));
-   List.iter begin fun size ->
-     Freetype.set_char_size face size 0. !dpi 0;
-     UTF8.iter begin fun uchar ->
-     (
-       let code = UChar.code uchar in
-       let char_index = Freetype.glyph_index_of_int code in
-       let (xadv,yadv) = Freetype.render_glyph face char_index [] Freetype.Render_Normal in
-       let bi = Freetype.get_bitmap_info face in
-       (* take bitmap as is for now *)
-       let open Freetype in
-     )
-     end !pattern
-   end !sizes
+   List.iter (make_size face xmlout) !sizes
 );
 
 

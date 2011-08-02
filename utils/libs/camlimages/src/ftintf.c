@@ -407,11 +407,15 @@ value get_Size_Metrics( face )
 
   FT_Size_Metrics *imetrics = &((*(FT_Face*)face)->size->metrics);
 
-  res = alloc_tuple(4);
+  res = alloc_tuple(8);
   Store_field(res,0, Val_int(imetrics->x_ppem));
   Store_field(res,1, Val_int(imetrics->y_ppem));
   Store_field(res,2, Val_int(imetrics->x_scale));
   Store_field(res,3, Val_int(imetrics->y_scale));
+  Store_field(res,4, Val_int(imetrics->ascender));
+  Store_field(res,5, Val_int(imetrics->descender));
+  Store_field(res,6, Val_int(imetrics->height));
+  Store_field(res,7, Val_int(imetrics->max_advance));
 
   CAMLreturn(res);
 }

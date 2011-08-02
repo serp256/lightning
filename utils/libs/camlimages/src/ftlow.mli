@@ -117,6 +117,10 @@ type size_metrics = {
     y_ppem : int;
     x_scale : int; (** 16.16 *)
     y_scale : int; (** 16.16 *)
+    ascender: int; (** 26.6 *)
+    descender: int;(** 26.6 *)
+    height: int;(** 26.6 *)
+    max_advance: int;(** 26.6 *)
   }
 
 val get_size_metrics : face -> size_metrics
