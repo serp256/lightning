@@ -82,7 +82,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent: Ev.t P.evType P.evData -> unit;
+        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': Ev.t P.evType P.evData -> _c _ -> unit;
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; modified: unit -> unit; .. 
       >;
 
@@ -194,22 +194,27 @@ class virtual _c [ 'parent ] = (*{{{*)
       ];
     );
 
-    method dispatchEvent event = (*{{{*)
+    method dispatchEvent' event target =
     (
       try
         let l = List.assoc event.Ev.etype listeners in
-        let evd = (self#asDisplayObject,self) in
+        let evd = (target,self) in
         ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs);
       with [ Not_found -> () ];
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with
       [ True -> 
         match parent with
-        [ Some p -> p#dispatchEvent event
+        [ Some p -> p#dispatchEvent' event target
         | None -> ()
         ]
       | False -> ()
       ]
-    ); (*}}}*)
+    );
+
+
+    method dispatchEvent event = (*{{{*)
+      self#dispatchEvent' event self#asDisplayObject;
+    (*}}}*)
 
     value mutable scaleX = 1.0;
     method scaleX = scaleX;
@@ -660,7 +665,7 @@ class virtual container = (*{{{*)
     method dispatchEventOnChildren event = 
     (
       self#dispatchEvent event;
-      Enum.iter begin fun (child:'displayObject) ->
+      Enum.iter begin fun (child:'displayObject) -> (* здесь хуйня с таргетом надо разобраца *)
         match child#dcast with
         [ `Container cont -> cont#dispatchEventOnChildren event
 (*           (cont :> < dispatchEventOnChildren: !'a. Ev.t eventType eventData 'displayObject (< .. > as 'a) -> unit >)#dispatchEventOnChildren event *)

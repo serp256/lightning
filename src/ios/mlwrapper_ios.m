@@ -56,3 +56,10 @@ void ml_showActivityIndicator(value mlpos) {
 void ml_hideActivityIndicator(value p) {
 	[[LightViewController sharedInstance] hideActivityIndicator];
 }
+
+
+value ml_deviceIdentifier(value p) {
+	CAMLparam0();
+	NSString *ident = [[UIDevice currentDevice] uniqueIdentifier];
+	CAMLreturn(caml_copy_string([ident cStringUsingEncoding:NSASCIIStringEncoding]));
+}

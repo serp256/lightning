@@ -1,5 +1,32 @@
 open Gl;
 
+type textureFormat = 
+  [ TextureFormatRGBA
+  | TextureFormatRGB
+  | TextureFormatAlpha
+  | TextureFormatPvrtcRGB2
+  | TextureFormatPvrtcRGBA2
+  | TextureFormatPvrtcRGB4
+  | TextureFormatPvrtcRGBA4
+  | TextureFormat565
+  | TextureFormat5551
+  | TextureFormat4444
+  ];
+
+type textureInfo = 
+  {
+    texFormat: textureFormat;
+    realWidth: int;
+    width: int;
+    realHeight: int;
+    height: int;
+    numMipmaps: int;
+    generateMipmaps: bool;
+    premultipliedAlpha:bool;
+    scale: float;
+    textureID: int;
+  };
+
 class type c = 
   object
     method width: float;
@@ -9,6 +36,7 @@ class type c =
     method textureID: int;
     method base : option (c * Rectangle.t);
     method adjustTextureCoordinates: float_array -> unit;
+    method update: string -> unit;
   end;
 
 
@@ -21,32 +49,6 @@ value rec nextPowerOfTwo number =
     else result
   in 
   loop 1;
-
-(*
-value loadImage ~path ~contentScaleFactor = 
-  let surface = Sdl_image.load (LightCommon.resource_path path 1.) in
-  let width = Sdl.Video.surface_width surface in
-  let height = Sdl.Video.surface_height surface in
-  let textureInfo = 
-    let open GLTexture in 
-    {
-        texFormat = TextureFormatRGBA;
-        realWidth = width;
-        width = width;
-        realHeight = height;
-        height = height;
-        numMipmaps = 0;
-        generateMipmaps = True;
-        premultipliedAlpha = True;
-        scale = 1.0; (* FIXME: *)
-        imgData = Sdl.Video.surface_pixels surface
-    }
-  in
-  (
-    Gc.finalise (fun _ -> Sdl.Video.free_surface surface) textureInfo;
-    textureInfo
-  );
-*)
 
 value loadImage ~path ~contentScaleFactor = 
   let surface = Sdl_image.load (LightCommon.resource_path path 1.) in
@@ -72,7 +74,7 @@ value loadImage ~path ~contentScaleFactor =
         numMipmaps = 0;
         generateMipmaps = True;
         premultipliedAlpha = False;
-        scale = 1.0; (* FIXME: *)
+        scale = 1.0;
         imgData = Sdl.Video.surface_pixels rgbSurface
       }
     in
@@ -82,10 +84,14 @@ value loadImage ~path ~contentScaleFactor =
     );
   );
 
+value freeImageData _ = ();
+
 ELSE IFDEF IOS THEN
-external loadImage: ~path:string -> ~contentScaleFactor:float -> GLTexture.textureInfo = "ml_loadImage";
+external loadImage: ~textureID:int -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+(* external freeImageData: GLTexture.textureInfo -> unit = "ml_freeImageData"; *)
 ELSE IFDEF ANDROID THEN
-external loadImage: ~path:string -> ~contentScaleFactor:float -> GLTexture.textureInfo = "ml_loadImage";
+external loadImage: ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+(* external freeImageData: GLTexture.textureInfo -> unit = "ml_freeImageData"; *)
 (*
 value loadImage ~path ~contentScaleFactor = 
   let ba =  (* Gl.make_ubyte_array (8 * 8 * 4) in *)
@@ -163,6 +169,7 @@ class subtexture region (baseTexture:c) =
         texCoords.{2*i} := rootClipping.Rectangle.x +. texCoords.{2*i} *. rootClipping.Rectangle.width;
         texCoords.{2*i+1} := rootClipping.Rectangle.y +. texCoords.{2*i+1} *. rootClipping.Rectangle.height;
       done;
+    method update path = baseTexture#update path;
   end;
 
 value createSubTexture = new subtexture;
@@ -196,16 +203,18 @@ value load path : c =
     ((Cache.find cache path) :> c)
   with 
   [ Not_found ->
-    let open GLTexture in
-    let textureInfo = loadImage path 1. in
+    let textureInfo = 
+      proftimer "Loading texture [%F]" loadImage 0 path 1. 
+    in
     let () = 
       debug
-        "load texture: %s [%d->%d; %d->%d] [pma=%s] [bytes=%d]\n%!" 
+        "load texture: %s [%d->%d; %d->%d] [pma=%s]\n%!" 
         path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
-        (string_of_bool textureInfo.premultipliedAlpha) (Bigarray.Array1.dim textureInfo.imgData) 
+        (string_of_bool textureInfo.premultipliedAlpha) 
     in
-    let textureID = GLTexture.create textureInfo in
-    let width = float textureInfo.width
+(*     let textureID = GLTexture.create textureInfo in *)
+    let textureID = textureInfo.textureID
+    and width = float textureInfo.width
     and height = float textureInfo.height
     and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
     and scale = textureInfo.scale 
@@ -221,18 +230,20 @@ value load path : c =
         method textureID = textureID;
         method base = None;
         method adjustTextureCoordinates texCoords = ();
+        method update path = ignore(loadImage textureID path 1.);  (* fixme cache it *)
       end
     in
     (
-      Gc.finalise (fun _ -> glDeleteTextures 1 [| textureID |]) res;
+      Gc.finalise (fun _ -> let () = debug "finalize texture" in glDeleteTextures 1 [| textureID |]) res;
       let res = 
         if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
         then _createSubTexture (Rectangle.create 0. 0. (float textureInfo.realWidth) (float textureInfo.realHeight)) res
         else res
       in
       (
-        Cache.add cache path res);
+        Cache.add cache path res;
         (res :> c)
+      )
     )
   ];
 

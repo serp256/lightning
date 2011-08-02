@@ -72,7 +72,7 @@
         mDisplayLinkSupported = YES;
     
 		self.multipleTouchEnabled = YES;
-    self.frameRate = 30.0f;
+    self.frameRate = 60.0f;
     
     // get the layer
     CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;

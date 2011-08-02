@@ -8,6 +8,7 @@ class type c =
     method textureID: int;
     method base : option (c * Rectangle.t);
     method adjustTextureCoordinates: Gl.float_array -> unit;
+    method update: string -> unit;
   end;
 
 

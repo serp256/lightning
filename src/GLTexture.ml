@@ -37,6 +37,11 @@ type tinfo =
   };
 
 value create textureInfo = 
+(*
+  match False with
+  [ True -> 0
+  | False ->
+*)
   let () = debug "create GLTexture" in
   let repeat = False in
   let info =

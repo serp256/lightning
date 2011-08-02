@@ -50,6 +50,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       value mutable currentTouches = []; (* FIXME: make it weak for target *)
       method processTouches (touches:list Touch.n) = (*{{{*)
+        let () = debug "process touches" in
         match touchable with
         [ True -> 
           let () = debug:touches "process touches %d\n%!" (List.length touches) in
@@ -110,7 +111,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
               let event = {(event) with Ev.data = `Touches touches} in
               target#dispatchEvent event
             end fireTouches;
-            currentTouches := (List.filter (fun (_,t) -> match t.n_phase with [ TouchPhaseEnded | TouchPhaseCancelled -> False | _ -> True ]) processedTouches) @ otherTouches
+            currentTouches := (List.filter (fun (_,t) -> match t.n_phase with [ TouchPhaseEnded | TouchPhaseCancelled -> False | _ -> True ]) processedTouches) @ otherTouches;
+            debug "touches end";
           )
         | False -> ()
         ];(*}}}*)
@@ -120,13 +122,16 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         RenderSupport.clearTexture ();
         RenderSupport.clear color 1.0;
         RenderSupport.setupOrthographicRendering 0. width height 0.;
+        debug "start render";
         proftimer:render "STAGE rendered %F" (super#render None);
+        debug "end render";
         debug:errors ignore(RenderSupport.checkForOpenGLError());
       );
 
       value runtweens = Queue.create ();
 
       method advanceTime (seconds:float) = 
+        let () = debug "advance time" in
         proftimer:perfomance "Stage advanceTime: %F"
         (
           Timers.process seconds;
@@ -140,6 +145,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           done;
           (* dispatch EnterFrameEvent *)
           proftimer:perfomance "Enter frame: %F" D.dispatchEnterFrame seconds;
+          debug "end advance time";
         );
 
       method run seconds = 

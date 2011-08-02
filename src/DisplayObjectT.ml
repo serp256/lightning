@@ -15,7 +15,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     type 'displayObject = _c 'parent;
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent: Ev.t evType evData -> unit; 
+        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': Ev.t evType evData -> _c _ -> unit; 
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; modified: unit -> unit; .. >;
 (*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
@@ -23,6 +23,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     type 'listener = 'event -> ('displayObject * 'self) -> int -> unit;
     method addEventListener: evType -> 'listener -> int;
     method removeEventListener: evType -> int -> unit;
+    method dispatchEvent': 'event -> _c _ -> unit;
     method dispatchEvent: 'event -> unit;
     method hasEventListeners: evType -> bool;
 

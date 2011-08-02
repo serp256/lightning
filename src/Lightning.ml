@@ -39,9 +39,12 @@ end;
 IFDEF IOS THEN
 external showNativeWaiter: Point.t -> unit = "ml_showActivityIndicator";
 external hideNativeWaiter: unit -> unit = "ml_hideActivityIndicator";
+external _deviceIdentifier: unit -> string = "ml_deviceIdentifier";
+value deviceIdentifier () = Some (_deviceIdentifier ());
 ELSE
 value showNativeWaiter _pos = ();
 value hideNativeWaiter () = ();
+value deviceIdentifier () = None;
 ENDIF;
 
 type stage_constructor =

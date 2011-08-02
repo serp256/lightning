@@ -19,143 +19,13 @@
 
 
 #import "common_ios.h"
-#import "texture.h"
-
-
-/*
-
-
-uint createGLTexture(SPTextureFormat format, int width, int height, int numMipmaps, BOOL generateMipmaps, BOOL premultipliedAlpha, const void *imgData, float scale) { //{{{
-    BOOL mRepeat = NO;    
-    
-    GLenum glTexType = GL_UNSIGNED_BYTE;
-    GLenum glTexFormat;
-    int bitsPerPixel;
-    BOOL compressed = NO;
-    uint mTextureID;
-    
-    switch (format)
-    {
-        default:
-        case SPTextureFormatRGBA:
-            bitsPerPixel = 8;
-            glTexFormat = GL_RGBA;
-            break;
-        case SPTextureFormatAlpha:
-            bitsPerPixel = 8;
-            glTexFormat = GL_ALPHA;
-            break;
-        case SPTextureFormatPvrtcRGBA2:
-            compressed = YES;
-            bitsPerPixel = 2;
-            glTexFormat = GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG;
-            break;
-        case SPTextureFormatPvrtcRGB2:
-            compressed = YES;
-            bitsPerPixel = 2;
-            glTexFormat = GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG;
-            break;
-        case SPTextureFormatPvrtcRGBA4:
-            compressed = YES;
-            bitsPerPixel = 4;
-            glTexFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG;
-            break;
-        case SPTextureFormatPvrtcRGB4:
-            compressed = YES;
-            bitsPerPixel = 4;
-            glTexFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
-            break;
-        case SPTextureFormat565:
-            bitsPerPixel = 16;
-            glTexFormat = GL_RGB;
-            glTexType = GL_UNSIGNED_SHORT_5_6_5;
-            break;
-        case SPTextureFormat5551:
-            bitsPerPixel = 16;                    
-            glTexFormat = GL_RGBA;
-            glTexType = GL_UNSIGNED_SHORT_5_5_5_1;                    
-            break;
-        case SPTextureFormat4444:
-            bitsPerPixel = 16;
-            glTexFormat = GL_RGBA;
-            glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
-            break;
-    }
-    
-    glGenTextures(1, &mTextureID);
-    glBindTexture(GL_TEXTURE_2D, mTextureID);
-    
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
-    
-    if (!compressed)
-    {       
-        if (numMipmaps > 0 || generateMipmaps)
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-        else
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        
-        if (numMipmaps == 0 && generateMipmaps)
-            glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);  
-        
-        int levelWidth = width;
-        int levelHeight = height;
-        unsigned char *levelData = (unsigned char *)imgData;
-        
-        for (int level=0; level<=numMipmaps; ++level)
-        {                    
-            int size = levelWidth * levelHeight * bitsPerPixel / 8;
-            glTexImage2D(GL_TEXTURE_2D, level, glTexFormat, levelWidth, levelHeight, 
-                         0, glTexFormat, glTexType, levelData);
-            levelData += size;
-            levelWidth  /= 2; 
-            levelHeight /= 2;
-        }            
-    }
-    else
-    {
-        // 'generateMipmaps' not supported for compressed textures
-        
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, numMipmaps == 0 ? GL_LINEAR : GL_LINEAR_MIPMAP_NEAREST);
-        
-        int levelWidth = width;
-        int levelHeight = height;
-        unsigned char *levelData = (unsigned char *)imgData;
-        
-        for (int level=0; level<= numMipmaps; ++level)
-        {                    
-            int size = MAX(32, levelWidth * levelHeight * bitsPerPixel / 8);
-            glCompressedTexImage2D(GL_TEXTURE_2D, level, glTexFormat, levelWidth, levelHeight, 0, size, levelData);
-            levelData += size;
-            levelWidth  /= 2; 
-            levelHeight /= 2;
-        }
-    }
-    
-    glBindTexture(GL_TEXTURE_2D, 0);
-    return mTextureID;
-} //}}}
-*/
-
-typedef struct {
-	int format;
-	float width;
-	float realWidth;
-	float height;
-	float realHeight;
-	int numMipmaps;
-	BOOL premultipliedAlpha;
-	float scale;
-	unsigned int dataLen;
-	unsigned char* imgData;
-} textureInfo;
+#import "texture_common.h"
 
 
 
 typedef void (*drawingBlock)(CGContextRef context,void *data);
 
-void createTextureInfo(float width, float height, float scale, drawingBlock draw, void *data, textureInfo *tInfo) {
+void createTextureInfo(int colorSpace, float width, float height, float scale, drawingBlock draw, void *data, textureInfo *tInfo) {
 		int legalWidth  = nextPowerOfTwo(width  * scale);
 		int legalHeight = nextPowerOfTwo(height * scale);
     
@@ -163,13 +33,22 @@ void createTextureInfo(float width, float height, float scale, drawingBlock draw
     CGBitmapInfo bitmapInfo;
     int bytesPerPixel;
 
-    /*if (colorSpace == SPColorSpaceRGBA)
-    {*/
+    
+    if (colorSpace == SPTextureFormatRGBA)
+    {
         bytesPerPixel = 4;
         tInfo->format = SPTextureFormatRGBA;
         cgColorSpace = CGColorSpaceCreateDeviceRGB();
         bitmapInfo = kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
         tInfo->premultipliedAlpha = YES;
+		}
+		else { // assume it's rgb
+			bytesPerPixel = 3;
+			tInfo->format = SPTextureFormatRGB;
+			cgColorSpace = CGColorSpaceCreateDeviceRGB();
+			bitmapInfo = kCGImageAlphaNone;// kCGBitmapByteOrder32Big | kCGImageAlphaNoneSkipLast;
+        tInfo->premultipliedAlpha = NO;
+		}
     /*}
     else
     {
@@ -198,6 +77,7 @@ void createTextureInfo(float width, float height, float scale, drawingBlock draw
 		tInfo->realWidth = width;
 		tInfo->height = legalHeight;
 		tInfo->realHeight = height;
+		tInfo->generateMipmaps = 0;
 		tInfo->numMipmaps = 0;
 		tInfo->scale = scale;
 		tInfo->dataLen = dataLen;
@@ -206,20 +86,99 @@ void createTextureInfo(float width, float height, float scale, drawingBlock draw
 
 void drawImage(CGContextRef context, void* data) {
 	UIImage *image = (UIImage*)data;
-	[image drawAtPoint:CGPointMake(0, 0)];
+	//CGImageRef imageRef = (CGImageRef)data;
+	//size_t width = CGImageGetWidth(imageRef); 
+	//size_t height = CGImageGetHeight(imageRef); 
+	//CGRect rect = CGRectMake(0, 0, width, height);  
+	//CGContextDrawImage(context, rect, imageRef); 
+  [image drawAtPoint:CGPointMake(0, 0)];
 }
 
 int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
 	float width = image.size.width;
 	float height = image.size.height;
-	/*
-	CGImageRef  CGImage = uiImage.CGImage;
-	CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
-	size_t bpp = CGImageGetBitsPerComponent(CGImage); */
-	createTextureInfo(width,height,scale,*drawImage,(void*)image,tInfo);
+	//CGImageRef  CGImage = uiImage.CGImage;
+	//CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
+	int colorSpace = SPTextureFormatRGBA;
+	createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
 	return 0;
 }
+
+
+/*
+int loadImageFile(UIImage *image,textureInfo *tInfo) {
+	 CGImageRef CGImage = image.CGImage;
+	 size_t bpp = CGImageGetBitsPerPixel(CGImage);
+	 tInfo->realWidth = CGImageGetWidth(CGImage);
+	 tInfo->realHeight = CGImageGetHeight(CGImage);
+	 switch (bpp) {
+		 case 32: 
+		 {
+			 tInfo->format = SPTextureFormatRGBA;
+			 CGBitmapInfo info = CGImageGetBitmapInfo(CGImage);
+			 switch(info & kCGBitmapAlphaInfoMask) {
+				 case kCGImageAlphaPremultipliedFirst:
+				 case kCGImageAlphaFirst:
+				 case kCGImageAlphaNoneSkipFirst:
+					 fprintf(stderr,"unsupported alpha format\n",bpp); 
+					 return 1;
+			 };
+			 tInfo->premultipliedAlpha = YES;
+			 break;
+		 }
+		 case 24:
+		 {
+			 tInfo->format = SPTextureFormatRGB;
+			 tInfo->premultipliedAlpha = NO;
+			 break;
+		 }
+		 default: fprintf(stderr,"unsupported bpp [%d]\n",bpp); return 1; // not supported yet
+	 }
+	 double t1 = CACurrentMediaTime();
+	 CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(CGImage));
+	 GLubyte *pixels = (GLubyte *)CFDataGetBytePtr(data);
+	 double t2 = CACurrentMediaTime();
+	 fprintf(stderr,"get image data: %f\n",(t2 - t1));
+
+	 tInfo->width = nextPowerOfTwo(tInfo->realWidth);
+	 tInfo->height = nextPowerOfTwo(tInfo->realHeight);
+
+	 int components = bpp >> 3;
+	 int rowBytes = components * tInfo->width;
+	 tInfo->dataLen = rowBytes * tInfo->height;
+
+	 if (tInfo->width != tInfo->realWidth || tInfo->height != tInfo->realHeight)
+	 {
+		 t1 = CACurrentMediaTime();
+		 int srcRowBytes = tInfo->realWidth * components;
+		 GLuint rowBytes   = CGImageGetBytesPerRow(CGImage); 
+		 GLubyte *temp = (GLubyte *)malloc(tInfo->dataLen);
+		 for (int y = 0; y < tInfo->realHeight; y++)
+			 memcpy(&temp[y*rowBytes], &pixels[y*srcRowBytes], srcRowBytes);
+
+		 t2 = CACurrentMediaTime();
+		 fprintf(stderr,"copy to POT: %f\n",(t2 - t1));
+
+		 //img->s *= (float)img->wide/POTWide;
+		 //img->t *= (float)img->high/POTHigh;
+		 //img->wide = POTWide;
+		 //img->high = POTHigh;
+		 pixels = temp;
+		 //rowBytes = dstBytes;
+	 } else { // copy for now
+		 GLubyte *temp = (GLubyte*)malloc(tInfo->dataLen);
+		 memcpy(temp,pixels,tInfo->dataLen);
+	 }
+	 tInfo->numMipmaps = 0;
+	 tInfo->generateMipmaps = 0;
+	 tInfo->scale = 1.0;
+	 tInfo->dataLen = rowBytes * tInfo->height;
+	 tInfo->imgData = pixels;
+	 CFRelease(data);
+	 return 0;
+}*/
+
 
 // --- PVR structs & enums -------------------------------------------------------------------------
 
@@ -258,6 +217,7 @@ enum PVRPixelType
 
 
 int loadPvrFile(NSString *path, textureInfo *tInfo) {
+	//NSLog(@"read pvr [%@]\n",path);
 	//NSData *fileData = gzCompressed ? [SPTexture decompressPvrFile:path] : [NSData dataWithContentsOfFile:path];
 
 	// we need read it with c style functions
@@ -277,7 +237,8 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	PVRTextureHeader header;
 
 	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader));
-	if ((readed != sizeof(PVRTextureHeader)) || (header.pvr != PVRTEX_IDENTIFIER)) {close(fildes); return 1;};
+	//printf("readed header: %d\n",readed);
+	if ((readed != sizeof(PVRTextureHeader)) /*|| (header.pvr != PVRTEX_IDENTIFIER)*/) {close(fildes); return 1;};
 
   int hasAlpha = header.alphaBitMask ? 1 : 0;
 
@@ -289,6 +250,7 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	tInfo->numMipmaps = header.numMipmaps;
 	tInfo->premultipliedAlpha = NO;
   
+	//printf("check pvr header\n");
   switch (header.pfFlags & 0xff)
   {
       case OGL_RGB_565:
@@ -363,9 +325,10 @@ NSString *pathForImage(NSString *path, float contentScaleFactor) {
 }*/
 
 
-CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
+CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleFactor) { // if old texture exists when replace
     CAMLparam2(opath,ocontentScaleFactor);
-		CAMLlocal2(oImgData,res);
+		//CAMLlocal2(oImgData,res);
+		CAMLlocal1(res);
    
 		//printf("ml_loade image: %s\n",String_val(opath));
     NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
@@ -374,6 +337,7 @@ CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
 
 		textureInfo tInfo;
 
+		//double gt1 = CACurrentMediaTime();
     NSString *fullPath = NULL;
     NSString *imgType = [[path pathExtension] lowercaseString];
 		NSBundle *bundle = [NSBundle mainBundle];
@@ -414,21 +378,41 @@ CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
 			if (!fullPath) r = 2;
 			else {
 				if (is_pvr) r = loadPvrFile(fullPath,&tInfo);
-				else r = loadImageFile([UIImage imageWithContentsOfFile:fullPath], &tInfo);
+				else {
+					//double t1 = CACurrentMediaTime();
+					UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
+					//double t2 = CACurrentMediaTime();
+					//NSLog(@"load from disk: %F",(t2 - t1));
+					//t1 = CACurrentMediaTime();
+					r = loadImageFile(image, &tInfo);
+					//t2 = CACurrentMediaTime();
+					//NSLog(@"decode img: [%f]",(t2 - t1));
+					[image release];
+				}
 			}
 		}
 
-		caml_acquire_runtime_system();
-
 		if (r) {
+			caml_acquire_runtime_system();
 			if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 			caml_failwith("Can't load image");
 		};
+		//double glt1 = CACurrentMediaTime();
+		uint textureID;
+		textureID = createGLTexture(Long_val(oldTexture),&tInfo);
+		//double glt2 = CACurrentMediaTime();
+		//NSLog(@"gl binding: [%f]",(glt2 - glt1));
+		free(tInfo.imgData);
 
+		caml_acquire_runtime_system();
+
+		/*
 		intnat dims[1];
 		dims[0] = tInfo.dataLen;
     
-		oImgData = caml_ba_alloc(CAML_BA_MANAGED | CAML_BA_UINT8, 1, tInfo.imgData, dims); 
+		oImgData = caml_ba_alloc(CAML_BA_EXTERNAL | CAML_BA_UINT8, 1, tInfo.imgData, dims); 
+		*/
+
 
 		res = caml_alloc_tuple(10);
 		Store_field(res,0,Val_int(tInfo.format));
@@ -440,10 +424,19 @@ CAMLprim value ml_loadImage (value opath, value ocontentScaleFactor) {
     Store_field(res,6,Val_int(1));
     Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
     Store_field(res,8,caml_copy_double(tInfo.scale));
-    Store_field(res,9,oImgData);
-
+		Store_field(res,9,Val_int(textureID));
+    //Store_field(res,9,oImgData);
+		//double gt2 = CACurrentMediaTime();
+		//NSLog(@"loading texture: [%f]",(gt2 - gt1));
 		CAMLreturn(res);
 }
+
+
+/*
+void ml_freeImageData(value textureInfo) {
+	free(Caml_ba_data_val(Field(textureInfo,9)));
+}
+*/
 
 CAMLprim value ml_textureWithText(value text) {
 	caml_failwith("not implemented");
