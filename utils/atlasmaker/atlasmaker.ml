@@ -8,6 +8,8 @@ type rect = {
 value out_file = ref "tx_texture";
 value gen_pvr = ref False;
 
+value emptyPx = 2;
+
 value imageRects : (Hashtbl.t string rect) = Hashtbl.create 55;
 
 exception Break_loop;
@@ -145,7 +147,7 @@ value layoutRects rects =
   let rec tryLayout rects placed empty unfit = 
     match rects with
     [ [] -> (placed, unfit)    (* все разместили *)
-    | [r :: rects']  -> 
+    | [ r :: rects']  -> 
       match empty with 
       [ []  -> (placed, (List.append rects unfit))
       | _   -> 
@@ -161,8 +163,8 @@ value layoutRects rects =
                 putToMinimalContainer rect  placed containers' [c :: used_containers]
               else
                 let r' =  { x = c.x; y = c.y; w = r.w; h = r.h }             
-                and e1 = { x = c.x; y = c.y + r.h; w = r.w; h = c.h - r.h }
-                and e2 = { x = c.x + r.w; y = c.y; w = c.w - r.w; h = c.h }
+                and e1 = { x = c.x  ; y = c.y + r.h + emptyPx; w = r.w; h = c.h - r.h - emptyPx }
+                and e2 = { x = c.x + r.w + emptyPx; y = c.y; w = c.w - r.w - emptyPx; h = c.h }
                 in ([(id,r') :: placed], (List.append containers' (List.append used_containers [e1; e2])))
             ]
           ]
@@ -190,7 +192,7 @@ value layoutRects rects =
   
   (* размещаем на одной странице, постепенно увеличивая ее размер *)
   let rec layout rects w h = 
-    let mainrect = { x = 0; y = 0; w; h } in
+    let mainrect = { x = emptyPx; y = emptyPx; w; h } in
     let (placed, rest) = tryLayout rects [] [mainrect] [] in 
     match rest with 
     [ [] -> (w, h, placed, rest) (* разместили все *)
