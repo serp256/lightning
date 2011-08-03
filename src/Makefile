@@ -4,10 +4,11 @@ include ../Makefile.common
 
 MLCFLAGS = 
 %.o: %.c
-	$(OCAMLOPT) -I . -verbose -g  $(if $(MLCOPTSS),$(patsubst %,-ccopt %,$(MLCOPTS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
+	$(OCAMLOPT) -I . -verbose -g  $(if $(MLCOPTS),$(patsubst %,-ccopt %,$(MLCOPTS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 
 GLPARAM = 
+CFLAGS += -I .
 
 MOBJS = texture_common.o
 MLOBJSFLAGS = 
@@ -25,7 +26,8 @@ $(SYNTAX): MLPPOPT :=
 
 ifeq ($(PLATFORM),ios)
 	gl = gl/es
-	CFLAGS += -I . -DDEBUG
+	CFLAGS +=  -DDEBUG
+	MLCOPTS += -DIOS
 	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightView.o ios/LightViewController.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o
 	MLPPOPT += -DGLES -DIOS
 	LIBFLAGS = -cclib '-framework\ Foundation' \
@@ -39,7 +41,6 @@ ifeq ($(PLATFORM),ios)
 else
 	ifeq ($(PLATFORM),android)
 		gl = gl/es
-		CFLAGS += -I . 
 		MLPPOPT += -DGLES -DANDROID 
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
@@ -47,7 +48,7 @@ else
 		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng'
 	else
 		gl = gl/2.1
-		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o
+		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
 		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
 		AMLSOURCES = sdl/sdl_run.ml
 		MLOBJSFLAGS = -I sdl

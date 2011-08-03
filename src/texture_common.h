@@ -31,4 +31,4 @@ typedef struct {
 } textureInfo;
 
 
-unsigned int createGLTexture(GLuint mTextureID,textureInfo *tInfo);
+unsigned int createGLTexture(unsigned int mTextureID, textureInfo *tInfo);

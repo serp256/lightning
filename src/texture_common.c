@@ -2,9 +2,17 @@
 
 #ifdef ANDROID
 #include <GLES/gl.h>
-#else // this is IOS
+#else 
+#ifdef IOS
 #include <OpenGLES/ES1/gl.h>
 #include <OpenGLES/ES1/glext.h>
+#else
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else // this is linux
+#include <GL/gl.h>
+#endif
+#endif
 #endif
 
 #include "texture_common.h"
@@ -24,7 +32,7 @@ typedef struct {
 	int compressed;
 } texParams;
 
-void textureParams(textureInfo *tInfo,texParams *p) {
+int textureParams(textureInfo *tInfo,texParams *p) {
     switch (tInfo->format)
     {
         case SPTextureFormatRGBA:
@@ -37,25 +45,41 @@ void textureParams(textureInfo *tInfo,texParams *p) {
             p->glTexFormat = GL_ALPHA;
             break;
         case SPTextureFormatPvrtcRGBA2:
+#ifdef IOS
             p->compressed = 1;
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG;
             break;
+#else
+						return 0;
+#endif
         case SPTextureFormatPvrtcRGB2:
+#ifdef IOS
             p->compressed = 1;
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG;
             break;
+#else
+						return 0;
+#endif
         case SPTextureFormatPvrtcRGBA4:
+#ifdef IOS
             p->compressed = 1;
             p->bitsPerPixel = 4;
             p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG;
             break;
+#else 
+						return 0;
+#endif
         case SPTextureFormatPvrtcRGB4:
+#ifdef IOS
             p->compressed = 1;
             p->bitsPerPixel = 4;
             p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
             break;
+#else
+						return 0;
+#endif
         case SPTextureFormat565:
             p->bitsPerPixel = 16;
             p->glTexFormat = GL_RGB;
@@ -72,6 +96,7 @@ void textureParams(textureInfo *tInfo,texParams *p) {
             p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
             break;
     }
+		return 1;
 }
 
 
@@ -83,7 +108,7 @@ unsigned int createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     params.bitsPerPixel = 8;
     params.compressed = 0;
     //unsigned int mTextureID;
-		textureParams(tInfo,&params);
+		if (!textureParams(tInfo,&params)) return 0;
     
 		if (mTextureID == 0) glGenTextures(1, &mTextureID);
     glBindTexture(GL_TEXTURE_2D, mTextureID);
