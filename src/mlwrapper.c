@@ -3,7 +3,6 @@
 #include <caml/memory.h>
 #include <caml/callback.h>
 #include <caml/alloc.h>
-#include <caml/threads.h>
 #include "mlwrapper.h"
 
 #define NIL Val_int(0)
@@ -15,6 +14,14 @@
     #define PRINT_DEBUG(fmt,args...)  (fprintf(stderr,fmt, ## args),putc('\n',stderr))
 #else
     #define PRINT_DEBUG(fmt,args...)
+#endif
+
+
+#ifdef ANDROID
+#define caml_acquire_runtime_system()
+#define caml_release_runtime_system()
+#else
+#include <caml/threads.h>
 #endif
 
 

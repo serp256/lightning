@@ -29,6 +29,7 @@
 #include <string.h> 
 #ifdef ANDROID
 #include <GLES/gl.h>
+#include <GLES/glext.h>
 #else // this is IOS
 #include <OpenGLES/ES1/gl.h>
 #endif

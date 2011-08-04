@@ -27,11 +27,15 @@
 
 #include <stdio.h>
 #include <string.h> 
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
+
+
+#ifdef ANDROID
+#include <GLES/gl.h>
+#include <GLES/glext.h>
+#else // this is IOS
+#include <OpenGLES/ES1/gl.h>
 #endif
+
  
 #include <caml/mlvalues.h>
 #include <caml/memory.h>

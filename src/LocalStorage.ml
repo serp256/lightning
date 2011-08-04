@@ -17,6 +17,8 @@ ENDIF;
 exception Error of string;
 exception Record_not_found;
 
+IFNDEF ANDROID THEN
+
 type db = [ Closed | Opened of Dbm.t ];
 
 value load dbname = 
@@ -74,6 +76,17 @@ value load dbname =
 
   end;
 
+ELSE
 
+value load (_:string) = failwith "not implemented";
+(*
+  object
+    method get _ = failwith "not implemented";
+    method get_opt _ = failwith "not implemented";
+    method set _ _ = failwith "not implemented";
+    method remove _ = failwith "not implemented"
+  end;
+*)
 
+ENDIF;
 

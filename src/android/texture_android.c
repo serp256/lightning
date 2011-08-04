@@ -8,7 +8,7 @@
 #include <caml/callback.h>
 #include "mlwrapper_android.h"
 #include "libpng/png.h"
-#include "texture.h"
+#include "texture_common.h"
 
 
 
@@ -19,13 +19,11 @@
     ((unsigned)(unsigned char)(va) << 24))
 
 
-value load_png_image(resource *rs) {
-	CAMLparam0();
-	CAMLlocal2(oImgData,result);
+int load_png_image(resource *rs,textureInfo *tInfo) {
 	//png_byte        header[8]   = {0};
 	png_structp     png_ptr     =   0;
 	png_infop       info_ptr    = 0;
-	unsigned char * pImateData  = 0;
+	unsigned char * pImageData  = 0;
 	FILE *fp = fdopen(rs->fd,"rb");
 
 	// png header len is 8 bytes
@@ -75,19 +73,25 @@ value load_png_image(resource *rs) {
 	// allocate memory and read data
 	int bytesPerComponent = 3;
 	if (hasAlpha) bytesPerComponent = 4;
-	int dataLen = height * width * bytesPerComponent;
-	pImateData = caml_stat_alloc(dataLen);
+
+	unsigned int legalWidth = nextPowerOfTwo(width);
+	unsigned int legalHeight = nextPowerOfTwo(height);
+
+	unsigned int dataLen = legalHeight * legalWidth * bytesPerComponent;
+	pImageData = caml_stat_alloc(dataLen);
 
 	png_bytep * rowPointers = png_get_rows(png_ptr, info_ptr);
 
 	// copy data to image info
-	int bytesPerRow = width * bytesPerComponent;
+	unsigned int bytesPerRow = width * bytesPerComponent;
+	unsigned int bytesPerLegalRow = legalWidth * bytesPerComponent;
 	unsigned int i,j;
 	if(hasAlpha)
 	{
-		unsigned int *tmp = (unsigned int *)pImateData;
+		unsigned int *tmp = (unsigned int *)pImageData;
 		for(i = 0; i < height; i++)
 		{
+			tmp += i * bytesPerLegalRow;
 			for(j = 0; j < bytesPerRow; j += 4)
 			{
 				*tmp++ = CC_RGB_PREMULTIPLY_APLHA( rowPointers[i][j], rowPointers[i][j + 1], rowPointers[i][j + 2], rowPointers[i][j + 3] );
@@ -98,41 +102,50 @@ value load_png_image(resource *rs) {
 	{
 		for (j = 0; j < height; ++j)
 		{
-			memcpy(pImateData + j * bytesPerRow, rowPointers[j], bytesPerRow);
+			memcpy(pImageData + j * bytesPerLegalRow, rowPointers[j], bytesPerRow);
 		}
 	}
 
 	png_destroy_read_struct(&png_ptr, &info_ptr, 0);
 	fclose(fp);
 
-	/* TODO: nextPowerTwo here */
-	intnat dims[1];
-	dims[0] = dataLen;
-	oImgData = caml_ba_alloc(CAML_BA_MANAGED | CAML_BA_UINT8, 1, pImateData, dims); 
-
-	int legalWidth = width;
-	int legalHeight = height;
-	result = caml_alloc_tuple(10);
-	Store_field(result,0,Val_int(hasAlpha ? SPTextureFormatRGBA : SPTextureFormatRGB));
-	Store_field(result,1,Val_int((unsigned int)width));
-	Store_field(result,2,Val_int(legalWidth));
-	Store_field(result,3,Val_int((unsigned int)height));
-	Store_field(result,4,Val_int(legalHeight));
-	Store_field(result,5,Val_int(0));
-	Store_field(result,6,Val_int(1));
-	Store_field(result,7,Val_int(preMulti));
-	Store_field(result,8,caml_copy_double(1.));
-	Store_field(result,9,oImgData);
-	CAMLreturn(result);
+	tInfo->format = hasAlpha ? SPTextureFormatRGBA : SPTextureFormatRGB;
+	tInfo->width = legalWidth;
+	tInfo->realWidth = width;
+	tInfo->height = legalHeight;
+	tInfo->realHeight =  height;
+	tInfo->numMipmaps = 0;
+	tInfo->premultipliedAlpha = preMulti;
+	tInfo->scale = 1.;
+	tInfo->dataLen = dataLen;
+	tInfo->imgData = pImageData;
+	return 1;
 }
 
-CAMLprim value ml_loadImage(value fname, value scale) { // scale unused here
+CAMLprim value ml_loadImage(value oldTextureID, value fname, value scale) { // scale unused here
 	CAMLparam2(fname,scale);
+	CAMLlocal1(res);
 	resource r;
 	if (!getResourceFd(fname,&r)) caml_raise_with_string(*caml_named_value("File_not_exists"), String_val(fname));
 	// here use ext for select img format, but now we work only with png
-	value res = load_png_image(&r);
+	textureInfo tInfo;
+	if (!load_png_image(&r,&tInfo)) caml_failwith("can't load png");
+	unsigned int textureID = createGLTexture(Long_val(oldTextureID),&tInfo);
+	free(tInfo.imgData);
+	if (!textureID) caml_failwith("can't load texture");
+	res = caml_alloc_tuple(10);
+	Store_field(res,0,Val_int(tInfo.format));
+	Store_field(res,1,Val_int((unsigned int)tInfo.realWidth));
+	Store_field(res,2,Val_int(tInfo.width));
+	Store_field(res,3,Val_int((unsigned int)tInfo.realHeight));
+	Store_field(res,4,Val_int(tInfo.height));
+	Store_field(res,5,Val_int(tInfo.numMipmaps));
+	Store_field(res,6,Val_int(1));
+	Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
+	Store_field(res,8,caml_copy_double(tInfo.scale));
+	Store_field(res,9,Val_int(textureID));
 	CAMLreturn(res);
+
 }
 
 

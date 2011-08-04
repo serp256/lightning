@@ -21,7 +21,7 @@ debug: release
 SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
 $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend -syntax camlp4r 
 $(SYNTAX): MLPPOPT :=
-#$(SYNTAX): OCAMLC = ocamlfind ocamlc
+$(SYNTAX): OCAMLC = ocamlfind ocamlc
 
 
 ifeq ($(PLATFORM),ios)

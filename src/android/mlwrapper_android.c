@@ -206,7 +206,7 @@ void fireTouches(JNIEnv *env, jintArray ids, jfloatArray xs, jfloatArray ys, int
 	(*env)->GetFloatArrayRegion(env,xs,0,size,x);
 	(*env)->GetFloatArrayRegion(env,ys,0,size,y);
 	value touch,globalX,globalY,lst_el,touches;
-	Begin_roots2(touch,touches,globalX,globalY);
+	Begin_roots4(touch,touches,globalX,globalY);
 	int i = 0;
 	touches = 1;
 	for (i = 0; i < size; i++) {

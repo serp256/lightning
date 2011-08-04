@@ -252,7 +252,7 @@ value process_events () =
 (*}}}*)
 ELSE
 
-value start_load wrappers r = failwith "Net not implemented on this platform yet";
+value start_load (wrappers:loader_wrapper) (r:request) = failwith "Net not implemented on this platform yet";
 
 ENDIF;
 ENDIF;

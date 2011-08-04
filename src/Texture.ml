@@ -84,7 +84,7 @@ ELSE IFDEF IOS THEN
 external loadImage: ~textureID:int -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 (* external freeImageData: GLTexture.textureInfo -> unit = "ml_freeImageData"; *)
 ELSE IFDEF ANDROID THEN
-external loadImage: ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+external loadImage: ~textureID:int -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 ENDIF;
 ENDIF;
 ENDIF;
@@ -151,6 +151,7 @@ value cache = Cache.create 11;
 
 
 
+(*
 IFDEF ANDROID THEN
 value reloadTextures () = 
   let () = debug:android "reload textures" in
@@ -162,6 +163,7 @@ value reloadTextures () =
 
 Callback.register "realodTextures" reloadTextures;
 ENDIF;
+*)
 
 
 value load path : c = 
