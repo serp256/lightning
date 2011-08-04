@@ -13,7 +13,7 @@ type t 'etype 'data =
 
 
 value stopImmediatePropagation event = event.propagation := `StopImmediate;
-value stopPropagaion event = 
+value stopPropagation event = 
   match event.propagation with
   [ `Propagate -> event.propagation := `Stop
   | _ -> ()

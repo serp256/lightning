@@ -52,6 +52,7 @@ module Make
 
 
       method private onTouch touchEvent _ _ = (*{{{*)
+        let () = Ev.stopPropagation touchEvent in
         match enabled with
         [ False -> ()
         | True -> 

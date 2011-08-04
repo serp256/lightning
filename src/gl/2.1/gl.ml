@@ -1607,13 +1607,18 @@ value gl_compressed_srgb = 0x00008c48;
 value gl_compressed_srgb_alpha = 0x00008c49;
 value gl_compressed_sluminance = 0x00008c4a;
 value gl_compressed_sluminance_alpha = 0x00008c4b;
-external glAccum : int -> float -> unit = "glstub_glAccum" "glstub_glAccum";
+value gl_framebuffer_ext = 0x00008d40;
+value gl_color_attachment0_ext = 0x00008ce0;
+value gl_framebuffer_complete_ext = 0x00008cd5;
+value gl_framebuffer_binding_ext = 0x00008ca6;
+external glAccum : int -> float -> unit = "glstub_glAccum" "glstub_glAccum"
+  "noalloc";
 external glActiveTexture : int -> unit = "glstub_glActiveTexture"
-  "glstub_glActiveTexture";
+  "glstub_glActiveTexture" "noalloc";
 external glActiveTextureARB : int -> unit = "glstub_glActiveTextureARB"
-  "glstub_glActiveTextureARB";
+  "glstub_glActiveTextureARB" "noalloc";
 external glAlphaFunc : int -> float -> unit = "glstub_glAlphaFunc"
-  "glstub_glAlphaFunc";
+  "glstub_glAlphaFunc" "noalloc";
 external glAreTexturesResident : int -> word_array -> word_array -> bool =
   "glstub_glAreTexturesResident" "glstub_glAreTexturesResident";
 value glAreTexturesResident p0 p1 p2 =
@@ -1623,467 +1628,523 @@ value glAreTexturesResident p0 p1 p2 =
   let bp2 = Array.create (Bigarray.Array1.dim np2) 0 in
   let _ = copy_word_array np2 bp2 in let _ = copy_to_bool_array bp2 p2 in r;
 external glArrayElement : int -> unit = "glstub_glArrayElement"
-  "glstub_glArrayElement";
+  "glstub_glArrayElement" "noalloc";
 external glAttachShader : int -> int -> unit = "glstub_glAttachShader"
-  "glstub_glAttachShader";
-external glBegin : int -> unit = "glstub_glBegin" "glstub_glBegin";
+  "glstub_glAttachShader" "noalloc";
+external glBegin : int -> unit = "glstub_glBegin" "glstub_glBegin" "noalloc";
 external glBeginQuery : int -> int -> unit = "glstub_glBeginQuery"
-  "glstub_glBeginQuery";
+  "glstub_glBeginQuery" "noalloc";
 external glBeginQueryARB : int -> int -> unit = "glstub_glBeginQueryARB"
-  "glstub_glBeginQueryARB";
+  "glstub_glBeginQueryARB" "noalloc";
 external glBindAttribLocation : int -> int -> string -> unit =
-  "glstub_glBindAttribLocation" "glstub_glBindAttribLocation";
+  "glstub_glBindAttribLocation" "glstub_glBindAttribLocation" "noalloc";
 external glBindBuffer : int -> int -> unit = "glstub_glBindBuffer"
-  "glstub_glBindBuffer";
+  "glstub_glBindBuffer" "noalloc";
 external glBindBufferARB : int -> int -> unit = "glstub_glBindBufferARB"
-  "glstub_glBindBufferARB";
+  "glstub_glBindBufferARB" "noalloc";
+external glBindFramebufferEXT : int -> int -> unit =
+  "glstub_glBindFramebufferEXT" "glstub_glBindFramebufferEXT" "noalloc";
 external glBindProgramARB : int -> int -> unit = "glstub_glBindProgramARB"
-  "glstub_glBindProgramARB";
+  "glstub_glBindProgramARB" "noalloc";
 external glBindTexture : int -> int -> unit = "glstub_glBindTexture"
-  "glstub_glBindTexture";
+  "glstub_glBindTexture" "noalloc";
 external glBitmap :
   int -> int -> float -> float -> float -> float -> ubyte_array -> unit =
-  "glstub_glBitmap_byte" "glstub_glBitmap";
+  "glstub_glBitmap_byte" "glstub_glBitmap" "noalloc";
 value glBitmap p0 p1 p2 p3 p4 p5 p6 =
   let np6 = to_ubyte_array p6 in let r = glBitmap p0 p1 p2 p3 p4 p5 np6 in r;
 external glBlendColor : float -> float -> float -> float -> unit =
-  "glstub_glBlendColor" "glstub_glBlendColor";
+  "glstub_glBlendColor" "glstub_glBlendColor" "noalloc";
 external glBlendColorEXT : float -> float -> float -> float -> unit =
-  "glstub_glBlendColorEXT" "glstub_glBlendColorEXT";
+  "glstub_glBlendColorEXT" "glstub_glBlendColorEXT" "noalloc";
 external glBlendEquation : int -> unit = "glstub_glBlendEquation"
-  "glstub_glBlendEquation";
+  "glstub_glBlendEquation" "noalloc";
 external glBlendEquationEXT : int -> unit = "glstub_glBlendEquationEXT"
-  "glstub_glBlendEquationEXT";
+  "glstub_glBlendEquationEXT" "noalloc";
 external glBlendEquationSeparate : int -> int -> unit =
-  "glstub_glBlendEquationSeparate" "glstub_glBlendEquationSeparate";
+  "glstub_glBlendEquationSeparate" "glstub_glBlendEquationSeparate"
+  "noalloc";
 external glBlendFunc : int -> int -> unit = "glstub_glBlendFunc"
-  "glstub_glBlendFunc";
+  "glstub_glBlendFunc" "noalloc";
 external glBlendFuncSeparate : int -> int -> int -> int -> unit =
-  "glstub_glBlendFuncSeparate" "glstub_glBlendFuncSeparate";
+  "glstub_glBlendFuncSeparate" "glstub_glBlendFuncSeparate" "noalloc";
 external glBlendFuncSeparateEXT : int -> int -> int -> int -> unit =
-  "glstub_glBlendFuncSeparateEXT" "glstub_glBlendFuncSeparateEXT";
+  "glstub_glBlendFuncSeparateEXT" "glstub_glBlendFuncSeparateEXT" "noalloc";
 external glBufferData : int -> int -> 'a -> int -> unit =
-  "glstub_glBufferData" "glstub_glBufferData";
+  "glstub_glBufferData" "glstub_glBufferData" "noalloc";
 external glBufferDataARB : int -> int -> 'a -> int -> unit =
-  "glstub_glBufferDataARB" "glstub_glBufferDataARB";
+  "glstub_glBufferDataARB" "glstub_glBufferDataARB" "noalloc";
 external glBufferSubData : int -> int -> int -> 'a -> unit =
-  "glstub_glBufferSubData" "glstub_glBufferSubData";
+  "glstub_glBufferSubData" "glstub_glBufferSubData" "noalloc";
 external glBufferSubDataARB : int -> int -> int -> 'a -> unit =
-  "glstub_glBufferSubDataARB" "glstub_glBufferSubDataARB";
-external glCallList : int -> unit = "glstub_glCallList" "glstub_glCallList";
+  "glstub_glBufferSubDataARB" "glstub_glBufferSubDataARB" "noalloc";
+external glCallList : int -> unit = "glstub_glCallList" "glstub_glCallList"
+  "noalloc";
 external glCallLists : int -> int -> 'a -> unit = "glstub_glCallLists"
-  "glstub_glCallLists";
-external glClear : int -> unit = "glstub_glClear" "glstub_glClear";
+  "glstub_glCallLists" "noalloc";
+external glCheckFramebufferStatusEXT : int -> int =
+  "glstub_glCheckFramebufferStatusEXT" "glstub_glCheckFramebufferStatusEXT";
+external glClear : int -> unit = "glstub_glClear" "glstub_glClear" "noalloc";
 external glClearAccum : float -> float -> float -> float -> unit =
-  "glstub_glClearAccum" "glstub_glClearAccum";
+  "glstub_glClearAccum" "glstub_glClearAccum" "noalloc";
 external glClearColor : float -> float -> float -> float -> unit =
-  "glstub_glClearColor" "glstub_glClearColor";
+  "glstub_glClearColor" "glstub_glClearColor" "noalloc";
 external glClearDepth : float -> unit = "glstub_glClearDepth"
-  "glstub_glClearDepth";
+  "glstub_glClearDepth" "noalloc";
 external glClearIndex : float -> unit = "glstub_glClearIndex"
-  "glstub_glClearIndex";
+  "glstub_glClearIndex" "noalloc";
 external glClearStencil : int -> unit = "glstub_glClearStencil"
-  "glstub_glClearStencil";
+  "glstub_glClearStencil" "noalloc";
 external glClientActiveTexture : int -> unit = "glstub_glClientActiveTexture"
-  "glstub_glClientActiveTexture";
+  "glstub_glClientActiveTexture" "noalloc";
 external glClientActiveTextureARB : int -> unit =
-  "glstub_glClientActiveTextureARB" "glstub_glClientActiveTextureARB";
+  "glstub_glClientActiveTextureARB" "glstub_glClientActiveTextureARB"
+  "noalloc";
 external glClipPlane : int -> array float -> unit = "glstub_glClipPlane"
-  "glstub_glClipPlane";
+  "glstub_glClipPlane" "noalloc";
 external glColor3b : int -> int -> int -> unit = "glstub_glColor3b"
-  "glstub_glColor3b";
+  "glstub_glColor3b" "noalloc";
 external glColor3bv : byte_array -> unit = "glstub_glColor3bv"
-  "glstub_glColor3bv";
+  "glstub_glColor3bv" "noalloc";
 value glColor3bv p0 =
   let np0 = to_byte_array p0 in let r = glColor3bv np0 in r;
 external glColor3d : float -> float -> float -> unit = "glstub_glColor3d"
-  "glstub_glColor3d";
+  "glstub_glColor3d" "noalloc";
 external glColor3dv : array float -> unit = "glstub_glColor3dv"
-  "glstub_glColor3dv";
+  "glstub_glColor3dv" "noalloc";
 external glColor3f : float -> float -> float -> unit = "glstub_glColor3f"
-  "glstub_glColor3f";
+  "glstub_glColor3f" "noalloc";
 external glColor3fv : float_array -> unit = "glstub_glColor3fv"
-  "glstub_glColor3fv";
+  "glstub_glColor3fv" "noalloc";
 value glColor3fv p0 =
   let np0 = to_float_array p0 in let r = glColor3fv np0 in r;
 external glColor3i : int -> int -> int -> unit = "glstub_glColor3i"
-  "glstub_glColor3i";
+  "glstub_glColor3i" "noalloc";
 external glColor3iv : word_array -> unit = "glstub_glColor3iv"
-  "glstub_glColor3iv";
+  "glstub_glColor3iv" "noalloc";
 value glColor3iv p0 =
   let np0 = to_word_array p0 in let r = glColor3iv np0 in r;
 external glColor3s : int -> int -> int -> unit = "glstub_glColor3s"
-  "glstub_glColor3s";
+  "glstub_glColor3s" "noalloc";
 external glColor3sv : short_array -> unit = "glstub_glColor3sv"
-  "glstub_glColor3sv";
+  "glstub_glColor3sv" "noalloc";
 value glColor3sv p0 =
   let np0 = to_short_array p0 in let r = glColor3sv np0 in r;
 external glColor3ub : int -> int -> int -> unit = "glstub_glColor3ub"
-  "glstub_glColor3ub";
+  "glstub_glColor3ub" "noalloc";
 external glColor3ubv : ubyte_array -> unit = "glstub_glColor3ubv"
-  "glstub_glColor3ubv";
+  "glstub_glColor3ubv" "noalloc";
 value glColor3ubv p0 =
   let np0 = to_ubyte_array p0 in let r = glColor3ubv np0 in r;
 external glColor3ui : int -> int -> int -> unit = "glstub_glColor3ui"
-  "glstub_glColor3ui";
+  "glstub_glColor3ui" "noalloc";
 external glColor3uiv : word_array -> unit = "glstub_glColor3uiv"
-  "glstub_glColor3uiv";
+  "glstub_glColor3uiv" "noalloc";
 value glColor3uiv p0 =
   let np0 = to_word_array p0 in let r = glColor3uiv np0 in r;
 external glColor3us : int -> int -> int -> unit = "glstub_glColor3us"
-  "glstub_glColor3us";
+  "glstub_glColor3us" "noalloc";
 external glColor3usv : ushort_array -> unit = "glstub_glColor3usv"
-  "glstub_glColor3usv";
+  "glstub_glColor3usv" "noalloc";
 value glColor3usv p0 =
   let np0 = to_ushort_array p0 in let r = glColor3usv np0 in r;
 external glColor4b : int -> int -> int -> int -> unit = "glstub_glColor4b"
-  "glstub_glColor4b";
+  "glstub_glColor4b" "noalloc";
 external glColor4bv : byte_array -> unit = "glstub_glColor4bv"
-  "glstub_glColor4bv";
+  "glstub_glColor4bv" "noalloc";
 value glColor4bv p0 =
   let np0 = to_byte_array p0 in let r = glColor4bv np0 in r;
 external glColor4d : float -> float -> float -> float -> unit =
-  "glstub_glColor4d" "glstub_glColor4d";
+  "glstub_glColor4d" "glstub_glColor4d" "noalloc";
 external glColor4dv : array float -> unit = "glstub_glColor4dv"
-  "glstub_glColor4dv";
+  "glstub_glColor4dv" "noalloc";
 external glColor4f : float -> float -> float -> float -> unit =
-  "glstub_glColor4f" "glstub_glColor4f";
+  "glstub_glColor4f" "glstub_glColor4f" "noalloc";
 external glColor4fv : float_array -> unit = "glstub_glColor4fv"
-  "glstub_glColor4fv";
+  "glstub_glColor4fv" "noalloc";
 value glColor4fv p0 =
   let np0 = to_float_array p0 in let r = glColor4fv np0 in r;
 external glColor4i : int -> int -> int -> int -> unit = "glstub_glColor4i"
-  "glstub_glColor4i";
+  "glstub_glColor4i" "noalloc";
 external glColor4iv : word_array -> unit = "glstub_glColor4iv"
-  "glstub_glColor4iv";
+  "glstub_glColor4iv" "noalloc";
 value glColor4iv p0 =
   let np0 = to_word_array p0 in let r = glColor4iv np0 in r;
 external glColor4s : int -> int -> int -> int -> unit = "glstub_glColor4s"
-  "glstub_glColor4s";
+  "glstub_glColor4s" "noalloc";
 external glColor4sv : short_array -> unit = "glstub_glColor4sv"
-  "glstub_glColor4sv";
+  "glstub_glColor4sv" "noalloc";
 value glColor4sv p0 =
   let np0 = to_short_array p0 in let r = glColor4sv np0 in r;
 external glColor4ub : int -> int -> int -> int -> unit = "glstub_glColor4ub"
-  "glstub_glColor4ub";
+  "glstub_glColor4ub" "noalloc";
 external glColor4ubv : ubyte_array -> unit = "glstub_glColor4ubv"
-  "glstub_glColor4ubv";
+  "glstub_glColor4ubv" "noalloc";
 value glColor4ubv p0 =
   let np0 = to_ubyte_array p0 in let r = glColor4ubv np0 in r;
 external glColor4ui : int -> int -> int -> int -> unit = "glstub_glColor4ui"
-  "glstub_glColor4ui";
+  "glstub_glColor4ui" "noalloc";
 external glColor4uiv : word_array -> unit = "glstub_glColor4uiv"
-  "glstub_glColor4uiv";
+  "glstub_glColor4uiv" "noalloc";
 value glColor4uiv p0 =
   let np0 = to_word_array p0 in let r = glColor4uiv np0 in r;
 external glColor4us : int -> int -> int -> int -> unit = "glstub_glColor4us"
-  "glstub_glColor4us";
+  "glstub_glColor4us" "noalloc";
 external glColor4usv : ushort_array -> unit = "glstub_glColor4usv"
-  "glstub_glColor4usv";
+  "glstub_glColor4usv" "noalloc";
 value glColor4usv p0 =
   let np0 = to_ushort_array p0 in let r = glColor4usv np0 in r;
 external glColorMask : bool -> bool -> bool -> bool -> unit =
-  "glstub_glColorMask" "glstub_glColorMask";
+  "glstub_glColorMask" "glstub_glColorMask" "noalloc";
 external glColorMaterial : int -> int -> unit = "glstub_glColorMaterial"
-  "glstub_glColorMaterial";
+  "glstub_glColorMaterial" "noalloc";
 external glColorPointer : int -> int -> int -> 'a -> unit =
-  "glstub_glColorPointer" "glstub_glColorPointer";
+  "glstub_glColorPointer" "glstub_glColorPointer" "noalloc";
 external glColorSubTable : int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glColorSubTable_byte" "glstub_glColorSubTable";
+  "glstub_glColorSubTable_byte" "glstub_glColorSubTable" "noalloc";
 external glColorTable : int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glColorTable_byte" "glstub_glColorTable";
+  "glstub_glColorTable_byte" "glstub_glColorTable" "noalloc";
 external glColorTableParameterfv : int -> int -> float_array -> unit =
-  "glstub_glColorTableParameterfv" "glstub_glColorTableParameterfv";
+  "glstub_glColorTableParameterfv" "glstub_glColorTableParameterfv"
+  "noalloc";
 value glColorTableParameterfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glColorTableParameterfv p0 p1 np2 in r;
 external glColorTableParameteriv : int -> int -> word_array -> unit =
-  "glstub_glColorTableParameteriv" "glstub_glColorTableParameteriv";
+  "glstub_glColorTableParameteriv" "glstub_glColorTableParameteriv"
+  "noalloc";
 value glColorTableParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glColorTableParameteriv p0 p1 np2 in r;
 external glCompileShader : int -> unit = "glstub_glCompileShader"
-  "glstub_glCompileShader";
+  "glstub_glCompileShader" "noalloc";
 external glCompressedTexImage1D :
   int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexImage1D_byte" "glstub_glCompressedTexImage1D";
+  "glstub_glCompressedTexImage1D_byte" "glstub_glCompressedTexImage1D"
+  "noalloc";
 external glCompressedTexImage1DARB :
   int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexImage1DARB_byte" "glstub_glCompressedTexImage1DARB";
+  "glstub_glCompressedTexImage1DARB_byte" "glstub_glCompressedTexImage1DARB"
+  "noalloc";
 external glCompressedTexImage2D :
   int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexImage2D_byte" "glstub_glCompressedTexImage2D";
+  "glstub_glCompressedTexImage2D_byte" "glstub_glCompressedTexImage2D"
+  "noalloc";
 external glCompressedTexImage2DARB :
   int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexImage2DARB_byte" "glstub_glCompressedTexImage2DARB";
+  "glstub_glCompressedTexImage2DARB_byte" "glstub_glCompressedTexImage2DARB"
+  "noalloc";
 external glCompressedTexImage3D :
   int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexImage3D_byte" "glstub_glCompressedTexImage3D";
+  "glstub_glCompressedTexImage3D_byte" "glstub_glCompressedTexImage3D"
+  "noalloc";
 external glCompressedTexImage3DARB :
   int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexImage3DARB_byte" "glstub_glCompressedTexImage3DARB";
+  "glstub_glCompressedTexImage3DARB_byte" "glstub_glCompressedTexImage3DARB"
+  "noalloc";
 external glCompressedTexSubImage1D :
   int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexSubImage1D_byte" "glstub_glCompressedTexSubImage1D";
+  "glstub_glCompressedTexSubImage1D_byte" "glstub_glCompressedTexSubImage1D"
+  "noalloc";
 external glCompressedTexSubImage1DARB :
   int -> int -> int -> int -> int -> int -> 'a -> unit =
   "glstub_glCompressedTexSubImage1DARB_byte"
-  "glstub_glCompressedTexSubImage1DARB";
+  "glstub_glCompressedTexSubImage1DARB" "noalloc";
 external glCompressedTexSubImage2D :
   int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexSubImage2D_byte" "glstub_glCompressedTexSubImage2D";
+  "glstub_glCompressedTexSubImage2D_byte" "glstub_glCompressedTexSubImage2D"
+  "noalloc";
 external glCompressedTexSubImage2DARB :
   int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
   "glstub_glCompressedTexSubImage2DARB_byte"
-  "glstub_glCompressedTexSubImage2DARB";
+  "glstub_glCompressedTexSubImage2DARB" "noalloc";
 external glCompressedTexSubImage3D :
   int ->
     int -> int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glCompressedTexSubImage3D_byte" "glstub_glCompressedTexSubImage3D";
+  "glstub_glCompressedTexSubImage3D_byte" "glstub_glCompressedTexSubImage3D"
+  "noalloc";
 external glCompressedTexSubImage3DARB :
   int ->
     int -> int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
   "glstub_glCompressedTexSubImage3DARB_byte"
-  "glstub_glCompressedTexSubImage3DARB";
+  "glstub_glCompressedTexSubImage3DARB" "noalloc";
 external glConvolutionFilter1D :
   int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glConvolutionFilter1D_byte" "glstub_glConvolutionFilter1D";
+  "glstub_glConvolutionFilter1D_byte" "glstub_glConvolutionFilter1D"
+  "noalloc";
 external glConvolutionFilter2D :
   int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glConvolutionFilter2D_byte" "glstub_glConvolutionFilter2D";
+  "glstub_glConvolutionFilter2D_byte" "glstub_glConvolutionFilter2D"
+  "noalloc";
 external glConvolutionParameterf : int -> int -> float -> unit =
-  "glstub_glConvolutionParameterf" "glstub_glConvolutionParameterf";
+  "glstub_glConvolutionParameterf" "glstub_glConvolutionParameterf"
+  "noalloc";
 external glConvolutionParameterfv : int -> int -> float_array -> unit =
-  "glstub_glConvolutionParameterfv" "glstub_glConvolutionParameterfv";
+  "glstub_glConvolutionParameterfv" "glstub_glConvolutionParameterfv"
+  "noalloc";
 value glConvolutionParameterfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glConvolutionParameterfv p0 p1 np2 in r;
 external glConvolutionParameteri : int -> int -> int -> unit =
-  "glstub_glConvolutionParameteri" "glstub_glConvolutionParameteri";
+  "glstub_glConvolutionParameteri" "glstub_glConvolutionParameteri"
+  "noalloc";
 external glConvolutionParameteriv : int -> int -> word_array -> unit =
-  "glstub_glConvolutionParameteriv" "glstub_glConvolutionParameteriv";
+  "glstub_glConvolutionParameteriv" "glstub_glConvolutionParameteriv"
+  "noalloc";
 value glConvolutionParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glConvolutionParameteriv p0 p1 np2 in r;
 external glCopyColorSubTable : int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyColorSubTable" "glstub_glCopyColorSubTable";
+  "glstub_glCopyColorSubTable" "glstub_glCopyColorSubTable" "noalloc";
 external glCopyColorTable : int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyColorTable" "glstub_glCopyColorTable";
+  "glstub_glCopyColorTable" "glstub_glCopyColorTable" "noalloc";
 external glCopyConvolutionFilter1D :
   int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyConvolutionFilter1D" "glstub_glCopyConvolutionFilter1D";
+  "glstub_glCopyConvolutionFilter1D" "glstub_glCopyConvolutionFilter1D"
+  "noalloc";
 external glCopyConvolutionFilter2D :
   int -> int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyConvolutionFilter2D_byte" "glstub_glCopyConvolutionFilter2D";
+  "glstub_glCopyConvolutionFilter2D_byte" "glstub_glCopyConvolutionFilter2D"
+  "noalloc";
 external glCopyPixels : int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyPixels" "glstub_glCopyPixels";
+  "glstub_glCopyPixels" "glstub_glCopyPixels" "noalloc";
 external glCopyTexImage1D :
   int -> int -> int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyTexImage1D_byte" "glstub_glCopyTexImage1D";
+  "glstub_glCopyTexImage1D_byte" "glstub_glCopyTexImage1D" "noalloc";
 external glCopyTexImage2D :
   int -> int -> int -> int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyTexImage2D_byte" "glstub_glCopyTexImage2D";
+  "glstub_glCopyTexImage2D_byte" "glstub_glCopyTexImage2D" "noalloc";
 external glCopyTexSubImage1D :
   int -> int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyTexSubImage1D_byte" "glstub_glCopyTexSubImage1D";
+  "glstub_glCopyTexSubImage1D_byte" "glstub_glCopyTexSubImage1D" "noalloc";
 external glCopyTexSubImage2D :
   int -> int -> int -> int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyTexSubImage2D_byte" "glstub_glCopyTexSubImage2D";
+  "glstub_glCopyTexSubImage2D_byte" "glstub_glCopyTexSubImage2D" "noalloc";
 external glCopyTexSubImage3D :
   int -> int -> int -> int -> int -> int -> int -> int -> int -> unit =
-  "glstub_glCopyTexSubImage3D_byte" "glstub_glCopyTexSubImage3D";
+  "glstub_glCopyTexSubImage3D_byte" "glstub_glCopyTexSubImage3D" "noalloc";
 external glCreateProgram : unit -> int = "glstub_glCreateProgram"
   "glstub_glCreateProgram";
 external glCreateShader : int -> int = "glstub_glCreateShader"
   "glstub_glCreateShader";
-external glCullFace : int -> unit = "glstub_glCullFace" "glstub_glCullFace";
+external glCullFace : int -> unit = "glstub_glCullFace" "glstub_glCullFace"
+  "noalloc";
 external glDeleteBuffers : int -> word_array -> unit =
-  "glstub_glDeleteBuffers" "glstub_glDeleteBuffers";
+  "glstub_glDeleteBuffers" "glstub_glDeleteBuffers" "noalloc";
 value glDeleteBuffers p0 p1 =
   let np1 = to_word_array p1 in let r = glDeleteBuffers p0 np1 in r;
 external glDeleteBuffersARB : int -> word_array -> unit =
-  "glstub_glDeleteBuffersARB" "glstub_glDeleteBuffersARB";
+  "glstub_glDeleteBuffersARB" "glstub_glDeleteBuffersARB" "noalloc";
 value glDeleteBuffersARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glDeleteBuffersARB p0 np1 in let _ = copy_word_array np1 p1 in r;
+external glDeleteFramebuffersEXT : int -> word_array -> unit =
+  "glstub_glDeleteFramebuffersEXT" "glstub_glDeleteFramebuffersEXT"
+  "noalloc";
+value glDeleteFramebuffersEXT p0 p1 =
+  let np1 = to_word_array p1 in let r = glDeleteFramebuffersEXT p0 np1 in r;
 external glDeleteLists : int -> int -> unit = "glstub_glDeleteLists"
-  "glstub_glDeleteLists";
+  "glstub_glDeleteLists" "noalloc";
 external glDeleteProgram : int -> unit = "glstub_glDeleteProgram"
-  "glstub_glDeleteProgram";
+  "glstub_glDeleteProgram" "noalloc";
 external glDeleteProgramsARB : int -> word_array -> unit =
-  "glstub_glDeleteProgramsARB" "glstub_glDeleteProgramsARB";
+  "glstub_glDeleteProgramsARB" "glstub_glDeleteProgramsARB" "noalloc";
 value glDeleteProgramsARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glDeleteProgramsARB p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glDeleteQueries : int -> word_array -> unit =
-  "glstub_glDeleteQueries" "glstub_glDeleteQueries";
+  "glstub_glDeleteQueries" "glstub_glDeleteQueries" "noalloc";
 value glDeleteQueries p0 p1 =
   let np1 = to_word_array p1 in let r = glDeleteQueries p0 np1 in r;
 external glDeleteQueriesARB : int -> word_array -> unit =
-  "glstub_glDeleteQueriesARB" "glstub_glDeleteQueriesARB";
+  "glstub_glDeleteQueriesARB" "glstub_glDeleteQueriesARB" "noalloc";
 value glDeleteQueriesARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glDeleteQueriesARB p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glDeleteShader : int -> unit = "glstub_glDeleteShader"
-  "glstub_glDeleteShader";
+  "glstub_glDeleteShader" "noalloc";
 external glDeleteTextures : int -> word_array -> unit =
-  "glstub_glDeleteTextures" "glstub_glDeleteTextures";
+  "glstub_glDeleteTextures" "glstub_glDeleteTextures" "noalloc";
 value glDeleteTextures p0 p1 =
   let np1 = to_word_array p1 in let r = glDeleteTextures p0 np1 in r;
 external glDepthFunc : int -> unit = "glstub_glDepthFunc"
-  "glstub_glDepthFunc";
+  "glstub_glDepthFunc" "noalloc";
 external glDepthMask : bool -> unit = "glstub_glDepthMask"
-  "glstub_glDepthMask";
+  "glstub_glDepthMask" "noalloc";
 external glDepthRange : float -> float -> unit = "glstub_glDepthRange"
-  "glstub_glDepthRange";
+  "glstub_glDepthRange" "noalloc";
 external glDetachShader : int -> int -> unit = "glstub_glDetachShader"
-  "glstub_glDetachShader";
-external glDisable : int -> unit = "glstub_glDisable" "glstub_glDisable";
+  "glstub_glDetachShader" "noalloc";
+external glDisable : int -> unit = "glstub_glDisable" "glstub_glDisable"
+  "noalloc";
 external glDisableClientState : int -> unit = "glstub_glDisableClientState"
-  "glstub_glDisableClientState";
+  "glstub_glDisableClientState" "noalloc";
 external glDisableVertexAttribArray : int -> unit =
-  "glstub_glDisableVertexAttribArray" "glstub_glDisableVertexAttribArray";
+  "glstub_glDisableVertexAttribArray" "glstub_glDisableVertexAttribArray"
+  "noalloc";
 external glDisableVertexAttribArrayARB : int -> unit =
   "glstub_glDisableVertexAttribArrayARB"
-  "glstub_glDisableVertexAttribArrayARB";
+  "glstub_glDisableVertexAttribArrayARB" "noalloc";
 external glDrawArrays : int -> int -> int -> unit = "glstub_glDrawArrays"
-  "glstub_glDrawArrays";
+  "glstub_glDrawArrays" "noalloc";
 external glDrawBuffer : int -> unit = "glstub_glDrawBuffer"
-  "glstub_glDrawBuffer";
+  "glstub_glDrawBuffer" "noalloc";
 external glDrawBuffers : int -> word_array -> unit = "glstub_glDrawBuffers"
-  "glstub_glDrawBuffers";
+  "glstub_glDrawBuffers" "noalloc";
 value glDrawBuffers p0 p1 =
   let np1 = to_word_array p1 in let r = glDrawBuffers p0 np1 in r;
 external glDrawBuffersARB : int -> word_array -> unit =
-  "glstub_glDrawBuffersARB" "glstub_glDrawBuffersARB";
+  "glstub_glDrawBuffersARB" "glstub_glDrawBuffersARB" "noalloc";
 value glDrawBuffersARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glDrawBuffersARB p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glDrawElements : int -> int -> int -> 'a -> unit =
-  "glstub_glDrawElements" "glstub_glDrawElements";
+  "glstub_glDrawElements" "glstub_glDrawElements" "noalloc";
 external glDrawPixels : int -> int -> int -> int -> 'a -> unit =
-  "glstub_glDrawPixels" "glstub_glDrawPixels";
+  "glstub_glDrawPixels" "glstub_glDrawPixels" "noalloc";
 external glDrawRangeElements :
   int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glDrawRangeElements_byte" "glstub_glDrawRangeElements";
-external glEdgeFlag : bool -> unit = "glstub_glEdgeFlag" "glstub_glEdgeFlag";
+  "glstub_glDrawRangeElements_byte" "glstub_glDrawRangeElements" "noalloc";
+external glEdgeFlag : bool -> unit = "glstub_glEdgeFlag" "glstub_glEdgeFlag"
+  "noalloc";
 external glEdgeFlagPointer : int -> 'a -> unit = "glstub_glEdgeFlagPointer"
-  "glstub_glEdgeFlagPointer";
+  "glstub_glEdgeFlagPointer" "noalloc";
 external glEdgeFlagv : word_array -> unit = "glstub_glEdgeFlagv"
-  "glstub_glEdgeFlagv";
+  "glstub_glEdgeFlagv" "noalloc";
 value glEdgeFlagv p0 =
   let np0 = to_word_array (bool_to_int_array p0) in
   let r = glEdgeFlagv np0 in r;
-external glEnable : int -> unit = "glstub_glEnable" "glstub_glEnable";
+external glEnable : int -> unit = "glstub_glEnable" "glstub_glEnable"
+  "noalloc";
 external glEnableClientState : int -> unit = "glstub_glEnableClientState"
-  "glstub_glEnableClientState";
+  "glstub_glEnableClientState" "noalloc";
 external glEnableVertexAttribArray : int -> unit =
-  "glstub_glEnableVertexAttribArray" "glstub_glEnableVertexAttribArray";
+  "glstub_glEnableVertexAttribArray" "glstub_glEnableVertexAttribArray"
+  "noalloc";
 external glEnableVertexAttribArrayARB : int -> unit =
-  "glstub_glEnableVertexAttribArrayARB"
-  "glstub_glEnableVertexAttribArrayARB";
-external glEnd : unit -> unit = "glstub_glEnd" "glstub_glEnd";
-external glEndList : unit -> unit = "glstub_glEndList" "glstub_glEndList";
-external glEndQuery : int -> unit = "glstub_glEndQuery" "glstub_glEndQuery";
+  "glstub_glEnableVertexAttribArrayARB" "glstub_glEnableVertexAttribArrayARB"
+  "noalloc";
+external glEnd : unit -> unit = "glstub_glEnd" "glstub_glEnd" "noalloc";
+external glEndList : unit -> unit = "glstub_glEndList" "glstub_glEndList"
+  "noalloc";
+external glEndQuery : int -> unit = "glstub_glEndQuery" "glstub_glEndQuery"
+  "noalloc";
 external glEndQueryARB : int -> unit = "glstub_glEndQueryARB"
-  "glstub_glEndQueryARB";
+  "glstub_glEndQueryARB" "noalloc";
 external glEvalCoord1d : float -> unit = "glstub_glEvalCoord1d"
-  "glstub_glEvalCoord1d";
+  "glstub_glEvalCoord1d" "noalloc";
 external glEvalCoord1dv : array float -> unit = "glstub_glEvalCoord1dv"
-  "glstub_glEvalCoord1dv";
+  "glstub_glEvalCoord1dv" "noalloc";
 external glEvalCoord1f : float -> unit = "glstub_glEvalCoord1f"
-  "glstub_glEvalCoord1f";
+  "glstub_glEvalCoord1f" "noalloc";
 external glEvalCoord1fv : float_array -> unit = "glstub_glEvalCoord1fv"
-  "glstub_glEvalCoord1fv";
+  "glstub_glEvalCoord1fv" "noalloc";
 value glEvalCoord1fv p0 =
   let np0 = to_float_array p0 in let r = glEvalCoord1fv np0 in r;
 external glEvalCoord2d : float -> float -> unit = "glstub_glEvalCoord2d"
-  "glstub_glEvalCoord2d";
+  "glstub_glEvalCoord2d" "noalloc";
 external glEvalCoord2dv : array float -> unit = "glstub_glEvalCoord2dv"
-  "glstub_glEvalCoord2dv";
+  "glstub_glEvalCoord2dv" "noalloc";
 external glEvalCoord2f : float -> float -> unit = "glstub_glEvalCoord2f"
-  "glstub_glEvalCoord2f";
+  "glstub_glEvalCoord2f" "noalloc";
 external glEvalCoord2fv : float_array -> unit = "glstub_glEvalCoord2fv"
-  "glstub_glEvalCoord2fv";
+  "glstub_glEvalCoord2fv" "noalloc";
 value glEvalCoord2fv p0 =
   let np0 = to_float_array p0 in let r = glEvalCoord2fv np0 in r;
 external glEvalMesh1 : int -> int -> int -> unit = "glstub_glEvalMesh1"
-  "glstub_glEvalMesh1";
+  "glstub_glEvalMesh1" "noalloc";
 external glEvalMesh2 : int -> int -> int -> int -> int -> unit =
-  "glstub_glEvalMesh2" "glstub_glEvalMesh2";
+  "glstub_glEvalMesh2" "glstub_glEvalMesh2" "noalloc";
 external glEvalPoint1 : int -> unit = "glstub_glEvalPoint1"
-  "glstub_glEvalPoint1";
+  "glstub_glEvalPoint1" "noalloc";
 external glEvalPoint2 : int -> int -> unit = "glstub_glEvalPoint2"
-  "glstub_glEvalPoint2";
+  "glstub_glEvalPoint2" "noalloc";
 external glFeedbackBuffer : int -> int -> float_array -> unit =
-  "glstub_glFeedbackBuffer" "glstub_glFeedbackBuffer";
+  "glstub_glFeedbackBuffer" "glstub_glFeedbackBuffer" "noalloc";
 value glFeedbackBuffer p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glFeedbackBuffer p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
-external glFinish : unit -> unit = "glstub_glFinish" "glstub_glFinish";
-external glFlush : unit -> unit = "glstub_glFlush" "glstub_glFlush";
+external glFinish : unit -> unit = "glstub_glFinish" "glstub_glFinish"
+  "noalloc";
+external glFlush : unit -> unit = "glstub_glFlush" "glstub_glFlush"
+  "noalloc";
 external glFogCoordPointer : int -> int -> 'a -> unit =
-  "glstub_glFogCoordPointer" "glstub_glFogCoordPointer";
+  "glstub_glFogCoordPointer" "glstub_glFogCoordPointer" "noalloc";
 external glFogCoordd : float -> unit = "glstub_glFogCoordd"
-  "glstub_glFogCoordd";
+  "glstub_glFogCoordd" "noalloc";
 external glFogCoorddv : array float -> unit = "glstub_glFogCoorddv"
-  "glstub_glFogCoorddv";
+  "glstub_glFogCoorddv" "noalloc";
 external glFogCoordf : float -> unit = "glstub_glFogCoordf"
-  "glstub_glFogCoordf";
+  "glstub_glFogCoordf" "noalloc";
 external glFogCoordfv : float_array -> unit = "glstub_glFogCoordfv"
-  "glstub_glFogCoordfv";
+  "glstub_glFogCoordfv" "noalloc";
 value glFogCoordfv p0 =
   let np0 = to_float_array p0 in let r = glFogCoordfv np0 in r;
-external glFogf : int -> float -> unit = "glstub_glFogf" "glstub_glFogf";
+external glFogf : int -> float -> unit = "glstub_glFogf" "glstub_glFogf"
+  "noalloc";
 external glFogfv : int -> float_array -> unit = "glstub_glFogfv"
-  "glstub_glFogfv";
+  "glstub_glFogfv" "noalloc";
 value glFogfv p0 p1 =
   let np1 = to_float_array p1 in let r = glFogfv p0 np1 in r;
-external glFogi : int -> int -> unit = "glstub_glFogi" "glstub_glFogi";
+external glFogi : int -> int -> unit = "glstub_glFogi" "glstub_glFogi"
+  "noalloc";
 external glFogiv : int -> word_array -> unit = "glstub_glFogiv"
-  "glstub_glFogiv";
+  "glstub_glFogiv" "noalloc";
 value glFogiv p0 p1 =
   let np1 = to_word_array p1 in let r = glFogiv p0 np1 in r;
+external glFramebufferTexture1DEXT :
+  int -> int -> int -> int -> int -> unit =
+  "glstub_glFramebufferTexture1DEXT" "glstub_glFramebufferTexture1DEXT"
+  "noalloc";
+external glFramebufferTexture2DEXT :
+  int -> int -> int -> int -> int -> unit =
+  "glstub_glFramebufferTexture2DEXT" "glstub_glFramebufferTexture2DEXT"
+  "noalloc";
 external glFrontFace : int -> unit = "glstub_glFrontFace"
-  "glstub_glFrontFace";
+  "glstub_glFrontFace" "noalloc";
 external glFrustum :
   float -> float -> float -> float -> float -> float -> unit =
-  "glstub_glFrustum_byte" "glstub_glFrustum";
+  "glstub_glFrustum_byte" "glstub_glFrustum" "noalloc";
 external glGenBuffers : int -> word_array -> unit = "glstub_glGenBuffers"
-  "glstub_glGenBuffers";
+  "glstub_glGenBuffers" "noalloc";
 value glGenBuffers p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGenBuffers p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGenBuffersARB : int -> word_array -> unit =
-  "glstub_glGenBuffersARB" "glstub_glGenBuffersARB";
+  "glstub_glGenBuffersARB" "glstub_glGenBuffersARB" "noalloc";
 value glGenBuffersARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGenBuffersARB p0 np1 in let _ = copy_word_array np1 p1 in r;
+external glGenFramebuffersEXT : int -> word_array -> unit =
+  "glstub_glGenFramebuffersEXT" "glstub_glGenFramebuffersEXT" "noalloc";
+value glGenFramebuffersEXT p0 p1 =
+  let np1 = to_word_array p1 in
+  let r = glGenFramebuffersEXT p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGenLists : int -> int = "glstub_glGenLists" "glstub_glGenLists";
 external glGenProgramsARB : int -> word_array -> unit =
-  "glstub_glGenProgramsARB" "glstub_glGenProgramsARB";
+  "glstub_glGenProgramsARB" "glstub_glGenProgramsARB" "noalloc";
 value glGenProgramsARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGenProgramsARB p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGenQueries : int -> word_array -> unit = "glstub_glGenQueries"
-  "glstub_glGenQueries";
+  "glstub_glGenQueries" "noalloc";
 value glGenQueries p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGenQueries p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGenQueriesARB : int -> word_array -> unit =
-  "glstub_glGenQueriesARB" "glstub_glGenQueriesARB";
+  "glstub_glGenQueriesARB" "glstub_glGenQueriesARB" "noalloc";
 value glGenQueriesARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGenQueriesARB p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGenTextures : int -> word_array -> unit = "glstub_glGenTextures"
-  "glstub_glGenTextures";
+  "glstub_glGenTextures" "noalloc";
 value glGenTextures p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGenTextures p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGetActiveAttrib :
   int ->
     int -> int -> word_array -> word_array -> word_array -> string -> unit =
-  "glstub_glGetActiveAttrib_byte" "glstub_glGetActiveAttrib";
+  "glstub_glGetActiveAttrib_byte" "glstub_glGetActiveAttrib" "noalloc";
 value glGetActiveAttrib p0 p1 p2 p3 p4 p5 p6 =
   let np3 = to_word_array p3 in
   let np4 = to_word_array p4 in
@@ -2094,7 +2155,7 @@ value glGetActiveAttrib p0 p1 p2 p3 p4 p5 p6 =
 external glGetActiveUniform :
   int ->
     int -> int -> word_array -> word_array -> word_array -> string -> unit =
-  "glstub_glGetActiveUniform_byte" "glstub_glGetActiveUniform";
+  "glstub_glGetActiveUniform_byte" "glstub_glGetActiveUniform" "noalloc";
 value glGetActiveUniform p0 p1 p2 p3 p4 p5 p6 =
   let np3 = to_word_array p3 in
   let np4 = to_word_array p4 in
@@ -2104,7 +2165,7 @@ value glGetActiveUniform p0 p1 p2 p3 p4 p5 p6 =
   let _ = copy_word_array np4 p4 in let _ = copy_word_array np5 p5 in r;
 external glGetAttachedShaders :
   int -> int -> word_array -> word_array -> unit =
-  "glstub_glGetAttachedShaders" "glstub_glGetAttachedShaders";
+  "glstub_glGetAttachedShaders" "glstub_glGetAttachedShaders" "noalloc";
 value glGetAttachedShaders p0 p1 p2 p3 =
   let np2 = to_word_array p2 in
   let np3 = to_word_array p3 in
@@ -2113,173 +2174,182 @@ value glGetAttachedShaders p0 p1 p2 p3 =
 external glGetAttribLocation : int -> string -> int =
   "glstub_glGetAttribLocation" "glstub_glGetAttribLocation";
 external glGetBooleanv : int -> word_array -> unit = "glstub_glGetBooleanv"
-  "glstub_glGetBooleanv";
+  "glstub_glGetBooleanv" "noalloc";
 value glGetBooleanv p0 p1 =
   let np1 = to_word_array (bool_to_int_array p1) in
   let r = glGetBooleanv p0 np1 in
   let bp1 = Array.create (Bigarray.Array1.dim np1) 0 in
   let _ = copy_word_array np1 bp1 in let _ = copy_to_bool_array bp1 p1 in r;
 external glGetBufferParameteriv : int -> int -> word_array -> unit =
-  "glstub_glGetBufferParameteriv" "glstub_glGetBufferParameteriv";
+  "glstub_glGetBufferParameteriv" "glstub_glGetBufferParameteriv" "noalloc";
 value glGetBufferParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetBufferParameteriv p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetBufferParameterivARB : int -> int -> word_array -> unit =
-  "glstub_glGetBufferParameterivARB" "glstub_glGetBufferParameterivARB";
+  "glstub_glGetBufferParameterivARB" "glstub_glGetBufferParameterivARB"
+  "noalloc";
 value glGetBufferParameterivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetBufferParameterivARB p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetBufferPointerv : int -> int -> 'a -> unit =
-  "glstub_glGetBufferPointerv" "glstub_glGetBufferPointerv";
+  "glstub_glGetBufferPointerv" "glstub_glGetBufferPointerv" "noalloc";
 external glGetBufferPointervARB : int -> int -> 'a -> unit =
-  "glstub_glGetBufferPointervARB" "glstub_glGetBufferPointervARB";
+  "glstub_glGetBufferPointervARB" "glstub_glGetBufferPointervARB" "noalloc";
 external glGetBufferSubData : int -> int -> int -> 'a -> unit =
-  "glstub_glGetBufferSubData" "glstub_glGetBufferSubData";
+  "glstub_glGetBufferSubData" "glstub_glGetBufferSubData" "noalloc";
 external glGetBufferSubDataARB : int -> int -> int -> 'a -> unit =
-  "glstub_glGetBufferSubDataARB" "glstub_glGetBufferSubDataARB";
+  "glstub_glGetBufferSubDataARB" "glstub_glGetBufferSubDataARB" "noalloc";
 external glGetClipPlane : int -> array float -> unit =
-  "glstub_glGetClipPlane" "glstub_glGetClipPlane";
+  "glstub_glGetClipPlane" "glstub_glGetClipPlane" "noalloc";
 external glGetColorTable : int -> int -> int -> 'a -> unit =
-  "glstub_glGetColorTable" "glstub_glGetColorTable";
+  "glstub_glGetColorTable" "glstub_glGetColorTable" "noalloc";
 external glGetColorTableParameterfv : int -> int -> float_array -> unit =
-  "glstub_glGetColorTableParameterfv" "glstub_glGetColorTableParameterfv";
+  "glstub_glGetColorTableParameterfv" "glstub_glGetColorTableParameterfv"
+  "noalloc";
 value glGetColorTableParameterfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetColorTableParameterfv p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetColorTableParameteriv : int -> int -> word_array -> unit =
-  "glstub_glGetColorTableParameteriv" "glstub_glGetColorTableParameteriv";
+  "glstub_glGetColorTableParameteriv" "glstub_glGetColorTableParameteriv"
+  "noalloc";
 value glGetColorTableParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetColorTableParameteriv p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetCompressedTexImage : int -> int -> 'a -> unit =
-  "glstub_glGetCompressedTexImage" "glstub_glGetCompressedTexImage";
+  "glstub_glGetCompressedTexImage" "glstub_glGetCompressedTexImage"
+  "noalloc";
 external glGetCompressedTexImageARB : int -> int -> 'a -> unit =
-  "glstub_glGetCompressedTexImageARB" "glstub_glGetCompressedTexImageARB";
+  "glstub_glGetCompressedTexImageARB" "glstub_glGetCompressedTexImageARB"
+  "noalloc";
 external glGetConvolutionFilter : int -> int -> int -> 'a -> unit =
-  "glstub_glGetConvolutionFilter" "glstub_glGetConvolutionFilter";
+  "glstub_glGetConvolutionFilter" "glstub_glGetConvolutionFilter" "noalloc";
 external glGetConvolutionParameterfv : int -> int -> float_array -> unit =
-  "glstub_glGetConvolutionParameterfv" "glstub_glGetConvolutionParameterfv";
+  "glstub_glGetConvolutionParameterfv" "glstub_glGetConvolutionParameterfv"
+  "noalloc";
 value glGetConvolutionParameterfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetConvolutionParameterfv p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetConvolutionParameteriv : int -> int -> word_array -> unit =
-  "glstub_glGetConvolutionParameteriv" "glstub_glGetConvolutionParameteriv";
+  "glstub_glGetConvolutionParameteriv" "glstub_glGetConvolutionParameteriv"
+  "noalloc";
 value glGetConvolutionParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetConvolutionParameteriv p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetDoublev : int -> array float -> unit = "glstub_glGetDoublev"
-  "glstub_glGetDoublev";
+  "glstub_glGetDoublev" "noalloc";
 external glGetError : unit -> int = "glstub_glGetError" "glstub_glGetError";
 external glGetFloatv : int -> float_array -> unit = "glstub_glGetFloatv"
-  "glstub_glGetFloatv";
+  "glstub_glGetFloatv" "noalloc";
 value glGetFloatv p0 p1 =
   let np1 = to_float_array p1 in
   let r = glGetFloatv p0 np1 in let _ = copy_float_array np1 p1 in r;
 external glGetHistogram : int -> bool -> int -> int -> 'a -> unit =
-  "glstub_glGetHistogram" "glstub_glGetHistogram";
+  "glstub_glGetHistogram" "glstub_glGetHistogram" "noalloc";
 external glGetHistogramParameterfv : int -> int -> float_array -> unit =
-  "glstub_glGetHistogramParameterfv" "glstub_glGetHistogramParameterfv";
+  "glstub_glGetHistogramParameterfv" "glstub_glGetHistogramParameterfv"
+  "noalloc";
 value glGetHistogramParameterfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetHistogramParameterfv p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetHistogramParameteriv : int -> int -> word_array -> unit =
-  "glstub_glGetHistogramParameteriv" "glstub_glGetHistogramParameteriv";
+  "glstub_glGetHistogramParameteriv" "glstub_glGetHistogramParameteriv"
+  "noalloc";
 value glGetHistogramParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetHistogramParameteriv p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetIntegerv : int -> word_array -> unit = "glstub_glGetIntegerv"
-  "glstub_glGetIntegerv";
+  "glstub_glGetIntegerv" "noalloc";
 value glGetIntegerv p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGetIntegerv p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGetLightfv : int -> int -> float_array -> unit =
-  "glstub_glGetLightfv" "glstub_glGetLightfv";
+  "glstub_glGetLightfv" "glstub_glGetLightfv" "noalloc";
 value glGetLightfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetLightfv p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glGetLightiv : int -> int -> word_array -> unit =
-  "glstub_glGetLightiv" "glstub_glGetLightiv";
+  "glstub_glGetLightiv" "glstub_glGetLightiv" "noalloc";
 value glGetLightiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetLightiv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetMapdv : int -> int -> array float -> unit = "glstub_glGetMapdv"
-  "glstub_glGetMapdv";
+  "glstub_glGetMapdv" "noalloc";
 external glGetMapfv : int -> int -> float_array -> unit = "glstub_glGetMapfv"
-  "glstub_glGetMapfv";
+  "glstub_glGetMapfv" "noalloc";
 value glGetMapfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetMapfv p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glGetMapiv : int -> int -> word_array -> unit = "glstub_glGetMapiv"
-  "glstub_glGetMapiv";
+  "glstub_glGetMapiv" "noalloc";
 value glGetMapiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetMapiv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetMaterialfv : int -> int -> float_array -> unit =
-  "glstub_glGetMaterialfv" "glstub_glGetMaterialfv";
+  "glstub_glGetMaterialfv" "glstub_glGetMaterialfv" "noalloc";
 value glGetMaterialfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetMaterialfv p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glGetMaterialiv : int -> int -> word_array -> unit =
-  "glstub_glGetMaterialiv" "glstub_glGetMaterialiv";
+  "glstub_glGetMaterialiv" "glstub_glGetMaterialiv" "noalloc";
 value glGetMaterialiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetMaterialiv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetMinmax : int -> bool -> int -> int -> 'a -> unit =
-  "glstub_glGetMinmax" "glstub_glGetMinmax";
+  "glstub_glGetMinmax" "glstub_glGetMinmax" "noalloc";
 external glGetMinmaxParameterfv : int -> int -> float_array -> unit =
-  "glstub_glGetMinmaxParameterfv" "glstub_glGetMinmaxParameterfv";
+  "glstub_glGetMinmaxParameterfv" "glstub_glGetMinmaxParameterfv" "noalloc";
 value glGetMinmaxParameterfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetMinmaxParameterfv p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetMinmaxParameteriv : int -> int -> word_array -> unit =
-  "glstub_glGetMinmaxParameteriv" "glstub_glGetMinmaxParameteriv";
+  "glstub_glGetMinmaxParameteriv" "glstub_glGetMinmaxParameteriv" "noalloc";
 value glGetMinmaxParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetMinmaxParameteriv p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetPixelMapfv : int -> float_array -> unit =
-  "glstub_glGetPixelMapfv" "glstub_glGetPixelMapfv";
+  "glstub_glGetPixelMapfv" "glstub_glGetPixelMapfv" "noalloc";
 value glGetPixelMapfv p0 p1 =
   let np1 = to_float_array p1 in
   let r = glGetPixelMapfv p0 np1 in let _ = copy_float_array np1 p1 in r;
 external glGetPixelMapuiv : int -> word_array -> unit =
-  "glstub_glGetPixelMapuiv" "glstub_glGetPixelMapuiv";
+  "glstub_glGetPixelMapuiv" "glstub_glGetPixelMapuiv" "noalloc";
 value glGetPixelMapuiv p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGetPixelMapuiv p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGetPixelMapusv : int -> ushort_array -> unit =
-  "glstub_glGetPixelMapusv" "glstub_glGetPixelMapusv";
+  "glstub_glGetPixelMapusv" "glstub_glGetPixelMapusv" "noalloc";
 value glGetPixelMapusv p0 p1 =
   let np1 = to_ushort_array p1 in
   let r = glGetPixelMapusv p0 np1 in let _ = copy_ushort_array np1 p1 in r;
 external glGetPointerv : int -> 'a -> unit = "glstub_glGetPointerv"
-  "glstub_glGetPointerv";
+  "glstub_glGetPointerv" "noalloc";
 external glGetPolygonStipple : ubyte_array -> unit =
-  "glstub_glGetPolygonStipple" "glstub_glGetPolygonStipple";
+  "glstub_glGetPolygonStipple" "glstub_glGetPolygonStipple" "noalloc";
 value glGetPolygonStipple p0 =
   let np0 = to_ubyte_array p0 in
   let r = glGetPolygonStipple np0 in let _ = copy_ubyte_array np0 p0 in r;
 external glGetProgramEnvParameterdvARB : int -> int -> array float -> unit =
   "glstub_glGetProgramEnvParameterdvARB"
-  "glstub_glGetProgramEnvParameterdvARB";
+  "glstub_glGetProgramEnvParameterdvARB" "noalloc";
 external glGetProgramEnvParameterfvARB : int -> int -> float_array -> unit =
   "glstub_glGetProgramEnvParameterfvARB"
-  "glstub_glGetProgramEnvParameterfvARB";
+  "glstub_glGetProgramEnvParameterfvARB" "noalloc";
 value glGetProgramEnvParameterfvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetProgramEnvParameterfvARB p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetProgramInfoLog : int -> int -> word_array -> string -> unit =
-  "glstub_glGetProgramInfoLog" "glstub_glGetProgramInfoLog";
+  "glstub_glGetProgramInfoLog" "glstub_glGetProgramInfoLog" "noalloc";
 value glGetProgramInfoLog p0 p1 p2 p3 =
   let np2 = to_word_array p2 in
   let r = glGetProgramInfoLog p0 p1 np2 p3 in
@@ -2287,124 +2357,126 @@ value glGetProgramInfoLog p0 p1 p2 p3 =
 external glGetProgramLocalParameterdvARB :
   int -> int -> array float -> unit =
   "glstub_glGetProgramLocalParameterdvARB"
-  "glstub_glGetProgramLocalParameterdvARB";
+  "glstub_glGetProgramLocalParameterdvARB" "noalloc";
 external glGetProgramLocalParameterfvARB :
   int -> int -> float_array -> unit =
   "glstub_glGetProgramLocalParameterfvARB"
-  "glstub_glGetProgramLocalParameterfvARB";
+  "glstub_glGetProgramLocalParameterfvARB" "noalloc";
 value glGetProgramLocalParameterfvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetProgramLocalParameterfvARB p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetProgramStringARB : int -> int -> 'a -> unit =
-  "glstub_glGetProgramStringARB" "glstub_glGetProgramStringARB";
+  "glstub_glGetProgramStringARB" "glstub_glGetProgramStringARB" "noalloc";
 external glGetProgramiv : int -> int -> word_array -> unit =
-  "glstub_glGetProgramiv" "glstub_glGetProgramiv";
+  "glstub_glGetProgramiv" "glstub_glGetProgramiv" "noalloc";
 value glGetProgramiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetProgramiv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetProgramivARB : int -> int -> word_array -> unit =
-  "glstub_glGetProgramivARB" "glstub_glGetProgramivARB";
+  "glstub_glGetProgramivARB" "glstub_glGetProgramivARB" "noalloc";
 value glGetProgramivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetProgramivARB p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetQueryObjectiv : int -> int -> word_array -> unit =
-  "glstub_glGetQueryObjectiv" "glstub_glGetQueryObjectiv";
+  "glstub_glGetQueryObjectiv" "glstub_glGetQueryObjectiv" "noalloc";
 value glGetQueryObjectiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetQueryObjectiv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetQueryObjectivARB : int -> int -> word_array -> unit =
-  "glstub_glGetQueryObjectivARB" "glstub_glGetQueryObjectivARB";
+  "glstub_glGetQueryObjectivARB" "glstub_glGetQueryObjectivARB" "noalloc";
 value glGetQueryObjectivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetQueryObjectivARB p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetQueryObjectuiv : int -> int -> word_array -> unit =
-  "glstub_glGetQueryObjectuiv" "glstub_glGetQueryObjectuiv";
+  "glstub_glGetQueryObjectuiv" "glstub_glGetQueryObjectuiv" "noalloc";
 value glGetQueryObjectuiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetQueryObjectuiv p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetQueryObjectuivARB : int -> int -> word_array -> unit =
-  "glstub_glGetQueryObjectuivARB" "glstub_glGetQueryObjectuivARB";
+  "glstub_glGetQueryObjectuivARB" "glstub_glGetQueryObjectuivARB" "noalloc";
 value glGetQueryObjectuivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetQueryObjectuivARB p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetQueryiv : int -> int -> word_array -> unit =
-  "glstub_glGetQueryiv" "glstub_glGetQueryiv";
+  "glstub_glGetQueryiv" "glstub_glGetQueryiv" "noalloc";
 value glGetQueryiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetQueryiv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetQueryivARB : int -> int -> word_array -> unit =
-  "glstub_glGetQueryivARB" "glstub_glGetQueryivARB";
+  "glstub_glGetQueryivARB" "glstub_glGetQueryivARB" "noalloc";
 value glGetQueryivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetQueryivARB p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetSeparableFilter : int -> int -> int -> 'a -> 'a -> 'a -> unit =
-  "glstub_glGetSeparableFilter_byte" "glstub_glGetSeparableFilter";
+  "glstub_glGetSeparableFilter_byte" "glstub_glGetSeparableFilter" "noalloc";
 external glGetShaderInfoLog : int -> int -> word_array -> string -> unit =
-  "glstub_glGetShaderInfoLog" "glstub_glGetShaderInfoLog";
+  "glstub_glGetShaderInfoLog" "glstub_glGetShaderInfoLog" "noalloc";
 value glGetShaderInfoLog p0 p1 p2 p3 =
   let np2 = to_word_array p2 in
   let r = glGetShaderInfoLog p0 p1 np2 p3 in
   let _ = copy_word_array np2 p2 in r;
 external glGetShaderSource : int -> int -> word_array -> string -> unit =
-  "glstub_glGetShaderSource" "glstub_glGetShaderSource";
+  "glstub_glGetShaderSource" "glstub_glGetShaderSource" "noalloc";
 value glGetShaderSource p0 p1 p2 p3 =
   let np2 = to_word_array p2 in
   let r = glGetShaderSource p0 p1 np2 p3 in
   let _ = copy_word_array np2 p2 in r;
 external glGetShaderiv : int -> int -> word_array -> unit =
-  "glstub_glGetShaderiv" "glstub_glGetShaderiv";
+  "glstub_glGetShaderiv" "glstub_glGetShaderiv" "noalloc";
 value glGetShaderiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetShaderiv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetTexEnvfv : int -> int -> float_array -> unit =
-  "glstub_glGetTexEnvfv" "glstub_glGetTexEnvfv";
+  "glstub_glGetTexEnvfv" "glstub_glGetTexEnvfv" "noalloc";
 value glGetTexEnvfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetTexEnvfv p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glGetTexEnviv : int -> int -> word_array -> unit =
-  "glstub_glGetTexEnviv" "glstub_glGetTexEnviv";
+  "glstub_glGetTexEnviv" "glstub_glGetTexEnviv" "noalloc";
 value glGetTexEnviv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetTexEnviv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetTexGendv : int -> int -> array float -> unit =
-  "glstub_glGetTexGendv" "glstub_glGetTexGendv";
+  "glstub_glGetTexGendv" "glstub_glGetTexGendv" "noalloc";
 external glGetTexGenfv : int -> int -> float_array -> unit =
-  "glstub_glGetTexGenfv" "glstub_glGetTexGenfv";
+  "glstub_glGetTexGenfv" "glstub_glGetTexGenfv" "noalloc";
 value glGetTexGenfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetTexGenfv p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glGetTexGeniv : int -> int -> word_array -> unit =
-  "glstub_glGetTexGeniv" "glstub_glGetTexGeniv";
+  "glstub_glGetTexGeniv" "glstub_glGetTexGeniv" "noalloc";
 value glGetTexGeniv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetTexGeniv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetTexImage : int -> int -> int -> int -> 'a -> unit =
-  "glstub_glGetTexImage" "glstub_glGetTexImage";
+  "glstub_glGetTexImage" "glstub_glGetTexImage" "noalloc";
 external glGetTexLevelParameterfv :
   int -> int -> int -> float_array -> unit =
-  "glstub_glGetTexLevelParameterfv" "glstub_glGetTexLevelParameterfv";
+  "glstub_glGetTexLevelParameterfv" "glstub_glGetTexLevelParameterfv"
+  "noalloc";
 value glGetTexLevelParameterfv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glGetTexLevelParameterfv p0 p1 p2 np3 in
   let _ = copy_float_array np3 p3 in r;
 external glGetTexLevelParameteriv : int -> int -> int -> word_array -> unit =
-  "glstub_glGetTexLevelParameteriv" "glstub_glGetTexLevelParameteriv";
+  "glstub_glGetTexLevelParameteriv" "glstub_glGetTexLevelParameteriv"
+  "noalloc";
 value glGetTexLevelParameteriv p0 p1 p2 p3 =
   let np3 = to_word_array p3 in
   let r = glGetTexLevelParameteriv p0 p1 p2 np3 in
   let _ = copy_word_array np3 p3 in r;
 external glGetTexParameterfv : int -> int -> float_array -> unit =
-  "glstub_glGetTexParameterfv" "glstub_glGetTexParameterfv";
+  "glstub_glGetTexParameterfv" "glstub_glGetTexParameterfv" "noalloc";
 value glGetTexParameterfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetTexParameterfv p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetTexParameteriv : int -> int -> word_array -> unit =
-  "glstub_glGetTexParameteriv" "glstub_glGetTexParameteriv";
+  "glstub_glGetTexParameteriv" "glstub_glGetTexParameteriv" "noalloc";
 value glGetTexParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetTexParameteriv p0 p1 np2 in
@@ -2412,87 +2484,96 @@ value glGetTexParameteriv p0 p1 p2 =
 external glGetUniformLocation : int -> string -> int =
   "glstub_glGetUniformLocation" "glstub_glGetUniformLocation";
 external glGetUniformfv : int -> int -> float_array -> unit =
-  "glstub_glGetUniformfv" "glstub_glGetUniformfv";
+  "glstub_glGetUniformfv" "glstub_glGetUniformfv" "noalloc";
 value glGetUniformfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetUniformfv p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glGetUniformiv : int -> int -> word_array -> unit =
-  "glstub_glGetUniformiv" "glstub_glGetUniformiv";
+  "glstub_glGetUniformiv" "glstub_glGetUniformiv" "noalloc";
 value glGetUniformiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetUniformiv p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glGetVertexAttribPointerv : int -> int -> 'a -> unit =
-  "glstub_glGetVertexAttribPointerv" "glstub_glGetVertexAttribPointerv";
+  "glstub_glGetVertexAttribPointerv" "glstub_glGetVertexAttribPointerv"
+  "noalloc";
 external glGetVertexAttribPointervARB : int -> int -> 'a -> unit =
-  "glstub_glGetVertexAttribPointervARB"
-  "glstub_glGetVertexAttribPointervARB";
+  "glstub_glGetVertexAttribPointervARB" "glstub_glGetVertexAttribPointervARB"
+  "noalloc";
 external glGetVertexAttribdv : int -> int -> array float -> unit =
-  "glstub_glGetVertexAttribdv" "glstub_glGetVertexAttribdv";
+  "glstub_glGetVertexAttribdv" "glstub_glGetVertexAttribdv" "noalloc";
 external glGetVertexAttribdvARB : int -> int -> array float -> unit =
-  "glstub_glGetVertexAttribdvARB" "glstub_glGetVertexAttribdvARB";
+  "glstub_glGetVertexAttribdvARB" "glstub_glGetVertexAttribdvARB" "noalloc";
 external glGetVertexAttribfv : int -> int -> float_array -> unit =
-  "glstub_glGetVertexAttribfv" "glstub_glGetVertexAttribfv";
+  "glstub_glGetVertexAttribfv" "glstub_glGetVertexAttribfv" "noalloc";
 value glGetVertexAttribfv p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetVertexAttribfv p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetVertexAttribfvARB : int -> int -> float_array -> unit =
-  "glstub_glGetVertexAttribfvARB" "glstub_glGetVertexAttribfvARB";
+  "glstub_glGetVertexAttribfvARB" "glstub_glGetVertexAttribfvARB" "noalloc";
 value glGetVertexAttribfvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glGetVertexAttribfvARB p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glGetVertexAttribiv : int -> int -> word_array -> unit =
-  "glstub_glGetVertexAttribiv" "glstub_glGetVertexAttribiv";
+  "glstub_glGetVertexAttribiv" "glstub_glGetVertexAttribiv" "noalloc";
 value glGetVertexAttribiv p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetVertexAttribiv p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
 external glGetVertexAttribivARB : int -> int -> word_array -> unit =
-  "glstub_glGetVertexAttribivARB" "glstub_glGetVertexAttribivARB";
+  "glstub_glGetVertexAttribivARB" "glstub_glGetVertexAttribivARB" "noalloc";
 value glGetVertexAttribivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glGetVertexAttribivARB p0 p1 np2 in
   let _ = copy_word_array np2 p2 in r;
-external glHint : int -> int -> unit = "glstub_glHint" "glstub_glHint";
+external glHint : int -> int -> unit = "glstub_glHint" "glstub_glHint"
+  "noalloc";
 external glHistogram : int -> int -> int -> bool -> unit =
-  "glstub_glHistogram" "glstub_glHistogram";
+  "glstub_glHistogram" "glstub_glHistogram" "noalloc";
 external glIndexMask : int -> unit = "glstub_glIndexMask"
-  "glstub_glIndexMask";
+  "glstub_glIndexMask" "noalloc";
 external glIndexPointer : int -> int -> 'a -> unit = "glstub_glIndexPointer"
-  "glstub_glIndexPointer";
-external glIndexd : float -> unit = "glstub_glIndexd" "glstub_glIndexd";
+  "glstub_glIndexPointer" "noalloc";
+external glIndexd : float -> unit = "glstub_glIndexd" "glstub_glIndexd"
+  "noalloc";
 external glIndexdv : array float -> unit = "glstub_glIndexdv"
-  "glstub_glIndexdv";
-external glIndexf : float -> unit = "glstub_glIndexf" "glstub_glIndexf";
+  "glstub_glIndexdv" "noalloc";
+external glIndexf : float -> unit = "glstub_glIndexf" "glstub_glIndexf"
+  "noalloc";
 external glIndexfv : float_array -> unit = "glstub_glIndexfv"
-  "glstub_glIndexfv";
+  "glstub_glIndexfv" "noalloc";
 value glIndexfv p0 =
   let np0 = to_float_array p0 in let r = glIndexfv np0 in r;
-external glIndexi : int -> unit = "glstub_glIndexi" "glstub_glIndexi";
+external glIndexi : int -> unit = "glstub_glIndexi" "glstub_glIndexi"
+  "noalloc";
 external glIndexiv : word_array -> unit = "glstub_glIndexiv"
-  "glstub_glIndexiv";
+  "glstub_glIndexiv" "noalloc";
 value glIndexiv p0 =
   let np0 = to_word_array p0 in let r = glIndexiv np0 in r;
-external glIndexs : int -> unit = "glstub_glIndexs" "glstub_glIndexs";
+external glIndexs : int -> unit = "glstub_glIndexs" "glstub_glIndexs"
+  "noalloc";
 external glIndexsv : short_array -> unit = "glstub_glIndexsv"
-  "glstub_glIndexsv";
+  "glstub_glIndexsv" "noalloc";
 value glIndexsv p0 =
   let np0 = to_short_array p0 in let r = glIndexsv np0 in r;
-external glIndexub : int -> unit = "glstub_glIndexub" "glstub_glIndexub";
+external glIndexub : int -> unit = "glstub_glIndexub" "glstub_glIndexub"
+  "noalloc";
 external glIndexubv : ubyte_array -> unit = "glstub_glIndexubv"
-  "glstub_glIndexubv";
+  "glstub_glIndexubv" "noalloc";
 value glIndexubv p0 =
   let np0 = to_ubyte_array p0 in let r = glIndexubv np0 in r;
 external glInitNames : unit -> unit = "glstub_glInitNames"
-  "glstub_glInitNames";
+  "glstub_glInitNames" "noalloc";
 external glInterleavedArrays : int -> int -> 'a -> unit =
-  "glstub_glInterleavedArrays" "glstub_glInterleavedArrays";
+  "glstub_glInterleavedArrays" "glstub_glInterleavedArrays" "noalloc";
 external glIsBuffer : int -> bool = "glstub_glIsBuffer" "glstub_glIsBuffer";
 external glIsBufferARB : int -> bool = "glstub_glIsBufferARB"
   "glstub_glIsBufferARB";
 external glIsEnabled : int -> bool = "glstub_glIsEnabled"
   "glstub_glIsEnabled";
+external glIsFramebufferEXT : int -> bool = "glstub_glIsFramebufferEXT"
+  "glstub_glIsFramebufferEXT";
 external glIsList : int -> bool = "glstub_glIsList" "glstub_glIsList";
 external glIsProgram : int -> bool = "glstub_glIsProgram"
   "glstub_glIsProgram";
@@ -2505,68 +2586,73 @@ external glIsShader : int -> bool = "glstub_glIsShader" "glstub_glIsShader";
 external glIsTexture : int -> bool = "glstub_glIsTexture"
   "glstub_glIsTexture";
 external glLightModelf : int -> float -> unit = "glstub_glLightModelf"
-  "glstub_glLightModelf";
+  "glstub_glLightModelf" "noalloc";
 external glLightModelfv : int -> float_array -> unit =
-  "glstub_glLightModelfv" "glstub_glLightModelfv";
+  "glstub_glLightModelfv" "glstub_glLightModelfv" "noalloc";
 value glLightModelfv p0 p1 =
   let np1 = to_float_array p1 in let r = glLightModelfv p0 np1 in r;
 external glLightModeli : int -> int -> unit = "glstub_glLightModeli"
-  "glstub_glLightModeli";
+  "glstub_glLightModeli" "noalloc";
 external glLightModeliv : int -> word_array -> unit = "glstub_glLightModeliv"
-  "glstub_glLightModeliv";
+  "glstub_glLightModeliv" "noalloc";
 value glLightModeliv p0 p1 =
   let np1 = to_word_array p1 in let r = glLightModeliv p0 np1 in r;
 external glLightf : int -> int -> float -> unit = "glstub_glLightf"
-  "glstub_glLightf";
+  "glstub_glLightf" "noalloc";
 external glLightfv : int -> int -> float_array -> unit = "glstub_glLightfv"
-  "glstub_glLightfv";
+  "glstub_glLightfv" "noalloc";
 value glLightfv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glLightfv p0 p1 np2 in r;
 external glLighti : int -> int -> int -> unit = "glstub_glLighti"
-  "glstub_glLighti";
+  "glstub_glLighti" "noalloc";
 external glLightiv : int -> int -> word_array -> unit = "glstub_glLightiv"
-  "glstub_glLightiv";
+  "glstub_glLightiv" "noalloc";
 value glLightiv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glLightiv p0 p1 np2 in r;
 external glLineStipple : int -> int -> unit = "glstub_glLineStipple"
-  "glstub_glLineStipple";
+  "glstub_glLineStipple" "noalloc";
 external glLineWidth : float -> unit = "glstub_glLineWidth"
-  "glstub_glLineWidth";
+  "glstub_glLineWidth" "noalloc";
 external glLinkProgram : int -> unit = "glstub_glLinkProgram"
-  "glstub_glLinkProgram";
-external glListBase : int -> unit = "glstub_glListBase" "glstub_glListBase";
+  "glstub_glLinkProgram" "noalloc";
+external glListBase : int -> unit = "glstub_glListBase" "glstub_glListBase"
+  "noalloc";
 external glLoadIdentity : unit -> unit = "glstub_glLoadIdentity"
-  "glstub_glLoadIdentity";
+  "glstub_glLoadIdentity" "noalloc";
 external glLoadMatrixd : array float -> unit = "glstub_glLoadMatrixd"
-  "glstub_glLoadMatrixd";
+  "glstub_glLoadMatrixd" "noalloc";
 external glLoadMatrixf : float_array -> unit = "glstub_glLoadMatrixf"
-  "glstub_glLoadMatrixf";
+  "glstub_glLoadMatrixf" "noalloc";
 value glLoadMatrixf p0 =
   let np0 = to_float_array p0 in let r = glLoadMatrixf np0 in r;
-external glLoadName : int -> unit = "glstub_glLoadName" "glstub_glLoadName";
+external glLoadName : int -> unit = "glstub_glLoadName" "glstub_glLoadName"
+  "noalloc";
 external glLoadTransposeMatrixd : array float -> unit =
-  "glstub_glLoadTransposeMatrixd" "glstub_glLoadTransposeMatrixd";
+  "glstub_glLoadTransposeMatrixd" "glstub_glLoadTransposeMatrixd" "noalloc";
 external glLoadTransposeMatrixdARB : array float -> unit =
-  "glstub_glLoadTransposeMatrixdARB" "glstub_glLoadTransposeMatrixdARB";
+  "glstub_glLoadTransposeMatrixdARB" "glstub_glLoadTransposeMatrixdARB"
+  "noalloc";
 external glLoadTransposeMatrixf : float_array -> unit =
-  "glstub_glLoadTransposeMatrixf" "glstub_glLoadTransposeMatrixf";
+  "glstub_glLoadTransposeMatrixf" "glstub_glLoadTransposeMatrixf" "noalloc";
 value glLoadTransposeMatrixf p0 =
   let np0 = to_float_array p0 in let r = glLoadTransposeMatrixf np0 in r;
 external glLoadTransposeMatrixfARB : float_array -> unit =
-  "glstub_glLoadTransposeMatrixfARB" "glstub_glLoadTransposeMatrixfARB";
+  "glstub_glLoadTransposeMatrixfARB" "glstub_glLoadTransposeMatrixfARB"
+  "noalloc";
 value glLoadTransposeMatrixfARB p0 =
   let np0 = to_float_array p0 in
   let r = glLoadTransposeMatrixfARB np0 in
   let _ = copy_float_array np0 p0 in r;
 external glLockArraysEXT : int -> int -> unit = "glstub_glLockArraysEXT"
-  "glstub_glLockArraysEXT";
-external glLogicOp : int -> unit = "glstub_glLogicOp" "glstub_glLogicOp";
+  "glstub_glLockArraysEXT" "noalloc";
+external glLogicOp : int -> unit = "glstub_glLogicOp" "glstub_glLogicOp"
+  "noalloc";
 external glMap1d :
   int -> float -> float -> int -> int -> array float -> unit =
-  "glstub_glMap1d_byte" "glstub_glMap1d";
+  "glstub_glMap1d_byte" "glstub_glMap1d" "noalloc";
 external glMap1f :
   int -> float -> float -> int -> int -> float_array -> unit =
-  "glstub_glMap1f_byte" "glstub_glMap1f";
+  "glstub_glMap1f_byte" "glstub_glMap1f" "noalloc";
 value glMap1f p0 p1 p2 p3 p4 p5 =
   let np5 = to_float_array p5 in let r = glMap1f p0 p1 p2 p3 p4 np5 in r;
 external glMap2d :
@@ -2574,13 +2660,13 @@ external glMap2d :
     float ->
       float ->
         int -> int -> float -> float -> int -> int -> array float -> unit =
-  "glstub_glMap2d_byte" "glstub_glMap2d";
+  "glstub_glMap2d_byte" "glstub_glMap2d" "noalloc";
 external glMap2f :
   int ->
     float ->
       float ->
         int -> int -> float -> float -> int -> int -> float_array -> unit =
-  "glstub_glMap2f_byte" "glstub_glMap2f";
+  "glstub_glMap2f_byte" "glstub_glMap2f" "noalloc";
 value glMap2f p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 =
   let np9 = to_float_array p9 in
   let r = glMap2f p0 p1 p2 p3 p4 p5 p6 p7 p8 np9 in r;
@@ -2589,346 +2675,351 @@ external glMapBuffer : int -> int -> 'a = "glstub_glMapBuffer"
 external glMapBufferARB : int -> int -> 'a = "glstub_glMapBufferARB"
   "glstub_glMapBufferARB";
 external glMapGrid1d : int -> float -> float -> unit = "glstub_glMapGrid1d"
-  "glstub_glMapGrid1d";
+  "glstub_glMapGrid1d" "noalloc";
 external glMapGrid1f : int -> float -> float -> unit = "glstub_glMapGrid1f"
-  "glstub_glMapGrid1f";
+  "glstub_glMapGrid1f" "noalloc";
 external glMapGrid2d :
   int -> float -> float -> int -> float -> float -> unit =
-  "glstub_glMapGrid2d_byte" "glstub_glMapGrid2d";
+  "glstub_glMapGrid2d_byte" "glstub_glMapGrid2d" "noalloc";
 external glMapGrid2f :
   int -> float -> float -> int -> float -> float -> unit =
-  "glstub_glMapGrid2f_byte" "glstub_glMapGrid2f";
+  "glstub_glMapGrid2f_byte" "glstub_glMapGrid2f" "noalloc";
 external glMaterialf : int -> int -> float -> unit = "glstub_glMaterialf"
-  "glstub_glMaterialf";
+  "glstub_glMaterialf" "noalloc";
 external glMaterialfv : int -> int -> float_array -> unit =
-  "glstub_glMaterialfv" "glstub_glMaterialfv";
+  "glstub_glMaterialfv" "glstub_glMaterialfv" "noalloc";
 value glMaterialfv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glMaterialfv p0 p1 np2 in r;
 external glMateriali : int -> int -> int -> unit = "glstub_glMateriali"
-  "glstub_glMateriali";
+  "glstub_glMateriali" "noalloc";
 external glMaterialiv : int -> int -> word_array -> unit =
-  "glstub_glMaterialiv" "glstub_glMaterialiv";
+  "glstub_glMaterialiv" "glstub_glMaterialiv" "noalloc";
 value glMaterialiv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glMaterialiv p0 p1 np2 in r;
 external glMatrixMode : int -> unit = "glstub_glMatrixMode"
-  "glstub_glMatrixMode";
+  "glstub_glMatrixMode" "noalloc";
 external glMinmax : int -> int -> bool -> unit = "glstub_glMinmax"
-  "glstub_glMinmax";
+  "glstub_glMinmax" "noalloc";
 external glMultMatrixd : array float -> unit = "glstub_glMultMatrixd"
-  "glstub_glMultMatrixd";
+  "glstub_glMultMatrixd" "noalloc";
 external glMultMatrixf : float_array -> unit = "glstub_glMultMatrixf"
-  "glstub_glMultMatrixf";
+  "glstub_glMultMatrixf" "noalloc";
 value glMultMatrixf p0 =
   let np0 = to_float_array p0 in let r = glMultMatrixf np0 in r;
 external glMultTransposeMatrixd : array float -> unit =
-  "glstub_glMultTransposeMatrixd" "glstub_glMultTransposeMatrixd";
+  "glstub_glMultTransposeMatrixd" "glstub_glMultTransposeMatrixd" "noalloc";
 external glMultTransposeMatrixdARB : array float -> unit =
-  "glstub_glMultTransposeMatrixdARB" "glstub_glMultTransposeMatrixdARB";
+  "glstub_glMultTransposeMatrixdARB" "glstub_glMultTransposeMatrixdARB"
+  "noalloc";
 external glMultTransposeMatrixf : float_array -> unit =
-  "glstub_glMultTransposeMatrixf" "glstub_glMultTransposeMatrixf";
+  "glstub_glMultTransposeMatrixf" "glstub_glMultTransposeMatrixf" "noalloc";
 value glMultTransposeMatrixf p0 =
   let np0 = to_float_array p0 in let r = glMultTransposeMatrixf np0 in r;
 external glMultTransposeMatrixfARB : float_array -> unit =
-  "glstub_glMultTransposeMatrixfARB" "glstub_glMultTransposeMatrixfARB";
+  "glstub_glMultTransposeMatrixfARB" "glstub_glMultTransposeMatrixfARB"
+  "noalloc";
 value glMultTransposeMatrixfARB p0 =
   let np0 = to_float_array p0 in
   let r = glMultTransposeMatrixfARB np0 in
   let _ = copy_float_array np0 p0 in r;
 external glMultiDrawArrays : int -> word_array -> word_array -> int -> unit =
-  "glstub_glMultiDrawArrays" "glstub_glMultiDrawArrays";
+  "glstub_glMultiDrawArrays" "glstub_glMultiDrawArrays" "noalloc";
 value glMultiDrawArrays p0 p1 p2 p3 =
   let np1 = to_word_array p1 in
   let np2 = to_word_array p2 in
   let r = glMultiDrawArrays p0 np1 np2 p3 in
   let _ = copy_word_array np1 p1 in let _ = copy_word_array np2 p2 in r;
 external glMultiTexCoord1d : int -> float -> unit =
-  "glstub_glMultiTexCoord1d" "glstub_glMultiTexCoord1d";
+  "glstub_glMultiTexCoord1d" "glstub_glMultiTexCoord1d" "noalloc";
 external glMultiTexCoord1dARB : int -> float -> unit =
-  "glstub_glMultiTexCoord1dARB" "glstub_glMultiTexCoord1dARB";
+  "glstub_glMultiTexCoord1dARB" "glstub_glMultiTexCoord1dARB" "noalloc";
 external glMultiTexCoord1dv : int -> array float -> unit =
-  "glstub_glMultiTexCoord1dv" "glstub_glMultiTexCoord1dv";
+  "glstub_glMultiTexCoord1dv" "glstub_glMultiTexCoord1dv" "noalloc";
 external glMultiTexCoord1dvARB : int -> array float -> unit =
-  "glstub_glMultiTexCoord1dvARB" "glstub_glMultiTexCoord1dvARB";
+  "glstub_glMultiTexCoord1dvARB" "glstub_glMultiTexCoord1dvARB" "noalloc";
 external glMultiTexCoord1f : int -> float -> unit =
-  "glstub_glMultiTexCoord1f" "glstub_glMultiTexCoord1f";
+  "glstub_glMultiTexCoord1f" "glstub_glMultiTexCoord1f" "noalloc";
 external glMultiTexCoord1fARB : int -> float -> unit =
-  "glstub_glMultiTexCoord1fARB" "glstub_glMultiTexCoord1fARB";
+  "glstub_glMultiTexCoord1fARB" "glstub_glMultiTexCoord1fARB" "noalloc";
 external glMultiTexCoord1fv : int -> float_array -> unit =
-  "glstub_glMultiTexCoord1fv" "glstub_glMultiTexCoord1fv";
+  "glstub_glMultiTexCoord1fv" "glstub_glMultiTexCoord1fv" "noalloc";
 value glMultiTexCoord1fv p0 p1 =
   let np1 = to_float_array p1 in let r = glMultiTexCoord1fv p0 np1 in r;
 external glMultiTexCoord1fvARB : int -> float_array -> unit =
-  "glstub_glMultiTexCoord1fvARB" "glstub_glMultiTexCoord1fvARB";
+  "glstub_glMultiTexCoord1fvARB" "glstub_glMultiTexCoord1fvARB" "noalloc";
 value glMultiTexCoord1fvARB p0 p1 =
   let np1 = to_float_array p1 in let r = glMultiTexCoord1fvARB p0 np1 in r;
 external glMultiTexCoord1i : int -> int -> unit = "glstub_glMultiTexCoord1i"
-  "glstub_glMultiTexCoord1i";
+  "glstub_glMultiTexCoord1i" "noalloc";
 external glMultiTexCoord1iARB : int -> int -> unit =
-  "glstub_glMultiTexCoord1iARB" "glstub_glMultiTexCoord1iARB";
+  "glstub_glMultiTexCoord1iARB" "glstub_glMultiTexCoord1iARB" "noalloc";
 external glMultiTexCoord1iv : int -> word_array -> unit =
-  "glstub_glMultiTexCoord1iv" "glstub_glMultiTexCoord1iv";
+  "glstub_glMultiTexCoord1iv" "glstub_glMultiTexCoord1iv" "noalloc";
 value glMultiTexCoord1iv p0 p1 =
   let np1 = to_word_array p1 in let r = glMultiTexCoord1iv p0 np1 in r;
 external glMultiTexCoord1ivARB : int -> word_array -> unit =
-  "glstub_glMultiTexCoord1ivARB" "glstub_glMultiTexCoord1ivARB";
+  "glstub_glMultiTexCoord1ivARB" "glstub_glMultiTexCoord1ivARB" "noalloc";
 value glMultiTexCoord1ivARB p0 p1 =
   let np1 = to_word_array p1 in let r = glMultiTexCoord1ivARB p0 np1 in r;
 external glMultiTexCoord1s : int -> int -> unit = "glstub_glMultiTexCoord1s"
-  "glstub_glMultiTexCoord1s";
+  "glstub_glMultiTexCoord1s" "noalloc";
 external glMultiTexCoord1sARB : int -> int -> unit =
-  "glstub_glMultiTexCoord1sARB" "glstub_glMultiTexCoord1sARB";
+  "glstub_glMultiTexCoord1sARB" "glstub_glMultiTexCoord1sARB" "noalloc";
 external glMultiTexCoord1sv : int -> short_array -> unit =
-  "glstub_glMultiTexCoord1sv" "glstub_glMultiTexCoord1sv";
+  "glstub_glMultiTexCoord1sv" "glstub_glMultiTexCoord1sv" "noalloc";
 value glMultiTexCoord1sv p0 p1 =
   let np1 = to_short_array p1 in let r = glMultiTexCoord1sv p0 np1 in r;
 external glMultiTexCoord1svARB : int -> short_array -> unit =
-  "glstub_glMultiTexCoord1svARB" "glstub_glMultiTexCoord1svARB";
+  "glstub_glMultiTexCoord1svARB" "glstub_glMultiTexCoord1svARB" "noalloc";
 value glMultiTexCoord1svARB p0 p1 =
   let np1 = to_short_array p1 in let r = glMultiTexCoord1svARB p0 np1 in r;
 external glMultiTexCoord2d : int -> float -> float -> unit =
-  "glstub_glMultiTexCoord2d" "glstub_glMultiTexCoord2d";
+  "glstub_glMultiTexCoord2d" "glstub_glMultiTexCoord2d" "noalloc";
 external glMultiTexCoord2dARB : int -> float -> float -> unit =
-  "glstub_glMultiTexCoord2dARB" "glstub_glMultiTexCoord2dARB";
+  "glstub_glMultiTexCoord2dARB" "glstub_glMultiTexCoord2dARB" "noalloc";
 external glMultiTexCoord2dv : int -> array float -> unit =
-  "glstub_glMultiTexCoord2dv" "glstub_glMultiTexCoord2dv";
+  "glstub_glMultiTexCoord2dv" "glstub_glMultiTexCoord2dv" "noalloc";
 external glMultiTexCoord2dvARB : int -> array float -> unit =
-  "glstub_glMultiTexCoord2dvARB" "glstub_glMultiTexCoord2dvARB";
+  "glstub_glMultiTexCoord2dvARB" "glstub_glMultiTexCoord2dvARB" "noalloc";
 external glMultiTexCoord2f : int -> float -> float -> unit =
-  "glstub_glMultiTexCoord2f" "glstub_glMultiTexCoord2f";
+  "glstub_glMultiTexCoord2f" "glstub_glMultiTexCoord2f" "noalloc";
 external glMultiTexCoord2fARB : int -> float -> float -> unit =
-  "glstub_glMultiTexCoord2fARB" "glstub_glMultiTexCoord2fARB";
+  "glstub_glMultiTexCoord2fARB" "glstub_glMultiTexCoord2fARB" "noalloc";
 external glMultiTexCoord2fv : int -> float_array -> unit =
-  "glstub_glMultiTexCoord2fv" "glstub_glMultiTexCoord2fv";
+  "glstub_glMultiTexCoord2fv" "glstub_glMultiTexCoord2fv" "noalloc";
 value glMultiTexCoord2fv p0 p1 =
   let np1 = to_float_array p1 in let r = glMultiTexCoord2fv p0 np1 in r;
 external glMultiTexCoord2fvARB : int -> float_array -> unit =
-  "glstub_glMultiTexCoord2fvARB" "glstub_glMultiTexCoord2fvARB";
+  "glstub_glMultiTexCoord2fvARB" "glstub_glMultiTexCoord2fvARB" "noalloc";
 value glMultiTexCoord2fvARB p0 p1 =
   let np1 = to_float_array p1 in let r = glMultiTexCoord2fvARB p0 np1 in r;
 external glMultiTexCoord2i : int -> int -> int -> unit =
-  "glstub_glMultiTexCoord2i" "glstub_glMultiTexCoord2i";
+  "glstub_glMultiTexCoord2i" "glstub_glMultiTexCoord2i" "noalloc";
 external glMultiTexCoord2iARB : int -> int -> int -> unit =
-  "glstub_glMultiTexCoord2iARB" "glstub_glMultiTexCoord2iARB";
+  "glstub_glMultiTexCoord2iARB" "glstub_glMultiTexCoord2iARB" "noalloc";
 external glMultiTexCoord2iv : int -> word_array -> unit =
-  "glstub_glMultiTexCoord2iv" "glstub_glMultiTexCoord2iv";
+  "glstub_glMultiTexCoord2iv" "glstub_glMultiTexCoord2iv" "noalloc";
 value glMultiTexCoord2iv p0 p1 =
   let np1 = to_word_array p1 in let r = glMultiTexCoord2iv p0 np1 in r;
 external glMultiTexCoord2ivARB : int -> word_array -> unit =
-  "glstub_glMultiTexCoord2ivARB" "glstub_glMultiTexCoord2ivARB";
+  "glstub_glMultiTexCoord2ivARB" "glstub_glMultiTexCoord2ivARB" "noalloc";
 value glMultiTexCoord2ivARB p0 p1 =
   let np1 = to_word_array p1 in let r = glMultiTexCoord2ivARB p0 np1 in r;
 external glMultiTexCoord2s : int -> int -> int -> unit =
-  "glstub_glMultiTexCoord2s" "glstub_glMultiTexCoord2s";
+  "glstub_glMultiTexCoord2s" "glstub_glMultiTexCoord2s" "noalloc";
 external glMultiTexCoord2sARB : int -> int -> int -> unit =
-  "glstub_glMultiTexCoord2sARB" "glstub_glMultiTexCoord2sARB";
+  "glstub_glMultiTexCoord2sARB" "glstub_glMultiTexCoord2sARB" "noalloc";
 external glMultiTexCoord2sv : int -> short_array -> unit =
-  "glstub_glMultiTexCoord2sv" "glstub_glMultiTexCoord2sv";
+  "glstub_glMultiTexCoord2sv" "glstub_glMultiTexCoord2sv" "noalloc";
 value glMultiTexCoord2sv p0 p1 =
   let np1 = to_short_array p1 in let r = glMultiTexCoord2sv p0 np1 in r;
 external glMultiTexCoord2svARB : int -> short_array -> unit =
-  "glstub_glMultiTexCoord2svARB" "glstub_glMultiTexCoord2svARB";
+  "glstub_glMultiTexCoord2svARB" "glstub_glMultiTexCoord2svARB" "noalloc";
 value glMultiTexCoord2svARB p0 p1 =
   let np1 = to_short_array p1 in let r = glMultiTexCoord2svARB p0 np1 in r;
 external glMultiTexCoord3d : int -> float -> float -> float -> unit =
-  "glstub_glMultiTexCoord3d" "glstub_glMultiTexCoord3d";
+  "glstub_glMultiTexCoord3d" "glstub_glMultiTexCoord3d" "noalloc";
 external glMultiTexCoord3dARB : int -> float -> float -> float -> unit =
-  "glstub_glMultiTexCoord3dARB" "glstub_glMultiTexCoord3dARB";
+  "glstub_glMultiTexCoord3dARB" "glstub_glMultiTexCoord3dARB" "noalloc";
 external glMultiTexCoord3dv : int -> array float -> unit =
-  "glstub_glMultiTexCoord3dv" "glstub_glMultiTexCoord3dv";
+  "glstub_glMultiTexCoord3dv" "glstub_glMultiTexCoord3dv" "noalloc";
 external glMultiTexCoord3dvARB : int -> array float -> unit =
-  "glstub_glMultiTexCoord3dvARB" "glstub_glMultiTexCoord3dvARB";
+  "glstub_glMultiTexCoord3dvARB" "glstub_glMultiTexCoord3dvARB" "noalloc";
 external glMultiTexCoord3f : int -> float -> float -> float -> unit =
-  "glstub_glMultiTexCoord3f" "glstub_glMultiTexCoord3f";
+  "glstub_glMultiTexCoord3f" "glstub_glMultiTexCoord3f" "noalloc";
 external glMultiTexCoord3fARB : int -> float -> float -> float -> unit =
-  "glstub_glMultiTexCoord3fARB" "glstub_glMultiTexCoord3fARB";
+  "glstub_glMultiTexCoord3fARB" "glstub_glMultiTexCoord3fARB" "noalloc";
 external glMultiTexCoord3fv : int -> float_array -> unit =
-  "glstub_glMultiTexCoord3fv" "glstub_glMultiTexCoord3fv";
+  "glstub_glMultiTexCoord3fv" "glstub_glMultiTexCoord3fv" "noalloc";
 value glMultiTexCoord3fv p0 p1 =
   let np1 = to_float_array p1 in let r = glMultiTexCoord3fv p0 np1 in r;
 external glMultiTexCoord3fvARB : int -> float_array -> unit =
-  "glstub_glMultiTexCoord3fvARB" "glstub_glMultiTexCoord3fvARB";
+  "glstub_glMultiTexCoord3fvARB" "glstub_glMultiTexCoord3fvARB" "noalloc";
 value glMultiTexCoord3fvARB p0 p1 =
   let np1 = to_float_array p1 in let r = glMultiTexCoord3fvARB p0 np1 in r;
 external glMultiTexCoord3i : int -> int -> int -> int -> unit =
-  "glstub_glMultiTexCoord3i" "glstub_glMultiTexCoord3i";
+  "glstub_glMultiTexCoord3i" "glstub_glMultiTexCoord3i" "noalloc";
 external glMultiTexCoord3iARB : int -> int -> int -> int -> unit =
-  "glstub_glMultiTexCoord3iARB" "glstub_glMultiTexCoord3iARB";
+  "glstub_glMultiTexCoord3iARB" "glstub_glMultiTexCoord3iARB" "noalloc";
 external glMultiTexCoord3iv : int -> word_array -> unit =
-  "glstub_glMultiTexCoord3iv" "glstub_glMultiTexCoord3iv";
+  "glstub_glMultiTexCoord3iv" "glstub_glMultiTexCoord3iv" "noalloc";
 value glMultiTexCoord3iv p0 p1 =
   let np1 = to_word_array p1 in let r = glMultiTexCoord3iv p0 np1 in r;
 external glMultiTexCoord3ivARB : int -> word_array -> unit =
-  "glstub_glMultiTexCoord3ivARB" "glstub_glMultiTexCoord3ivARB";
+  "glstub_glMultiTexCoord3ivARB" "glstub_glMultiTexCoord3ivARB" "noalloc";
 value glMultiTexCoord3ivARB p0 p1 =
   let np1 = to_word_array p1 in let r = glMultiTexCoord3ivARB p0 np1 in r;
 external glMultiTexCoord3s : int -> int -> int -> int -> unit =
-  "glstub_glMultiTexCoord3s" "glstub_glMultiTexCoord3s";
+  "glstub_glMultiTexCoord3s" "glstub_glMultiTexCoord3s" "noalloc";
 external glMultiTexCoord3sARB : int -> int -> int -> int -> unit =
-  "glstub_glMultiTexCoord3sARB" "glstub_glMultiTexCoord3sARB";
+  "glstub_glMultiTexCoord3sARB" "glstub_glMultiTexCoord3sARB" "noalloc";
 external glMultiTexCoord3sv : int -> short_array -> unit =
-  "glstub_glMultiTexCoord3sv" "glstub_glMultiTexCoord3sv";
+  "glstub_glMultiTexCoord3sv" "glstub_glMultiTexCoord3sv" "noalloc";
 value glMultiTexCoord3sv p0 p1 =
   let np1 = to_short_array p1 in let r = glMultiTexCoord3sv p0 np1 in r;
 external glMultiTexCoord3svARB : int -> short_array -> unit =
-  "glstub_glMultiTexCoord3svARB" "glstub_glMultiTexCoord3svARB";
+  "glstub_glMultiTexCoord3svARB" "glstub_glMultiTexCoord3svARB" "noalloc";
 value glMultiTexCoord3svARB p0 p1 =
   let np1 = to_short_array p1 in let r = glMultiTexCoord3svARB p0 np1 in r;
 external glMultiTexCoord4d :
   int -> float -> float -> float -> float -> unit =
-  "glstub_glMultiTexCoord4d" "glstub_glMultiTexCoord4d";
+  "glstub_glMultiTexCoord4d" "glstub_glMultiTexCoord4d" "noalloc";
 external glMultiTexCoord4dARB :
   int -> float -> float -> float -> float -> unit =
-  "glstub_glMultiTexCoord4dARB" "glstub_glMultiTexCoord4dARB";
+  "glstub_glMultiTexCoord4dARB" "glstub_glMultiTexCoord4dARB" "noalloc";
 external glMultiTexCoord4dv : int -> array float -> unit =
-  "glstub_glMultiTexCoord4dv" "glstub_glMultiTexCoord4dv";
+  "glstub_glMultiTexCoord4dv" "glstub_glMultiTexCoord4dv" "noalloc";
 external glMultiTexCoord4dvARB : int -> array float -> unit =
-  "glstub_glMultiTexCoord4dvARB" "glstub_glMultiTexCoord4dvARB";
+  "glstub_glMultiTexCoord4dvARB" "glstub_glMultiTexCoord4dvARB" "noalloc";
 external glMultiTexCoord4f :
   int -> float -> float -> float -> float -> unit =
-  "glstub_glMultiTexCoord4f" "glstub_glMultiTexCoord4f";
+  "glstub_glMultiTexCoord4f" "glstub_glMultiTexCoord4f" "noalloc";
 external glMultiTexCoord4fARB :
   int -> float -> float -> float -> float -> unit =
-  "glstub_glMultiTexCoord4fARB" "glstub_glMultiTexCoord4fARB";
+  "glstub_glMultiTexCoord4fARB" "glstub_glMultiTexCoord4fARB" "noalloc";
 external glMultiTexCoord4fv : int -> float_array -> unit =
-  "glstub_glMultiTexCoord4fv" "glstub_glMultiTexCoord4fv";
+  "glstub_glMultiTexCoord4fv" "glstub_glMultiTexCoord4fv" "noalloc";
 value glMultiTexCoord4fv p0 p1 =
   let np1 = to_float_array p1 in let r = glMultiTexCoord4fv p0 np1 in r;
 external glMultiTexCoord4fvARB : int -> float_array -> unit =
-  "glstub_glMultiTexCoord4fvARB" "glstub_glMultiTexCoord4fvARB";
+  "glstub_glMultiTexCoord4fvARB" "glstub_glMultiTexCoord4fvARB" "noalloc";
 value glMultiTexCoord4fvARB p0 p1 =
   let np1 = to_float_array p1 in let r = glMultiTexCoord4fvARB p0 np1 in r;
 external glMultiTexCoord4i : int -> int -> int -> int -> int -> unit =
-  "glstub_glMultiTexCoord4i" "glstub_glMultiTexCoord4i";
+  "glstub_glMultiTexCoord4i" "glstub_glMultiTexCoord4i" "noalloc";
 external glMultiTexCoord4iARB : int -> int -> int -> int -> int -> unit =
-  "glstub_glMultiTexCoord4iARB" "glstub_glMultiTexCoord4iARB";
+  "glstub_glMultiTexCoord4iARB" "glstub_glMultiTexCoord4iARB" "noalloc";
 external glMultiTexCoord4iv : int -> word_array -> unit =
-  "glstub_glMultiTexCoord4iv" "glstub_glMultiTexCoord4iv";
+  "glstub_glMultiTexCoord4iv" "glstub_glMultiTexCoord4iv" "noalloc";
 value glMultiTexCoord4iv p0 p1 =
   let np1 = to_word_array p1 in let r = glMultiTexCoord4iv p0 np1 in r;
 external glMultiTexCoord4ivARB : int -> word_array -> unit =
-  "glstub_glMultiTexCoord4ivARB" "glstub_glMultiTexCoord4ivARB";
+  "glstub_glMultiTexCoord4ivARB" "glstub_glMultiTexCoord4ivARB" "noalloc";
 value glMultiTexCoord4ivARB p0 p1 =
   let np1 = to_word_array p1 in let r = glMultiTexCoord4ivARB p0 np1 in r;
 external glMultiTexCoord4s : int -> int -> int -> int -> int -> unit =
-  "glstub_glMultiTexCoord4s" "glstub_glMultiTexCoord4s";
+  "glstub_glMultiTexCoord4s" "glstub_glMultiTexCoord4s" "noalloc";
 external glMultiTexCoord4sARB : int -> int -> int -> int -> int -> unit =
-  "glstub_glMultiTexCoord4sARB" "glstub_glMultiTexCoord4sARB";
+  "glstub_glMultiTexCoord4sARB" "glstub_glMultiTexCoord4sARB" "noalloc";
 external glMultiTexCoord4sv : int -> short_array -> unit =
-  "glstub_glMultiTexCoord4sv" "glstub_glMultiTexCoord4sv";
+  "glstub_glMultiTexCoord4sv" "glstub_glMultiTexCoord4sv" "noalloc";
 value glMultiTexCoord4sv p0 p1 =
   let np1 = to_short_array p1 in let r = glMultiTexCoord4sv p0 np1 in r;
 external glMultiTexCoord4svARB : int -> short_array -> unit =
-  "glstub_glMultiTexCoord4svARB" "glstub_glMultiTexCoord4svARB";
+  "glstub_glMultiTexCoord4svARB" "glstub_glMultiTexCoord4svARB" "noalloc";
 value glMultiTexCoord4svARB p0 p1 =
   let np1 = to_short_array p1 in let r = glMultiTexCoord4svARB p0 np1 in r;
 external glNewList : int -> int -> unit = "glstub_glNewList"
-  "glstub_glNewList";
+  "glstub_glNewList" "noalloc";
 external glNormal3b : int -> int -> int -> unit = "glstub_glNormal3b"
-  "glstub_glNormal3b";
+  "glstub_glNormal3b" "noalloc";
 external glNormal3bv : byte_array -> unit = "glstub_glNormal3bv"
-  "glstub_glNormal3bv";
+  "glstub_glNormal3bv" "noalloc";
 value glNormal3bv p0 =
   let np0 = to_byte_array p0 in let r = glNormal3bv np0 in r;
 external glNormal3d : float -> float -> float -> unit = "glstub_glNormal3d"
-  "glstub_glNormal3d";
+  "glstub_glNormal3d" "noalloc";
 external glNormal3dv : array float -> unit = "glstub_glNormal3dv"
-  "glstub_glNormal3dv";
+  "glstub_glNormal3dv" "noalloc";
 external glNormal3f : float -> float -> float -> unit = "glstub_glNormal3f"
-  "glstub_glNormal3f";
+  "glstub_glNormal3f" "noalloc";
 external glNormal3fv : float_array -> unit = "glstub_glNormal3fv"
-  "glstub_glNormal3fv";
+  "glstub_glNormal3fv" "noalloc";
 value glNormal3fv p0 =
   let np0 = to_float_array p0 in let r = glNormal3fv np0 in r;
 external glNormal3i : int -> int -> int -> unit = "glstub_glNormal3i"
-  "glstub_glNormal3i";
+  "glstub_glNormal3i" "noalloc";
 external glNormal3iv : word_array -> unit = "glstub_glNormal3iv"
-  "glstub_glNormal3iv";
+  "glstub_glNormal3iv" "noalloc";
 value glNormal3iv p0 =
   let np0 = to_word_array p0 in let r = glNormal3iv np0 in r;
 external glNormal3s : int -> int -> int -> unit = "glstub_glNormal3s"
-  "glstub_glNormal3s";
+  "glstub_glNormal3s" "noalloc";
 external glNormal3sv : short_array -> unit = "glstub_glNormal3sv"
-  "glstub_glNormal3sv";
+  "glstub_glNormal3sv" "noalloc";
 value glNormal3sv p0 =
   let np0 = to_short_array p0 in let r = glNormal3sv np0 in r;
 external glNormalPointer : int -> int -> 'a -> unit =
-  "glstub_glNormalPointer" "glstub_glNormalPointer";
+  "glstub_glNormalPointer" "glstub_glNormalPointer" "noalloc";
 external glOrtho :
   float -> float -> float -> float -> float -> float -> unit =
-  "glstub_glOrtho_byte" "glstub_glOrtho";
+  "glstub_glOrtho_byte" "glstub_glOrtho" "noalloc";
 external glPassThrough : float -> unit = "glstub_glPassThrough"
-  "glstub_glPassThrough";
+  "glstub_glPassThrough" "noalloc";
 external glPixelMapfv : int -> int -> float_array -> unit =
-  "glstub_glPixelMapfv" "glstub_glPixelMapfv";
+  "glstub_glPixelMapfv" "glstub_glPixelMapfv" "noalloc";
 value glPixelMapfv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glPixelMapfv p0 p1 np2 in r;
 external glPixelMapuiv : int -> int -> word_array -> unit =
-  "glstub_glPixelMapuiv" "glstub_glPixelMapuiv";
+  "glstub_glPixelMapuiv" "glstub_glPixelMapuiv" "noalloc";
 value glPixelMapuiv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glPixelMapuiv p0 p1 np2 in r;
 external glPixelMapusv : int -> int -> ushort_array -> unit =
-  "glstub_glPixelMapusv" "glstub_glPixelMapusv";
+  "glstub_glPixelMapusv" "glstub_glPixelMapusv" "noalloc";
 value glPixelMapusv p0 p1 p2 =
   let np2 = to_ushort_array p2 in let r = glPixelMapusv p0 p1 np2 in r;
 external glPixelStoref : int -> float -> unit = "glstub_glPixelStoref"
-  "glstub_glPixelStoref";
+  "glstub_glPixelStoref" "noalloc";
 external glPixelStorei : int -> int -> unit = "glstub_glPixelStorei"
-  "glstub_glPixelStorei";
+  "glstub_glPixelStorei" "noalloc";
 external glPixelTransferf : int -> float -> unit = "glstub_glPixelTransferf"
-  "glstub_glPixelTransferf";
+  "glstub_glPixelTransferf" "noalloc";
 external glPixelTransferi : int -> int -> unit = "glstub_glPixelTransferi"
-  "glstub_glPixelTransferi";
+  "glstub_glPixelTransferi" "noalloc";
 external glPixelZoom : float -> float -> unit = "glstub_glPixelZoom"
-  "glstub_glPixelZoom";
+  "glstub_glPixelZoom" "noalloc";
 external glPointParameterf : int -> float -> unit =
-  "glstub_glPointParameterf" "glstub_glPointParameterf";
+  "glstub_glPointParameterf" "glstub_glPointParameterf" "noalloc";
 external glPointParameterfARB : int -> float -> unit =
-  "glstub_glPointParameterfARB" "glstub_glPointParameterfARB";
+  "glstub_glPointParameterfARB" "glstub_glPointParameterfARB" "noalloc";
 external glPointParameterfv : int -> float_array -> unit =
-  "glstub_glPointParameterfv" "glstub_glPointParameterfv";
+  "glstub_glPointParameterfv" "glstub_glPointParameterfv" "noalloc";
 value glPointParameterfv p0 p1 =
   let np1 = to_float_array p1 in
   let r = glPointParameterfv p0 np1 in let _ = copy_float_array np1 p1 in r;
 external glPointParameterfvARB : int -> float_array -> unit =
-  "glstub_glPointParameterfvARB" "glstub_glPointParameterfvARB";
+  "glstub_glPointParameterfvARB" "glstub_glPointParameterfvARB" "noalloc";
 value glPointParameterfvARB p0 p1 =
   let np1 = to_float_array p1 in
   let r = glPointParameterfvARB p0 np1 in
   let _ = copy_float_array np1 p1 in r;
 external glPointSize : float -> unit = "glstub_glPointSize"
-  "glstub_glPointSize";
+  "glstub_glPointSize" "noalloc";
 external glPolygonMode : int -> int -> unit = "glstub_glPolygonMode"
-  "glstub_glPolygonMode";
+  "glstub_glPolygonMode" "noalloc";
 external glPolygonOffset : float -> float -> unit = "glstub_glPolygonOffset"
-  "glstub_glPolygonOffset";
+  "glstub_glPolygonOffset" "noalloc";
 external glPolygonStipple : ubyte_array -> unit = "glstub_glPolygonStipple"
-  "glstub_glPolygonStipple";
+  "glstub_glPolygonStipple" "noalloc";
 value glPolygonStipple p0 =
   let np0 = to_ubyte_array p0 in let r = glPolygonStipple np0 in r;
 external glPopAttrib : unit -> unit = "glstub_glPopAttrib"
-  "glstub_glPopAttrib";
+  "glstub_glPopAttrib" "noalloc";
 external glPopClientAttrib : unit -> unit = "glstub_glPopClientAttrib"
-  "glstub_glPopClientAttrib";
+  "glstub_glPopClientAttrib" "noalloc";
 external glPopMatrix : unit -> unit = "glstub_glPopMatrix"
-  "glstub_glPopMatrix";
-external glPopName : unit -> unit = "glstub_glPopName" "glstub_glPopName";
+  "glstub_glPopMatrix" "noalloc";
+external glPopName : unit -> unit = "glstub_glPopName" "glstub_glPopName"
+  "noalloc";
 external glPrioritizeTextures : int -> word_array -> float_array -> unit =
-  "glstub_glPrioritizeTextures" "glstub_glPrioritizeTextures";
+  "glstub_glPrioritizeTextures" "glstub_glPrioritizeTextures" "noalloc";
 value glPrioritizeTextures p0 p1 p2 =
   let np1 = to_word_array p1 in
   let np2 = to_float_array p2 in let r = glPrioritizeTextures p0 np1 np2 in r;
 external glProgramEnvParameter4dARB :
   int -> int -> float -> float -> float -> float -> unit =
   "glstub_glProgramEnvParameter4dARB_byte"
-  "glstub_glProgramEnvParameter4dARB";
+  "glstub_glProgramEnvParameter4dARB" "noalloc";
 external glProgramEnvParameter4dvARB : int -> int -> array float -> unit =
-  "glstub_glProgramEnvParameter4dvARB" "glstub_glProgramEnvParameter4dvARB";
+  "glstub_glProgramEnvParameter4dvARB" "glstub_glProgramEnvParameter4dvARB"
+  "noalloc";
 external glProgramEnvParameter4fARB :
   int -> int -> float -> float -> float -> float -> unit =
   "glstub_glProgramEnvParameter4fARB_byte"
-  "glstub_glProgramEnvParameter4fARB";
+  "glstub_glProgramEnvParameter4fARB" "noalloc";
 external glProgramEnvParameter4fvARB : int -> int -> float_array -> unit =
-  "glstub_glProgramEnvParameter4fvARB" "glstub_glProgramEnvParameter4fvARB";
+  "glstub_glProgramEnvParameter4fvARB" "glstub_glProgramEnvParameter4fvARB"
+  "noalloc";
 value glProgramEnvParameter4fvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glProgramEnvParameter4fvARB p0 p1 np2 in
@@ -2936,957 +3027,961 @@ value glProgramEnvParameter4fvARB p0 p1 p2 =
 external glProgramLocalParameter4dARB :
   int -> int -> float -> float -> float -> float -> unit =
   "glstub_glProgramLocalParameter4dARB_byte"
-  "glstub_glProgramLocalParameter4dARB";
+  "glstub_glProgramLocalParameter4dARB" "noalloc";
 external glProgramLocalParameter4dvARB : int -> int -> array float -> unit =
   "glstub_glProgramLocalParameter4dvARB"
-  "glstub_glProgramLocalParameter4dvARB";
+  "glstub_glProgramLocalParameter4dvARB" "noalloc";
 external glProgramLocalParameter4fARB :
   int -> int -> float -> float -> float -> float -> unit =
   "glstub_glProgramLocalParameter4fARB_byte"
-  "glstub_glProgramLocalParameter4fARB";
+  "glstub_glProgramLocalParameter4fARB" "noalloc";
 external glProgramLocalParameter4fvARB : int -> int -> float_array -> unit =
   "glstub_glProgramLocalParameter4fvARB"
-  "glstub_glProgramLocalParameter4fvARB";
+  "glstub_glProgramLocalParameter4fvARB" "noalloc";
 value glProgramLocalParameter4fvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glProgramLocalParameter4fvARB p0 p1 np2 in
   let _ = copy_float_array np2 p2 in r;
 external glProgramStringARB : int -> int -> int -> 'a -> unit =
-  "glstub_glProgramStringARB" "glstub_glProgramStringARB";
+  "glstub_glProgramStringARB" "glstub_glProgramStringARB" "noalloc";
 external glPushAttrib : int -> unit = "glstub_glPushAttrib"
-  "glstub_glPushAttrib";
+  "glstub_glPushAttrib" "noalloc";
 external glPushClientAttrib : int -> unit = "glstub_glPushClientAttrib"
-  "glstub_glPushClientAttrib";
+  "glstub_glPushClientAttrib" "noalloc";
 external glPushMatrix : unit -> unit = "glstub_glPushMatrix"
-  "glstub_glPushMatrix";
-external glPushName : int -> unit = "glstub_glPushName" "glstub_glPushName";
+  "glstub_glPushMatrix" "noalloc";
+external glPushName : int -> unit = "glstub_glPushName" "glstub_glPushName"
+  "noalloc";
 external glRasterPos2d : float -> float -> unit = "glstub_glRasterPos2d"
-  "glstub_glRasterPos2d";
+  "glstub_glRasterPos2d" "noalloc";
 external glRasterPos2dv : array float -> unit = "glstub_glRasterPos2dv"
-  "glstub_glRasterPos2dv";
+  "glstub_glRasterPos2dv" "noalloc";
 external glRasterPos2f : float -> float -> unit = "glstub_glRasterPos2f"
-  "glstub_glRasterPos2f";
+  "glstub_glRasterPos2f" "noalloc";
 external glRasterPos2fv : float_array -> unit = "glstub_glRasterPos2fv"
-  "glstub_glRasterPos2fv";
+  "glstub_glRasterPos2fv" "noalloc";
 value glRasterPos2fv p0 =
   let np0 = to_float_array p0 in let r = glRasterPos2fv np0 in r;
 external glRasterPos2i : int -> int -> unit = "glstub_glRasterPos2i"
-  "glstub_glRasterPos2i";
+  "glstub_glRasterPos2i" "noalloc";
 external glRasterPos2iv : word_array -> unit = "glstub_glRasterPos2iv"
-  "glstub_glRasterPos2iv";
+  "glstub_glRasterPos2iv" "noalloc";
 value glRasterPos2iv p0 =
   let np0 = to_word_array p0 in let r = glRasterPos2iv np0 in r;
 external glRasterPos2s : int -> int -> unit = "glstub_glRasterPos2s"
-  "glstub_glRasterPos2s";
+  "glstub_glRasterPos2s" "noalloc";
 external glRasterPos2sv : short_array -> unit = "glstub_glRasterPos2sv"
-  "glstub_glRasterPos2sv";
+  "glstub_glRasterPos2sv" "noalloc";
 value glRasterPos2sv p0 =
   let np0 = to_short_array p0 in let r = glRasterPos2sv np0 in r;
 external glRasterPos3d : float -> float -> float -> unit =
-  "glstub_glRasterPos3d" "glstub_glRasterPos3d";
+  "glstub_glRasterPos3d" "glstub_glRasterPos3d" "noalloc";
 external glRasterPos3dv : array float -> unit = "glstub_glRasterPos3dv"
-  "glstub_glRasterPos3dv";
+  "glstub_glRasterPos3dv" "noalloc";
 external glRasterPos3f : float -> float -> float -> unit =
-  "glstub_glRasterPos3f" "glstub_glRasterPos3f";
+  "glstub_glRasterPos3f" "glstub_glRasterPos3f" "noalloc";
 external glRasterPos3fv : float_array -> unit = "glstub_glRasterPos3fv"
-  "glstub_glRasterPos3fv";
+  "glstub_glRasterPos3fv" "noalloc";
 value glRasterPos3fv p0 =
   let np0 = to_float_array p0 in let r = glRasterPos3fv np0 in r;
 external glRasterPos3i : int -> int -> int -> unit = "glstub_glRasterPos3i"
-  "glstub_glRasterPos3i";
+  "glstub_glRasterPos3i" "noalloc";
 external glRasterPos3iv : word_array -> unit = "glstub_glRasterPos3iv"
-  "glstub_glRasterPos3iv";
+  "glstub_glRasterPos3iv" "noalloc";
 value glRasterPos3iv p0 =
   let np0 = to_word_array p0 in let r = glRasterPos3iv np0 in r;
 external glRasterPos3s : int -> int -> int -> unit = "glstub_glRasterPos3s"
-  "glstub_glRasterPos3s";
+  "glstub_glRasterPos3s" "noalloc";
 external glRasterPos3sv : short_array -> unit = "glstub_glRasterPos3sv"
-  "glstub_glRasterPos3sv";
+  "glstub_glRasterPos3sv" "noalloc";
 value glRasterPos3sv p0 =
   let np0 = to_short_array p0 in let r = glRasterPos3sv np0 in r;
 external glRasterPos4d : float -> float -> float -> float -> unit =
-  "glstub_glRasterPos4d" "glstub_glRasterPos4d";
+  "glstub_glRasterPos4d" "glstub_glRasterPos4d" "noalloc";
 external glRasterPos4dv : array float -> unit = "glstub_glRasterPos4dv"
-  "glstub_glRasterPos4dv";
+  "glstub_glRasterPos4dv" "noalloc";
 external glRasterPos4f : float -> float -> float -> float -> unit =
-  "glstub_glRasterPos4f" "glstub_glRasterPos4f";
+  "glstub_glRasterPos4f" "glstub_glRasterPos4f" "noalloc";
 external glRasterPos4fv : float_array -> unit = "glstub_glRasterPos4fv"
-  "glstub_glRasterPos4fv";
+  "glstub_glRasterPos4fv" "noalloc";
 value glRasterPos4fv p0 =
   let np0 = to_float_array p0 in let r = glRasterPos4fv np0 in r;
 external glRasterPos4i : int -> int -> int -> int -> unit =
-  "glstub_glRasterPos4i" "glstub_glRasterPos4i";
+  "glstub_glRasterPos4i" "glstub_glRasterPos4i" "noalloc";
 external glRasterPos4iv : word_array -> unit = "glstub_glRasterPos4iv"
-  "glstub_glRasterPos4iv";
+  "glstub_glRasterPos4iv" "noalloc";
 value glRasterPos4iv p0 =
   let np0 = to_word_array p0 in let r = glRasterPos4iv np0 in r;
 external glRasterPos4s : int -> int -> int -> int -> unit =
-  "glstub_glRasterPos4s" "glstub_glRasterPos4s";
+  "glstub_glRasterPos4s" "glstub_glRasterPos4s" "noalloc";
 external glRasterPos4sv : short_array -> unit = "glstub_glRasterPos4sv"
-  "glstub_glRasterPos4sv";
+  "glstub_glRasterPos4sv" "noalloc";
 value glRasterPos4sv p0 =
   let np0 = to_short_array p0 in let r = glRasterPos4sv np0 in r;
 external glReadBuffer : int -> unit = "glstub_glReadBuffer"
-  "glstub_glReadBuffer";
+  "glstub_glReadBuffer" "noalloc";
 external glReadPixels :
   int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glReadPixels_byte" "glstub_glReadPixels";
+  "glstub_glReadPixels_byte" "glstub_glReadPixels" "noalloc";
 external glRectd : float -> float -> float -> float -> unit =
-  "glstub_glRectd" "glstub_glRectd";
+  "glstub_glRectd" "glstub_glRectd" "noalloc";
 external glRectdv : array float -> array float -> unit = "glstub_glRectdv"
-  "glstub_glRectdv";
+  "glstub_glRectdv" "noalloc";
 external glRectf : float -> float -> float -> float -> unit =
-  "glstub_glRectf" "glstub_glRectf";
+  "glstub_glRectf" "glstub_glRectf" "noalloc";
 external glRectfv : float_array -> float_array -> unit = "glstub_glRectfv"
-  "glstub_glRectfv";
+  "glstub_glRectfv" "noalloc";
 value glRectfv p0 p1 =
   let np0 = to_float_array p0 in
   let np1 = to_float_array p1 in let r = glRectfv np0 np1 in r;
 external glRecti : int -> int -> int -> int -> unit = "glstub_glRecti"
-  "glstub_glRecti";
+  "glstub_glRecti" "noalloc";
 external glRectiv : word_array -> word_array -> unit = "glstub_glRectiv"
-  "glstub_glRectiv";
+  "glstub_glRectiv" "noalloc";
 value glRectiv p0 p1 =
   let np0 = to_word_array p0 in
   let np1 = to_word_array p1 in let r = glRectiv np0 np1 in r;
 external glRects : int -> int -> int -> int -> unit = "glstub_glRects"
-  "glstub_glRects";
+  "glstub_glRects" "noalloc";
 external glRectsv : short_array -> short_array -> unit = "glstub_glRectsv"
-  "glstub_glRectsv";
+  "glstub_glRectsv" "noalloc";
 value glRectsv p0 p1 =
   let np0 = to_short_array p0 in
   let np1 = to_short_array p1 in let r = glRectsv np0 np1 in r;
 external glRenderMode : int -> int = "glstub_glRenderMode"
   "glstub_glRenderMode";
 external glResetHistogram : int -> unit = "glstub_glResetHistogram"
-  "glstub_glResetHistogram";
+  "glstub_glResetHistogram" "noalloc";
 external glResetMinmax : int -> unit = "glstub_glResetMinmax"
-  "glstub_glResetMinmax";
+  "glstub_glResetMinmax" "noalloc";
 external glRotated : float -> float -> float -> float -> unit =
-  "glstub_glRotated" "glstub_glRotated";
+  "glstub_glRotated" "glstub_glRotated" "noalloc";
 external glRotatef : float -> float -> float -> float -> unit =
-  "glstub_glRotatef" "glstub_glRotatef";
+  "glstub_glRotatef" "glstub_glRotatef" "noalloc";
 external glSampleCoverage : float -> bool -> unit = "glstub_glSampleCoverage"
-  "glstub_glSampleCoverage";
+  "glstub_glSampleCoverage" "noalloc";
 external glSampleCoverageARB : float -> bool -> unit =
-  "glstub_glSampleCoverageARB" "glstub_glSampleCoverageARB";
+  "glstub_glSampleCoverageARB" "glstub_glSampleCoverageARB" "noalloc";
 external glScaled : float -> float -> float -> unit = "glstub_glScaled"
-  "glstub_glScaled";
+  "glstub_glScaled" "noalloc";
 external glScalef : float -> float -> float -> unit = "glstub_glScalef"
-  "glstub_glScalef";
+  "glstub_glScalef" "noalloc";
 external glScissor : int -> int -> int -> int -> unit = "glstub_glScissor"
-  "glstub_glScissor";
+  "glstub_glScissor" "noalloc";
 external glSecondaryColor3b : int -> int -> int -> unit =
-  "glstub_glSecondaryColor3b" "glstub_glSecondaryColor3b";
+  "glstub_glSecondaryColor3b" "glstub_glSecondaryColor3b" "noalloc";
 external glSecondaryColor3bv : byte_array -> unit =
-  "glstub_glSecondaryColor3bv" "glstub_glSecondaryColor3bv";
+  "glstub_glSecondaryColor3bv" "glstub_glSecondaryColor3bv" "noalloc";
 value glSecondaryColor3bv p0 =
   let np0 = to_byte_array p0 in let r = glSecondaryColor3bv np0 in r;
 external glSecondaryColor3d : float -> float -> float -> unit =
-  "glstub_glSecondaryColor3d" "glstub_glSecondaryColor3d";
+  "glstub_glSecondaryColor3d" "glstub_glSecondaryColor3d" "noalloc";
 external glSecondaryColor3dv : array float -> unit =
-  "glstub_glSecondaryColor3dv" "glstub_glSecondaryColor3dv";
+  "glstub_glSecondaryColor3dv" "glstub_glSecondaryColor3dv" "noalloc";
 external glSecondaryColor3f : float -> float -> float -> unit =
-  "glstub_glSecondaryColor3f" "glstub_glSecondaryColor3f";
+  "glstub_glSecondaryColor3f" "glstub_glSecondaryColor3f" "noalloc";
 external glSecondaryColor3fv : float_array -> unit =
-  "glstub_glSecondaryColor3fv" "glstub_glSecondaryColor3fv";
+  "glstub_glSecondaryColor3fv" "glstub_glSecondaryColor3fv" "noalloc";
 value glSecondaryColor3fv p0 =
   let np0 = to_float_array p0 in let r = glSecondaryColor3fv np0 in r;
 external glSecondaryColor3i : int -> int -> int -> unit =
-  "glstub_glSecondaryColor3i" "glstub_glSecondaryColor3i";
+  "glstub_glSecondaryColor3i" "glstub_glSecondaryColor3i" "noalloc";
 external glSecondaryColor3iv : word_array -> unit =
-  "glstub_glSecondaryColor3iv" "glstub_glSecondaryColor3iv";
+  "glstub_glSecondaryColor3iv" "glstub_glSecondaryColor3iv" "noalloc";
 value glSecondaryColor3iv p0 =
   let np0 = to_word_array p0 in let r = glSecondaryColor3iv np0 in r;
 external glSecondaryColor3s : int -> int -> int -> unit =
-  "glstub_glSecondaryColor3s" "glstub_glSecondaryColor3s";
+  "glstub_glSecondaryColor3s" "glstub_glSecondaryColor3s" "noalloc";
 external glSecondaryColor3sv : short_array -> unit =
-  "glstub_glSecondaryColor3sv" "glstub_glSecondaryColor3sv";
+  "glstub_glSecondaryColor3sv" "glstub_glSecondaryColor3sv" "noalloc";
 value glSecondaryColor3sv p0 =
   let np0 = to_short_array p0 in let r = glSecondaryColor3sv np0 in r;
 external glSecondaryColor3ub : int -> int -> int -> unit =
-  "glstub_glSecondaryColor3ub" "glstub_glSecondaryColor3ub";
+  "glstub_glSecondaryColor3ub" "glstub_glSecondaryColor3ub" "noalloc";
 external glSecondaryColor3ubv : ubyte_array -> unit =
-  "glstub_glSecondaryColor3ubv" "glstub_glSecondaryColor3ubv";
+  "glstub_glSecondaryColor3ubv" "glstub_glSecondaryColor3ubv" "noalloc";
 value glSecondaryColor3ubv p0 =
   let np0 = to_ubyte_array p0 in let r = glSecondaryColor3ubv np0 in r;
 external glSecondaryColor3ui : int -> int -> int -> unit =
-  "glstub_glSecondaryColor3ui" "glstub_glSecondaryColor3ui";
+  "glstub_glSecondaryColor3ui" "glstub_glSecondaryColor3ui" "noalloc";
 external glSecondaryColor3uiv : word_array -> unit =
-  "glstub_glSecondaryColor3uiv" "glstub_glSecondaryColor3uiv";
+  "glstub_glSecondaryColor3uiv" "glstub_glSecondaryColor3uiv" "noalloc";
 value glSecondaryColor3uiv p0 =
   let np0 = to_word_array p0 in let r = glSecondaryColor3uiv np0 in r;
 external glSecondaryColor3us : int -> int -> int -> unit =
-  "glstub_glSecondaryColor3us" "glstub_glSecondaryColor3us";
+  "glstub_glSecondaryColor3us" "glstub_glSecondaryColor3us" "noalloc";
 external glSecondaryColor3usv : ushort_array -> unit =
-  "glstub_glSecondaryColor3usv" "glstub_glSecondaryColor3usv";
+  "glstub_glSecondaryColor3usv" "glstub_glSecondaryColor3usv" "noalloc";
 value glSecondaryColor3usv p0 =
   let np0 = to_ushort_array p0 in let r = glSecondaryColor3usv np0 in r;
 external glSecondaryColorPointer : int -> int -> int -> 'a -> unit =
-  "glstub_glSecondaryColorPointer" "glstub_glSecondaryColorPointer";
+  "glstub_glSecondaryColorPointer" "glstub_glSecondaryColorPointer"
+  "noalloc";
 external glSelectBuffer : int -> word_array -> unit = "glstub_glSelectBuffer"
-  "glstub_glSelectBuffer";
+  "glstub_glSelectBuffer" "noalloc";
 value glSelectBuffer p0 p1 =
   let np1 = to_word_array p1 in
   let r = glSelectBuffer p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glSeparableFilter2D :
   int -> int -> int -> int -> int -> int -> 'a -> 'a -> unit =
-  "glstub_glSeparableFilter2D_byte" "glstub_glSeparableFilter2D";
+  "glstub_glSeparableFilter2D_byte" "glstub_glSeparableFilter2D" "noalloc";
 external glShadeModel : int -> unit = "glstub_glShadeModel"
-  "glstub_glShadeModel";
+  "glstub_glShadeModel" "noalloc";
 external glStencilFunc : int -> int -> int -> unit = "glstub_glStencilFunc"
-  "glstub_glStencilFunc";
+  "glstub_glStencilFunc" "noalloc";
 external glStencilFuncSeparate : int -> int -> int -> int -> unit =
-  "glstub_glStencilFuncSeparate" "glstub_glStencilFuncSeparate";
+  "glstub_glStencilFuncSeparate" "glstub_glStencilFuncSeparate" "noalloc";
 external glStencilMask : int -> unit = "glstub_glStencilMask"
-  "glstub_glStencilMask";
+  "glstub_glStencilMask" "noalloc";
 external glStencilMaskSeparate : int -> int -> unit =
-  "glstub_glStencilMaskSeparate" "glstub_glStencilMaskSeparate";
+  "glstub_glStencilMaskSeparate" "glstub_glStencilMaskSeparate" "noalloc";
 external glStencilOp : int -> int -> int -> unit = "glstub_glStencilOp"
-  "glstub_glStencilOp";
+  "glstub_glStencilOp" "noalloc";
 external glStencilOpSeparate : int -> int -> int -> int -> unit =
-  "glstub_glStencilOpSeparate" "glstub_glStencilOpSeparate";
+  "glstub_glStencilOpSeparate" "glstub_glStencilOpSeparate" "noalloc";
 external glTexCoord1d : float -> unit = "glstub_glTexCoord1d"
-  "glstub_glTexCoord1d";
+  "glstub_glTexCoord1d" "noalloc";
 external glTexCoord1dv : array float -> unit = "glstub_glTexCoord1dv"
-  "glstub_glTexCoord1dv";
+  "glstub_glTexCoord1dv" "noalloc";
 external glTexCoord1f : float -> unit = "glstub_glTexCoord1f"
-  "glstub_glTexCoord1f";
+  "glstub_glTexCoord1f" "noalloc";
 external glTexCoord1fv : float_array -> unit = "glstub_glTexCoord1fv"
-  "glstub_glTexCoord1fv";
+  "glstub_glTexCoord1fv" "noalloc";
 value glTexCoord1fv p0 =
   let np0 = to_float_array p0 in let r = glTexCoord1fv np0 in r;
 external glTexCoord1i : int -> unit = "glstub_glTexCoord1i"
-  "glstub_glTexCoord1i";
+  "glstub_glTexCoord1i" "noalloc";
 external glTexCoord1iv : word_array -> unit = "glstub_glTexCoord1iv"
-  "glstub_glTexCoord1iv";
+  "glstub_glTexCoord1iv" "noalloc";
 value glTexCoord1iv p0 =
   let np0 = to_word_array p0 in let r = glTexCoord1iv np0 in r;
 external glTexCoord1s : int -> unit = "glstub_glTexCoord1s"
-  "glstub_glTexCoord1s";
+  "glstub_glTexCoord1s" "noalloc";
 external glTexCoord1sv : short_array -> unit = "glstub_glTexCoord1sv"
-  "glstub_glTexCoord1sv";
+  "glstub_glTexCoord1sv" "noalloc";
 value glTexCoord1sv p0 =
   let np0 = to_short_array p0 in let r = glTexCoord1sv np0 in r;
 external glTexCoord2d : float -> float -> unit = "glstub_glTexCoord2d"
-  "glstub_glTexCoord2d";
+  "glstub_glTexCoord2d" "noalloc";
 external glTexCoord2dv : array float -> unit = "glstub_glTexCoord2dv"
-  "glstub_glTexCoord2dv";
+  "glstub_glTexCoord2dv" "noalloc";
 external glTexCoord2f : float -> float -> unit = "glstub_glTexCoord2f"
-  "glstub_glTexCoord2f";
+  "glstub_glTexCoord2f" "noalloc";
 external glTexCoord2fv : float_array -> unit = "glstub_glTexCoord2fv"
-  "glstub_glTexCoord2fv";
+  "glstub_glTexCoord2fv" "noalloc";
 value glTexCoord2fv p0 =
   let np0 = to_float_array p0 in let r = glTexCoord2fv np0 in r;
 external glTexCoord2i : int -> int -> unit = "glstub_glTexCoord2i"
-  "glstub_glTexCoord2i";
+  "glstub_glTexCoord2i" "noalloc";
 external glTexCoord2iv : word_array -> unit = "glstub_glTexCoord2iv"
-  "glstub_glTexCoord2iv";
+  "glstub_glTexCoord2iv" "noalloc";
 value glTexCoord2iv p0 =
   let np0 = to_word_array p0 in let r = glTexCoord2iv np0 in r;
 external glTexCoord2s : int -> int -> unit = "glstub_glTexCoord2s"
-  "glstub_glTexCoord2s";
+  "glstub_glTexCoord2s" "noalloc";
 external glTexCoord2sv : short_array -> unit = "glstub_glTexCoord2sv"
-  "glstub_glTexCoord2sv";
+  "glstub_glTexCoord2sv" "noalloc";
 value glTexCoord2sv p0 =
   let np0 = to_short_array p0 in let r = glTexCoord2sv np0 in r;
 external glTexCoord3d : float -> float -> float -> unit =
-  "glstub_glTexCoord3d" "glstub_glTexCoord3d";
+  "glstub_glTexCoord3d" "glstub_glTexCoord3d" "noalloc";
 external glTexCoord3dv : array float -> unit = "glstub_glTexCoord3dv"
-  "glstub_glTexCoord3dv";
+  "glstub_glTexCoord3dv" "noalloc";
 external glTexCoord3f : float -> float -> float -> unit =
-  "glstub_glTexCoord3f" "glstub_glTexCoord3f";
+  "glstub_glTexCoord3f" "glstub_glTexCoord3f" "noalloc";
 external glTexCoord3fv : float_array -> unit = "glstub_glTexCoord3fv"
-  "glstub_glTexCoord3fv";
+  "glstub_glTexCoord3fv" "noalloc";
 value glTexCoord3fv p0 =
   let np0 = to_float_array p0 in let r = glTexCoord3fv np0 in r;
 external glTexCoord3i : int -> int -> int -> unit = "glstub_glTexCoord3i"
-  "glstub_glTexCoord3i";
+  "glstub_glTexCoord3i" "noalloc";
 external glTexCoord3iv : word_array -> unit = "glstub_glTexCoord3iv"
-  "glstub_glTexCoord3iv";
+  "glstub_glTexCoord3iv" "noalloc";
 value glTexCoord3iv p0 =
   let np0 = to_word_array p0 in let r = glTexCoord3iv np0 in r;
 external glTexCoord3s : int -> int -> int -> unit = "glstub_glTexCoord3s"
-  "glstub_glTexCoord3s";
+  "glstub_glTexCoord3s" "noalloc";
 external glTexCoord3sv : short_array -> unit = "glstub_glTexCoord3sv"
-  "glstub_glTexCoord3sv";
+  "glstub_glTexCoord3sv" "noalloc";
 value glTexCoord3sv p0 =
   let np0 = to_short_array p0 in let r = glTexCoord3sv np0 in r;
 external glTexCoord4d : float -> float -> float -> float -> unit =
-  "glstub_glTexCoord4d" "glstub_glTexCoord4d";
+  "glstub_glTexCoord4d" "glstub_glTexCoord4d" "noalloc";
 external glTexCoord4dv : array float -> unit = "glstub_glTexCoord4dv"
-  "glstub_glTexCoord4dv";
+  "glstub_glTexCoord4dv" "noalloc";
 external glTexCoord4f : float -> float -> float -> float -> unit =
-  "glstub_glTexCoord4f" "glstub_glTexCoord4f";
+  "glstub_glTexCoord4f" "glstub_glTexCoord4f" "noalloc";
 external glTexCoord4fv : float_array -> unit = "glstub_glTexCoord4fv"
-  "glstub_glTexCoord4fv";
+  "glstub_glTexCoord4fv" "noalloc";
 value glTexCoord4fv p0 =
   let np0 = to_float_array p0 in let r = glTexCoord4fv np0 in r;
 external glTexCoord4i : int -> int -> int -> int -> unit =
-  "glstub_glTexCoord4i" "glstub_glTexCoord4i";
+  "glstub_glTexCoord4i" "glstub_glTexCoord4i" "noalloc";
 external glTexCoord4iv : word_array -> unit = "glstub_glTexCoord4iv"
-  "glstub_glTexCoord4iv";
+  "glstub_glTexCoord4iv" "noalloc";
 value glTexCoord4iv p0 =
   let np0 = to_word_array p0 in let r = glTexCoord4iv np0 in r;
 external glTexCoord4s : int -> int -> int -> int -> unit =
-  "glstub_glTexCoord4s" "glstub_glTexCoord4s";
+  "glstub_glTexCoord4s" "glstub_glTexCoord4s" "noalloc";
 external glTexCoord4sv : short_array -> unit = "glstub_glTexCoord4sv"
-  "glstub_glTexCoord4sv";
+  "glstub_glTexCoord4sv" "noalloc";
 value glTexCoord4sv p0 =
   let np0 = to_short_array p0 in let r = glTexCoord4sv np0 in r;
 external glTexCoordPointer : int -> int -> int -> 'a -> unit =
-  "glstub_glTexCoordPointer" "glstub_glTexCoordPointer";
+  "glstub_glTexCoordPointer" "glstub_glTexCoordPointer" "noalloc";
 external glTexEnvf : int -> int -> float -> unit = "glstub_glTexEnvf"
-  "glstub_glTexEnvf";
+  "glstub_glTexEnvf" "noalloc";
 external glTexEnvfv : int -> int -> float_array -> unit = "glstub_glTexEnvfv"
-  "glstub_glTexEnvfv";
+  "glstub_glTexEnvfv" "noalloc";
 value glTexEnvfv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glTexEnvfv p0 p1 np2 in r;
 external glTexEnvi : int -> int -> int -> unit = "glstub_glTexEnvi"
-  "glstub_glTexEnvi";
+  "glstub_glTexEnvi" "noalloc";
 external glTexEnviv : int -> int -> word_array -> unit = "glstub_glTexEnviv"
-  "glstub_glTexEnviv";
+  "glstub_glTexEnviv" "noalloc";
 value glTexEnviv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glTexEnviv p0 p1 np2 in r;
 external glTexGend : int -> int -> float -> unit = "glstub_glTexGend"
-  "glstub_glTexGend";
+  "glstub_glTexGend" "noalloc";
 external glTexGendv : int -> int -> array float -> unit = "glstub_glTexGendv"
-  "glstub_glTexGendv";
+  "glstub_glTexGendv" "noalloc";
 external glTexGenf : int -> int -> float -> unit = "glstub_glTexGenf"
-  "glstub_glTexGenf";
+  "glstub_glTexGenf" "noalloc";
 external glTexGenfv : int -> int -> float_array -> unit = "glstub_glTexGenfv"
-  "glstub_glTexGenfv";
+  "glstub_glTexGenfv" "noalloc";
 value glTexGenfv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glTexGenfv p0 p1 np2 in r;
 external glTexGeni : int -> int -> int -> unit = "glstub_glTexGeni"
-  "glstub_glTexGeni";
+  "glstub_glTexGeni" "noalloc";
 external glTexGeniv : int -> int -> word_array -> unit = "glstub_glTexGeniv"
-  "glstub_glTexGeniv";
+  "glstub_glTexGeniv" "noalloc";
 value glTexGeniv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glTexGeniv p0 p1 np2 in r;
 external glTexImage1D :
   int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glTexImage1D_byte" "glstub_glTexImage1D";
+  "glstub_glTexImage1D_byte" "glstub_glTexImage1D" "noalloc";
 external glTexImage2D :
   int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glTexImage2D_byte" "glstub_glTexImage2D";
+  "glstub_glTexImage2D_byte" "glstub_glTexImage2D" "noalloc";
 external glTexImage3D :
   int -> int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glTexImage3D_byte" "glstub_glTexImage3D";
+  "glstub_glTexImage3D_byte" "glstub_glTexImage3D" "noalloc";
 external glTexParameterf : int -> int -> float -> unit =
-  "glstub_glTexParameterf" "glstub_glTexParameterf";
+  "glstub_glTexParameterf" "glstub_glTexParameterf" "noalloc";
 external glTexParameterfv : int -> int -> float_array -> unit =
-  "glstub_glTexParameterfv" "glstub_glTexParameterfv";
+  "glstub_glTexParameterfv" "glstub_glTexParameterfv" "noalloc";
 value glTexParameterfv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glTexParameterfv p0 p1 np2 in r;
 external glTexParameteri : int -> int -> int -> unit =
-  "glstub_glTexParameteri" "glstub_glTexParameteri";
+  "glstub_glTexParameteri" "glstub_glTexParameteri" "noalloc";
 external glTexParameteriv : int -> int -> word_array -> unit =
-  "glstub_glTexParameteriv" "glstub_glTexParameteriv";
+  "glstub_glTexParameteriv" "glstub_glTexParameteriv" "noalloc";
 value glTexParameteriv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glTexParameteriv p0 p1 np2 in r;
 external glTexSubImage1D :
   int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glTexSubImage1D_byte" "glstub_glTexSubImage1D";
+  "glstub_glTexSubImage1D_byte" "glstub_glTexSubImage1D" "noalloc";
 external glTexSubImage2D :
   int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glTexSubImage2D_byte" "glstub_glTexSubImage2D";
+  "glstub_glTexSubImage2D_byte" "glstub_glTexSubImage2D" "noalloc";
 external glTexSubImage3D :
   int ->
     int -> int -> int -> int -> int -> int -> int -> int -> int -> 'a -> unit =
-  "glstub_glTexSubImage3D_byte" "glstub_glTexSubImage3D";
+  "glstub_glTexSubImage3D_byte" "glstub_glTexSubImage3D" "noalloc";
 external glTranslated : float -> float -> float -> unit =
-  "glstub_glTranslated" "glstub_glTranslated";
+  "glstub_glTranslated" "glstub_glTranslated" "noalloc";
 external glTranslatef : float -> float -> float -> unit =
-  "glstub_glTranslatef" "glstub_glTranslatef";
+  "glstub_glTranslatef" "glstub_glTranslatef" "noalloc";
 external glUniform1f : int -> float -> unit = "glstub_glUniform1f"
-  "glstub_glUniform1f";
+  "glstub_glUniform1f" "noalloc";
 external glUniform1fARB : int -> float -> unit = "glstub_glUniform1fARB"
-  "glstub_glUniform1fARB";
+  "glstub_glUniform1fARB" "noalloc";
 external glUniform1fv : int -> int -> float_array -> unit =
-  "glstub_glUniform1fv" "glstub_glUniform1fv";
+  "glstub_glUniform1fv" "glstub_glUniform1fv" "noalloc";
 value glUniform1fv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glUniform1fv p0 p1 np2 in r;
 external glUniform1fvARB : int -> int -> float_array -> unit =
-  "glstub_glUniform1fvARB" "glstub_glUniform1fvARB";
+  "glstub_glUniform1fvARB" "glstub_glUniform1fvARB" "noalloc";
 value glUniform1fvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glUniform1fvARB p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glUniform1i : int -> int -> unit = "glstub_glUniform1i"
-  "glstub_glUniform1i";
+  "glstub_glUniform1i" "noalloc";
 external glUniform1iARB : int -> int -> unit = "glstub_glUniform1iARB"
-  "glstub_glUniform1iARB";
+  "glstub_glUniform1iARB" "noalloc";
 external glUniform1iv : int -> int -> word_array -> unit =
-  "glstub_glUniform1iv" "glstub_glUniform1iv";
+  "glstub_glUniform1iv" "glstub_glUniform1iv" "noalloc";
 value glUniform1iv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glUniform1iv p0 p1 np2 in r;
 external glUniform1ivARB : int -> int -> word_array -> unit =
-  "glstub_glUniform1ivARB" "glstub_glUniform1ivARB";
+  "glstub_glUniform1ivARB" "glstub_glUniform1ivARB" "noalloc";
 value glUniform1ivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glUniform1ivARB p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glUniform2f : int -> float -> float -> unit = "glstub_glUniform2f"
-  "glstub_glUniform2f";
+  "glstub_glUniform2f" "noalloc";
 external glUniform2fARB : int -> float -> float -> unit =
-  "glstub_glUniform2fARB" "glstub_glUniform2fARB";
+  "glstub_glUniform2fARB" "glstub_glUniform2fARB" "noalloc";
 external glUniform2fv : int -> int -> float_array -> unit =
-  "glstub_glUniform2fv" "glstub_glUniform2fv";
+  "glstub_glUniform2fv" "glstub_glUniform2fv" "noalloc";
 value glUniform2fv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glUniform2fv p0 p1 np2 in r;
 external glUniform2fvARB : int -> int -> float_array -> unit =
-  "glstub_glUniform2fvARB" "glstub_glUniform2fvARB";
+  "glstub_glUniform2fvARB" "glstub_glUniform2fvARB" "noalloc";
 value glUniform2fvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glUniform2fvARB p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glUniform2i : int -> int -> int -> unit = "glstub_glUniform2i"
-  "glstub_glUniform2i";
+  "glstub_glUniform2i" "noalloc";
 external glUniform2iARB : int -> int -> int -> unit = "glstub_glUniform2iARB"
-  "glstub_glUniform2iARB";
+  "glstub_glUniform2iARB" "noalloc";
 external glUniform2iv : int -> int -> word_array -> unit =
-  "glstub_glUniform2iv" "glstub_glUniform2iv";
+  "glstub_glUniform2iv" "glstub_glUniform2iv" "noalloc";
 value glUniform2iv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glUniform2iv p0 p1 np2 in r;
 external glUniform2ivARB : int -> int -> word_array -> unit =
-  "glstub_glUniform2ivARB" "glstub_glUniform2ivARB";
+  "glstub_glUniform2ivARB" "glstub_glUniform2ivARB" "noalloc";
 value glUniform2ivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glUniform2ivARB p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glUniform3f : int -> float -> float -> float -> unit =
-  "glstub_glUniform3f" "glstub_glUniform3f";
+  "glstub_glUniform3f" "glstub_glUniform3f" "noalloc";
 external glUniform3fARB : int -> float -> float -> float -> unit =
-  "glstub_glUniform3fARB" "glstub_glUniform3fARB";
+  "glstub_glUniform3fARB" "glstub_glUniform3fARB" "noalloc";
 external glUniform3fv : int -> int -> float_array -> unit =
-  "glstub_glUniform3fv" "glstub_glUniform3fv";
+  "glstub_glUniform3fv" "glstub_glUniform3fv" "noalloc";
 value glUniform3fv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glUniform3fv p0 p1 np2 in r;
 external glUniform3fvARB : int -> int -> float_array -> unit =
-  "glstub_glUniform3fvARB" "glstub_glUniform3fvARB";
+  "glstub_glUniform3fvARB" "glstub_glUniform3fvARB" "noalloc";
 value glUniform3fvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glUniform3fvARB p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glUniform3i : int -> int -> int -> int -> unit =
-  "glstub_glUniform3i" "glstub_glUniform3i";
+  "glstub_glUniform3i" "glstub_glUniform3i" "noalloc";
 external glUniform3iARB : int -> int -> int -> int -> unit =
-  "glstub_glUniform3iARB" "glstub_glUniform3iARB";
+  "glstub_glUniform3iARB" "glstub_glUniform3iARB" "noalloc";
 external glUniform3iv : int -> int -> word_array -> unit =
-  "glstub_glUniform3iv" "glstub_glUniform3iv";
+  "glstub_glUniform3iv" "glstub_glUniform3iv" "noalloc";
 value glUniform3iv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glUniform3iv p0 p1 np2 in r;
 external glUniform3ivARB : int -> int -> word_array -> unit =
-  "glstub_glUniform3ivARB" "glstub_glUniform3ivARB";
+  "glstub_glUniform3ivARB" "glstub_glUniform3ivARB" "noalloc";
 value glUniform3ivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glUniform3ivARB p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glUniform4f : int -> float -> float -> float -> float -> unit =
-  "glstub_glUniform4f" "glstub_glUniform4f";
+  "glstub_glUniform4f" "glstub_glUniform4f" "noalloc";
 external glUniform4fARB : int -> float -> float -> float -> float -> unit =
-  "glstub_glUniform4fARB" "glstub_glUniform4fARB";
+  "glstub_glUniform4fARB" "glstub_glUniform4fARB" "noalloc";
 external glUniform4fv : int -> int -> float_array -> unit =
-  "glstub_glUniform4fv" "glstub_glUniform4fv";
+  "glstub_glUniform4fv" "glstub_glUniform4fv" "noalloc";
 value glUniform4fv p0 p1 p2 =
   let np2 = to_float_array p2 in let r = glUniform4fv p0 p1 np2 in r;
 external glUniform4fvARB : int -> int -> float_array -> unit =
-  "glstub_glUniform4fvARB" "glstub_glUniform4fvARB";
+  "glstub_glUniform4fvARB" "glstub_glUniform4fvARB" "noalloc";
 value glUniform4fvARB p0 p1 p2 =
   let np2 = to_float_array p2 in
   let r = glUniform4fvARB p0 p1 np2 in let _ = copy_float_array np2 p2 in r;
 external glUniform4i : int -> int -> int -> int -> int -> unit =
-  "glstub_glUniform4i" "glstub_glUniform4i";
+  "glstub_glUniform4i" "glstub_glUniform4i" "noalloc";
 external glUniform4iARB : int -> int -> int -> int -> int -> unit =
-  "glstub_glUniform4iARB" "glstub_glUniform4iARB";
+  "glstub_glUniform4iARB" "glstub_glUniform4iARB" "noalloc";
 external glUniform4iv : int -> int -> word_array -> unit =
-  "glstub_glUniform4iv" "glstub_glUniform4iv";
+  "glstub_glUniform4iv" "glstub_glUniform4iv" "noalloc";
 value glUniform4iv p0 p1 p2 =
   let np2 = to_word_array p2 in let r = glUniform4iv p0 p1 np2 in r;
 external glUniform4ivARB : int -> int -> word_array -> unit =
-  "glstub_glUniform4ivARB" "glstub_glUniform4ivARB";
+  "glstub_glUniform4ivARB" "glstub_glUniform4ivARB" "noalloc";
 value glUniform4ivARB p0 p1 p2 =
   let np2 = to_word_array p2 in
   let r = glUniform4ivARB p0 p1 np2 in let _ = copy_word_array np2 p2 in r;
 external glUniformMatrix2fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix2fv" "glstub_glUniformMatrix2fv";
+  "glstub_glUniformMatrix2fv" "glstub_glUniformMatrix2fv" "noalloc";
 value glUniformMatrix2fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in let r = glUniformMatrix2fv p0 p1 p2 np3 in r;
 external glUniformMatrix2fvARB : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix2fvARB" "glstub_glUniformMatrix2fvARB";
+  "glstub_glUniformMatrix2fvARB" "glstub_glUniformMatrix2fvARB" "noalloc";
 value glUniformMatrix2fvARB p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix2fvARB p0 p1 p2 np3 in
   let _ = copy_float_array np3 p3 in r;
 external glUniformMatrix2x3fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix2x3fv" "glstub_glUniformMatrix2x3fv";
+  "glstub_glUniformMatrix2x3fv" "glstub_glUniformMatrix2x3fv" "noalloc";
 value glUniformMatrix2x3fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix2x3fv p0 p1 p2 np3 in r;
 external glUniformMatrix2x4fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix2x4fv" "glstub_glUniformMatrix2x4fv";
+  "glstub_glUniformMatrix2x4fv" "glstub_glUniformMatrix2x4fv" "noalloc";
 value glUniformMatrix2x4fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix2x4fv p0 p1 p2 np3 in r;
 external glUniformMatrix3fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix3fv" "glstub_glUniformMatrix3fv";
+  "glstub_glUniformMatrix3fv" "glstub_glUniformMatrix3fv" "noalloc";
 value glUniformMatrix3fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in let r = glUniformMatrix3fv p0 p1 p2 np3 in r;
 external glUniformMatrix3fvARB : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix3fvARB" "glstub_glUniformMatrix3fvARB";
+  "glstub_glUniformMatrix3fvARB" "glstub_glUniformMatrix3fvARB" "noalloc";
 value glUniformMatrix3fvARB p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix3fvARB p0 p1 p2 np3 in
   let _ = copy_float_array np3 p3 in r;
 external glUniformMatrix3x2fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix3x2fv" "glstub_glUniformMatrix3x2fv";
+  "glstub_glUniformMatrix3x2fv" "glstub_glUniformMatrix3x2fv" "noalloc";
 value glUniformMatrix3x2fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix3x2fv p0 p1 p2 np3 in r;
 external glUniformMatrix3x4fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix3x4fv" "glstub_glUniformMatrix3x4fv";
+  "glstub_glUniformMatrix3x4fv" "glstub_glUniformMatrix3x4fv" "noalloc";
 value glUniformMatrix3x4fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix3x4fv p0 p1 p2 np3 in r;
 external glUniformMatrix4fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix4fv" "glstub_glUniformMatrix4fv";
+  "glstub_glUniformMatrix4fv" "glstub_glUniformMatrix4fv" "noalloc";
 value glUniformMatrix4fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in let r = glUniformMatrix4fv p0 p1 p2 np3 in r;
 external glUniformMatrix4fvARB : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix4fvARB" "glstub_glUniformMatrix4fvARB";
+  "glstub_glUniformMatrix4fvARB" "glstub_glUniformMatrix4fvARB" "noalloc";
 value glUniformMatrix4fvARB p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix4fvARB p0 p1 p2 np3 in
   let _ = copy_float_array np3 p3 in r;
 external glUniformMatrix4x2fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix4x2fv" "glstub_glUniformMatrix4x2fv";
+  "glstub_glUniformMatrix4x2fv" "glstub_glUniformMatrix4x2fv" "noalloc";
 value glUniformMatrix4x2fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix4x2fv p0 p1 p2 np3 in r;
 external glUniformMatrix4x3fv : int -> int -> bool -> float_array -> unit =
-  "glstub_glUniformMatrix4x3fv" "glstub_glUniformMatrix4x3fv";
+  "glstub_glUniformMatrix4x3fv" "glstub_glUniformMatrix4x3fv" "noalloc";
 value glUniformMatrix4x3fv p0 p1 p2 p3 =
   let np3 = to_float_array p3 in
   let r = glUniformMatrix4x3fv p0 p1 p2 np3 in r;
 external glUnlockArraysEXT : unit -> unit = "glstub_glUnlockArraysEXT"
-  "glstub_glUnlockArraysEXT";
+  "glstub_glUnlockArraysEXT" "noalloc";
 external glUnmapBuffer : int -> bool = "glstub_glUnmapBuffer"
   "glstub_glUnmapBuffer";
 external glUnmapBufferARB : int -> bool = "glstub_glUnmapBufferARB"
   "glstub_glUnmapBufferARB";
 external glUseProgram : int -> unit = "glstub_glUseProgram"
-  "glstub_glUseProgram";
+  "glstub_glUseProgram" "noalloc";
 external glValidateProgram : int -> unit = "glstub_glValidateProgram"
-  "glstub_glValidateProgram";
+  "glstub_glValidateProgram" "noalloc";
 external glVertex2d : float -> float -> unit = "glstub_glVertex2d"
-  "glstub_glVertex2d";
+  "glstub_glVertex2d" "noalloc";
 external glVertex2dv : array float -> unit = "glstub_glVertex2dv"
-  "glstub_glVertex2dv";
+  "glstub_glVertex2dv" "noalloc";
 external glVertex2f : float -> float -> unit = "glstub_glVertex2f"
-  "glstub_glVertex2f";
+  "glstub_glVertex2f" "noalloc";
 external glVertex2fv : float_array -> unit = "glstub_glVertex2fv"
-  "glstub_glVertex2fv";
+  "glstub_glVertex2fv" "noalloc";
 value glVertex2fv p0 =
   let np0 = to_float_array p0 in let r = glVertex2fv np0 in r;
 external glVertex2i : int -> int -> unit = "glstub_glVertex2i"
-  "glstub_glVertex2i";
+  "glstub_glVertex2i" "noalloc";
 external glVertex2iv : word_array -> unit = "glstub_glVertex2iv"
-  "glstub_glVertex2iv";
+  "glstub_glVertex2iv" "noalloc";
 value glVertex2iv p0 =
   let np0 = to_word_array p0 in let r = glVertex2iv np0 in r;
 external glVertex2s : int -> int -> unit = "glstub_glVertex2s"
-  "glstub_glVertex2s";
+  "glstub_glVertex2s" "noalloc";
 external glVertex2sv : short_array -> unit = "glstub_glVertex2sv"
-  "glstub_glVertex2sv";
+  "glstub_glVertex2sv" "noalloc";
 value glVertex2sv p0 =
   let np0 = to_short_array p0 in let r = glVertex2sv np0 in r;
 external glVertex3d : float -> float -> float -> unit = "glstub_glVertex3d"
-  "glstub_glVertex3d";
+  "glstub_glVertex3d" "noalloc";
 external glVertex3dv : array float -> unit = "glstub_glVertex3dv"
-  "glstub_glVertex3dv";
+  "glstub_glVertex3dv" "noalloc";
 external glVertex3f : float -> float -> float -> unit = "glstub_glVertex3f"
-  "glstub_glVertex3f";
+  "glstub_glVertex3f" "noalloc";
 external glVertex3fv : float_array -> unit = "glstub_glVertex3fv"
-  "glstub_glVertex3fv";
+  "glstub_glVertex3fv" "noalloc";
 value glVertex3fv p0 =
   let np0 = to_float_array p0 in let r = glVertex3fv np0 in r;
 external glVertex3i : int -> int -> int -> unit = "glstub_glVertex3i"
-  "glstub_glVertex3i";
+  "glstub_glVertex3i" "noalloc";
 external glVertex3iv : word_array -> unit = "glstub_glVertex3iv"
-  "glstub_glVertex3iv";
+  "glstub_glVertex3iv" "noalloc";
 value glVertex3iv p0 =
   let np0 = to_word_array p0 in let r = glVertex3iv np0 in r;
 external glVertex3s : int -> int -> int -> unit = "glstub_glVertex3s"
-  "glstub_glVertex3s";
+  "glstub_glVertex3s" "noalloc";
 external glVertex3sv : short_array -> unit = "glstub_glVertex3sv"
-  "glstub_glVertex3sv";
+  "glstub_glVertex3sv" "noalloc";
 value glVertex3sv p0 =
   let np0 = to_short_array p0 in let r = glVertex3sv np0 in r;
 external glVertex4d : float -> float -> float -> float -> unit =
-  "glstub_glVertex4d" "glstub_glVertex4d";
+  "glstub_glVertex4d" "glstub_glVertex4d" "noalloc";
 external glVertex4dv : array float -> unit = "glstub_glVertex4dv"
-  "glstub_glVertex4dv";
+  "glstub_glVertex4dv" "noalloc";
 external glVertex4f : float -> float -> float -> float -> unit =
-  "glstub_glVertex4f" "glstub_glVertex4f";
+  "glstub_glVertex4f" "glstub_glVertex4f" "noalloc";
 external glVertex4fv : float_array -> unit = "glstub_glVertex4fv"
-  "glstub_glVertex4fv";
+  "glstub_glVertex4fv" "noalloc";
 value glVertex4fv p0 =
   let np0 = to_float_array p0 in let r = glVertex4fv np0 in r;
 external glVertex4i : int -> int -> int -> int -> unit = "glstub_glVertex4i"
-  "glstub_glVertex4i";
+  "glstub_glVertex4i" "noalloc";
 external glVertex4iv : word_array -> unit = "glstub_glVertex4iv"
-  "glstub_glVertex4iv";
+  "glstub_glVertex4iv" "noalloc";
 value glVertex4iv p0 =
   let np0 = to_word_array p0 in let r = glVertex4iv np0 in r;
 external glVertex4s : int -> int -> int -> int -> unit = "glstub_glVertex4s"
-  "glstub_glVertex4s";
+  "glstub_glVertex4s" "noalloc";
 external glVertex4sv : short_array -> unit = "glstub_glVertex4sv"
-  "glstub_glVertex4sv";
+  "glstub_glVertex4sv" "noalloc";
 value glVertex4sv p0 =
   let np0 = to_short_array p0 in let r = glVertex4sv np0 in r;
 external glVertexAttrib1d : int -> float -> unit = "glstub_glVertexAttrib1d"
-  "glstub_glVertexAttrib1d";
+  "glstub_glVertexAttrib1d" "noalloc";
 external glVertexAttrib1dARB : int -> float -> unit =
-  "glstub_glVertexAttrib1dARB" "glstub_glVertexAttrib1dARB";
+  "glstub_glVertexAttrib1dARB" "glstub_glVertexAttrib1dARB" "noalloc";
 external glVertexAttrib1dv : int -> array float -> unit =
-  "glstub_glVertexAttrib1dv" "glstub_glVertexAttrib1dv";
+  "glstub_glVertexAttrib1dv" "glstub_glVertexAttrib1dv" "noalloc";
 external glVertexAttrib1dvARB : int -> array float -> unit =
-  "glstub_glVertexAttrib1dvARB" "glstub_glVertexAttrib1dvARB";
+  "glstub_glVertexAttrib1dvARB" "glstub_glVertexAttrib1dvARB" "noalloc";
 external glVertexAttrib1f : int -> float -> unit = "glstub_glVertexAttrib1f"
-  "glstub_glVertexAttrib1f";
+  "glstub_glVertexAttrib1f" "noalloc";
 external glVertexAttrib1fARB : int -> float -> unit =
-  "glstub_glVertexAttrib1fARB" "glstub_glVertexAttrib1fARB";
+  "glstub_glVertexAttrib1fARB" "glstub_glVertexAttrib1fARB" "noalloc";
 external glVertexAttrib1fv : int -> float_array -> unit =
-  "glstub_glVertexAttrib1fv" "glstub_glVertexAttrib1fv";
+  "glstub_glVertexAttrib1fv" "glstub_glVertexAttrib1fv" "noalloc";
 value glVertexAttrib1fv p0 p1 =
   let np1 = to_float_array p1 in let r = glVertexAttrib1fv p0 np1 in r;
 external glVertexAttrib1fvARB : int -> float_array -> unit =
-  "glstub_glVertexAttrib1fvARB" "glstub_glVertexAttrib1fvARB";
+  "glstub_glVertexAttrib1fvARB" "glstub_glVertexAttrib1fvARB" "noalloc";
 value glVertexAttrib1fvARB p0 p1 =
   let np1 = to_float_array p1 in
   let r = glVertexAttrib1fvARB p0 np1 in let _ = copy_float_array np1 p1 in r;
 external glVertexAttrib1s : int -> int -> unit = "glstub_glVertexAttrib1s"
-  "glstub_glVertexAttrib1s";
+  "glstub_glVertexAttrib1s" "noalloc";
 external glVertexAttrib1sARB : int -> int -> unit =
-  "glstub_glVertexAttrib1sARB" "glstub_glVertexAttrib1sARB";
+  "glstub_glVertexAttrib1sARB" "glstub_glVertexAttrib1sARB" "noalloc";
 external glVertexAttrib1sv : int -> short_array -> unit =
-  "glstub_glVertexAttrib1sv" "glstub_glVertexAttrib1sv";
+  "glstub_glVertexAttrib1sv" "glstub_glVertexAttrib1sv" "noalloc";
 value glVertexAttrib1sv p0 p1 =
   let np1 = to_short_array p1 in let r = glVertexAttrib1sv p0 np1 in r;
 external glVertexAttrib1svARB : int -> short_array -> unit =
-  "glstub_glVertexAttrib1svARB" "glstub_glVertexAttrib1svARB";
+  "glstub_glVertexAttrib1svARB" "glstub_glVertexAttrib1svARB" "noalloc";
 value glVertexAttrib1svARB p0 p1 =
   let np1 = to_short_array p1 in
   let r = glVertexAttrib1svARB p0 np1 in let _ = copy_short_array np1 p1 in r;
 external glVertexAttrib2d : int -> float -> float -> unit =
-  "glstub_glVertexAttrib2d" "glstub_glVertexAttrib2d";
+  "glstub_glVertexAttrib2d" "glstub_glVertexAttrib2d" "noalloc";
 external glVertexAttrib2dARB : int -> float -> float -> unit =
-  "glstub_glVertexAttrib2dARB" "glstub_glVertexAttrib2dARB";
+  "glstub_glVertexAttrib2dARB" "glstub_glVertexAttrib2dARB" "noalloc";
 external glVertexAttrib2dv : int -> array float -> unit =
-  "glstub_glVertexAttrib2dv" "glstub_glVertexAttrib2dv";
+  "glstub_glVertexAttrib2dv" "glstub_glVertexAttrib2dv" "noalloc";
 external glVertexAttrib2dvARB : int -> array float -> unit =
-  "glstub_glVertexAttrib2dvARB" "glstub_glVertexAttrib2dvARB";
+  "glstub_glVertexAttrib2dvARB" "glstub_glVertexAttrib2dvARB" "noalloc";
 external glVertexAttrib2f : int -> float -> float -> unit =
-  "glstub_glVertexAttrib2f" "glstub_glVertexAttrib2f";
+  "glstub_glVertexAttrib2f" "glstub_glVertexAttrib2f" "noalloc";
 external glVertexAttrib2fARB : int -> float -> float -> unit =
-  "glstub_glVertexAttrib2fARB" "glstub_glVertexAttrib2fARB";
+  "glstub_glVertexAttrib2fARB" "glstub_glVertexAttrib2fARB" "noalloc";
 external glVertexAttrib2fv : int -> float_array -> unit =
-  "glstub_glVertexAttrib2fv" "glstub_glVertexAttrib2fv";
+  "glstub_glVertexAttrib2fv" "glstub_glVertexAttrib2fv" "noalloc";
 value glVertexAttrib2fv p0 p1 =
   let np1 = to_float_array p1 in let r = glVertexAttrib2fv p0 np1 in r;
 external glVertexAttrib2fvARB : int -> float_array -> unit =
-  "glstub_glVertexAttrib2fvARB" "glstub_glVertexAttrib2fvARB";
+  "glstub_glVertexAttrib2fvARB" "glstub_glVertexAttrib2fvARB" "noalloc";
 value glVertexAttrib2fvARB p0 p1 =
   let np1 = to_float_array p1 in
   let r = glVertexAttrib2fvARB p0 np1 in let _ = copy_float_array np1 p1 in r;
 external glVertexAttrib2s : int -> int -> int -> unit =
-  "glstub_glVertexAttrib2s" "glstub_glVertexAttrib2s";
+  "glstub_glVertexAttrib2s" "glstub_glVertexAttrib2s" "noalloc";
 external glVertexAttrib2sARB : int -> int -> int -> unit =
-  "glstub_glVertexAttrib2sARB" "glstub_glVertexAttrib2sARB";
+  "glstub_glVertexAttrib2sARB" "glstub_glVertexAttrib2sARB" "noalloc";
 external glVertexAttrib2sv : int -> short_array -> unit =
-  "glstub_glVertexAttrib2sv" "glstub_glVertexAttrib2sv";
+  "glstub_glVertexAttrib2sv" "glstub_glVertexAttrib2sv" "noalloc";
 value glVertexAttrib2sv p0 p1 =
   let np1 = to_short_array p1 in let r = glVertexAttrib2sv p0 np1 in r;
 external glVertexAttrib2svARB : int -> short_array -> unit =
-  "glstub_glVertexAttrib2svARB" "glstub_glVertexAttrib2svARB";
+  "glstub_glVertexAttrib2svARB" "glstub_glVertexAttrib2svARB" "noalloc";
 value glVertexAttrib2svARB p0 p1 =
   let np1 = to_short_array p1 in
   let r = glVertexAttrib2svARB p0 np1 in let _ = copy_short_array np1 p1 in r;
 external glVertexAttrib3d : int -> float -> float -> float -> unit =
-  "glstub_glVertexAttrib3d" "glstub_glVertexAttrib3d";
+  "glstub_glVertexAttrib3d" "glstub_glVertexAttrib3d" "noalloc";
 external glVertexAttrib3dARB : int -> float -> float -> float -> unit =
-  "glstub_glVertexAttrib3dARB" "glstub_glVertexAttrib3dARB";
+  "glstub_glVertexAttrib3dARB" "glstub_glVertexAttrib3dARB" "noalloc";
 external glVertexAttrib3dv : int -> array float -> unit =
-  "glstub_glVertexAttrib3dv" "glstub_glVertexAttrib3dv";
+  "glstub_glVertexAttrib3dv" "glstub_glVertexAttrib3dv" "noalloc";
 external glVertexAttrib3dvARB : int -> array float -> unit =
-  "glstub_glVertexAttrib3dvARB" "glstub_glVertexAttrib3dvARB";
+  "glstub_glVertexAttrib3dvARB" "glstub_glVertexAttrib3dvARB" "noalloc";
 external glVertexAttrib3f : int -> float -> float -> float -> unit =
-  "glstub_glVertexAttrib3f" "glstub_glVertexAttrib3f";
+  "glstub_glVertexAttrib3f" "glstub_glVertexAttrib3f" "noalloc";
 external glVertexAttrib3fARB : int -> float -> float -> float -> unit =
-  "glstub_glVertexAttrib3fARB" "glstub_glVertexAttrib3fARB";
+  "glstub_glVertexAttrib3fARB" "glstub_glVertexAttrib3fARB" "noalloc";
 external glVertexAttrib3fv : int -> float_array -> unit =
-  "glstub_glVertexAttrib3fv" "glstub_glVertexAttrib3fv";
+  "glstub_glVertexAttrib3fv" "glstub_glVertexAttrib3fv" "noalloc";
 value glVertexAttrib3fv p0 p1 =
   let np1 = to_float_array p1 in let r = glVertexAttrib3fv p0 np1 in r;
 external glVertexAttrib3fvARB : int -> float_array -> unit =
-  "glstub_glVertexAttrib3fvARB" "glstub_glVertexAttrib3fvARB";
+  "glstub_glVertexAttrib3fvARB" "glstub_glVertexAttrib3fvARB" "noalloc";
 value glVertexAttrib3fvARB p0 p1 =
   let np1 = to_float_array p1 in
   let r = glVertexAttrib3fvARB p0 np1 in let _ = copy_float_array np1 p1 in r;
 external glVertexAttrib3s : int -> int -> int -> int -> unit =
-  "glstub_glVertexAttrib3s" "glstub_glVertexAttrib3s";
+  "glstub_glVertexAttrib3s" "glstub_glVertexAttrib3s" "noalloc";
 external glVertexAttrib3sARB : int -> int -> int -> int -> unit =
-  "glstub_glVertexAttrib3sARB" "glstub_glVertexAttrib3sARB";
+  "glstub_glVertexAttrib3sARB" "glstub_glVertexAttrib3sARB" "noalloc";
 external glVertexAttrib3sv : int -> short_array -> unit =
-  "glstub_glVertexAttrib3sv" "glstub_glVertexAttrib3sv";
+  "glstub_glVertexAttrib3sv" "glstub_glVertexAttrib3sv" "noalloc";
 value glVertexAttrib3sv p0 p1 =
   let np1 = to_short_array p1 in let r = glVertexAttrib3sv p0 np1 in r;
 external glVertexAttrib3svARB : int -> short_array -> unit =
-  "glstub_glVertexAttrib3svARB" "glstub_glVertexAttrib3svARB";
+  "glstub_glVertexAttrib3svARB" "glstub_glVertexAttrib3svARB" "noalloc";
 value glVertexAttrib3svARB p0 p1 =
   let np1 = to_short_array p1 in
   let r = glVertexAttrib3svARB p0 np1 in let _ = copy_short_array np1 p1 in r;
 external glVertexAttrib4Nbv : int -> byte_array -> unit =
-  "glstub_glVertexAttrib4Nbv" "glstub_glVertexAttrib4Nbv";
+  "glstub_glVertexAttrib4Nbv" "glstub_glVertexAttrib4Nbv" "noalloc";
 value glVertexAttrib4Nbv p0 p1 =
   let np1 = to_byte_array p1 in let r = glVertexAttrib4Nbv p0 np1 in r;
 external glVertexAttrib4NbvARB : int -> byte_array -> unit =
-  "glstub_glVertexAttrib4NbvARB" "glstub_glVertexAttrib4NbvARB";
+  "glstub_glVertexAttrib4NbvARB" "glstub_glVertexAttrib4NbvARB" "noalloc";
 value glVertexAttrib4NbvARB p0 p1 =
   let np1 = to_byte_array p1 in
   let r = glVertexAttrib4NbvARB p0 np1 in let _ = copy_byte_array np1 p1 in r;
 external glVertexAttrib4Niv : int -> word_array -> unit =
-  "glstub_glVertexAttrib4Niv" "glstub_glVertexAttrib4Niv";
+  "glstub_glVertexAttrib4Niv" "glstub_glVertexAttrib4Niv" "noalloc";
 value glVertexAttrib4Niv p0 p1 =
   let np1 = to_word_array p1 in let r = glVertexAttrib4Niv p0 np1 in r;
 external glVertexAttrib4NivARB : int -> word_array -> unit =
-  "glstub_glVertexAttrib4NivARB" "glstub_glVertexAttrib4NivARB";
+  "glstub_glVertexAttrib4NivARB" "glstub_glVertexAttrib4NivARB" "noalloc";
 value glVertexAttrib4NivARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glVertexAttrib4NivARB p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glVertexAttrib4Nsv : int -> short_array -> unit =
-  "glstub_glVertexAttrib4Nsv" "glstub_glVertexAttrib4Nsv";
+  "glstub_glVertexAttrib4Nsv" "glstub_glVertexAttrib4Nsv" "noalloc";
 value glVertexAttrib4Nsv p0 p1 =
   let np1 = to_short_array p1 in let r = glVertexAttrib4Nsv p0 np1 in r;
 external glVertexAttrib4NsvARB : int -> short_array -> unit =
-  "glstub_glVertexAttrib4NsvARB" "glstub_glVertexAttrib4NsvARB";
+  "glstub_glVertexAttrib4NsvARB" "glstub_glVertexAttrib4NsvARB" "noalloc";
 value glVertexAttrib4NsvARB p0 p1 =
   let np1 = to_short_array p1 in
   let r = glVertexAttrib4NsvARB p0 np1 in
   let _ = copy_short_array np1 p1 in r;
 external glVertexAttrib4Nub : int -> int -> int -> int -> int -> unit =
-  "glstub_glVertexAttrib4Nub" "glstub_glVertexAttrib4Nub";
+  "glstub_glVertexAttrib4Nub" "glstub_glVertexAttrib4Nub" "noalloc";
 external glVertexAttrib4NubARB : int -> int -> int -> int -> int -> unit =
-  "glstub_glVertexAttrib4NubARB" "glstub_glVertexAttrib4NubARB";
+  "glstub_glVertexAttrib4NubARB" "glstub_glVertexAttrib4NubARB" "noalloc";
 external glVertexAttrib4Nubv : int -> ubyte_array -> unit =
-  "glstub_glVertexAttrib4Nubv" "glstub_glVertexAttrib4Nubv";
+  "glstub_glVertexAttrib4Nubv" "glstub_glVertexAttrib4Nubv" "noalloc";
 value glVertexAttrib4Nubv p0 p1 =
   let np1 = to_ubyte_array p1 in let r = glVertexAttrib4Nubv p0 np1 in r;
 external glVertexAttrib4NubvARB : int -> ubyte_array -> unit =
-  "glstub_glVertexAttrib4NubvARB" "glstub_glVertexAttrib4NubvARB";
+  "glstub_glVertexAttrib4NubvARB" "glstub_glVertexAttrib4NubvARB" "noalloc";
 value glVertexAttrib4NubvARB p0 p1 =
   let np1 = to_ubyte_array p1 in
   let r = glVertexAttrib4NubvARB p0 np1 in
   let _ = copy_ubyte_array np1 p1 in r;
 external glVertexAttrib4Nuiv : int -> word_array -> unit =
-  "glstub_glVertexAttrib4Nuiv" "glstub_glVertexAttrib4Nuiv";
+  "glstub_glVertexAttrib4Nuiv" "glstub_glVertexAttrib4Nuiv" "noalloc";
 value glVertexAttrib4Nuiv p0 p1 =
   let np1 = to_word_array p1 in let r = glVertexAttrib4Nuiv p0 np1 in r;
 external glVertexAttrib4NuivARB : int -> word_array -> unit =
-  "glstub_glVertexAttrib4NuivARB" "glstub_glVertexAttrib4NuivARB";
+  "glstub_glVertexAttrib4NuivARB" "glstub_glVertexAttrib4NuivARB" "noalloc";
 value glVertexAttrib4NuivARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glVertexAttrib4NuivARB p0 np1 in
   let _ = copy_word_array np1 p1 in r;
 external glVertexAttrib4Nusv : int -> ushort_array -> unit =
-  "glstub_glVertexAttrib4Nusv" "glstub_glVertexAttrib4Nusv";
+  "glstub_glVertexAttrib4Nusv" "glstub_glVertexAttrib4Nusv" "noalloc";
 value glVertexAttrib4Nusv p0 p1 =
   let np1 = to_ushort_array p1 in let r = glVertexAttrib4Nusv p0 np1 in r;
 external glVertexAttrib4NusvARB : int -> ushort_array -> unit =
-  "glstub_glVertexAttrib4NusvARB" "glstub_glVertexAttrib4NusvARB";
+  "glstub_glVertexAttrib4NusvARB" "glstub_glVertexAttrib4NusvARB" "noalloc";
 value glVertexAttrib4NusvARB p0 p1 =
   let np1 = to_ushort_array p1 in
   let r = glVertexAttrib4NusvARB p0 np1 in
   let _ = copy_ushort_array np1 p1 in r;
 external glVertexAttrib4bv : int -> byte_array -> unit =
-  "glstub_glVertexAttrib4bv" "glstub_glVertexAttrib4bv";
+  "glstub_glVertexAttrib4bv" "glstub_glVertexAttrib4bv" "noalloc";
 value glVertexAttrib4bv p0 p1 =
   let np1 = to_byte_array p1 in let r = glVertexAttrib4bv p0 np1 in r;
 external glVertexAttrib4bvARB : int -> byte_array -> unit =
-  "glstub_glVertexAttrib4bvARB" "glstub_glVertexAttrib4bvARB";
+  "glstub_glVertexAttrib4bvARB" "glstub_glVertexAttrib4bvARB" "noalloc";
 value glVertexAttrib4bvARB p0 p1 =
   let np1 = to_byte_array p1 in
   let r = glVertexAttrib4bvARB p0 np1 in let _ = copy_byte_array np1 p1 in r;
 external glVertexAttrib4d : int -> float -> float -> float -> float -> unit =
-  "glstub_glVertexAttrib4d" "glstub_glVertexAttrib4d";
+  "glstub_glVertexAttrib4d" "glstub_glVertexAttrib4d" "noalloc";
 external glVertexAttrib4dARB :
   int -> float -> float -> float -> float -> unit =
-  "glstub_glVertexAttrib4dARB" "glstub_glVertexAttrib4dARB";
+  "glstub_glVertexAttrib4dARB" "glstub_glVertexAttrib4dARB" "noalloc";
 external glVertexAttrib4dv : int -> array float -> unit =
-  "glstub_glVertexAttrib4dv" "glstub_glVertexAttrib4dv";
+  "glstub_glVertexAttrib4dv" "glstub_glVertexAttrib4dv" "noalloc";
 external glVertexAttrib4dvARB : int -> array float -> unit =
-  "glstub_glVertexAttrib4dvARB" "glstub_glVertexAttrib4dvARB";
+  "glstub_glVertexAttrib4dvARB" "glstub_glVertexAttrib4dvARB" "noalloc";
 external glVertexAttrib4f : int -> float -> float -> float -> float -> unit =
-  "glstub_glVertexAttrib4f" "glstub_glVertexAttrib4f";
+  "glstub_glVertexAttrib4f" "glstub_glVertexAttrib4f" "noalloc";
 external glVertexAttrib4fARB :
   int -> float -> float -> float -> float -> unit =
-  "glstub_glVertexAttrib4fARB" "glstub_glVertexAttrib4fARB";
+  "glstub_glVertexAttrib4fARB" "glstub_glVertexAttrib4fARB" "noalloc";
 external glVertexAttrib4fv : int -> float_array -> unit =
-  "glstub_glVertexAttrib4fv" "glstub_glVertexAttrib4fv";
+  "glstub_glVertexAttrib4fv" "glstub_glVertexAttrib4fv" "noalloc";
 value glVertexAttrib4fv p0 p1 =
   let np1 = to_float_array p1 in let r = glVertexAttrib4fv p0 np1 in r;
 external glVertexAttrib4fvARB : int -> float_array -> unit =
-  "glstub_glVertexAttrib4fvARB" "glstub_glVertexAttrib4fvARB";
+  "glstub_glVertexAttrib4fvARB" "glstub_glVertexAttrib4fvARB" "noalloc";
 value glVertexAttrib4fvARB p0 p1 =
   let np1 = to_float_array p1 in
   let r = glVertexAttrib4fvARB p0 np1 in let _ = copy_float_array np1 p1 in r;
 external glVertexAttrib4iv : int -> word_array -> unit =
-  "glstub_glVertexAttrib4iv" "glstub_glVertexAttrib4iv";
+  "glstub_glVertexAttrib4iv" "glstub_glVertexAttrib4iv" "noalloc";
 value glVertexAttrib4iv p0 p1 =
   let np1 = to_word_array p1 in let r = glVertexAttrib4iv p0 np1 in r;
 external glVertexAttrib4ivARB : int -> word_array -> unit =
-  "glstub_glVertexAttrib4ivARB" "glstub_glVertexAttrib4ivARB";
+  "glstub_glVertexAttrib4ivARB" "glstub_glVertexAttrib4ivARB" "noalloc";
 value glVertexAttrib4ivARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glVertexAttrib4ivARB p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glVertexAttrib4s : int -> int -> int -> int -> int -> unit =
-  "glstub_glVertexAttrib4s" "glstub_glVertexAttrib4s";
+  "glstub_glVertexAttrib4s" "glstub_glVertexAttrib4s" "noalloc";
 external glVertexAttrib4sARB : int -> int -> int -> int -> int -> unit =
-  "glstub_glVertexAttrib4sARB" "glstub_glVertexAttrib4sARB";
+  "glstub_glVertexAttrib4sARB" "glstub_glVertexAttrib4sARB" "noalloc";
 external glVertexAttrib4sv : int -> short_array -> unit =
-  "glstub_glVertexAttrib4sv" "glstub_glVertexAttrib4sv";
+  "glstub_glVertexAttrib4sv" "glstub_glVertexAttrib4sv" "noalloc";
 value glVertexAttrib4sv p0 p1 =
   let np1 = to_short_array p1 in let r = glVertexAttrib4sv p0 np1 in r;
 external glVertexAttrib4svARB : int -> short_array -> unit =
-  "glstub_glVertexAttrib4svARB" "glstub_glVertexAttrib4svARB";
+  "glstub_glVertexAttrib4svARB" "glstub_glVertexAttrib4svARB" "noalloc";
 value glVertexAttrib4svARB p0 p1 =
   let np1 = to_short_array p1 in
   let r = glVertexAttrib4svARB p0 np1 in let _ = copy_short_array np1 p1 in r;
 external glVertexAttrib4ubv : int -> ubyte_array -> unit =
-  "glstub_glVertexAttrib4ubv" "glstub_glVertexAttrib4ubv";
+  "glstub_glVertexAttrib4ubv" "glstub_glVertexAttrib4ubv" "noalloc";
 value glVertexAttrib4ubv p0 p1 =
   let np1 = to_ubyte_array p1 in let r = glVertexAttrib4ubv p0 np1 in r;
 external glVertexAttrib4ubvARB : int -> ubyte_array -> unit =
-  "glstub_glVertexAttrib4ubvARB" "glstub_glVertexAttrib4ubvARB";
+  "glstub_glVertexAttrib4ubvARB" "glstub_glVertexAttrib4ubvARB" "noalloc";
 value glVertexAttrib4ubvARB p0 p1 =
   let np1 = to_ubyte_array p1 in
   let r = glVertexAttrib4ubvARB p0 np1 in
   let _ = copy_ubyte_array np1 p1 in r;
 external glVertexAttrib4uiv : int -> word_array -> unit =
-  "glstub_glVertexAttrib4uiv" "glstub_glVertexAttrib4uiv";
+  "glstub_glVertexAttrib4uiv" "glstub_glVertexAttrib4uiv" "noalloc";
 value glVertexAttrib4uiv p0 p1 =
   let np1 = to_word_array p1 in let r = glVertexAttrib4uiv p0 np1 in r;
 external glVertexAttrib4uivARB : int -> word_array -> unit =
-  "glstub_glVertexAttrib4uivARB" "glstub_glVertexAttrib4uivARB";
+  "glstub_glVertexAttrib4uivARB" "glstub_glVertexAttrib4uivARB" "noalloc";
 value glVertexAttrib4uivARB p0 p1 =
   let np1 = to_word_array p1 in
   let r = glVertexAttrib4uivARB p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glVertexAttrib4usv : int -> ushort_array -> unit =
-  "glstub_glVertexAttrib4usv" "glstub_glVertexAttrib4usv";
+  "glstub_glVertexAttrib4usv" "glstub_glVertexAttrib4usv" "noalloc";
 value glVertexAttrib4usv p0 p1 =
   let np1 = to_ushort_array p1 in let r = glVertexAttrib4usv p0 np1 in r;
 external glVertexAttrib4usvARB : int -> ushort_array -> unit =
-  "glstub_glVertexAttrib4usvARB" "glstub_glVertexAttrib4usvARB";
+  "glstub_glVertexAttrib4usvARB" "glstub_glVertexAttrib4usvARB" "noalloc";
 value glVertexAttrib4usvARB p0 p1 =
   let np1 = to_ushort_array p1 in
   let r = glVertexAttrib4usvARB p0 np1 in
   let _ = copy_ushort_array np1 p1 in r;
 external glVertexAttribPointer :
   int -> int -> int -> bool -> int -> 'a -> unit =
-  "glstub_glVertexAttribPointer_byte" "glstub_glVertexAttribPointer";
+  "glstub_glVertexAttribPointer_byte" "glstub_glVertexAttribPointer"
+  "noalloc";
 external glVertexAttribPointerARB :
   int -> int -> int -> bool -> int -> 'a -> unit =
-  "glstub_glVertexAttribPointerARB_byte" "glstub_glVertexAttribPointerARB";
+  "glstub_glVertexAttribPointerARB_byte" "glstub_glVertexAttribPointerARB"
+  "noalloc";
 external glVertexPointer : int -> int -> int -> 'a -> unit =
-  "glstub_glVertexPointer" "glstub_glVertexPointer";
+  "glstub_glVertexPointer" "glstub_glVertexPointer" "noalloc";
 external glViewport : int -> int -> int -> int -> unit = "glstub_glViewport"
-  "glstub_glViewport";
+  "glstub_glViewport" "noalloc";
 external glWindowPos2d : float -> float -> unit = "glstub_glWindowPos2d"
-  "glstub_glWindowPos2d";
+  "glstub_glWindowPos2d" "noalloc";
 external glWindowPos2dARB : float -> float -> unit =
-  "glstub_glWindowPos2dARB" "glstub_glWindowPos2dARB";
+  "glstub_glWindowPos2dARB" "glstub_glWindowPos2dARB" "noalloc";
 external glWindowPos2dv : array float -> unit = "glstub_glWindowPos2dv"
-  "glstub_glWindowPos2dv";
+  "glstub_glWindowPos2dv" "noalloc";
 external glWindowPos2dvARB : array float -> unit = "glstub_glWindowPos2dvARB"
-  "glstub_glWindowPos2dvARB";
+  "glstub_glWindowPos2dvARB" "noalloc";
 external glWindowPos2f : float -> float -> unit = "glstub_glWindowPos2f"
-  "glstub_glWindowPos2f";
+  "glstub_glWindowPos2f" "noalloc";
 external glWindowPos2fARB : float -> float -> unit =
-  "glstub_glWindowPos2fARB" "glstub_glWindowPos2fARB";
+  "glstub_glWindowPos2fARB" "glstub_glWindowPos2fARB" "noalloc";
 external glWindowPos2fv : float_array -> unit = "glstub_glWindowPos2fv"
-  "glstub_glWindowPos2fv";
+  "glstub_glWindowPos2fv" "noalloc";
 value glWindowPos2fv p0 =
   let np0 = to_float_array p0 in let r = glWindowPos2fv np0 in r;
 external glWindowPos2fvARB : float_array -> unit = "glstub_glWindowPos2fvARB"
-  "glstub_glWindowPos2fvARB";
+  "glstub_glWindowPos2fvARB" "noalloc";
 value glWindowPos2fvARB p0 =
   let np0 = to_float_array p0 in
   let r = glWindowPos2fvARB np0 in let _ = copy_float_array np0 p0 in r;
 external glWindowPos2i : int -> int -> unit = "glstub_glWindowPos2i"
-  "glstub_glWindowPos2i";
+  "glstub_glWindowPos2i" "noalloc";
 external glWindowPos2iARB : int -> int -> unit = "glstub_glWindowPos2iARB"
-  "glstub_glWindowPos2iARB";
+  "glstub_glWindowPos2iARB" "noalloc";
 external glWindowPos2iv : word_array -> unit = "glstub_glWindowPos2iv"
-  "glstub_glWindowPos2iv";
+  "glstub_glWindowPos2iv" "noalloc";
 value glWindowPos2iv p0 =
   let np0 = to_word_array p0 in let r = glWindowPos2iv np0 in r;
 external glWindowPos2ivARB : word_array -> unit = "glstub_glWindowPos2ivARB"
-  "glstub_glWindowPos2ivARB";
+  "glstub_glWindowPos2ivARB" "noalloc";
 value glWindowPos2ivARB p0 =
   let np0 = to_word_array p0 in
   let r = glWindowPos2ivARB np0 in let _ = copy_word_array np0 p0 in r;
 external glWindowPos2s : int -> int -> unit = "glstub_glWindowPos2s"
-  "glstub_glWindowPos2s";
+  "glstub_glWindowPos2s" "noalloc";
 external glWindowPos2sARB : int -> int -> unit = "glstub_glWindowPos2sARB"
-  "glstub_glWindowPos2sARB";
+  "glstub_glWindowPos2sARB" "noalloc";
 external glWindowPos2sv : short_array -> unit = "glstub_glWindowPos2sv"
-  "glstub_glWindowPos2sv";
+  "glstub_glWindowPos2sv" "noalloc";
 value glWindowPos2sv p0 =
   let np0 = to_short_array p0 in let r = glWindowPos2sv np0 in r;
 external glWindowPos2svARB : short_array -> unit = "glstub_glWindowPos2svARB"
-  "glstub_glWindowPos2svARB";
+  "glstub_glWindowPos2svARB" "noalloc";
 value glWindowPos2svARB p0 =
   let np0 = to_short_array p0 in
   let r = glWindowPos2svARB np0 in let _ = copy_short_array np0 p0 in r;
 external glWindowPos3d : float -> float -> float -> unit =
-  "glstub_glWindowPos3d" "glstub_glWindowPos3d";
+  "glstub_glWindowPos3d" "glstub_glWindowPos3d" "noalloc";
 external glWindowPos3dARB : float -> float -> float -> unit =
-  "glstub_glWindowPos3dARB" "glstub_glWindowPos3dARB";
+  "glstub_glWindowPos3dARB" "glstub_glWindowPos3dARB" "noalloc";
 external glWindowPos3dv : array float -> unit = "glstub_glWindowPos3dv"
-  "glstub_glWindowPos3dv";
+  "glstub_glWindowPos3dv" "noalloc";
 external glWindowPos3dvARB : array float -> unit = "glstub_glWindowPos3dvARB"
-  "glstub_glWindowPos3dvARB";
+  "glstub_glWindowPos3dvARB" "noalloc";
 external glWindowPos3f : float -> float -> float -> unit =
-  "glstub_glWindowPos3f" "glstub_glWindowPos3f";
+  "glstub_glWindowPos3f" "glstub_glWindowPos3f" "noalloc";
 external glWindowPos3fARB : float -> float -> float -> unit =
-  "glstub_glWindowPos3fARB" "glstub_glWindowPos3fARB";
+  "glstub_glWindowPos3fARB" "glstub_glWindowPos3fARB" "noalloc";
 external glWindowPos3fv : float_array -> unit = "glstub_glWindowPos3fv"
-  "glstub_glWindowPos3fv";
+  "glstub_glWindowPos3fv" "noalloc";
 value glWindowPos3fv p0 =
   let np0 = to_float_array p0 in let r = glWindowPos3fv np0 in r;
 external glWindowPos3fvARB : float_array -> unit = "glstub_glWindowPos3fvARB"
-  "glstub_glWindowPos3fvARB";
+  "glstub_glWindowPos3fvARB" "noalloc";
 value glWindowPos3fvARB p0 =
   let np0 = to_float_array p0 in
   let r = glWindowPos3fvARB np0 in let _ = copy_float_array np0 p0 in r;
 external glWindowPos3i : int -> int -> int -> unit = "glstub_glWindowPos3i"
-  "glstub_glWindowPos3i";
+  "glstub_glWindowPos3i" "noalloc";
 external glWindowPos3iARB : int -> int -> int -> unit =
-  "glstub_glWindowPos3iARB" "glstub_glWindowPos3iARB";
+  "glstub_glWindowPos3iARB" "glstub_glWindowPos3iARB" "noalloc";
 external glWindowPos3iv : word_array -> unit = "glstub_glWindowPos3iv"
-  "glstub_glWindowPos3iv";
+  "glstub_glWindowPos3iv" "noalloc";
 value glWindowPos3iv p0 =
   let np0 = to_word_array p0 in let r = glWindowPos3iv np0 in r;
 external glWindowPos3ivARB : word_array -> unit = "glstub_glWindowPos3ivARB"
-  "glstub_glWindowPos3ivARB";
+  "glstub_glWindowPos3ivARB" "noalloc";
 value glWindowPos3ivARB p0 =
   let np0 = to_word_array p0 in
   let r = glWindowPos3ivARB np0 in let _ = copy_word_array np0 p0 in r;
 external glWindowPos3s : int -> int -> int -> unit = "glstub_glWindowPos3s"
-  "glstub_glWindowPos3s";
+  "glstub_glWindowPos3s" "noalloc";
 external glWindowPos3sARB : int -> int -> int -> unit =
-  "glstub_glWindowPos3sARB" "glstub_glWindowPos3sARB";
+  "glstub_glWindowPos3sARB" "glstub_glWindowPos3sARB" "noalloc";
 external glWindowPos3sv : short_array -> unit = "glstub_glWindowPos3sv"
-  "glstub_glWindowPos3sv";
+  "glstub_glWindowPos3sv" "noalloc";
 value glWindowPos3sv p0 =
   let np0 = to_short_array p0 in let r = glWindowPos3sv np0 in r;
 external glWindowPos3svARB : short_array -> unit = "glstub_glWindowPos3svARB"
-  "glstub_glWindowPos3svARB";
+  "glstub_glWindowPos3svARB" "noalloc";
 value glWindowPos3svARB p0 =
   let np0 = to_short_array p0 in
   let r = glWindowPos3svARB np0 in let _ = copy_short_array np0 p0 in r;

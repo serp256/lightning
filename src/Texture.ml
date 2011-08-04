@@ -1,3 +1,4 @@
+open LightCommon;
 open Gl;
 
 type textureFormat = 
@@ -42,13 +43,6 @@ class type c =
 
 
 IFDEF SDL THEN
-value rec nextPowerOfTwo number =
-  let rec loop result = 
-    if result < number 
-    then loop (result * 2)
-    else result
-  in 
-  loop 1;
 
 external loadTexture: textureInfo -> ubyte_array -> textureInfo = "ml_loadTexture";
 

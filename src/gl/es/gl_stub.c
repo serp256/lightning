@@ -42,6 +42,69 @@
 #include <caml/bigarray.h>
 
 
+#ifdef _WIN32
+#include <windows.h>
+
+static HMODULE lib=NULL;
+
+static void init_lib()
+{
+	if(lib)return;
+	lib = LoadLibrary("opengl32.dll");
+	if(lib == NULL) failwith("error loading opengl32.dll");
+}
+
+static void *get_proc_address(char *fname)
+{
+	return GetProcAddress(lib, fname);
+}
+
+#endif
+
+#ifdef __unix__
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+#include <dlfcn.h>
+#include <stdio.h>
+
+static void* lib=NULL;
+
+static void init_lib()
+{
+	if(lib)return;
+	lib = dlopen("libGL.so.1",RTLD_LAZY);
+	if(lib == NULL) failwith("error loading libGL.so.1");
+}
+
+static void *get_proc_address(char *fname)
+{
+	return dlsym(lib, fname);
+}
+
+#endif
+
+#if defined(__APPLE__) && defined(__GNUC__)
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+#include <dlfcn.h>
+#include <stdio.h>
+
+static void* lib=NULL;
+
+static void init_lib()
+{
+	if(lib)return;
+	lib = dlopen("libGL.dylib",RTLD_LAZY);
+	if(lib == NULL) failwith("error loading libGL.dylib");
+}
+
+static void *get_proc_address(char *fname)
+{
+	return dlsym(lib, fname);
+}
+#endif
 
 value unsafe_coercion(value v)
 {
@@ -97,6 +160,13 @@ void glstub_glBindBuffer(value v0, value v1)
 	glBindBuffer(lv0, lv1);
 }
 
+void glstub_glBindFramebufferOES(value v0, value v1)
+{
+	GLenum lv0 = Int_val(v0);
+	GLuint lv1 = Int_val(v1);
+	glBindFramebufferOES(lv0, lv1);
+}
+
 void glstub_glBindTexture(value v0, value v1)
 {
 	GLenum lv0 = Int_val(v0);
@@ -127,6 +197,17 @@ void glstub_glBufferSubData(value v0, value v1, value v2, value v3)
 	GLsizeiptr lv2 = Int_val(v2);
 	GLvoid* lv3 = (GLvoid *)(Is_long(v3) ? (void*)Long_val(v3) : ((Tag_val(v3) == String_tag)? (String_val(v3)) : (Data_bigarray_val(v3))));
 	glBufferSubData(lv0, lv1, lv2, lv3);
+}
+
+value glstub_glCheckFramebufferStatusOES(value v0)
+{
+	CAMLparam1(v0);
+	CAMLlocal1(result);
+	GLenum lv0 = Int_val(v0);
+	GLenum ret;
+	ret = glCheckFramebufferStatusOES(lv0);
+	result = Val_int(ret);
+	CAMLreturn(result);
 }
 
 void glstub_glClear(value v0)
@@ -297,6 +378,13 @@ void glstub_glDeleteBuffers(value v0, value v1)
 	glDeleteBuffers(lv0, lv1);
 }
 
+void glstub_glDeleteFramebuffersOES(value v0, value v1)
+{
+	GLsizei lv0 = Int_val(v0);
+	GLuint* lv1 = Data_bigarray_val(v1);
+	glDeleteFramebuffersOES(lv0, lv1);
+}
+
 void glstub_glDeleteTextures(value v0, value v1)
 {
 	GLsizei lv0 = Int_val(v0);
@@ -436,6 +524,25 @@ void glstub_glFogfv(value v0, value v1)
 	glFogfv(lv0, lv1);
 }
 
+void glstub_glFramebufferRenderbufferOES(value v0, value v1, value v2, value v3)
+{
+	GLenum lv0 = Int_val(v0);
+	GLenum lv1 = Int_val(v1);
+	GLenum lv2 = Int_val(v2);
+	GLuint lv3 = Int_val(v3);
+	glFramebufferRenderbufferOES(lv0, lv1, lv2, lv3);
+}
+
+void glstub_glFramebufferTexture2DOES(value v0, value v1, value v2, value v3, value v4)
+{
+	GLenum lv0 = Int_val(v0);
+	GLenum lv1 = Int_val(v1);
+	GLenum lv2 = Int_val(v2);
+	GLuint lv3 = Int_val(v3);
+	GLint lv4 = Int_val(v4);
+	glFramebufferTexture2DOES(lv0, lv1, lv2, lv3, lv4);
+}
+
 void glstub_glFrontFace(value v0)
 {
 	GLenum lv0 = Int_val(v0);
@@ -465,11 +572,24 @@ void glstub_glGenBuffers(value v0, value v1)
 	glGenBuffers(lv0, lv1);
 }
 
+void glstub_glGenFramebuffersOES(value v0, value v1)
+{
+	GLsizei lv0 = Int_val(v0);
+	GLuint* lv1 = Data_bigarray_val(v1);
+	glGenFramebuffersOES(lv0, lv1);
+}
+
 void glstub_glGenTextures(value v0, value v1)
 {
 	GLsizei lv0 = Int_val(v0);
 	GLuint* lv1 = Data_bigarray_val(v1);
 	glGenTextures(lv0, lv1);
+}
+
+void glstub_glGenerateMipmapOES(value v0)
+{
+	GLenum lv0 = Int_val(v0);
+	glGenerateMipmapOES(lv0);
 }
 
 void glstub_glGetBooleanv(value v0, value v1)

@@ -581,12 +581,20 @@ value gl_compressed_rgb_pvrtc_4bppv1_img : int;
 value gl_compressed_rgb_pvrtc_2bppv1_img : int;
 value gl_compressed_rgba_pvrtc_4bppv1_img : int;
 value gl_compressed_rgba_pvrtc_2bppv1_img : int;
+value gl_framebuffer_oes : int;
+value gl_color_attachment0_oes : int;
+value gl_depth_attachment_oes : int;
+value gl_stencil_attachment_oes : int;
+value gl_framebuffer_complete_oes : int;
+value gl_framebuffer_binding_oes : int;
 external glActiveTexture : int -> unit = "glstub_glActiveTexture"
   "glstub_glActiveTexture";
 external glAlphaFunc : int -> float -> unit = "glstub_glAlphaFunc"
   "glstub_glAlphaFunc";
 external glBindBuffer : int -> int -> unit = "glstub_glBindBuffer"
   "glstub_glBindBuffer";
+external glBindFramebufferOES : int -> int -> unit =
+  "glstub_glBindFramebufferOES" "glstub_glBindFramebufferOES";
 external glBindTexture : int -> int -> unit = "glstub_glBindTexture"
   "glstub_glBindTexture";
 external glBlendFunc : int -> int -> unit = "glstub_glBlendFunc"
@@ -595,6 +603,8 @@ external glBufferData : int -> int -> 'a -> int -> unit =
   "glstub_glBufferData" "glstub_glBufferData";
 external glBufferSubData : int -> int -> int -> 'a -> unit =
   "glstub_glBufferSubData" "glstub_glBufferSubData";
+external glCheckFramebufferStatusOES : int -> int =
+  "glstub_glCheckFramebufferStatusOES" "glstub_glCheckFramebufferStatusOES";
 external glClear : int -> unit = "glstub_glClear" "glstub_glClear";
 external glClearColor : float -> float -> float -> float -> unit =
   "glstub_glClearColor" "glstub_glClearColor";
@@ -629,6 +639,7 @@ external glCullFace : int -> unit = "glstub_glCullFace" "glstub_glCullFace";
 external glCurrentPaletteMatrixOES : int -> unit =
   "glstub_glCurrentPaletteMatrixOES" "glstub_glCurrentPaletteMatrixOES";
 value glDeleteBuffers : int -> array int -> unit;
+value glDeleteFramebuffersOES : int -> array int -> unit;
 value glDeleteTextures : int -> array int -> unit;
 external glDepthFunc : int -> unit = "glstub_glDepthFunc"
   "glstub_glDepthFunc";
@@ -659,13 +670,22 @@ external glFinish : unit -> unit = "glstub_glFinish" "glstub_glFinish";
 external glFlush : unit -> unit = "glstub_glFlush" "glstub_glFlush";
 external glFogf : int -> float -> unit = "glstub_glFogf" "glstub_glFogf";
 value glFogfv : int -> array float -> unit;
+external glFramebufferRenderbufferOES : int -> int -> int -> int -> unit =
+  "glstub_glFramebufferRenderbufferOES"
+  "glstub_glFramebufferRenderbufferOES";
+external glFramebufferTexture2DOES :
+  int -> int -> int -> int -> int -> unit =
+  "glstub_glFramebufferTexture2DOES" "glstub_glFramebufferTexture2DOES";
 external glFrontFace : int -> unit = "glstub_glFrontFace"
   "glstub_glFrontFace";
 external glFrustumf :
   float -> float -> float -> float -> float -> float -> unit =
   "glstub_glFrustumf_byte" "glstub_glFrustumf";
 value glGenBuffers : int -> array int -> unit;
+value glGenFramebuffersOES : int -> array int -> unit;
 value glGenTextures : int -> array int -> unit;
+external glGenerateMipmapOES : int -> unit = "glstub_glGenerateMipmapOES"
+  "glstub_glGenerateMipmapOES";
 value glGetBooleanv : int -> array bool -> unit;
 value glGetBufferParameteriv : int -> int -> array int -> unit;
 value glGetClipPlanef : int -> array float -> unit;

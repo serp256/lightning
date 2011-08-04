@@ -1610,6 +1610,10 @@ value gl_compressed_srgb : int;
 value gl_compressed_srgb_alpha : int;
 value gl_compressed_sluminance : int;
 value gl_compressed_sluminance_alpha : int;
+value gl_framebuffer_ext : int;
+value gl_color_attachment0_ext : int;
+value gl_framebuffer_complete_ext : int;
+value gl_framebuffer_binding_ext : int;
 external glAccum : int -> float -> unit = "glstub_glAccum" "glstub_glAccum";
 external glActiveTexture : int -> unit = "glstub_glActiveTexture"
   "glstub_glActiveTexture";
@@ -1633,6 +1637,8 @@ external glBindBuffer : int -> int -> unit = "glstub_glBindBuffer"
   "glstub_glBindBuffer";
 external glBindBufferARB : int -> int -> unit = "glstub_glBindBufferARB"
   "glstub_glBindBufferARB";
+external glBindFramebufferEXT : int -> int -> unit =
+  "glstub_glBindFramebufferEXT" "glstub_glBindFramebufferEXT";
 external glBindProgramARB : int -> int -> unit = "glstub_glBindProgramARB"
   "glstub_glBindProgramARB";
 external glBindTexture : int -> int -> unit = "glstub_glBindTexture"
@@ -1666,6 +1672,8 @@ external glBufferSubDataARB : int -> int -> int -> 'a -> unit =
 external glCallList : int -> unit = "glstub_glCallList" "glstub_glCallList";
 external glCallLists : int -> int -> 'a -> unit = "glstub_glCallLists"
   "glstub_glCallLists";
+external glCheckFramebufferStatusEXT : int -> int =
+  "glstub_glCheckFramebufferStatusEXT" "glstub_glCheckFramebufferStatusEXT";
 external glClear : int -> unit = "glstub_glClear" "glstub_glClear";
 external glClearAccum : float -> float -> float -> float -> unit =
   "glstub_glClearAccum" "glstub_glClearAccum";
@@ -1834,6 +1842,7 @@ external glCreateShader : int -> int = "glstub_glCreateShader"
 external glCullFace : int -> unit = "glstub_glCullFace" "glstub_glCullFace";
 value glDeleteBuffers : int -> array int -> unit;
 value glDeleteBuffersARB : int -> array int -> unit;
+value glDeleteFramebuffersEXT : int -> array int -> unit;
 external glDeleteLists : int -> int -> unit = "glstub_glDeleteLists"
   "glstub_glDeleteLists";
 external glDeleteProgram : int -> unit = "glstub_glDeleteProgram"
@@ -1928,6 +1937,12 @@ external glFogf : int -> float -> unit = "glstub_glFogf" "glstub_glFogf";
 value glFogfv : int -> array float -> unit;
 external glFogi : int -> int -> unit = "glstub_glFogi" "glstub_glFogi";
 value glFogiv : int -> array int -> unit;
+external glFramebufferTexture1DEXT :
+  int -> int -> int -> int -> int -> unit =
+  "glstub_glFramebufferTexture1DEXT" "glstub_glFramebufferTexture1DEXT";
+external glFramebufferTexture2DEXT :
+  int -> int -> int -> int -> int -> unit =
+  "glstub_glFramebufferTexture2DEXT" "glstub_glFramebufferTexture2DEXT";
 external glFrontFace : int -> unit = "glstub_glFrontFace"
   "glstub_glFrontFace";
 external glFrustum :
@@ -1935,6 +1950,7 @@ external glFrustum :
   "glstub_glFrustum_byte" "glstub_glFrustum";
 value glGenBuffers : int -> array int -> unit;
 value glGenBuffersARB : int -> array int -> unit;
+value glGenFramebuffersEXT : int -> array int -> unit;
 external glGenLists : int -> int = "glstub_glGenLists" "glstub_glGenLists";
 value glGenProgramsARB : int -> array int -> unit;
 value glGenQueries : int -> array int -> unit;
@@ -2080,6 +2096,8 @@ external glIsBufferARB : int -> bool = "glstub_glIsBufferARB"
   "glstub_glIsBufferARB";
 external glIsEnabled : int -> bool = "glstub_glIsEnabled"
   "glstub_glIsEnabled";
+external glIsFramebufferEXT : int -> bool = "glstub_glIsFramebufferEXT"
+  "glstub_glIsFramebufferEXT";
 external glIsList : int -> bool = "glstub_glIsList" "glstub_glIsList";
 external glIsProgram : int -> bool = "glstub_glIsProgram"
   "glstub_glIsProgram";

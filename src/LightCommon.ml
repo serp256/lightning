@@ -11,6 +11,14 @@ value two_pi =  6.28318530718;
 
 exception File_not_exists of string;
 
+value rec nextPowerOfTwo number =
+  let rec loop result = 
+    if result < number 
+    then loop (result * 2)
+    else result
+  in 
+  loop 1;
+
 IFDEF IOS THEN
 
 Callback.register_exception "File_not_exists" (File_not_exists "");

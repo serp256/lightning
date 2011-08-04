@@ -581,12 +581,20 @@ value gl_compressed_rgb_pvrtc_4bppv1_img = 0x00008c00;
 value gl_compressed_rgb_pvrtc_2bppv1_img = 0x00008c01;
 value gl_compressed_rgba_pvrtc_4bppv1_img = 0x00008c02;
 value gl_compressed_rgba_pvrtc_2bppv1_img = 0x00008c03;
+value gl_framebuffer_oes = 0x00008d40;
+value gl_color_attachment0_oes = 0x00008ce0;
+value gl_depth_attachment_oes = 0x00008d00;
+value gl_stencil_attachment_oes = 0x00008d20;
+value gl_framebuffer_complete_oes = 0x00008cd5;
+value gl_framebuffer_binding_oes = 0x00008ca6;
 external glActiveTexture : int -> unit = "glstub_glActiveTexture"
   "glstub_glActiveTexture" "noalloc";
 external glAlphaFunc : int -> float -> unit = "glstub_glAlphaFunc"
   "glstub_glAlphaFunc" "noalloc";
 external glBindBuffer : int -> int -> unit = "glstub_glBindBuffer"
   "glstub_glBindBuffer" "noalloc";
+external glBindFramebufferOES : int -> int -> unit =
+  "glstub_glBindFramebufferOES" "glstub_glBindFramebufferOES" "noalloc";
 external glBindTexture : int -> int -> unit = "glstub_glBindTexture"
   "glstub_glBindTexture" "noalloc";
 external glBlendFunc : int -> int -> unit = "glstub_glBlendFunc"
@@ -595,6 +603,8 @@ external glBufferData : int -> int -> 'a -> int -> unit =
   "glstub_glBufferData" "glstub_glBufferData" "noalloc";
 external glBufferSubData : int -> int -> int -> 'a -> unit =
   "glstub_glBufferSubData" "glstub_glBufferSubData" "noalloc";
+external glCheckFramebufferStatusOES : int -> int =
+  "glstub_glCheckFramebufferStatusOES" "glstub_glCheckFramebufferStatusOES";
 external glClear : int -> unit = "glstub_glClear" "glstub_glClear" "noalloc";
 external glClearColor : float -> float -> float -> float -> unit =
   "glstub_glClearColor" "glstub_glClearColor" "noalloc";
@@ -639,6 +649,11 @@ external glDeleteBuffers : int -> word_array -> unit =
   "glstub_glDeleteBuffers" "glstub_glDeleteBuffers" "noalloc";
 value glDeleteBuffers p0 p1 =
   let np1 = to_word_array p1 in let r = glDeleteBuffers p0 np1 in r;
+external glDeleteFramebuffersOES : int -> word_array -> unit =
+  "glstub_glDeleteFramebuffersOES" "glstub_glDeleteFramebuffersOES"
+  "noalloc";
+value glDeleteFramebuffersOES p0 p1 =
+  let np1 = to_word_array p1 in let r = glDeleteFramebuffersOES p0 np1 in r;
 external glDeleteTextures : int -> word_array -> unit =
   "glstub_glDeleteTextures" "glstub_glDeleteTextures" "noalloc";
 value glDeleteTextures p0 p1 =
@@ -689,6 +704,13 @@ external glFogfv : int -> float_array -> unit = "glstub_glFogfv"
   "glstub_glFogfv" "noalloc";
 value glFogfv p0 p1 =
   let np1 = to_float_array p1 in let r = glFogfv p0 np1 in r;
+external glFramebufferRenderbufferOES : int -> int -> int -> int -> unit =
+  "glstub_glFramebufferRenderbufferOES" "glstub_glFramebufferRenderbufferOES"
+  "noalloc";
+external glFramebufferTexture2DOES :
+  int -> int -> int -> int -> int -> unit =
+  "glstub_glFramebufferTexture2DOES" "glstub_glFramebufferTexture2DOES"
+  "noalloc";
 external glFrontFace : int -> unit = "glstub_glFrontFace"
   "glstub_glFrontFace" "noalloc";
 external glFrustumf :
@@ -699,11 +721,18 @@ external glGenBuffers : int -> word_array -> unit = "glstub_glGenBuffers"
 value glGenBuffers p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGenBuffers p0 np1 in let _ = copy_word_array np1 p1 in r;
+external glGenFramebuffersOES : int -> word_array -> unit =
+  "glstub_glGenFramebuffersOES" "glstub_glGenFramebuffersOES" "noalloc";
+value glGenFramebuffersOES p0 p1 =
+  let np1 = to_word_array p1 in
+  let r = glGenFramebuffersOES p0 np1 in let _ = copy_word_array np1 p1 in r;
 external glGenTextures : int -> word_array -> unit = "glstub_glGenTextures"
   "glstub_glGenTextures" "noalloc";
 value glGenTextures p0 p1 =
   let np1 = to_word_array p1 in
   let r = glGenTextures p0 np1 in let _ = copy_word_array np1 p1 in r;
+external glGenerateMipmapOES : int -> unit = "glstub_glGenerateMipmapOES"
+  "glstub_glGenerateMipmapOES" "noalloc";
 external glGetBooleanv : int -> word_array -> unit = "glstub_glGetBooleanv"
   "glstub_glGetBooleanv" "noalloc";
 value glGetBooleanv p0 p1 =
