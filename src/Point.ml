@@ -8,6 +8,8 @@ value angle (x,y) =  atan2 y x;
 value addPoint (x1,y1) (x2,y2) = (x1+.x2,y1+.y2);
 value subtractPoint (x1,y1) (x2,y2) = (x1-.x2,y1-.y2);
 value scaleBy (x,y) scalar = (x*.scalar,y*.scalar);
+value mul (x,y) k = (x*.k,y*.k);
+value div (x,y) k = (x/.k,y/.k);
 value normalize ((x,y) as p) = 
   match (x,y) with
   [ (0.,0.) -> raise (Invalid_argument "Point normalize")

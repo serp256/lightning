@@ -16,6 +16,7 @@ module type S = sig
       method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
       method texture: Texture.c;
       method setTexture: Texture.c -> unit;
+      method setTexScale: float -> unit;
     end;
 
   value cast: #Q.D.c -> option c;

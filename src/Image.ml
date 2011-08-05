@@ -45,6 +45,7 @@ module type S = sig
       method texRotation: option [= `left | `right];
       method setTexRotation: option [= `left | `right] -> unit;
       method setTexture: Texture.c -> unit;
+      method setTexScale: float -> unit;
     end;
 
   value cast: #Q.D.c -> option c;
@@ -85,30 +86,25 @@ module Make(Q:Quad.S) = struct
         Bigarray.Array1.blit texCoords dest;
 
 
+      value mutable texScale = 1.;
+      method setTexScale s = 
+        let k = s /. texScale in
+        let width = vertexCoords.{2} *. k 
+        and height = vertexCoords.{5} *. k in
+        (
+          vertexCoords.{2} := width;
+          vertexCoords.{5} := height;
+          vertexCoords.{6} := width;
+          vertexCoords.{7} := height;
+          texScale := s;
+        );
+
       value mutable texFlipX = False;
       method texFlipX = texFlipX;
       method private applyTexFlipX () = 
       (
         SWAP_TEX_COORDS(0,1);
         SWAP_TEX_COORDS(2,3);
-        (*
-        let tmpX = texCoords.{0} 
-        and tmpY = texCoords.{1} in
-        (
-          texCoords.{0} := texCoords.{2};
-          texCoords.{1} := texCoords.{3};
-          texCoords.{2} := tmpX;
-          texCoords.{3} := tmpY;
-        );
-        let tmpX = texCoords.{4} 
-        and tmpY = texCoords.{5} in
-        (
-          texCoords.{4} := texCoords.{6};
-          texCoords.{5} := texCoords.{7};
-          texCoords.{6} := tmpX;
-          texCoords.{7} := tmpY;
-        )
-        *)
       );
       method setTexFlipX nv = 
         if nv <> texFlipX
@@ -125,24 +121,6 @@ module Make(Q:Quad.S) = struct
       (
         SWAP_TEX_COORDS(0,2);
         SWAP_TEX_COORDS(1,3);
-        (*
-        let tmpX = texCoords.{0} 
-        and tmpY = texCoords.{1} in
-        (
-          texCoords.{0} := texCoords.{4};
-          texCoords.{1} := texCoords.{5};
-          texCoords.{4} := tmpX;
-          texCoords.{5} := tmpY;
-        );
-        let tmpX = texCoords.{2} 
-        and tmpY = texCoords.{3} in
-        (
-          texCoords.{2} := texCoords.{6};
-          texCoords.{3} := texCoords.{7};
-          texCoords.{6} := tmpX;
-          texCoords.{7} := tmpY;
-        )
-        *)
       );
 
       method setTexFlipY nv = 
@@ -200,18 +178,7 @@ module Make(Q:Quad.S) = struct
       method! private render' _ = 
       (
         RenderSupport.bindTexture texture;
-  (*
-        for i = 0 to 3 do
-          RenderSupport.convertColors vertexColors.(i) alpha (Bigarray.Array1.sub Quad.gl_quad_colors (i*4) 4);
-         done;
-  *)
-  (*
-        let alphaBits =  Int32.shift_left (Int32.of_float (alpha *. 255.)) 24 in
-        Array.iteri (fun i c -> Quad.gl_quad_colors.{i} := Int32.logor (Int32.of_int c) alphaBits) vertexColors;
-  *)
         Array.iteri (fun i c -> Quad.gl_quad_colors.{i} := RenderSupport.convertColor c alpha) vertexColors;
-(*         Array.iteri (fun i a -> Bigarray.Array1.unsafe_set gl_tex_coords i a) texCoords; *)
-(*         texture#adjustTextureCoordinates gl_tex_coords; *)
         glEnableClientState gl_texture_coord_array;
         glEnableClientState gl_vertex_array;
         glEnableClientState gl_color_array;

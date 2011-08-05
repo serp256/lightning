@@ -37,8 +37,10 @@ class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
       texturesID.(0)
     )
   in
-  let legalWidth = nextPowerOfTwo width
-  and legalHeight = nextPowerOfTwo height in
+  let iWidth = truncate width
+  and iHeight = truncate height in
+  let legalWidth = nextPowerOfTwo iWidth
+  and legalHeight = nextPowerOfTwo iHeight in
   let _texture = 
     (
       glBindTexture gl_texture_2d textureID;
@@ -62,8 +64,8 @@ class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
           method update path = ();
         end
       in
-      if legalWidth <> width || legalHeight <> height
-      then Texture.createSubTexture (Rectangle.create 0. 0. (float width) (float height)) texture
+      if legalWidth <> iWidth || legalHeight <> iHeight
+      then Texture.createSubTexture (Rectangle.create 0. 0. width height) texture
       else texture
     )
   in
