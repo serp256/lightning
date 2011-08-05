@@ -84,22 +84,29 @@ int load_png_image(resource *rs,textureInfo *tInfo) {
 
 	// copy data to image info
 	unsigned int bytesPerRow = width * bytesPerComponent;
-	unsigned int bytesPerLegalRow = legalWidth * bytesPerComponent;
 	unsigned int i,j;
 	if(hasAlpha)
 	{
 		unsigned int *tmp = (unsigned int *)pImageData;
+		unsigned int rowDiff = legalWidth - width;
+		DEBUGF("row diff: %d",rowDiff);
+		unsigned char red,green,blue,alpha;
 		for(i = 0; i < height; i++)
 		{
-			tmp += i * bytesPerLegalRow;
 			for(j = 0; j < bytesPerRow; j += 4)
 			{
-				*tmp++ = CC_RGB_PREMULTIPLY_APLHA( rowPointers[i][j], rowPointers[i][j + 1], rowPointers[i][j + 2], rowPointers[i][j + 3] );
+				red = rowPointers[i][j];
+				green = rowPointers[i][j + 1];
+				blue = rowPointers[i][j + 2];
+				alpha = rowPointers[i][j + 3];
+				*tmp++ = CC_RGB_PREMULTIPLY_APLHA(red, green, blue, alpha);
 			}
+			tmp += rowDiff;
 		}
 	}
 	else
 	{
+		unsigned int bytesPerLegalRow = legalWidth * bytesPerComponent;
 		for (j = 0; j < height; ++j)
 		{
 			memcpy(pImageData + j * bytesPerLegalRow, rowPointers[j], bytesPerRow);
@@ -125,12 +132,15 @@ int load_png_image(resource *rs,textureInfo *tInfo) {
 CAMLprim value ml_loadImage(value oldTextureID, value fname, value scale) { // scale unused here
 	CAMLparam2(fname,scale);
 	CAMLlocal1(res);
+	DEBUG("LOAD IMAGE FROM ML");
 	resource r;
 	if (!getResourceFd(fname,&r)) caml_raise_with_string(*caml_named_value("File_not_exists"), String_val(fname));
 	// here use ext for select img format, but now we work only with png
 	textureInfo tInfo;
 	if (!load_png_image(&r,&tInfo)) caml_failwith("can't load png");
+	DEBUG("PNG LOADED");
 	unsigned int textureID = createGLTexture(Long_val(oldTextureID),&tInfo);
+	DEBUG("TEXTURE CREATED");
 	free(tInfo.imgData);
 	if (!textureID) caml_failwith("can't load texture");
 	res = caml_alloc_tuple(10);
