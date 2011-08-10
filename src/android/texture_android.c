@@ -9,6 +9,7 @@
 #include "mlwrapper_android.h"
 #include "libpng/png.h"
 #include "texture_common.h"
+#include "libjpeg/jpeglib.h"
 
 
 
@@ -18,10 +19,77 @@
     ((unsigned)((unsigned char)(vb) * ((unsigned char)(va) + 1) >> 8) << 16) | \
     ((unsigned)(unsigned char)(va) << 24))
 
+int load_jpg_image(resource *rs,textureInfo *tInfo) {
+
+	/* these are standard libjpeg structures for reading(decompression) */
+	struct jpeg_decompress_struct cinfo;
+	struct jpeg_error_mgr jerr;
+
+	unsigned char * pImageData  = 0;
+	FILE *fp = fdopen(rs->fd,"rb");
+	/* libjpeg data structure for storing one row, that is, scanline of an image */
+	JSAMPROW row_pointer[1];
+	if( row_pointer[1] == NULL ){
+		fclose(fp);
+		failwith("jpg: can't allocate memory for storing one row struct");
+	}
+
+	/* here we set up the standard libjpeg error handler */
+	cinfo.err = jpeg_std_error( &jerr );
+	/* setup decompression process and source, then read JPEG header */
+	jpeg_create_decompress( &cinfo );
+	/* this makes the library read from file */
+	jpeg_stdio_src( &cinfo, fp );
+	/* reading the image header which contains image information */
+	jpeg_read_header( &cinfo, TRUE );
+	
+	/* Start decompression jpeg here */
+	jpeg_start_decompress( &cinfo );
+
+	// allocate memory and read data
+	unsigned int legalWidth = nextPowerOfTwo(cinfo.image_width);
+	unsigned int legalHeight = nextPowerOfTwo(cinfo.image_height);
+	unsigned int dataLen = legalHeight * legalWidth * cinfo.num_components;
+	pImageData = caml_stat_alloc(dataLen);
+	/* now actually read the jpeg into the raw buffer */
+	row_pointer[0] = (unsigned char *)malloc( cinfo.output_width*cinfo.num_components );
+
+	/* read one scan line at a time and copy data to image info */
+	unsigned long location = 0;
+	int i = 0;
+	unsigned int bytesPerRow = cinfo.image_width * cinfo.num_components;
+	unsigned int bytesPerLegalRow = legalWidth * cinfo.num_components;
+	unsigned int rowShift = legalWidth - cinfo.image_width;
+	while( cinfo.output_scanline < cinfo.image_height )
+	{
+		jpeg_read_scanlines( &cinfo, row_pointer, 1 ); //now one row in row_pointer-array
+		memcpy(pImageData + i * bytesPerLegalRow, row_pointer[0], bytesPerRow);
+		i++;
+	}
+	/* wrap up decompression, destroy objects, free pointers and close open files */
+	jpeg_finish_decompress( &cinfo );
+	jpeg_destroy_decompress( &cinfo );
+	free( row_pointer[0] );
+	fclose( fp );
+
+	tInfo->format = SPTextureFormatRGB;
+	tInfo->width = legalWidth;
+	tInfo->realWidth = cinfo.image_width;
+	tInfo->height = legalHeight;
+	tInfo->realHeight = cinfo.image_height;
+	tInfo->numMipmaps = 0;
+	tInfo->premultipliedAlpha = 0;
+	tInfo->scale = 1.;
+	tInfo->dataLen = dataLen;
+	tInfo->imgData = pImageData;
+	return 1;
+}
+
+
 
 int load_png_image(resource *rs,textureInfo *tInfo) {
 	//png_byte        header[8]   = {0};
-	png_structp     png_ptr     =   0;
+	png_structp     png_ptr     =   0; 
 	png_infop       info_ptr    = 0;
 	unsigned char * pImageData  = 0;
 	FILE *fp = fdopen(rs->fd,"rb");
@@ -135,10 +203,30 @@ CAMLprim value ml_loadImage(value oldTextureID, value fname, value scale) { // s
 	DEBUG("LOAD IMAGE FROM ML");
 	resource r;
 	if (!getResourceFd(fname,&r)) caml_raise_with_string(*caml_named_value("File_not_exists"), String_val(fname));
-	// here use ext for select img format, but now we work only with png
+	// here use ext for select img format
+  char ext[4];
+  char png[]="png";
+  char jpg[]="jpg";
+	char * _fname = String_val(fname);
+  unsigned int len = 0;
+  while (_fname[len] != '\0') { len++; };
+  ext[0] = _fname[len-3];
+  ext[1] = _fname[len-2];
+  ext[2] = _fname[len-1];
+  ext[3] = '\0';
 	textureInfo tInfo;
-	if (!load_png_image(&r,&tInfo)) caml_failwith("can't load png");
-	DEBUG("PNG LOADED");
+  if (strcmp(ext,jpg)==0) 
+	{
+		if (!load_jpg_image(&r,&tInfo)) caml_failwith("can't load jpg");
+	  DEBUG("JPG LOADED");
+	} else {
+  	if (strcmp(ext,png)==0) {
+			if (!load_png_image(&r,&tInfo)) caml_failwith("can't load png");
+	    DEBUG("PNG LOADED");
+		} else {
+			caml_failwith("can't understand img format (by ext), supported .png and .jpg only");
+		};
+	};
 	unsigned int textureID = createGLTexture(Long_val(oldTextureID),&tInfo);
 	DEBUG("TEXTURE CREATED");
 	free(tInfo.imgData);

@@ -45,7 +45,7 @@ else
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
-		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng'
+		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
 	else
 		gl = gl/2.1
 		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
