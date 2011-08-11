@@ -163,9 +163,10 @@ value layoutRects rects =
                 putToMinimalContainer rect  placed containers' [c :: used_containers]
               else
                 let r' =  { x = c.x; y = c.y; w = r.w; h = r.h }             
-                and e1 = { x = c.x  ; y = c.y + r.h + emptyPx; w = r.w; h = c.h - r.h - emptyPx }
-                and e2 = { x = c.x + r.w + emptyPx; y = c.y; w = c.w - r.w - emptyPx; h = c.h }
-                in ([(id,r') :: placed], (List.append containers' (List.append used_containers [e1; e2])))
+                and e1 = { x = c.x  ; y = min (c.y + r.h + emptyPx) (c.y + c.h); w = min (r.w + emptyPx) c.w; h = max 0 (c.h - r.h - emptyPx) }
+                and e2 = { x = min (c.x + c.w) (c.x + r.w + emptyPx); y = c.y; w = max 0 (c.w - r.w - emptyPx); h = c.h }
+                in
+                ([(id,r') :: placed], (List.append containers' (List.append used_containers [e1; e2])))
             ]
           ]
         in 
@@ -192,7 +193,7 @@ value layoutRects rects =
   
   (* размещаем на одной странице, постепенно увеличивая ее размер *)
   let rec layout rects w h = 
-    let mainrect = { x = emptyPx; y = emptyPx; w; h } in
+    let mainrect = { x = emptyPx; y = emptyPx; w =w - emptyPx; h= h - emptyPx } in
     let (placed, rest) = tryLayout rects [] [mainrect] [] in 
     match rest with 
     [ [] -> (w, h, placed, rest) (* разместили все *)
