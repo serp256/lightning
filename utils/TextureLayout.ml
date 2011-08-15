@@ -7,6 +7,7 @@ type rect = {
   h : int
 };
 
+value countEmptyPixels = 2;
 
 
 (* 
@@ -30,8 +31,8 @@ value rec tryLayout rects placed empty unfit =
           then
             putToMinimalContainer data  placed containers' [c :: used_containers]
           else
-            let e1 = { x = c.x; y = c.y + rh; w = rw; h = c.h - rh }
-            and e2 = { x = c.x + rw; y = c.y; w = c.w - rw; h = c.h }
+            let e1 = { x = c.x; y = c.y + rh + countEmptyPixels; w = rw; h = c.h - rh - countEmptyPixels }
+            and e2 = { x = c.x + rw + countEmptyPixels; y = c.y; w = c.w - rw - countEmptyPixels; h = c.h }
             in 
             (
               [(info,(c.x,c.y,img)) :: placed], 
@@ -59,29 +60,33 @@ value rec tryLayout rects placed empty unfit =
 
 
 (* размещаем на одной странице, постепенно увеличивая ее размер *)
-value rec layout_page rects w h = 
+value rec layout_page ~sqr rects w h = 
   let mainrect = { x = 0; y = 0; w; h } in
   let (placed, rest) = tryLayout rects [] [mainrect] [] in 
   match rest with 
   [ [] -> (w, h, placed, rest) (* разместили все *)
   | _  -> 
       let (w', h') = 
-        if w > h 
-        then (w, (h*2))
-        else ((w*2), h)
+        match sqr with
+        [ True -> (w*2, h*2)
+        | _ -> 
+          if w > h 
+          then (w, (h*2))
+          else ((w*2), h)
+        ]
       in 
       if w' > !max_size 
       then (* не в местили в максимальный размер. возвращаем страницу *)
         (!max_size, !max_size, placed, rest)
       else
-        layout_page rects w' h'
+        layout_page ~sqr rects w' h'
   ];
 
 
 (* размещаем на нескольких страницах *)
-value rec layout_multipage rects pages = 
+value rec layout_multipage ~sqr rects pages = 
   let (w, h, placed, rest) = 
-    layout_page 
+    layout_page ~sqr
       (List.sort 
         begin fun (_,i1)  (_,i2) -> 
           let (w1,h1) = Images.size i1
@@ -95,11 +100,11 @@ value rec layout_multipage rects pages =
   in 
   match rest with 
   [ [] -> [ (w,h,placed) :: pages]
-  | _  -> layout_multipage rest [(w,h,placed) :: pages]
+  | _  -> layout_multipage ~sqr rest [(w,h,placed) :: pages]
   ];
 
 
 (* 
  возвращает список страниц. каждая страница не больше 2048x2048
 *)
-value layout rects = layout_multipage rects [];
+value layout ?(sqr=False) rects = layout_multipage ~sqr rects [];

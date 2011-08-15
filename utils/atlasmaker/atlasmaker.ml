@@ -7,10 +7,11 @@ type rect = {
 
 value out_file = ref "tx_texture";
 value gen_pvr = ref False;
+value sqr = ref False;
 
 value emptyPx = 2;
 
-value imageRects : (Hashtbl.t string rect) = Hashtbl.create 55;
+value imageRects : (Hashtbl.t string Images.t) = Hashtbl.create 55;
 
 exception Break_loop;
 
@@ -98,13 +99,11 @@ value croppedImageRect img =
           ]
         done        
       with [Break_loop -> ()];      
-      
-      { x = !x; y = !y; w = (!w - !x); h = (!h - !y) }
+      Images.sub img !x !y (!w - !x) (!h - !y)
     )
     
   | Images.Rgb24 i -> 
-    { x = 0; y = 0; w = i.Rgb24.width; h = i.Rgb24.height }
-
+      Images.sub img 0 0 i.Rgb24.width i.Rgb24.height
   | _ -> assert False
   ];
 
@@ -138,7 +137,7 @@ value loadFiles d =
 (* 
  возвращает список страниц. каждая страница не больше 2048x2048
 *)
-
+(*
 value layoutRects rects = 
   (* 
     пробуем упаковать прямоугольники в заданные пустые прямоугольники.
@@ -230,12 +229,12 @@ value layoutRects rects =
     ]
   in layout_multipage rects [];
   
-  
+ *) 
   
 (* *)
 value createAtlas () = 
     let i = ref 0 
-    and pages = layoutRects (Hashtbl.fold (fun k v acc -> [(k,v) :: acc]) imageRects []) in
+    and pages = TextureLayout.layout ~sqr:!sqr (Hashtbl.fold (fun k v acc -> [(k,v) :: acc]) imageRects []) in
     let xml  = ref "<TextureAtlases >\n" in
     (
       List.iter begin fun (w,h,rects) -> 
@@ -254,18 +253,18 @@ value createAtlas () =
         let () = Printf.eprintf "Canvas: %dx%d\n%!" w h in
         let canvas  = Images.Rgba32 rgba in 
         (
-          List.iter begin fun (id, rect) -> 
-            let cropFrame = Hashtbl.find imageRects id 
-            and img = Images.load id [] in
+          List.iter begin fun (id, (x,y,img)) -> 
             let img = match img with 
             [ Images.Rgba32 i -> img
             | Images.Rgb24 i -> Images.Rgba32 (Rgb24.to_rgba32 i)
             | _ -> assert False
             ] in
-            let subTextureElt = Printf.sprintf "\t<SubTexture name='%s' x='%d' y='%d' height='%f' width='%f'/>\n" id rect.x rect.y (float_of_int rect.h) (float_of_int rect.w) in
-            let () = xml.val := !xml ^ subTextureElt in
-            let cropped = Images.sub img cropFrame.x cropFrame.y cropFrame.w cropFrame.h in
-            Images.blit cropped 0 0 canvas rect.x rect.y rect.w rect.h  
+            let (w, h) = Images.size img in
+            let subTextureElt = Printf.sprintf "\t<SubTexture name='%s' x='%d' y='%d' height='%f' width='%f'/>\n" id x y (float_of_int h) (float_of_int w) in
+              (
+                xml.val := !xml ^ subTextureElt;
+                Images.blit img 0 0 canvas x y w h  
+              )
           end rects;
           Images.save fname (Some Images.Png) [] canvas;
         );
@@ -294,6 +293,7 @@ value () =
     Arg.parse
       [
         ("-o",Arg.Set_string out_file,"output file");
+        ("-sqr",Arg.Unit (fun sq -> sqr.val := True )  ,"square texture");
         ("-p",Arg.Set gen_pvr,"generate pvr file")
       ]
       (fun dn -> match !dirname with [ None -> dirname.val := Some dn | Some _ -> failwith "You must specify only one directory" ])
