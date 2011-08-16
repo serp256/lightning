@@ -202,7 +202,7 @@ value loadFiles () =
                     in 
                     let duration = get_attribute "duration" attributes in 
                     let image = Images.sub textures.(int_of_string textureId) (int_of_string x) (int_of_string y) (int_of_string width) (int_of_string height) in
-                    let (diffX,diffY,new_image) = (0,0,image) (*croppedImageRect  image*) in
+                    let (diffX,diffY,new_image) = (*(0,0,image)*) croppedImageRect  image in
                       (
                         images.val := [({id = !id; posX = (float_of_string posX) +. (float_of_int  diffX); posY = (float_of_string posY) +. (float_of_int diffY); label; duration}, new_image) :: !images];
                         id.val := !id + 1;
