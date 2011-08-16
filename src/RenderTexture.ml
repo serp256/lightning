@@ -13,6 +13,7 @@ IFDEF SDL THEN
 value glGenFramebuffers = glGenFramebuffersEXT;
 value glBindFramebuffer = glBindFramebufferEXT;
 value glFramebufferTexture2D = glFramebufferTexture2DEXT;
+value glDeleteFramebuffers = glDeleteFramebuffersEXT;
 value gl_framebuffer_l = gl_framebuffer_ext;
 value gl_color_attachment0 = gl_color_attachment0_ext;
 value glCheckFramebufferStatus = glCheckFramebufferStatusEXT;
@@ -22,6 +23,7 @@ ELSE
 value glGenFramebuffers = glGenFramebuffersOES;
 value glBindFramebuffer = glBindFramebufferOES;
 value glFramebufferTexture2D = glFramebufferTexture2DOES;
+value glDeleteFramebuffers = glDeleteFramebuffersOES;
 value gl_framebuffer_l = gl_framebuffer_oes;
 value gl_color_attachment0 = gl_color_attachment0_oes;
 value glCheckFramebufferStatus = glCheckFramebufferStatusOES;
@@ -30,6 +32,7 @@ value gl_framebuffer_binding = gl_framebuffer_binding_oes;
 ENDIF;
 
 class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
+  (*
   let textureID = 
     let texturesID = Array.make 1 0 in
     (
@@ -54,6 +57,7 @@ class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
       and tHeight = float legalHeight in
       let texture = 
         object 
+          method bindGL = glBindTexture gl_texture_2d textureID;
           method width = tWidth;
           method height = tHeight;
           method hasPremultipliedAlpha = False;
@@ -69,8 +73,12 @@ class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
       else texture
     )
   in
+  *)
+  let texture = Texture.create Texture.TextureFormatRGBA (truncate width) (truncate height) None in
+  let textureID = Texture.glid_of_textureID texture#textureID in
   let framebufferID = 
   (
+    let () = debug "render textureID: %d" textureID in
     let framebuffers = Array.make 1 0 in
     (
       glGenFramebuffers 1 framebuffers;
@@ -91,7 +99,6 @@ class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
   let () = debug "textureID: %d, framebufferID: %d" textureID framebufferID in
 
   object(self)
-    value texture : Texture.c = _texture;
     method texture = texture;
     value framebufferID = framebufferID;
     value mutable framebufferIsActive = False;
@@ -102,7 +109,7 @@ class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
         match framebufferIsActive with
         [ False ->
           (
-            debug "bind framebuffer";
+            debug "bind framebuffer %d" framebufferID;
             framebufferIsActive := True;
             let stdBuffer = Array.make 1 0 in
             (
@@ -149,4 +156,10 @@ class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
       in
       self#renderToFramebuffer f;
 
+    initializer Gc.finalise (fun _ -> glDeleteFramebuffers 1 [| framebufferID |]) self;
+
   end;
+
+
+
+value create = new c;

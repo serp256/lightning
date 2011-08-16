@@ -17,10 +17,9 @@ value checkForOpenGLError () =
     error
   );
 
-value bindTexture texture = 
+value bindTexture (texture:Texture.c) = 
   let newTextureID = texture#textureID
   and newPMA = texture#hasPremultipliedAlpha in
-  DEFINE bind = glBindTexture gl_texture_2d newTextureID IN
   DEFINE apply_pma =
     match newPMA with
     [ True -> glBlendFunc gl_one gl_one_minus_src_alpha
@@ -30,14 +29,16 @@ value bindTexture texture =
   match !boundTextureID with
   [ None -> 
     (
-      bind;
+      debug "bindTexture: previous None";
+      texture#bindGL();
       apply_pma;
       boundTextureID.val := Some newTextureID;
       premultiplyAlpha.val := newPMA;
     )
   | Some textureID when textureID <> newTextureID ->
     (
-      bind;
+      debug "bindTexture: not compatible with prev";
+      texture#bindGL();
       boundTextureID.val := Some newTextureID;
       if newPMA <> !premultiplyAlpha
       then 
@@ -47,7 +48,7 @@ value bindTexture texture =
         )
       else ()
     )
-  | _ -> ()
+  | _ -> debug "bindTexture: all compatible"
   ];
 
 

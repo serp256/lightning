@@ -1,4 +1,4 @@
-
+#include <caml/mlvalues.h>
 
 int nextPowerOfTwo(int number);
 
@@ -18,10 +18,10 @@ typedef enum
 
 typedef struct {
 	int format;
-	float width;
-	float realWidth;
-	float height;
-	float realHeight;
+	unsigned int width;
+	double realWidth;
+	unsigned int height;
+	double realHeight;
 	int numMipmaps;
 	int generateMipmaps;
 	int premultipliedAlpha;
@@ -31,4 +31,4 @@ typedef struct {
 } textureInfo;
 
 
-unsigned int createGLTexture(unsigned int mTextureID, textureInfo *tInfo);
+value createGLTexture(value mTextureID, textureInfo *tInfo);

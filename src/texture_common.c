@@ -15,7 +15,13 @@
 #endif
 #endif
 
+#include <stdio.h>
 #include "texture_common.h"
+#include <caml/memory.h>
+#include <caml/bigarray.h>
+#include <caml/custom.h>
+
+#define MAXTEXMEMORY 83886080
 
 int nextPowerOfTwo(int number) {
 	int result = 1;
@@ -31,6 +37,7 @@ typedef struct {
 	int bitsPerPixel;
 	int compressed;
 } texParams;
+
 
 int textureParams(textureInfo *tInfo,texParams *p) {
     switch (tInfo->format)
@@ -99,8 +106,47 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 		return 1;
 }
 
+#define TEXID(v) ((GLuint*)Data_custom_val(v))
 
-unsigned int createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
+
+value ml_glid_of_textureID(value textureID) {
+	return Val_int(*TEXID(textureID));
+}
+
+void ml_bind_texture(value texid) {
+	GLuint textureID = *TEXID(texid);
+	printf("bind texture: %d\n",textureID);
+	glBindTexture(GL_TEXTURE_2D,textureID);
+}
+
+static void texid_finalize(value texid) {
+	GLuint textureID = *TEXID(texid);
+	printf("finalize texture: %d\n",textureID);
+	glDeleteTextures(1,&textureID);
+}
+
+static int texid_compare(value texid1,value texid2) {
+	GLuint t1 = *TEXID(texid1);
+	GLuint t2 = *TEXID(texid2);
+	if (t1 == t2) return 0;
+	else {
+		if (t1 < t2) return -1;
+		return 1;
+	}
+}
+
+struct custom_operations texid_ops = {
+  "pointer to texture id",
+  texid_finalize,
+  texid_compare,
+  custom_hash_default,
+  custom_serialize_default,
+  custom_deserialize_default
+};
+
+
+// make it custom 
+value createGLTexture(value texid,textureInfo *tInfo) {
     int mRepeat = 0;    
     
 		texParams params;
@@ -110,7 +156,9 @@ unsigned int createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     //unsigned int mTextureID;
 		if (!textureParams(tInfo,&params)) return 0;
     
-		if (mTextureID == 0) glGenTextures(1, &mTextureID);
+		GLuint mTextureID;
+		if (texid == 1) {printf("genTexture\n");glGenTextures(1, &mTextureID);}
+		else mTextureID = *TEXID(Field(texid,0));
     glBindTexture(GL_TEXTURE_2D, mTextureID);
     
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
@@ -118,6 +166,7 @@ unsigned int createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
     
 		int level;
+		printf("create texture: %d:%d\n",tInfo->width,tInfo->height);
     if (!params.compressed)
     {       
         if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
@@ -163,5 +212,37 @@ unsigned int createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     }
     
     glBindTexture(GL_TEXTURE_2D, 0);
-    return mTextureID;
+		value result;
+		if (texid == 1) {
+			result = caml_alloc_custom(&texid_ops, sizeof(GLuint), tInfo->dataLen, MAXTEXMEMORY);
+			*TEXID(result) = mTextureID;
+		} else result = Field(texid,0);
+    return result;
+};
+
+CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
+	CAMLparam2(mlTexInfo,imgData);
+	textureInfo tInfo;
+	tInfo.format = Long_val(Field(mlTexInfo,0));
+	tInfo.realWidth = (double)Long_val(Field(mlTexInfo,1));
+	tInfo.width = Long_val(Field(mlTexInfo,2));
+	tInfo.realHeight = (double)Long_val(Field(mlTexInfo,3));
+	tInfo.height = Long_val(Field(mlTexInfo,4));
+	tInfo.numMipmaps = Long_val(Field(mlTexInfo,5));
+	tInfo.generateMipmaps = Int_val(Field(mlTexInfo,6));
+	tInfo.premultipliedAlpha = Int_val(Field(mlTexInfo,7));
+	tInfo.scale = Double_val(Field(mlTexInfo,8));
+	printf("loadTexture: %d:%d\n",tInfo.width,tInfo.height);
+	if (imgData == 1) {
+		tInfo.dataLen = 0;
+		tInfo.imgData = NULL;
+	} else {
+		struct caml_ba_array *data = Caml_ba_array_val(Field(imgData,0));
+		tInfo.dataLen = data->dim[0];
+		tInfo.imgData = data->data;
+	};
+	value texID = createGLTexture(Field(mlTexInfo,9),&tInfo);
+	if (!texID) caml_failwith("failed to load texture");
+	Store_field(mlTexInfo,9,texID);
+	CAMLreturn(mlTexInfo);
 }

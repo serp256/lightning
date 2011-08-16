@@ -48,7 +48,7 @@ else
 		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
 	else
 		gl = gl/2.1
-		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
+		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o 
 		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
 		AMLSOURCES = sdl/sdl_run.ml
 		MLOBJSFLAGS = -I sdl

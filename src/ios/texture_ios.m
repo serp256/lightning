@@ -399,7 +399,7 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
 		};
 		//double glt1 = CACurrentMediaTime();
 		uint textureID;
-		textureID = createGLTexture(Long_val(oldTexture),&tInfo);
+		textureID = createGLTexture(oldTexture,&tInfo);
 		//double glt2 = CACurrentMediaTime();
 		//NSLog(@"gl binding: [%f]",(glt2 - glt1));
 		free(tInfo.imgData);
@@ -424,11 +424,10 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
     Store_field(res,6,Val_int(1));
     Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
     Store_field(res,8,caml_copy_double(tInfo.scale));
-		Store_field(res,9,Val_int(textureID));
-    //Store_field(res,9,oImgData);
-		//double gt2 = CACurrentMediaTime();
-		//NSLog(@"loading texture: [%f]",(gt2 - gt1));
+		Store_field(res,9,textureID);
+
 		CAMLreturn(res);
+
 }
 
 
