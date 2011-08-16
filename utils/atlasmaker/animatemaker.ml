@@ -9,6 +9,7 @@ type rect = {
 value out_file = ref "tx_texture";
 value gen_pvr = ref False;
 value sqr = ref False;
+value type_rect = ref 0;
 value xmls = ref [];
 
 value emptyPx = 2;
@@ -201,7 +202,7 @@ value loadFiles () =
                     in 
                     let duration = get_attribute "duration" attributes in 
                     let image = Images.sub textures.(int_of_string textureId) (int_of_string x) (int_of_string y) (int_of_string width) (int_of_string height) in
-                    let (diffX,diffY,new_image) = croppedImageRect  image in
+                    let (diffX,diffY,new_image) = (0,0,image) (*croppedImageRect  image*) in
                       (
                         images.val := [({id = !id; posX = (float_of_string posX) +. (float_of_int  diffX); posY = (float_of_string posY) +. (float_of_int diffY); label; duration}, new_image) :: !images];
                         id.val := !id + 1;
@@ -225,7 +226,7 @@ value loadFiles () =
                               [ [ (frame, img ) :: tail ] ->
                                   let label =
                                     match frame.label with
-                                    [ Some label -> Some (label ^ "_" ^ name)
+                                    [ Some label -> Some label
                                     | None -> Some ("_end_" ^ name)
                                     ]
                                   in
@@ -248,7 +249,7 @@ value loadFiles () =
 
 value createAtlas () = 
     let i = ref 0 
-    and pages = TextureLayout.layout ~sqr:!sqr !images in
+    and pages = TextureLayout.layout ~type_rects:!type_rect ~sqr:!sqr !images in
     let xml_textures = ref "\t<Textures>\n" 
     and frames_info = ref []
     in
@@ -263,7 +264,7 @@ value createAtlas () =
               Printf.sprintf "%s_%d.png" !out_file !i;
             )
           ] in
-        let () = xml_textures.val := !xml_textures ^ (Printf.sprintf "<Texture path='%s'>\n" fname) in
+        let () = xml_textures.val := !xml_textures ^ (Printf.sprintf "\t\t<Texture path='%s'/>\n" fname) in
         let rgba = Rgba32.make w h {Color.color={Color.r=0;g=0;b=0}; alpha=0;} in
         let () = Printf.eprintf "Canvas: %dx%d\n%!" w h in
         let canvas  = Images.Rgba32 rgba in 
@@ -275,7 +276,7 @@ value createAtlas () =
             | _ -> assert False
             ] in
             let (w, h) = Images.size img in
-            let frame_str = Printf.sprintf "\t\t<Frame textureID = '%d' x='%d' y='%d' width= '%f' height='%f' posX='%f' posY='%f' %s  %s />\n" !i x y (float_of_int h) (float_of_int w) frame.posX frame.posY (match frame.duration with [ Some duration -> "duration='" ^ duration ^ "'" | _ -> ""]) (match frame.label with [ Some label -> "label='" ^ label ^ "'" | _ -> ""])in
+            let frame_str = Printf.sprintf "\t\t<Frame textureID = '%d' x='%d' y='%d' width= '%f' height='%f' posX='%f' posY='%f' %s  %s />\n" !i x y (float_of_int w) (float_of_int h) frame.posX frame.posY (match frame.duration with [ Some duration -> "duration='" ^ duration ^ "'" | _ -> ""]) (match frame.label with [ Some label -> "label='" ^ label ^ "'" | _ -> ""])in
               (
                 frames_info.val := [(frame.id, frame_str) :: !frames_info];
                 Images.blit img 0 0 canvas x y w h  
@@ -290,10 +291,10 @@ value createAtlas () =
       let oc = open_out (!out_file ^ ".xml") in (
         output_string oc "<MovieClip>\n";
         output_string oc !xml_textures;
-        output_string oc "\t<Frames>";
+        output_string oc "\n\t<Frames>\n";
         List.iter (fun (_,s) ->  output_string oc s) !frames_info;
         output_string oc "\t</Frames>";
-        output_string oc "</MovieClip>";
+        output_string oc "\n</MovieClip>";
         close_out oc;
       )
       
@@ -308,7 +309,8 @@ value () =
       [
         ("-o",Arg.Set_string out_file,"output file");
         ("-sqr",Arg.Unit (fun sq -> sqr.val := True )  ,"square texture");
-        ("-p",Arg.Set gen_pvr,"generate pvr file")
+        ("-p",Arg.Set gen_pvr,"generate pvr file");
+        ("-t",Arg.Set_int type_rect,"type rect for insert images")
       ]
       (fun xml -> xmls.val := [ xml :: !xmls ] )
       "---"

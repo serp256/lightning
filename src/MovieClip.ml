@@ -265,9 +265,8 @@ module Make
                   (
                     match loop with
                     [ True -> 
-                      let len = endFrame - startFrame in
-                      let num = cFrame / len in
-                      (startFrame + (cFrame - (num * len)),False)
+                      let len = endFrame - startFrame + 1 in
+                      (startFrame + ((cFrame - endFrame -1) mod len),False)
                     | False -> (endFrame,True)
                     ]
                   )
