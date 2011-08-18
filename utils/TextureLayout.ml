@@ -33,23 +33,22 @@ value rec tryLayout ~type_rects rects placed empty unfit =
           else
             let type_rects =
               match type_rects with
-              [ 2 -> Random.int 2 
-              | _ -> type_rects 
+              [ `rand -> match Random.int 2 with [ 0 -> `vert | 1 -> `hor | _ -> assert False ]
+              | (`vert | `hor) as t -> t
               ] 
             in
             let rects = 
               match type_rects with
-              [ 0 ->
+              [ `vert ->
                   [
                     { x = c.x; y = c.y + rh + countEmptyPixels; w = rw; h = c.h - rh - countEmptyPixels };
                     { x = c.x + rw + countEmptyPixels; y = c.y; w = c.w - rw - countEmptyPixels; h = c.h }
                   ]
-              | 1 -> 
+              | `hor -> 
                   [
                     { x = c.x; y = c.y + rh + countEmptyPixels; w = c.w; h = c.h - rh - countEmptyPixels };
                     { x = c.x + rw + countEmptyPixels; y = c.y; w = c.w - rw - countEmptyPixels; h = rh }
                   ]
-              | _ -> failwith "unknown type_rects"
               ]
             in 
             (
@@ -125,7 +124,8 @@ value rec layout_multipage ~type_rects ~sqr rects pages =
 (* 
  возвращает список страниц. каждая страница не больше 2048x2048
 *)
-value layout ?(type_rects=0) ?(sqr=False) rects =
+type ltype = [= `vert | `hor | `rand ];
+value layout ?(type_rects=`vert) ?(sqr=False) rects =
   (
     Random.self_init ();
     layout_multipage ~type_rects ~sqr rects [];
