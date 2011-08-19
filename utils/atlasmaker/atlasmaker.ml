@@ -8,6 +8,7 @@ type rect = {
 value out_file = ref "tx_texture";
 value gen_pvr = ref False;
 value sqr = ref False;
+value type_rect = ref `vert;
 
 value emptyPx = 2;
 
@@ -63,7 +64,7 @@ value croppedImageRect img =
       (* сканируем сверху *)
       try 
         while !y < i.Rgba32.height do 
-          match hlineEmpty i !y !x (!x + !w - 1) with
+          match hlineEmpty i !y !x (!w - 1) with
           [ True    -> incr y
           | False   -> raise Break_loop
           ]
@@ -73,7 +74,7 @@ value croppedImageRect img =
       (* сканируем снизу *)
       try 
         while !h > 0 do 
-          match hlineEmpty i (!h - 1) !x (!x + !w - 1) with
+          match hlineEmpty i (!h - 1) !x (!w - 1) with
           [ True    -> decr h
           | False   -> raise Break_loop
           ]
@@ -83,7 +84,7 @@ value croppedImageRect img =
       (* слева *)
       try 
         while !x < i.Rgba32.width do 
-          match vlineEmpty i !x !y (!y + !h - 1) with
+          match vlineEmpty i !x !y (!h - 1) with
           [ True    -> incr x
           | False   -> raise Break_loop
           ]
@@ -93,7 +94,7 @@ value croppedImageRect img =
       (* справа *)
       try 
         while !w > 0 do 
-          match vlineEmpty i (!w - 1) !y (!y + !h - 1) with
+          match vlineEmpty i (!w - 1) !y (!h - 1) with
           [ True    -> decr w
           | False   -> raise Break_loop
           ]
@@ -103,6 +104,7 @@ value croppedImageRect img =
     )
     
   | Images.Rgb24 i -> 
+      let () = Printf.eprintf "Rgba24\n" in
       Images.sub img 0 0 i.Rgb24.width i.Rgb24.height
   | _ -> assert False
   ];
@@ -234,7 +236,7 @@ value layoutRects rects =
 (* *)
 value createAtlas () = 
     let i = ref 0 
-    and pages = TextureLayout.layout ~sqr:!sqr (Hashtbl.fold (fun k v acc -> [(k,v) :: acc]) imageRects []) in
+    and pages = TextureLayout.layout ~type_rects:!type_rect ~sqr:!sqr (Hashtbl.fold (fun k v acc -> [(k,v) :: acc]) imageRects []) in
     let xml  = ref "<TextureAtlases >\n" in
     (
       List.iter begin fun (w,h,rects) -> 
@@ -294,6 +296,7 @@ value () =
       [
         ("-o",Arg.Set_string out_file,"output file");
         ("-sqr",Arg.Unit (fun sq -> sqr.val := True )  ,"square texture");
+        ("-t",Arg.String (fun s -> let t = match s with [ "vert" -> `vert | "hor" -> `hor | "rand" -> `rand | _ -> failwith "unknown type rect" ] in type_rect.val := t),"type rect for insert images");
         ("-p",Arg.Set gen_pvr,"generate pvr file")
       ]
       (fun dn -> match !dirname with [ None -> dirname.val := Some dn | Some _ -> failwith "You must specify only one directory" ])
