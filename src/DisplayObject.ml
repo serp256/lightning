@@ -67,13 +67,16 @@ DEFINE RENDER_WITH_MASK(call_render) =
 class type dispObj = 
   object
     method dispatchEvent: Ev.t P.evType P.evData -> unit;
+    method name: string;
   end;
 
-value onEnterFrameObjects : HSet.t dispObj = HSet.empty ();
+module SetD = Set.Make (struct type t = dispObj; value compare d1 d2 = compare d1 d2; end);
+
+value onEnterFrameObjects = ref SetD.empty;
 
 value dispatchEnterFrame seconds = 
   let enterFrameEvent = Ev.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
-  HSet.iter (fun (obj:dispObj) -> obj#dispatchEvent enterFrameEvent) onEnterFrameObjects;
+  SetD.iter (fun obj -> let () = debug:enter_frame "dispatch enter frame on: %s" obj#name in obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
 
 class virtual _c [ 'parent ] = (*{{{*)
   object(self:'self)
@@ -135,12 +138,12 @@ class virtual _c [ 'parent ] = (*{{{*)
 (*     type 'listener = Ev.t P.evType P.evData 'displayObject 'self -> int -> unit; *)
 
     method private enterFrameListenerRemovedFromStage  _ _ lid =
-      let _ = self#removeEventListener `REMOVED_FROM_STAGE lid in
+      let _ = super#removeEventListener `REMOVED_FROM_STAGE lid in
       match self#hasEventListeners `ENTER_FRAME with
       [ True -> 
         (
-          HSet.remove onEnterFrameObjects (self :> dispObj);
-          ignore(self#addEventListener `ADDED_TO_STAGE self#enterFrameListenerAddedToStage)
+          onEnterFrameObjects.val := SetD.remove (self :> dispObj) !onEnterFrameObjects;
+          ignore(super#addEventListener `ADDED_TO_STAGE self#enterFrameListenerAddedToStage)
         )
       | False -> ()
       ];
@@ -151,13 +154,13 @@ class virtual _c [ 'parent ] = (*{{{*)
         [ True -> self#listenEnterFrame ()
         | False -> () 
         ];
-        self#removeEventListener `ADDED_TO_STAGE lid
+        super#removeEventListener `ADDED_TO_STAGE lid
       );
 
     method private listenEnterFrame () = 
       (
-        HSet.add onEnterFrameObjects (self :> dispObj);
-        ignore(self#addEventListener `REMOVED_FROM_STAGE self#enterFrameListenerRemovedFromStage);
+        onEnterFrameObjects.val := SetD.add (self :> dispObj) !onEnterFrameObjects;
+        ignore(super#addEventListener `REMOVED_FROM_STAGE self#enterFrameListenerRemovedFromStage);
       );
 
     method! addEventListener (eventType:P.evType) (listener:'listener) = 
@@ -167,7 +170,7 @@ class virtual _c [ 'parent ] = (*{{{*)
         match self#hasEventListeners `ENTER_FRAME with
         [ False ->
           match self#stage with
-          [ None -> ignore(self#addEventListener `ADDED_TO_STAGE self#enterFrameListenerAddedToStage)
+          [ None -> ignore(super#addEventListener `ADDED_TO_STAGE self#enterFrameListenerAddedToStage)
           | Some _ -> self#listenEnterFrame ()
           ]
         | True -> ()
@@ -186,7 +189,7 @@ class virtual _c [ 'parent ] = (*{{{*)
           [ False ->
             match self#stage with
             [ None -> ()
-            | Some _ -> HSet.remove onEnterFrameObjects (self :> dispObj)
+            | Some _ -> onEnterFrameObjects.val := SetD.remove (self :> dispObj) !onEnterFrameObjects 
             ]
           | True -> ()
           ]
