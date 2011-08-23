@@ -8,6 +8,9 @@ type rect = {
 value out_file = ref "tx_texture";
 value gen_pvr = ref False;
 value sqr = ref False;
+value nocrop = ref "";
+value nocropHash:Hashtbl.t string unit = Hashtbl.create 3;
+
 
 value emptyPx = 2;
 
@@ -113,9 +116,16 @@ value croppedImageRect img =
 value readImageRect fname = 
   let () = Printf.eprintf "Loading %s\n%!" fname in
   try 
-    let rect = croppedImageRect (Images.load fname []) in
-    Hashtbl.add imageRects fname rect
+    let image = Images.load fname [] in
+    let rect = 
+      try 
+        let () = Hashtbl.find nocropHash fname in
+        let () = Printf.eprintf "Won't crop %s\n%!" fname 
+        in image
+      with [ Not_found -> croppedImageRect image ] 
+    in  Hashtbl.add imageRects fname rect
   with [Images.Wrong_file_type -> ()];
+  
 
 
 
@@ -293,12 +303,19 @@ value () =
     Arg.parse
       [
         ("-o",Arg.Set_string out_file,"output file");
+        ("-nc", Arg.Set_string nocrop, "files that are not supposed to be cropped");
         ("-sqr",Arg.Unit (fun sq -> sqr.val := True )  ,"square texture");
         ("-p",Arg.Set gen_pvr,"generate pvr file")
       ]
       (fun dn -> match !dirname with [ None -> dirname.val := Some dn | Some _ -> failwith "You must specify only one directory" ])
       "---"
     ;
+    
+    match !nocrop with
+    [ "" -> ()
+    | str -> List.iter begin fun s -> Hashtbl.add nocropHash s () end (ExtString.String.nsplit str ",")
+    ];
+    
     let dirname =
       match !dirname with
       [ None -> failwith "You must specify directory for process"
