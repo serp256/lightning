@@ -1,42 +1,10 @@
 
 DEFINE W = 1.;
+DEFINE SIGN(x) = if x < 0. then ~-.1. else 1.;
+
 type t = { a:float; b:float; c:float; d: float; tx: float; ty: float};
 
 value identity = {a=1.0;b=0.;c=0.;d=1.;tx=0.;ty=0.};
-
-(*
-value create ?(translate=(0.,0.)) ?(scale=(1.,1.)) ?(rotation=0.) () : t = 
-  let (tx,ty) = translate in 
-  let ar = [| 1.; 0.; 0.; 1.; tx; ty |] in
-  let (sx,sy) = scale in
-  (
-    if sx <> 1.0 || sy <> 1.0 
-    then
-    (
-      ar.(0) := sx;
-      ar.(3) := sy;
-    )
-    else ();
-    if rotation <> 0.0 
-    then 
-      let c = cos(rotation)
-      and s = sin(rotation) in
-      (
-        ar.(0) := sx *. c;
-        ar.(1) := s *. sx;
-        ar.(2) := sy *. ~-.s;
-        ar.(3) := sy *. c;
-        let tx = ar.(4) in
-        let ty = ar.(5) in
-        (
-          ar.(4) := c *. tx +. ~-.s *. ty;
-          ar.(5) := s *. tx +. c *. ty;
-        );
-      )
-    else ();
-    Obj.magic ar;
-  );
-*)
 
 value create ?(rotation=0.) ?(scale=(1.,1.)) ?(translate=(0.,0.)) () : t = 
   let (tx,ty) = translate in 
@@ -82,8 +50,8 @@ value concat m1 m2 =
     b = m2.b *. m1.a +. m2.d *. m1.b;
     c = m2.a *. m1.c +. m2.c *. m1.d;
     d = m2.b *. m1.c +. m2.d *. m1.d;
-    tx = m2.a *. m1.tx +. m2.c *. m1.ty +. m2.tx *. W;
-    ty = m2.b *. m1.tx +. m2.d *. m1.ty +. m2.ty *. W;
+    tx = m2.a *. m1.tx +. m2.c *. m1.ty +. m2.tx; 
+    ty = m2.b *. m1.tx +. m2.d *. m1.ty +. m2.ty;
   };
 
 value rotate m angle = 
@@ -134,6 +102,10 @@ value invert m =
     tx = (m.c*.m.ty-.m.d*.m.tx)/.det;
     ty = (m.b*.m.tx-.m.a*.m.ty)/.det
   };
+
+value scaleX m = SIGN(m.a) *. sqrt(m.a *. m.a +. m.b *. m.b);
+value scaleY m = SIGN(m.d) *. sqrt(m.c *. m.c +. m.d *. m.d);
+value rotation m = atan2 m.b m.a;
 
 value to_string m = Printf.sprintf "[a:%f,b:%f,c:%f,d:%f,tx:%f,ty:%f]" m.a m.b m.c m.d m.tx m.ty;
 

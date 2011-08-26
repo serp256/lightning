@@ -164,7 +164,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
     (*                     let () = Printf.printf "lastWhiteSpace: numChildren: %d, removeIndex: %d, numCharsToRemove: %d\n%!" currentLine#numChildren removeIndex numCharsToRemove in *)
                         for i = 0 to numCharsToRemove - 1 do
     (*                       let () = Printf.printf "remove %d\n%!" currentLine#numChildren in *)
-                          currentLine#removeChildAtIndex removeIndex 
+                          ignore(currentLine#removeChildAtIndex removeIndex)
                         done;
                         UTF8.move text index ~-numCharsToRemove
                       )

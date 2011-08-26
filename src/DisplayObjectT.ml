@@ -76,6 +76,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method virtual bounds: Rectangle.t;
     method transformGLMatrix: unit -> unit;
     method transformationMatrix: Matrix.t;
+    method setTransformationMatrix: Matrix.t -> unit;
     method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t;
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method globalToLocal: Point.t -> Point.t;
@@ -111,7 +112,7 @@ class virtual container:
     method getLastChild: 'displayObject;
     method numChildren: int;
     method removeChild: !'child. (#_c container as 'child) -> unit;
-    method removeChildAtIndex: int -> unit;
+    method removeChildAtIndex: int -> 'displayObject;
     (* need to be hidden *)
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;

@@ -33,6 +33,7 @@ value transform_points points matrix =
     ar
   );
 
+
 DEFINE RENDER_WITH_MASK(call_render) = 
   match self#stage with
   [ Some stage ->
@@ -78,7 +79,10 @@ value dispatchEnterFrame seconds =
   let enterFrameEvent = Ev.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
   SetD.iter (fun obj -> let () = debug:enter_frame "dispatch enter frame on: %s" obj#name in obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
 
+DEFINE RESET_TRANSFORMATION_MATRIX = match transformationMatrix with [ Some _ -> transformationMatrix := None | _ -> () ];
+
 class virtual _c [ 'parent ] = (*{{{*)
+
   object(self:'self)
     type 'displayObject = _c 'parent;
     inherit EventDispatcher.base [ P.evType,P.evData,'displayObject,'self] as super;
@@ -96,7 +100,26 @@ class virtual _c [ 'parent ] = (*{{{*)
     method name = name;
     method setName n = name := n;
 
+    value mutable x = 0.0;
+    value mutable y = 0.0;
     value mutable transformPoint = (0.,0.);
+    value mutable scaleX = 1.0;
+    value mutable scaleY = 1.0;
+    value mutable rotation = 0.0;
+    value mutable transformationMatrix = None;
+
+    method transformationMatrix = 
+      match transformationMatrix with
+      [ None -> 
+        let translate = Point.addPoint (x,y) transformPoint in
+        let m = Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate () in
+        (
+          transformationMatrix := Some m;
+          m;
+        )
+      | Some m -> m
+      ];
+
 
     method transformPointX = fst transformPoint;
     method setTransformPointX nv = 
@@ -104,6 +127,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
         (
           transformPoint := (nv,snd transformPoint);
+          RESET_TRANSFORMATION_MATRIX;
           self#modified();
         )
       else ();
@@ -114,6 +138,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
         (
           transformPoint := (fst transformPoint,nv);
+          RESET_TRANSFORMATION_MATRIX;
           self#modified();
         )
       else ();
@@ -125,6 +150,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
       (
         transformPoint := p;
+        RESET_TRANSFORMATION_MATRIX;
         self#modified ();
       )
       else ();
@@ -219,15 +245,13 @@ class virtual _c [ 'parent ] = (*{{{*)
       self#dispatchEvent' event self#asDisplayObject;
     (*}}}*)
 
-    value mutable scaleX = 1.0;
     method scaleX = scaleX;
-    method setScaleX ns = (scaleX := ns; self#modified () );
+    method setScaleX ns = (scaleX := ns; RESET_TRANSFORMATION_MATRIX; self#modified () );
 
-    value mutable scaleY = 1.0;
     method scaleY = scaleY;
-    method setScaleY ns = (scaleY := ns; self#modified () );
+    method setScaleY ns = (scaleY := ns; RESET_TRANSFORMATION_MATRIX; self#modified () );
 
-    method setScale s = (scaleX := s; scaleY := s; self#modified () );
+    method setScale s = (scaleX := s; scaleY := s; RESET_TRANSFORMATION_MATRIX; self#modified () );
 
     value mutable visible = True;
     method visible = visible;
@@ -237,16 +261,14 @@ class virtual _c [ 'parent ] = (*{{{*)
     method touchable = touchable;
     method setTouchable v = touchable := v;
 
-    value mutable x = 0.0;
     method x = x;
-    method setX x' = ( x := x'; self#modified ());
+    method setX x' = ( x := x'; RESET_TRANSFORMATION_MATRIX; self#modified ());
 
-    value mutable y = 0.0;
     method y = y;
-    method setY y' = (y := y'; self#modified ());
+    method setY y' = (y := y'; RESET_TRANSFORMATION_MATRIX; self#modified ());
 
     method pos = (x,y);
-    method setPos (x',y') = (x := x'; y := y'; self#modified ());
+    method setPos (x',y') = (x := x'; y := y'; RESET_TRANSFORMATION_MATRIX; self#modified ());
 
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
@@ -314,7 +336,6 @@ class virtual _c [ 'parent ] = (*{{{*)
     );
     
 
-    value mutable rotation = 0.0;
     method rotation = rotation;
     method setRotation nr = 
       (* clamp between [-180 deg, +180 deg] *)
@@ -330,8 +351,23 @@ class virtual _c [ 'parent ] = (*{{{*)
       in
       (
         rotation := nr;
+        RESET_TRANSFORMATION_MATRIX;
         self#modified ();
       );
+
+    method setTransformationMatrix m =
+    (
+      let sx = Matrix.scaleX m in
+      scaleX := sx;
+      let sy = Matrix.scaleY m in
+      scaleY := sy;
+      let r = Matrix.rotation m in
+      rotation := r;
+      x := m.Matrix.tx;
+      y := m.Matrix.ty;
+      transformationMatrix := Some m;
+      self#modified();
+    );
 
     value mutable alpha = 1.0;
     method alpha = alpha;
@@ -349,9 +385,6 @@ class virtual _c [ 'parent ] = (*{{{*)
       if scaleX <> 0.0 || scaleY <> 0.0 then glScalef scaleX scaleY 1.0 else ();
     );
 
-    method transformationMatrix = 
-      let translate = Point.addPoint (x,y) transformPoint in
-      Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate (); (* Может быть стоит закэшировать нах. *)
 
     method root = 
       loop self#asDisplayObject where
@@ -539,7 +572,10 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method modified () = 
     (
-      boundsCache := None;
+      match boundsCache with
+      [ Some _ -> boundsCache := None
+      | None -> ()
+      ];
       match parent with
       [ Some p -> p#modified ()
       | None -> ()
@@ -796,6 +832,7 @@ class virtual container = (*{{{*)
           ]
         | None -> ()
         ];
+        child;
       );
 
     method removeChild' child = 
@@ -803,14 +840,14 @@ class virtual container = (*{{{*)
       [ None -> raise Child_not_found
       | Some children ->
           let n = try dllist_find children child with [ Not_found -> raise Child_not_found ] in
-          self#removeChild'' n
+          ignore(self#removeChild'' n)
       ];
 
     method removeChild: !'child. ((#_c container) as 'child) -> unit = fun child -> (* чекать сцука надо блядь *)
       let child = child#asDisplayObject in
       self#removeChild' child;
 
-    method removeChildAtIndex index = 
+    method removeChildAtIndex index : 'displayObject = 
       match children with
       [ None -> raise Invalid_index
       | Some children -> 
