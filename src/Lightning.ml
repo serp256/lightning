@@ -15,6 +15,7 @@ end;
 
 module Make(Param:sig type evType = private [> eventType ]; type evData = private [> eventData ]; end) = struct
   module DisplayObject = DisplayObject.Make Param;
+  module Shape = Shape.Make DisplayObject;
   module Quad = Quad.Make DisplayObject;
   module Image = Image.Make Quad;
   module Sprite = Sprite.Make DisplayObject;
