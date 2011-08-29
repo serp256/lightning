@@ -7,6 +7,7 @@ type halign = [= `HAlignLeft | `HAlignCenter | `HAlignRight ];
 type valign = [= `VAlignTop | `VAlignCenter | `VAlignBottom ];
 
 value pi  =  3.14159265359;
+value half_pi = pi /. 2.;
 value two_pi =  6.28318530718;
 
 exception File_not_exists of string;

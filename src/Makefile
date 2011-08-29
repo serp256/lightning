@@ -66,7 +66,7 @@ endif
 
 MOBJS += $(gl)/gl_stub.o 
 
-MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) Debug.ml ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Graphics.ml RenderSupport.ml \
+MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) Debug.ml ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml Graphics.ml\
 					DisplayObject.ml Shape.ml Sprite.ml Quad.ml Texture.ml RenderTexture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml \
 					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
