@@ -16,18 +16,15 @@
 #import <caml/callback.h>
 #import <caml/threads.h>
 
-
-
 #import "common_ios.h"
 #import "texture_common.h"
-
 
 
 typedef void (*drawingBlock)(CGContextRef context,void *data);
 
 void createTextureInfo(int colorSpace, float width, float height, float scale, drawingBlock draw, void *data, textureInfo *tInfo) {
-		int legalWidth  = nextPowerOfTwo(width  * scale);
-		int legalHeight = nextPowerOfTwo(height * scale);
+	int legalWidth  = nextPowerOfTwo(width  * scale);
+	int legalHeight = nextPowerOfTwo(height * scale);
     
     CGColorSpaceRef cgColorSpace;
     CGBitmapInfo bitmapInfo;
@@ -69,19 +66,19 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
 		CGContextScaleCTM(context, scale, -scale);
     
     UIGraphicsPushContext(context);
-		draw(context,data);
+	draw(context,data);
     UIGraphicsPopContext();        
     
     CGContextRelease(context);
-		tInfo->width = legalWidth;
-		tInfo->realWidth = width;
-		tInfo->height = legalHeight;
-		tInfo->realHeight = height;
-		tInfo->generateMipmaps = 0;
-		tInfo->numMipmaps = 0;
-		tInfo->scale = scale;
-		tInfo->dataLen = dataLen;
-		tInfo->imgData = imageData;
+	tInfo->width = legalWidth;
+	tInfo->realWidth = width;
+	tInfo->height = legalHeight;
+	tInfo->realHeight = height;
+	tInfo->generateMipmaps = 0;
+	tInfo->numMipmaps = 0;
+	tInfo->scale = scale;
+	tInfo->dataLen = dataLen;
+	tInfo->imgData = imageData;
 }
 
 void drawImage(CGContextRef context, void* data) {
@@ -325,117 +322,136 @@ NSString *pathForImage(NSString *path, float contentScaleFactor) {
 }*/
 
 
+NSString * pathForBundleResource(NSString * path, NSBundle * bundle) {
+    NSArray * components = [path pathComponents];
+    NSString * bundlePath = nil;
+    if ([components count] > 1) {
+      bundlePath = [bundle pathForResource: [components lastObject] ofType:nil inDirectory: [path stringByDeletingLastPathComponent]]; 
+    } else {
+      bundlePath = [bundle pathForResource:path ofType:nil];
+    }	                     
+    return bundlePath;
+}
+
+
 CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleFactor) { // if old texture exists when replace
     CAMLparam2(opath,ocontentScaleFactor);
-		//CAMLlocal2(oImgData,res);
-		CAMLlocal1(res);
-   
-		//printf("ml_loade image: %s\n",String_val(opath));
+	CAMLlocal1(res);
+	NSLog(@"ml_loade image: %s\n",String_val(opath));
     NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
 
-		caml_release_runtime_system();
+	caml_release_runtime_system();
 
-		textureInfo tInfo;
+	textureInfo tInfo;
 
-		//double gt1 = CACurrentMediaTime();
+	//double gt1 = CACurrentMediaTime();
     NSString *fullPath = NULL;
     NSString *imgType = [[path pathExtension] lowercaseString];
-		NSBundle *bundle = [NSBundle mainBundle];
-		float contentScaleFactor = Double_val(ocontentScaleFactor);
+	NSBundle *bundle = [NSBundle mainBundle];
+	float contentScaleFactor = Double_val(ocontentScaleFactor);
+	contentScaleFactor = deviceScaleFactor();
 
-		int r;
+	int r;
+	int is2x = 0;
     if ([imgType rangeOfString:@"pvr"].location == 0) {
-			if (contentScaleFactor != 1.0f) {
-				NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
-				NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", suffix, imgType];
-				fullPath = [bundle pathForResource:fname ofType:nil];
-			};
-			if (!fullPath) fullPath = [bundle pathForResource:path ofType:nil];
-			if (!fullPath) r = 2;
-			else r = loadPvrFile(fullPath, &tInfo);
-		} else {
-			// Try pvr first with right scale factor
-			int is_pvr = 0;
-			do {
-				NSString *fname = NULL;
-				NSString *pathWithoutExt = [path stringByDeletingPathExtension];
-				if (contentScaleFactor != 1.0f) {
-						NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
-						fname = [pathWithoutExt stringByAppendingFormat:@"%@.%@", suffix, @"pvr"];
-						fullPath = [bundle pathForResource:fname ofType:nil];
-						if (fullPath) {is_pvr = 1; break; }
-						// try original ext with this scale factor
-						fname = [pathWithoutExt stringByAppendingFormat:@"%@.%@", suffix, imgType];
-						fullPath = [bundle pathForResource:fname ofType:nil];
-						if (fullPath) break;
-				} 
-				// try pvr 
-				fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
-				fullPath = [bundle pathForResource:fname ofType:nil];
-				if (fullPath) {is_pvr = 1; break;};
-				fullPath = [bundle pathForResource:path ofType:nil];
-			} while (0);
-			if (!fullPath) r = 2;
-			else {
-				if (is_pvr) r = loadPvrFile(fullPath,&tInfo);
-				else {
-					//double t1 = CACurrentMediaTime();
-					UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
-					//double t2 = CACurrentMediaTime();
-					//NSLog(@"load from disk: %F",(t2 - t1));
-					//t1 = CACurrentMediaTime();
-					r = loadImageFile(image, &tInfo);
-					//t2 = CACurrentMediaTime();
-					//NSLog(@"decode img: [%f]",(t2 - t1));
-					[image release];
-				}
-			}
+  	  if (contentScaleFactor != 1.0f) {
+	    NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
+		NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", suffix, imgType];
+		fullPath = pathForBundleResource(fname, bundle);
+		if (fullPath) {
+		  is2x = 1;
 		}
+	  };
+	  
+	  if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
+	  if (!fullPath) r = 2;
+	  else r = loadPvrFile(fullPath, &tInfo);
+	} else {
+	  // Try pvr first with right scale factor
+	  int is_pvr = 0;
+      do {
+	    NSString *fname = NULL;
+		NSString *pathWithoutExt = [path stringByDeletingPathExtension];
+		if (contentScaleFactor != 1.0f) {
+		  
+		  // в файл уже передали @2x
+		  if ([path rangeOfString: @"@2x"].location != NSNotFound) {
+		    fullPath = pathForBundleResource(path, bundle); 
+  		    if (fullPath) {
+		      is2x = 1;
+		      break; 
+		    }
+		  }
+		
+		  NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
+		  fname = [pathWithoutExt stringByAppendingFormat:@"%@.%@", suffix, @"pvr"];
+		  fullPath = pathForBundleResource(fname, bundle); 
+		  if (fullPath) {
+		    is2x = 1;
+		    is_pvr = 1; 
+		    break; 
+		  }
+		  
+		  // try original ext with this scale factor
+		  fname = [pathWithoutExt stringByAppendingFormat:@"%@.%@", suffix, imgType];
+		  fullPath = pathForBundleResource(fname, bundle); 
+		  
+		  if (fullPath) {
+		    is2x = 1;
+		    break;
+		  }
+	    } 
+
+		// try pvr 
+		fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
+		pathForBundleResource(fname, bundle);
+		if (fullPath) {is_pvr = 1; break;};
+		fullPath = pathForBundleResource(path, bundle);
+	  } while (0);
+			
+		if (!fullPath) r = 2;
+		else {
+		  if (is_pvr) r = loadPvrFile(fullPath,&tInfo);
+		  else {
+			//double t1 = CACurrentMediaTime();
+			UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
+			//double t2 = CACurrentMediaTime();
+			//NSLog(@"load from disk: %F",(t2 - t1));
+			//t1 = CACurrentMediaTime();
+			r = loadImageFile(image, &tInfo);
+			//t2 = CACurrentMediaTime();
+			//NSLog(@"decode img: [%f]",(t2 - t1));
+			[image release];
+		  }
+		}
+    }
 
 		if (r) {
 			caml_acquire_runtime_system();
 			if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 			caml_failwith("Can't load image");
 		};
-		//double glt1 = CACurrentMediaTime();
+
 		uint textureID;
 		textureID = createGLTexture(oldTexture,&tInfo);
-		//double glt2 = CACurrentMediaTime();
-		//NSLog(@"gl binding: [%f]",(glt2 - glt1));
 		free(tInfo.imgData);
 
 		caml_acquire_runtime_system();
 
-		/*
-		intnat dims[1];
-		dims[0] = tInfo.dataLen;
-    
-		oImgData = caml_ba_alloc(CAML_BA_EXTERNAL | CAML_BA_UINT8, 1, tInfo.imgData, dims); 
-		*/
-
-
 		res = caml_alloc_tuple(10);
 		Store_field(res,0,Val_int(tInfo.format));
 		Store_field(res,1,Val_int((unsigned int)tInfo.realWidth));
-    Store_field(res,2,Val_int(tInfo.width));
+        Store_field(res,2,Val_int(tInfo.width));
 		Store_field(res,3,Val_int((unsigned int)tInfo.realHeight));
-    Store_field(res,4,Val_int(tInfo.height));
-    Store_field(res,5,Val_int(tInfo.numMipmaps));
-    Store_field(res,6,Val_int(1));
-    Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
-    Store_field(res,8,caml_copy_double(tInfo.scale));
-		Store_field(res,9,textureID);
-
+        Store_field(res,4,Val_int(tInfo.height));
+        Store_field(res,5,Val_int(tInfo.numMipmaps));
+        Store_field(res,6,Val_int(1));
+        Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
+        Store_field(res,8,caml_copy_double(is2x ? contentScaleFactor : 1.0f));
+    	Store_field(res,9,textureID);
 		CAMLreturn(res);
-
 }
 
-
-/*
-void ml_freeImageData(value textureInfo) {
-	free(Caml_ba_data_val(Field(textureInfo,9)));
-}
-*/
 
 CAMLprim value ml_textureWithText(value text) {
 	caml_failwith("not implemented");

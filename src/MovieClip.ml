@@ -32,6 +32,13 @@ module Make
   DEFINE FRAME_TO_STRING(f) = match f with [ `label l -> Printf.sprintf "label:%s" l | `num n -> Printf.sprintf "num: %d" n ];
 
   value load xmlpath : descriptor = (*{{{*)
+    let path  = resource_path xmlpath in 
+    let scale = 
+      try 
+        let _ = ExtString.String.find path "@2x" in 2.0
+      with [ ExtString.Invalid_string -> 1.0 ] 
+    in
+  
     let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
     let () = XmlParser.accept (`Dtd None) in
     let labels = Hashtbl.create 0 in
@@ -48,8 +55,8 @@ module Make
         let label =  XmlParser.get_attribute "label" attributes in
         let frame = 
           {
-            region = Rectangle.create (floats x) (floats y) (floats width) (floats height);
-            hotpos = ((floats posX),(floats posY));
+            region = Rectangle.create ((floats x) /. scale)  ((floats y) /. scale) ((floats width) /. scale) ((floats height) /. scale);
+            hotpos = (((floats posX) /. scale) ,((floats posY) /. scale));
             textureID = int_of_string textureID;
             label; texture = None;
           }

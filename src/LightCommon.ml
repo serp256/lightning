@@ -23,6 +23,14 @@ IFDEF IOS THEN
 
 Callback.register_exception "File_not_exists" (File_not_exists "");
 external bundle_path_for_resource: string -> float -> option string = "ml_bundle_path_for_resource";
+external device_scale_factor: unit -> float = "ml_device_scale_factor";
+
+value resource_path fname = 
+  match bundle_path_for_resource fname 2.0 with
+  [ None    -> raise (File_not_exists path)
+  | Some p  -> p
+  ];
+
 value open_resource path scale =
   match bundle_path_for_resource path scale with
   [ None -> raise (File_not_exists path)
@@ -31,18 +39,15 @@ value open_resource path scale =
 
 ELSE IFDEF ANDROID THEN
 
-(*
-value resPath  = ref "";
-Callback.register "setResourcesBase" (fun str -> resPath.val := str);
-value bundle_path_for_resource fname = 
-  let path = Filename.concat !resPath fname in
-  match Sys.file_exists path with
-  [ True -> Some path
-  | False -> None
-  ];
-*)
-
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
+value device_scale_factor () = 1.0;
+
+value resource_path fname = 
+  match bundle_fd_of_resource path with 
+  [ None -> raise (File_not_exists path)  
+  | Some _ -> fname
+  ];  
+
 
 value open_resource path _ = 
   match bundle_fd_of_resource path with
@@ -53,14 +58,15 @@ value open_resource path _ =
 
 ELSE IFDEF SDL THEN
 
-value resource_path fname _ = 
+value device_scale_factor () = 1.0;
+value resource_path fname = 
   let path = Filename.concat "Resources" fname in
   match Sys.file_exists path with
   [ True -> path
   | False -> raise (File_not_exists fname)
   ];
 
-value open_resource fname scale = open_in (resource_path fname scale);
+value open_resource fname scale = open_in (resource_path fname);
 
 ENDIF;
 ENDIF;
@@ -81,7 +87,6 @@ value resource_path path _ =
 exception Xml_error of string and string;
 
 module MakeXmlParser(P:sig value path: string; end) = struct
-
 
   value input = open_resource P.path 1.;
 
