@@ -115,7 +115,6 @@ value ml_glid_of_textureID(value textureID) {
 
 void ml_bind_texture(value texid) {
 	GLuint textureID = *TEXID(texid);
-	printf("bind texture: %d\n",textureID);
 	glBindTexture(GL_TEXTURE_2D,textureID);
 }
 
