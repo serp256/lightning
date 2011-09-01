@@ -1,11 +1,11 @@
 
-type t = {x:mutable float; y:mutable float; width:mutable float; height:mutable float;};
-value empty () = {x=0.;y=0.;width=0.;height=0.};
+type t = {x:float; y:float; width:float; height:float;};
+type tm = {m_x:mutable float; m_y: mutable float; m_width: mutable float; m_height: mutable float };
+value tm_of_t r = {m_x=r.x;m_y=r.y;m_width=r.width;m_height=r.height};
+value empty = {x=0.;y=0.;width=0.;height=0.};
 value create x y width height = {x;y;width;height};
-value copy r = {x=r.x;y=r.y;width=r.width;height=r.height};
 value containsPoint rect (x,y) = 
   x >= rect.x && y >= rect.y && x <= rect.x +. rect.width && y <= rect.y +. rect.height;
-
 
 value points r = [| (r.x,r.y) ; (r.x, r.y +. r.height); (r.x +. r.width,r.y); (r.x +. r.width, r.y +. r.height) |];
 
@@ -22,7 +22,19 @@ value intersection rect1 rect2 =
     else
       Some (create left top (right -. left) (bottom -. top))
 ;
-  
+
+value join r1 r2 =
+  let xr1 = r1.x +. r2.width
+  and yr1 = r1.y +. r1.height
+  and xr2 = r2.x +. r2.width
+  and yr2 = r2.y +. r2.height
+  in
+  let xr = max xr1 xr2
+  and yr = max yr1 yr2
+  and x = min r1.x r2.x
+  and y = min r1.y r2.y
+  in
+  {x;y;width=xr-.x;height=yr-.y};
 
 
 value to_ints r = (int_of_float r.x, int_of_float r.y, int_of_float r.width, int_of_float r.height);

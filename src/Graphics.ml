@@ -6,10 +6,15 @@ type cmd =
   | EndFill
   | LineStyle of (float * float * float * float * float)
   | Circle of int
+  | Rect of float_array
   | RoundRect of int
   ];
 
-type t = Queue.t cmd;
+type t = 
+  {
+    commands: Queue.t cmd;
+    bounds: mutable option Rectangle.t;
+  };
 
 value clear t = 
 (
@@ -19,7 +24,7 @@ value clear t =
       | RoundRect buffer_id -> [ buffer_id :: res ]
       | _ -> res
       ]
-    end [] t
+    end [] t.commands
   in
   match buffers with 
   [ [] -> ()
@@ -27,11 +32,12 @@ value clear t =
     let buffers = Array.of_list buffers in
     glDeleteBuffers (Array.length buffers) buffers
   ];
-  Queue.clear t;
+  Queue.clear t.commands;
+  t.bounds := None;
 );
 
 value create () = 
-  let res = Queue.create () in
+  let res = {commands = Queue.create (); bounds = None } in
   (
     Gc.finalise clear res;
     res;
@@ -39,13 +45,19 @@ value create () =
 
 value beginFill t color alpha = 
   let (r,g,b) = RenderSupport.floats_of_color color in
-  Queue.push (Fill  (r,g,b,alpha)) t;
+  Queue.push (Fill  (r,g,b,alpha)) t.commands;
 
 value lineStyle t thickness color alpha (* pixelHinting:Boolean = false, scaleMode:String = "normal", caps:String = null, joints:String = null, miterLimit:Number = 3 *) = 
   let (r,g,b) = RenderSupport.floats_of_color color in
-  Queue.push (LineStyle (thickness,r,g,b,alpha)) t;
+  Queue.push (LineStyle (thickness,r,g,b,alpha)) t.commands;
 
 value drawEllipse t x y width height = assert False;
+
+value update_bounds t nbounds = 
+  match t.bounds with
+  [ None -> t.bounds := Some nbounds
+  | Some bounds -> t.bounds := Some (Rectangle.join bounds nbounds)
+  ];
 
 value drawCircle t x y r = 
   let segs = 360 in
@@ -69,11 +81,22 @@ value drawCircle t x y r =
       let verts = Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout verticies in
       glBufferData gl_array_buffer (Array.length verticies * 4) verts gl_static_draw;
       glBindBuffer gl_array_buffer 0;
-      Queue.push (Circle bfrs.(0)) t;
+      Queue.push (Circle bfrs.(0)) t.commands;
+      update_bounds t (Rectangle.create  (x -. r) (y -. r) r r);
     );
   );
 
-value drawRect t x y width height = assert False;
+value drawRect t x y width height = 
+  let verts = 
+    [| x; y; x; y +. height;
+      x +. width; y; x +. width; y +. height
+    |]
+  in
+  (
+    Queue.push (Rect (Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout verts)) t.commands;
+    update_bounds t (Rectangle.create x y width height);
+  );
+
 
 value drawRoundRect t x y width height ellipseWidth ellipseHeight = 
 (*   let vtxs = Array.make 360 0. in *)
@@ -159,7 +182,8 @@ value drawRoundRect t x y width height ellipseWidth ellipseHeight =
       glBindBuffer gl_array_buffer bfrs.(0);
       let verts = Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout vtxs in
       glBufferData gl_array_buffer ((Array.length vtxs) * 4) verts gl_static_draw;
-      Queue.push (RoundRect bfrs.(0)) t;
+      Queue.push (RoundRect bfrs.(0)) t.commands;
+      update_bounds t (Rectangle.create x y width height);
     )
   );
 
@@ -169,11 +193,11 @@ value lineTo t x y = assert False;
 
 value moveTo t x y = assert False;
 
-value endFill t = Queue.push EndFill t;
+value endFill t = Queue.push EndFill t.commands;
 
 
 value render t = 
-  if not (Queue.is_empty t) 
+  if not (Queue.is_empty t.commands) 
   then
   (
     glDisable gl_texture_2d;
@@ -192,6 +216,12 @@ value render t =
         (
           glLineWidth thickness;
           glColor4f red green blue alpha;
+        )
+      | Rect verts ->
+        (
+          glBindBuffer gl_array_buffer 0;
+          glVertexPointer 2 gl_float 0 verts;
+          glDrawArrays (if !isFill then gl_triangle_strip else gl_line_loop) 0 4;
         )
       | Circle buffer_id ->
         (
@@ -242,10 +272,13 @@ value render t =
           glColor4f 1. 1. 1. 1.;
         )
       ]
-    end t;
+    end t.commands;
     glBindBuffer gl_array_buffer 0;
     glDisableClientState gl_vertex_array;
     glDisable gl_line_smooth;
     glEnable gl_texture_2d;
   )
   else ();
+
+
+value bounds t = t.bounds;

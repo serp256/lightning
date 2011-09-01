@@ -5,13 +5,23 @@ module Make(D:DisplayObjectT.M) = struct
 
 
   class c =
-    object
+    object(self)
       inherit D.c;
 
       value graphics = Graphics.create ();
       method graphics = graphics;
 
-      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun _ -> Rectangle.empty (); (*       let () = Printf.printf "bounds in space %s\n" name in *)
+      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->
+        match Graphics.bounds graphics with
+        [ None -> Rectangle.empty
+        | Some bounds -> 
+          match targetCoordinateSpace with
+          [ Some ts when ts#asDisplayObject = self#asDisplayObject -> bounds
+          | _ ->
+            let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
+            Matrix.transformRectangle transformationMatrix bounds
+          ]
+        ];
 
       method private render' _ = Graphics.render graphics;
 

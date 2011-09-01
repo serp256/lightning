@@ -112,7 +112,7 @@ class subtexture region (baseTexture:c) =
   let tw = baseTexture#width
   and th = baseTexture#height in
   let clipping = Rectangle.create (region.Rectangle.x /. tw) (region.Rectangle.y /. th) (region.Rectangle.width /. tw)  (region.Rectangle.height /. th) in
-  let rootClipping = Rectangle.copy clipping in
+  let rootClipping = Rectangle.tm_of_t clipping in
   let () = 
     let open Rectangle in
     adjustClipping baseTexture where
@@ -121,10 +121,10 @@ class subtexture region (baseTexture:c) =
         [ None -> ()
         | Some (baseTexture,baseClipping) ->
             (
-              rootClipping.x := baseClipping.x +. rootClipping.x *. baseClipping.width;
-              rootClipping.y := baseClipping.y +. rootClipping.y *. baseClipping.height;
-              rootClipping.width := rootClipping.width *. baseClipping.width;
-              rootClipping.height := rootClipping.height *. baseClipping.height;
+              rootClipping.m_x := baseClipping.x +. rootClipping.m_x *. baseClipping.width;
+              rootClipping.m_y := baseClipping.y +. rootClipping.m_y *. baseClipping.height;
+              rootClipping.m_width := rootClipping.m_width *. baseClipping.width;
+              rootClipping.m_height := rootClipping.m_height *. baseClipping.height;
               adjustClipping baseTexture
             )
         ]
@@ -139,8 +139,8 @@ class subtexture region (baseTexture:c) =
     method base = Some (baseTexture,clipping);
     method adjustTextureCoordinates (texCoords:float_array) = 
       for i = 0 to (Bigarray.Array1.dim texCoords) / 2 - 1 do
-        texCoords.{2*i} := rootClipping.Rectangle.x +. texCoords.{2*i} *. rootClipping.Rectangle.width;
-        texCoords.{2*i+1} := rootClipping.Rectangle.y +. texCoords.{2*i+1} *. rootClipping.Rectangle.height;
+        texCoords.{2*i} := rootClipping.Rectangle.m_x +. texCoords.{2*i} *. rootClipping.Rectangle.m_width;
+        texCoords.{2*i+1} := rootClipping.Rectangle.m_y +. texCoords.{2*i+1} *. rootClipping.Rectangle.m_height;
       done;
     method update path = baseTexture#update path;
   end;
