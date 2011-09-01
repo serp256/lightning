@@ -21,7 +21,7 @@
 #include <caml/bigarray.h>
 #include <caml/custom.h>
 
-#define MAXTEXMEMORY 83886080
+#define MAXTEXMEMORY 73400320
 
 int nextPowerOfTwo(int number) {
 	int result = 1;
@@ -156,7 +156,7 @@ value createGLTexture(value texid,textureInfo *tInfo) {
 		if (!textureParams(tInfo,&params)) return 0;
     
 		GLuint mTextureID;
-		if (texid == 1) {printf("genTexture\n");glGenTextures(1, &mTextureID);}
+		if (texid == 1) glGenTextures(1, &mTextureID);
 		else mTextureID = *TEXID(Field(texid,0));
     glBindTexture(GL_TEXTURE_2D, mTextureID);
     
@@ -165,7 +165,6 @@ value createGLTexture(value texid,textureInfo *tInfo) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
     
 		int level;
-		printf("create texture: %d:%d\n",tInfo->width,tInfo->height);
     if (!params.compressed)
     {       
         if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
@@ -213,6 +212,7 @@ value createGLTexture(value texid,textureInfo *tInfo) {
     glBindTexture(GL_TEXTURE_2D, 0);
 		value result;
 		if (texid == 1) {
+			printf("new texture of size: %d\n",tInfo->dataLen);
 			result = caml_alloc_custom(&texid_ops, sizeof(GLuint), tInfo->dataLen, MAXTEXMEMORY);
 			*TEXID(result) = mTextureID;
 		} else result = Field(texid,0);
@@ -231,7 +231,6 @@ CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 	tInfo.generateMipmaps = Int_val(Field(mlTexInfo,6));
 	tInfo.premultipliedAlpha = Int_val(Field(mlTexInfo,7));
 	tInfo.scale = Double_val(Field(mlTexInfo,8));
-	printf("loadTexture: %d:%d\n",tInfo.width,tInfo.height);
 	if (imgData == 1) {
 		tInfo.dataLen = 0;
 		tInfo.imgData = NULL;

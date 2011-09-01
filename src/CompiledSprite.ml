@@ -98,18 +98,8 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
     (IO.close_out vertexData,IO.close_out colorData,IO.close_out texCoordData,List.rev textures);
   (*}}}*)
 
-  class c =
-    object(self)
-      inherit Sprite.c;
 
-      value buffers = Array.make 4 0;
-      value mutable textureSwitches = [];
-      value mutable colorData = "";
-      value mutable compiled = False;
-      value mutable colorsUpdated = False;
-      initializer Gc.finalise (fun _ -> self#deleteBuffers()) self;
-
-      method private deleteBuffers () = 
+  value del_buffers buffers = 
         match ExtArray.Array.for_all (fun x -> x = 0) buffers with
         [ True -> ()
         | False -> 
@@ -118,6 +108,24 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
             for i = 0 to 3 do buffers.(i) := 0; done;
           )
         ];
+
+  class c =
+    object(self)
+      inherit Sprite.c;
+
+      value buffers = 
+        let res = Array.make 4 0 in
+        (
+          Gc.finalise del_buffers res;
+          res
+        );
+
+      value mutable textureSwitches = [];
+      value mutable colorData = "";
+      value mutable compiled = False;
+      value mutable colorsUpdated = False;
+
+      method private deleteBuffers () = del_buffers buffers;
 
       method invalidate () = let () = debug:compile "invalidate %s" name in compiled := False;
 

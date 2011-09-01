@@ -434,7 +434,10 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
 
 		uint textureID;
 		textureID = createGLTexture(oldTexture,&tInfo);
-		free(tInfo.imgData);
+		//free(tInfo.imgData);
+		//double glt2 = CACurrentMediaTime();
+		//NSLog(@"gl binding: [%f]",(glt2 - glt1));
+		caml_stat_free(tInfo.imgData);
 
 		caml_acquire_runtime_system();
 

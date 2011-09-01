@@ -9,7 +9,7 @@ type rect = {
 value out_file = ref "tx_texture";
 value gen_pvr = ref False;
 value sqr = ref False;
-value type_rect = ref 0;
+value type_rect = ref `vert;
 value xmls = ref [];
 
 value emptyPx = 2;
@@ -310,7 +310,7 @@ value () =
         ("-o",Arg.Set_string out_file,"output file");
         ("-sqr",Arg.Unit (fun sq -> sqr.val := True )  ,"square texture");
         ("-p",Arg.Set gen_pvr,"generate pvr file");
-        ("-t",Arg.Set_int type_rect,"type rect for insert images")
+        ("-t",Arg.String (fun s -> let t = match s with [ "vert" -> `vert | "hor" -> `hor | "rand" -> `rand | _ -> failwith "unknown type rect" ] in type_rect.val := t),"type rect for insert images")
       ]
       (fun xml -> xmls.val := [ xml :: !xmls ] )
       "---"
