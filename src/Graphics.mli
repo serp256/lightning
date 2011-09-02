@@ -1,6 +1,7 @@
 
 type t;
 value create: unit -> t;
+value clear: t -> unit;
 value beginFill: t -> int -> float -> unit;
 value endFill: t -> unit;
 value lineStyle: t -> float -> int -> float -> unit;
