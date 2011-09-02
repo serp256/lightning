@@ -153,7 +153,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
               then
                 add_line currentLine (Some (UTF8.next text index))
               else 
-                if currentX +. bchar.xAdvance > containerWidth 
+                if currentX +. bchar.xAdvance > containerWidth (* we need use scale in this comparation ???? *)
                 then
                   let idx = 
                     match !lastWhiteSpace with
@@ -208,7 +208,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
         | _ -> Queue.iter lineContainer#addChild lines
         ];
       );
-      let outerContainer = CompiledSprite.create () in (* FIXME: must be compiled sprite *)
+      let outerContainer = CompiledSprite.create () in 
       (
         outerContainer#addChild lineContainer;
         match vAlign with

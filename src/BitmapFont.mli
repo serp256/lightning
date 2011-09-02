@@ -1,5 +1,21 @@
 
-type t;
+type bc = 
+  {
+    charID:int;
+    xOffset:float;
+    yOffset:float;
+    xAdvance: float;
+    charTexture: Texture.c;
+  };
+
+type t = 
+  {
+    texture: Texture.c;
+    chars: Hashtbl.t int bc;
+    name: string;
+    size: float;
+    lineHeight: float;
+  };
 value register: string -> unit;
 value exists: string -> bool;
 value get: string -> t;
