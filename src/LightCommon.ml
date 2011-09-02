@@ -25,8 +25,8 @@ Callback.register_exception "File_not_exists" (File_not_exists "");
 external bundle_path_for_resource: string -> float -> option string = "ml_bundle_path_for_resource";
 external device_scale_factor: unit -> float = "ml_device_scale_factor";
 
-value resource_path fname = 
-  match bundle_path_for_resource fname 2.0 with
+value resource_path path = 
+  match bundle_path_for_resource path 2.0 with
   [ None    -> raise (File_not_exists path)
   | Some p  -> p
   ];
@@ -42,10 +42,10 @@ ELSE IFDEF ANDROID THEN
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
 value device_scale_factor () = 1.0;
 
-value resource_path fname = 
+value resource_path path = 
   match bundle_fd_of_resource path with 
   [ None -> raise (File_not_exists path)  
-  | Some _ -> fname
+  | Some p -> p
   ];  
 
 
