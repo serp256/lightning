@@ -16,14 +16,14 @@ type t =
     texture: Texture.c;
     chars: Hashtbl.t int bc;
     name: string;
-    size: float;
+    scale: float;
     lineHeight: float;
   };
 
 value fonts = Hashtbl.create 0;
 value exists name = Hashtbl.mem fonts name;
 exception Font_not_found of string;
-value get name =
+value get ?size name =
   try
     Hashtbl.find fonts name
   with [ Not_found -> raise (Font_not_found name) ];
@@ -43,8 +43,8 @@ value register xmlpath = (*{{{*)
     | _ -> assert False
     ]
   and parse_common () = 
-    match XmlParser.parse_element "common" ["lineHeight"] with
-    [ Some [ lineHeight ] _ -> floats lineHeight
+    match XmlParser.parse_element "common" ["lineHeight";"base"] with
+    [ Some [ lineHeight ; base ] _ -> (floats lineHeight, floats base)
     | None -> XmlParser.error "font->common not found"
     | _ -> assert False
     ]
@@ -89,12 +89,12 @@ value register xmlpath = (*{{{*)
   match XmlParser.next () with
   [ `El_start ((_,"font"),_) -> 
     let (name,size) = parse_info () in
-    let lineHeight = parse_common () in
+    let (lineHeight,baseLine) = parse_common () in
     let imgFile = parse_page () in
     let texture = Texture.load imgFile in
     let chars = parse_chars texture in
-    let bf = { texture; chars; name; size; lineHeight } in
-    Hashtbl.add fonts name bf
+    let bf = { texture; chars; name; scale=1.; baseLine; lineHeight } in
+    Hashtbl.add fonts name bf (* здесь надо по размеру как-то вставить желательно большие вначале *)
   | _ -> XmlParser.error "font not found"
   ];(*}}}*)
 

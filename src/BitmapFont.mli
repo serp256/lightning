@@ -13,7 +13,7 @@ type t =
     texture: Texture.c;
     chars: Hashtbl.t int bc;
     name: string;
-    size: float;
+    scale: float;
     lineHeight: float;
   };
 value register: string -> unit;

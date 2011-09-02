@@ -62,15 +62,14 @@ value getFontSize attrs = gtAttr attrs (fun [ `fontSize fn -> Some fn | _ -> Non
 value create ?width ?height html = 
   let rec loop lineHeight ((cx,cy) as cpos) ((width,height) as size) attributes container = fun
     [ `div attrs els ->
-        let cy = cy + lineHeight in
-        let cx = 0. in
         let div = Sprite.create () in
+        let dy = ref 0 in
         let mainCont = 
           match (getAttr attrs (fun [ `paddingTop x -> Some x | _ -> None ]), getAttr attrs (fun [ `paddingLeft x -> Some x | _ -> None ])) with
           [ ((Some _ as top),( _ as left)) | ((_ as top),(Some _ as left)) -> 
             (
               match top with
-              [ Some paddingTop -> div#setY paddingTop
+              [ Some paddingTop -> (dy.val := paddingTop; div#setY paddingTop)
               | None -> ()
               ];
               match left with
@@ -80,59 +79,59 @@ value create ?width ?height html =
               let cont = Sprite.create () in
               (
                 cont#adChild div;
-                cont#setPos (0.,cy);
                 cont;
               )
             )
-          | _ -> 
-            (
-              div#setPos (0.,cy);
-              div
-            )
+          | _ -> div
           ]
         in
         let attrs = attrs @ attributes in
         let size = subtractSize size mainCont#pos in
-        let (_,endpos) = 
+        let (_,(_,endy) = 
           List.fold_left begin fun (lineHeight,endpos) el -> 
             loop lineHeight endpos size attrs div 
           end (0.,(0.,0.)) els 
         in
-
+        (
+          let cy = cy +. lineHeight in
+          mainCont#setPos (0.,cy);
+          (0.,(0.,cy +. endY +. !dy))
+        )
     | `p attributes elements -> assert False
     | `img attrs image -> 
         (
           match getAttr attrs (fun [ `width w -> Some w | _ -> None ]) with [ Some w -> image#setWidth w | None -> ()];
           match getAttr attrs (fun [ `height h -> Some h | _ -> None ]) with [ Some h -> image#setHeight h | None -> ()];
           let dy = ref 0 in
-          (
+          let cx = 
             match width with
-            [ Some width when cx + image#width > width -> dy.val := lineHeight
-            | _ -> ()
-            ];
-            let dx = 
-              (* apply paddings *)
-              match getAttr attrs (fun [ `paddingLeft pl -> Some pl | _ -> None ]) with
-              [ Some pl -> pl
-              | None -> 0.
-              ]
-            and dy = 
-              let font = 
-                match getFontFamily attributes with
-                [ Some fn ->
-                  match getFontSize attributes with
-                  [ Some size -> BitmapFont.get ~size fn
-                  | None -> None
-                  ]
+            [ Some width when cx + image#width > width -> (dy.val := lineHeight; 0.)
+            | _ -> cx
+            ]
+          in
+          let dx = 
+            (* apply paddings *)
+            match getAttr attrs (fun [ `paddingLeft pl -> Some pl | _ -> None ]) with
+            [ Some pl -> pl
+            | None -> 0.
+            ]
+          and baseLine = 
+            let font = 
+              match getFontFamily attributes with
+              [ Some fn ->
+                match getFontSize attributes with
+                [ Some size -> BitmapFont.get ~size fn
                 | None -> None
                 ]
-              in
-              match font with
-              [ Some fnt ->
-              | None -> cy + !dy
+              | None -> None
               ]
             in
-            (* apply paddingTop *)
+            match font with
+            [ Some fnt -> fnt
+            | None -> cy + !dy
+            ]
+          in
+          (* apply paddingTop *)
           in
           in
           (
