@@ -17,6 +17,7 @@ type t =
     chars: Hashtbl.t int bc;
     name: string;
     scale: float;
+    baseLine: float;
     lineHeight: float;
   };
 
@@ -124,6 +125,12 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
         match strLength with
         [ 0 -> ()
         | _ ->
+          let containerWidth =
+            match width with
+            [ Some width -> width /. font.BitmapFont.scale
+            | None -> None
+            ]
+          in
           let lastWhiteSpace = ref None in
           let rec add_line currentLine index = 
             (

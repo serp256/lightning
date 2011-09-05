@@ -10,7 +10,7 @@ type img_attribute =
 
 type span_attribute = 
   [= `fontFamily of string
-  | `fondSize of string
+  | `fontSize of string
   | `color of int
   | `textAlpha of float
   | `backgroundColor of int
@@ -19,7 +19,8 @@ type span_attribute =
 
 type p_attribute = 
   [= span_attribute
-  | `textAlign of [= `left | `right | `center ]
+  | `horizontalAlign of [= `left | `right | `center ]
+  | `verticalAlign of [= `top | `bottom | `center ]
   | `paragraphSpaceBefore of float
   | `paragraphSpaceAfter of float
   ];
@@ -57,9 +58,185 @@ value subtractSize (sx,sy) (sx',xy') =
 
 value getFontFamily attrs = gtAttr attrs (fun [ `fontFamily fn -> Some fn | _ -> None ]);
 value getFontSize attrs = gtAttr attrs (fun [ `fontSize fn -> Some fn | _ -> None ]);
+value getFontOpt attributes = 
+   match getFontFamily attributes with
+   [ Some fn ->
+     match getFontSize attributes with
+     [ Some size -> BitmapFont.get ~size fn
+     | None -> None
+     ]
+   | None -> None
+   ];
 
+value getFont attributes =
+  let fontFamily =
+   match getFontFamily attributes with
+   [ Some fn -> fn
+   | None -> default_font_family
+   ];
+  in
+  let size = getFontSize attributes in 
+  BitmapFont.get ?size fontFamily;
+
+
+type line = 
+  {
+    container: Sprite.c;
+    lineHeight: option float;
+    currentX: mutable float;
+    closed: mutable bool;
+  };
+
+
+value createLine font =  {container = Sprite.create (); lineHeight = match font with [ Some fnt -> fnt.BitmapFont.lineHeight | None -> 0. ]; currentX = 0.; closed = False};
+value lineAdd offset element line = 
+  let x = offset +. line.currentX in
+  (
+    element#setX x;
+    line.container#addChild element;
+    line.currentX := x;
+  );
+
+(*
+*)
 
 value create ?width ?height html = 
+  let rec make_lines width attributes lines = fun (* функция возвращает список линий *)
+    [ `img attrs image -> (*{{{*)
+      let iWidth = match getAttr attrs (fun [ `width w -> Some w | _ -> None ]) with [ Some w -> (image#setWidth w; w) | None -> image#width]
+      and iHeight = match getAttr attrs (fun [ `height h -> Some h | _ -> None ]) with [ Some h -> (image#setHeight h; h) | None -> mage#height]
+      and paddingLeft = match getAttr attrs (fun [ `paddingLeft pl -> Some pl | _ -> None]) with [ Some pl -> pl | None -> 0. ] in
+      DEFINE new_line = 
+        (
+          let line = createLine font in
+          Stack.push line lines;
+          line
+        )
+      in
+      let font = getFontOpt attributes in
+      let line = 
+        if Stack.is_empty lines 
+        then new_line
+        else
+          let line = Stack.top lines in
+          if line.closed 
+          then new_line
+          else 
+            match width with
+            [ None -> line
+            | Some width ->
+              if line.currentX +. iwidth +. paddingLeft > width 
+              then 
+              (
+                line.closed := True;
+                new_line
+              )
+              else line
+            ]
+      in
+      let baseLine = 
+        match font with
+        [ Some fnt -> fnt.BitmapFont.baseLine
+        | None -> iHeight
+        ]
+      in
+      let paddingTop = match getAttr attrs (fun [ `paddingTop pt -> Some pt | _ -> None]) with [ Some pt -> pt | None -> 0. ] in
+      (
+        if baseLine > image#height
+        then 
+        (
+          line.lineHeight := iHeight;
+          line#setY padingTop;
+        )
+        else line#setY (iHeight -. baseLine +. paddingTop);
+        lineAdd paddingLeft image line;
+      ) (*}}}*)
+    | `span attribs elements ->
+        let attributes = attribs @ attributes in
+        List.iter (fun make_lines width attributes lines) elements
+    | `text text -> (* рендер text {{{*)
+        let strLength = String.length text in
+        match strLength with
+        [ 0 -> ()
+        | _ ->
+          let containerWidth =
+            match width with
+            [ Some width -> width /. font.BitmapFont.scale
+            | None -> ()
+            ]
+          in
+          let lastWhiteSpace = ref None in
+          let rec add_line currentLine index = 
+            (
+              currentLine.closed := closed;
+              Stack.push currentLine lines;
+              match index with
+              [ Some index -> 
+                let () = currentLine.closed := True in
+                let nextLine = createLine font in
+                (
+                  lastWhiteSpace.val := None;
+                  add_char nextLine index
+                )
+              | None -> ()
+              ]
+            )
+          and  add_char line index = 
+            if index < strLength 
+            then
+              let code = UChar.code (UTF8.look text index) in
+              let bchar = try Hashtbl.find t.chars code with [ Not_found -> let () = Printf.eprintf "char %d not found\n%!" code in Hashtbl.find t.chars CHAR_SPACE ] in
+              if code = CHAR_NEWLINE 
+              then
+                add_line currentLine (Some (UTF8.next text index))
+              else 
+                match containerWidth with
+                [ Some containerWidth when line.currentX +. bchar.xAdvance > containerWidth ->
+                  let idx = 
+                    match !lastWhiteSpace with
+                    [ Some idx -> 
+                      let removeIndex = idx in
+                      let numCharsToRemove = currentLine#numChildren - removeIndex in
+                      (
+                        for i = 0 to numCharsToRemove - 1 do
+                          ignore(currentLine#removeChildAtIndex removeIndex)
+                        done;
+                        UTF8.move text index ~-numCharsToRemove
+                      )
+                    | None -> index
+                    ]
+                  in
+                  add_line currentLine (Some idx)
+                | _ ->
+                  let bitmapChar = Image.create bchar.charTexture in
+                  (
+                    bitmapChar#setScale font.BitmapFont.scale;
+                    bitmapChar#setX (currentX +. );
+                    bitmapChar#setY bchar.yOffset;
+                    bitmapChar#setColor color;
+                    lineAdd bchar.xOffset bitmapChar currentLine
+                    if code = CHAR_SPACE then lastWhiteSpace.val := Some currentLine#numChildren else ();
+                    add_char currentLine (UTF8.next text index)
+                  )
+                ]
+            else add_line currentLine None
+          in
+          let line = 
+            if Stack.is_empty lines || (Stack.top lines).closed 
+            then createLine font
+            else 
+              let line = Stack.top lines in
+              (
+                if line.lineHeight < font.BitmapFont.lineHeight
+                then line.lineHeight := font.BitmapFont.lineHeight
+                else ();
+                line
+              )
+          in
+          add_char line 0(*}}}*)
+    | `br -> ()
+    ]
+  in
   let rec loop lineHeight ((cx,cy) as cpos) ((width,height) as size) attributes container = fun
     [ `div attrs els ->
         let div = Sprite.create () in
@@ -87,7 +264,7 @@ value create ?width ?height html =
         in
         let attrs = attrs @ attributes in
         let size = subtractSize size mainCont#pos in
-        let (_,(_,endy) = 
+        let (_,(_,endy)) = 
           List.fold_left begin fun (lineHeight,endpos) el -> 
             loop lineHeight endpos size attrs div 
           end (0.,(0.,0.)) els 
@@ -97,121 +274,13 @@ value create ?width ?height html =
           mainCont#setPos (0.,cy);
           (0.,(0.,cy +. endY +. !dy))
         )
-    | `p attributes elements -> assert False
-    | `img attrs image -> 
+    | `p attributes elements -> assert False (* запустить make_line *)
+    | `span _ | `img _  -> 
+        let lines = Stack.create () in
         (
-          match getAttr attrs (fun [ `width w -> Some w | _ -> None ]) with [ Some w -> image#setWidth w | None -> ()];
-          match getAttr attrs (fun [ `height h -> Some h | _ -> None ]) with [ Some h -> image#setHeight h | None -> ()];
-          let dy = ref 0 in
-          let cx = 
-            match width with
-            [ Some width when cx + image#width > width -> (dy.val := lineHeight; 0.)
-            | _ -> cx
-            ]
-          in
-          let dx = 
-            (* apply paddings *)
-            match getAttr attrs (fun [ `paddingLeft pl -> Some pl | _ -> None ]) with
-            [ Some pl -> pl
-            | None -> 0.
-            ]
-          and baseLine = 
-            let font = 
-              match getFontFamily attributes with
-              [ Some fn ->
-                match getFontSize attributes with
-                [ Some size -> BitmapFont.get ~size fn
-                | None -> None
-                ]
-              | None -> None
-              ]
-            in
-            match font with
-            [ Some fnt -> fnt
-            | None -> cy + !dy
-            ]
-          in
-          (* apply paddingTop *)
-          in
-          in
-          (
-            image#setPos (x,y);
-            container#addChild image
-
-          )
+          make_lines width attributes lines;
+          (* получили список нахуй линий блядь *)
         )
-    | `span attribs text -> 
-        let attributes = attribs @ attributes in
-        let fname = match getFontFamily attributes with [ Some fn -> fn | None -> defaultFontFamily ] in
-        let size = getFontSize attributes in
-        let font = BitmapFont.get ?size fname in
-        let color = match getAttr attributes (fun [ `fontSize sz -> Some sz | _ -> None ]) with [ Some sz -> sz | None -> defaultColor ] in
-        (* начинаем хуячить *)
-        let open BitmapFont in
-        let span = Sprite.create () in
-        let scale = match size with [ Some sz -> sz /. font.size | None -> 1. ] in
-        (
-          span#setScale scale;
-          let lastWhiteSpace = ref None in
-          let rec add_line currentLine index = 
-            (
-              span#addChild currentLine;
-              match index with
-              [ Some index -> 
-                let nextLineY = currentLine#y +. t.lineHeight in
-                if nextLineY +. t.lineHeight <= containerHeight
-                then 
-                  let nextLine = Sprite.create () in
-                  (
-                    nextLine#setY nextLineY;
-                    lastWhiteSpace.val := None;
-                    add_char nextLine 0. index
-                  )
-                else ()
-              | None -> ()
-              ]
-            )
-          and  add_char currentLine (currentX:float) index = 
-    (*         let () = Printf.printf "add char with index: %d\n%!" index in *)
-            if index < strLength 
-            then
-              let code = UChar.code (UTF8.look text index) in
-              let bchar = try Hashtbl.find t.chars code with [ Not_found -> let () = Printf.eprintf "char %d not found\n%!" code in Hashtbl.find t.chars CHAR_SPACE ] in
-              if code = CHAR_NEWLINE 
-              then
-                add_line currentLine (Some (UTF8.next text index))
-              else 
-                if currentX +. bchar.xAdvance > containerWidth 
-                then
-                  let idx = 
-                    match !lastWhiteSpace with
-                    [ Some idx -> 
-                      let removeIndex = idx in
-                      let numCharsToRemove = currentLine#numChildren - removeIndex in
-                      (
-                        for i = 0 to numCharsToRemove - 1 do
-                          ignore(currentLine#removeChildAtIndex removeIndex)
-                        done;
-                        UTF8.move text index ~-numCharsToRemove
-                      )
-                    | None -> index
-                    ]
-                  in
-                  add_line currentLine (Some idx)
-                else
-                  let bitmapChar = Image.create bchar.charTexture in
-                  (
-                    bitmapChar#setX (currentX +. bchar.xOffset);
-                    bitmapChar#setY bchar.yOffset;
-                    bitmapChar#setColor color;
-                    currentLine#addChild bitmapChar;
-                    if code = CHAR_SPACE then lastWhiteSpace.val := Some currentLine#numChildren else ();
-                    add_char currentLine (currentX +. bchar.xAdvance) (UTF8.next text index)
-                  )
-            else add_line currentLine None
-          in
-          add_char (Sprite.create()) 0. 0
-        );
     ]
   in
   let result = Sprite.create () in

@@ -14,6 +14,7 @@ type t =
     chars: Hashtbl.t int bc;
     name: string;
     scale: float;
+    baseLine: float;
     lineHeight: float;
   };
 value register: string -> unit;
