@@ -41,13 +41,13 @@ type simple_elements =
 
 type p = ((list p_attributes) * (list simple_elements));
 
-type html = 
-  [= `div of ((list div_attributes) * list [= `p of p | simple_elements ])
+type main = 
+  [= `div of ((list div_attributes) * (list main))
   | `p of p
-  | simple_elements
   ];
 
-value getAttr attrs f = try Some (List.find_map f) with [ Not_found -> None ];
+value getAttr attrs f default = try (List.find_map f) with [ Not_found -> default ];
+value getAttrOpt attrs f = try Some (List.find_map f) with [ Not_found -> None ];
 
 value subtractSize (sx,sy) (sx',xy') = 
   (
@@ -140,7 +140,7 @@ value create ?width ?height html =
         | None -> iHeight
         ]
       in
-      let paddingTop = match getAttr attrs (fun [ `paddingTop pt -> Some pt | _ -> None]) with [ Some pt -> pt | None -> 0. ] in
+      let paddingTop = getAttr attrs (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. in
       (
         if baseLine > image#height
         then 
@@ -237,9 +237,10 @@ value create ?width ?height html =
     | `br -> ()
     ]
   in
-  let rec loop lineHeight ((cx,cy) as cpos) ((width,height) as size) attributes container = fun
+  let rec process ((width,height) as size) attributes = fun
     [ `div attrs els ->
         let div = Sprite.create () in
+        (*
         let dy = ref 0 in
         let mainCont = 
           match (getAttr attrs (fun [ `paddingTop x -> Some x | _ -> None ]), getAttr attrs (fun [ `paddingLeft x -> Some x | _ -> None ])) with
@@ -262,32 +263,71 @@ value create ?width ?height html =
           | _ -> div
           ]
         in
-        let attrs = attrs @ attributes in
-        let size = subtractSize size mainCont#pos in
-        let (_,(_,endy)) = 
-          List.fold_left begin fun (lineHeight,endpos) el -> 
-            loop lineHeight endpos size attrs div 
-          end (0.,(0.,0.)) els 
+        *)
+        let attribs = attrs @ attributes in
+        let paddigTop = getAttr attrs (fun [ `paddingTop x -> Some x | _ -> None ]) 0.
+        and paddingLeft = getAttr attrs (fun [ `paddingLeft x -> Some x | _ -> None ]) 0. 
         in
+        let (width,height) = subtractSize size (paddingTop,paddingLeft) in
+        (* дети могут быть либо параграфы, либо опять дивы 
+         * параграф цельный сцука а див нихуя нахуй
+         * *)
+        let (x,y) = 
+          List.fold_left begin fun (x,y) element ->
+              let (pos,obj) = process size attribs in
+              match pos with
+              [ `P height ->
+                (
+                  obj#setPos (x,y);
+                  mainCont#addChild obj
+                  (x,y +. height)
+                )
+              ]
+          end (paddingTop,paddingLeft) elements
+        in
+        (`P y,div)
+    | `p attrs elements ->  (* p - содержит линии *)
+        let container = Sprite.create () in 
+        let attribs = attrs @ attributes in
         (
-          let cy = cy +. lineHeight in
-          mainCont#setPos (0.,cy);
-          (0.,(0.,cy +. endY +. !dy))
-        )
-    | `p attributes elements -> assert False (* запустить make_line *)
-    | `span _ | `img _  -> 
-        let lines = Stack.create () in
-        (
-          make_lines width attributes lines;
-          (* получили список нахуй линий блядь *)
+          let lines = Stack.create () in
+          (
+            make_lines width attribs lines;
+            let qlines = Queue.create () in
+            (
+              let max_width = ref 0. in
+              Stack.iter begin fun line -> 
+                (
+                  let width = (line#getChildAt 0)#x +. line#width in
+                  if width > !max_width then max_width.val := width else ()
+                  Queue.push (line,width) qlines
+                )
+              end lines;
+              let halign = match getAttr attribs (fun [ `horizontalAlign p -> Some p | _ -> None ]) with [ None -> `left | Some align -> align ] in
+              let yOffset = ref 0. in
+              Queue.iter begin fun (line,width) ->
+                (
+                  match halign with
+                  [ `center | `right ->
+                    let widthDiff = !max_width - width in
+                    line#setX
+                      match halign with
+                      [ `center -> widthDiff /. 2
+                      | `right -> widthDiff
+                      ]
+                  | _ -> ()
+                  ];
+                  line#setY !yOffset;
+                  container#addChild line.container;
+                  yOffset.val := !yOffset +. line.lineHeight;
+                )
+              end qlines;
+            )
+          );
+          (`P !yOffset,container)
         )
     ]
   in
   let result = Sprite.create () in
-  (
-    ignore(loop (0.,0.) [] result);
-    result;
-  );
-
-
-(* задача геморная, но решаемая, главное в начале что-нить нахуячить, а потом видно будет, в начале сложно так как нихуя пока не понятно блядь *)
+  let (pos,container) = process (width,height) [] html in
+  result;

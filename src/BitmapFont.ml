@@ -21,17 +21,32 @@ type t =
     lineHeight: float;
   };
 
+module MapInt = Map.Make (struct type t = int; value compare (k1:int) k2 = compare k1 k2; end);
 value fonts = Hashtbl.create 0;
 value exists name = Hashtbl.mem fonts name;
 exception Font_not_found of string;
-value get ?size name =
+
+value default_size = 24;
+
+
+value get ?(size=default_size) name =
   try
-    Hashtbl.find fonts name
+    let sizes = Hashtbl.find fonts name in
+    let (l,f,r) = MapInt.split size sizes in
+    match f with
+    [ Some f -> f
+    | None -> 
+        match MapInt.is_empty r with
+        [ False -> MapInt.min_binding r
+        | True -> MapInt.max_binding l
+        ]
+    ]
   with [ Not_found -> raise (Font_not_found name) ];
 
 DEFINE CHAR_NEWLINE = 10;
 DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_TAB = 9;
+
 
 value register xmlpath = (*{{{*)
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
@@ -95,7 +110,11 @@ value register xmlpath = (*{{{*)
     let texture = Texture.load imgFile in
     let chars = parse_chars texture in
     let bf = { texture; chars; name; scale=1.; baseLine; lineHeight } in
-    Hashtbl.add fonts name bf (* здесь надо по размеру как-то вставить желательно большие вначале *)
+    try
+      let sizes = Hashtbl.find fonts name in
+      let size = MapInt.add size bf sizes in
+      Hashtbl.replace fonts name sizes
+    with [ Not_found -> Hashtbl.add fonts name (MapInt.singleton size bf) ]
   | _ -> XmlParser.error "font not found"
   ];(*}}}*)
 
