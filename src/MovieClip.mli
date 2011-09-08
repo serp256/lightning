@@ -10,6 +10,11 @@ module Make
 
   type frameID = [= `num of int | `label of string ];
 
+  type direction =
+    [= `forward
+    | `backward
+    ];
+
 
   type descriptor;
 
@@ -24,12 +29,14 @@ module Make
       method currentFrame: int;
       method currentFrameLabel: option string;
       method totalFrames: int;
-      method play: ?onComplete:(unit -> unit) -> unit -> unit;
+      method playDirection: direction;
+      method setPlayDirection: direction -> unit;
+      method play: ?onComplete:(unit -> unit) -> ?direction:direction -> unit -> unit;
       method isPlaying: bool;
       method stop: unit -> unit;
       method gotoAndPlay: ?onComplete:(unit -> unit) -> frameID -> unit;
       method gotoAndStop: frameID -> unit;
-      method playRange: ?onChangeFrame:(unit->unit) -> ?onComplete:(unit -> unit) -> frameID -> frameID -> unit;
+      method playRange: ?onChangeFrame:(unit->unit) -> ?onComplete:(unit -> unit) ->  ?direction:direction -> frameID -> frameID -> unit;
     end;
 
 
