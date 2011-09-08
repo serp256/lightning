@@ -215,12 +215,12 @@ module Make
     method playRange ?onChangeFrame ?onComplete ?(direction=`forward) f1 f2 = 
     (
       debug "[%s] playRange '%s' to '%s'" clipname (FRAME_TO_STRING(f1)) (FRAME_TO_STRING(f2));
-      let sf = self#resolveFrame f1 in
-      (
-        startFrame := sf;
-        self#setCurrentFrame sf;
-      );
+      startFrame := self#resolveFrame f1;
       endFrame := self#resolveFrame f2;
+      match direction with 
+      [ `forward -> self#setCurrentFrame startFrame
+      | `backward -> self#setCurrentFrame endFrame
+      ];
       if (endFrame < startFrame) then failwith("Incorrect range") else ();
       elapsedTime := ~-.1.;
       match eventID with 
@@ -300,7 +300,6 @@ module Make
                       (
                         match loop with
                         [ True -> 
-                          let () = Printf.eprintf "loop\n" in
                           let len = endFrame - startFrame + 1 in
                           (endFrame - ((startFrame - cFrame -1) mod len),False)
                         | False -> (startFrame,True)
