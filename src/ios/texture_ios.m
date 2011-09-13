@@ -404,7 +404,7 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
 
 		// try pvr 
 		fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
-		pathForBundleResource(fname, bundle);
+		fullPath = pathForBundleResource(fname, bundle);
 		if (fullPath) {is_pvr = 1; break;};
 		fullPath = pathForBundleResource(path, bundle);
 	  } while (0);
