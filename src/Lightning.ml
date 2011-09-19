@@ -41,6 +41,10 @@ external showNativeWaiter: Point.t -> unit = "ml_showActivityIndicator";
 external hideNativeWaiter: unit -> unit = "ml_hideActivityIndicator";
 external _deviceIdentifier: unit -> string = "ml_deviceIdentifier";
 value deviceIdentifier () = Some (_deviceIdentifier ());
+external openURL: string -> unit = "ml_openURL";
+value sendEmail recepient ~subject ?(body="") () = 
+  let url = Printf.sprintf "mailto:%s?subject=%s&body=%s" recepient subject body in
+  openURL (UrlEncoding.encode url);
 ELSE
 value showNativeWaiter _pos = ();
 value hideNativeWaiter () = ();

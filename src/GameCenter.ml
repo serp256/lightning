@@ -13,7 +13,7 @@ value game_center_initialized success =
   let callbacks = 
     match !state with
     [ Initializing callbacks -> callbacks
-    | _ -> assert False
+    | _ -> (Debug.w "Game center alredy initialized"; Queue.create ())
     ]
   in
   (
