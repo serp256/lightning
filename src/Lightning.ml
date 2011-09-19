@@ -43,8 +43,8 @@ external _deviceIdentifier: unit -> string = "ml_deviceIdentifier";
 value deviceIdentifier () = Some (_deviceIdentifier ());
 external openURL: string -> unit = "ml_openURL";
 value sendEmail recepient ~subject ?(body="") () = 
-  let url = Printf.sprintf "mailto:%s?subject=%s&body=%s" recepient subject body in
-  openURL (UrlEncoding.encode url);
+  let params = UrlEncoding.mk_url_encoded_parameters [ ("subject",subject); ("body", body)] in
+  openURL (Printf.sprintf "mailto:%s?%s" recepient params);
 ELSE
 value showNativeWaiter _pos = ();
 value hideNativeWaiter () = ();
