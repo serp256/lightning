@@ -104,6 +104,9 @@ module MakeXmlParser(P:sig value path: string; end) = struct
   value floats x = 
     try float_of_string x with [ Failure _ -> error "float_of_string: %s" x ];
 
+  value ints x = 
+    try int_of_string x with [ Failure _ -> error "int_of_string: %s" x ];
+
   value get_attribute name attributes = 
     try
       let (_,v) = List.find (fun ((_,ln),v) -> ln = name) attributes in

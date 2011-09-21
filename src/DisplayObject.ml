@@ -15,6 +15,8 @@ type hidden 'a = 'a;
 type evType = P.evType;
 type evData = P.evData;
 
+exception Invalid_index;
+exception Child_not_found;
 
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
 value transform_points points matrix = 
@@ -589,8 +591,6 @@ class virtual _c [ 'parent ] = (*{{{*)
 
 
 
-exception Invalid_index;
-exception Child_not_found;
 
 (* Dll additional functions {{{*)
 value dllist_find node el = 

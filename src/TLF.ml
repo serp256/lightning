@@ -1,29 +1,67 @@
+open Light;
 
+value default_font_family = "Helvetica";
 type img_attribute = 
-  [ `width of float
+  [= `width of float
   | `height of float
   | `paddingLeft of float
   | `paddingRight of float
   | `paddingTop of float
-  | `paddingBottom of float
+  | `valign of [= `baseLine | `center | `lineCenter ]
   ];
+
+type img_attributes = list img_attribute;
 
 type span_attribute = 
   [= `fontFamily of string
-  | `fontSize of string
+  | `fontSize of int
   | `color of int
-  | `textAlpha of float
-  | `backgroundColor of int
-  | `backgroundAlpha of float
+  | `alpha of float
+  | `backgroundColor of int (* как это замутить то я забыла *)
+  | `backgroundAlpha of float 
   ];
+
+type span_attributes = list span_attribute;
+
+type simple_element = [= `img of (img_attributes * Image.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
+and simple_elements = list simple_element;
+
+DEFINE AEXPAND(name,tag) = 
+  match name with
+  [ Some v -> [ tag v :: attrs ]
+  | None -> attrs
+  ];
+
+
+value img ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?paddingLeft ?valign img : simple_element = 
+  let attrs = [] in
+  let attrs = AEXPAND (width,`width) in
+  let attrs = AEXPAND (height,`height) in
+  let attrs = AEXPAND (paddingLeft,`paddingLeft) in
+  let attrs = AEXPAND (paddingTop,`paddingTop) in
+  let attrs = AEXPAND (paddingRight,`paddingRight) in
+  let attrs = AEXPAND (valign,`valign) in
+  `img (attrs,img);
+
+
+value span ?fontFamily ?fontSize ?color ?alpha elements : simple_element = 
+  let attrs = [] in
+  let attrs = AEXPAND(fontFamily,`fontFamily) in
+  let attrs = AEXPAND(fontSize,`fontSize) in
+  let attrs = AEXPAND(color,`color) in
+  let attrs = AEXPAND(alpha,`alpha) in
+  `span (attrs,elements);
+
 
 type p_attribute = 
   [= span_attribute
-  | `horizontalAlign of [= `left | `right | `center ]
-  | `verticalAlign of [= `top | `bottom | `center ]
-  | `paragraphSpaceBefore of float
-  | `paragraphSpaceAfter of float
+  | `halign of [= `left | `right | `center ]
+  | `valign of [= `top | `bottom | `center ]
+  | `spaceBefore of float
+  | `spaceAfter of float
   ];
+
+type p_attributes = list p_attribute;
 
 type div_attribute = 
   [= span_attribute 
@@ -32,95 +70,259 @@ type div_attribute =
   | `paddingLeft of float
   ];
 
-type simple_elements = 
-  [ `img of ((list img_attributes) * Image.c)
-  | `span of ((list span_attributes) * simple_elements)
-  | `br
-  | `text of string
-  ];
 
-type p = ((list p_attributes) * (list simple_elements));
+type div_attributes = list div_attribute;
+
+
+(* type attribute = [= div_attribute | p_attribute | span_attribute ]; *)
 
 type main = 
-  [= `div of ((list div_attributes) * (list main))
-  | `p of p
+  [= `div of (div_attributes * (list main))
+  | `p of (p_attributes * simple_elements)
   ];
 
-value getAttr attrs f default = try (List.find_map f) with [ Not_found -> default ];
-value getAttrOpt attrs f = try Some (List.find_map f) with [ Not_found -> None ];
+value p ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceAfter ?attrs elements : main = 
+  let attrs = [] in
+  let attrs = AEXPAND(fontFamily,`fontFamily) in
+  let attrs = AEXPAND(fontSize,`fontSize) in
+  let attrs = AEXPAND(color,`color) in
+  let attrs = AEXPAND(alpha,`alpha) in
+  let attrs = AEXPAND(halign,`halign) in
+  let attrs = AEXPAND(valign,`valign) in
+  let attrs = AEXPAND(spaceBefore,`spaceBefore) in
+  let attrs = AEXPAND(spaceAfter,`spaceAfter) in
+  `p (attrs,elements);
 
-value subtractSize (sx,sy) (sx',xy') = 
+
+
+
+value getAttr(*: ('a -> option 'b) -> 'b -> list 'a -> 'b *)= fun f default attrs -> try (ExtList.List.find_map f attrs) with [ Not_found -> default ];
+value getAttrOpt(*: ('a -> option 'b) -> list 'a -> option 'b*) = fun f attrs -> try Some (ExtList.List.find_map f attrs) with [ Not_found -> None ];
+
+value subtractSize (sx,sy) (sx',sy') = 
   (
-    match sx with [ None -> None | Some sx -> sx - sx' ],
-    match sy with [ None -> None | Some sy -> sy - sy' ]
+    match sx with [ None -> None | Some sx -> Some (sx -. sx') ],
+    match sy with [ None -> None | Some sy -> Some (sy -. sy') ]
   );
 
 
-value getFontFamily attrs = gtAttr attrs (fun [ `fontFamily fn -> Some fn | _ -> None ]);
-value getFontSize attrs = gtAttr attrs (fun [ `fontSize fn -> Some fn | _ -> None ]);
+value getFontFamily =
+  let f: !'p. ([> `fontFamily of string] as 'p) -> option string = fun [ `fontFamily fn -> Some fn | _ -> None ] in
+  getAttrOpt f;
+value getFontSize = getAttrOpt (fun [ `fontSize fn -> Some fn | _ -> None ]);
+
+(*
 value getFontOpt attributes = 
    match getFontFamily attributes with
    [ Some fn ->
      match getFontSize attributes with
-     [ Some size -> BitmapFont.get ~size fn
+     [ Some size -> Some (BitmapFont.get ~applyScale:True ~size fn)
      | None -> None
      ]
    | None -> None
    ];
+*)
 
 value getFont attributes =
   let fontFamily =
    match getFontFamily attributes with
    [ Some fn -> fn
    | None -> default_font_family
-   ];
+   ]
   in
   let size = getFontSize attributes in 
-  BitmapFont.get ?size fontFamily;
+  BitmapFont.get ~applyScale:True ?size fontFamily;
+
+
 
 
 type line = 
   {
     container: Sprite.c;
-    lineHeight: option float;
+    lineHeight: mutable float;
+    baseLine: mutable float;
     currentX: mutable float;
     closed: mutable bool;
   };
 
-
-value createLine font =  {container = Sprite.create (); lineHeight = match font with [ Some fnt -> fnt.BitmapFont.lineHeight | None -> 0. ]; currentX = 0.; closed = False};
-value lineAdd offset element line = 
-  let x = offset +. line.currentX in
+value createLine font lines =  
+  let () = debug "create new line" in
+(*   let line = {container = Sprite.create (); lineHeight = match font with [ Some fnt -> fnt.BitmapFont.lineHeight | None -> 0. ]; baseLine = 0.; currentX = 0.; closed = False} in *)
+  let line = {container = Sprite.create (); lineHeight = font.BitmapFont.lineHeight; baseLine = font.BitmapFont.baseLine; currentX = 0.; closed = False} in
   (
-    element#setX x;
-    line.container#addChild element;
-    line.currentX := x;
+    Stack.push line lines;
+    line;
   );
 
-(*
-*)
-
-value create ?width ?height html = 
-  let rec make_lines width attributes lines = fun (* функция возвращает список линий *)
-    [ `img attrs image -> (*{{{*)
-      let iWidth = match getAttr attrs (fun [ `width w -> Some w | _ -> None ]) with [ Some w -> (image#setWidth w; w) | None -> image#width]
-      and iHeight = match getAttr attrs (fun [ `height h -> Some h | _ -> None ]) with [ Some h -> (image#setHeight h; h) | None -> mage#height]
-      and paddingLeft = match getAttr attrs (fun [ `paddingLeft pl -> Some pl | _ -> None]) with [ Some pl -> pl | None -> 0. ] in
-      DEFINE new_line = 
+value addToLine width baseLine element line = 
+  (
+    match compare line.baseLine baseLine with
+    [ 0 -> ()
+    | -1 (* был меньше *) ->
+        let diff = baseLine -. line.baseLine in
         (
-          let line = createLine font in
-          Stack.push line lines;
-          line
+          (* здесь нужно теперь все элементы подвинуть вниз *)
+          Enum.iter (fun el -> el#setY (el#y +. diff)) line.container#children;
+          line.baseLine := baseLine;
         )
-      in
-      let font = getFontOpt attributes in
+    | _ (* был больше *) -> 
+        (* текущий мальца сдвинуть *)
+        element#setY (element#y +. (line.baseLine -. baseLine))
+    ];
+    line.container#addChild element;
+    line.currentX := width +. line.currentX;
+  ); (* здесь же надо позырить что предыдущий базелайн такой-же и перехуячить там все нахуй *)
+
+DEFINE CHAR_SPACE = 32;
+DEFINE CHAR_NEWLINE = 10;
+
+exception Parse_error of (string*string);
+(* exception Unknown_attribute (string*string); *)
+
+
+
+value parse ?(imgLoader=Image.load) xml : main = 
+  let inp = Xmlm.make_input (`String (0,xml)) in
+  let parse_error fmt = 
+    let (line,column) = Xmlm.pos inp in
+    Printf.kprintf (fun s -> raise (Parse_error (Printf.sprintf "%d:%d" line column) s)) fmt
+  in
+  match Xmlm.input inp with
+  [ `Dtd _ ->
+    let el_end () =  
+      match Xmlm.input inp with
+      [ `El_end -> ()
+      |  _ -> parse_error "want end tag"
+      ]
+    in
+    let parse_float p = 
+      try
+        float_of_string p
+      with [ Failure "float_of_string" -> parse_error "bad float: %s" p ]
+    and parse_int p = 
+      try
+        int_of_string p
+      with [ Failure "float_of_string" -> parse_error "bad int: %s" p ]
+    in
+    let parse_span_attribute: Xmlm.attribute -> span_attribute =
+      fun
+        [ ((_,"font-family"),ff) -> `fontFamily ff
+        | ((_,"font-size"),sz) -> `fontSize (parse_int sz)
+        | ((_,"color"),c) -> `color (parse_int c)
+        | ((_,"alpha"),alpha) -> `alpha (parse_float alpha)
+        | ((_,an),_) -> parse_error "unknown attribute %s" an
+        ]
+    in
+    let parse_p_attribute : Xmlm.attribute -> p_attribute = fun
+      [ ((_,"halign"),v) -> `halign (match v with [ "left" -> `left | "right" -> `right | "center" -> `center | _ -> parse_error "incorrect attribute halign value %s" v])
+      (*   | `valign of [= `top | `bottom | `center ] *)
+      | ((_,"space-before"),spb) -> `spaceBefore (parse_float spb) 
+      | ((_,"space-after"),spa) -> `spaceAfter (parse_float spa)
+      | x -> ((parse_span_attribute x) :> p_attribute)
+      ]
+    in
+    let rec parse_simple_elements res : simple_elements = 
+      match Xmlm.input inp with
+      [ `El_start (("",tag),attributes) ->
+        match tag with
+        [ "img" -> 
+          let img = ref None in
+          let attribs = 
+            ExtList.List.filter_map begin fun ((_,name),vlue) ->
+              match name with
+              [ "src" -> 
+                ( 
+                  let i = imgLoader vlue in img.val := Some i;
+                  None
+                )
+              | "width" -> Some (`width (parse_float vlue))
+              | "height" -> Some (`width (parse_float vlue))
+              | "padding-left" -> Some (`paddingLeft (parse_float vlue))
+              | "padding-top" -> Some (`paddingTop (parse_float vlue))
+              | "padding-right" -> Some (`paddingRight (parse_float vlue))
+              | "valign" -> 
+                  let v = 
+                    match vlue with
+                    [ "baseline" -> `baseLine
+                    | "center" -> `center
+                    | "line-center" -> `lineCenter
+                    | _ -> parse_error "incorrect img halign value %s" vlue
+                    ]
+                  in
+                  Some (`valign v)
+              | _ -> parse_error "unknown attribute img:%s" tag
+              ]
+            end attributes
+          in
+          match !img with
+          [ None -> parse_error "img src"
+          | Some img -> 
+              let () = el_end () in
+              parse_simple_elements [ `img (attribs,img) :: res ]
+          ]
+        | "span" ->
+            let attribs = List.map parse_span_attribute attributes in
+            let elements = parse_simple_elements [] in
+            parse_simple_elements [ `span (attribs,elements) :: res ]
+        | "br" -> let () = el_end () in parse_simple_elements [ `br :: res ]
+        | _ -> parse_error "unknown simple tag: %s" tag
+        ]
+      | `Data text -> parse_simple_elements [ `text text :: res ]
+      | `El_end -> List.rev res
+      | _ -> parse_error "DTD?"
+      ]
+    in
+    let rec parse_top_level () : option main = 
+      match Xmlm.input inp with
+      [ `El_start (("","p"),attributes) -> (* need to parse p attributes *)
+        let p_attribs = List.map parse_p_attribute attributes in
+        let elements = parse_simple_elements [] in
+        Some (`p (p_attribs,elements))
+      | `El_start (("","div"),attributes) -> (* need to parse div attributes *)
+          let attribs = 
+            List.map begin fun
+              [ ((_,"padding-top"),v) -> `paddingTop (parse_float v)
+              | ((_,"padding-left"),v) -> `paddingLeft (parse_float v)
+              (* TODO: something about positions *)
+              | x -> ((parse_p_attribute x) :> div_attribute)
+              ]
+            end attributes
+          in
+          let rec parse_content res = 
+            match parse_top_level () with
+            [ Some el -> parse_content [ el :: res ]
+            | None -> res
+            ]
+          in
+          let elements = parse_content [] in
+          Some (`div (attribs,elements))
+      | `El_end -> None
+      | _ -> parse_error "top level"
+      ]
+    in
+    match parse_top_level () with
+    [ Some res -> res
+    | None -> assert False 
+    ]
+  | _ -> parse_error "Dtd"
+  ];
+
+(* width, height вытащить наверно в html тоже *)
+value create ?width ?height (html:main) = 
+  let rec make_lines width attributes lines : simple_element -> unit = fun 
+    [ `img attrs image -> 
+      let () = debug "process img: lines: %d" (Stack.length lines) in
+      let iwidth = match getAttrOpt (fun [ `width w -> Some w | _ -> None ])  attrs with [ Some w -> (image#setWidth w; w) | None -> image#width] (*{{{*)
+      and iheight = match getAttrOpt (fun [ `height h -> Some h | _ -> None ])  attrs with [ Some h -> (image#setHeight h; h) | None -> image#height]
+      and paddingLeft = match getAttrOpt (fun [ `paddingLeft pl -> Some pl | _ -> None]) attrs with [ Some pl -> pl | None -> 0. ] in
+      let font = getFont attributes in
       let line = 
         if Stack.is_empty lines 
-        then new_line
+        then createLine font lines
         else
           let line = Stack.top lines in
           if line.closed 
-          then new_line
+          then createLine font lines
           else 
             match width with
             [ None -> line
@@ -129,51 +331,100 @@ value create ?width ?height html =
               then 
               (
                 line.closed := True;
-                new_line
+                createLine font lines;
               )
               else line
             ]
       in
-      let baseLine = 
-        match font with
-        [ Some fnt -> fnt.BitmapFont.baseLine
-        | None -> iHeight
-        ]
-      in
-      let paddingTop = getAttr attrs (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. in
       (
-        if baseLine > image#height
-        then 
-        (
-          line.lineHeight := iHeight;
-          line#setY padingTop;
-        )
-        else line#setY (iHeight -. baseLine +. paddingTop);
-        lineAdd paddingLeft image line;
-      ) (*}}}*)
+        image#setX (line.currentX +. paddingLeft);
+        let paddingRight = match getAttrOpt (fun [ `paddingRight pl -> Some pl | _ -> None]) attrs with [ Some pl -> pl | None -> 0. ] in
+        let eWidth = paddingLeft +. iwidth +. paddingRight in
+        let paddingTop = getAttr (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. attrs in
+        match getAttr (fun [ `valign v -> Some v | _ -> None]) `center attrs with
+        [ `baseLine -> (* тру работает пиздец как круто *)
+          (
+            let newLineHeight = iheight +. (line.lineHeight -. line.baseLine) in 
+            if newLineHeight > line.lineHeight
+            then line.lineHeight := newLineHeight
+            else ();
+            image#setY paddingTop;
+            addToLine eWidth iheight image line;
+          )
+        | `lineCenter -> (* хуево пашет *)
+            let () = debug "place image by center: %f,%f" iheight line.lineHeight in
+            let baseLine = 
+              if line.lineHeight < iheight
+              then (* нужно будет всю хуйню сдвинуть чтобы поместилось тут все *)
+                let diff = (iheight -. line.lineHeight) /. 2. in
+                (
+                  line.lineHeight := iheight;
+                  line.baseLine +. diff;
+                )
+              else 
+                line.baseLine
+            in
+            (
+              let yOffset = (line.lineHeight -. iheight) /. 2. in
+              let () = debug "img center yOffset: %f" yOffset in
+              image#setY (paddingTop +. yOffset);
+              addToLine eWidth baseLine image line;
+            )
+        | `center -> (* центер by text *)
+            let () = debug "place image by text center" in
+            (* нужна информация о тексте который сейчас валиден *)
+            let baseLine = 
+              if line.lineHeight < iheight
+              then (* нужно будет всю хуйню сдвинуть чтобы поместилось тут все *)
+                let diff = (iheight -. line.lineHeight) /. 2. in
+                (
+                  line.lineHeight := iheight;
+                  line.baseLine +. diff;
+                )
+              else 
+                line.baseLine
+            in
+            (
+              let () = debug "iheight: %f, bf.lh: %f" iheight font.BitmapFont.lineHeight in
+              let fdiff = (font.BitmapFont.lineHeight -. iheight) /. 2. in
+              (* теперь понять как это дифф применить *)
+              let () = debug "lh: %f" line.lineHeight in
+              let ldiff = line.baseLine -. font.BitmapFont.baseLine in
+              let () = debug "fdiff: %f, ldiff: %f" fdiff ldiff in
+              let yOffset = ldiff +. fdiff in
+              let () = debug "yOffset: %f" yOffset in
+              image#setY (paddingTop +. yOffset);
+              let () = debug "y: %f, baseLine: %f, line.baseLine: %f" image#y baseLine line.baseLine in
+              addToLine eWidth baseLine image line;
+            )
+        ]
+      )(*}}}*)
     | `span attribs elements ->
-        let attributes = attribs @ attributes in
-        List.iter (fun make_lines width attributes lines) elements
+        let () = debug "process span" in
+        let attributes = (attribs :> div_attributes) @ attributes in
+        List.iter (make_lines width attributes lines) elements
     | `text text -> (* рендер text {{{*)
+        let () = debug "process text: lines: %d" (Stack.length lines) in
         let strLength = String.length text in
         match strLength with
         [ 0 -> ()
         | _ ->
+          let color = getAttr (fun [ `color n -> Some n | _ -> None]) 0 attributes in
+          let font = getFont attributes in
+          let () = debug "font scale: %f" font.BitmapFont.scale in
           let containerWidth =
             match width with
-            [ Some width -> width /. font.BitmapFont.scale
-            | None -> ()
+            [ Some width -> Some (width /. font.BitmapFont.scale)
+            | None -> None
             ]
           in
           let lastWhiteSpace = ref None in
           let rec add_line currentLine index = 
             (
-              currentLine.closed := closed;
-              Stack.push currentLine lines;
               match index with
               [ Some index -> 
                 let () = currentLine.closed := True in
-                let nextLine = createLine font in
+                let nextLine = createLine font lines in
                 (
                   lastWhiteSpace.val := None;
                   add_char nextLine index
@@ -181,49 +432,50 @@ value create ?width ?height html =
               | None -> ()
               ]
             )
-          and  add_char line index = 
+          and add_char line index = 
             if index < strLength 
             then
               let code = UChar.code (UTF8.look text index) in
-              let bchar = try Hashtbl.find t.chars code with [ Not_found -> let () = Printf.eprintf "char %d not found\n%!" code in Hashtbl.find t.chars CHAR_SPACE ] in
+              let open BitmapFont in
+              let bchar = try Hashtbl.find font.chars code with [ Not_found -> let () = Printf.eprintf "char %d not found\n%!" code in Hashtbl.find font.chars CHAR_SPACE ] in
+              let bchar = if font.scale <> 1. then {(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale} else bchar in
               if code = CHAR_NEWLINE 
               then
-                add_line currentLine (Some (UTF8.next text index))
+                add_line line (Some (UTF8.next text index))
               else 
                 match containerWidth with
-                [ Some containerWidth when line.currentX +. bchar.xAdvance > containerWidth ->
+                [ Some containerWidth when line.currentX +. bchar.BitmapFont.xAdvance > containerWidth ->
                   let idx = 
                     match !lastWhiteSpace with
                     [ Some idx -> 
                       let removeIndex = idx in
-                      let numCharsToRemove = currentLine#numChildren - removeIndex in
+                      let numCharsToRemove = line.container#numChildren - removeIndex in
                       (
                         for i = 0 to numCharsToRemove - 1 do
-                          ignore(currentLine#removeChildAtIndex removeIndex)
+                          ignore(line.container#removeChildAtIndex removeIndex)
                         done;
                         UTF8.move text index ~-numCharsToRemove
                       )
                     | None -> index
                     ]
                   in
-                  add_line currentLine (Some idx)
+                  add_line line (Some idx)
                 | _ ->
-                  let bitmapChar = Image.create bchar.charTexture in
+                  let bitmapChar = Image.create bchar.BitmapFont.charTexture in
                   (
                     bitmapChar#setScale font.BitmapFont.scale;
-                    bitmapChar#setX (currentX +. );
-                    bitmapChar#setY bchar.yOffset;
+                    bitmapChar#setPos (line.currentX +. bchar.BitmapFont.xOffset, bchar.BitmapFont.yOffset);
                     bitmapChar#setColor color;
-                    lineAdd bchar.xOffset bitmapChar currentLine
-                    if code = CHAR_SPACE then lastWhiteSpace.val := Some currentLine#numChildren else ();
-                    add_char currentLine (UTF8.next text index)
+                    addToLine bchar.BitmapFont.xAdvance font.BitmapFont.baseLine bitmapChar line;
+                    if code = CHAR_SPACE then lastWhiteSpace.val := Some line.container#numChildren else ();
+                    add_char line (UTF8.next text index)
                   )
                 ]
-            else add_line currentLine None
+            else add_line line None
           in
           let line = 
             if Stack.is_empty lines || (Stack.top lines).closed 
-            then createLine font
+            then createLine font lines
             else 
               let line = Stack.top lines in
               (
@@ -234,11 +486,19 @@ value create ?width ?height html =
               )
           in
           add_char line 0(*}}}*)
-    | `br -> ()
+        ]
+    | `br -> 
+        if Stack.is_empty lines || (Stack.top lines).closed 
+        then 
+          let line = createLine (getFont attributes) lines in
+          line.closed := True
+        else 
+          let line = Stack.top lines in
+          line.closed := True
     ]
   in
   let rec process ((width,height) as size) attributes = fun
-    [ `div attrs els ->
+    [ `div attrs elements ->
         let div = Sprite.create () in
         (*
         let dy = ref 0 in
@@ -265,59 +525,63 @@ value create ?width ?height html =
         in
         *)
         let attribs = attrs @ attributes in
-        let paddigTop = getAttr attrs (fun [ `paddingTop x -> Some x | _ -> None ]) 0.
-        and paddingLeft = getAttr attrs (fun [ `paddingLeft x -> Some x | _ -> None ]) 0. 
+        let paddingTop = getAttr (fun [ `paddingTop x -> Some x | _ -> None ]) 0. attrs 
+        and paddingLeft = getAttr (fun [ `paddingLeft x -> Some x | _ -> None ]) 0. attrs 
         in
-        let (width,height) = subtractSize size (paddingTop,paddingLeft) in
+        let nsize = subtractSize size (paddingTop,paddingLeft) in
         (* дети могут быть либо параграфы, либо опять дивы 
          * параграф цельный сцука а див нихуя нахуй
          * *)
         let (x,y) = 
           List.fold_left begin fun (x,y) element ->
-              let (pos,obj) = process size attribs in
+              let (pos,obj) = process nsize attribs element in
               match pos with
               [ `P height ->
                 (
                   obj#setPos (x,y);
-                  mainCont#addChild obj
+                  div#addChild obj;
                   (x,y +. height)
                 )
               ]
-          end (paddingTop,paddingLeft) elements
+          end (paddingLeft,paddingTop) elements
         in
         (`P y,div)
     | `p attrs elements ->  (* p - содержит линии *)
+        let () = debug "process p" in
         let container = Sprite.create () in 
-        let attribs = attrs @ attributes in
+        let attribs = (attrs :> div_attributes) @ attributes in
+        let yOffset = ref 0. in
         (
           let lines = Stack.create () in
           (
-            make_lines width attribs lines;
-            let qlines = Queue.create () in
+            let f = make_lines width attribs lines in
+            List.iter f elements;
+            let qlines = Stack.create () in
+            let max_width = ref 0. in
             (
-              let max_width = ref 0. in
+              debug "p lines: %d" (Stack.length lines);
               Stack.iter begin fun line -> 
+                let linec = line.container in
+                let width = try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in
                 (
-                  let width = (line#getChildAt 0)#x +. line#width in
-                  if width > !max_width then max_width.val := width else ()
-                  Queue.push (line,width) qlines
+                  if width > !max_width then max_width.val := width else ();
+                  Stack.push (line,width) qlines
                 )
               end lines;
-              let halign = match getAttr attribs (fun [ `horizontalAlign p -> Some p | _ -> None ]) with [ None -> `left | Some align -> align ] in
-              let yOffset = ref 0. in
-              Queue.iter begin fun (line,width) ->
+              let halign = match getAttrOpt (fun [ `halign p -> Some p | _ -> None ]) attribs with [ None -> `left | Some align -> align ] in
+              Stack.iter begin fun (line,width) ->
                 (
                   match halign with
-                  [ `center | `right ->
-                    let widthDiff = !max_width - width in
-                    line#setX
-                      match halign with
-                      [ `center -> widthDiff /. 2
+                  [ `center | `right as ha ->
+                    let widthDiff = !max_width -. width in
+                    line.container#setX
+                      (match ha with
+                      [ `center -> widthDiff /. 2.
                       | `right -> widthDiff
-                      ]
+                      ])
                   | _ -> ()
                   ];
-                  line#setY !yOffset;
+                  line.container#setY !yOffset;
                   container#addChild line.container;
                   yOffset.val := !yOffset +. line.lineHeight;
                 )
@@ -330,4 +594,8 @@ value create ?width ?height html =
   in
   let result = Sprite.create () in
   let (pos,container) = process (width,height) [] html in
-  result;
+  (
+    (* FIXME: skip pos *)
+    result#addChild container;
+    result
+  );

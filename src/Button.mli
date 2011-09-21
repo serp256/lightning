@@ -17,7 +17,7 @@ module Make
       method setFontName: string -> unit;
       method setFontColor: int -> unit;
       method setDisabledFontColor: int -> unit;
-      method setFontSize: option float -> unit;
+      method setFontSize: option int -> unit;
       method setTextBounds: Rectangle.t -> unit;
       method isEnabled: bool;
       method setEnabled: bool -> unit;
