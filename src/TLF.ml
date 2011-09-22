@@ -1,13 +1,19 @@
-open Light;
 
-value default_font_family = "Helvetica";
+module Make(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sprite.D = Image.Q.D) = struct
+
+module DisplayObject = Image.Q.D;
+module Sprite = CompiledSprite.Sprite;
+
+value default_font_family = ref "Helvetica";
+
+type img_valign = [= `baseLine | `center | `lineCenter ];
 type img_attribute = 
   [= `width of float
   | `height of float
   | `paddingLeft of float
   | `paddingRight of float
   | `paddingTop of float
-  | `valign of [= `baseLine | `center | `lineCenter ]
+  | `valign of img_valign
   ];
 
 type img_attributes = list img_attribute;
@@ -25,6 +31,36 @@ type span_attributes = list span_attribute;
 
 type simple_element = [= `img of (img_attributes * Image.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
 and simple_elements = list simple_element;
+
+type p_halign = [= `left | `right | `center ];
+type p_valign = [= `top | `bottom | `center ];
+type p_attribute = 
+  [= span_attribute
+  | `halign of p_halign
+  | `valign of p_valign
+  | `spaceBefore of float
+  | `spaceAfter of float
+  ];
+
+type p_attributes = list p_attribute;
+
+type div_attribute = 
+  [= span_attribute 
+  | p_attribute
+  | `paddingTop of float
+  | `paddingLeft of float
+  ];
+
+
+type div_attributes = list div_attribute;
+
+
+(* type attribute = [= div_attribute | p_attribute | span_attribute ]; *)
+
+type main = 
+  [= `div of (div_attributes * (list main))
+  | `p of (p_attributes * simple_elements)
+  ];
 
 DEFINE AEXPAND(name,tag) = 
   match name with
@@ -53,35 +89,7 @@ value span ?fontFamily ?fontSize ?color ?alpha elements : simple_element =
   `span (attrs,elements);
 
 
-type p_attribute = 
-  [= span_attribute
-  | `halign of [= `left | `right | `center ]
-  | `valign of [= `top | `bottom | `center ]
-  | `spaceBefore of float
-  | `spaceAfter of float
-  ];
-
-type p_attributes = list p_attribute;
-
-type div_attribute = 
-  [= span_attribute 
-  | p_attribute
-  | `paddingTop of float
-  | `paddingLeft of float
-  ];
-
-
-type div_attributes = list div_attribute;
-
-
-(* type attribute = [= div_attribute | p_attribute | span_attribute ]; *)
-
-type main = 
-  [= `div of (div_attributes * (list main))
-  | `p of (p_attributes * simple_elements)
-  ];
-
-value p ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceAfter ?attrs elements : main = 
+value p ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceAfter elements : main = 
   let attrs = [] in
   let attrs = AEXPAND(fontFamily,`fontFamily) in
   let attrs = AEXPAND(fontSize,`fontSize) in
@@ -92,8 +100,6 @@ value p ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceA
   let attrs = AEXPAND(spaceBefore,`spaceBefore) in
   let attrs = AEXPAND(spaceAfter,`spaceAfter) in
   `p (attrs,elements);
-
-
 
 
 value getAttr(*: ('a -> option 'b) -> 'b -> list 'a -> 'b *)= fun f default attrs -> try (ExtList.List.find_map f attrs) with [ Not_found -> default ];
@@ -127,7 +133,7 @@ value getFont attributes =
   let fontFamily =
    match getFontFamily attributes with
    [ Some fn -> fn
-   | None -> default_font_family
+   | None -> !default_font_family
    ]
   in
   let size = getFontSize attributes in 
@@ -352,7 +358,7 @@ value create ?width ?height (html:main) =
             addToLine eWidth iheight image line;
           )
         | `lineCenter -> (* хуево пашет *)
-            let () = debug "place image by center: %f,%f" iheight line.lineHeight in
+            let () = debug "place image by lineCenter: %f,%f" iheight line.lineHeight in
             let baseLine = 
               if line.lineHeight < iheight
               then (* нужно будет всю хуйню сдвинуть чтобы поместилось тут все *)
@@ -372,28 +378,28 @@ value create ?width ?height (html:main) =
             )
         | `center -> (* центер by text *)
             let () = debug "place image by text center" in
-            (* нужна информация о тексте который сейчас валиден *)
+            (* хуево сцука двигаем *)
             let baseLine = 
               if line.lineHeight < iheight
-              then (* нужно будет всю хуйню сдвинуть чтобы поместилось тут все *)
+              then 
                 let diff = (iheight -. line.lineHeight) /. 2. in
-                (
-                  line.lineHeight := iheight;
-                  line.baseLine +. diff;
-                )
+                line.baseLine +. diff
               else 
                 line.baseLine
             in
             (
-              let () = debug "iheight: %f, bf.lh: %f" iheight font.BitmapFont.lineHeight in
               let fdiff = (font.BitmapFont.lineHeight -. iheight) /. 2. in
               (* теперь понять как это дифф применить *)
-              let () = debug "lh: %f" line.lineHeight in
-              let ldiff = line.baseLine -. font.BitmapFont.baseLine in
-              let () = debug "fdiff: %f, ldiff: %f" fdiff ldiff in
+              let ldiff = baseLine -. font.BitmapFont.baseLine in
               let yOffset = ldiff +. fdiff in
-              let () = debug "yOffset: %f" yOffset in
-              image#setY (paddingTop +. yOffset);
+              (
+                image#setY (paddingTop +. yOffset);
+                let imgHeight = yOffset +. iheight in
+                if imgHeight > line.lineHeight 
+                then
+                  line.lineHeight := imgHeight +. 1.
+                else ();
+              );
               let () = debug "y: %f, baseLine: %f, line.baseLine: %f" image#y baseLine line.baseLine in
               addToLine eWidth baseLine image line;
             )
@@ -581,6 +587,7 @@ value create ?width ?height (html:main) =
                       ])
                   | _ -> ()
                   ];
+                  debug "set line y to %f" !yOffset;
                   line.container#setY !yOffset;
                   container#addChild line.container;
                   yOffset.val := !yOffset +. line.lineHeight;
@@ -592,10 +599,13 @@ value create ?width ?height (html:main) =
         )
     ]
   in
-  let result = Sprite.create () in
+  let result = CompiledSprite.create () in
   let (pos,container) = process (width,height) [] html in
   (
     (* FIXME: skip pos *)
     result#addChild container;
     result
   );
+
+
+end;

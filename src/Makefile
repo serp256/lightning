@@ -18,10 +18,13 @@ MLDEPFLAGS =
 release: lightning.cmxa syntax/pa_prop.cmo
 debug: release
 
+MLPPOPT = syntax/pa_debug.cmo
+
 SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
 $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend -syntax camlp4r 
-$(SYNTAX): MLPPOPT :=
+$(SYNTAX) Debug.cmx: MLPPOPT :=
 $(SYNTAX): OCAMLC = ocamlfind ocamlc
+
 
 
 ifeq ($(PLATFORM),ios)
@@ -66,8 +69,8 @@ endif
 
 MOBJS += $(gl)/gl_stub.o 
 
-MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) Debug.ml ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml Graphics.ml\
-					DisplayObject.ml Shape.ml Sprite.ml Quad.ml Texture.ml RenderTexture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml FPS.ml Timers.ml Timer.ml \
+MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml Graphics.ml\
+					DisplayObject.ml Shape.ml Sprite.ml Quad.ml Texture.ml RenderTexture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml TLF.ml FPS.ml Timers.ml Timer.ml \
 					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
 	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),$(patsubst %,-ccopt %,$(GLPARAM))) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
@@ -86,11 +89,10 @@ $(MLOBJS): MLFLAGS += -package xmlm -I $(gl) $(MLOBJSFLAGS)
 $(MLOBJS): Debug.cmx
 
 $(MLOBJS) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
-$(MLOBJS) MLDepend.$(PLATFORM): MLPPOPT += syntax/pa_debug.cmo 
 -include debug.conf
 	
 lightning.cmxa: MLDepend.$(PLATFORM) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
-	$(OCAMLMKLIB) -verbose -o lightning $(MOBJS) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
+	$(OCAMLMKLIB) -verbose -o lightning $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLFLAGS) -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)

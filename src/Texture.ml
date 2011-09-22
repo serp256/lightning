@@ -79,6 +79,7 @@ value loadImage ?textureID ~path ~contentScaleFactor =
         textureID = Obj.magic textureID;
       }
     in
+(*     let () = debug "loaded texture" (* : [%d:%d] -> [%d:%d] width height legalWidth legalHeight*) in *)
     let res = loadTexture textureInfo (Some (Sdl.Video.surface_pixels rgbSurface)) in
     (
       Sdl.Video.free_surface rgbSurface;
@@ -226,7 +227,7 @@ value load path : c =
   with 
   [ Not_found ->
     let textureInfo = 
-      proftimer "Loading texture [%F]" loadImage path 1. 
+      proftimer:t "Loading texture [%F]" loadImage path 1. 
     in
     let () = 
       debug
