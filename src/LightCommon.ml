@@ -7,6 +7,7 @@ type halign = [= `HAlignLeft | `HAlignCenter | `HAlignRight ];
 type valign = [= `VAlignTop | `VAlignCenter | `VAlignBottom ];
 
 value pi  =  3.14159265359;
+value half_pi = pi /. 2.;
 value two_pi =  6.28318530718;
 
 exception File_not_exists of string;
@@ -107,6 +108,9 @@ module MakeXmlParser(P:sig value path: string; end) = struct
 
   value floats x = 
     try float_of_string x with [ Failure _ -> error "float_of_string: %s" x ];
+
+  value ints x = 
+    try int_of_string x with [ Failure _ -> error "int_of_string: %s" x ];
 
   value get_attribute name attributes = 
     try

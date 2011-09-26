@@ -15,6 +15,7 @@ end;
 
 module Make(Param:sig type evType = private [> eventType ]; type evData = private [> eventData ]; end) = struct
   module DisplayObject = DisplayObject.Make Param;
+  module Shape = Shape.Make DisplayObject;
   module Quad = Quad.Make DisplayObject;
   module Image = Image.Make Quad;
   module Sprite = Sprite.Make DisplayObject;
@@ -22,6 +23,7 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
   module MovieClip = MovieClip.Make DisplayObject Image;
   module BitmapFontCreator = BitmapFont.MakeCreator Image CompiledSprite;
   module TextField = TextField.Make Quad BitmapFontCreator; 
+  module TLF = TLF.Make Image CompiledSprite;
   module FPS = FPS.Make DisplayObject TextField;
   module Button = Button.Make DisplayObject Sprite Image TextField;
   module Stage = Stage.Make DisplayObject;

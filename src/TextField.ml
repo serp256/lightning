@@ -2,12 +2,12 @@ open LightCommon;
 
 module type S = sig
   module D: DisplayObjectT.M;
-  class c :  [ ?fontName:string ] -> [ ?fontSize:float ] -> [ ?color:int ] -> [ ~width:float ] -> [ ~height:float ] -> [ string ] ->
+  class c :  [ ?fontName:string ] -> [ ?fontSize:int ] -> [ ?color:int ] -> [ ~width:float ] -> [ ~height:float ] -> [ string ] ->
   object
     inherit D.container;
     method setText: string -> unit;
     method setFontName: string -> unit;
-    method setFontSize: option float -> unit;
+    method setFontSize: option int -> unit;
     method setBorder: bool -> unit;
     method setColor: int -> unit;
     method setHAlign: LightCommon.halign -> unit;
@@ -16,7 +16,7 @@ module type S = sig
   end;
 
 
-  value create: ?fontName:string -> ?fontSize:float -> ?color:int -> ~width:float -> ~height:float -> string -> c;
+  value create: ?fontName:string -> ?fontSize:int -> ?color:int -> ~width:float -> ~height:float -> string -> c;
 end;
 
 module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSprite.Sprite.D = Quad.D) = struct
@@ -24,6 +24,7 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSpri
   module D = Quad.D;
   module BF = FontCreator;
 
+  (* FIXME: make it more light -:) *)
   class c ?fontName ?fontSize ?color ~width ~height text = 
     let _fontName = Option.default "Helvetica" fontName in
     object(self)
@@ -43,12 +44,12 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSpri
       value mutable contents = None;
 
       initializer 
-        (
-          hitArea#setAlpha 0.;
-          self#addChild hitArea;
-          textArea#setVisible False;
-          self#addChild textArea;
-        );
+      (
+        hitArea#setAlpha 0.;
+        self#addChild hitArea;
+        textArea#setVisible False;
+        self#addChild textArea;
+      );
 
       method setText ntext = 
       (
@@ -124,12 +125,12 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSpri
           
       method private createRenderedContents () = failwith "Native fonts not supported yet";
       method private createComposedContents () =
-        let bitmapFont = BitmapFont.get fontName in
-        let contents = BF.createText bitmapFont ~width ~height ?size:fontSize ~color ~border ~hAlign ~vAlign text in
-        let bounds = contents#bounds in
+        let bitmapFont = BitmapFont.get ?size:fontSize fontName in
+        let contents = BF.createText bitmapFont ~width:hitArea#width ~height:hitArea#height ~color ~border ~hAlign ~vAlign text in
+        let bounds = (contents#getChildAt 0)#bounds in
         (
-          hitArea#setX bounds.Rectangle.x; hitArea#setY bounds.Rectangle.y;
-          hitArea#setWidth bounds.Rectangle.width; hitArea#setHeight bounds.Rectangle.height;
+          textArea#setX bounds.Rectangle.x; textArea#setY bounds.Rectangle.y;
+          textArea#setWidth bounds.Rectangle.width; textArea#setHeight bounds.Rectangle.height;
           contents;
         );
 
@@ -164,7 +165,7 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSpri
       method textBounds = 
       (
         if requiresRedraw then self#redrawContents () else ();
-        textArea#boundsInSpace (match parent with [ Some p -> Some (p#asDisplayObject) | None -> None ]);
+        textArea#boundsInSpace parent;
       );
 
       method! boundsInSpace targetCoordinateSpace = hitArea#boundsInSpace targetCoordinateSpace;

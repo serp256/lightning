@@ -1,12 +1,12 @@
 
 module type S = sig
   module D: DisplayObjectT.M;
-  class c :  [ ?fontName:string ] -> [ ?fontSize:float ] -> [ ?color:int ] -> [ ~width:float ] -> [ ~height:float ] -> [ string ] ->
+  class c :  [ ?fontName:string ] -> [ ?fontSize:int ] -> [ ?color:int ] -> [ ~width:float ] -> [ ~height:float ] -> [ string ] ->
   object
     inherit D.container;
     method setText: string -> unit;
     method setFontName: string -> unit;
-    method setFontSize: option float -> unit;
+    method setFontSize: option int -> unit;
     method setBorder: bool -> unit;
     method setColor: int -> unit;
     method setHAlign: LightCommon.halign -> unit;
@@ -15,7 +15,7 @@ module type S = sig
   end;
 
 
-  value create: ?fontName:string -> ?fontSize:float -> ?color:int -> ~width:float -> ~height:float -> string -> c;
+  value create: ?fontName:string -> ?fontSize:int -> ?color:int -> ~width:float -> ~height:float -> string -> c;
 end;
 
 
