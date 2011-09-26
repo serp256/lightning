@@ -416,27 +416,25 @@ value create ?width ?height (html:main) =
         [ 0 -> ()
         | _ ->
           let color = getAttr (fun [ `color n -> Some n | _ -> None]) 0 attributes in
+          let alpha = getAttr (fun [ `alpha a -> Some a | _ -> None]) 1. attributes in
           let font = getFont attributes in
           let () = debug "font scale: %f" font.BitmapFont.scale in
+          (*
           let containerWidth =
             match width with
-            [ Some width -> Some (width /. font.BitmapFont.scale)
+            [ Some width -> Some (width *. font.BitmapFont.scale)
             | None -> None
             ]
           in
+          *)
           let lastWhiteSpace = ref None in
           let rec add_line currentLine index = 
+            let () = debug "add line" in
+            let () = currentLine.closed := True in
+            let nextLine = createLine font lines in
             (
-              match index with
-              [ Some index -> 
-                let () = currentLine.closed := True in
-                let nextLine = createLine font lines in
-                (
-                  lastWhiteSpace.val := None;
-                  add_char nextLine index
-                )
-              | None -> ()
-              ]
+              lastWhiteSpace.val := None;
+              add_char nextLine index
             )
           and add_char line index = 
             if index < strLength 
@@ -445,12 +443,13 @@ value create ?width ?height (html:main) =
               let open BitmapFont in
               let bchar = try Hashtbl.find font.chars code with [ Not_found -> let () = Printf.eprintf "char %d not found\n%!" code in Hashtbl.find font.chars CHAR_SPACE ] in
               let bchar = if font.scale <> 1. then {(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale} else bchar in
+              let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
               if code = CHAR_NEWLINE 
               then
-                add_line line (Some (UTF8.next text index))
+                add_line line (UTF8.next text index)
               else 
-                match containerWidth with
-                [ Some containerWidth when line.currentX +. bchar.BitmapFont.xAdvance > containerWidth ->
+                match width with
+                [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width ->
                   let idx = 
                     match !lastWhiteSpace with
                     [ Some idx -> 
@@ -465,19 +464,20 @@ value create ?width ?height (html:main) =
                     | None -> index
                     ]
                   in
-                  add_line line (Some idx)
+                  add_line line idx
                 | _ ->
                   let bitmapChar = Image.create bchar.BitmapFont.charTexture in
                   (
                     bitmapChar#setScale font.BitmapFont.scale;
                     bitmapChar#setPos (line.currentX +. bchar.BitmapFont.xOffset, bchar.BitmapFont.yOffset);
                     bitmapChar#setColor color;
+                    bitmapChar#setAlpha alpha;
                     addToLine bchar.BitmapFont.xAdvance font.BitmapFont.baseLine bitmapChar line;
                     if code = CHAR_SPACE then lastWhiteSpace.val := Some line.container#numChildren else ();
                     add_char line (UTF8.next text index)
                   )
                 ]
-            else add_line line None
+            else ()
           in
           let line = 
             if Stack.is_empty lines || (Stack.top lines).closed 
@@ -504,7 +504,7 @@ value create ?width ?height (html:main) =
     ]
   in
   let rec process ((width,height) as size) attributes = fun
-    [ `div attrs elements ->
+    [ `div attrs elements -> (* не доделано нихуя вообще нахуй *)
         let div = Sprite.create () in
         (*
         let dy = ref 0 in
@@ -556,30 +556,50 @@ value create ?width ?height (html:main) =
         let () = debug "process p" in
         let container = Sprite.create () in 
         let attribs = (attrs :> div_attributes) @ attributes in
-        let yOffset = ref 0. in
+        let spaceBefore = getAttr (fun [ `spaceBefore s -> Some s | _ -> None]) 0. attrs in
+        let spaceAfter = getAttr (fun [ `spaceAfter s -> Some s | _ -> None]) 0. attrs in
+        let yOffset = ref spaceBefore in
         (
           let lines = Stack.create () in
           (
             let f = make_lines width attribs lines in
             List.iter f elements;
             let qlines = Stack.create () in
-            let max_width = ref 0. in
-            (
-              debug "p lines: %d" (Stack.length lines);
-              Stack.iter begin fun line -> 
-                let linec = line.container in
-                let width = try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in
+            let max_width = 
+              match width with
+              [ Some w -> 
                 (
-                  if width > !max_width then max_width.val := width else ();
-                  Stack.push (line,width) qlines
+                  let f line = 
+                    let linec = line.container in
+                    let width = try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in
+                    Stack.push (line,width) qlines
+                  in
+                  Stack.iter f lines;
+                  w
                 )
-              end lines;
+              | None -> 
+                let max_width = ref 0. in
+                (
+                  let f line =
+                    let linec = line.container in
+                    let width = try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in
+                    (
+                      if width > !max_width then max_width.val := width else ();
+                      Stack.push (line,width) qlines
+                    )
+                  in
+                  Stack.iter f lines;
+                  !max_width;
+                )
+              ]
+            in
+            (
               let halign = match getAttrOpt (fun [ `halign p -> Some p | _ -> None ]) attribs with [ None -> `left | Some align -> align ] in
               Stack.iter begin fun (line,width) ->
                 (
                   match halign with
                   [ `center | `right as ha ->
-                    let widthDiff = !max_width -. width in
+                    let widthDiff = max_width -. width in
                     line.container#setX
                       (match ha with
                       [ `center -> widthDiff /. 2.
@@ -595,7 +615,7 @@ value create ?width ?height (html:main) =
               end qlines;
             )
           );
-          (`P !yOffset,container)
+          (`P (!yOffset +. spaceAfter),container)
         )
     ]
   in
