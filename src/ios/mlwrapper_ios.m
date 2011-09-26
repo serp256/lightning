@@ -63,3 +63,11 @@ value ml_deviceIdentifier(value p) {
 	NSString *ident = [[UIDevice currentDevice] uniqueIdentifier];
 	CAMLreturn(caml_copy_string([ident cStringUsingEncoding:NSASCIIStringEncoding]));
 }
+
+
+void ml_openURL(value mlurl) {
+	CAMLparam1(mlurl);
+	NSString *url = [NSString stringWithCString:String_val(mlurl) encoding:NSUTF8StringEncoding];
+	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+	CAMLreturn0;
+}

@@ -1,9 +1,9 @@
 
 
 
-
 all: 
-	ocamlbuild -use-ocamlfind animexporter.native
+	ocamlbuild -use-ocamlfind fontmaker.byte
+
 
 clean:
 	ocamlbuild -use-ocamlfind -clean

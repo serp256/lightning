@@ -102,7 +102,6 @@ module Make
           contents#setScale 1.;
         );(*}}}*)
 
-
       method private textField = 
         match textField with
         [ None -> 
@@ -159,8 +158,10 @@ module Make
             enabled := False;
             background#setTexture disabledState;
             background#setColor (match disabled with [None -> 0xbbbbbb | _ -> 0xffffff]);
-            let tf = self#textField in 
-            tf#setColor disabledFontColor;
+            match textField with 
+            [ None -> ()
+            | Some tf -> tf#setColor disabledFontColor
+            ]
           )
           
         | (False, True) -> 
@@ -168,8 +169,10 @@ module Make
             enabled := True;
             background#setTexture upState;
             background#setColor 0xffffff;
-            let tf = self#textField in
-            tf#setColor fontColor;
+            match textField with
+            [ None -> ()
+            | Some tf -> tf#setColor fontColor
+            ]
           )
         ];
 

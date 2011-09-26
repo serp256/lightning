@@ -82,17 +82,16 @@ value read_frames () =
   let input = BatFile.open_in (file_frames()) in
   let rec loop index res =
      try
-      let w = BatIO.read_i16 input in
-      let h = BatIO.read_i16 input in
+      let w = BatIO.read_ui16 input in
+      let h = BatIO.read_ui16 input in
       let x = BatIO.read_i16 input in
       let y = BatIO.read_i16 input in
       let icon_x = BatIO.read_i16 input in
       let icon_y = BatIO.read_i16 input in
-(*       let _ = print_endline (Printf.sprintf "fields: %d, %d, %d, %d" field1 field2 field3 field4) in *)
-      let frame = {w;h;x;y;icon_x;icon_y;items=[]} in
+(*       let _ = print_endline (Printf.sprintf "fields: %d, %d, %d, %d" w h x y) in *)
       let count = BatIO.read_byte input in
 (*       let _ = print_endline ("count: " ^ (string_of_int count)) in *)
-      let rec loop1 i frame =
+      let rec loop1 i items =
           if i <= count
           then
 (*             let _ = print_endline ("i: " ^ (string_of_int i)) in *)
@@ -106,16 +105,18 @@ value read_frames () =
             let urlId = BatIO.read_i32 input in
 (*             let _ = print_endline (Printf.sprintf "ifields: %d, %d, %d, %d, %d, %d" ifield1 ifield2 ifield3 ifield4 ifield6 ifield7) in  *)
             let item = {libId;pngId;xi;yi;flip;alpha;urlId} in
-            loop1 (i+1) {(frame) with items = [item::frame.items]}
-          else {(frame) with items = List.rev frame.items}
+            loop1 (i+1) [item::items]
+          else List.rev items
       in
-      let frame = loop1 1 frame in
+      let items = loop1 1 [] in
+      let frame = {w;h;x;y;icon_x;icon_y;items} in
       (
-        loop (index+1) (Array.append res [| frame |]);
+        loop (index+1) [ frame :: res ]
       )
      with [BatInnerIO.No_more_input -> res]
   in
-  let res = loop 0 [||] in
+  let res = loop 0 [] in
+  let res = Array.of_list (List.rev res) in
   let _ = print_endline (Printf.sprintf "length res: %d" (Array.length res)) in
   res;
 
@@ -192,8 +193,8 @@ value make_frames framesMap frames libobjects =
   let framesIds = HSet.create 0 in
   (
     List.iter begin fun (objname,animname) ->
-      let frms = List.assoc animname (List.assoc objname !!animations) in
-      Array.iter (fun i -> HSet.add framesIds i) frms
+      let animinfo = List.assoc animname (List.assoc objname !!animations) in
+      Array.iter (fun i -> HSet.add framesIds i) animinfo.JSObjAnim.frames
     end libobjects;
     (* Сформировали массив фреймов нах *)
     let framesIds = HSet.to_list framesIds in
@@ -230,7 +231,7 @@ value write_textures imagesMap frames outdir =
 (*     let textures = blit_by_textures images in *)
     let textures = TextureLayout.layout images in
     let () = BatIO.write_ui16 texInfo (List.length textures) in
-    BatList.iteri begin fun cnt ((w,h),imgs) ->
+    BatList.iteri begin fun cnt (w,h,imgs) ->
 (*       let () = Printf.eprintf "texture [%d:%d]\n%!" w h in *)
       let () = BatIO.write_string texInfo ((string_of_int cnt) ^ ".png") in
       let () = BatIO.write_ui16 texInfo (List.length imgs) in
@@ -307,8 +308,8 @@ value write_lib libname libobjects frames =
   (* анимации составить с учетом новых фреймов *)
   let animations = 
     List.fold_left begin fun res (objname,animname) ->
-      let frms = List.assoc animname (List.assoc objname !!animations) in
-      let frms = Array.map (fun i -> Hashtbl.find framesMap i) frms in
+      let animinfo = List.assoc animname (List.assoc objname !!animations) in
+      let frms = Array.map (fun i -> Hashtbl.find framesMap i) animinfo.JSObjAnim.frames in
       let anims = 
         try
           List.assoc objname res
@@ -352,6 +353,49 @@ value group_by_objects (oname,info) res =
     Some oname
   with [ Not_found -> None ];
 
+
+value objects_by_levels = 
+  lazy(
+    let lvls = Hashtbl.create 0 in
+    (
+      match Json_io.load_json (!dataDir /// "levels.json") with
+      [ Json_type.Object lst -> 
+        List.iter begin fun (objname,level) ->
+          let level = Json_type.Browse.int level in
+          Hashtbl.add lvls objname level
+        end lst
+      | _ -> assert False
+      ];
+      lvls
+    )
+  );
+
+value group_by_levels (oname,info) res = 
+  try
+    let level = Hashtbl.find !!objects_by_levels oname in
+    let libname = "level_" ^ (string_of_int level) in
+    (
+      let anims = List.assoc oname !!animations in
+      let items = List.map (fun (animname,_) -> (oname,animname)) anims in
+      try
+        let pitems = Hashtbl.find res libname in 
+        Hashtbl.replace res libname (pitems @ items)
+      with [ Not_found -> Hashtbl.add res libname items ];
+      Some libname
+    )
+  with [ Not_found -> None ];
+
+value group_libs = ref group_by_objects;
+
+
+value set_group_libs s = 
+  group_libs.val :=
+    match s with
+    [ "obj" -> group_by_objects
+    | "levels" -> group_by_levels
+    | _ -> failwith "unknown group method"
+    ];
+
 value () =
 (
   let force = ref False in
@@ -362,6 +406,7 @@ value () =
         ("-data",Arg.Set_string dataDir,"data dir"); 
         ("-img",Arg.Set_string img_dir, "img dir"); 
         ("-o",Arg.Set_string outputDir,"output dir");
+        ("-g",Arg.String set_group_libs,"group fun")
      ] (fun _ -> ()) "";
     match Sys.file_exists !outputDir with
     [ True -> 
@@ -382,12 +427,11 @@ value () =
   (
     let () = Xmlm.output xml (`Dtd None) in
     let () = Xmlm.output xml (`El_start (("","Objects"),[])) in
-    let group_libs = group_by_objects in
     let libs = Hashtbl.create 1 in
     (
       List.iter begin fun ((oname,info) as infobj) ->
         let () = print_endline (Printf.sprintf "oname: %s" oname) in
-        match group_libs infobj libs with
+        match !group_libs infobj libs with
         [ None -> ()
         | Some lib ->
           let attribs = [ "name" =|= oname; "sizex" =*= info.JSObjAnim.sizex; "sizey" =*= info.JSObjAnim.sizey ; "lib" =|= lib ] in
@@ -396,7 +440,9 @@ value () =
         ]
      end !!info_obj;
      (* Начинаем хуячить нахуй *)
+     let () = print_endline "read frames" in
      let frames = read_frames () in
+     let () = print_endline "frames readed" in
      Hashtbl.iter begin fun libname elements -> 
        try
          write_lib libname elements frames

@@ -27,11 +27,24 @@ module Make
     | Frame of int
     ];
 
+  type direction = 
+    [= `forward
+    | `backward
+    ];
+     
+
   type descriptor = (string * array Texture.c * array frame * Hashtbl.t string int);
 
   DEFINE FRAME_TO_STRING(f) = match f with [ `label l -> Printf.sprintf "label:%s" l | `num n -> Printf.sprintf "num: %d" n ];
 
   value load xmlpath : descriptor = (*{{{*)
+    let path  = resource_path xmlpath in 
+    let scale = 
+      try 
+        let _ = ExtString.String.find path "@2x" in 2.0
+      with [ ExtString.Invalid_string -> 1.0 ] 
+    in
+  
     let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
     let () = XmlParser.accept (`Dtd None) in
     let labels = Hashtbl.create 0 in
@@ -48,8 +61,8 @@ module Make
         let label =  XmlParser.get_attribute "label" attributes in
         let frame = 
           {
-            region = Rectangle.create (floats x) (floats y) (floats width) (floats height);
-            hotpos = ((floats posX),(floats posY));
+            region = Rectangle.create ((floats x) /. scale)  ((floats y) /. scale) ((floats width) /. scale) ((floats height) /. scale);
+            hotpos = (((floats posX) /. scale) ,((floats posY) /. scale));
             textureID = int_of_string textureID;
             label; texture = None;
           }
@@ -136,7 +149,12 @@ module Make
     method totalFrames = framesLength;
     value mutable completeHandler = None;
     value mutable changeHandler = None;
-    method play ?onComplete () = 
+    value mutable playDirection = `forward;
+
+    method playDirection = playDirection;
+    method setPlayDirection direction = playDirection := direction; 
+
+    method play ?onComplete ?(direction:direction=`forward) () = 
     (
       match eventID with 
       [ None -> 
@@ -148,6 +166,7 @@ module Make
         )
       | _ -> ()
       ];
+      playDirection := direction;
       completeHandler := onComplete;
     );
 
@@ -193,15 +212,15 @@ module Make
       self#play ?onComplete (); (* FIXME: we need skip current rendering *)
     );
 
-    method playRange ?onChangeFrame ?onComplete  f1 f2 = 
+    method playRange ?onChangeFrame ?onComplete ?(direction=`forward) f1 f2 = 
     (
       debug "[%s] playRange '%s' to '%s'" clipname (FRAME_TO_STRING(f1)) (FRAME_TO_STRING(f2));
-      let sf = self#resolveFrame f1 in
-      (
-        startFrame := sf;
-        self#setCurrentFrame sf;
-      );
+      startFrame := self#resolveFrame f1;
       endFrame := self#resolveFrame f2;
+      match direction with 
+      [ `forward -> self#setCurrentFrame startFrame
+      | `backward -> self#setCurrentFrame endFrame
+      ];
       if (endFrame < startFrame) then failwith("Incorrect range") else ();
       elapsedTime := ~-.1.;
       match eventID with 
@@ -210,6 +229,7 @@ module Make
       ];
       changeHandler := onChangeFrame;
       completeHandler := onComplete;
+      playDirection := direction;
     );
 
     method private setCurrentFrame cf = 
@@ -258,19 +278,35 @@ module Make
             | n -> 
               (
                 elapsedTime := elapsedTime -. ((float n) *. frameTime);
-                let cFrame = currentFrameID + n in
                 let (currentFrame,complete) = 
-                  if cFrame > endFrame
-                  then 
-                  (
-                    match loop with
-                    [ True -> 
-                      let len = endFrame - startFrame + 1 in
-                      (startFrame + ((cFrame - endFrame -1) mod len),False)
-                    | False -> (endFrame,True)
-                    ]
-                  )
-                  else (cFrame,False)
+                  match playDirection with
+                  [ `forward -> 
+                      let cFrame = currentFrameID + n in
+                      if cFrame > endFrame
+                      then 
+                      (
+                        match loop with
+                        [ True -> 
+                          let len = endFrame - startFrame + 1 in
+                          (startFrame + ((cFrame - endFrame -1) mod len),False)
+                        | False -> (endFrame,True)
+                        ]
+                      )
+                      else (cFrame,False)
+                  | _ -> 
+                      let cFrame = currentFrameID - n in
+                      if cFrame < startFrame
+                      then 
+                      (
+                        match loop with
+                        [ True -> 
+                          let len = endFrame - startFrame + 1 in
+                          (endFrame - ((startFrame - cFrame -1) mod len),False)
+                        | False -> (startFrame,True)
+                        ]
+                      )
+                      else (cFrame,False)
+                  ]
                 in
                 (
                   self#setCurrentFrame currentFrame;
