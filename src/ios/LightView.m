@@ -91,6 +91,7 @@
 
 - (void)layoutSubviews 
 {
+		NSLog(@"Layout subviews");
     [self destroyFramebuffer]; // reset framebuffer (scale factor could have changed)
     [self createFramebuffer];
     [self renderStage];        // fill buffer immediately to avoid flickering
