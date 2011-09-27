@@ -172,6 +172,7 @@ value curl_thread (inch,outch) =
         ];
         Curl.set_writefunction ccon dataf;
         Curl.perform ccon;
+        debug "curl performed";
         let httpCode = Curl.get_httpcode ccon
         and contentType = Curl.get_contenttype ccon
         and contentLength = Int64.of_float (Curl.get_contentlengthdownload ccon)

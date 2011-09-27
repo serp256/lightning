@@ -13,9 +13,9 @@ type bc =
 
 type t = 
   {
-    texture: Texture.c;
+(*     texture: Texture.c; *)
     chars: Hashtbl.t int bc;
-    name: string;
+(*     name: string; *)
     scale: float;
     baseLine: float;
     lineHeight: float;
@@ -123,7 +123,7 @@ value register xmlpath = (*{{{*)
     let imgFile = parse_page () in
     let texture = Texture.load imgFile in
     let chars = parse_chars texture in
-    let bf = { texture; chars; name; scale=1.; baseLine; lineHeight } in
+    let bf = { (* texture; *) chars; (* name; *) scale=1.; baseLine; lineHeight } in
     try
       let sizes = Hashtbl.find fonts name in
       let sizes = MapInt.add size bf sizes in
@@ -131,6 +131,73 @@ value register xmlpath = (*{{{*)
     with [ Not_found -> Hashtbl.add fonts name (MapInt.singleton size bf) ]
   | _ -> XmlParser.error "font not found"
   ];(*}}}*)
+
+
+value registern xmlpath =
+  let dirname = Filename.dirname xmlpath in
+  let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
+  let () = XmlParser.accept (`Dtd None) in
+  let floats = XmlParser.floats in
+  let parse_pages () = 
+    match XmlParser.next () with
+    [ `El_start ((_,"Pages"),_) ->
+      let rec loop res = 
+        match XmlParser.parse_element "page" [ "file"] with
+        [ Some [ file ] _ -> loop [ Texture.load (Filename.concat dirname file) :: res ]
+        | None -> res 
+        | _ -> assert False
+        ]
+      in
+      Array.of_list (List.rev (loop []))
+    | _ -> XmlParser.error "Font->Pages not found"
+    ]
+  in
+  match XmlParser.next () with
+  [ `El_start ((_,"Font"),attributes) -> 
+    match XmlParser.get_attributes "Font" ["face"; "style"; "kerning"] attributes with
+    [ [ face;style;kernign] ->
+      let pages = parse_pages () in
+      let rec parse_chars res = 
+        match XmlParser.next () with
+        [ `El_start ((_,"Chars"),attributes) ->
+          match XmlParser.get_attributes "Chars" [ "size"; "lineHeight"; "baseLine" ] attributes with
+          [ [ size; lineHeight; baseLine ] ->
+            let chars = Hashtbl.create 9 in
+            let rec loop () = 
+              match XmlParser.parse_element "char" [ "id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance";"page" ] with
+              [ Some [ id;x;y;width;height;xOffset;yOffset;xAdvance;page] _ -> (* запихнуть *)
+                (
+                  let charID = XmlParser.ints id in
+                   let bc = 
+                     let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
+                     let charTexture = Texture.createSubTexture region pages.(XmlParser.ints page) in
+                     { charID; xOffset = floats xOffset; yOffset = floats yOffset; xAdvance = floats xAdvance; charTexture }
+                   in
+                   Hashtbl.add chars charID bc;
+                   loop ()
+                )
+              | None -> ()
+              | _ -> assert False
+              ]
+            in
+            (
+              loop ();
+              let bf = { chars; scale=1.; baseLine =  floats baseLine; lineHeight = floats lineHeight } in
+              let res = MapInt.add (XmlParser.ints size) bf res in
+              parse_chars res
+            )
+          | _ -> assert False
+          ]
+        | `El_end -> res
+        | _ -> XmlParser.error "unknown signal"
+        ]
+      in
+      let sizes = parse_chars (try Hashtbl.find fonts face with [ Not_found -> MapInt.empty ]) in
+      Hashtbl.replace fonts face sizes
+    | _ -> assert False
+    ]
+  | _ -> XmlParser.error "Font not found"
+  ];
 
 module type Creator = sig
   module CompiledSprite : CompiledSprite.S;

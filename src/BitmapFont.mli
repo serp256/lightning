@@ -10,14 +10,15 @@ type bc =
 
 type t = 
   {
-    texture: Texture.c;
+(*     texture: Texture.c; *)
     chars: Hashtbl.t int bc;
-    name: string;
+(*     name: string; *)
     scale: float;
     baseLine: float;
     lineHeight: float;
   };
 value register: string -> unit;
+value registern: string -> unit;
 value exists: string -> bool;
 value get: ?applyScale:bool -> ?size:int -> string -> t;
 
