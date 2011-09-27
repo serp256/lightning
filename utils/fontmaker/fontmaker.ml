@@ -59,7 +59,7 @@ type sdescr =
 
 value parse_sizes str = 
   try
-    sizes.val := List.map float_of_string (String.nsplit str ",")
+    sizes.val := List.map int_of_string (String.nsplit str ",")
   with [ _ -> failwith "Failure parse sizes" ];
 
 value read_chars fname = pattern.val := String.strip (Std.input_file fname);
@@ -103,7 +103,7 @@ let xmlout = Xmlm.make_output (`Channel (open_out xmlfname)) in
   let imgs = ref [] in
   (
     List.iter begin fun size ->
-      make_size face size begin fun code xadvance xoffset yoffset img ->
+      make_size face (float size) begin fun code xadvance xoffset yoffset img ->
         let key = (code,size) in
         (
           imgs.val := [ (key,Images.Rgba32 img) :: !imgs ];
@@ -128,7 +128,7 @@ let xmlout = Xmlm.make_output (`Channel (open_out xmlfname)) in
         let imgname = Printf.sprintf "%s%d.png" fname i in
         (
           Images.save imgname (Some Images.Png) [] (Images.Rgba32 texture);
-          Xmlm.output xmlout (`El_start (("","Page"),["file" =|= imgname]));
+          Xmlm.output xmlout (`El_start (("","page"),["file" =|= imgname]));
           Xmlm.output xmlout `El_end;
         );
       )
@@ -137,7 +137,9 @@ let xmlout = Xmlm.make_output (`Channel (open_out xmlfname)) in
   );
   List.iter begin fun size ->
     (
-      Xmlm.output xmlout (`El_start (("","Chars"),[ "size" =.= size ]));
+      Freetype.set_char_size face (float size) 0. !dpi 0;
+      let sizeInfo = Freetype.get_size_metrics face in
+      Xmlm.output xmlout (`El_start (("","Chars"),[ "size" =*= size ; "lineHeight" =.= sizeInfo.Freetype.height; "baseLine" =.= sizeInfo.Freetype.ascender ]));
       UTF8.iter begin fun uchar ->
         let code = UChar.code uchar in
         let info = Hashtbl.find chars (code,size) in

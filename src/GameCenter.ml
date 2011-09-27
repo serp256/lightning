@@ -110,6 +110,7 @@ value report_achivement_failed identifier percentComplete = Debug.e "report achi
 Callback.register "report_achivement_failed" report_achivement_failed;
 
 value reportAchivement identifier percentComplete = 
+  let () = debug "report achivement" in
   match !state with
   [ NotInitialized -> failwith "GameCenter not initialized"
   | Initializing callbacks ->
