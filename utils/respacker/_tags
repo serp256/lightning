@@ -1,0 +1,2 @@
+<*.ml>: package(camlp4),syntax(camlp4r),package(camlimages.core)
+<respacker.{ml,byte,native}>: package(extlib),package(camlimages.png),package(json-wheel),package(xmlm)
