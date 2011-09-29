@@ -1,5 +1,7 @@
 (* Скрипт пакует данные swf потрошителя *)
 open ExtList;
+open ExtString;
+open Printf;
 
 value (//) = Filename.concat;
 value (=|=) k v = (("",k),v);
@@ -30,37 +32,62 @@ type lib = Hashtbl.t string element;
 
 type pos = (float*float);
 type texinfo = {page:mutable int; x:mutable int;y:mutable int; width: int;height:int};
-type children = list (int*pos);
-type frame = {children:children; label: option string; duration: int};
+type children = list (int * option string * pos);
+type frame = {children:children; label: option string; duration: mutable int};
 type iteminfo = [= `image of texinfo | `sprite of children | `clip of list frame ];
 
-value items = DynArray.create ();
+value items : DynArray.t iteminfo = DynArray.create ();
+
+(* value compare_img img1 img2 =  *)
+  (* возвращает либо что полностью идентичны, либо что отличаюца только по альфе *)
+
 value push_item item =
-(
-  DynArray.add items item;
-  (DynArray.length items) - 1;
-);
+  try
+    match item with
+    [ `sprite _ | `clip _ -> DynArray.index_of (fun i -> i = item) items
+    | `image _ -> raise Not_found
+    ]
+  with 
+  [ Not_found ->
+    (
+      DynArray.add items item;
+      (DynArray.length items) - 1;
+    )
+  ];
 
 value images = RefList.empty ();
 
 
 value add_image dirname mobj = 
   let img = Images.load (dirname // (Json_type.Browse.string (List.assoc "file" mobj))) [] in
-  let id = 
-    let (width,height) = Images.size img in
-    push_item (`image {page=0;x=0;y=0;width;height}) 
-  in
-  (
-    RefList.push images (id,img);
+  try
+    let (id,_) = RefList.find (fun (id,img') -> img = img') images in
     id
-  );
+  with 
+  [ Not_found ->
+      let id = 
+        let (width,height) = Images.size img in
+        push_item (`image {page=0;x=0;y=0;width;height}) 
+      in
+      (
+        RefList.push images (id,img);
+        id
+      )
+  ];
 
-value getpos jsinfo = let open Json_type.Browse in (float (List.assoc "x" jsinfo),float (List.assoc "y" jsinfo));
+value getpos jsinfo = let open Json_type.Browse in (number (List.assoc "x" jsinfo),number (List.assoc "y" jsinfo));
+
+(* можно при добавлении картинок палить что они такие-же только разница в альфе - это легко 
+ * а в группировке есть засада, что мы можем не понять что это одно и тоже так как мы с чем-то слепим и будет не круто
+ * *)
+
+(* value calc_diff oldchildrens newchildrens =  *)
 
 value rec process_children dirname children = 
   let open Json_type.Browse in
   list begin fun child ->
     let child = objekt child in
+    let name = try Some (string (List.assoc "name" child)) with [ Not_found -> None ] in
     let pos = getpos child in
     let id = 
       match string (List.assoc "type" child) with
@@ -69,10 +96,11 @@ value rec process_children dirname children =
       | _ -> assert False
       ]
     in
-    (id,pos)
+    (id,name,pos)
   end children
 and process_dir dirname = (* найти мету в этой директории и от нее плясать *)
-  let meta = Json_io.load_json (dirname // "META") in
+  let () = printf "process directory: %s\n%!" dirname in
+  let meta = Json_io.load_json (dirname // "meta.json") in
   let open Json_type.Browse in
   let mobj = objekt meta in
   match string (List.assoc "type" mobj) with
@@ -89,28 +117,39 @@ and process_dir dirname = (* найти мету в этой директори�
           {label;children;duration=1}
         end (List.assoc "frames" mobj)
       in
-      push_item (`clip frames)
+      (* вычислим duration *)
+      (* FIXME: придумать сдесь механизм изменений *)
+      let frames = 
+        List.fold_left begin fun frames frame -> 
+          match frames with
+          [ [ pframe :: _ ] when pframe = frame -> 
+            (
+              pframe.duration := pframe.duration + 1;
+              frames
+            )
+          | _ -> [ frame :: frames ]
+          ]
+        end [] frames
+      in
+      push_item (`clip (List.rev frames))
   | _ -> assert False
   ];
 
+value outdir = ref "output";
 
-value () = 
-  let indir = ref "TopPanel" in 
-  let outdir = ref "output" in
-  (* здесь нужно взять папку типа TopPanel - в которое будет много подпапок со всякими классами *)
-  (* найти все подпапки название подпапки - это название ресурса - и для каждого ресурса составить уже свой мета в xml формате, так как lightning очень любит xml 
-   * *)
+value do_work indir =
   let exports = RefList.empty () in
   (
     Array.iter begin fun fl ->
-      let dirname = !indir // fl in
+      let dirname = indir // fl in
       if Sys.is_directory dirname
       then
         let item_id = process_dir dirname in
         RefList.push exports (fl,item_id)
       else ()
-    end (Sys.readdir !indir);
-    let outdir = !outdir // !indir in
+    end (Sys.readdir indir);
+    let outdir = !outdir // (Filename.basename indir) in
+    let () = printf "output to %s\n%!" outdir in
     (
       if Sys.file_exists outdir 
       then 
@@ -122,11 +161,11 @@ value () =
       Unix.mkdir outdir 0o755;
       (* Теперича сохранить xml и усе *)
       let out = open_out (outdir // "lib.xml") in
-      let xmlout = Xmlm.make_output (`Channel out) in
+      let xmlout = Xmlm.make_output ~indent:(Some 2) (`Channel out) in
       (
         Xmlm.output xmlout (`Dtd None);
         Xmlm.output xmlout (`El_start (("","lib"),[]));
-        Xmlm.output xmlout (`El_start (("","textures"),[]));
+        Xmlm.output xmlout (`El_start (("","textures"),[])); (* write textures {{{*)
         let pages = TextureLayout.layout (RefList.to_list images) in
         List.iteri begin fun i (w,h,imgs) ->
           let texture = Rgba32.make w h bgcolor in
@@ -149,9 +188,19 @@ value () =
             )
           )
         end pages;
-        Xmlm.output xmlout `El_end;
-        Xmlm.output xmlout (`El_start (("","items"),[]));
-        DynArray.iteri begin fun id item ->
+        Xmlm.output xmlout `El_end;(*}}}*)
+        Xmlm.output xmlout (`El_start (("","items"),[]));(* write items {{{ *)
+        let write_children = 
+          List.iter begin fun (id,name,(posX,posY)) ->
+            (
+              let attrs = [ "id" =*= id; "posX" =.= posX; "posY" =.= posY ] in
+              let attrs = match name with [ Some n -> [ "name" =|= n :: attrs ] | None -> attrs ] in
+              Xmlm.output xmlout (`El_start (("","child"),attrs));
+              Xmlm.output xmlout `El_end;
+            )
+          end 
+        in
+        DynArray.iteri begin fun id item -> 
           (
             match item with
             [ `image info -> 
@@ -169,12 +218,7 @@ value () =
             | `sprite children ->
               (
                 Xmlm.output xmlout (`El_start (("","item"),[ "id" =*= id ; "type" =|= "sprite" ]));
-                List.iter begin fun (id,(posX,posY)) ->
-                  (
-                    Xmlm.output xmlout (`El_start (("","child"),[ "id" =*= id; "posX" =.= posX; "posY" =.= posY ]));
-                    Xmlm.output xmlout `El_end;
-                  )
-                end children
+                write_children children;
               )
             | `clip frames ->
               (
@@ -184,12 +228,7 @@ value () =
                     let attrs = [ "duration" =*= frame.duration ] in 
                     let attrs = match frame.label with [ Some l -> [ "label" =|= l :: attrs ] | None -> attrs ] in
                     Xmlm.output xmlout (`El_start (("","frame"),attrs));
-                    List.iter begin fun (id,(posX,posY)) ->
-                    (
-                      Xmlm.output xmlout (`El_start (("","child"),[ "id" =*= id; "posX" =.= posX; "posY" =.= posY ]));
-                      Xmlm.output xmlout `El_end;
-                    )
-                    end frame.children;
+                    write_children frame.children;
                     Xmlm.output xmlout `El_end;
                   )
                 end frames;
@@ -198,19 +237,32 @@ value () =
             Xmlm.output xmlout `El_end;
           )
         end items;
-        Xmlm.output xmlout `El_end;
-        Xmlm.output xmlout (`El_start (("","symbols"),[]));
+        Xmlm.output xmlout `El_end;(*}}}*)
+        Xmlm.output xmlout (`El_start (("","symbols"),[])); (* write symbols {{{*)
         RefList.iter begin fun (cls,id) ->
           (
             Xmlm.output xmlout (`El_start (("","symbol"),[ "class" =|= cls; "id" =*= id ]));
             Xmlm.output xmlout `El_end;
           )
         end exports;
-        Xmlm.output xmlout `El_end;
+        Xmlm.output xmlout `El_end;(*}}}*)
         Xmlm.output xmlout `El_end;
         close_out out;
       )
-    )
+    );
+  );
+
+
+value () = 
+  let indir = ref None in
+  (
+    Arg.parse [ ("-o",Arg.Set_string outdir,"outpud directory") ] (fun id -> indir.val := Some id) "usage msg";
+    match !indir with
+    [ None -> failwith "You must spec input dir"
+    | Some indir -> 
+        let indir = if indir.[String.length indir - 1] = '/' then String.rchop indir else indir in
+        do_work indir
+    ]
   );
 
 (*
