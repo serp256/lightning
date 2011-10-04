@@ -39,3 +39,4 @@ value join r1 r2 =
 
 value to_ints r = (int_of_float r.x, int_of_float r.y, int_of_float r.width, int_of_float r.height);
 value to_string {x=x;y=y;width=width;height=height} = Printf.sprintf "[x=%f,y=%f,width=%f,height=%f]" x y width height;
+value offset rect dx dy = {(rect) with x = rect.x +. dx; y = rect.x +. dy};  
