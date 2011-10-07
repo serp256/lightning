@@ -8,8 +8,15 @@ module Program = struct
 
   type shader_type = [ Vertex | Fragment ];
   type shader;
+
   external compile_shader: shader_type -> string -> shader = "ml_compile_shader";
-  external create_program: shader -> shader -> list attributes -> list uniforms = "ml_create_program";
+
+  type attribute = [ AttribPosition | AttribColor | AttribTexCoords ];
+
+  type t 'uniforms;
+
+  type uniformValue 
+  external create_program: shader -> shader -> list (attribute * string) -> list ('uniform * string) -> t 'uniform = "ml_create_program";
 
 end;
 
@@ -23,7 +30,7 @@ module Quad = struct
   external alpha: t -> float = "ml_quad_alpha";
   external set_alpha: t -> float -> unit = "ml_alpha_set_alpha";
   external colors: t -> array int = "ml_quad_colors";
-  external render: Matrix.t -> ?alpha:float -> t -> unit = "ml_quad_render";
+  external render: Matrix.t -> Program.t 'a -> ?uniforms -> ?alpha:float -> t -> unit = "ml_quad_render";
 
 end;
 

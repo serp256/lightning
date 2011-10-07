@@ -156,7 +156,7 @@ struct custom_operations shader_ops = {
   custom_deserialize_default
 };
 
-value ml_compile_shader(vlaue stype,value shader_src) {
+value ml_compile_shader(value stype,value shader_src) {
 	GLenum type;
 	if (stype = 1) type = GL_VERTEX_SHADER; else type = GL_FRAGMENT_SHADER;
 	GLuint shader = glCreateShader(type);
