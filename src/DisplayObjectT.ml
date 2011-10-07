@@ -19,7 +19,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     type 'parent = 
       < 
         asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': Ev.t evType evData -> _c _ -> unit; 
-        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; modified: unit -> unit; .. >;
+        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; boundsChanged: unit -> unit; .. >;
 (*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
     type 'event = Ev.t evType evData;
@@ -77,7 +77,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method private hitTestPoint': Point.t -> bool -> option (_c _);
     method hitTestPoint: Point.t -> bool -> option (_c _) ;
     method virtual bounds: Rectangle.t;
-    method transformGLMatrix: unit -> unit;
+(*     method transformGLMatrix: unit -> unit; *)
     method transformationMatrix: Matrix.t;
     method setTransformationMatrix: Matrix.t -> unit;
     method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t;
@@ -91,7 +91,8 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method virtual dcast: [= `Object of _c _ | `Container of 'parent ];
     method root: _c _;
     method stage: option 'parent;
-    method modified: unit -> unit;
+(*     method modified: unit -> unit; *)
+    method boundsChanged: unit -> unit; (* FIXME: move it to container *)
     (* need to be hidden *)
     method clearParent: hidden unit -> unit;
     method setParent: hidden 'parent -> unit;
@@ -124,7 +125,6 @@ class virtual container:
     method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
-    method renderPrepare: unit -> unit;
   end;
 
 

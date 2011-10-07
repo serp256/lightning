@@ -15,17 +15,17 @@ end;
 
 module Make(Param:sig type evType = private [> eventType ]; type evData = private [> eventData ]; end) = struct
   module DisplayObject = DisplayObject.Make Param;
-  module Shape = Shape.Make DisplayObject;
+(*   module Shape = Shape.Make DisplayObject; *)
   module Quad = Quad.Make DisplayObject;
-  module Image = Image.Make Quad;
+(*   module Image = Image.Make Quad; *)
   module Sprite = Sprite.Make DisplayObject;
-  module CompiledSprite = CompiledSprite.Make Image Sprite;
-  module MovieClip = MovieClip.Make DisplayObject Image;
-  module BitmapFontCreator = BitmapFont.MakeCreator Image CompiledSprite;
-  module TextField = TextField.Make Quad BitmapFontCreator; 
-  module TLF = TLF.Make Image CompiledSprite;
-  module FPS = FPS.Make DisplayObject TextField;
-  module Button = Button.Make DisplayObject Sprite Image TextField;
+(*   module CompiledSprite = CompiledSprite.Make Image Sprite; *)
+(*   module MovieClip = MovieClip.Make DisplayObject Image; *)
+(*   module BitmapFontCreator = BitmapFont.MakeCreator Image CompiledSprite; *)
+(*   module TextField = TextField.Make Quad BitmapFontCreator;  *)
+(*   module TLF = TLF.Make Image CompiledSprite; *)
+(*   module FPS = FPS.Make DisplayObject TextField; *)
+(*   module Button = Button.Make DisplayObject Sprite Image TextField; *)
   module Stage = Stage.Make DisplayObject;
 end;
 
@@ -65,9 +65,10 @@ type stage_constructor =
 (* value _stage: ref (option (float -> float -> stage eventTypeDisplayObject eventEmptyData)) = ref None; *)
 
 IFDEF SDL THEN
+external setupOrthographicRendering: float -> float -> float -> float -> unit = "ml_setupOrthographicRendering";
 value init s = 
   let s = (s :> stage_constructor) in
-  Sdl_run.run s;
+  Sdl_run.run s (fun w h -> setupOrthographicRendering 0. w 0. h);
 ELSE
 value _stage : ref (option stage_constructor) = ref None;
 value init s = 

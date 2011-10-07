@@ -94,6 +94,7 @@
 		NSLog(@"Layout subviews");
     [self destroyFramebuffer]; // reset framebuffer (scale factor could have changed)
     [self createFramebuffer];
+		mlstage_setSize(mWidth,mHeight);
     [self renderStage];        // fill buffer immediately to avoid flickering
 }
 

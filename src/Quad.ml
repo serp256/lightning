@@ -1,7 +1,6 @@
-open Gl;
 open LightCommon;
 
-value gl_quad_colors = make_word_array 4;
+(* value gl_quad_colors = make_word_array 4; *)
 
 module type S = sig
 
@@ -10,10 +9,10 @@ module type S = sig
   class c: [ ?color:int] -> [ float ] -> [ float ] ->
     object
       inherit D.c; 
-      value vertexColors: array int;
-      value vertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout;
-      method updateSize: float -> float -> unit;
-      method copyVertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
+(*       value vertexColors: array int; *)
+(*       value vertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout; *)
+(*       method updateSize: float -> float -> unit; *)
+(*       method copyVertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
       method setColor: int -> unit;
       method color: int;
       method vertexColors: Enum.t int;
@@ -34,6 +33,9 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
     object(self)
       inherit D.c as super;
 
+      value quad = Render.Quad.create width height color 1.;
+
+      (*
       value vertexCoords = 
         let a = make_float_array 8 in
         let () = Bigarray.Array1.fill a 0. in
@@ -53,11 +55,12 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
           vertexCoords.{5} := height;
           vertexCoords.{6} := width;
           vertexCoords.{7} := height;
-          self#modified();
+          self#boundsChanged();
         )
         else ();
 
       method copyVertexCoords dest = Bigarray.Array1.blit vertexCoords dest;
+      *)
 
         (*
         let a = Array.make 8 0. in
@@ -70,42 +73,37 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
         );
         *)
         
-      value vertexColors = Array.make 4 color;
+(*       value vertexColors = Array.make 4 color; *)
   (*     method vertexColors = vertexColors; *)
-      method vertexColors = ExtArray.Array.enum vertexColors;
+(*       method vertexColors = ExtArray.Array.enum vertexColors; *)
+      method vertexColors: Enum.t int = Enum.empty ();
 
-      method setColor color =
+      method setColor color = Render.Quad.set_color quad color;
+        (*
         for i = 0 to 3 do
           vertexColors.(i) := color;
         done;
+        *)
 
-      method color = vertexColors.(0);
+      method color = (* vertexColors.(0); *) Render.Quad.color quad;
 
       method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
+        let vertexCoords = Render.Quad.points quad in
         match targetCoordinateSpace with
-        [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. vertexCoords.{6} vertexCoords.{7} (* optimization *)
+        [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. width height (* optimization *)
         | _ -> 
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
-          let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
-          (
-            for i = 0 to 3 do
-              let p = (vertexCoords.{2*i},vertexCoords.{2*i+1}) in
-              let (tx,ty) = Matrix.transformPoint transformationMatrix p in
-              (
-                if ar.(0) > tx then ar.(0) := tx else ();
-                if ar.(1) < tx then ar.(1) := tx else ();
-                if ar.(2) > ty then ar.(2) := ty else ();
-                if ar.(3) < ty then ar.(3) := ty else ();
-              )
-            done;
-            Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2));
-          )
+          let ar = Matrix.transformPoints transformationMatrix vertexCoords in
+          Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
         ];
 
 
-      method private render' _ = 
+      method private render' _ = Render.Quad.render self#transformationMatrix quad;
+      (*
       (
         debug "render quad";
+        (* есть идея хранить эти ебанные цвета сразу в сцанных массивах нахуй *)
+        render_quad 
         RenderSupport.clearTexture();
         (* optimize it!  
         for i = 0 to 3 do
@@ -125,6 +123,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
         glDisableClientState gl_vertex_array;
         glDisableClientState gl_color_array;
       );
+      *)
 
       
     end;(*}}}*)

@@ -2,15 +2,13 @@ include ../Makefile.common
 
 
 
-MLCFLAGS = 
 %.o: %.c
-	$(OCAMLOPT) -I . -verbose -g  $(if $(MLCOPTS),$(patsubst %,-ccopt %,$(MLCOPTS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
+	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 
 GLPARAM = 
-CFLAGS += -I .
 
-MOBJS = texture_common.o
+MOBJS = texture_common.o render.o
 MLOBJSFLAGS = 
 MLFLAGS +=  -package extlib -I containers -I utils
 MLDEPFLAGS =
@@ -18,6 +16,8 @@ MLDEPFLAGS =
 release: lightning.cmxa syntax/pa_prop.cmo
 debug: release
 
+KAZMATHOBJS = utility.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o GL/mat4stack.o GL/matrix.o
+KAZMATH = $(patsubst %,kazmath/%,$(KAZMATHOBJS))
 MLPPOPT = syntax/pa_debug.cmo
 
 SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
@@ -67,11 +67,15 @@ else
 endif
 
 
-MOBJS += $(gl)/gl_stub.o 
+#MOBJS += $(gl)/gl_stub.o 
 
-MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml Graphics.ml\
+#MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml Graphics.ml\
 					DisplayObject.ml Shape.ml Sprite.ml Quad.ml Texture.ml RenderTexture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml TLF.ml FPS.ml Timers.ml Timer.ml \
 					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
+
+MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml \
+					DisplayObject.ml Quad.ml Touch.ml Timers.ml Timer.ml Sprite.ml \
+					Stage.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
 	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),$(patsubst %,-ccopt %,$(GLPARAM))) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
 
@@ -85,19 +89,21 @@ MLUTILS = utils/UrlEncoding.ml
 MLCONTAINERSOBJS = $(MLCONTAINERS:.ml=.cmx)
 MLUTILSOBJS = $(MLUTILS:.ml=.cmx)
 MLOBJS = $(MLSOURCES:.ml=.cmx)
-$(MLOBJS): MLFLAGS += -package xmlm -I $(gl) $(MLOBJSFLAGS)
+#$(MLOBJS): MLFLAGS += -package xmlm -I $(gl) $(MLOBJSFLAGS)
+$(MLOBJS): MLFLAGS += -package xmlm  $(MLOBJSFLAGS)
 $(MLOBJS): Debug.cmx
 
 $(MLOBJS) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
 -include debug.conf
 	
-lightning.cmxa: MLDepend.$(PLATFORM) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
-	$(OCAMLMKLIB) -verbose -o lightning $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
+lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
+	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLFLAGS) -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLFLAGS) -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
-	$(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLFLAGS) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES:.ml=.mli) $(MLSOURCES) >> MLDepend.$(PLATFORM)
+# $(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
 
 
 doc:

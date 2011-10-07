@@ -23,6 +23,7 @@
  */
 
 #include <stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <SDL/SDL.h>
@@ -63,7 +64,7 @@ value cons(value x,value l)
 {
 	CAMLparam2(x,l);
 	CAMLlocal1(m);
-	m=alloc(2,CONS_tag);
+	m=caml_alloc(2,CONS_tag);
 	Store_field(m,0,x);
 	Store_field(m,1,l);
 	CAMLreturn (m);
@@ -190,7 +191,7 @@ value val_video_flag(int flags)
 /* raising SDL_failure exception */
 
 void raise_failure() {
-	raise_with_string(*caml_named_value("SDL_failure"), SDL_GetError());
+	caml_raise_with_string(*caml_named_value("SDL_failure"), SDL_GetError());
 }
 
 value sdlstub_init(value vf) {
@@ -211,7 +212,7 @@ value sdlstub_get_error(value u){
 	CAMLparam1(u);
 	CAMLlocal1(result);
 	char *s = SDL_GetError();
-	Store_field (result, 0, copy_string(s));
+	Store_field (result, 0, caml_copy_string(s));
 	CAMLreturn (result);
 }
 
@@ -319,7 +320,7 @@ value sdlstub_string_of_pixels(value s) {
 	CAMLlocal1(v);
 	SDL_Surface * surf = (SDL_Surface *)Field(s,0);
 	int n = surf->w * surf->h * surf->format->BytesPerPixel;
-	v = alloc_string(n);
+	v = caml_alloc_string(n);
 	memcpy(String_val(v), surf->pixels, n);
 	CAMLreturn(v);
 }
@@ -458,7 +459,7 @@ value sdlstub_unlock_surface(value s) {
 value sdlstub_surface_pixels(value ps) {
 	CAMLparam1(ps);
 	SDL_Surface *s = ((SDL_Surface*) Field(ps,0));
-	CAMLreturn (alloc_bigarray_dims(BIGARRAY_UINT8 | BIGARRAY_C_LAYOUT, 1, s->pixels, s->w * s->h * (s->format->BitsPerPixel/8)));
+	CAMLreturn (caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, s->pixels, s->w * s->h * (s->format->BitsPerPixel/8)));
 }
 
 value sdlstub_surface_width(value s) {
@@ -605,7 +606,7 @@ value sdlstub_update_rects(value s, value vn, value arr){
 	int i;
 	SDL_Rect* rects;
 	
-	if (Wosize_val(arr) < n) invalid_argument("update_rects");
+	if (Wosize_val(arr) < n) caml_invalid_argument("update_rects");
 	rects = (SDL_Rect*) malloc(n * sizeof(SDL_Rect));
 	for (i = 0; i < n; i++) {
 		v = Field(arr,i);
@@ -626,7 +627,6 @@ value sdlstub_flip(value s) {
 }
 
 SDL_Rect* rect_from_option(value v,SDL_Rect* r) {
-	CAMLparam1(v);
 	value vr;
 	if (v == Val_int(0)) { 
 	/* None */
@@ -644,12 +644,11 @@ SDL_Rect* rect_from_option(value v,SDL_Rect* r) {
 
 /* assumption: v = Some rect  and  r is not NULL */
 void update_rect_option(value v, SDL_Rect* r) {
-	CAMLparam1(v);
 	value vr = Field(v,0);
-	modify(&Field(vr,0), Val_int(r->x));
-	modify(&Field(vr,1), Val_int(r->y));
-	modify(&Field(vr,2), Val_int(r->w));
-	modify(&Field(vr,3), Val_int(r->h));
+	caml_modify(&Field(vr,0), Val_int(r->x));
+	caml_modify(&Field(vr,1), Val_int(r->y));
+	caml_modify(&Field(vr,2), Val_int(r->w));
+	caml_modify(&Field(vr,3), Val_int(r->h));
 }
 
 value sdlstub_blit_surface(value src, value srcr, value dst, value dstr) {
@@ -676,9 +675,9 @@ value sdlstub_set_colors(value s, value arr, value vfirst, value vn) {
 	value v;
 	SDL_Color* colors;
 	
-	if (ncolors < 0 || ncolors > Wosize_val(arr)) invalid_argument("set_colors");
+	if (ncolors < 0 || ncolors > Wosize_val(arr)) caml_invalid_argument("set_colors");
 	colors = (SDL_Color*) malloc(ncolors * sizeof(SDL_Color));
-	if (colors == NULL) raise_out_of_memory();
+	//if (colors == NULL) raise_out_of_memory();
 	for (i=0; i<ncolors; i++) {
 		v = Field(arr,i);
 		colors[i].r = Int_val(Field(v,0));
@@ -703,7 +702,7 @@ value sdlstub_warp_mouse(value x, value y)
 	CAMLparam2(x,y);
 	int lx = Int_val(x);
 	int ly = Int_val(y);
-	SDL_WarpMouse(x,y);
+	SDL_WarpMouse(lx,ly);
 	CAMLreturn(Val_unit);	
 }
 
@@ -712,7 +711,7 @@ value sdlstub_warp_mouse(value x, value y)
 
 int ML_flags_to_mask(value flags, int flag_to_cvalue[])
 {
-	int i,n;
+	//int i,n;
 	int mask=0;
 	CAMLparam0();
 	while(Is_block(flags))
@@ -731,12 +730,12 @@ value carray_to_ML_list(int carray[], int arr_size)
 	
 	if(arr_size==0)
 	CAMLreturn(Val_int(0));
-	toreturn=alloc(2,0);
+	toreturn=caml_alloc(2,0);
 	Store_field(toreturn, 0, Val_int(carray[0]));
 	tail=toreturn;
 	for(i=1;i<arr_size;i++)
 	{
-		Field(tail,1) = alloc(2,0);
+		Field(tail,1) = caml_alloc(2,0);
 		tail=Field(tail,1);
 		Store_field(tail, 0, Val_int(carray[i]));
 	}
@@ -813,13 +812,13 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 {
     CAMLparam0 ();
     CAMLlocal2(ML_event, to_return);
-    int i;
+    //int i;
 
     switch (event.type) 
     {
 	case SDL_ACTIVEEVENT: 
 	{
-    	    ML_event=alloc(2, 0);
+    	    ML_event=caml_alloc(2, 0);
 	    Store_field(ML_event, 0, Val_int(event.active.gain));
 	    if (event.active.state & SDL_APPACTIVE) 
 		Store_field(ML_event, 1, Val_int(2));
@@ -828,27 +827,27 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    else
 		Store_field(ML_event, 1, Val_int(0));
 	
-	    to_return=alloc(1,0);
+	    to_return=caml_alloc(1,0);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_KEYDOWN:
 	case SDL_KEYUP:
 	{
-	    ML_event=alloc(5,0);
+	    ML_event=caml_alloc(5,0);
 	    Store_field(ML_event, 0, Val_int(event.key.state));
 	    Store_field(ML_event, 1, Val_int(event.key.keysym.scancode));
 	    Store_field(ML_event, 2, Val_int(key_to_flag[event.key.keysym.sym]));
 	    Store_field(ML_event, 3, 
 		mask_to_ML_flags(event.key.keysym.mod, flag_to_mod, 12));
 	    Store_field(ML_event, 4, Val_int(event.key.keysym.unicode));
-	    to_return=alloc(1, 1);
+	    to_return=caml_alloc(1, 1);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_MOUSEMOTION:
 	{
-	    ML_event=alloc(5,0);
+	    ML_event=caml_alloc(5,0);
 	    switch(event.motion.state)
 	    {
 		case 0: Store_field(ML_event, 0, Val_int(0));break;
@@ -860,73 +859,73 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    Store_field(ML_event, 3, Val_int(event.motion.xrel));
 	    Store_field(ML_event, 4, Val_int(event.motion.yrel));
 	    
-	    to_return=alloc(1,2);
+	    to_return=caml_alloc(1,2);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
 	{
-	    ML_event=alloc(4,0);
+	    ML_event=caml_alloc(4,0);
 
 	    Store_field(ML_event, 0, Val_int(event.button.button - 1));
 	    Store_field(ML_event, 1, Val_int(event.button.state));
 	    Store_field(ML_event, 2, Val_int(event.button.x));
 	    Store_field(ML_event, 3, Val_int(event.button.y));
 	    
-	    to_return=alloc(1,3);
+	    to_return=caml_alloc(1,3);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_JOYAXISMOTION:
 	{
-	    ML_event=alloc(3,0);
+	    ML_event=caml_alloc(3,0);
 	    Store_field(ML_event, 0, Val_int(event.jaxis.which));
 	    Store_field(ML_event, 1, Val_int(event.jaxis.axis));
 	    Store_field(ML_event, 2, Val_int(event.jaxis.value));
-	    to_return=alloc(1,4);
+	    to_return=caml_alloc(1,4);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_JOYBALLMOTION:
 	{
-	    ML_event=alloc(4,0);
+	    ML_event=caml_alloc(4,0);
 	    Store_field(ML_event, 0, Val_int(event.jball.which));
 	    Store_field(ML_event, 1, Val_int(event.jball.ball));
 	    Store_field(ML_event, 2, Val_int(event.jball.xrel));
 	    Store_field(ML_event, 3, Val_int(event.jball.yrel));
-	    to_return=alloc(1,5);
+	    to_return=caml_alloc(1,5);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_JOYHATMOTION:
 	{
-	    ML_event=alloc(3,0);
+	    ML_event=caml_alloc(3,0);
 	    Store_field(ML_event, 0, Val_int(event.jhat.which));
 	    Store_field(ML_event, 1, Val_int(event.jhat.hat));
 	    Store_field(ML_event, 2, Val_int(event.jhat.value));
-	    to_return=alloc(1,6);
+	    to_return=caml_alloc(1,6);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_JOYBUTTONUP:
 	case SDL_JOYBUTTONDOWN:
 	{
-	    ML_event=alloc(3,0);
+	    ML_event=caml_alloc(3,0);
 	    Store_field(ML_event, 0, Val_int(event.jbutton.which));
 	    Store_field(ML_event, 1, Val_int(event.jbutton.button));
 	    Store_field(ML_event, 2, Val_int(event.jbutton.state));
-	    to_return=alloc(1,7);
+	    to_return=caml_alloc(1,7);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_VIDEORESIZE:
 	{
-	    ML_event=alloc(2,0);
+	    ML_event=caml_alloc(2,0);
 	    Store_field(ML_event, 0, Val_int(event.resize.w));
 	    Store_field(ML_event, 1, Val_int(event.resize.h));
 	    
-	    to_return=alloc(1,8);
+	    to_return=caml_alloc(1,8);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
@@ -942,18 +941,18 @@ value SDL_event_to_ML_tevent(SDL_Event event)
     /* ... */
 	case SDL_NUMEVENTS-1:
 	{
-	    ML_event=alloc(3,0);
+	    ML_event=caml_alloc(3,0);
 	    Store_field(ML_event, 0, Val_int(event.user.code));
 	    Store_field(ML_event, 1, (value)(event.user.data1));
 	    Store_field(ML_event, 2, (value)(event.user.data2));
 	    
-	    to_return=alloc(1,9);
+	    to_return=caml_alloc(1,9);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
 	case SDL_SYSWMEVENT:
 	{
-	    to_return=alloc(1,10);
+	    to_return=caml_alloc(1,10);
 	    Store_field(to_return, 0, (value)(event.syswm.msg));
 	    CAMLreturn(to_return);
 	}
@@ -1005,7 +1004,7 @@ value sdlstub_get_mouse_state(value u)
 	CAMLparam1(u);
 	CAMLlocal1(toreturn);
 	int x,y,but;
-	toreturn=alloc(3,0);
+	toreturn=caml_alloc(3,0);
 	but=SDL_GetMouseState(&x,&y);
 	switch(but)
 	{
@@ -1049,7 +1048,7 @@ void sdlstub_set_mod_state(value flags)
 value sdlstub_get_key_name(value ML_key)
 {
 	CAMLparam1(ML_key); /* perhaps GC likes CAMLlocal(toreturn); toreturn= */
-	CAMLreturn(copy_string(SDL_GetKeyName(flag_to_key[Int_val(ML_key)])));
+	CAMLreturn(caml_copy_string(SDL_GetKeyName(flag_to_key[Int_val(ML_key)])));
 }
 
 
@@ -1069,8 +1068,8 @@ value sdlstub_get_caption(value u)
 	 CAMLlocal1 (result);
 	 char *title, *icon;
 	 SDL_WM_GetCaption( &title, &icon );
-	 Store_field (result, 0, copy_string(title));
-	 Store_field (result, 1, copy_string(icon));
+	 Store_field (result, 0, caml_copy_string(title));
+	 Store_field (result, 1, caml_copy_string(icon));
 	 CAMLreturn (result);  
 }
 
@@ -1168,7 +1167,7 @@ value sdlstub_get_attribute(value a)
 /* audio */
 static void __audio_callback(void *userdata, unsigned char *stream, int len)
 {
-	caml_callback(*caml_named_value("ml_setaudiocallback"), alloc_bigarray_dims(BIGARRAY_UINT8 | BIGARRAY_C_LAYOUT, 1, stream, len));
+	caml_callback(*caml_named_value("ml_setaudiocallback"), caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, stream, len));
 }
 
 
@@ -1214,14 +1213,14 @@ value sdlstub_load_wav(value file) {
 	Store_field (result, 3, Val_int((int)wav_spec.silence));
 	Store_field (result, 4, Val_int((int)wav_spec.samples));
 	Store_field (result, 5, Val_int((int)wav_spec.size));
-	Store_field (result, 6, alloc_bigarray_dims(BIGARRAY_UINT8 | BIGARRAY_C_LAYOUT, 1, wav_buffer, wav_length));
+	Store_field (result, 6, caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, wav_buffer, wav_length));
 	CAMLreturn (result); 
 }
 
 
 value sdlstub_free_wav(value wav) {
 	CAMLparam1(wav);
-	SDL_FreeWAV(Data_bigarray_val(wav));
+	SDL_FreeWAV(Caml_ba_data_val(wav));
 	CAMLreturn (Val_unit);
 }
 
@@ -1252,7 +1251,7 @@ value sdlstub_get_audio_status(value u) {
 
 value sdlstub_mix_audio(value b1, value b2, value volume){
 	CAMLparam3(b1, b2, volume);
-	SDL_MixAudio(Data_bigarray_val(b1), Data_bigarray_val(b2), Bigarray_val(b1)->dim[0], Int_val(volume));
+	SDL_MixAudio(Caml_ba_data_val(b1), Caml_ba_data_val(b2), Caml_ba_array_val(b1)->dim[0], Int_val(volume));
 	CAMLreturn (Val_unit);
 }
 
@@ -1261,8 +1260,8 @@ value sdlstub_convert_audio(value from_format, value from_channels, value from_f
 	CAMLparam5(from_format, from_channels, from_freq, to_format, to_channels);
 	CAMLxparam2(to_freq, buffer);
 	SDL_AudioCVT  wav_cvt;
-	int wav_len = Bigarray_val(buffer)->dim[0];
-	unsigned char *wav_buf = Data_bigarray_val(buffer); 
+	int wav_len = Caml_ba_array_val(buffer)->dim[0];
+	unsigned char *wav_buf = Caml_ba_data_val(buffer); 
 	if(!SDL_BuildAudioCVT(&wav_cvt, Int_val(from_format), Int_val(from_channels), Int_val(from_freq),
 	                    Int_val(to_format), Int_val(to_channels), Int_val(to_freq)) ){
 	    caml_failwith("Unable to carry out conversion");
@@ -1271,7 +1270,7 @@ value sdlstub_convert_audio(value from_format, value from_channels, value from_f
 	wav_cvt.len = wav_len;
 	memcpy(wav_cvt.buf, wav_buf, wav_len);
 	SDL_ConvertAudio(&wav_cvt);
-	CAMLreturn (alloc_bigarray_dims(BIGARRAY_UINT8 | BIGARRAY_C_LAYOUT, 1, wav_cvt.buf, wav_len * wav_cvt.len_mult));
+	CAMLreturn (caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, wav_cvt.buf, wav_len * wav_cvt.len_mult));
 }
 
 value sdlstub_convert_audio_byte(value * argv, int n){
@@ -1304,7 +1303,7 @@ value fxstub_shift(value shift, value source, value target)
 {
 	CAMLparam3(shift, source, target);
 	int consumed = 0;
-	consumed = fxShift(Double_val(shift), Data_bigarray_val(source), Data_bigarray_val(target), Bigarray_val(target)->dim[0] );
+	consumed = fxShift(Double_val(shift), Caml_ba_data_val(source), Caml_ba_data_val(target), Caml_ba_array_val(target)->dim[0] );
 	CAMLreturn (Val_int(consumed));
 }
 
@@ -1329,7 +1328,7 @@ void fxPan(double pan, double vol, Uint8 *buf, Uint8 *out, int len) {
 value fxstub_pan(value pan, value vol, value buf, value out)
 {
 	CAMLparam4(pan, vol, buf, out);
-	fxPan(Double_val(pan), Double_val(vol), Data_bigarray_val(buf), Data_bigarray_val(out), Bigarray_val(buf)->dim[0]);
+	fxPan(Double_val(pan), Double_val(vol), Caml_ba_data_val(buf), Caml_ba_data_val(out), Caml_ba_array_val(buf)->dim[0]);
 	CAMLreturn (Val_unit);
 }
 

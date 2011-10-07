@@ -1,11 +1,12 @@
 open Sdl;
 open Video;
 open Window;
-open Gl;
 
 
+(*
 value init_gl width height =
   glViewport 0 0 width height;
+*)
 
 
 
@@ -23,7 +24,7 @@ value handle_events (width,height) frameRate stage =
       let ticks = Sdl.Timer.get_ticks () in
       (
         stage#advanceTime ((float (ticks - lastTicks)) /. 1e3);
-        glViewport 0 0 width height;
+(*         glViewport 0 0 width height; *)
         stage#render None;
         SDLGL.swap_buffers();
         match quit with
@@ -86,7 +87,7 @@ value handle_events (width,height) frameRate stage =
     );
   
 
-value run stage_create = 
+value run stage_create setSize = 
   let width = ref 768 and height = ref 1024 and frameRate = ref 30 in
   (
     Arg.parse [("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");("-frame-rate",Arg.Set_int frameRate,"frame rate")] (fun _ -> ()) "";
@@ -95,9 +96,9 @@ value run stage_create =
     let bpp = 32 in
     (
       ignore(set_video_mode !width !height bpp [ OPENGL ]);
-      (*init_gl !width !height;*)
       let stage = stage_create (float !width) (float !height) in
       (
+        setSize (float !width) (float !height);
         set_caption stage#name "";
         handle_events (!width,!height) !frameRate stage;
       )

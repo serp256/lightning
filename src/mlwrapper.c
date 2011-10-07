@@ -4,6 +4,7 @@
 #include <caml/callback.h>
 #include <caml/alloc.h>
 #include "mlwrapper.h"
+#include "render.h"
 
 #define NIL Val_int(0)
 
@@ -43,6 +44,15 @@ mlstage *mlstage_create(float width,float height) {
 	PRINT_DEBUG("stage successfully created");
 	return stage;
 }
+
+
+void setSize(mlstage *mlstage,float width,float height) {
+	stage->width = width;
+	stage->height = height;
+	setuporthographicrendering(0, width, 0, height);
+	// FIXME: set stage params 
+}
+
 
 void mlstage_destroy(mlstage *mlstage) {
 	caml_acquire_runtime_system();

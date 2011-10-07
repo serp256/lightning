@@ -73,6 +73,24 @@ value transformPoint m (x,y) =
     m.b*.x +. m.d*.y +. m.ty
   );
 
+
+value transformPoints matrix points = 
+  let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+  (
+    for i = 0 to (Array.length points) - 1 do
+      let p = points.(i) in
+      let (tx,ty) = transformPoint matrix p in
+      (
+        if ar.(0) > tx then ar.(0) := tx else ();
+        if ar.(1) < tx then ar.(1) := tx else ();
+        if ar.(2) > ty then ar.(2) := ty else ();
+        if ar.(3) < ty then ar.(3) := ty else ();
+      )
+    done;
+    ar
+  );
+  
+
 value transformRectangle m rect = 
   let points = Rectangle.points rect in
   let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in

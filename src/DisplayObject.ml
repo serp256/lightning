@@ -1,4 +1,3 @@
-open Gl;
 open LightCommon;
 
 type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE | `ENTER_FRAME ]; 
@@ -19,21 +18,6 @@ exception Invalid_index;
 exception Child_not_found;
 
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
-value transform_points points matrix = 
-  let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
-  (
-    for i = 0 to (Array.length points) - 1 do
-      let p = points.(i) in
-      let (tx,ty) = Matrix.transformPoint matrix p in
-      (
-        if ar.(0) > tx then ar.(0) := tx else ();
-        if ar.(1) < tx then ar.(1) := tx else ();
-        if ar.(2) > ty then ar.(2) := ty else ();
-        if ar.(3) < ty then ar.(3) := ty else ();
-      )
-    done;
-    ar
-  );
 
 
 DEFINE RENDER_WITH_MASK(call_render) = 
@@ -49,17 +33,17 @@ DEFINE RENDER_WITH_MASK(call_render) =
           ]
       ]
     in
-    match transform_points maskPoints matrix with
+    match Matrix.transformPoints matrix maskPoints with
     [ [| minX; maxX; minY; maxY |] ->
       let sheight = stage#height in
       (
         let minY = sheight -. maxY
         and maxY = sheight -. minY in
         (
-          glEnable gl_scissor_test;
-          glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY));
+(*           glEnable gl_scissor_test; *)
+(*           glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY)); *)
           call_render;
-          glDisable gl_scissor_test;
+(*           glDisable gl_scissor_test; *)
         )
       )
     | _ -> assert False
@@ -82,6 +66,19 @@ value dispatchEnterFrame seconds =
   SetD.iter (fun obj -> let () = debug:enter_frame "dispatch enter frame on: %s" obj#name in obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
 
 DEFINE RESET_TRANSFORMATION_MATRIX = match transformationMatrix with [ Some _ -> transformationMatrix := None | _ -> () ];
+DEFINE RESET_BOUNDS_CACHE =
+  (
+      match boundsCache with
+      [ Some _ -> boundsCache := None
+      | None -> ()
+      ];
+      match parent with
+      [ Some p -> p#boundsChanged ()
+      | None -> ()
+      ];
+  );
+
+DEFINE RESET_CACHE = (RESET_TRANSFORMATION_MATRIX; RESET_BOUNDS_CACHE);
 
 class virtual _c [ 'parent ] = (*{{{*)
 
@@ -92,7 +89,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     type 'parent = 
       < 
         asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': Ev.t P.evType P.evData -> _c _ -> unit;
-        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; modified: unit -> unit; .. 
+        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit; .. 
       >;
 
 (*     value intcache = Dictionary.create (); *)
@@ -109,6 +106,8 @@ class virtual _c [ 'parent ] = (*{{{*)
     value mutable scaleY = 1.0;
     value mutable rotation = 0.0;
     value mutable transformationMatrix = None;
+    value mutable boundsCache = None;
+    value mutable parent : option 'parent = None;
 
     method transformationMatrix = 
       match transformationMatrix with
@@ -129,8 +128,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
         (
           transformPoint := (nv,snd transformPoint);
-          RESET_TRANSFORMATION_MATRIX;
-          self#modified();
+          RESET_CACHE;
         )
       else ();
 
@@ -140,8 +138,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
         (
           transformPoint := (fst transformPoint,nv);
-          RESET_TRANSFORMATION_MATRIX;
-          self#modified();
+          RESET_CACHE;
         )
       else ();
 
@@ -152,12 +149,10 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
       (
         transformPoint := p;
-        RESET_TRANSFORMATION_MATRIX;
-        self#modified ();
+        RESET_CACHE;
       )
       else ();
 
-    value mutable parent : option 'parent = None;
     method parent = parent;
     method setParent p = (parent := Some p;);
     method clearParent () = (parent := None;);
@@ -248,12 +243,12 @@ class virtual _c [ 'parent ] = (*{{{*)
     (*}}}*)
 
     method scaleX = scaleX;
-    method setScaleX ns = (scaleX := ns; RESET_TRANSFORMATION_MATRIX; self#modified () );
+    method setScaleX ns = (scaleX := ns; RESET_CACHE);
 
     method scaleY = scaleY;
-    method setScaleY ns = (scaleY := ns; RESET_TRANSFORMATION_MATRIX; self#modified () );
+    method setScaleY ns = (scaleY := ns; RESET_CACHE);
 
-    method setScale s = (scaleX := s; scaleY := s; RESET_TRANSFORMATION_MATRIX; self#modified () );
+    method setScale s = (scaleX := s; scaleY := s; RESET_CACHE);
 
     value mutable visible = True;
     method visible = visible;
@@ -264,17 +259,16 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setTouchable v = touchable := v;
 
     method x = x;
-    method setX x' = ( x := x'; RESET_TRANSFORMATION_MATRIX; self#modified ());
+    method setX x' = ( x := x'; RESET_CACHE);
 
     method y = y;
-    method setY y' = (y := y'; RESET_TRANSFORMATION_MATRIX; self#modified ());
+    method setY y' = (y := y'; RESET_CACHE);
 
     method pos = (x,y);
-    method setPos (x',y') = (x := x'; y := y'; RESET_TRANSFORMATION_MATRIX; self#modified ());
+    method setPos (x',y') = (x := x'; y := y'; RESET_CACHE);
 
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
-    value mutable boundsCache = None;
     (*
     method bounds = 
       match boundsCacheSelector with
@@ -353,8 +347,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       in
       (
         rotation := nr;
-        RESET_TRANSFORMATION_MATRIX;
-        self#modified ();
+        RESET_CACHE;
       );
 
     method setTransformationMatrix m =
@@ -368,7 +361,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       x := m.Matrix.tx;
       y := m.Matrix.ty;
       transformationMatrix := Some m;
-      self#modified();
+      RESET_BOUNDS_CACHE;
     );
 
     value mutable alpha = 1.0;
@@ -378,6 +371,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method asDisplayObject = (self :> _c 'parent);
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
+    (*
     method transformGLMatrix () = 
     (
       if transformPoint <> (0.,0.) || x <> 0.0 || y <> 0.0 then 
@@ -386,6 +380,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       if rotation <> 0.0 then glRotatef (rotation /. pi *. 180.0) 0. 0. 1.0 else ();
       if scaleX <> 0.0 || scaleY <> 0.0 then glScalef scaleX scaleY 1.0 else ();
     );
+    *)
 
 
     method root = 
@@ -572,17 +567,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       in
       Matrix.transformPoint (Matrix.invert matrix) globalPoint;
 
-    method modified () = 
-    (
-      match boundsCache with
-      [ Some _ -> boundsCache := None
-      | None -> ()
-      ];
-      match parent with
-      [ Some p -> p#modified ()
-      | None -> ()
-      ];
-    );
+    method boundsChanged () = RESET_BOUNDS_CACHE;
 
   end;(*}}}*)
 
@@ -674,7 +659,6 @@ class virtual container = (*{{{*)
     method numChildren = numChildren;
     method asDisplayObjectContainer = (self :> container);
     method dcast = `Container self#asDisplayObjectContainer;
-    method renderPrepare () = ();
 
 
     (* Сделать enum устойчивым к модификациям и переписать на полное использование енумов или щас ? *)
@@ -711,7 +695,6 @@ class virtual container = (*{{{*)
           ];
           numChildren := numChildren + 1;
           child#setParent self#asDisplayObjectContainer;
-          child#modified();
           let event = Ev.create `ADDED () in
           child#dispatchEvent event;
           match self#stage with
@@ -748,7 +731,6 @@ class virtual container = (*{{{*)
       let child = Dllist.get child_node in
       (
         child#clearParent();
-        child#modified();
         match children with
         [ Some chldrn ->
           if chldrn == child_node
@@ -762,7 +744,6 @@ class virtual container = (*{{{*)
         | None -> assert False
         ];
         numChildren := numChildren - 1;
-        self#modified();
         let event = Ev.create `REMOVED () in
         child#dispatchEvent event;
         match self#stage with
@@ -897,23 +878,30 @@ class virtual container = (*{{{*)
       match children with
       [ None -> ()
       | Some children -> 
-        match rect with
-        [ None -> 
-          Dllist.iter begin fun child ->
-            let childAlpha = child#alpha in
-            if (childAlpha > 0.0 && child#visible) 
-            then
-            (
-              glPushMatrix();
-              child#transformGLMatrix ();
-              child#setAlpha (childAlpha *. alpha);
-              child#render None; 
-              child#setAlpha childAlpha;
-              glPopMatrix();
-            )
-            else ()
-          end children
-        | Some rect ->
+        (
+          Render.push_matrix self#transformationMatrix;
+          match rect with
+          [ None -> 
+            Dllist.iter begin fun child ->
+              let childAlpha = child#alpha in
+              if (childAlpha > 0.0 && child#visible) 
+              then
+              (
+                (* FIXME: пока без альфы, потом как-то хитро добавить нах. *)
+                child#render None;
+                (*
+                glPushMatrix();
+                child#transformGLMatrix ();
+                child#setAlpha (childAlpha *. alpha);
+                child#render None; 
+                child#setAlpha childAlpha;
+                glPopMatrix();
+                *)
+              )
+              else ()
+            end children
+          | Some rect -> ()
+            (*
             Dllist.iter begin fun (child:'displayObject) ->
               let childAlpha = child#alpha in
               if (childAlpha > 0.0 && child#visible) 
@@ -938,7 +926,10 @@ class virtual container = (*{{{*)
                 ]
               else ()
             end children
-        ]
+            *)
+          ];
+          Render.restore_matrix ();
+        )
       ];
 
   end;(*}}}*)

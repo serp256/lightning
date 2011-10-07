@@ -101,6 +101,7 @@ value clear color alpha =
     glClear gl_color_buffer_bit;
   );
 
+(*
 value setupOrthographicRendering left right bottom top = 
 (
   glDisable gl_cull_face;
@@ -119,6 +120,7 @@ value setupOrthographicRendering left right bottom top =
   glMatrixMode gl_modelview;
   glLoadIdentity();
 );
+*)
 
 
 value convertColors red green blue alpha pma = 

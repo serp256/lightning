@@ -1,5 +1,5 @@
 
-value gl_quad_colors: Bigarray.Array1.t int32 Bigarray.int32_elt Bigarray.c_layout;
+(* value gl_quad_colors: Bigarray.Array1.t int32 Bigarray.int32_elt Bigarray.c_layout; *)
 
 module type S = sig
 
@@ -8,10 +8,10 @@ module type S = sig
   class c: [ ?color:int] -> [ float ] -> [ float ] ->
     object
       inherit D.c; 
-      value vertexColors: array int;
-      value vertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout;
-      method updateSize: float -> float -> unit;
-      method copyVertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
+(*       value vertexColors: array int; *)
+(*       value vertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout; *)
+(*       method updateSize: float -> float -> unit; *)
+(*       method copyVertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
       method setColor: int -> unit;
       method color: int;
       method vertexColors: Enum.t int;

@@ -14,7 +14,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
   class type tween = object method process: float -> bool; end;
   value tweens : Queue.t  tween = Queue.create ();
   value addTween tween = Queue.push (tween :> tween) tweens;
-  value removeTween tween = (* Not best for perfomance realisation *)
+  value removeTween tween = 
     let tween = (tween :> tween) in
     let tmpqueue = Queue.create () in
     (
@@ -119,9 +119,9 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       method !render _ =
       (
-        RenderSupport.clearTexture ();
-        RenderSupport.clear color 1.0;
-        RenderSupport.setupOrthographicRendering 0. width height 0.;
+(*         RenderSupport.clearTexture (); FIXME: !!!*)
+(*         RenderSupport.clear color 1.0; *)
+(*         RenderSupport.setupOrthographicRendering 0. width height 0.; *)
         debug "start render";
         proftimer:render "STAGE rendered %F" (super#render None);
         debug "end render";
