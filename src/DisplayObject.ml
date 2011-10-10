@@ -641,29 +641,6 @@ class virtual container = (*{{{*)
     method renderPrepare () = ();
 
 
-    (*
-    method! setParent parent =
-      match (stage,parent#stage) with
-      [ (Some _,None) -> Dllist.iter (fun c -> c#clearStage()) children
-      | (None,Some s) -> Dllist.iter (fun c -> c#
-      | None -> parent := Some parent
-      ];
-
-    method! clearParent () = 
-    (
-      match stage with
-      [ Some _ -> 
-        (
-          stage := None;
-          Dllist.iter (fun c -> c#clearStage ()) children;
-        )
-      | None -> ();
-      ]
-      parent := None;
-    );
-  *)
-
-
     (* Сделать enum устойчивым к модификациям и переписать на полное использование енумов или щас ? *)
     method dispatchEventOnChildren event = 
     (
@@ -676,41 +653,6 @@ class virtual container = (*{{{*)
         ]
       end self#children;
     );
-      (*
-      let objs = ref [ [ self#asDisplayObject ] ] in
-      let rec loop () =
-        match !objs with
-        [ [ [ obj :: objs' ] :: tl ] ->
-          (
-            objs.val := 
-              match obj#dcast with
-              [ `Container cont -> 
-                let children = ExtList.List.of_enum cont#children in
-                match objs' with
-                [ [] -> [ children ] @ tl
-                | _ -> [ children ; objs' ] @ tl
-                ]
-              | _ -> 
-                  match objs' with
-                  [ [] -> tl
-                  | _ -> [ objs' :: tl ]
-                  ]
-              ];
-            if obj#hasEventListeners event.Event.etype 
-            then obj
-            else loop ()
-          )
-        | [ ] | [ [] :: _ ] -> raise Enum.No_more_elements
-        ]
-      in
-      let listeners = Enum.from loop in
-(*       let event = (event :> Event.t 'event_type 'event_data 'displayObject) in *)
-      match Enum.is_empty listeners with
-      [ True -> ()
-      | False -> Enum.iter (fun (listener:'displayObject) -> listener#dispatchEvent event) listeners
-      ];
-      *)
-    
 
     method addChild: !'child. ?index:int -> ((#_c container) as 'child) -> unit = fun  ?index child ->
       let child = child#asDisplayObject in

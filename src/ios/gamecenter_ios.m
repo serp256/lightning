@@ -34,6 +34,7 @@ void ml_report_leaderboard(value category, value score) {
 	GKScore *scoreReporter = [[[GKScore alloc] initWithCategory: [NSString stringWithCString:String_val(category) encoding:NSASCIIStringEncoding]] autorelease];
 	scoreReporter.value = Int64_val(score);
 	[scoreReporter reportScoreWithCompletionHandler:^(NSError *error) {
+		printf("report leaderboard failed\n");
 		if (error != nil && error.code == GKErrorCommunicationsFailure) {
 			caml_leave_blocking_section();
 			value category,score;

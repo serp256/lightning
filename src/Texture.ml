@@ -53,7 +53,7 @@ external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loa
 IFDEF SDL THEN
 
 value loadImage ?textureID ~path ~contentScaleFactor = 
-  let surface = Sdl_image.load (LightCommon.resource_path path 1.) in
+  let surface = Sdl_image.load (LightCommon.resource_path path) in
   let bpp = Sdl.Video.surface_bpp surface in
   let () = assert (bpp = 32) in
   let width = Sdl.Video.surface_width surface in
@@ -181,8 +181,8 @@ value make textureInfo =
   in
   let res : r = 
     object
-      method width = width;
-      method height = height;
+      method width = width /. scale;
+      method height = height /. scale;
       method bindGL () = bind_texture textureID;
       method hasPremultipliedAlpha = hasPremultipliedAlpha;
       method scale = scale;
@@ -228,6 +228,7 @@ value load path : c =
     let textureInfo = 
       proftimer "Loading texture [%F]" loadImage path 1. 
     in
+    let () = debug:gc Gc.compact () in
     let () = 
       debug
         "load texture: %s [%d->%d; %d->%d] [pma=%s]\n%!" 

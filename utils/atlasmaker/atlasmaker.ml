@@ -5,9 +5,13 @@ type rect = {
   h : int
 };
 
+value maxTextureSize = ref 2048;
 value out_file = ref "tx_texture";
 value gen_pvr = ref False;
 value sqr = ref False;
+
+value nocrop = ref "";
+value nocropHash:Hashtbl.t string unit = Hashtbl.create 3;
 value type_rect = ref `vert;
 
 value emptyPx = 2;
@@ -115,9 +119,16 @@ value croppedImageRect img =
 value readImageRect fname = 
   let () = Printf.eprintf "Loading %s\n%!" fname in
   try 
-    let rect = croppedImageRect (Images.load fname []) in
-    Hashtbl.add imageRects fname rect
+    let image = Images.load fname [] in
+    let rect = 
+      try 
+        let () = Hashtbl.find nocropHash fname in
+        let () = Printf.eprintf "Won't crop %s\n%!" fname 
+        in image
+      with [ Not_found -> croppedImageRect image ] 
+    in  Hashtbl.add imageRects fname rect
   with [Images.Wrong_file_type -> ()];
+  
 
 
 
@@ -136,103 +147,7 @@ value loadFiles d =
   in _readdir d;
 
 
-(* 
- возвращает список страниц. каждая страница не больше 2048x2048
-*)
-(*
-value layoutRects rects = 
-  (* 
-    пробуем упаковать прямоугольники в заданные пустые прямоугольники.
-    возвращаем оставшиеся прямоугольники и страницы
-  *)
-  let rec tryLayout rects placed empty unfit = 
-    match rects with
-    [ [] -> (placed, unfit)    (* все разместили *)
-    | [ r :: rects']  -> 
-      match empty with 
-      [ []  -> (placed, (List.append rects unfit))
-      | _   -> 
-      
-        let rec putToMinimalContainer rect placed containers used_containers = 
-          match containers with 
-          [ [] -> raise Not_found
-          | [ c :: containers'] -> 
-            
-            match rect with
-            [ (id, r) -> 
-              if r.w > c.w || r.h > c.h then
-                putToMinimalContainer rect  placed containers' [c :: used_containers]
-              else
-                let r' =  { x = c.x; y = c.y; w = r.w; h = r.h }             
-                and e1 = { x = c.x  ; y = min (c.y + r.h + emptyPx) (c.y + c.h); w = min (r.w + emptyPx) c.w; h = max 0 (c.h - r.h - emptyPx) }
-                and e2 = { x = min (c.x + c.w) (c.x + r.w + emptyPx); y = c.y; w = max 0 (c.w - r.w - emptyPx); h = c.h }
-                in
-                ([(id,r') :: placed], (List.append containers' (List.append used_containers [e1; e2])))
-            ]
-          ]
-        in 
-      
-        (* пытаемся впихнуть наибольший прямоугольник в наименьшую пустую область *)
-        try 
-          let (placed', empty') = putToMinimalContainer r placed empty []  
-          in tryLayout rects' placed' (List.sort begin fun c1 c2 -> 
-            let s1 = c1.w*c1.h 
-            and s2 = c2.w*c2.h
-            in 
-            if s1 = s2 then
-              0
-            else if s1 > s2 then
-              1
-            else 
-              -1  
-          end empty') unfit
-        with [Not_found -> tryLayout rects' placed empty [r :: unfit]]
-      ]
-    ]
-  in 
-  
-  
-  (* размещаем на одной странице, постепенно увеличивая ее размер *)
-  let rec layout rects w h = 
-    let mainrect = { x = emptyPx; y = emptyPx; w =w - emptyPx; h= h - emptyPx } in
-    let (placed, rest) = tryLayout rects [] [mainrect] [] in 
-    match rest with 
-    [ [] -> (w, h, placed, rest) (* разместили все *)
-    | _  -> 
-        let (w', h') = 
-          if w > h then
-            (w, (h*2))
-          else 
-            ((w*2), h)
-        in 
-        if w' > 2048 then (* не в местили в максимальный размер. возвращаем страницу *)
-          (2048, 2048, placed, rest)
-        else
-          layout rects w' h'
-    ]
 
-  in 
-  
-  (* размещаем на нескольких страницах *)
-  let rec layout_multipage rects pages = 
-    let (w, h, placed, rest) = 
-      layout 
-        (List.sort 
-          begin fun (_,r1)  (_,r2) -> 
-            let s1 = r1.w*r1.h and s2 = r2.w*r2.h in
-            if s1 = s2 then 0
-            else if s1 > s2 then -1
-            else 1
-        end rects
-      ) 2 2
-    in match rest with 
-    [ [] -> [ (w,h,placed) :: pages]
-    | _  -> layout_multipage rest [(w,h,placed) :: pages]
-    ]
-  in layout_multipage rects [];
-  
- *) 
-  
 (* *)
 value createAtlas () = 
     let i = ref 0 
@@ -294,7 +209,9 @@ value () =
   (
     Arg.parse
       [
+        ("-m", Arg.Set_int TextureLayout.max_size, "Max texture size");
         ("-o",Arg.Set_string out_file,"output file");
+        ("-nc", Arg.Set_string nocrop, "files that are not supposed to be cropped");
         ("-sqr",Arg.Unit (fun sq -> sqr.val := True )  ,"square texture");
         ("-t",Arg.String (fun s -> let t = match s with [ "vert" -> `vert | "hor" -> `hor | "rand" -> `rand | _ -> failwith "unknown type rect" ] in type_rect.val := t),"type rect for insert images");
         ("-p",Arg.Set gen_pvr,"generate pvr file")
@@ -302,6 +219,12 @@ value () =
       (fun dn -> match !dirname with [ None -> dirname.val := Some dn | Some _ -> failwith "You must specify only one directory" ])
       "---"
     ;
+    
+    match !nocrop with
+    [ "" -> ()
+    | str -> List.iter begin fun s -> Hashtbl.add nocropHash s () end (ExtString.String.nsplit str ",")
+    ];
+    
     let dirname =
       match !dirname with
       [ None -> failwith "You must specify directory for process"

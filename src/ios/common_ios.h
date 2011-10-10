@@ -1,1 +1,1 @@
-
+float deviceScaleFactor();
