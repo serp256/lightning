@@ -29,7 +29,7 @@ type init_flag =
   [ TIMER
   | AUDIO
   | VIDEO
-  | CDROM
+(*   | CDROM *)
   | JOYSTICK
   | NOPARACHUTE
   | EVENTTHREAD
@@ -73,12 +73,10 @@ module Video =
     (* Creates a window with no title frame and no border *)
     type surface;
     external free_surface : surface -> unit = "sdlstub_free_surface";
-    external surface_pixels : surface -> byte_array =
-      "sdlstub_surface_pixels";
+    external surface_pixels : surface -> byte_array = "sdlstub_surface_pixels";
     external surface_width : surface -> int = "sdlstub_surface_width";
     external surface_height : surface -> int = "sdlstub_surface_height";
-    external surface_flags : surface -> list video_flag =
-      "sdlstub_surface_flags";
+    external surface_flags : surface -> list video_flag = "sdlstub_surface_flags";
     external surface_bpp : surface -> int = "sdlstub_surface_bpp";
     external surface_rmask : surface -> int = "sdlstub_surface_rmask";
     external surface_gmask : surface -> int = "sdlstub_surface_gmask";
@@ -87,24 +85,16 @@ module Video =
     external must_lock : surface -> bool = "sdlstub_must_lock";
     external lock_surface : surface -> unit = "sdlstub_lock_surface";
     external unlock_surface : surface -> unit = "sdlstub_unlock_surface";
-    external video_mode_ok : int -> int -> int -> list video_flag -> bool =
-      "sdlstub_video_mode_ok";
-    external set_video_mode :
-      int -> int -> int -> list video_flag -> surface =
-      "sdlstub_set_video_mode";
-    external create_rgb_surface :
-      list video_flag -> int -> int -> int -> surface =
-      "sdlstub_create_rgb_surface";
+(*     external video_mode_ok : int -> int -> int -> list video_flag -> bool = "sdlstub_video_mode_ok"; *)
+(*     external set_video_mode : int -> int -> int -> list video_flag -> surface = "sdlstub_set_video_mode"; *)
+    external create_rgb_surface : list video_flag -> int -> int -> int -> surface = "sdlstub_create_rgb_surface";
     external load_bmp : string -> surface = "sdlstub_load_bmp";
     external save_bmp : surface -> string -> unit = "sdlstub_save_bmp";
-    external set_color_key : surface -> list video_flag -> int32 -> unit =
-      "sdlstub_set_color_key";
-    external set_alpha : surface -> list video_flag -> int -> unit =
-      "sdlstub_set_alpha";
-    external set_clipping : surface -> int -> int -> int -> int -> unit =
-      "sdlstub_set_clipping";
+(*     external set_color_key : surface -> list video_flag -> int32 -> unit = "sdlstub_set_color_key"; *)
+(*     external set_alpha : surface -> list video_flag -> int -> unit = "sdlstub_set_alpha"; *)
+    external set_clipping : surface -> int -> int -> int -> int -> unit = "sdlstub_set_clipping";
     value disable_clipping s = set_clipping s 0 0 0 0;
-    external display_format : surface -> surface = "sdlstub_display_format";
+(*     external display_format : surface -> surface = "sdlstub_display_format"; *)
     external get_rgb : surface -> int32 -> (int * int * int) =
       "sdlstub_get_rgb";
     external get_rgba : surface -> int32 -> (int * int * int * int) =
@@ -117,24 +107,19 @@ module Video =
       { rect_x : mutable int; rect_y : mutable int; rect_w : mutable int;
         rect_h : mutable int
       };
-    external fill_surface : surface -> int32 -> unit =
-      "sdlstub_fill_surface";
-    external fill_rect : surface -> rect -> int32 -> unit =
-      "sdlstub_fill_rect";
-    external update_surface : surface -> unit = "sdlstub_update_surface";
-    external update_rect : surface -> int -> int -> int -> int -> unit =
-      "sdlstub_update_rect";
-    external update_rects : surface -> array rect -> unit =
-      "sdlstub_update_rects";
-    external flip : surface -> unit = "sdlstub_flip";
+    external fill_surface : surface -> int32 -> unit = "sdlstub_fill_surface";
+    external fill_rect : surface -> rect -> int32 -> unit = "sdlstub_fill_rect";
+(*     external update_surface : surface -> unit = "sdlstub_update_surface"; *)
+(*     external update_rect : surface -> int -> int -> int -> int -> unit = "sdlstub_update_rect"; *)
+(*     external update_rects : surface -> array rect -> unit = "sdlstub_update_rects"; *)
+(*     external flip : surface -> unit = "sdlstub_flip"; *)
     external blit_surface :
       surface -> option rect -> surface -> option rect -> unit =
       "sdlstub_blit_surface";
     type color = { red : int; green : int; blue : int };
-    external set_colors : surface -> array color -> int -> int -> bool =
-      "sdlstub_set_colors";
+(*     external set_colors : surface -> array color -> int -> int -> bool = "sdlstub_set_colors"; *)
     external show_cursor : bool -> unit = "sdlstub_show_cursor";
-    external warp_mouse : int -> int -> unit = "sdlstub_warp_mouse";
+(*     external warp_mouse : int -> int -> unit = "sdlstub_warp_mouse"; *)
     external string_of_pixels : surface -> string =
       "sdlstub_string_of_pixels";
   end;
@@ -142,14 +127,13 @@ module Video =
 (****************************** Window management ******************************)
 module Window =
   struct
-    external set_caption : string -> string -> unit = "sdlstub_set_caption";
-    external get_caption : unit -> (string * string) = "sdlstub_get_caption";
-    external set_icon : Video.surface -> unit = "sdlstub_set_icon";
-    external iconify_window : unit -> unit = "sdlstub_iconify_window";
-    external toggle_fullscreen : Video.surface -> unit =
-      "sdlstub_toggle_fullscreen";
-    external set_grab_input : bool -> unit = "sdlstub_set_grab_input";
-    external get_grab_input : unit -> bool = "sdlstub_get_grab_input";
+(*     external set_caption : string -> string -> unit = "sdlstub_set_caption"; *)
+(*     external get_caption : unit -> (string * string) = "sdlstub_get_caption"; *)
+(*     external set_icon : Video.surface -> unit = "sdlstub_set_icon"; *)
+(*     external iconify_window : unit -> unit = "sdlstub_iconify_window"; *)
+(*     external toggle_fullscreen : Video.surface -> unit = "sdlstub_toggle_fullscreen"; *)
+(*     external set_grab_input : bool -> unit = "sdlstub_set_grab_input"; *)
+(*     external get_grab_input : unit -> bool = "sdlstub_get_grab_input"; *)
   end;
 (****************************** End Window management ******************************)
 (**************************** Open GL support **************************************)
@@ -167,8 +151,11 @@ module SDLGL =
       | ACCUM_RED_SIZE
       | ACCUM_GREEN_SIZE
       | ACCUM_BLUE_SIZE
-      | ACCUM_ALPHA_SIZE ];
-    external swap_buffers : unit -> unit = "sdlstub_GL_swap_buffers";
+      | ACCUM_ALPHA_SIZE 
+      | CONTEXT_MAJOR_VERSION
+      | CONTEXT_MINOR_VERSION
+      ];
+(*     external swap_buffers : unit -> unit = "sdlstub_GL_swap_buffers"; *)
     external load_bmp : string -> Video.surface = "sdlstub_GL_load_bmp";
     external set_attribute : gl_attr -> int -> unit =
       "sdlstub_set_attribute";
@@ -182,8 +169,7 @@ module Event =
     type off_on = [ OFF | ON ];
     type pointer;
     type app_state = [ APPMOUSEFOCUS | APPINPUTFOCUS | APPACTIVE ];
-    external get_app_state : unit -> list app_state =
-      "sdlstub_get_app_state";
+(*     external get_app_state : unit -> list app_state = "sdlstub_get_app_state"; *)
     (* SDLKey enum *)
     type key =
       [ K_UNKNOWN
@@ -433,12 +419,11 @@ module Event =
       | KMOD_CAPS
       | KMOD_MODE
       | KMOD_RESERVED ];
-    external enable_unicode : que_dis_ena -> off_on =
+(*     external enable_unicode : que_dis_ena -> off_on = *)
       "sdlstub_enable_unicode";
     value default_repeat_delay = 500
     and default_repeat_interval = 30;
-    external enable_key_repeat : int -> int -> unit =
-      "sdlstub_enable_key_repeat";
+(*     external enable_key_repeat : int -> int -> unit = "sdlstub_enable_key_repeat"; *)
     external get_mod_state : unit -> list key_mod = "sdlstub_get_mod_state";
     external set_mod_state : list key_mod -> unit = "sdlstub_set_mod_state";
     external get_key_name : key -> string = "sdlstub_get_key_name";

@@ -9,6 +9,7 @@ module type S = sig
   class c: [ ?color:int] -> [ float ] -> [ float ] ->
     object
       inherit D.c; 
+(*       value shaderProgram = Render.Program.load "PositionColor.vsh" "PositionColor.fsh" [ (AttribPosition,"a_position"); (AttributeColor,"a_color") ] [ (`UniformMPVMatrix, "u_MVPMatrix")]; *)
 (*       value vertexColors: array int; *)
 (*       value vertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout; *)
 (*       method updateSize: float -> float -> unit; *)
@@ -33,6 +34,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
     object(self)
       inherit D.c as super;
 
+      value shaderProgram = Render.Program.load "PositionColor.vsh" "PositionColor.fsh" [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] [ (`UniformMPVMatrix, "u_MVPMatrix")];
       value quad = Render.Quad.create width height color 1.;
 
       (*
@@ -98,7 +100,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
         ];
 
 
-      method private render' _ = Render.Quad.render self#transformationMatrix quad;
+      method private render' _ = Render.Quad.render self#transformationMatrix shaderProgram quad;
       (*
       (
         debug "render quad";

@@ -26,7 +26,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+#define SDL_NO_COMPAT
 #include <SDL/SDL.h>
+
 
 /* Ugly: SDL_AudioSpec has a field called "callback" which caml/callback.h redefines to caml_callback.
 So this function has to come before the caml #includes*/
@@ -116,7 +119,7 @@ int init_flag_val(value flag_list)
 		case TIMER_tag       : flag |= SDL_INIT_TIMER       ; break;
 		case AUDIO_tag       : flag |= SDL_INIT_AUDIO       ; break;
 		case VIDEO_tag       : flag |= SDL_INIT_VIDEO       ; break;
-		case CDROM_tag       : flag |= SDL_INIT_CDROM       ; break;
+		//case CDROM_tag       : flag |= SDL_INIT_CDROM       ; break;
 		case JOYSTICK_tag    : flag |= SDL_INIT_JOYSTICK    ; break;
 		case NOPARACHUTE_tag : flag |= SDL_INIT_NOPARACHUTE ; break;
 		case EVENTTHREAD_tag : flag |= SDL_INIT_EVENTTHREAD ; break;
@@ -127,6 +130,7 @@ int init_flag_val(value flag_list)
 	CAMLreturn (flag);
 }
 
+/*
 #define SWSURFACE_tag 0 
 #define HWSURFACE_tag 1   
 #define ANYFORMAT_tag 2  
@@ -151,7 +155,7 @@ int video_flag_val(value flag_list)
 	{
 		switch (Int_val(hd(l)))
 		{
-		case SWSURFACE_tag   : flag |= SDL_SWSURFACE   ; break;
+		//case SWSURFACE_tag   : flag |= SDL_SWSURFACE   ; break;
 		case HWSURFACE_tag   : flag |= SDL_HWSURFACE   ; break;
 		case ANYFORMAT_tag   : flag |= SDL_ANYFORMAT   ; break;
 		case HWPALETTE_tag   : flag |= SDL_HWPALETTE   ; break;
@@ -187,6 +191,7 @@ value val_video_flag(int flags)
 	if (flags & SDL_OPENGL)      l = cons(Val_int(OPENGL_tag),l);
 	CAMLreturn (l);
 }
+*/
 
 /* raising SDL_failure exception */
 
@@ -222,6 +227,7 @@ value sdlstub_must_lock(value s) {
 	CAMLreturn (Val_bool(b));
 }
 
+/*
 value sdlstub_video_mode_ok(value vw, value vh, value vbpp, value vf) {
 	CAMLparam4(vw,vh,vbpp,vf);
 	int w = Int_val(vw);
@@ -246,6 +252,7 @@ value sdlstub_set_video_mode(value vw, value vh, value vbpp, value vf) {
 	Field(r,0) = (value)s;
 	CAMLreturn (r);
 }
+*/
 
 value sdlstub_load_bmp(value vfile) {
 	CAMLparam1(vfile);
@@ -325,6 +332,7 @@ value sdlstub_string_of_pixels(value s) {
 	CAMLreturn(v);
 }
 
+/*
 value sdlstub_set_color_key(value s, value vf, value vk) {
 	CAMLparam3(s,vf,vk);
 	int flag = video_flag_val(vf);
@@ -334,7 +342,9 @@ value sdlstub_set_color_key(value s, value vf, value vk) {
 	if (SDL_SetColorKey(surf, flag, key) < 0) raise_failure();
 	CAMLreturn( Val_unit);
 }
+*/
 
+/*
 value sdlstub_set_alpha(value s, value vf, value va) {
 	CAMLparam3(s,vf,va);
 	int flags = video_flag_val(vf);
@@ -344,6 +354,7 @@ value sdlstub_set_alpha(value s, value vf, value va) {
 	if (SDL_SetAlpha(surf, flags, alpha) < 0) raise_failure();
 	CAMLreturn( Val_unit);
 }
+*/
 
 
 value sdlstub_set_clipping(value s, value vtop, value vleft, 
@@ -359,6 +370,7 @@ value sdlstub_set_clipping(value s, value vtop, value vleft,
 	CAMLreturn (Val_unit);
 }
 
+/*
 value sdlstub_display_format(value s) {
 	CAMLparam1(s);
 	SDL_Surface* n;
@@ -367,6 +379,7 @@ value sdlstub_display_format(value s) {
 	Field(r,0) = (value) n;
 	CAMLreturn (r);
 }
+*/
 
 value sdlstub_create_rgb_surface(value vflags, value vw, value vh, value vdepth) {
 	CAMLparam4(vflags, vw, vh, vdepth);
@@ -472,10 +485,12 @@ value sdlstub_surface_height(value s) {
 	CAMLreturn (Val_int(((SDL_Surface*) Field(s,0))->h));
 }
 
+/*
 value sdlstub_surface_flags(value s) {
 	CAMLparam1(s);		 
 	CAMLreturn (val_video_flag(((SDL_Surface*) Field(s,0))->flags));
 }
+*/
 
 value sdlstub_surface_bpp(value s) {
 	CAMLparam1(s);		 
@@ -582,6 +597,7 @@ value sdlstub_fill_rect(value s, value vr, value vc) {
 	CAMLreturn(Val_unit);
 }
 
+/*
 value sdlstub_update_surface(value s) {
 	CAMLparam1(s);
 	SDL_UpdateRect((SDL_Surface*) Field(s,0), 0, 0, 0, 0);
@@ -625,6 +641,7 @@ value sdlstub_flip(value s) {
 	if (SDL_Flip((SDL_Surface*) Field(s,0)) < 0) raise_failure();
 	CAMLreturn(Val_unit);
 }
+*/
 
 SDL_Rect* rect_from_option(value v,SDL_Rect* r) {
 	value vr;
@@ -667,6 +684,7 @@ value sdlstub_blit_surface(value src, value srcr, value dst, value dstr) {
 }
 
 
+/*
 value sdlstub_set_colors(value s, value arr, value vfirst, value vn) {
 	CAMLparam4(s, arr, vfirst, vn);
 	int ncolors = Int_val(vn);
@@ -688,6 +706,7 @@ value sdlstub_set_colors(value s, value arr, value vfirst, value vn) {
 	free(colors);
 	CAMLreturn (Val_bool(result));
 }
+*/
 
 value sdlstub_show_cursor(value vtoggle) {
 	CAMLparam1(vtoggle);
@@ -697,6 +716,7 @@ value sdlstub_show_cursor(value vtoggle) {
 	CAMLreturn(Val_unit);
 }
 
+/*
 value sdlstub_warp_mouse(value x, value y)
 {
 	CAMLparam2(x,y);
@@ -705,6 +725,7 @@ value sdlstub_warp_mouse(value x, value y)
 	SDL_WarpMouse(lx,ly);
 	CAMLreturn(Val_unit);	
 }
+*/
 
 /* --------------------- events -------------------------------- */
 #define FLAG_TO_MOD_SIZE 12
@@ -801,12 +822,14 @@ int flag_to_appstate[] = {
 
 #define FLAG_TO_APPSTATE_SIZE 	3
 
+/*
 value sdlstub_get_app_state(value u)
 {
 	CAMLparam1(u);
 	CAMLreturn(mask_to_ML_flags(SDL_GetAppState(), 
 	flag_to_appstate, FLAG_TO_APPSTATE_SIZE));
 }
+*/
 
 value SDL_event_to_ML_tevent(SDL_Event event)
 {
@@ -816,6 +839,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 
     switch (event.type) 
     {
+			/*
 	case SDL_ACTIVEEVENT: 
 	{
     	    ML_event=caml_alloc(2, 0);
@@ -830,7 +854,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    to_return=caml_alloc(1,0);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
-	}
+	}*/
 	case SDL_KEYDOWN:
 	case SDL_KEYUP:
 	{
@@ -919,6 +943,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
 	}
+	/*
 	case SDL_VIDEORESIZE:
 	{
 	    ML_event=caml_alloc(2,0);
@@ -928,11 +953,12 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    to_return=caml_alloc(1,8);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
-	}
+	}*/
+	/*
 	case SDL_VIDEOEXPOSE:
 	{
 	    CAMLreturn(Val_int(1));
-	}
+	}*/
 	case SDL_QUIT:
 	{
 	    CAMLreturn(Val_int(2));
@@ -1017,6 +1043,7 @@ value sdlstub_get_mouse_state(value u)
 	CAMLreturn(toreturn);
 }
 
+/*
 value sdlstub_enable_unicode(value enable)
 {
 	CAMLparam1(enable);
@@ -1030,6 +1057,7 @@ void sdlstub_enable_key_repeat(value delay, value interval)
 		raise_failure();
 	else CAMLreturn0;
 }
+*/
 
 value sdlstub_get_mod_state(value u)
 {
@@ -1054,7 +1082,7 @@ value sdlstub_get_key_name(value ML_key)
 
 
 
-/* Window management */
+/* Window management 
 value sdlstub_set_caption(value title, value icon)
 {
 	 CAMLparam2(title, icon);
@@ -1114,15 +1142,18 @@ value sdlstub_get_grab_input(value u)
 	result = Bool_val(0);
 	if(r == SDL_GRAB_ON)result = Bool_val(1);
 	CAMLreturn(result);	
-}
+}*/
 
 
 /* open GL */
+
+/*
 value sdlstub_GL_swap_buffers(value u) {
 	CAMLparam1(u);		 
 	SDL_GL_SwapBuffers();
 	CAMLreturn(Val_unit);
 }
+*/
 
 SDL_GLattr  SDL_GLAttrArray[] =
 {
@@ -1137,7 +1168,9 @@ SDL_GLattr  SDL_GLAttrArray[] =
 	SDL_GL_ACCUM_RED_SIZE ,
 	SDL_GL_ACCUM_GREEN_SIZE ,
 	SDL_GL_ACCUM_BLUE_SIZE ,
-	SDL_GL_ACCUM_ALPHA_SIZE 
+	SDL_GL_ACCUM_ALPHA_SIZE ,
+	SDL_GL_CONTEXT_MAJOR_VERSION ,
+	SDL_GL_CONTEXT_MINOR_VERSION
 };
 
 value sdlstub_set_attribute(value a, value v)

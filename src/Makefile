@@ -8,7 +8,7 @@ include ../Makefile.common
 
 GLPARAM = 
 
-MOBJS = texture_common.o render.o
+MOBJS = texture_common.o render_stub.o
 MLOBJSFLAGS = 
 MLFLAGS +=  -package extlib -I containers -I utils
 MLDEPFLAGS =

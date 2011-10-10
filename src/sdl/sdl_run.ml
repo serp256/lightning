@@ -26,7 +26,7 @@ value handle_events (width,height) frameRate stage =
         stage#advanceTime ((float (ticks - lastTicks)) /. 1e3);
 (*         glViewport 0 0 width height; *)
         stage#render None;
-        SDLGL.swap_buffers();
+(*         SDLGL.swap_buffers(); *)
         match quit with
         [ True -> ()
         | False ->
@@ -95,11 +95,14 @@ value run stage_create setSize =
     Sdl_image.init [ Sdl_image.PNG ]; 
     let bpp = 32 in
     (
-      ignore(set_video_mode !width !height bpp [ OPENGL ]);
+      SDLGL.set_attribute SDLGL.CONTEXT_MAJOR_VERSION 3;
+      SDLGL.set_attribute SDLGL.CONTEXT_MINOR_VERSION 2;
+(*       ignore(set_video_mode !width !height bpp [ OPENGL ]); *)
+      Printf.printf "SDL ATTRIBUTES: %d:%d\n%!" (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
       let stage = stage_create (float !width) (float !height) in
       (
         setSize (float !width) (float !height);
-        set_caption stage#name "";
+(*         set_caption stage#name ""; *)
         handle_events (!width,!height) !frameRate stage;
       )
     );

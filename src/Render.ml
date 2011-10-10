@@ -1,7 +1,7 @@
 
 external push_matrix: Matrix.t -> unit = "ml_push_matrix";
 external restore_matrix: unit -> unit = "ml_restore_matrix";
-external clear: int -> float = "ml_clear";
+external clear: int -> unit = "ml_clear";
 
 
 module Program = struct
@@ -11,12 +11,24 @@ module Program = struct
 
   external compile_shader: shader_type -> string -> shader = "ml_compile_shader";
 
-  type attribute = [ AttribPosition | AttribColor | AttribTexCoords ];
 
-  type t 'uniforms;
+  type program;
+  type t 'uniform =
+    { 
+      program: program;
+      uniforms: list ('uniform * int)
+    };
 
-  type uniformValue 
+  type attribute = [ AttribPosition | AttribColor | AttribTexCoords ]; (* с атриббутами пока так *)
+
   external create_program: shader -> shader -> list (attribute * string) -> list ('uniform * string) -> t 'uniform = "ml_create_program";
+
+
+  value load vs fs attributes uniforms = 
+    let vshader = compile_shader Vertex (Std.input_all (LightCommon.open_resource (Filename.concat "Shaders" vs) 0.)) 
+    and fshader = compile_shader Fragment (Std.input_all (LightCommon.open_resource (Filename.concat "Shaders" fs) 0.))
+    in
+    create_program vshader fshader attributes uniforms;
 
 end;
 
@@ -28,9 +40,9 @@ module Quad = struct
   external color: t -> int = "ml_quad_color";
   external set_color: t -> int -> unit = "ml_quad_set_color";
   external alpha: t -> float = "ml_quad_alpha";
-  external set_alpha: t -> float -> unit = "ml_alpha_set_alpha";
+  external set_alpha: t -> float -> unit = "ml_quad_set_alpha";
   external colors: t -> array int = "ml_quad_colors";
-  external render: Matrix.t -> Program.t 'a -> ?uniforms -> ?alpha:float -> t -> unit = "ml_quad_render";
+  external render: Matrix.t -> Program.t 'a -> ?uniforms:(list (int * 'b)) -> ?alpha:float -> t -> unit = "ml_quad_render";
 
 end;
 
