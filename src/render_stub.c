@@ -163,7 +163,7 @@ struct custom_operations shader_ops = {
 
 value ml_compile_shader(value stype,value shader_src) {
 	GLenum type;
-	if (stype = 1) type = GL_VERTEX_SHADER; else type = GL_FRAGMENT_SHADER;
+	if (stype == 1) type = GL_VERTEX_SHADER; else type = GL_FRAGMENT_SHADER;
 	GLuint shader = glCreateShader(type);
 	const char *sh_src = String_val(shader_src);
 	glShaderSource(shader, 1, &sh_src, NULL);
@@ -173,6 +173,10 @@ value ml_compile_shader(value stype,value shader_src) {
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
  
   if( ! status ) {
+		GLenum error = glGetError();
+		if (error != GL_NO_ERROR) {
+			printf("gl error\n");
+		};
 		char msg[1024];
     if( type == GL_VERTEX_SHADER ) {
 			char *log = vertexShaderLog(shader);
@@ -198,10 +202,9 @@ static char   vertexAttribTexCoords = 0;
 
 /* vertex attribs */
 enum {
-  lgVertexAttrib_Position,
-  lgVertexAttrib_Color,
-  lgVertexAttrib_TexCoords,
-      
+  lgVertexAttrib_Position = 0,
+  lgVertexAttrib_Color = 1,
+  lgVertexAttrib_TexCoords = 2,
   lgVertexAttrib_MAX,
 };  
 
@@ -236,18 +239,18 @@ typedef struct {
 	GLint uniforms[lgUniform_MAX];
 } sprogram;
 
-#define SPROGRAM(v) ((sprogram**)Data_custom_val(v))
+#define SPROGRAM(v) *((sprogram**)Data_custom_val(v))
 
 static void program_finalize(value program) {
-	sprogram *p = *SPROGRAM(program);
+	sprogram *p = SPROGRAM(program);
   if( program == currentShaderProgram ) currentShaderProgram = -1;
 	glDeleteProgram(p->program);
 	caml_stat_free(p);
 }
 
 static int program_compare(value p1,value p2) {
-	sprogram *pr1 = *SPROGRAM(p1);
-	sprogram *pr2 = *SPROGRAM(p2);
+	sprogram *pr1 = SPROGRAM(p1);
+	sprogram *pr2 = SPROGRAM(p2);
 	if (pr1->program == pr2->program) return 0;
 	else {
 		if (pr1->program < pr2->program) return -1;
@@ -276,13 +279,18 @@ value ml_create_program(value vShader,value fShader,value attributes,value unifo
 	lst = attributes;
 	value el;
 	GLuint index = 0;
-	while (el != 1) {
+	while (lst != 1) {
 		el = Field(lst,0);
 		value attr = Field(el,0);
 		value name = Field(el,1);
 		glBindAttribLocation(program,index,String_val(name));
 		sp->attributes[Int_val(attr)] = index;
 		lst = Field(lst,1);
+		index++;
+	}
+	printf("AFTER ATTRIBS\n");
+	for (int i = 0; i < lgVertexAttrib_MAX; i++) {
+		printf("attrib: %d = %d\n",i,sp->attributes[i]);
 	}
 	// Link
 	glLinkProgram(program);
@@ -306,7 +314,7 @@ value ml_create_program(value vShader,value fShader,value attributes,value unifo
 		GLint loc = glGetUniformLocation(program, String_val(name));
 		if (attr == mlUniformMPVMatrix) {
 			sp->uniforms[lgUniformMVPMatrix] = loc;
-		} else if (attr = mlUniformSampler) {
+		} else if (attr == mlUniformSampler) {
 			sp->uniforms[lgUniformSampler] = loc;
 		};
 		rel = caml_alloc_tuple(2);
@@ -317,11 +325,15 @@ value ml_create_program(value vShader,value fShader,value attributes,value unifo
 		runiforms = ruel;
 		lst = Field(lst,1);
 	}
+	printf("AFTER UNIFORMS\n");
+	for (int i = 0; i < lgVertexAttrib_MAX; i++) {
+		printf("attrib: %d = %d\n",i,sp->attributes[i]);
+	}
 	sp->program = program;
 	// return res
 	res = caml_alloc_tuple(2);
 	Store_field(res,0,caml_alloc_custom(&program_ops,sizeof(*sp),0,1));
-	*SPROGRAM(Field(res,0)) = sp;
+	SPROGRAM(Field(res,0)) = sp;
 	Field(res,1) = runiforms;
 	CAMLreturn(res);
 }
@@ -524,22 +536,30 @@ void ml_quad_colors(value quad) {
 }
 
 
-void ml_quad_render(value matrix, value program, value alpha, value quad) {
+void ml_quad_render(value matrix, value program, value uniforms, value alpha, value quad) {
 	lgQuad *q = *QUAD(quad);
 	lgGLUseProgram(program);
-	sprogram *sp = *SPROGRAM(program);
+	sprogram *sp = SPROGRAM(Field(program,0));
 	lgGLUniformModelViewProjectionMatrix(sp);
 	lgGLEnableVertexAttribs( lgVertexAttribFlag_PosColor);
 
 	long offset = (long)&q;
 
+	/*
+	printf("RENDER\n");
+	for (int i = 0; i < lgVertexAttrib_MAX; i++) {
+		printf("attrib: %d = %d\n",i,sp->attributes[i]);
+	}*/
+
 	#define kQuadSize sizeof(q->bl)
   // vertex
   int diff = offsetof( lgQVertex, v);
+	//printf("vertex attrib position: %d, diff = %d\n",sp->attributes[lgVertexAttrib_Position],diff);
   glVertexAttribPointer(sp->attributes[lgVertexAttrib_Position], 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
   
   // color
   diff = offsetof( lgQVertex, c);
+	//printf("vertex color position: %d, diff = %d\n",sp->attributes[lgVertexAttrib_Color],diff);
   glVertexAttribPointer(sp->attributes[lgVertexAttrib_Color], 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

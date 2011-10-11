@@ -196,13 +196,18 @@ value val_video_flag(int flags)
 /* raising SDL_failure exception */
 
 void raise_failure() {
-	caml_raise_with_string(*caml_named_value("SDL_failure"), SDL_GetError());
+	char *err = SDL_GetError();
+	value *failure = caml_named_value("SDL_failure");
+	caml_raise_with_string(*failure, err);
 }
 
 value sdlstub_init(value vf) {
 	CAMLparam1(vf);
 	int flags = init_flag_val(vf);
-	
+	int numdrvs = SDL_GetNumVideoDrivers();
+	printf("num video drivers: %d\n",numdrvs);
+	printf("video drv 1: %s\n",SDL_GetVideoDriver(0));
+	printf("video drv 2: %s\n",SDL_GetVideoDriver(1));
 	if (SDL_Init(flags) < 0) raise_failure();
 	CAMLreturn (Val_unit);
 }
@@ -225,6 +230,59 @@ value sdlstub_must_lock(value s) {
 	CAMLparam1(s);
 	int b = SDL_MUSTLOCK(((SDL_Surface*) Field(s,0)));
 	CAMLreturn (Val_bool(b));
+}
+
+
+value sdlstub_create_window(value title,value x,value y, value w, value h, value flags) {
+	CAMLparam5(title,x,y,w,h);
+	CAMLxparam1(flags);
+	int sx = 0;
+	if (Is_block(x)) {
+		printf("this is block\n");
+		sx = Int_val(Field(x,0));
+	}
+	else {
+		switch Int_val(x) {
+			case 0: sx = SDL_WINDOWPOS_UNDEFINED; break;
+			case 1: sx = SDL_WINDOWPOS_CENTERED; break;
+			default: break;
+		};
+	};
+	int sy = 0;
+	if (Is_block(y)) sy = Int_val(Field(y,0));
+	else {
+		switch Int_val(y) {
+			case 0: sy = SDL_WINDOWPOS_UNDEFINED; break;
+			case 1: sy = SDL_WINDOWPOS_CENTERED; break;
+			default: break;
+		};
+	};
+	Uint32 flgs = 0;
+	value el = flags;
+	while (el != 1) {
+		switch (Int_val(Field(el,0))) {
+			case 0: flgs |= SDL_WINDOW_FULLSCREEN; break;
+			case 1: flgs |= SDL_WINDOW_SHOWN; break;
+			case 2: flgs |= SDL_WINDOW_RESIZABLE; break;
+			case 3: flgs |= SDL_WINDOW_MINIMIZED; break;
+			case 4: flgs |= SDL_WINDOW_OPENGL; break;
+			case 5: flgs |= SDL_WINDOW_BORDERLESS; break;
+			case 6: flgs |= SDL_WINDOW_MAXIMIZED; break;
+			case 7: flgs |= SDL_WINDOW_INPUT_GRABBED; break;
+		};
+		el = Field(el,1);
+	};
+	SDL_Window *window = SDL_CreateWindow(String_val(title),sx,sy,Int_val(w),Int_val(h),flgs);
+	if (!window) raise_failure();
+	CAMLreturn((value)window);
+}
+
+value sdlstub_create_window_byte(value * argv, int n){
+	return sdlstub_create_window (argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+}
+
+void sdlstub_destroy_window(value window) {
+	SDL_DestroyWindow((SDL_Window*)window);
 }
 
 /*
@@ -839,6 +897,17 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 
     switch (event.type) 
     {
+			
+			case SDL_NOEVENT: CAMLreturn(Val_int(0));
+			case SDL_WINDOWEVENT: 
+					ML_event=caml_alloc(3,0);
+					printf("window event: %d\n",event.window.event);
+					Store_field(ML_event,0,Val_int(event.window.event));
+					Store_field(ML_event,1,Val_int(event.window.data1));
+					Store_field(ML_event,2,Val_int(event.window.data2));
+					to_return=caml_alloc(1,0);
+					Store_field(to_return,0,ML_event);
+					CAMLreturn(to_return);
 			/*
 	case SDL_ACTIVEEVENT: 
 	{
@@ -862,8 +931,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    Store_field(ML_event, 0, Val_int(event.key.state));
 	    Store_field(ML_event, 1, Val_int(event.key.keysym.scancode));
 	    Store_field(ML_event, 2, Val_int(key_to_flag[event.key.keysym.sym]));
-	    Store_field(ML_event, 3, 
-		mask_to_ML_flags(event.key.keysym.mod, flag_to_mod, 12));
+	    Store_field(ML_event, 3, mask_to_ML_flags(event.key.keysym.mod, flag_to_mod, 12));
 	    Store_field(ML_event, 4, Val_int(event.key.keysym.unicode));
 	    to_return=caml_alloc(1, 1);
 	    Store_field(to_return, 0, ML_event);
@@ -984,7 +1052,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	}
 	default:
 	{
-	    fprintf(stderr,"Unknown event.\n");
+	    fprintf(stderr,"Unknown event. %d\n",event.type);
 	    exit(-1);
 	}
     }
@@ -1173,19 +1241,21 @@ SDL_GLattr  SDL_GLAttrArray[] =
 	SDL_GL_CONTEXT_MINOR_VERSION
 };
 
-value sdlstub_set_attribute(value a, value v)
+value sdlstub_gl_set_attribute(value a, value v)
 {
 	CAMLparam2(a,v);
 	int attr = Int_val(a);
 	int val = Int_val(v);
 	if(attr < sizeof(SDL_GLAttrArray)){
 		SDL_GLattr  sdlattr = SDL_GLAttrArray[attr];
-		SDL_GL_SetAttribute(sdlattr, val);
+		printf("set %d to %d\n",sdlattr,val);
+		int res = SDL_GL_SetAttribute(sdlattr, val);
+		if (res) raise_failure();
 	}	
 	CAMLreturn(Val_unit);
 }
 
-value sdlstub_get_attribute(value a)
+value sdlstub_gl_get_attribute(value a)
 {
 	CAMLparam1(a);
 	int attr = Int_val(a);
@@ -1193,8 +1263,29 @@ value sdlstub_get_attribute(value a)
 	if(attr < sizeof(SDL_GLAttrArray)){
 		SDL_GLattr  sdlattr = SDL_GLAttrArray[attr];
 		SDL_GL_GetAttribute(sdlattr, &val);
+		printf("atrribute: %d =  %d\n",sdlattr,val);
 	}	
 	CAMLreturn(Val_int(val));
+}
+
+
+value sdlstub_gl_create_context(value window) {
+	SDL_GLContext *context = SDL_GL_CreateContext((SDL_Window*)window);
+	if (!context) raise_failure();
+	return (value)context;
+}
+
+void sdlstub_gl_set_swap_interval(value interval) {
+	int res = SDL_GL_SetSwapInterval(Int_val(interval));
+	if (res) raise_failure();
+}
+
+void sdlstub_gl_delete_context(value context) {
+	SDL_GL_DeleteContext((SDL_GLContext)context);
+}
+
+void sdlstub_gl_swap_window(value window) {
+	SDL_GL_SwapWindow((SDL_Window*)window);
 }
 
 /* audio */

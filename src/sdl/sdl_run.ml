@@ -13,7 +13,7 @@ value init_gl width height =
 
 value touchid = ref 0;
 
-value handle_events (width,height) frameRate stage =
+value handle_events window (width,height) frameRate stage =
   let ticksRate = 1000 / frameRate in
   let open Event in
   loop 0 None False where
@@ -26,7 +26,7 @@ value handle_events (width,height) frameRate stage =
         stage#advanceTime ((float (ticks - lastTicks)) /. 1e3);
 (*         glViewport 0 0 width height; *)
         stage#render None;
-(*         SDLGL.swap_buffers(); *)
+        SDLGL.swap_window window;
         match quit with
         [ True -> ()
         | False ->
@@ -93,18 +93,21 @@ value run stage_create setSize =
     Arg.parse [("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");("-frame-rate",Arg.Set_int frameRate,"frame rate")] (fun _ -> ()) "";
     init [VIDEO];
     Sdl_image.init [ Sdl_image.PNG ]; 
-    let bpp = 32 in
     (
-      SDLGL.set_attribute SDLGL.CONTEXT_MAJOR_VERSION 3;
-      SDLGL.set_attribute SDLGL.CONTEXT_MINOR_VERSION 2;
-(*       ignore(set_video_mode !width !height bpp [ OPENGL ]); *)
-      Printf.printf "SDL ATTRIBUTES: %d:%d\n%!" (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
-      let stage = stage_create (float !width) (float !height) in
+      SDLGL.set_attribute SDLGL.CONTEXT_MAJOR_VERSION 2;
+      SDLGL.set_attribute SDLGL.CONTEXT_MINOR_VERSION 0;
+      SDLGL.set_attribute SDLGL.DOUBLEBUFFER 1;
+      SDLGL.set_attribute SDLGL.DEPTH_SIZE 24;
+      let window = Window.create "TEST WINDOW NAME" Window.PosCentered Window.PosCentered !width !height [ Window.SHOWN ; Window.OPENGL ] in
+      let context = SDLGL.create_context window in
       (
-        setSize (float !width) (float !height);
-(*         set_caption stage#name ""; *)
-        handle_events (!width,!height) !frameRate stage;
-      )
+        SDLGL.set_swap_interval 1;
+        Printf.printf "SDL ATTRIBUTES: %d:%d\n%!" (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
+        let stage = stage_create (float !width) (float !height) in
+        handle_events window (!width,!height) !frameRate stage;
+        SDLGL.delete_context context;
+        Window.destroy window;
+      );
     );
     quit();
   );
