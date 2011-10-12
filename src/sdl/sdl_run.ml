@@ -39,7 +39,7 @@ value handle_events window (width,height) frameRate stage =
               else loop cticks touch False
             and event_loop touch ticks = 
               match Event.poll_event () with
-              [ Quit -> loop ticks touch True
+              [ Window {wevent=WINDOWEVENT_CLOSE;_} | Quit -> loop ticks touch True
               | NoEvent -> loop ticks touch False
               | Button ({Event.mousebutton = LEFT;_} as mb) -> 
                   match touch with
@@ -97,14 +97,17 @@ value run stage_create setSize =
       SDLGL.set_attribute SDLGL.CONTEXT_MAJOR_VERSION 2;
       SDLGL.set_attribute SDLGL.CONTEXT_MINOR_VERSION 0;
       SDLGL.set_attribute SDLGL.DOUBLEBUFFER 1;
-      SDLGL.set_attribute SDLGL.DEPTH_SIZE 24;
+      SDLGL.set_attribute SDLGL.DEPTH_SIZE 32;
       let window = Window.create "TEST WINDOW NAME" Window.PosCentered Window.PosCentered !width !height [ Window.SHOWN ; Window.OPENGL ] in
       let context = SDLGL.create_context window in
       (
         SDLGL.set_swap_interval 1;
-        Printf.printf "SDL ATTRIBUTES: %d:%d\n%!" (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
+        Printf.printf "SDL ATTRIBUTES: DOUBLEBUFFER:%d,GLMV:%d,GLMV:%d\n%!" (SDLGL.get_attribute SDLGL.DOUBLEBUFFER) (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
         let stage = stage_create (float !width) (float !height) in
-        handle_events window (!width,!height) !frameRate stage;
+        (
+          setSize (float !width) (float !height);
+          handle_events window (!width,!height) !frameRate stage;
+        );
         SDLGL.delete_context context;
         Window.destroy window;
       );

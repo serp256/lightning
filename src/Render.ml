@@ -35,7 +35,7 @@ end;
 module Quad = struct
   type t;
 
-  external create: float -> float -> int -> float -> t = "ml_quad_create";
+  external create: ~w:float -> ~h:float -> ~color:int -> ~alpha:float -> t = "ml_quad_create";
   external points: t -> array Point.t = "ml_quad_points";
   external color: t -> int = "ml_quad_color";
   external set_color: t -> int -> unit = "ml_quad_set_color";
@@ -49,6 +49,9 @@ end;
 
 module Image = struct
   type t;
-end;
 
+  external create: ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> ~color:int -> ~alpha:float -> t = "ml_image_create";
+  external render: Matrix.t -> Program.t 'a -> Texture.textureID -> ~pma:bool -> ?uniforms:(list (int * 'b)) -> ?alpha:float -> t -> unit = "ml_image_render_byte" "ml_image_render";
+
+end;
 

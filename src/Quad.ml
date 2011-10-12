@@ -34,7 +34,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
     object(self)
       inherit D.c as super;
 
-      value shaderProgram = Render.Program.load "PositionColor.vsh" "PositionColor.fsh" [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] [ (`UniformMPVMatrix, "u_MVPMatrix")];
+      value shaderProgram = Render.Program.load "PositionColor.vsh" "PositionColor.fsh" [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] [ (`UniformMVPMatrix, "u_MVPMatrix")];
       value quad = Render.Quad.create width height color 1.;
 
       (*

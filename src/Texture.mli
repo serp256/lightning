@@ -23,7 +23,8 @@ class type c =
     method scale: float;
     method textureID: textureID;
     method base : option (c * Rectangle.t);
-    method adjustTextureCoordinates: Gl.float_array -> unit;
+(*     method adjustTextureCoordinates: Gl.float_array -> unit; *)
+    method clipping: option Rectangle.t;
     method update: string -> unit;
   end;
 

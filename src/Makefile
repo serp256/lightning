@@ -74,7 +74,7 @@ endif
 					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 
 MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml \
-					DisplayObject.ml Quad.ml Touch.ml Timers.ml Timer.ml Sprite.ml \
+					DisplayObject.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml Touch.ml Timers.ml Timer.ml Sprite.ml \
 					Stage.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
 	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),$(patsubst %,-ccopt %,$(GLPARAM))) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c

@@ -1,5 +1,6 @@
 open LightCommon;
-open Gl;
+
+type ubyte_array = Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout;
 
 type textureFormat = 
   [ TextureFormatRGBA
@@ -43,7 +44,8 @@ class type c =
     method scale: float;
     method textureID: textureID;
     method base : option (c * Rectangle.t);
-    method adjustTextureCoordinates: float_array -> unit;
+    method clipping: option Rectangle.t;
+(*     method adjustTextureCoordinates: float_array -> unit; *)
     method update: string -> unit;
   end;
 
@@ -62,8 +64,11 @@ value loadImage ?textureID ~path ~contentScaleFactor =
   let legalHeight = nextPowerOfTwo height in
   let rgbSurface = Sdl.Video.create_rgb_surface [Sdl.Video.HWSURFACE] legalWidth legalHeight bpp in
   (
-    Sdl.Video.set_alpha surface [] 0;
-    Sdl.Video.blit_surface surface None rgbSurface None;
+(*       Sdl.Video.set_alpha_mod surface 255; *)
+(*     Sdl.Video.set_color_key rgbSurface [] 0l; *)
+    Sdl.Video.fill_surface rgbSurface (Sdl.Video.map_rgba rgbSurface 244 0 0 0);
+(*     Sdl.Video.set_blend_mode rgbSurface Sdl.Video.BLENDMODE_BLEND; *)
+(*     Sdl.Video.blit_surface surface None rgbSurface None; *)
     Sdl.Video.free_surface surface;
     let textureInfo = 
       {
@@ -130,6 +135,7 @@ class subtexture region (baseTexture:c) =
             )
         ]
   in
+  let rootClipping : Rectangle.t = Obj.magic rootClipping in
   object
     method bindGL () = bind_texture baseTexture#textureID;
     method width = baseTexture#width *. clipping.Rectangle.width;
@@ -138,11 +144,14 @@ class subtexture region (baseTexture:c) =
     method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
     method scale = baseTexture#scale;
     method base = Some (baseTexture,clipping);
+    method clipping = Some rootClipping;
+    (*
     method adjustTextureCoordinates (texCoords:float_array) = 
       for i = 0 to (Bigarray.Array1.dim texCoords) / 2 - 1 do
         texCoords.{2*i} := rootClipping.Rectangle.m_x +. texCoords.{2*i} *. rootClipping.Rectangle.m_width;
         texCoords.{2*i+1} := rootClipping.Rectangle.m_y +. texCoords.{2*i+1} *. rootClipping.Rectangle.m_height;
       done;
+    *)
     method update path = baseTexture#update path;
   end;
 
@@ -191,7 +200,8 @@ value make textureInfo =
       method setTextureID tid = textureID := tid;
       method textureID = textureID;
       method base = None;
-      method adjustTextureCoordinates texCoords = ();
+(*       method adjustTextureCoordinates texCoords = (); *)
+      method clipping = None;
       method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *)
     end
   in

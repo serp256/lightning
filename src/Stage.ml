@@ -122,6 +122,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 (*         RenderSupport.clearTexture (); FIXME: !!!*)
 (*         RenderSupport.clear color 1.0; *)
 (*         RenderSupport.setupOrthographicRendering 0. width height 0.; *)
+        Render.clear color;
         debug "start render";
         proftimer:render "STAGE rendered %F" (super#render None);
         debug "end render";

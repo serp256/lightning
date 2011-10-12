@@ -1,8 +1,8 @@
-open Gl;
 open LightCommon;
 
 (* value gl_tex_coords = make_float_array 8; *)
 
+(*
 DEFINE SWAP_TEX_COORDS(c1,c2) = 
   let tmpX = texCoords.{c1*2} 
   and tmpY = texCoords.{c1*2+1} in
@@ -27,17 +27,19 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
     SWAP_TEX_COORDS(2,3);
   );
 
+*)
 
 module type S = sig
 
-  module Q: Quad.S;
+  module D : DisplayObjectT.M;
 
   class c : [ Texture.c ] ->
     object
-      inherit Q.c; 
+      inherit D.c; 
       value texture: Texture.c;
-      method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
+(*       method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
       method texture: Texture.c;
+      (*
       method texFlipX: bool;
       method setTexFlipX: bool -> unit;
       method texFlipY: bool;
@@ -46,30 +48,35 @@ module type S = sig
       method setTexRotation: option [= `left | `right] -> unit;
       method setTexture: Texture.c -> unit;
       method setTexScale: float -> unit;
+      *)
+      method private render': option Rectangle.t -> unit;
+      method boundsInSpace: !'space. option (<asDisplayObject: D.c; .. > as 'space) -> Rectangle.t;
     end;
 
-  value cast: #Q.D.c -> option c;
+  value cast: #D.c -> option c;
 
   value load: string -> c;
   value create: Texture.c -> c;
 end;
 
-module Make(Q:Quad.S) = struct
+module Make(D:DisplayObjectT.M) = struct
+  module D = D;
 
-  module Q = Q;
-
+  (*
   value flushTexCoords res = 
   (
     Bigarray.Array1.fill res 0.;
     res.{2} := 1.0; res.{5} := 1.0;
     res.{6} := 1.0; res.{7} := 1.0;
   );
+  *)
 
-  class _c  _texture =
+  class _c  ?(color=0xFFFFFF)  _texture =
     object(self)
-      inherit Q.c _texture#width _texture#height as super;
+      inherit D.c as super;
 
 
+      (*
       value texCoords = 
         let a = make_float_array 8 in
         (
@@ -77,15 +84,23 @@ module Make(Q:Quad.S) = struct
           _texture#adjustTextureCoordinates a;
           a
         );
+      *)
 
       value mutable texture: Texture.c = _texture;
       method texture = texture;
 
-      method virtual copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
-      method copyTexCoords dest = (* Array.iteri (fun i a -> Bigarray.Array1.unsafe_set dest i a) texCoords; *)
-        Bigarray.Array1.blit texCoords dest;
+      value shaderProgram = 
+        Render.Program.load "PositionTextureColor.vsh" "PositionTextureColor.fsh" 
+          [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ; (Render.Program.AttribTexCoords, "a_texCoord") ]
+          [ (`UniformMVPMatrix, "u_MVPMatrix"); (`UniformSampler,"u_texture") ];
+      value image = Render.Image.create _texture#width _texture#height _texture#clipping color 1.;
+
+(*       method virtual copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
+(*       method copyTexCoords dest = (* Array.iteri (fun i a -> Bigarray.Array1.unsafe_set dest i a) texCoords; *) *)
+(*         Bigarray.Array1.blit texCoords dest; *)
 
 
+      (*
       value mutable texScale = 1.;
       method setTexScale s = 
         let k = s /. texScale in
@@ -157,9 +172,10 @@ module Make(Q:Quad.S) = struct
               | Some `right -> ()
               ]
           ];
+      *)
 
 
-
+      (*
       method setTexture nt = 
       (
         self#updateSize nt#width nt#height;
@@ -174,7 +190,14 @@ module Make(Q:Quad.S) = struct
         | Some `right -> TEX_COORDS_ROTATE_RIGHT
         ];
       );
+      *)
 
+
+      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
+        Rectangle.empty;
+      method private render' _ = Render.Image.render self#transformationMatrix shaderProgram texture#textureID texture#hasPremultipliedAlpha image;
+
+      (*
       method! private render' _ = 
       (
         RenderSupport.bindTexture texture;
@@ -190,6 +213,7 @@ module Make(Q:Quad.S) = struct
         glDisableClientState gl_vertex_array;
         glDisableClientState gl_color_array;
       );
+      *)
 
     end;
 
@@ -201,7 +225,7 @@ module Make(Q:Quad.S) = struct
       initializer memo#add (self :> c);
     end;
 
-  value cast: #Q.D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
+  value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
 
   value load path = 
     let texture = Texture.load path in

@@ -17,7 +17,7 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
   module DisplayObject = DisplayObject.Make Param;
 (*   module Shape = Shape.Make DisplayObject; *)
   module Quad = Quad.Make DisplayObject;
-(*   module Image = Image.Make Quad; *)
+  module Image = Image.Make DisplayObject;
   module Sprite = Sprite.Make DisplayObject;
 (*   module CompiledSprite = CompiledSprite.Make Image Sprite; *)
 (*   module MovieClip = MovieClip.Make DisplayObject Image; *)
@@ -68,7 +68,7 @@ IFDEF SDL THEN
 external setupOrthographicRendering: float -> float -> float -> float -> unit = "ml_setupOrthographicRendering";
 value init s = 
   let s = (s :> stage_constructor) in
-  Sdl_run.run s (fun w h -> setupOrthographicRendering 0. w 0. h);
+  Sdl_run.run s (fun w h -> setupOrthographicRendering 0. w h 0.);
 ELSE
 value _stage : ref (option stage_constructor) = ref None;
 value init s = 

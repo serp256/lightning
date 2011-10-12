@@ -204,10 +204,7 @@ void raise_failure() {
 value sdlstub_init(value vf) {
 	CAMLparam1(vf);
 	int flags = init_flag_val(vf);
-	int numdrvs = SDL_GetNumVideoDrivers();
-	printf("num video drivers: %d\n",numdrvs);
-	printf("video drv 1: %s\n",SDL_GetVideoDriver(0));
-	printf("video drv 2: %s\n",SDL_GetVideoDriver(1));
+	//int numdrvs = SDL_GetNumVideoDrivers();
 	if (SDL_Init(flags) < 0) raise_failure();
 	CAMLreturn (Val_unit);
 }
@@ -390,17 +387,15 @@ value sdlstub_string_of_pixels(value s) {
 	CAMLreturn(v);
 }
 
-/*
 value sdlstub_set_color_key(value s, value vf, value vk) {
 	CAMLparam3(s,vf,vk);
-	int flag = video_flag_val(vf);
+	int flag = 0;
 	unsigned int key = Int32_val(vk);
 	
 	SDL_Surface *surf = (SDL_Surface*) Field(s,0);
 	if (SDL_SetColorKey(surf, flag, key) < 0) raise_failure();
 	CAMLreturn( Val_unit);
 }
-*/
 
 /*
 value sdlstub_set_alpha(value s, value vf, value va) {
@@ -413,6 +408,29 @@ value sdlstub_set_alpha(value s, value vf, value va) {
 	CAMLreturn( Val_unit);
 }
 */
+
+void sdlstub_set_surface_alpha_mod(value s,value va) {
+	int alpha = Int_val(va);
+	SDL_Surface *surf = (SDL_Surface*)Field(s,0);
+	int res = SDL_SetSurfaceAlphaMod(surf,alpha);
+	if (res) raise_failure();
+}
+
+static SDL_BlendMode  SDL_BlendModeArray[] =
+{
+   SDL_BLENDMODE_NONE,
+	 SDL_BLENDMODE_MASK,
+	 SDL_BLENDMODE_BLEND,
+	 SDL_BLENDMODE_ADD,
+	 SDL_BLENDMODE_MOD
+};
+
+
+void sdlstub_set_surface_blend_mode(value s,value bm) {
+	int blendMode = SDL_BlendModeArray[Int_val(bm)];
+	int res = SDL_SetSurfaceBlendMode((SDL_Surface*)Field(s,0),blendMode);
+	if (res) raise_failure();
+}
 
 
 value sdlstub_set_clipping(value s, value vtop, value vleft, 
@@ -437,8 +455,7 @@ value sdlstub_display_format(value s) {
 	Field(r,0) = (value) n;
 	CAMLreturn (r);
 }
-*/
-
+*/ 
 value sdlstub_create_rgb_surface(value vflags, value vw, value vh, value vdepth) {
 	CAMLparam4(vflags, vw, vh, vdepth);
 	SDL_Surface* s;
@@ -927,6 +944,8 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	case SDL_KEYDOWN:
 	case SDL_KEYUP:
 	{
+		CAMLreturn(Val_int(0)); // skip it now
+		/*
 	    ML_event=caml_alloc(5,0);
 	    Store_field(ML_event, 0, Val_int(event.key.state));
 	    Store_field(ML_event, 1, Val_int(event.key.keysym.scancode));
@@ -936,6 +955,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    to_return=caml_alloc(1, 1);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
+		*/
 	}
 	case SDL_MOUSEMOTION:
 	{
@@ -1248,7 +1268,7 @@ value sdlstub_gl_set_attribute(value a, value v)
 	int val = Int_val(v);
 	if(attr < sizeof(SDL_GLAttrArray)){
 		SDL_GLattr  sdlattr = SDL_GLAttrArray[attr];
-		printf("set %d to %d\n",sdlattr,val);
+		//printf("set %d to %d\n",sdlattr,val);
 		int res = SDL_GL_SetAttribute(sdlattr, val);
 		if (res) raise_failure();
 	}	
@@ -1263,7 +1283,7 @@ value sdlstub_gl_get_attribute(value a)
 	if(attr < sizeof(SDL_GLAttrArray)){
 		SDL_GLattr  sdlattr = SDL_GLAttrArray[attr];
 		SDL_GL_GetAttribute(sdlattr, &val);
-		printf("atrribute: %d =  %d\n",sdlattr,val);
+		//printf("atrribute: %d =  %d\n",sdlattr,val);
 	}	
 	CAMLreturn(Val_int(val));
 }

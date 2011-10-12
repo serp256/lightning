@@ -95,8 +95,18 @@ module Video =
     external create_rgb_surface : list video_flag -> int -> int -> int -> surface = "sdlstub_create_rgb_surface";
     external load_bmp : string -> surface = "sdlstub_load_bmp";
     external save_bmp : surface -> string -> unit = "sdlstub_save_bmp";
-(*     external set_color_key : surface -> list video_flag -> int32 -> unit = "sdlstub_set_color_key"; *)
+    external set_color_key : surface -> list video_flag -> int32 -> unit = "sdlstub_set_color_key";
 (*     external set_alpha : surface -> list video_flag -> int -> unit = "sdlstub_set_alpha"; *)
+    external set_alpha_mod: surface -> int -> unit = "sdlstub_set_surface_alpha_mod";
+    type blendMode = 
+      [ BLENDMODE_NONE (**< No blending *)
+      | BLENDMODE_MASK (**< dst = A ? src : dst (alpha is mask) *)
+      | BLENDMODE_BLEND (**< dst = (src * A) + (dst * (1-A)) *)
+      | BLENDMODE_ADD (**< dst = (src * A) + dst *)
+      | BLENDMODE_MOD (**< dst = src * dst *)
+      ];
+      
+    external set_blend_mode: surface -> blendMode -> unit = "sdlstub_set_surface_blend_mode";
     external set_clipping : surface -> int -> int -> int -> int -> unit = "sdlstub_set_clipping";
     value disable_clipping s = set_clipping s 0 0 0 0;
 (*     external display_format : surface -> surface = "sdlstub_display_format"; *)
@@ -104,10 +114,8 @@ module Video =
       "sdlstub_get_rgb";
     external get_rgba : surface -> int32 -> (int * int * int * int) =
       "sdlstub_get_rgba";
-    external map_rgb : surface -> int -> int -> int -> int32 =
-      "sdlstub_map_rgb";
-    external map_rgba : surface -> int -> int -> int -> int -> int32 =
-      "sdlstub_map_rgba";
+    external map_rgb : surface -> int -> int -> int -> int32 = "sdlstub_map_rgb";
+    external map_rgba : surface -> int -> int -> int -> int -> int32 = "sdlstub_map_rgba";
     type rect =
       { rect_x : mutable int; rect_y : mutable int; rect_w : mutable int;
         rect_h : mutable int
