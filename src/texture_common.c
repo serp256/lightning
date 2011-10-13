@@ -1,11 +1,11 @@
 
 
 #ifdef ANDROID
-#include <GLES/gl.h>
+#include fixme
 #else 
 #ifdef IOS
-#include <OpenGLES/ES1/gl.h>
-#include <OpenGLES/ES1/glext.h>
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
 #else
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include "texture_common.h"
 #include <caml/memory.h>
+#include <caml/fail.h>
 #include <caml/bigarray.h>
 #include <caml/custom.h>
 
@@ -172,8 +173,7 @@ value createGLTexture(value texid,textureInfo *tInfo) {
         else
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         
-        if (tInfo->numMipmaps == 0 && tInfo->generateMipmaps)
-            glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);  
+        if (tInfo->numMipmaps == 0 && tInfo->generateMipmaps) glGenerateMipmap(GL_TEXTURE_2D);
         
         int levelWidth = tInfo->width;
         int levelHeight = tInfo->height;

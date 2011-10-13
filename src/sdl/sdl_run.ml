@@ -87,7 +87,7 @@ value handle_events window (width,height) frameRate stage =
     );
   
 
-value run stage_create setSize = 
+value run stage_create = 
   let width = ref 768 and height = ref 1024 and frameRate = ref 30 in
   (
     Arg.parse [("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");("-frame-rate",Arg.Set_int frameRate,"frame rate")] (fun _ -> ()) "";
@@ -103,9 +103,9 @@ value run stage_create setSize =
       (
         SDLGL.set_swap_interval 1;
         Printf.printf "SDL ATTRIBUTES: DOUBLEBUFFER:%d,GLMV:%d,GLMV:%d\n%!" (SDLGL.get_attribute SDLGL.DOUBLEBUFFER) (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
-        let stage = stage_create (float !width) (float !height) in
+        let stage = stage_create 0. 0. in
         (
-          setSize (float !width) (float !height);
+          stage#resize (float !width) (float !height);
           handle_events window (!width,!height) !frameRate stage;
         );
         SDLGL.delete_context context;

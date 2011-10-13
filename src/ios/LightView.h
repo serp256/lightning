@@ -12,8 +12,8 @@
 
 #import <UIKit/UIKit.h>
 #import <OpenGLES/EAGL.h>
-#import <OpenGLES/ES1/gl.h>
-#import <OpenGLES/ES1/glext.h>
+#import <OpenGLES/ES2/gl.h>
+#import <OpenGLES/ES2/glext.h>
 #import "mlwrapper.h"
 
 /** ------------------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@
 /// -------------
 
 //- (void)initStageWithWidth:(float)width height:(float)height;
-- (void)initStage;
+// - (void)initStage;
 
 /// Starts rendering and event handling.
 - (void)start;

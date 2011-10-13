@@ -5,6 +5,8 @@ type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME  ];
 type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `PassedTime of float ];
 
 
+external setupOrthographicRendering: float -> float -> float -> float -> unit = "ml_setupOrthographicRendering";
+
 exception Restricted_operation;
 
 
@@ -31,11 +33,13 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
   exception Touch_not_found;
 
-  class virtual c (width:float) (height:float) =
+  class virtual c (_width:float) (_height:float) =
     object(self)
       inherit D.container as super;
       initializer self#setName "STAGE";
       value virtual color: int;
+      value mutable width = _width;
+      value mutable height = _height;
       method! width = width;
       method! setWidth _ = raise Restricted_operation;
       method! height = height;
@@ -45,6 +49,13 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method! setScaleX _ = raise Restricted_operation;
       method! setScaleY _ = raise Restricted_operation;
       method! setRotation _ = raise Restricted_operation;
+
+      method resize w h = 
+      (
+        width := w;
+        height := h;
+        setupOrthographicRendering 0. w h 0.
+      );
 
       method! stage = Some self#asDisplayObjectContainer;
 
@@ -117,7 +128,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         | False -> ()
         ];(*}}}*)
 
-      method !render _ =
+      method! private render _ =
       (
 (*         RenderSupport.clearTexture (); FIXME: !!!*)
 (*         RenderSupport.clear color 1.0; *)

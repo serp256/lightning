@@ -23,11 +23,11 @@
 @property (nonatomic, retain) id displayLink;
 
 - (void)setup;
-- (void)createFramebuffer;
+//- (void)createFramebuffer;
 - (void)destroyFramebuffer;
 
-- (void)initStage;
 - (void)renderStage;
+-(void)resizeFramebuffer;
 //- (void)processTouchEvent:(UIEvent*)event;
 
 @end
@@ -68,8 +68,7 @@
     
     // A system version of 3.1 or greater is required to use CADisplayLink.
     NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
-    if ([currSysVer compare:@"3.1" options:NSNumericSearch] != NSOrderedAscending)
-        mDisplayLinkSupported = YES;
+    if ([currSysVer compare:@"3.1" options:NSNumericSearch] != NSOrderedAscending) mDisplayLinkSupported = YES;
     
 		self.multipleTouchEnabled = YES;
     self.frameRate = 60.0f;
@@ -82,52 +81,46 @@
         [NSNumber numberWithBool:NO], kEAGLDrawablePropertyRetainedBacking, 
         kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];    
 
-    mContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];    
+    mContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];    
+    if (!mContext || ![EAGLContext setCurrentContext:mContext]) NSLog(@"Could not create render context");    
+
+    glGenFramebuffers(1, &mFramebuffer);
+    glGenRenderbuffers(1, &mRenderbuffer);
+
+		NSLog(@"Buffers: %d:%d",mFramebuffer,mRenderbuffer);
     
-    if (!mContext || ![EAGLContext setCurrentContext:mContext])        
-        NSLog(@"Could not create render context");    
+    glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, mRenderbuffer);
+
+	  	
+		[mContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:eaglLayer];
     
+		CGRect rect = self.frame;
+		mStage = mlstage_create(rect.size.width - rect.origin.x,rect.size.height - rect.origin.y);
 }
 
 - (void)layoutSubviews 
 {
-		NSLog(@"Layout subviews");
-    [self destroyFramebuffer]; // reset framebuffer (scale factor could have changed)
-    [self createFramebuffer];
-		mlstage_setSize(mWidth,mHeight);
+    [self resizeFramebuffer];
     [self renderStage];        // fill buffer immediately to avoid flickering
 }
 
-
--(void)initStage 
+-(void)resizeFramebuffer
 {
-	//CGSize screenSize = [UIScreen mainScreen].bounds.size;
-	CGRect rect = self.frame;
-	mStage = mlstage_create(rect.size.width - rect.origin.x,rect.size.height - rect.origin.y);
-}
-
-- (void)createFramebuffer 
-{    
-    glGenFramebuffersOES(1, &mFramebuffer);
-    glGenRenderbuffersOES(1, &mRenderbuffer);
-    
-    glBindFramebufferOES(GL_FRAMEBUFFER_OES, mFramebuffer);
-    glBindRenderbufferOES(GL_RENDERBUFFER_OES, mRenderbuffer);
-    [mContext renderbufferStorage:GL_RENDERBUFFER_OES fromDrawable:(CAEAGLLayer*)self.layer];
-    glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_RENDERBUFFER_OES, mRenderbuffer);
-    
-    glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &mWidth);
-    glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &mHeight);
-    
-    if(glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES) != GL_FRAMEBUFFER_COMPLETE_OES) 
-        NSLog(@"failed to create framebuffer: %x", glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES));
+	glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
+	[mContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer];
+	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &mWidth);
+	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &mHeight);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) NSLog(@"failed to create framebuffer: %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
+	mlstage_resize(mStage,mWidth,mHeight);
 }
 
 - (void)destroyFramebuffer 
 {
-    glDeleteFramebuffersOES(1, &mFramebuffer);
+    glDeleteFramebuffers(1, &mFramebuffer);
     mFramebuffer = 0;
-    glDeleteRenderbuffersOES(1, &mRenderbuffer);
+    glDeleteRenderbuffers(1, &mRenderbuffer);
     mRenderbuffer = 0;    
 }
 
@@ -149,13 +142,12 @@
     
     [EAGLContext setCurrentContext:mContext];
     
-    glBindFramebufferOES(GL_FRAMEBUFFER_OES, mFramebuffer);
-    glViewport(0, 0, mWidth, mHeight);
+    glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
     
     mlstage_render(mStage);
     
-    glBindRenderbufferOES(GL_RENDERBUFFER_OES, mRenderbuffer);
-    [mContext presentRenderbuffer:GL_RENDERBUFFER_OES];
+    glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
+    [mContext presentRenderbuffer:GL_RENDERBUFFER];
     
 		[pool release];
 }
@@ -230,19 +222,6 @@
     self.timer = nil;
     self.displayLink = nil;
 }
-
-/*
-- (void)setStage:(SPStage*)stage
-{
-    if (mStage != stage)
-    {
-        mStage.nativeView = nil;
-        [mStage release];
-        mStage = [stage retain];
-        mStage.nativeView = self;        
-    }
-}
-*/
 
 + (Class)layerClass 
 {

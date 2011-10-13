@@ -1,6 +1,7 @@
 include ../Makefile.common
 
 
+CFLAGS += -I .
 
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
@@ -29,7 +30,7 @@ $(SYNTAX): OCAMLC = ocamlfind ocamlc
 
 ifeq ($(PLATFORM),ios)
 	gl = gl/es
-	CFLAGS +=  -DDEBUG
+	CFLAGS +=  -DDEBUG -DIOS
 	MLCOPTS += -DIOS
 	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightView.o ios/LightViewController.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o
 	MLPPOPT += -DGLES -DIOS

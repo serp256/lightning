@@ -16,5 +16,6 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method processTouches: list Touch.n -> unit;
       method advanceTime: float -> unit;
       method run: float -> unit; (* combine advanceTime and processTouches *)
+      method resize: float -> float -> unit;
     end;
 end;

@@ -56,6 +56,7 @@ ENDIF;
 type stage_constructor =
   float -> float -> 
     <
+      resize: float -> float -> unit;
       render: option Rectangle.t -> unit;
       processTouches: list Touch.n -> unit;
       advanceTime: float -> unit;
@@ -65,15 +66,17 @@ type stage_constructor =
 (* value _stage: ref (option (float -> float -> stage eventTypeDisplayObject eventEmptyData)) = ref None; *)
 
 IFDEF SDL THEN
-external setupOrthographicRendering: float -> float -> float -> float -> unit = "ml_setupOrthographicRendering";
 value init s = 
   let s = (s :> stage_constructor) in
-  Sdl_run.run s (fun w h -> setupOrthographicRendering 0. w h 0.);
+  Sdl_run.run s;
 ELSE
+
 value _stage : ref (option stage_constructor) = ref None;
+
 value init s = 
   let s = (s :> stage_constructor) in
   _stage.val := Some s;
+
 value stage_create width height = 
   match _stage.val with
   [ None -> failwith "Stage not initialized"

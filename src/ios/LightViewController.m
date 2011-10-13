@@ -44,7 +44,6 @@ static LightViewController *instance = NULL;
 	};
 	LightView * lightView = [[LightView alloc] initWithFrame:rect];
 	self.view = lightView;
-	[lightView initStage];
 	[lightView release];
 }
 
