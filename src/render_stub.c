@@ -37,6 +37,16 @@ void checkGLErrors(char *where) {
 	};
 }
 
+GLuint boundTextureID = 0;
+int PMA = 0;
+
+void setDefaultGLBlend () {
+	if (PMA != 1) {
+		glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
+		PMA = 1;
+	};
+}
+
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
 	printf("set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
   glDisable(GL_DEPTH_TEST);
@@ -44,7 +54,8 @@ void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLf
   
 	glViewport(left, top, right, bottom);
       
-	glClearColor(1.0,1.0,1.0,1.0);
+	setDefaultGLBlend();
+	glClearColor(1.0,0.0,1.0,1.0);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLLoadIdentity();
       
@@ -290,25 +301,15 @@ void lgGLUseProgram( GLuint program ) {
   }
 }
 
-GLuint boundTextureID = 0;
-int PMA = 0;
 
 void lgGLBindTexture(GLuint newTextureID, int newPMA) {
-	printf("BIND Texture: %d, %d\n",newTextureID,newPMA);
-	#define APPLY_PMA if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA)
-	//#define APPLY_PMA 
-	if (!boundTextureID) {
+	if (boundTextureID != newTextureID) {
 		glBindTexture(GL_TEXTURE_2D,newTextureID);
-		APPLY_PMA;
 		boundTextureID = newTextureID;
+	};
+	if (newPMA != PMA) {
+		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		PMA = newPMA;
-	} else if (boundTextureID != newTextureID) {
-		glBindTexture(GL_TEXTURE_2D,newTextureID);
-		boundTextureID = newTextureID;
-		if (newPMA != PMA) {
-			PMA = newPMA;
-			APPLY_PMA;
-		}
 	}
 }
 
@@ -581,6 +582,7 @@ value ml_quad_alpha(value quad) {
 void ml_quad_set_alpha(value quad,value alpha) {
 	lgQuad *q = *QUAD(quad);
 	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);
+	printf("set quad alpha to: %d\n",a);
 	q->bl.c.a = a;
 	q->br.c.a = a;
 	q->tl.c.a = a;
@@ -620,6 +622,7 @@ void ml_quad_render(value matrix, value program, value uniforms, value alpha, va
 	checkGLErrors("bind matrix uniform");
 	//lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
 
+	setDefaultGLBlend();
 	long offset = (long)q;
 
 	#define kQuadSize sizeof(q->bl)

@@ -36,6 +36,11 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
 
       value shaderProgram = Render.Program.load "PositionColor.vsh" "PositionColor.fsh" [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] [ (`UniformMVPMatrix, "u_MVPMatrix")];
       value quad = Render.Quad.create width height color 1.;
+      method! setAlpha a =
+      (
+        super#setAlpha a;
+        Render.Quad.set_alpha quad a;
+      );
 
       (*
       value vertexCoords = 

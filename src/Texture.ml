@@ -62,13 +62,13 @@ value loadImage ?textureID ~path ~contentScaleFactor =
   let legalWidth = nextPowerOfTwo width in
   let height = Sdl.Video.surface_height surface in
   let legalHeight = nextPowerOfTwo height in
-  let rgbSurface = Sdl.Video.create_rgb_surface [Sdl.Video.HWSURFACE] legalWidth legalHeight bpp in
+  let rgbSurface = Sdl.Video.create_rgb_surface [] legalWidth legalHeight bpp in
   (
-(*       Sdl.Video.set_alpha_mod surface 255; *)
+(*     Sdl.Video.set_alpha_mod surface 0; *)
+(*     Sdl.Video.fill_surface rgbSurface (Sdl.Video.map_rgba rgbSurface 0 0 0 0); *)
 (*     Sdl.Video.set_color_key rgbSurface [] 0l; *)
-    Sdl.Video.fill_surface rgbSurface (Sdl.Video.map_rgba rgbSurface 244 0 0 0);
-(*     Sdl.Video.set_blend_mode rgbSurface Sdl.Video.BLENDMODE_BLEND; *)
-(*     Sdl.Video.blit_surface surface None rgbSurface None; *)
+    Sdl.Video.set_blend_mode surface Sdl.Video.BLENDMODE_NONE;
+    Sdl.Video.blit_surface surface None rgbSurface None;
     Sdl.Video.free_surface surface;
     let textureInfo = 
       {
