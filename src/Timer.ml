@@ -6,6 +6,7 @@ class type virtual c =
     inherit EventDispatcher.simple [eventType,Ev.dataEmpty, c ];
     method running: bool;
     method delay: float;
+    method setDelay: float -> unit;
     method repeatCount: int;
     method currentCount: int;
     method start: unit -> unit;
@@ -22,7 +23,9 @@ value create ?(repeatCount=0) delay = (*{{{*)
       value mutable running = None;
       method running = running <> None;
       value mutable currentCount = 0;
-      method delay = delay;
+      value mutable _delay = delay;
+      method delay = _delay;
+      method setDelay d = _delay := d;
       method repeatCount = repeatCount;
       method currentCount = currentCount;
       method fire () = 
@@ -33,7 +36,7 @@ value create ?(repeatCount=0) delay = (*{{{*)
           if repeatCount <= 0 || currentCount < repeatCount
           then
           (
-            running := Some (Timers.start delay self#fire);
+            running := Some (Timers.start _delay self#fire);
             let event = Ev.create `TIMER () in
             self#dispatchEvent event; 
           )
@@ -50,7 +53,7 @@ value create ?(repeatCount=0) delay = (*{{{*)
       );
 
       method private start' () = 
-        running := Some (Timers.start delay self#fire);
+        running := Some (Timers.start _delay self#fire);
 
       method start () = 
         match running with
