@@ -19,7 +19,7 @@ module type S = sig
   value create: ?fontName:string -> ?fontSize:int -> ?color:int -> ~width:float -> ~height:float -> string -> c;
 end;
 
-module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSprite.Sprite.D = Quad.D) = struct
+module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module Sprite.D = Quad.D) = struct
 
   module D = Quad.D;
   module BF = FontCreator;
@@ -160,7 +160,7 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSpri
         super#render' rect;
       );
 
-      method! renderPrepare () = if requiresRedraw then self#redrawContents () else ();
+(*       method! renderPrepare () = if requiresRedraw then self#redrawContents () else (); *)
 
       method textBounds = 
       (

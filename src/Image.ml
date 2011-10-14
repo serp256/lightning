@@ -33,6 +33,41 @@ module type S = sig
 
   module D : DisplayObjectT.M;
 
+
+
+  module Programs = 
+
+    module Simple = 
+
+      value id = Render.Program.get_id ();
+
+      value create () = 
+          Redner.Program.load
+            id
+            ~vertex:"Image.vsh" ~fragment:"Image.fsh"
+            ~attributes:[ AttribPosition; AttribColor ; AttribTexCoords ]
+            ~uniforms: [| "u_texture" |];
+
+    end;
+
+    module Glow = 
+
+      value id  = Render.Program.get_id ();
+      value create (blurSize:float) (blurColor:int) = 
+        Render.Program.load
+          id
+          ~vertes:"Image.vsh" ~fragment:"Image.fsh"
+          ~attributes:[ AttribPosition; AttribColor ; AttribTexCoords ]
+          ~uniforms: [| "u_texture"; "blurSize" ; "blurColor" |]
+        in (* может быть здесь сразу запиздючить эту дрочь нахуй ? *)
+        (
+        );
+        
+
+    end;
+
+  end;
+
   class c : [ Texture.c ] ->
     object
       inherit D.c; 
@@ -46,9 +81,13 @@ module type S = sig
       method setTexFlipY: bool -> unit;
       method texRotation: option [= `left | `right];
       method setTexRotation: option [= `left | `right] -> unit;
+      *)
       method setTexture: Texture.c -> unit;
+      (*
       method setTexScale: float -> unit;
       *)
+      method setColor: int -> unit;
+      method color: int;
       method private render': option Rectangle.t -> unit;
       method boundsInSpace: !'space. option (<asDisplayObject: D.c; .. > as 'space) -> Rectangle.t;
     end;
@@ -89,11 +128,31 @@ module Make(D:DisplayObjectT.M) = struct
       value mutable texture: Texture.c = _texture;
       method texture = texture;
 
+
       value shaderProgram = 
-        Render.Program.load "PositionTextureColor.vsh" "PositionTextureColor.fsh" 
+        Render.Program.load "Image.vsh" "Image.fsh" 
           [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ; (Render.Program.AttribTexCoords, "a_texCoord") ]
           [ (`UniformMVPMatrix, "u_MVPMatrix"); (`UniformSampler,"u_texture") ];
+
+
+
+      method setFilters filtes = 
+        List.fold_left begin fun c
+          [ `Glow (glowSize,glowColor) ->
+          | 
+          ]
+        end;
+
       value image = Render.Image.create _texture#width _texture#height _texture#clipping color 1.;
+
+      method setColor color = Render.Image.set_color image color;
+      method color = Render.Image.color image;
+
+      method! setAlpha a =
+      (
+        super#setAlpha a;
+        Render.Image.set_alpha image a;
+      );
 
 (*       method virtual copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
 (*       method copyTexCoords dest = (* Array.iteri (fun i a -> Bigarray.Array1.unsafe_set dest i a) texCoords; *) *)
@@ -174,6 +233,13 @@ module Make(D:DisplayObjectT.M) = struct
           ];
       *)
 
+
+      method setTexture nt = 
+      (
+        Render.Image.update image texture#width texture#height texture#clipping;
+        texture := nt;
+        (* modified нах *)
+      );
 
       (*
       method setTexture nt = 

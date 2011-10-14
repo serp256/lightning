@@ -301,7 +301,6 @@ void lgGLUseProgram( GLuint program ) {
   }
 }
 
-
 void lgGLBindTexture(GLuint newTextureID, int newPMA) {
 	if (boundTextureID != newTextureID) {
 		glBindTexture(GL_TEXTURE_2D,newTextureID);
@@ -325,7 +324,7 @@ value ml_create_program(value vShader,value fShader,value attributes,value unifo
 	sprogram *sp = caml_stat_alloc(sizeof(sprogram));
 	lst = attributes;
 	value el;
-	GLuint index = 0;
+	GLuint index = 1;
 	while (lst != 1) {
 		el = Field(lst,0);
 		value attr = Field(el,0);
@@ -350,18 +349,21 @@ value ml_create_program(value vShader,value fShader,value attributes,value unifo
     glDeleteProgram( program );
     caml_failwith("Failed to link program");
   }
-	if (mlUniformMVPMatrix == 0) mlUniformMVPMatrix = caml_hash_variant("UniformMVPMatrix");
-	if (mlUniformSampler == 0) mlUniformSampler = caml_hash_variant("UniformSampler");
+
 	lst = uniforms;
 	runiforms = 1;
 	value rel;
 	checkGLErrors("before uniforms");
+
+	sp->uniforms[lgUniformMVPMatrix] = glGetUniformLocation(program, "u_MVPMatrix");
+	
 	while (lst != 1) {
 		el = Field(lst,0);
 		value attr = Field(el,0);
 		value name = Field(el,1);
 		GLint loc = glGetUniformLocation(program, String_val(name));
 		printf("get uniform: attr: %d, %s = %d\n",(int)attr,String_val(name),loc);
+		/*
 		if (attr == mlUniformMVPMatrix) {
 			//printf("set MVPMatrix to %d\n",loc);
 			sp->uniforms[lgUniformMVPMatrix] = loc;
@@ -370,6 +372,7 @@ value ml_create_program(value vShader,value fShader,value attributes,value unifo
 			glUniform1i(loc, 0 );
 			//sp->uniforms[lgUniformSampler] = loc;
 		};
+		*/
 		rel = caml_alloc_tuple(2);
 		Field(rel,0) = attr; Field(rel,1) = Val_int(loc);
 		ruel = caml_alloc_tuple(2);
@@ -690,43 +693,83 @@ struct custom_operations tex_quad_ops = {
   custom_deserialize_default
 };
 
-value ml_image_create(value width,value height,value clipping,value color,value alpha) {
-	CAMLparam5(width,height,clipping,color,alpha);
-	lgTexQuad *tq = (lgTexQuad*)caml_stat_alloc(sizeof(lgTexQuad));
-	int clr = Int_val(color);
-	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255));
-	tq->bl.v = (vertex2F) { 0, 0 };
-	tq->bl.c = c;
-	tq->bl.tex = (tex2F){0,0};
-	tq->br.v = (vertex2F) { Double_val(width)};
-	tq->br.c = c;
-	tq->br.tex = (tex2F){1,0};
-	tq->tl.v = (vertex2F) { 0, Double_val(height)};
-	tq->tl.c = c;
-	tq->tl.tex = (tex2F){0,1};
-	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height) };
-	tq->tr.c = c;
-	tq->tr.tex = (tex2F){1,1};
+
+void set_image_uv(lgTexQuad *tq, value clipping) {
 	if (clipping != 1) {
+		printf("non default clipping\n");
 		value c = Field(clipping,0);
 		double x = Double_field(c,0);
 		double y = Double_field(c,1);
 		double width = Double_field(c,2);
 		double height = Double_field(c,3);
-		tq->bl.tex.u = x + tq->bl.tex.u * width;
-		tq->bl.tex.v = y + tq->bl.tex.v * height;
-		tq->br.tex.u = x + tq->br.tex.u * width;
-		tq->br.tex.v = y + tq->br.tex.v * height;
-		tq->tl.tex.u = x + tq->tl.tex.u * width;
-		tq->tl.tex.v = y + tq->tl.tex.v * height;
-		tq->tr.tex.u = x + tq->tr.tex.u * width;
-		tq->tr.tex.v = y + tq->tr.tex.v * height;
+		tq->bl.tex.u = x;
+		tq->bl.tex.v = y;
+		tq->br.tex.u = x + width;
+		tq->br.tex.v = y;
+		tq->tl.tex.u = x;
+		tq->tl.tex.v = y + height;
+		tq->tr.tex.u = x + width;
+		tq->tr.tex.v = y + height;
+	} else {
+		printf("clipping default\n");
+		tq->bl.tex = (tex2F){0,0};
+		tq->br.tex = (tex2F){1,0};
+		tq->tl.tex = (tex2F){0,1};
+		tq->tr.tex = (tex2F){1,1};
 	};
+}
+
+value ml_image_create(value width,value height,value clipping,value color,value alpha) {
+	CAMLparam5(width,height,clipping,color,alpha);
+	lgTexQuad *tq = (lgTexQuad*)caml_stat_alloc(sizeof(lgTexQuad));
+	int clr = Int_val(color);
+	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255));
+	tq->bl.v = (vertex2F){0,0};
+	tq->bl.c = c;
+	tq->br.v = (vertex2F) { Double_val(width)};
+	tq->br.c = c;
+	tq->tl.v = (vertex2F) { 0, Double_val(height)};
+	tq->tl.c = c;
+	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height) };
+	tq->tr.c = c;
+	set_image_uv(tq,clipping);
 	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgTexQuad*),0,1); // 
 	*TEXQUAD(res) = tq;
 	CAMLreturn(res);
 }
 
+value ml_image_color(value image) {
+	lgTexQuad *tq = *TEXQUAD(image);
+	return Int_val((COLOR(tq->bl.c.r,tq->bl.c.b,tq->bl.c.g)));
+}
+
+
+void ml_image_set_color(value image,value color) {
+	lgTexQuad *tq = *TEXQUAD(image);
+	long clr = Int_val(color);
+	color4B c = COLOR_FROM_INT(clr,tq->bl.c.a);
+	tq->bl.c = c;
+	tq->br.c = c;
+	tq->tl.c = c;
+	tq->tr.c = c;
+}
+
+void ml_image_set_alpha(value image,value alpha) {
+	lgTexQuad *tq = *TEXQUAD(image);
+	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);
+	tq->bl.c.a = a;
+	tq->br.c.a = a;
+	tq->tl.c.a = a;
+	tq->tr.c.a = a;
+}
+
+void ml_image_update(value image, value width, value height, value clipping) {
+	lgTexQuad *tq = *TEXQUAD(image);
+	tq->br.v = (vertex2F) { Double_val(width)};
+	tq->tl.v = (vertex2F) { 0, Double_val(height)};
+	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height) };
+	set_image_uv(tq,clipping);
+}
 
 void ml_image_render(value matrix,value program, value textureID, value pma, value uniforms, value alpha, value image) {
 	lgTexQuad *tq = *TEXQUAD(image);

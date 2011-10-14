@@ -1,8 +1,7 @@
 
-module Make(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sprite.D = Image.Q.D) = struct
+module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.D) = struct
 
-module DisplayObject = Image.Q.D;
-module Sprite = CompiledSprite.Sprite;
+module DisplayObject = Image.D;
 
 value default_font_family = ref "Helvetica";
 
@@ -619,7 +618,7 @@ value create ?width ?height (html:main) =
         )
     ]
   in
-  let result = CompiledSprite.create () in
+  let result = Sprite.create () in
   let (pos,container) = process (width,height) [] html in
   (
     (* FIXME: skip pos *)

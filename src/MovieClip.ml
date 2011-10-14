@@ -4,7 +4,7 @@ value floats = float_of_string;
 
 module Make
   (D:DisplayObjectT.M with type evType = private [> DisplayObjectT.eventType | `ENTER_FRAME ] and type evData = private [> `PassedTime of float | DisplayObjectT.eventData ]) 
-  (Image: Image.S with module Q.D = D)
+  (Image: Image.S with module D = D)
   
   = struct
 

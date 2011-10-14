@@ -5,7 +5,7 @@ module Make
     type evData = private [> `Touches of list Touch.t | DisplayObjectT.eventData ]
   ) 
   (Sprite: Sprite.S with module D = D)
-  (Image: Image.S with module Q.D = D)
+  (Image: Image.S with module D = D)
   (TextField: TextField.S with module D = D)
   
   : sig

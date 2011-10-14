@@ -65,7 +65,7 @@ value loadImage ?textureID ~path ~contentScaleFactor =
   let rgbSurface = Sdl.Video.create_rgb_surface [] legalWidth legalHeight bpp in
   (
 (*     Sdl.Video.set_alpha_mod surface 0; *)
-(*     Sdl.Video.fill_surface rgbSurface (Sdl.Video.map_rgba rgbSurface 0 0 0 0); *)
+(*     Sdl.Video.fill_surface rgbSurface (Sdl.Video.map_rgba rgbSurface 255 0 0 255); *)
 (*     Sdl.Video.set_color_key rgbSurface [] 0l; *)
     Sdl.Video.set_blend_mode surface Sdl.Video.BLENDMODE_NONE;
     Sdl.Video.blit_surface surface None rgbSurface None;
@@ -78,7 +78,7 @@ value loadImage ?textureID ~path ~contentScaleFactor =
         realHeight = height;
         height = legalHeight;
         numMipmaps = 0;
-        generateMipmaps = True;
+        generateMipmaps = False;
         premultipliedAlpha = False;
         scale = 1.0;
         textureID = Obj.magic textureID;

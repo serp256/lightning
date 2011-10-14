@@ -9,11 +9,6 @@ module type S = sig
   class c: [ ?color:int] -> [ float ] -> [ float ] ->
     object
       inherit D.c; 
-(*       value shaderProgram = Render.Program.load "PositionColor.vsh" "PositionColor.fsh" [ (AttribPosition,"a_position"); (AttributeColor,"a_color") ] [ (`UniformMPVMatrix, "u_MVPMatrix")]; *)
-(*       value vertexColors: array int; *)
-(*       value vertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout; *)
-(*       method updateSize: float -> float -> unit; *)
-(*       method copyVertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
       method setColor: int -> unit;
       method color: int;
       method vertexColors: Enum.t int;
@@ -34,7 +29,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
     object(self)
       inherit D.c as super;
 
-      value shaderProgram = Render.Program.load "PositionColor.vsh" "PositionColor.fsh" [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] [ (`UniformMVPMatrix, "u_MVPMatrix")];
+      value shaderProgram = Render.Program.load "Quad.vsh" "Quad.fsh" [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] [ (`UniformMVPMatrix, "u_MVPMatrix")];
       value quad = Render.Quad.create width height color 1.;
       method! setAlpha a =
       (
@@ -86,13 +81,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
       method vertexColors: Enum.t int = Enum.empty ();
 
       method setColor color = Render.Quad.set_color quad color;
-        (*
-        for i = 0 to 3 do
-          vertexColors.(i) := color;
-        done;
-        *)
-
-      method color = (* vertexColors.(0); *) Render.Quad.color quad;
+      method color = Render.Quad.color quad;
 
       method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
         let vertexCoords = Render.Quad.points quad in
@@ -144,15 +133,6 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
     end; (*}}}*)
 
   value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
-
-  (*
-  value cast: #DisplayObject.c 'event_type 'event_data -> option (c 'event_type 'event_data) = 
-    fun q ->
-      match ObjMemo.mem memo (q :> < >) with
-      [ True -> Some ((Obj.magic q) : c 'event_type 'event_data)
-      | False -> None
-      ];
-    *)
 
   value create ?color width height = new c ?color width height;
 

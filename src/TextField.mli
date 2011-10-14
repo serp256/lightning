@@ -19,4 +19,4 @@ module type S = sig
 end;
 
 
-module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module CompiledSprite.Sprite.D = Quad.D): S with module D = Quad.D;
+module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module Sprite.D = Quad.D): S with module D = Quad.D;

@@ -200,15 +200,13 @@ value registern xmlpath =
   ];
 
 module type Creator = sig
-  module CompiledSprite : CompiledSprite.S;
-  value createText: t -> ~width:float -> ~height:float -> ~color:int -> ?border:bool -> ?hAlign:LightCommon.halign -> ?vAlign:LightCommon.valign -> string -> CompiledSprite.c;
+  module Sprite: Sprite.S;
+  value createText: t -> ~width:float -> ~height:float -> ~color:int -> ?border:bool -> ?hAlign:LightCommon.halign -> ?vAlign:LightCommon.valign -> string -> Sprite.c;
 end;
 
-module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sprite.D = Image.Q.D) = struct
+module MakeCreator(Image:Image.S)(Sprite:Sprite.S with module D = Image.D) = struct
 
-  module Sprite = CompiledSprite.Sprite;
-  module Quad = Image.Q;
-  module CompiledSprite = CompiledSprite;
+  module Sprite = Sprite;
 
   value createText t ~width ~height ~color ?(border=False) ?hAlign ?vAlign text =
   (*   let () = Printf.eprintf "create text: [%s]\n%!" text in *)
@@ -308,7 +306,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
         | _ -> Queue.iter lineContainer#addChild lines
         ];
       );
-      let outerContainer = CompiledSprite.create () in 
+      let outerContainer = Sprite.create () in 
       (
         outerContainer#addChild lineContainer;
         match vAlign with
@@ -323,6 +321,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
           end
         | _ -> ()
         ];
+        (*
         if border
         then
           let topBorder = Quad.create width 1.
@@ -345,6 +344,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
             outerContainer#addChild rightBorder;
           )   
         else ();
+        *)
         outerContainer;
       )
     );

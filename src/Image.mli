@@ -7,6 +7,8 @@ module type S = sig
     object
       inherit D.c; 
       value texture: Texture.c;
+      method setColor: int -> unit;
+      method color: int;
       (*
       method texFlipX: bool;
       method setTexFlipX: bool -> unit;
@@ -17,7 +19,7 @@ module type S = sig
       method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
       *)
       method texture: Texture.c;
-(*       method setTexture: Texture.c -> unit; *)
+      method setTexture: Texture.c -> unit;
 (*       method setTexScale: float -> unit; *)
       method private render': option Rectangle.t -> unit;
       method boundsInSpace: !'space. option (<asDisplayObject: D.c; .. > as 'space) -> Rectangle.t;
