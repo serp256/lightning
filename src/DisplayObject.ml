@@ -99,9 +99,8 @@ class virtual _c [ 'parent ] = (*{{{*)
     method name = name;
     method setName n = name := n;
 
-    value mutable x = 0.0;
-    value mutable y = 0.0;
-    value mutable transformPoint = (0.,0.);
+    value mutable pos  = {Point.x = 0.; y =0.};
+    value mutable transformPoint = {Point.x=0.;y=0.};
     value mutable scaleX = 1.0;
     value mutable scaleY = 1.0;
     value mutable rotation = 0.0;
@@ -112,7 +111,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method transformationMatrix = 
       match transformationMatrix with
       [ None -> 
-        let translate = Point.addPoint (x,y) transformPoint in
+        let translate = match transformPoint with [ {Point.x=0.;y=0.} -> pos | _ -> Point.addPoint pos transformPoint ] in
         let m = Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate () in
         (
           transformationMatrix := Some m;
@@ -122,22 +121,22 @@ class virtual _c [ 'parent ] = (*{{{*)
       ];
 
 
-    method transformPointX = fst transformPoint;
+    method transformPointX = transformPoint.Point.x;
     method setTransformPointX nv = 
-      if nv <> fst transformPoint
+      if nv <> transformPoint.Point.x
       then
         (
-          transformPoint := (nv,snd transformPoint);
+          transformPoint := {Point.x = nv;y = transformPoint.Point.y};
           RESET_CACHE;
         )
       else ();
 
-    method transformPointY = snd transformPoint;
+    method transformPointY = transformPoint.Point.y;
     method setTransformPointY nv =
-      if nv <> snd transformPoint
+      if nv <> transformPoint.Point.y
       then
         (
-          transformPoint := (fst transformPoint,nv);
+          transformPoint := {Point.x = transformPoint.Point.x;y=nv};
           RESET_CACHE;
         )
       else ();
@@ -258,14 +257,14 @@ class virtual _c [ 'parent ] = (*{{{*)
     method touchable = touchable;
     method setTouchable v = touchable := v;
 
-    method x = x;
-    method setX x' = ( x := x'; RESET_CACHE);
+    method x = pos.Point.x;
+    method setX x' = ( pos := {Point.x = x'; y = pos.Point.y}; RESET_CACHE);
 
-    method y = y;
-    method setY y' = (y := y'; RESET_CACHE);
+    method y = pos.Point.y;
+    method setY y' = (pos  := {Point.x = pos.Point.y; y = y'}; RESET_CACHE);
 
-    method pos = (x,y);
-    method setPos (x',y') = (x := x'; y := y'; RESET_CACHE);
+    method pos = pos;
+    method setPos x y = (pos := {Point.x=x;y=y}; RESET_CACHE);
 
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
@@ -358,8 +357,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       scaleY := sy;
       let r = Matrix.rotation m in
       rotation := r;
-      x := m.Matrix.tx;
-      y := m.Matrix.ty;
+      pos := {Point.x = m.Matrix.tx; y = m.Matrix.ty};
       transformationMatrix := Some m;
       RESET_BOUNDS_CACHE;
     );
@@ -472,7 +470,7 @@ class virtual _c [ 'parent ] = (*{{{*)
    
 
     (* если придумать какое-то кэширование ? *)
-    value mutable mask: option (bool * Rectangle.t * (array (float*float))) = None;
+    value mutable mask: option (bool * Rectangle.t * (array Point.t)) = None;
     method setMask ?(onSelf=False) rect = 
       let open Rectangle in 
       mask := Some (onSelf, rect, Rectangle.points rect); (* если будет система кэширования можно сразу преобразовать этот рект и закэшировать нах *)

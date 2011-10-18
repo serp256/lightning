@@ -78,7 +78,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
                   nt.n_previousGlobalY := touch.n_globalY; 
                   match target#stage with
                   [ None -> 
-                    match self#hitTestPoint (nt.n_globalX,nt.n_globalY) True with
+                    match self#hitTestPoint {Point.x=nt.n_globalX;y=nt.n_globalY} True with
                     [ None -> assert False
                     | Some target -> (target,nt)
                     ]
@@ -87,7 +87,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
                 )
               with 
               [  Touch_not_found -> 
-                match self#hitTestPoint (nt.n_globalX,nt.n_globalY) True with
+                match self#hitTestPoint {Point.x= nt.n_globalX;y = nt.n_globalY} True with
                 [ Some target -> (target,nt)
                 | None -> assert False
                 ]
@@ -172,7 +172,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       | False ->
           match super#hitTestPoint localPoint isTouch with
           [ None -> (* different to other containers, the stage should acknowledge touches even in empty parts. *)
-            let bounds = Rectangle.create x y width height in
+            let bounds = Rectangle.create pos.Point.x pos.Point.y width height in
             match Rectangle.containsPoint bounds localPoint with
             [ True -> Some self#asDisplayObject
             | False -> None

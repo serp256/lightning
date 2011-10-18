@@ -40,14 +40,13 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method setTransformPointY: float -> unit;
     method transformPoint: Point.t;
     method setTransformPoint: Point.t -> unit;
-    value x:float;
     method x: float;
     method setX: float -> unit;
-    value y:float;
     method y: float;
     method setY: float -> unit;
+    value pos: Point.t;
     method pos: Point.t;
-    method setPos: Point.t -> unit;
+    method setPos: float -> float -> unit;
     method width: float;
     method setWidth: float -> unit;
     method height: float;

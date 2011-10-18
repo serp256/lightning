@@ -101,10 +101,10 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
       method color = Render.Quad.color quad;
 
       method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
-        let vertexCoords = Render.Quad.points quad in
         match targetCoordinateSpace with
         [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. width height (* optimization *)
         | _ -> 
+          let vertexCoords = Render.Quad.points quad in
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
           let ar = Matrix.transformPoints transformationMatrix vertexCoords in
           Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))

@@ -4,10 +4,10 @@ type tm = {m_x:mutable float; m_y: mutable float; m_width: mutable float; m_heig
 value tm_of_t r = {m_x=r.x;m_y=r.y;m_width=r.width;m_height=r.height};
 value empty = {x=0.;y=0.;width=0.;height=0.};
 value create x y width height = {x;y;width;height};
-value containsPoint rect (x,y) = 
+value containsPoint rect {Point.x=x;y=y} = 
   x >= rect.x && y >= rect.y && x <= rect.x +. rect.width && y <= rect.y +. rect.height;
 
-value points r = [| (r.x,r.y) ; (r.x, r.y +. r.height); (r.x +. r.width,r.y); (r.x +. r.width, r.y +. r.height) |];
+value points r = [| {Point.x=r.x;y=r.y} ; {Point.x=r.x; y=r.y +. r.height}; {Point.x = r.x +. r.width; y = r.y}; {Point.x = r.x +. r.width; y = r.y +. r.height} |];
 
 value intersection rect1 rect2 = 
   let left = max rect1.x rect2.x

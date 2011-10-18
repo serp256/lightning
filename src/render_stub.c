@@ -12,6 +12,7 @@
 
 
 
+
 /*
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -25,6 +26,7 @@
 #include <caml/memory.h>
 #include <caml/alloc.h>
 #include <caml/custom.h>
+#include <caml/bigarray.h>
 #include <caml/fail.h>
 
 #include <kazmath/GL/matrix.h>
@@ -539,11 +541,38 @@ value ml_filter_glow(value glow) {
 	gd->glowSize = Double_val(Field(glow,0)) / 1000.;
 	gd->glowStrenght = Double_val(Field(glow,1));
 	gd->glowColor = COLOR3F_FROM_INT(Field(glow,2));
-	printf("glow filter: %f,%f,%d\n",gd->glowSize,gd->glowStrenght,gd->glowColor);
 	return make_filter(&glowFilter,gd);
 }
 
+void colorMatrixFilter(sprogram *sp,void *data) {
+	glUniform1fv(sp->other_uniforms[0],20,(GLfloat*)data);
+}
 
+value ml_filter_cmatrix(value matrix) {
+	return make_filter(&colorMatrixFilter,Caml_ba_data_val(matrix));
+}
+
+struct cMatrixGlow {
+	GLfloat *cmatrix;
+	struct glowData glow;
+};
+
+void cMatrixGlowFilter(sprogram *sp,void *data) {
+	struct cMatrixGlow *gd = (struct cMatrixGlow*)data;
+	glUniform1fv(sp->other_uniforms[0],20,(GLfloat*)gd->cmatrix);
+	glUniform1f(sp->other_uniforms[1],gd->glow.glowSize);
+	glUniform1f(sp->other_uniforms[2],gd->glow.glowStrenght);
+	glUniform3fv(sp->other_uniforms[3],1,(GLfloat*)&(gd->glow.glowColor));
+}
+
+value ml_filter_cmatrix_glow(value matrix,value glow) {
+	struct cMatrixGlow *gd = (struct cMatrixGlow*)caml_stat_alloc(sizeof(struct cMatrixGlow));
+	gd->cmatrix = Caml_ba_data_val(matrix);
+	gd->glow.glowSize = Double_val(Field(glow,0)) / 1000.;
+	gd->glow.glowStrenght = Double_val(Field(glow,1));
+	gd->glow.glowColor = COLOR3F_FROM_INT(Field(glow,2));
+	return make_filter(&cMatrixGlowFilter,gd);
+}
 ////////////////////////////////////
 /////// QUADS 
 //! a Point with a vertex point, and color 4B
@@ -605,18 +634,25 @@ value ml_quad_create(value width,value height,value color,value alpha) {
 
 value ml_quad_points(value quad) { // FIXME to array of points
 	CAMLparam1(quad);
-	CAMLlocal1(res);
+	CAMLlocal2(res,p);
 	lgQuad *q = *QUAD(quad);
-	res = caml_alloc(Double_array_tag,8);
-	Store_double_field(res, 0, q->bl.v.x);
-	Store_double_field(res, 1, q->bl.v.y);
-	Store_double_field(res, 2, q->br.v.x);
-	Store_double_field(res, 3, q->br.v.y);
-	Store_double_field(res, 4, q->tl.v.x);
-	Store_double_field(res, 5, q->tl.v.y);
-	Store_double_field(res, 6, q->tr.v.x);
-	Store_double_field(res, 7, q->tr.v.y);
-	// нужно сделать массив точек 
+	res = caml_alloc_tuple(4);
+	p = caml_alloc(2,Double_array_tag);
+	Store_double_field(p, 0, q->bl.v.x);
+	Store_double_field(p, 1, q->bl.v.y);
+	Store_field(res,0,p);
+	p = caml_alloc(2,Double_array_tag);
+	Store_double_field(p, 0, q->br.v.x);
+	Store_double_field(p, 1, q->br.v.y);
+	Store_field(res,1,p);
+	p = caml_alloc(2,Double_array_tag);
+	Store_double_field(p, 0, q->tl.v.x);
+	Store_double_field(p, 1, q->tl.v.y);
+	Store_field(res,2,p);
+	p = caml_alloc(2,Double_array_tag);
+	Store_double_field(p, 6, q->tr.v.x);
+	Store_double_field(p, 7, q->tr.v.y);
+	Store_field(res,3,p);
 	CAMLreturn(res);
 }
 
@@ -676,7 +712,6 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
 	sprogram *sp = SPROGRAM(Field(program,0));
-	printf("use program: %d\n",sp->program);
 	lgGLUseProgram(sp->program);
 	checkGLErrors("quad render use program");
 	lgGLUniformModelViewProjectionMatrix(sp);
@@ -797,6 +832,30 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	CAMLreturn(res);
 }
 
+value ml_image_points(value image) {
+	CAMLparam1(image);
+	CAMLlocal2(res,p);
+	lgTexQuad *tq = *TEXQUAD(image);
+	res = caml_alloc_tuple(4);
+	p = caml_alloc(2,Double_array_tag);
+	Store_double_field(p, 0, tq->bl.v.x);
+	Store_double_field(p, 1, tq->bl.v.y);
+	Store_field(res,0,p);
+	p = caml_alloc(2,Double_array_tag);
+	Store_double_field(p, 0, tq->br.v.x);
+	Store_double_field(p, 1, tq->br.v.y);
+	Store_field(res,1,p);
+	p = caml_alloc(2,Double_array_tag);
+	Store_double_field(p, 0, tq->tl.v.x);
+	Store_double_field(p, 1, tq->tl.v.y);
+	Store_field(res,2,p);
+	p = caml_alloc(2,Double_array_tag);
+	Store_double_field(p, 6, tq->tr.v.x);
+	Store_double_field(p, 7, tq->tr.v.y);
+	Store_field(res,3,p);
+	CAMLreturn(res);
+}
+
 value ml_image_color(value image) {
 	lgTexQuad *tq = *TEXQUAD(image);
 	return Int_val((COLOR(tq->bl.c.r,tq->bl.c.b,tq->bl.c.g)));
@@ -838,7 +897,6 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	applyTransformMatrix(matrix);
 	sprogram *sp = SPROGRAM(Field(program,0));
 	lgGLUseProgram(sp->program);
-	printf("use program: %d\n",sp->program);
 	checkGLErrors("quad render use program");
 	lgGLUniformModelViewProjectionMatrix(sp);
 	checkGLErrors("bind matrix uniform");

@@ -23,6 +23,7 @@ module Program = struct
     try
       ShaderCache.find shader_cache shader_file 
     with [ Not_found -> 
+      let () = debug "try compile shader: %s" shader_file in
       let s = compile_shader shader_type (Std.input_all (LightCommon.open_resource (Filename.concat "Shaders" shader_file) 0.)) in
       (
         ShaderCache.add shader_cache shader_file s;
@@ -72,6 +73,8 @@ module Filter = struct
 
   type t;
   external glow: Filters.glow -> t = "ml_filter_glow";
+  external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
+  external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow";
 
 end;
 
@@ -98,6 +101,7 @@ module Image = struct
   type t;
 
   external create: ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> ~color:int -> ~alpha:float -> t = "ml_image_create";
+  external points: t -> array Point.t = "ml_image_points";
   external set_color: t -> int -> unit = "ml_image_set_color";
   external color: t -> int = "ml_image_color";
   external set_alpha: t -> float -> unit = "ml_image_set_alpha";

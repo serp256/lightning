@@ -101,6 +101,36 @@ module Make(D:DisplayObjectT.M) = struct
 
     end;
 
+    module ColorMatrix = struct
+
+      value id  = gen_id();
+      value create matrix = 
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"ImageColorMatrix.fsh"
+            ~attributes:[ (AttribPosition,"a_position"); (AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
+            ~other_uniforms:[| "u_matrix" |]
+        in
+        let f = Render.Filter.color_matrix matrix in
+        (prg,Some f);
+        
+
+    end;
+
+    module ColorMatrixGlow = struct
+
+      value id  = gen_id();
+      value create matrix glow = 
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"ImageColorMatrixGlow.fsh"
+            ~attributes:[ (AttribPosition,"a_position"); (AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
+            ~other_uniforms:[| "u_matrix"; "u_glowSize"; "u_glowStrenght"; "u_glowColor" |]
+        in
+        let f = Render.Filter.cmatrix_glow matrix glow in
+        (prg,Some f);
+        
+
+    end;
+
   end;
 
   (*
@@ -116,16 +146,6 @@ module Make(D:DisplayObjectT.M) = struct
     object(self)
       inherit D.c as super;
 
-
-      (*
-      value texCoords = 
-        let a = make_float_array 8 in
-        (
-          flushTexCoords a;
-          _texture#adjustTextureCoordinates a;
-          a
-        );
-      *)
 
       value mutable texture: Texture.c = _texture;
       method texture = texture;
@@ -145,15 +165,13 @@ module Make(D:DisplayObjectT.M) = struct
               | `glow p as g -> g
               | `cmatrix m -> `cmatrix_glow (m,glow)
               | `cmatrix_glow (m,_) -> `cmatrix_glow (m,glow)
-              | `glow_cmatrix(_,m) -> `cmatrix_glow(m,glow)
               ]
             | `ColorMatrix m ->
                 match c with
                 [ `simple -> `cmatrix m
-                | `glow glow -> `glow_cmatrix (glow,m)
+                | `glow glow -> `cmatrix_glow (m,glow)
                 | `cmatrix m -> `cmatrix m
-                | `cmatrix_glow (_,glow) -> `glow_cmatrix(glow,m)
-                | `glow_cmatrix (glow,_) -> `glow_cmatrix(glow,m)
+                | `cmatrix_glow (_,glow) -> `cmatrix_glow(m,glow)
                 ]
             ]
           end `simple fltrs 
@@ -162,7 +180,8 @@ module Make(D:DisplayObjectT.M) = struct
           match f with
           [ `simple -> Programs.Simple.create ()
           | `glow glow -> Programs.Glow.create glow
-          | _ -> failwith "Other filters not implemented yeat"
+          | `cmatrix m -> Programs.ColorMatrix.create m
+          | `cmatrix_glow m glow -> Programs.ColorMatrixGlow.create m glow
           ]
         in
         shaderProgram := prg;
@@ -264,7 +283,7 @@ module Make(D:DisplayObjectT.M) = struct
       (
         Render.Image.update image texture#width texture#height texture#clipping;
         texture := nt;
-        (* modified нах *)
+        self#boundsChanged();
       );
 
       (*
@@ -285,8 +304,16 @@ module Make(D:DisplayObjectT.M) = struct
       *)
 
 
-      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
-        Rectangle.empty;
+      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
+        match targetCoordinateSpace with
+        [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height (* FIXME!!! optimization *)
+        | _ -> 
+          let vertexCoords = Render.Image.points image in
+          let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
+          let ar = Matrix.transformPoints transformationMatrix vertexCoords in
+          Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
+        ];
+
       method private render' _ = Render.Image.render self#transformationMatrix shaderProgram texture#textureID texture#hasPremultipliedAlpha image;
 
       (*
