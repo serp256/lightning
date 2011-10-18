@@ -55,7 +55,7 @@ void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLf
 	glViewport(left, top, right, bottom);
       
 	setDefaultGLBlend();
-	glClearColor(1.0,0.0,1.0,1.0);
+	glClearColor(1.0,1.0,1.0,1.0);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLLoadIdentity();
       
@@ -127,6 +127,43 @@ void ml_push_matrix(value matrix) {
 void ml_restore_matrix(value p) {
 	kmGLPopMatrix();
 }
+
+//////////////////////////////////
+/// COLORS
+
+#define COLOR_PART_ALPHA(color)  (((color) >> 24) & 0xff)
+#define COLOR_PART_RED(color)    (((color) >> 16) & 0xff)
+#define COLOR_PART_GREEN(color)  (((color) >>  8) & 0xff)
+#define COLOR_PART_BLUE(color)   ( (color)        & 0xff)
+
+#define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
+
+
+
+typedef struct
+{
+  GLfloat x;
+  GLfloat y;
+} vertex2F;
+
+typedef struct 
+{
+  GLfloat r;
+  GLfloat g;
+  GLfloat b;
+} color3F;
+
+#define COLOR3F_FROM_INT(c) (color3F){(GLfloat)(COLOR_PART_RED(c)/255.),(GLfloat)(COLOR_PART_GREEN(c)/255.),(GLfloat)(COLOR_PART_BLUE(c)/255.)}
+
+typedef struct 
+{
+  GLubyte r;
+  GLubyte g;
+  GLubyte b;
+  GLubyte a;
+} color4B;
+
+#define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
 
 /////////////////////////////////////
 /// SHADERS
@@ -223,28 +260,26 @@ value ml_compile_shader(value stype,value shader_src) {
 }
 
 static GLuint currentShaderProgram = -1;
+/*
 static char   vertexAttribPosition = 0;
 static char   vertexAttribColor = 0;
 static char   vertexAttribTexCoords = 0;
+*/
+
 
 /* vertex attribs */
 enum {
   lgVertexAttrib_Position = 0,
   lgVertexAttrib_Color = 1,
   lgVertexAttrib_TexCoords = 2,
-  lgVertexAttrib_MAX,
 };  
 
 enum {
   lgUniformMVPMatrix,
   lgUniformSampler,
-
-  lgUniform_MAX = 5,
+  lgUniform_MAX,
 };
 
-
-static value mlUniformMVPMatrix = 0;
-static value mlUniformSampler = 0;
 
 
 /** vertex attrib flags */
@@ -262,15 +297,22 @@ enum {
 
 typedef struct {
 	GLuint program;
-	GLint attributes[lgVertexAttrib_MAX];
+	//GLint attributes[lgVertexAttrib_MAX];
 	GLint uniforms[lgUniform_MAX];
+	GLint *other_uniforms;
 } sprogram;
+
+/*
+	void *specUniforms;
+	uniformFun bindUniforms;
+*/
 
 #define SPROGRAM(v) *((sprogram**)Data_custom_val(v))
 
 static void program_finalize(value program) {
 	sprogram *p = SPROGRAM(program);
-  if( program == currentShaderProgram ) currentShaderProgram = -1;
+	if (p->other_uniforms != NULL) caml_stat_free(p->other_uniforms);
+  if( p->program == currentShaderProgram ) currentShaderProgram = -1;
 	glDeleteProgram(p->program);
 	caml_stat_free(p);
 }
@@ -312,27 +354,26 @@ void lgGLBindTexture(GLuint newTextureID, int newPMA) {
 	}
 }
 
-value ml_create_program(value vShader,value fShader,value attributes,value uniforms) {
+value ml_program_create(value vShader,value fShader,value attributes,value uniforms) {
 	CAMLparam4(vShader,fShader,attributes,uniforms);
-	CAMLlocal4(lst,ruel,runiforms,res);
 	GLuint program =  glCreateProgram();
 	glAttachShader(program, *GLUINT(vShader)); 
-	checkGLErrors("attach shader 1");
+	//checkGLErrors("attach shader 1");
 	glAttachShader(program, *GLUINT(fShader)); 
-	checkGLErrors("attach shader 2");
+	//checkGLErrors("attach shader 2");
 	// bind attributes
 	sprogram *sp = caml_stat_alloc(sizeof(sprogram));
-	lst = attributes;
+	value lst = attributes;
 	value el;
-	GLuint index = 1;
+	int has_texture = 0;
 	while (lst != 1) {
 		el = Field(lst,0);
-		value attr = Field(el,0);
+		int attr = Int_val(Field(el,0));
 		value name = Field(el,1);
-		glBindAttribLocation(program,index,String_val(name));
-		sp->attributes[Int_val(attr)] = index;
+		glBindAttribLocation(program,attr,String_val(name));
+		printf("attribute: %d\n",attr);
+		if (attr == lgVertexAttrib_TexCoords) has_texture = 1;
 		lst = Field(lst,1);
-		index++;
 	}
 	checkGLErrors("locations binded");
 	/*printf("AFTER ATTRIBS\n");
@@ -350,50 +391,32 @@ value ml_create_program(value vShader,value fShader,value attributes,value unifo
     caml_failwith("Failed to link program");
   }
 
-	lst = uniforms;
-	runiforms = 1;
-	value rel;
 	checkGLErrors("before uniforms");
 
 	sp->uniforms[lgUniformMVPMatrix] = glGetUniformLocation(program, "u_MVPMatrix");
-	
-	while (lst != 1) {
-		el = Field(lst,0);
-		value attr = Field(el,0);
-		value name = Field(el,1);
-		GLint loc = glGetUniformLocation(program, String_val(name));
-		printf("get uniform: attr: %d, %s = %d\n",(int)attr,String_val(name),loc);
-		/*
-		if (attr == mlUniformMVPMatrix) {
-			//printf("set MVPMatrix to %d\n",loc);
-			sp->uniforms[lgUniformMVPMatrix] = loc;
-		} else if (attr == mlUniformSampler) {
-			lgGLUseProgram( program );
-			glUniform1i(loc, 0 );
-			//sp->uniforms[lgUniformSampler] = loc;
+	printf("u_matrix: %d\n",sp->uniforms[lgUniformMVPMatrix]);
+	if (has_texture) {
+		GLint loc = glGetUniformLocation(program,"u_texture");
+		sp->uniforms[lgUniformSampler] = loc;
+		lgGLUseProgram( program );
+		glUniform1i(loc, 0 );
+	};
+
+	checkGLErrors("create program bind uniforms");
+
+	int otherUniformsLen = Wosize_val(uniforms);
+	if (otherUniformsLen > 0) {
+		printf("otherUniformsLen = %d\n",otherUniformsLen);
+		sp->other_uniforms = (GLint*)caml_stat_alloc(sizeof(GLuint)*otherUniformsLen);
+		for (int idx = 0; idx < otherUniformsLen; idx++) {
+			value el = Field(uniforms,idx);
+			sp->other_uniforms[idx] = glGetUniformLocation(program, String_val(el));
+			printf("ou: %s = %d\n",String_val(el),sp->other_uniforms[idx]);
 		};
-		*/
-		rel = caml_alloc_tuple(2);
-		Field(rel,0) = attr; Field(rel,1) = Val_int(loc);
-		ruel = caml_alloc_tuple(2);
-		Field(ruel,0) = rel;
-		Field(ruel,1) = runiforms;
-		runiforms = ruel;
-		lst = Field(lst,1);
-	}
-	checkGLErrors("after uniforms");
-	/*
-	printf("AFTER UNIFORMS\n");
-	for (int i = 0; i < lgVertexAttrib_MAX; i++) {
-		printf("attrib: %d = %d\n",i,sp->attributes[i]);
-	}*/
+	} else sp->other_uniforms = NULL;
 	sp->program = program;
-	// return res
-	res = caml_alloc_tuple(2);
-	Store_field(res,0,caml_alloc_custom(&program_ops,sizeof(*sp),0,1));
-	SPROGRAM(Field(res,0)) = sp;
-	Field(res,1) = runiforms;
-	checkGLErrors("creating program");
+	value res = caml_alloc_custom(&program_ops,sizeof(*sp),0,1);
+	SPROGRAM(res) = sp;
 	CAMLreturn(res);
 }
 
@@ -414,8 +437,9 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
 }
 
 
+/*
 void lgGLEnableVertexAttribs( unsigned int flags ) {   
-  /* Position */
+  // Position
   char enablePosition = flags & lgVertexAttribFlag_Position;
 
   if( enablePosition != vertexAttribPosition ) {
@@ -431,7 +455,7 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
     vertexAttribPosition = enablePosition;
   } 
     
-  /* Color */
+  // Color
   char enableColor = flags & lgVertexAttribFlag_Color;
   
   if( enableColor != vertexAttribColor ) {
@@ -443,7 +467,7 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
     vertexAttribColor = enableColor;
   }
 
-  /* Tex Coords */
+  // Tex Coords
   char enableTexCoords = flags & lgVertexAttribFlag_TexCoords;
   
   if( enableTexCoords != vertexAttribTexCoords ) {
@@ -455,35 +479,69 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
     vertexAttribTexCoords = enableTexCoords;
   }
 } 
+*/
 
 
-//////////////////////////////////
-/// COLORS
+///// FILTERS 
+////////////
+//
 
-#define COLOR_PART_ALPHA(color)  (((color) >> 24) & 0xff)
-#define COLOR_PART_RED(color)    (((color) >> 16) & 0xff)
-#define COLOR_PART_GREEN(color)  (((color) >>  8) & 0xff)
-#define COLOR_PART_BLUE(color)   ( (color)        & 0xff)
+typedef void (*filterFun)(sprogram *sp,void *data);
 
-#define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
+typedef struct {
+	filterFun f_fun;
+	void *f_data;
+} filter;
+
+#define FILTER(v) *((filter**)Data_custom_val(v))
+
+static void filter_finalize(value fltr) {
+	filter *f = FILTER(fltr);
+	caml_stat_free(f->f_data);
+	caml_stat_free(f);
+}
+
+struct custom_operations filter_ops = {
+  "pointer to a filter",
+  filter_finalize,
+  custom_compare_default,
+  custom_hash_default,
+  custom_serialize_default,
+  custom_deserialize_default
+};
 
 
-
-typedef struct
+struct glowData 
 {
-  GLfloat x;
-  GLfloat y;
-} vertex2F;
+	GLfloat glowSize;
+	GLfloat glowStrenght;
+	color3F glowColor;
+};
 
-typedef struct 
-{
-  GLubyte r;
-  GLubyte g;
-  GLubyte b;
-  GLubyte a;
-} color4B;
+void glowFilter(sprogram *sp,void *data) {
+	struct glowData *d = (struct glowData*)data;
+	glUniform1f(sp->other_uniforms[0],d->glowSize);
+	glUniform1f(sp->other_uniforms[1],d->glowStrenght);
+	glUniform3fv(sp->other_uniforms[2],1,(GLfloat*)&(d->glowColor));
+}
 
-#define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
+value make_filter(filterFun fun,void *data) {
+	filter *f = (filter *)caml_stat_alloc(sizeof(filter));
+	f->f_fun = fun;
+	f->f_data = data;
+	value res = caml_alloc_custom(&filter_ops,sizeof(filter*),1,0);
+	FILTER(res) = f;
+	return res;
+}
+
+value ml_filter_glow(value glow) {
+	struct glowData *gd = (struct glowData*)caml_stat_alloc(sizeof(struct glowData));
+	gd->glowSize = Double_val(Field(glow,0)) / 1000.;
+	gd->glowStrenght = Double_val(Field(glow,1));
+	gd->glowColor = COLOR3F_FROM_INT(Field(glow,2));
+	printf("glow filter: %f,%f,%d\n",gd->glowSize,gd->glowStrenght,gd->glowColor);
+	return make_filter(&glowFilter,gd);
+}
 
 
 ////////////////////////////////////
@@ -612,13 +670,13 @@ void print_quad(lgQuad *q) {
 	print_vertex(&(q->tr));
 }
 
-void ml_quad_render(value matrix, value program, value uniforms, value alpha, value quad) {
+void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	lgQuad *q = *QUAD(quad);
 	checkGLErrors("start");
-	//print_quad(q);
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
 	sprogram *sp = SPROGRAM(Field(program,0));
+	printf("use program: %d\n",sp->program);
 	lgGLUseProgram(sp->program);
 	checkGLErrors("quad render use program");
 	lgGLUniformModelViewProjectionMatrix(sp);
@@ -629,16 +687,17 @@ void ml_quad_render(value matrix, value program, value uniforms, value alpha, va
 	long offset = (long)q;
 
 	#define kQuadSize sizeof(q->bl)
+
   // vertex
   int diff = offsetof( lgQVertex, v);
-	glEnableVertexAttribArray(sp->attributes[lgVertexAttrib_Position]);
-  glVertexAttribPointer(sp->attributes[lgVertexAttrib_Position], 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
+	glEnableVertexAttribArray(lgVertexAttrib_Position);
+  glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
   
   // color
   diff = offsetof( lgQVertex, c);
-	glEnableVertexAttribArray(sp->attributes[lgVertexAttrib_Color]);
-  glVertexAttribPointer(sp->attributes[lgVertexAttrib_Color], 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
+	glEnableVertexAttribArray(lgVertexAttrib_Color);
+  glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	checkGLErrors("draw arrays");
@@ -771,7 +830,7 @@ void ml_image_update(value image, value width, value height, value clipping) {
 	set_image_uv(tq,clipping);
 }
 
-void ml_image_render(value matrix,value program, value textureID, value pma, value uniforms, value alpha, value image) {
+void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 	//print_quad(q);
@@ -779,10 +838,17 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	applyTransformMatrix(matrix);
 	sprogram *sp = SPROGRAM(Field(program,0));
 	lgGLUseProgram(sp->program);
+	printf("use program: %d\n",sp->program);
 	checkGLErrors("quad render use program");
 	lgGLUniformModelViewProjectionMatrix(sp);
 	checkGLErrors("bind matrix uniform");
 	//lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
+	//
+	value fs = Field(program,1);
+	if (fs != Val_unit) {
+		filter *f = FILTER(Field(fs,0));
+		f->f_fun(sp,f->f_data);
+	};
 	lgGLBindTexture(*GLUINT(textureID),Int_val(pma));
 
 	long offset = (long)tq;
@@ -790,19 +856,19 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	#define kTexQuadSize sizeof(tq->bl)
   // vertex
   int diff = offsetof( lgTexVertex, v);
-	glEnableVertexAttribArray(sp->attributes[lgVertexAttrib_Position]);
-  glVertexAttribPointer(sp->attributes[lgVertexAttrib_Position], 2, GL_FLOAT, GL_FALSE, kTexQuadSize, (void*) (offset + diff));
+	glEnableVertexAttribArray(lgVertexAttrib_Position);
+  glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, kTexQuadSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
   
   // color
   diff = offsetof( lgTexVertex, c);
-	glEnableVertexAttribArray(sp->attributes[lgVertexAttrib_Color]);
-  glVertexAttribPointer(sp->attributes[lgVertexAttrib_Color], 4, GL_UNSIGNED_BYTE, GL_TRUE, kTexQuadSize, (void*)(offset + diff));
+	glEnableVertexAttribArray(lgVertexAttrib_Color);
+  glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kTexQuadSize, (void*)(offset + diff));
 
   // texture coords
   diff = offsetof( lgTexVertex, tex);
-	glEnableVertexAttribArray(sp->attributes[lgVertexAttrib_TexCoords]);
-  glVertexAttribPointer(sp->attributes[lgVertexAttrib_TexCoords], 2, GL_FLOAT, GL_FALSE, kTexQuadSize, (void*)(offset + diff));
+	glEnableVertexAttribArray(lgVertexAttrib_TexCoords);
+  glVertexAttribPointer(lgVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, kTexQuadSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	checkGLErrors("draw arrays");

@@ -25,11 +25,28 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
 
   module D = D;
 
+  module Programs = struct
+    open Render.Program;
+
+    module Simple = struct
+      value id = gen_id();
+      value create () = 
+        let prg = 
+          load id ~vertex:"Quad.vsh" ~fragment:"Quad.fsh" 
+            ~attributes:[ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] 
+            ~other_uniforms:[| |]
+        in
+        (prg,None);
+
+    end;
+
+  end;
+
   class _c color width height = (*{{{*)
     object(self)
       inherit D.c as super;
 
-      value shaderProgram = Render.Program.load "Quad.vsh" "Quad.fsh" [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] [ (`UniformMVPMatrix, "u_MVPMatrix")];
+      value shaderProgram = Programs.Simple.create ();
       value quad = Render.Quad.create width height color 1.;
       method! setAlpha a =
       (

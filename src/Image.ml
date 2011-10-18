@@ -35,39 +35,6 @@ module type S = sig
 
 
 
-  module Programs = 
-
-    module Simple = 
-
-      value id = Render.Program.get_id ();
-
-      value create () = 
-          Redner.Program.load
-            id
-            ~vertex:"Image.vsh" ~fragment:"Image.fsh"
-            ~attributes:[ AttribPosition; AttribColor ; AttribTexCoords ]
-            ~uniforms: [| "u_texture" |];
-
-    end;
-
-    module Glow = 
-
-      value id  = Render.Program.get_id ();
-      value create (blurSize:float) (blurColor:int) = 
-        Render.Program.load
-          id
-          ~vertes:"Image.vsh" ~fragment:"Image.fsh"
-          ~attributes:[ AttribPosition; AttribColor ; AttribTexCoords ]
-          ~uniforms: [| "u_texture"; "blurSize" ; "blurColor" |]
-        in (* может быть здесь сразу запиздючить эту дрочь нахуй ? *)
-        (
-        );
-        
-
-    end;
-
-  end;
-
   class c : [ Texture.c ] ->
     object
       inherit D.c; 
@@ -88,6 +55,8 @@ module type S = sig
       *)
       method setColor: int -> unit;
       method color: int;
+      method filters: list Filters.t;
+      method setFilters: list Filters.t -> unit;
       method private render': option Rectangle.t -> unit;
       method boundsInSpace: !'space. option (<asDisplayObject: D.c; .. > as 'space) -> Rectangle.t;
     end;
@@ -100,6 +69,39 @@ end;
 
 module Make(D:DisplayObjectT.M) = struct
   module D = D;
+
+  module Programs = struct
+    open Render.Program;
+
+    module Simple = struct
+
+      value id = gen_id ();
+      value create () = 
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"Image.fsh"
+              ~attributes:[ (AttribPosition,"a_position");(AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
+              ~other_uniforms:[| |]
+        in
+        (prg,None);
+
+    end;
+
+    module Glow = struct
+
+      value id  = gen_id();
+      value create blur = 
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"ImageGlow.fsh"
+            ~attributes:[ (AttribPosition,"a_position"); (AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
+            ~other_uniforms:[| "u_glowSize" ; "u_glowStrenght"; "u_glowColor" |]
+        in
+        let f = Render.Filter.glow blur in
+        (prg,Some f);
+        
+
+    end;
+
+  end;
 
   (*
   value flushTexCoords res = 
@@ -129,19 +131,43 @@ module Make(D:DisplayObjectT.M) = struct
       method texture = texture;
 
 
-      value shaderProgram = 
-        Render.Program.load "Image.vsh" "Image.fsh" 
-          [ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ; (Render.Program.AttribTexCoords, "a_texCoord") ]
-          [ (`UniformMVPMatrix, "u_MVPMatrix"); (`UniformSampler,"u_texture") ];
+      value mutable shaderProgram = Programs.Simple.create ();
 
-
-
-      method setFilters filtes = 
-        List.fold_left begin fun c
-          [ `Glow (glowSize,glowColor) ->
-          | 
+      value mutable filters : list Filters.t = [];
+      method filters = filters;
+      method setFilters fltrs = 
+      (
+        let f = 
+          List.fold_left begin fun c -> fun
+            [ `Glow glow ->
+              match c with
+              [ `simple -> `glow glow
+              | `glow p as g -> g
+              | `cmatrix m -> `cmatrix_glow (m,glow)
+              | `cmatrix_glow (m,_) -> `cmatrix_glow (m,glow)
+              | `glow_cmatrix(_,m) -> `cmatrix_glow(m,glow)
+              ]
+            | `ColorMatrix m ->
+                match c with
+                [ `simple -> `cmatrix m
+                | `glow glow -> `glow_cmatrix (glow,m)
+                | `cmatrix m -> `cmatrix m
+                | `cmatrix_glow (_,glow) -> `glow_cmatrix(glow,m)
+                | `glow_cmatrix (glow,_) -> `glow_cmatrix(glow,m)
+                ]
+            ]
+          end `simple fltrs 
+        in
+        let prg = 
+          match f with
+          [ `simple -> Programs.Simple.create ()
+          | `glow glow -> Programs.Glow.create glow
+          | _ -> failwith "Other filters not implemented yeat"
           ]
-        end;
+        in
+        shaderProgram := prg;
+        filters := fltrs;
+      );
 
       value image = Render.Image.create _texture#width _texture#height _texture#clipping color 1.;
 
