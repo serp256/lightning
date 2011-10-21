@@ -230,7 +230,7 @@ value write_textures imagesMap frames outdir =
 (*     let textures = blit_by_textures images in *)
     let textures = TextureLayout.layout images in
     let () = BatIO.write_ui16 texInfo (List.length textures) in
-    BatList.iteri begin fun cnt ((w,h),imgs) ->
+    BatList.iteri begin fun cnt (w,h,imgs) ->
 (*       let () = Printf.eprintf "texture [%d:%d]\n%!" w h in *)
       let () = BatIO.write_string texInfo ((string_of_int cnt) ^ ".png") in
       let () = BatIO.write_ui16 texInfo (List.length imgs) in
