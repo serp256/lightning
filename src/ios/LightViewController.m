@@ -185,7 +185,10 @@ static value *ml_url_complete = NULL;
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	// Return YES for supported orientations
-	if (_orientationDelegate) return [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
+	if (_orientationDelegate) {
+		BOOL res = [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
+		return res;
+	}
 	else
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }

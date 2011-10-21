@@ -201,7 +201,7 @@ value loadFiles () =
                       ]   
                     in 
                     let duration = get_attribute "duration" attributes in 
-                    let image = Images.sub textures.(int_of_string textureId) (int_of_string x) (int_of_string y) (int_of_string width) (int_of_string height) in
+                    let image = Images.sub textures.(int_of_string textureId) (int_of_string x) (int_of_string y) (int_of_float (float_of_string width)) (int_of_float (float_of_string height)) in
                     let (diffX,diffY,new_image) = (*(0,0,image)*) croppedImageRect  image in
                       (
                         images.val := [({id = !id; posX = (float_of_string posX) +. (float_of_int  diffX); posY = (float_of_string posY) +. (float_of_int diffY); label; duration}, new_image) :: !images];
@@ -266,7 +266,7 @@ value createAtlas () =
           ] in
         let () = xml_textures.val := !xml_textures ^ (Printf.sprintf "\t\t<Texture path='%s'/>\n" fname) in
         let rgba = Rgba32.make w h {Color.color={Color.r=0;g=0;b=0}; alpha=0;} in
-        let () = Printf.eprintf "Canvas: %dx%d\n%!" w h in
+        let () = Printf.eprintf "Canvas %d: %dx%d\n%!" !i w h in
         let canvas  = Images.Rgba32 rgba in 
         (
           List.iter begin fun (frame, (x,y,img)) -> 
@@ -276,7 +276,7 @@ value createAtlas () =
             | _ -> assert False
             ] in
             let (w, h) = Images.size img in
-            let frame_str = Printf.sprintf "\t\t<Frame textureID = '%d' x='%d' y='%d' width= '%f' height='%f' posX='%f' posY='%f' %s  %s />\n" !i x y (float_of_int w) (float_of_int h) frame.posX frame.posY (match frame.duration with [ Some duration -> "duration='" ^ duration ^ "'" | _ -> ""]) (match frame.label with [ Some label -> "label='" ^ label ^ "'" | _ -> ""])in
+            let frame_str = Printf.sprintf "\t\t<Frame textureID = '%d' x='%d' y='%d' width= '%d' height='%d' posX='%f' posY='%f' %s  %s />\n" (!i-1) x y w h frame.posX frame.posY (match frame.duration with [ Some duration -> "duration='" ^ duration ^ "'" | _ -> ""]) (match frame.label with [ Some label -> "label='" ^ label ^ "'" | _ -> ""])in
               (
                 frames_info.val := [(frame.id, frame_str) :: !frames_info];
                 Images.blit img 0 0 canvas x y w h  
@@ -307,6 +307,7 @@ value () =
   (
     Arg.parse
       [
+        ("-m", Arg.Set_int TextureLayout.max_size, "Max texture size");
         ("-o",Arg.Set_string out_file,"output file");
         ("-sqr",Arg.Unit (fun sq -> sqr.val := True )  ,"square texture");
         ("-p",Arg.Set gen_pvr,"generate pvr file");

@@ -9,9 +9,14 @@
 #include "mlwrapper_android.h"
 #include "GLES/gl.h"
 
+#define caml_acquire_runtime_system()
+#define caml_release_runtime_system()
+
+
 static JavaVM *gJavaVM;
 static mlstage *stage = NULL;
 static jobject jView;
+static jobject jActivity;
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
@@ -21,7 +26,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","caml initialized");
 	return JNI_VERSION_1_6; // Check this
 }
-
+//{{{ android debug
 void android_debug_output(value mtag, value msg) {
 	char buf[255];
 	char *tag;
@@ -47,6 +52,7 @@ void android_debug_output_fatal(value msg) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",String_val(msg));
 }
 
+//}}}
 
 static value string_of_jstring(JNIEnv* env, jstring jstr)
 {
@@ -67,6 +73,157 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 	(*env)->ReleaseByteArrayElements(env,barr, ba, 0);
 
 	return result;
+}
+
+
+static jobjectArray jarray_of_mlList(JNIEnv* env, value mlList) 
+//берет окэмльный список дуплов и делает из него двумерный массив явовый
+{
+	value block, duple;
+	int flag = 1;
+	int count = 0;
+	
+	//создал массив из двух строчек
+	jclass clsstring = (*env)->FindClass(env,"java/lang/String");
+	jobjectArray jduple = (*env)->NewObjectArray(env, 2, clsstring, NULL);
+	//создал большой массив с элементами маленькими массивами
+	jclass jdupleclass = (*env)->GetObjectClass(env, jduple);
+	jobjectArray jresult = (*env)->NewObjectArray(env, 5, jdupleclass, NULL);
+	(*env)->DeleteLocalRef(env, jduple);
+	
+	block = mlList;
+	while (flag != 0){
+		jduple = (*env)->NewObjectArray(env, 2, clsstring, NULL);
+  	duple = Field(block,0);
+		//берем строчку окэмловского дупла, конвертим ее в си формат
+		//затем создаем из нее ява-строчку и эту ява строчку
+		//пихаем во временный массив на две ячейки
+		jstring jfield1 = (*env)->NewStringUTF(env, String_val(Field(duple,0)));
+		(*env)->SetObjectArrayElement(env, jduple, 0, jfield1);
+		//То же самое со вторым полем
+		jstring jfield2 = (*env)->NewStringUTF(env, String_val(Field(duple,1)));
+		(*env)->SetObjectArrayElement(env, jduple, 1, jfield2);
+		//Добавляем мелкий массив в большой массив	
+		(*env)->SetObjectArrayElement(env, jresult, count, jduple);
+		//Освобождаем память занятую временными данным на проходе
+		(*env)->DeleteLocalRef(env, jduple);
+		(*env)->DeleteLocalRef(env, jfield1);
+		(*env)->DeleteLocalRef(env, jfield2);
+		count += 1;
+  	if Is_block(Field(block,1))
+			block = Field(block,1);
+		else flag = 0;
+	}
+	return jresult;
+}
+
+
+value ml_android_connection(value mlurl,value method,value headers,value data) {
+  JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+	if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
+  	{ __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()"); }
+
+	jstring jurl = (*env)->NewStringUTF(env, String_val(mlurl));
+	jstring jmethod = (*env)->NewStringUTF(env, String_val(method));
+	jobjectArray jheaders = jarray_of_mlList(env, headers);
+	jstring jdata = (*env)->NewStringUTF(env, String_val(method));
+	if Is_block(data) {
+		jdata = (*env)->NewStringUTF(env, String_val(data));
+	} 
+	//и тут уже вызываем ява-метод и передаем ему параметры
+	jclass cls = (*env)->GetObjectClass(env, jView);
+	jmethodID mid = (*env)->GetMethodID(env, cls, "spawnHttpLoader", "(Ljava/lang/String;Ljava/lang/String;[[Ljava/lang/String;Ljava/lang/String;)I");
+	if (mid == NULL) {
+ 		__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Can't find spawnHttpLoader  method!!!");
+		return; // method not found
+	}
+	//где-то тут надо получить идентификатор лоадера и вернуть его окэмлу, а так же передать в яву
+	//чтобы все дальнейшие действия ассоциировались именно с этим лоадером
+	jint jloader_id;
+	jloader_id = (*env)->CallIntMethod(env, jView, mid, jurl, jmethod, jheaders, jdata);
+	value loader_id;
+	loader_id = caml_copy_int32(jloader_id);
+	return loader_id;	
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlResponse(JNIEnv *env, jobject jloader, jint loader_id, jint jhttpCode, jstring jcontentType, jint jtotalBytes)
+{
+	DEBUG("IM INSIDE lightURLresponse!!");
+  static value *ml_url_response = NULL;
+	caml_acquire_runtime_system();
+	if (ml_url_response == NULL) 
+		ml_url_response = caml_named_value("url_response");
+
+	value contentType, httpCode, totalBytes;
+  Begin_roots3(contentType, httpCode, totalBytes);
+
+	contentType = string_of_jstring(env, jcontentType);
+	httpCode = caml_copy_int32(jhttpCode);
+	totalBytes = caml_copy_int32(jtotalBytes);
+
+	value args[4];
+	args[0] = caml_copy_int32(loader_id);
+	args[1] = httpCode; 
+	args[3] = totalBytes;
+	args[2] = contentType;
+	caml_callbackN(*ml_url_response,4,args);
+	End_roots();
+	caml_release_runtime_system();
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlData(JNIEnv *env, jobject jloader, jint loader_id, jarray data) {
+	DEBUG("IM INSIDE lightURLData!!-------------------------------------------->>>");
+  static value *ml_url_data = NULL;
+	DEBUG("GET MEMORY FOR ML_URL_DATA-method pointer");
+	caml_acquire_runtime_system();
+	if (ml_url_data == NULL) 
+		ml_url_data = caml_named_value("url_data");
+	int size = (*env)->GetArrayLength(env, data);
+	DEBUG("GET SIZE OF DATA, AND ITs = %lld",size);
+
+	value mldata;
+	DEBUG("ALLOC MEMORY FOR MLDATA in C");
+  Begin_roots1(mldata);
+	DEBUG("BEGIN ROOTS");
+	mldata = caml_alloc_string(size); 
+	DEBUG("ALLOCATE MEMORY IN CAML GC-zone");
+	memcpy(String_val(mldata),(*env)->GetByteArrayElements(env,data,0),size);
+	DEBUG("MEMCPY");
+
+	caml_callback2(*ml_url_data, caml_copy_int32(loader_id), mldata);
+	DEBUG("call caml callback");
+	End_roots();
+	DEBUG("ENDROOTS");
+	caml_release_runtime_system();
+	DEBUG("release runtime system");
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlFailed(JNIEnv *env, jobject jloader, jint jloader_id, jint jerror_code, jstring jerror_message) {
+  static value *ml_url_failed = NULL;
+	caml_acquire_runtime_system();
+	if (ml_url_failed == NULL) 
+		ml_url_failed = caml_named_value("url_failed"); 
+
+	value error_code,loader_id;
+	Begin_roots2(error_code,loader_id);
+	error_code = caml_copy_int32(jerror_code);
+	loader_id = caml_copy_int32(jloader_id);
+
+	caml_callback3(*ml_url_failed, jloader_id, error_code, string_of_jstring(env, jerror_message));
+	End_roots();
+	caml_release_runtime_system();
+}
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlComplete(JNIEnv *env, jobject jloader, jint loader_id) {
+	DEBUG("COMPLETE++++++++++++++++++++++++++++++++++++++++++++++++++");
+  static value *ml_url_complete = NULL;
+	caml_acquire_runtime_system();
+	if (ml_url_complete == NULL)
+		ml_url_complete = caml_named_value("url_complete");
+	caml_callback(*ml_url_complete, caml_copy_int32(loader_id));
+	caml_release_runtime_system();
 }
 
 // maybe rewrite it for libzip
@@ -143,6 +300,10 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobje
 	jView = (*env)->NewGlobalRef(env,jview);
 }
 
+JNIEXPORT void Java_hello_world_helloworld_activityInit(JNIEnv *env, jobject jactivity) {
+	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","activityInit");
+	jActivity = (*env)->NewGlobalRef(env,jactivity);
+}
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererInit(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUG("lightRender init");
@@ -160,7 +321,6 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererInit(JNIEnv
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUGF("GL Changed: %i:%i",width,height);
 }
-
 
 
 static value run_method = 1;//None
@@ -245,6 +405,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionCancel(JNIEn
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionMove(JNIEnv *env, jobject thiz, jarray ids, jarray xs, jarray ys) {
 	fireTouches(env,ids,xs,ys,1);//TouchePhaseMoved = 1
 }
+
 
 /*
 JNIEXPORT void Java_ru_redspell_lightning_lightRenderer_handlekeydown(int keycode) {
