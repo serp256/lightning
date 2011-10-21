@@ -46,7 +46,7 @@ class type c =
     method base : option (c * Rectangle.t);
     method clipping: option Rectangle.t;
 (*     method adjustTextureCoordinates: float_array -> unit; *)
-    method update: string -> unit;
+(*     method update: string -> unit; *)
   end;
 
 
@@ -152,7 +152,7 @@ class subtexture region (baseTexture:c) =
         texCoords.{2*i+1} := rootClipping.Rectangle.m_y +. texCoords.{2*i+1} *. rootClipping.Rectangle.m_height;
       done;
     *)
-    method update path = baseTexture#update path;
+(*     method update path = baseTexture#update path; *)
   end;
 
 value createSubTexture = new subtexture;
@@ -202,7 +202,7 @@ value make textureInfo =
       method base = None;
 (*       method adjustTextureCoordinates texCoords = (); *)
       method clipping = None;
-      method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *)
+(*       method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *) *)
     end
   in
   if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
