@@ -47,6 +47,7 @@ void set_audiospec(SDL_AudioSpec *in, int freq, int format, int channels, int sa
 #include <caml/fail.h>
 #include <caml/callback.h>
 #include <caml/bigarray.h>
+#include <caml/threads.h>
 
 
 /*  Caml list manipulations */
@@ -558,7 +559,9 @@ value sdlstub_get_ticks(value u) {
 value sdlstub_delay(value vms) {
 	CAMLparam1(vms);		 
 	int ms = Int_val(vms);
+	caml_release_runtime_system();
 	SDL_Delay(ms);
+	caml_acquire_runtime_system();
 	CAMLreturn (Val_unit);
 }
 
