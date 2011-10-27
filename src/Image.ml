@@ -57,7 +57,7 @@ module type S = sig
       method color: int;
       method filters: list Filters.t;
       method setFilters: list Filters.t -> unit;
-      method private render': option Rectangle.t -> unit;
+      method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
       method boundsInSpace: !'space. option (<asDisplayObject: D.c; .. > as 'space) -> Rectangle.t;
     end;
 
@@ -314,7 +314,7 @@ module Make(D:DisplayObjectT.M) = struct
           Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
         ];
 
-      method private render' _ = Render.Image.render self#transformationMatrix shaderProgram texture#textureID texture#hasPremultipliedAlpha image;
+      method private render' ?alpha ~transform _ = Render.Image.render self#transformationMatrix shaderProgram texture#textureID texture#hasPremultipliedAlpha image;
 
       (*
       method! private render' _ = 

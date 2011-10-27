@@ -20,7 +20,7 @@ exception Child_not_found;
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
 
 
-DEFINE RENDER_WITH_MASK(call_render) = 
+DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
   match self#stage with
   [ Some stage ->
     let matrix = 
@@ -49,7 +49,7 @@ DEFINE RENDER_WITH_MASK(call_render) =
     | _ -> assert False
     ]
   | None -> failwith "render without stage"
-  ];
+  ];(*}}}*)
 
 class type dispObj = 
   object
@@ -473,15 +473,15 @@ class virtual _c [ 'parent ] = (*{{{*)
     value mutable mask: option (bool * Rectangle.t * (array Point.t)) = None;
     method setMask ?(onSelf=False) rect = 
       let open Rectangle in 
-      mask := Some (onSelf, rect, Rectangle.points rect); (* если будет система кэширования можно сразу преобразовать этот рект и закэшировать нах *)
+      mask := Some (onSelf, rect, Rectangle.points rect); (* FIXME: можно сразу преобразовать этот рект и закэшировать нах *)
 
-    method virtual private render': option Rectangle.t -> unit;
+    method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
 
-    method render rect = 
+    method render ?alpha ?(transform=True) rect = 
       proftimer:render ("render %s" name)
       (
         match mask with
-        [ None -> self#render' rect 
+        [ None -> self#render' ?alpha ~transform rect 
         | Some (onSelf,maskRect,maskPoints) ->
             let maskRect = 
               match onSelf with
@@ -492,10 +492,10 @@ class virtual _c [ 'parent ] = (*{{{*)
               ]
             in
             match rect with
-            [ None -> RENDER_WITH_MASK (self#render' (Some maskRect))
+            [ None -> RENDER_WITH_MASK (self#render' ?alpha ~transform (Some maskRect))
             | Some rect -> 
                 match Rectangle.intersection maskRect rect with
-                [ Some inRect -> RENDER_WITH_MASK (self#render' (Some inRect))
+                [ Some inRect -> RENDER_WITH_MASK (self#render' ?alpha ~transform (Some inRect))
                 | None -> ()
                 ]
             ]
@@ -872,62 +872,42 @@ class virtual container = (*{{{*)
       ];
 
 
-    method private render' rect = 
+    method private render' ?alpha:(alpha') ~transform rect = 
       match children with
       [ None -> ()
       | Some children -> 
-        (
-          Render.push_matrix self#transformationMatrix;
-          match rect with
-          [ None -> 
-            Dllist.iter begin fun child ->
-              let childAlpha = child#alpha in
-              if (childAlpha > 0.0 && child#visible) 
-              then
-              (
-                (* FIXME: пока без альфы, потом как-то хитро добавить нах. *)
-                child#render None;
-                (*
-                glPushMatrix();
-                child#transformGLMatrix ();
-                child#setAlpha (childAlpha *. alpha);
-                child#render None; 
-                child#setAlpha childAlpha;
-                glPopMatrix();
-                *)
-              )
-              else ()
-            end children
-          | Some rect -> ()
-            (*
-            Dllist.iter begin fun (child:'displayObject) ->
-              let childAlpha = child#alpha in
-              if (childAlpha > 0.0 && child#visible) 
-              then
-                let bounds = child#bounds in
-                match Rectangle.intersection rect bounds with
-                [ Some intRect -> 
-                  (
-                    glPushMatrix();
-                    child#transformGLMatrix ();
-                    child#setAlpha (childAlpha *. alpha);
-                    match child#dcast with
-                    [ `Object _ -> child#render None (* FIXME: по идее нужно вызывать таки с ректом, но здесь оптимайзинг, убрать если надо! *)
-                    | `Container c -> 
-                        let childMatrix = self#transformationMatrixToSpace (Some child) in
-                        c#render (Some (Matrix.transformRectangle childMatrix intRect))
-                    ];
-                    child#setAlpha childAlpha;
-                    glPopMatrix();
-                  )
-                | None ->  debug:render "container '%s', not render: '%s'" name child#name
-                ]
-              else ()
-            end children
-            *)
-          ];
-          Render.restore_matrix ();
-        )
+          let alpha = 
+            if alpha <> 1.
+            then 
+              let a = match alpha' with [ None -> alpha | Some a -> a *. alpha ] in
+              Some a
+            else alpha'
+          in
+          (
+            if transform then Render.push_matrix self#transformationMatrix else ();
+            match rect with
+            [ None -> Dllist.iter (fun (child:'displayObject) -> child#render ?alpha None) children
+            | Some rect -> 
+              Dllist.iter begin fun (child:'displayObject) ->
+                let childAlpha = child#alpha in
+                if (childAlpha > 0.0 && child#visible) 
+                then
+                  let bounds = child#bounds in
+                  match Rectangle.intersection rect bounds with
+                  [ Some intRect -> 
+                      match child#dcast with
+                      [ `Object _ -> child#render ?alpha None (* FIXME: по идее нужно вызывать таки с ректом, но здесь оптимайзинг, убрать если надо! *)
+                      | `Container (c:container) -> 
+                          let childMatrix = self#transformationMatrixToSpace (Some child) in
+                          c#render ?alpha ?transform:(Some True) (Some (Matrix.transformRectangle childMatrix intRect))
+                      ]
+                  | None ->  debug:render "container '%s', not render: '%s'" name child#name
+                  ]
+                else ()
+              end children
+            ];
+            if transform then Render.restore_matrix () else ();
+          )
       ];
 
   end;(*}}}*)

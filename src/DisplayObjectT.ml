@@ -84,8 +84,8 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method globalToLocal: Point.t -> Point.t;
     method localToGlobal: Point.t -> Point.t;
     method setMask: ?onSelf:bool -> Rectangle.t -> unit;
-    method virtual private render': option Rectangle.t -> unit;
-    method render: option Rectangle.t -> unit;
+    method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
+    method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
     method asDisplayObject: _c _;
     method virtual dcast: [= `Object of _c _ | `Container of 'parent ];
     method root: _c _;
@@ -122,7 +122,7 @@ class virtual container:
     method clearChildren: unit -> unit;
     method dispatchEventOnChildren: Ev.t evType evData -> unit;
     method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
-    method private render': option Rectangle.t -> unit;
+    method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
   end;
 

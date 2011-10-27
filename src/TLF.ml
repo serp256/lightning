@@ -468,7 +468,7 @@ value create ?width ?height (html:main) =
                   let bitmapChar = Image.create bchar.BitmapFont.charTexture in
                   (
                     bitmapChar#setScale font.BitmapFont.scale;
-                    bitmapChar#setPos (line.currentX +. bchar.BitmapFont.xOffset, bchar.BitmapFont.yOffset);
+                    bitmapChar#setPos (line.currentX +. bchar.BitmapFont.xOffset) (bchar.BitmapFont.yOffset);
                     bitmapChar#setColor color;
                     bitmapChar#setAlpha alpha;
                     addToLine bchar.BitmapFont.xAdvance font.BitmapFont.baseLine bitmapChar line;
@@ -543,7 +543,7 @@ value create ?width ?height (html:main) =
               match pos with
               [ `P height ->
                 (
-                  obj#setPos (x,y);
+                  obj#setPos x y;
                   div#addChild obj;
                   (x,y +. height)
                 )

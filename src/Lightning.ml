@@ -21,11 +21,11 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
   module Sprite = Sprite.Make DisplayObject;
 (*   module CompiledSprite = CompiledSprite.Make Image Sprite; *)
 (*   module MovieClip = MovieClip.Make DisplayObject Image; *)
-(*   module BitmapFontCreator = BitmapFont.MakeCreator Image CompiledSprite; *)
-(*   module TextField = TextField.Make Quad BitmapFontCreator;  *)
-(*   module TLF = TLF.Make Image CompiledSprite; *)
-(*   module FPS = FPS.Make DisplayObject TextField; *)
-(*   module Button = Button.Make DisplayObject Sprite Image TextField; *)
+  module BitmapFontCreator = BitmapFont.MakeCreator Image Sprite;
+  module TextField = TextField.Make Quad BitmapFontCreator; 
+  module TLF = TLF.Make Image Sprite;
+  module FPS = FPS.Make DisplayObject TextField;
+  module Button = Button.Make DisplayObject Sprite Image TextField;
   module Stage = Stage.Make DisplayObject;
 end;
 

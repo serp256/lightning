@@ -98,7 +98,7 @@ module Make
         (
           isDown := False;
           background#setTexture upState;
-          contents#setPos (0.,0.);
+          contents#setPos 0. 0.;
           contents#setScale 1.;
         );(*}}}*)
 

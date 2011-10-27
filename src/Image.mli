@@ -27,7 +27,7 @@ module type S = sig
 
 (*       method setTexScale: float -> unit; *)
 
-      method private render': option Rectangle.t -> unit;
+      method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
       method boundsInSpace: !'space. option (<asDisplayObject: D.c; .. > as 'space) -> Rectangle.t;
 
     end;

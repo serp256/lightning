@@ -13,7 +13,7 @@ module type S = sig
       method color: int;
       method vertexColors: Enum.t int;
       method boundsInSpace: !'space. option (<asDisplayObject: D.c; ..> as 'space) -> Rectangle.t;
-      method private render': option Rectangle.t -> unit;
+      method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     end;
 
   value cast: #D.c -> option c; 
@@ -111,33 +111,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
         ];
 
 
-      method private render' _ = Render.Quad.render self#transformationMatrix shaderProgram quad;
-      (*
-      (
-        debug "render quad";
-        (* есть идея хранить эти ебанные цвета сразу в сцанных массивах нахуй *)
-        render_quad 
-        RenderSupport.clearTexture();
-        (* optimize it!  
-        for i = 0 to 3 do
-          RenderSupport.convertColors vertexColors.(i) alpha (Bigarray.Array1.sub gl_quad_colors (i*4) 4)
-        done;
-        *)
-  (*
-        let alphaBits =  Int32.shift_left (Int32.of_float (alpha *. 255.)) 24 in
-        Array.iteri (fun i c -> gl_quad_colors.{i} := Int32.logor (Int32.of_int c) alphaBits) vertexColors;
-  *)
-        Array.iteri (fun i c -> gl_quad_colors.{i} := RenderSupport.convertColor c alpha) vertexColors;
-        glEnableClientState gl_vertex_array;
-        glEnableClientState gl_color_array;
-        glVertexPointer 2 gl_float 0 vertexCoords;
-        glColorPointer 4 gl_unsigned_byte 0 gl_quad_colors;
-        glDrawArrays gl_triangle_strip 0 4;
-        glDisableClientState gl_vertex_array;
-        glDisableClientState gl_color_array;
-      );
-      *)
-
+      method private render' ?alpha ~transform _ = Render.Quad.render self#transformationMatrix shaderProgram quad;
       
     end;(*}}}*)
 

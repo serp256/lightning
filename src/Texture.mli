@@ -25,7 +25,7 @@ class type c =
     method base : option (c * Rectangle.t);
 (*     method adjustTextureCoordinates: Gl.float_array -> unit; *)
     method clipping: option Rectangle.t;
-    method update: string -> unit;
+(*     method update: string -> unit; *)
   end;
 
 
