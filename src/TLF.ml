@@ -2,6 +2,7 @@
 module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.D) = struct
 
 module DisplayObject = Image.D;
+(* module Shape = Shape.Make DisplayObject; *)
 
 value default_font_family = ref "Helvetica";
 
@@ -313,7 +314,7 @@ value parse ?(imgLoader=Image.load) xml : main =
   ];
 
 (* width, height вытащить наверно в html тоже *)
-value create ?width ?height (html:main) = 
+value create ?width ?height ?border (html:main) = 
   let rec make_lines width attributes lines : simple_element -> unit = fun 
     [ `img attrs image -> 
       let () = debug "process img: lines: %d" (Stack.length lines) in
@@ -621,6 +622,22 @@ value create ?width ?height (html:main) =
   let result = Sprite.create () in
   let (pos,container) = process (width,height) [] html in
   (
+    match border with
+    [ Some bcolor ->
+      let shape = Shape.create () in
+      let g = shape#graphics in
+      (
+        Graphics.lineStyle g 1. bcolor 1.;
+        let width = match width with [ Some w -> w | None -> container#width ]
+        and height = match height with [ Some h -> h | None -> container#height ]
+        in (
+          Graphics.beginFill g bcolor 1.;
+          Graphics.drawRect g 0. 0. width height;
+          result#addChild shape;
+        );
+      )
+    | None -> ()
+    ];
     (* FIXME: skip pos *)
     result#addChild container;
     result

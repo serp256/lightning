@@ -2,11 +2,11 @@ export PLATFORM = sdl
 export OS = macos
 SDK = /Developer/SDKs/MacOSX10.6.sdk
 OCAMLDIR = /usr/local/
-export OCAMLFIND = /usr/local/bin/ocamlfind
+export OCAMLFIND = ocamlfind
 OCAMLBINDIR = $(OCAMLDIR)/bin/
 CC = gcc-4.2
 #export CFLAGS = -std=c99 -Wno-trigraphs -fpascal-strings -O0 -DDEBUG -Wreturn-type -Wunused-variable -isysroot $(SDK) -isystem $(OCAMLDIR)/lib/ocaml -DCAML_NAME_SPACE -fexceptions -gdwarf-2 -DDEBUG -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
 export CFLAGS = -std=c99 -Wno-trigraphs -fpascal-strings -O0 -DDEBUG -Wreturn-type -Wunused-variable  -DCAML_NAME_SPACE -fexceptions -gdwarf-2 -DDEBUG -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
-export OCAMLMKLIB = /usr/local/bin/ocamlmklib
+export OCAMLMKLIB = ocamlmklib

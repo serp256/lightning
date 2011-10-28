@@ -47,6 +47,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     value pos: Point.t;
     method pos: Point.t;
     method setPos: float -> float -> unit;
+    method setPosPoint: Point.t -> unit;
     method width: float;
     method setWidth: float -> unit;
     method height: float;

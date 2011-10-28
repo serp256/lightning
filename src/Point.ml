@@ -3,6 +3,7 @@ DEFINE SP_FLOAT_EPSILON = 0.0001;
 DEFINE SP_IS_FLOAT_EQUAL(f1, f2) = abs_float(f1-.f2) < SP_FLOAT_EPSILON;
 
 type t = {x:float;y:float};
+value empty = {x=0.;y=0.};
 value length {x=x;y=y} = sqrt(SQ(x) +. SQ(y));
 value angle {x=x;y=y} =  atan2 y x;
 value addPoint {x=x1;y=y1} {x=x2;y=y2} = {x=x1+.x2;y=y1+.y2};

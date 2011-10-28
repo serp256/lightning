@@ -265,6 +265,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method pos = pos;
     method setPos x y = (pos := {Point.x=x;y=y}; RESET_CACHE);
+    method setPosPoint p = (pos := p; RESET_CACHE);
 
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
