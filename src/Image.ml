@@ -314,7 +314,7 @@ module Make(D:DisplayObjectT.M) = struct
           Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
         ];
 
-      method private render' ?alpha ~transform _ = Render.Image.render self#transformationMatrix shaderProgram texture#textureID texture#hasPremultipliedAlpha image;
+      method private render' ?alpha ~transform _ = Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image;
 
       (*
       method! private render' _ = 

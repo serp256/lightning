@@ -23,9 +23,7 @@ value handle_events window (width,height) frameRate stage =
       if dticks < ticksRate then Sdl.Timer.delay (ticksRate - dticks) else ();
       let ticks = Sdl.Timer.get_ticks () in
       (
-        stage#advanceTime ((float (ticks - lastTicks)) /. 1e3);
-(*         glViewport 0 0 width height; *)
-        stage#render None;
+        stage#run ((float (ticks - lastTicks)) /. 1e3);
         SDLGL.swap_window window;
         match quit with
         [ True -> ()

@@ -111,7 +111,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
         ];
 
 
-      method private render' ?alpha ~transform _ = Render.Quad.render self#transformationMatrix shaderProgram quad;
+      method private render' ?alpha ~transform _ = Render.Quad.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha quad;
       
     end;(*}}}*)
 

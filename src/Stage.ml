@@ -128,16 +128,16 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         | False -> ()
         ];(*}}}*)
 
-      method! private render _ =
+      method renderStage () =
       (
-(*         RenderSupport.clearTexture (); FIXME: !!!*)
-(*         RenderSupport.clear color 1.0; *)
-(*         RenderSupport.setupOrthographicRendering 0. width height 0.; *)
         Render.clear color;
+        self#render None;
+        (*
         debug "start render";
         proftimer:render "STAGE rendered %F" (super#render None);
         debug "end render";
         debug:errors ignore(RenderSupport.checkForOpenGLError());
+        *)
       );
 
       value runtweens = Queue.create ();
@@ -163,7 +163,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method run seconds = 
       (
         self#advanceTime seconds;
-        self#render None;
+        self#renderStage ();
       );
 
     method! hitTestPoint localPoint isTouch =

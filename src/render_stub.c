@@ -278,6 +278,7 @@ enum {
 
 enum {
   lgUniformMVPMatrix,
+	lgUniformAlpha,
   lgUniformSampler,
   lgUniform_MAX,
 };
@@ -396,7 +397,9 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 	checkGLErrors("before uniforms");
 
 	sp->uniforms[lgUniformMVPMatrix] = glGetUniformLocation(program, "u_MVPMatrix");
+	sp->uniforms[lgUniformAlpha] = glGetUniformLocation(program, "u_parentAlpha");
 	printf("u_matrix: %d\n",sp->uniforms[lgUniformMVPMatrix]);
+	printf("u_parentAlpha: %d\n",sp->uniforms[lgUniformAlpha]);
 	if (has_texture) {
 		GLint loc = glGetUniformLocation(program,"u_texture");
 		sp->uniforms[lgUniformSampler] = loc;
@@ -709,13 +712,18 @@ void print_quad(lgQuad *q) {
 void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	lgQuad *q = *QUAD(quad);
 	checkGLErrors("start");
-	kmGLPushMatrix();
-	applyTransformMatrix(matrix);
+
 	sprogram *sp = SPROGRAM(Field(program,0));
 	lgGLUseProgram(sp->program);
 	checkGLErrors("quad render use program");
+
+	kmGLPushMatrix();
+	applyTransformMatrix(matrix);
 	lgGLUniformModelViewProjectionMatrix(sp);
 	checkGLErrors("bind matrix uniform");
+
+	glUniform1f(sp->uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
+
 	//lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
 
 	setDefaultGLBlend();
@@ -725,7 +733,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 
   // vertex
   int diff = offsetof( lgQVertex, v);
-	glEnableVertexAttribArray(lgVertexAttrib_Position);
+	glEnableVertexAttribArray(lgVertexAttrib_Position); // FIXME: выставлять это с кэшированием как в кокосе 
   glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
   
@@ -736,6 +744,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	checkGLErrors("draw arrays");
+
 	kmGLPopMatrix();
 }
 
@@ -892,16 +901,21 @@ void ml_image_update(value image, value width, value height, value clipping) {
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
-	//print_quad(q);
-	kmGLPushMatrix();
-	applyTransformMatrix(matrix);
+
 	sprogram *sp = SPROGRAM(Field(program,0));
 	lgGLUseProgram(sp->program);
 	checkGLErrors("quad render use program");
+
+	kmGLPushMatrix();
+	applyTransformMatrix(matrix);
 	lgGLUniformModelViewProjectionMatrix(sp);
 	checkGLErrors("bind matrix uniform");
+
+	glUniform1f(sp->uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
+
 	//lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
 	//
+
 	value fs = Field(program,1);
 	if (fs != Val_unit) {
 		filter *f = FILTER(Field(fs,0));

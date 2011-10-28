@@ -22,10 +22,10 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
 (*   module CompiledSprite = CompiledSprite.Make Image Sprite; *)
 (*   module MovieClip = MovieClip.Make DisplayObject Image; *)
   module BitmapFontCreator = BitmapFont.MakeCreator Image Sprite;
-  module TextField = TextField.Make Quad BitmapFontCreator; 
+(*   module TextField = TextField.Make Quad BitmapFontCreator;  *)
   module TLF = TLF.Make Image Sprite;
-  module FPS = FPS.Make DisplayObject TextField;
-  module Button = Button.Make DisplayObject Sprite Image TextField;
+(*   module FPS = FPS.Make DisplayObject TextField; *)
+(*   module Button = Button.Make DisplayObject Sprite Image TextField; *)
   module Stage = Stage.Make DisplayObject;
 end;
 
@@ -57,7 +57,8 @@ type stage_constructor =
   float -> float -> 
     <
       resize: float -> float -> unit;
-      render: option Rectangle.t -> unit;
+      renderStage: unit -> unit;
+      run: float -> unit;
       processTouches: list Touch.n -> unit;
       advanceTime: float -> unit;
       name: string;
