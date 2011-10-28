@@ -84,12 +84,6 @@ value transformMatrixForObject obj =
   );
 *)
 
-value floats_of_color color = 
-  let red = SP_COLOR_PART_RED(color)
-  and green = SP_COLOR_PART_GREEN(color)
-  and blue = SP_COLOR_PART_BLUE(color)
-  in
-  (((float red) /. 255.),((float green) /. 255.),((float blue) /. 255.));
 
 value clear color alpha = 
   let red = SP_COLOR_PART_RED(color)

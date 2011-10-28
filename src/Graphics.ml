@@ -44,7 +44,7 @@ value create () =
   );
 
 value beginFill t color alpha = 
-  let (r,g,b) = RenderSupport.floats_of_color color in
+  let (r,g,b) = floats_of_color color in
   Queue.push (Fill  (r,g,b,alpha)) t.commands;
 
 value lineStyle t thickness color alpha (* pixelHinting:Boolean = false, scaleMode:String = "normal", caps:String = null, joints:String = null, miterLimit:Number = 3 *) = 

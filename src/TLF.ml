@@ -622,6 +622,7 @@ value create ?width ?height ?border (html:main) =
   let result = Sprite.create () in
   let (pos,container) = process (width,height) [] html in
   (
+    (*
     match border with
     [ Some bcolor ->
       let shape = Shape.create () in
@@ -638,6 +639,7 @@ value create ?width ?height ?border (html:main) =
       )
     | None -> ()
     ];
+    *)
     (* FIXME: skip pos *)
     result#addChild container;
     result
