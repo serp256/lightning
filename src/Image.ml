@@ -41,11 +41,11 @@ module type S = sig
       value texture: Texture.c;
 (*       method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
       method texture: Texture.c;
-      (*
       method texFlipX: bool;
       method setTexFlipX: bool -> unit;
       method texFlipY: bool;
       method setTexFlipY: bool -> unit;
+      (*
       method texRotation: option [= `left | `right];
       method setTexRotation: option [= `left | `right] -> unit;
       *)
@@ -217,41 +217,47 @@ module Make(D:DisplayObjectT.M) = struct
           vertexCoords.{7} := height;
           texScale := s;
         );
+      *)
 
       value mutable texFlipX = False;
       method texFlipX = texFlipX;
+      (*
       method private applyTexFlipX () = 
       (
         SWAP_TEX_COORDS(0,1);
         SWAP_TEX_COORDS(2,3);
       );
+      *)
       method setTexFlipX nv = 
         if nv <> texFlipX
         then 
         (
-          self#applyTexFlipX ();
+          Render.Image.flipTexX image;
           texFlipX := nv;
         )
         else ();
 
       value mutable texFlipY = False;
       method texFlipY = texFlipY;
+      (*
       method private applyTexFlipY () = 
       (
         SWAP_TEX_COORDS(0,2);
         SWAP_TEX_COORDS(1,3);
       );
+      *)
 
       method setTexFlipY nv = 
         if nv <> texFlipY
         then 
         (
-          self#applyTexFlipY ();
+          Render.Image.flipTexY image;
           texFlipY := nv;
         )
         else ();
 
 
+      (*
       value mutable texRotation : option [= `left |  `right ] = None ;
       method texRotation = texRotation;
 
@@ -283,6 +289,8 @@ module Make(D:DisplayObjectT.M) = struct
       (
         Render.Image.update image texture#width texture#height texture#clipping;
         texture := nt;
+        if texFlipX then Render.Image.flipTexX image else ();
+        if texFlipY then Render.Image.flipTexY image else ();
         self#boundsChanged();
       );
 

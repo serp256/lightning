@@ -898,6 +898,29 @@ void ml_image_update(value image, value width, value height, value clipping) {
 	set_image_uv(tq,clipping);
 }
 
+#define SWAP_TEX_COORDS(c1,c2) {tex2F tmp = tq->c1.tex, tq->c1.tex = tq->c2.tex,tq->c2.tex = tmp}
+
+
+void ml_image_flip_tex_x(value image) {
+	lgTexQuad *tq = *TEXQUAD(image);
+	tex2F tmp = tq->tl.tex;
+	tq->tl.tex = tq->tr.tex;
+	tq->tr.tex = tmp;
+	tmp = tq->bl.tex;
+	tq->bl.tex = tq->br.tex;
+	tq->br.tex = tmp;
+}
+
+void ml_image_flip_tex_y(value image) {
+	lgTexQuad *tq = *TEXQUAD(image);
+	tex2F tmp = tq->tl.tex;
+	tq->tl.tex = tq->bl.tex;
+	tq->bl.tex = tmp;
+	tmp = tq->tr.tex;
+	tq->tr.tex = tq->br.tex;
+	tq->br.tex = tmp;
+}
+
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");

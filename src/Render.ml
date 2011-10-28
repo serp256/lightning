@@ -101,6 +101,8 @@ module Image = struct
   type t;
 
   external create: ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> ~color:int -> ~alpha:float -> t = "ml_image_create";
+  external flipTexX: t -> unit = "ml_image_flip_tex_x";
+  external flipTexY: t -> unit = "ml_image_flip_tex_y";
   external points: t -> array Point.t = "ml_image_points";
   external set_color: t -> int -> unit = "ml_image_set_color";
   external color: t -> int = "ml_image_color";

@@ -10,11 +10,11 @@ module type S = sig
       method setColor: int -> unit;
       method color: int;
 
-      (*
       method texFlipX: bool;
       method setTexFlipX: bool -> unit;
       method texFlipY: bool;
       method setTexFlipY: bool -> unit;
+      (*
       method texRotation: option [= `left | `right];
       method setTexRotation: option [= `left | `right] -> unit;
       method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
