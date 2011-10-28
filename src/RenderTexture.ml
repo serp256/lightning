@@ -7,7 +7,29 @@ class type renderObject =
     method transformGLMatrix: unit -> unit;
   end;
 
+type framebufferID;
+external create_render_texture: float -> float -> (framebufferID,Texture.textureID) = "ml_create_render_texture";
 
+class c ?(color=0) ?(alpha=0.) width height = 
+  let (frameBufferID,textureID) = create_render_texture width height in
+  object
+    method width = width;
+    method height = height;
+    method hasPremultipliedAlpha = False;
+    method scale = 1.;
+    method textureID = textureID;
+    method base = None;
+    method clipping = None;
+    method subTexture region = assert False;
+    method drawObject obj = 
+    method release () = 
+    (
+      delete_framebuffer frameBufferID;
+      delete_texture textureID;
+    );
+  end;
+
+(*
 
 IFDEF SDL THEN
 value glGenFramebuffers = glGenFramebuffersEXT;
@@ -159,6 +181,7 @@ class c ?(color=0) ?(alpha=0.) ?(scale=1.) width height =
     initializer Gc.finalise (fun _ -> glDeleteFramebuffers 1 [| framebufferID |]) self;
 
   end;
+*)
 
 
 

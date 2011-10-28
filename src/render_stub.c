@@ -1,11 +1,12 @@
 
 #ifdef ANDROID
-#include <GLES/gl.h>
+#include <GLES/gl2.h>
 #else 
 #ifdef IOS
 #include <OpenGLES/ES2/gl.h>
 //#include <OpenGLES/ES1/glext.h>
 #else
+#define GL_GLEXT_PROTOTYPES
 #include <SDL/SDL_opengl.h>
 #endif
 #endif
@@ -969,3 +970,66 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	checkGLErrors("draw arrays");
 	kmGLPopMatrix();
 };
+
+
+
+//// RENDER TEXTURE
+////////////////////
+
+
+struct old_framebuffer_state {
+	GLuint frameBuffer;
+	GLsizei width;
+	GLsizei height;
+}; 
+
+value ml_activate_framebuffer(value framebufferID,value width,value height) {
+	GLint oldBuffer;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
+	GLint viewPort[4];
+	glGetIntegerv(GL_VIEWPORT,viewPort);
+	glBindFramebuffer(GL_FRAMEBUFFER,Long_val(framebufferID));
+
+	glViewport(0, (GLint)Double_val(width), (GLint)Double_val(height), 0);
+	kmGLMatrixMode(KM_GL_PROJECTION);
+	kmGLPushMatrix();
+	kmGLLoadIdentity();
+      
+	kmMat4 orthoMatrix;
+	kmMat4OrthographicProjection(&orthoMatrix, 0, Double_val(width), Double_val(height), 0, -1024, 1024 );
+	kmGLMultMatrix( &orthoMatrix );
+
+	kmGLMatrixMode(KM_GL_MODELVIEW);
+	kmGLPushMatrix();
+	kmGLLoadIdentity();
+
+	boundTextureID = 0;
+	setDefaultGLBlend();
+
+	struct old_framebuffer_state *s = caml_stat_alloc(sizeof(struct old_framebuffer_state));
+	s->frameBuffer = oldBuffer;
+	s->width = viewPort[1];
+	s->height = viewPort[2];
+	return (value)s;
+}
+
+
+void ml_deactivate_framebuffer(value ostate) {
+	struct old_framebuffer_state *s = (struct oldState*)ostate;
+	glBindFramebuffer(GL_FRAMEBUFFER,s->frameBuffer);
+	glViewport(0, s->width, s->height, 0);
+	kmGLMatrixMode(KM_GL_PROJECTION);
+	kmGLPopMatrix();
+	kmGLMatrixMode(KM_GL_MODELVIEW);
+	kmGLPopMatrix();
+	boundTextureID = 0;
+	setDefaultGLBlend();
+}
+
+
+void ml_delete_framebuffer(value framebuffer) {
+	GLuint fbID = Long_val(framebuffer);
+	glDeleteFramebuffers(1,&fbID);
+}
+
+

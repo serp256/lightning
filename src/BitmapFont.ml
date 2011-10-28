@@ -102,7 +102,7 @@ value register xmlpath = (*{{{*)
             let charID = int_of_string id in
             let bc = 
               let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
-              let charTexture = Texture.createSubTexture region texture in
+              let charTexture = texture#subTexture region in
               { charID ; xOffset = floats xoffset; yOffset = floats yoffset; xAdvance = floats xadvance; charTexture }
             in
             Hashtbl.add chars charID bc;
@@ -170,7 +170,7 @@ value registern xmlpath =
                   let charID = XmlParser.ints id in
                    let bc = 
                      let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
-                     let charTexture = Texture.createSubTexture region pages.(XmlParser.ints page) in
+                     let charTexture = pages.(XmlParser.ints page)#subTexture region  in
                      { charID; xOffset = floats xOffset; yOffset = floats yOffset; xAdvance = floats xAdvance; charTexture }
                    in
                    Hashtbl.add chars charID bc;

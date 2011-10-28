@@ -241,7 +241,7 @@ CAMLprim value ml_loadImage(value oldTextureID, value fname, value scale) { // s
 	Store_field(res,6,Val_int(1));
 	Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
 	Store_field(res,8,caml_copy_double(tInfo.scale));
-	Store_field(res,9,Val_int(textureID));
+	Store_field(res,9,Val_long(textureID));
 	CAMLreturn(res);
 
 }

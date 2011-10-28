@@ -16,10 +16,7 @@ type textureFormat =
   ];
 
 
-type textureID;
-
-external glid_of_textureID: textureID -> int = "ml_glid_of_textureID" "noalloc";
-external bind_texture: textureID -> unit = "ml_bind_texture" "noalloc";
+type textureID = int;
 
 type textureInfo = 
   {
@@ -37,7 +34,6 @@ type textureInfo =
 
 class type c = 
   object
-    method bindGL: unit -> unit;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
@@ -45,7 +41,8 @@ class type c =
     method textureID: textureID;
     method base : option (c * Rectangle.t);
     method clipping: option Rectangle.t;
-(*     method adjustTextureCoordinates: float_array -> unit; *)
+    method release: unit -> unit;
+    method subTexture: Rectangle.t -> c;
 (*     method update: string -> unit; *)
   end;
 
@@ -64,9 +61,6 @@ value loadImage ?textureID ~path ~contentScaleFactor =
   let legalHeight = nextPowerOfTwo height in
   let rgbSurface = Sdl.Video.create_rgb_surface [] legalWidth legalHeight bpp in
   (
-(*     Sdl.Video.set_alpha_mod surface 0; *)
-(*     Sdl.Video.fill_surface rgbSurface (Sdl.Video.map_rgba rgbSurface 255 0 0 255); *)
-(*     Sdl.Video.set_color_key rgbSurface [] 0l; *)
     Sdl.Video.set_blend_mode surface Sdl.Video.BLENDMODE_NONE;
     Sdl.Video.blit_surface surface None rgbSurface None;
     Sdl.Video.free_surface surface;
@@ -112,16 +106,18 @@ class type r =
   object
     inherit c;
     method setTextureID: textureID -> unit;
+    method retain: unit -> unit;
+    method releaseSubTexture: unit -> unit;
   end;
 
-class subtexture region (baseTexture:c) = 
+class subtexture region baseTexture = 
   let tw = baseTexture#width
   and th = baseTexture#height in
   let clipping = Rectangle.create (region.Rectangle.x /. tw) (region.Rectangle.y /. th) (region.Rectangle.width /. tw)  (region.Rectangle.height /. th) in
   let rootClipping = Rectangle.tm_of_t clipping in
   let () = 
     let open Rectangle in
-    adjustClipping baseTexture where
+    adjustClipping (baseTexture :> c) where
       rec adjustClipping texture =
         match texture#base with
         [ None -> ()
@@ -136,37 +132,24 @@ class subtexture region (baseTexture:c) =
         ]
   in
   let rootClipping : Rectangle.t = Obj.magic rootClipping in
-  object
-    method bindGL () = bind_texture baseTexture#textureID;
+  object(self)
     method width = baseTexture#width *. clipping.Rectangle.width;
     method height = baseTexture#height *. clipping.Rectangle.height;
     method textureID = baseTexture#textureID;
     method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
     method scale = baseTexture#scale;
-    method base = Some (baseTexture,clipping);
+    method base = Some ((baseTexture :> c),clipping);
     method clipping = Some rootClipping;
-    (*
-    method adjustTextureCoordinates (texCoords:float_array) = 
-      for i = 0 to (Bigarray.Array1.dim texCoords) / 2 - 1 do
-        texCoords.{2*i} := rootClipping.Rectangle.m_x +. texCoords.{2*i} *. rootClipping.Rectangle.m_width;
-        texCoords.{2*i+1} := rootClipping.Rectangle.m_y +. texCoords.{2*i+1} *. rootClipping.Rectangle.m_height;
-      done;
-    *)
 (*     method update path = baseTexture#update path; *)
-  end;
-
-value createSubTexture = new subtexture;
-
-value _createSubTexture region (baseTexture:r) =
-  object 
-    inherit subtexture region (baseTexture :> c);
+    method subTexture region = ((new subtexture region (self :> r)) :> c);
+    method retain () = baseTexture#retain ();
+    method releaseSubTexture () = baseTexture#releaseSubTexture ();
+    method release () = baseTexture#releaseSubTexture ();
     method setTextureID tid = baseTexture#setTextureID tid;
+    initializer Gc.finalise (fun t -> t#release ()) self;
   end;
-
 
 value cache = Cache.create 11;
-
-
 
 (*
 IFDEF ANDROID THEN
@@ -182,6 +165,8 @@ Callback.register "realodTextures" reloadTextures;
 ENDIF;
 *)
 
+external delete_texture: textureID -> unit = "ml_delete_texture";
+
 value make textureInfo = 
   let textureID = textureInfo.textureID
   and width = float textureInfo.width
@@ -189,24 +174,44 @@ value make textureInfo =
   and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
   and scale = textureInfo.scale 
   in
-  let res : r = 
-    object
+  let res = 
+    object(self)
+      value mutable textureID = textureID;
+      value mutable counter = 0;
+
+      method retain () = counter := counter + 1;
+
+      method releaseSubTexture () = 
+      (
+        counter := counter - 1;
+        if counter = 0
+        then self#release ()
+        else ();
+      );
+
+      method release () = 
+        if (textureID <> 0) 
+        then
+        (
+          delete_texture textureID; 
+          textureID := 0
+        )
+        else ();
       method width = width /. scale;
       method height = height /. scale;
-      method bindGL () = bind_texture textureID;
       method hasPremultipliedAlpha = hasPremultipliedAlpha;
       method scale = scale;
-      value mutable textureID = textureID;
       method setTextureID tid = textureID := tid;
       method textureID = textureID;
       method base = None;
-(*       method adjustTextureCoordinates texCoords = (); *)
       method clipping = None;
 (*       method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *) *)
+      method subTexture region = ((new subtexture region self) :> c);
+      initializer Gc.finalise (fun t -> t#release ()) self;
     end
   in
   if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
-  then _createSubTexture (Rectangle.create 0. 0. (float textureInfo.realWidth) (float textureInfo.realHeight)) res
+  then new subtexture (Rectangle.create 0. 0. (float textureInfo.realWidth) (float textureInfo.realHeight)) res
   else res;
 
 value create texFormat width height data =
@@ -253,4 +258,56 @@ value load path : c =
     )
   ];
 
+
+class type renderObject =
+  object
+    method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
+  end;
+
+type framebufferID;
+external create_render_texture: float -> float -> (framebufferID*textureID) = "ml_rendertexture_create";
+type framebufferState;
+external activate_framebuffer: framebufferID -> float -> float -> framebufferState = "ml_activate_framebuffer";
+external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
+external delete_framebuffer: framebufferID -> unit = "ml_delete_framebuffer";
+
+
+class type rendered = 
+  object
+    inherit c;
+    method drawObject: !'a. (#renderObject as 'a) -> unit;
+  end;
+
+value rendered ?(color=0) ?(alpha=0.) width height =
+  let (frameBufferID,textureID) = create_render_texture width height in
+  object
+    value mutable isActive = False;
+    method width = width;
+    method height = height;
+    method hasPremultipliedAlpha = False;
+    method scale = 1.;
+    method textureID = textureID;
+    method base : option (c*Rectangle.t) = None;
+    method clipping : option Rectangle.t = None;
+    method subTexture (region:Rectangle.t) : c = assert False;
+    method release () = 
+    (
+      delete_framebuffer frameBufferID;
+      delete_texture textureID;
+    );
+    method drawObject: !'a. (#renderObject as 'a) -> unit = fun obj ->
+      match isActive with
+      [ False ->
+        (
+          let oldState = activate_framebuffer frameBufferID width height in
+          (
+            isActive := True;
+            obj#render ~transform:False None;
+            deactivate_framebuffer oldState;
+            isActive := False;
+          )
+        )
+      | True -> obj#render ~transform:False None
+      ];
+  end;
 

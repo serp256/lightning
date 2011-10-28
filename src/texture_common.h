@@ -1,3 +1,15 @@
+#ifdef ANDROID
+#include <GLES/gl2.h>
+#else 
+#ifdef IOS
+#include <OpenGLES/ES2/gl.h>
+//#include <OpenGLES/ES1/glext.h>
+#else
+#define GL_GLEXT_PROTOTYPES
+#include <SDL/SDL_opengl.h>
+#endif
+#endif
+
 #include <caml/mlvalues.h>
 
 int nextPowerOfTwo(int number);
@@ -31,4 +43,4 @@ typedef struct {
 } textureInfo;
 
 
-value createGLTexture(value mTextureID, textureInfo *tInfo);
+value createGLTexture(GLuint mTextureID, textureInfo *tInfo);

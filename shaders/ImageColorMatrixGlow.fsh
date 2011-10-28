@@ -6,6 +6,7 @@ precision lowp float;
 varying vec4 v_fragmentColor;
 varying vec2 v_texCoord;
 uniform sampler2D u_texture;
+uniform float u_parentAlpha;
 #ifdef GL_ES
 uniform highp float u_matrix[20];
 uniform highp float u_glowSize;
@@ -21,6 +22,7 @@ uniform vec3 u_glowColor;
 void main()
 {
 	vec4 color = v_fragmentColor * texture2D(u_texture, v_texCoord);
+	color.a *= u_parentAlpha;
 
 	vec4 clr;
 	 

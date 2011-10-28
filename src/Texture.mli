@@ -16,21 +16,33 @@ type textureFormat =
 
 class type c = 
   object
-    method bindGL: unit -> unit;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
     method scale: float;
     method textureID: textureID;
     method base : option (c * Rectangle.t);
-(*     method adjustTextureCoordinates: Gl.float_array -> unit; *)
     method clipping: option Rectangle.t;
 (*     method update: string -> unit; *)
+    method release: unit -> unit;
+    method subTexture: Rectangle.t -> c;
   end;
 
 
 
-external glid_of_textureID: textureID -> int = "ml_glid_of_textureID" "noalloc";
 value create: textureFormat -> int -> int -> option (Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout) -> c;
 value load: string -> c;
-value createSubTexture: Rectangle.t -> c -> c;
+
+class type renderObject =
+  object
+    method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
+  end;
+
+
+class type rendered =
+  object
+    inherit c;
+    method drawObject: !'a. (#renderObject as 'a) -> unit;
+  end;
+
+value rendered: ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)

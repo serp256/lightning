@@ -61,5 +61,5 @@ value texture atlas name =
       Hashtbl.find atlas.regions name
     with [ Not_found -> raise (Texture_not_found name) ]
   in
-  Texture.createSubTexture region atlas.textures.(num);
+  atlas.textures.(num)#subTexture region;
 

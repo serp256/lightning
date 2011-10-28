@@ -1,20 +1,5 @@
 
 
-#ifdef ANDROID
-#include fixme
-#else 
-#ifdef IOS
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
-#else
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#else // this is linux
-#include <GL/gl.h>
-#endif
-#endif
-#endif
-
 #include <stdio.h>
 #include "texture_common.h"
 #include <caml/memory.h>
@@ -22,7 +7,7 @@
 #include <caml/bigarray.h>
 #include <caml/custom.h>
 
-#define MAXTEXMEMORY 73400320
+//#define MAXTEXMEMORY 73400320
 
 int nextPowerOfTwo(int number) {
 	int result = 1;
@@ -107,6 +92,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 		return 1;
 }
 
+/*
 #define TEXID(v) ((GLuint*)Data_custom_val(v))
 
 
@@ -144,9 +130,15 @@ struct custom_operations texid_ops = {
   custom_deserialize_default
 };
 
+*/
 
-// make it custom 
-value createGLTexture(value texid,textureInfo *tInfo) {
+void ml_delete_texture(value textureID) {
+	GLuint texID = Long_val(textureID);
+	glDeleteTextures(1,&texID);
+}
+
+
+value createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     int mRepeat = 0;    
     
 		texParams params;
@@ -156,9 +148,7 @@ value createGLTexture(value texid,textureInfo *tInfo) {
     //unsigned int mTextureID;
 		if (!textureParams(tInfo,&params)) return 0;
     
-		GLuint mTextureID;
-		if (texid == 1) glGenTextures(1, &mTextureID);
-		else mTextureID = *TEXID(Field(texid,0));
+		if (mTextureID == 0) glGenTextures(1, &mTextureID);
     glBindTexture(GL_TEXTURE_2D, mTextureID);
     
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
@@ -210,13 +200,15 @@ value createGLTexture(value texid,textureInfo *tInfo) {
     }
     
     glBindTexture(GL_TEXTURE_2D, 0);
+		/*
 		value result;
-		if (texid == 1) {
+		if (texid == 0) {
 			printf("new texture of size: %d\n",tInfo->dataLen);
 			result = caml_alloc_custom(&texid_ops, sizeof(GLuint), tInfo->dataLen, MAXTEXMEMORY);
 			*TEXID(result) = mTextureID;
 		} else result = Field(texid,0);
-    return result;
+		*/
+    return mTextureID;
 };
 
 CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
@@ -239,8 +231,43 @@ CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 		tInfo.dataLen = data->dim[0];
 		tInfo.imgData = data->data;
 	};
-	value texID = createGLTexture(Field(mlTexInfo,9),&tInfo);
+	value texID = createGLTexture(Long_val(Field(mlTexInfo,9)),&tInfo);
 	if (!texID) caml_failwith("failed to load texture");
-	Store_field(mlTexInfo,9,texID);
+	Store_field(mlTexInfo,9,Val_long(texID));
 	CAMLreturn(mlTexInfo);
 }
+
+
+
+/////////////////////////////
+////// Render Texture
+/////////////////////////////////////////
+
+
+value ml_rendertexture_create(value width,value height) {
+	CAMLparam2(width,height);
+	CAMLlocal1(result);
+	GLuint mTextureID;
+	glGenTextures(1, &mTextureID);
+	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)Double_val(width), (GLsizei)Double_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	checkGLErrors("tex image 2d from framebuffer");
+	GLuint mFramebuffer;
+	glGenFramebuffers(1, &mFramebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		caml_failwith("failed to create frame buffer for render texture");
+	};
+	glClearColor(1.0,1.0,1.0,1.0);
+	glBindTexture(GL_TEXTURE_2D,0);
+	// блэндинг бы еще врубить нахуй
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+	result = caml_alloc_small(2);
+	Field(result,0) = Long_val(mTextureID);
+	Field(result,1) = Long_val(mFramebuffer);
+	CAMLreturn(result);
+};

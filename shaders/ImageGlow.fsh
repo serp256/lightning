@@ -11,6 +11,7 @@ uniform highp float u_glowSize;
 #else
 uniform float u_glowSize;
 #endif
+uniform float u_parentAlpha;
 uniform float u_glowStrenght;
 uniform vec3 u_glowColor;
 
@@ -18,6 +19,7 @@ void main()
 {
 	
 	vec4 clr = v_fragmentColor * texture2D(u_texture, v_texCoord);
+	clr.a *= u_parentAlpha;
 
 	if (clr.a < 0.8)
 	{
