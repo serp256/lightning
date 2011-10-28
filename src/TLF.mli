@@ -61,6 +61,6 @@ value img: ?width:float -> ?height:float -> ?paddingLeft:float -> ?paddingTop:fl
 value span: ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> simple_elements -> simple_element;
 value p: ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> ?halign:p_halign -> ?valign:p_valign -> ?spaceBefore:float -> ?spaceAfter:float -> simple_elements -> main;
 value parse: ?imgLoader:(string -> Image.c) -> string -> main;
-value create: ?width:float -> ?height:float -> main -> CompiledSprite.c;
+value create: ?width:float -> ?height:float -> ?border:int -> main -> CompiledSprite.Sprite.c;
 
 end;
