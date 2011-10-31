@@ -17,6 +17,7 @@ type textureFormat =
 
 
 type textureID = Render.textureID;
+
 type textureInfo = 
   {
     texFormat: textureFormat;

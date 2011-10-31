@@ -79,9 +79,11 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
             if not valid then 
             (
               tex#draw (fun () ->
-                Render.push_matrix (Matrix.create ~translate:ic#pos ());
-                super#render' ?alpha ~transform:False rect;
-                Render.pop_matrix ();
+                (
+                  Render.push_matrix (Matrix.create ~translate:ic#pos ());
+                  super#render' ?alpha ~transform:False rect;
+                  Render.restore_matrix ();
+                );
               );
               c.valid := True; 
             ) else ();

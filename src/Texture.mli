@@ -1,5 +1,5 @@
 
-type textureID;
+type textureID = int;
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
