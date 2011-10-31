@@ -13,6 +13,8 @@ module type S = sig
       method color: int;
       method vertexColors: Enum.t int;
       method boundsInSpace: !'space. option (<asDisplayObject: D.c; ..> as 'space) -> Rectangle.t;
+      method filters: list Filters.t;
+      method setFilters: list Filters.t -> unit;
       method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     end;
 
@@ -110,6 +112,8 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
           Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
         ];
 
+      method filters = [];
+      method setFilters _ = assert False;
 
       method private render' ?alpha ~transform _ = Render.Quad.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha quad;
       

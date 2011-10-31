@@ -40,6 +40,10 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       value virtual color: int;
       value mutable width = _width;
       value mutable height = _height;
+      method cacheAsImage = False;
+      method setCacheAsImage = raise Restricted_operation;
+      method setFilters _ = raise Restricted_operation;
+      method filters = [];
       method! width = width;
       method! setWidth _ = raise Restricted_operation;
       method! height = height;
@@ -130,7 +134,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       method renderStage () =
       (
-        Render.clear color;
+        Render.clear color 1.;
         self#render None;
         (*
         debug "start render";

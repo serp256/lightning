@@ -18,7 +18,7 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
 (*   module Shape = Shape.Make DisplayObject; *)
   module Quad = Quad.Make DisplayObject;
   module Image = Image.Make DisplayObject;
-  module Sprite = Sprite.Make DisplayObject;
+  module Sprite = Sprite.Make DisplayObject Image;
 (*   module CompiledSprite = CompiledSprite.Make Image Sprite; *)
 (*   module MovieClip = MovieClip.Make DisplayObject Image; *)
   module BitmapFontCreator = BitmapFont.MakeCreator Image Sprite;

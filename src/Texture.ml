@@ -16,8 +16,7 @@ type textureFormat =
   ];
 
 
-type textureID = int;
-
+type textureID = Render.textureID;
 type textureInfo = 
   {
     texFormat: textureFormat;
@@ -29,7 +28,7 @@ type textureInfo =
     generateMipmaps: bool;
     premultipliedAlpha:bool;
     scale: float;
-    textureID: textureID;
+    textureID: Render.textureID;
   };
 
 class type c = 
@@ -38,7 +37,7 @@ class type c =
     method height: float;
     method hasPremultipliedAlpha:bool;
     method scale: float;
-    method textureID: textureID;
+    method textureID: Render.textureID;
     method base : option (c * Rectangle.t);
     method clipping: option Rectangle.t;
     method release: unit -> unit;
@@ -51,7 +50,7 @@ external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loa
 
 IFDEF SDL THEN
 
-value loadImage ?textureID ~path ~contentScaleFactor = 
+value loadImage ?(textureID=0) ~path ~contentScaleFactor = 
   let surface = Sdl_image.load (LightCommon.resource_path path) in
   let bpp = Sdl.Video.surface_bpp surface in
   let () = assert (bpp = 32) in
@@ -75,7 +74,7 @@ value loadImage ?textureID ~path ~contentScaleFactor =
         generateMipmaps = False;
         premultipliedAlpha = False;
         scale = 1.0;
-        textureID = Obj.magic textureID;
+        textureID = textureID;
       }
     in
 (*     let () = debug "loaded texture" (* : [%d:%d] -> [%d:%d] width height legalWidth legalHeight*) in *)
@@ -87,10 +86,10 @@ value loadImage ?textureID ~path ~contentScaleFactor =
   );
 
 ELSE IFDEF IOS THEN
-external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+external loadImage: ?textureID:Render.textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 (* external freeImageData: GLTexture.textureInfo -> unit = "ml_freeImageData"; *)
 ELSE IFDEF ANDROID THEN
-external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+external loadImage: ?textureID:Render.textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 ENDIF;
 ENDIF;
 ENDIF;
@@ -105,7 +104,7 @@ end);
 class type r = 
   object
     inherit c;
-    method setTextureID: textureID -> unit;
+    method setTextureID: Render.textureID -> unit;
     method retain: unit -> unit;
     method releaseSubTexture: unit -> unit;
   end;
@@ -165,7 +164,7 @@ Callback.register "realodTextures" reloadTextures;
 ENDIF;
 *)
 
-external delete_texture: textureID -> unit = "ml_delete_texture";
+external delete_texture: Render.textureID -> unit = "ml_delete_texture";
 
 value make textureInfo = 
   let textureID = textureInfo.textureID
@@ -265,21 +264,21 @@ class type renderObject =
   end;
 
 type framebufferID;
-external create_render_texture: float -> float -> (framebufferID*textureID) = "ml_rendertexture_create";
+external create_render_texture: int -> float -> float -> float -> (framebufferID*Render.textureID) = "ml_rendertexture_create";
 type framebufferState;
 external activate_framebuffer: framebufferID -> float -> float -> framebufferState = "ml_activate_framebuffer";
 external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
 external delete_framebuffer: framebufferID -> unit = "ml_delete_framebuffer";
 
-
 class type rendered = 
   object
     inherit c;
-    method drawObject: !'a. (#renderObject as 'a) -> unit;
+    method draw: (unit -> unit) -> unit;
+    method clear: int -> float -> unit;
   end;
 
-value rendered ?(color=0) ?(alpha=0.) width height =
-  let (frameBufferID,textureID) = create_render_texture width height in
+value rendered ?(color=0) ?(alpha=0.) width height : rendered =
+  let (frameBufferID,textureID) = create_render_texture color alpha width height in
   object(self)
     value mutable isActive = False;
     value mutable textureID = textureID;
@@ -300,18 +299,25 @@ value rendered ?(color=0) ?(alpha=0.) width height =
         textureID := 0;
       )
       else ();
-    method drawObject: !'a. (#renderObject as 'a) -> unit = fun obj ->
+
+    method draw f = 
       match isActive with
       [ False ->
         let oldState = activate_framebuffer frameBufferID width height in
         (
+          debug "buffer activated";
           isActive := True;
-          obj#render None;
+          f();
           deactivate_framebuffer oldState;
           isActive := False;
         )
-      | True -> obj#render None
+      | True -> f()
       ];
+
+    method clear color alpha = 
+      self#draw 
+      (fun () -> Render.clear color alpha);
     initializer Gc.finalise (fun r -> r#release ()) self;
+
   end;
 

@@ -40,6 +40,43 @@ void checkGLErrors(char *where) {
 	};
 }
 
+//////////////////////////////////
+/// COLORS
+
+#define COLOR_PART_ALPHA(color)  (((color) >> 24) & 0xff)
+#define COLOR_PART_RED(color)    (((color) >> 16) & 0xff)
+#define COLOR_PART_GREEN(color)  (((color) >>  8) & 0xff)
+#define COLOR_PART_BLUE(color)   ( (color)        & 0xff)
+
+#define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
+
+
+
+typedef struct
+{
+  GLfloat x;
+  GLfloat y;
+} vertex2F;
+
+typedef struct 
+{
+  GLfloat r;
+  GLfloat g;
+  GLfloat b;
+} color3F;
+
+#define COLOR3F_FROM_INT(c) (color3F){(GLfloat)(COLOR_PART_RED(c)/255.),(GLfloat)(COLOR_PART_GREEN(c)/255.),(GLfloat)(COLOR_PART_BLUE(c)/255.)}
+
+typedef struct 
+{
+  GLubyte r;
+  GLubyte g;
+  GLubyte b;
+  GLubyte a;
+} color4B;
+
+#define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
+
 GLuint boundTextureID = 0;
 int PMA = 0;
 
@@ -89,9 +126,10 @@ void ml_setupOrthographicRendering(value left,value right,value bottom,value top
 	setupOrthographicRendering(Double_val(left),Double_val(right),Double_val(bottom),Double_val(top));
 }
 
-void ml_clear(value color) {
+void ml_clear(value color,value alpha) {
+	color3F c = COLOR3F_FROM_INT(Int_val(color));
+	glClearColor(c.r,c.g,c.b,Double_val(alpha));
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(1.,1.,1.,0.);
 }
 /////////
 /// Matrix
@@ -132,42 +170,6 @@ void ml_restore_matrix(value p) {
 	kmGLPopMatrix();
 }
 
-//////////////////////////////////
-/// COLORS
-
-#define COLOR_PART_ALPHA(color)  (((color) >> 24) & 0xff)
-#define COLOR_PART_RED(color)    (((color) >> 16) & 0xff)
-#define COLOR_PART_GREEN(color)  (((color) >>  8) & 0xff)
-#define COLOR_PART_BLUE(color)   ( (color)        & 0xff)
-
-#define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
-
-
-
-typedef struct
-{
-  GLfloat x;
-  GLfloat y;
-} vertex2F;
-
-typedef struct 
-{
-  GLfloat r;
-  GLfloat g;
-  GLfloat b;
-} color3F;
-
-#define COLOR3F_FROM_INT(c) (color3F){(GLfloat)(COLOR_PART_RED(c)/255.),(GLfloat)(COLOR_PART_GREEN(c)/255.),(GLfloat)(COLOR_PART_BLUE(c)/255.)}
-
-typedef struct 
-{
-  GLubyte r;
-  GLubyte g;
-  GLubyte b;
-  GLubyte a;
-} color4B;
-
-#define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
 
 /////////////////////////////////////
 /// SHADERS
@@ -975,9 +977,48 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 
 
 
+/////////////////////////////
 //// RENDER TEXTURE
 ////////////////////
 
+
+value ml_rendertexture_create(value color, value alpha, value width,value height) {
+	CAMLparam2(width,height);
+	CAMLlocal1(result);
+	GLuint mTextureID;
+	glGenTextures(1, &mTextureID);
+	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)Double_val(width), (GLsizei)Double_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	checkGLErrors("tex image 2d from framebuffer");
+	glBindTexture(GL_TEXTURE_2D,0);
+	GLuint mFramebuffer;
+	GLint oldBuffer;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
+	glGenFramebuffers(1, &mFramebuffer);
+	printf("generated new framebuffer: %d\n",mFramebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+	checkGLErrors("bind framebuffer");
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
+	checkGLErrors("framebuffer texture");
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		printf("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		caml_failwith("failed to create frame buffer for render texture");
+	};
+	color3F c = COLOR3F_FROM_INT(Int_val(color));
+	glClearColor(c.r,c.g,c.b,Double_val(alpha));
+	glClear(GL_COLOR_BUFFER_BIT);
+	// блэндинг бы еще врубить нахуй
+	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
+	printf("old buffer: %d\n",oldBuffer);
+	result = caml_alloc_small(2,0);
+	Field(result,0) = Val_long(mFramebuffer);
+	Field(result,1) = Val_long(mTextureID);
+	CAMLreturn(result);
+};
 
 struct old_framebuffer_state {
 	GLuint frameBuffer;
@@ -993,11 +1034,13 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 	printf("old fb: %d, old viewport: %d:%d:%d:%d\n",oldBuffer,viewPort[0],viewPort[1],viewPort[2],viewPort[3]);
 
+	printf("here\n");
 	glBindFramebuffer(GL_FRAMEBUFFER,Long_val(framebufferID));
 
 	checkGLErrors("bind framebuffer");
 
 	glViewport(0, 0,(GLint)Double_val(width), (GLint)Double_val(height));
+	printf("here 2\n");
 
 	/*
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1019,10 +1062,12 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	boundTextureID = 0;
 	setDefaultGLBlend();
 
+	printf("here 3\n");
 	struct old_framebuffer_state *s = caml_stat_alloc(sizeof(struct old_framebuffer_state));
 	s->frameBuffer = oldBuffer;
 	s->width = viewPort[2];
 	s->height = viewPort[3];
+	printf("here 4\n");
 	return (value)s;
 }
 

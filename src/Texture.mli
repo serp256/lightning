@@ -1,5 +1,5 @@
-type textureID;
 
+type textureID;
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -33,16 +33,11 @@ class type c =
 value create: textureFormat -> int -> int -> option (Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout) -> c;
 value load: string -> c;
 
-class type renderObject =
-  object
-    method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
-  end;
-
-
 class type rendered =
   object
     inherit c;
-    method drawObject: !'a. (#renderObject as 'a) -> unit;
+    method draw: (unit -> unit) -> unit;
+    method clear: int -> float -> unit;
   end;
 
 value rendered: ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)

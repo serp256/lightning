@@ -156,8 +156,8 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setParent p = (parent := Some p;);
     method clearParent () = (parent := None;);
 
-    (* Events *)
-(*     type 'listener = Ev.t P.evType P.evData 'displayObject 'self -> int -> unit; *)
+    method virtual filters: list Filters.t;
+    method virtual setFilters: list Filters.t -> unit;
 
     method private enterFrameListenerRemovedFromStage  _ _ lid =
       let _ = super#removeEventListener `REMOVED_FROM_STAGE lid in
@@ -574,8 +574,6 @@ class virtual _c [ 'parent ] = (*{{{*)
 
 
 
-
-
 (* Dll additional functions {{{*)
 value dllist_find node el = 
   match Dllist.get node = el with
@@ -659,7 +657,6 @@ class virtual container = (*{{{*)
     method asDisplayObjectContainer = (self :> container);
     method dcast = `Container self#asDisplayObjectContainer;
 
-
     (* Сделать enum устойчивым к модификациям и переписать на полное использование енумов или щас ? *)
     method dispatchEventOnChildren event = 
     (
@@ -672,6 +669,9 @@ class virtual container = (*{{{*)
         ]
       end self#children;
     );
+
+    method virtual cacheAsImage: bool;
+    method virtual setCacheAsImage: bool -> unit;
 
     method addChild: !'child. ?index:int -> ((#_c container) as 'child) -> unit = fun  ?index child ->
       let child = child#asDisplayObject in
@@ -856,7 +856,7 @@ class virtual container = (*{{{*)
 
 (*     method! bounds = self#boundsInSpace parent; *)
 
-    method! private  hitTestPoint' localPoint isTouch = 
+    method! private hitTestPoint' localPoint isTouch = 
       match children with
       [ None -> None
       | Some children -> 

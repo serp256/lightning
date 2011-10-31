@@ -74,6 +74,8 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     value parent: option 'parent;
     method parent: option 'parent;
     method removeFromParent: unit -> unit;
+    method virtual filters: list Filters.t;
+    method virtual setFilters: list Filters.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option (_c _);
     method hitTestPoint: Point.t -> bool -> option (_c _) ;
     method virtual bounds: Rectangle.t;
@@ -117,6 +119,8 @@ class virtual container:
     method numChildren: int;
     method removeChild: !'child. (#_c container as 'child) -> unit;
     method removeChildAtIndex: int -> 'displayObject;
+    method virtual cacheAsImage: bool;
+    method virtual setCacheAsImage: bool -> unit;
     (* need to be hidden *)
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;

@@ -1,7 +1,9 @@
 
 external push_matrix: Matrix.t -> unit = "ml_push_matrix";
 external restore_matrix: unit -> unit = "ml_restore_matrix";
-external clear: int -> unit = "ml_clear";
+external clear: int -> float -> unit = "ml_clear";
+
+type textureID = int;
 
 module Program = struct
 
@@ -109,8 +111,6 @@ module Image = struct
   external set_alpha: t -> float -> unit = "ml_image_set_alpha";
   external colors: t -> array int = "ml_quad_colors";
   external update: t -> ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> unit = "ml_image_update";
-  external render: Matrix.t -> prg -> Texture.textureID -> bool -> ?alpha:float -> t -> unit = "ml_image_render_byte" "ml_image_render"; 
+  external render: Matrix.t -> prg -> textureID -> bool -> ?alpha:float -> t -> unit = "ml_image_render_byte" "ml_image_render"; 
 
 end;
-
-
