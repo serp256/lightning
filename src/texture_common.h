@@ -3,7 +3,7 @@
 #else 
 #ifdef IOS
 #include <OpenGLES/ES2/gl.h>
-//#include <OpenGLES/ES1/glext.h>
+#include <OpenGLES/ES2/glext.h>
 #else
 #define GL_GLEXT_PROTOTYPES
 #include <SDL/SDL_opengl.h>

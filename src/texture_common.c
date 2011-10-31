@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "texture_common.h"
 #include <caml/memory.h>
+#include <caml/alloc.h>
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 #include <caml/custom.h>
@@ -251,23 +252,32 @@ value ml_rendertexture_create(value width,value height) {
 	glGenTextures(1, &mTextureID);
 	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)Double_val(width), (GLsizei)Double_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
+	glBindTexture(GL_TEXTURE_2D,0);
 	GLuint mFramebuffer;
+	GLint oldBuffer;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	glGenFramebuffers(1, &mFramebuffer);
+	printf("generated new framebuffer: %d\n",mFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+	checkGLErrors("bind framebuffer");
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
+	checkGLErrors("framebuffer texture");
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		printf("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		caml_failwith("failed to create frame buffer for render texture");
 	};
-	glClearColor(1.0,1.0,1.0,1.0);
-	glBindTexture(GL_TEXTURE_2D,0);
+	glClearColor(1.0,0.0,1.0,1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
 	// блэндинг бы еще врубить нахуй
-	glBindFramebuffer(GL_FRAMEBUFFER,0);
-	result = caml_alloc_small(2);
-	Field(result,0) = Long_val(mTextureID);
-	Field(result,1) = Long_val(mFramebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
+	printf("old buffer: %d",oldBuffer);
+	result = caml_alloc_small(2,0);
+	Field(result,0) = Val_long(mFramebuffer);
+	Field(result,1) = Val_long(mTextureID);
 	CAMLreturn(result);
 };

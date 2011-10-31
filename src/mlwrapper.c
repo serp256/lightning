@@ -90,7 +90,7 @@ void mlstage_render(mlstage *mlstage) {
 	//PRINT_DEBUG("mlstage render");
 	caml_acquire_runtime_system();
 	if (render_method == NIL)
-		render_method = caml_hash_variant("render");
+		render_method = caml_hash_variant("renderStage");
 	caml_callback2(caml_get_public_method(mlstage->stage,render_method),mlstage->stage,Val_int(0));
 	caml_release_runtime_system();
 }

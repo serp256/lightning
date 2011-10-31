@@ -280,8 +280,9 @@ class type rendered =
 
 value rendered ?(color=0) ?(alpha=0.) width height =
   let (frameBufferID,textureID) = create_render_texture width height in
-  object
+  object(self)
     value mutable isActive = False;
+    value mutable textureID = textureID;
     method width = width;
     method height = height;
     method hasPremultipliedAlpha = False;
@@ -291,23 +292,26 @@ value rendered ?(color=0) ?(alpha=0.) width height =
     method clipping : option Rectangle.t = None;
     method subTexture (region:Rectangle.t) : c = assert False;
     method release () = 
-    (
-      delete_framebuffer frameBufferID;
-      delete_texture textureID;
-    );
+      if textureID <> 0
+      then
+      (
+        delete_framebuffer frameBufferID;
+        delete_texture textureID;
+        textureID := 0;
+      )
+      else ();
     method drawObject: !'a. (#renderObject as 'a) -> unit = fun obj ->
       match isActive with
       [ False ->
+        let oldState = activate_framebuffer frameBufferID width height in
         (
-          let oldState = activate_framebuffer frameBufferID width height in
-          (
-            isActive := True;
-            obj#render ~transform:False None;
-            deactivate_framebuffer oldState;
-            isActive := False;
-          )
+          isActive := True;
+          obj#render None;
+          deactivate_framebuffer oldState;
+          isActive := False;
         )
-      | True -> obj#render ~transform:False None
+      | True -> obj#render None
       ];
+    initializer Gc.finalise (fun r -> r#release ()) self;
   end;
 

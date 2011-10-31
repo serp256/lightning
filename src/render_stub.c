@@ -91,6 +91,7 @@ void ml_setupOrthographicRendering(value left,value right,value bottom,value top
 
 void ml_clear(value color) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(1.,1.,1.,0.);
 }
 /////////
 /// Matrix
@@ -923,6 +924,7 @@ void ml_image_flip_tex_y(value image) {
 }
 
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
+	//printf("draw image: %d\n",Long_val(textureID));
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 
@@ -945,7 +947,7 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 		filter *f = FILTER(Field(fs,0));
 		f->f_fun(sp,f->f_data);
 	};
-	lgGLBindTexture(*GLUINT(textureID),Int_val(pma));
+	lgGLBindTexture(Long_val(textureID),Int_val(pma));
 
 	long offset = (long)tq;
 
@@ -988,15 +990,26 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	GLint viewPort[4];
 	glGetIntegerv(GL_VIEWPORT,viewPort);
+	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
+	printf("old fb: %d, old viewport: %d:%d:%d:%d\n",oldBuffer,viewPort[0],viewPort[1],viewPort[2],viewPort[3]);
+
 	glBindFramebuffer(GL_FRAMEBUFFER,Long_val(framebufferID));
 
-	glViewport(0, (GLint)Double_val(width), (GLint)Double_val(height), 0);
+	checkGLErrors("bind framebuffer");
+
+	glViewport(0, 0,(GLint)Double_val(width), (GLint)Double_val(height));
+
+	/*
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(1.,1.,0.,1.0);
+	*/
+
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPushMatrix();
 	kmGLLoadIdentity();
       
 	kmMat4 orthoMatrix;
-	kmMat4OrthographicProjection(&orthoMatrix, 0, Double_val(width), Double_val(height), 0, -1024, 1024 );
+	kmMat4OrthographicProjection(&orthoMatrix, 0, Double_val(width), 0, Double_val(height), -1024, 1024 );
 	kmGLMultMatrix( &orthoMatrix );
 
 	kmGLMatrixMode(KM_GL_MODELVIEW);
@@ -1008,16 +1021,17 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 
 	struct old_framebuffer_state *s = caml_stat_alloc(sizeof(struct old_framebuffer_state));
 	s->frameBuffer = oldBuffer;
-	s->width = viewPort[1];
-	s->height = viewPort[2];
+	s->width = viewPort[2];
+	s->height = viewPort[3];
 	return (value)s;
 }
 
 
 void ml_deactivate_framebuffer(value ostate) {
-	struct old_framebuffer_state *s = (struct oldState*)ostate;
+	struct old_framebuffer_state *s = (struct old_framebuffer_state*)ostate;
 	glBindFramebuffer(GL_FRAMEBUFFER,s->frameBuffer);
-	glViewport(0, s->width, s->height, 0);
+	glViewport(0, 0, s->width, s->height);
+	printf("return old buffer: %d,%d,%d\n",s->frameBuffer,s->width,s->height);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPopMatrix();
 	kmGLMatrixMode(KM_GL_MODELVIEW);
