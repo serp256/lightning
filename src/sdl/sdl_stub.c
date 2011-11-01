@@ -962,6 +962,10 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    CAMLreturn(to_return);
 		*/
 	}
+	case SDL_MOUSEWHEEL:
+	{
+		CAMLreturn(Val_int(0)); // skip it now
+	}
 	case SDL_MOUSEMOTION:
 	{
 	    ML_event=caml_alloc(5,0);
@@ -1089,8 +1093,7 @@ value sdlstub_poll_event(value u)
 	CAMLparam1(u);
 	int isevent;
 	isevent=SDL_PollEvent(&event);
-	if (isevent==1) 
-	CAMLreturn (SDL_event_to_ML_tevent(event));
+	if (isevent==1) CAMLreturn (SDL_event_to_ML_tevent(event));
 	else CAMLreturn (Val_int(0));
 }
 

@@ -803,7 +803,6 @@ struct custom_operations tex_quad_ops = {
 
 void set_image_uv(lgTexQuad *tq, value clipping) {
 	if (clipping != 1) {
-		printf("non default clipping\n");
 		value c = Field(clipping,0);
 		double x = Double_field(c,0);
 		double y = Double_field(c,1);
@@ -975,6 +974,9 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	kmGLPopMatrix();
 };
 
+void ml_image_render_byte(value * argv, int n) {
+	ml_image_render(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
+}
 
 
 /////////////////////////////

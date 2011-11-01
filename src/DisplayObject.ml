@@ -67,18 +67,18 @@ value dispatchEnterFrame seconds =
 
 DEFINE RESET_TRANSFORMATION_MATRIX = match transformationMatrix with [ Some _ -> transformationMatrix := None | _ -> () ];
 DEFINE RESET_BOUNDS_CACHE =
-  (
-      match boundsCache with
-      [ Some _ -> boundsCache := None
-      | None -> ()
-      ];
-      match parent with
-      [ Some p -> p#boundsChanged ()
-      | None -> ()
-      ];
-  );
+(
+    match boundsCache with
+    [ Some _ -> boundsCache := None
+    | None -> ()
+    ];
+    match parent with
+    [ Some p -> p#boundsChanged ()
+    | None -> ()
+    ];
+);
 
-DEFINE RESET_CACHE = (RESET_TRANSFORMATION_MATRIX; RESET_BOUNDS_CACHE);
+DEFINE RESET_CACHE(what) = (debug "%s changed [%s]" self#name what; RESET_TRANSFORMATION_MATRIX; RESET_BOUNDS_CACHE);
 
 class virtual _c [ 'parent ] = (*{{{*)
 
@@ -95,8 +95,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 (*     value intcache = Dictionary.create (); *)
 
     value mutable name = "";
-    initializer  name := Printf.sprintf "instance%d" (Oo.id self);
-    method name = name;
+    method name = if name = ""  then Printf.sprintf "instance%d" (Oo.id self) else name;
     method setName n = name := n;
 
     value mutable pos  = {Point.x = 0.; y =0.};
@@ -127,7 +126,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
         (
           transformPoint := {Point.x = nv;y = transformPoint.Point.y};
-          RESET_CACHE;
+          RESET_CACHE("setTransformPointX");
         )
       else ();
 
@@ -137,7 +136,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
         (
           transformPoint := {Point.x = transformPoint.Point.x;y=nv};
-          RESET_CACHE;
+          RESET_CACHE("setTransformPointY");
         )
       else ();
 
@@ -148,7 +147,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
       (
         transformPoint := p;
-        RESET_CACHE;
+        RESET_CACHE("setTransformPoint");
       )
       else ();
 
@@ -242,12 +241,12 @@ class virtual _c [ 'parent ] = (*{{{*)
     (*}}}*)
 
     method scaleX = scaleX;
-    method setScaleX ns = (scaleX := ns; RESET_CACHE);
+    method setScaleX ns = (scaleX := ns; RESET_CACHE "setScaleX");
 
     method scaleY = scaleY;
-    method setScaleY ns = (scaleY := ns; RESET_CACHE);
+    method setScaleY ns = (scaleY := ns; RESET_CACHE "setScaleY");
 
-    method setScale s = (scaleX := s; scaleY := s; RESET_CACHE);
+    method setScale s = (scaleX := s; scaleY := s; RESET_CACHE "setScale");
 
     value mutable visible = True;
     method visible = visible;
@@ -258,14 +257,14 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setTouchable v = touchable := v;
 
     method x = pos.Point.x;
-    method setX x' = ( pos := {Point.x = x'; y = pos.Point.y}; RESET_CACHE);
+    method setX x' = ( pos := {Point.x = x'; y = pos.Point.y}; RESET_CACHE "setX");
 
     method y = pos.Point.y;
-    method setY y' = (pos  := {Point.x = pos.Point.y; y = y'}; RESET_CACHE);
+    method setY y' = (pos  := {Point.x = pos.Point.y; y = y'}; RESET_CACHE "setY");
 
     method pos = pos;
-    method setPos x y = (pos := {Point.x=x;y=y}; RESET_CACHE);
-    method setPosPoint p = (pos := p; RESET_CACHE);
+    method setPos x y = (pos := {Point.x=x;y=y}; RESET_CACHE "setPos");
+    method setPosPoint p = (pos := p; RESET_CACHE "setPosPoint");
 
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
@@ -347,7 +346,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       in
       (
         rotation := nr;
-        RESET_CACHE;
+        RESET_CACHE "setRotation";
       );
 
     method setTransformationMatrix m =
@@ -568,6 +567,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method boundsChanged () = RESET_BOUNDS_CACHE;
 
+
   end;(*}}}*)
 
 
@@ -694,6 +694,7 @@ class virtual container = (*{{{*)
           ];
           numChildren := numChildren + 1;
           child#setParent self#asDisplayObjectContainer;
+          self#boundsChanged();
           let event = Ev.create `ADDED () in
           child#dispatchEvent event;
           match self#stage with
@@ -743,6 +744,7 @@ class virtual container = (*{{{*)
         | None -> assert False
         ];
         numChildren := numChildren - 1;
+        self#boundsChanged();
         let event = Ev.create `REMOVED () in
         child#dispatchEvent event;
         match self#stage with
@@ -854,7 +856,6 @@ class virtual container = (*{{{*)
           )
       ];
 
-(*     method! bounds = self#boundsInSpace parent; *)
 
     method! private hitTestPoint' localPoint isTouch = 
       match children with

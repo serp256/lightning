@@ -95,11 +95,11 @@ value run stage_create =
       SDLGL.set_attribute SDLGL.CONTEXT_MAJOR_VERSION 2;
       SDLGL.set_attribute SDLGL.CONTEXT_MINOR_VERSION 0;
       SDLGL.set_attribute SDLGL.DOUBLEBUFFER 1;
-      SDLGL.set_attribute SDLGL.DEPTH_SIZE 32;
+      SDLGL.set_attribute SDLGL.DEPTH_SIZE 24;
       let window = Window.create "TEST WINDOW NAME" Window.PosCentered Window.PosCentered !width !height [ Window.SHOWN ; Window.OPENGL ] in
       let context = SDLGL.create_context window in
       (
-        SDLGL.set_swap_interval 1;
+        (*SDLGL.set_swap_interval 1;*)
         Printf.printf "SDL ATTRIBUTES: DOUBLEBUFFER:%d,GLMV:%d,GLMV:%d\n%!" (SDLGL.get_attribute SDLGL.DOUBLEBUFFER) (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
         let stage = stage_create (float !width) (float !height) in
         (

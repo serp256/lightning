@@ -4,6 +4,8 @@ type eventType = [= `TIMER | `TIMER_COMPLETE ];
 class type virtual c = 
   object('self)
     inherit EventDispatcher.simple [eventType,Ev.dataEmpty, c ];
+    method name: string;
+    method setName: string -> unit;
     method running: bool;
     method delay: float;
     method setDelay: float -> unit;
@@ -24,12 +26,16 @@ value create ?(repeatCount=0) delay = (*{{{*)
       method running = running <> None;
       value mutable currentCount = 0;
       value mutable _delay = delay;
+      value mutable name = "";
+      method setName n = name := n;
+      method name = if name = "" then Printf.sprintf "timer %d" (Oo.id self) else name;
       method delay = _delay;
       method setDelay d = _delay := d;
       method repeatCount = repeatCount;
       method currentCount = currentCount;
       method fire () = 
       (
+        debug "fire timer %s" self#name;
         currentCount := currentCount + 1;
         match running with
         [ Some _ -> 
@@ -49,7 +55,8 @@ value create ?(repeatCount=0) delay = (*{{{*)
             self#dispatchEvent event
           )
         | None -> assert False
-        ]
+        ];
+        debug "timer fired";
       );
 
       method private start' () = 

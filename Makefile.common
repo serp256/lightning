@@ -7,7 +7,7 @@ MLCOMPFLAGS = -w +7+9 -warn-error +10 -g
 	$(OCAMLC) $(MLFLAGS) $(MLCOMPFLAGS) -c $<
 
 %.cmo: %.ml
-	$(OCAMLC) $(MLFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<
+	$(OCAMLC) $(MLFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(if $(DEBUGS),$(patsubst %,-ppopt -enable-debug -ppopt %,$(DEBUGS))) -c $<
 
 %.cmx: %.ml
-	$(OCAMLOPT) $(MLFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<
+	$(OCAMLOPT) $(MLFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(if $(DEBUGS),$(patsubst %,-ppopt -enable-debug -ppopt %,$(DEBUGS)))  -c $<

@@ -477,7 +477,8 @@ module Event =
     type resize_event = { w : int; h : int };
     type user_event = { code : int; data1 : pointer; data2 : pointer };
     type window_event_id = 
-      [ WINDOWEVENT_SHOWN          (*< Window has been shown *)
+      [ WINDOWEVENT_NONE
+      | WINDOWEVENT_SHOWN          (*< Window has been shown *)
       | WINDOWEVENT_HIDDEN         (**< Window has been hidden *)
       | WINDOWEVENT_EXPOSED        (**< Window has been exposed and should be redrawn *)
       | WINDOWEVENT_MOVED          (**< Window has been moved to data1, data2 *)

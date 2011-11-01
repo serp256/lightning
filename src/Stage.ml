@@ -167,6 +167,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method run seconds = 
       (
         self#advanceTime seconds;
+        debug "render stage";
         self#renderStage ();
       );
 

@@ -314,7 +314,7 @@ value parse ?(imgLoader=Image.load) xml : main =
   ];
 
 (* width, height вытащить наверно в html тоже *)
-value create ?width ?height ?border (html:main) = 
+value create ?width ?height ?border ?dest (html:main) = 
   let rec make_lines width attributes lines : simple_element -> unit = fun 
     [ `img attrs image -> 
       let () = debug "process img: lines: %d" (Stack.length lines) in
@@ -619,7 +619,7 @@ value create ?width ?height ?border (html:main) =
         )
     ]
   in
-  let result = Sprite.create () in
+  let result = match dest with [ Some s -> (s :> Sprite.c) | None -> Sprite.create () ] in
   let (pos,container) = process (width,height) [] html in
   (
     (*

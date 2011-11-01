@@ -14,7 +14,7 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package extlib -I containers -I utils
 MLDEPFLAGS =
 
-release: lightning.cmxa syntax/pa_prop.cmo
+release: lightning.cma lightning.cmxa syntax/pa_prop.cmo
 debug: release
 
 KAZMATHOBJS = utility.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o GL/mat4stack.o GL/matrix.o
@@ -23,7 +23,7 @@ MLPPOPT = syntax/pa_debug.cmo
 
 SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
 $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend -syntax camlp4r 
-$(SYNTAX) Debug.cmx: MLPPOPT :=
+$(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT :=
 $(SYNTAX): OCAMLC = ocamlfind ocamlc
 
 
@@ -89,15 +89,22 @@ MLUTILS = utils/UrlEncoding.ml
 #$(XMLMFILES:.ml=.cmo) $(XMLMFILES:.ml=.cmx) $(XMLMFILES:.ml=.cmi): MLFLAGS += -package xmlm
 
 MLCONTAINERSOBJS = $(MLCONTAINERS:.ml=.cmx)
+MLCONTAINERSOBJSB = $(MLCONTAINERS:.ml=.cmo)
 MLUTILSOBJS = $(MLUTILS:.ml=.cmx)
+MLUTILSOBJSB = $(MLUTILS:.ml=.cmo)
 MLOBJS = $(MLSOURCES:.ml=.cmx)
-#$(MLOBJS): MLFLAGS += -package xmlm -I $(gl) $(MLOBJSFLAGS)
-$(MLOBJS): MLFLAGS += -package xmlm  $(MLOBJSFLAGS)
+MLOBJSB = $(MLSOURCES:.ml=.cmo)
+$(MLOBJS) $(MLOBJSB): MLFLAGS += -package xmlm  $(MLOBJSFLAGS)
 $(MLOBJS): Debug.cmx
+$(MLOBJSB): Debug.cmo
 
-$(MLOBJS) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
+$(MLOBJS) $(MLOBJSB) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
 -include debug.conf
 	
+
+lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MOBJS) $(MLOBJSB)
+	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmo $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MLOBJSB) $(LIBFLAGS) 
+
 lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
 	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
 

@@ -93,8 +93,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method virtual dcast: [= `Object of _c _ | `Container of 'parent ];
     method root: _c _;
     method stage: option 'parent;
-(*     method modified: unit -> unit; *)
-    method boundsChanged: unit -> unit; (* FIXME: move it to container *)
+    method boundsChanged: unit -> unit; 
     (* need to be hidden *)
     method clearParent: hidden unit -> unit;
     method setParent: hidden 'parent -> unit;

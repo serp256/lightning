@@ -19,7 +19,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
 
   module D = D;
 
-  type imageCahce = {ic: Image.c; tex: mutable Texture.rendered; valid: mutable bool};
+  type imageCahce = {ic: Image.c; tex: mutable Texture.rendered; valid: mutable bool; force: mutable bool};
 
   class c =
     object(self)
@@ -33,19 +33,20 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
           [ None -> 
             let bounds = self#bounds in
             let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
-            imageCache := Some {ic = Image.create (tex :> Texture.c); tex ; valid = False}
-          | _ -> ()
+            imageCache := Some {ic = Image.create (tex :> Texture.c); tex ; valid = False; force = True}
+          | Some c -> c.force := True
           ]
         | False ->
             match imageCache with
-            [ Some {ic; tex; _ } -> 
+            [ Some ({ic; tex; force; _ } as c) -> 
               match ic#filters = [] with
               [ True -> 
                   (
                     tex#release ();
                     imageCache := None;
                 )
-              | False -> ()
+              | False when force = True -> c.force := False
+              | _ -> ()
               ]
             | _ -> ()
             ]
@@ -57,30 +58,48 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
         | Some {ic; _ } -> ic#filters
         ];
 
-      method setFilters filters = 
+      method! boundsChanged () = 
+      (
         match imageCache with
-        [ None -> 
-          let bounds = self#bounds in
-          let tex = Texture.rendered ~color:0x000000 ~alpha:1. bounds.Rectangle.width bounds.Rectangle.height in
-          let img = Image.create (tex :> Texture.c) in
-          (
-            img#setPosPoint (Point.subtractPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} pos);
-            img#setFilters filters;
-            imageCache := Some {ic = img; tex; valid = False}
-          )
-        | Some {ic; _ } -> ic#setFilters filters
+        [ Some c -> c.valid := False
+        | None -> ()
+        ];
+        super#boundsChanged();
+      );
+
+      method setFilters = fun
+        [ [] ->
+          match imageCache with
+          [ None -> ()
+          | Some {tex;force=False;_} -> (tex#release();imageCache := None)
+          | Some ({ic;_} as c) -> (ic#setFilters []; c.valid := False)
+          ]
+        | filters ->
+          match imageCache with
+          [ None -> 
+            let bounds = self#bounds in
+            let tex = Texture.rendered ~color:0x000000 ~alpha:0. bounds.Rectangle.width bounds.Rectangle.height in
+            let img = Image.create (tex :> Texture.c) in
+            (
+              img#setPosPoint (Point.subtractPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} pos);
+              img#setFilters filters;
+              imageCache := Some {ic = img; tex; valid = False; force = False}
+            )
+          | Some {ic; _ } -> ic#setFilters filters
+          ]
         ];
 
       method! private render' ?alpha ~transform rect = 
         match imageCache with
         [ None -> super#render' ?alpha ~transform rect
-        | Some ({ic; tex; valid} as c) -> 
+        | Some ({ic; tex; valid;_} as c) -> 
           (
             if not valid then 
             (
               tex#draw (fun () ->
                 (
-                  Render.push_matrix (Matrix.create ~translate:ic#pos ());
+                  Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
+                  Render.clear 0x000000 0.;
                   super#render' ?alpha ~transform:False rect;
                   Render.restore_matrix ();
                 );
