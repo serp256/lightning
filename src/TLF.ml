@@ -442,30 +442,36 @@ value create ?width ?height ?border (html:main) =
             then
               let code = UChar.code (UTF8.look text index) in
               let open BitmapFont in
-              let bchar = try Hashtbl.find font.chars code with [ Not_found -> let () = Printf.eprintf "char %d not found\n%!" code in Hashtbl.find font.chars CHAR_SPACE ] in
-              let bchar = if font.scale <> 1. then {(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale} else bchar in
-              let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
               if code = CHAR_NEWLINE 
               then
                 add_line line (UTF8.next text index)
-              else 
-                match width with
-                [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width ->
-                  let idx = 
-                    match !lastWhiteSpace with
-                    [ Some idx -> 
-                      let removeIndex = idx in
-                      let numCharsToRemove = line.container#numChildren - removeIndex in
-                      (
-                        for i = 0 to numCharsToRemove - 1 do
-                          ignore(line.container#removeChildAtIndex removeIndex)
-                        done;
-                        UTF8.move text index ~-numCharsToRemove
-                      )
-                    | None -> index
-                    ]
-                  in
-                  add_line line idx
+               else if code = CHAR_SPACE then
+               (
+                 line.currentX := line.currentX +. font.space;
+                 lastWhiteSpace.val := Some line.container#numChildren;
+                 add_char line (UTF8.next text index)
+               )
+               else
+                  let bchar = try Hashtbl.find font.chars code with [ Not_found -> let () = Printf.eprintf "char %d not found\n%!" code in Hashtbl.find font.chars CHAR_SPACE ] in
+                  let bchar = if font.scale <> 1. then {(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale} else bchar in
+                  let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
+                  match width with
+                  [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width ->
+                    let idx = 
+                      match !lastWhiteSpace with
+                      [ Some idx -> 
+                        let removeIndex = idx in
+                        let numCharsToRemove = line.container#numChildren - removeIndex in
+                        (
+                          for i = 0 to numCharsToRemove - 1 do
+                            ignore(line.container#removeChildAtIndex removeIndex)
+                          done;
+                          UTF8.move text index ~-numCharsToRemove
+                        )
+                      | None -> index
+                      ]
+                    in
+                    add_line line idx
                 | _ ->
                   let bitmapChar = Image.create bchar.BitmapFont.charTexture in
                   (
@@ -474,7 +480,7 @@ value create ?width ?height ?border (html:main) =
                     bitmapChar#setColor color;
                     bitmapChar#setAlpha alpha;
                     addToLine bchar.BitmapFont.xAdvance font.BitmapFont.baseLine bitmapChar line;
-                    if code = CHAR_SPACE then lastWhiteSpace.val := Some line.container#numChildren else ();
+                    (* if code = CHAR_SPACE then lastWhiteSpace.val := Some line.container#numChildren else (); *)
                     add_char line (UTF8.next text index)
                   )
                 ]
