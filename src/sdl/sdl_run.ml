@@ -13,7 +13,7 @@ value init_gl width height =
 
 value touchid = ref 0;
 
-value handle_events window (width,height) frameRate stage =
+value handle_events window frameRate stage =
   let ticksRate = 1000 / frameRate in
   let open Event in
   loop 0 None False where
@@ -99,12 +99,12 @@ value run stage_create =
       let window = Window.create "TEST WINDOW NAME" Window.PosCentered Window.PosCentered !width !height [ Window.SHOWN ; Window.OPENGL ] in
       let context = SDLGL.create_context window in
       (
-        (*SDLGL.set_swap_interval 1;*)
+        SDLGL.set_swap_interval 1;
         Printf.printf "SDL ATTRIBUTES: DOUBLEBUFFER:%d,GLMV:%d,GLMV:%d\n%!" (SDLGL.get_attribute SDLGL.DOUBLEBUFFER) (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
         let stage = stage_create (float !width) (float !height) in
         (
           stage#resize (float !width) (float !height);
-          handle_events window (!width,!height) !frameRate stage;
+          handle_events window !frameRate stage;
         );
         SDLGL.delete_context context;
         Window.destroy window;

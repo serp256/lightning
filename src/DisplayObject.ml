@@ -806,7 +806,8 @@ class virtual container = (*{{{*)
         (
           children := None;
           numChildren := 0;
-          Dllist.iter (fun (child:'displayObject) -> (evs child; child#clearParent())) chldrn;
+          Dllist.iter (fun (child:'displayObject) -> (child#clearParent();evs child)) chldrn;
+          self#boundsChanged();
         )
       ];
 

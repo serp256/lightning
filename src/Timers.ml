@@ -10,7 +10,7 @@ value getTime () =
   ];
 
 value queue = TimersQueue.make ();
-value start delay f =
+value start delay (f:(unit -> unit)) =
   match !time with
   [ Some time -> 
     let id = !timer_id in

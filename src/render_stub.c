@@ -863,8 +863,8 @@ value ml_image_points(value image) {
 	Store_double_field(p, 1, tq->tl.v.y);
 	Store_field(res,2,p);
 	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 6, tq->tr.v.x);
-	Store_double_field(p, 7, tq->tr.v.y);
+	Store_double_field(p, 0, tq->tr.v.x);
+	Store_double_field(p, 1, tq->tr.v.y);
 	Store_field(res,3,p);
 	CAMLreturn(res);
 }
