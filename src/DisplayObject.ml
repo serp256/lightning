@@ -477,29 +477,32 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
 
-    method render ?alpha ?(transform=True) rect = 
+    method render ?alpha:(parentAlpha) ?(transform=True) rect = 
       proftimer:render ("render %s" name)
       (
-        match mask with
-        [ None -> self#render' ?alpha ~transform rect 
-        | Some (onSelf,maskRect,maskPoints) ->
-            let maskRect = 
-              match onSelf with
-              [ True -> maskRect
-              | False -> 
-                  let m = self#transformationMatrix in 
-                  Matrix.transformRectangle (Matrix.invert m) maskRect
-              ]
-            in
-            match rect with
-            [ None -> RENDER_WITH_MASK (self#render' ?alpha ~transform (Some maskRect))
-            | Some rect -> 
-                match Rectangle.intersection maskRect rect with
-                [ Some inRect -> RENDER_WITH_MASK (self#render' ?alpha ~transform (Some inRect))
-                | None -> ()
+        if visible && alpha > 0. 
+        then
+          match mask with
+          [ None -> self#render' ?alpha:parentAlpha ~transform rect 
+          | Some (onSelf,maskRect,maskPoints) ->
+              let maskRect = 
+                match onSelf with
+                [ True -> maskRect
+                | False -> 
+                    let m = self#transformationMatrix in 
+                    Matrix.transformRectangle (Matrix.invert m) maskRect
                 ]
-            ]
-        ];
+              in
+              match rect with
+              [ None -> RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some maskRect))
+              | Some rect -> 
+                  match Rectangle.intersection maskRect rect with
+                  [ Some inRect -> RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some inRect))
+                  | None -> ()
+                  ]
+              ]
+          ]
+        else ();
       );
 
     method private hitTestPoint' localPoint isTouch = 
