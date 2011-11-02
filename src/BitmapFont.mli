@@ -10,12 +10,11 @@ type bc =
 
 type t = 
   {
-(*     texture: Texture.c; *)
     chars: Hashtbl.t int bc;
-(*     name: string; *)
     scale: float;
     baseLine: float;
     lineHeight: float;
+    space:float;
   };
 value register: string -> unit;
 value registern: string -> unit;

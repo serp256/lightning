@@ -13,12 +13,11 @@ type bc =
 
 type t = 
   {
-(*     texture: Texture.c; *)
     chars: Hashtbl.t int bc;
-(*     name: string; *)
     scale: float;
     baseLine: float;
     lineHeight: float;
+    space:float;
   };
 
 module MapInt = Map.Make (struct type t = int; value compare (k1:int) k2 = compare k1 k2; end);
@@ -50,7 +49,7 @@ value get ?(applyScale=False) ?size name =
           match applyScale with
           [ True -> 
             let scale = (float size) /. (float fsize) in
-            {(font) with scale = scale; baseLine = font.baseLine *. scale; lineHeight = font.lineHeight *. scale }
+            {(font) with scale = scale; space = font.space *. scale; baseLine = font.baseLine *. scale; lineHeight = font.lineHeight *. scale }
           | False -> {(font) with scale = (float size) /. (float fsize) }
           ]
       ]
@@ -73,8 +72,8 @@ value register xmlpath = (*{{{*)
     | _ -> assert False
     ]
   and parse_common () = 
-    match XmlParser.parse_element "common" ["lineHeight";"base"] with
-    [ Some [ lineHeight ; base ] _ -> (floats lineHeight, floats base)
+    match XmlParser.parse_element "common" ["space";"lineHeight";"base"] with
+    [ Some [ space; lineHeight; base ] _ -> (floats space, floats lineHeight, floats base)
     | None -> XmlParser.error "font->common not found"
     | _ -> assert False
     ]
@@ -119,11 +118,11 @@ value register xmlpath = (*{{{*)
   match XmlParser.next () with
   [ `El_start ((_,"font"),_) -> 
     let (name,size) = parse_info () in
-    let (lineHeight,baseLine) = parse_common () in
+    let (space,lineHeight,baseLine) = parse_common () in
     let imgFile = parse_page () in
     let texture = Texture.load imgFile in
     let chars = parse_chars texture in
-    let bf = { (* texture; *) chars; (* name; *) scale=1.; baseLine; lineHeight } in
+    let bf = { (* texture; *) chars; (* name; *) scale=1.; baseLine; lineHeight; space } in
     try
       let sizes = Hashtbl.find fonts name in
       let sizes = MapInt.add size bf sizes in
@@ -160,8 +159,8 @@ value registern xmlpath =
       let rec parse_chars res = 
         match XmlParser.next () with
         [ `El_start ((_,"Chars"),attributes) ->
-          match XmlParser.get_attributes "Chars" [ "size"; "lineHeight"; "baseLine" ] attributes with
-          [ [ size; lineHeight; baseLine ] ->
+          match XmlParser.get_attributes "Chars" [ "space"; "size"; "lineHeight"; "baseLine" ] attributes with
+          [ [ space; size; lineHeight; baseLine ] ->
             let chars = Hashtbl.create 9 in
             let rec loop () = 
               match XmlParser.parse_element "char" [ "id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance";"page" ] with
@@ -182,7 +181,7 @@ value registern xmlpath =
             in
             (
               loop ();
-              let bf = { chars; scale=1.; baseLine =  floats baseLine; lineHeight = floats lineHeight } in
+              let bf = { chars; scale=1.; baseLine =  floats baseLine; space = floats space; lineHeight = floats lineHeight; } in
               let res = MapInt.add (XmlParser.ints size) bf res in
               parse_chars res
             )
