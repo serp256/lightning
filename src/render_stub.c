@@ -658,8 +658,8 @@ value ml_quad_points(value quad) { // FIXME to array of points
 	Store_double_field(p, 1, q->tl.v.y);
 	Store_field(res,2,p);
 	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 6, q->tr.v.x);
-	Store_double_field(p, 7, q->tr.v.y);
+	Store_double_field(p, 0, q->tr.v.x);
+	Store_double_field(p, 1, q->tr.v.y);
 	Store_field(res,3,p);
 	CAMLreturn(res);
 }
