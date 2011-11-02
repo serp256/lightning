@@ -188,7 +188,7 @@ module Make(D:DisplayObjectT.M) = struct
         filters := fltrs;
       );
 
-      value image = Render.Image.create _texture#width _texture#height _texture#clipping color 1.;
+      value image = Render.Image.create _texture#width _texture#height _texture#rootClipping color 1.;
 
       method setColor color = Render.Image.set_color image color;
       method color = Render.Image.color image;
@@ -287,7 +287,7 @@ module Make(D:DisplayObjectT.M) = struct
 
       method setTexture nt = 
       (
-        Render.Image.update image texture#width texture#height texture#clipping;
+        Render.Image.update image texture#width texture#height texture#rootClipping;
         texture := nt;
         if texFlipX then Render.Image.flipTexX image else ();
         if texFlipY then Render.Image.flipTexY image else ();

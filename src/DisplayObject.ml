@@ -257,10 +257,10 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setTouchable v = touchable := v;
 
     method x = pos.Point.x;
-    method setX x' = ( pos := {Point.x = x'; y = pos.Point.y}; RESET_CACHE "setX");
+    method setX x' = ( pos := {(pos) with Point.x = x'}; RESET_CACHE "setX");
 
     method y = pos.Point.y;
-    method setY y' = (pos  := {Point.x = pos.Point.y; y = y'}; RESET_CACHE "setY");
+    method setY y' = (pos  := {(pos) with Point.y = y'}; RESET_CACHE "setY");
 
     method pos = pos;
     method setPos x y = (pos := {Point.x=x;y=y}; RESET_CACHE "setPos");

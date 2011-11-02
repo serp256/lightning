@@ -21,8 +21,9 @@ class type c =
     method hasPremultipliedAlpha:bool;
     method scale: float;
     method textureID: textureID;
-    method base : option (c * Rectangle.t);
+    method base : option c;
     method clipping: option Rectangle.t;
+    method rootClipping: option Rectangle.t;
 (*     method update: string -> unit; *)
     method release: unit -> unit;
     method subTexture: Rectangle.t -> c;

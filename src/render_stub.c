@@ -301,6 +301,52 @@ enum {
 	lgVertexAttribFlag_PosColorTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords )
 };
 
+char vertexAttribPosition  = 0;
+char vertexAttribColor = 0;
+char vertexAttribTexCoords = 0;
+
+void lgGLEnableVertexAttribs( unsigned int flags ) {   
+
+  // Position
+  char enablePosition = flags & lgVertexAttribFlag_Position;
+
+  if( enablePosition != vertexAttribPosition ) {
+    if( enablePosition ) {
+			printf("enable vertex attrib array\n");
+      glEnableVertexAttribArray( lgVertexAttrib_Position );
+		}
+    else {
+			printf("disable vertex attrib array\n");
+      glDisableVertexAttribArray( lgVertexAttrib_Position );
+		}
+  
+    vertexAttribPosition = enablePosition;
+  } 
+    
+  // Color
+  char enableColor = flags & lgVertexAttribFlag_Color;
+  
+  if( enableColor != vertexAttribColor ) {
+    if( enableColor )
+      glEnableVertexAttribArray( lgVertexAttrib_Color );
+    else
+      glDisableVertexAttribArray( lgVertexAttrib_Color );
+    
+    vertexAttribColor = enableColor;
+  }
+
+  // Tex Coords
+  char enableTexCoords = flags & lgVertexAttribFlag_TexCoords;
+  
+  if( enableTexCoords != vertexAttribTexCoords ) {
+    if( enableTexCoords ) 
+      glEnableVertexAttribArray( lgVertexAttrib_TexCoords );
+    else
+      glDisableVertexAttribArray( lgVertexAttrib_TexCoords );
+    
+    vertexAttribTexCoords = enableTexCoords;
+  }
+} 
 
 typedef struct {
 	GLuint program;
@@ -444,51 +490,6 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
 	//printf("matrix uniform location: %d\n",sp->uniforms[lgUniformMVPMatrix]);
   glUniformMatrix4fv( sp->uniforms[lgUniformMVPMatrix], 1, GL_FALSE, matrixMVP.mat);
 }
-
-
-/*
-void lgGLEnableVertexAttribs( unsigned int flags ) {   
-  // Position
-  char enablePosition = flags & lgVertexAttribFlag_Position;
-
-  if( enablePosition != vertexAttribPosition ) {
-    if( enablePosition ) {
-			printf("enable vertex attrib array\n");
-      glEnableVertexAttribArray( lgVertexAttrib_Position );
-		}
-    else {
-			printf("disable vertex attrib array\n");
-      glDisableVertexAttribArray( lgVertexAttrib_Position );
-		}
-  
-    vertexAttribPosition = enablePosition;
-  } 
-    
-  // Color
-  char enableColor = flags & lgVertexAttribFlag_Color;
-  
-  if( enableColor != vertexAttribColor ) {
-    if( enableColor )
-      glEnableVertexAttribArray( lgVertexAttrib_Color );
-    else
-      glDisableVertexAttribArray( lgVertexAttrib_Color );
-    
-    vertexAttribColor = enableColor;
-  }
-
-  // Tex Coords
-  char enableTexCoords = flags & lgVertexAttribFlag_TexCoords;
-  
-  if( enableTexCoords != vertexAttribTexCoords ) {
-    if( enableTexCoords ) 
-      glEnableVertexAttribArray( lgVertexAttrib_TexCoords );
-    else
-      glDisableVertexAttribArray( lgVertexAttrib_TexCoords );
-    
-    vertexAttribTexCoords = enableTexCoords;
-  }
-} 
-*/
 
 
 ///// FILTERS 
@@ -728,7 +729,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 
 	glUniform1f(sp->uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
 
-	//lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
 
 	setDefaultGLBlend();
 	long offset = (long)q;
@@ -737,13 +738,13 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 
   // vertex
   int diff = offsetof( lgQVertex, v);
-	glEnableVertexAttribArray(lgVertexAttrib_Position); // FIXME: выставлять это с кэшированием как в кокосе 
+	//glEnableVertexAttribArray(lgVertexAttrib_Position); // FIXME: выставлять это с кэшированием как в кокосе 
   glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
   
   // color
   diff = offsetof( lgQVertex, c);
-	glEnableVertexAttribArray(lgVertexAttrib_Color);
+	//glEnableVertexAttribArray(lgVertexAttrib_Color);
   glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -824,7 +825,7 @@ void set_image_uv(lgTexQuad *tq, value clipping) {
 		tq->tr.tex = (tex2F){1,1};
 	};
 }
-
+//
 value ml_image_create(value width,value height,value clipping,value color,value alpha) {
 	CAMLparam5(width,height,clipping,color,alpha);
 	lgTexQuad *tq = (lgTexQuad*)caml_stat_alloc(sizeof(lgTexQuad));
@@ -940,7 +941,7 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 
 	glUniform1f(sp->uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
 
-	//lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColorTex);
 	//
 
 	value fs = Field(program,1);
@@ -955,18 +956,18 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	#define kTexQuadSize sizeof(tq->bl)
   // vertex
   int diff = offsetof( lgTexVertex, v);
-	glEnableVertexAttribArray(lgVertexAttrib_Position);
+	//glEnableVertexAttribArray(lgVertexAttrib_Position);
   glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, kTexQuadSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
   
   // color
   diff = offsetof( lgTexVertex, c);
-	glEnableVertexAttribArray(lgVertexAttrib_Color);
+	//glEnableVertexAttribArray(lgVertexAttrib_Color);
   glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kTexQuadSize, (void*)(offset + diff));
 
   // texture coords
   diff = offsetof( lgTexVertex, tex);
-	glEnableVertexAttribArray(lgVertexAttrib_TexCoords);
+	//glEnableVertexAttribArray(lgVertexAttrib_TexCoords);
   glVertexAttribPointer(lgVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, kTexQuadSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -985,8 +986,6 @@ void ml_image_render_byte(value * argv, int n) {
 
 
 value ml_rendertexture_create(value color, value alpha, value width,value height) {
-	CAMLparam2(width,height);
-	CAMLlocal1(result);
 	GLuint mTextureID;
 	glGenTextures(1, &mTextureID);
 	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
@@ -994,7 +993,8 @@ value ml_rendertexture_create(value color, value alpha, value width,value height
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)Double_val(width), (GLsizei)Double_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	printf("create rtexture: [%d:%d]\n",Long_val(width),Long_val(height));
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Long_val(width), Long_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
 	glBindTexture(GL_TEXTURE_2D,0);
 	GLuint mFramebuffer;
@@ -1016,10 +1016,10 @@ value ml_rendertexture_create(value color, value alpha, value width,value height
 	// блэндинг бы еще врубить нахуй
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	printf("old buffer: %d\n",oldBuffer);
-	result = caml_alloc_small(2,0);
+	value result = caml_alloc_small(2,0);
 	Field(result,0) = Val_long(mFramebuffer);
 	Field(result,1) = Val_long(mTextureID);
-	CAMLreturn(result);
+	return result;
 };
 
 struct old_framebuffer_state {
@@ -1041,20 +1041,15 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 
 	checkGLErrors("bind framebuffer");
 
-	glViewport(0, 0,(GLint)Double_val(width), (GLint)Double_val(height));
+	glViewport(0, 0,Long_val(width), Long_val(height));
 	printf("here 2\n");
-
-	/*
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(1.,1.,0.,1.0);
-	*/
 
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPushMatrix();
 	kmGLLoadIdentity();
       
 	kmMat4 orthoMatrix;
-	kmMat4OrthographicProjection(&orthoMatrix, 0, Double_val(width), 0, Double_val(height), -1024, 1024 );
+	kmMat4OrthographicProjection(&orthoMatrix, 0, (GLfloat)Long_val(width), 0, (GLfloat)Long_val(height), -1024, 1024 );
 	kmGLMultMatrix( &orthoMatrix );
 
 	kmGLMatrixMode(KM_GL_MODELVIEW);
@@ -1070,7 +1065,7 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	s->width = viewPort[2];
 	s->height = viewPort[3];
 	printf("here 4\n");
-	return (value)s;
+	return (value)s; 
 }
 
 
@@ -1085,6 +1080,7 @@ void ml_deactivate_framebuffer(value ostate) {
 	kmGLPopMatrix();
 	boundTextureID = 0;
 	setDefaultGLBlend();
+	caml_stat_free(s);
 }
 
 
