@@ -74,14 +74,15 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
           | Some {tex;force=False;_} -> (tex#release();imageCache := None)
           | Some ({ic;_} as c) -> (ic#setFilters []; c.valid := False)
           ]
-        | filters ->
+        | filters -> (* нужно обновлять сцука размеры нахуй поняла блядь *)
           match imageCache with
           [ None -> 
-            let bounds = self#bounds in
+            let bounds = self#boundsInSpace (Some self) in
+            let () = debug "bounds of sprite: [%f:%f:%f:%f]" bounds.Rectangle.x bounds.Rectangle.y bounds.Rectangle.width bounds.Rectangle.height in
             let tex = Texture.rendered ~color:0x000000 ~alpha:0. bounds.Rectangle.width bounds.Rectangle.height in
             let img = Image.create (tex :> Texture.c) in
             (
-              img#setPosPoint (Point.subtractPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} pos);
+              img#setPosPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y};
               img#setFilters filters;
               imageCache := Some {ic = img; tex; valid = False; force = False}
             )
