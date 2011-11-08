@@ -37,6 +37,7 @@ value load: string -> c;
 class type rendered =
   object
     inherit c;
+    method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
   end;

@@ -49,6 +49,7 @@ module type S = sig
       method texRotation: option [= `left | `right];
       method setTexRotation: option [= `left | `right] -> unit;
       *)
+      method updateSize: unit -> unit;
       method setTexture: Texture.c -> unit;
       (*
       method setTexScale: float -> unit;
@@ -284,15 +285,22 @@ module Make(D:DisplayObjectT.M) = struct
           ];
       *)
 
-
-      method setTexture nt = 
+      method updateSize () = 
       (
         Render.Image.update image texture#width texture#height texture#rootClipping;
-        texture := nt;
         if texFlipX then Render.Image.flipTexX image else ();
         if texFlipY then Render.Image.flipTexY image else ();
         self#boundsChanged();
       );
+
+      method setTexture nt = 
+        let ot = texture in
+        (
+          texture := nt;
+          if ot#width <> nt#width || ot#height <> nt#height
+          then self#updateSize ()
+          else ();
+        );
 
       (*
       method setTexture nt = 

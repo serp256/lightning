@@ -363,7 +363,7 @@ typedef struct {
 #define SPROGRAM(v) *((sprogram**)Data_custom_val(v))
 
 static void program_finalize(value program) {
-	sprogram *p = SPROGRAM(program);
+	sprogram *p = SPROGRAM(Field(program,0));
 	if (p->other_uniforms != NULL) caml_stat_free(p->other_uniforms);
   if( p->program == currentShaderProgram ) currentShaderProgram = -1;
 	glDeleteProgram(p->program);
@@ -371,8 +371,8 @@ static void program_finalize(value program) {
 }
 
 static int program_compare(value p1,value p2) {
-	sprogram *pr1 = SPROGRAM(p1);
-	sprogram *pr2 = SPROGRAM(p2);
+	sprogram *pr1 = SPROGRAM(Field(p1,0));
+	sprogram *pr2 = SPROGRAM(Field(p2,0));
 	if (pr1->program == pr2->program) return 0;
 	else {
 		if (pr1->program < pr2->program) return -1;
@@ -409,6 +409,7 @@ void lgGLBindTexture(GLuint newTextureID, int newPMA) {
 
 value ml_program_create(value vShader,value fShader,value attributes,value uniforms) {
 	CAMLparam4(vShader,fShader,attributes,uniforms);
+	CAMLlocal2(prg,res);
 	GLuint program =  glCreateProgram();
 	glAttachShader(program, *GLUINT(vShader)); 
 	//checkGLErrors("attach shader 1");
@@ -470,8 +471,12 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		};
 	} else sp->other_uniforms = NULL;
 	sp->program = program;
-	value res = caml_alloc_custom(&program_ops,sizeof(*sp),0,1);
-	SPROGRAM(res) = sp;
+	prg = caml_alloc_custom(&program_ops,sizeof(*sp),0,1);
+	SPROGRAM(prg) = sp;
+	res = caml_alloc_tuple(3);
+	Store_field(res,0,prg);
+	Store_field(res,1,vShader);
+	Store_field(res,2,fShader);
 	CAMLreturn(res);
 }
 
@@ -718,7 +723,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	lgQuad *q = *QUAD(quad);
 	checkGLErrors("start");
 
-	sprogram *sp = SPROGRAM(Field(program,0));
+	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
 	checkGLErrors("quad render use program");
 
@@ -930,7 +935,7 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 
-	sprogram *sp = SPROGRAM(Field(program,0));
+	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
 	checkGLErrors("quad render use program");
 
@@ -989,11 +994,12 @@ value ml_rendertexture_create(value color, value alpha, value width,value height
 	GLuint mTextureID;
 	glGenTextures(1, &mTextureID);
 	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
+	boundTextureID = mTextureID;
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
-	printf("create rtexture: [%d:%d]\n",Long_val(width),Long_val(height));
+	//printf("create rtexture: [%d:%d]\n",Long_val(width),Long_val(height));
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Long_val(width), Long_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
 	glBindTexture(GL_TEXTURE_2D,0);
@@ -1022,6 +1028,13 @@ value ml_rendertexture_create(value color, value alpha, value width,value height
 	return result;
 };
 
+void ml_resize_texture(value textureID,value width,value height) {
+	GLuint mTextureID = Long_val(textureID);
+	glBindTexture(GL_TEXTURE_2D, mTextureID);
+	boundTextureID = 0;
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,Long_val(width),Long_val(height),0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
+}
+
 struct old_framebuffer_state {
 	GLuint frameBuffer;
 	GLsizei width;
@@ -1036,13 +1049,11 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 	printf("old fb: %d, old viewport: %d:%d:%d:%d\n",oldBuffer,viewPort[0],viewPort[1],viewPort[2],viewPort[3]);
 
-	printf("here\n");
 	glBindFramebuffer(GL_FRAMEBUFFER,Long_val(framebufferID));
 
 	checkGLErrors("bind framebuffer");
 
 	glViewport(0, 0,Long_val(width), Long_val(height));
-	printf("here 2\n");
 
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPushMatrix();
@@ -1059,12 +1070,10 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	boundTextureID = 0;
 	setDefaultGLBlend();
 
-	printf("here 3\n");
 	struct old_framebuffer_state *s = caml_stat_alloc(sizeof(struct old_framebuffer_state));
 	s->frameBuffer = oldBuffer;
 	s->width = viewPort[2];
 	s->height = viewPort[3];
-	printf("here 4\n");
 	return (value)s; 
 }
 
@@ -1073,7 +1082,6 @@ void ml_deactivate_framebuffer(value ostate) {
 	struct old_framebuffer_state *s = (struct old_framebuffer_state*)ostate;
 	glBindFramebuffer(GL_FRAMEBUFFER,s->frameBuffer);
 	glViewport(0, 0, s->width, s->height);
-	printf("return old buffer: %d,%d,%d\n",s->frameBuffer,s->width,s->height);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPopMatrix();
 	kmGLMatrixMode(KM_GL_MODELVIEW);

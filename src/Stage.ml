@@ -135,10 +135,9 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method renderStage () =
       (
         Render.clear color 1.;
-        self#render None;
+        proftimer:perfomance "STAGE rendered %F" (super#render None);
         (*
         debug "start render";
-        proftimer:render "STAGE rendered %F" (super#render None);
         debug "end render";
         debug:errors ignore(RenderSupport.checkForOpenGLError());
         *)

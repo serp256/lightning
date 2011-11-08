@@ -21,6 +21,7 @@ module type S = sig
       *)
 
       method texture: Texture.c;
+      method updateSize: unit -> unit;
       method setTexture: Texture.c -> unit;
       method filters: list Filters.t;
       method setFilters: list Filters.t -> unit;

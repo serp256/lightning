@@ -548,8 +548,8 @@ value sdlstub_unlock_surface(value s) {
 value sdlstub_surface_pixels(value ps) {
 	CAMLparam1(ps);
 	SDL_Surface *s = ((SDL_Surface*) Field(ps,0));
-	unsigned char *pixels = s->pixels;
-	printf("get pixels from surface: bpp: %d, fp: [%hhu:%hhu:%hhu:%hhu]\n",s->format->BitsPerPixel,pixels[0],pixels[1],pixels[2],pixels[3]);
+	//unsigned char *pixels = s->pixels;
+	//printf("get pixels from surface: bpp: %d, fp: [%hhu:%hhu:%hhu:%hhu]\n",s->format->BitsPerPixel,pixels[0],pixels[1],pixels[2],pixels[3]);
 	CAMLreturn (caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, s->pixels, s->w * s->h * (s->format->BitsPerPixel/8)));
 }
 

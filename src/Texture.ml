@@ -136,9 +136,11 @@ class subtexture region baseTexture =
         ]
   in
   let rootClipping : Rectangle.t = Obj.magic rootClipping in
+  let width = region.Rectangle.width
+  and height = region.Rectangle.height in
   object(self)
-    method width = baseTexture#width *. clipping.Rectangle.width;
-    method height = baseTexture#height *. clipping.Rectangle.height;
+    method width = width;
+    method height = height;
     method textureID = baseTexture#textureID;
     method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
     method scale = baseTexture#scale;
@@ -276,10 +278,12 @@ type framebufferState;
 external activate_framebuffer: framebufferID -> int -> int -> framebufferState = "ml_activate_framebuffer";
 external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
 external delete_framebuffer: framebufferID -> unit = "ml_delete_framebuffer";
+external resize_texture: textureID -> int -> int -> unit = "ml_resize_texture";
 
 class type rendered = 
   object
     inherit c;
+    method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
   end;
@@ -296,7 +300,12 @@ value rendered ?(color=0) ?(alpha=0.) width height : rendered =
   object(self)
     value mutable isActive = False;
     value mutable textureID = textureID;
+    value mutable clipping = clipping;
+    value mutable width = width;
+    value mutable legalWidth = legalWidth;
     method width = width;
+    value mutable height = height;
+    value mutable legalHeight = legalHeight;
     method height = height;
     method hasPremultipliedAlpha = False;
     method scale = 1.;
@@ -305,6 +314,26 @@ value rendered ?(color=0) ?(alpha=0.) width height : rendered =
     method clipping = clipping;
     method rootClipping = clipping;
     method subTexture (region:Rectangle.t) : c = assert False;
+    method resize w h =
+      if w <> width || h <> height
+      then
+        let iw = truncate w in
+        let iw = if (float iw) < w then iw + 1 else iw in
+        let ih = truncate h in
+        let ih = if (float ih) < h then ih + 1 else ih in
+        let legalWidth' = nextPowerOfTwo iw
+        and legalHeight' = nextPowerOfTwo ih in
+        (
+          width := w;
+          height := h;
+          if (legalWidth' <> legalWidth || legalHeight <> legalHeight')
+          then resize_texture textureID legalWidth' legalHeight'
+          else ();
+          legalWidth := legalWidth'; legalHeight := legalHeight';
+          clipping := if (float legalWidth') <> w || (float legalHeight') <> h then Some (Rectangle.create 0. 0. (w /. (float legalWidth')) (h /. (float legalHeight'))) else None;
+        )
+      else ();
+
     method release () = 
       if textureID <> 0
       then
