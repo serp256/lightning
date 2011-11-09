@@ -299,7 +299,7 @@ module Make(D:DisplayObjectT.M) = struct
           texture := nt;
           if ot#width <> nt#width || ot#height <> nt#height
           then self#updateSize ()
-          else ();
+          else Render.Image.update image texture#width texture#height texture#rootClipping;
         );
 
       (*
