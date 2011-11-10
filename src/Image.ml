@@ -324,7 +324,13 @@ module Make(D:DisplayObjectT.M) = struct
         match targetCoordinateSpace with
         [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height (* FIXME!!! optimization *)
         | _ -> 
+            let open Point in
+            let vertexCoords = [| {x=0.;y=0.}; {x=texture#width;y=0.}; {x=0.;y=texture#height}; {x=texture#width;y=texture#height} |] in
+          (*
           let vertexCoords = Render.Image.points image in
+          let () = debug "vertex coords len: %d" (Array.length vertexCoords) in
+          let () = debug "vertex coords: %s - %s - %s - %s" (Point.to_string vertexCoords.(0)) (Point.to_string vertexCoords.(1)) (Point.to_string vertexCoords.(2)) (Point.to_string vertexCoords.(3)) in
+          *)
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
           let ar = Matrix.transformPoints transformationMatrix vertexCoords in
           Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))

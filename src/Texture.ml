@@ -181,11 +181,14 @@ value make textureInfo =
   and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
   and scale = textureInfo.scale 
   in
+  let () = debug "make texture: width=%f,height=%f,scale=%f" width height scale in
   let clipping = 
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
-    then Some (Rectangle.create 0. 0. (width /. (float textureInfo.realWidth)) (height /. (float textureInfo.realHeight)))
+    then Some (Rectangle.create 0. 0. ((float textureInfo.realWidth) /. width) ((float textureInfo.realHeight) /. height))
     else None 
   in
+  let w = (float textureInfo.realWidth) /. scale
+  and h = (float textureInfo.realHeight) /. scale in
   object(self)
     value mutable textureID = textureID;
     value mutable counter = 0;
@@ -208,8 +211,8 @@ value make textureInfo =
         textureID := 0
       )
       else ();
-    method width = width /. scale;
-    method height = height /. scale;
+    method width = w;
+    method height = h;
     method hasPremultipliedAlpha = hasPremultipliedAlpha;
     method scale = scale;
     method setTextureID tid = textureID := tid;

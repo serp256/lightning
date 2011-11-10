@@ -830,6 +830,22 @@ void set_image_uv(lgTexQuad *tq, value clipping) {
 		tq->tr.tex = (tex2F){1,1};
 	};
 }
+
+
+void print_tex_vertex(lgTexVertex *qv) {
+	printf("v = [%f:%f], c = [%hhu,%hhu,%hhu,%hhu], tex = [%f:%f] \n",qv->v.x,qv->v.y,qv->c.r,qv->c.g,qv->c.b,qv->c.a,qv->tex.u,qv->tex.v);
+}
+void print_image(lgTexQuad *tq) {
+	printf("==== image =====\n");
+	printf("bl: ");
+	print_tex_vertex(&(tq->bl));
+	printf("br: ");
+	print_tex_vertex(&(tq->br));
+	printf("tl: ");
+	print_tex_vertex(&(tq->tl));
+	printf("tr: ");
+	print_tex_vertex(&(tq->tr));
+}
 //
 value ml_image_create(value width,value height,value clipping,value color,value alpha) {
 	CAMLparam5(width,height,clipping,color,alpha);
@@ -847,30 +863,31 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	set_image_uv(tq,clipping);
 	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgTexQuad*),0,1); // 
 	*TEXQUAD(res) = tq;
+	print_image(tq);
 	CAMLreturn(res);
 }
 
 value ml_image_points(value image) {
 	CAMLparam1(image);
-	CAMLlocal2(res,p);
+	CAMLlocal5(p1,p2,p3,p4,res);
 	lgTexQuad *tq = *TEXQUAD(image);
-	res = caml_alloc_tuple(4);
-	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 0, tq->bl.v.x);
-	Store_double_field(p, 1, tq->bl.v.y);
-	Store_field(res,0,p);
-	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 0, tq->br.v.x);
-	Store_double_field(p, 1, tq->br.v.y);
-	Store_field(res,1,p);
-	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 0, tq->tl.v.x);
-	Store_double_field(p, 1, tq->tl.v.y);
-	Store_field(res,2,p);
-	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 0, tq->tr.v.x);
-	Store_double_field(p, 1, tq->tr.v.y);
-	Store_field(res,3,p);
+	p1 = caml_alloc(2,Double_array_tag);
+	Store_double_field(p1, 0, (double)(tq->bl.v.x));
+	Store_double_field(p1, 1, (double)(tq->bl.v.y));
+	p2 = caml_alloc(2,Double_array_tag);
+	Store_double_field(p2, 0, (double)(tq->br.v.x));
+	Store_double_field(p2, 1, (double)(tq->br.v.y));
+	p3 = caml_alloc(2,Double_array_tag);
+	Store_double_field(p3, 0, (double)(tq->tl.v.x));
+	Store_double_field(p3, 1, (double)(tq->tl.v.y));
+	p4 = caml_alloc(2,Double_array_tag);
+	Store_double_field(p4, 0, (double)(tq->tr.v.x));
+	Store_double_field(p4, 1, (double)(tq->tr.v.y));
+	res = caml_alloc_small(4,0);
+	Field(res,0) = p1;
+	Field(res,1) = p2;
+	Field(res,2) = p3;
+	Field(res,3) = p4;
 	CAMLreturn(res);
 }
 
@@ -931,7 +948,7 @@ void ml_image_flip_tex_y(value image) {
 }
 
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
-	//printf("draw image: %d\n",Long_val(textureID));
+	//printf("render image: %d\n",Long_val(textureID));
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 

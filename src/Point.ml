@@ -28,6 +28,6 @@ value distanceFromPoint {x=x1;y=y1} {x=x2;y=y2} = sqrt(SQ(x2 -. x1) +. SQ(y2 -. 
 value intrepolateFromPoint (x1,y1) (x2,y2) ratio = 
   let invRatio = 1.0 -. ratio in
   (invRatio *. x1 +. ratio *. x2, invRatio *. y1 +. ratio *. y2);
-
-value to_string (x,y) = Printf.sprintf "[%f:%f]" x y;
 *)
+
+value to_string {x=x;y=y} = Printf.sprintf "[%f:%f]" x y;
