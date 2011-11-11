@@ -80,12 +80,21 @@ typedef struct
 GLuint boundTextureID = 0;
 int PMA = 0;
 
-void setDefaultGLBlend () {
+void setPMAGLBlend () {
 	if (PMA != 1) {
 		glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
 		PMA = 1;
 	};
 }
+
+void setNotPMAGLBlend () {
+	if (PMA != 0) {
+		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		PMA = 0;
+	};
+}
+
+#define setDefaultGLBlend setPMAGLBlend
 
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
 	printf("set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
@@ -631,7 +640,7 @@ value ml_quad_create(value width,value height,value color,value alpha) {
 	lgQuad *q = (lgQuad*)caml_stat_alloc(sizeof(lgQuad));
 	int clr = Int_val(color);
 	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255));
-	printf("quad color: [%hhu,%hhu,%hhu,%hhu]\n",c.r,c.g,c.b,c.a);
+	//printf("quad color: [%hhu,%hhu,%hhu,%hhu]\n",c.r,c.g,c.b,c.a);
 	q->bl.v = (vertex2F) { 0, 0 };
 	q->bl.c = c;
 	q->br.v = (vertex2F) { Double_val(width)};
@@ -647,25 +656,26 @@ value ml_quad_create(value width,value height,value color,value alpha) {
 
 value ml_quad_points(value quad) { // FIXME to array of points
 	CAMLparam1(quad);
-	CAMLlocal2(res,p);
+	CAMLlocal4(p1,p2,p3,p4);
 	lgQuad *q = *QUAD(quad);
-	res = caml_alloc_tuple(4);
-	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 0, q->bl.v.x);
-	Store_double_field(p, 1, q->bl.v.y);
-	Store_field(res,0,p);
-	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 0, q->br.v.x);
-	Store_double_field(p, 1, q->br.v.y);
-	Store_field(res,1,p);
-	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 0, q->tl.v.x);
-	Store_double_field(p, 1, q->tl.v.y);
-	Store_field(res,2,p);
-	p = caml_alloc(2,Double_array_tag);
-	Store_double_field(p, 0, q->tr.v.x);
-	Store_double_field(p, 1, q->tr.v.y);
-	Store_field(res,3,p);
+	int s = 2 * Double_wosize;
+	p1 = caml_alloc(s,Double_array_tag);
+	Store_double_field(p1, 0, (double)q->bl.v.x);
+	Store_double_field(p1, 1, (double)q->bl.v.y);
+	p2 = caml_alloc(s,Double_array_tag);
+	Store_double_field(p2, 0, (double)q->br.v.x);
+	Store_double_field(p2, 1, (double)q->br.v.y);
+	p3 = caml_alloc(s,Double_array_tag);
+	Store_double_field(p3, 0, (double)q->tl.v.x);
+	Store_double_field(p3, 1, (double)q->tl.v.y);
+	p4 = caml_alloc(2,Double_array_tag);
+	Store_double_field(p4, 0, (double)q->tr.v.x);
+	Store_double_field(p4, 1, (double)q->tr.v.y);
+	value res = caml_alloc_small(4,0);
+	Field(res,0) = p1;
+	Field(res,1) = p2;
+	Field(res,2) = p3;
+	Field(res,3) = p4;
 	CAMLreturn(res);
 }
 
@@ -736,7 +746,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
 
-	setDefaultGLBlend();
+	setNotPMAGLBlend();
 	long offset = (long)q;
 
 	#define kQuadSize sizeof(q->bl)
@@ -863,7 +873,7 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	set_image_uv(tq,clipping);
 	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgTexQuad*),0,1); // 
 	*TEXQUAD(res) = tq;
-	print_image(tq);
+	//print_image(tq);
 	CAMLreturn(res);
 }
 
@@ -871,23 +881,26 @@ value ml_image_points(value image) {
 	CAMLparam1(image);
 	CAMLlocal5(p1,p2,p3,p4,res);
 	lgTexQuad *tq = *TEXQUAD(image);
-	p1 = caml_alloc(2,Double_array_tag);
-	Store_double_field(p1, 0, (double)(tq->bl.v.x));
-	Store_double_field(p1, 1, (double)(tq->bl.v.y));
-	p2 = caml_alloc(2,Double_array_tag);
-	Store_double_field(p2, 0, (double)(tq->br.v.x));
-	Store_double_field(p2, 1, (double)(tq->br.v.y));
-	p3 = caml_alloc(2,Double_array_tag);
-	Store_double_field(p3, 0, (double)(tq->tl.v.x));
-	Store_double_field(p3, 1, (double)(tq->tl.v.y));
-	p4 = caml_alloc(2,Double_array_tag);
+	int s = 2 * Double_wosize;
+	p1 = caml_alloc(s,Double_array_tag);
+	Store_double_field(p1, 0, (double)tq->bl.v.x);
+	Store_double_field(p1, 1, (double)tq->bl.v.y);
+	p2 = caml_alloc(s,Double_array_tag);
+	Store_double_field(p2, 0, (double)tq->br.v.x);
+	Store_double_field(p2, 1, (double)tq->br.v.y);
+	p3 = caml_alloc(s,Double_array_tag);
+	Store_double_field(p3, 0, (double)tq->tl.v.x);
+	Store_double_field(p3, 1, (double)tq->tl.v.y);
+	p4 = caml_alloc(s,Double_array_tag);
 	Store_double_field(p4, 0, (double)(tq->tr.v.x));
 	Store_double_field(p4, 1, (double)(tq->tr.v.y));
 	res = caml_alloc_small(4,0);
+	printf("after alloc res: %f\n",Double_field(p2,0));
 	Field(res,0) = p1;
 	Field(res,1) = p2;
 	Field(res,2) = p3;
 	Field(res,3) = p4;
+	printf("p2[0] = %f\n",Double_field(Field(res,1),0));
 	CAMLreturn(res);
 }
 
@@ -1085,7 +1098,7 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	kmGLLoadIdentity();
 
 	boundTextureID = 0;
-	setDefaultGLBlend();
+	setPMAGLBlend();
 
 	struct old_framebuffer_state *s = caml_stat_alloc(sizeof(struct old_framebuffer_state));
 	s->frameBuffer = oldBuffer;
