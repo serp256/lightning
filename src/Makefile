@@ -14,8 +14,11 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package extlib -I containers -I utils
 MLDEPFLAGS =
 
-release: lightning.cma lightning.cmxa syntax/pa_prop.cmo
-debug: release
+byte: lightning.cmxa
+native: MLDEPFLAGS += -native
+native: lightning.cmxa
+syntax: syntax/pa_prop.cmo
+
 
 KAZMATHOBJS = utility.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o GL/mat4stack.o GL/matrix.o
 KAZMATH = $(patsubst %,kazmath/%,$(KAZMATHOBJS))
@@ -24,6 +27,7 @@ MLPPOPT = syntax/pa_debug.cmo
 SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
 $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend -syntax camlp4r 
 $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT :=
+Debug.cmx: MLFLAGS += -package unix
 $(SYNTAX): OCAMLC = ocamlfind ocamlc
 
 
@@ -109,9 +113,9 @@ lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJ
 	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
 
 MLDepend.$(PLATFORM):
-	$(OCAMLFIND) ocamldep $(MLFLAGS) -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
-	$(OCAMLFIND) ocamldep $(MLFLAGS) -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
-	$(OCAMLFIND) ocamldep $(MLFLAGS) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES:.ml=.mli) $(MLSOURCES) >> MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES:.ml=.mli) $(MLSOURCES) >> MLDepend.$(PLATFORM)
 # $(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
 
 

@@ -6,3 +6,4 @@ OCAMLBINDIR = $(OCAMLDIR)/bin/
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB = ocamlmklib
+LIB = byte native syntax

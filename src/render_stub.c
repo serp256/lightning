@@ -900,7 +900,6 @@ value ml_image_points(value image) {
 	Field(res,1) = p2;
 	Field(res,2) = p3;
 	Field(res,3) = p4;
-	printf("p2[0] = %f\n",Double_field(Field(res,1),0));
 	CAMLreturn(res);
 }
 

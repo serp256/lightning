@@ -1,0 +1,10 @@
+# Specifications for the "unix" library:
+requires = ""
+description = "Unix system calls"
+version = "[distributed with Ocaml]"
+directory = "/usr/local/ocaml/ios/3.12.1/lib"
+browse_interfaces = " Unix UnixLabels "
+archive(byte) = "unix.cma"
+archive(native) = "unix.cmxa"
+archive(byte,mt_vm) = "vmthreads/unix.cma"
+

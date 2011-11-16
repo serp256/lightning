@@ -1,0 +1,10 @@
+# Specifications for the "str" library:
+requires = ""
+description = "Regular expressions and string processing"
+version = "[distributed with Ocaml]"
+directory = "/usr/local/ocaml/ios/3.12.1/lib"
+browse_interfaces = " Str "
+archive(byte) = "str.cma"
+archive(native) = "str.cmxa"
+
+

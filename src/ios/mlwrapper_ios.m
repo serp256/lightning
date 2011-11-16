@@ -47,7 +47,7 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
 void ml_showActivityIndicator(value mlpos) {
 	CAMLparam1(mlpos);
 	LightViewController *c = [LightViewController sharedInstance];
-	CGPoint pos = CGPointMake(Double_val(Field(mlpos,0)),Double_val(Field(mlpos,1)));
+	CGPoint pos = CGPointMake(Double_field(mlpos,0),Double_field(mlpos,1));
 	[c showActivityIndicator:pos];
 	CAMLreturn0;
 }
