@@ -151,7 +151,7 @@ class subtexture region baseTexture =
     method subTexture region = ((new subtexture region (self :> r)) :> c);
     method retain () = baseTexture#retain ();
     method releaseSubTexture () = baseTexture#releaseSubTexture ();
-    method release () = baseTexture#releaseSubTexture ();
+    method release () = let () = debug:gc "release subtexture" in baseTexture#releaseSubTexture ();
     method setTextureID tid = baseTexture#setTextureID tid;
     initializer Gc.finalise (fun t -> t#release ()) self;
   end;
@@ -207,6 +207,7 @@ value make textureInfo =
       if (textureID <> 0) 
       then
       (
+        debug:gc "release texture %d" textureID;
         delete_texture textureID; 
         textureID := 0
       )
@@ -249,6 +250,10 @@ value create texFormat width height data =
 
 value load path : c = 
   try
+    debug (
+      Debug.d "print cache";
+      Cache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
+    );
     ((Cache.find cache path) :> c)
   with 
   [ Not_found ->
@@ -264,6 +269,8 @@ value load path : c =
     in
     let res = make textureInfo in
     (
+      debug "texture %d loaded" res#textureID;
+      Gc.finalise (fun _ -> Cache.remove cache path) res;
       Cache.add cache path res;
       (res :> c)
     )

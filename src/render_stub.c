@@ -895,7 +895,6 @@ value ml_image_points(value image) {
 	Store_double_field(p4, 0, (double)(tq->tr.v.x));
 	Store_double_field(p4, 1, (double)(tq->tr.v.y));
 	res = caml_alloc_small(4,0);
-	printf("after alloc res: %f\n",Double_field(p2,0));
 	Field(res,0) = p1;
 	Field(res,1) = p2;
 	Field(res,2) = p3;

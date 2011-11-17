@@ -14,7 +14,7 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package extlib -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cmxa
+byte: lightning.cma
 native: MLDEPFLAGS += -native
 native: lightning.cmxa
 syntax: syntax/pa_prop.cmo
