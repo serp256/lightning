@@ -1,11 +1,14 @@
+include myconfig.ios
 export PLATFORM = ios
+SDK_VERSION ?= 5.0
+GCC ?= llvm-gcc
+ARCH ?= armv7
 PLAT = /Developer/Platforms/iPhoneOS.platform
-SDK = /Developer/SDKs/iPhoneOS4.3.sdk
+SDK = /Developer/SDKs/iPhoneOS$(SDK_VERSION).sdk
 OCAMLDIR = /usr/local/ocaml/ios/3.12.1
 export OCAMLFIND = /usr/local/bin/ocamlfind -toolchain ios
-ARCH = -arch armv6
 OCAMLBINDIR = $(OCAMLDIR)/bin/
-export CC = $(PLAT)/Developer/usr/bin/gcc-4.2 $(ARCH)
+export CC = $(PLAT)/Developer/usr/bin/$(GCC) -arch $(ARCH)
 export CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLDIR)/lib -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=4.2 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
 #CFLAGS = -std=c99 -DDEBUG -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLDIR)/lib -DCAML_NAME_SPACE -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
 # -mmacosx-version-min=10.6 -fobjc-abi-version=2 -fobjc-legacy-dispatch -D__IPHONE_OS_VERSION_MIN_REQUIRED=40200 

@@ -14,7 +14,7 @@ error(-mt_vm,-mt_posix) = "Missing -thread or -vmthread switch"
 package "vm" (
   # --- Bytecode-only threads:
   requires = "unix"
-  directory = "+vmthreads"
+  directory = "/usr/local/ocaml/ios/3.12.1/lib/vmthreads"
   exists_if = "threads.cma"
   archive(byte,mt,mt_vm) = "threads.cma"
   version = "[internal]"
@@ -23,7 +23,7 @@ package "vm" (
 package "posix" (
   # --- POSIX-threads:
   requires = "unix"
-  directory = "+threads"
+  directory = "/usr/local/ocaml/ios/3.12.1/lib/threads"
   exists_if = "threads.cma"
   archive(byte,mt,mt_posix) = "threads.cma"
   archive(native,mt,mt_posix) = "threads.cmxa"
