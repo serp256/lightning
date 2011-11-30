@@ -90,13 +90,13 @@ module Make(D:DisplayObjectT.M) = struct
     module Glow = struct
 
       value id  = gen_id();
-      value create blur = 
+      value create glow = 
         let prg = 
           load id ~vertex:"Image.vsh" ~fragment:"ImageGlow.fsh"
             ~attributes:[ (AttribPosition,"a_position"); (AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
             ~other_uniforms:[| "u_glowSize" ; "u_glowStrenght"; "u_glowColor" |]
         in
-        let f = Render.Filter.glow blur in
+        let f = Render.Filter.glow glow in
         (prg,Some f);
         
 
@@ -222,13 +222,6 @@ module Make(D:DisplayObjectT.M) = struct
 
       value mutable texFlipX = False;
       method texFlipX = texFlipX;
-      (*
-      method private applyTexFlipX () = 
-      (
-        SWAP_TEX_COORDS(0,1);
-        SWAP_TEX_COORDS(2,3);
-      );
-      *)
       method setTexFlipX nv = 
         if nv <> texFlipX
         then 
@@ -240,14 +233,6 @@ module Make(D:DisplayObjectT.M) = struct
 
       value mutable texFlipY = False;
       method texFlipY = texFlipY;
-      (*
-      method private applyTexFlipY () = 
-      (
-        SWAP_TEX_COORDS(0,2);
-        SWAP_TEX_COORDS(1,3);
-      );
-      *)
-
       method setTexFlipY nv = 
         if nv <> texFlipY
         then 

@@ -2,7 +2,7 @@
 requires = ""
 version = "[distributed with Ocaml]"
 description = "Base for Camlp4 syntax extensions"
-directory = "/usr/local/lib/ocaml/camlp4"
+directory = "/opt/local/lib/ocaml/camlp4"
 
 # For the toploop:
 requires(byte,toploop) = "dynlink"

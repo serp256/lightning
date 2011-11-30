@@ -1,35 +1,5 @@
 
-#ifdef ANDROID
-#include <GLES/gl2.h>
-#else 
-#ifdef IOS
-#include <OpenGLES/ES2/gl.h>
-//#include <OpenGLES/ES1/glext.h>
-#else
-#define GL_GLEXT_PROTOTYPES
-#include <SDL/SDL_opengl.h>
-#endif
-#endif
-
-
-
-
-/*
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#else // this is linux
-#include <GL/gl.h>
-#endif
-*/
-
-#include <stdio.h>
-#include <caml/mlvalues.h>
-#include <caml/memory.h>
-#include <caml/alloc.h>
-#include <caml/custom.h>
-#include <caml/bigarray.h>
-#include <caml/fail.h>
-
+#include "render_stub.h"
 #include <kazmath/GL/matrix.h>
 
 void checkGLErrors(char *where) {
@@ -197,22 +167,13 @@ char* logForOpenGLObject(GLuint object, GLInfoFunction infoFunc, GLLogFunction l
 		return logBytes;
 }
 
-char* vertexShaderLog(GLuint vertShader) {
-	return (logForOpenGLObject(vertShader,(GLInfoFunction)&glGetProgramiv,(GLLogFunction)&glGetProgramInfoLog));
+char* programLog(GLuint program) {
+	return (logForOpenGLObject(program,(GLInfoFunction)&glGetProgramiv,(GLLogFunction)&glGetProgramInfoLog));
 }
 
-char* fragmentShaderLog(GLuint fragShader) {
-  return (logForOpenGLObject(fragShader,(GLInfoFunction)&glGetShaderiv,(GLLogFunction)&glGetShaderInfoLog));
+char* shaderLog(GLuint shader) {
+  return (logForOpenGLObject(shader,(GLInfoFunction)&glGetShaderiv,(GLLogFunction)&glGetShaderInfoLog));
 }
-
-/*
-- (NSString *)programLog
-{
-    return [self logForOpenGLObject:program_
-                       infoCallback:(GLInfoFunction)&glGetProgramiv
-                            logFunc:(GLLogFunction)&glGetProgramInfoLog];
-}
-*/
 
 //
 
@@ -256,15 +217,13 @@ value ml_compile_shader(value stype,value shader_src) {
  
   if( ! status ) {
 		char msg[1024];
+		char *log = shaderLog(shader);
     if( type == GL_VERTEX_SHADER ) {
-			char *log = vertexShaderLog(shader);
 			sprintf(msg,"vertex shader compilation failed: [%s]",log);
-			caml_stat_free(log);
 		} else {
-			char *log = vertexShaderLog(shader);
       sprintf(msg,"frament shader compilation failed: [%s]",log);
-			caml_stat_free(log);
 		};
+		caml_stat_free(log);
 		glDeleteShader(shader);
 		caml_failwith(msg);
   }
@@ -506,95 +465,6 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
 }
 
 
-///// FILTERS 
-////////////
-//
-
-typedef void (*filterFun)(sprogram *sp,void *data);
-
-typedef struct {
-	filterFun f_fun;
-	void *f_data;
-} filter;
-
-#define FILTER(v) *((filter**)Data_custom_val(v))
-
-static void filter_finalize(value fltr) {
-	filter *f = FILTER(fltr);
-	caml_stat_free(f->f_data);
-	caml_stat_free(f);
-}
-
-struct custom_operations filter_ops = {
-  "pointer to a filter",
-  filter_finalize,
-  custom_compare_default,
-  custom_hash_default,
-  custom_serialize_default,
-  custom_deserialize_default
-};
-
-
-struct glowData 
-{
-	GLfloat glowSize;
-	GLfloat glowStrenght;
-	color3F glowColor;
-};
-
-void glowFilter(sprogram *sp,void *data) {
-	struct glowData *d = (struct glowData*)data;
-	glUniform1f(sp->other_uniforms[0],d->glowSize);
-	glUniform1f(sp->other_uniforms[1],d->glowStrenght);
-	glUniform3fv(sp->other_uniforms[2],1,(GLfloat*)&(d->glowColor));
-}
-
-value make_filter(filterFun fun,void *data) {
-	filter *f = (filter *)caml_stat_alloc(sizeof(filter));
-	f->f_fun = fun;
-	f->f_data = data;
-	value res = caml_alloc_custom(&filter_ops,sizeof(filter*),1,0);
-	FILTER(res) = f;
-	return res;
-}
-
-value ml_filter_glow(value glow) {
-	struct glowData *gd = (struct glowData*)caml_stat_alloc(sizeof(struct glowData));
-	gd->glowSize = Double_val(Field(glow,0)) / 1000.;
-	gd->glowStrenght = Double_val(Field(glow,1));
-	gd->glowColor = COLOR3F_FROM_INT(Field(glow,2));
-	return make_filter(&glowFilter,gd);
-}
-
-void colorMatrixFilter(sprogram *sp,void *data) {
-	glUniform1fv(sp->other_uniforms[0],20,(GLfloat*)data);
-}
-
-value ml_filter_cmatrix(value matrix) {
-	return make_filter(&colorMatrixFilter,Caml_ba_data_val(matrix));
-}
-
-struct cMatrixGlow {
-	GLfloat *cmatrix;
-	struct glowData glow;
-};
-
-void cMatrixGlowFilter(sprogram *sp,void *data) {
-	struct cMatrixGlow *gd = (struct cMatrixGlow*)data;
-	glUniform1fv(sp->other_uniforms[0],20,(GLfloat*)gd->cmatrix);
-	glUniform1f(sp->other_uniforms[1],gd->glow.glowSize);
-	glUniform1f(sp->other_uniforms[2],gd->glow.glowStrenght);
-	glUniform3fv(sp->other_uniforms[3],1,(GLfloat*)&(gd->glow.glowColor));
-}
-
-value ml_filter_cmatrix_glow(value matrix,value glow) {
-	struct cMatrixGlow *gd = (struct cMatrixGlow*)caml_stat_alloc(sizeof(struct cMatrixGlow));
-	gd->cmatrix = Caml_ba_data_val(matrix);
-	gd->glow.glowSize = Double_val(Field(glow,0)) / 1000.;
-	gd->glow.glowStrenght = Double_val(Field(glow,1));
-	gd->glow.glowColor = COLOR3F_FROM_INT(Field(glow,2));
-	return make_filter(&cMatrixGlowFilter,gd);
-}
 ////////////////////////////////////
 /////// QUADS 
 //! a Point with a vertex point, and color 4B
@@ -1018,7 +888,7 @@ void ml_image_render_byte(value * argv, int n) {
 ////////////////////
 
 
-value ml_rendertexture_create(value color, value alpha, value width,value height) {
+value ml_rendertexture_create(value format, value color, value alpha, value width,value height) {
 	GLuint mTextureID;
 	glGenTextures(1, &mTextureID);
 	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
@@ -1028,7 +898,7 @@ value ml_rendertexture_create(value color, value alpha, value width,value height
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 	//printf("create rtexture: [%d:%d]\n",Long_val(width),Long_val(height));
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Long_val(width), Long_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, Long_val(width), Long_val(height), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
 	glBindTexture(GL_TEXTURE_2D,0);
 	GLuint mFramebuffer;

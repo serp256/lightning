@@ -74,7 +74,7 @@ end;
 module Filter = struct
 
   type t;
-  external glow: Filters.glow -> t = "ml_filter_glow";
+  external glow: ~w:float -> ~h:float -> ~textureID:textureID -> ~clipping:option Rectangle.t -> Filters.glow -> t = "ml_filter_glow";
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
   external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow";
 

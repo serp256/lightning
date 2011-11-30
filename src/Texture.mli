@@ -42,4 +42,8 @@ class type rendered =
     method clear: int -> float -> unit;
   end;
 
-value rendered: ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)
+value glRGBA:int;
+value glRGB:int;
+value glAlpha:int;
+
+value rendered: ?format:int -> ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)

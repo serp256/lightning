@@ -283,7 +283,7 @@ class type renderObject =
   end;
 
 type framebufferID;
-external create_render_texture: int -> float -> int -> int -> (framebufferID*Render.textureID) = "ml_rendertexture_create";
+external create_render_texture: int -> int -> float -> int -> int -> (framebufferID*Render.textureID) = "ml_rendertexture_create";
 type framebufferState;
 external activate_framebuffer: framebufferID -> int -> int -> framebufferState = "ml_activate_framebuffer";
 external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
@@ -298,14 +298,19 @@ class type rendered =
     method clear: int -> float -> unit;
   end;
 
-value rendered ?(color=0) ?(alpha=0.) width height : rendered =
+
+value glRGBA = 0x1908;
+value glAlpha = 0x1906;
+value glRGB = 0x1907;
+
+value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered = (*{{{*)
   let iw = truncate width in
   let iw = if (float iw) < width then iw + 1 else iw in
   let ih = truncate height in
   let ih = if (float ih) < height then ih + 1 else ih in
   let legalWidth = nextPowerOfTwo iw
   and legalHeight = nextPowerOfTwo ih in
-  let (frameBufferID,textureID) = create_render_texture color alpha legalWidth legalHeight in
+  let (frameBufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
   let clipping = if (float legalWidth) <> width || (float legalHeight) <> height then Some (Rectangle.create 0. 0. (width /. (float legalWidth)) (height /. (float legalHeight))) else None in
   object(self)
     value mutable isActive = False;
@@ -371,5 +376,8 @@ value rendered ?(color=0) ?(alpha=0.) width height : rendered =
     method clear color alpha = self#draw (fun () -> Render.clear color alpha);
     initializer Gc.finalise (fun r -> r#release ()) self;
 
-  end;
+  end; (*}}}*)
 
+
+
+external blur ?(color=0xFF0000) ?(size=4) texture = 
