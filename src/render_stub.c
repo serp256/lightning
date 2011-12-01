@@ -241,13 +241,6 @@ static char   vertexAttribTexCoords = 0;
 */
 
 
-/* vertex attribs */
-enum {
-  lgVertexAttrib_Position = 0,
-  lgVertexAttrib_Color = 1,
-  lgVertexAttrib_TexCoords = 2,
-};  
-
 enum {
   lgUniformMVPMatrix,
 	lgUniformAlpha,
@@ -255,19 +248,6 @@ enum {
   lgUniform_MAX,
 };
 
-
-
-/** vertex attrib flags */
-enum {
-  lgVertexAttribFlag_None    = 0,
-
-  lgVertexAttribFlag_Position  = 1 << 0,
-  lgVertexAttribFlag_Color   = 1 << 1,
-  lgVertexAttribFlag_TexCoords = 1 << 2,
-  
-	lgVertexAttribFlag_PosColor = (lgVertexAttribFlag_Position | lgVertexAttribFlag_Color),
-	lgVertexAttribFlag_PosColorTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords )
-};
 
 char vertexAttribPosition  = 0;
 char vertexAttribColor = 0;
@@ -933,19 +913,22 @@ void ml_resize_texture(value textureID,value width,value height) {
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,Long_val(width),Long_val(height),0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
 }
 
-struct old_framebuffer_state {
-	GLuint frameBuffer;
-	GLsizei width;
-	GLsizei height;
-}; 
-
-value ml_activate_framebuffer(value framebufferID,value width,value height) {
+void get_framebuffer_state(framebuffer_state *s) {
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	GLint viewPort[4];
 	glGetIntegerv(GL_VIEWPORT,viewPort);
+	s->frameBuffer = oldBuffer;
+	s->width = viewPort[2];
+	s->height = viewPort[3];
+}
+
+value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 	printf("old fb: %d, old viewport: %d:%d:%d:%d\n",oldBuffer,viewPort[0],viewPort[1],viewPort[2],viewPort[3]);
+
+	struct framebuffer_state *s = caml_stat_alloc(sizeof(struct old_framebuffer_state));
+	get_framebuffer_stat(old_framebuffer_state);
 
 	glBindFramebuffer(GL_FRAMEBUFFER,Long_val(framebufferID));
 
@@ -968,18 +951,17 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	boundTextureID = 0;
 	setPMAGLBlend();
 
-	struct old_framebuffer_state *s = caml_stat_alloc(sizeof(struct old_framebuffer_state));
-	s->frameBuffer = oldBuffer;
-	s->width = viewPort[2];
-	s->height = viewPort[3];
 	return (value)s; 
 }
 
-
-void ml_deactivate_framebuffer(value ostate) {
-	struct old_framebuffer_state *s = (struct old_framebuffer_state*)ostate;
+void set_framebuffer_state(framebuffer_state *s) {
 	glBindFramebuffer(GL_FRAMEBUFFER,s->frameBuffer);
 	glViewport(0, 0, s->width, s->height);
+}
+
+void ml_deactivate_framebuffer(value ostate) {
+	struct framebuffer_state *s = (struct old_framebuffer_state*)ostate;
+	set_framebuffer_state(s);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPopMatrix();
 	kmGLMatrixMode(KM_GL_MODELVIEW);
