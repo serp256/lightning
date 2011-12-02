@@ -3,12 +3,12 @@
 type glow = 
   {
     glowSize: int;
-    glowStrenght:float;
     glowColor: int;
+    glowStrength:int;
   };
 
 
-value glow ?(size=1.) ?(strenght=0.5) color = `Glow {glowSize=size;glowStrenght=strenght;glowColor=color};
+value glow ?(size=1) ?(strength=1) color = `Glow {glowSize=size;glowStrength=strength;glowColor=color};
 
 type colorMatrix = Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout;
 

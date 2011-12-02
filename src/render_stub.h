@@ -13,8 +13,6 @@
 #endif
 
 
-
-
 #include <stdio.h>
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
@@ -23,14 +21,43 @@
 #include <caml/bigarray.h>
 #include <caml/fail.h>
 
+typedef struct 
+{
+  GLfloat r;
+  GLfloat g;
+  GLfloat b;
+} color3F;
+
+#define COLOR_PART_ALPHA(color)  (((color) >> 24) & 0xff)
+#define COLOR_PART_RED(color)    (((color) >> 16) & 0xff)
+#define COLOR_PART_GREEN(color)  (((color) >>  8) & 0xff)
+#define COLOR_PART_BLUE(color)   ( (color)        & 0xff)
+#define COLOR3F_FROM_INT(c) (color3F){(GLfloat)(COLOR_PART_RED(c)/255.),(GLfloat)(COLOR_PART_GREEN(c)/255.),(GLfloat)(COLOR_PART_BLUE(c)/255.)}
+
+enum {
+  lgUniformMVPMatrix,
+	lgUniformAlpha,
+  lgUniformSampler,
+  lgUniform_MAX,
+};
+
 typedef struct {
-	filterFun f_fun;
-	void *f_data;
+	GLuint program;
+	//GLint attributes[lgVertexAttrib_MAX];
+	GLint std_uniforms[lgUniform_MAX];
+	GLint *uniforms;
+} sprogram;
+
+typedef void (*filterRender)(sprogram *sp,void *data);
+typedef void (*filterFinalize)(void *data);
+typedef struct {
+	filterRender render;
+	filterFinalize finalize;
+	void *data;
 } filter;
 
 #define FILTER(v) *((filter**)Data_custom_val(v))
 
-typedef void (*filterFun)(sprogram *sp,void *data);
 
 /* vertex attribs */
 enum {
@@ -48,18 +75,23 @@ enum {
   lgVertexAttribFlag_Color   = 1 << 2,
   
 	lgVertexAttribFlag_PosColor = (lgVertexAttribFlag_Position | lgVertexAttribFlag_Color),
-	lgVertexAttribFlag_PosColorTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords )
+	lgVertexAttribFlag_PosColorTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords ),
 	lgVertexAttribFlag_PosTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_TexCoords )
 };
 
 void lgGLEnableVertexAttribs( unsigned int flags );
 
-struct framebuffer_state {
+typedef struct {
 	GLuint frameBuffer;
 	GLsizei width;
 	GLsizei height;
-}; 
+} framebuffer_state; 
 
 void get_framebuffer_state(framebuffer_state *s);
-void set_framebuffer_state(framebuffer_stat *s);
+void set_framebuffer_state(framebuffer_state *s);
+
+
+
+void checkGLErrors(char *where);
+
 #endif

@@ -36,7 +36,7 @@ module Make(D:DisplayObjectT.M) : S with module D = D = struct
         let prg = 
           load id ~vertex:"Quad.vsh" ~fragment:"Quad.fsh" 
             ~attributes:[ (Render.Program.AttribPosition,"a_position"); (Render.Program.AttribColor,"a_color") ] 
-            ~other_uniforms:[| |]
+            ~uniforms:[| |]
         in
         (prg,None);
 

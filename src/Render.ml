@@ -33,7 +33,7 @@ module Program = struct
       )
     ];
 
-  type attribute = [ AttribPosition | AttribColor | AttribTexCoords ]; (* с атриббутами пока так *)
+  type attribute = [ AttribPosition |  AttribTexCoords | AttribColor ]; (* с атриббутами пока так *)
   type t;
 
   value gen_id = 
@@ -53,16 +53,17 @@ module Program = struct
 
   value cache = Cache.create 3;
 
-  external create_program: ~vertex:shader -> ~fragment:shader -> ~attributes:list (attribute * string) -> ~other_uniforms:array string -> t = "ml_program_create";
+  type uniform = [ UNone | UInt of int | UInt2 of (int*int) | UInt3 of (int*int*int) | UFloat of float | UFloat2 of (float*float) ];
+  external create_program: ~vertex:shader -> ~fragment:shader -> ~attributes:list (attribute * string) -> ~uniforms:array (string * uniform) -> t = "ml_program_create";
 
-  value load id ~vertex ~fragment ~attributes ~other_uniforms = 
+  value load id ~vertex ~fragment ~attributes ~uniforms = 
     try
       Cache.find cache id
     with [ Not_found -> 
       let vertex = get_shader Vertex vertex
       and fragment = get_shader Fragment fragment
       in
-      let p = create_program ~vertex ~fragment ~attributes ~other_uniforms in
+      let p = create_program ~vertex ~fragment ~attributes ~uniforms in
       (
         Cache.add cache id p;
         p
@@ -74,7 +75,7 @@ end;
 module Filter = struct
 
   type t;
-  external glow: ~w:float -> ~h:float -> ~textureID:textureID -> ~clipping:option Rectangle.t -> Filters.glow -> t = "ml_filter_glow";
+  external glow: ~textureID:textureID -> ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> Filters.glow -> t = "ml_filter_glow";
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
   external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow";
 

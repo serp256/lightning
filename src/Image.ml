@@ -80,8 +80,8 @@ module Make(D:DisplayObjectT.M) = struct
       value create () = 
         let prg = 
           load id ~vertex:"Image.vsh" ~fragment:"Image.fsh"
-              ~attributes:[ (AttribPosition,"a_position");(AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
-              ~other_uniforms:[| |]
+            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+            ~uniforms:[| ("u_texture",(UInt 0)) |]
         in
         (prg,None);
 
@@ -90,16 +90,15 @@ module Make(D:DisplayObjectT.M) = struct
     module Glow = struct
 
       value id  = gen_id();
-      value create glow = 
+      value create texture glow = 
         let prg = 
           load id ~vertex:"Image.vsh" ~fragment:"ImageGlow.fsh"
-            ~attributes:[ (AttribPosition,"a_position"); (AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
-            ~other_uniforms:[| "u_glowSize" ; "u_glowStrenght"; "u_glowColor" |]
+            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+            ~uniforms:[|  ("u_texture", (UInt 0)); ("u_btexture",(UInt 1)); ("u_strength",UNone) |]
         in
-        let f = Render.Filter.glow glow in
+        let f = Render.Filter.glow texture#textureID texture#width texture#height texture#clipping glow in
         (prg,Some f);
         
-
     end;
 
     module ColorMatrix = struct
@@ -108,13 +107,12 @@ module Make(D:DisplayObjectT.M) = struct
       value create matrix = 
         let prg = 
           load id ~vertex:"Image.vsh" ~fragment:"ImageColorMatrix.fsh"
-            ~attributes:[ (AttribPosition,"a_position"); (AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
-            ~other_uniforms:[| "u_matrix" |]
+            ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
+            ~uniforms:[| ("u_matrix",UNone) |]
         in
         let f = Render.Filter.color_matrix matrix in
         (prg,Some f);
         
-
     end;
 
     module ColorMatrixGlow = struct
@@ -123,8 +121,9 @@ module Make(D:DisplayObjectT.M) = struct
       value create matrix glow = 
         let prg = 
           load id ~vertex:"Image.vsh" ~fragment:"ImageColorMatrixGlow.fsh"
-            ~attributes:[ (AttribPosition,"a_position"); (AttribColor,"a_color") ; (AttribTexCoords,"a_texCoord") ]
-            ~other_uniforms:[| "u_matrix"; "u_glowSize"; "u_glowStrenght"; "u_glowColor" |]
+            ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
+            ~uniforms: [| |]
+(*             ~uniforms:[| "u_matrix"; "u_glowSize"; "u_glowStrenght"; "u_glowColor" |] *)
         in
         let f = Render.Filter.cmatrix_glow matrix glow in
         (prg,Some f);
@@ -133,15 +132,6 @@ module Make(D:DisplayObjectT.M) = struct
     end;
 
   end;
-
-  (*
-  value flushTexCoords res = 
-  (
-    Bigarray.Array1.fill res 0.;
-    res.{2} := 1.0; res.{5} := 1.0;
-    res.{6} := 1.0; res.{7} := 1.0;
-  );
-  *)
 
   class _c  ?(color=0xFFFFFF)  _texture =
     object(self)
@@ -180,7 +170,7 @@ module Make(D:DisplayObjectT.M) = struct
         let prg = 
           match f with
           [ `simple -> Programs.Simple.create ()
-          | `glow glow -> Programs.Glow.create glow
+          | `glow glow -> Programs.Glow.create texture glow
           | `cmatrix m -> Programs.ColorMatrix.create m
           | `cmatrix_glow m glow -> Programs.ColorMatrixGlow.create m glow
           ]

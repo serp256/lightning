@@ -377,7 +377,3 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     initializer Gc.finalise (fun r -> r#release ()) self;
 
   end; (*}}}*)
-
-
-
-external blur ?(color=0xFF0000) ?(size=4) texture = 

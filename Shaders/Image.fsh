@@ -1,4 +1,3 @@
-// http://www.cocos2d-iphone.org
 
 #ifdef GL_ES
 precision lowp float;
