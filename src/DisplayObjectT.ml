@@ -115,6 +115,7 @@ class virtual container:
     method containsChild: !'child. (#_c container as 'child) -> bool;
     method getChildAt: int -> 'displayObject;
     method getLastChild: 'displayObject;
+    method getChildIndex: !'child. (#_c container as 'child) -> int;
     method numChildren: int;
     method removeChild: !'child. (#_c container as 'child) -> unit;
     method removeChildAtIndex: int -> 'displayObject;
