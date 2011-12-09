@@ -143,17 +143,18 @@ type action =
 type loop = [= `LoopNone | `LoopRepeat | `LoopReverse ];
 type prop = ((unit -> float) * (float -> unit));
 
-class c ?(transition=`linear) ?(loop=`LoopNone) time = 
+class c ?(delay=0.) ?(transition=`linear) ?(loop=`LoopNone) time = 
   object(self)
 
     value mutable actions = [];
-    value delay = 0.;
     value mutable currentTime = 0.;
     value totalTime = time;
     value loop: loop = loop; 
     value transition = Transitions.get transition;
     value mutable invertTransition = False;
     value mutable onComplete = None;
+    value mutable start = True;
+    value mutable delay = delay;
 
     method animate (getValue,setValue) endValue = actions := [ {startValue = 0.; endValue; getValue ; setValue}  :: actions ];
     method setOnComplete f = onComplete := Some f;
@@ -166,55 +167,67 @@ class c ?(transition=`linear) ?(loop=`LoopNone) time =
 
     method process dt = 
 (*       let () = Printf.eprintf "tween process %F\n%!" dt in *)
-      let start = currentTime = 0. in
-      let () = currentTime := min totalTime (currentTime +. dt) in
-      (
-        let ratio = currentTime /. totalTime in
-        List.iter begin fun action ->
+      let () = currentTime := min (totalTime +. delay) (currentTime +. dt) in
+      match currentTime < delay with
+      [ True -> True
+      | _ ->  
           (
-            if start then action.startValue := action.getValue () else ();
-            let delta = action.endValue -. action.startValue in
-            let transitionValue = 
-              match invertTransition with
-              [ True -> 1. -. (transition (1. -. ratio))
-              | False -> transition ratio
-              ]
-            in
-            action.setValue (action.startValue +. delta *. transitionValue)
-          )
-        end actions;
-        if currentTime >= totalTime 
-        then
-          match loop with
-          [ `LoopRepeat -> 
-            (
-              List.iter (fun action -> action.setValue (action.getValue ())) actions;
-              currentTime := 0.;
-              True
-            )
-          | `LoopReverse -> 
-            (
-              List.iter begin fun action ->
+            let ratio = (currentTime -. delay) /. totalTime in
+            List.iter begin fun action ->
+              (
+                match start with
+                [ True -> 
+                    ( 
+                      action.startValue := action.getValue ();
+                      start := False;
+                    )
+                | _ -> ()
+                ];
+                let delta = action.endValue -. action.startValue in
+                let transitionValue = 
+                  match invertTransition with
+                  [ True -> 1. -. (transition (1. -. ratio))
+                  | False -> transition ratio
+                  ]
+                in
+                action.setValue (action.startValue +. delta *. transitionValue)
+              )
+            end actions;
+            if (currentTime -. delay) >= totalTime 
+            then
+              match loop with
+              [ `LoopRepeat -> 
                 (
-                  action.setValue action.endValue;
-                  action.endValue := action.startValue;
-                  invertTransition := not invertTransition;
+                  List.iter (fun action -> action.setValue (action.getValue ())) actions;
+                  currentTime := 0.;
+                  delay := 0.;
+                  True
                 )
-              end actions;
-              currentTime := 0.;
-              True
-            )
-          | _ -> 
-            (
-              match onComplete with
-              [ Some f -> f ()
-              | None -> ()
-              ];
-              False (* it's completed *)
-            )
-          ]
-        else True
-      );
+              | `LoopReverse -> 
+                (
+                  List.iter begin fun action ->
+                    (
+                      action.setValue action.endValue;
+                      action.endValue := action.startValue;
+                      invertTransition := not invertTransition;
+                    )
+                  end actions;
+                  currentTime := 0.;
+                  delay := 0.;
+                  True
+                )
+              | _ -> 
+                (
+                  match onComplete with
+                  [ Some f -> f ()
+                  | None -> ()
+                  ];
+                  False (* it's completed *)
+                )
+              ]
+            else True
+          )
+      ];
 
   end;
 
