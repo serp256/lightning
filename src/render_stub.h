@@ -34,6 +34,48 @@ typedef struct
 #define COLOR_PART_BLUE(color)   ( (color)        & 0xff)
 #define COLOR3F_FROM_INT(c) (color3F){(GLfloat)(COLOR_PART_RED(c)/255.),(GLfloat)(COLOR_PART_GREEN(c)/255.),(GLfloat)(COLOR_PART_BLUE(c)/255.)}
 
+typedef struct
+{
+  GLfloat x;
+  GLfloat y;
+} vertex2F;
+
+
+typedef struct 
+{
+  GLubyte r;
+  GLubyte g;
+  GLubyte b;
+  GLubyte a;
+} color4B;
+
+typedef struct _ccTex2F {
+   GLfloat u;
+   GLfloat v;
+} tex2F;
+
+typedef struct 
+{ 
+  //! vertices (2F)
+  vertex2F    v;
+  //! colors (4B)   
+  color4B   c;
+  //! tex coords (2F)
+  tex2F     tex;
+} lgTexVertex;
+
+typedef struct
+{
+  //! top left
+  lgTexVertex tl;
+  //! bottom left
+  lgTexVertex bl;
+  //! top right
+  lgTexVertex tr;
+  //! bottom right
+  lgTexVertex br;
+} lgTexQuad;
+
 enum {
   lgUniformMVPMatrix,
 	lgUniformAlpha,

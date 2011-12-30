@@ -75,7 +75,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
           | Some {tex;force=False;_} -> (tex#release();imageCache := None)
           | Some ({ic;_} as c) -> (ic#setFilters []; c.valid := False)
           ]
-        | filters -> (* нужно обновлять сцука размеры нахуй поняла блядь *)
+        | filters -> 
           match imageCache with
           [ None -> 
             let bounds = self#boundsInSpace (Some self) in

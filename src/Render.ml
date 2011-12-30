@@ -60,6 +60,7 @@ module Program = struct
     try
       Cache.find cache id
     with [ Not_found -> 
+      let () = debug "create program %d with %s:%s" id vertex fragment in
       let vertex = get_shader Vertex vertex
       and fragment = get_shader Fragment fragment
       in
@@ -75,9 +76,10 @@ end;
 module Filter = struct
 
   type t;
-  external glow: ~textureID:textureID -> ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> Filters.glow -> t = "ml_filter_glow";
+  external glow: int -> int -> t = "ml_filter_glow";
+  external glow_resize: Texture.framebufferID -> textureID -> int -> int ->  int -> unit = "ml_glow_resize_byte" "ml_glow_resize";
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
-  external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow";
+(*   external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow"; *)
 
 end;
 

@@ -71,10 +71,10 @@ end;
 module Make(D:DisplayObjectT.M) = struct
   module D = D;
 
-  module Programs = struct
+  module Programs = struct (*{{{*)
     open Render.Program;
 
-    module Simple = struct
+    module Simple = struct (*{{{*)
 
       value id = gen_id ();
       value create () = 
@@ -85,23 +85,37 @@ module Make(D:DisplayObjectT.M) = struct
         in
         (prg,None);
 
-    end;
+    end;(*}}}*)
 
-    module Glow = struct
+    module Glowing = struct (*{{{*)
 
       value id  = gen_id();
-      value create texture glow = 
+      value create () = 
         let prg = 
           load id ~vertex:"Image.vsh" ~fragment:"ImageGlow.fsh"
             ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
-            ~uniforms:[|  ("u_texture", (UInt 0)); ("u_btexture",(UInt 1)); ("u_strength",UNone) |]
+            ~uniforms:[| ("u_texture", (UInt 0)) |]
         in
-        let f = Render.Filter.glow texture#textureID texture#width texture#height texture#clipping glow in
+        (prg,None);
+        
+    end;(*}}}*)
+
+    module Glow = struct (*{{{*)
+
+      value id  = gen_id();
+      value create glow = 
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"Glow.fsh"
+            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+            ~uniforms:[| ("u_texture", (UInt 0)) ; ("u_color",UNone) ; ("u_strength",UNone) |]
+        in
+        let f = Render.Filter.glow glow.Filters.glowColor glow.Filters.glowStrength in
         (prg,Some f);
         
-    end;
+    end;(*}}}*)
 
-    module ColorMatrix = struct
+
+    module ColorMatrix = struct (*{{{*)
 
       value id  = gen_id();
       value create matrix = 
@@ -113,9 +127,10 @@ module Make(D:DisplayObjectT.M) = struct
         let f = Render.Filter.color_matrix matrix in
         (prg,Some f);
         
-    end;
+    end;(*}}}*)
 
-    module ColorMatrixGlow = struct
+    (*
+    module ColorMatrixGlow = struct (*{{{*)
 
       value id  = gen_id();
       value create matrix glow = 
@@ -129,9 +144,19 @@ module Make(D:DisplayObjectT.M) = struct
         (prg,Some f);
         
 
-    end;
+    end;(*}}}*)
+    *)
 
-  end;
+  end;(*}}}*)
+
+  type glow = 
+    {
+      texture: Texture.rendered;
+      image: Render.Image.t;
+      prg: Render.prg;
+      matrix: Matrix.t;
+      params: Filters.glow;
+    };
 
   class _c  ?(color=0xFFFFFF)  _texture =
     object(self)
@@ -142,44 +167,73 @@ module Make(D:DisplayObjectT.M) = struct
       method texture = texture;
 
 
+      value mutable programID = Programs.Simple.id;
       value mutable shaderProgram = Programs.Simple.create ();
+      value image = Render.Image.create _texture#width _texture#height _texture#rootClipping color 1.;
 
       value mutable filters : list Filters.t = [];
+      value mutable glowFilter: option glow = None;
+
       method filters = filters;
       method setFilters fltrs = 
       (
-        let f = 
-          List.fold_left begin fun c -> fun
-            [ `Glow glow ->
-              match c with
-              [ `simple -> `glow glow
-              | `glow p as g -> g
-              | `cmatrix m -> `cmatrix_glow (m,glow)
-              | `cmatrix_glow (m,_) -> `cmatrix_glow (m,glow)
+        let hasGlow = ref False in
+        (
+          let f = 
+            List.fold_left begin fun c -> fun
+              [ `Glow glow ->
+                (
+                  hasGlow.val := True;
+                  match glowFilter with
+                  [ Some g when g.params = glow -> ()
+                  | _ ->
+                      let w = texture#width /. 2.
+                      and h = texture#height /. 2. in
+                      let gs = float glow.Filters.glowSize in
+                      let dgs = float (glow.Filters.glowSize * 2) in
+                      let wdth = w  +. dgs 
+                      and hght = h  +. dgs
+                      in
+                      let rtexture = Texture.rendered wdth hght in
+                      let mgs = ~-.dgs *. 2. in
+                      let matrix = Matrix.create ~scale:(2.,2.) ~translate:{Point.x=mgs;y=mgs} () in 
+                      (
+                        let glowPrg = Programs.Glowing.create () in
+                        (* нужно нарисовать по центру *)
+                        let m = Matrix.create ~scale:(0.5,0.5) ~translate:{Point.x = gs; y = gs} () in
+                        rtexture#draw (fun () ->
+                          Render.Image.render m glowPrg texture#textureID texture#hasPremultipliedAlpha image;
+                        );
+                        if glow.Filters.glowSize > 1 then Render.Filter.glow_resize rtexture#framebufferID rtexture#textureID rtexture#realWidth rtexture#realHeight glow.Filters.glowSize else ();
+                        let image = Render.Image.create rtexture#width rtexture#height rtexture#rootClipping 0 1. in
+                        let gl = { texture = rtexture; image; prg = Programs.Glow.create glow; matrix; params = glow} in
+                        glowFilter := Some gl
+                      )
+                  ];
+                  c
+                )
+              | `ColorMatrix m -> `cmatrix m
               ]
-            | `ColorMatrix m ->
-                match c with
-                [ `simple -> `cmatrix m
-                | `glow glow -> `cmatrix_glow (m,glow)
-                | `cmatrix m -> `cmatrix m
-                | `cmatrix_glow (_,glow) -> `cmatrix_glow(m,glow)
-                ]
-            ]
-          end `simple fltrs 
-        in
-        let prg = 
+            end `simple fltrs 
+          in
           match f with
-          [ `simple -> Programs.Simple.create ()
-          | `glow glow -> Programs.Glow.create texture glow
-          | `cmatrix m -> Programs.ColorMatrix.create m
-          | `cmatrix_glow m glow -> Programs.ColorMatrixGlow.create m glow
-          ]
-        in
-        shaderProgram := prg;
+          [ `simple when programID <> Programs.Simple.id -> 
+            (
+              programID := Programs.Simple.id;
+              shaderProgram := Programs.Simple.create ()
+            )
+          | `cmatrix m -> 
+            (
+              programID := Programs.ColorMatrix.id;
+              shaderProgram := Programs.ColorMatrix.create m
+            )
+          | _ -> ()
+          ];
+          if not !hasGlow && glowFilter <> None then glowFilter := None else ();
+        );
         filters := fltrs;
       );
 
-      value image = Render.Image.create _texture#width _texture#height _texture#rootClipping color 1.;
 
       method setColor color = Render.Image.set_color image color;
       method color = Render.Image.color image;
@@ -277,32 +331,14 @@ module Make(D:DisplayObjectT.M) = struct
           else Render.Image.update image texture#width texture#height texture#rootClipping;
         );
 
-      (*
-      method setTexture nt = 
-      (
-        self#updateSize nt#width nt#height;
-        texture := nt;
-        flushTexCoords texCoords;
-        texture#adjustTextureCoordinates texCoords;
-        if texFlipX then self#applyTexFlipX() else ();
-        if texFlipY then self#applyTexFlipY() else ();
-        match texRotation with
-        [ None -> ()
-        | Some `left -> TEX_COORDS_ROTATE_LEFT
-        | Some `right -> TEX_COORDS_ROTATE_RIGHT
-        ];
-      );
-      *)
-
-
       method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
         match targetCoordinateSpace with
         [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height (* FIXME!!! optimization *)
         | _ -> 
-            (*
-            let open Point in
-            let vertexCoords = [| {x=0.;y=0.}; {x=texture#width;y=0.}; {x=0.;y=texture#height}; {x=texture#width;y=texture#height} |] in
-            *)
+          (*
+          let open Point in
+          let vertexCoords = [| {x=0.;y=0.}; {x=texture#width;y=0.}; {x=0.;y=texture#height}; {x=texture#width;y=texture#height} |] in
+          *)
           let vertexCoords = Render.Image.points image in
           let () = debug "vertex coords len: %d" (Array.length vertexCoords) in
           let () = debug "vertex coords: %s - %s - %s - %s" (Point.to_string vertexCoords.(0)) (Point.to_string vertexCoords.(1)) (Point.to_string vertexCoords.(2)) (Point.to_string vertexCoords.(3)) in
@@ -311,25 +347,14 @@ module Make(D:DisplayObjectT.M) = struct
           Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
         ];
 
-      method private render' ?alpha ~transform _ = Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image;
-
-      (*
-      method! private render' _ = 
+      method private render' ?alpha ~transform _ = 
       (
-        RenderSupport.bindTexture texture;
-        Array.iteri (fun i c -> Quad.gl_quad_colors.{i} := RenderSupport.convertColor c alpha) vertexColors;
-        glEnableClientState gl_texture_coord_array;
-        glEnableClientState gl_vertex_array;
-        glEnableClientState gl_color_array;
-        glTexCoordPointer 2 gl_float 0 texCoords;
-        glVertexPointer 2 gl_float 0 vertexCoords;
-        glColorPointer 4 gl_unsigned_byte 0 Quad.gl_quad_colors;
-        glDrawArrays gl_triangle_strip 0 4;
-        glDisableClientState gl_texture_coord_array;
-        glDisableClientState gl_vertex_array;
-        glDisableClientState gl_color_array;
+        match glowFilter with
+        [ Some g -> Render.Image.render (if transform then Matrix.concat g.matrix self#transformationMatrix else g.matrix) g.prg g.texture#textureID g.texture#hasPremultipliedAlpha ?alpha g.image
+        | None -> ()
+        ];
+        Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image
       );
-      *)
 
     end;
 

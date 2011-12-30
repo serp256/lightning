@@ -18,21 +18,6 @@ void checkGLErrors(char *where) {
 
 
 
-typedef struct
-{
-  GLfloat x;
-  GLfloat y;
-} vertex2F;
-
-
-typedef struct 
-{
-  GLubyte r;
-  GLubyte g;
-  GLubyte b;
-  GLubyte a;
-} color4B;
-
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
 
 GLuint boundTextureID = 0;
@@ -286,7 +271,7 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 #define SPROGRAM(v) *((sprogram**)Data_custom_val(v))
 
 static void program_finalize(value program) {
-	sprogram *p = SPROGRAM(Field(program,0));
+	sprogram *p = SPROGRAM(program);
 	if (p->uniforms != NULL) caml_stat_free(p->uniforms);
   if( p->program == currentShaderProgram ) currentShaderProgram = -1;
 	glDeleteProgram(p->program);
@@ -294,8 +279,8 @@ static void program_finalize(value program) {
 }
 
 static int program_compare(value p1,value p2) {
-	sprogram *pr1 = SPROGRAM(Field(p1,0));
-	sprogram *pr2 = SPROGRAM(Field(p2,0));
+	sprogram *pr1 = SPROGRAM(p1);
+	sprogram *pr2 = SPROGRAM(p2);
 	if (pr1->program == pr2->program) return 0;
 	else {
 		if (pr1->program < pr2->program) return -1;
@@ -336,11 +321,10 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 	CAMLlocal2(prg,res);
 	GLuint program =  glCreateProgram();
 	glAttachShader(program, *GLUINT(vShader)); 
-	//checkGLErrors("attach shader 1");
+	checkGLErrors("attach shader 1");
 	glAttachShader(program, *GLUINT(fShader)); 
-	//checkGLErrors("attach shader 2");
+	checkGLErrors("attach shader 2");
 	// bind attributes
-	sprogram *sp = caml_stat_alloc(sizeof(sprogram));
 	value lst = attributes;
 	value el;
 	while (lst != 1) {
@@ -367,10 +351,14 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
     caml_failwith("Failed to link program");
   }
 
+	sprogram *sp = caml_stat_alloc(sizeof(sprogram));
+
 	checkGLErrors("before uniforms");
 
 	sp->std_uniforms[lgUniformMVPMatrix] = glGetUniformLocation(program, "u_MVPMatrix");
+	printf("std_uniform: matrix: %d\n",sp->std_uniforms[lgUniformMVPMatrix]);
 	sp->std_uniforms[lgUniformAlpha] = glGetUniformLocation(program, "u_parentAlpha");
+	printf("std_uniform: parentAlpha: %d\n",sp->std_uniforms[lgUniformAlpha]);
 	/*
 	if (has_texture) {
 		GLint loc = glGetUniformLocation(program,"u_texture");
@@ -391,7 +379,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		for (int idx = 0; idx < uniformsLen; idx++) {
 			value el = Field(uniforms,idx);
 			loc = glGetUniformLocation(program, String_val(Field(el,0)));
-			printf("uniform: %s = %d\n",String_val(Field(el,0)),loc);
+			printf("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);
 			sp->uniforms[idx] = loc;
 			value u = Field(el,1);
 			if (Is_block(u)) {
@@ -619,33 +607,6 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 // Images
 //
 
-typedef struct _ccTex2F {
-   GLfloat u;
-   GLfloat v;
-} tex2F;
-
-typedef struct 
-{ 
-  //! vertices (2F)
-  vertex2F    v;
-  //! colors (4B)   
-  color4B   c;
-  //! tex coords (2F)
-  tex2F     tex;
-} lgTexVertex;
-
-typedef struct
-{
-  //! top left
-  lgTexVertex tl;
-  //! bottom left
-  lgTexVertex bl;
-  //! top right
-  lgTexVertex tr;
-  //! bottom right
-  lgTexVertex br;
-} lgTexQuad;
-
 
 #define TEXQUAD(v) ((lgTexQuad**)Data_custom_val(v))
 
@@ -711,7 +672,7 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255));
 	tq->bl.v = (vertex2F){0,0};
 	tq->bl.c = c;
-	tq->br.v = (vertex2F) { Double_val(width)};
+	tq->br.v = (vertex2F) { Double_val(width),0.};
 	tq->br.c = c;
 	tq->tl.v = (vertex2F) { 0, Double_val(height)};
 	tq->tl.c = c;
@@ -875,7 +836,7 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 	//printf("create rtexture: [%d:%d]\n",Long_val(width),Long_val(height));
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, Long_val(width), Long_val(height), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Long_val(width), Long_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
 	glBindTexture(GL_TEXTURE_2D,0);
 	GLuint mFramebuffer;
@@ -894,7 +855,6 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	color3F c = COLOR3F_FROM_INT(Int_val(color));
 	glClearColor(c.r,c.g,c.b,Double_val(alpha));
 	glClear(GL_COLOR_BUFFER_BIT);
-	// блэндинг бы еще врубить нахуй
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	printf("old buffer: %d\n",oldBuffer);
 	value result = caml_alloc_small(2,0);

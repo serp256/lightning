@@ -293,6 +293,9 @@ external resize_texture: textureID -> int -> int -> unit = "ml_resize_texture";
 class type rendered = 
   object
     inherit c;
+    method realWidth:int;
+    method realHeight:int;
+    method framebufferID: framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
@@ -310,7 +313,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
   let ih = if (float ih) < height then ih + 1 else ih in
   let legalWidth = nextPowerOfTwo iw
   and legalHeight = nextPowerOfTwo ih in
-  let (frameBufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
+  let (framebufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
   let clipping = if (float legalWidth) <> width || (float legalHeight) <> height then Some (Rectangle.create 0. 0. (width /. (float legalWidth)) (height /. (float legalHeight))) else None in
   object(self)
     value mutable isActive = False;
@@ -318,9 +321,11 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     value mutable clipping = clipping;
     value mutable width = width;
     value mutable legalWidth = legalWidth;
+    method realWidth = legalWidth;
     method width = width;
     value mutable height = height;
     value mutable legalHeight = legalHeight;
+    method realHeight = legalHeight;
     method height = height;
     method hasPremultipliedAlpha = False;
     method scale = 1.;
@@ -329,6 +334,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method clipping = clipping;
     method rootClipping = clipping;
     method subTexture (region:Rectangle.t) : c = assert False;
+    method framebufferID = framebufferID;
     method resize w h =
       if w <> width || h <> height
       then
@@ -353,7 +359,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       if textureID <> 0
       then
       (
-        delete_framebuffer frameBufferID;
+        delete_framebuffer framebufferID;
         delete_texture textureID;
         textureID := 0;
       )
@@ -362,7 +368,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method draw f = 
       match isActive with
       [ False ->
-        let oldState = activate_framebuffer frameBufferID legalWidth legalHeight in
+        let oldState = activate_framebuffer framebufferID legalWidth legalHeight in
         (
           debug "buffer activated";
           isActive := True;
