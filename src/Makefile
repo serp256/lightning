@@ -78,7 +78,7 @@ endif
 					DisplayObject.ml Shape.ml Sprite.ml Quad.ml Texture.ml RenderTexture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml TLF.ml FPS.ml Timers.ml Timer.ml \
 					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 
-MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
+MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
 					DisplayObject.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml Touch.ml BitmapFont.ml TLF.ml Timers.ml Timer.ml Sprite.ml \
 					Stage.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 

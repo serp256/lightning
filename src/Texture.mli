@@ -1,5 +1,6 @@
 
-type textureID = int;
+open LightCommon;
+
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -36,13 +37,12 @@ class type c =
 value create: textureFormat -> int -> int -> option (Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout) -> c;
 value load: string -> c;
 
-type framebufferID;
 class type rendered =
   object
     inherit c;
     method realWidth: int;
     method realHeight: int;
-    method framebufferID: framebufferID;
+    method framebufferID: LightCommon.framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;

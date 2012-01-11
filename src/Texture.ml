@@ -16,7 +16,6 @@ type textureFormat =
   ];
 
 
-type textureID = Render.textureID;
 
 type textureInfo = 
   {
@@ -29,7 +28,7 @@ type textureInfo =
     generateMipmaps: bool;
     premultipliedAlpha:bool;
     scale: float;
-    textureID: Render.textureID;
+    textureID: textureID;
   };
 
 class type c = 
@@ -38,7 +37,7 @@ class type c =
     method height: float;
     method hasPremultipliedAlpha:bool;
     method scale: float;
-    method textureID: Render.textureID;
+    method textureID: textureID;
     method base : option c; 
     method clipping: option Rectangle.t;
     method rootClipping: option Rectangle.t;
@@ -89,10 +88,10 @@ value loadImage ?(textureID=0) ~path ~contentScaleFactor =
   );
 
 ELSE IFDEF IOS THEN
-external loadImage: ?textureID:Render.textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 (* external freeImageData: GLTexture.textureInfo -> unit = "ml_freeImageData"; *)
 ELSE IFDEF ANDROID THEN
-external loadImage: ?textureID:Render.textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 ENDIF;
 ENDIF;
 ENDIF;
@@ -107,7 +106,7 @@ end);
 class type r = 
   object
     inherit c;
-    method setTextureID: Render.textureID -> unit;
+    method setTextureID: textureID -> unit;
     method retain: unit -> unit;
     method releaseSubTexture: unit -> unit;
   end;
@@ -175,7 +174,7 @@ Callback.register "realodTextures" reloadTextures;
 ENDIF;
 *)
 
-external delete_texture: Render.textureID -> unit = "ml_delete_texture";
+external delete_texture: textureID -> unit = "ml_delete_texture";
 
 value make textureInfo = 
   let textureID = textureInfo.textureID
@@ -287,8 +286,7 @@ class type renderObject =
     method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
   end;
 
-type framebufferID;
-external create_render_texture: int -> int -> float -> int -> int -> (framebufferID*Render.textureID) = "ml_rendertexture_create";
+external create_render_texture: int -> int -> float -> int -> int -> (framebufferID*textureID) = "ml_rendertexture_create";
 type framebufferState;
 external activate_framebuffer: framebufferID -> int -> int -> option Matrix.t -> framebufferState = "ml_activate_framebuffer";
 external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";

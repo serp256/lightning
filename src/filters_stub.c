@@ -38,7 +38,7 @@ static GLuint simple_vertex_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
 		shader = compile_shader(GL_VERTEX_SHADER,
-			"attribute  vec2 a_position; attribute  vec2 a_texCoord; varying vec2 v_texCoord; \
+			"attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord; \
 			void main(void) { \
 			gl_Position = vec4(a_position, 0.0, 1.0); \
 			v_texCoord = a_texCoord; \
@@ -51,7 +51,8 @@ static GLuint simple_fragment_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
 		shader = compile_shader(GL_FRAGMENT_SHADER,
-				"varying vec2 v_texCoord; uniform sampler2D u_texture;\
+				"#ifdef GL_ES\nprecision lowp float; \n#endif\n\
+				varying vec2 v_texCoord; uniform sampler2D u_texture;\
 				void main() {\
 					 gl_FragColor = texture2D(u_texture, v_texCoord);\
 				}");
