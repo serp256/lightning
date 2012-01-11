@@ -206,7 +206,8 @@ value ml_compile_shader(value stype,value shader_src) {
 	return res;
 }
 
-static GLuint currentShaderProgram = -1;
+GLuint currentShaderProgram = -1;
+
 /*
 static char   vertexAttribPosition = 0;
 static char   vertexAttribColor = 0;
@@ -272,6 +273,7 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 
 static void program_finalize(value program) {
 	sprogram *p = SPROGRAM(program);
+	printf("finalize prg: %d\n",p->program);
 	if (p->uniforms != NULL) caml_stat_free(p->uniforms);
   if( p->program == currentShaderProgram ) currentShaderProgram = -1;
 	glDeleteProgram(p->program);
@@ -316,10 +318,10 @@ void lgGLBindTexture(GLuint newTextureID, int newPMA) {
 }
 
 value ml_program_create(value vShader,value fShader,value attributes,value uniforms) {
-	printf("create program\n");
 	CAMLparam4(vShader,fShader,attributes,uniforms);
 	CAMLlocal2(prg,res);
 	GLuint program =  glCreateProgram();
+	printf("create program %d\n",program);
 	glAttachShader(program, *GLUINT(vShader)); 
 	checkGLErrors("attach shader 1");
 	glAttachShader(program, *GLUINT(fShader)); 
@@ -577,7 +579,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
 	lgGLUniformModelViewProjectionMatrix(sp);
-	checkGLErrors("bind matrix uniform");
+	checkGLErrors("image render bind matrix uniform");
 
 	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
 
@@ -767,13 +769,13 @@ void ml_image_flip_tex_y(value image) {
 }
 
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
-	//printf("render image: %d\n",Long_val(textureID));
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
+	//printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
 	lgGLUseProgram(sp->program);
-	checkGLErrors("quad render use program");
+	checkGLErrors("image render use program");
 
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
@@ -880,7 +882,7 @@ void get_framebuffer_state(framebuffer_state *s) {
 	s->height = viewPort[3];
 }
 
-value ml_activate_framebuffer(value framebufferID,value width,value height) {
+value ml_activate_framebuffer(value framebufferID,value width,value height,value matrix) {
 	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 
 	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
@@ -902,7 +904,17 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPushMatrix();
-	kmGLLoadIdentity();
+	if (matrix != 1) {
+		value mtrx = Field(matrix,0);
+		kmMat4 transfrom4x4;
+		// Convert 3x3 into 4x4 matrix
+		GLfloat *m = transfrom4x4.mat;
+		m[2] = m[3] = m[6] = m[7] = m[8] = m[9] = m[11] = m[14] = 0.0f;
+		m[10] = m[15] = 1.0f;
+		m[0] = (GLfloat)Double_field(mtrx,0); m[4] = (GLfloat)Double_field(mtrx,2); m[12] = (GLfloat)Double_field(mtrx,4);
+		m[1] = (GLfloat)Double_field(mtrx,1); m[5] = (GLfloat)Double_field(mtrx,3); m[13] = (GLfloat)Double_field(mtrx,5);
+		kmGLLoadMatrix(&transfrom4x4);
+	} else kmGLLoadIdentity();
 
 	boundTextureID = 0;
 	setPMAGLBlend();

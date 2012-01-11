@@ -56,15 +56,18 @@ module Program = struct
   type uniform = [ UNone | UInt of int | UInt2 of (int*int) | UInt3 of (int*int*int) | UFloat of float | UFloat2 of (float*float) ];
   external create_program: ~vertex:shader -> ~fragment:shader -> ~attributes:list (attribute * string) -> ~uniforms:array (string * uniform) -> t = "ml_program_create";
 
+  value load_force ~vertex ~fragment ~attributes ~uniforms = 
+    let vertex = get_shader Vertex vertex
+    and fragment = get_shader Fragment fragment
+    in
+    create_program ~vertex ~fragment ~attributes ~uniforms;
+
   value load id ~vertex ~fragment ~attributes ~uniforms = 
     try
       Cache.find cache id
     with [ Not_found -> 
       let () = debug "create program %d with %s:%s" id vertex fragment in
-      let vertex = get_shader Vertex vertex
-      and fragment = get_shader Fragment fragment
-      in
-      let p = create_program ~vertex ~fragment ~attributes ~uniforms in
+      let p = load_force ~vertex ~fragment ~attributes ~uniforms in
       (
         Cache.add cache id p;
         p

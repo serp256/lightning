@@ -27,6 +27,8 @@ class type c =
 (*     method update: string -> unit; *)
     method release: unit -> unit;
     method subTexture: Rectangle.t -> c;
+    method addOnChangeListener: (c -> unit) -> int;
+    method removeOnChangeListener: int -> unit;
   end;
 
 
@@ -48,6 +50,5 @@ class type rendered =
 
 value glRGBA:int;
 value glRGB:int;
-value glAlpha:int;
 
 value rendered: ?format:int -> ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)

@@ -1,6 +1,8 @@
 
 #include "render_stub.h"
 
+extern GLuint currentShaderProgram;
+
 static int nextPowerOfTwo(int number) {
 	int result = 1;
 	while (result < number) result *= 2;
@@ -336,6 +338,7 @@ value ml_glow_resize(value framebufferID,value textureID, value width,value heig
 	delete_renderbuffer(rbfs);
 	caml_stat_free(rbfs);
 	glUseProgram(0);
+	currentShaderProgram = -1;
 	set_framebuffer_state(&fstate);
 }
 
@@ -424,6 +427,5 @@ static void colorMatrixFilter(sprogram *sp,void *data) {
 }
 
 value ml_filter_cmatrix(value matrix) {
-	// здесь бага что free вызовеца нахуй, над этой датой, а не надо // FIXME: BUG BUG BUG !!!!
 	return make_filter(&colorMatrixFilter,NULL,Caml_ba_data_val(matrix));
 }
