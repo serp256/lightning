@@ -594,6 +594,22 @@ value dllist_find node el =
     loop (Dllist.next node)
   ];
   
+value dllist_find_index node el = 
+  match Dllist.get node = el with
+  [ True -> 0
+  | False ->
+    let rec loop n i =
+      if n != node 
+      then
+        match Dllist.get n = el with
+        [ True -> i
+        | False -> loop (Dllist.next n) (i+1)
+        ]
+      else raise Not_found
+    in
+    loop (Dllist.next node) 1
+  ];
+  
 value dllist_existsf f node = 
   match f (Dllist.get node) with
   [ True -> True
@@ -729,6 +745,76 @@ class virtual container = (*{{{*)
       | Some children -> Dllist.get (Dllist.prev children)
       ];
 
+    method getChildIndex: !'child. ((#_c container) as 'child) -> int = fun child -> 
+      match children with
+      [ None -> raise Child_not_found
+      | Some children ->
+          try 
+            dllist_find_index children child#asDisplayObject
+          with 
+            [ Not_found -> raise Child_not_found ] 
+      ];
+
+    method setChildIndex: !'child. ((#_c container) as 'child) -> int -> unit = fun child index -> 
+      match children with
+      [ None -> raise Child_not_found
+      | Some chldrn ->
+          if index >= numChildren || index < 0 then raise Invalid_index
+          else
+            let child = child#asDisplayObject in
+            match Dllist.get chldrn = child with
+            [ True -> 
+              let next_node = Dllist.next chldrn in
+              match next_node == chldrn with
+              [ True -> () (* ничего делать не надо *)
+              | False -> 
+                  let prev = Dllist.skip next_node (index - 1) in
+                  let next = Dllist.next prev in
+                  (
+                    Dllist.splice prev chldrn;
+                    Dllist.splice chldrn next;
+                    children := Some next_node;
+                  )
+              ]
+            | False -> 
+                let node = find_node (Dllist.next chldrn) where
+                  rec find_node n =
+                    if n != chldrn
+                    then 
+                      match Dllist.get n = child with
+                      [ True -> n
+                      | False -> find_node (Dllist.next n)
+                      ]
+                    else raise Child_not_found
+                in
+                (
+                  Dllist.remove node;
+                  if index = 0
+                  then
+                  (
+                    children := Some node;
+                    Dllist.splice (Dllist.prev chldrn) node;
+                    Dllist.splice node chldrn;
+                    children := Some node
+                  )
+                  else
+                    if index = numChildren - 1
+                    then
+                    (
+                      Dllist.splice (Dllist.prev chldrn) node;
+                      Dllist.splice node chldrn;
+                    )
+                    else
+                      let prev = Dllist.skip chldrn (index - 1) in
+                      let next = Dllist.next prev in
+                      (
+                        Dllist.splice prev node;
+                        Dllist.splice node next;
+                      )
+                )
+            ]
+      ];
+
     (* FIXME: защиту от зацикливаний бы поставить нах *)
     method private removeChild'' (child_node:Dllist.node_t 'displayObject) =
       let child = Dllist.get child_node in
@@ -773,6 +859,7 @@ class virtual container = (*{{{*)
     method removeChild: !'child. ((#_c container) as 'child) -> unit = fun child -> (* чекать сцука надо блядь *)
       let child = child#asDisplayObject in
       self#removeChild' child;
+
 
     method removeChildAtIndex index : 'displayObject = 
       match children with
