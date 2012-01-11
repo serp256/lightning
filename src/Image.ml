@@ -214,7 +214,7 @@ module Make(D:DisplayObjectT.M) = struct
         in
         (
           GCache.add cache key t;
-          Gc.finalise (fun _ -> (GCache.remove cache key; (fst key)#removeOnChangeListener lid)) t;
+          Gc.finalise (fun t -> (debug:glow "finalize %d:%d" t.texture#textureID size; GCache.remove cache key; (fst key)#removeOnChangeListener lid)) t;
           let image = Render.Image.create t.texture#width t.texture#height t.texture#rootClipping 0 1. in
           (t,image)
         )
@@ -327,6 +327,10 @@ module Make(D:DisplayObjectT.M) = struct
         then 
         (
           Render.Image.flipTexX image;
+          match glowFilter with
+          [ Some g -> Render.Image.flipTexX g.image
+          | None -> ()
+          ];
           texFlipX := nv;
         )
         else ();
@@ -338,6 +342,10 @@ module Make(D:DisplayObjectT.M) = struct
         then 
         (
           Render.Image.flipTexY image;
+          match glowFilter with 
+          [ Some g -> Render.Image.flipTexY g.image
+          | None -> ()
+          ];
           texFlipY := nv;
         )
         else ();
@@ -385,6 +393,13 @@ module Make(D:DisplayObjectT.M) = struct
           if ot#width <> nt#width || ot#height <> nt#height
           then self#updateSize ()
           else Render.Image.update image texture#width texture#height texture#rootClipping;
+          match glowFilter with
+          [ Some g -> 
+            let (gtex,image) = Glow.create texture g.params.Filters.glowSize in
+            let gl = { (g) with gtex; image } in
+            glowFilter := Some gl
+          | None -> ()
+          ];
         );
 
       method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  

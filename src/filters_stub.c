@@ -2,6 +2,8 @@
 #include "render_stub.h"
 
 extern GLuint currentShaderProgram;
+extern GLuint boundTextureID;
+
 
 static int nextPowerOfTwo(int number) {
 	int result = 1;
@@ -304,6 +306,7 @@ value ml_glow_resize(value framebufferID,value textureID, value width,value heig
 		rb.clp.width = 1.;
 		rb.clp.height = 1.;
 	}; */
+	setNotPMAGLBlend();
 	int gsize = Int_val(count);
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -338,6 +341,7 @@ value ml_glow_resize(value framebufferID,value textureID, value width,value heig
 	delete_renderbuffer(rbfs);
 	caml_stat_free(rbfs);
 	glUseProgram(0);
+	boundTextureID = 0;
 	currentShaderProgram = -1;
 	set_framebuffer_state(&fstate);
 }

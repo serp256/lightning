@@ -21,6 +21,9 @@
 #include <caml/bigarray.h>
 #include <caml/fail.h>
 
+void setPMAGLBlend();
+void setNotPMAGLBlend();
+
 typedef struct 
 {
   GLfloat r;
