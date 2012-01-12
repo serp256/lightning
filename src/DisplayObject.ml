@@ -764,18 +764,22 @@ class virtual container = (*{{{*)
             let child = child#asDisplayObject in
             match Dllist.get chldrn = child with
             [ True -> 
-              let next_node = Dllist.next chldrn in
-              match next_node == chldrn with
-              [ True -> () (* ничего делать не надо *)
-              | False -> 
-                  let prev = Dllist.skip next_node (index - 1) in
-                  let next = Dllist.next prev in
-                  (
-                    Dllist.splice prev chldrn;
-                    Dllist.splice chldrn next;
-                    children := Some next_node;
-                  )
-              ]
+              if index > 0
+              then
+                let next_node = Dllist.next chldrn in
+                match next_node == chldrn with
+                [ True -> () (* ничего делать не надо *)
+                | False -> 
+                    let () = Dllist.remove chldrn in
+                    let prev = Dllist.skip next_node (index - 1) in
+                    let next = Dllist.next prev in
+                    (
+                      Dllist.splice prev chldrn;
+                      Dllist.splice chldrn next;
+                      children := Some next_node;
+                    )
+                ]
+              else ()
             | False -> 
                 let node = find_node (Dllist.next chldrn) where
                   rec find_node n =
@@ -792,7 +796,6 @@ class virtual container = (*{{{*)
                   if index = 0
                   then
                   (
-                    children := Some node;
                     Dllist.splice (Dllist.prev chldrn) node;
                     Dllist.splice node chldrn;
                     children := Some node

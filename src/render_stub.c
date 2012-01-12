@@ -206,7 +206,7 @@ value ml_compile_shader(value stype,value shader_src) {
 	return res;
 }
 
-GLuint currentShaderProgram = -1;
+GLuint currentShaderProgram = 0;
 
 /*
 static char   vertexAttribPosition = 0;
@@ -275,7 +275,7 @@ static void program_finalize(value program) {
 	sprogram *p = SPROGRAM(program);
 	printf("finalize prg: %d\n",p->program);
 	if (p->uniforms != NULL) caml_stat_free(p->uniforms);
-  if( p->program == currentShaderProgram ) currentShaderProgram = -1;
+  if( p->program == currentShaderProgram ) currentShaderProgram = 0;
 	glDeleteProgram(p->program);
 	caml_stat_free(p);
 }
@@ -375,7 +375,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 	int uniformsLen = Wosize_val(uniforms);
 	if (uniformsLen > 0) {
 		printf("uniformsLen = %d\n",uniformsLen);
-		glUseProgram(program);
+		lgGLUseProgram(program);
 		sp->uniforms = (GLint*)caml_stat_alloc(sizeof(GLuint)*uniformsLen);
 		GLuint loc;
 		for (int idx = 0; idx < uniformsLen; idx++) {
@@ -404,7 +404,6 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 				};
 			};
 		};
-		glUseProgram(0);
 	} else sp->uniforms = NULL;
 	checkGLErrors("uniform binded");
 	sp->program = program;

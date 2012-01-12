@@ -343,7 +343,7 @@ value ml_glow_resize(value framebufferID,value textureID, value width,value heig
 	caml_stat_free(rbfs);
 	glUseProgram(0);
 	boundTextureID = 0;
-	currentShaderProgram = -1;
+	currentShaderProgram = 0;
 	set_framebuffer_state(&fstate);
 }
 
