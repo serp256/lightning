@@ -3,6 +3,7 @@ value init : string -> unit;
 module Session : 
   sig
     value permissions : ref (list string);
+    value get_auth_token : unit -> string;
   end;
 
 
@@ -32,6 +33,3 @@ module Dialog :
     value apprequest : ?message:string -> ?recipients:list string -> ?filter:users_filter -> ?title:string -> ?delegate:option delegate -> unit -> unit;
   end;
   
-
-
-

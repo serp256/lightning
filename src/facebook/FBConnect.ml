@@ -19,6 +19,9 @@ module Session = struct
   value permissions = ref [];
 
   external ios_facebook_check_auth_token : unit -> bool = "ml_facebook_check_auth_token";
+  external ios_facebook_get_auth_token : unit -> string = "ml_facebook_get_auth_token";
+
+  value get_auth_token = ios_facebook_get_auth_token;
 
   value facebook_logged_in () = 
   (
@@ -273,6 +276,7 @@ value init appid = ();
 
 module Session = struct
   value permissions = ref [];
+  value get_auth_token () = "";
 end;
 
 

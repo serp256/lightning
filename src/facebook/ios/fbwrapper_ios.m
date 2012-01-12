@@ -35,6 +35,18 @@ value ml_facebook_check_auth_token() {
 }
 
 
+
+value ml_facebook_get_auth_token() {
+  CAMLparam0();
+  
+  if (fbcontroller != nil) {
+    CAMLreturn(caml_copy_string([fbcontroller.facebook.accessToken UTF8String]));
+  } else {
+    CAMLreturn(caml_copy_string(""));
+  }
+  
+}
+
 /*
  * TODO: add permissions
  */
@@ -107,4 +119,6 @@ void ml_facebook_open_apprequest_dialog(value ml_message, value ml_recipients, v
   CAMLreturn0;
 } 
  
- 
+
+
+
