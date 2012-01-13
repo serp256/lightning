@@ -277,6 +277,8 @@ value init appid = ();
 module Session = struct
   value permissions = ref [];
   value get_auth_token () = "";
+  value authorize _ = ();
+  value with_auth_check _ = ();
 end;
 
 

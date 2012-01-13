@@ -4,6 +4,8 @@ module Session :
   sig
     value permissions : ref (list string);
     value get_auth_token : unit -> string;
+    value authorize : list string -> unit;
+    value with_auth_check : (bool -> unit) -> unit;
   end;
 
 
