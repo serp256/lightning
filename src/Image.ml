@@ -205,8 +205,9 @@ module Make(D:DisplayObjectT.M) = struct
         (t,image)
       with [ Not_found -> 
         let t = gmake texture size Texture.rendered in
-        let lid = 
+        let lid =
           texture#addOnChangeListener begin fun texture ->
+            let () = debug:glow "texture changed remake glow" in
             let t = GCache.find cache (texture,size) in
             let t' = gmake texture size (fun w h -> (t.texture#resize w h; t.texture)) in
             t.matrix := t'.matrix
@@ -220,7 +221,6 @@ module Make(D:DisplayObjectT.M) = struct
         )
       ];
 
-(*     value render t image transform alpha = *)
 
   end;
 
@@ -259,13 +259,15 @@ module Make(D:DisplayObjectT.M) = struct
               [ `Glow glow ->
                 (
                   hasGlow.val := True;
+                  (*
                   match glowFilter with
                   [ Some g when g.params = glow -> ()
-                  | _ ->
+                  | _ -> 
                       let (gtex,image) = Glow.create texture glow.Filters.glowSize in
                       let gl = { gtex; image; prg = Programs.Glow.create glow; params = glow} in
                       glowFilter := Some gl
                   ];
+                  *)
                   c
                 )
               | `ColorMatrix m -> `cmatrix m
@@ -425,9 +427,8 @@ module Make(D:DisplayObjectT.M) = struct
         | None -> ()
         ];
         Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image
-      );
-
-    end;
+      ); 
+  end;
 
   value memo : WeakMemo.c _c = new WeakMemo.c 1;
 

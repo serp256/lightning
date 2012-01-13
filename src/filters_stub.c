@@ -88,7 +88,7 @@ GLuint create_program(GLuint vShader, GLuint fShader, int cntattribs, char* attr
 }
 
 GLuint simple_program() {
-	GLuint prg = 0;
+	static GLuint prg = 0;
 	if (prg == 0) {
 		printf("create new program\n");
 		char *attribs[2] = {"a_position","a_texCoord"};
@@ -172,7 +172,6 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, GLuint w, GLuint h,float s
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,textureID);
 
-	// пропорции относительно центра здесь нужно хитрый расчет сделать с учетом POT, здесь точно что-то не так ну хуй с ней пока мозги не соображают
 	double x = ((double)w / rb->width) * sx; // тут что-то не так нахуй блядь
 	double y = ((double)h / rb->height) * sy;
 	printf("x:%f,y:%f\n",x,y);
@@ -287,7 +286,7 @@ value ml_filter_glow(value color, value strength) {
 	return make_filter(&glowFilter,&glowFilterFinalize,gd);
 }
 
-value ml_glow_resize(value framebufferID,value textureID, value width,value height, value count) {
+void ml_glow_resize(value framebufferID,value textureID, value width,value height, value count) {
 	/* не понятно как тут разрулица надо */ 
 	renderbuffer_t rb;
 	rb.fbid = Long_val(framebufferID);
@@ -307,7 +306,7 @@ value ml_glow_resize(value framebufferID,value textureID, value width,value heig
 		rb.clp.width = 1.;
 		rb.clp.height = 1.;
 	}; */
-	setNotPMAGLBlend();
+	//setNotPMAGLBlend();
 	int gsize = Int_val(count);
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);

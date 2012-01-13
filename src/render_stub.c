@@ -1,13 +1,15 @@
-
 #include "render_stub.h"
 #include <kazmath/GL/matrix.h>
 
 void checkGLErrors(char *where) {
 	GLenum error = glGetError();
+	int is_error = 0;
 	while (error != GL_NO_ERROR) {
 		printf("%s: gl error: %d\n",where,error);
 		error = glGetError();
+		is_error = 1;
 	};
+	if (is_error) exit(1);
 }
 
 //////////////////////////////////
@@ -21,7 +23,7 @@ void checkGLErrors(char *where) {
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
 
 GLuint boundTextureID = 0;
-int PMA = 0;
+int PMA = -1;
 
 void setPMAGLBlend () {
 	if (PMA != 1) {
@@ -37,11 +39,11 @@ void setNotPMAGLBlend () {
 	};
 }
 
-#define setDefaultGLBlend setPMAGLBlend
+#define setDefaultGLBlend setNotPMAGLBlend
 
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
 	printf("set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
-  glDisable(GL_DEPTH_TEST);
+  //glDisable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   
 	glViewport(left, top, right, bottom);
@@ -840,6 +842,7 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Long_val(width), Long_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
 	glBindTexture(GL_TEXTURE_2D,0);
+	boundTextureID = 0;
 	GLuint mFramebuffer;
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
@@ -854,8 +857,8 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 		caml_failwith("failed to create frame buffer for render texture");
 	};
 	color3F c = COLOR3F_FROM_INT(Int_val(color));
-	glClearColor(c.r,c.g,c.b,Double_val(alpha));
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(c.r,c.g,c.b,(GLclampf)Double_val(alpha));
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	printf("old buffer: %d\n",oldBuffer);
 	value result = caml_alloc_small(2,0);
@@ -881,7 +884,7 @@ void get_framebuffer_state(framebuffer_state *s) {
 	s->height = viewPort[3];
 }
 
-value ml_activate_framebuffer(value framebufferID,value width,value height,value matrix) {
+value ml_activate_framebuffer(value framebufferID,value width,value height,value offset) {
 	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 
 	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
@@ -903,6 +906,9 @@ value ml_activate_framebuffer(value framebufferID,value width,value height,value
 
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPushMatrix();
+	kmGLLoadIdentity();
+	//if (offset != 1) kmGLTranslatef(Double_field(Field(offset,0),0),Double_field(Field(offset,0),1),-10);
+	/*
 	if (matrix != 1) {
 		value mtrx = Field(matrix,0);
 		kmMat4 transfrom4x4;
@@ -913,11 +919,14 @@ value ml_activate_framebuffer(value framebufferID,value width,value height,value
 		m[0] = (GLfloat)Double_field(mtrx,0); m[4] = (GLfloat)Double_field(mtrx,2); m[12] = (GLfloat)Double_field(mtrx,4);
 		m[1] = (GLfloat)Double_field(mtrx,1); m[5] = (GLfloat)Double_field(mtrx,3); m[13] = (GLfloat)Double_field(mtrx,5);
 		kmGLLoadMatrix(&transfrom4x4);
-	} else kmGLLoadIdentity();
+	} else 
+	*/
 
-	boundTextureID = 0;
-	setPMAGLBlend();
-
+  //glDisable(GL_DEPTH_TEST);
+	//glEnable(GL_BLEND);
+	//lgGLBindTexture(0,0);
+	setNotPMAGLBlend();
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 	return (value)s; 
 }
 
@@ -933,14 +942,16 @@ void ml_deactivate_framebuffer(value ostate) {
 	kmGLPopMatrix();
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPopMatrix();
-	boundTextureID = 0;
+	//boundTextureID = 0;
 	setDefaultGLBlend();
+	//glEnable(GL_BLEND);
 	caml_stat_free(s);
 }
 
 
 void ml_delete_framebuffer(value framebuffer) {
 	GLuint fbID = Long_val(framebuffer);
+	printf("delete framebuffer: %d\n",fbID);
 	glDeleteFramebuffers(1,&fbID);
 }
 

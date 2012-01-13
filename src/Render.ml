@@ -79,7 +79,7 @@ module Filter = struct
 
   type t;
   external glow: int -> int -> t = "ml_filter_glow";
-  external glow_resize: framebufferID -> textureID -> int -> int ->  int -> unit = "ml_glow_resize_byte" "ml_glow_resize";
+  external glow_resize: framebufferID -> textureID -> int -> int ->  int -> unit = "ml_glow_resize";
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
 (*   external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow"; *)
 

@@ -80,14 +80,14 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
           [ None -> 
             let bounds = self#boundsInSpace (Some self) in
             let () = debug "bounds of sprite: [%f:%f:%f:%f]" bounds.Rectangle.x bounds.Rectangle.y bounds.Rectangle.width bounds.Rectangle.height in
-            let tex = Texture.rendered ~color:0x000000 ~alpha:0. bounds.Rectangle.width bounds.Rectangle.height in
+            let tex = Texture.rendered ~color:0xFF0000 bounds.Rectangle.width bounds.Rectangle.height in
             let img = Image.create (tex :> Texture.c) in
             (
               img#setPosPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y};
               img#setFilters filters;
               imageCache := Some {ic = img; tex; valid = False; force = False}
             )
-          | Some {ic; _ } -> ic#setFilters filters
+          | Some {ic; _ } -> () (* ic#setFilters filters *)
           ]
         ];
 
@@ -96,7 +96,8 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
         [ None -> super#render' ?alpha ~transform rect
         | Some ({ic; tex; valid;_} as c) -> 
           (
-            if not valid then 
+            if not valid 
+            then 
               let () = debug "cacheImage not valid" in
               let bounds = self#boundsInSpace (Some self) in
               (
@@ -115,15 +116,16 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
                 tex#draw (fun () ->
                   (
                     Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
-                    Render.clear 0x000000 0.;
-                    super#render' ?alpha ~transform:False rect;
+                    Render.clear 0 0.;
+                    super#render' ~transform:False rect;
                     Render.restore_matrix ();
                   );
                 );
                 c.valid := True; 
-            ) else ();
+              ) 
+            else ();
             if transform then Render.push_matrix self#transformationMatrix else ();
-            ic#render rect;
+            ic#render ?alpha rect;
             if transform then Render.restore_matrix () else ();
           )
         ];

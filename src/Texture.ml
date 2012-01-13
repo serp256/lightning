@@ -281,14 +281,16 @@ value load path : c =
   ];
 
 
+(*
 class type renderObject =
   object
     method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
   end;
+*)
 
 external create_render_texture: int -> int -> float -> int -> int -> (framebufferID*textureID) = "ml_rendertexture_create";
 type framebufferState;
-external activate_framebuffer: framebufferID -> int -> int -> option Matrix.t -> framebufferState = "ml_activate_framebuffer";
+external activate_framebuffer: framebufferID -> int -> int -> option Point.t -> framebufferState = "ml_activate_framebuffer";
 external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
 external delete_framebuffer: framebufferID -> unit = "ml_delete_framebuffer";
 external resize_texture: textureID -> int -> int -> unit = "ml_resize_texture";
@@ -308,23 +310,23 @@ class type rendered =
 value glRGBA = 0x1908;
 value glRGB = 0x1907;
 
-value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered = (*{{{*)
-  let iw = truncate width in
-  let iw = if (float iw) < width then iw + 1 else iw in
-  let ih = truncate height in
-  let ih = if (float ih) < height then ih + 1 else ih in
+value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered = (* make it fucking int {{{*)
+  let iw = truncate (width +. 0.5) in
+  let ih = truncate (height +. 0.5) in
   let legalWidth = nextPowerOfTwo iw
   and legalHeight = nextPowerOfTwo ih in
   let (framebufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
-  let (clipping,matrix) = 
+  let (clipping,offset) = 
     let flw = float legalWidth and flh = float legalHeight in
     if flw <> width || flh <> height 
     then 
-      let x = (flw -. width) /. 2.
-      and y = (flh -. height) /. 2. in
+      let () = debug "clipping: [%f:%f] -> [%d:%d]" width height legalWidth legalHeight in
+      let offset = {Point.x = (flw -. width) /. 2.; y = (flh -. height) /. 2. } in
       (
-        Some (Rectangle.create (x /. flw) (y /. flh) (width /. flw) (height /. flh)),
-        Some (Matrix.create ~translate:{Point.x=x;y} ())
+        Some (Rectangle.create 0. 0. (width /. flw) (height /. flh)),
+(*         Some (Rectangle.create (x /. flw) (y /. flh) (width /. flw) (height /. flh)), *)
+        Some offset
+(*         Some (Matrix.create ~translate:{Point.x=x;y} ()) *)
       )
     else (None,None)
   in
@@ -334,14 +336,14 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     value mutable clipping = clipping;
     value mutable width = width;
     value mutable legalWidth = legalWidth;
-    value mutable matrix = matrix;
+    value mutable offset = offset;
     method realWidth = legalWidth;
     method width = width;
     value mutable height = height;
     value mutable legalHeight = legalHeight;
     method realHeight = legalHeight;
     method height = height;
-    method hasPremultipliedAlpha = False;
+    method hasPremultipliedAlpha = True;
     method scale = 1.;
     method textureID = textureID;
     method base : option c = None;
@@ -366,10 +368,8 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method resize w h =
       if w <> width || h <> height
       then
-        let iw = truncate w in
-        let iw = if (float iw) < w then iw + 1 else iw in
-        let ih = truncate h in
-        let ih = if (float ih) < h then ih + 1 else ih in
+        let iw = truncate (w +. 0.5) in
+        let ih = truncate (h +. 0.5) in
         let legalWidth' = nextPowerOfTwo iw
         and legalHeight' = nextPowerOfTwo ih in
         (
@@ -385,12 +385,12 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
             let x = (flw -. w ) /. 2.
             and y = (flh -. h) /. 2. in
             (
-              matrix := Some (Matrix.create ~translate:{Point.x = x; y} ());
+(*               matrix := Some (Matrix.create ~translate:{Point.x = x; y} ()); *)
               clipping := Some (Rectangle.create (x /. flw) (y /. flh) (w /. flw) (h /. flh))
             )
           else 
           (
-            matrix := None;
+(*             matrix := None; *)
             clipping := None; 
           );
           self#changed();
@@ -410,7 +410,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method draw f = 
       match isActive with
       [ False ->
-        let oldState = activate_framebuffer framebufferID legalWidth legalHeight matrix in
+        let oldState = activate_framebuffer framebufferID (truncate width) (truncate height) offset in
         (
           debug "buffer activated";
           isActive := True;
