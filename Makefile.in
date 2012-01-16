@@ -1,4 +1,3 @@
-
 lib: 
 	$(MAKE) -C src $(LIB)
 
@@ -11,8 +10,8 @@ debug:
 
 INSTALL_OPTS = 
 
-BYTE_FILES = src/lightning.cma src/dlllightning.so
-NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a
+BYTE_FILES = src/lightning.cma src/dlllightning.so src/facebook/fbconnect.cma src/facebook/dllfbconnect.so 
+NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a src/facebook/fbconnect.cmxa src/facebook/libfbconnect.a src/facebook/fbconnect.a
 SYNTAX_FILES = src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo
 INSTALL_FILES = 
 
@@ -34,7 +33,7 @@ endif
 
 install: lib 
 	cp $(META) META
-	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli $(INSTALL_OPTS) 
+	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli src/facebook/*.mli src/facebook/*.cmi $(INSTALL_OPTS) 
 
 uninstall:
 	sudo $(OCAMLFIND) remove lightning
@@ -48,3 +47,4 @@ doc:
 
 clean: 
 	$(MAKE) -C src clean
+	$(MAKE) -C src/facebook clean

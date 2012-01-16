@@ -3,6 +3,13 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm"
 
+package "facebook" (
+  description="Facebook API"
+  archive(byte) = "fbconnect.cma"
+  archive(native) = "fbconnect.cmxa"
+)
+
+
 package "syntax" (
 	package "prop" (
 		description = "Syntactic sugars make obj props for tween"

@@ -14,9 +14,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package extlib -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma
+byte: lightning.cma fbconnect.cma
 native: MLDEPFLAGS += -native
-native: lightning.cmxa
+native: lightning.cmxa fbconnect.cmxa
 syntax: syntax/pa_prop.cmo
 
 
@@ -111,6 +111,12 @@ lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJ
 
 lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
 	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
+
+fbconnect.cma:
+	make -C facebook fbconnect.cma
+
+fbconnect.cmxa:
+	make -C facebook fbconnect.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
