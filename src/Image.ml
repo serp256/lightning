@@ -401,6 +401,7 @@ module Make(D:DisplayObjectT.M) = struct
 
       method private updateSize () = 
       (
+        debug "update image size: %d" texture#textureID;
         Render.Image.update image texture#width texture#height texture#rootClipping;
         if texFlipX then Render.Image.flipTexX image else ();
         if texFlipY then Render.Image.flipTexY image else ();
@@ -409,6 +410,7 @@ module Make(D:DisplayObjectT.M) = struct
 
       method onTextureEvent (ev:Texture.event) _ = 
       (
+        debug "texture %d changed" texture#textureID;
         match ev with
         [ `RESIZE -> self#updateSize()
         | _ -> ()
@@ -436,10 +438,10 @@ module Make(D:DisplayObjectT.M) = struct
           if ot#width <> nt#width || ot#height <> nt#height
           then self#updateSize ()
           else Render.Image.update image texture#width texture#height texture#rootClipping;
-          texture#addRenderer (self :> Texture.renderer);
+          nt#addRenderer (self :> Texture.renderer);
           match glowFilter with
           [ Some g -> 
-            let (gtex,image) = Glow.create texture g.params.Filters.glowSize in
+            let (gtex,image) = Glow.create nt g.params.Filters.glowSize in
             let gl = { (g) with gtex; image } in
             glowFilter := Some gl
           | None -> ()
@@ -448,7 +450,7 @@ module Make(D:DisplayObjectT.M) = struct
 
       method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
         match targetCoordinateSpace with
-        [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height (* FIXME!!! optimization *)
+        [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height (* FIXME!!! when rotate incorrect optimization *)
         | _ -> 
           (*
           let open Point in

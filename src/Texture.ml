@@ -379,13 +379,10 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
           else ();
           legalWidth := legalWidth'; legalHeight := legalHeight';
           let flw = float legalWidth' and flh = float legalHeight' in
-          if flw <> w || flh <> h 
-          then 
-            let x = (flw -. w ) /. 2.
-            and y = (flh -. h) /. 2. in
-            clipping := Some (Rectangle.create (x /. flw) (y /. flh) (w /. flw) (h /. flh))
-          else 
-            clipping := None; 
+          clipping :=
+            if flw <> w || flh <> h 
+            then Some (Rectangle.create 0. 0. (w /. flw) (h /. flh))
+            else None; 
           Renderers.iter (fun r -> r#onTextureEvent `RESIZE (self :> c)) renderers;
         )
       else ();

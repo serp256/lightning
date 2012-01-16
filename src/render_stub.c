@@ -36,10 +36,10 @@ void setPMAGLBlend () {
 void setNotPMAGLBlend () {
 	if (PMA != 0) {
 		if (separateBlend) {
-			printf("set separate not pma blend\n");
+			//printf("set separate not pma blend\n");
 			glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
 		} else {
-			printf("set odinary not pma blend\n");
+			//printf("set odinary not pma blend\n");
 			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		};
 		PMA = 0;
@@ -858,7 +858,7 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	glGenFramebuffers(1, &mFramebuffer);
-	printf("generated new framebuffer: %d\n",mFramebuffer);
+	//printf("generated new framebuffer: %d\n",mFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
 	checkGLErrors("bind framebuffer");
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
@@ -871,7 +871,7 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	glClearColor(c.r,c.g,c.b,(GLclampf)Double_val(alpha));
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
-	printf("old buffer: %d\n",oldBuffer);
+	//printf("old buffer: %d\n",oldBuffer);
 	value result = caml_alloc_small(2,0);
 	Field(result,0) = Val_long(mFramebuffer);
 	Field(result,1) = Val_long(mTextureID);
@@ -896,7 +896,7 @@ void get_framebuffer_state(framebuffer_state *s) {
 }
 
 value ml_activate_framebuffer(value framebufferID,value width,value height) {
-	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
+	//printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 
 	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
 	get_framebuffer_state(s);
@@ -961,7 +961,7 @@ void ml_deactivate_framebuffer(value ostate) {
 
 void ml_delete_framebuffer(value framebuffer) {
 	GLuint fbID = Long_val(framebuffer);
-	printf("delete framebuffer: %d\n",fbID);
+	//printf("delete framebuffer: %d\n",fbID);
 	glDeleteFramebuffers(1,&fbID);
 }
 

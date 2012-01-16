@@ -60,7 +60,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
 
       method! boundsChanged () = 
       (
-        debug "%s bounds changed" self#name;
+(*         debug "%s bounds changed" self#name; *)
         match imageCache with
         [ Some c -> c.valid := False
         | None -> ()

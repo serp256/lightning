@@ -150,12 +150,12 @@ renderbuffer_t* create_renderbuffer(GLuint width,GLuint height, renderbuffer_t *
 	//r->clp = (clipping){0.,0.,(width / legalWidth),(height/legalHeight)};
   r->width = width;
   r->height = height;
-	printf("created new fb: %d with %d\n",fbid,rtid);
+	//printf("created new fb: %d with %d\n",fbid,rtid);
   return r;
 }
 
 void delete_renderbuffer(renderbuffer_t *rb) {
-	printf("delete rb: %d - %d\n",rb->fbid,rb->tid);
+	//printf("delete rb: %d - %d\n",rb->fbid,rb->tid);
 	glDeleteTextures(1,&rb->tid);
 	glDeleteFramebuffers(1,&rb->fbid);
 	printf("delete successfully\n");
@@ -167,14 +167,14 @@ static GLfloat texCoords[4][2] = {{0.,0.},{1.,0.},{0.,1.},{1.,1.}};
 void drawTexture(renderbuffer_t *rb,GLuint textureID, GLuint w, GLuint h,float sx,float sy) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
-	printf("rb size: %d:%d\n",rb->width,rb->height);
+	//printf("rb size: %d:%d\n",rb->width,rb->height);
   glViewport(0, 0,rb->width,rb->height);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,textureID);
 
 	double x = ((double)w / rb->width) * sx; // тут что-то не так нахуй блядь
 	double y = ((double)h / rb->height) * sy;
-	printf("x:%f,y:%f\n",x,y);
+	//printf("x:%f,y:%f\n",x,y);
 	quads[0][0] = -x;
 	quads[0][1] = y;
 	quads[1][0] = x;
@@ -323,7 +323,7 @@ void ml_glow_resize(value framebufferID,value textureID, value width,value heigh
 		w >>= 1;
 		h >>= 1;
 		create_renderbuffer(w,h,rbfp);
-		printf("resize forward\n");
+		//printf("resize forward\n");
 		drawTexture(rbfp,crb->tid,crb->width,crb->height,0.5,0.5);
 		crb = rbfp;
 		rbfp += 1;
