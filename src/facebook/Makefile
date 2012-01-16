@@ -7,6 +7,11 @@ MLFLAGS += -package ojson,extLib
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
+MLSOURCES = FBConnect.ml
+MLOBJSN = $(MLSOURCES:.ml=.cmx)
+MLOBJS = $(MLSOURCES:.ml=.cmo)
+IFACES = $(MLSOURCES:.ml=.cmi)
+
 ifeq ($(PLATFORM),ios)
 FAKELIBS  =
 CFLAGS  += -DDEBUG -DIOS -Iios/sdk
@@ -21,32 +26,25 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-framework\ UIKit' \
 		   -cclib '-framework\ QuartzCore' \
 		   -cclib '-framework\ CoreGraphics' 
-else
-
-FAKELIBS  = fbconnect.a libfbconnect.a dllfbconnect.so
-
-fbconnect.a:
-	touch fbconnect.a
-
-libfbconnect.a:
-	touch libfbconnect.a
-
-dllfbconnect.so:
-	touch dllfbconnect.so
-endif
-
-
-
-MLSOURCES = FBConnect.ml
-MLOBJSN = $(MLSOURCES:.ml=.cmx)
-MLOBJS = $(MLSOURCES:.ml=.cmo)
-IFACES = $(MLSOURCES:.ml=.cmi)
 
 fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
 	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
 
 fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
 	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+else
+
+fbconnect.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o fbconnect.cmxa $(MLOBJSN)
+
+fbconnect.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o fbconnect.cma $(MLOBJS)
+
+endif
+
+
+
+
 
 
 .PHONY : clean

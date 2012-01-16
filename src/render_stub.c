@@ -24,6 +24,7 @@ void checkGLErrors(char *where) {
 
 GLuint boundTextureID = 0;
 int PMA = -1;
+int separateBlend = 0;
 
 void setPMAGLBlend () {
 	if (PMA != 1) {
@@ -34,7 +35,13 @@ void setPMAGLBlend () {
 
 void setNotPMAGLBlend () {
 	if (PMA != 0) {
-		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		if (separateBlend) {
+			printf("set separate not pma blend\n");
+			glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+		} else {
+			printf("set odinary not pma blend\n");
+			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		};
 		PMA = 0;
 	};
 }
@@ -314,7 +321,11 @@ void lgGLBindTexture(GLuint newTextureID, int newPMA) {
 		boundTextureID = newTextureID;
 	};
 	if (newPMA != PMA) {
-		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
+			if (separateBlend)
+				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+			else
+				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		PMA = newPMA;
 	}
 }
@@ -884,7 +895,7 @@ void get_framebuffer_state(framebuffer_state *s) {
 	s->height = viewPort[3];
 }
 
-value ml_activate_framebuffer(value framebufferID,value width,value height,value offset) {
+value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 
 	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
@@ -921,12 +932,12 @@ value ml_activate_framebuffer(value framebufferID,value width,value height,value
 		kmGLLoadMatrix(&transfrom4x4);
 	} else 
 	*/
-
   //glDisable(GL_DEPTH_TEST);
 	//glEnable(GL_BLEND);
 	//lgGLBindTexture(0,0);
-	setNotPMAGLBlend();
-	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+	//setNotPMAGLBlend();
+	separateBlend = 1;
+	PMA = -1;
 	return (value)s; 
 }
 
@@ -942,9 +953,8 @@ void ml_deactivate_framebuffer(value ostate) {
 	kmGLPopMatrix();
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPopMatrix();
-	//boundTextureID = 0;
-	setDefaultGLBlend();
-	//glEnable(GL_BLEND);
+	separateBlend = 0;
+	PMA = -1;
 	caml_stat_free(s);
 }
 

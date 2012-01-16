@@ -307,6 +307,7 @@ void ml_glow_resize(value framebufferID,value textureID, value width,value heigh
 		rb.clp.height = 1.;
 	}; */
 	//setNotPMAGLBlend();
+	glDisable(GL_BLEND);
 	int gsize = Int_val(count);
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -344,6 +345,7 @@ void ml_glow_resize(value framebufferID,value textureID, value width,value heigh
 	boundTextureID = 0;
 	currentShaderProgram = 0;
 	set_framebuffer_state(&fstate);
+	glEnable(GL_BLEND);
 }
 
 

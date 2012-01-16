@@ -101,6 +101,8 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
               let () = debug "cacheImage not valid" in
               let bounds = self#boundsInSpace (Some self) in
               (
+                tex#resize bounds.Rectangle.width bounds.Rectangle.height;
+                (*
                 if bounds.Rectangle.width <> tex#width || bounds.Rectangle.height <> tex#height
                 then 
                 (
@@ -109,6 +111,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
                   ic#updateSize();
                 )
                 else ();
+                *)
                 let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
                 if ip <> ic#pos
                 then ic#setPosPoint ip

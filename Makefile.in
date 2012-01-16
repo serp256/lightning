@@ -10,21 +10,21 @@ debug:
 
 INSTALL_OPTS = 
 
-BYTE_FILES = src/lightning.cma src/dlllightning.so src/facebook/fbconnect.cma src/facebook/dllfbconnect.so 
-NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a src/facebook/fbconnect.cmxa src/facebook/libfbconnect.a src/facebook/fbconnect.a
+BYTE_FILES = src/lightning.cma src/dlllightning.so 
+NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a 
 SYNTAX_FILES = src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo
 INSTALL_FILES = 
 
-byte: INSTALL_FILES += BYTE_FILES
-native: INSTALL_FILES += NATIVE_FILES
-syntax: INSTALL_FILES += SYNTAX_FILES
-
 ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(BYTE_FILES)
+	INSTALL_FILES += $(wildcard src/facebook/*.cma)
+	INSTALL_FILES += $(wildcard src/facebook/*.so)
 endif
 
 ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(NATIVE_FILES)
+	INSTALL_FILES += $(wildcard src/facebook/*.cmxa)
+	INSTALL_FILES += $(wildcard src/facebook/*.a)
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))

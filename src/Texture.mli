@@ -15,7 +15,13 @@ type textureFormat =
   ];
 
 
-class type c = 
+type event = [= `RESIZE | `CHANGE ]; 
+
+class type renderer = 
+  object
+    method onTextureEvent: event -> c -> unit;
+  end
+and c =
   object
     method width: float;
     method height: float;
@@ -28,8 +34,8 @@ class type c =
 (*     method update: string -> unit; *)
     method release: unit -> unit;
     method subTexture: Rectangle.t -> c;
-    method addOnChangeListener: (c -> unit) -> int;
-    method removeOnChangeListener: int -> unit;
+    method addRenderer: renderer -> unit;
+    method removeRenderer: renderer -> unit;
   end;
 
 
@@ -42,6 +48,7 @@ class type rendered =
     inherit c;
     method realWidth: int;
     method realHeight: int;
+    method setPremultipliedAlpha: bool -> unit;
     method framebufferID: LightCommon.framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;

@@ -31,7 +31,16 @@ type textureInfo =
     textureID: textureID;
   };
 
-class type c = 
+
+
+
+type event = [= `RESIZE | `CHANGE ]; 
+
+class type renderer = 
+  object
+    method onTextureEvent: event -> c -> unit;
+  end
+and c =
   object
     method width: float;
     method height: float;
@@ -43,8 +52,8 @@ class type c =
     method rootClipping: option Rectangle.t;
     method release: unit -> unit;
     method subTexture: Rectangle.t -> c;
-    method addOnChangeListener: (c -> unit) -> int;
-    method removeOnChangeListener: int -> unit;
+    method addRenderer: renderer -> unit;
+    method removeRenderer: renderer -> unit;
   end;
 
 
@@ -153,8 +162,8 @@ class subtexture region baseTexture =
     method releaseSubTexture () = baseTexture#releaseSubTexture ();
     method release () = let () = debug:gc "release subtexture" in baseTexture#releaseSubTexture ();
     method setTextureID tid = baseTexture#setTextureID tid;
-    method addOnChangeListener (_:(c -> unit)) = 0;
-    method removeOnChangeListener _ = ();
+    method addRenderer (_:renderer) = ();
+    method removeRenderer (_:renderer) = ();
     initializer Gc.finalise (fun t -> t#release ()) self;
   end;
 
@@ -225,8 +234,8 @@ value make textureInfo =
     method rootClipping = clipping;
 (*       method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *) *)
     method subTexture region = ((new subtexture region self) :> c);
-    method addOnChangeListener (_:(c -> unit)) = 0;
-    method removeOnChangeListener _ = ();
+    method addRenderer (_:renderer) = ();
+    method removeRenderer (_:renderer) = ();
     initializer Gc.finalise (fun t -> t#release ()) self;
   end;
 
@@ -290,7 +299,7 @@ class type renderObject =
 
 external create_render_texture: int -> int -> float -> int -> int -> (framebufferID*textureID) = "ml_rendertexture_create";
 type framebufferState;
-external activate_framebuffer: framebufferID -> int -> int -> option Point.t -> framebufferState = "ml_activate_framebuffer";
+external activate_framebuffer: framebufferID -> int -> int -> framebufferState = "ml_activate_framebuffer";
 external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
 external delete_framebuffer: framebufferID -> unit = "ml_delete_framebuffer";
 external resize_texture: textureID -> int -> int -> unit = "ml_resize_texture";
@@ -300,6 +309,7 @@ class type rendered =
     inherit c;
     method realWidth:int;
     method realHeight:int;
+    method setPremultipliedAlpha: bool -> unit;
     method framebufferID: framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
@@ -310,25 +320,21 @@ class type rendered =
 value glRGBA = 0x1908;
 value glRGB = 0x1907;
 
+module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
+
 value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered = (* make it fucking int {{{*)
   let iw = truncate (width +. 0.5) in
   let ih = truncate (height +. 0.5) in
   let legalWidth = nextPowerOfTwo iw
   and legalHeight = nextPowerOfTwo ih in
   let (framebufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
-  let (clipping,offset) = 
+  let clipping = 
     let flw = float legalWidth and flh = float legalHeight in
     if flw <> width || flh <> height 
     then 
       let () = debug "clipping: [%f:%f] -> [%d:%d]" width height legalWidth legalHeight in
-      let offset = {Point.x = (flw -. width) /. 2.; y = (flh -. height) /. 2. } in
-      (
-        Some (Rectangle.create 0. 0. (width /. flw) (height /. flh)),
-(*         Some (Rectangle.create (x /. flw) (y /. flh) (width /. flw) (height /. flh)), *)
-        Some offset
-(*         Some (Matrix.create ~translate:{Point.x=x;y} ()) *)
-      )
-    else (None,None)
+      Some (Rectangle.create 0. 0. (width /. flw) (height /. flh))
+    else None
   in
   object(self)
     value mutable isActive = False;
@@ -336,14 +342,15 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     value mutable clipping = clipping;
     value mutable width = width;
     value mutable legalWidth = legalWidth;
-    value mutable offset = offset;
     method realWidth = legalWidth;
     method width = width;
     value mutable height = height;
     value mutable legalHeight = legalHeight;
     method realHeight = legalHeight;
     method height = height;
-    method hasPremultipliedAlpha = True;
+    value mutable hasPremultipliedAlpha = True;
+    method setPremultipliedAlpha v = hasPremultipliedAlpha := v;
+    method hasPremultipliedAlpha = hasPremultipliedAlpha;
     method scale = 1.;
     method textureID = textureID;
     method base : option c = None;
@@ -351,21 +358,13 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method rootClipping = clipping;
     method subTexture (region:Rectangle.t) : c = assert False;
     method framebufferID = framebufferID;
-    value mutable onChangeListeners = [];
-    value mutable onChangeListenerID = 0;
-    method addOnChangeListener listener = 
-      let id = onChangeListenerID in
-      (
-        onChangeListenerID := onChangeListenerID + 1;
-        onChangeListeners := [ (id,listener) :: onChangeListeners ];
-        id;
-      );
-
-    method removeOnChangeListener id = onChangeListeners := List.remove_assoc id onChangeListeners;
-
-    method private changed () = List.iter (fun (_,l) -> l (self :> c)) onChangeListeners;
+    value renderers = Renderers.create 1;
+    method addRenderer r = Renderers.add renderers r;
+    method removeRenderer r = Renderers.remove renderers r;
+    method private changed () = Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> c)) renderers;
 
     method resize w h =
+      let () = debug "resize %d from %f->%f, %f->%f" textureID width w height h in
       if w <> width || h <> height
       then
         let iw = truncate (w +. 0.5) in
@@ -384,16 +383,10 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
           then 
             let x = (flw -. w ) /. 2.
             and y = (flh -. h) /. 2. in
-            (
-(*               matrix := Some (Matrix.create ~translate:{Point.x = x; y} ()); *)
-              clipping := Some (Rectangle.create (x /. flw) (y /. flh) (w /. flw) (h /. flh))
-            )
+            clipping := Some (Rectangle.create (x /. flw) (y /. flh) (w /. flw) (h /. flh))
           else 
-          (
-(*             matrix := None; *)
             clipping := None; 
-          );
-          self#changed();
+          Renderers.iter (fun r -> r#onTextureEvent `RESIZE (self :> c)) renderers;
         )
       else ();
 
@@ -410,7 +403,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method draw f = 
       match isActive with
       [ False ->
-        let oldState = activate_framebuffer framebufferID (truncate width) (truncate height) offset in
+        let oldState = activate_framebuffer framebufferID (truncate width) (truncate height) in
         (
           debug "buffer activated";
           isActive := True;
