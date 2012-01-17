@@ -322,11 +322,36 @@ value glRGB = 0x1907;
 
 module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
 
+
+
+IFDEF IOS THEN
+value render_texture_size ((w,h) as ok) =
+  if w <= 8 
+  then
+    if w > h
+    then  (w,w) (* incorrect case *)
+    else
+      if h > w * 2 
+      then  (min (h / 2) 16, h) (* incorrect case *)
+      else ok
+  else
+    if h <= 8 
+    then (w,min 16 w)
+    else ok
+;
+
+ELSE
+
+value render_texture_size p = p;
+
+ENDIF;
+
 value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered = (* make it fucking int {{{*)
-  let iw = truncate (width +. 0.5) in
-  let ih = truncate (height +. 0.5) in
+  let iw = truncate (ceil width) in
+  let ih = truncate (ceil height) in
   let legalWidth = nextPowerOfTwo iw
   and legalHeight = nextPowerOfTwo ih in
+  let (legalWidth,legalHeight) = render_texture_size (legalWidth,legalHeight) in
   let (framebufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
   let clipping = 
     let flw = float legalWidth and flh = float legalHeight in
@@ -367,10 +392,11 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       let () = debug "resize %d from %f->%f, %f->%f" textureID width w height h in
       if w <> width || h <> height
       then
-        let iw = truncate (w +. 0.5) in
-        let ih = truncate (h +. 0.5) in
+        let iw = truncate (ceil w) in
+        let ih = truncate (ceil h) in
         let legalWidth' = nextPowerOfTwo iw
         and legalHeight' = nextPowerOfTwo ih in
+        let (legalWidth',legalHeight') = render_texture_size (legalWidth',legalHeight') in
         (
           width := w;
           height := h;
@@ -400,7 +426,8 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method draw f = 
       match isActive with
       [ False ->
-        let oldState = activate_framebuffer framebufferID (truncate width) (truncate height) in
+(*         let oldState = activate_framebuffer framebufferID (truncate width) (truncate height) in *)
+        let oldState = activate_framebuffer framebufferID legalWidth legalHeight in
         (
           debug "buffer activated";
           isActive := True;

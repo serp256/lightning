@@ -1,5 +1,6 @@
 
 #include "render_stub.h"
+#include "math.h"
 
 extern GLuint currentShaderProgram;
 extern GLuint boundTextureID;
@@ -112,44 +113,59 @@ typedef struct {
 typedef struct {
   GLuint fbid;
 	GLuint tid;
-	GLuint width;
-	GLuint height;
+	double width;
+	double height;
+	GLuint realWidth;
+	GLuint realHeight;
+	clipping clp;
 } renderbuffer_t;
 
 // сделать рендер буфер
-renderbuffer_t* create_renderbuffer(GLuint width,GLuint height, renderbuffer_t *r) {
-	printf("try create renderbuffer: %d:%d\n",width,height);
+renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *r) {
+	//printf("try create renderbuffer: %f:%f\n",width,height);
   GLuint rtid;
-	/*
-	GLuint iw = (GLuint)width;
-	if (iw < width) iw++;
-	GLuint ih = (GLuint)height;
-	if (ih < height) ih++;
+	GLuint iw = ceil(width);
+	GLuint ih = ceil(height);
 	GLuint legalWidth = nextPowerOfTwo(iw);
 	GLuint legalHeight = nextPowerOfTwo(ih);
-	*/
+#ifdef IOS
+	if (legalWidth <= 8) {
+    if (legalWidth > legalHeight) legalHeight = legalWidth;
+    else 
+      if (legalHeight > legalWidth * 2) legalWidth = legalHeight/2; 
+			if (legalWidth > 16) legalWidth = 16;
+	} else {
+    if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
+	};
+#endif
+	// need ios fix here 
   glGenTextures(1, &rtid);
   glBindTexture(GL_TEXTURE_2D, rtid);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	checkGLErrors("create renderbuffer texture");
   glBindTexture(GL_TEXTURE_2D,0);
   GLuint fbid;
   glGenFramebuffers(1, &fbid);
   glBindFramebuffer(GL_FRAMEBUFFER, fbid);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
+	checkGLErrors("bind framebuffer with texture");
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    printf("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    printf("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
     return NULL;
   };
   glBindFramebuffer(GL_FRAMEBUFFER,0);
   r->fbid = fbid;
   r->tid = rtid;
-	//r->clp = (clipping){0.,0.,(width / legalWidth),(height/legalHeight)};
+	r->clp = (clipping){0.,0.,(width / legalWidth),(height/legalHeight)};
   r->width = width;
   r->height = height;
+	//printf("framebuffer %d with texture %d of size %d:%d for %f:%f created\n",fbid,rtid,legalWidth,legalHeight,width,height);
+	//r->realWidth = realWidth;
+	//r->realHeight = realHeight;
 	//printf("created new fb: %d with %d\n",fbid,rtid);
   return r;
 }
@@ -158,34 +174,41 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 	//printf("delete rb: %d - %d\n",rb->fbid,rb->tid);
 	glDeleteTextures(1,&rb->tid);
 	glDeleteFramebuffers(1,&rb->fbid);
-	printf("delete successfully\n");
+	//printf("delete successfully\n");
 }
 
 static GLfloat quads[4][2];
 static GLfloat texCoords[4][2] = {{0.,0.},{1.,0.},{0.,1.},{1.,1.}};
 
-void drawTexture(renderbuffer_t *rb,GLuint textureID, GLuint w, GLuint h,float sx,float sy) {
+void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clipping *clp) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
-	//printf("rb size: %d:%d\n",rb->width,rb->height);
-  glViewport(0, 0,rb->width,rb->height);
+	GLsizei bw = ceil(rb->width);
+	GLsizei bh = ceil(rb->height);
+
+
+  glViewport(0, 0,bw,bh);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,textureID);
 
-	double x = ((double)w / rb->width) * sx; // тут что-то не так нахуй блядь
-	double y = ((double)h / rb->height) * sy;
-	//printf("x:%f,y:%f\n",x,y);
-	quads[0][0] = -x;
-	quads[0][1] = y;
-	quads[1][0] = x;
-	quads[1][1] = y;
-	quads[2][0] = -x;
-	quads[2][1] = -y;
-	quads[3][0] = x;
-	quads[3][1] = -y;
+	double dx = ((double)bw - w) / bw;
+	double dy = ((double)bh - h) / bh;
+	double x = w / bw;
+	double y = h / bh;
 
-	/*
-	printf("clp: %f:%f:%f:%f\n",clp->x,clp->y,clp->width,clp->height);
+	//printf("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh);
+
+	//  надо в левый сука угол сместить каким-то хуем блядь нахуй
+	quads[0][0] = -x - dx;
+	quads[0][1] = y - dy;
+	quads[1][0] = x - dx;
+	quads[1][1] = quads[0][1];
+	quads[2][0] = quads[0][0];
+	quads[2][1] = -y - dy;
+	quads[3][0] = quads[1][0];
+	quads[3][1] = quads[2][1];
+
+	//printf("clp: %f:%f:%f:%f\n",clp->x,clp->y,clp->width,clp->height);
 	texCoords[0][0] = clp->x;
 	texCoords[0][1] = clp->y;
 	texCoords[1][0] = clp->x + clp->width;
@@ -194,7 +217,6 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, GLuint w, GLuint h,float s
 	texCoords[2][1] = clp->y + clp->height;
 	texCoords[3][0] = clp->x + clp->width;
 	texCoords[3][1] = clp->y + clp->height;
-	*/
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 	glVertexAttribPointer(lgVertexAttrib_Position,2,GL_FLOAT,GL_FALSE,0,quads);
@@ -286,14 +308,13 @@ value ml_filter_glow(value color, value strength) {
 	return make_filter(&glowFilter,&glowFilterFinalize,gd);
 }
 
-void ml_glow_resize(value framebufferID,value textureID, value width,value height, value count) {
+void ml_glow_resize(value framebufferID,value textureID, value width, value height, value clip, value count) {
 	/* не понятно как тут разрулица надо */ 
 	renderbuffer_t rb;
 	rb.fbid = Long_val(framebufferID);
 	rb.tid = Long_val(textureID);
-	rb.width = Long_val(width);
-	rb.height = Long_val(height);
-	/*
+	rb.width = Double_val(width);
+	rb.height = Double_val(height);
 	if (clip != 1) {
 		value c = Field(clip,0);
 		rb.clp.x = Double_field(c,0);
@@ -305,8 +326,7 @@ void ml_glow_resize(value framebufferID,value textureID, value width,value heigh
 		rb.clp.y = 0;
 		rb.clp.width = 1.;
 		rb.clp.height = 1.;
-	}; */
-	//setNotPMAGLBlend();
+	};
 	glDisable(GL_BLEND);
 	int gsize = Int_val(count);
 	framebuffer_state fstate;
@@ -317,14 +337,15 @@ void ml_glow_resize(value framebufferID,value textureID, value width,value heigh
 	renderbuffer_t *crb = &rb;
 	renderbuffer_t *rbfs = caml_stat_alloc((gsize-1)*sizeof(renderbuffer_t));
 	int i;
-	GLuint w = rb.width, h = rb.height;
+	double w = rb.width, h = rb.height;
 	renderbuffer_t *rbfp = rbfs;
 	for (i = 1; i < gsize; i++) {
-		w >>= 1;
-		h >>= 1;
+		w /= 2;
+		h /= 2;
 		create_renderbuffer(w,h,rbfp);
-		//printf("resize forward\n");
-		drawTexture(rbfp,crb->tid,crb->width,crb->height,0.5,0.5);
+		checkGLErrors("create renderbuffer");
+		drawTexture(rbfp,crb->tid,w,h,&rbfp->clp);
+		checkGLErrors("draw forward");
 		crb = rbfp;
 		rbfp += 1;
 	};
@@ -332,13 +353,13 @@ void ml_glow_resize(value framebufferID,value textureID, value width,value heigh
 	renderbuffer_t *prbfp;
 	for (i = 2; i < gsize ; i++) {
 		prbfp = rbfp - 1;
-		drawTexture(prbfp,rbfp->tid,rbfp->width,rbfp->height,2,2);
+		drawTexture(prbfp,rbfp->tid,prbfp->width,prbfp->height,&rbfp->clp);
 		checkGLErrors("draw back");
 		delete_renderbuffer(rbfp);
 		rbfp = prbfp;
 	};
 	checkGLErrors("before last draw");
-	drawTexture(&rb,rbfs->tid,rbfs->width,rbfs->height,2,2);
+	drawTexture(&rb,rbfs->tid,rb.width,rb.height,&rbfp->clp);
 	delete_renderbuffer(rbfs);
 	caml_stat_free(rbfs);
 	glUseProgram(0);
@@ -350,7 +371,7 @@ void ml_glow_resize(value framebufferID,value textureID, value width,value heigh
 
 
 void ml_glow_resize_byte(value * argv, int n) {
-	ml_glow_resize(argv[0],argv[1],argv[2],argv[3],argv[4]);
+	ml_glow_resize(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
 }
 
 

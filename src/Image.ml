@@ -198,7 +198,7 @@ module Make(D:DisplayObjectT.M) = struct
             )
           );
         );
-        if size > 1 then Render.Filter.glow_resize t.texture#framebufferID t.texture#textureID t.texture#realWidth t.texture#realHeight size else ();
+        if size > 1 then Render.Filter.glow_resize t.texture#framebufferID t.texture#textureID t.texture#width t.texture#height t.texture#rootClipping size else ();
         t.valid_size := True;
         t.valid_content := True;
       );
