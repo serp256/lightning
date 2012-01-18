@@ -6,4 +6,6 @@ OCAMLBINDIR = $(OCAMLDIR)/bin/
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB = ocamlmklib
+export CFLAGS = -std=gnu99
+export SDLCONFIG = /usr/local/bin/sdl-config
 LIB = byte native syntax
