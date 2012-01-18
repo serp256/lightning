@@ -785,7 +785,7 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	checkGLErrors("start");
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
-	//printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
+	printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
 	lgGLUseProgram(sp->program);
 	checkGLErrors("image render use program");
 
@@ -797,7 +797,6 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColorTex);
-	//
 
 	value fs = Field(program,1);
 	if (fs != Val_unit) {
@@ -805,6 +804,7 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 		f->render(sp,f->data);
 	};
 	lgGLBindTexture(Long_val(textureID),Int_val(pma));
+	checkGLErrors("bind texture");
 
 	long offset = (long)tq;
 
@@ -868,9 +868,9 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 		printf("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		caml_failwith("failed to create frame buffer for render texture");
 	};
-	color3F c = COLOR3F_FROM_INT(Int_val(color));
-	glClearColor(c.r,c.g,c.b,(GLclampf)Double_val(alpha));
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//color3F c = COLOR3F_FROM_INT(Int_val(color));
+	//glClearColor(c.r,c.g,c.b,(GLclampf)Double_val(alpha));
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	//printf("old buffer: %d\n",oldBuffer);
 	value result = caml_alloc_small(2,0);

@@ -115,8 +115,6 @@ typedef struct {
 	GLuint tid;
 	double width;
 	double height;
-	GLuint realWidth;
-	GLuint realHeight;
 	clipping clp;
 } renderbuffer_t;
 

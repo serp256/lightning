@@ -127,7 +127,7 @@ module Make(D:DisplayObjectT.M) = struct
         let prg = 
           load id ~vertex:"Image.vsh" ~fragment:"ImageColorMatrix.fsh"
             ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
-            ~uniforms:[| ("u_matrix",UNone) |]
+            ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
         in
         let f = Render.Filter.color_matrix matrix in
         (prg,Some f);
@@ -193,7 +193,7 @@ module Make(D:DisplayObjectT.M) = struct
           let m = Matrix.create ~scale:(0.5,0.5) ~translate:{Point.x = hgs; y = hgs} () in
           t.texture#draw (fun () ->
             (
-              if not t.valid_size then Render.clear 0 0. else ();
+              Render.clear 0 0.;
               Render.Image.render m (glowPrg,None) texture#textureID texture#hasPremultipliedAlpha image;
             )
           );
@@ -319,6 +319,10 @@ module Make(D:DisplayObjectT.M) = struct
       (
         super#setAlpha a;
         Render.Image.set_alpha image a;
+        match glowFilter with
+        [ Some g -> Render.Image.set_alpha g.image a
+        | None -> ()
+        ];
       );
 
 (*       method virtual copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
@@ -481,7 +485,7 @@ module Make(D:DisplayObjectT.M) = struct
             else ();
             Render.Image.render (if transform then Matrix.concat g.gtex.Glow.matrix self#transformationMatrix else g.gtex.Glow.matrix) g.prg g.gtex.Glow.texture#textureID g.gtex.Glow.texture#hasPremultipliedAlpha ?alpha g.image
           )
-        | None -> ()
+        | None -> () (* Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image *)
         ];
         Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image
       ); 
