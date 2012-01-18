@@ -785,7 +785,7 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	checkGLErrors("start");
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
-	printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
+	//printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
 	lgGLUseProgram(sp->program);
 	checkGLErrors("image render use program");
 

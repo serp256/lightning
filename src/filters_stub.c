@@ -158,10 +158,10 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
   glBindFramebuffer(GL_FRAMEBUFFER,0);
   r->fbid = fbid;
   r->tid = rtid;
-	r->clp = (clipping){0.,0.,(width / legalWidth),(height/legalHeight)};
+	r->clp = (clipping){0.,0.,(width / legalWidth),(height / legalHeight)};
   r->width = width;
   r->height = height;
-	//printf("framebuffer %d with texture %d of size %d:%d for %f:%f created\n",fbid,rtid,legalWidth,legalHeight,width,height);
+	printf("framebuffer %d with texture %d of size %d:%d for %f:%f created\n",fbid,rtid,legalWidth,legalHeight,width,height);
 	//r->realWidth = realWidth;
 	//r->realHeight = realHeight;
 	//printf("created new fb: %d with %d\n",fbid,rtid);
@@ -206,6 +206,8 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 	quads[3][0] = quads[1][0];
 	quads[3][1] = quads[2][1];
 
+	//printf("quads: [%f:%f] [%f:%f] [%f:%f] [%f:%f]\n", quads[0][0], quads[0][1], quads[1][0], quads[1][1], quads[2][0], quads[2][1], quads[3][0], quads[3][1]);
+
 	//printf("clp: %f:%f:%f:%f\n",clp->x,clp->y,clp->width,clp->height);
 	texCoords[0][0] = clp->x;
 	texCoords[0][1] = clp->y;
@@ -213,8 +215,8 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 	texCoords[1][1] = clp->y;
 	texCoords[2][0] = clp->x;
 	texCoords[2][1] = clp->y + clp->height;
-	texCoords[3][0] = clp->x + clp->width;
-	texCoords[3][1] = clp->y + clp->height;
+	texCoords[3][0] = texCoords[1][0];
+	texCoords[3][1] = texCoords[2][1];
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 	glVertexAttribPointer(lgVertexAttrib_Position,2,GL_FLOAT,GL_FALSE,0,quads);
@@ -342,7 +344,7 @@ void ml_glow_resize(value framebufferID,value textureID, value width, value heig
 		h /= 2;
 		create_renderbuffer(w,h,rbfp);
 		checkGLErrors("create renderbuffer");
-		drawTexture(rbfp,crb->tid,w,h,&rbfp->clp);
+		drawTexture(rbfp,crb->tid,w,h,&crb->clp);
 		checkGLErrors("draw forward");
 		crb = rbfp;
 		rbfp += 1;
@@ -357,7 +359,7 @@ void ml_glow_resize(value framebufferID,value textureID, value width, value heig
 		rbfp = prbfp;
 	};
 	checkGLErrors("before last draw");
-	drawTexture(&rb,rbfs->tid,rb.width,rb.height,&rbfp->clp);
+	drawTexture(&rb,rbfs->tid,rb.width,rb.height,&rbfs->clp);
 	delete_renderbuffer(rbfs);
 	caml_stat_free(rbfs);
 	glUseProgram(0);
