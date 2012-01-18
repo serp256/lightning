@@ -9,14 +9,14 @@ CFLAGS += -I .
 
 GLPARAM = 
 
-MOBJS = texture_common.o render_stub.o
+MOBJS = texture_common.o filters_stub.o render_stub.o
 MLOBJSFLAGS = 
 MLFLAGS +=  -package extlib -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma
+byte: lightning.cma fbconnect.cma
 native: MLDEPFLAGS += -native
-native: lightning.cmxa
+native: lightning.cmxa fbconnect.cmxa
 syntax: syntax/pa_prop.cmo
 
 
@@ -79,7 +79,7 @@ endif
 					DisplayObject.ml Shape.ml Sprite.ml Quad.ml Texture.ml RenderTexture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml TLF.ml FPS.ml Timers.ml Timer.ml \
 					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 
-MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
+MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
 					DisplayObject.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml Touch.ml BitmapFont.ml TLF.ml Timers.ml Timer.ml Sprite.ml \
 					Stage.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 
@@ -112,6 +112,12 @@ lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJ
 
 lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
 	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
+
+fbconnect.cma:
+	make -C facebook fbconnect.cma
+
+fbconnect.cmxa:
+	make -C facebook fbconnect.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)

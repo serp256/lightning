@@ -1,9 +1,8 @@
+open LightCommon;
 
 external push_matrix: Matrix.t -> unit = "ml_push_matrix";
 external restore_matrix: unit -> unit = "ml_restore_matrix";
 external clear: int -> float -> unit = "ml_clear";
-
-type textureID = int;
 
 module Program = struct
 
@@ -33,7 +32,7 @@ module Program = struct
       )
     ];
 
-  type attribute = [ AttribPosition | AttribColor | AttribTexCoords ]; (* с атриббутами пока так *)
+  type attribute = [ AttribPosition |  AttribTexCoords | AttribColor ]; (* с атриббутами пока так *)
   type t;
 
   value gen_id = 
@@ -53,16 +52,21 @@ module Program = struct
 
   value cache = Cache.create 3;
 
-  external create_program: ~vertex:shader -> ~fragment:shader -> ~attributes:list (attribute * string) -> ~other_uniforms:array string -> t = "ml_program_create";
+  type uniform = [ UNone | UInt of int | UInt2 of (int*int) | UInt3 of (int*int*int) | UFloat of float | UFloat2 of (float*float) ];
+  external create_program: ~vertex:shader -> ~fragment:shader -> ~attributes:list (attribute * string) -> ~uniforms:array (string * uniform) -> t = "ml_program_create";
 
-  value load id ~vertex ~fragment ~attributes ~other_uniforms = 
+  value load_force ~vertex ~fragment ~attributes ~uniforms = 
+    let vertex = get_shader Vertex vertex
+    and fragment = get_shader Fragment fragment
+    in
+    create_program ~vertex ~fragment ~attributes ~uniforms;
+
+  value load id ~vertex ~fragment ~attributes ~uniforms = 
     try
       Cache.find cache id
     with [ Not_found -> 
-      let vertex = get_shader Vertex vertex
-      and fragment = get_shader Fragment fragment
-      in
-      let p = create_program ~vertex ~fragment ~attributes ~other_uniforms in
+      let () = debug "create program %d with %s:%s" id vertex fragment in
+      let p = load_force ~vertex ~fragment ~attributes ~uniforms in
       (
         Cache.add cache id p;
         p
@@ -74,9 +78,10 @@ end;
 module Filter = struct
 
   type t;
-  external glow: Filters.glow -> t = "ml_filter_glow";
+  external glow: int -> int -> t = "ml_filter_glow";
+  external glow_resize: framebufferID -> textureID -> float -> float -> option Rectangle.t -> int -> unit = "ml_glow_resize_byte" "ml_glow_resize";
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
-  external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow";
+(*   external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow"; *)
 
 end;
 

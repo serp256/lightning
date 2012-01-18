@@ -79,7 +79,6 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method private hitTestPoint': Point.t -> bool -> option (_c _);
     method hitTestPoint: Point.t -> bool -> option (_c _) ;
     method virtual bounds: Rectangle.t;
-(*     method transformGLMatrix: unit -> unit; *)
     method transformationMatrix: Matrix.t;
     method setTransformationMatrix: Matrix.t -> unit;
     method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t;
@@ -94,6 +93,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method root: _c _;
     method stage: option 'parent;
     method boundsChanged: unit -> unit; 
+
     (* need to be hidden *)
     method clearParent: hidden unit -> unit;
     method setParent: hidden 'parent -> unit;
@@ -114,7 +114,9 @@ class virtual container:
     method addChild: !'child. ?index:int -> (#_c container as 'child) -> unit;
     method containsChild: !'child. (#_c container as 'child) -> bool;
     method getChildAt: int -> 'displayObject;
+    method setChildIndex: !'child. (#_c container as 'child) -> int -> unit;
     method getLastChild: 'displayObject;
+    method getChildIndex: !'child. (#_c container as 'child) -> int;
     method numChildren: int;
     method removeChild: !'child. (#_c container as 'child) -> unit;
     method removeChildAtIndex: int -> 'displayObject;

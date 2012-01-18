@@ -16,7 +16,6 @@ type textureFormat =
   ];
 
 
-type textureID = Render.textureID;
 
 type textureInfo = 
   {
@@ -29,22 +28,32 @@ type textureInfo =
     generateMipmaps: bool;
     premultipliedAlpha:bool;
     scale: float;
-    textureID: Render.textureID;
+    textureID: textureID;
   };
 
-class type c = 
+
+
+
+type event = [= `RESIZE | `CHANGE ]; 
+
+class type renderer = 
+  object
+    method onTextureEvent: event -> c -> unit;
+  end
+and c =
   object
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
     method scale: float;
-    method textureID: Render.textureID;
+    method textureID: textureID;
     method base : option c; 
     method clipping: option Rectangle.t;
     method rootClipping: option Rectangle.t;
     method release: unit -> unit;
     method subTexture: Rectangle.t -> c;
-(*     method update: string -> unit; *)
+    method addRenderer: renderer -> unit;
+    method removeRenderer: renderer -> unit;
   end;
 
 
@@ -88,10 +97,10 @@ value loadImage ?(textureID=0) ~path ~contentScaleFactor =
   );
 
 ELSE IFDEF IOS THEN
-external loadImage: ?textureID:Render.textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 (* external freeImageData: GLTexture.textureInfo -> unit = "ml_freeImageData"; *)
 ELSE IFDEF ANDROID THEN
-external loadImage: ?textureID:Render.textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 ENDIF;
 ENDIF;
 ENDIF;
@@ -106,7 +115,7 @@ end);
 class type r = 
   object
     inherit c;
-    method setTextureID: Render.textureID -> unit;
+    method setTextureID: textureID -> unit;
     method retain: unit -> unit;
     method releaseSubTexture: unit -> unit;
   end;
@@ -153,6 +162,8 @@ class subtexture region baseTexture =
     method releaseSubTexture () = baseTexture#releaseSubTexture ();
     method release () = let () = debug:gc "release subtexture" in baseTexture#releaseSubTexture ();
     method setTextureID tid = baseTexture#setTextureID tid;
+    method addRenderer (_:renderer) = ();
+    method removeRenderer (_:renderer) = ();
     initializer Gc.finalise (fun t -> t#release ()) self;
   end;
 
@@ -172,7 +183,7 @@ Callback.register "realodTextures" reloadTextures;
 ENDIF;
 *)
 
-external delete_texture: Render.textureID -> unit = "ml_delete_texture";
+external delete_texture: textureID -> unit = "ml_delete_texture";
 
 value make textureInfo = 
   let textureID = textureInfo.textureID
@@ -223,6 +234,8 @@ value make textureInfo =
     method rootClipping = clipping;
 (*       method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *) *)
     method subTexture region = ((new subtexture region self) :> c);
+    method addRenderer (_:renderer) = ();
+    method removeRenderer (_:renderer) = ();
     initializer Gc.finalise (fun t -> t#release ()) self;
   end;
 
@@ -277,13 +290,14 @@ value load path : c =
   ];
 
 
+(*
 class type renderObject =
   object
     method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
   end;
+*)
 
-type framebufferID;
-external create_render_texture: int -> float -> int -> int -> (framebufferID*Render.textureID) = "ml_rendertexture_create";
+external create_render_texture: int -> int -> float -> int -> int -> (framebufferID*textureID) = "ml_rendertexture_create";
 type framebufferState;
 external activate_framebuffer: framebufferID -> int -> int -> framebufferState = "ml_activate_framebuffer";
 external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
@@ -293,46 +307,96 @@ external resize_texture: textureID -> int -> int -> unit = "ml_resize_texture";
 class type rendered = 
   object
     inherit c;
+    method realWidth:int;
+    method realHeight:int;
+    method setPremultipliedAlpha: bool -> unit;
+    method framebufferID: framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
   end;
 
-value rendered ?(color=0) ?(alpha=0.) width height : rendered =
-  let iw = truncate width in
-  let iw = if (float iw) < width then iw + 1 else iw in
-  let ih = truncate height in
-  let ih = if (float ih) < height then ih + 1 else ih in
+
+value glRGBA = 0x1908;
+value glRGB = 0x1907;
+
+module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
+
+
+
+IFDEF IOS THEN
+value render_texture_size ((w,h) as ok) =
+  if w <= 8 
+  then
+    if w > h
+    then  (w,w) (* incorrect case *)
+    else
+      if h > w * 2 
+      then  (min (h / 2) 16, h) (* incorrect case *)
+      else ok
+  else
+    if h <= 8 
+    then (w,min 16 w)
+    else ok
+;
+
+ELSE
+
+value render_texture_size p = p;
+
+ENDIF;
+
+value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered = (* make it fucking int {{{*)
+  let iw = truncate (ceil width) in
+  let ih = truncate (ceil height) in
   let legalWidth = nextPowerOfTwo iw
   and legalHeight = nextPowerOfTwo ih in
-  let (frameBufferID,textureID) = create_render_texture color alpha legalWidth legalHeight in
-  let clipping = if (float legalWidth) <> width || (float legalHeight) <> height then Some (Rectangle.create 0. 0. (width /. (float legalWidth)) (height /. (float legalHeight))) else None in
+  let (legalWidth,legalHeight) = render_texture_size (legalWidth,legalHeight) in
+  let (framebufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
+  let clipping = 
+    let flw = float legalWidth and flh = float legalHeight in
+    if flw <> width || flh <> height 
+    then 
+      let () = debug "clipping: [%f:%f] -> [%d:%d]" width height legalWidth legalHeight in
+      Some (Rectangle.create 0. 0. (width /. flw) (height /. flh))
+    else None
+  in
   object(self)
     value mutable isActive = False;
     value mutable textureID = textureID;
     value mutable clipping = clipping;
     value mutable width = width;
     value mutable legalWidth = legalWidth;
+    method realWidth = legalWidth;
     method width = width;
     value mutable height = height;
     value mutable legalHeight = legalHeight;
+    method realHeight = legalHeight;
     method height = height;
-    method hasPremultipliedAlpha = False;
+    value mutable hasPremultipliedAlpha = True;
+    method setPremultipliedAlpha v = hasPremultipliedAlpha := v;
+    method hasPremultipliedAlpha = hasPremultipliedAlpha;
     method scale = 1.;
     method textureID = textureID;
     method base : option c = None;
     method clipping = clipping;
     method rootClipping = clipping;
     method subTexture (region:Rectangle.t) : c = assert False;
+    method framebufferID = framebufferID;
+    value renderers = Renderers.create 1;
+    method addRenderer r = Renderers.add renderers r;
+    method removeRenderer r = Renderers.remove renderers r;
+    method private changed () = Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> c)) renderers;
+
     method resize w h =
+      let () = debug "resize %d from %f->%f, %f->%f" textureID width w height h in
       if w <> width || h <> height
       then
-        let iw = truncate w in
-        let iw = if (float iw) < w then iw + 1 else iw in
-        let ih = truncate h in
-        let ih = if (float ih) < h then ih + 1 else ih in
+        let iw = truncate (ceil w) in
+        let ih = truncate (ceil h) in
         let legalWidth' = nextPowerOfTwo iw
         and legalHeight' = nextPowerOfTwo ih in
+        let (legalWidth',legalHeight') = render_texture_size (legalWidth',legalHeight') in
         (
           width := w;
           height := h;
@@ -340,7 +404,12 @@ value rendered ?(color=0) ?(alpha=0.) width height : rendered =
           then resize_texture textureID legalWidth' legalHeight'
           else ();
           legalWidth := legalWidth'; legalHeight := legalHeight';
-          clipping := if (float legalWidth') <> w || (float legalHeight') <> h then Some (Rectangle.create 0. 0. (w /. (float legalWidth')) (h /. (float legalHeight'))) else None;
+          let flw = float legalWidth' and flh = float legalHeight' in
+          clipping :=
+            if flw <> w || flh <> h 
+            then Some (Rectangle.create 0. 0. (w /. flw) (h /. flh))
+            else None; 
+          Renderers.iter (fun r -> r#onTextureEvent `RESIZE (self :> c)) renderers;
         )
       else ();
 
@@ -348,7 +417,7 @@ value rendered ?(color=0) ?(alpha=0.) width height : rendered =
       if textureID <> 0
       then
       (
-        delete_framebuffer frameBufferID;
+        delete_framebuffer framebufferID;
         delete_texture textureID;
         textureID := 0;
       )
@@ -357,13 +426,15 @@ value rendered ?(color=0) ?(alpha=0.) width height : rendered =
     method draw f = 
       match isActive with
       [ False ->
-        let oldState = activate_framebuffer frameBufferID legalWidth legalHeight in
+(*         let oldState = activate_framebuffer framebufferID (truncate width) (truncate height) in *)
+        let oldState = activate_framebuffer framebufferID legalWidth legalHeight in
         (
           debug "buffer activated";
           isActive := True;
           f();
           deactivate_framebuffer oldState;
           isActive := False;
+          self#changed();
         )
       | True -> f()
       ];
@@ -371,5 +442,5 @@ value rendered ?(color=0) ?(alpha=0.) width height : rendered =
     method clear color alpha = self#draw (fun () -> Render.clear color alpha);
     initializer Gc.finalise (fun r -> r#release ()) self;
 
-  end;
 
+  end; (*}}}*)

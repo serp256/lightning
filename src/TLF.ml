@@ -256,7 +256,7 @@ value parse ?(imgLoader=Image.load) xml : main =
                     ]
                   in
                   Some (`valign v)
-              | _ -> parse_error "unknown attribute img:%s" tag
+              | _ -> parse_error "unknown attribute img:%s" name
               ]
             end attributes
           in

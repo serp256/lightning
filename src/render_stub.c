@@ -1,84 +1,30 @@
-
-#ifdef ANDROID
-#include <GLES/gl2.h>
-#else 
-#ifdef IOS
-#include <OpenGLES/ES2/gl.h>
-//#include <OpenGLES/ES1/glext.h>
-#else
-#define GL_GLEXT_PROTOTYPES
-#include <SDL/SDL_opengl.h>
-#endif
-#endif
-
-
-
-
-/*
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#else // this is linux
-#include <GL/gl.h>
-#endif
-*/
-
-#include <stdio.h>
-#include <caml/mlvalues.h>
-#include <caml/memory.h>
-#include <caml/alloc.h>
-#include <caml/custom.h>
-#include <caml/bigarray.h>
-#include <caml/fail.h>
-
+#include "render_stub.h"
 #include <kazmath/GL/matrix.h>
 
 void checkGLErrors(char *where) {
 	GLenum error = glGetError();
+	int is_error = 0;
 	while (error != GL_NO_ERROR) {
 		printf("%s: gl error: %d\n",where,error);
 		error = glGetError();
+		is_error = 1;
 	};
+	if (is_error) exit(1);
 }
 
 //////////////////////////////////
 /// COLORS
 
-#define COLOR_PART_ALPHA(color)  (((color) >> 24) & 0xff)
-#define COLOR_PART_RED(color)    (((color) >> 16) & 0xff)
-#define COLOR_PART_GREEN(color)  (((color) >>  8) & 0xff)
-#define COLOR_PART_BLUE(color)   ( (color)        & 0xff)
 
 #define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
 
 
 
-typedef struct
-{
-  GLfloat x;
-  GLfloat y;
-} vertex2F;
-
-typedef struct 
-{
-  GLfloat r;
-  GLfloat g;
-  GLfloat b;
-} color3F;
-
-#define COLOR3F_FROM_INT(c) (color3F){(GLfloat)(COLOR_PART_RED(c)/255.),(GLfloat)(COLOR_PART_GREEN(c)/255.),(GLfloat)(COLOR_PART_BLUE(c)/255.)}
-
-typedef struct 
-{
-  GLubyte r;
-  GLubyte g;
-  GLubyte b;
-  GLubyte a;
-} color4B;
-
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
 
 GLuint boundTextureID = 0;
-int PMA = 0;
+int PMA = -1;
+int separateBlend = 0;
 
 void setPMAGLBlend () {
 	if (PMA != 1) {
@@ -89,16 +35,22 @@ void setPMAGLBlend () {
 
 void setNotPMAGLBlend () {
 	if (PMA != 0) {
-		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		if (separateBlend) {
+			//printf("set separate not pma blend\n");
+			glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+		} else {
+			//printf("set odinary not pma blend\n");
+			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		};
 		PMA = 0;
 	};
 }
 
-#define setDefaultGLBlend setPMAGLBlend
+#define setDefaultGLBlend setNotPMAGLBlend
 
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
 	printf("set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
-  glDisable(GL_DEPTH_TEST);
+  //glDisable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   
 	glViewport(left, top, right, bottom);
@@ -197,22 +149,13 @@ char* logForOpenGLObject(GLuint object, GLInfoFunction infoFunc, GLLogFunction l
 		return logBytes;
 }
 
-char* vertexShaderLog(GLuint vertShader) {
-	return (logForOpenGLObject(vertShader,(GLInfoFunction)&glGetProgramiv,(GLLogFunction)&glGetProgramInfoLog));
+char* programLog(GLuint program) {
+	return (logForOpenGLObject(program,(GLInfoFunction)&glGetProgramiv,(GLLogFunction)&glGetProgramInfoLog));
 }
 
-char* fragmentShaderLog(GLuint fragShader) {
-  return (logForOpenGLObject(fragShader,(GLInfoFunction)&glGetShaderiv,(GLLogFunction)&glGetShaderInfoLog));
+char* shaderLog(GLuint shader) {
+  return (logForOpenGLObject(shader,(GLInfoFunction)&glGetShaderiv,(GLLogFunction)&glGetShaderInfoLog));
 }
-
-/*
-- (NSString *)programLog
-{
-    return [self logForOpenGLObject:program_
-                       infoCallback:(GLInfoFunction)&glGetProgramiv
-                            logFunc:(GLLogFunction)&glGetProgramInfoLog];
-}
-*/
 
 //
 
@@ -256,15 +199,13 @@ value ml_compile_shader(value stype,value shader_src) {
  
   if( ! status ) {
 		char msg[1024];
+		char *log = shaderLog(shader);
     if( type == GL_VERTEX_SHADER ) {
-			char *log = vertexShaderLog(shader);
 			sprintf(msg,"vertex shader compilation failed: [%s]",log);
-			caml_stat_free(log);
 		} else {
-			char *log = vertexShaderLog(shader);
       sprintf(msg,"frament shader compilation failed: [%s]",log);
-			caml_stat_free(log);
 		};
+		caml_stat_free(log);
 		glDeleteShader(shader);
 		caml_failwith(msg);
   }
@@ -274,7 +215,8 @@ value ml_compile_shader(value stype,value shader_src) {
 	return res;
 }
 
-static GLuint currentShaderProgram = -1;
+GLuint currentShaderProgram = 0;
+
 /*
 static char   vertexAttribPosition = 0;
 static char   vertexAttribColor = 0;
@@ -282,33 +224,6 @@ static char   vertexAttribTexCoords = 0;
 */
 
 
-/* vertex attribs */
-enum {
-  lgVertexAttrib_Position = 0,
-  lgVertexAttrib_Color = 1,
-  lgVertexAttrib_TexCoords = 2,
-};  
-
-enum {
-  lgUniformMVPMatrix,
-	lgUniformAlpha,
-  lgUniformSampler,
-  lgUniform_MAX,
-};
-
-
-
-/** vertex attrib flags */
-enum {
-  lgVertexAttribFlag_None    = 0,
-
-  lgVertexAttribFlag_Position  = 1 << 0,
-  lgVertexAttribFlag_Color   = 1 << 1,
-  lgVertexAttribFlag_TexCoords = 1 << 2,
-  
-	lgVertexAttribFlag_PosColor = (lgVertexAttribFlag_Position | lgVertexAttribFlag_Color),
-	lgVertexAttribFlag_PosColorTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords )
-};
 
 char vertexAttribPosition  = 0;
 char vertexAttribColor = 0;
@@ -357,12 +272,6 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
   }
 } 
 
-typedef struct {
-	GLuint program;
-	//GLint attributes[lgVertexAttrib_MAX];
-	GLint uniforms[lgUniform_MAX];
-	GLint *other_uniforms;
-} sprogram;
 
 /*
 	void *specUniforms;
@@ -372,16 +281,17 @@ typedef struct {
 #define SPROGRAM(v) *((sprogram**)Data_custom_val(v))
 
 static void program_finalize(value program) {
-	sprogram *p = SPROGRAM(Field(program,0));
-	if (p->other_uniforms != NULL) caml_stat_free(p->other_uniforms);
-  if( p->program == currentShaderProgram ) currentShaderProgram = -1;
+	sprogram *p = SPROGRAM(program);
+	printf("finalize prg: %d\n",p->program);
+	if (p->uniforms != NULL) caml_stat_free(p->uniforms);
+  if( p->program == currentShaderProgram ) currentShaderProgram = 0;
 	glDeleteProgram(p->program);
 	caml_stat_free(p);
 }
 
 static int program_compare(value p1,value p2) {
-	sprogram *pr1 = SPROGRAM(Field(p1,0));
-	sprogram *pr2 = SPROGRAM(Field(p2,0));
+	sprogram *pr1 = SPROGRAM(p1);
+	sprogram *pr2 = SPROGRAM(p2);
 	if (pr1->program == pr2->program) return 0;
 	else {
 		if (pr1->program < pr2->program) return -1;
@@ -411,7 +321,11 @@ void lgGLBindTexture(GLuint newTextureID, int newPMA) {
 		boundTextureID = newTextureID;
 	};
 	if (newPMA != PMA) {
-		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
+			if (separateBlend)
+				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+			else
+				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		PMA = newPMA;
 	}
 }
@@ -420,22 +334,20 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 	CAMLparam4(vShader,fShader,attributes,uniforms);
 	CAMLlocal2(prg,res);
 	GLuint program =  glCreateProgram();
+	printf("create program %d\n",program);
 	glAttachShader(program, *GLUINT(vShader)); 
-	//checkGLErrors("attach shader 1");
+	checkGLErrors("attach shader 1");
 	glAttachShader(program, *GLUINT(fShader)); 
-	//checkGLErrors("attach shader 2");
+	checkGLErrors("attach shader 2");
 	// bind attributes
-	sprogram *sp = caml_stat_alloc(sizeof(sprogram));
 	value lst = attributes;
 	value el;
-	int has_texture = 0;
 	while (lst != 1) {
 		el = Field(lst,0);
 		int attr = Int_val(Field(el,0));
 		value name = Field(el,1);
 		glBindAttribLocation(program,attr,String_val(name));
 		printf("attribute: %d\n",attr);
-		if (attr == lgVertexAttrib_TexCoords) has_texture = 1;
 		lst = Field(lst,1);
 	}
 	checkGLErrors("locations binded");
@@ -454,31 +366,59 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
     caml_failwith("Failed to link program");
   }
 
+	sprogram *sp = caml_stat_alloc(sizeof(sprogram));
+
 	checkGLErrors("before uniforms");
 
-	sp->uniforms[lgUniformMVPMatrix] = glGetUniformLocation(program, "u_MVPMatrix");
-	sp->uniforms[lgUniformAlpha] = glGetUniformLocation(program, "u_parentAlpha");
-	printf("u_matrix: %d\n",sp->uniforms[lgUniformMVPMatrix]);
-	printf("u_parentAlpha: %d\n",sp->uniforms[lgUniformAlpha]);
+	sp->std_uniforms[lgUniformMVPMatrix] = glGetUniformLocation(program, "u_MVPMatrix");
+	printf("std_uniform: matrix: %d\n",sp->std_uniforms[lgUniformMVPMatrix]);
+	sp->std_uniforms[lgUniformAlpha] = glGetUniformLocation(program, "u_parentAlpha");
+	printf("std_uniform: parentAlpha: %d\n",sp->std_uniforms[lgUniformAlpha]);
+	/*
 	if (has_texture) {
 		GLint loc = glGetUniformLocation(program,"u_texture");
 		sp->uniforms[lgUniformSampler] = loc;
 		lgGLUseProgram( program );
 		glUniform1i(loc, 0 );
 	};
+	*/
 
 	checkGLErrors("create program bind uniforms");
 
-	int otherUniformsLen = Wosize_val(uniforms);
-	if (otherUniformsLen > 0) {
-		printf("otherUniformsLen = %d\n",otherUniformsLen);
-		sp->other_uniforms = (GLint*)caml_stat_alloc(sizeof(GLuint)*otherUniformsLen);
-		for (int idx = 0; idx < otherUniformsLen; idx++) {
+	int uniformsLen = Wosize_val(uniforms);
+	if (uniformsLen > 0) {
+		printf("uniformsLen = %d\n",uniformsLen);
+		lgGLUseProgram(program);
+		sp->uniforms = (GLint*)caml_stat_alloc(sizeof(GLuint)*uniformsLen);
+		GLuint loc;
+		for (int idx = 0; idx < uniformsLen; idx++) {
 			value el = Field(uniforms,idx);
-			sp->other_uniforms[idx] = glGetUniformLocation(program, String_val(el));
-			printf("ou: %s = %d\n",String_val(el),sp->other_uniforms[idx]);
+			loc = glGetUniformLocation(program, String_val(Field(el,0)));
+			printf("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);
+			sp->uniforms[idx] = loc;
+			value u = Field(el,1);
+			if (Is_block(u)) {
+				value v = Field(u,0);
+				switch Tag_val(u) {
+					case 0: glUniform1i(loc,Long_val(v)); break;
+					case 1: 
+						glUniform2i(loc,Long_val(Field(v,0)),Long_val(Field(v,1)));
+						break;
+					case 2:
+						glUniform3i(loc,Long_val(Field(v,0)),Long_val(Field(v,1)),Long_val(Field(v,2)));
+						break;
+					case 3:
+						glUniform1f(loc,Double_val(v));
+						break;
+					case 4:
+						glUniform2f(loc,Double_val(Field(v,0)),Double_val(Field(v,1)));
+						break;
+					default: printf("unimplemented uniform value\n");
+				};
+			};
 		};
-	} else sp->other_uniforms = NULL;
+	} else sp->uniforms = NULL;
+	checkGLErrors("uniform binded");
 	sp->program = program;
 	prg = caml_alloc_custom(&program_ops,sizeof(*sp),0,1);
 	SPROGRAM(prg) = sp;
@@ -502,99 +442,10 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   kmMat4Multiply(&matrixMVP, &matrixP, &matrixMV);
 
 	//printf("matrix uniform location: %d\n",sp->uniforms[lgUniformMVPMatrix]);
-  glUniformMatrix4fv( sp->uniforms[lgUniformMVPMatrix], 1, GL_FALSE, matrixMVP.mat);
+  glUniformMatrix4fv( sp->std_uniforms[lgUniformMVPMatrix], 1, GL_FALSE, matrixMVP.mat);
 }
 
 
-///// FILTERS 
-////////////
-//
-
-typedef void (*filterFun)(sprogram *sp,void *data);
-
-typedef struct {
-	filterFun f_fun;
-	void *f_data;
-} filter;
-
-#define FILTER(v) *((filter**)Data_custom_val(v))
-
-static void filter_finalize(value fltr) {
-	filter *f = FILTER(fltr);
-	caml_stat_free(f->f_data);
-	caml_stat_free(f);
-}
-
-struct custom_operations filter_ops = {
-  "pointer to a filter",
-  filter_finalize,
-  custom_compare_default,
-  custom_hash_default,
-  custom_serialize_default,
-  custom_deserialize_default
-};
-
-
-struct glowData 
-{
-	GLfloat glowSize;
-	GLfloat glowStrenght;
-	color3F glowColor;
-};
-
-void glowFilter(sprogram *sp,void *data) {
-	struct glowData *d = (struct glowData*)data;
-	glUniform1f(sp->other_uniforms[0],d->glowSize);
-	glUniform1f(sp->other_uniforms[1],d->glowStrenght);
-	glUniform3fv(sp->other_uniforms[2],1,(GLfloat*)&(d->glowColor));
-}
-
-value make_filter(filterFun fun,void *data) {
-	filter *f = (filter *)caml_stat_alloc(sizeof(filter));
-	f->f_fun = fun;
-	f->f_data = data;
-	value res = caml_alloc_custom(&filter_ops,sizeof(filter*),1,0);
-	FILTER(res) = f;
-	return res;
-}
-
-value ml_filter_glow(value glow) {
-	struct glowData *gd = (struct glowData*)caml_stat_alloc(sizeof(struct glowData));
-	gd->glowSize = Double_val(Field(glow,0)) / 1000.;
-	gd->glowStrenght = Double_val(Field(glow,1));
-	gd->glowColor = COLOR3F_FROM_INT(Field(glow,2));
-	return make_filter(&glowFilter,gd);
-}
-
-void colorMatrixFilter(sprogram *sp,void *data) {
-	glUniform1fv(sp->other_uniforms[0],20,(GLfloat*)data);
-}
-
-value ml_filter_cmatrix(value matrix) {
-	return make_filter(&colorMatrixFilter,Caml_ba_data_val(matrix));
-}
-
-struct cMatrixGlow {
-	GLfloat *cmatrix;
-	struct glowData glow;
-};
-
-void cMatrixGlowFilter(sprogram *sp,void *data) {
-	struct cMatrixGlow *gd = (struct cMatrixGlow*)data;
-	glUniform1fv(sp->other_uniforms[0],20,(GLfloat*)gd->cmatrix);
-	glUniform1f(sp->other_uniforms[1],gd->glow.glowSize);
-	glUniform1f(sp->other_uniforms[2],gd->glow.glowStrenght);
-	glUniform3fv(sp->other_uniforms[3],1,(GLfloat*)&(gd->glow.glowColor));
-}
-
-value ml_filter_cmatrix_glow(value matrix,value glow) {
-	struct cMatrixGlow *gd = (struct cMatrixGlow*)caml_stat_alloc(sizeof(struct cMatrixGlow));
-	gd->cmatrix = Caml_ba_data_val(matrix);
-	gd->glow.glowSize = Double_val(Field(glow,0)) / 1000.;
-	gd->glow.glowStrenght = Double_val(Field(glow,1));
-	gd->glow.glowColor = COLOR3F_FROM_INT(Field(glow,2));
-	return make_filter(&cMatrixGlowFilter,gd);
-}
 ////////////////////////////////////
 /////// QUADS 
 //! a Point with a vertex point, and color 4B
@@ -654,7 +505,7 @@ value ml_quad_create(value width,value height,value color,value alpha) {
 	return res;
 }
 
-value ml_quad_points(value quad) { // FIXME to array of points
+value ml_quad_points(value quad) { 
 	CAMLparam1(quad);
 	CAMLlocal4(p1,p2,p3,p4);
 	lgQuad *q = *QUAD(quad);
@@ -740,9 +591,9 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
 	lgGLUniformModelViewProjectionMatrix(sp);
-	checkGLErrors("bind matrix uniform");
+	checkGLErrors("image render bind matrix uniform");
 
-	glUniform1f(sp->uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
+	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
 
@@ -753,13 +604,11 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 
   // vertex
   int diff = offsetof( lgQVertex, v);
-	//glEnableVertexAttribArray(lgVertexAttrib_Position); // FIXME: выставлять это с кэшированием как в кокосе 
   glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
   
   // color
   diff = offsetof( lgQVertex, c);
-	//glEnableVertexAttribArray(lgVertexAttrib_Color);
   glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -771,33 +620,6 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 ///////////////
 // Images
 //
-
-typedef struct _ccTex2F {
-   GLfloat u;
-   GLfloat v;
-} tex2F;
-
-typedef struct 
-{ 
-  //! vertices (2F)
-  vertex2F    v;
-  //! colors (4B)   
-  color4B   c;
-  //! tex coords (2F)
-  tex2F     tex;
-} lgTexVertex;
-
-typedef struct
-{
-  //! top left
-  lgTexVertex tl;
-  //! bottom left
-  lgTexVertex bl;
-  //! top right
-  lgTexVertex tr;
-  //! bottom right
-  lgTexVertex br;
-} lgTexQuad;
 
 
 #define TEXQUAD(v) ((lgTexQuad**)Data_custom_val(v))
@@ -864,7 +686,7 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255));
 	tq->bl.v = (vertex2F){0,0};
 	tq->bl.c = c;
-	tq->br.v = (vertex2F) { Double_val(width)};
+	tq->br.v = (vertex2F) { Double_val(width),0.};
 	tq->br.c = c;
 	tq->tl.v = (vertex2F) { 0, Double_val(height)};
 	tq->tl.c = c;
@@ -959,30 +781,30 @@ void ml_image_flip_tex_y(value image) {
 }
 
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
-	//printf("render image: %d\n",Long_val(textureID));
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
+	//printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
 	lgGLUseProgram(sp->program);
-	checkGLErrors("quad render use program");
+	checkGLErrors("image render use program");
 
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
 	lgGLUniformModelViewProjectionMatrix(sp);
 	checkGLErrors("bind matrix uniform");
 
-	glUniform1f(sp->uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
+	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColorTex);
-	//
 
 	value fs = Field(program,1);
 	if (fs != Val_unit) {
 		filter *f = FILTER(Field(fs,0));
-		f->f_fun(sp,f->f_data);
+		f->render(sp,f->data);
 	};
 	lgGLBindTexture(Long_val(textureID),Int_val(pma));
+	checkGLErrors("bind texture");
 
 	long offset = (long)tq;
 
@@ -1018,7 +840,7 @@ void ml_image_render_byte(value * argv, int n) {
 ////////////////////
 
 
-value ml_rendertexture_create(value color, value alpha, value width,value height) {
+value ml_rendertexture_create(value format, value color, value alpha, value width,value height) {
 	GLuint mTextureID;
 	glGenTextures(1, &mTextureID);
 	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
@@ -1027,15 +849,17 @@ value ml_rendertexture_create(value color, value alpha, value width,value height
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
-	//printf("create rtexture: [%d:%d]\n",Long_val(width),Long_val(height));
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Long_val(width), Long_val(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	int w = Long_val(width),h = Long_val(height);
+	printf("create rtexture: [%d:%d]\n",w,h);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
 	glBindTexture(GL_TEXTURE_2D,0);
+	boundTextureID = 0;
 	GLuint mFramebuffer;
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	glGenFramebuffers(1, &mFramebuffer);
-	printf("generated new framebuffer: %d\n",mFramebuffer);
+	//printf("generated new framebuffer: %d\n",mFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
 	checkGLErrors("bind framebuffer");
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
@@ -1044,12 +868,11 @@ value ml_rendertexture_create(value color, value alpha, value width,value height
 		printf("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		caml_failwith("failed to create frame buffer for render texture");
 	};
-	color3F c = COLOR3F_FROM_INT(Int_val(color));
-	glClearColor(c.r,c.g,c.b,Double_val(alpha));
-	glClear(GL_COLOR_BUFFER_BIT);
-	// блэндинг бы еще врубить нахуй
+	//color3F c = COLOR3F_FROM_INT(Int_val(color));
+	//glClearColor(c.r,c.g,c.b,(GLclampf)Double_val(alpha));
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
-	printf("old buffer: %d\n",oldBuffer);
+	//printf("old buffer: %d\n",oldBuffer);
 	value result = caml_alloc_small(2,0);
 	Field(result,0) = Val_long(mFramebuffer);
 	Field(result,1) = Val_long(mTextureID);
@@ -1063,19 +886,21 @@ void ml_resize_texture(value textureID,value width,value height) {
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,Long_val(width),Long_val(height),0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
 }
 
-struct old_framebuffer_state {
-	GLuint frameBuffer;
-	GLsizei width;
-	GLsizei height;
-}; 
-
-value ml_activate_framebuffer(value framebufferID,value width,value height) {
+void get_framebuffer_state(framebuffer_state *s) {
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	GLint viewPort[4];
 	glGetIntegerv(GL_VIEWPORT,viewPort);
-	printf("bind framebuffer: %ld\n",Long_val(framebufferID));
-	printf("old fb: %d, old viewport: %d:%d:%d:%d\n",oldBuffer,viewPort[0],viewPort[1],viewPort[2],viewPort[3]);
+	s->frameBuffer = oldBuffer;
+	s->width = viewPort[2];
+	s->height = viewPort[3];
+}
+
+value ml_activate_framebuffer(value framebufferID,value width,value height) {
+	//printf("bind framebuffer: %ld\n",Long_val(framebufferID));
+
+	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
+	get_framebuffer_state(s);
 
 	glBindFramebuffer(GL_FRAMEBUFFER,Long_val(framebufferID));
 
@@ -1094,34 +919,50 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPushMatrix();
 	kmGLLoadIdentity();
-
-	boundTextureID = 0;
-	setPMAGLBlend();
-
-	struct old_framebuffer_state *s = caml_stat_alloc(sizeof(struct old_framebuffer_state));
-	s->frameBuffer = oldBuffer;
-	s->width = viewPort[2];
-	s->height = viewPort[3];
+	//if (offset != 1) kmGLTranslatef(Double_field(Field(offset,0),0),Double_field(Field(offset,0),1),-10);
+	/*
+	if (matrix != 1) {
+		value mtrx = Field(matrix,0);
+		kmMat4 transfrom4x4;
+		// Convert 3x3 into 4x4 matrix
+		GLfloat *m = transfrom4x4.mat;
+		m[2] = m[3] = m[6] = m[7] = m[8] = m[9] = m[11] = m[14] = 0.0f;
+		m[10] = m[15] = 1.0f;
+		m[0] = (GLfloat)Double_field(mtrx,0); m[4] = (GLfloat)Double_field(mtrx,2); m[12] = (GLfloat)Double_field(mtrx,4);
+		m[1] = (GLfloat)Double_field(mtrx,1); m[5] = (GLfloat)Double_field(mtrx,3); m[13] = (GLfloat)Double_field(mtrx,5);
+		kmGLLoadMatrix(&transfrom4x4);
+	} else 
+	*/
+  //glDisable(GL_DEPTH_TEST);
+	//glEnable(GL_BLEND);
+	//lgGLBindTexture(0,0);
+	//setNotPMAGLBlend();
+	separateBlend = 1;
+	PMA = -1;
 	return (value)s; 
 }
 
-
-void ml_deactivate_framebuffer(value ostate) {
-	struct old_framebuffer_state *s = (struct old_framebuffer_state*)ostate;
+void set_framebuffer_state(framebuffer_state *s) {
 	glBindFramebuffer(GL_FRAMEBUFFER,s->frameBuffer);
 	glViewport(0, 0, s->width, s->height);
+}
+
+void ml_deactivate_framebuffer(value ostate) {
+	framebuffer_state *s = (framebuffer_state*)ostate;
+	set_framebuffer_state(s);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPopMatrix();
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPopMatrix();
-	boundTextureID = 0;
-	setDefaultGLBlend();
+	separateBlend = 0;
+	PMA = -1;
 	caml_stat_free(s);
 }
 
 
 void ml_delete_framebuffer(value framebuffer) {
 	GLuint fbID = Long_val(framebuffer);
+	//printf("delete framebuffer: %d\n",fbID);
 	glDeleteFramebuffers(1,&fbID);
 }
 

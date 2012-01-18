@@ -8,7 +8,6 @@
 #include <caml/bigarray.h>
 #include <caml/custom.h>
 
-//#define MAXTEXMEMORY 73400320
 
 int nextPowerOfTwo(int number) {
 	int result = 1;

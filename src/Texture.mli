@@ -1,5 +1,6 @@
 
-type textureID = int;
+open LightCommon;
+
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -14,7 +15,13 @@ type textureFormat =
   ];
 
 
-class type c = 
+type event = [= `RESIZE | `CHANGE ]; 
+
+class type renderer = 
+  object
+    method onTextureEvent: event -> c -> unit;
+  end
+and c =
   object
     method width: float;
     method height: float;
@@ -27,6 +34,8 @@ class type c =
 (*     method update: string -> unit; *)
     method release: unit -> unit;
     method subTexture: Rectangle.t -> c;
+    method addRenderer: renderer -> unit;
+    method removeRenderer: renderer -> unit;
   end;
 
 
@@ -37,9 +46,16 @@ value load: string -> c;
 class type rendered =
   object
     inherit c;
+    method realWidth: int;
+    method realHeight: int;
+    method setPremultipliedAlpha: bool -> unit;
+    method framebufferID: LightCommon.framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
   end;
 
-value rendered: ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)
+value glRGBA:int;
+value glRGB:int;
+
+value rendered: ?format:int -> ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)

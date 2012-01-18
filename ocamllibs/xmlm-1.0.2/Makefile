@@ -1,5 +1,5 @@
 
-OCAMLFIND=ocamlfind -toolchain ios
+OCAMLFIND=ocamlfind
 OCAMLOPT=$(OCAMLFIND) ocamlopt
 
 all:
@@ -8,3 +8,6 @@ all:
 
 install:
 	$(OCAMLFIND) install xmlm src/META src/xmlm.mli src/xmlm.cmi src/xmlm.cmx src/xmlm.o src/xmlm.annot
+
+uninstall:
+	$(OCAMLFIND) remove xmlm
