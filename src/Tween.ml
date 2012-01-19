@@ -167,7 +167,7 @@ class c ?(delay=0.) ?(transition=`linear) ?(loop=`LoopNone) time =
 
     method process dt = 
 (*       let () = Printf.eprintf "tween process %F\n%!" dt in *)
-      let () = currentTime := min (totalTime +. delay) (currentTime +. dt) in
+      let () = currentTime := currentTime +. dt in
       let isDelay =
         (
           currentTime := currentTime +. dt;
@@ -191,11 +191,7 @@ class c ?(delay=0.) ?(transition=`linear) ?(loop=`LoopNone) time =
                 List.iter begin fun action ->
                   (
                     match start with
-                    [ True -> 
-                        ( 
-                          action.startValue := action.getValue ();
-                          start := False;
-                        )
+                    [ True -> action.startValue := action.getValue ()
                     | _ -> ()
                     ];
                     let delta = action.endValue -. action.startValue in
@@ -208,6 +204,7 @@ class c ?(delay=0.) ?(transition=`linear) ?(loop=`LoopNone) time =
                     action.setValue (action.startValue +. delta *. transitionValue)
                   )
                 end actions;
+                start := False;
                 if ratio >= 1.  
                 then
                   match loop with

@@ -161,7 +161,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
 	r->clp = (clipping){0.,0.,(width / legalWidth),(height / legalHeight)};
   r->width = width;
   r->height = height;
-	printf("framebuffer %d with texture %d of size %d:%d for %f:%f created\n",fbid,rtid,legalWidth,legalHeight,width,height);
+//	printf("framebuffer %d with texture %d of size %d:%d for %f:%f created\n",fbid,rtid,legalWidth,legalHeight,width,height);
 	//r->realWidth = realWidth;
 	//r->realHeight = realHeight;
 	//printf("created new fb: %d with %d\n",fbid,rtid);
