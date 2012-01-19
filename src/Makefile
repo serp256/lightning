@@ -55,6 +55,7 @@ else
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
 	else
+		CFLAGS += $(shell ${SDLCONFIG} --cflags)
 		gl = gl/2.1
 		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o 
 		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
