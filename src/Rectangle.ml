@@ -50,6 +50,6 @@ value cutOut from rect =
     List.fold_left checkRect [] [
       create from.x from.y (rect.x -. from.x) from.height;
       create rect.x from.y rect.width (rect.y -. from.y);
-      create rect.x (rect.y +. rect.height) rect.width (from.height -. rect.y -. rect.height);
-      create (rect.x +. rect.width) from.y (from.width -. rect.x -. rect.width) from.height
+      create rect.x (rect.y +. rect.height) rect.width (from.y +. from.height -. rect.y -. rect.height);
+      create (rect.x +. rect.width) from.y (from.x +. from.width -. rect.x -. rect.width) from.height
     ];
