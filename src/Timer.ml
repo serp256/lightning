@@ -10,6 +10,7 @@ class type virtual c =
     method delay: float;
     method setDelay: float -> unit;
     method repeatCount: int;
+    method setRepeatCount : int -> unit;
     method currentCount: int;
     method start: unit -> unit;
     method stop: unit -> unit;
@@ -27,11 +28,13 @@ value create ?(repeatCount=0) delay = (*{{{*)
       value mutable currentCount = 0;
       value mutable _delay = delay;
       value mutable name = "";
+      value mutable _repeatCount = repeatCount;
       method setName n = name := n;
       method name = if name = "" then Printf.sprintf "timer %d" (Oo.id self) else name;
       method delay = _delay;
       method setDelay d = _delay := d;
-      method repeatCount = repeatCount;
+      method repeatCount = _repeatCount;
+      method setRepeatCount newCount = _repeatCount := newCount;
       method currentCount = currentCount;
       method fire () = 
       (
@@ -39,7 +42,7 @@ value create ?(repeatCount=0) delay = (*{{{*)
         currentCount := currentCount + 1;
         match running with
         [ Some _ -> 
-          if repeatCount <= 0 || currentCount < repeatCount
+          if _repeatCount <= 0 || currentCount < _repeatCount
           then
           (
             running := Some (Timers.start _delay self#fire);
