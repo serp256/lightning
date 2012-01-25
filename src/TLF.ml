@@ -29,7 +29,7 @@ type span_attribute =
 
 type span_attributes = list span_attribute;
 
-type simple_element = [= `img of (img_attributes * Image.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
+type simple_element = [= `img of (img_attributes * Image.D.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
 and simple_elements = list simple_element;
 
 type p_halign = [= `left | `right | `center ];
@@ -187,7 +187,7 @@ exception Parse_error of (string*string);
 
 
 
-value parse ?(imgLoader=Image.load) xml : main = 
+value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.load x)#asDisplayObject*)) xml : main = 
   let inp = Xmlm.make_input (`String (0,xml)) in
   let parse_error fmt = 
     let (line,column) = Xmlm.pos inp in

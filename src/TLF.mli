@@ -24,7 +24,7 @@ type span_attribute =
 
 type span_attributes = list span_attribute;
 
-type simple_element = [= `img of (img_attributes * Image.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
+type simple_element = [= `img of (img_attributes * Image.D.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
 and simple_elements = list simple_element;
 
 type p_halign = [= `left | `right | `center ];
@@ -57,10 +57,10 @@ type main =
   | `p of (p_attributes * simple_elements)
   ];
 
-value img: ?width:float -> ?height:float -> ?paddingLeft:float -> ?paddingTop:float -> ?paddingRight:float -> ?paddingLeft:float -> ?valign:img_valign -> Image.c -> simple_element;
+value img: ?width:float -> ?height:float -> ?paddingLeft:float -> ?paddingTop:float -> ?paddingRight:float -> ?paddingLeft:float -> ?valign:img_valign -> Image.D.c -> simple_element;
 value span: ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> simple_elements -> simple_element;
 value p: ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> ?halign:p_halign -> ?valign:p_valign -> ?spaceBefore:float -> ?spaceAfter:float -> simple_elements -> main;
-value parse: ?imgLoader:(string -> Image.c) -> string -> main;
+value parse: ?imgLoader:(string -> Image.D.c) -> string -> main;
 value create: ?width:float -> ?height:float -> ?border:int -> ?dest:#Sprite.c -> main -> Sprite.c;
 
 end;
