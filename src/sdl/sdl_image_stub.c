@@ -1,5 +1,5 @@
 
-#include <SDL/SDL_image.h>
+#include <SDL_image.h>
 
 
 #include <caml/mlvalues.h>

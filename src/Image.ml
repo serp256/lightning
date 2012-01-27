@@ -464,7 +464,7 @@ module Make(D:DisplayObjectT.M) = struct
           Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
         ];
 
-      method private render' ?alpha ~transform _ = 
+      method private render' ?alpha:(alpha') ~transform _ = 
       (
         match glowFilter with
         [ Some g -> 
@@ -479,11 +479,12 @@ module Make(D:DisplayObjectT.M) = struct
               g.valid := True
             )
             else ();
-            Render.Image.render (if transform then Matrix.concat g.gtex.Glow.matrix self#transformationMatrix else g.gtex.Glow.matrix) g.prg g.gtex.Glow.texture#textureID g.gtex.Glow.texture#hasPremultipliedAlpha ?alpha g.image
+            let alpha = match alpha' with [ Some a -> a *. alpha | None -> alpha ] in
+            Render.Image.render (if transform then Matrix.concat g.gtex.Glow.matrix self#transformationMatrix else g.gtex.Glow.matrix) g.prg g.gtex.Glow.texture#textureID g.gtex.Glow.texture#hasPremultipliedAlpha ~alpha g.image
           )
         | None -> ()
         ];
-        Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image
+        Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image
       ); 
   end;
 
