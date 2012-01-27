@@ -79,18 +79,15 @@ module Filter = struct
 
   type t;
   external glow: int -> int -> t = "ml_filter_glow";
-  external glow_resize: framebufferID -> textureID -> int -> int ->  int -> unit = "ml_glow_resize";
+  external glow_resize: framebufferID -> textureID -> float -> float -> option Rectangle.t -> int -> unit = "ml_glow_resize_byte" "ml_glow_resize";
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
-(*   external cmatrix_glow: Filters.colorMatrix -> Filters.glow -> t = "ml_filter_cmatrix_glow"; *)
 
 end;
 
 type prg = (Program.t * option Filter.t);
 
 module Quad = struct
-
   type t;
-
   external create: ~w:float -> ~h:float -> ~color:int -> ~alpha:float -> t = "ml_quad_create";
   external points: t -> array Point.t = "ml_quad_points";
   external color: t -> int = "ml_quad_color";
@@ -99,7 +96,6 @@ module Quad = struct
   external set_alpha: t -> float -> unit = "ml_quad_set_alpha";
   external colors: t -> array int = "ml_quad_colors";
   external render: Matrix.t -> prg -> ?alpha:float -> t -> unit = "ml_quad_render";
-
 end;
 
 
@@ -119,3 +115,4 @@ module Image = struct
   external render: Matrix.t -> prg -> textureID -> bool -> ?alpha:float -> t -> unit = "ml_image_render_byte" "ml_image_render"; 
 
 end;
+

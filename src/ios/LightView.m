@@ -1,10 +1,3 @@
-//
-//  EAGLView.m
-//  Sparrow
-//
-//  Created by Daniel Sperl on 13.03.09.
-//  Copyright 2009 Incognitek. All rights reserved.
-//
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the Simplified BSD License.
 //
@@ -36,7 +29,7 @@
 
 @implementation LightView
 
-#define REFRESH_RATE 60
+#define REFRESH_RATE 30
 
 //@synthesize stage = mStage;
 @synthesize timer = mTimer;
@@ -92,17 +85,22 @@
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, mRenderbuffer);
-
-	  	
 		[mContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:eaglLayer];
     
-		CGRect rect = self.frame;
-		mStage = mlstage_create(rect.size.width - rect.origin.x,rect.size.height - rect.origin.y);
+		if ([self respondsToSelector:@selector(contentScaleFactor)]) {
+			[self setContentScaleFactor:[UIScreen mainScreen].scale];
+		};
+
+		mStage = NULL;
 }
 
 - (void)layoutSubviews 
 {
     [self resizeFramebuffer];
+
+		if (mStage != NULL) mlstage_resize(mStage,mWidth,mHeight);
+		else mStage = mlstage_create(mWidth,mHeight);
+
     [self renderStage];        // fill buffer immediately to avoid flickering
 }
 
@@ -113,7 +111,6 @@
 	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &mWidth);
 	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &mHeight);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) NSLog(@"failed to create framebuffer: %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
-	mlstage_resize(mStage,mWidth,mHeight);
 }
 
 - (void)destroyFramebuffer 

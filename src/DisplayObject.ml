@@ -926,7 +926,7 @@ class virtual container = (*{{{*)
 
     method boundsInSpace targetCoordinateSpace =
       match children with
-      [ None -> Rectangle.create 0. 0. 0. 0.
+      [ None -> Rectangle.empty
       | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace targetCoordinateSpace
       | Some children -> 
           let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
