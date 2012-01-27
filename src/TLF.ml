@@ -330,7 +330,7 @@ value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.l
             ]
           in
           let elements = parse_content [] in
-          Some (`div (attribs,elements))
+          Some (`div (attribs,List.rev elements))
       | `El_end -> None
       | _ -> parse_error "top level"
       ]
