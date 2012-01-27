@@ -12,7 +12,7 @@ uniform float u_parentAlpha;
 void main(void)
 {
 	float alpha = texture2D(u_texture,v_texCoord).a;
-	if (a < 1.0) {
+	if (alpha < 1.0) {
 		gl_FragColor = vec4(u_color,alpha * u_strength * u_parentAlpha);
 	} else {
 		gl_FragColor = vec4(0.,0.,0.,0.);
