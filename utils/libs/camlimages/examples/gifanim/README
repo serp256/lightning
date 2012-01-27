@@ -1,6 +1,0 @@
-Gifanim animate gif animation files.
-
-This is an LablGtk application.
-You need to install the library with the configure option
---with-lablgtk.
-

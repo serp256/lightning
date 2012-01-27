@@ -23,8 +23,10 @@
 typedef void (*drawingBlock)(CGContextRef context,void *data);
 
 void createTextureInfo(int colorSpace, float width, float height, float scale, drawingBlock draw, void *data, textureInfo *tInfo) {
-	int legalWidth  = nextPowerOfTwo(width  * scale);
-	int legalHeight = nextPowerOfTwo(height * scale);
+	//int legalWidth  = nextPowerOfTwo(width  * scale);
+	//int legalHeight = nextPowerOfTwo(height * scale);
+	int legalWidth  = nextPowerOfTwo(width);
+	int legalHeight = nextPowerOfTwo(height);
     
     CGColorSpaceRef cgColorSpace;
     CGBitmapInfo bitmapInfo;
@@ -63,7 +65,8 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
     
     // UIKit referential is upside down - we flip it and apply the scale factor
     CGContextTranslateCTM(context, 0.0f, legalHeight);
-		CGContextScaleCTM(context, scale, -scale);
+		//CGContextScaleCTM(context, scale, -scale);
+		CGContextScaleCTM(context, 1.0, -1.0);
     
     UIGraphicsPushContext(context);
 	draw(context,data);
@@ -92,7 +95,8 @@ void drawImage(CGContextRef context, void* data) {
 }
 
 int loadImageFile(UIImage *image, textureInfo *tInfo) {
-	float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
+	//float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
+	float scale = 2.0f;
 	float width = image.size.width;
 	float height = image.size.height;
 	//CGImageRef  CGImage = uiImage.CGImage;
@@ -284,7 +288,7 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
   if ([baseFilename rangeOfString:@"@2x"].location == baseFilename.length - 3)
       glTexture.scale = 2.0f;
 	*/
-	tInfo->scale = 1.;
+	tInfo->scale = 2.0;
 	close(fildes);
 	return 0;
 }
@@ -339,6 +343,7 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
 	CAMLlocal1(res);
 	NSLog(@"ml_loade image: %s\n",String_val(opath));
 	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
+	checkGLErrors("start load image");
 
 	caml_release_runtime_system();
 
@@ -441,6 +446,7 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
 	caml_stat_free(tInfo.imgData);
 
 	caml_acquire_runtime_system();
+	checkGLErrors("after load texture");
 
 	res = caml_alloc_tuple(10);
 	Store_field(res,0,Val_int(tInfo.format));
@@ -451,7 +457,8 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
 	Store_field(res,5,Val_int(tInfo.numMipmaps));
 	Store_field(res,6,Val_int(1));
 	Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
-	Store_field(res,8,caml_copy_double(is2x ? contentScaleFactor : 1.0f));
+	//Store_field(res,8,caml_copy_double(is2x ? contentScaleFactor : 1.0f));
+	Store_field(res,8,caml_copy_double(tInfo.scale));
 	Store_field(res,9,Val_long(textureID));
 	CAMLreturn(res);
 }

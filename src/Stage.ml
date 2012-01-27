@@ -36,10 +36,14 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
   class virtual c (_width:float) (_height:float) =
     object(self)
       inherit D.container as super;
-      initializer self#setName "STAGE";
       value virtual color: int;
       value mutable width = _width;
       value mutable height = _height;
+      initializer 
+      (
+        self#setName "STAGE";
+        setupOrthographicRendering 0. width height 0.
+      );
       method cacheAsImage = False;
       method setCacheAsImage = raise Restricted_operation;
       method setFilters _ = raise Restricted_operation;

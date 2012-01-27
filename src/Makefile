@@ -25,19 +25,18 @@ KAZMATH = $(patsubst %,kazmath/%,$(KAZMATHOBJS))
 MLPPOPT = syntax/pa_debug.cmo
 
 SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
-$(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend -syntax camlp4r 
-$(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT :=
+$(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend,camlp4.macro -syntax camlp4r 
 Debug.cmx: MLFLAGS += -package unix
 $(SYNTAX): OCAMLC = ocamlfind ocamlc
 
 
 
-ifeq ($(PLATFORM),ios)
+ifeq ($(PLATFORM),IOS)
 	gl = gl/es
-	CFLAGS +=  -DDEBUG -DIOS
-	MLCOPTS += -DIOS
+	#CFLAGS +=  -DDEBUG -DIOS
+	#MLCOPTS += -DIOS
 	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightView.o ios/LightViewController.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o
-	MLPPOPT += -DGLES -DIOS
+	#MLPPOPT += -DGLES -DIOS
 	LIBFLAGS = -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
 						 -cclib '-framework\ QuartzCore' \
@@ -47,9 +46,9 @@ ifeq ($(PLATFORM),ios)
 						 -cclib '-framework\ OpenAL' \
 						 -cclib '-framework\ GameKit'
 else
-	ifeq ($(PLATFORM),android)
+	ifeq ($(PLATFORM),ANDROID)
 		gl = gl/es
-		MLPPOPT += -DGLES -DANDROID 
+		#MLPPOPT += -DGLES -DANDROID 
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
@@ -61,7 +60,7 @@ else
 		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
 		AMLSOURCES = sdl/sdl_run.ml
 		MLOBJSFLAGS = -I sdl
-		MLPPOPT += -DSDL
+		#MLPPOPT += -DSDL
 		MLCOMPFLAGS += -package curl,threads -thread
 		ifeq ($(OS),macos)
 			LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
@@ -73,14 +72,14 @@ else
 endif
 
 
-#MOBJS += $(gl)/gl_stub.o 
+MLPPOPT += -D$(PLATFORM)
+MLCOPTS += -D$(PLATFORM)
+CFLAGS += -D$(PLATFORM)
 
-#MLSOURCES = $(gl)/gl.ml $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml Dictionary.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml RenderSupport.ml Graphics.ml\
-					DisplayObject.ml Shape.ml Sprite.ml Quad.ml Texture.ml RenderTexture.ml TextureAtlas.ml Image.ml CompiledSprite.ml Touch.ml BitmapFont.ml TextField.ml TLF.ml FPS.ml Timers.ml Timer.ml \
-					Stage.ml Button.ml MovieClip.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
+$(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
-					DisplayObject.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml Touch.ml BitmapFont.ml TLF.ml Timers.ml Timer.ml Sprite.ml \
+					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml AtlasNode.ml Atlas.ml Touch.ml BitmapFont.ml TLF.ml Timers.ml Timer.ml Sprite.ml \
 					Stage.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
@@ -122,7 +121,7 @@ fbconnect.cmxa:
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
-	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES:.ml=.mli) $(MLSOURCES) >> MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) AtlasSig.mli $(MLSOURCES:.ml=.mli) $(MLSOURCES) >> MLDepend.$(PLATFORM)
 # $(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
 
 

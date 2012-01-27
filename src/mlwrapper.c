@@ -37,6 +37,7 @@ mlstage *mlstage_create(float width,float height) {
 		ERROR("ocaml not initialized\n");
 		return NULL;
 	};
+	PRINT_DEBUG("create stage with size: %f:%f",width,height);
 	stage->width = width;
 	stage->height = height;
 	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));

@@ -79,6 +79,8 @@ typedef struct
   lgTexVertex br;
 } lgTexQuad;
 
+#define TexVertexSize sizeof(lgTexVertex)
+
 enum {
   lgUniformMVPMatrix,
 	lgUniformAlpha,

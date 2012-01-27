@@ -7,3 +7,5 @@
 *.cmxa
 *.so
 *.cma
+*.d
+*.native

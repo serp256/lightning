@@ -69,70 +69,14 @@ module type S = sig
   value create: Texture.c -> c;
 end;
 
+
 module Make(D:DisplayObjectT.M) = struct
   module D = D;
 
 
 
   module Programs = struct (*{{{*)
-    open Render.Program;
 
-    module Simple = struct (*{{{*)
-
-      value id = gen_id ();
-      value create () = 
-        let prg = 
-          load id ~vertex:"Image.vsh" ~fragment:"Image.fsh"
-            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
-            ~uniforms:[| ("u_texture",(UInt 0)) |]
-        in
-        (prg,None);
-
-    end;(*}}}*)
-
-    (*
-    module Glowing = struct (*{{{*)
-
-      value id  = gen_id();
-      value create () = 
-        let prg = 
-          load id ~vertex:"Image.vsh" ~fragment:"ImageGlow.fsh"
-            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
-            ~uniforms:[| ("u_texture", (UInt 0)) |]
-        in
-        (prg,None);
-        
-    end;(*}}}*)
-  *)
-
-    module Glow = struct (*{{{*)
-
-      value id  = gen_id();
-      value create glow = 
-        let prg = 
-          load id ~vertex:"Image.vsh" ~fragment:"Glow.fsh"
-            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
-            ~uniforms:[| ("u_texture", (UInt 0)) ; ("u_color",UNone) ; ("u_strength",UNone) |]
-        in
-        let f = Render.Filter.glow glow.Filters.glowColor glow.Filters.glowStrength in
-        (prg,Some f);
-        
-    end;(*}}}*)
-
-
-    module ColorMatrix = struct (*{{{*)
-
-      value id  = gen_id();
-      value create matrix = 
-        let prg = 
-          load id ~vertex:"Image.vsh" ~fragment:"ImageColorMatrix.fsh"
-            ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
-            ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
-        in
-        let f = Render.Filter.color_matrix matrix in
-        (prg,Some f);
-        
-    end;(*}}}*)
 
   end;(*}}}*)
 
@@ -263,8 +207,8 @@ module Make(D:DisplayObjectT.M) = struct
       method texture = texture;
 
 
-      value mutable programID = Programs.Simple.id;
-      value mutable shaderProgram = Programs.Simple.create ();
+      value mutable programID = GLPrograms.ImageSimple.id;
+      value mutable shaderProgram = GLPrograms.ImageSimple.create ();
       value image = Render.Image.create _texture#width _texture#height _texture#rootClipping color 1.;
 
       value mutable filters : list Filters.t = [];
@@ -284,7 +228,7 @@ module Make(D:DisplayObjectT.M) = struct
                   [ Some g when g.params = glow -> ()
                   | _ -> 
                       let (gtex,image) = Glow.create texture glow.Filters.glowSize in
-                      let gl = { gtex; valid = True; image; prg = Programs.Glow.create glow; params = glow} in
+                      let gl = { gtex; valid = True; image; prg = GLPrograms.ImageGlow.create glow; params = glow} in
                       glowFilter := Some gl
                   ];
                   c
@@ -294,15 +238,15 @@ module Make(D:DisplayObjectT.M) = struct
             end `simple fltrs 
           in
           match f with
-          [ `simple when programID <> Programs.Simple.id -> 
+          [ `simple when programID <> GLPrograms.ImageSimple.id -> 
             (
-              programID := Programs.Simple.id;
-              shaderProgram := Programs.Simple.create ()
+              programID := GLPrograms.ImageSimple.id;
+              shaderProgram := GLPrograms.ImageSimple.create ()
             )
           | `cmatrix m -> 
             (
-              programID := Programs.ColorMatrix.id;
-              shaderProgram := Programs.ColorMatrix.create m
+              programID := GLPrograms.ImageColorMatrix.id;
+              shaderProgram := GLPrograms.ImageColorMatrix.create m
             )
           | _ -> ()
           ];

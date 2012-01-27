@@ -1,5 +1,5 @@
 
-module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.D) = struct
+module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.S with module D = Image.D) = struct
 
 module DisplayObject = Image.D;
 (* module Shape = Shape.Make DisplayObject; *)
@@ -62,6 +62,7 @@ type main =
   | `p of (p_attributes * simple_elements)
   ];
 
+
 DEFINE AEXPAND(name,tag) = 
   match name with
   [ Some v -> [ tag v :: attrs ]
@@ -77,7 +78,7 @@ value img ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?paddingLeft ?va
   let attrs = AEXPAND (paddingTop,`paddingTop) in
   let attrs = AEXPAND (paddingRight,`paddingRight) in
   let attrs = AEXPAND (valign,`valign) in
-  `img (attrs,img);
+  `img (attrs,img#asDisplayObject);
 
 
 value span ?fontFamily ?fontSize ?color ?alpha elements : simple_element = 
@@ -141,10 +142,12 @@ value getFont attributes =
 
 
 
-
+type line_element = [ Img of DisplayObject.c | Char of AtlasNode.t ];
 type line = 
   {
-    container: Sprite.c;
+    lchars: DynArray.t line_element;
+    lx: mutable float; ly: mutable float;
+    (* здесь бы еще понять что все либо флаг что closed либо настройки текста, сейчас упростим и пусть будет новый текст новым здесь элементом, но можно потом соеденить очень похожие в один *)
     lineHeight: mutable float;
     baseLine: mutable float;
     currentX: mutable float;
@@ -154,28 +157,54 @@ type line =
 value createLine font lines =  
   let () = debug "create new line" in
 (*   let line = {container = Sprite.create (); lineHeight = match font with [ Some fnt -> fnt.BitmapFont.lineHeight | None -> 0. ]; baseLine = 0.; currentX = 0.; closed = False} in *)
-  let line = {container = Sprite.create (); lineHeight = font.BitmapFont.lineHeight; baseLine = font.BitmapFont.baseLine; currentX = 0.; closed = False} in
+  let line = {lchars = DynArray.create (); lineHeight = font.BitmapFont.lineHeight; baseLine = font.BitmapFont.baseLine; currentX = 0.; lx = 0.; ly = 0.; closed = False} in
   (
     Stack.push line lines;
     line;
   );
 
+value lineWidth line = 
+  if DynArray.empty line.lchars
+  then 0.
+  else
+    let (lx,lw) = 
+      match DynArray.last line.lchars with
+      [ Img i -> (i#x,i#width)
+      | Char c -> (AtlasNode.x c,AtlasNode.width c)
+      ]
+    and fx = 
+      match DynArray.get line.lchars 0 with
+      [ Img i -> i#x
+      | Char c -> AtlasNode.x c
+      ]
+    in
+    lx +. lw -. fx;
+
 value addToLine width baseLine element line = 
   (
     match compare line.baseLine baseLine with
-    [ 0 -> ()
+    [ 0 -> DynArray.add line.lchars element
     | -1 (* был меньше *) ->
-        let diff = baseLine -. line.baseLine in
-        (
-          (* здесь нужно теперь все элементы подвинуть вниз *)
-          Enum.iter (fun el -> el#setY (el#y +. diff)) line.container#children;
-          line.baseLine := baseLine;
-        )
+      let diff = baseLine -. line.baseLine in
+      (
+        DynArray.iteri begin fun i -> fun
+          [ Img img -> img#setY (img#y +. diff)
+          | Char c -> DynArray.set line.lchars i (Char (AtlasNode.setY ((AtlasNode.y c) +. diff) c))
+          ]
+        end line.lchars;
+        line.baseLine := baseLine;
+        DynArray.add line.lchars element;
+      )
     | _ (* был больше *) -> 
-        (* текущий мальца сдвинуть *)
-        element#setY (element#y +. (line.baseLine -. baseLine))
+        match element with
+        [ Img img as i ->
+          (
+            img#setY (img#y +. (line.baseLine -. baseLine));
+            DynArray.add line.lchars i;
+          )
+        | Char c -> DynArray.add line.lchars (Char (AtlasNode.setY ((AtlasNode.y c) +. (line.baseLine -. baseLine)) c))
+        ]
     ];
-    line.container#addChild element;
     line.currentX := width +. line.currentX;
   ); (* здесь же надо позырить что предыдущий базелайн такой-же и перехуячить там все нахуй *)
 
@@ -315,6 +344,10 @@ value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.l
 
 (* width, height вытащить наверно в html тоже *)
 value create ?width ?height ?border ?dest (html:main) = 
+  let () = debug 
+    let opt = fun [ Some f -> string_of_float f | None -> "NONE" ] in
+    Debug.d "create %s:%s" (opt width) (opt height) 
+  in
   let rec make_lines width attributes lines : simple_element -> unit = fun 
     [ `img attrs image -> 
       let () = debug "process img: lines: %d" (Stack.length lines) in
@@ -348,16 +381,16 @@ value create ?width ?height ?border ?dest (html:main) =
         let eWidth = paddingLeft +. iwidth +. paddingRight in
         let paddingTop = getAttr (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. attrs in
         match getAttr (fun [ `valign v -> Some v | _ -> None]) `center attrs with
-        [ `baseLine -> (* тру работает пиздец как круто *)
+        [ `baseLine -> 
           (
             let newLineHeight = iheight +. (line.lineHeight -. line.baseLine) in 
             if newLineHeight > line.lineHeight
             then line.lineHeight := newLineHeight
             else ();
             image#setY paddingTop;
-            addToLine eWidth iheight image line;
+            addToLine eWidth iheight (Img image) line;
           )
-        | `lineCenter -> (* хуево пашет *)
+        | `lineCenter -> 
             let () = debug "place image by lineCenter: %f,%f" iheight line.lineHeight in
             let baseLine = 
               if line.lineHeight < iheight
@@ -374,7 +407,7 @@ value create ?width ?height ?border ?dest (html:main) =
               let yOffset = (line.lineHeight -. iheight) /. 2. in
               let () = debug "img center yOffset: %f" yOffset in
               image#setY (paddingTop +. yOffset);
-              addToLine eWidth baseLine image line;
+              addToLine eWidth baseLine (Img image) line;
             )
         | `center -> (* центер by text *)
             let () = debug "place image by text center" in
@@ -389,7 +422,6 @@ value create ?width ?height ?border ?dest (html:main) =
             in
             (
               let fdiff = (font.BitmapFont.lineHeight -. iheight) /. 2. in
-              (* теперь понять как это дифф применить *)
               let ldiff = baseLine -. font.BitmapFont.baseLine in
               let yOffset = ldiff +. fdiff in
               (
@@ -401,7 +433,7 @@ value create ?width ?height ?border ?dest (html:main) =
                 else ();
               );
               let () = debug "y: %f, baseLine: %f, line.baseLine: %f" image#y baseLine line.baseLine in
-              addToLine eWidth baseLine image line;
+              addToLine eWidth baseLine (Img image) line;
             )
         ]
       )(*}}}*)
@@ -419,14 +451,6 @@ value create ?width ?height ?border ?dest (html:main) =
           let alpha = getAttr (fun [ `alpha a -> Some a | _ -> None]) 1. attributes in
           let font = getFont attributes in
           let () = debug "font scale: %f" font.BitmapFont.scale in
-          (*
-          let containerWidth =
-            match width with
-            [ Some width -> Some (width *. font.BitmapFont.scale)
-            | None -> None
-            ]
-          in
-          *)
           let lastWhiteSpace = ref None in
           let rec add_line currentLine index = 
             let () = debug "add line" in
@@ -447,7 +471,7 @@ value create ?width ?height ?border ?dest (html:main) =
                else if code = CHAR_SPACE then
                (
                  line.currentX := line.currentX +. font.space;
-                 lastWhiteSpace.val := Some line.container#numChildren;
+                 lastWhiteSpace.val := Some (DynArray.length line.lchars);
                  add_char line (UTF8.next text index)
                )
                else
@@ -455,34 +479,26 @@ value create ?width ?height ?border ?dest (html:main) =
                   let bchar = if font.scale <> 1. then {(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale} else bchar in
                   let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
                   match width with
-                  [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width ->
+                  [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width && bchar.BitmapFont.xAdvance <= width ->
                     let idx = 
                       match !lastWhiteSpace with
                       [ Some idx -> 
-                        let removeIndex = idx in
-                        let numCharsToRemove = line.container#numChildren - removeIndex in
+                        let numCharsToRemove = (DynArray.length line.lchars) - idx in
                         (
-                          for i = 0 to numCharsToRemove - 1 do
-                            ignore(line.container#removeChildAtIndex removeIndex)
-                          done;
+                          DynArray.delete_range line.lchars idx numCharsToRemove;
                           UTF8.move text index ~-numCharsToRemove
                         )
                       | None -> index
                       ]
                     in
                     add_line line idx
-                | _ ->
-                  let bitmapChar = Image.create bchar.BitmapFont.charTexture in
-                  (
-                    bitmapChar#setScale font.BitmapFont.scale;
-                    bitmapChar#setPos (line.currentX +. bchar.BitmapFont.xOffset) (bchar.BitmapFont.yOffset);
-                    bitmapChar#setColor color;
-                    bitmapChar#setAlpha alpha;
-                    addToLine bchar.BitmapFont.xAdvance font.BitmapFont.baseLine bitmapChar line;
-                    (* if code = CHAR_SPACE then lastWhiteSpace.val := Some line.container#numChildren else (); *)
-                    add_char line (UTF8.next text index)
-                  )
-                ]
+                  | _ ->
+                    (
+                      let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x=(line.currentX +. bchar.xOffset);y=bchar.yOffset} ~color:color ~alpha:alpha bchar.atlasNode in
+                      addToLine bchar.xAdvance font.baseLine (Char b) line;
+                      add_char line (UTF8.next text index)
+                    )
+                  ]
             else ()
           in
           let line = 
@@ -576,8 +592,7 @@ value create ?width ?height ?border ?dest (html:main) =
               [ Some w -> 
                 (
                   let f line = 
-                    let linec = line.container in
-                    let width = try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in
+                    let width = lineWidth line in (* try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in *)
                     Stack.push (line,width) qlines
                   in
                   Stack.iter f lines;
@@ -587,8 +602,7 @@ value create ?width ?height ?border ?dest (html:main) =
                 let max_width = ref 0. in
                 (
                   let f line =
-                    let linec = line.container in
-                    let width = try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in
+                    let width = lineWidth line in (* try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in *)
                     (
                       if width > !max_width then max_width.val := width else ();
                       Stack.push (line,width) qlines
@@ -606,7 +620,7 @@ value create ?width ?height ?border ?dest (html:main) =
                   match halign with
                   [ `center | `right as ha ->
                     let widthDiff = max_width -. width in
-                    line.container#setX
+                    line.lx :=
                       (match ha with
                       [ `center -> widthDiff /. 2.
                       | `right -> widthDiff
@@ -614,11 +628,54 @@ value create ?width ?height ?border ?dest (html:main) =
                   | _ -> ()
                   ];
                   debug "set line y to %f" !yOffset;
-                  line.container#setY !yOffset;
-                  container#addChild line.container;
+                  line.ly := !yOffset;
+(*                   container#addChild line.container; *)
                   yOffset.val := !yOffset +. line.lineHeight;
                 )
               end qlines;
+              let atlas : ref (option Atlas.c) = ref None in
+              let atlasOnCurrentLine = ref False in
+              while not (Stack.is_empty qlines) do
+                let () = debug "add line to container" in
+                let (line,width) = Stack.pop qlines in
+                let () = atlasOnCurrentLine.val := False in
+                (
+                  for i = 0 to (DynArray.length line.lchars) - 1 do
+                    let () = debug "add char to line" in
+                    match DynArray.get line.lchars i with
+                    [ Img i -> 
+                      (
+                        i#setX (i#x +. line.lx);
+                        i#setY (i#y +. line.ly);
+                        container#addChild i;
+                        atlas.val := None;
+                      )
+                    | Char c ->
+                      (
+                        match !atlas with
+                        [ Some atlas when atlas#texture = (AtlasNode.texture c) ->
+                          match !atlasOnCurrentLine with
+                          [ True -> atlas#addChild c
+                          | False -> 
+                              let pos = AtlasNode.pos c in
+                              let pd = {Point.x = line.lx -. atlas#x; y = line.ly -. atlas#y} in
+                              atlas#addChild (AtlasNode.setPosPoint (Point.addPoint pos pd) c)
+                          ]
+                        | _ -> (* we need create one *) 
+                            let (atl : Atlas.c) = Atlas.create (AtlasNode.texture c) in
+                            (
+                              atl#setPos line.lx line.ly;
+                              atl#addChild c;
+                              atlas.val := Some atl;
+                              atlasOnCurrentLine.val := True;
+                              container#addChild atl;
+                            )
+                        ]
+                      )
+                    ]
+                  done
+                )
+              done;
             )
           );
           (`P (!yOffset +. spaceAfter),container)
@@ -626,7 +683,8 @@ value create ?width ?height ?border ?dest (html:main) =
     ]
   in
   let result = match dest with [ Some s -> (s :> Sprite.c) | None -> Sprite.create () ] in
-  let (pos,container) = process (width,height) [] html in
+  let no_zero = fun [ Some x when  x <= 0. -> (Debug.w "w or h not correct"; None) | x ->  x ] in
+  let (pos,container) = process (no_zero width,no_zero height) [] html in
   (
     (*
     match border with
