@@ -193,6 +193,16 @@ value add_assoc k v lst =
     dummy.tl;
   );
 
+value apply_assoc f key lst = 
+  let rec loop = fun
+    [ [] -> ()
+    | [ (k,vl) :: tl ] when k = key -> f vl
+    | [ _ :: tl ] -> loop tl
+    ]
+  in
+  loop lst;
+
+
 
 value update_assoc k f lst = 
   let rec loop dst = fun
@@ -346,6 +356,8 @@ value nsplit cnt lst =
           in
           loop i res tl
       ];
+
+
 
 
 (* requires HSet
