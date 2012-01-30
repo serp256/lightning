@@ -100,7 +100,7 @@ static LightViewController *instance = NULL;
 
 static value *ml_url_response = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSHTTPURLResponse *)response {
-	NSLog(@"did revieve response");
+	NSLog(@"did recieve response %lld",response.expectedContentLength);
 	caml_acquire_runtime_system();
 	if (ml_url_response == NULL) 
 		ml_url_response = caml_named_value("url_response");

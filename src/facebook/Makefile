@@ -12,7 +12,7 @@ MLOBJSN = $(MLSOURCES:.ml=.cmx)
 MLOBJS = $(MLSOURCES:.ml=.cmo)
 IFACES = $(MLSOURCES:.ml=.cmi)
 
-ifeq ($(PLATFORM),ios)
+ifeq ($(PLATFORM),IOS)
 FAKELIBS  =
 CFLAGS  += -DDEBUG -DIOS -Iios/sdk
 MLCOPTS += -DIOS
