@@ -391,7 +391,8 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		lgGLUseProgram(program);
 		sp->uniforms = (GLint*)caml_stat_alloc(sizeof(GLuint)*uniformsLen);
 		GLuint loc;
-		for (int idx = 0; idx < uniformsLen; idx++) {
+		int idx;
+		for (idx = 0; idx < uniformsLen; idx++) {
 			value el = Field(uniforms,idx);
 			loc = glGetUniformLocation(program, String_val(Field(el,0)));
 			printf("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);

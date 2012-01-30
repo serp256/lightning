@@ -61,7 +61,7 @@ value device_scale_factor () = 1.0;
 value resource_path path = 
   match bundle_fd_of_resource path with 
   [ None -> raise (File_not_exists path)  
-  | Some p -> p
+  | Some p -> path
   ];  
 
 

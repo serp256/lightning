@@ -253,7 +253,55 @@ value process_events () =
 (*}}}*)
 ELSE
 
-value start_load (wrappers:loader_wrapper) (r:request) = failwith "Net not implemented on this platform yet";
+type ns_connection;
+value loaders = Hashtbl.create 1;
+
+external url_connection: string -> string -> list (string*string) -> option string -> ns_connection = "ml_android_connection";
+
+value get_loader ns_connection = 
+  try
+    Hashtbl.find loaders ns_connection
+  with [ Not_found -> failwith("HTTPConneciton not found") ];
+
+value url_response ns_connection httpCode contentType totalBytes =
+  let () = debug "url response" in
+  let w = get_loader ns_connection in
+  w.onResponse httpCode contentType totalBytes;
+
+Callback.register "url_response" url_response;
+
+value url_data ns_connection data = 
+  let () = debug "url data" in
+  let w = get_loader ns_connection in
+  w.onData data;
+
+Callback.register "url_data" url_data;
+
+value url_complete ns_connection = 
+  let () = debug "url complete" in
+  let w = get_loader ns_connection in
+  (
+    Hashtbl.remove loaders ns_connection;
+    w.onComplete ();
+  );
+
+Callback.register "url_complete" url_complete;
+
+value url_failed ns_connection code msg = 
+  let () = debug "url failed" in
+  let w = get_loader ns_connection in
+  (
+    Hashtbl.remove loaders ns_connection;
+    w.onError code msg;
+  );
+
+Callback.register "url_failed" url_failed;
+
+value start_load wrappers r = 
+  let (url,data) = prepare_request r in
+  let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
+  Hashtbl.add loaders ns_connection wrappers;
+(*}}}*)
 
 ENDIF;
 ENDIF;

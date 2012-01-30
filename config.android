@@ -5,3 +5,5 @@ OCAMLBINDIR = $(OCAMLDIR)/bin/
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB = /usr/local/ocaml/android/bin/ocamlmklib
+LIB = native syntax
+

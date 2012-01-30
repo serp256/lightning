@@ -7,8 +7,8 @@ import android.util.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-
-
+import android.os.Handler;
+import android.os.Looper;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import android.content.res.AssetManager;
@@ -17,9 +17,10 @@ import android.content.res.AssetFileDescriptor;
 public class LightView extends GLSurfaceView {
 
 	private LightRenderer renderer;
+    private int loader_id;
 
 	public LightView(Context context,int width,int height) {
-		super(context);
+        super(context);
 		initView(width,height);
 	}
 
@@ -198,6 +199,35 @@ public class LightView extends GLSurfaceView {
 		 Log.d("EVENT", sb.toString());
 	}
 
+
+    //
+	// Этот методы вызывается из ocaml, он создает хттп-лоадер, который в фоне выполняет запрос с переданными параметрами
+	public int spawnHttpLoader(final String url, final String method, final String[][] headers, final String data){
+		loader_id = loader_id + 1;
+        final GLSurfaceView v = this;
+
+		Thread t = new Thread(new Runnable() { // в renderer thread это сделать нельзя, так как там нет лупера.
+		    public void run() {                // вообще можно попробовать переделать без async task.        
+		      Looper.prepare();                // просто запустить в другом треде. А так получается, что у нас аж два треда пускаются. 
+        	  UrlReq req = new UrlReq();
+		      req.url = url;
+		      req.method = method;
+		      req.headers = headers;
+		      req.data = data;
+		      req.loader_id = loader_id;
+              req.surface_view = v;		            
+	    	  LightHttpLoader loader = new LightHttpLoader();  
+		      loader.execute(req);
+		    }
+		  }
+		);
+		
+		t.start();
+		return loader_id;
+	}
+
+
 	private native void lightInit();
 }
+
 

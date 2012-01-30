@@ -25,7 +25,11 @@
 #define __NEON_MATRIX_IMPL_H__
 
 #ifdef __arm__
+#ifdef ANDROID
+#include "machine/cpu-features.h"
+#else
 #include "arm/arch.h"
+#endif
 #endif
 
 // Matrixes are assumed to be stored in column major format according to OpenGL

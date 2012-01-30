@@ -1,5 +1,5 @@
 #ifdef ANDROID
-#include <GLES/gl2.h>
+#include <GLES2/gl2.h>
 #else 
 #ifdef IOS
 #include <OpenGLES/ES2/gl.h>

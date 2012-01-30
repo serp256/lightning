@@ -9,6 +9,9 @@
 #include "mlwrapper_android.h"
 #include "GLES/gl.h"
 
+#define caml_acquire_runtime_system()
+#define caml_release_runtime_system()
+
 static JavaVM *gJavaVM;
 static mlstage *stage = NULL;
 static jobject jView;
@@ -252,4 +255,171 @@ JNIEXPORT void Java_ru_redspell_lightning_lightRenderer_handlekeydown(int keycod
 */
 
 // that's all now :-)
+
+
+static jobjectArray jarray_of_mlList(JNIEnv* env, value mlList) 
+//берет окэмльный список дуплов и делает из него двумерный массив явовый
+{
+	value block, tuple;
+	int flag = 1;
+	int count = 0;
+
+	//создал массив из двух строчек
+	jclass clsstring = (*env)->FindClass(env,"java/lang/String");
+	jobjectArray jtuple = (*env)->NewObjectArray(env, 2, clsstring, NULL);
+		
+	//создал большой массив с элементами маленькими массивами
+	jclass jtupleclass = (*env)->GetObjectClass(env, jtuple);
+	jobjectArray jresult = (*env)->NewObjectArray(env, 5, jtupleclass, NULL);
+	(*env)->DeleteLocalRef(env, jtuple);
+	
+	block = mlList;
+	
+	while (Is_block(block)) {
+		jtuple = (*env)->NewObjectArray(env, 2, clsstring, NULL);
+    	tuple = Field(block,0);
+    	
+		//берем строчку окэмловского дупла, конвертим ее в си формат
+		//затем создаем из нее ява-строчку и эту ява строчку
+		//пихаем во временный массив на две ячейки
+		
+		jstring jfield1 = (*env)->NewStringUTF(env, String_val(Field(tuple,0)));
+		
+		(*env)->SetObjectArrayElement(env, jtuple, 0, jfield1);
+		
+		//То же самое со вторым полем
+		
+		jstring jfield2 = (*env)->NewStringUTF(env, String_val(Field(tuple,1)));
+		
+		(*env)->SetObjectArrayElement(env, jtuple, 1, jfield2);
+		
+		//Добавляем мелкий массив в большой массив	
+		
+		(*env)->SetObjectArrayElement(env, jresult, count, jtuple);
+		
+		//Освобождаем память занятую временными данным на проходе
+		
+		(*env)->DeleteLocalRef(env, jtuple);
+		(*env)->DeleteLocalRef(env, jfield1);
+		(*env)->DeleteLocalRef(env, jfield2);
+		count += 1;
+  
+  	    block = Field(block,1);
+	}
+	return jresult;
+}
+
+
+
+
+
+value ml_android_connection(value mlurl,value method,value headers,value data) {
+  JNIEnv *env;
+  (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+  if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) { 
+    __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()"); 
+  }
+
+  jstring jurl = (*env)->NewStringUTF(env, String_val(mlurl));
+  jstring jmethod = (*env)->NewStringUTF(env, String_val(method));
+  jobjectArray jheaders = jarray_of_mlList(env, headers);
+  jstring jdata = (*env)->NewStringUTF(env, String_val(method));
+  if Is_block(data) {
+  	jdata = (*env)->NewStringUTF(env, String_val(data));
+  } 
+	
+	
+  //и тут уже вызываем ява-метод и передаем ему параметры
+  jclass cls = (*env)->GetObjectClass(env, jView);
+  jmethodID mid = (*env)->GetMethodID(env, cls, "spawnHttpLoader", "(Ljava/lang/String;Ljava/lang/String;[[Ljava/lang/String;Ljava/lang/String;)I");
+  if (mid == NULL) {
+  	return Val_int(0); // method not found
+  }
+	
+  //где-то тут надо получить идентификатор лоадера и вернуть его окэмлу, а так же передать в яву
+  //чтобы все дальнейшие действия ассоциировались именно с этим лоадером
+  jint jloader_id = (*env)->CallIntMethod(env, jView, mid, jurl, jmethod, jheaders, jdata);
+  value loader_id = caml_copy_int32(jloader_id);
+  return loader_id;
+}
+
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlResponse(JNIEnv *env, jobject jloader, jint loader_id, jint jhttpCode, jstring jcontentType, jint jtotalBytes) {
+  DEBUG("IM INSIDE lightURLresponse!!");
+  static value *ml_url_response = NULL;
+  
+  caml_acquire_runtime_system();
+  if (ml_url_response == NULL) 
+    ml_url_response = caml_named_value("url_response");
+
+  value contentType, httpCode, totalBytes;
+  Begin_roots3(contentType, httpCode, totalBytes);
+
+  contentType = string_of_jstring(env, jcontentType);
+  httpCode = caml_copy_int32(jhttpCode);
+  totalBytes = caml_copy_int32(jtotalBytes);
+
+  value args[4];
+  args[0] = caml_copy_int32(loader_id);
+  args[1] = httpCode; 
+  args[3] = totalBytes;
+  args[2] = contentType;
+  caml_callbackN(*ml_url_response,4,args);
+  End_roots();
+  caml_release_runtime_system();
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlData(JNIEnv *env, jobject jloader, jint loader_id, jarray data) {
+	DEBUG("IM INSIDE lightURLData!!-------------------------------------------->>>");
+    static value *ml_url_data = NULL;
+	caml_acquire_runtime_system();
+
+	if (ml_url_data == NULL) 
+      ml_url_data = caml_named_value("url_data");
+
+	int size = (*env)->GetArrayLength(env, data);
+	
+	value mldata;
+  
+    Begin_roots1(mldata);
+	mldata = caml_alloc_string(size); 
+	jbyte * javadata = (*env)->GetByteArrayElements(env,data,0);
+	memcpy(String_val(mldata),javadata,size);
+	(*env)->ReleaseByteArrayElements(env,data,javadata,0);
+
+	caml_callback2(*ml_url_data, caml_copy_int32(loader_id), mldata);
+	End_roots();
+	caml_release_runtime_system();
+}
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlFailed(JNIEnv *env, jobject jloader, jint jloader_id, jint jerror_code, jstring jerror_message) {
+  DEBUG("FAILURE ------------");
+  static value *ml_url_failed = NULL;
+  caml_acquire_runtime_system();
+
+  if (ml_url_failed == NULL) 
+    ml_url_failed = caml_named_value("url_failed"); 
+
+  value error_code,loader_id;
+  Begin_roots2(error_code,loader_id);
+
+  error_code = caml_copy_int32(jerror_code);
+  loader_id = caml_copy_int32(jloader_id);
+  caml_callback3(*ml_url_failed, loader_id, error_code, string_of_jstring(env, jerror_message));
+  End_roots();
+  caml_release_runtime_system();
+}
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlComplete(JNIEnv *env, jobject jloader, jint loader_id) {
+  DEBUG("COMPLETE++++++++++++++++++++++++++++++++++++++++++++++++++");
+  static value *ml_url_complete = NULL;
+  caml_acquire_runtime_system();
+  if (ml_url_complete == NULL)
+    ml_url_complete = caml_named_value("url_complete");
+  caml_callback(*ml_url_complete, caml_copy_int32(loader_id));
+  caml_release_runtime_system();
+}
 
