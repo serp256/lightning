@@ -432,7 +432,7 @@ module Make(D:DisplayObjectT.M) = struct
           )
         | None -> () (* Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image *)
         ];
-        Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image
+(*         Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image *)
       ); 
   end;
 
