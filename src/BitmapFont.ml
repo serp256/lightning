@@ -8,7 +8,7 @@ type bc =
     xOffset:float;
     yOffset:float;
     xAdvance: float;
-    charTexture: Texture.c;
+    atlasNode: AtlasNode.t;
   };
 
 type t = 
@@ -18,6 +18,7 @@ type t =
     baseLine: float;
     lineHeight: float;
     space:float;
+    texture: Texture.c;
   };
 
 module MapInt = Map.Make (struct type t = int; value compare (k1:int) k2 = compare k1 k2; end);
@@ -61,6 +62,7 @@ DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_TAB = 9;
 
 
+(*
 value register xmlpath = (*{{{*)
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
   let floats = XmlParser.floats in
@@ -101,8 +103,8 @@ value register xmlpath = (*{{{*)
             let charID = int_of_string id in
             let bc = 
               let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
-              let charTexture = texture#subTexture region in
-              { charID ; xOffset = floats xoffset; yOffset = floats yoffset; xAdvance = floats xadvance; charTexture }
+              let atlasNode = AtlasNode.create texture region () in
+              { charID ; xOffset = floats xoffset; yOffset = floats yoffset; xAdvance = floats xadvance; atlasNode }
             in
             Hashtbl.add chars charID bc;
             loop ()
@@ -122,7 +124,7 @@ value register xmlpath = (*{{{*)
     let imgFile = parse_page () in
     let texture = Texture.load imgFile in
     let chars = parse_chars texture in
-    let bf = { (* texture; *) chars; (* name; *) scale=1.; baseLine; lineHeight; space } in
+    let bf = { texture; chars; (* name; *) scale=1.; baseLine; lineHeight; space } in
     try
       let sizes = Hashtbl.find fonts name in
       let sizes = MapInt.add size bf sizes in
@@ -130,9 +132,10 @@ value register xmlpath = (*{{{*)
     with [ Not_found -> Hashtbl.add fonts name (MapInt.singleton size bf) ]
   | _ -> XmlParser.error "font not found"
   ];(*}}}*)
+*)
 
 
-value registern xmlpath =
+value register xmlpath =
   let dirname = Filename.dirname xmlpath in
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
   let () = XmlParser.accept (`Dtd None) in
@@ -169,8 +172,8 @@ value registern xmlpath =
                   let charID = XmlParser.ints id in
                    let bc = 
                      let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
-                     let charTexture = pages.(XmlParser.ints page)#subTexture region  in
-                     { charID; xOffset = floats xOffset; yOffset = floats yOffset; xAdvance = floats xAdvance; charTexture }
+                     let atlasNode = AtlasNode.create pages.(XmlParser.ints page) region  () in
+                     { charID; xOffset = floats xOffset; yOffset = floats yOffset; xAdvance = floats xAdvance; atlasNode }
                    in
                    Hashtbl.add chars charID bc;
                    loop ()
@@ -181,7 +184,7 @@ value registern xmlpath =
             in
             (
               loop ();
-              let bf = { chars; scale=1.; baseLine =  floats baseLine; space = floats space; lineHeight = floats lineHeight; } in
+              let bf = { chars; texture = pages.(0); scale=1.; baseLine =  floats baseLine; space = floats space; lineHeight = floats lineHeight; } in
               let res = MapInt.add (XmlParser.ints size) bf res in
               parse_chars res
             )
@@ -198,6 +201,7 @@ value registern xmlpath =
   | _ -> XmlParser.error "Font not found"
   ];
 
+(*
 module type Creator = sig
   module Sprite: Sprite.S;
   value createText: t -> ~width:float -> ~height:float -> ~color:int -> ?border:bool -> ?hAlign:LightCommon.halign -> ?vAlign:LightCommon.valign -> string -> Sprite.c;
@@ -349,3 +353,4 @@ module MakeCreator(Image:Image.S)(Sprite:Sprite.S with module D = Image.D) = str
     );
 
 end;
+*)

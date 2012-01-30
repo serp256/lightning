@@ -84,7 +84,7 @@ value loadImage ?(textureID=0) ~path ~contentScaleFactor =
         numMipmaps = 0;
         generateMipmaps = False;
         premultipliedAlpha = False;
-        scale = 1.0;
+        scale = 2.0;
         textureID = textureID;
       }
     in
@@ -123,7 +123,7 @@ class type r =
 class subtexture region baseTexture = 
   let tw = baseTexture#width
   and th = baseTexture#height in
-  let clipping = Rectangle.create (region.Rectangle.x /. tw) (region.Rectangle.y /. th) (region.Rectangle.width /. tw)  (region.Rectangle.height /. th) in
+  let clipping = Rectangle.create (region.Rectangle.x /. tw) (region.Rectangle.y /. th) (region.Rectangle.width /. tw) (region.Rectangle.height /. th) in
   let rootClipping = Rectangle.tm_of_t clipping in
   let () = 
     let open Rectangle in
@@ -155,7 +155,8 @@ class subtexture region baseTexture =
     method scale = baseTexture#scale;
     method base = Some (baseTexture :> c);
     method clipping = Some clipping;
-    method rootClipping = Some rootClipping;
+    value rootClipping : option Rectangle.t = Some (Obj.magic rootClipping);
+    method rootClipping = rootClipping;
 (*     method update path = baseTexture#update path; *)
     method subTexture region = ((new subtexture region (self :> r)) :> c);
     method retain () = baseTexture#retain ();
@@ -192,14 +193,14 @@ value make textureInfo =
   and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
   and scale = textureInfo.scale 
   in
-  let () = debug "make texture: width=%f,height=%f,scale=%f" width height scale in
+  let () = debug "make texture: width=[%d->%f],height=[%d -> %f],scale=%f" textureInfo.realWidth width textureInfo.realHeight height scale in
   let clipping = 
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
     then Some (Rectangle.create 0. 0. ((float textureInfo.realWidth) /. width) ((float textureInfo.realHeight) /. height))
     else None 
   in
-  let w = (float textureInfo.realWidth) /. scale
-  and h = (float textureInfo.realHeight) /. scale in
+  let w = float textureInfo.realWidth
+  and h = float textureInfo.realHeight in
   object(self)
     value mutable textureID = textureID;
     value mutable counter = 0;
@@ -263,7 +264,7 @@ value create texFormat width height data =
 
 value load path : c = 
   try
-    debug (
+    debug:cache (
       Debug.d "print cache";
       Cache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
     );
@@ -275,14 +276,14 @@ value load path : c =
     in
     let () = debug:gc Gc.compact () in
     let () = 
-      debug
+      debug:cache
         "load texture: %s [%d->%d; %d->%d] [pma=%s]\n%!" 
         path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
         (string_of_bool textureInfo.premultipliedAlpha) 
     in
     let res = make textureInfo in
     (
-      debug "texture %d loaded" res#textureID;
+      debug:cache "texture %d loaded" res#textureID;
       Gc.finalise (fun _ -> Cache.remove cache path) res;
       Cache.add cache path res;
       (res :> c)
@@ -326,19 +327,19 @@ module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = 
 
 IFDEF IOS THEN
 value render_texture_size ((w,h) as ok) =
-  if w <= 8 
-  then
-    if w > h
-    then  (w,w) (* incorrect case *)
+    if w <= 8 
+    then
+      if w > h
+      then  (w,w) (* incorrect case *)
+      else
+        if h > w * 2 
+        then  (min (h / 2) 16, h) (* incorrect case *)
+        else ok
     else
-      if h > w * 2 
-      then  (min (h / 2) 16, h) (* incorrect case *)
+      if h <= 8 
+      then (w,min 16 w)
       else ok
-  else
-    if h <= 8 
-    then (w,min 16 w)
-    else ok
-;
+    ;
 
 ELSE
 

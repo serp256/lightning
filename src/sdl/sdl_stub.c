@@ -28,7 +28,7 @@
 #include <math.h>
 
 #define SDL_NO_COMPAT
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 
 /* Ugly: SDL_AudioSpec has a field called "callback" which caml/callback.h redefines to caml_callback.

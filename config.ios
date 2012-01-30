@@ -1,5 +1,5 @@
 include myconfig.ios
-export PLATFORM = ios
+export PLATFORM = IOS
 SDK_VERSION ?= 5.0
 GCC ?= llvm-gcc
 ARCH ?= armv7

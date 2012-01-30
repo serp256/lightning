@@ -220,11 +220,12 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method dispatchEvent' event target =
     (
-      try
-        let l = List.assoc event.Ev.etype listeners in
-        let evd = (target,self) in
-        ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs);
-      with [ Not_found -> () ];
+      MList.apply_assoc 
+        (fun l ->
+          let evd = (target,self) in
+          ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
+        )
+        event.Ev.etype listeners;
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with
       [ True -> 
         match parent with
@@ -309,7 +310,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       (* this method calls 'self.scaleX' instead of changing mScaleX directly.
           that way, subclasses reacting on size changes need to override only the scaleX method. *)
       scaleX := 1.0;
-      boundsCache := None;
+      RESET_CACHE("setWidth");
       let actualWidth = self#width in
       if actualWidth <> 0.0
       then
@@ -322,7 +323,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setHeight nh = 
     (
       scaleY := 1.0;
-      boundsCache := None;
+      RESET_CACHE("setHeight");
       let actualHeight = self#height in
       if actualHeight <> 0.0
       then
@@ -926,7 +927,7 @@ class virtual container = (*{{{*)
 
     method boundsInSpace targetCoordinateSpace =
       match children with
-      [ None -> Rectangle.create 0. 0. 0. 0.
+      [ None -> Rectangle.empty
       | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace targetCoordinateSpace
       | Some children -> 
           let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
