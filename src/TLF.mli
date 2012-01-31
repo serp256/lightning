@@ -18,6 +18,7 @@ module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.
   type span_attribute = 
     [= `fontFamily of string
     | `fontSize of int
+    | `fontWeight of string
     | `color of int
     | `alpha of float
     | `backgroundColor of int (* как это замутить то я забыла *)

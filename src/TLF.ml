@@ -21,6 +21,7 @@ type img_attributes = list img_attribute;
 type span_attribute = 
   [= `fontFamily of string
   | `fontSize of int
+  | `fontWeight of string
   | `color of int
   | `alpha of float
   | `backgroundColor of int (* как это замутить то я забыла *)
@@ -243,6 +244,7 @@ value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.l
       fun
         [ ((_,"font-family"),ff) -> `fontFamily ff
         | ((_,"font-size"),sz) -> `fontSize (parse_int sz)
+        | ((_,"fontWeight"),sz) -> `fontWeight sz
         | ((_,"color"),c) -> `color (parse_int c)
         | ((_,"alpha"),alpha) -> `alpha (parse_float alpha)
         | ((_,an),_) -> parse_error "unknown attribute %s" an
