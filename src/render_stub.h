@@ -8,7 +8,7 @@
 #include <OpenGLES/ES2/gl.h>
 #else
 #define GL_GLEXT_PROTOTYPES
-#include <SDL/SDL_opengl.h>
+#include <SDL_opengl.h>
 #endif
 #endif
 
