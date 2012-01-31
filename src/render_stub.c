@@ -797,7 +797,7 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 
 	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
 
-	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColorTex);
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
 
 	value fs = Field(program,1);
 	if (fs != Val_unit) {

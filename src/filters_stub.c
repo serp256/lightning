@@ -136,7 +136,6 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
     if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
 	};
 #endif
-	// need ios fix here 
   glGenTextures(1, &rtid);
   glBindTexture(GL_TEXTURE_2D, rtid);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -178,7 +177,7 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 static GLfloat quads[4][2];
 static GLfloat texCoords[4][2] = {{0.,0.},{1.,0.},{0.,1.},{1.,1.}};
 
-void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clipping *clp) {
+void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clipping *clp,int clear) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
 	GLsizei bw = ceil(rb->width);
@@ -186,17 +185,26 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 
 
   glViewport(0, 0,bw,bh);
-	glClear(GL_COLOR_BUFFER_BIT);
+	if (clear) glClear(GL_COLOR_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,textureID);
 
-	double dx = ((double)bw - w) / bw;
-	double dy = ((double)bh - h) / bh;
+	//double dx = ((double)bw - w) / bw;
+	//double dy = ((double)bh - h) / bh;
 	double x = w / bw;
 	double y = h / bh;
 
-	//printf("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh);
+	printf("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d], quads: [%f,%f]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh, x, y);
 
-	//  надо в левый сука угол сместить каким-то хуем блядь нахуй
+	quads[0][0] = -x;
+	quads[0][1] = -y;
+	quads[1][0] = x;
+	quads[1][1] = -y;
+	quads[2][0] = -x;
+	quads[2][1] = y;
+	quads[3][0] = x;
+	quads[3][1] = y;
+
+	/*
 	quads[0][0] = -x - dx;
 	quads[0][1] = y - dy;
 	quads[1][0] = x - dx;
@@ -205,6 +213,7 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 	quads[2][1] = -y - dy;
 	quads[3][0] = quads[1][0];
 	quads[3][1] = quads[2][1];
+	*/
 
 	//printf("quads: [%f:%f] [%f:%f] [%f:%f] [%f:%f]\n", quads[0][0], quads[0][1], quads[1][0], quads[1][1], quads[2][0], quads[2][1], quads[3][0], quads[3][1]);
 
@@ -265,19 +274,54 @@ value make_filter(filterRender render,filterFinalize finalize, void *data) {
 
 
 /*
-static GLuint glow_fragment_shader() {
+static GLuint final_glow_vertex_shader() {
+	static GLuint shader = 0;
+	if (shader == 0) {
+		shader = compile_shader(GL_VERTEX_SHADER,
+			"attribute vec2 a_position; attribute vec2 a_texCoord; attribute vec2 a_texCoordOrig; varying vec2 v_texCoord; varying vec2 v_texCoordOrig;\
+			void main(void) { \
+			gl_Position = vec4(a_position, 0.0, 1.0); \
+			v_texCoord = a_texCoord; \
+			v_texCoordOrig = a_texCoordOrig; \
+			}");
+	};
+	return shader;
+}
+*/
+
+static GLuint final_glow_fragment_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
 		shader = compile_shader(GL_FRAGMENT_SHADER,
-				"varying  vec2 v_texCoord;uniform  vec3 u_color; uniform sampler2D u_texture;\
-				void main() {\
-					float alpha = texture2D(u_texture, v_texCoord).a; \
-					gl_FragColor = vec4(u_color,alpha);\
-				}");
+				"#ifdef GL_ES\nprecision lowp float; \n#endif\n"\
+				"varying vec2 v_texCoord; uniform sampler2D u_texture;\n"\
+				"void main() {"\
+					"vec4 pixel = texture2D(u_texture,v_texCoord);\n"\
+					"if (pixel.a == 1.) gl_FragColor = vec4(0.,0.,0.,1.);\n"\
+					"else gl_FragColor = vec4(0.,0.,0.,0.);\n"\
+					/*
+					float alpha = texture2D(u_orig_texture,v_texCoordOrig).a;"\
+					"if (alpha == 0.0) gl_FragColor = texture2D(u_texture,v_texCoord);\n"\
+					"else gl_FragColor =1vec4(0.,0.,0.,0.);\n"\
+					*/
+					"}");
 	};
 	return shader;
 };
-*/
+
+static GLuint final_glow_program() {
+	static GLuint prg = 0;
+	if (prg == 0) {
+		char *attribs[2] = {"a_position","a_texCoord"};
+		prg = create_program(simple_vertex_shader(),final_glow_fragment_shader(),2,attribs);
+		if (prg) {
+			glUseProgram(prg);
+			glUniform1i(glGetUniformLocation(prg,"u_texture"),0);
+			glUseProgram(0);
+		}
+	};
+	return prg;
+}
 
 struct glowData 
 {
@@ -308,10 +352,9 @@ value ml_filter_glow(value color, value strength) {
 	return make_filter(&glowFilter,&glowFilterFinalize,gd);
 }
 
-void ml_glow_resize(value framebufferID,value textureID, value width, value height, value clip, value count) {
-	/* не понятно как тут разрулица надо */ 
+void ml_glow_make(value textureID, value width, value height, value clip, value framebufferID, value twidth, value theight, value count) {
 	renderbuffer_t rb;
-	rb.fbid = Long_val(framebufferID);
+	rb.fbid = 0;
 	rb.tid = Long_val(textureID);
 	rb.width = Double_val(width);
 	rb.height = Double_val(height);
@@ -327,6 +370,12 @@ void ml_glow_resize(value framebufferID,value textureID, value width, value heig
 		rb.clp.width = 1.;
 		rb.clp.height = 1.;
 	};
+	renderbuffer_t tb;
+	tb.fbid = Long_val(framebufferID);
+	tb.tid = 0;
+	tb.width = Double_val(twidth);
+	tb.height = Double_val(theight);
+
 	glDisable(GL_BLEND);
 	int gsize = Int_val(count);
 	framebuffer_state fstate;
@@ -334,32 +383,112 @@ void ml_glow_resize(value framebufferID,value textureID, value width, value heig
 	glClearColor(0.,0.,0.,0.);
 	GLuint simplePrg = simple_program();
 	glUseProgram(simplePrg);
+
 	renderbuffer_t *crb = &rb;
-	renderbuffer_t *rbfs = caml_stat_alloc((gsize-1)*sizeof(renderbuffer_t));
+	renderbuffer_t *rbfs = caml_stat_alloc(gsize*sizeof(renderbuffer_t));
+	//drawTexture(&tb,rb.tid,rb.width,rb.height,&rb.clp,1);
+	//goto exit;
 	int i;
-	double w = rb.width, h = rb.height;
+	//double gs = (pos(2,gsize) - 1) * 2;
+	double w = tb.width, h = tb.height;
 	renderbuffer_t *rbfp = rbfs;
-	for (i = 1; i < gsize; i++) {
+	for (i = 0; i < gsize; i++) {
 		w /= 2;
 		h /= 2;
 		create_renderbuffer(w,h,rbfp);
 		checkGLErrors("create renderbuffer");
-		drawTexture(rbfp,crb->tid,w,h,&crb->clp);
+		drawTexture(rbfp, crb->tid, crb->width / 2, crb->height / 2, &crb->clp,1);
 		checkGLErrors("draw forward");
 		crb = rbfp;
 		rbfp += 1;
 	};
-	rbfp = rbfs + (gsize - 2);
+	rbfp = rbfs + (gsize - 1);
 	renderbuffer_t *prbfp;
-	for (i = 2; i < gsize ; i++) {
+	for (i = 1; i < gsize ; i++) {
 		prbfp = rbfp - 1;
-		drawTexture(prbfp,rbfp->tid,prbfp->width,prbfp->height,&rbfp->clp);
+		drawTexture(prbfp,rbfp->tid,prbfp->width,prbfp->height,&rbfp->clp,1);
 		checkGLErrors("draw back");
 		delete_renderbuffer(rbfp);
 		rbfp = prbfp;
 	};
 	checkGLErrors("before last draw");
-	drawTexture(&rb,rbfs->tid,rb.width,rb.height,&rbfs->clp);
+	drawTexture(&tb,rbfs->tid,tb.width,tb.height,&rbfs->clp,1);
+
+	// финальный шаг надо вырезать нахуй 
+	GLuint fgp = final_glow_program();
+	glUseProgram(fgp);
+	drawTexture(&tb,rb.tid,rb.width,rb.height,&rb.clp,0);
+
+	/*
+	GLuint fgp = final_glow_program();
+	glUseProgram(fgp);
+
+
+
+
+	glBindFramebuffer(GL_FRAMEBUFFER,rb.fbid);
+	GLsizei bw = ceil(rb.width);
+	GLsizei bh = ceil(rb.height);
+
+  glViewport(0, 0,bw,bh);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D,rb.tid);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,rbfs->tid);
+
+	double x = rb.width / bw;
+	double y = rb.height / bh;
+
+	quads[0][0] = -x;
+	quads[0][1] = y;
+	quads[1][0] = x;
+	quads[1][1] = y;
+	quads[2][0] = -x;
+	quads[2][1] = -y;
+	quads[3][0] = x;
+	quads[3][1] = -y;
+
+	texCoords[0][0] = rbfs->clp.x;
+	texCoords[0][1] = rbfs->clp.y;
+	texCoords[1][0] = rbfs->clp.x + rbfs->clp.width;
+	texCoords[1][1] = rbfs->clp.y;
+	texCoords[2][0] = rbfs->clp.x;
+	texCoords[2][1] = rbfs->clp.y + rbfs->clp.height;
+	texCoords[3][0] = texCoords[1][0];
+	texCoords[3][1] = texCoords[2][1];
+
+
+	GLfloat texCoordsOrig[4][2];	
+	texCoordsOrig[0][0] = rb.clp.x;
+	texCoordsOrig[0][1] = rb.clp.y;
+	texCoordsOrig[1][0] = rb.clp.x + rb.clp.width;
+	texCoordsOrig[1][1] = rb.clp.y;
+	texCoordsOrig[2][0] = rb.clp.x;
+	texCoordsOrig[2][1] = rb.clp.y + rb.clp.height;
+	texCoordsOrig[3][0] = texCoordsOrig[1][0];
+	texCoordsOrig[3][1] = texCoordsOrig[2][1];
+
+
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
+	glVertexAttribPointer(lgVertexAttrib_Position,2,GL_FLOAT,GL_FALSE,0,quads);
+	glVertexAttribPointer(lgVertexAttrib_TexCoords,2,GL_FLOAT,GL_FALSE,0,texCoords);
+	glVertexAttribPointer(lgVertexAttrib_Color,2,GL_FLOAT,GL_FALSE,0,texCoordsOrig);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	*/
+
+
+	checkGLErrors("final glow draw");
+
+exit:
+	// можно нахуй скипнуть это дело 
+	glBindTexture(GL_TEXTURE_2D,0);
+	glBindFramebuffer(GL_FRAMEBUFFER,0); 
+
+
+
 	delete_renderbuffer(rbfs);
 	caml_stat_free(rbfs);
 	glUseProgram(0);
@@ -370,8 +499,8 @@ void ml_glow_resize(value framebufferID,value textureID, value width, value heig
 }
 
 
-void ml_glow_resize_byte(value * argv, int n) {
-	ml_glow_resize(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
+void ml_glow_make_byte(value * argv, int n) {
+	ml_glow_make(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6],argv[7]);
 }
 
 

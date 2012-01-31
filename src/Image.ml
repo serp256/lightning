@@ -126,23 +126,24 @@ module Make(D:DisplayObjectT.M) = struct
           if not t.valid_size
           then
             (
-              let wdth = w /. 2. +. t.gs
-              and hght = h /. 2. +. t.gs in
+              let wdth = w +. t.gs
+              and hght = h +. t.gs in
               t.texture#resize wdth hght
             )
           else ();
+          (*
           let image = Render.Image.create w h texture#rootClipping 0xFFFFFF 1. in
           let glowPrg = glowPrg () in
-          let hgs = t.gs /. 2. in
-          let m = Matrix.create ~scale:(0.5,0.5) ~translate:{Point.x = hgs; y = hgs} () in
+          let m = Matrix.create ~scale:(0.5,0.5) ~translate:{Point.x = t.gs; y = t.gs} () in
           t.texture#draw (fun () ->
             (
               Render.clear 0 0.;
               Render.Image.render m (glowPrg,None) texture#textureID texture#hasPremultipliedAlpha image;
             )
           );
+          *)
+          Render.Filter.glow_make texture#textureID w h texture#rootClipping t.texture#framebufferID t.texture#width t.texture#height size;
         );
-        if size > 1 then Render.Filter.glow_resize t.texture#framebufferID t.texture#textureID t.texture#width t.texture#height t.texture#rootClipping size else ();
         t.valid_size := True;
         t.valid_content := True;
       );
@@ -158,19 +159,16 @@ module Make(D:DisplayObjectT.M) = struct
       with [ Not_found -> 
         let t = 
           let w = texture#width 
-          and h = texture#height 
+          and h = texture#height
           in
-          let hw = w /. 2.
-          and hh = h /. 2. in
-          let hgs = 2. ** (float size) -. 1. in
-          let gs = hgs *. 2. in
-          let wdth = hw  +. gs 
-          and hght = hh  +. gs
+          let gs = (2. ** (float size) -. 1.) *. 2. in
+          let wdth = w  +.  2. *. gs 
+          and hght = h  +.  2. *. gs
           in
           let rtexture = Texture.rendered wdth hght in
-          let () = rtexture#setPremultipliedAlpha False in
+          let () = rtexture#setPremultipliedAlpha False in (* ??? *)
           let mgs = ~-.gs in
-          let matrix = Matrix.create ~scale:(2.,2.) ~translate:{Point.x=mgs;y=mgs} () in 
+          let matrix = Matrix.create ~translate:{Point.x=mgs;y=mgs} () in 
           {valid_size=True;valid_content=False;texture=rtexture;gs;matrix}
         in
         (
@@ -228,7 +226,7 @@ module Make(D:DisplayObjectT.M) = struct
                   [ Some g when g.params = glow -> ()
                   | _ -> 
                       let (gtex,image) = Glow.create texture glow.Filters.glowSize in
-                      let gl = { gtex; valid = True; image; prg = GLPrograms.ImageGlow.create glow; params = glow} in
+                      let gl = { gtex; valid = True; image; prg = GLPrograms.ImageSimple.create (); params = glow} in
                       glowFilter := Some gl
                   ];
                   c

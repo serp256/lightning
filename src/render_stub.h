@@ -122,7 +122,7 @@ enum {
   lgVertexAttribFlag_Color   = 1 << 2,
   
 	lgVertexAttribFlag_PosColor = (lgVertexAttribFlag_Position | lgVertexAttribFlag_Color),
-	lgVertexAttribFlag_PosColorTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords ),
+	lgVertexAttribFlag_PosTexColor = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords ),
 	lgVertexAttribFlag_PosTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_TexCoords )
 };
 
