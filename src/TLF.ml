@@ -215,50 +215,41 @@ DEFINE CHAR_NEWLINE = 10;
 exception Parse_error of (string*string);
 (* exception Unknown_attribute (string*string); *)
 
+value parse_error inp fmt = 
+  let (line,column) = Xmlm.pos inp in
+  Printf.kprintf (fun s -> raise (Parse_error (Printf.sprintf "%d:%d" line column) s)) fmt;
 
+value parse_float inp p = 
+  try
+    float_of_string p
+  with [ Failure "float_of_string" -> parse_error inp "bad float: %s" p ];
+value parse_int inp p = 
+  try
+    int_of_string p
+  with [ Failure "float_of_string" -> parse_error inp "bad int: %s" p ];
 
-value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.load x)#asDisplayObject*)) xml : main = 
-  let inp = Xmlm.make_input (`String (0,xml)) in
-  let parse_error fmt = 
-    let (line,column) = Xmlm.pos inp in
-    Printf.kprintf (fun s -> raise (Parse_error (Printf.sprintf "%d:%d" line column) s)) fmt
+value parse_span_attribute inp:  Xmlm.attribute -> span_attribute =
+(
+  ();
+  fun
+    [ ((_,"font-family"),ff) -> `fontFamily ff
+    | ((_,"font-size"),sz) -> `fontSize (parse_int inp sz)
+    | ((_,"fontWeight"),sz) -> `fontWeight sz
+    | ((_,"color"),c) -> `color (parse_int inp c)
+    | ((_,"alpha"),alpha) -> `alpha (parse_float inp alpha)
+    | ((_,an),_) -> parse_error inp "unknown attribute %s" an
+    ];
+);
+
+value parse_simple_elements inp imgLoader = 
+  let el_end () =  
+    match Xmlm.input inp with
+    [ `El_end -> ()
+    |  _ -> parse_error inp "want end tag"
+    ]
   in
-  match Xmlm.input inp with
-  [ `Dtd _ ->
-    let el_end () =  
-      match Xmlm.input inp with
-      [ `El_end -> ()
-      |  _ -> parse_error "want end tag"
-      ]
-    in
-    let parse_float p = 
-      try
-        float_of_string p
-      with [ Failure "float_of_string" -> parse_error "bad float: %s" p ]
-    and parse_int p = 
-      try
-        int_of_string p
-      with [ Failure "float_of_string" -> parse_error "bad int: %s" p ]
-    in
-    let parse_span_attribute: Xmlm.attribute -> span_attribute =
-      fun
-        [ ((_,"font-family"),ff) -> `fontFamily ff
-        | ((_,"font-size"),sz) -> `fontSize (parse_int sz)
-        | ((_,"fontWeight"),sz) -> `fontWeight sz
-        | ((_,"color"),c) -> `color (parse_int c)
-        | ((_,"alpha"),alpha) -> `alpha (parse_float alpha)
-        | ((_,an),_) -> parse_error "unknown attribute %s" an
-        ]
-    in
-    let parse_p_attribute : Xmlm.attribute -> p_attribute = fun
-      [ ((_,"halign"),v) -> `halign (match v with [ "left" -> `left | "right" -> `right | "center" -> `center | _ -> parse_error "incorrect attribute halign value %s" v])
-      (*   | `valign of [= `top | `bottom | `center ] *)
-      | ((_,"space-before"),spb) -> `spaceBefore (parse_float spb) 
-      | ((_,"space-after"),spa) -> `spaceAfter (parse_float spa)
-      | x -> ((parse_span_attribute x) :> p_attribute)
-      ]
-    in
-    let rec parse_simple_elements res : simple_elements = 
+  parse [] where
+    rec parse res = 
       match Xmlm.input inp with
       [ `El_start (("",tag),attributes) ->
         match tag with
@@ -272,54 +263,78 @@ value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.l
                   let i = imgLoader vlue in img.val := Some i;
                   None
                 )
-              | "width" -> Some (`width (parse_float vlue))
-              | "height" -> Some (`width (parse_float vlue))
-              | "padding-left" -> Some (`paddingLeft (parse_float vlue))
-              | "padding-top" -> Some (`paddingTop (parse_float vlue))
-              | "padding-right" -> Some (`paddingRight (parse_float vlue))
+              | "width" -> Some (`width (parse_float inp vlue))
+              | "height" -> Some (`width (parse_float inp vlue))
+              | "padding-left" -> Some (`paddingLeft (parse_float inp vlue))
+              | "padding-top" -> Some (`paddingTop (parse_float inp vlue))
+              | "padding-right" -> Some (`paddingRight (parse_float inp vlue))
               | "valign" -> 
                   let v = 
                     match vlue with
                     [ "baseline" -> `baseLine
                     | "center" -> `center
                     | "line-center" -> `lineCenter
-                    | _ -> parse_error "incorrect img halign value %s" vlue
+                    | _ -> parse_error inp "incorrect img halign value %s" vlue
                     ]
                   in
                   Some (`valign v)
-              | _ -> parse_error "unknown attribute img:%s" name
+              | _ -> parse_error inp "unknown attribute img:%s" name
               ]
             end attributes
           in
           match !img with
-          [ None -> parse_error "img src"
+          [ None -> parse_error inp "img src"
           | Some img -> 
               let () = el_end () in
-              parse_simple_elements [ `img (attribs,img) :: res ]
+              parse [ `img (attribs,img) :: res ]
           ]
         | "span" ->
-            let attribs = List.map parse_span_attribute attributes in
-            let elements = parse_simple_elements [] in
-            parse_simple_elements [ `span (attribs,elements) :: res ]
-        | "br" -> let () = el_end () in parse_simple_elements [ `br :: res ]
-        | _ -> parse_error "unknown simple tag: %s" tag
+            let attribs = List.map (parse_span_attribute inp) attributes in
+            let elements = parse [] in
+            parse [ `span (attribs,elements) :: res ]
+        | "br" -> let () = el_end () in parse [ `br :: res ]
+        | _ -> parse_error inp "unknown simple tag: %s" tag
         ]
-      | `Data text -> parse_simple_elements [ `text text :: res ]
+      | `Data text -> parse [ `text text :: res ]
       | `El_end -> List.rev res
-      | _ -> parse_error "DTD?"
+      | _ -> parse_error inp "DTD?"
+      ];
+
+value parse_simples ?(imgLoader=(Image.load :> (string -> Image.D.c))) text : simple_elements = 
+  let inp = Xmlm.make_input (`String (0,"<simples>"^text^"</simples>")) in
+  match Xmlm.input inp with
+  [ `Dtd _ -> 
+    match Xmlm.input inp with
+    [ `El_start (("","simples"),[]) -> parse_simple_elements inp imgLoader
+    | _ -> assert False
+    ]
+  | _ -> parse_error inp "Dtd"
+  ];
+
+
+value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.load x)#asDisplayObject*)) xml : main = 
+  let inp = Xmlm.make_input (`String (0,xml)) in
+  match Xmlm.input inp with
+  [ `Dtd _ ->
+    let parse_p_attribute : Xmlm.attribute -> p_attribute = fun
+      [ ((_,"halign"),v) -> `halign (match v with [ "left" -> `left | "right" -> `right | "center" -> `center | _ -> parse_error inp "incorrect attribute halign value %s" v])
+      (*   | `valign of [= `top | `bottom | `center ] *)
+      | ((_,"space-before"),spb) -> `spaceBefore (parse_float inp spb) 
+      | ((_,"space-after"),spa) -> `spaceAfter (parse_float inp spa)
+      | x -> ((parse_span_attribute inp x) :> p_attribute)
       ]
     in
     let rec parse_top_level () : option main = 
       match Xmlm.input inp with
       [ `El_start (("","p"),attributes) -> (* need to parse p attributes *)
         let p_attribs = List.map parse_p_attribute attributes in
-        let elements = parse_simple_elements [] in
+        let elements = parse_simple_elements inp imgLoader in
         Some (`p (p_attribs,elements))
       | `El_start (("","div"),attributes) -> (* need to parse div attributes *)
           let attribs = 
             List.map begin fun
-              [ ((_,"padding-top"),v) -> `paddingTop (parse_float v)
-              | ((_,"padding-left"),v) -> `paddingLeft (parse_float v)
+              [ ((_,"padding-top"),v) -> `paddingTop (parse_float inp v)
+              | ((_,"padding-left"),v) -> `paddingLeft (parse_float inp v)
               (* TODO: something about positions *)
               | x -> ((parse_p_attribute x) :> div_attribute)
               ]
@@ -334,14 +349,14 @@ value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.l
           let elements = parse_content [] in
           Some (`div (attribs,List.rev elements))
       | `El_end -> None
-      | _ -> parse_error "top level"
+      | _ -> parse_error inp "top level"
       ]
     in
     match parse_top_level () with
     [ Some res -> res
     | None -> assert False 
     ]
-  | _ -> parse_error "Dtd"
+  | _ -> parse_error inp "Dtd"
   ];
 
 (* width, height вытащить наверно в html тоже *)
