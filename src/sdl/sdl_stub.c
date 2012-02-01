@@ -102,11 +102,10 @@ value tl(value l)
 #define TIMER_tag 0
 #define AUDIO_tag 1
 #define VIDEO_tag 2
-#define CDROM_tag 3
-#define JOYSTICK_tag 4
+#define JOYSTICK_tag 3
+#define HAPTIC_tag 4
 #define NOPARACHUTE_tag 5       
-#define EVENTTHREAD_tag 6
-#define EVERYTHING_tag 7
+#define EVERYTHING_tag 6
 
 int init_flag_val(value flag_list)
 {
@@ -120,10 +119,9 @@ int init_flag_val(value flag_list)
 		case TIMER_tag       : flag |= SDL_INIT_TIMER       ; break;
 		case AUDIO_tag       : flag |= SDL_INIT_AUDIO       ; break;
 		case VIDEO_tag       : flag |= SDL_INIT_VIDEO       ; break;
-		//case CDROM_tag       : flag |= SDL_INIT_CDROM       ; break;
 		case JOYSTICK_tag    : flag |= SDL_INIT_JOYSTICK    ; break;
+		case HAPTIC_tag    : flag |= SDL_INIT_HAPTIC    ; break;
 		case NOPARACHUTE_tag : flag |= SDL_INIT_NOPARACHUTE ; break;
-		case EVENTTHREAD_tag : flag |= SDL_INIT_EVENTTHREAD ; break;
 		case EVERYTHING_tag  : flag |= SDL_INIT_EVERYTHING  ; break;
 		}
 		l = tl(l);
@@ -420,7 +418,6 @@ void sdlstub_set_surface_alpha_mod(value s,value va) {
 static SDL_BlendMode  SDL_BlendModeArray[] =
 {
    SDL_BLENDMODE_NONE,
-	 SDL_BLENDMODE_MASK,
 	 SDL_BLENDMODE_BLEND,
 	 SDL_BLENDMODE_ADD,
 	 SDL_BLENDMODE_MOD
@@ -920,7 +917,6 @@ value SDL_event_to_ML_tevent(SDL_Event event)
     switch (event.type) 
     {
 			
-			case SDL_NOEVENT: CAMLreturn(Val_int(0));
 			case SDL_WINDOWEVENT: 
 					ML_event=caml_alloc(3,0);
 					printf("window event: %d\n",event.window.event);
@@ -1062,7 +1058,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	}
 	case SDL_USEREVENT:
     /* ... */
-	case SDL_NUMEVENTS-1:
+	/*case SDL_NUMEVENTS-1:
 	{
 	    ML_event=caml_alloc(3,0);
 	    Store_field(ML_event, 0, Val_int(event.user.code));
@@ -1072,7 +1068,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    to_return=caml_alloc(1,9);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
-	}
+	}*/
 	case SDL_SYSWMEVENT:
 	{
 	    to_return=caml_alloc(1,10);
