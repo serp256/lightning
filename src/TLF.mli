@@ -18,6 +18,7 @@ module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.
   type span_attribute = 
     [= `fontFamily of string
     | `fontSize of int
+    | `fontWeight of string
     | `color of int
     | `alpha of float
     | `backgroundColor of int (* как это замутить то я забыла *)
@@ -62,6 +63,7 @@ module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.
   value img: ?width:float -> ?height:float -> ?paddingLeft:float -> ?paddingTop:float -> ?paddingRight:float -> ?paddingLeft:float -> ?valign:img_valign -> #Image.D.c -> simple_element;
   value span: ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> simple_elements -> simple_element;
   value p: ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> ?halign:p_halign -> ?valign:p_valign -> ?spaceBefore:float -> ?spaceAfter:float -> simple_elements -> main;
+  value parse_simples: ?imgLoader:(string -> Image.D.c) -> string -> simple_elements;
   value parse: ?imgLoader:(string -> Image.D.c) -> string -> main;
   value create: ?width:float -> ?height:float -> ?border:int -> ?dest:#Sprite.c -> main -> Sprite.c;
 end;
