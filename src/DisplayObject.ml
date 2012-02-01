@@ -65,6 +65,45 @@ value dispatchEnterFrame seconds =
   let enterFrameEvent = Ev.create `ENTER_FRAME ~data:(`PassedTime seconds) () in
   SetD.iter (fun obj -> let () = debug:enter_frame "dispatch enter frame on: %s" obj#name in obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
 
+
+class type prerenderObj =
+  object
+    method prerender: bool -> unit;
+    method z: option int;
+  end;
+
+value prerender_locked = ref False;
+value prerender_objects = RefList.empty ();
+value add_prerender o = 
+  let () = debug:render "add_prerender" in
+  match !prerender_locked with
+  [ True -> failwith "Prerender locked"
+  | False -> RefList.push prerender_objects o
+  ];
+  
+value prerender () =
+  match RefList.is_empty prerender_objects with
+  [ True -> ()
+  | False ->
+    (
+      debug:render "start prerender";
+      prerender_locked.val := True;
+      let cmp ((z1:int),_) (z2,_) = ~-(compare z1 z2) in
+      let sorted_objects = RefList.empty () in
+      (
+        RefList.iter (fun o -> 
+          match o#z with
+          [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
+          | None -> o#prerender False
+          ]
+        ) prerender_objects;
+        RefList.iter (fun (_,o) -> o#prerender True) sorted_objects;
+        RefList.clear prerender_objects;
+      );
+      prerender_locked.val := False;
+    )
+  ];
+
 DEFINE RESET_TRANSFORMATION_MATRIX = match transformationMatrix with [ Some _ -> transformationMatrix := None | _ -> () ];
 DEFINE RESET_BOUNDS_CACHE =
 (
@@ -88,7 +127,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': Ev.t P.evType P.evData -> _c _ -> unit;
+        asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t P.evType P.evData -> _c _ -> unit;
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit; .. 
       >;
 
@@ -151,9 +190,53 @@ class virtual _c [ 'parent ] = (*{{{*)
       )
       else ();
 
+    value prerenders : Queue.t (unit -> unit) = Queue.create ();
+    value mutable prerenders_delayed = False;
+    method private addPrerender pr =
+    (
+      debug:render "addPrerender";
+      match Queue.is_empty prerenders with
+      [ True -> add_prerender (self :> prerenderObj)
+      | False -> ()
+      ];
+      Queue.push pr prerenders;
+    );
+
+    method prerender exe = 
+      let () = debug:render "prerender" in
+      match exe with
+      [ True -> 
+        while not (Queue.is_empty prerenders) do
+          (Queue.pop prerenders) ();
+        done
+      | False -> prerenders_delayed := False
+      ];
+
     method parent = parent;
-    method setParent p = (parent := Some p;);
+    method setParent p = 
+    (
+      parent := Some p;
+      match prerenders_delayed with
+      [ True ->
+        (
+          prerenders_delayed := False;
+          add_prerender (self :> prerenderObj);
+        )
+      | False -> ()
+      ];
+    );
+
     method clearParent () = (parent := None;);
+    method z =
+      match parent with
+      [ Some parent -> 
+        let () = debug "i have parent" in
+        match parent#z with
+        [ Some z -> Some (z + (parent#getChildIndex' (self :> _c 'parent)))
+        | None -> None
+        ]
+      | None -> None
+      ];
 
     method virtual filters: list Filters.t;
     method virtual setFilters: list Filters.t -> unit;
@@ -383,7 +466,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
 
     method root = 
-      loop self#asDisplayObject where
+      loop (self :> _c 'parent) where
         rec loop currentObject =
           match currentObject#parent with
           [ None -> currentObject
@@ -406,14 +489,14 @@ class virtual _c [ 'parent ] = (*{{{*)
           | None -> matrix
           ]
         in
-        loop self#asDisplayObject Matrix.identity
+        loop (self :> _c 'parent) Matrix.identity
       | Some targetCoordinateSpace -> 
         let targetCoordinateSpace = targetCoordinateSpace#asDisplayObject in
-        if targetCoordinateSpace = self#asDisplayObject
+        if targetCoordinateSpace = (self :> _c 'parent)
         then Matrix.identity
         else 
           match targetCoordinateSpace#parent with
-          [ Some targetParent when targetParent#asDisplayObject = self#asDisplayObject -> (* optimization  - this is our child *)
+          [ Some targetParent when targetParent#asDisplayObject = (self :> _c 'parent) -> (* optimization  - this is our child *)
               let targetMatrix = targetCoordinateSpace#transformationMatrix in
               Matrix.invert targetMatrix
           | _ ->
@@ -423,7 +506,7 @@ class virtual _c [ 'parent ] = (*{{{*)
               | _ ->
                 (* 1.: Find a common parent of self and the target coordinate space  *)
                 let ancessors = 
-                  loop self#asDisplayObject where
+                  loop (self :> _c 'parent) where
                     rec loop currentObject = 
                       let next = 
                         match currentObject#parent with
@@ -459,7 +542,7 @@ class virtual _c [ 'parent ] = (*{{{*)
                         ]
                 in
                 (* 2.: Move up from self to common parent *)
-                let selfMatrix = move_up self#asDisplayObject
+                let selfMatrix = move_up (self :> _c 'parent)
                 (* 3.: Move up from target to common parent *)
                 and targetMatrix = move_up targetCoordinateSpace
                 in
@@ -476,10 +559,11 @@ class virtual _c [ 'parent ] = (*{{{*)
       let open Rectangle in 
       mask := Some (onSelf, rect, Rectangle.points rect); (* FIXME: можно сразу преобразовать этот рект и закэшировать нах *)
 
+
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
 
     method render ?alpha:(parentAlpha) ?(transform=True) rect = 
-      proftimer:render ("render %s" name)
+      proftimer:render ("render [%s] %f" name)
       (
         if visible && alpha > 0. 
         then
@@ -509,7 +593,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method private hitTestPoint' localPoint isTouch = 
 (*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
       match Rectangle.containsPoint (self#boundsInSpace (Some self)) localPoint with
-      [ True -> Some self#asDisplayObject
+      [ True -> Some (self :> _c 'parent)
       | False -> None
       ];
 
@@ -538,14 +622,14 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method removeFromParent () = 
       match parent with
-      [ Some parent -> parent#removeChild' self#asDisplayObject
+      [ Some parent -> parent#removeChild' (self :> _c 'parent)
       | None -> ()
       ];
 
     method localToGlobal localPoint = 
       (* move up until parent is nil *)
       let matrix = 
-        loop self#asDisplayObject Matrix.identity where
+        loop (self :> _c 'parent) Matrix.identity where
           rec loop currentObject matrix =
             let matrix = Matrix.concat matrix currentObject#transformationMatrix in
             match currentObject#parent with
@@ -559,7 +643,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method globalToLocal globalPoint = 
       (* move up until parent is nil, then invert matrix *)
       let matrix = 
-        loop self#asDisplayObject Matrix.identity where
+        loop (self :> _c 'parent) Matrix.identity where
           rec loop currentObject matrix = 
             let matrix = Matrix.concat matrix currentObject#transformationMatrix in
             match currentObject#parent with
@@ -573,9 +657,6 @@ class virtual _c [ 'parent ] = (*{{{*)
 
 
   end;(*}}}*)
-
-
-
 
 
 (* Dll additional functions {{{*)
@@ -746,15 +827,19 @@ class virtual container = (*{{{*)
       | Some children -> Dllist.get (Dllist.prev children)
       ];
 
-    method getChildIndex: !'child. ((#_c container) as 'child) -> int = fun child -> 
+    method getChildIndex' child =
       match children with
       [ None -> raise Child_not_found
       | Some children ->
           try 
-            dllist_find_index children child#asDisplayObject
+            dllist_find_index children child
           with 
             [ Not_found -> raise Child_not_found ] 
       ];
+
+
+    method getChildIndex: !'child. ((#_c container) as 'child) -> int = fun child -> self#getChildIndex' child#asDisplayObject;
+
 
     method setChildIndex: !'child. ((#_c container) as 'child) -> int -> unit = fun child index -> 
       match children with

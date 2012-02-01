@@ -188,21 +188,21 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 	if (clear) glClear(GL_COLOR_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,textureID);
 
-	//double dx = ((double)bw - w) / bw;
-	//double dy = ((double)bh - h) / bh;
+	double dx = ((double)bw - rb->width) / bw;
+	double dy = ((double)bh - rb->height) / bh;
 	double x = w / bw;
 	double y = h / bh;
 
-	printf("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d], quads: [%f,%f]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh, x, y);
+	printf("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d], quads: [%f,%f,%f,%f]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh, x, y, dx, dy);
 
-	quads[0][0] = -x;
-	quads[0][1] = -y;
-	quads[1][0] = x;
-	quads[1][1] = -y;
-	quads[2][0] = -x;
-	quads[2][1] = y;
-	quads[3][0] = x;
-	quads[3][1] = y;
+	quads[0][0] = -x - dx;
+	quads[0][1] = -y - dy;
+	quads[1][0] = x - dx;
+	quads[1][1] = quads[0][1];
+	quads[2][0] = quads[0][0];
+	quads[2][1] = y - dy;
+	quads[3][0] = quads[1][0];
+	quads[3][1] = quads[2][1];
 
 	/*
 	quads[0][0] = -x - dx;
@@ -415,9 +415,11 @@ void ml_glow_make(value textureID, value width, value height, value clip, value 
 	drawTexture(&tb,rbfs->tid,tb.width,tb.height,&rbfs->clp,1);
 
 	// финальный шаг надо вырезать нахуй 
+	/*
 	GLuint fgp = final_glow_program();
 	glUseProgram(fgp);
 	drawTexture(&tb,rb.tid,rb.width,rb.height,&rb.clp,0);
+	*/
 
 	/*
 	GLuint fgp = final_glow_program();

@@ -19,7 +19,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
 
   module D = D;
 
-  type imageCahce = {ic: Image.c; tex: mutable Texture.rendered; valid: mutable bool; force: mutable bool};
+  type imageCache = {ic: Image.c; tex: Texture.rendered; valid: mutable bool; force: mutable bool};
 
   class c =
     object(self)
@@ -31,9 +31,12 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
         [ True -> 
           match imageCache with
           [ None -> 
-            let bounds = self#bounds in
-            let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
-            imageCache := Some {ic = Image.create (tex :> Texture.c); tex ; valid = False; force = True}
+            (
+              let bounds = self#bounds in
+              let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
+              imageCache := Some {ic = Image.create (tex :> Texture.c); valid = False; tex ; force = True};
+              self#addPrerender self#updateImageCache;
+            )
           | Some c -> c.force := True
           ]
         | False ->
@@ -62,11 +65,35 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
       (
 (*         debug "%s bounds changed" self#name; *)
         match imageCache with
-        [ Some c -> c.valid := False
+        [ Some c -> if c.valid then (c.valid := False; self#addPrerender self#updateImageCache) else ()
         | None -> ()
         ];
         super#boundsChanged();
       );
+
+      method private updateImageCache () = 
+        match imageCache with
+        [ Some ({ic; tex; valid=False;_} as c) -> 
+            let () = debug "cacheImage not valid" in
+            let bounds = self#boundsInSpace (Some self) in
+            (
+              tex#resize bounds.Rectangle.width bounds.Rectangle.height;
+              let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
+              if ip <> ic#pos
+              then ic#setPosPoint ip
+              else ();
+              tex#draw (fun () ->
+                (
+                  Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
+                  Render.clear 0 0.;
+                  super#render' ~transform:False None;
+                  Render.restore_matrix ();
+                );
+              );
+              c.valid := True; 
+            ) 
+        | _ -> ()
+        ];
 
       method setFilters = fun
         [ [] ->
@@ -94,39 +121,8 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
       method! private render' ?alpha ~transform rect = 
         match imageCache with
         [ None -> super#render' ?alpha ~transform rect
-        | Some ({ic; tex; valid;_} as c) -> 
+        | Some {ic; tex;_} ->
           (
-            if not valid 
-            then 
-              let () = debug "cacheImage not valid" in
-              let bounds = self#boundsInSpace (Some self) in
-              (
-                tex#resize bounds.Rectangle.width bounds.Rectangle.height;
-                (*
-                if bounds.Rectangle.width <> tex#width || bounds.Rectangle.height <> tex#height
-                then 
-                (
-                  debug "resize cache image";
-                  tex#resize bounds.Rectangle.width bounds.Rectangle.height;
-                  ic#updateSize();
-                )
-                else ();
-                *)
-                let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
-                if ip <> ic#pos
-                then ic#setPosPoint ip
-                else ();
-                tex#draw (fun () ->
-                  (
-                    Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
-                    Render.clear 0 0.;
-                    super#render' ~transform:False rect;
-                    Render.restore_matrix ();
-                  );
-                );
-                c.valid := True; 
-              ) 
-            else ();
             if transform then Render.push_matrix self#transformationMatrix else ();
             ic#render ?alpha rect;
             if transform then Render.restore_matrix () else ();

@@ -653,10 +653,10 @@ value create ?width ?height ?border ?dest (html:main) =
                 let () = atlasOnCurrentLine.val := False in
                 (
                   for i = 0 to (DynArray.length line.lchars) - 1 do
-                    let () = debug "add char to line" in
                     match DynArray.get line.lchars i with
                     [ Img i -> 
                       (
+                        debug "add image to line";
                         i#setX (i#x +. line.lx);
                         i#setY (i#y +. line.ly);
                         container#addChild i;
@@ -664,6 +664,7 @@ value create ?width ?height ?border ?dest (html:main) =
                       )
                     | Char c ->
                       (
+                        let () = debug "add char to line" in
                         match !atlas with
                         [ Some atlas when atlas#texture = (AtlasNode.texture c) ->
                           match !atlasOnCurrentLine with
@@ -718,6 +719,7 @@ value create ?width ?height ?border ?dest (html:main) =
     *)
     (* FIXME: skip pos *)
     result#addChild container;
+    debug "TLF DONE";
     result
   );
 
