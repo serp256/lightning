@@ -25,28 +25,28 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	return JNI_VERSION_1_6; // Check this
 }
 
-void android_debug_output(value mtag, value msg) {
+void android_debug_output(value mtag, value address, value msg) {
 	char buf[255];
 	char *tag;
 	if (mtag == Val_int(0)) tag = "DEFAULT";
 	else tag = String_val(Field(mtag,0));
-	sprintf(buf,"LIGHTNING[%s]",tag);
+	sprintf(buf,"LIGHTNING[%s (%s)]",tag, String_val(address));
 	__android_log_write(ANDROID_LOG_DEBUG,buf,String_val(msg));
 }
 
-void android_debug_output_info(value msg) {
+void android_debug_output_info(value address,value msg) {
 	__android_log_write(ANDROID_LOG_INFO,"LIGHTNING",String_val(msg));
 }
 
-void android_debug_output_warn(value msg) {
+void android_debug_output_warn(value address,value msg) {
 	__android_log_write(ANDROID_LOG_WARN,"LIGHTNING",String_val(msg));
 }
 
-void android_debug_output_error(value msg) {
+void android_debug_output_error(value address, value msg) {
 	__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING",String_val(msg));
 }
 
-void android_debug_output_fatal(value msg) {
+void android_debug_output_fatal(value address, value msg) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",String_val(msg));
 }
 
@@ -85,7 +85,9 @@ int getResourceFd(value mlpath, resource *res) {
 	if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
 	jstring jpath = (*env)->NewStringUTF(env,String_val(mlpath));
 	jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
-	if (!resourceParams) return 0;
+	if (!resourceParams) {
+	  return 0;
+	}
 	cls = (*env)->GetObjectClass(env,resourceParams);
 
 	jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");

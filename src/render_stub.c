@@ -7,9 +7,11 @@
 #define glGenVertexArrays glGenVertexArraysOES
 #define glBindVertexArray glBindVertexArrayOES
 #else
+#ifdef SDL
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #define glGenVertexArrays glGenVertexArraysAPPLE
 #define glBindVertexArray glBindVertexArrayAPPLE
+#endif
 #endif
 
 void checkGLErrors(char *where) {
@@ -986,7 +988,9 @@ typedef struct {
 static void atlas_finalize(value atlas) {
 	atlas_t *atl = ATLAS(atlas);
 	glDeleteBuffers(2,atl->buffersVBO);
-  glDeleteVertexArrays(1, &atl->vaoname);
+#ifndef ANDROID	
+    glDeleteVertexArrays(1, &atl->vaoname);
+#endif    
 	caml_stat_free(atl);
 }
 
@@ -1005,12 +1009,14 @@ value ml_atlas_init(value unit) {
 
 	atlas_t *atl = caml_stat_alloc(sizeof(atlas_t));
 
+#ifndef ANDROID
+
 	glGenVertexArrays(1, &atl->vaoname);
   glBindVertexArray(atl->vaoname);
-
+#endif
   glGenBuffers(2, atl->buffersVBO);
 
-
+#ifndef ANDROID
 	atl->index_size = 0;
 	atl->n_of_quads = 0;
 
@@ -1018,7 +1024,7 @@ value ml_atlas_init(value unit) {
   //glBufferData(GL_ARRAY_BUFFER, sizeof(quads_[0]) * capacity_, quads_, GL_DYNAMIC_DRAW);
 
   // vertices
-	glEnableVertexAttribArray(lgVertexAttrib_Position);
+  glEnableVertexAttribArray(lgVertexAttrib_Position);
   glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, TexVertexSize, (GLvoid*) offsetof( lgTexVertex, v));
  
   // colors
@@ -1036,7 +1042,7 @@ value ml_atlas_init(value unit) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	checkGLErrors("atlas init");
-
+#endif
 	value result = caml_alloc_custom(&atlas_ops,sizeof(atlas_t*),0,1);
 	ATLAS(result) = atl;
 	CAMLreturn(result);
@@ -1145,7 +1151,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 
 	};
 	
-	/*
+	
 	glBindBuffer(GL_ARRAY_BUFFER,atl->buffersVBO[0]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,atl->buffersVBO[1]);
 
@@ -1163,14 +1169,15 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
-	*/
+	
 
-
+/*
 	glBindVertexArray(atl->vaoname);
 	printf("draw %d quads\n",atl->n_of_quads);
 	checkGLErrors("before render atlas");
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
   glBindVertexArray(0);
+  */
 	checkGLErrors("after draw atals");
 	kmGLPopMatrix();
 
