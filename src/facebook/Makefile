@@ -2,7 +2,7 @@ include ../../Makefile.common
 
 CFLAGS += -I . 
 
-MLFLAGS += -package ojson,extLib 
+MLFLAGS += -package ojson,extlib 
 
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
