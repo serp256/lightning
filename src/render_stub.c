@@ -7,9 +7,9 @@
 #define glGenVertexArrays glGenVertexArraysOES
 #define glBindVertexArray glBindVertexArrayOES
 #else
-#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
-#define glGenVertexArrays glGenVertexArraysAPPLE
-#define glBindVertexArray glBindVertexArrayAPPLE
+#define glDeleteVertexArrays glDeleteVertexArrays
+#define glGenVertexArrays glGenVertexArrays
+#define glBindVertexArray glBindVertexArray
 #endif
 
 void checkGLErrors(char *where) {

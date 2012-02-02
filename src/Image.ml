@@ -165,8 +165,7 @@ module Make(D:DisplayObjectT.M) = struct
       try
         let t = GCache.find cache key in
         let () = debug:glow "finded in cache" in
-        let image = Render.Image.create t.texture#width t.texture#height t.texture#rootClipping 0xFFFFFF 1. in
-        (t,image)
+        t
       with [ Not_found -> 
         let t = 
           let w = texture#width 
@@ -185,8 +184,7 @@ module Make(D:DisplayObjectT.M) = struct
         (
           GCache.add cache key t;
           Gc.finalise (fun t -> (debug:glow "finalize %d:%d" t.texture#textureID size; GCache.remove cache key)) t;
-          let image = Render.Image.create t.texture#width t.texture#height t.texture#rootClipping 0xFFFFFF 1. in
-          (t,image)
+          t
         )
       ];
 
@@ -196,7 +194,6 @@ module Make(D:DisplayObjectT.M) = struct
     value is_valid t = t.valid_content && t.valid_size;
 
   end;
-  *)
 
   type glow = 
     {
@@ -228,8 +225,9 @@ module Make(D:DisplayObjectT.M) = struct
       method private setGlowFilter glow = 
       (
         let g_cmn = Glow.create texture glow.Filters.glowSize in
+        let open Glow in
         let g_image = Render.Image.create g_cmn.texture#width g_cmn.texture#height g_cmn.texture#rootClipping glow.Filters.glowColor alpha in
-        let gl = {g_cmn; g_valid = False; g_image; g_params = glow} in
+        let gl = {g_cmn; g_prg = GLPrograms.ImageSimple.create (); g_valid = False; g_image; g_params = glow} in
         glowFilter := Some gl;
         self#addPrerender self#updateGlow;
       );
@@ -368,7 +366,7 @@ module Make(D:DisplayObjectT.M) = struct
       method private updateGlow () = 
         let () = debug:glow "update glow" in
         match glowFilter with
-        [ Some ({g_valid; g_cmn; g_image; } as gf) -> (* Glow.make g.gtex texture g.params.Filters.glowSize *)
+        [ Some ({g_valid; g_cmn; g_image; g_params; _ } as gf) -> (* Glow.make g.gtex texture g.params.Filters.glowSize *)
           (
             if not (Glow.is_valid g_cmn)
             then Glow.make g_cmn texture g_params.Filters.glowSize
@@ -465,14 +463,16 @@ module Make(D:DisplayObjectT.M) = struct
             ) else ();
             *)
             Render.Image.render 
-              (if transform then Matrix.concat gf.g_cmn.Glow.g_matrix self#transformationMatrix else gf.g_cmn.Glow.g_matrix) 
+              (if transform then Matrix.concat gf.g_cmn.Glow.matrix self#transformationMatrix else gf.g_cmn.Glow.matrix) 
               gf.g_prg gf.g_cmn.Glow.texture#textureID gf.g_cmn.Glow.texture#hasPremultipliedAlpha ?alpha:alpha' gf.g_image
           )
         | None -> ()
         ];
+        (*
         Render.Image.render 
           (if transform then self#transformationMatrix else Matrix.identity) 
           shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image
+        *)
       ); 
   end;
 

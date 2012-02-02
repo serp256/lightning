@@ -1,0 +1,15 @@
+
+
+MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug default
+
+MLFLAGS += -I ../src -package extlib
+
+
+example: example.cmo
+	$(OCAMLC) -custom -verbose -o example  -g  \
+	-I ../src ../src/lightning.cma  Light.cmo example.cmo \
+	-package curl,bigarray,extlib,xmlm,dbm,threads -thread -linkpkg 
+
+example.cmx: Light.cmx
+example.cmo: Light.cmo
+

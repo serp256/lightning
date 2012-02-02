@@ -1,0 +1,9 @@
+
+OCAMLFIND = ocamlfind
+
+include Makefile.common
+
+MLFLAGS += -I ../src/sdl
+
+include Makefile.in
+

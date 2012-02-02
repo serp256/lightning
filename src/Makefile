@@ -65,7 +65,8 @@ else
 		ifeq ($(OS),macos)
 			LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
 		else
-			LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
+			SDLFLAGS = $(shell ${SDLCONFIG} --libs)
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
 		endif
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	endif

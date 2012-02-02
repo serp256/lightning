@@ -289,7 +289,7 @@ static GLuint final_glow_vertex_shader() {
 }
 */
 
-static GLuint final_glow_fragment_shader() {
+static GLuint glow_fragment_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
 		shader = compile_shader(GL_FRAGMENT_SHADER,
@@ -309,11 +309,11 @@ static GLuint final_glow_fragment_shader() {
 	return shader;
 };
 
-static GLuint final_glow_program() {
+static GLuint glow_program() {
 	static GLuint prg = 0;
 	if (prg == 0) {
 		char *attribs[2] = {"a_position","a_texCoord"};
-		prg = create_program(simple_vertex_shader(),final_glow_fragment_shader(),2,attribs);
+		prg = create_program(simple_vertex_shader(),glow_fragment_shader(),2,attribs);
 		if (prg) {
 			glUseProgram(prg);
 			glUniform1i(glGetUniformLocation(prg,"u_texture"),0);
