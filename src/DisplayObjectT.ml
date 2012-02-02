@@ -90,7 +90,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method setMask: ?onSelf:bool -> Rectangle.t -> unit;
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private addPrerender: (unit -> unit) -> unit;
-    method prerender: hidden bool -> unit;
+    method prerender: bool -> unit;
     method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
     method asDisplayObject: _c _;
     method virtual dcast: [= `Object of _c _ | `Container of 'parent ];

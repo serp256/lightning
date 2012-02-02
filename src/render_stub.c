@@ -656,7 +656,6 @@ void set_image_uv(lgTexQuad *tq, value clipping) {
 		tq->tr.tex.u = x + width;
 		tq->tr.tex.v = y + height;
 	} else {
-		printf("clipping default\n");
 		tq->bl.tex = (tex2F){0,0};
 		tq->br.tex = (tex2F){1,0};
 		tq->tl.tex = (tex2F){0,1};
@@ -666,7 +665,7 @@ void set_image_uv(lgTexQuad *tq, value clipping) {
 
 
 void print_tex_vertex(lgTexVertex *qv) {
-	printf("v = [%f:%f], c = [%hhu,%hhu,%hhu,%hhu], tex = [%f:%f] \n",qv->v.x,qv->v.y,qv->c.r,qv->c.g,qv->c.b,qv->c.a,qv->tex.u,qv->tex.v);
+	PRINT_DEBUG("v = [%f:%f], c = [%hhu,%hhu,%hhu,%hhu], tex = [%f:%f] \n",qv->v.x,qv->v.y,qv->c.r,qv->c.g,qv->c.b,qv->c.a,qv->tex.u,qv->tex.v);
 }
 void print_image(lgTexQuad *tq) {
 	printf("==== image =====\n");
@@ -853,7 +852,7 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 	int w = Long_val(width),h = Long_val(height);
-	printf("create rtexture: [%d:%d]\n",w,h);
+	PRINT_DEBUG("create rtexture: [%d:%d]\n",w,h);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
 	glBindTexture(GL_TEXTURE_2D,0);
@@ -862,13 +861,13 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	glGenFramebuffers(1, &mFramebuffer);
-	//printf("generated new framebuffer: %d\n",mFramebuffer);
+	PRINT_DEBUG("generated new framebuffer: %d\n",mFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
 	checkGLErrors("bind framebuffer");
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
 	checkGLErrors("framebuffer texture");
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		printf("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		PRINT_DEBUG("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		caml_failwith("failed to create frame buffer for render texture");
 	};
 	//color3F c = COLOR3F_FROM_INT(Int_val(color));
@@ -1075,7 +1074,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 		value arr = Field(children,0);
 		int len = Int_val(Field(children,1));
 		int arrlen = Wosize_val(arr);
-		printf("upgrade quads. indexlen: %d, quadslen: %d\n",arrlen,len);
+		PRINT_DEBUG("upgrade quads. indexlen: %d, quadslen: %d\n",arrlen,len);
 		int i;
 
 		if (arrlen != atl->index_size) { // we need resend index
@@ -1166,7 +1165,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 
 
 	glBindVertexArray(atl->vaoname);
-	printf("draw %d quads\n",atl->n_of_quads);
+	PRINT_DEBUG("draw %d quads\n",atl->n_of_quads);
 	checkGLErrors("before render atlas");
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
   glBindVertexArray(0);

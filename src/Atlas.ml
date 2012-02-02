@@ -43,6 +43,9 @@ module Make(D:DisplayObjectT.M) = struct
       inherit D.c as super;
 
       value atlas = atlas_init ();
+
+      method !name = if name = ""  then Printf.sprintf "atlas%d" (Oo.id self) else name;
+
       value mutable programID = GLPrograms.ImageSimple.id;
       value mutable shaderProgram = GLPrograms.ImageSimple.create ();
 

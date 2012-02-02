@@ -194,21 +194,28 @@ class virtual _c [ 'parent ] = (*{{{*)
     value mutable prerenders_delayed = False;
     method private addPrerender pr =
     (
-      debug:render "addPrerender";
+      debug:render "addPrerender %s" self#name;
       match Queue.is_empty prerenders with
-      [ True -> add_prerender (self :> prerenderObj)
+      [ True -> 
+        match parent with
+        [ Some _ -> add_prerender (self :> prerenderObj)
+        | None -> prerenders_delayed := True
+        ]
       | False -> ()
       ];
       Queue.push pr prerenders;
     );
 
     method prerender exe = 
-      let () = debug:render "prerender" in
+      let () = debug:render "prerender %s - %b" self#name exe in
       match exe with
       [ True -> 
-        while not (Queue.is_empty prerenders) do
-          (Queue.pop prerenders) ();
-        done
+        (
+          while not (Queue.is_empty prerenders) do
+            (Queue.pop prerenders) ();
+          done;
+          prerenders_delayed := False;
+        )
       | False -> prerenders_delayed := False
       ];
 
@@ -563,7 +570,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
 
     method render ?alpha:(parentAlpha) ?(transform=True) rect = 
-      proftimer:render ("render [%s] %f" name)
+      proftimer:render ("render [%s] %f" self#name)
       (
         if visible && alpha > 0. 
         then

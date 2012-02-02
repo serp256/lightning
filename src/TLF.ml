@@ -4,7 +4,7 @@ module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.
 module DisplayObject = Image.D;
 (* module Shape = Shape.Make DisplayObject; *)
 
-value default_font_family = ref "Helvetica";
+value default_font_family = ref "Arial";
 
 type img_valign = [= `baseLine | `center | `lineCenter ];
 type img_attribute = 

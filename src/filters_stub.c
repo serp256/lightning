@@ -91,7 +91,7 @@ GLuint create_program(GLuint vShader, GLuint fShader, int cntattribs, char* attr
 GLuint simple_program() {
 	static GLuint prg = 0;
 	if (prg == 0) {
-		printf("create new program\n");
+		PRINT_DEBUG("create new program\n");
 		char *attribs[2] = {"a_position","a_texCoord"};
 		prg = create_program(simple_vertex_shader(),simple_fragment_shader(),2,attribs);
 		if (prg) {
@@ -151,7 +151,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
 	checkGLErrors("bind framebuffer with texture");
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    printf("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    PRINT_DEBUG("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
     return NULL;
   };
   glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -193,7 +193,7 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 	double x = w / bw;
 	double y = h / bh;
 
-	printf("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d], quads: [%f,%f,%f,%f]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh, x, y, dx, dy);
+	PRINT_DEBUG("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d], quads: [%f,%f,%f,%f]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh, x, y, dx, dy);
 
 	quads[0][0] = -x - dx;
 	quads[0][1] = -y - dy;

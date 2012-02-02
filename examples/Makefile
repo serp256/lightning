@@ -1,7 +1,7 @@
 
+MLPPOPT = $(LIGHTNING_PATH)/syntax/pa_prop.cmo $(LIGHTNING_PATH)/syntax/pa_debug.cmo -enable-debug default
 
-
-all:
-	ocamlfind ocamlopt -verbose -o example -syntax camlp4r -g \
+example:
+	ocamlfind ocamlc -verbose -o example -syntax camlp4r -g \
 		-I ../src/lightning.cma \
-		 -package camlp4,extlib,lightning -linkpkg example.ml
+		 -package camlp4,extlib  -linkpkg example.ml

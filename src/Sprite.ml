@@ -26,6 +26,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
       inherit D.container as super; 
 
       value mutable imageCache = None;
+      method !name = if name = ""  then Printf.sprintf "sprite%d" (Oo.id self) else name;
       method cacheAsImage = imageCache <> None;
       method setCacheAsImage = fun
         [ True -> 
@@ -82,14 +83,20 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
               if ip <> ic#pos
               then ic#setPosPoint ip
               else ();
-              tex#draw (fun () ->
-                (
-                  Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
-                  Render.clear 0 0.;
-                  super#render' ~transform:False None;
-                  Render.restore_matrix ();
+              let alpha' = alpha in
+              (
+                self#setAlpha 1.;
+                tex#draw (fun () ->
+                  (
+                    Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
+                    Render.clear 0 0.;
+                    super#render' ~transform:False None;
+                    Render.restore_matrix ();
+                  );
                 );
+                self#setAlpha alpha';
               );
+              ic#prerender True;
               c.valid := True; 
             ) 
         | _ -> ()
@@ -100,7 +107,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
           match imageCache with
           [ None -> ()
           | Some {tex;force=False;_} -> (tex#release();imageCache := None)
-          | Some ({ic;_} as c) -> (ic#setFilters []; c.valid := False)
+          | Some ({ic;_} as c) -> (ic#setFilters []; c.valid := False; self#addPrerender self#updateImageCache)
           ]
         | filters -> 
           match imageCache with
@@ -112,18 +119,24 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
             (
               img#setPosPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y};
               img#setFilters filters;
-              imageCache := Some {ic = img; tex; valid = False; force = False}
+              imageCache := Some {ic = img; tex; valid = False; force = False};
+              self#addPrerender self#updateImageCache;
             )
           | Some {ic; _ } -> () (* ic#setFilters filters *)
           ]
         ];
 
-      method! private render' ?alpha ~transform rect = 
+      method! private render' ?alpha:(alpha') ~transform rect = 
         match imageCache with
-        [ None -> super#render' ?alpha ~transform rect
+        [ None -> super#render' ?alpha:alpha' ~transform rect
         | Some {ic; tex;_} ->
           (
             if transform then Render.push_matrix self#transformationMatrix else ();
+            let alpha = 
+              if alpha < 1.
+              then Some (match alpha' with [ Some a -> a *. alpha | None -> alpha ])
+              else alpha'
+            in
             ic#render ?alpha rect;
             if transform then Render.restore_matrix () else ();
           )

@@ -80,6 +80,7 @@ module Make(D:DisplayObjectT.M) = struct
 
   end;(*}}}*)
 
+  (*
   module Glow = struct
 
     type t = 
@@ -106,7 +107,7 @@ module Make(D:DisplayObjectT.M) = struct
       [ None -> 
         let open Render.Program in
         let prg = 
-          load_force ~vertex:"Image.vsh" ~fragment:"ImageGlow.fsh" 
+          load_force ~vertex:"Image.vsh" ~fragment:"GlowCut.fsh" 
             ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ] 
             ~uniforms:[| ("u_texture", (UInt 0)) |] 
           in
@@ -143,12 +144,12 @@ module Make(D:DisplayObjectT.M) = struct
           *)
           Render.Filter.glow_make texture#textureID w h texture#rootClipping t.texture#framebufferID t.texture#width t.texture#height size;
           let image = Render.Image.create w h texture#rootClipping 0xFFFFFF 1. in
-          let simplePrg = GLPrograms.ImageSimple.create () in
+          let prg = glowPrg () in
           let m = Matrix.create ~translate:{Point.x = t.gs; y = t.gs} () in
           (* и теперь !!! *)
           t.texture#draw (fun () ->
 (*             let () = Render.clear 0 0. in *)
-            Render.Image.render m simplePrg texture#textureID texture#hasPremultipliedAlpha image;
+            Render.Image.render m (prg,None) texture#textureID texture#hasPremultipliedAlpha image;
           )
         );
         t.valid_size := True;
@@ -192,14 +193,18 @@ module Make(D:DisplayObjectT.M) = struct
     value is_valid t = t.valid_content && t.valid_size;
 
   end;
+  *)
 
   type glow = 
     {
-      gtex: Glow.t;
-      valid: mutable bool;
-      image: Render.Image.t;
-      prg: Render.prg;
-      params: Filters.glow
+(*       gtex: Glow.t; *)
+      g_valid: mutable bool;
+      g_texture: Texture.rendered;
+      gs:float;
+      g_matrix: Matrix.t;
+      g_image: Render.Image.t;
+(*       g_prg: Render.prg; *)
+      g_params: Filters.glow
     };
 
 
@@ -207,6 +212,8 @@ module Make(D:DisplayObjectT.M) = struct
     object(self)
       inherit D.c as super;
 
+
+      method !name = if name = ""  then Printf.sprintf "image%d" (Oo.id self) else name;
 
       value mutable texture: Texture.c = _texture;
       method texture = texture;
@@ -218,13 +225,25 @@ module Make(D:DisplayObjectT.M) = struct
 
       value mutable filters : list Filters.t = [];
       value mutable glowFilter: option glow = None;
-      method private setGlowFilter gl = 
-        (
-          glowFilter := Some gl;
-          self#addPrerender self#updateGlow;
-        );
+      method private setGlowFilter glow = 
+      (
+        let w = texture#width 
+        and h = texture#height in
+        let gs = (2. ** (float glow.Filters.glowSize) -. 1.) *. 2. in
+        let wdth = w  +.  2. *. gs 
+        and hght = h  +.  2. *. gs in
+        let g_texture = Texture.rendered wdth hght in
+        let () = g_texture#setPremultipliedAlpha False in (* ??? *)
+        let mgs = ~-.gs in
+        let g_matrix = Matrix.create ~translate:{Point.x=mgs;y=mgs} () in 
+        let g_image = Render.Image.create g_texture#width g_texture#height g_texture#rootClipping 0xFFFFFF 1. in
+        let gl = {g_texture; g_valid = False; g_image; g_matrix; gs; g_params = glow} in
+        glowFilter := Some gl;
+        self#addPrerender self#updateGlow;
+      );
 
       method filters = filters;
+
       method setFilters fltrs = 
       (
         let hasGlow = ref False in
@@ -235,11 +254,8 @@ module Make(D:DisplayObjectT.M) = struct
                 (
                   hasGlow.val := True;
                   match glowFilter with
-                  [ Some g when g.params = glow -> ()
-                  | _ -> 
-                      let (gtex,image) = Glow.create texture glow.Filters.glowSize in
-                      let gl = { gtex; valid = True; image; prg = GLPrograms.ImageGlow.create glow; params = glow} in
-                      self#setGlowFilter gl
+                  [ Some g when g.g_params = glow -> ()
+                  | _ -> self#setGlowFilter glow
                   ];
                   c
                 )
@@ -274,7 +290,7 @@ module Make(D:DisplayObjectT.M) = struct
         super#setAlpha a;
         Render.Image.set_alpha image a;
         match glowFilter with
-        [ Some g -> Render.Image.set_alpha g.image a
+        [ Some g -> Render.Image.set_alpha g.g_image a
         | None -> ()
         ];
       );
@@ -307,7 +323,7 @@ module Make(D:DisplayObjectT.M) = struct
         (
           Render.Image.flipTexX image;
           match glowFilter with
-          [ Some g -> Render.Image.flipTexX g.image
+          [ Some g -> Render.Image.flipTexX g.g_image
           | None -> ()
           ];
           texFlipX := nv;
@@ -322,7 +338,7 @@ module Make(D:DisplayObjectT.M) = struct
         (
           Render.Image.flipTexY image;
           match glowFilter with 
-          [ Some g -> Render.Image.flipTexY g.image
+          [ Some g -> Render.Image.flipTexY g.g_image
           | None -> ()
           ];
           texFlipY := nv;
@@ -360,7 +376,26 @@ module Make(D:DisplayObjectT.M) = struct
       method private updateGlow () = 
         let () = debug:glow "update glow" in
         match glowFilter with
-        [ Some g when not (Glow.is_valid g.gtex) -> Glow.make g.gtex texture g.params.Filters.glowSize 
+        [ Some gf -> (* Glow.make g.gtex texture g.params.Filters.glowSize *)
+          (
+            let w = texture#width
+            and h = texture#height in
+            let dgs = gf.gs *. 2. in
+            (
+              let wdth = w +. dgs
+              and hght = h +. dgs in
+              gf.g_texture#resize wdth hght;
+              Render.Filter.glow_make texture#textureID w h texture#rootClipping gf.g_texture#framebufferID gf.g_texture#width gf.g_texture#height gf.g_params.Filters.glowSize;
+              let image = Render.Image.create w h texture#rootClipping 0xFFFFFF 1. in (* это можно убрать нахуй - но пока оставлю всетаки хочеца закэшировать фсю хуйню *)
+              let prg = GLPrograms.ImageSimple.create () in
+              let m = Matrix.create ~translate:{Point.x = gf.gs; y = gf.gs} () in
+              (* и теперь !!! *)
+              gf.g_texture#draw (fun () ->
+                Render.Image.render m prg texture#textureID texture#hasPremultipliedAlpha image;
+              );
+              gf.g_valid := True;
+            )
+          )
         | _ -> () 
         ];
 
@@ -375,15 +410,17 @@ module Make(D:DisplayObjectT.M) = struct
 
       method onTextureEvent (ev:Texture.event) _ = 
       (
-        debug "texture %d changed" texture#textureID;
+        debug "[%s] texture %d changed" self#name texture#textureID;
         match ev with
         [ `RESIZE -> self#updateSize()
         | _ -> ()
         ];
         match glowFilter with 
-        [ Some g -> 
+        [ Some gf -> 
           (
-            if Glow.is_valid g.gtex then self#addPrerender self#updateGlow else ();
+            if gf.g_valid then self#addPrerender self#updateGlow else ();
+            gf.g_valid := False;
+            (*
             match ev with
             [ `RESIZE ->
               (
@@ -392,7 +429,7 @@ module Make(D:DisplayObjectT.M) = struct
               )
             | `CHANGE -> Glow.invalidate_content g.gtex
             ];
-            
+            *)
           )
         | _ -> ()
         ];
@@ -409,10 +446,12 @@ module Make(D:DisplayObjectT.M) = struct
           else Render.Image.update image texture#width texture#height texture#rootClipping;
           nt#addRenderer (self :> Texture.renderer);
           match glowFilter with
-          [ Some g -> 
+          [ Some g -> self#setGlowFilter g.g_params
+          (*
             let (gtex,image) = Glow.create nt g.params.Filters.glowSize in
             let gl = { (g) with gtex; image } in
-            self#setGlowFilter gl
+            self#setGlowFilter g.params
+          *)
           | None -> ()
           ];
         );
@@ -436,20 +475,20 @@ module Make(D:DisplayObjectT.M) = struct
       method private render' ?alpha:(alpha') ~transform _ = 
       (
         match glowFilter with
-        [ Some g -> 
+        [ Some gf -> 
           (
+            (*
             if not g.valid
             then 
             (
               Render.Image.update g.image g.gtex.Glow.texture#width g.gtex.Glow.texture#height g.gtex.Glow.texture#rootClipping;
               g.valid := True
             ) else ();
-            let alpha = match alpha' with [ Some a -> a *. alpha | None -> alpha ] in
-            Render.Image.render (if transform then Matrix.concat g.gtex.Glow.matrix self#transformationMatrix else g.gtex.Glow.matrix) g.prg g.gtex.Glow.texture#textureID g.gtex.Glow.texture#hasPremultipliedAlpha ~alpha g.image
+            *)
+            Render.Image.render (if transform then Matrix.concat gf.g_matrix self#transformationMatrix else gf.g_matrix) shaderProgram gf.g_texture#textureID gf.g_texture#hasPremultipliedAlpha ?alpha:alpha' gf.g_image
           )
-        | None -> () (* Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha image *)
+        | None -> Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image
         ];
-        Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image
       ); 
   end;
 
