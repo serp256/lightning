@@ -1,4 +1,4 @@
-export PLATFORM = sdl
+export PLATFORM = SDL
 export OS = linux
 OCAMLDIR = /usr/local/
 export OCAMLFIND = ocamlfind
@@ -8,4 +8,4 @@ export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB = ocamlmklib
 export CFLAGS = -std=gnu99
 export SDLCONFIG = /usr/local/bin/sdl-config
-LIB = byte native syntax
+LIB = byte syntax
