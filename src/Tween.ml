@@ -168,7 +168,6 @@ class c ?(delay=0.) ?(repeat=(-1)) ?(transition=`linear) ?(loop=`LoopNone) time 
 
     method process dt = 
 (*       let () = Printf.eprintf "tween process %F\n%!" dt in *)
-      let () = currentTime := currentTime +. dt in
       let isDelay =
         (
           currentTime := currentTime +. dt;
