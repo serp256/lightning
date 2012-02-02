@@ -21,7 +21,7 @@ end;
 type loop = [= `LoopNone | `LoopRepeat | `LoopReverse ];
 type prop = ((unit -> float) * (float -> unit));
 
-class c: [?delay:float] -> [?transition:Transitions.kind] -> [?loop:loop] -> [float] ->
+class c: [?delay:float] -> [?repeat:int] -> [?transition:Transitions.kind] -> [?loop:loop] -> [float] ->
   object
     method animate: prop -> float -> unit;
     method process: float -> bool;
@@ -30,4 +30,4 @@ class c: [?delay:float] -> [?transition:Transitions.kind] -> [?loop:loop] -> [fl
   end;
 
 
-value create: ?delay:float -> ?transition:Transitions.kind -> ?loop:loop -> float -> c;
+value create: ?delay:float -> ?repeat:int -> ?transition:Transitions.kind -> ?loop:loop -> float -> c;
