@@ -82,8 +82,9 @@ value img ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?paddingLeft ?va
   `img (attrs,img#asDisplayObject);
 
 
-value span ?fontFamily ?fontSize ?color ?alpha elements : simple_element = 
+value span ?fontWeight ?fontFamily ?fontSize ?color ?alpha elements : simple_element = 
   let attrs = [] in
+  let attrs = AEXPAND(fontWeight,`fontWeight) in
   let attrs = AEXPAND(fontFamily,`fontFamily) in
   let attrs = AEXPAND(fontSize,`fontSize) in
   let attrs = AEXPAND(color,`color) in
@@ -91,8 +92,9 @@ value span ?fontFamily ?fontSize ?color ?alpha elements : simple_element =
   `span (attrs,elements);
 
 
-value p ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceAfter elements : main = 
+value p ?fontWeight ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceAfter elements : main = 
   let attrs = [] in
+  let attrs = AEXPAND(fontWeight,`fontWeight) in
   let attrs = AEXPAND(fontFamily,`fontFamily) in
   let attrs = AEXPAND(fontSize,`fontSize) in
   let attrs = AEXPAND(color,`color) in
