@@ -9,4 +9,4 @@ ios:
 
 .PHONY: clean
 clean: 
-	rm -f Code/*.o Code/*.cm[iox] iPad/*.o Shared/*.o
+	rm -f *.o *.cmo *.cmx *.cmi

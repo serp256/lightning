@@ -11,4 +11,4 @@ export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB = ocamlmklib
 export SDLCONFIG = sdl-config
-LIB = native syntax
+LIB = byte syntax

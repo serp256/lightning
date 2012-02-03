@@ -159,8 +159,14 @@ value filters (stage:Stage.c) =
   (
 (*     img#setFilters [ `ColorMatrix gray_filter ]; *)
     img#setFilters [ Filters.glow ~size:2 ~strength:10 0x0000FF ];
-(*     img#setAlpha 0.2; *)
+    img#setAlpha 0.2;
     img#setPos 100. 100.;
+    stage#addChild img;
+  );
+  let img = Image.load "tree.png" in
+  (
+    img#setPos 300. 100.;
+    img#setAlpha 0.2;
     stage#addChild img;
   );
   (*

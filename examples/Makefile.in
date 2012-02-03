@@ -6,7 +6,7 @@ MLFLAGS += -I ../src -package extlib
 
 
 example: example.cmo
-	$(OCAMLC) -custom -verbose -o example  -g  \
+	$(OCAMLC) -custom -verbose -o test  -g  \
 	-I ../src ../src/lightning.cma  Light.cmo example.cmo \
 	-package curl,bigarray,extlib,xmlm,dbm,threads -thread -linkpkg 
 

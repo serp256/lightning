@@ -98,8 +98,58 @@ module Make(D:DisplayObjectT.M) = struct
         else ();
       );
 
+
+      method private setGlowFilter glow = 
+      (
+        let g_cmn = Glow.create texture glow.Filters.glowSize in
+        let open Glow in
+        let w = g_cmn.Glow.texture#width *. 2. and h = g_cmn.Glow.texture#height *. 2. in
+        let g_texture = Texture.rendered w h in
+        let () = g_texture#setPremultipliedAlpha False in
+        let g_image = Render.Image.create w h g_texture#rootClipping 0xFFFFFF alpha in
+        let gl = {g_cmn; g_texture; g_prg = GLPrograms.ImageSimple.create (); g_valid = False; g_image; g_params = glow} in
+        glowFilter := Some gl;
+        self#addPrerender self#updateGlow;
+      );
+
+
       method filters = [];
-      method setFilters f = assert False;
+      method setFilters f =
+      (
+        let hasGlow = ref False in
+        (
+          let f = 
+            List.fold_left begin fun c -> fun
+              [ `Glow glow ->
+                (
+                  hasGlow.val := True;
+                  match glowFilter with
+                  [ Some g when g.g_params = glow -> ()
+                  | _ -> self#setGlowFilter glow
+                  ];
+                  c
+                )
+              | `ColorMatrix m -> `cmatrix m
+              ]
+            end `simple fltrs 
+          in
+          match f with
+          [ `simple when programID <> GLPrograms.ImageSimple.id -> 
+            (
+              programID := GLPrograms.ImageSimple.id;
+              shaderProgram := GLPrograms.ImageSimple.create ()
+            )
+          | `cmatrix m -> 
+            (
+              programID := GLPrograms.ImageColorMatrix.id;
+              shaderProgram := GLPrograms.ImageColorMatrix.create m
+            )
+          | _ -> ()
+          ];
+          if not !hasGlow && glowFilter <> None then glowFilter := None else ();
+        );
+        filters := fltrs;
+      );
 
       method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
         match DynArray.length children with
@@ -129,6 +179,7 @@ module Make(D:DisplayObjectT.M) = struct
         dirty := True;
         super#boundsChanged();
       );
+
 
       method private render' ?alpha:(alpha') ~transform rect = 
       (
