@@ -1,0 +1,18 @@
+PLAT = /Developer/Platforms/iPhoneOS.platform
+SDK = /Developer/SDKs/iPhoneOS5.0.sdk
+OCAMLFIND = ocamlfind -toolchain ios
+OCAMLOPT = $(OCAMLFIND) ocamlopt
+OCAMLC = $(OCAMLFIND) ocamlc
+OCAMLLIBDIR = $(shell ${OCAMLOPT} -where)
+ARCH = -arch armv7
+CC = $(PLAT)/Developer/usr/bin/llvm-gcc $(ARCH)
+CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLLIBDIR) -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=4.2 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
+#CFLAGS = -std=c99 -DDEBUG -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLDIR)/lib -DCAML_NAME_SPACE -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
+# -mmacosx-version-min=10.6 -fobjc-abi-version=2 -fobjc-legacy-dispatch -D__IPHONE_OS_VERSION_MIN_REQUIRED=40200 
+#OCAMLLIB = /usr/local/ocaml/ios/3.12.1/bin/ocamlmklib
+include Makefile.common
+
+MOBS = LightTest/AppDelegate.o LightTest/main.o  
+CFLAGS += -I ../src/ios
+
+include Makefile.in
