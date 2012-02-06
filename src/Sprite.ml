@@ -19,7 +19,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
 
   module D = D;
 
-  type imageCache = {ic: Image.c; tex: Texture.rendered; valid: mutable bool; force: mutable bool};
+  type imageCache = {ic: Image.c; tex: Texture.rendered; empty: mutable bool; valid: mutable bool; force: mutable bool};
 
   class c =
     object(self)
@@ -35,7 +35,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
             (
               let bounds = self#bounds in
               let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
-              imageCache := Some {ic = Image.create (tex :> Texture.c); valid = False; tex ; force = True};
+              imageCache := Some {ic = Image.create (tex :> Texture.c); empty = False; valid = False; tex ; force = True};
               self#addPrerender self#updateImageCache;
             )
           | Some c -> c.force := True
@@ -75,8 +75,12 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
       method private updateImageCache () = 
         match imageCache with
         [ Some ({ic; tex; valid=False;_} as c) -> 
-            let () = debug "cacheImage not valid" in
+          let () = debug "cacheImage not valid" in
+          (
             let bounds = self#boundsInSpace (Some self) in
+            if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
+            then c.empty := True
+            else 
             (
               tex#resize bounds.Rectangle.width bounds.Rectangle.height;
               let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
@@ -97,8 +101,10 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
                 self#setAlpha alpha';
               );
               ic#prerender True;
-              c.valid := True; 
-            ) 
+              c.empty := False;
+            ); 
+            c.valid := True; 
+          )
         | _ -> ()
         ];
 
@@ -119,7 +125,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
             (
               img#setPosPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y};
               img#setFilters filters;
-              imageCache := Some {ic = img; tex; valid = False; force = False};
+              imageCache := Some {ic = img; tex; empty = False; valid = False; force = False};
               self#addPrerender self#updateImageCache;
             )
           | Some {ic; _ } -> () (* ic#setFilters filters *)
@@ -129,7 +135,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
       method! private render' ?alpha:(alpha') ~transform rect = 
         match imageCache with
         [ None -> super#render' ?alpha:alpha' ~transform rect
-        | Some {ic; tex;_} ->
+        | Some {ic; tex;empty=False;_} ->
           (
             if transform then Render.push_matrix self#transformationMatrix else ();
             let alpha = 
@@ -140,6 +146,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
             ic#render ?alpha rect;
             if transform then Render.restore_matrix () else ();
           )
+        | _ -> ()
         ];
 
     end;

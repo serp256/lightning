@@ -263,8 +263,9 @@ value create texFormat width height data =
 
 
 Callback.register "create_ml_texture" begin fun textureID width height clipping ->
-  object
+  object(self:c)
     value mutable textureID = textureID;
+    method textureID = textureID;
     method width = width;
     method height = height;
     method hasPremultipliedAlpha = True;
@@ -272,7 +273,7 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
     method base = None;
     method clipping = clipping;
     method rootClipping = clipping;
-    method release = 
+    method release () = 
       if (textureID <> 0) 
       then
       (

@@ -7,9 +7,9 @@
 #define glGenVertexArrays glGenVertexArraysOES
 #define glBindVertexArray glBindVertexArrayOES
 #else
-#define glDeleteVertexArrays glDeleteVertexArrays
-#define glGenVertexArrays glGenVertexArrays
-#define glBindVertexArray glBindVertexArray
+#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
+#define glGenVertexArrays glGenVertexArraysAPPLE
+#define glBindVertexArray glBindVertexArrayAPPLE
 #endif
 
 void checkGLErrors(char *where) {
@@ -36,6 +36,7 @@ void checkGLErrors(char *where) {
 GLuint boundTextureID = 0;
 int PMA = -1;
 int separateBlend = 0;
+
 
 void setPMAGLBlend () {
 	if (PMA != 1) {

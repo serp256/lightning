@@ -149,6 +149,7 @@ value atlas (stage:Stage.c) =
     atlas#addChild (AtlasNode.create texture (Rectangle.create 10. 30. 100. 100.) ());
     atlas#addChild (AtlasNode.create texture (Rectangle.create 10. 30. 100. 20.) ~pos:{Point.x=150.;y=50.} ());
     atlas#setPos 100. 100.;
+    atlas#setFilters [ Filters.glow ~size:2 0xFF0000 ];
     stage#addChild atlas;
   );
 );
@@ -159,16 +160,18 @@ value filters (stage:Stage.c) =
   (
 (*     img#setFilters [ `ColorMatrix gray_filter ]; *)
     img#setFilters [ Filters.glow ~size:2 ~strength:10 0x0000FF ];
-    img#setAlpha 0.2;
+(*     img#setAlpha 0.2; *)
     img#setPos 100. 100.;
     stage#addChild img;
   );
+  (*
   let img = Image.load "tree.png" in
   (
     img#setPos 300. 100.;
     img#setAlpha 0.2;
     stage#addChild img;
   );
+  *)
   (*
   BitmapFont.register "Arial.fnt";
   let text = TLF.create (TLF.p ~fontSize:22 [`text "pizda lala"]) in
@@ -198,10 +201,11 @@ value size (stage:Stage.c) =
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
-    value color = 0xFFFFFF;
+    value color = 0xCCCCCC;
     initializer begin
-      filters self;
+(*       filters self; *)
 (*         size self; *)
+      atlas self;
     end;
   end
 in

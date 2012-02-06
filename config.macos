@@ -10,5 +10,5 @@ export CFLAGS = -std=c99 -Wno-trigraphs -fpascal-strings -O0 -DDEBUG -Wreturn-ty
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB = ocamlmklib
-export SDLCONFIG = sdl-config
+export SDLCONFIG = /usr/local/bin/sdl-config
 LIB = byte syntax

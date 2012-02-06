@@ -40,7 +40,7 @@ mlstage *mlstage_create(float width,float height) {
 	PRINT_DEBUG("create stage with size: %f:%f",width,height);
 	stage->width = width;
 	stage->height = height;
-	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));
+	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));// FIXME: GC 
 	caml_register_global_root(&stage->stage);
 	caml_release_runtime_system();
 	PRINT_DEBUG("stage successfully created");
