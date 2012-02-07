@@ -22,13 +22,8 @@ public class LightHttpLoader extends AsyncTask<UrlReq, byte[], String>{
 
 	protected String doInBackground(UrlReq...reqs) {
 		int count,i;
-		Log.d("LIGHT HTTP LOADER", "IM IN DO IN BACKGROUND");
-
 		req = reqs[0];
 		final int id = req.loader_id;
-		Log.d("LIGHT HTTP LOADER", "REQUEST CREATED");
-		Log.d("LIGHT HTTP LOADER", "I'VE GOT LOADER ID");
-
 
 		// DEFINE SOME RUNNABLES:
 		class DataPusher implements Runnable {
@@ -38,56 +33,45 @@ public class LightHttpLoader extends AsyncTask<UrlReq, byte[], String>{
 				// этот код вроде как выполняется в этом потоке (воркер тред)
 				idd = idz;
 				r_data = new byte[count]; 
-				Log.d("LIGHT HTTP LOADER", "CREATE r_Data for "+count+" bytes");
 				System.arraycopy(data, 0, r_data, 0, count);
 			}
 			public void run() {
 				// а вот этот уже в rendered!!!! -треде, не в UI
-				Log.d("LIGHT HTTP LOADER", "START TRANSFER FOR "+r_data.length+" bytes");
 				lightUrlData(idd, r_data);
-				Log.d("LIGHT HTTP LOADER", "I PUSH some DATA TO ML");
 			}
 		}
 
 
 		InputStream input;
 		OutputStream output;
-		Log.d("LIGHT HTTP LOADER", "NOW IM GOING INTO TRY SEGMENT");
 		try {
 			URL url_obj = new URL(req.url);
-			Log.d("LIGHT HTTP LOADER", "URL CREATED = " + req.url);
 			HttpURLConnection conexion = (HttpURLConnection) url_obj.openConnection();
-			Log.d("LIGHT HTTP LOADER", "CONEXION CREATED");
-
-    	    conexion.setRequestMethod(req.method);
 			conexion.setDoOutput(true);
-			conexion.setChunkedStreamingMode(0);
 			
 			// set headers
 			i = 0;
+			boolean hasContentLengthHeader = false;
 			while(req.headers[i] != null) {
-				Log.d("LIGHT HTTP LOADER", "IM TRYING TO SET HEADERS AND I IS NOW =" + i);
 				conexion.setRequestProperty(req.headers[i][0], req.headers[i][1]);
+				if (req.headers[i][0].toLowerCase().equals("content-length")) {
+				  hasContentLengthHeader = true;
+				}
 				i++;
 			} 
 
-			Log.d("LIGHT HTTP LOADER", "HEADERS CREATED");
-			
-			//  make request
 			try {
-			  if (req.method == "POST") {
-			  	OutputStreamWriter wr = new OutputStreamWriter(conexion.getOutputStream());
-				Log.d("LIGHT HTTP LOADER", "IT's a POST, so OutputStreamWriter created");
-				wr.write(req.data);
-				Log.d("LIGHT HTTP LOADER", "DATA WRITED");
-				wr.close();
+			  if (req.method.equals("POST")) {
+			    if (!hasContentLengthHeader) {
+			      conexion.setRequestProperty("Content-Length", String.valueOf(req.data.length)); 
+			    }  
+			  
+			  	conexion.getOutputStream().write(req.data);
+			  	conexion.getOutputStream().close();
 			  } else {
   			    conexion.connect();
 			  }
 			} catch (Exception e) {
-			
-			  Log.d("LIGHT HTTP LOADER", "HOHOOHhihi: " + e);
-			
 			  final String msg = e.getMessage();
               req.surface_view.queueEvent(
                 new Runnable() {
@@ -101,7 +85,6 @@ public class LightHttpLoader extends AsyncTask<UrlReq, byte[], String>{
 			}
 
 		
-			//  READ RESPONSE HEADERS
 			final int totalBytes = conexion.getContentLength();
 			final int httpCode = conexion.getResponseCode();
 			final String contentType = conexion.getContentType();
@@ -113,7 +96,6 @@ public class LightHttpLoader extends AsyncTask<UrlReq, byte[], String>{
               new Runnable() {
 			    @Override
 			    public void run() {
-			      Log.d("LIGHT HTTP LOADER", "I PUSH RESPONSE HEADERS TO ML");
 				  lightUrlResponse(id, httpCode, contentType, totalBytes);
 			    }
 			  }   
@@ -139,7 +121,6 @@ public class LightHttpLoader extends AsyncTask<UrlReq, byte[], String>{
 		    }
 
 			conexion.disconnect();
-            
             req.surface_view.queueEvent(
               new Runnable() {
 			    @Override

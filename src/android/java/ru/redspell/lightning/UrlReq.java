@@ -8,7 +8,7 @@ public class UrlReq {
   protected String url;
   protected String method;
   protected String[][] headers;
-  protected String data;
+  protected byte[] data;
   protected int loader_id;
   protected GLSurfaceView surface_view;
 }
