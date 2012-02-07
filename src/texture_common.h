@@ -1,3 +1,8 @@
+
+#ifndef __TEXTURE_COMMON_H__
+
+#define __TEXTURE_COMMON_H__
+
 #ifdef ANDROID
 #include <GLES/gl2.h>
 #else 
@@ -11,6 +16,7 @@
 #endif
 
 #include <caml/mlvalues.h>
+#include "light_common.h"
 
 int nextPowerOfTwo(int number);
 
@@ -44,3 +50,5 @@ typedef struct {
 
 
 value createGLTexture(GLuint mTextureID, textureInfo *tInfo);
+
+#endif

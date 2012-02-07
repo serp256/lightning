@@ -28,6 +28,8 @@
 #include <caml/bigarray.h>
 #include <caml/fail.h>
 
+#include "light_common.h"
+
 void setPMAGLBlend();
 void setNotPMAGLBlend();
 
@@ -146,7 +148,5 @@ void set_framebuffer_state(framebuffer_state *s);
 
 
 
-#define checkGLErrors(msg) check_gl_errors(__FILE__,__LINE__,msg)
-void check_gl_errors(char*,int,char*);
 
 #endif
