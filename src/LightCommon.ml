@@ -128,7 +128,7 @@ value open_resource fname scale = open_in (resource_path fname);
 value read_resource path scale = Std.input_all (open_resource path scale);
 
 value read_json path = 
-  let ch = LightCommon.open_resource path 1. in                                                                                                                
+  let ch = open_resource path 1. in                                                                                                                
   Ojson.from_channel ch;
 
 ENDIF;

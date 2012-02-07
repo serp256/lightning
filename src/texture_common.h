@@ -11,6 +11,7 @@
 #else
 #define GL_GLEXT_PROTOTYPES
 #include <SDL/SDL_opengl.h>
+#include <sys/types.h>
 #endif
 #endif
 
