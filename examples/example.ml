@@ -135,6 +135,8 @@ value tlf (stage:Stage.c) =
   BitmapFont.register "Arial.fnt";
   let text = TLF.create (TLF.p ~fontSize:20 ~halign:`center ~fontFamily:"Arial" [`text "This is first line\nThis is "; TLF.img ~width:50. ~height:40. (Image.load "e_cactus.png"); `text " second line"]) in
   (
+    text#setFilters [ Filters.glow ~size:2 0xFF0000 ];
+    text#setAlpha 0.3;
     stage#addChild text;
   )
 );
@@ -205,7 +207,8 @@ let stage width height =
     initializer begin
 (*       filters self; *)
 (*         size self; *)
-      atlas self;
+      tlf self;
+(*       atlas self; *)
     end;
   end
 in

@@ -146,6 +146,7 @@ void set_framebuffer_state(framebuffer_state *s);
 
 
 
-void checkGLErrors(char *where);
+#define checkGLErrors(msg) check_gl_errors(__FILE__,__LINE__,msg)
+void check_gl_errors(char*,int,char*);
 
 #endif

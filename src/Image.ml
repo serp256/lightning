@@ -395,9 +395,9 @@ module Make(D:DisplayObjectT.M) = struct
       *)
 
       method private updateGlowFilter () = 
-        let () = debug:glow "update glow" in
         match glowFilter with
         [ Some ({g_texture = None; g_image; g_params = glow; _ } as gf) ->
+          let () = debug:glow "update glow %d" glow.Filters.glowSize in
           let w = texture#width
           and h = texture#height in
           let g_texture = RenderFilters.glow_make texture#textureID w h texture#hasPremultipliedAlpha texture#rootClipping glow in 
@@ -409,7 +409,7 @@ module Make(D:DisplayObjectT.M) = struct
             gf.g_matrix := Matrix.create ~translate:{Point.x = (w -. gwidth) /. 2.; y = (h -. gheight) /. 2.} ();
             gf.g_texture := Some g_texture;
           )
-        | _ -> ()
+        | _ -> Debug.w "update non exist glow"
         ];
         (*
         match glowFilter with

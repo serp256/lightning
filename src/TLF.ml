@@ -4,6 +4,9 @@ module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.
 module DisplayObject = Image.D;
 (* module Shape = Shape.Make DisplayObject; *)
 
+open ExtList;
+open ExtHashtbl;
+
 value default_font_family = ref "Arial";
 
 type img_valign = [= `baseLine | `center | `lineCenter ];
@@ -81,6 +84,18 @@ value img ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?paddingLeft ?va
   let attrs = AEXPAND (valign,`valign) in
   `img (attrs,img#asDisplayObject);
 
+(*
+value teximg ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?paddingLeft ?valign tex : simple_element = 
+  let attrs = [] in
+  let attrs = AEXPAND (width,`width) in
+  let attrs = AEXPAND (height,`height) in
+  let attrs = AEXPAND (paddingLeft,`paddingLeft) in
+  let attrs = AEXPAND (paddingTop,`paddingTop) in
+  let attrs = AEXPAND (paddingRight,`paddingRight) in
+  let attrs = AEXPAND (valign,`valign) in
+  `teximg (attrs,tex);
+*)
+
 
 value span ?fontWeight ?fontFamily ?fontSize ?color ?alpha elements : simple_element = 
   let attrs = [] in
@@ -149,8 +164,8 @@ type line_element = [ Img of DisplayObject.c | Char of AtlasNode.t ];
 type line = 
   {
     lchars: DynArray.t line_element;
-    lx: mutable float; ly: mutable float;
-    (* здесь бы еще понять что все либо флаг что closed либо настройки текста, сейчас упростим и пусть будет новый текст новым здесь элементом, но можно потом соеденить очень похожие в один *)
+    lx: mutable float; 
+    ly: mutable float;
     lineHeight: mutable float;
     baseLine: mutable float;
     currentX: mutable float;
@@ -556,7 +571,6 @@ value create ?width ?height ?border ?dest (html:main) =
   in
   let rec process ((width,height) as size) attributes = fun
     [ `div attrs elements -> (* не доделано нихуя вообще нахуй *)
-        let div = Sprite.create () in
         (*
         let dy = ref 0 in
         let mainCont = 
@@ -581,141 +595,196 @@ value create ?width ?height ?border ?dest (html:main) =
           ]
         in
         *)
+        let div = RefList.empty () in
         let attribs = attrs @ attributes in
         let paddingTop = getAttr (fun [ `paddingTop x -> Some x | _ -> None ]) 0. attrs 
         and paddingLeft = getAttr (fun [ `paddingLeft x -> Some x | _ -> None ]) 0. attrs 
         in
         let nsize = subtractSize size (paddingTop,paddingLeft) in
-        (* дети могут быть либо параграфы, либо опять дивы 
-         * параграф цельный сцука а див нихуя нахуй
-         * *)
+        (* дети могут быть либо параграфы, либо опять дивы * параграф цельный сцука а див нихуя нахуй * *)
         let (x,y) = 
           List.fold_left begin fun (x,y) element ->
-              let (pos,obj) = process nsize attribs element in
-              match pos with
-              [ `P height ->
-                (
-                  obj#setPos x y;
-                  div#addChild obj;
-                  (x,y +. height)
-                )
-              ]
+              let (yoffset,lines) = process nsize attribs element in 
+              (
+                List.iter begin fun line -> 
+                  (
+                    line.lx := line.lx +. x; 
+                    line.ly := line.ly +. y;
+                    RefList.push div line
+                  )
+                end lines;
+                (x,y +. yoffset)
+              )
           end (paddingLeft,paddingTop) elements
         in
-        (`P y,div)
+        (y,RefList.to_list div)
     | `p attrs elements ->  (* p - содержит линии *)
         let () = debug "process p" in
-        let container = Sprite.create () in 
+(*         let container = Sprite.create () in  *)
         let attribs = (attrs :> div_attributes) @ attributes in
         let spaceBefore = getAttr (fun [ `spaceBefore s -> Some s | _ -> None]) 0. attrs in
         let spaceAfter = getAttr (fun [ `spaceAfter s -> Some s | _ -> None]) 0. attrs in
         let yOffset = ref spaceBefore in
+        let qlines = RefList.empty () in
         (
-          let lines = Stack.create () in
-          (
+          let max_width = 
+            let lines = Stack.create () in
             let f = make_lines width attribs lines in
-            List.iter f elements;
-            let qlines = Stack.create () in
-            let max_width = 
-              match width with
-              [ Some w -> 
-                (
-                  let f line = 
-                    let width = lineWidth line in (* try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in *)
-                    Stack.push (line,width) qlines
-                  in
-                  Stack.iter f lines;
-                  w
-                )
-              | None -> 
-                let max_width = ref 0. in
-                (
-                  let f line =
-                    let width = lineWidth line in (* try (linec#getChildAt 0)#x +. linec#width with [ DisplayObject.Invalid_index -> 0. ] in *)
+            let () = List.iter f elements in
+            match width with
+            [ Some w -> 
+              (
+                let f line = 
+                  let width = lineWidth line in 
+                  RefList.push qlines (line,width)
+                in
+                Stack.iter f lines;
+                w
+              )
+            | None -> 
+              let max_width = ref 0. in
+              (
+                let f line =
+                  let width = lineWidth line in
+                  (
+                    if width > !max_width then max_width.val := width else ();
+                    RefList.push qlines (line,width)
+                  )
+                in
+                Stack.iter f lines;
+                !max_width;
+              )
+            ]
+          in
+          let halign = match getAttrOpt (fun [ `halign p -> Some p | _ -> None ]) attribs with [ None -> `left | Some align -> align ] in
+          let lines = 
+            List.fold_left begin fun res (line,width) ->
+              (
+                match halign with
+                [ `center | `right as ha ->
+                  let widthDiff = max_width -. width in
+                  line.lx :=
+                    (match ha with
+                    [ `center -> widthDiff /. 2.
+                    | `right -> widthDiff
+                    ])
+                | _ -> ()
+                ];
+                debug "set line y to %f" !yOffset;
+                line.ly := !yOffset;
+  (*                   container#addChild line.container; *)
+                yOffset.val := !yOffset +. line.lineHeight;
+                [ line :: res ]
+              )
+            end [] (RefList.to_list qlines)
+          in
+            (*{{{
+            let atlas : ref (option Atlas.c) = ref None in
+            let atlasOnCurrentLine = ref False in
+            while not (Stack.is_empty qlines) do
+              let () = debug "add line to container" in
+              let (line,width) = Stack.pop qlines in
+              let () = atlasOnCurrentLine.val := False in
+              (
+                for i = 0 to (DynArray.length line.lchars) - 1 do
+                  match DynArray.get line.lchars i with
+                  [ Img i -> 
                     (
-                      if width > !max_width then max_width.val := width else ();
-                      Stack.push (line,width) qlines
+                      debug "add image to line";
+                      i#setX (i#x +. line.lx);
+                      i#setY (i#y +. line.ly);
+                      container#addChild i;
+                      atlas.val := None;
                     )
-                  in
-                  Stack.iter f lines;
-                  !max_width;
-                )
-              ]
-            in
-            (
-              let halign = match getAttrOpt (fun [ `halign p -> Some p | _ -> None ]) attribs with [ None -> `left | Some align -> align ] in
-              Stack.iter begin fun (line,width) ->
-                (
-                  match halign with
-                  [ `center | `right as ha ->
-                    let widthDiff = max_width -. width in
-                    line.lx :=
-                      (match ha with
-                      [ `center -> widthDiff /. 2.
-                      | `right -> widthDiff
-                      ])
-                  | _ -> ()
-                  ];
-                  debug "set line y to %f" !yOffset;
-                  line.ly := !yOffset;
-(*                   container#addChild line.container; *)
-                  yOffset.val := !yOffset +. line.lineHeight;
-                )
-              end qlines;
-              let atlas : ref (option Atlas.c) = ref None in
-              let atlasOnCurrentLine = ref False in
-              while not (Stack.is_empty qlines) do
-                let () = debug "add line to container" in
-                let (line,width) = Stack.pop qlines in
-                let () = atlasOnCurrentLine.val := False in
-                (
-                  for i = 0 to (DynArray.length line.lchars) - 1 do
-                    match DynArray.get line.lchars i with
-                    [ Img i -> 
-                      (
-                        debug "add image to line";
-                        i#setX (i#x +. line.lx);
-                        i#setY (i#y +. line.ly);
-                        container#addChild i;
-                        atlas.val := None;
-                      )
-                    | Char c ->
-                      (
-                        let () = debug "add char to line" in
-                        match !atlas with
-                        [ Some atlas when atlas#texture = (AtlasNode.texture c) ->
-                          match !atlasOnCurrentLine with
-                          [ True -> atlas#addChild c
-                          | False -> 
-                              let pos = AtlasNode.pos c in
-                              let pd = {Point.x = line.lx -. atlas#x; y = line.ly -. atlas#y} in
-                              atlas#addChild (AtlasNode.setPosPoint (Point.addPoint pos pd) c)
-                          ]
-                        | _ -> (* we need create one *) 
-                            let (atl : Atlas.c) = Atlas.create (AtlasNode.texture c) in
-                            (
-                              atl#setPos line.lx line.ly;
-                              atl#addChild c;
-                              atlas.val := Some atl;
-                              atlasOnCurrentLine.val := True;
-                              container#addChild atl;
-                            )
+                  | Char c ->
+                    (
+                      let () = debug "add char to line" in
+                      match !atlas with
+                      [ Some atlas when atlas#texture = (AtlasNode.texture c) ->
+                        match !atlasOnCurrentLine with
+                        [ True -> atlas#addChild c
+                        | False -> 
+                            let pos = AtlasNode.pos c in
+                            let pd = {Point.x = line.lx -. atlas#x; y = line.ly -. atlas#y} in
+                            atlas#addChild (AtlasNode.setPosPoint (Point.addPoint pos pd) c)
                         ]
-                      )
-                    ]
-                  done
-                )
-              done;
-            )
-          );
-          (`P (!yOffset +. spaceAfter),container)
-        )
+                      | _ -> (* we need create one *) 
+                          let (atl : Atlas.c) = Atlas.create (AtlasNode.texture c) in
+                          (
+                            atl#setPos line.lx line.ly;
+                            atl#addChild c;
+                            atlas.val := Some atl;
+                            atlasOnCurrentLine.val := True;
+                            container#addChild atl;
+                          )
+                      ]
+                    )
+                  ]
+                done
+              )
+            done;
+            }}}*)
+        ((!yOffset +. spaceAfter),lines)
+      )
     ]
   in
-  let result = match dest with [ Some s -> (s :> Sprite.c) | None -> Sprite.create () ] in
   let no_zero = fun [ Some x when  x <= 0. -> (Debug.w "w or h not correct"; None) | x ->  x ] in
-  let (pos,container) = process (no_zero width,no_zero height) [] html in
+  let (_yOffset,lines) = process (no_zero width,no_zero height) [] html in
+  let _container = ref (match dest with [ Some s -> Some (s :> Sprite.c) | None -> None  ]) in
+  let container () = match !_container with [ Some c -> c | None -> let c = Sprite.create () in (_container.val := Some c; c) ] in
+  let atlases : Hashtbl.t Texture.c (Atlas.c * int) = Hashtbl.create 1 in
   (
+    List.iteri begin fun lnum line ->
+      for i = 0 to (DynArray.length line.lchars) - 1 do
+        match DynArray.get line.lchars i with
+        [ Img i -> 
+          (
+            debug "add image to line";
+            i#setX (i#x +. line.lx);
+            i#setY (i#y +. line.ly);
+            (container())#addChild i
+          )
+        | Char c ->
+            let atex = AtlasNode.texture c in
+          try
+            let (atlas,alnum) = Hashtbl.find atlases atex in
+            if alnum = lnum 
+            then atlas#addChild c
+            else 
+              let pos = AtlasNode.pos c in
+              let pd = {Point.x = line.lx -. atlas#x; y = line.ly -. atlas#y} in
+              atlas#addChild (AtlasNode.setPosPoint (Point.addPoint pos pd) c)
+          with [ Not_found -> 
+            let (atl : Atlas.c) = Atlas.create atex in
+            (
+              atl#setPos line.lx line.ly;
+              atl#addChild c;
+              Hashtbl.add atlases atex (atl,lnum);
+            )
+          ]
+        ]
+      done
+    end lines;
+    let res = 
+      match !_container with
+      [ None ->
+        if Hashtbl.length atlases = 1
+        then (fst (Option.get (Enum.get (Hashtbl.values atlases))))#asDisplayObject
+        else 
+          let c = Sprite.create () in
+          (
+            Hashtbl.iter (fun _ (atlas,_) -> c#addChild atlas) atlases;
+            c#asDisplayObject
+          )
+      | Some c -> 
+          (
+            Hashtbl.iter (fun _ (atlas,_) -> c#addChild atlas) atlases;
+            c#asDisplayObject
+          )
+      ]
+    in
+    res
+  );
     (*
     match border with
     [ Some bcolor ->
@@ -734,11 +803,6 @@ value create ?width ?height ?border ?dest (html:main) =
     | None -> ()
     ];
     *)
-    (* FIXME: skip pos *)
-    result#addChild container;
-    debug "TLF DONE";
-    result
-  );
 
 
 end;

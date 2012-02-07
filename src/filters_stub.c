@@ -458,7 +458,7 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 		};
 		for (i = gsize - 1; i > 1 ; i--) {
 			prb = rbfs + i;
-			crb = rbfs - 1;
+			crb = prb - 1;
 			PRINT_DEBUG("draw back %i",i);
 			drawTexture(crb,prb->tid,prb->width,prb->height,&prb->clp,1);
 			checkGLErrors("draw back");

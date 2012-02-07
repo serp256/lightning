@@ -12,11 +12,12 @@
 #define glBindVertexArray glBindVertexArrayAPPLE
 #endif
 
-void checkGLErrors(char *where) {
+
+void check_gl_errors(char *fname, int lnum, char *msg) {
 	GLenum error = glGetError();
 	int is_error = 0;
 	while (error != GL_NO_ERROR) {
-		printf("%s: gl error: %d\n",where,error);
+		printf("(%s:%d) %s: gl error: %d\n",fname,lnum,msg,error);
 		error = glGetError();
 		is_error = 1;
 	};
