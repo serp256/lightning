@@ -297,11 +297,19 @@ value split3 lst =
   );
 
 (* возвращает номер элемента в списке удовлетворяющего условию *)
-value eth (f:('a -> bool)) (lst:list 'a) =  
+value index_of_func (f:('a -> bool)) (lst:list 'a) =  
   let rec loop i = fun
-    [ [] -> raise Not_found
-    | [hd::_] when (f hd) -> i
+    [ [] -> None
+    | [hd::_] when (f hd) -> Some i
     | [_::tl] -> loop (i+1) tl
+    ]
+  in loop 0 lst;
+  
+value index_of (lst:list 'a) (elem:'a) =
+  let rec loop i = fun
+    [ [] -> None
+    | [hd :: _] when hd = elem -> Some i
+    | [_ :: tl] -> loop (i + 1) tl
     ]
   in loop 0 lst;
 

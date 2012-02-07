@@ -28,10 +28,9 @@ type init_flag =
   [ TIMER
   | AUDIO
   | VIDEO
-(*   | CDROM *)
   | JOYSTICK
+  | HAPTIC
   | NOPARACHUTE
-  | EVENTTHREAD
   | EVERYTHING ];
 (* Don't catch fatal signals *)
 (* Not supported on all OS's *)
@@ -100,7 +99,6 @@ module Video =
     external set_alpha_mod: surface -> int -> unit = "sdlstub_set_surface_alpha_mod";
     type blendMode = 
       [ BLENDMODE_NONE (**< No blending *)
-      | BLENDMODE_MASK (**< dst = A ? src : dst (alpha is mask) *)
       | BLENDMODE_BLEND (**< dst = (src * A) + (dst * (1-A)) *)
       | BLENDMODE_ADD (**< dst = (src * A) + dst *)
       | BLENDMODE_MOD (**< dst = src * dst *)

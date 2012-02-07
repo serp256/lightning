@@ -856,7 +856,7 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 	int w = Long_val(width),h = Long_val(height);
-	printf("create rtexture: [%d:%d]\n",w,h);
+	//printf("create rtexture: [%d:%d]\n",w,h);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("tex image 2d from framebuffer");
 	glBindTexture(GL_TEXTURE_2D,0);
@@ -1082,7 +1082,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 		value arr = Field(children,0);
 		int len = Int_val(Field(children,1));
 		int arrlen = Wosize_val(arr);
-		printf("upgrade quads. indexlen: %d, quadslen: %d\n",arrlen,len);
+		//printf("upgrade quads. indexlen: %d, quadslen: %d\n",arrlen,len);
 		int i;
 
 		if (arrlen != atl->index_size) { // we need resend index
@@ -1171,7 +1171,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);	
 #else
 	glBindVertexArray(atl->vaoname);
-	printf("draw %d quads\n",atl->n_of_quads);
+	//printf("draw %d quads\n",atl->n_of_quads);
 	checkGLErrors("before render atlas");
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
     glBindVertexArray(0);
