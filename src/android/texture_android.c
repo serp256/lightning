@@ -82,6 +82,7 @@ int load_jpg_image(resource *rs,textureInfo *tInfo) {
 	tInfo->scale = 1.;
 	tInfo->dataLen = dataLen;
 	tInfo->imgData = pImageData;
+	tInfo->generateMipmaps = 0;
 	return 1;
 }
 
@@ -194,44 +195,145 @@ int load_png_image(resource *rs,textureInfo *tInfo) {
 	tInfo->scale = 1.;
 	tInfo->dataLen = dataLen;
 	tInfo->imgData = pImageData;
+	tInfo->generateMipmaps = 0;
 	return 1;
 }
+
+int loadPvrFile(resource *rs, textureInfo *tInfo) {
+	FILE * fildes = fdopen(rs->fd, "rb");
+
+	if (fildes == NULL) 
+	  return 0;
+
+	PVRTextureHeader header;
+
+	ssize_t readed = fread(&header, 1, sizeof(PVRTextureHeader), fildes);
+
+	if (readed != sizeof(PVRTextureHeader)) {
+	  fclose(fildes); 
+	  return 0;
+	}
+
+    int hasAlpha = header.alphaBitMask ? 1 : 0;
+
+	tInfo->width = tInfo->realWidth = header.width;
+	tInfo->height = tInfo->realHeight = header.height;
+	tInfo->numMipmaps = header.numMipmaps;
+	tInfo->premultipliedAlpha = 0;
+  
+    switch (header.pfFlags & 0xff)
+    {
+      case OGL_RGB_565:
+        tInfo->format = SPTextureFormat565;
+        break;
+      case OGL_RGBA_5551:
+		tInfo->format = SPTextureFormat5551;
+		break;
+      case OGL_RGBA_4444:
+		tInfo->format = SPTextureFormat4444;
+		break;
+      case OGL_RGBA_8888:
+		tInfo->format = SPTextureFormatRGBA;
+		break;
+      case OGL_PVRTC2:
+		tInfo->format = hasAlpha ? SPTextureFormatPvrtcRGBA2 : SPTextureFormatPvrtcRGB2;
+		break;
+      case OGL_PVRTC4:
+		tInfo->format = hasAlpha ? SPTextureFormatPvrtcRGBA4 : SPTextureFormatPvrtcRGB4;
+		break;
+      default:
+		fclose(fildes);
+		return 0;
+  }
+
+  tInfo->dataLen = header.textureDataSize;
+  tInfo->imgData = (unsigned char*)malloc(header.textureDataSize);
+
+  if (!tInfo->imgData) {
+    fclose(fildes);
+    return 0;
+  }
+  readed = fread(tInfo->imgData,sizeof(char), tInfo->dataLen, fildes);
+  if (readed != header.textureDataSize) {
+    fclose(fildes);
+    free(tInfo->imgData);
+    return 0;
+  }
+  tInfo->scale = 1.0;
+  fclose(fildes);
+  return 1;
+}
+
+
 
 CAMLprim value ml_loadImage(value oldTextureID, value fname, value scale) { // scale unused here
 	CAMLparam2(fname,scale);
 	CAMLlocal1(res);
 	DEBUG("LOAD IMAGE FROM ML");
+
 	resource r;
-	if (!getResourceFd(fname,&r)) caml_raise_with_string(*caml_named_value("File_not_exists"), String_val(fname));
-	// here use ext for select img format
-  char ext[4];
-  char png[]="png";
-  char jpg[]="jpg";
+
+	char tmpname[1024];
+    char ext[4];
+    char png[]="png";
+    char jpg[]="jpg";
 	char * _fname = String_val(fname);
-  unsigned int len = 0;
-  while (_fname[len] != '\0') { len++; };
-  ext[0] = _fname[len-3];
-  ext[1] = _fname[len-2];
-  ext[2] = _fname[len-1];
-  ext[3] = '\0';
-	textureInfo tInfo;
-  if (strcmp(ext,jpg)==0) 
-	{
-		if (!load_jpg_image(&r,&tInfo)) caml_failwith("can't load jpg");
-	  DEBUG("JPG LOADED");
-	} else {
-  	if (strcmp(ext,png)==0) {
-			if (!load_png_image(&r,&tInfo)) caml_failwith("can't load png");
-	    DEBUG("PNG LOADED");
-		} else {
-			caml_failwith("can't understand img format (by ext), supported .png and .jpg only");
-		};
-	};
+    
+    unsigned int len = 0;
+    while (_fname[len] != '\0') { len++; };
+    
+    ext[0] = _fname[len-3];
+    ext[1] = _fname[len-2];
+    ext[2] = _fname[len-1];
+    ext[3] = '\0';
+
+    unsigned int i = 0;
+    while (_fname[i] != '\0') {
+      if (_fname[i] == '.') {
+        tmpname[i] = '.';
+        tmpname[i + 1] = 'p';
+        tmpname[i + 2] = 'v';
+        tmpname[i + 3] = 'r';
+        tmpname[i + 4] = '\0';
+        break;
+      } else {
+        tmpname[i] = _fname[i];
+      }
+      i++;
+    }
+
+    textureInfo tInfo;
+
+	if (getResourceFd(caml_copy_string(tmpname) ,&r)) {
+	  if (!loadPvrFile(&r, &tInfo))  caml_failwith("can't load pvr");
+	  DEBUG("PVR LOADED");
+	} else {	
+	
+      if (!getResourceFd(fname,&r)) caml_raise_with_string(*caml_named_value("File_not_exists"), String_val(fname));
+  
+      if (strcmp(ext,jpg)==0) {
+	    if (!load_jpg_image(&r,&tInfo)) 
+	      caml_failwith("can't load jpg");
+	    DEBUG("JPG LOADED");
+      } else {
+        if (strcmp(ext,png)==0) {
+	  	  if (!load_png_image(&r,&tInfo)) 
+	  	    caml_failwith("can't load png");
+	      DEBUG("PNG LOADED");
+	    } else {
+	      caml_failwith("can't understand img format (by ext), supported .png and .jpg only");
+	    }
+      }
+    }
+	
 	unsigned int textureID = createGLTexture(Long_val(oldTextureID),&tInfo);
 	DEBUG("TEXTURE CREATED");
 	free(tInfo.imgData);
-	if (!textureID) caml_failwith("can't load texture");
+	if (!textureID) 
+	  caml_failwith("can't load texture");
+	
 	res = caml_alloc_tuple(10);
+	
 	Store_field(res,0,Val_int(tInfo.format));
 	Store_field(res,1,Val_int((unsigned int)tInfo.realWidth));
 	Store_field(res,2,Val_int(tInfo.width));
@@ -243,7 +345,13 @@ CAMLprim value ml_loadImage(value oldTextureID, value fname, value scale) { // s
 	Store_field(res,8,caml_copy_double(tInfo.scale));
 	Store_field(res,9,Val_long(textureID));
 	CAMLreturn(res);
-
 }
+
+
+
+
+
+
+
 
 

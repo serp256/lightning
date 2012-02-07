@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include "texture_common.h"
 #include <caml/memory.h>
@@ -38,7 +36,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
             p->glTexFormat = GL_ALPHA;
             break;
         case SPTextureFormatPvrtcRGBA2:
-#ifdef IOS
+#if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG;
@@ -47,7 +45,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 						return 0;
 #endif
         case SPTextureFormatPvrtcRGB2:
-#ifdef IOS
+#if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG;
@@ -56,7 +54,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 						return 0;
 #endif
         case SPTextureFormatPvrtcRGBA4:
-#ifdef IOS
+#if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 4;
             p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG;
@@ -65,7 +63,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 						return 0;
 #endif
         case SPTextureFormatPvrtcRGB4:
-#ifdef IOS
+#if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 4;
             p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG;

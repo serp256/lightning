@@ -25,7 +25,7 @@ module Program = struct
       ShaderCache.find shader_cache shader_file 
     with [ Not_found -> 
       let () = debug "try compile shader: %s" shader_file in
-      let s = compile_shader shader_type (Std.input_all (LightCommon.open_resource (Filename.concat "Shaders" shader_file) 0.)) in
+      let s = compile_shader shader_type (LightCommon.read_resource (Filename.concat "Shaders" shader_file) 0.) in
       (
         ShaderCache.add shader_cache shader_file s;
         s;

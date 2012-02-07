@@ -53,6 +53,13 @@ value open_resource path scale =
   | Some p -> open_in p
   ];
 
+
+value read_json path = 
+  let ch = LightCommon.open_resource path 1. in                                                                                                                
+  Ojson.from_channel ch;
+
+value read_resource path scale = Std.input_all (open_resource path scale);
+
 ELSE IFDEF ANDROID THEN
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
@@ -72,6 +79,40 @@ value open_resource path _ =
   ];
 
 
+value read_resource path _ = 
+  match bundle_fd_of_resource path with
+  [ None -> raise (File_not_exists path)
+  | Some (fd, length) -> 
+      let length = Int64.to_int length in 
+      let buff = String.create length
+      and ic = Unix.in_channel_of_descr fd in
+      (
+        really_input ic buff 0 length;
+        buff
+      )
+  ];
+  
+value read_json path = 
+  match bundle_fd_of_resource path with 
+  [ None -> raise (File_not_exists path)
+  | Some (fd, length) ->  
+    let read = ref Int64.zero
+    and ic = Unix.in_channel_of_descr fd in
+    Ojson.from_function begin fun buff len -> 
+      match Int64.compare !read length with
+      [ x when x >= 0 -> 0
+      | _ ->
+        let n = input ic buff 0 len in 
+        let () = read.val := Int64.add (Int64.of_int n) !read in
+        match Int64.compare !read length with
+        [ x when x >= 0 -> Int64.to_int (Int64.sub length (Int64.sub !read (Int64.of_int n)))
+        | _ -> n
+        ]  
+      ]
+    end
+  ];
+  
+
 ELSE IFDEF SDL THEN
 
 value device_scale_factor () = 1.0;
@@ -83,6 +124,12 @@ value resource_path fname =
   ];
 
 value open_resource fname scale = open_in (resource_path fname);
+
+value read_resource path scale = Std.input_all (open_resource path scale);
+
+value read_json path = 
+  let ch = LightCommon.open_resource path 1. in                                                                                                                
+  Ojson.from_channel ch;
 
 ENDIF;
 ENDIF;

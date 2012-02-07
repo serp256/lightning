@@ -1010,16 +1010,16 @@ value ml_atlas_init(value unit) {
 	atlas_t *atl = caml_stat_alloc(sizeof(atlas_t));
 
 #ifndef ANDROID
-
-	glGenVertexArrays(1, &atl->vaoname);
+  glGenVertexArrays(1, &atl->vaoname);
   glBindVertexArray(atl->vaoname);
 #endif
+
   glGenBuffers(2, atl->buffersVBO);
 
-#ifndef ANDROID
-	atl->index_size = 0;
-	atl->n_of_quads = 0;
+  atl->index_size = 0;
+  atl->n_of_quads = 0;
 
+#ifndef ANDROID
   glBindBuffer(GL_ARRAY_BUFFER, atl->buffersVBO[0]);
   //glBufferData(GL_ARRAY_BUFFER, sizeof(quads_[0]) * capacity_, quads_, GL_DYNAMIC_DRAW);
 
@@ -1151,10 +1151,10 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 
 	};
 	
-	
+
+#ifdef ANDROID	
 	glBindBuffer(GL_ARRAY_BUFFER,atl->buffersVBO[0]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,atl->buffersVBO[1]);
-
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColorTex);
 
 	// vertices
@@ -1168,16 +1168,14 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
 
 	glBindBuffer(GL_ARRAY_BUFFER,0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
-	
-
-/*
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);	
+#else
 	glBindVertexArray(atl->vaoname);
 	printf("draw %d quads\n",atl->n_of_quads);
 	checkGLErrors("before render atlas");
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
-  glBindVertexArray(0);
-  */
+    glBindVertexArray(0);
+#endif
 	checkGLErrors("after draw atals");
 	kmGLPopMatrix();
 

@@ -11,7 +11,7 @@ GLPARAM =
 
 MOBJS = texture_common.o filters_stub.o render_stub.o
 MLOBJSFLAGS = 
-MLFLAGS +=  -package extlib -I containers -I utils
+MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
 
 byte: lightning.cma fbconnect.cma
