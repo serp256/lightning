@@ -11,7 +11,7 @@ GLPARAM =
 
 MOBJS = texture_common.o filters_stub.o render_stub.o
 MLOBJSFLAGS = 
-MLFLAGS +=  -package extlib -I containers -I utils
+MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
 
 byte: lightning.cma fbconnect.cma
@@ -52,7 +52,7 @@ else
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
-		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
+		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
 	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
 		gl = gl/2.1

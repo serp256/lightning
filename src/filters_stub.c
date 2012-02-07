@@ -67,7 +67,8 @@ GLuint create_program(GLuint vShader, GLuint fShader, int cntattribs, char* attr
 	GLuint program =  glCreateProgram();
 	glAttachShader(program, vShader); 
 	glAttachShader(program, fShader); 
-	for (int i = 0; i < cntattribs; i++) {
+	int i = 0;
+	for (i; i < cntattribs; i++) {
     glBindAttribLocation(program,i,attribs[i]);
   };
   glLinkProgram(program);

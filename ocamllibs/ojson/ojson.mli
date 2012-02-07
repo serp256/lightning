@@ -40,3 +40,9 @@ val from_file :
   (** Read a JSON value from a file.
       See [from_string] for the meaning of the optional arguments. *)
 
+val from_function :
+  ?buf:Buffer.t ->
+  ?fname:string ->
+  ?lnum:int ->
+  (string -> int -> int) -> t
+
