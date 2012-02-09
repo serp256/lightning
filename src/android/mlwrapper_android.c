@@ -55,7 +55,8 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 {
 	// convert jstring to byte array
 	jclass clsstring = (*env)->FindClass(env,"java/lang/String");
-	jstring strencode = (*env)->NewStringUTF(env,"utf-8");
+	const char * utf = "utf-8";
+	jstring strencode = (*env)->NewStringUTF(env,utf);
 	jmethodID mid = (*env)->GetMethodID(env,clsstring, "getBytes", "(Ljava/lang/String;)[B");
 	jbyteArray barr= (jbyteArray)(*env)->CallObjectMethod(env,jstr, mid, strencode);
 	jsize alen =  (*env)->GetArrayLength(env,barr);
@@ -68,7 +69,11 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 		memcpy(String_val(result), ba, alen);
 	}
 	(*env)->ReleaseByteArrayElements(env,barr, ba, 0);
-
+	
+	(*env)->DeleteLocalRef(env, strencode);
+	(*env)->DeleteLocalRef(env, clsstring);
+	(*env)->DeleteLocalRef(env, mid);
+		
 	return result;
 }
 
@@ -80,32 +85,50 @@ int getResourceFd(value mlpath, resource *res) {
 	{
 		__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
 	}
+
 	jclass cls = (*env)->GetObjectClass(env,jView);
 	jmethodID mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
+	(*env)->DeleteLocalRef(env, cls); //
+	
 	if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
-	jstring jpath = (*env)->NewStringUTF(env,String_val(mlpath));
+	
+	const char * path = String_val(mlpath);
+	jstring jpath = (*env)->NewStringUTF(env,path);
 	jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
+	(*env)->DeleteLocalRef(env,jpath);
+	
 	if (!resourceParams) {
 	  return 0;
 	}
+	
 	cls = (*env)->GetObjectClass(env,resourceParams);
-
+	
 	jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");
+	
 	jobject fileDescriptor = (*env)->GetObjectField(env,resourceParams,fid);
 	jclass fdcls = (*env)->GetObjectClass(env,fileDescriptor);
+	
 	fid = (*env)->GetFieldID(env,fdcls,"descriptor","I");
-	jint fd = (*env)->GetIntField(env,fileDescriptor,fid);
 
+//3	(*env)->DeleteLocalRef(env, fdcls);
+    jint fd = (*env)->GetIntField(env,fileDescriptor,fid);
 	fid = (*env)->GetFieldID(env,cls,"startOffset","J");
 	jlong startOffset = (*env)->GetLongField(env,resourceParams,fid);
-
 	fid = (*env)->GetFieldID(env,cls,"length","J");
 	jlong length = (*env)->GetLongField(env,resourceParams,fid);
-	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld",startOffset,length);
+	
+	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld (%s)",startOffset,length, String_val(mlpath));
+	
 	int myfd = dup(fd); 
 	lseek(myfd,startOffset,SEEK_SET);
 	res->fd = myfd;
 	res->length = length;
+	
+	(*env)->DeleteLocalRef(env, fileDescriptor);
+	(*env)->DeleteLocalRef(env, resourceParams);
+	(*env)->DeleteLocalRef(env, cls);
+	
+	
 	return 1;
 }
 
@@ -322,26 +345,45 @@ value ml_android_connection(value mlurl,value method,value headers,value data) {
     __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()"); 
   }
 
-  jstring jurl = (*env)->NewStringUTF(env, String_val(mlurl));
-  jstring jmethod = (*env)->NewStringUTF(env, String_val(method));
+  
   jobjectArray jheaders = jarray_of_mlList(env, headers);
-  jstring jdata = (*env)->NewStringUTF(env, String_val(method));
-  if Is_block(data) {
-  	jdata = (*env)->NewStringUTF(env, String_val(data));
-  } 
-	
-	
+  
+  jbyteArray jdata;
+  
+  if (Is_block(data)) {
+    unsigned int len = caml_string_length(Field(data,0));
+    
+    DEBUGF("Data length is %ud bytes", len);  
+    
+    jdata = (*env)->NewByteArray(env, len);
+    (*env)->SetByteArrayRegion(env, jdata, 0, len, (const jbyte *)String_val(Field(data,0)));
+  } else {
+    jdata = (*env)->NewByteArray(env, 0);
+  }
+  
   //и тут уже вызываем ява-метод и передаем ему параметры
   jclass cls = (*env)->GetObjectClass(env, jView);
-  jmethodID mid = (*env)->GetMethodID(env, cls, "spawnHttpLoader", "(Ljava/lang/String;Ljava/lang/String;[[Ljava/lang/String;Ljava/lang/String;)I");
+  jmethodID mid = (*env)->GetMethodID(env, cls, "spawnHttpLoader", "(Ljava/lang/String;Ljava/lang/String;[[Ljava/lang/String;[B)I");
   if (mid == NULL) {
   	return Val_int(0); // method not found
   }
+
+  const char * url = String_val(mlurl);
+  const char * meth = String_val(method);
+
+  jstring jurl = (*env)->NewStringUTF(env, url);
+  jstring jmethod = (*env)->NewStringUTF(env, meth);
 	
   //где-то тут надо получить идентификатор лоадера и вернуть его окэмлу, а так же передать в яву
   //чтобы все дальнейшие действия ассоциировались именно с этим лоадером
   jint jloader_id = (*env)->CallIntMethod(env, jView, mid, jurl, jmethod, jheaders, jdata);
   value loader_id = caml_copy_int32(jloader_id);
+  
+  (*env)->DeleteLocalRef(env, cls);
+  (*env)->DeleteLocalRef(env, jdata);
+  (*env)->DeleteLocalRef(env, jurl);
+  (*env)->DeleteLocalRef(env, jmethod);
+  
   return loader_id;
 }
 
@@ -405,12 +447,11 @@ JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlFailed(JNIEnv 
     ml_url_failed = caml_named_value("url_failed"); 
 
   value error_code,loader_id;
-  Begin_roots2(error_code,loader_id);
-
+  Begin_roots2(error_code, loader_id);
   error_code = caml_copy_int32(jerror_code);
   loader_id = caml_copy_int32(jloader_id);
-  caml_callback3(*ml_url_failed, loader_id, error_code, string_of_jstring(env, jerror_message));
   End_roots();
+  caml_callback3(*ml_url_failed, loader_id, error_code, string_of_jstring(env, jerror_message));
   caml_release_runtime_system();
 }
 
