@@ -22,6 +22,7 @@ module type S = sig
       method numChildren: int;
       method updateChild: int -> AtlasNode.t -> unit;
       method removeChild: int -> unit;
+      method setChildIndex: int -> int -> unit;
     end;
 
 
@@ -107,6 +108,20 @@ module Make(D:DisplayObjectT.M) = struct
         else ();
       );
 
+      method setChildIndex idx nidx =
+        if nidx < DynArray.length children 
+        then
+          (
+            try
+              let child = DynArray.get children idx in
+              (
+                DynArray.delete children idx;
+                DynArray.insert children nidx child;
+              )
+            with [ DynArray.Invalid_arg _ -> raise D.Invalid_index ];
+            self#childrenDirty();
+          )
+        else raise D.Invalid_index;
 
       value mutable glowFilter = None;
 
@@ -233,8 +248,7 @@ module Make(D:DisplayObjectT.M) = struct
             )
         ];
 
-      method !boundsChanged() =
-      (
+      method private childrenDirty () =
         if not dirty
         then
         (
@@ -252,6 +266,10 @@ module Make(D:DisplayObjectT.M) = struct
           dirty := True; 
         )
         else ();
+
+      method !boundsChanged() =
+      (
+        self#childrenDirty();
         super#boundsChanged();
       );
 
