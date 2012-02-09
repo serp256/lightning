@@ -262,6 +262,33 @@ value create texFormat width height data =
   (res :> c);
 
 
+Callback.register "create_ml_texture" begin fun textureID width height clipping ->
+  object(self:c)
+    value mutable textureID = textureID;
+    method textureID = textureID;
+    method width = width;
+    method height = height;
+    method hasPremultipliedAlpha = True;
+    method scale = 1.;
+    method base = None;
+    method clipping = clipping;
+    method rootClipping = clipping;
+    method release () = 
+      if (textureID <> 0) 
+      then
+      (
+        debug:gc "release texture %d" textureID;
+        delete_texture textureID; 
+        textureID := 0
+      )
+      else ();
+    method subTexture _ = assert False;
+    method addRenderer _ = ();
+    method removeRenderer _ = ();
+    initializer Gc.finalise (fun t -> t#release ()) self;
+  end
+end;
+
 value load path : c = 
   try
     debug:cache (

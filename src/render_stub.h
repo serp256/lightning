@@ -14,6 +14,13 @@
 #endif
 #endif
 
+#define ERROR(fmt,args...) fprintf(stderr,fmt, ## args)
+
+#ifdef LDEBUG
+    #define PRINT_DEBUG(fmt,args...)  (fprintf(stderr,"[DEBUG(%s:%d)] ",__FILE__,__LINE__),fprintf(stderr,fmt, ## args),putc('\n',stderr))
+#else
+    #define PRINT_DEBUG(fmt,args...)
+#endif
 
 #include <stdio.h>
 #include <caml/mlvalues.h>
@@ -22,6 +29,8 @@
 #include <caml/custom.h>
 #include <caml/bigarray.h>
 #include <caml/fail.h>
+
+#include "light_common.h"
 
 void setPMAGLBlend();
 void setNotPMAGLBlend();
@@ -124,7 +133,7 @@ enum {
   lgVertexAttribFlag_Color   = 1 << 2,
   
 	lgVertexAttribFlag_PosColor = (lgVertexAttribFlag_Position | lgVertexAttribFlag_Color),
-	lgVertexAttribFlag_PosColorTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords ),
+	lgVertexAttribFlag_PosTexColor = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords ),
 	lgVertexAttribFlag_PosTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_TexCoords )
 };
 
@@ -141,6 +150,5 @@ void set_framebuffer_state(framebuffer_state *s);
 
 
 
-void checkGLErrors(char *where);
 
 #endif

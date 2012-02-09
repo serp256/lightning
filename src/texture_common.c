@@ -1,10 +1,12 @@
 #include <stdio.h>
-#include "texture_common.h"
 #include <caml/memory.h>
 #include <caml/alloc.h>
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 #include <caml/custom.h>
+
+#include "texture_common.h"
+
 
 
 int nextPowerOfTwo(int number) {

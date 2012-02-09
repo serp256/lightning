@@ -1,0 +1,12 @@
+
+include config.macos
+include Makefile.common
+
+LIGHTNING_PATH=lightning/src
+MLFLAGS += -I $(LIGHTNING_PATH)/sdl
+LINKFLAGS = -package chipmunk
+TESTFLAGS = -package curl,threads -thread
+
+
+include Makefile.in
+

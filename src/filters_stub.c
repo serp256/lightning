@@ -1,5 +1,6 @@
 
 #include "render_stub.h"
+#include <caml/callback.h>
 #include "math.h"
 
 extern GLuint currentShaderProgram;
@@ -92,7 +93,7 @@ GLuint create_program(GLuint vShader, GLuint fShader, int cntattribs, char* attr
 GLuint simple_program() {
 	static GLuint prg = 0;
 	if (prg == 0) {
-		printf("create new program\n");
+		PRINT_DEBUG("create new program\n");
 		char *attribs[2] = {"a_position","a_texCoord"};
 		prg = create_program(simple_vertex_shader(),simple_fragment_shader(),2,attribs);
 		if (prg) {
@@ -111,6 +112,9 @@ typedef struct {
 	GLfloat height;
 } clipping;
 
+
+#define IS_CLIPPING(clp) (clp.x == 0. && clp.y == 0. && clp.width == 1. && clp.height == 1.)
+
 typedef struct {
   GLuint fbid;
 	GLuint tid;
@@ -118,6 +122,30 @@ typedef struct {
 	double height;
 	clipping clp;
 } renderbuffer_t;
+
+value create_ml_texture(renderbuffer_t *rb) {
+	CAMLparam0();
+	CAMLlocal4(width,height,clip,res);
+	static value *mlf = NULL;
+	if (mlf == NULL) mlf = (value*)caml_named_value("create_ml_texture");
+	if (!IS_CLIPPING(rb->clp)) {
+		clip = caml_alloc_tuple(1);
+		Store_field(clip,0,caml_alloc(4 * Double_wosize,Double_array_tag));
+		Store_double_field(Field(clip,0),0,rb->clp.x);
+		Store_double_field(Field(clip,0),1,rb->clp.y);
+		Store_double_field(Field(clip,0),2,rb->clp.width);
+		Store_double_field(Field(clip,0),3,rb->clp.height);
+	} else clip = Val_unit;
+	value params[4];
+	params[0] = Val_long(rb->tid);
+	width = caml_copy_double(rb->width);
+	height = caml_copy_double(rb->height);
+	params[1] = width;
+	params[2] = height; 
+	params[3] = clip;
+	res = caml_callbackN(*mlf,4,params);
+	CAMLreturn(res);
+}
 
 // сделать рендер буфер
 renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *r) {
@@ -137,7 +165,6 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
     if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
 	};
 #endif
-	// need ios fix here 
   glGenTextures(1, &rtid);
   glBindTexture(GL_TEXTURE_2D, rtid);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -153,7 +180,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
 	checkGLErrors("bind framebuffer with texture");
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    printf("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    PRINT_DEBUG("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
     return NULL;
   };
   glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -179,7 +206,7 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 static GLfloat quads[4][2];
 static GLfloat texCoords[4][2] = {{0.,0.},{1.,0.},{0.,1.},{1.,1.}};
 
-void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clipping *clp) {
+void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clipping *clp,int clear) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
 	GLsizei bw = ceil(rb->width);
@@ -187,17 +214,26 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 
 
   glViewport(0, 0,bw,bh);
-	glClear(GL_COLOR_BUFFER_BIT);
+	if (clear) glClear(GL_COLOR_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,textureID);
 
-	double dx = ((double)bw - w) / bw;
-	double dy = ((double)bh - h) / bh;
+	double dx = ((double)bw - rb->width) / bw;
+	double dy = ((double)bh - rb->height) / bh;
 	double x = w / bw;
 	double y = h / bh;
 
-	//printf("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh);
+	PRINT_DEBUG("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d], quads: [%f,%f,%f,%f]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh, x, y, dx, dy);
 
-	//  надо в левый сука угол сместить каким-то хуем блядь нахуй
+	quads[0][0] = -x - dx;
+	quads[0][1] = -y - dy;
+	quads[1][0] = x - dx;
+	quads[1][1] = quads[0][1];
+	quads[2][0] = quads[0][0];
+	quads[2][1] = y - dy;
+	quads[3][0] = quads[1][0];
+	quads[3][1] = quads[2][1];
+
+	/*
 	quads[0][0] = -x - dx;
 	quads[0][1] = y - dy;
 	quads[1][0] = x - dx;
@@ -206,6 +242,7 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 	quads[2][1] = -y - dy;
 	quads[3][0] = quads[1][0];
 	quads[3][1] = quads[2][1];
+	*/
 
 	//printf("quads: [%f:%f] [%f:%f] [%f:%f] [%f:%f]\n", quads[0][0], quads[0][1], quads[1][0], quads[1][1], quads[2][0], quads[2][1], quads[3][0], quads[3][1]);
 
@@ -266,19 +303,76 @@ value make_filter(filterRender render,filterFinalize finalize, void *data) {
 
 
 /*
+static GLuint final_glow_vertex_shader() {
+	static GLuint shader = 0;
+	if (shader == 0) {
+		shader = compile_shader(GL_VERTEX_SHADER,
+			"attribute vec2 a_position; attribute vec2 a_texCoord; attribute vec2 a_texCoordOrig; varying vec2 v_texCoord; varying vec2 v_texCoordOrig;\
+			void main(void) { \
+			gl_Position = vec4(a_position, 0.0, 1.0); \
+			v_texCoord = a_texCoord; \
+			v_texCoordOrig = a_texCoordOrig; \
+			}");
+	};
+	return shader;
+}
+*/
+
 static GLuint glow_fragment_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
 		shader = compile_shader(GL_FRAGMENT_SHADER,
-				"varying  vec2 v_texCoord;uniform  vec3 u_color; uniform sampler2D u_texture;\
-				void main() {\
-					float alpha = texture2D(u_texture, v_texCoord).a; \
-					gl_FragColor = vec4(u_color,alpha);\
-				}");
+				"#ifdef GL_ES\nprecision lowp float; \n#endif\n"\
+				"varying vec2 v_texCoord; uniform sampler2D u_texture; uniform vec3 u_color;\n"\
+				"void main() {"\
+					"gl_FragColor = vec4(u_color,texture2D(u_texture,v_texCoord).a);"\
+				"}");
 	};
 	return shader;
 };
-*/
+
+static GLuint final_glow_fragment_shader() {
+	static GLuint shader = 0;
+	if (shader == 0) {
+		shader = compile_shader(GL_FRAGMENT_SHADER,
+				"#ifdef GL_ES\nprecision lowp float; \n#endif\n"\
+				"varying vec2 v_texCoord; uniform sampler2D u_texture; uniform float u_strength;\n"\
+				"void main() {"\
+					"vec4 color = texture2D(u_texture,v_texCoord);\n"\
+					"color.a *= u_strength;\n"\
+					"gl_FragColor = color;"\
+				"}");
+	};
+	return shader;
+};
+
+static GLuint glow_program() {
+	static GLuint prg = 0;
+	if (prg == 0) {
+		char *attribs[2] = {"a_position","a_texCoord"};
+		prg = create_program(simple_vertex_shader(),glow_fragment_shader(),2,attribs);
+		if (prg) {
+			glUseProgram(prg);
+			glUniform1i(glGetUniformLocation(prg,"u_texture"),0);
+			glUseProgram(0);
+		}
+	};
+	return prg;
+}
+
+static GLuint final_glow_program() {
+	static GLuint prg = 0;
+	if (prg == 0) {
+		char *attribs[2] = {"a_position","a_texCoord"};
+		prg = create_program(simple_vertex_shader(),final_glow_fragment_shader(),2,attribs);
+		if (prg) {
+			glUseProgram(prg);
+			glUniform1i(glGetUniformLocation(prg,"u_texture"),0);
+			glUseProgram(0);
+		}
+	};
+	return prg;
+}
 
 struct glowData 
 {
@@ -309,60 +403,193 @@ value ml_filter_glow(value color, value strength) {
 	return make_filter(&glowFilter,&glowFilterFinalize,gd);
 }
 
-void ml_glow_resize(value framebufferID,value textureID, value width, value height, value clip, value count) {
-	/* не понятно как тут разрулица надо */ 
-	renderbuffer_t rb;
-	rb.fbid = Long_val(framebufferID);
-	rb.tid = Long_val(textureID);
-	rb.width = Double_val(width);
-	rb.height = Double_val(height);
-	if (clip != 1) {
-		value c = Field(clip,0);
-		rb.clp.x = Double_field(c,0);
-		rb.clp.y = Double_field(c,1);
-		rb.clp.width = Double_field(c,2);
-		rb.clp.height = Double_field(c,3);
-	} else { 
-		rb.clp.x = 0;
-		rb.clp.y = 0;
-		rb.clp.width = 1.;
-		rb.clp.height = 1.;
-	};
-	glDisable(GL_BLEND);
-	int gsize = Int_val(count);
+value ml_glow_make2(value textureID, value width, value height, value pma, value clip, value glow) {
+	/// вернуть бы текстуру было бы заебись - сделать функцию в ml create_ml_texture
+	int gsize = Int_val(Field(glow,0));
+	double iwidth = Double_val(width);
+	double iheight = Double_val(height);
+	double gs = (pow(2,gsize) - 1) * 2;
+	double rwidth = iwidth + 2 * gs;
+	double rheight = iheight + 2 * gs;
+
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
+	glDisable(GL_BLEND);
 	glClearColor(0.,0.,0.,0.);
+	GLuint glowPrg = glow_program();
+	glUseProgram(glowPrg);
+
+	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
+	glUniform3f(glGetUniformLocation(glowPrg,"u_color"),c.r,c.g,c.b);
+
+	renderbuffer_t ib;
+	create_renderbuffer(rwidth/2,rheight/2,&ib);
+	GLuint tid = Long_val(textureID);
+	clipping clp;
+	if (clip != 1) {
+		value c = Field(clip,0);
+		clp.x = Double_field(c,0);
+		clp.y = Double_field(c,1);
+		clp.width = Double_field(c,2);
+		clp.height = Double_field(c,3);
+	} else { 
+		clp.x = 0;
+		clp.y = 0;
+		clp.width = 1.;
+		clp.height = 1.;
+	};
+	drawTexture(&ib,tid,iwidth/2,iheight/2,&clp,1);
+	if (gsize > 1) {
+		renderbuffer_t *crb = &ib;
+		renderbuffer_t *rbfs;
+		rbfs = caml_stat_alloc(gsize*sizeof(renderbuffer_t));
+		int i;
+		double w = ib.width, h = ib.height;
+		renderbuffer_t *prb;
+		for (i = 0; i < gsize - 1; i++) {
+			w /= 2;
+			h /= 2;
+			prb = rbfs + i;
+			create_renderbuffer(w,h,prb);
+			checkGLErrors("create renderbuffer");
+			PRINT_DEBUG("draw forward %i",i);
+			drawTexture(prb, crb->tid, crb->width / 2, crb->height / 2, &crb->clp,1);
+			crb = prb;
+			checkGLErrors("draw forward");
+		};
+		for (i = gsize - 1; i > 1 ; i--) {
+			prb = rbfs + i;
+			crb = prb - 1;
+			PRINT_DEBUG("draw back %i",i);
+			drawTexture(crb,prb->tid,prb->width,prb->height,&prb->clp,1);
+			checkGLErrors("draw back");
+			delete_renderbuffer(prb);
+		};
+		drawTexture(&ib,crb->tid,ib.width,ib.height,&crb->clp,1);
+		delete_renderbuffer(crb);
+		caml_stat_free(rbfs);
+	};
+	// теперь новое... нужно создать новый буфер и туда насрать ib и поверх оригирал с блендингом 
+	renderbuffer_t rb;
+	create_renderbuffer(rwidth,rheight,&rb);
+	glEnable(GL_BLEND);
+	glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+	GLuint fglowPrg = final_glow_program();
+	glUseProgram(fglowPrg);
+	glUniform1f(glGetUniformLocation(fglowPrg,"u_strength"),(double)Long_val(Field(glow,2)));
+
+	drawTexture(&rb,ib.tid,rwidth,rheight,&ib.clp,1);
+	delete_renderbuffer(&ib);
+	checkGLErrors("draw blurred");
+
+	if (Bool_val(pma)) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); 
+	else glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+
 	GLuint simplePrg = simple_program();
 	glUseProgram(simplePrg);
-	renderbuffer_t *crb = &rb;
-	renderbuffer_t *rbfs = caml_stat_alloc((gsize-1)*sizeof(renderbuffer_t));
-	int i;
-	double w = rb.width, h = rb.height;
-	renderbuffer_t *rbfp = rbfs;
-	for (i = 1; i < gsize; i++) {
-		w /= 2;
-		h /= 2;
-		create_renderbuffer(w,h,rbfp);
-		checkGLErrors("create renderbuffer");
-		drawTexture(rbfp,crb->tid,w,h,&crb->clp);
-		checkGLErrors("draw forward");
-		crb = rbfp;
-		rbfp += 1;
+	drawTexture(&rb,tid,iwidth,iheight,&clp,0);
+
+	/// здесь оригинал с блэндингом 
+	value res = create_ml_texture(&rb);
+	glDeleteFramebuffers(1,&rb.fbid);
+
+	glBindTexture(GL_TEXTURE_2D,0);
+	glBindFramebuffer(GL_FRAMEBUFFER,0); 
+	glUseProgram(0);
+	boundTextureID = 0;
+	currentShaderProgram = 0;
+	set_framebuffer_state(&fstate);
+	return res;
+}
+
+void ml_glow_make2_byte(value * argv, int n) {
+	ml_glow_make2(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
+}
+
+void ml_glow_make(value framebufferID, value textureID, value twidth, value theight, value clip, value sourceTexture, value count) {
+	renderbuffer_t tb;
+	// здесь хитрый изъеб - но так быстрее нах.  
+	tb.fbid = Long_val(framebufferID);
+	tb.tid = Long_val(textureID);
+	tb.width = Double_val(twidth);
+	tb.height = Double_val(theight);
+	if (clip != 1) {
+		value c = Field(clip,0);
+		tb.clp.x = Double_field(c,0);
+		tb.clp.y = Double_field(c,1);
+		tb.clp.width = Double_field(c,2);
+		tb.clp.height = Double_field(c,3);
+	} else { 
+		tb.clp.x = 0;
+		tb.clp.y = 0;
+		tb.clp.width = 1.;
+		tb.clp.height = 1.;
 	};
-	rbfp = rbfs + (gsize - 2);
-	renderbuffer_t *prbfp;
-	for (i = 2; i < gsize ; i++) {
-		prbfp = rbfp - 1;
-		drawTexture(prbfp,rbfp->tid,prbfp->width,prbfp->height,&rbfp->clp);
-		checkGLErrors("draw back");
-		delete_renderbuffer(rbfp);
-		rbfp = prbfp;
+
+	framebuffer_state fstate;
+	get_framebuffer_state(&fstate);
+	glDisable(GL_BLEND);
+	glClearColor(0.,0.,0.,0.);
+	GLuint glowPrg = glow_program();
+	glUseProgram(glowPrg);
+
+	if (sourceTexture != 1) {
+		value st = Field(sourceTexture,0);
+		GLuint tid = Long_val(Field(st,0));
+		double w = Double_val(Field(st,1));
+		double h = Double_val(Field(st,2));
+		value clip = Field(st,3);
+		clipping clp;
+		if (clip != 1) {
+			value c = Field(clip,0);
+			clp.x = Double_field(c,0);
+			clp.y = Double_field(c,1);
+			clp.width = Double_field(c,2);
+			clp.height = Double_field(c,3);
+		} else { 
+			clp.x = 0;
+			clp.y = 0;
+			clp.width = 1.;
+			clp.height = 1.;
+		};
+		drawTexture(&tb,tid,w/2,h/2,&clp,1);
 	};
-	checkGLErrors("before last draw");
-	drawTexture(&rb,rbfs->tid,rb.width,rb.height,&rbfs->clp);
-	delete_renderbuffer(rbfs);
-	caml_stat_free(rbfs);
+
+	int gsize = Int_val(count);
+
+	PRINT_DEBUG("make glow of size %d",gsize);
+	if (gsize > 1) {
+		renderbuffer_t *crb = &tb;
+		renderbuffer_t *rbfs;
+		rbfs = caml_stat_alloc((gsize - 1)*sizeof(renderbuffer_t));
+		int i;
+		double w = tb.width, h = tb.height;
+		renderbuffer_t *prb;
+		for (i = 0; i < gsize - 1; i++) {
+			w /= 2;
+			h /= 2;
+			prb = rbfs + i;
+			create_renderbuffer(w,h,prb);
+			checkGLErrors("create renderbuffer");
+			PRINT_DEBUG("draw forward %i",i);
+			drawTexture(prb, crb->tid, crb->width / 2, crb->height / 2, &crb->clp,1);
+			crb = prb;
+			checkGLErrors("draw forward");
+		};
+		for (i = gsize - 1; i > 1 ; i--) {
+			prb = rbfs + i;
+			crb = rbfs - 1;
+			PRINT_DEBUG("draw back %i",i);
+			drawTexture(crb,prb->tid,prb->width,prb->height,&prb->clp,1);
+			checkGLErrors("draw back");
+			delete_renderbuffer(prb);
+		};
+		drawTexture(&tb,crb->tid,tb.width,tb.height,&crb->clp,1);
+		delete_renderbuffer(crb);
+		caml_stat_free(rbfs);
+	};
+	glBindTexture(GL_TEXTURE_2D,0);
+	glBindFramebuffer(GL_FRAMEBUFFER,0); 
 	glUseProgram(0);
 	boundTextureID = 0;
 	currentShaderProgram = 0;
@@ -371,8 +598,8 @@ void ml_glow_resize(value framebufferID,value textureID, value width, value heig
 }
 
 
-void ml_glow_resize_byte(value * argv, int n) {
-	ml_glow_resize(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
+void ml_glow_make_byte(value * argv, int n) {
+	ml_glow_make(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6]);
 }
 
 

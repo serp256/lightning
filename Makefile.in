@@ -10,8 +10,8 @@ debug:
 
 INSTALL_OPTS = 
 
-BYTE_FILES = src/lightning.cma src/dlllightning.so 
-NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a 
+BYTE_FILES = src/lightning.cma src/dlllightning.so src/liblightning.a
+NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a
 SYNTAX_FILES = src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo
 INSTALL_FILES = 
 
