@@ -133,17 +133,18 @@ value onClick obj handler  =
 value tlf (stage:Stage.c) = 
 (
   BitmapFont.register "Arial.fnt";
-  let text1 = TLF.create (TLF.p ~fontSize:20 ~halign:`center ~fontFamily:"Arial" [`text "This is first line\nThis is "; TLF.img ~width:50. ~height:40. (Image.load "e_cactus.png"); `text " second line"]) in
+  let text = TLF.create (TLF.p ~fontSize:20 ~halign:`center ~fontFamily:"Arial" [`text "This is first line\nThis is "; TLF.img ~width:50. ~height:40. (Image.load "e_cactus.png"); `text " second line"]) in
   (
-    text1#
+    text#setPos 100. 100.;
 (*     text#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
 (*     text#setAlpha 0.3; *)
-    stage#addChild text1;
+    stage#addChild text;
   );
-  let text1 = TLF.create (TLF.p ~fontSize:20 ~halign:`center ~fontFamily:"Arial" [`text "Tgis is qirst line\nThis is "; TLF.img ~width:50. ~height:40. (Image.load "e_cactus.png"); `text " second lije"]) in
+  let text = TLF.create (TLF.p ~fontSize:20 ~halign:`center ~fontFamily:"Arial" [`text "Tgis is qirst line\nThis is "; TLF.img ~width:50. ~height:40. (Image.load "e_cactus.png"); `text " second lije"]) in
   (
+    text#setPos 300. 100.;
+    stage#addChild text;
   )
-
 );
 
 

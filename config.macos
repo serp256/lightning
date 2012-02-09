@@ -1,4 +1,4 @@
-include myconfig.macos
+-include myconfig.macos
 export PLATFORM = SDL
 export OS = macos
 SDK = /Developer/SDKs/MacOSX10.6.sdk
