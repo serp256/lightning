@@ -1,3 +1,4 @@
+include myconfig.macos
 export PLATFORM = SDL
 export OS = macos
 SDK = /Developer/SDKs/MacOSX10.6.sdk
@@ -10,5 +11,5 @@ export CFLAGS = -std=c99 -Wno-trigraphs -fpascal-strings -O0 -DDEBUG -Wreturn-ty
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB = ocamlmklib
-export SDLCONFIG = sdl-config
+export SDLCONFIG ?= sdl-config
 LIB = byte syntax

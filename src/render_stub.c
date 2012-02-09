@@ -859,7 +859,7 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	int w = Long_val(width),h = Long_val(height);
 	PRINT_DEBUG("create rtexture: [%d:%d]\n",w,h);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	checkGLErrors("tex image 2d from framebuffer");
+	checkGLErrors("tex image 2d for framebuffer %d:%d",w,h);
 	glBindTexture(GL_TEXTURE_2D,0);
 	boundTextureID = 0;
 	GLuint mFramebuffer;

@@ -14,13 +14,6 @@
 #endif
 #endif
 
-#define ERROR(fmt,args...) fprintf(stderr,fmt, ## args)
-
-#ifdef LDEBUG
-    #define PRINT_DEBUG(fmt,args...)  (fprintf(stderr,"[DEBUG(%s:%d)] ",__FILE__,__LINE__),fprintf(stderr,fmt, ## args),putc('\n',stderr))
-#else
-    #define PRINT_DEBUG(fmt,args...)
-#endif
 
 #include <stdio.h>
 #include <caml/mlvalues.h>
