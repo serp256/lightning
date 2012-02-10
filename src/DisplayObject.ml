@@ -70,12 +70,13 @@ class type prerenderObj =
   object
     method prerender: bool -> unit;
     method z: option int;
+    method name: string;
   end;
 
 value prerender_locked = ref False;
 value prerender_objects = RefList.empty ();
 value add_prerender o = 
-  let () = debug:render "add_prerender" in
+  let () = debug:prerender "add_prerender: %s" o#name in
   match !prerender_locked with
   [ True -> failwith "Prerender locked"
   | False -> RefList.push prerender_objects o
@@ -86,14 +87,16 @@ value prerender () =
   [ True -> ()
   | False ->
     (
-      debug:render "start prerender";
+      debug:prerender "start prerender";
       prerender_locked.val := True;
-      let cmp ((z1:int),_) (z2,_) = ~-(compare z1 z2) in
+      let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
       let sorted_objects = RefList.empty () in
       (
         RefList.iter (fun o -> 
           match o#z with
-          [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
+          [ Some z -> 
+            let () = debug:prerender "object [%s] with z %d added to prerender" o#name z in
+            RefList.add_sort ~cmp sorted_objects (z,o)
           | None -> o#prerender False
           ]
         ) prerender_objects;
@@ -207,7 +210,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     );
 
     method prerender exe = 
-      let () = debug:render "prerender %s - %b" self#name exe in
+      let () = debug:prerender "prerender %s - %b" self#name exe in
       match exe with
       [ True -> 
         (
@@ -239,7 +242,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       [ Some parent -> 
         let () = debug "i have parent" in
         match parent#z with
-        [ Some z -> Some (z + (parent#getChildIndex' (self :> _c 'parent)))
+        [ Some z -> Some (z + (parent#getChildIndex' (self :> _c 'parent)) + 1)
         | None -> None
         ]
       | None -> None

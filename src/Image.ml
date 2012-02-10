@@ -397,7 +397,7 @@ module Make(D:DisplayObjectT.M) = struct
       method private updateGlowFilter () = 
         match glowFilter with
         [ Some ({g_texture = None; g_image; g_params = glow; _ } as gf) ->
-          let () = debug:glow "update glow %d" glow.Filters.glowSize in
+          let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
           let w = texture#width
           and h = texture#height in
           let g_texture = RenderFilters.glow_make texture#textureID w h texture#hasPremultipliedAlpha texture#rootClipping glow in 
@@ -531,7 +531,7 @@ module Make(D:DisplayObjectT.M) = struct
           Render.Image.render 
             (if transform then self#transformationMatrix else Matrix.identity) 
             shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image
-        | _ -> assert False
+        | _ -> failwith (Printf.sprintf "glow not rendered %s" self#name)
         ]
       ); 
   end;

@@ -75,7 +75,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
       method private updateImageCache () = 
         match imageCache with
         [ Some ({ic; tex; valid=False;_} as c) -> 
-          let () = debug "cacheImage not valid" in
+          let () = debug "cacheImage %s not valid" ic#name in
           (
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
@@ -108,7 +108,9 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
         | _ -> ()
         ];
 
-      method setFilters = fun
+      method setFilters filters = 
+        let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t filters)) self#name in
+        match filters with
         [ [] ->
           match imageCache with
           [ None -> ()
