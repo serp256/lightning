@@ -96,10 +96,16 @@ value teximg ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?paddingLeft 
   `teximg (attrs,tex);
 *)
 
+DEFINE FONT_WEIGHT =
+  match fontWeight with
+  [ Some "normal" -> [ `fontWeight "regular" :: attrs ]
+  | Some w -> [ `fontWeight w :: attrs ]
+  | None -> attrs
+  ];
 
 value span ?fontWeight ?fontFamily ?fontSize ?color ?alpha elements : simple_element = 
   let attrs = [] in
-  let attrs = AEXPAND(fontWeight,`fontWeight) in
+  let attrs = FONT_WEIGHT in
   let attrs = AEXPAND(fontFamily,`fontFamily) in
   let attrs = AEXPAND(fontSize,`fontSize) in
   let attrs = AEXPAND(color,`color) in
@@ -109,7 +115,7 @@ value span ?fontWeight ?fontFamily ?fontSize ?color ?alpha elements : simple_ele
 
 value p ?fontWeight ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceAfter elements : main = 
   let attrs = [] in
-  let attrs = AEXPAND(fontWeight,`fontWeight) in
+  let attrs = FONT_WEIGHT in
   let attrs = AEXPAND(fontFamily,`fontFamily) in
   let attrs = AEXPAND(fontSize,`fontSize) in
   let attrs = AEXPAND(color,`color) in
@@ -134,6 +140,7 @@ value subtractSize (sx,sy) (sx',sy') =
 value getFontFamily =
   let f: !'p. ([> `fontFamily of string] as 'p) -> option string = fun [ `fontFamily fn -> Some fn | _ -> None ] in
   getAttrOpt f;
+value getFontStyle = getAttrOpt (fun [ `fontWeight fw -> Some fw | _ -> None ]);
 value getFontSize = getAttrOpt (fun [ `fontSize fn -> Some fn | _ -> None ]);
 
 (*
@@ -270,7 +277,7 @@ value parse_span_attribute inp:  Xmlm.attribute -> span_attribute =
   fun
     [ ((_,"font-family"),ff) -> `fontFamily ff
     | ((_,"font-size"),sz) -> `fontSize (parse_int inp sz)
-    | ((_,"fontWeight"),sz) -> `fontWeight sz
+    | ((_,"fontWeight"),sz) -> `fontWeight (match sz with [ "normal" -> "regular" | x -> x ])
     | ((_,"color"),c) -> `color (parse_int inp c)
     | ((_,"alpha"),alpha) -> `alpha (parse_float inp alpha)
     | ((_,an),_) -> parse_error inp "unknown attribute %s" an

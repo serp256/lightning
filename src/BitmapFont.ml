@@ -23,39 +23,37 @@ type t =
 
 module MapInt = Map.Make (struct type t = int; value compare (k1:int) k2 = compare k1 k2; end);
 value fonts = Hashtbl.create 0;
-value exists name = Hashtbl.mem fonts name;
-exception Font_not_found of string;
+value exists ?(style="regular") name = Hashtbl.mem fonts (name,style);
+exception Font_not_found of (string*string);
 
 value default_size = 24;
 
 
-value get ?(applyScale=False) ?size name =
-  try
-    let sizes = Hashtbl.find fonts name in
-    match size with
-    [ None -> 
-      let (fsize,font) = MapInt.choose sizes in
-      font
-    | Some size ->
-      let (l,f,r) = MapInt.split size sizes in
-      match f with
-      [ Some f -> f
-      | None -> 
-          let (fsize,font) = 
-            match MapInt.is_empty r with
-            [ False -> MapInt.min_binding r
-            | True -> MapInt.max_binding l
-            ]
-          in
-          match applyScale with
-          [ True -> 
-            let scale = (float size) /. (float fsize) in
-            {(font) with scale = scale; space = font.space *. scale; baseLine = font.baseLine *. scale; lineHeight = font.lineHeight *. scale }
-          | False -> {(font) with scale = (float size) /. (float fsize) }
+value get ?(applyScale=False) ?(style="regular") ?size name =
+  let sizes = try Hashtbl.find fonts (name,style) with [ Not_found -> raise (Font_not_found (name,style)) ] in
+  match size with
+  [ None -> 
+    let (fsize,font) = MapInt.choose sizes in
+    font
+  | Some size ->
+    let (l,f,r) = MapInt.split size sizes in
+    match f with
+    [ Some f -> f
+    | None -> 
+        let (fsize,font) = 
+          match MapInt.is_empty r with
+          [ False -> MapInt.min_binding r
+          | True -> MapInt.max_binding l
           ]
-      ]
+        in
+        match applyScale with
+        [ True -> 
+          let scale = (float size) /. (float fsize) in
+          {(font) with scale = scale; space = font.space *. scale; baseLine = font.baseLine *. scale; lineHeight = font.lineHeight *. scale }
+        | False -> {(font) with scale = (float size) /. (float fsize) }
+        ]
     ]
-  with [ Not_found -> raise (Font_not_found name) ];
+  ];
 
 DEFINE CHAR_NEWLINE = 10;
 DEFINE CHAR_SPACE = 32;
@@ -159,6 +157,7 @@ value register xmlpath =
     match XmlParser.get_attributes "Font" ["face"; "style"; "kerning"] attributes with
     [ [ face;style;kernign] ->
       let pages = parse_pages () in
+      let style = String.uncapitalize style in
       let rec parse_chars res = 
         match XmlParser.next () with
         [ `El_start ((_,"Chars"),attributes) ->
@@ -194,8 +193,8 @@ value register xmlpath =
         | _ -> XmlParser.error "unknown signal"
         ]
       in
-      let sizes = parse_chars (try Hashtbl.find fonts face with [ Not_found -> MapInt.empty ]) in
-      Hashtbl.replace fonts face sizes
+      let sizes = parse_chars (try Hashtbl.find fonts (face,style) with [ Not_found -> MapInt.empty ]) in
+      Hashtbl.replace fonts (face,style) sizes
     | _ -> assert False
     ]
   | _ -> XmlParser.error "Font not found"

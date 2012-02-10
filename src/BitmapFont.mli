@@ -20,8 +20,8 @@ type t =
 
 (* value register: string -> unit; *)
 value register: string -> unit;
-value exists: string -> bool;
-value get: ?applyScale:bool -> ?size:int -> string -> t;
+value exists: ?style:string -> string -> bool;
+value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
 (*
 module type Creator = sig
