@@ -969,8 +969,8 @@ void ml_deactivate_framebuffer(value ostate) {
 
 void ml_delete_framebuffer(value framebuffer) {
 	GLuint fbID = Long_val(framebuffer);
-	//printf("delete framebuffer: %d\n",fbID);
 	glDeleteFramebuffers(1,&fbID);
+	checkGLErrors("ml delete framebuffer: %d",fbID);
 }
 
 

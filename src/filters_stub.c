@@ -404,6 +404,7 @@ value ml_filter_glow(value color, value strength) {
 }
 
 value ml_glow_make2(value textureID, value width, value height, value pma, value clip, value glow) {
+	checkGLErrors("start make glow");
 	/// вернуть бы текстуру было бы заебись - сделать функцию в ml create_ml_texture
 	int gsize = Int_val(Field(glow,0));
 	double iwidth = Double_val(width);

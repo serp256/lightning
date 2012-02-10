@@ -198,6 +198,25 @@ value lineWidth line =
     in
     lx +. lw -. fx;
 
+value lineMinY line = 
+  if DynArray.empty line.lchars
+  then 0.
+  else
+    let minY = ref line.lineHeight in
+    (
+      for i = 0 to DynArray.length line.lchars - 1 do
+        let y = 
+          match DynArray.get line.lchars i with
+          [ Img i -> i#y
+          | Char c -> AtlasNode.y c
+          ]
+        in
+        if !minY > y then minY.val := y else ()
+      done;
+      !minY;
+    );
+
+
 value addToLine width baseLine element line = 
   (
     match compare line.baseLine baseLine with
@@ -658,26 +677,35 @@ value create ?width ?height ?border ?dest (html:main) =
           in
           let halign = match getAttrOpt (fun [ `halign p -> Some p | _ -> None ]) attribs with [ None -> `left | Some align -> align ] in
           let lines = 
-            List.fold_left begin fun res (line,width) ->
-              (
-                match halign with
-                [ `center | `right as ha ->
-                  let widthDiff = max_width -. width in
-                  line.lx :=
-                    (match ha with
-                    [ `center -> widthDiff /. 2.
-                    | `right -> widthDiff
-                    ])
-                | _ -> ()
-                ];
-                debug "set line y to %f" !yOffset;
-                line.ly := !yOffset;
-  (*                   container#addChild line.container; *)
-                yOffset.val := !yOffset +. line.lineHeight;
-                [ line :: res ]
-              )
-            end [] (RefList.to_list qlines)
+            if RefList.is_empty qlines
+            then []
+            else 
+            (
+              let (fline,_) = RefList.first qlines in
+              let y = lineMinY fline in
+              yOffset.val := !yOffset -. y;
+              List.fold_left begin fun res (line,width) ->
+                (
+                  match halign with
+                  [ `center | `right as ha ->
+                    let widthDiff = max_width -. width in
+                    line.lx :=
+                      (match ha with
+                      [ `center -> widthDiff /. 2.
+                      | `right -> widthDiff
+                      ])
+                  | _ -> ()
+                  ];
+                  debug "set line y to %f" !yOffset;
+                  line.ly := line.ly +. !yOffset;
+    (*                   container#addChild line.container; *)
+                  yOffset.val := !yOffset +. line.lineHeight;
+                  [ line :: res ]
+                )
+              end [] (RefList.to_list qlines)
+            )
           in
+          (* fix first line *)
             (*{{{
             let atlas : ref (option Atlas.c) = ref None in
             let atlasOnCurrentLine = ref False in
@@ -729,7 +757,7 @@ value create ?width ?height ?border ?dest (html:main) =
     ]
   in
   let no_zero = fun [ Some x when  x <= 0. -> (Debug.w "w or h not correct"; None) | x ->  x ] in
-  let (_yOffset,lines) = process (no_zero width,no_zero height) [] html in
+  let (height,lines) = process (no_zero width,no_zero height) [] html in
   let _container = ref (match dest with [ Some s -> Some (s :> Sprite.c) | None -> None  ]) in
   let container () = match !_container with [ Some c -> c | None -> let c = Sprite.create () in (_container.val := Some c; c) ] in
   let atlases : Hashtbl.t Texture.c (Atlas.c * int) = Hashtbl.create 1 in
@@ -783,7 +811,7 @@ value create ?width ?height ?border ?dest (html:main) =
           )
       ]
     in
-    res
+    (height,res)
   );
     (*
     match border with
