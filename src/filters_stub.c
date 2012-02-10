@@ -172,7 +172,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	checkGLErrors("create renderbuffer texture");
+	checkGLErrors("create renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
   glBindTexture(GL_TEXTURE_2D,0);
   GLuint fbid;
   glGenFramebuffers(1, &fbid);
