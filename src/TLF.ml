@@ -681,9 +681,9 @@ value create ?width ?height ?border ?dest (html:main) =
             then []
             else 
             (
-              let (fline,_) = RefList.first qlines in
+              (* let (fline,_) = RefList.first qlines in
               let y = lineMinY fline in
-              yOffset.val := !yOffset -. y;
+              yOffset.val := !yOffset -. y; *)
               List.fold_left begin fun res (line,width) ->
                 (
                   match halign with
