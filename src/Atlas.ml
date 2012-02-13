@@ -94,6 +94,7 @@ module Make(D:DisplayObjectT.M) = struct
         try
           DynArray.set children idx child;
         with [ DynArray.Invalid_arg _ -> raise D.Invalid_index ];
+        Node.bounds child |> ignore; (* force calc bounds *)
         self#boundsChanged();
       );
 
