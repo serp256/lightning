@@ -1189,7 +1189,7 @@ void ml_atlas_render_byte(value * argv, int n) {
 void ml_atlas_clear(value atlas) {
 	atlas_t *atl = ATLAS(atlas);
 	glBindBuffer(GL_ARRAY_BUFFER,atl->buffersVBO[0]);
-	glBufferSubData(GL_ARRAY_BUFFER,0,sizeof(lgTexQuad) * atl->n_of_quads,NULL);
+	glBufferData(GL_ARRAY_BUFFER,0,NULL,GL_DYNAMIC_DRAW);
 	atl->n_of_quads = 0;
 }
 
