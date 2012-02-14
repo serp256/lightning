@@ -15,7 +15,8 @@ type t =
   {
     chars: Hashtbl.t int bc;
     scale: float;
-    baseLine: float;
+    ascender: float;
+    descender: float;
     lineHeight: float;
     space:float;
     texture: Texture.c;
@@ -49,7 +50,7 @@ value get ?(applyScale=False) ?(style="regular") ?size name =
         match applyScale with
         [ True -> 
           let scale = (float size) /. (float fsize) in
-          {(font) with scale = scale; space = font.space *. scale; baseLine = font.baseLine *. scale; lineHeight = font.lineHeight *. scale }
+          {(font) with scale = scale; space = font.space *. scale; ascender = font.ascender *. scale; descender = font.descender *. scale; lineHeight = font.lineHeight *. scale }
         | False -> {(font) with scale = (float size) /. (float fsize) }
         ]
     ]
@@ -161,8 +162,8 @@ value register xmlpath =
       let rec parse_chars res = 
         match XmlParser.next () with
         [ `El_start ((_,"Chars"),attributes) ->
-          match XmlParser.get_attributes "Chars" [ "space"; "size"; "lineHeight"; "baseLine" ] attributes with
-          [ [ space; size; lineHeight; baseLine ] ->
+          match XmlParser.get_attributes "Chars" [ "space"; "size"; "lineHeight"; "ascender" ; "descender" ] attributes with
+          [ [ space; size; lineHeight; ascender; descender ] ->
             let chars = Hashtbl.create 9 in
             let rec loop () = 
               match XmlParser.parse_element "char" [ "id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance";"page" ] with
@@ -183,7 +184,7 @@ value register xmlpath =
             in
             (
               loop ();
-              let bf = { chars; texture = pages.(0); scale=1.; baseLine =  floats baseLine; space = floats space; lineHeight = floats lineHeight; } in
+              let bf = { chars; texture = pages.(0); scale=1.; ascender =  floats ascender; descender = floats descender; space = floats space; lineHeight = floats lineHeight; } in
               let res = MapInt.add (XmlParser.ints size) bf res in
               parse_chars res
             )

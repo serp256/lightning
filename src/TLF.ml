@@ -8,8 +8,9 @@ open ExtList;
 open ExtHashtbl;
 
 value default_font_family = ref "Arial";
+value (|>) a f = f a;
 
-type img_valign = [= `baseLine | `center | `lineCenter ];
+type img_valign = [= `aboveBaseLine | `underBaseLine | `centerBaseLine ];
 type img_attribute = 
   [= `width of float
   | `height of float
@@ -174,7 +175,8 @@ type line =
     lx: mutable float; 
     ly: mutable float;
     lineHeight: mutable float;
-    baseLine: mutable float;
+    ascender: mutable float;
+    descender: mutable float;
     currentX: mutable float;
     closed: mutable bool;
   };
@@ -182,7 +184,7 @@ type line =
 value createLine font lines =  
   let () = debug "create new line" in
 (*   let line = {container = Sprite.create (); lineHeight = match font with [ Some fnt -> fnt.BitmapFont.lineHeight | None -> 0. ]; baseLine = 0.; currentX = 0.; closed = False} in *)
-  let line = {lchars = DynArray.create (); lineHeight = font.BitmapFont.lineHeight; baseLine = font.BitmapFont.baseLine; currentX = 0.; lx = 0.; ly = 0.; closed = False} in
+  let line = {lchars = DynArray.create (); lineHeight = font.BitmapFont.lineHeight; ascender = font.BitmapFont.ascender; descender = font.BitmapFont.descender; currentX = 0.; lx = 0.; ly = 0.; closed = False} in
   (
     Stack.push line lines;
     line;
@@ -223,9 +225,56 @@ value lineMinY line =
       !minY;
     );
 
-
-value addToLine width baseLine element line = 
+value adjustToLine ?ascender ?descender ?height line = 
+(
+  let res = 
+    match ascender with
+    [ Some asc ->
+      match compare line.ascender asc with
+      [ 0 -> 0.
+      | -1 -> (* надо увеличить отступ сверху *)
+        (
+          let diff = asc -. line.ascender in
+          (
+            DynArray.iteri begin fun i -> fun
+              [ Img img -> img#setY (img#y +. diff)
+              | Char c -> DynArray.set line.lchars i (Char (AtlasNode.setY ((AtlasNode.y c) +. diff) c))
+              ]
+            end line.lchars;
+          );
+          line.ascender := asc;
+          0.
+        )
+      | _ -> 
+          let diff = line.ascender -. asc in
+          diff
+      ]
+    | None -> line.ascender
+    ]
+  in
   (
+    match descender with
+    [ Some desc when line.descender < desc -> line.descender := desc
+    | _ -> ()
+    ];
+    match height with
+    [ Some h when h > line.lineHeight -> line.lineHeight := h
+    | None ->
+      let nheight = line.ascender +. line.descender in
+      if nheight > line.lineHeight 
+      then line.lineHeight := nheight
+      else ()
+    | _ -> ()
+    ];
+    res;
+  );
+);
+
+value addToLine width element line = 
+(
+    DynArray.add line.lchars element;
+    line.currentX := width +. line.currentX;
+    (*
     match compare line.baseLine baseLine with
     [ 0 -> DynArray.add line.lchars element
     | -1 (* был меньше *) ->
@@ -250,7 +299,8 @@ value addToLine width baseLine element line =
         ]
     ];
     line.currentX := width +. line.currentX;
-  ); (* здесь же надо позырить что предыдущий базелайн такой-же и перехуячить там все нахуй *)
+    *)
+); (* здесь же надо позырить что предыдущий базелайн такой-же и перехуячить там все нахуй *)
 
 DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_NEWLINE = 10;
@@ -314,9 +364,9 @@ value parse_simple_elements inp imgLoader =
               | "valign" -> 
                   let v = 
                     match vlue with
-                    [ "baseline" -> `baseLine
-                    | "center" -> `center
-                    | "line-center" -> `lineCenter
+                    [ "above-baseline" -> `aboveBaseLine
+                    | "under-baseline" -> `underBaseLine
+                    | "center-baseline" -> `centerBaseLine
                     | _ -> parse_error inp "incorrect img halign value %s" vlue
                     ]
                   in
@@ -440,17 +490,26 @@ value create ?width ?height ?border ?dest (html:main) =
         let paddingRight = match getAttrOpt (fun [ `paddingRight pl -> Some pl | _ -> None]) attrs with [ Some pl -> pl | None -> 0. ] in
         let eWidth = paddingLeft +. iwidth +. paddingRight in
         let paddingTop = getAttr (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. attrs in
-        match getAttr (fun [ `valign v -> Some v | _ -> None]) `center attrs with
-        [ `baseLine -> 
+        match getAttr (fun [ `valign v -> Some v | _ -> None]) `aboveBaseLine attrs with
+        [ `aboveBaseLine -> 
           (
+            let y = adjustToLine ~ascender:iheight line in
+            (*
             let newLineHeight = iheight +. (line.lineHeight -. line.baseLine) in 
             if newLineHeight > line.lineHeight
             then line.lineHeight := newLineHeight
             else ();
-            image#setY paddingTop;
-            addToLine eWidth iheight (Img image) line;
+            *)
+            image#setY (y +. paddingTop);
+            addToLine eWidth (Img image) line;
           )
-        | `lineCenter -> 
+        | `underBaseLine -> 
+            (
+              let y = adjustToLine ~descender:iheight line in
+              image#setY (y +. paddingTop);
+              addToLine eWidth (Img image) line
+            )
+          (*
             let () = debug "place image by lineCenter: %f,%f" iheight line.lineHeight in
             let baseLine = 
               if line.lineHeight < iheight
@@ -469,9 +528,17 @@ value create ?width ?height ?border ?dest (html:main) =
               image#setY (paddingTop +. yOffset);
               addToLine eWidth baseLine (Img image) line;
             )
-        | `center -> (* центер by text *)
+          *)
+        | `centerBaseLine -> 
             let () = debug "place image by text center" in
-            (* хуево сцука двигаем *)
+            let h2 = iheight /. 2. in
+            let y = adjustToLine ~ascender:h2 ~descender:h2 line in
+            (
+              image#setY (y +. paddingTop);
+              addToLine eWidth (Img image) line
+            )
+
+            (*
             let baseLine = 
               if line.lineHeight < iheight
               then 
@@ -495,6 +562,7 @@ value create ?width ?height ?border ?dest (html:main) =
               let () = debug "y: %f, baseLine: %f, line.baseLine: %f" image#y baseLine line.baseLine in
               addToLine eWidth baseLine (Img image) line;
             )
+          *)
         ]
       )(*}}}*)
     | `span attribs elements ->
@@ -512,11 +580,13 @@ value create ?width ?height ?border ?dest (html:main) =
           let font = getFont attributes in
           let () = debug "font scale: %f" font.BitmapFont.scale in
           let lastWhiteSpace = ref None in
+          let yoffset = ref 0. in
           let rec add_line currentLine index = 
             let () = debug "add line" in
             let () = currentLine.closed := True in
             let nextLine = createLine font lines in
             (
+              yoffset.val := 0.;
               lastWhiteSpace.val := None;
               add_char nextLine index
             )
@@ -556,8 +626,8 @@ value create ?width ?height ?border ?dest (html:main) =
                      add_line line idx
                    | _ ->
                      (
-                       let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x=(line.currentX +. bchar.xOffset);y=bchar.yOffset} ~color:color ~alpha:alpha bchar.atlasNode in
-                       addToLine bchar.xAdvance font.baseLine (Char b) line;
+                       let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:color ~alpha:alpha bchar.atlasNode in
+                       addToLine bchar.xAdvance (Char b) line;
                        add_char line (UTF8.next text index)
                      )
                    ]
@@ -577,9 +647,7 @@ value create ?width ?height ?border ?dest (html:main) =
             else 
               let line = Stack.top lines in
               (
-                if line.lineHeight < font.BitmapFont.lineHeight
-                then line.lineHeight := font.BitmapFont.lineHeight
-                else ();
+                yoffset.val := adjustToLine ~ascender:font.BitmapFont.ascender ~descender:font.BitmapFont.descender ~height:font.BitmapFont.lineHeight line;
                 line
               )
           in
@@ -687,30 +755,36 @@ value create ?width ?height ?border ?dest (html:main) =
             if RefList.is_empty qlines
             then []
             else 
-            (
-              (* let (fline,_) = RefList.first qlines in
-              let y = lineMinY fline in
-              yOffset.val := !yOffset -. y; *)
-              List.fold_left begin fun res (line,width) ->
-                (
-                  match halign with
-                  [ `center | `right as ha ->
-                    let widthDiff = max_width -. width in
-                    line.lx :=
-                      (match ha with
-                      [ `center -> widthDiff /. 2.
-                      | `right -> widthDiff
-                      ])
-                  | _ -> ()
-                  ];
-                  debug "set line y to %f" !yOffset;
-                  line.ly := line.ly +. !yOffset;
-    (*                   container#addChild line.container; *)
-                  yOffset.val := !yOffset +. line.lineHeight;
-                  [ line :: res ]
-                )
-              end [] (RefList.to_list qlines)
-            )
+              let lines = 
+                List.fold_left begin fun res (line,width) ->
+                  (
+                    match halign with
+                    [ `center | `right as ha ->
+                      let widthDiff = max_width -. width in
+                      line.lx :=
+                        (match ha with
+                        [ `center -> widthDiff /. 2.
+                        | `right -> widthDiff
+                        ])
+                    | _ -> ()
+                    ];
+                    debug "set line y to %f" !yOffset;
+                    match res with
+                    [ [ pline :: _ ] -> yOffset.val := !yOffset +. pline.lineHeight
+                    | _ -> ()
+                    ];
+                    line.ly := line.ly +. !yOffset;
+      (*                   container#addChild line.container; *)
+  (*                   yOffset.val := !yOffset +. line.lineHeight; *)
+                    [ line :: res ]
+                  )
+                end [] (RefList.to_list qlines)
+              in
+              (
+                let lline = List.hd lines in
+                yOffset.val := !yOffset +. lline.ascender +. lline.descender;
+                lines
+              )
           in
           (* fix first line *)
             (*{{{
@@ -759,7 +833,7 @@ value create ?width ?height ?border ?dest (html:main) =
               )
             done;
             }}}*)
-        ((!yOffset +. spaceAfter),lines)
+          ((!yOffset +. spaceAfter),lines)
       )
     ]
   in

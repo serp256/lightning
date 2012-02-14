@@ -12,7 +12,8 @@ type t =
   {
     chars: Hashtbl.t int bc;
     scale: float;
-    baseLine: float;
+    ascender: float;
+    descender: float;
     lineHeight: float;
     space:float;
     texture: Texture.c;

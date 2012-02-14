@@ -133,17 +133,32 @@ value onClick obj handler  =
 value tlf (stage:Stage.c) = 
 (
   BitmapFont.register "MyriadPro-Regular.fnt";
-  let text = TLF.create (TLF.p ~fontSize:20 ~halign:`center ~fontFamily:"Myriad Pro" [`text "АБВнмгопК" ]) in
+  let (_,text) = TLF.create (TLF.p  ~fontSize:20 ~halign:`center ~fontFamily:"Myriad Pro" 
+    [`text "Pizda LaLa" ; TLF.img ~height:50. ~valign:`centerBaseLine (Image.load "quad.png") ; `text " nah nah" ; `br ; `text "bla bla bla BLA yyyy"]) in
   (
     text#setPos 100. 100.;
+    text#setMask ~onSelf:True (Rectangle.create 10. 10. 100. 100.);
 (*     text#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
 (*     text#setAlpha 0.3; *)
     stage#addChild text;
   );
-  let text = TLF.create (TLF.p ~fontSize:20 ~halign:`center ~fontFamily:"Myriad Pro" [`text "hАаджжжжу" ]) in
+  (*
+  let (_,text) = TLF.create (TLF.p ~halign:`center ~fontFamily:"Myriad Pro" [`text "laldddih" ]) in
   (
     text#setPos 300. 100.;
     stage#addChild text;
+  )
+  *)
+);
+
+
+value masks (stage:Stage.c) =
+(
+  let tree = Image.load "tree.png" in
+  (
+    tree#setMask ~onSelf:True (Rectangle.create 20. 50. 50. 30.);
+    tree#setPos 100. 100.;
+    stage#addChild tree;
   )
 );
 
@@ -213,8 +228,9 @@ let stage width height =
     initializer begin
 (*       filters self; *)
 (*         size self; *)
-      tlf self;
+(*       tlf self; *)
 (*       atlas self; *)
+      masks self;
     end;
   end
 in

@@ -19,6 +19,8 @@ exception Child_not_found;
 
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
 
+external glEnableScissor: int -> int -> int -> int -> unit = "ml_gl_scissor_enable";
+external glDisableScissor: unit -> unit = "ml_gl_scissor_disable";
 
 DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
   match self#stage with
@@ -40,10 +42,12 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
         let minY = sheight -. maxY
         and maxY = sheight -. minY in
         (
+          glEnableScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY)); 
 (*           glEnable gl_scissor_test; *)
 (*           glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY)); *)
           call_render;
 (*           glDisable gl_scissor_test; *)
+          glDisableScissor ();
         )
       )
     | _ -> assert False

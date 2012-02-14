@@ -1192,3 +1192,15 @@ void ml_atlas_clear(value atlas) {
 	glBufferSubData(GL_ARRAY_BUFFER,0,sizeof(lgTexQuad) * atl->n_of_quads,NULL);
 	atl->n_of_quads = 0;
 }
+
+
+
+void ml_gl_scissor_enable(value left,value top, value width, value height) {
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(Long_val(left),Long_val(top),Long_val(width),Long_val(height));
+}
+
+
+void ml_gl_scissor_disable(value unit) {
+	glDisable(GL_SCISSOR_TEST);
+}
