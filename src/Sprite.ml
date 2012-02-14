@@ -19,7 +19,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
 
   module D = D;
 
-  type imageCache = {ic: Image.c; tex: Texture.rendered; empty: mutable bool; valid: mutable bool; force: mutable bool};
+  type imageCache = {ic: Image.c; tex: Texture.rendered; empty: mutable bool; valid: mutable [= `invalid | `prerender | `valid ]; force: mutable bool};
 
   class c =
     object(self)
@@ -35,7 +35,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
             (
               let bounds = self#bounds in
               let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
-              imageCache := Some {ic = Image.create (tex :> Texture.c); empty = False; valid = False; tex ; force = True};
+              imageCache := Some {ic = Image.create (tex :> Texture.c); empty = False; valid = `invalid; tex ; force = True};
               self#addPrerender self#updateImageCache;
             )
           | Some c -> c.force := True
@@ -66,47 +66,52 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
       (
 (*         debug "%s bounds changed" self#name; *)
         match imageCache with
-        [ Some c -> if c.valid then (c.valid := False; self#addPrerender self#updateImageCache) else ()
-        | None -> ()
+        [ Some ({valid=`valid;_} as c) -> (self#addPrerender self#updateImageCache; c.valid := `invalid)
+        | Some ({valid=`prerender;_} as c) -> c.valid := `invalid
+        | _ -> ()
         ];
         super#boundsChanged();
       );
 
       method private updateImageCache () = 
         match imageCache with
-        [ Some ({ic; tex; valid=False;_} as c) -> 
-          let () = debug "cacheImage %s not valid" ic#name in
+        [ Some ({ic; tex; valid = (( `invalid | `prerender) as valid); _} as c) -> 
           (
-            let bounds = self#boundsInSpace (Some self) in
-            if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
-            then c.empty := True
-            else 
-            (
-              tex#resize bounds.Rectangle.width bounds.Rectangle.height;
-              let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
-              if ip <> ic#pos
-              then ic#setPosPoint ip
-              else ();
-              let alpha' = alpha in
+            match valid with
+            [ `invalid ->
+              let () = debug "cacheImage %s not valid" ic#name in
+              let bounds = self#boundsInSpace (Some self) in
+              if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
+              then c.empty := True
+              else 
               (
-                self#setAlpha 1.;
-                tex#draw (fun () ->
-                  (
-                    Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
-                    Render.clear 0 0.;
-                    super#render' ~transform:False None;
-                    Render.restore_matrix ();
+                tex#resize bounds.Rectangle.width bounds.Rectangle.height;
+                let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
+                if ip <> ic#pos
+                then ic#setPosPoint ip
+                else ();
+                let alpha' = alpha in
+                (
+                  self#setAlpha 1.;
+                  tex#draw (fun () ->
+                    (
+                      Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
+                      Render.clear 0 0.;
+                      super#render' ~transform:False None;
+                      Render.restore_matrix ();
+                    );
                   );
+                  self#setAlpha alpha';
                 );
-                self#setAlpha alpha';
-              );
-              ic#prerender True;
-              c.empty := False;
-            ); 
-            c.valid := True; 
+                ic#prerender True;
+                c.empty := False;
+              )
+            | `prerender -> ic#prerender True
+            ];
+            c.valid := `valid; 
           )
-        | _ -> ()
-        ];
+      | _ -> ()
+      ];
 
       method setFilters filters = 
         let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t filters)) self#name in
@@ -115,7 +120,14 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
           match imageCache with
           [ None -> ()
           | Some {tex;force=False;_} -> (tex#release();imageCache := None)
-          | Some ({ic;_} as c) -> (ic#setFilters []; c.valid := False; self#addPrerender self#updateImageCache)
+          | Some ({ic;valid;_} as c) -> 
+            (
+                ic#setFilters []; 
+                match valid with
+                [ `valid -> (c.valid := `prerender; self#addPrerender self#updateImageCache)
+                | _ -> ()
+                ]
+            )
           ]
         | filters -> 
           match imageCache with
@@ -127,10 +139,17 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
             (
               img#setPosPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y};
               img#setFilters filters;
-              imageCache := Some {ic = img; tex; empty = False; valid = False; force = False};
+              imageCache := Some {ic = img; tex; empty = False; valid = `invalid; force = False};
               self#addPrerender self#updateImageCache;
             )
-          | Some {ic; _ } -> ic#setFilters filters
+          | Some ({ic; valid; _ } as c) -> 
+            (
+              ic#setFilters filters;
+              match valid with
+              [ `valid -> (c.valid := `prerender; self#addPrerender self#updateImageCache) 
+              | _ -> ()
+              ]
+            )
           ]
         ];
 
