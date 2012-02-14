@@ -130,7 +130,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
               imageCache := Some {ic = img; tex; empty = False; valid = False; force = False};
               self#addPrerender self#updateImageCache;
             )
-          | Some {ic; _ } -> () (* ic#setFilters filters *)
+          | Some {ic; _ } -> ic#setFilters filters
           ]
         ];
 
