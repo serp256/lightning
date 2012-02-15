@@ -133,6 +133,7 @@ struct custom_operations texid_ops = {
 */
 
 void ml_delete_texture(value textureID) {
+	PRINT_DEBUG("delete texture: %d",textureID);
 	GLuint texID = Long_val(textureID);
 	glDeleteTextures(1,&texID);
 }

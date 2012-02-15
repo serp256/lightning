@@ -183,7 +183,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
     PRINT_DEBUG("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
     return NULL;
   };
-  glBindFramebuffer(GL_FRAMEBUFFER,0);
+  //glBindFramebuffer(GL_FRAMEBUFFER,0);
   r->fbid = fbid;
   r->tid = rtid;
 	r->clp = (clipping){0.,0.,(width / legalWidth),(height / legalHeight)};

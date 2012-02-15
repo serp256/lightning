@@ -285,7 +285,7 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 
 static void program_finalize(value program) {
 	sprogram *p = SPROGRAM(program);
-	printf("finalize prg: %d\n",p->program);
+	PRINT_DEBUG("finalize prg: %d\n",p->program);
 	if (p->uniforms != NULL) caml_stat_free(p->uniforms);
   if( p->program == currentShaderProgram ) currentShaderProgram = 0;
 	glDeleteProgram(p->program);
@@ -480,6 +480,7 @@ typedef struct
 
 static void quad_finalize(value quad) {
 	lgQuad *q = *QUAD(quad);
+	PRINT_DEBUG("quad finalize");
 	caml_stat_free(q);
 }
 
@@ -631,6 +632,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 #define TEXQUAD(v) ((lgTexQuad**)Data_custom_val(v))
 
 static void tex_quad_finalize(value tquad) {
+	PRINT_DEBUG("tex quad finalize");
 	lgTexQuad *tq = *TEXQUAD(tquad);
 	caml_stat_free(tq);
 }
@@ -987,6 +989,7 @@ typedef struct {
 #define ATLAS(v) *((atlas_t**)Data_custom_val(v))
 
 static void atlas_finalize(value atlas) {
+	PRINT_DEBUG("atlas finalize");
 	atlas_t *atl = ATLAS(atlas);
 	glDeleteBuffers(2,atl->buffersVBO);
 #ifndef ANDROID	
@@ -1175,11 +1178,10 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 	PRINT_DEBUG("draw %d quads\n",atl->n_of_quads);
 	checkGLErrors("before render atlas");
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
-    glBindVertexArray(0);
+	glBindVertexArray(0);
 #endif
 	checkGLErrors("after draw atals");
 	kmGLPopMatrix();
-
 }
 
 void ml_atlas_render_byte(value * argv, int n) {
@@ -1190,6 +1192,7 @@ void ml_atlas_clear(value atlas) {
 	atlas_t *atl = ATLAS(atlas);
 	glBindBuffer(GL_ARRAY_BUFFER,atl->buffersVBO[0]);
 	glBufferData(GL_ARRAY_BUFFER,0,NULL,GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER,0);
 	atl->n_of_quads = 0;
 }
 
