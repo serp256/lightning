@@ -486,7 +486,12 @@ module Make(D:DisplayObjectT.M) = struct
           texture := nt;
           if ot#width <> nt#width || ot#height <> nt#height
           then self#updateSize ()
-          else Render.Image.update image texture#width texture#height texture#rootClipping;
+          else
+          (
+            Render.Image.update image texture#width texture#height texture#rootClipping;
+            if texFlipX then Render.Image.flipTexX image else ();
+            if texFlipY then Render.Image.flipTexY image else ();
+          );
           nt#addRenderer (self :> Texture.renderer);
           match glowFilter with
           [ Some g -> self#setGlowFilter g.g_params
