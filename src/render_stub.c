@@ -1159,7 +1159,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 #ifdef ANDROID	
 	glBindBuffer(GL_ARRAY_BUFFER,atl->buffersVBO[0]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,atl->buffersVBO[1]);
-	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColorTex);
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
 
 	// vertices
 	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, TexVertexSize, (GLvoid*) offsetof( lgTexVertex, v));

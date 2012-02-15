@@ -14,9 +14,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma fbconnect.cma
+byte: lightning.cma fbconnect.cma vk.cma
 native: MLDEPFLAGS += -native
-native: lightning.cmxa fbconnect.cmxa
+native: lightning.cmxa fbconnect.cmxa vk.cmxa
 syntax: syntax/pa_prop.cmo
 
 
@@ -118,6 +118,13 @@ fbconnect.cma:
 
 fbconnect.cmxa:
 	make -C facebook fbconnect.cmxa
+
+vk.cma:
+	make -C vkontakte vk.cma
+
+vk.cmxa:
+	make -C vkontakte vk.cmxa
+
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
