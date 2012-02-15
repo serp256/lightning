@@ -28,7 +28,7 @@ static GLuint compile_shader(GLenum sType, const char* shaderSource) {
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
 		char *shaderInfoLog = (char *)malloc(logLength);
 		glGetShaderInfoLog(shader, logLength, &logLength, shaderInfoLog);
-		printf("shader error: <%s> -> [%s]\n",shaderSource,shaderInfoLog);
+		fprintf(stderr,"shader error: <%s> -> [%s]\n",shaderSource,shaderInfoLog);
 		free(shaderInfoLog);
 		glDeleteShader(shader);
 		return 0;
@@ -80,7 +80,7 @@ GLuint create_program(GLuint vShader, GLuint fShader, int cntattribs, char* attr
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
     char *shaderProgramInfoLog = (char *)malloc(maxLength);
     glGetProgramInfoLog(program, maxLength, &maxLength, shaderProgramInfoLog);
-    printf("program error: %s\n",shaderProgramInfoLog);
+    fprintf(stderr,"program error: %s\n",shaderProgramInfoLog);
     glDetachShader(program,vShader);
     glDetachShader(program,fShader);
     glDeleteProgram(program);
@@ -167,6 +167,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
 #endif
   glGenTextures(1, &rtid);
   glBindTexture(GL_TEXTURE_2D, rtid);
+	checkGLErrors("bind renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -197,7 +198,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
 }
 
 void delete_renderbuffer(renderbuffer_t *rb) {
-	//printf("delete rb: %d - %d\n",rb->fbid,rb->tid);
+	//fprintf(stderr,"delete rb: %d - %d\n",rb->fbid,rb->tid);
 	glDeleteTextures(1,&rb->tid);
 	glDeleteFramebuffers(1,&rb->fbid);
 	//printf("delete successfully\n");
@@ -256,11 +257,14 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 	texCoords[3][0] = texCoords[1][0];
 	texCoords[3][1] = texCoords[2][1];
 
+	checkGLErrors("before draw texture");
+
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 	glVertexAttribPointer(lgVertexAttrib_Position,2,GL_FLOAT,GL_FALSE,0,quads);
 	glVertexAttribPointer(lgVertexAttrib_TexCoords,2,GL_FLOAT,GL_FALSE,0,texCoords);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+	checkGLErrors("after draw texture");
 	// можно нахуй скипнуть это дело 
 	glBindTexture(GL_TEXTURE_2D,0);
 	glBindFramebuffer(GL_FRAMEBUFFER,0); 
@@ -443,7 +447,7 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 	if (gsize > 1) {
 		renderbuffer_t *crb = &ib;
 		renderbuffer_t *rbfs;
-		rbfs = caml_stat_alloc(gsize*sizeof(renderbuffer_t));
+		rbfs = caml_stat_alloc((gsize - 1)*sizeof(renderbuffer_t));
 		int i;
 		double w = ib.width, h = ib.height;
 		renderbuffer_t *prb;
@@ -458,7 +462,7 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 			crb = prb;
 			checkGLErrors("draw forward");
 		};
-		for (i = gsize - 1; i > 1 ; i--) {
+		for (i = gsize - 2; i > 1 ; i--) {
 			prb = rbfs + i;
 			crb = prb - 1;
 			PRINT_DEBUG("draw back %i",i);
@@ -499,7 +503,9 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 	glUseProgram(0);
 	boundTextureID = 0;
 	currentShaderProgram = 0;
+	checkGLErrors("glow make finished");
 	set_framebuffer_state(&fstate);
+	checkGLErrors("framebuffer state back after make glow");
 	return res;
 }
 
@@ -507,6 +513,7 @@ void ml_glow_make2_byte(value * argv, int n) {
 	ml_glow_make2(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
 }
 
+/*
 void ml_glow_make(value framebufferID, value textureID, value twidth, value theight, value clip, value sourceTexture, value count) {
 	renderbuffer_t tb;
 	// здесь хитрый изъеб - но так быстрее нах.  
@@ -602,6 +609,7 @@ void ml_glow_make(value framebufferID, value textureID, value twidth, value thei
 void ml_glow_make_byte(value * argv, int n) {
 	ml_glow_make(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6]);
 }
+*/
 
 
 /*

@@ -4,7 +4,7 @@ value color_black = 0x000000;
 
 
 type textureID = int;
-type framebufferID;
+type framebufferID = int;
 
 type halign = [= `HAlignLeft | `HAlignCenter | `HAlignRight ];
 type valign = [= `VAlignTop | `VAlignCenter | `VAlignBottom ];

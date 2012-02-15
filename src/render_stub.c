@@ -903,6 +903,7 @@ void get_framebuffer_state(framebuffer_state *s) {
 	s->frameBuffer = oldBuffer;
 	s->width = viewPort[2];
 	s->height = viewPort[3];
+	checkGLErrors("get framebuffer state");
 }
 
 value ml_activate_framebuffer(value framebufferID,value width,value height) {
@@ -972,7 +973,7 @@ void ml_deactivate_framebuffer(value ostate) {
 void ml_delete_framebuffer(value framebuffer) {
 	GLuint fbID = Long_val(framebuffer);
 	glDeleteFramebuffers(1,&fbID);
-	checkGLErrors("ml delete framebuffer: %d",fbID);
+	checkGLErrors("ml delete framebuffer: %d",Long_val(fbID));
 }
 
 
@@ -1112,31 +1113,37 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 			atlas_quads = realloc(atlas_quads,len * sizeof(lgTexQuad));
 		}
 		lgTexQuad *q;
-		value child,bounds,clipping;
+		value child,bounds,clipping,flipX,flipY;
 		color4B c;
-
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
 			bounds = Field(child,1);
 			clipping = Field(child,2);
+			flipX = Field(child,8);
+			flipY = Field(child,9);
 			c = COLOR_FROM_INT(Int_val(Field(child,6)),(GLubyte)(Double_val(Field(child,7)) * 255));
 
 			q = atlas_quads + i;
 
 			q->bl.c = c;
 			q->bl.v = (vertex2F){Double_field(bounds,0),Double_field(bounds,1)};
+
+
 			q->bl.tex = (tex2F){Double_field(clipping,0),Double_field(clipping,1)};
 
 			q->br.c = c;
 			q->br.v = (vertex2F){q->bl.v.x + Double_field(bounds,2),q->bl.v.y};
+
 			q->br.tex = (tex2F){q->bl.tex.u + Double_field(clipping,2),q->bl.tex.v};
 
 			q->tl.c = c;
 			q->tl.v = (vertex2F){q->bl.v.x,q->bl.v.y + Double_field(bounds,3)};
+
 			q->tl.tex = (tex2F){q->bl.tex.u,q->bl.tex.v + Double_field(clipping,3)};
 
 			q->tr.c = c;
 			q->tr.v = (vertex2F){q->br.v.x,q->tl.v.y};
+
 			q->tr.tex = (tex2F){q->br.tex.u,q->tl.tex.v};
 
 		};
