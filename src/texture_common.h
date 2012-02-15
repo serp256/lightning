@@ -1,5 +1,6 @@
-#ifndef __TEXTURE_COMMON__
-#define __TEXTURE_COMMON__
+
+#ifndef __TEXTURE_COMMON_H__
+#define __TEXTURE_COMMON_H__
 
 #ifdef ANDROID
 #include <GLES2/gl2.h>
@@ -11,12 +12,13 @@
 #include <sys/types.h>
 #else
 #define GL_GLEXT_PROTOTYPES
-#include <SDL/SDL_opengl.h>
+#include <SDL_opengl.h>
 #include <sys/types.h>
 #endif
 #endif
 
 #include <caml/mlvalues.h>
+#include "light_common.h"
 
 int nextPowerOfTwo(int number);
 

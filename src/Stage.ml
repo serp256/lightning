@@ -143,7 +143,6 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         (*
         debug "start render";
         debug "end render";
-        debug:errors ignore(RenderSupport.checkForOpenGLError());
         *)
       );
 
@@ -164,9 +163,11 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           done;
           (* dispatch EnterFrameEvent *)
           proftimer:perfomance "Enter frame: %F" D.dispatchEnterFrame seconds;
+          D.prerender();
           debug "end advance time";
         );
 
+      method !z = Some 0;
       method run seconds = 
       (
         self#advanceTime seconds;

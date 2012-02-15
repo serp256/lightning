@@ -1,0 +1,14 @@
+#PLAT = /Developer/Platforms/MaxOSX.platform
+#SDK = /Developer/SDKs/iPhoneOS4.3.sdk
+SDK = /Developer/SDKs/MacOSX10.6.sdk
+OCAMLDIR = /opt/local/
+OCAMLFIND = /opt/local/bin/ocamlfind
+#ARCH = -arch armv6
+OCAMLBINDIR = $(OCAMLDIR)/bin/
+CC = gcc-4.2
+CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -O0 -DDEBUG -Wreturn-type -Wunused-variable -isysroot $(SDK) -isystem $(OCAMLDIR)/lib/ocaml -DCAML_NAME_SPACE -fexceptions -gdwarf-2 -DDEBUG -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
+#CFLAGS = -std=c99 -DDEBUG -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLDIR)/lib -DCAML_NAME_SPACE -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
+# -mmacosx-version-min=10.6 -fobjc-abi-version=2 -fobjc-legacy-dispatch -D__IPHONE_OS_VERSION_MIN_REQUIRED=40200 
+OCAMLOPT = $(OCAMLFIND) ocamlopt
+OCAMLC = $(OCAMLFIND) ocamlc
+OCAMLLIB = /usr/local/bin/ocamlmklib

@@ -193,7 +193,7 @@ value make textureInfo =
   and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
   and scale = textureInfo.scale 
   in
-  let () = debug "make texture: width=[%d->%f],height=[%d -> %f],scale=%f" textureInfo.realWidth width textureInfo.realHeight height scale in
+  let () = debug "make texture: %d, width=[%d->%f],height=[%d -> %f],scale=%f" textureID textureInfo.realWidth width textureInfo.realHeight height scale in
   let clipping = 
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
     then Some (Rectangle.create 0. 0. ((float textureInfo.realWidth) /. width) ((float textureInfo.realHeight) /. height))
@@ -262,6 +262,34 @@ value create texFormat width height data =
   (res :> c);
 
 
+Callback.register "create_ml_texture" begin fun textureID width height clipping ->
+  let () = debug "create_ml_texture: %d" textureID in
+  object(self:c)
+    value mutable textureID = textureID;
+    method textureID = textureID;
+    method width = width;
+    method height = height;
+    method hasPremultipliedAlpha = True;
+    method scale = 1.;
+    method base = None;
+    method clipping = clipping;
+    method rootClipping = clipping;
+    method release () = 
+      if (textureID <> 0) 
+      then
+      (
+        debug:gc "release texture %d" textureID;
+        delete_texture textureID; 
+        textureID := 0
+      )
+      else ();
+    method subTexture _ = assert False;
+    method addRenderer _ = ();
+    method removeRenderer _ = ();
+    initializer Gc.finalise (fun t -> t#release ()) self;
+  end
+end;
+
 value load path : c = 
   try
     debug:cache (
@@ -274,11 +302,10 @@ value load path : c =
     let textureInfo = 
       proftimer:t "Loading texture [%F]" loadImage path 1. 
     in
-    let () = debug:gc Gc.compact () in
     let () = 
-      debug:cache
-        "load texture: %s [%d->%d; %d->%d] [pma=%s]\n%!" 
-        path textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
+      debug
+        "load texture: %s %d [%d->%d; %d->%d] [pma=%s]\n%!" 
+        path textureInfo.textureID textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
         (string_of_bool textureInfo.premultipliedAlpha) 
     in
     let res = make textureInfo in
@@ -354,6 +381,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
   and legalHeight = nextPowerOfTwo ih in
   let (legalWidth,legalHeight) = render_texture_size (legalWidth,legalHeight) in
   let (framebufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
+  let () = debug "rendered texture: %d" textureID in
   let clipping = 
     let flw = float legalWidth and flh = float legalHeight in
     if flw <> width || flh <> height 

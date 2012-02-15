@@ -19,6 +19,7 @@ module type S = sig
       method numChildren: int;
       method updateChild: int -> AtlasNode.t -> unit;
       method removeChild: int -> unit;
+      method setChildIndex: int -> int -> unit;
     end;
 
 
