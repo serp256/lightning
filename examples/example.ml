@@ -169,10 +169,10 @@ value atlas (stage:Stage.c) =
   let texture = Texture.load "tree.png" in
   let atlas = Atlas.create texture in
   (
-    atlas#addChild (AtlasNode.create texture (Rectangle.create 10. 30. 100. 100.) ());
+    atlas#addChild (AtlasNode.create texture (Rectangle.create 10. 30. 100. 100.) ~flipY:True ());
     atlas#addChild (AtlasNode.create texture (Rectangle.create 10. 30. 100. 20.) ~pos:{Point.x=150.;y=50.} ());
     atlas#setPos 100. 100.;
-    atlas#setFilters [ Filters.glow ~size:2 0xFF0000 ];
+(*     atlas#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
     stage#addChild atlas;
   );
 );
@@ -221,16 +221,34 @@ value size (stage:Stage.c) =
     end;
   );
 
+
+value flip (stage:Stage.c) =
+  let img = Image.load "tree.png" in
+  let tx = ref (Texture.load "e_cactus.png") in
+  (
+    onClick img (fun img ->
+      let t = img#texture in
+      (
+        img#setTexture !tx;
+        img#setTexFlipX (not img#texFlipX);
+        tx.val := t;
+      )
+    );
+    img#setPos 100. 100.;
+    stage#addChild img;
+  );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value color = 0xCCCCCC;
     initializer begin
+      flip self;
 (*       filters self; *)
 (*         size self; *)
 (*       tlf self; *)
 (*       atlas self; *)
-      masks self;
+(*       masks self; *)
     end;
   end
 in
