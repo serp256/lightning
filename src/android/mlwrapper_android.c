@@ -15,6 +15,15 @@
 static JavaVM *gJavaVM;
 static mlstage *stage = NULL;
 static jobject jView;
+static jobject jStorage;
+static jobject jStorageEditor;
+
+typedef enum 
+  { 
+    St_int_val, 
+    St_bool_val, 
+    St_string_val, 
+  } st_val_type;
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
@@ -128,7 +137,6 @@ int getResourceFd(value mlpath, resource *res) {
 	(*env)->DeleteLocalRef(env, resourceParams);
 	(*env)->DeleteLocalRef(env, cls);
 	
-	
 	return 1;
 }
 
@@ -169,6 +177,36 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightSetResourcesPath(JNIEnv
 JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview) {
 	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","lightInit");
 	jView = (*env)->NewGlobalRef(env,jview);
+	
+	/* 
+	 * init storage 
+	 */
+	 
+	jclass viewCls = (*env)->GetObjectClass(env,jView);
+	jmethodID getContextMthd = (*env)->GetMethodID(env, viewCls,"getContext","()Landroid/content/Context;");
+	jobject contextObj = (*env)->CallObjectMethod(env,jView,getContextMthd);
+	
+    jclass contextCls = (*env)->GetObjectClass(env, contextObj);
+    jmethodID getSharedPreferencesMthd = (*env)->GetMethodID(env, contextCls, "getSharedPreferences", "(Ljava/lang/String;I)Landroid/content/SharedPreferences;");  
+    jstring stname = (*env)->NewStringUTF(env, "lightning");
+    
+    jobject storage = (*env)->CallObjectMethod(env,contextObj, getSharedPreferencesMthd,stname,0);
+	jStorage = (*env)->NewGlobalRef(env, storage);
+
+    /* editor */
+    jclass storageCls = (*env)->GetObjectClass(env, storage);
+    jmethodID jmthd_edit = (*env)->GetMethodID(env, storageCls, "edit", "()Landroid/content/SharedPreferences$Editor;");
+    jobject storageEditor = (*env)->CallObjectMethod(env, storage, jmthd_edit);
+    jStorageEditor = (*env)->NewGlobalRef(env, storageEditor);
+  
+      
+	(*env)->DeleteLocalRef(env, storage);
+	(*env)->DeleteLocalRef(env, stname);
+	(*env)->DeleteLocalRef(env, contextCls);
+	(*env)->DeleteLocalRef(env, contextObj);
+    (*env)->DeleteLocalRef(env, viewCls);
+    (*env)->DeleteLocalRef(env, storageCls);
+    (*env)->DeleteLocalRef(env, storageEditor);
 }
 
 
@@ -464,5 +502,198 @@ JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlComplete(JNIEn
     ml_url_complete = caml_named_value("url_complete");
   caml_callback(*ml_url_complete, caml_copy_int32(loader_id));
   caml_release_runtime_system();
+}
+
+
+
+//////////// key-value storage based on NSUserDefaults
+
+value ml_kv_storage_create() {
+  CAMLparam0();
+  CAMLreturn((value)jStorage);
+}
+
+
+// commit
+void ml_kv_storage_commit(value storage) {
+  CAMLparam1(storage);
+
+  JNIEnv *env;
+  (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+  if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) {
+	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+  }
+
+  jclass editorCls = (*env)->GetObjectClass(env, jStorageEditor);
+  jmethodID jmthd_commit = (*env)->GetMethodID(env, editorCls, "commit", "()Z");
+  (*env)->CallBooleanMethod(env, jStorageEditor, jmthd_commit);
+  
+  (*env)->DeleteLocalRef(env, editorCls);
+  CAMLreturn0;
+}
+
+
+
+// 
+jboolean kv_storage_contains_key(JNIEnv *env, jobject storage, jstring key) {
+  jclass storageCls = (*env)->GetObjectClass(env, storage);
+  jmethodID jmthd_contains = (*env)->GetMethodID(env, storageCls, "contains", "(Ljava/lang/String;)Z");
+  jboolean contains = (*env)->CallBooleanMethod(env, storage, jmthd_contains, key);
+  (*env)->DeleteLocalRef(env, storageCls);
+  return contains;
+} 
+
+
+value kv_storage_get_val(value storage_ml, value key_ml, st_val_type vtype) {
+  CAMLparam2(storage_ml, key_ml);
+  CAMLlocal1(tuple);
+  
+  JNIEnv *env;                                                                                                                                                                                
+  (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);                                                                                                                                   
+  if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) {                                                                                                                                 
+    __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");                                                                           
+  }   
+  
+  jobject storage = (jobject)storage_ml;
+  jclass  storageCls = (*env)->GetObjectClass(env, storage);
+  jstring key = (*env)->NewStringUTF(env, String_val(key_ml));
+
+  if (!kv_storage_contains_key(env, storage, key)) {
+    (*env)->DeleteLocalRef(env, storageCls);
+    (*env)->DeleteLocalRef(env, key);
+    CAMLreturn(Val_int(0));
+  }
+
+
+  jmethodID jmthd_get;  
+  tuple = caml_alloc_tuple(1);
+  
+  if (vtype == St_string_val) {
+    jmthd_get = (*env)->GetMethodID(env, storageCls, "getString", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    jstring defval = (*env)->NewStringUTF(env, "");
+    jstring jval = (*env)->CallObjectMethod(env, storage, jmthd_get, key, defval);
+    const char * val = (*env)->GetStringUTFChars(env, jval, NULL);
+    Store_field(tuple,0,caml_copy_string(val));
+    (*env)->ReleaseStringUTFChars(env, jval, val);
+    (*env)->DeleteLocalRef(env, defval);
+    (*env)->DeleteLocalRef(env, jval);
+  } else if (vtype == St_int_val) {
+    jmthd_get = (*env)->GetMethodID(env, storageCls, "getInt", "(Ljava/lang/String;I)I");
+    jint jval = (*env)->CallIntMethod(env, storage, jmthd_get, key, 0);
+    Store_field(tuple,0,Val_int(jval));
+  } else {
+    jmthd_get = (*env)->GetMethodID(env, storageCls, "getBoolean", "(Ljava/lang/String;Z)Z");
+    jboolean jval = (*env)->CallBooleanMethod(env, storage, jmthd_get, key, 0);
+    Store_field(tuple,0,Val_bool(jval));
+  }
+  
+  
+  (*env)->DeleteLocalRef(env, storageCls);
+  (*env)->DeleteLocalRef(env, key);
+
+  CAMLreturn(tuple);
+}
+
+
+
+// get string
+value ml_kv_storage_get_string(value storage, value key_ml) {
+  return kv_storage_get_val(storage, key_ml, St_string_val);
+}  
+
+// get boolean
+value ml_kv_storage_get_bool(value storage, value key_ml) {
+  return kv_storage_get_val(storage, key_ml, St_bool_val);
+}
+
+// get int 
+value ml_kv_storage_get_int(value storage, value key_ml) {
+  return kv_storage_get_val(storage, key_ml, St_int_val);
+}
+
+
+void kv_storage_put_val(value storage_ml, value key_ml, value val_ml, st_val_type vtype) {
+  CAMLparam3(storage_ml, key_ml, val_ml);
+
+  JNIEnv *env;
+  (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+  if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) {
+	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+  }
+
+  jclass editorCls = (*env)->GetObjectClass(env, jStorageEditor);
+  jstring key = (*env)->NewStringUTF(env, String_val(key_ml));
+  jmethodID jmthd_put;
+  
+  if (vtype == St_string_val) {
+    jmthd_put = (*env)->GetMethodID(env, editorCls, "putString", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
+    jstring val = (*env)->NewStringUTF(env, String_val(val_ml));
+    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_put, key, val);
+    (*env)->DeleteLocalRef(env, val);
+  } else if (vtype == St_bool_val) {
+    jmthd_put = (*env)->GetMethodID(env, editorCls, "putBoolean", "(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;");
+    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_put, key, Bool_val(val_ml));
+  } else {
+    jmthd_put = (*env)->GetMethodID(env, editorCls, "putInt", "(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;");
+    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_put, key, Int_val(val_ml));
+  }
+      
+  (*env)->DeleteLocalRef(env, key);
+  (*env)->DeleteLocalRef(env, editorCls);
+  CAMLreturn0;
+}
+
+
+// put string
+void ml_kv_storage_put_string(value storage, value key_ml, value val_ml) {
+  return kv_storage_put_val(storage, key_ml, val_ml, St_string_val);
+}
+
+
+void ml_kv_storage_put_bool(value storage, value key_ml, value val_ml) {
+  return kv_storage_put_val(storage, key_ml, val_ml, St_bool_val);
+}
+
+
+void ml_kv_storage_put_int(value storage, value key_ml, value val_ml) {
+  return kv_storage_put_val(storage, key_ml, val_ml, St_int_val);
+}
+
+
+void ml_kv_storage_remove(value storage, value key_ml) {
+  CAMLparam2(storage, key_ml);
+
+  JNIEnv *env;
+  (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+  if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) {
+	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+  }
+
+  jclass editorCls = (*env)->GetObjectClass(env, jStorageEditor);
+  jstring key = (*env)->NewStringUTF(env, String_val(key_ml));
+  jmethodID jmthd_remove = (*env)->GetMethodID(env, editorCls, "remove", "(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
+  jobject e =  (*env)->CallObjectMethod(env, jStorageEditor, jmthd_remove, key);
+
+  (*env)->DeleteLocalRef(env, key);
+  (*env)->DeleteLocalRef(env, e);
+
+  CAMLreturn0;
+}
+
+
+value ml_kv_storage_exists(value storage, value key_ml) {
+  CAMLparam2(storage, key_ml);
+
+  JNIEnv *env;
+  (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+  if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) {
+	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+  }
+
+
+  jstring key = (*env)->NewStringUTF(env, String_val(key_ml)); 
+  jboolean contains = kv_storage_contains_key(env, (jobject)storage, key);
+  (*env)->DeleteLocalRef(env,key);
+  CAMLreturn(Val_bool(contains));
 }
 
