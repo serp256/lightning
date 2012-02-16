@@ -78,8 +78,9 @@ end;
 module Filter = struct (* remove it from here *)
 
   type t;
-  external glow: int -> int -> t = "ml_filter_glow";
-  external glow_make: framebufferID -> textureID -> float -> float -> option Rectangle.t -> option (textureID * float * float * option Rectangle.t) -> int -> unit = "ml_glow_make_byte" "ml_glow_make";
+(*   external glow: int -> int -> t = "ml_filter_glow"; *)
+(*   external glow_make: framebufferID -> textureID -> float -> float -> option Rectangle.t -> option (textureID * float * float * option Rectangle.t) -> int -> unit = "ml_glow_make_byte"
+ *   "ml_glow_make"; *)
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
 
 end;

@@ -26,6 +26,7 @@ module ImageSimple = struct (*{{{*)
 
 end;(*}}}*)
 
+(*
 module ImageGlow = struct (*{{{*)
 
   value id  = gen_id();
@@ -39,6 +40,7 @@ module ImageGlow = struct (*{{{*)
     (prg,Some f);
     
 end;(*}}}*)
+*)
 
 
 
