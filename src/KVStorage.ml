@@ -4,7 +4,12 @@ IFDEF SDL THEN
 type t = Hashtbl.t string string;
 
 value storage = ref None;
-value commit s = Marshal.to_channel (open_out_bin "kvstorage") s [];
+value commit s =
+ let ch = open_out_bin "kvstorage" in
+ (
+  Marshal.to_channel ch s [];
+  close_out ch
+);
 
 value create () = 
   match !storage with
