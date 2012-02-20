@@ -393,7 +393,7 @@ with type string = String.t
 
 (** {1:io Features and limitations}
     
-    The module assumes strings are immutable, thus strings
+    The module assumes strings are to_immutable, thus strings
     the client gives or receives {e during} the input and output process 
     must not be modified.
     {2:input Input}
