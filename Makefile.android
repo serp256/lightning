@@ -1,5 +1,5 @@
-
 include config.android
 META=META.android
 include Makefile.in
 INSTALL_OPTS = src/android/libpng/libpng.a
+INSTALL_OPTS += src/android/libjpeg/libjpeg.a

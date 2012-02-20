@@ -10,21 +10,21 @@ debug:
 
 INSTALL_OPTS = 
 
-BYTE_FILES = src/lightning.cma src/dlllightning.so 
-NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a 
+BYTE_FILES = src/lightning.cma src/dlllightning.so src/liblightning.a
+NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a
 SYNTAX_FILES = src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo
 INSTALL_FILES = 
 
 ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(BYTE_FILES)
-	INSTALL_FILES += $(wildcard src/facebook/*.cma)
-	INSTALL_FILES += $(wildcard src/facebook/*.so)
+	INSTALL_FILES += $(wildcard src/facebook/*.cma src/vkontakte/*.cma)
+	INSTALL_FILES += $(wildcard src/facebook/*.so src/vkontakte/*.so)
 endif
 
 ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(NATIVE_FILES)
-	INSTALL_FILES += $(wildcard src/facebook/*.cmxa)
-	INSTALL_FILES += $(wildcard src/facebook/*.a)
+	INSTALL_FILES += $(wildcard src/facebook/*.cmxa src/vkontakte/*.cmxa)
+	INSTALL_FILES += $(wildcard src/facebook/*.a src/vkontakte/*.a)
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))
@@ -33,7 +33,7 @@ endif
 
 install: lib 
 	cp $(META) META
-	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli src/facebook/*.mli src/facebook/*.cmi $(INSTALL_OPTS) 
+	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli src/facebook/*.mli src/facebook/*.cmi src/vkontakte/*.cmi src/vkontakte/*.mli  $(INSTALL_OPTS) 
 
 uninstall:
 	sudo $(OCAMLFIND) remove lightning
@@ -48,3 +48,5 @@ doc:
 clean: 
 	$(MAKE) -C src clean
 	$(MAKE) -C src/facebook clean
+	$(MAKE) -C src/vkontakte clean
+

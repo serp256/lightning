@@ -11,12 +11,12 @@ GLPARAM =
 
 MOBJS = texture_common.o filters_stub.o render_stub.o
 MLOBJSFLAGS = 
-MLFLAGS +=  -package extlib -I containers -I utils
+MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma fbconnect.cma
+byte: lightning.cma fbconnect.cma vk.cma
 native: MLDEPFLAGS += -native
-native: lightning.cmxa fbconnect.cmxa
+native: lightning.cmxa fbconnect.cmxa vk.cmxa
 syntax: syntax/pa_prop.cmo
 
 
@@ -52,7 +52,7 @@ else
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
-		LIBFLAGS = -cclib '-lGLESv1_CM' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
+		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
 	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
 		gl = gl/2.1
@@ -62,10 +62,11 @@ else
 		MLOBJSFLAGS = -I sdl
 		#MLPPOPT += -DSDL
 		MLCOMPFLAGS += -package curl,threads -thread
+		SDLFLAGS = $(shell ${SDLCONFIG} --libs)
 		ifeq ($(OS),macos)
-			LIBFLAGS = -cclib '-framework\ Cocoa' -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-framework\ Cocoa'  -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
 		else
-			LIBFLAGS = -cclib '-lSDL' -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
 		endif
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	endif
@@ -80,7 +81,7 @@ $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
 					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml AtlasNode.ml Atlas.ml Touch.ml BitmapFont.ml TLF.ml Timers.ml Timer.ml Sprite.ml \
-					Stage.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml $(AMLSOURCES) Lightning.ml 
+					Stage.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml KVStorage.ml $(AMLSOURCES) Lightning.ml 
 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
 	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),$(patsubst %,-ccopt %,$(GLPARAM))) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
@@ -118,10 +119,17 @@ fbconnect.cma:
 fbconnect.cmxa:
 	make -C facebook fbconnect.cmxa
 
+vk.cma:
+	make -C vkontakte vk.cma
+
+vk.cmxa:
+	make -C vkontakte vk.cmxa
+
+
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
-	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES:.ml=.mli) $(MLSOURCES) >> MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES:.ml=.mli) RenderFilters.ml $(MLSOURCES) >> MLDepend.$(PLATFORM)
 # $(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
 
 

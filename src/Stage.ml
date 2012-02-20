@@ -143,13 +143,13 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
         (*
         debug "start render";
         debug "end render";
-        debug:errors ignore(RenderSupport.checkForOpenGLError());
         *)
       );
 
       value runtweens = Queue.create ();
 
       method advanceTime (seconds:float) = 
+      (
         let () = debug "advance time" in
         proftimer:perfomance "Stage advanceTime: %F"
         (
@@ -162,11 +162,13 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
             | False -> ()
             ]
           done;
-          (* dispatch EnterFrameEvent *)
-          proftimer:perfomance "Enter frame: %F" D.dispatchEnterFrame seconds;
-          debug "end advance time";
         );
+        proftimer:perfomance "Enter frame: %F" D.dispatchEnterFrame seconds;
+        proftimer:perfomance "Prerender: %F" D.prerender();
+        debug "end advance time";
+      );
 
+      method !z = Some 0;
       method run seconds = 
       (
         self#advanceTime seconds;

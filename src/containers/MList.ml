@@ -297,10 +297,10 @@ value split3 lst =
   );
 
 (* возвращает номер элемента в списке удовлетворяющего условию *)
-value find (f:('a -> bool)) (lst:list 'a) =  
+value index_of_func (f:('a -> bool)) (lst:list 'a) =  
   let rec loop i = fun
-    [ [] -> raise Not_found
-    | [hd::_] when (f hd) -> i
+    [ [] -> None
+    | [hd::_] when (f hd) -> Some i
     | [_::tl] -> loop (i+1) tl
     ]
   in loop 0 lst;

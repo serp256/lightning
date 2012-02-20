@@ -2,7 +2,9 @@
 #define __RENDER_STUB_H_
 
 #ifdef ANDROID
-#include <GLES/gl2.h>
+#define GL_GLEXT_PROTOTYPES
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 #else 
 #ifdef IOS
 #include <OpenGLES/ES2/gl.h>
@@ -20,6 +22,8 @@
 #include <caml/custom.h>
 #include <caml/bigarray.h>
 #include <caml/fail.h>
+
+#include "light_common.h"
 
 void setPMAGLBlend();
 void setNotPMAGLBlend();
@@ -122,7 +126,7 @@ enum {
   lgVertexAttribFlag_Color   = 1 << 2,
   
 	lgVertexAttribFlag_PosColor = (lgVertexAttribFlag_Position | lgVertexAttribFlag_Color),
-	lgVertexAttribFlag_PosColorTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords ),
+	lgVertexAttribFlag_PosTexColor = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_Color | lgVertexAttribFlag_TexCoords ),
 	lgVertexAttribFlag_PosTex = ( lgVertexAttribFlag_Position | lgVertexAttribFlag_TexCoords )
 };
 
@@ -139,6 +143,5 @@ void set_framebuffer_state(framebuffer_state *s);
 
 
 
-void checkGLErrors(char *where);
 
 #endif

@@ -3,7 +3,7 @@ module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.
 
   value default_font_family: ref string;
 
-  type img_valign = [= `baseLine | `center | `lineCenter ];
+  type img_valign = [= `aboveBaseLine | `underBaseLine | `centerBaseLine ];
   type img_attribute = 
     [= `width of float
     | `height of float
@@ -61,9 +61,9 @@ module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.
     ];
 
   value img: ?width:float -> ?height:float -> ?paddingLeft:float -> ?paddingTop:float -> ?paddingRight:float -> ?paddingLeft:float -> ?valign:img_valign -> #Image.D.c -> simple_element;
-  value span: ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> simple_elements -> simple_element;
-  value p: ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> ?halign:p_halign -> ?valign:p_valign -> ?spaceBefore:float -> ?spaceAfter:float -> simple_elements -> main;
+  value span: ?fontWeight:string -> ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> simple_elements -> simple_element;
+  value p: ?fontWeight:string -> ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> ?halign:p_halign -> ?valign:p_valign -> ?spaceBefore:float -> ?spaceAfter:float -> simple_elements -> main;
   value parse_simples: ?imgLoader:(string -> Image.D.c) -> string -> simple_elements;
   value parse: ?imgLoader:(string -> Image.D.c) -> string -> main;
-  value create: ?width:float -> ?height:float -> ?border:int -> ?dest:#Sprite.c -> main -> Sprite.c;
+  value create: ?width:float -> ?height:float -> ?border:int -> ?dest:#Sprite.c -> main -> (float * Image.D.c);
 end;

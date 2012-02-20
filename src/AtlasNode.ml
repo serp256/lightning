@@ -16,34 +16,41 @@ type t =
     rotation: float;
   };
 
-value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=0xFFFFFF) ?(alpha=1.) () = 
+value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=0xFFFFFF) ?(flipX=False) ?(flipY=False) ?(alpha=1.) () = 
   let tw = texture#width
   and th = texture#height in
   let clipping = Rectangle.create_tm (rect.Rectangle.x /. tw) (rect.Rectangle.y /. th) (rect.Rectangle.width /. tw)  (rect.Rectangle.height /. th) in
   (
-    let open Rectangle in
-    adjustClipping texture where
-      rec adjustClipping texture =
-        match texture#clipping with
-        [ None -> ()
-        | Some baseClipping ->
-          (
-            clipping.m_x := baseClipping.x +. clipping.m_x *. baseClipping.width;
-            clipping.m_y := baseClipping.y +. clipping.m_y *. baseClipping.height;
-            clipping.m_width := clipping.m_width *. baseClipping.width;
-            clipping.m_height := clipping.m_height *. baseClipping.height;
-            match texture#base with
-            [ Some baseTexture -> adjustClipping baseTexture
-            | None -> ()
-            ]
-          )
-        ];
+    Rectangle.( begin
+      adjustClipping texture where
+        rec adjustClipping texture =
+          match texture#clipping with
+          [ None -> ()
+          | Some baseClipping ->
+            (
+              clipping.m_x := baseClipping.x +. clipping.m_x *. baseClipping.width;
+              clipping.m_y := baseClipping.y +. clipping.m_y *. baseClipping.height;
+              clipping.m_width := clipping.m_width *. baseClipping.width;
+              clipping.m_height := clipping.m_height *. baseClipping.height;
+              match texture#base with
+              [ Some baseTexture -> adjustClipping baseTexture
+              | None -> ()
+              ]
+            )
+          ];
+      if flipX
+      then (clipping.m_x := clipping.m_x +. clipping.m_width; clipping.m_width := ~-.(clipping.m_width))
+      else ();
+      if flipY
+      then (clipping.m_y := clipping.m_y +. clipping.m_height; clipping.m_height := ~-.(clipping.m_height))
+      else ();
+    end );
     debug "node clipping: %s" (Rectangle.to_string (Obj.magic clipping));
     {
       texture;
       width=rect.Rectangle.width;
       height=rect.Rectangle.height;
-      pos; color; alpha; flipX=False; flipY=False; scaleX; scaleY; rotation=0.;
+      pos; color; alpha; flipX; flipY; scaleX; scaleY; rotation=0.;
       bounds=Rectangle.empty;
       clipping=(Obj.magic clipping)
     };
@@ -72,7 +79,22 @@ value alpha t = t.alpha;
 value setAlpha alpha t = {(t) with alpha};
 
 value flipX t = t.flipX;
-value setFlipX flipX  t = {(t) with flipX};
+value setFlipX flipX  t = 
+  match t.flipX <> flipX with
+  [ True ->
+    let open Rectangle in
+    { (t) with flipX; clipping = {(t.clipping) with x = t.clipping.x +. t.clipping.width; width = ~-.(t.clipping.width) }}
+  | False -> t
+  ];
+
+value flipY t = t.flipY;
+value setFlipY flipY  t = 
+  match t.flipY <> flipY with
+  [ True ->
+    let open Rectangle in
+    { (t) with flipY; clipping = {(t.clipping) with y = t.clipping.y +. t.clipping.height; height = ~-.(t.clipping.height) }}
+  | False -> t
+  ];
 
 value scaleX t = t.scaleX;
 value setScaleX scaleX t = {(t) with scaleX; bounds=Rectangle.empty};

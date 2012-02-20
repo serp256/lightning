@@ -1,12 +1,12 @@
-
-
 #include <stdio.h>
-#include "texture_common.h"
 #include <caml/memory.h>
 #include <caml/alloc.h>
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 #include <caml/custom.h>
+
+#include "texture_common.h"
+
 
 
 int nextPowerOfTwo(int number) {
@@ -38,7 +38,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
             p->glTexFormat = GL_ALPHA;
             break;
         case SPTextureFormatPvrtcRGBA2:
-#ifdef IOS
+#if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG;
@@ -47,7 +47,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 						return 0;
 #endif
         case SPTextureFormatPvrtcRGB2:
-#ifdef IOS
+#if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG;
@@ -56,7 +56,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 						return 0;
 #endif
         case SPTextureFormatPvrtcRGBA4:
-#ifdef IOS
+#if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 4;
             p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG;
@@ -65,7 +65,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 						return 0;
 #endif
         case SPTextureFormatPvrtcRGB4:
-#ifdef IOS
+#if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 4;
             p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
@@ -133,6 +133,7 @@ struct custom_operations texid_ops = {
 */
 
 void ml_delete_texture(value textureID) {
+	PRINT_DEBUG("delete texture <%d>",Int_val(textureID));
 	GLuint texID = Long_val(textureID);
 	glDeleteTextures(1,&texID);
 }

@@ -7,8 +7,8 @@ import android.util.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-
-
+import android.os.Handler;
+import android.os.Looper;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import android.content.res.AssetManager;
@@ -17,14 +17,17 @@ import android.content.res.AssetFileDescriptor;
 public class LightView extends GLSurfaceView {
 
 	private LightRenderer renderer;
+    private int loader_id;
+    private Handler uithread;
 
 	public LightView(Context context,int width,int height) {
-		super(context);
+        super(context);
 		initView(width,height);
 	}
 
 	protected void initView(int width,int height) {
 		lightInit();
+		setEGLContextClientVersion(2);
 		renderer = new LightRenderer(width,height);
 		setFocusableInTouchMode(true);
 		setRenderer(renderer);
@@ -36,7 +39,9 @@ public class LightView extends GLSurfaceView {
 		try {
 			AssetFileDescriptor afd = getContext().getAssets().openFd(path);
 			res = new ResourceParams(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
-		} catch (IOException e) {res =  null;};
+		} catch (IOException e) {
+		   res =  null;
+		}
 		return res;
 	}
 
@@ -198,6 +203,36 @@ public class LightView extends GLSurfaceView {
 		 Log.d("EVENT", sb.toString());
 	}
 
+
+    //
+	// Этот методы вызывается из ocaml, он создает хттп-лоадер, который в фоне выполняет запрос с переданными параметрами
+	
+	//
+	// а зачем эту хуйню запускать сперва в UI thread? Можно ведь сразу asynch task сделать!
+	//
+	public int spawnHttpLoader(final String url, final String method, final String[][] headers, final byte[] data){
+		loader_id = loader_id + 1;
+        final GLSurfaceView v = this;
+		getHandler().post(new Runnable() {
+		    public void run() {
+        	  UrlReq req = new UrlReq();
+		      req.url = url;
+		      req.method = method;
+		      req.headers = headers;
+		      req.data = data;
+		      req.loader_id = loader_id;
+              req.surface_view = v;		
+	    	  LightHttpLoader loader = new LightHttpLoader();  
+		      loader.execute(req);
+		    }
+		  }
+		);
+
+		return loader_id;
+	}
+
+
 	private native void lightInit();
 }
+
 

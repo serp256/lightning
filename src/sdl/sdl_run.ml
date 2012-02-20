@@ -88,7 +88,7 @@ value handle_events window frameRate stage =
 value run stage_create = 
   let width = ref 768 and height = ref 1024 and frameRate = ref 30 in
   (
-    Arg.parse [("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");("-frame-rate",Arg.Set_int frameRate,"frame rate")] (fun _ -> ()) "";
+    Arg.parse [("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");("-fps",Arg.Set_int frameRate,"frame rate")] (fun _ -> ()) "";
     init [VIDEO];
     Sdl_image.init [ Sdl_image.PNG ]; 
     (

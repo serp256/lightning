@@ -1,6 +1,7 @@
 package ru.redspell.lightning;
 
 import android.util.Log;
+import android.os.Handler;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import android.opengl.GLSurfaceView;
@@ -12,9 +13,9 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	private static long animationInterval = (long)(1.0 / 30 * NANOSECONDSPERSECOND);
 	private long last;
 	
-
 	private int screenWidth;
 	private int screenHeight;
+	
 	public LightRenderer(int width,int height) {
 		super();
 		screenWidth = width;
@@ -22,6 +23,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	}
 
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) { 	
+	    Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
 		lightRendererInit(screenWidth,screenHeight);
 		last = System.nanoTime();
 	}

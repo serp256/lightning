@@ -29,6 +29,11 @@ value ml_game_center_init(value param) {
 	return Val_int(1);
 }
 
+value ml_playerID(value unit) {
+	NSString *playerID = [GKLocalPlayer localPlayer].playerID;
+	value result = caml_copy_string([playerID cStringUsingEncoding:NSASCIIStringEncoding]);
+	return result;
+}
 
 void ml_report_leaderboard(value category, value score) {
 	GKScore *scoreReporter = [[[GKScore alloc] initWithCategory: [NSString stringWithCString:String_val(category) encoding:NSASCIIStringEncoding]] autorelease];

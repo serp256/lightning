@@ -1,0 +1,20 @@
+
+
+MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug default
+
+MLFLAGS += -I ../src -package extlib -package ojson
+
+
+example.byte: example.cmo
+	$(OCAMLC) -custom -verbose -o test.byte  -g  \
+	-I ../src ../src/lightning.cma  Light.cmo example.cmo \
+	-package curl,bigarray,extlib,xmlm,ojson,dbm,threads -thread -linkpkg 
+
+example.native: $(MOBS) example.cmx
+	$(OCAMLOPT) -verbose -o test.native  -g  \
+	-I ../src ../src/lightning.cmxa  Light.cmx example.cmx \
+	-package extlib,xmlm,dbm,threads -thread -linkpkg 
+
+example.cmx: Light.cmx
+example.cmo: Light.cmo
+

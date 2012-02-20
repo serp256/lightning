@@ -12,7 +12,8 @@ type t =
   {
     chars: Hashtbl.t int bc;
     scale: float;
-    baseLine: float;
+    ascender: float;
+    descender: float;
     lineHeight: float;
     space:float;
     texture: Texture.c;
@@ -20,8 +21,8 @@ type t =
 
 (* value register: string -> unit; *)
 value register: string -> unit;
-value exists: string -> bool;
-value get: ?applyScale:bool -> ?size:int -> string -> t;
+value exists: ?style:string -> string -> bool;
+value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
 (*
 module type Creator = sig

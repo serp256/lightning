@@ -12,13 +12,14 @@ exception Invalid_index;
 exception Child_not_found;
 
 value dispatchEnterFrame: float -> unit;
+value prerender: unit -> unit;
 class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
 
   object('self)
     type 'displayObject = _c 'parent;
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; dispatchEvent': Ev.t evType evData -> _c _ -> unit; 
+        asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t evType evData -> _c _ -> unit; 
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; boundsChanged: unit -> unit; .. >;
 (*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
@@ -73,6 +74,7 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method setTouchable: bool -> unit;
     value parent: option 'parent;
     method parent: option 'parent;
+    method z: option int;
     method removeFromParent: unit -> unit;
     method virtual filters: list Filters.t;
     method virtual setFilters: list Filters.t -> unit;
@@ -87,6 +89,8 @@ class virtual _c [ 'parent ] : (*  _c' [evType,evData,'parent];  =  *)
     method localToGlobal: Point.t -> Point.t;
     method setMask: ?onSelf:bool -> Rectangle.t -> unit;
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
+    method private addPrerender: (unit -> unit) -> unit;
+    method prerender: bool -> unit;
     method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
     method asDisplayObject: _c _;
     method virtual dcast: [= `Object of _c _ | `Container of 'parent ];
@@ -116,6 +120,7 @@ class virtual container:
     method getChildAt: int -> 'displayObject;
     method setChildIndex: !'child. (#_c container as 'child) -> int -> unit;
     method getLastChild: 'displayObject;
+    method getChildIndex': 'displayObject -> int; 
     method getChildIndex: !'child. (#_c container as 'child) -> int;
     method numChildren: int;
     method removeChild: !'child. (#_c container as 'child) -> unit;

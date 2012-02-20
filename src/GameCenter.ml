@@ -66,6 +66,7 @@ value init ?callback () =
   ];
 
 
+external playerID: unit -> string = "ml_playerID";
 
 value report_leaderboard_failed category score = Debug.e "report leaderboard failed";
 Callback.register "report_leaderboard_failed" report_leaderboard_failed;
@@ -150,6 +151,7 @@ value init ?callback () =
   | None -> ()
   ];
 
+value playerID () = "";
 
 value reportLeaderboard (category:string) (scores:int64) = ();
 value showLeaderboard () = ();

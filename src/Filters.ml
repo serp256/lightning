@@ -16,3 +16,8 @@ type t =
   [= `Glow of glow 
   | `ColorMatrix of colorMatrix
   ];
+
+value string_of_t = fun
+  [ `Glow g -> Printf.sprintf "glow [%d:%d:%d]" g.glowSize g.glowColor g.glowStrength
+  | `ColorMatrix c -> "color matrix"
+  ];
