@@ -35,9 +35,10 @@ value floats_of_color color =
   in
   (((float red) /. 255.),((float green) /. 255.),((float blue) /. 255.));
 
+Callback.register_exception "File_not_exists" (File_not_exists "");
+
 IFDEF IOS THEN
 
-Callback.register_exception "File_not_exists" (File_not_exists "");
 external bundle_path_for_resource: string -> float -> option string = "ml_bundle_path_for_resource";
 external device_scale_factor: unit -> float = "ml_device_scale_factor";
 
@@ -134,18 +135,6 @@ value read_json path =
 ENDIF;
 ENDIF;
 ENDIF;
-
-(*
-value resource_path path _ = 
-  match Filename.is_relative path with (* убрать нах эту логику нах. *)
-  [ True -> match bundle_path_for_resource path with [ Some p -> p | None -> raise (File_not_exists path) ]
-  | False -> 
-    match Sys.file_exists path with
-    [ True -> path
-    | False -> raise (File_not_exists path)
-    ]
-  ];
-*)
 
 exception Xml_error of string and string;
 

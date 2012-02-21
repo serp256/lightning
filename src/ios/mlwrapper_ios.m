@@ -6,11 +6,13 @@
 #import <caml/mlvalues.h>
 #import <caml/alloc.h>
 #import <caml/threads.h>
+#import "light_common.h"
 #import "mlwrapper_ios.h"
 #import "LightViewController.h"
 
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
+	PRINT_DEBUG("process touched");
 	caml_acquire_runtime_system();
 	value mltouch = 1,mltouches = 1,globalX = 1,globalY = 1,time = 1, lst_el = 1;
   Begin_roots5(mltouch,time,globalX,globalY,mltouches);

@@ -96,12 +96,13 @@
 
 - (void)layoutSubviews 
 {
+		NSLog(@"Layout subviews");
     [self resizeFramebuffer];
 
 		if (mStage != NULL) mlstage_resize(mStage,mWidth,mHeight);
 		else mStage = mlstage_create(mWidth,mHeight);
-
     [self renderStage];        // fill buffer immediately to avoid flickering
+		NSLog(@"end of layoutSubviews");
 }
 
 -(void)resizeFramebuffer
@@ -123,6 +124,7 @@
 
 - (void)renderStage
 {
+		NSLog(@"render stage");
     if (mFramebuffer == 0 || mRenderbuffer == 0) {
         NSLog(@"buffers not yet initialized");
         return; // buffers not yet initialized
@@ -142,11 +144,14 @@
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
     
     mlstage_render(mStage);
+
+		NSLog(@"stage rendered");
     
     glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
     [mContext presentRenderbuffer:GL_RENDERBUFFER];
     
 		[pool release];
+		NSLog(@"end of renderStage");
 }
 
 - (void)setTimer:(NSTimer *)newTimer 
@@ -193,6 +198,7 @@
 
 - (void)start
 {
+	NSLog(@"START");
     if (self.isStarted) return;
     if (mFrameRate > 0.0f)
     {

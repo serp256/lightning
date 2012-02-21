@@ -59,7 +59,7 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
     }*/
 
 		size_t dataLen = legalWidth * legalHeight * bytesPerPixel;
-    void *imageData = caml_stat_alloc(dataLen);
+    void *imageData = malloc(dataLen);
     CGContextRef context = CGBitmapContextCreate(imageData, legalWidth, legalHeight, 8, bytesPerPixel * legalWidth, cgColorSpace, bitmapInfo);
     CGColorSpaceRelease(cgColorSpace);
     
@@ -72,7 +72,7 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
 	draw(context,data);
     UIGraphicsPopContext();        
     
-    CGContextRelease(context);
+		CGContextRelease(context);
 	tInfo->width = legalWidth;
 	tInfo->realWidth = width;
 	tInfo->height = legalHeight;
@@ -302,23 +302,12 @@ NSString * pathForBundleResource(NSString * path, NSBundle * bundle) {
 }
 
 
-CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleFactor) { // if old texture exists when replace
-	CAMLparam2(opath,ocontentScaleFactor);
-	CAMLlocal1(res);
-	NSLog(@"ml_loade image: %s\n",String_val(opath));
-	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
-	checkGLErrors("start load image");
+int _load_image(NSString *path,textureInfo *tInfo) {
 
-	caml_release_runtime_system();
-
-	textureInfo tInfo;
-
-	//double gt1 = CACurrentMediaTime();
 	NSString *fullPath = NULL;
 	NSString *imgType = [[path pathExtension] lowercaseString];
 	NSBundle *bundle = [NSBundle mainBundle];
-	float contentScaleFactor = Double_val(ocontentScaleFactor);
-	contentScaleFactor = deviceScaleFactor();
+	float contentScaleFactor = 1;
 
 	int r;
 	int is2x = 0;
@@ -334,7 +323,7 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
 
 		if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
 		if (!fullPath) r = 2;
-		else r = loadPvrFile(fullPath, &tInfo);
+		else r = loadPvrFile(fullPath, tInfo);
 	} else {
 		// Try pvr first with right scale factor
 		int is_pvr = 0;
@@ -380,51 +369,73 @@ CAMLprim value ml_loadImage (value oldTexture, value opath, value ocontentScaleF
 
 		if (!fullPath) r = 2;
 		else {
-			if (is_pvr) r = loadPvrFile(fullPath,&tInfo);
+			if (is_pvr) r = loadPvrFile(fullPath,tInfo);
 			else {
 				//double t1 = CACurrentMediaTime();
 				UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
 				//double t2 = CACurrentMediaTime();
 				//NSLog(@"load from disk: %F",(t2 - t1));
 				//t1 = CACurrentMediaTime();
-				r = loadImageFile(image, &tInfo);
+				r = loadImageFile(image, tInfo);
 				//t2 = CACurrentMediaTime();
 				//NSLog(@"decode img: [%f]",(t2 - t1));
 				[image release];
 			}
 		}
 	}
+	return r;
+}
 
+value ml_load_image_info(value opath) {
+	// NEED NSPool here
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
+	caml_release_runtime_system();
+	PRINT_DEBUG("runtime released from load image thread");
+	textureInfo *tInfo = malloc(sizeof(textureInfo));
+	int r = _load_image(path,tInfo);
+	[pool release];
+	caml_acquire_runtime_system();
+	PRINT_DEBUG("runtime acquired from load image thread");
 	if (r) {
-		caml_acquire_runtime_system();
+		free(tInfo);
+		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
+		caml_failwith("Can't load image");
+	};
+	return ((value)tInfo);
+}
+
+void ml_free_image_info(value tInfo) {
+	free(((textureInfo*)tInfo)->imgData);
+	free((textureInfo*)tInfo);
+}
+
+CAMLprim value ml_loadImage(value oldTexture, value opath, value ocontentScaleFactor) { // if old texture exists when replace
+	CAMLparam2(opath,ocontentScaleFactor);
+	CAMLlocal1(mlTex);
+	NSLog(@"ml_loade image: %s\n",String_val(opath));
+	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
+	checkGLErrors("start load image");
+
+	textureInfo tInfo;
+	int r = _load_image(path,&tInfo);
+
+	//double gt1 = CACurrentMediaTime();
+	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_failwith("Can't load image");
 	};
 
 	uint textureID;
-	textureID = createGLTexture(Long_val(oldTexture),&tInfo);
+	textureID = createGLTexture(OPTION_INT(oldTexture),&tInfo);
 	NSLog(@"loaded texture: %d",textureID);
-	//free(tInfo.imgData);
-	//double glt2 = CACurrentMediaTime();
-	//NSLog(@"gl binding: [%f]",(glt2 - glt1));
-	caml_stat_free(tInfo.imgData);
+	free(tInfo.imgData);
 
-	caml_acquire_runtime_system();
 	checkGLErrors("after load texture");
 
-	res = caml_alloc_tuple(10);
-	Store_field(res,0,Val_int(tInfo.format));
-	Store_field(res,1,Val_int((unsigned int)tInfo.realWidth));
-	Store_field(res,2,Val_int(tInfo.width));
-	Store_field(res,3,Val_int((unsigned int)tInfo.realHeight));
-	Store_field(res,4,Val_int(tInfo.height));
-	Store_field(res,5,Val_int(tInfo.numMipmaps));
-	Store_field(res,6,Val_int(1));
-	Store_field(res,7,Val_int(tInfo.premultipliedAlpha));
-	//Store_field(res,8,caml_copy_double(is2x ? contentScaleFactor : 1.0f));
-	Store_field(res,8,caml_copy_double(tInfo.scale));
-	Store_field(res,9,Val_long(textureID));
-	CAMLreturn(res);
+	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
+
+	CAMLreturn(mlTex);
 }
 
 

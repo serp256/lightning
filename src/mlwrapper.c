@@ -4,19 +4,13 @@
 #include <caml/memory.h>
 #include <caml/callback.h>
 #include <caml/alloc.h>
+#include "light_common.h"
 #include "mlwrapper.h"
+
 
 #define NIL Val_int(0)
 
 extern void caml_gc_compaction();
-
-#define ERROR(fmt,args...) fprintf(stderr,fmt, ## args)
-
-#ifdef DEBUG
-    #define PRINT_DEBUG(fmt,args...)  (fprintf(stderr,fmt, ## args),putc('\n',stderr))
-#else
-    #define PRINT_DEBUG(fmt,args...)
-#endif
 
 
 #ifdef ANDROID
@@ -75,8 +69,9 @@ void mlstage_destroy(mlstage *mlstage) {
 
 static value advanceTime_method = NIL;
 void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
-	//PRINT_DEBUG("advance time: %d",(unsigned int)pthread_self());
+	PRINT_DEBUG("advance time: %d",(unsigned int)pthread_self());
 	caml_acquire_runtime_system();
+	PRINT_DEBUG("ocaml runtime acquired");
 	if (advanceTime_method == NIL)
 		advanceTime_method = caml_hash_variant("advanceTime");
 	value advanceTimeMethod = caml_get_public_method(mlstage->stage,advanceTime_method);
@@ -84,16 +79,19 @@ void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
 	caml_callback2(advanceTimeMethod,mlstage->stage,caml_copy_double(timePassed));
 	End_roots();
 	caml_release_runtime_system();
+	PRINT_DEBUG("runtime released after advance time");
 }
 
 static value render_method = NIL;
 void mlstage_render(mlstage *mlstage) {
-	//PRINT_DEBUG("mlstage render");
+	PRINT_DEBUG("mlstage render");
 	caml_acquire_runtime_system();
+	PRINT_DEBUG("ocaml runtime acquired");
 	if (render_method == NIL)
 		render_method = caml_hash_variant("renderStage");
 	caml_callback2(caml_get_public_method(mlstage->stage,render_method),mlstage->stage,Val_int(0));
 	caml_release_runtime_system();
+	PRINT_DEBUG("runtime released after render");
 }
 
 

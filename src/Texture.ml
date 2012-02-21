@@ -57,11 +57,22 @@ and c =
   end;
 
 
-external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture";
-
+type imageInfo;
+external loadImageInfo: string -> imageInfo = "ml_load_image_info";
+external freeImageInfo: imageInfo -> unit = "ml_free_image_info";
+external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture";
+(* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
+external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 IFDEF SDL THEN
 
+value loadImageInfo path = loadImageInfo (Filename.concat "Resources" path);
+value loadImage ?textureID ~path ~contentScaleFactor = loadImage ?textureID ~path:(Filename.concat "Resources" path) ~contentScaleFactor;
+
+ENDIF;
+
+(*
 value loadImage ?(textureID=0) ~path ~contentScaleFactor = 
+(*     let () = debug "loaded texture" (* : [%d:%d] -> [%d:%d] width height legalWidth legalHeight*) in *)
   let surface = Sdl_image.load (LightCommon.resource_path path) in
   let bpp = Sdl.Video.surface_bpp surface in
   let () = assert (bpp = 32) in
@@ -88,7 +99,6 @@ value loadImage ?(textureID=0) ~path ~contentScaleFactor =
         textureID = textureID;
       }
     in
-(*     let () = debug "loaded texture" (* : [%d:%d] -> [%d:%d] width height legalWidth legalHeight*) in *)
     let res = loadTexture textureInfo (Some (Sdl.Video.surface_pixels rgbSurface)) in
     (
       Sdl.Video.free_surface rgbSurface;
@@ -97,13 +107,12 @@ value loadImage ?(textureID=0) ~path ~contentScaleFactor =
   );
 
 ELSE IFDEF IOS THEN
-external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
-(* external freeImageData: GLTexture.textureInfo -> unit = "ml_freeImageData"; *)
 ELSE IFDEF ANDROID THEN
 external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
 ENDIF;
 ENDIF;
 ENDIF;
+*)
 
 module Cache = WeakHashtbl.Make (struct
   type t = string;
@@ -240,6 +249,7 @@ value make textureInfo =
     initializer Gc.finalise (fun t -> (debug:gc "release texture <%d>" textureID; t#release ())) self;
   end;
 
+(*
 value create texFormat width height data =
   let legalWidth = nextPowerOfTwo width
   and legalHeight = nextPowerOfTwo height in
@@ -260,6 +270,7 @@ value create texFormat width height data =
   let textureInfo = loadTexture textureInfo data in
   let res = make textureInfo in
   (res :> c);
+*)
 
 
 Callback.register "create_ml_texture" begin fun textureID width height clipping ->
@@ -290,6 +301,16 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
   end
 end;
 
+value make_and_cache path textureInfo = 
+  let res = make textureInfo in
+  (
+    debug:cache "texture <%d> loaded" res#textureID;
+    (* FIXME: на релиз нужно отсюда наебывать *)
+    Gc.finalise (fun _ -> Cache.remove cache path) res;
+    Cache.add cache path res;
+    (res :> c)
+  );
+
 value load path : c = 
   try
     debug:cache (
@@ -308,15 +329,127 @@ value load path : c =
         path textureInfo.textureID textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
         (string_of_bool textureInfo.premultipliedAlpha) 
     in
-    let res = make textureInfo in
-    (
-      debug:cache "texture <%d> loaded" res#textureID;
-      Gc.finalise (fun _ -> Cache.remove cache path) res;
-      Cache.add cache path res;
-      (res :> c)
-    )
+    make_and_cache path textureInfo
   ];
 
+
+
+module type AsyncLoader = sig
+
+  value load: string -> (c -> unit) -> unit;
+  value check_result: unit -> unit;
+
+end;
+
+module AsyncLoader (P:sig end) : AsyncLoader = struct
+
+  debug "Async loader created";
+
+  value waiters = Hashtbl.create 1;
+
+  value load_queue = ThreadSafeQueue.create ();
+  value condition = Condition.create ();
+  value load path callback = 
+  (
+    if not (Hashtbl.mem waiters path)
+    then
+    (
+      ThreadSafeQueue.enqueue load_queue path;
+      Condition.signal condition;
+    )
+    else ();
+    Hashtbl.add waiters path callback;
+  );
+
+  value result_queue = ThreadSafeQueue.create ();
+
+  value rec check_result () = 
+    let () = debug "check result" in
+    match ThreadSafeQueue.dequeue result_queue with
+    [ Some (path,image_info) -> 
+      (
+        let textureInfo =  loadTexture image_info in
+        let () = freeImageInfo image_info in
+        let texture = make_and_cache path textureInfo in
+        (
+          debug "texture: %s loaded" path;
+          let waiters = MHashtbl.pop_all waiters path in
+          List.iter (fun f -> f texture) waiters;
+        );
+        check_result ();
+      )
+    | None -> ()
+    ];
+
+  value mutex = Mutex.create ();
+  value run () =
+    let () = debug "Async loader run" in
+    let () = Mutex.lock mutex in
+    loop () where
+      rec loop () = 
+        let () = debug "try check requests" in
+        match ThreadSafeQueue.dequeue load_queue with
+        [ Some path ->
+          (
+            let l = loadImageInfo path  in
+            let () = debug "image loaded" in
+            ThreadSafeQueue.enqueue result_queue (path,l);
+            loop ();
+          )
+        | None -> 
+          (
+            debug "wait signal";
+            Condition.wait condition mutex;
+            loop ()
+          )
+        ];
+
+  value thread = Thread.create run ();
+
+end;
+
+
+value async_loader = ref None; (* ссылка на модуль *) 
+
+value check_async () =
+  match !async_loader with
+  [ Some m ->
+    let module Loader = (value m:AsyncLoader) in
+    Loader.check_result ()
+  | None -> ()
+  ];
+
+value load_async path callback = 
+  (* хитрая логика с кэшем, но пока хуй с ней *)
+  let texture = 
+    try
+      debug:cache (
+        Debug.d "print cache";
+        Cache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
+      );
+      Some (((Cache.find cache path) :> c))
+    with 
+    [ Not_found -> None ]
+  in
+  match texture with
+  [ Some t -> callback t
+  | None -> 
+    let m =
+      match !async_loader with
+      [ Some m -> m
+      | None -> 
+          let module Loader = AsyncLoader (struct end) in
+          let m = (module Loader:AsyncLoader) in
+          (
+            async_loader.val := Some m;
+            m
+          )
+          
+      ]
+    in
+    let module Loader = (value m:AsyncLoader) in
+    Loader.load path callback
+  ];
 
 (*
 class type renderObject =

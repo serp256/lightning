@@ -21,6 +21,7 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
   module Image = Image.Make DisplayObject;
   module Atlas = Atlas.Make DisplayObject;
   module Sprite = Sprite.Make DisplayObject Image;
+  module Clip = Clip.Make Image Atlas Sprite;
 (*   module CompiledSprite = CompiledSprite.Make Image Sprite; *)
 (*   module MovieClip = MovieClip.Make DisplayObject Image; *)
 (*   module BitmapFontCreator = BitmapFont.MakeCreator Image Sprite; *)

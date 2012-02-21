@@ -21,10 +21,20 @@
 
 static LightViewController *instance = NULL;
 
+
+
++alloc {
+	NSLog(@"Try INIT Light view controller");
+	if (instance != NULL) return NULL; // raise exception
+	NSLog(@"INIT Light view controller");
+	char *argv[] = {"ios",NULL};
+	caml_startup(argv);
+	instance = [super alloc];
+	return instance;
+}
+
 +(LightViewController*)sharedInstance {
-	if (!instance) {
-		instance = [[LightViewController alloc] init];
-	};
+	if (!instance) [[LightViewController alloc] init];
 	return instance;
 }
 
