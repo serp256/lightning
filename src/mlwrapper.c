@@ -47,12 +47,11 @@ void mlstage_resize(mlstage *mlstage,float width,float height) {
 	mlstage->width = width;
 	mlstage->height = height;
 	caml_acquire_runtime_system();
-	value resize = Val_unit, w = Val_unit, h = Val_unit;
-	resize = caml_get_public_method(mlstage->stage,caml_hash_variant("resize"));
-	printf("resize method: %ld, advance = %ld\n",resize,caml_get_public_method(mlstage->stage,caml_hash_variant("advanceTime")));
-	Begin_roots3(resize,w,h);
+	value w = Val_unit, h = Val_unit;
+	Begin_roots2(w,h);
 	w = caml_copy_double(width);
 	h = caml_copy_double(height);
+	value resize = caml_get_public_method(mlstage->stage,caml_hash_variant("resize"));
 	caml_callback3(resize,mlstage->stage,w,h);
 	End_roots();
 	caml_release_runtime_system();
@@ -71,10 +70,9 @@ static value advanceTime_method = NIL;
 void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
 	caml_acquire_runtime_system();
 	if (advanceTime_method == NIL) advanceTime_method = caml_hash_variant("advanceTime");
+	value dt = caml_copy_double(timePassed);
 	value advanceTimeMethod = caml_get_public_method(mlstage->stage,advanceTime_method);
-	Begin_roots1(advanceTimeMethod);
-	caml_callback2(advanceTimeMethod,mlstage->stage,caml_copy_double(timePassed));
-	End_roots();
+	caml_callback2(advanceTimeMethod,mlstage->stage,dt);
 	caml_release_runtime_system();
 }
 
