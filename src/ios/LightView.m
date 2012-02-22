@@ -101,6 +101,7 @@
 
 		if (mStage != NULL) mlstage_resize(mStage,mWidth,mHeight);
 		else mStage = mlstage_create(mWidth,mHeight);
+    mLastFrameTimestamp = CACurrentMediaTime();
     [self renderStage];        // fill buffer immediately to avoid flickering
 		NSLog(@"end of layoutSubviews");
 }
@@ -198,29 +199,30 @@
 
 - (void)start
 {
-	NSLog(@"START");
-    if (self.isStarted) return;
-    if (mFrameRate > 0.0f)
-    {
-        mLastFrameTimestamp = CACurrentMediaTime();
-        
-				if (mDisplayLinkSupported)
-        {
-            mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
-						[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
-						[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-        }
-        else 
-        {
-            // timer used as a fallback
-            self.timer = [NSTimer scheduledTimerWithTimeInterval:(1.0f / mFrameRate) target:self selector:@selector(renderStage) userInfo:nil repeats:YES];            
-        }
-    }
+	NSLog(@"START View");
+	if (self.isStarted) return;
+	if (mFrameRate > 0.0f)
+	{
+			mLastFrameTimestamp = CACurrentMediaTime();
+			
+			if (mDisplayLinkSupported)
+			{
+					mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
+					[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
+					[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+			}
+			else 
+			{
+					// timer used as a fallback
+					self.timer = [NSTimer scheduledTimerWithTimeInterval:(1.0f / mFrameRate) target:self selector:@selector(renderStage) userInfo:nil repeats:YES];            
+			}
+	}
 }
 
 - (void)stop
 {
     [self renderStage]; // draw last-moment changes
+		NSLog(@"STOP View");
     
     self.timer = nil;
     self.displayLink = nil;

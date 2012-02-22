@@ -69,17 +69,13 @@ void mlstage_destroy(mlstage *mlstage) {
 
 static value advanceTime_method = NIL;
 void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
-	PRINT_DEBUG("advance time: %d",(unsigned int)pthread_self());
 	caml_acquire_runtime_system();
-	PRINT_DEBUG("ocaml runtime acquired");
-	if (advanceTime_method == NIL)
-		advanceTime_method = caml_hash_variant("advanceTime");
+	if (advanceTime_method == NIL) advanceTime_method = caml_hash_variant("advanceTime");
 	value advanceTimeMethod = caml_get_public_method(mlstage->stage,advanceTime_method);
 	Begin_roots1(advanceTimeMethod);
 	caml_callback2(advanceTimeMethod,mlstage->stage,caml_copy_double(timePassed));
 	End_roots();
 	caml_release_runtime_system();
-	PRINT_DEBUG("runtime released after advance time");
 }
 
 static value render_method = NIL;

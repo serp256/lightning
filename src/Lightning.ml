@@ -50,6 +50,7 @@ external openURL: string -> unit = "ml_openURL";
 value sendEmail recepient ~subject ?(body="") () = 
   let params = UrlEncoding.mk_url_encoded_parameters [ ("subject",subject); ("body", body)] in
   openURL (Printf.sprintf "mailto:%s?%s" recepient params);
+external show_alert: ~title:string -> ~message:string -> unit = "ml_show_alert";
 ELSE
 value showNativeWaiter _pos = ();
 value hideNativeWaiter () = ();

@@ -249,8 +249,21 @@ value async_load (stage:Stage.c) =
       loading#setPos 100. 100.;
       stage#addChild loading;
     );
-    Texture.async_load "tree.png" (fun t -> debug "WOOO it's loaded");
+    Texture.load_async "tree.png" (fun t -> debug "WOOO it's loaded");
   );
+);
+
+
+value alert (stage:Stage.c) =
+(
+  let lib = Clip.load "Clips" in
+  let loading = Clip.get_symbol lib "ESkins.LoadClip" in
+  (
+    loading#setPos 100. 100.;
+    stage#addChild loading;
+  );
+  Timers.start 20. (fun () -> Lightning.show_alert "this is test alert" "this message for test alert");
+  ();
 );
 
 let stage width height = 
@@ -258,8 +271,9 @@ let stage width height =
     inherit Stage.c width height as super;
     value color = 0xCCCCCC;
     initializer begin
+      alert self;
 (*       flip self; *)
-      async_load self;
+(*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
 (*       tlf self; *)

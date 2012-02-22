@@ -73,6 +73,16 @@ void ml_openURL(value mlurl) {
 	CAMLreturn0;
 }
 
+void ml_show_alert(value otitle,value omessage) {
+	PRINT_DEBUG("show alert");
+	NSString *title = [NSString stringWithCString:String_val(otitle) encoding:NSUTF8StringEncoding];
+	NSString *message = [NSString stringWithCString:String_val(omessage) encoding:NSUTF8StringEncoding];
+	UIAlertView *alert = [[UIAlertView alloc] init];
+	alert.title = title;
+	alert.message = message;
+	[alert show];
+}
+
 
 //////////// key-value storage based on NSUserDefaults
 
