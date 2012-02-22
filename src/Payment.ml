@@ -8,8 +8,17 @@ external ml_purchase : string -> unit = "ml_payment_purchase";
 
 ELSE
 
-value ml_init _ _ = failwith "Not implemented";
-value ml_purchase _ = failwith "Not implemented";
+type callbacks = 
+  {
+    on_success: (string -> bool -> unit);
+    on_error: (string -> string -> bool -> unit);
+  };
+
+value callbacks = ref None;
+
+value ml_init success error = callbacks.val := Some {on_success = success; on_error = error};
+
+value ml_purchase (id:string) = ();
 
 ENDIF;
 

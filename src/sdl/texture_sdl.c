@@ -56,6 +56,7 @@ int _load_image(char *path,textureInfo *tInfo) {
 	tInfo->realWidth = width;
 	tInfo->height = legalHeight;
 	tInfo->realHeight = height;
+	tInfo->premultipliedAlpha = 0;
 	tInfo->generateMipmaps = 0;
 	tInfo->numMipmaps = 0;
 	tInfo->scale = 1.;
