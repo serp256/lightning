@@ -44,8 +44,9 @@ ifeq ($(PLATFORM),IOS)
 						 -cclib '-framework\ OpenGLES' \
 						 -cclib '-framework\ AudioToolbox' \
 						 -cclib '-framework\ OpenAL' \
-						 -cclib '-framework\ GameKit'
-else
+						 -cclib '-framework\ GameKit' \
+						 -cclib '-framework StoreKit'
+	else
 	ifeq ($(PLATFORM),ANDROID)
 		gl = gl/es
 		#MLPPOPT += -DGLES -DANDROID 
