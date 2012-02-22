@@ -233,8 +233,34 @@ void ml_payment_purchase(value product_id) {
 }
 
 
+void ml_payment_commit_transaction(value t) {
+  CAMLparam1(t);
+  SKPaymentTransaction * transaction = (SKPaymentTransaction *)t;
+  [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
+  [transaction release];
+  CAMLreturn0;
+}
 
 
+// return transaction identifier
+CAMLprim value ml_payment_get_transaction_id(value t) {
+  CAMLparam1(t);
+  SKPaymentTransaction * transaction = (SKPaymentTransaction *)t;
+  CAMLreturn(caml_copy_string([transaction.transactionIdentifier cStringUsingEncoding:NSASCIIStringEncoding]));
+}
+
+
+
+// return transaction receipt for server side validation
+CAMLprim value ml_payment_get_transaction_receipt(value t) {
+  CAMLparam1(t);
+  CAMLlocal1(receipt);
+  SKPaymentTransaction * transaction = (SKPaymentTransaction *)t;
+  
+  receipt = caml_alloc_string([transaction.transactionReceipt length]);
+  memmove(String_val(receipt), (const char *)[transaction.transactionReceipt bytes], [transaction.transactionReceipt length]);
+  CAMLreturn(receipt);
+}
 
 
 

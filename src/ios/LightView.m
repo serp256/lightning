@@ -98,10 +98,14 @@
 {
 		NSLog(@"Layout subviews");
     [self resizeFramebuffer];
+		if (mStage != NULL) {
+		  mlstage_resize(mStage,mWidth,mHeight);	
+		} else {
+		  mStage = mlstage_create(mWidth,mHeight);		  
+		}
 
-		if (mStage != NULL) mlstage_resize(mStage,mWidth,mHeight);
-		else mStage = mlstage_create(mWidth,mHeight);
     mLastFrameTimestamp = CACurrentMediaTime();
+
     [self renderStage];        // fill buffer immediately to avoid flickering
 		NSLog(@"end of layoutSubviews");
 }

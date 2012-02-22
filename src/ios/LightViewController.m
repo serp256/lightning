@@ -260,16 +260,24 @@ static value *ml_url_complete = NULL;
                 break;
 
             case SKPaymentTransactionStateRestored:
+                NSLog(@"Restoring");
                 restored = YES;
             case SKPaymentTransactionStatePurchased:
-
+                NSLog(@"Purchased");
 				if (Is_block(payment_success_cb)) {
-				  caml_callback2(payment_success_cb, 
-				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]),
+				  
+//				  value receipt = caml_alloc_string([transaction.transactionReceipt length]);
+//				  memmove(String_val(receipt), [transaction.transactionReceipt bytes], len);
+//                caml_copy_string([transaction.transactionIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // transaction id
+
+                  [transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
+
+				  caml_callback3(payment_success_cb, 
+				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
+				                 (value)transaction,
 				                 Val_bool(restored));
 				}
             
-				[[SKPaymentQueue defaultQueue] finishTransaction:transaction];
 				[self hideActivityIndicator];
                 break;
             default:
@@ -277,5 +285,7 @@ static value *ml_url_complete = NULL;
         }
     }
 }
+
+
 
 @end
