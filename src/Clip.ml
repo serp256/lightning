@@ -470,38 +470,42 @@ class clip texture frames labels =
     initializer self#applyFrame 0 (match frames.(0) with [ KeyFrame _ f -> f | _ -> assert False ]);
   end;
 
+
+class image texture = 
+  object(self)
+    inherit Image.c texture;
+    method clip_cast : clip_cast = `Image (self :> Image.c);
+  end;
+
+class sprite = 
+  object(self)
+    inherit Sprite.c;
+    method clip_cast : clip_cast = `Sprite (self :> Sprite.c);
+  end;
+
 class type virtual c = 
   object
     inherit Image.D.c;
-    method clip_cast: [= `Image of Image.c | `Sprite of Sprite.c | `Atlas of Atlas.c | `Movie of movie ];
+    method clip_cast: clip_cast;
   end;
 
 value image path = 
   let texture = Texture.load path in
-  let res = 
-    object(self)
-      inherit Image.c texture;
-      method clip_cast = `Image (self :> Image.c);
-    end
-  in
+  let res = new image texture in
   (res :> c);
+
+value image_async path callback = 
+  Texture.load_async path begin fun texture ->
+    let res = new image texture in
+    callback (res :> c)
+  end;
 
 value create_element lib = fun
   [ Image img -> 
-    let res = 
-      object(self)
-        inherit Image.c (getSubTexture lib img);
-        method clip_cast = `Image (self :> Image.c);
-      end
-    in
+    let res = new image (getSubTexture lib img) in
     (res :> c)
   | Sprite elements -> 
-      let sprite = 
-        object(self)
-          inherit Sprite.c;
-          method clip_cast : clip_cast = `Sprite (self :> Sprite.c);
-        end
-      in
+      let sprite = new sprite in
       (
         List.iter begin fun 
           [ CImage img name pos ->
@@ -558,21 +562,11 @@ value create_element_async lib symbol callback =
   match symbol with
   [ Image img -> 
     getSubTextureAsync lib img begin fun texture ->
-      let res = 
-        object(self)
-          inherit Image.c texture;
-          method clip_cast = `Image (self :> Image.c);
-        end
-      in
+      let res = new image texture in
       callback (res :> c)
     end
   | Sprite elements -> 
-      let sprite = 
-        object(self)
-          inherit Sprite.c;
-          method clip_cast : clip_cast = `Sprite (self :> Sprite.c);
-        end
-      in
+      let sprite = new sprite in
       (
         let cnt = ref (List.length elements) in
         (
