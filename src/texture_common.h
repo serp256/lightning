@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #else
 #define GL_GLEXT_PROTOTYPES
+#include <SDL_surface.h>
 #include <SDL_opengl.h>
 #include <sys/types.h>
 #endif
@@ -46,6 +47,9 @@ typedef struct {
 	int generateMipmaps;
 	int premultipliedAlpha;
 	float scale;
+#ifdef SDL
+	SDL_Surface *surface;
+#endif
 	unsigned int dataLen;
 	unsigned char* imgData;
 } textureInfo;
@@ -88,5 +92,21 @@ enum PVRPixelType
   OGL_PVRTC2,
   OGL_PVRTC4
 };
+
+#define OPTION_INT(v) v == 1 ? 0 : Long_val(Field(v,0))
+
+#define ML_TEXTURE_INFO(mlTex,textureID,tInfo) \
+	mlTex = caml_alloc_tuple(10);\
+	Store_field(mlTex,0,Val_int(tInfo->format));\
+	Store_field(mlTex,1,Val_int((unsigned int)tInfo->realWidth));\
+	Store_field(mlTex,2,Val_int(tInfo->width));\
+	Store_field(mlTex,3,Val_int((unsigned int)tInfo->realHeight));\
+	Store_field(mlTex,4,Val_int(tInfo->height));\
+	Store_field(mlTex,5,Val_int(tInfo->numMipmaps));\
+	Store_field(mlTex,6,Val_int(1));\
+	Store_field(mlTex,7,Val_int(tInfo->premultipliedAlpha));\
+	Store_field(mlTex,8,caml_copy_double(tInfo->scale));\
+	Store_field(mlTex,9,Val_long(textureID));
+
 
 #endif

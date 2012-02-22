@@ -56,7 +56,7 @@ else
 	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
 		gl = gl/2.1
-		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o 
+		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
 		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
 		AMLSOURCES = sdl/sdl_run.ml
 		MLOBJSFLAGS = -I sdl
@@ -80,13 +80,15 @@ CFLAGS += -D$(PLATFORM)
 $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
-					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml AtlasNode.ml Atlas.ml Touch.ml BitmapFont.ml TLF.ml Timers.ml Timer.ml Sprite.ml \
+					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml AtlasNode.ml Atlas.ml Clip.ml Touch.ml BitmapFont.ml TLF.ml Timers.ml Timer.ml Sprite.ml \
 					Stage.ml Tween.ml Sound.ml GameCenter.ml LocalStorage.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml 
+
+Texture.cmo Texture.cmx: MLFLAGS += -package threads -thread
 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
 	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),$(patsubst %,-ccopt %,$(GLPARAM))) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
 
-MLCONTAINERS = containers/MList.ml containers/HSet.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml
+MLCONTAINERS = containers/MList.ml containers/HSet.ml containers/MHashtbl.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml containers/ThreadSafeQueue.ml
 MLUTILS = utils/UrlEncoding.ml
 
 

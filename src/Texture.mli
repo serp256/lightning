@@ -40,7 +40,7 @@ and c =
 
 
 
-value create: textureFormat -> int -> int -> option (Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout) -> c;
+(* value create: textureFormat -> int -> int -> option (Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout) -> c; *)
 value load: string -> c;
 
 class type rendered =
@@ -59,3 +59,8 @@ value glRGBA:int;
 value glRGB:int;
 
 value rendered: ?format:int -> ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)
+
+
+
+value load_async: string -> (c -> unit) -> unit;
+value check_async: unit -> unit;

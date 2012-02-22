@@ -16,7 +16,6 @@ float deviceScaleFactor() {
   return 1.0;
 }
 
-
 CAMLprim value ml_device_scale_factor() {
   CAMLparam0();
   CAMLreturn(caml_copy_double(deviceScaleFactor()));

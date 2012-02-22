@@ -6,11 +6,13 @@
 #import <caml/mlvalues.h>
 #import <caml/alloc.h>
 #import <caml/threads.h>
+#import "light_common.h"
 #import "mlwrapper_ios.h"
 #import "LightViewController.h"
 
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
+	PRINT_DEBUG("process touched");
 	caml_acquire_runtime_system();
 	value mltouch = 1,mltouches = 1,globalX = 1,globalY = 1,time = 1, lst_el = 1;
   Begin_roots5(mltouch,time,globalX,globalY,mltouches);
@@ -70,6 +72,16 @@ void ml_openURL(value mlurl) {
 	NSString *url = [NSString stringWithCString:String_val(mlurl) encoding:NSUTF8StringEncoding];
 	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
 	CAMLreturn0;
+}
+
+void ml_show_alert(value otitle,value omessage) {
+	PRINT_DEBUG("show alert");
+	NSString *title = [NSString stringWithCString:String_val(otitle) encoding:NSUTF8StringEncoding];
+	NSString *message = [NSString stringWithCString:String_val(omessage) encoding:NSUTF8StringEncoding];
+	UIAlertView *alert = [[UIAlertView alloc] init];
+	alert.title = title;
+	alert.message = message;
+	[alert show];
 }
 
 

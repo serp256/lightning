@@ -150,7 +150,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       method advanceTime (seconds:float) = 
       (
-        let () = debug "advance time" in
+        let () = debug "advance time: %f" seconds in
+        Texture.check_async();
         proftimer:perfomance "Stage advanceTime: %F"
         (
           Timers.process seconds;
