@@ -356,8 +356,8 @@ value parse_simple_elements inp imgLoader =
                   let i = imgLoader vlue in img.val := Some i;
                   None
                 )
-              | "width" -> Some (`width (parse_float inp vlue))
-              | "height" -> Some (`width (parse_float inp vlue))
+              | "width" | "w" -> Some (`width (parse_float inp vlue))
+              | "height" | "h" -> Some (`height (parse_float inp vlue))
               | "padding-left" -> Some (`paddingLeft (parse_float inp vlue))
               | "padding-top" -> Some (`paddingTop (parse_float inp vlue))
               | "padding-right" -> Some (`paddingRight (parse_float inp vlue))
