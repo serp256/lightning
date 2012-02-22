@@ -8,14 +8,20 @@
 
 #import <UIKit/UIKit.h>
 #import <GameKit/GameKit.h>
+#import <StoreKit/StoreKit.h>
+#import <caml/mlvalues.h>
+#import "LightActivityIndicator.h"
 
 @protocol OrientationDelegate 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
 @end
 
-@interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate> {
+@interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate, SKPaymentTransactionObserver> {
 	id<OrientationDelegate> _orientationDelegate;
-	UIActivityIndicatorView*	activityIndicator;
+	LightActivityIndicatorView*	activityIndicator;
+@public
+	value payment_success_cb;
+	value payment_error_cb;
 }
 
 +(LightViewController*)sharedInstance;
@@ -23,8 +29,9 @@
 -(void)start;
 -(void)showLeaderboard;
 -(void)showAchievements;
--(void)showActivityIndicator:(CGPoint)pos;
+-(void)showActivityIndicator:(LightActivityIndicatorView *)indicator;
 -(void)hideActivityIndicator;
+
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
 
 @end

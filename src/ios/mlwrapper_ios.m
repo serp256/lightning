@@ -47,8 +47,9 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
 void ml_showActivityIndicator(value mlpos) {
 	CAMLparam1(mlpos);
 	LightViewController *c = [LightViewController sharedInstance];
-	CGPoint pos = CGPointMake(Double_field(mlpos,0),Double_field(mlpos,1));
-	[c showActivityIndicator:pos];
+//	CGPoint pos = CGPointMake(Double_field(mlpos,0),Double_field(mlpos,1));
+//	[c showActivityIndicator: pos];
+    [c showActivityIndicator: nil];
 	CAMLreturn0;
 }
 
@@ -187,12 +188,37 @@ value ml_kv_storage_exists(value storage, value key_ml) {
 
 
 
+/* PAYMENTS */
+
+void ml_payment_init(value success_cb, value error_cb) {
+  CAMLparam2(success_cb, error_cb);
+
+  LightViewController * c = [LightViewController sharedInstance];
+
+  c->payment_success_cb = success_cb;
+  c->payment_error_cb   = error_cb;   
+
+  caml_register_global_root(&(c->payment_success_cb));
+  caml_register_global_root(&(c->payment_error_cb));
+  
+  [[SKPaymentQueue defaultQueue] addTransactionObserver: c];
+  
+  CAMLreturn0;
+}
 
 
-
-
-
-
+void ml_payment_purchase(value product_id) {
+  CAMLparam1(product_id);
+  
+  if ([SKPaymentQueue canMakePayments]) {
+    SKPayment *payment = [SKPayment paymentWithProductIdentifier: STR_CAML2OBJC(product_id)];
+    [[SKPaymentQueue defaultQueue] addPayment:payment];
+  } else {
+    [[[[UIAlertView alloc] initWithTitle:@"error" message:@"In App Purchases are currently disabled. Please adjust your settings to enable In App Purchases." delegate:nil cancelButtonTitle:@"close" otherButtonTitles:nil] autorelease] show];
+  }      
+  
+  CAMLreturn0;
+}
 
 
 

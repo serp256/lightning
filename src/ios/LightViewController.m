@@ -28,6 +28,7 @@ static LightViewController *instance = NULL;
 	return instance;
 }
 
+
 #pragma mark - View lifecycle
 - (void)loadView {
 	UIInterfaceOrientation orient = self.interfaceOrientation;
@@ -159,20 +160,34 @@ static value *ml_url_complete = NULL;
 // ////////////////////
 
 
+//
+-(void)showActivityIndicator: (LightActivityIndicatorView *)indicator {
+    if (indicator == nil) {
+        indicator = [[[LightActivityIndicatorView alloc] initWithTitle: nil message: @"" delegate:nil cancelButtonTitle:nil otherButtonTitles:nil] autorelease];
+    }
 
--(void)showActivityIndicator:(CGPoint)pos {
-	if (!activityIndicator) activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-	activityIndicator.center = pos;
-	self.view.userInteractionEnabled = NO;
-	[self.view addSubview:activityIndicator];
-	[activityIndicator startAnimating];
+	if (activityIndicator) {
+		[activityIndicator dismissWithClickedButtonIndex:-1 animated:YES];
+		[activityIndicator release];
+	}
+	
+	activityIndicator = [indicator retain];
+    [activityIndicator show];
 }
 
+
+//
 -(void)hideActivityIndicator {
-	[activityIndicator stopAnimating];
-	[activityIndicator removeFromSuperview];
-	self.view.userInteractionEnabled = YES;
+	if (!activityIndicator) {
+		return;
+	}
+	[activityIndicator dismissWithClickedButtonIndex:-1 animated:YES];
+	[activityIndicator release];
+	activityIndicator = nil;
 }
+
+
+
 
 - (void)viewDidUnload
 {
@@ -181,8 +196,7 @@ static value *ml_url_complete = NULL;
     // e.g. self.myOutlet = nil;
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 	// Return YES for supported orientations
 	if (_orientationDelegate) {
 		BOOL res = [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
@@ -190,6 +204,68 @@ static value *ml_url_complete = NULL;
 	}
 	else
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+
+
+
+/* handle payment transactions */
+- (void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray *)transactions {
+    BOOL restored;
+    LightActivityIndicatorView * indicator;
+    for (SKPaymentTransaction *transaction in transactions) {
+        restored = NO;
+        switch (transaction.transactionState) {
+			case SKPaymentTransactionStatePurchasing:
+				indicator = [[[LightActivityIndicatorView alloc] initWithTitle: nil message:@"Connecting to AppStore" delegate:nil cancelButtonTitle:nil otherButtonTitles:nil] autorelease];
+				[self showActivityIndicator: indicator];
+				break;
+            case SKPaymentTransactionStateFailed:
+				[self hideActivityIndicator];
+				NSString * e;
+				if (transaction.error.code != SKErrorPaymentCancelled)
+				{
+				    e = [transaction.error localizedDescription];
+					UIAlertView* alert =
+					[
+					 [UIAlertView alloc]
+					 initWithTitle:@"Payment error"
+					 message: e
+					 delegate:nil
+					 cancelButtonTitle:@"OK"
+					 otherButtonTitles:nil
+					 ];
+					[alert show];
+					[alert release];
+				} else {
+				  e = @"Cancelled";
+				}
+				
+				if (Is_block(payment_error_cb)) {
+				  caml_callback3(payment_error_cb, 
+				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), 
+				                 caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]), 
+				                 Val_bool(transaction.error.code == SKErrorPaymentCancelled));
+				}
+				[[SKPaymentQueue defaultQueue] finishTransaction: transaction];
+                break;
+
+            case SKPaymentTransactionStateRestored:
+                restored = YES;
+            case SKPaymentTransactionStatePurchased:
+
+				if (Is_block(payment_success_cb)) {
+				  caml_callback2(payment_success_cb, 
+				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]),
+				                 Val_bool(restored));
+				}
+            
+				[[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+				[self hideActivityIndicator];
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 @end
