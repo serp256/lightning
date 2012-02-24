@@ -46,8 +46,10 @@ value load: ?loadTextures:bool -> string -> lib;
 value loadxml: ?loadTextures:bool -> string -> lib;
 
 value image: string -> c;
+value image_async: string -> (c -> unit) -> unit;
 
 value symbols: lib -> Enum.t string;
 value get_symbol: lib -> string -> c;
+value get_symbol_async: lib -> string -> (c -> unit) -> unit;
 
 end;

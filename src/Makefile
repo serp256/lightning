@@ -45,7 +45,7 @@ ifeq ($(PLATFORM),IOS)
 						 -cclib '-framework\ AudioToolbox' \
 						 -cclib '-framework\ OpenAL' \
 						 -cclib '-framework\ GameKit' \
-						 -cclib '-framework StoreKit'
+						 -cclib '-framework\ StoreKit'
 	else
 	ifeq ($(PLATFORM),ANDROID)
 		gl = gl/es

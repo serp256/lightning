@@ -470,38 +470,42 @@ class clip texture frames labels =
     initializer self#applyFrame 0 (match frames.(0) with [ KeyFrame _ f -> f | _ -> assert False ]);
   end;
 
+
+class image texture = 
+  object(self)
+    inherit Image.c texture;
+    method clip_cast : clip_cast = `Image (self :> Image.c);
+  end;
+
+class sprite = 
+  object(self)
+    inherit Sprite.c;
+    method clip_cast : clip_cast = `Sprite (self :> Sprite.c);
+  end;
+
 class type virtual c = 
   object
     inherit Image.D.c;
-    method clip_cast: [= `Image of Image.c | `Sprite of Sprite.c | `Atlas of Atlas.c | `Movie of movie ];
+    method clip_cast: clip_cast;
   end;
 
 value image path = 
   let texture = Texture.load path in
-  let res = 
-    object(self)
-      inherit Image.c texture;
-      method clip_cast = `Image (self :> Image.c);
-    end
-  in
+  let res = new image texture in
   (res :> c);
+
+value image_async path callback = 
+  Texture.load_async path begin fun texture ->
+    let res = new image texture in
+    callback (res :> c)
+  end;
 
 value create_element lib = fun
   [ Image img -> 
-    let res = 
-      object(self)
-        inherit Image.c (getSubTexture lib img);
-        method clip_cast = `Image (self :> Image.c);
-      end
-    in
+    let res = new image (getSubTexture lib img) in
     (res :> c)
   | Sprite elements -> 
-      let sprite = 
-        object(self)
-          inherit Sprite.c;
-          method clip_cast : clip_cast = `Sprite (self :> Sprite.c);
-        end
-      in
+      let sprite = new sprite in
       (
         List.iter begin fun 
           [ CImage img name pos ->
@@ -558,21 +562,11 @@ value create_element_async lib symbol callback =
   match symbol with
   [ Image img -> 
     getSubTextureAsync lib img begin fun texture ->
-      let res = 
-        object(self)
-          inherit Image.c texture;
-          method clip_cast = `Image (self :> Image.c);
-        end
-      in
+      let res = new image texture in
       callback (res :> c)
     end
   | Sprite elements -> 
-      let sprite = 
-        object(self)
-          inherit Sprite.c;
-          method clip_cast : clip_cast = `Sprite (self :> Sprite.c);
-        end
-      in
+      let sprite = new sprite in
       (
         let cnt = ref (List.length elements) in
         (
@@ -669,7 +663,7 @@ value load ?(loadTextures=False) libpath : lib =
       | _ -> Some (IO.nread bininp len)
       ]
     in
-    let n_textures = IO.read_byte bininp in
+    let n_textures = IO.read_ui16 bininp in
     let textures = Array.init n_textures (fun _ -> IO.read_string bininp) in
     let n_items = IO.read_ui16 bininp in
     let items = Hashtbl.create n_items in
@@ -742,7 +736,7 @@ value load ?(loadTextures=False) libpath : lib =
         let () = debug "bin read %d:%d" id kind in
         match kind with
         [ 0 -> (* image *)
-            let page = IO.read_byte bininp in
+            let page = IO.read_ui16 bininp in
             let x = IO.read_ui16 bininp in
             let y = IO.read_ui16 bininp in
             let width = IO.read_ui16 bininp in
