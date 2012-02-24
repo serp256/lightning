@@ -22,6 +22,8 @@
 @public
 	value payment_success_cb;
 	value payment_error_cb;
+	value remote_notification_request_success_cb;
+	value remote_notification_request_error_cb;
 }
 
 +(LightViewController*)sharedInstance;

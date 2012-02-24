@@ -15,6 +15,9 @@ value open_resource: string -> float -> in_channel;
 value read_resource: string -> float -> string;
 value read_json: string -> Ojson.t;
 
+type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
+
+value request_remote_notifications: list remoteNotification ->  (string -> unit) -> (string -> unit) -> unit;
 
 module MakeXmlParser(P:sig value path: string; end): sig
   value close: unit -> unit;

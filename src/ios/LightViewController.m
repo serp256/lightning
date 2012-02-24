@@ -22,7 +22,6 @@
 static LightViewController *instance = NULL;
 
 
-
 +alloc {
 	NSLog(@"Try INIT Light view controller");
 	if (instance != NULL) return NULL; // raise exception
@@ -31,6 +30,17 @@ static LightViewController *instance = NULL;
 	caml_startup(argv);
 	instance = [super alloc];
 	return instance;
+}
+
+-(id)init {
+  self = [super init];
+  if (self != nil) {
+	payment_success_cb = Val_int(1);
+	payment_error_cb   = Val_int(1);
+	remote_notification_request_success_cb = Val_int(1);
+	remote_notification_request_error_cb   = Val_int(1);
+  }
+  return self;
 }
 
 +(LightViewController*)sharedInstance {
@@ -96,14 +106,6 @@ static LightViewController *instance = NULL;
     [self dismissModalViewControllerAnimated:YES];
 }
 
-
-/*
-// Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-}
-*/
 
 
 ////////////////////
@@ -198,14 +200,6 @@ static value *ml_url_complete = NULL;
 
 
 
-
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    // Release any retained subviews of the main view.
-    // e.g. self.myOutlet = nil;
-}
-
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 	// Return YES for supported orientations
 	if (_orientationDelegate) {
@@ -266,10 +260,6 @@ static value *ml_url_complete = NULL;
                 NSLog(@"Purchased");
 				if (Is_block(payment_success_cb)) {
 				  
-//				  value receipt = caml_alloc_string([transaction.transactionReceipt length]);
-//				  memmove(String_val(receipt), [transaction.transactionReceipt bytes], len);
-//                caml_copy_string([transaction.transactionIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // transaction id
-
                   [transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
 
 				  caml_callback3(payment_success_cb, 
