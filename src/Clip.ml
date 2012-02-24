@@ -663,7 +663,7 @@ value load ?(loadTextures=False) libpath : lib =
       | _ -> Some (IO.nread bininp len)
       ]
     in
-    let n_textures = IO.read_byte bininp in
+    let n_textures = IO.read_ui16 bininp in
     let textures = Array.init n_textures (fun _ -> IO.read_string bininp) in
     let n_items = IO.read_ui16 bininp in
     let items = Hashtbl.create n_items in
