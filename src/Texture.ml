@@ -56,6 +56,21 @@ and c =
     method removeRenderer: renderer -> unit;
   end;
 
+value zero : c = 
+  object(self)
+    method width = 0.;
+    method height = 0.;
+    method hasPremultipliedAlpha = False;
+    method scale = 1.;
+    method textureID = 0;
+    method base = None;
+    method clipping = None;
+    method rootClipping = None;
+    method release () = ();
+    method subTexture _ = self;
+    method addRenderer _ = ();
+    method removeRenderer _ = ();
+  end;
 
 type imageInfo;
 external loadImageInfo: string -> imageInfo = "ml_load_image_info";
@@ -364,7 +379,6 @@ module AsyncLoader (P:sig end) : AsyncLoader = struct
   value result_queue = ThreadSafeQueue.create ();
 
   value rec check_result () = 
-    let () = debug "check result" in
     match ThreadSafeQueue.dequeue result_queue with
     [ Some (path,image_info) -> 
       (
@@ -514,7 +528,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
   and legalHeight = nextPowerOfTwo ih in
   let (legalWidth,legalHeight) = render_texture_size (legalWidth,legalHeight) in
   let (framebufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
-  let () = debug "rendered texture <%d>" textureID in
+  let () = debug:rendered "rendered texture <%d>" textureID in
   let clipping = 
     let flw = float legalWidth and flh = float legalHeight in
     if flw <> width || flh <> height 
@@ -551,7 +565,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method private changed () = Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> c)) renderers;
 
     method resize w h =
-      let () = debug "resize <%d> from %f->%f, %f->%f" textureID width w height h in
+      let () = debug:rendered "resize <%d> from %f->%f, %f->%f" textureID width w height h in
       if w <> width || h <> height
       then
         let iw = truncate (ceil w) in
@@ -592,12 +606,12 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
 (*         let oldState = activate_framebuffer framebufferID (truncate width) (truncate height) in *)
         let oldState = activate_framebuffer framebufferID legalWidth legalHeight in
         (
-          debug "buffer [%d] activated" framebufferID;
+          debug:rendered "buffer [%d] activated" framebufferID;
           isActive := True;
           f();
           deactivate_framebuffer oldState;
           isActive := False;
-          debug "buffer [%d] deactivated" framebufferID;
+          debug:rendered "buffer [%d] deactivated" framebufferID;
           self#changed();
         )
       | True -> f()

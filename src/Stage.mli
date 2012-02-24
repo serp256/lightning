@@ -9,6 +9,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
   value addTween: #tween -> unit;
   value removeTween: #tween -> unit;
 
+  value screenSize: unit -> (float * float);
+
   class virtual c: [ float ] -> [ float ] ->
     object
       inherit D.container;

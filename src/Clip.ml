@@ -649,8 +649,9 @@ value get_symbol_async lib cls callback =
 
 value symbols lib = ExtHashtbl.Hashtbl.keys lib.symbols;
 
-value load ?(loadTextures=False) libpath : lib = 
-  (* бинарный формат нахуй *)
+
+(* бинарный формат нахуй *)
+value _load libpath = 
   let () = debug "bin load %s" libpath in
   let path = Filename.concat libpath "lib.bin" in
   let inp = open_resource path 1. in
@@ -668,7 +669,7 @@ value load ?(loadTextures=False) libpath : lib =
     let n_items = IO.read_ui16 bininp in
     let items = Hashtbl.create n_items in
     (
-      let read_children () = 
+      let read_children () = (*{{{*)
         let n_children = IO.read_byte bininp in
         let tid = ref 0 in
         let children = 
@@ -687,8 +688,8 @@ value load ?(loadTextures=False) libpath : lib =
             ]
           end 
         in
-        (!tid,children)
-      and read_sprite_children () = 
+        (!tid,children) (*}}}*)
+      and read_sprite_children () = (*{{{*)
         let n_children = IO.read_byte bininp in
         List.init n_children begin fun _ ->
           match IO.read_byte bininp with
@@ -728,7 +729,7 @@ value load ?(loadTextures=False) libpath : lib =
             CBox (name,{Point.x=posx;y=posy})
           | _ -> assert False
           ]
-        end 
+        end (*}}}*)
       in
       for i = 0 to n_items - 1 do (*{{{*)
         let id = IO.read_ui16 bininp in
@@ -864,15 +865,41 @@ value load ?(loadTextures=False) libpath : lib =
           let () = debug "%s" cls in
           Hashtbl.add symbols cls (Hashtbl.find items id);
         done;
-        let textures = 
-          match loadTextures with
-          [ True -> `textures (Array.map (fun file -> Texture.load (Filename.concat libpath file)) textures)
-          | False -> `files textures
-          ]
-        in
-        {path=libpath;textures;symbols}
+        IO.close_in bininp;
+        (textures,symbols);
       );
-    )
+    );
+  );
+
+
+
+value load ?(loadTextures=False) libpath : lib = 
+  let (textures,symbols) = _load libpath in
+  let textures = 
+    match loadTextures with
+    [ True -> `textures (Array.map (fun file -> Texture.load (Filename.concat libpath file)) textures)
+    | False -> `files textures
+    ]
+  in
+  {path=libpath;textures;symbols}
+;
+
+
+value load_async libpath callback = 
+  let (texture_files,symbols) = _load libpath in
+  let cnt_tx = ref (Array.length texture_files) in
+  let textures = Array.make !cnt_tx Texture.zero in
+  (
+    Array.iteri begin fun i file ->
+      Texture.load_async (Filename.concat libpath file) begin fun texture ->
+        (
+          textures.(i) := texture;
+          decr cnt_tx;
+          if !cnt_tx = 0 then callback {path=libpath;textures=(`textures textures);symbols} else ();
+        )
+      end 
+    end texture_files;
+    if !cnt_tx = 0 then callback {path=libpath;textures=(`textures textures);symbols} else ();
   );
 
 value loadxml ?(loadTextures=False) libpath : lib = 
@@ -1210,4 +1237,9 @@ value loadxml ?(loadTextures=False) libpath : lib =
     ];
   );
 
+value release lib = 
+  match lib.textures with
+  [ `textures tx -> Array.iter (fun t -> t#release ()) tx
+  | _ -> ()
+  ];
 end;

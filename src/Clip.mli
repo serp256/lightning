@@ -42,11 +42,15 @@ class type virtual c =
 
 type lib;
 
+
 value load: ?loadTextures:bool -> string -> lib;
+value load_async: string -> (lib -> unit) -> unit;
 value loadxml: ?loadTextures:bool -> string -> lib;
 
 value image: string -> c;
 value image_async: string -> (c -> unit) -> unit;
+
+value release: lib -> unit;
 
 value symbols: lib -> Enum.t string;
 value get_symbol: lib -> string -> c;
