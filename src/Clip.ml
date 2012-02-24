@@ -736,7 +736,7 @@ value load ?(loadTextures=False) libpath : lib =
         let () = debug "bin read %d:%d" id kind in
         match kind with
         [ 0 -> (* image *)
-            let page = IO.read_byte bininp in
+            let page = IO.read_ui16 bininp in
             let x = IO.read_ui16 bininp in
             let y = IO.read_ui16 bininp in
             let width = IO.read_ui16 bininp in
