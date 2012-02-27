@@ -264,6 +264,7 @@ module Make(D:DisplayObjectT.M) = struct
 
       method setFilters fltrs = 
       (
+        let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
         let hasGlow = ref False in
         (
           let f = 

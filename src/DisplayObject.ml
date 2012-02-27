@@ -197,16 +197,26 @@ class virtual _c [ 'parent ] = (*{{{*)
       )
       else ();
 
+    value mutable prerender_wait_listener = None;
     value prerenders : Queue.t (unit -> unit) = Queue.create ();
-    value mutable prerenders_delayed = False;
+    method private addToPrerenders _ _ lid = 
+    (
+      match Queue.is_empty prerenders with
+      [ False -> add_prerender (self :> prerenderObj)
+      | True -> ()
+      ];
+      self#removeEventListener `ADDED_TO_STAGE lid;
+      prerender_wait_listener := None;
+    );
+
     method private addPrerender pr =
     (
-      debug:render "addPrerender %s" self#name;
+      debug:prerender "addPrerender for %s" self#name;
       match Queue.is_empty prerenders with
       [ True -> 
-        match parent with
+        match self#stage with
         [ Some _ -> add_prerender (self :> prerenderObj)
-        | None -> prerenders_delayed := True
+        | None -> prerender_wait_listener := Some (self#addEventListener `ADDED_TO_STAGE self#addToPrerenders)
         ]
       | False -> ()
       ];
@@ -221,23 +231,27 @@ class virtual _c [ 'parent ] = (*{{{*)
           while not (Queue.is_empty prerenders) do
             (Queue.pop prerenders) ();
           done;
-          prerenders_delayed := False;
+          match prerender_wait_listener with
+          [ Some lid -> 
+            (
+              self#removeEventListener `ADDED_TO_STAGE lid;
+              prerender_wait_listener := None;
+            )
+          | None -> ()
+          ]
         )
-      | False -> prerenders_delayed := False
+      | False -> 
+          match prerender_wait_listener with
+          [ None -> prerender_wait_listener := Some (self#addEventListener `ADDED_TO_STAGE self#addToPrerenders)
+          | Some _ -> ()
+          ]
       ];
 
     method parent = parent;
     method setParent p = 
     (
+      debug:prerender "set parent for %s" self#name;
       parent := Some p;
-      match prerenders_delayed with
-      [ True ->
-        (
-          prerenders_delayed := False;
-          add_prerender (self :> prerenderObj);
-        )
-      | False -> ()
-      ];
     );
 
     method clearParent () = (parent := None;);

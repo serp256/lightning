@@ -52,7 +52,6 @@ int _load_image(char *path,textureInfo *tInfo) {
 			unsigned char *spixels = surface->pixels;
 			for (i = 0; i < legalWidth * legalHeight; i++) {
 				pixels[i*4 + 3] = spixels[i*4 + 3];
-				fprintf(stderr,"alpha: %d\n",pixels[i*4 + 3]);
 				a = (float)(pixels[i*4 + 3]) / 255.0;
 				pixels[i*4] = (unsigned char)((float)(spixels[i*4]) * a);
 				pixels[i*4 + 1] = (unsigned char)((float)(spixels[i*4 + 1]) * a);
