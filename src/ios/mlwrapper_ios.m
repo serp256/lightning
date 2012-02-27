@@ -6,11 +6,13 @@
 #import <caml/mlvalues.h>
 #import <caml/alloc.h>
 #import <caml/threads.h>
+#import "light_common.h"
 #import "mlwrapper_ios.h"
 #import "LightViewController.h"
 
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
+	PRINT_DEBUG("process touched");
 	caml_acquire_runtime_system();
 	value mltouch = 1,mltouches = 1,globalX = 1,globalY = 1,time = 1, lst_el = 1;
   Begin_roots5(mltouch,time,globalX,globalY,mltouches);
@@ -47,8 +49,9 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
 void ml_showActivityIndicator(value mlpos) {
 	CAMLparam1(mlpos);
 	LightViewController *c = [LightViewController sharedInstance];
-	CGPoint pos = CGPointMake(Double_field(mlpos,0),Double_field(mlpos,1));
-	[c showActivityIndicator:pos];
+//	CGPoint pos = CGPointMake(Double_field(mlpos,0),Double_field(mlpos,1));
+//	[c showActivityIndicator: pos];
+    [c showActivityIndicator: nil];
 	CAMLreturn0;
 }
 
@@ -69,6 +72,16 @@ void ml_openURL(value mlurl) {
 	NSString *url = [NSString stringWithCString:String_val(mlurl) encoding:NSUTF8StringEncoding];
 	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
 	CAMLreturn0;
+}
+
+void ml_show_alert(value otitle,value omessage) {
+	PRINT_DEBUG("show alert");
+	NSString *title = [NSString stringWithCString:String_val(otitle) encoding:NSUTF8StringEncoding];
+	NSString *message = [NSString stringWithCString:String_val(omessage) encoding:NSUTF8StringEncoding];
+	UIAlertView *alert = [[UIAlertView alloc] init];
+	alert.title = title;
+	alert.message = message;
+	[alert show];
 }
 
 
@@ -187,22 +200,90 @@ value ml_kv_storage_exists(value storage, value key_ml) {
 
 
 
+/* PAYMENTS */
+
+void ml_payment_init(value success_cb, value error_cb) {
+  CAMLparam2(success_cb, error_cb);
+
+  LightViewController * c = [LightViewController sharedInstance];
+
+  c->payment_success_cb = success_cb;
+  c->payment_error_cb   = error_cb;   
+
+  caml_register_global_root(&(c->payment_success_cb));
+  caml_register_global_root(&(c->payment_error_cb));
+  
+  [[SKPaymentQueue defaultQueue] addTransactionObserver: c];
+  
+  CAMLreturn0;
+}
+
+
+void ml_payment_purchase(value product_id) {
+  CAMLparam1(product_id);
+  
+  if ([SKPaymentQueue canMakePayments]) {
+    SKPayment *payment = [SKPayment paymentWithProductIdentifier: STR_CAML2OBJC(product_id)];
+    [[SKPaymentQueue defaultQueue] addPayment:payment];
+  } else {
+    [[[[UIAlertView alloc] initWithTitle:@"error" message:@"In App Purchases are currently disabled. Please adjust your settings to enable In App Purchases." delegate:nil cancelButtonTitle:@"close" otherButtonTitles:nil] autorelease] show];
+  }      
+  
+  CAMLreturn0;
+}
+
+
+void ml_payment_commit_transaction(value t) {
+  CAMLparam1(t);
+  SKPaymentTransaction * transaction = (SKPaymentTransaction *)t;
+  [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
+  [transaction release];
+  CAMLreturn0;
+}
+
+
+// return transaction identifier
+CAMLprim value ml_payment_get_transaction_id(value t) {
+  CAMLparam1(t);
+  SKPaymentTransaction * transaction = (SKPaymentTransaction *)t;
+  CAMLreturn(caml_copy_string([transaction.transactionIdentifier cStringUsingEncoding:NSASCIIStringEncoding]));
+}
 
 
 
+// return transaction receipt for server side validation
+CAMLprim value ml_payment_get_transaction_receipt(value t) {
+  CAMLparam1(t);
+  CAMLlocal1(receipt);
+  SKPaymentTransaction * transaction = (SKPaymentTransaction *)t;
+  
+  receipt = caml_alloc_string([transaction.transactionReceipt length]);
+  memmove(String_val(receipt), (const char *)[transaction.transactionReceipt bytes], [transaction.transactionReceipt length]);
+  CAMLreturn(receipt);
+}
 
 
+// 
+void ml_request_remote_notifications(value rntype, value success_cb, value error_cb) {
+  CAMLparam3(rntype, success_cb, error_cb);
+  LightViewController * c = [LightViewController sharedInstance];
 
+  if (Is_block(c->remote_notification_request_success_cb)) {
+    caml_remove_global_root(&(c->remote_notification_request_success_cb));
+  }
+  
+  if (Is_block(c->remote_notification_request_error_cb)) {
+    caml_remove_global_root(&(c->remote_notification_request_error_cb));
+  }
+  
+  c->remote_notification_request_success_cb = success_cb;
+  c->remote_notification_request_error_cb   = error_cb;
 
+  caml_register_global_root(&(c->remote_notification_request_success_cb));
+  caml_register_global_root(&(c->remote_notification_request_error_cb));
 
-
-
-
-
-
-
-
-
-
-
+  [[UIApplication sharedApplication] registerForRemoteNotificationTypes: Int_val(rntype)];
+  
+  CAMLreturn0;
+}
 

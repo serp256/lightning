@@ -133,11 +133,17 @@ value onClick obj handler  =
 value tlf (stage:Stage.c) = 
 (
   BitmapFont.register "MyriadPro-Regular.fnt";
-  let (_,text) = TLF.create (TLF.p  ~fontSize:20 ~halign:`center ~fontFamily:"Myriad Pro" 
-    [`text "Pizda LaLa" ; TLF.img ~height:50. ~valign:`centerBaseLine (Image.load "quad.png") ; `text " nah nah" ; `br ; `text "bla bla bla BLA yyyy"]) in
+  TLF.default_font_family.val := "Myriad Pro";
+  let (_,text) = TLF.create begin
+    TLF.p  ~halign:`center 
+      [ 
+        TLF.img ~height:50. ~valign:`default (Image.load "quad.png") ; 
+        TLF.span ~fontSize:20 ~fontFamily:"Myriad Pro" [ `text " nah nah" ]; `br ; 
+        `text "bla bla bla BLA yyyy"
+      ]
+  end in
   (
     text#setPos 100. 100.;
-    text#setMask ~onSelf:True (Rectangle.create 10. 10. 100. 100.);
 (*     text#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
 (*     text#setAlpha 0.3; *)
     stage#addChild text;
@@ -177,16 +183,41 @@ value atlas (stage:Stage.c) =
   );
 );
 
+
+value disable_filter = 
+  Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
+   [| 
+     0.4284989; 0.283371; 0.03813; 0.; 0.0622549019607843146;
+     0.143499; 0.568371; 0.03813; 0.; 0.0622549019607843146;
+     0.143499; 0.28337; 0.32313; 0.; 0.0622549019607843146;
+     0.; 0.; 0.; 1.; 0.
+   |];
+
+
 value filters (stage:Stage.c) =
 (
-  let img = Image.load "tree.png" in
+  let sprite = Sprite.create () in
   (
-(*     img#setFilters [ `ColorMatrix gray_filter ]; *)
-    img#setFilters [ Filters.glow ~size:2 ~strength:10 0x0000FF ];
-(*     img#setAlpha 0.2; *)
-    img#setPos 100. 100.;
-    stage#addChild img;
+    let img = Image.load "tree.png" in
+    sprite#addChild img;
+    let img = Image.load "e_cactus.png" in
+    (
+      img#setPos 100. 100.;
+      sprite#addChild img;
+    );
+    sprite#setFilters [ `ColorMatrix disable_filter ];
+(*     sprite#setFilters [ Filters.glow 0xFF0000 ]; *)
+    sprite#setPos 100. 100.;
+    stage#addChild sprite;
   );
+
+    let tree = Image.load "tree.png" in
+    (
+      tree#setPos 100. 350.;
+      tree#setFilters [ `ColorMatrix disable_filter ];
+(*       tree#setFilters [ Filters.glow 0xFF0000 ]; *)
+      stage#addChild tree;
+    );
   (*
   let img = Image.load "tree.png" in
   (
@@ -238,15 +269,47 @@ value flip (stage:Stage.c) =
     stage#addChild img;
   );
 
+
+value async_load (stage:Stage.c) = 
+(
+  let lib = Clip.load "Clips" in
+  let sprite = Sprite.create () in
+  (
+    let loading = Clip.get_symbol lib "ESkins.LoadClip" in
+    (
+      loading#setPos 100. 100.;
+      sprite#addChild loading;
+    );
+    Texture.load_async "tree.png" (fun t -> (sprite#clearChildren(); sprite#addChild (Image.create t)));
+    stage#addChild sprite;
+  );
+);
+
+
+(*
+value alert (stage:Stage.c) =
+(
+  let lib = Clip.load "Clips" in
+  let loading = Clip.get_symbol lib "ESkins.LoadClip" in
+  (
+    loading#setPos 100. 100.;
+    stage#addChild loading;
+  );
+  Timers.start 20. (fun () -> Lightning.show_alert "this is test alert" "this message for test alert");
+  ();
+);*)
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value color = 0xCCCCCC;
     initializer begin
-      flip self;
+(*       alert self; *)
+(*       flip self; *)
+(*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-(*       tlf self; *)
+      tlf self;
 (*       atlas self; *)
 (*       masks self; *)
     end;

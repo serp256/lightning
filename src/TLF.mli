@@ -3,7 +3,7 @@ module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.
 
   value default_font_family: ref string;
 
-  type img_valign = [= `aboveBaseLine | `underBaseLine | `centerBaseLine ];
+  type img_valign = [= `aboveBaseLine | `underBaseLine | `centerBaseLine | `default ];
   type img_attribute = 
     [= `width of float
     | `height of float

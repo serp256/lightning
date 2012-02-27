@@ -33,6 +33,9 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
   exception Touch_not_found;
 
+  value _screenSize = ref (0.,0.);
+  value screenSize () = !_screenSize;
+
   class virtual c (_width:float) (_height:float) =
     object(self)
       inherit D.container as super;
@@ -42,7 +45,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       initializer 
       (
         self#setName "STAGE";
-        setupOrthographicRendering 0. width height 0.
+        setupOrthographicRendering 0. width height 0.;
+        _screenSize.val := (width,height);
       );
       method cacheAsImage = False;
       method setCacheAsImage = raise Restricted_operation;
@@ -62,7 +66,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       (
         width := w;
         height := h;
-        setupOrthographicRendering 0. w h 0.
+        setupOrthographicRendering 0. w h 0.;
+        _screenSize.val := (w,h);
       );
 
       method! stage = Some self#asDisplayObjectContainer;
@@ -150,7 +155,8 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
 
       method advanceTime (seconds:float) = 
       (
-        let () = debug "advance time" in
+        let () = debug "advance time: %f" seconds in
+        Texture.check_async();
         proftimer:perfomance "Stage advanceTime: %F"
         (
           Timers.process seconds;

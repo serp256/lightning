@@ -21,12 +21,33 @@
 
 static LightViewController *instance = NULL;
 
-+(LightViewController*)sharedInstance {
-	if (!instance) {
-		instance = [[LightViewController alloc] init];
-	};
+
++alloc {
+	NSLog(@"Try INIT Light view controller");
+	if (instance != NULL) return NULL; // raise exception
+	NSLog(@"INIT Light view controller");
+	char *argv[] = {"ios",NULL};
+	caml_startup(argv);
+	instance = [super alloc];
 	return instance;
 }
+
+-(id)init {
+  self = [super init];
+  if (self != nil) {
+	payment_success_cb = Val_int(1);
+	payment_error_cb   = Val_int(1);
+	remote_notification_request_success_cb = Val_int(1);
+	remote_notification_request_error_cb   = Val_int(1);
+  }
+  return self;
+}
+
++(LightViewController*)sharedInstance {
+	if (!instance) [[LightViewController alloc] init];
+	return instance;
+}
+
 
 #pragma mark - View lifecycle
 - (void)loadView {
@@ -85,14 +106,6 @@ static LightViewController *instance = NULL;
     [self dismissModalViewControllerAnimated:YES];
 }
 
-
-/*
-// Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-}
-*/
 
 
 ////////////////////
@@ -159,30 +172,35 @@ static value *ml_url_complete = NULL;
 // ////////////////////
 
 
+//
+-(void)showActivityIndicator: (LightActivityIndicatorView *)indicator {
+    if (indicator == nil) {
+        indicator = [[[LightActivityIndicatorView alloc] initWithTitle: nil message: @"" delegate:nil cancelButtonTitle:nil otherButtonTitles:nil] autorelease];
+    }
 
--(void)showActivityIndicator:(CGPoint)pos {
-	if (!activityIndicator) activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-	activityIndicator.center = pos;
-	self.view.userInteractionEnabled = NO;
-	[self.view addSubview:activityIndicator];
-	[activityIndicator startAnimating];
+	if (activityIndicator) {
+		[activityIndicator dismissWithClickedButtonIndex:-1 animated:YES];
+		[activityIndicator release];
+	}
+	
+	activityIndicator = [indicator retain];
+    [activityIndicator show];
 }
 
+
+//
 -(void)hideActivityIndicator {
-	[activityIndicator stopAnimating];
-	[activityIndicator removeFromSuperview];
-	self.view.userInteractionEnabled = YES;
+	if (!activityIndicator) {
+		return;
+	}
+	[activityIndicator dismissWithClickedButtonIndex:-1 animated:YES];
+	[activityIndicator release];
+	activityIndicator = nil;
 }
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    // Release any retained subviews of the main view.
-    // e.g. self.myOutlet = nil;
-}
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 	// Return YES for supported orientations
 	if (_orientationDelegate) {
 		BOOL res = [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
@@ -191,5 +209,73 @@ static value *ml_url_complete = NULL;
 	else
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
+
+
+
+/* handle payment transactions */
+- (void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray *)transactions {
+    BOOL restored;
+    LightActivityIndicatorView * indicator;
+    for (SKPaymentTransaction *transaction in transactions) {
+        restored = NO;
+        switch (transaction.transactionState) {
+			case SKPaymentTransactionStatePurchasing:
+				indicator = [[[LightActivityIndicatorView alloc] initWithTitle: nil message:@"Connecting to AppStore" delegate:nil cancelButtonTitle:nil otherButtonTitles:nil] autorelease];
+				[self showActivityIndicator: indicator];
+				break;
+            case SKPaymentTransactionStateFailed:
+				[self hideActivityIndicator];
+				NSString * e;
+				if (transaction.error.code != SKErrorPaymentCancelled)
+				{
+				    e = [transaction.error localizedDescription];
+					UIAlertView* alert =
+					[
+					 [UIAlertView alloc]
+					 initWithTitle:@"Payment error"
+					 message: e
+					 delegate:nil
+					 cancelButtonTitle:@"OK"
+					 otherButtonTitles:nil
+					 ];
+					[alert show];
+					[alert release];
+				} else {
+				  e = @"Cancelled";
+				}
+				
+				if (Is_block(payment_error_cb)) {
+				  caml_callback3(payment_error_cb, 
+				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), 
+				                 caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]), 
+				                 Val_bool(transaction.error.code == SKErrorPaymentCancelled));
+				}
+				[[SKPaymentQueue defaultQueue] finishTransaction: transaction];
+                break;
+
+            case SKPaymentTransactionStateRestored:
+                NSLog(@"Restoring");
+                restored = YES;
+            case SKPaymentTransactionStatePurchased:
+                NSLog(@"Purchased");
+				if (Is_block(payment_success_cb)) {
+				  
+                  [transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
+
+				  caml_callback3(payment_success_cb, 
+				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
+				                 (value)transaction,
+				                 Val_bool(restored));
+				}
+            
+				[self hideActivityIndicator];
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+
 
 @end

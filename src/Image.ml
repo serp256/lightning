@@ -227,6 +227,12 @@ module Make(D:DisplayObjectT.M) = struct
       value mutable shaderProgram = GLPrograms.ImageSimple.create ();
       value image = Render.Image.create _texture#width _texture#height _texture#rootClipping color 1.;
 
+      value mutable texFlipX = False;
+      method texFlipX = texFlipX;
+
+      value mutable texFlipY = False;
+      method texFlipY = texFlipY;
+
       value mutable filters : list Filters.t = [];
       value mutable glowFilter: option glow = None;
       method private setGlowFilter glow = 
@@ -246,7 +252,11 @@ module Make(D:DisplayObjectT.M) = struct
         let gl = {g_cmn; g_texture; g_prg = GLPrograms.ImageSimple.create (); g_valid = False; g_image; g_params = glow} in
         *)
         let g_image = Render.Image.create 1. 1. None 0xFFFFFF alpha in
-        glowFilter := Some {g_image;g_matrix=Matrix.identity;g_texture=None;g_params=glow};
+        (
+          if texFlipX then Render.Image.flipTexX g_image else ();
+          if texFlipY then Render.Image.flipTexY g_image else ();
+          glowFilter := Some {g_image;g_matrix=Matrix.identity;g_texture=None;g_params=glow};
+        );
         self#addPrerender self#updateGlowFilter;
       );
 
@@ -254,6 +264,7 @@ module Make(D:DisplayObjectT.M) = struct
 
       method setFilters fltrs = 
       (
+        let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
         let hasGlow = ref False in
         (
           let f = 
@@ -336,8 +347,6 @@ module Make(D:DisplayObjectT.M) = struct
         );
       *)
 
-      value mutable texFlipX = False;
-      method texFlipX = texFlipX;
       method setTexFlipX nv = 
         if nv <> texFlipX
         then 
@@ -351,8 +360,6 @@ module Make(D:DisplayObjectT.M) = struct
         )
         else ();
 
-      value mutable texFlipY = False;
-      method texFlipY = texFlipY;
       method setTexFlipY nv = 
         if nv <> texFlipY
         then 

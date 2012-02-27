@@ -12,9 +12,14 @@ example.byte: example.cmo
 
 example.native: $(MOBS) example.cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-I ../src ../src/lightning.cmxa  Light.cmx example.cmx \
-	-package extlib,xmlm,dbm,threads -thread -linkpkg 
+	-I ../src ../src/lightning.cmxa  Light.cmx $(MOBS) example.cmx \
+	-package extlib,xmlm,dbm,ojson,bigarray,threads -thread -linkpkg 
 
 example.cmx: Light.cmx
 example.cmo: Light.cmo
 
+
+
+.PHONY: clean
+clean::
+	rm -f *.o *.cmo *.cmx *.cmi *.byte *.native

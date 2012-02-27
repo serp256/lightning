@@ -8,6 +8,7 @@
 #include "texture_common.h"
 
 
+extern int boundTextureID;
 
 int nextPowerOfTwo(int number) {
 	int result = 1;
@@ -142,6 +143,7 @@ void ml_delete_texture(value textureID) {
 value createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     int mRepeat = 0;    
     
+		PRINT_DEBUG("create GL Texture");
 		texParams params;
     params.glTexType = GL_UNSIGNED_BYTE;
     params.bitsPerPixel = 8;
@@ -149,7 +151,12 @@ value createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     //unsigned int mTextureID;
 		if (!textureParams(tInfo,&params)) return 0;
     
-		if (mTextureID == 0) glGenTextures(1, &mTextureID);
+		if (mTextureID == 0) {
+			PRINT_DEBUG("glGenTextures");
+			glGenTextures(1, &mTextureID);
+			PRINT_DEBUG("new texture: %d",mTextureID);
+			checkGLErrors("glGenTexture");
+		}
     glBindTexture(GL_TEXTURE_2D, mTextureID);
     
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
@@ -201,6 +208,7 @@ value createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     }
     
     glBindTexture(GL_TEXTURE_2D, 0);
+		boundTextureID = 0;
 		/*
 		value result;
 		if (texid == 0) {
@@ -212,6 +220,24 @@ value createGLTexture(GLuint mTextureID,textureInfo *tInfo) {
     return mTextureID;
 };
 
+
+
+value ml_load_texture(value oldTextureID, value oTInfo) {
+	CAMLparam0();
+	CAMLlocal1(mlTex);
+	textureInfo *tInfo = (textureInfo*)oTInfo;
+	GLuint textureID = createGLTexture(OPTION_INT(oldTextureID),(textureInfo*)tInfo);
+	if (!textureID) caml_failwith("failed to load texture");
+	ML_TEXTURE_INFO(mlTex,textureID,tInfo);
+	CAMLreturn(mlTex);
+}
+
+void ml_free_image_info(value tInfo) {
+	free(((textureInfo*)tInfo)->imgData);
+	free((textureInfo*)tInfo);
+}
+
+/*
 CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 	CAMLparam2(mlTexInfo,imgData);
 	textureInfo tInfo;
@@ -237,6 +263,7 @@ CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 	Store_field(mlTexInfo,9,Val_long(texID));
 	CAMLreturn(mlTexInfo);
 }
+*/
 
 
 

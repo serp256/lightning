@@ -13,6 +13,8 @@ value pi  =  3.14159265359;
 value half_pi = pi /. 2.;
 value two_pi =  6.28318530718;
 
+type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
+
 exception File_not_exists of string;
 
 value rec nextPowerOfTwo number =
@@ -35,11 +37,29 @@ value floats_of_color color =
   in
   (((float red) /. 255.),((float green) /. 255.),((float blue) /. 255.));
 
+Callback.register_exception "File_not_exists" (File_not_exists "");
+
 IFDEF IOS THEN
 
-Callback.register_exception "File_not_exists" (File_not_exists "");
 external bundle_path_for_resource: string -> float -> option string = "ml_bundle_path_for_resource";
 external device_scale_factor: unit -> float = "ml_device_scale_factor";
+external ml_request_remote_notifications : int -> (string -> unit) -> (string -> unit) -> unit = "ml_request_remote_notifications";
+
+
+value request_remote_notifications rntypes success error = 
+  let typesBitmask = List.fold_left 
+    begin fun mask rntype -> 
+    (
+      match rntype with
+      [ `RNBadge -> mask.val := !mask lor 1
+      | `RNSound -> mask.val := !mask lor 2
+      | `RNAlert -> mask.val := !mask lor 4
+      ];
+      mask
+    )
+    end (ref 0) rntypes
+  in ml_request_remote_notifications !typesBitmask success error;
+
 
 value resource_path path = 
   match bundle_path_for_resource path 2.0 with
@@ -64,6 +84,8 @@ ELSE IFDEF ANDROID THEN
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
 value device_scale_factor () = 1.0;
+
+value request_remote_notifications rntypes success error = ();
 
 value resource_path path = 
   match bundle_fd_of_resource path with 
@@ -115,6 +137,8 @@ value read_json path =
 
 ELSE IFDEF SDL THEN
 
+value request_remote_notifications rntypes success error = ();
+
 value device_scale_factor () = 1.0;
 value resource_path fname = 
   let path = Filename.concat "Resources" fname in
@@ -134,18 +158,6 @@ value read_json path =
 ENDIF;
 ENDIF;
 ENDIF;
-
-(*
-value resource_path path _ = 
-  match Filename.is_relative path with (* убрать нах эту логику нах. *)
-  [ True -> match bundle_path_for_resource path with [ Some p -> p | None -> raise (File_not_exists path) ]
-  | False -> 
-    match Sys.file_exists path with
-    [ True -> path
-    | False -> raise (File_not_exists path)
-    ]
-  ];
-*)
 
 exception Xml_error of string and string;
 

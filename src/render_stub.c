@@ -38,8 +38,6 @@ void check_gl_errors(char *fname, int lnum, char *msg) {
 
 #define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
 
-
-
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
 
 GLuint boundTextureID = 0;

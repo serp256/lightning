@@ -77,9 +77,10 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
         match imageCache with
         [ Some ({ic; tex; valid = (( `invalid | `prerender) as valid); _} as c) -> 
           (
+            debug:prerender "updateImageCache: %s" self#name;
             match valid with
             [ `invalid ->
-              let () = debug "cacheImage %s not valid" ic#name in
+              let () = debug:prerender "cacheImage %s not valid" ic#name in
               let bounds = self#boundsInSpace (Some self) in
               if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
               then c.empty := True
@@ -106,7 +107,9 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
                 ic#prerender True;
                 c.empty := False;
               )
-            | `prerender -> ic#prerender True
+            | `prerender -> 
+                let () = debug:prerender "prerender %s" ic#name in
+                ic#prerender True
             ];
             c.valid := `valid; 
           )
@@ -134,9 +137,10 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
           [ None -> 
             let bounds = self#boundsInSpace (Some self) in
             let () = debug "bounds of sprite: [%f:%f:%f:%f]" bounds.Rectangle.x bounds.Rectangle.y bounds.Rectangle.width bounds.Rectangle.height in
-            let tex = Texture.rendered ~color:0xFF0000 bounds.Rectangle.width bounds.Rectangle.height in
+            let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
             let img = Image.create (tex :> Texture.c) in
             (
+              debug:filters "create %s as image cache for %s" img#name self#name;
               img#setPosPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y};
               img#setFilters filters;
               imageCache := Some {ic = img; tex; empty = False; valid = `invalid; force = False};
