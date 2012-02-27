@@ -405,11 +405,6 @@ value ml_load_image_info(value opath) {
 	return ((value)tInfo);
 }
 
-void ml_free_image_info(value tInfo) {
-	free(((textureInfo*)tInfo)->imgData);
-	free((textureInfo*)tInfo);
-}
-
 CAMLprim value ml_loadImage(value oldTexture, value opath, value ocontentScaleFactor) { // if old texture exists when replace
 	CAMLparam2(opath,ocontentScaleFactor);
 	CAMLlocal1(mlTex);

@@ -177,16 +177,41 @@ value atlas (stage:Stage.c) =
   );
 );
 
+
+value disable_filter = 
+  Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
+   [| 
+     0.4284989; 0.283371; 0.03813; 0.; 0.0622549019607843146;
+     0.143499; 0.568371; 0.03813; 0.; 0.0622549019607843146;
+     0.143499; 0.28337; 0.32313; 0.; 0.0622549019607843146;
+     0.; 0.; 0.; 1.; 0.
+   |];
+
+
 value filters (stage:Stage.c) =
 (
-  let img = Image.load "tree.png" in
+  let sprite = Sprite.create () in
   (
-(*     img#setFilters [ `ColorMatrix gray_filter ]; *)
-    img#setFilters [ Filters.glow ~size:2 ~strength:10 0x0000FF ];
-(*     img#setAlpha 0.2; *)
-    img#setPos 100. 100.;
-    stage#addChild img;
+    let img = Image.load "tree.png" in
+    sprite#addChild img;
+    let img = Image.load "e_cactus.png" in
+    (
+      img#setPos 100. 100.;
+      sprite#addChild img;
+    );
+    sprite#setFilters [ `ColorMatrix disable_filter ];
+(*     sprite#setFilters [ Filters.glow 0xFF0000 ]; *)
+    sprite#setPos 100. 100.;
+    stage#addChild sprite;
   );
+
+    let tree = Image.load "tree.png" in
+    (
+      tree#setPos 100. 350.;
+      tree#setFilters [ `ColorMatrix disable_filter ];
+(*       tree#setFilters [ Filters.glow 0xFF0000 ]; *)
+      stage#addChild tree;
+    );
   (*
   let img = Image.load "tree.png" in
   (
@@ -275,8 +300,8 @@ let stage width height =
     initializer begin
 (*       alert self; *)
 (*       flip self; *)
-      async_load self;
-(*       filters self; *)
+(*       async_load self; *)
+      filters self;
 (*         size self; *)
 (*       tlf self; *)
 (*       atlas self; *)

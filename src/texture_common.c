@@ -232,6 +232,11 @@ value ml_load_texture(value oldTextureID, value oTInfo) {
 	CAMLreturn(mlTex);
 }
 
+void ml_free_image_info(value tInfo) {
+	free(((textureInfo*)tInfo)->imgData);
+	free((textureInfo*)tInfo);
+}
+
 /*
 CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 	CAMLparam2(mlTexInfo,imgData);

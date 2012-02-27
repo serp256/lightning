@@ -134,7 +134,7 @@ module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
           [ None -> 
             let bounds = self#boundsInSpace (Some self) in
             let () = debug "bounds of sprite: [%f:%f:%f:%f]" bounds.Rectangle.x bounds.Rectangle.y bounds.Rectangle.width bounds.Rectangle.height in
-            let tex = Texture.rendered ~color:0xFF0000 bounds.Rectangle.width bounds.Rectangle.height in
+            let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
             let img = Image.create (tex :> Texture.c) in
             (
               img#setPosPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y};

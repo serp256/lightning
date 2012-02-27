@@ -21,6 +21,8 @@ int _load_image(char *path,textureInfo *tInfo) {
   int legalHeight = nextPowerOfTwo(height);
 	SDL_Surface *surface;
 	fprintf(stderr,"%s - bpp = %d\n",path,s->format->BitsPerPixel);
+	unsigned int dataLen = legalWidth * legalHeight * (s->format->BitsPerPixel / 8);
+	unsigned char *pixels = (unsigned char*)malloc(dataLen);
 	switch (s->format->BitsPerPixel) {
 		case 32:
 			tInfo->format = SPTextureFormatRGBA;
@@ -35,6 +37,7 @@ int _load_image(char *path,textureInfo *tInfo) {
 	Uint32 bmask = 0x00ff0000;
 	Uint32 amask = 0xff000000;
 #endif
+	// FIXME: We can map it manually
 			surface = SDL_CreateRGBSurface(0, legalWidth, legalHeight, 32, rmask,gmask,bmask,amask);
 			SDL_SetSurfaceBlendMode(s,SDL_BLENDMODE_NONE);
 			if (SDL_BlitSurface(s, NULL, surface, NULL) < 0) {
@@ -43,8 +46,22 @@ int _load_image(char *path,textureInfo *tInfo) {
 				return 1;
 			};
 			SDL_FreeSurface(s);
+			// premiltiplyAlpha
+			int i;
+			float a;
+			unsigned char *spixels = surface->pixels;
+			for (i = 0; i < legalWidth * legalHeight; i++) {
+				pixels[i*4 + 3] = spixels[i*4 + 3];
+				fprintf(stderr,"alpha: %d\n",pixels[i*4 + 3]);
+				a = (float)(pixels[i*4 + 3]) / 255.0;
+				pixels[i*4] = (unsigned char)((float)(spixels[i*4]) * a);
+				pixels[i*4 + 1] = (unsigned char)((float)(spixels[i*4 + 1]) * a);
+				pixels[i*4 + 2] = (unsigned char)((float)(spixels[i*4 + 2]) * a);
+			}
+			SDL_FreeSurface(surface);
 			break;
 		case 24:
+				return 1; // FIXME
 				tInfo->format = SPTextureFormatRGB;
 				surface = s;
 				break;
@@ -56,13 +73,12 @@ int _load_image(char *path,textureInfo *tInfo) {
 	tInfo->realWidth = width;
 	tInfo->height = legalHeight;
 	tInfo->realHeight = height;
-	tInfo->premultipliedAlpha = 0;
+	tInfo->premultipliedAlpha = 1;
 	tInfo->generateMipmaps = 0;
 	tInfo->numMipmaps = 0;
 	tInfo->scale = 1.;
-	tInfo->dataLen = surface->w * surface->h * (surface->format->BitsPerPixel / 8);
-	tInfo->imgData = surface->pixels;
-	tInfo->surface = surface;
+	tInfo->dataLen = dataLen;
+	tInfo->imgData = pixels;
 	return 0;
 }
 
@@ -87,11 +103,13 @@ value ml_load_image_info(value opath) {
 	return ((value)tInfo);
 }
 
+/*
 void ml_free_image_info(value tInfo) {
-	SDL_FreeSurface(((textureInfo*)tInfo)->surface);
+	//SDL_FreeSurface(((textureInfo*)tInfo)->surface);
+	free(((textureInfo*)tInfo)->imgData);
 	free((textureInfo*)tInfo);
 }
-
+*/
 
 value ml_loadImage(value oldTextureID,value opath,value scale) {
 	CAMLparam3(oldTextureID,opath,scale);
@@ -105,7 +123,7 @@ value ml_loadImage(value oldTextureID,value opath,value scale) {
 	GLuint textureID = createGLTexture(OPTION_INT(oldTextureID),&tInfo);
 	// free surface
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
-	SDL_FreeSurface(tInfo.surface);
+	//SDL_FreeSurface(tInfo.surface);
 	CAMLreturn(mlTex);
 }
 
