@@ -133,11 +133,17 @@ value onClick obj handler  =
 value tlf (stage:Stage.c) = 
 (
   BitmapFont.register "MyriadPro-Regular.fnt";
-  let (_,text) = TLF.create (TLF.p  ~fontSize:20 ~halign:`center ~fontFamily:"Myriad Pro" 
-    [`text "Pizda LaLa" ; TLF.img ~height:50. ~valign:`centerBaseLine (Image.load "quad.png") ; `text " nah nah" ; `br ; `text "bla bla bla BLA yyyy"]) in
+  TLF.default_font_family.val := "Myriad Pro";
+  let (_,text) = TLF.create begin
+    TLF.p  ~halign:`center 
+      [ 
+        TLF.img ~height:50. ~valign:`default (Image.load "quad.png") ; 
+        TLF.span ~fontSize:20 ~fontFamily:"Myriad Pro" [ `text " nah nah" ]; `br ; 
+        `text "bla bla bla BLA yyyy"
+      ]
+  end in
   (
     text#setPos 100. 100.;
-    text#setMask ~onSelf:True (Rectangle.create 10. 10. 100. 100.);
 (*     text#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
 (*     text#setAlpha 0.3; *)
     stage#addChild text;
@@ -301,9 +307,9 @@ let stage width height =
 (*       alert self; *)
 (*       flip self; *)
 (*       async_load self; *)
-      filters self;
+(*       filters self; *)
 (*         size self; *)
-(*       tlf self; *)
+      tlf self;
 (*       atlas self; *)
 (*       masks self; *)
     end;

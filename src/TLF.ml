@@ -10,7 +10,7 @@ open ExtHashtbl;
 value default_font_family = ref "Arial";
 value (|>) a f = f a;
 
-type img_valign = [= `aboveBaseLine | `underBaseLine | `centerBaseLine ];
+type img_valign = [= `aboveBaseLine | `underBaseLine | `centerBaseLine | `default ];
 type img_attribute = 
   [= `width of float
   | `height of float
@@ -367,6 +367,7 @@ value parse_simple_elements inp imgLoader =
                     [ "above-baseline" -> `aboveBaseLine
                     | "under-baseline" -> `underBaseLine
                     | "center-baseline" -> `centerBaseLine
+                    | "default" -> `default
                     | _ -> parse_error inp "incorrect img halign value %s" vlue
                     ]
                   in
@@ -490,8 +491,16 @@ value create ?width ?height ?border ?dest (html:main) =
         let paddingRight = match getAttrOpt (fun [ `paddingRight pl -> Some pl | _ -> None]) attrs with [ Some pl -> pl | None -> 0. ] in
         let eWidth = paddingLeft +. iwidth +. paddingRight in
         let paddingTop = getAttr (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. attrs in
-        match getAttr (fun [ `valign v -> Some v | _ -> None]) `aboveBaseLine attrs with
-        [ `aboveBaseLine -> 
+        match getAttr (fun [ `valign v -> Some v | _ -> None]) `default attrs with
+        [ `default ->
+          (
+            let textHeight = line.ascender +. line.descender in
+            let dh = (iheight -. textHeight) /. 2. in
+            let y = adjustToLine ~ascender:(line.ascender +. dh) ~descender:(line.descender +. dh) line in
+            image#setY (y +. paddingTop);
+            addToLine eWidth (Img image) line;
+          )
+        | `aboveBaseLine -> 
           (
             let y = adjustToLine ~ascender:iheight line in
             (*
