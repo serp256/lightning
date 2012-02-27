@@ -8,9 +8,15 @@
 #define glBindVertexArray glBindVertexArrayOES
 #else
 #ifdef SDL
+#ifdef APPLE
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #define glGenVertexArrays glGenVertexArraysAPPLE
 #define glBindVertexArray glBindVertexArrayAPPLE
+#else
+#define glDeleteVertexArrays glDeleteVertexArrays
+#define glGenVertexArrays glGenVertexArrays
+#define glBindVertexArray glBindVertexArray
+#endif
 #endif
 #endif
 
@@ -1113,14 +1119,12 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 			atlas_quads = realloc(atlas_quads,len * sizeof(lgTexQuad));
 		}
 		lgTexQuad *q;
-		value child,bounds,clipping,flipX,flipY;
+		value child,bounds,clipping;
 		color4B c;
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
 			bounds = Field(child,1);
 			clipping = Field(child,2);
-			flipX = Field(child,8);
-			flipY = Field(child,9);
 			c = COLOR_FROM_INT(Int_val(Field(child,6)),(GLubyte)(Double_val(Field(child,7)) * 255));
 
 			q = atlas_quads + i;
