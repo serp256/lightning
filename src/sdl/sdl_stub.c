@@ -914,6 +914,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
     CAMLlocal2(ML_event, to_return);
     //int i;
 
+		to_return = Val_int(0);
     switch (event.type) 
     {
 			
@@ -925,7 +926,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 					Store_field(ML_event,2,Val_int(event.window.data2));
 					to_return=caml_alloc(1,0);
 					Store_field(to_return,0,ML_event);
-					CAMLreturn(to_return);
+					break;
 			/*
 	case SDL_ACTIVEEVENT: 
 	{
@@ -945,7 +946,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	case SDL_KEYDOWN:
 	case SDL_KEYUP:
 	{
-		CAMLreturn(Val_int(0)); // skip it now
+		break; // skip it now
 		/*
 	    ML_event=caml_alloc(5,0);
 	    Store_field(ML_event, 0, Val_int(event.key.state));
@@ -960,16 +961,16 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	}
 	case SDL_MOUSEWHEEL:
 	{
-		CAMLreturn(Val_int(0)); // skip it now
+		break; // skip it now
 	}
 	case SDL_MOUSEMOTION:
 	{
 	    ML_event=caml_alloc(5,0);
 	    switch(event.motion.state)
 	    {
-		case 0: Store_field(ML_event, 0, Val_int(0));break;
-		case 1: Store_field(ML_event, 0, Val_int(1));break;
-		default: Store_field(ML_event, 0, Val_int(2));break;
+				case 0: Store_field(ML_event, 0, Val_int(0));break;
+				case 1: Store_field(ML_event, 0, Val_int(1));break;
+				default: Store_field(ML_event, 0, Val_int(2));break;
 	    }
 	    Store_field(ML_event, 1, Val_int(event.motion.x));
 	    Store_field(ML_event, 2, Val_int(event.motion.y));
@@ -978,7 +979,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    
 	    to_return=caml_alloc(1,2);
 	    Store_field(to_return, 0, ML_event);
-	    CAMLreturn(to_return);
+			break;
 	}
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
@@ -992,7 +993,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    
 	    to_return=caml_alloc(1,3);
 	    Store_field(to_return, 0, ML_event);
-	    CAMLreturn(to_return);
+			break;
 	}
 	case SDL_JOYAXISMOTION:
 	{
@@ -1002,7 +1003,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    Store_field(ML_event, 2, Val_int(event.jaxis.value));
 	    to_return=caml_alloc(1,4);
 	    Store_field(to_return, 0, ML_event);
-	    CAMLreturn(to_return);
+			break;
 	}
 	case SDL_JOYBALLMOTION:
 	{
@@ -1013,7 +1014,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    Store_field(ML_event, 3, Val_int(event.jball.yrel));
 	    to_return=caml_alloc(1,5);
 	    Store_field(to_return, 0, ML_event);
-	    CAMLreturn(to_return);
+			break;
 	}
 	case SDL_JOYHATMOTION:
 	{
@@ -1023,7 +1024,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    Store_field(ML_event, 2, Val_int(event.jhat.value));
 	    to_return=caml_alloc(1,6);
 	    Store_field(to_return, 0, ML_event);
-	    CAMLreturn(to_return);
+			break;
 	}
 	case SDL_JOYBUTTONUP:
 	case SDL_JOYBUTTONDOWN:
@@ -1034,7 +1035,7 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    Store_field(ML_event, 2, Val_int(event.jbutton.state));
 	    to_return=caml_alloc(1,7);
 	    Store_field(to_return, 0, ML_event);
-	    CAMLreturn(to_return);
+			break;
 	}
 	/*
 	case SDL_VIDEORESIZE:
@@ -1054,12 +1055,14 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	}*/
 	case SDL_QUIT:
 	{
-	    CAMLreturn(Val_int(2));
+			printf("QUIT event\n");
+			to_return = Val_int(2);
+			break;
 	}
 	case SDL_USEREVENT:
-    /* ... */
-	/*case SDL_NUMEVENTS-1:
 	{
+		break;
+		/*
 	    ML_event=caml_alloc(3,0);
 	    Store_field(ML_event, 0, Val_int(event.user.code));
 	    Store_field(ML_event, 1, (value)(event.user.data1));
@@ -1068,19 +1071,21 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    to_return=caml_alloc(1,9);
 	    Store_field(to_return, 0, ML_event);
 	    CAMLreturn(to_return);
-	}*/
+		*/
+	}
 	case SDL_SYSWMEVENT:
 	{
 	    to_return=caml_alloc(1,10);
 	    Store_field(to_return, 0, (value)(event.syswm.msg));
-	    CAMLreturn(to_return);
+			break;
 	}
 	default:
 	{
 	    fprintf(stderr,"Unknown event. %d\n",event.type);
 	    exit(-1);
 	}
-    }
+		};
+	CAMLreturn(to_return);
 }
 
 value sdlstub_poll_event(value u)

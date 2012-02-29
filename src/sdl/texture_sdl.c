@@ -13,6 +13,7 @@
 
 
 int _load_image(char *path,textureInfo *tInfo) {
+	fprintf(stderr,"LOAD IMAGE: %s\n",path);
 	SDL_Surface* s = IMG_Load(path);
 	if (s == NULL) return 2;
 	int width = s->w;
@@ -20,7 +21,6 @@ int _load_image(char *path,textureInfo *tInfo) {
   int legalWidth = nextPowerOfTwo(width);
   int legalHeight = nextPowerOfTwo(height);
 	SDL_Surface *surface;
-	fprintf(stderr,"%s - bpp = %d\n",path,s->format->BitsPerPixel);
 	unsigned int dataLen = legalWidth * legalHeight * (s->format->BitsPerPixel / 8);
 	unsigned char *pixels = (unsigned char*)malloc(dataLen);
 	switch (s->format->BitsPerPixel) {

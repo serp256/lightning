@@ -8,7 +8,7 @@
 #define glBindVertexArray glBindVertexArrayOES
 #else
 #ifdef SDL
-#ifdef APPLE
+#ifdef __MACOS__
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #define glGenVertexArrays glGenVertexArraysAPPLE
 #define glBindVertexArray glBindVertexArrayAPPLE
@@ -20,6 +20,10 @@
 #endif
 #endif
 
+#define HAS_VAO
+#if defined(ANDROID) || defined(linux)
+#undef HAS_VAO
+#endif
 
 void check_gl_errors(char *fname, int lnum, char *msg) {
 	GLenum error = glGetError();
@@ -701,7 +705,7 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	tq->br.c = c;
 	tq->tl.v = (vertex2F) { 0, Double_val(height)};
 	tq->tl.c = c;
-	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height) };
+	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height)};
 	tq->tr.c = c;
 	set_image_uv(tq,clipping);
 	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgTexQuad*),0,1); // 
@@ -997,7 +1001,7 @@ static void atlas_finalize(value atlas) {
 	PRINT_DEBUG("atlas finalize");
 	atlas_t *atl = ATLAS(atlas);
 	glDeleteBuffers(2,atl->buffersVBO);
-#ifndef ANDROID	
+#ifdef HAS_VAO
     glDeleteVertexArrays(1, &atl->vaoname);
 #endif    
 	caml_stat_free(atl);
@@ -1018,7 +1022,7 @@ value ml_atlas_init(value unit) {
 
 	atlas_t *atl = caml_stat_alloc(sizeof(atlas_t));
 
-#ifndef ANDROID
+#ifdef HAS_VAO
   glGenVertexArrays(1, &atl->vaoname);
   glBindVertexArray(atl->vaoname);
 #endif
@@ -1028,7 +1032,7 @@ value ml_atlas_init(value unit) {
   atl->index_size = 0;
   atl->n_of_quads = 0;
 
-#ifndef ANDROID
+#ifdef HAS_VAO
   glBindBuffer(GL_ARRAY_BUFFER, atl->buffersVBO[0]);
   //glBufferData(GL_ARRAY_BUFFER, sizeof(quads_[0]) * capacity_, quads_, GL_DYNAMIC_DRAW);
 
@@ -1165,7 +1169,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 	};
 	
 
-#ifdef ANDROID	
+#ifndef HAS_VAO
 	glBindBuffer(GL_ARRAY_BUFFER,atl->buffersVBO[0]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,atl->buffersVBO[1]);
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);

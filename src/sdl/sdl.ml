@@ -481,6 +481,7 @@ module Event =
       | WINDOWEVENT_EXPOSED        (**< Window has been exposed and should be redrawn *)
       | WINDOWEVENT_MOVED          (**< Window has been moved to data1, data2 *)
       | WINDOWEVENT_RESIZED        (**< Window size changed to data1xdata2 *)
+      | WINDOWEVENT_SIZE_CHANGED    (**< The window size has changed, either as a result of an API call or through the system or user changing the window size. *)
       | WINDOWEVENT_MINIMIZED      (**< Window has been minimized *)
       | WINDOWEVENT_MAXIMIZED      (**< Window has been maximized *)
       | WINDOWEVENT_RESTORED       (**< Window has been restored to normal size and position *)

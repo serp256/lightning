@@ -1,8 +1,0 @@
-# Specification for the "dbm" library
-requires = ""
-version = "[distributed with Ocaml]"
-description = "Access to NDBM databases"
-directory = "/usr/local/ocaml/ios/3.12.1/lib"
-browse_interfaces = " Dbm "
-archive(byte) = "dbm.cma"
-archive(native) = "dbm.cmxa"
