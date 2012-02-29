@@ -134,19 +134,82 @@ value tlf (stage:Stage.c) =
 (
   BitmapFont.register "MyriadPro-Regular.fnt";
   TLF.default_font_family.val := "Myriad Pro";
-  let (_,text) = TLF.create begin
-    TLF.p  ~halign:`center 
-      [ 
-        TLF.img ~height:50. ~valign:`default (Image.load "quad.png") ; 
-        TLF.span ~fontSize:20 ~fontFamily:"Myriad Pro" [ `text " nah nah" ]; `br ; 
-        `text "bla bla bla BLA yyyy"
-      ]
-  end in
+  let quad = Quad.create  ~color:0xFF0000 100. 20. in
+  (
+    quad#setPos 100. 100.;
+    stage#addChild quad;
+  );
+  let (_,text) = 
+    TLF.create ~width:95. begin
+        TLF.p ~halign:`center ~color:0xfff4c7 ~fontSize:15 
+          [ 
+            `text "животные";
+          ]
+    end 
+  in
   (
     text#setPos 100. 100.;
 (*     text#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
 (*     text#setAlpha 0.3; *)
     stage#addChild text;
+  );
+  let quad = Quad.create  ~color:0xFF0000 100. 20. in
+  (
+    quad#setPos 220. 100.;
+    stage#addChild quad;
+  );
+  let (_,text) = 
+    TLF.create ~width:100. begin
+        TLF.p ~halign:`center ~color:0xfff4c7 ~fontSize:15 
+          [ 
+            `text "животные";
+          ]
+    end 
+  in
+  (
+    text#setPos 220. 100.;
+(*     text#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
+(*     text#setAlpha 0.3; *)
+    stage#addChild text;
+  );
+  let quad = Quad.create  ~color:0xFF0000 100. 20. in
+  (
+    quad#setPos 190. 134.;
+    stage#addChild quad;
+  );
+
+  let tex = (Texture.load "MyriadPro-Regular0.png")#subTexture (Rectangle.create 341. 421. 6. 8.) in
+  (
+    let g = Image.create tex in
+    (
+      g#setPos 200. 140.;
+      stage#addChild g;
+    );
+    let g = Image.create tex in
+    (
+      g#setPos 220. 140.5;
+      stage#addChild g;
+    );
+    let g = Image.create tex in
+    (
+      g#setPos 240.5 140.0;
+      stage#addChild g;
+    );
+    let g = Image.create tex in
+    (
+      g#setPos 260.4 140.5;
+      stage#addChild g;
+    );
+  );
+  let tree = Image.load "tree.png" in
+  (
+    tree#setPos 20.5 200.;
+    stage#addChild tree;
+  );
+  let tree = Image.load "tree.png" in
+  (
+    tree#setPos 150. 200.;
+    stage#addChild tree;
   );
   (*
   let (_,text) = TLF.create (TLF.p ~halign:`center ~fontFamily:"Myriad Pro" [`text "laldddih" ]) in
@@ -285,6 +348,28 @@ value async_load (stage:Stage.c) =
   );
 );
 
+value sound (stage:Stage.c) =
+(
+  Sound.init ();
+  let sound = Sound.load "ra_fertilizer.caf" in
+  let sound2 = Sound.load "stoneBoom.caf" in
+  let tree = Image.load "tree.png" in
+  (
+    stage#addChild tree;
+    onClick tree begin fun _ ->
+      (
+        Gc.full_major ();
+        let channel = 
+          match Random.int 2 with
+          [ 0 -> Sound.createChannel sound2
+          | 1 -> Sound.createChannel sound
+          ]
+        in
+        channel#play ();
+      )
+    end
+  )
+);
 
 (*
 value alert (stage:Stage.c) =
@@ -310,6 +395,7 @@ let stage width height =
 (*       filters self; *)
 (*         size self; *)
       tlf self;
+(*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
     end;
