@@ -129,7 +129,6 @@
 
 - (void)renderStage
 {
-		NSLog(@"render stage");
     if (mFramebuffer == 0 || mRenderbuffer == 0) {
         NSLog(@"buffers not yet initialized");
         return; // buffers not yet initialized
@@ -150,13 +149,11 @@
     
     mlstage_render(mStage);
 
-		NSLog(@"stage rendered");
     
     glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
     [mContext presentRenderbuffer:GL_RENDERBUFFER];
     
 		[pool release];
-		NSLog(@"end of renderStage");
 }
 
 - (void)setTimer:(NSTimer *)newTimer 

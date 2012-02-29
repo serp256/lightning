@@ -44,7 +44,12 @@ external al_setMasterVolume: float -> unit = "ml_al_setMasterVolume";
 
 value setMasterVolume = al_setMasterVolume;
 
-value load = albuffer_create;
+value load path = 
+  let res = albuffer_create path in
+  (
+    debug "sound %s - duration %f" path res.duration;
+    res;
+  );
 
 type alsource;
 external alsource_create: albuffer -> alsource = "ml_alsource_create";
