@@ -680,7 +680,7 @@ void set_image_uv(lgTexQuad *tq, value clipping) {
 
 
 void print_tex_vertex(lgTexVertex *qv) {
-	PRINT_DEBUG("v = [%f:%f], c = [%hhu,%hhu,%hhu,%hhu], tex = [%f:%f] \n",qv->v.x,qv->v.y,qv->c.r,qv->c.g,qv->c.b,qv->c.a,qv->tex.u,qv->tex.v);
+	printf("v = [%f:%f], c = [%hhu,%hhu,%hhu,%hhu], tex = [%f:%f] \n",qv->v.x,qv->v.y,qv->c.r,qv->c.g,qv->c.b,qv->c.a,qv->tex.u,qv->tex.v);
 }
 void print_image(lgTexQuad *tq) {
 	printf("==== image =====\n");
@@ -693,6 +693,8 @@ void print_image(lgTexQuad *tq) {
 	printf("tr: ");
 	print_tex_vertex(&(tq->tr));
 }
+
+#define TEX_SIZE(w) (Double_val(w))
 //
 value ml_image_create(value width,value height,value clipping,value color,value alpha) {
 	CAMLparam5(width,height,clipping,color,alpha);
@@ -701,16 +703,15 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255));
 	tq->bl.v = (vertex2F){0,0};
 	tq->bl.c = c;
-	tq->br.v = (vertex2F) { Double_val(width),0.};
+	tq->br.v = (vertex2F) { TEX_SIZE(width),0.};
 	tq->br.c = c;
-	tq->tl.v = (vertex2F) { 0, Double_val(height)};
+	tq->tl.v = (vertex2F) { 0, TEX_SIZE(height)};
 	tq->tl.c = c;
-	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height)};
+	tq->tr.v = (vertex2F) { tq->br.v.x, tq->tl.v.y};
 	tq->tr.c = c;
 	set_image_uv(tq,clipping);
 	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgTexQuad*),0,1); // 
 	*TEXQUAD(res) = tq;
-	//print_image(tq);
 	CAMLreturn(res);
 }
 
@@ -798,6 +799,8 @@ void ml_image_flip_tex_y(value image) {
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
+
+	print_image(tq);
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	//printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
