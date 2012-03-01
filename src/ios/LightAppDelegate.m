@@ -17,6 +17,7 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 	self.window = [[UIWindow alloc] initWithFrame: [UIScreen mainScreen].applicationFrame];
 	lightViewController = [LightViewController sharedInstance];
+	lightViewController.orientationDelegate = self;
 	[self.window makeKeyAndVisible];
 	[self.window addSubview:lightViewController.view];    
 	return YES;
@@ -95,6 +96,9 @@
     return YES;
 }
 
+-(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+  return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
 
 - (void)dealloc {
 	[lightViewController release];

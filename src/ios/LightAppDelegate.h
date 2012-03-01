@@ -1,7 +1,7 @@
 #import <UIKit/UIKit.h>
 #import "LightViewController.h"  
 
-@interface LightAppDelegate : NSObject <UIApplicationDelegate> {
+@interface LightAppDelegate : NSObject <UIApplicationDelegate,OrientationDelegate> {
     UIAlertView * inappPurchaseActivity;
     LightViewController * lightViewController;
     UIWindow * _window;
