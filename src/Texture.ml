@@ -36,6 +36,10 @@ type textureInfo =
 
 type event = [= `RESIZE | `CHANGE ]; 
 
+type filter = [ FilterNearest | FilterLinear ];
+
+external set_texture_filter: textureID -> filter -> unit = "ml_texture_set_filter" "noalloc";
+
 class type renderer = 
   object
     method onTextureEvent: event -> c -> unit;
@@ -45,6 +49,7 @@ and c =
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
+    method setFilter: filter -> unit;
     method scale: float;
     method textureID: textureID;
     method base : option c; 
@@ -61,6 +66,7 @@ value zero : c =
     method width = 0.;
     method height = 0.;
     method hasPremultipliedAlpha = False;
+    method setFilter filter = ();
     method scale = 1.;
     method textureID = 0;
     method base = None;
@@ -180,6 +186,7 @@ class subtexture region (baseTexture:c) =
     method scale = baseTexture#scale;
     method base = Some (baseTexture :> c);
     method clipping = Some clipping;
+    method setFilter filter = set_texture_filter baseTexture#textureID filter;
     value rootClipping : option Rectangle.t = Some (Obj.magic rootClipping);
     method rootClipping = rootClipping;
 (*     method update path = baseTexture#update path; *)
@@ -239,6 +246,7 @@ value make textureInfo =
     );
     *)
 
+    method setFilter filter = set_texture_filter textureID filter;
     method release () = 
       if (textureID <> 0) 
       then
@@ -296,6 +304,7 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
     method width = width;
     method height = height;
     method hasPremultipliedAlpha = True;
+    method setFilter filter = set_texture_filter textureID filter;
     method scale = 1.;
     method base = None;
     method clipping = clipping;
@@ -563,6 +572,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method addRenderer r = Renderers.add renderers r;
     method removeRenderer r = Renderers.remove renderers r;
     method private changed () = Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> c)) renderers;
+    method setFilter filter = set_texture_filter textureID filter;
 
     method resize w h =
       let () = debug:rendered "resize <%d> from %f->%f, %f->%f" textureID width w height h in

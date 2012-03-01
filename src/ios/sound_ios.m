@@ -5,6 +5,7 @@
 #import <OpenAL/al.h>
 #import <OpenAL/alc.h>
 
+#import "light_common.h"
 #import "common_ios.h"
 
 #import <caml/mlvalues.h>
@@ -77,6 +78,7 @@ void ml_al_setMasterVolume(value mlVolume) {
 #define ALBUFFERID(v) ((uint*)Data_custom_val(v))
 static void albuffer_finalize(value mlAlBufferID) {
 	uint bufferID = *ALBUFFERID(mlAlBufferID);
+	PRINT_DEBUG("albuffer finalize: %d",bufferID);
 	alDeleteBuffers(1,&bufferID);
 }
 
@@ -212,6 +214,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	mlres = caml_alloc_tuple(2);
 	Store_field(mlres,0,mlBufferID);
 	Store_field(mlres,1,caml_copy_double(soundDuration));
+	PRINT_DEBUG("CREATED new albuffer: %d - %f",bufferID,soundDuration);
 	CAMLreturn(mlres);
 }
     
@@ -219,6 +222,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 #define ALSOURCEID(v) ((uint*)Data_custom_val(v))
 static void alsource_finalize(value mlAlSourceID) {
 	uint sourceID = *ALSOURCEID(mlAlSourceID);
+	PRINT_DEBUG("alsource finalize: %d",sourceID);
 	alSourceStop(sourceID);
 	alSourcei(sourceID, AL_BUFFER, 0);
 	alDeleteSources(1, &sourceID);
@@ -244,11 +248,13 @@ CAMLprim value ml_alsource_create(value mlAlBufferID) {
 	if (errorCode != AL_NO_ERROR) raise_error("Counld no create OpenAL source",NULL,errorCode);
 	mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
 	*ALSOURCEID(mlAlSourceID) = sourceID;
+	PRINT_DEBUG("created alsource: %d",sourceID);
 	CAMLreturn(mlAlSourceID);
 }
 
 void ml_alsource_play(value mlAlSourceID) {
 	alSourcePlay(*ALSOURCEID(mlAlSourceID));
+	PRINT_DEBUG("play source: %d",*ALSOURCEID(mlAlSourceID));
 	// remove after debug
 	ALenum errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Counld play OpenAL source",NULL,errorCode);
@@ -263,6 +269,7 @@ void ml_alsource_pause(value mlAlSourceID) {
 
 void ml_alsource_stop(value mlAlSourceID) {
 	alSourceStop(*ALSOURCEID(mlAlSourceID));
+	PRINT_DEBUG("stop alsource: %d",*ALSOURCEID(mlAlSourceID));
 	// remove after debug
 	ALenum errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Counld stop OpenAL source",NULL,errorCode);

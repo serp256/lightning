@@ -96,3 +96,6 @@ void mlstage_processTouches(mlstage *mlstage, value touches) {
 	if (processTouches_method == NIL) processTouches_method = caml_hash_variant("processTouches");
 	caml_callback2(caml_get_public_method(mlstage->stage,processTouches_method),mlstage->stage,touches);
 }
+
+
+

@@ -4,6 +4,7 @@ external push_matrix: Matrix.t -> unit = "ml_push_matrix";
 external restore_matrix: unit -> unit = "ml_restore_matrix";
 external clear: int -> float -> unit = "ml_clear";
 
+external get_gl_extensions: unit -> string = "ml_get_gl_extensions";
 module Program = struct
 
   type shader_type = [ Vertex | Fragment ];

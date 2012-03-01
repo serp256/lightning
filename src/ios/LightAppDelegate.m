@@ -15,7 +15,7 @@
 @synthesize window=_window;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    self.window = [[UIWindow alloc] initWithFrame: [UIScreen mainScreen].applicationFrame];
+	self.window = [[UIWindow alloc] initWithFrame: [UIScreen mainScreen].applicationFrame];
 	lightViewController = [LightViewController sharedInstance];
 	[self.window makeKeyAndVisible];
 	[self.window addSubview:lightViewController.view];    
@@ -34,8 +34,12 @@
 
 
 
-- (void)applicationDidEnterBackground:(UIApplication *)application      {}
-- (void)applicationWillEnterForeground:(UIApplication *)application     {}
+- (void)applicationDidEnterBackground:(UIApplication *)application      {
+	[lightViewController stop];
+}
+- (void)applicationWillEnterForeground:(UIApplication *)application     {
+	[lightViewController start];
+}
 - (void)applicationWillTerminate:(UIApplication *)application           {}
 
 

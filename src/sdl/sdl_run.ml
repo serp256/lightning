@@ -101,6 +101,7 @@ value run stage_create =
       (
         SDLGL.set_swap_interval 1;
         Printf.printf "SDL ATTRIBUTES: DOUBLEBUFFER:%d,GLMV:%d,GLMV:%d\n%!" (SDLGL.get_attribute SDLGL.DOUBLEBUFFER) (SDLGL.get_attribute SDLGL.CONTEXT_MAJOR_VERSION) (SDLGL.get_attribute SDLGL.CONTEXT_MINOR_VERSION);
+        Printf.printf "GL_EXTENSTIONS: %s\n%!" (Render.get_gl_extensions ());
         let stage = stage_create (float !width) (float !height) in
         handle_events window !frameRate stage;
         SDLGL.delete_context context;

@@ -134,7 +134,7 @@ value tlf (stage:Stage.c) =
 (
   BitmapFont.register "MyriadPro-Regular.fnt";
   TLF.default_font_family.val := "Myriad Pro";
-  let quad = Quad.create  ~color:0xFF0000 100. 20. in
+  let quad = Quad.create  ~color:0xCC0000 100. 20. in
   (
     quad#setPos 100. 100.;
     stage#addChild quad;
@@ -149,11 +149,11 @@ value tlf (stage:Stage.c) =
   in
   (
     text#setPos 100. 100.;
-(*     text#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
+    text#setFilters [ Filters.glow ~size:2 0x00FF00 ];
 (*     text#setAlpha 0.3; *)
     stage#addChild text;
   );
-  let quad = Quad.create  ~color:0xFF0000 100. 20. in
+  let quad = Quad.create  ~color:0xCC0000 100. 20. in
   (
     quad#setPos 220. 100.;
     stage#addChild quad;
@@ -168,7 +168,7 @@ value tlf (stage:Stage.c) =
   in
   (
     text#setPos 220. 100.;
-(*     text#setFilters [ Filters.glow ~size:2 0xFF0000 ]; *)
+    text#setFilters [ Filters.glow 0x00FF00 ];
 (*     text#setAlpha 0.3; *)
     stage#addChild text;
   );
@@ -177,7 +177,6 @@ value tlf (stage:Stage.c) =
     quad#setPos 190. 134.;
     stage#addChild quad;
   );
-
   let tex = (Texture.load "MyriadPro-Regular0.png")#subTexture (Rectangle.create 341. 421. 6. 8.) in
   (
     let g = Image.create tex in
@@ -201,23 +200,20 @@ value tlf (stage:Stage.c) =
       stage#addChild g;
     );
   );
+
   let tree = Image.load "tree.png" in
   (
     tree#setPos 20.5 200.;
+    tree#setFilters [ Filters.glow ~size:2 ~strength:2 0xFF0000 ];
     stage#addChild tree;
   );
   let tree = Image.load "tree.png" in
   (
+(*     tree#texture#setFilter Texture.FilterLinear; *)
     tree#setPos 150. 200.;
+    tree#setFilters [ Filters.glow ~size:2 ~strength:2 0xFF0000 ];
     stage#addChild tree;
   );
-  (*
-  let (_,text) = TLF.create (TLF.p ~halign:`center ~fontFamily:"Myriad Pro" [`text "laldddih" ]) in
-  (
-    text#setPos 300. 100.;
-    stage#addChild text;
-  )
-  *)
 );
 
 
@@ -371,6 +367,39 @@ value sound (stage:Stage.c) =
   )
 );
 
+
+value half_pixels (stage:Stage.c) =
+(
+  let img = Image.load "frame.png" in
+  (
+    img#setPos 100.5 100.;
+    stage#addChild img;
+  );
+  let tex = (Texture.load "MyriadPro-Regular0.png")#subTexture (Rectangle.create 341. 421. 6. 8.) in
+  (
+    let g = Image.create tex in
+    (
+      g#setPos 200. 140.;
+      stage#addChild g;
+    );
+    let g = Image.create tex in
+    (
+      g#setPos 220. 140.5;
+      stage#addChild g;
+    );
+    let g = Image.create tex in
+    (
+      g#setPos 240.5 140.0;
+      stage#addChild g;
+    );
+    let g = Image.create tex in
+    (
+      g#setPos 260.4 140.5;
+      stage#addChild g;
+    );
+  );
+);
+
 (*
 value alert (stage:Stage.c) =
 (
@@ -398,8 +427,8 @@ let stage width height =
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
+(*       half_pixels self; *)
     end;
   end
 in
 Lightning.init stage;
-

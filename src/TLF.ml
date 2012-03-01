@@ -760,6 +760,7 @@ value create ?width ?height ?border ?dest (html:main) =
             ]
           in
           let halign = match getAttrOpt (fun [ `halign p -> Some p | _ -> None ]) attribs with [ None -> `left | Some align -> align ] in
+          let () = debug "align p: by %s - %f" (match halign with [ `left -> "left" | `right -> "right" | `center -> "center" ]) max_width in
           let lines = 
             if RefList.is_empty qlines
             then []
@@ -777,14 +778,12 @@ value create ?width ?height ?border ?dest (html:main) =
                         ])
                     | _ -> ()
                     ];
-                    debug "set line y to %f" !yOffset;
                     match res with
                     [ [ pline :: _ ] -> yOffset.val := !yOffset +. pline.lineHeight
                     | _ -> ()
                     ];
                     line.ly := line.ly +. !yOffset;
-      (*                   container#addChild line.container; *)
-  (*                   yOffset.val := !yOffset +. line.lineHeight; *)
+                    debug "line.x = %f, y = %f" line.lx line.ly;
                     [ line :: res ]
                   )
                 end [] (RefList.to_list qlines)
@@ -850,36 +849,34 @@ value create ?width ?height ?border ?dest (html:main) =
   let (height,lines) = process (no_zero width,no_zero height) [] html in
   let _container = ref (match dest with [ Some s -> Some (s :> Sprite.c) | None -> None  ]) in
   let container () = match !_container with [ Some c -> c | None -> let c = Sprite.create () in (_container.val := Some c; c) ] in
-  let atlases : Hashtbl.t Texture.c (Atlas.c * int) = Hashtbl.create 1 in
+  let atlases : Hashtbl.t Texture.c Atlas.c = Hashtbl.create 1 in
   (
-    List.iteri begin fun lnum line ->
+    List.iter begin fun line ->
       for i = 0 to (DynArray.length line.lchars) - 1 do
         match DynArray.get line.lchars i with
         [ Img i -> 
           (
-            debug "add image to line";
-            i#setX (i#x +. line.lx);
-            i#setY (i#y +. line.ly);
+            let pos = {Point.x = i#x +. line.lx; y = i#y +. line.ly } in
+            let () = debug "add image to line [%f:%f]" pos.Point.x pos.Point.y in
+            i#setPosPoint pos;
             (container())#addChild i
           )
         | Char c ->
-            let atex = AtlasNode.texture c in
-          try
-            let (atlas,alnum) = Hashtbl.find atlases atex in
-            if alnum = lnum 
-            then atlas#addChild c
-            else 
-              let pos = AtlasNode.pos c in
-              let pd = {Point.x = line.lx -. atlas#x; y = line.ly -. atlas#y} in
-              atlas#addChild (AtlasNode.setPosPoint (Point.addPoint pos pd) c)
-          with [ Not_found -> 
-            let (atl : Atlas.c) = Atlas.create atex in
-            (
-              atl#setPos line.lx line.ly;
-              atl#addChild c;
-              Hashtbl.add atlases atex (atl,lnum);
-            )
-          ]
+          let atex = AtlasNode.texture c in
+          let atlas = 
+            try
+               Hashtbl.find atlases atex
+            with [ Not_found -> 
+              let (atl : Atlas.c) = Atlas.create atex in
+              (
+                Hashtbl.add atlases atex atl;
+                atl
+              )
+            ]
+          in
+          let pos = Point.addPoint (AtlasNode.pos c) {Point.x = line.lx; y = line.ly} in
+          let () = debug "add char to [%f:%f]" pos.Point.x pos.Point.y in
+          atlas#addChild (AtlasNode.setPosPoint pos c)
         ]
       done
     end lines;
@@ -887,16 +884,20 @@ value create ?width ?height ?border ?dest (html:main) =
       match !_container with
       [ None ->
         if Hashtbl.length atlases = 1
-        then (fst (Option.get (Enum.get (Hashtbl.values atlases))))#asDisplayObject
+        then 
+          let () = debug "result is atlas" in
+          (Option.get (Enum.get (Hashtbl.values atlases)))#asDisplayObject
         else 
           let c = Sprite.create () in
           (
-            Hashtbl.iter (fun _ (atlas,_) -> c#addChild atlas) atlases;
+            debug "result sprite with atlases";
+            Hashtbl.iter (fun _ atlas -> c#addChild atlas) atlases;
             c#asDisplayObject
           )
       | Some c -> 
           (
-            Hashtbl.iter (fun _ (atlas,_) -> c#addChild atlas) atlases;
+            debug "result container";
+            Hashtbl.iter (fun _ atlas -> c#addChild atlas) atlases;
             c#asDisplayObject
           )
       ]

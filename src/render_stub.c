@@ -8,7 +8,7 @@
 #define glBindVertexArray glBindVertexArrayOES
 #else
 #ifdef SDL
-#ifdef __MACOS__
+#ifdef __APPLE__
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #define glGenVertexArrays glGenVertexArraysAPPLE
 #define glBindVertexArray glBindVertexArrayAPPLE
@@ -800,7 +800,7 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 
-	print_image(tq);
+	//print_image(tq);
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	//printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
@@ -1222,4 +1222,10 @@ void ml_gl_scissor_enable(value left,value top, value width, value height) {
 
 void ml_gl_scissor_disable(value unit) {
 	glDisable(GL_SCISSOR_TEST);
+}
+
+value ml_get_gl_extensions(value unit) {
+	const char *ext = (char*)glGetString(GL_EXTENSIONS);
+	value res = caml_copy_string(ext);
+	return res;
 }

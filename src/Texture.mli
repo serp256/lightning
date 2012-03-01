@@ -17,6 +17,8 @@ type textureFormat =
 
 type event = [= `RESIZE | `CHANGE ]; 
 
+type filter = [ FilterNearest | FilterLinear ];
+
 class type renderer = 
   object
     method onTextureEvent: event -> c -> unit;
@@ -28,6 +30,7 @@ and c =
     method hasPremultipliedAlpha:bool;
     method scale: float;
     method textureID: textureID;
+    method setFilter: filter -> unit;
     method base : option c;
     method clipping: option Rectangle.t;
     method rootClipping: option Rectangle.t;

@@ -148,7 +148,7 @@ value create_ml_texture(renderbuffer_t *rb) {
 }
 
 // сделать рендер буфер
-renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *r) {
+renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter) {
 	//printf("try create renderbuffer: %f:%f\n",width,height);
   GLuint rtid;
 	GLuint iw = ceil(width);
@@ -168,8 +168,8 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
   glGenTextures(1, &rtid);
   glBindTexture(GL_TEXTURE_2D, rtid);
 	checkGLErrors("bind renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -266,8 +266,8 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 
 	checkGLErrors("after draw texture");
 	// можно нахуй скипнуть это дело 
-	glBindTexture(GL_TEXTURE_2D,0);
-	glBindFramebuffer(GL_FRAMEBUFFER,0); 
+	//glBindTexture(GL_TEXTURE_2D,0);
+	//glBindFramebuffer(GL_FRAMEBUFFER,0); 
 
 }
 
@@ -428,7 +428,7 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 	glUniform3f(glGetUniformLocation(glowPrg,"u_color"),c.r,c.g,c.b);
 
 	renderbuffer_t ib;
-	create_renderbuffer(rwidth/2,rheight/2,&ib);
+	create_renderbuffer(rwidth/2,rheight/2,&ib,GL_LINEAR);
 	GLuint tid = Long_val(textureID);
 	clipping clp;
 	if (clip != 1) {
@@ -443,7 +443,18 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 		clp.width = 1.;
 		clp.height = 1.;
 	};
+	glBindTexture(GL_TEXTURE_2D,tid);
+	GLint filter;
+	glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,&filter);
+	if (filter != GL_LINEAR) {
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	};
 	drawTexture(&ib,tid,iwidth/2,iheight/2,&clp,1);
+	if (filter != GL_LINEAR) {
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,filter);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,filter);
+	};
 	if (gsize > 1) {
 		renderbuffer_t *crb = &ib;
 		renderbuffer_t *rbfs;
@@ -455,7 +466,7 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 			w /= 2;
 			h /= 2;
 			prb = rbfs + i;
-			create_renderbuffer(w,h,prb);
+			create_renderbuffer(w,h,prb,GL_LINEAR);
 			checkGLErrors("create renderbuffer");
 			PRINT_DEBUG("draw forward %i",i);
 			drawTexture(prb, crb->tid, crb->width / 2, crb->height / 2, &crb->clp,1);
@@ -476,7 +487,7 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 	};
 	// теперь новое... нужно создать новый буфер и туда насрать ib и поверх оригирал с блендингом 
 	renderbuffer_t rb;
-	create_renderbuffer(rwidth,rheight,&rb);
+	create_renderbuffer(rwidth,rheight,&rb,GL_NEAREST);
 	glEnable(GL_BLEND);
 	glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
 	GLuint fglowPrg = final_glow_program();
