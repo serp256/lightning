@@ -434,8 +434,5 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value ocontentScaleFa
 	CAMLreturn(mlTex);
 }
 
-
-CAMLprim value ml_textureWithText(value text) {
-	caml_failwith("not implemented");
+void ml_loadExternalImage(value url,value callback) {
 }
-
