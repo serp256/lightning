@@ -15,10 +15,12 @@
 #include <caml/custom.h>
 #import <caml/alloc.h>
 
+/*
 #define checkOpenALError \ {
 	ALenum errorCode = alGetError(); \
 	if (errorCode != AL_NO_ERROR) raise_error("Counld no create OpenAL source",NULL,errorCode); \
 }
+*/
 
 
 static void raise_error(char* message, char* fname, uint code) {
