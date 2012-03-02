@@ -245,10 +245,12 @@ static value *ml_url_complete = NULL;
 				}
 				
 				if (Is_block(payment_error_cb)) {
+					caml_acquire_runtime_system();
 				  caml_callback3(payment_error_cb, 
 				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), 
 				                 caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]), 
 				                 Val_bool(transaction.error.code == SKErrorPaymentCancelled));
+					caml_release_runtime_system();
 				}
 				[[SKPaymentQueue defaultQueue] finishTransaction: transaction];
                 break;
@@ -262,10 +264,12 @@ static value *ml_url_complete = NULL;
 				  
                   [transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
 
+									caml_acquire_runtime_system();
 				  caml_callback3(payment_success_cb, 
 				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
 				                 (value)transaction,
 				                 Val_bool(restored));
+								caml_release_runtime_system();
 				}
             
 				[self hideActivityIndicator];
