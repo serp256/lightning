@@ -53,12 +53,12 @@ value load path =
 
 type alsource;
 external alsource_create: albuffer -> alsource = "ml_alsource_create";
-external alsource_play: alsource -> unit = "ml_alsource_play" "noalloc";
-external alsource_setVolume: alsource -> float -> unit = "ml_alsource_setVolume" "noalloc";
+external alsource_play: alsource -> unit = "ml_alsource_play";
+external alsource_setVolume: alsource -> float -> unit = "ml_alsource_setVolume";
 external alsource_getVolume: alsource -> float = "ml_alsource_getVolume";
-external alsource_setLoop: alsource -> bool -> unit = "ml_alsource_setLoop" "noalloc";
-external alsource_stop: alsource -> unit = "ml_alsource_stop" "noalloc";
-external alsource_pause: alsource -> unit = "ml_alsource_pause" "noalloc";
+external alsource_setLoop: alsource -> bool -> unit = "ml_alsource_setLoop";
+external alsource_stop: alsource -> unit = "ml_alsource_stop";
+external alsource_pause: alsource -> unit = "ml_alsource_pause";
 
 external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc";
 
