@@ -304,6 +304,7 @@ NSString * pathForBundleResource(NSString * path, NSBundle * bundle) {
 
 int _load_image(NSString *path,textureInfo *tInfo) {
 
+	NSLog(@"LOAD IMAGE: %@\n",path);
 	NSString *fullPath = NULL;
 	NSString *imgType = [[path pathExtension] lowercaseString];
 	NSBundle *bundle = [NSBundle mainBundle];

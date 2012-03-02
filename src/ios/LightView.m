@@ -235,7 +235,12 @@
 }
 
 //#define PROCESS_TOUCH_EVENT if (self.isStarted && mLastTouchTimestamp != event.timestamp) { process_touches(self,touches,event,mStage); mLastTouchTimestamp = event.timestamp; }    
-#define PROCESS_TOUCH_EVENT if (self.isStarted) process_touches(self,touches,event,mStage);
+#define PROCESS_TOUCH_EVENT if (self.isStarted) {\
+	NSAssert(!processTouchesInProgress,@"PROCESS TOUCH EVENT while processTouchesInProgress"); \
+	processTouchesInProgress = YES; \
+	process_touches(self,touches,event,mStage);\
+	processTouchesInProgress = NO;\
+}
 
 - (void) touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event 
 {   
@@ -255,7 +260,10 @@
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {    
     mLastTouchTimestamp -= 0.0001f; // cancelled touch events have an old timestamp -> workaround
-    PROCESS_TOUCH_EVENT;
+		if (processTouchesInProgress) {
+			NSLog(@"TOuch in progress, needCacnelAllTouches");
+			mStage->needCancelAllTouches = 1;
+		} else PROCESS_TOUCH_EVENT;
 }
 
 /*

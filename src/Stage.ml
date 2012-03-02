@@ -121,7 +121,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
                 end (processedTouches @ otherTouches)
             in
             (* группируем их по таргетам и вперед - incorrect *) 
-            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) []processedTouches in
+            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) [] processedTouches in
             let fireTouches = 
               List.fold_left begin fun res (target,touch) -> 
                 try
@@ -140,6 +140,23 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
           )
         | False -> ()
         ];(*}}}*)
+
+
+      method cancelAllTouches () = 
+        match currentTouches with
+        [ [] -> ()
+        | touches ->
+          (
+            currentTouches := []; (* FIXME:  не проверяем что таргет на сцене *)
+            let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target ({(Touch.t_of_n touch) with phase = TouchPhaseCancelled}) res) [] touches in
+            let event = Ev.create ~bubbles:True `TOUCH () in
+            List.iter begin fun ((target:D.c),touches) ->
+              let event = {(event) with Ev.data = `Touches touches} in
+              target#dispatchEvent event
+            end fireTouches;
+          )
+        ];
+
 
       method renderStage () =
       (

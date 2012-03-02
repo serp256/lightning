@@ -35,6 +35,7 @@ mlstage *mlstage_create(float width,float height) {
 	stage->width = width;
 	stage->height = height;
 	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));// FIXME: GC 
+	stage->needCancelAllTouches = 0;
 	caml_register_global_root(&stage->stage);
 	caml_release_runtime_system();
 	PRINT_DEBUG("stage successfully created");
@@ -67,6 +68,7 @@ void mlstage_destroy(mlstage *mlstage) {
 }
 
 static value advanceTime_method = NIL;
+
 void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
 	caml_acquire_runtime_system();
 	if (advanceTime_method == NIL) advanceTime_method = caml_hash_variant("advanceTime");
@@ -77,6 +79,7 @@ void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
 }
 
 static value render_method = NIL;
+
 void mlstage_render(mlstage *mlstage) {
 	PRINT_DEBUG("mlstage render");
 	caml_acquire_runtime_system();
@@ -97,5 +100,10 @@ void mlstage_processTouches(mlstage *mlstage, value touches) {
 	caml_callback2(caml_get_public_method(mlstage->stage,processTouches_method),mlstage->stage,touches);
 }
 
+static value cancelAllTouches_method = NIL;
 
-
+void mlstage_cancelAllTouches(mlstage *mlstage) {
+	PRINT_DEBUG("mlstage cancelAllTouches");
+	if (cancelAllTouches_method == NIL) cancelAllTouches_method = caml_hash_variant("cancelAllTouches");
+	caml_callback2(caml_get_public_method(mlstage->stage,cancelAllTouches_method),mlstage->stage,Val_unit);
+}

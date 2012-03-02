@@ -244,11 +244,11 @@ CAMLprim value ml_alsource_create(value mlAlBufferID) {
 	alGenSources(1, &sourceID);
 	uint bufferID = *ALBUFFERID(mlAlBufferID);
 	alSourcei(sourceID, AL_BUFFER, bufferID);
+	PRINT_DEBUG("created alsource: %d for buffer %d",sourceID,bufferID);
 	ALenum errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Counld no create OpenAL source",NULL,errorCode);
 	mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
 	*ALSOURCEID(mlAlSourceID) = sourceID;
-	PRINT_DEBUG("created alsource: %d",sourceID);
 	CAMLreturn(mlAlSourceID);
 }
 
