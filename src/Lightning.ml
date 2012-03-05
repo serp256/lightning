@@ -64,6 +64,7 @@ type stage_constructor =
       renderStage: unit -> unit;
       run: float -> unit;
       processTouches: list Touch.n -> unit;
+      cancelAllTouches: unit -> unit;
       advanceTime: float -> unit;
       name: string;
     >;

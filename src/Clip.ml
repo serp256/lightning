@@ -640,10 +640,12 @@ value create_element_async lib symbol callback =
 
 exception Symbol_not_found of string;
 value get_symbol lib cls =
+  let () = debug:load "get %s from %s" cls lib.path in
   let symbol = try Hashtbl.find lib.symbols cls with [ Not_found -> raise (Symbol_not_found cls) ] in
   create_element lib symbol;
 
 value get_symbol_async lib cls callback = 
+  let () = debug:load "get async %s from %s" cls lib.path in
   let symbol = try Hashtbl.find lib.symbols cls with [ Not_found -> raise (Symbol_not_found cls) ] in
   create_element_async lib symbol callback;
 

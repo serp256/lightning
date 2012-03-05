@@ -16,6 +16,7 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       inherit D.container;
       value virtual color: int;
       method processTouches: list Touch.n -> unit;
+      method cancelAllTouches: unit -> unit;
       method advanceTime: float -> unit;
       method run: float -> unit; (* combine advanceTime and render *)
       method renderStage: unit -> unit;

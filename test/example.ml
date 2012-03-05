@@ -132,6 +132,10 @@ value onClick obj handler  =
 
 value tlf (stage:Stage.c) = 
 (
+  debug "min_int: %d" min_int;
+  debug "max_int: %d" max_int;
+  debug "min_float: %f" min_float;
+  debug "max_float: %f" max_float;
   BitmapFont.register "MyriadPro-Regular.fnt";
   TLF.default_font_family.val := "Myriad Pro";
   let quad = Quad.create  ~color:0xCC0000 100. 20. in

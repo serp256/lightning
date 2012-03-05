@@ -41,6 +41,11 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
     mltouches = lst_el;
   }
   mlstage_processTouches(mlstage,mltouches);
+	if (mlstage->needCancelAllTouches) {
+		mlstage->needCancelAllTouches = 0;
+		NSLog(@"Call cancel all touches");
+		mlstage_cancelAllTouches(mlstage);
+	}
 	End_roots();
 	caml_release_runtime_system();
 }

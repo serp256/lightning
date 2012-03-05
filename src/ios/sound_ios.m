@@ -15,6 +15,14 @@
 #include <caml/custom.h>
 #import <caml/alloc.h>
 
+/*
+#define checkOpenALError \ {
+	ALenum errorCode = alGetError(); \
+	if (errorCode != AL_NO_ERROR) raise_error("Counld no create OpenAL source",NULL,errorCode); \
+}
+*/
+
+
 static void raise_error(char* message, char* fname, uint code) {
 	char buf[256];
 	if (fname) 
@@ -205,8 +213,8 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	int format = (soundChannels > 1) ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
 
 	alBufferData(bufferID, format, soundBuffer, soundSize, soundFrequency);
-	errorCode = alGetError();
 	caml_stat_free(soundBuffer);
+	errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Could not fill OpenAL buffer",String_val(mlpath),errorCode);
 	
 	mlBufferID = caml_alloc_custom(&albuffer_ops,sizeof(uint),1,0);
@@ -244,11 +252,11 @@ CAMLprim value ml_alsource_create(value mlAlBufferID) {
 	alGenSources(1, &sourceID);
 	uint bufferID = *ALBUFFERID(mlAlBufferID);
 	alSourcei(sourceID, AL_BUFFER, bufferID);
+	PRINT_DEBUG("created alsource: %d for buffer %d",sourceID,bufferID);
 	ALenum errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Counld no create OpenAL source",NULL,errorCode);
 	mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
 	*ALSOURCEID(mlAlSourceID) = sourceID;
-	PRINT_DEBUG("created alsource: %d",sourceID);
 	CAMLreturn(mlAlSourceID);
 }
 

@@ -45,9 +45,9 @@
     NSTimer *mTimer;
     id mDisplayLink;
     BOOL mDisplayLinkSupported;        
-    
     double mLastFrameTimestamp;
     double mLastTouchTimestamp;
+		BOOL processTouchesInProgress;
 }
 
 /// ----------------
