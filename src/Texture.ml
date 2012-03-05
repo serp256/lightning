@@ -232,7 +232,7 @@ value make textureInfo =
   in
   let w = float textureInfo.realWidth
   and h = float textureInfo.realHeight in
-  object(self)
+  object(self : c)
     value mutable textureID = textureID;
 (*     value mutable counter = 0; *)
     (*
@@ -260,7 +260,7 @@ value make textureInfo =
     method height = h;
     method hasPremultipliedAlpha = hasPremultipliedAlpha;
     method scale = scale;
-    method setTextureID tid = textureID := tid;
+(*    method setTextureID tid = textureID := tid; *)
     method textureID = textureID;
     method base = None;
     method clipping = clipping;

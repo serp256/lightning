@@ -143,6 +143,48 @@ value showAchivements () =
   | InitFailed -> ()
   ];
 
+external get_friends_identifiers : (list string -> unit) -> unit = "ml_get_friends_identifiers";
+
+value getFriends cb = 
+  match !state with
+  [ NotInitialized -> failwith "GameCenter not initialized" 
+  | Initializing callbacks -> 
+      let c = fun 
+        [ True  -> get_friends_identifiers cb
+        | False -> cb []
+        ]
+      in Queue.push c callbacks
+  | Initialized -> get_friends_identifiers cb
+  | InitFailed -> cb []
+  ];
+
+
+
+external load_users_info : list string -> (list (string*(string*option Texture.textureInfo)) -> unit) -> unit = "ml_load_users_info";
+
+value loadUserInfo identifiers cb = 
+  let lcb infos = 
+    cb (List.map 
+      begin fun (playerId, (alias, photoTInfo)) ->
+        match photoTInfo with
+        [ None -> (playerId, (alias, None))
+        | Some tinfo -> (playerId, (alias, (Some (Texture.make tinfo))))
+        ]
+      end infos)
+  in 
+  match !state with
+  [ NotInitialized -> failwith "GameCenter not initialized" 
+  | Initializing callbacks -> 
+      let c = fun 
+        [ True  -> load_users_info identifiers lcb
+        | False -> lcb []
+        ]
+      in Queue.push c callbacks
+  | Initialized -> load_users_info identifiers lcb
+  | InitFailed -> lcb []
+  ];
+
+
 ELSE
 
 value init ?callback () = 
@@ -157,5 +199,7 @@ value reportLeaderboard (category:string) (scores:int64) = ();
 value showLeaderboard () = ();
 value reportAchivement (identifier:string) (percentComplete:float) = ();
 value showAchivements () = ();
+value getFriends cb = cb [];
+value loadUserInfo identifiers cb = cb [];
 
 ENDIF;
