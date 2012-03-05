@@ -632,3 +632,20 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
 
 
   end; (*}}}*)
+
+
+IFDEF IOS THEN
+external loadExternalImage: string -> (textureInfo -> unit) -> option (int -> string -> unit) -> unit = "ml_loadExternalImage";
+value loadExternal url ~callback ~errorCallback = 
+  loadExternalImage url begin fun textureInfo ->
+    let texture = make textureInfo in
+    callback (texture :> c)
+  end errorCallback;
+
+
+
+ELSE
+
+value loadExternal url callback ?errorCallback () = ();
+
+ENDIF;

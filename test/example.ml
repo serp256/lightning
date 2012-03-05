@@ -404,6 +404,22 @@ value half_pixels (stage:Stage.c) =
   );
 );
 
+value external_image (stage:Stage.c) =
+(
+  Texture.loadExternal 
+    "http://votrube.ru/uploads/posts/2012-03/thumbs/1330888418_-(www.votrube.ru)5.jpg"
+    ~callback:(fun texture ->
+      let image = Image.create texture in
+      stage#addChild image
+    )
+    ~errorCallback:
+    (Some 
+      (fun code msg -> 
+        let (_,text) = TLF.create (TLF.p [`text (Printf.sprintf "loading error: %d, %s" code msg) ]) in
+        stage#addChild text
+      )
+    )
+);
 (*
 value alert (stage:Stage.c) =
 (
@@ -427,7 +443,8 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-      tlf self;
+(*       tlf self; *)
+      external_image self;
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)

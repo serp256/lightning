@@ -15,12 +15,15 @@
 #include <caml/custom.h>
 #import <caml/alloc.h>
 
-/*
-#define checkOpenALError \ {
+#define checkOpenALError(fmt,args...) { \
 	ALenum errorCode = alGetError(); \
-	if (errorCode != AL_NO_ERROR) raise_error("Counld no create OpenAL source",NULL,errorCode); \
+	if (errorCode != AL_NO_ERROR) { \
+		char buf[256]; \
+		int bw = sprintf(buf,"(%s:%d) al error [%x]. ",__FILE__,__LINE__,errorCode); \
+		sprintf(buf + bw,fmt,## args); \
+		caml_raise_with_string(*caml_named_value("Audio_error"),buf); \
+	}; \
 }
-*/
 
 
 static void raise_error(char* message, char* fname, uint code) {
@@ -87,6 +90,7 @@ void ml_al_setMasterVolume(value mlVolume) {
 static void albuffer_finalize(value mlAlBufferID) {
 	uint bufferID = *ALBUFFERID(mlAlBufferID);
 	PRINT_DEBUG("albuffer finalize: %d",bufferID);
+	checkOpenALError("finalize albuffer: %d",bufferID);
 	alDeleteBuffers(1,&bufferID);
 }
 
@@ -234,6 +238,7 @@ static void alsource_finalize(value mlAlSourceID) {
 	alSourceStop(sourceID);
 	alSourcei(sourceID, AL_BUFFER, 0);
 	alDeleteSources(1, &sourceID);
+	checkOpenALError("finalize alsource: %d",sourceID);
 }
 
 struct custom_operations alsource_ops = {
@@ -253,34 +258,34 @@ CAMLprim value ml_alsource_create(value mlAlBufferID) {
 	uint bufferID = *ALBUFFERID(mlAlBufferID);
 	alSourcei(sourceID, AL_BUFFER, bufferID);
 	PRINT_DEBUG("created alsource: %d for buffer %d",sourceID,bufferID);
-	ALenum errorCode = alGetError();
-	if (errorCode != AL_NO_ERROR) raise_error("Counld no create OpenAL source",NULL,errorCode);
+	checkOpenALError("create alsource: %d - %d",bufferID,sourceID);
 	mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
 	*ALSOURCEID(mlAlSourceID) = sourceID;
 	CAMLreturn(mlAlSourceID);
 }
 
 void ml_alsource_play(value mlAlSourceID) {
-	alSourcePlay(*ALSOURCEID(mlAlSourceID));
-	PRINT_DEBUG("play source: %d",*ALSOURCEID(mlAlSourceID));
+	uint sourceID = *ALSOURCEID(mlAlSourceID);
+	alSourcePlay(sourceID);
+	PRINT_DEBUG("play source: %d",sourceID);
 	// remove after debug
-	ALenum errorCode = alGetError();
-	if (errorCode != AL_NO_ERROR) raise_error("Counld play OpenAL source",NULL,errorCode);
+	checkOpenALError("play: %d",sourceID);
 }
 
 void ml_alsource_pause(value mlAlSourceID) {
-	alSourcePause(*ALSOURCEID(mlAlSourceID));
+	uint sourceID = *ALSOURCEID(mlAlSourceID);
+	alSourcePause(sourceID);
+	PRINT_DEBUG("pause alsource: %d",sourceID);
 	// remove after debug
-	ALenum errorCode = alGetError();
-	if (errorCode != AL_NO_ERROR) raise_error("Counld pause OpenAL source",NULL,errorCode);
+	checkOpenALError("pause: %d",sourceID);
 }
 
 void ml_alsource_stop(value mlAlSourceID) {
-	alSourceStop(*ALSOURCEID(mlAlSourceID));
-	PRINT_DEBUG("stop alsource: %d",*ALSOURCEID(mlAlSourceID));
+	uint sourceID = *ALSOURCEID(mlAlSourceID);
+	alSourceStop(sourceID);
+	PRINT_DEBUG("stop alsource: %d",sourceID);
 	// remove after debug
-	ALenum errorCode = alGetError();
-	if (errorCode != AL_NO_ERROR) raise_error("Counld stop OpenAL source",NULL,errorCode);
+	checkOpenALError("play: %d",sourceID);
 }
 
 void ml_alsource_setLoop(value mlAlSourceID,value loop) {

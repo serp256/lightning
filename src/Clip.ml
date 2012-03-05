@@ -879,7 +879,14 @@ value load ?(loadTextures=False) libpath : lib =
   let (textures,symbols) = _load libpath in
   let textures = 
     match loadTextures with
-    [ True -> `textures (Array.map (fun file -> Texture.load (Filename.concat libpath file)) textures)
+    [ True -> `textures begin 
+      Array.map begin fun file -> 
+        let tx = Texture.load (Filename.concat libpath file) in
+        (
+          tx#setFilter Texture.FilterLinear;
+          tx
+        )
+      end textures end
     | False -> `files textures
     ]
   in

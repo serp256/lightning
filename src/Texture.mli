@@ -68,3 +68,6 @@ value rendered: ?format:int -> ?color:int -> ?alpha:float -> float -> float -> r
 
 value load_async: string -> (c -> unit) -> unit;
 value check_async: unit -> unit;
+
+
+value loadExternal: string -> ~callback:(c -> unit) -> ~errorCallback:option (int -> string -> unit) -> unit;

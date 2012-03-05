@@ -35,7 +35,7 @@ ifeq ($(PLATFORM),IOS)
 	gl = gl/es
 	#CFLAGS +=  -DDEBUG -DIOS
 	#MLCOPTS += -DIOS
-	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o
+	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o
 	#MLPPOPT += -DGLES -DIOS
 	LIBFLAGS = -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \

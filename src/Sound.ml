@@ -65,11 +65,11 @@ external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc"
 
 value createChannel snd : channel =
   object
+    value sourceID = alsource_create snd.albuffer;
     value sound = snd;
     value mutable loop = False;
     value mutable startMoment = 0.;
     value mutable pauseMoment = 0.;
-    value sourceID = alsource_create snd.albuffer;
     method play () = alsource_play sourceID;
     method pause () = alsource_pause sourceID;
     method stop () = alsource_stop sourceID;

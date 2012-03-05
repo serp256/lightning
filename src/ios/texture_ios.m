@@ -18,6 +18,7 @@
 
 #import "texture_common.h"
 #import "common_ios.h"
+#import "LightImageLoader.h"
 
 
 typedef void (*drawingBlock)(CGContextRef context,void *data);
@@ -434,5 +435,9 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value ocontentScaleFa
 	CAMLreturn(mlTex);
 }
 
-void ml_loadExternalImage(value url,value callback) {
+
+void ml_loadExternalImage(value url,value successCallback, value errorCallback) {
+	LightImageLoader *imageLoader = [[LightImageLoader alloc] initWithURL:[NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding] successCallback:successCallback errorCallback:errorCallback];
+	[imageLoader start];
+	[imageLoader release];
 }
