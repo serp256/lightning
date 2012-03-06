@@ -5,9 +5,9 @@ MLCOMPFLAGS = -w +7+9 -warn-error +10 -g
 
 %.cmi: %.mli
 ifneq (,$(findstring byte,$(LIB)))
-	$(OCAMLC) $(MLFLAGS) $(MLCOMPFLAGS) -c $<
+	$(OCAMLC) $(MLFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<
 else
-	$(OCAMLOPT) $(MLFLAGS) $(MLCOMPFLAGS) -c $<
+	$(OCAMLOPT) $(MLFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<
 endif
 
 %.cmo: %.ml

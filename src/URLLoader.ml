@@ -136,6 +136,139 @@ value start_load wrappers r =
 ELSE
 IFDEF SDL THEN (*{{{*)
 
+value curl_initialized = ref False;
+
+module type CurlLoader = sig
+  value push_request: loader_wrapper -> request -> unit;
+  value check_response: unit -> unit;
+end;
+
+module CurlLoader(P:sig end) = struct
+
+  match !curl_initialized with
+  [ False -> (Curl.global_init Curl.CURLINIT_GLOBALNOTHING; curl_initialized.val := True)
+  | True -> ()
+  ];
+
+  value condition = Condition.create ();
+
+  value requests_queue = ThreadSafeQueue.create ();
+
+  value waiting_loaders = Hashtbl.create 1;
+  value request_id = ref 0;
+  value push_request loader request = 
+    (
+      incr request_id;
+      Hashtbl.add waiting_loaders !request_id loader;
+      let (url,data) = prepare_request request in
+      ThreadSafeQueue.enqueue requests_queue (!request_id,url,request.httpMethod,request.headers,data);
+      Condition.signal condition;
+    );
+
+  value response_queue = ThreadSafeQueue.create ();
+
+  value rec check_response () = 
+    match ThreadSafeQueue.dequeue response_queue with
+    [ Some (request_id,result) ->
+      (
+        let loader = Hashtbl.find waiting_loaders request_id in
+        match result with
+        [ `Result (code,contentType,contentLength,data) ->
+          (
+            loader.onResponse code contentType contentLength;
+            loader.onData data;
+            loader.onComplete ();
+          )
+        | `Failure code errmsg -> loader.onError code errmsg
+        ];
+        check_response ();
+      )
+    | None -> ()
+    ];
+
+  value mutex = Mutex.create ();
+  value run () = 
+    let () = Mutex.lock mutex in
+    let buffer = Buffer.create 1024 in
+    let dataf = (fun str -> (Buffer.add_string buffer str; String.length str)) in
+    loop () where
+      rec loop () = 
+        let () = debug "try check requests" in
+        match ThreadSafeQueue.dequeue requests_queue with
+        [ Some (request_id,url,hmth,headers,body) ->
+          (
+            let () = debug "new curl request on url: %s" url in
+            let ccon = Curl.init () in
+            try
+              Curl.set_url ccon url;
+              let headers = List.map (fun (n,v) -> Printf.sprintf "%s:%s" n v) headers in
+              match headers with
+              [ [] -> ()
+              | _ -> Curl.set_httpheader ccon headers
+              ];
+              match hmth with
+              [ `POST -> Curl.set_post ccon True
+              | _ -> ()
+              ];
+              match body with
+              [ Some b -> 
+                (
+                  Curl.set_postfields ccon b;
+                  Curl.set_postfieldsize ccon (String.length b);
+                )
+              | None -> ()
+              ];
+              Curl.set_writefunction ccon dataf;
+              Curl.perform ccon;
+              debug "curl performed";
+              let httpCode = Curl.get_httpcode ccon
+              and contentType = Curl.get_contenttype ccon
+              and contentLength = Int64.of_float (Curl.get_contentlengthdownload ccon)
+              in
+              ThreadSafeQueue.enqueue response_queue (request_id,`Result (httpCode,contentType,contentLength,Buffer.contents buffer));
+              Buffer.clear buffer;
+              Curl.cleanup ccon;
+            with [ Curl.CurlException _ code str -> ThreadSafeQueue.enqueue response_queue (request_id,(`Failure code str))];
+            loop ()
+          )
+        | None ->
+          (
+            Condition.wait condition mutex;
+            loop ()
+          )
+        ];
+  value thread = Thread.create run ();
+
+end;
+
+
+value curl_loader = ref None;
+value process_events () =
+  match !curl_loader with
+  [ Some m ->
+    let module Loader = (value m:CurlLoader) in
+    Loader.check_response ()
+  | None -> ()
+  ];
+
+value start_load wrapper r = 
+  let m =
+    match !curl_loader with
+    [ Some m -> m
+    | None -> 
+        let module Loader = CurlLoader (struct end) in
+        let m = (module Loader:CurlLoader) in
+        (
+          curl_loader.val := Some m;
+          m
+        )
+        
+    ]
+  in
+  let module Loader = (value m:CurlLoader) in
+  Loader.push_request wrapper r;
+
+(*
 type thr = ((Event.channel [= `Result of (int * string * Int64.t * string) | `Failure of (int * string) ]) * (Event.channel (string * http_method * list (string*string) * option string)));
 value free_threads: Queue.t thr = Queue.create ();
 value working_threads = ref [];
@@ -150,6 +283,7 @@ value curl_thread (inch,outch) =
     (
       let e = Event.receive inch in
       let (url,hmth,headers,body) = Event.sync e in
+      let () = debug "new curl request on url: %s" url in
       let ccon = Curl.init () in
       try
         Curl.set_url ccon url;
@@ -196,6 +330,7 @@ value start_load wrapper r =
   let ((_,outch) as channels) = 
     match Queue.is_empty free_threads with
     [ True -> 
+      let () = debug "create new thread" in
       let inch = Event.new_channel ()
       and outch = Event.new_channel () 
       in
@@ -203,7 +338,9 @@ value start_load wrapper r =
         ignore(Thread.create curl_thread (outch,inch));
         ((inch,outch):thr)
       )
-    | False -> Queue.pop free_threads
+    | False -> 
+        let () = debug "take existent thread" in
+        Queue.pop free_threads
     ]
   in
   let e = Event.send outch (url,r.httpMethod,r.headers,data) in
@@ -249,6 +386,7 @@ value process_events () =
         end works
   ];
 
+*)
 
 (*}}}*)
 ELSE
@@ -312,6 +450,7 @@ class loader ?request () =
   object(self)
     inherit EventDispatcher.simple [eventType, eventData, loader];
     value mutable state = Init;
+    method state = state;
     method private asEventTarget = (self :> loader);
 
     value mutable httpCode = 0;
@@ -352,7 +491,7 @@ class loader ?request () =
       self#dispatchEvent event
     );
 
-    method onComplete () = 
+    method private onComplete () = 
     (
       debug "on complete";
       state := Complete;

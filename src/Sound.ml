@@ -64,15 +64,40 @@ external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc"
 
 
 value createChannel snd : channel =
-  object
+  object(self)
     value sourceID = alsource_create snd.albuffer;
     value sound = snd;
     value mutable loop = False;
     value mutable startMoment = 0.;
     value mutable pauseMoment = 0.;
-    method play () = alsource_play sourceID;
-    method pause () = alsource_pause sourceID;
-    method stop () = alsource_stop sourceID;
+    value mutable timer_id = None;
+    method play () = 
+    (
+      alsource_play sourceID;
+      timer_id := Some (Timers.start sound.duration self#finished);
+    );
+
+    method private finished () = if loop then timer_id := Some (Timers.start sound.duration self#finished) else timer_id := None;
+
+    method pause () = 
+      match timer_id with
+      [ Some timer_id ->
+        (
+          Timers.stop timer_id;
+          alsource_pause sourceID;
+        )
+      | None -> ()
+      ];
+
+    method stop () = 
+      match timer_id with
+      [ Some timer_id ->
+        (
+          Timers.stop timer_id;
+          alsource_stop sourceID;
+        )
+      | None -> ()
+      ];
     method setVolume v = alsource_setVolume sourceID v;
     method volume = alsource_getVolume sourceID;
     method setLoop v = alsource_setLoop sourceID v;

@@ -318,15 +318,14 @@ value size (stage:Stage.c) =
 
 value flip (stage:Stage.c) =
   let img = Image.load "tree.png" in
-  let tx = ref (Texture.load "e_cactus.png") in
+(*   let tx = ref (Texture.load "e_cactus.png") in *)
   (
+    img#setTexFlipX True;
     onClick img (fun img ->
-      let t = img#texture in
-      (
-        img#setTexture !tx;
-        img#setTexFlipX (not img#texFlipX);
-        tx.val := t;
-      )
+      match img#filters with
+      [ [] -> img#setFilters [ Filters.glow 0xFF0000 ]
+      | _ -> img#setFilters []
+      ]
     );
     img#setPos 100. 100.;
     stage#addChild img;
@@ -444,7 +443,7 @@ let stage width height =
     value color = 0xCCCCCC;
     initializer begin
 (*       alert self; *)
-(*       flip self; *)
+      flip self;
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
@@ -453,7 +452,7 @@ let stage width height =
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
-      half_pixels self;
+(*       half_pixels self; *)
     end;
   end
 in
