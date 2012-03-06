@@ -9,6 +9,12 @@ package "facebook" (
   archive(native) = "fbconnect.cmxa"
 )
 
+package "vk" (
+  description="VK API"
+  archive(byte) = "vk.cma"
+  archive(native) = "vk.cmxa"
+)
+
 
 
 package "syntax" (
