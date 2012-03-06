@@ -297,8 +297,8 @@ value rec vk_call_method ?(delegate = None) meth params =
 ELSE
 
 
-value vk_init  = failwith "Not implemented";
-value vk_call_method = failwith "Not implemented";
-value vk_get_auth_token  = failwith "Not implemented";
+value vk_init _ _  = ();
+value vk_call_method ?delegate _ _  = ();
+value vk_get_auth_token () =  "";
 
 ENDIF;

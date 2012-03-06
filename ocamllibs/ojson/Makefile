@@ -1,5 +1,5 @@
 
-OCAMLFIND = ocamlfind
+OCAMLFIND = ocamlfind 
 OCAMLOPT=$(OCAMLFIND) ocamlopt
 OCAMLC=$(OCAMLFIND) ocamlc
 
@@ -7,7 +7,7 @@ OCAMLC=$(OCAMLFIND) ocamlc
 install: byte native
 	$(OCAMLFIND) install ojson META ojson.cmi ojson.cma ojson.cmxa ojson.mli ojson.a
 
-ios: OCAMLFIND = ocamlfind
+ios: OCAMLFIND = ocamlfind -toolchain ios
 ios: install
 
 byte:
