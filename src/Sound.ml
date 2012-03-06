@@ -82,7 +82,6 @@ value createChannel snd : channel =
 ELSE
 (* Sdl version here *)
 
-
 value init ?category () = ();
 value setMasterVolume (_p:float) = ();
 type sound = int;

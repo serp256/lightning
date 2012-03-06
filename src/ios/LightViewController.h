@@ -33,6 +33,7 @@
 -(void)showAchievements;
 -(void)showActivityIndicator:(LightActivityIndicatorView *)indicator;
 -(void)hideActivityIndicator;
+-(void)lightError:(NSString*)error;
 
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
 

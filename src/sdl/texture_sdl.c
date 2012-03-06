@@ -25,7 +25,7 @@ int _load_image(char *path,textureInfo *tInfo) {
 	unsigned char *pixels = (unsigned char*)malloc(dataLen);
 	switch (s->format->BitsPerPixel) {
 		case 32:
-			tInfo->format = SPTextureFormatRGBA;
+			tInfo->format = LTextureFormatRGBA;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 	Uint32 rmask = 0xff000000;
 	Uint32 gmask = 0x00ff0000;
@@ -61,7 +61,7 @@ int _load_image(char *path,textureInfo *tInfo) {
 			break;
 		case 24:
 				return 1; // FIXME
-				tInfo->format = SPTextureFormatRGB;
+				tInfo->format = LTextureFormatRGB;
 				surface = s;
 				break;
 		default:

@@ -12,7 +12,6 @@
 
 @interface LightView ()
 
-@property (nonatomic, retain) NSTimer *timer;
 @property (nonatomic, retain) id displayLink;
 
 - (void)setup;
@@ -32,7 +31,6 @@
 #define REFRESH_RATE 30
 
 //@synthesize stage = mStage;
-@synthesize timer = mTimer;
 @synthesize displayLink = mDisplayLink;
 @synthesize frameRate = mFrameRate;
 
@@ -60,8 +58,8 @@
     if (mContext) return; // already initialized!
     
     // A system version of 3.1 or greater is required to use CADisplayLink.
-    NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
-    if ([currSysVer compare:@"3.1" options:NSNumericSearch] != NSOrderedAscending) mDisplayLinkSupported = YES;
+    //NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+    //if ([currSysVer compare:@"3.1" options:NSNumericSearch] != NSOrderedAscending) mDisplayLinkSupported = YES;
     
 		self.multipleTouchEnabled = YES;
     self.frameRate = 60.0f;
@@ -156,6 +154,7 @@
 		[pool release];
 }
 
+/*
 - (void)setTimer:(NSTimer *)newTimer 
 {    
     if (mTimer != newTimer)
@@ -164,6 +163,7 @@
         mTimer = newTimer;
     }
 }
+*/
 
 - (void)setDisplayLink:(id)newDisplayLink
 {
@@ -176,16 +176,10 @@
 
 - (void)setFrameRate:(float)value
 {    
-    if (mDisplayLinkSupported)
-    {
         int frameInterval = 1;            
         while (REFRESH_RATE / frameInterval > value)
             ++frameInterval;
         mFrameRate = REFRESH_RATE / frameInterval;
-    }
-    else 
-        mFrameRate = value;
-    
     if (self.isStarted)
     {
         [self stop];
@@ -195,7 +189,8 @@
 
 - (BOOL)isStarted
 {
-    return mTimer || mDisplayLink;
+    //return mTimer || mDisplayLink;
+		return (mDisplayLink != nil);
 }
 
 - (void)start
@@ -206,17 +201,9 @@
 	{
 			mLastFrameTimestamp = CACurrentMediaTime();
 			
-			if (mDisplayLinkSupported)
-			{
-					mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
-					[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
-					[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-			}
-			else 
-			{
-					// timer used as a fallback
-					self.timer = [NSTimer scheduledTimerWithTimeInterval:(1.0f / mFrameRate) target:self selector:@selector(renderStage) userInfo:nil repeats:YES];            
-			}
+			mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
+			[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
+			[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
 	}
 }
 
@@ -225,7 +212,15 @@
     [self renderStage]; // draw last-moment changes
 		NSLog(@"STOP View");
     
-    self.timer = nil;
+    //self.timer = nil;
+    self.displayLink = nil;
+}
+
+- (void)abort
+{
+		NSLog(@"ABORT View");
+    
+    //self.timer = nil;
     self.displayLink = nil;
 }
 
@@ -283,7 +278,7 @@
     //[mRenderSupport release];
     [self destroyFramebuffer];
     
-    self.timer = nil;       // invalidates timer    
+    //self.timer = nil;       // invalidates timer    
     self.displayLink = nil; // invalidates displayLink        
     
     [super dealloc];

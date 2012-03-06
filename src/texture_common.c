@@ -29,16 +29,16 @@ typedef struct {
 int textureParams(textureInfo *tInfo,texParams *p) {
     switch (tInfo->format)
     {
-        case SPTextureFormatRGBA:
+        case LTextureFormatRGBA:
             p->glTexFormat = GL_RGBA;
             break;
-				case SPTextureFormatRGB:
+				case LTextureFormatRGB:
 						p->glTexFormat = GL_RGB;
 						break;
-        case SPTextureFormatAlpha:
+        case LTextureFormatAlpha:
             p->glTexFormat = GL_ALPHA;
             break;
-        case SPTextureFormatPvrtcRGBA2:
+        case LTextureFormatPvrtcRGBA2:
 #if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 2;
@@ -47,7 +47,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 #else
 						return 0;
 #endif
-        case SPTextureFormatPvrtcRGB2:
+        case LTextureFormatPvrtcRGB2:
 #if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 2;
@@ -56,7 +56,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 #else
 						return 0;
 #endif
-        case SPTextureFormatPvrtcRGBA4:
+        case LTextureFormatPvrtcRGBA4:
 #if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 4;
@@ -65,7 +65,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 #else 
 						return 0;
 #endif
-        case SPTextureFormatPvrtcRGB4:
+        case LTextureFormatPvrtcRGB4:
 #if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 4;
@@ -74,17 +74,17 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 #else
 						return 0;
 #endif
-        case SPTextureFormat565:
+        case LTextureFormat565:
             p->bitsPerPixel = 16;
             p->glTexFormat = GL_RGB;
             p->glTexType = GL_UNSIGNED_SHORT_5_6_5;
             break;
-        case SPTextureFormat5551:
+        case LTextureFormat5551:
             p->bitsPerPixel = 16;                    
             p->glTexFormat = GL_RGBA;
             p->glTexType = GL_UNSIGNED_SHORT_5_5_5_1;                    
             break;
-        case SPTextureFormat4444:
+        case LTextureFormat4444:
             p->bitsPerPixel = 16;
             p->glTexFormat = GL_RGBA;
             p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    

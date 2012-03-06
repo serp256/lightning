@@ -57,6 +57,7 @@ module type S = sig
       *)
       method setColor: int -> unit;
       method color: int;
+      method setColors: array int -> unit;
       method filters: list Filters.t;
       method setFilters: list Filters.t -> unit;
       method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
@@ -316,6 +317,7 @@ module Make(D:DisplayObjectT.M) = struct
 
       method setColor color = Render.Image.set_color image color;
       method color = Render.Image.color image;
+      method setColors colors = Render.Image.set_colors image colors;
 
       method! setAlpha a =
       (
