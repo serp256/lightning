@@ -34,17 +34,17 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
     int bytesPerPixel;
 
     
-    if (colorSpace == SPTextureFormatRGBA)
+    if (colorSpace == LTextureFormatRGBA)
     {
         bytesPerPixel = 4;
-        tInfo->format = SPTextureFormatRGBA;
+        tInfo->format = LTextureFormatRGBA;
         cgColorSpace = CGColorSpaceCreateDeviceRGB();
         bitmapInfo = kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
         tInfo->premultipliedAlpha = YES;
 		}
 		else { // assume it's rgb
 			bytesPerPixel = 3;
-			tInfo->format = SPTextureFormatRGB;
+			tInfo->format = LTextureFormatRGB;
 			cgColorSpace = CGColorSpaceCreateDeviceRGB();
 			bitmapInfo = kCGImageAlphaNone;// kCGBitmapByteOrder32Big | kCGImageAlphaNoneSkipLast;
         tInfo->premultipliedAlpha = NO;
@@ -102,7 +102,7 @@ int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	float height = image.size.height;
 	//CGImageRef  CGImage = uiImage.CGImage;
 	//CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
-	int colorSpace = SPTextureFormatRGBA;
+	int colorSpace = LTextureFormatRGBA;
 	createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
 	return 0;
 }
@@ -220,22 +220,22 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
   switch (header.pfFlags & 0xff)
   {
       case OGL_RGB_565:
-        tInfo->format = SPTextureFormat565;
+        tInfo->format = LTextureFormat565;
         break;
       case OGL_RGBA_5551:
-				tInfo->format = SPTextureFormat5551;
+				tInfo->format = LTextureFormat5551;
 				break;
       case OGL_RGBA_4444:
-				tInfo->format = SPTextureFormat4444;
+				tInfo->format = LTextureFormat4444;
 				break;
       case OGL_RGBA_8888:
-				tInfo->format = SPTextureFormatRGBA;
+				tInfo->format = LTextureFormatRGBA;
 				break;
       case OGL_PVRTC2:
-				tInfo->format = hasAlpha ? SPTextureFormatPvrtcRGBA2 : SPTextureFormatPvrtcRGB2;
+				tInfo->format = hasAlpha ? LTextureFormatPvrtcRGBA2 : LTextureFormatPvrtcRGB2;
 				break;
       case OGL_PVRTC4:
-				tInfo->format = hasAlpha ? SPTextureFormatPvrtcRGBA4 : SPTextureFormatPvrtcRGB4;
+				tInfo->format = hasAlpha ? LTextureFormatPvrtcRGBA4 : LTextureFormatPvrtcRGB4;
 				break;
       default:
 				close(fildes);
