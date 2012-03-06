@@ -93,7 +93,7 @@ enum PVRPixelType
 #define OPTION_INT(v) v == 1 ? 0 : Long_val(Field(v,0))
 
 #define ML_TEXTURE_INFO(mlTex,textureID,tInfo) \
-	mlTex = caml_alloc_tuple(10);\
+	mlTex = caml_alloc_tuple(11);\
 	Store_field(mlTex,0,Val_int(tInfo->format));\
 	Store_field(mlTex,1,Val_int((unsigned int)tInfo->realWidth));\
 	Store_field(mlTex,2,Val_int(tInfo->width));\
