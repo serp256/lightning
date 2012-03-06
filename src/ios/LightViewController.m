@@ -262,14 +262,15 @@ static value *ml_url_complete = NULL;
                 NSLog(@"Purchased");
 				if (Is_block(payment_success_cb)) {
 				  
-                  [transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
+					[transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
 
-									caml_acquire_runtime_system();
-				  caml_callback3(payment_success_cb, 
-				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
-				                 (value)transaction,
-				                 Val_bool(restored));
-								caml_release_runtime_system();
+					caml_acquire_runtime_system();
+				  caml_callback3(
+							payment_success_cb, 
+							caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
+							(value)transaction,
+							Val_bool(restored));
+							caml_release_runtime_system();
 				}
             
 				[self hideActivityIndicator];
@@ -280,6 +281,18 @@ static value *ml_url_complete = NULL;
     }
 }
 
+-(void)lightError:(NSString*)error {
+	LightView *lightView = (LightView*)self.view;
+	[lightView abort];
+	UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Uncatched error" message:@"MESSAGE" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+	[alertView show];
+	[alertView release];
+}
 
+
+-(void)alertView:(UIAlertView*)alertView clickedButtonAtIndex:(NSUInteger)buttonIndex {
+	NSLog(@"alertView clicked button at index: %d",buttonIndex);
+	exit(2);
+}
 
 @end

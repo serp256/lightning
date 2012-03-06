@@ -756,6 +756,15 @@ void ml_image_set_color(value image,value color) {
 	tq->tr.c = c;
 }
 
+
+void ml_image_set_colors(value image,value colors) {
+	lgTexQuad *tq = *TEXQUAD(image);
+	tq->bl.c = COLOR_FROM_INT(Int_val(Field(colors,0)),tq->bl.c.a);
+	tq->br.c = COLOR_FROM_INT(Int_val(Field(colors,1)),tq->br.c.a);
+	tq->tl.c = COLOR_FROM_INT(Int_val(Field(colors,2)),tq->tl.c.a);
+	tq->tr.c = COLOR_FROM_INT(Int_val(Field(colors,3)),tq->tr.c.a);
+}
+
 void ml_image_set_alpha(value image,value alpha) {
 	lgTexQuad *tq = *TEXQUAD(image);
 	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);

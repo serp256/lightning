@@ -292,3 +292,9 @@ void ml_request_remote_notifications(value rntype, value success_cb, value error
   CAMLreturn0;
 }
 
+
+void ml_uncatchedError(value message) {
+	NSString *error = [NSString stringWithCString:String_val(message) encoding:NSUTF8StringEncoding];
+	[[LightViewController sharedInstance] lightError:error];
+}
+

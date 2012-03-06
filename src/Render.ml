@@ -110,6 +110,7 @@ module Image = struct
   external flipTexY: t -> unit = "ml_image_flip_tex_y";
   external points: t -> array Point.t = "ml_image_points";
   external set_color: t -> int -> unit = "ml_image_set_color";
+  external set_colors: t -> array int -> unit = "ml_image_set_colors";
   external color: t -> int = "ml_image_color";
   external set_alpha: t -> float -> unit = "ml_image_set_alpha";
   external colors: t -> array int = "ml_quad_colors";

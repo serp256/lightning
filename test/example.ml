@@ -374,6 +374,11 @@ value sound (stage:Stage.c) =
 
 value half_pixels (stage:Stage.c) =
 (
+  let tree = Image.load "tree.png" in
+  (
+    tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |];
+    stage#addChild tree;
+  );
   let img = Image.load "frame.png" in
   (
     img#setPos 100.5 100.;
@@ -418,7 +423,7 @@ value external_image (stage:Stage.c) =
         let (_,text) = TLF.create (TLF.p [`text (Printf.sprintf "loading error: %d, %s" code msg) ]) in
         stage#addChild text
       )
-    )
+    );
 );
 (*
 value alert (stage:Stage.c) =
@@ -444,11 +449,11 @@ let stage width height =
 (*       filters self; *)
 (*         size self; *)
 (*       tlf self; *)
-      external_image self;
+(*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
-(*       half_pixels self; *)
+      half_pixels self;
     end;
   end
 in

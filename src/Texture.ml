@@ -28,6 +28,7 @@ type textureInfo =
     generateMipmaps: bool;
     premultipliedAlpha:bool;
     scale: float;
+    memSize: int;
     textureID: textureID;
   };
 
@@ -200,6 +201,17 @@ class subtexture region (baseTexture:c) =
   end;
 
 value cache = Cache.create 11;
+value texture_memory = ref 0;
+value texture_mem_add v = 
+  (
+    texture_memory.val := !texture_memory + v;
+    debug:mem "TextureMemory = %d" !texture_memory;
+  );
+value texture_mem_sub v = 
+  (
+    texture_memory.val := !texture_memory - v;
+    debug:mem "TextureMemory = %d" !texture_memory;
+  );
 
 (*
 IFDEF ANDROID THEN
@@ -225,6 +237,7 @@ value make textureInfo =
   and scale = textureInfo.scale 
   in
   let () = debug "make texture: <%d>, width=[%d->%f],height=[%d -> %f],scale=%f" textureID textureInfo.realWidth width textureInfo.realHeight height scale in
+  let mem = textureInfo.memSize in
   let clipping = 
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
     then Some (Rectangle.create 0. 0. ((float textureInfo.realWidth) /. width) ((float textureInfo.realHeight) /. height))
@@ -253,7 +266,8 @@ value make textureInfo =
       (
         debug "release texture <%d>" textureID;
         delete_texture textureID; 
-        textureID := 0
+        textureID := 0;
+        texture_mem_sub mem;
       )
       else ();
     method width = w;
@@ -269,7 +283,11 @@ value make textureInfo =
     method subTexture region = ((new subtexture region (self :> c)) :> c);
     method addRenderer (_:renderer) = ();
     method removeRenderer (_:renderer) = ();
-    initializer Gc.finalise (fun t -> (debug:gc "release texture <%d>" textureID; t#release ())) self;
+    initializer 
+    (
+      Gc.finalise (fun t -> (debug:gc "release texture <%d>" textureID; t#release ())) self;
+      texture_mem_add mem;
+    );
   end;
 
 (*
@@ -646,6 +664,6 @@ value loadExternal url ~callback ~errorCallback =
 
 ELSE
 
-value loadExternal url callback ?errorCallback () = ();
+value loadExternal url ~callback ~errorCallback = ();
 
 ENDIF;

@@ -42,9 +42,9 @@
     GLuint mFramebuffer;    
     
     float mFrameRate;
-    NSTimer *mTimer;
+    //NSTimer *mTimer;
     id mDisplayLink;
-    BOOL mDisplayLinkSupported;        
+    //BOOL mDisplayLinkSupported;        
     double mLastFrameTimestamp;
     double mLastTouchTimestamp;
 		BOOL processTouchesInProgress;
@@ -75,5 +75,7 @@
 
 /// Stops rendering and event handling. Call this when the application moves into the background.
 - (void)stop;
+
+- (void)abort;
 
 @end

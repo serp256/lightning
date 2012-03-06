@@ -9,6 +9,14 @@ external setupOrthographicRendering: float -> float -> float -> float -> unit = 
 
 exception Restricted_operation;
 
+IFDEF IOS 
+THEN
+external uncatchedError: string -> unit = "ml_uncatchedError";
+DEFINE CATCH_ALL(expr) = 
+  try expr with [ exn -> uncatchedError (Printexc.to_string exn) ];
+ELSE
+DEFINE CATCH_ALL(expr) = expr;
+ENDIF;
 
 module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and type evData = private [> eventData ]) = struct (*{{{*)
 
@@ -173,22 +181,24 @@ module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and typ
       method advanceTime (seconds:float) = 
       (
         let () = debug "advance time: %f" seconds in
-        Texture.check_async();
-        proftimer:perfomance "Stage advanceTime: %F"
-        (
-          Timers.process seconds;
-          Queue.transfer tweens runtweens;
-          while not (Queue.is_empty runtweens) do
-            let tween = Queue.take runtweens in
-            match tween#process seconds with
-            [ True -> Queue.push tween tweens
-            | False -> ()
-            ]
-          done;
-        );
-        proftimer:perfomance "Enter frame: %F" D.dispatchEnterFrame seconds;
-        proftimer:perfomance "Prerender: %F" D.prerender();
-        debug "end advance time";
+        CATCH_ALL begin
+          Texture.check_async();
+          proftimer:perfomance "Stage advanceTime: %F"
+          (
+              Timers.process seconds;
+              Queue.transfer tweens runtweens;
+              while not (Queue.is_empty runtweens) do
+                let tween = Queue.take runtweens in
+                match tween#process seconds with
+                [ True -> Queue.push tween tweens
+                | False -> ()
+                ]
+              done;
+          );
+          proftimer:perfomance "Enter frame: %F" D.dispatchEnterFrame seconds;
+          proftimer:perfomance "Prerender: %F" D.prerender();
+          debug "end advance time";
+        end
       );
 
       method !z = Some 0;

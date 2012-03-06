@@ -25,17 +25,17 @@ int nextPowerOfTwo(int number);
 
 typedef enum 
 {
-    SPTextureFormatRGBA,
-    SPTextureFormatRGB,
-    SPTextureFormatAlpha,
-    SPTextureFormatPvrtcRGB2,
-    SPTextureFormatPvrtcRGBA2,
-    SPTextureFormatPvrtcRGB4,
-    SPTextureFormatPvrtcRGBA4,
-    SPTextureFormat565,
-    SPTextureFormat5551,
-    SPTextureFormat4444
-} SPTextureFormat;
+    LTextureFormatRGBA,
+    LTextureFormatRGB,
+    LTextureFormatAlpha,
+    LTextureFormatPvrtcRGB2,
+    LTextureFormatPvrtcRGBA2,
+    LTextureFormatPvrtcRGB4,
+    LTextureFormatPvrtcRGBA4,
+    LTextureFormat565,
+    LTextureFormat5551,
+    LTextureFormat4444
+} LTextureFormat;
 
 typedef struct {
 	int format;
@@ -47,9 +47,6 @@ typedef struct {
 	int generateMipmaps;
 	int premultipliedAlpha;
 	float scale;
-#ifdef SDL
-	SDL_Surface *surface;
-#endif
 	unsigned int dataLen;
 	unsigned char* imgData;
 } textureInfo;
@@ -106,7 +103,8 @@ enum PVRPixelType
 	Store_field(mlTex,6,Val_int(1));\
 	Store_field(mlTex,7,Val_int(tInfo->premultipliedAlpha));\
 	Store_field(mlTex,8,caml_copy_double(tInfo->scale));\
-	Store_field(mlTex,9,Val_long(textureID));
+	Store_field(mlTex,9,Val_long(tInfo->dataLen)); \
+	Store_field(mlTex,10,Val_long(textureID));
 
 
 #endif

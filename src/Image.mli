@@ -9,6 +9,7 @@ module type S = sig
       value texture: Texture.c;
       method setColor: int -> unit;
       method color: int;
+      method setColors: array int -> unit;
 
       method texFlipX: bool;
       method setTexFlipX: bool -> unit;
