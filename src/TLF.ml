@@ -158,13 +158,13 @@ value getFontOpt attributes =
 
 value getFont attributes =
   let fontFamily =
-   match getFontFamily attributes with
-   [ Some fn -> fn
-   | None -> !default_font_family
-   ]
-  in
-  let size = getFontSize attributes in 
-  BitmapFont.get ~applyScale:True ?size fontFamily;
+    match getFontFamily attributes with
+    [ Some fn -> fn
+    | None -> !default_font_family
+    ]
+  and style = getFontStyle attributes 
+  and size = getFontSize attributes in 
+  BitmapFont.get ~applyScale:True ?size ?style fontFamily;
 
 
 
