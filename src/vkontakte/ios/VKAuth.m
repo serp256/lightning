@@ -10,6 +10,7 @@
 #import <caml/mlvalues.h>                                                                                                                               
 #import <caml/callback.h>                                                                                                                               
 #import <caml/alloc.h>
+#import <caml/threads.h> 
 
 @implementation VKAuth
 
@@ -52,10 +53,12 @@
  */
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
     [self removeFromSuperview];
+    caml_acquire_runtime_system();
     value *mlf = (value*)caml_named_value("vk_login_failed");
     if (mlf != NULL) {                                                                                                                   
       caml_callback(*mlf, Val_int(1));
     }
+    caml_release_runtime_system();
 }
 
 
@@ -79,10 +82,12 @@
         NSArray * kv = [pair componentsSeparatedByString:@"="];
         if ([[kv objectAtIndex:0] isEqualToString:@"error"]) {
             [self removeFromSuperview];
+            caml_acquire_runtime_system();
             mlf = (value*)caml_named_value("vk_login_failed");
             if (mlf != NULL) {
               caml_callback(*mlf, Val_int(0));
             }
+            caml_release_runtime_system();
             return; 
         } else if ([[kv objectAtIndex:0] isEqualToString:@"access_token"]) {
             token = [kv objectAtIndex:1];
@@ -94,6 +99,7 @@
     }
     
     [self removeFromSuperview];
+    caml_acquire_runtime_system();
     mlf = (value*)caml_named_value("vk_logged_in");
     if (mlf != NULL) {
         caml_callback3(*mlf, 
@@ -102,6 +108,7 @@
             caml_copy_string([expires UTF8String])
         );
     }
+    caml_release_runtime_system();
 }
 
 
@@ -129,12 +136,14 @@
  */
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
     value * mlf = (value*)caml_named_value("vk_captcha_entered");
+    caml_acquire_runtime_system();
     if (mlf != NULL) {
         caml_callback2(*mlf, 
             caml_copy_string([_captchaSid UTF8String]),
             caml_copy_string([@"Hello"  UTF8String])
         );
     }  
+    caml_release_runtime_system();
 }
 
 @end
