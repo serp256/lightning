@@ -48,6 +48,7 @@ value load_async: string -> (lib -> unit) -> unit;
 value loadxml: ?loadTextures:bool -> string -> lib;
 
 value image: string -> c;
+value image_from_texture : Texture.c -> c;
 value image_async: string -> (c -> unit) -> unit;
 
 value release: lib -> unit;

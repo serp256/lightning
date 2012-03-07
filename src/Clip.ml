@@ -494,6 +494,9 @@ value image path =
   let res = new image texture in
   (res :> c);
 
+value image_from_texture texture= 
+  ((new image texture) :> c);
+
 value image_async path callback = 
   Texture.load_async path begin fun texture ->
     let res = new image texture in
