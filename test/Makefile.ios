@@ -5,11 +5,11 @@ OCAMLOPT = $(OCAMLFIND) ocamlopt
 OCAMLC = $(OCAMLFIND) ocamlc
 OCAMLLIBDIR = $(shell ${OCAMLOPT} -where)
 ARCH = -arch armv7
-CC = $(PLAT)/Developer/usr/bin/clang $(ARCH)
+CC = $(PLAT)/Developer/usr/bin/llvm-gcc $(ARCH)
 CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLLIBDIR) -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=4.2 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
 include Makefile.common
 
-MOBS = LightTest/AppDelegate.o LightTest/main.o  
+MOBS = LightTest/main.o  
 CFLAGS += -I ../src/ios
 
 ios: example.native

@@ -253,11 +253,7 @@ module Make(D:DisplayObjectT.M) = struct
         let gl = {g_cmn; g_texture; g_prg = GLPrograms.ImageSimple.create (); g_valid = False; g_image; g_params = glow} in
         *)
         let g_image = Render.Image.create 1. 1. None 0xFFFFFF alpha in
-        (
-          if texFlipX then Render.Image.flipTexX g_image else ();
-          if texFlipY then Render.Image.flipTexY g_image else ();
-          glowFilter := Some {g_image;g_matrix=Matrix.identity;g_texture=None;g_params=glow};
-        );
+        glowFilter := Some {g_image;g_matrix=Matrix.identity;g_texture=None;g_params=glow};
         self#addPrerender self#updateGlowFilter;
       );
 
@@ -414,7 +410,7 @@ module Make(D:DisplayObjectT.M) = struct
           and gheight = g_texture#height in
           (
             debug:glow "g_texture: %d [%f:%f] %s" g_texture#textureID gwidth gheight (match g_texture#rootClipping with [ Some r -> Rectangle.to_string r | None -> "NONE"]);
-            Render.Image.update g_image g_texture#width g_texture#height g_texture#rootClipping;
+            Render.Image.update g_image g_texture#width g_texture#height g_texture#rootClipping texFlipX texFlipY;
             gf.g_matrix := Matrix.create ~translate:{Point.x = (w -. gwidth) /. 2.; y = (h -. gheight) /. 2.} ();
             gf.g_texture := Some g_texture;
           )
@@ -457,9 +453,7 @@ module Make(D:DisplayObjectT.M) = struct
       method private updateSize () = 
       (
         debug "update image size: %d" texture#textureID;
-        Render.Image.update image texture#width texture#height texture#rootClipping;
-        if texFlipX then Render.Image.flipTexX image else ();
-        if texFlipY then Render.Image.flipTexY image else ();
+        Render.Image.update image texture#width texture#height texture#rootClipping texFlipX texFlipY;
         self#boundsChanged();
       );
 
@@ -497,9 +491,7 @@ module Make(D:DisplayObjectT.M) = struct
           then self#updateSize ()
           else
           (
-            Render.Image.update image texture#width texture#height texture#rootClipping;
-            if texFlipX then Render.Image.flipTexX image else ();
-            if texFlipY then Render.Image.flipTexY image else ();
+            Render.Image.update image texture#width texture#height texture#rootClipping texFlipX texFlipY;
           );
           nt#addRenderer (self :> Texture.renderer);
           match glowFilter with

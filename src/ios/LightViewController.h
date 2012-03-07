@@ -27,8 +27,11 @@
 }
 
 +(LightViewController*)sharedInstance;
--(void)stop;
--(void)start;
+-(void)becomeActive;
+-(void)resignActive;
+-(void)becomeActive;
+-(void)background;
+-(void)foreground;
 -(void)showLeaderboard;
 -(void)showAchievements;
 -(void)showActivityIndicator:(LightActivityIndicatorView *)indicator;

@@ -70,12 +70,11 @@
 //- (void)initStageWithWidth:(float)width height:(float)height;
 // - (void)initStage;
 
-/// Starts rendering and event handling.
-- (void)start;
 
 /// Stops rendering and event handling. Call this when the application moves into the background.
 - (void)stop;
+/// Starts rendering and event handling.
+- (void)start;
 
-- (void)abort;
 
 @end

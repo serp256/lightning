@@ -8,12 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
-#import "AppDelegate.h"
+
+@class LightAppDelegate;
 
 int main(int argc, char *argv[])
 {
-
-    @autoreleasepool {
-        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
-    }
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	int retVal = UIApplicationMain(argc, argv, nil,NSStringFromClass([LightAppDelegate class]));
+	[pool release];
+	return retVal;
 }

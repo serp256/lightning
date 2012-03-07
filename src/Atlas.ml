@@ -161,7 +161,7 @@ module Make(D:DisplayObjectT.M) = struct
                 and gheight = g_texture#height in
                 (
                   debug:glow "g_texture: %d [%f:%f] %s" g_texture#textureID gwidth gheight (match g_texture#rootClipping with [ Some r -> Rectangle.to_string r | None -> "NONE"]);
-                  Render.Image.update g_image g_texture#width g_texture#height g_texture#rootClipping;
+                  Render.Image.update g_image g_texture#width g_texture#height g_texture#rootClipping False False;
                   let dp = {Point.x=(bounds.Rectangle.width -. gwidth) /. 2.; y = (bounds.Rectangle.height -. gheight) /. 2.} in
                   gf.g_matrix := Matrix.create ~translate:(Point.addPoint ip dp) ();
                   gf.g_texture := Some g_texture;

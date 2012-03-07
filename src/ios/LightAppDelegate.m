@@ -25,23 +25,32 @@
 
 
 - (void)applicationWillResignActive:(UIApplication *)application        {
-	[lightViewController stop];
+	NSLog(@"resign active");
+	[lightViewController resignActive];
 }
-
 
 - (void)applicationDidBecomeActive:(UIApplication *)application         {
-	[lightViewController start];
+	NSLog(@"become active");
+	[lightViewController becomeActive];
 }
-
-
 
 - (void)applicationDidEnterBackground:(UIApplication *)application      {
-	[lightViewController stop];
+	NSLog(@"did enter background");
+	[lightViewController background];
 }
+
 - (void)applicationWillEnterForeground:(UIApplication *)application     {
-	[lightViewController start];
+	NSLog(@"did enter foreground");
+	[lightViewController foreground];
 }
-- (void)applicationWillTerminate:(UIApplication *)application           {}
+
+- (void)applicationWillTerminate:(UIApplication *)application           {
+	NSLog(@"wil terminate");
+}
+
+- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application {
+	NSLog(@"AppDelegate memory warning");
+}
 
 
 -(void)clearRemoteNotificationsRequestCallbacks {

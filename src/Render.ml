@@ -114,7 +114,7 @@ module Image = struct
   external color: t -> int = "ml_image_color";
   external set_alpha: t -> float -> unit = "ml_image_set_alpha";
   external colors: t -> array int = "ml_quad_colors";
-  external update: t -> ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> unit = "ml_image_update";
+  external update: t -> ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> ~flipX:bool -> ~flipY:bool -> unit = "ml_image_update_byte" "ml_image_update";
   external render: Matrix.t -> prg -> textureID -> bool -> ?alpha:float -> t -> unit = "ml_image_render_byte" "ml_image_render"; 
 
 end;

@@ -28,6 +28,7 @@ static LightViewController *instance = NULL;
 	NSLog(@"INIT Light view controller");
 	char *argv[] = {"ios",NULL};
 	caml_startup(argv);
+	caml_release_runtime_system();
 	instance = [super alloc];
 	return instance;
 }
@@ -68,15 +69,21 @@ static LightViewController *instance = NULL;
 	[lightView release];
 }
 
--(void)stop {
+-(void)resignActive {
 	[(LightView *)(self.view) stop];
 }
 
-
--(void)start {
+-(void)becomeActive {
 	[(LightView *)(self.view) start];
 }
 
+-(void)background {
+	caml_acquire_runtime_system();
+}
+
+-(void)foreground {
+	caml_release_runtime_system();
+}
 
 -(void)showLeaderboard {
     GKLeaderboardViewController *leaderboardController = [[GKLeaderboardViewController alloc] init];
@@ -283,7 +290,7 @@ static value *ml_url_complete = NULL;
 
 -(void)lightError:(NSString*)error {
 	LightView *lightView = (LightView*)self.view;
-	[lightView abort];
+	[lightView stop];
 	UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Uncatched error" message:@"MESSAGE" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
 	[alertView show];
 	[alertView release];
@@ -293,6 +300,11 @@ static value *ml_url_complete = NULL;
 -(void)alertView:(UIAlertView*)alertView clickedButtonAtIndex:(NSUInteger)buttonIndex {
 	NSLog(@"alertView clicked button at index: %d",buttonIndex);
 	exit(2);
+}
+
+
+-(void)didReceiveMemoryWarning {
+	NSLog(@"APP did recieve memory warning");
 }
 
 @end

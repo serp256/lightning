@@ -34,6 +34,7 @@ mlstage *mlstage_create(float width,float height) {
 	PRINT_DEBUG("create stage with size: %f:%f",width,height);
 	stage->width = width;
 	stage->height = height;
+	caml_acquire_runtime_system();
 	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));// FIXME: GC 
 	stage->needCancelAllTouches = 0;
 	caml_register_global_root(&stage->stage);

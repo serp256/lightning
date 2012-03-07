@@ -774,12 +774,32 @@ void ml_image_set_alpha(value image,value alpha) {
 	tq->tr.c.a = a;
 }
 
-void ml_image_update(value image, value width, value height, value clipping) {
+void ml_image_update(value image, value width, value height, value clipping, value flipX, value flipY ) {
 	lgTexQuad *tq = *TEXQUAD(image);
 	tq->br.v = (vertex2F) { Double_val(width)};
 	tq->tl.v = (vertex2F) { 0, Double_val(height)};
 	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height) };
 	set_image_uv(tq,clipping);
+	if (Bool_val(flipX)) {
+		tex2F tmp = tq->tl.tex;
+		tq->tl.tex = tq->tr.tex;
+		tq->tr.tex = tmp;
+		tmp = tq->bl.tex;
+		tq->bl.tex = tq->br.tex;
+		tq->br.tex = tmp;
+	};
+	if (Bool_val(flipY)) {
+		tex2F tmp = tq->tl.tex;
+		tq->tl.tex = tq->bl.tex;
+		tq->bl.tex = tmp;
+		tmp = tq->tr.tex;
+		tq->tr.tex = tq->br.tex;
+		tq->br.tex = tmp;
+	};
+}
+
+void ml_image_update_byte(value * argv, int n) {
+	ml_image_update(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
 }
 
 #define SWAP_TEX_COORDS(c1,c2) {tex2F tmp = tq->c1.tex, tq->c1.tex = tq->c2.tex,tq->c2.tex = tmp}

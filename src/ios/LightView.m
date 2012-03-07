@@ -103,8 +103,8 @@
 		}
 
     mLastFrameTimestamp = CACurrentMediaTime();
-
     [self renderStage];        // fill buffer immediately to avoid flickering
+
 		NSLog(@"end of layoutSubviews");
 }
 
@@ -176,15 +176,14 @@
 
 - (void)setFrameRate:(float)value
 {    
-        int frameInterval = 1;            
-        while (REFRESH_RATE / frameInterval > value)
-            ++frameInterval;
-        mFrameRate = REFRESH_RATE / frameInterval;
-    if (self.isStarted)
-    {
-        [self stop];
-        [self start];
-    }
+	int frameInterval = 1;            
+	while (REFRESH_RATE / frameInterval > value) ++frameInterval;
+	mFrameRate = REFRESH_RATE / frameInterval;
+	if (self.isStarted)
+	{
+		[self pause];
+		[self resume];
+	}
 }
 
 - (BOOL)isStarted
@@ -195,33 +194,22 @@
 
 - (void)start
 {
-	NSLog(@"START View");
+	NSLog(@"START view");
 	if (self.isStarted) return;
 	if (mFrameRate > 0.0f)
 	{
-			mLastFrameTimestamp = CACurrentMediaTime();
-			
-			mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
-			[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
-			[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+		mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
+		[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
+		[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
 	}
 }
 
 - (void)stop
 {
-    [self renderStage]; // draw last-moment changes
-		NSLog(@"STOP View");
-    
-    //self.timer = nil;
-    self.displayLink = nil;
-}
-
-- (void)abort
-{
-		NSLog(@"ABORT View");
-    
-    //self.timer = nil;
-    self.displayLink = nil;
+	NSLog(@"STOP View");
+	//[self renderStage]; // draw last-moment changes ??? why it's needed ?
+	//self.timer = nil;
+	self.displayLink = nil;
 }
 
 + (Class)layerClass 
@@ -270,16 +258,18 @@
 
 - (void)dealloc 
 {    
+    self.displayLink = nil; // invalidates displayLink        
+
+		mlstage_destroy(mStage);
+
     if ([EAGLContext currentContext] == mContext) 
         [EAGLContext setCurrentContext:nil];
     
     [mContext release];
-		mlstage_destroy(mStage);
     //[mRenderSupport release];
     [self destroyFramebuffer];
     
     //self.timer = nil;       // invalidates timer    
-    self.displayLink = nil; // invalidates displayLink        
     
     [super dealloc];
 }
