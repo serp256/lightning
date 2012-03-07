@@ -12,3 +12,4 @@ value vk_call_method : ?delegate: option delegate -> string -> list (string*stri
 
 value vk_get_auth_token : unit -> string;
 
+value vk_get_user_id : unit -> string;

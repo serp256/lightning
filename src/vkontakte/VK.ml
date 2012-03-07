@@ -55,6 +55,15 @@ value vk_get_auth_token () =
   ];
 
 
+(* возвращаем user_id. рейзим Not_found если нет токена или он заекспайрился *)
+value vk_get_user_id () = 
+  match vk_check_auth_token () with 
+  [ False -> raise Not_found 
+  | True  -> KVStorage.get_string storage "vk_user_id"
+  ];
+
+
+
 (* локальный логаут *)
 value vk_clear_auth_data () = 
   (
@@ -300,5 +309,6 @@ ELSE
 value vk_init _ _  = ();
 value vk_call_method ?delegate _ _  = ();
 value vk_get_auth_token () =  "";
+value vk_get_user_id () = raise Not_found;
 
 ENDIF;
