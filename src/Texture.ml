@@ -229,7 +229,8 @@ ENDIF;
 
 external delete_texture: textureID -> unit = "ml_delete_texture";
 
-value make textureInfo = 
+
+class s textureInfo = 
   let textureID = textureInfo.textureID
   and width = float textureInfo.width
   and height = float textureInfo.height
@@ -245,7 +246,7 @@ value make textureInfo =
   in
   let w = float textureInfo.realWidth
   and h = float textureInfo.realHeight in
-  object(self : c)
+  object(self)
     value mutable textureID = textureID;
 (*     value mutable counter = 0; *)
     (*
@@ -276,7 +277,7 @@ value make textureInfo =
     method scale = scale;
 (*    method setTextureID tid = textureID := tid; *)
     method textureID = textureID;
-    method base = None;
+    method base : option c = None;
     method clipping = clipping;
     method rootClipping = clipping;
 (*       method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *) *)
@@ -289,6 +290,9 @@ value make textureInfo =
       texture_mem_add mem;
     );
   end;
+
+
+value make textureInfo = new s textureInfo;
 
 (*
 value create texFormat width height data =
@@ -344,11 +348,25 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
 end;
 
 value make_and_cache path textureInfo = 
-  let res = make textureInfo in
+  let mem = textureInfo.memSize in
+  let res = 
+    object 
+      inherit s textureInfo;
+      method !release () = 
+      if (textureID <> 0) 
+      then
+      (
+        debug "release texture <%d>" textureID;
+        delete_texture textureID; 
+        textureID := 0;
+        texture_mem_sub mem;
+        Cache.remove cache path;
+      )
+      else ();
+    end
+  in
   (
     debug:cache "texture <%d> loaded" res#textureID;
-    (* FIXME: на релиз нужно отсюда наебывать *)
-    Gc.finalise (fun _ -> Cache.remove cache path) res;
     Cache.add cache path res;
     (res :> c)
   );

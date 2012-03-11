@@ -61,11 +61,13 @@ class channel snd =
     value mutable timer_id = None;
     method play () = 
     (
+      debug "play sound";
       alsource_play sourceID;
       timer_id := Some (Timers.start sound.duration self#finished);
     );
 
     method private finished () = 
+      let () = debug "sound finished" in
       if loop then timer_id := Some (Timers.start sound.duration self#finished) else timer_id := None;
 
     method pause () = 
@@ -80,6 +82,7 @@ class channel snd =
       ];
 
     method stop () = 
+      let () = debug "stop sound" in
       match timer_id with
       [ Some tid ->
         (
@@ -91,7 +94,11 @@ class channel snd =
       ];
     method setVolume v = alsource_setVolume sourceID v;
     method volume = alsource_getVolume sourceID;
-    method setLoop v = alsource_setLoop sourceID v;
+    method setLoop v = 
+    (
+      loop := v;
+      alsource_setLoop sourceID v;
+    );
     method state = alsource_state sourceID;
   end;
 
