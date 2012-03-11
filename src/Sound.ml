@@ -13,17 +13,6 @@ type category =
 type sound_state = [ SoundInitial | SoundPlaying | SoundPaused | SoundStoped ];
 
 
-class type channel =
-  object
-    method play: unit -> unit;
-    method stop: unit -> unit;
-    method pause: unit -> unit;
-    method setLoop: bool -> unit;
-    method setVolume: float -> unit;
-    method state: sound_state;
-    method volume: float;
-  end;
-
 IFDEF IOS THEN
 
 Callback.register_exception "Audio_error" (Audio_error "");
@@ -62,8 +51,7 @@ external alsource_pause: alsource -> unit = "ml_alsource_pause";
 
 external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc";
 
-
-value createChannel snd : channel =
+class channel snd = 
   object(self)
     value sourceID = alsource_create snd.albuffer;
     value sound = snd;
@@ -77,24 +65,27 @@ value createChannel snd : channel =
       timer_id := Some (Timers.start sound.duration self#finished);
     );
 
-    method private finished () = if loop then timer_id := Some (Timers.start sound.duration self#finished) else timer_id := None;
+    method private finished () = 
+      if loop then timer_id := Some (Timers.start sound.duration self#finished) else timer_id := None;
 
     method pause () = 
       match timer_id with
-      [ Some timer_id ->
+      [ Some tid ->
         (
-          Timers.stop timer_id;
+          Timers.stop tid;
           alsource_pause sourceID;
+          timer_id := None;
         )
       | None -> ()
       ];
 
     method stop () = 
       match timer_id with
-      [ Some timer_id ->
+      [ Some tid ->
         (
-          Timers.stop timer_id;
+          Timers.stop tid;
           alsource_stop sourceID;
+          timer_id := None;
         )
       | None -> ()
       ];
@@ -104,6 +95,8 @@ value createChannel snd : channel =
     method state = alsource_state sourceID;
   end;
 
+value createChannel snd = new channel snd;
+
 ELSE
 (* Sdl version here *)
 
@@ -111,7 +104,7 @@ value init ?category () = ();
 value setMasterVolume (_p:float) = ();
 type sound = int;
 value load (path:string) = 0;
-value createChannel (snd:sound) : channel = 
+class channel snd = 
   object
     method play () = ();
     method pause () = ();
@@ -121,5 +114,8 @@ value createChannel (snd:sound) : channel =
     method setLoop _ = ();
     method state = SoundInitial;
   end;
+
+
+value createChannel snd = new channel snd;
 
 ENDIF;
