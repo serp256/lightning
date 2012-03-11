@@ -7,6 +7,7 @@
 //
 
 #import "VKAuth.h"
+#import "../ios/LightViewController.h"
 #import <caml/mlvalues.h>                                                                                                                               
 #import <caml/callback.h>                                                                                                                               
 #import <caml/alloc.h>
@@ -38,6 +39,7 @@
 
     if (self.superview == nil) {
         [[[[UIApplication sharedApplication] windows] objectAtIndex:0] addSubview:self];
+        [[LightViewController sharedInstance] resignActive];
     }
     
     
@@ -52,6 +54,7 @@
  * webview delegate
  */
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
+    [[LightViewController sharedInstance] becomeActive];
     [self removeFromSuperview];
     caml_acquire_runtime_system();
     value *mlf = (value*)caml_named_value("vk_login_failed");
@@ -81,6 +84,7 @@
     for (NSString * pair in pairs) {
         NSArray * kv = [pair componentsSeparatedByString:@"="];
         if ([[kv objectAtIndex:0] isEqualToString:@"error"]) {
+            [[LightViewController sharedInstance] becomeActive];
             [self removeFromSuperview];
             caml_acquire_runtime_system();
             mlf = (value*)caml_named_value("vk_login_failed");
@@ -98,6 +102,7 @@
         }
     }
     
+    [[LightViewController sharedInstance] becomeActive];
     [self removeFromSuperview];
     caml_acquire_runtime_system();
     mlf = (value*)caml_named_value("vk_logged_in");
