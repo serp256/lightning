@@ -116,9 +116,9 @@ class channel snd =
     method play () = ();
     method pause () = ();
     method stop () = ();
-    method setVolume _ = ();
+    method setVolume (_:int) = ();
     method volume = 1.;
-    method setLoop _ = ();
+    method setLoop (_:bool) = ();
     method state = SoundInitial;
   end;
 

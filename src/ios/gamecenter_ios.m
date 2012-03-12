@@ -163,9 +163,10 @@ void ml_load_users_info(value uids, value callback) {
   
         void (^retBlock)(void) = ^(void){
             caml_leave_blocking_section();  
-            value infos, lst_elt, info;
-            Begin_roots1(infos);
+            value infos, lst_elt, info, img,mlTex;
+            Begin_roots4(infos,info,img,mlTex);
             infos = Val_int(0);
+						value alias;
                     
             for (NSArray * pair in loadedPhotos) {
               info = caml_alloc_tuple(2);
@@ -176,18 +177,15 @@ void ml_load_users_info(value uids, value callback) {
                 photo = (UIImage *)[pair objectAtIndex: 1];
               }
               
-              textureInfo *tInfo = malloc(sizeof(textureInfo));
-              loadImageFile(photo, tInfo);
+              Store_field(info,0,caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding])); //
+              Store_field(info,1,caml_alloc_tuple(2));
               
-              Field(info,0) = caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding]); //
-              Field(info,1) = caml_alloc_tuple(2);
-              
-              Field(Field(info,1), 0) = caml_copy_string([pl.alias  cStringUsingEncoding:NSASCIIStringEncoding]); //
+							alias = caml_copy_string([pl.alias  cStringUsingEncoding:NSASCIIStringEncoding]); //
+              Field(Field(info,1), 0) = alias;
               
               if (photo == nil) {
                 Field(Field(info,1), 1) = Val_int(0); // photo None
               } else {
-                CAMLlocal1(mlTex);
                 textureInfo tInfo;
                 uint textureID;
                 loadImageFile(photo, &tInfo);
@@ -195,11 +193,12 @@ void ml_load_users_info(value uids, value callback) {
                 free(tInfo.imgData);
                 ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
                 
-                Field(Field(info,1), 1) = caml_alloc_tuple(1);
-                Store_field(Field(Field(info,1), 1), 0, mlTex);
+								img = caml_alloc_small(1,0);
+								Field(img,0) = mlTex;
+								Field(Field(info,1),1) = img;
               }
                       
-              lst_elt = caml_alloc_tuple(2);
+              lst_elt = caml_alloc_small(2,0);
               Field(lst_elt, 0) = info;
               Field(lst_elt, 1) = infos;
               infos = lst_elt;
@@ -238,7 +237,10 @@ void ml_load_users_info(value uids, value callback) {
         }  
         
       } else {
-        caml_remove_global_root(&cb);
+				dispatch_async(dispatch_get_main_queue(),^(void) {
+					caml_callback(cb,Val_unit);
+					caml_remove_global_root(&cb);
+				});
       }
    }];
           

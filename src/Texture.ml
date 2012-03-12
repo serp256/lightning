@@ -337,13 +337,18 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
       (
         debug:gc "release create from c texture <%d>" textureID;
         delete_texture textureID; 
-        textureID := 0
+        textureID := 0;
+        texture_mem_sub ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4);
       )
       else ();
     method subTexture _ = assert False;
     method addRenderer _ = ();
     method removeRenderer _ = ();
-    initializer Gc.finalise (fun t -> let () = debug:gc "release c texture <%d>" textureID in t#release ()) self;
+    initializer 
+    (
+      Gc.finalise (fun t -> let () = debug:gc "release c texture <%d>" textureID in t#release ()) self;
+      texture_mem_add ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4);
+    );
   end
 end;
 
@@ -614,6 +619,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       let () = debug:rendered "resize <%d> from %f->%f, %f->%f" textureID width w height h in
       if w <> width || h <> height
       then
+        let () = texture_mem_sub (legalWidth * legalHeight * 4) in
         let iw = truncate (ceil w) in
         let ih = truncate (ceil h) in
         let legalWidth' = nextPowerOfTwo iw
@@ -626,6 +632,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
           then resize_texture textureID legalWidth' legalHeight'
           else ();
           legalWidth := legalWidth'; legalHeight := legalHeight';
+          texture_mem_add (legalWidth * legalHeight * 4);
           let flw = float legalWidth' and flh = float legalHeight' in
           clipping :=
             if flw <> w || flh <> h 
@@ -643,6 +650,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
         delete_framebuffer framebufferID;
         delete_texture textureID;
         textureID := 0;
+        texture_mem_sub (legalWidth * legalHeight * 4);
       )
       else ();
 
@@ -664,7 +672,11 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       ];
 
     method clear color alpha = self#draw (fun () -> Render.clear color alpha);
-    initializer Gc.finalise (fun r -> let () = debug:gc "release rendered texture <%d>" textureID in r#release ()) self;
+    initializer 
+    (
+      texture_mem_add (legalWidth * legalHeight * 4);
+      Gc.finalise (fun r -> let () = debug:gc "release rendered texture <%d>" textureID in r#release ()) self;
+    );
 
 
   end; (*}}}*)
