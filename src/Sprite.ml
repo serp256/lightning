@@ -1,6 +1,6 @@
 
 module type S = sig
-  module D : DisplayObjectT.M;
+  module D : DisplayObjectT.S;
 
   class c:
     object
@@ -15,9 +15,9 @@ module type S = sig
 
 end;
 
-module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D) = struct
+module Make(Image:Image.S) = struct
 
-  module D = D;
+  module D = Image.D;
 
   type imageCache = {ic: Image.c; tex: Texture.rendered; empty: mutable bool; valid: mutable [= `invalid | `prerender | `valid ]; force: mutable bool};
 

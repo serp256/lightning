@@ -132,10 +132,6 @@ value onClick obj handler  =
 
 value tlf (stage:Stage.c) = 
 (
-  debug "min_int: %d" min_int;
-  debug "max_int: %d" max_int;
-  debug "min_float: %f" min_float;
-  debug "max_float: %f" max_float;
   BitmapFont.register "MyriadPro-Regular.fnt";
   TLF.default_font_family.val := "Myriad Pro";
   let quad = Quad.create  ~color:0xCC0000 100. 20. in
@@ -143,8 +139,8 @@ value tlf (stage:Stage.c) =
     quad#setPos 100. 100.;
     stage#addChild quad;
   );
-  let (_,text) = 
-    TLF.create ~width:95. begin
+  let ((w,h),text) = 
+    TLF.create begin
         TLF.p ~halign:`center ~color:0xfff4c7 ~fontSize:15 
           [ 
             `text "животные";
@@ -152,11 +148,13 @@ value tlf (stage:Stage.c) =
     end 
   in
   (
+    debug "w:%f,h:%f" w h;
     text#setPos 100. 100.;
     text#setFilters [ Filters.glow ~size:2 0x00FF00 ];
 (*     text#setAlpha 0.3; *)
     stage#addChild text;
   );
+  (*
   let quad = Quad.create  ~color:0xCC0000 100. 20. in
   (
     quad#setPos 220. 100.;
@@ -218,6 +216,7 @@ value tlf (stage:Stage.c) =
     tree#setFilters [ Filters.glow ~size:2 ~strength:2 0xFF0000 ];
     stage#addChild tree;
   );
+  *)
 );
 
 
@@ -318,6 +317,7 @@ value size (stage:Stage.c) =
 
 value flip (stage:Stage.c) =
   let img = Image.load "tree.png" in
+  let () = debug "max_int: %d, min_int: %d, calc: %d" max_int min_int (if 1 lsl 32 = 0 then 1 else 2) in
 (*   let tx = ref (Texture.load "e_cactus.png") in *)
   (
     img#setTexFlipX True;
@@ -443,11 +443,11 @@ let stage width height =
     value color = 0xCCCCCC;
     initializer begin
 (*       alert self; *)
-      flip self;
+(*       flip self; *)
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-(*       tlf self; *)
+      tlf self;
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)

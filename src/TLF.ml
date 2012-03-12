@@ -1,7 +1,8 @@
 
 module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.S with module D = Image.D) = struct
 
-module DisplayObject = Image.D;
+module D = Image.D;
+module Sprite = Sprite;
 (* module Shape = Shape.Make DisplayObject; *)
 
 open ExtList;
@@ -45,6 +46,7 @@ type p_attribute =
   | `valign of p_valign
   | `spaceBefore of float
   | `spaceAfter of float
+  | `textIndent of float
   ];
 
 type p_attributes = list p_attribute;
@@ -114,7 +116,7 @@ value span ?fontWeight ?fontFamily ?fontSize ?color ?alpha elements : simple_ele
   `span (attrs,elements);
 
 
-value p ?fontWeight ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceAfter elements : main = 
+value p ?fontWeight ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBefore ?spaceAfter ?textIndent elements : main = 
   let attrs = [] in
   let attrs = FONT_WEIGHT in
   let attrs = AEXPAND(fontFamily,`fontFamily) in
@@ -125,6 +127,7 @@ value p ?fontWeight ?fontFamily ?fontSize ?color ?alpha ?halign ?valign ?spaceBe
   let attrs = AEXPAND(valign,`valign) in
   let attrs = AEXPAND(spaceBefore,`spaceBefore) in
   let attrs = AEXPAND(spaceAfter,`spaceAfter) in
+  let attrs = AEXPAND(textIndent,`textIndent) in
   `p (attrs,elements);
 
 
@@ -168,7 +171,7 @@ value getFont attributes =
 
 
 
-type line_element = [ Img of DisplayObject.c | Char of AtlasNode.t ];
+type line_element = [ Img of D.c | Char of AtlasNode.t ];
 type line = 
   {
     lchars: DynArray.t line_element;
@@ -181,10 +184,20 @@ type line =
     closed: mutable bool;
   };
 
-value createLine font lines =  
+value createLine ?(indent=0.) font lines =  
   let () = debug "create new line" in
 (*   let line = {container = Sprite.create (); lineHeight = match font with [ Some fnt -> fnt.BitmapFont.lineHeight | None -> 0. ]; baseLine = 0.; currentX = 0.; closed = False} in *)
-  let line = {lchars = DynArray.create (); lineHeight = font.BitmapFont.lineHeight; ascender = font.BitmapFont.ascender; descender = font.BitmapFont.descender; currentX = 0.; lx = 0.; ly = 0.; closed = False} in
+  let line = 
+    {
+      lchars = DynArray.create (); 
+      lineHeight = font.BitmapFont.lineHeight; 
+      ascender = font.BitmapFont.ascender; 
+      descender = font.BitmapFont.descender; 
+      currentX = indent;
+      lx = 0.; 
+      ly = 0.; 
+      closed = False
+    } in
   (
     Stack.push line lines;
     line;
@@ -413,6 +426,7 @@ value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.l
     let parse_p_attribute : Xmlm.attribute -> p_attribute = fun
       [ ((_,"halign"),v) -> `halign (match v with [ "left" -> `left | "right" -> `right | "center" -> `center | _ -> parse_error inp "incorrect attribute halign value %s" v])
       (*   | `valign of [= `top | `bottom | `center ] *)
+      | ((_,"text-inent"),v) -> `textIndent (parse_float inp v)
       | ((_,"space-before"),spb) -> `spaceBefore (parse_float inp spb) 
       | ((_,"space-after"),spa) -> `spaceAfter (parse_float inp spa)
       | x -> ((parse_span_attribute inp x) :> p_attribute)
@@ -453,6 +467,9 @@ value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.l
   | _ -> parse_error inp "Dtd"
   ];
 
+
+value getTextIndent attributes = getAttr (fun [ `textIndent v -> Some v | _ -> None]) 0. attributes;
+
 (* width, height вытащить наверно в html тоже *)
 value create ?width ?height ?border ?dest (html:main) = 
   let () = debug 
@@ -464,11 +481,11 @@ value create ?width ?height ?border ?dest (html:main) =
       let () = debug "process img: lines: %d" (Stack.length lines) in
       let iwidth = match getAttrOpt (fun [ `width w -> Some w | _ -> None ])  attrs with [ Some w -> (image#setWidth w; w) | None -> image#width] (*{{{*)
       and iheight = match getAttrOpt (fun [ `height h -> Some h | _ -> None ])  attrs with [ Some h -> (image#setHeight h; h) | None -> image#height]
-      and paddingLeft = match getAttrOpt (fun [ `paddingLeft pl -> Some pl | _ -> None]) attrs with [ Some pl -> pl | None -> 0. ] in
+      and paddingLeft = getAttr (fun [ `paddingLeft pl -> Some pl | _ -> None]) 0. attrs in
       let font = getFont attributes in
       let line = 
         if Stack.is_empty lines 
-        then createLine font lines
+        then createLine ~indent:(getTextIndent attributes) font lines
         else
           let line = Stack.top lines in
           if line.closed 
@@ -488,7 +505,7 @@ value create ?width ?height ?border ?dest (html:main) =
       in
       (
         image#setX (line.currentX +. paddingLeft);
-        let paddingRight = match getAttrOpt (fun [ `paddingRight pl -> Some pl | _ -> None]) attrs with [ Some pl -> pl | None -> 0. ] in
+        let paddingRight = getAttr (fun [ `paddingRight pl -> Some pl | _ -> None]) 0. attrs in
         let eWidth = paddingLeft +. iwidth +. paddingRight in
         let paddingTop = getAttr (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. attrs in
         match getAttr (fun [ `valign v -> Some v | _ -> None]) `default attrs with
@@ -651,7 +668,9 @@ value create ?width ?height ?border ?dest (html:main) =
             else ()
           in
           let line = 
-            if Stack.is_empty lines || (Stack.top lines).closed 
+            if Stack.is_empty lines 
+            then createLine ~indent:(getTextIndent attributes) font lines
+            else if (Stack.top lines).closed 
             then createLine font lines
             else 
               let line = Stack.top lines in
@@ -674,53 +693,29 @@ value create ?width ?height ?border ?dest (html:main) =
   in
   let rec process ((width,height) as size) attributes = fun
     [ `div attrs elements -> (* не доделано нихуя вообще нахуй *)
-        (*
-        let dy = ref 0 in
-        let mainCont = 
-          match (getAttr attrs (fun [ `paddingTop x -> Some x | _ -> None ]), getAttr attrs (fun [ `paddingLeft x -> Some x | _ -> None ])) with
-          [ ((Some _ as top),( _ as left)) | ((_ as top),(Some _ as left)) -> 
-            (
-              match top with
-              [ Some paddingTop -> (dy.val := paddingTop; div#setY paddingTop)
-              | None -> ()
-              ];
-              match left with
-              [ Some paddingLeft -> div#setX paddingLeft
-              | None -> ()
-              ];
-              let cont = Sprite.create () in
-              (
-                cont#adChild div;
-                cont;
-              )
-            )
-          | _ -> div
-          ]
-        in
-        *)
         let div = RefList.empty () in
         let attribs = attrs @ attributes in
         let paddingTop = getAttr (fun [ `paddingTop x -> Some x | _ -> None ]) 0. attrs 
         and paddingLeft = getAttr (fun [ `paddingLeft x -> Some x | _ -> None ]) 0. attrs 
         in
-        let nsize = subtractSize size (paddingTop,paddingLeft) in
+        let csize = subtractSize size (paddingTop,paddingLeft) in
         (* дети могут быть либо параграфы, либо опять дивы * параграф цельный сцука а див нихуя нахуй * *)
-        let (x,y) = 
-          List.fold_left begin fun (x,y) element ->
-              let (yoffset,lines) = process nsize attribs element in 
+        let (_,mwidth,height) = 
+          List.fold_left begin fun (((rwidth,rheight) as csize),mwidth,y) element ->
+              let ((cwidth,cheight),lines) = process csize attribs element in 
               (
                 List.iter begin fun line -> 
                   (
-                    line.lx := line.lx +. x; 
+                    line.lx := line.lx +. paddingLeft; 
                     line.ly := line.ly +. y;
                     RefList.push div line
                   )
                 end lines;
-                (x,y +. yoffset)
+                ((rwidth,match rheight with [ None -> None | Some h -> Some (h -. cheight) ]), max cwidth mwidth, y +. cheight);
               )
-          end (paddingLeft,paddingTop) elements
+          end (csize,0.,paddingTop) elements
         in
-        (y,RefList.to_list div)
+        ((paddingLeft +. mwidth,height),RefList.to_list div)
     | `p attrs elements ->  (* p - содержит линии *)
         let () = debug "process p" in
 (*         let container = Sprite.create () in  *)
@@ -759,7 +754,7 @@ value create ?width ?height ?border ?dest (html:main) =
               )
             ]
           in
-          let halign = match getAttrOpt (fun [ `halign p -> Some p | _ -> None ]) attribs with [ None -> `left | Some align -> align ] in
+          let halign = getAttr (fun [ `halign p -> Some p | _ -> None ]) `left attribs in
           let () = debug "align p: by %s - %f" (match halign with [ `left -> "left" | `right -> "right" | `center -> "center" ]) max_width in
           let lines = 
             if RefList.is_empty qlines
@@ -794,59 +789,12 @@ value create ?width ?height ?border ?dest (html:main) =
                 lines
               )
           in
-          (* fix first line *)
-            (*{{{
-            let atlas : ref (option Atlas.c) = ref None in
-            let atlasOnCurrentLine = ref False in
-            while not (Stack.is_empty qlines) do
-              let () = debug "add line to container" in
-              let (line,width) = Stack.pop qlines in
-              let () = atlasOnCurrentLine.val := False in
-              (
-                for i = 0 to (DynArray.length line.lchars) - 1 do
-                  match DynArray.get line.lchars i with
-                  [ Img i -> 
-                    (
-                      debug "add image to line";
-                      i#setX (i#x +. line.lx);
-                      i#setY (i#y +. line.ly);
-                      container#addChild i;
-                      atlas.val := None;
-                    )
-                  | Char c ->
-                    (
-                      let () = debug "add char to line" in
-                      match !atlas with
-                      [ Some atlas when atlas#texture = (AtlasNode.texture c) ->
-                        match !atlasOnCurrentLine with
-                        [ True -> atlas#addChild c
-                        | False -> 
-                            let pos = AtlasNode.pos c in
-                            let pd = {Point.x = line.lx -. atlas#x; y = line.ly -. atlas#y} in
-                            atlas#addChild (AtlasNode.setPosPoint (Point.addPoint pos pd) c)
-                        ]
-                      | _ -> (* we need create one *) 
-                          let (atl : Atlas.c) = Atlas.create (AtlasNode.texture c) in
-                          (
-                            atl#setPos line.lx line.ly;
-                            atl#addChild c;
-                            atlas.val := Some atl;
-                            atlasOnCurrentLine.val := True;
-                            container#addChild atl;
-                          )
-                      ]
-                    )
-                  ]
-                done
-              )
-            done;
-            }}}*)
-          ((!yOffset +. spaceAfter),lines)
+          ((max_width,(!yOffset +. spaceAfter)),lines)
       )
     ]
   in
   let no_zero = fun [ Some x when  x <= 0. -> (Debug.w "w or h not correct"; None) | x ->  x ] in
-  let (height,lines) = process (no_zero width,no_zero height) [] html in
+  let ((width,height),lines) = process (no_zero width,no_zero height) [] html in
   let _container = ref (match dest with [ Some s -> Some (s :> Sprite.c) | None -> None  ]) in
   let container () = match !_container with [ Some c -> c | None -> let c = Sprite.create () in (_container.val := Some c; c) ] in
   let atlases : Hashtbl.t Texture.c Atlas.c = Hashtbl.create 1 in
@@ -902,7 +850,7 @@ value create ?width ?height ?border ?dest (html:main) =
           )
       ]
     in
-    (height,res)
+    ((width,height),res)
   );
     (*
     match border with

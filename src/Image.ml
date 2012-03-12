@@ -31,7 +31,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
 
 module type S = sig
 
-  module D : DisplayObjectT.M;
+  module D : DisplayObjectT.S;
 
 
 
@@ -71,7 +71,7 @@ module type S = sig
 end;
 
 
-module Make(D:DisplayObjectT.M) = struct
+module Make(D:DisplayObjectT.S) = struct
   module D = D;
 
 

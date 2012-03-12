@@ -18,8 +18,9 @@ ELSE
 DEFINE CATCH_ALL(expr) = expr;
 ENDIF;
 
-module Make(D:DisplayObjectT.M with type evType = private [> eventType ] and type evData = private [> eventData ]) = struct (*{{{*)
+module Make(D:DisplayObjectT.S with type evType = private [> eventType ] and type evData = private [> eventData ]) = struct (*{{{*)
 
+  module D = D;
 
   class type tween = object method process: float -> bool; end;
   value tweens : Queue.t  tween = Queue.create ();

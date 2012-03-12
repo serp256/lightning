@@ -1,6 +1,6 @@
 
 module type S = sig
-  module D : DisplayObjectT.M;
+  module D : DisplayObjectT.S;
 
   class c:
     object
@@ -15,4 +15,4 @@ module type S = sig
 
 end;
 
-module Make(D:DisplayObjectT.M)(Image:Image.S with module D = D): S with module D = D;
+module Make(Image:Image.S): S with module D = Image.D;

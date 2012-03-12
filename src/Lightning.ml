@@ -20,7 +20,7 @@ module Make(Param:sig type evType = private [> eventType ]; type evData = privat
   module Quad = Quad.Make DisplayObject;
   module Image = Image.Make DisplayObject;
   module Atlas = Atlas.Make DisplayObject;
-  module Sprite = Sprite.Make DisplayObject Image;
+  module Sprite = Sprite.Make Image;
   module Clip = Clip.Make Image Atlas Sprite;
 (*   module CompiledSprite = CompiledSprite.Make Image Sprite; *)
 (*   module MovieClip = MovieClip.Make DisplayObject Image; *)
@@ -57,17 +57,18 @@ value hideNativeWaiter () = ();
 value deviceIdentifier () = None;
 ENDIF;
 
-type stage_constructor =
-  float -> float -> 
-    <
-      resize: float -> float -> unit;
-      renderStage: unit -> unit;
-      run: float -> unit;
-      processTouches: list Touch.n -> unit;
-      cancelAllTouches: unit -> unit;
-      advanceTime: float -> unit;
-      name: string;
-    >;
+class type stage = 
+  object
+    method resize: float -> float -> unit;
+    method renderStage: unit -> unit;
+    method run: float -> unit;
+    method processTouches: list Touch.n -> unit;
+    method cancelAllTouches: unit -> unit;
+    method advanceTime: float -> unit;
+    method name: string;
+  end;
+
+type stage_constructor = float -> float -> stage;
 
 (* value _stage: ref (option (float -> float -> stage eventTypeDisplayObject eventEmptyData)) = ref None; *)
 

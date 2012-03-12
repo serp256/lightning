@@ -98,6 +98,7 @@ void ml_get_friends_identifiers(value callback) {
 
   [localPlayer loadFriendsWithCompletionHandler:^(NSArray *friends, NSError *error) 
     {
+			NSCAssert([NSThread isMainThread],@"GameCenter call not in main thread");
       caml_leave_blocking_section();
       if (error != nil || [friends count] == 0) {
         caml_callback(cb, Val_int(0));

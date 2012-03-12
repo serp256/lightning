@@ -1,6 +1,10 @@
 
-(*
 module type S = sig
+
+  module D: DisplayObjectT.S;
+  module Image: Image.S with module D := D;
+  module Sprite: Sprite.S with module D := D;
+  module Atlas: Atlas.S with module D := D;
 
   exception Frame_not_found;
 
@@ -14,7 +18,7 @@ module type S = sig
 
   class type virtual movie = 
     object
-      inherit Image.D.c;
+      inherit D.c;
       method loop: bool;
       method setLoop: bool -> unit;
       method fps: int;
@@ -34,7 +38,7 @@ module type S = sig
 
   class type virtual c = 
     object
-      inherit Image.D.c;
+      inherit D.c;
       method clip_cast: [= `Image of Image.c | `Sprite of Sprite.c | `Atlas of Atlas.c | `Movie of movie ];
     end;
 
@@ -57,10 +61,3 @@ module type S = sig
   value get_symbol_async: lib -> string -> (c -> unit) -> unit;
 
 end;
-
-end;
-*)
-
-
-module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.S with module D = Image.D) : ClipT.S with module D = Image.D;
-

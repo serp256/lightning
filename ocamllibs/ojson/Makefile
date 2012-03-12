@@ -1,5 +1,5 @@
 
-OCAMLFIND = ocamlfind 
+OCAMLFIND = ocamlfind -toolchain 313
 OCAMLOPT=$(OCAMLFIND) ocamlopt
 OCAMLC=$(OCAMLFIND) ocamlc
 

@@ -1,7 +1,7 @@
 
 module type S = sig
 
-  module D : DisplayObjectT.M;
+  module D : DisplayObjectT.S;
 
   class c : [ Texture.c ] ->
     object
@@ -41,4 +41,4 @@ module type S = sig
   value create: Texture.c -> c;
 end;
 
-module Make(D:DisplayObjectT.M) : S with module D = D;
+module Make(D:DisplayObjectT.S) : S with module D = D;

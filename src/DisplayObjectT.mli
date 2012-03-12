@@ -2,7 +2,7 @@
 type eventType = [= `ADDED | `ADDED_TO_STAGE | `REMOVED | `REMOVED_FROM_STAGE | `ENTER_FRAME ]; 
 type eventData = [= Ev.dataEmpty | `PassedTime of float ];
 
-module type M = sig
+module type S = sig
 
 type hidden 'a;
 type evType = private [> eventType ];

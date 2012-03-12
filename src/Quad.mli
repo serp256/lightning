@@ -3,7 +3,7 @@
 
 module type S = sig
 
-  module D : DisplayObjectT.M;
+  module D : DisplayObjectT.S;
 
   class c: [ ?color:int] -> [ float ] -> [ float ] ->
     object
@@ -26,4 +26,4 @@ module type S = sig
 
 end;
 
-module Make(D:DisplayObjectT.M) : S with module D = D;
+module Make(D:DisplayObjectT.S) : S with module D = D;

@@ -7,11 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "LightViewController.h"
+#import "LightAppDelegate.h"
 
-@class ViewController;
-
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : LightAppDelegate <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) LightViewController *viewController;

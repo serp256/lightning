@@ -4,16 +4,18 @@ open ExtList;
 
 
 
-
-
 module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.S with module D = Image.D) = struct
+
+module D = Image.D;
+module Image = Image;
+module Atlas = Atlas;
+module Sprite = Sprite;
 
 exception Frame_not_found;
 
 value default_fps = ref 20;
 value set_default_fps f = default_fps.val := f;
 
-module DisplayObject = Image.D;
 
 type frameID = [= `num of int | `label of string ];
 
@@ -35,7 +37,7 @@ exception Same_frame;
 
 class type virtual movie = 
   object
-    inherit DisplayObject.c;
+    inherit D.c;
     method loop: bool;
     method setLoop: bool -> unit;
     method fps: int;
@@ -56,7 +58,7 @@ class type virtual movie =
 
 value memo : WeakMemo.c movie = new WeakMemo.c 1;
 
-value cast: #DisplayObject.c -> option movie = fun x -> try Some (memo#find x) with [ Not_found -> None ];
+value cast: #D.c -> option movie = fun x -> try Some (memo#find x) with [ Not_found -> None ];
 
 type clip_cast = [= `Image of Image.c | `Sprite of Sprite.c | `Atlas of Atlas.c | `Movie of movie ];
 
@@ -64,7 +66,7 @@ class virtual base ['frame] ?(fps=default_fps.val) ~frames:(frames:array (cFrame
 (*     let first_frame = match frames.(0) with [ KeyFrame frame -> frame | Frame _ -> assert False ] in *)
   let framesLength = Array.length frames in
 object(self)
-  inherit DisplayObject.c as super;
+  inherit D.c as super;
   value mutable frameTime = 1. /. (float fps); 
   value mutable currentFrameID = 0;
   method clip_cast : clip_cast = `Movie (self :> movie);

@@ -5,7 +5,7 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
 
 module type S = sig
 
-  module D : DisplayObjectT.M;
+  module D : DisplayObjectT.S;
 
   class c: [ Texture.c ] -> 
     object
@@ -30,7 +30,7 @@ module type S = sig
 
 end;
 
-module Make(D:DisplayObjectT.M) = struct
+module Make(D:DisplayObjectT.S) = struct
   module D = D;
 
   module Node = AtlasNode;
