@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface VKAuth : UIView <UIWebViewDelegate> {
+@interface VKAuth : UIViewController <UIWebViewDelegate> {
     NSString * _appid;
     UIWebView * _webview;
     UIImageView * _captchaView;

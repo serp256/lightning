@@ -181,8 +181,8 @@
 	mFrameRate = REFRESH_RATE / frameInterval;
 	if (self.isStarted)
 	{
-		[self pause];
-		[self resume];
+		[self stop];
+		[self start];
 	}
 }
 
