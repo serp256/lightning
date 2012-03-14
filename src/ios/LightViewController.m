@@ -21,7 +21,6 @@
 
 static LightViewController *instance = NULL;
 
-
 +alloc {
 	NSLog(@"Try INIT Light view controller");
 	if (instance != NULL) return NULL; // raise exception
@@ -307,4 +306,20 @@ static value *ml_url_complete = NULL;
 	NSLog(@"APP did recieve memory warning");
 }
 
+
+- (void)presentModalViewController:(UIViewController *)modalViewController animated:(BOOL)animated {
+  [self resignActive];
+  [super presentModalViewController: modalViewController animated: animated];
+}
+
 @end
+
+
+@implementation LightViewCompatibleController
+- (void)dismissModalViewControllerAnimated:(BOOL)animated {
+  [super dismissModalViewControllerAnimated: animated];
+  [[LightViewController sharedInstance] becomeActive];
+}  
+@end
+
+
