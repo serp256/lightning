@@ -7,8 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "../ios/LightViewController.h"
 
-@interface VKAuth : UIViewController <UIWebViewDelegate> {
+@interface VKAuth : LightViewCompatibleController  <UIWebViewDelegate> {
     NSString * _appid;
     UIWebView * _webview;
     UIImageView * _captchaView;

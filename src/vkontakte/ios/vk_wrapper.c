@@ -12,7 +12,6 @@ void ml_vk_init(value appid) {
 
 void ml_vk_authorize(value permissions) {
   CAMLparam1(permissions);
-  [[LightViewController sharedInstance] resignActive];
   [[LightViewController sharedInstance] presentModalViewController: _vk animated: YES];
   [_vk authorize: STR_CAML2OBJC(permissions)];
   CAMLreturn0;
