@@ -1,11 +1,9 @@
 include ../Makefile.common
 
-
 CFLAGS += -I .
 
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
-
 
 GLPARAM = 
 
@@ -14,9 +12,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma fbconnect.cma vk.cma
+byte: lightning.cma fbconnect.cma vk.cma tapjoy.cma
 native: MLDEPFLAGS += -native
-native: lightning.cmxa fbconnect.cmxa vk.cmxa
+native: lightning.cmxa fbconnect.cmxa vk.cmxa tapjoy.cmxa
 syntax: syntax/pa_prop.cmo
 
 
@@ -36,7 +34,7 @@ ifeq ($(PLATFORM),IOS)
 	#MLCOPTS += -DIOS
 	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o
 	#MLPPOPT += -DGLES -DIOS
-	LIBFLAGS = -cclib '-framework\ Foundation' \
+	LIBFLAGS = -ccopt '-ObjC' -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
 						 -cclib '-framework\ QuartzCore' \
 						 -cclib '-framework\ CoreGraphics' \
@@ -127,6 +125,11 @@ vk.cma:
 vk.cmxa:
 	make -C vkontakte vk.cmxa
 
+tapjoy.cma:
+	make -C tapjoy tapjoy.cma
+
+tapjoy.cmxa:
+	make -C tapjoy tapjoy.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
