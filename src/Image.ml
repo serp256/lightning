@@ -361,6 +361,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
               shaderProgram g_texture#textureID g_texture#hasPremultipliedAlpha ?alpha:alpha' g_image
           )
         | None ->
+(*           let () = debug "render image: %f:%f" pos.Point.x pos.Point.y in *)
           Render.Image.render 
             (if transform then self#transformationMatrix else Matrix.identity) 
             shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image

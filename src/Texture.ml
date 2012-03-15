@@ -548,7 +548,6 @@ value glRGB = 0x1907;
 module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
 
 
-
 IFDEF IOS THEN
 value render_texture_size ((w,h) as ok) =
     if w <= 8 
@@ -694,6 +693,6 @@ value loadExternal url ~callback ~errorCallback =
 
 ELSE
 
-value loadExternal url ~callback ~errorCallback = ();
+value loadExternal url ~callback ~errorCallback = (); (* TODO: Get it by URLLoader *)
 
 ENDIF;

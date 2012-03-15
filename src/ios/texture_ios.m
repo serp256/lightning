@@ -291,7 +291,7 @@ NSString *pathForImage(NSString *path, float contentScaleFactor) {
 }*/
 
 
-NSString * pathForBundleResource(NSString * path, NSBundle * bundle) {
+NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
     NSArray * components = [path pathComponents];
     NSString * bundlePath = nil;
     if ([components count] > 1) {

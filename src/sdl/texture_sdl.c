@@ -92,6 +92,8 @@ value ml_load_image_info(value opath) {
 	int r = _load_image(path,tInfo);
 
 	caml_acquire_runtime_system();
+	fprintf(stderr,"IMAGE INFO LOADED: %s\n",path);
+	free(path);
 
 	if (r) {
 		free(tInfo);

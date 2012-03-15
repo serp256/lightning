@@ -90,6 +90,7 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 
 
 -(void)dealloc {
+	NSLog(@"dealloc external image loader");
 	caml_acquire_runtime_system();
 	caml_remove_global_root(&successCallback);
 	if (errorCallback != 0) caml_remove_global_root(&errorCallback);

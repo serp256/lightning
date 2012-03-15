@@ -129,6 +129,8 @@ void applyTransformMatrix(value matrix) {
   m[0] = (GLfloat)Double_field(matrix,0); m[4] = (GLfloat)Double_field(matrix,2); m[12] = (GLfloat)Double_field(matrix,4);
   m[1] = (GLfloat)Double_field(matrix,1); m[5] = (GLfloat)Double_field(matrix,3); m[13] = (GLfloat)Double_field(matrix,5);
 
+	//fprintf(stderr,"applyTransformMatrix: %f:%f\n",m[12],m[13]);
+
   kmGLMultMatrix( &transfrom4x4 );
 }
 
@@ -450,7 +452,12 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   kmMat4 matrixMVP;
 
   kmGLGetMatrix(KM_GL_PROJECTION, &matrixP );
+
   kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV );
+	// RENDER SUBPIXEL FIX HERE
+	//fprintf(stderr,"matrix: tx=%f,ty=%f\n",matrixMV.mat[12],matrixMV.mat[13]);
+	matrixMV.mat[12] = (GLint)matrixMV.mat[12];
+	matrixMV.mat[13] = (GLint)matrixMV.mat[13];
 
   kmMat4Multiply(&matrixMVP, &matrixP, &matrixMV);
 
@@ -826,6 +833,7 @@ void ml_image_flip_tex_y(value image) {
 }
 
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
+	//fprintf(stderr,"render image\n");
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 
@@ -1016,9 +1024,6 @@ void ml_delete_framebuffer(value framebuffer) {
 	checkGLErrors("ml delete framebuffer: %d",Long_val(fbID));
 }
 
-
-
-
 typedef struct {
 	GLuint vaoname;
 	GLuint buffersVBO[2];
@@ -1101,6 +1106,8 @@ static lgTexQuad *atlas_quads = NULL;
 static int atlas_quads_len = 0;
 
 
+#define RENDER_SUBPIXEL(x) (GLint)x
+
 // assume that quads it's dynarray
 void ml_atlas_render(value atlas, value matrix,value program, value textureID,value pma, value alpha, value quads) {
 	atlas_t *atl = ATLAS(atlas);
@@ -1155,6 +1162,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 		lgTexQuad *q;
 		value child,bounds,clipping;
 		color4B c;
+		double quad[4];
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
 			bounds = Field(child,1);
@@ -1163,19 +1171,24 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 
 			q = atlas_quads + i;
 
+			quad[0] = Double_field(bounds,0);
+			quad[1] = Double_field(bounds,1);
+			quad[2] = Double_field(bounds,2);
+			quad[3] = Double_field(bounds,3);
+
 			q->bl.c = c;
-			q->bl.v = (vertex2F){Double_field(bounds,0),Double_field(bounds,1)};
+			q->bl.v = (vertex2F){RENDER_SUBPIXEL(quad[0]),RENDER_SUBPIXEL(quad[1])};
 
 
 			q->bl.tex = (tex2F){Double_field(clipping,0),Double_field(clipping,1)};
 
 			q->br.c = c;
-			q->br.v = (vertex2F){q->bl.v.x + Double_field(bounds,2),q->bl.v.y};
+			q->br.v = (vertex2F){RENDER_SUBPIXEL(quad[0] + quad[2]),q->bl.v.y};
 
 			q->br.tex = (tex2F){q->bl.tex.u + Double_field(clipping,2),q->bl.tex.v};
 
 			q->tl.c = c;
-			q->tl.v = (vertex2F){q->bl.v.x,q->bl.v.y + Double_field(bounds,3)};
+			q->tl.v = (vertex2F){q->bl.v.x,RENDER_SUBPIXEL(quad[1] + quad[3])};
 
 			q->tl.tex = (tex2F){q->bl.tex.u,q->bl.tex.v + Double_field(clipping,3)};
 
