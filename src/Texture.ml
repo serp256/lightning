@@ -399,6 +399,7 @@ value load path : c =
 
 
 
+(*
 module type AsyncLoader = sig
 
   value load: string -> (c -> unit) -> unit;
@@ -514,6 +515,10 @@ value load_async path callback =
     let module Loader = (value m:AsyncLoader) in
     Loader.load path callback
   ];
+*)
+
+
+
 
 (*
 class type renderObject =

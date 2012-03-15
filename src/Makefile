@@ -7,7 +7,7 @@ CFLAGS += -I .
 
 GLPARAM = 
 
-MOBJS = texture_common.o filters_stub.o render_stub.o
+MOBJS = texture_common.o texture_async_loader.o filters_stub.o render_stub.o
 MLOBJSFLAGS = 
 MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
