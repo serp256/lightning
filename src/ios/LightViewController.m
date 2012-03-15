@@ -290,7 +290,7 @@ static value *ml_url_complete = NULL;
 -(void)lightError:(NSString*)error {
 	LightView *lightView = (LightView*)self.view;
 	[lightView stop];
-	UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Uncatched error" message:@"MESSAGE" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+	UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Uncatched error" message:error delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
 	[alertView show];
 	[alertView release];
 }
