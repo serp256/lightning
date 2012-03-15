@@ -1,5 +1,6 @@
 
 value default_font_family: ref string;
+value default_font_size : ref int;
 
 type img_valign = [= `aboveBaseLine | `underBaseLine | `centerBaseLine | `default ];
 type img_attribute = 
