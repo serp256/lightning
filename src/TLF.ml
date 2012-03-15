@@ -1,10 +1,5 @@
 
-module Make(Image:Image.S)(Atlas:Atlas.S with module D = Image.D)(Sprite:Sprite.S with module D = Image.D) = struct
-
-module D = Image.D;
-module Sprite = Sprite;
-(* module Shape = Shape.Make DisplayObject; *)
-
+module D = DisplayObject;
 open ExtList;
 open ExtHashtbl;
 
@@ -35,7 +30,7 @@ type span_attribute =
 
 type span_attributes = list span_attribute;
 
-type simple_element = [= `img of (img_attributes * Image.D.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
+type simple_element = [= `img of (img_attributes * D.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
 and simple_elements = list simple_element;
 
 type p_halign = [= `left | `right | `center ];
@@ -407,7 +402,7 @@ value parse_simple_elements inp imgLoader =
       | _ -> parse_error inp "DTD?"
       ];
 
-value parse_simples ?(imgLoader=(Image.load :> (string -> Image.D.c))) text : simple_elements = 
+value parse_simples ?(imgLoader=(Image.load :> (string -> DisplayObject.c))) text : simple_elements = 
   let inp = Xmlm.make_input (`String (0,"<simples>"^text^"</simples>")) in
   match Xmlm.input inp with
   [ `Dtd _ -> 
@@ -419,7 +414,7 @@ value parse_simples ?(imgLoader=(Image.load :> (string -> Image.D.c))) text : si
   ];
 
 
-value parse ?(imgLoader=(Image.load :> (string -> Image.D.c))(*fun x -> (Image.load x)#asDisplayObject*)) xml : main = 
+value parse ?(imgLoader=(Image.load :> (string -> DisplayObject.c))(*fun x -> (Image.load x)#asDisplayObject*)) xml : main = 
   let inp = Xmlm.make_input (`String (0,xml)) in
   match Xmlm.input inp with
   [ `Dtd _ ->
@@ -870,6 +865,3 @@ value create ?width ?height ?border ?dest (html:main) =
     | None -> ()
     ];
     *)
-
-
-end;
