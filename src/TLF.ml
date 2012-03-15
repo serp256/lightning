@@ -4,6 +4,7 @@ open ExtList;
 open ExtHashtbl;
 
 value default_font_family = ref "Arial";
+value default_font_size = ref 14;
 value (|>) a f = f a;
 
 type img_valign = [= `aboveBaseLine | `underBaseLine | `centerBaseLine | `default ];
@@ -161,8 +162,13 @@ value getFont attributes =
     | None -> !default_font_family
     ]
   and style = getFontStyle attributes 
-  and size = getFontSize attributes in 
-  BitmapFont.get ~applyScale:True ?size ?style fontFamily;
+  and size = 
+    match getFontSize attributes with
+    [ Some size -> size 
+    | _ -> !default_font_size
+    ]
+  in
+  BitmapFont.get ~applyScale:True ~size ?style fontFamily;
 
 
 
