@@ -69,21 +69,30 @@
 
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+  
   if (Is_long(lightViewController->remote_notification_request_success_cb)) {
     NSLog(@"You requested for remote notifications, but didn't provide a success callback");
     return;
   }
-  
-  CAMLlocal1(token);
+
+  caml_acquire_runtime_system();
+  value token;
+  Begin_roots1(token);
+
   token = caml_alloc_string([deviceToken length]);
   memmove(String_val(token), (const char *)[deviceToken bytes], [deviceToken length]);  
   caml_callback(lightViewController->remote_notification_request_success_cb,token);
   
   [self clearRemoteNotificationsRequestCallbacks];
+  
+  End_roots();
+  caml_release_runtime_system();
 }
 
 
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+
+  caml_acquire_runtime_system();
 
   if (Is_block(lightViewController->remote_notification_request_error_cb)) {
     NSString *errdesc = [error localizedDescription];                                                                                                                                                     
@@ -91,6 +100,8 @@
   }
 
   [self clearRemoteNotificationsRequestCallbacks];
+  
+  caml_release_runtime_system();  
 }
 
 
