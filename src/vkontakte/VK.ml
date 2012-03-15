@@ -184,10 +184,10 @@ value vk_call_method_no_auth ?(delegate = None)  meth params token =
   let url = Printf.sprintf "https://api.vkontakte.ru/method/%s?%s" meth (mk_url_encoded_parameters params)
   and loader = new URLLoader.loader () in
   (
-    ignore (loader#addEventListener `IO_ERROR (fun _ _ _ -> _call_delegate_error delegate IOError));
+    ignore (loader#addEventListener URLLoader.ev_IO_ERROR (fun _ _ _ -> _call_delegate_error delegate IOError));
             
     ignore (
-    loader#addEventListener `COMPLETE 
+    loader#addEventListener URLLoader.ev_COMPLETE 
       (fun _ _ _ -> 
         match delegate with 
         [ Some d -> 
