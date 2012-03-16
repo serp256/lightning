@@ -11,10 +11,16 @@
 #include "texture_common.h"
 
 
+static char* resourcePath = "Resources/";
 
-int load_image_info(char *path,textureInfo *tInfo) {
+int load_image_info(char *fname,textureInfo *tInfo) {
+	int rplen = strlen(resourcePath);
+	char *path = malloc(rplen + strlen(fname) + 1);
+	memcpy(path,resourcePath,rplen);
+	strcpy(path + rplen,fname);
 	fprintf(stderr,"LOAD IMAGE: %s\n",path);
 	SDL_Surface* s = IMG_Load(path);
+	free(path);
 	if (s == NULL) return 2;
 	int width = s->w;
 	int height = s->h;

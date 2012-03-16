@@ -1,4 +1,7 @@
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "thqueue.h"
 #include "texture_common.h"
 
@@ -92,6 +95,7 @@ value ml_texture_async_loader_pop(value oruntime) {
 		free(r->tInfo);
 		opath = caml_copy_string(r->path);
 		free(r->path);
+		free(r);
 		res = caml_alloc_tuple(1);
 		Store_field(res,0,caml_alloc_small(2,0));
 		Field(Field(res,0),0) = opath;
