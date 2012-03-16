@@ -15,6 +15,11 @@ package "vk" (
   archive(native) = "vk.cmxa"
 )
 
+package "tapjoy" (
+  description="Tapjoy Connect"
+  archive(byte) = "tapjoy.cma"
+  archive(native) = "tapjoy.cmxa"
+)
 
 
 package "syntax" (

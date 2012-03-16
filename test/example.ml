@@ -1,4 +1,3 @@
-open Light;
 
 value max_anim_len = 40;
 value (|>) a b = b a;
@@ -121,9 +120,9 @@ value gray_filter =
     |];
 
 value onClick obj handler  =
-  obj#addEventListener `TOUCH begin fun ev (_,target) _ ->
-    match ev.Ev.data with
-    [ `Touches [ {Touch.phase=Touch.TouchPhaseEnded; _ } :: _ ] -> handler target
+  obj#addEventListener Stage.ev_TOUCH begin fun ev (_,target) _ ->
+    match Stage.touches_of_data ev.Ev.data with
+    [ Some [ {Touch.phase=Touch.TouchPhaseEnded; _ } :: _ ] -> handler target
     | _ -> ()
     ]
   end |> ignore;
@@ -334,10 +333,10 @@ value flip (stage:Stage.c) =
 
 value async_load (stage:Stage.c) = 
 (
-  let lib = Clip.load "Clips" in
+  let lib = LightLib.load "Clips" in
   let sprite = Sprite.create () in
   (
-    let loading = Clip.get_symbol lib "ESkins.LoadClip" in
+    let loading = LightLib.get_symbol lib "ESkins.LoadClip" in
     (
       loading#setPos 100. 100.;
       sprite#addChild loading;
@@ -424,6 +423,7 @@ value external_image (stage:Stage.c) =
       )
     );
 );
+
 (*
 value alert (stage:Stage.c) =
 (
@@ -437,22 +437,51 @@ value alert (stage:Stage.c) =
   ();
 );*)
 
+
+value game_center (stage:Stage.c) =
+  GameCenter.init ~callback:begin fun res ->
+    let text = 
+      match res with 
+      [ True -> "Game center success"
+      | False -> "Game center failed"
+      ]
+    in
+    let (_,text) = TLF.create (TLF.p [ `text text ]) in
+    stage#addChild text;
+  end ();
+
+
+value test_alpha (stage:Stage.c) = 
+  let sprite = Sprite.create () in
+  let tree = Image.load "tree.png" in
+  (
+    tree#setAlpha 0.5;
+    tree#setPos 100. 100.;
+    sprite#addChild tree;
+    sprite#setAlpha 0.2;
+    stage#addChild sprite;
+  );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value color = 0xCCCCCC;
     initializer begin
+        BitmapFont.register "MyriadPro-Regular.fnt";
+        TLF.default_font_family.val := "Myriad Pro";
+        test_alpha self;
 (*       alert self; *)
 (*       flip self; *)
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-      tlf self;
+(*       tlf self; *)
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
 (*       half_pixels self; *)
+(*         game_center self; *)
     end;
   end
 in

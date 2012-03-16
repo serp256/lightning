@@ -19,11 +19,11 @@ value ml_game_center_init(value param) {
 	if ([currSysVer compare:reqSysVer options:NSNumericSearch] == NSOrderedAscending) return Val_int(0);
 	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
 	[localPlayer authenticateWithCompletionHandler:^(NSError *error) {
-		NSLog(@"Initialized");
+		NSLog(@"GameCenter Initialized");
+		NSCAssert([NSThread isMainThread],@"GameCenter Init call not in main thread");
 		caml_leave_blocking_section();
 		value res = Val_false;
 		if (localPlayer.isAuthenticated) res = Val_true;
-
 		caml_callback(*caml_named_value("game_center_initialized"),res);
 		caml_enter_blocking_section();
 	 }];
@@ -98,7 +98,7 @@ void ml_get_friends_identifiers(value callback) {
 
   [localPlayer loadFriendsWithCompletionHandler:^(NSArray *friends, NSError *error) 
     {
-			NSCAssert([NSThread isMainThread],@"GameCenter call not in main thread");
+			NSCAssert([NSThread isMainThread],@"GameCenter Get ids call not in main thread");
       caml_leave_blocking_section();
       if (error != nil || [friends count] == 0) {
         caml_callback(cb, Val_int(0));
@@ -256,10 +256,3 @@ void ml_show_leaderboard(value p) {
 void ml_show_achivements(value p) {
 	[[LightViewController sharedInstance] showAchievements];
 }
-
-
-
-
-
-
-

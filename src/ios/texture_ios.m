@@ -291,7 +291,7 @@ NSString *pathForImage(NSString *path, float contentScaleFactor) {
 }*/
 
 
-NSString * pathForBundleResource(NSString * path, NSBundle * bundle) {
+NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
     NSArray * components = [path pathComponents];
     NSString * bundlePath = nil;
     if ([components count] > 1) {
@@ -385,6 +385,14 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 			}
 		}
 	}
+	return r;
+}
+
+int load_image_info(char *cpath,textureInfo *tInfo) {
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	NSString *path = [NSString stringWithCString:cpath encoding:NSASCIIStringEncoding];
+	int r = _load_image(path,tInfo);
+	[pool release];
 	return r;
 }
 

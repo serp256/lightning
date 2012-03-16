@@ -29,193 +29,20 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
 
 *)
 
-module type S = sig
 
-  module D : DisplayObjectT.S;
-
-
-
-  class c : [ Texture.c ] ->
-    object
-      inherit D.c; 
-      value texture: Texture.c;
-(*       method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
-      method texture: Texture.c;
-      method texFlipX: bool;
-      method setTexFlipX: bool -> unit;
-      method texFlipY: bool;
-      method setTexFlipY: bool -> unit;
-      (*
-      method texRotation: option [= `left | `right];
-      method setTexRotation: option [= `left | `right] -> unit;
-      *)
-(*       method updateSize: unit -> unit; *)
-      method onTextureEvent: Texture.event -> Texture.c -> unit;
-      method setTexture: Texture.c -> unit;
-      (*
-      method setTexScale: float -> unit;
-      *)
-      method setColor: int -> unit;
-      method color: int;
-      method setColors: array int -> unit;
-      method filters: list Filters.t;
-      method setFilters: list Filters.t -> unit;
-      method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
-      method boundsInSpace: !'space. option (<asDisplayObject: D.c; .. > as 'space) -> Rectangle.t;
-    end;
-
-  value cast: #D.c -> option c;
-
-  value load: string -> c;
-  value create: Texture.c -> c;
-end;
-
-
-module Make(D:DisplayObjectT.S) = struct
-  module D = D;
-
-
-
-  module Programs = struct (*{{{*)
-
-
-  end;(*}}}*)
-
-  (*
-  module Glow = struct (*{{{*)
-
-    type t = 
-      {
-        valid_size: mutable bool;
-        valid_content: mutable bool;
-        texture: Texture.rendered;
-        image: Render.Image.t;
-        gs:float;
-        matrix: Matrix.t;
-      };
-
-    (* здесь кэш *)
-    module GCache = WeakHashtbl.Make (struct
-      type t = (Texture.c * int);
-      value equal = (=);
-      value hash = Hashtbl.hash;
-    end);
-
-    value cache = GCache.create 1;
-
-    (*
-    value _glowPrg = ref None;
-    value glowPrg () = 
-      match !_glowPrg with
-      [ None -> 
-        let open Render.Program in
-        let prg = 
-          load_force ~vertex:"Image.vsh" ~fragment:"GlowCut.fsh" 
-            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ] 
-            ~uniforms:[| ("u_texture", (UInt 0)) |] 
-          in
-          (
-            _glowPrg.val := Some prg;
-            prg;
-          )
-      | Some prg -> prg
-      ];
-    *)
-
-    value make t texture size = 
-      (
-        let () = debug:glow "draw glow for texture: %d" texture#textureID in
-        let w = texture#width
-        and h = texture#height in
-        (
-          if not t.valid_size
-          then
-            (
-              let wdth = w /. 2. +. t.gs
-              and hght = h /. 2. +. t.gs in
-              t.texture#resize wdth hght
-            )
-          else ();
-          (*
-          let glowPrg = glowPrg () in
-          let m = Matrix.create ~scale:(0.5,0.5) ~translate:{Point.x = t.gs; y = t.gs} () in
-          t.texture#draw (fun () ->
-            (
-              Render.clear 0 0.;
-              Render.Image.render m (glowPrg,None) texture#textureID texture#hasPremultipliedAlpha image;
-            )
-          );
-          *)
-          Render.Filter.glow_make t.texture#framebufferID t.texture#textureID t.texture#width t.texture#height t.texture#rootClipping (Some (texture#textureID,w,h,texture#rootClipping)) size;
-          (*
-          let image = Render.Image.create w h texture#rootClipping 0xFFFFFF 1. in
-          let prg = glowPrg () in
-          let m = Matrix.create ~translate:{Point.x = t.gs; y = t.gs} () in
-          (* и теперь !!! *)
-          t.texture#draw (fun () ->
-(*             let () = Render.clear 0 0. in *)
-            Render.Image.render m (prg,None) texture#textureID texture#hasPremultipliedAlpha image;
-          )
-          *)
-        );
-        t.valid_size := True;
-        t.valid_content := True;
-      );
-
-    value create texture size = 
-      let key = (texture,size) in
-      let () = debug:glow "try create glow %d:%d" texture#textureID size in
-      try
-        let t = GCache.find cache key in
-        let () = debug:glow "finded in cache" in
-        t
-      with [ Not_found -> 
-        let t = 
-          let w = texture#width 
-          and h = texture#height
-          in
-          let gs = (2. ** (float size) -. 1.) *. 2. in
-          let wdth = w /. 2.  +.  gs 
-          and hght = h /. 2. +.  gs
-          in
-          let () = debug:glow "size of glow %f:%f" wdth hght in
-          let rtexture = Texture.rendered wdth hght in
-          let () = rtexture#setPremultipliedAlpha True in (* ??? *)
-          let mgs = ~-.gs in
-          let matrix = Matrix.create ~scale:(2.,2.) ~translate:{Point.x=mgs;y=mgs} () in 
-          let image = Render.Image.create wdth hght rtexture#rootClipping 0xFFFFFF 1. in
-          {valid_size=True;valid_content=False;texture=rtexture;image;gs;matrix}
-        in
-        (
-          GCache.add cache key t;
-          Gc.finalise (fun t -> (debug:glow "finalize %d:%d" t.texture#textureID size; GCache.remove cache key)) t;
-          t
-        )
-      ];
-
-
-    value invalidate_content t = t.valid_content := False;
-    value invalidate_size t = t.valid_size := False;
-    value is_valid t = t.valid_content && t.valid_size;
-
-  end;(*}}}*)
-  *)
 
   type glow = 
     {
-(*       g_cmn: Glow.t; *)
-(*       g_valid: mutable bool; *)
       g_texture: mutable option Texture.c;
       g_image: Render.Image.t;
-(*       g_prg: Render.prg; *)
       g_matrix: mutable Matrix.t;
       g_params: Filters.glow
     };
 
 
-  class _c  ?(color=0xFFFFFF)  _texture =
+  class _c  _texture =
     object(self)
-      inherit D.c as super;
+      inherit DisplayObject.c as super;
 
 
       method !name = if name = ""  then Printf.sprintf "image%d" (Oo.id self) else name;
@@ -226,7 +53,7 @@ module Make(D:DisplayObjectT.S) = struct
 
       value mutable programID = GLPrograms.ImageSimple.id;
       value mutable shaderProgram = GLPrograms.ImageSimple.create ();
-      value image = Render.Image.create _texture#width _texture#height _texture#rootClipping color 1.;
+      value image = Render.Image.create _texture#width _texture#height _texture#rootClipping 0xFFFFFF 1.;
 
       value mutable texFlipX = False;
       method texFlipX = texFlipX;
@@ -500,7 +327,7 @@ module Make(D:DisplayObjectT.S) = struct
           ];
         );
 
-      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
+      method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
         match targetCoordinateSpace with
         [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height (* FIXME!!! when rotate incorrect optimization *)
         | _ -> 
@@ -534,6 +361,7 @@ module Make(D:DisplayObjectT.S) = struct
               shaderProgram g_texture#textureID g_texture#hasPremultipliedAlpha ?alpha:alpha' g_image
           )
         | None ->
+(*           let () = debug "render image: %f:%f" pos.Point.x pos.Point.y in *)
           Render.Image.render 
             (if transform then self#transformationMatrix else Matrix.identity) 
             shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image
@@ -542,7 +370,15 @@ module Make(D:DisplayObjectT.S) = struct
       ); 
   end;
 
-  value memo : WeakMemo.c _c = new WeakMemo.c 1;
+
+
+  class c texture = 
+    object(self)
+      inherit _c texture;
+      method ccast : [= `Image of c ] = `Image (self :> c);
+    end;
+
+(*   value memo : WeakMemo.c _c = new WeakMemo.c 1; 
 
   class c texture = 
     object(self)
@@ -551,11 +387,12 @@ module Make(D:DisplayObjectT.S) = struct
     end;
 
   value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
+*)
 
   value load path = 
     let texture = Texture.load path in
     new c texture;
 
-  value create = new c;
+  value load_async path callback = Texture.load_async path (fun texture -> callback (new c texture));
 
-end;
+  value create = new c;

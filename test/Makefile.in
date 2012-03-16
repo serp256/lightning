@@ -7,18 +7,13 @@ MLFLAGS += -I ../src -package extlib -package ojson
 
 example.byte: example.cmo
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma  Light.cmo example.cmo \
+	-I ../src ../src/lightning.cma  example.cmo \
 	-package curl,bigarray,extlib,xmlm,ojson,dbm,threads -thread -linkpkg 
 
 example.native: $(MOBS) example.cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-I ../src ../src/lightning.cmxa  Light.cmx $(MOBS) example.cmx \
+	-I ../src ../src/lightning.cmxa  $(MOBS) example.cmx \
 	-package extlib,xmlm,dbm,ojson,bigarray,threads -thread -linkpkg 
-
-example.cmx: Light.cmx
-example.cmo: Light.cmo
-
-
 
 .PHONY: clean
 clean::

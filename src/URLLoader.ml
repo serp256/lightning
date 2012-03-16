@@ -27,8 +27,11 @@ value string_of_httpMethod = fun
 
 value request ?(httpMethod=`GET) ?(headers=[]) ?data url = { httpMethod; headers; data; url};
 
-type eventType = [= `PROGRESS | `COMPLETE | `IO_ERROR ];
-type eventData = [= Ev.dataEmpty | `HTTPBytes of int | `IOError of (int * string)];
+value ev_PROGRESS = Ev.gen_id ();
+value ev_COMPLETE =  Ev.gen_id ();
+value ev_IO_ERROR = Ev.gen_id ();
+
+value (data_of_ioerror,ioerror_of_data) = Ev.makeData();
 
 
 exception Incorrect_request;
@@ -448,7 +451,7 @@ type state = [ Init | Loading | Complete ];
 
 class loader ?request () = 
   object(self)
-    inherit EventDispatcher.simple [eventType, eventData, loader];
+    inherit EventDispatcher.simple [loader];
     value mutable state = Init;
     method state = state;
     method private asEventTarget = (self :> loader);
@@ -479,7 +482,7 @@ class loader ?request () =
       (
         bytesLoaded := Int64.add bytesLoaded (Int64.of_int bytes);
         Buffer.add_string data d;
-        let event = Ev.create `PROGRESS ~data:(`HTTPBytes bytes) () in
+        let event = Ev.create ev_PROGRESS ~data:(Ev.data_of_int bytes) () in
         self#dispatchEvent event;
       );
 
@@ -487,7 +490,7 @@ class loader ?request () =
     (
       debug "onError";
       state := Complete;
-      let event = Ev.create `IO_ERROR ~data:(`IOError (code,msg)) ()  in
+      let event = Ev.create ev_IO_ERROR ~data:(data_of_ioerror (code,msg)) ()  in
       self#dispatchEvent event
     );
 
@@ -495,7 +498,7 @@ class loader ?request () =
     (
       debug "on complete";
       state := Complete;
-      let event = Ev.create `COMPLETE () in
+      let event = Ev.create ev_COMPLETE () in
       self#dispatchEvent event
     );
 

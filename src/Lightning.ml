@@ -1,45 +1,4 @@
 
-type eventType = [= Stage.eventType | `TRIGGERED ];
-type eventData = Stage.eventData;
-
-
-(*
-module type Display = sig
-  module DisplayObject: DisplayObjectT.M;
-  module Quad : Quad.S;
-  module Image : Image.S;
-  module Sprite: Sprite.S;
-  module CompiledSprite: CompiledSprite.S;
-end;
-*)
-
-module Make(Param:sig type evType = private [> eventType ]; type evData = private [> eventData ]; end) = struct
-  type event = Ev.t Param.evType Param.evData;
-  module DisplayObject = DisplayObject.Make Param;
-(*   module Shape = Shape.Make DisplayObject; *)
-  module Quad = Quad.Make DisplayObject;
-  module Image = Image.Make DisplayObject;
-  module Atlas = Atlas.Make DisplayObject;
-  module Sprite = Sprite.Make Image;
-  module Clip = Clip.Make Image Atlas Sprite;
-(*   module CompiledSprite = CompiledSprite.Make Image Sprite; *)
-(*   module MovieClip = MovieClip.Make DisplayObject Image; *)
-(*   module BitmapFontCreator = BitmapFont.MakeCreator Image Sprite; *)
-(*   module TextField = TextField.Make Quad BitmapFontCreator;  *)
-  module TLF = TLF.Make Image Atlas Sprite;
-(*   module FPS = FPS.Make DisplayObject TextField; *)
-(*   module Button = Button.Make DisplayObject Sprite Image TextField; *)
-  module Stage = Stage.Make DisplayObject;
-end;
-
-
-module DefaultParam = struct
-  type evType = eventType;
-  type evData = eventData;
-end;
-
-(* добавлю с таймерами отдельно чтоли ? *)
-
 
 IFDEF IOS THEN
 external showNativeWaiter: Point.t -> unit = "ml_showActivityIndicator";
@@ -57,18 +16,7 @@ value hideNativeWaiter () = ();
 value deviceIdentifier () = None;
 ENDIF;
 
-class type stage = 
-  object
-    method resize: float -> float -> unit;
-    method renderStage: unit -> unit;
-    method run: float -> unit;
-    method processTouches: list Touch.n -> unit;
-    method cancelAllTouches: unit -> unit;
-    method advanceTime: float -> unit;
-    method name: string;
-  end;
-
-type stage_constructor = float -> float -> stage;
+type stage_constructor = float -> float -> Stage.c;
 
 (* value _stage: ref (option (float -> float -> stage eventTypeDisplayObject eventEmptyData)) = ref None; *)
 

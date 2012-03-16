@@ -1,37 +1,8 @@
 open LightCommon;
+
 type atlas;
 external atlas_init: unit -> atlas = "ml_atlas_init";
 external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
-
-module type S = sig
-
-  module D : DisplayObjectT.S;
-
-  class c: [ Texture.c ] -> 
-    object
-      inherit D.c;
-      method texture: Texture.c;
-      method filters: list Filters.t;
-      method setFilters: list Filters.t -> unit;
-      method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
-      method boundsInSpace: !'space. option (<asDisplayObject: D.c; .. > as 'space) -> Rectangle.t;
-      method addChild: ?index:int -> AtlasNode.t -> unit;
-      method children: Enum.t AtlasNode.t;
-      method clearChildren: unit -> unit;
-      method getChildAt: int -> AtlasNode.t;
-      method numChildren: int;
-      method updateChild: int -> AtlasNode.t -> unit;
-      method removeChild: int -> unit;
-      method setChildIndex: int -> int -> unit;
-    end;
-
-
-  value create: Texture.c -> c;
-
-end;
-
-module Make(D:DisplayObjectT.S) = struct
-  module D = D;
 
   module Node = AtlasNode;
 
@@ -46,11 +17,9 @@ module Make(D:DisplayObjectT.S) = struct
       g_params: Filters.glow
     };
 
-  (* сюда припиздячить glow еще нахуй *)
-  class c texture =
-    (* нужно сделать фсю gl хуйню *)
+  class _c texture =
     object(self)
-      inherit D.c as super;
+      inherit DisplayObject.c as super;
 
       value atlas = atlas_init ();
 
@@ -74,26 +43,26 @@ module Make(D:DisplayObjectT.S) = struct
         | Some index ->
             try
               DynArray.insert children index child
-            with [ DynArray.Invalid_arg _ -> raise D.Invalid_index ]
+            with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ]
         ];
         Node.bounds child |> ignore; (* force calc bounds *)
         self#boundsChanged();
       );
 
-      method getChildAt idx = try DynArray.get children idx with [ DynArray.Invalid_arg _ -> raise D.Invalid_index ];
+      method getChildAt idx = try DynArray.get children idx with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
 
       method removeChild idx = 
         try
           DynArray.delete children idx;
           self#boundsChanged();
-        with [ DynArray.Invalid_arg _ -> raise D.Invalid_index ];
+        with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
 
       method updateChild idx child =
       (
         assert(child.Node.texture = texture);
         try
           DynArray.set children idx child;
-        with [ DynArray.Invalid_arg _ -> raise D.Invalid_index ];
+        with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
         Node.bounds child |> ignore; (* force calc bounds *)
         self#boundsChanged();
       );
@@ -119,10 +88,10 @@ module Make(D:DisplayObjectT.S) = struct
                 DynArray.delete children idx;
                 DynArray.insert children nidx child;
               )
-            with [ DynArray.Invalid_arg _ -> raise D.Invalid_index ];
+            with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
             self#childrenDirty();
           )
-        else raise D.Invalid_index;
+        else raise DisplayObject.Invalid_index;
 
       value mutable glowFilter = None;
 
@@ -227,7 +196,7 @@ module Make(D:DisplayObjectT.S) = struct
         filters := fltrs;
       );
 
-      method boundsInSpace: !'space. (option (<asDisplayObject: D.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
+      method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
         match DynArray.length children with
         [ 0 -> Rectangle.empty
         | _ ->
@@ -306,6 +275,11 @@ module Make(D:DisplayObjectT.S) = struct
 
     end;
 
-    value create = new c;
+  class c texture = 
+    object(self)
+      inherit _c texture;
+      method ccast: [= `Atlas of c ] = `Atlas (self :> c);
+    end;
 
-end;
+value create = new c;
+

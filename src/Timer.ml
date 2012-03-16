@@ -1,9 +1,12 @@
 
-type eventType = [= `TIMER | `TIMER_COMPLETE ];
+(* type eventType = [= `TIMER | `TIMER_COMPLETE ]; *)
+
+value ev_TIMER = Ev.gen_id ();
+value ev_TIMER_COMPLETE = Ev.gen_id ();
 
 class type virtual c = 
   object('self)
-    inherit EventDispatcher.simple [eventType,Ev.dataEmpty, c ];
+    inherit EventDispatcher.simple [ c ];
     method name: string;
     method setName: string -> unit;
     method running: bool;
@@ -22,7 +25,7 @@ class type virtual c =
 value create ?(repeatCount=0) delay = (*{{{*)
   let o = 
     object(self)
-      inherit EventDispatcher.simple [eventType, Ev.dataEmpty, c];
+      inherit EventDispatcher.simple [ c];
       value mutable running = None;
       method running = running <> None;
       value mutable currentCount = 0;
@@ -46,15 +49,15 @@ value create ?(repeatCount=0) delay = (*{{{*)
           then
           (
             running := Some (Timers.start _delay self#fire);
-            let event = Ev.create `TIMER () in
+            let event = Ev.create ev_TIMER () in
             self#dispatchEvent event; 
           )
           else 
           (
             running := None;
-            let event = Ev.create `TIMER () in
+            let event = Ev.create ev_TIMER () in
             self#dispatchEvent event; 
-            let event = Ev.create `TIMER_COMPLETE () in
+            let event = Ev.create ev_TIMER_COMPLETE () in
             self#dispatchEvent event
           )
         | None -> assert False

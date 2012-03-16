@@ -12,8 +12,11 @@ value get_header: string -> list (string*string) -> option string;
 value request: ?httpMethod:http_method -> ?headers:list (string*string) -> ?data:data -> string -> request;
 type state = [ Init | Loading | Complete ];
 
-type eventType = [= `PROGRESS | `COMPLETE | `IO_ERROR ];
-type eventData = [= Ev.dataEmpty | `HTTPBytes of int | `IOError of (int * string)];
+value ev_PROGRESS: Ev.id; 
+value ev_COMPLETE: Ev.id;
+value ev_IO_ERROR: Ev.id;
+
+value ioerror_of_data: Ev.data -> option (int * string);
 
 IFDEF SDL THEN
 value process_events: unit -> unit;
@@ -21,7 +24,7 @@ ENDIF;
 
 class loader: [ ?request:request] -> [ unit ] ->
   object
-    inherit EventDispatcher.simple [eventType, eventData, loader];
+    inherit EventDispatcher.simple [loader];
     method private asEventTarget: loader;
     method state: state;
     method httpCode: int;

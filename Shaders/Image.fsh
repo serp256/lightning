@@ -10,6 +10,6 @@ uniform float u_parentAlpha;
 
 void main()
 {
-	gl_FragColor = v_fragmentColor * texture2D(u_texture, v_texCoord);
-	gl_FragColor.a *= u_parentAlpha;
+	vec4 color = v_fragmentColor * texture2D(u_texture, v_texCoord);
+	gl_FragColor = color * u_parentAlpha; 
 }

@@ -85,12 +85,6 @@ external freeImageInfo: imageInfo -> unit = "ml_free_image_info";
 external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture";
 (* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
 external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
-IFDEF SDL THEN
-
-value loadImageInfo path = loadImageInfo (Filename.concat "Resources" path);
-value loadImage ?textureID ~path ~contentScaleFactor = loadImage ?textureID ~path:(Filename.concat "Resources" path) ~contentScaleFactor;
-
-ENDIF;
 
 (*
 value loadImage ?(textureID=0) ~path ~contentScaleFactor = 
@@ -406,6 +400,7 @@ module type AsyncLoader = sig
 
 end;
 
+(*
 module AsyncLoader (P:sig end) : AsyncLoader = struct
 
   debug "Async loader created";
@@ -471,6 +466,47 @@ module AsyncLoader (P:sig end) : AsyncLoader = struct
   value thread = Thread.create run ();
 
 end;
+*)
+
+type aloader_runtime;
+external aloader_create_runtime: unit -> aloader_runtime = "ml_texture_async_loader_create_runtime";
+external aloader_push: aloader_runtime -> string -> unit = "ml_texture_async_loader_push";
+external aloader_pop: aloader_runtime -> option (string * textureInfo) = "ml_texture_async_loader_pop";
+
+module AsyncLoader(P:sig end) : AsyncLoader = struct
+
+  value waiters = Hashtbl.create 1;
+  value cruntime = aloader_create_runtime ();
+
+  value load path callback = 
+  (
+    if not (Hashtbl.mem waiters path)
+    then aloader_push cruntime path
+    else ();
+    Hashtbl.add waiters path callback;
+  );
+
+
+
+  value rec check_result () = 
+    if Hashtbl.length waiters > 0
+    then
+      match aloader_pop cruntime with
+      [ Some (path,textureInfo) -> 
+        (
+          let texture = make_and_cache path textureInfo in
+          (
+            debug "texture: %s loaded" path;
+            let waiters = MHashtbl.pop_all waiters path in
+            List.iter (fun f -> f texture) waiters;
+          );
+          check_result ();
+        )
+      | None -> ()
+      ]
+    else ();
+
+end;
 
 
 value async_loader = ref None; (* ссылка на модуль *) 
@@ -515,6 +551,9 @@ value load_async path callback =
     Loader.load path callback
   ];
 
+
+
+
 (*
 class type renderObject =
   object
@@ -546,7 +585,6 @@ value glRGBA = 0x1908;
 value glRGB = 0x1907;
 
 module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
-
 
 
 IFDEF IOS THEN
@@ -694,6 +732,6 @@ value loadExternal url ~callback ~errorCallback =
 
 ELSE
 
-value loadExternal url ~callback ~errorCallback = ();
+value loadExternal url ~callback ~errorCallback = (); (* TODO: Get it by URLLoader *)
 
 ENDIF;

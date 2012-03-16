@@ -7,7 +7,7 @@ CFLAGS += -I .
 
 GLPARAM = 
 
-MOBJS = texture_common.o filters_stub.o render_stub.o
+MOBJS = texture_common.o texture_async_loader.o filters_stub.o render_stub.o
 MLOBJSFLAGS = 
 MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
@@ -78,8 +78,8 @@ CFLAGS += -D$(PLATFORM)
 $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
-					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml AtlasNode.ml Atlas.ml Clip.ml Touch.ml BitmapFont.ml TLF.ml Timers.ml Timer.ml Sprite.ml \
-					Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml 
+					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml TextureAtlas.ml Image.ml AtlasNode.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml\
+					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml 
 
 Texture.cmo Texture.cmx: MLFLAGS += -package threads -thread
 
@@ -134,7 +134,7 @@ tapjoy.cmxa:
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
-	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) DisplayObjectT.mli $(MLSOURCES:.ml=.mli) ClipT.mli TLFT.mli RenderFilters.ml StageT.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
+	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES:.ml=.mli) RenderFilters.ml  $(MLSOURCES) >> MLDepend.$(PLATFORM)
 # $(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
 
 
@@ -142,7 +142,7 @@ doc:
 	mkdir -p docs
 	$(OCAMLFIND) ocamldoc -short-functors -html -d docs $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLFLAGS) \
 		containers/MList.ml containers/HSet.mli PriorityQueue.mli WeakHashtbl.mli WeakMemo.mli LightCommon.ml Event.ml EventDispatcher.mli Point.ml Rectangle.ml Matrix.ml DisplayObjectT.mli DisplayObject.mli Sprite.mli Quad.mli \
-		Texture.mli TextureAtlas.mli Image.mli CompiledSprite.mli Touch.ml BitmapFont.mli TextField.mli Stage.mli Button.mli MovieClip.mli Tween.mli GameCenter.mli  Lightning.ml
+		Texture.mli TextureAtlas.mli Image.mli Touch.ml BitmapFont.mli Stage.mli GameCenter.mli  Lightning.ml
 
 
 .DEFAULT_GOAL := release

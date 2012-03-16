@@ -2,17 +2,17 @@ open Ev;
 
 exception Listener_not_found;
 
-type lst 'eventType 'eventData 'target 'currentTarget = 
+type lst 'target 'currentTarget = 
   {
     counter: mutable int;
-    lstnrs: mutable list (int * (Ev.t 'eventType 'eventData -> ('target * 'currentTarget ) -> int -> unit));
+    lstnrs: mutable list (int * (Ev.t -> ('target * 'currentTarget ) -> int -> unit));
   };
 
 
-class base [ 'eventType,'eventData,'target,'currentTarget ] = (*{{{*)
+class base [ 'target,'currentTarget ] = (*{{{*)
   object
-    value mutable listeners: list ('eventType * (lst 'eventType 'eventData 'target 'currentTarget)) = [];
-    method addEventListener (eventType:'eventType) listener =
+    value mutable listeners: list (Ev.id * (lst 'target 'currentTarget)) = [];
+    method addEventListener eventType listener =
       let res = ref 0 in
       (
         listeners := 
@@ -48,19 +48,18 @@ class base [ 'eventType,'eventData,'target,'currentTarget ] = (*{{{*)
 
 
 
-class virtual simple [ 'eventType , 'eventData , 'target ]  =
+class virtual simple [ 'target ]  =
   object(self)
-    inherit base ['eventType,'eventData,'target,'target];
-    type 'event = Ev.t 'eventType 'eventData;
+    inherit base [ 'target,'target];
 
     method virtual private asEventTarget: 'target;
 
     (* всегда ставить таргет в себя и соответственно current_target *)
-    method dispatchEvent (event:'event) = 
+    method dispatchEvent event = 
       let t = self#asEventTarget in 
       let evd = (t,t) in
       try
-        let l = List.assoc event.Ev.etype listeners in
+        let l = List.assoc event.Ev.evid listeners in
         ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation = `StopImmediate)) l.lstnrs);
       with [ Not_found -> () ];
 

@@ -43,6 +43,8 @@ void check_gl_errors(char *fname, int lnum, char *msg) {
 #define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
 
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
+#define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
+#define UPDATE_PMA_ALPHA(c,alpha) (c.r = (GLubyte)((double)c.r * alpha), c.g = (GLubyte)((double)c.g * alpha), c.b = (GLubyte)((double)c.b * alpha), c.a = (GLubyte)(a * 255))
 
 GLuint boundTextureID = 0;
 int PMA = -1;
@@ -128,6 +130,8 @@ void applyTransformMatrix(value matrix) {
   m[10] = m[15] = 1.0f;
   m[0] = (GLfloat)Double_field(matrix,0); m[4] = (GLfloat)Double_field(matrix,2); m[12] = (GLfloat)Double_field(matrix,4);
   m[1] = (GLfloat)Double_field(matrix,1); m[5] = (GLfloat)Double_field(matrix,3); m[13] = (GLfloat)Double_field(matrix,5);
+
+	//fprintf(stderr,"applyTransformMatrix: %f:%f\n",m[12],m[13]);
 
   kmGLMultMatrix( &transfrom4x4 );
 }
@@ -450,7 +454,12 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   kmMat4 matrixMVP;
 
   kmGLGetMatrix(KM_GL_PROJECTION, &matrixP );
+
   kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV );
+	// RENDER SUBPIXEL FIX HERE
+	//fprintf(stderr,"matrix: tx=%f,ty=%f\n",matrixMV.mat[12],matrixMV.mat[13]);
+	matrixMV.mat[12] = (GLint)matrixMV.mat[12];
+	matrixMV.mat[13] = (GLint)matrixMV.mat[13];
 
   kmMat4Multiply(&matrixMVP, &matrixP, &matrixMV);
 
@@ -505,7 +514,7 @@ value ml_quad_create(value width,value height,value color,value alpha) {
 	CAMLparam0();
 	lgQuad *q = (lgQuad*)caml_stat_alloc(sizeof(lgQuad));
 	int clr = Int_val(color);
-	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255));
+	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha)));
 	//printf("quad color: [%hhu,%hhu,%hhu,%hhu]\n",c.r,c.g,c.b,c.a);
 	q->bl.v = (vertex2F) { 0, 0 };
 	q->bl.c = c;
@@ -696,11 +705,12 @@ void print_image(lgTexQuad *tq) {
 
 #define TEX_SIZE(w) (Double_val(w))
 //
-value ml_image_create(value width,value height,value clipping,value color,value alpha) {
-	CAMLparam5(width,height,clipping,color,alpha);
+value ml_image_create(value width,value height,value clipping,value color,value oalpha) {
+	CAMLparam5(width,height,clipping,color,oalpha);
 	lgTexQuad *tq = (lgTexQuad*)caml_stat_alloc(sizeof(lgTexQuad));
 	int clr = Int_val(color);
-	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255));
+	double alpha = Double_val(oalpha);
+	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
 	tq->bl.v = (vertex2F){0,0};
 	tq->bl.c = c;
 	tq->br.v = (vertex2F) { TEX_SIZE(width),0.};
@@ -749,7 +759,8 @@ value ml_image_color(value image) {
 void ml_image_set_color(value image,value color) {
 	lgTexQuad *tq = *TEXQUAD(image);
 	long clr = Int_val(color);
-	color4B c = COLOR_FROM_INT(clr,tq->bl.c.a);
+	double alpha = (double)(tq->bl.c.a) / 255;
+	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
 	tq->bl.c = c;
 	tq->br.c = c;
 	tq->tl.c = c;
@@ -759,19 +770,24 @@ void ml_image_set_color(value image,value color) {
 
 void ml_image_set_colors(value image,value colors) {
 	lgTexQuad *tq = *TEXQUAD(image);
-	tq->bl.c = COLOR_FROM_INT(Int_val(Field(colors,0)),tq->bl.c.a);
-	tq->br.c = COLOR_FROM_INT(Int_val(Field(colors,1)),tq->br.c.a);
-	tq->tl.c = COLOR_FROM_INT(Int_val(Field(colors,2)),tq->tl.c.a);
-	tq->tr.c = COLOR_FROM_INT(Int_val(Field(colors,3)),tq->tr.c.a);
+	double alpha = (double)tq->bl.c.a / 255;
+	int c = Int_val(Field(colors,0));
+	tq->bl.c = COLOR_FROM_INT_PMA(c,alpha);
+	c = Int_val(Field(colors,1));
+	tq->br.c = COLOR_FROM_INT_PMA(c,alpha);
+	c = Int_val(Field(colors,2));
+	tq->tl.c = COLOR_FROM_INT_PMA(c,alpha);
+	c = Int_val(Field(colors,3));
+	tq->tr.c = COLOR_FROM_INT_PMA(c,alpha);
 }
 
 void ml_image_set_alpha(value image,value alpha) {
 	lgTexQuad *tq = *TEXQUAD(image);
-	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);
-	tq->bl.c.a = a;
-	tq->br.c.a = a;
-	tq->tl.c.a = a;
-	tq->tr.c.a = a;
+	double a = Double_val(alpha);
+	UPDATE_PMA_ALPHA(tq->bl.c,a);
+	UPDATE_PMA_ALPHA(tq->br.c,a);
+	UPDATE_PMA_ALPHA(tq->tl.c,a);
+	UPDATE_PMA_ALPHA(tq->tr.c,a);
 }
 
 void ml_image_update(value image, value width, value height, value clipping, value flipX, value flipY ) {
@@ -826,6 +842,7 @@ void ml_image_flip_tex_y(value image) {
 }
 
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
+	//fprintf(stderr,"render image\n");
 	lgTexQuad *tq = *TEXQUAD(image);
 	checkGLErrors("start");
 
@@ -1016,9 +1033,6 @@ void ml_delete_framebuffer(value framebuffer) {
 	checkGLErrors("ml delete framebuffer: %d",Long_val(fbID));
 }
 
-
-
-
 typedef struct {
 	GLuint vaoname;
 	GLuint buffersVBO[2];
@@ -1101,6 +1115,8 @@ static lgTexQuad *atlas_quads = NULL;
 static int atlas_quads_len = 0;
 
 
+#define RENDER_SUBPIXEL(x) (GLint)x
+
 // assume that quads it's dynarray
 void ml_atlas_render(value atlas, value matrix,value program, value textureID,value pma, value alpha, value quads) {
 	atlas_t *atl = ATLAS(atlas);
@@ -1154,28 +1170,38 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 		}
 		lgTexQuad *q;
 		value child,bounds,clipping;
+		int icolor;
+		double alpha;
 		color4B c;
+		double quad[4];
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
 			bounds = Field(child,1);
 			clipping = Field(child,2);
-			c = COLOR_FROM_INT(Int_val(Field(child,6)),(GLubyte)(Double_val(Field(child,7)) * 255));
+			icolor = Int_val(Field(child,6));
+			alpha = Double_val(Field(child,7));
+			c = COLOR_FROM_INT_PMA(icolor,alpha);
 
 			q = atlas_quads + i;
 
+			quad[0] = Double_field(bounds,0);
+			quad[1] = Double_field(bounds,1);
+			quad[2] = Double_field(bounds,2);
+			quad[3] = Double_field(bounds,3);
+
 			q->bl.c = c;
-			q->bl.v = (vertex2F){Double_field(bounds,0),Double_field(bounds,1)};
+			q->bl.v = (vertex2F){RENDER_SUBPIXEL(quad[0]),RENDER_SUBPIXEL(quad[1])};
 
 
 			q->bl.tex = (tex2F){Double_field(clipping,0),Double_field(clipping,1)};
 
 			q->br.c = c;
-			q->br.v = (vertex2F){q->bl.v.x + Double_field(bounds,2),q->bl.v.y};
+			q->br.v = (vertex2F){RENDER_SUBPIXEL(quad[0] + quad[2]),q->bl.v.y};
 
 			q->br.tex = (tex2F){q->bl.tex.u + Double_field(clipping,2),q->bl.tex.v};
 
 			q->tl.c = c;
-			q->tl.v = (vertex2F){q->bl.v.x,q->bl.v.y + Double_field(bounds,3)};
+			q->tl.v = (vertex2F){q->bl.v.x,RENDER_SUBPIXEL(quad[1] + quad[3])};
 
 			q->tl.tex = (tex2F){q->bl.tex.u,q->bl.tex.v + Double_field(clipping,3)};
 
