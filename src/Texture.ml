@@ -399,7 +399,6 @@ value load path : c =
 
 
 
-(*
 module type AsyncLoader = sig
 
   value load: string -> (c -> unit) -> unit;
@@ -407,6 +406,7 @@ module type AsyncLoader = sig
 
 end;
 
+(*
 module AsyncLoader (P:sig end) : AsyncLoader = struct
 
   debug "Async loader created";
@@ -472,6 +472,47 @@ module AsyncLoader (P:sig end) : AsyncLoader = struct
   value thread = Thread.create run ();
 
 end;
+*)
+
+type aloader_runtime;
+external aloader_create_runtime: unit -> aloader_runtime = "ml_texture_async_loader_create_runtime";
+external aloader_push: aloader_runtime -> string -> unit = "ml_texture_async_loader_push";
+external aloader_pop: aloader_runtime -> option (string * textureInfo) = "ml_texture_async_loader_pop";
+
+module AsyncLoader(P:sig end) : AsyncLoader = struct
+
+  value waiters = Hashtbl.create 1;
+  value cruntime = aloader_create_runtime ();
+
+  value load path callback = 
+  (
+    if not (Hashtbl.mem waiters path)
+    then aloader_push cruntime path
+    else ();
+    Hashtbl.add waiters path callback;
+  );
+
+
+
+  value rec check_result () = 
+    if Hashtbl.length waiters > 0
+    then
+      match aloader_pop cruntime with
+      [ Some (path,textureInfo) -> 
+        (
+          let texture = make_and_cache path textureInfo in
+          (
+            debug "texture: %s loaded" path;
+            let waiters = MHashtbl.pop_all waiters path in
+            List.iter (fun f -> f texture) waiters;
+          );
+          check_result ();
+        )
+      | None -> ()
+      ]
+    else ();
+
+end;
 
 
 value async_loader = ref None; (* ссылка на модуль *) 
@@ -515,7 +556,6 @@ value load_async path callback =
     let module Loader = (value m:AsyncLoader) in
     Loader.load path callback
   ];
-*)
 
 
 

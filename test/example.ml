@@ -459,7 +459,7 @@ let stage width height =
         TLF.default_font_family.val := "Myriad Pro";
 (*       alert self; *)
 (*       flip self; *)
-(*       async_load self; *)
+      async_load self;
 (*       filters self; *)
 (*         size self; *)
 (*       tlf self; *)
@@ -467,7 +467,7 @@ let stage width height =
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
-      half_pixels self;
+(*       half_pixels self; *)
 (*         game_center self; *)
     end;
   end

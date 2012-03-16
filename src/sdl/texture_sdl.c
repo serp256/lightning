@@ -12,7 +12,7 @@
 
 
 
-int _load_image(char *path,textureInfo *tInfo) {
+int load_image_info(char *path,textureInfo *tInfo) {
 	fprintf(stderr,"LOAD IMAGE: %s\n",path);
 	SDL_Surface* s = IMG_Load(path);
 	if (s == NULL) return 2;
@@ -89,7 +89,7 @@ value ml_load_image_info(value opath) {
 
 	caml_release_runtime_system();
 
-	int r = _load_image(path,tInfo);
+	int r = load_image_info(path,tInfo);
 
 	caml_acquire_runtime_system();
 	fprintf(stderr,"IMAGE INFO LOADED: %s\n",path);
@@ -116,7 +116,7 @@ value ml_loadImage(value oldTextureID,value opath,value scale) {
 	CAMLparam3(oldTextureID,opath,scale);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
-	int r = _load_image(String_val(opath),&tInfo);
+	int r = load_image_info(String_val(opath),&tInfo);
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_failwith("Can't load image");
