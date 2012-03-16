@@ -450,6 +450,18 @@ value game_center (stage:Stage.c) =
     stage#addChild text;
   end ();
 
+
+value test_alpha (stage:Stage.c) = 
+  let sprite = Sprite.create () in
+  let tree = Image.load "tree.png" in
+  (
+    tree#setAlpha 0.5;
+    tree#setPos 100. 100.;
+    sprite#addChild tree;
+    sprite#setAlpha 0.2;
+    stage#addChild sprite;
+  );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -457,9 +469,10 @@ let stage width height =
     initializer begin
         BitmapFont.register "MyriadPro-Regular.fnt";
         TLF.default_font_family.val := "Myriad Pro";
+        test_alpha self;
 (*       alert self; *)
 (*       flip self; *)
-      async_load self;
+(*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
 (*       tlf self; *)
