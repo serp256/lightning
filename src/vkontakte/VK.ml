@@ -85,7 +85,7 @@ value vk_login_failed error =
         c False                                                                                                                                                                   
       done;                                                                                                                                                                       
     )
-  | _ -> failwith "vk_login_failed must be in authorizing state"
+  | _ -> () (* failwith "vk_login_failed must be in authorizing state" : если долбить по кнопке Отмена, failed вызовется несколько раз *)
   ];
 
 
@@ -100,7 +100,7 @@ value on_vk_logged_in () =
         c True                                                                                                                                                                   
       done;                                                                                                                                                                       
     )
-  | _ -> failwith "on_vk_logged_in must be in authorizing state"
+  | _ -> () (* failwith "on_vk_logged_in must be in authorizing state" *)
   ];
 
 
