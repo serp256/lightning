@@ -7,6 +7,8 @@ type state = [ NotInitialized | Initializing of Queue.t (bool -> unit) | Initial
 
 value state = ref NotInitialized;
 
+value initializer_handler = ref None;
+
 external ios_init: unit -> bool = "ml_game_center_init";
 
 value game_center_initialized success = 
@@ -22,6 +24,10 @@ value game_center_initialized success =
       [ True -> Initialized
       | False -> InitFailed
       ];
+    match !initializer_handler with
+    [ Some f -> f success
+    | _ -> ()
+    ];
     while not (Queue.is_empty callbacks) do
       let c = Queue.pop callbacks in
       c success
@@ -32,38 +38,45 @@ value game_center_initialized success =
 Callback.register "game_center_initialized" game_center_initialized;
 
 value init ?callback () = 
-  match !state with 
-  [ NotInitialized -> 
-    match ios_init () with
-    [ True ->
-      (
-        let callbacks  = Queue.create () in
+  (
+    initializer_handler.val := callback;
+    match !state with 
+    [ NotInitialized -> 
+      match ios_init () with
+      [ True ->
         (
-          state.val := Initializing callbacks;
-          match callback with
-          [ None -> ()
-          | Some f -> Queue.push f callbacks
-          ];
+          let callbacks  = Queue.create () in
+          (
+            state.val := Initializing callbacks;
+            (*
+            match callback with
+            [ None -> ()
+            | Some f -> Queue.push f callbacks
+            ];
+            *)
+          )
         )
-      )
-    | False -> ()
-    ]
-  | Initializing callbacks -> 
-      match callback with
-      [ None -> ()
-      | Some f -> Queue.push f callbacks
+      | False -> ()
       ]
-  | Initialized ->
-      match callback with
-      [ Some f -> f True
-      | None ->  ()
-      ]
-  | InitFailed ->
-      match callback with
-      [ Some f -> f False
-      | None -> ()
-      ]
-  ];
+    | Initializing callbacks -> ()
+        (*
+        match callback with
+        [ None -> ()
+        | Some f -> Queue.push f callbacks
+        ]
+        *)
+    | Initialized ->
+        match callback with
+        [ Some f -> f True
+        | None ->  ()
+        ]
+    | InitFailed ->
+        match callback with
+        [ Some f -> f False
+        | None -> ()
+        ]
+    ];
+  );
 
 
 external playerID: unit -> string = "ml_playerID";
