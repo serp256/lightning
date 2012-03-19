@@ -13,6 +13,7 @@ external show_alert: ~title:string -> ~message:string -> unit = "ml_show_alert";
 ELSE
 value showNativeWaiter _pos = ();
 value hideNativeWaiter () = ();
+value openURL _ = ();
 value deviceIdentifier () = None;
 ENDIF;
 
