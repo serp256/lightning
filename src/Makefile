@@ -12,9 +12,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma fbconnect.cma vk.cma tapjoy.cma
+byte: lightning.cma fbconnect.cma vk.cma tapjoy.cma flurry.cma
 native: MLDEPFLAGS += -native
-native: lightning.cmxa fbconnect.cmxa vk.cmxa tapjoy.cmxa
+native: lightning.cmxa fbconnect.cmxa vk.cmxa tapjoy.cmxa flurry.cmxa
 syntax: syntax/pa_prop.cmo
 
 
@@ -130,6 +130,12 @@ tapjoy.cma:
 
 tapjoy.cmxa:
 	make -C tapjoy tapjoy.cmxa
+
+flurry.cma:
+	make -C flurry flurry.cma
+
+flurry.cmxa:
+	make -C flurry flurry.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)

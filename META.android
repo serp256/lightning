@@ -9,11 +9,16 @@ package "facebook" (
   archive(native) = "fbconnect.cmxa"
 )
 
-
 package "tapjoy" (
   description="Tapjoy Connect"
   archive(byte) = "tapjoy.cma"
   archive(native) = "tapjoy.cmxa"
+)
+
+package "flurry" (
+  description="Flurry Analytics"
+  archive(byte) = "flurry.cma"
+  archive(native) = "flurry.cmxa"
 )
 
 package "syntax" (

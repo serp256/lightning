@@ -22,6 +22,12 @@ package "tapjoy" (
   archive(native) = "tapjoy.cmxa"
 )
 
+package "flurry" (
+  description="Flurry Analytics"
+  archive(byte) = "flurry.cma"
+  archive(native) = "flurry.cmxa"
+)
+
 package "syntax" (
 	package "prop" (
 		description = "Syntactic sugars make obj props for tween"
