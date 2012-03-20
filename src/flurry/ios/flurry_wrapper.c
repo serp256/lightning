@@ -5,8 +5,8 @@
 
 void ml_flurry_start_session(value ml_appkey) {
   CAMLparam1(ml_appkey);
-  [FlurryAnalytics setShowErrorInLogEnabled: YES];
-  [FlurryAnalytics setDebugLogEnabled:YES];
+//  [FlurryAnalytics setShowErrorInLogEnabled: YES];
+//  [FlurryAnalytics setDebugLogEnabled:YES];
   [FlurryAnalytics startSession:STR_CAML2OBJC(ml_appkey)];
   CAMLreturn0;
 }
