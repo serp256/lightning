@@ -29,6 +29,7 @@ int load_image_info(char *fname,textureInfo *tInfo) {
 	SDL_Surface *surface;
 	unsigned int dataLen = legalWidth * legalHeight * (s->format->BitsPerPixel / 8);
 	unsigned char *pixels = (unsigned char*)malloc(dataLen);
+	int i;
 	switch (s->format->BitsPerPixel) {
 		case 32:
 			tInfo->format = LTextureFormatRGBA;
@@ -53,7 +54,6 @@ int load_image_info(char *fname,textureInfo *tInfo) {
 			};
 			SDL_FreeSurface(s);
 			// premiltiplyAlpha
-			int i;
 			float a;
 			unsigned char *spixels = surface->pixels;
 			for (i = 0; i < legalWidth * legalHeight; i++) {
@@ -66,9 +66,13 @@ int load_image_info(char *fname,textureInfo *tInfo) {
 			SDL_FreeSurface(surface);
 			break;
 		case 24:
-				return 1; // FIXME
 				tInfo->format = LTextureFormatRGB;
-				surface = s;
+				int rbytes = legalWidth * 3;
+				int srbytes = width * 3;
+				for (i = 0; i < height; i++) {
+					memcpy(pixels + i * rbytes,s->pixels + i * srbytes, srbytes);
+				};
+				SDL_FreeSurface(s);
 				break;
 		default:
 				SDL_FreeSurface(s);
