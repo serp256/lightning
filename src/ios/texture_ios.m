@@ -182,14 +182,125 @@ int loadImageFile(UIImage *image,textureInfo *tInfo) {
 }*/
 
 
-int loadPvrFile(NSString *path, textureInfo *tInfo) {
+//Compressed pixel formats
+const uint32_t PVRTEX3_IDENT = 0x03525650;  // 'P''V''R'3
+
+// PVR Header file flags.                   Condition if true. If false, opposite is true unless specified.
+const uint32_t PVRTEX3_PREMULTIPLIED    = (1<<1);   //  Texture has been premultiplied by alpha value.  
+
+enum EPVRTPixelFormat
+{
+  ePVRTPF_PVRTCI_2bpp_RGB,
+  ePVRTPF_PVRTCI_2bpp_RGBA,
+  ePVRTPF_PVRTCI_4bpp_RGB,
+  ePVRTPF_PVRTCI_4bpp_RGBA,
+  ePVRTPF_PVRTCII_2bpp,
+  ePVRTPF_PVRTCII_4bpp,
+  ePVRTPF_ETC1,
+  ePVRTPF_DXT1,
+  ePVRTPF_DXT2,
+  ePVRTPF_DXT3,
+  ePVRTPF_DXT4,
+  ePVRTPF_DXT5
+};
+
+union PVR3PixelType {struct LowHigh {uint32_t Low; uint32_t High;} Part; uint64_t PixelTypeID; uint8_t PixelTypeChar[8];};
+
+typedef struct 
+{
+	uint32_t  u32Version;     //Version of the file header, used to identify it.
+  uint32_t  u32Flags;     //Various format flags.
+  uint64_t  u64PixelFormat;   //The pixel format, 8cc value storing the 4 channel identifiers and their respective sizes.
+  uint32_t u32ColourSpace;   //The Colour Space of the texture, currently either linear RGB or sRGB.
+  uint32_t u32ChannelType;   //Variable type that the channel is stored in. Supports signed/unsigned int/short/byte or float for now.
+  uint32_t  u32Height;      //Height of the texture.
+  uint32_t  u32Width;     //Width of the texture.
+  uint32_t  u32Depth;     //Depth of the texture. (Z-slices)
+  uint32_t  u32NumSurfaces;   //Number of members in a Texture Array.
+  uint32_t  u32NumFaces;    //Number of faces in a Cube Map. Maybe be a value other than 6.
+  uint32_t  u32MIPMapCount;   //Number of MIP Maps in the texture - NB: Includes top level.
+  uint32_t  u32MetaDataSize;  //Size of the accompanying meta data.
+} PVRTextureHeader3;
+
+int loadPvrFile3(int fildes,textureInfo *tInfo) {
+	struct stat s;
+	int res = fstat(fildes,&s);
+	if (res != 0) return 1;
+	off_t fsize = s.st_size;
+	if (fsize < sizeof(PVRTextureHeader3)) {return 1;};
+
+	PVRTextureHeader3 header;
+	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader3));
+	if (readed != sizeof(PVRTextureHeader3)) {fprintf(stderr,"can't read pvr header\n");return 1;};
+	if (header.u32Version != PVRTEX3_IDENT) {
+		fprintf(stderr,"bad pvr3 version\n");
+		return 1;
+	};
+	tInfo->width = tInfo->realWidth = header.u32Width;
+	tInfo->height = tInfo->realHeight = header.u32Height;
+	tInfo->numMipmaps = header.u32MIPMapCount - 1;
+	tInfo->premultipliedAlpha = header.u32Flags & PVRTEX3_PREMULTIPLIED;
+	union PVR3PixelType pt = (union PVR3PixelType)(header.u64PixelFormat);
+	if (pt.Part.High == 0) {
+		switch (pt.PixelTypeID)
+		{
+			case ePVRTPF_PVRTCI_2bpp_RGB:
+				//fprintf(stderr,"PVRTCI 2bpp RGB\n");
+				tInfo->format = LTextureFormatPvrtcRGB2;
+				break;
+			case ePVRTPF_PVRTCI_2bpp_RGBA:
+				//fprintf(stderr,"PVRTCI 2bpp RGBA\n");
+				tInfo->format = LTextureFormatPvrtcRGBA2;
+				break;
+			case ePVRTPF_PVRTCI_4bpp_RGB:
+				//fprintf(stderr,"PVRTCI 4bpp RGB\n");
+				tInfo->format = LTextureFormatPvrtcRGB4;
+				break;
+			case ePVRTPF_PVRTCI_4bpp_RGBA:
+				//fprintf(stderr,"PVRTCI 4bpp RGBA\n");
+				tInfo->format = LTextureFormatPvrtcRGBA4;
+				break;
+			case ePVRTPF_PVRTCII_2bpp:
+				//fprintf(stderr,"PVRTCII 2bpp\n");
+				return 1;
+				break;
+			case ePVRTPF_PVRTCII_4bpp:
+				fprintf(stderr,"unsupported: PVRTCII 2bpp\n");
+				return 1;
+				break;
+		}
+	} else {
+		fprintf(stderr,"unsupported: SPEC PVR format\n");
+		return 1;
+	};
+	// блядь как узнать то сколько сцука длина блядь
+	// skip meta
+	char meta[20];
+	char *metaData;
+	if (header.u32MetaDataSize > 20) {
+		metaData = malloc(header.u32MetaDataSize);
+	} else metaData = meta;
+	read(fildes,metaData,header.u32MetaDataSize);
+	if (metaData != meta) free(metaData);
+
+	tInfo->dataLen = fsize - sizeof(PVRTextureHeader3) - header.u32MetaDataSize;
+	printf("pvr data size: %d\n",tInfo->dataLen);
+	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
+
+	readed = read(fildes,tInfo->imgData,tInfo->dataLen);
+	if (readed != tInfo->dataLen) {free(tInfo->imgData);return 1;};
+	tInfo->scale = 1;
+	return 0;
+}
+
+int loadPvrFile2(int fildes, textureInfo *tInfo) {
 	//NSLog(@"read pvr [%@]\n",path);
 	//NSData *fileData = gzCompressed ? [SPTexture decompressPvrFile:path] : [NSData dataWithContentsOfFile:path];
 
 	// we need read it with c style functions
 	//NSData *fileData = [NSData dataWithContentsOfFile:path];
-	int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
-	if (fildes < 0) return 1;
+	//int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
+	//if (fildes < 0) return 1;
 	//printf("fildes opened\n");
 	/*
 	struct stat s;
@@ -203,12 +314,12 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	PVRTextureHeader header;
 
 	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader));
-	//printf("readed header: %d\n",readed);
+	printf("readed header: %d\n",readed);
 	if ((readed != sizeof(PVRTextureHeader)) /*|| (header.pvr != PVRTEX_IDENTIFIER)*/) {close(fildes); return 1;};
 
   int hasAlpha = header.alphaBitMask ? 1 : 0;
 
-	//printf("hasAlpha: %d\n",hasAlpha);
+	printf("hasAlpha: %d\n",hasAlpha);
   
 	tInfo->width = tInfo->realWidth = header.width;
 	tInfo->height = tInfo->realHeight = header.height;
@@ -216,7 +327,6 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	tInfo->numMipmaps = header.numMipmaps;
 	tInfo->premultipliedAlpha = NO;
   
-	//printf("check pvr header\n");
   switch (header.pfFlags & 0xff)
   {
       case OGL_RGB_565:
@@ -238,6 +348,7 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 				tInfo->format = hasAlpha ? LTextureFormatPvrtcRGBA4 : LTextureFormatPvrtcRGB4;
 				break;
       default:
+				printf("UNKNOWN header: %x\n",header.pfFlags & 0xff);
 				close(fildes);
 				return 1;
   }
@@ -256,6 +367,20 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	tInfo->scale = 2.0;
 	close(fildes);
 	return 0;
+}
+
+
+int loadPvrFile(NSString *path, textureInfo *tInfo) {
+	int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
+	if (fildes < 0) return 1;
+	int r = loadPvrFile3(fildes,tInfo);
+	close(fildes);
+	if (r != 0) {
+		fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
+		r = loadPvrFile2(fildes,tInfo);
+		close(fildes);
+	}
+	return r;
 }
 
 /*

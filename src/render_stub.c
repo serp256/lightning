@@ -71,7 +71,7 @@ void setNotPMAGLBlend () {
 	};
 }
 
-#define setDefaultGLBlend setNotPMAGLBlend
+#define setDefaultGLBlend setPMAGLBlend
 
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
 	printf("set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
@@ -514,7 +514,7 @@ value ml_quad_create(value width,value height,value color,value alpha) {
 	CAMLparam0();
 	lgQuad *q = (lgQuad*)caml_stat_alloc(sizeof(lgQuad));
 	int clr = Int_val(color);
-	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha)));
+	color4B c = COLOR_FROM_INT(clr,(GLubyte)(Double_val(alpha) * 255.));
 	//printf("quad color: [%hhu,%hhu,%hhu,%hhu]\n",c.r,c.g,c.b,c.a);
 	q->bl.v = (vertex2F) { 0, 0 };
 	q->bl.c = c;

@@ -462,6 +462,55 @@ value test_alpha (stage:Stage.c) =
     stage#addChild sprite;
   );
 
+
+
+(* value sounds = ref []; *)
+
+value sound (stage:Stage.c) =
+  let sndfiles = 
+    [
+      "achievement1"; "an_pig"; "buy"; "deathtree1"; "friend_help"; "new_message"; "sw_segway_steps"; "wn_nanoemitter"; "achievement2"; "an_sheep"; "combo_1"; "combo_6"; "deathtree2"; "ra_fertilizer"; 
+      "ra_root"; "take_energy"; "wn_nebulizergas"; "achievement3"; "bl_blastfurnace"; "deathtree3"; "take_food"; "wn_slingshot"; "add_energy"; "bl_hutches"; "combo_2"; "destruct1"; "mn_alien_off"; 
+      "ra_venom"; "take_mats"; "add_friend"; "bl_laboratory"; "combo_7"; "destruct2"; "get_item"; "mn_alien_on"; "ra_metal"; "take_money1";
+      "add_money"; "bl_magnetto"; "combo_3"; "destruct3"; "jewell_add"; "mn_bigfoot_off";  "take_money2";
+      "ambience_forest"; "bl_mill"; "en_inc2"; "level_up"; "mn_bigfoot_on";  "sell"; "take_money3";
+      "ambience_sea"; "bl_stratochamber"; "combo_4"; "combo_8"; "en_inc3"; "lightning"; "mn_tree_off"; "ra_other1"; "send_gift"; "take_star";
+      "an_chicken"; "bonus_drop"; "en_inc4"; "mason1"; "mn_tree_on"; "ra_other2"; "signal"; "task_complete";
+      "an_cow"; "build_house"; "combo_5"; "en_inc8"; "mason2"; "mn_wolf_off"; "ra_other3"; "ra_radium"; "steps"; "tell";
+      "an_goat"; "button_click"; "create"; "en_inc_max1"; "mason3"; "mn_wolf_on"; "ra_other4"; "stone_crack"; "wn_beegun"
+    ]
+  in
+  (
+    (*
+    Sound.init ();
+    sounds.val := List.map (fun kind -> Sound.load (Filename.concat "caf" (kind ^ ".caf"))) sndfiles;
+    *)
+    let (_,text) = TLF.create (TLF.p [ `text "SOUNDS LOADED" ]) in
+    stage#addChild text;
+  );
+
+
+value quad (stage:Stage.c) = 
+  let q = Quad.create ~color:0xFF0000 200. 200. in
+  (
+    q#setPos 100. 100.;
+    stage#addChild q;
+  );
+
+value window (stage:Stage.c) = 
+  let window = new Panelbg.c ~top:True ~bottom:True 500. 350. in
+  (
+    window#setPos 100. 100.;
+    stage#addChild window;
+    (*
+    let tree = Image.load "tree.png" in
+    (
+      tree#setPos 200. 400.;
+      stage#addChild tree;
+    );
+    *)
+  );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -469,7 +518,7 @@ let stage width height =
     initializer begin
         BitmapFont.register "MyriadPro-Regular.fnt";
         TLF.default_font_family.val := "Myriad Pro";
-        test_alpha self;
+(*         test_alpha self; *)
 (*       alert self; *)
 (*       flip self; *)
 (*       async_load self; *)
@@ -481,7 +530,10 @@ let stage width height =
 (*       atlas self; *)
 (*       masks self; *)
 (*       half_pixels self; *)
-(*         game_center self; *)
+(*         gradient self; *)
+        game_center self;
+(*         sound self; *)
+        window self;
     end;
   end
 in

@@ -99,6 +99,10 @@ value setFlipY flipY  t =
 value scaleX t = t.scaleX;
 value setScaleX scaleX t = {(t) with scaleX; bounds=Rectangle.empty};
 
+
+value scaleY t = t.scaleY;
+value setScaleY scaleY t = {(t) with scaleY; bounds=Rectangle.empty};
+
 value bounds t = 
   match t.bounds == Rectangle.empty with
   [ True ->
@@ -115,5 +119,6 @@ value bounds t =
   ];
 
 value width t = (bounds t).Rectangle.width;
+value height t = (bounds t).Rectangle.height;
 
 value texture t = t.texture;

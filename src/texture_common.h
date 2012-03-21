@@ -90,6 +90,7 @@ enum PVRPixelType
   OGL_PVRTC4
 };
 
+
 #define OPTION_INT(v) v == 1 ? 0 : Long_val(Field(v,0))
 
 #define ML_TEXTURE_INFO(mlTex,textureID,tInfo) \

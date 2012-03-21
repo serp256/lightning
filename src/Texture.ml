@@ -314,6 +314,7 @@ value create texFormat width height data =
 
 Callback.register "create_ml_texture" begin fun textureID width height clipping ->
   let () = debug "create_ml_texture <%d>" textureID in
+  let mem = ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4) in
   object(self:c)
     value mutable textureID = textureID;
     method textureID = textureID;
@@ -332,7 +333,7 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
         debug:gc "release create from c texture <%d>" textureID;
         delete_texture textureID; 
         textureID := 0;
-        texture_mem_sub ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4);
+        texture_mem_sub mem;
       )
       else ();
     method subTexture _ = assert False;
@@ -341,7 +342,7 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
     initializer 
     (
       Gc.finalise (fun t -> let () = debug:gc "release c texture <%d>" textureID in t#release ()) self;
-      texture_mem_add ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4);
+      texture_mem_add mem;
     );
   end
 end;
@@ -352,16 +353,16 @@ value make_and_cache path textureInfo =
     object 
       inherit s textureInfo;
       method !release () = 
-      if (textureID <> 0) 
-      then
-      (
-        debug "release texture <%d>" textureID;
-        delete_texture textureID; 
-        textureID := 0;
-        texture_mem_sub mem;
-        Cache.remove cache path;
-      )
-      else ();
+        if (textureID <> 0) 
+        then
+        (
+          debug "release texture <%d>" textureID;
+          delete_texture textureID; 
+          textureID := 0;
+          texture_mem_sub mem;
+          Cache.remove cache path;
+        )
+        else ();
     end
   in
   (

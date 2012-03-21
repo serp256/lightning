@@ -4,15 +4,23 @@ MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug def
 
 MLFLAGS += -I ../src -package extlib -package ojson
 
+MLFILES = panelbg.cmo
 
-example.byte: example.cmo
+
+example.byte: $(MLFILES) example.cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma  example.cmo \
+	-I ../src ../src/lightning.cma $(MLFILES) example.cmo \
 	-package curl,bigarray,extlib,xmlm,ojson,dbm,threads -thread -linkpkg 
 
-example.native: $(MOBS) example.cmx
+example.cmo: $(MLFILES)
+
+MLXFILES = $(MLFILES:.cmo=.cmx)
+
+example.cmx: $(MLXFILES)
+
+example.native: $(MOBS) $(MLXFILES) example.cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-I ../src ../src/lightning.cmxa  $(MOBS) example.cmx \
+	-I ../src ../src/lightning.cmxa  $(MOBS) $(MLXFILES) example.cmx \
 	-package extlib,xmlm,dbm,ojson,bigarray,threads -thread -linkpkg 
 
 .PHONY: clean
