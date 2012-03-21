@@ -15,6 +15,7 @@ value showNativeWaiter _pos = ();
 value hideNativeWaiter () = ();
 value openURL _ = ();
 value deviceIdentifier () = None;
+value sendEmail recepient ~subject ?(body="") () = (); 
 ENDIF;
 
 type stage_constructor = float -> float -> Stage.c;
