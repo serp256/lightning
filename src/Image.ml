@@ -41,6 +41,11 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
 
 
   class _c  _texture =
+    let (programID,shaderProgram) = 
+      match _texture#kind with
+      [ Texture.Simple -> (GLPrograms.ImageSimple.id,GLPrograms.ImageSimple.create ())
+      | Texture.Pallete -> (GLPrograms.ImagePallete.id,GLPrograms.ImagePallete.create ())
+      ]
     object(self)
       inherit DisplayObject.c as super;
 
@@ -51,8 +56,8 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
       method texture = texture;
 
 
-      value mutable programID = GLPrograms.ImageSimple.id;
-      value mutable shaderProgram = GLPrograms.ImageSimple.create ();
+      value mutable programID = programID
+      value mutable shaderProgram = shaderProgram;
       value image = Render.Image.create _texture#width _texture#height _texture#rootClipping 0xFFFFFF 1.;
 
       value mutable texFlipX = False;
@@ -69,7 +74,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
         [ Some {g_texture=Some gtex;_} -> gtex#release()
         | _ -> ()
         ];
-(*         let gtexture = RenderFilters.glow_make texture#textureID texture#width texture#height texture#rootClipping glow in *)
+(*      let gtexture = RenderFilters.glow_make texture#textureID texture#width texture#height texture#rootClipping glow in *)
         (*
         let g_cmn = Glow.create texture glow.Filters.glowSize in
         let open Glow in
@@ -151,11 +156,6 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
         | None -> ()
         ];
       );
-
-(*       method virtual copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
-(*       method copyTexCoords dest = (* Array.iteri (fun i a -> Bigarray.Array1.unsafe_set dest i a) texCoords; *) *)
-(*         Bigarray.Array1.blit texCoords dest; *)
-
 
       (*
       value mutable texScale = 1.;

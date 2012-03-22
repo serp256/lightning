@@ -28,7 +28,6 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
       value mutable programID = GLPrograms.ImageSimple.id;
       value mutable shaderProgram = GLPrograms.ImageSimple.create ();
 
-      (* ну вообще не принципиально нихуя чайлды это просто ректы нахуй *)
       value children = DynArray.make 2;
       value mutable dirty = False;
       method numChildren = DynArray.length children;

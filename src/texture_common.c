@@ -38,6 +38,10 @@ int textureParams(textureInfo *tInfo,texParams *p) {
         case LTextureFormatAlpha:
             p->glTexFormat = GL_ALPHA;
             break;
+				case LTextureFormatPallete:
+						p->glTexFormat = GL_LUMINANCE_ALPHA;
+            p->bitsPerPixel = 2;
+						break;
         case LTextureFormatPvrtcRGBA2:
 #if (defined IOS || defined ANDROID)
             p->compressed = 1;

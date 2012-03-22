@@ -26,22 +26,17 @@ module ImageSimple = struct (*{{{*)
 
 end;(*}}}*)
 
-(*
-module ImageGlow = struct (*{{{*)
-
-  value id  = gen_id();
-  value create glow = 
+module ImagePallete = struct
+  value id = gen_id ();
+  value create () = 
     let prg = 
-      load id ~vertex:"Image.vsh" ~fragment:"Glow.fsh"
+      load id ~vertex:"Image.vsh" ~fragment:"ImagePallete.fsh"
         ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
-        ~uniforms:[| ("u_texture", (UInt 0)) ; ("u_color",UNone) ; ("u_strength",UNone) |]
+        ~uniforms:[| ("u_texture",(UInt 0)) ; ("u_pallete",(UInt 1)) |]
     in
-    let f = Render.Filter.glow glow.Filters.glowColor glow.Filters.glowStrength in
-    (prg,Some f);
-    
-end;(*}}}*)
-*)
+    (prg,None);(* Бля тут же у меня еще хитрая cистема фильтров въебана нахуй *)
 
+end;
 
 
 module ImageColorMatrix = struct (*{{{*)

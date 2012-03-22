@@ -83,6 +83,14 @@ typedef struct
   lgTexVertex br;
 } lgTexQuad;
 
+
+typedef struct
+{
+	lgTexQuad quad;
+	GLuint textureID;
+	int PMA;
+}
+
 #define TexVertexSize sizeof(lgTexVertex)
 
 enum {

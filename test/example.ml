@@ -511,6 +511,12 @@ value window (stage:Stage.c) =
     *)
   );
 
+value zsort (stage:Stage.c) = 
+(
+  Testz.init ();
+  proftimer "zSort: %F" Testz.zSort ();
+);
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -533,7 +539,8 @@ let stage width height =
 (*         gradient self; *)
         game_center self;
 (*         sound self; *)
-        window self;
+(*         window self; *)
+        zsort self;
     end;
   end
 in

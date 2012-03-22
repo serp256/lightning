@@ -222,16 +222,15 @@ typedef struct
   uint32_t  u32MetaDataSize;  //Size of the accompanying meta data.
 } PVRTextureHeader3;
 
-int loadPvrFile3(int fildes,textureInfo *tInfo) {
-	struct stat s;
-	int res = fstat(fildes,&s);
-	if (res != 0) return 1;
-	off_t fsize = s.st_size;
+int loadPvrFile3(FILE* fildes,textureInfo *tInfo) {
+	fseek(fildes, 0, SEEK_END); /* Seek to the end of the file */
+	long fsize = ftell(fildes); /* Find out how many bytes into the file we are */
+	fseek(fildes, 0, SEEK_SET); /* Go back to the beginning of the file */
+
 	if (fsize < sizeof(PVRTextureHeader3)) {return 1;};
 
 	PVRTextureHeader3 header;
-	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader3));
-	if (readed != sizeof(PVRTextureHeader3)) {fprintf(stderr,"can't read pvr header\n");return 1;};
+	if (!fread(&header,sizeof(PVRTextureHeader3),1,fildes)) {fprintf(stderr,"can't read pvr header\n");return 1;};
 	if (header.u32Version != PVRTEX3_IDENT) {
 		fprintf(stderr,"bad pvr3 version\n");
 		return 1;
@@ -275,52 +274,28 @@ int loadPvrFile3(int fildes,textureInfo *tInfo) {
 	};
 	// блядь как узнать то сколько сцука длина блядь
 	// skip meta
-	char meta[20];
-	char *metaData;
-	if (header.u32MetaDataSize > 20) {
-		metaData = malloc(header.u32MetaDataSize);
-	} else metaData = meta;
-	read(fildes,metaData,header.u32MetaDataSize);
-	if (metaData != meta) free(metaData);
+	if (header.u32MetaDataSize > 0) {
+		fseek(fildes,header.u32MetaDataSize,SEEK_CUR);
+	};
 
 	tInfo->dataLen = fsize - sizeof(PVRTextureHeader3) - header.u32MetaDataSize;
 	printf("pvr data size: %d\n",tInfo->dataLen);
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
 
-	readed = read(fildes,tInfo->imgData,tInfo->dataLen);
-	if (readed != tInfo->dataLen) {free(tInfo->imgData);return 1;};
+	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
 	tInfo->scale = 1;
 	return 0;
 }
 
-int loadPvrFile2(int fildes, textureInfo *tInfo) {
-	//NSLog(@"read pvr [%@]\n",path);
-	//NSData *fileData = gzCompressed ? [SPTexture decompressPvrFile:path] : [NSData dataWithContentsOfFile:path];
-
-	// we need read it with c style functions
-	//NSData *fileData = [NSData dataWithContentsOfFile:path];
-	//int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
-	//if (fildes < 0) return 1;
-	//printf("fildes opened\n");
-	/*
-	struct stat s;
-	int res = fstat(fildes,&s);
-	if (res != 0) {close(fildes);return 0;};
-	//printf("fstat readed\n");
-	off_t fsize = s.st_size;
-	if (fsize < sizeof(PVRTextureHeader)) {close(fildes);return 0;};
-	*/
+int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
 
 	PVRTextureHeader header;
 
-	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader));
-	printf("readed header: %d\n",readed);
-	if ((readed != sizeof(PVRTextureHeader)) /*|| (header.pvr != PVRTEX_IDENTIFIER)*/) {close(fildes); return 1;};
+	if (!fread(&header,sizeof(PVRTextureHeader),1,fildes)) {return 1;};
+	if (header.pvr != PVRTEX_IDENTIFIER) {fprintf(stderr,"bad pvr2 IDENTIFIER\n");return 1;};
 
   int hasAlpha = header.alphaBitMask ? 1 : 0;
 
-	printf("hasAlpha: %d\n",hasAlpha);
-  
 	tInfo->width = tInfo->realWidth = header.width;
 	tInfo->height = tInfo->realHeight = header.height;
 	//printf("width: %d, height: %d\n",header.width,header.height);
@@ -349,36 +324,33 @@ int loadPvrFile2(int fildes, textureInfo *tInfo) {
 				break;
       default:
 				printf("UNKNOWN header: %x\n",header.pfFlags & 0xff);
-				close(fildes);
 				return 1;
   }
 
 	tInfo->dataLen = header.textureDataSize;
 	// make buffer
 	tInfo->imgData = (unsigned char*)malloc(header.textureDataSize);
-	if (!tInfo->imgData) {close(fildes);return 1;};
-	readed = read(fildes,tInfo->imgData,tInfo->dataLen);
-	if (readed != header.textureDataSize) {close(fildes);free(tInfo->imgData);return 1;};
+	if (!tInfo->imgData) {return 1;};
+	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
 	/*
   NSString *baseFilename = [[path lastPathComponent] stringByDeletingFullPathExtension];
   if ([baseFilename rangeOfString:@"@2x"].location == baseFilename.length - 3)
       glTexture.scale = 2.0f;
 	*/
 	tInfo->scale = 2.0;
-	close(fildes);
 	return 0;
 }
 
 
 int loadPvrFile(NSString *path, textureInfo *tInfo) {
-	int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
+	FILE* fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"ro");
 	if (fildes < 0) return 1;
 	int r = loadPvrFile3(fildes,tInfo);
-	close(fildes);
+	fclose(fildes);
 	if (r != 0) {
-		fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
+		fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"ro");
 		r = loadPvrFile2(fildes,tInfo);
-		close(fildes);
+		fclose(fildes);
 	}
 	return r;
 }

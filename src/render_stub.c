@@ -646,17 +646,17 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 //
 
 
-#define TEXQUAD(v) ((lgTexQuad**)Data_custom_val(v))
+#define IMAGE(v) ((lgImage**)Data_custom_val(v))
 
-static void tex_quad_finalize(value tquad) {
+static void image_finalize(value image) {
 	PRINT_DEBUG("tex quad finalize");
-	lgTexQuad *tq = *TEXQUAD(tquad);
-	caml_stat_free(tq);
+	lgImage *img = *IMAGE(image);
+	caml_stat_free(img);
 }
 
-struct custom_operations tex_quad_ops = {
-  "pointer to a quad",
-  tex_quad_finalize,
+struct custom_operations image_ops = {
+  "pointer to a image",
+  image_finalize,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
@@ -664,7 +664,7 @@ struct custom_operations tex_quad_ops = {
 };
 
 
-void set_image_uv(lgTexQuad *tq, value clipping) {
+void set_image_uv(lgImage *tq, value clipping) {
 	if (clipping != 1) {
 		value c = Field(clipping,0);
 		double x = Double_field(c,0);
@@ -691,7 +691,7 @@ void set_image_uv(lgTexQuad *tq, value clipping) {
 void print_tex_vertex(lgTexVertex *qv) {
 	printf("v = [%f:%f], c = [%hhu,%hhu,%hhu,%hhu], tex = [%f:%f] \n",qv->v.x,qv->v.y,qv->c.r,qv->c.g,qv->c.b,qv->c.a,qv->tex.u,qv->tex.v);
 }
-void print_image(lgTexQuad *tq) {
+void print_image(lgImage *tq) {
 	printf("==== image =====\n");
 	printf("bl: ");
 	print_tex_vertex(&(tq->bl));
@@ -707,7 +707,7 @@ void print_image(lgTexQuad *tq) {
 //
 value ml_image_create(value width,value height,value clipping,value color,value oalpha) {
 	CAMLparam5(width,height,clipping,color,oalpha);
-	lgTexQuad *tq = (lgTexQuad*)caml_stat_alloc(sizeof(lgTexQuad));
+	lgImage *tq = (lgImage*)caml_stat_alloc(sizeof(lgImage));
 	int clr = Int_val(color);
 	double alpha = Double_val(oalpha);
 	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
@@ -720,7 +720,7 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	tq->tr.v = (vertex2F) { tq->br.v.x, tq->tl.v.y};
 	tq->tr.c = c;
 	set_image_uv(tq,clipping);
-	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgTexQuad*),0,1); // 
+	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgImage*),0,1); // 
 	*TEXQUAD(res) = tq;
 	CAMLreturn(res);
 }
@@ -728,7 +728,7 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 value ml_image_points(value image) {
 	CAMLparam1(image);
 	CAMLlocal5(p1,p2,p3,p4,res);
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *tq = *IMAGE(image);
 	int s = 2 * Double_wosize;
 	p1 = caml_alloc(s,Double_array_tag);
 	Store_double_field(p1, 0, (double)tq->bl.v.x);
@@ -751,13 +751,13 @@ value ml_image_points(value image) {
 }
 
 value ml_image_color(value image) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *tq = *IMAGE(image);
 	return Int_val((COLOR(tq->bl.c.r,tq->bl.c.b,tq->bl.c.g)));
 }
 
 
 void ml_image_set_color(value image,value color) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *tq = *IMAGE(image);
 	long clr = Int_val(color);
 	double alpha = (double)(tq->bl.c.a) / 255;
 	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
@@ -769,7 +769,7 @@ void ml_image_set_color(value image,value color) {
 
 
 void ml_image_set_colors(value image,value colors) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *tq = *IMAGE(image);
 	double alpha = (double)tq->bl.c.a / 255;
 	int c = Int_val(Field(colors,0));
 	tq->bl.c = COLOR_FROM_INT_PMA(c,alpha);
@@ -782,7 +782,7 @@ void ml_image_set_colors(value image,value colors) {
 }
 
 void ml_image_set_alpha(value image,value alpha) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *tq = *IMAGE(image);
 	double a = Double_val(alpha);
 	UPDATE_PMA_ALPHA(tq->bl.c,a);
 	UPDATE_PMA_ALPHA(tq->br.c,a);
@@ -790,8 +790,8 @@ void ml_image_set_alpha(value image,value alpha) {
 	UPDATE_PMA_ALPHA(tq->tr.c,a);
 }
 
-void ml_image_update(value image, value width, value height, value clipping, value flipX, value flipY ) {
-	lgTexQuad *tq = *TEXQUAD(image);
+void ml_image_update(value image, value width, value height, value clipping, value flipX, value flipY) {
+	lgImage *tq = *IMAGE(image);
 	tq->br.v = (vertex2F) { Double_val(width)};
 	tq->tl.v = (vertex2F) { 0, Double_val(height)};
 	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height) };
@@ -822,7 +822,7 @@ void ml_image_update_byte(value * argv, int n) {
 
 
 void ml_image_flip_tex_x(value image) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *tq = *IMAGE(image);
 	tex2F tmp = tq->tl.tex;
 	tq->tl.tex = tq->tr.tex;
 	tq->tr.tex = tmp;
@@ -832,7 +832,7 @@ void ml_image_flip_tex_x(value image) {
 }
 
 void ml_image_flip_tex_y(value image) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *tq = *IMAGE(image);
 	tex2F tmp = tq->tl.tex;
 	tq->tl.tex = tq->bl.tex;
 	tq->bl.tex = tmp;
@@ -843,7 +843,7 @@ void ml_image_flip_tex_y(value image) {
 
 void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
 	//fprintf(stderr,"render image\n");
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *tq = *IMAGE(image);
 	checkGLErrors("start");
 
 	//print_image(tq);
@@ -909,7 +909,7 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	GLuint mTextureID;
 	checkGLErrors("start create rendertexture");
 	glGenTextures(1, &mTextureID);
-	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
+	glBindTexture(GL_TEXTURE_2D, mTextureID);
 	boundTextureID = mTextureID;
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1118,7 +1118,7 @@ static int atlas_quads_len = 0;
 #define RENDER_SUBPIXEL(x) (GLint)x
 
 // assume that quads it's dynarray
-void ml_atlas_render(value atlas, value matrix,value program, value textureID,value pma, value alpha, value quads) {
+void ml_atlas_render(value atlas, value matrix,value program,value textureID,value pma, value alpha, value quads) {
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);

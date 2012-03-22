@@ -3,6 +3,7 @@ open LightCommon;
 
 type textureInfo;
 
+(*
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -15,11 +16,14 @@ type textureFormat =
   | TextureFormat5551
   | TextureFormat4444
   ];
+*)
 
 
 type event = [= `RESIZE | `CHANGE ]; 
 
 type filter = [ FilterNearest | FilterLinear ];
+
+type kind = [ Simple | Pallete of textureInfo ];
 
 class type renderer = 
   object
@@ -27,10 +31,11 @@ class type renderer =
   end
 and c =
   object
+    method kind: kind;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
-    method scale: float;
+(*     method scale: float; *)
     method textureID: textureID;
     method setFilter: filter -> unit;
     method base : option c;

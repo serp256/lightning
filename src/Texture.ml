@@ -13,8 +13,8 @@ type textureFormat =
   | TextureFormat565
   | TextureFormat5551
   | TextureFormat4444
+  | TextureFormatPallete of int
   ];
-
 
 
 type textureInfo = 
@@ -24,16 +24,12 @@ type textureInfo =
     width: int;
     realHeight: int;
     height: int;
-    numMipmaps: int;
-    generateMipmaps: bool;
-    premultipliedAlpha:bool;
-    scale: float;
+    premultipliedAlpha:bool; 
     memSize: int;
     textureID: textureID;
   };
 
-
-
+type kind = [ Simple | Pallete of textureInfo ];
 
 type event = [= `RESIZE | `CHANGE ]; 
 
@@ -47,11 +43,12 @@ class type renderer =
   end
 and c =
   object
+    method kind : kind;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
     method setFilter: filter -> unit;
-    method scale: float;
+(*     method scale: float; *)
     method textureID: textureID;
     method base : option c; 
     method clipping: option Rectangle.t;
@@ -64,11 +61,12 @@ and c =
 
 value zero : c = 
   object(self)
+    method kind = Simple;
     method width = 0.;
     method height = 0.;
     method hasPremultipliedAlpha = False;
     method setFilter filter = ();
-    method scale = 1.;
+(*     method scale = 1.; *)
     method textureID = 0;
     method base = None;
     method clipping = None;
@@ -130,12 +128,11 @@ ENDIF;
 ENDIF;
 *)
 
-module Cache = WeakHashtbl.Make (struct
+module TextureCache = WeakHashtbl.Make (struct
   type t = string;
   value equal = (=);
   value hash = Hashtbl.hash;
 end);
-
 
 (*
 class type r = 
@@ -174,11 +171,12 @@ class subtexture region (baseTexture:c) =
   let width = region.Rectangle.width
   and height = region.Rectangle.height in
   object(self)
+    method kind = baseTexture#kind;
     method width = width;
     method height = height;
     method textureID = baseTexture#textureID;
     method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
-    method scale = baseTexture#scale;
+(*     method scale = baseTexture#scale; *)
     method base = Some (baseTexture :> c);
     method clipping = Some clipping;
     method setFilter filter = set_texture_filter baseTexture#textureID filter;
@@ -194,7 +192,7 @@ class subtexture region (baseTexture:c) =
 (*     initializer Gc.finalise (fun t -> t#release ()) self; *)
   end;
 
-value cache = Cache.create 11;
+value cache = TextureCache.create 11;
 value texture_memory = ref 0;
 value texture_mem_add v = 
   (
@@ -223,15 +221,34 @@ ENDIF;
 
 external delete_texture: textureID -> unit = "ml_delete_texture";
 
+module PalleteCache = WeakHashtbl.Make(struct
+  type t = int;
+  value equal = (=);
+  value hash = Hashtbl.hash;
+end);
+
+value palleteCache = PalleteCache.create 0;
+value loadPallete palleteID = 
+  try
+    PalleteCache.find palleteCache palleteID
+  with 
+  [ Not_found -> 
+    let pallete = loadImage (Printf.sprintf "palletes/%d.plt" palleteID) 1. in
+    (
+      PalleteCache.add palleteCache palleteID pallete;
+      (* здесь бы финализер повесить на нее, но да хуй с ней нахуй *)
+      pallete;
+    )
+  ];
+
 
 class s textureInfo = 
   let textureID = textureInfo.textureID
   and width = float textureInfo.width
   and height = float textureInfo.height
   and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
-  and scale = textureInfo.scale 
   in
-  let () = debug "make texture: <%d>, width=[%d->%f],height=[%d -> %f],scale=%f" textureID textureInfo.realWidth width textureInfo.realHeight height scale in
+  let () = debug "make texture: <%d>, width=[%d->%f],height=[%d -> %f]" textureID textureInfo.realWidth width textureInfo.realHeight height in
   let mem = textureInfo.memSize in
   let clipping = 
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
@@ -239,22 +256,22 @@ class s textureInfo =
     else None 
   in
   let w = float textureInfo.realWidth
-  and h = float textureInfo.realHeight in
+  and h = float textureInfo.realHeight
+  and kind = 
+    match textureInfo.texFormat with
+    [ TextureFormatPallete palleteID -> 
+      let pallete = loadPallete palleteID in
+      Pallete pallete
+    | _ -> Simple
+    ]
+  in
   object(self)
     value mutable textureID = textureID;
-(*     value mutable counter = 0; *)
-    (*
-    method releaseSubTexture () = 
-    (
-      debug:gc "release subtexture: %d" textureID;
-      counter := counter - 1;
-      if counter = 0
-      then self#release ()
-      else ();
-    );
-    *)
+
+    method kind = kind;
 
     method setFilter filter = set_texture_filter textureID filter;
+
     method release () = 
       if (textureID <> 0) 
       then
@@ -268,8 +285,6 @@ class s textureInfo =
     method width = w;
     method height = h;
     method hasPremultipliedAlpha = hasPremultipliedAlpha;
-    method scale = scale;
-(*    method setTextureID tid = textureID := tid; *)
     method textureID = textureID;
     method base : option c = None;
     method clipping = clipping;
@@ -317,12 +332,13 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
   let mem = ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4) in
   object(self:c)
     value mutable textureID = textureID;
+    method kind = Simple;
     method textureID = textureID;
     method width = width;
     method height = height;
     method hasPremultipliedAlpha = True;
     method setFilter filter = set_texture_filter textureID filter;
-    method scale = 1.;
+(*     method scale = 1.; *)
     method base = None;
     method clipping = clipping;
     method rootClipping = clipping;
@@ -360,14 +376,14 @@ value make_and_cache path textureInfo =
           delete_texture textureID; 
           textureID := 0;
           texture_mem_sub mem;
-          Cache.remove cache path;
+          TextureCache.remove cache path;
         )
         else ();
     end
   in
   (
     debug:cache "texture <%d> loaded" res#textureID;
-    Cache.add cache path res;
+    TextureCache.add cache path res;
     (res :> c)
   );
 
@@ -375,9 +391,9 @@ value load path : c =
   try
     debug:cache (
       Debug.d "print cache";
-      Cache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
+      TextureCache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
     );
-    ((Cache.find cache path) :> c)
+    ((TextureCache.find cache path) :> c)
   with 
   [ Not_found ->
     let textureInfo = 
@@ -521,14 +537,13 @@ value check_async () =
   ];
 
 value load_async path callback = 
-  (* хитрая логика с кэшем, но пока хуй с ней *)
   let texture = 
     try
       debug:cache (
         Debug.d "print cache";
-        Cache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
+        TextureCache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
       );
-      Some (((Cache.find cache path) :> c))
+      Some (((TextureCache.find cache path) :> c))
     with 
     [ Not_found -> None ]
   in
@@ -552,15 +567,6 @@ value load_async path callback =
     Loader.load path callback
   ];
 
-
-
-
-(*
-class type renderObject =
-  object
-    method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
-  end;
-*)
 
 external create_render_texture: int -> int -> float -> int -> int -> (framebufferID*textureID) = "ml_rendertexture_create";
 type framebufferState;
@@ -627,6 +633,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     else None
   in
   object(self)
+    method kind = Simple;
     value mutable isActive = False;
     value mutable textureID = textureID;
     value mutable clipping = clipping;
@@ -641,7 +648,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     value mutable hasPremultipliedAlpha = True;
     method setPremultipliedAlpha v = hasPremultipliedAlpha := v;
     method hasPremultipliedAlpha = hasPremultipliedAlpha;
-    method scale = 1.;
+(*     method scale = 1.; *)
     method textureID = textureID;
     method base : option c = None;
     method clipping = clipping;
