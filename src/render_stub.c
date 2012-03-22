@@ -664,7 +664,7 @@ struct custom_operations image_ops = {
 };
 
 
-void set_image_uv(lgImage *tq, value clipping) {
+void set_image_uv(lgTexQuad *tq, value clipping) {
 	if (clipping != 1) {
 		value c = Field(clipping,0);
 		double x = Double_field(c,0);
@@ -705,43 +705,43 @@ void print_image(lgImage *tq) {
 
 #define TEX_SIZE(w) (Double_val(w))
 //
-value ml_image_create(value width,value height,value clipping,value color,value oalpha) {
+value ml_image_create(value width,value height,value textureInfo,value color,value oalpha) {
 	CAMLparam5(width,height,clipping,color,oalpha);
 	lgImage *tq = (lgImage*)caml_stat_alloc(sizeof(lgImage));
 	int clr = Int_val(color);
 	double alpha = Double_val(oalpha);
 	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
-	tq->bl.v = (vertex2F){0,0};
-	tq->bl.c = c;
-	tq->br.v = (vertex2F) { TEX_SIZE(width),0.};
-	tq->br.c = c;
-	tq->tl.v = (vertex2F) { 0, TEX_SIZE(height)};
-	tq->tl.c = c;
-	tq->tr.v = (vertex2F) { tq->br.v.x, tq->tl.v.y};
-	tq->tr.c = c;
-	set_image_uv(tq,clipping);
-	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgImage*),0,1); // 
-	*TEXQUAD(res) = tq;
+	img->quad.bl.v = (vertex2F){0,0};
+	img->quad.bl.c = c;
+	img->quad.br.v = (vertex2F) { TEX_SIZE(width),0.};
+	img->quad.br.c = c;
+	img->quad.tl.v = (vertex2F) { 0, TEX_SIZE(height)};
+	img->quad.tl.c = c;
+	img->quad.tr.v = (vertex2F) { tq->br.v.x, tq->tl.v.y};
+	img->quad.tr.c = c;
+	set_image_uv(&(img->quad),clipping);
+	value res = caml_alloc_custom(&image_ops,sizeof(lgImage*),0,1); // 
+	*IMAGE(res) = img;
 	CAMLreturn(res);
 }
 
 value ml_image_points(value image) {
 	CAMLparam1(image);
 	CAMLlocal5(p1,p2,p3,p4,res);
-	lgImage *tq = *IMAGE(image);
+	lgImage *img = *IMAGE(image);
 	int s = 2 * Double_wosize;
 	p1 = caml_alloc(s,Double_array_tag);
-	Store_double_field(p1, 0, (double)tq->bl.v.x);
-	Store_double_field(p1, 1, (double)tq->bl.v.y);
+	Store_double_field(p1, 0, (double)img->quad.bl.v.x);
+	Store_double_field(p1, 1, (double)img->quad.bl.v.y);
 	p2 = caml_alloc(s,Double_array_tag);
-	Store_double_field(p2, 0, (double)tq->br.v.x);
-	Store_double_field(p2, 1, (double)tq->br.v.y);
+	Store_double_field(p2, 0, (double)img->quad.br.v.x);
+	Store_double_field(p2, 1, (double)img->quad.br.v.y);
 	p3 = caml_alloc(s,Double_array_tag);
-	Store_double_field(p3, 0, (double)tq->tl.v.x);
-	Store_double_field(p3, 1, (double)tq->tl.v.y);
+	Store_double_field(p3, 0, (double)img->quad.tl.v.x);
+	Store_double_field(p3, 1, (double)img->quad.tl.v.y);
 	p4 = caml_alloc(s,Double_array_tag);
-	Store_double_field(p4, 0, (double)(tq->tr.v.x));
-	Store_double_field(p4, 1, (double)(tq->tr.v.y));
+	Store_double_field(p4, 0, (double)(img->quad.tr.v.x));
+	Store_double_field(p4, 1, (double)(img->quad.tr.v.y));
 	res = caml_alloc_small(4,0);
 	Field(res,0) = p1;
 	Field(res,1) = p2;
@@ -751,38 +751,39 @@ value ml_image_points(value image) {
 }
 
 value ml_image_color(value image) {
-	lgImage *tq = *IMAGE(image);
-	return Int_val((COLOR(tq->bl.c.r,tq->bl.c.b,tq->bl.c.g)));
+	lgImage *img = *IMAGE(image);
+	return Int_val((COLOR(img->quad.bl.c.r,img->quad.bl.c.b,img->quad.bl.c.g)));
 }
 
 
 void ml_image_set_color(value image,value color) {
-	lgImage *tq = *IMAGE(image);
+	lgImage *img = *IMAGE(image);
 	long clr = Int_val(color);
-	double alpha = (double)(tq->bl.c.a) / 255;
+	double alpha = (double)(img->quad.bl.c.a) / 255;
 	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
-	tq->bl.c = c;
-	tq->br.c = c;
-	tq->tl.c = c;
-	tq->tr.c = c;
+	img->quad.bl.c = c;
+	img->quad.br.c = c;
+	img->quad.tl.c = c;
+	img->quad.tr.c = c;
 }
 
 
 void ml_image_set_colors(value image,value colors) {
-	lgImage *tq = *IMAGE(image);
-	double alpha = (double)tq->bl.c.a / 255;
+	lgImage *img = *IMAGE(image);
+	double alpha = (double)img->quad.bl.c.a / 255;
 	int c = Int_val(Field(colors,0));
-	tq->bl.c = COLOR_FROM_INT_PMA(c,alpha);
+	img->quad.bl.c = COLOR_FROM_INT_PMA(c,alpha);
 	c = Int_val(Field(colors,1));
-	tq->br.c = COLOR_FROM_INT_PMA(c,alpha);
+	img->quad.br.c = COLOR_FROM_INT_PMA(c,alpha);
 	c = Int_val(Field(colors,2));
-	tq->tl.c = COLOR_FROM_INT_PMA(c,alpha);
+	img->quad.tl.c = COLOR_FROM_INT_PMA(c,alpha);
 	c = Int_val(Field(colors,3));
-	tq->tr.c = COLOR_FROM_INT_PMA(c,alpha);
+	img->quad.tr.c = COLOR_FROM_INT_PMA(c,alpha);
 }
 
 void ml_image_set_alpha(value image,value alpha) {
-	lgImage *tq = *IMAGE(image);
+	lgImage *img = *IMAGE(image);
+	lgTexQuad *tq = &(img->quad);
 	double a = Double_val(alpha);
 	UPDATE_PMA_ALPHA(tq->bl.c,a);
 	UPDATE_PMA_ALPHA(tq->br.c,a);

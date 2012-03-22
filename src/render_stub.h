@@ -88,6 +88,7 @@ typedef struct
 {
 	lgTexQuad quad;
 	GLuint textureID;
+	GLuint palleteTextureID;
 	int PMA;
 }
 
