@@ -2,6 +2,8 @@ open LightCommon;
 
 type ubyte_array = Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout;
 
+external glClear: int -> float -> unit = "ml_clear";
+
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -30,6 +32,14 @@ type textureInfo =
   };
 
 type kind = [ Simple | Pallete of textureInfo ];
+type renderInfo = 
+  {
+    rtextureID: int;
+    rwidth: float;
+    rheight: float;
+    clipping: option Rectangle.t;
+    kind: kind;
+  };
 
 type event = [= `RESIZE | `CHANGE ]; 
 
@@ -44,6 +54,7 @@ class type renderer =
 and c =
   object
     method kind : kind;
+    method renderInfo: renderInfo;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
@@ -60,8 +71,10 @@ and c =
   end;
 
 value zero : c = 
+  let renderInfo = { rtextureID = 0; rwidth = 0.; rheight = 0.; clipping = None; kind = Simple } in
   object(self)
     method kind = Simple;
+    method renderInfo = renderInfo;
     method width = 0.;
     method height = 0.;
     method hasPremultipliedAlpha = False;
@@ -83,50 +96,6 @@ external freeImageInfo: imageInfo -> unit = "ml_free_image_info";
 external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture";
 (* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
 external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
-
-(*
-value loadImage ?(textureID=0) ~path ~contentScaleFactor = 
-(*     let () = debug "loaded texture" (* : [%d:%d] -> [%d:%d] width height legalWidth legalHeight*) in *)
-  let surface = Sdl_image.load (LightCommon.resource_path path) in
-  let bpp = Sdl.Video.surface_bpp surface in
-  let () = assert (bpp = 32) in
-  let width = Sdl.Video.surface_width surface in
-  let legalWidth = nextPowerOfTwo width in
-  let height = Sdl.Video.surface_height surface in
-  let legalHeight = nextPowerOfTwo height in
-  let rgbSurface = Sdl.Video.create_rgb_surface [] legalWidth legalHeight bpp in
-  (
-    Sdl.Video.set_blend_mode surface Sdl.Video.BLENDMODE_NONE;
-    Sdl.Video.blit_surface surface None rgbSurface None;
-    Sdl.Video.free_surface surface;
-    let textureInfo = 
-      {
-        texFormat = TextureFormatRGBA;
-        realWidth = width;
-        width = legalWidth;
-        realHeight = height;
-        height = legalHeight;
-        numMipmaps = 0;
-        generateMipmaps = False;
-        premultipliedAlpha = False;
-        scale = 2.0;
-        textureID = textureID;
-      }
-    in
-    let res = loadTexture textureInfo (Some (Sdl.Video.surface_pixels rgbSurface)) in
-    (
-      Sdl.Video.free_surface rgbSurface;
-      res
-    );
-  );
-
-ELSE IFDEF IOS THEN
-ELSE IFDEF ANDROID THEN
-external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
-ENDIF;
-ENDIF;
-ENDIF;
-*)
 
 module TextureCache = WeakHashtbl.Make (struct
   type t = string;
@@ -167,21 +136,27 @@ class subtexture region (baseTexture:c) =
             )
         ]
   in
-  let rootClipping : Rectangle.t = Obj.magic rootClipping in
-  let width = region.Rectangle.width
-  and height = region.Rectangle.height in
+  let renderInfo = 
+    {
+      rtextureID = baseTexture#textureID;
+      rwidth = region.Rectangle.width;
+      rheight = region.Rectangle.height;
+      clipping = Some (Obj.magic rootClipping);
+      kind = baseTexture#kind;
+    }
+  in
   object(self)
-    method kind = baseTexture#kind;
-    method width = width;
-    method height = height;
-    method textureID = baseTexture#textureID;
+    method renderInfo = renderInfo;
+    method kind = renderInfo.kind;
+    method width = renderInfo.rwidth;
+    method height = renderInfo.rheight;
+    method textureID = renderInfo.rtextureID;
     method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
 (*     method scale = baseTexture#scale; *)
     method base = Some (baseTexture :> c);
     method clipping = Some clipping;
     method setFilter filter = set_texture_filter baseTexture#textureID filter;
-    value rootClipping : option Rectangle.t = Some (Obj.magic rootClipping);
-    method rootClipping = rootClipping;
+    method rootClipping = renderInfo.clipping;
 (*     method update path = baseTexture#update path; *)
     method subTexture region = ((new subtexture region (self :> c)) :> c);
 (*     method releaseSubTexture () = baseTexture#releaseSubTexture (); *)
@@ -243,20 +218,15 @@ value loadPallete palleteID =
 
 
 class s textureInfo = 
-  let textureID = textureInfo.textureID
-  and width = float textureInfo.width
+  let width = float textureInfo.width
   and height = float textureInfo.height
-  and hasPremultipliedAlpha = textureInfo.premultipliedAlpha
   in
-  let () = debug "make texture: <%d>, width=[%d->%f],height=[%d -> %f]" textureID textureInfo.realWidth width textureInfo.realHeight height in
+  let () = debug "make texture: <%d>, width=[%d->%f],height=[%d -> %f]" textureInfo.textureID textureInfo.realWidth width textureInfo.realHeight height in
   let mem = textureInfo.memSize in
   let clipping = 
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
     then Some (Rectangle.create 0. 0. ((float textureInfo.realWidth) /. width) ((float textureInfo.realHeight) /. height))
     else None 
-  in
-  let w = float textureInfo.realWidth
-  and h = float textureInfo.realHeight
   and kind = 
     match textureInfo.texFormat with
     [ TextureFormatPallete palleteID -> 
@@ -265,13 +235,20 @@ class s textureInfo =
     | _ -> Simple
     ]
   in
+  let renderInfo = 
+    {
+      rtextureID = textureInfo.textureID;
+      rwidth = width;
+      rheight = height;
+      clipping = clipping;
+      kind = kind;
+    }
+  in
   object(self)
-    value mutable textureID = textureID;
-
-    method kind = kind;
-
+    value mutable textureID = renderInfo.rtextureID;
+    method renderInfo = renderInfo;
+    method kind = renderInfo.kind;
     method setFilter filter = set_texture_filter textureID filter;
-
     method release () = 
       if (textureID <> 0) 
       then
@@ -282,13 +259,13 @@ class s textureInfo =
         texture_mem_sub mem;
       )
       else ();
-    method width = w;
-    method height = h;
-    method hasPremultipliedAlpha = hasPremultipliedAlpha;
+    method width = renderInfo.rwidth;
+    method height = renderInfo.rheight;
+    method hasPremultipliedAlpha = True; (* CHECK THIS *)
     method textureID = textureID;
     method base : option c = None;
-    method clipping = clipping;
-    method rootClipping = clipping;
+    method clipping = renderInfo.clipping;
+    method rootClipping = renderInfo.clipping;
 (*       method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *) *)
     method subTexture region = ((new subtexture region (self :> c)) :> c);
     method addRenderer (_:renderer) = ();
@@ -329,19 +306,29 @@ value create texFormat width height data =
 
 Callback.register "create_ml_texture" begin fun textureID width height clipping ->
   let () = debug "create_ml_texture <%d>" textureID in
+  let renderInfo =
+    {
+      rtextureID = textureID;
+      rwidth = width;
+      rheight = height;
+      clipping = clipping;
+      kind = Simple;
+    }
+  in
   let mem = ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4) in
   object(self:c)
+    method renderInfo = renderInfo;
     value mutable textureID = textureID;
     method kind = Simple;
     method textureID = textureID;
-    method width = width;
-    method height = height;
+    method width = renderInfo.rwidth;
+    method height = renderInfo.rheight;
     method hasPremultipliedAlpha = True;
     method setFilter filter = set_texture_filter textureID filter;
 (*     method scale = 1.; *)
     method base = None;
-    method clipping = clipping;
-    method rootClipping = clipping;
+    method clipping = renderInfo.clipping;
+    method rootClipping = renderInfo.clipping;
     method release () = 
       if (textureID <> 0) 
       then
@@ -628,31 +615,39 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     let flw = float legalWidth and flh = float legalHeight in
     if flw <> width || flh <> height 
     then 
-      let () = debug "clipping: [%f:%f] -> [%d:%d]" width height legalWidth legalHeight in
+(*       let () = debug "clipping: [%f:%f] -> [%d:%d]" width height legalWidth legalHeight in *)
       Some (Rectangle.create 0. 0. (width /. flw) (height /. flh))
     else None
   in
+  let renderInfo = 
+    {
+      rtextureID = textureID;
+      rwidth = width;
+      rheight = height;
+      clipping = clipping;
+      kind = Simple
+    }
+  in
   object(self)
+    value mutable renderInfo = renderInfo;
+    method renderInfo = renderInfo;
     method kind = Simple;
     value mutable isActive = False;
     value mutable textureID = textureID;
-    value mutable clipping = clipping;
-    value mutable width = width;
     value mutable legalWidth = legalWidth;
     method realWidth = legalWidth;
-    method width = width;
-    value mutable height = height;
+    method width = renderInfo.rwidth;
     value mutable legalHeight = legalHeight;
     method realHeight = legalHeight;
-    method height = height;
+    method height = renderInfo.rheight;
     value mutable hasPremultipliedAlpha = True;
     method setPremultipliedAlpha v = hasPremultipliedAlpha := v;
     method hasPremultipliedAlpha = hasPremultipliedAlpha;
 (*     method scale = 1.; *)
     method textureID = textureID;
     method base : option c = None;
-    method clipping = clipping;
-    method rootClipping = clipping;
+    method clipping = renderInfo.clipping;
+    method rootClipping = renderInfo.clipping;
     method subTexture (region:Rectangle.t) : c = assert False;
     method framebufferID = framebufferID;
     value renderers = Renderers.create 1;
@@ -672,18 +667,18 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
         and legalHeight' = nextPowerOfTwo ih in
         let (legalWidth',legalHeight') = render_texture_size (legalWidth',legalHeight') in
         (
-          width := w;
-          height := h;
           if (legalWidth' <> legalWidth || legalHeight <> legalHeight')
           then resize_texture textureID legalWidth' legalHeight'
           else ();
           legalWidth := legalWidth'; legalHeight := legalHeight';
           texture_mem_add (legalWidth * legalHeight * 4);
           let flw = float legalWidth' and flh = float legalHeight' in
-          clipping :=
+          let clipping =
             if flw <> w || flh <> h 
             then Some (Rectangle.create 0. 0. (w /. flw) (h /. flh))
-            else None; 
+            else None 
+          in
+          renderInfo := {(renderInfo) with rwidth = w; rheight = h; clipping};
           Renderers.iter (fun r -> r#onTextureEvent `RESIZE (self :> c)) renderers;
         )
       else ();
@@ -717,7 +712,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       | True -> f()
       ];
 
-    method clear color alpha = self#draw (fun () -> Render.clear color alpha);
+    method clear color alpha = self#draw (fun () -> glClear color alpha);
     initializer 
     (
       texture_mem_add (legalWidth * legalHeight * 4);

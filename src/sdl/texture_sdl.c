@@ -62,7 +62,8 @@ int load_image_info(char *fname,textureInfo *tInfo) {
 	int rplen = strlen(resourcePath);
 	// try pallete first
 	char *ext = strrchr(fname,'.');
-	if (ext && ext != fname && !strcasecmp(ext,".plx")) {
+	printf("ext is %s\n",ext);
+	if (ext && ext != fname && strcasecmp(ext,".plx") && strcasecmp(ext,".plt")) {
 		// проверить этот ебанный plx 
 		int bflen = strlen(fname) - strlen(ext);
 		char *plxpath = malloc(rplen + bflen + 5);
@@ -70,6 +71,7 @@ int load_image_info(char *fname,textureInfo *tInfo) {
 		memcpy(plxpath + rplen,fname,bflen);
 		strcpy(plxpath + rplen + bflen,".plx");
 		// теперь узнать есть такой файло или нету
+		printf("try plx: %s\n",plxpath);
 		struct stat s;
 		if (!stat(plxpath,&s)) {// есть plx файл
 			int r = loadPlxFile(plxpath,tInfo);

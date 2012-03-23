@@ -98,7 +98,7 @@ enum PVRPixelType
 	mlTex = caml_alloc_tuple(8);\
 	if (tInfo->format != LTextureFormatPallete) \
 		Field(mlTex,0) = Val_int(tInfo->format);\
-	else { tInfo->format = caml_alloc(1,0); Field(tInfo->format,0) = Int_val(0);} \
+	else { Store_field(mlTex,0,caml_alloc(1,0)); Field(Field(mlTex,0),0) = Int_val(0);} \
 	Field(mlTex,1) = Val_long((unsigned int)tInfo->realWidth);\
 	Field(mlTex,2) = Val_long(tInfo->width);\
 	Field(mlTex,3) = Val_long((unsigned int)tInfo->realHeight);\

@@ -1,7 +1,7 @@
 
 open Render.Program;
 
-module QuadSimple = struct
+module Quad = struct
   value id = gen_id();
   value create () = 
     let prg = 
@@ -13,7 +13,7 @@ module QuadSimple = struct
 
 end;
 
-module ImageSimple = struct (*{{{*)
+module Image = struct (*{{{*)
 
   value id = gen_id ();
   value create () = 
@@ -34,7 +34,7 @@ module ImagePallete = struct
         ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
         ~uniforms:[| ("u_texture",(UInt 0)) ; ("u_pallete",(UInt 1)) |]
     in
-    (prg,None);(* Бля тут же у меня еще хитрая cистема фильтров въебана нахуй *)
+    (prg,None);
 
 end;
 
@@ -50,5 +50,35 @@ module ImageColorMatrix = struct (*{{{*)
     in
     let f = Render.Filter.color_matrix matrix in
     (prg,Some f);
+    
+  value from_filter filter =
+    let prg = 
+      load id ~vertex:"Image.vsh" ~fragment:"ImageColorMatrix.fsh"
+        ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
+        ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
+    in
+    (prg,Some filter);
+
+end;(*}}}*)
+
+module ImagePalleteColorMatrix = struct (*{{{*)
+
+  value id  = gen_id();
+  value create matrix = 
+    let prg = 
+      load id ~vertex:"Image.vsh" ~fragment:"ImagePalleteColorMatrix.fsh"
+        ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
+        ~uniforms:[| ("u_texture", (UInt 0)); ("u_pallete",(UInt 0)); ("u_matrix",UNone) |]
+    in
+    let f = Render.Filter.color_matrix matrix in
+    (prg,Some f);
+
+  value from_filter filter =
+    let prg = 
+      load id ~vertex:"Image.vsh" ~fragment:"ImagePalleteColorMatrix.fsh"
+        ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
+        ~uniforms:[| ("u_texture", (UInt 0)); ("u_pallete",(UInt 0)); ("u_matrix",UNone) |]
+    in
+    (prg,Some filter);
     
 end;(*}}}*)

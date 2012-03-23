@@ -88,9 +88,9 @@ typedef struct
 {
 	lgTexQuad quad;
 	GLuint textureID;
-	GLuint palleteTextureID;
-	int PMA;
-}
+	GLuint pallete;
+	int pma;
+} lgImage;
 
 #define TexVertexSize sizeof(lgTexVertex)
 
@@ -151,6 +151,8 @@ void get_framebuffer_state(framebuffer_state *s);
 void set_framebuffer_state(framebuffer_state *s);
 
 
+void lgGLBindTexture(GLuint textureID, int pma);
+void lgResetBoundTextures();
 
 
 #endif

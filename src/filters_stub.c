@@ -4,7 +4,6 @@
 #include "math.h"
 
 extern GLuint currentShaderProgram;
-extern GLuint boundTextureID;
 
 
 static int nextPowerOfTwo(int number) {
@@ -67,8 +66,8 @@ GLuint create_program(GLuint vShader, GLuint fShader, int cntattribs, char* attr
 	GLuint program =  glCreateProgram();
 	glAttachShader(program, vShader); 
 	glAttachShader(program, fShader); 
-	int i = 0;
-	for (i; i < cntattribs; i++) {
+	int i;
+	for (i = 0; i < cntattribs; i++) {
     glBindAttribLocation(program,i,attribs[i]);
   };
   glLinkProgram(program);
@@ -378,6 +377,7 @@ static GLuint final_glow_program() {
 	return prg;
 }
 
+/*
 struct glowData 
 {
 	color3F color;
@@ -388,35 +388,36 @@ static void glowFilter(sprogram *sp,void *data) {
 	struct glowData *d = (struct glowData*)data;
 	glUniform3f(sp->uniforms[1],d->color.r,d->color.g,d->color.b);
 	glUniform1f(sp->uniforms[2],d->strength);
-	/*glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D,d->textureID);
-	glActiveTexture(GL_TEXTURE0); // надо бы вернуть, а как после рендеринга еще вернуть? или хуй с ней ?
-	glUniform1f(sp->uniforms[2],d->strenght);*/
-	// здесь бы все отрендерить нахуй
 }
+*/
 
+/*
 static void glowFilterFinalize(void *data) {
 	struct glowData *d = (struct glowData*)data;
 	caml_stat_free(d);
 }
+*/
 
+/*
 value ml_filter_glow(value color, value strength) {
 	struct glowData *gd = (struct glowData*)caml_stat_alloc(sizeof(struct glowData));
 	gd->color = COLOR3F_FROM_INT(Long_val(color));
 	gd->strength = (GLfloat)Long_val(strength);
 	return make_filter(&glowFilter,&glowFilterFinalize,gd);
 }
+*/
 
-value ml_glow_make2(value textureID, value width, value height, value pma, value clip, value glow) {
+value ml_glow_make(value textureInfo, value glow) {
 	checkGLErrors("start make glow");
-	/// вернуть бы текстуру было бы заебись - сделать функцию в ml create_ml_texture
 	int gsize = Int_val(Field(glow,0));
-	double iwidth = Double_val(width);
-	double iheight = Double_val(height);
+	double iwidth = Double_val(Field(textureInfo,1));
+	double iheight = Double_val(Field(textureInfo,2));
 	double gs = (pow(2,gsize) - 1) * 2;
 	double rwidth = iwidth + 2 * gs;
 	double rheight = iheight + 2 * gs;
 
+	int pma = 1;
+	lgResetBoundTextures();
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
 	glDisable(GL_BLEND);
@@ -429,7 +430,8 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 
 	renderbuffer_t ib;
 	create_renderbuffer(rwidth/2,rheight/2,&ib,GL_LINEAR);
-	GLuint tid = Long_val(textureID);
+	GLuint tid = Long_val(Field(textureInfo,0));
+	value clip = Field(textureInfo,3);
 	clipping clp;
 	if (clip != 1) {
 		value c = Field(clip,0);
@@ -498,7 +500,7 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 	delete_renderbuffer(&ib);
 	checkGLErrors("draw blurred");
 
-	if (Bool_val(pma)) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); 
+	if (pma) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); 
 	else glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
 
 	GLuint simplePrg = simple_program();
@@ -512,7 +514,6 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 	glBindTexture(GL_TEXTURE_2D,0);
 	glBindFramebuffer(GL_FRAMEBUFFER,0); 
 	glUseProgram(0);
-	boundTextureID = 0;
 	currentShaderProgram = 0;
 	checkGLErrors("glow make finished");
 	set_framebuffer_state(&fstate);
@@ -520,9 +521,11 @@ value ml_glow_make2(value textureID, value width, value height, value pma, value
 	return res;
 }
 
+/*
 void ml_glow_make2_byte(value * argv, int n) {
 	ml_glow_make2(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
 }
+*/
 
 /*
 void ml_glow_make(value framebufferID, value textureID, value twidth, value theight, value clip, value sourceTexture, value count) {

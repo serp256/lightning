@@ -34,98 +34,110 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
   type glow = 
     {
       g_texture: mutable option Texture.c;
-      g_image: Render.Image.t;
+      g_image: mutable option Render.Image.t;
+      g_program: Render.prg;
       g_matrix: mutable Matrix.t;
       g_params: Filters.glow
     };
 
-
-  class _c  _texture =
+  class virtual base texture = 
     let (programID,shaderProgram) = 
-      match _texture#kind with
-      [ Texture.Simple -> (GLPrograms.ImageSimple.id,GLPrograms.ImageSimple.create ())
-      | Texture.Pallete -> (GLPrograms.ImagePallete.id,GLPrograms.ImagePallete.create ())
+      match texture#kind with
+      [ Texture.Simple -> (GLPrograms.Image.id,GLPrograms.Image.create ())
+      | Texture.Pallete _ -> (GLPrograms.ImagePallete.id,GLPrograms.ImagePallete.create ())
       ]
+    in
     object(self)
       inherit DisplayObject.c as super;
-
-
-      method !name = if name = ""  then Printf.sprintf "image%d" (Oo.id self) else name;
-
-      value mutable texture: Texture.c = _texture;
+      value mutable texture: Texture.c = texture;
       method texture = texture;
-
-
-      value mutable programID = programID
+      value mutable programID = programID;
       value mutable shaderProgram = shaderProgram;
-      value image = Render.Image.create _texture#width _texture#height _texture#rootClipping 0xFFFFFF 1.;
-
-      value mutable texFlipX = False;
-      method texFlipX = texFlipX;
-
-      value mutable texFlipY = False;
-      method texFlipY = texFlipY;
-
       value mutable filters : list Filters.t = [];
+      method filters = filters;
+
       value mutable glowFilter: option glow = None;
+      method virtual private updateGlowFilter: unit -> unit;
       method private setGlowFilter glow = 
       (
         match glowFilter with
         [ Some {g_texture=Some gtex;_} -> gtex#release()
-        | _ -> ()
+        | _ ->  ()
         ];
-(*      let gtexture = RenderFilters.glow_make texture#textureID texture#width texture#height texture#rootClipping glow in *)
-        (*
-        let g_cmn = Glow.create texture glow.Filters.glowSize in
-        let open Glow in
-        let w = g_cmn.Glow.texture#width *. 2. and h = g_cmn.Glow.texture#height *. 2. in
-        let g_texture = Texture.rendered w h in
-        let () = g_texture#setPremultipliedAlpha False in
-        let g_image = Render.Image.create w h g_texture#rootClipping 0xFFFFFF alpha in
-        let gl = {g_cmn; g_texture; g_prg = GLPrograms.ImageSimple.create (); g_valid = False; g_image; g_params = glow} in
-        *)
-        let g_image = Render.Image.create 1. 1. None 0xFFFFFF alpha in
-        glowFilter := Some {g_image;g_matrix=Matrix.identity;g_texture=None;g_params=glow};
+        let g_program = match texture#kind with [ Texture.Simple -> GLPrograms.Image.create () | Texture.Pallete _ -> GLPrograms.ImagePallete.create () ] in
+        glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_params=glow};
         self#addPrerender self#updateGlowFilter;
       );
-
-      method filters = filters;
-
       method setFilters fltrs = 
       (
         let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
-        let hasGlow = ref False in
+        let glow = ref None in
         (
           let f = 
             List.fold_left begin fun c -> fun
-              [ `Glow glow ->
+              [ `Glow g ->
                 (
-                  hasGlow.val := True;
-                  match glowFilter with
-                  [ Some g when g.g_params = glow -> ()
-                  | _ -> self#setGlowFilter glow
-                  ];
+                  glow.val := Some g;
                   c
                 )
               | `ColorMatrix m -> `cmatrix m
               ]
             end `simple fltrs 
           in
-          match f with
-          [ `simple when programID <> GLPrograms.ImageSimple.id -> 
-            (
-              programID := GLPrograms.ImageSimple.id;
-              shaderProgram := GLPrograms.ImageSimple.create ()
-            )
-          | `cmatrix m -> 
-            (
-              programID := GLPrograms.ImageColorMatrix.id;
-              shaderProgram := GLPrograms.ImageColorMatrix.create m
-            )
-          | _ -> ()
+          match texture#kind with
+          [ Texture.Simple -> 
+            match f with
+            [ `simple when programID <> GLPrograms.Image.id -> 
+              (
+                programID := GLPrograms.Image.id;
+                shaderProgram := GLPrograms.Image.create ()
+              )
+            | `cmatrix m -> 
+              (
+                programID := GLPrograms.ImageColorMatrix.id;
+                shaderProgram := GLPrograms.ImageColorMatrix.create m
+              )
+            | _ -> ()
+            ]
+          | Texture.Pallete _ ->
+            match !glow with
+            [ None ->
+              match f with
+              [ `simple when programID <> GLPrograms.ImagePallete.id -> 
+                (
+                  programID := GLPrograms.ImagePallete.id;
+                  shaderProgram := GLPrograms.ImagePallete.create ()
+                )
+              | `cmatrix m -> 
+                (
+                  programID := GLPrograms.ImagePalleteColorMatrix.id;
+                  shaderProgram := GLPrograms.ImagePalleteColorMatrix.create m
+                )
+              | _ -> ()
+              ]
+            | Some _ ->
+              match f with
+              [ `simple when programID <> GLPrograms.Image.id -> 
+                (
+                  programID := GLPrograms.Image.id;
+                  shaderProgram := GLPrograms.Image.create ()
+                )
+              | `cmatrix m -> 
+                (
+                  programID := GLPrograms.ImageColorMatrix.id;
+                  shaderProgram := GLPrograms.ImageColorMatrix.create m
+                )
+              | _ -> ()
+              ]
+            ]
           ];
-          if not !hasGlow 
-          then 
+          match !glow with
+          [ Some glow ->
+            match glowFilter with
+            [ Some {g_params;_} when g_params = glow -> ()
+            | _ -> self#setGlowFilter glow
+            ]
+          | None ->
             match glowFilter with 
             [ Some {g_texture;_} -> 
               (
@@ -137,10 +149,27 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
               )
             | _ -> () 
             ]  
-          else ();
+          ]
         );
         filters := fltrs;
       );
+    end;
+
+  class _c  _texture =
+    object(self)
+      inherit base _texture as super;
+
+
+      method !name = if name = ""  then Printf.sprintf "image%d" (Oo.id self) else name;
+
+
+      value image = Render.Image.create _texture#renderInfo 0xFFFFFF 1.;
+
+      value mutable texFlipX = False;
+      method texFlipX = texFlipX;
+
+      value mutable texFlipY = False;
+      method texFlipY = texFlipY;
 
 
       method setColor color = Render.Image.set_color image color;
@@ -152,8 +181,8 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
         super#setAlpha a;
         Render.Image.set_alpha image a;
         match glowFilter with
-        [ Some g -> Render.Image.set_alpha g.g_image a
-        | None -> ()
+        [ Some {g_image=Some img;_} -> Render.Image.set_alpha img a
+        | _ -> ()
         ];
       );
 
@@ -178,8 +207,8 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
         (
           Render.Image.flipTexX image;
           match glowFilter with
-          [ Some g -> Render.Image.flipTexX g.g_image
-          | None -> ()
+          [ Some {g_image = Some img; _ } -> Render.Image.flipTexX img
+          | _ -> ()
           ];
           texFlipX := nv;
         )
@@ -191,8 +220,8 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
         (
           Render.Image.flipTexY image;
           match glowFilter with 
-          [ Some g -> Render.Image.flipTexY g.g_image
-          | None -> ()
+          [ Some {g_image = Some img; _ } -> Render.Image.flipTexY img
+          | _ -> ()
           ];
           texFlipY := nv;
         )
@@ -228,18 +257,42 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
 
       method private updateGlowFilter () = 
         match glowFilter with
-        [ Some ({g_texture = None; g_image; g_params = glow; _ } as gf) ->
+        [ Some ({g_texture = None; g_params = glow; _ } as gf) ->
           let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
-          let w = texture#width
-          and h = texture#height in
-          let g_texture = RenderFilters.glow_make texture#textureID w h texture#hasPremultipliedAlpha texture#rootClipping glow in 
-          let gwidth = g_texture#width
-          and gheight = g_texture#height in
+          let renderInfo = texture#renderInfo in
+          let w = renderInfo.Texture.rwidth
+          and h = renderInfo.Texture.rheight in
+          let g_texture = 
+            match renderInfo.Texture.kind with
+            [ Texture.Simple -> RenderFilters.glow_make renderInfo glow 
+            | Texture.Pallete _ ->
+              let tex = Texture.rendered w h in
+              (
+                tex#draw (fun () ->
+                  (
+                    Render.clear 0 0.;
+                    Render.Image.render Matrix.identity (GLPrograms.ImagePallete.create ()) image; (* FIXME: NEED SIMPLE HERE *)
+                  );
+                );
+                let res = RenderFilters.glow_make tex#renderInfo glow in
+                (
+                  tex#release ();
+                  res
+                )
+              )
+            ]
+          in
+          let g_renderInfo = g_texture#renderInfo in
+          let gwidth = g_renderInfo.Texture.rwidth
+          and gheight = g_renderInfo.Texture.rheight
+          and g_image = Render.Image.create g_renderInfo 0xFFFFFF alpha in
           (
-            debug:glow "g_texture: %d [%f:%f] %s" g_texture#textureID gwidth gheight (match g_texture#rootClipping with [ Some r -> Rectangle.to_string r | None -> "NONE"]);
-            Render.Image.update g_image g_texture#width g_texture#height g_texture#rootClipping texFlipX texFlipY;
+            debug:glow "g_texture: %d [%f:%f] %s" renderInfo.Texture.rtextureID gwidth gheight (match renderInfo.Texture.clipping with [ Some r -> Rectangle.to_string r | None -> "NONE"]);
+            if texFlipX then Render.Image.flipTexX g_image else ();
+            if texFlipY then Render.Image.flipTexY g_image else ();
             gf.g_matrix := Matrix.create ~translate:{Point.x = (w -. gwidth) /. 2.; y = (h -. gheight) /. 2.} ();
             gf.g_texture := Some g_texture;
+            gf.g_image := Some g_image;
           )
         | _ -> Debug.w "update non exist glow"
         ];
@@ -280,7 +333,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
       method private updateSize () = 
       (
         debug "update image size: %d" texture#textureID;
-        Render.Image.update image texture#width texture#height texture#rootClipping texFlipX texFlipY;
+        Render.Image.update image texture#renderInfo texFlipX texFlipY;
         self#boundsChanged();
       );
 
@@ -316,14 +369,42 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
           texture := nt;
           if ot#width <> nt#width || ot#height <> nt#height
           then self#updateSize ()
-          else
-          (
-            Render.Image.update image texture#width texture#height texture#rootClipping texFlipX texFlipY;
-          );
+          else Render.Image.update image texture#renderInfo texFlipX texFlipY;
           nt#addRenderer (self :> Texture.renderer);
           match glowFilter with
           [ Some g -> self#setGlowFilter g.g_params
-          | None -> ()
+          | None -> 
+            match texture#kind with
+            [ Texture.Simple when programID = GLPrograms.ImagePallete.id ->
+              (
+                debug "set program to simple";
+                programID := GLPrograms.Image.id;
+                shaderProgram := GLPrograms.Image.create ()
+              )
+            | Texture.Simple when programID = GLPrograms.ImagePalleteColorMatrix.id -> 
+              (
+                programID := GLPrograms.ImageColorMatrix.id;
+                match shaderProgram with
+                [ (_,Some f) -> shaderProgram := GLPrograms.ImageColorMatrix.from_filter f
+                | _ -> assert False
+                ]
+              )
+            | Texture.Pallete _ when programID = GLPrograms.Image.id -> 
+              (
+                debug "set program to pallete";
+                programID := GLPrograms.ImagePallete.id;
+                shaderProgram := GLPrograms.ImagePallete.create ()
+              )
+            | Texture.Pallete _ when programID = GLPrograms.ImageColorMatrix.id -> 
+              (
+                programID := GLPrograms.ImagePalleteColorMatrix.id;
+                match shaderProgram with
+                [ (_,Some f) -> shaderProgram := GLPrograms.ImagePalleteColorMatrix.from_filter f
+                | _ -> assert False
+                ]
+              )
+            | _ -> ()
+            ]
           ];
         );
 
@@ -347,25 +428,10 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
       method private render' ?alpha:(alpha') ~transform _ = 
       (
         match glowFilter with
-        [ Some {g_texture=Some g_texture;g_image;g_matrix;_} -> 
-          (
-            (*
-            if not g.valid
-            then 
-            (
-              Render.Image.update g.image g.gtex.Glow.texture#width g.gtex.Glow.texture#height g.gtex.Glow.texture#rootClipping;
-              g.valid := True
-            ) else ();
-            *)
-            Render.Image.render 
-              (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) 
-              shaderProgram g_texture#textureID g_texture#hasPremultipliedAlpha ?alpha:alpha' g_image
-          )
+        [ Some {g_image=Some g_image;g_matrix;_} -> 
+            Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) shaderProgram ?alpha:alpha' g_image
         | None ->
-(*           let () = debug "render image: %f:%f" pos.Point.x pos.Point.y in *)
-          Render.Image.render 
-            (if transform then self#transformationMatrix else Matrix.identity) 
-            shaderProgram texture#textureID texture#hasPremultipliedAlpha ?alpha:alpha' image
+            Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha:alpha' image
         | _ -> failwith (Printf.sprintf "glow not rendered %s" self#name)
         ]
       ); 

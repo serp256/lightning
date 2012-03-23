@@ -374,7 +374,16 @@ value half_pixels (stage:Stage.c) =
 (
   let tree = Image.load "tree.png" in
   (
-    tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |];
+    (* tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |]; *)
+    tree#setFilters [ Filters.glow 0xFF0000 ];
+    (*
+    let tex = Texture.rendered 100. 100. in
+    (
+      tex#draw (fun () -> (Render.clear 0 1.; tree#render ~transform:False None));
+      let img = Image.create (tex :> Texture.c) in
+      stage#addChild img;
+    );
+    *)
     stage#addChild tree;
   );
   let img = Image.load "frame.png" in
@@ -530,17 +539,17 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-(*       tlf self; *)
+      tlf self;
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
-(*       half_pixels self; *)
+      half_pixels self;
 (*         gradient self; *)
         game_center self;
 (*         sound self; *)
 (*         window self; *)
-        zsort self;
+(*         zsort self; *)
     end;
   end
 in

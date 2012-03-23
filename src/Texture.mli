@@ -25,6 +25,16 @@ type filter = [ FilterNearest | FilterLinear ];
 
 type kind = [ Simple | Pallete of textureInfo ];
 
+
+type renderInfo =
+  {
+    rtextureID: int;
+    rwidth: float;
+    rheight: float;
+    clipping: option Rectangle.t;
+    kind: kind;
+  };
+
 class type renderer = 
   object
     method onTextureEvent: event -> c -> unit;
@@ -32,6 +42,7 @@ class type renderer =
 and c =
   object
     method kind: kind;
+    method renderInfo: renderInfo;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
