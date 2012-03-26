@@ -1,3 +1,4 @@
+exception Symbol_not_found of string;
 
 value default_fps: ref int;
 
