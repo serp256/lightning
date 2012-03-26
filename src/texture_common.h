@@ -53,6 +53,8 @@ typedef struct {
 } textureInfo;
 
 
+int loadPlxFile(const char *path,textureInfo *tInfo);
+
 value createGLTexture(GLuint mTextureID, textureInfo *tInfo);
 
 
@@ -96,9 +98,9 @@ enum PVRPixelType
 
 #define ML_TEXTURE_INFO(mlTex,textureID,tInfo) \
 	mlTex = caml_alloc_tuple(8);\
-	if (tInfo->format != LTextureFormatPallete) \
+	if ((tInfo->format & 0xFFFF) != LTextureFormatPallete) \
 		Field(mlTex,0) = Val_int(tInfo->format);\
-	else { Store_field(mlTex,0,caml_alloc(1,0)); Field(Field(mlTex,0),0) = Int_val(0);} \
+	else { Store_field(mlTex,0,caml_alloc(1,0)); Field(Field(mlTex,0),0) = Val_int(tInfo->format >> 16);} \
 	Field(mlTex,1) = Val_long((unsigned int)tInfo->realWidth);\
 	Field(mlTex,2) = Val_long(tInfo->width);\
 	Field(mlTex,3) = Val_long((unsigned int)tInfo->realHeight);\

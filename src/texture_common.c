@@ -16,6 +16,50 @@ int nextPowerOfTwo(int number) {
 	return result;
 }
 
+int loadPlxFile(const char *path,textureInfo *tInfo) {
+	fprintf(stderr,"LOAD PLX: %s\n",path);
+	// load idx
+	FILE *fptr = fopen(path, "rb"); 
+	if (!fptr) { fprintf(stderr,"can't open %s file",path); return 2;};
+	unsigned char pallete;
+	fread(&pallete,sizeof(pallete),1,fptr);
+	unsigned int size;
+	fread(&size,sizeof(size),1,fptr);
+	unsigned short width = size & 0xFFFF;
+	unsigned short height = size >> 16;
+	size_t dataSize = width * height * 2;
+	unsigned char *idxdata = malloc(dataSize);
+	if (!fread(idxdata,dataSize,1,fptr)) {fprintf(stderr,"can't read PLX %s data\n",path);return 1;};
+	fclose(fptr);
+
+
+	tInfo->format = LTextureFormatPallete;
+	tInfo->format = (pallete << 16) | LTextureFormatPallete;
+	tInfo->width = tInfo->realWidth = width;
+	tInfo->height = tInfo->realHeight = height;
+	tInfo->numMipmaps = 0;
+	tInfo->generateMipmaps = 0;
+	tInfo->premultipliedAlpha = 0;
+	tInfo->scale = 1.;
+	tInfo->dataLen = dataSize;
+	tInfo->imgData = idxdata;
+
+	return 0;
+	/*
+	GLuint tid;
+	glGenTextures(1, &tid);
+	glBindTexture(GL_TEXTURE_2D,tid);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, idxdata);
+	checkGLErrors("glTexImage2D idx");
+	glBindTexture(GL_TEXTURE_2D,0);
+	*/
+
+};
+
 #define MAX(p1,p2) p1 > p2 ? p1 : p2
 
 typedef struct {
@@ -27,7 +71,7 @@ typedef struct {
 
 
 int textureParams(textureInfo *tInfo,texParams *p) {
-    switch (tInfo->format)
+    switch (tInfo->format & 0xFFFF)
     {
         case LTextureFormatRGBA:
             p->glTexFormat = GL_RGBA;

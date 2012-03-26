@@ -89,7 +89,7 @@ typedef struct
 	lgTexQuad quad;
 	GLuint textureID;
 	GLuint pallete;
-	int pma;
+	unsigned char pma;
 } lgImage;
 
 #define TexVertexSize sizeof(lgTexVertex)

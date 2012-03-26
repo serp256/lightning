@@ -43,7 +43,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
   class virtual base texture = 
     let (programID,shaderProgram) = 
       match texture#kind with
-      [ Texture.Simple -> (GLPrograms.Image.id,GLPrograms.Image.create ())
+      [ Texture.Simple _ -> (GLPrograms.Image.id,GLPrograms.Image.create ())
       | Texture.Pallete _ -> (GLPrograms.ImagePallete.id,GLPrograms.ImagePallete.create ())
       ]
     in
@@ -64,7 +64,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
         [ Some {g_texture=Some gtex;_} -> gtex#release()
         | _ ->  ()
         ];
-        let g_program = match texture#kind with [ Texture.Simple -> GLPrograms.Image.create () | Texture.Pallete _ -> GLPrograms.ImagePallete.create () ] in
+        let g_program = match texture#kind with [ Texture.Simple _ -> GLPrograms.Image.create () | Texture.Pallete _ -> GLPrograms.ImagePallete.create () ] in
         glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_params=glow};
         self#addPrerender self#updateGlowFilter;
       );
@@ -85,14 +85,14 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
             end `simple fltrs 
           in
           match texture#kind with
-          [ Texture.Simple -> 
+          [ Texture.Simple _ -> 
             match f with
             [ `simple when programID <> GLPrograms.Image.id -> 
               (
                 programID := GLPrograms.Image.id;
                 shaderProgram := GLPrograms.Image.create ()
               )
-            | `cmatrix m -> 
+            | `cmatrix m when programID  <> GLPrograms.ImageColorMatrix.id -> 
               (
                 programID := GLPrograms.ImageColorMatrix.id;
                 shaderProgram := GLPrograms.ImageColorMatrix.create m
@@ -108,7 +108,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
                   programID := GLPrograms.ImagePallete.id;
                   shaderProgram := GLPrograms.ImagePallete.create ()
                 )
-              | `cmatrix m -> 
+              | `cmatrix m when programID <> GLPrograms.ImagePalleteColorMatrix.id -> 
                 (
                   programID := GLPrograms.ImagePalleteColorMatrix.id;
                   shaderProgram := GLPrograms.ImagePalleteColorMatrix.create m
@@ -122,7 +122,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
                   programID := GLPrograms.Image.id;
                   shaderProgram := GLPrograms.Image.create ()
                 )
-              | `cmatrix m -> 
+              | `cmatrix m when programID <> GLPrograms.ImageColorMatrix.id -> 
                 (
                   programID := GLPrograms.ImageColorMatrix.id;
                   shaderProgram := GLPrograms.ImageColorMatrix.create m
@@ -257,21 +257,21 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
 
       method private updateGlowFilter () = 
         match glowFilter with
-        [ Some ({g_texture = None; g_params = glow; _ } as gf) ->
+        [ Some ({g_texture = None; g_program; g_params = glow; _ } as gf) ->
           let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
           let renderInfo = texture#renderInfo in
           let w = renderInfo.Texture.rwidth
           and h = renderInfo.Texture.rheight in
           let g_texture = 
             match renderInfo.Texture.kind with
-            [ Texture.Simple -> RenderFilters.glow_make renderInfo glow 
+            [ Texture.Simple _ -> RenderFilters.glow_make renderInfo glow 
             | Texture.Pallete _ ->
               let tex = Texture.rendered w h in
               (
                 tex#draw (fun () ->
                   (
                     Render.clear 0 0.;
-                    Render.Image.render Matrix.identity (GLPrograms.ImagePallete.create ()) image; (* FIXME: NEED SIMPLE HERE *)
+                    Render.Image.render Matrix.identity g_program image; (* FIXME: NEED SIMPLE HERE *)
                   );
                 );
                 let res = RenderFilters.glow_make tex#renderInfo glow in
@@ -375,13 +375,13 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
           [ Some g -> self#setGlowFilter g.g_params
           | None -> 
             match texture#kind with
-            [ Texture.Simple when programID = GLPrograms.ImagePallete.id ->
+            [ Texture.Simple _ when programID = GLPrograms.ImagePallete.id ->
               (
                 debug "set program to simple";
                 programID := GLPrograms.Image.id;
                 shaderProgram := GLPrograms.Image.create ()
               )
-            | Texture.Simple when programID = GLPrograms.ImagePalleteColorMatrix.id -> 
+            | Texture.Simple _ when programID = GLPrograms.ImagePalleteColorMatrix.id -> 
               (
                 programID := GLPrograms.ImageColorMatrix.id;
                 match shaderProgram with

@@ -372,10 +372,11 @@ value sound (stage:Stage.c) =
 
 value half_pixels (stage:Stage.c) =
 (
-  let tree = Image.load "tree.png" in
+  let tree = Image.load "60.png" in
   (
     (* tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |]; *)
-    tree#setFilters [ Filters.glow 0xFF0000 ];
+(*     tree#setFilters [ Filters.glow 0xFF0000 ]; *)
+(*     tree#setFilters [ `ColorMatrix disable_filter ]; *)
     (*
     let tex = Texture.rendered 100. 100. in
     (
@@ -386,6 +387,7 @@ value half_pixels (stage:Stage.c) =
     *)
     stage#addChild tree;
   );
+  (*
   let img = Image.load "frame.png" in
   (
     img#setPos 100.5 100.;
@@ -414,6 +416,7 @@ value half_pixels (stage:Stage.c) =
       stage#addChild g;
     );
   );
+  *)
 );
 
 value external_image (stage:Stage.c) =
@@ -526,6 +529,12 @@ value zsort (stage:Stage.c) =
   proftimer "zSort: %F" Testz.zSort ();
 );
 
+(*
+value image (stage:Stage.c) =
+  let image = Image.load "default.png" in
+  stage#addChild image;
+*)
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -533,13 +542,14 @@ let stage width height =
     initializer begin
         BitmapFont.register "MyriadPro-Regular.fnt";
         TLF.default_font_family.val := "Myriad Pro";
+(*         image self; *)
 (*         test_alpha self; *)
 (*       alert self; *)
 (*       flip self; *)
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-      tlf self;
+(*       tlf self; *)
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)

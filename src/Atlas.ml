@@ -118,7 +118,7 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
       method private updateGlowFilter () = 
         let () = debug:glow "update glow" in
         match glowFilter with
-        [ Some ({g_texture = None; g_params = glow; _ } as gf) ->
+        [ Some ({g_texture = None; g_program; g_params = glow; _ } as gf) ->
           (
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
@@ -126,11 +126,12 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
               let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
               let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
               (
+                (* здесь нужно дать программу правильную *)
                 tex#draw (fun () ->
                   (
                     Render.push_matrix (Matrix.create ~translate:(Point.mul ip ~-.1.) ());
                     Render.clear 0 0.;
-                    self#render_quads 1. False;
+                    self#render_quads ~program:g_program 1. False;
                     Render.restore_matrix ();
                   )
                 );
@@ -149,9 +150,8 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
                 )
               )
             else ();
-(*             gf.g_valid := True; *)
           )
-        | _ -> ()
+        | _ -> Debug.w "update glow not need"
         ];
 
       (*
@@ -266,13 +266,13 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
         super#boundsChanged();
       );
 
-      method private render_quads alpha transform =
+      method private render_quads ?(program=shaderProgram) alpha transform =
         let quads = 
           if dirty 
           then (dirty := False; Some children) 
           else None 
         in
-        atlas_render atlas (if transform then self#transformationMatrix else Matrix.identity) shaderProgram alpha quads;
+        atlas_render atlas (if transform then self#transformationMatrix else Matrix.identity) program alpha quads;
         
 
       method private render' ?alpha:(alpha') ~transform rect = 

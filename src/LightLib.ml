@@ -569,7 +569,7 @@ value load ?(loadTextures=False) libpath : lib =
       Array.map begin fun file -> 
         let tx = Texture.load (Filename.concat libpath file) in
         (
-          tx#setFilter Texture.FilterLinear;
+(*           tx#setFilter Texture.FilterLinear; *)
           tx
         )
       end textures end

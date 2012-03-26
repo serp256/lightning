@@ -26,12 +26,12 @@ type textureInfo =
     width: int;
     realHeight: int;
     height: int;
-    premultipliedAlpha:bool; 
+    pma:bool; 
     memSize: int;
     textureID: textureID;
   };
 
-type kind = [ Simple | Pallete of textureInfo ];
+type kind = [ Simple of bool | Pallete of textureInfo ];
 type renderInfo = 
   {
     rtextureID: int;
@@ -71,9 +71,9 @@ and c =
   end;
 
 value zero : c = 
-  let renderInfo = { rtextureID = 0; rwidth = 0.; rheight = 0.; clipping = None; kind = Simple } in
+  let renderInfo = { rtextureID = 0; rwidth = 0.; rheight = 0.; clipping = None; kind = Simple False } in
   object(self)
-    method kind = Simple;
+    method kind = renderInfo.kind;
     method renderInfo = renderInfo;
     method width = 0.;
     method height = 0.;
@@ -218,21 +218,21 @@ value loadPallete palleteID =
 
 
 class s textureInfo = 
-  let width = float textureInfo.width
-  and height = float textureInfo.height
+  let () = debug "make texture: <%d>, width=[%d->%d],height=[%d -> %d]" textureInfo.textureID textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height in
+  let width = float textureInfo.realWidth
+  and height = float textureInfo.realHeight
   in
-  let () = debug "make texture: <%d>, width=[%d->%f],height=[%d -> %f]" textureInfo.textureID textureInfo.realWidth width textureInfo.realHeight height in
   let mem = textureInfo.memSize in
   let clipping = 
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
-    then Some (Rectangle.create 0. 0. ((float textureInfo.realWidth) /. width) ((float textureInfo.realHeight) /. height))
+    then Some (Rectangle.create 0. 0. (width /. (float textureInfo.width)) (height /. (float textureInfo.height)))
     else None 
   and kind = 
     match textureInfo.texFormat with
     [ TextureFormatPallete palleteID -> 
       let pallete = loadPallete palleteID in
       Pallete pallete
-    | _ -> Simple
+    | _ -> Simple textureInfo.pma
     ]
   in
   let renderInfo = 
@@ -312,14 +312,14 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
       rwidth = width;
       rheight = height;
       clipping = clipping;
-      kind = Simple;
+      kind = Simple True;
     }
   in
   let mem = ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4) in
   object(self:c)
     method renderInfo = renderInfo;
     value mutable textureID = textureID;
-    method kind = Simple;
+    method kind = renderInfo.kind;
     method textureID = textureID;
     method width = renderInfo.rwidth;
     method height = renderInfo.rheight;
@@ -390,7 +390,7 @@ value load path : c =
       debug
         "load texture: %s %d [%d->%d; %d->%d] [pma=%s]\n%!" 
         path textureInfo.textureID textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
-        (string_of_bool textureInfo.premultipliedAlpha) 
+        (string_of_bool textureInfo.pma) 
     in
     make_and_cache path textureInfo
   ];
@@ -567,7 +567,7 @@ class type rendered =
     inherit c;
     method realWidth:int;
     method realHeight:int;
-    method setPremultipliedAlpha: bool -> unit;
+(*     method setPremultipliedAlpha: bool -> unit; *)
     method framebufferID: framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
@@ -625,13 +625,13 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       rwidth = width;
       rheight = height;
       clipping = clipping;
-      kind = Simple
+      kind = Simple True;
     }
   in
   object(self)
     value mutable renderInfo = renderInfo;
     method renderInfo = renderInfo;
-    method kind = Simple;
+    method kind = renderInfo.kind;
     value mutable isActive = False;
     value mutable textureID = textureID;
     value mutable legalWidth = legalWidth;
@@ -640,9 +640,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     value mutable legalHeight = legalHeight;
     method realHeight = legalHeight;
     method height = renderInfo.rheight;
-    value mutable hasPremultipliedAlpha = True;
-    method setPremultipliedAlpha v = hasPremultipliedAlpha := v;
-    method hasPremultipliedAlpha = hasPremultipliedAlpha;
+    method hasPremultipliedAlpha = match renderInfo.kind with [ Simple v -> v | _ -> assert False ];
 (*     method scale = 1.; *)
     method textureID = textureID;
     method base : option c = None;

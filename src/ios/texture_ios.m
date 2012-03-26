@@ -69,11 +69,11 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
 		//CGContextScaleCTM(context, scale, -scale);
 		CGContextScaleCTM(context, 1.0, -1.0);
     
-    UIGraphicsPushContext(context);
+		UIGraphicsPushContext(context);
 	draw(context,data);
-    UIGraphicsPopContext();        
+	UIGraphicsPopContext();        
     
-		CGContextRelease(context);
+	CGContextRelease(context);
 	tInfo->width = legalWidth;
 	tInfo->realWidth = width;
 	tInfo->height = legalHeight;
@@ -97,13 +97,50 @@ void drawImage(CGContextRef context, void* data) {
 
 int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	//float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
-	float scale = 2.0f;
+	float scale = 1.0f;
 	float width = image.size.width;
 	float height = image.size.height;
 	//CGImageRef  CGImage = uiImage.CGImage;
 	//CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
-	int colorSpace = LTextureFormatRGBA;
-	createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
+	//int colorSpace = LTextureFormatRGBA;
+	//createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
+	int legalWidth  = nextPowerOfTwo(width);
+	int legalHeight = nextPowerOfTwo(height);
+    
+	CGColorSpaceRef cgColorSpace;
+	CGBitmapInfo bitmapInfo;
+	int bytesPerPixel;
+
+	bytesPerPixel = 4;
+	tInfo->format = LTextureFormatRGBA;
+	cgColorSpace = CGColorSpaceCreateDeviceRGB();
+	bitmapInfo = kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
+	tInfo->premultipliedAlpha = YES;
+
+	size_t dataLen = legalWidth * legalHeight * bytesPerPixel;
+	void *imageData = malloc(dataLen);
+	CGContextRef context = CGBitmapContextCreate(imageData, legalWidth, legalHeight, 8, bytesPerPixel * legalWidth, cgColorSpace, bitmapInfo);
+	CGColorSpaceRelease(cgColorSpace);
+    
+	// UIKit referential is upside down - we flip it and apply the scale factor
+	CGContextTranslateCTM(context, 0.0f, legalHeight);
+	CGContextScaleCTM(context, 1.0, -1.0);
+    
+	UIGraphicsPushContext(context);
+  [image drawAtPoint:CGPointMake(0, 0)];
+	UIGraphicsPopContext();        
+    
+	CGContextRelease(context);
+	tInfo->width = legalWidth;
+	tInfo->realWidth = width;
+	tInfo->height = legalHeight;
+	tInfo->realHeight = height;
+	tInfo->generateMipmaps = 0;
+	tInfo->numMipmaps = 0;
+	tInfo->scale = scale;
+	tInfo->dataLen = dataLen;
+	tInfo->imgData = imageData;
+	NSLog(@"IMAGE LOADED");
 	return 0;
 }
 
@@ -337,7 +374,7 @@ int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
   if ([baseFilename rangeOfString:@"@2x"].location == baseFilename.length - 3)
       glTexture.scale = 2.0f;
 	*/
-	tInfo->scale = 2.0;
+	tInfo->scale = 1.0;
 	return 0;
 }
 
@@ -409,8 +446,13 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 	float contentScaleFactor = 1;
 
 	int r;
+	int is_pvr = 0;
+	int is_plx = 0;
 	int is2x = 0;
-	if ([imgType rangeOfString:@"pvr"].location == 0) {
+
+	if ([imgType rangeOfString:@"plt"].location == 0) fullPath = pathForBundleResource(path, bundle); 
+	else if ([imgType rangeOfString:@"pvr"].location == 0) {
+		is_pvr = 1;
 		if (contentScaleFactor != 1.0f) {
 			NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
 			NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", suffix, imgType];
@@ -421,11 +463,11 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 		};
 
 		if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
-		if (!fullPath) r = 2;
-		else r = loadPvrFile(fullPath, tInfo);
+	} else if ([imgType rangeOfString:@"plx"].location == 0) {
+		is_plx = 1;
+		fullPath = pathForBundleResource(path, bundle); 
 	} else {
 		// Try pvr first with right scale factor
-		int is_pvr = 0;
 		do {
 			NSString *fname = NULL;
 			NSString *pathWithoutExt = [path stringByDeletingPathExtension];
@@ -463,23 +505,30 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 			fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
 			fullPath = pathForBundleResource(fname, bundle);
 			if (fullPath) {is_pvr = 1; break;};
+
+			// try plx
+			fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
+			fullPath = pathForBundleResource(fname, bundle);
+			if (fullPath) {is_plx = 1; break;};
+
 			fullPath = pathForBundleResource(path, bundle);
 		} while (0);
+	};
 
-		if (!fullPath) r = 2;
+	if (!fullPath) r = 2;
+	else {
+		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
+		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else {
-			if (is_pvr) r = loadPvrFile(fullPath,tInfo);
-			else {
-				//double t1 = CACurrentMediaTime();
-				UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
-				//double t2 = CACurrentMediaTime();
-				//NSLog(@"load from disk: %F",(t2 - t1));
-				//t1 = CACurrentMediaTime();
-				r = loadImageFile(image, tInfo);
-				//t2 = CACurrentMediaTime();
-				//NSLog(@"decode img: [%f]",(t2 - t1));
-				[image release];
-			}
+			//double t1 = CACurrentMediaTime();
+			UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
+			//double t2 = CACurrentMediaTime();
+			//NSLog(@"load from disk: %F",(t2 - t1));
+			//t1 = CACurrentMediaTime();
+			r = loadImageFile(image, tInfo);
+			//t2 = CACurrentMediaTime();
+			//NSLog(@"decode img: [%f]",(t2 - t1));
+			[image release];
 		}
 	}
 	return r;

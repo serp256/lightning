@@ -23,7 +23,7 @@ type event = [= `RESIZE | `CHANGE ];
 
 type filter = [ FilterNearest | FilterLinear ];
 
-type kind = [ Simple | Pallete of textureInfo ];
+type kind = [ Simple of bool | Pallete of textureInfo ];
 
 
 type renderInfo =
@@ -72,7 +72,7 @@ class type rendered =
     inherit c;
     method realWidth: int;
     method realHeight: int;
-    method setPremultipliedAlpha: bool -> unit;
+(*     method setPremultipliedAlpha: bool -> unit; *)
     method framebufferID: LightCommon.framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
