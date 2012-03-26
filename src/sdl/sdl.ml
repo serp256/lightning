@@ -472,6 +472,11 @@ module Event =
     type joy_button_event =
       { which_button : int; joybutton : int; jstate : press_release
       };
+    type tf_event_type = [ FingerMotion | FingerDown | FingerUp ];
+    type touch_finger_event = 
+      { tf_type: tf_event_type; touch_id: int64; finger_id: int64; tf_state: int; 
+        tfx: int; tfy: int; tfdx: int; tfdy: int; pressure: int
+      };
     type resize_event = { w : int; h : int };
     type user_event = { code : int; data1 : pointer; data2 : pointer };
     type window_event_id = 
@@ -505,6 +510,7 @@ module Event =
       | Jball of joy_ball_event
       | Jhat of joy_hat_event
       | Jbutton of joy_button_event
+      | TouchFingerEvent of touch_finger_event
       | Resize of resize_event
       | Expose
       | Quit

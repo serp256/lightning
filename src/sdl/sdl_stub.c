@@ -995,6 +995,34 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	    Store_field(to_return, 0, ML_event);
 			break;
 	}
+	case SDL_FINGERMOTION:
+	case SDL_FINGERDOWN:
+	case SDL_FINGERUP:
+	{
+		ML_event = caml_alloc(9,0);
+		switch (event.type) {
+			case SDL_FINGERMOTION:
+				Store_field(ML_event,0,Val_int(0));
+				break;
+			case SDL_FINGERDOWN:
+				Store_field(ML_event,0,Val_int(0));
+				break;
+			case SDL_FINGERUP:
+				Store_field(ML_event,0,Val_int(0));
+				break;
+		}
+		Store_field(ML_event,1,copy_int64(event.tfinger.touchId));
+		Store_field(ML_event,2,copy_int64(event.tfinger.fingerId));
+		Store_field(ML_event,3,Val_int(event.tfinger.state));
+		Store_field(ML_event,4,Val_int(event.tfinger.x));
+		Store_field(ML_event,5,Val_int(event.tfinger.y));
+		Store_field(ML_event,6,Val_int(event.tfinger.dx));
+		Store_field(ML_event,7,Val_int(event.tfinger.dy));
+		Store_field(ML_event,8,Val_int(event.tfinger.pressure));
+		to_return = caml_alloc(1,8);
+		Store_field(to_return,0,ML_event);
+		break;
+	}
 	case SDL_JOYAXISMOTION:
 	{
 	    ML_event=caml_alloc(3,0);
