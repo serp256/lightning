@@ -150,7 +150,7 @@ value ml_loadImage(value oldTextureID,value opath,value scale) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_failwith("Can't load image");
 	};
-	GLuint textureID = createGLTexture(OPTION_INT(oldTextureID),&tInfo);
+	value textureID = createGLTexture(oldTextureID,&tInfo);
 	// free surface
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
 	//SDL_FreeSurface(tInfo.surface);

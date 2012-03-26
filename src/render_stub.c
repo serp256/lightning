@@ -756,7 +756,7 @@ void print_image(lgImage *img) {
 			img->pma = Bool_val(Field(kind,0)); \
 			break; \
 		case 1: \
-			img->pallete = Long_val(Field(Field(kind,0),7)); \
+			img->pallete = *TEXTURE_ID(Field(Field(kind,0),7)); \
 			img->pma = Bool_val(Field(Field(kind,0),5)); \
 			break; \
 		default: \
@@ -785,7 +785,7 @@ value ml_image_create(value textureInfo,value color,value oalpha) {
 	tq->tr.v = (vertex2F) { tq->br.v.x, tq->tl.v.y};
 	tq->tr.c = c;
 	set_image_uv(tq,Field(textureInfo,3));
-	img->textureID = Long_val(Field(textureInfo,0));
+	img->textureID = *TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(img,textureInfo);
 	value res = caml_alloc_custom(&image_ops,sizeof(lgImage*),0,1); // 
 	*IMAGE(res) = img;
@@ -883,7 +883,7 @@ void ml_image_update(value image, value textureInfo, value flipX, value flipY) {
 		tq->tr.tex = tq->br.tex;
 		tq->br.tex = tmp;
 	};
-	img->textureID = Long_val(Field(textureInfo,0));
+	img->textureID = *TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(img,textureInfo);
 }
 
@@ -977,52 +977,6 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 ////////////////////
 
 
-value ml_rendertexture_create(value format, value color, value alpha, value width,value height) {
-	GLuint mTextureID;
-	checkGLErrors("start create rendertexture");
-	glGenTextures(1, &mTextureID);
-	lgGLBindTexture(mTextureID,PMA);
-	boundTextureID = mTextureID;
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
-	int w = Long_val(width),h = Long_val(height);
-	PRINT_DEBUG("create rtexture: [%d:%d]\n",w,h);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	checkGLErrors("tex image 2d for framebuffer %d:%d",w,h);
-	glBindTexture(GL_TEXTURE_2D,0);
-	boundTextureID = 0;
-	GLuint mFramebuffer;
-	GLint oldBuffer;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
-	glGenFramebuffers(1, &mFramebuffer);
-	PRINT_DEBUG("generated new framebuffer: %d\n",mFramebuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-	checkGLErrors("bind framebuffer");
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
-	checkGLErrors("framebuffer texture");
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		PRINT_DEBUG("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
-		caml_failwith("failed to create frame buffer for render texture");
-	};
-	//color3F c = COLOR3F_FROM_INT(Int_val(color));
-	//glClearColor(c.r,c.g,c.b,(GLclampf)Double_val(alpha));
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
-	//printf("old buffer: %d\n",oldBuffer);
-	value result = caml_alloc_small(2,0);
-	Field(result,0) = Val_long(mFramebuffer);
-	Field(result,1) = Val_long(mTextureID);
-	return result;
-};
-
-void ml_resize_texture(value textureID,value width,value height) {
-	GLuint mTextureID = Long_val(textureID);
-	glBindTexture(GL_TEXTURE_2D, mTextureID);
-	boundTextureID = 0;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,Long_val(width),Long_val(height),0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
-}
 
 void get_framebuffer_state(framebuffer_state *s) {
 	GLint oldBuffer;
@@ -1143,7 +1097,7 @@ value ml_atlas_init(value textureInfo) {
 	CAMLparam0();
 
 	atlas_t *atl = caml_stat_alloc(sizeof(atlas_t));
-	atl->textureID = Long_val(Field(textureInfo,0));
+	atl->textureID = *TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(atl,textureInfo);
 	/*
 	value kind = Field(textureInfo,4);

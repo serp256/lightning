@@ -23,6 +23,11 @@
 
 int nextPowerOfTwo(int number);
 
+int MAX_TEXTURE_MEMORY;
+
+value alloc_texture_id(GLuint tid);
+#define TEXTURE_ID(v) ((GLuint*)Data_custom_val(v))
+
 typedef enum 
 {
 	LTextureFormatRGBA,
@@ -107,6 +112,6 @@ enum PVRPixelType
 	Field(mlTex,4) = Val_long(tInfo->height);\
 	Field(mlTex,5) = Val_int(tInfo->premultipliedAlpha);\
 	Field(mlTex,6) = Val_long(tInfo->dataLen); \
-	Field(mlTex,7) = Val_long(textureID);
+	Field(mlTex,7) = textureID;
 
 #endif

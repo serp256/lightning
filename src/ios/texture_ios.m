@@ -577,9 +577,7 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value ocontentScaleFa
 		caml_failwith("Can't load image");
 	};
 
-	uint textureID;
-	textureID = createGLTexture(OPTION_INT(oldTexture),&tInfo);
-	NSLog(@"loaded texture: %d",textureID);
+	value textureID = createGLTexture(oldTexture,&tInfo);
 	free(tInfo.imgData);
 
 	checkGLErrors("after load texture");

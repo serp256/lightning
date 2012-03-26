@@ -124,7 +124,7 @@ typedef struct {
 
 value create_ml_texture(renderbuffer_t *rb) {
 	CAMLparam0();
-	CAMLlocal4(width,height,clip,res);
+	CAMLlocal5(mlTextureID,width,height,clip,res);
 	static value *mlf = NULL;
 	if (mlf == NULL) mlf = (value*)caml_named_value("create_ml_texture");
 	if (!IS_CLIPPING(rb->clp)) {
@@ -135,10 +135,11 @@ value create_ml_texture(renderbuffer_t *rb) {
 		Store_double_field(Field(clip,0),2,rb->clp.width);
 		Store_double_field(Field(clip,0),3,rb->clp.height);
 	} else clip = Val_unit;
-	value params[4];
-	params[0] = Val_long(rb->tid);
+	Store_textureID(mlTextureID,rb->tid);
 	width = caml_copy_double(rb->width);
 	height = caml_copy_double(rb->height);
+	value params[4];
+	params[0] = mlTextureID;
 	params[1] = width;
 	params[2] = height; 
 	params[3] = clip;
@@ -430,7 +431,7 @@ value ml_glow_make(value textureInfo, value glow) {
 
 	renderbuffer_t ib;
 	create_renderbuffer(rwidth/2,rheight/2,&ib,GL_LINEAR);
-	GLuint tid = Long_val(Field(textureInfo,0));
+	GLuint tid = *TEXTURE_ID(Field(textureInfo,0));
 	value clip = Field(textureInfo,3);
 	clipping clp;
 	if (clip != 1) {
