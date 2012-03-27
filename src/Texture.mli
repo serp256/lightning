@@ -23,12 +23,13 @@ type event = [= `RESIZE | `CHANGE ];
 
 type filter = [ FilterNearest | FilterLinear ];
 
-type kind = [ Simple of bool | Pallete of textureInfo ];
+type kind = [ Simple of bool | Alpha | Pallete of textureInfo ];
 
+value int32_of_textureID: textureID -> int32;
 
 type renderInfo =
   {
-    rtextureID: int;
+    rtextureID: textureID;
     rwidth: float;
     rheight: float;
     clipping: option Rectangle.t;

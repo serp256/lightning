@@ -372,6 +372,7 @@ value sound (stage:Stage.c) =
 
 value half_pixels (stage:Stage.c) =
 (
+  (*
   let tree = Image.load "60.png" in
   (
 (*     tree#setAlpha 0.5; *)
@@ -408,12 +409,21 @@ value half_pixels (stage:Stage.c) =
     *)
     stage#addChild tree;
   );
+  *)
   (*
   let img = Image.load "frame.png" in
   (
     img#setPos 100.5 100.;
     stage#addChild img;
   );
+  *)
+  let font = Image.load "MyriadPro-Regular0.alpha" in
+  (
+    font#setColor 0xFFFFFF;
+    font#setPos 100. 100.;
+    stage#addChild font;
+  );
+  (*
   let tex = (Texture.load "MyriadPro-Regular0.png")#subTexture (Rectangle.create 341. 421. 6. 8.) in
   (
     let g = Image.create tex in
@@ -479,8 +489,11 @@ value game_center (stage:Stage.c) =
       | False -> "Game center failed"
       ]
     in
-    let (_,text) = TLF.create (TLF.p [ `text text ]) in
-    stage#addChild text;
+    let (_,text) = TLF.create (TLF.p ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setFilters [ Filters.glow ~size:2 0 ];
+      stage#addChild text;
+    )
   end ();
 
 

@@ -23,7 +23,5 @@ void main()
 	newcolor.b = dot(color, vec4(u_matrix[10], u_matrix[11], u_matrix[12], u_matrix[13])) + u_matrix[14] * color.a;
 	newcolor.a = dot(color, vec4(u_matrix[15], u_matrix[16], u_matrix[17], u_matrix[18])) + u_matrix[19] * color.a;
 
-	newcolor.a *= u_parentAlpha;
-
-	gl_FragColor =  newcolor;
+	gl_FragColor =  newcolor * u_parentAlpha;
 }

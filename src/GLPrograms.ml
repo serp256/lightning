@@ -26,7 +26,7 @@ module Image = struct (*{{{*)
 
 end;(*}}}*)
 
-module ImagePallete = struct
+module ImagePallete = struct (*{{{*)
   value id = gen_id ();
   value create () = 
     let prg = 
@@ -36,8 +36,19 @@ module ImagePallete = struct
     in
     (prg,None);
 
-end;
+end;(*}}}*)
 
+module ImageAlpha = struct (*{{{*)
+  value id = gen_id ();
+  value create () = 
+    let prg = 
+      load id ~vertex:"Image.vsh" ~fragment:"ImageAlpha.fsh"
+        ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+        ~uniforms:[| ("u_texture",(UInt 0)) |]
+    in
+    (prg,None);
+
+end;(*}}}*)
 
 module ImageColorMatrix = struct (*{{{*)
 
@@ -81,4 +92,26 @@ module ImagePalleteColorMatrix = struct (*{{{*)
     in
     (prg,Some filter);
     
+end;(*}}}*)
+
+module ImageAlphaColorMatrix = struct (*{{{*)
+
+  value id  = gen_id();
+  value create matrix = 
+    let prg = 
+      load id ~vertex:"Image.vsh" ~fragment:"ImageAlphaColorMatrix.fsh"
+        ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
+        ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
+    in
+    let f = Render.Filter.color_matrix matrix in
+    (prg,Some f);
+    
+  value from_filter filter =
+    let prg = 
+      load id ~vertex:"Image.vsh" ~fragment:"ImageAlphaColorMatrix.fsh"
+        ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
+        ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
+    in
+    (prg,Some filter);
+
 end;(*}}}*)

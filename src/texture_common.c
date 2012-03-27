@@ -8,19 +8,21 @@
 #include "texture_common.h"
 
 
-extern int boundTextureID;
+static int MAX_TEXTURE_MEMORY = 62914560;
 
-
-static void textureID_delete(value texid) {
-	GLuint textureID = *TEXTURE_ID(texid);
-	glDeleteTextures(1,&textureID);
-	*TEXTURE_ID(texid) = 0;
+void ml_texture_id_delete(value textureID) {
+	GLuint tid = *TEXTURE_ID(textureID);
+	PRINT_DEBUG("delete texture: %d\n",tid);
+	if (tid) {
+		glDeleteTextures(1,&tid);
+		*TEXTURE_ID(textureID) = 0;
+	};
 }
 
 static void textureID_finalize(value texid) {
 	GLuint textureID = *TEXTURE_ID(texid);
-	printf("finalize texture: <%d>\n",textureID);
-	if textureID glDeleteTextures(1,&textureID);
+	PRINT_DEBUG("finalize texture: <%d>\n",textureID);
+	if (textureID) glDeleteTextures(1,&textureID);
 }
 
 static int textureID_compare(value texid1,value texid2) {
@@ -33,12 +35,7 @@ static int textureID_compare(value texid1,value texid2) {
 	}
 }
 
-
-#define Store_textureID(mlTextureID,GLuint tid) \
-	mlTextureID = caml_alloc_custom(&textureID_ops, sizeof(GLuint), tInfo->dataLen, MAX_TEXTURE_MEMORY); \
-	*TEXTURE_ID(mlTextureID) = tid;
-
-struct custom_operations texid_ops = {
+struct custom_operations textureID_ops = {
   "pointer to texture id",
   textureID_finalize,
   textureID_compare,
@@ -46,6 +43,118 @@ struct custom_operations texid_ops = {
   custom_serialize_default,
   custom_deserialize_default
 };
+
+#define Store_textureID(mlTextureID,tid,dataLen) \
+	mlTextureID = caml_alloc_custom(&textureID_ops, sizeof(GLuint), dataLen, MAX_TEXTURE_MEMORY); \
+	*TEXTURE_ID(mlTextureID) = tid;
+
+value alloc_texture_id(GLuint textureID, int dataLen) {
+	value mlTextureID;
+	Store_textureID(mlTextureID,textureID,dataLen);
+	return mlTextureID;
+}
+
+value ml_texture_id_zero() {
+	value mlTextureID;
+	Store_textureID(mlTextureID,0,0);
+	return mlTextureID;
+}
+
+value ml_texture_id_to_int32(value textureID) {
+	GLuint tid = *TEXTURE_ID(textureID);
+	return (caml_copy_int32(tid));
+}
+
+GLuint boundTextureID = 0;
+int PMA = -1;
+int separateBlend = 0;
+GLuint boundTextureID1 = 0;
+
+void setPMAGLBlend () {
+	if (PMA != 1) {
+		glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
+		PMA = 1;
+	};
+}
+
+void setNotPMAGLBlend () {
+	if (PMA != 0) {
+		if (separateBlend) {
+			//printf("set separate not pma blend\n");
+			glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+		} else {
+			//printf("set odinary not pma blend\n");
+			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		};
+		PMA = 0;
+	};
+}
+
+void enableSeparateBlend () {
+	separateBlend = 1;
+	if (PMA == 0) PMA = -1;
+}
+void disableSeparateBlend () {
+	separateBlend = 0;
+	if (PMA == 0) PMA = -1;
+}
+
+void lgGLBindTexture(GLuint textureID, int newPMA) {
+	if (boundTextureID != textureID) {
+		glBindTexture(GL_TEXTURE_2D,textureID);
+		boundTextureID = textureID;
+	};
+	if (newPMA != PMA) {
+		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
+			if (separateBlend)
+				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+			else
+				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		PMA = newPMA;
+	};
+	if (boundTextureID1) {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D,0);
+		//glDisable(GL_TEXTURE_2D);
+		glActiveTexture(GL_TEXTURE0);
+		boundTextureID1 = 0;
+	};
+	checkGLErrors("bind texture");
+};
+
+void lgGLBindTextures(GLuint textureID, GLuint textureID1, int newPMA) {
+	if (boundTextureID != textureID) {
+		glBindTexture(GL_TEXTURE_2D,textureID);
+		boundTextureID = textureID;
+	};
+	if (newPMA != PMA) {
+		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
+			if (separateBlend)
+				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+			else
+				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		PMA = newPMA;
+	};
+	if (boundTextureID1 != textureID1) {
+		glActiveTexture(GL_TEXTURE1);
+		checkGLErrors("active texture 1");
+		glBindTexture(GL_TEXTURE_2D,textureID1);
+		boundTextureID1 = textureID1;
+		glActiveTexture(GL_TEXTURE0);
+	}
+	checkGLErrors("bind textures");
+}
+
+void lgResetBoundTextures() {
+	boundTextureID = 0;
+	if (boundTextureID1) {
+		glActiveTexture(GL_TEXTURE1);
+		//glDisable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,0);
+		glActiveTexture(GL_TEXTURE0);
+		boundTextureID1 = 0;
+	};
+}
 
 
 int nextPowerOfTwo(int number) {
@@ -108,7 +217,7 @@ typedef struct {
 } texParams;
 
 
-int textureParams(textureInfo *tInfo,texParams *p) {
+static inline int textureParams(textureInfo *tInfo,texParams *p) {
     switch (tInfo->format & 0xFFFF)
     {
         case LTextureFormatRGBA:
@@ -119,6 +228,7 @@ int textureParams(textureInfo *tInfo,texParams *p) {
 						break;
         case LTextureFormatAlpha:
             p->glTexFormat = GL_ALPHA;
+						p->bitsPerPixel = 1;
             break;
 				case LTextureFormatPallete:
 						p->glTexFormat = GL_LUMINANCE_ALPHA;
@@ -192,7 +302,6 @@ void ml_delete_texture(value textureID) {
 value createGLTexture(value oldTextureID,textureInfo *tInfo) {
     //int mRepeat = 0;    
     
-		PRINT_DEBUG("create GL Texture");
 		texParams params;
     params.glTexType = GL_UNSIGNED_BYTE;
     params.bitsPerPixel = 8;
@@ -203,10 +312,10 @@ value createGLTexture(value oldTextureID,textureInfo *tInfo) {
 		GLuint textureID;
 		value mlTextureID;
 		if (oldTextureID == 1) { // ocaml None
-			glGenTextures(1, &mTextureID);
+			glGenTextures(1, &textureID);
 			PRINT_DEBUG("glGenTextures: <%d>",textureID);
 			checkGLErrors("glGenTexture");
-			Store_textureID(mlTextureID,textureID);
+			Store_textureID(mlTextureID,textureID,tInfo->dataLen);
 		} else {
 			// FIXME: check if it's correct
 			mlTextureID = Field(oldTextureID,0);
@@ -306,7 +415,7 @@ void ml_free_image_info(value tInfo) {
 
 value ml_rendertexture_create(value format, value color, value alpha, value width,value height) {
 	CAMLparam0();
-	CAMLlocal(mlTextureID);
+	CAMLlocal1(mlTextureID);
 	GLuint mTextureID;
 	checkGLErrors("start create rendertexture");
 	glGenTextures(1, &mTextureID);
@@ -339,11 +448,11 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	//printf("old buffer: %d\n",oldBuffer);
-	Store_textureID(mlTextureID,mTextureID);
+	Store_textureID(mlTextureID,mTextureID,w * h * 4);
 	value result = caml_alloc_small(2,0);
 	Field(result,0) = Val_long(mFramebuffer);
 	Field(result,1) = mlTextureID;
-	return result;
+	CAMLreturn(result);
 };
 
 void ml_resize_texture(value textureID,value width,value height) {

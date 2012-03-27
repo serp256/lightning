@@ -151,8 +151,6 @@ void get_framebuffer_state(framebuffer_state *s);
 void set_framebuffer_state(framebuffer_state *s);
 
 
-void lgGLBindTexture(GLuint textureID, int pma);
-void lgResetBoundTextures();
 
 
 #endif

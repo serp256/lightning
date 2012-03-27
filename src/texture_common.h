@@ -23,10 +23,18 @@
 
 int nextPowerOfTwo(int number);
 
-int MAX_TEXTURE_MEMORY;
 
-value alloc_texture_id(GLuint tid);
 #define TEXTURE_ID(v) ((GLuint*)Data_custom_val(v))
+
+void setPMAGLBlend ();
+void enableSeparateBlend ();
+void disableSeparateBlend ();
+void setNotPMAGLBlend ();
+void lgGLBindTexture(GLuint textureID, int pma);
+void lgGLBindTextures(GLuint textureID, GLuint textureID1, int newPMA);
+void lgResetBoundTextures();
+value alloc_texture_id(GLuint textureID, int dataLen);
+
 
 typedef enum 
 {
@@ -60,7 +68,7 @@ typedef struct {
 
 int loadPlxFile(const char *path,textureInfo *tInfo);
 
-value createGLTexture(GLuint mTextureID, textureInfo *tInfo);
+value createGLTexture(value oldTextureID, textureInfo *tInfo);
 
 
 // --- PVR structs & enums -------------------------------------------------------------------------

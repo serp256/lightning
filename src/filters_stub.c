@@ -1,16 +1,10 @@
 
+#include "texture_common.h"
 #include "render_stub.h"
 #include <caml/callback.h>
 #include "math.h"
 
 extern GLuint currentShaderProgram;
-
-
-static int nextPowerOfTwo(int number) {
-	int result = 1;
-	while (result < number) result *= 2;
-	return result;
-}
 
 
 // Shaders
@@ -135,7 +129,8 @@ value create_ml_texture(renderbuffer_t *rb) {
 		Store_double_field(Field(clip,0),2,rb->clp.width);
 		Store_double_field(Field(clip,0),3,rb->clp.height);
 	} else clip = Val_unit;
-	Store_textureID(mlTextureID,rb->tid);
+	mlTextureID = alloc_texture_id(rb->tid,width * height * 4);
+	fprintf(stderr,"allocated new mlTextureID: %ld\n",mlTextureID);
 	width = caml_copy_double(rb->width);
 	height = caml_copy_double(rb->height);
 	value params[4];

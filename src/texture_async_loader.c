@@ -88,7 +88,7 @@ value ml_texture_async_loader_pop(value oruntime) {
 	response_t *r = thqueue_responses_pop(runtime->resp_queue);
 	if (r == NULL) res = Val_unit;
 	else {
-		GLuint textureID = createGLTexture(0,r->tInfo);
+		value textureID = createGLTexture(1,r->tInfo);
 		if (!textureID) caml_failwith("failed to load texture");
 		ML_TEXTURE_INFO(mlTex,textureID,r->tInfo);
 		free(r->tInfo->imgData);

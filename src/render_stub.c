@@ -1,3 +1,4 @@
+#include "texture_common.h"
 #include "render_stub.h"
 #include <kazmath/GL/matrix.h>
 
@@ -25,6 +26,7 @@
 #undef HAS_VAO
 #endif
 
+/*
 void check_gl_errors(char *fname, int lnum, char *msg) {
 	GLenum error = glGetError();
 	int is_error = 0;
@@ -35,6 +37,7 @@ void check_gl_errors(char *fname, int lnum, char *msg) {
 	};
 	if (is_error) exit(1);
 }
+*/
 
 //////////////////////////////////
 /// COLORS
@@ -46,31 +49,8 @@ void check_gl_errors(char *fname, int lnum, char *msg) {
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
 #define UPDATE_PMA_ALPHA(c,alpha) (c.r = (GLubyte)((double)c.r * alpha), c.g = (GLubyte)((double)c.g * alpha), c.b = (GLubyte)((double)c.b * alpha), c.a = (GLubyte)(a * 255))
 
-GLuint boundTextureID = 0;
-int PMA = -1;
-int separateBlend = 0;
-GLuint boundTextureID1 = 0;
 
 
-void setPMAGLBlend () {
-	if (PMA != 1) {
-		glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
-		PMA = 1;
-	};
-}
-
-void setNotPMAGLBlend () {
-	if (PMA != 0) {
-		if (separateBlend) {
-			//printf("set separate not pma blend\n");
-			glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-		} else {
-			//printf("set odinary not pma blend\n");
-			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		};
-		PMA = 0;
-	};
-}
 
 #define setDefaultGLBlend setPMAGLBlend
 
@@ -252,11 +232,11 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 
   if( enablePosition != vertexAttribPosition ) {
     if( enablePosition ) {
-			printf("enable vertex attrib array\n");
+			//printf("enable vertex attrib array\n");
       glEnableVertexAttribArray( lgVertexAttrib_Position );
 		}
     else {
-			printf("disable vertex attrib array\n");
+			//printf("disable vertex attrib array\n");
       glDisableVertexAttribArray( lgVertexAttrib_Position );
 		}
   
@@ -331,62 +311,8 @@ void lgGLUseProgram( GLuint program ) {
   }
 }
 
-void lgGLBindTexture(GLuint textureID, int newPMA) {
-	if (boundTextureID != textureID) {
-		glBindTexture(GL_TEXTURE_2D,textureID);
-		boundTextureID = textureID;
-	};
-	if (newPMA != PMA) {
-		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
-			if (separateBlend)
-				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-			else
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		PMA = newPMA;
-	};
-	if (boundTextureID1) {
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D,0);
-		//glDisable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE0);
-		boundTextureID1 = 0;
-	};
-	checkGLErrors("bind texture");
-};
 
-void lgGLBindTextures(GLuint textureID, GLuint textureID1, int newPMA) {
-	if (boundTextureID != textureID) {
-		glBindTexture(GL_TEXTURE_2D,textureID);
-		boundTextureID = textureID;
-	};
-	if (newPMA != PMA) {
-		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
-			if (separateBlend)
-				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-			else
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		PMA = newPMA;
-	};
-	if (boundTextureID1 != textureID1) {
-		glActiveTexture(GL_TEXTURE1);
-		checkGLErrors("active texture 1");
-		glBindTexture(GL_TEXTURE_2D,textureID1);
-		boundTextureID1 = textureID1;
-		glActiveTexture(GL_TEXTURE0);
-	}
-	checkGLErrors("bind textures");
-}
 
-void lgResetBoundTextures() {
-	boundTextureID = 0;
-	if (boundTextureID1) {
-		glActiveTexture(GL_TEXTURE1);
-		//glDisable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D,0);
-		glActiveTexture(GL_TEXTURE0);
-		boundTextureID1 = 0;
-	};
-}
 
 value ml_program_create(value vShader,value fShader,value attributes,value uniforms) {
 	CAMLparam4(vShader,fShader,attributes,uniforms);
@@ -619,7 +545,7 @@ value ml_quad_alpha(value quad) {
 void ml_quad_set_alpha(value quad,value alpha) {
 	lgQuad *q = *QUAD(quad);
 	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);
-	printf("set quad alpha to: %d\n",a);
+	//printf("set quad alpha to: %d\n",a);
 	q->bl.c.a = a;
 	q->br.c.a = a;
 	q->tl.c.a = a;
@@ -750,19 +676,29 @@ void print_image(lgImage *img) {
 
 #define APPLY_TEXTURE_INFO_KIND(img,textureInfo) \
 	value kind = Field(textureInfo,4); \
-	switch (Tag_val(kind)) { \
-		case 0: \
-			img->pallete = 0; \
-			img->pma = Bool_val(Field(kind,0)); \
-			break; \
-		case 1: \
-			img->pallete = *TEXTURE_ID(Field(Field(kind,0),7)); \
-			img->pma = Bool_val(Field(Field(kind,0),5)); \
-			break; \
-		default: \
+	if (Is_long(kind)) { \
+		if (Int_val(kind) == 0) { \
+			img->pallete = 0;\
+			img->pma = 1; \
+		} else { \
 			fprintf(stderr,"unknown texture kind\n"); \
 			exit(3); \
-	};
+		} \
+	} else { \
+		switch (Tag_val(kind)) { \
+			case 0: \
+				img->pallete = 0; \
+				img->pma = Bool_val(Field(kind,0)); \
+				break; \
+			case 1: \
+				img->pallete = *TEXTURE_ID(Field(Field(kind,0),7)); \
+				img->pma = Bool_val(Field(Field(kind,0),5)); \
+				break; \
+			default: \
+				fprintf(stderr,"unknown texture kind\n"); \
+				exit(3); \
+		};\
+	}
 
 #define TEX_SIZE(w) (Double_val(w))
 //
@@ -774,7 +710,7 @@ value ml_image_create(value textureInfo,value color,value oalpha) {
 	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
 	value width = Field(textureInfo,1);
 	value height = Field(textureInfo,2);
-	fprintf(stderr,"width: %f, height: %f\n",TEX_SIZE(width),TEX_SIZE(height));
+	//fprintf(stderr,"width: %f, height: %f\n",TEX_SIZE(width),TEX_SIZE(height));
 	lgTexQuad *tq = &(img->quad);
 	tq->bl.v = (vertex2F){0,0};
 	tq->bl.c = c;
@@ -852,7 +788,7 @@ void ml_image_set_alpha(value image,value alpha) {
 	lgImage *img = *IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	double a = Double_val(alpha);
-	UPDATE_PMA_ALPHA(tq->bl.c,a);
+	UPDATE_PMA_ALPHA(tq->bl.c,a); // check PMA
 	UPDATE_PMA_ALPHA(tq->br.c,a);
 	UPDATE_PMA_ALPHA(tq->tl.c,a);
 	UPDATE_PMA_ALPHA(tq->tr.c,a);
@@ -1031,8 +967,7 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	//glEnable(GL_BLEND);
 	//lgGLBindTexture(0,0);
 	//setNotPMAGLBlend();
-	separateBlend = 1;
-	PMA = -1;
+	enableSeparateBlend();
 	return (value)s; 
 }
 
@@ -1048,8 +983,7 @@ void ml_deactivate_framebuffer(value ostate) {
 	kmGLPopMatrix();
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPopMatrix();
-	separateBlend = 0;
-	PMA = -1;
+	disableSeparateBlend();
 	caml_stat_free(s);
 }
 
