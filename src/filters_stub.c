@@ -417,7 +417,9 @@ value ml_glow_make(value textureInfo, value glow) {
 	double rwidth = iwidth + 2 * gs;
 	double rheight = iheight + 2 * gs;
 
-	int pma = 1;
+	value kind = Field(textureInfo,4);
+	if (Tag_val(kind) != 0) caml_failwith("can't make glow not simple texture");
+	int pma = Bool_val(Field(kind,0));
 	lgResetBoundTextures();
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
