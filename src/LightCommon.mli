@@ -1,7 +1,7 @@
 value (|>): 'a -> ('a -> 'b) -> 'b;
 value color_white: int;
 value color_black: int;
-type textureID = int;
+type textureID; 
 type framebufferID = int;
 
 value nextPowerOfTwo: int -> int;

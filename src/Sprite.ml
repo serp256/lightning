@@ -1,7 +1,14 @@
 
 module D = DisplayObject;
 
-type imageCache = {ic: Image.c; tex: Texture.rendered; empty: mutable bool; valid: mutable [= `invalid | `prerender | `valid ]; force: mutable bool};
+type imageCache = 
+  {
+    ic: Image.c; 
+    tex: Texture.rendered; 
+    empty: mutable bool; 
+    valid: mutable [= `invalid | `prerender | `valid ]; 
+    force: mutable bool
+  };
 
 class c =
   object(self)

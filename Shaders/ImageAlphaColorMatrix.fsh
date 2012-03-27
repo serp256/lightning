@@ -15,8 +15,8 @@ uniform float u_matrix[20];
 
 void main()
 {
-	vec4 color = v_fragmentColor * texture2D(u_texture, v_texCoord);
-	vec4 newcolor ; //= color;
+	vec4 color = v_fragmentColor * texture2D(u_texture, v_texCoord).a;
+	vec4 newcolor; 
 	 
 	newcolor.r = dot(color, vec4(u_matrix[0], u_matrix[1], u_matrix[2], u_matrix[3])) + u_matrix[4] * color.a;
 	newcolor.g = dot(color, vec4(u_matrix[5], u_matrix[6], u_matrix[7], u_matrix[8])) + u_matrix[9] * color.a;

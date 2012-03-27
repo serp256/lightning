@@ -136,7 +136,7 @@ value register xmlpath = (*{{{*)
 
 
 value register xmlpath =
-  let dirname = Filename.dirname xmlpath in
+  let dirname = match Filename.dirname xmlpath with [ "." -> "" | dir -> dir ] in
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
   let () = XmlParser.accept (`Dtd None) in
   let floats = XmlParser.floats in

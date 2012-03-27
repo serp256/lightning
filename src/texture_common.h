@@ -23,18 +23,32 @@
 
 int nextPowerOfTwo(int number);
 
+
+#define TEXTURE_ID(v) ((GLuint*)Data_custom_val(v))
+
+void setPMAGLBlend ();
+void enableSeparateBlend ();
+void disableSeparateBlend ();
+void setNotPMAGLBlend ();
+void lgGLBindTexture(GLuint textureID, int pma);
+void lgGLBindTextures(GLuint textureID, GLuint textureID1, int newPMA);
+void lgResetBoundTextures();
+value alloc_texture_id(GLuint textureID, int dataLen);
+
+
 typedef enum 
 {
-    LTextureFormatRGBA,
-    LTextureFormatRGB,
-    LTextureFormatAlpha,
-    LTextureFormatPvrtcRGB2,
-    LTextureFormatPvrtcRGBA2,
-    LTextureFormatPvrtcRGB4,
-    LTextureFormatPvrtcRGBA4,
-    LTextureFormat565,
-    LTextureFormat5551,
-    LTextureFormat4444
+	LTextureFormatRGBA,
+	LTextureFormatRGB,
+	LTextureFormatAlpha,
+	LTextureFormatPvrtcRGB2,
+	LTextureFormatPvrtcRGBA2,
+	LTextureFormatPvrtcRGB4,
+	LTextureFormatPvrtcRGBA4,
+	LTextureFormat565,
+	LTextureFormat5551,
+	LTextureFormat4444,
+	LTextureFormatPallete
 } LTextureFormat;
 
 typedef struct {
@@ -52,7 +66,9 @@ typedef struct {
 } textureInfo;
 
 
-value createGLTexture(GLuint mTextureID, textureInfo *tInfo);
+int loadPlxFile(const char *path,textureInfo *tInfo);
+
+value createGLTexture(value oldTextureID, textureInfo *tInfo);
 
 
 // --- PVR structs & enums -------------------------------------------------------------------------
@@ -94,18 +110,16 @@ enum PVRPixelType
 #define OPTION_INT(v) v == 1 ? 0 : Long_val(Field(v,0))
 
 #define ML_TEXTURE_INFO(mlTex,textureID,tInfo) \
-	mlTex = caml_alloc_tuple(11);\
-	Store_field(mlTex,0,Val_int(tInfo->format));\
-	Store_field(mlTex,1,Val_int((unsigned int)tInfo->realWidth));\
-	Store_field(mlTex,2,Val_int(tInfo->width));\
-	Store_field(mlTex,3,Val_int((unsigned int)tInfo->realHeight));\
-	Store_field(mlTex,4,Val_int(tInfo->height));\
-	Store_field(mlTex,5,Val_int(tInfo->numMipmaps));\
-	Store_field(mlTex,6,Val_int(1));\
-	Store_field(mlTex,7,Val_int(tInfo->premultipliedAlpha));\
-	Store_field(mlTex,8,caml_copy_double(tInfo->scale));\
-	Store_field(mlTex,9,Val_long(tInfo->dataLen)); \
-	Store_field(mlTex,10,Val_long(textureID));
-
+	mlTex = caml_alloc_tuple(8);\
+	if ((tInfo->format & 0xFFFF) != LTextureFormatPallete) \
+		Field(mlTex,0) = Val_int(tInfo->format);\
+	else { Store_field(mlTex,0,caml_alloc(1,0)); Field(Field(mlTex,0),0) = Val_int(tInfo->format >> 16);} \
+	Field(mlTex,1) = Val_long((unsigned int)tInfo->realWidth);\
+	Field(mlTex,2) = Val_long(tInfo->width);\
+	Field(mlTex,3) = Val_long((unsigned int)tInfo->realHeight);\
+	Field(mlTex,4) = Val_long(tInfo->height);\
+	Field(mlTex,5) = Val_int(tInfo->premultipliedAlpha);\
+	Field(mlTex,6) = Val_long(tInfo->dataLen); \
+	Field(mlTex,7) = textureID;
 
 #endif

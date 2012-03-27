@@ -82,11 +82,13 @@ module Filter = struct (* remove it from here *)
 (*   external glow: int -> int -> t = "ml_filter_glow"; *)
 (*   external glow_make: framebufferID -> textureID -> float -> float -> option Rectangle.t -> option (textureID * float * float * option Rectangle.t) -> int -> unit = "ml_glow_make_byte"
  *   "ml_glow_make"; *)
+(*   type color_matrix_filter; *)
+(*   type color_matrix = t color_matrix_filter; *)
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
 
 end;
 
-type prg = (Program.t * option Filter.t);
+type prg = (Program.t * (option Filter.t));
 
 module Quad = struct
   type t;
@@ -105,7 +107,7 @@ module Image = struct
 
   type t;
 
-  external create: ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> ~color:int -> ~alpha:float -> t = "ml_image_create";
+  external create: Texture.renderInfo -> ~color:int -> ~alpha:float -> t = "ml_image_create";
   external flipTexX: t -> unit = "ml_image_flip_tex_x";
   external flipTexY: t -> unit = "ml_image_flip_tex_y";
   external points: t -> array Point.t = "ml_image_points";
@@ -114,8 +116,8 @@ module Image = struct
   external color: t -> int = "ml_image_color";
   external set_alpha: t -> float -> unit = "ml_image_set_alpha";
   external colors: t -> array int = "ml_quad_colors";
-  external update: t -> ~w:float -> ~h:float -> ~clipping:option Rectangle.t -> ~flipX:bool -> ~flipY:bool -> unit = "ml_image_update_byte" "ml_image_update";
-  external render: Matrix.t -> prg -> textureID -> bool -> ?alpha:float -> t -> unit = "ml_image_render_byte" "ml_image_render"; 
+  external update: t -> Texture.renderInfo -> ~flipX:bool -> ~flipY:bool -> unit =  "ml_image_update";
+  external render: Matrix.t -> prg -> ?alpha:float -> t -> unit = "ml_image_render"; 
 
 end;
 

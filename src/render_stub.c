@@ -1,3 +1,4 @@
+#include "texture_common.h"
 #include "render_stub.h"
 #include <kazmath/GL/matrix.h>
 
@@ -25,6 +26,7 @@
 #undef HAS_VAO
 #endif
 
+/*
 void check_gl_errors(char *fname, int lnum, char *msg) {
 	GLenum error = glGetError();
 	int is_error = 0;
@@ -35,6 +37,7 @@ void check_gl_errors(char *fname, int lnum, char *msg) {
 	};
 	if (is_error) exit(1);
 }
+*/
 
 //////////////////////////////////
 /// COLORS
@@ -46,30 +49,8 @@ void check_gl_errors(char *fname, int lnum, char *msg) {
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
 #define UPDATE_PMA_ALPHA(c,alpha) (c.r = (GLubyte)((double)c.r * alpha), c.g = (GLubyte)((double)c.g * alpha), c.b = (GLubyte)((double)c.b * alpha), c.a = (GLubyte)(a * 255))
 
-GLuint boundTextureID = 0;
-int PMA = -1;
-int separateBlend = 0;
 
 
-void setPMAGLBlend () {
-	if (PMA != 1) {
-		glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
-		PMA = 1;
-	};
-}
-
-void setNotPMAGLBlend () {
-	if (PMA != 0) {
-		if (separateBlend) {
-			//printf("set separate not pma blend\n");
-			glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-		} else {
-			//printf("set odinary not pma blend\n");
-			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		};
-		PMA = 0;
-	};
-}
 
 #define setDefaultGLBlend setPMAGLBlend
 
@@ -225,7 +206,7 @@ value ml_compile_shader(value stype,value shader_src) {
 		caml_failwith(msg);
   }
 	value res = caml_alloc_custom(&shader_ops,sizeof(GLuint),0,1);
-	printf("created shader: %d\n",shader);
+	//printf("created shader: %d\n",shader);
 	*GLUINT(res) = shader;
 	return res;
 }
@@ -251,11 +232,11 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 
   if( enablePosition != vertexAttribPosition ) {
     if( enablePosition ) {
-			printf("enable vertex attrib array\n");
+			//printf("enable vertex attrib array\n");
       glEnableVertexAttribArray( lgVertexAttrib_Position );
 		}
     else {
-			printf("disable vertex attrib array\n");
+			//printf("disable vertex attrib array\n");
       glDisableVertexAttribArray( lgVertexAttrib_Position );
 		}
   
@@ -330,27 +311,14 @@ void lgGLUseProgram( GLuint program ) {
   }
 }
 
-void lgGLBindTexture(GLuint newTextureID, int newPMA) {
-	//printf("texture: %d, %d\n",newTextureID,newPMA);
-	if (boundTextureID != newTextureID) {
-		glBindTexture(GL_TEXTURE_2D,newTextureID);
-		boundTextureID = newTextureID;
-	};
-	if (newPMA != PMA) {
-		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
-			if (separateBlend)
-				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-			else
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		PMA = newPMA;
-	}
-}
+
+
 
 value ml_program_create(value vShader,value fShader,value attributes,value uniforms) {
 	CAMLparam4(vShader,fShader,attributes,uniforms);
 	CAMLlocal2(prg,res);
 	GLuint program =  glCreateProgram();
-	printf("create program %d\n",program);
+	//printf("create program %d\n",program);
 	glAttachShader(program, *GLUINT(vShader)); 
 	checkGLErrors("attach shader 1");
 	glAttachShader(program, *GLUINT(fShader)); 
@@ -363,7 +331,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		int attr = Int_val(Field(el,0));
 		value name = Field(el,1);
 		glBindAttribLocation(program,attr,String_val(name));
-		printf("attribute: %d\n",attr);
+		//printf("attribute: %d\n",attr);
 		lst = Field(lst,1);
 	}
 	checkGLErrors("locations binded");
@@ -387,9 +355,9 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 	checkGLErrors("before uniforms");
 
 	sp->std_uniforms[lgUniformMVPMatrix] = glGetUniformLocation(program, "u_MVPMatrix");
-	printf("std_uniform: matrix: %d\n",sp->std_uniforms[lgUniformMVPMatrix]);
+	//printf("std_uniform: matrix: %d\n",sp->std_uniforms[lgUniformMVPMatrix]);
 	sp->std_uniforms[lgUniformAlpha] = glGetUniformLocation(program, "u_parentAlpha");
-	printf("std_uniform: parentAlpha: %d\n",sp->std_uniforms[lgUniformAlpha]);
+	//printf("std_uniform: parentAlpha: %d\n",sp->std_uniforms[lgUniformAlpha]);
 	/*
 	if (has_texture) {
 		GLint loc = glGetUniformLocation(program,"u_texture");
@@ -403,7 +371,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 
 	int uniformsLen = Wosize_val(uniforms);
 	if (uniformsLen > 0) {
-		printf("uniformsLen = %d\n",uniformsLen);
+		//printf("uniformsLen = %d\n",uniformsLen);
 		lgGLUseProgram(program);
 		sp->uniforms = (GLint*)caml_stat_alloc(sizeof(GLuint)*uniformsLen);
 		GLuint loc;
@@ -411,7 +379,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		for (idx = 0; idx < uniformsLen; idx++) {
 			value el = Field(uniforms,idx);
 			loc = glGetUniformLocation(program, String_val(Field(el,0)));
-			printf("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);
+			//printf("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);
 			sp->uniforms[idx] = loc;
 			value u = Field(el,1);
 			if (Is_block(u)) {
@@ -577,7 +545,7 @@ value ml_quad_alpha(value quad) {
 void ml_quad_set_alpha(value quad,value alpha) {
 	lgQuad *q = *QUAD(quad);
 	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);
-	printf("set quad alpha to: %d\n",a);
+	//printf("set quad alpha to: %d\n",a);
 	q->bl.c.a = a;
 	q->br.c.a = a;
 	q->tl.c.a = a;
@@ -646,17 +614,17 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 //
 
 
-#define TEXQUAD(v) ((lgTexQuad**)Data_custom_val(v))
+#define IMAGE(v) ((lgImage**)Data_custom_val(v))
 
-static void tex_quad_finalize(value tquad) {
+static void image_finalize(value image) {
 	PRINT_DEBUG("tex quad finalize");
-	lgTexQuad *tq = *TEXQUAD(tquad);
-	caml_stat_free(tq);
+	lgImage *img = *IMAGE(image);
+	caml_stat_free(img);
 }
 
-struct custom_operations tex_quad_ops = {
-  "pointer to a quad",
-  tex_quad_finalize,
+struct custom_operations image_ops = {
+  "pointer to a image",
+  image_finalize,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
@@ -691,8 +659,10 @@ void set_image_uv(lgTexQuad *tq, value clipping) {
 void print_tex_vertex(lgTexVertex *qv) {
 	printf("v = [%f:%f], c = [%hhu,%hhu,%hhu,%hhu], tex = [%f:%f] \n",qv->v.x,qv->v.y,qv->c.r,qv->c.g,qv->c.b,qv->c.a,qv->tex.u,qv->tex.v);
 }
-void print_image(lgTexQuad *tq) {
+
+void print_image(lgImage *img) {
 	printf("==== image =====\n");
+	lgTexQuad *tq = &(img->quad);
 	printf("bl: ");
 	print_tex_vertex(&(tq->bl));
 	printf("br: ");
@@ -703,14 +673,45 @@ void print_image(lgTexQuad *tq) {
 	print_tex_vertex(&(tq->tr));
 }
 
+
+#define APPLY_TEXTURE_INFO_KIND(img,textureInfo) \
+	value kind = Field(textureInfo,4); \
+	if (Is_long(kind)) { \
+		if (Int_val(kind) == 0) { \
+			img->pallete = 0;\
+			img->pma = 1; \
+		} else { \
+			fprintf(stderr,"unknown texture kind\n"); \
+			exit(3); \
+		} \
+	} else { \
+		switch (Tag_val(kind)) { \
+			case 0: \
+				img->pallete = 0; \
+				img->pma = Bool_val(Field(kind,0)); \
+				break; \
+			case 1: \
+				img->pallete = *TEXTURE_ID(Field(Field(kind,0),7)); \
+				img->pma = Bool_val(Field(Field(kind,0),5)); \
+				break; \
+			default: \
+				fprintf(stderr,"unknown texture kind\n"); \
+				exit(3); \
+		};\
+	}
+
 #define TEX_SIZE(w) (Double_val(w))
 //
-value ml_image_create(value width,value height,value clipping,value color,value oalpha) {
-	CAMLparam5(width,height,clipping,color,oalpha);
-	lgTexQuad *tq = (lgTexQuad*)caml_stat_alloc(sizeof(lgTexQuad));
+value ml_image_create(value textureInfo,value color,value oalpha) {
+	CAMLparam3(textureInfo,color,oalpha);
+	lgImage *img = (lgImage*)caml_stat_alloc(sizeof(lgImage));
 	int clr = Int_val(color);
 	double alpha = Double_val(oalpha);
 	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
+	value width = Field(textureInfo,1);
+	value height = Field(textureInfo,2);
+	//fprintf(stderr,"width: %f, height: %f\n",TEX_SIZE(width),TEX_SIZE(height));
+	lgTexQuad *tq = &(img->quad);
 	tq->bl.v = (vertex2F){0,0};
 	tq->bl.c = c;
 	tq->br.v = (vertex2F) { TEX_SIZE(width),0.};
@@ -719,29 +720,31 @@ value ml_image_create(value width,value height,value clipping,value color,value 
 	tq->tl.c = c;
 	tq->tr.v = (vertex2F) { tq->br.v.x, tq->tl.v.y};
 	tq->tr.c = c;
-	set_image_uv(tq,clipping);
-	value res = caml_alloc_custom(&tex_quad_ops,sizeof(lgTexQuad*),0,1); // 
-	*TEXQUAD(res) = tq;
+	set_image_uv(tq,Field(textureInfo,3));
+	img->textureID = *TEXTURE_ID(Field(textureInfo,0));
+	APPLY_TEXTURE_INFO_KIND(img,textureInfo);
+	value res = caml_alloc_custom(&image_ops,sizeof(lgImage*),0,1); // 
+	*IMAGE(res) = img;
 	CAMLreturn(res);
 }
 
 value ml_image_points(value image) {
 	CAMLparam1(image);
 	CAMLlocal5(p1,p2,p3,p4,res);
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *img = *IMAGE(image);
 	int s = 2 * Double_wosize;
 	p1 = caml_alloc(s,Double_array_tag);
-	Store_double_field(p1, 0, (double)tq->bl.v.x);
-	Store_double_field(p1, 1, (double)tq->bl.v.y);
+	Store_double_field(p1, 0, (double)img->quad.bl.v.x);
+	Store_double_field(p1, 1, (double)img->quad.bl.v.y);
 	p2 = caml_alloc(s,Double_array_tag);
-	Store_double_field(p2, 0, (double)tq->br.v.x);
-	Store_double_field(p2, 1, (double)tq->br.v.y);
+	Store_double_field(p2, 0, (double)img->quad.br.v.x);
+	Store_double_field(p2, 1, (double)img->quad.br.v.y);
 	p3 = caml_alloc(s,Double_array_tag);
-	Store_double_field(p3, 0, (double)tq->tl.v.x);
-	Store_double_field(p3, 1, (double)tq->tl.v.y);
+	Store_double_field(p3, 0, (double)img->quad.tl.v.x);
+	Store_double_field(p3, 1, (double)img->quad.tl.v.y);
 	p4 = caml_alloc(s,Double_array_tag);
-	Store_double_field(p4, 0, (double)(tq->tr.v.x));
-	Store_double_field(p4, 1, (double)(tq->tr.v.y));
+	Store_double_field(p4, 0, (double)(img->quad.tr.v.x));
+	Store_double_field(p4, 1, (double)(img->quad.tr.v.y));
 	res = caml_alloc_small(4,0);
 	Field(res,0) = p1;
 	Field(res,1) = p2;
@@ -751,51 +754,55 @@ value ml_image_points(value image) {
 }
 
 value ml_image_color(value image) {
-	lgTexQuad *tq = *TEXQUAD(image);
-	return Int_val((COLOR(tq->bl.c.r,tq->bl.c.b,tq->bl.c.g)));
+	lgImage *img = *IMAGE(image);
+	return Int_val((COLOR(img->quad.bl.c.r,img->quad.bl.c.b,img->quad.bl.c.g)));
 }
 
 
 void ml_image_set_color(value image,value color) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *img = *IMAGE(image);
 	long clr = Int_val(color);
-	double alpha = (double)(tq->bl.c.a) / 255;
+	double alpha = (double)(img->quad.bl.c.a) / 255;
 	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
-	tq->bl.c = c;
-	tq->br.c = c;
-	tq->tl.c = c;
-	tq->tr.c = c;
+	img->quad.bl.c = c;
+	img->quad.br.c = c;
+	img->quad.tl.c = c;
+	img->quad.tr.c = c;
 }
 
 
 void ml_image_set_colors(value image,value colors) {
-	lgTexQuad *tq = *TEXQUAD(image);
-	double alpha = (double)tq->bl.c.a / 255;
+	lgImage *img = *IMAGE(image);
+	double alpha = (double)img->quad.bl.c.a / 255;
 	int c = Int_val(Field(colors,0));
-	tq->bl.c = COLOR_FROM_INT_PMA(c,alpha);
+	img->quad.bl.c = COLOR_FROM_INT_PMA(c,alpha);
 	c = Int_val(Field(colors,1));
-	tq->br.c = COLOR_FROM_INT_PMA(c,alpha);
+	img->quad.br.c = COLOR_FROM_INT_PMA(c,alpha);
 	c = Int_val(Field(colors,2));
-	tq->tl.c = COLOR_FROM_INT_PMA(c,alpha);
+	img->quad.tl.c = COLOR_FROM_INT_PMA(c,alpha);
 	c = Int_val(Field(colors,3));
-	tq->tr.c = COLOR_FROM_INT_PMA(c,alpha);
+	img->quad.tr.c = COLOR_FROM_INT_PMA(c,alpha);
 }
 
 void ml_image_set_alpha(value image,value alpha) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *img = *IMAGE(image);
+	lgTexQuad *tq = &(img->quad);
 	double a = Double_val(alpha);
-	UPDATE_PMA_ALPHA(tq->bl.c,a);
+	UPDATE_PMA_ALPHA(tq->bl.c,a); // check PMA
 	UPDATE_PMA_ALPHA(tq->br.c,a);
 	UPDATE_PMA_ALPHA(tq->tl.c,a);
 	UPDATE_PMA_ALPHA(tq->tr.c,a);
 }
 
-void ml_image_update(value image, value width, value height, value clipping, value flipX, value flipY ) {
-	lgTexQuad *tq = *TEXQUAD(image);
-	tq->br.v = (vertex2F) { Double_val(width)};
-	tq->tl.v = (vertex2F) { 0, Double_val(height)};
-	tq->tr.v = (vertex2F) { Double_val(width), Double_val(height) };
-	set_image_uv(tq,clipping);
+void ml_image_update(value image, value textureInfo, value flipX, value flipY) {
+	lgImage *img = *IMAGE(image);
+	lgTexQuad *tq = &(img->quad);
+	value width = Field(textureInfo,1);
+	value height = Field(textureInfo,2);
+	tq->br.v = (vertex2F) { TEX_SIZE(width)};
+	tq->tl.v = (vertex2F) { 0, TEX_SIZE(height)};
+	tq->tr.v = (vertex2F) { TEX_SIZE(width), TEX_SIZE(height) };
+	set_image_uv(tq,Field(textureInfo,3));
 	if (Bool_val(flipX)) {
 		tex2F tmp = tq->tl.tex;
 		tq->tl.tex = tq->tr.tex;
@@ -812,17 +819,17 @@ void ml_image_update(value image, value width, value height, value clipping, val
 		tq->tr.tex = tq->br.tex;
 		tq->br.tex = tmp;
 	};
+	img->textureID = *TEXTURE_ID(Field(textureInfo,0));
+	APPLY_TEXTURE_INFO_KIND(img,textureInfo);
 }
 
-void ml_image_update_byte(value * argv, int n) {
-	ml_image_update(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
-}
 
 #define SWAP_TEX_COORDS(c1,c2) {tex2F tmp = tq->c1.tex, tq->c1.tex = tq->c2.tex,tq->c2.tex = tmp}
 
 
 void ml_image_flip_tex_x(value image) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *img = *IMAGE(image);
+	lgTexQuad *tq = &(img->quad);
 	tex2F tmp = tq->tl.tex;
 	tq->tl.tex = tq->tr.tex;
 	tq->tr.tex = tmp;
@@ -832,7 +839,8 @@ void ml_image_flip_tex_x(value image) {
 }
 
 void ml_image_flip_tex_y(value image) {
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *img = *IMAGE(image);
+	lgTexQuad *tq = &(img->quad);
 	tex2F tmp = tq->tl.tex;
 	tq->tl.tex = tq->bl.tex;
 	tq->bl.tex = tmp;
@@ -841,9 +849,9 @@ void ml_image_flip_tex_y(value image) {
 	tq->br.tex = tmp;
 }
 
-void ml_image_render(value matrix,value program, value textureID, value pma, value alpha, value image) {
+void ml_image_render(value matrix, value program, value alpha, value image) {
 	//fprintf(stderr,"render image\n");
-	lgTexQuad *tq = *TEXQUAD(image);
+	lgImage *img = *IMAGE(image);
 	checkGLErrors("start");
 
 	//print_image(tq);
@@ -859,20 +867,24 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	checkGLErrors("bind matrix uniform");
 
 	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
-
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
+	checkGLErrors("render image: uniforms and attribs");
 
 	value fs = Field(program,1);
 	if (fs != Val_unit) {
 		filter *f = FILTER(Field(fs,0));
 		f->render(sp,f->data);
+		checkGLErrors("apply filters");
 	};
-	lgGLBindTexture(Long_val(textureID),Int_val(pma));
+
+	if (img->pallete) {
+		lgGLBindTextures(img->textureID,img->pallete,img->pma);
+	} else lgGLBindTexture(img->textureID,img->pma);
 	checkGLErrors("bind texture");
 
 	//print_image(tq);
 
-	long offset = (long)tq;
+	long offset = (long)(&(img->quad));
 
   // vertex
   int diff = offsetof( lgTexVertex, v);
@@ -895,62 +907,12 @@ void ml_image_render(value matrix,value program, value textureID, value pma, val
 	kmGLPopMatrix();
 };
 
-void ml_image_render_byte(value * argv, int n) {
-	ml_image_render(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
-}
-
 
 /////////////////////////////
 //// RENDER TEXTURE
 ////////////////////
 
 
-value ml_rendertexture_create(value format, value color, value alpha, value width,value height) {
-	GLuint mTextureID;
-	checkGLErrors("start create rendertexture");
-	glGenTextures(1, &mTextureID);
-	glBindTexture(GL_TEXTURE_2D, mTextureID);// бинд с кэшем нахуй бля 
-	boundTextureID = mTextureID;
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
-	int w = Long_val(width),h = Long_val(height);
-	PRINT_DEBUG("create rtexture: [%d:%d]\n",w,h);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	checkGLErrors("tex image 2d for framebuffer %d:%d",w,h);
-	glBindTexture(GL_TEXTURE_2D,0);
-	boundTextureID = 0;
-	GLuint mFramebuffer;
-	GLint oldBuffer;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
-	glGenFramebuffers(1, &mFramebuffer);
-	PRINT_DEBUG("generated new framebuffer: %d\n",mFramebuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-	checkGLErrors("bind framebuffer");
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
-	checkGLErrors("framebuffer texture");
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		PRINT_DEBUG("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
-		caml_failwith("failed to create frame buffer for render texture");
-	};
-	//color3F c = COLOR3F_FROM_INT(Int_val(color));
-	//glClearColor(c.r,c.g,c.b,(GLclampf)Double_val(alpha));
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
-	//printf("old buffer: %d\n",oldBuffer);
-	value result = caml_alloc_small(2,0);
-	Field(result,0) = Val_long(mFramebuffer);
-	Field(result,1) = Val_long(mTextureID);
-	return result;
-};
-
-void ml_resize_texture(value textureID,value width,value height) {
-	GLuint mTextureID = Long_val(textureID);
-	glBindTexture(GL_TEXTURE_2D, mTextureID);
-	boundTextureID = 0;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,Long_val(width),Long_val(height),0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
-}
 
 void get_framebuffer_state(framebuffer_state *s) {
 	GLint oldBuffer;
@@ -966,6 +928,7 @@ void get_framebuffer_state(framebuffer_state *s) {
 value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	//printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 
+	checkGLErrors("start actiavte framebuffer");
 	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
 	get_framebuffer_state(s);
 
@@ -1004,8 +967,7 @@ value ml_activate_framebuffer(value framebufferID,value width,value height) {
 	//glEnable(GL_BLEND);
 	//lgGLBindTexture(0,0);
 	//setNotPMAGLBlend();
-	separateBlend = 1;
-	PMA = -1;
+	enableSeparateBlend();
 	return (value)s; 
 }
 
@@ -1021,8 +983,7 @@ void ml_deactivate_framebuffer(value ostate) {
 	kmGLPopMatrix();
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPopMatrix();
-	separateBlend = 0;
-	PMA = -1;
+	disableSeparateBlend();
 	caml_stat_free(s);
 }
 
@@ -1034,6 +995,9 @@ void ml_delete_framebuffer(value framebuffer) {
 }
 
 typedef struct {
+	GLuint textureID;
+	unsigned char pma;
+	GLuint pallete;
 	GLuint vaoname;
 	GLuint buffersVBO[2];
 	int n_of_quads;
@@ -1063,10 +1027,17 @@ struct custom_operations atlas_ops = {
 };
 
 /// ATLAS
-value ml_atlas_init(value unit) { 
+value ml_atlas_init(value textureInfo) { 
 	CAMLparam0();
 
 	atlas_t *atl = caml_stat_alloc(sizeof(atlas_t));
+	atl->textureID = *TEXTURE_ID(Field(textureInfo,0));
+	APPLY_TEXTURE_INFO_KIND(atl,textureInfo);
+	/*
+	value kind = Field(textureInfo,4);
+	if (Is_long(kind)) atl->pallete = 0;
+	else atl->pallete = Long_val(Field(Field(kind,0),7));
+	*/
 
 #ifdef HAS_VAO
   glGenVertexArrays(1, &atl->vaoname);
@@ -1118,7 +1089,7 @@ static int atlas_quads_len = 0;
 #define RENDER_SUBPIXEL(x) (GLint)x
 
 // assume that quads it's dynarray
-void ml_atlas_render(value atlas, value matrix,value program, value textureID,value pma, value alpha, value quads) {
+void ml_atlas_render(value atlas, value matrix,value program, value alpha, value quads) {
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
@@ -1136,7 +1107,9 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 		f->render(sp,f->data);
 	};
 
-	lgGLBindTexture(Long_val(textureID),Int_val(pma));
+	if (atl->pallete == 0)
+		lgGLBindTexture(atl->textureID,atl->pma);
+	else lgGLBindTextures(atl->textureID,atl->pallete,atl->pma);
 
 	if (quads != Val_unit) { // it's not None array is dirty, resend it to gl
 		value children = Field(quads,0);
@@ -1255,9 +1228,11 @@ void ml_atlas_render(value atlas, value matrix,value program, value textureID,va
 	kmGLPopMatrix();
 }
 
+/*
 void ml_atlas_render_byte(value * argv, int n) {
 	ml_atlas_render(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6]);
 }
+*/
 
 void ml_atlas_clear(value atlas) {
 	atlas_t *atl = ATLAS(atlas);

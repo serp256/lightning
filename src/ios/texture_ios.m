@@ -69,11 +69,11 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
 		//CGContextScaleCTM(context, scale, -scale);
 		CGContextScaleCTM(context, 1.0, -1.0);
     
-    UIGraphicsPushContext(context);
+		UIGraphicsPushContext(context);
 	draw(context,data);
-    UIGraphicsPopContext();        
+	UIGraphicsPopContext();        
     
-		CGContextRelease(context);
+	CGContextRelease(context);
 	tInfo->width = legalWidth;
 	tInfo->realWidth = width;
 	tInfo->height = legalHeight;
@@ -97,13 +97,50 @@ void drawImage(CGContextRef context, void* data) {
 
 int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	//float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
-	float scale = 2.0f;
+	float scale = 1.0f;
 	float width = image.size.width;
 	float height = image.size.height;
 	//CGImageRef  CGImage = uiImage.CGImage;
 	//CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
-	int colorSpace = LTextureFormatRGBA;
-	createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
+	//int colorSpace = LTextureFormatRGBA;
+	//createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
+	int legalWidth  = nextPowerOfTwo(width);
+	int legalHeight = nextPowerOfTwo(height);
+    
+	CGColorSpaceRef cgColorSpace;
+	CGBitmapInfo bitmapInfo;
+	int bytesPerPixel;
+
+	bytesPerPixel = 4;
+	tInfo->format = LTextureFormatRGBA;
+	cgColorSpace = CGColorSpaceCreateDeviceRGB();
+	bitmapInfo = kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
+	tInfo->premultipliedAlpha = YES;
+
+	size_t dataLen = legalWidth * legalHeight * bytesPerPixel;
+	void *imageData = malloc(dataLen);
+	CGContextRef context = CGBitmapContextCreate(imageData, legalWidth, legalHeight, 8, bytesPerPixel * legalWidth, cgColorSpace, bitmapInfo);
+	CGColorSpaceRelease(cgColorSpace);
+    
+	// UIKit referential is upside down - we flip it and apply the scale factor
+	CGContextTranslateCTM(context, 0.0f, legalHeight);
+	CGContextScaleCTM(context, 1.0, -1.0);
+    
+	UIGraphicsPushContext(context);
+  [image drawAtPoint:CGPointMake(0, 0)];
+	UIGraphicsPopContext();        
+    
+	CGContextRelease(context);
+	tInfo->width = legalWidth;
+	tInfo->realWidth = width;
+	tInfo->height = legalHeight;
+	tInfo->realHeight = height;
+	tInfo->generateMipmaps = 0;
+	tInfo->numMipmaps = 0;
+	tInfo->scale = scale;
+	tInfo->dataLen = dataLen;
+	tInfo->imgData = imageData;
+	NSLog(@"IMAGE LOADED");
 	return 0;
 }
 
@@ -222,16 +259,15 @@ typedef struct
   uint32_t  u32MetaDataSize;  //Size of the accompanying meta data.
 } PVRTextureHeader3;
 
-int loadPvrFile3(int fildes,textureInfo *tInfo) {
-	struct stat s;
-	int res = fstat(fildes,&s);
-	if (res != 0) return 1;
-	off_t fsize = s.st_size;
+int loadPvrFile3(FILE* fildes,textureInfo *tInfo) {
+	fseek(fildes, 0, SEEK_END); /* Seek to the end of the file */
+	long fsize = ftell(fildes); /* Find out how many bytes into the file we are */
+	fseek(fildes, 0, SEEK_SET); /* Go back to the beginning of the file */
+
 	if (fsize < sizeof(PVRTextureHeader3)) {return 1;};
 
 	PVRTextureHeader3 header;
-	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader3));
-	if (readed != sizeof(PVRTextureHeader3)) {fprintf(stderr,"can't read pvr header\n");return 1;};
+	if (!fread(&header,sizeof(PVRTextureHeader3),1,fildes)) {fprintf(stderr,"can't read pvr header\n");return 1;};
 	if (header.u32Version != PVRTEX3_IDENT) {
 		fprintf(stderr,"bad pvr3 version\n");
 		return 1;
@@ -275,52 +311,28 @@ int loadPvrFile3(int fildes,textureInfo *tInfo) {
 	};
 	// блядь как узнать то сколько сцука длина блядь
 	// skip meta
-	char meta[20];
-	char *metaData;
-	if (header.u32MetaDataSize > 20) {
-		metaData = malloc(header.u32MetaDataSize);
-	} else metaData = meta;
-	read(fildes,metaData,header.u32MetaDataSize);
-	if (metaData != meta) free(metaData);
+	if (header.u32MetaDataSize > 0) {
+		fseek(fildes,header.u32MetaDataSize,SEEK_CUR);
+	};
 
 	tInfo->dataLen = fsize - sizeof(PVRTextureHeader3) - header.u32MetaDataSize;
 	printf("pvr data size: %d\n",tInfo->dataLen);
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
 
-	readed = read(fildes,tInfo->imgData,tInfo->dataLen);
-	if (readed != tInfo->dataLen) {free(tInfo->imgData);return 1;};
+	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
 	tInfo->scale = 1;
 	return 0;
 }
 
-int loadPvrFile2(int fildes, textureInfo *tInfo) {
-	//NSLog(@"read pvr [%@]\n",path);
-	//NSData *fileData = gzCompressed ? [SPTexture decompressPvrFile:path] : [NSData dataWithContentsOfFile:path];
-
-	// we need read it with c style functions
-	//NSData *fileData = [NSData dataWithContentsOfFile:path];
-	//int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
-	//if (fildes < 0) return 1;
-	//printf("fildes opened\n");
-	/*
-	struct stat s;
-	int res = fstat(fildes,&s);
-	if (res != 0) {close(fildes);return 0;};
-	//printf("fstat readed\n");
-	off_t fsize = s.st_size;
-	if (fsize < sizeof(PVRTextureHeader)) {close(fildes);return 0;};
-	*/
+int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
 
 	PVRTextureHeader header;
 
-	ssize_t readed = read(fildes,&header,sizeof(PVRTextureHeader));
-	printf("readed header: %d\n",readed);
-	if ((readed != sizeof(PVRTextureHeader)) /*|| (header.pvr != PVRTEX_IDENTIFIER)*/) {close(fildes); return 1;};
+	if (!fread(&header,sizeof(PVRTextureHeader),1,fildes)) {return 1;};
+	if (header.pvr != PVRTEX_IDENTIFIER) {fprintf(stderr,"bad pvr2 IDENTIFIER\n");return 1;};
 
   int hasAlpha = header.alphaBitMask ? 1 : 0;
 
-	printf("hasAlpha: %d\n",hasAlpha);
-  
 	tInfo->width = tInfo->realWidth = header.width;
 	tInfo->height = tInfo->realHeight = header.height;
 	//printf("width: %d, height: %d\n",header.width,header.height);
@@ -349,36 +361,33 @@ int loadPvrFile2(int fildes, textureInfo *tInfo) {
 				break;
       default:
 				printf("UNKNOWN header: %x\n",header.pfFlags & 0xff);
-				close(fildes);
 				return 1;
   }
 
 	tInfo->dataLen = header.textureDataSize;
 	// make buffer
 	tInfo->imgData = (unsigned char*)malloc(header.textureDataSize);
-	if (!tInfo->imgData) {close(fildes);return 1;};
-	readed = read(fildes,tInfo->imgData,tInfo->dataLen);
-	if (readed != header.textureDataSize) {close(fildes);free(tInfo->imgData);return 1;};
+	if (!tInfo->imgData) {return 1;};
+	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
 	/*
   NSString *baseFilename = [[path lastPathComponent] stringByDeletingFullPathExtension];
   if ([baseFilename rangeOfString:@"@2x"].location == baseFilename.length - 3)
       glTexture.scale = 2.0f;
 	*/
-	tInfo->scale = 2.0;
-	close(fildes);
+	tInfo->scale = 1.0;
 	return 0;
 }
 
 
 int loadPvrFile(NSString *path, textureInfo *tInfo) {
-	int fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
+	FILE* fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"ro");
 	if (fildes < 0) return 1;
 	int r = loadPvrFile3(fildes,tInfo);
-	close(fildes);
+	fclose(fildes);
 	if (r != 0) {
-		fildes = open([path cStringUsingEncoding:NSASCIIStringEncoding],O_RDONLY);
+		fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"ro");
 		r = loadPvrFile2(fildes,tInfo);
-		close(fildes);
+		fclose(fildes);
 	}
 	return r;
 }
@@ -437,8 +446,13 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 	float contentScaleFactor = 1;
 
 	int r;
+	int is_pvr = 0;
+	int is_plx = 0;
 	int is2x = 0;
-	if ([imgType rangeOfString:@"pvr"].location == 0) {
+
+	if ([imgType rangeOfString:@"plt"].location == 0) fullPath = pathForBundleResource(path, bundle); 
+	else if ([imgType rangeOfString:@"pvr"].location == 0) {
+		is_pvr = 1;
 		if (contentScaleFactor != 1.0f) {
 			NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
 			NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", suffix, imgType];
@@ -449,11 +463,11 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 		};
 
 		if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
-		if (!fullPath) r = 2;
-		else r = loadPvrFile(fullPath, tInfo);
+	} else if ([imgType rangeOfString:@"plx"].location == 0) {
+		is_plx = 1;
+		fullPath = pathForBundleResource(path, bundle); 
 	} else {
 		// Try pvr first with right scale factor
-		int is_pvr = 0;
 		do {
 			NSString *fname = NULL;
 			NSString *pathWithoutExt = [path stringByDeletingPathExtension];
@@ -491,23 +505,30 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 			fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
 			fullPath = pathForBundleResource(fname, bundle);
 			if (fullPath) {is_pvr = 1; break;};
+
+			// try plx
+			fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
+			fullPath = pathForBundleResource(fname, bundle);
+			if (fullPath) {is_plx = 1; break;};
+
 			fullPath = pathForBundleResource(path, bundle);
 		} while (0);
+	};
 
-		if (!fullPath) r = 2;
+	if (!fullPath) r = 2;
+	else {
+		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
+		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else {
-			if (is_pvr) r = loadPvrFile(fullPath,tInfo);
-			else {
-				//double t1 = CACurrentMediaTime();
-				UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
-				//double t2 = CACurrentMediaTime();
-				//NSLog(@"load from disk: %F",(t2 - t1));
-				//t1 = CACurrentMediaTime();
-				r = loadImageFile(image, tInfo);
-				//t2 = CACurrentMediaTime();
-				//NSLog(@"decode img: [%f]",(t2 - t1));
-				[image release];
-			}
+			//double t1 = CACurrentMediaTime();
+			UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
+			//double t2 = CACurrentMediaTime();
+			//NSLog(@"load from disk: %F",(t2 - t1));
+			//t1 = CACurrentMediaTime();
+			r = loadImageFile(image, tInfo);
+			//t2 = CACurrentMediaTime();
+			//NSLog(@"decode img: [%f]",(t2 - t1));
+			[image release];
 		}
 	}
 	return r;
@@ -556,9 +577,7 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value ocontentScaleFa
 		caml_failwith("Can't load image");
 	};
 
-	uint textureID;
-	textureID = createGLTexture(OPTION_INT(oldTexture),&tInfo);
-	NSLog(@"loaded texture: %d",textureID);
+	value textureID = createGLTexture(oldTexture,&tInfo);
 	free(tInfo.imgData);
 
 	checkGLErrors("after load texture");

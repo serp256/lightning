@@ -372,16 +372,58 @@ value sound (stage:Stage.c) =
 
 value half_pixels (stage:Stage.c) =
 (
-  let tree = Image.load "tree.png" in
+  (*
+  let tree = Image.load "60.png" in
   (
-    tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |];
+(*     tree#setAlpha 0.5; *)
+    (* tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |]; *)
+(*     tree#setFilters [ Filters.glow 0xFF0000 ]; *)
+    tree#setAlpha 0.3;
+    tree#setFilters [ `ColorMatrix disable_filter ];
+    tree#setPos 100. 10.;
+    (*
+    let tex = Texture.rendered 100. 100. in
+    (
+      tex#draw (fun () -> (Render.clear 0 1.; tree#render ~transform:False None));
+      let img = Image.create (tex :> Texture.c) in
+      stage#addChild img;
+    );
+    *)
     stage#addChild tree;
   );
+  let tree = Image.load "61.png" in
+  (
+(*     tree#setAlpha 0.5; *)
+    (* tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |]; *)
+(*     tree#setFilters [ Filters.glow 0xFF0000 ]; *)
+    tree#setFilters [ `ColorMatrix disable_filter ];
+    tree#setAlpha 0.3;
+    tree#setPos 100. 300.;
+    (*
+    let tex = Texture.rendered 100. 100. in
+    (
+      tex#draw (fun () -> (Render.clear 0 1.; tree#render ~transform:False None));
+      let img = Image.create (tex :> Texture.c) in
+      stage#addChild img;
+    );
+    *)
+    stage#addChild tree;
+  );
+  *)
+  (*
   let img = Image.load "frame.png" in
   (
     img#setPos 100.5 100.;
     stage#addChild img;
   );
+  *)
+  let font = Image.load "MyriadPro-Regular0.alpha" in
+  (
+    font#setColor 0xFFFFFF;
+    font#setPos 100. 100.;
+    stage#addChild font;
+  );
+  (*
   let tex = (Texture.load "MyriadPro-Regular0.png")#subTexture (Rectangle.create 341. 421. 6. 8.) in
   (
     let g = Image.create tex in
@@ -405,6 +447,7 @@ value half_pixels (stage:Stage.c) =
       stage#addChild g;
     );
   );
+  *)
 );
 
 value external_image (stage:Stage.c) =
@@ -446,8 +489,11 @@ value game_center (stage:Stage.c) =
       | False -> "Game center failed"
       ]
     in
-    let (_,text) = TLF.create (TLF.p [ `text text ]) in
-    stage#addChild text;
+    let (_,text) = TLF.create (TLF.p ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setFilters [ Filters.glow ~size:2 0 ];
+      stage#addChild text;
+    )
   end ();
 
 
@@ -511,6 +557,18 @@ value window (stage:Stage.c) =
     *)
   );
 
+value zsort (stage:Stage.c) = 
+(
+  Testz.init ();
+  proftimer "zSort: %F" Testz.zSort ();
+);
+
+(*
+value image (stage:Stage.c) =
+  let image = Image.load "default.png" in
+  stage#addChild image;
+*)
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -518,6 +576,7 @@ let stage width height =
     initializer begin
         BitmapFont.register "MyriadPro-Regular.fnt";
         TLF.default_font_family.val := "Myriad Pro";
+(*         image self; *)
 (*         test_alpha self; *)
 (*       alert self; *)
 (*       flip self; *)
@@ -529,11 +588,12 @@ let stage width height =
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
-(*       half_pixels self; *)
+      half_pixels self;
 (*         gradient self; *)
         game_center self;
 (*         sound self; *)
-        window self;
+(*         window self; *)
+(*         zsort self; *)
     end;
   end
 in

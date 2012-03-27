@@ -9,12 +9,75 @@
 #include <caml/callback.h>
 #include <caml/threads.h>
 #include "texture_common.h"
+#include <sys/stat.h>
 
 
 static char* resourcePath = "Resources/";
 
+int loadAlphaFile(const char *path,textureInfo *tInfo) {
+	fprintf(stderr,"LOAD ALPHA: '%s'\n",path);
+	FILE *fptr = fopen(path, "rb"); 
+	if (!fptr) { fprintf(stderr,"can't open %s file",path); fclose(fptr); return 2;};
+	unsigned int size;
+	fread(&size,sizeof(size),1,fptr);
+	unsigned short width = size & 0xFFFF;
+	unsigned short height = size >> 16;
+	size_t dataSize = width * height;
+	unsigned char *data = malloc(dataSize);
+	if (!fread(data,dataSize,1,fptr)) {fprintf(stderr,"can't read ALPHA %s data\n",path);free(data);fclose(fptr);return 1;};
+	fclose(fptr);
+
+	tInfo->format = LTextureFormatAlpha;
+	tInfo->width = tInfo->realWidth = width;
+	tInfo->height = tInfo->realHeight = height;
+	tInfo->numMipmaps = 0;
+	tInfo->generateMipmaps = 0;
+	tInfo->premultipliedAlpha = 1;
+	tInfo->scale = 1.;
+	tInfo->dataLen = dataSize;
+	tInfo->imgData = data;
+
+	return 0;
+}
+
 int load_image_info(char *fname,textureInfo *tInfo) {
 	int rplen = strlen(resourcePath);
+	// try pallete first
+	char *ext = strrchr(fname,'.');
+	if (ext && ext != fname && strcasecmp(ext,".plt")) {
+		if (!strcasecmp(ext,".plx")) {
+			// нужно загрузить палитру нахуй
+			char *path = malloc(rplen + strlen(fname) + 1);
+			memcpy(path,resourcePath,rplen);
+			strcpy(path + rplen,fname);
+			int r = loadPlxFile(path,tInfo);
+			free(path);
+			return r;
+		} else if (!strcasecmp(ext,".alpha")) {
+			// загрузить альфу 
+			char *path = malloc(rplen + strlen(fname) + 1);
+			memcpy(path,resourcePath,rplen);
+			strcpy(path + rplen,fname);
+			int r = loadAlphaFile(path,tInfo);
+			free(path);
+			return r;
+		} else {
+			// проверить этот ебанный plx 
+			int bflen = strlen(fname) - strlen(ext);
+			char *plxpath = malloc(rplen + bflen + 5);
+			memcpy(plxpath,resourcePath,rplen);
+			memcpy(plxpath + rplen,fname,bflen);
+			strcpy(plxpath + rplen + bflen,".plx");
+			// теперь узнать есть такой файло или нету
+			struct stat s;
+			if (!stat(plxpath,&s)) {// есть plx файл
+				int r = loadPlxFile(plxpath,tInfo);
+				free(plxpath);
+				return r;
+			};
+			free(plxpath);
+		}
+	};
 	char *path = malloc(rplen + strlen(fname) + 1);
 	memcpy(path,resourcePath,rplen);
 	strcpy(path + rplen,fname);
@@ -131,7 +194,7 @@ value ml_loadImage(value oldTextureID,value opath,value scale) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_failwith("Can't load image");
 	};
-	GLuint textureID = createGLTexture(OPTION_INT(oldTextureID),&tInfo);
+	value textureID = createGLTexture(oldTextureID,&tInfo);
 	// free surface
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
 	//SDL_FreeSurface(tInfo.surface);

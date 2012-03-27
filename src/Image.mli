@@ -1,4 +1,24 @@
 
+type glow = 
+  {
+    g_texture: mutable option Texture.c;
+    g_image: mutable option Render.Image.t;
+    g_program: Render.prg;
+    g_matrix: mutable Matrix.t;
+    g_params: Filters.glow
+  };
+
+class virtual base: [ Texture.c ] ->
+  object
+    inherit DisplayObject.c;
+    method texture: Texture.c;
+    method filters: list Filters.t;
+    method setFilters: list Filters.t -> unit;
+    value glowFilter: option glow;
+    value shaderProgram: Render.prg;
+    method virtual private updateGlowFilter: unit -> unit;
+    method private setGlowFilter: Filters.glow -> unit;
+  end;
 
 class _c : [ Texture.c ] ->
   object
@@ -22,13 +42,13 @@ class _c : [ Texture.c ] ->
     method texture: Texture.c;
     method onTextureEvent: Texture.event -> Texture.c -> unit;
     method setTexture: Texture.c -> unit;
-    method filters: list Filters.t;
-    method setFilters: list Filters.t -> unit;
 
 (*       method setTexScale: float -> unit; *)
 
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method boundsInSpace: !'space. option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
+    method filters: list Filters.t;
+    method setFilters: list Filters.t -> unit;
 
   end;
 

@@ -3,7 +3,7 @@ value color_white = 0xFFFFFF;
 value color_black = 0x000000;
 
 
-type textureID = int;
+type textureID;
 type framebufferID = int;
 
 type halign = [= `HAlignLeft | `HAlignCenter | `HAlignRight ];

@@ -4,7 +4,7 @@ MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug def
 
 MLFLAGS += -I ../src -package extlib -package ojson
 
-MLFILES = panelbg.cmo
+MLFILES = panelbg.cmo testz.cmo
 
 
 example.byte: $(MLFILES) example.cmo 

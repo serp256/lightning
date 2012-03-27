@@ -3,6 +3,7 @@ open LightCommon;
 
 type textureInfo;
 
+(*
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -15,11 +16,25 @@ type textureFormat =
   | TextureFormat5551
   | TextureFormat4444
   ];
+*)
 
 
 type event = [= `RESIZE | `CHANGE ]; 
 
 type filter = [ FilterNearest | FilterLinear ];
+
+type kind = [ Simple of bool | Alpha | Pallete of textureInfo ];
+
+value int32_of_textureID: textureID -> int32;
+
+type renderInfo =
+  {
+    rtextureID: textureID;
+    rwidth: float;
+    rheight: float;
+    clipping: option Rectangle.t;
+    kind: kind;
+  };
 
 class type renderer = 
   object
@@ -27,10 +42,12 @@ class type renderer =
   end
 and c =
   object
+    method kind: kind;
+    method renderInfo: renderInfo;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
-    method scale: float;
+(*     method scale: float; *)
     method textureID: textureID;
     method setFilter: filter -> unit;
     method base : option c;
@@ -56,7 +73,7 @@ class type rendered =
     inherit c;
     method realWidth: int;
     method realHeight: int;
-    method setPremultipliedAlpha: bool -> unit;
+(*     method setPremultipliedAlpha: bool -> unit; *)
     method framebufferID: LightCommon.framebufferID;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
