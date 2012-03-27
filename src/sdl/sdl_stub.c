@@ -1005,10 +1005,10 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 				Store_field(ML_event,0,Val_int(0));
 				break;
 			case SDL_FINGERDOWN:
-				Store_field(ML_event,0,Val_int(0));
+				Store_field(ML_event,0,Val_int(1));
 				break;
 			case SDL_FINGERUP:
-				Store_field(ML_event,0,Val_int(0));
+				Store_field(ML_event,0,Val_int(2));
 				break;
 		}
 		Store_field(ML_event,1,copy_int64(event.tfinger.touchId));
