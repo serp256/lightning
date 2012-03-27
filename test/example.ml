@@ -374,9 +374,30 @@ value half_pixels (stage:Stage.c) =
 (
   let tree = Image.load "60.png" in
   (
+(*     tree#setAlpha 0.5; *)
     (* tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |]; *)
 (*     tree#setFilters [ Filters.glow 0xFF0000 ]; *)
-(*     tree#setFilters [ `ColorMatrix disable_filter ]; *)
+    tree#setAlpha 0.3;
+    tree#setFilters [ `ColorMatrix disable_filter ];
+    tree#setPos 100. 10.;
+    (*
+    let tex = Texture.rendered 100. 100. in
+    (
+      tex#draw (fun () -> (Render.clear 0 1.; tree#render ~transform:False None));
+      let img = Image.create (tex :> Texture.c) in
+      stage#addChild img;
+    );
+    *)
+    stage#addChild tree;
+  );
+  let tree = Image.load "61.png" in
+  (
+(*     tree#setAlpha 0.5; *)
+    (* tree#setColors [| 0xFF0000; 0xFF0000; 0x00FF00; 0x00FF00 |]; *)
+(*     tree#setFilters [ Filters.glow 0xFF0000 ]; *)
+    tree#setFilters [ `ColorMatrix disable_filter ];
+    tree#setAlpha 0.3;
+    tree#setPos 100. 300.;
     (*
     let tex = Texture.rendered 100. 100. in
     (
