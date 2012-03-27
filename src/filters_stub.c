@@ -130,7 +130,7 @@ value create_ml_texture(renderbuffer_t *rb) {
 		Store_double_field(Field(clip,0),3,rb->clp.height);
 	} else clip = Val_unit;
 	mlTextureID = alloc_texture_id(rb->tid,width * height * 4);
-	fprintf(stderr,"allocated new mlTextureID: %ld\n",mlTextureID);
+	//fprintf(stderr,"allocated new mlTextureID: %ld\n",mlTextureID);
 	width = caml_copy_double(rb->width);
 	height = caml_copy_double(rb->height);
 	value params[4];

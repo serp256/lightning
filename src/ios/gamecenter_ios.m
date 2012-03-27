@@ -191,7 +191,7 @@ void ml_load_users_info(value uids, value callback) {
                 textureInfo tInfo;
                 uint textureID;
                 loadImageFile(photo, &tInfo);
-                textureID = createGLTexture(0,&tInfo);
+                textureID = createGLTexture(1,&tInfo);
                 free(tInfo.imgData);
                 ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
                 

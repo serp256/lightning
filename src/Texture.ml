@@ -203,7 +203,7 @@ Callback.register "realodTextures" reloadTextures;
 ENDIF;
 *)
 
-external delete_texture: textureID -> unit = "ml_delete_texture";
+(* external delete_texture: textureID -> unit = "ml_delete_texture"; *)
 
 module PalleteCache = WeakHashtbl.Make(struct
   type t = int;

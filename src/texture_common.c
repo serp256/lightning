@@ -207,6 +207,32 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 
 };
 
+int loadAlphaFile(const char *path,textureInfo *tInfo) {
+	fprintf(stderr,"LOAD ALPHA: '%s'\n",path);
+	FILE *fptr = fopen(path, "rb"); 
+	if (!fptr) { fprintf(stderr,"can't open %s file",path); fclose(fptr); return 2;};
+	unsigned int size;
+	fread(&size,sizeof(size),1,fptr);
+	unsigned short width = size & 0xFFFF;
+	unsigned short height = size >> 16;
+	size_t dataSize = width * height;
+	unsigned char *data = malloc(dataSize);
+	if (!fread(data,dataSize,1,fptr)) {fprintf(stderr,"can't read ALPHA %s data\n",path);free(data);fclose(fptr);return 1;};
+	fclose(fptr);
+
+	tInfo->format = LTextureFormatAlpha;
+	tInfo->width = tInfo->realWidth = width;
+	tInfo->height = tInfo->realHeight = height;
+	tInfo->numMipmaps = 0;
+	tInfo->generateMipmaps = 0;
+	tInfo->premultipliedAlpha = 1;
+	tInfo->scale = 1.;
+	tInfo->dataLen = dataSize;
+	tInfo->imgData = data;
+
+	return 0;
+}
+
 #define MAX(p1,p2) p1 > p2 ? p1 : p2
 
 typedef struct {

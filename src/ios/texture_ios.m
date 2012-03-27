@@ -466,6 +466,10 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 	} else if ([imgType rangeOfString:@"plx"].location == 0) {
 		is_plx = 1;
 		fullPath = pathForBundleResource(path, bundle); 
+	} else if ([imgType rangeOfString:@"alpha"].location == 0) {
+		fullPath = pathForBundleResource(path,bundle);
+		if (!fullPath) return 2;
+		return loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 	} else {
 		// Try pvr first with right scale factor
 		do {

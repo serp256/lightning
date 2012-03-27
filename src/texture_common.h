@@ -67,6 +67,7 @@ typedef struct {
 
 
 int loadPlxFile(const char *path,textureInfo *tInfo);
+int loadAlphaFile(const char *path,textureInfo *tInfo);
 
 value createGLTexture(value oldTextureID, textureInfo *tInfo);
 
