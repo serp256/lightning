@@ -998,6 +998,9 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 	case SDL_FINGERMOTION:
 	case SDL_FINGERDOWN:
 	case SDL_FINGERUP:
+	case SDL_DOLLARGESTURE:
+	case SDL_DOLLARRECORD:
+	case SDL_MULTIGESTURE:
 	{
 		ML_event = caml_alloc(9,0);
 		switch (event.type) {
@@ -1011,8 +1014,8 @@ value SDL_event_to_ML_tevent(SDL_Event event)
 				Store_field(ML_event,0,Val_int(2));
 				break;
 		}
-		Store_field(ML_event,1,copy_int64(event.tfinger.touchId));
-		Store_field(ML_event,2,copy_int64(event.tfinger.fingerId));
+		Store_field(ML_event,1,caml_copy_int64(event.tfinger.touchId));
+		Store_field(ML_event,2,caml_copy_int64(event.tfinger.fingerId));
 		Store_field(ML_event,3,Val_int(event.tfinger.state));
 		Store_field(ML_event,4,Val_int(event.tfinger.x));
 		Store_field(ML_event,5,Val_int(event.tfinger.y));
