@@ -529,11 +529,11 @@ let stage width height =
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
-(*       half_pixels self; *)
+       half_pixels self;
 (*         gradient self; *)
         game_center self;
 (*         sound self; *)
-        window self;
+       (* window self;*)
     end;
   end
 in
