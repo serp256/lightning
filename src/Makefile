@@ -29,11 +29,7 @@ Debug.cmx: MLFLAGS += -package unix
 
 
 ifeq ($(PLATFORM),IOS)
-	gl = gl/es
-	#CFLAGS +=  -DDEBUG -DIOS
-	#MLCOPTS += -DIOS
 	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o
-	#MLPPOPT += -DGLES -DIOS
 	LIBFLAGS = -ccopt '-ObjC' -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
 						 -cclib '-framework\ QuartzCore' \
@@ -42,24 +38,23 @@ ifeq ($(PLATFORM),IOS)
 						 -cclib '-framework\ AudioToolbox' \
 						 -cclib '-framework\ OpenAL' \
 						 -cclib '-framework\ GameKit' \
-						 -cclib '-framework\ StoreKit' \
-						 -cclib '-lz'
+						 -cclib '-framework\ StoreKit'
 	else
 	ifeq ($(PLATFORM),ANDROID)
-		gl = gl/es
-		#MLPPOPT += -DGLES -DANDROID 
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
 	else
+	ifeq ($(PLATFORM),GLUT)
+		MOBJS += glut/glut_stub.o 
+		BMLSOURCES = glut/glut.ml
+	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
-		gl = gl/2.1
 		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
 		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
 		AMLSOURCES = sdl/sdl_run.ml
 		MLOBJSFLAGS = -I sdl
-		#MLPPOPT += -DSDL
 		MLCOMPFLAGS += -package curl,threads -thread
 		SDLFLAGS = $(shell ${SDLCONFIG} --libs)
 		ifeq ($(OS),macos)
@@ -69,7 +64,10 @@ ifeq ($(PLATFORM),IOS)
 		endif
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	endif
+	endif
 endif
+
+LIBFLAGS += -cclib '-lz'
 
 
 MLPPOPT += -D$(PLATFORM)

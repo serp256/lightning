@@ -1,4 +1,4 @@
 
-include config.linux
+include config.glut
 META=META.sdl
 include Makefile.in

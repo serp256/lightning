@@ -610,8 +610,8 @@ let stage width height =
 (*       masks self; *)
 (*       half_pixels self; *)
 (*         gradient self; *)
-(*         pallete self; *)
-        map self;
+        pallete self;
+(*         map self; *)
         game_center self;
 (*         sound self; *)
 (*         window self; *)
