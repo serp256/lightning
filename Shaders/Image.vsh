@@ -1,4 +1,6 @@
-// http://www.cocos2d-iphone.org
+#ifdef GL_ES
+precision lowp float;
+#endif
 
 attribute vec4 a_position;
 attribute vec4 a_color;

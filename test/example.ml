@@ -563,6 +563,15 @@ value zsort (stage:Stage.c) =
   proftimer "zSort: %F" Testz.zSort ();
 );
 
+value pallete (stage:Stage.c) =
+(
+  let img = Image.load "pallete.plx" in
+  (
+    img#setPos 100. 100.;
+    stage#addChild img;
+  )
+);
+
 (*
 value image (stage:Stage.c) =
   let image = Image.load "default.png" in
@@ -588,8 +597,9 @@ let stage width height =
 (*       sound self; *)
 (*       atlas self; *)
 (*       masks self; *)
-      half_pixels self;
+(*       half_pixels self; *)
 (*         gradient self; *)
+        pallete self;
         game_center self;
 (*         sound self; *)
 (*         window self; *)

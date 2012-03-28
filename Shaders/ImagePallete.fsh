@@ -7,11 +7,13 @@ varying vec2 v_texCoord;
 uniform sampler2D u_texture;
 uniform sampler2D u_pallete;
 uniform float u_parentAlpha;
+const float px = 255. / 256.;
 
 void main()
 {
 	vec4 idx = texture2D(u_texture,v_texCoord);
 	// вычислить сцука индекc нахуй
-	vec4 color = v_fragmentColor * texture2D(u_pallete, vec2(idx.r,idx.a));
+	vec4 color = v_fragmentColor * texture2D(u_pallete,vec2(idx.r * px,idx.a * px));
+	//vec4 color = v_fragmentColor * texture2D(u_pallete, vec2(idx.r,idx.a));
 	gl_FragColor = color * u_parentAlpha; 
 }

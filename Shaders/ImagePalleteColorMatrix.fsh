@@ -1,5 +1,3 @@
-
-
 #ifdef GL_ES
 precision lowp float;
 #endif
@@ -15,10 +13,12 @@ uniform lowp float u_matrix[20];
 uniform float u_matrix[20];
 #endif
 
+const float px = 255. /. 256.;
+
 void main()
 {
 	vec4 idx = texture2D(u_texture,v_texCoord);
-	vec4 color = v_fragmentColor * texture2D(u_pallete, vec2(idx.r,idx.a));
+	vec4 color = v_fragmentColor * texture2D(u_pallete, vec2(idx.r * px,idx.a * px));
 	vec4 newcolor ; //= color;
 	 
 	newcolor.r = dot(color, vec4(u_matrix[0], u_matrix[1], u_matrix[2], u_matrix[3])) + u_matrix[4] * color.a;
