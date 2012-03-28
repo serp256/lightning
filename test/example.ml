@@ -578,6 +578,17 @@ value image (stage:Stage.c) =
   stage#addChild image;
 *)
 
+value map (stage:Stage.c) =
+  let map1 = Image.load "map/1.jpg"
+  and map2 = Image.load "map/2.jpg"
+  in
+  (
+    debug "map1#width: %f" map1#width;
+    stage#addChild map1;
+    map2#setX (map1#width -. 8.);
+    stage#addChild map2;
+  );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -599,7 +610,8 @@ let stage width height =
 (*       masks self; *)
 (*       half_pixels self; *)
 (*         gradient self; *)
-        pallete self;
+(*         pallete self; *)
+        map self;
         game_center self;
 (*         sound self; *)
 (*         window self; *)

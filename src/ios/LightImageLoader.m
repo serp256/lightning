@@ -70,7 +70,7 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 		if (r) [self badImageData];
 		else {
 			caml_acquire_runtime_system();
-			uint textureID = createGLTexture(0,&tInfo);
+			uint textureID = createGLTexture(1,&tInfo);
 			NSLog(@"loaded external texture: %d",textureID);
 			free(tInfo.imgData);
 			checkGLErrors("after load texture");

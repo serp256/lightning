@@ -4,6 +4,7 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 #include <caml/custom.h>
+#include <zlib.h>
 
 #include "texture_common.h"
 
@@ -166,18 +167,17 @@ int nextPowerOfTwo(int number) {
 int loadPlxFile(const char *path,textureInfo *tInfo) {
 	fprintf(stderr,"LOAD PLX: %s\n",path);
 	// load idx
-	FILE *fptr = fopen(path, "rb"); 
+	gzFile fptr = gzopen(path, "rb"); 
 	if (!fptr) { fprintf(stderr,"can't open %s file",path); return 2;};
-	unsigned char pallete;
-	fread(&pallete,sizeof(pallete),1,fptr);
+	int pallete = gzgetc(fptr);
 	unsigned int size;
-	fread(&size,sizeof(size),1,fptr);
+	gzread(fptr,&size,sizeof(size));
 	unsigned short width = size & 0xFFFF;
 	unsigned short height = size >> 16;
 	size_t dataSize = width * height * 2;
 	unsigned char *idxdata = malloc(dataSize);
-	if (!fread(idxdata,dataSize,1,fptr)) {fprintf(stderr,"can't read PLX %s data\n",path);return 1;};
-	fclose(fptr);
+	if (gzread(fptr,idxdata,dataSize) < dataSize) {fprintf(stderr,"can't read PLX %s data\n",path);free(idxdata);gzclose(fptr);return 1;};
+	gzclose(fptr);
 
 
 	tInfo->format = LTextureFormatPallete;
@@ -209,16 +209,16 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 
 int loadAlphaFile(const char *path,textureInfo *tInfo) {
 	fprintf(stderr,"LOAD ALPHA: '%s'\n",path);
-	FILE *fptr = fopen(path, "rb"); 
-	if (!fptr) { fprintf(stderr,"can't open %s file",path); fclose(fptr); return 2;};
+	gzFile fptr = gzopen(path, "rb"); 
+	if (!fptr) { fprintf(stderr,"can't open %s file",path); return 2;};
 	unsigned int size;
-	fread(&size,sizeof(size),1,fptr);
+	gzread(fptr,&size,sizeof(size));
 	unsigned short width = size & 0xFFFF;
 	unsigned short height = size >> 16;
 	size_t dataSize = width * height;
 	unsigned char *data = malloc(dataSize);
-	if (!fread(data,dataSize,1,fptr)) {fprintf(stderr,"can't read ALPHA %s data\n",path);free(data);fclose(fptr);return 1;};
-	fclose(fptr);
+	if (gzread(fptr,data,dataSize) < dataSize) {fprintf(stderr,"can't read ALPHA %s data\n",path);free(data);gzclose(fptr);return 1;};
+	gzclose(fptr);
 
 	tInfo->format = LTextureFormatAlpha;
 	tInfo->width = tInfo->realWidth = width;
