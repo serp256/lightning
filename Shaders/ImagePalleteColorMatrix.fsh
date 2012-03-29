@@ -13,8 +13,6 @@ uniform lowp float u_matrix[20];
 uniform float u_matrix[20];
 #endif
 
-const float px = 255. /. 256.;
-
 void main()
 {
 #ifdef GL_ES

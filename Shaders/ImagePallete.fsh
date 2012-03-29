@@ -7,7 +7,6 @@ varying vec2 v_texCoord;
 uniform sampler2D u_texture;
 uniform sampler2D u_pallete;
 uniform float u_parentAlpha;
-float px = 255. / 256.;
 
 void main()
 {
