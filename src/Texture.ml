@@ -279,6 +279,8 @@ class s textureInfo =
       if not released
       then
       (
+
+        debug:gc "release 's' texture: <%ld>" (int32_of_textureID renderInfo.rtextureID);
         delete_textureID renderInfo.rtextureID;
         released := True;
       ) else ();
@@ -371,6 +373,7 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
       if not released 
       then
       (
+        debug:gc "release 'c' texture: <%ld>" (int32_of_textureID renderInfo.rtextureID);
         delete_textureID renderInfo.rtextureID;
         released := True;
       )
@@ -408,6 +411,7 @@ value make_and_cache path textureInfo =
         if not released
         then
         (
+          debug:gc "release cached texture: <%ld>" (int32_of_textureID renderInfo.rtextureID);
           delete_textureID renderInfo.rtextureID;
           TextureCache.remove cache path;
           released := True;
@@ -749,7 +753,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       match released with
       [ False ->
         (
-          debug "release rendered texture: [%d] <%ld>" framebufferID (int32_of_textureID renderInfo.rtextureID);
+          debug:gc "release rendered texture: [%d] <%ld>" framebufferID (int32_of_textureID renderInfo.rtextureID);
           delete_framebuffer framebufferID;
           delete_textureID renderInfo.rtextureID;
           released := True;
@@ -777,11 +781,6 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       ];
 
     method clear color alpha = self#draw (fun () -> glClear color alpha);
-    method private finalise () =
-      match released with
-      [ False -> delete_framebuffer framebufferID
-      | True -> ()
-      ];
 
     initializer 
     (

@@ -7,18 +7,41 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		510C021314FE6C1200BDDCFC /* ra_fertilizer.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */; };
+		510C021614FE6ED800BDDCFC /* stoneBoom.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021514FE6ED800BDDCFC /* stoneBoom.caf */; };
+		513AB2441513836200B4AF5C /* caf in Resources */ = {isa = PBXBuildFile; fileRef = 513AB2431513836200B4AF5C /* caf */; };
+		517411B614FB6A420022E871 /* e_cactus.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B514FB6A420022E871 /* e_cactus.png */; };
+		517411B914FB6A510022E871 /* tree.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B814FB6A510022E871 /* tree.png */; };
+		517411CB14FB749C0022E871 /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 517411CA14FB749C0022E871 /* Shaders */; };
+		517EB8801522F888009D91B1 /* pallete.plx in Resources */ = {isa = PBXBuildFile; fileRef = 517EB87F1522F888009D91B1 /* pallete.plx */; };
+		517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */; };
+		517EB89215235990009D91B1 /* map in Resources */ = {isa = PBXBuildFile; fileRef = 517EB89115235990009D91B1 /* map */; };
+		51846F6514EE704D00FDE684 /* test.native in CopyFiles */ = {isa = PBXBuildFile; fileRef = 51846F6414EE704D00FDE684 /* test.native */; };
+		518819041519DF78002E1E1A /* wcorner.png in Resources */ = {isa = PBXBuildFile; fileRef = 518819011519DF78002E1E1A /* wcorner.png */; };
+		518819051519DF78002E1E1A /* whborder.png in Resources */ = {isa = PBXBuildFile; fileRef = 518819021519DF78002E1E1A /* whborder.png */; };
+		518819061519DF78002E1E1A /* wvborder.png in Resources */ = {isa = PBXBuildFile; fileRef = 518819031519DF78002E1E1A /* wvborder.png */; };
+		51881909151A00D4002E1E1A /* ui in Resources */ = {isa = PBXBuildFile; fileRef = 51881908151A00D4002E1E1A /* ui */; };
+		518874D91518823800A2892F /* frame.pvr in Resources */ = {isa = PBXBuildFile; fileRef = 518874D81518823800A2892F /* frame.pvr */; };
+		5189B0711521883F00CE78F0 /* 61.png in Resources */ = {isa = PBXBuildFile; fileRef = 5189B0701521883F00CE78F0 /* 61.png */; };
+		518A5292152434A000556D2C /* default.png in Resources */ = {isa = PBXBuildFile; fileRef = 518A5291152434A000556D2C /* default.png */; };
+		518D151C14FE441300B5436E /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */; };
+		518FDADB152085CB00F9E211 /* palletes in Resources */ = {isa = PBXBuildFile; fileRef = 518FDADA152085CA00F9E211 /* palletes */; };
+		518FDADE152085DA00F9E211 /* tree.plx in Resources */ = {isa = PBXBuildFile; fileRef = 518FDADD152085DA00F9E211 /* tree.plx */; };
+		518FDAEB1520B1AA00F9E211 /* 60.pvr in Resources */ = {isa = PBXBuildFile; fileRef = 518FDAEA1520B1AA00F9E211 /* 60.pvr */; };
+		519017B5151B091600B789EC /* zobjects in Resources */ = {isa = PBXBuildFile; fileRef = 519017B4151B091600B789EC /* zobjects */; };
+		5191FD9314FF5FC900DD8677 /* frame.png in Resources */ = {isa = PBXBuildFile; fileRef = 5191FD9214FF5FC900DD8677 /* frame.png */; };
+		51B5418514F273C300EB2241 /* items in Resources */ = {isa = PBXBuildFile; fileRef = 51B5418414F273C300EB2241 /* items */; };
 		51DC6E1314EE5E960084EB76 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1114EE5E960084EB76 /* InfoPlist.strings */; };
 		51DC6E1F14EE5E960084EB76 /* ViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1D14EE5E960084EB76 /* ViewController_iPhone.xib */; };
 		51DC6E2214EE5E960084EB76 /* ViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E2014EE5E960084EB76 /* ViewController_iPad.xib */; };
-		51DC6E3814EE62F20084EB76 /* test.native in CopyFiles */ = {isa = PBXBuildFile; fileRef = 51DC6E3714EE62F20084EB76 /* test.native */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		51DC6E3914EE63180084EB76 /* PBXContainerItemProxy */ = {
+		51846F6114EE6F7700FDE684 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 51DC6DFB14EE5E960084EB76 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 51DC6E3214EE626C0084EB76;
+			remoteGlobalIDString = 51173A5C14EE6E5C000772E1;
 			remoteInfo = test.native;
 		};
 /* End PBXContainerItemProxy section */
@@ -28,15 +51,39 @@
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 7;
+			dstSubfolderSpec = 6;
 			files = (
-				51DC6E3814EE62F20084EB76 /* test.native in CopyFiles */,
+				51846F6514EE704D00FDE684 /* test.native in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = ra_fertilizer.caf; path = ../../lightning/test/Resources/ra_fertilizer.caf; sourceTree = "<group>"; };
+		510C021514FE6ED800BDDCFC /* stoneBoom.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = stoneBoom.caf; path = ../../lightning/test/Resources/stoneBoom.caf; sourceTree = "<group>"; };
+		513AB2431513836200B4AF5C /* caf */ = {isa = PBXFileReference; lastKnownFileType = folder; name = caf; path = ../../lightning/test/Resources/caf; sourceTree = "<group>"; };
+		517411B514FB6A420022E871 /* e_cactus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = e_cactus.png; path = ../../lightning/test/Resources/e_cactus.png; sourceTree = "<group>"; };
+		517411B814FB6A510022E871 /* tree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tree.png; path = ../../lightning/test/Resources/tree.png; sourceTree = "<group>"; };
+		517411CA14FB749C0022E871 /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shaders; path = ../../lightning/Shaders; sourceTree = "<group>"; };
+		517EB87F1522F888009D91B1 /* pallete.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = pallete.plx; path = ../../lightning/test/Resources/pallete.plx; sourceTree = "<group>"; };
+		517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular0.alpha"; path = "../../lightning/test/Resources/MyriadPro-Regular0.alpha"; sourceTree = "<group>"; };
+		517EB89115235990009D91B1 /* map */ = {isa = PBXFileReference; lastKnownFileType = folder; name = map; path = ../../lightning/test/Resources/map; sourceTree = "<group>"; };
+		51846F6414EE704D00FDE684 /* test.native */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = test.native; sourceTree = "<group>"; };
+		518819011519DF78002E1E1A /* wcorner.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wcorner.png; path = ../../lightning/test/Resources/wcorner.png; sourceTree = "<group>"; };
+		518819021519DF78002E1E1A /* whborder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = whborder.png; path = ../../lightning/test/Resources/whborder.png; sourceTree = "<group>"; };
+		518819031519DF78002E1E1A /* wvborder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wvborder.png; path = ../../lightning/test/Resources/wvborder.png; sourceTree = "<group>"; };
+		51881908151A00D4002E1E1A /* ui */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ui; path = ../../lightning/test/Resources/ui; sourceTree = "<group>"; };
+		518874D81518823800A2892F /* frame.pvr */ = {isa = PBXFileReference; lastKnownFileType = file; name = frame.pvr; path = ../../lightning/test/Resources/frame.pvr; sourceTree = "<group>"; };
+		5189B0701521883F00CE78F0 /* 61.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = 61.png; path = ../../lightning/test/Resources/61.png; sourceTree = "<group>"; };
+		518A5291152434A000556D2C /* default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = default.png; path = ../../lightning/test/Resources/default.png; sourceTree = "<group>"; };
+		518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "MyriadPro-Regular.fnt"; path = "../../lightning/test/Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
+		518FDADA152085CA00F9E211 /* palletes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = palletes; path = ../../lightning/test/Resources/palletes; sourceTree = "<group>"; };
+		518FDADD152085DA00F9E211 /* tree.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = tree.plx; path = ../../lightning/test/Resources/tree.plx; sourceTree = "<group>"; };
+		518FDAEA1520B1AA00F9E211 /* 60.pvr */ = {isa = PBXFileReference; lastKnownFileType = file; name = 60.pvr; path = ../../lightning/test/Resources/60.pvr; sourceTree = "<group>"; };
+		519017B4151B091600B789EC /* zobjects */ = {isa = PBXFileReference; lastKnownFileType = text; name = zobjects; path = ../../lightning/test/Resources/zobjects; sourceTree = "<group>"; };
+		5191FD9214FF5FC900DD8677 /* frame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = frame.png; path = ../../lightning/test/Resources/frame.png; sourceTree = "<group>"; };
+		51B5418414F273C300EB2241 /* items */ = {isa = PBXFileReference; lastKnownFileType = folder; name = items; path = ../../lightning/test/Resources/items; sourceTree = "<group>"; };
 		51DC6E0414EE5E960084EB76 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		51DC6E0814EE5E960084EB76 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		51DC6E0A14EE5E960084EB76 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -51,14 +98,36 @@
 		51DC6E1B14EE5E960084EB76 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		51DC6E1E14EE5E960084EB76 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPhone.xib; sourceTree = "<group>"; };
 		51DC6E2114EE5E960084EB76 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPad.xib; sourceTree = "<group>"; };
-		51DC6E3714EE62F20084EB76 /* test.native */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = test.native; path = ../../ios/test/test.native; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
-				51DC6E3714EE62F20084EB76 /* test.native */,
+				518A5291152434A000556D2C /* default.png */,
+				517EB89115235990009D91B1 /* map */,
+				517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */,
+				517EB87F1522F888009D91B1 /* pallete.plx */,
+				5189B0701521883F00CE78F0 /* 61.png */,
+				518FDAEA1520B1AA00F9E211 /* 60.pvr */,
+				518FDADD152085DA00F9E211 /* tree.plx */,
+				518FDADA152085CA00F9E211 /* palletes */,
+				519017B4151B091600B789EC /* zobjects */,
+				51881908151A00D4002E1E1A /* ui */,
+				518819011519DF78002E1E1A /* wcorner.png */,
+				518819021519DF78002E1E1A /* whborder.png */,
+				518819031519DF78002E1E1A /* wvborder.png */,
+				518874D81518823800A2892F /* frame.pvr */,
+				513AB2431513836200B4AF5C /* caf */,
+				5191FD9214FF5FC900DD8677 /* frame.png */,
+				510C021514FE6ED800BDDCFC /* stoneBoom.caf */,
+				510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */,
+				518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */,
+				517411CA14FB749C0022E871 /* Shaders */,
+				517411B814FB6A510022E871 /* tree.png */,
+				517411B514FB6A420022E871 /* e_cactus.png */,
+				51B5418414F273C300EB2241 /* items */,
+				51846F6414EE704D00FDE684 /* test.native */,
 				51DC6E0E14EE5E960084EB76 /* LightTest */,
 				51DC6E0714EE5E960084EB76 /* Frameworks */,
 				51DC6E0514EE5E960084EB76 /* Products */,
@@ -111,10 +180,10 @@
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
-		51DC6E3214EE626C0084EB76 /* test.native */ = {
+		51173A5C14EE6E5C000772E1 /* test.native */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = ios;
-			buildConfigurationList = 51DC6E3314EE626C0084EB76 /* Build configuration list for PBXLegacyTarget "test.native" */;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 51173A5D14EE6E5C000772E1 /* Build configuration list for PBXLegacyTarget "test.native" */;
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
@@ -138,7 +207,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				51DC6E3A14EE63180084EB76 /* PBXTargetDependency */,
+				51846F6214EE6F7700FDE684 /* PBXTargetDependency */,
 			);
 			name = LightTest;
 			productName = LightTest;
@@ -167,7 +236,7 @@
 			projectRoot = "";
 			targets = (
 				51DC6E0314EE5E960084EB76 /* LightTest */,
-				51DC6E3214EE626C0084EB76 /* test.native */,
+				51173A5C14EE6E5C000772E1 /* test.native */,
 			);
 		};
 /* End PBXProject section */
@@ -177,6 +246,29 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				518A5292152434A000556D2C /* default.png in Resources */,
+				517EB89215235990009D91B1 /* map in Resources */,
+				517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */,
+				517EB8801522F888009D91B1 /* pallete.plx in Resources */,
+				5189B0711521883F00CE78F0 /* 61.png in Resources */,
+				518FDAEB1520B1AA00F9E211 /* 60.pvr in Resources */,
+				518FDADE152085DA00F9E211 /* tree.plx in Resources */,
+				518FDADB152085CB00F9E211 /* palletes in Resources */,
+				519017B5151B091600B789EC /* zobjects in Resources */,
+				51881909151A00D4002E1E1A /* ui in Resources */,
+				518819041519DF78002E1E1A /* wcorner.png in Resources */,
+				518819051519DF78002E1E1A /* whborder.png in Resources */,
+				518819061519DF78002E1E1A /* wvborder.png in Resources */,
+				518874D91518823800A2892F /* frame.pvr in Resources */,
+				513AB2441513836200B4AF5C /* caf in Resources */,
+				5191FD9314FF5FC900DD8677 /* frame.png in Resources */,
+				510C021614FE6ED800BDDCFC /* stoneBoom.caf in Resources */,
+				510C021314FE6C1200BDDCFC /* ra_fertilizer.caf in Resources */,
+				518D151C14FE441300B5436E /* MyriadPro-Regular.fnt in Resources */,
+				517411CB14FB749C0022E871 /* Shaders in Resources */,
+				517411B914FB6A510022E871 /* tree.png in Resources */,
+				517411B614FB6A420022E871 /* e_cactus.png in Resources */,
+				51B5418514F273C300EB2241 /* items in Resources */,
 				51DC6E1314EE5E960084EB76 /* InfoPlist.strings in Resources */,
 				51DC6E1F14EE5E960084EB76 /* ViewController_iPhone.xib in Resources */,
 				51DC6E2214EE5E960084EB76 /* ViewController_iPad.xib in Resources */,
@@ -186,10 +278,10 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		51DC6E3A14EE63180084EB76 /* PBXTargetDependency */ = {
+		51846F6214EE6F7700FDE684 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 51DC6E3214EE626C0084EB76 /* test.native */;
-			targetProxy = 51DC6E3914EE63180084EB76 /* PBXContainerItemProxy */;
+			target = 51173A5C14EE6E5C000772E1 /* test.native */;
+			targetProxy = 51846F6114EE6F7700FDE684 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -221,6 +313,43 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		51173A5E14EE6E5C000772E1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = armv7;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PATH = "/opt/local/bin:$PATH";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		51173A5F14EE6E5C000772E1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = armv7;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PATH = "/opt/local/bin:$PATH";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+			};
+			name = Release;
+		};
 		51DC6E2314EE5E960084EB76 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -292,44 +421,18 @@
 			};
 			name = Release;
 		};
-		51DC6E3414EE626C0084EB76 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				DEBUGGING_SYMBOLS = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PATH = "/opt/local/bin:$PATH";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-			};
-			name = Debug;
-		};
-		51DC6E3514EE626C0084EB76 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PATH = "/opt/local/bin:$PATH";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		51173A5D14EE6E5C000772E1 /* Build configuration list for PBXLegacyTarget "test.native" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				51173A5E14EE6E5C000772E1 /* Debug */,
+				51173A5F14EE6E5C000772E1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		51DC6DFE14EE5E960084EB76 /* Build configuration list for PBXProject "LightTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -347,14 +450,6 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
-		};
-		51DC6E3314EE626C0084EB76 /* Build configuration list for PBXLegacyTarget "test.native" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				51DC6E3414EE626C0084EB76 /* Debug */,
-				51DC6E3514EE626C0084EB76 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};
