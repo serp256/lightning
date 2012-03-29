@@ -583,9 +583,10 @@ value map (stage:Stage.c) =
   and map2 = Image.load "map/2.jpg"
   in
   (
+    map1#setX ~-.500.;
     debug "map1#width: %f" map1#width;
     stage#addChild map1;
-    map2#setX (map1#width -. 8.);
+    map2#setX (map1#x +. map1#width -. 8.);
     stage#addChild map2;
   );
 

@@ -17,8 +17,16 @@ const float px = 255. /. 256.;
 
 void main()
 {
+#ifdef GL_ES
+	mediump vec4 idx = texture2D(u_texture,v_texCoord);
+#else
 	vec4 idx = texture2D(u_texture,v_texCoord);
-	vec4 color = v_fragmentColor * texture2D(u_pallete, vec2(idx.r * px,idx.a * px));
+#endif
+	float x = ((idx.r * 255.) + 0.5) / 256.;
+	float y = ((idx.a * 255.) + 0.5) / 256.;
+
+	vec4 color = v_fragmentColor * texture2D(u_pallete, vec2(x,y));
+
 	vec4 newcolor ; //= color;
 	 
 	newcolor.r = dot(color, vec4(u_matrix[0], u_matrix[1], u_matrix[2], u_matrix[3])) + u_matrix[4] * color.a;
