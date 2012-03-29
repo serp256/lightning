@@ -27,6 +27,9 @@ type alsound =
     albuffer: albuffer;
     duration: float;
   };
+
+type sound = alsound;
+
 external albuffer_create: string -> alsound = "ml_albuffer_create";
 
 external al_setMasterVolume: float -> unit = "ml_al_setMasterVolume";
@@ -40,7 +43,7 @@ value load path =
     res;
   );
 
-type alsource;
+type alsource = int32;
 external alsource_create: albuffer -> alsource = "ml_alsource_create";
 external alsource_play: alsource -> unit = "ml_alsource_play";
 external alsource_setVolume: alsource -> float -> unit = "ml_alsource_setVolume";
@@ -48,12 +51,14 @@ external alsource_getVolume: alsource -> float = "ml_alsource_getVolume";
 external alsource_setLoop: alsource -> bool -> unit = "ml_alsource_setLoop";
 external alsource_stop: alsource -> unit = "ml_alsource_stop";
 external alsource_pause: alsource -> unit = "ml_alsource_pause";
+external alsource_delete: alsource -> unit = "ml_alsource_delete";
 
 external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc";
 
 class channel snd = 
+  let sourceID = alsource_create snd.albuffer in
   object(self)
-    value sourceID = alsource_create snd.albuffer;
+    initializer Gc.finalise (fun _ -> alsource_delete sourceID) self;
     value sound = snd;
     value mutable loop = False;
     value mutable startMoment = 0.;

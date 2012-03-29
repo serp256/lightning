@@ -590,6 +590,105 @@ value map (stage:Stage.c) =
     stage#addChild map2;
   );
 
+value test_gc (stage:Stage.c) = 
+  let items = 
+    [|
+      "bl_blastfurnace.png";
+      "bl_bridge1_break.png";
+      "bl_bridge2_break.png";
+      "bl_chickencoop.png";
+      "bl_chickencoop_gold.png";
+      "bl_chickencoop_gold_lock.png";
+      "bl_chickencoop_lock.png";
+      "bl_collider.png";
+      "bl_collider_lock.png";
+      "bl_cote.png";
+      "bl_cote_gold.png";
+      "bl_cote_gold_lock.png";
+      "bl_cote_lock.png";
+      "bl_cowshed.png";
+      "bl_cowshed_gold.png";
+      "bl_cowshed_gold_lock.png";
+      "bl_cowshed_lock.png";
+      "bl_dam.png";
+      "bl_doghouse.png";
+      "bl_gold_mine.png";
+      "bl_gold_mine_lock.png";
+      "bl_greenhouse.png";
+      "bl_house.png";
+      "bl_hutches.png";
+      "bl_hutches_gold.png";
+      "bl_hutches_gold_lock.png";
+      "bl_hutches_lock.png";
+      "bl_incubator.png";
+      "bl_incubator_lock.png";
+      "bl_ionizer.png";
+      "bl_ionizer_lock.png";
+      "bl_laboratory.png";
+      "bl_laboratory1.png";
+      "bl_laboratory1_lock.png";
+      "bl_laboratory2.png";
+      "bl_laboratory2_lock.png";
+      "bl_laboratory_lock.png";
+      "bl_magnetto.png";
+      "bl_magnetto_lock.png";
+      "bl_mill.png";
+      "bl_neutrino.png";
+      "bl_neutrino_lock.png";
+      "bl_paddock.png";
+      "bl_paddock_gold.png";
+      "bl_paddock_gold_lock.png";
+      "bl_paddock_lock.png";
+      "bl_stable.png";
+      "bl_stable_gold.png";
+      "bl_stable_gold_lock.png";
+      "bl_stable_lock.png";
+      "bl_stratochamber.png";
+      "bl_stratochamber_lock.png";
+      "bl_synchrophasotron.png";
+      "bl_synchrophasotron_lock.png";
+      "bl_teleport.png";
+      "bl_tesla.png";
+      "bl_tesla_lock.png";
+      "bl_turkeycoop.png";
+      "bl_turkeycoop_gold.png";
+      "bl_turkeycoop_gold_lock.png";
+      "bl_turkeycoop_lock.png";
+      "bl_ultrasonic.png";
+      "bl_ultrasonic_lock.png";
+      "bl_warehouse.png";
+      "bl_warehouse_lock.png";
+      "bl_workshop.png";
+      "bl_workshop_lock.png";
+      "bl_xray.png";
+      "bl_xray_lock.png"
+    |]
+  in
+  let sprite = Sprite.create () in
+  let i = ref 1 in
+  (
+    let img = Image.load (Filename.concat "items" items.(0)) in
+    sprite#addChild img;
+    onClick sprite begin fun sprite ->
+      (
+        sprite#clearChildren ();
+        if !i >= Array.length items
+        then i.val := 0
+        else ();
+        let img = Image.load (Filename.concat "items" items.(!i)) in
+        (
+          incr i;
+          sprite#addChild img;
+          Gc.full_major ();
+        )
+      )
+    end;
+    sprite#setPos 100. 100.;
+    stage#addChild sprite;
+  );
+
+
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -611,8 +710,9 @@ let stage width height =
 (*       masks self; *)
 (*       half_pixels self; *)
 (*         gradient self; *)
-        pallete self;
+(*         pallete self; *)
 (*         map self; *)
+        test_gc self;
         game_center self;
 (*         sound self; *)
 (*         window self; *)

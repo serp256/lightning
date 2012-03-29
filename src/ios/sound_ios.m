@@ -221,7 +221,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Could not fill OpenAL buffer",String_val(mlpath),errorCode);
 	
-	mlBufferID = caml_alloc_custom(&albuffer_ops,sizeof(uint),1,0);
+	mlBufferID = caml_alloc_custom(&albuffer_ops,sizeof(uint),soundSize,MAX_MEMORY);
 	*ALBUFFERID(mlBufferID) = bufferID;
 	mlres = caml_alloc_tuple(2);
 	Store_field(mlres,0,mlBufferID);
@@ -231,6 +231,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 }
     
 
+/*
 #define ALSOURCEID(v) ((uint*)Data_custom_val(v))
 static void alsource_finalize(value mlAlSourceID) {
 	uint sourceID = *ALSOURCEID(mlAlSourceID);
@@ -249,6 +250,7 @@ struct custom_operations alsource_ops = {
   custom_serialize_default,
   custom_deserialize_default
 };
+*/
 
 CAMLprim value ml_alsource_create(value mlAlBufferID) {
 	CAMLparam1(mlAlBufferID);
@@ -259,13 +261,15 @@ CAMLprim value ml_alsource_create(value mlAlBufferID) {
 	alSourcei(sourceID, AL_BUFFER, bufferID);
 	PRINT_DEBUG("created alsource: %d for buffer %d",sourceID,bufferID);
 	checkOpenALError("create alsource: %d - %d",bufferID,sourceID);
-	mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
-	*ALSOURCEID(mlAlSourceID) = sourceID;
+	//mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
+	//*ALSOURCEID(mlAlSourceID) = sourceID;
+	mlAlSourceID = caml_copy_int32(sourceID);
 	CAMLreturn(mlAlSourceID);
 }
 
 void ml_alsource_play(value mlAlSourceID) {
-	uint sourceID = *ALSOURCEID(mlAlSourceID);
+	//uint sourceID = *ALSOURCEID(mlAlSourceID);
+	uint sourceID = Int32_val(mlAlSourceID);
 	alSourcePlay(sourceID);
 	PRINT_DEBUG("play source: %d",sourceID);
 	// remove after debug
@@ -273,7 +277,8 @@ void ml_alsource_play(value mlAlSourceID) {
 }
 
 void ml_alsource_pause(value mlAlSourceID) {
-	uint sourceID = *ALSOURCEID(mlAlSourceID);
+	//uint sourceID = *ALSOURCEID(mlAlSourceID);
+	uint sourceID = Int32_val(mlAlSourceID);
 	alSourcePause(sourceID);
 	PRINT_DEBUG("pause alsource: %d",sourceID);
 	// remove after debug
@@ -281,7 +286,8 @@ void ml_alsource_pause(value mlAlSourceID) {
 }
 
 void ml_alsource_stop(value mlAlSourceID) {
-	uint sourceID = *ALSOURCEID(mlAlSourceID);
+	//uint sourceID = *ALSOURCEID(mlAlSourceID);
+	uint sourceID = Int32_val(mlAlSourceID);
 	alSourceStop(sourceID);
 	PRINT_DEBUG("stop alsource: %d",sourceID);
 	// remove after debug
@@ -289,12 +295,14 @@ void ml_alsource_stop(value mlAlSourceID) {
 }
 
 void ml_alsource_setLoop(value mlAlSourceID,value loop) {
-	alSourcei(*ALSOURCEID(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
+	//alSourcei(*ALSOURCEID(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
+	alSourcei(Int32_val(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
 }
 
 value ml_alsource_state(value mlAlSourceID) {
 	ALint state;
-	alGetSourcei(*ALSOURCEID(mlAlSourceID), AL_SOURCE_STATE, &state);
+	//alGetSourcei(*ALSOURCEID(mlAlSourceID), AL_SOURCE_STATE, &state);
+	alGetSourcei(Int32_val(mlAlSourceID), AL_SOURCE_STATE, &state);
 	int res;
 	switch (state) {
 		case AL_PLAYING: res = 1; break;
@@ -309,12 +317,21 @@ value ml_alsource_state(value mlAlSourceID) {
 */
 
 void ml_alsource_setVolume(value mlAlSourceID,value mlVolume) {
-	alSourcef(*ALSOURCEID(mlAlSourceID), AL_GAIN, Double_val(mlVolume)); // set volume
+	//alSourcef(*ALSOURCEID(mlAlSourceID), AL_GAIN, Double_val(mlVolume)); // set volume
+	alSourcef(Int32_val(mlAlSourceID), AL_GAIN, Double_val(mlVolume)); // set volume
 }
 
 CAMLprim value ml_alsource_getVolume(value mlAlSourceID) {
-	CAMLparam1(mlAlSourceID);
 	ALfloat volume;
-	alGetSourcef(*ALSOURCEID(mlAlSourceID),AL_GAIN,&volume);
-	CAMLreturn(caml_copy_double(volume));
+	//alGetSourcef(*ALSOURCEID(mlAlSourceID),AL_GAIN,&volume);
+	alGetSourcef(Int32_val(mlAlSourceID),AL_GAIN,&volume);
+	return caml_copy_double(volume);
+}
+
+
+void ml_alsource_delete(value mlAlSourceID) {
+	uint sourceID = Int32_val(mlAlSourceID);
+	alSourceStop(sourceID);
+	alSourcei(sourceID, AL_BUFFER, 0);
+	alDeleteSources(1, &sourceID);
 }

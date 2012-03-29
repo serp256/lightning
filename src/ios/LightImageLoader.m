@@ -64,6 +64,9 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 	// сделать текстуру и заебись
 	UIImage *image = [UIImage alloc];
 	if ([image initWithData:data_]) {
+		float width = image.size.width;
+		float height = image.size.height;
+		NSLog(@"Laded external image of size: %f:%f",width,height);
 		textureInfo tInfo;
 		int r = loadImageFile(image,&tInfo);
 		[image release];

@@ -28,6 +28,16 @@ type textureFormat =
   ];
 
 
+
+(*
+value mem = ref 0;
+value add_mem m =
+  (
+    mem.val := !mem + m;
+    Printf.printf "MEMORY: %d\n%!" !mem;
+  );
+*)
+
 type textureInfo = 
   {
     texFormat: textureFormat;
@@ -71,6 +81,7 @@ and c =
     method base : option c; 
     method clipping: option Rectangle.t;
     method rootClipping: option Rectangle.t;
+    method released: bool;
     method release: unit -> unit;
     method subTexture: Rectangle.t -> c;
     method addRenderer: renderer -> unit;
@@ -91,6 +102,7 @@ value zero : c =
     method base = None;
     method clipping = None;
     method rootClipping = None;
+    method released = False;
     method release () = ();
     method subTexture _ = self;
     method addRenderer _ = ();
@@ -167,6 +179,7 @@ class subtexture region (baseTexture:c) =
 (*     method update path = baseTexture#update path; *)
     method subTexture region = ((new subtexture region (self :> c)) :> c);
 (*     method releaseSubTexture () = baseTexture#releaseSubTexture (); *)
+    method released = baseTexture#released;
     method release () = ();(* let () = debug:gc "release subtexture" in baseTexture#releaseSubTexture (); *)
 (*     method setTextureID tid = baseTexture#setTextureID tid; *)
     method addRenderer (_:renderer) = ();
@@ -231,7 +244,7 @@ class s textureInfo =
   let width = float textureInfo.realWidth
   and height = float textureInfo.realHeight
   in
-(*   let mem = textureInfo.memSize in *)
+(*   let () = add_mem textureInfo.memSize in *)
   let clipping = 
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
     then Some (Rectangle.create 0. 0. (width /. (float textureInfo.width)) (height /. (float textureInfo.height)))
@@ -256,10 +269,20 @@ class s textureInfo =
   in
   object(self)
 (*     value mutable textureID = renderInfo.rtextureID; *)
+    value renderInfo = renderInfo;
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
     method setFilter filter = set_texture_filter renderInfo.rtextureID filter;
-    method release () = delete_textureID renderInfo.rtextureID;
+    value mutable released = False;
+    method released = released;
+    method release () = 
+      if not released
+      then
+      (
+        delete_textureID renderInfo.rtextureID;
+        released := True;
+      ) else ();
+
       (*
       if (textureID <> 0) 
       then
@@ -332,18 +355,26 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
 (*   let mem = ((nextPowerOfTwo (truncate width)) * (nextPowerOfTwo (truncate height)) * 4) in *)
   object(self:c)
     method renderInfo = renderInfo;
-    value mutable textureID = textureID;
     method kind = renderInfo.kind;
-    method textureID = textureID;
+    method textureID = renderInfo.rtextureID;
     method width = renderInfo.rwidth;
     method height = renderInfo.rheight;
     method hasPremultipliedAlpha = True;
-    method setFilter filter = set_texture_filter textureID filter;
+    method setFilter filter = set_texture_filter renderInfo.rtextureID filter;
 (*     method scale = 1.; *)
     method base = None;
     method clipping = renderInfo.clipping;
     method rootClipping = renderInfo.clipping;
-    method release () = delete_textureID renderInfo.rtextureID;
+    value mutable released = False;
+    method released = released;
+    method release () = 
+      if not released 
+      then
+      (
+        delete_textureID renderInfo.rtextureID;
+        released := True;
+      )
+      else ();
     (*
       if (textureID <> 0) 
       then
@@ -373,18 +404,17 @@ value make_and_cache path textureInfo =
   let res = 
     object(self) 
       inherit s textureInfo as super;
-      value mutable released = False;
       method !release () = 
         if not released
         then
         (
-          super#release ();
+          delete_textureID renderInfo.rtextureID;
           TextureCache.remove cache path;
           released := True;
         )
         else ();
 
-      initializer Gc.finalise (fun _ -> if not released then TextureCache.remove cache path else ()) self;
+      initializer Gc.finalise (fun t -> if not t#released then TextureCache.remove cache path else ()) self;
         (*
         if (textureID <> 0) 
         then
@@ -401,7 +431,6 @@ value make_and_cache path textureInfo =
   in
   (
     debug:cache "texture <%d> cached" (int32_of_textureID res#textureID);
-    Gc.finalise (fun t -> t#release ()) res; 
     TextureCache.add cache path res;
     (res :> c)
   );
@@ -667,7 +696,6 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
     value mutable isActive = False;
-    value mutable textureID = textureID;
     value mutable legalWidth = legalWidth;
     method realWidth = legalWidth;
     method width = renderInfo.rwidth;
@@ -676,7 +704,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method height = renderInfo.rheight;
     method hasPremultipliedAlpha = match renderInfo.kind with [ Simple v -> v | _ -> assert False ];
 (*     method scale = 1.; *)
-    method textureID = textureID;
+    method textureID = renderInfo.rtextureID;
     method base : option c = None;
     method clipping = renderInfo.clipping;
     method rootClipping = renderInfo.clipping;
@@ -686,10 +714,10 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     method addRenderer r = Renderers.add renderers r;
     method removeRenderer r = Renderers.remove renderers r;
     method private changed () = Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> c)) renderers;
-    method setFilter filter = set_texture_filter textureID filter;
+    method setFilter filter = set_texture_filter renderInfo.rtextureID filter;
 
     method resize w h =
-      let () = debug:rendered "resize <%ld> from %f->%f, %f->%f" (int32_of_textureID textureID) width w height h in
+      let () = debug:rendered "resize <%ld> from %f->%f, %f->%f" (int32_of_textureID renderInfo.rtextureID) width w height h in
       if w <> width || h <> height
       then
 (*         let () = texture_mem_sub (legalWidth * legalHeight * 4) in *)
@@ -700,7 +728,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
         let (legalWidth',legalHeight') = render_texture_size (legalWidth',legalHeight') in
         (
           if (legalWidth' <> legalWidth || legalHeight <> legalHeight')
-          then resize_texture textureID legalWidth' legalHeight'
+          then resize_texture renderInfo.rtextureID legalWidth' legalHeight'
           else ();
           legalWidth := legalWidth'; legalHeight := legalHeight';
 (*           texture_mem_add (legalWidth * legalHeight * 4); *)
@@ -716,13 +744,14 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       else ();
 
     value mutable released = False;
+    method released = released;
     method release () = 
       match released with
       [ False ->
         (
-          debug "release rendered texture: [%d] <%ld>" framebufferID (int32_of_textureID textureID);
+          debug "release rendered texture: [%d] <%ld>" framebufferID (int32_of_textureID renderInfo.rtextureID);
           delete_framebuffer framebufferID;
-          delete_textureID textureID;
+          delete_textureID renderInfo.rtextureID;
           released := True;
   (*         texture_mem_sub (legalWidth * legalHeight * 4); *)
         )
@@ -757,7 +786,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     initializer 
     (
 (*       texture_mem_add (legalWidth * legalHeight * 4); *)
-      Gc.finalise (fun _ -> self#finalise ()) self;
+      Gc.finalise (fun obj -> if not obj#released then delete_framebuffer obj#framebufferID else ()) self;
     );
 
 

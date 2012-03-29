@@ -54,6 +54,7 @@ and c =
     method clipping: option Rectangle.t;
     method rootClipping: option Rectangle.t;
 (*     method update: string -> unit; *)
+    method released: bool;
     method release: unit -> unit;
     method subTexture: Rectangle.t -> c;
     method addRenderer: renderer -> unit;
