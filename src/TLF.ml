@@ -480,8 +480,22 @@ value create ?width ?height ?border ?dest (html:main) =
   let rec make_lines width attributes lines : simple_element -> unit = fun 
     [ `img attrs image -> 
       let () = debug "process img: lines: %d" (Stack.length lines) in
-      let iwidth = match getAttrOpt (fun [ `width w -> Some w | _ -> None ])  attrs with [ Some w -> (image#setWidth w; w) | None -> image#width] (*{{{*)
-      and iheight = match getAttrOpt (fun [ `height h -> Some h | _ -> None ])  attrs with [ Some h -> (image#setHeight h; h) | None -> image#height]
+      let (iwidth, iheight) =
+        let (w, h) =
+          match (getAttrOpt (fun [ `width w -> Some w | _ -> None ]) attrs, getAttrOpt (fun [ `height h -> Some h | _ -> None ]) attrs) with
+          [ (Some w, Some h) -> (w, h)
+          | (Some w, None) -> (w, image#height *. w /. image#width)
+          | (None, Some h) -> (image#width *. h /. image#height, h)
+          | _ -> (image#width, image#height)
+          ]
+        in
+        (
+          image#setWidth w;
+          image#setHeight h;
+          (w, h);
+        )
+(*       let iwidth = match getAttrOpt (fun [ `width w -> Some w | _ -> None ])  attrs with [ Some w -> (image#setWidth w; w) | None -> image#width] (*{{{*)
+      and iheight = match getAttrOpt (fun [ `height h -> Some h | _ -> None ])  attrs with [ Some h -> (image#setHeight h; h) | None -> image#height] *)
       and paddingLeft = getAttr (fun [ `paddingLeft pl -> Some pl | _ -> None]) 0. attrs in
       let font = getFont attributes in
       let line = 
