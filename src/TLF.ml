@@ -73,7 +73,7 @@ DEFINE AEXPAND(name,tag) =
   ];
 
 
-value img ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?paddingLeft ?valign img : simple_element = 
+value img ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?valign img : simple_element = 
   let attrs = [] in
   let attrs = AEXPAND (width,`width) in
   let attrs = AEXPAND (height,`height) in
@@ -478,7 +478,9 @@ value create ?width ?height ?border ?dest (html:main) =
     Debug.d "create %s:%s" (opt width) (opt height) 
   in
   let rec make_lines width attributes lines : simple_element -> unit = fun 
-    [ `img attrs image -> 
+    [ `img attrs image ->
+      let () = debug "attrs empty %B" (attrs = []) in
+      let () = List.iter (fun attr -> match attr with [ `paddingLeft pl -> debug "paddingLeft: %f" pl | _ -> debug "some attr "]) attrs in
       let () = debug "process img: lines: %d" (Stack.length lines) in
       let (iwidth, iheight) =
         let (w, h) =
@@ -497,6 +499,7 @@ value create ?width ?height ?border ?dest (html:main) =
 (*       let iwidth = match getAttrOpt (fun [ `width w -> Some w | _ -> None ])  attrs with [ Some w -> (image#setWidth w; w) | None -> image#width] (*{{{*)
       and iheight = match getAttrOpt (fun [ `height h -> Some h | _ -> None ])  attrs with [ Some h -> (image#setHeight h; h) | None -> image#height] *)
       and paddingLeft = getAttr (fun [ `paddingLeft pl -> Some pl | _ -> None]) 0. attrs in
+      let () = debug "paddingLeft: %f" paddingLeft in
       let font = getFont attributes in
       let line = 
         if Stack.is_empty lines 
