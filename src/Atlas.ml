@@ -116,10 +116,10 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
       *)
 
       method private updateGlowFilter () = 
-        let () = debug:glow "update glow" in
         match glowFilter with
         [ Some ({g_texture = None; g_program; g_params = glow; _ } as gf) ->
           (
+            let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
             then
@@ -142,7 +142,7 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
                 let gwidth = g_renderInfo.Texture.rwidth
                 and gheight = g_renderInfo.Texture.rheight in
                 (
-                  debug:glow "g_texture: %d [%f:%f] %s" g_texture#textureID gwidth gheight (match g_texture#rootClipping with [ Some r -> Rectangle.to_string r | None -> "NONE"]);
+                  debug:glow "g_texture: <%ld> [%f:%f] %s" (Texture.int32_of_textureID g_renderInfo.Texture.rtextureID) gwidth gheight (match g_texture#rootClipping with [ Some r -> Rectangle.to_string r | None -> "NONE"]);
                   let dp = {Point.x=(bounds.Rectangle.width -. gwidth) /. 2.; y = (bounds.Rectangle.height -. gheight) /. 2.} in
                   gf.g_matrix := Matrix.create ~translate:(Point.addPoint ip dp) ();
                   gf.g_texture := Some g_texture;

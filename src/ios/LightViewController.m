@@ -304,6 +304,7 @@ static value *ml_url_complete = NULL;
 
 -(void)didReceiveMemoryWarning {
 	NSLog(@"APP did recieve memory warning");
+	ml_memoryWarning();
 }
 
 

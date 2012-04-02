@@ -482,11 +482,17 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	CAMLreturn(result);
 };
 
-void ml_resize_texture(value textureID,value width,value height) {
-	GLuint mTextureID = *TEXTURE_ID(textureID);
-	glBindTexture(GL_TEXTURE_2D, mTextureID);
+value ml_resize_texture(value textureID,value width,value height) {
+	GLuint tid = *TEXTURE_ID(textureID);
+	int w = Long_val(width);
+	int h = Long_val(height);
+	glBindTexture(GL_TEXTURE_2D, tid);
 	boundTextureID = 0;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,Long_val(width),Long_val(height),0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
+	// хак с памятью 
+	*TEXTURE_ID(textureID) = 0;
+	Store_textureID(textureID,tid,w * h * 4);
+	return textureID;
 }
 
 /*

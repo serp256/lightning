@@ -1,5 +1,5 @@
 
-OCAMLFIND=ocamlfind -toolchain ios
+OCAMLFIND=ocamlfind
 OCAMLOPT=$(OCAMLFIND) ocamlopt
 
 all:
