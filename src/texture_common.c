@@ -9,21 +9,20 @@
 #include "texture_common.h"
 
 
-static int MAX_TEXTURE_MEMORY = 62914560;
 
 void ml_texture_id_delete(value textureID) {
 	GLuint tid = *TEXTURE_ID(textureID);
-	PRINT_DEBUG("delete texture: %d\n",tid);
+	PRINT_DEBUG("delete texture: <%d>\n",tid);
 	if (tid) {
 		glDeleteTextures(1,&tid);
 		*TEXTURE_ID(textureID) = 0;
 	};
 }
 
-static void textureID_finalize(value texid) {
-	GLuint textureID = *TEXTURE_ID(texid);
-	PRINT_DEBUG("finalize texture: <%d>\n",textureID);
-	if (textureID) glDeleteTextures(1,&textureID);
+static void textureID_finalize(value textureID) {
+	GLuint tid = *TEXTURE_ID(textureID);
+	PRINT_DEBUG("finalize texture: <%d>\n",tid);
+	if (textureID) glDeleteTextures(1,&tid);
 }
 
 static int textureID_compare(value texid1,value texid2) {
@@ -46,7 +45,7 @@ struct custom_operations textureID_ops = {
 };
 
 #define Store_textureID(mlTextureID,tid,dataLen) \
-	mlTextureID = caml_alloc_custom(&textureID_ops, sizeof(GLuint), dataLen, MAX_TEXTURE_MEMORY); \
+	mlTextureID = caml_alloc_custom(&textureID_ops, sizeof(GLuint), dataLen, MAX_MEMORY); \
 	*TEXTURE_ID(mlTextureID) = tid;
 
 value alloc_texture_id(GLuint textureID, int dataLen) {
