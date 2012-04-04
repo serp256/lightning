@@ -625,7 +625,7 @@ type framebufferState;
 external activate_framebuffer: framebufferID -> int -> int -> framebufferState = "ml_activate_framebuffer";
 external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
 external delete_framebuffer: framebufferID -> unit = "ml_delete_framebuffer";
-external resize_texture: textureID -> int -> int -> unit = "ml_resize_texture";
+external resize_texture: textureID -> int -> int -> textureID = "ml_resize_texture";
 
 class type rendered = 
   object
@@ -730,10 +730,12 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
         let legalWidth' = nextPowerOfTwo iw
         and legalHeight' = nextPowerOfTwo ih in
         let (legalWidth',legalHeight') = render_texture_size (legalWidth',legalHeight') in
-        (
+        let textureID = 
           if (legalWidth' <> legalWidth || legalHeight <> legalHeight')
           then resize_texture renderInfo.rtextureID legalWidth' legalHeight'
-          else ();
+          else renderInfo.rtextureID
+        in
+        (
           legalWidth := legalWidth'; legalHeight := legalHeight';
 (*           texture_mem_add (legalWidth * legalHeight * 4); *)
           let flw = float legalWidth' and flh = float legalHeight' in
@@ -742,7 +744,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
             then Some (Rectangle.create 0. 0. (w /. flw) (h /. flh))
             else None 
           in
-          renderInfo := {(renderInfo) with rwidth = w; rheight = h; clipping};
+          renderInfo := {(renderInfo) with rtextureID = textureID; rwidth = w; rheight = h; clipping};
           Renderers.iter (fun r -> r#onTextureEvent `RESIZE (self :> c)) renderers;
         )
       else ();

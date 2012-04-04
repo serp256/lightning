@@ -302,7 +302,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
           and gheight = g_renderInfo.Texture.rheight
           and g_image = Render.Image.create g_renderInfo 0xFFFFFF alpha in
           (
-            debug:glow "g_texture: %ld [%f:%f] %s" (Texture.int32_of_textureID renderInfo.Texture.rtextureID) gwidth gheight (match renderInfo.Texture.clipping with [ Some r -> Rectangle.to_string r | None -> "NONE"]);
+            debug:glow "g_texture: <%ld> [%f:%f] %s" (Texture.int32_of_textureID renderInfo.Texture.rtextureID) gwidth gheight (match renderInfo.Texture.clipping with [ Some r -> Rectangle.to_string r | None -> "NONE"]);
             if texFlipX then Render.Image.flipTexX g_image else ();
             if texFlipY then Render.Image.flipTexY g_image else ();
             gf.g_matrix := Matrix.create ~translate:{Point.x = (w -. gwidth) /. 2.; y = (h -. gheight) /. 2.} ();

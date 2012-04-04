@@ -687,7 +687,59 @@ value test_gc (stage:Stage.c) =
     stage#addChild sprite;
   );
 
+value library = RefList.empty ();
+value library (stage:Stage.c) = 
+  for i = 0 to 87 do
+    Texture.load_async (Printf.sprintf "library/%d.png" i) (fun texture ->
+      RefList.push library texture
+    )  
+  done;
 
+
+
+
+value data = Hashtbl.create 99;
+
+value lang (stage:Stage.c) = 
+(
+  let json = LightCommon.read_json (Printf.sprintf "locale/Lang%s.json" "RU") in
+  match json with
+  [ `Assoc obj -> List.iter (fun (k,v) -> Hashtbl.replace data k v) obj
+  | _ ->  failwith "Incorrect lang json"
+  ];
+);
+
+value print_mem msg = 
+  let meminfo = Gc.stat () in
+  let sysmem = Lightning.memUsage () in
+  Printf.eprintf "!MEMORY [%s]: live: %d, total: %d, sys: %d\n%!" msg ((Sys.word_size/8) * meminfo.Gc.live_words) ((Sys.word_size/8) * meminfo.Gc.heap_words) sysmem;
+
+value memtest (stage:Stage.c) =
+(
+  let texture = ref (Texture.load "library/0.png") in
+  let img = Image.create !texture in
+  (
+    let timer = Timer.create 0.5 in
+    (
+      timer#addEventListener Timer.ev_TIMER (fun _ _ _ -> (!texture#release(); texture.val := Texture.load "library/0.png"; img#setTexture !texture; print_mem "timer"));
+      timer#start ();
+    );
+    stage#addChild img;
+  );
+);
+
+value memtest_async (stage:Stage.c) =
+  let img = Image.create Texture.zero in
+  (
+    let rec f () = 
+      (
+        img#texture#release();
+        Texture.load_async "library/0.png" (fun texture -> (img#setTexture texture; ignore(Timers.start 1. f)));
+      )
+    in
+    Timers.start 0.5 f;
+    stage#addChild img;
+  );
 
 let stage width height = 
   object(self)
@@ -715,6 +767,11 @@ let stage width height =
 (*       half_pixels self; *)
 (*         gradient self; *)
 (*         pallete self; *)
+(*         map self; *)
+(*         test_gc self; *)
+(*         library self; *)
+(*         lang self; *)
+        memtest_async self;
         (* map self; *)
 (*         test_gc self;
         game_center self;

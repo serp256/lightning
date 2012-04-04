@@ -7,7 +7,7 @@ CFLAGS += -I .
 
 GLPARAM = 
 
-MOBJS = texture_common.o texture_async_loader.o filters_stub.o render_stub.o
+MOBJS = light_common.o texture_common.o texture_async_loader.o filters_stub.o render_stub.o
 MLOBJSFLAGS = 
 MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
@@ -98,7 +98,7 @@ MLUTILSOBJS = $(MLUTILS:.ml=.cmx)
 MLUTILSOBJSB = $(MLUTILS:.ml=.cmo)
 MLOBJS = $(MLSOURCES:.ml=.cmx)
 MLOBJSB = $(MLSOURCES:.ml=.cmo)
-$(MLOBJS) $(MLOBJSB): MLFLAGS += -package xmlm  $(MLOBJSFLAGS)
+$(MLOBJS) $(MLOBJSB) doc: MLFLAGS += -package xmlm  $(MLOBJSFLAGS)
 $(MLOBJS): Debug.cmx
 $(MLOBJSB): Debug.cmo
 
@@ -146,8 +146,8 @@ MLDepend.$(PLATFORM):
 doc:
 	mkdir -p docs
 	$(OCAMLFIND) ocamldoc -short-functors -html -d docs $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLFLAGS) \
-		containers/MList.ml containers/HSet.mli PriorityQueue.mli WeakHashtbl.mli WeakMemo.mli LightCommon.ml Event.ml EventDispatcher.mli Point.ml Rectangle.ml Matrix.ml DisplayObjectT.mli DisplayObject.mli Sprite.mli Quad.mli \
-		Texture.mli TextureAtlas.mli Image.mli Touch.ml BitmapFont.mli Stage.mli GameCenter.mli  Lightning.ml
+		containers/MList.ml containers/HSet.mli containers/PriorityQueue.mli containers/WeakHashtbl.mli WeakMemo.mli LightCommon.mli Ev.mli EventDispatcher.mli Point.ml Rectangle.ml Matrix.ml DisplayObject.mli Sprite.mli Quad.mli \
+		Texture.mli TextureAtlas.mli Image.mli Touch.ml BitmapFont.mli Clip.mli LightLib.mli TLF.mli Stage.mli GameCenter.mli Lightning.mli
 
 
 .DEFAULT_GOAL := release

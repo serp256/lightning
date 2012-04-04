@@ -31,5 +31,7 @@ typedef enum
 } SPTouchPhase;
 
 //value mltouch_create(double timestamp,float globalX,float globalY,float previousGlobalX,float previousGlobalY,int tapCount, SPTouchPhase phase);
+//
+void ml_memoryWarning();
 
 #endif

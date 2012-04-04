@@ -108,3 +108,10 @@ void mlstage_cancelAllTouches(mlstage *mlstage) {
 	if (cancelAllTouches_method == NIL) cancelAllTouches_method = caml_hash_variant("cancelAllTouches");
 	caml_callback2(caml_get_public_method(mlstage->stage,cancelAllTouches_method),mlstage->stage,Val_unit);
 }
+
+
+void ml_memoryWarning() {
+	caml_acquire_runtime_system();
+	caml_gc_compaction();
+	caml_release_runtime_system();
+}
