@@ -52,6 +52,7 @@ value () =
 ENDIF;
 
 
+external memUsage: unit -> int = "ml_memUsage";
 
 
 
