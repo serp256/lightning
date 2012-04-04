@@ -23,8 +23,12 @@
 
 int nextPowerOfTwo(int number);
 
+struct tex {
+	GLuint tid;
+	int mem;
+};
 
-#define TEXTURE_ID(v) ((GLuint*)Data_custom_val(v))
+#define TEXTURE_ID(v) ((struct tex*)Data_custom_val(v))->tid
 
 void setPMAGLBlend ();
 void enableSeparateBlend ();
@@ -33,7 +37,7 @@ void setNotPMAGLBlend ();
 void lgGLBindTexture(GLuint textureID, int pma);
 void lgGLBindTextures(GLuint textureID, GLuint textureID1, int newPMA);
 void lgResetBoundTextures();
-value alloc_texture_id(GLuint textureID, int dataLen);
+value alloc_texture_id(GLuint textureID, unsigned int dataLen);
 
 
 typedef enum 

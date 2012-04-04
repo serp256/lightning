@@ -170,6 +170,7 @@ value ml_loadImage(value oldTextureID,value opath,value scale) {
 		caml_failwith("Can't load image");
 	};
 	value textureID = createGLTexture(oldTextureID,&tInfo);
+	free(tInfo.imgData);
 	// free surface
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
 	//SDL_FreeSurface(tInfo.surface);

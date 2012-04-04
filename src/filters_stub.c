@@ -130,7 +130,7 @@ value create_ml_texture(renderbuffer_t *rb) {
 		Store_double_field(Field(clip,0),3,rb->clp.height);
 	} else clip = Val_unit;
 	fprintf(stderr,"alloc new c texture: %d\n",rb->tid);
-	mlTextureID = alloc_texture_id(rb->tid,width * height * 4);
+	mlTextureID = alloc_texture_id(rb->tid,rb->width * rb->height * 4);
 	//fprintf(stderr,"allocated new mlTextureID: %ld\n",mlTextureID);
 	width = caml_copy_double(rb->width);
 	height = caml_copy_double(rb->height);
@@ -429,7 +429,7 @@ value ml_glow_make(value textureInfo, value glow) {
 
 	renderbuffer_t ib;
 	create_renderbuffer(rwidth/2,rheight/2,&ib,GL_LINEAR);
-	GLuint tid = *TEXTURE_ID(Field(textureInfo,0));
+	GLuint tid = TEXTURE_ID(Field(textureInfo,0));
 	value clip = Field(textureInfo,3);
 	clipping clp;
 	if (clip != 1) {

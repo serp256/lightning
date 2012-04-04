@@ -517,8 +517,8 @@ class loader ?request () =
         bytesTotal := 0L;
         bytesLoaded := 0L;
         Buffer.clear data;
-        start_load wrapper r;
         state := Loading;
+        start_load wrapper r;
       );
 
     initializer

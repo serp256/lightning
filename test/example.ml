@@ -1,4 +1,6 @@
 
+Gc.set {(Gc.get ()) with Gc.verbose  = (0x001 lor 0x002 lor 0x004 lor 0x010 lor 0x040 lor 0x080)};
+
 value max_anim_len = 40;
 value (|>) a b = b a;
 (*

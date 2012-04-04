@@ -9,25 +9,30 @@
 #include "texture_common.h"
 
 
+static unsigned int total_tex_mem = 0;
+
+#define TEX(v) ((struct tex*)Data_custom_val(v))
 
 void ml_texture_id_delete(value textureID) {
-	GLuint tid = *TEXTURE_ID(textureID);
+	GLuint tid = TEXTURE_ID(textureID);
 	PRINT_DEBUG("delete texture: <%d>\n",tid);
 	if (tid) {
 		glDeleteTextures(1,&tid);
-		*TEXTURE_ID(textureID) = 0;
+		TEX(textureID)->tid = 0;
 	};
 }
 
 static void textureID_finalize(value textureID) {
-	GLuint tid = *TEXTURE_ID(textureID);
+	GLuint tid = TEXTURE_ID(textureID);
 	PRINT_DEBUG("finalize texture: <%d>\n",tid);
 	if (textureID) glDeleteTextures(1,&tid);
+	total_tex_mem -= TEX(textureID)->mem;
+	fprintf(stderr,"TEXTURE MEMORY (dealloc): %d\n",total_tex_mem);
 }
 
 static int textureID_compare(value texid1,value texid2) {
-	GLuint t1 = *TEXTURE_ID(texid1);
-	GLuint t2 = *TEXTURE_ID(texid2);
+	GLuint t1 = TEXTURE_ID(texid1);
+	GLuint t2 = TEXTURE_ID(texid2);
 	if (t1 == t2) return 0;
 	else {
 		if (t1 < t2) return -1;
@@ -44,11 +49,12 @@ struct custom_operations textureID_ops = {
   custom_deserialize_default
 };
 
-#define Store_textureID(mlTextureID,tid,dataLen) \
-	mlTextureID = caml_alloc_custom(&textureID_ops, sizeof(GLuint), dataLen, MAX_MEMORY); \
-	*TEXTURE_ID(mlTextureID) = tid;
+#define Store_textureID(mltex,texID,dataLen) \
+	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_MEMORY); \
+	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; fprintf(stderr,"TEXTURE MEMORY: %d\n",total_tex_mem);}
+//*TEXTURE_ID(mlTextureID) = tid;
 
-value alloc_texture_id(GLuint textureID, int dataLen) {
+value alloc_texture_id(GLuint textureID, unsigned int dataLen) {
 	value mlTextureID;
 	Store_textureID(mlTextureID,textureID,dataLen);
 	return mlTextureID;
@@ -61,7 +67,7 @@ value ml_texture_id_zero() {
 }
 
 value ml_texture_id_to_int32(value textureID) {
-	GLuint tid = *TEXTURE_ID(textureID);
+	GLuint tid = TEXTURE_ID(textureID);
 	return (caml_copy_int32(tid));
 }
 
@@ -344,9 +350,9 @@ value createGLTexture(value oldTextureID,textureInfo *tInfo) {
 			checkGLErrors("glGenTexture");
 			Store_textureID(mlTextureID,textureID,tInfo->dataLen);
 		} else {
-			// FIXME: check if it's correct
+			// FIXME: check memory detecting incorrect
 			mlTextureID = Field(oldTextureID,0);
-			textureID = *TEXTURE_ID(mlTextureID);
+			textureID = TEXTURE_ID(mlTextureID);
 		}
     glBindTexture(GL_TEXTURE_2D, textureID);
     
@@ -408,7 +414,7 @@ value createGLTexture(value oldTextureID,textureInfo *tInfo) {
 };
 
 void ml_texture_set_filter(value textureID,value filter) {
-	GLuint tid = *TEXTURE_ID(textureID);
+	GLuint tid = TEXTURE_ID(textureID);
 	glBindTexture(GL_TEXTURE_2D,tid);
 	boundTextureID = tid;
 	switch (Int_val(filter)) {
@@ -483,14 +489,16 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 };
 
 value ml_resize_texture(value textureID,value width,value height) {
-	GLuint tid = *TEXTURE_ID(textureID);
+	GLuint tid = TEXTURE_ID(textureID);
 	int w = Long_val(width);
 	int h = Long_val(height);
 	glBindTexture(GL_TEXTURE_2D, tid);
 	boundTextureID = 0;
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
 	// хак с памятью 
-	*TEXTURE_ID(textureID) = 0;
+	struct tex *_tex = TEX(textureID);
+	_tex->tid = 0;
+	_tex->mem = 0;
 	Store_textureID(textureID,tid,w * h * 4);
 	return textureID;
 }

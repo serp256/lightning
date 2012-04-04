@@ -691,7 +691,7 @@ void print_image(lgImage *img) {
 				img->pma = Bool_val(Field(kind,0)); \
 				break; \
 			case 1: \
-				img->pallete = *TEXTURE_ID(Field(Field(kind,0),7)); \
+				img->pallete = TEXTURE_ID(Field(Field(kind,0),7)); \
 				img->pma = Bool_val(Field(Field(kind,0),5)); \
 				break; \
 			default: \
@@ -721,7 +721,7 @@ value ml_image_create(value textureInfo,value color,value oalpha) {
 	tq->tr.v = (vertex2F) { tq->br.v.x, tq->tl.v.y};
 	tq->tr.c = c;
 	set_image_uv(tq,Field(textureInfo,3));
-	img->textureID = *TEXTURE_ID(Field(textureInfo,0));
+	img->textureID = TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(img,textureInfo);
 	value res = caml_alloc_custom(&image_ops,sizeof(lgImage*),0,1); // 
 	*IMAGE(res) = img;
@@ -819,7 +819,7 @@ void ml_image_update(value image, value textureInfo, value flipX, value flipY) {
 		tq->tr.tex = tq->br.tex;
 		tq->br.tex = tmp;
 	};
-	img->textureID = *TEXTURE_ID(Field(textureInfo,0));
+	img->textureID = TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(img,textureInfo);
 }
 
@@ -1031,7 +1031,7 @@ value ml_atlas_init(value textureInfo) {
 	CAMLparam0();
 
 	atlas_t *atl = caml_stat_alloc(sizeof(atlas_t));
-	atl->textureID = *TEXTURE_ID(Field(textureInfo,0));
+	atl->textureID = TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(atl,textureInfo);
 	/*
 	value kind = Field(textureInfo,4);

@@ -161,7 +161,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
                 ];
                 match glowFilter with
                 [ Some {g_params;_} when g_params = glow -> ()
-                | _ -> self#setGlowFilter glow
+                | _ -> () (* self#setGlowFilter glow *)
                 ];
               )
             ];
