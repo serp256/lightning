@@ -1,3 +1,9 @@
+IFDEF IOS THEN
+external ml_authorization_grant : string -> unit = "ml_authorization_grant";
+ELSE
+value ml_authorization_grant str:string = ();
+ENDIF;
+
 open Ojson;
 
 type state = [ Standby | Authorizing of (string -> unit) ];
@@ -40,7 +46,8 @@ type delegate = (auth_response -> unit);
 (* ожидаемые авторизации *)
 value pendings = Queue.create ();
 
-external ml_authorization_grant : string -> unit = "ml_authorization_grant";
+
+
 
 
 (* 
