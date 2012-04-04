@@ -749,15 +749,16 @@ value url_loader (stage:Stage.c) =
   let loader = new URLLoader.loader () in
   (
     ignore <| loader#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "recieved %d bytes" (Option.get (Ev.int_of_data ev.Ev.data)));
-    ignore <| loader#addEventListener URLLoader.ev_COMPLETE (fun ev (loader,_) _ -> debug "request complete: %d, %s, %Ld" loader#httpCode loader#contentType loader#bytesTotal);
     let rec loop () = 
       (
         let request = URLLoader.request ~httpMethod:`GET "http://st-farm.redspell.ru/images/map_bottom_2.png" in
         loader#load request;
-        ignore <| Timers.start 0.3 loop;
       )
     in
-    ignore <| Timers.start 0.1 loop;
+    (
+      ignore <| loader#addEventListener URLLoader.ev_COMPLETE (fun ev (loader,_) _ -> (debug "request complete: %d, %s, %Ld" loader#httpCode loader#contentType loader#bytesTotal; ignore <| Timers.start 0.1 loop));
+      ignore <| Timers.start 0.1 loop;
+    )
   );
 
 

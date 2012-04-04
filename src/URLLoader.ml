@@ -447,12 +447,14 @@ value start_load wrappers r =
 ENDIF;
 ENDIF;
 
-type state = [ Init | Loading | Complete ];
+exception Loading_in_progress;
+
+type state = [ Loading | Complete ];
 
 class loader ?request () = 
   object(self)
     inherit EventDispatcher.simple [loader];
-    value mutable state = Init;
+    value mutable state = Complete;
     method state = state;
     method private asEventTarget = (self :> loader);
 
@@ -503,23 +505,27 @@ class loader ?request () =
     );
 
     method load r =
-      let wrapper = 
-        {
-          onResponse = self#onResponse;
-          onData = self#onData;
-          onComplete = self#onComplete;
-          onError = self#onError
-        }
-      in
-      (
-        httpCode := 0;
-        contentType := "";
-        bytesTotal := 0L;
-        bytesLoaded := 0L;
-        Buffer.clear data;
-        state := Loading;
-        start_load wrapper r;
-      );
+      match state with
+      [ Complete ->
+        let wrapper = 
+          {
+            onResponse = self#onResponse;
+            onData = self#onData;
+            onComplete = self#onComplete;
+            onError = self#onError
+          }
+        in
+        (
+          httpCode := 0;
+          contentType := "";
+          bytesTotal := 0L;
+          bytesLoaded := 0L;
+          Buffer.clear data;
+          state := Loading;
+          start_load wrapper r;
+        )
+      | Loading -> raise Loading_in_progress
+      ];
 
     initializer
       match request with

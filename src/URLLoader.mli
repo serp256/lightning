@@ -10,7 +10,7 @@ type request =
   };
 value get_header: string -> list (string*string) -> option string;
 value request: ?httpMethod:http_method -> ?headers:list (string*string) -> ?data:data -> string -> request;
-type state = [ Init | Loading | Complete ];
+type state = [ Loading | Complete ];
 
 value ev_PROGRESS: Ev.id; 
 value ev_COMPLETE: Ev.id;
