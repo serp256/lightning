@@ -50,7 +50,7 @@ struct custom_operations textureID_ops = {
 };
 
 #define Store_textureID(mltex,texID,dataLen) \
-	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_MEMORY); \
+	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
 	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; fprintf(stderr,"TEXTURE MEMORY (alloc %d): %d\n",dataLen,total_tex_mem);}
 //*TEXTURE_ID(mlTextureID) = tid;
 

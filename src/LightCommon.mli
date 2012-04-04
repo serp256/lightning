@@ -31,3 +31,7 @@ module MakeXmlParser(P:sig value path: string; end): sig
   value get_attributes: string -> list string -> list Xmlm.attribute -> list string;
   value parse_element: string -> list string -> option (list string * list Xmlm.attribute);
 end;
+
+
+
+external set_maxGC: int -> unit = "ml_setMaxGC";

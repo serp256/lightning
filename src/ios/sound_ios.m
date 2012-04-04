@@ -221,7 +221,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Could not fill OpenAL buffer",String_val(mlpath),errorCode);
 	
-	mlBufferID = caml_alloc_custom(&albuffer_ops,sizeof(uint),soundSize,MAX_MEMORY);
+	mlBufferID = caml_alloc_custom(&albuffer_ops,sizeof(uint),soundSize,MAX_GC_MEM);
 	*ALBUFFERID(mlBufferID) = bufferID;
 	mlres = caml_alloc_tuple(2);
 	Store_field(mlres,0,mlBufferID);

@@ -26,5 +26,4 @@
 #endif
 
 
-
-#define MAX_MEMORY 10485760
+extern unsigned int MAX_GC_MEM;
