@@ -60,7 +60,7 @@ type main =
   | `p of (p_attributes * simple_elements)
   ];
 
-value img: ?width:float -> ?height:float -> ?paddingLeft:float -> ?paddingTop:float -> ?paddingRight:float -> ?paddingLeft:float -> ?valign:img_valign -> #DisplayObject.c -> simple_element;
+value img: ?width:float -> ?height:float -> ?paddingLeft:float -> ?paddingTop:float -> ?paddingRight:float -> ?valign:img_valign -> #DisplayObject.c -> simple_element;
 value span: ?fontWeight:string -> ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> simple_elements -> simple_element;
 value p: ?fontWeight:string -> ?fontFamily:string -> ?fontSize:int -> ?color:int -> ?alpha:float -> ?halign:p_halign -> ?valign:p_valign -> ?spaceBefore:float -> ?spaceAfter:float -> ?textIndent:float -> simple_elements -> main;
 value parse_simples: ?imgLoader:(string -> DisplayObject.c) -> string -> simple_elements;

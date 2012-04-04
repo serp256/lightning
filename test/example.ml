@@ -579,8 +579,8 @@ value image (stage:Stage.c) =
 *)
 
 value map (stage:Stage.c) =
-  let map1 = Image.load "map/1.jpg"
-  and map2 = Image.load "map/2.jpg"
+  let map1 = Image.load "test_map/map_12.jpg"
+  and map2 = Image.load "test_map/map_13.jpg"
   in
   (
     map1#setX ~-.500.;
@@ -748,6 +748,10 @@ let stage width height =
     initializer begin
         BitmapFont.register "MyriadPro-Regular.fnt";
         TLF.default_font_family.val := "Myriad Pro";
+
+        let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
+          self#addChild tlf;
+        (* map self; *)
 (*         image self; *)
 (*         test_alpha self; *)
 (*       alert self; *)
@@ -768,8 +772,10 @@ let stage width height =
 (*         library self; *)
 (*         lang self; *)
         memtest_async self;
+        (* map self; *)
+(*         test_gc self;
         game_center self;
-(*         sound self; *)
+ *)(*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
     end;

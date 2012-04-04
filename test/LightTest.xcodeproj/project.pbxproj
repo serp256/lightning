@@ -9,26 +9,13 @@
 /* Begin PBXBuildFile section */
 		510C021314FE6C1200BDDCFC /* ra_fertilizer.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */; };
 		510C021614FE6ED800BDDCFC /* stoneBoom.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021514FE6ED800BDDCFC /* stoneBoom.caf */; };
-		513AB2441513836200B4AF5C /* caf in Resources */ = {isa = PBXBuildFile; fileRef = 513AB2431513836200B4AF5C /* caf */; };
 		517411B614FB6A420022E871 /* e_cactus.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B514FB6A420022E871 /* e_cactus.png */; };
 		517411B914FB6A510022E871 /* tree.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B814FB6A510022E871 /* tree.png */; };
 		517411CB14FB749C0022E871 /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 517411CA14FB749C0022E871 /* Shaders */; };
 		517EB8801522F888009D91B1 /* pallete.plx in Resources */ = {isa = PBXBuildFile; fileRef = 517EB87F1522F888009D91B1 /* pallete.plx */; };
 		517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */; };
-		517EB89215235990009D91B1 /* map in Resources */ = {isa = PBXBuildFile; fileRef = 517EB89115235990009D91B1 /* map */; };
 		51846F6514EE704D00FDE684 /* test.native in CopyFiles */ = {isa = PBXBuildFile; fileRef = 51846F6414EE704D00FDE684 /* test.native */; };
-		518819041519DF78002E1E1A /* wcorner.png in Resources */ = {isa = PBXBuildFile; fileRef = 518819011519DF78002E1E1A /* wcorner.png */; };
-		518819051519DF78002E1E1A /* whborder.png in Resources */ = {isa = PBXBuildFile; fileRef = 518819021519DF78002E1E1A /* whborder.png */; };
-		518819061519DF78002E1E1A /* wvborder.png in Resources */ = {isa = PBXBuildFile; fileRef = 518819031519DF78002E1E1A /* wvborder.png */; };
-		51881909151A00D4002E1E1A /* ui in Resources */ = {isa = PBXBuildFile; fileRef = 51881908151A00D4002E1E1A /* ui */; };
-		518874D91518823800A2892F /* frame.pvr in Resources */ = {isa = PBXBuildFile; fileRef = 518874D81518823800A2892F /* frame.pvr */; };
-		5189B0711521883F00CE78F0 /* 61.png in Resources */ = {isa = PBXBuildFile; fileRef = 5189B0701521883F00CE78F0 /* 61.png */; };
-		518A5292152434A000556D2C /* default.png in Resources */ = {isa = PBXBuildFile; fileRef = 518A5291152434A000556D2C /* default.png */; };
 		518D151C14FE441300B5436E /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */; };
-		518FDADB152085CB00F9E211 /* palletes in Resources */ = {isa = PBXBuildFile; fileRef = 518FDADA152085CA00F9E211 /* palletes */; };
-		518FDADE152085DA00F9E211 /* tree.plx in Resources */ = {isa = PBXBuildFile; fileRef = 518FDADD152085DA00F9E211 /* tree.plx */; };
-		518FDAEB1520B1AA00F9E211 /* 60.pvr in Resources */ = {isa = PBXBuildFile; fileRef = 518FDAEA1520B1AA00F9E211 /* 60.pvr */; };
-		519017B5151B091600B789EC /* zobjects in Resources */ = {isa = PBXBuildFile; fileRef = 519017B4151B091600B789EC /* zobjects */; };
 		5191FD9314FF5FC900DD8677 /* frame.png in Resources */ = {isa = PBXBuildFile; fileRef = 5191FD9214FF5FC900DD8677 /* frame.png */; };
 		51B5418514F273C300EB2241 /* items in Resources */ = {isa = PBXBuildFile; fileRef = 51B5418414F273C300EB2241 /* items */; };
 		51DC6E1314EE5E960084EB76 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1114EE5E960084EB76 /* InfoPlist.strings */; };
@@ -246,21 +233,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				518A5292152434A000556D2C /* default.png in Resources */,
-				517EB89215235990009D91B1 /* map in Resources */,
 				517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */,
 				517EB8801522F888009D91B1 /* pallete.plx in Resources */,
-				5189B0711521883F00CE78F0 /* 61.png in Resources */,
-				518FDAEB1520B1AA00F9E211 /* 60.pvr in Resources */,
-				518FDADE152085DA00F9E211 /* tree.plx in Resources */,
-				518FDADB152085CB00F9E211 /* palletes in Resources */,
-				519017B5151B091600B789EC /* zobjects in Resources */,
-				51881909151A00D4002E1E1A /* ui in Resources */,
-				518819041519DF78002E1E1A /* wcorner.png in Resources */,
-				518819051519DF78002E1E1A /* whborder.png in Resources */,
-				518819061519DF78002E1E1A /* wvborder.png in Resources */,
-				518874D91518823800A2892F /* frame.pvr in Resources */,
-				513AB2441513836200B4AF5C /* caf in Resources */,
 				5191FD9314FF5FC900DD8677 /* frame.png in Resources */,
 				510C021614FE6ED800BDDCFC /* stoneBoom.caf in Resources */,
 				510C021314FE6C1200BDDCFC /* ra_fertilizer.caf in Resources */,
