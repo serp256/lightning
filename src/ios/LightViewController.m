@@ -318,7 +318,8 @@ static value *ml_url_complete = NULL;
 
 @implementation LightViewCompatibleController
 - (void)dismissModalViewControllerAnimated:(BOOL)animated {
-  [super dismissModalViewControllerAnimated: animated];
+//  [super dismissModalViewControllerAnimated: animated];
+  [[LightViewController sharedInstance] dismissModalViewControllerAnimated: animated];
   [[LightViewController sharedInstance] becomeActive];
 }  
 @end

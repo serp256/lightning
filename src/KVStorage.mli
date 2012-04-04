@@ -1,5 +1,7 @@
 type t;
 
+exception Kv_not_found;
+
 value create : unit -> t;
 
 value get_string_opt : t -> string -> option string;

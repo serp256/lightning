@@ -1,7 +1,7 @@
 open Ojson;
 open SNTypes;
 
-type permission = [ Photos | Guestbook | Stream | Messages | Events ];
+type permission = [ Valuable_access | Set_status | Photo_content ];
 
 type permissions = list permission;
 
@@ -13,40 +13,42 @@ value _perms = ref None;
 
 value _private_key = ref "";
 
-value _oauth = OAuth.create "https://connect.mail.ru/oauth/authorize" "https://appsmail.ru/oauth/token";
+value _application_key = ref "";
+
+value _oauth = OAuth.create "http://www.odnoklassniki.ru/oauth/authorize" "http://api.odnoklassniki.ru/oauth/token.do";
 
 (* *)
 value string_of_permission = fun
-  [ Photos      -> "photos"
-  | Guestbook   -> "guestbook"
-  | Stream      -> "stream"
-  | Messages    -> "messages"
-  | Events      -> "events"
+  [ Valuable_access -> "VALUABLE ACCESS"
+  | Set_status      -> "SET STATUS"
+  | Photo_content   -> "PHOTO CONTENT"
   ];
   
   
 (* В Моем мире привелегии передаются через пробел *)
 value scope_of_perms perms = 
-  String.concat " " (List.map string_of_permission perms);
+  String.concat ";" (List.map string_of_permission perms);
   
 
 (* 
    Используйте необязательный параметр scope чтобы запросить у пользователя требующиеся вашему приложению привилегии. 
    Если требуется запросить несколько привилегий, они передаются в scope через пробел. 
 *)
-value init appid pkey perms = (
+value init appid appkey pkey perms = (
   _appid.val := appid;
   _private_key.val := pkey;
   _perms.val := Some (scope_of_perms perms);
+  _application_key.val := appkey;
 );
   
 
 (* высчитываем сигнатуру параметров *)
-value calc_signature uid params pkey = 
+value calc_signature params pkey access_token = 
   let sorted = List.sort (fun (k1,_) (k2,_) -> compare k1 k2) params in
   let joined = List.fold_left (fun acc (k,v) -> acc ^ k ^ "=" ^ v) "" sorted in
-  let () = Printf.eprintf "Sighning %s\n%!" joined in
-  Digest.to_hex (Digest.string (uid ^ joined ^ pkey));
+  let () = Printf.eprintf "Signing %s\n%!" joined in
+  let md5_1 = Digest.to_hex (Digest.string (access_token ^ pkey)) in
+  Digest.to_hex (Digest.string (joined ^ md5_1));
 
   
 
@@ -55,34 +57,28 @@ value calc_signature uid params pkey =
 value extract_error_from_json json = 
   match json with 
   [ `Assoc dict ->
-      let error = List.assoc "error" dict in
-      match error with 
-      [ `Assoc eparams ->
-         try 
-            let code = match List.assoc "error_code" eparams with
-            [ `Int i -> string_of_int i
-            | `Intlit s | `String s -> s
-            | _ -> raise Not_found
-            ]
-            and msg  = match List.assoc "error_msg" eparams with
-            [ `String s -> s
-            | _ -> raise Not_found
-            ] 
-            in SocialNetworkError (code, msg)
-         with [ Not_found -> SocialNetworkError ("999", "Error code or error message not found") ]      
+      let code = match List.assoc "error_code" dict with
+      [ `Int i -> string_of_int i
+      | `Intlit s | `String s -> s
       | _ -> raise Not_found
       ]
-  | _ -> raise Not_found 
+      and msg  = match List.assoc "error_msg" dict with
+      [ `String s -> s
+      | _ -> raise Not_found
+      ] 
+      in SocialNetworkError (code, msg)
+  | _ -> raise Not_found
   ];
   
 
 
 (* вызываем REST метод *)
-value call_method' meth session_key uid params callback = 
-  let params = [ ("app_id", !_appid ) :: [ ("method", meth) :: [ ("session_key", session_key) :: params ]]] in
-  let signature = calc_signature uid params !_private_key in
+value call_method' meth access_token params callback = 
+  let params = [ ("application_key", !_application_key) :: [("method", meth) :: params ]] in
+  let signature = calc_signature params !_private_key access_token in
   let params = [ ("sig", signature) :: params ] in
-  let url = Printf.sprintf "http://www.appsmail.ru/platform/api?%s" (UrlEncoding.mk_url_encoded_parameters params) in
+  let params = [ ("access_token", access_token) :: params ] in
+  let url = Printf.sprintf "http://api.odnoklassniki.ru/fb.do?%s" (UrlEncoding.mk_url_encoded_parameters params) in
   let loader = new URLLoader.loader ()  in (
     
     ignore (
@@ -118,27 +114,20 @@ value call_method' meth session_key uid params callback =
 
   
 (* проверяем все ли данные есть и сохраняем токен *)
-value handle_new_access_token token_info = 
-  let uid = List.assoc "x_mailru_vid" token_info.OAuth.other_params in (
+value handle_new_access_token token_info = (
 
-    KVStorage.put_string storage "mm_access_token" token_info.OAuth.access_token;
-    KVStorage.put_string storage "mm_user_id" uid;
+  KVStorage.put_string storage "ok_access_token" token_info.OAuth.access_token;
     
-    match token_info.OAuth.expires_in with 
-    [ Some seconds -> 
-        let expires = string_of_float ((float_of_int seconds) +. Unix.time ())
-        in KVStorage.put_string storage "mm_access_token_expires" expires
-    | None -> KVStorage.remove storage "mm_access_token_expires"
-    ];
+  let expires = string_of_float ((float_of_int 1800) +. Unix.time ()) (* пишут, что acces token експайрится через 30 минут *)
+  in KVStorage.put_string storage "ok_access_token_expires" expires;
     
+  match token_info.OAuth.refresh_token with 
+  [ Some token -> KVStorage.put_string storage "ok_refresh_token" token
+  | None -> KVStorage.remove storage "ok_refresh_token"
+  ];
     
-    match token_info.OAuth.refresh_token with 
-    [ Some token -> KVStorage.put_string storage "mm_refresh_token" token
-    | None -> KVStorage.remove storage "mm_refresh_token"
-    ];
-    
-    (token_info.OAuth.access_token, uid);
-  );
+  token_info.OAuth.access_token;
+);
   
   
 
@@ -156,21 +145,25 @@ value call_method ?(delegate=None) meth params =
 
   (* функция показа авторизации. при успехе выполняем REST метод *)
   let show_auth () = 
-    let redirect_uri = "https://connect.mail.ru/oauth/success.html"
-    and oauth_params = [("display", "mobile")]
+    let redirect_uri = "http://api.odnoklassniki.ru/success.html"
+    and oauth_params = [("client_secret", !_private_key)] in
+    let oauth_params = match !_perms with
+      [ Some "" | None -> oauth_params
+      | Some s -> [ ("scope", s) :: oauth_params ]
+      ] 
     and oauth_callback = fun 
       [ OAuth.Token  t ->  
           try 
-            let (access_token, uid) = handle_new_access_token t in
+            let access_token = handle_new_access_token t in
             let callback = fun
               [ Data json     ->  call_delegate_success json
               | Error e       ->  call_delegate_error e
               ]
-            in call_method' meth access_token uid params callback
+            in call_method' meth access_token params callback
           with [ Not_found -> call_delegate_error (SocialNetworkError ("999", "No UID in token info")) ]
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
-    in OAuth.authorization_grant _oauth OAuth.Implicit !_appid redirect_uri oauth_params oauth_callback
+    in OAuth.authorization_grant _oauth OAuth.Code !_appid redirect_uri oauth_params oauth_callback
   in
 
 
@@ -179,50 +172,36 @@ value call_method ?(delegate=None) meth params =
     let oauth_refresh_callback = fun 
     [ OAuth.Token t ->
         try 
-          let (access_token, uid) = handle_new_access_token t in 
+          let access_token = handle_new_access_token t in 
           let callback = fun
             [ Data json     ->  call_delegate_success json
             | Error e       ->  match e with 
-                [ SocialNetworkError ("102", _) -> show_auth ()
+                [ SocialNetworkError ("401", _) -> show_auth () (* TODO: надо посмотреть другие ошибки !!! *)
                 | _ -> call_delegate_error e
                 ]
             ]
-          in call_method' meth access_token uid params callback
+          in call_method' meth access_token params callback
         with [ Not_found -> show_auth () ]
     | OAuth.Error e -> show_auth ()
     ] 
     in OAuth.refresh_token _oauth rtoken !_appid [("client_secret", !_private_key)] oauth_refresh_callback
 
   in try 
-    let access_token = KVStorage.get_string storage "mm_access_token"
-    and uid = KVStorage.get_string storage "mm_user_id"
-    and token_expires = float_of_string (KVStorage.get_string storage "mm_access_token_expires") in 
+    let access_token = KVStorage.get_string storage "ok_access_token"
+    and token_expires = float_of_string (KVStorage.get_string storage "ok_access_token_expires") in 
     if ((Unix.time ()) > token_expires) then (* expired. try to refresh *)
-      refresh_token (KVStorage.get_string storage "mm_refresh_token")
+      refresh_token (KVStorage.get_string storage "ok_refresh_token")
     else   
       let callback = fun 
       [ Data json   -> call_delegate_success json
       | Error e     -> match e with
-          [ SocialNetworkError ("102", _) -> 
+          [ SocialNetworkError ("401", _) -> 
               try 
-                refresh_token (KVStorage.get_string storage "mm_refresh_token") (* тот токен, что у нас уже невалиден, надо зарефрешить *)
+                refresh_token (KVStorage.get_string storage "ok_refresh_token") (* тот токен, что у нас уже невалиден, надо зарефрешить *)
               with [ KVStorage.Kv_not_found -> show_auth() ]
           | _ -> call_delegate_error e
           ] 
       ]
-      in call_method' meth access_token uid params callback
+      in call_method' meth access_token params callback
   with [ KVStorage.Kv_not_found -> show_auth() ];  
   
-
-value get_access_token () = 
-  try 
-    KVStorage.get_string storage "mm_access_token"
-  with [ KVStorage.Kv_not_found -> raise Not_found ];
-
-
-value get_user_id () = 
-  try 
-    KVStorage.get_string storage "mm_user_id"
-  with [ KVStorage.Kv_not_found -> raise Not_found ];  
-
-

@@ -12,9 +12,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma fbconnect.cma vk.cma tapjoy.cma flurry.cma
+byte: lightning.cma tapjoy.cma flurry.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa fbconnect.cmxa vk.cmxa tapjoy.cmxa flurry.cmxa
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -78,7 +78,7 @@ $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
 					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml  Image.ml AtlasNode.ml TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml\
-					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml 
+					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml
 
 Texture.cmo Texture.cmx: MLFLAGS += -package threads -thread
 
@@ -112,17 +112,6 @@ lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJ
 lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
 	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
 
-fbconnect.cma:
-	make -C facebook fbconnect.cma
-
-fbconnect.cmxa:
-	make -C facebook fbconnect.cmxa
-
-vk.cma:
-	make -C vkontakte vk.cma
-
-vk.cmxa:
-	make -C vkontakte vk.cmxa
 
 tapjoy.cma:
 	make -C tapjoy tapjoy.cma
@@ -135,6 +124,12 @@ flurry.cma:
 
 flurry.cmxa:
 	make -C flurry flurry.cmxa
+
+social_byte:
+	make -C social byte
+
+social_native:
+	make -C social native
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)

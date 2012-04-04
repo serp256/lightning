@@ -13,6 +13,7 @@
     UIWebView * _webview;
     NSString * _redirectURIpath;
     UIActivityIndicatorView * _spinner;    
+    BOOL _authorizing;
 }
 +(OAuth *)sharedInstance;
 -(void)authorize: (NSURL *)url;

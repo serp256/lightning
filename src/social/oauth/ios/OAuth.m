@@ -25,6 +25,7 @@ static OAuth * sharedOAuth = nil;
 
 	if (self != nil) {
 		self.modalPresentationStyle = UIModalPresentationFormSheet;
+		_authorizing = NO;
 	}
 
 	return self;
@@ -114,6 +115,9 @@ static OAuth * sharedOAuth = nil;
  *  Show auth dialog                                                                                                                                                                    
  */                                                                                                                                                                                     
 -(void)authorize:(NSURL *)url { 
+
+    _authorizing = YES;
+
     NSRange redirect_range = [url.query rangeOfString:@"redirect_uri="];
     NSRange amp_search_range;
     amp_search_range.location = redirect_range.location + redirect_range.length;
@@ -147,7 +151,14 @@ static OAuth * sharedOAuth = nil;
  * webview delegate                                                                                                                                                                     
  */                                                                                                                                                                                     
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {                                                                                                            
-    NSLog(@"HERE: didFaileLoad");
+
+    if (!_authorizing) {
+      return;
+    }
+
+    _authorizing = NO;
+  
+    NSLog(@"HERE: didFaileLoad %@", error.localizedDescription);
     [_spinner stopAnimating];
 	[self dismissModalViewControllerAnimated: YES];
 	NSString * errorUrl = [NSString stringWithFormat: @"%@#error=server_error&error_description=webViewdidFailLoadWithError", _redirectURIpath];
@@ -162,6 +173,12 @@ static OAuth * sharedOAuth = nil;
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)webViewDidFinishLoad:(UIWebView *)webView {                                                                                                                                      
+
+    if (!_authorizing) {
+      return;
+    }
+    
+    NSLog(@"HERE: Finished loading %@", webView.request.URL.absoluteString);
     [_spinner stopAnimating];
 	NSString * content = [webView stringByEvaluatingJavaScriptFromString: @"document.body.innerHTML"];
 	
@@ -190,6 +207,7 @@ static OAuth * sharedOAuth = nil;
  *
  */
 -(void)webViewDidStartLoad:(UIWebView *)webView {
+    NSLog(@"HERE: Started loading %@", webView.request.URL.absoluteString);
     [_spinner startAnimating];
 }
 
@@ -201,13 +219,16 @@ static OAuth * sharedOAuth = nil;
     NSLog(@"Saved path: %@ My path %@", _redirectURIpath, request.URL.path);
     
     if ([request.URL.path isEqualToString: _redirectURIpath]) {
-        [self dismissModalViewControllerAnimated:YES];
-        [_spinner stopAnimating];
-        value * mlf = (value*)caml_named_value("oauth_redirected"); 
-        caml_acquire_runtime_system();
-        caml_callback(*mlf, caml_copy_string([request.URL.absoluteString UTF8String]));
-        caml_release_runtime_system();        
-        return NO;
+        if (_authorizing) {
+          _authorizing = NO;
+          [self dismissModalViewControllerAnimated:YES];
+          [_spinner stopAnimating];
+          value * mlf = (value*)caml_named_value("oauth_redirected"); 
+          caml_acquire_runtime_system();
+          caml_callback(*mlf, caml_copy_string([request.URL.absoluteString UTF8String]));
+          caml_release_runtime_system();        
+          return NO;
+        }
     }
     return YES;
 }
