@@ -1,7 +1,7 @@
 IFDEF IOS THEN
 external ml_authorization_grant : string -> unit = "ml_authorization_grant";
 ELSE
-value ml_authorization_grant str:string = ();
+value ml_authorization_grant (str:string) = ();
 ENDIF;
 
 open Ojson;
