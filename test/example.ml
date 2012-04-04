@@ -1,3 +1,4 @@
+open LightCommon;
 
 Gc.set {(Gc.get ()) with Gc.verbose  = (0x001 lor 0x002 lor 0x004 lor 0x010 lor 0x040 lor 0x080)};
 
@@ -743,6 +744,23 @@ value memtest_async (stage:Stage.c) =
     stage#addChild img;
   );
 
+
+value url_loader (stage:Stage.c) = 
+  let loader = new URLLoader.loader () in
+  (
+    ignore <| loader#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "recieved %d bytes" (Option.get (Ev.int_of_data ev.Ev.data)));
+    ignore <| loader#addEventListener URLLoader.ev_COMPLETE (fun ev (loader,_) _ -> debug "request complete: %d, %s, %Ld" loader#httpCode loader#contentType loader#bytesTotal);
+    let rec loop () = 
+      (
+        let request = URLLoader.request ~httpMethod:`GET "http://st-farm.redspell.ru/images/map_bottom_2.png" in
+        loader#load request;
+        ignore <| Timers.start 0.3 loop;
+      )
+    in
+    ignore <| Timers.start 0.1 loop;
+  );
+
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -773,7 +791,8 @@ let stage width height =
 (*         test_gc self; *)
 (*         library self; *)
 (*         lang self; *)
-        memtest_async self;
+(*         memtest_async self; *)
+          url_loader self;
         (* map self; *)
 (*         test_gc self;
         game_center self;

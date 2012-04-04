@@ -1,4 +1,5 @@
 value (|>): 'a -> ('a -> 'b) -> 'b;
+value (<|): ('a -> 'b) -> 'a -> 'b;
 value color_white: int;
 value color_black: int;
 type textureID; 

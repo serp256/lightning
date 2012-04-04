@@ -1,4 +1,5 @@
 value (|>) a b = b a;
+value (<|) f v = f v;
 value color_white = 0xFFFFFF;
 value color_black = 0x000000;
 
