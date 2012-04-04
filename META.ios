@@ -48,21 +48,21 @@ package "social" (
     description="Social network: Moy Mir"
     archive(byte) = "mm.cmo"
     archive(native) = "mm.cmx"
-    requires = "lightning.oauth"
+    requires = "lightning.social.oauth"
   )
   
   package "vk" (
     description="VK API"
     archive(byte) = "vk.cmo"
     archive(native) = "vk.cmx"
-    requires = "lightning.oauth"
+    requires = "lightning.social.oauth"
   )
   
   package "ok" (
     description="Odniklassniki API"
     archive(byte) = "ok.cmo"
     archive(native) = "ok.cmx"
-    requires = "lightning.oauth"
+    requires = "lightning.social.oauth"
   )
   
 )
