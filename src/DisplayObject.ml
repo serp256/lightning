@@ -929,8 +929,12 @@ class virtual container = (*{{{*)
 
     method removeChild: !'child. ((#_c container) as 'child) -> unit = fun child -> (* чекать сцука надо блядь *)
       let child = child#asDisplayObject in
-      self#removeChild' child;
-
+      match children with
+      [ None -> raise Child_not_found
+      | Some children ->
+          let n = try dllist_find children child with [ Not_found -> raise Child_not_found ] in
+          ignore(self#removeChild'' n)
+      ];
 
     method removeChildAtIndex index : 'displayObject = 
       match children with

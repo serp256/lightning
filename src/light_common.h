@@ -27,4 +27,4 @@
 
 
 
-#define MAX_MEMORY 52428800
+#define MAX_MEMORY 10485760
