@@ -741,6 +741,18 @@ value memtest_async (stage:Stage.c) =
     stage#addChild img;
   );
 
+
+value sprite_cache (stage:Stage.c) =
+(
+  let (_,txt) = TLF.create (TLF.p [ `text "pizda лялял" ]) in
+  let sprite = Sprite.create () in
+  (
+    sprite#setFilters [ Filters.glow 0xFF0000 ];
+    sprite#addChild txt;
+    stage#addChild sprite;
+  );
+);
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -771,13 +783,14 @@ let stage width height =
 (*         test_gc self; *)
 (*         library self; *)
 (*         lang self; *)
-        memtest_async self;
+(*         memtest_async self; *)
         (* map self; *)
 (*         test_gc self;
         game_center self;
  *)(*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
+        sprite_cache self;
     end;
   end
 in

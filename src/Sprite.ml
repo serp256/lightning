@@ -60,7 +60,7 @@ class c =
     (
 (*         debug "%s bounds changed" self#name; *)
       match imageCache with
-      [ Some ({valid=CValid;_} as c) -> (self#addPrerender self#updateImageCache; c.valid := CInvalid)
+      [ Some ({valid=CValid | CEmpty;_} as c) -> (self#addPrerender self#updateImageCache; c.valid := CInvalid)
       | Some ({valid=CPrerender;_} as c) -> c.valid := CInvalid
       | _ -> ()
       ];
