@@ -40,8 +40,6 @@ value floats_of_color color =
 
 Callback.register_exception "File_not_exists" (File_not_exists "");
 
-external set_maxGC: int -> unit = "ml_setMaxGC";
-
 IFDEF IOS THEN
 
 external bundle_path_for_resource: string -> float -> option string = "ml_bundle_path_for_resource";

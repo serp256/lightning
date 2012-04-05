@@ -1,7 +1,7 @@
 #include <sys/resource.h>
 #include <caml/mlvalues.h>
 
-unsigned int MAX_GC_MEM;
+unsigned int MAX_GC_MEM = 10485760;
 
 value ml_memUsage(value p) {
 	struct rusage ru;

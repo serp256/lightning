@@ -53,6 +53,7 @@ ENDIF;
 
 
 external memUsage: unit -> int = "ml_memUsage";
+external set_maxGC: int -> unit = "ml_setMaxGC";
 
 
 
