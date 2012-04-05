@@ -547,6 +547,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
 
     method render ?alpha:(parentAlpha) ?(transform=True) rect = 
+      let () = debug:tmp "render [%s]" self#name in
       proftimer:render ("render [%s] %f" self#name)
       (
         if visible && alpha > 0. 
