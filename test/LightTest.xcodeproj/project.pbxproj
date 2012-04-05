@@ -169,7 +169,7 @@
 /* Begin PBXLegacyTarget section */
 		51173A5C14EE6E5C000772E1 /* test.native */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION)";
+			buildArgumentsString = "$(ACTION)ios";
 			buildConfigurationList = 51173A5D14EE6E5C000772E1 /* Build configuration list for PBXLegacyTarget "test.native" */;
 			buildPhases = (
 			);
