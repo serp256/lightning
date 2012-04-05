@@ -56,7 +56,7 @@ value request_remote_notifications rntypes success error =
       ]
     end 0 rntypes
   in 
-  ml_request_remote_notifications !typesBitmask success error;
+  ml_request_remote_notifications typesBitmask success error;
 
 
 value resource_path path = 
