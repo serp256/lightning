@@ -48,18 +48,15 @@ external ml_request_remote_notifications : int -> (string -> unit) -> (string ->
 
 
 value request_remote_notifications rntypes success error = 
-  let typesBitmask = List.fold_left 
-    begin fun mask rntype -> 
-    (
-      match rntype with
-      [ `RNBadge -> mask.val := !mask lor 1
-      | `RNSound -> mask.val := !mask lor 2
-      | `RNAlert -> mask.val := !mask lor 4
-      ];
-      mask
-    )
-    end (ref 0) rntypes
-  in ml_request_remote_notifications !typesBitmask success error;
+  let typesBitmask = 
+    List.fold_left begin fun mask -> fun 
+      [ `RNBadge -> mask lor 1
+      | `RNSound -> mask lor 2
+      | `RNAlert -> mask lor 4
+      ]
+    end 0 rntypes
+  in 
+  ml_request_remote_notifications !typesBitmask success error;
 
 
 value resource_path path = 
