@@ -492,9 +492,10 @@ value game_center (stage:Stage.c) =
       | False -> "Game center failed"
       ]
     in
-    let (_,text) = TLF.create (TLF.p ~color:0xFFFF00 [ `text text ]) in
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
     (
-      text#setFilters [ Filters.glow ~size:2 0 ];
+      text#setPos 100. 100.;
+      text#setFilters [ Filters.glow ~size:2 ~strength:100 0 ];
       stage#addChild text;
     )
   end ();
@@ -768,6 +769,7 @@ let stage width height =
     value color = 0xCCCCCC;
     initializer begin
         BitmapFont.register "MyriadPro-Regular.fnt";
+        BitmapFont.register "MyriadPro-Bold.fnt";
         TLF.default_font_family.val := "Myriad Pro";
 
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
@@ -793,11 +795,11 @@ let stage width height =
 (*         library self; *)
 (*         lang self; *)
 (*         memtest_async self; *)
-          url_loader self;
+(*           url_loader self; *)
         (* map self; *)
-(*         test_gc self;
+(*         test_gc self; *)
         game_center self;
- *)(*         sound self; *)
+ (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
     end;
