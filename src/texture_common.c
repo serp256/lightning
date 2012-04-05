@@ -160,6 +160,7 @@ void lgResetBoundTextures() {
 		glActiveTexture(GL_TEXTURE0);
 		boundTextureID1 = 0;
 	};
+	PMA = -1;
 }
 
 

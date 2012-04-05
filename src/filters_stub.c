@@ -499,14 +499,13 @@ value ml_glow_make(value textureInfo, value glow) {
 	delete_renderbuffer(&ib);
 	checkGLErrors("draw blurred");
 
-	if (pma) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); 
+	/*if (pma) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); 
 	else glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
 
 	GLuint simplePrg = simple_program();
 	glUseProgram(simplePrg);
-	drawTexture(&rb,tid,iwidth,iheight,&clp,0);
+	drawTexture(&rb,tid,iwidth,iheight,&clp,0); */
 
-	/// здесь оригинал с блэндингом 
 	value res = create_ml_texture(&rb);
 	glDeleteFramebuffers(1,&rb.fbid);
 
