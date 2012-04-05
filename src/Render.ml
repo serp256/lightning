@@ -99,7 +99,7 @@ module Quad = struct
   external alpha: t -> float = "ml_quad_alpha";
   external set_alpha: t -> float -> unit = "ml_quad_set_alpha";
   external colors: t -> array int = "ml_quad_colors";
-  external render: Matrix.t -> prg -> ?alpha:float -> t -> unit = "ml_quad_render";
+  external render: Matrix.t -> prg -> ?alpha:float -> t -> unit = "ml_quad_render" "noalloc";
 end;
 
 
@@ -108,16 +108,16 @@ module Image = struct
   type t;
 
   external create: Texture.renderInfo -> ~color:int -> ~alpha:float -> t = "ml_image_create";
-  external flipTexX: t -> unit = "ml_image_flip_tex_x";
-  external flipTexY: t -> unit = "ml_image_flip_tex_y";
+  external flipTexX: t -> unit = "ml_image_flip_tex_x" "noalloc";
+  external flipTexY: t -> unit = "ml_image_flip_tex_y" "noalloc";
   external points: t -> array Point.t = "ml_image_points";
-  external set_color: t -> int -> unit = "ml_image_set_color";
+  external set_color: t -> int -> unit = "ml_image_set_color" "noalloc";
   external set_colors: t -> array int -> unit = "ml_image_set_colors";
   external color: t -> int = "ml_image_color";
-  external set_alpha: t -> float -> unit = "ml_image_set_alpha";
+  external set_alpha: t -> float -> unit = "ml_image_set_alpha" "noalloc";
   external colors: t -> array int = "ml_quad_colors";
-  external update: t -> Texture.renderInfo -> ~flipX:bool -> ~flipY:bool -> unit =  "ml_image_update";
-  external render: Matrix.t -> prg -> ?alpha:float -> t -> unit = "ml_image_render"; 
+  external update: t -> Texture.renderInfo -> ~flipX:bool -> ~flipY:bool -> unit =  "ml_image_update" "noalloc";
+  external render: Matrix.t -> prg -> ?alpha:float -> t -> unit = "ml_image_render" "noalloc"; 
 
 end;
 

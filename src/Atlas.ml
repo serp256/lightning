@@ -3,10 +3,10 @@ open LightCommon;
 type atlas;
 external atlas_init: Texture.renderInfo -> atlas = "ml_atlas_init";
 external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
+external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynArray.t Node.t) -> unit = "ml_atlas_render" "noalloc";
 
-  module Node = AtlasNode;
+module Node = AtlasNode;
 
-  external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynArray.t Node.t) -> unit = "ml_atlas_render" "noalloc";
 
   type glow = Image.glow ==
     {

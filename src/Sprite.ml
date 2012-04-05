@@ -132,7 +132,6 @@ class c =
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t filters)) self#name in
       (
         filters := fltrs;
-        (*
         match fltrs with
         [ [] ->
           match imageCache with
@@ -185,7 +184,6 @@ class c =
           | _ -> ()
           ]
         ];
-        *)
       );
 
     method! private render' ?alpha:(alpha') ~transform rect = 

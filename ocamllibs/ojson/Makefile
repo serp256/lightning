@@ -1,5 +1,5 @@
 
-OCAMLFIND = ocamlfind -toolchain 313
+OCAMLFIND = ocamlfind
 OCAMLOPT=$(OCAMLFIND) ocamlopt
 OCAMLC=$(OCAMLFIND) ocamlc
 
@@ -32,4 +32,7 @@ native:
 	$(OCAMLOPT) -c ojson.ml
 	$(OCAMLOPT) -a type.cmx common.cmx read.cmx ojson.cmx -o ojson.cmxa
 
+
+clean:
+	rm -f *.cmo *.cmx *.cmxa *.a *.o *.cmi *.cma read.ml
 
