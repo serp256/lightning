@@ -336,10 +336,10 @@ static GLuint final_glow_fragment_shader() {
 	if (shader == 0) {
 		shader = compile_shader(GL_FRAGMENT_SHADER,
 				"#ifdef GL_ES\nprecision lowp float; \n#endif\n"\
-				"varying vec2 v_texCoord; uniform sampler2D u_texture; uniform float u_strength;\n"\
+				"varying vec2 v_texCoord; uniform sampler2D u_texture; uniform int u_strength;\n"\
 				"void main() {"\
 					"vec4 color = texture2D(u_texture,v_texCoord);\n"\
-					"color.a *= u_strength;\n"\
+					"color.a *= float(u_strength);\n"\
 					"gl_FragColor = color;"\
 				"}");
 	};
@@ -493,18 +493,18 @@ value ml_glow_make(value textureInfo, value glow) {
 	glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
 	GLuint fglowPrg = final_glow_program();
 	glUseProgram(fglowPrg);
-	glUniform1f(glGetUniformLocation(fglowPrg,"u_strength"),(double)Long_val(Field(glow,2)));
+	glUniform1i(glGetUniformLocation(fglowPrg,"u_strength"),Long_val(Field(glow,2)));
 
 	drawTexture(&rb,ib.tid,rwidth,rheight,&ib.clp,1);
 	delete_renderbuffer(&ib);
 	checkGLErrors("draw blurred");
 
-	/*if (pma) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); 
+	if (pma) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); 
 	else glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
 
 	GLuint simplePrg = simple_program();
 	glUseProgram(simplePrg);
-	drawTexture(&rb,tid,iwidth,iheight,&clp,0); */
+	drawTexture(&rb,tid,iwidth,iheight,&clp,0);
 
 	value res = create_ml_texture(&rb);
 	glDeleteFramebuffers(1,&rb.fbid);

@@ -771,9 +771,10 @@ let stage width height =
         BitmapFont.register "MyriadPro-Regular.fnt";
         BitmapFont.register "MyriadPro-Bold.fnt";
         TLF.default_font_family.val := "Myriad Pro";
-
+(*
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
           self#addChild tlf;
+*)
         (* map self; *)
 (*         image self; *)
 (*         test_alpha self; *)
