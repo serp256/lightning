@@ -90,10 +90,10 @@ void mlstage_render(mlstage *mlstage) {
 	//caml_release_runtime_system();
 }
 
-static value preRender_fun = NIL;
+static value *preRender_fun = NULL;
 void mlstage_preRender() {
 	//caml_acquire_runtime_system();
-	if (preRender_fun == NIL) preRender_fun = (value*)caml_named_value("prerender");
+	if (preRender_fun == NULL) preRender_fun = (value*)caml_named_value("prerender");
 	caml_callback(*preRender_fun,Val_unit);
 	//caml_release_runtime_system();
 }

@@ -35,7 +35,8 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
     {
       g_texture: mutable option Texture.c;
       g_image: mutable option Render.Image.t;
-      g_program: Render.prg;
+      g_make_program: Render.prg;
+      g_program: mutable Render.prg;
       g_matrix: mutable Matrix.t;
       g_params: Filters.glow
     };
@@ -59,16 +60,17 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
 
       value mutable glowFilter: option glow = None;
       method virtual private updateGlowFilter: unit -> unit;
-      method private setGlowFilter glow = 
+      method private setGlowFilter g_program glow = 
       (
         match glowFilter with
         [ Some {g_texture=Some gtex;_} -> gtex#release()
         | _ ->  ()
         ];
-        let g_program = match texture#kind with [ Texture.Simple _ -> GLPrograms.Image.create () | Texture.Alpha -> GLPrograms.ImageAlpha.create () | Texture.Pallete _ -> GLPrograms.ImagePallete.create () ] in
-        glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_params=glow};
+        let g_make_program = match texture#kind with [ Texture.Simple _ -> GLPrograms.Image.create () | Texture.Alpha -> GLPrograms.ImageAlpha.create () | Texture.Pallete _ -> GLPrograms.ImagePallete.create () ] in
+        glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_make_program;g_params=glow};
         self#addPrerender self#updateGlowFilter;
       );
+
       method setFilters fltrs = 
       (
         let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
@@ -85,53 +87,54 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
               ]
             end `simple fltrs 
           in
-            match !glow with
+          (
+            (* this is ugly, need rewrite *)
+            match texture#kind with (*{{{*)
+            [ Texture.Simple _ ->
+              match f with
+              [ `simple when programID <> GLPrograms.Image.id -> 
+                (
+                  programID := GLPrograms.Image.id;
+                  shaderProgram := GLPrograms.Image.create ()
+                )
+              | `cmatrix m when programID  <> GLPrograms.ImageColorMatrix.id -> 
+                (
+                  programID := GLPrograms.ImageColorMatrix.id;
+                  shaderProgram := GLPrograms.ImageColorMatrix.create m
+                )
+              | _ -> ()
+              ]
+            | Texture.Pallete _ ->
+              match f with
+              [ `simple when programID <> GLPrograms.ImagePallete.id -> 
+                (
+                  programID := GLPrograms.ImagePallete.id;
+                  shaderProgram := GLPrograms.ImagePallete.create ()
+                )
+              | `cmatrix m when programID <> GLPrograms.ImagePalleteColorMatrix.id -> 
+                (
+                  programID := GLPrograms.ImagePalleteColorMatrix.id;
+                  shaderProgram := GLPrograms.ImagePalleteColorMatrix.create m
+                )
+              | _ -> ()
+              ]
+            | Texture.Alpha ->
+              match f with
+              [ `simple when programID <> GLPrograms.ImageAlpha.id -> 
+                (
+                  programID := GLPrograms.ImageAlpha.id;
+                  shaderProgram := GLPrograms.ImageAlpha.create ()
+                )
+              | `cmatrix m when programID <> GLPrograms.ImageAlphaColorMatrix.id -> 
+                (
+                  programID := GLPrograms.ImageAlphaColorMatrix.id;
+                  shaderProgram := GLPrograms.ImageAlphaColorMatrix.create m
+                )
+              | _ -> ()
+              ]
+            ];(*}}}*)
+            match !glow with (*{{{*)
             [ None ->
-              (
-                match texture#kind with
-                [ Texture.Simple _ ->
-                  match f with
-                  [ `simple when programID <> GLPrograms.Image.id -> 
-                    (
-                      programID := GLPrograms.Image.id;
-                      shaderProgram := GLPrograms.Image.create ()
-                    )
-                  | `cmatrix m when programID  <> GLPrograms.ImageColorMatrix.id -> 
-                    (
-                      programID := GLPrograms.ImageColorMatrix.id;
-                      shaderProgram := GLPrograms.ImageColorMatrix.create m
-                    )
-                  | _ -> ()
-                  ]
-                | Texture.Pallete _ ->
-                  match f with
-                  [ `simple when programID <> GLPrograms.ImagePallete.id -> 
-                    (
-                      programID := GLPrograms.ImagePallete.id;
-                      shaderProgram := GLPrograms.ImagePallete.create ()
-                    )
-                  | `cmatrix m when programID <> GLPrograms.ImagePalleteColorMatrix.id -> 
-                    (
-                      programID := GLPrograms.ImagePalleteColorMatrix.id;
-                      shaderProgram := GLPrograms.ImagePalleteColorMatrix.create m
-                    )
-                  | _ -> ()
-                  ]
-                | Texture.Alpha ->
-                  match f with
-                  [ `simple when programID <> GLPrograms.ImageAlpha.id -> 
-                    (
-                      programID := GLPrograms.ImageAlpha.id;
-                      shaderProgram := GLPrograms.ImageAlpha.create ()
-                    )
-                  | `cmatrix m when programID <> GLPrograms.ImageAlphaColorMatrix.id -> 
-                    (
-                      programID := GLPrograms.ImageAlphaColorMatrix.id;
-                      shaderProgram := GLPrograms.ImageAlphaColorMatrix.create m
-                    )
-                  | _ -> ()
-                  ]
-                ];
                 match glowFilter with 
                 [ Some {g_texture;_} -> 
                   (
@@ -143,28 +146,19 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
                   )
                 | _ -> () 
                 ]  
-              )
             | Some glow ->
-              (
+              let gprg = 
                 match f with
-                [ `simple when programID <> GLPrograms.Image.id -> 
-                  (
-                    programID := GLPrograms.Image.id;
-                    shaderProgram := GLPrograms.Image.create ()
-                  )
-                | `cmatrix m when programID <> GLPrograms.ImageColorMatrix.id -> 
-                  (
-                    programID := GLPrograms.ImageColorMatrix.id;
-                    shaderProgram := GLPrograms.ImageColorMatrix.create m
-                  )
-                | _ -> ()
-                ];
-                match glowFilter with
-                [ Some {g_params;_} when g_params = glow -> ()
-                | _ -> self#setGlowFilter glow
-                ];
-              )
-            ];
+                [ `simple -> GLPrograms.Image.create ()
+                | `cmatrix m  -> GLPrograms.ImageColorMatrix.create m
+                ]
+              in
+              match glowFilter with
+              [ Some ({g_params;_} as g) when g_params = glow -> g.g_program := gprg
+              | _ -> self#setGlowFilter gprg glow
+              ]
+            ];(*}}}*)
+          )
         );
         filters := fltrs;
       );
@@ -272,7 +266,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
 
       method private updateGlowFilter () = 
         match glowFilter with
-        [ Some ({g_texture = None; g_program; g_params = glow; _ } as gf) ->
+        [ Some ({g_texture = None; g_make_program; g_params = glow; _ } as gf) ->
           let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
           let renderInfo = texture#renderInfo in
           let w = renderInfo.Texture.rwidth
@@ -286,7 +280,7 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
                 tex#draw (fun () ->
                   (
                     Render.clear 0 0.;
-                    Render.Image.render Matrix.identity g_program image; 
+                    Render.Image.render Matrix.identity g_make_program image; 
                   );
                 );
                 let res = RenderFilters.glow_make tex#renderInfo glow in
@@ -385,40 +379,40 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
           then self#updateSize ()
           else Render.Image.update image texture#renderInfo texFlipX texFlipY;
           nt#addRenderer (self :> Texture.renderer);
+          match texture#kind with
+          [ Texture.Simple _ when programID = GLPrograms.ImagePallete.id ->
+            (
+              debug "set program to simple";
+              programID := GLPrograms.Image.id;
+              shaderProgram := GLPrograms.Image.create ()
+            )
+          | Texture.Simple _ when programID = GLPrograms.ImagePalleteColorMatrix.id -> 
+            (
+              programID := GLPrograms.ImageColorMatrix.id;
+              match shaderProgram with
+              [ (_,Some f) -> shaderProgram := GLPrograms.ImageColorMatrix.from_filter f
+              | _ -> assert False
+              ]
+            )
+          | Texture.Pallete _ when programID = GLPrograms.Image.id -> 
+            (
+              debug "set program to pallete";
+              programID := GLPrograms.ImagePallete.id;
+              shaderProgram := GLPrograms.ImagePallete.create ()
+            )
+          | Texture.Pallete _ when programID = GLPrograms.ImageColorMatrix.id -> 
+            (
+              programID := GLPrograms.ImagePalleteColorMatrix.id;
+              match shaderProgram with
+              [ (_,Some f) -> shaderProgram := GLPrograms.ImagePalleteColorMatrix.from_filter f
+              | _ -> assert False
+              ]
+            )
+          | _ -> ()
+          ];
           match glowFilter with
-          [ Some g -> self#setGlowFilter g.g_params
-          | None -> 
-            match texture#kind with
-            [ Texture.Simple _ when programID = GLPrograms.ImagePallete.id ->
-              (
-                debug "set program to simple";
-                programID := GLPrograms.Image.id;
-                shaderProgram := GLPrograms.Image.create ()
-              )
-            | Texture.Simple _ when programID = GLPrograms.ImagePalleteColorMatrix.id -> 
-              (
-                programID := GLPrograms.ImageColorMatrix.id;
-                match shaderProgram with
-                [ (_,Some f) -> shaderProgram := GLPrograms.ImageColorMatrix.from_filter f
-                | _ -> assert False
-                ]
-              )
-            | Texture.Pallete _ when programID = GLPrograms.Image.id -> 
-              (
-                debug "set program to pallete";
-                programID := GLPrograms.ImagePallete.id;
-                shaderProgram := GLPrograms.ImagePallete.create ()
-              )
-            | Texture.Pallete _ when programID = GLPrograms.ImageColorMatrix.id -> 
-              (
-                programID := GLPrograms.ImagePalleteColorMatrix.id;
-                match shaderProgram with
-                [ (_,Some f) -> shaderProgram := GLPrograms.ImagePalleteColorMatrix.from_filter f
-                | _ -> assert False
-                ]
-              )
-            | _ -> ()
-            ]
+          [ Some g -> self#setGlowFilter g.g_program g.g_params
+          | None -> ()
           ];
         );
 
@@ -442,11 +436,9 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
       method private render' ?alpha:(alpha') ~transform _ = 
       (
         match glowFilter with
-        [ Some {g_image=Some g_image;g_matrix;_} -> 
-            Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) shaderProgram ?alpha:alpha' g_image
-        | None ->
-            Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha:alpha' image
-        | _ -> failwith (Printf.sprintf "glow not rendered %s" self#name)
+        [ Some {g_image=Some g_image;g_matrix;g_program;_} -> 
+            Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' g_image
+        | _ -> Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha:alpha' image
         ]
       ); 
   end;

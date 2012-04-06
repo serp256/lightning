@@ -188,8 +188,7 @@ class c =
 
     method! private render' ?alpha:(alpha') ~transform rect = 
       match imageCache with
-      [ None -> super#render' ?alpha:alpha' ~transform rect
-      | Some {ic=Some ic; valid=CValid;_} ->
+      [ Some {ic=Some ic; valid=CValid;_} ->
         (
           if transform then Render.push_matrix self#transformationMatrix else ();
           let alpha = 
@@ -201,7 +200,7 @@ class c =
           if transform then Render.restore_matrix () else ();
         )
       | Some {valid = CEmpty;_} -> ()
-      | _ -> assert False
+      | _ -> super#render' ?alpha:alpha' ~transform rect
       ];
 
   end;

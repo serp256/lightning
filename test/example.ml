@@ -485,6 +485,9 @@ value alert (stage:Stage.c) =
 
 
 value game_center (stage:Stage.c) =
+    let text = "Ежедневный бонус PipIy" in
+  (
+    (*
   GameCenter.init ~callback:begin fun res ->
     let text = 
       match res with 
@@ -492,13 +495,28 @@ value game_center (stage:Stage.c) =
       | False -> "Game center failed"
       ]
     in
+    *)
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
     (
       text#setPos 100. 100.;
-      text#setFilters [ Filters.glow ~size:2 ~strength:100 0 ];
+(*       text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ]; *)
       stage#addChild text;
-    )
-  end ();
+    );
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 100. 150.;
+      text#setFilters [ Filters.glow ~size:1 ~strength:3 0 ];
+      stage#addChild text;
+    );
+
+    let img = Image.load "tree.png" in
+    (
+      img#setPos 50. 300.;
+      img#setFilters [ Filters.glow ~size:1 ~strength:3 0 ];
+      stage#addChild img;
+    );
+  );
+(*   end (); *)
 
 
 value test_alpha (stage:Stage.c) = 
@@ -799,6 +817,7 @@ let stage width height =
 (*           url_loader self; *)
         (* map self; *)
 (*         test_gc self; *)
+(*         filters self; *)
         game_center self;
  (*         sound self; *)
 (*         window self; *)

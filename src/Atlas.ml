@@ -13,7 +13,8 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
 (*       g_valid: mutable bool; *)
       g_texture: mutable option Texture.c;
       g_image: mutable option Render.Image.t;
-      g_program: Render.prg;
+      g_make_program: Render.prg;
+      g_program: mutable Render.prg;
       g_matrix: mutable Matrix.t;
       g_params: Filters.glow
     };
@@ -117,7 +118,7 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
 
       method private updateGlowFilter () = 
         match glowFilter with
-        [ Some ({g_texture = None; g_program; g_params = glow; _ } as gf) ->
+        [ Some ({g_texture = None; g_make_program; g_params = glow; _ } as gf) ->
           (
             let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
             let bounds = self#boundsInSpace (Some self) in
@@ -131,7 +132,7 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
                   (
                     Render.push_matrix (Matrix.create ~translate:(Point.mul ip ~-.1.) ());
                     Render.clear 0 0.;
-                    self#render_quads ~program:g_program 1. False;
+                    self#render_quads ~program:g_make_program 1. False;
                     Render.restore_matrix ();
                   )
                 );
@@ -280,14 +281,12 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
         if DynArray.length children > 0
         then 
           match glowFilter with
-          [ Some {g_image = Some g_image; g_matrix; _ } -> 
-            Render.Image.render 
-              (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) 
-              shaderProgram ?alpha:alpha' g_image
-          | None -> 
+          [ Some {g_image = Some g_image; g_matrix; g_program; _ } -> 
+            Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' g_image
+          | _ -> 
               let alpha = match alpha' with [ Some a -> a *. alpha | None -> alpha ] in
               self#render_quads alpha transform
-          | _ -> () (* WE NEED ASSERT HERE ?? *)
+(*           | _ -> () (* WE NEED ASSERT HERE ?? *) *)
           ]
         else 
           if dirty

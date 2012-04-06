@@ -426,8 +426,8 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV );
 	// RENDER SUBPIXEL FIX HERE
 	//fprintf(stderr,"matrix: tx=%f,ty=%f\n",matrixMV.mat[12],matrixMV.mat[13]);
-	matrixMV.mat[12] = (GLint)matrixMV.mat[12];
-	matrixMV.mat[13] = (GLint)matrixMV.mat[13];
+	//matrixMV.mat[12] = (GLint)matrixMV.mat[12];
+	//matrixMV.mat[13] = (GLint)matrixMV.mat[13];
 
   kmMat4Multiply(&matrixMVP, &matrixP, &matrixMV);
 

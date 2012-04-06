@@ -33,9 +33,9 @@ static GLuint simple_vertex_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
 		shader = compile_shader(GL_VERTEX_SHADER,
-			"attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord; \
+			"attribute vec4 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord; \
 			void main(void) { \
-			gl_Position = vec4(a_position, 0.0, 1.0); \
+			gl_Position = a_position; \
 			v_texCoord = a_texCoord; \
 			}");
 	};
@@ -164,6 +164,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
   glGenTextures(1, &rtid);
   glBindTexture(GL_TEXTURE_2D, rtid);
 	checkGLErrors("bind renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
+	printf("create renderbuffer: %f:%f:%x\n",width,height,filter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -195,6 +196,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
 
 void delete_renderbuffer(renderbuffer_t *rb) {
 	//fprintf(stderr,"delete rb: %d - %d\n",rb->fbid,rb->tid);
+	PRINT_DEBUG("delete rb: %d",rb->fbid);
 	glDeleteTextures(1,&rb->tid);
 	glDeleteFramebuffers(1,&rb->fbid);
 	//printf("delete successfully\n");
@@ -206,6 +208,7 @@ static GLfloat texCoords[4][2] = {{0.,0.},{1.,0.},{0.,1.},{1.,1.}};
 void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clipping *clp,int clear) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
+
 	GLsizei bw = ceil(rb->width);
 	GLsizei bh = ceil(rb->height);
 
@@ -219,7 +222,7 @@ void drawTexture(renderbuffer_t *rb,GLuint textureID, double w, double h, clippi
 	double x = w / bw;
 	double y = h / bh;
 
-	PRINT_DEBUG("draw texture %d [%f:%f] to rb %d [%f:%f] -> viewport [%d:%d], quads: [%f,%f,%f,%f]\n",textureID,w,h,rb->fbid,rb->width,rb->height, bw, bh, x, y, dx, dy);
+	PRINT_DEBUG("draw texture %d [%f:%f] to rb [%d=%d] [%f:%f] -> viewport [%d:%d], quads: [%f,%f,%f,%f]\n",textureID,w,h,rb->fbid,rb->tid,rb->width,rb->height, bw, bh, x, y, dx, dy);
 
 	quads[0][0] = -x - dx;
 	quads[0][1] = -y - dy;
@@ -410,8 +413,10 @@ value ml_glow_make(value textureInfo, value glow) {
 	double iwidth = Double_val(Field(textureInfo,1));
 	double iheight = Double_val(Field(textureInfo,2));
 	double gs = (pow(2,gsize) - 1) * 2;
-	double rwidth = iwidth + 2 * gs;
-	double rheight = iheight + 2 * gs;
+	double rwidth = iwidth + gs * 2;
+	double rheight = iheight + gs * 2;
+
+	fprintf(stderr,"create glow %d - [%f:%f] - [%f:%f]\n",gsize,iwidth,iheight,rwidth,rheight);
 
 	value kind = Field(textureInfo,4);
 	if (Tag_val(kind) != 0) caml_failwith("can't make glow not simple texture");
@@ -447,6 +452,7 @@ value ml_glow_make(value textureInfo, value glow) {
 	glBindTexture(GL_TEXTURE_2D,tid);
 	GLint filter;
 	glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,&filter);
+	fprintf(stderr,"filter: %x\n",filter);
 	if (filter != GL_LINEAR) {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -474,11 +480,11 @@ value ml_glow_make(value textureInfo, value glow) {
 			crb = prb;
 			checkGLErrors("draw forward");
 		};
-		for (i = gsize - 2; i > 1 ; i--) {
+		for (i = gsize - 2; i > 0 ; i--) {
 			prb = rbfs + i;
 			crb = prb - 1;
 			PRINT_DEBUG("draw back %i",i);
-			drawTexture(crb,prb->tid,prb->width,prb->height,&prb->clp,1);
+			drawTexture(crb,prb->tid,crb->width,crb->height,&prb->clp,1);
 			checkGLErrors("draw back");
 			delete_renderbuffer(prb);
 		};
@@ -495,6 +501,7 @@ value ml_glow_make(value textureInfo, value glow) {
 	glUseProgram(fglowPrg);
 	glUniform1i(glGetUniformLocation(fglowPrg,"u_strength"),Long_val(Field(glow,2)));
 
+	//glClearColor(1.,1.,1.,0.);
 	drawTexture(&rb,ib.tid,rwidth,rheight,&ib.clp,1);
 	delete_renderbuffer(&ib);
 	checkGLErrors("draw blurred");
