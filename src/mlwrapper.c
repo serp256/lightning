@@ -71,25 +71,31 @@ void mlstage_destroy(mlstage *mlstage) {
 static value advanceTime_method = NIL;
 
 void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	if (advanceTime_method == NIL) advanceTime_method = caml_hash_variant("advanceTime");
 	value dt = caml_copy_double(timePassed);
 	value advanceTimeMethod = caml_get_public_method(mlstage->stage,advanceTime_method);
 	caml_callback2(advanceTimeMethod,mlstage->stage,dt);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 static value render_method = NIL;
 
 void mlstage_render(mlstage *mlstage) {
 	PRINT_DEBUG("mlstage render");
-	caml_acquire_runtime_system();
-	PRINT_DEBUG("ocaml runtime acquired");
+	//caml_acquire_runtime_system();
 	if (render_method == NIL)
 		render_method = caml_hash_variant("renderStage");
-	caml_callback2(caml_get_public_method(mlstage->stage,render_method),mlstage->stage,Val_int(0));
-	caml_release_runtime_system();
-	PRINT_DEBUG("runtime released after render");
+	caml_callback2(caml_get_public_method(mlstage->stage,render_method),mlstage->stage,Val_unit);
+	//caml_release_runtime_system();
+}
+
+static value preRender_fun = NIL;
+void mlstage_preRender() {
+	//caml_acquire_runtime_system();
+	if (preRender_fun == NIL) preRender_fun = (value*)caml_named_value("prerender");
+	caml_callback(*preRender_fun,Val_unit);
+	//caml_release_runtime_system();
 }
 
 
