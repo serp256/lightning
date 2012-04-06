@@ -220,6 +220,11 @@ value get_access_token () =
   with [ KVStorage.Kv_not_found -> raise Not_found ];
 
 
+value get_refresh_token () = 
+  try 
+    KVStorage.get_string storage "mm_refresh_token"
+  with [ KVStorage.Kv_not_found -> raise Not_found ];
+
 value get_user_id () = 
   try 
     KVStorage.get_string storage "mm_user_id"
