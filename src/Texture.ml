@@ -3,6 +3,7 @@ open LightCommon;
 type ubyte_array = Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout;
 
 type filter = [ FilterNearest | FilterLinear ];
+value defaultFilter = FilterNearest;
 
 external glClear: int -> float -> unit = "ml_clear";
 external set_texture_filter: textureID -> filter -> unit = "ml_texture_set_filter" "noalloc";

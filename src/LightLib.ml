@@ -138,18 +138,29 @@ type lib =
   {
     path: string;
     textures: textures;
+    filter: Texture.filter;
     symbols: Hashtbl.t string element
   };
 
+value setTexFltr tex fltr =
+  if fltr <> Texture.defaultFilter then
+    tex#setFilter fltr
+  else ();
+
 value getTexture lib tid =
   match lib.textures with
-  [ TFiles files -> Texture.load (Filename.concat lib.path files.(tid))
+  [ TFiles files ->
+    let tex = Texture.load (Filename.concat lib.path files.(tid)) in
+    (
+      setTexFltr tex lib.filter;
+      tex;
+    )
   | TTextures textures -> textures.(tid)
   ];
 
 value getTextureAsync lib tid callback =
   match lib.textures with
-  [ TFiles files -> Texture.load_async (Filename.concat lib.path files.(tid)) callback
+  [ TFiles files -> Texture.load_async (Filename.concat lib.path files.(tid)) (fun tex -> ( setTexFltr tex lib.filter; callback tex ))
   | TTextures textures -> callback textures.(tid)
   ];
 
@@ -561,7 +572,7 @@ value _load libpath =
 
 
 
-value load ?(loadTextures=False) libpath : lib = 
+value load ?(filter=Texture.FilterNearest) ?(loadTextures=False) libpath : lib = 
   let (textures,symbols) = _load libpath in
   let textures = 
     match loadTextures with
@@ -569,18 +580,17 @@ value load ?(loadTextures=False) libpath : lib =
       Array.map begin fun file -> 
         let tx = Texture.load (Filename.concat libpath file) in
         (
-(*           tx#setFilter Texture.FilterLinear; *)
+          setTexFltr tx filter;
           tx
         )
       end textures end
     | False -> TFiles textures
     ]
   in
-  {path=libpath;textures;symbols}
-;
+  {path=libpath; textures; filter; symbols};
 
 
-value load_async libpath callback = 
+value load_async ?(filter=Texture.FilterNearest) libpath callback = 
   let (texture_files,symbols) = _load libpath in
   let cnt_tx = ref (Array.length texture_files) in
   let textures = Array.make !cnt_tx Texture.zero in
@@ -588,16 +598,17 @@ value load_async libpath callback =
     Array.iteri begin fun i file ->
       Texture.load_async (Filename.concat libpath file) begin fun texture ->
         (
+          setTexFltr texture filter;
           textures.(i) := texture;
           decr cnt_tx;
-          if !cnt_tx = 0 then callback {path=libpath;textures=(TTextures textures);symbols} else ();
+          if !cnt_tx = 0 then callback {path=libpath;textures=(TTextures textures);filter;symbols} else ();
         )
       end 
     end texture_files;
-    if !cnt_tx = 0 then callback {path=libpath;textures=(TTextures textures);symbols} else ();
+    if !cnt_tx = 0 then callback {path=libpath;textures=(TTextures textures);filter;symbols} else ();
   );
 
-value loadxml ?(loadTextures=False) libpath : lib = 
+value loadxml ?(filter=Texture.FilterNearest) ?(loadTextures=False) libpath : lib = 
   let module XmlParser = MakeXmlParser (struct value path = Filename.concat libpath "lib.xml"; end) in
   (
     XmlParser.accept (`Dtd None);
@@ -923,7 +934,7 @@ value loadxml ?(loadTextures=False) libpath : lib =
               | False -> TFiles textures
               ]
             in
-            {path=libpath;textures;symbols}
+            {path=libpath;textures;filter;symbols}
           )
         )
       | _ -> XmlParser.error "exports not found"

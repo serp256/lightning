@@ -11,9 +11,9 @@ class type virtual c =
 
 type lib;
 
-value load: ?loadTextures:bool -> string -> lib;
-value load_async: string -> (lib -> unit) -> unit;
-value loadxml: ?loadTextures:bool -> string -> lib;
+value load: ?filter:Texture.filter -> ?loadTextures:bool -> string -> lib;
+value load_async: ?filter:Texture.filter -> string -> (lib -> unit) -> unit;
+value loadxml: ?filter:Texture.filter -> ?loadTextures:bool -> string -> lib;
 
 (*
 value image: string -> c;

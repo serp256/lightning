@@ -81,6 +81,7 @@ class type rendered =
     method clear: int -> float -> unit;
   end;
 
+value defaultFilter:filter;
 value glRGBA:int;
 value glRGB:int;
 

@@ -771,6 +771,25 @@ let stage width height =
         BitmapFont.register "MyriadPro-Regular.fnt";
         BitmapFont.register "MyriadPro-Bold.fnt";
         TLF.default_font_family.val := "Myriad Pro";
+
+        let img = Image.load "424b08b9a009c215478ba7b9bda1e8bd8a926a03.png" in
+        (
+          img#setWidth 300.;
+          img#setHeight 125.;
+          img#texture#setFilter Texture.FilterLinear;
+
+          self#addChild img;          
+        );
+
+        let img = Image.load "424b08b9a009c215478ba7b9bda1e8bd8a926a04.png" in
+        (
+          img#setWidth 300.;
+          img#setHeight 125.;
+          img#setX 350.;
+
+          self#addChild img;          
+        );        
+          
 (*
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
           self#addChild tlf;
@@ -799,7 +818,7 @@ let stage width height =
 (*           url_loader self; *)
         (* map self; *)
 (*         test_gc self; *)
-        game_center self;
+        (* game_center self; *)
  (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
