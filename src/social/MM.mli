@@ -11,3 +11,5 @@ value call_method : ?delegate:option delegate -> string -> list (string*string) 
 value get_access_token : unit -> string;
 
 value get_user_id : unit -> string;
+
+value get_refresh_token : unit -> string;

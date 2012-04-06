@@ -205,3 +205,15 @@ value call_method ?(delegate=None) meth params =
       in call_method' meth access_token params callback
   with [ KVStorage.Kv_not_found -> show_auth() ];  
   
+
+
+value get_access_token () = 
+  try 
+    KVStorage.get_string storage "ok_access_token"
+  with [ KVStorage.Kv_not_found -> raise Not_found ];
+
+
+value get_refresh_token () = 
+  try 
+    KVStorage.get_string storage "ok_refresh_token"
+  with [ KVStorage.Kv_not_found -> raise Not_found ];
