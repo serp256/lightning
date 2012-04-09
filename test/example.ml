@@ -780,6 +780,38 @@ value url_loader (stage:Stage.c) =
     )
   );
 
+value glow (stage:Stage.c) = 
+(
+  let img = Image.load "little_line.png" in
+  (
+    img#setFilters [ Filters.glow ~size:1 0x00FF00 ];
+    img#setPos 100. 100.;
+    stage#addChild img;
+  );
+  let text = "Ежедневный бонус PipIy" in
+  (
+    (*
+  GameCenter.init ~callback:begin fun res ->
+    let text = 
+      match res with 
+      [ True -> "Game center success"
+      | False -> "Game center failed"
+      ]
+    in
+    *)
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 100. 150.;
+      stage#addChild text;
+    );
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 100. 200.;
+      text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ];
+      stage#addChild text;
+    );
+  );
+);
 
 let stage width height = 
   object(self)
@@ -818,7 +850,8 @@ let stage width height =
         (* map self; *)
 (*         test_gc self; *)
 (*         filters self; *)
-        game_center self;
+(*         game_center self; *)
+          glow self;
  (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
