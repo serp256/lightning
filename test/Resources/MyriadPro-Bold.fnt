@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Font face="Myriad Pro" style="Bold" kerning="0">
     <Pages>
-        <page file="MyriadPro-Bold0.png"/>
+        <page file="MyriadPro-Bold0.alpha"/>
     </Pages>
     <Chars space="2." size="12" lineHeight="14." ascender="9." descender="3.">
         <char id="64" xadvance="9." xoffset="1" yoffset="2" x="184" y="250" width="8" height="8" page="0"/>

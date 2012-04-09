@@ -782,23 +782,21 @@ value url_loader (stage:Stage.c) =
 
 value glow (stage:Stage.c) = 
 (
-  let img = Image.load "little_line.png" in
+  let img = Image.load "1px_line.png" in
   (
-    img#setFilters [ Filters.glow ~size:1 0x00FF00 ];
+    img#setFilters [ Filters.glow ~size:1 0 ];
     img#setPos 100. 100.;
     stage#addChild img;
   );
+  let img = Image.load "2px_line.png" in
+  (
+    img#setFilters [ Filters.glow ~size:1 0 ];
+    img#setPos 100. 150.;
+    stage#addChild img;
+  );
+  (*
   let text = "Ежедневный бонус PipIy" in
   (
-    (*
-  GameCenter.init ~callback:begin fun res ->
-    let text = 
-      match res with 
-      [ True -> "Game center success"
-      | False -> "Game center failed"
-      ]
-    in
-    *)
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
     (
       text#setPos 100. 150.;
@@ -811,12 +809,13 @@ value glow (stage:Stage.c) =
       stage#addChild text;
     );
   );
+  *)
 );
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
-    value color = 0xCCCCCC;
+    value color = 0x00FF00;
     initializer begin
         BitmapFont.register "MyriadPro-Regular.fnt";
         BitmapFont.register "MyriadPro-Bold.fnt";
