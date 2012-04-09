@@ -27,7 +27,7 @@ static void textureID_finalize(value textureID) {
 	PRINT_DEBUG("finalize texture: <%d>\n",tid);
 	if (textureID) glDeleteTextures(1,&tid);
 	total_tex_mem -= TEX(textureID)->mem;
-	fprintf(stderr,"TEXTURE MEMORY (dealloc): %d\n",total_tex_mem);
+	PRINT_DEBUG("TEXTURE MEMORY (dealloc): %d\n",total_tex_mem);
 }
 
 static int textureID_compare(value texid1,value texid2) {
@@ -51,7 +51,7 @@ struct custom_operations textureID_ops = {
 
 #define Store_textureID(mltex,texID,dataLen) \
 	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
-	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; fprintf(stderr,"TEXTURE MEMORY (alloc %d): %d\n",dataLen,total_tex_mem);}
+	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; PRINT_DEBUG("TEXTURE MEMORY (alloc %d): %d\n",dataLen,total_tex_mem);}
 //*TEXTURE_ID(mlTextureID) = tid;
 
 value alloc_texture_id(GLuint textureID, unsigned int dataLen) {
@@ -171,7 +171,7 @@ int nextPowerOfTwo(int number) {
 }
 
 int loadPlxFile(const char *path,textureInfo *tInfo) {
-	fprintf(stderr,"LOAD PLX: %s\n",path);
+	PRINT_DEBUG("LOAD PLX: %s\n",path);
 	// load idx
 	gzFile fptr = gzopen(path, "rb"); 
 	if (!fptr) { fprintf(stderr,"can't open %s file",path); return 2;};

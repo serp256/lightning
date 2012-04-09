@@ -12,6 +12,7 @@ value screenSize: unit -> (float * float);
 
 value ev_TOUCH: Ev.id;
 value touches_of_data: (Ev.data -> option (list Touch.t));
+value data_of_touches: (list Touch.t -> Ev.data);
 
 class virtual c: [ float ] -> [ float ] ->
   object
