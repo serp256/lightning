@@ -94,10 +94,11 @@ value call_method' meth access_token params callback =
           try 
             let json_data = Ojson.from_string loader#data in 
             try 
+                let () = Printf.eprintf "DATA:\n%!" in
               let error = extract_error_from_json json_data
               in callback (Error error)
-            with [ Not_found -> callback (Data json_data) ] 
-          with [ _ -> callback (Error (SocialNetworkError ("998", "HOHA error"))) ]
+            with [ Not_found -> let () = Printf.eprintf "DATA IS OK:\n%!" in callback (Data json_data) ] 
+          with [ exn -> callback (Error (SocialNetworkError ("998", Printexc.to_string exn))) ]
       )
     );
     
