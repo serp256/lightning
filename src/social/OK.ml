@@ -1,6 +1,9 @@
 open Ojson;
 open SNTypes;
 
+OAuth.set_close_button_visible True;
+OAuth.set_close_button_insets 60 10 10 10;
+
 type permission = [ Valuable_access | Set_status | Photo_content ];
 
 type permissions = list permission;
@@ -91,14 +94,16 @@ value call_method' meth access_token params callback =
       loader#addEventListener URLLoader.ev_COMPLETE (
         fun _ _ _ -> 
           let () = Printf.eprintf "WE GOT DATA: %s\n%!" loader#data in
-          try 
-            let json_data = Ojson.from_string loader#data in 
+          let cb = 
             try 
+              let json_data = Ojson.from_string loader#data in 
+              try 
                 let () = Printf.eprintf "DATA:\n%!" in
-              let error = extract_error_from_json json_data
-              in callback (Error error)
-            with [ Not_found -> let () = Printf.eprintf "DATA IS OK:\n%!" in callback (Data json_data) ] 
-          with [ exn -> callback (Error (SocialNetworkError ("998", Printexc.to_string exn))) ]
+                let error = extract_error_from_json json_data
+                in fun () -> callback (Error error)
+              with [ Not_found -> let () = Printf.eprintf "DATA IS OK:\n%!" in fun () -> callback (Data json_data) ] 
+            with [ exn -> fun () -> callback (Error (SocialNetworkError ("998", Printexc.to_string exn))) ]
+          in cb ()
       )
     );
     
@@ -124,7 +129,7 @@ value handle_new_access_token token_info = (
     
   match token_info.OAuth.refresh_token with 
   [ Some token -> KVStorage.put_string storage "ok_refresh_token" token
-  | None -> KVStorage.remove storage "ok_refresh_token"
+  | None -> () (* KVStorage.remove storage "ok_refresh_token" *)
   ];
     
   token_info.OAuth.access_token;
@@ -154,14 +159,21 @@ value call_method ?(delegate=None) meth params =
       ] 
     and oauth_callback = fun 
       [ OAuth.Token  t ->  
-          try 
-            let access_token = handle_new_access_token t in
-            let callback = fun
-              [ Data json     ->  call_delegate_success json
-              | Error e       ->  call_delegate_error e
-              ]
-            in call_method' meth access_token params callback
-          with [ Not_found -> call_delegate_error (SocialNetworkError ("999", "No UID in token info")) ]
+          let access_token = 
+            try  
+              Some (handle_new_access_token t)
+            with [ Not_found -> None ]
+          in match access_token with
+          
+          [ Some access_token ->  
+              let callback = fun
+                [ Data json     ->  call_delegate_success json
+                | Error e       ->  call_delegate_error e
+                ]
+              in call_method' meth access_token params callback
+          | None -> call_delegate_error (SocialNetworkError ("999", "No UID in token info")) 
+          ]
+          
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
     in OAuth.authorization_grant _oauth OAuth.Code !_appid redirect_uri oauth_params oauth_callback
@@ -172,17 +184,23 @@ value call_method ?(delegate=None) meth params =
   let refresh_token rtoken = 
     let oauth_refresh_callback = fun 
     [ OAuth.Token t ->
-        try 
-          let access_token = handle_new_access_token t in 
-          let callback = fun
-            [ Data json     ->  call_delegate_success json
-            | Error e       ->  match e with 
-                [ SocialNetworkError ("401", _) -> show_auth () (* TODO: надо посмотреть другие ошибки !!! *)
-                | _ -> call_delegate_error e
+          let access_token = 
+            try 
+              Some (handle_new_access_token t)
+            with [ Not_found -> None ]
+          in match access_token with
+          
+          [ Some access_token -> 
+              let callback = fun
+                [ Data json     ->  call_delegate_success json
+                | Error e       ->  match e with 
+                    [ SocialNetworkError ("401", _) -> show_auth () (* TODO: надо посмотреть другие ошибки !!! *)
+                    | _ -> call_delegate_error e
+                    ]
                 ]
-            ]
-          in call_method' meth access_token params callback
-        with [ Not_found -> show_auth () ]
+              in call_method' meth access_token params callback
+          | None -> show_auth () 
+          ]
     | OAuth.Error e -> show_auth ()
     ] 
     in OAuth.refresh_token _oauth rtoken !_appid [("client_secret", !_private_key)] oauth_refresh_callback
