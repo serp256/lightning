@@ -136,7 +136,7 @@ value handle_new_access_token token_info =
     
     match token_info.OAuth.refresh_token with 
     [ Some token -> KVStorage.put_string storage "mm_refresh_token" token
-    | None -> KVStorage.remove storage "mm_refresh_token"
+    | None -> (* KVStorage.remove storage "mm_refresh_token" *) ()
     ];
     
     (token_info.OAuth.access_token, uid);
