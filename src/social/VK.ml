@@ -108,13 +108,15 @@ value call_method' meth access_token params callback =
       loader#addEventListener URLLoader.ev_COMPLETE (
         fun _ _ _ -> 
           let () = Printf.eprintf "WE GOT DATA: %s\n%!" loader#data in
-          try 
-            let json_data = Ojson.from_string loader#data in 
+          let cb = 
             try 
-              let error = extract_error_from_json json_data
-              in callback (Error error)
-            with [ Not_found -> callback (Data json_data) ] 
-          with [ _ -> callback (Error (SocialNetworkError ("998", "HOHA error"))) ]
+              let json_data = Ojson.from_string loader#data in 
+              try 
+                let error = extract_error_from_json json_data
+                in fun () -> callback (Error error)
+              with [ Not_found -> fun () -> callback (Data json_data) ] 
+            with [ _ -> fun () -> callback (Error (SocialNetworkError ("998", "HOHA error"))) ]
+          in cb ()
       )
     );
     
@@ -145,14 +147,19 @@ value call_method ?(delegate=None) meth params =
     and oauth_params = [("display", "touch")]
     and oauth_callback = fun 
       [ OAuth.Token  t ->  
-          try 
-            let (access_token, uid) = handle_new_access_token t in
-            let callback = fun
-              [ Data json     ->  call_delegate_success json
-              | Error e       ->  call_delegate_error e
-              ]
-            in call_method' meth access_token params callback
-          with [ Not_found -> call_delegate_error (SocialNetworkError ("999", "No UID in token info")) ]
+          let access_token_info = 
+            try 
+              Some (handle_new_access_token t)
+            with [ Not_found -> None ]
+          in match access_token_info with 
+          [ Some (access_token, uid) -> 
+              let callback = fun
+                [ Data json     ->  call_delegate_success json
+                | Error e       ->  call_delegate_error e
+                ]
+              in call_method' meth access_token params callback
+          | None ->  call_delegate_error (SocialNetworkError ("999", "No UID in token info")) 
+          ]
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
     in OAuth.authorization_grant _oauth OAuth.Implicit !_appid redirect_uri oauth_params oauth_callback

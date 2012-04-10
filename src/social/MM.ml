@@ -95,13 +95,15 @@ value call_method' meth session_key uid params callback =
       loader#addEventListener URLLoader.ev_COMPLETE (
         fun _ _ _ -> 
           let () = Printf.eprintf "WE GOT DATA: %s\n%!" loader#data in
-          try 
-            let json_data = Ojson.from_string loader#data in 
+          let cb = 
             try 
-              let error = extract_error_from_json json_data
-              in callback (Error error)
-            with [ Not_found -> callback (Data json_data) ] 
-          with [ _ -> callback (Error (SocialNetworkError ("998", "HOHA error"))) ]
+              let json_data = Ojson.from_string loader#data in 
+              try 
+                let error = extract_error_from_json json_data
+                in fun () -> callback (Error error)
+              with [ Not_found -> fun () -> callback (Data json_data) ] 
+            with [ _ -> fun () -> callback (Error (SocialNetworkError ("998", "HOHA error"))) ]
+          in cb ()
       )
     );
     
@@ -160,14 +162,18 @@ value call_method ?(delegate=None) meth params =
     and oauth_params = [("display", "mobile")]
     and oauth_callback = fun 
       [ OAuth.Token  t ->  
-          try 
-            let (access_token, uid) = handle_new_access_token t in
-            let callback = fun
+          let access_token_info =  
+            try 
+              Some (handle_new_access_token t)
+            with [ Not_found -> None ]
+          in match access_token_info with 
+          [ Some (access_token, uid) -> 
+              let callback = fun
               [ Data json     ->  call_delegate_success json
               | Error e       ->  call_delegate_error e
-              ]
-            in call_method' meth access_token uid params callback
-          with [ Not_found -> call_delegate_error (SocialNetworkError ("999", "No UID in token info")) ]
+              ] in call_method' meth access_token uid params callback
+          | _ -> call_delegate_error (SocialNetworkError ("999", "No UID in token info")) 
+          ] 
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
     in OAuth.authorization_grant _oauth OAuth.Implicit !_appid redirect_uri oauth_params oauth_callback
@@ -178,21 +184,26 @@ value call_method ?(delegate=None) meth params =
   let refresh_token rtoken = 
     let oauth_refresh_callback = fun 
     [ OAuth.Token t ->
-        try 
-          let (access_token, uid) = handle_new_access_token t in 
-          let callback = fun
-            [ Data json     ->  call_delegate_success json
-            | Error e       ->  match e with 
-                [ SocialNetworkError ("102", _) -> show_auth ()
-                | _ -> call_delegate_error e
-                ]
-            ]
-          in call_method' meth access_token uid params callback
-        with [ Not_found -> show_auth () ]
+        let access_token_info = 
+          try 
+            Some (handle_new_access_token t)
+          with [ Not_found -> None ]
+        in match access_token_info with
+        [ Some (access_token, uid) -> 
+            let callback = fun
+              [ Data json     ->  call_delegate_success json
+              | Error e       ->  match e with 
+                  [ SocialNetworkError ("102", _) -> show_auth ()
+                  | _ -> call_delegate_error e
+                  ]
+              ]
+            in call_method' meth access_token uid params callback
+        | None -> show_auth ()
+        ]
+        
     | OAuth.Error e -> show_auth ()
     ] 
     in OAuth.refresh_token _oauth rtoken !_appid [("client_secret", !_private_key)] oauth_refresh_callback
-
   in try 
     let access_token = KVStorage.get_string storage "mm_access_token"
     and uid = KVStorage.get_string storage "mm_user_id"
