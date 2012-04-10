@@ -1,6 +1,9 @@
 open Ojson;
 open SNTypes;
 
+OAuth.set_close_button_visible True;
+OAuth.set_close_button_insets 60 10 10 10;
+
 type permission = [ Valuable_access | Set_status | Photo_content ];
 
 type permissions = list permission;

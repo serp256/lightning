@@ -28,3 +28,6 @@ value authorization_grant : t -> auth_grant -> string -> string -> list (string*
 
 value refresh_token : t -> string -> string -> list (string*string) -> (auth_response -> unit) -> unit;
 
+value  set_close_button_insets : int -> int -> int -> int -> unit;
+value  set_close_button_visible : bool -> unit;
+value  set_close_button_image_name : string -> unit;

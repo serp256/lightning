@@ -13,9 +13,14 @@
 #import <caml/alloc.h>
 #import <caml/threads.h> 
 
+#define CLOSE_BUTTON_HEIGHT 25
+#define CLOSE_BUTTON_WIDTH  25
+
 static OAuth * sharedOAuth = nil;
 
 @implementation OAuth
+
+@dynamic closeButtonInsets, closeButtonImageName, closeButtonVisible;
 
 /* 
  * Initialize
@@ -26,10 +31,109 @@ static OAuth * sharedOAuth = nil;
 	if (self != nil) {
 		self.modalPresentationStyle = UIModalPresentationFormSheet;
 		_authorizing = NO;
+		_closeButton = nil;
+		_closeButtonVisible = NO;
+		_closeButtonImageName = @"close_auth_dialog_btn";
+		_closeButtonInsets =  UIEdgeInsetsZero;
 	}
 
 	return self;
 }
+
+
+/*
+ *
+ */
+-(void)updateCloseButtonImage {
+  [_closeButton setImage: [UIImage imageNamed: _closeButtonImageName] forState: UIControlStateNormal];
+}
+
+/*
+ *
+ */
+-(void)updateCloseButtonFrame {
+  CGRect rect = [UIScreen mainScreen].applicationFrame;
+  _closeButton.frame = CGRectMake(rect.size.width - CLOSE_BUTTON_WIDTH - _closeButtonInsets.right, 
+                                  _closeButtonInsets.top, 
+                                  CLOSE_BUTTON_WIDTH, 
+                                  CLOSE_BUTTON_HEIGHT);
+}
+
+/*
+ *
+ */
+-(void)createCloseButton {
+  _closeButton = [[UIButton buttonWithType: UIButtonTypeCustom] retain];
+  [self updateCloseButtonImage];
+  [self updateCloseButtonFrame];
+  [_closeButton addTarget: self action:@selector(onCloseButton) forControlEvents: UIControlEventTouchUpInside];
+  _closeButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
+}
+
+
+
+/*
+ *
+ */
+-(void)setCloseButtonInsets: (UIEdgeInsets)insets {
+    _closeButtonInsets = insets;
+    if (_closeButton != nil) {
+      [self updateCloseButtonFrame];
+    }
+}
+
+/*
+ *
+ */
+-(UIEdgeInsets)closeButtonInsets {
+  return _closeButtonInsets;
+}
+
+
+/*
+ *
+ */
+-(void)setCloseButtonImageName: (NSString *)name {
+  if (_closeButtonImageName != nil) {
+    [_closeButtonImageName release];
+  }
+
+  _closeButtonImageName = [name retain];
+  
+  if (_closeButton != nil) {
+    [self updateCloseButtonImage];
+  }
+}
+
+
+/*
+ *
+ */
+-(NSString *)closeButtonImageName {
+  return _closeButtonImageName;
+}
+
+
+
+/*
+ *
+ */
+-(void)setCloseButtonVisible: (BOOL)visible {
+  _closeButtonVisible = visible;
+  if (_closeButton == nil && [self isViewLoaded]) {
+    [self createCloseButton];
+    [self.view addSubview: _closeButton];
+  }
+}
+
+
+/*
+ *
+ */
+-(BOOL)closeButtonVisible {
+  return _closeButtonVisible;
+}
+
 
 
 +(OAuth *)sharedInstance {
@@ -84,12 +188,26 @@ static OAuth * sharedOAuth = nil;
 }
 
 
+-(void)onCloseButton {
+  [_webview stopLoading];
+  
+  [self dismissModalViewControllerAnimated: YES];
+  value *mlf = (value*)caml_named_value("oauth_redirected");
+  NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+  caml_acquire_runtime_system();
+  if (mlf != NULL) {                                                                                                        
+    caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
+  }
+  caml_release_runtime_system();
+  
+}
+
 
 /*                                                                                                                                                                                      
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)loadView {                                                                                                                                                                       
-    CGRect rect = [UIScreen mainScreen].applicationFrame;                                                                                                                               
+    CGRect rect = [UIScreen mainScreen].applicationFrame; 
     _webview = [[UIWebView alloc] initWithFrame: rect];                                                                                                                                 
     _webview.delegate = self;                                                                                                                                                           
     _webview.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;                                                                                     
@@ -100,6 +218,12 @@ static OAuth * sharedOAuth = nil;
     _spinner.center = CGPointMake(CGRectGetMidX(_webview.frame), CGRectGetMidY(_webview.frame));
     _spinner.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleRightMargin ;
     [self.view addSubview:_spinner];
+    
+    if (_closeButtonVisible) {
+      [self createCloseButton];
+      [self.view addSubview: _closeButton];
+    }
+    
 }                                                                                                                                                                                       
 
 
