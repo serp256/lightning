@@ -14,7 +14,17 @@
     NSString * _redirectURIpath;
     UIActivityIndicatorView * _spinner;    
     BOOL _authorizing;
+    
+    UIButton * _closeButton;
+    UIEdgeInsets _closeButtonInsets;
+    NSString * _closeButtonImageName;
+    BOOL _closeButtonVisible;    
 }
 +(OAuth *)sharedInstance;
 -(void)authorize: (NSURL *)url;
+
+@property (nonatomic, assign)   UIEdgeInsets closeButtonInsets;
+@property (nonatomic, retain)  NSString * closeButtonImageName;
+@property (nonatomic, assign)   BOOL closeButtonVisible;
+
 @end
