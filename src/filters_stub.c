@@ -98,31 +98,6 @@ GLuint simple_program() {
 	return prg;
 }
 
-typedef struct {
-	GLfloat x;
-	GLfloat y;
-	GLfloat width;
-	GLfloat height;
-} clipping;
-
-typedef struct {
-	GLsizei x;
-	GLsizei y;
-	GLsizei w;
-	GLsizei h;
-} viewport;
-
-#define IS_CLIPPING(clp) (clp.x == 0. && clp.y == 0. && clp.width == 1. && clp.height == 1.)
-
-typedef struct {
-  GLuint fbid;
-	GLuint tid;
-	double width;
-	double height;
-	viewport vp;
-	clipping clp;
-} renderbuffer_t;
-
 value create_ml_texture(renderbuffer_t *rb) {
 	CAMLparam0();
 	CAMLlocal5(mlTextureID,width,height,clip,res);
@@ -151,68 +126,6 @@ value create_ml_texture(renderbuffer_t *rb) {
 	params[3] = clip;
 	res = caml_callbackN(*mlf,4,params);
 	CAMLreturn(res);
-}
-
-// сделать рендер буфер
-renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter) {
-  GLuint rtid;
-	GLuint iw = ceil(width);
-	GLuint ih = ceil(height);
-	GLuint legalWidth = nextPowerOfTwo(iw);
-	GLuint legalHeight = nextPowerOfTwo(ih);
-	printf("try create renderbuffer: %f:%f, %d:%d\n",width,height,legalWidth,legalHeight);
-#ifdef IOS
-	if (legalWidth <= 8) {
-    if (legalWidth > legalHeight) legalHeight = legalWidth;
-    else 
-      if (legalHeight > legalWidth * 2) legalWidth = legalHeight/2; 
-			if (legalWidth > 16) legalWidth = 16;
-	} else {
-    if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
-	};
-#endif
-  glGenTextures(1, &rtid);
-  glBindTexture(GL_TEXTURE_2D, rtid);
-	checkGLErrors("bind renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
-	printf("create renderbuffer: %f:%f:%x\n",width,height,filter);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	checkGLErrors("create renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
-  glBindTexture(GL_TEXTURE_2D,0);
-  GLuint fbid;
-  glGenFramebuffers(1, &fbid);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbid);
-  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	checkGLErrors("bind framebuffer with texture");
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    PRINT_DEBUG("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
-    return NULL;
-  };
-  //glBindFramebuffer(GL_FRAMEBUFFER,0);
-  r->fbid = fbid;
-  r->tid = rtid;
-	r->vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
-	r->clp = (clipping){(double)r->vp.x / legalWidth,(double)r->vp.y / legalHeight,(width / legalWidth),(height / legalHeight)};
-	//r->clp = (clipping){0.,0.,1.,1.};
-  r->width = width;
-  r->height = height;
-//	printf("framebuffer %d with texture %d of size %d:%d for %f:%f created\n",fbid,rtid,legalWidth,legalHeight,width,height);
-	//r->realWidth = realWidth;
-	//r->realHeight = realHeight;
-	//printf("created new fb: %d with %d\n",fbid,rtid);
-  return r;
-}
-
-void delete_renderbuffer(renderbuffer_t *rb) {
-	//fprintf(stderr,"delete rb: %d - %d\n",rb->fbid,rb->tid);
-	PRINT_DEBUG("delete rb: %d",rb->fbid);
-	glDeleteTextures(1,&rb->tid);
-	glDeleteFramebuffers(1,&rb->fbid);
-	//printf("delete successfully\n");
 }
 
 static GLfloat quads[4][2];
@@ -439,20 +352,15 @@ static inline GLuint powOfTwo(unsigned int p) {
 	return r;
 }
 
-value ml_glow_make(value textureInfo, value glow) {
+void ml_glow_make(value orb, value glow) {
 	checkGLErrors("start make glow");
 	int gsize = Int_val(Field(glow,0));
-	GLuint iwidth = Double_val(Field(textureInfo,1));
-	GLuint iheight = Double_val(Field(textureInfo,2));
-	GLuint gs = (powOfTwo(gsize) - 1) * 2;
-	GLuint rwidth = iwidth + gs;
-	GLuint rheight = iheight + gs;
+	renderbuffer_t *rb = (renderbuffer_t*)orb;
 
-	fprintf(stderr,"create glow %d - [%d:%d] - [%d:%d]\n",gsize,iwidth,iheight,rwidth,rheight);
+	fprintf(stderr,"create glow %d - [%f:%f]\n",gsize,rb->width,rb->height);
 
-	value kind = Field(textureInfo,4);
-	if (Tag_val(kind) != 0) caml_failwith("can't make glow not simple texture");
-	int pma = Bool_val(Field(kind,0));
+	//int pma = Bool_val(Field(kind,0));
+
 	lgResetBoundTextures();
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -464,8 +372,9 @@ value ml_glow_make(value textureInfo, value glow) {
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
 	glUniform3f(glGetUniformLocation(glowPrg,"u_color"),c.r,c.g,c.b);
 
+	/*
 	renderbuffer_t ib;
-	create_renderbuffer(rwidth,rheight,&ib,GL_LINEAR);
+	create_renderbuffer(rwidth/2,rheight/2,&ib,GL_LINEAR);
 	GLuint tid = TEXTURE_ID(Field(textureInfo,0));
 	value clip = Field(textureInfo,3);
 	clipping clp;
@@ -481,9 +390,9 @@ value ml_glow_make(value textureInfo, value glow) {
 		clp.width = 1.;
 		clp.height = 1.;
 	};
-	/*
 	glBindTexture(GL_TEXTURE_2D,tid);
-	GLint filter;
+	*/
+	/*GLint filter;
 	glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,&filter);
 	fprintf(stderr,"filter: %x\n",filter);
 	if (filter != GL_LINEAR) {
@@ -491,21 +400,22 @@ value ml_glow_make(value textureInfo, value glow) {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	};
 	*/
-	drawTexture(&ib,tid,iwidth,iheight,&clp,1);
+	//drawTexture(&ib,tid,ib->width,ib->height,&clp,1);
 	/*if (filter != GL_LINEAR) {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,filter);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,filter);
 	};*/
-	//if (gsize > 1) {
+	/*
+	if (gsize > 1) {
 		renderbuffer_t *crb = &ib;
 		renderbuffer_t *rbfs;
 		rbfs = caml_stat_alloc(gsize*sizeof(renderbuffer_t));
 		int i;
 		double w = ib.width, h = ib.height;
 		renderbuffer_t *prb;
-		for (i = 0; i < gsize; i++) {
-			w -= 1;
-			h -= 1;
+		for (i = 0; i < gsize - 1; i++) {
+			w /= 2;
+			h /= 2;
 			prb = rbfs + i;
 			create_renderbuffer(w,h,prb,GL_LINEAR);
 			checkGLErrors("create renderbuffer");
@@ -514,7 +424,7 @@ value ml_glow_make(value textureInfo, value glow) {
 			crb = prb;
 			checkGLErrors("draw forward");
 		};
-		for (i = gsize - 1; i > 0 ; i--) {
+		for (i = gsize - 2; i > 0 ; i--) {
 			prb = rbfs + i;
 			crb = prb - 1;
 			PRINT_DEBUG("draw back %i",i);
@@ -522,24 +432,17 @@ value ml_glow_make(value textureInfo, value glow) {
 			checkGLErrors("draw back");
 			delete_renderbuffer(prb);
 		};
-		//ib = *crb;
-		glEnable(GL_BLEND);
-		/*
-		glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-		GLuint fglowPrg = final_glow_program();
-		glUseProgram(fglowPrg);
-		glUniform1i(glGetUniformLocation(fglowPrg,"u_strength"),Long_val(Field(glow,2)));
-		*/
-		//drawTexture(&ib,crb->tid,crb->width,crb->height,&crb->clp,1);
-		glClearColor(1.,1.,1.,1.);
 		drawTexture(&ib,crb->tid,ib.width,ib.height,&crb->clp,1);
-		//delete_renderbuffer(crb);
+		delete_renderbuffer(crb);
 		caml_stat_free(rbfs);
-	//};
+	};
+	*/
+
 	// теперь новое... нужно создать новый буфер и туда насрать ib и поверх оригирал с блендингом 
 	/*renderbuffer_t rb;
 	create_renderbuffer(rwidth,rheight,&rb,GL_NEAREST);
-	glEnable(GL_BLEND);
+	*/
+	/*glEnable(GL_BLEND);
 	glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
 	GLuint fglowPrg = final_glow_program();
 	glUseProgram(fglowPrg);
@@ -548,7 +451,12 @@ value ml_glow_make(value textureInfo, value glow) {
 	//glClearColor(1.,1.,1.,0.);
 	drawTexture(&rb,ib.tid,rwidth,rheight,&ib.clp,1);
 	delete_renderbuffer(&ib);
-	checkGLErrors("draw blurred");*/
+	checkGLErrors("draw blurred");
+
+	*/
+
+	// делаем activate и заворачивалку с 'c' rendered текстур и пиздиец
+	// а потом с хитрым шейдером еще разок, сравниваем префоманс - и чего-то уже решаем 
 
 	//glEnable(GL_BLEND);
 
@@ -562,7 +470,7 @@ value ml_glow_make(value textureInfo, value glow) {
 	*/
 
 
-	value res = create_ml_texture(&ib);
+	/*value res = create_ml_texture(&ib);
 	glDeleteFramebuffers(1,&ib.fbid);
 
 	glBindTexture(GL_TEXTURE_2D,0);
@@ -572,7 +480,7 @@ value ml_glow_make(value textureInfo, value glow) {
 	checkGLErrors("glow make finished");
 	set_framebuffer_state(&fstate);
 	checkGLErrors("framebuffer state back after make glow");
-	return res;
+	return res;*/
 }
 
 /*

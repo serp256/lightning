@@ -128,3 +128,38 @@ enum PVRPixelType
 	Field(mlTex,7) = textureID;
 
 #endif
+
+
+
+
+typedef struct {
+	GLfloat x;
+	GLfloat y;
+	GLfloat width;
+	GLfloat height;
+} clipping;
+
+typedef struct {
+	GLsizei x;
+	GLsizei y;
+	GLsizei w;
+	GLsizei h;
+} viewport;
+
+#define IS_CLIPPING(clp) (clp.x == 0. && clp.y == 0. && clp.width == 1. && clp.height == 1.)
+
+typedef struct {
+  GLuint fbid;
+	GLuint tid;
+	double width;
+	double height;
+	GLuint realWidth;
+	GLuint realHeight;
+	viewport vp;
+	clipping clp;
+} renderbuffer_t;
+
+
+renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter);
+void delete_renderbuffer(renderbuffer_t *rb);
+

@@ -782,18 +782,43 @@ value url_loader (stage:Stage.c) =
 
 value glow (stage:Stage.c) = 
 (
+  (*
   let img = Image.load "1px_line.png" in
   (
     img#setFilters [ Filters.glow ~size:1 0 ];
     img#setPos 100. 100.;
     stage#addChild img;
   );
+  *)
   let img = Image.load "2px_line.png" in
   (
     img#setFilters [ Filters.glow ~size:1 0 ];
+    img#setPos 100. 160.;
+    stage#addChild img;
+    (*
+    let tex = Texture.rendered 100. 100. in
+    (
+      tex#draw begin fun () ->
+        (
+          Render.clear 0xFFFFFF 1.;
+          img#render ~transform:False None;
+        );
+      end;
+      let img = Image.create (tex :> Texture.c) in
+      (
+        img#setPos 100. 300.;
+        stage#addChild img;
+      );
+    );
+    *)
+  );
+  (*
+  let img = Image.load "2px_line.png" in
+  (
     img#setPos 100. 150.;
     stage#addChild img;
   );
+  *)
   (*
   let text = "Ежедневный бонус PipIy" in
   (
