@@ -568,7 +568,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
           (
             debug "texture: %s loaded" path;
             let waiters = MHashtbl.pop_all waiters path in
-            List.iter (fun f -> f texture) waiters;
+            List.iter (fun f -> f texture) (List.rev waiters);
           );
           check_result ();
         )
@@ -602,7 +602,7 @@ value load_async path callback =
   in
   match texture with
   [ Some t -> callback t
-  | None -> 
+  | None ->
     let m =
       match !async_loader with
       [ Some m -> m
