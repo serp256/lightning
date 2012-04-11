@@ -505,14 +505,14 @@ value game_center (stage:Stage.c) =
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
     (
       text#setPos 100. 150.;
-      text#setFilters [ Filters.glow ~size:1 ~strength:3 0 ];
+      text#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
       stage#addChild text;
     );
 
     let img = Image.load "tree.png" in
     (
       img#setPos 50. 300.;
-      img#setFilters [ Filters.glow ~size:1 ~strength:3 0 ];
+      img#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
       stage#addChild img;
     );
   );
@@ -792,8 +792,8 @@ value glow (stage:Stage.c) =
   *)
   let img = Image.load "tree.png" in
   (
-    img#setPos 100. 160.;
-    img#setFilters [ Filters.glow ~size:1 0 ];
+    img#setPos 20. 50.;
+    img#setFilters [ Filters.glow ~size:2 0 ];
     stage#addChild img;
   );
   (*
@@ -826,22 +826,20 @@ value glow (stage:Stage.c) =
     stage#addChild img;
   );
   *)
-  (*
   let text = "Ежедневный бонус PipIy" in
   (
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
     (
-      text#setPos 100. 150.;
+      text#setPos 120. 200.;
+      text#setFilters [ Filters.glow ~size:2 0 ];
       stage#addChild text;
     );
-    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFF0000 [ `text text ]) in
     (
-      text#setPos 100. 200.;
-      text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ];
+      text#setPos 120. 200.;
       stage#addChild text;
     );
   );
-  *)
 );
 
 let stage width height = 

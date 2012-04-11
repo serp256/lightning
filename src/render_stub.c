@@ -916,13 +916,9 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 
 
 void get_framebuffer_state(framebuffer_state *s) {
-	GLint oldBuffer;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
-	GLint viewPort[4];
-	glGetIntegerv(GL_VIEWPORT,viewPort);
-	s->frameBuffer = oldBuffer;
-	s->width = viewPort[2];
-	s->height = viewPort[3];
+
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&s->framebuffer);
+	glGetIntegerv(GL_VIEWPORT,s->viewport);
 	checkGLErrors("get framebuffer state");
 }
 
@@ -953,8 +949,8 @@ value ml_renderbuffer_activate(value ofb) {
 }
 
 void set_framebuffer_state(framebuffer_state *s) {
-	glBindFramebuffer(GL_FRAMEBUFFER,s->frameBuffer);
-	glViewport(0, 0, s->width, s->height);
+	glBindFramebuffer(GL_FRAMEBUFFER,s->framebuffer);
+	glViewport(s->viewport[0], s->viewport[1], s->viewport[2], s->viewport[3]);
 }
 
 void ml_renderbuffer_deactivate(value ostate) {

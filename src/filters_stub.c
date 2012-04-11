@@ -87,7 +87,7 @@ GLuint create_program(GLuint vShader, GLuint fShader, int cntattribs, char* attr
   return program;
 }
 
-static prg_t simple_program() {
+static prg_t* simple_program() {
 	static prg_t prg = {0,{0,0,0,0}};
 	if (prg.prg == 0) {
 		PRINT_DEBUG("create new program\n");
@@ -98,7 +98,7 @@ static prg_t simple_program() {
 			glUniform1i(glGetUniformLocation(prg.prg,"u_texture"),0);
 		}
 	} else glUseProgram(prg.prg);
-	return prg;
+	return &prg;
 }
 
 value create_ml_texture(renderbuffer_t *rb) {
@@ -273,7 +273,7 @@ static GLuint glow_fragment_shader() {
 	return shader;
 };
 
-static prg_t* glow_program() {
+static const prg_t* glow_program() {
 	static prg_t prg = {0,{0,0,0,0}};
 	if (prg.prg == 0) {
 		char *attribs[2] = {"a_position","a_texCoord"};
@@ -291,11 +291,11 @@ static GLuint final_glow_fragment_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
 		shader = compile_shader(GL_FRAGMENT_SHADER,
-				"#ifdef GL_ES\nprecision lowp float; \n#endif\n"\
-				"varying vec2 v_texCoord; uniform sampler2D u_texture; uniform int u_strength;\n"\
+				"#ifdef GL_ES\nprecision mediump float; \n#endif\n"\
+				"varying vec2 v_texCoord; uniform sampler2D u_texture; uniform float u_strength;\n"\
 				"void main() {"\
 					"vec4 color = texture2D(u_texture,v_texCoord);\n"\
-					"color.a *= float(u_strength);\n"\
+					"color.a *= u_strength;\n"\
 					"gl_FragColor = color;"\
 				"}");
 	};
@@ -303,7 +303,7 @@ static GLuint final_glow_fragment_shader() {
 };
 
 
-static prg_t* final_glow_program() {
+static const prg_t* final_glow_program() {
 	static prg_t prg = {0,{0,0,0}};
 	if (prg.prg == 0) {
 		char *attribs[2] = {"a_position","a_texCoord"};
@@ -322,7 +322,7 @@ static GLuint glow2_fragment_shader() {
 	if (shader == 0) {
 		shader = compile_shader(GL_FRAGMENT_SHADER,
 				"#ifdef GL_ES\nprecision mediump float; \n#endif\n"\
-				"varying vec2 v_texCoord; uniform sampler2D u_texture; uniform int u_twidth; uniform int u_theight; uniform vec3 u_gcolor; uniform int u_strength;\n"\
+				"varying vec2 v_texCoord; uniform sampler2D u_texture; uniform int u_twidth; uniform int u_theight; uniform vec3 u_gcolor; uniform float u_strength;\n"\
 				"void main() {"\
 					"float px = 1. / float(u_twidth);"\
 					"float py = 1. / float(u_theight);"\
@@ -335,7 +335,7 @@ static GLuint glow2_fragment_shader() {
 					"a += texture2D(u_texture,v_texCoord + vec2(-px,py)).a * 0.05;"\
 					"a += texture2D(u_texture,v_texCoord + vec2(-px,0)).a * 0.05;"\
 					"a += texture2D(u_texture,v_texCoord).a * 0.6;"\
-					"gl_FragColor = vec4(u_gcolor,a * float(u_strength));"
+					"gl_FragColor = vec4(u_gcolor,a * u_strength);"
 				"}");
 	};
 	return shader;
@@ -412,7 +412,7 @@ void ml_glow2_make(value orb,value glow) {
 	glClearColor(0.,0.,0.,0.);
 	const prg_t *prg = glow2_program();
 	glUniform3f(prg->uniforms[0],c.r,c.g,c.b);
-	glUniform1i(prg->uniforms[1],Long_val(Field(glow,2)));
+	glUniform1i(prg->uniforms[1],Double_val(Field(glow,2)));
 	glUniform1i(prg->uniforms[2],rb->width);
 	glUniform1i(prg->uniforms[3],rb->height);
 	checkGLErrors("glow2 bind uniforms");
@@ -436,12 +436,23 @@ void ml_glow2_make(value orb,value glow) {
 		delete_renderbuffer(rb);
 		rb->tid = rb2.tid;
 		rb->fbid = rb2.fbid;
+		fstate.framebuffer = rb->fbid;
 	} else delete_renderbuffer(&rb2);
 	glUseProgram(0);
 	currentShaderProgram = 0;
 	checkGLErrors("glow make finished");
 	set_framebuffer_state(&fstate);
 	checkGLErrors("framebuffer state back after make glow");
+}
+
+static void inline glow_make_draw(GLuint w,GLuint h) {
+	static GLfloat quads[4][2] = {{-1.,-1.},{1.,-1.},{-1.,1.},{1.,1.}};
+	static GLfloat texCoords[4][2] = {{0.,0.},{1.,0.},{0.,1.},{1.,1.}};
+	glViewport(0,0,w,h);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glVertexAttribPointer(lgVertexAttrib_Position,2,GL_FLOAT,GL_FALSE,0,quads);
+	glVertexAttribPointer(lgVertexAttrib_TexCoords,2,GL_FLOAT,GL_FALSE,0,texCoords);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void ml_glow_make(value orb, value glow) {
@@ -459,44 +470,65 @@ void ml_glow_make(value orb, value glow) {
 	glDisable(GL_BLEND);
 	glClearColor(0.,0.,0.,0.);
 
-	prg_t *glowPrg = glow_program();
+	const prg_t *glowPrg = glow_program();
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
 	glUniform3f(glowPrg->uniforms[0],c.r,c.g,c.b);
 
-	renderbuffer_t *rbfs = caml_stat_alloc(gsize*sizeof(renderbuffer_t));
+	GLuint *txrs = caml_stat_alloc(gsize * sizeof(GLuint));
+  glGenTextures(gsize, txrs);
+	GLuint *bfrs = caml_stat_alloc(gsize * sizeof(GLuint));
+	glGenFramebuffers(gsize, bfrs);
 
-	renderbuffer_t *crb = rb;
-	renderbuffer_t *prb;
 	int i;
+	GLuint w = rb->realWidth;
+	GLuint h = rb->realHeight;
+	GLuint ctid = rb->tid;
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 	for (i = 0; i < gsize; i++) {
-		prb = rbfs + i;
-		create_renderbuffer(crb->width / 2,crb->height / 2,prb,GL_LINEAR);
-		checkGLErrors("create renderbuffer");
-		PRINT_DEBUG("draw forward %i",i);
-		//drawTexture(prb, crb->tid, w, h, &crb->clp,1);
-		drawRenderbuffer(prb,crb,1);
-		crb = prb;
+		w /= 2;
+		h /= 2;
+		glBindTexture(GL_TEXTURE_2D, txrs[i]);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glBindFramebuffer(GL_FRAMEBUFFER, bfrs[i]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[i],0);
+		/*if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			PRINT_DEBUG("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+			return NULL;
+		};*/
+		glBindTexture(GL_TEXTURE_2D,ctid);
+		glow_make_draw(w,h);
+		ctid = txrs[i];
 		checkGLErrors("draw forward");
 	};
+
+	GLuint cbuf;
 	for (i = gsize - 1; i > 0 ; i--) {
-		prb = rbfs + i;
-		crb = prb - 1;
-		PRINT_DEBUG("draw back %i",i);
-		//drawTexture(crb,prb->tid,crb->width,crb->height,&prb->clp,1);
-		drawRenderbuffer(crb,prb,1);
-		checkGLErrors("draw back");
-		delete_renderbuffer(prb);
+		w *= 2;
+		h *= 2;
+		cbuf = bfrs[i-1];
+		glBindFramebuffer(GL_FRAMEBUFFER,cbuf);
+		ctid = txrs[i];
+		glBindTexture(GL_TEXTURE_2D,ctid);
+		glow_make_draw(w,h);
 	};
-	checkGLErrors("hehehe");
 	// и теперь с блэндингом нахуй 
 	glEnable(GL_BLEND);
 	setNotPMAGLBlend (); // WARNING - ensure what separate blend enabled
-	prg_t *fglowPrg = final_glow_program();
-	glUniform1i(fglowPrg->uniforms[0],Long_val(Field(glow,2)));
+	const prg_t *fglowPrg = final_glow_program();
+	glUniform1f(fglowPrg->uniforms[0],Double_val(Field(glow,2)));
 	checkGLErrors("final glow program");
-	drawRenderbuffer(rb,crb,1);
-	delete_renderbuffer(crb);
-	caml_stat_free(rbfs);
+	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
+	glBindTexture(GL_TEXTURE_2D,txrs[0]);
+	glow_make_draw(rb->realWidth,rb->realHeight);
+
+	glDeleteFramebuffers(gsize,bfrs);
+	caml_stat_free(bfrs);
+	glDeleteTextures(gsize,txrs);
+	caml_stat_free(txrs);
 
 	glBindTexture(GL_TEXTURE_2D,0);
 	glUseProgram(0);

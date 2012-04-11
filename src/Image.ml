@@ -30,14 +30,6 @@ DEFINE TEX_COORDS_ROTATE_LEFT =
 *)
 
 
-value powOfTwo p =
-  let r = ref 1 in
-  (
-    for i = 0 to p -1 do
-      r.val := !r * 2; 
-    done;
-    !r;
-  );
 
 type glow = 
   {
@@ -284,12 +276,16 @@ class _c  _texture =
         let rw = w +. (float gs)
         and rh = h +. (float gs) in
         let tex = Texture.rendered rw rh in
+        let cm = Matrix.create ~translate:{Point.x = float hgs; y = float hgs} () in
         (
           tex#activate ();
           Render.clear 0 0.;
-          Render.Image.render (Matrix.create ~translate:{Point.x = float hgs; y = float hgs} ()) g_make_program image; 
-          RenderFilters.glow2_make tex#renderbuffer glow;
-          Render.Image.render (Matrix.create ~translate:{Point.x = float hgs; y = float hgs} ()) g_make_program image; 
+          Render.Image.render cm g_make_program image; 
+          match glow.Filters.glowKind with
+          [ `linear -> RenderFilters.glow_make tex#renderbuffer glow
+          | `precise -> RenderFilters.glow2_make tex#renderbuffer glow
+          ];
+          Render.Image.render cm g_make_program image; 
           tex#deactivate ();
           let g_image = Render.Image.create tex#renderInfo 0xFFFFFF alpha in
           (

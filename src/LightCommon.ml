@@ -26,6 +26,15 @@ value rec nextPowerOfTwo number =
   in 
   loop 1;
 
+value powOfTwo p =
+  let r = ref 1 in
+  (
+    for i = 0 to p -1 do
+      r.val := !r * 2; 
+    done;
+    !r;
+  );
+
 DEFINE COLOR_PART_ALPHA(color) = (color lsr 24) land 0xff;
 DEFINE COLOR_PART_RED(color) = (color lsr 16) land 0xff;
 DEFINE COLOR_PART_GREEN(color) = (color lsr  8) land 0xff;

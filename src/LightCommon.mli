@@ -5,6 +5,7 @@ value color_black: int;
 type textureID; 
 type framebufferID = int;
 
+value powOfTwo: int -> int;
 value nextPowerOfTwo: int -> int;
 
 value pi:float;
