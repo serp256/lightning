@@ -36,6 +36,7 @@ ifeq ($(PLATFORM),IOS)
 						 -cclib '-framework\ CoreGraphics' \
 						 -cclib '-framework\ OpenGLES' \
 						 -cclib '-framework\ AudioToolbox' \
+						 -cclib '-framework\ AVFoundation' \
 						 -cclib '-framework\ OpenAL' \
 						 -cclib '-framework\ GameKit' \
 						 -cclib '-framework\ StoreKit'

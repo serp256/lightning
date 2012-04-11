@@ -1,6 +1,7 @@
 
 #import <Foundation/Foundation.h>
 #include <AudioToolbox/AudioToolbox.h>
+#import <AVFoundation/AVAudioPlayer.h>
 
 #import <OpenAL/al.h>
 #import <OpenAL/alc.h>
@@ -335,3 +336,200 @@ void ml_alsource_delete(value mlAlSourceID) {
 	alSourcei(sourceID, AL_BUFFER, 0);
 	alDeleteSources(1, &sourceID);
 }
+
+
+
+
+
+
+
+@interface LightningAVSoundPlayerController : NSObject <AVAudioPlayerDelegate> {
+  AVAudioPlayer * _player;
+}
+-(id)initWithFilename: (NSString *)fname;
+@end
+
+
+@implementation LightningAVSoundPlayerController
+
+/*
+ *
+ */
+-(id)initWithFilename: (NSString *)fname {
+    self = [super init];
+    if (self) {
+
+        NSURL * sndurl = [[NSBundle mainBundle] URLForResource: fname withExtension: nil];
+        if (sndurl == nil) {
+          NSLog(@"Can't find file %@", fname);
+          [self release];
+          return nil;
+        }
+        
+        NSError *error = nil;                                                                                                                                                              
+        _player  = [[AVAudioPlayer alloc] initWithContentsOfURL:sndurl error:&error];
+        if (_player == nil) {
+          [self release];
+          return nil;
+        }
+        _player.delegate = self;
+        [_player prepareToPlay];
+        
+        // handle master volume changes ???
+  }
+  
+  return self;
+}
+
+-(void)play {
+  [_player play];
+}
+
+
+-(void)pause {
+  [_player pause];
+}
+
+
+-(void)stop {
+  [_player stop];
+  _player.currentTime = 0;  
+}
+
+
+-(BOOL)isPlaying {                                                                                                                                                                                      
+  return _player.playing;                                                                                                                                                            
+}
+
+
+-(void)setLoop:(BOOL)value {
+  _player.numberOfLoops = value ? -1 : 0;
+}
+
+-(float)volume {
+  return _player.volume;
+}
+
+
+-(void)setVolume:(float)value {
+  _player.volume = value;
+}
+
+
+
+#pragma mark AVAudioPlayerDelegate
+
+- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {    
+//    [self dispatchEvent:[SPEvent eventWithType:SP_EVENT_TYPE_SOUND_COMPLETED]];
+}
+
+- (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error {
+    NSLog(@"Error during sound decoding: %@", [error description]); // trhow error?
+}
+
+- (void)audioPlayerBeginInterruption:(AVAudioPlayer *)player {
+    [player pause];
+}
+
+- (void)audioPlayerEndInterruption:(AVAudioPlayer *)player {
+    [player play];
+}
+
+-(void)dealloc {
+  [_player release];
+  [super dealloc];
+}
+
+@end
+
+
+
+/* create controller */
+CAMLprim value ml_avsound_create_player(value fname) {
+  CAMLparam1(fname);
+  NSString * filename = [NSString stringWithCString:String_val(fname) encoding:NSASCIIStringEncoding]; 
+  LightningAVSoundPlayerController * playerController = [[LightningAVSoundPlayerController alloc] initWithFilename: filename];
+  
+  if (playerController == nil) {
+    raise_error("Error initializing LightningAVSoundPlayerController", NULL, 404);
+  }
+    
+  CAMLreturn((value)playerController);
+}
+
+
+/*
+ * Release player controler
+ */
+void ml_avsound_release(value playerController) {
+  CAMLparam1(playerController);
+  [(LightningAVSoundPlayerController *)playerController release]; 
+  CAMLreturn0;
+}
+
+/*
+ * Let's play
+ */
+void ml_avsound_play(value playerController) {
+  CAMLparam1(playerController);
+  [(LightningAVSoundPlayerController *)playerController play];
+  CAMLreturn0;
+}
+
+
+/*
+ * Pause
+ */
+void ml_avsound_pause(value playerController) {
+  CAMLparam1(playerController);
+  [(LightningAVSoundPlayerController *)playerController pause];
+  CAMLreturn0;
+}
+
+
+/*
+ * Stop
+ */
+void ml_avsound_stop(value playerController) {
+  CAMLparam1(playerController);
+  [(LightningAVSoundPlayerController *)playerController stop];
+  CAMLreturn0;
+}
+
+
+/* 
+ * Set volume
+ */
+void ml_avsound_set_volume(value playerController, value volume) {
+  CAMLparam2(playerController, volume);
+  [(LightningAVSoundPlayerController *)playerController setVolume: Double_val(volume)];
+  CAMLreturn0;
+}
+
+/* 
+ * Get volume
+ */
+CAMLprim value ml_avsound_get_volume(value playerController) {
+  CAMLparam1(playerController);
+  CAMLreturn(caml_copy_double([(LightningAVSoundPlayerController *)playerController volume]));
+}
+
+
+/*
+ * Loop sound or not
+ */
+void ml_avsound_set_loop(value playerController, value loop) {
+  CAMLparam2(playerController, loop);
+  [(LightningAVSoundPlayerController *)playerController setLoop: Bool_val(loop)];
+  CAMLreturn0;
+}
+
+
+/*
+ * Is playing
+ */
+CAMLprim value ml_avsound_is_playing(value playerController) {
+  CAMLparam1(playerController);
+  CAMLreturn(Val_bool([(LightningAVSoundPlayerController *)playerController isPlaying]));
+}
+

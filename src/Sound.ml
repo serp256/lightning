@@ -28,20 +28,20 @@ type alsound =
     duration: float;
   };
 
-type sound = alsound;
+type avsound = string;
+
+type sound = [ ALSound of alsound | AVSound of avsound ];
 
 external albuffer_create: string -> alsound = "ml_albuffer_create";
-
 external al_setMasterVolume: float -> unit = "ml_al_setMasterVolume";
 
 value setMasterVolume = al_setMasterVolume;
 
 value load path = 
-  let res = albuffer_create path in
-  (
-    debug "sound %s - duration %f" path res.duration;
-    res;
-  );
+  match ExtString.String.ends_with path ".caf" with
+  [ True    -> ALSound (albuffer_create path)
+  | False   -> AVSound path
+  ];
 
 type alsource = int32;
 external alsource_create: albuffer -> alsource = "ml_alsource_create";
@@ -52,9 +52,10 @@ external alsource_setLoop: alsource -> bool -> unit = "ml_alsource_setLoop";
 external alsource_stop: alsource -> unit = "ml_alsource_stop";
 external alsource_pause: alsource -> unit = "ml_alsource_pause";
 external alsource_delete: alsource -> unit = "ml_alsource_delete";
-
 external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc";
 
+
+(* ALSound *)
 class channel snd = 
   let sourceID = alsource_create snd.albuffer in
   object(self)
@@ -107,7 +108,81 @@ class channel snd =
     method state = alsource_state sourceID;
   end;
 
-value createChannel snd = new channel snd;
+
+type avplayer = int;
+
+external avsound_create_player : avsound -> avplayer = "ml_avsound_create_player";
+external avsound_release : avplayer -> unit = "ml_avsound_release";
+external avsound_play : avplayer -> unit = "ml_avsound_play";
+external avsound_pause : avplayer -> unit = "ml_avsound_pause";
+external avsound_stop : avplayer -> unit = "ml_avsound_stop";
+external avsound_set_volume : avplayer -> float -> unit = "ml_avsound_set_volume";
+external avsound_get_volume : avplayer -> float = "ml_avsound_get_volume";
+external avsound_set_loop : avplayer -> bool -> unit = "ml_avsound_set_loop";
+external avsound_is_playing : avplayer -> bool = "ml_avsound_is_playing";
+
+(* AVSound *)
+class av_channel snd = 
+  object(self)
+  
+    value avplayer = avsound_create_player snd; (* create and call prepare *)
+    value mutable paused = False;
+        
+    initializer (
+      Gc.finalise (fun _ -> avsound_release avplayer) self;
+    );
+
+    method play () = (
+      debug "play avsound";
+      paused := False;
+      avsound_play avplayer;  
+    );
+
+    method private isPlaying () = avsound_is_playing avplayer;
+    
+    method pause () = (
+      debug "pause avsound";
+      paused := True;
+      avsound_pause avplayer;
+    );
+    
+    method stop () = (
+      debug "stop avsound";
+      paused := False;
+      avsound_stop avplayer;
+    );
+    
+    method setVolume (v:float) = (
+      debug "setVolume avsound";
+      avsound_set_volume avplayer v;
+    );
+    
+    method volume = (
+      debug "volume avsound";
+      avsound_get_volume avplayer;
+    );
+    
+    method setLoop loop  = (
+      debug "set loop avsound";
+      avsound_set_loop avplayer loop;
+    );
+    
+    method state = match (paused, self#isPlaying ()) with
+    [ (_, True)         -> SoundPlaying
+    | (True, False)     -> SoundPaused
+    | (False, False)    -> SoundStoped
+    ];
+    
+  end;
+
+
+
+value createChannel snd = 
+  match snd with 
+  [ ALSound als -> new channel als
+  | AVSound avs -> new av_channel avs 
+  ];
+
 
 ELSE
 (* Sdl version here *)
