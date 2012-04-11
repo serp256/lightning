@@ -638,7 +638,7 @@ external renderbuffer_delete: renderbuffer_t -> unit = "ml_renderbuffer_delete";
 class type rendered = 
   object
     inherit c;
-    method renderbuffer: renderbuffer_t;
+    method renderbuffer: renderbuffer;
     method activate: unit -> unit;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
@@ -682,7 +682,7 @@ value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered =
   let rb = renderbuffer_create format filter width height in
   object(self)
     method renderInfo = rb.renderInfo;
-    method renderbuffer = rb.renderbuffer;
+    method renderbuffer = rb;
     method kind = rb.renderInfo.kind;
     value mutable isActive = None;
 (*
@@ -792,7 +792,7 @@ value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered =
     initializer 
     (
 (*       texture_mem_add (legalWidth * legalHeight * 4); *)
-      Gc.finalise (fun obj -> if not obj#released then renderbuffer_delete obj#renderbuffer else ()) self;
+      Gc.finalise (fun obj -> if not obj#released then renderbuffer_delete obj#renderbuffer.renderbuffer else ()) self;
     );
 
 

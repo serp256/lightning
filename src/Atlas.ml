@@ -118,8 +118,8 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
 
       method private updateGlowFilter () = 
         match glowFilter with
-        [ Some ({g_texture = None; g_make_program; g_params = glow; _ } as gf) ->
-          (
+        [ Some ({g_texture = None; g_make_program; g_params = glow; _ } as gf) -> ()
+          (*
             let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
@@ -151,7 +151,7 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
                 )
               )
             else ();
-          )
+          *)
         | _ -> Debug.w "update glow not need"
         ];
 

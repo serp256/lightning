@@ -22,6 +22,10 @@ void ml_texture_id_delete(value textureID) {
 	};
 }
 
+void update_texture_id(value mlTextureID,GLuint textureID) {
+	TEX(mlTextureID)->tid = textureID;
+}
+
 static void textureID_finalize(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
 	PRINT_DEBUG("finalize texture: <%d>\n",tid);
@@ -100,6 +104,7 @@ void enableSeparateBlend () {
 	separateBlend = 1;
 	if (PMA == 0) PMA = -1;
 }
+
 void disableSeparateBlend () {
 	separateBlend = 0;
 	if (PMA == 0) PMA = -1;
@@ -469,7 +474,7 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
   glGenTextures(1, &rtid);
   glBindTexture(GL_TEXTURE_2D, rtid);
 	checkGLErrors("bind renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
-	printf("create renderbuffer: %f:%f:%x\n",width,height,filter);
+	fprintf(stderr,"create renderbuffer: %f:%f:%x\n",width,height,filter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -494,10 +499,8 @@ renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *
 	//r->clp = (clipping){0.,0.,1.,1.};
   r->width = width;
   r->height = height;
-//	printf("framebuffer %d with texture %d of size %d:%d for %f:%f created\n",fbid,rtid,legalWidth,legalHeight,width,height);
 	r->realWidth = legalWidth;
 	r->realHeight = legalHeight;
-	//printf("created new fb: %d with %d\n",fbid,rtid);
   return r;
 }
 
@@ -522,6 +525,7 @@ value ml_renderbuffer_create(value format, value filter, value width,value heigh
 	};
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
+	lgResetBoundTextures();
 	renderbuffer_t *rb = caml_stat_alloc(sizeof(renderbuffer_t));
 	create_renderbuffer(Double_val(width),Double_val(height),rb,fltr);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);

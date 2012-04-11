@@ -70,12 +70,12 @@ value make : textureInfo -> c;
 value load: string -> c;
 
 
-type renderbuffer_t;
+type renderbuffer;
 
 class type rendered = 
   object
     inherit c;
-    method renderbuffer: renderbuffer_t;
+    method renderbuffer: renderbuffer;
     method activate: unit -> unit;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;

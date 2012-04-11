@@ -1,6 +1,6 @@
 open LightCommon;
 
-Gc.set {(Gc.get ()) with Gc.verbose  = (0x001 lor 0x002 lor 0x004 lor 0x010 lor 0x040 lor 0x080)};
+(* Gc.set {(Gc.get ()) with Gc.verbose  = (0x001 lor 0x002 lor 0x004 lor 0x010 lor 0x040 lor 0x080)}; *)
 
 value max_anim_len = 40;
 value (|>) a b = b a;
@@ -790,11 +790,19 @@ value glow (stage:Stage.c) =
     stage#addChild img;
   );
   *)
+  let img = Image.load "tree.png" in
+  (
+    img#setPos 100. 160.;
+    img#setFilters [ Filters.glow ~size:1 0 ];
+    stage#addChild img;
+  );
+  (*
   let img = Image.load "2px_line.png" in
   (
-    img#setFilters [ Filters.glow ~size:1 0 ];
-    img#setPos 100. 160.;
+    img#setPos 100. 180.;
     stage#addChild img;
+  );
+  *)
     (*
     let tex = Texture.rendered 100. 100. in
     (
@@ -811,7 +819,6 @@ value glow (stage:Stage.c) =
       );
     );
     *)
-  );
   (*
   let img = Image.load "2px_line.png" in
   (
@@ -840,7 +847,7 @@ value glow (stage:Stage.c) =
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
-    value color = 0x00FF00;
+    value color = 0xCCCCCC;
     initializer begin
         BitmapFont.register "MyriadPro-Regular.fnt";
         BitmapFont.register "MyriadPro-Bold.fnt";

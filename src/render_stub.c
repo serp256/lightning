@@ -404,6 +404,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		};
 	} else sp->uniforms = NULL;
 	checkGLErrors("uniform binded");
+	fprintf(stderr,"create program: %d\n",program);
 	sp->program = program;
 	prg = caml_alloc_custom(&program_ops,sizeof(*sp),0,1);
 	SPROGRAM(prg) = sp;
@@ -857,7 +858,7 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 	//print_image(tq);
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
-	//printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
+	fprintf(stderr,"render image: %d with prg %d\n",img->textureID,sp->program);
 	lgGLUseProgram(sp->program);
 	checkGLErrors("image render use program");
 

@@ -285,13 +285,12 @@ class _c  _texture =
         and rh = h +. (float gs) in
         let tex = Texture.rendered rw rh in
         (
-          tex#draw begin fun () ->
-            (
-              Render.clear 0xFFFFFF 1.;
-              Render.Image.render (Matrix.create ~translate:{Point.x = float hgs; y = float hgs} ()) g_make_program image; 
-            );
-          end;
-(*           RenderFilters.glow_make tex#renderbuffer glow; *)
+          tex#activate ();
+          Render.clear 0 0.;
+          Render.Image.render (Matrix.create ~translate:{Point.x = float hgs; y = float hgs} ()) g_make_program image; 
+          RenderFilters.glow2_make tex#renderbuffer glow;
+          Render.Image.render (Matrix.create ~translate:{Point.x = float hgs; y = float hgs} ()) g_make_program image; 
+          tex#deactivate ();
           let g_image = Render.Image.create tex#renderInfo 0xFFFFFF alpha in
           (
             if texFlipX then Render.Image.flipTexX g_image else ();

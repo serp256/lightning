@@ -14,7 +14,7 @@
 { GLenum error = glGetError(); \
 	int is_error = 0;\
 	while (error != GL_NO_ERROR) { \
-		printf("(%s:%d) gl error: %d [",__FILE__,__LINE__,error); \
+		printf("(%s:%d) gl error: %X [",__FILE__,__LINE__,error); \
 		printf(fmt,## args);\
 		printf("]\n"); \
 		error = glGetError(); \
