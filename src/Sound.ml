@@ -13,6 +13,18 @@ type category =
 
 type sound_state = [ SoundInitial | SoundPlaying | SoundPaused | SoundStoped ];
 
+class type virtual channel  =
+  object
+    inherit EventDispatcher.simple [ channel ];
+    method play: unit -> unit;
+    method pause: unit -> unit;
+    method stop: unit -> unit;
+    method setVolume: float -> unit;
+    method volume: float;
+    method setLoop: bool -> unit;
+    method state: sound_state;
+  end;
+
 
 IFDEF IOS THEN
 
@@ -55,18 +67,6 @@ external alsource_pause: alsource -> unit = "ml_alsource_pause";
 external alsource_delete: alsource -> unit = "ml_alsource_delete";
 external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc";
 
-
-class type virtual channel  =
-  object
-    inherit EventDispatcher.simple [ channel ];
-    method play: unit -> unit;
-    method pause: unit -> unit;
-    method stop: unit -> unit;
-    method setVolume: float -> unit;
-    method volume: float;
-    method setLoop: bool -> unit;
-    method state: sound_state;
-  end;
 
 
 (* ALSound *)
@@ -236,8 +236,10 @@ value init ?category () = ();
 value setMasterVolume (_p:float) = ();
 type sound = int;
 value load (path:string) = 0;
-class channel snd = 
-  object
+class ch snd = 
+  object(self)
+    inherit EventDispatcher.simple [ channel ];
+    method private asEventTarget = (self :> channel);
     method play () = ();
     method pause () = ();
     method stop () = ();
@@ -248,6 +250,6 @@ class channel snd =
   end;
 
 
-value createChannel snd = new channel snd;
+value createChannel snd = new ch snd;
 
 ENDIF;
