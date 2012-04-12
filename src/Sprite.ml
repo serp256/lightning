@@ -71,60 +71,65 @@ class c =
 
     method private updateImageCache () = 
       match imageCache with
-      [ Some ({c_img; c_tex; valid = CInvalid;  _} as c) -> 
-        (
-          let () = debug:prerender "cacheImage %s not valid" ic#name in
-          let bounds = self#boundsInSpace (Some self) in
-          if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
-          then c.valid := CEmpty
-          else 
-            let (ic,tex) = 
-              match (ic,tex) with 
-              [ (Some ic, Some tex) -> 
-                (
-                  tex#resize bounds.Rectangle.width bounds.Rectangle.height;
-                  (ic,tex) 
-                )
-              | (None,None) -> 
-                  let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
-                  let img = Image.create (tex :> Texture.c) in
-                  (
-                    img#setFilters filters;
-                    c.tex := Some tex;
-                    c.ic := Some img;
-                    (img,tex)
-                  )
-              | _ -> assert False
-              ]
-            in
-            (
-              let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
-              if ip <> ic#pos
-              then ic#setPosPoint ip
-              else ();
-              let alpha' = alpha in
-              (
-                self#setAlpha 1.;
-                tex#draw (fun () ->
-                  (
-                    Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
-                    Render.clear 0 0.;
-                    super#render' ~transform:False None;
-                    Render.restore_matrix ();
-                  );
-                );
-                self#setAlpha alpha';
-              );
-              ic#prerender True;
-            );
-            c.valid := CValid; 
-          )
-    | Some ({ic = Some ic; valid = CPrerender ; _} as c) -> 
-      (
-        debug:prerender "prerender image cache: %s" self#name;
-        ic#prerender True;
-        c.valid := CValid; 
-      )
+      [ Some ({c_img; c_tex; glow; valid = CInvalid;  _} as c) -> 
+         let () = debug:prerender "cacheImage %s not valid" ic#name in
+         let bounds = self#boundsInSpace (Some self) in
+         if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
+         then c.valid := CEmpty
+         else 
+         (
+           let get_tex w h = (*{{{*)
+             match (c_img,c_tex) with 
+             [ (Some img, Some tex) -> 
+               if tex#width <> w || tex#height <> h
+               then
+               (
+                 tex#resize w h;
+                 Render.Image.update img tex#renderInfo ~texFlipX ~texFlipY;
+                 tex 
+               )
+             | (None,None) -> 
+                 let tex = Texture.rendered w h in
+                 let img = Render.Image.create tex#renderInfo ~color:0xFFFFFF ~alpha:1. in
+                 (
+                   c.c_tex := Some tex;
+                   c.c_img := Some img;
+                   tex
+                 )
+             | _ -> assert False
+             ]
+           in (*}}}*)
+           match glow with
+           [ None ->
+               let tex = get_tex bounds.Rectangle.width bounds.Rectangle.height in
+               let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
+               let alpha' = alpha in
+               (
+                 self#setAlpha 1.;
+                 tex#draw begin fun () ->
+                   (
+                     Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
+                     Render.clear 0 0.;
+                     super#render' ~transform:False None;
+                     Render.restore_matrix ();
+                   );
+                 end;
+                 self#setAlpha alpha';
+               )
+           | Some glow ->
+               (* рассчитать размер глоу *)
+               let hgs =  (powOfTwo glow.Filters.glowSize) - 1 in
+               let gs = hgs * 2 in
+               let rw = w +. (float gs)
+               and rh = h +. (float gs) in
+               let tex = get_tex rw rh in
+               (
+                 tex#activate ();
+                 tex#deactivate ();
+               )
+           ];
+           c.valid := CValid; 
+         )
     | Some _ -> assert False
     | _ -> ()
     ];
