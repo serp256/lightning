@@ -621,23 +621,30 @@ value load_async path callback =
   ];
 
 
-external create_render_texture: int -> int -> float -> int -> int -> (framebufferID*textureID) = "ml_rendertexture_create";
+(* RENDERED TEXTURE *)
+
+type renderbuffer_t;
+type renderbuffer = 
+  {
+    renderbuffer: renderbuffer_t;
+    renderInfo: renderInfo;
+  };
+external renderbuffer_create: int -> filter -> float -> float -> renderbuffer = "ml_renderbuffer_create";
 type framebufferState;
-external activate_framebuffer: framebufferID -> int -> int -> framebufferState = "ml_activate_framebuffer";
-external deactivate_framebuffer: framebufferState -> unit = "ml_deactivate_framebuffer";
-external delete_framebuffer: framebufferID -> unit = "ml_delete_framebuffer";
-external resize_texture: textureID -> int -> int -> textureID = "ml_resize_texture";
+external renderbuffer_activate: renderbuffer_t -> framebufferState = "ml_renderbuffer_activate";
+external renderbuffer_deactivate: framebufferState -> unit = "ml_renderbuffer_deactivate";
+external renderbuffer_resize: renderbuffer -> float -> float -> unit = "ml_renderbuffer_resize";
+external renderbuffer_delete: renderbuffer_t -> unit = "ml_renderbuffer_delete";
 
 class type rendered = 
   object
     inherit c;
-    method realWidth:int;
-    method realHeight:int;
-(*     method setPremultipliedAlpha: bool -> unit; *)
-    method framebufferID: framebufferID;
+    method renderbuffer: renderbuffer;
+    method activate: unit -> unit;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
+    method deactivate: unit -> unit;
   end;
 
 
@@ -669,59 +676,42 @@ value render_texture_size p = p;
 
 ENDIF;
 
-value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered = (* make it fucking int {{{*)
+
+
+value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered = (*{{{*)
   let () = debug:rendered "try create rtexture of size %f:%f" width height in
-(*   let () = assert (width > 0. && height > 0.) in *)
-  let iw = truncate (ceil width) in
-  let ih = truncate (ceil height) in
-  let legalWidth = nextPowerOfTwo iw
-  and legalHeight = nextPowerOfTwo ih in
-  let (legalWidth,legalHeight) = render_texture_size (legalWidth,legalHeight) in
-  let (framebufferID,textureID) = create_render_texture format color alpha legalWidth legalHeight in
-  let () = debug:rendered "rendered texture <%ld>" (int32_of_textureID textureID) in
-  let clipping = 
-    let flw = float legalWidth and flh = float legalHeight in
-    if flw <> width || flh <> height 
-    then 
-(*       let () = debug "clipping: [%f:%f] -> [%d:%d]" width height legalWidth legalHeight in *)
-      Some (Rectangle.create 0. 0. (width /. flw) (height /. flh))
-    else None
-  in
-  let renderInfo = 
-    {
-      rtextureID = textureID;
-      rwidth = width;
-      rheight = height;
-      clipping = clipping;
-      kind = Simple True;
-    }
-  in
+  let rb = renderbuffer_create format filter width height in
   object(self)
-    value mutable renderInfo = renderInfo;
-    method renderInfo = renderInfo;
-    method kind = renderInfo.kind;
-    value mutable isActive = False;
+    method renderInfo = rb.renderInfo;
+    method renderbuffer = rb;
+    method kind = rb.renderInfo.kind;
+    value mutable isActive = None;
+(*
     value mutable legalWidth = legalWidth;
     method realWidth = legalWidth;
-    method width = renderInfo.rwidth;
+*)
+    method width = rb.renderInfo.rwidth;
+(*
     value mutable legalHeight = legalHeight;
     method realHeight = legalHeight;
-    method height = renderInfo.rheight;
-    method hasPremultipliedAlpha = match renderInfo.kind with [ Simple v -> v | _ -> assert False ];
+*)
+    method height = rb.renderInfo.rheight;
+    method hasPremultipliedAlpha = match rb.renderInfo.kind with [ Simple v -> v | _ -> assert False ];
 (*     method scale = 1.; *)
-    method textureID = renderInfo.rtextureID;
+    method textureID = rb.renderInfo.rtextureID;
     method base : option c = None;
-    method clipping = renderInfo.clipping;
-    method rootClipping = renderInfo.clipping;
+    method clipping = rb.renderInfo.clipping;
+    method rootClipping = rb.renderInfo.clipping;
     method subTexture (region:Rectangle.t) : c = assert False;
-    method framebufferID = framebufferID;
+(*     method framebufferID = framebufferID; *)
     value renderers = Renderers.create 1;
     method addRenderer r = Renderers.add renderers r;
     method removeRenderer r = Renderers.remove renderers r;
     method private changed () = Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> c)) renderers;
-    method setFilter filter = set_texture_filter renderInfo.rtextureID filter;
+    method setFilter filter = set_texture_filter rb.renderInfo.rtextureID filter;
 
-    method resize w h =
+    method resize w h = renderbuffer_resize rb w h;
+    (*
       let () = debug:rendered "resize <%ld> from %f->%f, %f->%f" (int32_of_textureID renderInfo.rtextureID) width w height h in
       if w <> width || h <> height
       then
@@ -742,13 +732,14 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
           let flw = float legalWidth' and flh = float legalHeight' in
           let clipping =
             if flw <> w || flh <> h 
-            then Some (Rectangle.create 0. 0. (w /. flw) (h /. flh))
+            then Some (Rectangle.create ((flw -. w) /. (2. *. flw)) ((flh -. h) /. (2. *. flh))  (w /. flw) (h /. flh))
             else None 
           in
           renderInfo := {(renderInfo) with rtextureID = textureID; rwidth = w; rheight = h; clipping};
           Renderers.iter (fun r -> r#onTextureEvent `RESIZE (self :> c)) renderers;
         )
       else ();
+    *)
 
     value mutable released = False;
     method released = released;
@@ -756,9 +747,9 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       match released with
       [ False ->
         (
-          debug:gc "release rendered texture: [%d] <%ld>" framebufferID (int32_of_textureID renderInfo.rtextureID);
-          delete_framebuffer framebufferID;
-          delete_textureID renderInfo.rtextureID;
+(*           debug:gc "release rendered texture: [%d] <%ld>" framebufferID (int32_of_textureID renderInfo.rtextureID); *)
+          renderbuffer_delete rb.renderbuffer;
+          delete_textureID rb.renderInfo.rtextureID;
           released := True;
   (*         texture_mem_sub (legalWidth * legalHeight * 4); *)
         )
@@ -766,21 +757,35 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
       ];
 
 
+    method activate () = 
+      match isActive with
+      [ None ->
+        let oldState = renderbuffer_activate rb.renderbuffer in
+        isActive := Some oldState
+      | Some _ -> ()
+      ];
+    method deactivate () =
+      match isActive with
+      [ Some state -> 
+        (
+          renderbuffer_deactivate state;
+          self#changed ();
+        )
+      | None -> () (* FIXME: assert here ? *)
+      ];
+
     method draw f = 
       match isActive with
-      [ False ->
-(*         let oldState = activate_framebuffer framebufferID (truncate width) (truncate height) in *)
-        let oldState = activate_framebuffer framebufferID legalWidth legalHeight in
+      [ None ->
+        let oldState = renderbuffer_activate rb.renderbuffer in
         (
-          debug:rendered "buffer [%d] activated" framebufferID;
-          isActive := True;
+          isActive := Some oldState;
           f();
-          deactivate_framebuffer oldState;
-          isActive := False;
-          debug:rendered "buffer [%d] deactivated" framebufferID;
+          renderbuffer_deactivate oldState;
+          isActive := None;
           self#changed();
         )
-      | True -> f()
+      | Some _ -> f()
       ];
 
     method clear color alpha = self#draw (fun () -> glClear color alpha);
@@ -788,7 +793,7 @@ value rendered ?(format=glRGBA) ?(color=0) ?(alpha=0.) width height : rendered =
     initializer 
     (
 (*       texture_mem_add (legalWidth * legalHeight * 4); *)
-      Gc.finalise (fun obj -> if not obj#released then delete_framebuffer obj#framebufferID else ()) self;
+      Gc.finalise (fun obj -> if not obj#released then renderbuffer_delete obj#renderbuffer.renderbuffer else ()) self;
     );
 
 

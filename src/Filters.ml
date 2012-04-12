@@ -4,11 +4,12 @@ type glow =
   {
     glowSize: int;
     glowColor: int;
-    glowStrength:int;
+    glowStrength:float;
+    glowKind: [= `linear | `soft ];
   };
 
 
-value glow ?(size=2) ?(strength=2) color = `Glow {glowSize=size;glowStrength=strength;glowColor=color};
+value glow ?(kind=`linear) ?(size=2) ?(strength=1.) color = `Glow {glowKind=kind;glowSize=size;glowStrength=strength;glowColor=color};
 
 type colorMatrix = Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout;
 
@@ -18,6 +19,6 @@ type t =
   ];
 
 value string_of_t = fun
-  [ `Glow g -> Printf.sprintf "glow [%d:%d:%d]" g.glowSize g.glowColor g.glowStrength
+  [ `Glow g -> Printf.sprintf "glow [%d:%d:%f]" g.glowSize g.glowColor g.glowStrength
   | `ColorMatrix c -> "color matrix"
   ];

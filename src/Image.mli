@@ -3,7 +3,8 @@ type glow =
   {
     g_texture: mutable option Texture.c;
     g_image: mutable option Render.Image.t;
-    g_program: Render.prg;
+    g_make_program: Render.prg;
+    g_program: mutable Render.prg;
     g_matrix: mutable Matrix.t;
     g_params: Filters.glow
   };
@@ -17,7 +18,7 @@ class virtual base: [ Texture.c ] ->
     value glowFilter: option glow;
     value shaderProgram: Render.prg;
     method virtual private updateGlowFilter: unit -> unit;
-    method private setGlowFilter: Filters.glow -> unit;
+    method private setGlowFilter: Render.prg -> Filters.glow -> unit;
   end;
 
 class _c : [ Texture.c ] ->

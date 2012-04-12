@@ -3,6 +3,7 @@
 #define MLWRAPPER_H_
 
 #include <caml/mlvalues.h>
+#include <caml/threads.h>
 
 void mlrender_clearTexture();
 

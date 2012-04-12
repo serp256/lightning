@@ -105,6 +105,9 @@ value prerender () =
     )
   ];
 
+
+Callback.register "prerender" prerender;
+
 DEFINE RESET_TRANSFORMATION_MATRIX = match transformationMatrix with [ Some _ -> transformationMatrix := None | _ -> () ];
 DEFINE RESET_BOUNDS_CACHE =
 (

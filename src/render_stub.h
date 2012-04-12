@@ -142,9 +142,8 @@ enum {
 void lgGLEnableVertexAttribs( unsigned int flags );
 
 typedef struct {
-	GLuint frameBuffer;
-	GLsizei width;
-	GLsizei height;
+	GLuint framebuffer;
+	GLsizei viewport[4];
 } framebuffer_state; 
 
 void get_framebuffer_state(framebuffer_state *s);

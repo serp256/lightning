@@ -5,6 +5,7 @@
 #include <caml/bigarray.h>
 #include <caml/custom.h>
 #include <zlib.h>
+#include <math.h>
 
 #include "texture_common.h"
 
@@ -20,6 +21,10 @@ void ml_texture_id_delete(value textureID) {
 		glDeleteTextures(1,&tid);
 		TEX(textureID)->tid = 0;
 	};
+}
+
+void update_texture_id(value mlTextureID,GLuint textureID) {
+	TEX(mlTextureID)->tid = textureID;
 }
 
 static void textureID_finalize(value textureID) {
@@ -100,6 +105,7 @@ void enableSeparateBlend () {
 	separateBlend = 1;
 	if (PMA == 0) PMA = -1;
 }
+
 void disableSeparateBlend () {
 	separateBlend = 0;
 	if (PMA == 0) PMA = -1;
@@ -447,7 +453,102 @@ void ml_free_image_info(value tInfo) {
 	free((textureInfo*)tInfo);
 }
 
-value ml_rendertexture_create(value format, value color, value alpha, value width,value height) {
+
+// сделать рендер буфер
+renderbuffer_t* create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter) {
+  GLuint rtid;
+	GLuint iw = ceil(width);
+	GLuint ih = ceil(height);
+	GLuint legalWidth = nextPowerOfTwo(iw);
+	GLuint legalHeight = nextPowerOfTwo(ih);
+#ifdef IOS
+	if (legalWidth <= 8) {
+    if (legalWidth > legalHeight) legalHeight = legalWidth;
+    else 
+      if (legalHeight > legalWidth * 2) legalWidth = legalHeight/2; 
+			if (legalWidth > 16) legalWidth = 16;
+	} else {
+    if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
+	};
+#endif
+  glGenTextures(1, &rtid);
+  glBindTexture(GL_TEXTURE_2D, rtid);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	//checkGLErrors("create renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
+  glBindTexture(GL_TEXTURE_2D,0);
+  GLuint fbid;
+  glGenFramebuffers(1, &fbid);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbid);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    PRINT_DEBUG("framebuffer %d status: %d\n",fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    return NULL;
+  };
+  r->fbid = fbid;
+  r->tid = rtid;
+	r->vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
+	r->clp = (clipping){(double)r->vp.x / legalWidth,(double)r->vp.y / legalHeight,(width / legalWidth),(height / legalHeight)};
+  r->width = width;
+  r->height = height;
+	r->realWidth = legalWidth;
+	r->realHeight = legalHeight;
+  return r;
+}
+
+void delete_renderbuffer(renderbuffer_t *rb) {
+	glDeleteTextures(1,&rb->tid);
+	glDeleteFramebuffers(1,&rb->fbid);
+}
+
+
+value ml_renderbuffer_create(value format, value filter, value width,value height) {
+	CAMLparam0();
+	CAMLlocal2(renderInfo,clip);
+	GLenum fltr;
+	switch (Int_val(filter)) {
+		case 0: 
+			fltr = GL_NEAREST;
+			break;
+		case 1:
+			fltr = GL_LINEAR;
+			break;
+		default: break;
+	};
+	GLint oldBuffer;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
+	lgResetBoundTextures();
+	renderbuffer_t *rb = caml_stat_alloc(sizeof(renderbuffer_t));
+	create_renderbuffer(Double_val(width),Double_val(height),rb,fltr);
+	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
+	// and create renderInfo here
+	renderInfo = caml_alloc_tuple(5);
+	value mlTextureID;
+	Store_textureID(mlTextureID,rb->tid,rb->realWidth * rb->realHeight * 4);
+	Field(renderInfo,0) = mlTextureID;
+	Store_field(renderInfo,1,caml_copy_double(rb->width));
+	Store_field(renderInfo,2,caml_copy_double(rb->height));
+	if (!IS_CLIPPING(rb->clp)) {
+		clip = caml_alloc_tuple(1);
+		Store_field(clip,0,caml_alloc(4 * Double_wosize,Double_array_tag));
+		Store_double_field(Field(clip,0),0,rb->clp.x);
+		Store_double_field(Field(clip,0),1,rb->clp.y);
+		Store_double_field(Field(clip,0),2,rb->clp.width);
+		Store_double_field(Field(clip,0),3,rb->clp.height);
+	} else clip = Val_unit;
+	Field(renderInfo,3) = clip;
+	value kind = caml_alloc_small(1,0);
+	Field(kind,0) = Val_true;
+	Field(renderInfo,4) = kind;
+	value result = caml_alloc_small(2,0);
+	Field(result,0) = (value)rb;
+	Field(result,1) = renderInfo;
+	CAMLreturn(result);
+
+	/*
 	CAMLparam0();
 	CAMLlocal1(mlTextureID);
 	GLuint mTextureID;
@@ -487,8 +588,10 @@ value ml_rendertexture_create(value format, value color, value alpha, value widt
 	Field(result,0) = Val_long(mFramebuffer);
 	Field(result,1) = mlTextureID;
 	CAMLreturn(result);
+	*/
 };
 
+/*
 value ml_resize_texture(value textureID,value width,value height) {
 	GLuint tid = TEXTURE_ID(textureID);
 	int w = Long_val(width);
@@ -502,6 +605,60 @@ value ml_resize_texture(value textureID,value width,value height) {
 	_tex->mem = 0;
 	Store_textureID(textureID,tid,w * h * 4);
 	return textureID;
+}
+*/
+
+void ml_renderbuffer_resize(value orb,value owidth,value oheight) {
+	CAMLparam1(orb);
+	CAMLlocal2(renderInfo,clip);
+	renderbuffer_t *rb = (renderbuffer_t*)Field(orb,0);
+	value width = Double_val(owidth);
+	value height = Double_val(oheight);
+	GLuint legalWidth = nextPowerOfTwo(ceil(width));
+	GLuint legalHeight = nextPowerOfTwo(ceil(height));
+#ifdef IOS
+	if (legalWidth <= 8) {
+    if (legalWidth > legalHeight) legalHeight = legalWidth;
+    else 
+      if (legalHeight > legalWidth * 2) legalWidth = legalHeight/2; 
+			if (legalWidth > 16) legalWidth = 16;
+	} else {
+    if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
+	};
+#endif
+	lgGLBindTexture(rb->tid,1);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,legalWidth,legalHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
+	// обновить фсю хуйню 
+	rb->vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
+	rb->clp = (clipping){(double)rb->vp.x / legalWidth,(double)rb->vp.y / legalHeight,(width / legalWidth),(height / legalHeight)};
+  rb->width = width;
+  rb->height = height;
+	rb->realWidth = legalWidth;
+	rb->realHeight = legalHeight;
+	// теперича ocaml
+	value mlTextureID;
+	Store_textureID(mlTextureID,rb->tid,legalWidth*legalHeight*4);
+	renderInfo = Field(orb,1);
+	TEX(Field(renderInfo,0))->tid = 0;
+	Field(renderInfo,0) = mlTextureID;
+	Field(renderInfo,1) = owidth;
+	Field(renderInfo,2) = oheight;
+	// clipping 
+	if (!IS_CLIPPING(rb->clp)) {
+		clip = caml_alloc_tuple(1);
+		Store_field(clip,0,caml_alloc(4 * Double_wosize,Double_array_tag));
+		Store_double_field(Field(clip,0),0,rb->clp.x);
+		Store_double_field(Field(clip,0),1,rb->clp.y);
+		Store_double_field(Field(clip,0),2,rb->clp.width);
+		Store_double_field(Field(clip,0),3,rb->clp.height);
+	} else clip = Val_unit;
+	Field(renderInfo,3) = clip;
+	CAMLreturn0;
+}
+
+void ml_renderbuffer_delete(value orb) {
+	renderbuffer_t *rb = (renderbuffer_t*)orb;
+	glDeleteFramebuffers(1,&rb->fbid);
 }
 
 /*

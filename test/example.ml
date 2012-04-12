@@ -1,6 +1,6 @@
 open LightCommon;
 
-Gc.set {(Gc.get ()) with Gc.verbose  = (0x001 lor 0x002 lor 0x004 lor 0x010 lor 0x040 lor 0x080)};
+(* Gc.set {(Gc.get ()) with Gc.verbose  = (0x001 lor 0x002 lor 0x004 lor 0x010 lor 0x040 lor 0x080)}; *)
 
 value max_anim_len = 40;
 value (|>) a b = b a;
@@ -485,6 +485,9 @@ value alert (stage:Stage.c) =
 
 
 value game_center (stage:Stage.c) =
+    let text = "Ежедневный бонус PipIy" in
+  (
+    (*
   GameCenter.init ~callback:begin fun res ->
     let text = 
       match res with 
@@ -492,13 +495,28 @@ value game_center (stage:Stage.c) =
       | False -> "Game center failed"
       ]
     in
+    *)
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
     (
       text#setPos 100. 100.;
-      text#setFilters [ Filters.glow ~size:2 ~strength:100 0 ];
+(*       text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ]; *)
       stage#addChild text;
-    )
-  end ();
+    );
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 100. 150.;
+      text#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
+      stage#addChild text;
+    );
+
+    let img = Image.load "tree.png" in
+    (
+      img#setPos 50. 300.;
+      img#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
+      stage#addChild img;
+    );
+  );
+(*   end (); *)
 
 
 value test_alpha (stage:Stage.c) = 
@@ -762,6 +780,79 @@ value url_loader (stage:Stage.c) =
     )
   );
 
+value glow (stage:Stage.c) = 
+(
+  (*
+  let img = Image.load "1px_line.png" in
+  (
+    img#setFilters [ Filters.glow ~size:1 0 ];
+    img#setPos 100. 100.;
+    stage#addChild img;
+  );
+  *)
+  let change_filter el = 
+    match el#filters with
+    [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ Filters.glow ~kind:`soft ~strength:2. ~size:2 0xFF0000 ]
+    | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ]
+    | [ ] -> el#setFilters [ Filters.glow ~kind:`linear ~size:2 0xFF0000 ]
+    | _ -> assert False 
+    ]
+  in
+  (
+  let img = Image.load "tree.png" in
+  (
+    img#setPos 20. 50.;
+    stage#addChild img;
+    onClick img change_filter;
+  );
+  (*
+  let img = Image.load "2px_line.png" in
+  (
+    img#setPos 100. 180.;
+    stage#addChild img;
+  );
+  *)
+    (*
+    let tex = Texture.rendered 100. 100. in
+    (
+      tex#draw begin fun () ->
+        (
+          Render.clear 0xFFFFFF 1.;
+          img#render ~transform:False None;
+        );
+      end;
+      let img = Image.create (tex :> Texture.c) in
+      (
+        img#setPos 100. 300.;
+        stage#addChild img;
+      );
+    );
+    *)
+  (*
+  let img = Image.load "2px_line.png" in
+  (
+    img#setPos 100. 150.;
+    stage#addChild img;
+  );
+  *)
+  let text = "Ежедневный бонус PipIy" in
+  (
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 120. 200.;
+      stage#addChild text;
+      onClick text change_filter;
+    );
+  );
+    (*
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFF0000 [ `text text ]) in
+    (
+      text#setPos 120. 200.;
+      stage#addChild text;
+    );
+    *)
+  );
+);
 
 let stage width height = 
   object(self)
@@ -771,25 +862,6 @@ let stage width height =
         BitmapFont.register "MyriadPro-Regular.fnt";
         BitmapFont.register "MyriadPro-Bold.fnt";
         TLF.default_font_family.val := "Myriad Pro";
-
-        let img = Image.load "424b08b9a009c215478ba7b9bda1e8bd8a926a03.png" in
-        (
-          img#setWidth 300.;
-          img#setHeight 125.;
-          img#texture#setFilter Texture.FilterLinear;
-
-          self#addChild img;          
-        );
-
-        let img = Image.load "424b08b9a009c215478ba7b9bda1e8bd8a926a04.png" in
-        (
-          img#setWidth 300.;
-          img#setHeight 125.;
-          img#setX 350.;
-
-          self#addChild img;          
-        );        
-          
 (*
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
           self#addChild tlf;
@@ -818,7 +890,9 @@ let stage width height =
 (*           url_loader self; *)
         (* map self; *)
 (*         test_gc self; *)
-        (* game_center self; *)
+(*         filters self; *)
+(*         game_center self; *)
+          glow self;
  (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)

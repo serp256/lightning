@@ -25,6 +25,7 @@ value handle_events window frameRate stage =
       (
         stage#run ((float (ticks - lastTicks)) /. 1e3);
         SDLGL.swap_window window;
+        DisplayObject.prerender ();
         match quit with
         [ True -> ()
         | False ->
