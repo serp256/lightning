@@ -5,13 +5,11 @@ type glow =
     glowSize: int;
     glowColor: int;
     glowStrength:float;
-    glowKind: [= `linear | `precise ];
+    glowKind: [= `linear | `soft ];
   };
 
 
-value glow ?(kind=`linear) ?(size=2) ?strength color = 
-  let strength = match strength with [ None -> match kind with [ `linear -> 1. | `precise -> 0.05 ] | Some v -> v ] in
-  `Glow {glowKind=kind;glowSize=size;glowStrength=strength;glowColor=color};
+value glow ?(kind=`linear) ?(size=2) ?(strength=1.) color = `Glow {glowKind=kind;glowSize=size;glowStrength=strength;glowColor=color};
 
 type colorMatrix = Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout;
 

@@ -136,8 +136,8 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
                 Render.clear 0 0.;
                 self#render_quads ~program:g_make_program 1. False;
                 match glow.Filters.glowKind with
-                [ `linear -> RenderFilters.glow_make tex#renderbuffer glow
-                | `precise -> RenderFilters.glow2_make tex#renderbuffer glow
+                [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
+                | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
                 ];
                 self#render_quads ~program:g_make_program 1. False;
                 Render.restore_matrix ();

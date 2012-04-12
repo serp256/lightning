@@ -282,8 +282,8 @@ class _c  _texture =
           Render.clear 0 0.;
           Render.Image.render cm g_make_program image; 
           match glow.Filters.glowKind with
-          [ `linear -> RenderFilters.glow_make tex#renderbuffer glow
-          | `precise -> RenderFilters.glow2_make tex#renderbuffer glow
+          [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
+          | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
           ];
           Render.Image.render cm g_make_program image; 
           tex#deactivate ();

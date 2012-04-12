@@ -790,11 +790,20 @@ value glow (stage:Stage.c) =
     stage#addChild img;
   );
   *)
+  let change_filter el = 
+    match el#filters with
+    [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ Filters.glow ~kind:`soft ~strength:2. ~size:2 0xFF0000 ]
+    | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ]
+    | [ ] -> el#setFilters [ Filters.glow ~kind:`linear ~size:2 0xFF0000 ]
+    | _ -> assert False 
+    ]
+  in
+  (
   let img = Image.load "tree.png" in
   (
     img#setPos 20. 50.;
-    img#setFilters [ Filters.glow ~size:2 0 ];
     stage#addChild img;
+    onClick img change_filter;
   );
   (*
   let img = Image.load "2px_line.png" in
@@ -831,14 +840,17 @@ value glow (stage:Stage.c) =
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
     (
       text#setPos 120. 200.;
-      text#setFilters [ Filters.glow ~size:2 0 ];
       stage#addChild text;
+      onClick text change_filter;
     );
+  );
+    (*
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFF0000 [ `text text ]) in
     (
       text#setPos 120. 200.;
       stage#addChild text;
     );
+    *)
   );
 );
 
