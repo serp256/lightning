@@ -15,6 +15,7 @@
 #import <caml/fail.h>
 #include <caml/custom.h>
 #import <caml/alloc.h>
+#import <caml/threads.h>
 
 #define checkOpenALError(fmt,args...) { \
 	ALenum errorCode = alGetError(); \
@@ -345,8 +346,9 @@ void ml_alsource_delete(value mlAlSourceID) {
 
 @interface LightningAVSoundPlayerController : NSObject <AVAudioPlayerDelegate> {
   AVAudioPlayer * _player;
+  value _sound_stopped_handler;
 }
--(id)initWithFilename: (NSString *)fname;
+-(id)initWithFilename: (NSString *)fname completeHandler: (value)handler;
 @end
 
 
@@ -355,7 +357,7 @@ void ml_alsource_delete(value mlAlSourceID) {
 /*
  *
  */
--(id)initWithFilename: (NSString *)fname {
+-(id)initWithFilename: (NSString *)fname completeHandler:(value)handler {
     self = [super init];
     if (self) {
 
@@ -372,6 +374,10 @@ void ml_alsource_delete(value mlAlSourceID) {
           [self release];
           return nil;
         }
+        
+        caml_register_global_root(&_sound_stopped_handler);
+        _sound_stopped_handler = handler;
+        
         _player.delegate = self;
         [_player prepareToPlay];
         
@@ -420,7 +426,9 @@ void ml_alsource_delete(value mlAlSourceID) {
 #pragma mark AVAudioPlayerDelegate
 
 - (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {    
-//    [self dispatchEvent:[SPEvent eventWithType:SP_EVENT_TYPE_SOUND_COMPLETED]];
+  caml_acquire_runtime_system();
+  caml_callback(_sound_stopped_handler, Val_int(0));
+  caml_release_runtime_system();
 }
 
 - (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error {
@@ -437,6 +445,7 @@ void ml_alsource_delete(value mlAlSourceID) {
 
 -(void)dealloc {
   [_player release];
+  caml_remove_global_root(&_sound_stopped_handler);
   [super dealloc];
 }
 
@@ -445,10 +454,10 @@ void ml_alsource_delete(value mlAlSourceID) {
 
 
 /* create controller */
-CAMLprim value ml_avsound_create_player(value fname) {
+CAMLprim value ml_avsound_create_player(value fname, value on_stop) {
   CAMLparam1(fname);
   NSString * filename = [NSString stringWithCString:String_val(fname) encoding:NSASCIIStringEncoding]; 
-  LightningAVSoundPlayerController * playerController = [[LightningAVSoundPlayerController alloc] initWithFilename: filename];
+  LightningAVSoundPlayerController * playerController = [[LightningAVSoundPlayerController alloc] initWithFilename: filename completeHandler: on_stop];
   
   if (playerController == nil) {
     raise_error("Error initializing LightningAVSoundPlayerController", NULL, 404);

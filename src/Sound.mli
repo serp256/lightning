@@ -1,3 +1,4 @@
+value ev_SOUND_COMPLETE : Ev.id;
 
 exception Audio_error of string;
 
@@ -20,8 +21,9 @@ type sound;
 
 value load: string -> sound;
 
-class type channel  =
+class type virtual channel  =
   object
+    inherit EventDispatcher.simple [ channel ];
     method play: unit -> unit;
     method pause: unit -> unit;
     method stop: unit -> unit;
