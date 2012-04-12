@@ -209,8 +209,8 @@ class virtual c (_width:float) (_height:float) =
     (
       self#advanceTime seconds;
       Render.clear color 1.;
-      proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
       D.prerender ();
+      proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
     );
 
   method! hitTestPoint localPoint isTouch =

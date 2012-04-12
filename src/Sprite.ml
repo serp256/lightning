@@ -6,10 +6,12 @@ module D = DisplayObject;
 type cache_valid = [ CInvalid | CPrerender | CEmpty | CValid ];
 type imageCache = 
   {
-    ic: mutable option Image.c; 
-    tex: mutable option Texture.rendered; 
+    c_texture: mutable option Texture.c;
+    c_image: mutable option Render.Image.t;
+    c_program: mutable Render.prg;
+    glow: mutable option Filters.glow;
     valid: mutable cache_valid;
-    force: mutable bool
+    force: mutable bool (* ??? *)
   };
 
 class c =
@@ -132,6 +134,7 @@ class c =
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t filters)) self#name in
       (
         filters := fltrs;
+        (*
         match fltrs with
         [ [] ->
           match imageCache with
@@ -184,6 +187,7 @@ class c =
           | _ -> ()
           ]
         ];
+        *)
       );
 
     method! private render' ?alpha:(alpha') ~transform rect = 
