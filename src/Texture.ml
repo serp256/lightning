@@ -633,7 +633,8 @@ external renderbuffer_create: int -> filter -> float -> float -> renderbuffer = 
 type framebufferState;
 external renderbuffer_activate: renderbuffer_t -> framebufferState = "ml_renderbuffer_activate";
 external renderbuffer_deactivate: framebufferState -> unit = "ml_renderbuffer_deactivate";
-external renderbuffer_resize: renderbuffer -> float -> float -> unit = "ml_renderbuffer_resize";
+external renderbuffer_clone: renderbuffer_t -> renderbuffer = "ml_renderbuffer_clone";
+external renderbuffer_resize: renderbuffer -> float -> float -> bool = "ml_renderbuffer_resize";
 external renderbuffer_delete: renderbuffer_t -> unit = "ml_renderbuffer_delete";
 
 class type rendered = 
@@ -645,6 +646,7 @@ class type rendered =
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
     method deactivate: unit -> unit;
+    method clone: unit -> rendered;
   end;
 
 
@@ -677,10 +679,7 @@ value render_texture_size p = p;
 ENDIF;
 
 
-
-value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered = (*{{{*)
-  let () = debug:rendered "try create rtexture of size %f:%f" width height in
-  let rb = renderbuffer_create format filter width height in
+class rbt rb = 
   object(self)
     method renderInfo = rb.renderInfo;
     method renderbuffer = rb;
@@ -710,7 +709,15 @@ value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered =
     method private changed () = Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> c)) renderers;
     method setFilter filter = set_texture_filter rb.renderInfo.rtextureID filter;
 
-    method resize w h = renderbuffer_resize rb w h;
+    method resize w h = 
+      match renderbuffer_resize rb w h with
+      [ True -> 
+        (
+          Gc.compact ();
+          Renderers.iter (fun r -> r#onTextureEvent `RESIZE (self :> c)) renderers
+        )
+      | False -> ()
+      ];
     (*
       let () = debug:rendered "resize <%ld> from %f->%f, %f->%f" (int32_of_textureID renderInfo.rtextureID) width w height h in
       if w <> width || h <> height
@@ -764,11 +771,13 @@ value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered =
         isActive := Some oldState
       | Some _ -> ()
       ];
+
     method deactivate () =
       match isActive with
       [ Some state -> 
         (
           renderbuffer_deactivate state;
+          isActive := None;
           self#changed ();
         )
       | None -> () (* FIXME: assert here ? *)
@@ -789,6 +798,9 @@ value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered =
       ];
 
     method clear color alpha = self#draw (fun () -> glClear color alpha);
+    method clone () = 
+      let rb = renderbuffer_clone rb.renderbuffer in
+      new rbt rb;
 
     initializer 
     (
@@ -796,8 +808,12 @@ value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered =
       Gc.finalise (fun obj -> if not obj#released then renderbuffer_delete obj#renderbuffer.renderbuffer else ()) self;
     );
 
-
   end; (*}}}*)
+
+value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered = (*{{{*)
+  let () = debug:rendered "try create rtexture of size %f:%f" width height in
+  let rb = renderbuffer_create format filter width height in
+  new rbt rb;
 
 
 IFDEF IOS THEN

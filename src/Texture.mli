@@ -81,6 +81,7 @@ class type rendered =
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
     method deactivate: unit -> unit;
+    method clone: unit -> rendered;
   end;
 
 value defaultFilter:filter;

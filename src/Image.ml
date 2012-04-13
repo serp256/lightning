@@ -268,6 +268,7 @@ class _c  _texture =
     method private updateGlowFilter () =
       match glowFilter with
       [ Some ({g_texture = None; g_make_program; g_params = glow; _ } as gf) ->
+        let () = debug:glow "update glow filter on %s" self#name in
         let renderInfo = texture#renderInfo in
         let w = renderInfo.Texture.rwidth
         and h = renderInfo.Texture.rheight in

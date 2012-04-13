@@ -101,6 +101,7 @@ static prg_t* simple_program() {
 	return &prg;
 }
 
+/*
 value create_ml_texture(renderbuffer_t *rb) {
 	CAMLparam0();
 	CAMLlocal5(mlTextureID,width,height,clip,res);
@@ -130,6 +131,7 @@ value create_ml_texture(renderbuffer_t *rb) {
 	res = caml_callbackN(*mlf,4,params);
 	CAMLreturn(res);
 }
+*/
 
 static GLfloat quads[4][2] = {{-1.,-1.},{1.,-1.},{-1.,1.},{1.,1.}};
 static GLfloat texCoords[4][2] = {{0.,0.},{1.,0.},{0.,1.},{1.,1.}};
@@ -424,7 +426,7 @@ void ml_glow2_make(value orb,value glow) {
 	checkGLErrors("bind glow uniforms");
 
 	renderbuffer_t rb2;
-	create_renderbuffer(rb->width,rb->height,&rb2,GL_NEAREST); // м.б. clone
+	clone_renderbuffer(rb,&rb2,GL_NEAREST); // м.б. clone
 	renderbuffer_t *drb = &rb2;
 	renderbuffer_t *srb = rb;
 	renderbuffer_t *trb;

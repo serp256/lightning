@@ -793,7 +793,8 @@ value glow (stage:Stage.c) =
   let change_filter el = 
     match el#filters with
     [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ Filters.glow ~kind:`soft ~strength:2. ~size:2 0xFF0000 ]
-    | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ]
+    | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ `ColorMatrix gray_filter ]
+    | [ `ColorMatrix m ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ]
     | [ ] -> el#setFilters [ Filters.glow ~kind:`linear ~size:2 0xFF0000 ]
     | _ -> assert False 
     ]
@@ -843,7 +844,20 @@ value glow (stage:Stage.c) =
       stage#addChild text;
       onClick text change_filter;
     );
-  );
+    let sprite = Sprite.create () in
+    (
+      let img = Image.load "tree.png" in
+      sprite#addChild img;
+      let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+      (
+        text#setPos 20. 50.;
+        sprite#addChild text;
+      );
+      stage#addChild sprite;
+      sprite#setPos 10. 300.;
+      onClick sprite change_filter;
+    );
+  )
     (*
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFF0000 [ `text text ]) in
     (

@@ -929,6 +929,7 @@ value ml_renderbuffer_activate(value ofb) {
 	get_framebuffer_state(s);
 
 	renderbuffer_t *rb = (renderbuffer_t*)ofb;
+	fprintf(stderr,"activate renderbuffer: %d:%d\n",rb->fbid,rb->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
 
 	glViewport(rb->vp.x,rb->vp.y,rb->vp.w,rb->vp.h);
@@ -955,6 +956,7 @@ void set_framebuffer_state(framebuffer_state *s) {
 
 void ml_renderbuffer_deactivate(value ostate) {
 	framebuffer_state *s = (framebuffer_state*)ostate;
+	fprintf(stderr,"deactivate renderbuffer. oldbuffer: %d\n",s->framebuffer);
 	set_framebuffer_state(s);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPopMatrix();
