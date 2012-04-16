@@ -148,14 +148,14 @@
 		*/
 		caml_acquire_runtime_system();
     mlstage_advanceTime(mStage,timePassed);
+		// prerender here
+		mlstage_preRender();
     mLastFrameTimestamp = now;
     [EAGLContext setCurrentContext:mContext];
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
     mlstage_render(mStage);
     glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
     [mContext presentRenderbuffer:GL_RENDERBUFFER];
-		// prerender here
-		mlstage_preRender();
 		caml_release_runtime_system();
 		[pool release];
 }
