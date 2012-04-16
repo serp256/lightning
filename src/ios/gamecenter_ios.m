@@ -13,10 +13,10 @@
 value ml_game_center_init(value param) {
 	BOOL localPlayerClassAvailable = (NSClassFromString(@"GKLocalPlayer")) != nil;
 	// The device must be running iOS 4.1 or later.
-	if (!localPlayerClassAvailable) return Val_int(0);
+	if (!localPlayerClassAvailable) return Val_false;
 	NSString *reqSysVer = @"4.1";
 	NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
-	if ([currSysVer compare:reqSysVer options:NSNumericSearch] == NSOrderedAscending) return Val_int(0);
+	if ([currSysVer compare:reqSysVer options:NSNumericSearch] == NSOrderedAscending) return Val_false;
 	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
 	[localPlayer authenticateWithCompletionHandler:^(NSError *error) {
 		NSLog(@"GameCenter Initialized");
@@ -27,13 +27,21 @@ value ml_game_center_init(value param) {
 		caml_callback(*caml_named_value("game_center_initialized"),res);
 		caml_enter_blocking_section();
 	 }];
-	return Val_int(1);
+	return Val_true;
 }
 
 value ml_playerID(value unit) {
-	NSString *playerID = [GKLocalPlayer localPlayer].playerID;
-	value result = caml_copy_string([playerID cStringUsingEncoding:NSASCIIStringEncoding]);
-	return result;
+	CAMLparam0();
+	CAMLlocal1(pid);
+	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
+	value res;
+	if (localPlayer.isAuthenticated) {
+		NSString *playerID = localPlayer.playerID;
+		pid = caml_copy_string([playerID cStringUsingEncoding:NSASCIIStringEncoding]);
+		res = caml_alloc_small(1,0);
+		Field(res,0) = pid;
+	} else res = Val_unit;
+	CAMLreturn(res);
 }
 
 void ml_report_leaderboard(value category, value score) {
