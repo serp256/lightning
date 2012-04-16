@@ -309,7 +309,6 @@ int loadPvrFile3(FILE* fildes,textureInfo *tInfo) {
 		fprintf(stderr,"unsupported: SPEC PVR format\n");
 		return 1;
 	};
-	// блядь как узнать то сколько сцука длина блядь
 	// skip meta
 	if (header.u32MetaDataSize > 0) {
 		fseek(fildes,header.u32MetaDataSize,SEEK_CUR);
@@ -369,11 +368,6 @@ int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
 	tInfo->imgData = (unsigned char*)malloc(header.textureDataSize);
 	if (!tInfo->imgData) {return 1;};
 	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
-	/*
-  NSString *baseFilename = [[path lastPathComponent] stringByDeletingFullPathExtension];
-  if ([baseFilename rangeOfString:@"@2x"].location == baseFilename.length - 3)
-      glTexture.scale = 2.0f;
-	*/
 	tInfo->scale = 1.0;
 	return 0;
 }
