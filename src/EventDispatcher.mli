@@ -1,5 +1,5 @@
 
-exception Listener_not_found;
+exception Listener_not_found of (Ev.id * string * int);
 
 
 type lst 'target 'currentTarget = 

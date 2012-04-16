@@ -1,6 +1,6 @@
 open Ev;
 
-exception Listener_not_found;
+exception Listener_not_found of (Ev.id * string * int);
 
 type lst 'target 'currentTarget = 
   {
@@ -34,13 +34,13 @@ class base [ 'target,'currentTarget ] = (*{{{*)
       try
         let l = List.assoc eventType listeners in
         (
-          l.lstnrs := try MList.remove_assoc_exn listenerID l.lstnrs with [ Not_found -> raise Listener_not_found ];
+          l.lstnrs := try MList.remove_assoc_exn listenerID l.lstnrs with [ Not_found -> raise (Listener_not_found (eventType,Ev.string_of_id eventType, listenerID)) ];
           match l.lstnrs with
           [ [] -> listeners := List.remove_assoc eventType listeners 
           | _ -> ()
           ]
         )
-      with [ Not_found  -> raise Listener_not_found ];
+      with [ Not_found  -> raise (Listener_not_found (eventType,Ev.string_of_id eventType, listenerID)) ];
 
     method hasEventListeners eventType = List.mem_assoc eventType listeners;
 

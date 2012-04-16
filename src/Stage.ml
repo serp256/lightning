@@ -5,7 +5,7 @@ open Touch;
 (* type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `PassedTime of float ]; *)
 
 
-value ev_TOUCH = Ev.gen_id ();
+value ev_TOUCH = Ev.gen_id "TOUCH";
 
 value (data_of_touches,touches_of_data) = Ev.makeData ();
 

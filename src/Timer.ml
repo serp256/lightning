@@ -1,8 +1,8 @@
 
 (* type eventType = [= `TIMER | `TIMER_COMPLETE ]; *)
 
-value ev_TIMER = Ev.gen_id ();
-value ev_TIMER_COMPLETE = Ev.gen_id ();
+value ev_TIMER = Ev.gen_id "TIMER";
+value ev_TIMER_COMPLETE = Ev.gen_id "TIMER_COMPLETE";
 
 class type virtual c = 
   object('self)

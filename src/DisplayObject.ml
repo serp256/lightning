@@ -1,10 +1,10 @@
 open LightCommon;
 
-value ev_ADDED = Ev.gen_id ();
-value ev_ADDED_TO_STAGE = Ev.gen_id ();
-value ev_REMOVED = Ev.gen_id ();
-value ev_REMOVED_FROM_STAGE = Ev.gen_id ();
-value ev_ENTER_FRAME = Ev.gen_id ();
+value ev_ADDED = Ev.gen_id "ADDED";
+value ev_ADDED_TO_STAGE = Ev.gen_id "ADDED_TO_STAGE";
+value ev_REMOVED = Ev.gen_id "REMOVED";
+value ev_REMOVED_FROM_STAGE = Ev.gen_id "REMOVED_FROM_STAGE";
+value ev_ENTER_FRAME = Ev.gen_id "ENTER_FRAME";
 
 type hidden 'a = 'a;
 

@@ -1,6 +1,8 @@
 
 type data = exn;
 
+value events = Hashtbl.create 11;
+
 value makeData (type s) () =
   let module M = struct exception E of s; end in
   ((fun x -> M.E x), (fun [ M.E x -> Some x | _ -> None]));
@@ -22,7 +24,8 @@ type t =
   };
 
 value id = ref 0;
-value gen_id () = let res = !id in (incr id; res);
+value gen_id name = let res = !id in (incr id; Hashtbl.add events res name; res);
+value string_of_id ev = try Hashtbl.find events ev with [ Not_found -> "UKNOWN" ];
 
 
 value stopImmediatePropagation event = event.propagation := `StopImmediate;
