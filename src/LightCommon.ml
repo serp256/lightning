@@ -41,9 +41,9 @@ DEFINE COLOR_PART_GREEN(color) = (color lsr  8) land 0xff;
 DEFINE COLOR_PART_BLUE(color) =  color land 0xff;
 
 
-value _resource_prefix = ref None;
+value _resources_prefix = ref None;
 
-value set_resource_prefix prefix = _resource_prefix := Some prefix;
+value set_resource_prefix prefix = _resources_prefix.val := Some prefix;
 
 value split_filename filename = 
   try

@@ -884,7 +884,7 @@ let stage width height =
 (*         image self; *)
 (*         test_alpha self; *)
 (*       alert self; *)
-(*       flip self; *)
+      flip self;
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
@@ -906,7 +906,7 @@ let stage width height =
 (*         test_gc self; *)
 (*         filters self; *)
 (*         game_center self; *)
-          glow self;
+(*           glow self; *)
  (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)

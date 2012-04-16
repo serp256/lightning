@@ -441,7 +441,6 @@ value make_and_cache path textureInfo =
   );
 
 value load ?(with_prefix=True) path : c = 
-  let path = match with_prefix [ True -> path_with_prefix path | False -> path ] in
   try
     debug:cache (
       Debug.d "print cache";

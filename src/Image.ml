@@ -181,9 +181,23 @@ class _c  _texture =
     method texFlipY = texFlipY;
 
 
-    method setColor color = Render.Image.set_color image color;
+    method setColor color = 
+    (
+      Render.Image.set_color image color;
+      match glowFilter with
+      [ Some {g_image=Some img;_} -> Render.Image.set_color img color
+      | _ -> ()
+      ]
+    );
     method color = Render.Image.color image;
-    method setColors colors = Render.Image.set_colors image colors;
+    method setColors colors = 
+    (
+      Render.Image.set_colors image colors;
+      match glowFilter with
+      [ Some {g_image = Some img; _} -> Render.Image.set_colors img  colors
+      | _ -> ()
+      ]
+    );
 
     method! setAlpha a =
     (
@@ -278,6 +292,7 @@ class _c  _texture =
         and rh = h +. (float gs) in
         let tex = Texture.rendered rw rh in
         let cm = Matrix.create ~translate:{Point.x = float hgs; y = float hgs} () in
+        let image = Render.Image.create renderInfo 0xFFFFFF 1. in
         (
           tex#activate ();
           Render.clear 0 0.;
@@ -456,7 +471,7 @@ class _c  _texture =
 
     method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
       match targetCoordinateSpace with
-      [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height (* FIXME!!! when rotate incorrect optimization *)
+      [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height 
       | _ -> 
         (*
         let open Point in
