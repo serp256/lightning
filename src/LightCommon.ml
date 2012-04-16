@@ -40,6 +40,27 @@ DEFINE COLOR_PART_RED(color) = (color lsr 16) land 0xff;
 DEFINE COLOR_PART_GREEN(color) = (color lsr  8) land 0xff;
 DEFINE COLOR_PART_BLUE(color) =  color land 0xff;
 
+
+value _resource_prefix = ref None;
+
+value set_resource_prefix prefix = _resource_prefix := Some prefix;
+
+value split_filename filename = 
+  try
+    let i = String.rindex filename '.' in
+    (String.sub filename 0 i,String.sub filename i ((String.length filename) - i))
+  with [ Not_found -> (filename,"") ];
+
+value path_with_prefix path = 
+  match !_resources_prefix with
+  [ Some p -> 
+    let (fname,ext) = split_filename path in
+    fname ^ p ^ ext
+  | None -> path
+  ];
+
+
+
 value floats_of_color color = 
   let red = COLOR_PART_RED(color)
   and green = COLOR_PART_GREEN(color)
@@ -52,7 +73,7 @@ Callback.register_exception "File_not_exists" (File_not_exists "");
 IFDEF IOS THEN
 
 external bundle_path_for_resource: string -> float -> option string = "ml_bundle_path_for_resource";
-external device_scale_factor: unit -> float = "ml_device_scale_factor";
+(* external device_scale_factor: unit -> float = "ml_device_scale_factor"; *)
 external ml_request_remote_notifications : int -> (string -> unit) -> (string -> unit) -> unit = "ml_request_remote_notifications";
 
 
@@ -90,7 +111,7 @@ value read_resource path scale = Std.input_all (open_resource path scale);
 ELSE IFDEF ANDROID THEN
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
-value device_scale_factor () = 1.0;
+(* value device_scale_factor () = 1.0; *)
 
 value request_remote_notifications rntypes success error = ();
 

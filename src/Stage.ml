@@ -13,14 +13,16 @@ external setupOrthographicRendering: float -> float -> float -> float -> unit = 
 
 exception Restricted_operation;
 
+(*
 IFDEF IOS 
 THEN
 external uncatchedError: string -> unit = "ml_uncatchedError";
 DEFINE CATCH_ALL(expr) = 
   try expr with [ exn -> uncatchedError (Printexc.to_string exn) ];
 ELSE
+*)
 DEFINE CATCH_ALL(expr) = expr;
-ENDIF;
+(* ENDIF; *)
 
 module D = DisplayObject;
 
