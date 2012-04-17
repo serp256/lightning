@@ -437,85 +437,74 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 	NSString *fullPath = NULL;
 	NSString *imgType = [[path pathExtension] lowercaseString];
 	NSBundle *bundle = [NSBundle mainBundle];
-	float contentScaleFactor = 1;
 
 	int r;
 	int is_pvr = 0;
 	int is_plx = 0;
-	int is2x = 0;
+	int is_alpha = 0;
+	int is_plt = 0;
 
-	if ([imgType rangeOfString:@"plt"].location == 0) fullPath = pathForBundleResource(path, bundle); 
-	else if ([imgType rangeOfString:@"pvr"].location == 0) {
-		is_pvr = 1;
-		if (contentScaleFactor != 1.0f) {
-			NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
-			NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", suffix, imgType];
-			fullPath = pathForBundleResource(fname, bundle);
-			if (fullPath) {
-				is2x = 1;
-			}
-		};
-		if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
-	} else if ([imgType rangeOfString:@"plx"].location == 0) {
-		is_plx = 1;
-		fullPath = pathForBundleResource(path, bundle); 
-	} else if ([imgType rangeOfString:@"alpha"].location == 0) {
-		fullPath = pathForBundleResource(path,bundle);
-		if (!fullPath) return 2;
-		return loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
-	} else {
-		// Try pvr first with right scale factor
-		do {
-			NSString *fname = NULL;
-			NSString *pathWithoutExt = [path stringByDeletingPathExtension];
-			if (contentScaleFactor != 1.0f) {
+	do  {
+		if ([imgType rangeOfString:@"pvr"].location == 0) is_pvr = 1;
+		else if ([imgType rangeOfString:@"plx"].location == 0) is_plx = 1;
+		else if ([imgType rangeOfString:@"alpha"].location == 0) is_alpha = 1;
+		else if ([imgType rangeOfString:@"plt"].location == 0) {}
+		else {
+			do {
+				NSString *fname = NULL;
+				NSString *pathWithoutExt = [path stringByDeletingPathExtension];
+				if (suffix != NULL) {
 
-				// в файл уже передали @2x
-				if ([path rangeOfString: @"@2x"].location != NSNotFound) {
-					fullPath = pathForBundleResource(path, bundle); 
+					NSString *pathWithSuffix = [pathWithoutExt stringByAppendingString:[NSString stringWithCString:suffix encoding:NSASCIIStringEncoding]];
+					fname = [pathWithSuffix stringByAppendingPathExtension:@"pvr"];
+					fullPath = pathForBundleResource(fname, bundle); 
 					if (fullPath) {
-						is2x = 1;
+						is_pvr = 1; 
 						break; 
 					}
-				}
 
-				NSString *suffix = [NSString stringWithFormat:@"@%@x", [NSNumber numberWithFloat:contentScaleFactor]];
-				fname = [pathWithoutExt stringByAppendingFormat:@"%@.%@", suffix, @"pvr"];
-				fullPath = pathForBundleResource(fname, bundle); 
-				if (fullPath) {
-					is2x = 1;
-					is_pvr = 1; 
-					break; 
-				}
+					// try plx with with suffix
+					fname = [pathWithSuffix stringByAppendingPathExtension:@"plx"];
+					fullPath = pathForBundleResource(fname,bundle);
+					if (fullPath) {
+						is_plx = 1;
+						break;
+					};
 
-				// try original ext with this scale factor
-				fname = [pathWithoutExt stringByAppendingFormat:@"%@.%@", suffix, imgType];
-				fullPath = pathForBundleResource(fname, bundle); 
+					// try original ext with this suffix
+					fname = [pathWithSuffix stringByAppendingPathExtension:imgType];
+					fullPath = pathForBundleResource(fname, bundle); 
 
-				if (fullPath) {
-					is2x = 1;
-					break;
-				}
-			} 
+					if (fullPath) break;
+				} 
 
-			// try pvr 
-			fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
+				// try pvr 
+				fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
+				fullPath = pathForBundleResource(fname, bundle);
+				if (fullPath) {is_pvr = 1; break;};
+
+				// try plx
+				fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
+				fullPath = pathForBundleResource(fname, bundle);
+				if (fullPath) {is_plx = 1; break;};
+
+				fullPath = pathForBundleResource(path, bundle);
+			} while (0);
+			break;
+		}
+		// if not needed try other exts
+		if (suffix != NULL) {
+			NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", [NSString stringWithCString:suffix encoding:NSASCIIStringEncoding], imgType];
 			fullPath = pathForBundleResource(fname, bundle);
-			if (fullPath) {is_pvr = 1; break;};
-
-			// try plx
-			fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
-			fullPath = pathForBundleResource(fname, bundle);
-			if (fullPath) {is_plx = 1; break;};
-
-			fullPath = pathForBundleResource(path, bundle);
-		} while (0);
-	};
+			if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
+		} else fullPath = pathForBundleResource(path, bundle); 
+	} while(0);
 
 	if (!fullPath) r = 2;
 	else {
 		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
 		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
+		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else {
 			//double t1 = CACurrentMediaTime();
 			UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
