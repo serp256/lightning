@@ -41,9 +41,10 @@ DEFINE COLOR_PART_GREEN(color) = (color lsr  8) land 0xff;
 DEFINE COLOR_PART_BLUE(color) =  color land 0xff;
 
 
-value _resources_prefix = ref None;
+value _resources_suffix = ref None;
+value resources_suffix () = !_resources_suffix;
 
-value set_resource_prefix prefix = _resources_prefix.val := Some prefix;
+value set_resources_suffix suffix = _resources_suffix.val := Some suffix;
 
 value split_filename filename = 
   try
@@ -51,15 +52,13 @@ value split_filename filename =
     (String.sub filename 0 i,String.sub filename i ((String.length filename) - i))
   with [ Not_found -> (filename,"") ];
 
-value path_with_prefix path = 
-  match !_resources_prefix with
+value path_with_suffix path = 
+  match !_resources_suffix with
   [ Some p -> 
     let (fname,ext) = split_filename path in
     fname ^ p ^ ext
   | None -> path
   ];
-
-
 
 value floats_of_color color = 
   let red = COLOR_PART_RED(color)
@@ -72,41 +71,28 @@ Callback.register_exception "File_not_exists" (File_not_exists "");
 
 IFDEF IOS THEN
 
-external bundle_path_for_resource: string -> float -> option string = "ml_bundle_path_for_resource";
-(* external device_scale_factor: unit -> float = "ml_device_scale_factor"; *)
-external ml_request_remote_notifications : int -> (string -> unit) -> (string -> unit) -> unit = "ml_request_remote_notifications";
+external bundle_path_for_resource: string -> option string -> option string = "ml_bundle_path_for_resource";
 
-
-value request_remote_notifications rntypes success error = 
-  let typesBitmask = 
-    List.fold_left begin fun mask -> fun 
-      [ `RNBadge -> mask lor 1
-      | `RNSound -> mask lor 2
-      | `RNAlert -> mask lor 4
-      ]
-    end 0 rntypes
-  in 
-  ml_request_remote_notifications typesBitmask success error;
-
-
-value resource_path path = 
-  match bundle_path_for_resource path 2.0 with
+value resource_path ?(with_suffix=True) path = 
+  let suffix = match with_suffix with [ True -> !_resources_suffix | False -> None ] in
+  match bundle_path_for_resource path suffix with
   [ None    -> raise (File_not_exists path)
   | Some p  -> p
   ];
 
-value open_resource path scale =
-  match bundle_path_for_resource path scale with
+value open_resource ?(with_suffix=True) path =
+  let suffix = match with_suffix with [ True -> !_resources_suffix | False -> None ] in
+  match bundle_path_for_resource path suffix with
   [ None -> raise (File_not_exists path)
   | Some p -> open_in p
   ];
 
 
-value read_json path = 
-  let ch = open_resource path 1. in                                                                                                                
+value read_json ?with_suffix path = 
+  let ch = open_resource ?with_suffix path in                                                                                                                
   Ojson.from_channel ch;
 
-value read_resource path scale = Std.input_all (open_resource path scale);
+value read_resource ?with_suffix path = Std.input_all (open_resource ?with_suffix path);
 
 ELSE IFDEF ANDROID THEN
 
@@ -165,22 +151,34 @@ value read_json path =
 
 ELSE IFDEF SDL THEN
 
-value request_remote_notifications rntypes success error = ();
-
-value device_scale_factor () = 1.0;
-value resource_path fname = 
-  let path = Filename.concat "Resources" fname in
-  match Sys.file_exists path with
-  [ True -> path
-  | False -> raise (File_not_exists fname)
+value resources_path = "Resources";
+value resource_path ?(with_suffix=True) fname = 
+  match with_suffix with
+  [ True ->
+    let spath = Filename.concat resources_path (path_with_suffix fname) in
+    match Sys.file_exists spath with
+    [ True -> spath
+    | False -> 
+        let path = Filename.concat resources_path fname in
+        match Sys.file_exists path with
+        [ True -> path
+        | False -> raise (File_not_exists fname)
+        ]
+    ]
+  | False ->
+    let path = Filename.concat "Resources" fname in
+    match Sys.file_exists path with
+    [ True -> path
+    | False -> raise (File_not_exists fname)
+    ]
   ];
 
-value open_resource fname scale = open_in (resource_path fname);
+value open_resource ?with_suffix fname = open_in (resource_path ?with_suffix fname);
 
-value read_resource path scale = Std.input_all (open_resource path scale);
+value read_resource ?with_suffix path = Std.input_all (open_resource ?with_suffix path);
 
-value read_json path = 
-  let ch = open_resource path 1. in                                                                                                                
+value read_json ?with_suffix path = 
+  let ch = open_resource ?with_suffix path in                                                                                                                
   Ojson.from_channel ch;
 
 ENDIF;
@@ -189,9 +187,9 @@ ENDIF;
 
 exception Xml_error of string and string;
 
-module MakeXmlParser(P:sig value path: string; end) = struct
+module MakeXmlParser(P:sig value path: string; value with_suffix: bool; end) = struct
 
-  value input = open_resource P.path 1.;
+  value input = open_resource ~with_suffix:P.with_suffix P.path;
 
   value xmlinput = Xmlm.make_input ~strip:True (`Channel input);
 

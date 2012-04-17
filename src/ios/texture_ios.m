@@ -431,7 +431,7 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
 }
 
 
-int _load_image(NSString *path,textureInfo *tInfo) {
+int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 
 	NSLog(@"LOAD IMAGE: %@\n",path);
 	NSString *fullPath = NULL;
@@ -455,7 +455,6 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 				is2x = 1;
 			}
 		};
-
 		if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
 	} else if ([imgType rangeOfString:@"plx"].location == 0) {
 		is_plx = 1;
@@ -532,14 +531,15 @@ int _load_image(NSString *path,textureInfo *tInfo) {
 	return r;
 }
 
-int load_image_info(char *cpath,textureInfo *tInfo) {
+int load_image_info(char *cpath,char *suffix, textureInfo *tInfo) {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	NSString *path = [NSString stringWithCString:cpath encoding:NSASCIIStringEncoding];
-	int r = _load_image(path,tInfo);
+	int r = _load_image(path,suffix,tInfo);
 	[pool release];
 	return r;
 }
 
+/*
 value ml_load_image_info(value opath) {
 	// NEED NSPool here
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -558,16 +558,19 @@ value ml_load_image_info(value opath) {
 	};
 	return ((value)tInfo);
 }
+*/
 
-CAMLprim value ml_loadImage(value oldTexture, value opath, value ocontentScaleFactor) { // if old texture exists when replace
-	CAMLparam2(opath,ocontentScaleFactor);
+
+CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix) { // if old texture exists when replace
+	CAMLparam2(opath,osuffix);
 	CAMLlocal1(mlTex);
 	NSLog(@"ml_loade image: %s\n",String_val(opath));
 	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
 	checkGLErrors("start load image");
 
 	textureInfo tInfo;
-	int r = _load_image(path,&tInfo);
+	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
+	int r = _load_image(path,suffix,&tInfo);
 
 	//double gt1 = CACurrentMediaTime();
 	if (r) {

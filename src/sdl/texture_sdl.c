@@ -26,9 +26,11 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 			char *path = malloc(rplen + strlen(fname) + slen + 1);
 			memcpy(path,resourcePath,rplen);
 			if (slen != 0) {// need check with prefix first
-				memcpy(path + rplen,suffix,slen);
-				strcpy(path + rplen + slen,fname);
-				struct stat;
+				int bflen = strlen(fname) - strlen(ext);
+				memcpy(path + rplen,fname,bflen);
+				memcpy(path + rplen + bflen,suffix,slen);
+				strcpy(path + rplen + bflen + slen,ext);
+				struct stat s;
 				if (!stat(path,&s)) {
 					int r = loadPlxFile(path,tInfo);
 					free(path);
@@ -44,7 +46,9 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 			char *path = malloc(rplen + strlen(fname) + slen + 1);
 			memcpy(path,resourcePath,rplen);
 			if (slen != 0) {
-				memcpy(path + rplen,suffix,slen);
+				int bflen = strlen(fname) - strlen(ext);
+				memcpy(path + rplen,fname,bflen);
+				memcpy(path + rplen + bflen,suffix,slen);
 				strcpy(path + rplen + slen,fname);
 				struct stat s;
 				if (!stat(path,&s)) {
@@ -87,12 +91,22 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 	memcpy(path,resourcePath,rplen);
 	while (1) {
 		if (slen != 0) {
-			memcpy(path + rplen,suffix,slen);
-			strcpy(path + rplen + slen,fname);
+			if (ext) {
+				int bflen = strlen(fname) - strlen(ext);
+				memcpy(path + rplen,fname,bflen);
+				memcpy(path + rplen + bflen,suffix,slen);
+				strcpy(path + rplen + bflen + slen,ext);
+			} else {
+				int flen = strlen(fname);
+				memcpy(path + rplen,fname,flen);
+				strcpy(path + rplen + flen,suffix);
+			}
 			struct stat s;
-			if (!stat(path,&s) break;
+			fprintf(stderr,"try with '%s'\n",path);
+			if (!stat(path,&s)) break;
 		}
 		strcpy(path + rplen,fname);
+		break;
 	}
 	fprintf(stderr,"LOAD IMAGE: %s\n",path);
 	SDL_Surface* s = IMG_Load(path);
@@ -168,6 +182,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 }
 
 
+/*
 value ml_load_image_info(value opath) {
 	char *path = malloc(caml_string_length(opath) + 1);
 	strcpy(path,String_val(opath));
@@ -189,6 +204,7 @@ value ml_load_image_info(value opath) {
 
 	return ((value)tInfo);
 }
+*/
 
 /*
 void ml_free_image_info(value tInfo) {
@@ -198,11 +214,12 @@ void ml_free_image_info(value tInfo) {
 }
 */
 
-value ml_loadImage(value oldTextureID,value opath,value prefix) {
-	CAMLparam3(oldTextureID,opath,scale);
+value ml_loadImage(value oldTextureID,value opath,value osuffix) {
+	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
-	int r = load_image_info(String_val(opath),&tInfo,prefix);
+	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
+	int r = load_image_info(String_val(opath),suffix,&tInfo);
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_failwith("Can't load image");

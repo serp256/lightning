@@ -7,7 +7,7 @@ value (|>) a b = b a;
 (*
 value run_thread () = 
   while True do
-    Thread.delay 1.;
+option     Thread.delay 1.;
     debug "I'am thread";
   done;
 *)
@@ -318,6 +318,7 @@ value size (stage:Stage.c) =
 
 
 value flip (stage:Stage.c) =
+  let () = LightCommon.set_resources_suffix "@2x" in
   let img = Image.load "tree.png" in
   let () = debug "max_int: %d, min_int: %d, calc: %d" max_int min_int (if 1 lsl 32 = 0 then 1 else 2) in
 (*   let tx = ref (Texture.load "e_cactus.png") in *)

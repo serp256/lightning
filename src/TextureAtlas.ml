@@ -68,7 +68,7 @@ value load binpath =
       let f = float_of_int in
       for i = 0 to cnt_atlases - 1 do
         let path = IO.read_string bininp in
-        textures.(i) := Texture.load (Filename.concat dirname path);
+        textures.(i) := Texture.load ~with_suffix:False (Filename.concat dirname path);
         let cnt_items = IO.read_ui16 bininp in
         for j = 0 to cnt_items - 1 do
           let name = IO.read_string bininp in
@@ -88,7 +88,7 @@ value load binpath =
 
 value loadxml xmlpath = 
   let xmlpath = resource_path xmlpath in
-  let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
+  let module XmlParser = MakeXmlParser(struct value path = xmlpath; value with_suffix = True; end) in
   let regions = Hashtbl.create 3 in
   let () = XmlParser.accept (`Dtd None) in
   let textures = 
@@ -112,7 +112,7 @@ value loadxml xmlpath =
                     | None -> ()
                     | _ -> assert False
                     ];
-                parseTextures (cnt + 1) [ Texture.load image_path :: textures ]
+                parseTextures (cnt + 1) [ Texture.load ~with_suffix:False image_path :: textures ]
               )
           | _ -> XmlParser.error "not found path"
           ]

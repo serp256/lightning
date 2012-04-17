@@ -1,4 +1,5 @@
 
+type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 
 IFDEF IOS THEN
 external showNativeWaiter: Point.t -> unit = "ml_showActivityIndicator";
@@ -10,7 +11,20 @@ value sendEmail recepient ~subject ?(body="") () =
   let params = UrlEncoding.mk_url_encoded_parameters [ ("subject",subject); ("body", body)] in
   openURL (Printf.sprintf "mailto:%s?%s" recepient params);
 external show_alert: ~title:string -> ~message:string -> unit = "ml_show_alert";
+external ml_request_remote_notifications : int -> (string -> unit) -> (string -> unit) -> unit = "ml_request_remote_notifications";
+value request_remote_notifications rntypes success error = 
+  let typesBitmask = 
+    List.fold_left begin fun mask -> fun 
+      [ `RNBadge -> mask lor 1
+      | `RNSound -> mask lor 2
+      | `RNAlert -> mask lor 4
+      ]
+    end 0 rntypes
+  in 
+  ml_request_remote_notifications typesBitmask success error;
+
 ELSE
+value request_remote_notifications rntypes success error = ();
 value showNativeWaiter _pos = ();
 value hideNativeWaiter () = ();
 value openURL _ = ();
