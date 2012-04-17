@@ -1,0 +1,29 @@
+===== 0.5 =====
+
+  * use more search pathes for iconv
+  * fix a bug in Encoding.recode_string
+  * several optimizations for the Text module
+
+===== 0.4 =====
+
+  * Fix a bug in regular expression generation for PCRE
+  * Adding the function Text.transform
+  * Adding the module Encoding_bigarray for encoding/decoding
+    to/from bigarrays instead of strings
+  * Automatically detect whether -liconv is needed or not
+
+===== 0.3 =====
+
+  * Adding a user manual
+  * Adding support for regular expressions inside arbitrary pattern
+    matching
+  * Adding a syntax extension for converting human readable regular
+    expressions over UTF-8 strings into PCRE ones
+  * Faster reimplementation of Encoding.recode_string.
+    (note: the ?fallback argument have been removed, use //TRANSLIT instead)
+  * Text.encode use transliteration instead of a fallback string
+  * Fixing various bugs in the module Text (thanks to unit tests)
+  * Adding unit tests
+  * Adding support for windows (using GetACP instead of nl_langinfo)
+
+===== 0.2 =====
