@@ -28,7 +28,8 @@ type t =
     data: data;
   };
 
-value gen_id: unit -> id;
+value gen_id: string -> id;
+value string_of_id: id -> string;
 
 value stopImmediatePropagation: t -> unit;
 value stopPropagation: t -> unit;
