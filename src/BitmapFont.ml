@@ -134,7 +134,7 @@ value register xmlpath = (*{{{*)
 
 value register xmlpath =
   let dirname = match Filename.dirname xmlpath with [ "." -> "" | dir -> dir ] in
-  let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
+  let module XmlParser = MakeXmlParser(struct value path = xmlpath; value with_suffix = True; end) in
   let () = XmlParser.accept (`Dtd None) in
   let floats = XmlParser.floats in
   let parse_pages () = 
@@ -142,7 +142,7 @@ value register xmlpath =
     [ `El_start ((_,"Pages"),_) ->
       let rec loop res = 
         match XmlParser.parse_element "page" [ "file"] with
-        [ Some [ file ] _ -> loop [ Texture.load (Filename.concat dirname file) :: res ]
+        [ Some [ file ] _ -> loop [ Texture.load ~with_suffix:False (Filename.concat dirname file) :: res ]
         | None -> res 
         | _ -> assert False
         ]

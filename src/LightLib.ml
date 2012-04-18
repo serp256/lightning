@@ -150,7 +150,7 @@ value setTexFltr tex fltr =
 value getTexture lib tid =
   match lib.textures with
   [ TFiles files ->
-    let tex = Texture.load (Filename.concat lib.path files.(tid)) in
+    let tex = Texture.load ~with_suffix:False (Filename.concat lib.path files.(tid)) in
     (
       setTexFltr tex lib.filter;
       tex;
@@ -160,14 +160,14 @@ value getTexture lib tid =
 
 value getTextureAsync lib tid callback =
   match lib.textures with
-  [ TFiles files -> Texture.load_async (Filename.concat lib.path files.(tid)) (fun tex -> ( setTexFltr tex lib.filter; callback tex ))
+  [ TFiles files -> Texture.load_async ~with_suffix:False (Filename.concat lib.path files.(tid)) (fun tex -> ( setTexFltr tex lib.filter; callback tex ))
   | TTextures textures -> callback textures.(tid)
   ];
 
 value getSubTexture lib (tid,rect) =
   let t = 
     match lib.textures with
-    [ TFiles files -> Texture.load (Filename.concat lib.path files.(tid))
+    [ TFiles files -> Texture.load ~with_suffix:False (Filename.concat lib.path files.(tid))
     | TTextures textures -> textures.(tid)
     ]
   in
@@ -176,7 +176,7 @@ value getSubTexture lib (tid,rect) =
 value getSubTextureAsync lib (tid,rect) callback =
   let f texture = callback (texture#subTexture rect) in
   match lib.textures with
-  [ TFiles files -> Texture.load_async (Filename.concat lib.path files.(tid)) f
+  [ TFiles files -> Texture.load_async ~with_suffix:False (Filename.concat lib.path files.(tid)) f
   | TTextures textures -> f textures.(tid)
   ];
 
@@ -353,7 +353,7 @@ value symbols lib = ExtHashtbl.Hashtbl.keys lib.symbols;
 value _load libpath = 
   let () = debug "bin load %s" libpath in
   let path = Filename.concat libpath "lib.bin" in
-  let inp = open_resource path 1. in
+  let inp = open_resource path in
   let bininp = IO.input_channel inp in
   (
     let read_option_string () =
@@ -578,7 +578,7 @@ value load ?(filter=Texture.FilterNearest) ?(loadTextures=False) libpath : lib =
     match loadTextures with
     [ True -> TTextures begin 
       Array.map begin fun file -> 
-        let tx = Texture.load (Filename.concat libpath file) in
+        let tx = Texture.load ~with_suffix:False (Filename.concat libpath file) in
         (
           setTexFltr tx filter;
           tx
@@ -596,7 +596,7 @@ value load_async ?(filter=Texture.FilterNearest) libpath callback =
   let textures = Array.make !cnt_tx Texture.zero in
   (
     Array.iteri begin fun i file ->
-      Texture.load_async (Filename.concat libpath file) begin fun texture ->
+      Texture.load_async ~with_suffix:False (Filename.concat libpath file) begin fun texture ->
         (
           setTexFltr texture filter;
           textures.(i) := texture;
@@ -609,7 +609,7 @@ value load_async ?(filter=Texture.FilterNearest) libpath callback =
   );
 
 value loadxml ?(filter=Texture.FilterNearest) ?(loadTextures=False) libpath : lib = 
-  let module XmlParser = MakeXmlParser (struct value path = Filename.concat libpath "lib.xml"; end) in
+  let module XmlParser = MakeXmlParser (struct value path = Filename.concat libpath "lib.xml"; value with_suffix = True; end) in
   (
     XmlParser.accept (`Dtd None);
     let floats = XmlParser.floats
@@ -930,7 +930,7 @@ value loadxml ?(filter=Texture.FilterNearest) ?(loadTextures=False) libpath : li
             XmlParser.close ();
             let textures = 
               match loadTextures with
-              [ True -> TTextures (Array.map (fun file -> Texture.load (Filename.concat libpath file)) textures)
+              [ True -> TTextures (Array.map (fun file -> Texture.load ~with_suffix:False (Filename.concat libpath file)) textures)
               | False -> TFiles textures
               ]
             in

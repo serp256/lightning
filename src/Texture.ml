@@ -111,11 +111,11 @@ value zero : c =
   end;
 
 type imageInfo;
-external loadImageInfo: string -> imageInfo = "ml_load_image_info";
-external freeImageInfo: imageInfo -> unit = "ml_free_image_info";
+(* external loadImageInfo: string -> imageInfo = "ml_load_image_info"; *)
+(* external freeImageInfo: imageInfo -> unit = "ml_free_image_info"; *)
 external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture";
 (* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
-external loadImage: ?textureID:textureID -> ~path:string -> ~contentScaleFactor:float -> textureInfo = "ml_loadImage";
+external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> textureInfo = "ml_loadImage";
 
 module TextureCache = WeakHashtbl.Make (struct
   type t = string;
@@ -231,7 +231,7 @@ value loadPallete palleteID =
     PalleteCache.find palleteCache palleteID
   with 
   [ Not_found -> 
-    let pallete = loadImage (Printf.sprintf "palletes/%d.plt" palleteID) 1. in
+    let pallete = loadImage (Printf.sprintf "palletes/%d.plt" palleteID) None in
     (
       PalleteCache.add palleteCache palleteID pallete;
       (* здесь бы финализер повесить на нее, но да хуй с ней нахуй *)
@@ -440,7 +440,7 @@ value make_and_cache path textureInfo =
     (res :> c)
   );
 
-value load path : c = 
+value load ?(with_suffix=True) path : c = 
   try
     debug:cache (
       Debug.d "print cache";
@@ -449,9 +449,13 @@ value load path : c =
     ((TextureCache.find cache path) :> c)
   with 
   [ Not_found ->
-    let textureInfo = 
-      proftimer:t "Loading texture [%F]" loadImage path 1. 
+    let suffix =
+      match with_suffix with
+      [ True -> LightCommon.resources_suffix ()
+      | False ->  None
+      ]
     in
+    let textureInfo = proftimer:t "Loading texture [%F]" loadImage path suffix in
     let () = 
       debug
         "loaded texture: %s <%ld> [%d->%d; %d->%d] [pma=%s]\n%!" 
@@ -465,7 +469,7 @@ value load path : c =
 
 module type AsyncLoader = sig
 
-  value load: string -> (c -> unit) -> unit;
+  value load: bool -> string -> (c -> unit) -> unit;
   value check_result: unit -> unit;
 
 end;
@@ -540,7 +544,7 @@ end;
 
 type aloader_runtime;
 external aloader_create_runtime: unit -> aloader_runtime = "ml_texture_async_loader_create_runtime";
-external aloader_push: aloader_runtime -> string -> unit = "ml_texture_async_loader_push";
+external aloader_push: aloader_runtime -> string -> option string -> unit = "ml_texture_async_loader_push";
 external aloader_pop: aloader_runtime -> option (string * textureInfo) = "ml_texture_async_loader_pop";
 
 module AsyncLoader(P:sig end) : AsyncLoader = struct
@@ -548,10 +552,17 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
   value waiters = Hashtbl.create 1;
   value cruntime = aloader_create_runtime ();
 
-  value load path callback = 
+  value load with_suffix path callback = 
   (
     if not (Hashtbl.mem waiters path)
-    then aloader_push cruntime path
+    then 
+      let suffix = 
+        match with_suffix with
+        [ True -> LightCommon.resources_suffix ()
+        | False -> None
+        ]
+      in
+      aloader_push cruntime path suffix
     else ();
     Hashtbl.add waiters path callback;
   );
@@ -589,7 +600,7 @@ value check_async () =
   | None -> ()
   ];
 
-value load_async path callback = 
+value load_async ?(with_suffix=True) path callback = 
   let texture = 
     try
       debug:cache (
@@ -617,7 +628,7 @@ value load_async path callback =
       ]
     in
     let module Loader = (value m:AsyncLoader) in
-    Loader.load path callback
+    Loader.load with_suffix path callback
   ];
 
 
