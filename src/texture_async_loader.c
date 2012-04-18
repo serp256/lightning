@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "thqueue.h"
 #include "texture_common.h"
@@ -16,13 +17,17 @@
 #include "sdl/texture_sdl.h"
 #endif
 
+typedef struct {
+	char *path;
+	char *suffix;
+} request_t;
 
 typedef struct {
 	char *path;
 	textureInfo *tInfo;
 } response_t;
 
-THQUEUE_INIT(requests,char*)
+THQUEUE_INIT(requests,request_t*)
 THQUEUE_INIT(responses,response_t*)
 
 typedef struct {
@@ -38,19 +43,20 @@ void *run_worker(void *param) {
 	runtime_t *runtime = (runtime_t*)param;
 	pthread_mutex_lock(&(runtime->mutex));
 	while (1) {
-		char *path = thqueue_requests_pop(runtime->req_queue);
-		if (path == NULL) pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
+		request_t *req = thqueue_requests_pop(runtime->req_queue);
+		if (req == NULL) pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
 		else {
 			textureInfo *tInfo = (textureInfo*)malloc(sizeof(textureInfo));
-			int r = load_image_info(path,tInfo);// Как тут ебнуца то ?? 
+			int r = load_image_info(req->path,req->suffix,tInfo);
 			if (r) {
 				free(tInfo);
-				if (r == 2) fprintf(stderr,"ASYNC LOADER. Can't find %s\n",path);
-				else fprintf(stderr,"Can't load image %s\n",path);
+				if (r == 2) fprintf(stderr,"ASYNC LOADER. Can't find %s\n",req->path);
+				else fprintf(stderr,"Can't load image %s\n",req->path);
 				exit(3);
 			};
 			response_t *resp = malloc(sizeof(response_t));
-			resp->path = path; resp->tInfo = tInfo;
+			resp->path = req->path; resp->tInfo = tInfo;
+			if (req->suffix != NULL) free(req->suffix); free(req);
 			thqueue_responses_push(runtime->resp_queue,resp);
 		}
 	}
@@ -72,11 +78,19 @@ value ml_texture_async_loader_create_runtime(value unit) {
 
 }
 
-void ml_texture_async_loader_push(value oruntime,value opath) {
+void ml_texture_async_loader_push(value oruntime,value opath,value osuffix) {
 	char *path = malloc(caml_string_length(opath) + 1);
 	strcpy(path,String_val(opath));
+	char *suffix;
+	if (Is_block(osuffix)) {
+		suffix = malloc(caml_string_length(Field(osuffix,0)) + 1);
+		strcpy(suffix,String_val(osuffix));
+	}  else suffix = NULL;
 	runtime_t *runtime = (runtime_t*)oruntime;
-	thqueue_requests_push(runtime->req_queue,path);
+	request_t *req = malloc(sizeof(request_t));
+	req->path = path;
+	req->suffix = suffix;
+	thqueue_requests_push(runtime->req_queue,req);
 	pthread_cond_signal(&runtime->cond);
 }
 
