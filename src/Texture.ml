@@ -111,8 +111,8 @@ value zero : c =
   end;
 
 type imageInfo;
-external loadImageInfo: string -> imageInfo = "ml_load_image_info";
-external freeImageInfo: imageInfo -> unit = "ml_free_image_info";
+(* external loadImageInfo: string -> imageInfo = "ml_load_image_info"; *)
+(* external freeImageInfo: imageInfo -> unit = "ml_free_image_info"; *)
 external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture";
 (* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
 external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> textureInfo = "ml_loadImage";
