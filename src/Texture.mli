@@ -67,29 +67,30 @@ value zero: c;
 value make : textureInfo -> c;
 
 (* value create: textureFormat -> int -> int -> option (Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout) -> c; *)
-value load: string -> c;
+value load: ?with_suffix:bool -> string -> c;
 
-class type rendered =
+
+type renderbuffer;
+
+class type rendered = 
   object
     inherit c;
-    method realWidth: int;
-    method realHeight: int;
-(*     method setPremultipliedAlpha: bool -> unit; *)
-    method framebufferID: LightCommon.framebufferID;
+    method renderbuffer: renderbuffer;
+    method activate: unit -> unit;
     method resize: float -> float -> unit;
     method draw: (unit -> unit) -> unit;
     method clear: int -> float -> unit;
+    method deactivate: unit -> unit;
+    method clone: unit -> rendered;
   end;
 
 value defaultFilter:filter;
 value glRGBA:int;
 value glRGB:int;
 
-value rendered: ?format:int -> ?color:int -> ?alpha:float -> float -> float -> rendered; (*object inherit c; method renderObject: !'a. (#renderObject as 'a) -> unit; end;*)
+value rendered: ?format:int -> ?filter:filter -> float -> float -> rendered; 
 
-
-
-value load_async: string -> (c -> unit) -> unit;
+value load_async: ?with_suffix:bool -> string -> (c -> unit) -> unit;
 value check_async: unit -> unit;
 
 

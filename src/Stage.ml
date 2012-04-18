@@ -5,7 +5,7 @@ open Touch;
 (* type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `PassedTime of float ]; *)
 
 
-value ev_TOUCH = Ev.gen_id ();
+value ev_TOUCH = Ev.gen_id "TOUCH";
 
 value (data_of_touches,touches_of_data) = Ev.makeData ();
 
@@ -13,14 +13,16 @@ external setupOrthographicRendering: float -> float -> float -> float -> unit = 
 
 exception Restricted_operation;
 
+(*
 IFDEF IOS 
 THEN
 external uncatchedError: string -> unit = "ml_uncatchedError";
 DEFINE CATCH_ALL(expr) = 
   try expr with [ exn -> uncatchedError (Printexc.to_string exn) ];
 ELSE
+*)
 DEFINE CATCH_ALL(expr) = expr;
-ENDIF;
+(* ENDIF; *)
 
 module D = DisplayObject;
 
@@ -171,7 +173,7 @@ class virtual c (_width:float) (_height:float) =
 
     method renderStage () =
     (
-      proftimer:perfomance "Prerender: %F" D.prerender();
+(*       proftimer:perfomance "Prerender: %F" D.prerender(); *)
       Render.clear color 1.;
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
       (*
@@ -208,8 +210,9 @@ class virtual c (_width:float) (_height:float) =
     method run seconds = 
     (
       self#advanceTime seconds;
-      debug "render stage";
-      self#renderStage ();
+      Render.clear color 1.;
+      D.prerender ();
+      proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
     );
 
   method! hitTestPoint localPoint isTouch =

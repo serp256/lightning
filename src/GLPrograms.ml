@@ -16,13 +16,24 @@ end;
 module Image = struct (*{{{*)
 
   value id = gen_id ();
+  value cache : ref (option Render.prg) = ref None;
   value create () = 
-    let prg = 
-      load id ~vertex:"Image.vsh" ~fragment:"Image.fsh"
-        ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
-        ~uniforms:[| ("u_texture",(UInt 0)) |]
-    in
-    (prg,None);
+    match !cache with
+    [ None ->
+      let res = 
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"Image.fsh"
+            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+            ~uniforms:[| ("u_texture",(UInt 0)) |]
+        in
+        (prg,None)
+      in
+      (
+        cache.val := Some res;
+        res
+      )
+    | Some res -> res
+    ];
 
 end;(*}}}*)
 

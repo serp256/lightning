@@ -26,7 +26,7 @@ module Program = struct
       ShaderCache.find shader_cache shader_file 
     with [ Not_found -> 
       let () = debug "try compile shader: %s" shader_file in
-      let s = compile_shader shader_type (LightCommon.read_resource (Filename.concat "Shaders" shader_file) 0.) in
+      let s = compile_shader shader_type (LightCommon.read_resource ~with_suffix:False (Filename.concat "Shaders" shader_file)) in
       (
         ShaderCache.add shader_cache shader_file s;
         s;
@@ -56,10 +56,11 @@ module Program = struct
   type uniform = [ UNone | UInt of int | UInt2 of (int*int) | UInt3 of (int*int*int) | UFloat of float | UFloat2 of (float*float) ];
   external create_program: ~vertex:shader -> ~fragment:shader -> ~attributes:list (attribute * string) -> ~uniforms:array (string * uniform) -> t = "ml_program_create";
 
-  value load_force ~vertex ~fragment ~attributes ~uniforms = 
-    let vertex = get_shader Vertex vertex
-    and fragment = get_shader Fragment fragment
+  value load_force ~vertex:vertexf ~fragment:fragmentf ~attributes ~uniforms = 
+    let vertex = get_shader Vertex vertexf
+    and fragment = get_shader Fragment fragmentf
     in
+    let () = debug "create program: %s:%s" vertexf fragmentf in
     create_program ~vertex ~fragment ~attributes ~uniforms;
 
   value load id ~vertex ~fragment ~attributes ~uniforms = 

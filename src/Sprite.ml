@@ -1,15 +1,18 @@
+open LightCommon;
 
 module D = DisplayObject;
 
-(* наверно лучше было бы сделать RenderedImage *)
 
-type cache_valid = [ CInvalid | CPrerender | CEmpty | CValid ];
+type cache_valid = [ CInvalid | CEmpty | CValid ];
 type imageCache = 
   {
-    ic: mutable option Image.c; 
-    tex: mutable option Texture.rendered; 
+    c_tex: mutable option Texture.rendered;
+    c_img: mutable option Render.Image.t;
+    c_prg: mutable Render.prg;
+    c_mat: mutable Matrix.t;
+    glow: mutable option Filters.glow;
     valid: mutable cache_valid;
-    force: mutable bool
+    force: mutable bool (* ??? *)
   };
 
 class c =
@@ -21,6 +24,11 @@ class c =
     method !name = if name = ""  then Printf.sprintf "sprite%d" (Oo.id self) else name;
     method cacheAsImage = imageCache <> None;
     value mutable filters = [];
+
+
+    method setCacheAsImage (v:bool) = ();
+
+    (*
     method setCacheAsImage = fun
       [ True -> 
         match imageCache with
@@ -53,6 +61,7 @@ class c =
           | _ -> ()
           ]
       ];
+    *)
 
     method filters = filters;
 
@@ -61,7 +70,6 @@ class c =
 (*         debug "%s bounds changed" self#name; *)
       match imageCache with
       [ Some ({valid=CValid | CEmpty;_} as c) -> (self#addPrerender self#updateImageCache; c.valid := CInvalid)
-      | Some ({valid=CPrerender;_} as c) -> c.valid := CInvalid
       | _ -> ()
       ];
       super#boundsChanged();
@@ -69,61 +77,92 @@ class c =
 
     method private updateImageCache () = 
       match imageCache with
-      [ Some ({ic; tex; valid = CInvalid;  _} as c) -> 
-        (
-          debug:prerender "validate image cache: %s" self#name;
-          let () = debug:prerender "cacheImage %s not valid" ic#name in
-          let bounds = self#boundsInSpace (Some self) in
-          if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
-          then c.valid := CEmpty
-          else 
-            let (ic,tex) = 
-              match (ic,tex) with 
-              [ (Some ic, Some tex) -> 
-                (
-                  tex#resize bounds.Rectangle.width bounds.Rectangle.height;
-                  (ic,tex) 
-                )
-              | (None,None) -> 
-                  let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
-                  let img = Image.create (tex :> Texture.c) in
-                  (
-                    img#setFilters filters;
-                    c.tex := Some tex;
-                    c.ic := Some img;
-                    (img,tex)
-                  )
-              | _ -> assert False
-              ]
-            in
-            (
-              let ip = {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} in
-              if ip <> ic#pos
-              then ic#setPosPoint ip
-              else ();
-              let alpha' = alpha in
-              (
-                self#setAlpha 1.;
-                tex#draw (fun () ->
-                  (
-                    Render.push_matrix (Matrix.create ~translate:(Point.mul ic#pos ~-.1.) ());
-                    Render.clear 0 0.;
-                    super#render' ~transform:False None;
-                    Render.restore_matrix ();
-                  );
-                );
-                self#setAlpha alpha';
-              );
-              ic#prerender True;
-            );
-            c.valid := CValid; 
-          )
-    | Some ({ic = Some ic; valid = CPrerender ; _} as c) -> 
-      (
-        debug:prerender "prerender image cache: %s" self#name;
-        ic#prerender True;
-        c.valid := CValid; 
-      )
+      [ Some ({c_img; c_tex; glow; valid = CInvalid;  _} as c) -> 
+         let () = debug:prerender "update cacheImage %s" self#name in
+         let bounds = self#boundsInSpace (Some self) in
+         if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
+         then c.valid := CEmpty
+         else 
+         (
+           let get_tex w h = (*{{{*)
+             match (c_img,c_tex) with 
+             [ (Some img, Some tex) -> 
+               let () = debug "get_tex [%f:%f] [%f:%f]" w h tex#width tex#height in
+               if tex#width <> w || tex#height <> h
+               then
+               (
+                 tex#resize w h;
+                 Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False;
+                 tex
+               ) else tex
+             | (None,None) -> 
+                 let tex = Texture.rendered w h in
+                 let img = Render.Image.create tex#renderInfo ~color:0xFFFFFF ~alpha:1. in
+                 (
+                   c.c_tex := Some tex;
+                   c.c_img := Some img;
+                   tex
+                 )
+             | _ -> assert False
+             ]
+           in (*}}}*)
+           match glow with
+           [ None ->
+               let tex = get_tex bounds.Rectangle.width bounds.Rectangle.height in
+               let alpha' = alpha in
+               (
+                 self#setAlpha 1.;
+                 tex#draw begin fun () ->
+                   (
+                     Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
+                     Render.clear 0 0.;
+                     super#render' ~transform:False None;
+                     Render.restore_matrix ();
+                   );
+                 end;
+                 self#setAlpha alpha';
+                 c.c_mat := Matrix.create ~translate:{Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} ();
+               )
+           | Some glow ->
+               (* рассчитать размер глоу *)
+               let hgs =  (powOfTwo glow.Filters.glowSize) - 1 in
+               (
+                 let gs = hgs * 2 in
+                 let rw = bounds.Rectangle.width +. (float gs)
+                 and rh = bounds.Rectangle.height +. (float gs) in
+                 let tex = get_tex rw rh in
+                 let m = Matrix.create ~translate:{Point.x = (float hgs) -. bounds.Rectangle.x; y = (float hgs) -. bounds.Rectangle.y} () in
+                 let ctex = tex#clone () in
+                 let cimg = Render.Image.create ctex#renderInfo ~color:0xFFFFFF ~alpha:1. in
+                 (
+                   let alpha' = alpha in
+                   (
+                     ctex#draw begin fun () ->
+                       (
+                         Render.push_matrix m;
+                         Render.clear 0 0.;
+                         super#render' ~transform:False None;
+                         Render.restore_matrix ();
+                       )
+                     end;
+                     self#setAlpha alpha';
+                   );
+                   tex#activate ();
+                   Render.clear 0 0.;
+                   Render.Image.render Matrix.identity (GLPrograms.Image.create ()) cimg;
+                   match glow.Filters.glowKind with
+                   [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
+                   | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
+                   ];
+                   Render.Image.render Matrix.identity (GLPrograms.Image.create ()) cimg;
+                   tex#deactivate ();
+                   ctex#release ();
+                 );
+                 c.c_mat := Matrix.create ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs)); y = (bounds.Rectangle.y -. (float hgs))} ();
+               )
+           ];
+           c.valid := CValid; 
+         )
     | Some _ -> assert False
     | _ -> ()
     ];
@@ -136,61 +175,80 @@ class c =
         [ [] ->
           match imageCache with
           [ None -> ()
-          | Some {tex=Some tex;force=False;_} -> (tex#release();imageCache := None)
-          | Some ({ic = Some ic;valid;_} as c) -> 
+          | Some {c_tex;force=False;_} -> 
             (
-                ic#setFilters []; 
-                match valid with
-                [ CValid  -> (c.valid := CPrerender; self#addPrerender self#updateImageCache)
-                | _ -> ()
-                ]
+              match c_tex with
+              [ Some tex -> tex#release()
+              | None -> ()
+              ];
+              imageCache := None
             )
-          | Some ({valid=CValid; _} as c) -> (c.valid := CInvalid; self#addPrerender self#updateImageCache)
-          | _ -> () (* значит уже висит пререндер нахуй *)
+          | Some c -> 
+            (
+              c.c_prg := GLPrograms.Image.create ();
+              if c.glow <> None
+              then
+              (
+                c.glow := None;
+                if c.valid = CValid 
+                then 
+                  (
+                    c.valid := CInvalid;
+                    self#addPrerender self#updateImageCache
+                  )
+                else ();
+              )
+              else ()
+            )
           ]
         | _ -> 
-          match imageCache with
-          [ None -> 
-            (*
-            let bounds = self#boundsInSpace (Some self) in
-            let () = debug "bounds of sprite: [%f:%f:%f:%f]" bounds.Rectangle.x bounds.Rectangle.y bounds.Rectangle.width bounds.Rectangle.height in
-            let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in
-            let img = Image.create (tex :> Texture.c) in
-            *)
-            (
-              debug:filters "create %s as image cache for %s" img#name self#name;
-              (*
-              img#setPosPoint {Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y};
-              img#setFilters filters;
-              imageCache := Some {ic = img; tex; empty = False; valid = `invalid; force = False};
-              *)
-              let bounds = self#bounds in
-              if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
-              then imageCache := Some {ic = None; tex = None; valid = CEmpty; force = False}
-              else
+            let glow = ref None in
+            let prg =
+              List.fold_left begin fun c -> fun
+                [ `Glow g ->
+                  (
+                    glow.val := Some g;
+                    c
+                  )
+                | `ColorMatrix m -> `cmatrix m
+                ]
+              end `simple fltrs
+            in
+            let c_prg = match prg with [ `simple -> GLPrograms.Image.create () | `cmatrix m -> GLPrograms.ImageColorMatrix.create m ] in
+            match imageCache with
+            [ None -> 
               (
-                imageCache := Some {ic = None; tex = None; valid = CInvalid; force = False};
-                self#addPrerender self#updateImageCache;
+                let bounds = self#bounds in
+                imageCache := Some begin
+                  if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
+                  then {c_img = None; c_tex = None; c_mat = Matrix.identity; valid = CEmpty; c_prg; glow = !glow; force = False}
+                  else
+                  (
+                    self#addPrerender self#updateImageCache;
+                    {c_img = None; c_tex = None; c_mat = Matrix.identity; valid = CInvalid; c_prg; glow = !glow; force = False};
+                  )
+                end
               )
-            )
-          | Some ({ic = Some ic; valid; _ } as c) -> 
-            (
-              ic#setFilters filters;
-              match valid with
-              [ CValid -> (c.valid := CPrerender; self#addPrerender self#updateImageCache) 
-              | _ -> ()
-              ]
-            )
-          | _ -> ()
-          ]
+            | Some c -> 
+              (
+                c.c_prg := c_prg;
+                if c.glow <> !glow
+                then
+                (
+                  c.glow := !glow;
+                  if c.valid = CValid then (c.valid := CInvalid; self#addPrerender self#updateImageCache) else ();
+                )
+                else ();
+              )
+            ]
         ];
       );
 
     method! private render' ?alpha:(alpha') ~transform rect = 
       match imageCache with
-      [ None -> super#render' ?alpha:alpha' ~transform rect
-      | Some {ic=Some ic; valid=CValid;_} ->
+      [ Some {c_img=Some img; c_mat; c_prg; valid=CValid;_} ->
         (
+          (*
           if transform then Render.push_matrix self#transformationMatrix else ();
           let alpha = 
             if alpha < 1.
@@ -199,9 +257,16 @@ class c =
           in
           ic#render ?alpha rect;
           if transform then Render.restore_matrix () else ();
+          *)
+          let alpha = 
+            if alpha < 1.
+            then Some (match alpha' with [ Some a -> a *. alpha | None -> alpha ])
+            else alpha'
+          in
+          Render.Image.render (if transform then Matrix.concat c_mat self#transformationMatrix else c_mat) c_prg ?alpha img
         )
       | Some {valid = CEmpty;_} -> ()
-      | _ -> assert False
+      | _ -> super#render' ?alpha:alpha' ~transform rect
       ];
 
   end;

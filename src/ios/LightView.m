@@ -137,20 +137,26 @@
     double now = CACurrentMediaTime();
     double timePassed = now - mLastFrameTimestamp;
 
+		/* 
     mlstage_advanceTime(mStage,timePassed);
-
     mLastFrameTimestamp = now;
-    
     [EAGLContext setCurrentContext:mContext];
-    
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-    
     mlstage_render(mStage);
-
-    
     glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
     [mContext presentRenderbuffer:GL_RENDERBUFFER];
-    
+		*/
+		caml_acquire_runtime_system();
+    mlstage_advanceTime(mStage,timePassed);
+		// prerender here
+		mlstage_preRender();
+    mLastFrameTimestamp = now;
+    [EAGLContext setCurrentContext:mContext];
+    glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+    mlstage_render(mStage);
+    glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
+    [mContext presentRenderbuffer:GL_RENDERBUFFER];
+		caml_release_runtime_system();
 		[pool release];
 }
 

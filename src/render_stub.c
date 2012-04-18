@@ -404,6 +404,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		};
 	} else sp->uniforms = NULL;
 	checkGLErrors("uniform binded");
+	fprintf(stderr,"create program: %d\n",program);
 	sp->program = program;
 	prg = caml_alloc_custom(&program_ops,sizeof(*sp),0,1);
 	SPROGRAM(prg) = sp;
@@ -857,7 +858,7 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 	//print_image(tq);
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
-	//printf("render image: %d with prg %d\n",Long_val(textureID),sp->program);
+	//fprintf(stderr,"render image: %d with prg %d\n",img->textureID,sp->program);
 	lgGLUseProgram(sp->program);
 	checkGLErrors("image render use program");
 
@@ -915,69 +916,47 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 
 
 void get_framebuffer_state(framebuffer_state *s) {
-	GLint oldBuffer;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
-	GLint viewPort[4];
-	glGetIntegerv(GL_VIEWPORT,viewPort);
-	s->frameBuffer = oldBuffer;
-	s->width = viewPort[2];
-	s->height = viewPort[3];
+
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&s->framebuffer);
+	glGetIntegerv(GL_VIEWPORT,s->viewport);
 	checkGLErrors("get framebuffer state");
 }
 
-value ml_activate_framebuffer(value framebufferID,value width,value height) {
+value ml_renderbuffer_activate(value ofb) {
 	//printf("bind framebuffer: %ld\n",Long_val(framebufferID));
 
-	checkGLErrors("start actiavte framebuffer");
 	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
 	get_framebuffer_state(s);
 
-	glBindFramebuffer(GL_FRAMEBUFFER,Long_val(framebufferID));
+	renderbuffer_t *rb = (renderbuffer_t*)ofb;
+	fprintf(stderr,"activate renderbuffer: %d:%d\n",rb->fbid,rb->tid);
+	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
 
-	checkGLErrors("bind framebuffer");
-
-	glViewport(0, 0,Long_val(width), Long_val(height));
+	glViewport(rb->vp.x,rb->vp.y,rb->vp.w,rb->vp.h);
 
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPushMatrix();
 	kmGLLoadIdentity();
       
 	kmMat4 orthoMatrix;
-	kmMat4OrthographicProjection(&orthoMatrix, 0, (GLfloat)Long_val(width), 0, (GLfloat)Long_val(height), -1024, 1024 );
+	kmMat4OrthographicProjection(&orthoMatrix, 0, (GLfloat)rb->vp.w, 0, (GLfloat)rb->vp.h, -1024, 1024 );
 	kmGLMultMatrix( &orthoMatrix );
 
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPushMatrix();
 	kmGLLoadIdentity();
-	//if (offset != 1) kmGLTranslatef(Double_field(Field(offset,0),0),Double_field(Field(offset,0),1),-10);
-	/*
-	if (matrix != 1) {
-		value mtrx = Field(matrix,0);
-		kmMat4 transfrom4x4;
-		// Convert 3x3 into 4x4 matrix
-		GLfloat *m = transfrom4x4.mat;
-		m[2] = m[3] = m[6] = m[7] = m[8] = m[9] = m[11] = m[14] = 0.0f;
-		m[10] = m[15] = 1.0f;
-		m[0] = (GLfloat)Double_field(mtrx,0); m[4] = (GLfloat)Double_field(mtrx,2); m[12] = (GLfloat)Double_field(mtrx,4);
-		m[1] = (GLfloat)Double_field(mtrx,1); m[5] = (GLfloat)Double_field(mtrx,3); m[13] = (GLfloat)Double_field(mtrx,5);
-		kmGLLoadMatrix(&transfrom4x4);
-	} else 
-	*/
-  //glDisable(GL_DEPTH_TEST);
-	//glEnable(GL_BLEND);
-	//lgGLBindTexture(0,0);
-	//setNotPMAGLBlend();
 	enableSeparateBlend();
 	return (value)s; 
 }
 
 void set_framebuffer_state(framebuffer_state *s) {
-	glBindFramebuffer(GL_FRAMEBUFFER,s->frameBuffer);
-	glViewport(0, 0, s->width, s->height);
+	glBindFramebuffer(GL_FRAMEBUFFER,s->framebuffer);
+	glViewport(s->viewport[0], s->viewport[1], s->viewport[2], s->viewport[3]);
 }
 
-void ml_deactivate_framebuffer(value ostate) {
+void ml_renderbuffer_deactivate(value ostate) {
 	framebuffer_state *s = (framebuffer_state*)ostate;
+	fprintf(stderr,"deactivate renderbuffer. oldbuffer: %d\n",s->framebuffer);
 	set_framebuffer_state(s);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPopMatrix();
@@ -987,12 +966,12 @@ void ml_deactivate_framebuffer(value ostate) {
 	caml_stat_free(s);
 }
 
-
-void ml_delete_framebuffer(value framebuffer) {
-	GLuint fbID = Long_val(framebuffer);
-	glDeleteFramebuffers(1,&fbID);
-	checkGLErrors("ml delete framebuffer: %d",Long_val(fbID));
-}
+/////////////////////////////////////////////////////
+//
+//
+//
+// ATLASES
+// ///////////////////
 
 typedef struct {
 	GLuint textureID;

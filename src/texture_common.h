@@ -30,6 +30,7 @@ struct tex {
 
 #define TEXTURE_ID(v) ((struct tex*)Data_custom_val(v))->tid
 
+//extern GLuint boundTextureID;
 void setPMAGLBlend ();
 void enableSeparateBlend ();
 void disableSeparateBlend ();
@@ -38,6 +39,7 @@ void lgGLBindTexture(GLuint textureID, int pma);
 void lgGLBindTextures(GLuint textureID, GLuint textureID1, int newPMA);
 void lgResetBoundTextures();
 value alloc_texture_id(GLuint textureID, unsigned int dataLen);
+void update_texture_id(value mlTextureID,GLuint textureID);
 
 
 typedef enum 
@@ -128,3 +130,39 @@ enum PVRPixelType
 	Field(mlTex,7) = textureID;
 
 #endif
+
+
+
+
+typedef struct {
+	GLfloat x;
+	GLfloat y;
+	GLfloat width;
+	GLfloat height;
+} clipping;
+
+typedef struct {
+	GLsizei x;
+	GLsizei y;
+	GLsizei w;
+	GLsizei h;
+} viewport;
+
+#define IS_CLIPPING(clp) (clp.x == 0. && clp.y == 0. && clp.width == 1. && clp.height == 1.)
+
+typedef struct {
+  GLuint fbid;
+	GLuint tid;
+	double width;
+	double height;
+	GLuint realWidth;
+	GLuint realHeight;
+	viewport vp;
+	clipping clp;
+} renderbuffer_t;
+
+
+int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter);
+int clone_renderbuffer(renderbuffer_t *sr,renderbuffer_t *dr,GLenum filter);
+void delete_renderbuffer(renderbuffer_t *rb);
+

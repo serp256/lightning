@@ -15,23 +15,48 @@
 static char* resourcePath = "Resources/";
 
 
-int load_image_info(char *fname,textureInfo *tInfo) {
+int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 	int rplen = strlen(resourcePath);
 	// try pallete first
 	char *ext = strrchr(fname,'.');
+	int slen = suffix == NULL ? 0 : strlen(suffix);
 	if (ext && ext != fname && strcasecmp(ext,".plt")) {
 		if (!strcasecmp(ext,".plx")) {
 			// нужно загрузить палитру нахуй
-			char *path = malloc(rplen + strlen(fname) + 1);
+			char *path = malloc(rplen + strlen(fname) + slen + 1);
 			memcpy(path,resourcePath,rplen);
+			if (slen != 0) {// need check with prefix first
+				int bflen = strlen(fname) - strlen(ext);
+				memcpy(path + rplen,fname,bflen);
+				memcpy(path + rplen + bflen,suffix,slen);
+				strcpy(path + rplen + bflen + slen,ext);
+				struct stat s;
+				if (!stat(path,&s)) {
+					int r = loadPlxFile(path,tInfo);
+					free(path);
+					return r;
+				}
+			}
 			strcpy(path + rplen,fname);
 			int r = loadPlxFile(path,tInfo);
 			free(path);
 			return r;
 		} else if (!strcasecmp(ext,".alpha")) {
 			// загрузить альфу 
-			char *path = malloc(rplen + strlen(fname) + 1);
+			char *path = malloc(rplen + strlen(fname) + slen + 1);
 			memcpy(path,resourcePath,rplen);
+			if (slen != 0) {
+				int bflen = strlen(fname) - strlen(ext);
+				memcpy(path + rplen,fname,bflen);
+				memcpy(path + rplen + bflen,suffix,slen);
+				strcpy(path + rplen + slen,fname);
+				struct stat s;
+				if (!stat(path,&s)) {
+					int r = loadAlphaFile(path,tInfo);
+					free(path);
+					return r;
+				}
+			}
 			strcpy(path + rplen,fname);
 			int r = loadAlphaFile(path,tInfo);
 			free(path);
@@ -39,11 +64,20 @@ int load_image_info(char *fname,textureInfo *tInfo) {
 		} else {
 			// проверить этот ебанный plx 
 			int bflen = strlen(fname) - strlen(ext);
-			char *plxpath = malloc(rplen + bflen + 5);
+			char *plxpath = malloc(rplen + bflen + slen + 5);
 			memcpy(plxpath,resourcePath,rplen);
 			memcpy(plxpath + rplen,fname,bflen);
+			if (slen != 0) {
+				memcpy(plxpath + rplen + bflen,suffix,slen);
+				strcpy(plxpath + rplen + bflen + slen,".plx");
+				struct stat s;
+				if (!stat(plxpath,&s)) {
+					int r = loadPlxFile(plxpath,tInfo);
+					free(plxpath);
+					return r;
+				}
+			}
 			strcpy(plxpath + rplen + bflen,".plx");
-			// теперь узнать есть такой файло или нету
 			struct stat s;
 			if (!stat(plxpath,&s)) {// есть plx файл
 				int r = loadPlxFile(plxpath,tInfo);
@@ -53,9 +87,27 @@ int load_image_info(char *fname,textureInfo *tInfo) {
 			free(plxpath);
 		}
 	};
-	char *path = malloc(rplen + strlen(fname) + 1);
+	char *path = malloc(rplen + strlen(fname) + slen + 1);
 	memcpy(path,resourcePath,rplen);
-	strcpy(path + rplen,fname);
+	while (1) {
+		if (slen != 0) {
+			if (ext) {
+				int bflen = strlen(fname) - strlen(ext);
+				memcpy(path + rplen,fname,bflen);
+				memcpy(path + rplen + bflen,suffix,slen);
+				strcpy(path + rplen + bflen + slen,ext);
+			} else {
+				int flen = strlen(fname);
+				memcpy(path + rplen,fname,flen);
+				strcpy(path + rplen + flen,suffix);
+			}
+			struct stat s;
+			fprintf(stderr,"try with '%s'\n",path);
+			if (!stat(path,&s)) break;
+		}
+		strcpy(path + rplen,fname);
+		break;
+	}
 	fprintf(stderr,"LOAD IMAGE: %s\n",path);
 	SDL_Surface* s = IMG_Load(path);
 	free(path);
@@ -130,6 +182,7 @@ int load_image_info(char *fname,textureInfo *tInfo) {
 }
 
 
+/*
 value ml_load_image_info(value opath) {
 	char *path = malloc(caml_string_length(opath) + 1);
 	strcpy(path,String_val(opath));
@@ -151,6 +204,7 @@ value ml_load_image_info(value opath) {
 
 	return ((value)tInfo);
 }
+*/
 
 /*
 void ml_free_image_info(value tInfo) {
@@ -160,11 +214,12 @@ void ml_free_image_info(value tInfo) {
 }
 */
 
-value ml_loadImage(value oldTextureID,value opath,value scale) {
-	CAMLparam3(oldTextureID,opath,scale);
+value ml_loadImage(value oldTextureID,value opath,value osuffix) {
+	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
-	int r = load_image_info(String_val(opath),&tInfo);
+	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
+	int r = load_image_info(String_val(opath),suffix,&tInfo);
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_failwith("Can't load image");

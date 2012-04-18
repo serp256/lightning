@@ -27,9 +27,9 @@ value string_of_httpMethod = fun
 
 value request ?(httpMethod=`GET) ?(headers=[]) ?data url = { httpMethod; headers; data; url};
 
-value ev_PROGRESS = Ev.gen_id ();
-value ev_COMPLETE =  Ev.gen_id ();
-value ev_IO_ERROR = Ev.gen_id ();
+value ev_PROGRESS = Ev.gen_id "PROGRESS";
+value ev_COMPLETE =  Ev.gen_id "COMPLETE";
+value ev_IO_ERROR = Ev.gen_id "IO_ERORR";
 
 value (data_of_ioerror,ioerror_of_data) = Ev.makeData();
 
