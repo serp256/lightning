@@ -29,7 +29,6 @@
 +(LightViewController*)sharedInstance;
 -(void)becomeActive;
 -(void)resignActive;
--(void)becomeActive;
 -(void)background;
 -(void)foreground;
 -(void)showLeaderboard;

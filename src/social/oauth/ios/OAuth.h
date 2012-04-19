@@ -10,21 +10,25 @@
 #import "../../ios/LightViewController.h"
 
 @interface OAuth : LightViewCompatibleController  <UIWebViewDelegate> {
-    UIWebView * _webview;
+		NSURL *url;
     NSString * _redirectURIpath;
+    UIWebView * _webview;
     UIActivityIndicatorView * _spinner;    
     BOOL _authorizing;
     
-    UIButton * _closeButton;
+    //UIButton * _closeButton;
     UIEdgeInsets _closeButtonInsets;
     NSString * _closeButtonImageName;
     BOOL _closeButtonVisible;    
 }
-+(OAuth *)sharedInstance;
--(void)authorize: (NSURL *)url;
 
-@property (nonatomic, assign)   UIEdgeInsets closeButtonInsets;
-@property (nonatomic, retain)  NSString * closeButtonImageName;
-@property (nonatomic, assign)   BOOL closeButtonVisible;
+
+-(OAuth*)initWithURL:(value)mlURL closeButton:(value)mlCloseButton;
+//+(OAuth *)sharedInstance;
+//-(void)authorize: (NSURL *)url;
+
+//@property (nonatomic, assign)   UIEdgeInsets closeButtonInsets;
+//@property (nonatomic, retain)  NSString * closeButtonImageName;
+//@property (nonatomic, assign)   BOOL closeButtonVisible;
 
 @end
