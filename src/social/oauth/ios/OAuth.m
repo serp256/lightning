@@ -207,25 +207,28 @@ static OAuth * sharedOAuth = nil;
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)loadView {                                                                                                                                                                       
-    CGRect rect = [UIScreen mainScreen].applicationFrame; 
-    _webview = [[UIWebView alloc] initWithFrame: rect];                                                                                                                                 
-    _webview.delegate = self;                                                                                                                                                           
-    _webview.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;                                                                                     
-    _webview.scalesPageToFit = NO;                                                                                                                                                      
-    self.view = _webview;   
-    
-    _spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    _spinner.center = CGPointMake(CGRectGetMidX(_webview.frame), CGRectGetMidY(_webview.frame));
-    _spinner.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleRightMargin ;
-    [self.view addSubview:_spinner];
-    
-    if (_closeButtonVisible) {
-      [self createCloseButton];
-      [self.view addSubview: _closeButton];
-    }
+	CGRect rect = [UIScreen mainScreen].applicationFrame; 
+	_webview = [[UIWebView alloc] initWithFrame: rect];                                                                                                                                 
+	_webview.delegate = self;                                                                                                                                                           
+	_webview.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;                                                                                     
+	_webview.scalesPageToFit = NO;                                                                                                                                                      
+	self.view = _webview;   
+
+	_spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+	_spinner.center = CGPointMake(CGRectGetMidX(_webview.frame), CGRectGetMidY(_webview.frame));
+	_spinner.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleRightMargin ;
+	[self.view addSubview:_spinner];
+
+	if (_closeButtonVisible) {
+		[self createCloseButton];
+		[self.view addSubview: _closeButton];
+	}
     
 }                                                                                                                                                                                       
 
+-(void)viewDidUnload {
+
+}
 
 /*                                                                                                                                                                                      
  *                                                                                                                                                                                      
@@ -355,6 +358,11 @@ static OAuth * sharedOAuth = nil;
         }
     }
     return YES;
+}
+
+
+-(void)dealloc {
+	[super dealloc];
 }
 
 

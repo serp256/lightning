@@ -765,19 +765,20 @@ class virtual container = (*{{{*)
     method addChild: !'child. ?index:int -> ((#_c container) as 'child) -> unit = fun  ?index child ->
       let child = child#asDisplayObject in
       (
-          debug:container "%s: addChild '%s'" name child#name;
+          debug:children "[%s] addChild '%s'" self#name child#name;
+          child#removeFromParent(); 
           match children with
           [ None -> 
             match index with
             [ Some idx when idx > 0 -> raise Invalid_index
-            | _ -> ( child#removeFromParent(); children := Some (Dllist.create child))
+            | _ -> children := Some (Dllist.create child)
             ]
           | Some chldrn -> 
               match index with
-              [ None -> (* добавить в канец *) (child#removeFromParent(); Dllist.add (Dllist.prev chldrn) child )
-              | Some idx when idx > 0 && idx < numChildren -> (child#removeFromParent(); Dllist.add (Dllist.skip chldrn (idx-1)) child)
-              | Some idx when idx = 0 -> (child#removeFromParent(); children := Some (Dllist.prepend chldrn child))
-              | Some idx when idx = numChildren -> (child#removeFromParent(); Dllist.add (Dllist.prev chldrn) child)
+              [ None -> (* добавить в канец *) Dllist.add (Dllist.prev chldrn) child 
+              | Some idx when idx > 0 && idx < numChildren -> Dllist.add (Dllist.skip chldrn (idx-1)) child
+              | Some idx when idx = 0 -> children := Some (Dllist.prepend chldrn child)
+              | Some idx when idx = numChildren -> Dllist.add (Dllist.prev chldrn) child
               | _ -> raise Invalid_index
               ]
           ];
@@ -833,6 +834,7 @@ class virtual container = (*{{{*)
       | Some chldrn ->
           if index >= numChildren || index < 0 then raise Invalid_index
           else
+            let () = debug:children "[%s] setChildIndex %s" self#name child#name in 
             let child = child#asDisplayObject in
             match Dllist.get chldrn = child with
             [ True -> 
@@ -894,6 +896,7 @@ class virtual container = (*{{{*)
     method private removeChild'' (child_node:Dllist.node_t 'displayObject) =
       let child = Dllist.get child_node in
       (
+        let () = debug:children "[%s] removeChild %s" self#name child#name in
         child#clearParent();
         match children with
         [ Some chldrn ->
@@ -927,6 +930,7 @@ class virtual container = (*{{{*)
       match children with
       [ None -> raise Child_not_found
       | Some children ->
+          let () = debug:children "[%s] removeChild' %s" self#name child#name in
           let n = try dllist_find children child with [ Not_found -> raise Child_not_found ] in
           ignore(self#removeChild'' n)
       ];
@@ -936,6 +940,7 @@ class virtual container = (*{{{*)
       match children with
       [ None -> raise Child_not_found
       | Some children ->
+          let () = debug:children "[%s] removeChild' %s" self#name child#name in
           let n = try dllist_find children child with [ Not_found -> raise Child_not_found ] in
           ignore(self#removeChild'' n)
       ];
@@ -953,6 +958,7 @@ class virtual container = (*{{{*)
       ];
 
     method clearChildren () = 
+      let () = debug:children "[%s] clear children" self#name in
       match children with
       [ None -> ()
       | Some chldrn -> 

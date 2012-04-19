@@ -62,7 +62,7 @@
     //if ([currSysVer compare:@"3.1" options:NSNumericSearch] != NSOrderedAscending) mDisplayLinkSupported = YES;
     
 		self.multipleTouchEnabled = YES;
-    self.frameRate = 60.0f;
+    self.frameRate = 30.0f;
     
     // get the layer
     CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;

@@ -1,31 +1,31 @@
-type t;
+(* type t; *)
 
 exception Kv_not_found;
 
-value create : unit -> t;
+(* value create : unit -> t; *)
 
-value get_string_opt : t -> string -> option string;
+value get_string_opt : string -> option string;
 
-value get_bool_opt : t -> string -> option bool;
+value get_bool_opt : string -> option bool;
 
-value get_int_opt : t -> string -> option int;
+value get_int_opt : string -> option int;
 
-value get_string : t -> string -> string;
+value get_string : string -> string;
 
-value get_bool : t -> string -> bool;
+value get_bool : string -> bool;
 
-value get_int : t -> string -> int;
+value get_int : string -> int;
 
-value put_string : t -> string -> string -> unit;
+value put_string : string -> string -> unit;
 
-value put_bool : t -> string -> bool -> unit;
+value put_bool : string -> bool -> unit;
 
-value put_int : t -> string -> int -> unit;
+value put_int : string -> int -> unit;
 
-value remove : t -> string -> unit;
+value remove : string -> unit;
 
-value exists : t -> string -> bool;
+value exists : string -> bool;
 
-value commit : t -> unit;
+value commit : unit -> unit;
 
 

@@ -1,4 +1,4 @@
-type t;
+
 
 type auth_grant = [ Code | Implicit ];
 
@@ -22,12 +22,23 @@ type error_response =
 
 type auth_response = [ Error of error_response | Token of token_info ];
 
-value create : string -> string -> t;
+(* value create : string -> string -> t; *)
 
-value authorization_grant : t -> auth_grant -> string -> string -> list (string*string) -> (auth_response -> unit) -> unit;
+type close_button = 
+  {
+    cb_insets: (int*int*int*int);
+    cb_visible: bool;
+    cb_image: option string;
+  };
 
-value refresh_token : t -> string -> string -> list (string*string) -> (auth_response -> unit) -> unit;
+module Make (P:sig value auth_endpoint: string; value token_endpoint: string; value close_button: option close_button; end): sig
 
-value  set_close_button_insets : int -> int -> int -> int -> unit;
-value  set_close_button_visible : bool -> unit;
-value  set_close_button_image_name : string -> unit;
+  value authorization_grant : auth_grant -> string -> string -> list (string*string) -> (auth_response -> unit) -> unit;
+  value refresh_token : string -> string -> list (string*string) -> (auth_response -> unit) -> unit;
+(*
+  value  set_close_button_insets : int -> int -> int -> int -> unit;
+  value  set_close_button_visible : bool -> unit;
+  value  set_close_button_image_name : string -> unit;
+*)
+
+end;
