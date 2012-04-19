@@ -97,16 +97,16 @@ value call_method' meth access_token params callback =
       loader#addEventListener URLLoader.ev_COMPLETE (
         fun _ _ _ -> 
           let () = Printf.eprintf "WE GOT DATA: %s\n%!" loader#data in
-          let cb = 
+          let response = 
             try 
               let json_data = Ojson.from_string loader#data in 
               try 
                 let () = Printf.eprintf "DATA:\n%!" in
                 let error = extract_error_from_json json_data
-                in fun () -> callback (Error error)
-              with [ Not_found -> let () = Printf.eprintf "DATA IS OK:\n%!" in fun () -> callback (Data json_data) ] 
-            with [ exn -> fun () -> callback (Error (SocialNetworkError ("998", Printexc.to_string exn))) ]
-          in cb ()
+                in Error error
+              with [ Not_found -> let () = Printf.eprintf "DATA IS OK:\n%!" in Data json_data ] 
+            with [ exn -> fun () -> Error (SocialNetworkError ("998", Printexc.to_string exn)) ]
+          in callback response
       )
     );
     
