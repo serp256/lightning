@@ -869,6 +869,12 @@ value glow (stage:Stage.c) =
   );
 );
 
+
+value test_exn (stage:Stage.c) =
+  Timers.start 5. begin fun () ->
+    failwith("BLYYYY exn");
+  end;
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -885,6 +891,7 @@ let stage width height =
 (*         image self; *)
 (*         test_alpha self; *)
 (*       alert self; *)
+      test_exn self;
       flip self;
 (*       async_load self; *)
 (*       filters self; *)

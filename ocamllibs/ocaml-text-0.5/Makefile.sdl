@@ -1,0 +1,43 @@
+
+OCAMLFIND=ocamlfind 
+OCAMLOPT=${OCAMLFIND} ocamlopt
+OCAMLC=${OCAMLFIND} ocamlc 
+OCAMLMKLIB=/usr/local/bin/ocamlmklib
+INCLUDE_DIR=-I/opt/local/include
+INCLUDE_LIB=-L/opt/local/lib
+INCLUDE_CCLIB=-cclib ${INCLUDE_LIB}
+
+all:
+	${OCAMLC} -ccopt ${INCLUDE_DIR} -c src/ml_text.c
+	mv ml_text.o src/ml_text.o
+	${OCAMLMKLIB} -o src/text -liconv ${INCLUDE_LIB} src/ml_text.o
+	${OCAMLC} -c -g -I src -package bigarray -I src -I syntax -o src/encoding.cmi src/encoding.mli
+	${OCAMLC} -c -g -I src -package bigarray -I src -I syntax -o src/text.cmi src/text.mli
+	${OCAMLC} -c -g -I src -package bigarray -I src -I syntax -o src/text.cmo src/text.ml
+	${OCAMLC} -c -g -I src -package bigarray -I src -I syntax -o src/encoding.cmo src/encoding.ml
+	${OCAMLC} -a -dllib -ltext -cclib -ltext -cclib -liconv ${INCLUDE_CCLIB} src/encoding.cmo src/text.cmo -o src/text.cma
+	${OCAMLOPT} -c -g -I src -package bigarray -I src -I syntax -o src/encoding.cmx src/encoding.ml
+	${OCAMLOPT} -c -g -I src -package bigarray -I src -I syntax -o src/text.cmx src/text.ml
+	${OCAMLOPT} -a  ${INCLUDE_CCLIB} -cclib -ltext -cclib -liconv  src/encoding.cmx src/text.cmx -o src/text.cmxa
+	${OCAMLC} -c -g -I src -I tests -I syntax -I src -o tests/test.cmo tests/test.ml
+	${OCAMLOPT} -c -g -I src -I tests -I syntax -I src -o tests/test.cmx tests/test.ml
+	${OCAMLOPT} -g -ccopt -Lsrc -linkpkg src/text.cmxa tests/test.cmx -o  tests/test.native
+	${OCAMLC} -ccopt ${INCLUDE_DIR} -c src/ml_text_bigarray.c
+	mv ml_text_bigarray.o src/ml_text_bigarray.o
+	${OCAMLMKLIB} -o src/text-bigarray -liconv ${INCLUDE_LIB} src/ml_text_bigarray.o
+	${OCAMLC} -c -g -I src -package bigarray -I src -I syntax -o src/encoding_bigarray.cmi src/encoding_bigarray.mli
+	${OCAMLC} -c -g -I src -package bigarray -I src -I syntax -o src/encoding_bigarray.cmo src/encoding_bigarray.ml
+	${OCAMLC} -a -dllib -ltext-bigarray -cclib -ltext-bigarray -cclib -liconv ${INCLUDE_CCLIB} src/encoding_bigarray.cmo -o src/text-bigarray.cma
+	${OCAMLOPT} -c -g -I src -package bigarray -I src -I syntax -o src/encoding_bigarray.cmx src/encoding_bigarray.ml
+	${OCAMLOPT} -a -cclib -ltext-bigarray -cclib -liconv ${INCLUDE_CCLIB} src/encoding_bigarray.cmx -o src/text-bigarray.cmxa
+
+install:
+	sudo ${OCAMLFIND} install text src/META src/*.cmo src/*.cmx src/*.mli src/*.cmxa src/*.a src/*.mllib src/*cma src/*so src/*cmi
+
+uninstall:
+	sudo ${OCAMLFIND} remove text
+
+reinstall: uninstall install
+
+clean:
+	  rm -f src/*.cmo src/*.cmx src/*.o src/*.cmi src/*.cma src/*.cmxa src/*.a src/*.so

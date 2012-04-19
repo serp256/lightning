@@ -14,6 +14,7 @@
 #import <caml/alloc.h>
 #import <caml/callback.h>
 #import <caml/threads.h>
+#import <caml/fail.h>
 
 @implementation LightViewController
 
@@ -21,11 +22,25 @@
 
 static LightViewController *instance = NULL;
 
+static void mlUncaughtException(const char* message) {
+	NSString * to = @"mobile-nanofarm@redspell.ru";
+  NSString * subj = [NSString stringWithFormat:@"Сообщение об ошибке в игре '%@'", [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
+	UIDevice * dev = [UIDevice currentDevice];
+	NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleVersion"];
+	// Fixme - localization here
+	NSString * body = [NSString stringWithFormat:@"На моем %@ (iOS %@) ваше приложение (v%@) завершилось с ошибкой. Исправьте её как можно скорее. Спасибо!\n------------------------------------------------------\n%s", dev.model, dev.systemVersion, appVersion, message];
+	//NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", to, subj, [NSString stringWithCString:message encoding:NSUTF8StringEncoding]];
+	NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", to, subj, body];
+  email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+  [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];
+}
+
 +alloc {
 	NSLog(@"Try INIT Light view controller");
 	if (instance != NULL) return NULL; // raise exception
 	NSLog(@"INIT Light view controller");
 	char *argv[] = {"ios",NULL};
+	uncaught_exception_callback = &mlUncaughtException;
 	caml_startup(argv);
 	caml_release_runtime_system();
 	instance = [super alloc];

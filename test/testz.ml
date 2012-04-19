@@ -10,7 +10,7 @@ class wobj bpos tpos depth =
 
 value zObjects : DynArray.t wobj = DynArray.create ();
 value init () = 
-  let f = LightCommon.open_resource "zobjects" 1. in
+  let f = LightCommon.open_resource "zobjects" in
   read () where
     rec read () = 
       try
