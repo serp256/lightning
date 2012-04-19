@@ -7,8 +7,6 @@ type permission =
 
 type permissions = list permission;
 
-value storage = KVStorage.create ();
-
 value _oauth = OAuth.create "http://oauth.vk.com/authorize" "";
 
 value _appid = ref "";

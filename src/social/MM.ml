@@ -5,8 +5,6 @@ type permission = [ Photos | Guestbook | Stream | Messages | Events ];
 
 type permissions = list permission;
 
-value storage = KVStorage.create ();
-
 value _appid = ref "";
 
 value _perms = ref None;

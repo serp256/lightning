@@ -1,14 +1,14 @@
 open Ojson;
 open SNTypes;
 
+(*
 OAuth.set_close_button_visible True;
 OAuth.set_close_button_insets 60 10 10 10;
+*)
 
 type permission = [ Valuable_access | Set_status | Photo_content ];
 
 type permissions = list permission;
-
-value storage = KVStorage.create ();
 
 value _appid = ref "";
 
@@ -18,7 +18,11 @@ value _private_key = ref "";
 
 value _application_key = ref "";
 
-value _oauth = OAuth.create "http://www.odnoklassniki.ru/oauth/authorize" "http://api.odnoklassniki.ru/oauth/token.do";
+module MyOAuth = OAuth.Make(struct 
+  value auth_endpoint = "http://www.odnoklassniki.ru/oauth/authorize"; value token_endpoint = "http://api.odnoklassniki.ru/oauth/token.do"; 
+  value close_button = Some {OAuth.cb_visible = True; OAuth.cb_insets = (60,10,10,10); OAuth.cb_image = None;end}
+end
+);
 
 (* *)
 value string_of_permission = fun
@@ -28,7 +32,6 @@ value string_of_permission = fun
   ];
   
   
-(* В Моем мире привелегии передаются через пробел *)
 value scope_of_perms perms = 
   String.concat ";" (List.map string_of_permission perms);
   
@@ -138,6 +141,7 @@ value handle_new_access_token token_info = (
   
 
 
+exception Show_auth;
 
 (* Вызываем REST method. Если нужно, проводим авторизацию *)
 value call_method ?(delegate=None) meth params = 
@@ -163,20 +167,20 @@ value call_method ?(delegate=None) meth params =
             try  
               Some (handle_new_access_token t)
             with [ Not_found -> None ]
-          in match access_token with
-          
+          in 
+          match access_token with
           [ Some access_token ->  
               let callback = fun
-                [ Data json     ->  call_delegate_success json
-                | Error e       ->  call_delegate_error e
-                ]
+                 [ Data json     ->  call_delegate_success json
+                 | Error e       ->  call_delegate_error e
+                 ]
               in call_method' meth access_token params callback
           | None -> call_delegate_error (SocialNetworkError ("999", "No UID in token info")) 
           ]
           
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
-    in OAuth.authorization_grant _oauth OAuth.Code !_appid redirect_uri oauth_params oauth_callback
+    in MyOAuth.authorization_grant _oauth OAuth.Code !_appid redirect_uri oauth_params oauth_callback
   in
 
 
@@ -203,11 +207,17 @@ value call_method ?(delegate=None) meth params =
           ]
     | OAuth.Error e -> show_auth ()
     ] 
-    in OAuth.refresh_token _oauth rtoken !_appid [("client_secret", !_private_key)] oauth_refresh_callback
+    in MyOAuth.refresh_token _oauth rtoken !_appid [("client_secret", !_private_key)] oauth_refresh_callback
 
-  in try 
-    let access_token = KVStorage.get_string storage "ok_access_token"
-    and token_expires = float_of_string (KVStorage.get_string storage "ok_access_token_expires") in 
+  in 
+  try
+    let (access_token,token_expires) = 
+      try 
+        let at = KVStorage.get_string storage "ok_access_token"
+        and te = float_of_string (KVStorage.get_string storage "ok_access_token_expires") in 
+        (at,te)
+      with [ KVStorage.Kv_not_found -> raise Show_auth]
+    in
     if ((Unix.time ()) > token_expires) then (* expired. try to refresh *)
       refresh_token (KVStorage.get_string storage "ok_refresh_token")
     else   
@@ -221,9 +231,9 @@ value call_method ?(delegate=None) meth params =
           | _ -> call_delegate_error e
           ] 
       ]
-      in call_method' meth access_token params callback
-  with [ KVStorage.Kv_not_found -> show_auth() ];  
-  
+      in 
+      call_method' meth access_token params callback
+  with [ Show_auth -> show_auth () ];
 
 
 value get_access_token () = 
