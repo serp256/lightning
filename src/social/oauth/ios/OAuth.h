@@ -9,14 +9,14 @@
 #import <UIKit/UIKit.h>
 #import "../../ios/LightViewController.h"
 
-@interface OAuth : LightViewCompatibleController  <UIWebViewDelegate> {
+@interface OAuth : UIViewController  <UIWebViewDelegate> {
 		NSURL *url;
     NSString * _redirectURIpath;
     UIWebView * _webview;
     UIActivityIndicatorView * _spinner;    
     BOOL _authorizing;
     
-    //UIButton * _closeButton;
+    UIButton * _closeButton;
     UIEdgeInsets _closeButtonInsets;
     NSString * _closeButtonImageName;
     BOOL _closeButtonVisible;    

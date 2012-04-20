@@ -2,9 +2,14 @@
 #import "oauth_wrapper.h"
 #import "../../ios/LightViewController.h"
 
-void ml_authorization_grant(value url,value close_button,value callback) {
+void ml_authorization_grant(value url,value close_button) {
   CAMLparam1(url);
-  OAuth * oauth = [OAuth oauthWithURL:url closeButton:close_button callback:callback];
+	fprintf(stderr,"create oauth\n");
+  OAuth *oauth = [[OAuth alloc] initWithURL:url closeButton:close_button];
+	fprintf(stderr,"sharedInstace - %p, present: %p\n",[LightViewController sharedInstance],oauth);
+	[[LightViewController sharedInstance] presentModalViewController:oauth animated: YES];
+	[oauth release];
+	fprintf(stderr,"oauth presented\n");
 	/*
   if ([LightViewController sharedInstance].presentedViewController == nil) {
     [[LightViewController sharedInstance] presentModalViewController: oauth animated: YES];

@@ -24,13 +24,22 @@ type permission = [ Notify | Friends | Photos | Audio | Video | Docs | Notes | P
 
 type permissions = list permission;
 
-value init : string -> permissions -> unit;
+
+module type Param = sig
+  value appid: string;
+  value permissions:permissions;
+end;
+
+
+module Make(P:Param) : sig
+(* value init : string -> permissions -> unit; *)
   
-value call_method : ?delegate:option delegate -> string -> list (string*string) -> unit;
+  value call_method : ?delegate:option delegate -> string -> list (string*string) -> unit;
 
-value get_access_token : unit -> string;
+  value get_access_token : unit -> string;
 
-value get_user_id : unit -> string;
+  value get_user_id : unit -> string;
+end;
 
 
 

@@ -28,12 +28,12 @@ type error_response =
 
 type auth_response = [ Error of error_response | Token of token_info ];
 
-type auth_grant = [ Code | Implicit ];
+type auth_grant = [ Code of string | Implicit ];
 
 type delegate = (auth_response -> unit);
 
-(* ожидаемые авторизации *)
-value pendings = Queue.create ();
+
+
 
 (* 
    Парсит урл-encoded строку и достает данные о токене.
@@ -194,6 +194,7 @@ value auth_response_of_json json =
 
 
 
+(*
 module type Param = sig
   value auth_endpoint: string; 
   value token_endpoint: string; 
@@ -201,18 +202,14 @@ module type Param = sig
   value grant_type: auth_grant;
   value client_id: string;
   value redirect_uri: string;
-  value params:; ????
+  value params: list (string*string);
 end;
+*)
 
 
 
 IFDEF IOS THEN
-(* Так как стало функторное, и OAuth в obj-c создаеца новый каждый раз, нужно какой-то механизм разруливания конфликтов,
- * сейчас нет случаев чтобы разные сетки попросили одновременно гранты, но вообщем-то по правильному нужно, как-то это замутить
- * Вообщем-то не сложно, сделать стартер какой-то глобальный и он callback оборачивает немного, чтобы запустить следующие если есть
- * но пока нахуй
- *)
-external ml_authorization_grant : string -> (string -> unit) -> option close_button -> unit = "ml_authorization_grant";
+external ml_authorization_grant : string -> option close_button -> unit = "ml_authorization_grant";
 
 (*
 external  set_close_button_insets : int -> int -> int -> int -> unit = "ml_set_close_button_insets";
@@ -222,7 +219,7 @@ external  set_close_button_image_name : string -> unit = "ml_set_close_button_im
 
 ELSE
 
-value ml_authorization_grant (str:string) = ();
+value ml_authorization_grant (str:string) (close_button:option close_button) = debug "HAHAHA";
 (*
 value set_close_button_insets (top:int) (left:int) (right:int) (botton:int) = ();
 value set_close_button_visible (visible: bool) = ();
@@ -231,148 +228,148 @@ value set_close_button_image_name (name:string) = ();
 
 ENDIF;
 
-module Make (P:sig  end) = struct
+(* ожидаемые авторизации *)
+value pendings = Queue.create ();
+type state = [ Standby | Authorizing of (string -> unit) ]; 
+value state = ref Standby;
 
-(*   type state = [ Standby | Authorizing of (string -> unit) ]; *)
-(*   value state = ref Standby; *)
-  (* *)
-  (*
-  value create auth_endpoint token_endpoint = 
-    { auth_endpoint; token_endpoint };
-  *)
+value authorization_grant url close_button callback = 
+  match !state with
+  [ Standby -> 
+    (
+      state.val := Authorizing callback;
+      debug "call ml_auth_grant";
+      ml_authorization_grant url close_button;
+      debug "called auth grant";
+    )
+  | Authorizing _ -> Queue.push (url,close_button,callback) pendings
+  ];
 
+value oauth_redirected url = 
+  match !state with 
+  [ Authorizing cb ->
+      (
+        cb url;
+        try 
+          let (url,close_button,callback) = Queue.pop pendings in
+          (
+            state.val := Authorizing callback;
+            ml_authorization_grant url close_button;
+          )
+        with [ Queue.Empty -> () ]
+      )
+  | Standby -> failwith "Must be Authorizing"
+  ];
+  
+Callback.register "oauth_redirected" oauth_redirected;
 
-
-  (* рефрешим токен *)
-  value refresh_token rtoken params callback = 
-    let grant_type = "refresh_token" in
-    let params = [ ("client_id", client_id) :: [ ("grant_type", grant_type) :: [ ("refresh_token", rtoken) :: params ]]] in
-    let token_url = Printf.sprintf "%s?%s" P.token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
+(* рефрешим токен *)
+value refresh_token ~client_id ~token_endpoint ~rtoken ~params callback = 
+  let grant_type = "refresh_token" in
+  let params = [ ("client_id", client_id) :: [ ("grant_type", grant_type) :: [ ("refresh_token", rtoken) :: params ]]] in
+  let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
+  
+  let loader = new URLLoader.loader () in (
     
-    let loader = new URLLoader.loader () in (
-      
-      ignore (loader#addEventListener URLLoader.ev_IO_ERROR (fun _ _ _ -> 
-          let error = { error = "io_error"; description = "Network error" }
-          in callback (Error error)
-        )
-      );
-      
-      ignore (loader#addEventListener URLLoader.ev_COMPLETE (fun _ _ _ ->
-          try 
-            let json_data = Ojson.from_string loader#data in
-            let response  = auth_response_of_json json_data 
-            in callback response
-          with 
-          [ _ -> 
-            let error = { error = "io_error"; description = "Not a JSON data in response" }
-            in callback (Error error)          
-          ];          
-        );
-      );
-      
-      let request = 
-      { 
-        URLLoader.httpMethod = `POST;
-        headers = [];
-        data = None;
-        url = token_url
-      } in loader#load request;
-
+    ignore (loader#addEventListener URLLoader.ev_IO_ERROR (fun _ _ _ -> 
+        let error = { error = "io_error"; description = "Network error" }
+        in callback (Error error)
+      )
     );
-
-
-  (* получаем токен, имея code. Используется в схеме Auth Code Grant *)
-  value get_token_by_code code params callback = 
-    let grant_type = "authorization_code" in
-    let params = [ ( "client_id", client_id) :: [ ("grant_type", grant_type) :: [ ("code", code) :: [ ("redirect_uri", redirect_uri) :: params ]]]] in
-    let token_url = Printf.sprintf "%s?%s" P.token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
-
-    let () = Printf.eprintf "Going to: %s\n%!" token_url in
     
-    let loader = new URLLoader.loader () in (  
-      ignore (loader#addEventListener URLLoader.ev_IO_ERROR (fun _ _ _ -> 
-          let error = { error = "io_error"; description = "Network error" }
-          in callback (Error error)
-        )
+    ignore (loader#addEventListener URLLoader.ev_COMPLETE (fun _ _ _ ->
+        try 
+          let json_data = Ojson.from_string loader#data in
+          let response  = auth_response_of_json json_data 
+          in callback response
+        with 
+        [ _ -> 
+          let error = { error = "io_error"; description = "Not a JSON data in response" }
+          in callback (Error error)          
+        ];          
       );
-      
-      ignore (loader#addEventListener URLLoader.ev_COMPLETE (fun _ _ _ ->
-          try 
-            let json_data = Ojson.from_string loader#data in
-            let response  = auth_response_of_json json_data 
-            in callback response
-          with 
-          [ _ -> 
-            let error = { error = "io_error"; description = "Not a JSON data in response" }
-            in callback (Error error)          
-          ];          
-        );
-      );
-      
-      let request = 
-      { 
-        URLLoader.httpMethod = `POST;
-        headers = [];
-        data = None;
-        url = token_url
-      } in loader#load request;
-
     );
-
-
-  (* Запрашиваем авторизацию. *)
-  value authorization_grant callback = 
-    match !state with
-    [ Standby ->
-        let response_type = match gtype with [ Code -> "code" | Implicit -> "token" ] in
-        let params' = [ ("client_id", client_id) :: [ ("redirect_uri", redirect_uri) :: [ ("response_type", response_type) :: params ]]] in
-        let auth_url = Printf.sprintf "%s?%s" P.auth_endpoint (UrlEncoding.mk_url_encoded_parameters params') in
-        (
-          let () = Printf.eprintf "Going to: %s\n%!" auth_url in
-
-          let handler = 
-            let () = Printf.eprintf "Got URL: %s\n%!" url in
-            match gtype with
-            [ Code -> 
-              fun url ->
-                let pstr = extarct_params_string_from_url url in
-                let qs_params = UrlEncoding.dest_url_encoded_parameters pstr in 
-                try 
-                  let error = List.assoc "error" qs_params 
-                  in callback (Error { error; description = "" })
-                with [ Not_found ->
-                  try 
-                    let code = List.assoc "code" qs_params
-                    in get_token_by_code code client_id redirect_uri params callback
-                  with [ Not_found -> callback (Error { error = "invalid_response_data"; description = "error or code must be there..." }) ]
-                ]
-            | Implicit -> fun url -> callback (auth_response_of_url url)
-            ]
-          in 
-(*           state.val := (Authorizing handler);                                                                                                                                              *)
-          ml_authorization_grant auth_url P.close_button handler
-        )
-    | Authorizing _   -> Queue.add run pendings
-    ];
     
+    let request = 
+    { 
+      URLLoader.httpMethod = `POST;
+      headers = [];
+      data = None;
+      url = token_url
+    } in loader#load request;
+
+  );
 
 
-  (*
-  value oauth_redirected url = 
-    match !state with 
-    [ Authorizing cb ->
-        (
-          state.val := Standby;
-          cb url;
+(* получаем токен, имея code. Используется в схеме Auth Code Grant *)
+value get_token_by_code client_id token_endpoint redirect_uri params code callback = 
+  let grant_type = "authorization_code" in
+  let params = 
+    [ ( "client_id", client_id) ; ("grant_type", grant_type) ; ("code", code) ; ("redirect_uri", redirect_uri) :: params ] in
+  let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
+
+  let () = Printf.eprintf "Going to: %s\n%!" token_url in
+  
+  let loader = new URLLoader.loader () in (  
+    ignore (loader#addEventListener URLLoader.ev_IO_ERROR (fun _ _ _ -> 
+        let error = { error = "io_error"; description = "Network error" }
+        in callback (Error error)
+      )
+    );
+    
+    ignore (loader#addEventListener URLLoader.ev_COMPLETE (fun _ _ _ ->
+        try 
+          let () = debug "get_token_result: %s" loader#data in
+          let json_data = Ojson.from_string loader#data in
+          let response  = auth_response_of_json json_data 
+          in callback response
+        with 
+        [ _ -> 
+          let error = { error = "io_error"; description = "Not a JSON data in response" }
+          in callback (Error error)          
+        ];          
+      );
+    );
+    
+    let request = 
+    { 
+      URLLoader.httpMethod = `POST;
+      headers = [];
+      data = None;
+      url = token_url
+    } in loader#load request;
+
+  );
+
+
+(* Запрашиваем авторизацию. *)
+value authorization_grant ~client_id ~auth_endpoint ~redirect_uri ~gtype ~params ?close_button callback = 
+  let response_type = match gtype with [ Code _ -> "code" | Implicit -> "token" ] in
+  let params' = [ ("client_id", client_id) :: [ ("redirect_uri", redirect_uri) :: [ ("response_type", response_type) :: params ]]] in
+  let auth_url = Printf.sprintf "%s?%s" auth_endpoint (UrlEncoding.mk_url_encoded_parameters params') in
+  (
+    let () = debug "Going to: %s" auth_url in
+    let handler = 
+      match gtype with
+      [ Code token_endpoint -> 
+        fun url ->
+          let () = debug "Got URL: %s" url in
+          let pstr = extarct_params_string_from_url url in
+          let qs_params = UrlEncoding.dest_url_encoded_parameters pstr in 
           try 
-            ((Queue.take pendings) ());
-          with [ Queue.Empty -> () ]
-        )
-    | Standby -> failwith "Must be Authorizing"
-    ];
-    
-  Callback.register "oauth_redirected" oauth_redirected;
-  *)
-
-end;
-
+            let error = List.assoc "error" qs_params 
+            in callback (Error { error; description = "" })
+          with [ Not_found ->
+            try 
+              let code = List.assoc "code" qs_params
+              in get_token_by_code client_id token_endpoint redirect_uri params code callback
+            with [ Not_found -> callback (Error { error = "invalid_response_data"; description = "error or code must be there..." }) ]
+          ]
+      | Implicit -> 
+          fun url -> 
+            let () = debug "Got URL: %s!" url in
+            callback (auth_response_of_url url)
+      ]
+    in 
+    authorization_grant auth_url close_button handler
+  );

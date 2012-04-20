@@ -31,13 +31,13 @@ value get_storage () =
     )
   ];
 
-value get_string k = try Hashtbl.find (get_stroage()) k with [ Not_found -> raise Kv_not_found ];
+value get_string k = try Hashtbl.find (get_storage()) k with [ Not_found -> raise Kv_not_found ];
 value get_bool k = try bool_of_string (Hashtbl.find (get_storage()) k) with [ Not_found -> raise Kv_not_found ];
-value get_int k = try int_of_string (Hashtbl.find s k) with [ Not_found -> raise Kv_not_found ];
+value get_int k = try int_of_string (Hashtbl.find (get_storage()) k) with [ Not_found -> raise Kv_not_found ];
       
-value put_string k v = Hashtbl.add s k v;
-value put_bool k v = Hashtbl.add s k (string_of_bool v); 
-value put_int k v = Hashtbl.add s k (string_of_int v);
+value put_string k v = Hashtbl.add (get_storage()) k v;
+value put_bool k v = Hashtbl.add (get_storage()) k (string_of_bool v); 
+value put_int k v = Hashtbl.add (get_storage()) k (string_of_int v);
 value remove k = Hashtbl.remove (get_storage()) k;
 value exists k = Hashtbl.mem (get_storage()) k;
 
