@@ -19,7 +19,10 @@ void ml_texture_id_delete(value textureID) {
 	PRINT_DEBUG("delete texture: <%d>\n",tid);
 	if (tid) {
 		glDeleteTextures(1,&tid);
-		TEX(textureID)->tid = 0;
+		struct tex *t = TEX(textureID);
+		t->tid = 0;
+		total_tex_mem -= t->mem;
+		caml_free_dependent_memory(t->mem);
 	};
 }
 
@@ -30,8 +33,12 @@ void update_texture_id(value mlTextureID,GLuint textureID) {
 static void textureID_finalize(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
 	PRINT_DEBUG("finalize texture: <%d>\n",tid);
-	if (textureID) glDeleteTextures(1,&tid);
-	total_tex_mem -= TEX(textureID)->mem;
+	if (textureID) {
+		glDeleteTextures(1,&tid);
+		struct tex *t = TEX(textureID);
+		total_tex_mem -= t->mem;
+		caml_free_dependent_memory(t->mem);
+	};
 	PRINT_DEBUG("TEXTURE MEMORY (dealloc): %d\n",total_tex_mem);
 }
 
@@ -55,6 +62,7 @@ struct custom_operations textureID_ops = {
 };
 
 #define Store_textureID(mltex,texID,dataLen) \
+	caml_alloc_dependent_memory(dataLen); \
 	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
 	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; PRINT_DEBUG("TEXTURE MEMORY (alloc %d): %d\n",dataLen,total_tex_mem);}
 //*TEXTURE_ID(mlTextureID) = tid;
@@ -713,6 +721,8 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 			value mlTextureID;
 			Store_textureID(mlTextureID,rb->tid,legalWidth*legalHeight*4);
 			TEX(Field(renderInfo,0))->tid = 0;
+			caml_free_dependent_memory(TEX(Field(renderInfo,0))->mem);
+			total_tex_mem -= TEX(Field(renderInfo,0))->mem;
 			Store_field(renderInfo,0,mlTextureID);
 		};
 	};

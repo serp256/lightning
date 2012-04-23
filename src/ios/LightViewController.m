@@ -23,7 +23,7 @@
 static LightViewController *instance = NULL;
 
 static void mlUncaughtException(const char* message) {
-	NSString * to = @"mobile-nanofarm@redspell.ru";
+	NSString * to = @"nanofarm@redspell.ru";
   NSString * subj = [NSString stringWithFormat:@"Сообщение об ошибке в игре '%@'", [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
 	UIDevice * dev = [UIDevice currentDevice];
 	NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleVersion"];
