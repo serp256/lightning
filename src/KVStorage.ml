@@ -11,7 +11,7 @@ value commit s =
   close_out ch
 );
 
-value create () = 
+value get_storage () = 
   match !storage with
   [ Some s -> s
   | None ->
@@ -31,54 +31,59 @@ value create () =
     )
   ];
 
-value get_string s k = try Hashtbl.find s k with [ Not_found -> raise Kv_not_found ];
-value get_bool s k = try bool_of_string (Hashtbl.find s k) with [ Not_found -> raise Kv_not_found ];
-value get_int s k = try int_of_string (Hashtbl.find s k) with [ Not_found -> raise Kv_not_found ];
+value get_string k = try Hashtbl.find (get_storage()) k with [ Not_found -> raise Kv_not_found ];
+value get_bool k = try bool_of_string (Hashtbl.find (get_storage()) k) with [ Not_found -> raise Kv_not_found ];
+value get_int k = try int_of_string (Hashtbl.find (get_storage()) k) with [ Not_found -> raise Kv_not_found ];
       
-value put_string s k v = Hashtbl.add s k v;
-value put_bool s k v = Hashtbl.add s k (string_of_bool v); 
-value put_int s k v = Hashtbl.add s k (string_of_int v);
-value remove s k = Hashtbl.remove s k;
-value exists s k = Hashtbl.mem s k;
+value put_string k v = Hashtbl.add (get_storage()) k v;
+value put_bool k v = Hashtbl.add (get_storage()) k (string_of_bool v); 
+value put_int k v = Hashtbl.add (get_storage()) k (string_of_int v);
+value remove k = Hashtbl.remove (get_storage()) k;
+value exists k = Hashtbl.mem (get_storage()) k;
 
-value get_string_opt s (k:string) = try Some (get_string s k) with [ Kv_not_found -> None ];
-value get_bool_opt s k = try Some (get_bool s k) with [ Kv_not_found -> None ];
-value get_int_opt s k = try Some (get_int s k) with [ Kv_not_found -> None ];
+value get_string_opt (k:string) = try Some (get_string k) with [ Kv_not_found -> None ];
+value get_bool_opt k = try Some (get_bool k) with [ Kv_not_found -> None ];
+value get_int_opt k = try Some (get_int k) with [ Kv_not_found -> None ];
  
 ELSE
-type t;
 
-external ml_create : unit -> t = "ml_kv_storage_create";
-external ml_commit : t -> unit = "ml_kv_storage_commit";
+(* external ml_create : unit -> t = "ml_kv_storage_create"; *)
+external commit : unit -> unit = "ml_kv_storage_commit";
 
-external ml_get_string : t -> string -> option string = "ml_kv_storage_get_string";
-external ml_get_bool : t -> string -> option bool = "ml_kv_storage_get_bool";
-external ml_get_int : t -> string -> option int = "ml_kv_storage_get_int";
+external get_string_opt : string -> option string = "ml_kv_storage_get_string";
+external get_bool_opt : string -> option bool = "ml_kv_storage_get_bool";
+external get_int_opt : string -> option int = "ml_kv_storage_get_int";
 
-external ml_put_string : t -> string -> string -> unit = "ml_kv_storage_put_string";
-external ml_put_bool :   t -> string -> bool -> unit = "ml_kv_storage_put_bool";
-external ml_put_int  :   t -> string -> int -> unit = "ml_kv_storage_put_int";
-external ml_remove   :   t -> string -> unit = "ml_kv_storage_remove";
-external ml_exists   :   t -> string -> bool = "ml_kv_storage_exists"; 
-
+external put_string : string -> string -> unit = "ml_kv_storage_put_string";
+external put_bool :  string -> bool -> unit = "ml_kv_storage_put_bool";
+external put_int  :  string -> int -> unit = "ml_kv_storage_put_int";
+external remove   :  string -> unit = "ml_kv_storage_remove";
+external exists   :  string -> bool = "ml_kv_storage_exists"; 
 
 
+
+(*
 value create = ml_create;
 value commit = ml_commit;
+*)
 
+(*
 value get_string_opt = ml_get_string;
 value get_bool_opt  = ml_get_bool;
 value get_int_opt   = ml_get_int;
+*)
 
-value get_string  t k = match get_string_opt t k with [ Some s -> s | None -> raise Kv_not_found ];
-value get_bool    t k = match get_bool_opt t k with [ Some b -> b   | None -> raise Kv_not_found ];
-value get_int     t k = match get_int_opt t k with [ Some i -> i    | None -> raise Kv_not_found ];
+value get_string  k = match get_string_opt k with [ Some s -> s | None -> raise Kv_not_found ];
+value get_bool    k = match get_bool_opt k with [ Some b -> b   | None -> raise Kv_not_found ];
+value get_int     k = match get_int_opt k with [ Some i -> i    | None -> raise Kv_not_found ];
 
+(*
 value put_string = ml_put_string;
 value put_bool = ml_put_bool;
 value put_int = ml_put_int;
 value remove  = ml_remove;
 value exists  = ml_exists;
+*)
 
 ENDIF;
 

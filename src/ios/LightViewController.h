@@ -29,7 +29,6 @@
 +(LightViewController*)sharedInstance;
 -(void)becomeActive;
 -(void)resignActive;
--(void)becomeActive;
 -(void)background;
 -(void)foreground;
 -(void)showLeaderboard;
@@ -42,11 +41,12 @@
 
 @end
 
-// при модальном показе LightViewController паузит себя, однако он не знает, когда показываемый им контроллер 
+/* при модальном показе LightViewController паузит себя, однако он не знает, когда показываемый им контроллер 
 // дисмиссится, соответственно не может продолжить работу.
 // контроллеры, которые мы показыавем поверх должны наследоваться от этого контроллера.
 @interface LightViewCompatibleController : UIViewController
 @end
+*/
 
 
 

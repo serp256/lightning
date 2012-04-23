@@ -93,24 +93,27 @@ void ml_show_alert(value otitle,value omessage) {
 
 //////////// key-value storage based on NSUserDefaults
 
+/*
 value ml_kv_storage_create() {
   CAMLparam0();
   CAMLreturn((value)[NSUserDefaults standardUserDefaults]);
 }
+*/
+
+
+#define USER_DEFAULTS [NSUserDefaults standardUserDefaults]
 
 void ml_kv_storage_commit(value storage) {
-  CAMLparam1(storage);
-  [(NSUserDefaults *)storage synchronize];
-  CAMLreturn0;
+  [USER_DEFAULTS synchronize];
 }
 
 
-value ml_kv_storage_get_string(value storage, value key_ml) {
-  CAMLparam2(storage, key_ml);
+value ml_kv_storage_get_string(value key_ml) {
+  CAMLparam1(key_ml);
   CAMLlocal1(tuple);
 
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  NSString * val = [(NSUserDefaults *)storage stringForKey: key];
+  NSString * val = [USER_DEFAULTS stringForKey:key];
   if (val == nil) {
     CAMLreturn(Val_int(0));
   }
@@ -122,17 +125,18 @@ value ml_kv_storage_get_string(value storage, value key_ml) {
 }
 
 
-value ml_kv_storage_get_bool(value storage, value key_ml) {
-  CAMLparam2(storage, key_ml);
+value ml_kv_storage_get_bool(value key_ml) {
+  CAMLparam1(key_ml);
   CAMLlocal1(tuple);
 
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
   
-  if ([(NSUserDefaults *)storage objectForKey: key] == nil) {
+	NSUserDefaults *d = USER_DEFAULTS;
+  if ([d objectForKey: key] == nil) {
     CAMLreturn(Val_int(0));
   }
   
-  BOOL val = [(NSUserDefaults *)storage boolForKey: key];
+  BOOL val = [d boolForKey: key];
   tuple = caml_alloc_tuple(1);
   Store_field(tuple,0,Val_bool(val));
   
@@ -140,17 +144,18 @@ value ml_kv_storage_get_bool(value storage, value key_ml) {
 }
 
 
-value ml_kv_storage_get_int(value storage, value key_ml) {
-  CAMLparam2(storage, key_ml);
+value ml_kv_storage_get_int(value key_ml) {
+  CAMLparam1(key_ml);
   CAMLlocal1(tuple);
 
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
   
-  if ([(NSUserDefaults *)storage objectForKey: key] == nil) {
+	NSUserDefaults *d = USER_DEFAULTS;
+  if ([d objectForKey: key] == nil) {
     CAMLreturn(Val_int(0));
   }
   
-  NSInteger val = [(NSUserDefaults *)storage integerForKey: key];
+  NSInteger val = [d integerForKey: key];
   tuple = caml_alloc_tuple(1);
   Store_field(tuple,0,Val_int(val));
   
@@ -158,45 +163,37 @@ value ml_kv_storage_get_int(value storage, value key_ml) {
 }
 
 
-void ml_kv_storage_put_string(value storage, value key_ml, value val_ml) {
-  CAMLparam3(storage, key_ml, val_ml);
+void ml_kv_storage_put_string(value key_ml, value val_ml) {
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
   NSString * val = [NSString stringWithCString:String_val(val_ml) encoding:NSUTF8StringEncoding];
-  [(NSUserDefaults *)storage setObject: val forKey: key];
-  CAMLreturn0;
+  [USER_DEFAULTS setObject: val forKey: key];
 }
 
 
-void ml_kv_storage_put_bool(value storage, value key_ml, value val_ml) {
-  CAMLparam3(storage, key_ml, val_ml);
+void ml_kv_storage_put_bool(value key_ml, value val_ml) {
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  [(NSUserDefaults *)storage setBool: Bool_val(val_ml) forKey: key];
-  CAMLreturn0;
+  [USER_DEFAULTS setBool: Bool_val(val_ml) forKey: key];
 }
 
 
-void ml_kv_storage_put_int(value storage, value key_ml, value val_ml) {
-  CAMLparam3(storage, key_ml, val_ml);
+void ml_kv_storage_put_int(value key_ml, value val_ml) {
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  [(NSUserDefaults *)storage setInteger: Int_val(val_ml) forKey: key];
-  CAMLreturn0;
+  [USER_DEFAULTS setInteger: Int_val(val_ml) forKey: key];
 }
 
 
 
-void ml_kv_storage_remove(value storage, value key_ml) {
-  CAMLparam2(storage, key_ml);
+void ml_kv_storage_remove(value key_ml) {
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  [(NSUserDefaults *)storage removeObjectForKey: key];  
-  CAMLreturn0;
+  [USER_DEFAULTS removeObjectForKey: key];  
 }
 
 
-value ml_kv_storage_exists(value storage, value key_ml) {
-  CAMLparam2(storage, key_ml);
+value ml_kv_storage_exists(value key_ml) {
+  CAMLparam1(key_ml);
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
   
-  if ([(NSUserDefaults *)storage objectForKey: key] == nil) {
+  if ([USER_DEFAULTS objectForKey: key] == nil) {
     CAMLreturn(Val_false);
   }
   

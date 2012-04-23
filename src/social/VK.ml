@@ -7,13 +7,10 @@ type permission =
 
 type permissions = list permission;
 
-value storage = KVStorage.create ();
+value auth_endpoint = "http://oauth.vk.com/authorize";
+(* value _oauth = OAuth.create "http://oauth.vk.com/authorize" ""; *)
 
-value _oauth = OAuth.create "http://oauth.vk.com/authorize" "";
 
-value _appid = ref "";
-
-value _perms = ref None;
 
 (* *)
 value string_of_permission = fun
@@ -39,15 +36,6 @@ value string_of_permission = fun
 value scope_of_perms perms = 
   String.concat "," (List.map string_of_permission perms);
   
-
-(* Используйте необязательный параметр scope чтобы запросить у пользователя требующиеся вашему приложению привилегии. *)
-value init appid perms = (
-  _appid.val := appid;
-  _perms.val := Some (scope_of_perms perms);
-);
-
-
-
 (* достаем ошибку *)
 value extract_error_from_json json = 
   match json with 
@@ -72,20 +60,34 @@ value extract_error_from_json json =
   | _ -> raise Not_found 
   ];
   
+module type Param = sig
+  value appid: string;
+  value permissions:permissions;
+end;
+
+
+module Make(P:Param) = struct
+
+(* Используйте необязательный параметр scope чтобы запросить у пользователя требующиеся вашему приложению привилегии. 
+value init appid perms = (
+  _appid.val := appid;
+  _perms.val := Some (scope_of_perms perms);
+);
+*)
 
 
 (* проверяем все ли данные есть и сохраняем токен *)
 value handle_new_access_token token_info = 
   let uid = List.assoc "user_id" token_info.OAuth.other_params in (
 
-    KVStorage.put_string storage "vk_access_token" token_info.OAuth.access_token;
-    KVStorage.put_string storage "vk_user_id" uid;
+    KVStorage.put_string "vk_access_token" token_info.OAuth.access_token;
+    KVStorage.put_string "vk_user_id" uid;
     
     match token_info.OAuth.expires_in with 
     [ Some seconds -> 
         let expires = string_of_float ((float_of_int seconds) +. Unix.time ())
-        in KVStorage.put_string storage "vk_access_token_expires" expires
-    | None -> KVStorage.remove storage "vk_access_token_expires"
+        in KVStorage.put_string "vk_access_token_expires" expires
+    | None -> KVStorage.remove "vk_access_token_expires"
     ];
     
     (token_info.OAuth.access_token, uid);
@@ -130,9 +132,10 @@ value call_method' meth access_token params callback =
   );
   
 
+exception Show_auth;
 
 (* Вызываем REST method. Если нужно, проводим авторизацию *)
-value call_method ?(delegate=None) meth params = 
+value call_method ?delegate meth params = 
   
   let (call_delegate_success, call_delegate_error) =  
     match delegate with 
@@ -144,8 +147,8 @@ value call_method ?(delegate=None) meth params =
   (* функция показа авторизации. при успехе выполняем REST метод *)
   let show_auth () = 
     let redirect_uri = "http://api.vk.com/blank.html"
-    and oauth_params = [("display", "touch")]
-    and oauth_callback = fun 
+    and params = [("display", "touch")]
+    and callback = fun 
       [ OAuth.Token  t ->  
           let access_token_info = 
             try 
@@ -162,35 +165,43 @@ value call_method ?(delegate=None) meth params =
           ]
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
-    in OAuth.authorization_grant _oauth OAuth.Implicit !_appid redirect_uri oauth_params oauth_callback
+    in OAuth.authorization_grant ~client_id:P.appid ~auth_endpoint ~gtype:OAuth.Implicit ~redirect_uri ~params callback
 
   in try 
-    let access_token = KVStorage.get_string storage "vk_access_token"
-    and token_expires = float_of_string (KVStorage.get_string storage "vk_access_token_expires") in 
+    let (access_token,token_expires) = 
+      try
+        let at = KVStorage.get_string "vk_access_token"
+        and te = float_of_string (KVStorage.get_string "vk_access_token_expires") 
+        in
+        (at,te)
+      with [ KVStorage.Kv_not_found -> raise Show_auth ]
+    in 
     if ((Unix.time ()) > token_expires) then (* expired. show auth *)
       show_auth ()
     else   
       let callback = fun 
-      [ Data json   -> call_delegate_success json
-      | Error e     -> match e with
-          [ SocialNetworkError ("5", _) -> show_auth()
-          | _ -> call_delegate_error e
-          ] 
-      ]
-      in call_method' meth access_token params callback
-  with [ KVStorage.Kv_not_found -> show_auth() ];  
+        [ Data json   -> call_delegate_success json
+        | Error e     -> match e with
+            [ SocialNetworkError ("5", _) -> show_auth()
+            | _ -> call_delegate_error e
+            ] 
+        ]
+      in 
+      call_method' meth access_token params callback
+  with [ Show_auth -> show_auth() ];  
 
 
 
 value get_access_token () = 
   try 
-    KVStorage.get_string storage "vk_access_token"
+    KVStorage.get_string "vk_access_token"
   with [ KVStorage.Kv_not_found -> raise Not_found ];
 
 
 value get_user_id () = 
   try 
-    KVStorage.get_string storage "vk_user_id"
+    KVStorage.get_string "vk_user_id"
   with [ KVStorage.Kv_not_found -> raise Not_found ];  
 
 
+end;

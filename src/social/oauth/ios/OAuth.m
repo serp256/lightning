@@ -13,44 +13,80 @@
 #import <caml/alloc.h>
 #import <caml/threads.h> 
 
-#define CLOSE_BUTTON_HEIGHT 25
+#define CLOSE_BUTTON_HEIGHT 25 // ???
 #define CLOSE_BUTTON_WIDTH  25
 
-static OAuth * sharedOAuth = nil;
+//static OAuth * sharedOAuth = nil;
 
 @implementation OAuth
 
-@dynamic closeButtonInsets, closeButtonImageName, closeButtonVisible;
+//@dynamic closeButtonInsets, closeButtonImageName, closeButtonVisible;
+
 
 /* 
  * Initialize
  */
--(id)init {
+-(id)initWithURL:(value)mlURL closeButton:(value)mlCloseButton {
 	self = [super init];
+	NSLog(@"init OAUTH");
 
 	if (self != nil) {
 		self.modalPresentationStyle = UIModalPresentationFormSheet;
 		_authorizing = NO;
+		// close button
 		_closeButton = nil;
-		_closeButtonVisible = NO;
-		_closeButtonImageName = @"close_auth_dialog_btn";
 		_closeButtonInsets =  UIEdgeInsetsZero;
+		_closeButtonImageName = @"close_auth_dialog_btn";
+		if (Is_block(mlCloseButton)) {
+			value button = Field(mlCloseButton,0);
+			_closeButtonVisible = YES;
+			// insets
+			value insets = Field(button,0);
+			_closeButtonInsets = 
+				UIEdgeInsetsMake(Int_val(Field(insets,0)), Int_val(Field(insets,1)), Int_val(Field(insets,2)), Int_val(Field(insets,3)));
+			// image
+			if (Is_block(Field(button,1))) {
+				value image = Field(Field(button,1),0);
+				_closeButtonImageName = [[NSString alloc] initWithCString:String_val(image) encoding:NSUTF8StringEncoding];
+			}
+		} else _closeButtonVisible = NO;
+
+		// URL
+		url = [[NSURL alloc] initWithString:[NSString stringWithCString:String_val(mlURL) encoding:NSASCIIStringEncoding]];
+		NSRange redirect_range = [url.query rangeOfString:@"redirect_uri="];
+		NSRange amp_search_range;
+		amp_search_range.location = redirect_range.location + redirect_range.length;
+		amp_search_range.length = [url.query length] - amp_search_range.location;
+				
+		NSRange amp_range = [url.query rangeOfString:@"&" options:0 range:amp_search_range];
+		NSRange substr_range;
+		substr_range.location = amp_search_range.location;
+		
+		if (amp_range.location == NSNotFound) {
+				substr_range.length   = [url.query length] - redirect_range.length - redirect_range.location;
+		} else {
+				substr_range.length   = amp_range.location - substr_range.location;    
+		}
+		 
+		NSURL *u = [NSURL URLWithString:[[url.query substringWithRange:substr_range] stringByReplacingPercentEscapesUsingEncoding:NSASCIIStringEncoding]];
+		_redirectURIpath = [u.path retain];
+
+		_webview = nil;
+		_spinner = nil;
 	}
 
 	return self;
 }
 
+-(void)start {
+	[[LightViewController sharedInstance] presentModalViewController:self animated: YES];
+}
 
 /*
- *
- */
 -(void)updateCloseButtonImage {
   [_closeButton setImage: [UIImage imageNamed: _closeButtonImageName] forState: UIControlStateNormal];
 }
 
-/*
- *
- */
 -(void)updateCloseButtonFrame {
   CGRect rect = [UIScreen mainScreen].applicationFrame;
   _closeButton.frame = CGRectMake(rect.size.width - CLOSE_BUTTON_WIDTH - _closeButtonInsets.right, 
@@ -59,22 +95,21 @@ static OAuth * sharedOAuth = nil;
                                   CLOSE_BUTTON_HEIGHT);
 }
 
-/*
- *
- */
 -(void)createCloseButton {
   _closeButton = [[UIButton buttonWithType: UIButtonTypeCustom] retain];
-  [self updateCloseButtonImage];
-  [self updateCloseButtonFrame];
+  [_closeButton setImage: [UIImage imageNamed: _closeButtonImageName] forState: UIControlStateNormal];
+  CGRect rect = [UIScreen mainScreen].applicationFrame;
+  _closeButton.frame = CGRectMake(rect.size.width - CLOSE_BUTTON_WIDTH - _closeButtonInsets.right, 
+                                  _closeButtonInsets.top, 
+                                  CLOSE_BUTTON_WIDTH, 
+                                  CLOSE_BUTTON_HEIGHT);
   [_closeButton addTarget: self action:@selector(onCloseButton) forControlEvents: UIControlEventTouchUpInside];
   _closeButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
 }
-
+ */
 
 
 /*
- *
- */
 -(void)setCloseButtonInsets: (UIEdgeInsets)insets {
     _closeButtonInsets = insets;
     if (_closeButton != nil) {
@@ -82,17 +117,10 @@ static OAuth * sharedOAuth = nil;
     }
 }
 
-/*
- *
- */
 -(UIEdgeInsets)closeButtonInsets {
   return _closeButtonInsets;
 }
 
-
-/*
- *
- */
 -(void)setCloseButtonImageName: (NSString *)name {
   if (_closeButtonImageName != nil) {
     [_closeButtonImageName release];
@@ -105,19 +133,11 @@ static OAuth * sharedOAuth = nil;
   }
 }
 
-
-/*
- *
- */
 -(NSString *)closeButtonImageName {
   return _closeButtonImageName;
 }
 
 
-
-/*
- *
- */
 -(void)setCloseButtonVisible: (BOOL)visible {
   _closeButtonVisible = visible;
   if (_closeButton == nil && [self isViewLoaded]) {
@@ -126,10 +146,6 @@ static OAuth * sharedOAuth = nil;
   }
 }
 
-
-/*
- *
- */
 -(BOOL)closeButtonVisible {
   return _closeButtonVisible;
 }
@@ -144,14 +160,15 @@ static OAuth * sharedOAuth = nil;
   return sharedOAuth;
 }
 
+*/
+
 
 /*
  * Вконтакте выставляют в мета тэге viewport атрибут width в device-width, поэтому при модальном показе на iPad
  * длинна контента получается 768 (или 1024 в зависимости от ориентации). Из-за этого появляется скрол и вообще выглядит как говно.
  */
 -(NSString *) setViewportWidth:(CGFloat)inWidth {
-	UIWebView * w = (UIWebView *)self.view;
-	NSString *result = [w stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"(function ( inWidth ) { "
+	NSString *result = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"(function ( inWidth ) { "
 		"var result = ''; "
 		"var viewport = null; "
 		"var content = 'width = ' + inWidth; "
@@ -189,12 +206,11 @@ static OAuth * sharedOAuth = nil;
 
 
 -(void)onCloseButton {
-  [_webview stopLoading];
-  
-  [self dismissModalViewControllerAnimated: YES];
-  value *mlf = (value*)caml_named_value("oauth_redirected");
-  NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+	[_webview stopLoading];
+	NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
   caml_acquire_runtime_system();
+  value *mlf = (value*)caml_named_value("oauth_redirected");
   if (mlf != NULL) {                                                                                                        
     caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
   }
@@ -207,89 +223,104 @@ static OAuth * sharedOAuth = nil;
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)loadView {                                                                                                                                                                       
-    CGRect rect = [UIScreen mainScreen].applicationFrame; 
-    _webview = [[UIWebView alloc] initWithFrame: rect];                                                                                                                                 
-    _webview.delegate = self;                                                                                                                                                           
-    _webview.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;                                                                                     
-    _webview.scalesPageToFit = NO;                                                                                                                                                      
-    self.view = _webview;   
-    
-    _spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    _spinner.center = CGPointMake(CGRectGetMidX(_webview.frame), CGRectGetMidY(_webview.frame));
-    _spinner.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleRightMargin ;
-    [self.view addSubview:_spinner];
-    
-    if (_closeButtonVisible) {
-      [self createCloseButton];
-      [self.view addSubview: _closeButton];
-    }
-    
-}                                                                                                                                                                                       
+	NSLog(@"OAUTH load view");
+	CGRect rect = [UIScreen mainScreen].applicationFrame; 
+	_webview = [[UIWebView alloc] initWithFrame: rect];                                                                                                                                 
+	_webview.delegate = self;                                                                                                                                                           
+	_webview.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;                                                                                     
+	_webview.scalesPageToFit = NO;                                                                                                                                                      
+	self.view = _webview;   
 
+	_spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+	_spinner.center = CGPointMake(CGRectGetMidX(_webview.frame), CGRectGetMidY(_webview.frame));
+	_spinner.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleRightMargin ;
+	[self.view addSubview:_spinner];
+
+	if (_closeButtonVisible) {
+		_closeButton = [[UIButton buttonWithType:UIButtonTypeCustom] retain];
+		[_closeButton setImage: [UIImage imageNamed: _closeButtonImageName] forState: UIControlStateNormal];
+		CGRect rect = [UIScreen mainScreen].applicationFrame;
+		_closeButton.frame = CGRectMake(rect.size.width - CLOSE_BUTTON_WIDTH - _closeButtonInsets.right, 
+																		_closeButtonInsets.top, 
+																		CLOSE_BUTTON_WIDTH, 
+																		CLOSE_BUTTON_HEIGHT);
+		[_closeButton addTarget: self action:@selector(onCloseButton) forControlEvents: UIControlEventTouchUpInside];
+		_closeButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
+		[self.view addSubview: _closeButton];
+	}
+    
+	_authorizing = YES;
+	[_webview loadRequest:[NSURLRequest requestWithURL:url]];                                                                                                                          
+}
+
+-(void)viewDidUnload {
+	NSLog(@"VIEW did unload");
+	if (_closeButton) [_closeButton release];
+	_webview.delegate = nil;
+	[_webview release];
+	_webview = nil;
+	[_spinner release];
+	_spinner = nil;
+}
 
 /*                                                                                                                                                                                      
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)orientation {                                                                                                    
-    return YES;                                                                                                                                                                         
+	return [[LightViewController sharedInstance] shouldAutorotateToInterfaceOrientation:orientation];
 }                                                                                                                                                                                       
 
 
 /*                                                                                                                                                                                      
  *  Show auth dialog                                                                                                                                                                    
- */                                                                                                                                                                                     
 -(void)authorize:(NSURL *)url { 
+	if (_webview == nil) return; // raise exn
 
-    _authorizing = YES;
+	_authorizing = YES;
 
-    NSRange redirect_range = [url.query rangeOfString:@"redirect_uri="];
-    NSRange amp_search_range;
-    amp_search_range.location = redirect_range.location + redirect_range.length;
-    amp_search_range.length = [url.query length] - amp_search_range.location;
-        
-    NSRange amp_range = [url.query rangeOfString:@"&" options:0 range:amp_search_range];
-    NSRange substr_range;
-    substr_range.location = amp_search_range.location;
-    
-    if (amp_range.location == NSNotFound) {
-        substr_range.length   = [url.query length] - redirect_range.length - redirect_range.location;
-    } else {
-        substr_range.length   = amp_range.location - substr_range.location;    
-    }
-     
-    NSURL * u = [NSURL URLWithString:[[url.query substringWithRange:substr_range] stringByReplacingPercentEscapesUsingEncoding:NSASCIIStringEncoding]];
-    _redirectURIpath = [u.path retain];
-    
-    NSLog(@"Saved path %@", _redirectURIpath);
-    
-    /*                                                                                                                                                                                      
-     NSString * urlstr = [NSString stringWithFormat:@"http://oauth.vkontakte.ru/authorize?client_id=%@&scope=%@&redirect=%@&display=touch&response_type=token",                          
-     _appid, permissions, [@"http://oauth.vkontakte.ru/blank.html" stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];                                                
-     */                                                                                                                                                                                      
-    
-    [_webview loadRequest:[NSURLRequest requestWithURL: url]];                                                                                                                          
+	NSRange redirect_range = [url.query rangeOfString:@"redirect_uri="];
+	NSRange amp_search_range;
+	amp_search_range.location = redirect_range.location + redirect_range.length;
+	amp_search_range.length = [url.query length] - amp_search_range.location;
+			
+	NSRange amp_range = [url.query rangeOfString:@"&" options:0 range:amp_search_range];
+	NSRange substr_range;
+	substr_range.location = amp_search_range.location;
+	
+	if (amp_range.location == NSNotFound) {
+			substr_range.length   = [url.query length] - redirect_range.length - redirect_range.location;
+	} else {
+			substr_range.length   = amp_range.location - substr_range.location;    
+	}
+	 
+	NSURL * u = [NSURL URLWithString:[[url.query substringWithRange:substr_range] stringByReplacingPercentEscapesUsingEncoding:NSASCIIStringEncoding]];
+	_redirectURIpath = [u.path retain];
+	
+	NSLog(@"Saved path %@", _redirectURIpath);
+	
+	
+	[_webview loadRequest:[NSURLRequest requestWithURL: url]];                                                                                                                          
 }                                                                                                                                                                                       
+*/
 
 
 /*                                                                                                                                                                                      
  * webview delegate                                                                                                                                                                     
  */                                                                                                                                                                                     
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {                                                                                                            
-
-    if (!_authorizing) {
-      return;
-    }
-
-    _authorizing = NO;
-  
-    NSLog(@"HERE: didFaileLoad %@", error.localizedDescription);
-    [_spinner stopAnimating];
-	[self dismissModalViewControllerAnimated: YES];
+	if (!_authorizing) {
+		return;
+	}
+	_authorizing = NO;
+	NSLog(@"didFailLoad %@", error.localizedDescription);
+	[_spinner stopAnimating];
 	NSString * errorUrl = [NSString stringWithFormat: @"%@#error=server_error&error_description=webViewdidFailLoadWithError", _redirectURIpath];
-    value * mlf = (value*)caml_named_value("oauth_redirected"); 
-    caml_acquire_runtime_system();
-    caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
-    caml_release_runtime_system();        	
+	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
+	NSCAssert([NSThread isMainThread],@"OAuth didFail not in main thread");
+	caml_acquire_runtime_system();
+	value * mlf = (value*)caml_named_value("oauth_redirected"); 
+	caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
+	caml_release_runtime_system();        	
 }       
 
 
@@ -297,33 +328,31 @@ static OAuth * sharedOAuth = nil;
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)webViewDidFinishLoad:(UIWebView *)webView {                                                                                                                                      
+  NSLog(@"Finished loading '%@'", webView.request.URL.absoluteString);
 
-    if (!_authorizing) {
-      return;
-    }
-    
-    NSLog(@"HERE: Finished loading %@", webView.request.URL.absoluteString);
-    [_spinner stopAnimating];
+  if (!_authorizing) {
+    return;
+  }
+  
+  [_spinner stopAnimating];
 	NSString * content = [webView stringByEvaluatingJavaScriptFromString: @"document.body.innerHTML"];
 	
 	
+	NSCAssert([NSThread isMainThread],@"OAuth didFinish not in main thread");
 	// В VK если сперва вбили левый логин, а потом нажали cancel, то нас не редиректят на blank.html
 	if ([@"security breach" isEqualToString: content]) {
-		[self dismissModalViewControllerAnimated: YES];
-		value *mlf = (value*)caml_named_value("oauth_redirected");
 		NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+		[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
 		caml_acquire_runtime_system();
+		value *mlf = (value*)caml_named_value("oauth_redirected");
 		if (mlf != NULL) {                                                                                                        
 		    caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
 		}
 		caml_release_runtime_system();
 		return;
-	}  
-
-    
-    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
-        [self setViewportWidth: 540.0f];
-    }
+	} else if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+		[self setViewportWidth: 540.0f];
+	}
 }
 
 
@@ -331,30 +360,46 @@ static OAuth * sharedOAuth = nil;
  *
  */
 -(void)webViewDidStartLoad:(UIWebView *)webView {
-    NSLog(@"HERE: Started loading %@", webView.request.URL.absoluteString);
-    [_spinner startAnimating];
+	NSLog(@"didStartLoad '%@'", webView.request.URL.absoluteString);
+	[_spinner startAnimating];
 }
-
 
 /*
  *
  */
 -(BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
-    NSLog(@"Saved path: %@ My path %@", _redirectURIpath, request.URL.path);
-    
-    if ([request.URL.path isEqualToString: _redirectURIpath]) {
-        if (_authorizing) {
-          _authorizing = NO;
-          [self dismissModalViewControllerAnimated:YES];
-          [_spinner stopAnimating];
-          value * mlf = (value*)caml_named_value("oauth_redirected"); 
-          caml_acquire_runtime_system();
-          caml_callback(*mlf, caml_copy_string([request.URL.absoluteString UTF8String]));
-          caml_release_runtime_system();        
-          return NO;
-        }
-    }
-    return YES;
+	NSLog(@"Should start %@, paths: [%@ = %@]",request.URL.absoluteString,request.URL.path,_redirectURIpath);
+	
+	if ([request.URL.path isEqualToString: _redirectURIpath]) {
+		if (_authorizing) {
+			NSCAssert([NSThread isMainThread],@"OAuth shotStartLoad not in main thread");
+			_authorizing = NO;
+			[_spinner stopAnimating];
+			[[LightViewController sharedInstance] dismissModalViewControllerAnimated:NO];
+			caml_acquire_runtime_system();
+			value * mlf = (value*)caml_named_value("oauth_redirected"); 
+			caml_callback(*mlf, caml_copy_string([request.URL.absoluteString UTF8String]));
+			caml_release_runtime_system();        
+			NSLog(@"ml callback successfully called");
+			return NO;
+		}
+	}
+	return YES;
+}
+
+
+-(void)dealloc {
+	NSLog(@"DEALLOC OAUTH!!!! %p",self);
+	if (_closeButton) [_closeButton release];
+	if (_spinner) [_spinner release];
+	if (_webview) {
+		_webview.delegate = nil;
+		[_webview release];
+	};
+	_authorizing = NO;
+	[url release];
+	[_redirectURIpath release];
+	[super dealloc];
 }
 
 

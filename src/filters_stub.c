@@ -479,7 +479,7 @@ void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
 	renderbuffer_t *rb = (renderbuffer_t*)Field(orb,0);
 
-	//fprintf(stderr,"create glow %d - [%f:%f]\n",gsize,rb->width,rb->height);
+//	fprintf(stderr,"create glow %d - [%f:%f]\n",gsize,rb->width,rb->height);
 
 	//int pma = Bool_val(Field(kind,0));
 

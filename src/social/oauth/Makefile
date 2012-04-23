@@ -14,13 +14,14 @@ IFACES = $(MLSOURCES:.ml=.cmi)
 
 MLFLAGS += -I ../.. -I ../../utils
 
+MLPPOPT += ../../syntax/pa_debug.cmo -enable-debug default
 ifeq ($(PLATFORM),IOS)
 FAKELIBS  =
 CFLAGS  += -DDEBUG -DIOS -Iios
 MLCOPTS += -DIOS
 MOBJS   +=  ios/oauth_wrapper.o ios/OAuth.o
             
-MLPPOPT += -DGLES -DIOS
+MLPPOPT += -DIOS 
 LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-framework\ UIKit' \
 		   -cclib '-framework\ QuartzCore' \
@@ -33,6 +34,7 @@ oauth.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
 	$(OCAMLMKLIB) -verbose -o oauth $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 else
 
+MLCOPTS += -DSDL
 oauth.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o oauth.cmxa $(MLOBJSN)
 
@@ -41,6 +43,7 @@ oauth.cma: $(IFACES) $(MLOBJS)
 
 endif
 
+OAuth.cmx: OAuth.cmi
 
 .PHONY : clean
 clean: 

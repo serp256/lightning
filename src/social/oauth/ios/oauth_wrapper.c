@@ -2,17 +2,25 @@
 #import "oauth_wrapper.h"
 #import "../../ios/LightViewController.h"
 
-void ml_authorization_grant(value url) {
+void ml_authorization_grant(value url,value close_button) {
   CAMLparam1(url);
-  OAuth * oauth = [OAuth sharedInstance];
+	fprintf(stderr,"create oauth\n");
+  OAuth *oauth = [[OAuth alloc] initWithURL:url closeButton:close_button];
+	fprintf(stderr,"sharedInstace - %p, present: %p\n",[LightViewController sharedInstance],oauth);
+	[[LightViewController sharedInstance] presentModalViewController:oauth animated: YES];
+	[oauth release];
+	fprintf(stderr,"oauth presented\n");
+	/*
   if ([LightViewController sharedInstance].presentedViewController == nil) {
     [[LightViewController sharedInstance] presentModalViewController: oauth animated: YES];
   }
   [oauth authorize: [NSURL URLWithString: STR_CAML2OBJC(url)]];
+	*/
   CAMLreturn0;
 }
 
 
+/*
 void ml_set_close_button_insets(value top, value left, value bottom, value right) {
   CAMLparam4(top,left,bottom,right);
   OAuth * oauth = [OAuth sharedInstance];
@@ -35,3 +43,4 @@ void ml_set_close_button_image_name(value name) {
   oauth.closeButtonImageName = [NSString stringWithCString:String_val(name) encoding:NSASCIIStringEncoding];
   CAMLreturn0;
 }
+*/
