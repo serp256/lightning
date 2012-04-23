@@ -5,12 +5,6 @@ type permission = [ Photos | Guestbook | Stream | Messages | Events ];
 
 type permissions = list permission;
 
-value _appid = ref "";
-
-value _perms = ref None;
-
-value _private_key = ref "";
-
 value auth_endpoint = "https://connect.mail.ru/oauth/authorize";
 value token_endpoint = "https://appsmail.ru/oauth/token";
 
@@ -87,7 +81,7 @@ value init appid pkey perms = (
 (* вызываем REST метод *)
 value call_method' meth session_key uid params callback = 
   let params = [ ("app_id", P.appid ) :: [ ("method", meth) :: [ ("session_key", session_key) :: params ]]] in
-  let signature = calc_signature uid params !_private_key in
+  let signature = calc_signature uid params P.private_key in
   let params = [ ("sig", signature) :: params ] in
   let url = Printf.sprintf "http://www.appsmail.ru/platform/api?%s" (UrlEncoding.mk_url_encoded_parameters params) in
   let loader = new URLLoader.loader ()  in (
