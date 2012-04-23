@@ -5,8 +5,6 @@ CFLAGS += -I .
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
-GLPARAM = 
-
 MOBJS = light_common.o texture_common.o texture_async_loader.o filters_stub.o render_stub.o
 
 light_common.o: light_common.h
@@ -153,7 +151,7 @@ doc:
 		Texture.mli TextureAtlas.mli Image.mli Touch.ml BitmapFont.mli Clip.mli LightLib.mli TLF.mli Stage.mli GameCenter.mli Lightning.mli
 
 
-.DEFAULT_GOAL := release
+.DEFAULT_GOAL := debug
 
 .PHONY : clean
 clean: 
