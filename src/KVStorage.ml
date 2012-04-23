@@ -4,31 +4,35 @@ IFDEF SDL THEN
 type t = Hashtbl.t string string;
 
 value storage = ref None;
-value commit s =
- let ch = open_out_bin "kvstorage" in
- (
-  Marshal.to_channel ch s [];
-  close_out ch
-);
+value commit () =
+  match !storage with
+  [ None -> ()
+  | Some s -> 
+     let ch = open_out_bin "kvstorage" in
+     (
+       Marshal.to_channel ch s [];
+       close_out ch
+     )
+  ];
 
 value get_storage () = 
   match !storage with
   [ Some s -> s
   | None ->
-    let s =
-      if Sys.file_exists "kvstorage" then
-        Marshal.from_channel (open_in_bin "kvstorage")
+      if Sys.file_exists "kvstorage" 
+      then
+        let s = Marshal.from_channel (open_in_bin "kvstorage") in
+        (
+          storage.val := Some s;
+          s
+        )
       else 
         let s = Hashtbl.create 0 in
         (
-          commit s;
+          storage.val := Some s;
+          commit ();
           s;
         )
-    in
-    (
-      storage.val := Some s;
-      s;
-    )
   ];
 
 value get_string k = try Hashtbl.find (get_storage()) k with [ Not_found -> raise Kv_not_found ];
