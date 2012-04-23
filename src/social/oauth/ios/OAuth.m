@@ -206,9 +206,9 @@
 
 
 -(void)onCloseButton {
-  [_webview stopLoading];
-  [[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
-  NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+	[_webview stopLoading];
+	NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
   caml_acquire_runtime_system();
   value *mlf = (value*)caml_named_value("oauth_redirected");
   if (mlf != NULL) {                                                                                                        
@@ -341,10 +341,10 @@
 	NSCAssert([NSThread isMainThread],@"OAuth didFinish not in main thread");
 	// В VK если сперва вбили левый логин, а потом нажали cancel, то нас не редиректят на blank.html
 	if ([@"security breach" isEqualToString: content]) {
-		[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
-		value *mlf = (value*)caml_named_value("oauth_redirected");
 		NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+		[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
 		caml_acquire_runtime_system();
+		value *mlf = (value*)caml_named_value("oauth_redirected");
 		if (mlf != NULL) {                                                                                                        
 		    caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
 		}

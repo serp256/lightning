@@ -878,52 +878,62 @@ value test_exn (stage:Stage.c) =
 
 value social (stage:Stage.c) = 
 (
-
-  (*
-  let module OK = 
-    OK.Make(struct
-      value appid = "59630080";
-      value permissions = let open OK in [ Valuable_access; Set_status; Photo_content ];
-      value application_key = "CBADOOIEABABABABA";
-      value private_key = "70F1FED9D831D37A338485A4";
-    end)
-  in
-  let delegate = 
-    {
-      SNTypes.on_error = begin fun 
-        [ SNTypes.IOError -> debug "OK IOERROR"
-        | SNTypes.SocialNetworkError (code, msg) -> debug "social network error (%s,%s)" code msg
-        | SNTypes.OAuthError e -> debug "OAuth error"
-        ]
-      end;
-      on_success = begin fun id ->
-        debug "on_success"
-      end
-    }
-  in
-  OK.call_method ~delegate "users.getCurrentUser" [];
-  *)
-  let module VK = 
-    VK.Make(struct
-      value appid = "2831779";
-      value permissions = let open VK in [Notify; Friends; Photos; Docs; Notes; Pages; Wall; Groups; Messages; Notifications ; Stats ; Ads; Offline ];
-    end)
-  in
-  let delegate = 
-    {
-      SNTypes.on_error = begin fun 
-        [ SNTypes.IOError -> debug "OK IOERROR"
-        | SNTypes.SocialNetworkError (code, msg) -> debug "social network error (%s,%s)" code msg
-        | SNTypes.OAuthError e -> debug "OAuth error"
-        ]
-      end;
-      on_success = begin fun id ->
-        debug "on_success VK"
-      end
-    }
-  in
-  VK.call_method ~delegate:(Some delegate) "friends.getAppUsers" [];
-
+  let b = Image.load "tree.png" in
+  (
+    b#setPos 50. 100.;
+    stage#addChild b;
+    onClick b begin fun _ ->
+      let module OK = 
+        OK.Make(struct
+          value appid = "59630080";
+          value permissions = let open OK in [ Valuable_access; Set_status; Photo_content ];
+          value application_key = "CBADOOIEABABABABA";
+          value private_key = "70F1FED9D831D37A338485A4";
+        end)
+      in
+      let delegate = 
+        {
+          SNTypes.on_error = begin fun 
+            [ SNTypes.IOError -> debug "OK IOERROR"
+            | SNTypes.SocialNetworkError (code, msg) -> debug "social network error (%s,%s)" code msg
+            | SNTypes.OAuthError e -> debug "OAuth error"
+            ]
+          end;
+          on_success = begin fun id ->
+            debug "on_success"
+          end
+        }
+      in
+      OK.call_method ~delegate "users.getCurrentUser" [];
+    end;
+  );
+  let b = Image.load "tree.png" in
+  (
+    b#setPos 200. 100.;
+    stage#addChild b;
+    onClick b begin fun _ ->
+      let module VK = 
+        VK.Make(struct
+          value appid = "2831779";
+          value permissions = let open VK in [Notify; Friends; Photos; Docs; Notes; Pages; Wall; Groups; Messages; Notifications ; Stats ; Ads; Offline ];
+        end)
+      in
+      let delegate = 
+        {
+          SNTypes.on_error = begin fun 
+            [ SNTypes.IOError -> debug "OK IOERROR"
+            | SNTypes.SocialNetworkError (code, msg) -> debug "social network error (%s,%s)" code msg
+            | SNTypes.OAuthError e -> debug "OAuth error"
+            ]
+          end;
+          on_success = begin fun id ->
+            debug "on_success VK"
+          end
+        }
+      in
+      VK.call_method ~delegate "friends.getAppUsers" [];
+    end
+  );
 );
 
 let stage width height = 

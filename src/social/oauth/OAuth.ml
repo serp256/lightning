@@ -256,7 +256,7 @@ value oauth_redirected url =
             state.val := Authorizing callback;
             ml_authorization_grant url close_button;
           )
-        with [ Queue.Empty -> () ]
+        with [ Queue.Empty -> state.val := Standby ]
       )
   | Standby -> failwith "Must be Authorizing"
   ];
