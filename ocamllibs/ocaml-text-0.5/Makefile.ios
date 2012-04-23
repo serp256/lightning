@@ -38,7 +38,7 @@ all:
 	${OCAMLOPT} -a -cclib -ltext-bigarray -cclib -liconv ${INCLUDE_CCLIB} src/encoding_bigarray.cmx -o src/text-bigarray.cmxa
 
 install:
-	sudo ${OCAMLFIND} install text src/META src/*.cmo src/*.cmx src/*.mli src/*.cmxa src/*.a src/*.mllib src/*cma src/*so src/*cmi
+	sudo ${OCAMLFIND} install text src/META src/*.cmo src/*.cmx src/*.mli src/*.cmxa src/*.a src/*.mllib src/*cma src/*cmi
 
 uninstall:
 	sudo ${OCAMLFIND} remove text
