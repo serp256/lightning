@@ -578,7 +578,7 @@ value ml_renderbuffer_create(value format, value filter, value width,value heigh
 	lgResetBoundTextures();
 	renderbuffer_t *rb = caml_stat_alloc(sizeof(renderbuffer_t));
 	create_renderbuffer(Double_val(width),Double_val(height),rb,fltr);
-	fprintf(stderr,"create renderbuffer: %d:%d\n",rb->fbid,rb->tid);
+//	fprintf(stderr,"create renderbuffer: %d:%d\n",rb->fbid,rb->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	// and create renderInfo here
 	return renderbuffer_to_ml(rb);
@@ -721,7 +721,7 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 
 void ml_renderbuffer_delete(value orb) {
 	renderbuffer_t *rb = (renderbuffer_t*)orb;
-	fprintf(stderr,"delete renderbuffer: %d\n",rb->fbid);
+//	fprintf(stderr,"delete renderbuffer: %d\n",rb->fbid);
 	glDeleteFramebuffers(1,&rb->fbid);
 }
 

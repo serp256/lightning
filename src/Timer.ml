@@ -71,7 +71,10 @@ value create ?(repeatCount=0) delay = (*{{{*)
       method start () = 
         match running with
         [ None -> self#start'()
-        | Some _ -> failwith "Timer alredy started"
+        | Some _ ->
+            (
+              failwith (Printf.sprintf "Timer %S alredy started" self#name);
+            )
         ];
 
       method private stop' id = 
@@ -91,7 +94,7 @@ value create ?(repeatCount=0) delay = (*{{{*)
             Timers.stop id;
             running := None;
           )
-        | None -> failwith "Timer alredy stopped"
+        | None -> failwith (Printf.sprintf "Timer %S alredy stopped" self#name)
         ];
 
       method private asEventTarget = (self :> c);

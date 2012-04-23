@@ -158,7 +158,7 @@ exception Show_auth;
 
 
 (* Вызываем REST method. Если нужно, проводим авторизацию *)
-value call_method ?(delegate=None) meth params = 
+value call_method ?delegate meth params = 
   
   let (call_delegate_success, call_delegate_error) =  
     match delegate with 

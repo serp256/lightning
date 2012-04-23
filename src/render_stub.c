@@ -956,7 +956,7 @@ void set_framebuffer_state(framebuffer_state *s) {
 
 void ml_renderbuffer_deactivate(value ostate) {
 	framebuffer_state *s = (framebuffer_state*)ostate;
-	fprintf(stderr,"deactivate renderbuffer. oldbuffer: %d\n",s->framebuffer);
+//	fprintf(stderr,"deactivate renderbuffer. oldbuffer: %d\n",s->framebuffer);
 	set_framebuffer_state(s);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPopMatrix();

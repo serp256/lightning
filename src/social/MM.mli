@@ -15,7 +15,7 @@ end;
 
 module Make(P:Param) : sig
     
-  value call_method : ?delegate:option delegate -> string -> list (string*string) -> unit;
+  value call_method : ?delegate:delegate -> string -> list (string*string) -> unit;
 
   value get_access_token : unit -> string;
 

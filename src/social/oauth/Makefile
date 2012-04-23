@@ -21,7 +21,7 @@ CFLAGS  += -DDEBUG -DIOS -Iios
 MLCOPTS += -DIOS
 MOBJS   +=  ios/oauth_wrapper.o ios/OAuth.o
             
-MLPPOPT += -DIOS ../../syntax/pa_debug.cmo -enable-debug default
+MLPPOPT += -DIOS 
 LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-framework\ UIKit' \
 		   -cclib '-framework\ QuartzCore' \

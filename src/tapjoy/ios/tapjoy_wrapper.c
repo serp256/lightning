@@ -5,7 +5,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-@interface TapjoyOffersController : LightViewCompatibleController {
+@interface TapjoyOffersController : UIViewController {
   NSString * _currency;
   BOOL _selectorVisible;
 }
@@ -23,7 +23,8 @@
 }
 
 -(void)tapjoyOffersClosed {
-  [self dismissModalViewControllerAnimated: YES];
+	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: YES];
+  //[self dismissModalViewControllerAnimated: YES];
 }
 
 
