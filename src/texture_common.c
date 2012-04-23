@@ -222,7 +222,7 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 };
 
 int loadAlphaFile(const char *path,textureInfo *tInfo) {
-	fprintf(stderr,"LOAD ALPHA: '%s'\n",path);
+	PRINT_DEBUG("LOAD ALPHA: '%s'",path);
 	gzFile fptr = gzopen(path, "rb"); 
 	if (!fptr) { fprintf(stderr,"can't open %s file",path); return 2;};
 	unsigned int size;
@@ -578,7 +578,7 @@ value ml_renderbuffer_create(value format, value filter, value width,value heigh
 	lgResetBoundTextures();
 	renderbuffer_t *rb = caml_stat_alloc(sizeof(renderbuffer_t));
 	create_renderbuffer(Double_val(width),Double_val(height),rb,fltr);
-	fprintf(stderr,"create renderbuffer: %d:%d\n",rb->fbid,rb->tid);
+	//fprintf(stderr,"create renderbuffer: %d:%d\n",rb->fbid,rb->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	// and create renderInfo here
 	return renderbuffer_to_ml(rb);
@@ -634,7 +634,7 @@ value ml_renderbuffer_clone(value orb) {
 	lgResetBoundTextures();
 	renderbuffer_t *rbc = caml_stat_alloc(sizeof(renderbuffer_t));
 	clone_renderbuffer(rb,rbc,GL_LINEAR);
-	fprintf(stderr,"clone renderbuffer: %d:%d\n",rbc->fbid,rbc->tid);
+	//fprintf(stderr,"clone renderbuffer: %d:%d\n",rbc->fbid,rbc->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	return renderbuffer_to_ml(rbc);
 }
@@ -664,14 +664,14 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 	double height = Double_val(oheight);
 	renderbuffer_t *rb = (renderbuffer_t*)Field(orb,0);
 	value res;
-	fprintf(stderr,"try resize %d:%d from [%f:%f] to [%f:%f]\n",rb->fbid,rb->tid,rb->width,rb->height,width,height);
+	//fprintf(stderr,"try resize %d:%d from [%f:%f] to [%f:%f]\n",rb->fbid,rb->tid,rb->width,rb->height,width,height);
 	if (width == rb->width && height == rb->height) {
-		fprintf(stderr,"resize skip\n");
+		//fprintf(stderr,"resize skip\n");
 		res = Val_false;
 	}
 	else {
 		res = Val_true;
-		fprintf(stderr,"resize renderbuffer %d:%d to %f:%f\n",rb->fbid,rb->tid,width,height);
+		//fprintf(stderr,"resize renderbuffer %d:%d to %f:%f\n",rb->fbid,rb->tid,width,height);
 		GLuint legalWidth = nextPowerOfTwo(ceil(width));
 		GLuint legalHeight = nextPowerOfTwo(ceil(height));
 #ifdef IOS
@@ -690,7 +690,7 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 		rb->width = width;
 		rb->height = height;
 		renderInfo = Field(orb,1);
-		fprintf(stderr,"old %f:%f\n",Double_val(Field(renderInfo,1)),Double_val(Field(renderInfo,2)));
+		//fprintf(stderr,"old %f:%f\n",Double_val(Field(renderInfo,1)),Double_val(Field(renderInfo,2)));
 		Store_field(renderInfo,1,owidth);
 		Store_field(renderInfo,2,oheight);
 		if (!IS_CLIPPING(rb->clp)) {
@@ -721,7 +721,7 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 
 void ml_renderbuffer_delete(value orb) {
 	renderbuffer_t *rb = (renderbuffer_t*)orb;
-	fprintf(stderr,"delete renderbuffer: %d\n",rb->fbid);
+	//fprintf(stderr,"delete renderbuffer: %d\n",rb->fbid);
 	glDeleteFramebuffers(1,&rb->fbid);
 }
 

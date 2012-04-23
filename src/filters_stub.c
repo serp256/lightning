@@ -439,7 +439,7 @@ void ml_glow2_make(value orb,value glow) {
 	// и вот здесь вопрос чего вернуть
 	glBindTexture(GL_TEXTURE_2D,0);
 	if (srb->fbid != rb->fbid) {
-		fprintf(stderr,"we need return new texture\n");
+		//fprintf(stderr,"we need return new texture\n");
 		// бля не повезло надо бы тут пошаманить
 		// Ебнуть текстуру старую и перезаписать в ml ную структуру
 		update_texture_id(Field(Field(orb,1),0),rb2.tid);
@@ -454,7 +454,7 @@ void ml_glow2_make(value orb,value glow) {
 }
 
 static void inline glow_make_draw(viewport *vp,clipping *clp) {
-	fprintf(stderr,"glow_make_draw: [%d:%d:%d:%d] [%f:%f:%f:%f]\n",vp->x,vp->y,vp->w,vp->h,clp->x,clp->y,clp->width,clp->height);
+	//fprintf(stderr,"glow_make_draw: [%d:%d:%d:%d] [%f:%f:%f:%f]\n",vp->x,vp->y,vp->w,vp->h,clp->x,clp->y,clp->width,clp->height);
 	glViewport(vp->x,vp->y,vp->w,vp->h);
 	glClear(GL_COLOR_BUFFER_BIT);
 	texCoords[0][0] = clp->x;
@@ -479,7 +479,7 @@ void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
 	renderbuffer_t *rb = (renderbuffer_t*)Field(orb,0);
 
-	fprintf(stderr,"create glow %d - [%f:%f]\n",gsize,rb->width,rb->height);
+	//fprintf(stderr,"create glow %d - [%f:%f]\n",gsize,rb->width,rb->height);
 
 	//int pma = Bool_val(Field(kind,0));
 
@@ -512,7 +512,7 @@ void ml_glow_make(value orb, value glow) {
 	for (i = 0; i < gsize; i++) {
 		w /= 2;
 		h /= 2;
-		fprintf(stderr,"size: %d:%d\n",w,h);
+		//fprintf(stderr,"size: %d:%d\n",w,h);
 		glBindTexture(GL_TEXTURE_2D, txrs[i]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

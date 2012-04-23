@@ -10,6 +10,7 @@
     #define PRINT_DEBUG(fmt,args...)
 #endif
 
+#ifndef RELEASE
 #define checkGLErrors(fmt,args...) \
 { GLenum error = glGetError(); \
 	int is_error = 0;\
@@ -23,7 +24,13 @@
 	if (is_error) exit(1); \
 }
 
+#else
+#define checkGLErrors(fmt,args...)
 #endif
 
 
 extern unsigned int MAX_GC_MEM;
+
+#endif
+
+

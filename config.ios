@@ -9,9 +9,8 @@ OCAMLDIR = /usr/local/ocaml/ios/3.12.1
 export OCAMLFIND ?= /opt/local/bin/ocamlfind -toolchain ios
 OCAMLBINDIR = $(OCAMLDIR)/bin/
 export CC = $(PLAT)/Developer/usr/bin/$(GCC) -arch $(ARCH)
-export CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLDIR)/lib -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=4.2 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
+export CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLDIR)/lib -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=4.2 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT -fvisibility=hidden 
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB = /usr/local/ocaml/ios/3.12.1/bin/ocamlmklib
 LIB = native syntax
-
