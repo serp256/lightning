@@ -28,4 +28,6 @@ class virtual c: [ float ] -> [ float ] ->
     method setFilters: list Filters.t -> unit;
     method cacheAsImage: bool;
     method setCacheAsImage: bool -> unit;
+(*     method stop: unit -> unit; *)
+(*     method start: unit -> unit; *)
   end;

@@ -36,7 +36,7 @@ static void mlUncaughtException(const char* message) {
 }
 
 +alloc {
-	NSLog(@"Try INIT Light view controller");
+	//NSLog(@"Try INIT Light view controller");
 	if (instance != NULL) return NULL; // raise exception
 	NSLog(@"INIT Light view controller");
 	char *argv[] = {"ios",NULL};
@@ -134,7 +134,7 @@ static void mlUncaughtException(const char* message) {
 
 static value *ml_url_response = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSHTTPURLResponse *)response {
-	NSLog(@"did recieve response %lld",response.expectedContentLength);
+	//NSLog(@"did recieve response %lld",response.expectedContentLength);
 	caml_acquire_runtime_system();
 	if (ml_url_response == NULL) 
 		ml_url_response = caml_named_value("url_response");
@@ -153,7 +153,7 @@ static value *ml_url_response = NULL;
 
 static value *ml_url_data = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-	NSLog(@"did revieve data");
+	//NSLog(@"did revieve data");
 	caml_acquire_runtime_system();
 	if (ml_url_data == NULL) 
 		ml_url_data = caml_named_value("url_data");
@@ -165,13 +165,13 @@ static value *ml_url_data = NULL;
 
 static value *ml_url_failed = NULL;
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-	NSLog(@"did fail with error");
+	//NSLog(@"did fail with error");
 	caml_acquire_runtime_system();
 	if (ml_url_failed == NULL)
 		ml_url_failed = caml_named_value("url_failed");
 	NSString *errdesc = [error localizedDescription];
 	value errmessage = caml_copy_string([errdesc cStringUsingEncoding:NSUTF8StringEncoding]);
-	NSLog(@"connection didFailWithError with [%s]",String_val(errmessage));
+	//NSLog(@"connection didFailWithError with [%s]",String_val(errmessage));
 	caml_callback3(*ml_url_failed,(value)connection,Val_int(error.code),errmessage);
 	[connection release];
 	caml_release_runtime_system();
@@ -180,7 +180,7 @@ static value *ml_url_failed = NULL;
 
 static value *ml_url_complete = NULL;
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-	NSLog(@"did finish loading");
+	//NSLog(@"did finish loading");
 	caml_acquire_runtime_system();
 	if (ml_url_complete == NULL)
 		ml_url_complete = caml_named_value("url_complete");
@@ -277,10 +277,10 @@ static value *ml_url_complete = NULL;
                 break;
 
             case SKPaymentTransactionStateRestored:
-                NSLog(@"Restoring");
+                //NSLog(@"Restoring");
                 restored = YES;
             case SKPaymentTransactionStatePurchased:
-                NSLog(@"Purchased");
+                //NSLog(@"Purchased");
 				if (Is_block(payment_success_cb)) {
 				  
 					[transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!

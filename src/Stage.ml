@@ -6,6 +6,8 @@ open Touch;
 
 
 value ev_TOUCH = Ev.gen_id "TOUCH";
+(* value ev_STOP = Ev.gen_id "STOP"; *)
+(* value ev_START = Ev.gen_id "START"; *)
 
 value (data_of_touches,touches_of_data) = Ev.makeData ();
 
@@ -214,6 +216,11 @@ class virtual c (_width:float) (_height:float) =
       D.prerender ();
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
     );
+
+  (*
+  method stop () = self#dispatchEvent (Ev.create ev_STOP ());
+  method start () = self#dispatchEvent (Ev.create ev_START ());
+  *)
 
   method! hitTestPoint localPoint isTouch =
     match isTouch && (not visible || not touchable) with

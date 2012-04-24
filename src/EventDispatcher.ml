@@ -47,7 +47,6 @@ class base [ 'target,'currentTarget ] = (*{{{*)
   end;(*}}}*)
 
 
-
 class virtual simple [ 'target ]  =
   object(self)
     inherit base [ 'target,'target];
@@ -58,9 +57,9 @@ class virtual simple [ 'target ]  =
     method dispatchEvent event = 
       let t = self#asEventTarget in 
       let evd = (t,t) in
-      try
-        let l = List.assoc event.Ev.evid listeners in
-        ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation = `StopImmediate)) l.lstnrs);
-      with [ Not_found -> () ];
+      match try Some (List.assoc event.Ev.evid listeners) with [ Not_found -> None ] with
+      [ Some l -> ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation = `StopImmediate)) l.lstnrs)
+      | None -> ()
+      ];
 
   end;

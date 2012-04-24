@@ -140,7 +140,6 @@ int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	tInfo->scale = scale;
 	tInfo->dataLen = dataLen;
 	tInfo->imgData = imageData;
-	NSLog(@"IMAGE LOADED");
 	return 0;
 }
 
@@ -433,7 +432,7 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
 
 int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 
-	NSLog(@"LOAD IMAGE: %@\n",path);
+	//NSLog(@"LOAD IMAGE: %@\n",path);
 	NSString *fullPath = NULL;
 	NSString *imgType = [[path pathExtension] lowercaseString];
 	NSBundle *bundle = [NSBundle mainBundle];
@@ -553,7 +552,7 @@ value ml_load_image_info(value opath) {
 CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix) { // if old texture exists when replace
 	CAMLparam2(opath,osuffix);
 	CAMLlocal1(mlTex);
-	NSLog(@"ml_loade image: %s\n",String_val(opath));
+	//NSLog(@"ml_loade image: %s\n",String_val(opath));
 	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
 	checkGLErrors("start load image");
 

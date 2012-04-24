@@ -187,8 +187,9 @@
 	mFrameRate = REFRESH_RATE / frameInterval;
 	if (self.isStarted)
 	{
-		[self stop];
-		[self start];
+		// FIXME!!!!
+		//[self stop];
+		//[self start];
 	}
 }
 
@@ -207,15 +208,20 @@
 		mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
 		[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
 		[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+		/*caml_acquire_runtime_system();
+		mlstage_start(mStage);
+		caml_release_runtime_system();*/
 	}
 }
 
 - (void)stop
 {
 	NSLog(@"STOP View");
-	//[self renderStage]; // draw last-moment changes ??? why it's needed ?
-	//self.timer = nil;
+	if (! mDisplayLink) return;
 	self.displayLink = nil;
+	/*caml_acquire_runtime_system();
+	mlstage_stop(mStage);
+	caml_release_runtime_system();*/
 }
 
 + (Class)layerClass 
