@@ -228,6 +228,7 @@ value load path : c =
     let textureInfo = 
       proftimer "Loading texture [%F]" loadImage path 1. 
     in
+    let () = debug:gc Gc.compact () in
     let () = 
       debug
         "load texture: %s [%d->%d; %d->%d] [pma=%s]\n%!" 

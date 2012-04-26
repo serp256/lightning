@@ -13,17 +13,25 @@ import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
+	
+import android.os.Handler;
+
 
 public class LightView extends GLSurfaceView {
 
-	private LightRenderer renderer;
+	private int loader_id;
 
-	public LightView(Context context,int width,int height) {
+	private LightRenderer renderer;
+	private Handler uithread;
+
+	public LightView(Context context,int width,int height, Handler activitythread) {
 		super(context);
+		uithread = activitythread;
 		initView(width,height);
 	}
 
 	protected void initView(int width,int height) {
+		loader_id = 0;
 		lightInit();
 		renderer = new LightRenderer(width,height);
 		setFocusableInTouchMode(true);
@@ -61,7 +69,6 @@ public class LightView extends GLSurfaceView {
 		 });
 	 }
 			 
-
 	public boolean onTouchEvent(final MotionEvent event) {
 		Log.d("EVENT","Touch event");
 
@@ -198,6 +205,30 @@ public class LightView extends GLSurfaceView {
 		 Log.d("EVENT", sb.toString());
 	}
 
+	// Этот методы вызывается из ocaml, он создает хттп-лоадер, который в фоне выполняет запрос с переданными параметрами
+	public int spawnHttpLoader(final String url, final String method, final String[][] headers, final String data){
+	  Log.d("LIGHT VIEW", "IM IN SPAWN HTTP LOADER METHOD");
+		loader_id = loader_id + 1;
+    final Handler mainthread = uithread;
+		uithread.post(new Runnable() {
+			public void run() {
+	 		UrlReq req = new UrlReq();
+				req.url = url;
+				req.method = method;
+				req.headers = headers;
+				req.data = data;
+				req.mainthread = mainthread;
+				req.loader_id = loader_id;
+      LightHttpLoader loader = new LightHttpLoader();  
+	  	Log.d("LIGHT VIEW", "LOADER CREATED");
+			loader.execute(req);
+			}
+		});
+		return loader_id;
+	}
+
 	private native void lightInit();
+
 }
+
 
