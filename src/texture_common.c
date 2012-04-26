@@ -199,7 +199,7 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 	unsigned char *idxdata = malloc(dataSize);
 	if (gzread(fptr,idxdata,dataSize) < dataSize) {fprintf(stderr,"can't read PLX %s data\n",path);free(idxdata);gzclose(fptr);return 1;};
 	gzclose(fptr);
-	fprintf(stderr,"PLX [%s] file with size %d:%d readed\n",path,width,height);
+	//fprintf(stderr,"PLX [%s] file with size %d:%d readed\n",path,width,height);
 
 
 	tInfo->format = LTextureFormatPallete;
