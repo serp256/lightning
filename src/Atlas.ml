@@ -152,7 +152,7 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
                 )
               )
             else ()
-        | _ -> Debug.w "update glow not need"
+        | _ -> () (* Debug.w "update glow not need" *)
         ];
 
       (*

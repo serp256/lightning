@@ -595,11 +595,9 @@ value pallete (stage:Stage.c) =
   )
 );
 
-(*
 value image (stage:Stage.c) =
   let image = Image.load "default.png" in
   stage#addChild image;
-*)
 
 value map (stage:Stage.c) =
   let map1 = Image.load "test_map/map_12.jpg"
@@ -949,12 +947,12 @@ let stage width height =
           self#addChild tlf;
 *)
         (* map self; *)
-(*         image self; *)
+        image self;
 (*         test_alpha self; *)
 (*       alert self; *)
 (*       test_exn self; *)
 (*       flip self; *)
-      social self;
+(*       social self; *)
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)

@@ -1,6 +1,6 @@
 include ../Makefile.common
 
-CFLAGS += -I . -DRELEASE
+CFLAGS += -I .
 
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<

@@ -404,7 +404,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		};
 	} else sp->uniforms = NULL;
 	checkGLErrors("uniform binded");
-	fprintf(stderr,"create program: %d\n",program);
+	//fprintf(stderr,"create program: %d\n",program);
 	sp->program = program;
 	prg = caml_alloc_custom(&program_ops,sizeof(*sp),0,1);
 	SPROGRAM(prg) = sp;
@@ -1143,23 +1143,18 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 
 			q->bl.c = c;
 			q->bl.v = (vertex2F){RENDER_SUBPIXEL(quad[0]),RENDER_SUBPIXEL(quad[1])};
-
-
 			q->bl.tex = (tex2F){Double_field(clipping,0),Double_field(clipping,1)};
 
 			q->br.c = c;
 			q->br.v = (vertex2F){RENDER_SUBPIXEL(quad[0] + quad[2]),q->bl.v.y};
-
 			q->br.tex = (tex2F){q->bl.tex.u + Double_field(clipping,2),q->bl.tex.v};
 
 			q->tl.c = c;
 			q->tl.v = (vertex2F){q->bl.v.x,RENDER_SUBPIXEL(quad[1] + quad[3])};
-
 			q->tl.tex = (tex2F){q->bl.tex.u,q->bl.tex.v + Double_field(clipping,3)};
 
 			q->tr.c = c;
 			q->tr.v = (vertex2F){q->br.v.x,q->tl.v.y};
-
 			q->tr.tex = (tex2F){q->br.tex.u,q->tl.tex.v};
 
 		};

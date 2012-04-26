@@ -268,7 +268,7 @@ int loadPvrFile3(FILE* fildes,textureInfo *tInfo) {
 	PVRTextureHeader3 header;
 	if (!fread(&header,sizeof(PVRTextureHeader3),1,fildes)) {fprintf(stderr,"can't read pvr header\n");return 1;};
 	if (header.u32Version != PVRTEX3_IDENT) {
-		fprintf(stderr,"bad pvr3 version\n");
+		//fprintf(stderr,"bad pvr3 version\n");
 		return 1;
 	};
 	tInfo->width = tInfo->realWidth = header.u32Width;
@@ -314,7 +314,7 @@ int loadPvrFile3(FILE* fildes,textureInfo *tInfo) {
 	};
 
 	tInfo->dataLen = fsize - sizeof(PVRTextureHeader3) - header.u32MetaDataSize;
-	printf("pvr data size: %d\n",tInfo->dataLen);
+	//printf("pvr data size: %d\n",tInfo->dataLen);
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
 
 	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
@@ -441,7 +441,6 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 	int is_pvr = 0;
 	int is_plx = 0;
 	int is_alpha = 0;
-	int is_plt = 0;
 
 	do  {
 		if ([imgType rangeOfString:@"pvr"].location == 0) is_pvr = 1;

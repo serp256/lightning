@@ -6,23 +6,24 @@ MLFLAGS += -I ../src -package extlib -package ojson -I ../src/social
 
 MLFILES = panelbg.cmo testz.cmo
 
+SOCIAL= ../src/social/oauth/oauth.cma ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
 
 example.byte: $(MLFILES) example.cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma ../src/social/OK.cmo $(MLFILES) example.cmo \
+	-I ../src ../src/lightning.cma $(SOCIAL) $(MLFILES) example.cmo \
 	-package curl,bigarray,extlib,xmlm,ojson,dbm,threads -thread -linkpkg 
 
 example.cmo: $(MLFILES)
 
 MLXFILES = $(MLFILES:.cmo=.cmx)
+SOCIALX = $(SOCIAL:.cmo=.cmx)
 
 example.cmx: $(MLXFILES)
 
-SOCIAL= ../src/social/oauth/oauth.cmxa ../src/social/OK.cmx ../src/social/VK.cmx -ccopt -L../src/social/oauth
 
 example.native: $(MOBS) $(MLXFILES) example.cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-I ../src ../src/lightning.cmxa  $(SOCIAL) $(MOBS) $(MLXFILES) example.cmx \
+	-I ../src ../src/lightning.cmxa  $(SOCIALX) $(MOBS) $(MLXFILES) example.cmx \
 	-package extlib,xmlm,dbm,ojson,bigarray,threads -thread -linkpkg 
 
 .PHONY: clean
