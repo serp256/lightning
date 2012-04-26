@@ -21,7 +21,6 @@
  * Non-SDL functions added to Module Draw: scale, scale_to, read_tga, load_tga, make_mipmaps,make_sfont and sfont_print
  *)
 exception SDL_failure of string;
-Callback.register_exception "SDL_failure" (SDL_failure "");
 type byte_array =
   Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout;
 (* Initialization. *)
@@ -29,14 +28,19 @@ type init_flag =
   [ TIMER
   | AUDIO
   | VIDEO
-  | CDROM
   | JOYSTICK
+  | HAPTIC
   | NOPARACHUTE
-  | EVENTTHREAD
   | EVERYTHING ];
 (* Don't catch fatal signals *)
 (* Not supported on all OS's *)
 external init : list init_flag -> unit = "sdlstub_init";
+value init init_flag = 
+(
+  Callback.register_exception "SDL_failure" (SDL_failure "");
+  init init_flag;
+);
+
 external quit : unit -> unit = "sdlstub_quit";
 external get_error : unit -> string = "sdlstub_get_error";
 (******************************* Video. ************************************)
@@ -73,12 +77,10 @@ module Video =
     (* Creates a window with no title frame and no border *)
     type surface;
     external free_surface : surface -> unit = "sdlstub_free_surface";
-    external surface_pixels : surface -> byte_array =
-      "sdlstub_surface_pixels";
+    external surface_pixels : surface -> byte_array = "sdlstub_surface_pixels";
     external surface_width : surface -> int = "sdlstub_surface_width";
     external surface_height : surface -> int = "sdlstub_surface_height";
-    external surface_flags : surface -> list video_flag =
-      "sdlstub_surface_flags";
+(*     external surface_flags : surface -> list video_flag = "sdlstub_surface_flags"; *)
     external surface_bpp : surface -> int = "sdlstub_surface_bpp";
     external surface_rmask : surface -> int = "sdlstub_surface_rmask";
     external surface_gmask : surface -> int = "sdlstub_surface_gmask";
@@ -87,54 +89,48 @@ module Video =
     external must_lock : surface -> bool = "sdlstub_must_lock";
     external lock_surface : surface -> unit = "sdlstub_lock_surface";
     external unlock_surface : surface -> unit = "sdlstub_unlock_surface";
-    external video_mode_ok : int -> int -> int -> list video_flag -> bool =
-      "sdlstub_video_mode_ok";
-    external set_video_mode :
-      int -> int -> int -> list video_flag -> surface =
-      "sdlstub_set_video_mode";
-    external create_rgb_surface :
-      list video_flag -> int -> int -> int -> surface =
-      "sdlstub_create_rgb_surface";
+(*     external video_mode_ok : int -> int -> int -> list video_flag -> bool = "sdlstub_video_mode_ok"; *)
+(*     external set_video_mode : int -> int -> int -> list video_flag -> surface = "sdlstub_set_video_mode"; *)
+    external create_rgb_surface : list video_flag -> int -> int -> int -> surface = "sdlstub_create_rgb_surface";
     external load_bmp : string -> surface = "sdlstub_load_bmp";
     external save_bmp : surface -> string -> unit = "sdlstub_save_bmp";
-    external set_color_key : surface -> list video_flag -> int32 -> unit =
-      "sdlstub_set_color_key";
-    external set_alpha : surface -> list video_flag -> int -> unit =
-      "sdlstub_set_alpha";
-    external set_clipping : surface -> int -> int -> int -> int -> unit =
-      "sdlstub_set_clipping";
+    external set_color_key : surface -> list video_flag -> int32 -> unit = "sdlstub_set_color_key";
+(*     external set_alpha : surface -> list video_flag -> int -> unit = "sdlstub_set_alpha"; *)
+    external set_alpha_mod: surface -> int -> unit = "sdlstub_set_surface_alpha_mod";
+    type blendMode = 
+      [ BLENDMODE_NONE (**< No blending *)
+      | BLENDMODE_BLEND (**< dst = (src * A) + (dst * (1-A)) *)
+      | BLENDMODE_ADD (**< dst = (src * A) + dst *)
+      | BLENDMODE_MOD (**< dst = src * dst *)
+      ];
+      
+    external set_blend_mode: surface -> blendMode -> unit = "sdlstub_set_surface_blend_mode";
+    external set_clipping : surface -> int -> int -> int -> int -> unit = "sdlstub_set_clipping";
     value disable_clipping s = set_clipping s 0 0 0 0;
-    external display_format : surface -> surface = "sdlstub_display_format";
+(*     external display_format : surface -> surface = "sdlstub_display_format"; *)
     external get_rgb : surface -> int32 -> (int * int * int) =
       "sdlstub_get_rgb";
     external get_rgba : surface -> int32 -> (int * int * int * int) =
       "sdlstub_get_rgba";
-    external map_rgb : surface -> int -> int -> int -> int32 =
-      "sdlstub_map_rgb";
-    external map_rgba : surface -> int -> int -> int -> int -> int32 =
-      "sdlstub_map_rgba";
+    external map_rgb : surface -> int -> int -> int -> int32 = "sdlstub_map_rgb";
+    external map_rgba : surface -> int -> int -> int -> int -> int32 = "sdlstub_map_rgba";
     type rect =
       { rect_x : mutable int; rect_y : mutable int; rect_w : mutable int;
         rect_h : mutable int
       };
-    external fill_surface : surface -> int32 -> unit =
-      "sdlstub_fill_surface";
-    external fill_rect : surface -> rect -> int32 -> unit =
-      "sdlstub_fill_rect";
-    external update_surface : surface -> unit = "sdlstub_update_surface";
-    external update_rect : surface -> int -> int -> int -> int -> unit =
-      "sdlstub_update_rect";
-    external update_rects : surface -> array rect -> unit =
-      "sdlstub_update_rects";
-    external flip : surface -> unit = "sdlstub_flip";
+    external fill_surface : surface -> int32 -> unit = "sdlstub_fill_surface";
+    external fill_rect : surface -> rect -> int32 -> unit = "sdlstub_fill_rect";
+(*     external update_surface : surface -> unit = "sdlstub_update_surface"; *)
+(*     external update_rect : surface -> int -> int -> int -> int -> unit = "sdlstub_update_rect"; *)
+(*     external update_rects : surface -> array rect -> unit = "sdlstub_update_rects"; *)
+(*     external flip : surface -> unit = "sdlstub_flip"; *)
     external blit_surface :
       surface -> option rect -> surface -> option rect -> unit =
       "sdlstub_blit_surface";
     type color = { red : int; green : int; blue : int };
-    external set_colors : surface -> array color -> int -> int -> bool =
-      "sdlstub_set_colors";
+(*     external set_colors : surface -> array color -> int -> int -> bool = "sdlstub_set_colors"; *)
     external show_cursor : bool -> unit = "sdlstub_show_cursor";
-    external warp_mouse : int -> int -> unit = "sdlstub_warp_mouse";
+(*     external warp_mouse : int -> int -> unit = "sdlstub_warp_mouse"; *)
     external string_of_pixels : surface -> string =
       "sdlstub_string_of_pixels";
   end;
@@ -142,14 +138,18 @@ module Video =
 (****************************** Window management ******************************)
 module Window =
   struct
-    external set_caption : string -> string -> unit = "sdlstub_set_caption";
-    external get_caption : unit -> (string * string) = "sdlstub_get_caption";
-    external set_icon : Video.surface -> unit = "sdlstub_set_icon";
-    external iconify_window : unit -> unit = "sdlstub_iconify_window";
-    external toggle_fullscreen : Video.surface -> unit =
-      "sdlstub_toggle_fullscreen";
-    external set_grab_input : bool -> unit = "sdlstub_set_grab_input";
-    external get_grab_input : unit -> bool = "sdlstub_get_grab_input";
+(*     external set_caption : string -> string -> unit = "sdlstub_set_caption"; *)
+(*     external get_caption : unit -> (string * string) = "sdlstub_get_caption"; *)
+(*     external set_icon : Video.surface -> unit = "sdlstub_set_icon"; *)
+(*     external iconify_window : unit -> unit = "sdlstub_iconify_window"; *)
+(*     external toggle_fullscreen : Video.surface -> unit = "sdlstub_toggle_fullscreen"; *)
+(*     external set_grab_input : bool -> unit = "sdlstub_set_grab_input"; *)
+(*     external get_grab_input : unit -> bool = "sdlstub_get_grab_input"; *)
+    type t;
+    type pos = [ PosUndefined | PosCentered | Pos of int ];
+    type flag = [ FULLSCREEN | SHOWN | RESIZABLE | MINIMIZED | OPENGL | BORDERLESS | MAXIMIZED | INPUT_GRABBED ];
+    external create: ~title:string -> ~x:pos -> ~y:pos -> ~w:int -> ~h:int -> list flag -> t = "sdlstub_create_window_byte" "sdlstub_create_window" ;
+    external destroy: t -> unit = "sdlstub_destroy_window";
   end;
 (****************************** End Window management ******************************)
 (**************************** Open GL support **************************************)
@@ -167,12 +167,20 @@ module SDLGL =
       | ACCUM_RED_SIZE
       | ACCUM_GREEN_SIZE
       | ACCUM_BLUE_SIZE
-      | ACCUM_ALPHA_SIZE ];
-    external swap_buffers : unit -> unit = "sdlstub_GL_swap_buffers";
-    external load_bmp : string -> Video.surface = "sdlstub_GL_load_bmp";
-    external set_attribute : gl_attr -> int -> unit =
-      "sdlstub_set_attribute";
-    external get_attribute : gl_attr -> int = "sdlstub_get_attribute";
+      | ACCUM_ALPHA_SIZE 
+      | CONTEXT_MAJOR_VERSION
+      | CONTEXT_MINOR_VERSION
+      ];
+(*     external swap_buffers : unit -> unit = "sdlstub_GL_swap_buffers"; *)
+(*     external load_bmp : string -> Video.surface = "sdlstub_GL_load_bmp"; *)
+    external set_attribute : gl_attr -> int -> unit = "sdlstub_gl_set_attribute";
+    external get_attribute : gl_attr -> int = "sdlstub_gl_get_attribute";
+    type context;
+    external create_context: Window.t -> context = "sdlstub_gl_create_context";
+(*     external make_current: Window.t -> context -> unit = "sdlstub_gl_make_current"; *)
+    external delete_context: context -> unit = "sdlstub_gl_delete_context";
+    external swap_window: Window.t -> unit = "sdlstub_gl_swap_window";
+    external set_swap_interval: int -> unit = "sdlstub_gl_set_swap_interval";
   end;
 (**************************** End Open GL support **************************************)
 (***************************** Events. *************************************************)
@@ -181,9 +189,8 @@ module Event =
     type que_dis_ena = [ QUERY | DISABLE | ENABLE ];
     type off_on = [ OFF | ON ];
     type pointer;
-    type app_state = [ APPMOUSEFOCUS | APPINPUTFOCUS | APPACTIVE ];
-    external get_app_state : unit -> list app_state =
-      "sdlstub_get_app_state";
+(*     type app_state = [ APPMOUSEFOCUS | APPINPUTFOCUS | APPACTIVE ]; *)
+(*     external get_app_state : unit -> list app_state = "sdlstub_get_app_state"; *)
     (* SDLKey enum *)
     type key =
       [ K_UNKNOWN
@@ -433,18 +440,17 @@ module Event =
       | KMOD_CAPS
       | KMOD_MODE
       | KMOD_RESERVED ];
-    external enable_unicode : que_dis_ena -> off_on =
+(*     external enable_unicode : que_dis_ena -> off_on = *)
       "sdlstub_enable_unicode";
     value default_repeat_delay = 500
     and default_repeat_interval = 30;
-    external enable_key_repeat : int -> int -> unit =
-      "sdlstub_enable_key_repeat";
+(*     external enable_key_repeat : int -> int -> unit = "sdlstub_enable_key_repeat"; *)
     external get_mod_state : unit -> list key_mod = "sdlstub_get_mod_state";
     external set_mod_state : list key_mod -> unit = "sdlstub_set_mod_state";
     external get_key_name : key -> string = "sdlstub_get_key_name";
     type press_release = [ RELEASED | PRESSED ];
-    type lost_gained = [ LOST | GAINED ];
-    type active_event = { focus : lost_gained; state : app_state };
+(*     type lost_gained = [ LOST | GAINED ]; *)
+(*     type active_event = { focus : lost_gained; state : app_state }; *)
     type keyboard_event =
       { keystate : press_release; scancode : int; sym : key;
         modifiers : list key_mod; unicode : int
@@ -466,12 +472,37 @@ module Event =
     type joy_button_event =
       { which_button : int; joybutton : int; jstate : press_release
       };
+    type tf_event_type = [ FingerMotion | FingerDown | FingerUp ];
+    type touch_finger_event = 
+      { tf_type: tf_event_type; touch_id: int64; finger_id: int64; tf_state: int; 
+        tfx: int; tfy: int; tfdx: int; tfdy: int; pressure: int
+      };
     type resize_event = { w : int; h : int };
     type user_event = { code : int; data1 : pointer; data2 : pointer };
+    type window_event_id = 
+      [ WINDOWEVENT_NONE
+      | WINDOWEVENT_SHOWN          (*< Window has been shown *)
+      | WINDOWEVENT_HIDDEN         (**< Window has been hidden *)
+      | WINDOWEVENT_EXPOSED        (**< Window has been exposed and should be redrawn *)
+      | WINDOWEVENT_MOVED          (**< Window has been moved to data1, data2 *)
+      | WINDOWEVENT_RESIZED        (**< Window size changed to data1xdata2 *)
+      | WINDOWEVENT_SIZE_CHANGED    (**< The window size has changed, either as a result of an API call or through the system or user changing the window size. *)
+      | WINDOWEVENT_MINIMIZED      (**< Window has been minimized *)
+      | WINDOWEVENT_MAXIMIZED      (**< Window has been maximized *)
+      | WINDOWEVENT_RESTORED       (**< Window has been restored to normal size and position *)
+      | WINDOWEVENT_ENTER          (**< Window has gained mouse focus *)
+      | WINDOWEVENT_LEAVE          (**< Window has lost mouse focus *)
+      | WINDOWEVENT_FOCUS_GAINED   (**< Window has gained keyboard focus *)
+      | WINDOWEVENT_FOCUS_LOST     (**< Window has lost keyboard focus *)
+      | WINDOWEVENT_CLOSE           (*< The window manager requests that *)
+      ];
+
+    type window_event = {wevent: window_event_id; wdata1: int; wdata2: int};
     type sys_wm_event;
     type event =
       [ NoEvent
-      | Active of active_event
+(*       | Active of active_event *)
+      | Window of window_event
       | Key of keyboard_event
       | Motion of mouse_motion_event
       | Button of mouse_button_event
@@ -479,6 +510,7 @@ module Event =
       | Jball of joy_ball_event
       | Jhat of joy_hat_event
       | Jbutton of joy_button_event
+      | TouchFingerEvent of touch_finger_event
       | Resize of resize_event
       | Expose
       | Quit
@@ -582,8 +614,7 @@ module Audio =
     external mix_audio : byte_array -> byte_array -> int -> unit =
       "sdlstub_mix_audio";
     external proto_convert_audio :
-      int -> int -> int -> int -> int -> int -> byte_array -> byte_array =
-      "sdlstub_convert_audio_byte" "sdlstub_convert_audio";
+      int -> int -> int -> int -> int -> int -> byte_array -> byte_array = "sdlstub_convert_audio_byte" "sdlstub_convert_audio";
     value convert_audio f_fmt f_ch f_fr fmt ch fr ain =
       proto_convert_audio (int_of_sampletype f_fmt) (int_of_channel f_ch)
         f_fr (int_of_sampletype fmt) (int_of_channel ch) fr ain;

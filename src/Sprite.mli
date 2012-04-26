@@ -1,14 +1,14 @@
 
-module type S = sig
-  module D : DisplayObjectT.M;
 
-  class c:
-    object
-      inherit D.container;
-    end;
+class c:
+  object
+    inherit DisplayObject.container;
+    method ccast: [= `Sprite of c];
+    value mutable filters: list Filters.t;
+    method filters: list Filters.t;
+    method setFilters: list Filters.t -> unit;
+    method cacheAsImage: bool;
+    method setCacheAsImage: bool -> unit;
+  end;
 
-  value create: unit -> c;
-
-end;
-
-module Make(D:DisplayObjectT.M): S with module D = D;
+value create: unit -> c;

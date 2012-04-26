@@ -1,6 +1,5 @@
-
-release: 
-	$(MAKE) -C src
+lib: 
+	$(MAKE) -C src $(LIB)
 
 debug:
 	$(MAKE) -C src debug
@@ -10,9 +9,36 @@ debug:
 
 
 INSTALL_OPTS = 
-install: release
+
+BYTE_FILES = src/lightning.cma src/dlllightning.so src/liblightning.a
+NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a
+SYNTAX_FILES = src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo
+INSTALL_FILES = 
+
+ifneq (,$(findstring byte,$(LIB)))
+	INSTALL_FILES += $(BYTE_FILES)
+	INSTALL_FILES += $(wildcard src/social/facebook/*.cma src/tapjoy/*.cma src/flurry/*.cma src/social/oauth/*.cma src/social/*.cmo src/social/*.o)
+	INSTALL_FILES += $(wildcard src/social/facebook/*.so src/tapjoy/*.so src/flurry/*.so src/social/oauth/*.so)
+endif
+
+ifneq (,$(findstring native,$(LIB)))
+	INSTALL_FILES += $(NATIVE_FILES)
+	INSTALL_FILES += $(wildcard src/social/facebook/*.cmxa src/tapjoy/*.cmxa src/flurry/*.cmxa src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o)
+	INSTALL_FILES += $(wildcard src/social/facebook/*.a src/tapjoy/*.a src/flurry/*.a src/social/oauth/*.a)
+endif
+
+ifneq (,$(findstring syntax,$(LIB)))
+	INSTALL_FILES += $(SYNTAX_FILES)
+endif
+
+install: lib 
 	cp $(META) META
-	sudo $(OCAMLFIND) install lightning META src/lightning.cmxa src/lightning.a src/liblightning.a src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo $(INSTALL_OPTS) 
+	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli\
+	                                                          src/social/facebook/*.mli src/social/facebook/*.cmi \
+	                                                          src/tapjoy/*.cmi src/tapjoy/*.mli \
+	                                                          src/flurry/*.cmi src/flurry/*.mli \
+	                                                          src/social/oauth/*.cmi src/social/oauth/*.mli \
+	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
 
 uninstall:
 	sudo $(OCAMLFIND) remove lightning
@@ -26,3 +52,6 @@ doc:
 
 clean: 
 	$(MAKE) -C src clean
+	$(MAKE) -C src/tapjoy clean
+	$(MAKE) -C src/flurry clean
+	$(MAKE) -C src/social clean

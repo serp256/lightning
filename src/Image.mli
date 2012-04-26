@@ -1,28 +1,66 @@
 
-module type S = sig
+type glow = 
+  {
+    g_texture: mutable option Texture.c;
+    g_image: mutable option Render.Image.t;
+    g_make_program: Render.prg;
+    g_program: mutable Render.prg;
+    g_matrix: mutable Matrix.t;
+    g_params: Filters.glow
+  };
 
-  module Q: Quad.S;
+class virtual base: [ Texture.c ] ->
+  object
+    inherit DisplayObject.c;
+    method texture: Texture.c;
+    method filters: list Filters.t;
+    method setFilters: list Filters.t -> unit;
+    value glowFilter: option glow;
+    value shaderProgram: Render.prg;
+    method virtual private updateGlowFilter: unit -> unit;
+    method private setGlowFilter: Render.prg -> Filters.glow -> unit;
+  end;
 
-  class c : [ Texture.c ] ->
-    object
-      inherit Q.c; 
-      value texture: Texture.c;
-      method texFlipX: bool;
-      method setTexFlipX: bool -> unit;
-      method texFlipY: bool;
-      method setTexFlipY: bool -> unit;
-      method texRotation: option [= `left | `right];
-      method setTexRotation: option [= `left | `right] -> unit;
-      method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
-      method texture: Texture.c;
-      method setTexture: Texture.c -> unit;
-      method setTexScale: float -> unit;
-    end;
+class _c : [ Texture.c ] ->
+  object
+    inherit DisplayObject.c; 
+    value texture: Texture.c;
+    method setColor: int -> unit;
+    method color: int;
+    method setColors: array int -> unit;
 
-  value cast: #Q.D.c -> option c;
+    method texFlipX: bool;
+    method setTexFlipX: bool -> unit;
+    method texFlipY: bool;
+    method setTexFlipY: bool -> unit;
 
-  value load: string -> c;
-  value create: Texture.c -> c;
-end;
+    (*
+    method texRotation: option [= `left | `right];
+    method setTexRotation: option [= `left | `right] -> unit;
+    method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
+    *)
 
-module Make(Q:Quad.S) : S with module Q = Q;
+    method texture: Texture.c;
+    method onTextureEvent: Texture.event -> Texture.c -> unit;
+    method setTexture: Texture.c -> unit;
+
+(*       method setTexScale: float -> unit; *)
+
+    method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
+    method boundsInSpace: !'space. option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
+    method filters: list Filters.t;
+    method setFilters: list Filters.t -> unit;
+
+  end;
+
+(* value cast: #DisplayObject.c -> option c; *)
+
+class c : [ Texture.c ] ->
+  object
+    inherit _c;
+    method ccast: [= `Image of c ];
+  end;
+
+value create: Texture.c -> c;
+value load: string -> c;
+value load_async: string -> (c -> unit) -> unit;

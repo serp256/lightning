@@ -12,8 +12,8 @@
 
 #import <UIKit/UIKit.h>
 #import <OpenGLES/EAGL.h>
-#import <OpenGLES/ES1/gl.h>
-#import <OpenGLES/ES1/glext.h>
+#import <OpenGLES/ES2/gl.h>
+#import <OpenGLES/ES2/glext.h>
 #import "mlwrapper.h"
 
 /** ------------------------------------------------------------------------------------------------
@@ -42,12 +42,12 @@
     GLuint mFramebuffer;    
     
     float mFrameRate;
-    NSTimer *mTimer;
+    //NSTimer *mTimer;
     id mDisplayLink;
-    BOOL mDisplayLinkSupported;        
-    
+    //BOOL mDisplayLinkSupported;        
     double mLastFrameTimestamp;
     double mLastTouchTimestamp;
+		BOOL processTouchesInProgress;
 }
 
 /// ----------------
@@ -68,12 +68,13 @@
 /// -------------
 
 //- (void)initStageWithWidth:(float)width height:(float)height;
-- (void)initStage;
+// - (void)initStage;
 
-/// Starts rendering and event handling.
-- (void)start;
 
 /// Stops rendering and event handling. Call this when the application moves into the background.
 - (void)stop;
+/// Starts rendering and event handling.
+- (void)start;
+
 
 @end

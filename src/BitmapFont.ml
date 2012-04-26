@@ -8,43 +8,71 @@ type bc =
     xOffset:float;
     yOffset:float;
     xAdvance: float;
-    charTexture: Texture.c;
+    atlasNode: AtlasNode.t;
   };
 
 type t = 
   {
-    texture: Texture.c;
     chars: Hashtbl.t int bc;
-    name: string;
-    size: float;
+    scale: float;
+    ascender: float;
+    descender: float;
     lineHeight: float;
+    space:float;
+    texture: Texture.c;
   };
 
+module MapInt = Map.Make (struct type t = int; value compare (k1:int) k2 = compare k1 k2; end);
 value fonts = Hashtbl.create 0;
-value exists name = Hashtbl.mem fonts name;
-exception Font_not_found of string;
-value get name =
-  try
-    Hashtbl.find fonts name
-  with [ Not_found -> raise (Font_not_found name) ];
+value exists ?(style="regular") name = Hashtbl.mem fonts (name,style);
+exception Font_not_found of (string*string);
+
+value get ?(applyScale=False) ?(style="regular") ?size name =
+  let sizes = try Hashtbl.find fonts (name,style) with [ Not_found -> raise (Font_not_found (name,style)) ] in
+  match size with
+  [ None -> 
+    let (fsize,font) = MapInt.choose sizes in
+    font
+  | Some size ->
+    let (l,f,r) = MapInt.split size sizes in
+    match f with
+    [ Some f -> f
+    | None -> 
+        let () = Debug.e "SCALE FONT: %s:%s:%d" name style size in
+        let (fsize,font) = 
+          match MapInt.is_empty r with
+          [ False -> MapInt.min_binding r
+          | True -> MapInt.max_binding l
+          ]
+        in
+        match applyScale with
+        [ True -> 
+          let scale = (float size) /. (float fsize) in
+          {(font) with scale = scale; space = font.space *. scale; ascender = font.ascender *. scale; descender = font.descender *. scale; lineHeight = font.lineHeight *. scale }
+        | False -> {(font) with scale = (float size) /. (float fsize) }
+        ]
+    ]
+  ];
 
 DEFINE CHAR_NEWLINE = 10;
 DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_TAB = 9;
 
+
+(*
 value register xmlpath = (*{{{*)
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; end) in
   let floats = XmlParser.floats in
   let () = XmlParser.accept (`Dtd None) in
   let parse_info () = 
     match XmlParser.parse_element "info" [ "face"; "size"] with
-    [ Some [ face; size ] _ -> (face,floats size)
+    [ Some [ face; size ] _ -> (face,XmlParser.ints size)
     | None -> XmlParser.error "font->info not found"
     | _ -> assert False
     ]
   and parse_common () = 
-    match XmlParser.parse_element "common" ["lineHeight"] with
-    [ Some [ lineHeight ] _ -> floats lineHeight
+    match XmlParser.parse_element "common" ["space";"lineHeight";"base"] with
+    [ Some [ space; lineHeight; base ] _ -> (floats space, floats lineHeight, floats base)
     | None -> XmlParser.error "font->common not found"
     | _ -> assert False
     ]
@@ -72,8 +100,8 @@ value register xmlpath = (*{{{*)
             let charID = int_of_string id in
             let bc = 
               let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
-              let charTexture = Texture.createSubTexture region texture in
-              { charID ; xOffset = floats xoffset; yOffset = floats yoffset; xAdvance = floats xadvance; charTexture }
+              let atlasNode = AtlasNode.create texture region () in
+              { charID ; xOffset = floats xoffset; yOffset = floats yoffset; xAdvance = floats xadvance; atlasNode }
             in
             Hashtbl.add chars charID bc;
             loop ()
@@ -89,35 +117,106 @@ value register xmlpath = (*{{{*)
   match XmlParser.next () with
   [ `El_start ((_,"font"),_) -> 
     let (name,size) = parse_info () in
-    let lineHeight = parse_common () in
+    let (space,lineHeight,baseLine) = parse_common () in
     let imgFile = parse_page () in
     let texture = Texture.load imgFile in
     let chars = parse_chars texture in
-    let bf = { texture; chars; name; size; lineHeight } in
-    Hashtbl.add fonts name bf
+    let bf = { texture; chars; (* name; *) scale=1.; baseLine; lineHeight; space } in
+    try
+      let sizes = Hashtbl.find fonts name in
+      let sizes = MapInt.add size bf sizes in
+      Hashtbl.replace fonts name sizes
+    with [ Not_found -> Hashtbl.add fonts name (MapInt.singleton size bf) ]
   | _ -> XmlParser.error "font not found"
   ];(*}}}*)
+*)
 
+
+value register xmlpath =
+  let dirname = match Filename.dirname xmlpath with [ "." -> "" | dir -> dir ] in
+  let module XmlParser = MakeXmlParser(struct value path = xmlpath; value with_suffix = True; end) in
+  let () = XmlParser.accept (`Dtd None) in
+  let floats = XmlParser.floats in
+  let parse_pages () = 
+    match XmlParser.next () with
+    [ `El_start ((_,"Pages"),_) ->
+      let rec loop res = 
+        match XmlParser.parse_element "page" [ "file"] with
+        [ Some [ file ] _ -> loop [ Texture.load ~with_suffix:False (Filename.concat dirname file) :: res ]
+        | None -> res 
+        | _ -> assert False
+        ]
+      in
+      Array.of_list (List.rev (loop []))
+    | _ -> XmlParser.error "Font->Pages not found"
+    ]
+  in
+  match XmlParser.next () with
+  [ `El_start ((_,"Font"),attributes) -> 
+    match XmlParser.get_attributes "Font" ["face"; "style"; "kerning"] attributes with
+    [ [ face;style;kernign] ->
+      let pages = parse_pages () in
+      let style = String.uncapitalize style in
+      let rec parse_chars res = 
+        match XmlParser.next () with
+        [ `El_start ((_,"Chars"),attributes) ->
+          match XmlParser.get_attributes "Chars" [ "space"; "size"; "lineHeight"; "ascender" ; "descender" ] attributes with
+          [ [ space; size; lineHeight; ascender; descender ] ->
+            let chars = Hashtbl.create 9 in
+            let rec loop () = 
+              match XmlParser.parse_element "char" [ "id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance";"page" ] with
+              [ Some [ id;x;y;width;height;xOffset;yOffset;xAdvance;page] _ -> (* запихнуть *)
+                (
+                  let charID = XmlParser.ints id in
+                   let bc = 
+                     let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
+                     let atlasNode = AtlasNode.create pages.(XmlParser.ints page) region  () in
+                     { charID; xOffset = floats xOffset; yOffset = floats yOffset; xAdvance = floats xAdvance; atlasNode }
+                   in
+                   Hashtbl.add chars charID bc;
+                   loop ()
+                )
+              | None -> ()
+              | _ -> assert False
+              ]
+            in
+            (
+              loop ();
+              let bf = { chars; texture = pages.(0); scale=1.; ascender =  floats ascender; descender = floats descender; space = floats space; lineHeight = floats lineHeight; } in
+              let res = MapInt.add (XmlParser.ints size) bf res in
+              parse_chars res
+            )
+          | _ -> assert False
+          ]
+        | `El_end -> res
+        | _ -> XmlParser.error "unknown signal"
+        ]
+      in
+      let sizes = parse_chars (try Hashtbl.find fonts (face,style) with [ Not_found -> MapInt.empty ]) in
+      Hashtbl.replace fonts (face,style) sizes
+    | _ -> assert False
+    ]
+  | _ -> XmlParser.error "Font not found"
+  ];
+
+(*
 module type Creator = sig
-  module CompiledSprite : CompiledSprite.S;
-  value createText: t -> ~width:float -> ~height:float -> ?size:float -> ~color:int -> ?border:bool -> ?hAlign:LightCommon.halign -> ?vAlign:LightCommon.valign -> string -> CompiledSprite.c;
+  module Sprite: Sprite.S;
+  value createText: t -> ~width:float -> ~height:float -> ~color:int -> ?border:bool -> ?hAlign:LightCommon.halign -> ?vAlign:LightCommon.valign -> string -> Sprite.c;
 end;
 
-module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sprite.D = Image.Q.D) = struct
+module MakeCreator(Image:Image.S)(Sprite:Sprite.S with module D = Image.D) = struct
 
-  module Sprite = CompiledSprite.Sprite;
-  module Quad = Image.Q;
-  module CompiledSprite = CompiledSprite;
+  module Sprite = Sprite;
 
-  value createText t ~width ~height ?(size=t.size) ~color ?(border=False) ?hAlign ?vAlign text =
+  value createText t ~width ~height ~color ?(border=False) ?hAlign ?vAlign text =
   (*   let () = Printf.eprintf "create text: [%s]\n%!" text in *)
-    let lineContainer = Sprite.create ()
-    and scale = size /. t.size in
-    let containerWidth = width /. scale
-    and containerHeight = height /. scale 
+    let lineContainer = Sprite.create () in
+    let containerWidth = width /. t.scale
+    and containerHeight = height /. t.scale 
     in
     (
-      lineContainer#setScale scale;
+      lineContainer#setScale t.scale;
       let lines = Queue.create () in
       (
         let strLength = String.length text in
@@ -153,7 +252,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
               then
                 add_line currentLine (Some (UTF8.next text index))
               else 
-                if currentX +. bchar.xAdvance > containerWidth 
+                if currentX +. bchar.xAdvance > containerWidth (* we need use scale in this comparation ???? *)
                 then
                   let idx = 
                     match !lastWhiteSpace with
@@ -208,12 +307,12 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
         | _ -> Queue.iter lineContainer#addChild lines
         ];
       );
-      let outerContainer = CompiledSprite.create () in (* FIXME: must be compiled sprite *)
+      let outerContainer = Sprite.create () in 
       (
         outerContainer#addChild lineContainer;
         match vAlign with
         [ Some ((`VAlignCenter | `VAlignBottom) as valign) ->
-          let contentHeight = (float lineContainer#numChildren) *. t.lineHeight *. scale in
+          let contentHeight = (float lineContainer#numChildren) *. t.lineHeight *. t.scale in
           let heightDiff = height -. contentHeight in
           lineContainer#setY begin
             match valign with
@@ -223,6 +322,7 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
           end
         | _ -> ()
         ];
+        (*
         if border
         then
           let topBorder = Quad.create width 1.
@@ -245,8 +345,10 @@ module MakeCreator(Image:Image.S)(CompiledSprite:CompiledSprite.S with module Sp
             outerContainer#addChild rightBorder;
           )   
         else ();
+        *)
         outerContainer;
       )
     );
 
 end;
+*)

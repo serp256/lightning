@@ -205,7 +205,6 @@ value of_list lst =
   );
 
 
-(*
 value enum h = (*{{{*)
   let rec make ipos ibuck idata icount =
     let pos = ref ipos in
@@ -226,7 +225,7 @@ value enum h = (*{{{*)
       match !buck with
       [ Empty ->					
           if !hcount = 0 
-          then raise BatEnum.No_more_elements
+          then raise Enum.No_more_elements
           else
           (
             incr pos;
@@ -251,10 +250,45 @@ value enum h = (*{{{*)
       make !pos !buck !hdata !hcount
     )
     in
-    BatEnum.make ~next ~count ~clone 
+    Enum.make ~next ~count ~clone 
   in		
   make (-1) Empty (Obj.magic()) (-1); (*}}}*)
-*)
+
+value unsafe_enum h = (*{{{*)
+  let rec make ipos ibuck icount =
+    let pos = ref ipos in
+    let buck = ref ibuck in
+    let hcount = ref icount in
+    let rec next() =
+    (
+      match !buck with
+      [ Empty ->					
+          if !hcount = h.size 
+          then raise Enum.No_more_elements
+          else
+          (
+            incr pos;
+            buck.val := Array.unsafe_get h.data !pos;
+            next()
+          )
+        | Cons (v,next_buck) ->
+          (
+            buck.val := next_buck;
+            incr hcount;
+            v
+          )
+        ]
+      )
+    in
+    let count() = h.size in
+    let clone() =
+    (
+      make !pos !buck !hcount
+    )
+    in
+    Enum.make ~next ~count ~clone 
+  in		
+  make ~-1 Empty 0; (*}}}*)
 
 module type S = sig
   type key;

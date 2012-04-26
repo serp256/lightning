@@ -1,7 +1,20 @@
 version="0.01"
 archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
-requires="bigarray extlib xmlm dbm threads curl"
+requires="bigarray extlib xmlm dbm threads curl ojson"
+
+package "tapjoy" (
+  description="Tapjoy Connect"
+  archive(byte) = "tapjoy.cma"
+  archive(native) = "tapjoy.cmxa"
+)
+
+
+package "flurry" (
+  description="Flurry Analytics"
+  archive(byte) = "flurry.cma"
+  archive(native) = "flurry.cmxa"
+)
 
 package "syntax" (
 	package "prop" (
@@ -12,4 +25,46 @@ package "syntax" (
 		description = "Syntactic sugars make obj props for tween"
 		archive(syntax,preprocessor) = "pa_debug.cmo"
 	)
+)
+
+
+
+package "social" (
+
+  archive(bytes) = "SNTypes.cmi"
+  archive(native) = "SNTypes.cmi"
+
+  package "facebook" (
+    description="Facebook API"
+    archive(byte) = "fbconnect.cma"
+    archive(native) = "fbconnect.cmxa"
+  )
+
+  package "oauth" (
+    description="OAuth"
+    archive(byte) = "oauth.cma"
+    archive(native) = "oauth.cmxa"
+  )
+
+  package "mm"  (
+    description="Social network: Moy Mir"
+    archive(byte) = "mm.cmo"
+    archive(native) = "mm.cmx"
+    requires = "lightning.social.oauth"
+  )
+  
+  package "vk" (
+    description="VK API"
+    archive(byte) = "vk.cmo"
+    archive(native) = "vk.cmx"
+    requires = "lightning.social.oauth"
+  )
+  
+  package "ok" (
+    description="Odniklassniki API"
+    archive(byte) = "ok.cmo"
+    archive(native) = "ok.cmx"
+    requires = "lightning.social.oauth"
+  )
+  
 )

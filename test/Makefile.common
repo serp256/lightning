@@ -1,0 +1,15 @@
+
+OCAMLC ?= $(OCAMLFIND) ocamlc
+OCAMLOPT ?= $(OCAMLFIND) ocamlopt
+
+MLPPOPT = 
+MLFLAGS = -package camlp4,camlp4.macro -syntax camlp4r -w +7+9 -g
+
+%.cmi: %.mli
+	$(OCAMLC) $(MLFLAGS) -c $<
+
+%.cmo: %.ml
+	$(OCAMLC) $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<
+
+%.cmx: %.ml
+	$(OCAMLOPT) $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<

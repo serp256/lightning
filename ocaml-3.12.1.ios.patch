@@ -1,0 +1,1358 @@
+diff -uNr ocaml-3.12.1/Makefile.ios ios/ocaml-3.12.1/Makefile.ios
+--- ocaml-3.12.1/Makefile.ios	1970-01-01 03:00:00.000000000 +0300
++++ ios/ocaml-3.12.1/Makefile.ios	2012-03-12 14:33:12.000000000 +0400
+@@ -0,0 +1,352 @@
++include config/Makefile
++include stdlib/StdlibModules
++
++CAMLC=ocamlc.opt
++CAMLOPT=ocamlopt.opt
++COMPFLAGS=-strict-sequence -warn-error A $(INCLUDES)
++LINKFLAGS=
++
++CAMLYACC=ocamlyacc
++YACCFLAGS=-v
++CAMLLEX=ocamllex.opt
++CAMLDEP=ocamldep.opt
++DEPFLAGS=$(INCLUDES)
++CAMLRUN=ocamlrun
++SHELL=/bin/sh
++MKDIR=mkdir -p
++
++INCLUDES=-I utils -I parsing -I typing -I bytecomp -I asmcomp -I driver \
++	 -I toplevel
++
++UTILS=utils/misc.cmo utils/tbl.cmo utils/config.cmo \
++  utils/clflags.cmo utils/terminfo.cmo utils/ccomp.cmo utils/warnings.cmo \
++  utils/consistbl.cmo
++
++OPTUTILS=$(UTILS)
++
++PARSING=parsing/linenum.cmo parsing/location.cmo parsing/longident.cmo \
++  parsing/syntaxerr.cmo parsing/parser.cmo \
++  parsing/lexer.cmo parsing/parse.cmo parsing/printast.cmo
++
++TYPING=typing/unused_var.cmo typing/ident.cmo typing/path.cmo \
++  typing/primitive.cmo typing/types.cmo \
++  typing/btype.cmo typing/oprint.cmo \
++  typing/subst.cmo typing/predef.cmo \
++  typing/datarepr.cmo typing/env.cmo \
++  typing/typedtree.cmo typing/ctype.cmo \
++  typing/printtyp.cmo typing/includeclass.cmo \
++  typing/mtype.cmo typing/includecore.cmo \
++  typing/includemod.cmo typing/parmatch.cmo \
++  typing/typetexp.cmo typing/stypes.cmo typing/typecore.cmo \
++  typing/typedecl.cmo typing/typeclass.cmo \
++  typing/typemod.cmo
++
++COMP=bytecomp/lambda.cmo bytecomp/printlambda.cmo \
++  bytecomp/typeopt.cmo bytecomp/switch.cmo bytecomp/matching.cmo \
++  bytecomp/translobj.cmo bytecomp/translcore.cmo \
++  bytecomp/translclass.cmo bytecomp/translmod.cmo \
++  bytecomp/simplif.cmo bytecomp/runtimedef.cmo
++
++BYTECOMP=bytecomp/meta.cmo bytecomp/instruct.cmo bytecomp/bytegen.cmo \
++  bytecomp/printinstr.cmo bytecomp/opcodes.cmo bytecomp/emitcode.cmo \
++  bytecomp/bytesections.cmo bytecomp/dll.cmo bytecomp/symtable.cmo \
++  bytecomp/bytelink.cmo bytecomp/bytelibrarian.cmo bytecomp/bytepackager.cmo
++
++ASMCOMP=asmcomp/arch.cmo asmcomp/debuginfo.cmo \
++  asmcomp/cmm.cmo asmcomp/printcmm.cmo \
++  asmcomp/reg.cmo asmcomp/mach.cmo asmcomp/proc.cmo \
++  asmcomp/clambda.cmo asmcomp/compilenv.cmo \
++  asmcomp/closure.cmo asmcomp/cmmgen.cmo \
++  asmcomp/printmach.cmo asmcomp/selectgen.cmo asmcomp/selection.cmo \
++  asmcomp/comballoc.cmo asmcomp/liveness.cmo \
++  asmcomp/spill.cmo asmcomp/split.cmo \
++  asmcomp/interf.cmo asmcomp/coloring.cmo \
++  asmcomp/reloadgen.cmo asmcomp/reload.cmo \
++  asmcomp/printlinear.cmo asmcomp/linearize.cmo \
++  asmcomp/schedgen.cmo asmcomp/scheduling.cmo \
++  asmcomp/emitaux.cmo asmcomp/emit.cmo asmcomp/asmgen.cmo \
++  asmcomp/asmlink.cmo asmcomp/asmlibrarian.cmo asmcomp/asmpackager.cmo
++
++DRIVER=driver/pparse.cmo driver/errors.cmo driver/compile.cmo \
++  driver/main_args.cmo driver/main.cmo
++
++OPTDRIVER= driver/pparse.cmo driver/opterrors.cmo driver/optcompile.cmo \
++  driver/main_args.cmo driver/optmain.cmo
++
++PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
++
++OPTOBJS=$(OPTUTILS) $(PARSING) $(TYPING) $(COMP) $(ASMCOMP) $(OPTDRIVER)
++
++
++all: runtime runtimeopt ocamlopt.opt libraryopt otherlibrariesopt
++
++runtime:
++	cd byterun; $(MAKE) all
++	if test -f stdlib/libcamlrun.a; then :; else \
++	  ln -s ../byterun/libcamlrun.a stdlib/libcamlrun.a; fi
++
++clean::
++	cd byterun; $(MAKE) clean
++	rm -f stdlib/libcamlrun.a
++	rm -f stdlib/caml
++
++# The runtime system for the native-code compiler
++
++runtimeopt: makeruntimeopt
++	cp asmrun/libasmrun.a stdlib/libasmrun.a
++
++makeruntimeopt:
++	cd asmrun; $(MAKE) all
++
++clean::
++	cd asmrun; $(MAKE) clean
++	rm -f stdlib/libasmrun.a
++
++alldepend::
++	cd asmrun; $(MAKE) depend
++
++ocamlopt.opt: $(OPTOBJS:.cmo=.cmx)
++	$(CAMLOPT) $(LINKFLAGS) -o ocamlopt.opt $(OPTOBJS:.cmo=.cmx)
++	@sed -e 's|@compiler@|ocamlc.opt|' \
++	  driver/ocamlcomp.sh.in > ocamlcomp.sh
++	@chmod +x ocamlcomp.sh
++	@sed -e 's|@compiler@|$$topdir/ocamlopt.opt|' \
++	  driver/ocamlcomp.sh.in > ocamlcompopt.sh
++	@chmod +x ocamlcompopt.sh
++
++partialclean::
++	rm -f ocamlcomp.sh ocamlcompopt.sh ocamlopt.opt
++
++libraryopt:
++	cd stdlib; $(MAKE) allopt
++
++partialclean::
++	cd stdlib; $(MAKE) clean
++
++alldepend::
++	cd stdlib; $(MAKE) depend
++
++ocamlmklib:
++	cd tools; $(MAKE) ocamlmklib
++
++partialclean::
++	cd tools; $(MAKE) clean
++
++
++otherlibrariesopt: ocamlmklib
++	for i in $(OTHERLIBRARIES); do \
++	  (cd otherlibs/$$i; $(MAKE) allopt) || exit $$?; \
++	done
++
++partialclean::
++	for i in $(OTHERLIBRARIES); do \
++	  (cd otherlibs/$$i; $(MAKE) partialclean); \
++	done
++
++
++
++# Installation of the native-code compiler
++install:
++	if test -d $(BINDIR); then : ; else $(MKDIR) $(BINDIR); fi
++	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
++	cp typing/outcometree.cmi typing/outcometree.mli $(LIBDIR)
++	cd byterun; $(MAKE) installopt
++	cd asmrun; $(MAKE) install
++	cd stdlib; $(MAKE) installopt
++	for i in $(OTHERLIBRARIES); \
++	  do (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; done
++	cp ocamlopt.opt $(BINDIR)/ocamlopt.opt$(EXE)
++	ln -fs $(BINDIR)/ocamlopt.opt $(BINDIR)/ocamlopt
++	cp tools/ocamlmklib $(BINDIR)
++	cp config/Makefile $(LIBDIR)/Makefile.config
++
++clean::
++	for i in $(OTHERLIBRARIES); do (cd otherlibs/$$i; $(MAKE) clean); done
++
++alldepend::
++	for i in $(OTHERLIBRARIES); do (cd otherlibs/$$i; $(MAKE) depend); done
++
++# The configuration file
++
++utils/config.ml: utils/config.mlp config/Makefile
++	@rm -f utils/config.ml
++	sed -e 's|%%LIBDIR%%|$(LIBDIR)|' \
++	    -e 's|%%BYTERUN%%|$(BINDIR)/ocamlrun|' \
++	    -e 's|%%CCOMPTYPE%%|cc|' \
++	    -e 's|%%BYTECC%%|$(BYTECC) $(BYTECCCOMPOPTS) $(SHAREDCCCOMPOPTS)|' \
++	    -e 's|%%NATIVECC%%|$(NATIVECC) $(NATIVECCCOMPOPTS)|' \
++	    -e 's|%%PACKLD%%|$(PACKLD)|' \
++	    -e 's|%%BYTECCLIBS%%|$(BYTECCLIBS)|' \
++	    -e 's|%%NATIVECCLIBS%%|$(NATIVECCLIBS)|' \
++	    -e 's|%%RANLIBCMD%%|$(RANLIBCMD)|' \
++	    -e 's|%%CC_PROFILE%%|$(CC_PROFILE)|' \
++	    -e 's|%%ARCH%%|$(ARCH)|' \
++	    -e 's|%%MODEL%%|$(MODEL)|' \
++	    -e 's|%%SYSTEM%%|$(SYSTEM)|' \
++	    -e 's|%%EXT_OBJ%%|.o|' \
++	    -e 's|%%EXT_ASM%%|.s|' \
++	    -e 's|%%EXT_LIB%%|.a|' \
++	    -e 's|%%EXT_DLL%%|.so|' \
++	    -e 's|%%SYSTHREAD_SUPPORT%%|$(SYSTHREAD_SUPPORT)|' \
++	    -e 's|%%ASM%%|$(ASM)|' \
++	    -e 's|%%MKDLL%%|$(MKDLL)|' \
++	    -e 's|%%MKEXE%%|$(MKEXE)|' \
++	    -e 's|%%MKMAINDLL%%|$(MKMAINDLL)|' \
++	    utils/config.mlp > utils/config.ml
++	@chmod -w utils/config.ml
++
++partialclean::
++	rm -f utils/config.ml
++
++beforedepend:: utils/config.ml
++
++partialclean::
++	rm -f myocamlbuild_config.ml tools/myocamlbuild_config.ml
++
++# The parser
++
++parsing/parser.mli parsing/parser.ml: parsing/parser.mly
++	$(CAMLYACC) $(YACCFLAGS) parsing/parser.mly
++
++partialclean::
++	rm -f parsing/parser.mli parsing/parser.ml parsing/parser.output
++
++beforedepend:: parsing/parser.mli parsing/parser.ml
++
++# The lexer
++
++parsing/lexer.ml: parsing/lexer.mll
++	$(CAMLLEX) parsing/lexer.mll
++
++partialclean::
++	rm -f parsing/lexer.ml
++
++beforedepend:: parsing/lexer.ml
++
++# The auxiliary lexer for counting line numbers
++
++parsing/linenum.ml: parsing/linenum.mll
++	$(CAMLLEX) parsing/linenum.mll
++
++partialclean::
++	rm -f parsing/linenum.ml
++
++beforedepend:: parsing/linenum.ml
++
++# The predefined exceptions and primitives
++
++bytecomp/runtimedef.ml: byterun/primitives byterun/fail.h
++	(echo 'let builtin_exceptions = [|'; \
++	 sed -n -e 's|.*/\* \("[A-Za-z_]*"\) \*/$$|  \1;|p' byterun/fail.h | \
++	 sed -e '$$s/;$$//'; \
++	 echo '|]'; \
++	 echo 'let builtin_primitives = [|'; \
++	 sed -e 's/.*/  "&";/' -e '$$s/;$$//' byterun/primitives; \
++	 echo '|]') > bytecomp/runtimedef.ml
++
++partialclean::
++	rm -f bytecomp/runtimedef.ml
++
++beforedepend:: bytecomp/runtimedef.ml
++
++# Choose the right machine-dependent files
++
++# Choose the right machine-dependent files
++
++asmcomp/arch.ml: asmcomp/$(ARCH)/arch.ml
++	ln -s $(ARCH)/arch.ml asmcomp/arch.ml
++
++partialclean::
++	rm -f asmcomp/arch.ml
++
++beforedepend:: asmcomp/arch.ml
++
++asmcomp/proc.ml: asmcomp/$(ARCH)/proc.ml
++	ln -s $(ARCH)/proc.ml asmcomp/proc.ml
++
++partialclean::
++	rm -f asmcomp/proc.ml
++
++beforedepend:: asmcomp/proc.ml
++
++asmcomp/selection.ml: asmcomp/$(ARCH)/selection.ml
++	ln -s $(ARCH)/selection.ml asmcomp/selection.ml
++
++partialclean::
++	rm -f asmcomp/selection.ml
++
++beforedepend:: asmcomp/selection.ml
++
++asmcomp/reload.ml: asmcomp/$(ARCH)/reload.ml
++	ln -s $(ARCH)/reload.ml asmcomp/reload.ml
++
++partialclean::
++	rm -f asmcomp/reload.ml
++
++beforedepend:: asmcomp/reload.ml
++
++asmcomp/scheduling.ml: asmcomp/$(ARCH)/scheduling.ml
++	ln -s $(ARCH)/scheduling.ml asmcomp/scheduling.ml
++
++partialclean::
++	rm -f asmcomp/scheduling.ml
++
++beforedepend:: asmcomp/scheduling.ml
++
++# Preprocess the code emitters
++
++asmcomp/emit.ml: asmcomp/$(ARCH)/emit.mlp tools/cvt_emit
++	$(CAMLRUN) tools/cvt_emit < asmcomp/$(ARCH)/emit.mlp > asmcomp/emit.ml \
++	|| { rm -f asmcomp/emit.ml; exit 2; }
++
++partialclean::
++	rm -f asmcomp/emit.ml
++
++beforedepend:: asmcomp/emit.ml
++
++tools/cvt_emit: tools/cvt_emit.mll
++	cd tools; \
++	$(MAKE) CAMLC="ocamlc" cvt_emit
++
++# Default rules
++
++.SUFFIXES: .ml .mli .cmo .cmi .cmx
++
++.ml.cmo:
++	$(CAMLC) $(COMPFLAGS) -c $<
++
++.mli.cmi:
++	$(CAMLC) $(COMPFLAGS) -c $<
++
++.ml.cmx:
++	$(CAMLOPT) $(COMPFLAGS) -c $<
++
++partialclean::
++	for d in utils parsing typing bytecomp asmcomp driver toplevel tools; \
++	  do rm -f $$d/*.cm[iox] $$d/*.annot $$d/*.[so] $$d/*~; done
++	rm -f *~
++
++depend: beforedepend
++	(for d in utils parsing typing bytecomp asmcomp driver toplevel; \
++	 do $(CAMLDEP) $(DEPFLAGS) $$d/*.mli $$d/*.ml; \
++	 done) > .depend
++
++alldepend:: depend
++
++clean:: partialclean
++
++distclean:
++	./build/distclean.sh
++
++.PHONY: all backup bootstrap camlp4opt camlp4out checkstack clean
++.PHONY: partialclean beforedepend alldepend cleanboot coldstart
++.PHONY: compare core coreall
++.PHONY: coreboot defaultentry depend distclean install installopt
++.PHONY: library library-cross libraryopt ocamlbuild-mixed-boot
++.PHONY: ocamlbuild.byte ocamlbuild.native ocamldebugger ocamldoc
++.PHONY: ocamldoc.opt ocamllex ocamllex.opt ocamltools ocamltools.opt
++.PHONY: ocamlyacc opt-core opt opt.opt otherlibraries
++.PHONY: otherlibrariesopt package-macosx promote promote-cross
++.PHONY: restore runtime runtimeopt makeruntimeopt world world.opt
++
++include .depend
+diff -uNr ocaml-3.12.1/asmcomp/arm/emit.mlp ios/ocaml-3.12.1/asmcomp/arm/emit.mlp
+--- ocaml-3.12.1/asmcomp/arm/emit.mlp	2010-04-22 13:33:18.000000000 +0400
++++ ios/ocaml-3.12.1/asmcomp/arm/emit.mlp	2012-03-12 14:33:12.000000000 +0400
+@@ -30,13 +30,36 @@
+ 
+ (* Output a label *)
+ 
++let label_prefix =
++  match Config.system with
++    "linux_elf" -> ".L"
++  | "bsd_elf" -> ".L"
++  | "solaris" -> ".L"
++  | "beos" -> ".L"
++  | "gnu" -> ".L"
++  | _ -> "L"
++
+ let emit_label lbl =
+-  emit_string ".L"; emit_int lbl
++  emit_string label_prefix; emit_int lbl
+ 
+ (* Output a symbol *)
+ 
++let symbol_prefix =
++  match Config.system with
++    "linux_elf" -> ""
++  | "bsd_elf" -> ""
++  | "solaris" -> ""
++  | "beos" -> ""
++  | "gnu" -> ""
++  | _ -> "_"
++
+ let emit_symbol s =
+-  Emitaux.emit_symbol '$' s
++  emit_string symbol_prefix; Emitaux.emit_symbol '$' s
++
++let global_dir =
++  match Config.system with
++  | "macosx" -> ".globl"
++  | _ -> ".global"
+ 
+ (* Output a pseudo-register *)
+ 
+@@ -310,7 +333,7 @@
+         if alloc then begin
+           let lbl = label_constant symbol_constants s 1 in
+           `	ldr	r12, {emit_label lbl} @ {emit_symbol s}\n`;
+-          `{record_frame i.live}	bl	caml_c_call\n`; 2
++          `{record_frame i.live}	bl	{emit_symbol "caml_c_call"}\n`; 2
+         end else begin
+           `	bl	{emit_symbol s}\n`; 1
+         end
+@@ -362,15 +385,15 @@
+           let ni = emit_intconst (phys_reg 8 (*r12*)) (Nativeint.of_int n) in
+           `	sub	alloc_ptr, alloc_ptr, r12\n`;
+           `	cmp	alloc_ptr, alloc_limit\n`;
+-          `{record_frame i.live}	blcc    caml_call_gc\n`;
++          `{record_frame i.live}	blcc    {emit_symbol "caml_call_gc"}\n`;
+           `	add	{emit_reg i.res.(0)}, alloc_ptr, #4\n`;
+           4 + ni
+         end else if n = 8 || n = 12 || n = 16 then begin
+-          `{record_frame i.live}	bl	caml_alloc{emit_int ((n-4)/4)}\n`;
++          `{record_frame i.live}	bl	{emit_symbol "caml_alloc"}{emit_int ((n-4)/4)}\n`;
+           `	add	{emit_reg i.res.(0)}, alloc_ptr, #4\n`; 2
+         end else begin
+           let ni = emit_intconst (phys_reg 8 (*r12*)) (Nativeint.of_int n) in
+-          `{record_frame i.live}	bl	caml_allocN\n`;
++          `{record_frame i.live}	bl	{emit_symbol "caml_allocN"}\n`;
+           `	add	{emit_reg i.res.(0)}, alloc_ptr, #4\n`;
+           2 + ni
+         end
+@@ -384,7 +407,7 @@
+         `	mov{emit_string	comp}   {emit_reg i.res.(0)}, #1\n`; 3
+     | Lop(Iintop(Icheckbound)) ->
+         `	cmp	{emit_reg i.arg.(0)}, {emit_reg i.arg.(1)}\n`;
+-        `	blls	caml_ml_array_bound_error\n`; 2
++        `	blls	{emit_symbol "caml_ml_array_bound_error"}\n`; 2
+     | Lop(Iintop op) ->
+         let instr = name_for_int_operation op in
+         `	{emit_string	instr}     {emit_reg i.res.(0)}, {emit_reg i.arg.(0)}, {emit_reg i.arg.(1)}\n`; 1
+@@ -421,7 +444,7 @@
+         `	mov{emit_string	comp}   {emit_reg i.res.(0)}, #1\n`; 3
+     | Lop(Iintop_imm(Icheckbound, n)) ->
+         `	cmp	{emit_reg i.arg.(0)}, #{emit_int n}\n`;
+-        `	blls	caml_ml_array_bound_error\n`; 2
++        `	blls	{emit_symbol "caml_ml_array_bound_error"}\n`; 2
+     | Lop(Iintop_imm(op, n)) ->
+         let instr = name_for_int_operation op in
+         `	{emit_string	instr}     {emit_reg i.res.(0)}, {emit_reg i.arg.(0)}, #{emit_int n}\n`; 1
+@@ -440,7 +463,7 @@
+         1
+     | Lop(Ispecific(Ishiftcheckbound shift)) ->
+         `	cmp	{emit_reg i.arg.(1)}, {emit_reg i.arg.(0)}, lsr #{emit_int shift}\n`;
+-        `	blcs	caml_ml_array_bound_error\n`; 2
++        `	blcs	{emit_symbol "caml_ml_array_bound_error"}\n`; 2
+     | Lop(Ispecific(Irevsubimm n)) ->
+         `	rsb	{emit_reg i.res.(0)}, {emit_reg i.arg.(0)}, #{emit_int n}\n`; 1
+     | Lreloadretaddr ->
+@@ -555,7 +578,8 @@
+   Hashtbl.clear float_constants;
+   `	.text\n`;
+   `	.align	2\n`;
+-  `	.global	{emit_symbol fundecl.fun_name}\n`;
++  `	{emit_string global_dir}	{emit_symbol fundecl.fun_name}\n`;
++	(* `  .type {emit_symbol fundecl.fun_name}, %function\n`; *)
+   `{emit_symbol fundecl.fun_name}:\n`;
+   let n = frame_size() in
+   ignore(emit_stack_adjustment "sub" n);
+@@ -569,7 +593,7 @@
+ 
+ let emit_item = function
+     Cglobal_symbol s ->
+-      `	.global	{emit_symbol s}\n`;
++      `	{emit_string global_dir}	{emit_symbol s}\n`;
+   | Cdefine_symbol s ->
+       `{emit_symbol s}:\n`
+   | Cdefine_label lbl ->
+@@ -604,31 +628,31 @@
+ (* Beginning / end of an assembly file *)
+ 
+ let begin_assembly() =
+-  `trap_ptr     .req    r11\n`;
+-  `alloc_ptr    .req    r8\n`;
+-  `alloc_limit  .req    r10\n`;
++  `trap_ptr .req r11\n`;
++  `alloc_ptr .req r8\n`;
++  `alloc_limit .req r10\n`;
+   let lbl_begin = Compilenv.make_symbol (Some "data_begin") in
+   `	.data\n`;
+-  `	.global	{emit_symbol lbl_begin}\n`;
++  `	{emit_string global_dir}	{emit_symbol lbl_begin}\n`;
+   `{emit_symbol lbl_begin}:\n`;
+   let lbl_begin = Compilenv.make_symbol (Some "code_begin") in
+   `	.text\n`;
+-  `	.global	{emit_symbol lbl_begin}\n`;
++  `	{emit_string global_dir}	{emit_symbol lbl_begin}\n`;
+   `{emit_symbol lbl_begin}:\n`
+ 
+ let end_assembly () =
+   let lbl_end = Compilenv.make_symbol (Some "code_end") in
+   `	.text\n`;
+-  `	.global	{emit_symbol lbl_end}\n`;
++  `	{emit_string global_dir}	{emit_symbol lbl_end}\n`;
+   `{emit_symbol lbl_end}:\n`;
+   let lbl_end = Compilenv.make_symbol (Some "data_end") in
+   `	.data\n`;
+-  `	.global	{emit_symbol lbl_end}\n`;
++  `	{emit_string global_dir}	{emit_symbol lbl_end}\n`;
+   `{emit_symbol lbl_end}:\n`;
+   `	.word	0\n`;
+   let lbl = Compilenv.make_symbol (Some "frametable") in
+   `	.data\n`;
+-  `	.global	{emit_symbol lbl}\n`;
++  `	{emit_string global_dir}	{emit_symbol lbl}\n`;
+   `{emit_symbol lbl}:\n`;
+   `	.word	{emit_int (List.length !frame_descriptors)}\n`;
+   List.iter emit_frame !frame_descriptors;
+diff -uNr ocaml-3.12.1/asmcomp/cmmgen.ml ios/ocaml-3.12.1/asmcomp/cmmgen.ml
+--- ocaml-3.12.1/asmcomp/cmmgen.ml	2010-11-11 20:08:07.000000000 +0300
++++ ios/ocaml-3.12.1/asmcomp/cmmgen.ml	2012-03-12 14:33:12.000000000 +0400
+@@ -1668,7 +1668,9 @@
+   if size_int = 8 then
+     Csymbol_address("caml_int64_ops") :: Cint lo :: cont
+   else begin
+-    let hi = Int64.to_nativeint (Int64.shift_right n 32) in
++    assert (size_int = 4);
++    let lo = Int64.to_nativeint (Int64.shift_right_logical (Int64.shift_left n 32) 32) in
++    let hi = Int64.to_nativeint (Int64.shift_right_logical n 32) in
+     if big_endian then
+       Csymbol_address("caml_int64_ops") :: Cint hi :: Cint lo :: cont
+     else
+diff -uNr ocaml-3.12.1/asmrun/arm.S ios/ocaml-3.12.1/asmrun/arm.S
+--- ocaml-3.12.1/asmrun/arm.S	2009-05-04 17:46:46.000000000 +0400
++++ ios/ocaml-3.12.1/asmrun/arm.S	2012-03-12 14:33:12.000000000 +0400
+@@ -15,6 +15,25 @@
+ 
+ /* Asm part of the runtime system, ARM processor */
+ 
++/* Linux/BSD with ELF binaries and Solaris do not prefix identifiers with _.
++   Linux/BSD with a.out binaries and NextStep do.
++   Copied from asmrun/i386.S */
++
++#if defined(SYS_solaris)
++#define CONCAT(a,b) a/**/b
++#else
++#define CONCAT(a,b) a##b
++#endif
++
++#if defined(SYS_linux_elf) || defined(SYS_bsd_elf) \
++ || defined(SYS_solaris) || defined(SYS_beos) || defined(SYS_gnu)
++#define G(x) x
++#define LBL(x) CONCAT(.L,x)
++#else
++#define G(x) CONCAT(_,x)
++#define LBL(x) CONCAT(L,x)
++#endif
++
+ trap_ptr        .req    r11
+ alloc_ptr       .req    r8
+ alloc_limit     .req    r10
+@@ -23,108 +42,118 @@
+ 
+ /* Allocation functions and GC interface */
+ 
+-        .globl caml_call_gc
+-caml_call_gc:
++        .globl G(caml_call_gc)
++				.align 2
++				//.type caml_call_gc, %function
++G(caml_call_gc):
+     /* Record return address and desired size */
+     /* Can use alloc_limit as a temporary since it will be reloaded by
+        invoke_gc */
+-        ldr     alloc_limit, .Lcaml_last_return_address
++        ldr     alloc_limit, LBL(caml_last_return_address)
+         str     lr, [alloc_limit, #0]
+-        ldr     alloc_limit, .Lcaml_requested_size
++        ldr     alloc_limit, LBL(caml_requested_size)
+         str     r12, [alloc_limit, #0]
+     /* Branch to shared GC code */
+-        bl      .Linvoke_gc
++        bl      LBL(invoke_gc)
+     /* Finish allocation */
+-	ldr	r12, .Lcaml_requested_size
++	ldr	r12, LBL(caml_requested_size)
+ 	ldr	r12, [r12, #0]
+ 	sub	alloc_ptr, alloc_ptr, r12
+         bx      lr
+ 
+-        .globl caml_alloc1
+-caml_alloc1:
++        .globl G(caml_alloc1)
++				.align 2
++				//.type caml_alloc1, %function
++G(caml_alloc1):
+         sub     alloc_ptr, alloc_ptr, #8
+         cmp     alloc_ptr, alloc_limit
+         movcs   pc, lr                /* Return if alloc_ptr >= alloc_limit */
+     /* Record return address */
+-        ldr     r12, .Lcaml_last_return_address
++        ldr     r12, LBL(caml_last_return_address)
+         str     lr, [r12, #0]
+     /* Invoke GC */
+-        bl      .Linvoke_gc
++        bl      LBL(invoke_gc)
+     /* Try again */
+-        b       caml_alloc1
++        b       G(caml_alloc1)
+ 
+-        .globl caml_alloc2
+-caml_alloc2:
++        .globl G(caml_alloc2)
++				.align 2
++				//.type caml_alloc2, %function
++G(caml_alloc2):
+         sub     alloc_ptr, alloc_ptr, #12
+         cmp     alloc_ptr, alloc_limit
+         movcs   pc, lr                /* Return if alloc_ptr >= alloc_limit */
+     /* Record return address */
+-        ldr     r12, .Lcaml_last_return_address
++        ldr     r12, LBL(caml_last_return_address)
+         str     lr, [r12, #0]
+     /* Invoke GC */
+-        bl      .Linvoke_gc
++        bl      LBL(invoke_gc)
+     /* Try again */
+-        b       caml_alloc2
++        b       G(caml_alloc2)
+ 
+-        .globl caml_alloc3
+-caml_alloc3:
++        .globl G(caml_alloc3)
++				.align 2
++				//.type caml_alloc3, %function
++G(caml_alloc3):
+         sub     alloc_ptr, alloc_ptr, #16
+         cmp     alloc_ptr, alloc_limit
+         movcs   pc, lr                /* Return if alloc_ptr >= alloc_limit */
+     /* Record return address */
+-        ldr     r12, .Lcaml_last_return_address
++        ldr     r12, LBL(caml_last_return_address)
+         str     lr, [r12, #0]
+     /* Invoke GC */
+-        bl      .Linvoke_gc
++        bl      LBL(invoke_gc)
+     /* Try again */
+-        b       caml_alloc3
++        b       G(caml_alloc3)
+ 
+-        .globl caml_allocN
+-caml_allocN:
++        .globl G(caml_allocN)
++				.align 2
++				//.type caml_allocN, %function
++G(caml_allocN):
+         sub     alloc_ptr, alloc_ptr, r12
+         cmp     alloc_ptr, alloc_limit
+         movcs   pc, lr                /* Return if alloc_ptr >= alloc_limit */
+     /* Record return address and desired size */
+     /* Can use alloc_limit as a temporary since it will be reloaded by
+        invoke_gc */
+-        ldr     alloc_limit, .Lcaml_last_return_address
++        ldr     alloc_limit, LBL(caml_last_return_address)
+         str     lr, [alloc_limit, #0]
+-        ldr     alloc_limit, .Lcaml_requested_size
++        ldr     alloc_limit, LBL(caml_requested_size)
+         str     r12, [alloc_limit, #0]
+     /* Invoke GC */
+-        bl      .Linvoke_gc
++        bl      LBL(invoke_gc)
+     /* Try again */
+-	ldr	r12, .Lcaml_requested_size
++	ldr	r12, LBL(caml_requested_size)
+ 	ldr	r12, [r12, #0]
+-        b       caml_allocN
++        b       G(caml_allocN)
+ 
+ /* Shared code to invoke the GC */
+-.Linvoke_gc:
++LBL(invoke_gc):
+     /* Record lowest stack address */
+-        ldr     r12, .Lcaml_bottom_of_stack
++        ldr     r12, LBL(caml_bottom_of_stack)
+         str     sp, [r12, #0]
+     /* Save integer registers and return address on stack */
+         stmfd   sp!, {r0,r1,r2,r3,r4,r5,r6,r7,r12,lr}
+     /* Store pointer to saved integer registers in caml_gc_regs */
+-        ldr     r12, .Lcaml_gc_regs
++        ldr     r12, LBL(caml_gc_regs)
+         str     sp, [r12, #0]
+     /* Save current allocation pointer for debugging purposes */
+-        ldr     r12, .Lcaml_young_ptr
++        ldr     r12, LBL(caml_young_ptr)
+         str     alloc_ptr, [r12, #0]
+     /* Save trap pointer in case an exception is raised during GC */
+-        ldr     r12, .Lcaml_exception_pointer
++        ldr     r12, LBL(caml_exception_pointer)
+         str     trap_ptr, [r12, #0]
+     /* Call the garbage collector */
+-        bl      caml_garbage_collection
++        bl      G(caml_garbage_collection)
+     /* Restore the registers from the stack */
+         ldmfd   sp!, {r0,r1,r2,r3,r4,r5,r6,r7,r12}
+     /* Reload return address */
+-        ldr     r12, .Lcaml_last_return_address
++        ldr     r12, LBL(caml_last_return_address)
+         ldr     lr, [r12, #0]
+     /* Reload new allocation pointer and allocation limit */
+-        ldr     r12, .Lcaml_young_ptr
++        ldr     r12, LBL(caml_young_ptr)
+         ldr     alloc_ptr, [r12, #0]
+-        ldr     r12, .Lcaml_young_limit
++        ldr     r12, LBL(caml_young_limit)
+         ldr     alloc_limit, [r12, #0]
+     /* Return to caller */
+         ldr     r12, [sp], #4
+@@ -133,25 +162,27 @@
+ /* Call a C function from Caml */
+ /* Function to call is in r12 */
+ 
+-        .globl caml_c_call
+-caml_c_call:
++        .globl G(caml_c_call)
++				.align 2
++				//.type caml_c_call, %function
++G(caml_c_call):
+     /* Preserve return address in callee-save register r4 */
+         mov     r4, lr
+     /* Record lowest stack address and return address */
+-        ldr     r5, .Lcaml_last_return_address
+-        ldr     r6, .Lcaml_bottom_of_stack
++        ldr     r5, LBL(caml_last_return_address)
++        ldr     r6, LBL(caml_bottom_of_stack)
+         str     lr, [r5, #0]
+         str     sp, [r6, #0]
+     /* Make the exception handler and alloc ptr available to the C code */
+-        ldr     r6, .Lcaml_young_ptr
+-        ldr     r7, .Lcaml_exception_pointer
++        ldr     r6, LBL(caml_young_ptr)
++        ldr     r7, LBL(caml_exception_pointer)
+         str     alloc_ptr, [r6, #0]
+         str     trap_ptr, [r7, #0]
+     /* Call the function */
+         mov     lr, pc
+         bx      r12
+     /* Reload alloc ptr and alloc limit */
+-        ldr     r5, .Lcaml_young_limit
++        ldr     r5, LBL(caml_young_limit)
+         ldr     alloc_ptr, [r6, #0]    /* r6 still points to caml_young_ptr */
+         ldr     alloc_limit, [r5, #0]
+     /* Return */
+@@ -159,117 +190,127 @@
+ 
+ /* Start the Caml program */
+ 
+-        .globl caml_start_program
+-caml_start_program:
+-        ldr     r12, .Lcaml_program
++        .globl G(caml_start_program)
++				.align 2
++				//.type caml_start_program, %function
++G(caml_start_program):
++        ldr     r12, LBL(caml_program)
+ 
+ /* Code shared with caml_callback* */
+ /* Address of Caml code to call is in r12 */
+ /* Arguments to the Caml code are in r0...r3 */
+ 
+-.Ljump_to_caml:
++LBL(jump_to_caml):
+     /* Save return address and callee-save registers */
+         stmfd   sp!, {r4,r5,r6,r7,r8,r10,r11,lr} /* 8-alignment */
+     /* Setup a callback link on the stack */
+         sub     sp, sp, #4*4                    /* 8-alignment */
+-        ldr     r4, .Lcaml_bottom_of_stack
++        ldr     r4, LBL(caml_bottom_of_stack)
+         ldr     r4, [r4, #0]
+         str     r4, [sp, #0]
+-        ldr     r4, .Lcaml_last_return_address
++        ldr     r4, LBL(caml_last_return_address)
+         ldr     r4, [r4, #0]
+         str     r4, [sp, #4]
+-        ldr     r4, .Lcaml_gc_regs
++        ldr     r4, LBL(caml_gc_regs)
+         ldr     r4, [r4, #0]
+         str     r4, [sp, #8]
+     /* Setup a trap frame to catch exceptions escaping the Caml code */
+         sub     sp, sp, #4*2
+-        ldr     r4, .Lcaml_exception_pointer
++        ldr     r4, LBL(caml_exception_pointer)
+         ldr     r4, [r4, #0]
+         str     r4, [sp, #0]
+-        ldr     r4, .LLtrap_handler
++        ldr     r4, LBL(Ltrap_handler)
+         str     r4, [sp, #4]
+         mov     trap_ptr, sp
+     /* Reload allocation pointers */
+-        ldr     r4, .Lcaml_young_ptr
++        ldr     r4, LBL(caml_young_ptr)
+         ldr     alloc_ptr, [r4, #0]
+-        ldr     r4, .Lcaml_young_limit
++        ldr     r4, LBL(caml_young_limit)
+         ldr     alloc_limit, [r4, #0]
+     /* Call the Caml code */
+         mov     lr, pc
+         bx      r12
+-.Lcaml_retaddr:
++LBL(caml_retaddr):
+     /* Pop the trap frame, restoring caml_exception_pointer */
+-        ldr     r4, .Lcaml_exception_pointer
++        ldr     r4, LBL(caml_exception_pointer)
+         ldr     r5, [sp, #0]
+         str     r5, [r4, #0]
+         add     sp, sp, #2 * 4
+     /* Pop the callback link, restoring the global variables */
+-.Lreturn_result:
+-        ldr     r4, .Lcaml_bottom_of_stack
++LBL(return_result):
++        ldr     r4, LBL(caml_bottom_of_stack)
+         ldr     r5, [sp, #0]
+         str     r5, [r4, #0]
+-        ldr     r4, .Lcaml_last_return_address
++        ldr     r4, LBL(caml_last_return_address)
+         ldr     r5, [sp, #4]
+         str     r5, [r4, #0]
+-        ldr     r4, .Lcaml_gc_regs
++        ldr     r4, LBL(caml_gc_regs)
+         ldr     r5, [sp, #8]
+         str     r5, [r4, #0]
+         add     sp, sp, #4*4
+     /* Update allocation pointer */
+-        ldr     r4, .Lcaml_young_ptr
++        ldr     r4, LBL(caml_young_ptr)
+         str     alloc_ptr, [r4, #0]
+     /* Reload callee-save registers and return */
+         ldmfd   sp!, {r4,r5,r6,r7,r8,r10,r11,lr}
+ 	bx	lr
+ 
+     /* The trap handler */
+-.Ltrap_handler:
++LBL(trap_handler):
+     /* Save exception pointer */
+-        ldr     r4, .Lcaml_exception_pointer
++        ldr     r4, LBL(caml_exception_pointer)
+         str     trap_ptr, [r4, #0]
+     /* Encode exception bucket as an exception result */
+         orr     r0, r0, #2
+     /* Return it */
+-        b       .Lreturn_result
++        b       LBL(return_result)
+ 
+ /* Raise an exception from C */
+ 
+-        .globl caml_raise_exception
+-caml_raise_exception:
++        .globl G(caml_raise_exception)
++				.align 2
++				//.type caml_raise_exception, %function
++G(caml_raise_exception):
+     /* Reload Caml allocation pointers */
+-        ldr     r12, .Lcaml_young_ptr
++        ldr     r12, LBL(caml_young_ptr)
+         ldr     alloc_ptr, [r12, #0]
+-        ldr     r12, .Lcaml_young_limit
++        ldr     r12, LBL(caml_young_limit)
+         ldr     alloc_limit, [r12, #0]
+     /* Cut stack at current trap handler */
+-        ldr     r12, .Lcaml_exception_pointer
++        ldr     r12, LBL(caml_exception_pointer)
+         ldr     sp, [r12, #0]
+     /* Pop previous handler and addr of trap, and jump to it */
+         ldmfd   sp!, {trap_ptr, pc}
+ 
+ /* Callback from C to Caml */
+ 
+-        .globl caml_callback_exn
+-caml_callback_exn:
++        .globl G(caml_callback_exn)
++				.align 2
++				//.type caml_callback_exn, %function
++G(caml_callback_exn):
+     /* Initial shuffling of arguments (r0 = closure, r1 = first arg) */
+         mov     r12, r0
+         mov     r0, r1            /* r0 = first arg */
+         mov     r1, r12           /* r1 = closure environment */
+         ldr     r12, [r12, #0]    /* code pointer */
+-        b       .Ljump_to_caml
++        b       LBL(jump_to_caml)
+ 
+-        .globl caml_callback2_exn
+-caml_callback2_exn:
++        .globl G(caml_callback2_exn)
++				.align 2
++				//.type caml_callback2_exn, %function
++G(caml_callback2_exn):
+     /* Initial shuffling of arguments (r0 = closure, r1 = arg1, r2 = arg2) */
+         mov     r12, r0
+         mov     r0, r1           /* r0 = first arg */
+         mov     r1, r2           /* r1 = second arg */
+         mov     r2, r12          /* r2 = closure environment */
+-        ldr     r12, .Lcaml_apply2
+-        b       .Ljump_to_caml
++        ldr     r12, LBL(caml_apply2)
++        b       LBL(jump_to_caml)
+ 
+-        .globl caml_callback3_exn
+-caml_callback3_exn:
++        .globl G(caml_callback3_exn)
++				.align 2
++				//.type caml_callback3_exn, %function
++G(caml_callback3_exn):
+     /* Initial shuffling of arguments */
+     /* (r0 = closure, r1 = arg1, r2 = arg2, r3 = arg3) */
+         mov     r12, r0
+@@ -277,42 +318,44 @@
+         mov     r1, r2          /* r1 = second arg */
+         mov     r2, r3          /* r2 = third arg */
+         mov     r3, r12         /* r3 = closure environment */
+-        ldr     r12, .Lcaml_apply3
+-        b       .Ljump_to_caml
++        ldr     r12, LBL(caml_apply3)
++        b       LBL(jump_to_caml)
+ 
+-        .globl caml_ml_array_bound_error
+-caml_ml_array_bound_error:
++        .globl G(caml_ml_array_bound_error)
++				.align 2
++				//.type caml_ml_array_bound_error, %function
++G(caml_ml_array_bound_error):
+     /* Load address of [caml_array_bound_error] in r12 */
+-        ldr     r12, .Lcaml_array_bound_error
++        ldr     r12, LBL(caml_array_bound_error)
+     /* Call that function */
+-        b       caml_c_call
++        b       G(caml_c_call)
+ 
+ /* Global references */
+ 
+-.Lcaml_last_return_address:     .word caml_last_return_address
+-.Lcaml_bottom_of_stack:         .word caml_bottom_of_stack
+-.Lcaml_gc_regs:                 .word caml_gc_regs
+-.Lcaml_young_ptr:               .word caml_young_ptr
+-.Lcaml_young_limit:             .word caml_young_limit
+-.Lcaml_exception_pointer:       .word caml_exception_pointer
+-.Lcaml_program:                 .word caml_program
+-.LLtrap_handler:                .word .Ltrap_handler
+-.Lcaml_apply2:                  .word caml_apply2
+-.Lcaml_apply3:                  .word caml_apply3
+-.Lcaml_array_bound_error:       .word caml_array_bound_error
+-.Lcaml_requested_size:          .word caml_requested_size
++LBL(caml_last_return_address):     .word G(caml_last_return_address)
++LBL(caml_bottom_of_stack):         .word G(caml_bottom_of_stack)
++LBL(caml_gc_regs):                 .word G(caml_gc_regs)
++LBL(caml_young_ptr):               .word G(caml_young_ptr)
++LBL(caml_young_limit):             .word G(caml_young_limit)
++LBL(caml_exception_pointer):       .word G(caml_exception_pointer)
++LBL(caml_program):                 .word G(caml_program)
++LBL(Ltrap_handler):                .word LBL(trap_handler)
++LBL(caml_apply2):                  .word G(caml_apply2)
++LBL(caml_apply3):                  .word G(caml_apply3)
++LBL(caml_array_bound_error):       .word G(caml_array_bound_error)
++LBL(caml_requested_size):          .word G(caml_requested_size)
+ 
+ 	.data
+-caml_requested_size:
++G(caml_requested_size):
+ 	.word	0
+ 
+ /* GC roots for callback */
+ 
+         .data
+-        .globl caml_system__frametable
+-caml_system__frametable:
++        .globl G(caml_system__frametable)
++G(caml_system__frametable):
+         .word   1               /* one descriptor */
+-        .word   .Lcaml_retaddr  /* return address into callback */
++        .word   LBL(caml_retaddr)  /* return address into callback */
+         .short  -1              /* negative frame size => use callback link */
+         .short  0               /* no roots */
+         .align  2
+diff -uNr ocaml-3.12.1/byterun/Makefile.common ios/ocaml-3.12.1/byterun/Makefile.common
+--- ocaml-3.12.1/byterun/Makefile.common	2010-05-21 15:28:21.000000000 +0400
++++ ios/ocaml-3.12.1/byterun/Makefile.common	2012-03-12 14:33:12.000000000 +0400
+@@ -53,6 +53,14 @@
+ 	  sed -f ../tools/cleanup-header $$i > $(LIBDIR)/caml/$$i; \
+ 	done
+ 	cp ld.conf $(LIBDIR)/ld.conf
++
++
++installopt:
++	if test -d $(LIBDIR)/caml; then : ; else mkdir $(LIBDIR)/caml; fi
++	for i in $(PUBLIC_INCLUDES); do \
++	  sed -f ../tools/cleanup-header $$i > $(LIBDIR)/caml/$$i; \
++	done
++
+ .PHONY: install
+ 
+ 
+diff -uNr ocaml-3.12.1/byterun/fail.h ios/ocaml-3.12.1/byterun/fail.h
+--- ocaml-3.12.1/byterun/fail.h	2008-09-18 15:23:28.000000000 +0400
++++ ios/ocaml-3.12.1/byterun/fail.h	2012-04-19 13:18:03.000000000 +0400
+@@ -55,8 +55,13 @@
+ CAMLextern struct longjmp_buffer * caml_external_raise;
+ extern value caml_exn_bucket;
+ 
++
+ /* </private> */
+ 
++typedef void (*uncaught_exception_callback_t)(const char*);
++extern uncaught_exception_callback_t uncaught_exception_callback;
++
++
+ CAMLextern void caml_raise (value bucket) Noreturn;
+ CAMLextern void caml_raise_constant (value tag) Noreturn;
+ CAMLextern void caml_raise_with_arg (value tag, value arg) Noreturn;
+diff -uNr ocaml-3.12.1/byterun/printexc.c ios/ocaml-3.12.1/byterun/printexc.c
+--- ocaml-3.12.1/byterun/printexc.c	2010-01-22 15:48:24.000000000 +0300
++++ ios/ocaml-3.12.1/byterun/printexc.c	2012-04-16 16:49:40.000000000 +0400
+@@ -26,6 +26,8 @@
+ #include "mlvalues.h"
+ #include "printexc.h"
+ 
++uncaught_exception_callback_t uncaught_exception_callback = NULL;
++
+ struct stringbuf {
+   char * ptr;
+   char * end;
+@@ -112,7 +114,6 @@
+   caml_backtrace_pos = saved_backtrace_pos;
+   /* Display the uncaught exception */
+   fprintf(stderr, "Fatal error: exception %s\n", msg);
+-  free(msg);
+   /* Display the backtrace if available */
+   if (caml_backtrace_active
+ #ifndef NATIVE_CODE
+@@ -121,6 +122,8 @@
+       ) {
+     caml_print_exception_backtrace();
+   }
++	if (uncaught_exception_callback != NULL) uncaught_exception_callback(msg);
++  free(msg);
+   /* Terminate the process */
+   exit(2);
+ }
+diff -uNr ocaml-3.12.1/config/Makefile ios/ocaml-3.12.1/config/Makefile
+--- ocaml-3.12.1/config/Makefile	1970-01-01 03:00:00.000000000 +0300
++++ ios/ocaml-3.12.1/config/Makefile	2012-03-12 14:33:12.000000000 +0400
+@@ -0,0 +1,73 @@
++# generated by ./configure 
++PREFIX=/usr/local/ocaml/ios/3.12.1
++PLATFORM=/Developer/Platforms/iPhoneOS.platform/Developer
++SDK=$(PLATFORM)/SDKs/iPhoneOS5.0.sdk
++BINDIR=$(PREFIX)/bin
++LIBDIR=$(PREFIX)/lib
++STUBLIBDIR=$(LIBDIR)/stublibs
++MANDIR=$(PREFIX)/man
++MANEXT=1
++RANLIB=$(PLATFORM)/usr/bin/ranlib
++RANLIBCMD=$(RANLIB)
++SHARPBANGSCRIPTS=true
++BNG_ARCH=generic
++BNG_ASM_LEVEL=0
++PTHREAD_LINK=-cclib -lpthread
++DBM_INCLUDES=
++DBM_LINK=
++LIBBFD_LINK=
++BYTECC=$(PLATFORM)/usr/bin/llvm-gcc -arch armv7 -isysroot $(SDK) 
++BYTECCCOMPOPTS= -fno-defer-pop -no-cpp-precomp -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
++BYTECCLINKOPTS=
++BYTECCLIBS=   -lpthread
++BYTECCRPATH=
++EXE=
++SUPPORTS_SHARED_LIBRARIES=true
++SHAREDCCCOMPOPTS=
++MKSHAREDLIBRPATH=
++NATDYNLINKOPTS=
++SYSLIB=-l$(1)
++#ml let syslib x = "-l"^x;;
++
++### How to build a static library
++MKLIB=$(PLATFORM)/usr/bin/ar rc $(1) $(2); $(PLATFORM)/usr/bin/ranlib $(1)
++#ml let mklib out files opts = Printf.sprintf "ar rc %s %s %s; ranlib %s" out opts files out;;
++MKLIB=ar rc $(1) $(2); ranlib $(1)
++#ml let mklib out files opts = Printf.sprintf "ar rc %s %s %s; ranlib %s" out opts files out;;
++ARCH=arm
++MODEL=default
++SYSTEM=macosx
++NATIVECC=$(BYTECC)
++NATIVECCCOMPOPTS= -D_FILE_OFFSET_BITS=64 -D_REENTRANT  -D__ARM_EABI__
++NATIVECCPROFOPTS= -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
++NATIVECCLINKOPTS=
++NATIVECCRPATH=
++NATIVECCLIBS=  
++ASM=$(NATIVECC) -D__ARM_EABI__ -c
++ASPP=$(ASM)
++ASPPPROFFLAGS=-DPROFILING
++PROFILING=noprof
++DYNLINKOPTS=
++OTHERLIBRARIES=unix str num dynlink bigarray systhreads threads dbm 
++DEBUGGER=ocamldebugger
++CC_PROFILE=-pg
++SYSTHREAD_SUPPORT=true
++PARTIALLD=ld -r 
++PACKLD=$(PARTIALLD) $(NATIVECCLINKOPTS) -o\ 
++DLLCCCOMPOPTS=
++IFLEXDIR=
++O=o
++A=a
++SO=so
++EXT_OBJ=.o
++EXT_ASM=.s
++EXT_LIB=.a
++EXT_DLL=.so
++EXTRALIBS=
++CCOMPTYPE=cc
++TOOLCHAIN=cc
++NATDYNLINK=true
++CMXS=cmxa
++MKEXE=$(BYTECC)
++MKDLL=$(NATIVECC) -bundle -flat_namespace -undefined suppress
++MKMAINDLL=$(NATIVECC) -bundle -flat_namespace -undefined suppress
+diff -uNr ocaml-3.12.1/config/m.h ios/ocaml-3.12.1/config/m.h
+--- ocaml-3.12.1/config/m.h	1970-01-01 03:00:00.000000000 +0300
++++ ios/ocaml-3.12.1/config/m.h	2012-03-12 14:33:12.000000000 +0400
+@@ -0,0 +1,15 @@
++#ifndef __PIC__
++#  define ARCH_CODE32
++#endif
++#undef ARCH_SIXTYFOUR
++#define SIZEOF_INT 4
++#define SIZEOF_LONG 4
++#define SIZEOF_PTR 4
++#define SIZEOF_SHORT 2
++#define ARCH_INT64_TYPE long long
++#define ARCH_UINT64_TYPE unsigned long long
++#define ARCH_INT64_PRINTF_FORMAT "ll"
++#undef ARCH_BIG_ENDIAN
++#undef ARCH_ALIGN_DOUBLE
++#undef ARCH_ALIGN_INT64
++#undef NONSTANDARD_DIV_MOD
+diff -uNr ocaml-3.12.1/config/s.h ios/ocaml-3.12.1/config/s.h
+--- ocaml-3.12.1/config/s.h	1970-01-01 03:00:00.000000000 +0300
++++ ios/ocaml-3.12.1/config/s.h	2012-03-12 14:33:12.000000000 +0400
+@@ -0,0 +1,47 @@
++#define OCAML_OS_TYPE "Unix"
++#define OCAML_STDLIB_DIR "/usr/local/ocaml/ios/3.12.1/lib"
++#define POSIX_SIGNALS
++#define HAS_EXPM1_LOG1P
++#define HAS_GETRUSAGE
++#define HAS_TIMES
++#undef HAS_TERMCAP
++#define HAS_SOCKETS
++#define HAS_SOCKLEN_T
++#define HAS_INET_ATON
++#define HAS_IPV6
++#define HAS_UNISTD
++#define HAS_OFF_T
++#define HAS_DIRENT
++#define HAS_REWINDDIR
++#define HAS_LOCKF
++#define HAS_MKFIFO
++#define HAS_GETCWD
++#define HAS_GETWD
++#define HAS_GETPRIORITY
++#define HAS_UTIME
++#define HAS_UTIMES
++#define HAS_DUP2
++#define HAS_FCHMOD
++#define HAS_TRUNCATE
++#define HAS_SYS_SELECT_H
++#define HAS_SELECT
++#define HAS_SYMLINK
++#define HAS_WAITPID
++#define HAS_WAIT4
++#undef HAS_GETGROUPS
++#undef HAS_SETGROUPS
++#undef HAS_INITGROUPS
++#define HAS_TERMIOS
++#define HAS_ASYNC_IO
++#define HAS_SETITIMER
++#define HAS_GETHOSTNAME
++#define HAS_UNAME
++#define HAS_GETTIMEOFDAY
++#define HAS_MKTIME
++#define HAS_SETSID
++#define HAS_PUTENV
++#define HAS_LOCALE
++#define SUPPORT_DYNAMIC_LINKING
++#define HAS_MMAP
++#undef HAS_STACK_OVERFLOW_DETECTION
++#define HAS_SIGWAIT
+diff -uNr ocaml-3.12.1/otherlibs/Makefile.shared ios/ocaml-3.12.1/otherlibs/Makefile.shared
+--- ocaml-3.12.1/otherlibs/Makefile.shared	2008-07-15 19:31:32.000000000 +0400
++++ ios/ocaml-3.12.1/otherlibs/Makefile.shared	2012-03-12 14:33:12.000000000 +0400
+@@ -20,7 +20,7 @@
+ 
+ # Compilation options
+ CC=$(BYTECC)
+-CAMLRUN=$(ROOTDIR)/boot/ocamlrun
++CAMLRUN=ocamlrun
+ COMPFLAGS=-warn-error A -g $(EXTRACAMLFLAGS)
+ MKLIB=$(CAMLRUN) $(ROOTDIR)/tools/ocamlmklib
+ 
+@@ -45,10 +45,10 @@
+ allopt: lib$(CLIBNAME).$(A) $(LIBNAME).cmxa $(LIBNAME).$(CMXS) $(CMIFILES)
+ 
+ $(LIBNAME).cma: $(CAMLOBJS)
+-	$(MKLIB) -o $(LIBNAME) -oc $(CLIBNAME) -ocamlc '$(CAMLC)' -linkall $(CAMLOBJS) $(LINKOPTS)
++	$(MKLIB) -v -o $(LIBNAME) -oc $(CLIBNAME) -ocamlc '$(CAMLC)' -linkall $(CAMLOBJS) $(LINKOPTS)
+ 
+ $(LIBNAME).cmxa: $(CAMLOBJS_NAT)
+-	$(MKLIB) -o $(LIBNAME) -oc $(CLIBNAME) -ocamlopt '$(CAMLOPT)' -linkall $(CAMLOBJS_NAT) $(LINKOPTS)
++	$(MKLIB) -v -o $(LIBNAME) -oc $(CLIBNAME) -ocamlopt '$(CAMLOPT)' -linkall $(CAMLOBJS_NAT) $(LINKOPTS)
+ 
+ $(LIBNAME).cmxs: $(LIBNAME).cmxa lib$(CLIBNAME).$(A)
+ 	$(CAMLOPT) -shared -o $(LIBNAME).cmxs -I . $(LIBNAME).cmxa
+@@ -65,9 +65,13 @@
+ 	if test -n "$(HEADERS)"; then cp $(HEADERS) $(LIBDIR)/caml/; fi
+ 
+ installopt:
++	cp lib$(CLIBNAME).$(A) $(LIBDIR)/
++	cd $(LIBDIR); $(RANLIB) lib$(CLIBNAME).$(A)
+ 	cp $(CAMLOBJS_NAT) $(LIBNAME).cmxa $(LIBNAME).$(A) $(LIBDIR)/
+ 	cd $(LIBDIR); $(RANLIB) $(LIBNAME).a
++	cp $(CMIFILES) $(CMIFILES:.cmi=.mli) $(LIBDIR)/
+ 	if test -f $(LIBNAME).cmxs; then cp $(LIBNAME).cmxs $(LIBDIR)/; fi
++	if test -n "$(HEADERS)"; then cp $(HEADERS) $(LIBDIR)/caml/; fi
+ 
+ partialclean:
+ 	rm -f *.cm*
+diff -uNr ocaml-3.12.1/otherlibs/dynlink/Makefile ios/ocaml-3.12.1/otherlibs/dynlink/Makefile
+--- ocaml-3.12.1/otherlibs/dynlink/Makefile	2010-05-28 19:09:22.000000000 +0400
++++ ios/ocaml-3.12.1/otherlibs/dynlink/Makefile	2012-03-12 14:33:12.000000000 +0400
+@@ -17,7 +17,7 @@
+ 
+ include ../../config/Makefile
+ 
+-CAMLC=../../boot/ocamlrun ../../ocamlc
++CAMLC=../../ocamlcomp.sh
+ CAMLOPT=../../ocamlcompopt.sh
+ INCLUDES=-I ../../utils -I ../../typing -I ../../bytecomp -I ../../asmcomp
+ COMPFLAGS=-warn-error A -I ../../stdlib $(INCLUDES)
+diff -uNr ocaml-3.12.1/otherlibs/systhreads/Makefile ios/ocaml-3.12.1/otherlibs/systhreads/Makefile
+--- ocaml-3.12.1/otherlibs/systhreads/Makefile	2010-04-27 11:55:08.000000000 +0400
++++ ios/ocaml-3.12.1/otherlibs/systhreads/Makefile	2012-03-12 14:33:12.000000000 +0400
+@@ -17,7 +17,7 @@
+ 
+ CAMLC=../../ocamlcomp.sh -I ../unix
+ CAMLOPT=../../ocamlcompopt.sh -I ../unix
+-MKLIB=../../boot/ocamlrun ../../tools/ocamlmklib
++MKLIB=../../tools/ocamlmklib
+ COMPFLAGS=-warn-error A -g
+ 
+ BYTECODE_C_OBJS=st_stubs_b.o
+@@ -61,8 +61,6 @@
+ # modular to me this way. -- Alain
+ 
+ 
+-$(THREAD_OBJS:.cmo=.cmx): ../../ocamlopt
+-
+ partialclean:
+ 	rm -f *.cm*
+ 
+@@ -80,6 +78,10 @@
+ 	cp threads.h $(LIBDIR)/caml/threads.h
+ 
+ installopt:
++	if test -d $(LIBDIR)/threads; then :; else mkdir $(LIBDIR)/threads; fi
++	cp $(THREAD_OBJS:.cmo=.cmi) $(LIBDIR)/threads
++	cp thread.mli mutex.mli condition.mli event.mli threadUnix.mli $(LIBDIR)
++	cp threads.h $(LIBDIR)/caml/threads.h
+ 	cp libthreadsnat.a $(LIBDIR)/libthreadsnat.a
+ 	cd $(LIBDIR); $(RANLIB) libthreadsnat.a
+ 	cp $(THREAD_OBJS:.cmo=.cmx) threads.cmxa threads.a $(LIBDIR)/threads
+diff -uNr ocaml-3.12.1/stdlib/Makefile ios/ocaml-3.12.1/stdlib/Makefile
+--- ocaml-3.12.1/stdlib/Makefile	2010-01-22 15:48:24.000000000 +0300
++++ ios/ocaml-3.12.1/stdlib/Makefile	2012-03-12 14:33:12.000000000 +0400
+@@ -15,7 +15,7 @@
+ 
+ include Makefile.shared
+ 
+-allopt: stdlib.cmxa std_exit.cmx allopt-$(PROFILING)
++allopt: stdlib.cmxa std_exit.cmx camlheader camlheader_ur allopt-$(PROFILING)
+ 
+ allopt-noprof:
+ 
+@@ -25,7 +25,7 @@
+ installopt: installopt-default installopt-$(PROFILING)
+ 
+ installopt-default:
+-	cp stdlib.cmxa stdlib.a std_exit.o *.cmx $(LIBDIR)
++	cp stdlib.cmxa stdlib.a std_exit.o *.cmx *.cmi *.mli *.ml camlheader camlheader_ur $(LIBDIR)
+ 	cd $(LIBDIR); $(RANLIB) stdlib.a
+ 
+ installopt-noprof:
+diff -uNr ocaml-3.12.1/stdlib/Makefile.shared ios/ocaml-3.12.1/stdlib/Makefile.shared
+--- ocaml-3.12.1/stdlib/Makefile.shared	2010-05-21 15:28:21.000000000 +0400
++++ ios/ocaml-3.12.1/stdlib/Makefile.shared	2012-03-12 14:33:12.000000000 +0400
+@@ -14,14 +14,12 @@
+ # $Id: Makefile.shared 10448 2010-05-21 11:28:21Z doligez $
+ 
+ include ../config/Makefile
+-RUNTIME=../boot/ocamlrun
+-COMPILER=../ocamlc
+-CAMLC=$(RUNTIME) $(COMPILER)
++RUNTIME=ocamlrun
++CAMLC=ocamlc.opt
+ COMPFLAGS=-strict-sequence -g -warn-error A -nostdlib
+-OPTCOMPILER=../ocamlopt
+-CAMLOPT=$(RUNTIME) $(OPTCOMPILER)
++CAMLOPT=../ocamlopt.opt
+ OPTCOMPFLAGS=-warn-error A -nostdlib -g
+-CAMLDEP=../boot/ocamlrun ../tools/ocamldep
++CAMLDEP=ocamldep.opt
+ 
+ OBJS=pervasives.cmo $(OTHERS)
+ OTHERS=array.cmo list.cmo char.cmo string.cmo sys.cmo \
+@@ -72,12 +70,6 @@
+ .ml.p.cmx:
+ 	$(CAMLOPT) $(OPTCOMPFLAGS) `./Compflags $@` -p -c -o $*.p.cmx $<
+ 
+-# Dependencies on the compiler
+-$(OBJS) std_exit.cmo: $(COMPILER)
+-$(OBJS:.cmo=.cmi) std_exit.cmi: $(COMPILER)
+-$(OBJS:.cmo=.cmx) std_exit.cmx: $(OPTCOMPILER)
+-$(OBJS:.cmo=.p.cmx) std_exit.p.cmx: $(OPTCOMPILER)
+-
+ # Dependencies on Pervasives (not tracked by ocamldep)
+ $(OBJS) std_exit.cmo: pervasives.cmi
+ $(OTHERS:.cmo=.cmi) std_exit.cmi: pervasives.cmi
+diff -uNr ocaml-3.12.1/stdlib/pervasives.ml ios/ocaml-3.12.1/stdlib/pervasives.ml
+--- ocaml-3.12.1/stdlib/pervasives.ml	2010-06-09 14:27:01.000000000 +0400
++++ ios/ocaml-3.12.1/stdlib/pervasives.ml	2012-03-12 14:36:14.000000000 +0400
+@@ -72,7 +72,7 @@
+ external (lsr) : int -> int -> int = "%lsrint"
+ external (asr) : int -> int -> int = "%asrint"
+ 
+-let min_int = 1 lsl (if 1 lsl 31 = 0 then 30 else 62)
++let min_int = 1 lsl 30
+ let max_int = min_int - 1
+ 
+ (* Floating-point operations *)
+diff -uNr ocaml-3.12.1/tools/Makefile.shared ios/ocaml-3.12.1/tools/Makefile.shared
+--- ocaml-3.12.1/tools/Makefile.shared	2010-10-15 19:36:55.000000000 +0400
++++ ios/ocaml-3.12.1/tools/Makefile.shared	2012-03-12 14:33:12.000000000 +0400
+@@ -14,10 +14,12 @@
+ 
+ include ../config/Makefile
+ 
+-CAMLRUN=../boot/ocamlrun
+-CAMLC=$(CAMLRUN) ../boot/ocamlc -strict-sequence -nostdlib -I ../boot
+-CAMLOPT=$(CAMLRUN) ../ocamlopt -nostdlib -I ../stdlib
+-CAMLLEX=$(CAMLRUN) ../boot/ocamllex
++CAMLRUN=ocamlrun
++CAMLC=ocamlc.opt -strict-sequence 
++#-nostdlib -I ../boot
++CAMLOPT=ocamlopt.opt
++#-nostdlib -I ../stdlib
++CAMLLEX=ocamllex
+ INCLUDES=-I ../utils -I ../parsing -I ../typing -I ../bytecomp -I ../asmcomp \
+ 	 -I ../driver
+ COMPFLAGS= -warn-error A $(INCLUDES)

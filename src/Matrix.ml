@@ -6,9 +6,8 @@ type t = { a:float; b:float; c:float; d: float; tx: float; ty: float};
 
 value identity = {a=1.0;b=0.;c=0.;d=1.;tx=0.;ty=0.};
 
-value create ?(rotation=0.) ?(scale=(1.,1.)) ?(translate=(0.,0.)) () : t = 
-  let (tx,ty) = translate in 
-  let ar = [| 1.; 0.; 0.; 1.; tx; ty |] in
+value create ?(rotation=0.) ?(scale=(1.,1.)) ?(translate={Point.x = 0.;y=0.}) () : t = 
+  let ar = [| 1.; 0.; 0.; 1.; translate.Point.x; translate.Point.y |] in
   (
     if rotation <> 0.0 
     then 
@@ -67,24 +66,44 @@ value translate m (dx,dy) =
     ty = m.ty +. dy;
   };
 
-value transformPoint m (x,y) = 
+value transformPoint m {Point.x = x;y=y} = 
+  {
+    Point.x = m.a*.x +. m.c*.y +. m.tx;
+    y = m.b*.x +. m.d*.y +. m.ty
+  };
+
+
+value transformPoints matrix points = 
+  let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+  let open Point in
   (
-    m.a*.x +. m.c*.y +. m.tx,
-    m.b*.x +. m.d*.y +. m.ty
+    for i = 0 to (Array.length points) - 1 do
+      let p = points.(i) in
+      let tp = transformPoint matrix p in
+      (
+        if ar.(0) > tp.x then ar.(0) := tp.x else ();
+        if ar.(1) < tp.x then ar.(1) := tp.x else ();
+        if ar.(2) > tp.y then ar.(2) := tp.y else ();
+        if ar.(3) < tp.y then ar.(3) := tp.y else ();
+      )
+    done;
+    ar
   );
+  
 
 value transformRectangle m rect = 
   let points = Rectangle.points rect in
   let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+  let open Point in
   (
     for i = 0 to 3 do
       let p = points.(i) in
-      let (tx,ty) = transformPoint m p in
+      let tp = transformPoint m p in
       (
-        if ar.(0) > tx then ar.(0) := tx else ();
-        if ar.(1) < tx then ar.(1) := tx else ();
-        if ar.(2) > ty then ar.(2) := ty else ();
-        if ar.(3) < ty then ar.(3) := ty else ();
+        if ar.(0) > tp.x then ar.(0) := tp.x else ();
+        if ar.(1) < tp.x then ar.(1) := tp.x else ();
+        if ar.(2) > tp.y then ar.(2) := tp.y else ();
+        if ar.(3) < tp.y then ar.(3) := tp.y else ();
       )
     done;
     Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2));

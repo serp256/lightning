@@ -1,15 +1,31 @@
 
-type dataEmpty = [= `Empty ];
+type data = exn;
 
-type t 'etype 'data =
+value events = Hashtbl.create 11;
+
+value makeData (type s) () =
+  let module M = struct exception E of s; end in
+  ((fun x -> M.E x), (fun [ M.E x -> Some x | _ -> None]));
+
+
+value ((data_of_bool:(bool -> data)),bool_of_data) = makeData ();
+value ((data_of_int:(int -> data)),int_of_data) = makeData ();
+value ((data_of_float:(float -> data)),float_of_data) = makeData ();
+value ((data_of_string:(string -> data)),string_of_data) = makeData ();
+
+type id = int;
+
+type t =
   {
-    etype:'etype ;
+    evid: id;
     propagation:mutable [= `Propagate | `Stop | `StopImmediate ];
     bubbles:bool;
-(*     eventPhase: [= `AT_TARGET | `BUBBLING_PHASE ]; *)
-    data:'data;
-  } constraint 'etype = [> ] constraint 'data = [> dataEmpty ] constraint 'target = < .. > constraint 'currentTarget = < .. >;
+    data: data;
+  };
 
+value id = ref 0;
+value gen_id name = let res = !id in (incr id; Hashtbl.add events res name; res);
+value string_of_id ev = try Hashtbl.find events ev with [ Not_found -> "UKNOWN" ];
 
 
 value stopImmediatePropagation event = event.propagation := `StopImmediate;
@@ -19,4 +35,8 @@ value stopPropagation event =
   | _ -> ()
   ];
 
-value create etype ?(bubbles=False) ?(data=`Empty) () = { etype; propagation = `Propagate; bubbles; data};
+exception EmptyData;
+
+value nodata = EmptyData;
+
+value create evid ?(bubbles=False) ?(data=EmptyData) () = { evid; propagation = `Propagate; bubbles; data};

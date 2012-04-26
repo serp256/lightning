@@ -1,10 +1,12 @@
 
 #import <Foundation/Foundation.h>
 #include <AudioToolbox/AudioToolbox.h>
+#import <AVFoundation/AVAudioPlayer.h>
 
 #import <OpenAL/al.h>
 #import <OpenAL/alc.h>
 
+#import "light_common.h"
 #import "common_ios.h"
 
 #import <caml/mlvalues.h>
@@ -13,6 +15,18 @@
 #import <caml/fail.h>
 #include <caml/custom.h>
 #import <caml/alloc.h>
+#import <caml/threads.h>
+
+#define checkOpenALError(fmt,args...) { \
+	ALenum errorCode = alGetError(); \
+	if (errorCode != AL_NO_ERROR) { \
+		char buf[256]; \
+		int bw = sprintf(buf,"(%s:%d) al error [%x]. ",__FILE__,__LINE__,errorCode); \
+		sprintf(buf + bw,fmt,## args); \
+		caml_raise_with_string(*caml_named_value("Audio_error"),buf); \
+	}; \
+}
+
 
 static void raise_error(char* message, char* fname, uint code) {
 	char buf[256];
@@ -77,6 +91,8 @@ void ml_al_setMasterVolume(value mlVolume) {
 #define ALBUFFERID(v) ((uint*)Data_custom_val(v))
 static void albuffer_finalize(value mlAlBufferID) {
 	uint bufferID = *ALBUFFERID(mlAlBufferID);
+	PRINT_DEBUG("albuffer finalize: %d",bufferID);
+	checkOpenALError("finalize albuffer: %d",bufferID);
 	alDeleteBuffers(1,&bufferID);
 }
 
@@ -203,25 +219,29 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	int format = (soundChannels > 1) ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
 
 	alBufferData(bufferID, format, soundBuffer, soundSize, soundFrequency);
-	errorCode = alGetError();
 	caml_stat_free(soundBuffer);
+	errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Could not fill OpenAL buffer",String_val(mlpath),errorCode);
 	
-	mlBufferID = caml_alloc_custom(&albuffer_ops,sizeof(uint),1,0);
+	mlBufferID = caml_alloc_custom(&albuffer_ops,sizeof(uint),soundSize,MAX_GC_MEM);
 	*ALBUFFERID(mlBufferID) = bufferID;
 	mlres = caml_alloc_tuple(2);
 	Store_field(mlres,0,mlBufferID);
 	Store_field(mlres,1,caml_copy_double(soundDuration));
+	PRINT_DEBUG("CREATED new albuffer: %d - %f",bufferID,soundDuration);
 	CAMLreturn(mlres);
 }
     
 
+/*
 #define ALSOURCEID(v) ((uint*)Data_custom_val(v))
 static void alsource_finalize(value mlAlSourceID) {
 	uint sourceID = *ALSOURCEID(mlAlSourceID);
+	PRINT_DEBUG("alsource finalize: %d",sourceID);
 	alSourceStop(sourceID);
 	alSourcei(sourceID, AL_BUFFER, 0);
 	alDeleteSources(1, &sourceID);
+	checkOpenALError("finalize alsource: %d",sourceID);
 }
 
 struct custom_operations alsource_ops = {
@@ -232,6 +252,7 @@ struct custom_operations alsource_ops = {
   custom_serialize_default,
   custom_deserialize_default
 };
+*/
 
 CAMLprim value ml_alsource_create(value mlAlBufferID) {
 	CAMLparam1(mlAlBufferID);
@@ -240,41 +261,50 @@ CAMLprim value ml_alsource_create(value mlAlBufferID) {
 	alGenSources(1, &sourceID);
 	uint bufferID = *ALBUFFERID(mlAlBufferID);
 	alSourcei(sourceID, AL_BUFFER, bufferID);
-	ALenum errorCode = alGetError();
-	if (errorCode != AL_NO_ERROR) raise_error("Counld no create OpenAL source",NULL,errorCode);
-	mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
-	*ALSOURCEID(mlAlSourceID) = sourceID;
+	PRINT_DEBUG("created alsource: %d for buffer %d",sourceID,bufferID);
+	checkOpenALError("create alsource: %d - %d",bufferID,sourceID);
+	//mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
+	//*ALSOURCEID(mlAlSourceID) = sourceID;
+	mlAlSourceID = caml_copy_int32(sourceID);
 	CAMLreturn(mlAlSourceID);
 }
 
 void ml_alsource_play(value mlAlSourceID) {
-	alSourcePlay(*ALSOURCEID(mlAlSourceID));
+	//uint sourceID = *ALSOURCEID(mlAlSourceID);
+	uint sourceID = Int32_val(mlAlSourceID);
+	alSourcePlay(sourceID);
+	PRINT_DEBUG("play source: %d",sourceID);
 	// remove after debug
-	ALenum errorCode = alGetError();
-	if (errorCode != AL_NO_ERROR) raise_error("Counld play OpenAL source",NULL,errorCode);
+	checkOpenALError("play: %d",sourceID);
 }
 
 void ml_alsource_pause(value mlAlSourceID) {
-	alSourcePause(*ALSOURCEID(mlAlSourceID));
+	//uint sourceID = *ALSOURCEID(mlAlSourceID);
+	uint sourceID = Int32_val(mlAlSourceID);
+	alSourcePause(sourceID);
+	PRINT_DEBUG("pause alsource: %d",sourceID);
 	// remove after debug
-	ALenum errorCode = alGetError();
-	if (errorCode != AL_NO_ERROR) raise_error("Counld pause OpenAL source",NULL,errorCode);
+	checkOpenALError("pause: %d",sourceID);
 }
 
 void ml_alsource_stop(value mlAlSourceID) {
-	alSourceStop(*ALSOURCEID(mlAlSourceID));
+	//uint sourceID = *ALSOURCEID(mlAlSourceID);
+	uint sourceID = Int32_val(mlAlSourceID);
+	alSourceStop(sourceID);
+	PRINT_DEBUG("stop alsource: %d",sourceID);
 	// remove after debug
-	ALenum errorCode = alGetError();
-	if (errorCode != AL_NO_ERROR) raise_error("Counld stop OpenAL source",NULL,errorCode);
+	checkOpenALError("play: %d",sourceID);
 }
 
 void ml_alsource_setLoop(value mlAlSourceID,value loop) {
-	alSourcei(*ALSOURCEID(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
+	//alSourcei(*ALSOURCEID(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
+	alSourcei(Int32_val(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
 }
 
 value ml_alsource_state(value mlAlSourceID) {
 	ALint state;
-	alGetSourcei(*ALSOURCEID(mlAlSourceID), AL_SOURCE_STATE, &state);
+	//alGetSourcei(*ALSOURCEID(mlAlSourceID), AL_SOURCE_STATE, &state);
+	alGetSourcei(Int32_val(mlAlSourceID), AL_SOURCE_STATE, &state);
 	int res;
 	switch (state) {
 		case AL_PLAYING: res = 1; break;
@@ -289,12 +319,226 @@ value ml_alsource_state(value mlAlSourceID) {
 */
 
 void ml_alsource_setVolume(value mlAlSourceID,value mlVolume) {
-	alSourcef(*ALSOURCEID(mlAlSourceID), AL_GAIN, Double_val(mlVolume)); // set volume
+	//alSourcef(*ALSOURCEID(mlAlSourceID), AL_GAIN, Double_val(mlVolume)); // set volume
+	alSourcef(Int32_val(mlAlSourceID), AL_GAIN, Double_val(mlVolume)); // set volume
 }
 
 CAMLprim value ml_alsource_getVolume(value mlAlSourceID) {
-	CAMLparam1(mlAlSourceID);
 	ALfloat volume;
-	alGetSourcef(*ALSOURCEID(mlAlSourceID),AL_GAIN,&volume);
-	CAMLreturn(caml_copy_double(volume));
+	//alGetSourcef(*ALSOURCEID(mlAlSourceID),AL_GAIN,&volume);
+	alGetSourcef(Int32_val(mlAlSourceID),AL_GAIN,&volume);
+	return caml_copy_double(volume);
 }
+
+
+void ml_alsource_delete(value mlAlSourceID) {
+	uint sourceID = Int32_val(mlAlSourceID);
+	alSourceStop(sourceID);
+	alSourcei(sourceID, AL_BUFFER, 0);
+	alDeleteSources(1, &sourceID);
+}
+
+
+
+
+
+
+
+@interface LightningAVSoundPlayerController : NSObject <AVAudioPlayerDelegate> {
+  AVAudioPlayer * _player;
+  value _sound_stopped_handler;
+}
+-(id)initWithFilename: (NSString *)fname completeHandler: (value)handler;
+@end
+
+
+@implementation LightningAVSoundPlayerController
+
+/*
+ *
+ */
+-(id)initWithFilename: (NSString *)fname completeHandler:(value)handler {
+    self = [super init];
+    if (self) {
+
+        NSURL * sndurl = [[NSBundle mainBundle] URLForResource: fname withExtension: nil];
+        if (sndurl == nil) {
+          NSLog(@"Can't find file %@", fname);
+          [self release];
+          return nil;
+        }
+        
+        NSError *error = nil;                                                                                                                                                              
+        _player  = [[AVAudioPlayer alloc] initWithContentsOfURL:sndurl error:&error];
+        if (_player == nil) {
+          [self release];
+          return nil;
+        }
+        
+        caml_register_global_root(&_sound_stopped_handler);
+        _sound_stopped_handler = handler;
+        
+        _player.delegate = self;
+        [_player prepareToPlay];
+        
+        // handle master volume changes ???
+  }
+  
+  return self;
+}
+
+-(void)play {
+  [_player play];
+}
+
+
+-(void)pause {
+  [_player pause];
+}
+
+
+-(void)stop {
+  [_player stop];
+  _player.currentTime = 0;  
+}
+
+
+-(BOOL)isPlaying {                                                                                                                                                                                      
+  return _player.playing;                                                                                                                                                            
+}
+
+
+-(void)setLoop:(BOOL)value {
+  _player.numberOfLoops = value ? -1 : 0;
+}
+
+-(float)volume {
+  return _player.volume;
+}
+
+
+-(void)setVolume:(float)value {
+  _player.volume = value;
+}
+
+
+
+#pragma mark AVAudioPlayerDelegate
+
+- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {    
+  caml_acquire_runtime_system();
+  caml_callback(_sound_stopped_handler, Val_int(0));
+  caml_release_runtime_system();
+}
+
+- (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error {
+    NSLog(@"Error during sound decoding: %@", [error description]); // trhow error?
+}
+
+- (void)audioPlayerBeginInterruption:(AVAudioPlayer *)player {
+    [player pause];
+}
+
+- (void)audioPlayerEndInterruption:(AVAudioPlayer *)player {
+    [player play];
+}
+
+-(void)dealloc {
+  [_player release];
+  caml_remove_global_root(&_sound_stopped_handler);
+  [super dealloc];
+}
+
+@end
+
+
+
+/* create controller */
+CAMLprim value ml_avsound_create_player(value fname, value on_stop) {
+  CAMLparam1(fname);
+  NSString * filename = [NSString stringWithCString:String_val(fname) encoding:NSASCIIStringEncoding]; 
+  LightningAVSoundPlayerController * playerController = [[LightningAVSoundPlayerController alloc] initWithFilename: filename completeHandler: on_stop];
+  
+  if (playerController == nil) {
+    raise_error("Error initializing LightningAVSoundPlayerController", NULL, 404);
+  }
+    
+  CAMLreturn((value)playerController);
+}
+
+
+/*
+ * Release player controler
+ */
+void ml_avsound_release(value playerController) {
+  CAMLparam1(playerController);
+  [(LightningAVSoundPlayerController *)playerController release]; 
+  CAMLreturn0;
+}
+
+/*
+ * Let's play
+ */
+void ml_avsound_play(value playerController) {
+  CAMLparam1(playerController);
+  [(LightningAVSoundPlayerController *)playerController play];
+  CAMLreturn0;
+}
+
+
+/*
+ * Pause
+ */
+void ml_avsound_pause(value playerController) {
+  CAMLparam1(playerController);
+  [(LightningAVSoundPlayerController *)playerController pause];
+  CAMLreturn0;
+}
+
+
+/*
+ * Stop
+ */
+void ml_avsound_stop(value playerController) {
+  CAMLparam1(playerController);
+  [(LightningAVSoundPlayerController *)playerController stop];
+  CAMLreturn0;
+}
+
+
+/* 
+ * Set volume
+ */
+void ml_avsound_set_volume(value playerController, value volume) {
+  CAMLparam2(playerController, volume);
+  [(LightningAVSoundPlayerController *)playerController setVolume: Double_val(volume)];
+  CAMLreturn0;
+}
+
+/* 
+ * Get volume
+ */
+CAMLprim value ml_avsound_get_volume(value playerController) {
+  CAMLparam1(playerController);
+  CAMLreturn(caml_copy_double([(LightningAVSoundPlayerController *)playerController volume]));
+}
+
+
+/*
+ * Loop sound or not
+ */
+void ml_avsound_set_loop(value playerController, value loop) {
+  CAMLparam2(playerController, loop);
+  [(LightningAVSoundPlayerController *)playerController setLoop: Bool_val(loop)];
+  CAMLreturn0;
+}
+
+
+/*
+ * Is playing
+ */
+CAMLprim value ml_avsound_is_playing(value playerController) {
+  CAMLparam1(playerController);
+  CAMLreturn(Val_bool([(LightningAVSoundPlayerController *)playerController isPlaying]));
+}
+

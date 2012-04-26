@@ -20,7 +20,8 @@ value print: ('a -> unit) -> t 'a -> unit;
 value fold: ('a -> 'b -> 'b) -> t 'a -> 'b -> 'b;
 value to_list: t 'a -> list 'a;
 value of_list: list 'a -> t 'a;
-(* value enum: t 'a -> BatEnum.t 'a; *)
+value enum: t 'a -> Enum.t 'a;
+value unsafe_enum: t 'a -> Enum.t 'a;
 
 
 module type S = sig

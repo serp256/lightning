@@ -3,6 +3,7 @@ open Printf;
 open Unix;
 
 
+(*
 value min_columns = 174;
 IFDEF SDL THEN
 value columns : int = 
@@ -18,18 +19,19 @@ value columns : int =
 ELSE
 value columns = 120;
 END;
+*)
 
 IFDEF ANDROID THEN
-external fail_writer: string -> exn = "android_debug_output_fatal";
-external e_writer: string -> unit = "android_debug_output_error";
-external w_writer: string -> unit = "android_debug_output_warn";
-external i_writer: string -> unit = "android_debug_output_info";
-external d_writer: option string -> string -> unit = "android_debug_output";
+external fail_writer: string -> string -> exn = "android_debug_output_fatal";
+external e_writer: string -> string -> unit = "android_debug_output_error";
+external w_writer: string -> string -> unit = "android_debug_output_warn";
+external i_writer: string -> string -> unit = "android_debug_output_info";
+external d_writer: option string -> string -> string -> unit = "android_debug_output";
 ELSE
-value fail_writer = (fun s -> failwith s);
-value e_writer = (fun s -> (prerr_string "[ERROR] "; prerr_endline s));
-value w_writer = (fun s -> (prerr_string "[WARN] "; prerr_endline s));
-value i_writer = (fun s -> (prerr_string "[INFO] "; prerr_endline s));
+value fail_writer = (fun _ s -> failwith s);
+value e_writer = (fun addr s -> (Printf.eprintf "[ERROR(%s)] " addr; prerr_endline s));
+value w_writer = (fun addr s -> (Printf.eprintf "[WARN(%s)] " addr; prerr_endline s));
+value i_writer = (fun addr s -> (Printf.eprintf "[INFO(%s)] " addr; prerr_endline s));
 value d_writer l = 
   let l = 
     match l with
@@ -37,7 +39,7 @@ value d_writer l =
     | Some l -> l
     ]
   in
-  fun s -> (Printf.eprintf "[DEBUG:%s] " l; prerr_endline s);
+  fun addr s -> (Printf.eprintf "[DEBUG:%s(%s)] " l addr; prerr_endline s);
 value null_writer = (fun _ -> ());
 END;
 
@@ -70,7 +72,8 @@ value out writer level mname mline s =
   in
   writer line;
 *)
-value out writer mname mline message = 
+value out writer mname mline message = writer (Printf.sprintf "%s:%d" mname mline) message;
+  (*
   let line = 
     let place = sprintf "[%s:%d]" mname mline in
     let module UTF = UTF8 in
@@ -81,6 +84,7 @@ value out writer mname mline message =
     else message ^ "\n" ^ (String.make (columns - (String.length place)) ' ') ^ place (* Здесь бы ещё вставить кол-во пробелов чтобы справо было *)
   in
   writer line;
+  *)
 
 value fail mname mline fmt = 
   kprintf (out fail_writer mname mline) fmt; 

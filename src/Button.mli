@@ -5,7 +5,7 @@ module Make
     type evData = private [> `Touches of list Touch.t | DisplayObjectT.eventData ]
   ) 
   (Sprite: Sprite.S with module D = D)
-  (Image: Image.S with module Q.D = D)
+  (Image: Image.S with module D = D)
   (TextField: TextField.S with module D = D)
   
   : sig
@@ -17,7 +17,7 @@ module Make
       method setFontName: string -> unit;
       method setFontColor: int -> unit;
       method setDisabledFontColor: int -> unit;
-      method setFontSize: option float -> unit;
+      method setFontSize: option int -> unit;
       method setTextBounds: Rectangle.t -> unit;
       method isEnabled: bool;
       method setEnabled: bool -> unit;

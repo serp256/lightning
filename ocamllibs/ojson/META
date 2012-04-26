@@ -1,0 +1,5 @@
+name = "ojson"
+version = "0.0.1"
+description = "JSON parsing "
+archive(byte) = "ojson.cma"
+archive(native) = "ojson.cmxa"

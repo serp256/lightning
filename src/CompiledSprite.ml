@@ -100,14 +100,14 @@ module Make(Image:Image.S)(Sprite:Sprite.S with module D = Image.Q.D) = struct
 
 
   value del_buffers buffers = 
-        match ExtArray.Array.for_all (fun x -> x = 0) buffers with
-        [ True -> ()
-        | False -> 
-          (
-            glDeleteBuffers 4 buffers;
-            for i = 0 to 3 do buffers.(i) := 0; done;
-          )
-        ];
+    match ExtArray.Array.for_all (fun x -> x = 0) buffers with
+    [ True -> ()
+    | False -> 
+      (
+        glDeleteBuffers 4 buffers;
+        for i = 0 to 3 do buffers.(i) := 0; done;
+      )
+    ];
 
   class c =
     object(self)

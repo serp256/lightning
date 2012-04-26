@@ -1,7 +1,25 @@
 version="0.01"
 archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
-requires="bigarray extlib xmlm"
+requires="bigarray extlib xmlm ojson"
+
+package "facebook" (
+  description="Facebook API"
+  archive(byte) = "fbconnect.cma"
+  archive(native) = "fbconnect.cmxa"
+)
+
+package "tapjoy" (
+  description="Tapjoy Connect"
+  archive(byte) = "tapjoy.cma"
+  archive(native) = "tapjoy.cmxa"
+)
+
+package "flurry" (
+  description="Flurry Analytics"
+  archive(byte) = "flurry.cma"
+  archive(native) = "flurry.cmxa"
+)
 
 package "syntax" (
 	package "prop" (

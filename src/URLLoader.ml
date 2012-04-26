@@ -27,8 +27,11 @@ value string_of_httpMethod = fun
 
 value request ?(httpMethod=`GET) ?(headers=[]) ?data url = { httpMethod; headers; data; url};
 
-type eventType = [= `PROGRESS | `COMPLETE | `IO_ERROR ];
-type eventData = [= Ev.dataEmpty | `HTTPBytes of int | `IOError of (int * string)];
+value ev_PROGRESS = Ev.gen_id "PROGRESS";
+value ev_COMPLETE =  Ev.gen_id "COMPLETE";
+value ev_IO_ERROR = Ev.gen_id "IO_ERORR";
+
+value (data_of_ioerror,ioerror_of_data) = Ev.makeData();
 
 
 exception Incorrect_request;
@@ -136,6 +139,139 @@ value start_load wrappers r =
 ELSE
 IFDEF SDL THEN (*{{{*)
 
+value curl_initialized = ref False;
+
+module type CurlLoader = sig
+  value push_request: loader_wrapper -> request -> unit;
+  value check_response: unit -> unit;
+end;
+
+module CurlLoader(P:sig end) = struct
+
+  match !curl_initialized with
+  [ False -> (Curl.global_init Curl.CURLINIT_GLOBALNOTHING; curl_initialized.val := True)
+  | True -> ()
+  ];
+
+  value condition = Condition.create ();
+
+  value requests_queue = ThreadSafeQueue.create ();
+
+  value waiting_loaders = Hashtbl.create 1;
+  value request_id = ref 0;
+  value push_request loader request = 
+    (
+      incr request_id;
+      Hashtbl.add waiting_loaders !request_id loader;
+      let (url,data) = prepare_request request in
+      ThreadSafeQueue.enqueue requests_queue (!request_id,url,request.httpMethod,request.headers,data);
+      Condition.signal condition;
+    );
+
+  value response_queue = ThreadSafeQueue.create ();
+
+  value rec check_response () = 
+    match ThreadSafeQueue.dequeue response_queue with
+    [ Some (request_id,result) ->
+      (
+        let loader = Hashtbl.find waiting_loaders request_id in
+        match result with
+        [ `Result (code,contentType,contentLength,data) ->
+          (
+            loader.onResponse code contentType contentLength;
+            loader.onData data;
+            loader.onComplete ();
+          )
+        | `Failure code errmsg -> loader.onError code errmsg
+        ];
+        check_response ();
+      )
+    | None -> ()
+    ];
+
+  value mutex = Mutex.create ();
+  value run () = 
+    let () = Mutex.lock mutex in
+    let buffer = Buffer.create 1024 in
+    let dataf = (fun str -> (Buffer.add_string buffer str; String.length str)) in
+    loop () where
+      rec loop () = 
+        let () = debug "try check requests" in
+        match ThreadSafeQueue.dequeue requests_queue with
+        [ Some (request_id,url,hmth,headers,body) ->
+          (
+            let () = debug "new curl request on url: %s" url in
+            let ccon = Curl.init () in
+            try
+              Curl.set_url ccon url;
+              let headers = List.map (fun (n,v) -> Printf.sprintf "%s:%s" n v) headers in
+              match headers with
+              [ [] -> ()
+              | _ -> Curl.set_httpheader ccon headers
+              ];
+              match hmth with
+              [ `POST -> Curl.set_post ccon True
+              | _ -> ()
+              ];
+              match body with
+              [ Some b -> 
+                (
+                  Curl.set_postfields ccon b;
+                  Curl.set_postfieldsize ccon (String.length b);
+                )
+              | None -> ()
+              ];
+              Curl.set_writefunction ccon dataf;
+              Curl.perform ccon;
+              debug "curl performed";
+              let httpCode = Curl.get_httpcode ccon
+              and contentType = Curl.get_contenttype ccon
+              and contentLength = Int64.of_float (Curl.get_contentlengthdownload ccon)
+              in
+              ThreadSafeQueue.enqueue response_queue (request_id,`Result (httpCode,contentType,contentLength,Buffer.contents buffer));
+              Buffer.clear buffer;
+              Curl.cleanup ccon;
+            with [ Curl.CurlException _ code str -> ThreadSafeQueue.enqueue response_queue (request_id,(`Failure code str))];
+            loop ()
+          )
+        | None ->
+          (
+            Condition.wait condition mutex;
+            loop ()
+          )
+        ];
+  value thread = Thread.create run ();
+
+end;
+
+
+value curl_loader = ref None;
+value process_events () =
+  match !curl_loader with
+  [ Some m ->
+    let module Loader = (value m:CurlLoader) in
+    Loader.check_response ()
+  | None -> ()
+  ];
+
+value start_load wrapper r = 
+  let m =
+    match !curl_loader with
+    [ Some m -> m
+    | None -> 
+        let module Loader = CurlLoader (struct end) in
+        let m = (module Loader:CurlLoader) in
+        (
+          curl_loader.val := Some m;
+          m
+        )
+        
+    ]
+  in
+  let module Loader = (value m:CurlLoader) in
+  Loader.push_request wrapper r;
+
+(*
 type thr = ((Event.channel [= `Result of (int * string * Int64.t * string) | `Failure of (int * string) ]) * (Event.channel (string * http_method * list (string*string) * option string)));
 value free_threads: Queue.t thr = Queue.create ();
 value working_threads = ref [];
@@ -150,6 +286,7 @@ value curl_thread (inch,outch) =
     (
       let e = Event.receive inch in
       let (url,hmth,headers,body) = Event.sync e in
+      let () = debug "new curl request on url: %s" url in
       let ccon = Curl.init () in
       try
         Curl.set_url ccon url;
@@ -172,6 +309,7 @@ value curl_thread (inch,outch) =
         ];
         Curl.set_writefunction ccon dataf;
         Curl.perform ccon;
+        debug "curl performed";
         let httpCode = Curl.get_httpcode ccon
         and contentType = Curl.get_contenttype ccon
         and contentLength = Int64.of_float (Curl.get_contentlengthdownload ccon)
@@ -195,6 +333,7 @@ value start_load wrapper r =
   let ((_,outch) as channels) = 
     match Queue.is_empty free_threads with
     [ True -> 
+      let () = debug "create new thread" in
       let inch = Event.new_channel ()
       and outch = Event.new_channel () 
       in
@@ -202,7 +341,9 @@ value start_load wrapper r =
         ignore(Thread.create curl_thread (outch,inch));
         ((inch,outch):thr)
       )
-    | False -> Queue.pop free_threads
+    | False -> 
+        let () = debug "take existent thread" in
+        Queue.pop free_threads
     ]
   in
   let e = Event.send outch (url,r.httpMethod,r.headers,data) in
@@ -248,21 +389,73 @@ value process_events () =
         end works
   ];
 
+*)
 
 (*}}}*)
 ELSE
 
-value start_load (wrappers:loader_wrapper) (r:request) = failwith "Net not implemented on this platform yet";
+type ns_connection;
+value loaders = Hashtbl.create 1;
+
+external url_connection: string -> string -> list (string*string) -> option string -> ns_connection = "ml_android_connection";
+
+value get_loader ns_connection = 
+  try
+    Hashtbl.find loaders ns_connection
+  with [ Not_found -> failwith("HTTPConneciton not found") ];
+
+value url_response ns_connection httpCode contentType totalBytes =
+  let () = debug "url response" in
+  let w = get_loader ns_connection in
+  w.onResponse httpCode contentType totalBytes;
+
+Callback.register "url_response" url_response;
+
+value url_data ns_connection data = 
+  let () = debug "url data" in
+  let w = get_loader ns_connection in
+  w.onData data;
+
+Callback.register "url_data" url_data;
+
+value url_complete ns_connection = 
+  let () = debug "url complete" in
+  let w = get_loader ns_connection in
+  (
+    Hashtbl.remove loaders ns_connection;
+    w.onComplete ();
+  );
+
+Callback.register "url_complete" url_complete;
+
+value url_failed ns_connection code msg = 
+  let () = debug "url failed" in
+  let w = get_loader ns_connection in
+  (
+    Hashtbl.remove loaders ns_connection;
+    w.onError code msg;
+  );
+
+Callback.register "url_failed" url_failed;
+
+value start_load wrappers r = 
+  let (url,data) = prepare_request r in
+  let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
+  Hashtbl.add loaders ns_connection wrappers;
+(*}}}*)
 
 ENDIF;
 ENDIF;
 
-type state = [ Init | Loading | Complete ];
+exception Loading_in_progress;
+
+type state = [ Loading | Complete ];
 
 class loader ?request () = 
   object(self)
-    inherit EventDispatcher.simple [eventType, eventData, loader];
-    value mutable state = Init;
+    inherit EventDispatcher.simple [loader];
+    value mutable state = Complete;
+    method state = state;
     method private asEventTarget = (self :> loader);
 
     value mutable httpCode = 0;
@@ -291,7 +484,7 @@ class loader ?request () =
       (
         bytesLoaded := Int64.add bytesLoaded (Int64.of_int bytes);
         Buffer.add_string data d;
-        let event = Ev.create `PROGRESS ~data:(`HTTPBytes bytes) () in
+        let event = Ev.create ev_PROGRESS ~data:(Ev.data_of_int bytes) () in
         self#dispatchEvent event;
       );
 
@@ -299,36 +492,40 @@ class loader ?request () =
     (
       debug "onError";
       state := Complete;
-      let event = Ev.create `IO_ERROR ~data:(`IOError (code,msg)) ()  in
+      let event = Ev.create ev_IO_ERROR ~data:(data_of_ioerror (code,msg)) ()  in
       self#dispatchEvent event
     );
 
-    method onComplete () = 
+    method private onComplete () = 
     (
       debug "on complete";
       state := Complete;
-      let event = Ev.create `COMPLETE () in
+      let event = Ev.create ev_COMPLETE () in
       self#dispatchEvent event
     );
 
     method load r =
-      let wrapper = 
-        {
-          onResponse = self#onResponse;
-          onData = self#onData;
-          onComplete = self#onComplete;
-          onError = self#onError
-        }
-      in
-      (
-        httpCode := 0;
-        contentType := "";
-        bytesTotal := 0L;
-        bytesLoaded := 0L;
-        Buffer.clear data;
-        start_load wrapper r;
-        state := Loading;
-      );
+      match state with
+      [ Complete ->
+        let wrapper = 
+          {
+            onResponse = self#onResponse;
+            onData = self#onData;
+            onComplete = self#onComplete;
+            onError = self#onError
+          }
+        in
+        (
+          httpCode := 0;
+          contentType := "";
+          bytesTotal := 0L;
+          bytesLoaded := 0L;
+          Buffer.clear data;
+          state := Loading;
+          start_load wrapper r;
+        )
+      | Loading -> raise Loading_in_progress
+      ];
 
     initializer
       match request with

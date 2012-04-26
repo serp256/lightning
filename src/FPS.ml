@@ -1,12 +1,12 @@
 
 module Make
-  (D:DisplayObjectT.M  with type evType = private [> `ENTER_FRAME | DisplayObjectT.eventType ] and type evData = private [> `PassedTime of float | DisplayObjectT.eventData] )
+  (Sprite:Sprite.S type D.evType = private [> `ENTER_FRAME | DisplayObjectT.eventType ] and type D.evData = private [> `PassedTime of float | DisplayObjectT.eventData] )
   (TextField:TextField.S with module D = D) = struct
 
 
   class c ?fontSize ?color () = 
     object(self)
-      inherit TextField.c ?fontSize ?color ~width:100. ~height:30. "";
+      inherit Sprite.c;
       value mutable frames = 0;
       value mutable time = 0.;
 
@@ -26,7 +26,8 @@ module Make
             [ 0 ->  frames := frames + 1
             | _ -> 
               (
-                self#setText (string_of_int (frames / seconds));
+                self#clearChildren();
+                TLF.create ~dest:self (TLP.p ?fontSize ?fontColor:color [`text (string_of_int (frames / seconds))]);
                 frames := 1;
               )
             ]

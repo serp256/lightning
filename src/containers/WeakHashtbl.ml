@@ -196,4 +196,3 @@ module Make (H : Hashtbl.HashedType) : S with type key = H.t =
          (len, (count t), totlen, (lens.(0)), (lens.(len / 2)),
           (lens.(len - 1))));
   end;
-

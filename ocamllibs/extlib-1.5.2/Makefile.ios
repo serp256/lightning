@@ -1,0 +1,27 @@
+# Makefile contributed by Alain Frisch
+
+MODULES = \
+ enum bitSet dynArray extArray extHashtbl extList extString global IO option \
+ pMap std uChar uTF8 base64 unzip refList optParse dllist
+
+# the list is topologically sorted
+
+MLI = $(MODULES:=.mli)
+SRC = $(MLI) $(MODULES:=.ml) extLib.ml
+
+OCAMLFIND=ocamlfind -toolchain ios
+OCAMLOPT=$(OCAMLFIND) ocamlopt
+OCAMLC=$(OCAMLFIND) ocamlc
+
+all: 
+	$(OCAMLC) -a -o extLib.cma $(SRC)
+	$(OCAMLOPT)  -a -o extLib.cmxa $(SRC)
+
+install:
+	$(OCAMLFIND) install extlib META *.cma *.cmi $(MLI) $(wildcard *.cmxa) $(wildcard *.a)
+
+uninstall:
+	$(OCAMLFIND) remove extlib
+
+clean:
+	rm -f *.cmo *.cmx *.o *.cmi *.cma *.cmxa *.a

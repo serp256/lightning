@@ -7,6 +7,8 @@ type state = [ NotInitialized | Initializing of Queue.t (bool -> unit) | Initial
 
 value state = ref NotInitialized;
 
+value initializer_handler = ref None;
+
 external ios_init: unit -> bool = "ml_game_center_init";
 
 value game_center_initialized success = 
@@ -22,6 +24,10 @@ value game_center_initialized success =
       [ True -> Initialized
       | False -> InitFailed
       ];
+    match !initializer_handler with
+    [ Some f -> f success
+    | _ -> ()
+    ];
     while not (Queue.is_empty callbacks) do
       let c = Queue.pop callbacks in
       c success
@@ -32,40 +38,48 @@ value game_center_initialized success =
 Callback.register "game_center_initialized" game_center_initialized;
 
 value init ?callback () = 
-  match !state with 
-  [ NotInitialized -> 
-    match ios_init () with
-    [ True ->
-      (
-        let callbacks  = Queue.create () in
+  (
+    initializer_handler.val := callback;
+    match !state with 
+    [ NotInitialized -> 
+      match ios_init () with
+      [ True ->
         (
-          state.val := Initializing callbacks;
-          match callback with
-          [ None -> ()
-          | Some f -> Queue.push f callbacks
-          ];
+          let callbacks  = Queue.create () in
+          (
+            state.val := Initializing callbacks;
+            (*
+            match callback with
+            [ None -> ()
+            | Some f -> Queue.push f callbacks
+            ];
+            *)
+          )
         )
-      )
-    | False -> ()
-    ]
-  | Initializing callbacks -> 
-      match callback with
-      [ None -> ()
-      | Some f -> Queue.push f callbacks
+      | False -> ()
       ]
-  | Initialized ->
-      match callback with
-      [ Some f -> f True
-      | None ->  ()
-      ]
-  | InitFailed ->
-      match callback with
-      [ Some f -> f False
-      | None -> ()
-      ]
-  ];
+    | Initializing callbacks -> ()
+        (*
+        match callback with
+        [ None -> ()
+        | Some f -> Queue.push f callbacks
+        ]
+        *)
+    | Initialized ->
+        match callback with
+        [ Some f -> f True
+        | None ->  ()
+        ]
+    | InitFailed ->
+        match callback with
+        [ Some f -> f False
+        | None -> ()
+        ]
+    ];
+  );
 
 
+external playerID: unit -> option string = "ml_playerID";
 
 value report_leaderboard_failed category score = Debug.e "report leaderboard failed";
 Callback.register "report_leaderboard_failed" report_leaderboard_failed;
@@ -142,6 +156,48 @@ value showAchivements () =
   | InitFailed -> ()
   ];
 
+external get_friends_identifiers : (list string -> unit) -> unit = "ml_get_friends_identifiers";
+
+value getFriends cb = 
+  match !state with
+  [ NotInitialized -> failwith "GameCenter not initialized" 
+  | Initializing callbacks -> 
+      let c = fun 
+        [ True  -> get_friends_identifiers cb
+        | False -> cb []
+        ]
+      in Queue.push c callbacks
+  | Initialized -> get_friends_identifiers cb
+  | InitFailed -> cb []
+  ];
+
+
+
+external load_users_info : list string -> (list (string*(string*option Texture.textureInfo)) -> unit) -> unit = "ml_load_users_info";
+
+value loadUserInfo identifiers cb = 
+  let lcb infos = 
+    cb (List.map 
+      begin fun (playerId, (alias, photoTInfo)) ->
+        match photoTInfo with
+        [ None -> (playerId, (alias, None))
+        | Some tinfo -> (playerId, (alias, (Some (Texture.make tinfo))))
+        ]
+      end infos)
+  in 
+  match !state with
+  [ NotInitialized -> failwith "GameCenter not initialized" 
+  | Initializing callbacks -> 
+      let c = fun 
+        [ True  -> load_users_info identifiers lcb
+        | False -> lcb []
+        ]
+      in Queue.push c callbacks
+  | Initialized -> load_users_info identifiers lcb
+  | InitFailed -> lcb []
+  ];
+
+
 ELSE
 
 value init ?callback () = 
@@ -150,10 +206,13 @@ value init ?callback () =
   | None -> ()
   ];
 
+value playerID () = None;
 
 value reportLeaderboard (category:string) (scores:int64) = ();
 value showLeaderboard () = ();
 value reportAchivement (identifier:string) (percentComplete:float) = ();
 value showAchivements () = ();
+value getFriends cb = cb [];
+value loadUserInfo identifiers cb = cb [];
 
 ENDIF;

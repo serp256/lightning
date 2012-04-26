@@ -17,7 +17,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	value mlh;
 	while (Is_block(el)) {
 		mlh = Field(el,0);
-		[request addValue:[NSString stringWithCString:String_val(Field(mlh,0)) encoding:NSASCIIStringEncoding] forHTTPHeaderField:[NSString stringWithCString:String_val(Field(mlh,1)) encoding:NSASCIIStringEncoding]];
+		[request addValue:[NSString stringWithCString:String_val(Field(mlh,1)) encoding:NSASCIIStringEncoding] forHTTPHeaderField:[NSString stringWithCString:String_val(Field(mlh,0)) encoding:NSASCIIStringEncoding]];
 		el = Field(el,1);
 	};
 	// set body
@@ -32,4 +32,3 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	[request release];
 	CAMLreturn((value)connection);
 }
-

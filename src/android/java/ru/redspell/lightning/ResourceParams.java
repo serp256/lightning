@@ -13,7 +13,7 @@ class ResourceParams {
 		this.fd = fd;
 		this.startOffset = startOffset;
 		this.length = length;
-		Log.d("RESPARAMS","startOffset: " + this.startOffset + ", length: " + this.length);
+//		Log.d("RESPARAMS","startOffset: " + this.startOffset + ", length: " + this.length);
 	}
 
 }

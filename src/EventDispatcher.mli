@@ -1,26 +1,26 @@
 
-exception Listener_not_found;
+exception Listener_not_found of (Ev.id * string * int);
 
 
-type lst 'eventType 'eventData 'target 'currentTarget = 
+type lst 'target 'currentTarget = 
   {
     counter: mutable int;
-    lstnrs: mutable list (int * (Ev.t 'eventType 'eventData -> ('target * 'currentTarget ) -> int -> unit));
+    lstnrs: mutable list (int * (Ev.t -> ('target * 'currentTarget ) -> int -> unit));
   };
 
-class base [ 'eventType,'eventData,'target,'currentTarget ]: 
+class base [ 'target,'currentTarget ]: 
   object
-    type 'listener = Ev.t 'eventType 'eventData -> ('target * 'currentTarget) -> int -> unit;
-    value mutable listeners: list ('eventType * (lst 'eventType 'eventData 'target 'currentTarget));
-    method addEventListener: 'eventType -> 'listener -> int;
-    method removeEventListener: 'eventType -> int -> unit;
-    method hasEventListeners: 'eventType -> bool;
+    type 'listener = Ev.t -> ('target * 'currentTarget) -> int -> unit;
+    value mutable listeners: list (Ev.id * (lst 'target 'currentTarget));
+    method addEventListener: Ev.id -> 'listener -> int;
+    method removeEventListener: Ev.id -> int -> unit;
+    method hasEventListeners: Ev.id -> bool;
   end;
 
 
-class virtual simple [ 'eventType , 'eventData , 'target ]:
+class virtual simple [ 'target ]:
   object
-    inherit base ['eventType,'eventData,'target,'target];
+    inherit base ['target,'target];
     method virtual private asEventTarget: 'target;
-    method dispatchEvent: Ev.t 'eventType 'eventData -> unit;
+    method dispatchEvent: Ev.t -> unit;
   end;
