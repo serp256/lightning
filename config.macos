@@ -1,7 +1,7 @@
 -include myconfig.macos
 export PLATFORM = SDL
 export OS = macos
-SDK = /Developer/SDKs/MacOSX10.6.sdk
+SDK = /Developer/SDKs/MacOSX10.7.sdk
 export OCAMLFIND ?= ocamlfind
 CC = gcc-4.2
 export CFLAGS = -std=c99 -Wno-trigraphs -fpascal-strings -O0 -DDEBUG -Wreturn-type -Wunused-variable  -DCAML_NAME_SPACE -fexceptions -gdwarf-2 -DDEBUG -D_FILE_OFFSET_BITS=64 -D_REENTRANT 

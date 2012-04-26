@@ -1,0 +1,5 @@
+OCAMLFIND = ocamlfind -toolchain ios
+all: native
+include Makefile.in
+
+

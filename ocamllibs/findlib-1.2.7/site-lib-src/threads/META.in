@@ -25,7 +25,7 @@ dnl This file is input of the m4 macro processor.
 `  # --- POSIX-threads:'
 `  requires = "unix"'
 `  directory = "'stdlib_dir`/threads"'
-`  exists_if = "threads.cma"'
+`  exists_if = "threads.cmxa"'
 `  archive(byte,mt,mt_posix) = "threads.cma"'
 `  archive(native,mt,mt_posix) = "threads.cmxa"'
 `  version = "[internal]"'
