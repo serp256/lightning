@@ -1,4 +1,6 @@
 
+open LightCommon;
+
 value ev_ADDED: Ev.id;
 value ev_ADDED_TO_STAGE: Ev.id;
 value ev_REMOVED: Ev.id;
@@ -59,12 +61,13 @@ class virtual _c [ 'parent ] :
     method scaleY: float;
     method setScaleY: float -> unit;
     method setScale: float -> unit;
+    method virtual color: color;
+    method virtual setColor: color -> unit;
     value alpha:float;
     method alpha: float;
     method setAlpha: float -> unit;
     method rotation: float;
     method setRotation: float -> unit;
-    method setAlpha: float -> unit;
     value visible: bool;
     method visible: bool;
     method setVisible: bool -> unit;

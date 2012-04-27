@@ -181,7 +181,7 @@ class _c  _texture =
     method texFlipY = texFlipY;
 
 
-    method setColor color = 
+    method setColor qColor = 
     (
       Render.Image.set_color image color;
       match glowFilter with
@@ -189,7 +189,10 @@ class _c  _texture =
       | _ -> ()
       ]
     );
-    method color = Render.Image.color image;
+
+(*  
+    method color = Render.Image.color image; 
+
     method setColors colors = 
     (
       Render.Image.set_colors image colors;
@@ -198,6 +201,7 @@ class _c  _texture =
       | _ -> ()
       ]
     );
+*)
 
     method! setAlpha a =
     (

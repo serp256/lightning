@@ -48,6 +48,7 @@ void check_gl_errors(char *fname, int lnum, char *msg) {
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
 #define UPDATE_PMA_ALPHA(c,alpha) (c.r = (GLubyte)((double)c.r * alpha), c.g = (GLubyte)((double)c.g * alpha), c.b = (GLubyte)((double)c.b * alpha), c.a = (GLubyte)(a * 255))
+#define MULTIPLY_COLOR(c,cm) (c.r = (c.r * cm.r) / 255, c.g = (c.g * cm.g) / 255, c.b = (c.b * cm.b) / 255)
 
 
 
@@ -633,7 +634,7 @@ struct custom_operations image_ops = {
 };
 
 
-void set_image_uv(lgTexQuad *tq, value clipping) {
+static inline void set_image_uv(lgTexQuad *tq, value clipping) {
 	if (clipping != 1) {
 		value c = Field(clipping,0);
 		double x = Double_field(c,0);
@@ -703,24 +704,43 @@ void print_image(lgImage *img) {
 
 #define TEX_SIZE(w) (Double_val(w))
 //
+//
+
+
+static inline extract_color(value color,value alpha,color4b *tl,color4b *tr,color4b *bl,color4b *br) {
+	double alpha = Double_val(alpha);
+	if (Is_long(color)) { // white
+		GLubyte c = 255 * alpha;
+		*tl = *tr = *bl = *br = {c,c,c,c};
+	} else {
+		static value caml_hash_Color = 0;
+		if (caml_hash_Color == 0) caml_hash_Color = caml_hash_variant("Color");
+		if (Field(color,0) == caml_hash_Color) {
+			*tl = *tr = *bl = *br = COLOR_FROM_INT_PMA(Long_val(Field(color,1)),alpha);
+		} else { // QColors
+			value qcolor = Field(color,1);
+			*tl = COLOR_FROM_INT_PMA(Long_val(Field(qcolor,0)),alpha);
+			*tr = COLOR_FROM_INT_PMA(Long_val(Field(qcolor,1)),alpha);
+			*bl = COLOR_FROM_INT_PMA(Long_val(Field(qcolor,2)),alpha);
+			*br = COLOR_FROM_INT_PMA(Long_val(Field(qcolor,3)),alpha);
+		}
+	};
+}
+
 value ml_image_create(value textureInfo,value color,value oalpha) {
 	CAMLparam3(textureInfo,color,oalpha);
 	lgImage *img = (lgImage*)caml_stat_alloc(sizeof(lgImage));
 	int clr = Int_val(color);
 	double alpha = Double_val(oalpha);
-	color4B c = COLOR_FROM_INT_PMA(clr,alpha);
+	extract_color(color,oalpha,&tq->tl.c,&tq->tl.c,&tq->bl.c,&tq->br.c);
 	value width = Field(textureInfo,1);
 	value height = Field(textureInfo,2);
 	//fprintf(stderr,"width: %f, height: %f\n",TEX_SIZE(width),TEX_SIZE(height));
 	lgTexQuad *tq = &(img->quad);
 	tq->bl.v = (vertex2F){0,0};
-	tq->bl.c = c;
 	tq->br.v = (vertex2F) { TEX_SIZE(width),0.};
-	tq->br.c = c;
 	tq->tl.v = (vertex2F) { 0, TEX_SIZE(height)};
-	tq->tl.c = c;
 	tq->tr.v = (vertex2F) { tq->br.v.x, tq->tl.v.y};
-	tq->tr.c = c;
 	set_image_uv(tq,Field(textureInfo,3));
 	img->textureID = TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(img,textureInfo);

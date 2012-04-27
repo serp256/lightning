@@ -31,6 +31,7 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
     object(self)
       inherit Image.base texture as super;
 
+      value mutable color : option qColor = None;
       value atlas = atlas_init texture#renderInfo;
 
       method !name = if name = ""  then Printf.sprintf "atlas%d" (Oo.id self) else name;
@@ -241,6 +242,16 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
         | _ -> ()
         ];
       );
+
+      method setColor qColor = 
+      (
+        color := Some qColor;
+        dirty := True;
+      );
+
+      method clearColor () = 
+
+      method color = color;
 
       method private childrenDirty () =
         if not dirty
