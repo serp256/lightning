@@ -18,6 +18,25 @@ type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 
 exception File_not_exists of string;
 
+type qColor = 
+  {
+    qcTopLeft: int;
+    qcTopRight: int;
+    qcBottomLeft: int;
+    qcBottomRight: int;
+  };
+
+
+value qColor ?topRight ?bottomLeft ?bottomRight ~topLeft =
+  {
+    qcTopLeft = topLeft;
+    qcTopRight = match topRight with [ None -> topLeft | Some c -> c];
+    qcBottomLeft = match bottomLeft with [ None -> topLeft | Some c -> c];
+    qcBottomRight = match bottomRight with [ None -> topLeft | Some c -> c];
+  };
+
+type color = [ `NoColor | `Color of int | `QColors of qColor ];
+
 value rec nextPowerOfTwo number =
   let rec loop result = 
     if result < number 
