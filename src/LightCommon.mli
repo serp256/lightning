@@ -2,6 +2,22 @@ value (|>): 'a -> ('a -> 'b) -> 'b;
 value (<|): ('a -> 'b) -> 'a -> 'b;
 value color_white: int;
 value color_black: int;
+
+type qColor = 
+  {
+    qcTopLeft: int;
+    qcTopRight: int;
+    qcBottomLeft: int;
+    qcBottomRight: int;
+  };
+
+value qColor: ~topLeft:int -> ~topRight:int -> ~bottomLeft:int ->
+  ~bottomRight:int -> qColor;
+
+type color = [= `NoColor | `Color of int | `QColors of qColor ];
+
+
+
 type textureID; 
 type framebufferID = int;
 

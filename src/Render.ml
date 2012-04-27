@@ -93,7 +93,7 @@ type prg = (Program.t * (option Filter.t));
 
 module Quad = struct
   type t;
-  external create: ~w:float -> ~h:float -> ~color:int -> ~alpha:float -> t = "ml_quad_create";
+  external create: ~w:float -> ~h:float -> ~color:color -> ~alpha:float -> t = "ml_quad_create";
   external points: t -> array Point.t = "ml_quad_points";
 (*   external color: t -> int = "ml_quad_color"; *)
   external set_color: t -> color -> unit = "ml_quad_set_color";

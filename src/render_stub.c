@@ -48,7 +48,6 @@ void check_gl_errors(char *fname, int lnum, char *msg) {
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
 #define UPDATE_PMA_ALPHA(c,alpha) (c.r = (GLubyte)((double)c.r * alpha), c.g = (GLubyte)((double)c.g * alpha), c.b = (GLubyte)((double)c.b * alpha), c.a = (GLubyte)(a * 255))
-#define MULTIPLY_COLOR(c,cm) (c.r = (c.r * cm.r) / 255, c.g = (c.g * cm.g) / 255, c.b = (c.b * cm.b) / 255)
 
 
 
@@ -437,6 +436,36 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   glUniformMatrix4fv( sp->std_uniforms[lgUniformMVPMatrix], 1, GL_FALSE, matrixMVP.mat);
 }
 
+static value caml_hash_Color = 0;
+
+static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,color4B *tr,color4B *bl,color4B *br) {
+	if (Is_long(color)) { // white
+		GLubyte a = 255 * alpha;
+		color4B clr;
+		if (pma) clr = (color4B){a,a,a,a};
+		else clr = (color4B){255,255,255,a};
+		*tl = *tr = *bl = *br = clr;
+	} else {
+		if (caml_hash_Color == 0) caml_hash_Color = caml_hash_variant("Color");
+		if (Field(color,0) == caml_hash_Color) {
+			color4B clr;
+			int c = Long_val(Field(color,1));
+			if (pma) clr = COLOR_FROM_INT_PMA(c,alpha);
+			else clr = COLOR_FROM_INT(c,alpha);
+			*tl = *tr = *bl = *br = clr;
+		} else { // QColors
+			value qcolor = Field(color,1);
+			int c = Long_val(Field(qcolor,0));
+			*tl = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);
+			c = Long_val(Field(qcolor,1));
+			*tr = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);
+			c = Long_val(Field(qcolor,2));
+			*bl = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);
+			c = Long_val(Field(qcolor,3));
+			*br = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);
+		}
+	};
+}
 
 ////////////////////////////////////
 /////// QUADS 
@@ -524,19 +553,16 @@ value ml_quad_points(value quad) {
 	CAMLreturn(res);
 }
 
+/*
 value ml_quad_color(value quad) {
 	lgQuad *q = *QUAD(quad);
 	return Int_val((COLOR(q->bl.c.r,q->bl.c.b,q->bl.c.g)));
 }
+*/
 
 void ml_quad_set_color(value quad,value color) {
 	lgQuad *q = *QUAD(quad);
-	long clr = Int_val(color);
-	color4B c = COLOR_FROM_INT(clr,q->bl.c.a);
-	q->bl.c = c;
-	q->br.c = c;
-	q->tl.c = c;
-	q->tr.c = c;
+	extract_color(color,q->bl.c.a,0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
 }
 
 value ml_quad_alpha(value quad) {
@@ -554,8 +580,9 @@ void ml_quad_set_alpha(value quad,value alpha) {
 	q->tr.c.a = a;
 }
 
-void ml_quad_colors(value quad) {
-}
+////////////////////
+///// IMAGES 
+///////////////////
 
 
 void print_vertex(lgQVertex *qv) {
@@ -707,36 +734,14 @@ void print_image(lgImage *img) {
 //
 
 
-static inline extract_color(value color,value alpha,color4b *tl,color4b *tr,color4b *bl,color4b *br) {
-	double alpha = Double_val(alpha);
-	if (Is_long(color)) { // white
-		GLubyte c = 255 * alpha;
-		*tl = *tr = *bl = *br = {c,c,c,c};
-	} else {
-		static value caml_hash_Color = 0;
-		if (caml_hash_Color == 0) caml_hash_Color = caml_hash_variant("Color");
-		if (Field(color,0) == caml_hash_Color) {
-			*tl = *tr = *bl = *br = COLOR_FROM_INT_PMA(Long_val(Field(color,1)),alpha);
-		} else { // QColors
-			value qcolor = Field(color,1);
-			*tl = COLOR_FROM_INT_PMA(Long_val(Field(qcolor,0)),alpha);
-			*tr = COLOR_FROM_INT_PMA(Long_val(Field(qcolor,1)),alpha);
-			*bl = COLOR_FROM_INT_PMA(Long_val(Field(qcolor,2)),alpha);
-			*br = COLOR_FROM_INT_PMA(Long_val(Field(qcolor,3)),alpha);
-		}
-	};
-}
-
 value ml_image_create(value textureInfo,value color,value oalpha) {
 	CAMLparam3(textureInfo,color,oalpha);
 	lgImage *img = (lgImage*)caml_stat_alloc(sizeof(lgImage));
-	int clr = Int_val(color);
-	double alpha = Double_val(oalpha);
-	extract_color(color,oalpha,&tq->tl.c,&tq->tl.c,&tq->bl.c,&tq->br.c);
+	lgTexQuad *tq = &(img->quad);
+	extract_color(color,Double_val(oalpha),1,&tq->tl.c,&tq->tl.c,&tq->bl.c,&tq->br.c);
 	value width = Field(textureInfo,1);
 	value height = Field(textureInfo,2);
 	//fprintf(stderr,"width: %f, height: %f\n",TEX_SIZE(width),TEX_SIZE(height));
-	lgTexQuad *tq = &(img->quad);
 	tq->bl.v = (vertex2F){0,0};
 	tq->br.v = (vertex2F) { TEX_SIZE(width),0.};
 	tq->tl.v = (vertex2F) { 0, TEX_SIZE(height)};
@@ -774,6 +779,14 @@ value ml_image_points(value image) {
 	CAMLreturn(res);
 }
 
+
+void ml_image_set_color(value image,value color) {
+	lgImage *img = *IMAGE(image);
+	lgTexQuad *tq = &img->quad;
+	extract_color(color,tq->bl.c.a,1,&tq->tl.c,&tq->tl.c,&tq->bl.c,&tq->br.c);
+}
+
+/*
 value ml_image_color(value image) {
 	lgImage *img = *IMAGE(image);
 	return Int_val((COLOR(img->quad.bl.c.r,img->quad.bl.c.b,img->quad.bl.c.g)));
@@ -804,6 +817,7 @@ void ml_image_set_colors(value image,value colors) {
 	c = Int_val(Field(colors,3));
 	img->quad.tr.c = COLOR_FROM_INT_PMA(c,alpha);
 }
+*/
 
 void ml_image_set_alpha(value image,value alpha) {
 	lgImage *img = *IMAGE(image);
@@ -1088,7 +1102,7 @@ static int atlas_quads_len = 0;
 #define RENDER_SUBPIXEL(x) (GLint)x
 
 // assume that quads it's dynarray
-void ml_atlas_render(value atlas, value matrix,value program, value alpha, value quads) {
+void ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
@@ -1110,7 +1124,8 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 		lgGLBindTexture(atl->textureID,atl->pma);
 	else lgGLBindTextures(atl->textureID,atl->pallete,atl->pma);
 
-	if (quads != Val_unit) { // it's not None array is dirty, resend it to gl
+	if (atlasInfo != Val_unit) { // it's not None array is dirty, resend it to gl
+		value quads = Field(atlasInfo,0);
 		value children = Field(quads,0);
 		value arr = Field(children,0);
 		int len = Int_val(Field(children,1));
@@ -1139,41 +1154,120 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 
 		if (len > atlas_quads_len) {
 			atlas_quads = realloc(atlas_quads,len * sizeof(lgTexQuad));
-		}
+		};
+
+		value acolor = Field(atlasInfo,1);
+
+		color4B tlc,trc,blc,brc;
+		if (!Is_long(acolor)) {
+			if (caml_hash_Color == 0) caml_hash_Color = caml_hash_variant("Color");
+			if (Field(acolor,0) == caml_hash_Color) {
+				int c = Long_val(Field(acolor,1));
+				tlc = COLOR_FROM_INT(c,1.);// alpha = 1. PMA not need
+			} else {
+				value qcolor = Field(acolor,1);
+				int c = Long_val(Field(qcolor,0));
+				tlc = COLOR_FROM_INT(c,1.);
+				c = Long_val(Field(qcolor,1));
+				trc = COLOR_FROM_INT(c,1.);
+				c = Long_val(Field(qcolor,2));
+				blc = COLOR_FROM_INT(c,1.);
+				c = Long_val(Field(qcolor,3));
+				brc = COLOR_FROM_INT(c,1.);
+			}
+		};
+
 		lgTexQuad *q;
-		value child,bounds,clipping;
-		int icolor;
+		value child,bounds,clipping,clr,qclr;
 		double alpha;
+		int ic;
 		color4B c;
 		double quad[4];
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
 			bounds = Field(child,1);
 			clipping = Field(child,2);
-			icolor = Int_val(Field(child,6));
+			//icolor = Int_val(Field(child,6));
+			clr = Field(child,6);
 			alpha = Double_val(Field(child,7));
-			c = COLOR_FROM_INT_PMA(icolor,alpha);
 
 			q = atlas_quads + i;
+
+			// придеца продублировать здесь логику 
+			if (Is_long(acolor)) extract_color(clr,alpha,1,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
+			else {
+				if (Is_long(clr)) {
+					if (Field(acolor,0) == caml_hash_Color)
+						q->tl.c = q->tr.c = q->bl.c = q->br.c = tlc;
+					else {
+						q->tl.c = tlc;
+						q->tr.c = trc;
+						q->bl.c = blc;
+						q->br.c = brc;
+					}
+				} else {
+#define MULTIPLY_COLORS(c,cm) (c.r = (c.r * cm.r) / 255, c.g = (c.g * cm.g) / 255, c.b = (c.b * cm.b) / 255)
+
+					if (Field(acolor,0) == caml_hash_Color) {
+						if (Field(clr,0) == caml_hash_Color) {
+							ic = Long_val(Field(clr,1));
+							q->tl.c = COLOR_FROM_INT_PMA(ic,alpha);
+							MULTIPLY_COLORS(q->tl.c,tlc);
+							q->tr.c = q->bl.c = q->br.c = q->tl.c;
+						} else {
+							qclr = Field(clr,1);
+							
+							ic = Long_val(Field(qclr,0));
+							q->tl.c = COLOR_FROM_INT_PMA(ic,alpha);
+							MULTIPLY_COLORS(q->tl.c,tlc);
+
+							ic = Long_val(Field(qclr,1));
+							q->tr.c = COLOR_FROM_INT_PMA(ic,alpha);
+							MULTIPLY_COLORS(q->tr.c,tlc);
+
+							ic = Long_val(Field(qclr,2));
+							q->bl.c = COLOR_FROM_INT_PMA(ic,alpha);
+							MULTIPLY_COLORS(q->bl.c,tlc);
+
+							ic = Long_val(Field(qclr,3));
+							q->br.c = COLOR_FROM_INT_PMA(ic,alpha);
+							MULTIPLY_COLORS(q->br.c,tlc);
+						}
+					} else {
+						ic = Long_val(Field(qclr,0));
+						q->tl.c = COLOR_FROM_INT_PMA(ic,alpha);
+						MULTIPLY_COLORS(q->tl.c,tlc);
+
+						ic = Long_val(Field(qclr,1));
+						q->tr.c = COLOR_FROM_INT_PMA(ic,alpha);
+						MULTIPLY_COLORS(q->tr.c,trc);
+
+						ic = Long_val(Field(qclr,2));
+						q->bl.c = COLOR_FROM_INT_PMA(ic,alpha);
+						MULTIPLY_COLORS(q->bl.c,blc);
+
+						ic = Long_val(Field(qclr,3));
+						q->br.c = COLOR_FROM_INT_PMA(ic,alpha);
+						MULTIPLY_COLORS(q->br.c,brc);
+					}
+				}
+#undef MULTIPLY_COLORS
+			};
 
 			quad[0] = Double_field(bounds,0);
 			quad[1] = Double_field(bounds,1);
 			quad[2] = Double_field(bounds,2);
 			quad[3] = Double_field(bounds,3);
 
-			q->bl.c = c;
 			q->bl.v = (vertex2F){RENDER_SUBPIXEL(quad[0]),RENDER_SUBPIXEL(quad[1])};
 			q->bl.tex = (tex2F){Double_field(clipping,0),Double_field(clipping,1)};
 
-			q->br.c = c;
 			q->br.v = (vertex2F){RENDER_SUBPIXEL(quad[0] + quad[2]),q->bl.v.y};
 			q->br.tex = (tex2F){q->bl.tex.u + Double_field(clipping,2),q->bl.tex.v};
 
-			q->tl.c = c;
 			q->tl.v = (vertex2F){q->bl.v.x,RENDER_SUBPIXEL(quad[1] + quad[3])};
 			q->tl.tex = (tex2F){q->bl.tex.u,q->bl.tex.v + Double_field(clipping,3)};
 
-			q->tr.c = c;
 			q->tr.v = (vertex2F){q->br.v.x,q->tl.v.y};
 			q->tr.tex = (tex2F){q->br.tex.u,q->tl.tex.v};
 

@@ -249,8 +249,6 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
         dirty := True;
       );
 
-      method clearColor () = 
-
       method color = color;
 
       method private childrenDirty () =

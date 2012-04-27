@@ -1,4 +1,4 @@
-
+open LightCommon;
 
 class c: [ ?color:int] -> [ float ] -> [ float ] ->
   object
@@ -9,9 +9,8 @@ class c: [ ?color:int] -> [ float ] -> [ float ] ->
 (*       method copyVertexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit; *)
     method filters: list Filters.t;
     method setFilters: list Filters.t -> unit;
-    method setColor: int -> unit;
-    method color: int;
-    method vertexColors: Enum.t int;
+    method setColor: color -> unit;
+    method color: color;
     method boundsInSpace: !'space. option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
   end;

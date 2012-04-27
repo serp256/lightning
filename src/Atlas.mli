@@ -4,8 +4,8 @@ open LightCommon;
 class _c: [ Texture.c ] -> 
   object
     inherit DisplayObject.c;
-    method color: qColor;
-    method setColor: qColor -> unit;
+    method color: color;
+    method setColor: color -> unit;
     method texture: Texture.c;
     method filters: list Filters.t;
     method setFilters: list Filters.t -> unit;

@@ -27,6 +27,7 @@ type qColor =
   };
 
 
+(*
 value qColor ?topRight ?bottomLeft ?bottomRight ~topLeft =
   {
     qcTopLeft = topLeft;
@@ -34,8 +35,12 @@ value qColor ?topRight ?bottomLeft ?bottomRight ~topLeft =
     qcBottomLeft = match bottomLeft with [ None -> topLeft | Some c -> c];
     qcBottomRight = match bottomRight with [ None -> topLeft | Some c -> c];
   };
+*)
 
-type color = [ `NoColor | `Color of int | `QColors of qColor ];
+value qColor ~topLeft ~topRight ~bottomLeft ~bottomRight =
+  {qcTopLeft=topLeft;qcTopRight=topRight;qcBottomLeft=bottomLeft;qcBottomRight=bottomRight};
+
+type color = [= `NoColor | `Color of int | `QColors of qColor ];
 
 value rec nextPowerOfTwo number =
   let rec loop result = 
