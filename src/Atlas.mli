@@ -1,7 +1,3 @@
-
-
-
-
 class _c: [ Texture.c ] -> 
   object
     inherit DisplayObject.c;
@@ -16,7 +12,9 @@ class _c: [ Texture.c ] ->
     method getChildAt: int -> AtlasNode.t;
     method numChildren: int;
     method updateChild: int -> AtlasNode.t -> unit;
-    method removeChild: int -> unit;
+    method removeChild: AtlasNode.t -> unit;
+    method removeChildAt: int -> unit;
+    method childIndex: AtlasNode.t -> int;
     method setChildIndex: int -> int -> unit;
   end;
 

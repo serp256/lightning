@@ -105,7 +105,7 @@ class clip texture frames labels =
           | ClpClear (from,count) -> 
               let () = debug "clear %d-%d" from count in
               for i = 0 to count - 1 do
-                ignore(self#removeChild from)
+                ignore(self#removeChildAt from)
               done
           ]
         end cmds

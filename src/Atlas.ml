@@ -6,8 +6,6 @@ external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
 module Node = AtlasNode;
 external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynArray.t Node.t) -> unit = "ml_atlas_render" "noalloc";
 
-
-
   type glow = Image.glow ==
     {
 (*       g_valid: mutable bool; *)
@@ -60,7 +58,15 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
 
       method getChildAt idx = try DynArray.get children idx with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
 
-      method removeChild idx = 
+      method childIndex node =
+        try
+          DynArray.index_of (fun c -> c == node) children
+        with [ Not_found -> raise DisplayObject.Invalid_index ];
+
+      method removeChild node =
+        DynArray.delete children (self#childIndex node);
+
+      method removeChildAt idx = 
         try
           DynArray.delete children idx;
           self#boundsChanged();
