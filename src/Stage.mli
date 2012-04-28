@@ -2,6 +2,7 @@
 (* type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME ]; *)
 (* type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `PassedTime of float ]; *)
 
+open LightCommon;
 
 class type tween = object method process: float -> bool; end;
 value addTween: #tween -> unit;
@@ -17,7 +18,9 @@ value data_of_touches: (list Touch.t -> Ev.data);
 class virtual c: [ float ] -> [ float ] ->
   object
     inherit DisplayObject.container;
-    value virtual color: int;
+    value virtual bgColor: int;
+    method color: color;
+    method setColor: color -> unit;
     method processTouches: list Touch.n -> unit;
     method cancelAllTouches: unit -> unit;
     method advanceTime: float -> unit;

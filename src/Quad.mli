@@ -1,6 +1,6 @@
 open LightCommon;
 
-class c: [ ?color:int] -> [ float ] -> [ float ] ->
+class c: [ ?color:color ] -> [ float ] -> [ float ] ->
   object
     inherit DisplayObject.c; 
 (*       value vertexColors: array int; *)
@@ -16,4 +16,4 @@ class c: [ ?color:int] -> [ float ] -> [ float ] ->
   end;
 
 (* value cast: #DisplayObject.c -> option c;  *)
-value create: ?color:int -> float -> float -> c;
+value create: ?color:color -> float -> float -> c;

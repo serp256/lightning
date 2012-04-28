@@ -1,3 +1,4 @@
+open LightCommon;
 
 type t = 
   {
@@ -7,7 +8,7 @@ type t =
     width: float;
     height: float;
     pos: Point.t;
-    color: int;
+    color: color;
     alpha: float;
     flipX: bool;
     flipY: bool;
@@ -16,7 +17,7 @@ type t =
     rotation: float;
   };
 
-value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=0xFFFFFF) ?(flipX=False) ?(flipY=False) ?(alpha=1.) () = 
+value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=`NoColor) ?(flipX=False) ?(flipY=False) ?(alpha=1.) () = 
   let tw = texture#width
   and th = texture#height in
   let clipping = Rectangle.create_tm (rect.Rectangle.x /. tw) (rect.Rectangle.y /. th) (rect.Rectangle.width /. tw)  (rect.Rectangle.height /. th) in

@@ -4,7 +4,7 @@ MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug def
 
 MLFLAGS += -I ../src -package extlib -package ojson -I ../src/social
 
-MLFILES = panelbg.cmo testz.cmo
+#MLFILES = panelbg.cmo testz.cmo
 
 SOCIAL= ../src/social/oauth/oauth.cma ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
 

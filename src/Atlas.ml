@@ -4,7 +4,7 @@ type atlas;
 external atlas_init: Texture.renderInfo -> atlas = "ml_atlas_init";
 external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
 module Node = AtlasNode;
-external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynArray.t Node.t) -> unit = "ml_atlas_render" "noalloc";
+external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynArray.t Node.t * color) -> unit = "ml_atlas_render" "noalloc";
 
 
 
@@ -19,6 +19,14 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
       g_params: Filters.glow
     };
 
+DEFINE RENDER_QUADS(program,transform,color,alpha) = 
+  let quads = 
+    if dirty 
+    then (dirty := False; Some (children,color))
+    else None 
+  in
+  atlas_render atlas transform program alpha quads;
+
   class _c texture =
     (*
     let (programID,shaderProgram) = 
@@ -31,7 +39,7 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
     object(self)
       inherit Image.base texture as super;
 
-      value mutable color : option qColor = None;
+      value mutable color : color = `NoColor;
       value atlas = atlas_init texture#renderInfo;
 
       method !name = if name = ""  then Printf.sprintf "atlas%d" (Oo.id self) else name;
@@ -135,15 +143,17 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
                 tex#activate();
                 Render.push_matrix cm;
                 Render.clear 0 0.;
-                self#render_quads ~program:g_make_program 1. False;
+                RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
+                (* self#render_quads ~program:g_make_program 1. False; *)
                 match glow.Filters.glowKind with
                 [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
                 | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
                 ];
-                self#render_quads ~program:g_make_program 1. False;
+                (* self#render_quads ~program:g_make_program 1. False; *)
+                RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
                 Render.restore_matrix ();
                 tex#deactivate ();
-                let g_image = Render.Image.create tex#renderInfo 0xFFFFFF alpha in
+                let g_image = Render.Image.create tex#renderInfo color alpha in
                 (
                   gf.g_matrix := 
                     Matrix.create 
@@ -243,9 +253,9 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
         ];
       );
 
-      method setColor qColor = 
+      method setColor c = 
       (
-        color := Some qColor;
+        color := c;
         dirty := True;
       );
 
@@ -274,15 +284,7 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
       (
         self#childrenDirty();
         super#boundsChanged();
-      );
-
-      method private render_quads ?(program=shaderProgram) alpha transform =
-        let quads = 
-          if dirty 
-          then (dirty := False; Some children) 
-          else None 
-        in
-        atlas_render atlas (if transform then self#transformationMatrix else Matrix.identity) program alpha quads;
+      );        
         
 
       method private render' ?alpha:(alpha') ~transform rect = 
@@ -294,7 +296,8 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
             Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' g_image
           | _ -> 
               let alpha = match alpha' with [ Some a -> a *. alpha | None -> alpha ] in
-              self#render_quads alpha transform
+              RENDER_QUADS(shaderProgram,(if transform then self#transformationMatrix else Matrix.identity),color,alpha)
+              (* self#render_quads alpha transform *)
 (*           | _ -> () (* WE NEED ASSERT HERE ?? *) *)
           ]
         else 

@@ -1,3 +1,4 @@
+open LightCommon;
 
 exception Texture_not_found of string;
 type t;
@@ -7,4 +8,4 @@ value texture: t -> int -> Texture.c;
 
 value description: t -> string -> (int * Rectangle.t);
 value subTexture: t -> string -> Texture.c;
-value atlasNode: t -> string -> ?pos:Point.t -> ?scaleX:float -> ?scaleY:float -> ?color:int -> ?flipX:bool -> ?flipY:bool -> ?alpha:float -> unit -> AtlasNode.t;
+value atlasNode: t -> string -> ?pos:Point.t -> ?scaleX:float -> ?scaleY:float -> ?color:color -> ?flipX:bool -> ?flipY:bool -> ?alpha:float -> unit -> AtlasNode.t;

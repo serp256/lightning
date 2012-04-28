@@ -172,7 +172,7 @@ class _c  _texture =
     method !name = if name = ""  then Printf.sprintf "image%d" (Oo.id self) else name;
 
 
-    value image = Render.Image.create _texture#renderInfo 0xFFFFFF 1.;
+    value image = Render.Image.create _texture#renderInfo `NoColor 1.;
 
     value mutable texFlipX = False;
     method texFlipX = texFlipX;
@@ -180,15 +180,19 @@ class _c  _texture =
     value mutable texFlipY = False;
     method texFlipY = texFlipY;
 
+    value mutable color = `NoColor;
 
-    method setColor qColor = 
+    method setColor c = 
     (
-      Render.Image.set_color image color;
+      color := c;
+      Render.Image.set_color image c;
       match glowFilter with
-      [ Some {g_image=Some img;_} -> Render.Image.set_color img color
+      [ Some {g_image=Some img;_} -> Render.Image.set_color img c
       | _ -> ()
       ]
     );
+
+    method color = color;
 
 (*  
     method color = Render.Image.color image; 
@@ -296,7 +300,7 @@ class _c  _texture =
         and rh = h +. (float gs) in
         let tex = Texture.rendered rw rh in
         let cm = Matrix.create ~translate:{Point.x = float hgs; y = float hgs} () in
-        let image = Render.Image.create renderInfo 0xFFFFFF 1. in
+        let image = Render.Image.create renderInfo `NoColor 1. in
         (
           tex#activate ();
           Render.clear 0 0.;
@@ -307,7 +311,7 @@ class _c  _texture =
           ];
           Render.Image.render cm g_make_program image; 
           tex#deactivate ();
-          let g_image = Render.Image.create tex#renderInfo 0xFFFFFF alpha in
+          let g_image = Render.Image.create tex#renderInfo color alpha in
           (
             if texFlipX then Render.Image.flipTexX g_image else ();
             if texFlipY then Render.Image.flipTexY g_image else ();
