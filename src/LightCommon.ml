@@ -209,6 +209,28 @@ ENDIF;
 ENDIF;
 ENDIF;
 
+
+
+type deviceType = [ Phone | Pad ];
+
+IFDEF IOS THEN
+
+external getDeviceType: unit -> deviceType = "ml_getDeviceType";
+
+
+ELSE
+
+value internalDeviceType = ref Pad;
+value getDeviceType () = !internalDeviceType;
+
+ENDIF;
+
+value _deviceType = Lazy.lazy_from_fun getDeviceType;
+
+value deviceType () = Lazy.force _deviceType;
+
+
+
 exception Xml_error of string and string;
 
 module MakeXmlParser(P:sig value path: string; value with_suffix: bool; end) = struct

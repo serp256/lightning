@@ -289,9 +289,28 @@ void ml_request_remote_notifications(value rntype, value success_cb, value error
   return;  
 }
 
-
+/*
 void ml_uncatchedError(value message) {
 	NSString *error = [NSString stringWithCString:String_val(message) encoding:NSUTF8StringEncoding];
 	[[LightViewController sharedInstance] lightError:error];
 }
+*/
+
+
+
+value ml_getDeviceType(value p) {
+  value r;
+  switch ([[UIDevice currentDevice] userInterfaceIdiom]) {
+    case UIUserInterfaceIdiomPhone: r = Val_int(0);
+    case UIUserInterfaceIdiomPad: r = Val_int(1);
+  };
+  return r;
+}
+
+
+
+
+
+
+
 

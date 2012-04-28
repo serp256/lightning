@@ -9,3 +9,6 @@ external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 value request_remote_notifications: list remoteNotification ->  (string -> unit) -> (string -> unit) -> unit;
+
+
+

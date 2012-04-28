@@ -36,6 +36,13 @@ value open_resource: ?with_suffix:bool -> string -> in_channel;
 value read_resource: ?with_suffix:bool -> string -> string;
 value read_json: ?with_suffix:bool -> string -> Ojson.t;
 
+type deviceType = [ Phone | Pad ];
+
+value deviceType: unit -> deviceType;
+
+IFDEF SDL THEN
+value internalDeviceType: ref deviceType;
+ENDIF;
 
 
 module MakeXmlParser(P:sig value path: string; value with_suffix:bool; end): sig
