@@ -136,14 +136,14 @@ value tlf (stage:Stage.c) =
 (
   BitmapFont.register "MyriadPro-Regular.fnt";
   TLF.default_font_family.val := "Myriad Pro";
-  let quad = Quad.create  ~color:0xCC0000 100. 20. in
+  let quad = Quad.create  ~color:(`Color 0xCC0000) 100. 20. in
   (
     quad#setPos 100. 100.;
     stage#addChild quad;
   );
   let ((w,h),text) = 
     TLF.create begin
-        TLF.p ~halign:`center ~color:0xfff4c7 ~fontSize:15 
+        TLF.p ~halign:`center ~color:0xFFFFFF ~fontSize:15 
           [ 
             `text "животные";
           ]
@@ -152,6 +152,7 @@ value tlf (stage:Stage.c) =
   (
     debug "w:%f,h:%f" w h;
     text#setPos 100. 100.;
+    text#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF));
     text#setFilters [ Filters.glow ~size:2 0x00FF00 ];
 (*     text#setAlpha 0.3; *)
     stage#addChild text;
@@ -423,7 +424,7 @@ value half_pixels (stage:Stage.c) =
   *)
   let font = Image.load "MyriadPro-Regular0.alpha" in
   (
-    font#setColor 0xFFFFFF;
+    font#setColor (`Color 0xFFFFFF);
     font#setPos 100. 100.;
     stage#addChild font;
   );
@@ -560,12 +561,13 @@ value sound (stage:Stage.c) =
 
 
 value quad (stage:Stage.c) = 
-  let q = Quad.create ~color:0xFF0000 200. 200. in
+  let q = Quad.create ~color:(`Color 0xFF0000) 200. 200. in
   (
     q#setPos 100. 100.;
     stage#addChild q;
   );
 
+(* 
 value window (stage:Stage.c) = 
   let window = new Panelbg.c ~top:True ~bottom:True 500. 350. in
   (
@@ -579,12 +581,13 @@ value window (stage:Stage.c) =
     );
     *)
   );
+ *)
 
-value zsort (stage:Stage.c) = 
+(* value zsort (stage:Stage.c) = 
 (
   Testz.init ();
   proftimer "zSort: %F" Testz.zSort ();
-);
+); *)
 
 value pallete (stage:Stage.c) =
 (
@@ -596,7 +599,8 @@ value pallete (stage:Stage.c) =
 );
 
 value image (stage:Stage.c) =
-  let image = Image.load "default.png" in
+  let image = Image.load "tree.png" in
+  let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
   stage#addChild image;
 
 value map (stage:Stage.c) =
@@ -937,7 +941,7 @@ value social (stage:Stage.c) =
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
-    value color = 0xCCCCCC;
+    value bgColor = 0xCCCCCC;
     initializer begin
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
@@ -956,7 +960,7 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-(*       tlf self; *)
+      tlf self;
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)

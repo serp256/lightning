@@ -148,6 +148,10 @@ class virtual _c [ 'parent ] = (*{{{*)
     value mutable boundsCache = None;
     value mutable parent : option 'parent = None;
 
+
+    method virtual color: color;
+    method virtual setColor: color -> unit;
+
     method transformationMatrix = 
       match transformationMatrix with
       [ None -> 

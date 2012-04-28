@@ -18,6 +18,30 @@ type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 
 exception File_not_exists of string;
 
+type qColor = 
+  {
+    qcTopLeft: int;
+    qcTopRight: int;
+    qcBottomLeft: int;
+    qcBottomRight: int;
+  };
+
+
+(*
+value qColor ?topRight ?bottomLeft ?bottomRight ~topLeft =
+  {
+    qcTopLeft = topLeft;
+    qcTopRight = match topRight with [ None -> topLeft | Some c -> c];
+    qcBottomLeft = match bottomLeft with [ None -> topLeft | Some c -> c];
+    qcBottomRight = match bottomRight with [ None -> topLeft | Some c -> c];
+  };
+*)
+
+value qColor ~topLeft ~topRight ~bottomLeft ~bottomRight =
+  {qcTopLeft=topLeft;qcTopRight=topRight;qcBottomLeft=bottomLeft;qcBottomRight=bottomRight};
+
+type color = [= `NoColor | `Color of int | `QColors of qColor ];
+
 value rec nextPowerOfTwo number =
   let rec loop result = 
     if result < number 
@@ -184,6 +208,28 @@ value read_json ?with_suffix path =
 ENDIF;
 ENDIF;
 ENDIF;
+
+
+
+type deviceType = [ Phone | Pad ];
+
+IFDEF IOS THEN
+
+external getDeviceType: unit -> deviceType = "ml_getDeviceType";
+
+
+ELSE
+
+value internalDeviceType = ref Pad;
+value getDeviceType () = !internalDeviceType;
+
+ENDIF;
+
+value _deviceType = Lazy.lazy_from_fun getDeviceType;
+
+value deviceType () = Lazy.force _deviceType;
+
+
 
 exception Xml_error of string and string;
 

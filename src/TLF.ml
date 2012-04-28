@@ -670,7 +670,7 @@ value create ?width ?height ?border ?dest (html:main) =
                      add_line line idx
                    | _ ->
                      (
-                       let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:color ~alpha:alpha bchar.atlasNode in
+                       let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:(`Color color) ~alpha:alpha bchar.atlasNode in
                        addToLine bchar.xAdvance (Char b) line;
                        add_char line (UTF8.next text index)
                      )

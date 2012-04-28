@@ -1,3 +1,4 @@
+open LightCommon;
 
 type glow = 
   {
@@ -25,9 +26,9 @@ class _c : [ Texture.c ] ->
   object
     inherit DisplayObject.c; 
     value texture: Texture.c;
-    method setColor: int -> unit;
-    method color: int;
-    method setColors: array int -> unit;
+    method setColor: color -> unit;
+    method color: color;
+    (*method setColors: array int -> unit;*)
 
     method texFlipX: bool;
     method setTexFlipX: bool -> unit;

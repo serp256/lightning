@@ -2,7 +2,7 @@ open LightCommon;
 
 (* value gl_quad_colors = make_word_array 4; *)
 
-  class c ?(color=0xFFFFFF) width height = (*{{{*)
+  class c ?(color=`Color 0xFFFFFF) width height = (*{{{*)
     object(self)
       inherit DisplayObject.c as super;
 
@@ -14,51 +14,13 @@ open LightCommon;
         Render.Quad.set_alpha quad a;
       );
 
-      (*
-      value vertexCoords = 
-        let a = make_float_array 8 in
-        let () = Bigarray.Array1.fill a 0. in
-        (
-          a.{2} := width;
-          a.{5} := height;
-          a.{6} := width;
-          a.{7} := height;
-          a
-        );
-
-      method updateSize width height = 
-        if (vertexCoords.{2} <> width || vertexCoords.{5} <> height) 
-        then
-        (
-          vertexCoords.{2} := width;
-          vertexCoords.{5} := height;
-          vertexCoords.{6} := width;
-          vertexCoords.{7} := height;
-          self#boundsChanged();
-        )
-        else ();
-
-      method copyVertexCoords dest = Bigarray.Array1.blit vertexCoords dest;
-      *)
-
-        (*
-        let a = Array.make 8 0. in
-        (
-          a.(2) := width;
-          a.(5) := height;
-          a.(6) := width;
-          a.(7) := height;
-          a
-        );
-        *)
-        
-(*       value vertexColors = Array.make 4 color; *)
-  (*     method vertexColors = vertexColors; *)
-(*       method vertexColors = ExtArray.Array.enum vertexColors; *)
-      method vertexColors: Enum.t int = Enum.empty ();
-
-      method setColor color = Render.Quad.set_color quad color;
-      method color = Render.Quad.color quad;
+      value mutable color = color;
+      method setColor c = 
+      (
+        color := c;
+        Render.Quad.set_color quad c;
+      );
+      method color = color;
 
       method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
         match targetCoordinateSpace with

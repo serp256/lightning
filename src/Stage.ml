@@ -1,4 +1,4 @@
-
+open LightCommon;
 open Touch;
 
 (* type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME  ]; *)
@@ -54,7 +54,9 @@ value screenSize () = !_screenSize;
 class virtual c (_width:float) (_height:float) =
   object(self)
     inherit D.container as super;
-    value virtual color: int;
+    value virtual bgColor: int;
+    method color = `NoColor;
+    method setColor (_:color) = raise Restricted_operation;
     value mutable width = _width;
     value mutable height = _height;
     initializer 
@@ -176,7 +178,7 @@ class virtual c (_width:float) (_height:float) =
     method renderStage () =
     (
 (*       proftimer:perfomance "Prerender: %F" D.prerender(); *)
-      Render.clear color 1.;
+      Render.clear bgColor 1.;
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
       (*
       debug "start render";
@@ -212,7 +214,7 @@ class virtual c (_width:float) (_height:float) =
     method run seconds = 
     (
       self#advanceTime seconds;
-      Render.clear color 1.;
+      Render.clear bgColor 1.;
       D.prerender ();
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
     );

@@ -25,7 +25,8 @@ class c =
     method cacheAsImage = imageCache <> None;
     value mutable filters = [];
 
-
+    method color = `NoColor;
+    method setColor (c:color) = ();
     method setCacheAsImage (v:bool) = ();
 
     (*
@@ -97,7 +98,7 @@ class c =
                ) else tex
              | (None,None) -> 
                  let tex = Texture.rendered w h in
-                 let img = Render.Image.create tex#renderInfo ~color:0xFFFFFF ~alpha:1. in
+                 let img = Render.Image.create tex#renderInfo ~color:`NoColor ~alpha:1. in
                  (
                    c.c_tex := Some tex;
                    c.c_img := Some img;
@@ -133,7 +134,7 @@ class c =
                  let tex = get_tex rw rh in
                  let m = Matrix.create ~translate:{Point.x = (float hgs) -. bounds.Rectangle.x; y = (float hgs) -. bounds.Rectangle.y} () in
                  let ctex = tex#clone () in
-                 let cimg = Render.Image.create ctex#renderInfo ~color:0xFFFFFF ~alpha:1. in
+                 let cimg = Render.Image.create ctex#renderInfo ~color:`NoColor ~alpha:1. in
                  (
                    let alpha' = alpha in
                    (

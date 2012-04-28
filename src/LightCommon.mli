@@ -2,6 +2,22 @@ value (|>): 'a -> ('a -> 'b) -> 'b;
 value (<|): ('a -> 'b) -> 'a -> 'b;
 value color_white: int;
 value color_black: int;
+
+type qColor = 
+  {
+    qcTopLeft: int;
+    qcTopRight: int;
+    qcBottomLeft: int;
+    qcBottomRight: int;
+  };
+
+value qColor: ~topLeft:int -> ~topRight:int -> ~bottomLeft:int ->
+  ~bottomRight:int -> qColor;
+
+type color = [= `NoColor | `Color of int | `QColors of qColor ];
+
+
+
 type textureID; 
 type framebufferID = int;
 
@@ -20,6 +36,13 @@ value open_resource: ?with_suffix:bool -> string -> in_channel;
 value read_resource: ?with_suffix:bool -> string -> string;
 value read_json: ?with_suffix:bool -> string -> Ojson.t;
 
+type deviceType = [ Phone | Pad ];
+
+value deviceType: unit -> deviceType;
+
+IFDEF SDL THEN
+value internalDeviceType: ref deviceType;
+ENDIF;
 
 
 module MakeXmlParser(P:sig value path: string; value with_suffix:bool; end): sig
