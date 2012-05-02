@@ -1,9 +1,0 @@
-# Specifications for the standard library:
-# (Only included because of findlib-browser)
-requires = ""
-description = "Standard library"
-version = "[distributed with Ocaml]"
-directory = "^"
-browse_interfaces = " Arg Array ArrayLabels Buffer Callback CamlinternalLazy CamlinternalMod CamlinternalOO Char Complex Digest Filename Format Gc Genlex Hashtbl Int32 Int64 Lazy Lexing List ListLabels Map Marshal MoreLabels Nativeint Obj Oo Parsing Pervasives Printexc Printf Queue Random Scanf Set Sort Stack StdLabels Stream String StringLabels Sys Weak "
-
-

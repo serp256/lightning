@@ -86,7 +86,7 @@ MLSOURCES = $(BMLSOURCES) ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDi
 					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml  Image.ml AtlasNode.ml TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml\
 					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml
 
-Texture.cmo Texture.cmx: MLFLAGS += -package threads -thread
+#Texture.cmo Texture.cmx: MLFLAGS += -package threads -thread
 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
 	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),$(patsubst %,-ccopt %,$(GLPARAM))) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
