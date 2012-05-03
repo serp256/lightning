@@ -73,7 +73,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         with [ Not_found -> raise DisplayObject.Invalid_index ];
 
       method removeChild node =
-        DynArray.delete children (self#childIndex node);
+        self#removeChildAt (self#childIndex node);
 
       method removeChildAt idx = 
         try
