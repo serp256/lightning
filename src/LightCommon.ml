@@ -179,7 +179,7 @@ value resources_path = "Resources";
 value resource_path ?(with_suffix=True) fname = 
   match with_suffix with
   [ True ->
-    let spath = Filename.concat resources_path (LightCommon.path_with_suffix fname) in
+    let spath = Filename.concat resources_path (path_with_suffix fname) in
     match Sys.file_exists spath with
     [ True -> spath
     | False -> 

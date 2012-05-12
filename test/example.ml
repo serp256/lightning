@@ -1007,13 +1007,13 @@ let stage width height =
 (*         test_alpha self; *)
 (*       alert self; *)
       (* test_exn self; *)
-      tweens self;
+   (*   tweens self; *)
       (* flip self; *)
 (*       social self; *)
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-      (* tlf self; *)
+       tlf self; 
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)

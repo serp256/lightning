@@ -131,8 +131,75 @@ value register xmlpath = (*{{{*)
   ];(*}}}*)
 *)
 
+value register binpath =
+  let dirname = match Filename.dirname binpath with [ "." -> "" | dir -> dir ] in
+  let inp = open_resource binpath in
+  let bininp = IO.input_channel inp in
+  let parse_pages () =
+    let rec loop n res = 
+      match n with
+      [ 0 -> res
+      | _ ->
+          let file = IO.read_string bininp in
+          loop (n - 1) [  Texture.load ~with_suffix:False (Filename.concat dirname file) :: res  ] 
+      ]
+    in
+    Array.of_list (List.rev (loop (IO.read_ui16 bininp) []))
+  in
+    (
+      let face = IO.read_string bininp in
+      let style = String.uncapitalize (IO.read_string bininp) in
+      let kerning = IO.read_byte bininp in
+      let pages = parse_pages () in
+      let rec parse_chars n res = 
+        match n with
+        [ 0 -> res 
+        | _ -> 
+            let space = IO.read_double bininp in
+            let size = IO.read_ui16 bininp in
+            let lineHeight = IO.read_double bininp in
+            let ascender = IO.read_double bininp in
+            let descender = IO.read_double bininp in
+            let chars = Hashtbl.create 9 in
+            let rec loop n =
+              match n with
+              [ 0 -> ()
+              | _ -> 
+                  (
+                    let charID = IO.read_i32 bininp in
+                    let xAdvance = IO.read_ui16 bininp in
+                    let xOffset = IO.read_i16 bininp in
+                    let yOffset = IO.read_i16 bininp in
+                    let x = IO.read_ui16 bininp in
+                    let y = IO.read_ui16 bininp in
+                    let width = IO.read_ui16 bininp in
+                    let height = IO.read_ui16 bininp in
+                    let page = IO.read_ui16 bininp in
+                     let bc = 
+                       let region = Rectangle.create (float x) (float y) (float width) (float height) in
+                       let atlasNode = AtlasNode.create pages.(page) region  () in
+                       { charID; xOffset = float xOffset; yOffset = float yOffset; xAdvance = float xAdvance; atlasNode }
+                     in
+                     Hashtbl.add chars charID bc;
+                     loop (n-1)
+                   )
+              ]
+            in
+              (
+                loop (IO.read_ui16 bininp);
+                let bf = { chars; texture = pages.(0); scale=1.; ascender; descender; space; lineHeight; } in
+                let res = MapInt.add size bf res in
+                parse_chars (n-1) res
+              )
+        ]
+      in
+      let sizes = parse_chars (IO.read_ui16 bininp) (try Hashtbl.find fonts (face,style) with [ Not_found -> MapInt.empty ]) in
+      Hashtbl.replace fonts (face,style) sizes;
 
-value register xmlpath =
+      close_in inp;
+    );
+
+value registerXML xmlpath =
   let dirname = match Filename.dirname xmlpath with [ "." -> "" | dir -> dir ] in
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; value with_suffix = True; end) in
   let () = XmlParser.accept (`Dtd None) in
