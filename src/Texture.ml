@@ -441,15 +441,13 @@ value make_and_cache path textureInfo =
   );
 
 value load ?(with_suffix=True) path : c = 
+  let fpath = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
   try
-    let path = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
-    (
       debug:cache (
         Debug.d "print cache";
         TextureCache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
       );
-      ((TextureCache.find cache path) :> c)
-    )
+      ((TextureCache.find cache fpath) :> c)
   with 
   [ Not_found ->
     let suffix =
@@ -465,7 +463,7 @@ value load ?(with_suffix=True) path : c =
         path (int32_of_textureID textureInfo.textureID) textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height 
         (string_of_bool textureInfo.pma) 
     in
-    make_and_cache path textureInfo
+    make_and_cache fpath textureInfo
   ];
 
 
@@ -556,19 +554,20 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
   value cruntime = aloader_create_runtime ();
 
   value load with_suffix path callback = 
-  (
-    if not (Hashtbl.mem waiters path)
-    then 
-      let suffix = 
-        match with_suffix with
-        [ True -> LightCommon.resources_suffix ()
-        | False -> None
-        ]
-      in
-      aloader_push cruntime path suffix
-    else ();
-    Hashtbl.add waiters path callback;
-  );
+    let fpath = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
+    (
+      if not (Hashtbl.mem waiters fpath)
+      then 
+        let suffix = 
+          match with_suffix with
+          [ True -> LightCommon.resources_suffix ()
+          | False -> None
+          ]
+        in
+        aloader_push cruntime path suffix
+      else ();
+      Hashtbl.add waiters fpath callback;
+    );
 
 
 
@@ -578,10 +577,16 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
       match aloader_pop cruntime with
       [ Some (path,textureInfo) -> 
         (
+          let path =  (* FIXME!!!! *)
+            match Hashtbl.mem waiters path with
+            [ False -> LightCommon.path_with_suffix path
+            | True -> path
+            ]
+          in
           let texture = make_and_cache path textureInfo in
+          let waiters = MHashtbl.pop_all waiters path in
           (
             debug "texture: %s loaded" path;
-            let waiters = MHashtbl.pop_all waiters path in
             List.iter (fun f -> f texture) (List.rev waiters);
           );
           check_result ();
