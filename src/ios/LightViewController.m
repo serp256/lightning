@@ -22,14 +22,17 @@
 
 static LightViewController *instance = NULL;
 
-static void mlUncaughtException(const char* message) {
+static void mlUncaughtException(const char* exn, int bc, char** bv) {
+	// FIXME: address 
 	NSString * to = @"nanofarm@redspell.ru";
   NSString * subj = [NSString stringWithFormat:@"Сообщение об ошибке в игре '%@'", [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
 	UIDevice * dev = [UIDevice currentDevice];
 	NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleVersion"];
-	// Fixme - localization here
-	NSString * body = [NSString stringWithFormat:@"На моем %@ (iOS %@) ваше приложение (v%@) завершилось с ошибкой. Исправьте её как можно скорее. Спасибо!\n------------------------------------------------------\n%s", dev.model, dev.systemVersion, appVersion, message];
-	//NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", to, subj, [NSString stringWithCString:message encoding:NSUTF8StringEncoding]];
+	// FIXME: localization here
+	NSString * body = [NSString stringWithFormat:@"На моем %@ (iOS %@) ваше приложение (v%@) завершилось с ошибкой. Исправьте её как можно скорее. Спасибо!\n------------------------------------------------------\n%s\n", dev.model, dev.systemVersion, appVersion, exn];
+	for (int i = 0; i < bc; i++) {
+		if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
+	};
 	NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", to, subj, body];
   email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
   [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];

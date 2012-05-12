@@ -432,7 +432,7 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
 
 int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 
-	//NSLog(@"LOAD IMAGE: %@\n",path);
+	NSLog(@"LOAD IMAGE: %@[%s]\n",path,suffix);
 	NSString *fullPath = NULL;
 	NSString *imgType = [[path pathExtension] lowercaseString];
 	NSBundle *bundle = [NSBundle mainBundle];
@@ -500,6 +500,7 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 
 	if (!fullPath) r = 2;
 	else {
+		NSLog(@"REAL FILE: %@",fullPath);
 		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
 		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);

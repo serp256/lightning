@@ -2,6 +2,7 @@ open LightCommon;
 
 (* Gc.set {(Gc.get ()) with Gc.verbose  = (0x001 lor 0x002 lor 0x004 lor 0x010 lor 0x040 lor 0x080)}; *)
 
+Printexc.record_backtrace True;
 value max_anim_len = 40;
 value (|>) a b = b a;
 (*
@@ -134,7 +135,9 @@ value onClick obj handler  =
 
 value tlf (stage:Stage.c) = 
 (
+  debug "REGISTR FONT";
   BitmapFont.register "MyriadPro-Regular.fnt";
+  debug "FONT REGISTRED";
   TLF.default_font_family.val := "Myriad Pro";
   let quad = Quad.create  ~color:(`Color 0xCC0000) 100. 20. in
   (
@@ -223,6 +226,7 @@ value tlf (stage:Stage.c) =
 );
 
 
+(*
 value masks (stage:Stage.c) =
 (
   let tree = Image.load "tree.png" in
@@ -248,6 +252,7 @@ value atlas (stage:Stage.c) =
   );
 );
 
+*)
 
 value disable_filter = 
   Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
@@ -305,6 +310,7 @@ value filters (stage:Stage.c) =
 );
 
 
+(*
 value size (stage:Stage.c) = 
   let img = Image.load "tree.png" in
   (
@@ -316,6 +322,7 @@ value size (stage:Stage.c) =
       )
     end;
   );
+*)
 
 
 value flip (stage:Stage.c) =
@@ -336,6 +343,7 @@ value flip (stage:Stage.c) =
   );
 
 
+(*
 value async_load (stage:Stage.c) = 
 (
   let lib = LightLib.load "Clips" in
@@ -870,14 +878,23 @@ value glow (stage:Stage.c) =
     *)
   );
 );
+*)
 
+value raise_some_exn () = 
+  if True then raise (Failure "BLYYYY exn") else ();
 
 value test_exn (stage:Stage.c) =
   Timers.start 5. begin fun () ->
-    failwith("BLYYYY exn");
+(*     try *)
+    (
+      prerr_endline "now call exn";
+      raise_some_exn ();
+    )
+(*     with [ exn -> (Printexc.print_backtrace stderr; flush stderr) ] *)
   end;
 
 
+(*
 value social (stage:Stage.c) = 
 (
   let b = Image.load "tree.png" in
@@ -937,12 +954,46 @@ value social (stage:Stage.c) =
     end
   );
 );
+*)
+
+
+value tweens (stage:Stage.c) =
+  let bt = Image.load "tree.png" in 
+  let () = stage#addChild bt in
+  let tweenY = Tween.create ~transition:`easeOutBounce 10.
+  (* and tweenX = Tween.create 0.7 *)
+  (* and tweenAlpha = Tween.create 0.8 *)
+  in
+  (         
+    bt#setX 100.;
+    (* Stage.addTween tweenX; *)
+    Stage.addTween tweenY;
+    (* Stage.addTween tweenAlpha; *)
+    (* tweenX#animate bt#prop'x 300.; *)
+    tweenY#animate bt#prop'y 600.;
+    (* tweenAlpha#animate bt#prop'alpha 0.5; *)
+    (* tweenX#setOnComplete (fun () -> Stage.removeTween tweenX); *)
+    (* tweenY#setOnComplete (fun () -> Stage.removeTween tweenY); *)
+    (* tweenAlpha#setOnComplete begin fun () ->  
+      (
+        Stage.removeTween tweenAlpha;
+        let tween =  Tween.create 0.15 in
+          (
+            Stage.addTween tween;
+            tween#animate bt#prop'alpha 0.;
+            (* tween#setOnComplete (fun () -> Stage.removeTween tween); *)
+            (* ignore(tween#process 0.04); *)
+          )
+      ) end; *)
+    );
+
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      debug "START OCAML";
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
 (*         TLF.default_font_family.val := "Myriad Pro"; *)
@@ -951,16 +1002,18 @@ let stage width height =
           self#addChild tlf;
 *)
         (* map self; *)
-        image self;
+(*         image self; *)
+(*         rec_fun self; *)
 (*         test_alpha self; *)
 (*       alert self; *)
-(*       test_exn self; *)
-(*       flip self; *)
+      (* test_exn self; *)
+   (*   tweens self; *)
+      (* flip self; *)
 (*       social self; *)
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-      tlf self;
+       tlf self; 
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)

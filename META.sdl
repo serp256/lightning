@@ -1,7 +1,7 @@
 version="0.01"
 archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
-requires="bigarray extlib xmlm dbm threads curl ojson"
+requires="bigarray extlib xmlm threads curl ojson"
 
 package "tapjoy" (
   description="Tapjoy Connect"

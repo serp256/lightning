@@ -9,7 +9,7 @@ value ev_ENTER_FRAME: Ev.id;
 
 
 type hidden 'a;
-exception Invalid_index;
+exception Invalid_index of (int*int);
 exception Child_not_found;
 
 value dispatchEnterFrame: float -> unit;

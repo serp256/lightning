@@ -36,8 +36,6 @@ value (data_of_ioerror,ioerror_of_data) = Ev.makeData();
 
 exception Incorrect_request;
 
-
-
 value prepare_request r = 
   match r.httpMethod with
   [ `POST -> 
@@ -86,11 +84,13 @@ type loader_wrapper =
     onComplete: unit -> unit;
     onError: int -> string -> unit
   };
+
+
 IFDEF IOS THEN (*{{{*)
-type ns_connection;
+type connection;
 value loaders = Hashtbl.create 1;
 
-external url_connection: string -> string -> list (string*string) -> option string -> ns_connection = "ml_URLConnection";
+external url_connection: string -> string -> list (string*string) -> option string -> connection = "ml_URLConnection";
 
 value get_loader ns_connection = 
   try
@@ -134,15 +134,30 @@ Callback.register "url_failed" url_failed;
 value start_load wrappers r = 
   let (url,data) = prepare_request r in
   let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
-  Hashtbl.add loaders ns_connection wrappers;
+  (
+    Hashtbl.add loaders ns_connection wrappers;
+    ns_connection;
+  );
+
+
+
+external cancel_ns_connection: connection -> unit = "ml_URLConnection_cancel";
+value cancel_load connection =
+(
+  cancel_ns_connection connection;
+  Hashtbl.remove loaders connection;
+);
+
 (*}}}*)
 ELSE
 IFDEF SDL THEN (*{{{*)
 
+type connection = int;
 value curl_initialized = ref False;
 
 module type CurlLoader = sig
-  value push_request: loader_wrapper -> request -> unit;
+  value push_request: loader_wrapper -> request -> int;
+  value cancel_request: int -> unit;
   value check_response: unit -> unit;
 end;
 
@@ -166,7 +181,10 @@ module CurlLoader(P:sig end) = struct
       let (url,data) = prepare_request request in
       ThreadSafeQueue.enqueue requests_queue (!request_id,url,request.httpMethod,request.headers,data);
       Condition.signal condition;
+      !request_id;
     );
+
+  value cancel_request reqid = Hashtbl.remove waiting_loaders reqid;
 
   value response_queue = ThreadSafeQueue.create ();
 
@@ -174,15 +192,20 @@ module CurlLoader(P:sig end) = struct
     match ThreadSafeQueue.dequeue response_queue with
     [ Some (request_id,result) ->
       (
-        let loader = Hashtbl.find waiting_loaders request_id in
-        match result with
-        [ `Result (code,contentType,contentLength,data) ->
-          (
-            loader.onResponse code contentType contentLength;
-            loader.onData data;
-            loader.onComplete ();
-          )
-        | `Failure code errmsg -> loader.onError code errmsg
+        let loader = try Some (Hashtbl.find waiting_loaders request_id) with [
+          Not_found -> None ] in
+        match loader with
+        [ Some loader ->
+          match result with
+          [ `Result (code,contentType,contentLength,data) ->
+            (
+              loader.onResponse code contentType contentLength;
+              loader.onData data;
+              loader.onComplete ();
+            )
+          | `Failure code errmsg -> loader.onError code errmsg
+          ]
+        | None -> ()
         ];
         check_response ();
       )
@@ -271,133 +294,23 @@ value start_load wrapper r =
   let module Loader = (value m:CurlLoader) in
   Loader.push_request wrapper r;
 
-(*
-type thr = ((Event.channel [= `Result of (int * string * Int64.t * string) | `Failure of (int * string) ]) * (Event.channel (string * http_method * list (string*string) * option string)));
-value free_threads: Queue.t thr = Queue.create ();
-value working_threads = ref [];
-
-value curl_initialized = ref False;
-
-value curl_thread (inch,outch) = 
-  let buffer = Buffer.create 1024 in
-  let dataf = (fun str -> (Buffer.add_string buffer str; String.length str)) in
-  loop () where
-    rec loop () =
-    (
-      let e = Event.receive inch in
-      let (url,hmth,headers,body) = Event.sync e in
-      let () = debug "new curl request on url: %s" url in
-      let ccon = Curl.init () in
-      try
-        Curl.set_url ccon url;
-        let headers = List.map (fun (n,v) -> Printf.sprintf "%s:%s" n v) headers in
-        match headers with
-        [ [] -> ()
-        | _ -> Curl.set_httpheader ccon headers
-        ];
-        match hmth with
-        [ `POST -> Curl.set_post ccon True
-        | _ -> ()
-        ];
-        match body with
-        [ Some b -> 
-          (
-            Curl.set_postfields ccon b;
-            Curl.set_postfieldsize ccon (String.length b);
-          )
-        | None -> ()
-        ];
-        Curl.set_writefunction ccon dataf;
-        Curl.perform ccon;
-        debug "curl performed";
-        let httpCode = Curl.get_httpcode ccon
-        and contentType = Curl.get_contenttype ccon
-        and contentLength = Int64.of_float (Curl.get_contentlengthdownload ccon)
-        in
-        Event.sync (Event.send outch (`Result (httpCode,contentType,contentLength,Buffer.contents buffer)));
-        Buffer.clear buffer;
-        Curl.cleanup ccon;
-      with [ Curl.CurlException _ code str -> Event.sync (Event.send outch (`Failure code str))];
-      loop ();
-    );
-
-value global_conn_id = ref 0;
-value start_load wrapper r = 
-(
-  match !curl_initialized with
-  [ False -> (Curl.global_init Curl.CURLINIT_GLOBALNOTHING; curl_initialized.val := True)
-  | True -> ()
-  ];
-  let (url,data) = prepare_request r in
-  let () = debug "data after prepare: [%s]" (match data with [ None -> "NONE" | Some d -> d]) in
-  let ((_,outch) as channels) = 
-    match Queue.is_empty free_threads with
-    [ True -> 
-      let () = debug "create new thread" in
-      let inch = Event.new_channel ()
-      and outch = Event.new_channel () 
-      in
-      (
-        ignore(Thread.create curl_thread (outch,inch));
-        ((inch,outch):thr)
-      )
-    | False -> 
-        let () = debug "take existent thread" in
-        Queue.pop free_threads
+value cancel_load req = 
+  let m = 
+    match !curl_loader with
+    [ Some m -> m
+    | None -> assert False
     ]
   in
-  let e = Event.send outch (url,r.httpMethod,r.headers,data) in
-  working_threads.val := [ (channels,wrapper,`send_request e) :: !working_threads ]
-);
-
-value process_result loader = fun
-  [ `Result (code,contentType,contentLength,data) ->
-    (
-      loader.onResponse code contentType contentLength;
-      loader.onData data;
-      loader.onComplete ();
-    )
-  | `Failure code errmsg -> loader.onError code errmsg
-  ];
-
-value process_events () =
-  match !working_threads with
-  [ [] -> ()
-  | works -> 
-      let () = debug "process working threads" in
-      working_threads.val := 
-        ExtList.List.filter_map begin fun ((((inch,outch) as worker),loader,state) as j) ->
-          match state with
-          [ `send_request e ->
-            match Event.poll e with
-            [ None -> Some j
-            | Some () ->
-                let e = Event.receive inch in
-                Some (worker,loader,`wait_result e)
-            ]
-          | `wait_result e -> 
-              match Event.poll e with
-              [ None -> Some j
-              | Some result ->
-                (
-                  process_result loader result;
-                  Queue.push worker free_threads;
-                  None
-                )
-              ]
-          ]
-        end works
-  ];
-
-*)
+  let module Loader = (value m:CurlLoader) in
+  Loader.cancel_request req;
 
 (*}}}*)
 ELSE
 
-type ns_connection;
+type connection;
 value loaders = Hashtbl.create 1;
 
-external url_connection: string -> string -> list (string*string) -> option string -> ns_connection = "ml_android_connection";
+external url_connection: string -> string -> list (string*string) -> option string -> connection = "ml_android_connection";
 
 value get_loader ns_connection = 
   try
@@ -438,10 +351,23 @@ value url_failed ns_connection code msg =
 
 Callback.register "url_failed" url_failed;
 
+
 value start_load wrappers r = 
   let (url,data) = prepare_request r in
   let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
-  Hashtbl.add loaders ns_connection wrappers;
+  (
+    Hashtbl.add loaders ns_connection wrappers;
+    ns_connection;
+  );
+
+external cancel_ns_connection: connection -> unit = "ml_URLConnection_cancel";
+value cancel_load connection =
+(
+  cancel_ns_connection connection;
+  Hashtbl.remove loaders connection;
+);
+
+
 (*}}}*)
 
 ENDIF;
@@ -449,13 +375,14 @@ ENDIF;
 
 exception Loading_in_progress;
 
-type state = [ Loading | Complete ];
+type state = [= `Loading | `Complete ];
+type istate = [ Loading of connection | Complete ];
 
 class loader ?request () = 
   object(self)
     inherit EventDispatcher.simple [loader];
     value mutable state = Complete;
-    method state = state;
+    method state : state = match state with [ Complete -> `Complete | Loading _ -> `Loading ];
     method private asEventTarget = (self :> loader);
 
     value mutable httpCode = 0;
@@ -521,10 +448,19 @@ class loader ?request () =
           bytesTotal := 0L;
           bytesLoaded := 0L;
           Buffer.clear data;
-          state := Loading;
-          start_load wrapper r;
+          state := Loading (start_load wrapper r);
         )
-      | Loading -> raise Loading_in_progress
+      | Loading _ -> raise Loading_in_progress
+      ];
+
+    method cancel () =
+      match state with
+      [ Loading conn -> 
+        (
+          cancel_load conn;
+          state := Complete;
+        )
+      | _ -> ()
       ];
 
     initializer

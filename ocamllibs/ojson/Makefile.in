@@ -2,9 +2,6 @@
 OCAMLOPT=$(OCAMLFIND) ocamlopt
 OCAMLC=$(OCAMLFIND) ocamlc
 
-install: 
-	$(OCAMLFIND) install ojson META ojson.cmi ojson.cma ojson.cmxa ojson.mli ojson.a
-
 byte:
 	$(OCAMLC) -c type.ml
 	$(OCAMLC) -c common.mli
@@ -27,6 +24,11 @@ native:
 	$(OCAMLOPT) -c ojson.ml
 	$(OCAMLOPT) -a type.cmx common.cmx read.cmx ojson.cmx -o ojson.cmxa
 
+install: 
+	$(OCAMLFIND) install ojson META ojson.cmi ojson.cma ojson.cmxa ojson.mli ojson.a
+
+uninstall:
+	$(OCAMLFIND) remove ojson
 
 clean:
 	rm -f *.cmo *.cmx *.cmxa *.a *.o *.cmi *.cma read.ml

@@ -67,6 +67,15 @@ ENDIF;
 
 
 external memUsage: unit -> int = "ml_memUsage";
+type malinfo = 
+  {
+    malloc_total: int;
+    malloc_used: int;
+    malloc_free: int;
+  };
+
+external malinfo: unit -> malinfo = "ml_malinfo";
+
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
 

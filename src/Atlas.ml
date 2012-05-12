@@ -59,18 +59,18 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         | Some index ->
             try
               DynArray.insert children index child
-            with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ]
+            with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (index,DynArray.length children))]
         ];
         Node.bounds child |> ignore; (* force calc bounds *)
         self#boundsChanged();
       );
 
-      method getChildAt idx = try DynArray.get children idx with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
+      method getChildAt idx = try DynArray.get children idx with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (idx,DynArray.length children))];
 
       method childIndex node =
         try
           DynArray.index_of (fun c -> c == node) children
-        with [ Not_found -> raise DisplayObject.Invalid_index ];
+        with [ Not_found -> raise DisplayObject.Child_not_found ];
 
       method removeChild node =
         self#removeChildAt (self#childIndex node);
@@ -79,14 +79,14 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         try
           DynArray.delete children idx;
           self#boundsChanged();
-        with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
+        with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (idx,DynArray.length children))];
 
       method updateChild idx child =
       (
         assert(child.Node.texture = texture);
         try
           DynArray.set children idx child;
-        with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
+        with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (idx,DynArray.length children))];
         Node.bounds child |> ignore; (* force calc bounds *)
         self#boundsChanged();
       );
@@ -112,10 +112,10 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 DynArray.delete children idx;
                 DynArray.insert children nidx child;
               )
-            with [ DynArray.Invalid_arg _ -> raise DisplayObject.Invalid_index ];
+            with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (idx,DynArray.length children))];
             self#childrenDirty();
           )
-        else raise DisplayObject.Invalid_index;
+        else raise (DisplayObject.Invalid_index (nidx,DynArray.length children));
 
 (*       value mutable glowFilter = None; *)
 

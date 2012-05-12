@@ -1599,6 +1599,9 @@ value sdldraw_get_pixel(value s, value vx, value vy) {
 	CAMLreturn(rs);
 }
 
+value ml_malinfo(value p) {
+	return (caml_alloc_tuple(3));
+}
 
 #ifdef __APPLE__
 int main(int argc, char **argv)
@@ -1608,3 +1611,4 @@ int main(int argc, char **argv)
 	return 0;
 }
 #endif 
+

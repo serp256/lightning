@@ -12,6 +12,12 @@
 
 static unsigned int total_tex_mem = 0;
 
+#ifdef DEBUG_MEM
+#define LOGMEM(op,size) DEBUGMSG("TEXTURE MEMORY <%s> %u -> %u",op,size,total_tex_mem)
+#else
+#define LOGMEM(op,size)
+#endif
+
 #define TEX(v) ((struct tex*)Data_custom_val(v))
 
 void ml_texture_id_delete(value textureID) {
@@ -22,6 +28,7 @@ void ml_texture_id_delete(value textureID) {
 		struct tex *t = TEX(textureID);
 		t->tid = 0;
 		total_tex_mem -= t->mem;
+		LOGMEM("delete",t->mem);
 		caml_free_dependent_memory(t->mem);
 	};
 }
@@ -37,9 +44,9 @@ static void textureID_finalize(value textureID) {
 		glDeleteTextures(1,&tid);
 		struct tex *t = TEX(textureID);
 		total_tex_mem -= t->mem;
+		LOGMEM("finalize",t->mem);
 		caml_free_dependent_memory(t->mem);
 	};
-	PRINT_DEBUG("TEXTURE MEMORY (dealloc): %d\n",total_tex_mem);
 }
 
 static int textureID_compare(value texid1,value texid2) {
@@ -64,7 +71,7 @@ struct custom_operations textureID_ops = {
 #define Store_textureID(mltex,texID,dataLen) \
 	caml_alloc_dependent_memory(dataLen); \
 	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
-	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; PRINT_DEBUG("TEXTURE MEMORY (alloc %d): %d\n",dataLen,total_tex_mem);}
+	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",dataLen);}
 //*TEXTURE_ID(mlTextureID) = tid;
 
 value alloc_texture_id(GLuint textureID, unsigned int dataLen) {
