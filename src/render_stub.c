@@ -440,7 +440,6 @@ static value caml_hash_Color = 0;
 
 static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,color4B *tr,color4B *bl,color4B *br) {
 	if (Is_long(color)) { // white
-    fprintf(stderr,"extrat_color: NoColor\n");
 		GLubyte a = 255 * alpha;
 		color4B clr;
 		if (pma) clr = (color4B){a,a,a,a};
@@ -451,12 +450,12 @@ static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,c
 		if (Field(color,0) == caml_hash_Color) {
 			color4B clr;
 			int c = Long_val(Field(color,1));
-      fprintf(stderr,"extract_color: Color - %x,%f\n",c,alpha);
+      //fprintf(stderr,"extract_color: Color - %x,%f\n",c,alpha);
 			if (pma) clr = COLOR_FROM_INT_PMA(c,alpha);
 			else clr = COLOR_FROM_INT(c,alpha);
 			*tl = *tr = *bl = *br = clr;
 		} else { // QColors
-      fprintf(stderr,"extract_color: QColors\n");
+      //fprintf(stderr,"extract_color: QColors\n");
 			value qcolor = Field(color,1);
 			int c = Long_val(Field(qcolor,0));
 			*tl = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);
@@ -1179,7 +1178,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 		double alpha;
 		int ic;
 		double quad[4];
-    fprintf(stderr,"len of quads: %d\n",len);
+    //fprintf(stderr,"len of quads: %d\n",len);
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
 			bounds = Field(child,1);

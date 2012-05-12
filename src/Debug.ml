@@ -40,7 +40,7 @@ value d_writer l =
     ]
   in
   fun addr s -> (Printf.eprintf "[DEBUG:%s(%s)] " l addr; prerr_endline s);
-value null_writer = (fun _ -> ());
+value null_writer = (fun _ _ -> ());
 END;
 
 

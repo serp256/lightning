@@ -138,9 +138,12 @@ value register xmlpath =
   let () = XmlParser.accept (`Dtd None) in
   let floats = XmlParser.floats in
   let parse_pages () = 
+    let () = debug "parse pages" in
     match XmlParser.next () with
     [ `El_start ((_,"Pages"),_) ->
+      let () = debug "this is pages" in
       let rec loop res = 
+        let () = debug "parse pages looop" in
         match XmlParser.parse_element "page" [ "file"] with
         [ Some [ file ] _ -> loop [ Texture.load ~with_suffix:False (Filename.concat dirname file) :: res ]
         | None -> res 

@@ -49,26 +49,13 @@
 /* Begin PBXFileReference section */
 		510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = ra_fertilizer.caf; path = ../../lightning/test/Resources/ra_fertilizer.caf; sourceTree = "<group>"; };
 		510C021514FE6ED800BDDCFC /* stoneBoom.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = stoneBoom.caf; path = ../../lightning/test/Resources/stoneBoom.caf; sourceTree = "<group>"; };
-		513AB2431513836200B4AF5C /* caf */ = {isa = PBXFileReference; lastKnownFileType = folder; name = caf; path = ../../lightning/test/Resources/caf; sourceTree = "<group>"; };
 		517411B514FB6A420022E871 /* e_cactus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = e_cactus.png; path = ../../lightning/test/Resources/e_cactus.png; sourceTree = "<group>"; };
 		517411B814FB6A510022E871 /* tree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tree.png; path = ../../lightning/test/Resources/tree.png; sourceTree = "<group>"; };
 		517411CA14FB749C0022E871 /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shaders; path = ../../lightning/Shaders; sourceTree = "<group>"; };
 		517EB87F1522F888009D91B1 /* pallete.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = pallete.plx; path = ../../lightning/test/Resources/pallete.plx; sourceTree = "<group>"; };
 		517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular0.alpha"; path = "../../lightning/test/Resources/MyriadPro-Regular0.alpha"; sourceTree = "<group>"; };
-		517EB89115235990009D91B1 /* map */ = {isa = PBXFileReference; lastKnownFileType = folder; name = map; path = ../../lightning/test/Resources/map; sourceTree = "<group>"; };
 		51846F6414EE704D00FDE684 /* test.native */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = test.native; sourceTree = "<group>"; };
-		518819011519DF78002E1E1A /* wcorner.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wcorner.png; path = ../../lightning/test/Resources/wcorner.png; sourceTree = "<group>"; };
-		518819021519DF78002E1E1A /* whborder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = whborder.png; path = ../../lightning/test/Resources/whborder.png; sourceTree = "<group>"; };
-		518819031519DF78002E1E1A /* wvborder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wvborder.png; path = ../../lightning/test/Resources/wvborder.png; sourceTree = "<group>"; };
-		51881908151A00D4002E1E1A /* ui */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ui; path = ../../lightning/test/Resources/ui; sourceTree = "<group>"; };
-		518874D81518823800A2892F /* frame.pvr */ = {isa = PBXFileReference; lastKnownFileType = file; name = frame.pvr; path = ../../lightning/test/Resources/frame.pvr; sourceTree = "<group>"; };
-		5189B0701521883F00CE78F0 /* 61.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = 61.png; path = ../../lightning/test/Resources/61.png; sourceTree = "<group>"; };
-		518A5291152434A000556D2C /* default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = default.png; path = ../../lightning/test/Resources/default.png; sourceTree = "<group>"; };
 		518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "MyriadPro-Regular.fnt"; path = "../../lightning/test/Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
-		518FDADA152085CA00F9E211 /* palletes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = palletes; path = ../../lightning/test/Resources/palletes; sourceTree = "<group>"; };
-		518FDADD152085DA00F9E211 /* tree.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = tree.plx; path = ../../lightning/test/Resources/tree.plx; sourceTree = "<group>"; };
-		518FDAEA1520B1AA00F9E211 /* 60.pvr */ = {isa = PBXFileReference; lastKnownFileType = file; name = 60.pvr; path = ../../lightning/test/Resources/60.pvr; sourceTree = "<group>"; };
-		519017B4151B091600B789EC /* zobjects */ = {isa = PBXFileReference; lastKnownFileType = text; name = zobjects; path = ../../lightning/test/Resources/zobjects; sourceTree = "<group>"; };
 		5191FD9214FF5FC900DD8677 /* frame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = frame.png; path = ../../lightning/test/Resources/frame.png; sourceTree = "<group>"; };
 		51B5418414F273C300EB2241 /* items */ = {isa = PBXFileReference; lastKnownFileType = folder; name = items; path = ../../lightning/test/Resources/items; sourceTree = "<group>"; };
 		51DC6E0414EE5E960084EB76 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -91,21 +78,8 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
-				518A5291152434A000556D2C /* default.png */,
-				517EB89115235990009D91B1 /* map */,
 				517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */,
 				517EB87F1522F888009D91B1 /* pallete.plx */,
-				5189B0701521883F00CE78F0 /* 61.png */,
-				518FDAEA1520B1AA00F9E211 /* 60.pvr */,
-				518FDADD152085DA00F9E211 /* tree.plx */,
-				518FDADA152085CA00F9E211 /* palletes */,
-				519017B4151B091600B789EC /* zobjects */,
-				51881908151A00D4002E1E1A /* ui */,
-				518819011519DF78002E1E1A /* wcorner.png */,
-				518819021519DF78002E1E1A /* whborder.png */,
-				518819031519DF78002E1E1A /* wvborder.png */,
-				518874D81518823800A2892F /* frame.pvr */,
-				513AB2431513836200B4AF5C /* caf */,
 				5191FD9214FF5FC900DD8677 /* frame.png */,
 				510C021514FE6ED800BDDCFC /* stoneBoom.caf */,
 				510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */,
@@ -292,6 +266,7 @@
 			buildSettings = {
 				ARCHS = armv7;
 				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -301,7 +276,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
-				PATH = "/opt/local/bin:$PATH";
+				PATH = "/usr/local/bin:$PATH";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 			};
@@ -312,13 +287,14 @@
 			buildSettings = {
 				ARCHS = armv7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
-				PATH = "/opt/local/bin:$PATH";
+				PATH = "/usr/local/bin:$PATH";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 			};
@@ -374,9 +350,10 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				LD_NO_PIE = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -387,9 +364,10 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				LD_NO_PIE = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};

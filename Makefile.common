@@ -1,7 +1,8 @@
 
 MLPPOPT = 
 MLFLAGS = -package camlp4,camlp4.macro -syntax camlp4r 
-MLCOMPFLAGS = -w +7+9@5@8-13 -warn-error +10 -g
+MLCOMPFLAGS = -w +7+9@5@8-13 -warn-error +10 -g 
+MLNATFLAGS = -S
 
 %.cmi: %.mli
 ifneq (,$(findstring byte,$(LIB)))
@@ -14,4 +15,4 @@ endif
 	$(OCAMLC) $(MLFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(if $(DEBUGS),$(patsubst %,-ppopt -enable-debug -ppopt %,$(DEBUGS))) -c $<
 
 %.cmx: %.ml
-	$(OCAMLOPT) $(MLFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(if $(DEBUGS),$(patsubst %,-ppopt -enable-debug -ppopt %,$(DEBUGS)))  -c $<
+	$(OCAMLOPT) $(MLFLAGS) $(MLNATFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(if $(DEBUGS),$(patsubst %,-ppopt -enable-debug -ppopt %,$(DEBUGS)))  -c $<

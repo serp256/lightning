@@ -8,7 +8,8 @@ value ev_ENTER_FRAME = Ev.gen_id "ENTER_FRAME";
 
 type hidden 'a = 'a;
 
-exception Invalid_index;
+exception Invalid_index of (int*int);
+Printexc.register_printer (fun [ Invalid_index (c,n) -> Some (Printf.sprintf "DisplayObject.Invalid_index %d %d" c n) | _ -> None ]);
 exception Child_not_found;
 
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
@@ -774,7 +775,7 @@ class virtual container = (*{{{*)
           match children with
           [ None -> 
             match index with
-            [ Some idx when idx > 0 -> raise Invalid_index
+            [ Some idx when idx > 0 -> raise (Invalid_index (idx,0))
             | _ -> children := Some (Dllist.create child)
             ]
           | Some chldrn -> 
@@ -783,7 +784,7 @@ class virtual container = (*{{{*)
               | Some idx when idx > 0 && idx < numChildren -> Dllist.add (Dllist.skip chldrn (idx-1)) child
               | Some idx when idx = 0 -> children := Some (Dllist.prepend chldrn child)
               | Some idx when idx = numChildren -> Dllist.add (Dllist.prev chldrn) child
-              | _ -> raise Invalid_index
+              | Some idx -> raise (Invalid_index (idx,numChildren))
               ]
           ];
           numChildren := numChildren + 1;
@@ -804,17 +805,17 @@ class virtual container = (*{{{*)
 
     method getChildAt index = 
       match children with
-      [ None -> raise Invalid_index
+      [ None -> raise (Invalid_index (index,0))
       | Some children -> 
           match index >= 0 && index < numChildren with
           [ True -> Dllist.get (Dllist.skip children index)
-          | False -> raise Invalid_index
+          | False -> raise (Invalid_index (index,numChildren))
           ]
       ];
 
     method getLastChild =
       match children with
-      [ None -> raise Invalid_index
+      [ None -> raise (Invalid_index (1,0))
       | Some children -> Dllist.get (Dllist.prev children)
       ];
 
@@ -836,7 +837,7 @@ class virtual container = (*{{{*)
       match children with
       [ None -> raise Child_not_found
       | Some chldrn ->
-          if index >= numChildren || index < 0 then raise Invalid_index
+          if index >= numChildren || index < 0 then raise (Invalid_index (index,numChildren))
           else
             let () = debug:children "[%s] setChildIndex %s" self#name child#name in 
             let child = child#asDisplayObject in
@@ -951,13 +952,13 @@ class virtual container = (*{{{*)
 
     method removeChildAtIndex index : 'displayObject = 
       match children with
-      [ None -> raise Invalid_index
+      [ None -> raise (Invalid_index (index,0))
       | Some children -> 
         match index >= 0 && index < numChildren with
         [ True -> 
           let n = Dllist.skip children index in
           self#removeChild'' n
-        | False -> raise Invalid_index 
+        | False -> raise (Invalid_index (index,numChildren))
         ]
       ];
 

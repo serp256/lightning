@@ -10,7 +10,7 @@ class wobj bpos tpos depth =
 
 value zObjects : DynArray.t wobj = DynArray.create ();
 value init () = 
-  let f = LightCommon.open_resource "zobjects" in
+  let f = open_in "zobjects" in
   read () where
     rec read () = 
       try
@@ -18,12 +18,11 @@ value init () =
         Scanf.sscanf l "(%d:%d)(%d:%d)%d" begin fun bposx bposy tposx tposy depth ->
           DynArray.add zObjects (new wobj (bposx,bposy) (tposx,tposy) depth)
         end;
-        read ();
+(*         read (); *)
       with [ End_of_file -> close_in f ];
 
 
 value zSort () = 
-  let () = debug "zSort: %d" (DynArray.length zObjects) in
   let ls = DynArray.copy zObjects in
   let stack = ref [] 
   and max = ref (DynArray.length ls) 
@@ -33,7 +32,6 @@ value zSort () =
   in
   (
     while (!max > 0)  do
-      let () = debug:zsort "max: %d" !max in
       let woA = ref (DynArray.get ls 0) 
       and m = ref 0 
       and go = ref True 
@@ -44,7 +42,6 @@ value zSort () =
           DynArray.delete ls 0;
           while !go do
             (
-              debug:zsort "isStack: %b" !isStack;
               match !isStack with
               [ True -> 
                   (
@@ -61,7 +58,6 @@ value zSort () =
                   )
               | _ -> () 
               ];
-              debug:zsort "woA: [%d;%d] %d" (fst !woA#bpos) (snd !woA#bpos) !m;
               match !go with
               [ True -> 
                   (
@@ -70,7 +66,6 @@ value zSort () =
                     match cnt < !m with
                     [ True -> ()
                     | _ ->  
-                        let () = debug:zsort "for i = %d to %d" !m cnt in
                         try
                           for i = !m to cnt do 
                             let woB = DynArray.get ls i in
@@ -78,7 +73,6 @@ value zSort () =
                             [ True -> 
                                 (
                                   flag.val := False;
-                                  debug:zsort "woB: [ %d; %d] %d" (fst woB#bpos) (snd woB#bpos) i;  
                                   stack.val := [ (i, !woA) :: (List.map (fun (k,wo) -> match k > 0 && k >= i with [ True -> (k - 1, wo) | _ ->  (k, wo)]) !stack) ];
                                   woA.val := woB; 
                                   m.val := 0;
@@ -91,7 +85,6 @@ value zSort () =
                           done
                         with [ Exit -> () ]
                     ];
-                    debug:zsort "flag: %b" !flag;
                     match !flag with
                     [ True ->
                         (
@@ -121,7 +114,6 @@ value zSort () =
                   )
               | _ -> ()
               ];
-              debug:zsort "go: %b" !go;
             )
           done 
         )

@@ -274,6 +274,7 @@ module MakeXmlParser(P:sig value path: string; value with_suffix: bool; end) = s
 (*   value get_attr name (tag_name,assoc) = try List.assoc name assoc with [ Not_found -> error "can't find attribute %s" name ]; *)
 
   value parse_element tag_name attr_names =
+    let () = debug "Parse element %s" tag_name in
     match Xmlm.input xmlinput with
     [ `El_start ((_,tname),attributes) when tname = tag_name ->
       let res = get_attributes tname attr_names attributes in

@@ -308,9 +308,13 @@ value ml_getDeviceType(value p) {
 }
 
 
+#include <malloc/malloc.h>
 
-
-
-
-
-
+value ml_malinfo(value p) {
+	struct mstats s = mstats();
+	value res = caml_alloc_small(3,0);
+	Field(res,0) = Val_int(s.bytes_total);
+	Field(res,1) = Val_int(s.bytes_used);
+	Field(res,2) = Val_int(s.bytes_free);
+	return res;
+}

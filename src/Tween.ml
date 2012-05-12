@@ -32,11 +32,11 @@ module Transitions = struct
 
 (*   value s = 1.70158; *)
 
-  value easeInBack ratio = (ratio ** 2.0) *. (2.70158 *. ratio -. 1.70158);
+  value easeInBack ratio = (ratio *. ratio) *. (2.70158 *. ratio -. 1.70158);
 
   value easeOutBack ratio =
     let invRatio = ratio -. 1.0 in
-    (invRatio ** 2.0) *. (2.70158 *. invRatio +. 1.70158) +. 1.0;
+    (invRatio *. invRatio) *. (2.70158 *. invRatio +. 1.70158) +. 1.0;
 
   value easeInOutBack ratio =
     if ratio < 0.5
@@ -80,20 +80,20 @@ module Transitions = struct
 (*     float p = 2.75f; *)
 (*     float l; *)
     if ratio < 0.363636363636
-    then 7.5625 *. (ratio ** 2.0)
+    then 7.5625 *. (ratio *. ratio)
     else
         if ratio < 0.727272727273 
         then
           let ratio = ratio -. 0.545454545455 in
-          7.5625 *. (ratio ** 2.0) +. 0.75
+          7.5625 *. (ratio *. ratio) +. 0.75
         else
           if ratio <  0.909090909091
           then
             let ratio = ratio -. 0.818181818182 in
-            7.5625 *. (ratio ** 2.0) +. 0.9375
+            7.5625 *. (ratio *. ratio) +. 0.9375
           else
             let ratio = ratio -. 0.954545454545 in
-            7.5625 *. (ratio ** 2.0) +. 0.984375
+            7.5625 *. (ratio *. ratio) +. 0.984375
   ;
 
   value easeInBounce ratio = 1.0 -. (easeOutBounce (1.0 -. ratio));
@@ -196,6 +196,7 @@ class c ?(delay=0.) ?(repeat=(-1)) ?(transition=`linear) ?(loop=`LoopNone) time 
                     ];
                     let delta = action.endValue -. action.startValue in
                     let transitionValue = transition ratio in
+                    let () = debug "ratio: %f, transitionValue: %f" ratio transitionValue in
                     (*
                       match invertTransition with
                       [ True -> 1. -. (transition (1. -. ratio))

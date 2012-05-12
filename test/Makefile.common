@@ -12,4 +12,4 @@ MLFLAGS = -package camlp4,camlp4.macro -syntax camlp4r -w +7+9 -g
 	$(OCAMLC) $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<
 
 %.cmx: %.ml
-	$(OCAMLOPT) $(MLFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<
+	$(OCAMLOPT) $(MLFLAGS) -S $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<

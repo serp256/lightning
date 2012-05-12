@@ -4,8 +4,11 @@
 
 #define ERROR(fmt,args...) fprintf(stderr,fmt, ## args)
 
+
+#define DEBUGMSG(fmt,args...) (fprintf(stderr,"[DEBUG(%s:%d)] ",__FILE__,__LINE__),fprintf(stderr,fmt, ## args),putc('\n',stderr))
+
 #ifdef LDEBUG
-    #define PRINT_DEBUG(fmt,args...)  (fprintf(stderr,"[DEBUG(%s:%d)] ",__FILE__,__LINE__),fprintf(stderr,fmt, ## args),putc('\n',stderr))
+    #define PRINT_DEBUG(fmt,args...) DEBUGMSG(fmt,## args) 
 #else
     #define PRINT_DEBUG(fmt,args...)
 #endif
