@@ -84,7 +84,7 @@ void ml_texture_async_loader_push(value oruntime,value opath,value osuffix) {
 	char *suffix;
 	if (Is_block(osuffix)) {
 		suffix = malloc(caml_string_length(Field(osuffix,0)) + 1);
-		strcpy(suffix,String_val(osuffix));
+		strcpy(suffix,String_val(Field(osuffix,0)));
 	}  else suffix = NULL;
 	runtime_t *runtime = (runtime_t*)oruntime;
 	request_t *req = malloc(sizeof(request_t));

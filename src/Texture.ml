@@ -442,11 +442,14 @@ value make_and_cache path textureInfo =
 
 value load ?(with_suffix=True) path : c = 
   try
-    debug:cache (
-      Debug.d "print cache";
-      TextureCache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
-    );
-    ((TextureCache.find cache path) :> c)
+    let path = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
+    (
+      debug:cache (
+        Debug.d "print cache";
+        TextureCache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
+      );
+      ((TextureCache.find cache path) :> c)
+    )
   with 
   [ Not_found ->
     let suffix =
@@ -603,11 +606,14 @@ value check_async () =
 value load_async ?(with_suffix=True) path callback = 
   let texture = 
     try
-      debug:cache (
-        Debug.d "print cache";
-        TextureCache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
-      );
-      Some (((TextureCache.find cache path) :> c))
+      let path = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
+      (
+        debug:cache (
+          Debug.d "print cache";
+          TextureCache.iter (fun k _ -> Debug.d "image cache: %s" k) cache;
+        );
+        Some (((TextureCache.find cache path) :> c))
+      )
     with 
     [ Not_found -> None ]
   in

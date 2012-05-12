@@ -32,3 +32,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	[request release];
 	CAMLreturn((value)connection);
 }
+
+void ml_URLConnection_cancel(value connection) {
+  [(NSURLConnection*)connection cancel];
+}

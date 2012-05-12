@@ -72,7 +72,28 @@ value out writer level mname mline s =
   in
   writer line;
 *)
-value out writer mname mline message = writer (Printf.sprintf "%s:%d" mname mline) message;
+
+value enabled = ref True;
+
+value eout writer mname mline message = writer (Printf.sprintf "%s:%d" mname mline) message;
+value dout (_:(string -> string -> unit)) (_:string) (_:int) (_:string) = ();
+value _out = ref eout;
+
+value disable () = 
+(
+  enabled.val := False;
+  _out.val := dout;
+);
+
+value enable () = 
+(
+  enabled.val := True;
+  _out.val := eout;
+);
+
+value out writer mname mline message = !_out writer mname mline message;
+
+
   (*
   let line = 
     let place = sprintf "[%s:%d]" mname mline in
