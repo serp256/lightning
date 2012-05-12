@@ -1,11 +1,11 @@
 
 exception Listener_not_found of (Ev.id * string * int);
 
-
+type listener 'target 'currentTarget = Ev.t -> ('target * 'currentTarget ) -> int -> unit;
 type lst 'target 'currentTarget = 
   {
     counter: mutable int;
-    lstnrs: mutable list (int * (Ev.t -> ('target * 'currentTarget ) -> int -> unit));
+    lstnrs: mutable list (int * (listener 'target 'currentTarget));
   };
 
 class base [ 'target,'currentTarget ]: 
@@ -15,6 +15,7 @@ class base [ 'target,'currentTarget ]:
     method addEventListener: Ev.id -> 'listener -> int;
     method removeEventListener: Ev.id -> int -> unit;
     method hasEventListeners: Ev.id -> bool;
+    method getListenerId : Ev.id -> (listener 'target 'currentTarget) -> option int;
   end;
 
 

@@ -2,10 +2,11 @@ open Ev;
 
 exception Listener_not_found of (Ev.id * string * int);
 
+type listener 'target 'currentTarget = Ev.t -> ('target * 'currentTarget ) -> int -> unit;
 type lst 'target 'currentTarget = 
   {
     counter: mutable int;
-    lstnrs: mutable list (int * (Ev.t -> ('target * 'currentTarget ) -> int -> unit));
+    lstnrs: mutable list (int * (listener 'target 'currentTarget));
   };
 
 
@@ -44,6 +45,17 @@ class base [ 'target,'currentTarget ] = (*{{{*)
 
     method hasEventListeners eventType = List.mem_assoc eventType listeners;
 
+    method getListenerId eventType listener =
+      try
+        let rec iter lnrs =
+          match lnrs with
+          [ [ (id, lnr) :: _ ] when listener = lnr -> Some id
+          | [ _ :: lnrs ] -> iter lnrs
+          | _ -> None
+          ]
+        in
+          iter (List.assoc eventType listeners).lstnrs
+      with [ Not_found -> None ];
   end;(*}}}*)
 
 
