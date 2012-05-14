@@ -21,6 +21,7 @@ type t =
 
 (* value register: string -> unit; *)
 value register: string -> unit;
+value registerXML: string -> unit;
 value exists: ?style:string -> string -> bool;
 value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
