@@ -18,5 +18,4 @@ external malinfo: unit -> malinfo = "ml_malinfo";
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 value request_remote_notifications: list remoteNotification ->  (string -> unit) -> (string -> unit) -> unit;
 
-
-
+value getLocale: unit -> string;

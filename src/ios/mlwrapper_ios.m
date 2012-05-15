@@ -318,3 +318,10 @@ value ml_malinfo(value p) {
 	Field(res,2) = Val_int(s.bytes_free);
 	return res;
 }
+
+
+value ml_getLocale() {
+	NSString *identifier = [[NSLocale preferredLanguages] objectAtIndex:0];
+	value s = caml_copy_string([identifier cStringUsingEncoding:NSASCIIStringEncoding]);
+	return s;
+}

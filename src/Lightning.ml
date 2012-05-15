@@ -66,6 +66,12 @@ value () =
 ENDIF;
 
 
+IFDEF IOS THEN
+external getLocale: unit -> string = "ml_getLocale";
+ELSE
+value getLocale () = "en";
+ENDIF;
+
 external memUsage: unit -> int = "ml_memUsage";
 type malinfo = 
   {
@@ -77,7 +83,6 @@ type malinfo =
 external malinfo: unit -> malinfo = "ml_malinfo";
 
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
-
 
 
 

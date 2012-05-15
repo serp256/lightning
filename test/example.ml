@@ -993,7 +993,7 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      debug "START OCAML";
+      debug "START OCAML, locale: %s" (Lightning.getLocale());
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
 (*         TLF.default_font_family.val := "Myriad Pro"; *)
