@@ -512,7 +512,7 @@ struct custom_operations quad_ops = {
 };
 
 value ml_quad_create(value width,value height,value color,value alpha) {
-	CAMLparam0();
+	CAMLparam4(width,height,color,alpha);
 	lgQuad *q = (lgQuad*)caml_stat_alloc(sizeof(lgQuad));
   extract_color(color,Double_val(alpha),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
 	//printf("quad color: [%hhu,%hhu,%hhu,%hhu]\n",c.r,c.g,c.b,c.a);

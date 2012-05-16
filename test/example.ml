@@ -987,6 +987,14 @@ value tweens (stage:Stage.c) =
       ) end; *)
     );
 
+value localNotif () =
+  let time = Unix.time () in
+  (
+    ignore(LocalNotifications.schedule "xyu" (time +. 5.) "xyu");
+    ignore(LocalNotifications.schedule "pizda" (time +. 15.) "pizda");
+    LocalNotifications.cancel "xyu";
+  );
+
 
 let stage width height = 
   object(self)
@@ -1013,7 +1021,7 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-       tlf self; 
+       (* tlf self;  *)
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
@@ -1035,6 +1043,7 @@ let stage width height =
  (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
+      localNotif ();
     end;
   end
 in
