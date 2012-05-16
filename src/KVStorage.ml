@@ -43,7 +43,7 @@ value get_float k = try float_of_string (Hashtbl.find (get_storage ()) k) with [
 value put_string k v = Hashtbl.add (get_storage()) k v;
 value put_bool k v = Hashtbl.add (get_storage()) k (string_of_bool v); 
 value put_int k v = Hashtbl.add (get_storage()) k (string_of_int v);
-value put_float k v = Hashtbl.add (get_storage() k (string_of_float v));
+value put_float k v = Hashtbl.add (get_storage()) k (string_of_float v);
 value remove k = Hashtbl.remove (get_storage()) k;
 value exists k = Hashtbl.mem (get_storage()) k;
 
