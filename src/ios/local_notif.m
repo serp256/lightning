@@ -21,7 +21,7 @@ value ml_lnSchedule(value alertAction, value badgeNum, value nid, value fireDate
     }
 
     if (!Is_long(badgeNum)) {
-        notif.applicationIconBadgeNumber = Int_val(Field(alertAction, 0));
+        notif.applicationIconBadgeNumber = Int_val(Field(badgeNum, 0));
     }
 
     [[UIApplication sharedApplication] scheduleLocalNotification:notif];

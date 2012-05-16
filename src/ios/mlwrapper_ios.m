@@ -173,9 +173,9 @@ value ml_kv_storage_get_float(value key_ml) {
     CAMLreturn(Val_int(0));
   }
   
-  NSInteger val = [d floatForKey: key];
+  double val = [d doubleForKey: key];
   tuple = caml_alloc_tuple(1);
-  Store_field(tuple,0,Val_float(val));
+  Store_field(tuple,0,caml_copy_double(val));
   
   CAMLreturn(tuple);  
 }
@@ -201,7 +201,7 @@ void ml_kv_storage_put_int(value key_ml, value val_ml) {
 
 void ml_kv_storage_put_float(value key_ml, value val_ml) {
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  [USER_DEFAULTS setFloat: Float_val(val_ml) forKey: key];
+  [USER_DEFAULTS setFloat: Double_val(val_ml) forKey: key];
 }
 
 

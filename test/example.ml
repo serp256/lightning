@@ -991,7 +991,7 @@ value localNotif () =
   let time = Unix.time () in
   (
     ignore(LocalNotifications.schedule "xyu" (time +. 5.) "xyu");
-    ignore(LocalNotifications.schedule "pizda" (time +. 15.) "pizda");
+    ignore(LocalNotifications.schedule ~badgeNum:10 "pizda" (time +. 15.) "pizda");
     LocalNotifications.cancel "xyu";
   );
 
