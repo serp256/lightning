@@ -9,6 +9,7 @@
  * The test works by executing the toplevel phrase "Topfind.reset" and
  * checking whether this causes an error.
  *)
+#directory "@SITELIB@/findlib";;
 let exec_test s =
   let l = Lexing.from_string s in
   let ph = !Toploop.parse_toplevel_phrase l in
@@ -33,7 +34,6 @@ if not(exec_test "Topfind.reset;;") then (
  * initialized
  *)
 
-#directory "@SITELIB@/findlib";;
 Topfind.add_predicates [ "byte"; "toploop" ];
 Topfind.don't_load ["findlib"];
 Topfind.announce();;
