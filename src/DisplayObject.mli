@@ -31,7 +31,6 @@ class virtual _c [ 'parent ] :
     method dispatchEvent': Ev.t -> _c _ -> unit;
     method dispatchEvent: Ev.t -> unit;
     method hasEventListeners: Ev.id -> bool;
-    method getListenerId : Ev.id -> 'listener -> option int;
 
 
     value name: string;
