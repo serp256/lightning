@@ -1,0 +1,14 @@
+
+OCAMLOPT=$(OCAMLFIND) ocamlopt
+OCAMLC=$(OCAMLFIND) ocamlc
+
+all:
+	$(OCAMLOPT) -c src/xmlm.mli
+	$(OCAMLC) -c -annot -I src -I test src/xmlm.ml
+	$(OCAMLOPT) -c -annot -I src -I test  src/xmlm.ml
+
+install:
+	$(OCAMLFIND) install xmlm src/META src/xmlm.mli src/xmlm.cmi src/xmlm.cmo src/xmlm.cmx src/xmlm.o src/xmlm.annot
+
+uninstall:
+	$(OCAMLFIND) remove xmlm

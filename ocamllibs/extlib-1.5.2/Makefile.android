@@ -1,0 +1,3 @@
+OCAMLFIND=ocamlfind -toolchain android
+
+include Makefile.in
