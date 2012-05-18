@@ -50,6 +50,7 @@ value exists k = Hashtbl.mem (get_storage()) k;
 value get_string_opt (k:string) = try Some (get_string k) with [ Kv_not_found -> None ];
 value get_bool_opt k = try Some (get_bool k) with [ Kv_not_found -> None ];
 value get_int_opt k = try Some (get_int k) with [ Kv_not_found -> None ];
+value get_float_opt k = try Some (get_float k) with [ Kv_not_found -> None ];
  
 ELSE
 

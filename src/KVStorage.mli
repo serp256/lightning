@@ -10,6 +10,8 @@ value get_bool_opt : string -> option bool;
 
 value get_int_opt : string -> option int;
 
+value get_float_opt : string -> option float;
+
 value get_string : string -> string;
 
 value get_bool : string -> bool;
@@ -31,5 +33,3 @@ value remove : string -> unit;
 value exists : string -> bool;
 
 value commit : unit -> unit;
-
-
