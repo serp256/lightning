@@ -51,14 +51,32 @@ void ml_lnCancel(value nid) {
     }];
 }
 
-value ml_lnExists(value nid) {
+int nidToIndex(value nid) {
     NSString *nsNid = [NSString stringWithCString:String_val(nid) encoding:NSASCIIStringEncoding];
-    int idx = [[UIApplication sharedApplication].scheduledLocalNotifications indexOfObjectPassingTest:^(id obj, NSUInteger idx, BOOL *stop) {
+
+    return [[UIApplication sharedApplication].scheduledLocalNotifications indexOfObjectPassingTest:^(id obj, NSUInteger idx, BOOL *stop) {
         UILocalNotification *notif = (UILocalNotification*) obj;
         NSString *val = [notif.userInfo objectForKey:ID_KEY];
         *stop = (val != nil) && ([val compare:nsNid] == NSOrderedSame);
         return *stop;
-    }];
+    }];    
+}
 
-    return Val_bool(idx != NSNotFound);
+value ml_lnExists(value nid) {
+    return Val_bool(nidToIndex(nid) != NSNotFound);
+}
+
+value ml_notifFireDate(value nid) {
+    int idx = nidToIndex(nid);
+
+    if (idx == NSNotFound) {
+        return Val_int(0);
+    }
+
+    UILocalNotification *notif = (UILocalNotification*) [[UIApplication sharedApplication].scheduledLocalNotifications objectAtIndex:idx];
+
+    value tuple = caml_alloc_tuple(1);
+    Store_field(tuple, 0, caml_copy_double([notif.fireDate timeIntervalSince1970]));
+
+    return tuple;
 }
