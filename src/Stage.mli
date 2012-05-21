@@ -3,6 +3,7 @@
 (* type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `PassedTime of float ]; *)
 
 open LightCommon;
+open Motion;
 
 class type tween = object method process: float -> bool; end;
 value addTween: #tween -> unit;
@@ -14,6 +15,10 @@ value screenSize: unit -> (float * float);
 value ev_TOUCH: Ev.id;
 value touches_of_data: (Ev.data -> option (list Touch.t));
 value data_of_touches: (list Touch.t -> Ev.data);
+
+value ev_ACCELEROMETER : Ev.id;
+value accData_of_data : (Ev.data -> option (accData));
+value data_of_accData : (accData -> Ev.data);
 
 class virtual c: [ float ] -> [ float ] ->
   object
