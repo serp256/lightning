@@ -1,4 +1,4 @@
-
+#include "light_common.h"
 #include <caml/mlvalues.h>
 
 #define DEBUG(str) __android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING",str)

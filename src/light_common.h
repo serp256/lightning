@@ -9,7 +9,7 @@
 #ifdef ANDROID
 #define ERROR(fmt,args...) __android_log_print(ANDROID_LOG_ERROR,"LIGHTNING",fmt, ## args)
 #else
-#define ERROR(fmt,args...) fprintf(stderr,fmt, ## args)
+#define ERROR(fmt,args...) (fprintf(stderr,fmt, ## args),putc '\n')
 #endif
 
 

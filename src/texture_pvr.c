@@ -37,6 +37,8 @@ enum PVRPixelType
 
 int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
 
+	PRINT_DEBUG("LoadPvrFile2");
+
 	PVRTextureHeader header;
 
 	if (!fread(&header,sizeof(PVRTextureHeader),1,fildes)) {return 1;};
@@ -127,15 +129,15 @@ typedef struct
 
 int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 
+	PRINT_DEBUG("LoadPvrFile3 of size: %d",fsize);
 	if (fsize < sizeof(PVRTextureHeader3)) {return 1;};
 
 	PVRTextureHeader3 header;
 	if (!fread(&header,sizeof(PVRTextureHeader3),1,fildes)) {ERROR("can't read pvr header");return 1;};
-	/*
 	if (header.u32Version != PVRTEX3_IDENT) {
 		ERROR("bad pvr3 version");
 		return 1;
-	};*/
+	};
 	tInfo->width = tInfo->realWidth = header.u32Width;
 	tInfo->height = tInfo->realHeight = header.u32Height;
 	tInfo->numMipmaps = header.u32MIPMapCount - 1;
