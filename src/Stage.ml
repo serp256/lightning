@@ -13,7 +13,7 @@ value ev_ACCELEROMETER = Ev.gen_id "ACCELEROMETER";
 (* value ev_START = Ev.gen_id "START"; *)
 
 value (data_of_touches,touches_of_data) = Ev.makeData ();
-value (data_of_accData,accData_of_data) = Ev.makeData ();
+value (data_of_acmtrData,acmtrData_of_data) = Ev.makeData ();
 
 external setupOrthographicRendering: float -> float -> float -> float -> unit = "ml_setupOrthographicRendering";
 

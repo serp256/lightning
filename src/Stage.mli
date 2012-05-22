@@ -17,8 +17,8 @@ value touches_of_data: (Ev.data -> option (list Touch.t));
 value data_of_touches: (list Touch.t -> Ev.data);
 
 value ev_ACCELEROMETER : Ev.id;
-value accData_of_data : (Ev.data -> option (accData));
-value data_of_accData : (accData -> Ev.data);
+value acmtrData_of_data : (Ev.data -> option (acmtrData));
+value data_of_acmtrData : (acmtrData -> Ev.data);
 
 class virtual c: [ float ] -> [ float ] ->
   object

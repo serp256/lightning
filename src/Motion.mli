@@ -1,10 +1,10 @@
-type accData = {
+type acmtrData = {
   accX : float;
   accY : float;
   accZ : float;
 };
 
-type callback = accData -> unit;
+type callback = acmtrData -> unit;
 
-value accStart : callback -> float -> unit;
-value accStop : unit -> unit;
+value acmtrStart : callback -> float -> unit;
+value acmtrStop : unit -> unit;

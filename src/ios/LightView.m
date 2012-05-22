@@ -153,7 +153,7 @@
     //printf("lastupTime: %f; now: %f; now - accLastUpTime: %f; accUpInterval: %f\n", accLastUpTime, now, now - accLastUpTime, accUpInterval);
 
     if (accEnabled && (now - accLastUpTime >= accUpInterval)) {
-        accGetData(now);
+        acmtrGetData(now);
     }
 
     mlstage_advanceTime(mStage,timePassed);

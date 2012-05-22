@@ -996,7 +996,7 @@ value localNotif () =
   );
 
 value accelerometer () =
-  Motion.accStart (fun data -> debug "%f %f %f" data.Motion.accX data.Motion.accY data.Motion.accZ) 1.;
+  Motion.acmtrStart (fun data -> debug "%f %f %f" data.Motion.accX data.Motion.accY data.Motion.accZ) 1.;
 
 let stage width height = 
   object(self)
