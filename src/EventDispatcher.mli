@@ -15,7 +15,6 @@ class base [ 'target,'currentTarget ]:
     method addEventListener: Ev.id -> 'listener -> int;
     method removeEventListener: Ev.id -> int -> unit;
     method hasEventListeners: Ev.id -> bool;
-    method getListenerId : Ev.id -> (listener 'target 'currentTarget) -> option int;
   end;
 
 

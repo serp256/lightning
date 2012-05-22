@@ -1,15 +1,19 @@
 open LightCommon;
 open Touch;
+open Motion;
 
 (* type eventType = [= DisplayObject.eventType | `TOUCH | `ENTER_FRAME  ]; *)
 (* type eventData = [= DisplayObject.eventData | `Touches of list Touch.t | `PassedTime of float ]; *)
 
+value _ACCELEROMETER_INTERVAL = 1;
 
 value ev_TOUCH = Ev.gen_id "TOUCH";
+value ev_ACCELEROMETER = Ev.gen_id "ACCELEROMETER";
 (* value ev_STOP = Ev.gen_id "STOP"; *)
 (* value ev_START = Ev.gen_id "START"; *)
 
 value (data_of_touches,touches_of_data) = Ev.makeData ();
+value (data_of_acmtrData,acmtrData_of_data) = Ev.makeData ();
 
 external setupOrthographicRendering: float -> float -> float -> float -> unit = "ml_setupOrthographicRendering";
 
@@ -238,7 +242,7 @@ class virtual c (_width:float) (_height:float) =
         | res -> res
         ]
     ];
-
+    
   initializer Timers.init 0.;
   
 end;

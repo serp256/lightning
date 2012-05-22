@@ -984,12 +984,24 @@ value storage (stage:Stage.c) =
   debug "get_string: %s" (KVStorage.get_string "pizda");
 );
 
+value localNotif () =
+  let time = Unix.time () in
+  (
+    ignore(LocalNotifications.schedule "xyu" (time +. 5.) "xyu");
+    ignore(LocalNotifications.schedule ~badgeNum:10 "pizda" (time +. 15.) "pizda");
+    LocalNotifications.cancel "xyu";
+  );
+
+value accelerometer () =
+  Motion.acmtrStart (fun data -> debug "%f %f %f" data.Motion.accX data.Motion.accY data.Motion.accZ) 1.;
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
+      accelerometer ();
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
 (*         TLF.default_font_family.val := "Myriad Pro"; *)
@@ -1009,7 +1021,7 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-(*        tlf self;  *)
+       (* tlf self;  *)
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
@@ -1033,6 +1045,7 @@ let stage width height =
  (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
+      (* localNotif (); *)
     end;
   end
 in
