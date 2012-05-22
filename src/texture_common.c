@@ -4,7 +4,6 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 #include <caml/custom.h>
-#include <zlib.h>
 #include <math.h>
 
 #include "texture_common.h"
@@ -191,11 +190,10 @@ int nextPowerOfTwo(int number) {
 	return result;
 }
 
-int loadPlxFile(const char *path,textureInfo *tInfo) {
-	PRINT_DEBUG("LOAD PLX: %s\n",path);
+
+int loadPlxPtr(gzFile fptr,textureInfo *tInfo) {
 	// load idx
-	gzFile fptr = gzopen(path, "rb"); 
-	if (!fptr) { fprintf(stderr,"can't open %s file",path); return 2;};
+	if (!fptr) return 2;
 	unsigned char pallete;
 	gzread(fptr,&pallete,1);
 	unsigned int size;
@@ -204,7 +202,7 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 	unsigned short height = size >> 16;
 	size_t dataSize = width * height * 2;
 	unsigned char *idxdata = malloc(dataSize);
-	if (gzread(fptr,idxdata,dataSize) < dataSize) {fprintf(stderr,"can't read PLX %s data\n",path);free(idxdata);gzclose(fptr);return 1;};
+	if (gzread(fptr,idxdata,dataSize) < dataSize) {free(idxdata);gzclose(fptr);return 1;};
 	gzclose(fptr);
 	//fprintf(stderr,"PLX [%s] file with size %d:%d readed\n",path,width,height);
 
@@ -233,20 +231,23 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 	checkGLErrors("glTexImage2D idx");
 	glBindTexture(GL_TEXTURE_2D,0);
 	*/
-
 };
 
-int loadAlphaFile(const char *path,textureInfo *tInfo) {
-	PRINT_DEBUG("LOAD ALPHA: '%s'",path);
+int loadPlxFile(const char *path,textureInfo *tInfo) {
+	PRINT_DEBUG("LOAD PLX: %s\n",path);
 	gzFile fptr = gzopen(path, "rb"); 
-	if (!fptr) { fprintf(stderr,"can't open %s file",path); return 2;};
+	return loadPlxPtr(fptr,tInfo);
+};
+
+int loadAlphaPtr(gzFile fptr,textureInfo *tInfo) {
+	if (!fptr) { return 2;};
 	unsigned int size;
 	gzread(fptr,&size,sizeof(size));
 	unsigned short width = size & 0xFFFF;
 	unsigned short height = size >> 16;
 	size_t dataSize = width * height;
 	unsigned char *data = malloc(dataSize);
-	if (gzread(fptr,data,dataSize) < dataSize) {fprintf(stderr,"can't read ALPHA %s data\n",path);free(data);gzclose(fptr);return 1;};
+	if (gzread(fptr,data,dataSize) < dataSize) {free(data);gzclose(fptr);return 1;};
 	gzclose(fptr);
 
 	tInfo->format = LTextureFormatAlpha;
@@ -260,6 +261,12 @@ int loadAlphaFile(const char *path,textureInfo *tInfo) {
 	tInfo->imgData = data;
 
 	return 0;
+}
+
+int loadAlphaFile(const char *path,textureInfo *tInfo) {
+	PRINT_DEBUG("LOAD ALPHA: '%s'",path);
+	gzFile fptr = gzopen(path,"rb");
+	return loadAlphaPtr(fptr,tInfo);
 }
 
 #define MAX(p1,p2) p1 > p2 ? p1 : p2

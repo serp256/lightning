@@ -5,7 +5,7 @@ CFLAGS += -I .
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
-MOBJS = light_common.o texture_common.o texture_async_loader.o filters_stub.o render_stub.o
+MOBJS = light_common.o texture_common.o texture_pvr.o texture_async_loader.o filters_stub.o render_stub.o
 
 light_common.o: light_common.h
 texture_common.o: texture_common.h light_common.h

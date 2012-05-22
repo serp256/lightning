@@ -101,7 +101,7 @@ module Make(Quad:Quad.S)(FontCreator:BitmapFont.Creator with module Sprite.D = Q
           if (mIsRenderedText)
               [(SPImage * )mContents setColor:color];
           else *)
-              requiresRedraw := True;
+          requiresRedraw := True;
         )
         else ();
         

@@ -23,7 +23,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	}
 
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) { 	
-	    Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
+		Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
 		lightRendererInit(screenWidth,screenHeight);
 		last = System.nanoTime();
 	}

@@ -611,18 +611,6 @@ value image (stage:Stage.c) =
   let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
   stage#addChild image;
 
-value map (stage:Stage.c) =
-  let map1 = Image.load "test_map/map_12.jpg"
-  and map2 = Image.load "test_map/map_13.jpg"
-  in
-  (
-    map1#setX ~-.500.;
-    debug "map1#width: %f" map1#width;
-    stage#addChild map1;
-    map2#setX (map1#x +. map1#width -. 8.);
-    stage#addChild map2;
-  );
-
 value test_gc (stage:Stage.c) = 
   let items = 
     [|
@@ -790,6 +778,11 @@ value url_loader (stage:Stage.c) =
       ignore <| Timers.start 0.1 loop;
     )
   );
+*)
+
+value pvr (stage:Stage.c) = 
+  let image = Image.load "map/1.jpg" in
+  stage#addChild image;
 
 value glow (stage:Stage.c) = 
 (
@@ -810,7 +803,6 @@ value glow (stage:Stage.c) =
     | _ -> assert False 
     ]
   in
-  (
   let img = Image.load "tree.png" in
   (
     img#setPos 20. 50.;
@@ -846,7 +838,6 @@ value glow (stage:Stage.c) =
     img#setPos 100. 150.;
     stage#addChild img;
   );
-  *)
   let text = "Ежедневный бонус PipIy" in
   (
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
@@ -877,8 +868,8 @@ value glow (stage:Stage.c) =
     );
     *)
   );
+  *)
 );
-*)
 
 value raise_some_exn () = 
   if True then raise (Failure "BLYYYY exn") else ();
@@ -987,6 +978,11 @@ value tweens (stage:Stage.c) =
       ) end; *)
     );
 
+value storage (stage:Stage.c) = 
+(
+  KVStorage.put_string "pizda" "lala";
+  debug "get_string: %s" (KVStorage.get_string "pizda");
+);
 
 let stage width height = 
   object(self)
@@ -1013,7 +1009,7 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-       tlf self; 
+(*        tlf self;  *)
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
@@ -1031,7 +1027,9 @@ let stage width height =
 (*         test_gc self; *)
 (*         filters self; *)
 (*         game_center self; *)
-(*           glow self; *)
+          pvr self;
+          glow self;
+(*           storage self; *)
  (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
@@ -1039,3 +1037,6 @@ let stage width height =
   end
 in
 Lightning.init stage;
+
+
+(* debug "VALUE IN STORAGE: %s" (try KVStorage.get_string "pizda" with [ KVStorage.Kv_not_found -> "NOT FOUND"]); *)

@@ -13,6 +13,8 @@
 
 #ifdef IOS
 #include "ios/texture_ios.h"
+#elif ANDROID
+#include "android/texture_android.h"
 #else
 #include "sdl/texture_sdl.h"
 #endif

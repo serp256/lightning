@@ -14,7 +14,6 @@
 
 static char* resourcePath = "Resources/";
 
-
 int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 	int rplen = strlen(resourcePath);
 	// try pallete first
@@ -22,7 +21,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 	int slen = suffix == NULL ? 0 : strlen(suffix);
 	if (ext && ext != fname && strcasecmp(ext,".plt")) {
 		if (!strcasecmp(ext,".plx")) {
-			// нужно загрузить палитру нахуй
+			// нужно загрузить палитровую картинку нахуй
 			char *path = malloc(rplen + strlen(fname) + slen + 1);
 			memcpy(path,resourcePath,rplen);
 			if (slen != 0) {// need check with prefix first

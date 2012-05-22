@@ -3,7 +3,9 @@
 #define MLWRAPPER_H_
 
 #include <caml/mlvalues.h>
+#ifndef ANDROID
 #include <caml/threads.h>
+#endif
 
 void mlrender_clearTexture();
 
