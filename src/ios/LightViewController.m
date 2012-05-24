@@ -53,10 +53,10 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 -(id)init {
   self = [super init];
   if (self != nil) {
-	payment_success_cb = Val_int(1);
-	payment_error_cb   = Val_int(1);
-	remote_notification_request_success_cb = Val_int(1);
-	remote_notification_request_error_cb   = Val_int(1);
+		payment_success_cb = Val_int(1);
+		payment_error_cb   = Val_int(1);
+		remote_notification_request_success_cb = Val_int(1);
+		remote_notification_request_error_cb   = Val_int(1);
   }
   return self;
 }
@@ -242,65 +242,61 @@ static value *ml_url_complete = NULL;
     LightActivityIndicatorView * indicator;
     for (SKPaymentTransaction *transaction in transactions) {
         restored = NO;
-        switch (transaction.transactionState) {
-			case SKPaymentTransactionStatePurchasing:
-				indicator = [[[LightActivityIndicatorView alloc] initWithTitle: nil message:@"Connecting to AppStore" delegate:nil cancelButtonTitle:nil otherButtonTitles:nil] autorelease];
-				[self showActivityIndicator: indicator];
-				break;
-            case SKPaymentTransactionStateFailed:
-				[self hideActivityIndicator];
-				NSString * e;
-				if (transaction.error.code != SKErrorPaymentCancelled)
-				{
-				    e = [transaction.error localizedDescription];
-					UIAlertView* alert =
-					[
-					 [UIAlertView alloc]
-					 initWithTitle:@"Payment error"
-					 message: e
-					 delegate:nil
-					 cancelButtonTitle:@"OK"
-					 otherButtonTitles:nil
-					 ];
-					[alert show];
-					[alert release];
-				} else {
-				  e = @"Cancelled";
-				}
-				
-				if (Is_block(payment_error_cb)) {
-					caml_acquire_runtime_system();
-				  caml_callback3(payment_error_cb, 
-				                 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), 
-				                 caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]), 
-				                 Val_bool(transaction.error.code == SKErrorPaymentCancelled));
-					caml_release_runtime_system();
-				}
-				[[SKPaymentQueue defaultQueue] finishTransaction: transaction];
-                break;
-
-            case SKPaymentTransactionStateRestored:
-                //NSLog(@"Restoring");
-                restored = YES;
-            case SKPaymentTransactionStatePurchased:
-                //NSLog(@"Purchased");
-				if (Is_block(payment_success_cb)) {
-				  
-					[transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
-
-					caml_acquire_runtime_system();
-				  caml_callback3(
-							payment_success_cb, 
-							caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
-							(value)transaction,
-							Val_bool(restored));
+				switch (transaction.transactionState) {
+					case SKPaymentTransactionStatePurchasing:
+						indicator = [[[LightActivityIndicatorView alloc] initWithTitle: nil message:@"Connecting to AppStore" delegate:nil cancelButtonTitle:nil otherButtonTitles:nil] autorelease];
+						[self showActivityIndicator: indicator];
+						break;
+					case SKPaymentTransactionStateFailed:
+						[self hideActivityIndicator];
+						NSString * e;
+						if (transaction.error.code != SKErrorPaymentCancelled)
+						{
+							e = [transaction.error localizedDescription];
+							UIAlertView* alert =
+							[
+							 [UIAlertView alloc]
+							 initWithTitle:@"Payment error"
+							 message: e
+							 delegate:nil
+							 cancelButtonTitle:@"OK"
+							 otherButtonTitles:nil
+							 ];
+							[alert show];
+							[alert release];
+						} else {
+							e = @"Cancelled";
+						}
+						if (Is_block(payment_error_cb)) {
+							caml_acquire_runtime_system();
+							caml_callback3(payment_error_cb, 
+														 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), 
+														 caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]), 
+														 Val_bool(transaction.error.code == SKErrorPaymentCancelled));
 							caml_release_runtime_system();
-				}
-            
-				[self hideActivityIndicator];
-                break;
-            default:
-                break;
+						}
+						[[SKPaymentQueue defaultQueue] finishTransaction: transaction];
+						break;
+
+					case SKPaymentTransactionStateRestored:
+							//NSLog(@"Restoring");
+							restored = YES;
+					case SKPaymentTransactionStatePurchased:
+							//NSLog(@"Purchased");
+							if (Is_block(payment_success_cb)) {
+								[transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
+								caml_acquire_runtime_system();
+								caml_callback3(
+									payment_success_cb, 
+									caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
+									(value)transaction,
+									Val_bool(restored));
+									caml_release_runtime_system();
+							}
+							[self hideActivityIndicator];
+							break;
+					default:
+							break;
         }
     }
 }
