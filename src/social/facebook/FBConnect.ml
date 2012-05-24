@@ -107,7 +107,7 @@ external ios_facebook_request_with_graph_api_and_params : string -> list (string
 
 (* graph api request *)
 
-value _request graph_path params ?(delegate = None) () = 
+value _request graph_path params ?delegate () = 
   let requestID = Random.int 10000 in
   (
     match delegate with
@@ -118,8 +118,8 @@ value _request graph_path params ?(delegate = None) () =
     ios_facebook_request_with_graph_api_and_params graph_path params requestID
   );
 
-value request graph_path params ?(delegate = None) () = 
-  let f = (fun _ -> _request graph_path params ~delegate:delegate ())
+value request graph_path params ?delegate () = 
+  let f = (fun _ -> _request graph_path params ?delegate:delegate ())
   in Session.with_auth_check f;
 
 
@@ -197,7 +197,7 @@ value delegates = Hashtbl.create 1;
 external ios_facebook_open_apprequest_dialog : string -> string -> string -> string -> int -> unit = "ml_facebook_open_apprequest_dialog";
 
 (* apprequest dialog *)
-value _apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?(delegate=None) () = 
+value _apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = 
   let dialogID = Random.int 10000 in
   (
     match delegate with
@@ -214,8 +214,8 @@ value _apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?(del
   );
   
 
-value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?(delegate=None) () = 
-  let f = (fun _ -> _apprequest ~message ~recipients ~filter ~delegate ())
+value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = 
+  let f = (fun _ -> _apprequest ~message ~recipients ~filter ?delegate ())
   in Session.with_auth_check f;
 
 
@@ -291,7 +291,7 @@ module GraphAPI = struct
     fb_request_did_load   : option (Ojson.t -> unit)
   };
 
-  value request graph_path params ?(delegate = None) () = (); 
+  value request graph_path params ?delegate () = (); 
 end;
 
 
@@ -307,7 +307,7 @@ module Dialog = struct
 
   type users_filter = [ All | AppUsers | NonAppUsers ];
 
-  value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?(delegate=None) () = ();
+  value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = ();
 end;
 
 

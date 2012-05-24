@@ -7,6 +7,8 @@
 
 #import "LightView.h"
 #import "mlwrapper_ios.h"
+#import <CoreMotion/CMAccelerometer.h>
+#import "motion.h";
 
 // --- private interface ---------------------------------------------------------------------------
 
@@ -147,13 +149,20 @@
     [mContext presentRenderbuffer:GL_RENDERBUFFER];
 		*/
 		caml_acquire_runtime_system();
+
+    //printf("lastupTime: %f; now: %f; now - accLastUpTime: %f; accUpInterval: %f\n", accLastUpTime, now, now - accLastUpTime, accUpInterval);
+
+    if (accEnabled && (now - accLastUpTime >= accUpInterval)) {
+        acmtrGetData(now);
+    }
+
     mlstage_advanceTime(mStage,timePassed);
 		// prerender here
 		mlstage_preRender();
     mLastFrameTimestamp = now;
     [EAGLContext setCurrentContext:mContext];
-    glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-    mlstage_render(mStage);
+    glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);    
+    mlstage_render(mStage);    
     glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
     [mContext presentRenderbuffer:GL_RENDERBUFFER];
 		caml_release_runtime_system();

@@ -1,0 +1,32 @@
+ocaml:
+    - накатить соотвествующий патч из лайтнинга
+    - в config/Makefile проставить правильные PLATFORM и SDK
+    - make -f Makefile.(android|ios)
+    - make -f Makefile.(android|ios) install
+    - для android:  путь_до_ndk/platforms/android-9/arch-arm/usr/include/stdlib.h закоментировать #include <memory.h>
+
+поставить findlib из лайтнинга
+    - ./configure -stdlib /usr/local/ocaml/(android|ios)/lib -sitelib /usr/local/ocaml/(android|ios)/lib/site-lib
+    - sudo make install-meta
+    - по идее уже не надо, но если проблема с threads, то попробовать решить так:
+        в /usr/local/ocaml/ios/3.12.1/lib/site-lib/threads/META исправить exists_if = "threads.cma" на exists_if = "threads.cmxa"
+
+посавить extlib, xmlm, ojson из лайтнинга:
+    - make -f Makefile.(android|ios)
+    - sudo make -f Makefile.(android|ios) install
+    - в случае проблем типа "cma not found" исправить в соотвествующем Makefile'е цель all: byte native
+
+в .bash_profile
+    export OCAMLRUNPARAM=b
+    export C_INCLUDE_PATH=$C_INCLUDE_PATH:/opt/local/include
+    export CPATH=$CPATH:/opt/local/include
+    export LIBRARY_PATH=$LIBRARY_PATH:/opt/local/lib
+    export MANPATH=$MANPATH:/usr/local/man:/opt/local/share/man
+    alias ocaml='rlwrap ocaml'
+
+в /opt/local/etc/findlib.conf
+    destdir(ios)="/usr/local/ocaml/(android|ios)/lib/site-lib"
+    path(ios)="/usr/local/ocaml/(android|ios)/lib/site-lib"
+    ocamlopt(ios)="/usr/local/ocaml/(android|ios)/bin/ocamlopt.opt"
+
+в myconfig.(android|ios) -- PLAT и SDK
