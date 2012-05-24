@@ -10,3 +10,10 @@ typedef struct {
 } resource;
 
 int getResourceFd(const char *path, resource *res);
+
+value ml_alsoundLoad(value path);
+value ml_alsoundPlay(value soundId, value vol, value loop, value streamId);
+void ml_alsoundPause(value streamId);
+void ml_alsoundStop(value streamId);
+void ml_alsoundSetVolume(value streamId, value vol);
+void ml_alsoundSetLoop(value streamId, value loop);

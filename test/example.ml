@@ -995,13 +995,21 @@ value localNotif () =
 value accelerometer () =
   Motion.acmtrStart (fun data -> debug "%f %f %f" data.Motion.accX data.Motion.accY data.Motion.accZ) 1.;
 
+value sound () =
+  let () = debug "Sound.load call..." in
+  (
+    Sound.init ();
+    ignore(Sound.load "xyupizda");
+  );
+    
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
-      accelerometer ();
+      (* accelerometer (); *)
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
 (*         TLF.default_font_family.val := "Myriad Pro"; *)
@@ -1039,7 +1047,8 @@ let stage width height =
 (*         test_gc self; *)
 (*         filters self; *)
 (*         game_center self; *)
-          pvr self;
+          (* pvr self; *)
+          sound ();
 (*           url_loader self; *)
 (*           glow self; *)
 (*           storage self; *)

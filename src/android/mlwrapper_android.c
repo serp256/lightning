@@ -733,3 +733,56 @@ value ml_kv_storage_exists(value key_ml) {
 value ml_malinfo(value p) {
 	return caml_alloc_tuple(3);
 }
+
+static jclass gSndPoolCls = NULL;
+static jobject gSndPool = NULL;
+
+void ml_alsoundInit() {
+	if (gSndPoolCls != NULL) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+		jclass amCls = (*env)->FindClass(env, "android/media/AudioManager");
+		jfieldID strmTypeFid = (*env)->GetStaticFieldID(env, amCls, "STREAM_MUSIC", "I");
+		jint strmType = (*env)->GetStaticIntField(env, amCls, strmTypeFid);
+
+		jclass sndPoolCls = (*env)->FindClass(env, "android/media/SoundPool");
+		jmethodID constrId = (*env)->GetMethodID(env, sndPoolCls, "<init>", "(III)V");
+		jobject sndPool = (*env)->NewObject(env, sndPoolCls, constrId, 100, strmType, 0);
+
+		gSndPoolCls = (*env)->NewGlobalRef(env, sndPoolCls);
+		gSndPool = (*env)->NewGlobalRef(env, sndPool);
+
+		(*env)->DeleteLocalRef(env, amCls);
+		(*env)->DeleteLocalRef(env, sndPoolCls);
+		(*env)->DeleteLocalRef(env, sndPool);
+	}
+}
+
+value ml_alsoundLoad(value path) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jclass lightViewCls = (*env)->GetObjectClass(env, jView);
+	jmethodID getSndMthdId = (*env)->GetMethodID(env, lightViewCls, "getSoundId", "(Ljava/lang/String;Landroid/media/SoundPool;)I");
+	DEBUGF("lakfhlsfjalsf %u", getSndMthdId);
+	jstring jPath = (*env)->NewStringUTF(env, String_val(path));
+	jint sndId = (*env)->CallIntMethod(env, jView, getSndMthdId, jPath, gSndPool);
+
+	(*env)->DeleteLocalRef(env, jPath);
+	(*env)->DeleteLocalRef(env, lightViewCls);
+
+	return Val_int(sndId);
+}
+
+value ml_alsoundPlay(value soundId, value vol, value loop, value streamId) {
+	return Val_int(1);
+}
+
+void ml_alsoundPause(value streamId) {}
+
+void ml_alsoundStop(value streamId) {}
+
+void ml_alsoundSetVolume(value streamId, value vol) {}
+
+void ml_alsoundSetLoop(value streamId, value loop) {}

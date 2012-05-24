@@ -1,5 +1,3 @@
-
-
 sdl:
 	$(MAKE) -f Makefile.sdl
 
@@ -12,10 +10,17 @@ ios:
 iosclean:
 	$(MAKE) -f Makefile.ios clean
 
-
 android: 
 	$(MAKE) -f Makefile.android
 
+android-install:
+	adb install -r android/bin/LightTest-debug.apk
+
+android-log:
+	adb logcat LIGHTNING:* *:E *:F *:S
+
+android-log-error:
+	adb logcat LIGHTNING:* DEBUG:* dalvikvm:* *:E *:F *:S
 
 .PHONY: android ios sdl
 

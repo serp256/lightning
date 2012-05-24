@@ -17,6 +17,7 @@ import android.graphics.Bitmap;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
+import android.media.SoundPool;
 
 public class LightView extends GLSurfaceView {
 
@@ -45,6 +46,13 @@ public class LightView extends GLSurfaceView {
 		setRenderer(renderer);
 	}
 
+	public int getSoundId(String path, SoundPool sndPool) throws IOException {
+		if (path.charAt(0) == '/') {
+			return sndPool.load(path, 1);
+		}
+
+		return sndPool.load(getContext().getAssets().openFd(path), 1);
+	}
 
 	public ResourceParams getResource(String path) {
 		ResourceParams res;
