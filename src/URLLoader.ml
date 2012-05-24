@@ -79,14 +79,13 @@ value prepare_request r =
 
 type loader_wrapper = 
   {
-    onResponse: int -> string -> int64 -> unit;
+    onResponse: int -> int64 -> string -> unit;
     onData: string -> unit;
     onComplete: unit -> unit;
     onError: int -> string -> unit
   };
 
 
-IFDEF IOS THEN (*{{{*)
 type connection;
 value loaders = Hashtbl.create 1;
 
@@ -97,35 +96,35 @@ value get_loader ns_connection =
     Hashtbl.find loaders ns_connection
   with [ Not_found -> failwith("HTTPConneciton not found") ];
 
-value url_response ns_connection httpCode contentType totalBytes =
+value url_response connection httpCode contentLength contentType =
   let () = debug "url response" in
-  let w = get_loader ns_connection in
-  w.onResponse httpCode contentType totalBytes;
+  let w = get_loader connection in
+  w.onResponse httpCode contentLength contentType;
 
 Callback.register "url_response" url_response;
 
-value url_data ns_connection data = 
+value url_data connection data = 
   let () = debug "url data" in
-  let w = get_loader ns_connection in
+  let w = get_loader connection in
   w.onData data;
 
 Callback.register "url_data" url_data;
 
-value url_complete ns_connection = 
+value url_complete connection = 
   let () = debug "url complete" in
-  let w = get_loader ns_connection in
+  let w = get_loader connection in
   (
-    Hashtbl.remove loaders ns_connection;
+    Hashtbl.remove loaders connection;
     w.onComplete ();
   );
 
 Callback.register "url_complete" url_complete;
 
-value url_failed ns_connection code msg = 
+value url_failed connection code msg = 
   let () = debug "url failed" in
-  let w = get_loader ns_connection in
+  let w = get_loader connection in
   (
-    Hashtbl.remove loaders ns_connection;
+    Hashtbl.remove loaders connection;
     w.onError code msg;
   );
 
@@ -148,8 +147,7 @@ value cancel_load connection =
   Hashtbl.remove loaders connection;
 );
 
-(*}}}*)
-ELSE
+(*}}}
 IFDEF ANDROID THEN
 
 type connection;
@@ -293,10 +291,11 @@ module CurlLoader(P:sig end) = struct
             let ccon = Curl.init () in
             try
               Curl.set_url ccon url;
-              let headers = List.map (fun (n,v) -> Printf.sprintf "%s:%s" n v) headers in
               match headers with
               [ [] -> ()
-              | _ -> Curl.set_httpheader ccon headers
+              | _ -> 
+                  let headers = List.map (fun (n,v) -> Printf.sprintf "%s:%s" n v) headers in
+                  Curl.set_httpheader ccon headers
               ];
               match hmth with
               [ `POST -> Curl.set_post ccon True
@@ -370,9 +369,13 @@ value cancel_load req =
   let module Loader = (value m:CurlLoader) in
   Loader.cancel_request req;
 
-(*}}}*)
 ENDIF;
 ENDIF;
+ENDIF;
+}}}*)
+
+IFDEF SDL THEN
+external run: unit -> unit = "net_run";
 ENDIF;
 
 exception Loading_in_progress;
@@ -398,12 +401,12 @@ class loader ?request () =
     value data = Buffer.create 10;
     method data = Buffer.contents data;
 
-    method private onResponse c ct b = 
+    method private onResponse c b ct =  
     (
-      debug "onResponse";
+      debug "onResponse: %d:%Ld:%s" c b ct;
       httpCode := c; 
-      contentType := ct;
       bytesTotal := b;
+      contentType := ct;
       bytesLoaded := 0L;
     );
 

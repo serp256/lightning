@@ -125,11 +125,11 @@ typedef struct
   uint32_t  u32NumFaces;    //Number of faces in a Cube Map. Maybe be a value other than 6.
   uint32_t  u32MIPMapCount;   //Number of MIP Maps in the texture - NB: Includes top level.
   uint32_t  u32MetaDataSize;  //Size of the accompanying meta data.
-} PVRTextureHeader3;
+} __attribute__((packed)) PVRTextureHeader3;
 
 int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 
-	PRINT_DEBUG("LoadPvrFile3 of size: %d",fsize);
+	PRINT_DEBUG("LoadPvrFile3 of size: %d, %d, %u",fsize,ftell(fildes),sizeof(PVRTextureHeader3));
 	if (fsize < sizeof(PVRTextureHeader3)) {return 1;};
 
 	PVRTextureHeader3 header;
@@ -148,27 +148,27 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 		switch (pt.PixelTypeID)
 		{
 			case ePVRTPF_PVRTCI_2bpp_RGB:
-				//fprintf(stderr,"PVRTCI 2bpp RGB\n");
+				PRINT_DEBUG("PVRTCI 2bpp RGB");
 				tInfo->format = LTextureFormatPvrtcRGB2;
 				break;
 			case ePVRTPF_PVRTCI_2bpp_RGBA:
-				//fprintf(stderr,"PVRTCI 2bpp RGBA\n");
+				PRINT_DEBUG("PVRTCI 2bpp RGBA");
 				tInfo->format = LTextureFormatPvrtcRGBA2;
 				break;
 			case ePVRTPF_PVRTCI_4bpp_RGB:
-				//fprintf(stderr,"PVRTCI 4bpp RGB\n");
+				PRINT_DEBUG("PVRTCI 4bpp RGB");
 				tInfo->format = LTextureFormatPvrtcRGB4;
 				break;
 			case ePVRTPF_PVRTCI_4bpp_RGBA:
-				//fprintf(stderr,"PVRTCI 4bpp RGBA\n");
+				PRINT_DEBUG("PVRTCI 4bpp RGBA");
 				tInfo->format = LTextureFormatPvrtcRGBA4;
 				break;
 			case ePVRTPF_PVRTCII_2bpp:
-				//fprintf(stderr,"PVRTCII 2bpp\n");
+				ERROR("unsupported: PVRTCII 2bpp");
 				return 1;
 				break;
 			case ePVRTPF_PVRTCII_4bpp:
-				ERROR("unsupported: PVRTCII 2bpp");
+				ERROR("unsupported: PVRTCII 4bpp");
 				return 1;
 				break;
 		}
@@ -177,9 +177,12 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 		return 1;
 	};
 	// skip meta
+	int p;
 	if (header.u32MetaDataSize > 0) {
-		fseek(fildes,header.u32MetaDataSize,SEEK_CUR);
-	};
+		PRINT_DEBUG("move on metaSize");
+		p = fseek(fildes,header.u32MetaDataSize,SEEK_CUR);
+	} else p = ftell(fildes);
+	PRINT_DEBUG("metadataSize: %d, curlp: %d",header.u32MetaDataSize,p);
 
 	tInfo->dataLen = fsize - sizeof(PVRTextureHeader3) - header.u32MetaDataSize;
 	//printf("pvr data size: %d\n",tInfo->dataLen);

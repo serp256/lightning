@@ -9,6 +9,8 @@
 #include "mlwrapper.h"
 #include "mlwrapper_android.h"
 #include "GLES/gl.h"
+#include "net_curl.h"
+
 
 #define caml_acquire_runtime_system()
 #define caml_release_runtime_system()
@@ -231,6 +233,7 @@ static value run_method = 1;//None
 void mlstage_run(double timePassed) {
 	if (run_method == 1) // None
 		run_method = caml_hash_variant("run");
+	if (net_running > 0) net_perform();
 	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,caml_copy_double(timePassed));
 }
 
@@ -622,6 +625,11 @@ value ml_kv_storage_get_int(value key_ml) {
   return kv_storage_get_val(key_ml, St_int_val);
 }
 
+// get float 
+value ml_kv_storage_get_float(value key_ml) {
+	return caml_copy_double(1.);
+  //return kv_storage_get_val(key_ml, St_int_val);
+}
 
 void kv_storage_put_val(value key_ml, value val_ml, st_val_type vtype) {
   CAMLparam2(key_ml, val_ml);
@@ -674,6 +682,10 @@ void ml_kv_storage_put_bool(value key_ml, value val_ml) {
 
 void ml_kv_storage_put_int(value key_ml, value val_ml) {
   return kv_storage_put_val(key_ml, val_ml, St_int_val);
+}
+
+void ml_kv_storage_put_float(value key_ml, value val_ml) {
+  //return kv_storage_put_val(key_ml, val_ml, St_int_val);
 }
 
 

@@ -762,6 +762,7 @@ value memtest_async (stage:Stage.c) =
     stage#addChild img;
   );
 
+*)
 
 value url_loader (stage:Stage.c) = 
   let loader = new URLLoader.loader () in
@@ -778,7 +779,6 @@ value url_loader (stage:Stage.c) =
       ignore <| Timers.start 0.1 loop;
     )
   );
-*)
 
 value pvr (stage:Stage.c) = 
   let image = Image.load "map/1.jpg" in
@@ -1040,7 +1040,8 @@ let stage width height =
 (*         filters self; *)
 (*         game_center self; *)
           pvr self;
-          glow self;
+(*           url_loader self; *)
+(*           glow self; *)
 (*           storage self; *)
  (*         sound self; *)
 (*         window self; *)

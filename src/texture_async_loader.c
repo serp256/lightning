@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "thqueue.h"
+#include "light_common.h"
 #include "texture_common.h"
 
 #include "caml/memory.h"
@@ -52,8 +53,8 @@ void *run_worker(void *param) {
 			int r = load_image_info(req->path,req->suffix,tInfo);
 			if (r) {
 				free(tInfo);
-				if (r == 2) fprintf(stderr,"ASYNC LOADER. Can't find %s\n",req->path);
-				else fprintf(stderr,"Can't load image %s\n",req->path);
+				if (r == 2) ERROR("ASYNC LOADER. Can't find %s\n",req->path);
+				else ERROR("Can't load image %s\n",req->path);
 				exit(3);
 			};
 			response_t *resp = malloc(sizeof(response_t));
