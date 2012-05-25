@@ -230,11 +230,11 @@ value createChannel snd =
 ELSE
   IFDEF ANDROID THEN
     type sound = int;
+    value _SND_DURATION = 5.;
 
     external init : unit -> unit = "ml_alsoundInit";
 
-    value masterVol = ref 1.;
-    value setMasterVolume v = masterVol.val := v;
+    value setMasterVolume (v:float) = (); (* fixme *)
 
     external alsoundLoad : string -> sound = "ml_alsoundLoad";
     external alsoundPlay : int -> float -> bool -> int = "ml_alsoundPlay"; (* soundId -> volume -> loop -> streamId *)
@@ -264,12 +264,12 @@ ELSE
         (
           stream := Some (alsoundPlay sound volume loop);
           state := SoundPlaying;
-          timer_id := Some (Timers.start (* sound.duration *)10. self#finished);
+          timer_id := Some (Timers.start _SND_DURATION self#finished); (* find way to get real duration  *)
         );
 
         method private finished () = 
           if loop then 
-            timer_id := Some (Timers.start (* sound.duration *)10. self#finished) 
+            timer_id := Some (Timers.start _SND_DURATION self#finished) (* find way to get real duration  *)
           else (
             timer_id := None;
             stream := None;

@@ -87,14 +87,18 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	public native void handleActionCancel(int[] id, float[] x, float[] y);
 	public native void handleActionMove(int[] id, float[] x, float[] y);
 
-	public void handleOnPause(){
-		//nativeonpause();
-	}
+	public native void handleOnPause();
+	public native void handleOnResume();
+
 	
-	public void handleOnResume(){
-		//nativeonresume();
-		last = System.nanoTime();
-	}
+	// public void handleOnPause(){
+	// 	//nativeonpause();
+	// }
+	
+	// public void handleOnResume(){
+	// 	//nativeonresume();
+	// 	last = System.nanoTime();
+	// }
 	
 	public static void setAnimationInterval(double interval){
 		animationInterval = (long)(interval * NANOSECONDSPERSECOND);

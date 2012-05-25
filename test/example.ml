@@ -995,11 +995,36 @@ value localNotif () =
 value accelerometer () =
   Motion.acmtrStart (fun data -> debug "%f %f %f" data.Motion.accX data.Motion.accY data.Motion.accZ) 1.;
 
-value sound () =
+value sound (stage:Stage.c) =
   let () = debug "Sound.load call..." in
   (
     Sound.init ();
-    ignore(Sound.load "xyupizda");
+    (* let sndId = Sound.load "achievement1.mp3" in *)
+    let sndId = Sound.load "achievement1.mp3" in
+      let alchan = Sound.createChannel sndId
+      and img = Image.load "tree.png"
+      and img1 = Image.load "tree.png" in
+      (
+        stage#addChild img;
+        stage#addChild img1;
+
+        img1#setX 140.;
+        alchan#setLoop True;
+
+        ignore(img#addEventListener Stage.ev_TOUCH (fun ev _ _ ->
+          match Stage.touches_of_data ev.Ev.data with
+          [ Some [ touch :: _  ] when touch.Touch.phase = Touch.TouchPhaseEnded -> alchan#play ()
+          | _ -> ()
+          ]
+        ));
+
+        ignore(img1#addEventListener Stage.ev_TOUCH (fun ev _ _ ->
+          match Stage.touches_of_data ev.Ev.data with
+          [ Some [ touch :: _  ] when touch.Touch.phase = Touch.TouchPhaseEnded -> alchan#setVolume 0.25
+          | _ -> ()
+          ]
+        ));        
+      );
   );
     
 
@@ -1048,7 +1073,7 @@ let stage width height =
 (*         filters self; *)
 (*         game_center self; *)
           (* pvr self; *)
-          sound ();
+          sound self;
 (*           url_loader self; *)
 (*           glow self; *)
 (*           storage self; *)

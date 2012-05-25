@@ -12,7 +12,7 @@ typedef struct {
 int getResourceFd(const char *path, resource *res);
 
 value ml_alsoundLoad(value path);
-value ml_alsoundPlay(value soundId, value vol, value loop, value streamId);
+value ml_alsoundPlay(value soundId, value vol, value loop);
 void ml_alsoundPause(value streamId);
 void ml_alsoundStop(value streamId);
 void ml_alsoundSetVolume(value streamId, value vol);
