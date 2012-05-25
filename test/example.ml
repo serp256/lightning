@@ -568,12 +568,6 @@ value sound (stage:Stage.c) =
   );
 
 
-value quad (stage:Stage.c) = 
-  let q = Quad.create ~color:(`Color 0xFF0000) 200. 200. in
-  (
-    q#setPos 100. 100.;
-    stage#addChild q;
-  );
 
 (* 
 value window (stage:Stage.c) = 
@@ -880,6 +874,13 @@ value glow (stage:Stage.c) =
 );
 *)
 
+value quad (stage:Stage.c) = 
+  let q = Quad.create ~color:(`Color 0xFF0000) 200. 200. in
+  (
+    q#setPos 100. 100.;
+    stage#addChild q;
+  );
+
 value raise_some_exn () = 
   if True then raise (Failure "BLYYYY exn") else ();
 
@@ -1066,6 +1067,7 @@ let stage width height =
 (*         zsort self; *)
       (* localNotif (); *)
           music self;
+          quad self;
     end;
   end
 in
