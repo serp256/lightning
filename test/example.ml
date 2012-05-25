@@ -998,13 +998,31 @@ value localNotif () =
 value accelerometer () =
   Motion.acmtrStart (fun data -> debug "%f %f %f" data.Motion.accX data.Motion.accY data.Motion.accZ) 1.;
 
+value music (self:Stage.c) =
+(
+  Sound.init ();
+  let sound = Sound.load "sound.mp3" in
+  let channel = Sound.createChannel sound in
+  (
+    channel#play ();
+    channel#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "sound complete") |> ignore;
+  );
+  let timer = Timer.create ~repeatCount:3 5. in
+  (
+    timer#addEventListener Timer.ev_TIMER (fun _ _ _ -> (debug "call major"; Gc.full_major ())) |> ignore;
+    timer#start ();
+  );
+);
+
+
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
-      accelerometer ();
+(*       accelerometer (); *)
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
 (*         TLF.default_font_family.val := "Myriad Pro"; *)
@@ -1047,6 +1065,7 @@ let stage width height =
 (*         window self; *)
 (*         zsort self; *)
       (* localNotif (); *)
+          music self;
     end;
   end
 in

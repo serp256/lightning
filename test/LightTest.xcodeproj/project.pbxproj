@@ -12,6 +12,7 @@
 		517411B614FB6A420022E871 /* e_cactus.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B514FB6A420022E871 /* e_cactus.png */; };
 		517411B914FB6A510022E871 /* tree.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B814FB6A510022E871 /* tree.png */; };
 		517411CB14FB749C0022E871 /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 517411CA14FB749C0022E871 /* Shaders */; };
+		5175C4DF156E80DE00A6DB34 /* sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 5175C4DE156E80DE00A6DB34 /* sound.mp3 */; };
 		517EB8801522F888009D91B1 /* pallete.plx in Resources */ = {isa = PBXBuildFile; fileRef = 517EB87F1522F888009D91B1 /* pallete.plx */; };
 		517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */; };
 		51846F6514EE704D00FDE684 /* test.native in CopyFiles */ = {isa = PBXBuildFile; fileRef = 51846F6414EE704D00FDE684 /* test.native */; };
@@ -52,6 +53,7 @@
 		517411B514FB6A420022E871 /* e_cactus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = e_cactus.png; path = ../../lightning/test/Resources/e_cactus.png; sourceTree = "<group>"; };
 		517411B814FB6A510022E871 /* tree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tree.png; path = ../../lightning/test/Resources/tree.png; sourceTree = "<group>"; };
 		517411CA14FB749C0022E871 /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shaders; path = ../../lightning/Shaders; sourceTree = "<group>"; };
+		5175C4DE156E80DE00A6DB34 /* sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = sound.mp3; path = Resources/sound.mp3; sourceTree = "<group>"; };
 		517EB87F1522F888009D91B1 /* pallete.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = pallete.plx; path = ../../lightning/test/Resources/pallete.plx; sourceTree = "<group>"; };
 		517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular0.alpha"; path = "../../lightning/test/Resources/MyriadPro-Regular0.alpha"; sourceTree = "<group>"; };
 		51846F6414EE704D00FDE684 /* test.native */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = test.native; sourceTree = "<group>"; };
@@ -78,6 +80,7 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
+				5175C4DE156E80DE00A6DB34 /* sound.mp3 */,
 				517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */,
 				517EB87F1522F888009D91B1 /* pallete.plx */,
 				5191FD9214FF5FC900DD8677 /* frame.png */,
@@ -207,6 +210,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5175C4DF156E80DE00A6DB34 /* sound.mp3 in Resources */,
 				517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */,
 				517EB8801522F888009D91B1 /* pallete.plx in Resources */,
 				5191FD9314FF5FC900DD8677 /* frame.png in Resources */,

@@ -72,9 +72,10 @@ external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc"
 (* ALSound *)
 class al_channel snd = 
   let sourceID = alsource_create snd.albuffer in
+  let finalize _ = (debug "finalize al_channel"; alsource_delete sourceID) in
   object(self)
     inherit EventDispatcher.simple [ channel ];
-    initializer Gc.finalise (fun _ -> alsource_delete sourceID) self;
+    initializer Gc.finalise finalize self;
     value sound = snd;
     value mutable loop = False;
     value mutable startMoment = 0.;
@@ -133,11 +134,11 @@ class al_channel snd =
   end;
 
 
-type avplayer = int;
+type avplayer;
 
-external avsound_create_player : avsound -> (unit -> unit) -> avplayer = "ml_avsound_create_player";
-external avsound_release : avplayer -> unit = "ml_avsound_release";
-external avsound_play : avplayer -> unit = "ml_avsound_play";
+external avsound_create_player : avsound -> avplayer = "ml_avsound_create_player";
+(* external avsound_release : avplayer -> unit = "ml_avsound_release"; *)
+external avsound_play : avplayer -> (unit -> unit) -> unit = "ml_avsound_play";
 external avsound_pause : avplayer -> unit = "ml_avsound_pause";
 external avsound_stop : avplayer -> unit = "ml_avsound_stop";
 external avsound_set_volume : avplayer -> float -> unit = "ml_avsound_set_volume";
@@ -148,69 +149,54 @@ external avsound_is_playing : avplayer -> bool = "ml_avsound_is_playing";
 
 (* AVSound *)
 class av_channel snd = 
+  let player = avsound_create_player snd in
   object(self)
 
     inherit EventDispatcher.simple [ channel ];
 
-    value mutable avplayer = None;
-
     value mutable paused = False;
 
-    method private player = 
-      match avplayer with
-      [ Some player -> player
-      | None -> failwith "AVPlayer is not initialized"
-      ];
-    
-    initializer (
-      let on_sound_complete () = self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ())
-      in avplayer := Some (avsound_create_player snd on_sound_complete);
-      Gc.finalise (fun _ -> avsound_release self#player) self;
-    );
-
     method private asEventTarget = (self :> channel);
-  
-  
-
+    method private onSoundComplete () = self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
     method play () = 
     (
       debug "play avsound";
       paused := False;
-      avsound_play self#player;  
+      avsound_play player self#onSoundComplete;  
     );
 
-    method private isPlaying () = avsound_is_playing self#player;
+    method private isPlaying () = avsound_is_playing player;
     
     method pause () = 
     (
       debug "pause avsound";
       paused := True;
-      avsound_pause self#player;
+      avsound_pause player;
     );
     
     method stop () = 
     (
       debug "stop avsound";
       paused := False;
-      avsound_stop self#player;
+      avsound_stop player;
     );
     
     method setVolume (v:float) = 
     (
       debug "setVolume avsound";
-      avsound_set_volume self#player v;
+      avsound_set_volume player v;
     );
     
     method volume = 
     (
       debug "volume avsound";
-      avsound_get_volume self#player;
+      avsound_get_volume player;
     );
     
     method setLoop loop  = 
     (
       debug "set loop avsound";
-      avsound_set_loop self#player loop;
+      avsound_set_loop player loop;
     );
     
     method state = match (paused, self#isPlaying ()) with

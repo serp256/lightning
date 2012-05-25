@@ -405,6 +405,7 @@ end;
 
 value make_and_cache path textureInfo = 
 (*   let mem = textureInfo.memSize in *)
+  let finalizer t = if not t#released then TextureCache.remove cache path else () in
   let res = 
     object(self) 
       inherit s textureInfo as super;
@@ -419,7 +420,7 @@ value make_and_cache path textureInfo =
         )
         else ();
 
-      initializer Gc.finalise (fun t -> if not t#released then TextureCache.remove cache path else ()) self;
+      initializer Gc.finalise finalizer self;
         (*
         if (textureID <> 0) 
         then

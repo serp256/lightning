@@ -12,8 +12,9 @@
 
 static unsigned int total_tex_mem = 0;
 
+extern uintnat caml_dependent_size;
 #ifdef DEBUG_MEM
-#define LOGMEM(op,size) DEBUGMSG("TEXTURE MEMORY <%s> %u -> %u",op,size,total_tex_mem)
+#define LOGMEM(op,size) DEBUGMSG("TEXTURE MEMORY <%s> %u -> %u:%u",op,size,total_tex_mem,(unsigned int)caml_dependent_size)
 #else
 #define LOGMEM(op,size)
 #endif
@@ -28,8 +29,8 @@ void ml_texture_id_delete(value textureID) {
 		struct tex *t = TEX(textureID);
 		t->tid = 0;
 		total_tex_mem -= t->mem;
-		LOGMEM("delete",t->mem);
 		caml_free_dependent_memory(t->mem);
+		LOGMEM("delete",t->mem);
 	};
 }
 
@@ -44,8 +45,8 @@ static void textureID_finalize(value textureID) {
 		glDeleteTextures(1,&tid);
 		struct tex *t = TEX(textureID);
 		total_tex_mem -= t->mem;
-		LOGMEM("finalize",t->mem);
 		caml_free_dependent_memory(t->mem);
+		LOGMEM("finalize",t->mem);
 	};
 }
 
