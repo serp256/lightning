@@ -440,7 +440,7 @@ static value caml_hash_Color = 0;
 
 static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,color4B *tr,color4B *bl,color4B *br) {
 	if (Is_long(color)) { // white
-		GLubyte a = 255 * alpha;
+		GLubyte a = alpha * 255.;
 		color4B clr;
 		if (pma) clr = (color4B){a,a,a,a};
 		else clr = (color4B){255,255,255,a};

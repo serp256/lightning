@@ -875,12 +875,12 @@ value glow (stage:Stage.c) =
 *)
 
 value quad (stage:Stage.c) = 
-  let q = Quad.create ~color:(`Color 0xFF0000) 200. 200. in
+  let q = Quad.create (*~color:(`Color 0xFF0000)*) 200. 200. in
   (
+    stage#addChild q;
     q#setPos 100. 100.;
     q#setAlpha 0.2;
-    q#setColor (`Color 0x00FF00);
-    stage#addChild q;
+(*     q#setColor (`Color 0x00FF00); *)
   );
 
 value raise_some_exn () = 
@@ -1010,7 +1010,7 @@ value music (self:Stage.c) =
     channel#play ();
     channel#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "sound complete") |> ignore;
   );
-  let timer = Timer.create ~repeatCount:3 5. in
+  let timer = Timer.create ~repeatCount:3 5. "GC" in
   (
     timer#addEventListener Timer.ev_TIMER (fun _ _ _ -> (debug "call major"; Gc.full_major ())) |> ignore;
     timer#start ();
