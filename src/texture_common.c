@@ -14,23 +14,22 @@ static unsigned int total_tex_mem = 0;
 
 extern uintnat caml_dependent_size;
 #ifdef DEBUG_MEM
-#define LOGMEM(op,size) DEBUGMSG("TEXTURE MEMORY <%s> %u -> %u:%u",op,size,total_tex_mem,(unsigned int)caml_dependent_size)
+#define LOGMEM(op,tid,size) DEBUGMSG("TEXTURE MEMORY [%s] <%d> %u -> %u:%u",op,tid,size,total_tex_mem,(unsigned int)caml_dependent_size)
 #else
-#define LOGMEM(op,size)
+#define LOGMEM(op,tid,size)
 #endif
 
 #define TEX(v) ((struct tex*)Data_custom_val(v))
 
 void ml_texture_id_delete(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
-	PRINT_DEBUG("delete texture: <%d>\n",tid);
 	if (tid) {
 		glDeleteTextures(1,&tid);
 		struct tex *t = TEX(textureID);
 		t->tid = 0;
 		total_tex_mem -= t->mem;
+		LOGMEM("delete",tid,t->mem);
 		caml_free_dependent_memory(t->mem);
-		LOGMEM("delete",t->mem);
 	};
 }
 
@@ -40,13 +39,12 @@ void update_texture_id(value mlTextureID,GLuint textureID) {
 
 static void textureID_finalize(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
-	PRINT_DEBUG("finalize texture: <%d>\n",tid);
-	if (textureID) {
+	if (tid) {
 		glDeleteTextures(1,&tid);
 		struct tex *t = TEX(textureID);
 		total_tex_mem -= t->mem;
 		caml_free_dependent_memory(t->mem);
-		LOGMEM("finalize",t->mem);
+		LOGMEM("finalize",tid,t->mem);
 	};
 }
 
@@ -72,7 +70,7 @@ struct custom_operations textureID_ops = {
 #define Store_textureID(mltex,texID,dataLen) \
 	caml_alloc_dependent_memory(dataLen); \
 	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
-	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",dataLen);}
+	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",texID,dataLen);}
 //*TEXTURE_ID(mlTextureID) = tid;
 
 value alloc_texture_id(GLuint textureID, unsigned int dataLen) {
@@ -728,10 +726,11 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 			rb->realHeight = legalHeight;
 
 			value mlTextureID;
-			Store_textureID(mlTextureID,rb->tid,legalWidth*legalHeight*4);
 			TEX(Field(renderInfo,0))->tid = 0;
-			caml_free_dependent_memory(TEX(Field(renderInfo,0))->mem);
 			total_tex_mem -= TEX(Field(renderInfo,0))->mem;
+			caml_free_dependent_memory(TEX(Field(renderInfo,0))->mem);
+			int s = legalWidth*legalHeight*4;
+			Store_textureID(mlTextureID,rb->tid,s);
 			Store_field(renderInfo,0,mlTextureID);
 		};
 	};

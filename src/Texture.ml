@@ -704,6 +704,7 @@ ENDIF;
 
 
 class rbt rb = 
+  let () = debug "create rendered texture <%ld>" (int32_of_textureID rb.renderInfo.rtextureID) in
   object(self)
     method renderInfo = rb.renderInfo;
     method renderbuffer = rb;
