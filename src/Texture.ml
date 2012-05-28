@@ -584,6 +584,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
             | True -> path
             ]
           in
+          let () = debug:async "make_and_cache: %s" path in
           let texture = make_and_cache path textureInfo in
           let waiters = MHashtbl.pop_all waiters path in
           (

@@ -109,7 +109,6 @@ value call_method' meth access_token params callback =
     ignore (
       loader#addEventListener URLLoader.ev_COMPLETE (
         fun _ _ _ -> 
-          let () = Printf.eprintf "WE GOT DATA: %s\n%!" loader#data in
           let cb = 
             try 
               let json_data = Ojson.from_string loader#data in 

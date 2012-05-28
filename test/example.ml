@@ -878,6 +878,8 @@ value quad (stage:Stage.c) =
   let q = Quad.create ~color:(`Color 0xFF0000) 200. 200. in
   (
     q#setPos 100. 100.;
+    q#setAlpha 0.2;
+    q#setColor (`Color 0x00FF00);
     stage#addChild q;
   );
 

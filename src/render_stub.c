@@ -559,7 +559,7 @@ value ml_quad_color(value quad) {
 
 void ml_quad_set_color(value quad,value color) {
 	lgQuad *q = *QUAD(quad);
-	extract_color(color,q->bl.c.a,0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
+	extract_color(color,((double)q->bl.c.a / 255.),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
 }
 
 value ml_quad_alpha(value quad) {

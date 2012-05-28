@@ -520,10 +520,12 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 }
 
 int load_image_info(char *cpath,char *suffix, textureInfo *tInfo) {
+	NSLog(@"LOAD_IMAGE_INFO: %s",cpath);
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	NSString *path = [NSString stringWithCString:cpath encoding:NSASCIIStringEncoding];
 	int r = _load_image(path,suffix,tInfo);
 	[pool release];
+	NSLog(@"IMAGE_LOADED: %s",cpath);
 	return r;
 }
 

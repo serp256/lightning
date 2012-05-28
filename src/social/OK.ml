@@ -24,7 +24,6 @@ value scope_of_perms perms =
 value calc_signature params pkey access_token = 
   let sorted = List.sort (fun (k1,_) (k2,_) -> compare k1 k2) params in
   let joined = List.fold_left (fun acc (k,v) -> acc ^ k ^ "=" ^ v) "" sorted in
-  let () = Printf.eprintf "Signing %s\n%!" joined in
   let md5_1 = Digest.to_hex (Digest.string (access_token ^ pkey)) in
   Digest.to_hex (Digest.string (joined ^ md5_1));
 
@@ -112,15 +111,13 @@ value call_method' meth access_token params callback =
     ignore (
       loader#addEventListener URLLoader.ev_COMPLETE (
         fun _ _ _ -> 
-          let () = Printf.eprintf "WE GOT DATA: %s\n%!" loader#data in
           let response = 
             try 
               let json_data = Ojson.from_string loader#data in 
               try 
-                let () = Printf.eprintf "DATA:\n%!" in
                 let error = extract_error_from_json json_data
                 in Error error
-              with [ Not_found -> let () = Printf.eprintf "DATA IS OK:\n%!" in Data json_data ] 
+              with [ Not_found ->  Data json_data ] 
             with [ exn -> Error (SocialNetworkError ("998", Printexc.to_string exn)) ]
           in callback response
       )
