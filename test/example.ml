@@ -883,6 +883,10 @@ value quad (stage:Stage.c) =
 (*     q#setColor (`Color 0x00FF00); *)
   );
 
+value hardware (stage:Stage.c) =
+  let open Hardware in
+  debug "platform: %s, model: %s, cpu: %d, total mem: %d, user mem: %d" (platform()) (hwmodel()) (cpu_frequency()) (total_memory()) (user_memory());
+
 value raise_some_exn () = 
   if True then raise (Failure "BLYYYY exn") else ();
 
@@ -1018,6 +1022,27 @@ value music (self:Stage.c) =
 );
 
 
+value glow_and_gc (stage:Stage.c) = 
+(
+(*   for i = 0 to 100 do *)
+    let (_,text) = TLF.create (TLF.p ~fontSize:20 [`text "Пизда Ля Ля"]) in
+    let tree = Image.load "tree.png" in
+    let sprite = Sprite.create () in
+    (
+      sprite#addChild tree;
+      sprite#addChild text;
+      sprite#addEventListener DisplayObject.ev_ENTER_FRAME begin fun _ (_,sprite) _ ->
+        match sprite#filters with
+        [ [] -> sprite#setFilters [ Filters.glow ~size:2 0xFF0000 ]
+        | _ -> sprite#setFilters []
+        ]
+      end;
+      stage#addChild sprite;
+    );
+(*   done; *)
+  onClick stage (fun _ -> Gc.compact());
+);
+
 
 let stage width height = 
   object(self)
@@ -1026,9 +1051,9 @@ let stage width height =
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
 (*       accelerometer (); *)
-(*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
+        BitmapFont.register "MyriadPro-Regular.fnt";
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
-(*         TLF.default_font_family.val := "Myriad Pro"; *)
+        TLF.default_font_family.val := "Myriad Pro";
 (*
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
           self#addChild tlf;
@@ -1070,6 +1095,8 @@ let stage width height =
       (* localNotif (); *)
           music self;
           quad self;
+          hardware self;
+          glow_and_gc self;
     end;
   end
 in

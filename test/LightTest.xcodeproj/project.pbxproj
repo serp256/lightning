@@ -16,6 +16,7 @@
 		517EB8801522F888009D91B1 /* pallete.plx in Resources */ = {isa = PBXBuildFile; fileRef = 517EB87F1522F888009D91B1 /* pallete.plx */; };
 		517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */; };
 		51846F6514EE704D00FDE684 /* test.native in CopyFiles */ = {isa = PBXBuildFile; fileRef = 51846F6414EE704D00FDE684 /* test.native */; };
+		5184FDBD15741E2D001FDC0F /* MyriadPro-Regular_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 5184FDBC15741E2D001FDC0F /* MyriadPro-Regular_0.alpha */; };
 		518D151C14FE441300B5436E /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */; };
 		5191FD9314FF5FC900DD8677 /* frame.png in Resources */ = {isa = PBXBuildFile; fileRef = 5191FD9214FF5FC900DD8677 /* frame.png */; };
 		51B5418514F273C300EB2241 /* items in Resources */ = {isa = PBXBuildFile; fileRef = 51B5418414F273C300EB2241 /* items */; };
@@ -57,6 +58,7 @@
 		517EB87F1522F888009D91B1 /* pallete.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = pallete.plx; path = ../../lightning/test/Resources/pallete.plx; sourceTree = "<group>"; };
 		517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular0.alpha"; path = "../../lightning/test/Resources/MyriadPro-Regular0.alpha"; sourceTree = "<group>"; };
 		51846F6414EE704D00FDE684 /* test.native */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = test.native; sourceTree = "<group>"; };
+		5184FDBC15741E2D001FDC0F /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
 		518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "MyriadPro-Regular.fnt"; path = "../../lightning/test/Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
 		5191FD9214FF5FC900DD8677 /* frame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = frame.png; path = ../../lightning/test/Resources/frame.png; sourceTree = "<group>"; };
 		51B5418414F273C300EB2241 /* items */ = {isa = PBXFileReference; lastKnownFileType = folder; name = items; path = ../../lightning/test/Resources/items; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
+				5184FDBC15741E2D001FDC0F /* MyriadPro-Regular_0.alpha */,
 				5175C4DE156E80DE00A6DB34 /* sound.mp3 */,
 				517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */,
 				517EB87F1522F888009D91B1 /* pallete.plx */,
@@ -210,6 +213,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5184FDBD15741E2D001FDC0F /* MyriadPro-Regular_0.alpha in Resources */,
 				5175C4DF156E80DE00A6DB34 /* sound.mp3 in Resources */,
 				517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */,
 				517EB8801522F888009D91B1 /* pallete.plx in Resources */,

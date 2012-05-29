@@ -402,7 +402,7 @@ static inline GLuint powOfTwo(unsigned int p) {
 }
 
 void ml_glow2_make(value orb,value glow) {
-	renderbuffer_t *rb = (renderbuffer_t*)Field(orb,0);
+	renderbuffer_t *rb = RENDERBUFFER(Field(orb,0));
 	int gsize = Int_val(Field(glow,0));
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
 
@@ -477,7 +477,7 @@ struct vpclp {
 
 void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
-	renderbuffer_t *rb = (renderbuffer_t*)Field(orb,0);
+	renderbuffer_t *rb = RENDERBUFFER(Field(orb,0));
 
 //	fprintf(stderr,"create glow %d - [%f:%f]\n",gsize,rb->width,rb->height);
 

@@ -162,6 +162,9 @@ typedef struct {
 } renderbuffer_t;
 
 
+#define RENDERBUFFER(v) ((renderbuffer_t*)Data_custom_val(v))
+
+
 int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter);
 int clone_renderbuffer(renderbuffer_t *sr,renderbuffer_t *dr,GLenum filter);
 void delete_renderbuffer(renderbuffer_t *rb);

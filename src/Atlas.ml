@@ -150,7 +150,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 Render.push_matrix cm;
                 Render.clear 0 0.;
                 RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
-                (* self#render_quads ~program:g_make_program 1. False; *)
                 match glow.Filters.glowKind with
                 [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
                 | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
@@ -171,6 +170,11 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             else ()
         | _ -> () (* Debug.w "update glow not need" *)
         ];
+
+      (*
+      value mutable fltrs = [];
+      method! setFilters f = fltrs := f;
+      *)
 
       (*
       value mutable filters = [];

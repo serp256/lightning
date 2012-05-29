@@ -138,6 +138,7 @@ class c =
                  (
                    let alpha' = alpha in
                    (
+                     self#setAlpha 1.;
                      ctex#draw begin fun () ->
                        (
                          Render.push_matrix m;

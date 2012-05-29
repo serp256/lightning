@@ -830,7 +830,7 @@ class rbt rb =
     initializer 
     (
 (*       texture_mem_add (legalWidth * legalHeight * 4); *)
-      Gc.finalise (fun obj -> if not obj#released then renderbuffer_delete obj#renderbuffer.renderbuffer else ()) self;
+      Gc.finalise (fun obj -> (debug:gc "release renderbuffer"; if not obj#released then renderbuffer_delete obj#renderbuffer.renderbuffer else ())) self;
     );
 
   end; (*}}}*)

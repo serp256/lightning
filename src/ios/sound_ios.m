@@ -498,7 +498,7 @@ CAMLprim value ml_avsound_create_player(value fname) {
     raise_error("Error initializing LightningAVSoundPlayerController", NULL, 404);
   }
 
-	value result = caml_alloc_custom(&avplayer_ops,sizeof(AVSoundPlayerController*),1,0);
+	value result = caml_alloc_custom(&avplayer_ops,sizeof(AVSoundPlayerController*),0,1);
 
 	*AVPLAYER(result) = playerController;
 
