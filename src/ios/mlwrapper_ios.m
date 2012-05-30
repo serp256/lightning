@@ -110,16 +110,19 @@ void ml_kv_storage_commit(value storage) {
 
 value ml_kv_storage_get_string(value key_ml) {
   CAMLparam1(key_ml);
-  CAMLlocal1(tuple);
+  CAMLlocal2(result,tuple);
 
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  NSString * val = [USER_DEFAULTS stringForKey:key];
+  NSData * val = [USER_DEFAULTS dataForKey:key];
   if (val == nil) {
     CAMLreturn(Val_int(0));
   }
+
+	result = caml_alloc_string(val.length);
+	[val getBytes:String_val(result) length:val.length];
   
   tuple = caml_alloc_tuple(1);
-  Store_field(tuple,0,caml_copy_string([val cStringUsingEncoding:NSASCIIStringEncoding]));
+  Store_field(tuple,0,result);
   
   CAMLreturn(tuple);
 }
@@ -183,8 +186,8 @@ value ml_kv_storage_get_float(value key_ml) {
 
 void ml_kv_storage_put_string(value key_ml, value val_ml) {
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  NSString * val = [NSString stringWithCString:String_val(val_ml) encoding:NSUTF8StringEncoding];
-  [USER_DEFAULTS setObject: val forKey: key];
+	NSString * val = [NSData dataWithBytes:String_val(val_ml) length:caml_string_length(val_ml)];
+  [USER_DEFAULTS setObject:val forKey: key];
 }
 
 
