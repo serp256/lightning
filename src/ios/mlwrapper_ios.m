@@ -142,8 +142,7 @@ value ml_kv_storage_get_bool(value key_ml) {
   BOOL val = [d boolForKey: key];
   tuple = caml_alloc_tuple(1);
   Store_field(tuple,0,Val_bool(val));
-  
-  CAMLreturn(tuple);
+   CAMLreturn(tuple);
 }
 
 
@@ -186,7 +185,7 @@ value ml_kv_storage_get_float(value key_ml) {
 
 void ml_kv_storage_put_string(value key_ml, value val_ml) {
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-	NSString * val = [NSData dataWithBytes:String_val(val_ml) length:caml_string_length(val_ml)];
+	NSData * val = [NSData dataWithBytes:String_val(val_ml) length:caml_string_length(val_ml)];
   [USER_DEFAULTS setObject:val forKey: key];
 }
 
