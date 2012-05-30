@@ -1026,6 +1026,21 @@ value sound (stage:Stage.c) =
         ));        
       );
   );
+
+value payments  (stage:Stage.c) =
+  let img = Image.load "tree.png" in
+  (
+    stage#addChild img;
+
+    Payment.init (fun _ _ _ -> debug "success") (fun _ _ _ -> debug "fail");
+
+    ignore(img#addEventListener Stage.ev_TOUCH (fun ev _ _ ->
+      match Stage.touches_of_data ev.Ev.data with
+      [ Some [ touch :: _  ] when touch.Touch.phase = Touch.TouchPhaseEnded -> Payment.purchase "android.test.purchased" (* PaymentAndroid.test () *)
+      | _ -> ()
+      ]
+    ));
+  );
     
 
 let stage width height = 
@@ -1073,7 +1088,8 @@ let stage width height =
 (*         filters self; *)
 (*         game_center self; *)
           (* pvr self; *)
-          sound self;
+          (* sound self; *)
+          payments self;
 (*           url_loader self; *)
 (*           glow self; *)
 (*           storage self; *)

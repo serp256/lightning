@@ -19,11 +19,15 @@ import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.SoundPool;
 
+import ru.redspell.lightning.payments.BillingService;
+import ru.redspell.lightning.payments.ResponseHandler;
+
 public class LightView extends GLSurfaceView {
 
 	private LightRenderer renderer;
 	private int loader_id;
 	private Handler uithread;
+	private BillingService bserv;
 
 	public LightView(Activity activity) {
 		super(activity);
@@ -36,6 +40,10 @@ public class LightView extends GLSurfaceView {
 		lightInit(activity.getPreferences(0));
 		Log.d("LIGHTNING","lightInit finished");
 		initView(width,height);
+
+		bserv = new BillingService();
+		bserv.setContext(activity);
+		ResponseHandler.register(activity);
 	}
 
 	protected void initView(int width,int height) {
@@ -66,6 +74,8 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void onPause(){
+		Log.d("LIGHTNING", "onPause");
+
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -77,6 +87,8 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void onResume() {
+		Log.d("LIGHTNING", "onResume");
+		
 		super.onResume();
 		queueEvent(new Runnable() {
 			@Override
@@ -252,6 +264,16 @@ public class LightView extends GLSurfaceView {
 
 
 	private native void lightInit(SharedPreferences p);
+
+	public void requestPurchase(String prodId) {
+		bserv.requestPurchase(prodId);
+	}
+	
+	public void initBillingServ() {
+		Log.d("LIGHTNING", "-----xyu");		
+		//Log.d("LIGHTNING", "bserv.checkBillingSupported(): " + bserv.checkBillingSupported());
+		// bserv.setContext();
+		bserv.requestPurchase("android.test.purchased");
+		Log.d("LIGHTNING", "-----pizda");
+	}
 }
-
-

@@ -17,7 +17,6 @@ type sound;
 value init: unit -> unit;
 value setMasterVolume: float -> unit;
 value load: string -> sound;
-value createChannel: sound -> channel;
 
 class type virtual channel  =
   object
@@ -30,3 +29,5 @@ class type virtual channel  =
     method setLoop: bool -> unit;
     method state: sound_state;
   end;
+
+value createChannel: sound -> channel;

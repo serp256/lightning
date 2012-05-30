@@ -220,7 +220,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererInit(JNIEnv
 	DEBUG("lightRender init");
 	if (stage) {
 		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","stage alredy initialized");
-		caml_callback(*caml_named_value("realodTextures"),Val_int(0));
+		// caml_callback(*caml_named_value("realodTextures"),Val_int(0));
 		// we need reload textures
 		return;
 	}
@@ -908,4 +908,58 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 
 		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
 	}
+}
+
+void ml_paymentsTest() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jmethodID mthdId = (*env)->GetMethodID(env, jViewCls, "initBillingServ", "()V");
+	(*env)->CallIntMethod(env, jView, mthdId);
+}
+
+static value successCb;
+static value errorCb;
+
+void ml_payment_init(value scb, value ecb) {
+	if (successCb) {
+		caml_failwith("payments already initialized");		
+	}
+
+	successCb = scb;
+	caml_register_generational_global_root(&successCb);
+	errorCb = ecb;
+	caml_register_generational_global_root(&errorCb);
+}
+
+static jmethodID gRequestPurchase;
+
+void ml_payment_purchase(value prodId) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gRequestPurchase == NULL) {
+		gRequestPurchase = (*env)->GetMethodID(env, jViewCls, "requestPurchase", "(Ljava/lang/String;)V");
+	}
+
+	jstring jprodId = (*env)->NewStringUTF(env, String_val(prodId));
+	(*env)->CallVoidMethod(env, jView, gRequestPurchase, jprodId);
+	(*env)->DeleteLocalRef(env, jprodId);
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaymentSuccessCb(JNIEnv *env, jobject this, jstring prodId, jstring notifId) {
+	if (!successCb) {
+		caml_failwith("payment callbacks are not initialized");
+	}
+
+	char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
+	char *cnotifId = (*env)->GetStringUTFChars(env, notifId, JNI_FALSE);
+
+	value vprodId = caml_copy_string(cprodId);
+	value vnotifId = caml_copy_string(cnotifId);
+
+	caml_callback3(successCb, vprodId, vnotifId, Val_true);
+}
+
+void ml_payment_commit_transaction(value transaction) {	
 }
