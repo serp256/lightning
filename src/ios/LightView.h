@@ -78,5 +78,8 @@
 /// Starts rendering and event handling.
 - (void)start;
 
+- (void)foreground;
+- (void)background;
+
 
 @end

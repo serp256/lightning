@@ -609,7 +609,7 @@ value ml_renderbuffer_create(value format, value filter, value width,value heigh
 	lgResetBoundTextures();
 	value orb = caml_alloc_custom(&renderbuffer_ops,sizeof(renderbuffer_t),0,1);
 	renderbuffer_t *rb = RENDERBUFFER(orb);
-	create_renderbuffer(Double_val(width),Double_val(height),rb,fltr);
+	if (create_renderbuffer(Double_val(width),Double_val(height),rb,fltr)) caml_failwith("can't create framebuffer");
 	//fprintf(stderr,"create renderbuffer: %d:%d\n",rb->fbid,rb->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	// and create renderInfo here
@@ -667,7 +667,7 @@ value ml_renderbuffer_clone(value orb) {
 	lgResetBoundTextures();
 	value orbc = caml_alloc_custom(&renderbuffer_ops,sizeof(renderbuffer_t),0,1);
 	renderbuffer_t *rbc = RENDERBUFFER(orbc);
-	clone_renderbuffer(RENDERBUFFER(orb),rbc,GL_LINEAR);
+	if (clone_renderbuffer(RENDERBUFFER(orb),rbc,GL_LINEAR)) caml_failwith("can't clone renderbuffer");
 	//fprintf(stderr,"clone renderbuffer: %d:%d\n",rbc->fbid,rbc->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	checkGLErrors("renderbuffer clone");

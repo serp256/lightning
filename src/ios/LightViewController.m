@@ -95,11 +95,11 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 }
 
 -(void)background {
-	caml_acquire_runtime_system();
+	[(LightView *)(self.view) background];
 }
 
 -(void)foreground {
-	caml_release_runtime_system();
+	[(LightView *)(self.view) foreground];
 }
 
 -(void)showLeaderboard {
@@ -299,20 +299,6 @@ static value *ml_url_complete = NULL;
 							break;
         }
     }
-}
-
--(void)lightError:(NSString*)error {
-	LightView *lightView = (LightView*)self.view;
-	[lightView stop];
-	UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Uncatched error" message:error delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
-	[alertView show];
-	[alertView release];
-}
-
-
--(void)alertView:(UIAlertView*)alertView clickedButtonAtIndex:(NSUInteger)buttonIndex {
-	NSLog(@"alertView clicked button at index: %d",buttonIndex);
-	exit(2);
 }
 
 

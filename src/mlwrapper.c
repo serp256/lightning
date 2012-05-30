@@ -98,16 +98,16 @@ void mlstage_preRender() {
 	//caml_release_runtime_system();
 }
 
-static value stop_method = NIL;
-void mlstage_stop(mlstage *mlstage) {
-	if (stop_method == NIL) stop_method = caml_hash_variant("stop");
-	caml_callback2(caml_get_public_method(mlstage->stage,stop_method),mlstage->stage,Val_unit);
+void mlstage_background() {
+	static value *on_background_fun = NULL;
+	if (on_background_fun == NULL) on_background_fun = caml_named_value("on_background");
+	caml_callback(*on_background_fun,Val_unit);
 }
 
-static value start_method = NIL;
-void mlstage_start(mlstage *mlstage) {
-	if (start_method == NIL) start_method = caml_hash_variant("start");
-	caml_callback2(caml_get_public_method(mlstage->stage,start_method),mlstage->stage,Val_unit);
+void mlstage_foreground(mlstage *mlstage) {
+	static value *on_foreground_fun = NULL;
+	if (on_foreground_fun == NULL) on_foreground_fun = caml_named_value("on_foreground");
+	caml_callback(*on_foreground_fun,Val_unit);
 }
 
 static value processTouches_method = NIL;

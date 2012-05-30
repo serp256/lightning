@@ -1024,23 +1024,25 @@ value music (self:Stage.c) =
 
 value glow_and_gc (stage:Stage.c) = 
 (
-(*   for i = 0 to 100 do *)
+  let make_sprite (parent:Stage.c) =
     let (_,text) = TLF.create (TLF.p ~fontSize:20 [`text "Пизда Ля Ля"]) in
     let tree = Image.load "tree.png" in
     let sprite = Sprite.create () in
     (
       sprite#addChild tree;
       sprite#addChild text;
-      sprite#addEventListener DisplayObject.ev_ENTER_FRAME begin fun _ (_,sprite) _ ->
-        match sprite#filters with
-        [ [] -> sprite#setFilters [ Filters.glow ~size:2 0xFF0000 ]
-        | _ -> sprite#setFilters []
-        ]
-      end;
-      stage#addChild sprite;
+      sprite#setFilters [ Filters.glow ~size:2 0xFF0000 ];
+      parent#addChild sprite;
+      sprite;
+    )
+  in
+  let sprite = ref (make_sprite stage) in
+  stage#addEventListener DisplayObject.ev_ENTER_FRAME begin fun _ (_,stage) _ ->
+    (
+      !sprite#removeFromParent();
+      sprite.val := make_sprite stage;
     );
-(*   done; *)
-  onClick stage (fun _ -> Gc.compact());
+  end |> ignore;
 );
 
 
@@ -1096,7 +1098,7 @@ let stage width height =
           music self;
           quad self;
           hardware self;
-          glow_and_gc self;
+(*           glow_and_gc self; *)
     end;
   end
 in
