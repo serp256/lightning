@@ -324,11 +324,13 @@ void ml_uncatchedError(value message) {
 
 
 value ml_getDeviceType(value p) {
-  value r;
+  value r = Val_int(0);
+	NSLog(@"getDeviceType: %d [ %d, %d]",[[UIDevice currentDevice] userInterfaceIdiom],UIUserInterfaceIdiomPhone,UIUserInterfaceIdiomPad);
   switch ([[UIDevice currentDevice] userInterfaceIdiom]) {
-    case UIUserInterfaceIdiomPhone: r = Val_int(0);
-    case UIUserInterfaceIdiomPad: r = Val_int(1);
+    case UIUserInterfaceIdiomPhone: r = Val_int(0); break;
+    case UIUserInterfaceIdiomPad: r = Val_int(1); break;
   };
+	NSLog(@"result: %d",r);
   return r;
 }
 

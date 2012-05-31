@@ -20,6 +20,9 @@
 		518D151C14FE441300B5436E /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */; };
 		5191FD9314FF5FC900DD8677 /* frame.png in Resources */ = {isa = PBXBuildFile; fileRef = 5191FD9214FF5FC900DD8677 /* frame.png */; };
 		51B5418514F273C300EB2241 /* items in Resources */ = {isa = PBXBuildFile; fileRef = 51B5418414F273C300EB2241 /* items */; };
+		51C72804157768860003B471 /* CCFairyTale_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 51C72802157768860003B471 /* CCFairyTale_0.alpha */; };
+		51C72805157768860003B471 /* CCFairyTale.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 51C72803157768860003B471 /* CCFairyTale.fnt */; };
+		51C72808157768C20003B471 /* fb.png in Resources */ = {isa = PBXBuildFile; fileRef = 51C72807157768C20003B471 /* fb.png */; };
 		51DC6E1314EE5E960084EB76 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1114EE5E960084EB76 /* InfoPlist.strings */; };
 		51DC6E1F14EE5E960084EB76 /* ViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1D14EE5E960084EB76 /* ViewController_iPhone.xib */; };
 		51DC6E2214EE5E960084EB76 /* ViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E2014EE5E960084EB76 /* ViewController_iPad.xib */; };
@@ -62,6 +65,9 @@
 		518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "MyriadPro-Regular.fnt"; path = "../../lightning/test/Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
 		5191FD9214FF5FC900DD8677 /* frame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = frame.png; path = ../../lightning/test/Resources/frame.png; sourceTree = "<group>"; };
 		51B5418414F273C300EB2241 /* items */ = {isa = PBXFileReference; lastKnownFileType = folder; name = items; path = ../../lightning/test/Resources/items; sourceTree = "<group>"; };
+		51C72802157768860003B471 /* CCFairyTale_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = CCFairyTale_0.alpha; path = Resources/CCFairyTale_0.alpha; sourceTree = "<group>"; };
+		51C72803157768860003B471 /* CCFairyTale.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = CCFairyTale.fnt; path = Resources/CCFairyTale.fnt; sourceTree = "<group>"; };
+		51C72807157768C20003B471 /* fb.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = fb.png; path = Resources/fb.png; sourceTree = "<group>"; };
 		51DC6E0414EE5E960084EB76 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		51DC6E0814EE5E960084EB76 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		51DC6E0A14EE5E960084EB76 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -82,6 +88,9 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
+				51C72807157768C20003B471 /* fb.png */,
+				51C72802157768860003B471 /* CCFairyTale_0.alpha */,
+				51C72803157768860003B471 /* CCFairyTale.fnt */,
 				5184FDBC15741E2D001FDC0F /* MyriadPro-Regular_0.alpha */,
 				5175C4DE156E80DE00A6DB34 /* sound.mp3 */,
 				517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */,
@@ -213,6 +222,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				51C72808157768C20003B471 /* fb.png in Resources */,
+				51C72804157768860003B471 /* CCFairyTale_0.alpha in Resources */,
+				51C72805157768860003B471 /* CCFairyTale.fnt in Resources */,
 				5184FDBD15741E2D001FDC0F /* MyriadPro-Regular_0.alpha in Resources */,
 				5175C4DF156E80DE00A6DB34 /* sound.mp3 in Resources */,
 				517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */,

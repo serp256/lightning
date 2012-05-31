@@ -137,92 +137,24 @@ value tlf (stage:Stage.c) =
 (
   debug "REGISTR FONT";
   BitmapFont.register "MyriadPro-Regular.fnt";
+  BitmapFont.register "CCFairyTale.fnt";
   debug "FONT REGISTRED";
   TLF.default_font_family.val := "Myriad Pro";
-  let quad = Quad.create  ~color:(`Color 0xCC0000) 100. 20. in
-  (
-    quad#setPos 100. 100.;
-    stage#addChild quad;
-  );
-  let ((w,h),text) = 
-    TLF.create begin
-        TLF.p ~halign:`center ~color:0xFFFFFF ~fontSize:15 
-          [ 
-            `text "животные";
-          ]
-    end 
-  in
-  (
-    debug "w:%f,h:%f" w h;
-    text#setPos 100. 100.;
-    text#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF));
-    text#setFilters [ Filters.glow ~size:2 0x00FF00 ];
-(*     text#setAlpha 0.3; *)
-    stage#addChild text;
-  );
   (*
-  let quad = Quad.create  ~color:0xCC0000 100. 20. in
-  (
-    quad#setPos 220. 100.;
-    stage#addChild quad;
-  );
-  let (_,text) = 
-    TLF.create ~width:100. begin
-        TLF.p ~halign:`center ~color:0xfff4c7 ~fontSize:15 
-          [ 
-            `text "животные";
-          ]
-    end 
+  let xml = "<p valign=\"center\" halign=\"center\" color=\"0x591100\" font-size=\"16\"><span color=\"0xA01063\">семена дыни</span> будет открыт за <span><img src=\"fb.png\" padding-right=\"1.\"
+  padding-left=\"0.\" height=\"20.\" width=\"20.\"/><span color=\"0xA01063\" font-size=\"18\" font-family=\"CCFairyTale\">9</span></span>. Продолжить?</p>" in
+  *)
+  let xml = 
+    "<p valign=\"center\" halign=\"left\" color=\"0x591100\" font-size=\"16\"><span color=\"0xA01063\" font-size=\"18\" font-family=\"CCFairyTale\">6</span> шт <span color=\"0x317AC9\">баклажан</span> будет продано за б<span><img src=\"fb.png\" padding-right=\"1.\" padding-left=\"0.\" height=\"16.\"></img><span color=\"0xA01063\" font-size=\"16\" font-family=\"CCFairyTale\">1800</span></span> Продолжить?</p>"
   in
+
+  
+
+  let tlf = TLF.parse xml in
+  let (_,text) = TLF.create ~width:282. ~height:82. tlf in
   (
-    text#setPos 220. 100.;
-    text#setFilters [ Filters.glow 0x00FF00 ];
-(*     text#setAlpha 0.3; *)
     stage#addChild text;
   );
-  let quad = Quad.create  ~color:0xFF0000 100. 20. in
-  (
-    quad#setPos 190. 134.;
-    stage#addChild quad;
-  );
-  let tex = (Texture.load "MyriadPro-Regular0.png")#subTexture (Rectangle.create 341. 421. 6. 8.) in
-  (
-    let g = Image.create tex in
-    (
-      g#setPos 200. 140.;
-      stage#addChild g;
-    );
-    let g = Image.create tex in
-    (
-      g#setPos 220. 140.5;
-      stage#addChild g;
-    );
-    let g = Image.create tex in
-    (
-      g#setPos 240.5 140.0;
-      stage#addChild g;
-    );
-    let g = Image.create tex in
-    (
-      g#setPos 260.4 140.5;
-      stage#addChild g;
-    );
-  );
-
-  let tree = Image.load "tree.png" in
-  (
-    tree#setPos 20.5 200.;
-    tree#setFilters [ Filters.glow ~size:2 ~strength:2 0xFF0000 ];
-    stage#addChild tree;
-  );
-  let tree = Image.load "tree.png" in
-  (
-(*     tree#texture#setFilter Texture.FilterLinear; *)
-    tree#setPos 150. 200.;
-    tree#setFilters [ Filters.glow ~size:2 ~strength:2 0xFF0000 ];
-    stage#addChild tree;
-  );
-  *)
 );
 
 
@@ -884,8 +816,14 @@ value quad (stage:Stage.c) =
   );
 
 value hardware (stage:Stage.c) =
+(
   let open Hardware in
   debug "platform: %s, model: %s, cpu: %d, total mem: %d, user mem: %d" (platform()) (hwmodel()) (cpu_frequency()) (total_memory()) (user_memory());
+  match LightCommon.deviceType () with
+  [ LightCommon.Pad -> debug "this is PAD"
+  | LightCommon.Phone -> debug "this is phone"
+  ]
+);
 
 value raise_some_exn () = 
   if True then raise (Failure "BLYYYY exn") else ();
@@ -1046,6 +984,7 @@ value glow_and_gc (stage:Stage.c) =
 );
 
 
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -1095,8 +1034,9 @@ let stage width height =
 (*         window self; *)
 (*         zsort self; *)
       (* localNotif (); *)
-          music self;
-          quad self;
+(*           music self; *)
+          tlf self;
+(*           quad self; *)
           hardware self;
 (*           glow_and_gc self; *)
     end;

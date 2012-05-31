@@ -21,19 +21,20 @@
 @synthesize orientationDelegate=_orientationDelegate;
 
 static LightViewController *instance = NULL;
+static NSString *supportEmail = @"nanofarm@redspell.ru";
 
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
-	// FIXME: address 
-	NSString * to = @"nanofarm@redspell.ru";
-  NSString * subj = [NSString stringWithFormat:@"Сообщение об ошибке в игре '%@'", [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
+	NSBundle *bundle = [NSBundle mainBundle];
+	NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
+  subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
 	UIDevice * dev = [UIDevice currentDevice];
-	NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleVersion"];
-	// FIXME: localization here
-	NSString * body = [NSString stringWithFormat:@"На моем %@ (iOS %@) ваше приложение (v%@) завершилось с ошибкой. Исправьте её как можно скорее. Спасибо!\n------------------------------------------------------\n%s\n", dev.model, dev.systemVersion, appVersion, exn];
+	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+	NSString * body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
+	body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n%s\n"],dev.model, dev.systemVersion, appVersion, exn];
 	for (int i = 0; i < bc; i++) {
 		if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
 	};
-	NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", to, subj, body];
+	NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", supportEmail, subj, body];
   email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
   [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];
 }
