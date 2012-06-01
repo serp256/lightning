@@ -136,22 +136,27 @@ value onClick obj handler  =
 value tlf (stage:Stage.c) = 
 (
   debug "REGISTR FONT";
+  LightCommon.set_resources_suffix "x2";
   BitmapFont.register "MyriadPro-Regular.fnt";
   BitmapFont.register "CCFairyTale.fnt";
   debug "FONT REGISTRED";
   TLF.default_font_family.val := "Myriad Pro";
+  TLF.default_font_size.val := 18;
   (*
   let xml = "<p valign=\"center\" halign=\"center\" color=\"0x591100\" font-size=\"16\"><span color=\"0xA01063\">семена дыни</span> будет открыт за <span><img src=\"fb.png\" padding-right=\"1.\"
   padding-left=\"0.\" height=\"20.\" width=\"20.\"/><span color=\"0xA01063\" font-size=\"18\" font-family=\"CCFairyTale\">9</span></span>. Продолжить?</p>" in
   *)
+  (*
   let xml = 
     "<p valign=\"center\" halign=\"left\" color=\"0x591100\" font-size=\"16\"><span color=\"0xA01063\" font-size=\"18\" font-family=\"CCFairyTale\">6</span> шт <span color=\"0x317AC9\">баклажан</span> будет продано за б<span><img src=\"fb.png\" padding-right=\"1.\" padding-left=\"0.\" height=\"16.\"></img><span color=\"0xA01063\" font-size=\"16\" font-family=\"CCFairyTale\">1800</span></span> Продолжить?</p>"
   in
+  *)
 
-  
+  let xml = "<p halign=\"left\" color=\"0x591100\">The cat appreciates sour cream. He'll keep helping you collect combo, and you will get a bonus to your maximum energy!</p>" in
+
 
   let tlf = TLF.parse xml in
-  let (_,text) = TLF.create ~width:282. ~height:82. tlf in
+  let (_,text) = TLF.create ~width:880. ~height:80. tlf in
   (
     stage#addChild text;
   );
@@ -992,9 +997,9 @@ let stage width height =
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
 (*       accelerometer (); *)
-        BitmapFont.register "MyriadPro-Regular.fnt";
+(*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
-        TLF.default_font_family.val := "Myriad Pro";
+(*         TLF.default_font_family.val := "Myriad Pro"; *)
 (*
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
           self#addChild tlf;

@@ -16,6 +16,7 @@ static char* resourcePath = "Resources/";
 
 
 int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
+	PRINT_DEBUG("load_image_info: %s[%s]",fname,suffix);
 	int rplen = strlen(resourcePath);
 	// try pallete first
 	char *ext = strrchr(fname,'.');

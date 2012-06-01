@@ -611,6 +611,7 @@ value check_async () =
   ];
 
 value load_async ?(with_suffix=True) path callback = 
+  let () = debug "start async load %s[%b]" path with_suffix in
   let texture = 
     try
       let path = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in

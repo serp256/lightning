@@ -684,29 +684,29 @@ value create ?width ?height ?border ?dest (html:main) =
               let () = debug "font scale: %f" font.BitmapFont.scale in
               let text_whitespace = ref None in
               let yoffset = ref 0. in
-              let rec add_line currentLine index = 
+              let rec add_line currentLine num index = 
                 let () = debug "add line" in
                 let () = currentLine.closed := True in
                 let nextLine = createLine font lines in
                 (
                   yoffset.val := 0.;
                   text_whitespace.val := None;
-                  add_char nextLine 0 index
+                  add_char nextLine num index
                 )
-              and add_char line numChars index = 
+              and add_char line num index = 
                 if index < strLength 
                 then
                   let code = UChar.code (UTF8.look text index) in
                   let open BitmapFont in
                   if code = CHAR_NEWLINE 
                   then
-                    add_line line (UTF8.next text index)
+                    add_line line (num+1) (UTF8.next text index)
                    else if code = CHAR_SPACE 
                    then
                    (
                      line.currentX := line.currentX +. font.space;
-                     text_whitespace.val := Some (numChars,DynArray.length line.lchars);
-                     add_char line (numChars+1) (UTF8.next text index)
+                     text_whitespace.val := Some (num,DynArray.length line.lchars);
+                     add_char line (num+1) (UTF8.next text index)
                    )
                    else
                      match try Some (Hashtbl.find font.chars code) with [ Not_found -> None ] with
@@ -725,7 +725,7 @@ value create ?width ?height ?border ?dest (html:main) =
                              match !line_whitespace with
                              [ None -> 
                                let () = debug "has no whitespaces on this line" in
-                               add_line line index 
+                               add_line line num index 
                              | Some len ascender descender elements ->
                                (
                                  debug "line has whitespace";
@@ -735,19 +735,19 @@ value create ?width ?height ?border ?dest (html:main) =
                                  loop elements
                                )
                              ]
-                           | Some (numChars,numAddedChars) ->
+                           | Some (num,numAddedChars) ->
                              (
-                               debug "text has whitespace %d:%d" numChars numAddedChars;
+                               debug "text has whitespace %d:%d" num numAddedChars;
                                let cnt_chars_in_line = DynArray.length line.lchars in
                                DynArray.delete_range line.lchars numAddedChars (cnt_chars_in_line - numAddedChars);
-                               add_line line (UTF8.nth text (numChars + 1))
+                               add_line line (num+1) (UTF8.nth text (num + 1))
                              )
                            ]
                        | _ ->
                          (
                            let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:(`Color color) ~alpha:alpha bchar.atlasNode in
                            addToLine bchar.xAdvance (Char b) line;
-                           add_char line (numChars+1) (UTF8.next text index)
+                           add_char line (num+1) (UTF8.next text index)
                          )
                        ]
                      | None -> 
@@ -755,19 +755,19 @@ value create ?width ?height ?border ?dest (html:main) =
                          Debug.w "char %d not found\n%!" code;
                          line.currentX := line.currentX +. font.space;
 (*                          lastWhiteSpace.val := DynArray.length line.lchars; *)
-                         add_char line (numChars+1) (UTF8.next text index)
+                         add_char line (num+1) (UTF8.next text index)
                        )
                      ]
                 else 
                 (
                   match !text_whitespace with
-                  [ Some (numChars,ws) -> 
-                    let () = debug "set line_whitespace: %d, %d" ws numChars in
+                  [ Some (num,ws) -> 
+                    let () = debug "set line_whitespace: %d, %d" ws num in
                     line_whitespace.val := Some ( 
                       ws , line.ascender, line.descender, 
-                      if numChars + 1 < UTF8.length text
+                      if num + 1 < UTF8.length text
                       then 
-                        let index = UTF8.nth text (numChars + 1) in
+                        let index = UTF8.nth text (num + 1) in
                         [ (attributes, [ `text (String.sub text index (strLength - index)) :: elements ]) :: next ]
                       else [ (attributes,elements) :: next ]
                     )
