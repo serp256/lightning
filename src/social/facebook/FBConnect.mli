@@ -17,7 +17,7 @@ module GraphAPI :
       fb_request_did_load   : option (Ojson.t -> unit)
     };
 
-    value request : string -> list (string*string) -> ?delegate:option delegate -> unit -> unit;
+    value request : string -> list (string*string) -> ?delegate:delegate -> unit -> unit;
   end;
 
 
@@ -32,6 +32,6 @@ module Dialog :
 
     type users_filter = [ All | AppUsers | NonAppUsers ];
 
-    value apprequest : ?message:string -> ?recipients:list string -> ?filter:users_filter -> ?title:string -> ?delegate:option delegate -> unit -> unit;
+    value apprequest : ?message:string -> ?recipients:list string -> ?filter:users_filter -> ?title:string -> ?delegate:delegate -> unit -> unit;
   end;
   

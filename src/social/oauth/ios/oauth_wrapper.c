@@ -8,7 +8,7 @@ void ml_authorization_grant(value url,value close_button) {
   OAuth *oauth = [[OAuth alloc] initWithURL:url closeButton:close_button];
 	//fprintf(stderr,"sharedInstace - %p, present: %p\n",[LightViewController sharedInstance],oauth);
 	//caml_release_runtime_system();
-	[[LightViewController sharedInstance] presentModalViewController:oauth animated: YES];
+	[[LightViewController sharedInstance] presentModalViewController:oauth animated:YES];
 	[oauth release];
 	//caml_acquire_runtime_system();
 	//fprintf(stderr,"oauth presented\n");

@@ -26,26 +26,13 @@
 #undef HAS_VAO
 #endif
 
-/*
-void check_gl_errors(char *fname, int lnum, char *msg) {
-	GLenum error = glGetError();
-	int is_error = 0;
-	while (error != GL_NO_ERROR) {
-		printf("(%s:%d) %s: gl error: %d\n",fname,lnum,msg,error);
-		error = glGetError();
-		is_error = 1;
-	};
-	if (is_error) exit(1);
-}
-*/
-
 //////////////////////////////////
 /// COLORS
 
 
 #define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
 
-#define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),alpha}
+#define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),(GLubyte)(alpha * 255.)}
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
 #define UPDATE_PMA_ALPHA(c,alpha) (c.r = (GLubyte)((double)c.r * alpha), c.g = (GLubyte)((double)c.g * alpha), c.b = (GLubyte)((double)c.b * alpha), c.a = (GLubyte)(a * 255))
 
@@ -274,7 +261,7 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 	uniformFun bindUniforms;
 */
 
-#define SPROGRAM(v) *((sprogram**)Data_custom_val(v))
+#define SPROGRAM(v) ((sprogram*)Data_custom_val(v))
 
 static void program_finalize(value program) {
 	sprogram *p = SPROGRAM(program);
@@ -282,7 +269,7 @@ static void program_finalize(value program) {
 	if (p->uniforms != NULL) caml_stat_free(p->uniforms);
   if( p->program == currentShaderProgram ) currentShaderProgram = 0;
 	glDeleteProgram(p->program);
-	caml_stat_free(p);
+	//caml_stat_free(p);
 }
 
 static int program_compare(value p1,value p2) {
@@ -350,7 +337,8 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
     caml_failwith("Failed to link program");
   }
 
-	sprogram *sp = caml_stat_alloc(sizeof(sprogram));
+	prg = caml_alloc_custom(&program_ops,sizeof(sprogram),0,1);
+	sprogram *sp = SPROGRAM(prg);
 
 	checkGLErrors("before uniforms");
 
@@ -406,8 +394,6 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 	checkGLErrors("uniform binded");
 	//fprintf(stderr,"create program: %d\n",program);
 	sp->program = program;
-	prg = caml_alloc_custom(&program_ops,sizeof(*sp),0,1);
-	SPROGRAM(prg) = sp;
 	res = caml_alloc_tuple(3);
 	Store_field(res,0,prg);
 	Store_field(res,1,vShader);
@@ -440,7 +426,7 @@ static value caml_hash_Color = 0;
 
 static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,color4B *tr,color4B *bl,color4B *br) {
 	if (Is_long(color)) { // white
-		GLubyte a = 255 * alpha;
+		GLubyte a = alpha * 255.;
 		color4B clr;
 		if (pma) clr = (color4B){a,a,a,a};
 		else clr = (color4B){255,255,255,a};
@@ -494,17 +480,20 @@ typedef struct
 } lgQuad;
 
 
-#define QUAD(v) ((lgQuad**)Data_custom_val(v))
+#define QUAD(v) ((lgQuad*)Data_custom_val(v))
 
+/*
 static void quad_finalize(value quad) {
-	lgQuad *q = *QUAD(quad);
+	lgQuad *q = QUAD(quad);
 	PRINT_DEBUG("quad finalize");
-	caml_stat_free(q);
+	//caml_stat_free(q);
 }
+*/
 
 struct custom_operations quad_ops = {
   "pointer to a quad",
-  quad_finalize,
+  //quad_finalize,
+	custom_finalize_default,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
@@ -513,22 +502,21 @@ struct custom_operations quad_ops = {
 
 value ml_quad_create(value width,value height,value color,value alpha) {
 	CAMLparam4(width,height,color,alpha);
-	lgQuad *q = (lgQuad*)caml_stat_alloc(sizeof(lgQuad));
+	value res = caml_alloc_custom(&quad_ops,sizeof(lgQuad),0,1); // 
+	lgQuad *q = QUAD(res);
   extract_color(color,Double_val(alpha),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
-	//printf("quad color: [%hhu,%hhu,%hhu,%hhu]\n",c.r,c.g,c.b,c.a);
+	printf("quad color: [%hhu,%hhu,%hhu]\n",q->tl.c.r,q->tl.c.g,q->tl.c.b);
 	q->bl.v = (vertex2F) { 0, 0 };
 	q->br.v = (vertex2F) { Double_val(width)};
 	q->tl.v = (vertex2F) { 0, Double_val(height)};
 	q->tr.v = (vertex2F) { Double_val(width), Double_val(height) };
-	value res = caml_alloc_custom(&quad_ops,sizeof(lgQuad*),0,1); // 
-	*QUAD(res) = q;
 	CAMLreturn(res);
 }
 
 value ml_quad_points(value quad) { 
 	CAMLparam1(quad);
 	CAMLlocal4(p1,p2,p3,p4);
-	lgQuad *q = *QUAD(quad);
+	lgQuad *q = QUAD(quad);
 	int s = 2 * Double_wosize;
 	p1 = caml_alloc(s,Double_array_tag);
 	Store_double_field(p1, 0, (double)q->bl.v.x);
@@ -558,17 +546,17 @@ value ml_quad_color(value quad) {
 */
 
 void ml_quad_set_color(value quad,value color) {
-	lgQuad *q = *QUAD(quad);
-	extract_color(color,q->bl.c.a,0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
+	lgQuad *q = QUAD(quad);
+	extract_color(color,((double)q->bl.c.a / 255.),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
 }
 
 value ml_quad_alpha(value quad) {
-	lgQuad *q = *QUAD(quad);
+	lgQuad *q = QUAD(quad);
 	return (caml_copy_double((double)(q->bl.c.a / 255)));
 }
 
 void ml_quad_set_alpha(value quad,value alpha) {
-	lgQuad *q = *QUAD(quad);
+	lgQuad *q = QUAD(quad);
 	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);
 	//printf("set quad alpha to: %d\n",a);
 	q->bl.c.a = a;
@@ -599,7 +587,7 @@ void print_quad(lgQuad *q) {
 }
 
 void ml_quad_render(value matrix, value program, value alpha, value quad) {
-	lgQuad *q = *QUAD(quad);
+	lgQuad *q = QUAD(quad);
 	checkGLErrors("start");
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
@@ -640,17 +628,20 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 //
 
 
-#define IMAGE(v) ((lgImage**)Data_custom_val(v))
+#define IMAGE(v) ((lgImage*)Data_custom_val(v))
 
+/*
 static void image_finalize(value image) {
-	PRINT_DEBUG("tex quad finalize");
-	lgImage *img = *IMAGE(image);
-	caml_stat_free(img);
+	PRINT_DEBUG("image finalize");
+	//lgImage *img = IMAGE(image);
+	//caml_stat_free(img);
 }
+*/
 
 struct custom_operations image_ops = {
   "pointer to a image",
-  image_finalize,
+  //image_finalize,
+	custom_finalize_default,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
@@ -733,7 +724,9 @@ void print_image(lgImage *img) {
 
 value ml_image_create(value textureInfo,value color,value oalpha) {
 	CAMLparam3(textureInfo,color,oalpha);
-	lgImage *img = (lgImage*)caml_stat_alloc(sizeof(lgImage));
+	PRINT_DEBUG("create image");
+	value res = caml_alloc_custom(&image_ops,sizeof(lgImage),0,1); // 
+	lgImage *img = IMAGE(res);
 	lgTexQuad *tq = &(img->quad);
 	extract_color(color,Double_val(oalpha),1,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
 	value width = Field(textureInfo,1);
@@ -746,15 +739,13 @@ value ml_image_create(value textureInfo,value color,value oalpha) {
 	set_image_uv(tq,Field(textureInfo,3));
 	img->textureID = TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(img,textureInfo);
-	value res = caml_alloc_custom(&image_ops,sizeof(lgImage*),0,1); // 
-	*IMAGE(res) = img;
 	CAMLreturn(res);
 }
 
 value ml_image_points(value image) {
 	CAMLparam1(image);
 	CAMLlocal5(p1,p2,p3,p4,res);
-	lgImage *img = *IMAGE(image);
+	lgImage *img = IMAGE(image);
 	int s = 2 * Double_wosize;
 	p1 = caml_alloc(s,Double_array_tag);
 	Store_double_field(p1, 0, (double)img->quad.bl.v.x);
@@ -778,7 +769,7 @@ value ml_image_points(value image) {
 
 
 void ml_image_set_color(value image,value color) {
-	lgImage *img = *IMAGE(image);
+	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &img->quad;
 	extract_color(color,(((GLfloat)tq->bl.c.a) / 255.),1,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
 }
@@ -817,7 +808,7 @@ void ml_image_set_colors(value image,value colors) {
 */
 
 void ml_image_set_alpha(value image,value alpha) {
-	lgImage *img = *IMAGE(image);
+	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	double a = Double_val(alpha);
 	UPDATE_PMA_ALPHA(tq->bl.c,a); // check PMA
@@ -827,7 +818,7 @@ void ml_image_set_alpha(value image,value alpha) {
 }
 
 void ml_image_update(value image, value textureInfo, value flipX, value flipY) {
-	lgImage *img = *IMAGE(image);
+	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	value width = Field(textureInfo,1);
 	value height = Field(textureInfo,2);
@@ -860,7 +851,7 @@ void ml_image_update(value image, value textureInfo, value flipX, value flipY) {
 
 
 void ml_image_flip_tex_x(value image) {
-	lgImage *img = *IMAGE(image);
+	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	tex2F tmp = tq->tl.tex;
 	tq->tl.tex = tq->tr.tex;
@@ -871,7 +862,7 @@ void ml_image_flip_tex_x(value image) {
 }
 
 void ml_image_flip_tex_y(value image) {
-	lgImage *img = *IMAGE(image);
+	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	tex2F tmp = tq->tl.tex;
 	tq->tl.tex = tq->bl.tex;
@@ -883,8 +874,8 @@ void ml_image_flip_tex_y(value image) {
 
 void ml_image_render(value matrix, value program, value alpha, value image) {
 	//fprintf(stderr,"render image\n");
-	lgImage *img = *IMAGE(image);
-	checkGLErrors("start");
+	lgImage *img = IMAGE(image);
+	checkGLErrors("start image render");
 
 	//print_image(tq);
 
@@ -959,7 +950,7 @@ value ml_renderbuffer_activate(value ofb) {
 	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
 	get_framebuffer_state(s);
 
-	renderbuffer_t *rb = (renderbuffer_t*)ofb;
+	renderbuffer_t *rb = RENDERBUFFER(ofb);
 	//fprintf(stderr,"activate renderbuffer: %d:%d\n",rb->fbid,rb->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
 
@@ -1015,7 +1006,7 @@ typedef struct {
 } atlas_t;
 
 
-#define ATLAS(v) *((atlas_t**)Data_custom_val(v))
+#define ATLAS(v) ((atlas_t*)Data_custom_val(v))
 
 static void atlas_finalize(value atlas) {
 	PRINT_DEBUG("atlas finalize");
@@ -1024,7 +1015,7 @@ static void atlas_finalize(value atlas) {
 #ifdef HAS_VAO
     glDeleteVertexArrays(1, &atl->vaoname);
 #endif    
-	caml_stat_free(atl);
+	//caml_stat_free(atl);
 }
 
 struct custom_operations atlas_ops = {
@@ -1038,9 +1029,10 @@ struct custom_operations atlas_ops = {
 
 /// ATLAS
 value ml_atlas_init(value textureInfo) { 
-	CAMLparam0();
+	CAMLparam1(textureInfo);
+	value result = caml_alloc_custom(&atlas_ops,sizeof(atlas_t),0,1);
 
-	atlas_t *atl = caml_stat_alloc(sizeof(atlas_t));
+	atlas_t *atl = ATLAS(result);
 	atl->textureID = TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(atl,textureInfo);
 	/*
@@ -1083,8 +1075,6 @@ value ml_atlas_init(value textureInfo) {
 
 	checkGLErrors("atlas init");
 #endif
-	value result = caml_alloc_custom(&atlas_ops,sizeof(atlas_t*),0,1);
-	ATLAS(result) = atl;
 	CAMLreturn(result);
 }
 
@@ -1314,7 +1304,6 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);	
 #else
 	glBindVertexArray(atl->vaoname);
-	PRINT_DEBUG("draw %d quads\n",atl->n_of_quads);
 	checkGLErrors("before render atlas");
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
 	glBindVertexArray(0);

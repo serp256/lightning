@@ -308,7 +308,6 @@ value get_token_by_code client_id token_endpoint redirect_uri params code callba
     [ ( "client_id", client_id) ; ("grant_type", grant_type) ; ("code", code) ; ("redirect_uri", redirect_uri) :: params ] in
   let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
 
-  let () = Printf.eprintf "Going to: %s\n%!" token_url in
   
   let loader = new URLLoader.loader () in (  
     ignore (loader#addEventListener URLLoader.ev_IO_ERROR (fun _ _ _ -> 

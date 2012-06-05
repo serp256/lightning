@@ -3,6 +3,245 @@ let ocamlc_spec = Some [
   false,
   " Build a library";
 
+  "-annot",
+  false,
+  " Save information in <filename>.annot";
+
+  "-c",
+  false,
+  " Compile only (do not link)";
+
+  "-cc",
+  true,
+  "<command>  Use <command> as the C compiler and linker";
+
+  "-cclib",
+  true,
+  "<opt>  Pass option <opt> to the C linker";
+
+  "-ccopt",
+  true,
+  "<opt>  Pass option <opt> to the C compiler and linker";
+
+  "-config",
+  false,
+  " Print configuration values and exit";
+
+  "-custom",
+  false,
+  " Link in custom mode";
+
+  "-dllib",
+  true,
+  "<lib>  Use the dynamically-loaded library <lib>";
+
+  "-dllpath",
+  true,
+  "<dir>  Add <dir> to the run-time search path for shared libraries";
+
+  "-dtypes",
+  false,
+  " (deprecated) same as -annot";
+
+  "-for-pack",
+  true,
+  "<ident>  Ignored (for compatibility with ocamlopt)";
+
+  "-g",
+  false,
+  " Save debugging information";
+
+  "-i",
+  false,
+  " Print inferred interface";
+
+  "-I",
+  true,
+  "<dir>  Add <dir> to the list of include directories";
+
+  "-impl",
+  true,
+  "<file>  Compile <file> as a .ml file";
+
+  "-intf",
+  true,
+  "<file>  Compile <file> as a .mli file";
+
+  "-intf-suffix",
+  true,
+  "<string>  Suffix for interface files (default: .mli)";
+
+  "-intf_suffix",
+  true,
+  "<string>  (deprecated) same as -intf-suffix";
+
+  "-labels",
+  false,
+  " Use commuting label mode";
+
+  "-linkall",
+  false,
+  " Link all modules, even unused ones";
+
+  "-make-runtime",
+  false,
+  " Build a runtime system with given C objects and libraries";
+
+  "-make_runtime",
+  false,
+  " (deprecated) same as -make-runtime";
+
+  "-modern",
+  false,
+  " (deprecated) same as -labels";
+
+  "-no-app-funct",
+  false,
+  " Deactivate applicative functors";
+
+  "-noassert",
+  false,
+  " Do not compile assertion checks";
+
+  "-noautolink",
+  false,
+  " Do not automatically link C libraries specified in .cma files";
+
+  "-nolabels",
+  false,
+  " Ignore non-optional labels in types";
+
+  "-nostdlib",
+  false,
+  " Do not add default directory to the list of include directories";
+
+  "-o",
+  true,
+  "<file>  Set output file name to <file>";
+
+  "-output-obj",
+  false,
+  " Output a C object file instead of an executable";
+
+  "-pack",
+  false,
+  " Package the given .cmo files into one .cmo";
+
+  "-pp",
+  true,
+  "<command>  Pipe sources through preprocessor <command>";
+
+  "-principal",
+  false,
+  " Check principality of type inference";
+
+  "-rectypes",
+  false,
+  " Allow arbitrary recursive types";
+
+  "-strict-sequence",
+  false,
+  " Left-hand part of a sequence must have type unit";
+
+  "-thread",
+  false,
+  " Generate code that supports the system threads library";
+
+  "-unsafe",
+  false,
+  " Do not compile bounds checking on array and string access";
+
+  "-use-runtime",
+  true,
+  "<file>  Generate bytecode for the given runtime system";
+
+  "-use_runtime",
+  true,
+  "<file>  (deprecated) same as -use-runtime";
+
+  "-v",
+  false,
+  " Print compiler version and location of standard library and exit";
+
+  "-version",
+  false,
+  " Print version and exit";
+
+  "-vnum",
+  false,
+  " Print version number and exit";
+
+  "-verbose",
+  false,
+  " Print calls to external commands";
+
+  "-vmthread",
+  false,
+  " Generate code that supports the threads library with VM-level\n     scheduling";
+
+  "-w",
+  true,
+  "<list>  Enable or disable warnings according to <list>:\n        +<spec>   enable warnings in <spec>";
+
+  "-",
+  true,
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27..29\"";
+
+  "-warn-error",
+  true,
+  "<list>  Enable or disable error status for warnings according\n     to <list>.  See option -w for the syntax of <list>.\n     Default setting is \"-a\"";
+
+  "-warn-help",
+  false,
+  "  Show description of warning numbers";
+
+  "-where",
+  false,
+  " Print location of standard library and exit";
+
+  "-nopervasives",
+  false,
+  " (undocumented)";
+
+  "-use-prims",
+  true,
+  "<file>  (undocumented)";
+
+  "-dparsetree",
+  false,
+  " (undocumented)";
+
+  "-drawlambda",
+  false,
+  " (undocumented)";
+
+  "-dlambda",
+  false,
+  " (undocumented)";
+
+  "-dinstr",
+  false,
+  " (undocumented)";
+
+  "-",
+  true,
+  "<file>  Treat <file> as a file name (even if it starts with `-')";
+
+];;
+
+let ocamlcp_spec = Some [
+  "-P",
+  true,
+  "[afilmt]  Profile constructs specified by argument (default fm):\n      a  Everything\n      f  Function calls and method calls\n      i  if ... then ... else\n      l  while and for loops\n      m  match ... with\n      t  try ... with";
+
+  "-p",
+  true,
+  "[afilmt]  Same as option -P";
+
+  "-a",
+  false,
+  " Build a library";
+
   "-absname",
   false,
   "  Show absolute filenames in error message";
@@ -237,241 +476,6 @@ let ocamlc_spec = Some [
 
 ];;
 
-let ocamlcp_spec = Some [
-  "-p",
-  true,
-  "[afilmt]  Profile constructs specified by argument (default fm):\n      a  Everything\n      f  Function calls and method calls\n      i  if ... then ... else\n      l  while and for loops\n      m  match ... with\n      t  try ... with";
-
-  "-a",
-  false,
-  " Build a library";
-
-  "-annot",
-  false,
-  " Save information in <filename>.annot";
-
-  "-c",
-  false,
-  " Compile only (do not link)";
-
-  "-cc",
-  true,
-  "<command>  Use <command> as the C compiler and linker";
-
-  "-cclib",
-  true,
-  "<opt>  Pass option <opt> to the C linker";
-
-  "-ccopt",
-  true,
-  "<opt>  Pass option <opt> to the C compiler and linker";
-
-  "-config",
-  false,
-  " Print configuration values and exit";
-
-  "-custom",
-  false,
-  " Link in custom mode";
-
-  "-dllib",
-  true,
-  "<lib>  Use the dynamically-loaded library <lib>";
-
-  "-dllpath",
-  true,
-  "<dir>  Add <dir> to the run-time search path for shared libraries";
-
-  "-dtypes",
-  false,
-  " (deprecated) same as -annot";
-
-  "-for-pack",
-  true,
-  "<ident>  Ignored (for compatibility with ocamlopt)";
-
-  "-g",
-  false,
-  " Save debugging information";
-
-  "-i",
-  false,
-  " Print inferred interface";
-
-  "-I",
-  true,
-  "<dir>  Add <dir> to the list of include directories";
-
-  "-impl",
-  true,
-  "<file>  Compile <file> as a .ml file";
-
-  "-intf",
-  true,
-  "<file>  Compile <file> as a .mli file";
-
-  "-intf-suffix",
-  true,
-  "<string>  Suffix for interface files (default: .mli)";
-
-  "-intf_suffix",
-  true,
-  "<string>  (deprecated) same as -intf-suffix";
-
-  "-labels",
-  false,
-  " Use commuting label mode";
-
-  "-linkall",
-  false,
-  " Link all modules, even unused ones";
-
-  "-make-runtime",
-  false,
-  " Build a runtime system with given C objects and libraries";
-
-  "-make_runtime",
-  false,
-  " (deprecated) same as -make-runtime";
-
-  "-modern",
-  false,
-  " (deprecated) same as -labels";
-
-  "-no-app-funct",
-  false,
-  " Deactivate applicative functors";
-
-  "-noassert",
-  false,
-  " Do not compile assertion checks";
-
-  "-noautolink",
-  false,
-  " Do not automatically link C libraries specified in .cma files";
-
-  "-nolabels",
-  false,
-  " Ignore non-optional labels in types";
-
-  "-nostdlib",
-  false,
-  " Do not add default directory to the list of include directories";
-
-  "-o",
-  true,
-  "<file>  Set output file name to <file>";
-
-  "-output-obj",
-  false,
-  " Output a C object file instead of an executable";
-
-  "-pack",
-  false,
-  " Package the given .cmo files into one .cmo";
-
-  "-pp",
-  true,
-  "<command>  Pipe sources through preprocessor <command>";
-
-  "-principal",
-  false,
-  " Check principality of type inference";
-
-  "-rectypes",
-  false,
-  " Allow arbitrary recursive types";
-
-  "-strict-sequence",
-  false,
-  " Left-hand part of a sequence must have type unit";
-
-  "-thread",
-  false,
-  " Generate code that supports the system threads library";
-
-  "-unsafe",
-  false,
-  " Do not compile bounds checking on array and string access";
-
-  "-use-runtime",
-  true,
-  "<file>  Generate bytecode for the given runtime system";
-
-  "-use_runtime",
-  true,
-  "<file>  (deprecated) same as -use-runtime";
-
-  "-v",
-  false,
-  " Print compiler version and location of standard library and exit";
-
-  "-version",
-  false,
-  " Print version and exit";
-
-  "-vnum",
-  false,
-  " Print version number and exit";
-
-  "-verbose",
-  false,
-  " Print calls to external commands";
-
-  "-vmthread",
-  false,
-  " Generate code that supports the threads library with VM-level\n     scheduling";
-
-  "-w",
-  true,
-  "<list>  Enable or disable warnings according to <list>:\n        +<spec>   enable warnings in <spec>";
-
-  "-",
-  true,
-  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27..29\"";
-
-  "-warn-error",
-  true,
-  "<list>  Enable or disable error status for warnings according\n     to <list>.  See option -w for the syntax of <list>.\n     Default setting is \"-a\"";
-
-  "-warn-help",
-  false,
-  "  Show description of warning numbers";
-
-  "-where",
-  false,
-  " Print location of standard library and exit";
-
-  "-nopervasives",
-  false,
-  " (undocumented)";
-
-  "-use-prims",
-  true,
-  "<file>  (undocumented)";
-
-  "-dparsetree",
-  false,
-  " (undocumented)";
-
-  "-drawlambda",
-  false,
-  " (undocumented)";
-
-  "-dlambda",
-  false,
-  " (undocumented)";
-
-  "-dinstr",
-  false,
-  " (undocumented)";
-
-  "-",
-  true,
-  "<file>  Treat <file> as a file name (even if it starts with `-')";
-
-];;
-
 let ocamlmklib_spec = Some [
   "-cclib",
   true,
@@ -503,7 +507,7 @@ let ocamlmklib_spec = Some [
 
   "-I",
   true,
-  "<dir>       Add <dir> to the path searched for OCaml object files";
+  "<dir>       Add <dir> to the path searched for Caml object files";
 
   "-failsafe",
   false,
@@ -515,7 +519,7 @@ let ocamlmklib_spec = Some [
 
   "-linkall",
   false,
-  "      Build OCaml archive with link-all behavior";
+  "      Build Caml archive with link-all behavior";
 
   "-l",
   true,
@@ -535,7 +539,7 @@ let ocamlmklib_spec = Some [
 
   "-o",
   true,
-  "<name>      Generated OCaml library is named <name>.cma or <name>.cmxa";
+  "<name>      Generated Caml library is named <name>.cma or <name>.cmxa";
 
   "-oc",
   true,
@@ -584,6 +588,10 @@ let ocamlmktop_spec = Some [
   false,
   " Build a library";
 
+  "-absname",
+  false,
+  "  Show absolute filenames in error message";
+
   "-annot",
   false,
   " Save information in <filename>.annot";
@@ -720,6 +728,10 @@ let ocamlmktop_spec = Some [
   false,
   " Allow arbitrary recursive types";
 
+  "-runtime-variant",
+  true,
+  "<str>  Use the <str> variant of the run-time system";
+
   "-strict-sequence",
   false,
   " Left-hand part of a sequence must have type unit";
@@ -766,7 +778,7 @@ let ocamlmktop_spec = Some [
 
   "-",
   true,
-  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27..29\"";
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..38\"";
 
   "-warn-error",
   true,
@@ -822,10 +834,6 @@ let ocamlopt_spec = Some [
   "-a",
   false,
   " Build a library";
-
-  "-absname",
-  false,
-  "  Show absolute filenames in error message";
 
   "-annot",
   false,
@@ -951,10 +959,6 @@ let ocamlopt_spec = Some [
   false,
   " Allow arbitrary recursive types";
 
-  "-runtime-variant",
-  true,
-  "<str>  Use the <str> variant of the run-time system";
-
   "-S",
   false,
   " Keep intermediate assembly file";
@@ -997,7 +1001,7 @@ let ocamlopt_spec = Some [
 
   "-",
   true,
-  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..38\"";
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27..29\"";
 
   "-warn-error",
   true,
@@ -1027,10 +1031,6 @@ let ocamlopt_spec = Some [
   false,
   " (undocumented)";
 
-  "-dclambda",
-  false,
-  " (undocumented)";
-
   "-dcmm",
   false,
   " (undocumented)";
@@ -1048,10 +1048,6 @@ let ocamlopt_spec = Some [
   " (undocumented)";
 
   "-dspill",
-  false,
-  " (undocumented)";
-
-  "-dsplit",
   false,
   " (undocumented)";
 
@@ -1110,10 +1106,6 @@ let ocamldep_spec = Some [
   true,
   "<e> Consider <e> as a synonym of the .mli extension";
 
-  "-sort",
-  false,
-  " Sort files according to their dependencies";
-
   "-modules",
   false,
   " Print module dependencies in raw form (not suitable for make)";
@@ -1121,14 +1113,6 @@ let ocamldep_spec = Some [
   "-native",
   false,
   "  Generate dependencies for a pure native-code project (no .cmo files)";
-
-  "-all",
-  false,
-  "  Generate dependencies on all files (not accommodating for make shortcomings)";
-
-  "-one-line",
-  false,
-  "  Output one line per file, regardless of the length";
 
   "-pp",
   true,
@@ -1144,7 +1128,7 @@ let ocamldep_spec = Some [
 
   "-vnum",
   false,
-  "    Print version number and exit";
+  " Print version number and exit";
 
 ];;
 

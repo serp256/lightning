@@ -9,8 +9,8 @@ value _ACCELEROMETER_INTERVAL = 1;
 
 value ev_TOUCH = Ev.gen_id "TOUCH";
 value ev_ACCELEROMETER = Ev.gen_id "ACCELEROMETER";
-(* value ev_STOP = Ev.gen_id "STOP"; *)
-(* value ev_START = Ev.gen_id "START"; *)
+value ev_BACKGROUND = Ev.gen_id "BACKGROUND";
+value ev_FOREGROUND = Ev.gen_id "FOREGROUND";
 
 value (data_of_touches,touches_of_data) = Ev.makeData ();
 value (data_of_acmtrData,acmtrData_of_data) = Ev.makeData ();
@@ -54,6 +54,29 @@ exception Touch_not_found;
 
 value _screenSize = ref (0.,0.);
 value screenSize () = !_screenSize;
+
+value onBackground = ref None;
+value on_background () = 
+  (
+    debug "GOING TO BACKGROUND";
+    match !onBackground with
+    [ Some f -> f()
+    | None -> ()
+    ]
+  );
+Callback.register "on_background" on_background;
+
+value onForeground = ref None;
+value on_foreground () = 
+(
+  debug "ENTER TO FOREGROUND";
+  match !onForeground with
+  [ Some f -> f ()
+  | None -> ()
+  ];
+);
+Callback.register "on_foreground" on_foreground;
+
 
 class virtual c (_width:float) (_height:float) =
   object(self)
@@ -222,11 +245,6 @@ class virtual c (_width:float) (_height:float) =
       D.prerender ();
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
     );
-
-  (*
-  method stop () = self#dispatchEvent (Ev.create ev_STOP ());
-  method start () = self#dispatchEvent (Ev.create ev_START ());
-  *)
 
   method! hitTestPoint localPoint isTouch =
     match isTouch && (not visible || not touchable) with

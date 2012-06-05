@@ -184,6 +184,8 @@ module MakeParser (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
             <:expr<let $lid:tname$ = ProfTimer.start () in let $lid:resname$ = $expr$ in (ProfTimer.stop $lid:tname$; $print_prof$ (ProfTimer.length $lid:tname$); $lid:resname$)>>
           else expr
         ]
+        |
+        [ "OPTGET" ; expr = SELF -> <:expr<match $expr$ with [ Some v -> v | None -> assert False ]>> ]
       ];
 
     els_platform_expr:

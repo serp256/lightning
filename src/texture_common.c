@@ -11,23 +11,23 @@
 
 static unsigned int total_tex_mem = 0;
 
+extern uintnat caml_dependent_size;
 #ifdef DEBUG_MEM
-#define LOGMEM(op,size) DEBUGMSG("TEXTURE MEMORY <%s> %u -> %u",op,size,total_tex_mem)
+#define LOGMEM(op,tid,size) DEBUGMSG("TEXTURE MEMORY [%s] <%d> %u -> %u:%u",op,tid,size,total_tex_mem,(unsigned int)caml_dependent_size)
 #else
-#define LOGMEM(op,size)
+#define LOGMEM(op,tid,size)
 #endif
 
 #define TEX(v) ((struct tex*)Data_custom_val(v))
 
 void ml_texture_id_delete(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
-	PRINT_DEBUG("delete texture: <%d>\n",tid);
 	if (tid) {
 		glDeleteTextures(1,&tid);
 		struct tex *t = TEX(textureID);
 		t->tid = 0;
 		total_tex_mem -= t->mem;
-		LOGMEM("delete",t->mem);
+		LOGMEM("delete",tid,t->mem);
 		caml_free_dependent_memory(t->mem);
 	};
 }
@@ -38,13 +38,12 @@ void update_texture_id(value mlTextureID,GLuint textureID) {
 
 static void textureID_finalize(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
-	PRINT_DEBUG("finalize texture: <%d>\n",tid);
-	if (textureID) {
+	if (tid) {
 		glDeleteTextures(1,&tid);
 		struct tex *t = TEX(textureID);
 		total_tex_mem -= t->mem;
-		LOGMEM("finalize",t->mem);
 		caml_free_dependent_memory(t->mem);
+		LOGMEM("finalize",tid,t->mem);
 	};
 }
 
@@ -70,7 +69,7 @@ struct custom_operations textureID_ops = {
 #define Store_textureID(mltex,texID,dataLen) \
 	caml_alloc_dependent_memory(dataLen); \
 	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
-	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",dataLen);}
+	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",texID,dataLen);}
 //*TEXTURE_ID(mlTextureID) = tid;
 
 value alloc_texture_id(GLuint textureID, unsigned int dataLen) {
@@ -552,22 +551,38 @@ int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr,GLenum filter) {
 	return 0;
 }
 
+
+
+struct custom_operations renderbuffer_ops = {
+  "pointer to a image",
+  //image_finalize,
+	custom_finalize_default,
+  custom_compare_default,
+  custom_hash_default,
+  custom_serialize_default,
+  custom_deserialize_default
+};
+
+
 void delete_renderbuffer(renderbuffer_t *rb) {
 	glDeleteTextures(1,&rb->tid);
 	glDeleteFramebuffers(1,&rb->fbid);
 }
 
-value renderbuffer_to_ml(renderbuffer_t *rb) {
-	CAMLparam0();
+value renderbuffer_to_ml(value orb) {
+	CAMLparam1(orb);
 	CAMLlocal3(renderInfo,clip,clp);
+	value mlTextureID = 0;
+	renderbuffer_t *rb = RENDERBUFFER(orb);
+	int s = rb->realWidth * rb->realHeight * 4;
 	renderInfo = caml_alloc_tuple(5);
-	value mlTextureID;
-	Store_textureID(mlTextureID,rb->tid,rb->realWidth * rb->realHeight * 4);
+	Store_textureID(mlTextureID,rb->tid,s);
 	Store_field(renderInfo,0,mlTextureID);
-	Store_field(renderInfo,1,caml_copy_double(rb->width));
-	Store_field(renderInfo,2,caml_copy_double(rb->height));
-	if (!IS_CLIPPING(rb->clp)) {
+	Store_field(renderInfo,1,caml_copy_double(RENDERBUFFER(orb)->width));
+	Store_field(renderInfo,2,caml_copy_double(RENDERBUFFER(orb)->height));
+	if (!IS_CLIPPING(RENDERBUFFER(orb)->clp)) {
 		clp = caml_alloc(4 * Double_wosize,Double_array_tag);
+		rb = RENDERBUFFER(orb);
 		Store_double_field(clp,0,rb->clp.x);
 		Store_double_field(clp,1,rb->clp.y);
 		Store_double_field(clp,2,rb->clp.width);
@@ -580,7 +595,7 @@ value renderbuffer_to_ml(renderbuffer_t *rb) {
 	Field(kind,0) = Val_true;
 	Field(renderInfo,4) = kind;
 	value result = caml_alloc_small(2,0);
-	Field(result,0) = (value)rb;
+	Field(result,0) = orb;
 	Field(result,1) = renderInfo;
 	CAMLreturn(result);
 }
@@ -599,12 +614,14 @@ value ml_renderbuffer_create(value format, value filter, value width,value heigh
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	lgResetBoundTextures();
-	renderbuffer_t *rb = caml_stat_alloc(sizeof(renderbuffer_t));
-	create_renderbuffer(Double_val(width),Double_val(height),rb,fltr);
+	value orb = caml_alloc_custom(&renderbuffer_ops,sizeof(renderbuffer_t),0,1);
+	renderbuffer_t *rb = RENDERBUFFER(orb);
+	if (create_renderbuffer(Double_val(width),Double_val(height),rb,fltr)) caml_failwith("can't create framebuffer");
 	//fprintf(stderr,"create renderbuffer: %d:%d\n",rb->fbid,rb->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
 	// and create renderInfo here
-	return renderbuffer_to_ml(rb);
+	checkGLErrors("renderbuffer create");
+	return renderbuffer_to_ml(orb);
 
 	/*
 	CAMLparam0();
@@ -651,15 +668,17 @@ value ml_renderbuffer_create(value format, value filter, value width,value heigh
 
 
 value ml_renderbuffer_clone(value orb) {
-	renderbuffer_t *rb = (renderbuffer_t*)orb;
+	CAMLparam1(orb);
 	GLint oldBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
 	lgResetBoundTextures();
-	renderbuffer_t *rbc = caml_stat_alloc(sizeof(renderbuffer_t));
-	clone_renderbuffer(rb,rbc,GL_LINEAR);
+	value orbc = caml_alloc_custom(&renderbuffer_ops,sizeof(renderbuffer_t),0,1);
+	renderbuffer_t *rbc = RENDERBUFFER(orbc);
+	if (clone_renderbuffer(RENDERBUFFER(orb),rbc,GL_LINEAR)) caml_failwith("can't clone renderbuffer");
 	//fprintf(stderr,"clone renderbuffer: %d:%d\n",rbc->fbid,rbc->tid);
 	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
-	return renderbuffer_to_ml(rbc);
+	checkGLErrors("renderbuffer clone");
+	CAMLreturn(renderbuffer_to_ml(orbc));
 }
 
 
@@ -681,11 +700,11 @@ value ml_resize_texture(value textureID,value width,value height) {
 */
 
 value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
-	CAMLparam0();
+	CAMLparam3(orb,owidth,oheight);
 	CAMLlocal3(renderInfo,clip,clp);
 	double width = Double_val(owidth);
 	double height = Double_val(oheight);
-	renderbuffer_t *rb = (renderbuffer_t*)Field(orb,0);
+	renderbuffer_t *rb = RENDERBUFFER(Field(orb,0));
 	value res;
 	//fprintf(stderr,"try resize %d:%d from [%f:%f] to [%f:%f]\n",rb->fbid,rb->tid,rb->width,rb->height,width,height);
 	if (width == rb->width && height == rb->height) {
@@ -716,8 +735,9 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 		//fprintf(stderr,"old %f:%f\n",Double_val(Field(renderInfo,1)),Double_val(Field(renderInfo,2)));
 		Store_field(renderInfo,1,owidth);
 		Store_field(renderInfo,2,oheight);
-		if (!IS_CLIPPING(rb->clp)) {
+		if (!IS_CLIPPING(RENDERBUFFER(Field(orb,0))->clp)) {
 			clp = caml_alloc(4 * Double_wosize,Double_array_tag);
+			rb = RENDERBUFFER(Field(orb,0));
 			Store_double_field(clp,0,rb->clp.x);
 			Store_double_field(clp,1,rb->clp.y);
 			Store_double_field(clp,2,rb->clp.width);
@@ -726,6 +746,7 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 			Store_field(clip,0,clp);
 		} else clip = Val_unit;
 		Store_field(renderInfo,3,clip);
+		rb = RENDERBUFFER(Field(orb,0));
 		if (legalWidth != rb->realWidth || legalHeight != rb->realHeight) {
 
 			lgGLBindTexture(rb->tid,1);
@@ -734,18 +755,20 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 			rb->realHeight = legalHeight;
 
 			value mlTextureID;
-			Store_textureID(mlTextureID,rb->tid,legalWidth*legalHeight*4);
 			TEX(Field(renderInfo,0))->tid = 0;
-			caml_free_dependent_memory(TEX(Field(renderInfo,0))->mem);
 			total_tex_mem -= TEX(Field(renderInfo,0))->mem;
+			caml_free_dependent_memory(TEX(Field(renderInfo,0))->mem);
+			int s = legalWidth*legalHeight*4;
+			Store_textureID(mlTextureID,rb->tid,s);
 			Store_field(renderInfo,0,mlTextureID);
 		};
 	};
+	checkGLErrors("renderbuffer resize");
 	CAMLreturn(res);
 }
 
 void ml_renderbuffer_delete(value orb) {
-	renderbuffer_t *rb = (renderbuffer_t*)orb;
+	renderbuffer_t *rb = RENDERBUFFER(orb);
 	//fprintf(stderr,"delete renderbuffer: %d\n",rb->fbid);
 	glDeleteFramebuffers(1,&rb->fbid);
 }

@@ -8,7 +8,6 @@ class type virtual c =
   object('self)
     inherit EventDispatcher.simple [ c ];
     method name: string;
-    method setName: string -> unit;
     method running: bool;
     method delay: float;
     method setDelay: float -> unit;
@@ -22,7 +21,7 @@ class type virtual c =
   end;
 
 
-value create ?(repeatCount=0) delay = (*{{{*)
+value create ?(repeatCount=0) delay name = (*{{{*)
   let o = 
     object(self)
       inherit EventDispatcher.simple [ c];
@@ -30,10 +29,8 @@ value create ?(repeatCount=0) delay = (*{{{*)
       method running = running <> None;
       value mutable currentCount = 0;
       value mutable _delay = delay;
-      value mutable name = "";
       value mutable _repeatCount = repeatCount;
-      method setName n = name := n;
-      method name = if name = "" then Printf.sprintf "timer %d" (Oo.id self) else name;
+      method name = name;
       method delay = _delay;
       method setDelay d = _delay := d;
       method repeatCount = _repeatCount;

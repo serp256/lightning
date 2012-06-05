@@ -34,7 +34,7 @@ Debug.cmx: MLFLAGS += -package unix
 
 
 ifeq ($(PLATFORM),IOS)
-	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o
+	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o
 	LIBFLAGS = -ccopt '-ObjC' -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
 						 -cclib '-framework\ QuartzCore' \
@@ -83,7 +83,7 @@ CFLAGS += -D$(PLATFORM)
 
 $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
-MLSOURCES = $(BMLSOURCES) PaymentAndroid.ml LocalNotifications.ml Motion.ml ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
+MLSOURCES = $(BMLSOURCES) Hardware.ml LocalNotifications.ml Motion.ml ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
 					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml  Image.ml AtlasNode.ml TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml\
 					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml
 

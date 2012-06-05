@@ -405,6 +405,7 @@ end;
 
 value make_and_cache path textureInfo = 
 (*   let mem = textureInfo.memSize in *)
+  let finalizer t = if not t#released then TextureCache.remove cache path else () in
   let res = 
     object(self) 
       inherit s textureInfo as super;
@@ -419,7 +420,7 @@ value make_and_cache path textureInfo =
         )
         else ();
 
-      initializer Gc.finalise (fun t -> if not t#released then TextureCache.remove cache path else ()) self;
+      initializer Gc.finalise finalizer self;
         (*
         if (textureID <> 0) 
         then
@@ -583,6 +584,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
             | True -> path
             ]
           in
+          let () = debug:async "make_and_cache: %s" path in
           let texture = make_and_cache path textureInfo in
           let waiters = MHashtbl.pop_all waiters path in
           (
@@ -609,6 +611,7 @@ value check_async () =
   ];
 
 value load_async ?(with_suffix=True) path callback = 
+  let () = debug "start async load %s[%b]" path with_suffix in
   let texture = 
     try
       let path = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
@@ -702,6 +705,7 @@ ENDIF;
 
 
 class rbt rb = 
+  let () = debug "create rendered texture <%ld>" (int32_of_textureID rb.renderInfo.rtextureID) in
   object(self)
     method renderInfo = rb.renderInfo;
     method renderbuffer = rb;
@@ -827,7 +831,7 @@ class rbt rb =
     initializer 
     (
 (*       texture_mem_add (legalWidth * legalHeight * 4); *)
-      Gc.finalise (fun obj -> if not obj#released then renderbuffer_delete obj#renderbuffer.renderbuffer else ()) self;
+      Gc.finalise (fun obj -> (debug:gc "release renderbuffer"; if not obj#released then renderbuffer_delete obj#renderbuffer.renderbuffer else ())) self;
     );
 
   end; (*}}}*)

@@ -22,8 +22,8 @@ void mlstage_destroy(mlstage *stage);
 void mlstage_advanceTime(mlstage *stage,double timePassed);
 void mlstage_render(mlstage *stage);
 void mlstage_preRender();
-void mlstage_stop(mlstage *mlstage);
-void mlstage_start(mlstage *mlstage);
+void mlstage_background();
+void mlstage_foreground();
 void mlstage_processTouches(mlstage *stage, value touches);
 void mlstage_cancelAllTouches(mlstage *stage);
 

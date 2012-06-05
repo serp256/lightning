@@ -16,9 +16,14 @@ value ev_TOUCH: Ev.id;
 value touches_of_data: (Ev.data -> option (list Touch.t));
 value data_of_touches: (list Touch.t -> Ev.data);
 
+(*
 value ev_ACCELEROMETER : Ev.id;
 value acmtrData_of_data : (Ev.data -> option (acmtrData));
 value data_of_acmtrData : (acmtrData -> Ev.data);
+*)
+
+value onBackground: ref (option (unit -> unit));
+value onForeground: ref (option (unit -> unit));
 
 class virtual c: [ float ] -> [ float ] ->
   object
@@ -36,6 +41,4 @@ class virtual c: [ float ] -> [ float ] ->
     method setFilters: list Filters.t -> unit;
     method cacheAsImage: bool;
     method setCacheAsImage: bool -> unit;
-(*     method stop: unit -> unit; *)
-(*     method start: unit -> unit; *)
   end;

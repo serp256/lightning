@@ -6,6 +6,9 @@
 #include <android/log.h>
 #endif
 
+#include <caml/callback.h>
+#include <caml/fail.h>
+
 #ifdef ANDROID
 #define PRINT_ERROR(msg) __android_log_write(ANDROID_LOG_ERROR,"LIGHTNING",msg)
 #else
@@ -32,6 +35,7 @@
 #define PRINT_DEBUG(fmt,args...)
 #endif
 
+/*
 #ifndef RELEASE
 #define checkGLErrors(fmt,args...) \
 { GLenum error = glGetError(); \
@@ -50,7 +54,25 @@
 #else
 #define checkGLErrors(fmt,args...)
 #endif
+*/
 
+#ifndef RELEASE
+#define checkGLErrors(fmt,args...) \
+{ GLenum error = glGetError(); \
+	int is_error = 0; char buf[1024]; int pos = 0;\
+	while (error != GL_NO_ERROR) { \
+		pos = sprintf(buf + pos,"(%s:%d) gl error: %X [",__FILE__,__LINE__,error); \
+    pos += sprintf(buf + pos,fmt,## args);\
+    pos += sprintf(buf + pos, "]\n"); \
+		error = glGetError(); \
+		is_error = 1; \
+	}; \
+	if (is_error) caml_raise_with_string(*(caml_named_value("gl_error")),buf); \
+}
+
+#else
+#define checkGLErrors(fmt,args...)
+#endif
 
 extern unsigned int MAX_GC_MEM;
 

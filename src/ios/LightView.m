@@ -233,6 +233,18 @@
 	caml_release_runtime_system();*/
 }
 
+-(void)background 
+{
+	caml_acquire_runtime_system();
+	mlstage_background();
+}
+
+-(void)foreground
+{
+	mlstage_foreground();
+	caml_release_runtime_system();
+}
+
 + (Class)layerClass 
 {
     return [CAEAGLLayer class];

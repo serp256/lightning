@@ -136,93 +136,30 @@ value onClick obj handler  =
 value tlf (stage:Stage.c) = 
 (
   debug "REGISTR FONT";
+  LightCommon.set_resources_suffix "x2";
   BitmapFont.register "MyriadPro-Regular.fnt";
+  BitmapFont.register "CCFairyTale.fnt";
   debug "FONT REGISTRED";
   TLF.default_font_family.val := "Myriad Pro";
-  let quad = Quad.create  ~color:(`Color 0xCC0000) 100. 20. in
-  (
-    quad#setPos 100. 100.;
-    stage#addChild quad;
-  );
-  let ((w,h),text) = 
-    TLF.create begin
-        TLF.p ~halign:`center ~color:0xFFFFFF ~fontSize:15 
-          [ 
-            `text "животные";
-          ]
-    end 
-  in
-  (
-    debug "w:%f,h:%f" w h;
-    text#setPos 100. 100.;
-    text#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF));
-    text#setFilters [ Filters.glow ~size:2 0x00FF00 ];
-(*     text#setAlpha 0.3; *)
-    stage#addChild text;
-  );
+  TLF.default_font_size.val := 18;
   (*
-  let quad = Quad.create  ~color:0xCC0000 100. 20. in
-  (
-    quad#setPos 220. 100.;
-    stage#addChild quad;
-  );
-  let (_,text) = 
-    TLF.create ~width:100. begin
-        TLF.p ~halign:`center ~color:0xfff4c7 ~fontSize:15 
-          [ 
-            `text "животные";
-          ]
-    end 
+  let xml = "<p valign=\"center\" halign=\"center\" color=\"0x591100\" font-size=\"16\"><span color=\"0xA01063\">семена дыни</span> будет открыт за <span><img src=\"fb.png\" padding-right=\"1.\"
+  padding-left=\"0.\" height=\"20.\" width=\"20.\"/><span color=\"0xA01063\" font-size=\"18\" font-family=\"CCFairyTale\">9</span></span>. Продолжить?</p>" in
+  *)
+  (*
+  let xml = 
+    "<p valign=\"center\" halign=\"left\" color=\"0x591100\" font-size=\"16\"><span color=\"0xA01063\" font-size=\"18\" font-family=\"CCFairyTale\">6</span> шт <span color=\"0x317AC9\">баклажан</span> будет продано за б<span><img src=\"fb.png\" padding-right=\"1.\" padding-left=\"0.\" height=\"16.\"></img><span color=\"0xA01063\" font-size=\"16\" font-family=\"CCFairyTale\">1800</span></span> Продолжить?</p>"
   in
+  *)
+
+  let xml = "<p halign=\"left\" color=\"0x591100\">The cat appreciates sour cream. He'll keep helping you collect combo, and you will get a bonus to your maximum energy!</p>" in
+
+
+  let tlf = TLF.parse xml in
+  let (_,text) = TLF.create ~width:880. ~height:80. tlf in
   (
-    text#setPos 220. 100.;
-    text#setFilters [ Filters.glow 0x00FF00 ];
-(*     text#setAlpha 0.3; *)
     stage#addChild text;
   );
-  let quad = Quad.create  ~color:0xFF0000 100. 20. in
-  (
-    quad#setPos 190. 134.;
-    stage#addChild quad;
-  );
-  let tex = (Texture.load "MyriadPro-Regular0.png")#subTexture (Rectangle.create 341. 421. 6. 8.) in
-  (
-    let g = Image.create tex in
-    (
-      g#setPos 200. 140.;
-      stage#addChild g;
-    );
-    let g = Image.create tex in
-    (
-      g#setPos 220. 140.5;
-      stage#addChild g;
-    );
-    let g = Image.create tex in
-    (
-      g#setPos 240.5 140.0;
-      stage#addChild g;
-    );
-    let g = Image.create tex in
-    (
-      g#setPos 260.4 140.5;
-      stage#addChild g;
-    );
-  );
-
-  let tree = Image.load "tree.png" in
-  (
-    tree#setPos 20.5 200.;
-    tree#setFilters [ Filters.glow ~size:2 ~strength:2 0xFF0000 ];
-    stage#addChild tree;
-  );
-  let tree = Image.load "tree.png" in
-  (
-(*     tree#texture#setFilter Texture.FilterLinear; *)
-    tree#setPos 150. 200.;
-    tree#setFilters [ Filters.glow ~size:2 ~strength:2 0xFF0000 ];
-    stage#addChild tree;
-  );
-  *)
 );
 
 
@@ -568,12 +505,6 @@ value sound (stage:Stage.c) =
   );
 
 
-value quad (stage:Stage.c) = 
-  let q = Quad.create ~color:(`Color 0xFF0000) 200. 200. in
-  (
-    q#setPos 100. 100.;
-    stage#addChild q;
-  );
 
 (* 
 value window (stage:Stage.c) = 
@@ -871,6 +802,25 @@ value glow (stage:Stage.c) =
   *)
 );
 
+value quad (stage:Stage.c) = 
+  let q = Quad.create (*~color:(`Color 0xFF0000)*) 200. 200. in
+  (
+    stage#addChild q;
+    q#setPos 100. 100.;
+    q#setAlpha 0.2;
+(*     q#setColor (`Color 0x00FF00); *)
+  );
+
+value hardware (stage:Stage.c) =
+(
+  let open Hardware in
+  debug "platform: %s, model: %s, cpu: %d, total mem: %d, user mem: %d" (platform()) (hwmodel()) (cpu_frequency()) (total_memory()) (user_memory());
+  match LightCommon.deviceType () with
+  [ LightCommon.Pad -> debug "this is PAD"
+  | LightCommon.Phone -> debug "this is phone"
+  ]
+);
+
 value raise_some_exn () = 
   if True then raise (Failure "BLYYYY exn") else ();
 
@@ -995,64 +945,47 @@ value localNotif () =
 value accelerometer () =
   Motion.acmtrStart (fun data -> debug "%f %f %f" data.Motion.accX data.Motion.accY data.Motion.accZ) 1.;
 
-value sound (stage:Stage.c) =
-  let () = debug "Sound.load call..." in
+value music (self:Stage.c) =
+(
+  Sound.init ();
+  let sound = Sound.load "sound.mp3" in
+  let channel = Sound.createChannel sound in
   (
-    Sound.init ();
-    (* let sndId = Sound.load "achievement1.mp3" in *)
-    let sndId = Sound.load "achievement1.mp3" in
-      let alchan = Sound.createChannel sndId
-      and img = Image.load "tree.png"
-      and img1 = Image.load "tree.png" in
-      (
-        stage#addChild img;
-        stage#addChild img1;
-
-        img1#setX 140.;
-        alchan#setLoop True;
-
-        ignore(img#addEventListener Stage.ev_TOUCH (fun ev _ _ ->
-          match Stage.touches_of_data ev.Ev.data with
-          [ Some [ touch :: _  ] when touch.Touch.phase = Touch.TouchPhaseEnded -> alchan#play ()
-          | _ -> ()
-          ]
-        ));
-
-        ignore(img1#addEventListener Stage.ev_TOUCH (fun ev _ _ ->
-          match Stage.touches_of_data ev.Ev.data with
-          [ Some [ touch :: _  ] when touch.Touch.phase = Touch.TouchPhaseEnded -> alchan#setVolume 0.25
-          | _ -> ()
-          ]
-        ));        
-      );
+    channel#play ();
+    channel#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "sound complete") |> ignore;
   );
-
-value payments  (stage:Stage.c) =
-  let img = Image.load "tree.png" in
+  let timer = Timer.create ~repeatCount:3 5. "GC" in
   (
-    stage#addChild img;
+    timer#addEventListener Timer.ev_TIMER (fun _ _ _ -> (debug "call major"; Gc.full_major ())) |> ignore;
+    timer#start ();
+  );
+);
 
-(*     let img = Image.load "tree.png" in
+
+value glow_and_gc (stage:Stage.c) = 
+(
+  let make_sprite (parent:Stage.c) =
+    let (_,text) = TLF.create (TLF.p ~fontSize:20 [`text "Пизда Ля Ля"]) in
+    let tree = Image.load "tree.png" in
+    let sprite = Sprite.create () in
     (
-      img#setX 200.;
-      stage#addChild img;
-    ); *)
+      sprite#addChild tree;
+      sprite#addChild text;
+      sprite#setFilters [ Filters.glow ~size:2 0xFF0000 ];
+      parent#addChild sprite;
+      sprite;
+    )
+  in
+  let sprite = ref (make_sprite stage) in
+  stage#addEventListener DisplayObject.ev_ENTER_FRAME begin fun _ (_,stage) _ ->
+    (
+      !sprite#removeFromParent();
+      sprite.val := make_sprite stage;
+    );
+  end |> ignore;
+);
 
-    Payment.init ~pubkey:"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk4VHm23geqp5lhRVJDciZbEjPX+eKSPhD7LnW9p5xfu7JxfWYsLVPkp8EeGLjCTM/PaybmZeR/bxaDX2euTeqKLRDAfNN+/LiKLsO9mHm6ioZXo6DnoBJ8uFCd/UMYZjGwMMd6iik7UkCqfmPCQRRxk0Sdr2K6+TXVGjk8AiktuNfmcARo10MgEdVpErfHEMDZJxI0CJQDHvDigfVabGyVRvz3zlvSphSdIFr5Movm1+av2cZFlPfEc2Mtibnw9wUgPkIfhLuzP67eCnlxR7+jBfFNznEkJvI4iaM10G4bEo26HMemI7wGYhwnA2L0VlEjU4OrZPZEWYI3erxtt4wwIDAQAB" (fun prodId tr _ ->
-        (
-          let () = debug "commit transaction call" in Payment.commit_transaction tr;
-          Payment.Transaction.(debug "%s %s %s" (get_id tr) (get_receipt tr) (get_signature tr));
-        )
-    ) (fun _ _ _ -> debug "fail");
 
-    ignore(img#addEventListener Stage.ev_TOUCH (fun ev _ _ ->
-      match Stage.touches_of_data ev.Ev.data with
-      [ Some [ touch :: _  ] when touch.Touch.phase = Touch.TouchPhaseEnded -> let () = debug "purchase test1" in Payment.purchase "ru.redspell.lighttest.testprod1"
-      | _ -> ()
-      ]
-    ));
-  );
-    
 
 let stage width height = 
   object(self)
@@ -1060,7 +993,7 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
-      (* accelerometer (); *)
+(*       accelerometer (); *)
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
 (*         TLF.default_font_family.val := "Myriad Pro"; *)
@@ -1108,6 +1041,11 @@ let stage width height =
 (*         window self; *)
 (*         zsort self; *)
       (* localNotif (); *)
+(*           music self; *)
+          tlf self;
+(*           quad self; *)
+          hardware self;
+(*           glow_and_gc self; *)
     end;
   end
 in

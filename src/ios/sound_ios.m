@@ -17,6 +17,16 @@
 #import <caml/alloc.h>
 #import <caml/threads.h>
 
+static unsigned int total_sound_mem = 0;
+
+extern uintnat caml_dependent_size;
+#ifdef DEBUG_MEM
+#define LOGMEM(op,size) DEBUGMSG("SOUND MEMORY <%s> %u -> %u:%u",op,size,total_sound_mem,caml_dependent_size)
+#else
+#define LOGMEM(op,size)
+#endif
+
+
 #define checkOpenALError(fmt,args...) { \
 	ALenum errorCode = alGetError(); \
 	if (errorCode != AL_NO_ERROR) { \
@@ -88,12 +98,19 @@ void ml_al_setMasterVolume(value mlVolume) {
 	alListenerf(AL_GAIN, Double_val(mlVolume));
 }
 
-#define ALBUFFERID(v) ((uint*)Data_custom_val(v))
-static void albuffer_finalize(value mlAlBufferID) {
-	uint bufferID = *ALBUFFERID(mlAlBufferID);
-	PRINT_DEBUG("albuffer finalize: %d",bufferID);
-	checkOpenALError("finalize albuffer: %d",bufferID);
-	alDeleteBuffers(1,&bufferID);
+struct albuffer {
+	uint bufferID;
+	size_t soundSize;
+};
+
+#define ALBUFFER(v) ((struct albuffer*)Data_custom_val(v))
+static void albuffer_finalize(value mlAlBuffer) {
+	struct albuffer *b = ALBUFFER(mlAlBuffer);
+	PRINT_DEBUG("albuffer finalize: %d",b->bufferID);
+	//checkOpenALError("finalize albuffer: %d",bufferID);
+	alDeleteBuffers(1,&(b->bufferID));
+	caml_free_dependent_memory(b->soundSize);
+	LOGMEM("finalize",b->soundSize);
 }
 
 struct custom_operations albuffer_ops = {
@@ -123,7 +140,7 @@ NSString* pathForResource(NSString *path) {
 
 CAMLprim value ml_albuffer_create(value mlpath) {
 	CAMLparam1(mlpath);
-	CAMLlocal2(mlBufferID,mlres);
+	CAMLlocal2(mlBuffer,mlres);
 
 	NSString *path = [NSString stringWithCString:String_val(mlpath) encoding:NSASCIIStringEncoding];
 	NSString *fullPath = pathForResource(path);
@@ -223,10 +240,15 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Could not fill OpenAL buffer",String_val(mlpath),errorCode);
 	
-	mlBufferID = caml_alloc_custom(&albuffer_ops,sizeof(uint),soundSize,MAX_GC_MEM);
-	*ALBUFFERID(mlBufferID) = bufferID;
+	caml_alloc_dependent_memory(soundSize);
+	total_sound_mem += soundSize;
+	LOGMEM("alloc",soundSize);
+
+	mlBuffer = caml_alloc_custom(&albuffer_ops,sizeof(struct albuffer),soundSize,MAX_GC_MEM);
+	ALBUFFER(mlBuffer)->bufferID = bufferID;
+	ALBUFFER(mlBuffer)->soundSize = soundSize;
 	mlres = caml_alloc_tuple(2);
-	Store_field(mlres,0,mlBufferID);
+	Store_field(mlres,0,mlBuffer);
 	Store_field(mlres,1,caml_copy_double(soundDuration));
 	PRINT_DEBUG("CREATED new albuffer: %d - %f",bufferID,soundDuration);
 	CAMLreturn(mlres);
@@ -254,12 +276,12 @@ struct custom_operations alsource_ops = {
 };
 */
 
-CAMLprim value ml_alsource_create(value mlAlBufferID) {
-	CAMLparam1(mlAlBufferID);
+CAMLprim value ml_alsource_create(value mlAlBuffer) {
+	CAMLparam1(mlAlBuffer);
 	CAMLlocal1(mlAlSourceID);
 	uint sourceID;
 	alGenSources(1, &sourceID);
-	uint bufferID = *ALBUFFERID(mlAlBufferID);
+	uint bufferID = ALBUFFER(mlAlBuffer)->bufferID;
 	alSourcei(sourceID, AL_BUFFER, bufferID);
 	PRINT_DEBUG("created alsource: %d for buffer %d",sourceID,bufferID);
 	checkOpenALError("create alsource: %d - %d",bufferID,sourceID);
@@ -344,50 +366,44 @@ void ml_alsource_delete(value mlAlSourceID) {
 
 
 
-@interface LightningAVSoundPlayerController : NSObject <AVAudioPlayerDelegate> {
+@interface AVSoundPlayerController : NSObject <AVAudioPlayerDelegate> {
   AVAudioPlayer * _player;
   value _sound_stopped_handler;
 }
--(id)initWithFilename: (NSString *)fname completeHandler: (value)handler;
+-(id)initWithFilename: (NSString *)fname;
 @end
 
 
-@implementation LightningAVSoundPlayerController
+@implementation AVSoundPlayerController
 
-/*
- *
- */
--(id)initWithFilename: (NSString *)fname completeHandler:(value)handler {
-    self = [super init];
-    if (self) {
+/* * */
+-(id)initWithFilename: (NSString *)fname {
+	self = [super init];
+	if (self) {
+		NSURL * sndurl = [[NSBundle mainBundle] URLForResource: fname withExtension: nil];
+		if (sndurl == nil) {
+			[self release];
+			caml_failwith("can't find sound");
+		}
+		
+		NSError *error = nil;                                                                                                                                                              
+		_player  = [[AVAudioPlayer alloc] initWithContentsOfURL:sndurl error:&error];
+		if (_player == nil) {
+			[self release];
+			caml_failwith("can't create player");
+		};
 
-        NSURL * sndurl = [[NSBundle mainBundle] URLForResource: fname withExtension: nil];
-        if (sndurl == nil) {
-          NSLog(@"Can't find file %@", fname);
-          [self release];
-          return nil;
-        }
-        
-        NSError *error = nil;                                                                                                                                                              
-        _player  = [[AVAudioPlayer alloc] initWithContentsOfURL:sndurl error:&error];
-        if (_player == nil) {
-          [self release];
-          return nil;
-        }
-        
-        caml_register_global_root(&_sound_stopped_handler);
-        _sound_stopped_handler = handler;
-        
-        _player.delegate = self;
-        [_player prepareToPlay];
-        
-        // handle master volume changes ???
-  }
-  
-  return self;
+		_sound_stopped_handler = 0;
+		_player.delegate = self;
+		[_player prepareToPlay];
+	}
+	return self;
 }
 
--(void)play {
+
+-(void)play:(value)stopHandler {
+	_sound_stopped_handler = stopHandler;
+	caml_register_generational_global_root(&_sound_stopped_handler);
   [_player play];
 }
 
@@ -426,62 +442,85 @@ void ml_alsource_delete(value mlAlSourceID) {
 #pragma mark AVAudioPlayerDelegate
 
 - (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {    
-  caml_acquire_runtime_system();
-  caml_callback(_sound_stopped_handler, Val_int(0));
-  caml_release_runtime_system();
+	if (_sound_stopped_handler) {
+		caml_acquire_runtime_system();
+		caml_callback(_sound_stopped_handler, Val_unit);
+		caml_remove_generational_global_root(&_sound_stopped_handler);
+		_sound_stopped_handler = 0;
+		caml_release_runtime_system();
+	};
 }
 
 - (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error {
-    NSLog(@"Error during sound decoding: %@", [error description]); // trhow error?
+	 NSLog(@"Error during sound decoding: %@", [error description]); // trhow error?
 }
 
 - (void)audioPlayerBeginInterruption:(AVAudioPlayer *)player {
-    [player pause];
+	[player pause];
 }
 
 - (void)audioPlayerEndInterruption:(AVAudioPlayer *)player {
-    [player play];
+	[player play];
 }
 
 -(void)dealloc {
   [_player release];
-  caml_remove_global_root(&_sound_stopped_handler);
+	if (_sound_stopped_handler) caml_remove_generational_global_root(&_sound_stopped_handler);
   [super dealloc];
 }
 
 @end
 
+#define AVPLAYER(v) ((AVSoundPlayerController**)Data_custom_val(v))
+static void avplayer_finalize(value oplayer) {
+	PRINT_DEBUG("av player finalize");
+	AVSoundPlayerController *player = *AVPLAYER(oplayer);
+  [player release]; 
+}
 
+struct custom_operations avplayer_ops = {
+  "pointer to avsoundcontroller",
+  avplayer_finalize,
+  custom_compare_default,
+  custom_hash_default,
+  custom_serialize_default,
+  custom_deserialize_default
+};
 
 /* create controller */
-CAMLprim value ml_avsound_create_player(value fname, value on_stop) {
+CAMLprim value ml_avsound_create_player(value fname) {
   CAMLparam1(fname);
+	PRINT_DEBUG("create player");
   NSString * filename = [NSString stringWithCString:String_val(fname) encoding:NSASCIIStringEncoding]; 
-  LightningAVSoundPlayerController * playerController = [[LightningAVSoundPlayerController alloc] initWithFilename: filename completeHandler: on_stop];
+  AVSoundPlayerController *playerController = [[AVSoundPlayerController alloc] initWithFilename:filename];
   
   if (playerController == nil) {
     raise_error("Error initializing LightningAVSoundPlayerController", NULL, 404);
   }
-    
-  CAMLreturn((value)playerController);
-}
 
+	value result = caml_alloc_custom(&avplayer_ops,sizeof(AVSoundPlayerController*),0,1);
+
+	*AVPLAYER(result) = playerController;
+
+  CAMLreturn(result);
+}
 
 /*
  * Release player controler
- */
 void ml_avsound_release(value playerController) {
   CAMLparam1(playerController);
-  [(LightningAVSoundPlayerController *)playerController release]; 
+	PRINT_DEBUG("avsound release");
+  [(AVSoundPlayerController *)playerController release]; 
   CAMLreturn0;
 }
+*/
 
 /*
  * Let's play
- */
-void ml_avsound_play(value playerController) {
+*/
+void ml_avsound_play(value playerController, value stopHandler) {
   CAMLparam1(playerController);
-  [(LightningAVSoundPlayerController *)playerController play];
+	[*AVPLAYER(playerController) play:stopHandler];
   CAMLreturn0;
 }
 
@@ -490,9 +529,7 @@ void ml_avsound_play(value playerController) {
  * Pause
  */
 void ml_avsound_pause(value playerController) {
-  CAMLparam1(playerController);
-  [(LightningAVSoundPlayerController *)playerController pause];
-  CAMLreturn0;
+  [*AVPLAYER(playerController) pause];
 }
 
 
@@ -500,9 +537,7 @@ void ml_avsound_pause(value playerController) {
  * Stop
  */
 void ml_avsound_stop(value playerController) {
-  CAMLparam1(playerController);
-  [(LightningAVSoundPlayerController *)playerController stop];
-  CAMLreturn0;
+  [*AVPLAYER(playerController) stop];
 }
 
 
@@ -510,17 +545,14 @@ void ml_avsound_stop(value playerController) {
  * Set volume
  */
 void ml_avsound_set_volume(value playerController, value volume) {
-  CAMLparam2(playerController, volume);
-  [(LightningAVSoundPlayerController *)playerController setVolume: Double_val(volume)];
-  CAMLreturn0;
+  [*AVPLAYER(playerController) setVolume: Double_val(volume)];
 }
 
 /* 
  * Get volume
  */
 CAMLprim value ml_avsound_get_volume(value playerController) {
-  CAMLparam1(playerController);
-  CAMLreturn(caml_copy_double([(LightningAVSoundPlayerController *)playerController volume]));
+  return caml_copy_double([*AVPLAYER(playerController) volume]);
 }
 
 
@@ -528,9 +560,7 @@ CAMLprim value ml_avsound_get_volume(value playerController) {
  * Loop sound or not
  */
 void ml_avsound_set_loop(value playerController, value loop) {
-  CAMLparam2(playerController, loop);
-  [(LightningAVSoundPlayerController *)playerController setLoop: Bool_val(loop)];
-  CAMLreturn0;
+  [*AVPLAYER(playerController) setLoop: Bool_val(loop)];
 }
 
 
@@ -538,7 +568,6 @@ void ml_avsound_set_loop(value playerController, value loop) {
  * Is playing
  */
 CAMLprim value ml_avsound_is_playing(value playerController) {
-  CAMLparam1(playerController);
-  CAMLreturn(Val_bool([(LightningAVSoundPlayerController *)playerController isPlaying]));
+	return Val_bool([*AVPLAYER(playerController) isPlaying]);
 }
 

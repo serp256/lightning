@@ -26,7 +26,6 @@ value scope_of_perms perms =
 value calc_signature uid params pkey = 
   let sorted = List.sort (fun (k1,_) (k2,_) -> compare k1 k2) params in
   let joined = List.fold_left (fun acc (k,v) -> acc ^ k ^ "=" ^ v) "" sorted in
-  let () = Printf.eprintf "Sighning %s\n%!" joined in
   Digest.to_hex (Digest.string (uid ^ joined ^ pkey));
 
   
@@ -95,7 +94,6 @@ value call_method' meth session_key uid params callback =
     ignore (
       loader#addEventListener URLLoader.ev_COMPLETE (
         fun _ _ _ -> 
-          let () = Printf.eprintf "WE GOT DATA: %s\n%!" loader#data in
           let cb = 
             try 
               let json_data = Ojson.from_string loader#data in 
