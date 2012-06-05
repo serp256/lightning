@@ -47,15 +47,16 @@ public class BillingReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
+
+        Log.d(TAG, "onReceive call, action: " + action);
+
         if (Consts.ACTION_PURCHASE_STATE_CHANGED.equals(action)) {
             String signedData = intent.getStringExtra(Consts.INAPP_SIGNED_DATA);
             String signature = intent.getStringExtra(Consts.INAPP_SIGNATURE);
             purchaseStateChanged(context, signedData, signature);
         } else if (Consts.ACTION_NOTIFY.equals(action)) {
             String notifyId = intent.getStringExtra(Consts.NOTIFICATION_ID);
-            if (Consts.DEBUG) {
-                Log.i(TAG, "notifyId: " + notifyId);
-            }
+            Log.d(TAG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! IN APP NOTIFY !!!!!!!!!!!!!!!!!!!!!!!!!!! id: " + notifyId);
             notify(context, notifyId);
         } else if (Consts.ACTION_RESPONSE_CODE.equals(action)) {
             long requestId = intent.getLongExtra(Consts.INAPP_REQUEST_ID, -1);

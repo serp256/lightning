@@ -268,6 +268,10 @@ public class LightView extends GLSurfaceView {
 	public void requestPurchase(String prodId) {
 		bserv.requestPurchase(prodId);
 	}
+
+	public void confirmNotif(String notifId) {
+		bserv.confirmNotif(notifId);
+	}	
 	
 	public void initBillingServ() {
 		Log.d("LIGHTNING", "-----xyu");		

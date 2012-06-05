@@ -896,6 +896,8 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
+	DEBUGF("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
+
 	if (gSndPool != NULL) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
@@ -904,10 +906,12 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 			gAutoResume = (*env)->GetMethodID(env, gSndPoolCls, "autoResume", "()V");
 		}
 
-		DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
-
 		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
+
+		DEBUG("pizda");
 	}
+
+	DEBUG("xyu");
 }
 
 void ml_paymentsTest() {
@@ -921,7 +925,7 @@ void ml_paymentsTest() {
 static value successCb;
 static value errorCb;
 
-void ml_payment_init(value scb, value ecb) {
+void ml_payment_init(value pubkey, value scb, value ecb) {
 	if (successCb) {
 		caml_failwith("payments already initialized");		
 	}
@@ -930,6 +934,20 @@ void ml_payment_init(value scb, value ecb) {
 	caml_register_generational_global_root(&successCb);
 	errorCb = ecb;
 	caml_register_generational_global_root(&errorCb);
+
+	if (!Is_long(pubkey)) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+		jclass securityCls = (*env)->FindClass(env, "ru/redspell/lightning/payments/Security");
+		jmethodID setPubkey = (*env)->GetStaticMethodID(env, securityCls, "setPubkey", "(Ljava/lang/String;)V");
+		jstring jpubkey = (*env)->NewStringUTF(env, String_val(Field(pubkey, 0)));
+
+		(*env)->CallStaticVoidMethod(env, securityCls, setPubkey, jpubkey);
+
+		(*env)->DeleteLocalRef(env, securityCls);
+		(*env)->DeleteLocalRef(env, jpubkey);
+	}
 }
 
 static jmethodID gRequestPurchase;
@@ -947,19 +965,70 @@ void ml_payment_purchase(value prodId) {
 	(*env)->DeleteLocalRef(env, jprodId);
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaymentSuccessCb(JNIEnv *env, jobject this, jstring prodId, jstring notifId) {
+JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaymentSuccessCb(JNIEnv *env, jobject this, jstring prodId, jstring notifId, jstring signedData, jstring signature) {
+	CAMLparam0();
+	CAMLlocal2(tr, vprodId);
+
 	if (!successCb) {
 		caml_failwith("payment callbacks are not initialized");
 	}
 
-	char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
-	char *cnotifId = (*env)->GetStringUTFChars(env, notifId, JNI_FALSE);
+	const char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
+	const char *cnotifId = (*env)->GetStringUTFChars(env, notifId, JNI_FALSE);
+	const char *csignature = (*env)->GetStringUTFChars(env, signature, JNI_FALSE);
+	const char *csignedData = (*env)->GetStringUTFChars(env, signedData, JNI_FALSE);	
 
-	value vprodId = caml_copy_string(cprodId);
-	value vnotifId = caml_copy_string(cnotifId);
+	tr = caml_alloc_tuple(3);
+	vprodId = caml_copy_string(cprodId);
 
-	caml_callback3(successCb, vprodId, vnotifId, Val_true);
+	Store_field(tr, 0, caml_copy_string(cnotifId));
+	Store_field(tr, 1, caml_copy_string(csignedData));
+	Store_field(tr, 2, caml_copy_string(csignature));
+
+	caml_callback3(successCb, vprodId, tr, Val_true);
+
+	CAMLreturn0;
 }
 
-void ml_payment_commit_transaction(value transaction) {	
+JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaymentErrorCb(JNIEnv *env, jobject this, jstring prodId, jstring mes) {
+	CAMLparam0();
+	CAMLlocal2(vprodId, vmes);
+
+	if (!errorCb) {
+		caml_failwith("payment callbacks are not initialized");
+	}
+
+	const char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
+	const char *cmes = (*env)->GetStringUTFChars(env, mes, JNI_FALSE);
+
+	vprodId = caml_copy_string(cprodId);
+	vmes = caml_copy_string(cmes);
+
+	caml_callback3(errorCb, vprodId, vmes, Val_true);
+
+	CAMLreturn0;
+}
+
+static jmethodID gConfirmNotif;
+
+void ml_payment_commit_transaction(value transaction) {
+	CAMLparam1(transaction);
+	CAMLlocal1(vnotifId);
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gConfirmNotif == NULL) {
+		gConfirmNotif = (*env)->GetMethodID(env, jViewCls, "confirmNotif", "(Ljava/lang/String;)V");
+	}
+
+	vnotifId = Field(transaction, 0);
+
+	DEBUGF("LASFJALKSJFLASJFLASJFLASJFAKSLFJ: %s", String_val(vnotifId));
+
+	jstring jnotifId = (*env)->NewStringUTF(env, String_val(vnotifId));
+	(*env)->CallVoidMethod(env, jView, gConfirmNotif, jnotifId);
+	(*env)->DeleteLocalRef(env, jnotifId);
+
+	CAMLreturn0;
 }

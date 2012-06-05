@@ -1032,11 +1032,22 @@ value payments  (stage:Stage.c) =
   (
     stage#addChild img;
 
-    Payment.init (fun _ _ _ -> debug "success") (fun _ _ _ -> debug "fail");
+(*     let img = Image.load "tree.png" in
+    (
+      img#setX 200.;
+      stage#addChild img;
+    ); *)
+
+    Payment.init ~pubkey:"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk4VHm23geqp5lhRVJDciZbEjPX+eKSPhD7LnW9p5xfu7JxfWYsLVPkp8EeGLjCTM/PaybmZeR/bxaDX2euTeqKLRDAfNN+/LiKLsO9mHm6ioZXo6DnoBJ8uFCd/UMYZjGwMMd6iik7UkCqfmPCQRRxk0Sdr2K6+TXVGjk8AiktuNfmcARo10MgEdVpErfHEMDZJxI0CJQDHvDigfVabGyVRvz3zlvSphSdIFr5Movm1+av2cZFlPfEc2Mtibnw9wUgPkIfhLuzP67eCnlxR7+jBfFNznEkJvI4iaM10G4bEo26HMemI7wGYhwnA2L0VlEjU4OrZPZEWYI3erxtt4wwIDAQAB" (fun prodId tr _ ->
+        (
+          let () = debug "commit transaction call" in Payment.commit_transaction tr;
+          Payment.Transaction.(debug "%s %s %s" (get_id tr) (get_receipt tr) (get_signature tr));
+        )
+    ) (fun _ _ _ -> debug "fail");
 
     ignore(img#addEventListener Stage.ev_TOUCH (fun ev _ _ ->
       match Stage.touches_of_data ev.Ev.data with
-      [ Some [ touch :: _  ] when touch.Touch.phase = Touch.TouchPhaseEnded -> Payment.purchase "android.test.purchased" (* PaymentAndroid.test () *)
+      [ Some [ touch :: _  ] when touch.Touch.phase = Touch.TouchPhaseEnded -> let () = debug "purchase test1" in Payment.purchase "ru.redspell.lighttest.testprod1"
       | _ -> ()
       ]
     ));

@@ -17,6 +17,7 @@
 package ru.redspell.lightning.payments;
 
 import com.android.vending.billing.IMarketBillingService;
+import android.app.Activity;
 
 import ru.redspell.lightning.payments.Consts.PurchaseState;
 import ru.redspell.lightning.payments.Consts.ResponseCode;
@@ -159,7 +160,7 @@ public class BillingService extends Service implements ServiceConnection {
         protected Bundle makeRequestBundle(String method) {
             Bundle request = new Bundle();
             request.putString(Consts.BILLING_REQUEST_METHOD, method);
-            request.putInt(Consts.BILLING_REQUEST_API_VERSION, 2);
+            request.putInt(Consts.BILLING_REQUEST_API_VERSION, 1);
             request.putString(Consts.BILLING_REQUEST_PACKAGE_NAME, getPackageName());
             return request;
         }
@@ -297,14 +298,53 @@ public class BillingService extends Service implements ServiceConnection {
             }
 
             Intent intent = new Intent();
-            ResponseHandler.buyPageIntentResponse(pendingIntent, intent);
+            //ResponseHandler.buyPageIntentResponse(pendingIntent, intent);
+
+            Activity act = (Activity) getBaseContext();
+
+            if (act == null) {
+                Log.e(TAG, "ResponseHandler activity is not initialized");
+                return Consts.BILLING_RESPONSE_INVALID_REQUEST_ID;
+            }
+
+            try {
+                act.startIntentSender(pendingIntent.getIntentSender(), intent, 0, 0, 0);
+            } catch (Exception e) {
+                Log.e(TAG, "error starting activity", e);
+            }            
+
             return response.getLong(Consts.BILLING_RESPONSE_REQUEST_ID,
                     Consts.BILLING_RESPONSE_INVALID_REQUEST_ID);
         }
 
         @Override
         protected void responseCodeReceived(ResponseCode responseCode) {
-            ResponseHandler.responseCodeReceived(BillingService.this, this, responseCode);
+            switch (responseCode) {
+                case RESULT_USER_CANCELED:
+                    invokeCamlPaymentErrorCb(mProductId, "User cancel operation");
+                    break;
+
+                case RESULT_SERVICE_UNAVAILABLE:
+                    invokeCamlPaymentErrorCb(mProductId, "Some network problems");
+                    break;
+
+                case RESULT_BILLING_UNAVAILABLE:
+                    invokeCamlPaymentErrorCb(mProductId, "Payments are not available");
+                    break;
+
+                case RESULT_ITEM_UNAVAILABLE:
+                    invokeCamlPaymentErrorCb(mProductId, "Wrong product id");
+                    break;
+
+                case RESULT_DEVELOPER_ERROR:
+                    invokeCamlPaymentErrorCb(mProductId, "Develper error");
+                    break;
+
+                case RESULT_ERROR:
+                    invokeCamlPaymentErrorCb(mProductId, "Server error");
+                    break;
+            }
+            //ResponseHandler.responseCodeReceived(BillingService.this, this, responseCode);
         }
     }
 
@@ -321,6 +361,8 @@ public class BillingService extends Service implements ServiceConnection {
 
         @Override
         protected long run() throws RemoteException {
+            Log.d(TAG, "!??????????????????????????????confirm notification");
+
             Bundle request = makeRequestBundle("CONFIRM_NOTIFICATIONS");
             request.putStringArray(Consts.BILLING_REQUEST_NOTIFY_IDS, mNotifyIds);
             Bundle response = mService.sendBillingRequest(request);
@@ -417,6 +459,7 @@ public class BillingService extends Service implements ServiceConnection {
 
     @Override
     public void onStart(Intent intent, int startId) {
+        Log.d(TAG, "onStart call, intent: " + intent);
         handleCommand(intent, startId);
     }
 
@@ -427,10 +470,11 @@ public class BillingService extends Service implements ServiceConnection {
      * @param startId an identifier for the invocation instance of this service
      */
     public void handleCommand(Intent intent, int startId) {
+        Log.d(TAG, "handleCommand call, intent: " + intent);
+
         String action = intent.getAction();
-        if (Consts.DEBUG) {
-            Log.i(TAG, "handleCommand() action: " + action);
-        }
+        Log.d(TAG, "handleCommand() action: " + action);
+
         if (Consts.ACTION_CONFIRM_NOTIFICATION.equals(action)) {
             String[] notifyIds = intent.getStringArrayExtra(Consts.NOTIFICATION_ID);
             confirmNotifications(startId, notifyIds);
@@ -568,21 +612,29 @@ public class BillingService extends Service implements ServiceConnection {
      * @param signature the signature for the data, signed with the private key
      */
     private void purchaseStateChanged(int startId, String signedData, String signature) {
-        ArrayList<Security.VerifiedPurchase> purchases;
-        purchases = Security.verifyPurchase(signedData, signature);
-        if (purchases == null) {
-            return;
-        }
-
-        //ArrayList<String> notifyList = new ArrayList<String>();
-        for (VerifiedPurchase vp : purchases) {
-            if (vp.notificationId != null) {
-                invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId);
-                //notifyList.add(vp.notificationId);
+            ArrayList<Security.VerifiedPurchase> purchases;
+            purchases = Security.verifyPurchase(signedData, signature, !Security.hasPubkey());
+            if (purchases == null) {
+                Log.d(TAG, "purchases == null");
+                invokeCamlPaymentErrorCb("", "error when verifying");
+                return;
             }
-            // ResponseHandler.purchaseResponse(this, vp.purchaseState, vp.productId,
-            //         vp.orderId, vp.purchaseTime, vp.developerPayload);
-        }
+
+            //ArrayList<String> notifyList = new ArrayList<String>();
+
+            Log.d(TAG, "purchases len: " + purchases.size());
+
+            for (VerifiedPurchase vp : purchases) {
+                Log.d(TAG, "purchases id: " + vp.notificationId);
+
+                if (vp.notificationId != null) {
+                    Log.d(TAG, "!!!!!!!!!!!!!!!!!!!invokeCamlPaymentSuccessCb call");
+                    invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? signature : "");
+                    //notifyList.add(vp.notificationId);
+                }
+                // ResponseHandler.purchaseResponse(this, vp.purchaseState, vp.productId,
+                //         vp.orderId, vp.purchaseTime, vp.developerPayload);
+            }            
 
 
         // if (!notifyList.isEmpty()) {
@@ -604,11 +656,11 @@ public class BillingService extends Service implements ServiceConnection {
      * of the request
      */
     private void checkResponseCode(long requestId, ResponseCode responseCode) {
+        Log.d(TAG, "-------------------------------------checkResponseCode");
+
         BillingRequest request = mSentRequests.get(requestId);
         if (request != null) {
-            if (Consts.DEBUG) {
-                Log.d(TAG, request.getClass().getSimpleName() + ": " + responseCode);
-            }
+            Log.d(TAG, request.getClass().getSimpleName() + ": " + responseCode);
             request.responseCodeReceived(responseCode);
         }
         mSentRequests.remove(requestId);
@@ -684,5 +736,12 @@ public class BillingService extends Service implements ServiceConnection {
         }
     }
 
-    public native void invokeCamlPaymentSuccessCb(String prodId, String notifId);
+    public void confirmNotif(String notifId) {
+        Log.d(TAG, "java confirmNotif call, notifId: " + notifId);
+        confirmNotifications(-1, new String[] { notifId });
+    }
+
+    //public void invokeCamlPaymentSuccessCb(String prodId, String notifId, String signedData, String signature) {}
+    public native void invokeCamlPaymentSuccessCb(String prodId, String notifId, String signedData, String signature);
+    public native void invokeCamlPaymentErrorCb(String prodId, String mes);
 }

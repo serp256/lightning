@@ -51,6 +51,7 @@ public class Security {
      * check if a nonce exists.
      */
     private static HashSet<Long> sKnownNonces = new HashSet<Long>();
+    private static String _pubkey = null;
 
     /**
      * A class to hold the verified purchase information.
@@ -62,15 +63,18 @@ public class Security {
         public String orderId;
         public long purchaseTime;
         public String developerPayload;
+        public JSONObject jobj;
 
         public VerifiedPurchase(PurchaseState purchaseState, String notificationId,
-                String productId, String orderId, long purchaseTime, String developerPayload) {
+                String productId, String orderId, long purchaseTime, String developerPayload,
+                JSONObject jobj) {
             this.purchaseState = purchaseState;
             this.notificationId = notificationId;
             this.productId = productId;
             this.orderId = orderId;
             this.purchaseTime = purchaseTime;
             this.developerPayload = developerPayload;
+            this.jobj = jobj;
         }
     }
 
@@ -101,7 +105,7 @@ public class Security {
      * @param signedData the signed JSON string (signed, not encrypted)
      * @param signature the signature for the data, signed with the private key
      */
-    public static ArrayList<VerifiedPurchase> verifyPurchase(String signedData, String signature) {
+    public static ArrayList<VerifiedPurchase> verifyPurchase(String signedData, String signature, boolean skip) {
         if (signedData == null) {
             Log.e(TAG, "data is null");
             return null;
@@ -110,7 +114,7 @@ public class Security {
             Log.i(TAG, "signedData: " + signedData);
         }
         boolean verified = false;
-        if (!TextUtils.isEmpty(signature)) {
+        if (!skip && !TextUtils.isEmpty(signature)) {
             /**
              * Compute your public key (that you got from the Android Market publisher site).
              *
@@ -124,8 +128,8 @@ public class Security {
              * Generally, encryption keys / passwords should only be kept in memory
              * long enough to perform the operation they need to perform.
              */
-            String base64EncodedPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk4VHm23geqp5lhRVJDciZbEjPX+eKSPhD7LnW9p5xfu7JxfWYsLVPkp8EeGLjCTM/PaybmZeR/bxaDX2euTeqKLRDAfNN+/LiKLsO9mHm6ioZXo6DnoBJ8uFCd/UMYZjGwMMd6iik7UkCqfmPCQRRxk0Sdr2K6+TXVGjk8AiktuNfmcARo10MgEdVpErfHEMDZJxI0CJQDHvDigfVabGyVRvz3zlvSphSdIFr5Movm1+av2cZFlPfEc2Mtibnw9wUgPkIfhLuzP67eCnlxR7+jBfFNznEkJvI4iaM10G4bEo26HMemI7wGYhwnA2L0VlEjU4OrZPZEWYI3erxtt4wwIDAQAB";
-            PublicKey key = Security.generatePublicKey(base64EncodedPublicKey);
+            //String base64EncodedPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk4VHm23geqp5lhRVJDciZbEjPX+eKSPhD7LnW9p5xfu7JxfWYsLVPkp8EeGLjCTM/PaybmZeR/bxaDX2euTeqKLRDAfNN+/LiKLsO9mHm6ioZXo6DnoBJ8uFCd/UMYZjGwMMd6iik7UkCqfmPCQRRxk0Sdr2K6+TXVGjk8AiktuNfmcARo10MgEdVpErfHEMDZJxI0CJQDHvDigfVabGyVRvz3zlvSphSdIFr5Movm1+av2cZFlPfEc2Mtibnw9wUgPkIfhLuzP67eCnlxR7+jBfFNznEkJvI4iaM10G4bEo26HMemI7wGYhwnA2L0VlEjU4OrZPZEWYI3erxtt4wwIDAQAB";
+            PublicKey key = Security.generatePublicKey(_pubkey);
             verified = Security.verify(key, signedData, signature);
             if (!verified) {
                 Log.w(TAG, "signature does not match data.");
@@ -147,6 +151,7 @@ public class Security {
                 numTransactions = jTransactionsArray.length();
             }
         } catch (JSONException e) {
+            Log.e(TAG, "JSONException");
             return null;
         }
 
@@ -173,17 +178,18 @@ public class Security {
 
                 // If the purchase state is PURCHASED, then we require a
                 // verified nonce.
-                if (purchaseState == PurchaseState.PURCHASED && !verified) {
+                if (purchaseState == PurchaseState.PURCHASED && !verified && !skip) {
                     continue;
                 }
                 purchases.add(new VerifiedPurchase(purchaseState, notifyId, productId,
-                        orderId, purchaseTime, developerPayload));
+                        orderId, purchaseTime, developerPayload, jElement));
             }
         } catch (JSONException e) {
             Log.e(TAG, "JSON exception: ", e);
             return null;
         }
         removeNonce(nonce);
+        Log.d(TAG, "return purchases");
         return purchases;
     }
 
@@ -243,5 +249,15 @@ public class Security {
             Log.e(TAG, "Base64 decoding failed.");
         }
         return false;
+    }
+
+    public static void setPubkey(String pubkey) {
+        Log.d(TAG, "setPubkey call: " + pubkey);
+
+        _pubkey = pubkey;
+    }
+
+    public static boolean hasPubkey() {
+        return _pubkey != null;
     }
 }
