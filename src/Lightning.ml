@@ -85,6 +85,7 @@ external malinfo: unit -> malinfo = "ml_malinfo";
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
 
+external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
 
 
 

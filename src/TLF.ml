@@ -150,9 +150,9 @@ value parse_span_attribute inp:  Xmlm.attribute -> span_attribute =
 (
   ();
   fun
-    [ ((_,"font-family"),ff) -> `fontFamily ff
-    | ((_,"font-size"),sz) -> `fontSize (parse_int inp sz)
-    | ((_,"font-weight"),sz) -> `fontWeight (match sz with [ "normal" -> "regular" | x -> x ])
+    [ ((_,("font-family" | "fontFamily")),ff) -> `fontFamily ff
+    | ((_,("font-size" | "fontSize")),sz) -> `fontSize (parse_int inp sz)
+    | ((_,("font-weight" | "fontWeight")),sz) -> `fontWeight (match sz with [ "normal" -> "regular" | x -> x ])
     | ((_,"color"),c) -> `color (parse_int inp c)
     | ((_,"alpha"),alpha) -> `alpha (parse_float inp alpha)
     | ((_,an),_) -> parse_error inp "unknown attribute %s" an

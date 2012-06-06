@@ -42,7 +42,7 @@
 #define setDefaultGLBlend setPMAGLBlend
 
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
-	fprintf(stderr,"set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
+	//fprintf(stderr,"set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
   //glDisable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   
@@ -505,7 +505,7 @@ value ml_quad_create(value width,value height,value color,value alpha) {
 	value res = caml_alloc_custom(&quad_ops,sizeof(lgQuad),0,1); // 
 	lgQuad *q = QUAD(res);
   extract_color(color,Double_val(alpha),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
-	printf("quad color: [%hhu,%hhu,%hhu]\n",q->tl.c.r,q->tl.c.g,q->tl.c.b);
+	//printf("quad color: [%hhu,%hhu,%hhu]\n",q->tl.c.r,q->tl.c.g,q->tl.c.b);
 	q->bl.v = (vertex2F) { 0, 0 };
 	q->br.v = (vertex2F) { Double_val(width)};
 	q->tl.v = (vertex2F) { 0, Double_val(height)};
@@ -1147,10 +1147,10 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 			if (caml_hash_Color == 0) caml_hash_Color = caml_hash_variant("Color");
 			if (Field(acolor,0) == caml_hash_Color) {
         int c = Long_val(Field(acolor,1));
-        fprintf(stderr,"redern_atlas: acolor is Color: %x\n",c);
+        //fprintf(stderr,"redern_atlas: acolor is Color: %x\n",c);
 				tlc = COLOR_FROM_INT(c,1.);// alpha = 1. PMA not need
 			} else {
-        fprintf(stderr,"render_atlas: acolor is QColor\n");
+        //fprintf(stderr,"render_atlas: acolor is QColor\n");
 				value qcolor = Field(acolor,1);
 				int c = Long_val(Field(qcolor,0));
 				tlc = COLOR_FROM_INT(c,1.);
