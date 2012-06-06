@@ -352,3 +352,9 @@ value ml_getLocale() {
 	value s = caml_copy_string([identifier cStringUsingEncoding:NSASCIIStringEncoding]);
 	return s;
 }
+
+
+void ml_addExceptionInfo(value mlinfo) {
+	NSString *info = [NSString stringWithCString:String_val(mlinfo) encoding:NSUTF8StringEncoding];
+	[LightViewController addExceptionInfo:info];
+}

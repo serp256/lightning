@@ -27,6 +27,7 @@
 }
 
 +(LightViewController*)sharedInstance;
++(void)addExceptionInfo:(NSString*)info;
 -(void)becomeActive;
 -(void)resignActive;
 -(void)background;
