@@ -255,7 +255,7 @@ void fireTouch(jint id, jfloat x, jfloat y, int phase) {
 	value touch,touches = 1;
 	Begin_roots1(touch);
 	touch = caml_alloc_tuple(8);
-	Store_field(touch,0,caml_copy_int32(id));
+	Store_field(touch,0,caml_copy_int32(id + 1));
 	Store_field(touch,1,caml_copy_double(0.));
 	Store_field(touch,2,caml_copy_double(x));
 	Store_field(touch,3,caml_copy_double(y));
@@ -286,7 +286,7 @@ void fireTouches(JNIEnv *env, jintArray ids, jfloatArray xs, jfloatArray ys, int
 		globalX = caml_copy_double(x[i]);
 		globalY = caml_copy_double(y[i]);
 		touch = caml_alloc_tuple(8);
-		Store_field(touch,0,caml_copy_int32(id[i]));
+		Store_field(touch,0,caml_copy_int32(id[i] + 1));
 		Store_field(touch,1,caml_copy_double(0.));
 		Store_field(touch,2,globalX);
 		Store_field(touch,3,globalY);

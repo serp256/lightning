@@ -985,6 +985,40 @@ value glow_and_gc (stage:Stage.c) =
   end |> ignore;
 );
 
+value touchesTest(stage:Stage.c) =
+(
+  let img = Image.load "tree.png" in
+  (
+    img#setX 50.;
+    img#setY 50.;
+
+    Stage.(
+      img#addEventListener ev_TOUCH (fun ev _ _ ->
+        match touches_of_data ev.Ev.data with
+        [ Some [ touch :: _ ] ->
+          Touch.(
+            let () = debug "touch id: %ld" touch.tid in
+              match touch.phase with
+              [ TouchPhaseBegan -> debug "TouchPhaseBegan"
+              | TouchPhaseMoved ->
+                (
+                  debug "TouchPhaseMoved";
+                  img#setX (img#x -. touch.previousGlobalX +. touch.globalX);
+                  img#setY (img#y -. touch.previousGlobalY +. touch.globalY);
+                )
+              | TouchPhaseEnded -> debug "TouchPhaseEnded"
+              | _ -> debug "some other phase"
+              ]
+          )
+        | _ -> ()
+        ]
+      )
+    );
+
+    stage#addChild img;
+  );  
+);
+
 
 
 let stage width height = 
@@ -993,6 +1027,7 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
+      touchesTest self;
 (*       accelerometer (); *)
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
@@ -1033,7 +1068,6 @@ let stage width height =
 (*         game_center self; *)
           (* pvr self; *)
           (* sound self; *)
-          payments self;
 (*           url_loader self; *)
 (*           glow self; *)
 (*           storage self; *)
@@ -1042,9 +1076,9 @@ let stage width height =
 (*         zsort self; *)
       (* localNotif (); *)
 (*           music self; *)
-          tlf self;
+          (* tlf self; *)
 (*           quad self; *)
-          hardware self;
+          (* hardware self; *)
 (*           glow_and_gc self; *)
     end;
   end

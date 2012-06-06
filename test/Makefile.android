@@ -3,7 +3,7 @@ OCAMLOPT = $(OCAMLFIND) ocamlopt
 OCAMLC = $(OCAMLFIND) ocamlc
 include Makefile.common
 
-ios: example.so
+so: example.so
 	cp test.so android/libs/armeabi-v7a/libtest.so
 	cd android && ant debug
 	
