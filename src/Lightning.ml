@@ -84,8 +84,11 @@ external malinfo: unit -> malinfo = "ml_malinfo";
 
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
-
+IFDEF IOS THEN
 external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
+ELSE
+value addExceptionInfo (_:string) = ();
+ENDIF;
 
 
 
