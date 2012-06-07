@@ -87,5 +87,11 @@ external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
 external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
 
+IFDEF ANDROID THEN
+external extractAssets : unit -> unit = "ml_extractAssets";
+ELSE
+value extractAssets () = ();
+ENDIF;
+
 
 

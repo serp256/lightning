@@ -1019,7 +1019,8 @@ value touchesTest(stage:Stage.c) =
   );  
 );
 
-
+value assets () =
+  Lightning.extractAssets ();
 
 let stage width height = 
   object(self)
@@ -1027,7 +1028,9 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
-      touchesTest self;
+      assets ();
+      (* touchesTest self; *)
+
 (*       accelerometer (); *)
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)

@@ -1023,12 +1023,19 @@ void ml_payment_commit_transaction(value transaction) {
 	}
 
 	vnotifId = Field(transaction, 0);
-
-	DEBUGF("LASFJALKSJFLASJFLASJFLASJFAKSLFJ: %s", String_val(vnotifId));
-
 	jstring jnotifId = (*env)->NewStringUTF(env, String_val(vnotifId));
 	(*env)->CallVoidMethod(env, jView, gConfirmNotif, jnotifId);
 	(*env)->DeleteLocalRef(env, jnotifId);
 
 	CAMLreturn0;
+}
+
+void ml_addExceptionInfo(value v) {}
+
+void ml_extractAssets() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jmethodID extractResources = (*env)->GetMethodID(env, jViewCls, "extractAssets", "()V");
+	(*env)->CallVoidMethod(env, jView, extractResources);
 }

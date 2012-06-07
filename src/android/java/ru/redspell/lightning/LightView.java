@@ -18,6 +18,13 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.SoundPool;
+import android.content.Context;
+import java.io.FileOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URI;
+
+
 
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
@@ -28,6 +35,8 @@ public class LightView extends GLSurfaceView {
 	private int loader_id;
 	private Handler uithread;
 	private BillingService bserv;
+	private File assetsDir;
+	private URI assetsDirUri;
 
 	public LightView(Activity activity) {
 		super(activity);
@@ -279,5 +288,98 @@ public class LightView extends GLSurfaceView {
 		// bserv.setContext();
 		bserv.requestPurchase("android.test.purchased");
 		Log.d("LIGHTNING", "-----pizda");
+	}
+
+/*	protected void cleanLocalStorage() {
+		String[] names = fileList();
+
+		for (String name : names) {
+			File file = new File(path);
+		}
+	}*/
+
+	// protected void traceAssets(String baseAsset, int indentSize) throws IOException {
+	// 	Context cntxt = getContext();
+	// 	String[] assets = cntxt.getAssets().list(baseAsset);
+	// 	String indent = "";
+
+	// 	for (int i = 0; i < indentSize; i++) {
+	// 		indent += "\t";
+	// 	}
+
+	// 	for (String asset : assets) {			
+	// 		Log.d("LIGHTNING", indent + asset);
+	// 		traceAssets(baseAsset != "" ? baseAsset + "/" + asset : asset, indentSize + 1);			
+	// 	}		
+	// }
+
+	protected void recExtractAssets(File dir) throws IOException {
+		Context c = getContext();
+		AssetManager am = c.getAssets();
+
+		String subAssetsUri = assetsDirUri.relativize(dir.toURI()).toString();
+		String[] subAssets = c.getAssets().list(subAssetsUri != "" ? subAssetsUri.substring(0, subAssetsUri.length() - 1) : subAssetsUri);
+
+		for (String subAsset : subAssets) {
+			File subAssetFile = new File(dir, subAsset);
+
+			try {
+				InputStream in = am.open(assetsDirUri.relativize(subAssetFile.toURI()).toString());
+
+				subAssetFile.createNewFile();
+
+				FileOutputStream out = new FileOutputStream(subAssetFile);
+				byte[] buf = new byte[in.available()];
+
+				in.read(buf, 0, in.available());
+				out.write(buf, 0, buf.length);
+
+				in.close();
+				out.close();
+			} catch (FileNotFoundException e) {
+				subAssetFile.mkdir();
+				recExtractAssets(subAssetFile);
+			}
+		}
+	}
+
+	protected void traceFile(File file, int indentSize) {
+		String indent = "";
+
+		for (int i = 0; i < indentSize; i++) {
+			indent += "\t";
+		}
+
+		Log.d("LIGHTNING", indent + file.getAbsolutePath());
+
+		if (file.isDirectory()) {
+			File[] files = file.listFiles();
+
+			for (File f : files) {
+				traceFile(f, indentSize + 1);
+			}
+		}
+	}
+
+	public void extractAssets() throws IOException {
+		if (assetsDir != null) {
+			return;
+		}
+
+		Context c = getContext();
+		assetsDir = c.getDir("assets", Context.MODE_PRIVATE);
+		assetsDirUri = assetsDir.toURI();
+
+		Log.d("LIGHTNING", "_____________before");
+		traceFile(assetsDir, 0);
+		Log.d("LIGHTNING", "_____________before end");
+
+
+		recExtractAssets(assetsDir);
+
+
+		Log.d("LIGHTNING", "_____________after");
+		traceFile(assetsDir, 0);
+		Log.d("LIGHTNING", "_____________after end");
 	}
 }
