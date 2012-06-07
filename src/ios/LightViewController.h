@@ -36,6 +36,7 @@
 -(void)showAchievements;
 -(void)showActivityIndicator:(LightActivityIndicatorView *)indicator;
 -(void)hideActivityIndicator;
++(void)setSupportEmail:(NSString*)email;
 
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
 

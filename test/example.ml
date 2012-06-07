@@ -280,6 +280,21 @@ value flip (stage:Stage.c) =
   );
 
 
+value game_center (stage:Stage.c) =
+  GameCenter.init ~callback:begin fun res ->
+    let text = 
+      match res with 
+      [ True -> "Game center success"
+      | False -> "Game center failed"
+      ]
+    in
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 100. 100.;
+(*       text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ]; *)
+      stage#addChild text;
+    )
+  end ();
 (*
 value async_load (stage:Stage.c) = 
 (
@@ -431,38 +446,6 @@ value alert (stage:Stage.c) =
 );*)
 
 
-value game_center (stage:Stage.c) =
-    let text = "Ежедневный бонус PipIy" in
-  (
-    (*
-  GameCenter.init ~callback:begin fun res ->
-    let text = 
-      match res with 
-      [ True -> "Game center success"
-      | False -> "Game center failed"
-      ]
-    in
-    *)
-    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
-    (
-      text#setPos 100. 100.;
-(*       text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ]; *)
-      stage#addChild text;
-    );
-    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
-    (
-      text#setPos 100. 150.;
-      text#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
-      stage#addChild text;
-    );
-
-    let img = Image.load "tree.png" in
-    (
-      img#setPos 50. 300.;
-      img#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
-      stage#addChild img;
-    );
-  );
 (*   end (); *)
 
 
@@ -1043,6 +1026,7 @@ let stage width height =
           tlf self;
 (*           quad self; *)
           hardware self;
+          game_center self;
 (*           glow_and_gc self; *)
     end;
   end

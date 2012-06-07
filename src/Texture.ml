@@ -30,14 +30,6 @@ type textureFormat =
 
 
 
-(*
-value mem = ref 0;
-value add_mem m =
-  (
-    mem.val := !mem + m;
-    Printf.printf "MEMORY: %d\n%!" !mem;
-  );
-*)
 
 type textureInfo = 
   {

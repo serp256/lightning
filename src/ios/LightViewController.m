@@ -330,6 +330,10 @@ static value *ml_url_complete = NULL;
 	 [self becomeActive];
 }
 
++ (void)setSupportEmail:(NSString*)email {
+	supportEmail = [email retain];
+}
+
 @end
 
 

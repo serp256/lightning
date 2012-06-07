@@ -86,6 +86,7 @@ external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
 
 external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
+external setSupportEmail: string -> unit = "ml_setSupportEmail";
 
 
 

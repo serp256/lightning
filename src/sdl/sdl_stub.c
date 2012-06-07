@@ -1612,3 +1612,9 @@ int main(int argc, char **argv)
 }
 #endif 
 
+
+void ml_addExceptionInfo(value s) {
+}
+
+void ml_setSupportEmail(value s) {
+}

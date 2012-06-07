@@ -946,7 +946,7 @@ value create ?width ?height ?border ?dest (html:main) =
         if Hashtbl.length atlases = 1
         then 
           let () = debug "result is atlas" in
-          (Option.get (Enum.get (Hashtbl.values atlases)))#asDisplayObject
+          (OPTGET (Enum.get (Hashtbl.values atlases)))#asDisplayObject
         else 
           let c = Sprite.create () in
           (

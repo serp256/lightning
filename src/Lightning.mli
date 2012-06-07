@@ -21,3 +21,4 @@ value request_remote_notifications: list remoteNotification ->  (string -> unit)
 value getLocale: unit -> string;
 
 value addExceptionInfo: string -> unit;
+value setSupportEmail: string -> unit;
