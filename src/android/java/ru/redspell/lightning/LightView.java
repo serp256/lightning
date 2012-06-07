@@ -23,7 +23,7 @@ import java.io.FileOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URI;
-
+import android.os.Environment;
 
 
 import ru.redspell.lightning.payments.BillingService;
@@ -362,7 +362,37 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void extractAssets() throws IOException {
-		if (assetsDir != null) {
+		String state = Environment.getExternalStorageState();
+		Context c = getContext();
+
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			assetsDir = new File(c.getExternalFilesDir(null), "assets");
+
+			if (assetsDir.isFile()) {
+				assetsDir.delete();
+			}
+
+			if (!assetsDir.exists()) {
+				assetsDir.mkdir();
+			}
+		} else {
+		    assetsDir = c.getDir("assets", Context.MODE_PRIVATE);
+		}
+
+		assetsDirUri = assetsDir.toURI();
+
+		Log.d("LIGHTNING", "_____________before");
+		traceFile(assetsDir, 0);
+		Log.d("LIGHTNING", "_____________before end");
+		
+		recExtractAssets(assetsDir);
+
+		Log.d("LIGHTNING", "_____________after");
+		traceFile(assetsDir, 0);
+		Log.d("LIGHTNING", "_____________after end");
+
+
+/*		if (assetsDir != null) {
 			return;
 		}
 
@@ -380,6 +410,6 @@ public class LightView extends GLSurfaceView {
 
 		Log.d("LIGHTNING", "_____________after");
 		traceFile(assetsDir, 0);
-		Log.d("LIGHTNING", "_____________after end");
+		Log.d("LIGHTNING", "_____________after end");*/
 	}
 }
