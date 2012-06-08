@@ -1019,8 +1019,36 @@ value touchesTest(stage:Stage.c) =
   );  
 );
 
-value assets () =
-  Lightning.extractAssets ();
+value assets (s:Stage.c) =
+  let img = Image.load "tree.png" in
+  (
+(*     ignore(Stage.(
+      img#addEventListener ev_TOUCH (fun ev _ _ ->
+        match touches_of_data ev.Ev.data with
+        [ Some [ touch :: _ ] ->
+          Touch.(
+            let () = debug "touch id: %ld" touch.tid in
+              match touch.phase with
+              [ TouchPhaseEnded -> Lightning.extractAssets ()
+              | _ -> debug "some other phase"
+              ]
+          )
+        | _ -> ()
+        ]
+      )
+    )); *)
+
+    s#addChild img;
+
+    let tw = Tween.create ~transition:`easeInOut 1. in
+    (
+      tw#animate img#prop'x 200.;
+      Stage.addTween tw;
+    );
+
+    Lightning.extractAssets ();
+  );
+    
 
 let stage width height = 
   object(self)
@@ -1028,7 +1056,7 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
-      assets ();
+      assets self;
       (* touchesTest self; *)
 
 (*       accelerometer (); *)

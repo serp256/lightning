@@ -24,19 +24,113 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import android.os.Environment;
-
+import android.os.AsyncTask;
 
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
 
 public class LightView extends GLSurfaceView {
 
+	private class ExtractAssetsTask extends AsyncTask<Void, Void, Void> {
+		private File assetsDir;
+		private URI assetsDirUri;
+
+		protected void recExtractAssets(File dir) throws IOException {
+			Context c = getContext();
+			AssetManager am = c.getAssets();
+
+			String subAssetsUri = assetsDirUri.relativize(dir.toURI()).toString();
+			String[] subAssets = c.getAssets().list(subAssetsUri != "" ? subAssetsUri.substring(0, subAssetsUri.length() - 1) : subAssetsUri);
+
+			for (String subAsset : subAssets) {
+				File subAssetFile = new File(dir, subAsset);
+
+				try {
+					InputStream in = am.open(assetsDirUri.relativize(subAssetFile.toURI()).toString());
+
+					subAssetFile.createNewFile();
+
+					FileOutputStream out = new FileOutputStream(subAssetFile);
+					byte[] buf = new byte[in.available()];
+
+					in.read(buf, 0, in.available());
+					out.write(buf, 0, buf.length);
+
+					in.close();
+					out.close();
+				} catch (FileNotFoundException e) {
+					subAssetFile.mkdir();
+					recExtractAssets(subAssetFile);
+				}
+			}
+		}
+
+		protected void traceFile(File file, int indentSize) {
+			String indent = "";
+
+			for (int i = 0; i < indentSize; i++) {
+				indent += "\t";
+			}
+
+			Log.d("LIGHTNING", indent + file.getAbsolutePath());
+
+			if (file.isDirectory()) {
+				File[] files = file.listFiles();
+
+				for (File f : files) {
+					traceFile(f, indentSize + 1);
+				}
+			}
+		}
+
+		public void extractAssets() throws IOException {
+			String state = Environment.getExternalStorageState();
+			Context c = getContext();
+
+			if (Environment.MEDIA_MOUNTED.equals(state)) {
+				assetsDir = new File(c.getExternalFilesDir(null), "assets");
+
+				if (assetsDir.isFile()) {
+					assetsDir.delete();
+				}
+
+				if (!assetsDir.exists()) {
+					assetsDir.mkdir();
+				}
+			} else {
+			    assetsDir = c.getDir("assets", Context.MODE_PRIVATE);
+			}
+
+			assetsDirUri = assetsDir.toURI();
+
+			Log.d("LIGHTNING", "_____________before");
+			traceFile(assetsDir, 0);
+			Log.d("LIGHTNING", "_____________before end");
+			
+			recExtractAssets(assetsDir);
+
+			Log.d("LIGHTNING", "_____________after");
+			traceFile(assetsDir, 0);
+			Log.d("LIGHTNING", "_____________after end");
+		}
+
+		protected Void doInBackground(Void... params){
+			try {
+				Log.d("LIGHTNING", "extractAssets call...");
+				extractAssets();
+				Log.d("LIGHTNING", "extractAssets executed");
+			} catch (IOException e) {
+				Log.e("LIGHTNING", "io exception when extracting resources");
+			}
+			
+			return null;
+		}
+	}
+
 	private LightRenderer renderer;
 	private int loader_id;
 	private Handler uithread;
 	private BillingService bserv;
-	private File assetsDir;
-	private URI assetsDirUri;
 
 	public LightView(Activity activity) {
 		super(activity);
@@ -283,11 +377,18 @@ public class LightView extends GLSurfaceView {
 	}	
 	
 	public void initBillingServ() {
-		Log.d("LIGHTNING", "-----xyu");		
-		//Log.d("LIGHTNING", "bserv.checkBillingSupported(): " + bserv.checkBillingSupported());
-		// bserv.setContext();
 		bserv.requestPurchase("android.test.purchased");
-		Log.d("LIGHTNING", "-----pizda");
+	}
+
+	public void extractAssets() {
+		Log.d("LIGHTNING", "lightview extractAssets call");
+
+		getHandler().post(new Runnable() {
+			public void run() {
+				Log.d("LIGHTNING", "Runnable run call");
+				new ExtractAssetsTask().execute();		
+			}
+		});
 	}
 
 /*	protected void cleanLocalStorage() {
@@ -313,103 +414,5 @@ public class LightView extends GLSurfaceView {
 	// 	}		
 	// }
 
-	protected void recExtractAssets(File dir) throws IOException {
-		Context c = getContext();
-		AssetManager am = c.getAssets();
 
-		String subAssetsUri = assetsDirUri.relativize(dir.toURI()).toString();
-		String[] subAssets = c.getAssets().list(subAssetsUri != "" ? subAssetsUri.substring(0, subAssetsUri.length() - 1) : subAssetsUri);
-
-		for (String subAsset : subAssets) {
-			File subAssetFile = new File(dir, subAsset);
-
-			try {
-				InputStream in = am.open(assetsDirUri.relativize(subAssetFile.toURI()).toString());
-
-				subAssetFile.createNewFile();
-
-				FileOutputStream out = new FileOutputStream(subAssetFile);
-				byte[] buf = new byte[in.available()];
-
-				in.read(buf, 0, in.available());
-				out.write(buf, 0, buf.length);
-
-				in.close();
-				out.close();
-			} catch (FileNotFoundException e) {
-				subAssetFile.mkdir();
-				recExtractAssets(subAssetFile);
-			}
-		}
-	}
-
-	protected void traceFile(File file, int indentSize) {
-		String indent = "";
-
-		for (int i = 0; i < indentSize; i++) {
-			indent += "\t";
-		}
-
-		Log.d("LIGHTNING", indent + file.getAbsolutePath());
-
-		if (file.isDirectory()) {
-			File[] files = file.listFiles();
-
-			for (File f : files) {
-				traceFile(f, indentSize + 1);
-			}
-		}
-	}
-
-	public void extractAssets() throws IOException {
-		String state = Environment.getExternalStorageState();
-		Context c = getContext();
-
-		if (Environment.MEDIA_MOUNTED.equals(state)) {
-			assetsDir = new File(c.getExternalFilesDir(null), "assets");
-
-			if (assetsDir.isFile()) {
-				assetsDir.delete();
-			}
-
-			if (!assetsDir.exists()) {
-				assetsDir.mkdir();
-			}
-		} else {
-		    assetsDir = c.getDir("assets", Context.MODE_PRIVATE);
-		}
-
-		assetsDirUri = assetsDir.toURI();
-
-		Log.d("LIGHTNING", "_____________before");
-		traceFile(assetsDir, 0);
-		Log.d("LIGHTNING", "_____________before end");
-		
-		recExtractAssets(assetsDir);
-
-		Log.d("LIGHTNING", "_____________after");
-		traceFile(assetsDir, 0);
-		Log.d("LIGHTNING", "_____________after end");
-
-
-/*		if (assetsDir != null) {
-			return;
-		}
-
-		Context c = getContext();
-		assetsDir = c.getDir("assets", Context.MODE_PRIVATE);
-		assetsDirUri = assetsDir.toURI();
-
-		Log.d("LIGHTNING", "_____________before");
-		traceFile(assetsDir, 0);
-		Log.d("LIGHTNING", "_____________before end");
-
-
-		recExtractAssets(assetsDir);
-
-
-		Log.d("LIGHTNING", "_____________after");
-		traceFile(assetsDir, 0);
-		Log.d("LIGHTNING", "_____________after end");*/
-	}
 }
