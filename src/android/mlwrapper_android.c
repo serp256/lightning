@@ -133,7 +133,7 @@ int getResourceFd(const char *path, resource *res) { //{{{
 	jlong startOffset = (*env)->GetLongField(env,resourceParams,fid);
 	fid = (*env)->GetFieldID(env,cls,"length","J");
 	jlong length = (*env)->GetLongField(env,resourceParams,fid);
-	
+
 	//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld (%s)",startOffset,length, String_val(mlpath));
 	
 	int myfd = dup(fd); 

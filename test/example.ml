@@ -1022,21 +1022,27 @@ value touchesTest(stage:Stage.c) =
 value assets (s:Stage.c) =
   let img = Image.load "tree.png" in
   (
-(*     ignore(Stage.(
+    ignore(Stage.(
       img#addEventListener ev_TOUCH (fun ev _ _ ->
         match touches_of_data ev.Ev.data with
         [ Some [ touch :: _ ] ->
           Touch.(
             let () = debug "touch id: %ld" touch.tid in
               match touch.phase with
-              [ TouchPhaseEnded -> Lightning.extractAssets ()
+              [ TouchPhaseEnded ->
+                let img1 = Image.load "Russia.png" in
+                (
+                  s#addChild img1;
+                  img1#setX 200.;
+                  img1#setY 200.;
+                )
               | _ -> debug "some other phase"
               ]
           )
         | _ -> ()
         ]
       )
-    )); *)
+    ));
 
     s#addChild img;
 

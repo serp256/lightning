@@ -19,6 +19,7 @@ import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.SoundPool;
 import android.content.Context;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,11 +32,11 @@ import ru.redspell.lightning.payments.ResponseHandler;
 
 public class LightView extends GLSurfaceView {
 
-	private class ExtractAssetsTask extends AsyncTask<Void, Void, Void> {
+	private class ExtractAssetsTask extends AsyncTask<Void, Void, File> {
 		private File assetsDir;
 		private URI assetsDirUri;
 
-		protected void recExtractAssets(File dir) throws IOException {
+		private void recExtractAssets(File dir) throws IOException {
 			Context c = getContext();
 			AssetManager am = c.getAssets();
 
@@ -65,7 +66,7 @@ public class LightView extends GLSurfaceView {
 			}
 		}
 
-		protected void traceFile(File file, int indentSize) {
+		private void traceFile(File file, int indentSize) {
 			String indent = "";
 
 			for (int i = 0; i < indentSize; i++) {
@@ -83,47 +84,73 @@ public class LightView extends GLSurfaceView {
 			}
 		}
 
-		public void extractAssets() throws IOException {
+		private void extractAssets() throws IOException {
+			assetsDirUri = assetsDir.toURI();
+			cleanDir(assetsDir);
+			recExtractAssets(assetsDir);
+		}
+
+		private void extractAssetsToExternal() throws IOException {
 			String state = Environment.getExternalStorageState();
 			Context c = getContext();
 
-			if (Environment.MEDIA_MOUNTED.equals(state)) {
-				assetsDir = new File(c.getExternalFilesDir(null), "assets");
-
-				if (assetsDir.isFile()) {
-					assetsDir.delete();
-				}
-
-				if (!assetsDir.exists()) {
-					assetsDir.mkdir();
-				}
-			} else {
-			    assetsDir = c.getDir("assets", Context.MODE_PRIVATE);
+			if (!Environment.MEDIA_MOUNTED.equals(state)) {
+				throw new IOException("External stotage is unavailable");
 			}
 
-			assetsDirUri = assetsDir.toURI();
+			assetsDir = new File(c.getExternalFilesDir(null), "assets");
 
-			Log.d("LIGHTNING", "_____________before");
-			traceFile(assetsDir, 0);
-			Log.d("LIGHTNING", "_____________before end");
-			
-			recExtractAssets(assetsDir);
+			if (!assetsDir.exists()) {
+				assetsDir.mkdir();
+			}
 
-			Log.d("LIGHTNING", "_____________after");
-			traceFile(assetsDir, 0);
-			Log.d("LIGHTNING", "_____________after end");
+			extractAssets();
 		}
 
-		protected Void doInBackground(Void... params){
+		private void cleanDir(File dir) {
+			if (dir.isDirectory()) {
+				for (File f : dir.listFiles()) {
+					cleanDir(f);
+					dir.delete();
+				}
+			}
+		}
+
+		private void extractAssetsToInternal() throws IOException {
+			Context c = getContext();
+			assetsDir = c.getDir("assets", Context.MODE_PRIVATE);
+			extractAssets();
+		}
+
+		protected File doInBackground(Void... params) {
 			try {
-				Log.d("LIGHTNING", "extractAssets call...");
-				extractAssets();
-				Log.d("LIGHTNING", "extractAssets executed");
+				Log.d("LIGHTNING", "trying to extract assets to external stotage...");
+
+				extractAssetsToExternal();
+
+				Log.d("LIGHTNING", "success");
 			} catch (IOException e) {
-				Log.e("LIGHTNING", "io exception when extracting resources");
+				Log.d("LIGHTNING", "failed, try to extract assets to internal storage...");
+
+				cleanDir(assetsDir);
+
+				try {
+					extractAssetsToInternal();
+				} catch (IOException e1) {
+					Log.e("LIGHTNING", "failed, cannot use any kind of storate for assets extraction");
+
+					cleanDir(assetsDir);
+					assetsDir = null;
+				}
+
+				Log.d("LIGHTNING", "success");
 			}
 			
-			return null;
+			return assetsDir;
+		}
+
+		protected void onPostExecute(File res) {
+			assetsExtracted(res);
 		}
 	}
 
@@ -131,6 +158,7 @@ public class LightView extends GLSurfaceView {
 	private int loader_id;
 	private Handler uithread;
 	private BillingService bserv;
+	private File assetsDir;
 
 	public LightView(Activity activity) {
 		super(activity);
@@ -166,10 +194,24 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public ResourceParams getResource(String path) {
+		Log.d("LIGHTNING", "getResource call for " + path);
+
 		ResourceParams res;
+
 		try {
-			AssetFileDescriptor afd = getContext().getAssets().openFd(path);
-			res = new ResourceParams(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
+			if (assetsDir != null) {
+				Log.d("LIGHTNING", "loading from excracted assets");
+
+				File f = new File(assetsDir, path);
+				FileInputStream fis = new FileInputStream(f);
+
+				res = new ResourceParams(fis.getFD(), 0, f.length());
+			} else {
+				Log.d("LIGHTNING", "loading from raw assets");
+
+				AssetFileDescriptor afd = getContext().getAssets().openFd(path);
+				res = new ResourceParams(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
+			}
 		} catch (IOException e) {
 			res =  null;
 		}
@@ -389,6 +431,12 @@ public class LightView extends GLSurfaceView {
 				new ExtractAssetsTask().execute();		
 			}
 		});
+	}
+
+	protected void assetsExtracted(File assetsDir) {
+		this.assetsDir = assetsDir;
+
+		Log.d("LIGHTNING", assetsDir != null ? "assets extracted to " + assetsDir.getAbsolutePath() : "assets are not extracted: no space on device");
 	}
 
 /*	protected void cleanLocalStorage() {
