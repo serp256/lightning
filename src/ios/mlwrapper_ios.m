@@ -248,6 +248,7 @@ void ml_payment_init(value success_cb, value error_cb) {
 
 
 void ml_payment_purchase(value product_id) {
+	NSLog(@"PAYMENT: %s",String_val(product_id));
   CAMLparam1(product_id);
   
   if ([SKPaymentQueue canMakePayments]) {
@@ -325,12 +326,11 @@ void ml_uncatchedError(value message) {
 
 value ml_getDeviceType(value p) {
   value r = Val_int(0);
-	NSLog(@"getDeviceType: %d [ %d, %d]",[[UIDevice currentDevice] userInterfaceIdiom],UIUserInterfaceIdiomPhone,UIUserInterfaceIdiomPad);
+	//NSLog(@"getDeviceType: %d [ %d, %d]",[[UIDevice currentDevice] userInterfaceIdiom],UIUserInterfaceIdiomPhone,UIUserInterfaceIdiomPad);
   switch ([[UIDevice currentDevice] userInterfaceIdiom]) {
     case UIUserInterfaceIdiomPhone: r = Val_int(0); break;
     case UIUserInterfaceIdiomPad: r = Val_int(1); break;
   };
-	NSLog(@"result: %d",r);
   return r;
 }
 
@@ -351,4 +351,16 @@ value ml_getLocale() {
 	NSString *identifier = [[NSLocale preferredLanguages] objectAtIndex:0];
 	value s = caml_copy_string([identifier cStringUsingEncoding:NSASCIIStringEncoding]);
 	return s;
+}
+
+
+void ml_addExceptionInfo(value mlinfo) {
+	NSString *info = [NSString stringWithCString:String_val(mlinfo) encoding:NSUTF8StringEncoding];
+	[LightViewController addExceptionInfo:info];
+}
+
+
+void ml_setSupportEmail(value mlemail) {
+	NSString *email = [NSString stringWithCString:String_val(mlemail) encoding:NSASCIIStringEncoding];
+	[LightViewController setSupportEmail:email];
 }

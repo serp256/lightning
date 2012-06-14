@@ -189,8 +189,8 @@ void ml_load_users_info(value uids, value callback) {
               Store_field(info,0,caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding])); //
               Store_field(info,1,caml_alloc_tuple(2));
               
-			  NSLog(@"ALIAS: %@",pl.alias);
-			  alias = caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding]); //
+							NSLog(@"ALIAS: %@",pl.alias);
+							alias = caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding]); //
               Field(Field(info,1), 0) = alias;
               
               if (photo == nil) {

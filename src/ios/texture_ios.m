@@ -351,7 +351,7 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 
 	if (!fullPath) r = 2;
 	else {
-		NSLog(@"REAL FILE: %@",fullPath);
+		//NSLog(@"REAL FILE: %@",fullPath);
 		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
 		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
@@ -371,12 +371,12 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 }
 
 int load_image_info(char *cpath,char *suffix, textureInfo *tInfo) {
-	NSLog(@"LOAD_IMAGE_INFO: %s",cpath);
+	//NSLog(@"LOAD_IMAGE_INFO: %s",cpath);
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	NSString *path = [NSString stringWithCString:cpath encoding:NSASCIIStringEncoding];
 	int r = _load_image(path,suffix,tInfo);
 	[pool release];
-	NSLog(@"IMAGE_LOADED: %s",cpath);
+	//NSLog(@"IMAGE_LOADED: %s",cpath);
 	return r;
 }
 

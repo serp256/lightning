@@ -24,6 +24,7 @@ void ml_texture_id_delete(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
 	if (tid) {
 		glDeleteTextures(1,&tid);
+		checkGLErrors("delete texture");
 		struct tex *t = TEX(textureID);
 		t->tid = 0;
 		total_tex_mem -= t->mem;
@@ -40,6 +41,7 @@ static void textureID_finalize(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
 	if (tid) {
 		glDeleteTextures(1,&tid);
+		checkGLErrors("finalize texture");
 		struct tex *t = TEX(textureID);
 		total_tex_mem -= t->mem;
 		caml_free_dependent_memory(t->mem);
@@ -555,7 +557,6 @@ int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr,GLenum filter) {
 
 struct custom_operations renderbuffer_ops = {
   "pointer to a image",
-  //image_finalize,
 	custom_finalize_default,
   custom_compare_default,
   custom_hash_default,
