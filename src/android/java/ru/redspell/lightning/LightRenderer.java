@@ -5,6 +5,7 @@ import android.os.Handler;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import android.opengl.GLSurfaceView;
+//import ru.redspell.lightning.GLSurfaceView;
 
 public class LightRenderer implements GLSurfaceView.Renderer {
 
@@ -23,24 +24,26 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	}
 
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) { 	
-		Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
-		lightRendererInit(screenWidth,screenHeight);
+		//Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
+		Log.d("LIGHTNING","SURFACE CREATED");
+		nativeSurfaceCreated(screenWidth,screenHeight);
 		last = System.nanoTime();
 	}
 
 	public void onSurfaceChanged(GL10 gl, int w, int h) {  	
 		Log.d("LIGHTNING","size: " + w + ":" + h);
-		lightRendererChanged(w,h);
+		nativeSurfaceChanged(w,h);
 	}
     
 	public void onDrawFrame(GL10 gl) {
     	
+		Log.d("LIGHTNING","onDraw Frame");
 		long now = System.nanoTime();
 		long interval = now - last;
 		
 		// should render a frame when onDrawFrame() is called
 		// or there is a "ghost"
-		lightRender(interval);   	
+		nativeDrawFrame(interval);   	
 	
 		// fps controlling
 		if (interval < animationInterval){ 
@@ -105,9 +108,9 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	}
 
 
-	private static native void lightRendererInit(int width, int height);
-	private static native void lightRendererChanged(int width,int height);
-	private static native void lightRender(long nanoseconds);
+	private static native void nativeSurfaceCreated(int width, int height);
+	private static native void nativeSurfaceChanged(int width,int height);
+	private static native void nativeDrawFrame(long nanoseconds);
 
 	/*
 	private static native void nativeTouchesBegin(int id, float x, float y);

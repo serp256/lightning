@@ -16,6 +16,7 @@
 #define caml_release_runtime_system()
 
 static JavaVM *gJavaVM;
+static int ocaml_initialized = 0;
 static mlstage *stage = NULL;
 static jobject jView;
 static jclass jViewCls;
@@ -210,26 +211,45 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobje
 	(*env)->DeleteLocalRef(env, storageCls);
 	(*env)->DeleteLocalRef(env, storageEditor);
 	(*env)->DeleteLocalRef(env, viewCls);
-	char *argv[] = {"android",NULL};
-	caml_startup(argv);
-	DEBUG("caml initialized");
+	if (!ocaml_initialized) {
+		char *argv[] = {"android",NULL};
+		caml_startup(argv);
+		ocaml_initialized = 1;
+		DEBUG("caml initialized");
+	}
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightView_lightFinalize(JNIEnv *env, jobject jview) {
+	DEBUG("handleOnDestroy");
+	if (stage) {
+		(*env)->DeleteGlobalRef(env,jStorage);
+		jStorage = NULL;
+		(*env)->DeleteGlobalRef(env,jStorageEditor);
+		jStorageEditor = NULL;
+		(*env)->DeleteGlobalRef(env,jView);
+		jView = NULL;
+		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","finalize old stage");
+		mlstage_destroy(stage);
+		caml_callback(*caml_named_value("texture_cache_clear"),Val_unit);
+		DEBUGF("texture cache cleared");
+		caml_callback(*caml_named_value("programs_cache_clear"),Val_unit);
+		caml_callback(*caml_named_value("image_program_cache_clear"),Val_unit);
+		stage = NULL;
+	}
 }
 
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererInit(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUG("lightRender init");
-	if (stage) {
-		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","stage alredy initialized");
-		// caml_callback(*caml_named_value("realodTextures"),Val_int(0));
-		// we need reload textures
-		return;
-	}
+	if (stage) return;
 	DEBUGF("create stage: [%d:%d]",width,height);
 	stage = mlstage_create((double)width,(double)height); 
+	DEBUGF("stage created");
 }
 
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUGF("GL Changed: %i:%i",width,height);
 }
 
@@ -243,7 +263,7 @@ void mlstage_run(double timePassed) {
 	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,caml_copy_double(timePassed));
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRender(JNIEnv *env, jobject thiz, jlong interval) {
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
 	double timePassed = (double)interval / 1000000000L;
 	mlstage_run(timePassed);
 }

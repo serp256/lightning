@@ -1,8 +1,8 @@
 package ru.redspell.lightning; 
 
 import android.app.Activity;
-import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
+import android.opengl.GLSurfaceView;
 import android.util.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
@@ -18,6 +18,7 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.SoundPool;
+import android.view.SurfaceHolder;
 
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
@@ -54,6 +55,16 @@ public class LightView extends GLSurfaceView {
 		setRenderer(renderer);
 	}
 
+	public void surfaceCreated(SurfaceHolder holder) {
+		Log.d("LIGHTNING","surfaceCreated");
+		super.surfaceCreated(holder);
+	}
+
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		Log.d("LIGHTNING","surfaceDestroyed");
+		super.surfaceDestroyed(holder);
+	}
+
 	public int getSoundId(String path, SoundPool sndPool) throws IOException {
 		if (path.charAt(0) == '/') {
 			return sndPool.load(path, 1);
@@ -74,7 +85,7 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void onPause(){
-		Log.d("LIGHTNING", "onPause");
+		Log.d("LIGHTNING", "VIEW.onPause");
 
 		queueEvent(new Runnable() {
 			@Override
@@ -82,20 +93,23 @@ public class LightView extends GLSurfaceView {
 				renderer.handleOnPause();
 			}
 		});
-
-		super.onPause();
+		//super.onPause();
 	}
 
 	public void onResume() {
-		Log.d("LIGHTNING", "onResume");
-		
-		super.onResume();
+		Log.d("LIGHTNING", "VIEW.onResume");
+		//super.onResume();
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
 				renderer.handleOnResume();
 			}
 		});
+	}
+
+	public void onDestroy() {
+		Log.d("LIGHTNING","VIEW.onDestroy");
+		lightFinalize();
 	}
 
 
@@ -240,8 +254,7 @@ public class LightView extends GLSurfaceView {
 	// Этот методы вызывается из ocaml, он создает хттп-лоадер, который в фоне выполняет запрос с переданными параметрами
 
 	//
-	// а зачем эту хуйню запускать сперва в UI thread? Можно ведь сразу asynch task сделать!
-	//
+	/* а зачем эту хуйню запускать сперва в UI thread? Можно ведь сразу asynch task сделать!
 	public int spawnHttpLoader(final String url, final String method, final String[][] headers, final byte[] data) {
 		loader_id = loader_id + 1;
 		final GLSurfaceView v = this;
@@ -260,10 +273,11 @@ public class LightView extends GLSurfaceView {
 		});
 
 		return loader_id;
-	}
+	}*/
 
 
 	private native void lightInit(SharedPreferences p);
+	private native void lightFinalize();
 
 	public void requestPurchase(String prodId) {
 		bserv.requestPurchase(prodId);

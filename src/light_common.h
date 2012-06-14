@@ -23,7 +23,11 @@
 #endif
 
 
+#ifdef ANDROID
+#define DEBUGMSG(fmt,args...) __android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING",fmt, ## args)
+#else
 #define DEBUGMSG(fmt,args...) (fprintf(stderr,"[DEBUG(%s:%d)] ",__FILE__,__LINE__),fprintf(stderr,fmt, ## args),putc('\n',stderr))
+#endif
 
 #ifdef LDEBUG
 #ifdef ANDROID

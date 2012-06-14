@@ -155,6 +155,7 @@ static int gluint_compare(value gluint1,value gluint2) {
 }
 
 static void shader_finalize(value shader) {
+	PRINT_DEBUG("finzalied shader %d",*GLUINT(shader));
 	GLuint s = *GLUINT(shader);
 	glDeleteShader(s);
 }
@@ -194,6 +195,7 @@ value ml_compile_shader(value stype,value shader_src) {
   }
 	value res = caml_alloc_custom(&shader_ops,sizeof(GLuint),0,1);
 	//printf("created shader: %d\n",shader);
+	PRINT_DEBUG("shader compiled: %d",shader);
 	*GLUINT(res) = shader;
 	return res;
 }
@@ -318,7 +320,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		int attr = Int_val(Field(el,0));
 		value name = Field(el,1);
 		glBindAttribLocation(program,attr,String_val(name));
-		//printf("attribute: %d\n",attr);
+		PRINT_DEBUG("attribute: %d - %s\n",attr,String_val(name));
 		lst = Field(lst,1);
 	}
 	checkGLErrors("locations binded");
@@ -359,40 +361,48 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 
 	int uniformsLen = Wosize_val(uniforms);
 	if (uniformsLen > 0) {
-		//printf("uniformsLen = %d\n",uniformsLen);
+		PRINT_DEBUG("uniformsLen: %d",uniformsLen);
 		lgGLUseProgram(program);
+		checkGLErrors("use program before uniforms");
 		sp->uniforms = (GLint*)caml_stat_alloc(sizeof(GLuint)*uniformsLen);
 		GLuint loc;
 		int idx;
 		for (idx = 0; idx < uniformsLen; idx++) {
 			value el = Field(uniforms,idx);
 			loc = glGetUniformLocation(program, String_val(Field(el,0)));
-			//printf("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);
+			PRINT_DEBUG("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);
 			sp->uniforms[idx] = loc;
 			value u = Field(el,1);
 			if (Is_block(u)) {
 				value v = Field(u,0);
 				switch Tag_val(u) {
-					case 0: glUniform1i(loc,Long_val(v)); break;
+					case 0: 
+						PRINT_DEBUG("this is 1i [%d]",Int_val(v));
+						glUniform1i(loc,Long_val(v)); 
+						break;
 					case 1: 
+						PRINT_DEBUG("this is 2i");
 						glUniform2i(loc,Long_val(Field(v,0)),Long_val(Field(v,1)));
 						break;
 					case 2:
+						PRINT_DEBUG("this is 3i");
 						glUniform3i(loc,Long_val(Field(v,0)),Long_val(Field(v,1)),Long_val(Field(v,2)));
 						break;
 					case 3:
+						PRINT_DEBUG("this is 1f");
 						glUniform1f(loc,Double_val(v));
 						break;
 					case 4:
+						PRINT_DEBUG("this is 2f");
 						glUniform2f(loc,Double_val(Field(v,0)),Double_val(Field(v,1)));
 						break;
 					default: printf("unimplemented uniform value\n");
 				};
 			};
+			checkGLErrors("uniform %d binded", idx);
 		};
 	} else sp->uniforms = NULL;
 	checkGLErrors("uniform binded");
-	//fprintf(stderr,"create program: %d\n",program);
 	sp->program = program;
 	res = caml_alloc_tuple(3);
 	Store_field(res,0,prg);
