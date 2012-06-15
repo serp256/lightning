@@ -210,9 +210,16 @@ static char   vertexAttribTexCoords = 0;
 
 
 
-char vertexAttribPosition  = 0;
-char vertexAttribColor = 0;
-char vertexAttribTexCoords = 0;
+static char vertexAttribPosition  = 0;
+static char vertexAttribColor = 0;
+static char vertexAttribTexCoords = 0;
+
+
+void render_clear_cached_values () {
+	vertexAttribPosition  = 0;
+	vertexAttribColor = 0;
+	vertexAttribTexCoords = 0;
+}
 
 void lgGLEnableVertexAttribs( unsigned int flags ) {   
 
@@ -307,7 +314,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 	CAMLparam4(vShader,fShader,attributes,uniforms);
 	CAMLlocal2(prg,res);
 	GLuint program =  glCreateProgram();
-	//printf("create program %d\n",program);
+	PRINT_DEBUG("create program %d\n",program);
 	glAttachShader(program, *GLUINT(vShader)); 
 	checkGLErrors("attach shader 1");
 	glAttachShader(program, *GLUINT(fShader)); 
@@ -370,6 +377,7 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		for (idx = 0; idx < uniformsLen; idx++) {
 			value el = Field(uniforms,idx);
 			loc = glGetUniformLocation(program, String_val(Field(el,0)));
+			checkGLErrors("get uiform location"); 
 			PRINT_DEBUG("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);
 			sp->uniforms[idx] = loc;
 			value u = Field(el,1);
@@ -377,7 +385,6 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 				value v = Field(u,0);
 				switch Tag_val(u) {
 					case 0: 
-						PRINT_DEBUG("this is 1i [%d]",Int_val(v));
 						glUniform1i(loc,Long_val(v)); 
 						break;
 					case 1: 

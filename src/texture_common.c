@@ -20,10 +20,19 @@ extern uintnat caml_dependent_size;
 
 #define TEX(v) ((struct tex*)Data_custom_val(v))
 
+
+
+GLuint boundTextureID = 0;
+int PMA = -1;
+int separateBlend = 0;
+GLuint boundTextureID1 = 0;
+
 void ml_texture_id_delete(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
 	if (tid) {
 		glDeleteTextures(1,&tid);
+		if (tid == boundTextureID) {boundTextureID = 0; PMA = -1;};
+		if (tid == boundTextureID1) boundTextureID1 = 0;
 		checkGLErrors("delete texture");
 		struct tex *t = TEX(textureID);
 		t->tid = 0;
@@ -41,6 +50,8 @@ static void textureID_finalize(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
 	if (tid) {
 		glDeleteTextures(1,&tid);
+		if (tid == boundTextureID) {boundTextureID = 0; PMA = -1;};
+		if (tid == boundTextureID1) boundTextureID1 = 0;
 		checkGLErrors("finalize texture");
 		struct tex *t = TEX(textureID);
 		total_tex_mem -= t->mem;
@@ -91,10 +102,6 @@ value ml_texture_id_to_int32(value textureID) {
 	return (caml_copy_int32(tid));
 }
 
-GLuint boundTextureID = 0;
-int PMA = -1;
-int separateBlend = 0;
-GLuint boundTextureID1 = 0;
 
 void setPMAGLBlend () {
 	if (PMA != 1) {

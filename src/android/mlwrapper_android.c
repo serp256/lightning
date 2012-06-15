@@ -10,6 +10,7 @@
 #include "mlwrapper_android.h"
 #include "GLES/gl.h"
 #include "net_curl.h"
+#include "render_stub.h"
 
 
 #define caml_acquire_runtime_system()
@@ -234,6 +235,8 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightFinalize(JNIEnv *env, j
 		DEBUGF("texture cache cleared");
 		caml_callback(*caml_named_value("programs_cache_clear"),Val_unit);
 		caml_callback(*caml_named_value("image_program_cache_clear"),Val_unit);
+		render_clear_cached_values ();
+		caml_gc_compaction(Val_unit);
 		stage = NULL;
 	}
 }
