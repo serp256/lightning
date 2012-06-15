@@ -93,6 +93,7 @@ int load_png_image(resource *rs,textureInfo *tInfo) {
 	png_structp     png_ptr     =   0; 
 	png_infop       info_ptr    = 0;
 	unsigned char * pImageData  = 0;
+
 	FILE *fp = fdopen(rs->fd,"rb");
 
 	// png header len is 8 bytes
@@ -124,6 +125,7 @@ int load_png_image(resource *rs,textureInfo *tInfo) {
 	// PNG_TRANSFORM_PACKING: expand 1, 2 and 4-bit samples to bytes
 	// PNG_TRANSFORM_STRIP_16: strip 16-bit samples to 8 bits
 	// PNG_TRANSFORM_GRAY_TO_RGB: expand grayscale samples to RGB (or GA to RGBA)
+
 	png_read_png(png_ptr, info_ptr, 
 			PNG_TRANSFORM_EXPAND | PNG_TRANSFORM_PACKING | PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB, 
 			0
@@ -154,6 +156,8 @@ int load_png_image(resource *rs,textureInfo *tInfo) {
 	// copy data to image info
 	unsigned int bytesPerRow = width * bytesPerComponent;
 	unsigned int i,j;
+
+
 	if(hasAlpha)
 	{
 		unsigned int *tmp = (unsigned int *)pImageData;
@@ -288,6 +292,7 @@ int load_image_info(char *fname,char *suffix,textureInfo *tInfo) {
 			strcpy(path + flen,suffix);
 		} 
 	}
+
 	// Treat it as png
 	if (slen > 0) {
 		// IN path alredy good fname!!
@@ -298,6 +303,7 @@ int load_image_info(char *fname,char *suffix,textureInfo *tInfo) {
 		free(path);
 	};
 	if (!getResourceFd(fname,&r)) return 2;
+
 	return load_png_image(&r,tInfo);
 }
 

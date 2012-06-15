@@ -1,4 +1,6 @@
 *.o
+.DS_Store
+*.s
 *.a
 *.cmo
 *.cmx
@@ -9,3 +11,4 @@
 *.cma
 *.d
 *.native
+local.properties

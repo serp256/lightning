@@ -91,3 +91,9 @@ ELSE
 value addExceptionInfo (_:string) = ();
 value setSupportEmail (_:string) = ();
 ENDIF;
+
+IFDEF ANDROID THEN
+external extractAssets : unit -> unit = "ml_extractAssets";
+ELSE
+value extractAssets () = ();
+ENDIF;

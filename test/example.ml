@@ -1019,7 +1019,42 @@ value touchesTest(stage:Stage.c) =
   );  
 );
 
+value assets (s:Stage.c) =
+  let img = Image.load "tree.png" in
+  (
+    ignore(Stage.(
+      img#addEventListener ev_TOUCH (fun ev _ _ ->
+        match touches_of_data ev.Ev.data with
+        [ Some [ touch :: _ ] ->
+          Touch.(
+            let () = debug "touch id: %ld" touch.tid in
+              match touch.phase with
+              [ TouchPhaseEnded ->
+                let img1 = Image.load "Russia.png" in
+                (
+                  s#addChild img1;
+                  img1#setX 200.;
+                  img1#setY 200.;
+                )
+              | _ -> debug "some other phase"
+              ]
+          )
+        | _ -> ()
+        ]
+      )
+    ));
 
+    s#addChild img;
+
+    let tw = Tween.create ~transition:`easeInOut 1. in
+    (
+      tw#animate img#prop'x 200.;
+      Stage.addTween tw;
+    );
+
+    Lightning.extractAssets ();
+  );
+    
 
 let stage width height = 
   object(self)
@@ -1027,7 +1062,9 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
       debug "START OCAML, locale: %s" (Lightning.getLocale());
-      touchesTest self;
+      assets self;
+      (* touchesTest self; *)
+
 (*       accelerometer (); *)
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)

@@ -11,6 +11,7 @@
 #include "GLES/gl.h"
 #include "net_curl.h"
 #include "render_stub.h"
+#include <fcntl.h>
 
 
 #define caml_acquire_runtime_system()
@@ -96,57 +97,88 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 	return result;
 }
 
+static char *gAssetsDir = NULL;
+
+JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env, jobject this, jstring assetsDir) {
+	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, 0);
+
+	if (assetsDir != NULL) {
+		const char *path = (*env)->GetStringUTFChars(env, assetsDir, JNI_FALSE);
+		gAssetsDir = (char*) malloc(strlen(path));
+		strcpy(gAssetsDir, path);		
+	}
+}
+
 // NEED rewrite it for libzip
 int getResourceFd(const char *path, resource *res) { //{{{
 	DEBUGF("getResourceFD: %s",path);
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
-	if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
-	{
-		__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+
+	if (gAssetsDir != NULL) {
+		char *assetPath = (char*) malloc(strlen(gAssetsDir) + strlen(path) + 1);
+		strcpy(assetPath, gAssetsDir);
+		strcat(assetPath, "/");
+		strcat(assetPath, path);
+
+		int fd = open(assetPath, O_RDONLY);
+		free(assetPath);
+
+		if (fd < 0) {
+			return 0;
+		}
+
+		res->fd = fd;
+		res->length = lseek(fd, 0, SEEK_END);
+		lseek(fd, 0, SEEK_SET);
+	} else {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+		if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
+		{
+			__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+		}
+
+		jclass cls = (*env)->GetObjectClass(env,jView);
+		jmethodID mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
+		(*env)->DeleteLocalRef(env, cls); //
+		
+		if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
+		
+		jstring jpath = (*env)->NewStringUTF(env,path);
+		jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
+		(*env)->DeleteLocalRef(env,jpath);
+		
+		if (!resourceParams) {
+		  return 0;
+		}
+		
+		cls = (*env)->GetObjectClass(env,resourceParams);
+		
+		jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");
+		
+		jobject fileDescriptor = (*env)->GetObjectField(env,resourceParams,fid);
+		jclass fdcls = (*env)->GetObjectClass(env,fileDescriptor);
+		
+		fid = (*env)->GetFieldID(env,fdcls,"descriptor","I");
+
+	//3	(*env)->DeleteLocalRef(env, fdcls);
+		jint fd = (*env)->GetIntField(env,fileDescriptor,fid);
+		fid = (*env)->GetFieldID(env,cls,"startOffset","J");
+		jlong startOffset = (*env)->GetLongField(env,resourceParams,fid);
+		fid = (*env)->GetFieldID(env,cls,"length","J");
+		jlong length = (*env)->GetLongField(env,resourceParams,fid);
+
+		//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld (%s)",startOffset,length, String_val(mlpath));
+		
+		int myfd = dup(fd); 
+		lseek(myfd,startOffset,SEEK_SET);
+		res->fd = myfd;
+		res->length = length;
+		
+		(*env)->DeleteLocalRef(env, fileDescriptor);
+		(*env)->DeleteLocalRef(env, resourceParams);
+		(*env)->DeleteLocalRef(env, cls);		
 	}
 
-	jclass cls = (*env)->GetObjectClass(env,jView);
-	jmethodID mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
-	(*env)->DeleteLocalRef(env, cls); //
-	
-	if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
-	
-	jstring jpath = (*env)->NewStringUTF(env,path);
-	jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
-	(*env)->DeleteLocalRef(env,jpath);
-	
-	if (!resourceParams) {
-	  return 0;
-	}
-	
-	cls = (*env)->GetObjectClass(env,resourceParams);
-	
-	jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");
-	
-	jobject fileDescriptor = (*env)->GetObjectField(env,resourceParams,fid);
-	jclass fdcls = (*env)->GetObjectClass(env,fileDescriptor);
-	
-	fid = (*env)->GetFieldID(env,fdcls,"descriptor","I");
-
-//3	(*env)->DeleteLocalRef(env, fdcls);
-	jint fd = (*env)->GetIntField(env,fileDescriptor,fid);
-	fid = (*env)->GetFieldID(env,cls,"startOffset","J");
-	jlong startOffset = (*env)->GetLongField(env,resourceParams,fid);
-	fid = (*env)->GetFieldID(env,cls,"length","J");
-	jlong length = (*env)->GetLongField(env,resourceParams,fid);
-	
-	//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld (%s)",startOffset,length, String_val(mlpath));
-	
-	int myfd = dup(fd); 
-	lseek(myfd,startOffset,SEEK_SET);
-	res->fd = myfd;
-	res->length = length;
-	
-	(*env)->DeleteLocalRef(env, fileDescriptor);
-	(*env)->DeleteLocalRef(env, resourceParams);
-	(*env)->DeleteLocalRef(env, cls);
-	
 	return 1;
 }//}}}
 
@@ -1046,12 +1078,18 @@ void ml_payment_commit_transaction(value transaction) {
 	}
 
 	vnotifId = Field(transaction, 0);
-
-	DEBUGF("LASFJALKSJFLASJFLASJFLASJFAKSLFJ: %s", String_val(vnotifId));
-
 	jstring jnotifId = (*env)->NewStringUTF(env, String_val(vnotifId));
 	(*env)->CallVoidMethod(env, jView, gConfirmNotif, jnotifId);
 	(*env)->DeleteLocalRef(env, jnotifId);
 
 	CAMLreturn0;
+}
+void ml_addExceptionInfo(value v) {}
+
+void ml_extractAssets() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jmethodID extractResources = (*env)->GetMethodID(env, jViewCls, "extractAssets", "()V");
+	(*env)->CallVoidMethod(env, jView, extractResources);
 }
