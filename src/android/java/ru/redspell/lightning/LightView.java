@@ -229,16 +229,16 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public ResourceParams getResource(String path) {
-		Log.d("LIGHTNING", "getResource call for " + path);
 
 		ResourceParams res;
 
 		try {
-			Log.d("LIGHTNING", "loading from raw assets");
+			Log.d("LIGHTNING", "loading from raw assets [" + path + "]");
 
 			AssetFileDescriptor afd = getContext().getAssets().openFd(path);
 			res = new ResourceParams(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());			
 		} catch (IOException e) {
+			Log.d("LIGHTNING","can't find [" + path + "] <" + e + ">");
 			res =  null;
 		}
 		return res;

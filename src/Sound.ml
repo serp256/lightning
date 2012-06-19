@@ -319,7 +319,7 @@ ELSE
   ELSE
     (* Sdl version here *)
 
-    value init ?category () = ();
+    value init (*?category*) () = ();
     value setMasterVolume (_p:float) = ();
     type sound = int;
     value load (path:string) = 0;
