@@ -49,7 +49,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 				int bflen = strlen(fname) - strlen(ext);
 				memcpy(path + rplen,fname,bflen);
 				memcpy(path + rplen + bflen,suffix,slen);
-				strcpy(path + rplen + slen,fname);
+				strcpy(path + rplen + bflen + slen,ext);
 				struct stat s;
 				if (!stat(path,&s)) {
 					int r = loadAlphaFile(path,tInfo);
