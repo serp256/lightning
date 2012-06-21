@@ -12,13 +12,10 @@ type category =
   ];
 
 type sound_state = [ SoundInitial | SoundPlaying | SoundPaused | SoundStoped ];
-
-value init: ?category:category -> unit -> unit;
-
-value setMasterVolume: float -> unit;
-
 type sound;
 
+value init: unit -> unit;
+value setMasterVolume: float -> unit;
 value load: string -> sound;
 
 class type virtual channel  =
@@ -33,6 +30,4 @@ class type virtual channel  =
     method state: sound_state;
   end;
 
-
 value createChannel: sound -> channel;
-

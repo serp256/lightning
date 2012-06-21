@@ -52,66 +52,61 @@ static const float LOADING_PAGE_FADE_TIME = 0.25f;		/*!< The amount of time in s
  */
 @interface TJCUIWebPageView : UIView <UIWebViewDelegate>
 {
-	UIWebView *cWebView_;								/*!< The UIWebView is used for embedding web content in the application. */
-	NSString *alertErrorMessage_;						/*!< Used to display error messages. */
-	NSURLRequest *lastClickedURL_;					/*!< Holds the last URL selected. */
-	id delegate_;											/*!< The delegate object is used to receive actions by classes that implement #tjcUIWebPageViewwebRequestCompleted and #tjcUIWebPageViewwebRequestCanceled. */
-	BOOL webPageRendered_;								/*!< Used to make sure the web UIView is not reinitialized needlessly. */
-	NSString *lastURL_;									/*!< This is used if data connection is lost and the user presses the retry button. */
-	TJCLoadingView *loadingView_;
+	UIWebView *cWebView_;			/*!< The UIWebView is used for embedding web content in the application. */
+	NSString *lastClickedURL_;		/*!< Holds the last URL selected. */
+	TJCLoadingView *loadingView_;	/*!< The loading view object, visible when the web view is loading content. */
+	BOOL isViewVisible_;				/*!< Used to make sure that the web UIView is only refreshed when it is visible. */
+	BOOL isAlertViewVisible_;		/*!< Indicates whether the retry message box is visible. */
+	id delegate_;
 }
 
-@property (nonatomic, retain) NSString* alertErrorMessage;
-@property (nonatomic, retain) NSString *lastURL;
+@property (nonatomic, retain) TJCLoadingView *loadingView;
+@property (nonatomic) BOOL isViewVisible;
+@property (nonatomic) BOOL isAlertViewVisible;
 
-/*!	\fn initWithFrame:WithRequestURL:(CGRect aFrame, NSURLRequest* aRequest)
- *	\brief Initializes the #TJCUIWebPageView with the given CGRect as the frame and a NSURLRequest.
+/*!	\fn refreshWithFrame:(CGRect)frame
+ *	\brief Refreshes the #TJCUIWebPageView with the given CGRect as the frame.
  *  
  *	\param aFrame The CGRect that represents the web page frame.
- *	\param aRequest The NSURLRequest containing the URL for the web page.
- *  \return The #TJCUIWebPageView object.
+ *	\return n/a
  */
--(id) initWithFrame:(CGRect)aFrame WithRequestURL:(NSURLRequest*) aRequest;
+- (void)refreshWithFrame:(CGRect)frame;
 
-/*!	\fn setDelegate:(id)aDelegate
- *	\brief Set the #delegate_ object with the given id.
+- (void)setViewToTransparent:(BOOL)transparent;
+
+/*!	\fn clearWebViewContents
+ *	\brief Releases the web view object, effectively wiping the webview clean.
  *  
- *	\param aDelegate The #delegate_ object is set to this id.
- *  \return n/a
+ *	\param n/a
+ *	\return n/a
  */
--(void) setDelegate:(id)aDelegate;
+- (void)clearWebViewContents;
 
-/*!	\fn loadWebRequest:(NSURLRequest *)aRequest
- *	\brief The given NSURLRequest contains a URL that the web page will navigate to.
+/*!	\fn (BOOL)parseVideoClickURL:(NSString*)videoClickURL shouldPlayVideo:(BOOL)shouldPlay
+ *	\brief Takes a video click URL, and initiates a video ad playback using 
  *  
- *	\param aRequest The NSURLRequest containing the URL for the web page.
- *  \return n/a
+ *	\param videoClickURL The video click URL contains a video offer id and click URL, called when the video is completed.
+ *	\return n/a
  */
--(void)loadWebRequest:(NSURLRequest *)aRequest;
+- (void)parseVideoClickURL:(NSString*)videoClickURL shouldPlayVideo:(BOOL)shouldPlay;
 
-/*!	\fn loadURLRequest:(NSURL*)requestURL
+/*!	\fn loadURLRequest:withTimeOutInterval:(NSString* requestURLString, int tInterval)
  *	\brief The given NSURL contains a URL that the web page will navigate to.
  *  
- *	\param requestURL The NSURL containing the URL for the web page.
- *  \return n/a
- */
--(void)loadURLRequest:(NSURL*)requestURL;
-
-/*!	\fn loadURLRequest:withTimeOutInterval:(NSURL* requestURL, int tInterval)
- *	\brief The given NSURL contains a URL that the web page will navigate to.
- *  
- *	\param requestURL The NSURL containing the URL for the web page.
+ *	\param requestURL The NSString containing the URL for the web page.
  *	\param tInterval The timeout interval.
- *  \return n/a
+ *	\return n/a
  */
--(void)loadURLRequest:(NSURL*)requestURL withTimeOutInterval:(int)tInterval;
+- (void)loadURLRequest:(NSString*)requestURLString withTimeOutInterval:(int)tInterval;
 
 /*!	\fn appendGenericParamsWithURL:(NSString*)theURL
  *	\brief Appends the TJC generic parameters to the given URL.
  *  
  *	\param theURL The URL to append the generic params to.
- *  \return The URL string constructed from appending the generic parameters to the given URL.
+ *	\return The URL string constructed from appending the generic parameters to the given URL.
  */
 - (NSString*)appendGenericParamsWithURL:(NSString*)theURL;
+
+- (void)setDelegate:(id)delegate;
 
 @end

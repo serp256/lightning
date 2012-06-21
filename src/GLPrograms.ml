@@ -17,6 +17,9 @@ module Image = struct (*{{{*)
 
   value id = gen_id ();
   value cache : ref (option Render.prg) = ref None;
+  value clear_cache () = cache.val := None;
+  Callback.register "image_program_cache_clear" clear_cache;
+
   value create () = 
     match !cache with
     [ None ->

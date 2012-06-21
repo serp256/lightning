@@ -78,6 +78,14 @@ module Program = struct
       )
     ];
 
+  value clear () = 
+  (
+    ShaderCache.clear shader_cache;
+    Cache.clear cache;
+  );
+  Callback.register "programs_cache_clear" clear;
+
+
 end;
 
 module Filter = struct (* remove it from here *)

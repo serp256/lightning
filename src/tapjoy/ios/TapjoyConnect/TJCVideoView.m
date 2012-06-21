@@ -99,18 +99,7 @@
 		adDelegate_ = delegate;
 		
 		mainView_ = [[[NSBundle mainBundle] loadNibNamed:@"TJCVideoView" owner:self options:nil] objectAtIndex:0];
-		
-		if ([TJCUtil isPad])
-		{
-			mainVideoLayer_ = iPadLayer_;
-			[iPhoneLayer_ setAlpha:0];
-		}
-		else
-		{
-			mainVideoLayer_ = iPhoneLayer_;
-			[iPadLayer_ setAlpha:0];
-		}
-		
+
 		// Init loading view.
 		loadingView_ = [[TJCLoadingView alloc] initWithFrame:mainView_.frame];
 		[mainView_ addSubview:loadingView_.mainView];
@@ -145,6 +134,7 @@
 
 	[loadingView_ fadeIn];
 	
+	// JC: TODO: See if this needs to be here.
 	[mainView_ addSubview:mainVideoLayer_.closeButton];
 }
 
@@ -177,7 +167,10 @@
 - (void)playVideoWithOfferID:(NSString*)offerID
 {	
 	NSDictionary *cachedVideoDict = [[TJCVideoManager sharedTJCVideoManager] getCachedVideoDictonary];
-	NSDictionary *videoObjDict = [[[TJCVideoManager sharedTJCVideoManager] getCachedVideoDictonary] objectForKey:offerID];
+	NSDictionary *cachedVideoObjDict = [[[TJCVideoManager sharedTJCVideoManager] getCachedVideoDictonary] objectForKey:offerID];
+	
+	NSDictionary *fullVideoDict = [[TJCVideoManager sharedTJCVideoManager] getAllVideosDictionary];
+	NSDictionary *potentiallyUncachedVideoObjDict = [fullVideoDict objectForKey:offerID];
 	
 	BOOL shouldStream = YES;
 	NSString *videoURL = nil;
@@ -186,13 +179,11 @@
 	if ([cachedVideoDict objectForKey:offerID])
 	{
 		shouldStream = NO;
-		videoURL = [videoObjDict objectForKey:TJC_VIDEO_OBJ_DATA_LOCATION];
+		videoURL = [cachedVideoObjDict objectForKey:TJC_VIDEO_OBJ_DATA_LOCATION];
 	}
 	else
 	{
-		NSDictionary *fullVideoDict = [[TJCVideoManager sharedTJCVideoManager] getAllVideosDictionary];
-		NSDictionary *tmpVideoObjDict = [fullVideoDict objectForKey:offerID];
-		videoURL = [tmpVideoObjDict objectForKey:TJC_VIDEO_OBJ_VIDEO_URL];
+		videoURL = [potentiallyUncachedVideoObjDict objectForKey:TJC_VIDEO_OBJ_VIDEO_URL];
 	}
 	
 	// Buffer video ad in the shared video view.
@@ -202,6 +193,24 @@
 	mainVideoLayer_.offerID = offerID;
 	
 	mainVideoLayer_.isFinishedWatching = NO;
+	
+	// Load the video complete screen as the video starts - We want it to be loaded by the time the video is finished.
+	// JC: TODO: Determine where to move place this and place with proper URL.
+	NSMutableDictionary *paramDict = [[TapjoyConnect sharedTapjoyConnect] genericParameters];
+	
+	NSString *userID = [TapjoyConnect getUserID];
+	if (userID)
+	{
+		// Add the publisher user ID to the generic parameters dictionary.
+		[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	}
+	
+	// Set the video offer ID.
+	[paramDict setObject:offerID forKey:TJC_URL_PARAM_OFFER_ID];
+	
+	// Preload the video complete screen.
+	NSString *requestString = [potentiallyUncachedVideoObjDict objectForKey:TJC_VIDEO_OBJ_COMPLETE_URL];
+	[mainVideoLayer_ loadWebViewWithURL:requestString];
 }
 
 
@@ -228,18 +237,6 @@
 }
 
 
-- (IBAction)customButtonAction1
-{
-	[mainVideoLayer_ buttonAction1];
-}
-
-
-- (IBAction)customButtonAction2
-{
-	[mainVideoLayer_ buttonAction2];
-}
-
-
 - (IBAction)backToVideo
 {
 	[mainVideoLayer_ transitionToVideoView];
@@ -252,14 +249,14 @@
 	[[mainVideoLayer_ videoFeed] setShouldAutoplay:NO];
 	
 	[TJCViewCommons animateTJCView:mainView_ 
-					 withTJCTransition:[[TJCViewCommons sharedObject]getReverseTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject]getTransitionDelay]];
-	[self performSelector:@selector(giveBackNotification) withObject:nil afterDelay:[[TJCViewCommons sharedObject]getTransitionDelay]];
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons]getReverseTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
+	[self performSelector:@selector(giveBackNotification) withObject:nil afterDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
 	
 	[mainVideoLayer_ cleanupVideo];
 	
 	// Refresh offer wall.
-	[[TJCOffersWebView sharedTJCOffersWebView] refreshWebView];
+	[[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] refreshWebView];
 	
 	if (shouldShowStatusBar_)
 	{
@@ -360,7 +357,7 @@
 }
 
 
--(void) giveBackNotification
+- (void)giveBackNotification
 {	
 	if ([adDelegate_ respondsToSelector:@selector(videoAdClosed)])
 	{

@@ -3,10 +3,11 @@ module Transaction :
     type t;
     value get_id : t -> string;
     value get_receipt : t -> string;
+    value get_signature : t -> string;
   end;
 
 
-value init : (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit;
+value init : ?pubkey:string -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit;
 
 value purchase : string -> unit;
 

@@ -25,7 +25,7 @@ dataLocation = dataLocation_,
 videoFilename = videoFilename_;
 
 
-- (id)initWithTBXML:(TBXMLElement*)aXMLElement
+- (id)initWithTBXML:(TJCTBXMLElement*)aXMLElement
 {
 	self = [super init];
 	
@@ -43,15 +43,15 @@ videoFilename = videoFilename_;
 		buttons_ = [[NSMutableArray alloc] init];
 		
 		// Get button data.
-		TBXMLElement *buttonElements = [TBXML childElementNamed:@"Buttons" parentElement:aXMLElement];
-		TBXMLElement *buttonElement = [TBXML childElementNamed:@"Button" parentElement:buttonElements];
+		TJCTBXMLElement *buttonElements = [TJCTBXML childElementNamed:@"Buttons" parentElement:aXMLElement];
+		TJCTBXMLElement *buttonElement = [TJCTBXML childElementNamed:@"Button" parentElement:buttonElements];
 		
 		while (buttonElement)
 		{
-			NSString *buttonLabel = [TBXML textForElement:[TBXML childElementNamed:@"Name" parentElement:buttonElement]];
-			NSString *buttonURL = [TBXML textForElement:[TBXML childElementNamed:@"URL" parentElement:buttonElement]];
+			NSString *buttonLabel = [TJCTBXML textForElement:[TJCTBXML childElementNamed:@"Name" parentElement:buttonElement]];
+			NSString *buttonURL = [TJCTBXML textForElement:[TJCTBXML childElementNamed:@"URL" parentElement:buttonElement]];
 			
-			// TBXML fucks up encoding so & comes in as &amp;. Fix that here.
+			// TJCTBXML fucks up encoding so & comes in as &amp;. Fix that here.
 			NSString *fixedButtonURL = [buttonURL stringByReplacingOccurrencesOfString:@"&amp;" withString:@"&"];
 			
 			NSMutableDictionary *buttonDict = [[NSMutableDictionary alloc] init];
@@ -60,18 +60,18 @@ videoFilename = videoFilename_;
 			[buttons_ addObject:buttonDict];
 			[buttonDict release];
 			
-			buttonElement = [TBXML nextSiblingNamed:@"Button" searchFromElement:buttonElement];
+			buttonElement = [TJCTBXML nextSiblingNamed:@"Button" searchFromElement:buttonElement];
 		}
 		
-		videoURL_ = [[TBXML textForElement:[TBXML childElementNamed:@"VideoURL" parentElement:aXMLElement]] copy];
-		currencyAmount_ = [[TBXML textForElement:[TBXML childElementNamed:@"Amount" parentElement:aXMLElement]] copy];
-		offerID_ = [[TBXML textForElement:[TBXML childElementNamed:@"OfferID" parentElement:aXMLElement]] copy];
-		clickURL_ = [[TBXML textForElement:[TBXML childElementNamed:@"ClickURL" parentElement:aXMLElement]] copy];
-		videoAdName_ = [[TBXML textForElement:[TBXML childElementNamed:@"Name" parentElement:aXMLElement]] copy];
+		videoURL_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"VideoURL" parentElement:aXMLElement]] copy];
+		currencyAmount_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"Amount" parentElement:aXMLElement]] copy];
+		offerID_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"OfferID" parentElement:aXMLElement]] copy];
+		clickURL_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"ClickURL" parentElement:aXMLElement]] copy];
+		videoAdName_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"Name" parentElement:aXMLElement]] copy];
 		NSArray *parts = [videoURL_ componentsSeparatedByString:@"/"];;
 		videoFilename_ = [[parts lastObject] copy];
-		currencyName_ = [[TBXML textForElement:[TBXML childElementNamed:@"CurrencyName" parentElement:aXMLElement]] copy];
-		iconURL_ = [[TBXML textForElement:[TBXML childElementNamed:@"IconURL" parentElement:aXMLElement]] copy];
+		currencyName_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"CurrencyName" parentElement:aXMLElement]] copy];
+		iconURL_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"IconURL" parentElement:aXMLElement]] copy];
 		if ([iconURL_ isEqualToString:@""] || ([iconURL_ length] <= 0))
 		{
 			iconURL_ = [[NSString alloc] initWithString:TJC_VIDEO_NO_ICON];

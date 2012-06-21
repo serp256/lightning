@@ -1,0 +1,19 @@
+OCAMLFIND = /usr/local/bin/ocamlfind -toolchain android
+OCAMLOPT = $(OCAMLFIND) ocamlopt
+OCAMLC = $(OCAMLFIND) ocamlc
+include Makefile.common
+
+so: example.so
+	cp test.so android/libs/armeabi-v7a/libtest.so
+	cd android && ant debug
+	
+
+include Makefile.in
+
+example.so: $(MLXFILES) example.cmx
+	$(OCAMLOPT) -verbose -o test.so  -g  \
+	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) example.cmx \
+	-package extlib,xmlm,ojson,bigarray -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" -output-obj
+
+clean::
+	rm -f LightTest/*.o LighTest/*.so 

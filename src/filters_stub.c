@@ -395,7 +395,8 @@ value ml_filter_glow(value color, value strength) { struct glowData *gd = (struc
 
 static inline GLuint powOfTwo(unsigned int p) {
 	GLuint r = 1;
-	for (unsigned int i = 0; i < p; i++) {
+	unsigned int i;
+	for (i = 0; i < p; i++) {
 		r *= 2;
 	}
 	return r;
@@ -430,7 +431,8 @@ void ml_glow2_make(value orb,value glow) {
 	renderbuffer_t *drb = &rb2;
 	renderbuffer_t *srb = rb;
 	renderbuffer_t *trb;
-	for (int i=0;i<gsize;i++) {
+	int i;
+	for (i=0;i<gsize;i++) {
 		if (strength != 1. && i == (gsize - 1)) glUniform1f(prg->uniforms[3],strength);
 		drawRenderbuffer(drb,srb,1);
 		trb = drb; drb = srb; srb = trb;

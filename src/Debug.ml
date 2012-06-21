@@ -22,7 +22,7 @@ END;
 *)
 
 IFDEF ANDROID THEN
-external fail_writer: string -> string -> exn = "android_debug_output_fatal";
+external fail_writer: string -> string -> unit = "android_debug_output_fatal";
 external e_writer: string -> string -> unit = "android_debug_output_error";
 external w_writer: string -> string -> unit = "android_debug_output_warn";
 external i_writer: string -> string -> unit = "android_debug_output_info";

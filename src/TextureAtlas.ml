@@ -57,8 +57,7 @@ value load xmlpath =
 
 value load binpath = 
   let dirname = Filename.dirname binpath in
-  let path = resource_path binpath in
-  let inp = open_in_bin path in
+  let inp = open_resource binpath in
   (
     let bininp = IO.input_channel inp in
     let cnt_atlases = IO.read_byte bininp in
@@ -87,7 +86,6 @@ value load binpath =
 
 
 value loadxml xmlpath = 
-  let xmlpath = resource_path xmlpath in
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; value with_suffix = True; end) in
   let regions = Hashtbl.create 3 in
   let () = XmlParser.accept (`Dtd None) in

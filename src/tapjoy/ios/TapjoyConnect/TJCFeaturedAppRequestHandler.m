@@ -18,7 +18,10 @@
 
 @implementation TJCFeaturedAppRequestHandler
 
--(id) initRequestWithDelegate:(id<TJCFetchResponseDelegate>) aDelegate andRequestTag:(int)aTag
+
+
+
+- (id)initRequestWithDelegate:(id<TJCFetchResponseDelegate>) aDelegate andRequestTag:(int)aTag
 {
 	self = [super initRequestWithDelegate:aDelegate andRequestTag:aTag];
 	
@@ -31,8 +34,7 @@
 	NSString *userID = [TapjoyConnect getUserID];
 	
 	// Save off the user id since we may need to access it later upon a possible retry.
-	[TJCFeaturedAppView sharedTJCFeaturedAppView].publisherUserID_ = userID;
-	[TJCFeaturedAppView sharedTJCFeaturedAppView].currencyID_ = nil;
+	[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView].currencyID_ = nil;
 	
 	NSString *requestString = [NSString stringWithFormat:@"%@%@", TJC_SERVICE_URL, TJC_FEATURED_URL_NAME];
 	
@@ -41,7 +43,10 @@
 	NSMutableDictionary *paramDict = [[[TapjoyConnect sharedTapjoyConnect] genericParameters] retain];
 	
 	// Add the publisher user ID to the generic parameters dictionary.
-	[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	if (userID)
+	{
+		[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	}
 	
 	[self makeGenericRequestWithURL:requestString alternateURL:alternateString params:paramDict selector:@selector(featuredAppDataReceived:)];
 	[paramDict release];
@@ -53,8 +58,7 @@
 	NSString *userID = [TapjoyConnect getUserID];
 	
 	// Save off the user id since we may need to access it later upon a possible retry.
-	[TJCFeaturedAppView sharedTJCFeaturedAppView].publisherUserID_ = userID;
-	[TJCFeaturedAppView sharedTJCFeaturedAppView].currencyID_ = currencyID;
+	[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView].currencyID_ = currencyID;
 	
 	NSString *requestString = [NSString stringWithFormat:@"%@%@", TJC_SERVICE_URL, TJC_FEATURED_URL_NAME];
 	
@@ -63,7 +67,10 @@
 	NSMutableDictionary *paramDict = [[[TapjoyConnect sharedTapjoyConnect] genericParameters] retain];
 	
 	// Add the publisher user ID to the generic parameters dictionary.
-	[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	if (userID)
+	{
+		[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	}
 	
 	// Add the currency ID to the generic parameters dictionary.
 	[paramDict setObject:currencyID forKey:TJC_URL_PARAM_CURRENCY_ID];
@@ -77,12 +84,12 @@
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"Update Account Info Response Returned"];
 	
-	TBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
+	TJCTBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
 	
 	if (!tjcConnectRetObject) 
 		return;
 	
-	TBXMLElement *offerArryObj = [TBXML childElementNamed:@"OfferArray" parentElement:tjcConnectRetObject];
+	TJCTBXMLElement *offerArryObj = [TJCTBXML childElementNamed:@"OfferArray" parentElement:tjcConnectRetObject];
 	
 	if(!offerArryObj)
 	{
@@ -93,7 +100,7 @@
 		return;
 	}
 	
-	TBXMLElement *featureApp = [TBXML childElementNamed:@"TapjoyApp" parentElement:offerArryObj];
+	TJCTBXMLElement *featureApp = [TJCTBXML childElementNamed:@"TapjoyApp" parentElement:offerArryObj];
 	
 	if(!featureApp)
 	{

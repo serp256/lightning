@@ -150,6 +150,7 @@ void get_framebuffer_state(framebuffer_state *s);
 void set_framebuffer_state(framebuffer_state *s);
 
 
+void render_clear_cached_values ();
 
 
 #endif

@@ -5,16 +5,23 @@
 #include <caml/memory.h>
 #include <caml/callback.h>
 #include <caml/alloc.h>
+#include <caml/fail.h>
 #include "mlwrapper.h"
 #include "mlwrapper_android.h"
 #include "GLES/gl.h"
+#include "net_curl.h"
+#include "render_stub.h"
+#include <fcntl.h>
+
 
 #define caml_acquire_runtime_system()
 #define caml_release_runtime_system()
 
 static JavaVM *gJavaVM;
+static int ocaml_initialized = 0;
 static mlstage *stage = NULL;
 static jobject jView;
+static jclass jViewCls;
 static jobject jStorage;
 static jobject jStorageEditor;
 
@@ -25,22 +32,26 @@ typedef enum
     St_string_val, 
   } st_val_type;
 
+static void mlUncaughtException(const char* exn, int bc, char** bv) {
+	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",exn);
+	int i;
+	for (i = 0; i < bc; i++) {
+		if (bv[i]) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",bv[i]);
+	};
+}
+
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
-	char *argv[] = {"android",NULL};
-	caml_startup(argv);
+	uncaught_exception_callback = &mlUncaughtException;
 	gJavaVM = vm;
-	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","caml initialized");
 	return JNI_VERSION_1_6; // Check this
 }
 
 void android_debug_output(value mtag, value address, value msg) {
-	char buf[255];
 	char *tag;
 	if (mtag == Val_int(0)) tag = "DEFAULT";
 	else tag = String_val(Field(mtag,0));
-	sprintf(buf,"LIGHTNING[%s (%s)]",tag, String_val(address));
-	__android_log_write(ANDROID_LOG_DEBUG,buf,String_val(msg));
+	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s",tag,String_val(address),String_val(msg)); // this should be APPNAME
 }
 
 void android_debug_output_info(value address,value msg) {
@@ -86,81 +97,102 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 	return result;
 }
 
-// maybe rewrite it for libzip
-int getResourceFd(value mlpath, resource *res) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
-	if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
-	{
-		__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
-	}
+static char *gAssetsDir = NULL;
 
-	jclass cls = (*env)->GetObjectClass(env,jView);
-	jmethodID mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
-	(*env)->DeleteLocalRef(env, cls); //
-	
-	if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
-	
-	const char * path = String_val(mlpath);
-	jstring jpath = (*env)->NewStringUTF(env,path);
-	jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
-	(*env)->DeleteLocalRef(env,jpath);
-	
-	if (!resourceParams) {
-	  return 0;
-	}
-	
-	cls = (*env)->GetObjectClass(env,resourceParams);
-	
-	jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");
-	
-	jobject fileDescriptor = (*env)->GetObjectField(env,resourceParams,fid);
-	jclass fdcls = (*env)->GetObjectClass(env,fileDescriptor);
-	
-	fid = (*env)->GetFieldID(env,fdcls,"descriptor","I");
+JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env, jobject this, jstring assetsDir) {
+	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, 0);
 
-//3	(*env)->DeleteLocalRef(env, fdcls);
-    jint fd = (*env)->GetIntField(env,fileDescriptor,fid);
-	fid = (*env)->GetFieldID(env,cls,"startOffset","J");
-	jlong startOffset = (*env)->GetLongField(env,resourceParams,fid);
-	fid = (*env)->GetFieldID(env,cls,"length","J");
-	jlong length = (*env)->GetLongField(env,resourceParams,fid);
-	
-	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld (%s)",startOffset,length, String_val(mlpath));
-	
-	int myfd = dup(fd); 
-	lseek(myfd,startOffset,SEEK_SET);
-	res->fd = myfd;
-	res->length = length;
-	
-	(*env)->DeleteLocalRef(env, fileDescriptor);
-	(*env)->DeleteLocalRef(env, resourceParams);
-	(*env)->DeleteLocalRef(env, cls);
-	
-	return 1;
+	if (assetsDir != NULL) {
+		const char *path = (*env)->GetStringUTFChars(env, assetsDir, JNI_FALSE);
+		gAssetsDir = (char*) malloc(strlen(path));
+		strcpy(gAssetsDir, path);		
+	}
 }
 
+// NEED rewrite it for libzip
+int getResourceFd(const char *path, resource *res) { //{{{
+	DEBUGF("getResourceFD: %s",path);
+
+	if (gAssetsDir != NULL) {
+		char *assetPath = (char*) malloc(strlen(gAssetsDir) + strlen(path) + 1);
+		strcpy(assetPath, gAssetsDir);
+		strcat(assetPath, "/");
+		strcat(assetPath, path);
+
+		int fd = open(assetPath, O_RDONLY);
+		free(assetPath);
+
+		if (fd < 0) {
+			return 0;
+		}
+
+		res->fd = fd;
+		res->length = lseek(fd, 0, SEEK_END);
+		lseek(fd, 0, SEEK_SET);
+	} else {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+		if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
+		{
+			__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+		}
+
+		jclass cls = (*env)->GetObjectClass(env,jView);
+		jmethodID mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
+		(*env)->DeleteLocalRef(env, cls); //
+		
+		if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
+		
+		jstring jpath = (*env)->NewStringUTF(env,path);
+		jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
+		(*env)->DeleteLocalRef(env,jpath);
+		
+		if (!resourceParams) {
+		  return 0;
+		}
+		
+		cls = (*env)->GetObjectClass(env,resourceParams);
+		
+		jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");
+		
+		jobject fileDescriptor = (*env)->GetObjectField(env,resourceParams,fid);
+		jclass fdcls = (*env)->GetObjectClass(env,fileDescriptor);
+		
+		fid = (*env)->GetFieldID(env,fdcls,"descriptor","I");
+
+	//3	(*env)->DeleteLocalRef(env, fdcls);
+		jint fd = (*env)->GetIntField(env,fileDescriptor,fid);
+		fid = (*env)->GetFieldID(env,cls,"startOffset","J");
+		jlong startOffset = (*env)->GetLongField(env,resourceParams,fid);
+		fid = (*env)->GetFieldID(env,cls,"length","J");
+		jlong length = (*env)->GetLongField(env,resourceParams,fid);
+
+		//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld (%s)",startOffset,length, String_val(mlpath));
+		
+		int myfd = dup(fd); 
+		lseek(myfd,startOffset,SEEK_SET);
+		res->fd = myfd;
+		res->length = length;
+		
+		(*env)->DeleteLocalRef(env, fileDescriptor);
+		(*env)->DeleteLocalRef(env, resourceParams);
+		(*env)->DeleteLocalRef(env, cls);		
+	}
+
+	return 1;
+}//}}}
+
 // получим параметры нах
-value caml_getResource(value mlpath) {
+value caml_getResource(value mlpath,value suffix) {
 	CAMLparam1(mlpath);
 	CAMLlocal2(res,mlfd);
 	resource r;
-	if (getResourceFd(mlpath,&r)) {
+	if (getResourceFd(String_val(mlpath),&r)) {
 		mlfd = caml_alloc_tuple(2);
 		Store_field(mlfd,0,Val_int(r.fd));
 		Store_field(mlfd,1,caml_copy_int64(r.length));
 		res = caml_alloc_tuple(1);
 		Store_field(res,0,mlfd);
-		//FILE* myFile = fdopen(myfd, "rb"); 
-		/*
-		if (myFile) 
-		{ 
-			fseek(myFile, startOffset, SEEK_SET); 
-			char *test = malloc(length+1);
-			size_t readed = fread(test,length,1,myFile);
-			test[length] = '\0';
-			__android_log_print(ANDROID_LOG_DEBUG,"TEST","readed: %d bytes [%s]",readed,test);
-		} */
 	} else res = Val_int(0); 
 	CAMLreturn(res);
 }
@@ -174,56 +206,85 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightSetResourcesPath(JNIEnv
 }
 */
 
-JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview) {
-	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","lightInit");
+JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview, jobject storage) {
+	DEBUG("lightInit");
+
 	jView = (*env)->NewGlobalRef(env,jview);
+
+	jclass viewCls = (*env)->GetObjectClass(env, jView);
+	jViewCls = (*env)->NewGlobalRef(env, viewCls);
+
 	
-	/* 
-	 * init storage 
-	 */
-	 
+	/*
 	jclass viewCls = (*env)->GetObjectClass(env,jView);
 	jmethodID getContextMthd = (*env)->GetMethodID(env, viewCls,"getContext","()Landroid/content/Context;");
 	jobject contextObj = (*env)->CallObjectMethod(env,jView,getContextMthd);
 	
-    jclass contextCls = (*env)->GetObjectClass(env, contextObj);
-    jmethodID getSharedPreferencesMthd = (*env)->GetMethodID(env, contextCls, "getSharedPreferences", "(Ljava/lang/String;I)Landroid/content/SharedPreferences;");  
-    jstring stname = (*env)->NewStringUTF(env, "lightning");
-    
-    jobject storage = (*env)->CallObjectMethod(env,contextObj, getSharedPreferencesMthd,stname,0);
+	jclass contextCls = (*env)->GetObjectClass(env, contextObj);
+	jmethodID getSharedPreferencesMthd = (*env)->GetMethodID(env, contextCls, "getSharedPreferences", "(Ljava/lang/String;I)Landroid/content/SharedPreferences;");  
+	jstring stname = (*env)->NewStringUTF(env, "lightning");
+	
+	jobject storage = (*env)->CallObjectMethod(env,contextObj, getSharedPreferencesMthd,stname,0);
+	*/
+
 	jStorage = (*env)->NewGlobalRef(env, storage);
 
-    /* editor */
-    jclass storageCls = (*env)->GetObjectClass(env, storage);
-    jmethodID jmthd_edit = (*env)->GetMethodID(env, storageCls, "edit", "()Landroid/content/SharedPreferences$Editor;");
-    jobject storageEditor = (*env)->CallObjectMethod(env, storage, jmthd_edit);
-    jStorageEditor = (*env)->NewGlobalRef(env, storageEditor);
+	/* editor */
+	jclass storageCls = (*env)->GetObjectClass(env, storage);
+	jmethodID jmthd_edit = (*env)->GetMethodID(env, storageCls, "edit", "()Landroid/content/SharedPreferences$Editor;");
+	jobject storageEditor = (*env)->CallObjectMethod(env, storage, jmthd_edit);
+	jStorageEditor = (*env)->NewGlobalRef(env, storageEditor);
   
       
-	(*env)->DeleteLocalRef(env, storage);
-	(*env)->DeleteLocalRef(env, stname);
-	(*env)->DeleteLocalRef(env, contextCls);
-	(*env)->DeleteLocalRef(env, contextObj);
-    (*env)->DeleteLocalRef(env, viewCls);
-    (*env)->DeleteLocalRef(env, storageCls);
-    (*env)->DeleteLocalRef(env, storageEditor);
+	//(*env)->DeleteLocalRef(env, storage);
+	//(*env)->DeleteLocalRef(env, stname);
+	//(*env)->DeleteLocalRef(env, contextCls);
+	//(*env)->DeleteLocalRef(env, contextObj);
+	//(*env)->DeleteLocalRef(env, viewCls);
+	(*env)->DeleteLocalRef(env, storageCls);
+	(*env)->DeleteLocalRef(env, storageEditor);
+	(*env)->DeleteLocalRef(env, viewCls);
+	if (!ocaml_initialized) {
+		char *argv[] = {"android",NULL};
+		caml_startup(argv);
+		ocaml_initialized = 1;
+		DEBUG("caml initialized");
+	}
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightView_lightFinalize(JNIEnv *env, jobject jview) {
+	DEBUG("handleOnDestroy");
+	if (stage) {
+		(*env)->DeleteGlobalRef(env,jStorage);
+		jStorage = NULL;
+		(*env)->DeleteGlobalRef(env,jStorageEditor);
+		jStorageEditor = NULL;
+		(*env)->DeleteGlobalRef(env,jView);
+		jView = NULL;
+		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","finalize old stage");
+		mlstage_destroy(stage);
+		caml_callback(*caml_named_value("texture_cache_clear"),Val_unit);
+		DEBUGF("texture cache cleared");
+		caml_callback(*caml_named_value("programs_cache_clear"),Val_unit);
+		caml_callback(*caml_named_value("image_program_cache_clear"),Val_unit);
+		render_clear_cached_values ();
+		caml_gc_compaction(Val_unit);
+		stage = NULL;
+	}
 }
 
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererInit(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUG("lightRender init");
-	if (stage) {
-		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","stage alredy initialized");
-		caml_callback(*caml_named_value("realodTextures"),Val_int(0));
-		// we need reload textures
-		return;
-	}
+	if (stage) return;
 	DEBUGF("create stage: [%d:%d]",width,height);
 	stage = mlstage_create((double)width,(double)height); 
+	DEBUGF("stage created");
 }
 
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRendererChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUGF("GL Changed: %i:%i",width,height);
 }
 
@@ -233,10 +294,11 @@ static value run_method = 1;//None
 void mlstage_run(double timePassed) {
 	if (run_method == 1) // None
 		run_method = caml_hash_variant("run");
+	if (net_running > 0) net_perform();
 	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,caml_copy_double(timePassed));
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_lightRender(JNIEnv *env, jobject thiz, jlong interval) {
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
 	double timePassed = (double)interval / 1000000000L;
 	mlstage_run(timePassed);
 }
@@ -248,7 +310,7 @@ void fireTouch(jint id, jfloat x, jfloat y, int phase) {
 	value touch,touches = 1;
 	Begin_roots1(touch);
 	touch = caml_alloc_tuple(8);
-	Store_field(touch,0,caml_copy_int32(id));
+	Store_field(touch,0,caml_copy_int32(id + 1));
 	Store_field(touch,1,caml_copy_double(0.));
 	Store_field(touch,2,caml_copy_double(x));
 	Store_field(touch,3,caml_copy_double(y));
@@ -279,7 +341,7 @@ void fireTouches(JNIEnv *env, jintArray ids, jfloatArray xs, jfloatArray ys, int
 		globalX = caml_copy_double(x[i]);
 		globalY = caml_copy_double(y[i]);
 		touch = caml_alloc_tuple(8);
-		Store_field(touch,0,caml_copy_int32(id[i]));
+		Store_field(touch,0,caml_copy_int32(id[i] + 1));
 		Store_field(touch,1,caml_copy_double(0.));
 		Store_field(touch,2,globalX);
 		Store_field(touch,3,globalY);
@@ -317,14 +379,11 @@ JNIEXPORT void Java_ru_redspell_lightning_lightRenderer_handlekeydown(int keycod
 }
 */
 
-// that's all now :-)
-
 
 static jobjectArray jarray_of_mlList(JNIEnv* env, value mlList) 
 //берет окэмльный список дуплов и делает из него двумерный массив явовый
 {
 	value block, tuple;
-	int flag = 1;
 	int count = 0;
 
 	//создал массив из двух строчек
@@ -426,7 +485,6 @@ value ml_android_connection(value mlurl,value method,value headers,value data) {
 }
 
 
-
 JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlResponse(JNIEnv *env, jobject jloader, jint loader_id, jint jhttpCode, jstring jcontentType, jint jtotalBytes) {
   DEBUG("IM INSIDE lightURLresponse!!");
   static value *ml_url_response = NULL;
@@ -454,17 +512,16 @@ JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlResponse(JNIEn
 
 JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlData(JNIEnv *env, jobject jloader, jint loader_id, jarray data) {
 	DEBUG("IM INSIDE lightURLData!!-------------------------------------------->>>");
-    static value *ml_url_data = NULL;
+	static value *ml_url_data = NULL;
 	caml_acquire_runtime_system();
 
-	if (ml_url_data == NULL) 
-      ml_url_data = caml_named_value("url_data");
+	if (ml_url_data == NULL) ml_url_data = caml_named_value("url_data");
 
 	int size = (*env)->GetArrayLength(env, data);
 	
 	value mldata;
   
-    Begin_roots1(mldata);
+	Begin_roots1(mldata);
 	mldata = caml_alloc_string(size); 
 	jbyte * javadata = (*env)->GetByteArrayElements(env,data,0);
 	memcpy(String_val(mldata),javadata,size);
@@ -508,15 +565,18 @@ JNIEXPORT void Java_ru_redspell_lightning_LightHttpLoader_lightUrlComplete(JNIEn
 
 //////////// key-value storage based on NSUserDefaults
 
+/*
 value ml_kv_storage_create() {
   CAMLparam0();
   CAMLreturn((value)jStorage);
 }
+*/
+
+static int kv_storage_synced = 1;
 
 
 // commit
-void ml_kv_storage_commit(value storage) {
-  CAMLparam1(storage);
+void ml_kv_storage_commit(value unit) {
 
   JNIEnv *env;
   (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
@@ -525,65 +585,78 @@ void ml_kv_storage_commit(value storage) {
   }
 
   jclass editorCls = (*env)->GetObjectClass(env, jStorageEditor);
-  jmethodID jmthd_commit = (*env)->GetMethodID(env, editorCls, "commit", "()Z");
+	static jmethodID jmthd_commit = NULL;
+	if (jmthd_commit == NULL) jmthd_commit = (*env)->GetMethodID(env, editorCls, "commit", "()Z");
   (*env)->CallBooleanMethod(env, jStorageEditor, jmthd_commit);
-  
   (*env)->DeleteLocalRef(env, editorCls);
-  CAMLreturn0;
+	kv_storage_synced = 1;
 }
 
 
+static void kv_storage_apply(JNIEnv *env) {
+  jclass editorCls = (*env)->GetObjectClass(env, jStorageEditor);
+	static jmethodID jmthd_apply = NULL;
+	if (jmthd_apply == NULL) jmthd_apply = (*env)->GetMethodID(env, editorCls, "apply", "()V");
+  (*env)->CallVoidMethod(env, jStorageEditor, jmthd_apply);
+  (*env)->DeleteLocalRef(env, editorCls);
+	kv_storage_synced = 1;
+}
+
 
 // 
-jboolean kv_storage_contains_key(JNIEnv *env, jobject storage, jstring key) {
-  jclass storageCls = (*env)->GetObjectClass(env, storage);
-  jmethodID jmthd_contains = (*env)->GetMethodID(env, storageCls, "contains", "(Ljava/lang/String;)Z");
-  jboolean contains = (*env)->CallBooleanMethod(env, storage, jmthd_contains, key);
+jboolean kv_storage_contains_key(JNIEnv *env, jstring key) {
+  jclass storageCls = (*env)->GetObjectClass(env, jStorage);
+  static jmethodID jmthd_contains = NULL;
+	if (jmthd_contains == NULL) jmthd_contains = (*env)->GetMethodID(env, storageCls, "contains", "(Ljava/lang/String;)Z");
+  jboolean contains = (*env)->CallBooleanMethod(env, jStorage, jmthd_contains, key);
   (*env)->DeleteLocalRef(env, storageCls);
   return contains;
 } 
 
 
-value kv_storage_get_val(value storage_ml, value key_ml, st_val_type vtype) {
-  CAMLparam2(storage_ml, key_ml);
+value kv_storage_get_val(value key_ml, st_val_type vtype) {
+  CAMLparam1(key_ml);
   CAMLlocal1(tuple);
   
+	DEBUG("KV_STORAGE_GET_VAL");
   JNIEnv *env;                                                                                                                                                                                
   (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);                                                                                                                                   
   if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) {                                                                                                                                 
     __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");                                                                           
-  }   
+  };  
+
+	if (!kv_storage_synced) kv_storage_apply(env);
+	DEBUG("KV_STORAGE_SYNCED");
   
-  jobject storage = (jobject)storage_ml;
-  jclass  storageCls = (*env)->GetObjectClass(env, storage);
+  jclass  storageCls = (*env)->GetObjectClass(env, jStorage);
   jstring key = (*env)->NewStringUTF(env, String_val(key_ml));
 
-  if (!kv_storage_contains_key(env, storage, key)) {
+  if (!kv_storage_contains_key(env, key)) {
     (*env)->DeleteLocalRef(env, storageCls);
     (*env)->DeleteLocalRef(env, key);
     CAMLreturn(Val_int(0));
   }
 
 
-  jmethodID jmthd_get;  
   tuple = caml_alloc_tuple(1);
   
   if (vtype == St_string_val) {
-    jmthd_get = (*env)->GetMethodID(env, storageCls, "getString", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    jstring defval = (*env)->NewStringUTF(env, "");
-    jstring jval = (*env)->CallObjectMethod(env, storage, jmthd_get, key, defval);
+		static jmethodID jmthd_getString = NULL;
+		if (jmthd_getString == NULL) jmthd_getString = (*env)->GetMethodID(env, storageCls, "getString", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    jstring jval = (*env)->CallObjectMethod(env, jStorage, jmthd_getString, key, NULL);
     const char * val = (*env)->GetStringUTFChars(env, jval, NULL);
     Store_field(tuple,0,caml_copy_string(val));
     (*env)->ReleaseStringUTFChars(env, jval, val);
-    (*env)->DeleteLocalRef(env, defval);
     (*env)->DeleteLocalRef(env, jval);
   } else if (vtype == St_int_val) {
-    jmthd_get = (*env)->GetMethodID(env, storageCls, "getInt", "(Ljava/lang/String;I)I");
-    jint jval = (*env)->CallIntMethod(env, storage, jmthd_get, key, 0);
+		static jmethodID jmthd_getInt = NULL;
+		if (jmthd_getInt == NULL) jmthd_getInt = (*env)->GetMethodID(env, storageCls, "getInt", "(Ljava/lang/String;I)I");
+    jint jval = (*env)->CallIntMethod(env, jStorage, jmthd_getInt, key, 0);
     Store_field(tuple,0,Val_int(jval));
   } else {
-    jmthd_get = (*env)->GetMethodID(env, storageCls, "getBoolean", "(Ljava/lang/String;Z)Z");
-    jboolean jval = (*env)->CallBooleanMethod(env, storage, jmthd_get, key, 0);
+		static jmethodID jmthd_getBool = NULL;
+		if (jmthd_getBool == NULL) jmthd_getBool = (*env)->GetMethodID(env, storageCls, "getBoolean", "(Ljava/lang/String;Z)Z");
+    jboolean jval = (*env)->CallBooleanMethod(env, jStorage, jmthd_getBool, key, 0);
     Store_field(tuple,0,Val_bool(jval));
   }
   
@@ -591,29 +664,36 @@ value kv_storage_get_val(value storage_ml, value key_ml, st_val_type vtype) {
   (*env)->DeleteLocalRef(env, storageCls);
   (*env)->DeleteLocalRef(env, key);
 
+  //(*gJavaVM)->DetachCurrentThread(gJavaVM);
+
   CAMLreturn(tuple);
 }
 
 
 
 // get string
-value ml_kv_storage_get_string(value storage, value key_ml) {
-  return kv_storage_get_val(storage, key_ml, St_string_val);
+value ml_kv_storage_get_string(value key_ml) {
+  return kv_storage_get_val(key_ml, St_string_val);
 }  
 
 // get boolean
-value ml_kv_storage_get_bool(value storage, value key_ml) {
-  return kv_storage_get_val(storage, key_ml, St_bool_val);
+value ml_kv_storage_get_bool(value key_ml) {
+  return kv_storage_get_val(key_ml, St_bool_val);
 }
 
 // get int 
-value ml_kv_storage_get_int(value storage, value key_ml) {
-  return kv_storage_get_val(storage, key_ml, St_int_val);
+value ml_kv_storage_get_int(value key_ml) {
+  return kv_storage_get_val(key_ml, St_int_val);
 }
 
+// get float 
+value ml_kv_storage_get_float(value key_ml) {
+	return caml_copy_double(1.);
+  //return kv_storage_get_val(key_ml, St_int_val);
+}
 
-void kv_storage_put_val(value storage_ml, value key_ml, value val_ml, st_val_type vtype) {
-  CAMLparam3(storage_ml, key_ml, val_ml);
+void kv_storage_put_val(value key_ml, value val_ml, st_val_type vtype) {
+  CAMLparam2(key_ml, val_ml);
 
   JNIEnv *env;
   (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
@@ -623,45 +703,55 @@ void kv_storage_put_val(value storage_ml, value key_ml, value val_ml, st_val_typ
 
   jclass editorCls = (*env)->GetObjectClass(env, jStorageEditor);
   jstring key = (*env)->NewStringUTF(env, String_val(key_ml));
-  jmethodID jmthd_put;
   
   if (vtype == St_string_val) {
-    jmthd_put = (*env)->GetMethodID(env, editorCls, "putString", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
+		static jmethodID jmthd_putString = NULL;
+		if (jmthd_putString == NULL) jmthd_putString = (*env)->GetMethodID(env, editorCls, "putString", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
     jstring val = (*env)->NewStringUTF(env, String_val(val_ml));
-    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_put, key, val);
+    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_putString, key, val);
     (*env)->DeleteLocalRef(env, val);
   } else if (vtype == St_bool_val) {
-    jmthd_put = (*env)->GetMethodID(env, editorCls, "putBoolean", "(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;");
-    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_put, key, Bool_val(val_ml));
+		static jmethodID jmthd_putBool = NULL;
+		if (jmthd_putBool == NULL) jmthd_putBool = (*env)->GetMethodID(env, editorCls, "putBoolean", "(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;");
+    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_putBool, key, Bool_val(val_ml));
   } else {
-    jmthd_put = (*env)->GetMethodID(env, editorCls, "putInt", "(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;");
-    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_put, key, Int_val(val_ml));
+		static jmethodID jmthd_putInt = NULL;
+		if (jmthd_putInt == NULL) jmthd_putInt = (*env)->GetMethodID(env, editorCls, "putInt", "(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;");
+    (*env)->CallObjectMethod(env, jStorageEditor, jmthd_putInt, key, Int_val(val_ml));
   }
       
+	kv_storage_synced = 0;
   (*env)->DeleteLocalRef(env, key);
   (*env)->DeleteLocalRef(env, editorCls);
+
+  //(*gJavaVM)->DetachCurrentThread(gJavaVM);
+
   CAMLreturn0;
 }
 
 
 // put string
-void ml_kv_storage_put_string(value storage, value key_ml, value val_ml) {
-  return kv_storage_put_val(storage, key_ml, val_ml, St_string_val);
+void ml_kv_storage_put_string(value key_ml, value val_ml) {
+  return kv_storage_put_val(key_ml, val_ml, St_string_val);
 }
 
 
-void ml_kv_storage_put_bool(value storage, value key_ml, value val_ml) {
-  return kv_storage_put_val(storage, key_ml, val_ml, St_bool_val);
+void ml_kv_storage_put_bool(value key_ml, value val_ml) {
+  return kv_storage_put_val(key_ml, val_ml, St_bool_val);
 }
 
 
-void ml_kv_storage_put_int(value storage, value key_ml, value val_ml) {
-  return kv_storage_put_val(storage, key_ml, val_ml, St_int_val);
+void ml_kv_storage_put_int(value key_ml, value val_ml) {
+  return kv_storage_put_val(key_ml, val_ml, St_int_val);
+}
+
+void ml_kv_storage_put_float(value key_ml, value val_ml) {
+  //return kv_storage_put_val(key_ml, val_ml, St_int_val);
 }
 
 
-void ml_kv_storage_remove(value storage, value key_ml) {
-  CAMLparam2(storage, key_ml);
+void ml_kv_storage_remove(value key_ml) {
+  CAMLparam1(key_ml);
 
   JNIEnv *env;
   (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
@@ -671,29 +761,335 @@ void ml_kv_storage_remove(value storage, value key_ml) {
 
   jclass editorCls = (*env)->GetObjectClass(env, jStorageEditor);
   jstring key = (*env)->NewStringUTF(env, String_val(key_ml));
-  jmethodID jmthd_remove = (*env)->GetMethodID(env, editorCls, "remove", "(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
+
+  jmethodID jmthd_remove = NULL;
+	if (jmthd_remove == NULL) jmthd_remove = (*env)->GetMethodID(env, editorCls, "remove", "(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
   jobject e =  (*env)->CallObjectMethod(env, jStorageEditor, jmthd_remove, key);
 
+	kv_storage_synced = 0;
   (*env)->DeleteLocalRef(env, key);
   (*env)->DeleteLocalRef(env, e);
+
+  //(*gJavaVM)->DetachCurrentThread(gJavaVM);
 
   CAMLreturn0;
 }
 
 
-value ml_kv_storage_exists(value storage, value key_ml) {
-  CAMLparam2(storage, key_ml);
+value ml_kv_storage_exists(value key_ml) {
+  CAMLparam1(key_ml);
 
   JNIEnv *env;
   (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
   if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
   }
-
-
   jstring key = (*env)->NewStringUTF(env, String_val(key_ml)); 
-  jboolean contains = kv_storage_contains_key(env, (jobject)storage, key);
+  jboolean contains = kv_storage_contains_key(env, key);
   (*env)->DeleteLocalRef(env,key);
   CAMLreturn(Val_bool(contains));
 }
 
+
+value ml_malinfo(value p) {
+	return caml_alloc_tuple(3);
+}
+
+static jclass gSndPoolCls = NULL;
+static jobject gSndPool = NULL;
+
+void ml_alsoundInit() {
+	if (gSndPool != NULL) {
+		caml_failwith("alsound already initialized");
+	}
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jclass amCls = (*env)->FindClass(env, "android/media/AudioManager");
+	jfieldID strmTypeFid = (*env)->GetStaticFieldID(env, amCls, "STREAM_MUSIC", "I");
+	jint strmType = (*env)->GetStaticIntField(env, amCls, strmTypeFid);
+
+	jclass sndPoolCls = (*env)->FindClass(env, "android/media/SoundPool");
+	jmethodID constrId = (*env)->GetMethodID(env, sndPoolCls, "<init>", "(III)V");
+	jobject sndPool = (*env)->NewObject(env, sndPoolCls, constrId, 100, strmType, 0);
+
+	gSndPoolCls = (*env)->NewGlobalRef(env, sndPoolCls);
+	gSndPool = (*env)->NewGlobalRef(env, sndPool);
+
+	(*env)->DeleteLocalRef(env, amCls);
+	(*env)->DeleteLocalRef(env, sndPoolCls);
+	(*env)->DeleteLocalRef(env, sndPool);
+}
+
+static jmethodID gGetSndIdMthdId = NULL;
+
+value ml_alsoundLoad(value path) {
+	if (gSndPool == NULL) {
+		caml_failwith("alsound is not initialized, try to call Sound.init first, then again Sound.load");
+	}
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gGetSndIdMthdId == NULL) {
+		gGetSndIdMthdId = (*env)->GetMethodID(env, jViewCls, "getSoundId", "(Ljava/lang/String;Landroid/media/SoundPool;)I");
+	}
+
+	jstring jpath = (*env)->NewStringUTF(env, String_val(path));
+	jint sndId = (*env)->CallIntMethod(env, jView, gGetSndIdMthdId, jpath, gSndPool);
+	(*env)->DeleteLocalRef(env, jpath);
+
+	return Val_int(sndId);
+}
+
+static jmethodID gPlayMthdId = NULL;
+
+value ml_alsoundPlay(value soundId, value vol, value loop) {
+	if (gSndPool == NULL) {
+		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#play");
+	}
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gPlayMthdId == NULL) {
+		gPlayMthdId = (*env)->GetMethodID(env, gSndPoolCls, "play", "(IFFIIF)I");
+	}
+
+	jdouble jvol = Double_val(vol);
+	jint streamId = (*env)->CallIntMethod(env, gSndPool, gPlayMthdId, Int_val(soundId), jvol, jvol, 0, Bool_val(loop) ? -1 : 0, 1.0);
+
+	return Val_int(streamId);
+}
+
+static jmethodID gPauseMthdId = NULL;
+
+void ml_alsoundPause(value streamId) {
+	if (gSndPool == NULL) {
+		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#pause");
+	}
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gPauseMthdId == NULL) {
+		gPauseMthdId = (*env)->GetMethodID(env, gSndPoolCls, "pause", "(I)V");
+	}
+ 
+	(*env)->CallVoidMethod(env, gSndPool, gPauseMthdId, Int_val(streamId));
+}
+
+static jmethodID gStopMthdId = NULL;
+
+void ml_alsoundStop(value streamId) {
+	if (gSndPool == NULL) {
+		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#stop");
+	}
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gStopMthdId == NULL) {
+		gStopMthdId = (*env)->GetMethodID(env, gSndPoolCls, "stop", "(I)V");
+	}
+
+	(*env)->CallVoidMethod(env, gSndPool, gStopMthdId, Int_val(streamId));
+
+	DEBUGF("ml_alsoundStop call %d", Int_val(streamId));
+}
+
+static jmethodID gSetVolMthdId = NULL;
+
+void ml_alsoundSetVolume(value streamId, value vol) {
+	if (gSndPool == NULL) {
+		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#setVolume");
+	}
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gSetVolMthdId == NULL) {
+		gSetVolMthdId = (*env)->GetMethodID(env, gSndPoolCls, "setVolume", "(IFF)V");
+	}
+
+	jdouble jvol = Double_val(vol);
+	(*env)->CallVoidMethod(env, gSndPool, gSetVolMthdId, Int_val(streamId), jvol, jvol);
+}
+
+static jmethodID gSetLoopMthdId = NULL;
+
+void ml_alsoundSetLoop(value streamId, value loop) {
+	if (gSndPool == NULL) {
+		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#setLoop");
+	}
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gSetLoopMthdId == NULL) {
+		gSetLoopMthdId = (*env)->GetMethodID(env, gSndPoolCls, "setLoop", "(II)V");
+	}
+
+	(*env)->CallVoidMethod(env, gSndPool, gSetLoopMthdId, Int_val(streamId), Bool_val(loop) ? -1 : 0);	
+}
+
+static jmethodID gAutoPause = NULL;
+static jmethodID gAutoResume = NULL;
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
+	if (gSndPool != NULL) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+		if (gAutoPause == NULL) {
+			gAutoPause = (*env)->GetMethodID(env, gSndPoolCls, "autoPuase", "()V");
+		}
+
+		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
+	}
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
+	DEBUGF("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
+
+	if (gSndPool != NULL) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+		
+		if (gAutoResume == NULL) {
+			gAutoResume = (*env)->GetMethodID(env, gSndPoolCls, "autoResume", "()V");
+		}
+
+		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
+
+		DEBUG("pizda");
+	}
+
+	DEBUG("xyu");
+}
+
+void ml_paymentsTest() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jmethodID mthdId = (*env)->GetMethodID(env, jViewCls, "initBillingServ", "()V");
+	(*env)->CallIntMethod(env, jView, mthdId);
+}
+
+static value successCb;
+static value errorCb;
+
+void ml_payment_init(value pubkey, value scb, value ecb) {
+	if (successCb) {
+		caml_failwith("payments already initialized");		
+	}
+
+	successCb = scb;
+	caml_register_generational_global_root(&successCb);
+	errorCb = ecb;
+	caml_register_generational_global_root(&errorCb);
+
+	if (!Is_long(pubkey)) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+		jclass securityCls = (*env)->FindClass(env, "ru/redspell/lightning/payments/Security");
+		jmethodID setPubkey = (*env)->GetStaticMethodID(env, securityCls, "setPubkey", "(Ljava/lang/String;)V");
+		jstring jpubkey = (*env)->NewStringUTF(env, String_val(Field(pubkey, 0)));
+
+		(*env)->CallStaticVoidMethod(env, securityCls, setPubkey, jpubkey);
+
+		(*env)->DeleteLocalRef(env, securityCls);
+		(*env)->DeleteLocalRef(env, jpubkey);
+	}
+}
+
+static jmethodID gRequestPurchase;
+
+void ml_payment_purchase(value prodId) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gRequestPurchase == NULL) {
+		gRequestPurchase = (*env)->GetMethodID(env, jViewCls, "requestPurchase", "(Ljava/lang/String;)V");
+	}
+
+	jstring jprodId = (*env)->NewStringUTF(env, String_val(prodId));
+	(*env)->CallVoidMethod(env, jView, gRequestPurchase, jprodId);
+	(*env)->DeleteLocalRef(env, jprodId);
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaymentSuccessCb(JNIEnv *env, jobject this, jstring prodId, jstring notifId, jstring signedData, jstring signature) {
+	CAMLparam0();
+	CAMLlocal2(tr, vprodId);
+
+	if (!successCb) {
+		caml_failwith("payment callbacks are not initialized");
+	}
+
+	const char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
+	const char *cnotifId = (*env)->GetStringUTFChars(env, notifId, JNI_FALSE);
+	const char *csignature = (*env)->GetStringUTFChars(env, signature, JNI_FALSE);
+	const char *csignedData = (*env)->GetStringUTFChars(env, signedData, JNI_FALSE);	
+
+	tr = caml_alloc_tuple(3);
+	vprodId = caml_copy_string(cprodId);
+
+	Store_field(tr, 0, caml_copy_string(cnotifId));
+	Store_field(tr, 1, caml_copy_string(csignedData));
+	Store_field(tr, 2, caml_copy_string(csignature));
+
+	caml_callback3(successCb, vprodId, tr, Val_true);
+
+	CAMLreturn0;
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaymentErrorCb(JNIEnv *env, jobject this, jstring prodId, jstring mes) {
+	CAMLparam0();
+	CAMLlocal2(vprodId, vmes);
+
+	if (!errorCb) {
+		caml_failwith("payment callbacks are not initialized");
+	}
+
+	const char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
+	const char *cmes = (*env)->GetStringUTFChars(env, mes, JNI_FALSE);
+
+	vprodId = caml_copy_string(cprodId);
+	vmes = caml_copy_string(cmes);
+
+	caml_callback3(errorCb, vprodId, vmes, Val_true);
+
+	CAMLreturn0;
+}
+
+static jmethodID gConfirmNotif;
+
+void ml_payment_commit_transaction(value transaction) {
+	CAMLparam1(transaction);
+	CAMLlocal1(vnotifId);
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	if (gConfirmNotif == NULL) {
+		gConfirmNotif = (*env)->GetMethodID(env, jViewCls, "confirmNotif", "(Ljava/lang/String;)V");
+	}
+
+	vnotifId = Field(transaction, 0);
+	jstring jnotifId = (*env)->NewStringUTF(env, String_val(vnotifId));
+	(*env)->CallVoidMethod(env, jView, gConfirmNotif, jnotifId);
+	(*env)->DeleteLocalRef(env, jnotifId);
+
+	CAMLreturn0;
+}
+void ml_addExceptionInfo(value v) {}
+
+void ml_extractAssets() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jmethodID extractResources = (*env)->GetMethodID(env, jViewCls, "extractAssets", "()V");
+	(*env)->CallVoidMethod(env, jView, extractResources);
+}

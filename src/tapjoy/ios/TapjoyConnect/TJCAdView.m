@@ -12,10 +12,9 @@
 #import "TapjoyConnect.h"
 #import "TJCUtil.h"
 
-static TJCAdView *sharedTJCAdView_ = nil;
-
 @implementation TJCAdView
 
+TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCAdView)
 
 @synthesize clickURL = clickURL_;
 @synthesize imageDataStr = imageDataStr_;
@@ -25,17 +24,6 @@ static TJCAdView *sharedTJCAdView_ = nil;
 @synthesize adViewOverlay = adViewOverlay_;
 @synthesize adHandlerObj = adHandlerObj_;
 @synthesize adDelegate = adDelegate_;
-
-
-+ (TJCAdView*)sharedTJCAdView
-{
-	if(!sharedTJCAdView_)
-	{
-		sharedTJCAdView_ = [[super alloc] init];
-	}
-	
-	return sharedTJCAdView_;
-}
 
 - (id)init
 {
@@ -98,7 +86,7 @@ static TJCAdView *sharedTJCAdView_ = nil;
 	}
 	
 	// The ad view overlay should go directly over the ad view.
-	[adViewOverlay_ setFrame:sharedTJCAdView_.frame];
+	[adViewOverlay_ setFrame:sharedTJCAdView.frame];
 	
 	// Different request handling depending on whether the currency ID is set or not.
 	if (currencyID)
@@ -180,12 +168,13 @@ static TJCAdView *sharedTJCAdView_ = nil;
 	// We want to fade out the old ad view while simultaneously fade in the new ad view.
 	if ([self.subviews count] > 0)
 	{
-		previousImageView_ = [self.subviews objectAtIndex:0];
+		if (previousImageView_)
+		{
+			[previousImageView_ release];
+		}
+		previousImageView_ = [[self.subviews objectAtIndex:0] retain];
 		// Previous ad is initially visible.
 		[previousImageView_ setAlpha:1.0f];
-		
-		[UIView setAnimationDelegate:self];
-		[UIView setAnimationDidStopSelector:@selector(removeOldAdEnded:finished:context:)];
 		
 		[UIView beginAnimations:nil context:nil];
 		// The fade out animation is a bit slower to make it look better.
@@ -195,6 +184,10 @@ static TJCAdView *sharedTJCAdView_ = nil;
 		[previousImageView_ setAlpha:0.0f];
 		
 		[UIView commitAnimations];
+		
+		[self performSelector:@selector(removeOldAdEnded:finished:context:)
+					  withObject:nil 
+					  afterDelay:animDuration + .10];
 	}
 	
 	NSArray *dataArray = [NSArray arrayWithArray:dataObj];
@@ -208,10 +201,10 @@ static TJCAdView *sharedTJCAdView_ = nil;
 	// JC: TODO: This should be removed when the image data is formatted correctly. For now, strip out the newline chars.
 	
 	UIImage *image = [[UIImage imageWithData:[TJCUtil dataWithBase64EncodedString:imageDataStr]] retain];
+	[imageView_ release];
 	imageView_ = [[UIImageView alloc] initWithImage: image];
 	[image release];
-	
-	//[imageView_ setFrame:self.frame];
+
 	[imageView_ setBounds:self.bounds];
 	[imageView_ setCenter:CGPointMake(imageView_.bounds.size.width * 0.5f, imageView_.bounds.size.height * 0.5f)];
 	
@@ -237,7 +230,7 @@ static TJCAdView *sharedTJCAdView_ = nil;
 	
 	if ([adDelegate_ respondsToSelector:@selector(shouldRefreshAd)])
 	{
-		// Query delegate method to determin whether the ad should be refreshed.
+		// Query delegate method to determine whether the ad should be refreshed.
 		if ([adDelegate_ shouldRefreshAd])
 		{
 			// Now start a refresh timer to load the next ad.
@@ -247,21 +240,22 @@ static TJCAdView *sharedTJCAdView_ = nil;
 }
 
 
--(void)removeOldAdEnded:(NSString *)animationID finished:(NSNumber *)finished context:(void *)context
+- (void)removeOldAdEnded:(NSString*)animationID finished:(NSNumber*)finished context:(void*)context
 {
 	[previousImageView_ removeFromSuperview];
+	[previousImageView_ release];
+	previousImageView_ = nil;
 }
 
 
-- (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+- (void)touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event
 {
 	// Darken image when it is touched.
-	//[[adViewOverlay_ superview] bringSubviewToFront:adViewOverlay_];
 	[adViewOverlay_ setAlpha:0.4f];
 }
 
 
-- (void) touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+- (void) touchesEnded:(NSSet*)touches withEvent:(UIEvent*)event
 {
 	for (UITouch *touch in touches)
 	{

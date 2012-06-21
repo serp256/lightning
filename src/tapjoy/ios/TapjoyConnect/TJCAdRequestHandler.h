@@ -25,6 +25,7 @@ extern NSString *kTJCAdImageDataStr;
 	BOOL accumulatingImageDataStr;		/*!< Indicates whether the NSXML parser is currently parsinge the image data. */
 	NSMutableString *imageDataStr_;		/*!< The image data in string form. */
 	BOOL isDataFetchSuccessful_;			/*!< Only set to true if valid data was received from the server. */
+	BOOL isFetchingData_;					/*!< Flag used to prevent multiple simultaneous refreshes. */
 }
 
 /*!	\fn initRequestWithDelegate:andRequestTag(id<TJCFetchResponseDelegate> aDelegate, int aTag)

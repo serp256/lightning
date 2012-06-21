@@ -280,21 +280,6 @@ value flip (stage:Stage.c) =
   );
 
 
-value game_center (stage:Stage.c) =
-  GameCenter.init ~callback:begin fun res ->
-    let text = 
-      match res with 
-      [ True -> "Game center success"
-      | False -> "Game center failed"
-      ]
-    in
-    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
-    (
-      text#setPos 100. 100.;
-(*       text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ]; *)
-      stage#addChild text;
-    )
-  end ();
 (*
 value async_load (stage:Stage.c) = 
 (
@@ -446,6 +431,38 @@ value alert (stage:Stage.c) =
 );*)
 
 
+value game_center (stage:Stage.c) =
+    let text = "Ежедневный бонус PipIy" in
+  (
+    (*
+  GameCenter.init ~callback:begin fun res ->
+    let text = 
+      match res with 
+      [ True -> "Game center success"
+      | False -> "Game center failed"
+      ]
+    in
+    *)
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 100. 100.;
+(*       text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ]; *)
+      stage#addChild text;
+    );
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 100. 150.;
+      text#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
+      stage#addChild text;
+    );
+
+    let img = Image.load "tree.png" in
+    (
+      img#setPos 50. 300.;
+      img#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
+      stage#addChild img;
+    );
+  );
 (*   end (); *)
 
 
@@ -524,18 +541,6 @@ value image (stage:Stage.c) =
   let image = Image.load "tree.png" in
   let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
   stage#addChild image;
-
-value map (stage:Stage.c) =
-  let map1 = Image.load "test_map/map_12.jpg"
-  and map2 = Image.load "test_map/map_13.jpg"
-  in
-  (
-    map1#setX ~-.500.;
-    debug "map1#width: %f" map1#width;
-    stage#addChild map1;
-    map2#setX (map1#x +. map1#width -. 8.);
-    stage#addChild map2;
-  );
 
 value test_gc (stage:Stage.c) = 
   let items = 
@@ -688,6 +693,7 @@ value memtest_async (stage:Stage.c) =
     stage#addChild img;
   );
 
+*)
 
 value url_loader (stage:Stage.c) = 
   let loader = new URLLoader.loader () in
@@ -704,6 +710,10 @@ value url_loader (stage:Stage.c) =
       ignore <| Timers.start 0.1 loop;
     )
   );
+
+value pvr (stage:Stage.c) = 
+  let image = Image.load "map/1.jpg" in
+  stage#addChild image;
 
 value glow (stage:Stage.c) = 
 (
@@ -724,7 +734,6 @@ value glow (stage:Stage.c) =
     | _ -> assert False 
     ]
   in
-  (
   let img = Image.load "tree.png" in
   (
     img#setPos 20. 50.;
@@ -760,7 +769,6 @@ value glow (stage:Stage.c) =
     img#setPos 100. 150.;
     stage#addChild img;
   );
-  *)
   let text = "Ежедневный бонус PipIy" in
   (
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
@@ -791,8 +799,8 @@ value glow (stage:Stage.c) =
     );
     *)
   );
+  *)
 );
-*)
 
 value quad (stage:Stage.c) = 
   let q = Quad.create (*~color:(`Color 0xFF0000)*) 200. 200. in
@@ -920,6 +928,12 @@ value tweens (stage:Stage.c) =
       ) end; *)
     );
 
+value storage (stage:Stage.c) = 
+(
+  KVStorage.put_string "pizda" "lala";
+  debug "get_string: %s" (KVStorage.get_string "pizda");
+);
+
 value localNotif () =
   let time = Unix.time () in
   (
@@ -971,14 +985,100 @@ value glow_and_gc (stage:Stage.c) =
   end |> ignore;
 );
 
+value touchesTest(stage:Stage.c) =
+(
+  let img = Image.load "tree.png" in
+  (
+    img#setX 50.;
+    img#setY 50.;
 
+    Stage.(
+      img#addEventListener ev_TOUCH (fun ev _ _ ->
+        match touches_of_data ev.Ev.data with
+        [ Some [ touch :: _ ] ->
+          Touch.(
+            let () = debug "touch id: %ld" touch.tid in
+              match touch.phase with
+              [ TouchPhaseBegan -> debug "TouchPhaseBegan"
+              | TouchPhaseMoved ->
+                (
+                  debug "TouchPhaseMoved";
+                  img#setX (img#x -. touch.previousGlobalX +. touch.globalX);
+                  img#setY (img#y -. touch.previousGlobalY +. touch.globalY);
+                )
+              | TouchPhaseEnded -> debug "TouchPhaseEnded"
+              | _ -> debug "some other phase"
+              ]
+          )
+        | _ -> ()
+        ]
+      )
+    );
+
+    stage#addChild img;
+  );  
+);
+
+value assets (s:Stage.c) =
+  let img = Image.load "tree.png" in
+  (
+    ignore(Stage.(
+      img#addEventListener ev_TOUCH (fun ev _ _ ->
+        match touches_of_data ev.Ev.data with
+        [ Some [ touch :: _ ] ->
+          Touch.(
+(*             let () = debug "touch id: %ld" touch.tid in *)
+              match touch.phase with
+              [ TouchPhaseEnded ->
+                let img1 = Image.load "Russia.png" in
+                (
+                  s#addChild img1;
+                  img1#setX 200.;
+                  img1#setY 200.;
+                )
+              | _ -> () (* debug "some other phase" *)
+              ]
+          )
+        | _ -> ()
+        ]
+      )
+    ));
+
+    s#addChild img;
+
+    let tw = Tween.create ~transition:`easeInOut 1. in
+    (
+      tw#animate img#prop'x 200.;
+      Stage.addTween tw;
+    );
+
+    Lightning.extractAssets ();
+  );
+    
+value udid (self:Stage.c) = 
+  let text = 
+    match TapjoyConnect.getOpenUDID () with
+    [ None -> "NONE"
+    | Some udid -> udid
+    ]
+  in
+  let (_,text) = TLF.create (TLF.p [`text text]) in
+  (
+    text#setY 100.;
+    self#addChild text;
+  );
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      debug "START OCAML, locale: %s" (Lightning.getLocale());
+(*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
+(*       assets self; *)
+      quad self;
+      tweens self;
+      (* touchesTest self; *)
+
 (*       accelerometer (); *)
 (*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
@@ -999,7 +1099,7 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-       (* tlf self;  *)
+       tlf self; 
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
@@ -1017,18 +1117,25 @@ let stage width height =
 (*         test_gc self; *)
 (*         filters self; *)
 (*         game_center self; *)
+          (* pvr self; *)
+          (* sound self; *)
+(*           url_loader self; *)
 (*           glow self; *)
+(*           storage self; *)
  (*         sound self; *)
 (*         window self; *)
 (*         zsort self; *)
       (* localNotif (); *)
 (*           music self; *)
-          tlf self;
+          (* tlf self; *)
 (*           quad self; *)
-          hardware self;
-          game_center self;
+          (* hardware self; *)
 (*           glow_and_gc self; *)
+       udid self;
     end;
   end
 in
 Lightning.init stage;
+
+
+(* debug "VALUE IN STORAGE: %s" (try KVStorage.get_string "pizda" with [ KVStorage.Kv_not_found -> "NOT FOUND"]); *)

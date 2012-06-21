@@ -1,17 +1,30 @@
 module Transaction = struct
-  type t;
+  
+IFDEF ANDROID THEN
+  type t = {
+    id:string;
+    receipt:string;
+    signature:string;
+  };
 
-IFDEF IOS THEN
-  external get_id : t -> string = "ml_payment_get_transaction_id";
-  external get_receipt : t -> string = "ml_payment_get_transaction_receipt"; 
+  value get_id tr = tr.id;
+  value get_receipt tr = tr.receipt;
+  value get_signature tr = tr.signature;
 ELSE
-  value get_id (tr:t) = "";
-  value get_receipt (tr:t) = "";
-ENDIF;  
+  type t;
+  
+  IFDEF IOS THEN
+    external get_id : t -> string = "ml_payment_get_transaction_id";
+    external get_receipt : t -> string = "ml_payment_get_transaction_receipt"; 
+    value get_signature (tr:t) = "";
+  ELSE
+    value get_id (tr:t) = "";
+    value get_receipt (tr:t) = "";
+    value get_signature (tr:t) = "";
+  ENDIF;    
+ENDIF;
   
 end;
-
-
 
 
 (* TODO: доделать передачу receipt *)
@@ -20,6 +33,14 @@ value initialized = ref False;
 IFDEF IOS THEN
 
 external ml_init : (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit = "ml_payment_init";
+external ml_purchase : string -> unit = "ml_payment_purchase";
+external ml_commit_transaction : Transaction.t -> unit = "ml_payment_commit_transaction";
+
+ELSE
+
+IFDEF ANDROID THEN
+
+external ml_init : ?pubkey:string -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit = "ml_payment_init";
 external ml_purchase : string -> unit = "ml_payment_purchase";
 external ml_commit_transaction : Transaction.t -> unit = "ml_payment_commit_transaction";
 
@@ -40,6 +61,7 @@ value ml_purchase (id:string) = ();
 value ml_commit_transaction (tr:Transaction.t) = ();
 
 ENDIF;
+ENDIF;
 
 (* 
   инитим.
@@ -47,8 +69,12 @@ ENDIF;
   Первый - success, принимает product_id и флаг, показывающий, что транзацкция была восстановлена
   Второй - error, принимает product_id, строку ошибки и флаг, показывающий, что юзер отменил транзакцию.
 *)
-value init success_cb error_cb = (
-  ml_init success_cb error_cb;
+value init ?pubkey success_cb error_cb = (
+  ifplatform(android)
+    ml_init ?pubkey success_cb error_cb
+  else
+    ml_init success_cb error_cb;
+
   initialized.val := True;
 );
 

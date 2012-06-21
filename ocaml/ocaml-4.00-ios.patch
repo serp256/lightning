@@ -1,365 +1,145 @@
-diff -urN ocaml-4.00/Makefile.ios ocaml-4.00-ios/Makefile.ios
---- ocaml-4.00/Makefile.ios	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00-ios/Makefile.ios	2012-05-05 17:26:16.000000000 +0400
-@@ -0,0 +1,354 @@
-+include config/Makefile
-+include stdlib/StdlibModules
-+
-+CAMLC=ocamlc.opt
+diff -urN ocaml-4.00-orig/Makefile ocaml-4.00-ios/Makefile
+--- ocaml-4.00-orig/Makefile	2012-05-31 14:32:03.000000000 +0400
++++ ocaml-4.00-ios/Makefile	2012-06-19 16:30:16.000000000 +0400
+@@ -17,17 +17,17 @@
+ include config/Makefile
+ include stdlib/StdlibModules
+ 
+-CAMLC=boot/ocamlrun boot/ocamlc -nostdlib -I boot
+-CAMLOPT=boot/ocamlrun ./ocamlopt -nostdlib -I stdlib -I otherlibs/dynlink
++CAMLC=ocamlc.opt -I boot
 +CAMLOPT=ocamlopt.opt
-+COMPFLAGS=-strict-sequence -warn-error A $(INCLUDES)
-+LINKFLAGS=
-+
+ COMPFLAGS= -strict-sequence -warn-error A $(INCLUDES)
+ LINKFLAGS=
+ 
+-CAMLYACC=boot/ocamlyacc
 +CAMLYACC=ocamlyacc
-+YACCFLAGS=-v
+ YACCFLAGS=-v
+-CAMLLEX=boot/ocamlrun boot/ocamllex
+-CAMLDEP=boot/ocamlrun tools/ocamldep
 +CAMLLEX=ocamllex.opt
 +CAMLDEP=ocamldep.opt
-+DEPFLAGS=$(INCLUDES)
+ DEPFLAGS=$(INCLUDES)
+-CAMLRUN=byterun/ocamlrun
 +CAMLRUN=ocamlrun
-+SHELL=/bin/sh
-+MKDIR=mkdir -p
+ SHELL=/bin/sh
+ MKDIR=mkdir -p
+ 
+@@ -105,19 +105,14 @@
+ PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
+ 
+ # For users who don't read the INSTALL file
+-defaultentry:
+-	@echo "Please refer to the installation instructions in file INSTALL."
+-	@echo "If you've just unpacked the distribution, something like"
+-	@echo "	./configure"
+-	@echo "	make world"
+-	@echo "	make opt"
+-	@echo "	make install"
+-	@echo "should work.  But see the file INSTALL for more details."
++defaultentry: runtime runtimeopt ocamlopt.opt libraryopt otherlibrariesopt 
+ 
+ # Recompile the system using the bootstrap compiler
+ all: runtime ocamlc ocamllex ocamlyacc ocamltools library ocaml \
+   otherlibraries ocamlbuild.byte $(CAMLP4OUT) $(DEBUGGER) ocamldoc
+ 
++optonly: 
 +
-+INCLUDES=-I utils -I parsing -I typing -I bytecomp -I asmcomp -I driver \
-+	 -I toplevel
-+
-+UTILS=utils/misc.cmo utils/tbl.cmo utils/config.cmo \
-+  utils/clflags.cmo utils/terminfo.cmo utils/ccomp.cmo utils/warnings.cmo \
-+  utils/consistbl.cmo
-+
-+OPTUTILS=$(UTILS)
-+
-+PARSING=parsing/location.cmo parsing/longident.cmo \
-+  parsing/syntaxerr.cmo parsing/parser.cmo \
-+  parsing/lexer.cmo parsing/parse.cmo parsing/printast.cmo
-+
-+TYPING=typing/ident.cmo typing/path.cmo \
-+  typing/primitive.cmo typing/types.cmo \
-+  typing/btype.cmo typing/oprint.cmo \
-+  typing/subst.cmo typing/predef.cmo \
-+  typing/datarepr.cmo typing/env.cmo \
-+  typing/typedtree.cmo typing/ctype.cmo \
-+  typing/printtyp.cmo typing/includeclass.cmo \
-+  typing/mtype.cmo typing/includecore.cmo \
-+  typing/includemod.cmo typing/parmatch.cmo \
-+  typing/typetexp.cmo typing/stypes.cmo typing/typecore.cmo \
-+  typing/typedecl.cmo typing/typeclass.cmo \
-+  typing/typemod.cmo
-+
-+COMP=bytecomp/lambda.cmo bytecomp/printlambda.cmo \
-+  bytecomp/typeopt.cmo bytecomp/switch.cmo bytecomp/matching.cmo \
-+  bytecomp/translobj.cmo bytecomp/translcore.cmo \
-+  bytecomp/translclass.cmo bytecomp/translmod.cmo \
-+  bytecomp/simplif.cmo bytecomp/runtimedef.cmo
-+
-+BYTECOMP=bytecomp/meta.cmo bytecomp/instruct.cmo bytecomp/bytegen.cmo \
-+  bytecomp/printinstr.cmo bytecomp/opcodes.cmo bytecomp/emitcode.cmo \
-+  bytecomp/bytesections.cmo bytecomp/dll.cmo bytecomp/symtable.cmo \
-+  bytecomp/bytelink.cmo bytecomp/bytelibrarian.cmo bytecomp/bytepackager.cmo
-+
-+ASMCOMP=asmcomp/arch.cmo asmcomp/debuginfo.cmo \
-+  asmcomp/cmm.cmo asmcomp/printcmm.cmo \
-+  asmcomp/reg.cmo asmcomp/mach.cmo asmcomp/proc.cmo \
-+  asmcomp/clambda.cmo asmcomp/compilenv.cmo \
-+  asmcomp/closure.cmo asmcomp/cmmgen.cmo \
-+  asmcomp/printmach.cmo asmcomp/selectgen.cmo asmcomp/selection.cmo \
-+  asmcomp/comballoc.cmo asmcomp/liveness.cmo \
-+  asmcomp/spill.cmo asmcomp/split.cmo \
-+  asmcomp/interf.cmo asmcomp/coloring.cmo \
-+  asmcomp/reloadgen.cmo asmcomp/reload.cmo \
-+  asmcomp/printlinear.cmo asmcomp/linearize.cmo \
-+  asmcomp/schedgen.cmo asmcomp/scheduling.cmo \
-+  asmcomp/emitaux.cmo asmcomp/emit.cmo asmcomp/asmgen.cmo \
-+  asmcomp/asmlink.cmo asmcomp/asmlibrarian.cmo asmcomp/asmpackager.cmo
-+
-+DRIVER=driver/pparse.cmo driver/errors.cmo driver/compile.cmo \
-+  driver/main_args.cmo driver/main.cmo
-+
-+OPTDRIVER= driver/pparse.cmo driver/opterrors.cmo driver/optcompile.cmo \
-+  driver/main_args.cmo driver/optmain.cmo
-+
-+PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
-+
-+OPTOBJS=$(OPTUTILS) $(PARSING) $(TYPING) $(COMP) $(ASMCOMP) $(OPTDRIVER)
-+
-+
-+all: runtime runtimeopt ocamlopt.opt libraryopt otherlibrariesopt
-+
-+runtime:
-+	cd byterun; $(MAKE) all
-+	if test -f stdlib/libcamlrun.a; then :; else \
-+	  ln -s ../byterun/libcamlrun.a stdlib/libcamlrun.a; fi
-+
-+clean::
-+	cd byterun; $(MAKE) clean
-+	rm -f stdlib/libcamlrun.a
-+	rm -f stdlib/caml
-+
-+# The runtime system for the native-code compiler
-+
-+runtimeopt: makeruntimeopt
-+	cp asmrun/libasmrun.a stdlib/libasmrun.a
-+
-+makeruntimeopt:
-+	cd asmrun; $(MAKE) all
-+
-+clean::
-+	cd asmrun; $(MAKE) clean
-+	rm -f stdlib/libasmrun.a
-+
-+alldepend::
-+	cd asmrun; $(MAKE) depend
-+
-+ocamlopt.opt: $(OPTOBJS:.cmo=.cmx)
-+	$(CAMLOPT) $(LINKFLAGS) -o ocamlopt.opt $(OPTOBJS:.cmo=.cmx)
-+	@sed -e 's|@compiler@|ocamlc.opt|' \
-+	  driver/ocamlcomp.sh.in > ocamlcomp.sh
-+	@chmod +x ocamlcomp.sh
-+	@sed -e 's|@compiler@|$$topdir/ocamlopt.opt|' \
-+	  driver/ocamlcomp.sh.in > ocamlcompopt.sh
-+	@chmod +x ocamlcompopt.sh
-+
-+partialclean::
-+	rm -f ocamlcomp.sh ocamlcompopt.sh ocamlopt.opt
-+
-+libraryopt:
-+	cd stdlib; $(MAKE) allopt
-+
-+partialclean::
-+	cd stdlib; $(MAKE) clean
-+
-+alldepend::
-+	cd stdlib; $(MAKE) depend
-+
-+ocamlmklib:
-+	cd tools; $(MAKE) ocamlmklib
-+
-+partialclean::
-+	cd tools; $(MAKE) clean
-+
-+
-+otherlibrariesopt: ocamlmklib
-+	for i in $(OTHERLIBRARIES); do \
-+	  (cd otherlibs/$$i; $(MAKE) allopt) || exit $$?; \
-+	done
-+
-+partialclean::
-+	for i in $(OTHERLIBRARIES); do \
-+	  (cd otherlibs/$$i; $(MAKE) partialclean); \
-+	done
-+
-+
-+
-+# Installation of the native-code compiler
-+install:
-+	if test -d $(BINDIR); then : ; else $(MKDIR) $(BINDIR); fi
-+	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
-+	cp typing/outcometree.cmi typing/outcometree.mli $(LIBDIR)
+ # Compile everything the first time
+ world:
+ 	$(MAKE) coldstart
+@@ -268,6 +263,33 @@
+ 	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
+ 	if test -d $(STUBLIBDIR); then : ; else $(MKDIR) $(STUBLIBDIR); fi
+ 	if test -d $(COMPLIBDIR); then : ; else $(MKDIR) $(COMPLIBDIR); fi
++	cp VERSION $(LIBDIR)/
 +	cd byterun; $(MAKE) installopt
 +	cd asmrun; $(MAKE) install
-+	cd stdlib; $(MAKE) installopt
-+	for i in $(OTHERLIBRARIES); \
-+	  do (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; done
 +	cp ocamlopt.opt $(BINDIR)/ocamlopt.opt$(EXE)
 +	ln -fs $(BINDIR)/ocamlopt.opt $(BINDIR)/ocamlopt
++	cd stdlib; $(MAKE) installopt
++	for i in $(OTHERLIBRARIES); do \
++	  (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; \
++	done
++	cp asmcomp/*.cmi $(COMPLIBDIR)
++	cp compilerlibs/ocamlcommon.cmxa compilerlibs/ocamlcommon.a \
++           compilerlibs/ocamloptcomp.cmxa compilerlibs/ocamloptcomp.a \
++           $(OPTSTART:.cmo=.cmx) $(OPTSTART:.cmo=.o) \
++           $(COMPLIBDIR)
++	cd $(COMPLIBDIR) && $(RANLIB) ocamlcommon.a ocamloptcomp.a
++	cd ocamldoc; $(MAKE) installopt
++	for i in $(OTHERLIBRARIES); \
++	  do (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; done
 +	cp tools/ocamlmklib $(BINDIR)
 +	cp config/Makefile $(LIBDIR)/Makefile.config
 +
-+clean::
-+	for i in $(OTHERLIBRARIES); do (cd otherlibs/$$i; $(MAKE) clean); done
 +
-+alldepend::
-+	for i in $(OTHERLIBRARIES); do (cd otherlibs/$$i; $(MAKE) depend); done
++installall:
++	if test -d $(BINDIR); then : ; else $(MKDIR) $(BINDIR); fi
++	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
++	if test -d $(STUBLIBDIR); then : ; else $(MKDIR) $(STUBLIBDIR); fi
++	if test -d $(COMPLIBDIR); then : ; else $(MKDIR) $(COMPLIBDIR); fi
+ 	if test -d $(MANDIR)/man$(MANEXT); then : ; \
+ 	  else $(MKDIR) $(MANDIR)/man$(MANEXT); fi
+ 	cp VERSION $(LIBDIR)/
+@@ -321,6 +343,7 @@
+            $(COMPLIBDIR)
+ 	cd $(COMPLIBDIR) && $(RANLIB) ocamlcommon.a ocamlbytecomp.a ocamloptcomp.a
+ 
 +
-+# The configuration file
-+
-+utils/config.ml: utils/config.mlp config/Makefile
-+	@rm -f utils/config.ml
-+	sed -e 's|%%LIBDIR%%|$(LIBDIR)|' \
-+	    -e 's|%%BYTERUN%%|$(BINDIR)/ocamlrun|' \
-+	    -e 's|%%CCOMPTYPE%%|cc|' \
-+	    -e 's|%%BYTECC%%|$(BYTECC) $(BYTECCCOMPOPTS) $(SHAREDCCCOMPOPTS)|' \
-+	    -e 's|%%NATIVECC%%|$(NATIVECC) $(NATIVECCCOMPOPTS)|' \
-+	    -e 's|%%PACKLD%%|$(PACKLD)|' \
-+	    -e 's|%%BYTECCLIBS%%|$(BYTECCLIBS)|' \
-+	    -e 's|%%NATIVECCLIBS%%|$(NATIVECCLIBS)|' \
-+	    -e 's|%%RANLIBCMD%%|$(RANLIBCMD)|' \
-+	    -e 's|%%ARCMD%%|$(ARCMD)|' \
-+	    -e 's|%%CC_PROFILE%%|$(CC_PROFILE)|' \
-+	    -e 's|%%ARCH%%|$(ARCH)|' \
-+	    -e 's|%%MODEL%%|$(MODEL)|' \
-+	    -e 's|%%SYSTEM%%|$(SYSTEM)|' \
-+	    -e 's|%%EXT_OBJ%%|.o|' \
-+	    -e 's|%%EXT_ASM%%|.s|' \
-+	    -e 's|%%EXT_LIB%%|.a|' \
-+	    -e 's|%%EXT_DLL%%|.so|' \
-+	    -e 's|%%SYSTHREAD_SUPPORT%%|$(SYSTHREAD_SUPPORT)|' \
-+	    -e 's|%%ASM%%|$(ASM)|' \
-+	    -e 's|%%MKDLL%%|$(MKDLL)|' \
-+	    -e 's|%%MKEXE%%|$(MKEXE)|' \
-+	    -e 's|%%MKMAINDLL%%|$(MKMAINDLL)|' \
-+	    -e 's|%%ASM_CFI_SUPPORTED%%|$(ASM_CFI_SUPPORTED)|' \
-+	    utils/config.mlp > utils/config.ml
-+	@chmod -w utils/config.ml
-+
-+partialclean::
-+	rm -f utils/config.ml
-+
-+beforedepend:: utils/config.ml
-+
-+partialclean::
-+	rm -f myocamlbuild_config.ml tools/myocamlbuild_config.ml
-+
-+# The parser
-+
-+parsing/parser.mli parsing/parser.ml: parsing/parser.mly
-+	$(CAMLYACC) $(YACCFLAGS) parsing/parser.mly
-+
-+partialclean::
-+	rm -f parsing/parser.mli parsing/parser.ml parsing/parser.output
-+
-+beforedepend:: parsing/parser.mli parsing/parser.ml
-+
-+# The lexer
-+
-+parsing/lexer.ml: parsing/lexer.mll
-+	$(CAMLLEX) parsing/lexer.mll
-+
-+partialclean::
-+	rm -f parsing/lexer.ml
-+
-+beforedepend:: parsing/lexer.ml
-+
-+# The auxiliary lexer for counting line numbers
-+
-+parsing/linenum.ml: parsing/linenum.mll
-+	$(CAMLLEX) parsing/linenum.mll
-+
-+partialclean::
-+	rm -f parsing/linenum.ml
-+
-+beforedepend:: parsing/linenum.ml
-+
-+# The predefined exceptions and primitives
-+
-+bytecomp/runtimedef.ml: byterun/primitives byterun/fail.h
-+	(echo 'let builtin_exceptions = [|'; \
-+	 sed -n -e 's|.*/\* \("[A-Za-z_]*"\) \*/$$|  \1;|p' byterun/fail.h | \
-+	 sed -e '$$s/;$$//'; \
-+	 echo '|]'; \
-+	 echo 'let builtin_primitives = [|'; \
-+	 sed -e 's/.*/  "&";/' -e '$$s/;$$//' byterun/primitives; \
-+	 echo '|]') > bytecomp/runtimedef.ml
-+
-+partialclean::
-+	rm -f bytecomp/runtimedef.ml
-+
-+beforedepend:: bytecomp/runtimedef.ml
-+
-+# Choose the right machine-dependent files
-+
-+# Choose the right machine-dependent files
-+
-+asmcomp/arch.ml: asmcomp/$(ARCH)/arch.ml
-+	ln -s $(ARCH)/arch.ml asmcomp/arch.ml
-+
-+partialclean::
-+	rm -f asmcomp/arch.ml
-+
-+beforedepend:: asmcomp/arch.ml
-+
-+asmcomp/proc.ml: asmcomp/$(ARCH)/proc.ml
-+	ln -s $(ARCH)/proc.ml asmcomp/proc.ml
-+
-+partialclean::
-+	rm -f asmcomp/proc.ml
-+
-+beforedepend:: asmcomp/proc.ml
-+
-+asmcomp/selection.ml: asmcomp/$(ARCH)/selection.ml
-+	ln -s $(ARCH)/selection.ml asmcomp/selection.ml
-+
-+partialclean::
-+	rm -f asmcomp/selection.ml
-+
-+beforedepend:: asmcomp/selection.ml
-+
-+asmcomp/reload.ml: asmcomp/$(ARCH)/reload.ml
-+	ln -s $(ARCH)/reload.ml asmcomp/reload.ml
-+
-+partialclean::
-+	rm -f asmcomp/reload.ml
-+
-+beforedepend:: asmcomp/reload.ml
-+
-+asmcomp/scheduling.ml: asmcomp/$(ARCH)/scheduling.ml
-+	ln -s $(ARCH)/scheduling.ml asmcomp/scheduling.ml
-+
-+partialclean::
-+	rm -f asmcomp/scheduling.ml
-+
-+beforedepend:: asmcomp/scheduling.ml
-+
-+# Preprocess the code emitters
-+
-+asmcomp/emit.ml: asmcomp/$(ARCH)/emit.mlp tools/cvt_emit
-+	$(CAMLRUN) tools/cvt_emit < asmcomp/$(ARCH)/emit.mlp > asmcomp/emit.ml \
-+	|| { rm -f asmcomp/emit.ml; exit 2; }
-+
-+partialclean::
-+	rm -f asmcomp/emit.ml
-+
-+beforedepend:: asmcomp/emit.ml
-+
-+tools/cvt_emit: tools/cvt_emit.mll
-+	cd tools; \
+ clean:: partialclean
+ 
+ # Shared parts of the system
+@@ -481,6 +504,9 @@
+ 	$(CAMLOPT) $(LINKFLAGS) -o ocamlopt.opt \
+            compilerlibs/ocamlcommon.cmxa compilerlibs/ocamloptcomp.cmxa \
+            $(OPTSTART:.cmo=.cmx)
++	@sed -e 's|@compiler@|ocamlc.opt|' \
++		driver/ocamlcomp.sh.in > ocamlcomp.sh
++	@chmod +x ocamlcomp.sh
+ 	@sed -e 's|@compiler@|$$topdir/ocamlopt.opt|' \
+ 	  driver/ocamlcomp.sh.in > ocamlcompopt.sh
+ 	@chmod +x ocamlcompopt.sh
+@@ -575,7 +601,7 @@
+ 
+ tools/cvt_emit: tools/cvt_emit.mll
+ 	cd tools; \
+-	$(MAKE) CAMLC="../$(CAMLRUN) ../boot/ocamlc -I ../stdlib" cvt_emit
 +	$(MAKE) CAMLC="ocamlc" cvt_emit
+ 
+ # The "expunge" utility
+ 
+@@ -658,6 +684,9 @@
+ ocamltools: ocamlc ocamlyacc ocamllex asmcomp/cmx_format.cmi
+ 	cd tools; $(MAKE) all
+ 
++ocamlmklib:
++	cd tools; $(MAKE) ocamlmklib
 +
-+# Default rules
+ ocamltoolsopt: ocamlopt
+ 	cd tools; $(MAKE) opt
+ 
+@@ -691,7 +720,7 @@
+ 	  (cd otherlibs/$$i; $(MAKE) RUNTIME=$(RUNTIME) all) || exit $$?; \
+ 	done
+ 
+-otherlibrariesopt:
++otherlibrariesopt: ocamlmklib
+ 	for i in $(OTHERLIBRARIES); do \
+ 	  (cd otherlibs/$$i; $(MAKE) allopt) || exit $$?; \
+ 	done
+@@ -807,4 +836,6 @@
+ .PHONY: otherlibrariesopt package-macosx promote promote-cross
+ .PHONY: restore runtime runtimeopt makeruntimeopt world world.opt
+ 
 +
-+.SUFFIXES: .ml .mli .cmo .cmi .cmx
 +
-+.ml.cmo:
-+	$(CAMLC) $(COMPFLAGS) -c $<
-+
-+.mli.cmi:
-+	$(CAMLC) $(COMPFLAGS) -c $<
-+
-+.ml.cmx:
-+	$(CAMLOPT) $(COMPFLAGS) -c $<
-+
-+partialclean::
-+	for d in utils parsing typing bytecomp asmcomp driver toplevel tools; \
-+	  do rm -f $$d/*.cm[iox] $$d/*.annot $$d/*.[so] $$d/*~; done
-+	rm -f *~
-+
-+depend: beforedepend
-+	(for d in utils parsing typing bytecomp asmcomp driver toplevel; \
-+	 do $(CAMLDEP) $(DEPFLAGS) $$d/*.mli $$d/*.ml; \
-+	 done) > .depend
-+
-+alldepend:: depend
-+
-+clean:: partialclean
-+
-+distclean:
-+	./build/distclean.sh
-+
-+.PHONY: all backup bootstrap camlp4opt camlp4out checkstack clean
-+.PHONY: partialclean beforedepend alldepend cleanboot coldstart
-+.PHONY: compare core coreall
-+.PHONY: coreboot defaultentry depend distclean install installopt
-+.PHONY: library library-cross libraryopt ocamlbuild-mixed-boot
-+.PHONY: ocamlbuild.byte ocamlbuild.native ocamldebugger ocamldoc
-+.PHONY: ocamldoc.opt ocamllex ocamllex.opt ocamltools ocamltools.opt
-+.PHONY: ocamlyacc opt-core opt opt.opt otherlibraries
-+.PHONY: otherlibrariesopt package-macosx promote promote-cross
-+.PHONY: restore runtime runtimeopt makeruntimeopt world world.opt
-+
-+include .depend
-diff -urN ocaml-4.00/asmcomp/arm/emit.mlp ocaml-4.00-ios/asmcomp/arm/emit.mlp
---- ocaml-4.00/asmcomp/arm/emit.mlp	2012-04-26 23:17:53.000000000 +0400
-+++ ocaml-4.00-ios/asmcomp/arm/emit.mlp	2012-05-05 17:26:16.000000000 +0400
-@@ -32,25 +32,26 @@
+ include .depend
+Binary files ocaml-4.00-orig/asmcomp/arm/.emit.mlp.swp and ocaml-4.00-ios/asmcomp/arm/.emit.mlp.swp differ
+diff -urN ocaml-4.00-orig/asmcomp/arm/emit.mlp ocaml-4.00-ios/asmcomp/arm/emit.mlp
+--- ocaml-4.00-orig/asmcomp/arm/emit.mlp	2012-06-06 01:55:41.000000000 +0400
++++ ocaml-4.00-ios/asmcomp/arm/emit.mlp	2012-06-20 02:24:16.000000000 +0400
+@@ -32,25 +32,20 @@
  (* Output a label *)
  
  let emit_label lbl =
@@ -374,25 +154,44 @@ diff -urN ocaml-4.00/asmcomp/arm/emit.mlp ocaml-4.00-ios/asmcomp/arm/emit.mlp
  
  let emit_symbol s =
 -  Emitaux.emit_symbol '$' s
-+  emit_string "_"; Emitaux.emit_symbol '$' s
++	emit_string "_"; Emitaux.emit_symbol '$' s
  
  let emit_call s =
-+(*
-   if !Clflags.dlcode || !pic_code
-   then `bl	{emit_symbol s}(PLT)`
--  else `bl	{emit_symbol s}`
-+  else *) `bl	{emit_symbol s}`
- 
- let emit_jump s =
 -  if !Clflags.dlcode || !pic_code
-+  (* if !Clflags.dlcode || !pic_code
-   then `b	{emit_symbol s}(PLT)`
+-  then `bl	{emit_symbol s}(PLT)`
+-  else `bl	{emit_symbol s}`
+-
+-let emit_jump s =
+-  if !Clflags.dlcode || !pic_code
+-  then `b	{emit_symbol s}(PLT)`
 -  else `b	{emit_symbol s}`
-+  else *) `b	{emit_symbol s}`
++  `bl	{emit_symbol s}`
++
++let emit_jump s = `b	{emit_symbol s}`
  
  (* Output a pseudo-register *)
  
-@@ -823,13 +824,14 @@
+@@ -750,8 +745,10 @@
+           (* The Thumb-2 TBH instruction supports only forward branches,
+              so we need to generate appropriate trampolines for all labels
+              that appear before this switch instruction (PR#5623) *)
++					let lbl = new_label () in
+           let tramtbl = Array.copy jumptbl in
+           `	tbh	[pc, {emit_reg i.arg.(0)}, lsl #1]\n`;
++					`{emit_label lbl}:`;
+           for j = 0 to Array.length tramtbl - 1 do
+             let rec label i =
+               match i.desc with
+@@ -759,7 +756,7 @@
+               | Llabel lbl when lbl = tramtbl.(j) -> lbl
+               | _ -> label i.next in
+             tramtbl.(j) <- label i.next;
+-            `	.short	({emit_label tramtbl.(j)}-.)/2+{emit_int j}\n`
++            `	.short	({emit_label tramtbl.(j)}-{emit_label lbl})/2\n`
+           done;
+           (* Generate the necessary trampolines *)
+           for j = 0 to Array.length tramtbl - 1 do
+@@ -847,13 +844,13 @@
    call_gc_sites := [];
    bound_error_sites := [];
    `	.text\n`;
@@ -404,33 +203,30 @@ diff -urN ocaml-4.00/asmcomp/arm/emit.mlp ocaml-4.00-ios/asmcomp/arm/emit.mlp
    else
      `	.arm\n`;
 -  `	.type	{emit_symbol fundecl.fun_name}, %function\n`;
-+  (*`	.type	{emit_symbol fundecl.fun_name}, %function\n`;*)
-+  `	.thumb_func	{emit_symbol fundecl.fun_name}\n`;
++	`  .thumb_func {emit_symbol fundecl.fun_name}\n`;
    `{emit_symbol fundecl.fun_name}:\n`;
-   if !Clflags.gprofile then emit_profile();
-   let n = frame_size() in
-@@ -840,9 +842,11 @@
-   emit_all 0 fundecl.fun_body;
+   emit_debug_info fundecl.fun_dbg;
+   cfi_startproc();
+@@ -869,9 +866,7 @@
    emit_literals();
    List.iter emit_call_gc !call_gc_sites;
--  List.iter emit_call_bound_error !bound_error_sites;
-+  List.iter emit_call_bound_error !bound_error_sites
-+	(*
-   `	.type	{emit_symbol fundecl.fun_name}, %function\n`;
-   `	.size	{emit_symbol fundecl.fun_name}, .-{emit_symbol fundecl.fun_name}\n`
-+	*)
+   List.iter emit_call_bound_error !bound_error_sites;
+-  cfi_endproc();
+-  `	.type	{emit_symbol fundecl.fun_name}, %function\n`;
+-  `	.size	{emit_symbol fundecl.fun_name}, .-{emit_symbol fundecl.fun_name}\n`
++  cfi_endproc()
  
  (* Emission of data *)
  
-@@ -870,6 +874,7 @@
- 
+@@ -900,6 +895,7 @@
  let begin_assembly() =
+   reset_debug_info();
    `	.syntax	unified\n`;
 +	(*
    begin match !arch with
    | ARMv4   -> `	.arch	armv4t\n`
    | ARMv5   -> `	.arch	armv5t\n`
-@@ -883,6 +888,7 @@
+@@ -913,6 +909,7 @@
    | VFPv3_D16 -> `	.fpu	vfpv3-d16\n`
    | VFPv3     -> `	.fpu	vfpv3\n`
    end;
@@ -438,7 +234,7 @@ diff -urN ocaml-4.00/asmcomp/arm/emit.mlp ocaml-4.00-ios/asmcomp/arm/emit.mlp
    `trap_ptr	.req	r8\n`;
    `alloc_ptr	.req	r10\n`;
    `alloc_limit	.req	r11\n`;
-@@ -893,13 +899,15 @@
+@@ -923,13 +920,15 @@
    let lbl_begin = Compilenv.make_symbol (Some "code_begin") in
    `	.text\n`;
    `	.globl	{emit_symbol lbl_begin}\n`;
@@ -455,34 +251,32 @@ diff -urN ocaml-4.00/asmcomp/arm/emit.mlp ocaml-4.00-ios/asmcomp/arm/emit.mlp
    let lbl_end = Compilenv.make_symbol (Some "data_end") in
    `	.data\n`;
    `	.globl	{emit_symbol lbl_end}\n`;
-@@ -910,7 +918,7 @@
+@@ -940,7 +939,7 @@
    `{emit_symbol lbl}:\n`;
    emit_frames
      { efa_label = (fun lbl ->
 -                       `	.type	{emit_label lbl}, %function\n`;
-+                       (*`	.type	{emit_label lbl}, %function\n`;*)
++         (*              `	.type	{emit_label lbl}, %function\n`; *)
                         `	.word	{emit_label lbl}\n`);
        efa_16 = (fun n -> `	.short	{emit_int n}\n`);
        efa_32 = (fun n -> `	.long	{emit_int32 n}\n`);
-@@ -920,11 +928,13 @@
+@@ -949,12 +948,4 @@
+       efa_label_rel = (fun lbl ofs ->
                             `	.word	{emit_label lbl} - . + {emit_int32 ofs}\n`);
        efa_def_label = (fun lbl -> `{emit_label lbl}:\n`);
-       efa_string = (fun s -> emit_string_directive "	.asciz	" s) };
+-      efa_string = (fun s -> emit_string_directive "	.asciz	" s) };
 -  `	.type	{emit_symbol lbl}, %object\n`;
 -  `	.size	{emit_symbol lbl}, .-{emit_symbol lbl}\n`;
-+  (*`	.type	{emit_symbol lbl}, %object\n`;
-+  `	.size	{emit_symbol lbl}, .-{emit_symbol lbl}\n`;*)
-+	(*
-   begin match Config.system with
-     "linux_eabihf" | "linux_eabi" ->
-       (* Mark stack as non-executable *)
-       `	.section	.note.GNU-stack,\"\",%progbits\n`
-   | _ -> ()
-   end
-+	*)
-diff -urN ocaml-4.00/asmrun/arm.S ocaml-4.00-ios/asmrun/arm.S
---- ocaml-4.00/asmrun/arm.S	2012-04-26 23:18:00.000000000 +0400
-+++ ocaml-4.00-ios/asmrun/arm.S	2012-05-05 17:26:16.000000000 +0400
+-  begin match Config.system with
+-    "linux_eabihf" | "linux_eabi" ->
+-      (* Mark stack as non-executable *)
+-      `	.section	.note.GNU-stack,\"\",%progbits\n`
+-  | _ -> ()
+-  end
++      efa_string = (fun s -> emit_string_directive "	.asciz	" s) }
+diff -urN ocaml-4.00-orig/asmrun/arm.S ocaml-4.00-ios/asmrun/arm.S
+--- ocaml-4.00-orig/asmrun/arm.S	2012-04-26 23:18:00.000000000 +0400
++++ ocaml-4.00-ios/asmrun/arm.S	2012-06-19 12:09:13.000000000 +0400
 @@ -17,11 +17,27 @@
  /* Asm part of the runtime system, ARM processor */
  /* Must be preprocessed by cpp */
@@ -1067,9 +861,9 @@ diff -urN ocaml-4.00/asmrun/arm.S ocaml-4.00-ios/asmrun/arm.S
 -        .type   caml_system__frametable, %object
 -        .size   caml_system__frametable, .-caml_system__frametable
 +
-diff -urN ocaml-4.00/asmrun/backtrace.c ocaml-4.00-ios/asmrun/backtrace.c
---- ocaml-4.00/asmrun/backtrace.c	2012-04-26 23:18:00.000000000 +0400
-+++ ocaml-4.00-ios/asmrun/backtrace.c	2012-05-09 00:51:20.000000000 +0400
+diff -urN ocaml-4.00-orig/asmrun/backtrace.c ocaml-4.00-ios/asmrun/backtrace.c
+--- ocaml-4.00-orig/asmrun/backtrace.c	2012-04-26 23:18:00.000000000 +0400
++++ ocaml-4.00-ios/asmrun/backtrace.c	2012-06-19 17:37:40.000000000 +0400
 @@ -162,12 +162,12 @@
    li->loc_endchr = ((info2 & 0xF) << 6) | (info1 >> 26);
  }
@@ -1131,27 +925,26 @@ diff -urN ocaml-4.00/asmrun/backtrace.c ocaml-4.00-ios/asmrun/backtrace.c
  /* Convert the backtrace to a data structure usable from OCaml */
  
  CAMLprim value caml_get_exception_backtrace(value unit)
-diff -urN ocaml-4.00/byterun/Makefile.common ocaml-4.00-ios/byterun/Makefile.common
---- ocaml-4.00/byterun/Makefile.common	2012-04-26 23:17:55.000000000 +0400
-+++ ocaml-4.00-ios/byterun/Makefile.common	2012-05-05 17:26:16.000000000 +0400
-@@ -59,6 +59,14 @@
- 	  sed -f ../tools/cleanup-header $$i > $(LIBDIR)/caml/$$i; \
- 	done
+diff -urN ocaml-4.00-orig/byterun/Makefile.common ocaml-4.00-ios/byterun/Makefile.common
+--- ocaml-4.00-orig/byterun/Makefile.common	2012-04-26 23:17:55.000000000 +0400
++++ ocaml-4.00-ios/byterun/Makefile.common	2012-06-19 01:42:31.000000000 +0400
+@@ -61,6 +61,13 @@
  	cp ld.conf $(LIBDIR)/ld.conf
-+
-+
+ .PHONY: install
+ 
 +installopt:
 +	if test -d $(LIBDIR)/caml; then : ; else mkdir $(LIBDIR)/caml; fi
 +	for i in $(PUBLIC_INCLUDES); do \
-+	   sed -f ../tools/cleanup-header $$i > $(LIBDIR)/caml/$$i; \
-+	 done
++		sed -f ../tools/cleanup-header $$i > $(LIBDIR)/caml/$$i; \
++  done
++.PHONY: installopt
 +
- .PHONY: install
- 
  install:: install-$(RUNTIMED)
-diff -urN ocaml-4.00/byterun/backtrace.c ocaml-4.00-ios/byterun/backtrace.c
---- ocaml-4.00/byterun/backtrace.c	2012-04-26 23:17:55.000000000 +0400
-+++ ocaml-4.00-ios/byterun/backtrace.c	2012-05-09 00:20:48.000000000 +0400
+ 
+ install-noruntimed:
+diff -urN ocaml-4.00-orig/byterun/backtrace.c ocaml-4.00-ios/byterun/backtrace.c
+--- ocaml-4.00-orig/byterun/backtrace.c	2012-04-26 23:17:55.000000000 +0400
++++ ocaml-4.00-ios/byterun/backtrace.c	2012-06-19 01:55:40.000000000 +0400
 @@ -274,6 +274,11 @@
    }
  }
@@ -1164,9 +957,9 @@ diff -urN ocaml-4.00/byterun/backtrace.c ocaml-4.00-ios/byterun/backtrace.c
  /* Convert the backtrace to a data structure usable from OCaml */
  
  CAMLprim value caml_get_exception_backtrace(value unit)
-diff -urN ocaml-4.00/byterun/backtrace.h ocaml-4.00-ios/byterun/backtrace.h
---- ocaml-4.00/byterun/backtrace.h	2012-04-26 23:17:55.000000000 +0400
-+++ ocaml-4.00-ios/byterun/backtrace.h	2012-05-09 00:18:10.000000000 +0400
+diff -urN ocaml-4.00-orig/byterun/backtrace.h ocaml-4.00-ios/byterun/backtrace.h
+--- ocaml-4.00-orig/byterun/backtrace.h	2012-04-26 23:17:55.000000000 +0400
++++ ocaml-4.00-ios/byterun/backtrace.h	2012-06-19 01:56:01.000000000 +0400
 @@ -29,5 +29,6 @@
  extern void caml_stash_backtrace(value exn, code_t pc, value * sp);
  #endif
@@ -1174,9 +967,9 @@ diff -urN ocaml-4.00/byterun/backtrace.h ocaml-4.00-ios/byterun/backtrace.h
 +CAMLextern char** caml_print_get_exception_backtrace(void);
  
  #endif /* CAML_BACKTRACE_H */
-diff -urN ocaml-4.00/byterun/fail.h ocaml-4.00-ios/byterun/fail.h
---- ocaml-4.00/byterun/fail.h	2012-04-26 23:17:55.000000000 +0400
-+++ ocaml-4.00-ios/byterun/fail.h	2012-05-09 00:19:51.000000000 +0400
+diff -urN ocaml-4.00-orig/byterun/fail.h ocaml-4.00-ios/byterun/fail.h
+--- ocaml-4.00-orig/byterun/fail.h	2012-04-26 23:17:55.000000000 +0400
++++ ocaml-4.00-ios/byterun/fail.h	2012-06-19 01:57:01.000000000 +0400
 @@ -62,6 +62,9 @@
  extern "C" {
  #endif
@@ -1187,9 +980,9 @@ diff -urN ocaml-4.00/byterun/fail.h ocaml-4.00-ios/byterun/fail.h
  CAMLextern void caml_raise (value bucket) Noreturn;
  CAMLextern void caml_raise_constant (value tag) Noreturn;
  CAMLextern void caml_raise_with_arg (value tag, value arg) Noreturn;
-diff -urN ocaml-4.00/byterun/printexc.c ocaml-4.00-ios/byterun/printexc.c
---- ocaml-4.00/byterun/printexc.c	2012-04-26 23:17:55.000000000 +0400
-+++ ocaml-4.00-ios/byterun/printexc.c	2012-05-09 00:22:00.000000000 +0400
+diff -urN ocaml-4.00-orig/byterun/printexc.c ocaml-4.00-ios/byterun/printexc.c
+--- ocaml-4.00-orig/byterun/printexc.c	2012-04-26 23:17:55.000000000 +0400
++++ ocaml-4.00-ios/byterun/printexc.c	2012-06-19 01:57:47.000000000 +0400
 @@ -26,6 +26,8 @@
  #include "mlvalues.h"
  #include "printexc.h"
@@ -1224,11 +1017,10 @@ diff -urN ocaml-4.00/byterun/printexc.c ocaml-4.00-ios/byterun/printexc.c
 +	};
    exit(2);
  }
-diff -urN ocaml-4.00/config/Makefile ocaml-4.00-ios/config/Makefile
---- ocaml-4.00/config/Makefile	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00-ios/config/Makefile	2012-05-11 12:03:18.000000000 +0400
-@@ -0,0 +1,74 @@
-+# generated by ./configure 
+diff -urN ocaml-4.00-orig/config/Makefile ocaml-4.00-ios/config/Makefile
+--- ocaml-4.00-orig/config/Makefile	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.00-ios/config/Makefile	2012-06-19 18:26:42.000000000 +0400
+@@ -0,0 +1,73 @@
 +PREFIX=/usr/local/ocaml/ios/4.00
 +PLATFORM=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
 +SDK=$(PLATFORM)/SDKs/iPhoneOS5.1.sdk
@@ -1245,7 +1037,6 @@ diff -urN ocaml-4.00/config/Makefile ocaml-4.00-ios/config/Makefile
 +BNG_ASM_LEVEL=0
 +PTHREAD_LINK=-cclib -pthread
 +LIBBFD_LINK=-lbfd -ldl -liberty -lz
-+#-mfloat-abi=softfp -mfpu=vfpv3 
 +BYTECC=$(PLATFORM)/usr/bin/gcc -arch armv7 -isysroot $(SDK)
 +#BYTECCCOMPOPTS=-fno-defer-pop -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
 +BYTECCCOMPOPTS=-fno-defer-pop -no-cpp-precomp -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
@@ -1267,7 +1058,8 @@ diff -urN ocaml-4.00/config/Makefile ocaml-4.00-ios/config/Makefile
 +MODEL=armv7
 +SYSTEM=linux_eabihf
 +NATIVECC=$(BYTECC)
-+NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
++NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -miphoneos-version-min=4.3
++# -gdwarf-2 -fexceptions
 +NATIVECCPROFOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
 +NATIVECCLINKOPTS=
 +NATIVECCRPATH=-Wl,-rpath,
@@ -1301,10 +1093,10 @@ diff -urN ocaml-4.00/config/Makefile ocaml-4.00-ios/config/Makefile
 +MKDLL=$(NATIVECC) -bundle -flat_namespace -undefined suppress
 +MKMAINDLL=$(MKDLL)
 +RUNTIMED=noruntimed
-+ASM_CFI_SUPPORTED=true
-diff -urN ocaml-4.00/config/m.h ocaml-4.00-ios/config/m.h
---- ocaml-4.00/config/m.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00-ios/config/m.h	2012-05-05 17:26:16.000000000 +0400
++ASM_CFI_SUPPORTED=false
+diff -urN ocaml-4.00-orig/config/m.h ocaml-4.00-ios/config/m.h
+--- ocaml-4.00-orig/config/m.h	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.00-ios/config/m.h	2012-06-19 02:28:42.000000000 +0400
 @@ -0,0 +1,16 @@
 +#ifndef __PIC__
 +#  define ARCH_CODE32
@@ -1322,9 +1114,9 @@ diff -urN ocaml-4.00/config/m.h ocaml-4.00-ios/config/m.h
 +#undef ARCH_ALIGN_INT64
 +#undef NONSTANDARD_DIV_MOD
 +#define ASM_CFI_SUPPORTED
-diff -urN ocaml-4.00/config/s.h ocaml-4.00-ios/config/s.h
---- ocaml-4.00/config/s.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00-ios/config/s.h	2012-05-05 17:26:16.000000000 +0400
+diff -urN ocaml-4.00-orig/config/s.h ocaml-4.00-ios/config/s.h
+--- ocaml-4.00-orig/config/s.h	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.00-ios/config/s.h	2012-06-19 02:29:12.000000000 +0400
 @@ -0,0 +1,51 @@
 +#define OCAML_OS_TYPE "Unix"
 +#define OCAML_STDLIB_DIR "/usr/local/ocaml/ios/4.00/lib"
@@ -1377,9 +1169,9 @@ diff -urN ocaml-4.00/config/s.h ocaml-4.00-ios/config/s.h
 +#undef HAS_STACK_OVERFLOW_DETECTION
 +#define HAS_SIGWAIT
 +#undef HAS_LIBBFD
-diff -urN ocaml-4.00/otherlibs/Makefile.shared ocaml-4.00-ios/otherlibs/Makefile.shared
---- ocaml-4.00/otherlibs/Makefile.shared	2012-04-26 23:17:59.000000000 +0400
-+++ ocaml-4.00-ios/otherlibs/Makefile.shared	2012-05-05 17:26:16.000000000 +0400
+diff -urN ocaml-4.00-orig/otherlibs/Makefile.shared ocaml-4.00-ios/otherlibs/Makefile.shared
+--- ocaml-4.00-orig/otherlibs/Makefile.shared	2012-04-26 23:17:59.000000000 +0400
++++ ocaml-4.00-ios/otherlibs/Makefile.shared	2012-06-19 02:00:42.000000000 +0400
 @@ -20,7 +20,7 @@
  
  # Compilation options
@@ -1403,9 +1195,9 @@ diff -urN ocaml-4.00/otherlibs/Makefile.shared ocaml-4.00-ios/otherlibs/Makefile
  
  partialclean:
  	rm -f *.cm*
-diff -urN ocaml-4.00/otherlibs/dynlink/Makefile ocaml-4.00-ios/otherlibs/dynlink/Makefile
---- ocaml-4.00/otherlibs/dynlink/Makefile	2012-04-26 23:17:58.000000000 +0400
-+++ ocaml-4.00-ios/otherlibs/dynlink/Makefile	2012-05-05 17:26:16.000000000 +0400
+diff -urN ocaml-4.00-orig/otherlibs/dynlink/Makefile ocaml-4.00-ios/otherlibs/dynlink/Makefile
+--- ocaml-4.00-orig/otherlibs/dynlink/Makefile	2012-05-31 14:32:03.000000000 +0400
++++ ocaml-4.00-ios/otherlibs/dynlink/Makefile	2012-06-19 02:01:23.000000000 +0400
 @@ -17,7 +17,7 @@
  
  include ../../config/Makefile
@@ -1415,9 +1207,9 @@ diff -urN ocaml-4.00/otherlibs/dynlink/Makefile ocaml-4.00-ios/otherlibs/dynlink
  CAMLOPT=../../ocamlcompopt.sh
  INCLUDES=-I ../../utils -I ../../typing -I ../../bytecomp -I ../../asmcomp
  COMPFLAGS=-warn-error A -I ../../stdlib $(INCLUDES)
-diff -urN ocaml-4.00/otherlibs/systhreads/Makefile ocaml-4.00-ios/otherlibs/systhreads/Makefile
---- ocaml-4.00/otherlibs/systhreads/Makefile	2012-04-26 23:17:59.000000000 +0400
-+++ ocaml-4.00-ios/otherlibs/systhreads/Makefile	2012-05-05 17:26:16.000000000 +0400
+diff -urN ocaml-4.00-orig/otherlibs/systhreads/Makefile ocaml-4.00-ios/otherlibs/systhreads/Makefile
+--- ocaml-4.00-orig/otherlibs/systhreads/Makefile	2012-06-15 18:39:15.000000000 +0400
++++ ocaml-4.00-ios/otherlibs/systhreads/Makefile	2012-06-19 02:04:22.000000000 +0400
 @@ -17,7 +17,7 @@
  
  CAMLC=../../ocamlcomp.sh -I ../unix
@@ -1446,9 +1238,9 @@ diff -urN ocaml-4.00/otherlibs/systhreads/Makefile ocaml-4.00-ios/otherlibs/syst
  	cp libthreadsnat.a $(LIBDIR)/libthreadsnat.a
  	cd $(LIBDIR); $(RANLIB) libthreadsnat.a
  	cp $(THREAD_OBJS:.cmo=.cmx) threads.cmxa threads.a $(LIBDIR)/threads
-diff -urN ocaml-4.00/otherlibs/threads/pervasives.ml ocaml-4.00-ios/otherlibs/threads/pervasives.ml
---- ocaml-4.00/otherlibs/threads/pervasives.ml	2012-04-26 23:17:59.000000000 +0400
-+++ ocaml-4.00-ios/otherlibs/threads/pervasives.ml	2012-05-11 10:55:29.000000000 +0400
+diff -urN ocaml-4.00-orig/otherlibs/threads/pervasives.ml ocaml-4.00-ios/otherlibs/threads/pervasives.ml
+--- ocaml-4.00-orig/otherlibs/threads/pervasives.ml	2012-04-26 23:17:59.000000000 +0400
++++ ocaml-4.00-ios/otherlibs/threads/pervasives.ml	2012-06-19 02:22:21.000000000 +0400
 @@ -87,29 +87,29 @@
  external (-.) : float -> float -> float = "%subfloat"
  external ( *. ) : float -> float -> float = "%mulfloat"
@@ -1501,9 +1293,9 @@ diff -urN ocaml-4.00/otherlibs/threads/pervasives.ml ocaml-4.00-ios/otherlibs/th
  external frexp : float -> float * int = "caml_frexp_float"
  external ldexp : float -> int -> float = "caml_ldexp_float"
  external modf : float -> float * float = "caml_modf_float"
-diff -urN ocaml-4.00/stdlib/Makefile ocaml-4.00-ios/stdlib/Makefile
---- ocaml-4.00/stdlib/Makefile	2012-04-26 23:17:52.000000000 +0400
-+++ ocaml-4.00-ios/stdlib/Makefile	2012-05-05 17:26:16.000000000 +0400
+diff -urN ocaml-4.00-orig/stdlib/Makefile ocaml-4.00-ios/stdlib/Makefile
+--- ocaml-4.00-orig/stdlib/Makefile	2012-04-26 23:17:52.000000000 +0400
++++ ocaml-4.00-ios/stdlib/Makefile	2012-06-19 02:07:11.000000000 +0400
 @@ -15,7 +15,7 @@
  
  include Makefile.shared
@@ -1513,18 +1305,18 @@ diff -urN ocaml-4.00/stdlib/Makefile ocaml-4.00-ios/stdlib/Makefile
  
  allopt-noprof:
  
-@@ -26,6 +26,8 @@
+@@ -25,7 +25,7 @@
+ installopt: installopt-default installopt-$(PROFILING)
  
  installopt-default:
- 	cp stdlib.cmxa stdlib.a std_exit.o *.cmx $(LIBDIR)
+-	cp stdlib.cmxa stdlib.a std_exit.o *.cmx $(LIBDIR)
 +	cp stdlib.cmxa stdlib.a std_exit.o *.cmx *.cmi *.mli *.ml camlheader camlheader_ur $(LIBDIR)
-+	cp stdlib.cmxa stdlib.a std_exit.o *.cmx $(LIBDIR)
  	cd $(LIBDIR); $(RANLIB) stdlib.a
  
  installopt-noprof:
-diff -urN ocaml-4.00/stdlib/Makefile.shared ocaml-4.00-ios/stdlib/Makefile.shared
---- ocaml-4.00/stdlib/Makefile.shared	2012-04-26 23:17:52.000000000 +0400
-+++ ocaml-4.00-ios/stdlib/Makefile.shared	2012-05-05 17:26:16.000000000 +0400
+diff -urN ocaml-4.00-orig/stdlib/Makefile.shared ocaml-4.00-ios/stdlib/Makefile.shared
+--- ocaml-4.00-orig/stdlib/Makefile.shared	2012-04-26 23:17:52.000000000 +0400
++++ ocaml-4.00-ios/stdlib/Makefile.shared	2012-06-19 02:09:28.000000000 +0400
 @@ -14,14 +14,12 @@
  # $Id: Makefile.shared 12383 2012-04-19 13:12:23Z xleroy $
  
@@ -1556,131 +1348,24 @@ diff -urN ocaml-4.00/stdlib/Makefile.shared ocaml-4.00-ios/stdlib/Makefile.share
  
  # Dependencies on Pervasives (not tracked by ocamldep)
  $(OBJS) std_exit.cmo: pervasives.cmi
-diff -urN ocaml-4.00/stdlib/Makefile.shared.orig ocaml-4.00-ios/stdlib/Makefile.shared.orig
---- ocaml-4.00/stdlib/Makefile.shared.orig	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00-ios/stdlib/Makefile.shared.orig	2012-04-26 23:17:52.000000000 +0400
-@@ -0,0 +1,105 @@
-+#########################################################################
-+#                                                                       #
-+#                                 OCaml                                 #
-+#                                                                       #
-+#            Xavier Leroy, projet Cristal, INRIA Rocquencourt           #
-+#                                                                       #
-+#   Copyright 1999 Institut National de Recherche en Informatique et    #
-+#   en Automatique.  All rights reserved.  This file is distributed     #
-+#   under the terms of the GNU Library General Public License, with     #
-+#   the special exception on linking described in file ../LICENSE.      #
-+#                                                                       #
-+#########################################################################
-+
-+# $Id: Makefile.shared 12383 2012-04-19 13:12:23Z xleroy $
-+
-+include ../config/Makefile
-+RUNTIME=../boot/ocamlrun
-+COMPILER=../ocamlc
-+CAMLC=$(RUNTIME) $(COMPILER)
-+COMPFLAGS=-strict-sequence -g -warn-error A -nostdlib
-+OPTCOMPILER=../ocamlopt
-+CAMLOPT=$(RUNTIME) $(OPTCOMPILER)
-+OPTCOMPFLAGS=-warn-error A -nostdlib -g
-+CAMLDEP=../boot/ocamlrun ../tools/ocamldep
-+
-+OBJS=pervasives.cmo $(OTHERS)
-+OTHERS=array.cmo list.cmo char.cmo string.cmo sys.cmo \
-+  sort.cmo marshal.cmo obj.cmo \
-+  int32.cmo int64.cmo nativeint.cmo \
-+  lexing.cmo parsing.cmo \
-+  set.cmo map.cmo stack.cmo queue.cmo \
-+  camlinternalLazy.cmo lazy.cmo stream.cmo \
-+  buffer.cmo printf.cmo \
-+  arg.cmo printexc.cmo gc.cmo \
-+  digest.cmo random.cmo hashtbl.cmo format.cmo scanf.cmo callback.cmo \
-+  camlinternalOO.cmo oo.cmo camlinternalMod.cmo \
-+  genlex.cmo weak.cmo \
-+  filename.cmo complex.cmo \
-+  arrayLabels.cmo listLabels.cmo stringLabels.cmo moreLabels.cmo stdLabels.cmo
-+
-+all: stdlib.cma std_exit.cmo camlheader camlheader_ur
-+
-+install: install-$(RUNTIMED)
-+	cp stdlib.cma std_exit.cmo *.cmi *.mli *.ml camlheader camlheader_ur \
-+	  $(LIBDIR)
-+
-+install-noruntimed:
-+.PHONY: install-noruntimed
-+
-+install-runtimed: camlheaderd
-+	cp camlheaderd $(LIBDIR)
-+.PHONY: install-runtimed
-+
-+stdlib.cma: $(OBJS)
-+	$(CAMLC) -a -o stdlib.cma $(OBJS)
-+
-+stdlib.cmxa: $(OBJS:.cmo=.cmx)
-+	$(CAMLOPT) -a -o stdlib.cmxa $(OBJS:.cmo=.cmx)
-+
-+sys.ml: sys.mlp ../VERSION
-+	sed -e "s|%%VERSION%%|`sed -e 1q ../VERSION`|" sys.mlp >sys.ml
-+
-+clean::
-+	rm -f sys.ml
-+
-+clean::
-+	rm -f camlheader camlheader_ur camlheaderd
-+
-+.SUFFIXES: .mli .ml .cmi .cmo .cmx .p.cmx
-+
-+.mli.cmi:
-+	$(CAMLC) $(COMPFLAGS) `./Compflags $@` -c $<
-+
-+.ml.cmo:
-+	$(CAMLC) $(COMPFLAGS) `./Compflags $@` -c $<
-+
-+.ml.cmx:
-+	$(CAMLOPT) $(OPTCOMPFLAGS) `./Compflags $@` -c $<
-+
-+.ml.p.cmx:
-+	$(CAMLOPT) $(OPTCOMPFLAGS) `./Compflags $@` -p -c -o $*.p.cmx $<
-+
-+# Dependencies on the compiler
-+$(OBJS) std_exit.cmo: $(COMPILER)
-+$(OBJS:.cmo=.cmi) std_exit.cmi: $(COMPILER)
-+$(OBJS:.cmo=.cmx) std_exit.cmx: $(OPTCOMPILER)
-+$(OBJS:.cmo=.p.cmx) std_exit.p.cmx: $(OPTCOMPILER)
-+
-+# Dependencies on Pervasives (not tracked by ocamldep)
-+$(OBJS) std_exit.cmo: pervasives.cmi
-+$(OTHERS:.cmo=.cmi) std_exit.cmi: pervasives.cmi
-+$(OBJS:.cmo=.cmx) std_exit.cmx: pervasives.cmi
-+$(OBJS:.cmo=.p.cmx) std_exit.p.cmx: pervasives.cmi
-+$(OTHERS:.cmo=.cmx) std_exit.cmx: pervasives.cmx
-+$(OTHERS:.cmo=.p.cmx) std_exit.p.cmx: pervasives.cmx
-+
-+clean::
-+	rm -f *.cm* *.$(O) *.$(A)
-+	rm -f *~
-+
-+include .depend
-+
-+depend:
-+	$(CAMLDEP) *.mli *.ml > .depend
-+	$(CAMLDEP) *.ml | sed -e 's/\.cmx/.p.cmx/g' >>.depend
-diff -urN ocaml-4.00/stdlib/camlinternalOO.ml ocaml-4.00-ios/stdlib/camlinternalOO.ml
---- ocaml-4.00/stdlib/camlinternalOO.ml	2012-04-26 23:17:52.000000000 +0400
-+++ ocaml-4.00-ios/stdlib/camlinternalOO.ml	2012-05-05 17:26:16.000000000 +0400
-@@ -80,7 +80,8 @@
+diff -urN ocaml-4.00-orig/stdlib/camlinternalOO.ml ocaml-4.00-ios/stdlib/camlinternalOO.ml
+--- ocaml-4.00-orig/stdlib/camlinternalOO.ml	2012-04-26 23:17:52.000000000 +0400
++++ ocaml-4.00-ios/stdlib/camlinternalOO.ml	2012-06-19 02:10:59.000000000 +0400
+@@ -78,9 +78,9 @@
+     accu := 223 * !accu + Char.code s.[i]
+   done;
    (* reduce to 31 bits *)
-   accu := !accu land (1 lsl 31 - 1);
+-  accu := !accu land (1 lsl 31 - 1);
++  let tag = !accu land (1 lsl 31 - 1) in
    (* make it signed for 64 bits architectures *)
 -  let tag = if !accu > 0x3FFFFFFF then !accu - (1 lsl 31) else !accu in
-+  let tag = !accu in
 +(*   let tag = if !accu > 0x3FFFFFFF then !accu - (1 lsl 31) else !accu in *)
    (* Printf.eprintf "%s = %d\n" s tag; flush stderr; *)
    magic tag
  
-diff -urN ocaml-4.00/stdlib/pervasives.ml ocaml-4.00-ios/stdlib/pervasives.ml
---- ocaml-4.00/stdlib/pervasives.ml	2012-04-26 23:17:52.000000000 +0400
-+++ ocaml-4.00-ios/stdlib/pervasives.ml	2012-05-11 10:52:22.000000000 +0400
+diff -urN ocaml-4.00-orig/stdlib/pervasives.ml ocaml-4.00-ios/stdlib/pervasives.ml
+--- ocaml-4.00-orig/stdlib/pervasives.ml	2012-04-26 23:17:52.000000000 +0400
++++ ocaml-4.00-ios/stdlib/pervasives.ml	2012-06-19 02:21:27.000000000 +0400
 @@ -72,7 +72,7 @@
  external ( lsr ) : int -> int -> int = "%lsrint"
  external ( asr ) : int -> int -> int = "%asrint"
@@ -1744,9 +1429,9 @@ diff -urN ocaml-4.00/stdlib/pervasives.ml ocaml-4.00-ios/stdlib/pervasives.ml
  external frexp : float -> float * int = "caml_frexp_float"
  external ldexp : float -> int -> float = "caml_ldexp_float"
  external modf : float -> float * float = "caml_modf_float"
-diff -urN ocaml-4.00/stdlib/pervasives.mli ocaml-4.00-ios/stdlib/pervasives.mli
---- ocaml-4.00/stdlib/pervasives.mli	2012-05-05 17:00:39.000000000 +0400
-+++ ocaml-4.00-ios/stdlib/pervasives.mli	2012-05-11 10:57:51.000000000 +0400
+diff -urN ocaml-4.00-orig/stdlib/pervasives.mli ocaml-4.00-ios/stdlib/pervasives.mli
+--- ocaml-4.00-orig/stdlib/pervasives.mli	2012-05-05 17:00:39.000000000 +0400
++++ ocaml-4.00-ios/stdlib/pervasives.mli	2012-06-19 02:21:35.000000000 +0400
 @@ -261,82 +261,81 @@
  external ( /. ) : float -> float -> float = "%divfloat"
  (** Floating-point division. *)
@@ -1868,10 +1553,10 @@ diff -urN ocaml-4.00/stdlib/pervasives.mli ocaml-4.00-ios/stdlib/pervasives.mli
  (** [mod_float a b] returns the remainder of [a] with respect to
     [b].  The returned value is [a -. n *. b], where [n]
     is the quotient [a /. b] rounded towards zero to an integer. *)
-diff -urN ocaml-4.00/tools/Makefile.shared ocaml-4.00-ios/tools/Makefile.shared
---- ocaml-4.00/tools/Makefile.shared	2012-04-26 23:17:53.000000000 +0400
-+++ ocaml-4.00-ios/tools/Makefile.shared	2012-05-05 17:26:16.000000000 +0400
-@@ -14,10 +14,12 @@
+diff -urN ocaml-4.00-orig/tools/Makefile.shared ocaml-4.00-ios/tools/Makefile.shared
+--- ocaml-4.00-orig/tools/Makefile.shared	2012-06-06 01:55:42.000000000 +0400
++++ ocaml-4.00-ios/tools/Makefile.shared	2012-06-19 02:13:46.000000000 +0400
+@@ -14,10 +14,10 @@
  
  include ../config/Makefile
  
@@ -1880,11 +1565,10 @@ diff -urN ocaml-4.00/tools/Makefile.shared ocaml-4.00-ios/tools/Makefile.shared
 -CAMLOPT=$(CAMLRUN) ../ocamlopt -nostdlib -I ../stdlib
 -CAMLLEX=$(CAMLRUN) ../boot/ocamllex
 +CAMLRUN=ocamlrun
-+CAMLC=ocamlc.opt -strict-sequence 
-+#-nostdlib -I ../boot
++CAMLC=ocamlc.opt -strict-sequence -I ../boot
 +CAMLOPT=ocamlopt.opt
-+#-nostdlib -I ../stdlib
 +CAMLLEX=ocamllex
  INCLUDES=-I ../utils -I ../parsing -I ../typing -I ../bytecomp -I ../asmcomp \
  	 -I ../driver
  COMPFLAGS= -warn-error A $(INCLUDES)
+Binary files ocaml-4.00-orig/tools/cvt_emit.bak and ocaml-4.00-ios/tools/cvt_emit.bak differ

@@ -2,7 +2,7 @@
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug default
 
-MLFLAGS += -I ../src -package extlib -package ojson -I ../src/social
+MLFLAGS += -I ../src -package extlib -package ojson -I ../src/social -I ../src/tapjoy
 
 #MLFILES = panelbg.cmo testz.cmo
 
@@ -12,7 +12,7 @@ OAUTH = ../src/social/oauth/oauth.cma
 example.byte: $(MLFILES) example.cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
 	-I ../src ../src/lightning.cma $(OAUTH) $(SOCIAL) $(MLFILES) example.cmo \
-	-package curl,bigarray,extlib,xmlm,ojson,threads -thread -linkpkg 
+	-package bigarray,extlib,xmlm,ojson,threads -thread -linkpkg 
 
 example.cmo: $(MLFILES)
 
@@ -25,8 +25,9 @@ example.cmx: $(MLXFILES)
 
 example.native: $(MOBS) $(MLXFILES) example.cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) example.cmx \
+	-I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa example.cmx \
 	-package extlib,xmlm,ojson,bigarray,threads -thread -linkpkg 
+
 
 .PHONY: clean
 clean::

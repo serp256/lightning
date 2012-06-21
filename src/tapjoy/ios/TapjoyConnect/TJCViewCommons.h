@@ -62,7 +62,7 @@ typedef enum TJCViewsIntegrationType
 	float transitionDelay_;								/*!< The delay in seconds before views come in or go out of visibility. */
 }
 
-+ (TJCViewCommons*)sharedObject; /*!< The globally accessible #TJCViewCommons object. */
++ (TJCViewCommons*)sharedTJCViewCommons; /*!< The globally accessible #TJCViewCommons object. */
 
 /*!	\fn animateTJCView:withTJCTransition:withDelay:(UIView* viewRef, TJCTransitionEnum transEffect, float delay)
  *	\brief Set a preset animation for transitioning the main view in and out of visibility.

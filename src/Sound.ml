@@ -32,7 +32,7 @@ Callback.register_exception "Audio_error" (Audio_error "");
 
 external init': category -> unit -> unit = "ml_sound_init";
 
-value init ?(category=SoloAmbientSound) () = init' category ();
+value init () = init' SoloAmbientSound ();
 
 type albuffer;
 type alsound =
@@ -88,7 +88,7 @@ class al_channel snd =
     (
       debug "play sound";
       alsource_play sourceID;
-      timer_id := Some (Timers.start sound.duration self#finished);
+      timer_id := Some (Timers.start (* sound.duration *)10. self#finished);
     );
 
     method private finished () = 
@@ -216,26 +216,127 @@ value createChannel snd =
 
 
 ELSE
-(* Sdl version here *)
+  IFDEF ANDROID THEN
+    type sound = int;
+    value _SND_DURATION = 5.;
 
-value init ?category () = ();
-value setMasterVolume (_p:float) = ();
-type sound = int;
-value load (path:string) = 0;
-class ch snd = 
-  object(self)
-    inherit EventDispatcher.simple [ channel ];
-    method private asEventTarget = (self :> channel);
-    method play () = ();
-    method pause () = ();
-    method stop () = ();
-    method setVolume (v:float) = ();
-    method volume = 1.;
-    method setLoop (b:bool) = ();
-    method state = SoundInitial;
-  end;
+    external init : unit -> unit = "ml_alsoundInit";
+
+    value setMasterVolume (v:float) = (); (* fixme *)
+
+    external alsoundLoad : string -> sound = "ml_alsoundLoad";
+    external alsoundPlay : int -> float -> bool -> int = "ml_alsoundPlay"; (* soundId -> volume -> loop -> streamId *)
+    external alsoundPause : int -> unit = "ml_alsoundPause";
+    external alsoundStop : int -> unit = "ml_alsoundStop";
+    external alsoundSetVolume : int -> float -> unit = "ml_alsoundSetVolume";
+    external alsoundSetLoop : int -> bool -> unit = "ml_alsoundSetLoop";
+
+    value load = alsoundLoad;
+
+    class al_channel snd = 
+      object(self)
+        inherit EventDispatcher.simple [ channel ];
+
+        value sound = snd;
+        value mutable stream = None;
+        value mutable volume = 1.;
+        value mutable loop = False;
+        value mutable startMoment = 0.;
+        value mutable pauseMoment = 0.;
+        value mutable timer_id = None;
+        value mutable state = SoundInitial;
+        
+        method private asEventTarget = (self :> channel);
+        
+        method play () = 
+        (
+          stream := Some (alsoundPlay sound volume loop);
+          state := SoundPlaying;
+          timer_id := Some (Timers.start _SND_DURATION self#finished); (* find way to get real duration  *)
+        );
+
+        method private finished () = 
+          if loop then 
+            timer_id := Some (Timers.start _SND_DURATION self#finished) (* find way to get real duration  *)
+          else (
+            timer_id := None;
+            stream := None;
+            self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
+            state := SoundStoped;
+          );
+
+        method pause () = 
+          match (timer_id, stream) with
+          [ (Some tid, Some stream) ->
+            (
+              Timers.stop tid;
+              alsoundPause stream;              
+              timer_id := None;
+              state := SoundPaused;
+            )
+          | _ -> ()
+          ];
+
+        method stop () = 
+          match (timer_id, stream) with
+          [ (Some tid, Some strm) ->
+            (
+              stream := None;
+              Timers.stop tid;
+              alsoundStop strm;              
+              timer_id := None;
+              state := SoundStoped;
+            )
+          | _ -> ()
+          ];
+
+        method setVolume v =
+        (
+          volume := v;
+
+          match stream with
+          [ Some stream -> alsoundSetVolume stream v
+          | _ -> ()
+          ];
+        );
+          
+        method volume = volume;
+
+        method setLoop v = 
+        (
+          loop := v;
+
+          match stream with
+          [ Some stream -> alsoundSetLoop stream v
+          | _ -> ()
+          ];
+        );
+        
+        method state = state;
+      end;    
+
+    value createChannel snd = new al_channel snd;
+  ELSE
+    (* Sdl version here *)
+
+    value init (*?category*) () = ();
+    value setMasterVolume (_p:float) = ();
+    type sound = int;
+    value load (path:string) = 0;
+    class ch snd = 
+      object(self)
+        inherit EventDispatcher.simple [ channel ];
+        method private asEventTarget = (self :> channel);
+        method play () = ();
+        method pause () = ();
+        method stop () = ();
+        method setVolume (v:float) = ();
+        method volume = 1.;
+        method setLoop (b:bool) = ();
+        method state = SoundInitial;
+      end;
 
 
-value createChannel snd = new ch snd;
-
+    value createChannel snd = new ch snd;
+  ENDIF;
 ENDIF;

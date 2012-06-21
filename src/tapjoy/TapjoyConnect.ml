@@ -12,6 +12,8 @@ external ml_tapjoy_show_offers : unit -> unit = "ml_tapjoy_show_offers";
 
 external ml_tapjoy_show_offers_with_currency : string -> bool -> unit = "ml_tapjoy_show_offers_with_currency";
 
+external getOpenUDID: unit -> option string = "ml_TJCOpenUDIDvalue";
+
 ELSE 
 
 value ml_tapjoy_init appid skey = ();

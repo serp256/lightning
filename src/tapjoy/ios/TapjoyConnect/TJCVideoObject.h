@@ -7,7 +7,7 @@
 // The Tapjoy SDK is bound by the Tapjoy SDK License Agreement and can be found here: https://www.tapjoy.com/sdk/license
 
 #import <Foundation/Foundation.h>
-#import "TBXML.h"
+#import "TJCTBXML.h"
 
 #define TJC_VIDEO_BUTTON_LABEL_KEY	@"TJC_VIDEO_BUTTON_LABEL_KEY"
 #define TJC_VIDEO_BUTTON_URL_KEY		@"TJC_VIDEO_BUTTON_URL_KEY"
@@ -19,6 +19,7 @@
 #define TJC_VIDEO_OBJ_CURRENCY_NAME		@"TJC_VIDEO_OBJ_CURRENCY_NAME"
 #define TJC_VIDEO_OBJ_OFFER_ID			@"TJC_VIDEO_OBJ_OFFER_ID"
 #define TJC_VIDEO_OBJ_CLICK_URL			@"TJC_VIDEO_OBJ_CLICK_URL"
+#define TJC_VIDEO_OBJ_COMPLETE_URL		@"TJC_VIDEO_OBJ_COMPLETE_URL"
 #define TJC_VIDEO_OBJ_DATA_LOCATION		@"TJC_VIDEO_OBJ_DATA_LOCATION"
 #define TJC_VIDEO_OBJ_FILENAME			@"TJC_VIDEO_OBJ_FILENAME"
 #define TJC_VIDEO_OBJ_NAME					@"TJC_VIDEO_OBJ_NAME"
@@ -58,7 +59,7 @@
 @property (copy) NSString *videoFilename;
 
 
-- (id)initWithTBXML:(TBXMLElement*)aXMLElement;
+- (id)initWithTBXML:(TJCTBXMLElement*)aXMLElement;
 
 - (NSDictionary*)getDictionary;
 

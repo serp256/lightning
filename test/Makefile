@@ -1,5 +1,3 @@
-
-
 sdl:
 	$(MAKE) -f Makefile.sdl
 
@@ -12,7 +10,19 @@ ios:
 iosclean:
 	$(MAKE) -f Makefile.ios clean
 
+android: 
+	$(MAKE) -f Makefile.android
 
+android-install:
+	adb install -r android/bin/LightTest-debug.apk
+
+android-log:
+	adb logcat LIGHTNING:* *:E *:F *:S
+
+android-log-error:
+	adb logcat LIGHTNING:* DEBUG:* dalvikvm:* *:E *:F *:S
+
+.PHONY: android ios sdl
 
 
 KAZMATHOBJS = utility.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o neon_matrix_impl.o GL/mat4stack.o GL/matrix.o

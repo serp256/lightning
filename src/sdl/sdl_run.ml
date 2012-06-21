@@ -30,7 +30,7 @@ value handle_events window frameRate stage =
         [ True -> ()
         | False ->
           (
-            URLLoader.process_events();
+            URLLoader.run();
             let rec next_event touch ticks =
               let cticks = Sdl.Timer.get_ticks() in
               if cticks - ticks < ticksRate 

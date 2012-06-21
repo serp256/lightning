@@ -37,7 +37,7 @@ mlstage *mlstage_create(float width,float height) {
 	caml_acquire_runtime_system();
 	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));// FIXME: GC 
 	stage->needCancelAllTouches = 0;
-	caml_register_global_root(&stage->stage);
+	caml_register_generational_global_root(&stage->stage);
 	caml_release_runtime_system();
 	PRINT_DEBUG("stage successfully created");
 	return stage;
@@ -62,7 +62,7 @@ void mlstage_resize(mlstage *mlstage,float width,float height) {
 
 void mlstage_destroy(mlstage *mlstage) {
 	caml_acquire_runtime_system();
-	caml_remove_global_root(&mlstage->stage);
+	caml_remove_generational_global_root(&mlstage->stage);
 	caml_gc_compaction(Val_int(0));
 	caml_release_runtime_system();
 	free(mlstage);

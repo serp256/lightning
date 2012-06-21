@@ -9,13 +9,25 @@
 
 #import <UIKit/UIKit.h>
 #import "TJCCallsWrapper.h"
+#import "TJCOffersWebView.h"
 #import "TapjoyConnect.h"
+
+@class TJCOffersWebView;
 
 /*!	\interface TJCOffersViewHandler
  *	\brief The Tapjoy Connect Offers View Handler class.
  *
  */
-@interface TJCOffersViewHandler : NSObject 
+@interface TJCOffersViewHandler : NSObject
+{
+	TJCOffersWebView *offersWebView_;
+}
+
+@property (nonatomic, retain) TJCOffersWebView *offersWebView;
+
+- (void)removeOffersWebView;
+
++ (TJCOffersViewHandler*)sharedTJCOffersViewHandler;
 
 + (UIView*)showOffersWithFrame:(CGRect)frame;
 

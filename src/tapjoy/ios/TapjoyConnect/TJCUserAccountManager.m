@@ -13,22 +13,12 @@
 #import "TJCUserAccountModel.h"
 #import "TapjoyConnect.h"
 
-static TJCUserAccountManager *sharedTJCUserAccountManager_ = nil;
 
 @implementation TJCUserAccountManager
 
+TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 
 @synthesize userAccountModelObj = userAccountModelObj_;
-
-+ (TJCUserAccountManager*)sharedTJCUserAccountManager
-{
-    if (!sharedTJCUserAccountManager_)
-    {
-        sharedTJCUserAccountManager_ = [[super alloc] init];
-    }
-    
-    return sharedTJCUserAccountManager_;
-}
 
 
 - (id)init
@@ -46,7 +36,7 @@ static TJCUserAccountManager *sharedTJCUserAccountManager_ = nil;
 }
 
 
-- (void)updateUserAccountObjWithTBXMLElement:(TBXMLElement*)userAccElement
+- (void)updateUserAccountObjWithTBXMLElement:(TJCTBXMLElement*)userAccElement
 {
 	// JC: TODO: Super hack, this prevents an issue where the earned points alert would pop up if the virtual good purchase returned incorrect Tap Points data.
 	[userAccountModelObj_ updateWithTBXML:userAccElement shouldCheckEarnedPoints:NO];
@@ -262,11 +252,12 @@ static TJCUserAccountManager *sharedTJCUserAccountManager_ = nil;
 						  [[NSUserDefaults standardUserDefaults] objectForKey:TJC_CURRENCY_KEY_NAME]];
 	UIAlertView *alertview = [[UIAlertView alloc] initWithTitle:@"Congratulations!"
 																		 message:msg
-																		delegate:self 
+																		delegate:nil
 															cancelButtonTitle:@"OK"
 															otherButtonTitles:nil];
 	[alertview show];
 	[alertview release];
+	alertview = nil;
 }
 
 @end

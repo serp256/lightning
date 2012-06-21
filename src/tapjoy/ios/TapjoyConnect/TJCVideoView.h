@@ -32,8 +32,6 @@
 @public
 	IBOutlet UIView *mainView_;						/*!< The parent view for all videos. */
 	IBOutlet TJCVideoLayer *mainVideoLayer_;		/*!< The main video object that contains the video to be initially loaded and viewed. */
-	IBOutlet TJCVideoLayer *iPhoneLayer_;			/*!< iPhone view, set in the nib file specifically formatted for iPhone-sized screens. */
-	IBOutlet TJCVideoLayer *iPadLayer_;				/*!< iPad view, set in the nib file specifically formatted for iPad-sized screens. */
 }
 
 @property (nonatomic, retain) UIView *mainView;
@@ -91,22 +89,6 @@
  *	\return n/a
  */
 - (id)initWithDelegate:(id<TJCVideoAdDelegate>)delegate;
-
-/*!	\fn customButtonAction1
- *	\brief Loads a web page related to the video ad.
- *
- *	\param n/a
- *	\return n/a
- */
-- (IBAction)customButtonAction1;
-
-/*!	\fn customButtonAction1
- *	\brief Loads a web page related to the video ad.
- *
- *	\param n/a
- *	\return n/a
- */
-- (IBAction)customButtonAction2;
 
 /*!	\fn closeVideoView
  *	\brief Closes the video ad view with the set TJC transition setting

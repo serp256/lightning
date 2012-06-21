@@ -163,10 +163,10 @@ extern NSString *kTJCAdFailStr;
 + (BOOL) isDisplayAdLoaded;
 
 /*!	\fn getDisplayAdView
- *	\brief The Tapjoy Display Ad UIView returned by this method should be added to the current superview after an Ad has been successfully loaded.
+ *	\brief The Tapjoy Banner Ad UIView returned by this method should be added to the current superview after an Ad has been successfully loaded.
  *
  *	\param n/a
- *	\return The Tapjoy Display Ad UIView.
+ *	\return The Tapjoy Banner Ad UIView.
  */
 + (TJCAdView*) getDisplayAdView;
 

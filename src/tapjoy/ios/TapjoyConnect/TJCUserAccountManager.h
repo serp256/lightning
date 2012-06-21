@@ -10,7 +10,7 @@
 #import <Foundation/Foundation.h>
 #import "TJCFetchResponseProtocol.h"
 #import "TapjoyConnect.h"
-#import "TBXML.h"
+#import "TJCTBXML.h"
 
 
 typedef enum
@@ -84,13 +84,13 @@ typedef enum
  */
 - (void)fetchResponseError:(TJCResponseError)errorType errorDescription:(id)errorDescObj requestTag:(int) aTag;
 
-/*!	\fn updateUserAccountObjWithTBXMLElement:(TBXMLElement*) userAccElement
+/*!	\fn updateUserAccountObjWithTBXMLElement:(TJCTBXMLElement*) userAccElement
  *	\brief Updates the user account data.
  *
  *	\param userAccElement The XML data that contains user info including currency name and amount.
  *	\return n/a
  */
-- (void)updateUserAccountObjWithTBXMLElement:(TBXMLElement*) userAccElement;
+- (void)updateUserAccountObjWithTBXMLElement:(TJCTBXMLElement*) userAccElement;
 
 /*!	\fn releaseUserAccount
  *	\brief Releases the user account model object and the request handler object.
