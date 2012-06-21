@@ -544,7 +544,7 @@ value ml_quad_points(value quad) {
 	p3 = caml_alloc(s,Double_array_tag);
 	Store_double_field(p3, 0, (double)q->tl.v.x);
 	Store_double_field(p3, 1, (double)q->tl.v.y);
-	p4 = caml_alloc(2,Double_array_tag);
+	p4 = caml_alloc(s,Double_array_tag);
 	Store_double_field(p4, 0, (double)q->tr.v.x);
 	Store_double_field(p4, 1, (double)q->tr.v.y);
 	value res = caml_alloc_small(4,0);
@@ -761,7 +761,7 @@ value ml_image_create(value textureInfo,value color,value oalpha) {
 
 value ml_image_points(value image) {
 	CAMLparam1(image);
-	CAMLlocal5(p1,p2,p3,p4,res);
+	CAMLlocal4(p1,p2,p3,p4);
 	lgImage *img = IMAGE(image);
 	int s = 2 * Double_wosize;
 	p1 = caml_alloc(s,Double_array_tag);
@@ -776,7 +776,7 @@ value ml_image_points(value image) {
 	p4 = caml_alloc(s,Double_array_tag);
 	Store_double_field(p4, 0, (double)(img->quad.tr.v.x));
 	Store_double_field(p4, 1, (double)(img->quad.tr.v.y));
-	res = caml_alloc_small(4,0);
+	value res = caml_alloc_small(4,0);
 	Field(res,0) = p1;
 	Field(res,1) = p2;
 	Field(res,2) = p3;

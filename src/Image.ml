@@ -490,6 +490,7 @@ class _c  _texture =
 (*           let () = debug "vertex coords: %s - %s - %s - %s" (Point.to_string vertexCoords.(0)) (Point.to_string vertexCoords.(1)) (Point.to_string vertexCoords.(2)) (Point.to_string
 *           vertexCoords.(3)) in *)
         let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
+        let () = debug:matrix "call transformPoints" in
         let ar = Matrix.transformPoints transformationMatrix vertexCoords in
         Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
       ];
