@@ -10,66 +10,44 @@
 #import "TJCLog.h"
 #import "TJCViewCommons.h"
 #import "TJCFeaturedAppView.h"
+#import "SynthesizeSingleton.h"
 
-
-static TJCCallsWrapper *_sharedTJCCallsWrapperInstance;
 
 @implementation TJCCallsWrapper
 
 @synthesize currentInterfaceOrientation;
 
 
-+ (TJCCallsWrapper*) sharedTJCCallsWrapper;
-{
-	if (!_sharedTJCCallsWrapperInstance) 
-	{
-		_sharedTJCCallsWrapperInstance = [[TJCCallsWrapper alloc] init];
-		[[NSNotificationCenter defaultCenter] addObserver:_sharedTJCCallsWrapperInstance
-															  selector:@selector(showBoxCloseNotification:) 
-																	name:TJC_VIEW_CLOSED_NOTIFICATION
-																 object:nil];
-	}
-	return _sharedTJCCallsWrapperInstance;
-}
+TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCCallsWrapper)
 
 
 - (id) init
 {
-	if ((self = [super init]))
+	self = [super init];
+	if (self)
 	{
-		@try
-		{
-			UIWindow *window = [[[UIApplication sharedApplication] windows] objectAtIndex:0];
-			
-			if(!window || ![window isKindOfClass:[UIWindow class]])
-			{
-				[TJCLog logWithLevel:LOG_FATAL format:@"There must be a UIWindow in the project"];
-				NSAssert(NO,@"No UIWindow Found, an application should have atleast one Window object");
-			}
-			
-			[window addSubview:self.view];
-			
-			[self.view setAlpha:0];
-			
-			// Let the background show through during the transition.
-			[self.view setBackgroundColor:[UIColor clearColor]];
-		}
-		@catch (NSException *exp) 
+		[[NSNotificationCenter defaultCenter] addObserver:sharedTJCCallsWrapper
+															  selector:@selector(showBoxCloseNotification:) 
+																	name:TJC_VIEW_CLOSED_NOTIFICATION
+																 object:nil];
+		
+		UIWindow *window = [[[UIApplication sharedApplication] windows] objectAtIndex:0];
+		
+		if(!window || ![window isKindOfClass:[UIWindow class]])
 		{
 			[TJCLog logWithLevel:LOG_FATAL format:@"There must be a UIWindow in the project"];
+			NSAssert(NO,@"No UIWindow Found, an application should have atleast one Window object");
 		}
 		
+		[window addSubview:self.view];
 		
+		[self.view setAlpha:0];
+		
+		// Let the background show through during the transition.
+		[self.view setBackgroundColor:[UIColor clearColor]];
+		[self.view setOpaque:NO];
 	}
 	return self;
-}
-
-
-- (void)viewDidLoad
-{
-	[super viewDidLoad];
-
-	[self.view setBackgroundColor:[UIColor blackColor]];
 }
 
 
@@ -94,7 +72,7 @@ static TJCCallsWrapper *_sharedTJCCallsWrapperInstance;
 
 - (void)updateViewsWithOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	[[TJCFeaturedAppView sharedTJCFeaturedAppView] updateViewWithOrientation:interfaceOrientation];
+	[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] updateViewWithOrientation:interfaceOrientation];
 	
 #if defined (TJC_VIRTUAL_GOODS_SDK)
 	[[TJCVGViewHandler sharedTJCVGViewHandler] updateViewWithOrientation:interfaceOrientation];

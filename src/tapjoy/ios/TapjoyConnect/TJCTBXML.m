@@ -1,5 +1,5 @@
 // ================================================================================================
-//  TBXML.m
+//  TJCTBXML.m
 //  Fast processing of XML files
 //
 // ================================================================================================
@@ -26,16 +26,16 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 // ================================================================================================
-#import "TBXML.h"
+#import "TJCTBXML.h"
 
 // ================================================================================================
 // Private methods
 // ================================================================================================
-@interface TBXML (Private)
+@interface TJCTBXML (Private)
 - (void) decodeData:(NSData*)data;
 - (void) decodeBytes;
-- (TBXMLElement*) nextAvailableElement;
-- (TBXMLAttribute*) nextAvailableAttribute;
+- (TJCTBXMLElement*) nextAvailableElement;
+- (TJCTBXMLAttribute*) nextAvailableAttribute;
 @end
 
 
@@ -43,23 +43,23 @@
 // ================================================================================================
 // Public Implementation
 // ================================================================================================
-@implementation TBXML
+@implementation TJCTBXML
 
 @synthesize rootXMLElement;
 
 + (id)tbxmlWithURL:(NSURL*)aURL 
 {
-	return [[[TBXML alloc] initWithURL:aURL] autorelease];
+	return [[[TJCTBXML alloc] initWithURL:aURL] autorelease];
 }
 
 + (id)tbxmlWithXMLString:(NSString*)aXMLString 
 {
-	return [[[TBXML alloc] initWithXMLString:aXMLString] autorelease];
+	return [[[TJCTBXML alloc] initWithXMLString:aXMLString] autorelease];
 }
 
 + (id)tbxmlWithXMLData:(NSData*)aData
 {
-	return [[[TBXML alloc] initWithXMLData:aData] autorelease];
+	return [[[TJCTBXML alloc] initWithXMLData:aData] autorelease];
 }
 
 - (id)init 
@@ -129,37 +129,37 @@
 #pragma mark -
 #pragma mark Static Functions implementation
 
-@implementation TBXML (StaticFunctions)
+@implementation TJCTBXML (StaticFunctions)
 
-+ (NSString*) elementName:(TBXMLElement*)aXMLElement 
++ (NSString*) elementName:(TJCTBXMLElement*)aXMLElement 
 {
 	if (nil == aXMLElement) return @"";
 	if (nil == aXMLElement->name) return @"";
 	return [NSString stringWithCString:&aXMLElement->name[0] encoding:NSUTF8StringEncoding];
 }
 
-+ (NSString*) attributeName:(TBXMLAttribute*)aXMLAttribute 
++ (NSString*) attributeName:(TJCTBXMLAttribute*)aXMLAttribute 
 {
 	if (nil == aXMLAttribute) return @"";
 	if (nil == aXMLAttribute->name) return @"";
 	return [NSString stringWithCString:&aXMLAttribute->name[0] encoding:NSUTF8StringEncoding];
 }
 
-+ (NSString*) attributeValue:(TBXMLAttribute*)aXMLAttribute 
++ (NSString*) attributeValue:(TJCTBXMLAttribute*)aXMLAttribute 
 {
 	if (nil == aXMLAttribute) return @"";
 	if (nil == aXMLAttribute->value) return @"";
 	return [NSString stringWithCString:&aXMLAttribute->value[0] encoding:NSUTF8StringEncoding];
 }
 
-+ (NSString*) textForElement:(TBXMLElement*)aXMLElement 
++ (NSString*) textForElement:(TJCTBXMLElement*)aXMLElement 
 {
 	if (nil == aXMLElement) return @"";
 	if (nil == aXMLElement->text) return @"";
 	return [NSString stringWithCString:&aXMLElement->text[0] encoding:NSUTF8StringEncoding];
 }
 
-+ (int) numberForElement:(TBXMLElement*)aXMLElement 
++ (int) numberForElement:(TJCTBXMLElement*)aXMLElement 
 {
 	if (nil == aXMLElement) return 0;
 	if (nil == aXMLElement->text) return 0;
@@ -175,7 +175,7 @@
 	return 0;
 }
 
-+ (BOOL) boolForElement:(TBXMLElement*)aXMLElement 
++ (BOOL) boolForElement:(TJCTBXMLElement*)aXMLElement 
 {
 	if (nil == aXMLElement) return false;
 	if (nil == aXMLElement->text) return false;
@@ -188,7 +188,7 @@
 }
 
 
-+ (int) negativeNumberForUnknownElement:(TBXMLElement*)aXMLElement 
++ (int) negativeNumberForUnknownElement:(TJCTBXMLElement*)aXMLElement 
 {
 	if (nil == aXMLElement) return -1;
 	if (nil == aXMLElement->text) return -1;
@@ -204,11 +204,11 @@
 	return -1;
 }
 
-+ (NSString*) valueOfAttributeNamed:(NSString *)aName forElement:(TBXMLElement*)aXMLElement 
++ (NSString*) valueOfAttributeNamed:(NSString *)aName forElement:(TJCTBXMLElement*)aXMLElement 
 {
 	const char * name = [aName cStringUsingEncoding:NSUTF8StringEncoding];
 	NSString * value = nil;
-	TBXMLAttribute * attribute = aXMLElement->firstAttribute;
+	TJCTBXMLAttribute * attribute = aXMLElement->firstAttribute;
 	while (attribute) 
 	{
 		if (strlen(attribute->name) == strlen(name) && memcmp(attribute->name,name,strlen(name)) == 0) 
@@ -221,10 +221,10 @@
 	return value;
 }
 
-+ (TBXMLElement*) childElementNamed:(NSString*)aName parentElement:(TBXMLElement*)aParentXMLElement
++ (TJCTBXMLElement*) childElementNamed:(NSString*)aName parentElement:(TJCTBXMLElement*)aParentXMLElement
 {
 	if (nil == aParentXMLElement) return nil;
-	TBXMLElement * xmlElement = aParentXMLElement->firstChild;
+	TJCTBXMLElement * xmlElement = aParentXMLElement->firstChild;
 	const char * name = [aName cStringUsingEncoding:NSUTF8StringEncoding];
 	while (xmlElement) 
 	{
@@ -237,10 +237,10 @@
 	return nil;
 }
 
-+ (TBXMLElement*) nextSiblingNamed:(NSString*)aName searchFromElement:(TBXMLElement*)aXMLElement
++ (TJCTBXMLElement*) nextSiblingNamed:(NSString*)aName searchFromElement:(TJCTBXMLElement*)aXMLElement
 {
 	if (nil == aXMLElement) return nil;
-	TBXMLElement * xmlElement = aXMLElement->nextSibling;
+	TJCTBXMLElement * xmlElement = aXMLElement->nextSibling;
 	const char * name = [aName cStringUsingEncoding:NSUTF8StringEncoding];
 	while (xmlElement) 
 	{
@@ -263,7 +263,7 @@
 #pragma mark -
 #pragma mark Private implementation
 
-@implementation TBXML (Private)
+@implementation TJCTBXML (Private)
 
 - (void)decodeData:(NSData*)data
 {
@@ -290,7 +290,7 @@
 	char * elementStart=bytes;
 	
 	// set parent element to nil
-	TBXMLElement * parentXMLElement = nil;
+	TJCTBXMLElement * parentXMLElement = nil;
 	
 	// find next element start
 	while ((elementStart = strstr(elementStart,"<"))) 
@@ -418,7 +418,7 @@
 		
 		
 		// create new xmlElement struct
-		TBXMLElement * xmlElement = [self nextAvailableElement];
+		TJCTBXMLElement * xmlElement = [self nextAvailableElement];
 		
 		// set element name
 		xmlElement->name = elementNameStart;
@@ -466,11 +466,11 @@
 			char * value = nil;
 			char * CDATAStart = nil;
 			char * CDATAEnd = nil;
-			TBXMLAttribute * lastXMLAttribute = nil;
-			TBXMLAttribute * xmlAttribute = nil;
+			TJCTBXMLAttribute * lastXMLAttribute = nil;
+			TJCTBXMLAttribute * xmlAttribute = nil;
 			BOOL singleQuote = NO;
 			
-			int mode = TBXML_ATTRIBUTE_NAME_START;
+			int mode = TJC_TBXML_ATTRIBUTE_NAME_START;
 			
 			// loop through all characters within element
 			while (chr++ < elementEnd) 
@@ -479,26 +479,26 @@
 				switch (mode)
 				{
 					// look for start of attribute name
-					case TBXML_ATTRIBUTE_NAME_START:
+					case TJC_TBXML_ATTRIBUTE_NAME_START:
 						if (isspace(*chr)) continue;
 						name = chr;
-						mode = TBXML_ATTRIBUTE_NAME_END;
+						mode = TJC_TBXML_ATTRIBUTE_NAME_END;
 						break;
 					// look for end of attribute name
-					case TBXML_ATTRIBUTE_NAME_END:
+					case TJC_TBXML_ATTRIBUTE_NAME_END:
 						if (isspace(*chr) || *chr == '=')
 						{
 							*chr = 0;
-							mode = TBXML_ATTRIBUTE_VALUE_START;
+							mode = TJC_TBXML_ATTRIBUTE_VALUE_START;
 						}
 						break;
 					// look for start of attribute value
-					case TBXML_ATTRIBUTE_VALUE_START:
+					case TJC_TBXML_ATTRIBUTE_VALUE_START:
 						if (isspace(*chr)) continue;
 						if (*chr == '"' || *chr == '\'')
 						{
 							value = chr+1;
-							mode = TBXML_ATTRIBUTE_VALUE_END;
+							mode = TJC_TBXML_ATTRIBUTE_VALUE_END;
 							if (*chr == '\'') 
 								singleQuote = YES;
 							else
@@ -506,10 +506,10 @@
 						}
 						break;
 					// look for end of attribute value
-					case TBXML_ATTRIBUTE_VALUE_END:
+					case TJC_TBXML_ATTRIBUTE_VALUE_END:
 						if (*chr == '<' && strncmp(chr, "<![CDATA[", 9) == 0)
 						{
-							mode = TBXML_ATTRIBUTE_CDATA_END;
+							mode = TJC_TBXML_ATTRIBUTE_CDATA_END;
 						}
 						else if ((*chr == '"' && singleQuote == NO) || (*chr == '\'' && singleQuote == YES)) 
 						{
@@ -549,16 +549,16 @@
 							value = nil;
 							
 							// start looking for next attribute
-							mode = TBXML_ATTRIBUTE_NAME_START;
+							mode = TJC_TBXML_ATTRIBUTE_NAME_START;
 						}
 						break;
 						// look for end of cdata
-					case TBXML_ATTRIBUTE_CDATA_END:
+					case TJC_TBXML_ATTRIBUTE_CDATA_END:
 						if (*chr == ']')
 						{
 							if (strncmp(chr, "]]>", 3) == 0)
 							{
-								mode = TBXML_ATTRIBUTE_VALUE_END;
+								mode = TJC_TBXML_ATTRIBUTE_VALUE_END;
 							}
 						}
 						break;						
@@ -572,8 +572,11 @@
 		if (!selfClosingElement) 
 		{
 			// set text on element to element end+1
-			if (*(elementEnd+1) != '>')
-				xmlElement->text = elementEnd+1;
+			if (elementEnd)
+			{
+				if (*(elementEnd+1) != '>')
+					xmlElement->text = elementEnd+1;
+			}
 			
 			parentXMLElement = xmlElement;
 		}
@@ -630,45 +633,45 @@
 	[super dealloc];
 }
 
-- (TBXMLElement*) nextAvailableElement 
+- (TJCTBXMLElement*) nextAvailableElement 
 {
 	currentElement++;
 	
 	if (!currentElementBuffer) 
 	{
-		currentElementBuffer = calloc(1, sizeof(TBXMLElementBuffer));
-		currentElementBuffer->elements = (TBXMLElement*)calloc(1,sizeof(TBXMLElement)*MAX_ELEMENTS);
+		currentElementBuffer = calloc(1, sizeof(TJCTBXMLElementBuffer));
+		currentElementBuffer->elements = (TJCTBXMLElement*)calloc(1,sizeof(TJCTBXMLElement)*TJC_MAX_ELEMENTS);
 		currentElement = 0;
 		rootXMLElement = &currentElementBuffer->elements[currentElement];
 	} 
-	else if (currentElement >= MAX_ELEMENTS) 
+	else if (currentElement >= TJC_MAX_ELEMENTS) 
 	{
-		currentElementBuffer->next = calloc(1, sizeof(TBXMLElementBuffer));
+		currentElementBuffer->next = calloc(1, sizeof(TJCTBXMLElementBuffer));
 		currentElementBuffer->next->previous = currentElementBuffer;
 		currentElementBuffer = currentElementBuffer->next;
-		currentElementBuffer->elements = (TBXMLElement*)calloc(1,sizeof(TBXMLElement)*MAX_ELEMENTS);
+		currentElementBuffer->elements = (TJCTBXMLElement*)calloc(1,sizeof(TJCTBXMLElement)*TJC_MAX_ELEMENTS);
 		currentElement = 0;
 	}
 	
 	return &currentElementBuffer->elements[currentElement];
 }
 
-- (TBXMLAttribute*) nextAvailableAttribute 
+- (TJCTBXMLAttribute*) nextAvailableAttribute 
 {
 	currentAttribute++;
 	
 	if (!currentAttributeBuffer) 
 	{
-		currentAttributeBuffer = calloc(1, sizeof(TBXMLAttributeBuffer));
-		currentAttributeBuffer->attributes = (TBXMLAttribute*)calloc(MAX_ATTRIBUTES,sizeof(TBXMLAttribute));
+		currentAttributeBuffer = calloc(1, sizeof(TJCTBXMLAttributeBuffer));
+		currentAttributeBuffer->attributes = (TJCTBXMLAttribute*)calloc(TJC_MAX_ATTRIBUTES,sizeof(TJCTBXMLAttribute));
 		currentAttribute = 0;
 	} 
-	else if (currentAttribute >= MAX_ATTRIBUTES) 
+	else if (currentAttribute >= TJC_MAX_ATTRIBUTES) 
 	{
-		currentAttributeBuffer->next = calloc(1, sizeof(TBXMLAttributeBuffer));
+		currentAttributeBuffer->next = calloc(1, sizeof(TJCTBXMLAttributeBuffer));
 		currentAttributeBuffer->next->previous = currentAttributeBuffer;
 		currentAttributeBuffer = currentAttributeBuffer->next;
-		currentAttributeBuffer->attributes = (TBXMLAttribute*)calloc(MAX_ATTRIBUTES,sizeof(TBXMLAttribute));
+		currentAttributeBuffer->attributes = (TJCTBXMLAttribute*)calloc(TJC_MAX_ATTRIBUTES,sizeof(TJCTBXMLAttribute));
 		currentAttribute = 0;
 	}
 	

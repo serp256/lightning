@@ -128,9 +128,8 @@
 			}
 		}
 	}
-	
-	//	self = [self initWithData:mutableData];
-	return [[[NSData allocWithZone:nil] initWithData:mutableData] autorelease];
+
+	return [NSData dataWithData:mutableData];
 }
 
 

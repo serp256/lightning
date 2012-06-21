@@ -11,7 +11,8 @@
 #import "TJCCoreFetcherHandler.h"
 #import "TJCCoreFetcher.h"
 #import "TJCUtil.h"
-#import "TBXML.h"
+#import "TJCTBXML.h"
+#import "TJCConstants.h"
 
 NSString *kTJCCoreFetcherReturnObjStr = @"TapjoyConnectReturnObject";
 NSString *kTJCCoreFetcherAdStr = @"TapjoyAd";
@@ -47,7 +48,7 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 	
 	myFetcher_ = [[TJCCoreFetcher alloc] init];
 	myFetcher_.requestTag = requestTag_;
-	myFetcher_.requestTimeout = 10;
+	myFetcher_.requestTimeout = TJC_REQUEST_TIME_OUT_SHORT;
 	myFetcher_.requestMethod = @"GET";
 	myFetcher_.postParameters = aParamsList;
 	myFetcher_.baseURL = aRequestString;
@@ -81,7 +82,7 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 	
 	myFetcher_ = [[TJCCoreFetcher alloc] init];
 	myFetcher_.requestTag = requestTag_;
-	myFetcher_.requestTimeout = 10;
+	myFetcher_.requestTimeout = TJC_REQUEST_TIME_OUT_SHORT;
 	myFetcher_.requestMethod = @"POST";
 	myFetcher_.postParameters = aParamsList;
 	myFetcher_.baseURL = aRequestString;
@@ -97,7 +98,7 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 }
 
 
-- (TBXMLElement*) parseReturnObjectAsTBXMLElement:(TJCCoreFetcher *) myFetcher;
+- (TJCTBXMLElement*) parseReturnObjectAsTBXMLElement:(TJCCoreFetcher *) myFetcher;
 {
 	if ([myFetcher hasError]) 
 	{
@@ -127,7 +128,7 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 		return nil;
 	}
 	
-	TBXML *responseXML = [TBXML tbxmlWithXMLData:myFetcher.data];
+	TJCTBXML *responseXML = [TJCTBXML tbxmlWithXMLData:myFetcher.data];
 	
 	if (responseXML && [responseXML rootXMLElement])
 	{
@@ -138,9 +139,9 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 }
 
 
--(TBXMLElement*) validateResponseReturnedObject:(TJCCoreFetcher*) myFetcher
+-(TJCTBXMLElement*) validateResponseReturnedObject:(TJCCoreFetcher*) myFetcher
 {
-	TBXMLElement *returnObj = [self parseReturnObjectAsTBXMLElement:myFetcher];
+	TJCTBXMLElement *returnObj = [self parseReturnObjectAsTBXMLElement:myFetcher];
 	
 	if(returnObj == nil)
 	{
@@ -152,9 +153,9 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 		return nil;
 	}
 	
-	//TBXMLElement *connectRetObj = [ret]
+	//TJCTBXMLElement *connectRetObj = [ret]
 	
-	NSString *connectReturnObj = [TBXML elementName:returnObj]; 
+	NSString *connectReturnObj = [TJCTBXML elementName:returnObj]; 
 	
 	if ((![TJCUtil caseInsenstiveCompare:connectReturnObj AndString2:kTJCCoreFetcherReturnObjStr]) &&
 		 (![TJCUtil caseInsenstiveCompare:connectReturnObj AndString2:kTJCCoreFetcherAdStr]) &&
@@ -168,7 +169,7 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 		return nil;
 	}
 	
-	TBXMLElement *errorElement = [TBXML childElementNamed:@"ErrorMessage" parentElement:returnObj];
+	TJCTBXMLElement *errorElement = [TJCTBXML childElementNamed:@"ErrorMessage" parentElement:returnObj];
 	
 	if(errorElement)
 	{

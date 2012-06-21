@@ -9,20 +9,11 @@
 #import "TJCViewCommons.h"
 #import "TJCLog.h"
 #import "TJCOffersWebView.h"
-
-static TJCViewCommons *sharedObject_ = nil;
+#import "SynthesizeSingleton.h"
 
 @implementation TJCViewCommons
 
-+ (TJCViewCommons*)sharedObject
-{
-	if (!sharedObject_) 
-	{
-		sharedObject_ = [[super alloc] init];
-	}
-	return sharedObject_;
-}
-
+TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCViewCommons)
 
 - (id)init
 {
@@ -176,7 +167,7 @@ static TJCViewCommons *sharedObject_ = nil;
 			[tmpDict setObject:viewRef forKey:@"viewref"];
 			[tmpDict setObject:[NSNumber numberWithFloat:delay] forKey:@"delay"];
 			[NSTimer scheduledTimerWithTimeInterval:0.05f 
-														target:[TJCViewCommons sharedObject] 
+														target:[TJCViewCommons sharedTJCViewCommons] 
 													 selector:@selector(runExpandTransition:) 
 													 userInfo:tmpDict
 													  repeats:NO];
@@ -261,7 +252,7 @@ static TJCViewCommons *sharedObject_ = nil;
 	}
 	
 	// Remove the view after the animation finishes.
-	[[TJCViewCommons sharedObject] performSelector:@selector(removeTempView:) withObject:viewRef afterDelay:delay];
+	[[TJCViewCommons sharedTJCViewCommons] performSelector:@selector(removeTempView:) withObject:viewRef afterDelay:delay];
 }
 
 
@@ -436,19 +427,19 @@ static TJCViewCommons *sharedObject_ = nil;
 
 + (void)setTransitionEffect:(TJCTransitionEnum) transitionEffect
 {
-	[[TJCViewCommons sharedObject] setTransitionEffect:transitionEffect];
+	[[TJCViewCommons sharedTJCViewCommons] setTransitionEffect:transitionEffect];
 }
 
 
 + (void)setUserdefinedColorWithIntValue:(int) colorValue
 {
-	[[TJCViewCommons sharedObject] setUserdefinedColorWithIntValue:colorValue];
+	[[TJCViewCommons sharedTJCViewCommons] setUserdefinedColorWithIntValue:colorValue];
 }
 
 
 + (void)setUserDefinedColorWithRed:(int)red WithGreen:(int)green WithBlue:(int)blue
 {
-	[[TJCViewCommons sharedObject] setUserDefinedColorWithRed:red WithGreen:green WithBlue:blue];	
+	[[TJCViewCommons sharedTJCViewCommons] setUserDefinedColorWithRed:red WithGreen:green WithBlue:blue];	
 }
 
 
@@ -466,19 +457,19 @@ static TJCViewCommons *sharedObject_ = nil;
 
 + (float)getTransitionDelay
 {
-	return [[TJCViewCommons sharedObject] getTransitionDelay];
+	return [[TJCViewCommons sharedTJCViewCommons] getTransitionDelay];
 }
 
 
 + (TJCTransitionEnum)getCurrentTransitionEffect
 {
-	return [[TJCViewCommons sharedObject] getCurrentTransitionEffect];
+	return [[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect];
 }
 
 
 + (TJCTransitionEnum)getReverseTransitionEffect
 {
-	return [[TJCViewCommons sharedObject] getReverseTransitionEffect];
+	return [[TJCViewCommons sharedTJCViewCommons] getReverseTransitionEffect];
 }
 
 @end

@@ -8,6 +8,7 @@
 
 
 #import "TJCCoreFetcher.h"
+#import "TapjoyConnect.h"
 
 @implementation TJCCoreFetcher
 
@@ -20,7 +21,6 @@
 @synthesize POSTdata = POSTdata_;
 @synthesize responseCode = responseCode_;
 @synthesize requestTimeout = requestTimeout_;
-@synthesize connection = connection_;
 @synthesize invocation = invocation_;
 @synthesize requestMethod = requestMethod_;
 @synthesize postParameters = postParameters_;
@@ -84,8 +84,14 @@
 		[data_ release];
 	}
 	data_ = [[NSMutableData alloc] init];
-	
-	connection_ = [[NSURLConnection alloc] initWithRequest: urlRequest delegate: self];
+
+#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_4_0
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[NSURLConnection connectionWithRequest:urlRequest delegate:self];
+	});
+#else
+	[NSURLConnection connectionWithRequest:urlRequest delegate:self];
+#endif
 }
 
 
@@ -94,41 +100,6 @@
 	// Returning nil will ensure that no cached response will be stored for the connection.
 	// This is in case the cache is being used by something else.
 	return nil;
-}
-
-
-- (NSString*)createQueryStringFromDict:(NSDictionary*)paramDict
-{
-	if (!paramDict)
-	{
-		return nil;
-	}
-	
-	if ([paramDict count] == 0)
-	{
-		return nil;
-	}
-	
-	NSMutableArray *parts = [NSMutableArray array];
-	
-	for (id key in [paramDict allKeys])
-	{
-		id value = [paramDict objectForKey: key];
-		
-		// Encode string to a legal URL string.
-		NSString *encodedString = (NSString*)CFURLCreateStringByAddingPercentEscapes(NULL,
-																											  (CFStringRef)value,
-																											  NULL,
-																											  (CFStringRef)@"!*'();:@&=+$,/?%#[]",
-																											  kCFStringEncodingUTF8);
-		
-		NSString *part = [NSString stringWithFormat: @"%@=%@", key, encodedString];
-		
-		[encodedString release];
-		
-		[parts addObject: part];
-	}
-	return [parts componentsJoinedByString: @"&"];
 }
 
 
@@ -155,7 +126,7 @@
 	else 
 	{
 		//result = [NSString stringWithFormat: @"%@?%@", requestURL, [self urlEncodedBindings]];
-		result = [NSString stringWithFormat: @"%@?%@", requestURL, [self createQueryStringFromDict:bindings_]];
+		result = [NSString stringWithFormat: @"%@?%@", requestURL, [TapjoyConnect createQueryStringFromDict:bindings_]];
 	}
 	
 	return result;
@@ -246,7 +217,6 @@
 	[bindings_ release];
 	[error_ release];
 	[data_ release];
-	[connection_ release];
 	[invocation_ release];
 	[requestMethod_ release];
 	[postParameters_ release];
@@ -259,29 +229,28 @@
 
 #pragma mark delegate methods for asynchronous requests
 
-- (void)connection:(NSURLConnection *) myConnection didReceiveResponse:(NSURLResponse *) myResponse
+- (void)connection:(NSURLConnection*)myConnection didReceiveResponse:(NSURLResponse*)myResponse
 {
 	responseCode_ = [(NSHTTPURLResponse*)myResponse statusCode];
 }
 
 
-- (void)connection:(NSURLConnection *) myConnection didReceiveData:(NSData *) myData
+- (void)connection:(NSURLConnection*)myConnection didReceiveData:(NSData*)myData
 {
 	[data_ appendData: myData];
 }
 
 
-- (void)connection:(NSURLConnection *) myConnection didFailWithError:(NSError *) myError
+- (void)connection:(NSURLConnection*)myConnection didFailWithError:(NSError*)myError
 {
-	NSLog(@"baseURL:%@", baseURL_);
+	[TJCLog logWithLevel:LOG_NONFATAL_ERROR format:[myError localizedDescription]];
+	//NSLog(@"baseURL:%@", baseURL_);
+	
+	[TapjoyConnect clearCache];
 	
 	if (retryCount_ < 1 && alternateURL_)
 	{
 		retryCount_++;
-		
-		//and what happens to the previous connection object ...must release it here
-		[connection_ release];
-		connection_ = nil;
 		
 		[self initiateConnection];
 		return;
@@ -305,10 +274,9 @@
 	}
 }
 
-- (void)connectionDidFinishLoading:(NSURLConnection *) myConnection
-{
-	[connection_ release];
-	connection_ = nil;
+- (void)connectionDidFinishLoading:(NSURLConnection*)myConnection
+{		
+	[TapjoyConnect clearCache];
 	
 	hasFetched_ = YES;
 
@@ -320,5 +288,6 @@
 		invocation_ = nil;
 	}
 }
+
 
 @end

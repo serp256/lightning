@@ -7,7 +7,7 @@
 // The Tapjoy SDK is bound by the Tapjoy SDK License Agreement and can be found here: https://www.tapjoy.com/sdk/license
 
 #import <Foundation/Foundation.h>
-#import "TBXML.h"
+#import "TJCTBXML.h"
 
 
 
@@ -27,7 +27,7 @@
 	NSString *iconURL_;			/*!< The URL to the location of the icon for the featured app. */
 	NSString *largeIconURL_;	/*!< The URL to the location of the large icon for featured app. */
 	NSString *redirectURL_;		/*!< The redirect URL for the featured app. */
-	int	maxTimesToDisplayThisApp_;	/*!< The maximum number of times this feature app may appear. */
+	int maxTimesToDisplayThisApp_;	/*!< The maximum number of times this feature app may appear. */
 	
 	NSString *fullScreenAdURL_;		/*!< The URL to the full screen Ad. This is used when the Tapjoy Full Screen Ad web view is used to display the featured app. */
 }
@@ -43,13 +43,13 @@
 @property (assign) int maxTimesToDisplayThisApp;
 @property (copy) NSString* fullScreenAdURL;
 
-/*!	\fn initWithTBXML:(TBXMLElement*) aXMLElement
+/*!	\fn initWithTBXML:(TJCTBXMLElement*) aXMLElement
  *	\brief Initializes the #TJCFeaturedAppModel object with the given xml data.
  *
  *	\param aXMLElement The xml element contains all the relevant #TJCFeaturedAppModel object data.
  *	\return The #TJCFeaturedAppModel object.
  */
-- (id) initWithTBXML:(TBXMLElement*) aXMLElement;
+- (id) initWithTBXML:(TJCTBXMLElement*) aXMLElement;
 
 
 @end

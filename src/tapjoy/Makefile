@@ -18,7 +18,8 @@ ifeq ($(PLATFORM),IOS)
 FAKELIBS  =
 CFLAGS  += -DDEBUG -DIOS -Iios -Iios/TapjoyConnect
 MLCOPTS += -DIOS
-MOBJS   +=  ios/TapjoyConnect/TBXML.o\
+MOBJS   +=  ios/TapjoyConnect/TJCTBXML.o\
+						ios/TapjoyConnect/TJCOpenUDID.o\
             ios/TapjoyConnect/TJCAdRequestHandler.o\
             ios/TapjoyConnect/TJCAdView.o\
             ios/TapjoyConnect/TJCCallsWrapper.o\

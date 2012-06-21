@@ -1,6 +1,7 @@
 #include "tapjoy_wrapper.h"
-#include "TapjoyConnect/TapjoyConnect.h"
-#include "TapjoyConnect/TapjoyConnectConstants.h"
+#import "TapjoyConnect/TapjoyConnect.h"
+#import "TapjoyConnect/TapjoyConnectConstants.h"
+#import "TapjoyConnect/TJCOpenUDID.h"
 #import "../../ios/LightViewController.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
@@ -115,3 +116,14 @@ void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
 }
 
 
+value ml_TJCOpenUDIDvalue(value unit) {
+	NSString *id = [TJCOpenUDID value];
+	value res;
+	if (id != nil) {
+		value mlid = caml_alloc_string(id.length);
+		memcpy(String_val(mlid),[id cStringUsingEncoding:NSASCIIStringEncoding],id.length);
+		res = caml_alloc_small(1,0);
+		Field(res,0) = mlid;
+	} else res = Val_unit;
+	return res;
+}

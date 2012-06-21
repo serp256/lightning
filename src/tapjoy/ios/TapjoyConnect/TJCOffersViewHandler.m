@@ -12,27 +12,65 @@
 #import "TJCViewCommons.h"
 #import "TJCConstants.h"
 #import "TJCUINavigationBarView.h"
+#import "SynthesizeSingleton.h"
 
 @implementation TJCOffersViewHandler
+
+@synthesize offersWebView = offersWebView_;
+
+TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCOffersViewHandler)
+
+
+- (id)init
+{
+	self = [super init];
+
+	if (self)
+	{
+		[[NSNotificationCenter defaultCenter] removeObserver:self name:TJC_OFFERWALL_WEBVIEW_CLOSE_NOTIFICATION object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self 
+															  selector:@selector(removeOffersWebView) 
+																	name:TJC_OFFERWALL_WEBVIEW_CLOSE_NOTIFICATION
+																 object:nil];
+	}
+
+	return self;
+}
+
+
+- (void)dealloc
+{
+	[offersWebView_ release];
+	[super dealloc];
+}
+
+
+- (void)removeOffersWebView
+{
+	if ([TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView)
+	{
+		[[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView removeFromSuperview];
+		[[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView release];
+		[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = nil;
+	}
+}
 
 
 + (UIView*)showOffersWithFrame:(CGRect)frame
 {
 	// Remove any offers view that might possibly exist.
-	[[TJCOffersWebView sharedTJCOffersWebView] removeFromSuperview];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] removeOffersWebView];
+	[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = [[TJCOffersWebView alloc] initWithFrame:frame enableNavBar:YES];
 	 
-	[TJCOffersWebView sharedTJCOffersWebView].publisherUserID_ = [TapjoyConnect getUserID];
 	// For showOffers methods that do not use a parent view controller, we depend on this to be nil for certain initialization purposes.
-	[TJCOffersWebView sharedTJCOffersWebView].parentVController_ = nil;
-
-	[[TJCOffersWebView sharedTJCOffersWebView] refreshWithFrame:frame enableNavBar:YES];
-	[[TJCOffersWebView sharedTJCOffersWebView] loadView];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].parentVController_ = nil;
+	[[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] loadViewWithURL:nil];
 	
-	[TJCViewCommons animateTJCView:[TJCOffersWebView sharedTJCOffersWebView] 
-					 withTJCTransition:[[TJCViewCommons sharedObject] getCurrentTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject] getTransitionDelay]];
+	[TJCViewCommons animateTJCView:[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] 
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons] getTransitionDelay]];
 	
-	return [TJCOffersWebView sharedTJCOffersWebView];
+	return [[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView];
 }
 
 
@@ -56,19 +94,17 @@
 	}
 	
 	// Remove any offers view that might possibly exist.
-	[[TJCOffersWebView sharedTJCOffersWebView] removeFromSuperview];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] removeOffersWebView];
+	[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = [[TJCOffersWebView alloc] initWithFrame:vController.view.bounds enableNavBar:visible];
 	
-	[TJCOffersWebView sharedTJCOffersWebView].publisherUserID_ = [TapjoyConnect getUserID];
-	[TJCOffersWebView sharedTJCOffersWebView].parentVController_ = vController;
-
-	[[TJCOffersWebView sharedTJCOffersWebView] refreshWithFrame:vController.view.bounds enableNavBar:visible];
-	[[TJCOffersWebView sharedTJCOffersWebView] loadView];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].parentVController_ = vController;
+	[[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] loadViewWithURL:nil];
 	
-	[vController.view addSubview:[TJCOffersWebView sharedTJCOffersWebView]];
+	[vController.view addSubview:[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView]];
 
-	[TJCViewCommons animateTJCView:[TJCOffersWebView sharedTJCOffersWebView]  
-					 withTJCTransition:[[TJCViewCommons sharedObject] getCurrentTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject] getTransitionDelay]];
+	[TJCViewCommons animateTJCView:[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView]  
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons] getTransitionDelay]];
 	
 }
 
@@ -76,22 +112,20 @@
 + (UIView*)showOffersWithCurrencyID:(NSString*)currencyID withFrame:(CGRect)frame withCurrencySelector:(BOOL)isSelectorVisible
 {
 	// Remove any offers view that might possibly exist.
-	[[TJCOffersWebView sharedTJCOffersWebView] removeFromSuperview];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] removeOffersWebView];
+	[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = [[TJCOffersWebView alloc] initWithFrame:frame enableNavBar:YES];
 
-	[TJCOffersWebView sharedTJCOffersWebView].currencyID_ = [NSString stringWithFormat:@"%@=%@", TJC_URL_PARAM_CURRENCY_ID, currencyID];
-	[TJCOffersWebView sharedTJCOffersWebView].isSelectorVisible_ = [NSString stringWithFormat:@"%@=%d", TJC_URL_PARAM_SELECTOR_ID, isSelectorVisible];
-	[TJCOffersWebView sharedTJCOffersWebView].publisherUserID_ = [TapjoyConnect getUserID];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].currencyID_ = [NSString stringWithFormat:@"%@=%@", TJC_URL_PARAM_CURRENCY_ID, currencyID];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].isSelectorVisible_ = [NSString stringWithFormat:@"%@=%d", TJC_URL_PARAM_SELECTOR_ID, isSelectorVisible];
 	// For showOffers methods that do not use a parent view controller, we depend on this to be nil for certain initialization purposes.
-	[TJCOffersWebView sharedTJCOffersWebView].parentVController_ = nil;
-
-	[[TJCOffersWebView sharedTJCOffersWebView] refreshWithFrame:frame enableNavBar:YES];
-	[[TJCOffersWebView sharedTJCOffersWebView] loadView];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].parentVController_ = nil;
+	[[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] loadViewWithURL:nil];
 	
-	[TJCViewCommons animateTJCView:[TJCOffersWebView sharedTJCOffersWebView] 
-					 withTJCTransition:[[TJCViewCommons sharedObject] getCurrentTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject] getTransitionDelay]];
+	[TJCViewCommons animateTJCView:[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] 
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons] getTransitionDelay]];
 	
-	return [TJCOffersWebView sharedTJCOffersWebView];
+	return [[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView];
 }
 
 
@@ -119,22 +153,19 @@
 		NSAssert(NO,@"View Controller provided must not be nil or some other object");
 	}
 	
-	// Remove any offers view that might possibly exist.
-	[[TJCOffersWebView sharedTJCOffersWebView] removeFromSuperview];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] removeOffersWebView];
+	[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = [[TJCOffersWebView alloc] initWithFrame:vController.view.bounds enableNavBar:visible];
 
-	[TJCOffersWebView sharedTJCOffersWebView].publisherUserID_ = [TapjoyConnect getUserID];
-	[TJCOffersWebView sharedTJCOffersWebView].parentVController_ = vController;
-	[TJCOffersWebView sharedTJCOffersWebView].currencyID_ = [NSString stringWithFormat:@"%@=%@", TJC_URL_PARAM_CURRENCY_ID, currencyID];
-	[TJCOffersWebView sharedTJCOffersWebView].isSelectorVisible_ = [NSString stringWithFormat:@"%@=%d", TJC_URL_PARAM_SELECTOR_ID, isSelectorVisible];
-	//[[TJCOffersWebView sharedTJCOffersWebView] initWithFrame:vController.view.bounds enableNavBar:visible];
-	[[TJCOffersWebView sharedTJCOffersWebView] refreshWithFrame:vController.view.bounds enableNavBar:visible];
-	[[TJCOffersWebView sharedTJCOffersWebView] loadView];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].parentVController_ = vController;
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].currencyID_ = [NSString stringWithFormat:@"%@=%@", TJC_URL_PARAM_CURRENCY_ID, currencyID];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].isSelectorVisible_ = [NSString stringWithFormat:@"%@=%d", TJC_URL_PARAM_SELECTOR_ID, isSelectorVisible];	
+	[[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] loadViewWithURL:nil];
 	
-	[vController.view addSubview:[TJCOffersWebView sharedTJCOffersWebView]];
+	[vController.view addSubview:[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView]];
 	
-	[TJCViewCommons animateTJCView:[TJCOffersWebView sharedTJCOffersWebView]  
-					 withTJCTransition:[[TJCViewCommons sharedObject] getCurrentTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject] getTransitionDelay]];
+	[TJCViewCommons animateTJCView:[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView]  
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons] getTransitionDelay]];
 }
 
 @end
@@ -204,7 +235,7 @@
 
 + (void)setOffersNavBarImage:(UIImage*)image
 {
-	[[TJCOffersWebView sharedTJCOffersWebView] setCustomNavBarImage:image];
+	[[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] setCustomNavBarImage:image];
 }
 
 

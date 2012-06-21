@@ -11,60 +11,30 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import <QuartzCore/QuartzCore.h>
 #import "TJCVideoAdProtocol.h"
+#import "TJCUIWebPageView.h"
 
 
 #define TJC_VIDEO_STATUS_TEXT_FADE_DURATION	(0.3f)
-
-#define TJC_VIDEO_CORNER_RADIUS					(5.0f)
-#define TJC_VIDEO_BORDER_WIDTH					(0.5f)
-#define TJC_VIDEO_BUTTON_STROKE_COLOR			(0x494949FF)
-#define TJC_VIDEO_FONT_TYPE				@"\"helvetica\""
-#define TJC_VIDEO_FONT_COLOR				@"\"black\""
-#define TJC_VIDEO_FONT_SIZE				@"\"3\""
-#define TJC_VIDEO_CURRENCY_TEXT_COLOR	@"#004194"
-#define TJC_VIDEO_AD_TEXT_FONT_SIZE		@"\"2\""
-#define TJC_VIDEO_AD_TEXT_FONT_COLOR	@"#909090"
-
-#define TJC_VIDEO_CORNER_RADIUS_IPAD		(10.0f)
-#define TJC_VIDEO_BORDER_WIDTH_IPAD			(1.0f)
-#define TJC_VIDEO_FONT_SIZE_IPAD				@"\"6\""
-#define TJC_VIDEO_AD_TEXT_FONT_SIZE_IPAD	@"\"5\""
-
 
 /*!	\interface TJCVideoLayer
  *	\brief The Tapjoy Connect Video Layer class.
  *
  */
-@interface TJCVideoLayer : UIView
+@interface TJCVideoLayer : UIView <UIWebViewDelegate>
 {
 @private
 	IBOutlet UILabel *statusLabel_;			/*!< Info label on the video that indicates time left. */
-	IBOutlet UIView *videoCompleteView_;	/*!< The view that contains all elements in the video complete view. */
-	IBOutlet UIButton *replayButton_;		/*!< Replays the video from the beginning. */
-	IBOutlet UIButton *customButton1_;		/*!< Custom button 1. */
-	IBOutlet UIButton *customButton2_;		/*!< Custom button 2. */
-	IBOutlet UIButton *backToVideoButton_;	/*!< Goes back to the video. */
-	IBOutlet UIButton *backButton_;			/*!< Allows exiting of the video view. This should not be enabled until the video ad has finished playing. */
-	IBOutlet UILabel *buttonDescriptionLabel_;	/*!< The label above the buttons. */
-	IBOutlet UILabel *detailsLabel_;			/*!< The label above the details view. */
-	IBOutlet UIView *messageView_;			/*!< The message view contains an icon image, and a description. */
-	IBOutlet UIWebView *currencyLabelWebView_;	/*!< Contains the currency message. */
-	IBOutlet UIImageView *iconImageView_;	/*!< The video icon in the message view. */
-	IBOutlet UINavigationBar *navBar_;		/*!< The navigation bar. */
-	IBOutlet UINavigationItem *navItem_;	/*!< The navigation item within the nav bar. */
-	IBOutlet UILabel *navBarLabel_;			/*!< The label on top of the nav bar. */
+	IBOutlet UIView *completeScreenView_;	/*!< The view that holds the video complete view items. */
+	IBOutlet TJCUIWebPageView *webView_;	/*!< Used for loading web content when the redirect button is pressed. */
 	IBOutlet UIButton *doneButton_;			/*!< The button on the upper right hand corner that dismmisses the complete screen. */
 	IBOutlet UIImageView *tapjoyLogo_;		/*!< The logo that is displayed during video ad playback. */
 	IBOutlet UIButton *closeButton_;			/*!< The close button that can cancel a video, or go back to the complete screen if the video has already been viewed once. */
 	NSTimeInterval duration_;					/*!< The duration of the video currently playing. */
 	id<TJCVideoAdDelegate> delegate_;		/*!< The delegate that implements the TJCVideoAdProtocol. */
-	NSArray *buttons_;							/*!< Array that holds the custom buttons. Used for convenience. */
-	NSMutableArray *buttonURLs_;				/*!< Array that holds the redirect URLs for the custom buttons. */
 @public
 	NSString *fileName_;							/*!< The name of the video file saved locally on this device. */
 	NSString *linkURLString_;					/*!< The redirect URL associated with this video file. */
 	MPMoviePlayerController *videoFeed_;	/*!< The video controller object for loading and managing playback of videos. */
-	UIWebView *webView_;							/*!< Used for loading web content when the redirect button is pressed. */
 	BOOL isVideoPlaying_;						/*!< Video ad play status. */
 	NSString *offerID_;							/*!< The offer Id for the video currently being played. */
 	BOOL didIconDownload_;						/*!< Flag that indicates whether the video ad icon was downloaded. */
@@ -74,23 +44,14 @@
 }
 
 @property (nonatomic, retain) IBOutlet UIButton *closeButton;
-@property (copy) NSString *fileName;
-@property (copy) NSString *linkURLString;
+@property (nonatomic, copy) NSString *fileName;
+@property (nonatomic, copy) NSString *linkURLString;
 @property (nonatomic, retain) MPMoviePlayerController *videoFeed;
 @property (assign) BOOL isVideoPlaying;
-@property (copy) NSString *offerID;
+@property (nonatomic, copy) NSString *offerID;
 @property (assign) BOOL isFinishedWatching;
 @property (assign) BOOL shouldDisplayLogo;
-
-/*!	\fn getDescriptionWithAmountString
- *	\brief Returns an html formatted string for the video complete description.
- *
- *	\param amountString The string that displays currency amount.
- *	\param currencyName The string that displays currency name.
- *	\param adText The string that displays the ad description.
- *	\return n/a
- */
-- (NSString*)getDescriptionWithAmountString:(NSString*)amountString currencyName:(NSString*)currencyName adText:(NSString*)adText;
+@property (nonatomic, retain) TJCUIWebPageView *webView;
 
 /*!	\fn setVideoView:(UIView*)view
  *	\brief Sets video view properties with the given UIView.
@@ -126,15 +87,6 @@
  *	\return n/a
  */
 - (IBAction)transitionToVideoView;
-
-/*!	\fn enableShowBackToVideoButton:(BOOL)enable
- *	\brief Enable the back-to-video button.
- *
- *	This button swaps the video ad view back in from the web view.
- *	\param enable YES to show the button, NO to hide it.
- *	\return n/a
- */
-- (void)enableShowBackToVideoButton:(BOOL)enable;
 
 /*!	\fn enableShowVideoCompleteScreen:(BOOL)enable
  *	\brief Enables the video complete screen.
@@ -224,30 +176,6 @@
  */
 - (void)cleanupVideo;
 
-/*!	\fn buttonAction1
- *	\brief Button action method for the custom button. Redirects to somewhere, set by the video offer.
- *
- *	\param n/a
- *	\return n/a
- */
-- (void)buttonAction1;
-
-/*!	\fn buttonAction2
- *	\brief Button action method for the custom button. Redirects to somewhere, set by the video offer.
- *
- *	\param n/a
- *	\return n/a
- */
-- (void)buttonAction2;
-
-/*!	\fn loadIconImage
- *	\brief Loads the video ad icon.
- *
- *	\param n/a
- *	\return n/a
- */
-- (void)loadIconImage;
-
 /*!	\fn loadLogoImage
  *	\brief Loads the video ad logo.
  *
@@ -255,14 +183,6 @@
  *	\return n/a
  */
 - (void)loadLogoImage;
-
-/*!	\fn displayIcon:(UIImage*)iconImage
- *	\brief Sets and displays the video ad icon.
- *
- *	\param iconImage The image to display.
- *	\return n/a
- */
-- (void)displayIcon:(UIImage*)iconImage;
 
 /*!	\fn displayLogo:(UIImage*)logoImage
  *	\brief Sets and displays the Tapjoy logo during video playback.

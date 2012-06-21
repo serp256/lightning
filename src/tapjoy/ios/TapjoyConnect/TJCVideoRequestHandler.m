@@ -42,7 +42,10 @@
 	NSMutableDictionary *paramDict = [[[TapjoyConnect sharedTapjoyConnect] genericParameters] retain];
 	
 	// Add the publisher user ID to the generic parameters dictionary.
-	[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	if (userID)
+	{
+		[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	}
 	
 	[self makeGenericRequestWithURL:requestString alternateURL:alternateString params:paramDict selector:@selector(videoDataReceived:)];
 	[paramDict release];
@@ -73,7 +76,10 @@
 	NSMutableDictionary *paramDict = [[[TapjoyConnect sharedTapjoyConnect] genericParameters] retain];
 	
 	// Add the publisher user ID to the generic parameters dictionary.
-	[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	if (userID)
+	{
+		[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	}
 	
 	// Set app id to the offer ID cause that's how it works.
 	[paramDict setObject:offerID forKey:TJC_APP_ID_NAME];
@@ -93,7 +99,7 @@
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"Video Ad Data Response Returned"];
 	
-	TBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
+	TJCTBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
 	
 	if (!tjcConnectRetObject)
 		return;
@@ -118,7 +124,7 @@
 
 - (void)videoCompleteReceived:(TJCCoreFetcher*)myFetcher
 {
-	TBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
+	TJCTBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
 	
 	if (!tjcConnectRetObject)
 		return;

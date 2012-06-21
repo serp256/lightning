@@ -13,23 +13,12 @@
 #import "TJCOffersViewHandler.h"
 #import "TJCLoadingView.h"
 
-
 static NSString *currentServiceURL = nil;
-static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 
 @implementation TJCFeaturedAppView
 
-@synthesize currencyID_, publisherUserID_;
 
-+ (TJCFeaturedAppView*) sharedTJCFeaturedAppView
-{
-	if (!sharedTJCFeaturedAppView_) 
-	{
-		sharedTJCFeaturedAppView_ = [[super alloc] init];
-	}
-	
-	return sharedTJCFeaturedAppView_;
-}
+@synthesize currencyID_;
 
 
 - (id)initWithFrame:(CGRect)frame
@@ -42,23 +31,23 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 		[loadingView_ fadeIn];
 		
 		// Initialize the back button and add it to the view.
-		UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
+		backButton_ = [UIButton buttonWithType:UIButtonTypeCustom];
 		UIImage *backBtnImg = [UIImage imageNamed:@"close_button.png"];
 		UIImageView *backBtnImgView = [[UIImageView alloc] initWithImage:backBtnImg];
         
         // JC: NOTE: The coords here are not 0, 0 since that places the button in the center of the super view for some reason.
-		backButton.frame = CGRectMake(-.01f, -.01f,
+		backButton_.frame = CGRectMake(-.01f, -.01f,
                                       backBtnImgView.frame.size.width, 
                                       backBtnImgView.frame.size.height);
 
-		[backButton addTarget:self action:@selector(backtoGameAction:) forControlEvents:UIControlEventTouchUpInside];
-		[backButton setBackgroundColor:[UIColor clearColor]];
-		[backButton setImage:backBtnImg forState:UIControlStateNormal];
-		[backButton setAutoresizingMask:
+		[backButton_ addTarget:self action:@selector(backtoGameAction:) forControlEvents:UIControlEventTouchUpInside];
+		[backButton_ setBackgroundColor:[UIColor clearColor]];
+		[backButton_ setImage:backBtnImg forState:UIControlStateNormal];
+		[backButton_ setAutoresizingMask:
 		 UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleLeftMargin |
 		 UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin];
 		
-		[self addSubview:backButton];
+		[self addSubview:backButton_];
 		
 		[backBtnImgView release];
 	}
@@ -69,33 +58,37 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 
 - (void)refreshWithFrame:(CGRect)frame
 {
+	[self clearWebViewContents];
+	[super refreshWithFrame:frame];
+	
 	[self setFrame:frame];
 	[loadingView_.mainView setFrame:frame];
-	
-	currentServiceURL = [self setUpFeaturedAdURLWithServiceURL:
-                         [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_FEATURED_FULLSCREEN_URL_NAME]];
-	
+
 	// Touch is not yet enabled for the webview and will not be until the page has loaded.
 	[cWebView_ setUserInteractionEnabled:NO];
 	[cWebView_ setScalesPageToFit:YES];
-	[cWebView_ setAutoresizesSubviews: YES];
-	
-	self.layer.borderColor = [UIColor darkGrayColor].CGColor;
-	self.layer.borderWidth = FULLSCREEN_AD_BORDER_SIZE;
+	[cWebView_ setAutoresizesSubviews:YES];
 	
 	[self setAutoresizingMask:UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth];
+	
+	[self addSubview:backButton_];
 }
 
 
 - (NSString*)setUpFeaturedAdURLWithServiceURL:(NSString*)serviceURL
 {
 	NSString *result = [self appendGenericParamsWithURL:serviceURL];
+
+	NSString *userID = [TapjoyConnect getUserID];
 	
-	result = [NSString stringWithFormat:
-              @"%@&%@=%@",
-              result,
-              TJC_URL_PARAM_USER_ID,
-              publisherUserID_];
+	if (userID)
+	{
+		result = [NSString stringWithFormat:
+					  @"%@&%@=%@",
+					  result,
+					  TJC_URL_PARAM_USER_ID,
+					  [TapjoyConnect createQueryStringFromString:userID]];
+	}
 	
 	return result;
 }
@@ -109,32 +102,7 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 		[loadingView_ fadeIn];
 		[cWebView_ stopLoading];
 		
-		// Load the last url that was attempted.
-		if (!lastURL_)
-		{
-			currentServiceURL = [self setUpFeaturedAdURLWithServiceURL:
-                                 [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_FEATURED_FULLSCREEN_URL_NAME]];
-		}
-		else
-		{
-			// Check for valid url.
-			if ([NSURL URLWithString:lastURL_])
-			{
-				// Valid URL, proceed.
-				currentServiceURL = [NSString stringWithString:lastURL_];
-				//NSLog(@"Retry URL: %@", lastURL_);
-			}
-			else
-			{
-				// Invalid URL, use default one.
-				currentServiceURL = [self setUpFeaturedAdURLWithServiceURL:
-                                     [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_FEATURED_FULLSCREEN_URL_NAME]];
-			}
-			
-			[lastURL_ release];
-			lastURL_ = nil;
-		}
-		
+		// Reload page.
 		[self loadViewWithURL:currentServiceURL];
 	}
 	// The cancel button action.
@@ -145,21 +113,25 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 		
 		// Re-enable user touch interaction so that they may click on another link to try again if so desired.
 		[cWebView_ setUserInteractionEnabled:YES];
-		
-		//re-intitialize webview
-		//[self handleWebViewUI];
 	}
 }
 
 
-- (void) loadViewWithURL:(NSString*)theURL
+- (void)loadViewWithURL:(NSString*)theURL
 {
+	if (!theURL)
+	{
+		currentServiceURL = [self setUpFeaturedAdURLWithServiceURL:
+									[NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_FEATURED_FULLSCREEN_URL_NAME]];
+	}
+	else 
+	{
+		currentServiceURL = theURL;
+	}
+	
 	[self setBackgroundColor:[UIColor whiteColor]];
-	
-	//initialize WebView UI
-	[self initializeWebViewUI];
-	
-	[self loadURLRequest:[NSURL URLWithString:theURL] withTimeOutInterval:TJC_REQUEST_TIME_OUT];
+
+	[self loadURLRequest:theURL withTimeOutInterval:TJC_REQUEST_TIME_OUT];
 }
 
 
@@ -176,13 +148,13 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 	}
 	
 	// 102 error code for slow request completion. This happens when a NSURLConnection is made for opening links externally in Safari.
-	if(error.code == 102) 
+	if (error.code == 102) 
 	{
 		return;
 	}
 	
 	// Try alternate URL.
-	if(currentServiceURL == [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_FEATURED_FULLSCREEN_URL_NAME])
+	if (currentServiceURL == [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_FEATURED_FULLSCREEN_URL_NAME])
 	{
 		currentServiceURL = [self setUpFeaturedAdURLWithServiceURL:
                              [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL_ALTERNATE, TJC_FEATURED_FULLSCREEN_URL_NAME]];
@@ -190,10 +162,8 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 	}
 	else
 	{
-		NSString *msg = alertErrorMessage_;
-		if(!msg) msg = @"Service is unreachable.\nDo you want to try again?";
 		UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@"" 
-                                                             message:msg 
+                                                             message:TJC_GENERIC_CONNECTION_ERROR_MESSAGE 
                                                             delegate:self 
                                                    cancelButtonTitle:@"Cancel" 
                                                    otherButtonTitles:@"Retry", nil];
@@ -209,7 +179,7 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 }
 
 
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+- (BOOL)webView:(UIWebView*)webView shouldStartLoadWithRequest:(NSURLRequest*)request navigationType:(UIWebViewNavigationType)navigationType
 {
 	//NSLog(@"URL host: %@", [[request URL] host]);
 	
@@ -220,7 +190,7 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 	
 	NSString *requestString = [[request URL] absoluteString];
 	
-	if (CFStringFind((CFStringRef)requestString, (CFStringRef)@"dismiss", kCFCompareCaseInsensitive).length > 0)
+	if (requestString == nil || (CFStringFind((CFStringRef)requestString, (CFStringRef)@"dismiss", kCFCompareCaseInsensitive).length > 0))
 	{
 		[self backtoGameAction:nil];
 		return NO;
@@ -243,15 +213,6 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
              (CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_TAPJOY_ALT_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
              (CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_LINKSHARE_HOST_NAME, kCFCompareCaseInsensitive).length > 0))
 	{
-		if (lastURL_)
-		{
-			[lastURL_ release];
-			lastURL_ = nil;
-		}
-		
-		// Save the address in case data connection craps out and we need to reload.
-		lastURL_ = [[NSString alloc] initWithString:[[request URL] absoluteString]];
-		
 		return YES;
 	}
 	
@@ -275,8 +236,6 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-	webPageRendered_ = true;
-	
 	[loadingView_ fadeOut];
 	
 	// Re-enable user touch interaction.
@@ -319,10 +278,8 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
-	NSString *msg = alertErrorMessage_;
-	if(!msg) msg = @"Service is unreachable.\nDo you want to try again?";
 	UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@"" 
-                                                         message:msg 
+                                                         message:TJC_GENERIC_CONNECTION_ERROR_MESSAGE
                                                         delegate:self 
                                                cancelButtonTitle:@"Cancel" 
                                                otherButtonTitles:@"Retry", nil];
@@ -337,21 +294,24 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 }
 
 
--(void) backtoGameAction:(id) sender
+- (void)backtoGameAction:(id)sender
 {
 	[TJCViewCommons animateTJCView:self 
-                 withTJCTransition:[[TJCViewCommons sharedObject]getReverseTransitionEffect] 
-                         withDelay:[[TJCViewCommons sharedObject]getTransitionDelay]];
+                 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons]getReverseTransitionEffect] 
+                         withDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
 	
 	[self performSelector:@selector(giveBackNotification)
                withObject:nil 
-               afterDelay:[[TJCViewCommons sharedObject]getTransitionDelay]];
+               afterDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
 }
 
 
--(void) giveBackNotification
+- (void)giveBackNotification
 {	
 	[self removeFromSuperview];
+	
+	// Clear web view contents.
+	[self clearWebViewContents];
 	
 	// Remove any transforms applied to this view.
 	self.transform = CGAffineTransformIdentity;
@@ -360,38 +320,15 @@ static TJCFeaturedAppView *sharedTJCFeaturedAppView_ = nil;
 	
 	// JC: NOTE: Deprecated since 8.1.0
 	[[NSNotificationCenter defaultCenter] postNotificationName:TJC_SHOW_BOX_CLOSE_NOTIFICATION object:nil];
+	
+	// This will notify the featured view handler to release the web view.
+	[[NSNotificationCenter defaultCenter] postNotificationName:TJC_FEATURED_WEBVIEW_CLOSE_NOTIFICATION object:nil];
 }
 
 
-- (void) updateViewWithOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+- (void)updateViewWithOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
 	[cWebView_ stringByEvaluatingJavaScriptFromString:@"window.onorientationchange();"];
-}
-
-
-
-#pragma mark UIHandling
-
--(void) handleWebViewUI
-{
-	[self initializeWebViewUI];
-	[[self class]cancelPreviousPerformRequestsWithTarget:self];
-}
-
-
-- (void) initializeWebViewUI
-{
-	if(webPageRendered_) 
-	{
-		return; 
-	}
-}
-
-
-- (void)dealloc 
-{
-	[TJCLog logWithLevel:LOG_DEBUG format:@"TJCOffersView Dealloc"];
-	[super dealloc];
 }
 
 

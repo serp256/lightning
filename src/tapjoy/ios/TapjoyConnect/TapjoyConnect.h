@@ -17,16 +17,19 @@
 #import <UIKit/UIkit.h>
 
 
-#define TJC_LIBRARY_VERSION_NUMBER			@"8.1.7"					/*!< The SDK version number. */
+
+#define TJC_LIBRARY_VERSION_NUMBER			@"8.2.0"					/*!< The SDK version number. */
 
 #define TJC_SERVICE_URL							@"https://ws.tapjoyads.com/"
 #define TJC_SERVICE_URL_ALTERNATE			@"https://ws1.tapjoyads.com/"
 #define TJC_TAPJOY_HOST_NAME					@"ws.tapjoyads.com"
 #define TJC_TAPJOY_ALT_HOST_NAME				@"ws1.tapjoyads.com"
 #define TJC_LINKSHARE_HOST_NAME				@"click.linksynergy.com"
-
 #define TJC_UDID									@"udid"					/*!< The unique device identifier. Deprecated in iOS 5. */
 #define TJC_UNIQUE_MAC_ID						@"mac_address"			/*!< The unique ID retrieved by taking the hash of mac address. */
+#define TJC_UNIQUE_MAC_ID_SHA1				@"sha1_mac_address"	/*!< The SHA1 has of the mac address (uppercase, colon separated) */
+#define TJC_OPEN_UDID							@"open_udid"			/*!< The Open UDID. */
+#define TJC_OPEN_UDID_COUNT					@"open_udid_count"	/*!< The Open UDID slot count. */
 #define TJC_DEVICE_NAME							@"device_name"			/*!< This is the specific device name ("iPhone1,1", "iPod1,1"...) */
 #define TJC_DEVICE_TYPE_NAME					@"device_type"			/*!< The model name of the device. This is less descriptive than the device name. */
 #define TJC_DEVICE_OS_VERSION_NAME			@"os_version"			/*!< The device system version. */
@@ -45,16 +48,34 @@
 #define TJC_MOBILE_COUNTRY_CODE				@"mobile_country_code"	/*!< The mobile country code (MCC) for the user’s cellular service provider. */
 #define TJC_MOBILE_NETWORK_CODE				@"mobile_network_code"	/*!< The mobile network code (MNC) for the user’s cellular service provider. */
 #define TJC_PLATFORM								@"platform"				/*!< The name of the platform. */
-#define TJC_PLATFORM_IOS						@"iOS"
+#define TJC_PLATFORM_IOS						@"iOS"					/*!< The parameter value of the platform. */
+#define TJC_PLUGIN								@"plugin"				/*!< The plugin being used, if any. */
+#define TJC_PLUGIN_NATIVE						@"native"				/*!< The default value for the plugin parameter, native means not a plugin. */
+#define TJC_SDK_TYPE								@"sdk_type"				/*!< The type of SDK, advertiser, publisher, virtual goods, etc. */
 // The user ID.
 #define TJC_URL_PARAM_USER_ID					@"publisher_user_id"
 // NOTE: This doesn't actually affect currency earned, just the value displayed on the offer wall.
-#define TJC_URL_PARAM_CURRENCY_MULTIPLIER	@"display_multiplier"	/*!< Currency multiplier value. */
+#define TJC_URL_PARAM_CURRENCY_MULTIPLIER	@"display_multiplier"/*!< Currency multiplier value. */
 #define TJC_CONNECTION_TYPE_NAME				@"connection_type"	/*!< The type of data connection that is being used. */
-
+#define TJC_PACKAGE_NAMES						@"package_names"		/*!< Comma separated advertiser URL schemes. */
 
 #define TJC_CONNECT_API							@"connect"						/*!< API for Tapjoy connect. */
 #define TJC_SET_USER_ID_API					@"set_publisher_user_id"	/*!< API for setting publisher user id. */
+#define TJC_SDK_LESS_CONNECT_API				@"apps_installed"				/*!< API for passing advertiser apps. */
+
+#define TJC_PASTEBOARD_SLOT_MAX				256
+#define TJC_PASTEBOARD_TYPE					@"public.plain-text" //@"com.tapjoy"
+#define TJC_PASTEBOARD_SLOT_PREFIX			@"com.tapjoy.slot."
+#define TJC_TAPJOY_UUID							@"TJC_TAPJOY_UUID"
+
+enum TJCConnectionType
+{
+	TJC_CONNECT_TYPE_CONNECT = 0,
+	TJC_CONNECT_TYPE_ALT_CONNECT,
+	TJC_CONNECT_TYPE_USER_ID,
+	TJC_CONNECT_TYPE_SDK_LESS,
+	TJC_CONNECT_TYPE_MAX
+};
 
 
 /*!	\interface TapjoyConnect
@@ -62,28 +83,27 @@
  *
  */
 @interface TapjoyConnect :  NSObject
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_4_0
-<NSXMLParserDelegate>
-#endif
 {
 @private
 	NSString *appID_;						/*!< The application ID unique to this app. */
 	NSString *secretKey_;				/*!< The Tapjoy secret key for this applicaiton. */
-	NSString *userID_;					/*!< The user ID, used to display ads. This is the UDID by default. */
+	NSString *userID_;					/*!< The user ID, used to banner ads. This is the UDID by default. */
+	NSString *plugin_;					/*!< The name of the plugin used. If no plugin is used, this value is set to "native" by default. */
 	float currencyMultiplier_;			/*!< The currency multiplier value, used to adjust currency earned. */
 	NSMutableData *data_;				/*!< Holds data for any data that comes back from a URL request. */
-	NSURLConnection *connection_;		/*!< Used to provide support to perform the loading of a URL request. Delegate methods are defined to handle when a response is receive with associated data. This is used for asynchronous requests only. */
 	int connectAttempts_;				/*!< The connect attempts is used to determine whether the alternate URL will be used. */
 	BOOL isInitialConnect_;				/*!< Used to keep track of an initial connect call to prevent multiple repeated calls. */
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_4_0
-	NSString *currentXMLElement_;		/*!< Contains @"Success when a connection is successfully made, nil otherwise. */
-#endif
+	int responseCode_;					/*!< The response code received from the server. */
+	NSURLConnection *connectConnection_;
+	NSURLConnection *userIDConnection_;
+	NSURLConnection *SDKLessConnection_;
 }
 
-@property (nonatomic,copy) NSString* appID;
-@property (nonatomic,copy) NSString* secretKey;
-@property (nonatomic,copy) NSString* userID;
-@property (nonatomic) BOOL isInitialConnect;
+@property (nonatomic, copy) NSString *appID;
+@property (nonatomic, copy) NSString *secretKey;
+@property (nonatomic, copy) NSString *userID;
+@property (nonatomic, copy) NSString *plugin;
+@property (assign) BOOL isInitialConnect;
 
 
 /*!	\fn requestTapjoyConnect:secretKey:(NSString *appID, NSString *secretKey)
@@ -141,6 +161,16 @@
  */
 + (NSString*)TJCSHA256CommonParamsWithTimeStamp:(NSString*)timeStamp tapPointsAmount:(int)points guid:(NSString*)guid;
 
+/*!	\fn TJCSHA256CommonParamsWithTimeStamp:tapPointsAmount:guid:(NSString* timeStamp, NSString* packageNames)
+ *	\brief Generates a SHA-256 hash value with the time stamp and some common parameters.
+ *
+ * The following are sent as common parameters: appID, UDID, and timestamp.
+ *	\param timeStamp The time stamp to generate the hash with.
+ *	\param packageNames Comma separated URL scheme strings.
+ *	\return The SHA-256 hash value.
+ */
++ (NSString*)TJCSHA256CommonParamsWithTimeStamp:(NSString *)timeStamp packageNames:(NSString*)packageNames;
+
 /*!	\fn TJCSHA256WithString:(NSString*)dataStr
  *	\brief Generates a SHA-256 hash value with the given string.
  *
@@ -170,7 +200,7 @@
  *	\brief Retrieves the user ID.
  *
  *	\param n/a
- *	\return The Tapjoy user ID. The user ID defaults to the UDID.
+ *	\return The Tapjoy user ID. The user ID defaults to the UDID. If UDID is opted out, this returns null.
  */
 + (NSString*)getUserID;
 
@@ -181,6 +211,19 @@
  *	\return The Tapjoy secret key for this application.
  */
 + (NSString*)getSecretKey;
+
+/*!	\fn setPlugin:(NSString*)thePlugin
+ *	\brief Sets the plugin.
+ *
+ * The plugin defaults to "native".
+ *	\param thePlugin The name of the plugin.
+ *	\return n/a
+ */
++ (void)setPlugin:(NSString*)thePlugin;
+
+- (void)connectWithType:(int)connectionType withParams:(NSDictionary*)params;
+- (NSString*)getURLStringWithConnectionType:(int)connectionType;
+- (void)initiateConnectionWithConnectionType:(int)connectionType requestString:(NSString*)requestString;
 
 /*! \fn isJailBroken
  *	\brief Simple check to detect jail broken devices/apps.
@@ -217,6 +260,8 @@
 - (NSString*)createQueryStringFromDict:(NSDictionary*)paramDict;
 // Wrapper method.
 + (NSString*)createQueryStringFromDict:(NSDictionary*)paramDict;
+- (NSString*)createQueryStringFromString:(NSString*)string;
++ (NSString*)createQueryStringFromString:(NSString*)string;
 
 /*!	\fn setCurrencyMultiplier:(float)mult
  *	\brief Sets the currency multiplier for virtual currency to be earned.
@@ -238,16 +283,20 @@
 // Wrapper method.
 + (float)getCurrencyMultiplier;
 
-
-// Declared here to prevent warnings.
-#pragma mark TapjoyConnect NSXMLParser Delegate Methods
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_4_0
-- (void)startParsing:(NSData*) myData;
-#endif
+/*!	\fn clearCache
+ *	\brief Nukes the NSURLConnection cache. This seems to address some memory leak issue associated with NSURLConnections.
+ *
+ *	\param n/a
+ *	\return n/a
+ */
++ (void)clearCache;
 
 
 + (NSString*)getMACAddress;
++ (NSString*)getMACID;
++ (NSString*)getSHA1MacAddress;
 + (NSString*)getUniqueIdentifier;
++ (NSString*)getTimeStamp;
 
 @end
 

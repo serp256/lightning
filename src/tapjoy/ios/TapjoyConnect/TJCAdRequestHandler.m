@@ -29,6 +29,7 @@ NSString *kTJCAdImageDataStr = @"Image";
 	if ((self = [super initRequestWithDelegate:aDelegate andRequestTag:aTag]))
 	{
 		isDataFetchSuccessful_ = NO;
+		isFetchingData_ = NO;
 	}
 	
 	return self;
@@ -43,8 +44,15 @@ NSString *kTJCAdImageDataStr = @"Image";
 
 - (void)requestAdWithSize:(NSString*)adSize currencyID:(NSString*)currencyID
 {
+	if (isFetchingData_)
+	{
+		[TJCLog logWithLevel:LOG_DEBUG format:@"Display Ad data fetching in progress, cannot initiate another connection"];
+		return;
+	}
+	
 	// Reset success bool whenever a request is made. It will be set to success when data is retrieved from the server.
 	isDataFetchSuccessful_ = NO;
+	isFetchingData_= YES;
 	
 	NSString *userID = [TapjoyConnect getUserID];
 	
@@ -55,7 +63,10 @@ NSString *kTJCAdImageDataStr = @"Image";
 	NSMutableDictionary *paramDict = [[[TapjoyConnect sharedTapjoyConnect] genericParameters] retain];
 	
 	// Add the publisher user ID to the generic parameters dictionary.
-	[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	if (userID)
+	{
+		[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
+	}
 	
 	// Add the content size of the ad to the request URL.
 	[paramDict setObject:adSize forKey:TJC_URL_PARAM_DISPLAY_AD_SIZE];
@@ -75,7 +86,7 @@ NSString *kTJCAdImageDataStr = @"Image";
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"Ad Data Response Returned"];
 	
-	TBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
+	TJCTBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
 	
 	// Check for valid return data;
 	if(!tjcConnectRetObject) 
@@ -87,7 +98,7 @@ NSString *kTJCAdImageDataStr = @"Image";
 	
 	[TJCLog logWithLevel:LOG_DEBUG format:@"Update Account Info Response Returned"];
 	
-	TBXMLElement *clickURLObj = [TBXML childElementNamed:kTJCAdClickURLStr parentElement:tjcConnectRetObject];
+	TJCTBXMLElement *clickURLObj = [TJCTBXML childElementNamed:kTJCAdClickURLStr parentElement:tjcConnectRetObject];
 	
 	if (!clickURLObj)
 	{
@@ -98,7 +109,7 @@ NSString *kTJCAdImageDataStr = @"Image";
 		return;
 	}
 	
-	TBXMLElement *imageDataStrObj = [TBXML childElementNamed:kTJCAdImageDataStr parentElement:tjcConnectRetObject];
+	TJCTBXMLElement *imageDataStrObj = [TJCTBXML childElementNamed:kTJCAdImageDataStr parentElement:tjcConnectRetObject];
 	
 	if (!imageDataStrObj)
 	{
@@ -113,19 +124,20 @@ NSString *kTJCAdImageDataStr = @"Image";
 	{
 		[clickURL_ release];
 	}
-	clickURL_ = [[NSMutableString stringWithString:[TBXML textForElement:clickURLObj]] retain];
+	clickURL_ = [[NSMutableString stringWithString:[TJCTBXML textForElement:clickURLObj]] retain];
 	
 	if (imageDataStr_)
 	{
 		[imageDataStr_ release];
 	}
-	imageDataStr_ = [[NSMutableString stringWithString:[TBXML textForElement:imageDataStrObj]] retain];
+	imageDataStr_ = [[NSMutableString stringWithString:[TJCTBXML textForElement:imageDataStrObj]] retain];
 	
 	// Create an array to be passed in to the fetch response method.
 	NSArray *dataArray = [[NSArray alloc] initWithObjects:clickURL_, imageDataStr_, nil];
 	
 	// Set success bool only here!
 	isDataFetchSuccessful_ = YES;
+	isFetchingData_ = NO;
 	
 	// We don't use the tag here so just pass in a zero.
 	[deleg_ fetchResponseSuccessWithData:dataArray withRequestTag:0];

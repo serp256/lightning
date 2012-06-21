@@ -25,7 +25,7 @@
 @synthesize maxTimesToDisplayThisApp = maxTimesToDisplayThisApp_;
 @synthesize fullScreenAdURL = fullScreenAdURL_;
 
-- (id) initWithTBXML:(TBXMLElement*) aXMLElement
+- (id) initWithTBXML:(TJCTBXMLElement*) aXMLElement
 {
 	if ((self = [super init]))
 	{
@@ -33,21 +33,23 @@
 		{
 			return self;
 		}
-		cost_ = [[TBXML textForElement:[TBXML childElementNamed:@"Cost" parentElement:aXMLElement]] copy];
-		storeID_ = [[TBXML textForElement:[TBXML childElementNamed:@"StoreID" parentElement:aXMLElement]] copy];
-		name_ = [[TBXML textForElement:[TBXML childElementNamed:@"Name" parentElement:aXMLElement]] copy];
-		description_ = [[TBXML textForElement:[TBXML childElementNamed:@"Description" parentElement:aXMLElement]] copy];
-		iconURL_ = [[TBXML textForElement:[TBXML childElementNamed:@"IconURL" parentElement:aXMLElement]] copy];
-		largeIconURL_ = [[TBXML textForElement:[TBXML childElementNamed:@"MediumIconURL" parentElement:aXMLElement]] copy];
-		redirectURL_ = [[TBXML textForElement:[TBXML childElementNamed:@"RedirectURL" parentElement:aXMLElement]] copy];
-		amount_ = [TBXML numberForElement:[TBXML childElementNamed:@"Amount" parentElement:aXMLElement]];
+		cost_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"Cost" parentElement:aXMLElement]] copy];
+		storeID_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"StoreID" parentElement:aXMLElement]] copy];
+		name_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"Name" parentElement:aXMLElement]] copy];
+		description_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"Description" parentElement:aXMLElement]] copy];
+		iconURL_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"IconURL" parentElement:aXMLElement]] copy];
+		largeIconURL_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"MediumIconURL" parentElement:aXMLElement]] copy];
+		redirectURL_ = [[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"RedirectURL" parentElement:aXMLElement]] copy];
+		amount_ = [TJCTBXML numberForElement:[TJCTBXML childElementNamed:@"Amount" parentElement:aXMLElement]];
 		
 		if (maxTimesToDisplayThisApp_ < 0)
 		{
 			maxTimesToDisplayThisApp_ = TJC_FEATURED_APP_DEFAULT_MAX_DISPLAY_COUNT;
 		}
 		
-		fullScreenAdURL_ = [[TBXML textForElement:[TBXML childElementNamed:@"FullScreenAdURL" parentElement:aXMLElement]] copy];
+		// Sometimes the URL returned from the server has unescaped characters, make sure that it's all escaped.
+		fullScreenAdURL_ = [[[TJCTBXML textForElement:[TJCTBXML childElementNamed:@"FullScreenAdURL" parentElement:aXMLElement]] 
+								  stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding] copy];
 	}
 	return self;
 }

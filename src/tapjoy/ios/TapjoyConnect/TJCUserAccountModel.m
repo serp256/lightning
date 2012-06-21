@@ -44,7 +44,12 @@
 		
 		if (!cachedPointsID)
 		{
-			cachedPointsID = [TapjoyConnect getUserID];
+			NSString *userID = [TapjoyConnect getUserID];
+			if (userID)
+			{
+				cachedPointsID = userID;
+				[self setPointsID:cachedPointsID];
+			}
 		}
 		
 		[self setCurrencyName:cachedCurrencyName];
@@ -60,39 +65,36 @@
 		{
 			tapPoints_ = 0;
 		}
-		
-		[self setPointsID:cachedPointsID];
-		
 	}
 	return self;
 }
 
 
-- (id)initWithTBXML:(TBXMLElement*)aXMLElement
+- (id)initWithTBXML:(TJCTBXMLElement*)aXMLElement
 {
 	if ((self = [super init]))
 	{
 		if (aXMLElement)
 		{
-			TBXMLElement *tapPointElement = [TBXML childElementNamed:@"TapPoints" parentElement:aXMLElement];
-			TBXMLElement *currencyNameElement = [TBXML childElementNamed:@"CurrencyName" parentElement:aXMLElement];
-			TBXMLElement *pointsIDElement = [TBXML childElementNamed:@"PointsID" parentElement:aXMLElement];
+			TJCTBXMLElement *tapPointElement = [TJCTBXML childElementNamed:@"TapPoints" parentElement:aXMLElement];
+			TJCTBXMLElement *currencyNameElement = [TJCTBXML childElementNamed:@"CurrencyName" parentElement:aXMLElement];
+			TJCTBXMLElement *pointsIDElement = [TJCTBXML childElementNamed:@"PointsID" parentElement:aXMLElement];
 			
-			int newTapPoints = [TBXML numberForElement:tapPointElement];				
+			int newTapPoints = [TJCTBXML numberForElement:tapPointElement];				
 			
 			tapPoints_ = newTapPoints;
 			[[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@",[NSNumber numberWithInt:newTapPoints]] forKey:TJC_POINTS_KEY_NAME];
 			
-			NSString *newPointsID = [TBXML textForElement:pointsIDElement];
+			NSString *newPointsID = [TJCTBXML textForElement:pointsIDElement];
 			[self setPointsID:newPointsID];
 			[[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@",newPointsID] forKey:TJC_POINT_ID_KEY_NAME];
 			
-			NSString *newCurrencyName = [TBXML textForElement:currencyNameElement] ;
+			NSString *newCurrencyName = [TJCTBXML textForElement:currencyNameElement] ;
 			//primary color which is available in cache  
 			NSString * cachedCurrencyName = [[NSUserDefaults standardUserDefaults] objectForKey:TJC_CURRENCY_KEY_NAME];
 			
 			//Refresh Cache
-			if(newCurrencyName && ![newCurrencyName isEqualToString:@""])
+			if (newCurrencyName && ![newCurrencyName isEqualToString:@""])
 			{
 				//OLD CURRENCY NAME IS SAVE
 				if(!cachedCurrencyName || ![cachedCurrencyName isEqualToString:newCurrencyName] )
@@ -104,7 +106,7 @@
 				}
 			}	
 			
-			if(!cachedCurrencyName)
+			if (!cachedCurrencyName)
 			{
 				[self setCurrencyName:@""];
 			}
@@ -119,16 +121,16 @@
 }
 
 
-- (void)updateWithTBXML:(TBXMLElement*)aXMLElement shouldCheckEarnedPoints:(BOOL)checkEarnedPoints
+- (void)updateWithTBXML:(TJCTBXMLElement*)aXMLElement shouldCheckEarnedPoints:(BOOL)checkEarnedPoints
 {
 	if (!aXMLElement)
 		return;
 	
-	TBXMLElement *tapPointElement = [TBXML childElementNamed:@"TapPoints" parentElement:aXMLElement];
-	TBXMLElement *currencyNameElement = [TBXML childElementNamed:@"CurrencyName" parentElement:aXMLElement];
-	TBXMLElement *pointsIDElement = [TBXML childElementNamed:@"PointsID" parentElement:aXMLElement];
+	TJCTBXMLElement *tapPointElement = [TJCTBXML childElementNamed:@"TapPoints" parentElement:aXMLElement];
+	TJCTBXMLElement *currencyNameElement = [TJCTBXML childElementNamed:@"CurrencyName" parentElement:aXMLElement];
+	TJCTBXMLElement *pointsIDElement = [TJCTBXML childElementNamed:@"PointsID" parentElement:aXMLElement];
 	
-	int newTapPoints = [TBXML numberForElement:tapPointElement];				
+	int newTapPoints = [TJCTBXML numberForElement:tapPointElement];				
 
 	if (checkEarnedPoints)
 	{
@@ -147,7 +149,7 @@
 	[[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@",[NSNumber numberWithInt:newTapPoints]] 
 															forKey:TJC_POINTS_KEY_NAME];
 	
-	NSString *newPointsID = [TBXML textForElement:pointsIDElement];
+	NSString *newPointsID = [TJCTBXML textForElement:pointsIDElement];
 	if (newPointsID && ![newPointsID isEqualToString:@""])
 	{
 		if (pointsID_)
@@ -160,7 +162,7 @@
 																forKey:TJC_POINT_ID_KEY_NAME];
 	}
 	
-	NSString *newCurrencyName = [TBXML textForElement:currencyNameElement] ;
+	NSString *newCurrencyName = [TJCTBXML textForElement:currencyNameElement] ;
 	//primary color which is available in cache  
 	NSString *cachedCurrencyName = [[NSUserDefaults standardUserDefaults] objectForKey:TJC_CURRENCY_KEY_NAME];
 	

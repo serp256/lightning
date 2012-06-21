@@ -34,7 +34,7 @@ extern NSString *kTJCCoreFetcherAdStr;
 
 
 
-#import "TBXML.h"
+#import "TJCTBXML.h"
 
 @class TJCCoreFetcher;
 
@@ -107,7 +107,7 @@ extern NSString *kTJCCoreFetcherAdStr;
  *	\param myFetcher The #TJCCoreFetcher that contains the response data.
  *	\return The NSDictionary will have all the parsed data contained in it if the connection and response was successful.
  */
-- (TBXMLElement*) parseReturnObjectAsTBXMLElement:(TJCCoreFetcher *) myFetcher;
+- (TJCTBXMLElement*) parseReturnObjectAsTBXMLElement:(TJCCoreFetcher *) myFetcher;
 
 /*!	\fn validateResponseReturnedObject:(TJCCoreFetcher*) myFetcher
  *	\brief Checks the response object for valid data.
@@ -115,7 +115,7 @@ extern NSString *kTJCCoreFetcherAdStr;
  *	\param myFetcher The #TJCCoreFetcher that contains the response data.
  *	\return Nil of the response data is invalid, an XML element otherwise.
  */
-- (TBXMLElement*) validateResponseReturnedObject:(TJCCoreFetcher*) myFetcher;
+- (TJCTBXMLElement*) validateResponseReturnedObject:(TJCCoreFetcher*) myFetcher;
 
 
 @end

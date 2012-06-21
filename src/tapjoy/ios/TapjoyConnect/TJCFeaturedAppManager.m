@@ -14,23 +14,13 @@
 #import "TJCFeaturedAppModel.h"
 #import "TapjoyConnect.h"
 
-static TJCFeaturedAppManager *sharedTJCFeaturedAppManager_ = nil;
 
 @implementation TJCFeaturedAppManager
 
+TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCFeaturedAppManager)
+
 @synthesize featuredAppModelObj = featuredAppModelObj_;
 @synthesize featuredAppDisplayCount = featuredAppDisplayCount_;
-
-
-+ (TJCFeaturedAppManager*)sharedTJCFeaturedAppManager
-{
-    if (!sharedTJCFeaturedAppManager_)
-    {
-        sharedTJCFeaturedAppManager_ = [[super alloc] init];
-    }
-    
-    return sharedTJCFeaturedAppManager_;
-}
 
 
 - (id) init
@@ -39,6 +29,8 @@ static TJCFeaturedAppManager *sharedTJCFeaturedAppManager_ = nil;
 	{
 		featuredAppHandlerObj_ = [[TJCFeaturedAppRequestHandler alloc] initRequestWithDelegate:self andRequestTag:0];
 		featuredAppDisplayCount_ = TJC_FEATURED_APP_DEFAULT_MAX_DISPLAY_COUNT;
+		delayDisplayCount_ = 0;
+		delayDisplayCountMax_ = TJC_FEATURED_APP_DEFAULT_DELAY_COUNT;
 	}
 	return self;
 }
@@ -50,13 +42,13 @@ static TJCFeaturedAppManager *sharedTJCFeaturedAppManager_ = nil;
 }
 
 
-- (void) getFeaturedAppWithCurrencyID:(NSString*)currencyID
+- (void)getFeaturedAppWithCurrencyID:(NSString*)currencyID
 {
 	[featuredAppHandlerObj_ requestFeaturedAppWithCurrencyID:currencyID];
 }
 
 
-- (void) setFeaturedAppDisplayCount:(int) displayCount
+- (void)setFeaturedAppDisplayCount:(int)displayCount
 {
 	if (displayCount == TJC_FEATURED_COUNT_INF)
 	{
@@ -70,8 +62,14 @@ static TJCFeaturedAppManager *sharedTJCFeaturedAppManager_ = nil;
 }
 
 
+- (void)setFeaturedAppDelayCount:(int)delayCount
+{
+	delayDisplayCountMax_ = delayCount;
+}
+
+
 // called when request succeeeds
-- (void) fetchResponseSuccessWithData:(void*)dataObj withRequestTag:(int)aTag
+- (void)fetchResponseSuccessWithData:(void*)dataObj withRequestTag:(int)aTag
 {
 	// Store all the featured app data inside the featured app model.
 	[featuredAppModelObj_ release];
@@ -79,9 +77,24 @@ static TJCFeaturedAppManager *sharedTJCFeaturedAppManager_ = nil;
 	
 	int dispCount = [[TJCFeaturedAppDBManager sharedTJCFeaturedAppDBManager] getDisplayedCountForStoreID:featuredAppModelObj_.storeID];
 	
+	NSNumber *delayCountObj = [[NSUserDefaults standardUserDefaults] objectForKey:TJC_FEATURED_APP_DELAY_COUNT];
+	
+	if (delayCountObj)
+	{
+		delayDisplayCount_ = [delayCountObj intValue];
+	}
+	
+	// Check delay count first to make sure the featured ad is not displayed if the delay count is less than the set value.
+	if (delayDisplayCount_ < delayDisplayCountMax_)
+	{
+		// Increment delay count.
+		delayDisplayCount_++;
+		
+		[[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:delayDisplayCount_] forKey:TJC_FEATURED_APP_DELAY_COUNT];
+	}
 	// Check whether we have reached our display count so that featured app will not keep showing up.
 	// Also, if the store id happens to match the app id, then we will show the featured app indefinitely.
-	if ((featuredAppDisplayCount_ == TJC_FEATURED_COUNT_INF) || 
+	else if ((featuredAppDisplayCount_ == TJC_FEATURED_COUNT_INF) || 
 		 [[[TapjoyConnect sharedTapjoyConnect] appID] isEqualToString:featuredAppModelObj_.storeID])
 	{
 		// The count is set to infinity, always return the object. 
@@ -114,7 +127,7 @@ static TJCFeaturedAppManager *sharedTJCFeaturedAppManager_ = nil;
 
 
 // raised when error occurs
-- (void) fetchResponseError:(TJCResponseError)errorType errorDescription:(id)errorDescObj requestTag:(int) aTag
+- (void)fetchResponseError:(TJCResponseError)errorType errorDescription:(id)errorDescObj requestTag:(int)aTag
 {
 	[[NSNotificationCenter defaultCenter] postNotificationName:TJC_FEATURED_APP_RESPONSE_NOTIFICATION object:nil];
 	//No Object is sent No Model created so just release the Handler
@@ -122,7 +135,7 @@ static TJCFeaturedAppManager *sharedTJCFeaturedAppManager_ = nil;
 }
 
 
-- (void) releaseFeaturedAppHandler
+- (void)releaseFeaturedAppHandler
 {
 	if(featuredAppHandlerObj_)
 	{
@@ -132,7 +145,7 @@ static TJCFeaturedAppManager *sharedTJCFeaturedAppManager_ = nil;
 }
 
 
-- (void) dealloc
+- (void)dealloc
 {
 	if(featuredAppHandlerObj_)
 	{

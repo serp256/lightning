@@ -25,10 +25,10 @@
 	[[TJCVideoManager sharedTJCVideoManager].videoView refreshViewWithInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation];
 	
 	[[TJCVideoManager sharedTJCVideoManager].videoView playVideoWithOfferID:offerID];
-
+	
 	[TJCViewCommons animateTJCView:[TJCVideoManager sharedTJCVideoManager].videoView.mainView
-					 withTJCTransition:[[TJCViewCommons sharedObject] getCurrentTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject] getTransitionDelay]];
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons] getTransitionDelay]];
 	
 	return [TJCVideoManager sharedTJCVideoManager].videoView.mainView;
 }
@@ -59,8 +59,8 @@
 	[vController.view addSubview:[TJCVideoManager sharedTJCVideoManager].videoView.mainView];
 	
 	[TJCViewCommons animateTJCView:[TJCVideoManager sharedTJCVideoManager].videoView.mainView
-					 withTJCTransition:[[TJCViewCommons sharedObject] getCurrentTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject] getTransitionDelay]];
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons] getTransitionDelay]];
 }
 
 
@@ -71,7 +71,11 @@
 
 + (void)initVideoAdWithDelegate:(id<TJCVideoAdDelegate>)delegate
 {
+#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_3_2	
 	[[TJCVideoManager sharedTJCVideoManager] initVideoAdsWithDelegate:delegate];
+#else
+	[TJCLog logWithLevel:LOG_NONFATAL_ERROR format:@"Error: Videos require iOS version 3.2 or higher, initialization ignored"];
+#endif
 }
 
 

@@ -13,30 +13,46 @@
 #import "TJCLog.h"
 
 
-static TJCFeaturedAppViewHandler *sharedTJCFeaturedAppViewHandler_ = nil;
 
 @implementation TJCFeaturedAppViewHandler
 
+@synthesize featuredAppView = featuredAppView_;
+
+TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCFeaturedAppViewHandler)
 
 
-+ (TJCFeaturedAppViewHandler*)sharedTJCFeaturedAppViewHandler
+- (id)init
 {
-    if (!sharedTJCFeaturedAppViewHandler_)
-    {
-        sharedTJCFeaturedAppViewHandler_ = [[super alloc] init];
-    }
-    
-    return sharedTJCFeaturedAppViewHandler_;
+	self = [super init];
+
+	if (self)
+	{
+		[[NSNotificationCenter defaultCenter] removeObserver:self name:TJC_FEATURED_WEBVIEW_CLOSE_NOTIFICATION object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self 
+															  selector:@selector(removeFeaturedWebView) 
+																	name:TJC_FEATURED_WEBVIEW_CLOSE_NOTIFICATION
+																 object:nil];
+	}
+
+	return self;
 }
 
 
-- (id)initWithFrame:(CGRect)frame 
+- (void)dealloc
 {
-	if ((self = [super initWithFrame:frame])) 
+	[featuredAppView_ release];
+	[super dealloc];
+}
+
+
+- (void)removeFeaturedWebView
+{
+	if ([[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView])
 	{
-		// Initialization code
+		[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] removeFromSuperview];
+		[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] release];
+		[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler].featuredAppView = nil;
 	}
-	return self;
 }
 
 
@@ -48,15 +64,16 @@ static TJCFeaturedAppViewHandler *sharedTJCFeaturedAppViewHandler_ = nil;
 
 + (UIView*)showFullScreenAdWithURL:(NSString *)adURL withFrame:(CGRect)frame
 {
-	//[[TJCFeaturedAppView sharedTJCFeaturedAppView] initWithFrame:frame];
-	[[TJCFeaturedAppView sharedTJCFeaturedAppView] refreshWithFrame:frame];
-	[[TJCFeaturedAppView sharedTJCFeaturedAppView] loadViewWithURL:adURL];
+	[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] removeFeaturedWebView];
+	[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler].featuredAppView = [[TJCFeaturedAppView alloc] initWithFrame:frame];
+
+	[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] loadViewWithURL:adURL];
 	
-	[TJCViewCommons animateTJCView:[TJCFeaturedAppView sharedTJCFeaturedAppView]
-					 withTJCTransition:[[TJCViewCommons sharedObject] getCurrentTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject] getTransitionDelay]];
+	[TJCViewCommons animateTJCView:[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView]
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons] getTransitionDelay]];
 	
-	return [TJCFeaturedAppView sharedTJCFeaturedAppView];
+	return [[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView];
 }
 
 
@@ -67,22 +84,19 @@ static TJCFeaturedAppViewHandler *sharedTJCFeaturedAppViewHandler_ = nil;
 		NSAssert(NO,@"View Controller provided must not be nil or some other object");
 	}
 	
-	//[[TJCFeaturedAppView sharedTJCFeaturedAppView] initWithFrame:vController.view.bounds];
-	[[TJCFeaturedAppView sharedTJCFeaturedAppView] refreshWithFrame:vController.view.bounds];
-	[[TJCFeaturedAppView sharedTJCFeaturedAppView] loadViewWithURL:adURL];
+	[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] removeFeaturedWebView];
+	[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler].featuredAppView = [[TJCFeaturedAppView alloc] initWithFrame:vController.view.bounds];
+
+	[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] loadViewWithURL:adURL];
 	
-	[vController.view addSubview:[TJCFeaturedAppView sharedTJCFeaturedAppView]];
+	[vController.view addSubview:[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView]];
 	
-	[TJCViewCommons animateTJCView:[TJCFeaturedAppView sharedTJCFeaturedAppView]
-					 withTJCTransition:[[TJCViewCommons sharedObject] getCurrentTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject] getTransitionDelay]];
+	[TJCViewCommons animateTJCView:[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView]
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons] getCurrentTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons] getTransitionDelay]];
 	
 }
 
-- (void)dealloc 
-{
-	[super dealloc];
-}
 
 @end
 
@@ -145,6 +159,12 @@ static TJCFeaturedAppViewHandler *sharedTJCFeaturedAppViewHandler_ = nil;
 + (void)setFeaturedAppDisplayCount:(int) displayCount
 {
 	[[TJCFeaturedAppManager sharedTJCFeaturedAppManager] setFeaturedAppDisplayCount:displayCount];
+}
+
+
++ (void)setFeaturedAppDelayCount:(int)delayCount
+{
+	[[TJCFeaturedAppManager sharedTJCFeaturedAppManager] setFeaturedAppDelayCount:delayCount];
 }
 
 

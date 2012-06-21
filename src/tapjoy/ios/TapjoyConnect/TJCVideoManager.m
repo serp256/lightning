@@ -12,24 +12,15 @@
 #import "TapjoyConnectConstants.h"
 #import "TJCVideoViewHandler.h"
 #import "TJCConstants.h"
+#import "SynthesizeSingleton.h"
 
-
-static TJCVideoManager *sharedTJCVideoManager_ = nil;
 
 @implementation TJCVideoManager
 
+TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
+
 @synthesize videoView = videoView_, requestHandler = requestHandler_, currentOrientation = currentOrientation_, shouldShowVideos = shouldShowVideos_;
 
-
-+ (TJCVideoManager*)sharedTJCVideoManager
-{
-	if (!sharedTJCVideoManager_)
-	{
-		sharedTJCVideoManager_ = [[super alloc] init];
-	}
-	
-	return sharedTJCVideoManager_;
-}
 
 
 - (id)init
@@ -121,7 +112,7 @@ static TJCVideoManager *sharedTJCVideoManager_ = nil;
 
 - (void)fetchResponseSuccessWithData:(void*)dataObj withRequestTag:(int)aTag
 {
-	TBXMLElement *videoElement = [TBXML childElementNamed:@"TapjoyVideo" parentElement:dataObj];
+	TJCTBXMLElement *videoElement = [TJCTBXML childElementNamed:@"TapjoyVideo" parentElement:dataObj];
 	
 	// Temporary dictionary for new video objects, which will be compared to locally saved one to make sure we clear out old videos from the cache.
 	NSMutableDictionary *videoDict = [[NSMutableDictionary alloc] init];
@@ -137,7 +128,7 @@ static TJCVideoManager *sharedTJCVideoManager_ = nil;
 		
 		[videoObj release];
 		
-		videoElement = [TBXML nextSiblingNamed:@"TapjoyVideo" searchFromElement:videoElement];
+		videoElement = [TJCTBXML nextSiblingNamed:@"TapjoyVideo" searchFromElement:videoElement];
 	}
 	
 	// Save dictionary that contains all the videos for reference.
@@ -239,9 +230,19 @@ static TJCVideoManager *sharedTJCVideoManager_ = nil;
 		NSDictionary *videoObjDict = [unCachedVideoObjects_ objectAtIndex:downloadIndex_];
 		
 		NSURL *url = [NSURL URLWithString:[videoObjDict objectForKey:TJC_VIDEO_OBJ_VIDEO_URL]];
-		NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:30.0];
+		NSURLRequest *request = [NSURLRequest requestWithURL:url
+															  cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData 
+														 timeoutInterval:30.0];
 		connection_ = [[NSURLConnection alloc] initWithRequest:request delegate:self];
 	}
+}
+
+
+- (NSCachedURLResponse*)connection:(NSURLConnection*)connection willCacheResponse:(NSCachedURLResponse*)cachedResponse 
+{
+	// Returning nil will ensure that no cached response will be stored for the connection.
+	// This is in case the cache is being used by something else.
+	return nil;
 }
 
 
@@ -249,6 +250,8 @@ static TJCVideoManager *sharedTJCVideoManager_ = nil;
 {
 	[TJCLog logWithLevel: LOG_NONFATAL_ERROR
 					  format: @"%s: %d; %s; video download failure: %@", __FILE__, __LINE__, __PRETTY_FUNCTION__, [error localizedFailureReason]];
+	
+	[TapjoyConnect clearCache];
 }
 
 
@@ -264,6 +267,12 @@ static TJCVideoManager *sharedTJCVideoManager_ = nil;
 
 - (void)connectionDidFinishLoading:(NSURLConnection*)theConnection 
 {
+	if ([unCachedVideoObjects_ count] <= 0)
+	{
+		// No uncached video objects to cache, return.
+		return;
+	}
+	
 	NSMutableDictionary *videoObjDict = [NSMutableDictionary dictionaryWithDictionary:[unCachedVideoObjects_ objectAtIndex:downloadIndex_]];
 	
 	[connection_ release];
@@ -300,6 +309,8 @@ static TJCVideoManager *sharedTJCVideoManager_ = nil;
 		// Download next video.
 		[self beginVideoCaching];
 	}
+	
+	[TapjoyConnect clearCache];
 }
 
 

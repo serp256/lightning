@@ -1055,6 +1055,18 @@ value assets (s:Stage.c) =
     Lightning.extractAssets ();
   );
     
+value udid (self:Stage.c) = 
+  let text = 
+    match TapjoyConnect.getOpenUDID () with
+    [ None -> "NONE"
+    | Some udid -> udid
+    ]
+  in
+  let (_,text) = TLF.create (TLF.p [`text text]) in
+  (
+    text#setY 100.;
+    self#addChild text;
+  );
 
 let stage width height = 
   object(self)
@@ -1119,6 +1131,7 @@ let stage width height =
 (*           quad self; *)
           (* hardware self; *)
 (*           glow_and_gc self; *)
+       udid self;
     end;
   end
 in
