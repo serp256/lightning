@@ -12,7 +12,7 @@ OAUTH = ../src/social/oauth/oauth.cma
 example.byte: $(MLFILES) example.cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
 	-I ../src ../src/lightning.cma $(OAUTH) $(SOCIAL) $(MLFILES) example.cmo \
-	-package curl,bigarray,extlib,xmlm,ojson,threads -thread -linkpkg 
+	-package bigarray,extlib,xmlm,ojson,threads -thread -linkpkg 
 
 example.cmo: $(MLFILES)
 

@@ -65,10 +65,12 @@ ifeq ($(PLATFORM),IOS)
 		#MLCOMPFLAGS += -package curl,threads -thread
 		SDLFLAGS = $(shell ${SDLCONFIG} --libs)
 		ifeq ($(OS),macos)
-			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-framework\ Cocoa'  -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+			#LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-framework\ Cocoa'  -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -framework Cocoa  -lSDL_image -lSDLmain -framework OpenGL
 		else
 			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
 		endif
+		LIBFLAGS += -lcurl
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	endif
 	endif

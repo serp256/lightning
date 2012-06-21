@@ -1027,7 +1027,7 @@ value assets (s:Stage.c) =
         match touches_of_data ev.Ev.data with
         [ Some [ touch :: _ ] ->
           Touch.(
-            let () = debug "touch id: %ld" touch.tid in
+(*             let () = debug "touch id: %ld" touch.tid in *)
               match touch.phase with
               [ TouchPhaseEnded ->
                 let img1 = Image.load "Russia.png" in
@@ -1036,7 +1036,7 @@ value assets (s:Stage.c) =
                   img1#setX 200.;
                   img1#setY 200.;
                 )
-              | _ -> debug "some other phase"
+              | _ -> () (* debug "some other phase" *)
               ]
           )
         | _ -> ()
@@ -1061,8 +1061,10 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      debug "START OCAML, locale: %s" (Lightning.getLocale());
-      assets self;
+(*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
+(*       assets self; *)
+      quad self;
+      tweens self;
       (* touchesTest self; *)
 
 (*       accelerometer (); *)
@@ -1085,7 +1087,7 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-       (* tlf self;  *)
+       tlf self; 
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
