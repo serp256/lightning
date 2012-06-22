@@ -15,7 +15,7 @@ type request =
 value get_header name headers = 
   let name = String.lowercase name in
   try
-    let hv = MList.find_map (fun (hn,hv) -> match String.lowercase hn = name with [ True -> Some hv | False -> None ]) headers in
+    let hv = MList.find_map_raise (fun (hn,hv) -> match String.lowercase hn = name with [ True -> Some hv | False -> None ]) headers in
     Some hv
   with [ Not_found -> None ];
 

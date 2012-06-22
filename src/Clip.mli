@@ -35,7 +35,7 @@ class type virtual c =
 
 type labels = Hashtbl.t string int;
 
-class virtual base ['frame] : [ ~fps:int ] -> [ ~frames:array (cFrame 'frame)] -> [~labels:labels] ->  (*{{{*)
+class virtual base ['frame] : [ ~fps:int ] -> [ ~frames:array (cFrame 'frame)] -> [~labels:labels] ->
   object
     inherit c;
     value currentFrameID: int;

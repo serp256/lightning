@@ -8,11 +8,20 @@ type mut_list 'a =  {
 external inj : mut_list 'a -> list 'a = "%identity";
 value dummy_node () = { hd = Obj.magic (); tl = [] };
 
+value rec find_map_raise f = fun
+	[ [] -> raise Not_found
+	| [ x :: xs ] ->
+		match f x with
+		[ Some y -> y
+		| None -> find_map_raise f xs
+		]
+	];
+
 value rec find_map f = fun
-  [ [] -> raise Not_found
+  [ [] -> None
   | [ x :: xs ] ->
       match f x with
-      [ Some y -> y
+      [ Some y as res -> res
       | None -> find_map f xs
       ]
   ];

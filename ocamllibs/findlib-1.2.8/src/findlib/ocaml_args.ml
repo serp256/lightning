@@ -3,6 +3,10 @@ let ocamlc_spec = Some [
   false,
   " Build a library";
 
+  "-absname",
+  false,
+  "  Show absolute filenames in error message";
+
   "-annot",
   false,
   " Save information in <filename>.annot";
@@ -139,6 +143,10 @@ let ocamlc_spec = Some [
   false,
   " Allow arbitrary recursive types";
 
+  "-runtime-variant",
+  true,
+  "<str>  Use the <str> variant of the run-time system";
+
   "-strict-sequence",
   false,
   " Left-hand part of a sequence must have type unit";
@@ -185,7 +193,7 @@ let ocamlc_spec = Some [
 
   "-",
   true,
-  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27..29\"";
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..38\"";
 
   "-warn-error",
   true,
@@ -507,7 +515,7 @@ let ocamlmklib_spec = Some [
 
   "-I",
   true,
-  "<dir>       Add <dir> to the path searched for Caml object files";
+  "<dir>       Add <dir> to the path searched for OCaml object files";
 
   "-failsafe",
   false,
@@ -519,7 +527,7 @@ let ocamlmklib_spec = Some [
 
   "-linkall",
   false,
-  "      Build Caml archive with link-all behavior";
+  "      Build OCaml archive with link-all behavior";
 
   "-l",
   true,
@@ -539,7 +547,7 @@ let ocamlmklib_spec = Some [
 
   "-o",
   true,
-  "<name>      Generated Caml library is named <name>.cma or <name>.cmxa";
+  "<name>      Generated OCaml library is named <name>.cma or <name>.cmxa";
 
   "-oc",
   true,
@@ -835,6 +843,10 @@ let ocamlopt_spec = Some [
   false,
   " Build a library";
 
+  "-absname",
+  false,
+  "  Show absolute filenames in error message";
+
   "-annot",
   false,
   " Save information in <filename>.annot";
@@ -959,6 +971,10 @@ let ocamlopt_spec = Some [
   false,
   " Allow arbitrary recursive types";
 
+  "-runtime-variant",
+  true,
+  "<str>  Use the <str> variant of the run-time system";
+
   "-S",
   false,
   " Keep intermediate assembly file";
@@ -1001,7 +1017,7 @@ let ocamlopt_spec = Some [
 
   "-",
   true,
-  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27..29\"";
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..38\"";
 
   "-warn-error",
   true,
@@ -1031,6 +1047,10 @@ let ocamlopt_spec = Some [
   false,
   " (undocumented)";
 
+  "-dclambda",
+  false,
+  " (undocumented)";
+
   "-dcmm",
   false,
   " (undocumented)";
@@ -1048,6 +1068,10 @@ let ocamlopt_spec = Some [
   " (undocumented)";
 
   "-dspill",
+  false,
+  " (undocumented)";
+
+  "-dsplit",
   false,
   " (undocumented)";
 
@@ -1106,6 +1130,10 @@ let ocamldep_spec = Some [
   true,
   "<e> Consider <e> as a synonym of the .mli extension";
 
+  "-sort",
+  false,
+  " Sort files according to their dependencies";
+
   "-modules",
   false,
   " Print module dependencies in raw form (not suitable for make)";
@@ -1113,6 +1141,14 @@ let ocamldep_spec = Some [
   "-native",
   false,
   "  Generate dependencies for a pure native-code project (no .cmo files)";
+
+  "-all",
+  false,
+  "  Generate dependencies on all files (not accommodating for make shortcomings)";
+
+  "-one-line",
+  false,
+  "  Output one line per file, regardless of the length";
 
   "-pp",
   true,
@@ -1128,7 +1164,7 @@ let ocamldep_spec = Some [
 
   "-vnum",
   false,
-  " Print version number and exit";
+  "    Print version number and exit";
 
 ];;
 

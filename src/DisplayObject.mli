@@ -1,4 +1,5 @@
 
+open ExtList;
 open LightCommon;
 
 value ev_ADDED: Ev.id;
@@ -8,7 +9,7 @@ value ev_REMOVED_FROM_STAGE: Ev.id;
 value ev_ENTER_FRAME: Ev.id;
 
 
-type hidden 'a;
+(* type hidden 'a; *)
 exception Invalid_index of (int*int);
 exception Child_not_found;
 
@@ -21,7 +22,7 @@ class virtual _c [ 'parent ] :
     type 'displayObject = _c 'parent;
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; 
+        asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit;
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; boundsChanged: unit -> unit; .. >;
 (*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
 
@@ -30,6 +31,7 @@ class virtual _c [ 'parent ] :
     method removeEventListener: Ev.id -> int -> unit;
     method dispatchEvent': Ev.t -> _c _ -> unit;
     method dispatchEvent: Ev.t -> unit;
+		method virtual dispatchEventGlobal: Ev.t -> unit;
     method hasEventListeners: Ev.id -> bool;
 
 
@@ -81,7 +83,7 @@ class virtual _c [ 'parent ] :
     method removeFromParent: unit -> unit;
     method virtual filters: list Filters.t;
     method virtual setFilters: list Filters.t -> unit;
-    method private hitTestPoint': Point.t -> bool -> option (_c _);
+    method virtual private hitTestPoint': Point.t -> bool -> option (_c _);
     method hitTestPoint: Point.t -> bool -> option (_c _) ;
     method virtual bounds: Rectangle.t;
     method transformationMatrix: Matrix.t;
@@ -99,11 +101,13 @@ class virtual _c [ 'parent ] :
     method virtual dcast: [= `Object of _c _ | `Container of 'parent ];
     method root: _c _;
     method stage: option 'parent;
+    method bounds: Rectangle.t;
     method boundsChanged: unit -> unit; 
 
     (* need to be hidden *)
-    method clearParent: hidden unit -> unit;
-    method setParent: hidden 'parent -> unit;
+    method clearParent: (* hidden *) unit -> unit;
+    method setParent: (* hidden *) 'parent -> unit;
+		method classes: list exn;
   end;
 
 
@@ -115,8 +119,8 @@ class virtual container:
 
     method dcast: [= `Object of 'displayObject | `Container of container ];
 
-    method bounds: Rectangle.t;
     method asDisplayObjectContainer: container;
+		method dispatchEventGlobal: Ev.t -> unit;
     method children: Enum.t 'displayObject;
     method addChild: !'child. ?index:int -> (#_c container as 'child) -> unit;
     method containsChild: !'child. (#_c container as 'child) -> bool;
@@ -134,10 +138,11 @@ class virtual container:
     method removeChild': 'displayObject -> unit;
     method containsChild': 'displayObject -> bool;
     method clearChildren: unit -> unit;
-    method dispatchEventOnChildren: Ev.t -> unit;
+(*     method dispatchEventOnChildren: Ev.t -> unit; *)
     method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
+		method classes: list exn;
   end;
 
 
@@ -145,5 +150,6 @@ class virtual c:
   object
     inherit _c  [ container ];
     method dcast: [= `Object of c | `Container of container ];
-    method bounds: Rectangle.t;
+    method private hitTestPoint': Point.t -> bool -> option ('displayObject);
+		method dispatchEventGlobal: Ev.t -> unit;
   end;
