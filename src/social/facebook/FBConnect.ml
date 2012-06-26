@@ -39,8 +39,6 @@ module Session = struct
     auth_status.val := Authorized;
   );
 
-
-
   value facebook_session_invalidated () = 
   (  
     match !auth_status with
@@ -57,10 +55,8 @@ module Session = struct
     auth_status.val := NotAuthorized;
   );
 
-
   value facebook_logged_out  = facebook_session_invalidated;
   value facebook_login_cancelled  = facebook_session_invalidated;
-
 
   value authorize perms = 
     match ios_facebook_check_auth_token () with

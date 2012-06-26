@@ -146,7 +146,7 @@ value call_method ?delegate meth params =
   (* функция показа авторизации. при успехе выполняем REST метод *)
   let show_auth () = 
     let redirect_uri = "http://api.vk.com/blank.html"
-    and params = [("display", "touch")]
+    and params = [("display", "touch"); ("scope", "friends,notify")]
     and callback = fun 
       [ OAuth.Token  t ->  
           let access_token_info = 
