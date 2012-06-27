@@ -2,10 +2,6 @@ value init : string -> unit;
 
 module Session : 
   sig
-    type status = [ NotAuthorized | Authorizing of Queue.t (bool -> unit) | Authorized ];
-
-    value auth_status : ref status;
-
     value permissions : ref (list string);
     value get_auth_token : unit -> string;
     value authorize : list string -> unit;
