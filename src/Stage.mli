@@ -13,6 +13,7 @@ value screenSize: unit -> (float * float);
 
 
 value ev_TOUCH: Ev.id;
+value ev_UNLOAD: Ev.id;
 value touches_of_data: (Ev.data -> option (list Touch.t));
 value data_of_touches: (list Touch.t -> Ev.data);
 
@@ -41,4 +42,5 @@ class virtual c: [ float ] -> [ float ] ->
     method setFilters: list Filters.t -> unit;
     method cacheAsImage: bool;
     method setCacheAsImage: bool -> unit;
+    method onUnload: unit -> unit;
   end;
