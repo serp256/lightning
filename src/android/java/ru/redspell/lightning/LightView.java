@@ -17,6 +17,7 @@ import android.graphics.Bitmap;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.Intent;
 import android.media.SoundPool;
 import android.view.SurfaceHolder;
 import android.content.Context;
@@ -25,6 +26,8 @@ import java.io.FileOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URI;
+import java.util.Locale;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.AsyncTask;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -268,6 +271,7 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void onDestroy() {
+
 		Log.d("LIGHTNING","VIEW.onDestroy");
 		lightFinalize();
 	}
@@ -463,6 +467,26 @@ public class LightView extends GLSurfaceView {
 	}
 
 	private native void assetsExtracted(String assetsDir);
+
+
+  public void openURL(String url){
+		Context c = getContext();
+    Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+		c.startActivity(i);
+	}
+
+  private String supportEmail = "mail@redspell.ru";
+	public void setSupportEmail(String d){
+		supportEmail = d;
+	}
+
+	public void addExceptionInfo(String d){
+    openURL(supportEmail);
+	}
+
+  public String mlGetLocale () {
+		return Locale.getDefault().getLanguage();
+	}
 
 /*	{
 		this.assetsDir = assetsDir;
