@@ -28,6 +28,7 @@ open LightCommon;
         | _ -> 
           let vertexCoords = Render.Quad.points quad in
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
+          let () = debug:matrix "call transformPoints" in
           let ar = Matrix.transformPoints transformationMatrix vertexCoords in
           Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
         ];

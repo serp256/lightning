@@ -28,7 +28,7 @@
  */
 -(id)initWithURL:(value)mlURL closeButton:(value)mlCloseButton {
 	self = [super init];
-	NSLog(@"init OAUTH");
+	//NSLog(@"init OAUTH");
 
 	if (self != nil) {
 		self.modalPresentationStyle = UIModalPresentationFormSheet;
@@ -223,7 +223,7 @@
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)loadView {                                                                                                                                                                       
-	NSLog(@"OAUTH load view");
+	//NSLog(@"OAUTH load view");
 	CGRect rect = [UIScreen mainScreen].applicationFrame; 
 	_webview = [[UIWebView alloc] initWithFrame: rect];                                                                                                                                 
 	_webview.delegate = self;                                                                                                                                                           
@@ -254,7 +254,7 @@
 }
 
 -(void)viewDidUnload {
-	NSLog(@"VIEW did unload");
+	//NSLog(@"VIEW did unload");
 	if (_closeButton) [_closeButton release];
 	_webview.delegate = nil;
 	[_webview release];
@@ -312,7 +312,7 @@
 		return;
 	}
 	_authorizing = NO;
-	NSLog(@"didFailLoad %@", error.localizedDescription);
+	//NSLog(@"didFailLoad %@", error.localizedDescription);
 	[_spinner stopAnimating];
 	NSString * errorUrl = [NSString stringWithFormat: @"%@#error=server_error&error_description=webViewdidFailLoadWithError", _redirectURIpath];
 	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
@@ -328,7 +328,7 @@
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)webViewDidFinishLoad:(UIWebView *)webView {                                                                                                                                      
-  NSLog(@"Finished loading '%@'", webView.request.URL.absoluteString);
+  //NSLog(@"Finished loading '%@'", webView.request.URL.absoluteString);
 
   if (!_authorizing) {
     return;
@@ -360,7 +360,7 @@
  *
  */
 -(void)webViewDidStartLoad:(UIWebView *)webView {
-	NSLog(@"didStartLoad '%@'", webView.request.URL.absoluteString);
+	//NSLog(@"didStartLoad '%@'", webView.request.URL.absoluteString);
 	[_spinner startAnimating];
 }
 
@@ -368,7 +368,7 @@
  *
  */
 -(BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
-	NSLog(@"Should start %@, paths: [%@ = %@]",request.URL.absoluteString,request.URL.path,_redirectURIpath);
+	//NSLog(@"Should start %@, paths: [%@ = %@]",request.URL.absoluteString,request.URL.path,_redirectURIpath);
 	
 	if ([request.URL.path isEqualToString: _redirectURIpath]) {
 		if (_authorizing) {
@@ -380,7 +380,7 @@
 			value * mlf = (value*)caml_named_value("oauth_redirected"); 
 			caml_callback(*mlf, caml_copy_string([request.URL.absoluteString UTF8String]));
 			caml_release_runtime_system();        
-			NSLog(@"ml callback successfully called");
+			//NSLog(@"ml callback successfully called");
 			return NO;
 		}
 	}
@@ -389,7 +389,7 @@
 
 
 -(void)dealloc {
-	NSLog(@"DEALLOC OAUTH!!!! %p",self);
+	//NSLog(@"DEALLOC OAUTH!!!! %p",self);
 	if (_closeButton) [_closeButton release];
 	if (_spinner) [_spinner release];
 	if (_webview) {

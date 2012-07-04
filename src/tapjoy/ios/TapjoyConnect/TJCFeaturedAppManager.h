@@ -10,6 +10,8 @@
 #import <Foundation/Foundation.h>
 #import "TJCFetchResponseProtocol.h"
 
+#define TJC_FEATURED_APP_DELAY_COUNT	@"TJC_FEATURED_APP_DELAY_COUNT"
+
 @class TJCFeaturedAppModel;
 @class TJCFeaturedAppRequestHandler;
 
@@ -22,6 +24,8 @@
 	TJCFeaturedAppRequestHandler *featuredAppHandlerObj_;
 	TJCFeaturedAppModel *featuredAppModelObj_;
 	int featuredAppDisplayCount_;
+	int delayDisplayCount_;		/*!< The counter for featured ad display. */
+	int delayDisplayCountMax_;	/*!< The number of times the app must run (since app installation) before a featured ad will be displayed. */
 }
 
 @property (nonatomic, retain) TJCFeaturedAppModel *featuredAppModelObj;
@@ -71,6 +75,14 @@
  *	\return n/a
  */
 - (void)setFeaturedAppDisplayCount:(int)displayCount;
+
+/*!	\fn setFeaturedAppDelayCount:(int)delayCount
+ *	\brief Sets the delay count for featured app.
+ *
+ *	\param delayCount The number of times that the app must run (since initial app install) before a featured ad can be displayed.
+ *	\return n/a
+ */
+- (void)setFeaturedAppDelayCount:(int)delayCount;
 
 /*!	\fn releaseFeaturedAppHandler
  *	\brief Releases the featured application handler object.

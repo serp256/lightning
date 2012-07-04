@@ -22,14 +22,12 @@ static const float FULLSCREEN_AD_BORDER_SIZE = 3.0f;
 @interface TJCFeaturedAppView : TJCUIWebPageView 
 {
 	NSString *currencyID_;				/*!< The last currency ID passed in. Used to show the proper currency if the offer wall is opened from the featured view. */
-	NSString *publisherUserID_;		/*!< The publisher ID. */
+	UIButton *backButton_;
 }
 
 
 @property (copy) NSString *currencyID_;
-@property (copy) NSString *publisherUserID_;
 
-+ (TJCFeaturedAppView*) sharedTJCFeaturedAppView;
 
 /*!	\fn refreshWithFrame:(CGRect)frame
  *	\brief Refreshes the #TJCFeaturedAppView with the given GCRect frame.
@@ -55,14 +53,6 @@ static const float FULLSCREEN_AD_BORDER_SIZE = 3.0f;
  *	\return The result URL.
  */
 - (NSString*)setUpFeaturedAdURLWithServiceURL:(NSString*)serviceURL;
-
-/*!	\fn initializeWebViewUI
- *	\brief Initializes the web page view.
- *
- *	\param n/a
- *	\return n/a
- */
-- (void) initializeWebViewUI;
 
 - (void) backtoGameAction:(id) sender;
 

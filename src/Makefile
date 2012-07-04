@@ -5,7 +5,7 @@ CFLAGS += -I .
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
-MOBJS = light_common.o texture_common.o texture_async_loader.o filters_stub.o render_stub.o
+MOBJS = light_common.o texture_common.o texture_pvr.o texture_async_loader.o filters_stub.o render_stub.o
 
 light_common.o: light_common.h
 texture_common.o: texture_common.h light_common.h
@@ -49,26 +49,28 @@ ifeq ($(PLATFORM),IOS)
 	else
 	ifeq ($(PLATFORM),ANDROID)
 		MLCOPTS += -D__ANDROID__
-		MOBJS += mlwrapper.o android/mlwrapper_android.o android/texture_android.o
+		MOBJS += mlwrapper.o net_curl.o android/mlwrapper_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
-		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg'
+		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl'
 	else
 	ifeq ($(PLATFORM),GLUT)
 		MOBJS += glut/glut_stub.o 
 		BMLSOURCES = glut/glut.ml
 	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
-		MOBJS += sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
+		MOBJS += net_curl.o sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
 		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
 		AMLSOURCES = sdl/sdl_run.ml
 		MLOBJSFLAGS = -I sdl
-		MLCOMPFLAGS += -package curl,threads -thread
+		#MLCOMPFLAGS += -package curl,threads -thread
 		SDLFLAGS = $(shell ${SDLCONFIG} --libs)
 		ifeq ($(OS),macos)
-			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-framework\ Cocoa'  -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+			#LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-framework\ Cocoa'  -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -framework Cocoa  -lSDL_image -lSDLmain -framework OpenGL
 		else
 			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
 		endif
+		LIBFLAGS += -lcurl
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	endif
 	endif

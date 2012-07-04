@@ -8,7 +8,7 @@
 
 
 #import <Foundation/Foundation.h>
-#import "TBXML.h"
+#import "TJCTBXML.h"
 
 
 /*!	\interface TJCUserAccountModel
@@ -29,21 +29,21 @@
 @property (nonatomic, retain) NSString * currencyName;
 
 
-/*!	\fn initWithTBXML:(TBXMLElement*)aXMLElement
+/*!	\fn initWithTBXML:(TJCTBXMLElement*)aXMLElement
  *	\brief Initializes the user account model object with the given xml data.
  *
  *	\param aXMLElement The XML data includes information such as currency name, id, and amount.
  *	\return n/a
  */
-- (id)initWithTBXML:(TBXMLElement*)aXMLElement;
+- (id)initWithTBXML:(TJCTBXMLElement*)aXMLElement;
 
-/*!	\fn updateWithTBXML:(TBXMLElement*)aXMLElement;
+/*!	\fn updateWithTBXML:(TJCTBXMLElement*)aXMLElement;
  *	\brief Updates the user account model object with the given xml data.
  *
  *	\param aXMLElement The XML data includes information such as currency name, id, and amount.
  *	\param checkEarnedPoints Indicates whether earned points and notification should be checked. This is specifically to prevent a bug where the earned alert pops up after a virtual good is purchased.
  *	\return n/a
  */
-- (void)updateWithTBXML:(TBXMLElement*)aXMLElement shouldCheckEarnedPoints:(BOOL)checkEarnedPoints;
+- (void)updateWithTBXML:(TJCTBXMLElement*)aXMLElement shouldCheckEarnedPoints:(BOOL)checkEarnedPoints;
 
 @end

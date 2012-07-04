@@ -40,7 +40,7 @@
 		navBarTitle = [[UINavigationItem alloc] initWithTitle:title];
 		self.items = [NSArray arrayWithObject:navBarTitle];
 		
-		[self setTintColor: [[TJCViewCommons sharedObject] getUserDefinedColor]];
+		[self setTintColor: [[TJCViewCommons sharedTJCViewCommons] getUserDefinedColor]];
 		[self setAutoresizingMask: UIViewAutoresizingFlexibleWidth];
 		[self setAutoresizingMask: UIViewAutoresizingFlexibleWidth];
 	}
@@ -53,7 +53,7 @@
 	UIImageView *bgImageView = [[UIImageView alloc] initWithImage:image];
 	
 	[self addSubview:bgImageView];
-	[self sendSubviewToBack:bgImageView];
+	//[self sendSubviewToBack:bgImageView];
 	
 	[bgImageView release];
 }

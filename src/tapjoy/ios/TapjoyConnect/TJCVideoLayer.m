@@ -13,6 +13,7 @@
 #import "TJCVideoObject.h"
 #import "TJCVideoManager.h"
 #import "TJCVideoRequestHandler.h"
+#import "TJCUIWebPageView.h"
 
 
 @implementation TJCVideoLayer
@@ -24,20 +25,21 @@ fileName = fileName_,
 linkURLString = linkURLString_,
 offerID = offerID_,
 isFinishedWatching = isFinishedWatching_,
-shouldDisplayLogo = shouldDisplayLogo_;
+shouldDisplayLogo = shouldDisplayLogo_,
+webView = webView_;
 
 
 - (void)setVideoView:(UIView*)view
 {
 	[self setFrame:view.bounds];
 	[videoFeed_.view setFrame:view.bounds];
-	[webView_ setFrame:CGRectMake(0, navBar_.frame.size.height, view.bounds.size.width, view.bounds.size.height - navBar_.frame.size.height)];
+	[completeScreenView_ setFrame:view.bounds];
+	[completeScreenView_ setBackgroundColor:[UIColor clearColor]];
+	[webView_ refreshWithFrame:view.bounds];
 	[webView_ setBackgroundColor:[UIColor scrollViewTexturedBackgroundColor]];
-	[videoCompleteView_ setFrame:view.bounds];
-	
 	[self addSubview:videoFeed_.view];
-	[self addSubview:webView_];
-	[self addSubview:videoCompleteView_];
+	
+	[self addSubview:completeScreenView_];
 	
 	[self addSubview:statusLabel_];
 	[self bringSubviewToFront:statusLabel_];
@@ -46,60 +48,8 @@ shouldDisplayLogo = shouldDisplayLogo_;
 	[self addSubview:closeButton_];
 	[self bringSubviewToFront:closeButton_];
 	
-	// Apply some UI customization.
-	float cornerRadiusSize = TJC_VIDEO_CORNER_RADIUS;
-	float borderWidth = TJC_VIDEO_BORDER_WIDTH;
-	if ([TJCUtil isPad])
-	{
-		cornerRadiusSize = TJC_VIDEO_CORNER_RADIUS_IPAD;
-		borderWidth = TJC_VIDEO_BORDER_WIDTH_IPAD;
-	}
-	
-	[messageView_.layer setCornerRadius:cornerRadiusSize];
-	[messageView_.layer setMasksToBounds:YES];
-	[messageView_.layer setBorderWidth:borderWidth];
-	[messageView_.layer setBorderColor:[TJC_HEXCOLOR(TJC_VIDEO_BUTTON_STROKE_COLOR) CGColor]];
-	
-	[replayButton_.layer setCornerRadius:cornerRadiusSize];
-	[replayButton_.layer setMasksToBounds:YES];
-	[replayButton_.layer setBorderWidth:borderWidth];
-	[replayButton_.layer setBorderColor:[TJC_HEXCOLOR(TJC_VIDEO_BUTTON_STROKE_COLOR) CGColor]];
-	
-	[backButton_.layer setCornerRadius:cornerRadiusSize];
-	[backButton_.layer setMasksToBounds:YES];
-	[backButton_.layer setBorderWidth:borderWidth];
-	[backButton_.layer setBorderColor:[TJC_HEXCOLOR(TJC_VIDEO_BUTTON_STROKE_COLOR) CGColor]];
-	
-	// Buttons are initially hidden.
-	[customButton1_.layer setCornerRadius:cornerRadiusSize];
-	[customButton1_.layer setMasksToBounds:YES];
-	[customButton1_.layer setBorderWidth:borderWidth];
-	[customButton1_.layer setBorderColor:[TJC_HEXCOLOR(TJC_VIDEO_BUTTON_STROKE_COLOR) CGColor]];
-	[customButton1_ setAlpha:0];
-	
-	[customButton2_.layer setCornerRadius:cornerRadiusSize];
-	[customButton2_.layer setMasksToBounds:YES];
-	[customButton2_.layer setBorderWidth:borderWidth];
-	[customButton2_.layer setBorderColor:[TJC_HEXCOLOR(TJC_VIDEO_BUTTON_STROKE_COLOR) CGColor]];
-	[customButton2_ setAlpha:0];
-	
-	if (buttons_)
-	{
-		[buttons_ release];
-	}
-	buttons_ = [[NSArray alloc] initWithObjects:customButton1_, customButton2_, nil];
-	
-	
-	if (buttonURLs_)
-	{
-		[buttonURLs_ release];
-	}
-	buttonURLs_ = [[NSMutableArray alloc] init];
-	
-	// Initially, the web view will always be not visible.
-	[webView_ setAlpha:0];
-	// The video complete view will also not be visible.
-	[videoCompleteView_ setAlpha:0];
+	// Initially, the web view will not be visible.
+	[completeScreenView_ setAlpha:0];
 }
 
 
@@ -107,109 +57,27 @@ shouldDisplayLogo = shouldDisplayLogo_;
 {
 	[self setFrame:bounds];
 	[videoFeed_.view setFrame:bounds];
-	[webView_ setFrame:CGRectMake(0, navBar_.frame.size.height, bounds.size.width, bounds.size.height - navBar_.frame.size.height)];
+	[completeScreenView_ setFrame:bounds];
+	[completeScreenView_ setBackgroundColor:[UIColor clearColor]];
 	[webView_ setBackgroundColor:[UIColor scrollViewTexturedBackgroundColor]];
-	[videoCompleteView_ setFrame:bounds];
-}
-
-
-- (void)updateViewPropertiesWithOfferID:(NSString*)offerID
-{
-	NSDictionary* videoObjDict = [[[TJCVideoManager sharedTJCVideoManager] getAllVideosDictionary] objectForKey:offerID];
-	
-	// Get button data and set button properties.
-	NSArray *buttonsData = [videoObjDict objectForKey:TJC_VIDEO_OBJ_BUTTONS];
-	
-	// Kinda gross handling for custom buttons.
-	if ([buttonsData count] > 0)
-	{
-		//for (NSDictionary *buttonDict in buttons)
-		for (int i = 0; i < [buttonsData count]; ++i)
-		{
-			NSDictionary *buttonDict = [buttonsData objectAtIndex:i];
-			NSString *buttonLabel = [buttonDict objectForKey:TJC_VIDEO_BUTTON_LABEL_KEY];
-			NSString *buttonURL = [buttonDict objectForKey:TJC_VIDEO_BUTTON_URL_KEY];
-			
-			UIButton *tmpButton = [buttons_ objectAtIndex:i];
-			
-			[tmpButton setTitle:buttonLabel forState:UIControlStateNormal];
-			[tmpButton setTitle:buttonLabel forState:UIControlStateHighlighted];
-			[tmpButton setTitle:buttonLabel forState:UIControlStateSelected];
-			[tmpButton setAlpha:1];
-			
-			[buttonURLs_ addObject:buttonURL];
-		}
-	}
-	
-	NSString *currencyAmt = [videoObjDict objectForKey:TJC_VIDEO_OBJ_CURRENCY_AMOUNT];
-	NSString *currencyName = [videoObjDict objectForKey:TJC_VIDEO_OBJ_CURRENCY_NAME];
-	NSString *adText = [videoObjDict objectForKey:TJC_VIDEO_OBJ_NAME];
-	
-	NSString *currencyText = [self getDescriptionWithAmountString:currencyAmt currencyName:currencyName adText:adText];
-	
-	[currencyLabelWebView_ loadHTMLString:currencyText baseURL:nil]; 
-}
-
-
-- (void)buttonAction1
-{
-	[self loadWebViewWithURL:[buttonURLs_ objectAtIndex:0]];
-	// JC: NOTE: Web pages are loaded externally now.
-	//	[self transitionToWebView];
-}
-
-
-- (void)buttonAction2
-{
-	[self loadWebViewWithURL:[buttonURLs_ objectAtIndex:1]];
-	// JC: NOTE: Web pages are loaded externally now.
-	//	[self transitionToWebView];	
-}
-
-
-- (NSString*)getDescriptionWithAmountString:(NSString*)amountString currencyName:(NSString*)currencyName adText:(NSString*)adText
-{
-	NSString *currencyText = nil;
-	if ([TJCUtil isPad])
-	{
-		
-		currencyText = [NSString stringWithFormat:@"<html><body><font face=%@ color=%@ size=%@><p>You just earned <font color=%@><b>%@</b></font> %@! <br /> <font color=%@ size=%@><b>%@</b></font></p></font></body></html>", TJC_VIDEO_FONT_TYPE, TJC_VIDEO_FONT_COLOR, TJC_VIDEO_FONT_SIZE_IPAD, TJC_VIDEO_CURRENCY_TEXT_COLOR, amountString, currencyName, TJC_VIDEO_AD_TEXT_FONT_COLOR, TJC_VIDEO_AD_TEXT_FONT_SIZE_IPAD, adText];		
-	}
-	else
-	{
-		currencyText = [NSString stringWithFormat:@"<html><body><font face=%@ color=%@ size=%@><p>You just earned <font color=%@><b>%@</b></font> %@! <br /> <font color=%@ size=%@><b>%@</b></font></p></font></body></html>", TJC_VIDEO_FONT_TYPE, TJC_VIDEO_FONT_COLOR, TJC_VIDEO_FONT_SIZE, TJC_VIDEO_CURRENCY_TEXT_COLOR, amountString, currencyName, TJC_VIDEO_AD_TEXT_FONT_COLOR, TJC_VIDEO_AD_TEXT_FONT_SIZE, adText];
-	}
-	
-	return currencyText;
 }
 
 
 - (IBAction)transitionToWebView
 {
-	[webView_ setAlpha:1];
-	[self bringSubviewToFront:webView_];
-	
+	[completeScreenView_ setAlpha:1];
+	[self bringSubviewToFront:completeScreenView_];
 	
 	[doneButton_ setAlpha:0];
-	[self bringSubviewToFront:backToVideoButton_];
-	[backToVideoButton_ setAlpha:1];
-	
-	// Enable the back to video button.
-	[self enableShowBackToVideoButton:YES];
 }
 
 
 - (IBAction)transitionToVideoView
 {
-	[webView_ setAlpha:0];
-	[self sendSubviewToBack:webView_];
+	[completeScreenView_ setAlpha:0];
+	[self sendSubviewToBack:completeScreenView_];
 	
 	[doneButton_ setAlpha:1];
-	[self sendSubviewToBack:backToVideoButton_];
-	[backToVideoButton_ setAlpha:0];
-	
-	// Disable the back to video button.
-	[self enableShowBackToVideoButton:NO];
 }
 
 
@@ -244,19 +112,19 @@ shouldDisplayLogo = shouldDisplayLogo_;
 	[videoFeed_.view setUserInteractionEnabled:NO];
 	
 	// Init the web view.
-	if (webView_)
+	if (!webView_)
 	{
-		[webView_ release];
+		// Default window frame, is changed later in setVideoView.
+		webView_ = [[TJCUIWebPageView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 	}
-	webView_ = [[UIWebView alloc] init];
+	[webView_ setDelegate:self];
+	[webView_ setViewToTransparent:NO];
 	
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_3_2
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:MPMovieDurationAvailableNotification object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self 
 														  selector:@selector(movieDurationAvailable:)
 																name:MPMovieDurationAvailableNotification
 															 object:nil];
-#endif
 	
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self 
@@ -269,48 +137,28 @@ shouldDisplayLogo = shouldDisplayLogo_;
 }
 
 
-- (void)enableShowBackToVideoButton:(BOOL)enable
-{
-	if (enable)
-	{
-		[backToVideoButton_ setEnabled:YES];
-		[backToVideoButton_ setAlpha:0];
-		
-		[UIView beginAnimations:nil context:nil];
-		[UIView setAnimationDuration:TJC_VIDEO_STATUS_TEXT_FADE_DURATION];
-		[backToVideoButton_ setAlpha:1];
-		[UIView commitAnimations];
-	}
-	else
-	{
-		[backToVideoButton_ setEnabled:NO];
-		[backToVideoButton_ setAlpha:0];
-	}
-}
-
-
 - (void)enableShowVideoCompleteScreen:(BOOL)enable
 {
 	if (enable)
 	{
 		// Fade in view only if not visible.
-		if (videoCompleteView_.alpha < 1)
+		if (completeScreenView_.alpha < 1)
 		{
-			[videoCompleteView_ setAlpha:0];
+			[completeScreenView_ setAlpha:0];
 			[UIView beginAnimations:nil context:nil];
 			[UIView setAnimationDuration:TJC_VIDEO_STATUS_TEXT_FADE_DURATION];
-			[videoCompleteView_ setAlpha:1];
+			[completeScreenView_ setAlpha:1];
 		}
 	}
 	else
 	{
 		// Fade out view only if visible.
-		if (videoCompleteView_.alpha > 0)
+		if (completeScreenView_.alpha > 0)
 		{
-			[videoCompleteView_ setAlpha:1];
+			[completeScreenView_ setAlpha:1];
 			[UIView beginAnimations:nil context:nil];
 			[UIView setAnimationDuration:TJC_VIDEO_STATUS_TEXT_FADE_DURATION];
-			[videoCompleteView_ setAlpha:0];
+			[completeScreenView_ setAlpha:0];
 		}
 	}
 	
@@ -358,14 +206,9 @@ shouldDisplayLogo = shouldDisplayLogo_;
 - (void)movieDurationAvailable:(id)sender
 {
 	duration_ = [videoFeed_ duration];
-	
 	//NSLog(@"Movie Duration:%f", duration_);
-	
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_3_2
 	NSString *statusStr = [NSString stringWithFormat:@"%d seconds left", (int)duration_];
-#else
-	NSString *statusStr = [NSString stringWithFormat:@"Application will resume shortly", (int)duration_];
-#endif
+
 	
 	[statusLabel_ setText:statusStr];
 }
@@ -389,7 +232,6 @@ shouldDisplayLogo = shouldDisplayLogo_;
 	if (offerID_)
 	{
 		[[[TJCVideoManager sharedTJCVideoManager] requestHandler] requestVideoCompleteWithOfferID:offerID_];
-		[self updateViewPropertiesWithOfferID:offerID_];
 		offerID_ = nil;
 	}
 	
@@ -400,17 +242,14 @@ shouldDisplayLogo = shouldDisplayLogo_;
 
 - (void)loadWebViewWithURL:(NSString*)URLString
 {
-	// Open link in mobile safari.
-	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:URLString]];
+	[webView_ loadURLRequest:URLString withTimeOutInterval:TJC_REQUEST_TIME_OUT];
 }
 
 
 - (void)playVideo
 {
 	[self enableShowVideoCompleteScreen:NO];
-	
-	[self enableShowBackToVideoButton:NO];
-	
+
 	// Stop and play from the beginning.
 	//[videoFeed_ stop];
 	[videoFeed_ play];
@@ -427,20 +266,7 @@ shouldDisplayLogo = shouldDisplayLogo_;
 	
 	isVideoPlaying_ = YES;
 	
-	// Begin download of video icon and tapjoy logo.
-	if (offerID_)
-	{
-		if (!didIconDownload_)
-		{
-			NSOperationQueue *queue = [[[NSOperationQueue alloc] init] autorelease];
-			NSInvocationOperation *operation = [[NSInvocationOperation alloc] initWithTarget:self 
-																											selector:@selector(loadIconImage)
-																											  object:nil];
-			[queue addOperation:operation];
-			[operation release];
-		}
-	}
-	
+	// Begin download of tapjoy logo.
 	if (!didLogoDownload_)
 	{
 		NSOperationQueue *queue = [[[NSOperationQueue alloc] init] autorelease];
@@ -450,28 +276,12 @@ shouldDisplayLogo = shouldDisplayLogo_;
 		[queue addOperation:operation];
 		[operation release];
 	}
-}
-
-
-- (void)loadIconImage
-{
-	NSDictionary* videoObjDict = [[[TJCVideoManager sharedTJCVideoManager] getCachedVideoDictonary] objectForKey:offerID_];
-	NSString *iconURLString = [videoObjDict objectForKey:TJC_VIDEO_OBJ_ICON_URL];
 	
-	// Safety check to see if there is any icon file to download.
-	if ([iconURLString isEqualToString:TJC_VIDEO_NO_ICON] || [iconURLString isEqualToString:@""])
-	{
-		[iconImageView_ setImage:[UIImage imageNamed:@"tapjoy_icon.png"]];
-	}
-	else
-	{
-		NSURL *iconURL = [NSURL URLWithString:[videoObjDict objectForKey:TJC_VIDEO_OBJ_ICON_URL]];
-		NSData *iconData = [[NSData alloc] initWithContentsOfURL:iconURL];
-		UIImage *iconImg = [[[UIImage alloc] initWithData:iconData] autorelease];
-		[iconData release];
-		
-		[self performSelectorOnMainThread:@selector(displayIcon:) withObject:iconImg waitUntilDone:NO];
-	}
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self 
+														  selector:@selector(movieDidFinishWatching:)
+																name:MPMoviePlayerPlaybackDidFinishNotification
+															 object:nil];
 }
 
 
@@ -490,13 +300,6 @@ shouldDisplayLogo = shouldDisplayLogo_;
 		
 		[self performSelectorOnMainThread:@selector(displayLogo:) withObject:logoImg waitUntilDone:NO];
 	}
-}
-
-
-- (void)displayIcon:(UIImage*)iconImage
-{
-	didIconDownload_ = YES;
-	[iconImageView_ setImage:iconImage];
 }
 
 
@@ -524,6 +327,13 @@ shouldDisplayLogo = shouldDisplayLogo_;
 - (void)enableLogo:(BOOL)enable
 {
 	shouldDisplayLogo_ = enable;
+	
+	// Never enable the logo in the video complete screen.
+	if (!isVideoPlaying_)
+	{
+		return;
+	}
+
 	if (enable)
 	{
 		[tapjoyLogo_ setAlpha:1];
@@ -582,8 +392,8 @@ shouldDisplayLogo = shouldDisplayLogo_;
 	}
 	if (webView_)
 	{
-		[webView_ release];
-		webView_ = nil;
+		// Clear web view content.
+		[webView_ clearWebViewContents];
 	}
 	
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:MPMovieDurationAvailableNotification object:nil];
@@ -599,23 +409,89 @@ shouldDisplayLogo = shouldDisplayLogo_;
 		[timer invalidate];
 	}
 	
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_3_2
-	NSString *statusStr = [NSString stringWithFormat:@"%d seconds left", (int)(duration_ - videoFeed_.currentPlaybackTime)];
-#else
-	NSString *statusStr = @"Application will resume shortly";
-#endif	
+	NSString *statusStr = [NSString stringWithFormat:@"%d seconds left", (int)(duration_ - videoFeed_.currentPlaybackTime)];	
 
 	[statusLabel_ setText:statusStr];
+}
+
+
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+	//NSLog(@"URL host: %@", [[request URL] host]);
+	
+	if (!request)
+	{
+		return NO;
+	}
+	
+	NSString *requestString = [[request URL] absoluteString];
+	
+	// Check for replay button click and showOffers click.
+	if (requestString == nil)
+	{
+		// Error check. If the request string is null for some reason, do nothing.
+		return NO;
+	}
+	else if (CFStringFind((CFStringRef)requestString, (CFStringRef)TJC_VIDEO_CLICK_PROTOCOL, kCFCompareCaseInsensitive).length > 0)
+	{
+		//[webView_ parseVideoClickURL:requestString shouldPlayVideo:NO];
+		// Different code path since we need to skip some things when playing a video from a completion screen.
+		[self playVideo];
+		
+		// Handled, return NO.
+		return NO;
+	}
+	else if (CFStringFind((CFStringRef)requestString, (CFStringRef)@"offer_wall", kCFCompareCaseInsensitive).length > 0)
+	{
+		// This is gross, calling back up to the video view cause that's where closing the video view is handled.
+		[[[TJCVideoManager sharedTJCVideoManager] videoView] closeVideoView];
+		return NO;
+	}
+
+	// If we see either tapjoy or linkshare host names, we won't open it externally. All other host names will open externally from the app.
+	if ((CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_TAPJOY_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
+		 (CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_TAPJOY_ALT_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
+		 (CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_LINKSHARE_HOST_NAME, kCFCompareCaseInsensitive).length > 0))
+	{
+		// Return YES here to indicate that we want to load the content.
+		return YES;
+	}
+	
+	// Open the link externally.
+	NSURLConnection *conn = [[NSURLConnection alloc] initWithRequest:[NSURLRequest requestWithURL:[request URL]] 
+																			  delegate:self 
+																	startImmediately:YES];
+	[conn release];
+
+	return NO;
+}
+
+
+- (NSURLRequest*)connection:(NSURLConnection*)connection 
+				willSendRequest:(NSURLRequest*)request 
+			  redirectResponse:(NSURLResponse*)response
+{
+	[TJCLog logWithLevel:LOG_DEBUG format:@"OPENING EXTERNAL URL NOW ::::::%@", [request URL]];
+	
+	// Open up itunes. This will effectively place this app in the background.
+	[[UIApplication sharedApplication] openURL:[request URL]];
+	
+	// Immediately cancel redirects since we only care about the first one.
+	[connection cancel];
+	
+	// Returning nil will also ensure that we don't follow the redirects within the webview.
+	// We rely on mobile safari to do so.
+	return nil;
 }
 
 
 - (void)dealloc
 {
 	[offerID_ release];
-	[buttons_ release];
-	[buttonURLs_ release];
+	[completeScreenView_ release];
 	[webView_ release];
 	[videoFeed_ release];
+	[closeButton_ release];
 	[super dealloc];
 }
 

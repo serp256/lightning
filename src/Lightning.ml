@@ -84,7 +84,16 @@ external malinfo: unit -> malinfo = "ml_malinfo";
 
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
+IFDEF IOS THEN
+external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
+external setSupportEmail: string -> unit = "ml_setSupportEmail";
+ELSE
+value addExceptionInfo (_:string) = ();
+value setSupportEmail (_:string) = ();
+ENDIF;
 
-
-
-
+IFDEF ANDROID THEN
+external extractAssets : unit -> unit = "ml_extractAssets";
+ELSE
+value extractAssets () = ();
+ENDIF;

@@ -16,8 +16,9 @@
 #import <caml/callback.h>
 #import <caml/threads.h>
 
-#import "texture_common.h"
 #import "common_ios.h"
+#import "texture_common.h"
+#import "texture_pvr.h"
 #import "LightImageLoader.h"
 
 
@@ -218,167 +219,17 @@ int loadImageFile(UIImage *image,textureInfo *tInfo) {
 }*/
 
 
-//Compressed pixel formats
-const uint32_t PVRTEX3_IDENT = 0x03525650;  // 'P''V''R'3
 
-// PVR Header file flags.                   Condition if true. If false, opposite is true unless specified.
-const uint32_t PVRTEX3_PREMULTIPLIED    = (1<<1);   //  Texture has been premultiplied by alpha value.  
-
-enum EPVRTPixelFormat
-{
-  ePVRTPF_PVRTCI_2bpp_RGB,
-  ePVRTPF_PVRTCI_2bpp_RGBA,
-  ePVRTPF_PVRTCI_4bpp_RGB,
-  ePVRTPF_PVRTCI_4bpp_RGBA,
-  ePVRTPF_PVRTCII_2bpp,
-  ePVRTPF_PVRTCII_4bpp,
-  ePVRTPF_ETC1,
-  ePVRTPF_DXT1,
-  ePVRTPF_DXT2,
-  ePVRTPF_DXT3,
-  ePVRTPF_DXT4,
-  ePVRTPF_DXT5
-};
-
-union PVR3PixelType {struct LowHigh {uint32_t Low; uint32_t High;} Part; uint64_t PixelTypeID; uint8_t PixelTypeChar[8];};
-
-typedef struct 
-{
-	uint32_t  u32Version;     //Version of the file header, used to identify it.
-  uint32_t  u32Flags;     //Various format flags.
-  uint64_t  u64PixelFormat;   //The pixel format, 8cc value storing the 4 channel identifiers and their respective sizes.
-  uint32_t u32ColourSpace;   //The Colour Space of the texture, currently either linear RGB or sRGB.
-  uint32_t u32ChannelType;   //Variable type that the channel is stored in. Supports signed/unsigned int/short/byte or float for now.
-  uint32_t  u32Height;      //Height of the texture.
-  uint32_t  u32Width;     //Width of the texture.
-  uint32_t  u32Depth;     //Depth of the texture. (Z-slices)
-  uint32_t  u32NumSurfaces;   //Number of members in a Texture Array.
-  uint32_t  u32NumFaces;    //Number of faces in a Cube Map. Maybe be a value other than 6.
-  uint32_t  u32MIPMapCount;   //Number of MIP Maps in the texture - NB: Includes top level.
-  uint32_t  u32MetaDataSize;  //Size of the accompanying meta data.
-} PVRTextureHeader3;
-
-int loadPvrFile3(FILE* fildes,textureInfo *tInfo) {
+int loadPvrFile(NSString *path, textureInfo *tInfo) {
+	FILE* fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"rb");
+	if (fildes < 0) return 1;
 	fseek(fildes, 0, SEEK_END); /* Seek to the end of the file */
 	long fsize = ftell(fildes); /* Find out how many bytes into the file we are */
 	fseek(fildes, 0, SEEK_SET); /* Go back to the beginning of the file */
-
-	if (fsize < sizeof(PVRTextureHeader3)) {return 1;};
-
-	PVRTextureHeader3 header;
-	if (!fread(&header,sizeof(PVRTextureHeader3),1,fildes)) {fprintf(stderr,"can't read pvr header\n");return 1;};
-	if (header.u32Version != PVRTEX3_IDENT) {
-		//fprintf(stderr,"bad pvr3 version\n");
-		return 1;
-	};
-	tInfo->width = tInfo->realWidth = header.u32Width;
-	tInfo->height = tInfo->realHeight = header.u32Height;
-	tInfo->numMipmaps = header.u32MIPMapCount - 1;
-	tInfo->premultipliedAlpha = header.u32Flags & PVRTEX3_PREMULTIPLIED;
-	union PVR3PixelType pt = (union PVR3PixelType)(header.u64PixelFormat);
-	if (pt.Part.High == 0) {
-		switch (pt.PixelTypeID)
-		{
-			case ePVRTPF_PVRTCI_2bpp_RGB:
-				//fprintf(stderr,"PVRTCI 2bpp RGB\n");
-				tInfo->format = LTextureFormatPvrtcRGB2;
-				break;
-			case ePVRTPF_PVRTCI_2bpp_RGBA:
-				//fprintf(stderr,"PVRTCI 2bpp RGBA\n");
-				tInfo->format = LTextureFormatPvrtcRGBA2;
-				break;
-			case ePVRTPF_PVRTCI_4bpp_RGB:
-				//fprintf(stderr,"PVRTCI 4bpp RGB\n");
-				tInfo->format = LTextureFormatPvrtcRGB4;
-				break;
-			case ePVRTPF_PVRTCI_4bpp_RGBA:
-				//fprintf(stderr,"PVRTCI 4bpp RGBA\n");
-				tInfo->format = LTextureFormatPvrtcRGBA4;
-				break;
-			case ePVRTPF_PVRTCII_2bpp:
-				//fprintf(stderr,"PVRTCII 2bpp\n");
-				return 1;
-				break;
-			case ePVRTPF_PVRTCII_4bpp:
-				fprintf(stderr,"unsupported: PVRTCII 2bpp\n");
-				return 1;
-				break;
-		}
-	} else {
-		fprintf(stderr,"unsupported: SPEC PVR format\n");
-		return 1;
-	};
-	// skip meta
-	if (header.u32MetaDataSize > 0) {
-		fseek(fildes,header.u32MetaDataSize,SEEK_CUR);
-	};
-
-	tInfo->dataLen = fsize - sizeof(PVRTextureHeader3) - header.u32MetaDataSize;
-	//printf("pvr data size: %d\n",tInfo->dataLen);
-	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
-
-	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
-	tInfo->scale = 1;
-	return 0;
-}
-
-int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
-
-	PVRTextureHeader header;
-
-	if (!fread(&header,sizeof(PVRTextureHeader),1,fildes)) {return 1;};
-	if (header.pvr != PVRTEX_IDENTIFIER) {fprintf(stderr,"bad pvr2 IDENTIFIER\n");return 1;};
-
-  int hasAlpha = header.alphaBitMask ? 1 : 0;
-
-	tInfo->width = tInfo->realWidth = header.width;
-	tInfo->height = tInfo->realHeight = header.height;
-	//printf("width: %d, height: %d\n",header.width,header.height);
-	tInfo->numMipmaps = header.numMipmaps;
-	tInfo->premultipliedAlpha = NO;
-  
-  switch (header.pfFlags & 0xff)
-  {
-      case OGL_RGB_565:
-        tInfo->format = LTextureFormat565;
-        break;
-      case OGL_RGBA_5551:
-				tInfo->format = LTextureFormat5551;
-				break;
-      case OGL_RGBA_4444:
-				tInfo->format = LTextureFormat4444;
-				break;
-      case OGL_RGBA_8888:
-				tInfo->format = LTextureFormatRGBA;
-				break;
-      case OGL_PVRTC2:
-				tInfo->format = hasAlpha ? LTextureFormatPvrtcRGBA2 : LTextureFormatPvrtcRGB2;
-				break;
-      case OGL_PVRTC4:
-				tInfo->format = hasAlpha ? LTextureFormatPvrtcRGBA4 : LTextureFormatPvrtcRGB4;
-				break;
-      default:
-				printf("UNKNOWN header: %x\n",header.pfFlags & 0xff);
-				return 1;
-  }
-
-	tInfo->dataLen = header.textureDataSize;
-	// make buffer
-	tInfo->imgData = (unsigned char*)malloc(header.textureDataSize);
-	if (!tInfo->imgData) {return 1;};
-	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
-	tInfo->scale = 1.0;
-	return 0;
-}
-
-
-int loadPvrFile(NSString *path, textureInfo *tInfo) {
-	FILE* fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"ro");
-	if (fildes < 0) return 1;
-	int r = loadPvrFile3(fildes,tInfo);
+	int r = loadPvrFile3(fildes,fsize,tInfo);
 	fclose(fildes);
 	if (r != 0) {
-		fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"ro");
+		fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"rb");
 		r = loadPvrFile2(fildes,tInfo);
 		fclose(fildes);
 	}
@@ -500,7 +351,7 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 
 	if (!fullPath) r = 2;
 	else {
-		NSLog(@"REAL FILE: %@",fullPath);
+		//NSLog(@"REAL FILE: %@",fullPath);
 		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
 		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
@@ -520,12 +371,12 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 }
 
 int load_image_info(char *cpath,char *suffix, textureInfo *tInfo) {
-	NSLog(@"LOAD_IMAGE_INFO: %s",cpath);
+	//NSLog(@"LOAD_IMAGE_INFO: %s",cpath);
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	NSString *path = [NSString stringWithCString:cpath encoding:NSASCIIStringEncoding];
 	int r = _load_image(path,suffix,tInfo);
 	[pool release];
-	NSLog(@"IMAGE_LOADED: %s",cpath);
+	//NSLog(@"IMAGE_LOADED: %s",cpath);
 	return r;
 }
 

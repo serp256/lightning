@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "thqueue.h"
+#include "light_common.h"
 #include "texture_common.h"
 
 #include "caml/memory.h"
@@ -13,6 +14,8 @@
 
 #ifdef IOS
 #include "ios/texture_ios.h"
+#elif ANDROID
+#include "android/texture_android.h"
 #else
 #include "sdl/texture_sdl.h"
 #endif
@@ -50,8 +53,8 @@ void *run_worker(void *param) {
 			int r = load_image_info(req->path,req->suffix,tInfo);
 			if (r) {
 				free(tInfo);
-				if (r == 2) fprintf(stderr,"ASYNC LOADER. Can't find %s\n",req->path);
-				else fprintf(stderr,"Can't load image %s\n",req->path);
+				if (r == 2) ERROR("ASYNC LOADER. Can't find %s\n",req->path);
+				else ERROR("Can't load image %s\n",req->path);
 				exit(3);
 			};
 			response_t *resp = malloc(sizeof(response_t));
@@ -86,7 +89,7 @@ void ml_texture_async_loader_push(value oruntime,value opath,value osuffix) {
 		suffix = malloc(caml_string_length(Field(osuffix,0)) + 1);
 		strcpy(suffix,String_val(Field(osuffix,0)));
 	}  else suffix = NULL;
-	fprintf(stderr,"REQUEST TO LOAD %s[%s]\n",path,suffix);
+	//fprintf(stderr,"REQUEST TO LOAD %s[%s]\n",path,suffix);
 	runtime_t *runtime = (runtime_t*)oruntime;
 	request_t *req = malloc(sizeof(request_t));
 	req->path = path;

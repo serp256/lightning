@@ -11,6 +11,10 @@ let ocamlc_spec = Some [
   false,
   " Save information in <filename>.annot";
 
+  "-bin-annot",
+  false,
+  " Save typedtree in <filename>.cmt";
+
   "-c",
   false,
   " Compile only (do not link)";
@@ -193,7 +197,11 @@ let ocamlc_spec = Some [
 
   "-",
   true,
+<<<<<<< HEAD
   "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..38\"";
+=======
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..39\"";
+>>>>>>> origin/master
 
   "-warn-error",
   true,
@@ -258,6 +266,10 @@ let ocamlcp_spec = Some [
   false,
   " Save information in <filename>.annot";
 
+  "-bin-annot",
+  false,
+  " Save typedtree in <filename>.cmt";
+
   "-c",
   false,
   " Compile only (do not link)";
@@ -440,7 +452,7 @@ let ocamlcp_spec = Some [
 
   "-",
   true,
-  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..38\"";
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..39\"";
 
   "-warn-error",
   true,
@@ -604,6 +616,10 @@ let ocamlmktop_spec = Some [
   false,
   " Save information in <filename>.annot";
 
+  "-bin-annot",
+  false,
+  " Save typedtree in <filename>.cmt";
+
   "-c",
   false,
   " Compile only (do not link)";
@@ -786,7 +802,7 @@ let ocamlmktop_spec = Some [
 
   "-",
   true,
-  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..38\"";
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..39\"";
 
   "-warn-error",
   true,
@@ -850,6 +866,10 @@ let ocamlopt_spec = Some [
   "-annot",
   false,
   " Save information in <filename>.annot";
+
+  "-bin-annot",
+  false,
+  " Save typedtree in <filename>.cmt";
 
   "-c",
   false,
@@ -1017,7 +1037,11 @@ let ocamlopt_spec = Some [
 
   "-",
   true,
+<<<<<<< HEAD
   "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..38\"";
+=======
+  "<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..39\"";
+>>>>>>> origin/master
 
   "-warn-error",
   true,

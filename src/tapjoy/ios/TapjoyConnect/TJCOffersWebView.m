@@ -19,27 +19,29 @@
 #import "TJCVideoRequestHandler.h"
 #import "TJCVideoViewHandler.h"
 
-static TJCOffersWebView *sharedTJCOffersWebView_ = nil;
 static NSString *currentServiceURL = nil;
 
 
 @implementation TJCOffersWebView
 
-@synthesize publisherUserID_, parentVController_, isViewVisible_, currencyID_, isSelectorVisible_;
+
+
+@synthesize parentVController_, currencyID_, isSelectorVisible_;
 @synthesize navBar = navBar_;
 
 
-+ (TJCOffersWebView*) sharedTJCOffersWebView
+- (id)init
 {
-	if (!sharedTJCOffersWebView_) 
+	// Init frame here in case access to local variables is needed. For instance, if a custom bg image is set before the view is actually shown.
+	self = [super initWithFrame:[[UIScreen mainScreen] bounds]];
+	
+	if (self)
 	{
-		sharedTJCOffersWebView_ = [[super alloc] init];
-		// Init here in case access to local variables is needed. For instance, if a custom bg image is set before the view is actually shown.
-		[sharedTJCOffersWebView_ initWithFrame:[[UIScreen mainScreen] bounds] enableNavBar:YES];
+		[self refreshWithFrame:[[UIScreen mainScreen] bounds] enableNavBar:YES];
 	}
-	return sharedTJCOffersWebView_;
+	
+	return self;
 }
-
 
 - (id)initWithFrame:(CGRect)frame enableNavBar:(BOOL)enableNavigationBar
 {
@@ -55,12 +57,12 @@ static NSString *currentServiceURL = nil;
 
 
 - (void)refreshWithFrame:(CGRect)frame enableNavBar:(BOOL)enableNavigationBar
-{
+{	
+	[self clearWebViewContents];
+	[super refreshWithFrame:frame];
+	
 	[self setFrame:frame];
 	[loadingView_.mainView setFrame:frame];
-	
-	currentServiceURL = [self setUpOffersURLWithServiceURL:
-								[NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
 	
 	cWebView_.scalesPageToFit = TRUE;
 	cWebView_.autoresizesSubviews = YES;
@@ -88,6 +90,8 @@ static NSString *currentServiceURL = nil;
 	}
 	
 	enableNavBar = enableNavigationBar;
+	
+	[self setViewToTransparent:NO];
 }
 
 
@@ -100,19 +104,24 @@ static NSString *currentServiceURL = nil;
 - (NSString*)setUpOffersURLWithServiceURL:(NSString*)serviceURL
 {
 	NSString *result = [self appendGenericParamsWithURL:serviceURL];
+
+	NSString *userID = [TapjoyConnect getUserID];
 	
-	result = [NSString stringWithFormat:
-				 @"%@&%@=%@",
-				 result,
-				 TJC_URL_PARAM_USER_ID,
-				 publisherUserID_];
+	if (userID)
+	{
+		result = [NSString stringWithFormat:
+					 @"%@&%@=%@",
+					 result,
+					 TJC_URL_PARAM_USER_ID,
+					 [TapjoyConnect createQueryStringFromString:userID]];
+	}
 	
-	if ([currencyID_ length] > 0)
+	if (currencyID_ && [currencyID_ length] > 0)
 	{
 		result = [NSString stringWithFormat:@"%@&%@", result, currencyID_];
 	}
 	
-	if ([isSelectorVisible_ length] > 0)
+	if (isSelectorVisible_ && [isSelectorVisible_ length] > 0)
 	{
 		result = [NSString stringWithFormat:@"%@&%@", result, isSelectorVisible_];
 	}
@@ -153,59 +162,18 @@ static NSString *currentServiceURL = nil;
 }
 
 
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+- (void)loadViewWithURL:(NSString*)URLString
 {
-	// The retry button action.
-	if(buttonIndex == 1)
+	if (!URLString)
 	{
-		[loadingView_ fadeIn];
-		[cWebView_ stopLoading];
-		
-		// Load the last url that was attempted.
-		if (!lastURL_)
-		{
-			currentServiceURL = [self setUpOffersURLWithServiceURL:
-										[NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
-		}
-		else
-		{
-			// Check for valid url.
-			if ([NSURL URLWithString:lastURL_])
-			{
-				// Valid URL, proceed.
-				currentServiceURL = [NSString stringWithString:lastURL_];
-				//NSLog(@"Retry URL: %@", lastURL_);
-				[TJCLog logWithLevel: LOG_DEBUG
-								  format: @"%s: %d; %s; Retry URL:%@", __FILE__, __LINE__, __PRETTY_FUNCTION__, lastURL_];
-			}
-			else
-			{
-				// Invalid URL, use default one.
-				currentServiceURL = [self setUpOffersURLWithServiceURL:
-											[NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
-			}
-			
-			[lastURL_ release];
-			lastURL_ = nil;
-		}
-		
-		
-		[self loadView]; 
+		currentServiceURL = [self setUpOffersURLWithServiceURL:
+									[NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
 	}
-	// The cancel button action.
-	else if(buttonIndex == 0) 
+	else 
 	{
-		//Stop Activity Indicator
-		[loadingView_ fadeOut];
-		
-		// Re-enable user touch interaction so that they may click on another link to try again if so desired.
-		[cWebView_ setUserInteractionEnabled:YES];
+		currentServiceURL = URLString;
 	}
-}
-
-
-- (void) loadView
-{
+	
 	//initialize WebView UI
 	int shiftVal = 0;
 	
@@ -228,24 +196,24 @@ static NSString *currentServiceURL = nil;
 	
 	[self setAutoresizingMask:UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth];
 	
-	[self loadURLRequest:[NSURL URLWithString:currentServiceURL] withTimeOutInterval:TJC_REQUEST_TIME_OUT];
+	[self loadURLRequest:currentServiceURL withTimeOutInterval:TJC_REQUEST_TIME_OUT];
 }
 
 
 
-- (void) refreshWebView
+- (void)refreshWebView
 {
 	NSString *offersURL = [self setUpOffersURLWithServiceURL:
 								  [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
 	
-	[self loadURLRequest:[NSURL URLWithString:offersURL] withTimeOutInterval:TJC_REQUEST_TIME_OUT];
+	[self loadURLRequest:offersURL withTimeOutInterval:TJC_REQUEST_TIME_OUT];
 }
 
 
 
 #pragma mark OverRidden Connection Methods
 
-- (void) webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
+- (void)webView:(UIWebView*)webView didFailLoadWithError:(NSError*)error
 {
 	if (error.code == NSURLErrorCancelled) 
 	{
@@ -253,29 +221,31 @@ static NSString *currentServiceURL = nil;
 	}
 	
 	// 102 error code for slow request completion. This happens when a NSURLConnection is made for opening links externally in Safari.
-	if(error.code == 102) 
+	if (error.code == 102) 
 	{
 		return;
 	}
 	
 	// Something failed with the default URL, try the alternate one.
-	if(currentServiceURL == [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME])
+	if (currentServiceURL == [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME])
 	{
 		currentServiceURL = [self setUpOffersURLWithServiceURL:
 									[NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL_ALTERNATE, TJC_WEB_OFFERS_URL_NAME]];		
-		[self loadView];
+		[self loadViewWithURL:currentServiceURL];
 	}
 	else
 	{
-		NSString *msg = alertErrorMessage_;
-		if(!msg) msg = @"Service is unreachable.\nDo you want to try again?";
-		UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@"" 
-																			  message:msg 
-																			 delegate:self 
-																 cancelButtonTitle:@"Cancel" 
-																 otherButtonTitles:@"Retry", nil];
-		[alertview show];
-		[alertview release];
+		if (isViewVisible_)
+		{
+			UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@"" 
+																				  message:TJC_GENERIC_CONNECTION_ERROR_MESSAGE 
+																				 delegate:self 
+																	 cancelButtonTitle:@"Cancel" 
+																	 otherButtonTitles:@"Retry", nil];
+			[alertview show];
+			[alertview release];
+			isAlertViewVisible_ = YES;
+		}
 		
 		//Stop Activity Indicator
 		[loadingView_ fadeOut];
@@ -286,7 +256,31 @@ static NSString *currentServiceURL = nil;
 }
 
 
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+	// The retry button action.
+	if(buttonIndex == 1)
+	{
+		[loadingView_ fadeIn];
+		[cWebView_ stopLoading];
+		
+		[self loadViewWithURL:nil]; 
+	}
+	// The cancel button action.
+	else if(buttonIndex == 0) 
+	{
+		//Stop Activity Indicator
+		[loadingView_ fadeOut];
+		
+		// Re-enable user touch interaction so that they may click on another link to try again if so desired.
+		[cWebView_ setUserInteractionEnabled:YES];
+	}
+	
+	isAlertViewVisible_ = NO;
+}
+
+
+- (BOOL)webView:(UIWebView*)webView shouldStartLoadWithRequest:(NSURLRequest*)request navigationType:(UIWebViewNavigationType)navigationType
 {
 	//NSLog(@"URL host: %@", [[request URL] host]);
 	
@@ -297,103 +291,24 @@ static NSString *currentServiceURL = nil;
 	
 	// Check for video click.
 	NSString *requestString = [[request URL] absoluteString];
-	if (CFStringFind((CFStringRef)requestString, (CFStringRef)TJC_VIDEO_CLICK_PROTOCOL, kCFCompareCaseInsensitive).length > 0)
+	NSString *requestHost = [[request URL] host];
+	if (requestString == nil)
 	{
-		NSString *requestStringTrimmed = [requestString stringByReplacingOccurrencesOfString:TJC_VIDEO_CLICK_PROTOCOL_COMPLETE withString:@""];
-		NSArray *parts = [requestStringTrimmed componentsSeparatedByString:@"&"];
-		NSString *offerID = nil;
-		NSString *clickURL = nil;
-		NSString *currencyName = nil;
-		NSString *currencyAmount = nil;
-		
-		for (NSString *part in parts)
-		{
-			if (CFStringFind((CFStringRef)part, (CFStringRef)TJC_VIDEO_CLICK_ID, kCFCompareCaseInsensitive).length > 0)
-			{
-				// Video ID found, trim off the paramater portion.
-				offerID = [part stringByReplacingOccurrencesOfString:TJC_VIDEO_CLICK_ID withString:@""];
-
-				continue;
-			}
-			
-			if (CFStringFind((CFStringRef)part, (CFStringRef)TJC_VIDEO_CLICK_URL, kCFCompareCaseInsensitive).length > 0)
-			{
-				// Click URL found, trim off the parameter portion.
-				clickURL = [part stringByReplacingOccurrencesOfString:TJC_VIDEO_CLICK_URL withString:@""];
-
-				continue;
-			}
-			
-			if (CFStringFind((CFStringRef)part, (CFStringRef)TJC_VIDEO_CLICK_CURRENCY_AMOUNT, kCFCompareCaseInsensitive).length > 0)
-			{
-				// Currency amount found, trim off parameter portion.
-				currencyAmount = [part stringByReplacingOccurrencesOfString:TJC_VIDEO_CLICK_CURRENCY_AMOUNT withString:@""];
-				
-				continue;
-			}
-			
-			if (CFStringFind((CFStringRef)part, (CFStringRef)TJC_VIDEO_CLICK_CURRENCY_NAME, kCFCompareCaseInsensitive).length > 0)
-			{
-				// Currency name found, trim off parameter portion.
-				currencyName = [part stringByReplacingOccurrencesOfString:TJC_VIDEO_CLICK_CURRENCY_NAME withString:@""];
-				currencyName = [currencyName stringByReplacingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
-				
-				continue;
-			}
-		}
-		
-		// All parts should be set. If not, set error message.
-		if (!offerID)
-		{
-			[TJCLog logWithLevel:LOG_NONFATAL_ERROR format:@"Error: Video Offer ID not set"];
-			return NO;
-		}
-		
-		if (!clickURL)
-		{
-			[TJCLog logWithLevel:LOG_NONFATAL_ERROR format:@"Error: Video Offer click URL not set"];
-			return NO;
-		}
-		
-		if (!currencyName)
-		{
-			currencyName = @"currency";
-		}
-		
-		if (!currencyAmount)
-		{
-			currencyAmount = @"some";
-		}
-		
-		// Get video id (offer id) and initiate video play.
-		[TapjoyConnect showVideoAdWithOfferID:offerID];
-		// Ping server for video click.
-		[[[TJCVideoManager sharedTJCVideoManager] requestHandler] recordVideoClickWithURL:clickURL];
-		// Save off updated currency amount and name.
-		NSDictionary *allVideosDict = [[TJCVideoManager sharedTJCVideoManager] getAllVideosDictionary];
-		NSMutableDictionary* videoObjDict = [NSMutableDictionary dictionaryWithDictionary:[allVideosDict objectForKey:offerID]];
-		[videoObjDict setObject:currencyName forKey:TJC_VIDEO_OBJ_CURRENCY_NAME];
-		[videoObjDict setObject:currencyAmount forKey:TJC_VIDEO_OBJ_CURRENCY_AMOUNT];
-		[[TJCVideoManager sharedTJCVideoManager] setAllVideosObjectDict:videoObjDict withKey:offerID];
+		// Error check. If the request string is null for some reason, do nothing.
+		return NO;
+	}
+	else if (CFStringFind((CFStringRef)requestString, (CFStringRef)TJC_VIDEO_CLICK_PROTOCOL, kCFCompareCaseInsensitive).length > 0)
+	{
+		[self parseVideoClickURL:requestString shouldPlayVideo:YES];
 		
 		// Handled, return NO.
 		return NO;
 	}
-	
 	// If we see either tapjoy or linkshare host names, we won't open it externally. All other host names will open externally from the app.
-	if ((CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_TAPJOY_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
-		 (CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_TAPJOY_ALT_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
-		 (CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_LINKSHARE_HOST_NAME, kCFCompareCaseInsensitive).length > 0))
+	else if ((CFStringFind((CFStringRef)requestHost, (CFStringRef)TJC_TAPJOY_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
+		 (CFStringFind((CFStringRef)requestHost, (CFStringRef)TJC_TAPJOY_ALT_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
+		 (CFStringFind((CFStringRef)requestHost, (CFStringRef)TJC_LINKSHARE_HOST_NAME, kCFCompareCaseInsensitive).length > 0))
 	{
-		if (lastURL_)
-		{
-			[lastURL_ release];
-			lastURL_ = nil;
-		}
-		
-		// Save the address in case data connection craps out and we need to reload.
-		lastURL_ = [[NSString alloc] initWithString:[[request URL] absoluteString]];
-		
 		return YES;
 	}
 	
@@ -421,8 +336,6 @@ static NSString *currentServiceURL = nil;
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-	webPageRendered_ = true;
-	
 	[loadingView_ fadeOut];
 	
 	// Re-enable user touch interaction.
@@ -466,21 +379,22 @@ static NSString *currentServiceURL = nil;
 	if (!isViewVisible_)
 	{
 		[connection cancel];
-	}	
+	}
 }
 
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
-	NSString *msg = alertErrorMessage_;
-	if(!msg) msg = @"Service is unreachable.\nDo you want to try again?";
-	UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@"" 
-																		  message:msg 
-																		 delegate:self 
-															 cancelButtonTitle:@"Cancel" 
-															 otherButtonTitles:@"Retry", nil];
-	[alertview show];
-	[alertview release];
+	if (isViewVisible_)
+	{
+		UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@"" 
+																			  message:TJC_GENERIC_CONNECTION_ERROR_MESSAGE
+																			 delegate:self 
+																 cancelButtonTitle:@"Cancel" 
+																 otherButtonTitles:@"Retry", nil];
+		[alertview show];
+		[alertview release];
+	}
 	
 	//Stop Activity Indicator
 	[loadingView_ fadeOut];
@@ -490,21 +404,24 @@ static NSString *currentServiceURL = nil;
 }
 
 
--(void) backtoGameAction:(id) sender
+- (void)backtoGameAction:(id)sender
 {
 	[TJCViewCommons animateTJCView:self 
-					 withTJCTransition:[[TJCViewCommons sharedObject]getReverseTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedObject]getTransitionDelay]];
+					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons]getReverseTransitionEffect] 
+								withDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
 	
 	[self performSelector:@selector(giveBackNotification) 
 				  withObject:nil 
-				  afterDelay:[[TJCViewCommons sharedObject]getTransitionDelay]];
+				  afterDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
 }
 
 
--(void) giveBackNotification
+- (void)giveBackNotification
 {	
 	isViewVisible_ = NO;
+	
+	// Clear web view contents.
+	[self clearWebViewContents];
 	
 	[self removeFromSuperview];
 	
@@ -515,13 +432,17 @@ static NSString *currentServiceURL = nil;
 	
 	// JC: NOTE: Deprecated since 8.1.0
 	[[NSNotificationCenter defaultCenter] postNotificationName:TJC_SHOW_BOX_CLOSE_NOTIFICATION object:nil];
+	
+	[TapjoyConnect clearCache];
+	
+	// This will notify the offers view handler to release the web view.
+	[[NSNotificationCenter defaultCenter] postNotificationName:TJC_OFFERWALL_WEBVIEW_CLOSE_NOTIFICATION object:nil];
 }
 
 
 - (void)dealloc 
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"TJCOffersView Dealloc"];
-	[publisherUserID_ release];
 	[navBar_ release];
 	[super dealloc];
 }

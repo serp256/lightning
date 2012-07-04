@@ -110,6 +110,4 @@ typedef enum UIDevicePlatform
 
 - (NSNumber*) freeDiskSpace;
 
-- (NSString*) macaddress;
-
 @end

@@ -30,14 +30,6 @@ type textureFormat =
 
 
 
-(*
-value mem = ref 0;
-value add_mem m =
-  (
-    mem.val := !mem + m;
-    Printf.printf "MEMORY: %d\n%!" !mem;
-  );
-*)
 
 type textureInfo = 
   {
@@ -123,6 +115,7 @@ module TextureCache = WeakHashtbl.Make (struct
   value hash = Hashtbl.hash;
 end);
 
+
 (*
 class type r = 
   object
@@ -189,6 +182,10 @@ class subtexture region (baseTexture:c) =
   end;
 
 value cache = TextureCache.create 11;
+
+
+
+
 (*
 value texture_memory = ref 0;
 value texture_mem_add v = 
@@ -857,3 +854,13 @@ ELSE
 value loadExternal url ~callback ~errorCallback = (); (* TODO: Get it by URLLoader *)
 
 ENDIF;
+
+
+
+value clear () = 
+(
+  PalleteCache.clear palleteCache;
+  TextureCache.clear cache;
+);
+
+Callback.register "texture_cache_clear" clear;

@@ -19,6 +19,7 @@
 #endif
 
 #include <caml/mlvalues.h>
+#include <zlib.h>
 #include "light_common.h"
 
 int nextPowerOfTwo(int number);
@@ -72,46 +73,13 @@ typedef struct {
 } textureInfo;
 
 
+int loadPlxPtr(gzFile fptr,textureInfo *tInfo);
 int loadPlxFile(const char *path,textureInfo *tInfo);
+int loadAlphaPtr(gzFile fptr,textureInfo *tInfo);
 int loadAlphaFile(const char *path,textureInfo *tInfo);
 
 value createGLTexture(value oldTextureID, textureInfo *tInfo);
 
-
-// --- PVR structs & enums -------------------------------------------------------------------------
-
-#define PVRTEX_IDENTIFIER 0x21525650 // = the characters 'P', 'V', 'R'
-
-typedef struct
-{
-  uint headerSize;          // size of the structure
-  uint height;              // height of surface to be created
-  uint width;               // width of input surface
-  uint numMipmaps;          // number of mip-map levels requested
-  uint pfFlags;             // pixel format flags
-  uint textureDataSize;     // total size in bytes
-  uint bitCount;            // number of bits per pixel
-  uint rBitMask;            // mask for red bit
-  uint gBitMask;            // mask for green bits
-  uint bBitMask;            // mask for blue bits
-  uint alphaBitMask;        // mask for alpha channel
-  uint pvr;                 // magic number identifying pvr file
-  uint numSurfs;            // number of surfaces present in the pvr
-} PVRTextureHeader;
-
-enum PVRPixelType
-{
-  OGL_RGBA_4444 = 0x10,
-  OGL_RGBA_5551,
-  OGL_RGBA_8888,
-  OGL_RGB_565,
-  OGL_RGB_555,
-  OGL_RGB_888,
-  OGL_I_8,
-  OGL_AI_88,
-  OGL_PVRTC2,
-  OGL_PVRTC4
-};
 
 
 #define OPTION_INT(v) v == 1 ? 0 : Long_val(Field(v,0))
@@ -129,7 +97,6 @@ enum PVRPixelType
 	Field(mlTex,6) = Val_long(tInfo->dataLen); \
 	Field(mlTex,7) = textureID;
 
-#endif
 
 
 
@@ -169,3 +136,4 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
 int clone_renderbuffer(renderbuffer_t *sr,renderbuffer_t *dr,GLenum filter);
 void delete_renderbuffer(renderbuffer_t *rb);
 
+#endif

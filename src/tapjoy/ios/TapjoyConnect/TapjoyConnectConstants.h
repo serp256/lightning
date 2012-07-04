@@ -10,6 +10,7 @@
 #define TJC_CONNECT_SUCCESS				@"TJC_Connect_Success"
 #define TJC_CONNECT_FAILED					@"TJC_Connect_Failed"
 #define TJC_OFFERS_SDK
+#define TJC_SDK_TYPE_VALUE					@"offers"
 
 // This notification is fired after getTapPoints has been called, and indicates that user currency amount has been received from the server.
 #define TJC_TAP_POINTS_RESPONSE_NOTIFICATION					@"TJC_TAP_POINTS_RESPONSE_NOTIFICATION"
@@ -25,7 +26,7 @@
 // Error notification for awardTapPoints
 #define TJC_AWARD_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR	@"TJC_AWARD_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR"
 
-// Featured App notification is fired after featured app ad data is received from the server.
+// Featured App notification is fired after full screen ad data is received from the server.
 #define TJC_FEATURED_APP_RESPONSE_NOTIFICATION				@"TJC_FEATURED_APP_RESPONSE_NOTIFICATION"
 
 // Notification that a user has just successfully completed an offer and earned currency. This only fires on init/resume.

@@ -22,7 +22,6 @@
 	int retryCount_;						/*!< Keeps track of the retry count for the NSURLConnection requests. */
 	NSInteger responseCode_;
 	NSTimeInterval	requestTimeout_;	/*!< The time out time in seconds for an NSURLConnection request. */
-	NSURLConnection *connection_;		/*!< Used to provide support to perform the loading of a URL request. Delegate methods are defined to handle when a response is receive with associated data. This is used for asynchronous requests only. */
 	NSInvocation *invocation_;			/*!< Used to invoke a NSURLConnection request, specifically after a Tap Point is received. This is used for asynchronous requests only. */
 	NSString *requestMethod_;			/*!< Used to set NSMutableURLRequest setHTTPMethod. Values can be "GET", "POST", etc... */
 	NSDictionary *postParameters_;	/*!< Holds the parameter list when a NSURLConnection request is made. */
@@ -49,7 +48,6 @@
 @property (nonatomic, retain) NSData *POSTdata;
 @property NSInteger responseCode;
 @property (nonatomic) NSTimeInterval requestTimeout;
-@property (nonatomic, retain) NSURLConnection * connection;
 
 
 /*!	\fn fetchAsynchronouslyWithCompletionInvocation: (NSInvocation *) myInvocation

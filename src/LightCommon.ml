@@ -97,12 +97,14 @@ IFDEF IOS THEN
 
 external bundle_path_for_resource: string -> option string -> option string = "ml_bundle_path_for_resource";
 
+(*
 value resource_path ?(with_suffix=True) path = 
   let suffix = match with_suffix with [ True -> !_resources_suffix | False -> None ] in
   match bundle_path_for_resource path suffix with
   [ None    -> raise (File_not_exists path)
   | Some p  -> p
   ];
+*)
 
 value open_resource ?(with_suffix=True) path =
   let suffix = match with_suffix with [ True -> !_resources_suffix | False -> None ] in
@@ -121,26 +123,40 @@ value read_resource ?with_suffix path = Std.input_all (open_resource ?with_suffi
 ELSE IFDEF ANDROID THEN
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
-(* value device_scale_factor () = 1.0; *)
 
 value request_remote_notifications rntypes success error = ();
 
-value resource_path path = 
+(*
+value resource_path ?(with_suffix=True) path = 
+  let suffix = match with_suffix with [ True -> !_resources_suffix | False -> None ] in
   match bundle_fd_of_resource path with 
   [ None -> raise (File_not_exists path)  
   | Some p -> path
   ];  
+*)
 
 
-value open_resource path _ = 
-  match bundle_fd_of_resource path with
+value get_resource with_suffix path  = 
+  match with_suffix with
+  [ True -> 
+    let spath = path_with_suffix path in
+    match bundle_fd_of_resource spath with
+    [ Some (fd,len) as res -> res
+    | None -> bundle_fd_of_resource path
+    ]
+  | False -> bundle_fd_of_resource path
+  ];
+
+
+value open_resource ?(with_suffix=True) path = 
+  match get_resource with_suffix path with
   [ None -> raise (File_not_exists path)
   | Some (fd,length) -> Unix.in_channel_of_descr fd
   ];
 
 
-value read_resource path _ = 
-  match bundle_fd_of_resource path with
+value read_resource ?(with_suffix=True) path = 
+  match get_resource with_suffix path with
   [ None -> raise (File_not_exists path)
   | Some (fd, length) -> 
       let length = Int64.to_int length in 
@@ -152,8 +168,8 @@ value read_resource path _ =
       )
   ];
   
-value read_json path = 
-  match bundle_fd_of_resource path with 
+value read_json ?(with_suffix=True) path = 
+  match get_resource with_suffix path with
   [ None -> raise (File_not_exists path)
   | Some (fd, length) ->  
     let read = ref Int64.zero
@@ -176,10 +192,12 @@ value read_json path =
 ELSE IFDEF SDL THEN
 
 value resources_path = "Resources";
-value resource_path ?(with_suffix=True) fname = 
+value resource_path ?(with_suffix=True) fname =
+  let () = debug "resource_path call, %B" with_suffix in
   match with_suffix with
-  [ True ->
+  [ True ->    
     let spath = Filename.concat resources_path (path_with_suffix fname) in
+    let () = debug "spath: %s" spath in
     match Sys.file_exists spath with
     [ True -> spath
     | False -> 

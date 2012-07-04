@@ -9,8 +9,11 @@
 
 #import <UIKit/UIKit.h>
 #import "TJCCallsWrapper.h"
+#import "TJCFeaturedAppView.h"
 #import "TapjoyConnect.h"
 
+
+@class TJCFeaturedAppView;
 
 /*!	\interface TJCFeaturedAppViewHandler
  *	\brief The Tapjoy Connect Featured App View Handler class.
@@ -18,8 +21,12 @@
  */
 @interface TJCFeaturedAppViewHandler : UIView 
 {
-	
+	TJCFeaturedAppView *featuredAppView_;
 }
+
+@property (nonatomic, retain) TJCFeaturedAppView *featuredAppView;
+
+- (void)removeFeaturedWebView;
 
 + (TJCFeaturedAppViewHandler*)sharedTJCFeaturedAppViewHandler;
 
@@ -85,6 +92,14 @@
  *	\return n/a
  */
 + (void)setFeaturedAppDisplayCount:(int) displayCount;
+
+/*!	\fn setFeaturedAppDelayCount:(int)delayCount
+ *	\brief Sets the delay count for featured app.
+ *
+ *	\param delayCount The number of times that the app must run (since initial app install) before a featured ad can be displayed.
+ *	\return n/a
+ */
++ (void)setFeaturedAppDelayCount:(int)delayCount;
 
 @end
 

@@ -150,9 +150,9 @@ value parse_span_attribute inp:  Xmlm.attribute -> span_attribute =
 (
   ();
   fun
-    [ ((_,"font-family"),ff) -> `fontFamily ff
-    | ((_,"font-size"),sz) -> `fontSize (parse_int inp sz)
-    | ((_,"font-weight"),sz) -> `fontWeight (match sz with [ "normal" -> "regular" | x -> x ])
+    [ ((_,("font-family" | "fontFamily")),ff) -> `fontFamily ff
+    | ((_,("font-size" | "fontSize")),sz) -> `fontSize (parse_int inp sz)
+    | ((_,("font-weight" | "fontWeight")),sz) -> `fontWeight (match sz with [ "normal" -> "regular" | x -> x ])
     | ((_,"color"),c) -> `color (parse_int inp c)
     | ((_,"alpha"),alpha) -> `alpha (parse_float inp alpha)
     | ((_,an),_) -> parse_error inp "unknown attribute %s" an
@@ -946,7 +946,7 @@ value create ?width ?height ?border ?dest (html:main) =
         if Hashtbl.length atlases = 1
         then 
           let () = debug "result is atlas" in
-          (Option.get (Enum.get (Hashtbl.values atlases)))#asDisplayObject
+          (OPTGET (Enum.get (Hashtbl.values atlases)))#asDisplayObject
         else 
           let c = Sprite.create () in
           (

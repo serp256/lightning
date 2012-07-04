@@ -130,7 +130,7 @@ value special_rfc2396 =
       (* unwise *) True
   | _ -> False ];
 (* ' ' must also be encoded but its encoding '+' takes a single char. *)
-value encode ?(plus = True) s =
+value encode ?(plus = False) s =
   let is_special =
     if plus
     then special_rfc2396

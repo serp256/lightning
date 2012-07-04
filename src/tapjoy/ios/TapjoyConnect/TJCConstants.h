@@ -57,7 +57,7 @@
 #define TJC_URL_PARAM_OFFER_ID				@"offer_id"
 #define TJC_URL_PARAM_CLICK_ID				@"click_id"
 
-// Display Ad API.
+// Banner Ad API.
 #define TJC_BANNER_URL_NAME					@"display_ad"
 
 // Video Ad API
@@ -72,22 +72,25 @@
 #define TJC_VIDEO_CLICK_PROTOCOL_COMPLETE	@"tjvideo://"
 #define TJC_VIDEO_CLICK_ID						@"video_id="
 #define TJC_VIDEO_CLICK_URL					@"click_url="
+#define TJC_VIDEO_CLICK_COMPLETE_URL		@"video_complete_url="
 #define TJC_VIDEO_CLICK_CURRENCY_AMOUNT	@"amount="
 #define TJC_VIDEO_CLICK_CURRENCY_NAME		@"currency_name="
 #define TJC_VIDEO_LOGO_IMAGE_URL				@"https://s3.amazonaws.com/tapjoy/videos/assets/watermark.png"
 
 
-// Display Ad URL size parameter.
+// Banner Ad URL size parameter.
 #define TJC_URL_PARAM_DISPLAY_AD_SIZE		@"size"
 
-#define TJC_REQUEST_TIME_OUT 35
+#define TJC_REQUEST_TIME_OUT			35
+#define TJC_REQUEST_TIME_OUT_SHORT	(10)
 
 #define TJC_URL_PARAM_VG_MAX_INDEX		999
 #define TJC_URL_PARAM_VG_PAGE_INDEX		999
 
 // Used for featured app.
-#define TJC_FEATURED_APP_DEFAULT_MAX_DISPLAY_COUNT	4
-#define TJC_FEATURED_COUNT_INF		-1
+#define TJC_FEATURED_APP_DEFAULT_MAX_DISPLAY_COUNT	4	// The number of times a particular featured ad will show by default before being skipped
+#define TJC_FEATURED_COUNT_INF							-1	// Used to set featured ads to show indefinitely
+#define TJC_FEATURED_APP_DEFAULT_DELAY_COUNT			0	// The number of times the app must be run (since initial installation) before a featured ad will be displayed
 
 
 //Custom HEXColor function
@@ -98,13 +101,20 @@ alpha:((c)&0xFF)/255.0f]
 
 #define TJC_DEFAULT_TRANSITION_DELAY (0.4f)
 
-#define TJC_SHOW_BOX_CLOSE_NOTIFICATION @"TJC_SHOW_BOX_NOTIFICATION"
+#define TJC_SHOW_BOX_CLOSE_NOTIFICATION				@"TJC_SHOW_BOX_NOTIFICATION"
+
+#define TJC_OFFERWALL_WEBVIEW_CLOSE_NOTIFICATION	@"TJC_OFFERWALL_WEBVIEW_CLOSE_NOTIFICATION"
+
+#define TJC_FEATURED_WEBVIEW_CLOSE_NOTIFICATION		@"TJC_FEATURED_WEBVIEW_CLOSE_NOTIFICATION"
+
 #define TJC_DEFAULT_COLOR   0x0E2C4CFF	//928844
 
 // For the loading view.
 #define TJC_LOADING_RECT_CORNER_RADIUS	5
 
 #define TJC_GENERIC_TAG_ID	12345
+
+#define TJC_GENERIC_CONNECTION_ERROR_MESSAGE	@"Service is unreachable.\nDo you want to try again?"
 
 
 #endif

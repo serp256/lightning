@@ -19,7 +19,7 @@ value ev_IO_ERROR: Ev.id;
 value ioerror_of_data: Ev.data -> option (int * string);
 
 IFDEF SDL THEN
-value process_events: unit -> unit;
+external run: unit -> unit = "net_run";
 ENDIF;
 
 class loader: [ ?request:request] -> [ unit ] ->

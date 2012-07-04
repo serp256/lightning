@@ -138,12 +138,11 @@ void ml_get_friends_identifiers(value callback) {
  */
 int loadImageFile(UIImage *image, textureInfo *tInfo);
 
+
 void ml_load_users_info(value uids, value callback) {
   CAMLparam2(uids, callback);
-  static value cb = 0; 
-  cb = callback;
-
   CAMLlocal2(lst, item);
+  
   lst = uids;
   
   NSMutableArray * identifiers = [NSMutableArray arrayWithCapacity: 1];
@@ -159,9 +158,13 @@ void ml_load_users_info(value uids, value callback) {
     CAMLreturn0;
   }
   
-  caml_register_global_root(&cb);
+  value *cb = malloc(sizeof(value));
+  *cb = callback;
+  caml_register_generational_global_root(cb);
   
   [GKPlayer loadPlayersForIdentifiers:identifiers withCompletionHandler:^(NSArray *players, NSError *error) {
+
+      NSLog(@"loadPlayersForIdentifiers complete handler call");
 
       if (players != nil)  {
       
@@ -169,16 +172,18 @@ void ml_load_users_info(value uids, value callback) {
         NSLock * photosToLoadLock = [[NSLock alloc] init];
         __block int photosToLoad = [players count];
   
-  
+        NSLog(@"photosToLoad: %d", photosToLoad);
+
         void (^retBlock)(void) = ^(void){
+            NSLog(@"RETURN GC DATA TO ML");
             caml_leave_blocking_section();  
-            value infos, lst_elt, info, img,mlTex;
-            Begin_roots4(infos,info,img,mlTex);
-            infos = Val_int(0);
-						value alias;
+            value result = 0, rec = 0, info = 0, textureID = 0, mlTex = 0;
+            Begin_roots5(result,rec,info,textureID,mlTex);
+            result = Val_unit;
+						value img,lst_elt;
                     
             for (NSArray * pair in loadedPhotos) {
-              info = caml_alloc_tuple(2);
+              rec = caml_alloc_tuple(2);
               GKPlayer * pl = (GKPlayer *)[pair objectAtIndex: 0];
               UIImage  * photo = nil;
               
@@ -186,46 +191,74 @@ void ml_load_users_info(value uids, value callback) {
                 photo = (UIImage *)[pair objectAtIndex: 1];
               }
               
-              Store_field(info,0,caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding])); //
-              Store_field(info,1,caml_alloc_tuple(2));
+              Store_field(rec,0,caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding])); //
+              info = caml_alloc_tuple(2);
               
-			  NSLog(@"ALIAS: %@",pl.alias);
-			  alias = caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding]); //
-              Field(Field(info,1), 0) = alias;
+							NSLog(@"ALIAS: %@",pl.alias);
+              NSLog(@"photo: %@", photo);
+
+							Store_field(info,0,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
               
               if (photo == nil) {
-                Field(Field(info,1), 1) = Val_int(0); // photo None
+                Field(info,1) = Val_int(0); // photo None
               } else {
                 textureInfo tInfo;
-                uint textureID;
                 loadImageFile(photo, &tInfo);
                 textureID = createGLTexture(1,&tInfo);
                 free(tInfo.imgData);
                 ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
-                
+              
+                /*NSLog(@"PRINT PREV LIST:");
+                value r,inf,mt;
+                lst_elt = result;
+                while (lst_elt != Val_unit) {
+                  r = Field(lst_elt,0);
+                  inf = Field(r,1);
+                  img = Field(inf,1);
+                  mt = Field(img,0);
+                  NSLog(@"textureID: %d",TEXTURE_ID(Field(mt,7)));
+                  lst_elt = Field(lst_elt,1);              
+                };
+                NSLog(@"------------");*/  
+
 								img = caml_alloc_small(1,0);
 								Field(img,0) = mlTex;
-								Field(Field(info,1),1) = img;
+                //Field(info, 1) = img;
+
+                Store_field(info,1,img);
               }
-                      
+
+              //NSLog(@"ALLOCATED TEXTURE: %d",TEXTURE_ID(Field(Field(Field(Field(info,1),1),1),0),7));
+
+              Store_field(rec,1,info);
+
               lst_elt = caml_alloc_small(2,0);
-              Field(lst_elt, 0) = info;
-              Field(lst_elt, 1) = infos;
-              infos = lst_elt;
+              Field(lst_elt, 0) = rec;
+              Field(lst_elt, 1) = result;
+              result = lst_elt;
+
+              
             }
-            caml_callback(cb, infos);
+            
+            
+            caml_callback(*cb, result);
             End_roots();
-            caml_remove_global_root(&cb);
+            caml_remove_generational_global_root(cb);
+            free(cb);
             caml_enter_blocking_section();
         };
         
         if ([GKPlayer instancesRespondToSelector: @selector(loadPhotoForSize:withCompletionHandler:)]) { // фотки поддерживаются только с ios 5.0
+          NSLog(@"instancesRespondToSelector");
           for (GKPlayer * p in players) {
             [p loadPhotoForSize: GKPhotoSizeNormal withCompletionHandler: ^(UIImage *photo, NSError *error) {
                 BOOL last = NO;
                 [photosToLoadLock lock];
                 photosToLoad--;
                 last = photosToLoad == 0;
+
+                NSLog(@"_alias: %@", p.alias);
+                NSLog(@"_photo: %@", photo);  
 
                 if (photo != nil) {
                   [loadedPhotos addObject: [NSArray arrayWithObjects: p, photo, nil]];
@@ -248,8 +281,9 @@ void ml_load_users_info(value uids, value callback) {
         
       } else {
 				dispatch_async(dispatch_get_main_queue(),^(void) {
-					caml_callback(cb,Val_unit);
-					caml_remove_global_root(&cb);
+					caml_callback(*cb,Val_unit);
+					caml_remove_generational_global_root(&cb);
+          free(cb);
 				});
       }
    }];

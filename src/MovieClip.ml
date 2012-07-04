@@ -124,7 +124,7 @@ module Make
 
   class c ?(fps=10) (clipname,textures,frames,labels) = 
     let first_frame = match frames.(0) with [ KeyFrame frame -> frame | Frame _ -> assert False ] in
-    let first_texture = Option.get first_frame.texture in
+    let first_texture = OPTGET first_frame.texture in
     let framesLength = Array.length frames in
   object(self)
     inherit Image.c first_texture as super;

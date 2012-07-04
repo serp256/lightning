@@ -30,6 +30,7 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
           ]
       ]
     in
+    let () = debug:mask "transform points for mask" in
     match Matrix.transformPoints matrix maskPoints with
     [ [| minX; maxX; minY; maxY |] ->
       let sheight = stage#height in

@@ -23,6 +23,8 @@
 static LightViewController *instance = NULL;
 static NSString *supportEmail = @"nanofarm@redspell.ru";
 
+static NSMutableArray *exceptionInfo = nil;
+
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	NSBundle *bundle = [NSBundle mainBundle];
 	NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
@@ -30,7 +32,11 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	UIDevice * dev = [UIDevice currentDevice];
 	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
 	NSString * body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
-	body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n%s\n"],dev.model, dev.systemVersion, appVersion, exn];
+	body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
+	for (NSString *info in exceptionInfo) {
+		body = [body stringByAppendingFormat:@"%@\n",info];
+	};
+	body = [body stringByAppendingFormat:@"%s\n",exn];
 	for (int i = 0; i < bc; i++) {
 		if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
 	};
@@ -67,6 +73,10 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	return instance;
 }
 
++(void)addExceptionInfo:(NSString*)info {
+	if (exceptionInfo == nil) exceptionInfo = [[NSMutableArray alloc] initWithCapacity:1];
+	[exceptionInfo addObject:info];
+}
 
 #pragma mark - View lifecycle
 - (void)loadView {
@@ -148,8 +158,8 @@ static value *ml_url_response = NULL;
 	value args[4];
 	args[0] = (value)connection;
 	args[1] = Val_int(response.statusCode);
-	args[3] = caml_copy_int64(response.expectedContentLength);
-	args[2] = contentType;
+	args[2] = caml_copy_int64(response.expectedContentLength);
+	args[3] = contentType;
 	caml_callbackN(*ml_url_response,4,args);
 	End_roots();
 	caml_release_runtime_system();
@@ -318,6 +328,10 @@ static value *ml_url_complete = NULL;
 - (void)dismissModalViewControllerAnimated:(BOOL)animated {
 	 [super dismissModalViewControllerAnimated: animated];
 	 [self becomeActive];
+}
+
++ (void)setSupportEmail:(NSString*)email {
+	supportEmail = [email retain];
 }
 
 @end

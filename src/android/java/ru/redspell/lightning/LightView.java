@@ -1,74 +1,280 @@
 package ru.redspell.lightning; 
 
-import android.content.Context;
-import android.opengl.GLSurfaceView;
+import android.app.Activity;
 import android.view.MotionEvent;
+import android.opengl.GLSurfaceView;
 import android.util.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.WindowManager;
+import android.view.Window;
+import android.util.DisplayMetrics;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
+import android.media.SoundPool;
+import android.view.SurfaceHolder;
+import android.content.Context;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URI;
+import android.os.Environment;
+import android.os.AsyncTask;
+import android.content.pm.PackageManager.NameNotFoundException;
+
+import ru.redspell.lightning.payments.BillingService;
+import ru.redspell.lightning.payments.ResponseHandler;
 
 public class LightView extends GLSurfaceView {
 
-	private LightRenderer renderer;
-    private int loader_id;
-    private Handler uithread;
+	private class ExtractAssetsTask extends AsyncTask<Void, Void, File> {
+		//private File assetsDir;
+		private URI assetsDirUri;
+		private String ver;
 
-	public LightView(Context context,int width,int height) {
-        super(context);
+		private void recExtractAssets(File dir) throws IOException {
+			Context c = getContext();
+			AssetManager am = c.getAssets();
+
+			String subAssetsUri = assetsDirUri.relativize(dir.toURI()).toString();
+			String[] subAssets = c.getAssets().list(subAssetsUri != "" ? subAssetsUri.substring(0, subAssetsUri.length() - 1) : subAssetsUri);
+
+			for (String subAsset : subAssets) {
+				File subAssetFile = new File(dir, subAsset);
+
+				try {
+					InputStream in = am.open(assetsDirUri.relativize(subAssetFile.toURI()).toString());
+
+					subAssetFile.createNewFile();
+
+					FileOutputStream out = new FileOutputStream(subAssetFile);
+					byte[] buf = new byte[in.available()];
+
+					in.read(buf, 0, in.available());
+					out.write(buf, 0, buf.length);
+
+					in.close();
+					out.close();
+				} catch (FileNotFoundException e) {
+					subAssetFile.mkdir();
+					recExtractAssets(subAssetFile);
+				}
+			}
+		}
+
+		private void traceFile(File file, int indentSize) {
+			String indent = "";
+
+			for (int i = 0; i < indentSize; i++) {
+				indent += "\t";
+			}
+
+			Log.d("LIGHTNING", indent + file.getAbsolutePath());
+
+			if (file.isDirectory()) {
+				File[] files = file.listFiles();
+
+				for (File f : files) {
+					traceFile(f, indentSize + 1);
+				}
+			}
+		}
+
+		private void extractAssets(File assetsDir) throws IOException {
+			assetsDirUri = assetsDir.toURI();
+			cleanDir(assetsDir);
+			recExtractAssets(assetsDir);
+			(new File(assetsDir, ver)).createNewFile();
+		}
+
+		private void cleanDir(File dir) {
+			if (dir.isDirectory()) {
+				for (File f : dir.listFiles()) {
+					cleanDir(f);
+					f.delete();
+				}
+			}
+		}
+
+		private File getExternalAssetsPath() {
+			return new File(getContext().getExternalFilesDir(null), "assets");
+		}
+
+		private File getInternalAssetsPath() {
+			return getContext().getDir("assets", Context.MODE_PRIVATE);
+		}
+
+		private void extractAssetsToExternal(File assetsDir) throws IOException {
+			String state = Environment.getExternalStorageState();
+
+			if (!Environment.MEDIA_MOUNTED.equals(state)) {
+				throw new IOException("External stotage is unavailable");
+			}
+
+			if (!assetsDir.exists()) {
+				assetsDir.mkdir();
+			}
+
+			extractAssets(assetsDir);
+		}
+
+		private void extractAssetsToInternal(File assetsDir) throws IOException {
+			Context c = getContext();
+			extractAssets(assetsDir);
+		}
+
+		protected File doInBackground(Void... params) {
+			File internalAssetsPath = getInternalAssetsPath();
+			File externalAssetsPath = getExternalAssetsPath();
+
+			try {
+				Context c = getContext();				
+				ver = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName;
+
+				if ((new File(externalAssetsPath, ver)).exists()) {
+					Log.d("LIGHTNING", "assets already extracted to external storage");
+					return externalAssetsPath;
+				}
+
+				if ((new File(internalAssetsPath, ver).exists())) {
+					Log.d("LIGHTNING", "assets already extracted to internal storage");
+					return internalAssetsPath;
+				}
+			
+				Log.d("LIGHTNING", "trying to extract assets to external stotage...");
+				extractAssetsToExternal(externalAssetsPath);
+				Log.d("LIGHTNING", "success");
+
+				return externalAssetsPath;
+			} catch (IOException e) {
+				Log.d("LIGHTNING", "failed, try to extract assets to internal storage...");
+
+				cleanDir(externalAssetsPath);
+
+				try {
+					extractAssetsToInternal(internalAssetsPath);
+					Log.d("LIGHTNING", "success");
+
+					return internalAssetsPath;
+				} catch (IOException e1) {
+					Log.e("LIGHTNING", "failed, cannot use any kind of storate for assets extraction");
+					cleanDir(internalAssetsPath);
+				}
+			} catch (NameNotFoundException nnfe) {
+				Log.e("LIGHTNING", "NameNotFoundException");
+			}
+
+			return null;
+		}
+
+		protected void onPostExecute(File res) {
+			assetsExtracted(res != null ? res.getAbsolutePath() : null);
+		}
+	}
+
+	private LightRenderer renderer;
+	private int loader_id;
+	private Handler uithread;
+	private BillingService bserv;
+	//private File assetsDir;
+
+	public LightView(Activity activity) {
+		super(activity);
+		activity.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		DisplayMetrics dm = new DisplayMetrics();
+		activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
+		int width = dm.widthPixels;
+		int height = dm.heightPixels;
+		lightInit(activity.getPreferences(0));
+		Log.d("LIGHTNING","lightInit finished");
 		initView(width,height);
+
+		bserv = new BillingService();
+		bserv.setContext(activity);
+		ResponseHandler.register(activity);
 	}
 
 	protected void initView(int width,int height) {
-		lightInit();
 		setEGLContextClientVersion(2);
+		Log.d("LIGHTNING","create Renderer");
 		renderer = new LightRenderer(width,height);
 		setFocusableInTouchMode(true);
 		setRenderer(renderer);
 	}
 
+	public void surfaceCreated(SurfaceHolder holder) {
+		Log.d("LIGHTNING","surfaceCreated");
+		super.surfaceCreated(holder);
+	}
+
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		Log.d("LIGHTNING","surfaceDestroyed");
+		super.surfaceDestroyed(holder);
+	}
+
+	public int getSoundId(String path, SoundPool sndPool) throws IOException {
+		if (path.charAt(0) == '/') {
+			return sndPool.load(path, 1);
+		}
+
+		return sndPool.load(getContext().getAssets().openFd(path), 1);
+	}
 
 	public ResourceParams getResource(String path) {
+
 		ResourceParams res;
+
 		try {
+			Log.d("LIGHTNING", "loading from raw assets [" + path + "]");
+
 			AssetFileDescriptor afd = getContext().getAssets().openFd(path);
-			res = new ResourceParams(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
+			res = new ResourceParams(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());			
 		} catch (IOException e) {
-		   res =  null;
+			Log.d("LIGHTNING","can't find [" + path + "] <" + e + ">");
+			res =  null;
 		}
 		return res;
 	}
 
-	 public void onPause(){
-		 queueEvent(new Runnable() {
-			 @Override
-			 public void run() {
-				 renderer.handleOnPause();
-			 }
-		 });
+	public void onPause(){
+		Log.d("LIGHTNING", "VIEW.onPause");
 
-		 super.onPause();
-	 }
-	    
-	 public void onResume() {
-		 super.onResume();
-		 queueEvent(new Runnable() {
-			 @Override
-			 public void run() {
-				 renderer.handleOnResume();
-			 }
-		 });
-	 }
-			 
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				renderer.handleOnPause();
+			}
+		});
+		//super.onPause();
+	}
+
+	public void onResume() {
+		Log.d("LIGHTNING", "VIEW.onResume");
+		//super.onResume();
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				renderer.handleOnResume();
+			}
+		});
+	}
+
+	public void onDestroy() {
+		Log.d("LIGHTNING","VIEW.onDestroy");
+		lightFinalize();
+	}
+
 
 	public boolean onTouchEvent(final MotionEvent event) {
-		Log.d("EVENT","Touch event");
+		Log.d("LIGHTNING","Touch event");
 
 		// these data are used in ACTION_MOVE and ACTION_CANCEL
 		dumpMotionEvent(event);
@@ -78,11 +284,11 @@ public class LightView extends GLSurfaceView {
 		final float[] ys = new float[pointerNumber];
 
 		for (int i = 0; i < pointerNumber; i++) {
-					ids[i] = event.getPointerId(i);
-					xs[i] = event.getX(i);
-					ys[i] = event.getY(i);
-			}
-			
+			ids[i] = event.getPointerId(i);
+			xs[i] = event.getX(i);
+			ys[i] = event.getY(i);
+		}
+
 		switch (event.getAction() & MotionEvent.ACTION_MASK) {
 
 			case MotionEvent.ACTION_POINTER_DOWN:
@@ -97,35 +303,35 @@ public class LightView extends GLSurfaceView {
 					}
 				});
 				break;
-					
+
 			case MotionEvent.ACTION_DOWN:
 				// there are only one finger on the screen
 				final int idDown = event.getPointerId(0);
 				final float xDown = event.getX(idDown);
 				final float yDown = event.getY(idDown);
-					
+
 				queueEvent(new Runnable() {
-							@Override
-							public void run() {
-									renderer.handleActionDown(idDown, xDown, yDown);
-							}
-					});
-					break;
+					@Override
+					public void run() {
+						renderer.handleActionDown(idDown, xDown, yDown);
+					}
+				});
+				break;
 
 			case MotionEvent.ACTION_MOVE:
-					queueEvent(new Runnable() {
-						@Override
-						public void run() {
-							renderer.handleActionMove(ids, xs, ys);
-						}
-					});
-					break;
+				queueEvent(new Runnable() {
+					@Override
+					public void run() {
+						renderer.handleActionMove(ids, xs, ys);
+					}
+				});
+				break;
 
 			case MotionEvent.ACTION_POINTER_UP:
 				final int idPointerUp = event.getAction() >> MotionEvent.ACTION_POINTER_ID_SHIFT;
 				final float xPointerUp = event.getX(idPointerUp);
 				final float yPointerUp = event.getY(idPointerUp);
-					
+
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
@@ -133,13 +339,13 @@ public class LightView extends GLSurfaceView {
 					}
 				});
 				break;
-					
+
 			case MotionEvent.ACTION_UP:  
 				// there are only one finger on the screen
 				final int idUp = event.getPointerId(0);
 				final float xUp = event.getX(idUp);
 				final float yUp = event.getY(idUp);
-					
+
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
@@ -161,78 +367,131 @@ public class LightView extends GLSurfaceView {
 	}
 
 	/*
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		final int kc = keyCode;
-		if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU) {
-			queueEvent(new Runnable() {
-						@Override
-						public void run() {
-								mRenderer.handleKeyDown(kc);
-						}
-			});
-			return true;
-		}
-		return super.onKeyDown(keyCode, event);
-	}
-	*/
+		 @Override
+		 public boolean onKeyDown(int keyCode, KeyEvent event) {
+		 final int kc = keyCode;
+		 if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU) {
+		 queueEvent(new Runnable() {
+		 @Override
+		 public void run() {
+		 mRenderer.handleKeyDown(kc);
+		 }
+		 });
+		 return true;
+		 }
+		 return super.onKeyDown(keyCode, event);
+		 }
+		 */
 
 	// Show an event in the LogCat view, for debugging
 	private static void dumpMotionEvent(MotionEvent event) {
-		 String names[] = { "DOWN" , "UP" , "MOVE" , "CANCEL" , "OUTSIDE" , "POINTER_DOWN" , "POINTER_UP" , "7?" , "8?" , "9?" };
-		 StringBuilder sb = new StringBuilder();
-		 int action = event.getAction();
-		 int actionCode = action & MotionEvent.ACTION_MASK;
-		 sb.append("event ACTION_" ).append(names[actionCode]);
-		 if (actionCode == MotionEvent.ACTION_POINTER_DOWN
-					 || actionCode == MotionEvent.ACTION_POINTER_UP) {
-				sb.append("(pid " ).append(
-				action >> MotionEvent.ACTION_POINTER_INDEX_SHIFT);
-				sb.append(")" );
-		 }
-		 sb.append("[" );
-		 for (int i = 0; i < event.getPointerCount(); i++) {
-				sb.append("#" ).append(i);
-				sb.append("(pid " ).append(event.getPointerId(i));
-				sb.append(")=" ).append((int) event.getX(i));
-				sb.append("," ).append((int) event.getY(i));
-				if (i + 1 < event.getPointerCount())
-					 sb.append(";" );
-		 }
-		 sb.append("]" );
-		 Log.d("EVENT", sb.toString());
+		String names[] = { "DOWN" , "UP" , "MOVE" , "CANCEL" , "OUTSIDE" , "POINTER_DOWN" , "POINTER_UP" , "7?" , "8?" , "9?" };
+		StringBuilder sb = new StringBuilder();
+		int action = event.getAction();
+		int actionCode = action & MotionEvent.ACTION_MASK;
+		sb.append("event ACTION_" ).append(names[actionCode]);
+		if (actionCode == MotionEvent.ACTION_POINTER_DOWN
+				|| actionCode == MotionEvent.ACTION_POINTER_UP) {
+			sb.append("(pid " ).append(
+						action >> MotionEvent.ACTION_POINTER_INDEX_SHIFT);
+			sb.append(")" );
+				}
+		sb.append("[" );
+		for (int i = 0; i < event.getPointerCount(); i++) {
+			sb.append("#" ).append(i);
+			sb.append("(pid " ).append(event.getPointerId(i));
+			sb.append(")=" ).append((int) event.getX(i));
+			sb.append("," ).append((int) event.getY(i));
+			if (i + 1 < event.getPointerCount())
+				sb.append(";" );
+		}
+		sb.append("]" );
+		Log.d("LIGHTNING", sb.toString());
 	}
 
 
-    //
+	//
 	// Этот методы вызывается из ocaml, он создает хттп-лоадер, который в фоне выполняет запрос с переданными параметрами
-	
+
 	//
-	// а зачем эту хуйню запускать сперва в UI thread? Можно ведь сразу asynch task сделать!
-	//
-	public int spawnHttpLoader(final String url, final String method, final String[][] headers, final byte[] data){
+	/* а зачем эту хуйню запускать сперва в UI thread? Можно ведь сразу asynch task сделать!
+	public int spawnHttpLoader(final String url, final String method, final String[][] headers, final byte[] data) {
 		loader_id = loader_id + 1;
-        final GLSurfaceView v = this;
+		final GLSurfaceView v = this;
 		getHandler().post(new Runnable() {
-		    public void run() {
-        	  UrlReq req = new UrlReq();
-		      req.url = url;
-		      req.method = method;
-		      req.headers = headers;
-		      req.data = data;
-		      req.loader_id = loader_id;
-              req.surface_view = v;		
-	    	  LightHttpLoader loader = new LightHttpLoader();  
-		      loader.execute(req);
-		    }
-		  }
-		);
+			public void run() {
+				UrlReq req = new UrlReq();
+				req.url = url;
+				req.method = method;
+				req.headers = headers;
+				req.data = data;
+				req.loader_id = loader_id;
+				req.surface_view = v;		
+				LightHttpLoader loader = new LightHttpLoader();  
+				loader.execute(req);
+			}
+		});
 
 		return loader_id;
+	}*/
+
+
+	private native void lightInit(SharedPreferences p);
+	private native void lightFinalize();
+
+	public void requestPurchase(String prodId) {
+		bserv.requestPurchase(prodId);
 	}
 
+	public void confirmNotif(String notifId) {
+		bserv.confirmNotif(notifId);
+	}	
+	
+	public void initBillingServ() {
+		bserv.requestPurchase("android.test.purchased");
+	}
 
-	private native void lightInit();
+	public void extractAssets() {
+		Log.d("LIGHTNING", "lightview extractAssets call");
+
+		getHandler().post(new Runnable() {
+			public void run() {
+				Log.d("LIGHTNING", "Runnable run call");
+				new ExtractAssetsTask().execute();		
+			}
+		});
+	}
+
+	private native void assetsExtracted(String assetsDir);
+
+/*	{
+		this.assetsDir = assetsDir;
+
+		Log.d("LIGHTNING", assetsDir != null ? "assets extracted to " + assetsDir.getAbsolutePath() : "assets are not extracted: no space on device");
+	}*/
+
+/*	protected void cleanLocalStorage() {
+		String[] names = fileList();
+
+		for (String name : names) {
+			File file = new File(path);
+		}
+	}*/
+
+	// protected void traceAssets(String baseAsset, int indentSize) throws IOException {
+	// 	Context cntxt = getContext();
+	// 	String[] assets = cntxt.getAssets().list(baseAsset);
+	// 	String indent = "";
+
+	// 	for (int i = 0; i < indentSize; i++) {
+	// 		indent += "\t";
+	// 	}
+
+	// 	for (String asset : assets) {			
+	// 		Log.d("LIGHTNING", indent + asset);
+	// 		traceAssets(baseAsset != "" ? baseAsset + "/" + asset : asset, indentSize + 1);			
+	// 	}		
+	// }
+
+
 }
-
-

@@ -7,7 +7,7 @@
 // The Tapjoy SDK is bound by the Tapjoy SDK License Agreement and can be found here: https://www.tapjoy.com/sdk/license
 
 
-#define SYNTHESIZE_SINGLETON_FOR_CLASS(classname) \
+#define TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(classname) \
  \
 static classname *shared##classname = nil; \
  \
@@ -53,11 +53,12 @@ static classname *shared##classname = nil; \
 	return NSUIntegerMax; \
 } \
  \
-- (void)release \
-{ \
-} \
- \
 - (id)autorelease \
 { \
 	return self; \
+} \
+\
+- (oneway void)release \
+{ \
+\
 }

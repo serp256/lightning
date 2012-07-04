@@ -34,7 +34,10 @@
 	NSMutableDictionary *paramDict = [[NSMutableDictionary alloc] initWithDictionary:[[TapjoyConnect sharedTapjoyConnect] genericParameters]];
 	
 	// Add the publisher user ID to the generic parameters dictionary.
-	[paramDict setObject:[TapjoyConnect getUserID] forKey:TJC_URL_PARAM_USER_ID];
+	if ([TapjoyConnect getUserID])
+	{
+		[paramDict setObject:[TapjoyConnect getUserID] forKey:TJC_URL_PARAM_USER_ID];
+	}
 	
 	[self makeGenericRequestWithURL:requestString 
 							 alternateURL:alternateString 
@@ -53,7 +56,10 @@
 	NSMutableDictionary *paramDict = [[NSMutableDictionary alloc] initWithDictionary:[[TapjoyConnect sharedTapjoyConnect] genericParameters]];
 	
 	// Add the publisher user ID to the generic parameters dictionary.
-	[paramDict setObject:[TapjoyConnect getUserID] forKey:TJC_URL_PARAM_USER_ID];
+	if ([TapjoyConnect getUserID])
+	{
+		[paramDict setObject:[TapjoyConnect getUserID] forKey:TJC_URL_PARAM_USER_ID];
+	}
 	
 	// Set points to deduct.
 	[paramDict setObject:[NSString stringWithFormat:@"%d", points] forKey:TJC_URL_PARAM_TAP_POINTS];
@@ -75,14 +81,16 @@
 	NSMutableDictionary *paramDict = [[NSMutableDictionary alloc] initWithDictionary:[[TapjoyConnect sharedTapjoyConnect] genericParameters]];
 	
 	// Add the publisher user ID to the generic parameters dictionary.
-	[paramDict setObject:[TapjoyConnect getUserID] forKey:TJC_URL_PARAM_USER_ID];
+	if ([TapjoyConnect getUserID])
+	{
+		[paramDict setObject:[TapjoyConnect getUserID] forKey:TJC_URL_PARAM_USER_ID];
+	}
 	
 	// Set points to award.
 	[paramDict setObject:[NSString stringWithFormat:@"%d", points] forKey:TJC_URL_PARAM_TAP_POINTS];
 	
-	NSTimeInterval timeInterval = [[NSDate date] timeIntervalSince1970];
 	// Get seconds since Jan 1st, 1970.
-	NSString *timeStamp = [NSString stringWithFormat:@"%d", (int)timeInterval];
+	NSString *timeStamp = [TapjoyConnect getTimeStamp];
 	
 	// Replace existing time stamp with this time stamp, just in case it's changed since genericParameters was generated.
 	[paramDict setObject:timeStamp forKey:TJC_TIMESTAMP];
@@ -110,12 +118,12 @@
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"Update Account Info Response Returned"];
 	
-	TBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
+	TJCTBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
 	
 	if (!tjcConnectRetObject) 
 		return;
 	
-	TBXMLElement *userAccountObj = [TBXML childElementNamed:@"UserAccountObject" parentElement:tjcConnectRetObject];
+	TJCTBXMLElement *userAccountObj = [TJCTBXML childElementNamed:@"UserAccountObject" parentElement:tjcConnectRetObject];
 	
 	if (!userAccountObj)
 	{
