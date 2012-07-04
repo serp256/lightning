@@ -618,7 +618,6 @@ value kv_storage_get_val(value key_ml, st_val_type vtype) {
   CAMLparam1(key_ml);
   CAMLlocal1(tuple);
   
-	DEBUG("KV_STORAGE_GET_VAL");
   JNIEnv *env;                                                                                                                                                                                
   (*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);                                                                                                                                   
   if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0) {                                                                                                                                 
@@ -703,6 +702,7 @@ void kv_storage_put_val(value key_ml, value val_ml, st_val_type vtype) {
 
   jclass editorCls = (*env)->GetObjectClass(env, jStorageEditor);
   jstring key = (*env)->NewStringUTF(env, String_val(key_ml));
+	DEBUG (String_val(key_ml));
   
   if (vtype == St_string_val) {
 		static jmethodID jmthd_putString = NULL;
@@ -858,6 +858,7 @@ value ml_alsoundPlay(value soundId, value vol, value loop) {
 	}
 
 	jdouble jvol = Double_val(vol);
+
 	jint streamId = (*env)->CallIntMethod(env, gSndPool, gPlayMthdId, Int_val(soundId), jvol, jvol, 0, Bool_val(loop) ? -1 : 0, 1.0);
 
 	return Val_int(streamId);
@@ -943,7 +944,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
 		if (gAutoPause == NULL) {
-			gAutoPause = (*env)->GetMethodID(env, gSndPoolCls, "autoPuase", "()V");
+			gAutoPause = (*env)->GetMethodID(env, gSndPoolCls, "autoPause", "()V");
 		}
 
 		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
@@ -1084,7 +1085,6 @@ void ml_payment_commit_transaction(value transaction) {
 
 	CAMLreturn0;
 }
-void ml_addExceptionInfo(value v) {}
 
 void ml_extractAssets() {
 	JNIEnv *env;
@@ -1093,3 +1093,39 @@ void ml_extractAssets() {
 	jmethodID extractResources = (*env)->GetMethodID(env, jViewCls, "extractAssets", "()V");
 	(*env)->CallVoidMethod(env, jView, extractResources);
 }
+
+void ml_openURL(value  url) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jstring _url = (*env)->NewStringUTF(env, String_val(url));
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "openURL", "(Ljava/lang/String;)V");
+	(*env)->CallVoidMethod(env, jView, mid, _url);
+}
+
+void ml_addExceptionInfo (value info){
+  JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jstring _info = (*env)->NewStringUTF(env, String_val(info));
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "mlAddExceptionInfo", "(Ljava/lang/String;)V");
+	(*env)->CallVoidMethod(env, jView, mid, _info);
+}
+
+void ml_setSupportEmail (value d){
+  JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jstring _d = (*env)->NewStringUTF(env, String_val(d));
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "mlSetSupportEmail", "(Ljava/lang/String;)V");
+	(*env)->CallVoidMethod(env, jView, mid, _d);
+}
+
+value ml_getLocale () {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetLocale", "()Ljava/lang/String;");
+  return string_of_jstring(env, (*env)->CallObjectMethod(env, jView, meth));
+}
+
