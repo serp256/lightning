@@ -132,6 +132,7 @@ Callback.register "url_failed" url_failed;
 
 value start_load wrappers r = 
   let (url,data) = prepare_request r in
+  let () = debug "HEADERS: [%s]" (String.concat ";" (List.map (fun (n,v) -> n ^ ":" ^ v) r.headers)) in
   let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
   (
     Hashtbl.add loaders ns_connection wrappers;
