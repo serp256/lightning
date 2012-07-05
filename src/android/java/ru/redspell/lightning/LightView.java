@@ -480,14 +480,18 @@ public class LightView extends GLSurfaceView {
 		supportEmail = d;
 	}
 
-	public void addExceptionInfo(String d){
-    openURL(supportEmail);
+	public void addExceptionInfo(String d) {
+    openURL("mailto:".concat(supportEmail).concat("?subject=test&body=wtf"));
 	}
 
   public String mlGetLocale () {
 		return Locale.getDefault().getLanguage();
 	}
 
+  public String mlGetStoragePath () {
+		Log.d("LIGHTNING", "LightView: mlgetStoragePath");
+		return getContext().getFilesDir().getPath();
+	}
 /*	{
 		this.assetsDir = assetsDir;
 

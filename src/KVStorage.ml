@@ -1,59 +1,6 @@
 exception Kv_not_found;
 
-IFDEF SDL THEN
-type t = Hashtbl.t string string;
-
-value storage = ref None;
-value commit () =
-  match !storage with
-  [ None -> ()
-  | Some s -> 
-     let ch = open_out_bin "kvstorage" in
-     (
-       Marshal.to_channel ch s [];
-       close_out ch
-     )
-  ];
-
-value get_storage () = 
-  match !storage with
-  [ Some s -> s
-  | None ->
-      if Sys.file_exists "kvstorage" 
-      then
-        let s = Marshal.from_channel (open_in_bin "kvstorage") in
-        (
-          storage.val := Some s;
-          s
-        )
-      else 
-        let s = Hashtbl.create 0 in
-        (
-          storage.val := Some s;
-          commit ();
-          s;
-        )
-  ];
-
-value get_string k = try Hashtbl.find (get_storage()) k with [ Not_found -> raise Kv_not_found ];
-value get_bool k = try bool_of_string (Hashtbl.find (get_storage()) k) with [ Not_found -> raise Kv_not_found ];
-value get_int k = try int_of_string (Hashtbl.find (get_storage()) k) with [ Not_found -> raise Kv_not_found ];
-(*value get_float k = try float_of_string (Hashtbl.find (get_storage ()) k) with [ Not_found -> raise Kv_not_found ];*)
-      
-value put_string k v = Hashtbl.replace (get_storage()) k v;
-value put_bool k v = Hashtbl.replace (get_storage()) k (string_of_bool v); 
-value put_int k v = Hashtbl.replace (get_storage()) k (string_of_int v);
-value put_float k v = Hashtbl.replace (get_storage()) k (string_of_float v);
-value remove k = Hashtbl.remove (get_storage()) k;
-value exists k = Hashtbl.mem (get_storage()) k;
-
-value get_string_opt (k:string) = try Some (get_string k) with [ Kv_not_found -> None ];
-value get_bool_opt k = try Some (get_bool k) with [ Kv_not_found -> None ];
-value get_int_opt k = try Some (get_int k) with [ Kv_not_found -> None ];
-(*value get_float_opt k = try Some (get_float k) with [ Kv_not_found -> None ];*)
- 
-ELSE
-
+IFDEF IOS THEN
 (* external ml_create : unit -> t = "ml_kv_storage_create"; *)
 external commit : unit -> unit = "ml_kv_storage_commit";
 
@@ -94,6 +41,92 @@ value put_int = ml_put_int;
 value remove  = ml_remove;
 value exists  = ml_exists;
 *)
+
+ELSE
+
+type t = Hashtbl.t string string;
+
+IFDEF ANDROID THEN
+external get_storage_path: unit -> string = "ml_getStoragePath";
+ENDIF;
+
+value storage = ref None;
+value commit () =
+  match !storage with
+  [ None -> ()
+  | Some s -> 
+IFDEF ANDROID THEN
+		 let ch = open_out_bin ((get_storage_path ()) ^ "kvstorage") in
+     (
+       Marshal.to_channel ch s [];
+       close_out ch
+     )
+ELSE
+		 let ch = open_out_bin "kvstorage" in
+     (
+       Marshal.to_channel ch s [];
+       close_out ch
+     )
+ENDIF
+  ];
+
+value get_storage () = 
+  match !storage with
+  [ Some s -> s
+  | None ->
+IFDEF ANDROID THEN 
+		  let path = ((get_storage_path()) ^ "kvstorage") in
+			(Printf.printf "DDD: %s\n%!" path;
+      if Sys.file_exists path 
+      then
+        let s = Marshal.from_channel (open_in_bin path) in
+        (
+          storage.val := Some s;
+          s
+        )
+      else 
+        let s = Hashtbl.create 0 in
+        (
+          storage.val := Some s;
+          commit ();
+          s;
+        )
+		  )
+ELSE
+		  let path = "kvstorage" in
+      if Sys.file_exists path 
+      then
+        let s = Marshal.from_channel (open_in_bin path) in
+        (
+          storage.val := Some s;
+          s
+        )
+      else 
+        let s = Hashtbl.create 0 in
+        (
+          storage.val := Some s;
+          commit ();
+          s;
+        )
+ENDIF
+  ];
+
+value get_string k = try Hashtbl.find (get_storage()) k with [ Not_found -> raise Kv_not_found ];
+value get_bool k = try bool_of_string (Hashtbl.find (get_storage()) k) with [ Not_found -> raise Kv_not_found ];
+value get_int k = try int_of_string (Hashtbl.find (get_storage()) k) with [ Not_found -> raise Kv_not_found ];
+(*value get_float k = try float_of_string (Hashtbl.find (get_storage ()) k) with [ Not_found -> raise Kv_not_found ];*)
+      
+value put_string k v = Hashtbl.replace (get_storage()) k v;
+value put_bool k v = Hashtbl.replace (get_storage()) k (string_of_bool v); 
+value put_int k v = Hashtbl.replace (get_storage()) k (string_of_int v);
+value put_float k v = Hashtbl.replace (get_storage()) k (string_of_float v);
+value remove k = Hashtbl.remove (get_storage()) k;
+value exists k = Hashtbl.mem (get_storage()) k;
+
+value get_string_opt (k:string) = try Some (get_string k) with [ Kv_not_found -> None ];
+value get_bool_opt k = try Some (get_bool k) with [ Kv_not_found -> None ];
+value get_int_opt k = try Some (get_int k) with [ Kv_not_found -> None ];
+(*value get_float_opt k = try Some (get_float k) with [ Kv_not_found -> None ];*)
 
 ENDIF;
 

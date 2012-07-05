@@ -1160,3 +1160,16 @@ value ml_getLocale () {
   return r;
 }
 
+value ml_getStoragePath () {
+  JNIEnv *env;
+	DEBUG("getStoragePath");
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetStoragePath", "()Ljava/lang/String;");
+	jstring path = (*env)->CallObjectMethod(env, jView, meth);
+	const char *l = (*env)->GetStringUTFChars(env, path, JNI_FALSE);
+	value r = caml_copy_string(l);
+	(*env)->ReleaseStringUTFChars(env, path, l);
+	DEBUGF("getStoragePath: %s", String_val(r));
+	return r;
+}
+
