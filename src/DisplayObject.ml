@@ -18,7 +18,7 @@ external glEnableScissor: int -> int -> int -> int -> unit = "ml_gl_scissor_enab
 external glDisableScissor: unit -> unit = "ml_gl_scissor_disable";
 
 type rect_mask = { x0 : float ; y0 : float ; x1 : float ; y1 : float };
-value maskQueue = ref [];
+value maskStack = Stack.create ();
 
 DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
   match self#stage with
@@ -33,24 +33,22 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
           ]
       ]
     in
-(*     let () = debug:mask "transform points for mask" in *)
+    let () = debug:mask "transform points for mask" in
     match Matrix.transformPoints matrix maskPoints with
     [ [| minX; maxX; minY; maxY |] ->
       let sheight = stage#height in
       (
 				let os = { x0 = minX ; y0 = minY ; x1 =  maxX ; y1 =  maxY } in
 				let os = 
-					match !maskQueue with 
-						[ [ a :: _ ] ->
-								(
-									{ x0 = max os.x0 a.x0 ; y0 = max os.y0 a.y0 ; x1 = min os.x1 a.x1 ; y1 = min os.y1 a.y1 }
-								)
-						| _ -> os
-						]
+					try 
+					 	let a = Stack.top maskStack in
+							{ x0 = max os.x0 a.x0 ; y0 = max os.y0 a.y0 ; x1 = min os.x1 a.x1 ; y1 = min os.y1 a.y1 }
+					with
+						[ Stack.Empty -> os ]
 					in
 					(
 						debug:mask "push %f %f %f %f " os.x0 os.y0 os.x1 os.y1;
-						maskQueue.val := [ os :: !maskQueue ];
+						Stack.push os maskStack;
 						let minY = sheight -. os.y1
 						and maxY = sheight -. os.y0 in
 						let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } in
@@ -58,10 +56,7 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
 							glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
 							call_render;
 							glDisableScissor ();
-							match !maskQueue with 
-							[ [ _ :: ms ] -> maskQueue.val := ms
-							| _ -> ()
-							];
+							ignore ( Stack.pop maskStack );
 							debug:mask "pull";
 						);
 					);
