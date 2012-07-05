@@ -8,7 +8,7 @@
 #import "LightView.h"
 #import "mlwrapper_ios.h"
 #import <CoreMotion/CMAccelerometer.h>
-#import "motion.h";
+#import "motion.h"
 
 // --- private interface ---------------------------------------------------------------------------
 

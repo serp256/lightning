@@ -34,6 +34,7 @@ size_t writefunction(char *buffer,size_t size,size_t nitems, void *p) {
 	CAMLparam0();
 	CAMLlocal1(ml_string);
 	struct request *r = (struct request*)p;
+	PRINT_DEBUG("writefunction %lu",(long)r);
 	if (!r->headers_done) {
 		static value *ml_url_response = NULL;
 		if (ml_url_response == NULL) ml_url_response = caml_named_value("url_response");
@@ -116,13 +117,25 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	struct request *r = (struct request*)caml_stat_alloc(sizeof(struct request));
 	r->handle = curl_easy_init();
 	r->url = strdup(String_val(url));
+	PRINT_DEBUG("curl req: [%s]",r->url);
 	curl_easy_setopt(r->handle,CURLOPT_URL,r->url);
 	if (Int_val(method) == caml_hash_variant("POST")) curl_easy_setopt(r->handle,CURLOPT_POST,1);
 	r->headers = NULL;
 	if (Is_block(headers)) {
 		value h = headers;
+		char *name,*val,*header;
+		size_t nlen,vlen;
 		do {
-			r->headers = curl_slist_append(r->headers,strdup(String_val(Field(h,0))));
+			name = String_val(Field(Field(h,0),0));
+			val = String_val(Field(Field(h,0),1));
+			PRINT_DEBUG("header [%s = %s]",name,val);
+			nlen = strlen(name);
+			vlen = strlen(val);
+			header = (char*)caml_stat_alloc(nlen+vlen+2);
+			strcpy(header,name);
+			header[nlen] = ':';
+			strcpy(header + nlen + 1,val);
+			r->headers = curl_slist_append(r->headers,header);
 			h = Field(h,1);
 		} while (Is_block(h));
 		curl_easy_setopt(r->handle,CURLOPT_HTTPHEADER,r->headers);
@@ -131,6 +144,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	if (Is_block(data)) {
 		value d = Field(data,0);
 		size_t l = caml_string_length(d);
+		PRINT_DEBUG("send data of len: %d",l);
 		r->data = (char*)malloc(l);
 		memcpy(r->data,String_val(d),l);
 		curl_easy_setopt(r->handle,CURLOPT_POSTFIELDS,r->data);
@@ -141,6 +155,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	curl_easy_setopt(r->handle,CURLOPT_PRIVATE,(void*)r);
 	curl_multi_add_handle(curlm,r->handle);
 	net_running++;
+	PRINT_DEBUG("created new curl request: %lu",(long)r);
 	return (value)r;
 }
 

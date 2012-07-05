@@ -78,7 +78,7 @@ int loadPlxFile(const char *path,textureInfo *tInfo);
 int loadAlphaPtr(gzFile fptr,textureInfo *tInfo);
 int loadAlphaFile(const char *path,textureInfo *tInfo);
 
-value createGLTexture(value oldTextureID, textureInfo *tInfo);
+value createGLTexture(value oldTextureID, textureInfo *tInfo,value filter);
 
 
 
