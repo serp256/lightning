@@ -74,7 +74,7 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 		if (r) [self badImageData];
 		else {
 			caml_acquire_runtime_system();
-			value textureID = createGLTexture(1,&tInfo);
+			value textureID = createGLTexture(1,&tInfo,Val_int(1));
 			value mlTex = 0;
 			Begin_roots2(textureID,mlTex);
 			//NSLog(@"loaded external texture: %d",textureID);

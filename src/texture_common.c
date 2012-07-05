@@ -369,14 +369,13 @@ void ml_delete_texture(value textureID) {
 */
 
 
-value createGLTexture(value oldTextureID,textureInfo *tInfo) {
-    //int mRepeat = 0;    
+value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     
 		texParams params;
     params.glTexType = GL_UNSIGNED_BYTE;
     params.bitsPerPixel = 8;
     params.compressed = 0;
-    //unsigned int mTextureID;
+
 		if (!textureParams(tInfo,&params)) return 0;
     
 		GLuint textureID;
@@ -394,7 +393,19 @@ value createGLTexture(value oldTextureID,textureInfo *tInfo) {
     glBindTexture(GL_TEXTURE_2D, textureID);
     
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
+		switch (Int_val(filter)) {
+			case 0: 
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				break;
+			case 1:
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				break;
+			default: break;
+		};
+		
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
@@ -469,6 +480,7 @@ void ml_texture_set_filter(value textureID,value filter) {
 }
 
 
+/*
 value ml_load_texture(value oldTextureID, value oTInfo) {
 	CAMLparam0();
 	CAMLlocal1(mlTex);
@@ -483,6 +495,7 @@ void ml_free_image_info(value tInfo) {
 	free(((textureInfo*)tInfo)->imgData);
 	free((textureInfo*)tInfo);
 }
+*/
 
 
 // сделать рендер буфер

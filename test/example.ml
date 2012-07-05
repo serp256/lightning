@@ -1055,6 +1055,7 @@ value assets (s:Stage.c) =
     Lightning.extractAssets ();
   );
     
+(*
 value udid (self:Stage.c) = 
   let text = 
     match TapjoyConnect.getOpenUDID () with
@@ -1067,6 +1068,7 @@ value udid (self:Stage.c) =
     text#setY 100.;
     self#addChild text;
   );
+*)
 
 let stage width height = 
   object(self)
@@ -1131,7 +1133,7 @@ let stage width height =
 (*           quad self; *)
           (* hardware self; *)
 (*           glow_and_gc self; *)
-       udid self;
+(*        udid self; *)
     end;
   end
 in

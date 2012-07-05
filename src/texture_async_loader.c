@@ -23,10 +23,13 @@
 typedef struct {
 	char *path;
 	char *suffix;
+	value filter;
 } request_t;
 
 typedef struct {
 	char *path;
+	unsigned char with_suffix;
+	value filter;
 	textureInfo *tInfo;
 } response_t;
 
@@ -58,7 +61,10 @@ void *run_worker(void *param) {
 				exit(3);
 			};
 			response_t *resp = malloc(sizeof(response_t));
-			resp->path = req->path; resp->tInfo = tInfo;
+			resp->path = req->path; 
+			resp->with_suffix = (req->suffix != NULL);
+			resp->filter = req->filter;
+			resp->tInfo = tInfo;
 			if (req->suffix != NULL) free(req->suffix); free(req);
 			thqueue_responses_push(runtime->resp_queue,resp);
 		}
@@ -81,7 +87,7 @@ value ml_texture_async_loader_create_runtime(value unit) {
 
 }
 
-void ml_texture_async_loader_push(value oruntime,value opath,value osuffix) {
+void ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value filter) {
 	char *path = malloc(caml_string_length(opath) + 1);
 	strcpy(path,String_val(opath));
 	char *suffix;
@@ -94,6 +100,7 @@ void ml_texture_async_loader_push(value oruntime,value opath,value osuffix) {
 	request_t *req = malloc(sizeof(request_t));
 	req->path = path;
 	req->suffix = suffix;
+	req->filter = filter;
 	thqueue_requests_push(runtime->req_queue,req);
 	pthread_cond_signal(&runtime->cond);
 }
@@ -106,7 +113,7 @@ value ml_texture_async_loader_pop(value oruntime) {
 	response_t *r = thqueue_responses_pop(runtime->resp_queue);
 	if (r == NULL) res = Val_unit;
 	else {
-		value textureID = createGLTexture(1,r->tInfo);
+		value textureID = createGLTexture(1,r->tInfo,r->filter);
 		if (!textureID) caml_failwith("failed to load texture");
 		ML_TEXTURE_INFO(mlTex,textureID,r->tInfo);
 		free(r->tInfo->imgData);
@@ -115,9 +122,10 @@ value ml_texture_async_loader_pop(value oruntime) {
 		free(r->path);
 		free(r);
 		res = caml_alloc_tuple(1);
-		Store_field(res,0,caml_alloc_small(2,0));
+		Store_field(res,0,caml_alloc_small(3,0));
 		Field(Field(res,0),0) = opath;
-		Field(Field(res,0),1) = mlTex;
+		Field(Field(res,0),1) = Val_bool(r->with_suffix);
+		Field(Field(res,0),2) = mlTex;
 	};
 	CAMLreturn(res);
 }

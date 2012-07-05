@@ -204,7 +204,7 @@ void ml_load_users_info(value uids, value callback) {
               } else {
                 textureInfo tInfo;
                 loadImageFile(photo, &tInfo);
-                textureID = createGLTexture(1,&tInfo);
+                textureID = createGLTexture(1,&tInfo,Val_int(1));
                 free(tInfo.imgData);
                 ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
               
@@ -282,7 +282,7 @@ void ml_load_users_info(value uids, value callback) {
       } else {
 				dispatch_async(dispatch_get_main_queue(),^(void) {
 					caml_callback(*cb,Val_unit);
-					caml_remove_generational_global_root(&cb);
+					caml_remove_generational_global_root(cb);
           free(cb);
 				});
       }

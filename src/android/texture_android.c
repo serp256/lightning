@@ -309,7 +309,7 @@ int load_image_info(char *fname,char *suffix,textureInfo *tInfo) {
 
 
 
-value ml_loadImage(value oldTextureID,value opath,value osuffix) {
+value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter) {
 	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
@@ -319,7 +319,7 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_failwith("Can't load image");
 	};
-	value textureID = createGLTexture(oldTextureID,&tInfo);
+	value textureID = createGLTexture(oldTextureID,&tInfo,filter);
 	free(tInfo.imgData);
 	// free surface
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
