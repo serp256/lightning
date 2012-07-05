@@ -77,14 +77,14 @@ value transformPoint m {Point.x = x;y=y} =
 
 
 value transformPoints matrix points = 
-  let () = debug "transformPoints: %s - <%s>" (to_string matrix) (String.concat ";" (List.map Point.to_string (Array.to_list points))) in
+(*   let () = debug "transformPoints: %s - <%s>" (to_string matrix) (String.concat ";" (List.map Point.to_string (Array.to_list points))) in *)
   let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
-	let () = debug "transformPoints with matrix: %s [%s]" (to_string matrix) (String.concat ";" (List.map Point.to_string (Array.to_list points))) in
+(* 	let () = debug "transformPoints with matrix: %s [%s]" (to_string matrix) (String.concat ";" (List.map Point.to_string (Array.to_list points))) in *)
   let open Point in
   (
     for i = 0 to (Array.length points) - 1 do
       let p = points.(i) in
-      let () = debug "transform point %s" (Point.to_string p) in
+(*       let () = debug "transform point %s" (Point.to_string p) in *)
       let tp = transformPoint matrix p in
       (
         if ar.(0) > tp.x then ar.(0) := tp.x else ();
@@ -93,7 +93,7 @@ value transformPoints matrix points =
         if ar.(3) < tp.y then ar.(3) := tp.y else ();
       )
     done;
-		debug "transformed";
+(* 		debug "transformed"; *)
     ar
   );
   

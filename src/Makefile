@@ -112,7 +112,7 @@ $(MLOBJS): Debug.cmx
 $(MLOBJSB): Debug.cmo
 
 $(MLOBJS) $(MLOBJSB) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
--include debug.conf
+include debug.conf
 	
 
 lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MOBJS) $(MLOBJSB)
