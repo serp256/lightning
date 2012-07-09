@@ -60,8 +60,8 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 -(id)init {
   self = [super init];
   if (self != nil) {
-		payment_success_cb = Val_int(1);
-		payment_error_cb   = Val_int(1);
+		payment_success_cb = 0;
+		payment_error_cb   = 0;
 		remote_notification_request_success_cb = Val_int(1);
 		remote_notification_request_error_cb   = Val_int(1);
   }
