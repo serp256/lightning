@@ -86,7 +86,7 @@ class al_channel snd =
     
     method play () = 
     (
-      debug "play sound";
+      debug "play sound for IOS";
       alsource_play sourceID;
       timer_id := Some (Timers.start (* sound.duration *)10. self#finished);
     );
@@ -237,7 +237,7 @@ ELSE
       object(self)
         inherit EventDispatcher.simple [ channel ];
 
-        value sound = snd;
+				value sound = snd;
         value mutable stream = None;
         value mutable volume = 1.;
         value mutable loop = False;
@@ -250,12 +250,15 @@ ELSE
         
         method play () = 
         (
+						debug "play\n%!";
           stream := Some (alsoundPlay sound volume loop);
           state := SoundPlaying;
           timer_id := Some (Timers.start _SND_DURATION self#finished); (* find way to get real duration  *)
         );
 
-        method private finished () = 
+        method private finished () =
+				(
+						debug "finish to play PAganini!\n%!";
           if loop then 
             timer_id := Some (Timers.start _SND_DURATION self#finished) (* find way to get real duration  *)
           else (
@@ -263,7 +266,8 @@ ELSE
             stream := None;
             self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
             state := SoundStoped;
-          );
+          )
+				);
 
         method pause () = 
           match (timer_id, stream) with

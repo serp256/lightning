@@ -63,7 +63,7 @@ void mlstage_resize(mlstage *mlstage,float width,float height) {
 void mlstage_destroy(mlstage *mlstage) {
 	caml_acquire_runtime_system();
 	caml_remove_generational_global_root(&mlstage->stage);
-	caml_gc_compaction(Val_int(0));
+	//caml_gc_compaction(Val_int(0));
 	caml_release_runtime_system();
 	free(mlstage);
 }

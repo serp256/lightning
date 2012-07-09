@@ -301,13 +301,12 @@ struct custom_operations program_ops = {
 };
 
 void lgGLUseProgram( GLuint program ) {
-  if( program != currentShaderProgram ) {
+  if (program != currentShaderProgram) {
+		//PRINT_DEBUG("!!!real use program %d",program);
     currentShaderProgram = program;
     glUseProgram(program);
   }
 }
-
-
 
 
 value ml_program_create(value vShader,value fShader,value attributes,value uniforms) {

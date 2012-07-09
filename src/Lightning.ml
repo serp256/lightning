@@ -27,9 +27,18 @@ ELSE
 value request_remote_notifications rntypes success error = ();
 value showNativeWaiter _pos = ();
 value hideNativeWaiter () = ();
+
+IFDEF ANDROID THEN
+external openURL: string -> unit = "ml_openURL";
+value sendEmail recepient ~subject ?(body="") () = 
+  let params = UrlEncoding.mk_url_encoded_parameters [ ("subject",subject); ("body", body)] in
+  openURL (Printf.sprintf "mailto:%s?%s" recepient params);
+ELSE
 value openURL _ = ();
-value deviceIdentifier () = None;
 value sendEmail recepient ~subject ?(body="") () = (); 
+ENDIF;
+
+value deviceIdentifier () = None;
 ENDIF;
 
 type stage_constructor = float -> float -> Stage.c;
@@ -66,10 +75,10 @@ value () =
 ENDIF;
 
 
-IFDEF IOS THEN
-external getLocale: unit -> string = "ml_getLocale";
-ELSE
+IFDEF SDL THEN
 value getLocale () = "en";
+ELSE
+external getLocale: unit -> string = "ml_getLocale";
 ENDIF;
 
 external memUsage: unit -> int = "ml_memUsage";
@@ -88,6 +97,12 @@ IFDEF IOS THEN
 external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
 external setSupportEmail: string -> unit = "ml_setSupportEmail";
 ELSE
+
+IFDEF ANDROID THEN 
+external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
+external setSupportEmail: string -> unit = "ml_setSupportEmail";
+ENDIF;
+
 value addExceptionInfo (_:string) = ();
 value setSupportEmail (_:string) = ();
 ENDIF;

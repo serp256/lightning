@@ -27,6 +27,8 @@ value fonts = Hashtbl.create 0;
 value exists ?(style="regular") name = Hashtbl.mem fonts (name,style);
 exception Font_not_found of (string*string);
 Printexc.register_printer (fun [ Font_not_found name style -> Some (Printf.sprintf "Font_not_found %s:%s" name style) | _ -> None ]);
+value clear () = Hashtbl.clear fonts;
+Callback.register "clear_fonts" clear;
 
 value get ?(applyScale=False) ?(style="regular") ?size name =
   let sizes = try Hashtbl.find fonts (name,style) with [ Not_found -> raise (Font_not_found (name,style)) ] in

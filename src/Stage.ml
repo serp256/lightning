@@ -11,6 +11,7 @@ value ev_TOUCH = Ev.gen_id "TOUCH";
 value ev_ACCELEROMETER = Ev.gen_id "ACCELEROMETER";
 value ev_BACKGROUND = Ev.gen_id "BACKGROUND";
 value ev_FOREGROUND = Ev.gen_id "FOREGROUND";
+value ev_UNLOAD = Ev.gen_id "UNLOAD";
 
 value (data_of_touches,touches_of_data) = Ev.makeData ();
 value (data_of_acmtrData,acmtrData_of_data) = Ev.makeData ();
@@ -48,6 +49,11 @@ value removeTween tween =
     done;
     Queue.transfer tmpqueue tweens;
   );
+
+
+value clear_tweens () = Queue.clear tweens;
+Callback.register "clear_tweens" clear_tweens;
+
 
 
 exception Touch_not_found;
@@ -113,6 +119,11 @@ class virtual c (_width:float) (_height:float) =
       setupOrthographicRendering 0. w h 0.;
       _screenSize.val := (w,h);
     );
+
+    method onUnload () = 
+      let ev = Ev.create ev_UNLOAD () in
+      let () = debug:unload "UNLOAD" in
+      self#dispatchEvent ev;
 
     method! stage = Some self#asDisplayObjectContainer;
 
