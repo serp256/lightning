@@ -105,7 +105,7 @@ void net_perform() {
 				curl_multi_remove_handle(curlm,c);
 				curl_easy_cleanup(c);
 			}
-		};
+		}
 	}
 }
 

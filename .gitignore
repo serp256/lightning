@@ -12,3 +12,5 @@
 *.d
 *.native
 local.properties
+myconfig.ios
+myconfig.macos
