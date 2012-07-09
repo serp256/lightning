@@ -51,6 +51,11 @@ value removeTween tween =
   );
 
 
+value clear_tweens () = Queue.clear tweens;
+Callback.register "clear_tweens" clear_tweens;
+
+
+
 exception Touch_not_found;
 
 value _screenSize = ref (0.,0.);

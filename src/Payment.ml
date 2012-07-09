@@ -74,7 +74,6 @@ value init ?pubkey success_cb error_cb = (
     ml_init ?pubkey success_cb error_cb
   else
     ml_init success_cb error_cb;
-
   initialized.val := True;
 );
 
@@ -82,6 +81,7 @@ value init ?pubkey success_cb error_cb = (
 (*
   совершаем покупку 
 *)
+
 value purchase product_id = 
   match !initialized with 
   [ False -> failwith "Payment not initialized. Call init first"
@@ -94,4 +94,3 @@ value commit_transaction tr =
   [ False -> failwith "Payment not initialized. Call init first"
   | True  ->  ml_commit_transaction tr
   ];  
-  

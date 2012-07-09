@@ -54,3 +54,5 @@ value process dt =
   | None -> failwith "Timers not initialized"
   ];
 
+value clear () = TimersQueue.clear queue;
+Callback.register "clear_timers" clear;

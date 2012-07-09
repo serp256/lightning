@@ -400,12 +400,21 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
   end
 end;
 
+(*
+value texture_finaliser path = 
+(
+  ();
+  fun t -> if not t#released then TextureCache.remove cache path else ();
+);
+*)
+
 value make_and_cache path textureInfo = 
 (*   let mem = textureInfo.memSize in *)
-  let finalizer t = if not t#released then TextureCache.remove cache path else () in
+(*   let finalizer t = if not t#released then TextureCache.remove cache path else () in *)
   let res = 
     object(self) 
       inherit s textureInfo as super;
+      value path = path;
       method !release () = 
         if not released
         then
@@ -417,7 +426,7 @@ value make_and_cache path textureInfo =
         )
         else ();
 
-      initializer Gc.finalise finalizer self;
+(*       initializer Gc.finalise (make_finalizer path) self; *)
         (*
         if (textureID <> 0) 
         then
