@@ -614,7 +614,7 @@ value renderbuffer_to_ml(value orb) {
 	Store_field(renderInfo,3,clip);
 	value kind = caml_alloc_small(1,0);
 	Field(kind,0) = Val_true;
-	Store_Field(renderInfo,4,kind);
+	Store_field(renderInfo,4,kind);
 	value result = caml_alloc_small(2,0);
 	Field(result,0) = orb;
 	Field(result,1) = renderInfo;
