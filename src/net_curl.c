@@ -30,32 +30,45 @@ struct request {
 	int headers_done;
 };
 
-size_t writefunction(char *buffer,size_t size,size_t nitems, void *p) {
+/*
+size_t my_headerfunction(char *buffer,size_t size,size_t nitems, void *p) {
+	PRINT_DEBUG("headerfunction");
+	size_t s = size * nitems;
+	return s;
+}
+*/
+
+static void send_headers_to_ml (struct request *r) {
+	CAMLparam0();
+	CAMLlocal1(ml_string);
+	static value *ml_url_response = NULL;
+	if (ml_url_response == NULL) ml_url_response = caml_named_value("url_response");
+	long http_code;
+	curl_easy_getinfo(r->handle,CURLINFO_RESPONSE_CODE,&http_code);
+	char *content_type;
+	curl_easy_getinfo(r->handle,CURLINFO_CONTENT_TYPE,&content_type);
+	PRINT_DEBUG("content-type: %s",content_type);
+	double content_length;
+	curl_easy_getinfo(r->handle,CURLINFO_CONTENT_LENGTH_DOWNLOAD,&content_length);
+	PRINT_DEBUG("content-length: %llu",(uint64_t)content_length);
+	r->headers_done = 1;
+	if (content_type != NULL) ml_string = caml_copy_string(content_type);
+	else ml_string = caml_alloc_string(0);
+	value args[4];
+	args[0] = (value)r;
+	args[1] = Val_int(http_code);
+	args[2] = caml_copy_int64((uint64_t)content_length);
+	args[3] = ml_string;
+	caml_callbackN(*ml_url_response,4,args);
+	CAMLreturn0;
+}
+
+static size_t my_writefunction(char *buffer,size_t size,size_t nitems, void *p) {
 	CAMLparam0();
 	CAMLlocal1(ml_string);
 	struct request *r = (struct request*)p;
 	PRINT_DEBUG("writefunction %lu",(long)r);
-	if (!r->headers_done) {
-		static value *ml_url_response = NULL;
-		if (ml_url_response == NULL) ml_url_response = caml_named_value("url_response");
-		long http_code;
-		curl_easy_getinfo(r->handle,CURLINFO_RESPONSE_CODE,&http_code);
-		char *content_type;
-		curl_easy_getinfo(r->handle,CURLINFO_CONTENT_TYPE,&content_type);
-		PRINT_DEBUG("content-type: %s",content_type);
-		double content_length;
-		curl_easy_getinfo(r->handle,CURLINFO_CONTENT_LENGTH_DOWNLOAD,&content_length);
-		PRINT_DEBUG("content-length: %llu",(uint64_t)content_length);
-		r->headers_done = 1;
-		if (content_type != NULL) ml_string = caml_copy_string(content_type);
-		else ml_string = caml_alloc_string(0);
-		value args[4];
-		args[0] = (value)r;
-		args[1] = Val_int(http_code);
-		args[2] = caml_copy_int64((uint64_t)content_length);
-		args[3] = ml_string;
-		caml_callbackN(*ml_url_response,4,args);
-	};
+	if (!r->headers_done) send_headers_to_ml(r);
 	size_t s = size * nitems;
 	ml_string = caml_alloc_string(s);
 	if (s > 0) memcpy(String_val(ml_string),buffer,s);
@@ -88,6 +101,7 @@ void net_perform() {
 				PRINT_DEBUG("url_loader complete: %lu",(long)r);
 				// вызвать окамл и все похерить нахуй
 				if (msg->data.result == CURLE_OK) {
+					if (!r->headers_done) send_headers_to_ml(r);
 					static value *ml_url_complete = NULL;
 					if (ml_url_complete == NULL) ml_url_complete = caml_named_value("url_complete");
 					caml_callback(*ml_url_complete,(value)r);
@@ -119,7 +133,9 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	r->url = strdup(String_val(url));
 	PRINT_DEBUG("curl req: [%s]",r->url);
 	curl_easy_setopt(r->handle,CURLOPT_URL,r->url);
-	if (Int_val(method) == caml_hash_variant("POST")) curl_easy_setopt(r->handle,CURLOPT_POST,1);
+	static value ml_POST = 0;
+	if (ml_POST == 0) ml_POST = caml_hash_variant("POST");
+	if (method == ml_POST) {PRINT_DEBUG("this is POST"); curl_easy_setopt(r->handle,CURLOPT_POST,1);} else PRINT_DEBUG("GET!!!!");
 	r->headers = NULL;
 	if (Is_block(headers)) {
 		value h = headers;
@@ -150,7 +166,8 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 		curl_easy_setopt(r->handle,CURLOPT_POSTFIELDS,r->data);
 		curl_easy_setopt(r->handle,CURLOPT_POSTFIELDSIZE,l);
 	} else r->data = NULL;
-	curl_easy_setopt(r->handle,CURLOPT_WRITEFUNCTION,&writefunction);
+	//curl_easy_setopt(r->handle,CURLOPT_HEADERFUNCTION,&my_headerfunction);
+	curl_easy_setopt(r->handle,CURLOPT_WRITEFUNCTION,&my_writefunction);
 	curl_easy_setopt(r->handle,CURLOPT_WRITEDATA,(void*)r);
 	curl_easy_setopt(r->handle,CURLOPT_PRIVATE,(void*)r);
 	curl_multi_add_handle(curlm,r->handle);

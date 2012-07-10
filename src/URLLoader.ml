@@ -89,7 +89,7 @@ type loader_wrapper =
 type connection;
 value loaders = Hashtbl.create 1;
 
-external url_connection: string -> string -> list (string*string) -> option string -> connection = "ml_URLConnection";
+external url_connection: string -> http_method -> list (string*string) -> option string -> connection = "ml_URLConnection";
 
 value get_loader ns_connection = 
   try
@@ -133,7 +133,7 @@ Callback.register "url_failed" url_failed;
 value start_load wrappers r = 
   let (url,data) = prepare_request r in
   let () = debug "HEADERS: [%s]" (String.concat ";" (List.map (fun (n,v) -> n ^ ":" ^ v) r.headers)) in
-  let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
+  let ns_connection = url_connection url r.httpMethod r.headers data in
   (
     Hashtbl.add loaders ns_connection wrappers;
     ns_connection;
