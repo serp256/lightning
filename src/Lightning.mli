@@ -23,3 +23,4 @@ value getLocale: unit -> string;
 value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
 value extractAssets: unit -> unit;
+value getMACID: unit -> string;

@@ -539,7 +539,7 @@ value pallete (stage:Stage.c) =
 *)
 
 value image (stage:Stage.c) =
-  Texture.load_async "tree1.png" begin fun t ->
+  Texture.load_async "tree.png" begin fun t ->
     let image = Image.create t in
     let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
     stage#addChild image;
@@ -1059,20 +1059,13 @@ value assets (s:Stage.c) =
     Lightning.extractAssets ();
   );
     
-(*
 value udid (self:Stage.c) = 
-  let text = 
-    match TapjoyConnect.getOpenUDID () with
-    [ None -> "NONE"
-    | Some udid -> udid
-    ]
-  in
-  let (_,text) = TLF.create (TLF.p [`text text]) in
+  let text = Lightning.getMACID () in
+  let (_,text) = TLF.create (TLF.p [`text ("<<<< " ^ text ^ " >>>>")]) in
   (
-    text#setY 100.;
+    text#setY 300.;
     self#addChild text;
   );
-*)
 
 let stage width height = 
   object(self)
@@ -1086,9 +1079,9 @@ let stage width height =
       (* touchesTest self; *)
 
 (*       accelerometer (); *)
-(*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
+        BitmapFont.register "MyriadPro-Regular.fnt";
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
-(*         TLF.default_font_family.val := "Myriad Pro"; *)
+        TLF.default_font_family.val := "Myriad Pro";
 (*
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
           self#addChild tlf;
@@ -1137,7 +1130,7 @@ let stage width height =
 (*           quad self; *)
           (* hardware self; *)
 (*           glow_and_gc self; *)
-(*        udid self; *)
+       udid self;
     end;
   end
 in

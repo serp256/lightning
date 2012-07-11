@@ -112,3 +112,5 @@ external extractAssets : unit -> unit = "ml_extractAssets";
 ELSE
 value extractAssets () = ();
 ENDIF;
+
+external getMACID: unit -> string = "ml_getMACID";
