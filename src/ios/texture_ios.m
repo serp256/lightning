@@ -416,7 +416,7 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value 
 	//double gt1 = CACurrentMediaTime();
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
-		caml_failwith("Can't load image");
+		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);
 	};
 
 	value textureID = createGLTexture(oldTexture,&tInfo,filter);

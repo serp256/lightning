@@ -1,5 +1,8 @@
 open LightCommon;
 
+exception Cant_load_texture of string;
+Callback.register_exception "Cant_load_texture" (Cant_load_texture "");
+
 type ubyte_array = Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout;
 
 type filter = [ FilterNearest | FilterLinear ];
@@ -473,7 +476,7 @@ value load ?(with_suffix=True) ?(filter=FilterNearest) path : c =
 
 module type AsyncLoader = sig
 
-  value load: bool -> string -> filter -> (c -> unit) -> unit;
+  value load: bool -> string -> filter -> ((c -> unit) * (string -> unit)) -> unit;
   value check_result: unit -> unit;
 
 end;
@@ -549,14 +552,14 @@ end;
 type aloader_runtime;
 external aloader_create_runtime: unit -> aloader_runtime = "ml_texture_async_loader_create_runtime";
 external aloader_push: aloader_runtime -> string -> option string -> filter -> unit = "ml_texture_async_loader_push";
-external aloader_pop: aloader_runtime -> option (string * bool * textureInfo) = "ml_texture_async_loader_pop";
+external aloader_pop: aloader_runtime -> option (string * bool * option textureInfo) = "ml_texture_async_loader_pop";
 
 module AsyncLoader(P:sig end) : AsyncLoader = struct
 
   value waiters = Hashtbl.create 1;
   value cruntime = aloader_create_runtime ();
 
-  value load with_suffix path filter callback = 
+  value load with_suffix path filter callbacks = 
     let fpath = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
     (
       if not (Hashtbl.mem waiters fpath)
@@ -569,7 +572,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
         in
         aloader_push cruntime path suffix filter
       else ();
-      Hashtbl.add waiters fpath callback;
+      Hashtbl.add waiters fpath callbacks
     );
 
 
@@ -578,7 +581,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
     if Hashtbl.length waiters > 0
     then
       match aloader_pop cruntime with
-      [ Some (path,with_suffix,textureInfo) -> 
+      [ Some (path,with_suffix,tInfo) -> 
         (
           let path =  
             match with_suffix with
@@ -587,12 +590,16 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
             ]
           in
           let () = debug:async "make_and_cache: %s" path in
-          let texture = make_and_cache path textureInfo in
           let waiters = MHashtbl.pop_all waiters path in
-          (
-            debug "texture: %s loaded" path;
-            List.iter (fun f -> f texture) (List.rev waiters);
-          );
+          match tInfo with
+          [ Some textureInfo -> 
+            let texture = make_and_cache path textureInfo in
+            (
+              debug "texture: %s loaded" path;
+              List.iter (fun (f,_) -> f texture) (List.rev waiters);
+            )
+          | None -> List.iter (fun (_,f) -> f path) (List.rev waiters)
+          ];
           check_result ();
         )
       | None -> ()
@@ -612,7 +619,9 @@ value check_async () =
   | None -> ()
   ];
 
-value load_async ?(with_suffix=True) ?(filter=FilterNearest) path callback = 
+value async_ecallback path = raise (Cant_load_texture path);
+
+value load_async ?(with_suffix=True) ?(filter=FilterNearest) path ?(ecallback=async_ecallback) callback = 
   let () = debug "start async load %s[%b]" path with_suffix in
   let texture = 
     try
@@ -644,7 +653,7 @@ value load_async ?(with_suffix=True) ?(filter=FilterNearest) path callback =
       ]
     in
     let module Loader = (value m:AsyncLoader) in
-    Loader.load with_suffix path filter callback
+    Loader.load with_suffix path filter (callback,ecallback)
   ];
 
 
@@ -838,7 +847,7 @@ class rbt rb =
 
   end; (*}}}*)
 
-value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered = (*{{{*)
+value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered =
   let () = debug:rendered "try create rtexture of size %f:%f" width height in
   let rb = renderbuffer_create format filter width height in
   new rbt rb;

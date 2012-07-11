@@ -3,6 +3,7 @@ value (<|): ('a -> 'b) -> 'a -> 'b;
 value color_white: int;
 value color_black: int;
 
+
 type qColor = 
   {
     qcTopLeft: int;
@@ -17,6 +18,8 @@ value qColor: ~topLeft:int -> ~topRight:int -> ~bottomLeft:int ->
 type color = [= `NoColor | `Color of int | `QColors of qColor ];
 
 
+
+exception File_not_exists of string;
 
 type textureID; 
 type framebufferID = int;

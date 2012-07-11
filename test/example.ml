@@ -536,12 +536,16 @@ value pallete (stage:Stage.c) =
     stage#addChild img;
   )
 );
+*)
 
 value image (stage:Stage.c) =
-  let image = Image.load "tree.png" in
-  let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
-  stage#addChild image;
+  Texture.load_async "tree1.png" begin fun t ->
+    let image = Image.create t in
+    let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
+    stage#addChild image;
+  end;
 
+(*
 value test_gc (stage:Stage.c) = 
   let items = 
     [|
@@ -1090,7 +1094,7 @@ let stage width height =
           self#addChild tlf;
 *)
         (* map self; *)
-(*         image self; *)
+        image self;
 (*         rec_fun self; *)
 (*         test_alpha self; *)
 (*       alert self; *)
@@ -1101,7 +1105,7 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-       tlf self; 
+(*        tlf self;  *)
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)

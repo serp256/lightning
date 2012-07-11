@@ -317,7 +317,7 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter) {
 	int r = load_image_info(String_val(opath),suffix,&tInfo);
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
-		caml_failwith("Can't load image");
+		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);
 	};
 	value textureID = createGLTexture(oldTextureID,&tInfo,filter);
 	free(tInfo.imgData);

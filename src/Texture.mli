@@ -17,7 +17,7 @@ type textureFormat =
   | TextureFormat4444
   ];
 *)
-
+exception Cant_load_texture of string;
 
 type event = [= `RESIZE | `CHANGE ]; 
 
@@ -90,7 +90,7 @@ value glRGB:int;
 
 value rendered: ?format:int -> ?filter:filter -> float -> float -> rendered; 
 
-value load_async: ?with_suffix:bool -> ?filter:filter -> string -> (c -> unit) -> unit;
+value load_async: ?with_suffix:bool -> ?filter:filter -> string -> ?ecallback:(string -> unit) -> (c -> unit) -> unit;
 value check_async: unit -> unit;
 
 

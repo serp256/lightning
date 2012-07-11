@@ -58,7 +58,7 @@ void *run_worker(void *param) {
 				free(tInfo);
 				if (r == 2) ERROR("ASYNC LOADER. Can't find %s\n",req->path);
 				else ERROR("Can't load image %s\n",req->path);
-				exit(3);
+				tInfo = NULL;
 			};
 			response_t *resp = malloc(sizeof(response_t));
 			resp->path = req->path; 
@@ -113,11 +113,16 @@ value ml_texture_async_loader_pop(value oruntime) {
 	response_t *r = thqueue_responses_pop(runtime->resp_queue);
 	if (r == NULL) res = Val_unit;
 	else {
-		value textureID = createGLTexture(1,r->tInfo,r->filter);
-		if (!textureID) caml_failwith("failed to load texture");
-		ML_TEXTURE_INFO(mlTex,textureID,r->tInfo);
-		free(r->tInfo->imgData);
-		free(r->tInfo);
+		if (r->tInfo != NULL) {
+			value textureID = createGLTexture(1,r->tInfo,r->filter);
+			if (!textureID) caml_failwith("failed to create texture");
+			ML_TEXTURE_INFO(mlTex,textureID,r->tInfo);
+			free(r->tInfo->imgData);
+			free(r->tInfo);
+			value tInfo = caml_alloc_small(1,0);
+			Field(tInfo,0) = mlTex;
+			mlTex = tInfo;
+		} else mlTex = Val_unit;
 		opath = caml_copy_string(r->path);
 		free(r->path);
 		free(r);

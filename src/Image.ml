@@ -528,6 +528,6 @@ value load path =
   let texture = Texture.load path in
   new c texture;
 
-value load_async path callback = Texture.load_async path (fun texture -> callback (new c texture));
+value load_async path ?ecallback callback = Texture.load_async path ?ecallback (fun texture -> callback (new c texture));
 
 value create = new c;

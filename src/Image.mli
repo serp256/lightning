@@ -64,4 +64,4 @@ class c : [ Texture.c ] ->
 
 value create: Texture.c -> c;
 value load: string -> c;
-value load_async: string -> (c -> unit) -> unit;
+value load_async: string -> ?ecallback:(string -> unit) -> (c -> unit) -> unit;
