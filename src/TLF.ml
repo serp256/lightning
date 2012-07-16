@@ -219,7 +219,8 @@ value parse_simple_elements inp imgLoader =
       | _ -> parse_error inp "DTD?"
       ];
 
-value parse_simples ?(imgLoader=(Image.load :> (string -> DisplayObject.c))) text : simple_elements = 
+value parse_simples ?(imgLoader:option (string -> DisplayObject.c)) text : simple_elements = 
+  let imgLoader = match imgLoader with [ Some f -> f | None -> fun s -> ((Image.load s) :> DisplayObject.c) ] in
   let inp = Xmlm.make_input (`String (0,"<simples>"^text^"</simples>")) in
   match Xmlm.input inp with
   [ `Dtd _ -> 
@@ -231,7 +232,8 @@ value parse_simples ?(imgLoader=(Image.load :> (string -> DisplayObject.c))) tex
   ];
 
 
-value parse ?(imgLoader=(Image.load :> (string -> DisplayObject.c))(*fun x -> (Image.load x)#asDisplayObject*)) xml : main = 
+value parse ?(imgLoader:option (string -> DisplayObject.c)) xml : main = 
+  let imgLoader = match imgLoader with [ Some f -> f | None -> fun s -> ((Image.load s) :> DisplayObject.c) ] in
   let inp = Xmlm.make_input (`String (0,xml)) in
   match Xmlm.input inp with
   [ `Dtd _ ->
