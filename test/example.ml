@@ -1067,6 +1067,61 @@ value udid (self:Stage.c) =
     self#addChild text;
   );
 
+
+value bl_greenhouse (stage:Stage.c) =
+(*   let texture = Texture.load "28x05.png"  *)
+  let texture = Texture.load "25.png" 
+(*   and pos = {Point.x = ~-.80.; y = 11.}  *)
+  and pos = {Point.x = 59.; y = 23.}
+  and flipX = True 
+  in
+  (
+    (*
+    let house = AtlasNode.create texture (Rectangle.create 124. 74. 127. 133.) ~pos:{Point.x = ~-.153.; y = ~-.52.} ~flipX ()
+    and img1 = ref (AtlasNode.create texture (Rectangle.create 376. 0. 50. 69.) ~pos ~flipX ())
+    and img2 = ref (AtlasNode.create texture (Rectangle.create 224. 0. 50. 69.) ~pos ~flipX ())
+    *)
+    let house = AtlasNode.create texture (Rectangle.create 246. 672. 254. 266.) ~pos:{Point.x = 51.; y = ~-.103.} ~flipX ()
+    and img1 = ref (AtlasNode.create texture (Rectangle.create ) ~pos ~flipX ())
+    and img2 = ref (AtlasNode.create texture (Rectangle.create 871. 594. 50. 69.) ~pos ~flipX ())
+    in
+    let atlas = Atlas.create texture in
+    (
+      atlas#setPos 200.0 100.0;
+      atlas#addChild house;
+      atlas#addChild !img2;
+      stage#addChild atlas;
+      let timer = Timer.create ~repeatCount:~-1 0.5 "pizda" in
+      (
+        timer#addEventListener Timer.ev_TIMER begin fun _ _ _ ->
+          (
+            if atlas#numChildren = 1 
+            then
+            (
+              atlas#clearChildren();
+              atlas#addChild house;
+              atlas#addChild !img2;
+            )
+            else 
+            (
+              atlas#clearChildren();
+              atlas#addChild house;
+            )
+            (*
+            atlas#addChild !img2;
+            let img = img1.val in
+            (
+              img1.val := !img2;
+              img2.val := img;
+            )
+            *)
+          )
+        end |> ignore;
+        timer#start();
+      );
+    )
+  );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -1074,8 +1129,8 @@ let stage width height =
     initializer begin
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
 (*       assets self; *)
-      quad self;
-      tweens self;
+(*       quad self; *)
+(*       tweens self; *)
       (* touchesTest self; *)
 
 (*       accelerometer (); *)
@@ -1087,7 +1142,7 @@ let stage width height =
           self#addChild tlf;
 *)
         (* map self; *)
-        image self;
+(*         image self; *)
 (*         rec_fun self; *)
 (*         test_alpha self; *)
 (*       alert self; *)
@@ -1130,7 +1185,8 @@ let stage width height =
 (*           quad self; *)
           (* hardware self; *)
 (*           glow_and_gc self; *)
-       udid self;
+(*        udid self; *)
+       bl_greenhouse self;
     end;
   end
 in

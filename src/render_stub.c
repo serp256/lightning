@@ -1132,7 +1132,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 		value arr = Field(children,0);
 		int len = Int_val(Field(children,1));
 		int arrlen = Wosize_val(arr);
-		PRINT_DEBUG("upgrade quads. indexlen: %d, quadslen: %d\n",arrlen,len);
+		fprintf(stderr,"upgrade quads. indexlen: %d, quadslen: %d\n",arrlen,len);
 		int i;
 
 		if (arrlen != atl->index_size) { // we need resend index
@@ -1272,6 +1272,8 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 			quad[2] = Double_field(bounds,2);
 			quad[3] = Double_field(bounds,3);
 
+			fprintf(stderr,"atals quad: %f:%f:%f:%f\n",quad[0],quad[1],quad[2],quad[3]);
+
 			q->bl.v = (vertex2F){RENDER_SUBPIXEL(quad[0]),RENDER_SUBPIXEL(quad[1])};
 			q->bl.tex = (tex2F){Double_field(clipping,0),Double_field(clipping,1)};
 
@@ -1297,6 +1299,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		atl->n_of_quads = len;
 		
+		fprintf(stderr,"atals end quads\n");
 
 	};
 	

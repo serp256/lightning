@@ -92,7 +92,9 @@ value run stage_create =
   (
     Arg.parse [
       ("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");("-fps",Arg.Set_int frameRate,"frame rate");
-      ("-dt",Arg.String setDeviceType,"Set deviceType [phone | pad] default pad")] (fun _ -> ()) "";
+      ("-dt",Arg.String setDeviceType,"Set deviceType [phone | pad] default pad");
+      ("-um",Arg.Set_int Hardware.internal_user_memory,"Set Hardware.user_memory (default 0)")
+    ] (fun _ -> ()) "";
     init [VIDEO];
     Sdl_image.init [ Sdl_image.PNG ]; 
     (

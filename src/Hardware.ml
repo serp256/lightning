@@ -1,6 +1,4 @@
 
-
-
 IFDEF IOS THEN
 external platform: unit -> string = "ml_platform";
 external hwmodel: unit -> string = "ml_hwmodel";
@@ -12,5 +10,6 @@ value platform () = "PLATFORM";
 value hwmodel () = "HWMODEL";
 value cpu_frequency () = 0;
 value total_memory () = 0;
-value user_memory () = 0;
+value internal_user_memory = ref 0;
+value user_memory () = !internal_user_memory;
 ENDIF;

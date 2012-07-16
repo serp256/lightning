@@ -307,7 +307,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           | _ -> 
               let alpha = match alpha' with [ Some a -> a *. alpha | None -> alpha ] in
               RENDER_QUADS(shaderProgram,(if transform then self#transformationMatrix else Matrix.identity),color,alpha)
-              (* self#render_quads alpha transform *)
 (*           | _ -> () (* WE NEED ASSERT HERE ?? *) *)
           ]
         else 
