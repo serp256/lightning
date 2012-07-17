@@ -1073,7 +1073,7 @@ value bl_greenhouse (stage:Stage.c) =
   let texture = Texture.load "25.png" 
 (*   and pos = {Point.x = ~-.80.; y = 11.}  *)
   and pos = {Point.x = 59.; y = 23.}
-  and flipX = True 
+  and flipX = False 
   in
   (
     (*
@@ -1081,12 +1081,18 @@ value bl_greenhouse (stage:Stage.c) =
     and img1 = ref (AtlasNode.create texture (Rectangle.create 376. 0. 50. 69.) ~pos ~flipX ())
     and img2 = ref (AtlasNode.create texture (Rectangle.create 224. 0. 50. 69.) ~pos ~flipX ())
     *)
+(*
     let house = AtlasNode.create texture (Rectangle.create 246. 672. 254. 266.) ~pos:{Point.x = 51.; y = ~-.103.} ~flipX ()
-    and img1 = ref (AtlasNode.create texture (Rectangle.create ) ~pos ~flipX ())
-    and img2 = ref (AtlasNode.create texture (Rectangle.create 871. 594. 50. 69.) ~pos ~flipX ())
+    and img1 = ref (AtlasNode.create texture (Rectangle.create 871. 594. 100. 137.) ~pos ~flipX ())
+    and img2 = ref (AtlasNode.create texture (Rectangle.create 871. 455. 100. 137.) ~pos ~flipX ())
+*)
+    let house = AtlasNode.create texture (Rectangle.create 246. 672. 254. 266.) ~pos:{Point.x = 51.; y = ~-.103.} ~flipX ()
+    and img1 = ref (AtlasNode.create texture (Rectangle.create 871. 594. 100. 137.) ~pos ~flipX ())
+    and img2 = ref (AtlasNode.create texture (Rectangle.create 871. 455. 100. 137.) ~pos ~flipX ())
     in
     let atlas = Atlas.create texture in
     (
+      atlas#setScale 0.5;
       atlas#setPos 200.0 100.0;
       atlas#addChild house;
       atlas#addChild !img2;
@@ -1095,6 +1101,7 @@ value bl_greenhouse (stage:Stage.c) =
       (
         timer#addEventListener Timer.ev_TIMER begin fun _ _ _ ->
           (
+            (*
             if atlas#numChildren = 1 
             then
             (
@@ -1107,14 +1114,15 @@ value bl_greenhouse (stage:Stage.c) =
               atlas#clearChildren();
               atlas#addChild house;
             )
-            (*
+            *)
+            atlas#clearChildren();
+            atlas#addChild house;
             atlas#addChild !img2;
             let img = img1.val in
             (
               img1.val := !img2;
               img2.val := img;
             )
-            *)
           )
         end |> ignore;
         timer#start();
