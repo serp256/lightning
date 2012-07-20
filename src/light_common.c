@@ -1,10 +1,5 @@
 #include <stdio.h>
 #include <sys/resource.h>
-#include <sys/socket.h>
-#include <sys/sysctl.h>
-#include <net/if.h>
-#include <net/if_dl.h>
-
 
 #include <caml/mlvalues.h>
 #include <caml/mlvalues.h>
@@ -25,6 +20,18 @@ void ml_setMaxGC(value max) {
 	MAX_GC_MEM = Int64_val(max);
 }
 
+#ifdef ANDROID 
+
+value ml_getMACID(value p) {
+  return caml_copy_string("xyu");
+}
+
+#else
+
+#include <sys/socket.h>
+#include <sys/sysctl.h>
+#include <net/if.h>
+#include <net/if_dl.h>
 
 value ml_getMACID(value p) {
 	int                 mib[6];
@@ -69,3 +76,5 @@ value ml_getMACID(value p) {
   free(buf);
   return res;
 }
+
+#endif

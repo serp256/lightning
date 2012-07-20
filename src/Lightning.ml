@@ -108,9 +108,9 @@ value setSupportEmail (_:string) = ();
 ENDIF;
 
 IFDEF ANDROID THEN
-external extractAssets : unit -> unit = "ml_extractAssets";
+external extractAssets : (unit -> unit) -> unit -> unit = "ml_extractAssets";
 ELSE
-value extractAssets () = ();
+value extractAssets (cb:(unit -> unit)) () = ();
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";

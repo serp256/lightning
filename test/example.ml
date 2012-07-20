@@ -1056,7 +1056,7 @@ value assets (s:Stage.c) =
       Stage.addTween tw;
     );
 
-    Lightning.extractAssets ();
+    Lightning.extractAssets (fun () -> debug "assets extracted") ();
   );
     
 value udid (self:Stage.c) = 
@@ -1135,6 +1135,7 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      assets self;
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
 (*       assets self; *)
 (*       quad self; *)
@@ -1142,9 +1143,9 @@ let stage width height =
       (* touchesTest self; *)
 
 (*       accelerometer (); *)
-        BitmapFont.register "MyriadPro-Regular.fnt";
+        (* BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
-        TLF.default_font_family.val := "Myriad Pro";
+        (* TLF.default_font_family.val := "Myriad Pro"; *)
 (*
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
           self#addChild tlf;
@@ -1194,7 +1195,7 @@ let stage width height =
           (* hardware self; *)
 (*           glow_and_gc self; *)
 (*        udid self; *)
-       bl_greenhouse self;
+       (* bl_greenhouse self; *)
     end;
   end
 in

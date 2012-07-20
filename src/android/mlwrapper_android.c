@@ -104,6 +104,7 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 */
 
 static char *gAssetsDir = NULL;
+static value assetsExtractedCb;
 
 JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env, jobject this, jstring assetsDir) {
 	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, 0);
@@ -113,6 +114,12 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env,
 		gAssetsDir = (char*) malloc(strlen(path));
 		strcpy(gAssetsDir, path);		
 	}
+
+	if (!assetsExtractedCb) {
+		caml_failwith("assets extracted callback is not initialized");
+	}
+
+	caml_callback(assetsExtractedCb, Val_unit);	
 }
 
 // NEED rewrite it for libzip
@@ -1128,9 +1135,12 @@ void ml_payment_commit_transaction(value transaction) {
 	CAMLreturn0;
 }
 
-void ml_extractAssets() {
+void ml_extractAssets(value callback) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	assetsExtractedCb = callback;
+	caml_register_generational_global_root(&callback);
 
 	jmethodID extractResources = (*env)->GetMethodID(env, jViewCls, "extractAssets", "()V");
 	(*env)->CallVoidMethod(env, jView, extractResources);

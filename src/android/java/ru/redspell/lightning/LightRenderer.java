@@ -37,7 +37,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
     
 	public void onDrawFrame(GL10 gl) {
     	
-		Log.d("LIGHTNING","onDraw Frame");
+		// Log.d("LIGHTNING","onDraw Frame");
 		long now = System.nanoTime();
 		long interval = now - last;
 		
