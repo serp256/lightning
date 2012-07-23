@@ -1130,12 +1130,73 @@ value bl_greenhouse (stage:Stage.c) =
     )
   );
 
+(* value music (self:Stage.c) =
+(
+  Sound.init ();
+  let sound = Sound.load "sound.mp3" in
+  let channel = Sound.createChannel sound in
+  (
+    channel#play ();
+    channel#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "sound complete") |> ignore;
+  );
+  let timer = Timer.create ~repeatCount:3 5. "GC" in
+  (
+    timer#addEventListener Timer.ev_TIMER (fun _ _ _ -> (debug "call major"; Gc.full_major ())) |> ignore;
+    timer#start ();
+  );
+); *)
+
+value avsound (stage:Stage.c) path =
+(
+  Sound.init ();
+
+    let channel = Sound.createChannel (Sound.load "melody0.mp3") in
+      let createImg click =
+        let img = Image.load "Russia.png" in
+        (
+          img#setScaleX 0.5;
+          img#setScaleY 0.5;
+          stage#addChild img;
+
+          ignore(Stage.(
+            img#addEventListener ev_TOUCH (fun ev _ _ ->
+              match touches_of_data ev.Ev.data with
+              [ Some [ touch :: _ ] ->
+                Touch.(
+                    match touch.phase with
+                    [ TouchPhaseEnded -> click ()
+                    | _ -> ()
+                    ]
+                )
+              | _ -> ()
+              ]
+            )
+          ));
+
+          img;
+        )
+      in
+        let play = createImg channel#play
+        and stop = createImg channel#stop
+        and pause = createImg channel#pause in
+        (
+          stage#addChild play;
+          stage#addChild stop;
+          stage#addChild pause;
+
+          stop#setX 150.;
+          pause#setX 300.;
+        );
+);
+  (* ignore(Sound.createChannel path); *)
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      assets self;
+      avsound self "melody0.mp3";
+      (* assets self; *)
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
 (*       assets self; *)
 (*       quad self; *)

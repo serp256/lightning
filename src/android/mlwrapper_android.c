@@ -752,7 +752,7 @@ void kv_storage_put_val(value key_ml, value val_ml, st_val_type vtype) {
   
   if (vtype == St_string_val) {
 		static jmethodID jmthd_putString = NULL;
-		if (jmthd_putString == NULL) jmthd_putString = (*env)->GetMethodID(env, editorCls, "putString", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
+		if (jmthd_putString == NULL) jmthd_putString = (*env)->GetMethodID(env, editorCls, "putString", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");	
     jstring val = (*env)->NewString(env, String_val(val_ml),caml_string_length(val_ml));
     (*env)->CallObjectMethod(env, jStorageEditor, jmthd_putString, key, val);
     (*env)->DeleteLocalRef(env, val);
@@ -1201,3 +1201,133 @@ value ml_getStoragePath () {
 	return r;
 }
 
+/*static jclass gContextCls;
+static jclass gAssetManagerCls;
+static jclass gAssetFdCls;
+static jclass gMediaPlayerCls;
+
+static jmethodID gGetContextMid;
+static jmethodID gGetAssetsMid;
+static jmethodID gOpenFdMid;
+static jmethodID gGetFdMid;
+static jmethodID gGetOffsetMid;
+static jmethodID gGetLenMid;
+static jmethodID gMediaPlayerCid;*/
+
+/*void initAvsoundJNI(JNIEnv *env) {
+	gContextCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "android/content/Context"));
+	gAssetManagerCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "android/content/res/AssetManager"));
+	gAssetFdCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "android/content/res/AssetFileDescriptor"));
+	gMediaPlayerCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "android/media/MediaPlayer"));
+
+	gGetContextMid = (*env)->GetMethodID(evn, jViewCls, "getContext", "()Landroid/content/Context;");
+	gGetAssetsMid = (*env)->GetMethodID(env, contextCls, "getAssets", "()Landroid/content/res/AssetManager;");
+	gOpenFdMid = (*env)->GetMethodID(env, assetManagerCls, "openFd", "(Ljava/lang/String;)Landroid/content/res/AssetFileDescriptor;");
+	gGetFdMid = (*env)->GetMethodID(env, assetFdCls, "getFileDescriptor", "()Ljava/io/FileDescriptor;");
+	gGetOffsetMid = (*env)->GetMethodID(env, assetFdCls, "getStartOffset", "()J");
+	gGetLenMid = (*env)->GetMethodID(env, assetFdCls, "getLength", "()J");
+	gMediaPlayerCid = (*env)->GetMethodID(env, gMediaPlayerCls, "<init>", "()V");
+}*/
+
+static void mp_finalize(value vmp) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID releaseMid;
+
+	jobject jmp = *(jobject*)Data_custom_val(vmp);
+	jclass mpCls = (*env)->GetObjectClass(env, jmp);
+
+	if (!releaseMid) {
+		releaseMid = (*env)->GetMethodID(env, mpCls, "release", "()V"); 
+	}
+
+	(*env)->CallVoidMethod(env, jmp, releaseMid);
+	(*env)->DeleteLocalRef(env, mpCls);
+	(*env)->DeleteGlobalRef(env, jmp);
+}
+
+struct custom_operations mpOpts = {
+	"pointer to MediaPlayer",
+	mp_finalize,
+	custom_compare_default,
+	custom_hash_default,
+	custom_serialize_default,
+	custom_deserialize_default
+};
+
+value ml_avsound_create_player(value vpath) {
+	CAMLparam1(vpath);
+	CAMLlocal1(retval);
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID createMpMid;
+
+	if (!createMpMid) {
+		createMpMid = (*env)->GetMethodID(env, jViewCls, "createMediaPlayer", "(Ljava/lang/String;)Landroid/media/MediaPlayer;");
+	}
+
+	const char* cpath = String_val(vpath);
+	jstring jpath = (*env)->NewStringUTF(env, cpath);
+	jobject mp = (*env)->CallObjectMethod(env, jView, createMpMid, jpath);
+	jobject gmp = (*env)->NewGlobalRef(env, mp);
+
+	(*env)->ReleaseStringUTFChars(env, jpath, cpath);
+	(*env)->DeleteLocalRef(env, jpath);
+	(*env)->DeleteLocalRef(env, mp);
+
+	retval = caml_alloc_custom(&mpOpts, sizeof(jobject), 0, 1);
+	*(jobject*)Data_custom_val(retval) = gmp;
+
+	CAMLreturn(retval);
+}
+
+void testMethodId(JNIEnv *env, jclass cls, jmethodID *mid, char* methodName) {
+	if (!*mid) {
+		*mid = (*env)->GetMethodID(env, cls, methodName, "()V");
+	}
+}
+
+void ml_avsound_playback(value vmp, value vmethodName) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID startMid;
+	static jmethodID pauseMid;
+	static jmethodID stopMid;
+	static jmethodID prepareMid;
+
+	char* methodName = String_val(vmethodName);
+
+	jobject jmp = *(jobject*)Data_custom_val(vmp);
+	jclass mpCls = (*env)->GetObjectClass(env, jmp);
+	jmethodID *mid;
+
+	do {
+		if (strcmp(methodName, "start")) {
+			mid = &startMid;
+			break;
+		}
+
+		if (strcmp(methodName, "stop")) {
+			mid = &stopMid;
+			break;
+		}
+
+		if (strcmp(methodName, "pause")) {
+			mid = &pauseMid;
+			break;
+		}
+
+		if (strcmp(methodName, "prepare")) {
+			mid = &prepareMid;
+			break;
+		}
+	} while(0);
+
+	testMethodId(env, mpCls, mid, methodName);
+	(*env)->CallVoidMethod(env, jmp, *mid);
+	(*env)->DeleteLocalRef(env, mpCls);
+}
