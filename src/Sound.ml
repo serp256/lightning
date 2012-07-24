@@ -236,6 +236,10 @@ ELSE
 
     external avsound_create_player : string -> avplayer = "ml_avsound_create_player";
     external avsound_playback : avplayer -> string -> unit = "ml_avsound_playback";
+    external avsound_setLoop : avplayer -> bool -> unit = "ml_avsound_set_loop";
+    external avsound_setVolume : avplayer -> float -> unit = "ml_avsound_set_volume";
+    external avsound_isPlaying : avplayer -> bool = "ml_avsound_is_playing";
+    external avsound_play : avplayer -> (unit -> unit) -> unit = "ml_avsound_play";
 
     value load path = if True then AVSound (avsound_create_player path) else ALSound (alsoundLoad path);
 
@@ -245,57 +249,53 @@ ELSE
 
       value player = match snd with [ AVSound p -> p | _ -> assert False ];
       value mutable paused = False;
+      value mutable completed = False;
+      value mutable volume = 0.;
 
       method private asEventTarget = (self :> channel);
-      method private onSoundComplete () = self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
+
+      method private onSoundComplete () =
+      (
+        completed := True;
+        self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
+      );
+
       method play () = 
       (
-        (* debug "play avsound"; *)
-        if not paused then
+        if not paused && not completed then
           avsound_playback player "prepare"
         else ();
 
         paused := False;
-        avsound_playback player "play";
-
-(*         avsound_play player (* self#onSoundComplete *); *)
+        completed := False;
+        avsound_play player self#onSoundComplete;
       );
 
-      (* method private isPlaying () = avsound_is_playing player; *)
-      method private isPlaying () = True;
+      method private isPlaying () = avsound_isPlaying player;
       
       method pause () = 
       (
-        (* debug "pause avsound"; *)
         paused := True;
+        completed := False;
         avsound_playback player "pause";
       );
       
       method stop () = 
       (
-        (* debug "stop avsound"; *)
         paused := False;
+        completed := False;
         avsound_playback player "stop";
       );
       
-      method setVolume (v:float) = 
-      (
-        debug "setVolume avsound";
-        (* avsound_set_volume player v; *)
+      method setVolume v =
+      (        
+        volume := v;
+        avsound_setVolume player v;
       );
       
-      method volume = 
-      (
-        debug "volume avsound";
-        0.
-        (* avsound_get_volume player; *)
-      );
+      method volume = volume;
       
-      method setLoop loop  = 
-      (
-        debug "set loop avsound";
-        (* avsound_set_loop player loop; *)
-      );
+      method setLoop loop  = avsound_setLoop player loop;
       
       method state = match (paused, self#isPlaying ()) with
       [ (_, True)         -> SoundPlaying

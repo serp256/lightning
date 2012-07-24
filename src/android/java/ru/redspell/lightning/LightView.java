@@ -511,44 +511,32 @@ public class LightView extends GLSurfaceView {
 	}
 
 
+	private class LightMediaPlayer extends MediaPlayer {
+		private class CamlCallbackCompleteListener implements MediaPlayer.OnCompletionListener {
+			private int camlCb;
+
+			public CamlCallbackCompleteListener(int cb) {
+				camlCb = cb;
+			}
+
+			public native void onCompletion(MediaPlayer mp);
+		}
+
+		public void start(int cb) {
+			setOnCompletionListener(new CamlCallbackCompleteListener(cb));
+			// seekTo(getDuration() - 3000);
+			start();
+		}
+	}
+
 	public MediaPlayer createMediaPlayer(String path) throws IOException {
 		AssetFileDescriptor afd = getContext().getAssets().openFd(path);
 
-		MediaPlayer mp = new MediaPlayer();
+		MediaPlayer mp = new LightMediaPlayer();
 
-		mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
 
 		return mp;
 	}
-/*	{
-		this.assetsDir = assetsDir;
-
-		Log.d("LIGHTNING", assetsDir != null ? "assets extracted to " + assetsDir.getAbsolutePath() : "assets are not extracted: no space on device");
-	}*/
-
-/*	protected void cleanLocalStorage() {
-		String[] names = fileList();
-
-		for (String name : names) {
-			File file = new File(path);
-		}
-	}*/
-
-	// protected void traceAssets(String baseAsset, int indentSize) throws IOException {
-	// 	Context cntxt = getContext();
-	// 	String[] assets = cntxt.getAssets().list(baseAsset);
-	// 	String indent = "";
-
-	// 	for (int i = 0; i < indentSize; i++) {
-	// 		indent += "\t";
-	// 	}
-
-	// 	for (String asset : assets) {			
-	// 		Log.d("LIGHTNING", indent + asset);
-	// 		traceAssets(baseAsset != "" ? baseAsset + "/" + asset : asset, indentSize + 1);			
-	// 	}		
-	// }
-
-
 }

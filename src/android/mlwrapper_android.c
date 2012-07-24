@@ -12,6 +12,7 @@
 #include "net_curl.h"
 #include "render_stub.h"
 #include <fcntl.h>
+#include <inttypes.h>
 
 
 #define caml_acquire_runtime_system()
@@ -1294,7 +1295,6 @@ void ml_avsound_playback(value vmp, value vmethodName) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	static jmethodID startMid;
 	static jmethodID pauseMid;
 	static jmethodID stopMid;
 	static jmethodID prepareMid;
@@ -1306,23 +1306,21 @@ void ml_avsound_playback(value vmp, value vmethodName) {
 	jmethodID *mid;
 
 	do {
-		if (strcmp(methodName, "start")) {
-			mid = &startMid;
-			break;
-		}
-
-		if (strcmp(methodName, "stop")) {
+		if (!strcmp(methodName, "stop")) {
 			mid = &stopMid;
+			DEBUG("stop");
 			break;
 		}
 
-		if (strcmp(methodName, "pause")) {
+		if (!strcmp(methodName, "pause")) {
 			mid = &pauseMid;
+			DEBUG("pause");
 			break;
 		}
 
-		if (strcmp(methodName, "prepare")) {
+		if (!strcmp(methodName, "prepare")) {
 			mid = &prepareMid;
+			DEBUG("prepare");
 			break;
 		}
 	} while(0);
@@ -1330,4 +1328,108 @@ void ml_avsound_playback(value vmp, value vmethodName) {
 	testMethodId(env, mpCls, mid, methodName);
 	(*env)->CallVoidMethod(env, jmp, *mid);
 	(*env)->DeleteLocalRef(env, mpCls);
+}
+
+void ml_avsound_set_loop(value vmp, value loop) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID setLoopMid;
+
+	jobject jmp = *(jobject*)Data_custom_val(vmp);
+	jclass mpCls = (*env)->GetObjectClass(env, jmp);
+
+	if (!setLoopMid) {
+		setLoopMid = (*env)->GetMethodID(env, mpCls, "setLooping", "(Z)V");		
+	}
+
+	(*env)->CallVoidMethod(env, jmp, setLoopMid, Bool_val(loop));
+	(*env)->DeleteLocalRef(env, mpCls);
+}
+
+void ml_avsound_set_volume(value vmp, value vol) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID setLoopMid;
+
+	jobject jmp = *(jobject*)Data_custom_val(vmp);
+	jclass mpCls = (*env)->GetObjectClass(env, jmp);
+
+	if (!setLoopMid) {
+		setLoopMid = (*env)->GetMethodID(env, mpCls, "setVolume", "(FF)V");
+	}
+
+	double cvol = Double_val(vol);
+	(*env)->CallVoidMethod(env, jmp, setLoopMid, cvol, cvol);
+	(*env)->DeleteLocalRef(env, mpCls);
+}
+
+value ml_avsound_is_playing(value vmp) {
+	CAMLparam1(vmp);
+	CAMLlocal1(retval);
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID isPlayingMid;
+
+	jobject jmp = *(jobject*)Data_custom_val(vmp);
+	jclass mpCls = (*env)->GetObjectClass(env, jmp);
+
+	if (!isPlayingMid) {
+		isPlayingMid = (*env)->GetMethodID(env, mpCls, "isPlaying", "()Z");
+	}
+
+	retval = Val_bool((*env)->CallBooleanMethod(env, jmp, isPlayingMid));
+	(*env)->DeleteLocalRef(env, mpCls);
+
+	CAMLreturn(retval);
+}
+
+void ml_avsound_play(value vmp, value cb) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID playMid;
+
+	jobject jmp = *(jobject*)Data_custom_val(vmp);
+	jclass mpCls = (*env)->GetObjectClass(env, jmp);
+
+	if (!playMid) {
+		playMid = (*env)->GetMethodID(env, mpCls, "start", "(I)V");
+	}
+
+	value *cbptr = malloc(sizeof(value));
+	*cbptr = cb;
+	caml_register_generational_global_root(cbptr);
+
+	(*env)->CallVoidMethod(env, jmp, playMid, (jint)cbptr);
+	(*env)->DeleteLocalRef(env, mpCls);
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024LightMediaPlayer_00024CamlCallbackCompleteListener_onCompletion(JNIEnv *env, jobject this, jobject mp) {
+	jclass lnrCls = (*env)->GetObjectClass(env, this);
+	static jfieldID cbFid;
+
+	if (!cbFid) {
+		cbFid = (*env)->GetFieldID(env, lnrCls, "camlCb", "I");
+	}
+
+	value *cbptr = (value*)(*env)->GetIntField(env, this, cbFid);
+	value cb = *cbptr;
+	caml_callback(cb, Val_unit);
+	caml_remove_generational_global_root(cbptr);
+
+	jclass mpCls = (*env)->GetObjectClass(env, mp);
+	static jmethodID setCmpltLnrMid;
+
+	if (!setCmpltLnrMid) {
+		setCmpltLnrMid = (*env)->GetMethodID(env, mpCls, "setOnCompletionListener", "(Landroid/media/MediaPlayer$OnCompletionListener;)V");
+	}
+
+	(*env)->CallVoidMethod(env, mp, setCmpltLnrMid, NULL);
+
+	(*env)->DeleteLocalRef(env, mpCls);
+	(*env)->DeleteLocalRef(env, lnrCls);
 }

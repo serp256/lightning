@@ -1150,7 +1150,8 @@ value avsound (stage:Stage.c) path =
 (
   Sound.init ();
 
-    let channel = Sound.createChannel (Sound.load "melody0.mp3") in
+    let channel1 = Sound.createChannel (Sound.load "melody0.mp3") in
+    let channel2 = Sound.createChannel (Sound.load "melody0.mp3") in
       let createImg click =
         let img = Image.load "Russia.png" in
         (
@@ -1164,7 +1165,7 @@ value avsound (stage:Stage.c) path =
               [ Some [ touch :: _ ] ->
                 Touch.(
                     match touch.phase with
-                    [ TouchPhaseEnded -> click ()
+                    [ TouchPhaseEnded -> let () = debug "click!" in click ()
                     | _ -> ()
                     ]
                 )
@@ -1176,10 +1177,12 @@ value avsound (stage:Stage.c) path =
           img;
         )
       in
-        let play = createImg channel#play
-        and stop = createImg channel#stop
-        and pause = createImg channel#pause in
+        let play = createImg channel1#play
+        and stop = createImg channel1#stop
+        and pause = createImg channel1#pause in
         (
+          ignore(channel1#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "pizda"));
+
           stage#addChild play;
           stage#addChild stop;
           stage#addChild pause;
