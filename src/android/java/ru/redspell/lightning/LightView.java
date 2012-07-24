@@ -524,7 +524,6 @@ public class LightView extends GLSurfaceView {
 
 		public void start(int cb) {
 			setOnCompletionListener(new CamlCallbackCompleteListener(cb));
-			// seekTo(getDuration() - 3000);
 			start();
 		}
 	}

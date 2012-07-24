@@ -274,18 +274,24 @@ ELSE
       method private isPlaying () = avsound_isPlaying player;
       
       method pause () = 
-      (
-        paused := True;
-        completed := False;
-        avsound_playback player "pause";
-      );
+        if self#isPlaying () then
+        (
+          paused := True;
+          completed := False;
+
+          avsound_playback player "pause";          
+        )
+        else ();
       
       method stop () = 
-      (
-        paused := False;
-        completed := False;
-        avsound_playback player "stop";
-      );
+        if paused || self#isPlaying () then
+        (
+          paused := False;
+          completed := False;
+
+          avsound_playback player "stop";          
+        )
+        else ();
       
       method setVolume v =
       (        

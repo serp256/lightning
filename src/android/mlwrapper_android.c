@@ -1286,8 +1286,10 @@ value ml_avsound_create_player(value vpath) {
 }
 
 void testMethodId(JNIEnv *env, jclass cls, jmethodID *mid, char* methodName) {
+	DEBUGF("testMethodId %s", methodName);
 	if (!*mid) {
 		*mid = (*env)->GetMethodID(env, cls, methodName, "()V");
+		DEBUG("GetMethodID call");
 	}
 }
 
@@ -1380,6 +1382,8 @@ value ml_avsound_is_playing(value vmp) {
 	if (!isPlayingMid) {
 		isPlayingMid = (*env)->GetMethodID(env, mpCls, "isPlaying", "()Z");
 	}
+
+	DEBUGF("ml_avsound_is_playing %s", (*env)->CallBooleanMethod(env, jmp, isPlayingMid) ? "true" : "false");
 
 	retval = Val_bool((*env)->CallBooleanMethod(env, jmp, isPlayingMid));
 	(*env)->DeleteLocalRef(env, mpCls);
