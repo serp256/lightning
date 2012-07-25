@@ -80,8 +80,10 @@ and c =
     method removeRenderer: renderer -> unit;
   end;
 
+  value zero_textureID = zero_textureID ();
+
 value zero : c = 
-  let renderInfo = { rtextureID = zero_textureID (); rwidth = 0.; rheight = 0.; clipping = None; kind = Simple False } in
+  let renderInfo = { rtextureID = zero_textureID; rwidth = 0.; rheight = 0.; clipping = None; kind = Simple False } in
   object(self)
     method kind = renderInfo.kind;
     method renderInfo = renderInfo;
@@ -107,6 +109,24 @@ type imageInfo;
 (* external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture"; *)
 (* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
 external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> textureInfo = "ml_loadImage";
+(* external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> unit = "ml_loadImage"; 
+value zero_textureInfo = 
+  {
+    texFormat= TextureFormatRGBA;
+    realWidth= 0;
+    width= 0;
+    realHeight= 0;
+    height= 0;
+    pma=False; 
+    memSize= 0;
+    textureID = zero_textureID;
+  };
+value loadImage ?textureID ~path ~suffix filter =
+  (
+    loadImage ?textureID ~path ~suffix filter;
+    zero_textureInfo;
+  );
+*)
 
 module TextureCache = WeakHashtbl.Make (struct
   type t = string;
@@ -622,6 +642,10 @@ value check_async () =
 value async_ecallback path = raise (Cant_load_texture path);
 
 value load_async ?(with_suffix=True) ?(filter=FilterNearest) path ?(ecallback=async_ecallback) callback = 
+  let texture = load ~with_suffix ~filter path in
+  callback texture;
+
+  (*
   let () = debug "start async load %s[%b]" path with_suffix in
   let texture = 
     try
@@ -655,6 +679,7 @@ value load_async ?(with_suffix=True) ?(filter=FilterNearest) path ?(ecallback=as
     let module Loader = (value m:AsyncLoader) in
     Loader.load with_suffix path filter (callback,ecallback)
   ];
+  *)
 
 
 (* RENDERED TEXTURE *)

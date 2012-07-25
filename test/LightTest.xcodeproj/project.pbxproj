@@ -19,7 +19,9 @@
 		5184FDBD15741E2D001FDC0F /* MyriadPro-Regular_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 5184FDBC15741E2D001FDC0F /* MyriadPro-Regular_0.alpha */; };
 		518D151C14FE441300B5436E /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */; };
 		5191FD9314FF5FC900DD8677 /* frame.png in Resources */ = {isa = PBXBuildFile; fileRef = 5191FD9214FF5FC900DD8677 /* frame.png */; };
-		51B5418514F273C300EB2241 /* items in Resources */ = {isa = PBXBuildFile; fileRef = 51B5418414F273C300EB2241 /* items */; };
+		51BCBEBD15BD4CDE00A3DCB7 /* palletes in Resources */ = {isa = PBXBuildFile; fileRef = 51BCBEBC15BD4CDE00A3DCB7 /* palletes */; };
+		51BCBEBF15BD50CB00A3DCB7 /* Docroot in Resources */ = {isa = PBXBuildFile; fileRef = 51BCBEBE15BD50CB00A3DCB7 /* Docroot */; };
+		51BCBED015BE985900A3DCB7 /* memtest in Resources */ = {isa = PBXBuildFile; fileRef = 51BCBECF15BE985900A3DCB7 /* memtest */; };
 		51C72804157768860003B471 /* CCFairyTale_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 51C72802157768860003B471 /* CCFairyTale_0.alpha */; };
 		51C72805157768860003B471 /* CCFairyTale.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 51C72803157768860003B471 /* CCFairyTale.fnt */; };
 		51C72808157768C20003B471 /* fb.png in Resources */ = {isa = PBXBuildFile; fileRef = 51C72807157768C20003B471 /* fb.png */; };
@@ -65,6 +67,10 @@
 		518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "MyriadPro-Regular.fnt"; path = "../../lightning/test/Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
 		5191FD9214FF5FC900DD8677 /* frame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = frame.png; path = ../../lightning/test/Resources/frame.png; sourceTree = "<group>"; };
 		51B5418414F273C300EB2241 /* items */ = {isa = PBXFileReference; lastKnownFileType = folder; name = items; path = ../../lightning/test/Resources/items; sourceTree = "<group>"; };
+		51BC9D9015BD403300A3DCB7 /* library */ = {isa = PBXFileReference; lastKnownFileType = folder; name = library; path = "../../mobile-farm/Resources/library"; sourceTree = "<group>"; };
+		51BCBEBC15BD4CDE00A3DCB7 /* palletes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = palletes; path = "../../mobile-farm/Resources/palletes"; sourceTree = "<group>"; };
+		51BCBEBE15BD50CB00A3DCB7 /* Docroot */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Docroot; path = Resources/Docroot; sourceTree = "<group>"; };
+		51BCBECF15BE985900A3DCB7 /* memtest */ = {isa = PBXFileReference; lastKnownFileType = folder; name = memtest; path = Resources/memtest; sourceTree = "<group>"; };
 		51C72802157768860003B471 /* CCFairyTale_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = CCFairyTale_0.alpha; path = Resources/CCFairyTale_0.alpha; sourceTree = "<group>"; };
 		51C72803157768860003B471 /* CCFairyTale.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = CCFairyTale.fnt; path = Resources/CCFairyTale.fnt; sourceTree = "<group>"; };
 		51C72807157768C20003B471 /* fb.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = fb.png; path = Resources/fb.png; sourceTree = "<group>"; };
@@ -88,6 +94,10 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
+				51BCBECF15BE985900A3DCB7 /* memtest */,
+				51BCBEBE15BD50CB00A3DCB7 /* Docroot */,
+				51BCBEBC15BD4CDE00A3DCB7 /* palletes */,
+				51BC9D9015BD403300A3DCB7 /* library */,
 				51C72807157768C20003B471 /* fb.png */,
 				51C72802157768860003B471 /* CCFairyTale_0.alpha */,
 				51C72803157768860003B471 /* CCFairyTale.fnt */,
@@ -222,6 +232,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				51BCBED015BE985900A3DCB7 /* memtest in Resources */,
+				51BCBEBF15BD50CB00A3DCB7 /* Docroot in Resources */,
+				51BCBEBD15BD4CDE00A3DCB7 /* palletes in Resources */,
 				51C72808157768C20003B471 /* fb.png in Resources */,
 				51C72804157768860003B471 /* CCFairyTale_0.alpha in Resources */,
 				51C72805157768860003B471 /* CCFairyTale.fnt in Resources */,
@@ -236,7 +249,6 @@
 				517411CB14FB749C0022E871 /* Shaders in Resources */,
 				517411B914FB6A510022E871 /* tree.png in Resources */,
 				517411B614FB6A420022E871 /* e_cactus.png in Resources */,
-				51B5418514F273C300EB2241 /* items in Resources */,
 				51DC6E1314EE5E960084EB76 /* InfoPlist.strings in Resources */,
 				51DC6E1F14EE5E960084EB76 /* ViewController_iPhone.xib in Resources */,
 				51DC6E2214EE5E960084EB76 /* ViewController_iPad.xib in Resources */,

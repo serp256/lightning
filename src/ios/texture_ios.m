@@ -24,9 +24,8 @@
 
 typedef void (*drawingBlock)(CGContextRef context,void *data);
 
+/*
 void createTextureInfo(int colorSpace, float width, float height, float scale, drawingBlock draw, void *data, textureInfo *tInfo) {
-	//int legalWidth  = nextPowerOfTwo(width  * scale);
-	//int legalHeight = nextPowerOfTwo(height * scale);
 	int legalWidth  = nextPowerOfTwo(width);
 	int legalHeight = nextPowerOfTwo(height);
     
@@ -50,7 +49,7 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
 			bitmapInfo = kCGImageAlphaNone;// kCGBitmapByteOrder32Big | kCGImageAlphaNoneSkipLast;
         tInfo->premultipliedAlpha = NO;
 		}
-    /*}
+    }
     else
     {
         bytesPerPixel = 1;
@@ -58,7 +57,7 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
         cgColorSpace = CGColorSpaceCreateDeviceGray();
         bitmapInfo = kCGImageAlphaNone;
         premultipliedAlpha = NO;
-    }*/
+    }
 
 		size_t dataLen = legalWidth * legalHeight * bytesPerPixel;
     void *imageData = malloc(dataLen);
@@ -95,6 +94,7 @@ void drawImage(CGContextRef context, void* data) {
 	//CGContextDrawImage(context, rect, imageRef); 
   [image drawAtPoint:CGPointMake(0, 0)];
 }
+*/
 
 int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	//float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
@@ -105,8 +105,10 @@ int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	//CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
 	//int colorSpace = LTextureFormatRGBA;
 	//createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
-	int legalWidth  = nextPowerOfTwo(width);
-	int legalHeight = nextPowerOfTwo(height);
+	//int legalWidth  = nextPowerOfTwo(width);
+	//int legalHeight = nextPowerOfTwo(height);
+	int legalWidth  = width;
+	int legalHeight = height;
     
 	CGColorSpaceRef cgColorSpace;
 	CGBitmapInfo bitmapInfo;
@@ -221,6 +223,7 @@ int loadImageFile(UIImage *image,textureInfo *tInfo) {
 
 
 int loadPvrFile(NSString *path, textureInfo *tInfo) {
+	PRINT_DEBUG("LOAD PVR: %s",[path cStringUsingEncoding:NSASCIIStringEncoding]);
 	FILE* fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"rb");
 	if (fildes < 0) return 1;
 	fseek(fildes, 0, SEEK_END); /* Seek to the end of the file */
@@ -357,6 +360,7 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else {
 			//double t1 = CACurrentMediaTime();
+			PRINT_DEBUG("LOAD IMAGE: %s",[fullPath cStringUsingEncoding:NSASCIIStringEncoding]);
 			UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
 			//double t2 = CACurrentMediaTime();
 			//NSLog(@"load from disk: %F",(t2 - t1));

@@ -192,6 +192,18 @@ void lgResetBoundTextures() {
 }
 
 
+unsigned long nextPOT(unsigned long x)
+{
+    x = x - 1;
+    x = x | (x >> 1);
+    x = x | (x >> 2);
+    x = x | (x >> 4);
+    x = x | (x >> 8);
+    x = x | (x >>16);
+    return x + 1;
+}
+
+
 int nextPowerOfTwo(int number) {
 	int result = 1;
 	while (result < number) result *= 2;
@@ -303,6 +315,8 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 				case LTextureFormatPallete:
 						p->glTexFormat = GL_LUMINANCE_ALPHA;
             p->bitsPerPixel = 2;
+            //p->glTexFormat = GL_ALPHA;
+            //p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
 						break;
         case LTextureFormatPvrtcRGBA2:
 #if (defined IOS || defined ANDROID)
@@ -341,17 +355,17 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 						return 0;
 #endif
         case LTextureFormat565:
-            p->bitsPerPixel = 16;
+            p->bitsPerPixel = 2;
             p->glTexFormat = GL_RGB;
             p->glTexType = GL_UNSIGNED_SHORT_5_6_5;
             break;
         case LTextureFormat5551:
-            p->bitsPerPixel = 16;                    
+            p->bitsPerPixel = 2;                    
             p->glTexFormat = GL_RGBA;
             p->glTexType = GL_UNSIGNED_SHORT_5_5_5_1;                    
             break;
         case LTextureFormat4444:
-            p->bitsPerPixel = 16;
+            p->bitsPerPixel = 2;
             p->glTexFormat = GL_RGBA;
             p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
             break;
@@ -373,10 +387,15 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     
 		texParams params;
     params.glTexType = GL_UNSIGNED_BYTE;
-    params.bitsPerPixel = 8;
+    params.bitsPerPixel = 4;
     params.compressed = 0;
 
 		if (!textureParams(tInfo,&params)) return 0;
+
+    if (!params.compressed && ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height)))
+			glPixelStorei(GL_UNPACK_ALIGNMENT,4);
+		else
+			glPixelStorei(GL_UNPACK_ALIGNMENT,1);
     
 		GLuint textureID;
 		value mlTextureID;
@@ -392,33 +411,54 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 		}
     glBindTexture(GL_TEXTURE_2D, textureID);
     
-    //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
-		switch (Int_val(filter)) {
-			case 0: 
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-				break;
-			case 1:
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				break;
-			default: break;
-		};
 		
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
+
+		switch (Int_val(filter)) {
+			case 0: 
+				if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+				else
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				break;
+			case 1:
+				if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+				else
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				break;
+			default: break;
+		};
     
 		int level;
     if (!params.compressed)
     {       
+				if ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height))
+					glPixelStorei(GL_UNPACK_ALIGNMENT,4);
+				else
+					glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+				/*
         if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
         else
-            //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+						switch (Int_val(filter)) {
+							case 0: 
+								glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+								glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+								break;
+							case 1:
+								glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+								glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+								break;
+							default: break;
+						};
+				*/
         
         if (tInfo->numMipmaps == 0 && tInfo->generateMipmaps) glGenerateMipmap(GL_TEXTURE_2D);
         
@@ -427,9 +467,10 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
         unsigned char *levelData = tInfo->imgData;
         
 
-        for (level=0; level<= tInfo->numMipmaps; ++level)
+        for (level=0; level <= tInfo->numMipmaps; ++level)
         {                    
-            int size = levelWidth * levelHeight * params.bitsPerPixel / 8;
+						PRINT_DEBUG("LOAD DATA FOR LEVEL: %d",level);
+            int size = levelWidth * levelHeight * params.bitsPerPixel;
             glTexImage2D(GL_TEXTURE_2D, level, params.glTexFormat, levelWidth, levelHeight, 0, params.glTexFormat, params.glTexType, levelData);
             levelData += size;
             levelWidth  /= 2; 
@@ -440,8 +481,9 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     {
         // 'generateMipmaps' not supported for compressed textures
         
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tInfo->numMipmaps == 0 ? GL_LINEAR : GL_LINEAR_MIPMAP_NEAREST);
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tInfo->numMipmaps == 0 ? GL_LINEAR : GL_LINEAR_MIPMAP_NEAREST);
         
+				glPixelStorei(GL_UNPACK_ALIGNMENT,1);
         int levelWidth = tInfo->width;
         int levelHeight = tInfo->height;
         unsigned char *levelData = tInfo->imgData;
@@ -503,8 +545,10 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
   GLuint rtid;
 	GLuint iw = ceil(width);
 	GLuint ih = ceil(height);
-	GLuint legalWidth = nextPowerOfTwo(iw);
-	GLuint legalHeight = nextPowerOfTwo(ih);
+	//GLuint legalWidth = nextPowerOfTwo(iw);
+	//GLuint legalHeight = nextPowerOfTwo(ih);
+	GLuint legalWidth = nextPOT(iw);
+	GLuint legalHeight = nextPOT(ih);
 #ifdef IOS
 	if (legalWidth <= 8) {
     if (legalWidth > legalHeight) legalHeight = legalWidth;
@@ -735,8 +779,10 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 	else {
 		res = Val_true;
 		//fprintf(stderr,"resize renderbuffer %d:%d to %f:%f\n",rb->fbid,rb->tid,width,height);
-		GLuint legalWidth = nextPowerOfTwo(ceil(width));
-		GLuint legalHeight = nextPowerOfTwo(ceil(height));
+		//GLuint legalWidth = nextPowerOfTwo(ceil(width));
+		//GLuint legalHeight = nextPowerOfTwo(ceil(height));
+		GLuint legalWidth = nextPOT(ceil(width));
+		GLuint legalHeight = nextPOT(ceil(height));
 #ifdef IOS
 		if (legalWidth <= 8) {
 			if (legalWidth > legalHeight) legalHeight = legalWidth;

@@ -1,4 +1,5 @@
 #include "texture_pvr.h"
+#include <string.h>
 
 // --- PVR 2 structs & enums -------------------------------------------------------------------------
 
@@ -50,6 +51,7 @@ int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
 	tInfo->height = tInfo->realHeight = header.height;
 	//printf("width: %d, height: %d\n",header.width,header.height);
 	tInfo->numMipmaps = header.numMipmaps;
+	tInfo->generateMipmaps = 0;
 	tInfo->premultipliedAlpha = 0;
   
   switch (header.pfFlags & 0xff)
@@ -141,6 +143,7 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 	tInfo->width = tInfo->realWidth = header.u32Width;
 	tInfo->height = tInfo->realHeight = header.u32Height;
 	tInfo->numMipmaps = header.u32MIPMapCount - 1;
+	tInfo->generateMipmaps = 0;
 	tInfo->premultipliedAlpha = header.u32Flags & PVRTEX3_PREMULTIPLIED;
 	PRINT_DEBUG("width: %d, height: %d, pma: %d",tInfo->width,tInfo->height,tInfo->premultipliedAlpha);
 	union PVR3PixelType pt = (union PVR3PixelType)(header.u64PixelFormat);
@@ -173,8 +176,18 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 				break;
 		}
 	} else {
-		ERROR("unsupported: SPEC PVR format");
-		return 1;
+		if (!memcmp("rgba",pt.PixelTypeChar,4)) {
+			uint32_t *bpc = (uint32_t*)(pt.PixelTypeChar + 4);
+			switch (*bpc) {
+				case 67372036: PRINT_DEBUG("RGBA:4444"); tInfo->format = LTextureFormat4444; break;
+				default:
+					ERROR("unsupported: SPEC rgba format [%hhu,%hhu,%hhu,%hhu]",pt.PixelTypeChar[4],pt.PixelTypeChar[5],pt.PixelTypeChar[6],pt.PixelTypeChar[7]);
+					return 1;
+			}
+		} else {
+			ERROR("unsupported: SPEC PVR format {%c,%c,%c,%c}",pt.PixelTypeChar[0],pt.PixelTypeChar[1],pt.PixelTypeChar[2],pt.PixelTypeChar[3]);
+			return 1;
+		}
 	};
 	// skip meta
 	int p;
@@ -185,7 +198,7 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 	PRINT_DEBUG("metadataSize: %d, curlp: %d",header.u32MetaDataSize,p);
 
 	tInfo->dataLen = fsize - sizeof(PVRTextureHeader3) - header.u32MetaDataSize;
-	//printf("pvr data size: %d\n",tInfo->dataLen);
+	PRINT_DEBUG("pvr data size: %d",tInfo->dataLen);
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
 
 	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};

@@ -1130,6 +1130,28 @@ value bl_greenhouse (stage:Stage.c) =
     )
   );
 
+
+(* value lib = ref None; *)
+value memory_test (stage:Stage.c) = 
+  (*
+  let textures = DynArray.create () in
+  let load_async fname = Texture.load_async ~with_suffix:False ~filter:Texture.FilterLinear fname (DynArray.add textures) in
+  (
+    for i = 0 to 64 do 
+      load_async (Printf.sprintf "library/%d.png" i)
+    done;
+    load_async "library/100500.png";
+  );
+  *)
+(*   lib.val := Some (LightLib.load ~loadTextures:True "Docroot"); *)
+(
+  for i = 0 to 200 do
+    ignore (Texture.load (Printf.sprintf "memtest/fake%d.png" i));
+  done
+);
+
+
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -1142,7 +1164,7 @@ let stage width height =
       (* touchesTest self; *)
 
 (*       accelerometer (); *)
-        BitmapFont.register "MyriadPro-Regular.fnt";
+(*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
         TLF.default_font_family.val := "Myriad Pro";
 (*
@@ -1194,7 +1216,8 @@ let stage width height =
           (* hardware self; *)
 (*           glow_and_gc self; *)
 (*        udid self; *)
-       bl_greenhouse self;
+(*        bl_greenhouse self; *)
+          memory_test self;
     end;
   end
 in
