@@ -241,13 +241,17 @@ ELSE
     external avsound_isPlaying : avplayer -> bool = "ml_avsound_is_playing";
     external avsound_play : avplayer -> (unit -> unit) -> unit = "ml_avsound_play";
 
-    value load path = if True then AVSound (avsound_create_player path) else ALSound (alsoundLoad path);
+    value load path =
+      if ExtString.String.ends_with path ".caf" then
+        ALSound (alsoundLoad path)
+      else
+        AVSound (avsound_create_player path);
 
-  class av_channel snd =    
+  class av_channel plr =    
     object(self)
       inherit EventDispatcher.simple [ channel ];
 
-      value player = match snd with [ AVSound p -> p | _ -> assert False ];
+      value player = plr;
       value mutable paused = False;
       value mutable completed = False;
       value mutable volume = 0.;
@@ -397,7 +401,12 @@ ELSE
       end;    
 
     (* value createChannel snd = new al_channel snd; *)
-    value createChannel snd = new av_channel snd;
+    (* value createChannel snd = new av_channel snd; *)
+    value createChannel snd = 
+      match snd with 
+      [ ALSound als -> new al_channel als
+      | AVSound avs -> new av_channel avs 
+      ];
   ELSE
     (* Sdl version here *)
 
