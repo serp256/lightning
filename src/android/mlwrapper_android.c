@@ -273,48 +273,6 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobje
 	}
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_LightView_lightFinalize(JNIEnv *env, jobject jview) {
-	DEBUG("handleOnDestroy");
-	if (stage) {
-		(*env)->DeleteGlobalRef(env,jStorage);
-		jStorage = NULL;
-		(*env)->DeleteGlobalRef(env,jStorageEditor);
-		jStorageEditor = NULL;
-		(*env)->DeleteGlobalRef(env,jView);
-		jView = NULL;
-		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","finalize old stage");
-		value unload_method = caml_hash_variant("onUnload");
-		caml_callback2(caml_get_public_method(stage->stage,unload_method),stage->stage,Val_unit);
-		caml_remove_generational_global_root(&stage->stage);
-		free(stage);
-		caml_callback(*caml_named_value("clear_tweens"),Val_unit);
-		DEBUG("tweens clear");
-		caml_callback(*caml_named_value("clear_timers"),Val_unit);
-		DEBUG("timers clear");
-		caml_callback(*caml_named_value("clear_fonts"),Val_unit);
-		DEBUG("fonts clear");
-		caml_callback(*caml_named_value("texture_cache_clear"),Val_unit);
-		DEBUG("texture cache clear");
-		caml_callback(*caml_named_value("programs_cache_clear"),Val_unit);
-		DEBUG("programs cache clear");
-		caml_callback(*caml_named_value("image_program_cache_clear"),Val_unit);
-		DEBUG("image programs cache clear");
-		// net finalize NEED, but for doodles it's not used
-		caml_gc_compaction(Val_unit);
-		DEBUG("SECOND COMPACTION!");
-		caml_gc_compaction(Val_unit);
-		if (gSndPool != NULL) {
-			(*env)->DeleteGlobalRef(env,gSndPool);
-			gSndPool = NULL;
-			(*env)->DeleteGlobalRef(env,gSndPoolCls);
-			gSndPoolCls = NULL;
-		};
-		render_clear_cached_values ();
-		stage = NULL;
-	}
-}
-
-
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	DEBUG("lightRender init");
@@ -1030,18 +988,20 @@ void ml_paymentsTest() {
 	(*env)->CallIntMethod(env, jView, mthdId);
 }
 
-static value successCb;
-static value errorCb;
+static value successCb = 0;
+static value errorCb = 0;
 
 void ml_payment_init(value pubkey, value scb, value ecb) {
-	if (successCb) {
-		caml_failwith("payments already initialized");		
-	}
 
-	successCb = scb;
-	caml_register_generational_global_root(&successCb);
-	errorCb = ecb;
-	caml_register_generational_global_root(&errorCb);
+	if (successCb == 0) {
+		successCb = scb;
+		caml_register_generational_global_root(&successCb);
+		errorCb = ecb;
+		caml_register_generational_global_root(&errorCb);
+	} else {
+		caml_modify_generational_global_root(&successCb,scb);
+		caml_modify_generational_global_root(&errorCb,ecb);
+	}
 
 	if (!Is_long(pubkey)) {
 		JNIEnv *env;
@@ -1056,6 +1016,15 @@ void ml_payment_init(value pubkey, value scb, value ecb) {
 		(*env)->DeleteLocalRef(env, securityCls);
 		(*env)->DeleteLocalRef(env, jpubkey);
 	}
+}
+
+void payments_destroy() {
+	if (successCb) {
+		caml_remove_generational_global_root(&successCb);
+		successCb = 0;
+		caml_remove_generational_global_root(&errorCb);
+		errorCb = 0;
+	};
 }
 
 static jmethodID gRequestPurchase;
@@ -1077,19 +1046,7 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 	CAMLparam0();
 	CAMLlocal2(tr, vprodId);
 
-	// jclass tc = (*env)->FindClass(env, "java/lang/Thread");
-	// jmethodID mid = (*env)->GetStaticMethodID(env, tc, "currentThread", "()Ljava/lang/Thread;");
-	// jobject ct = (*env)->CallStaticObjectMethod(env, tc, mid);
-
-	// mid = (*env)->GetMethodID(env, tc, "getId", "()J");
-	// jlong tid = (*env)->CallLongMethod(env, ct, mid);
-
-	DEBUGF("jni invoke caml payment succ cb %d", gettid());
-
-
-	if (!successCb) {
-		caml_failwith("payment callbacks are not initialized");
-	}
+	if (!successCb) return; //caml_failwith("payment callbacks are not initialized");
 
 	const char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
 	const char *cnotifId = (*env)->GetStringUTFChars(env, notifId, JNI_FALSE);
@@ -1116,9 +1073,8 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 	CAMLparam0();
 	CAMLlocal2(vprodId, vmes);
 
-	if (!errorCb) {
-		caml_failwith("payment callbacks are not initialized");
-	}
+	if (!errorCb) return; 
+	//	caml_failwith("payment callbacks are not initialized");
 
 	const char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
 	const char *cmes = (*env)->GetStringUTFChars(env, mes, JNI_FALSE);
@@ -1224,6 +1180,47 @@ value ml_getStoragePath () {
 	return r;
 }
 
+
+////////
+JNIEXPORT void Java_ru_redspell_lightning_LightView_lightFinalize(JNIEnv *env, jobject jview) {
+	DEBUG("handleOnDestroy");
+	if (stage) {
+		(*env)->DeleteGlobalRef(env,jStorage);
+		jStorage = NULL;
+		(*env)->DeleteGlobalRef(env,jStorageEditor);
+		jStorageEditor = NULL;
+		(*env)->DeleteGlobalRef(env,jView);
+		jView = NULL;
+		__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING","finalize old stage");
+		value unload_method = caml_hash_variant("onUnload");
+		caml_callback2(caml_get_public_method(stage->stage,unload_method),stage->stage,Val_unit);
+		caml_remove_generational_global_root(&stage->stage);
+		free(stage);
+		caml_callback(*caml_named_value("clear_tweens"),Val_unit);
+		DEBUG("tweens clear");
+		caml_callback(*caml_named_value("clear_timers"),Val_unit);
+		DEBUG("timers clear");
+		caml_callback(*caml_named_value("clear_fonts"),Val_unit);
+		DEBUG("fonts clear");
+		caml_callback(*caml_named_value("texture_cache_clear"),Val_unit);
+		DEBUG("texture cache clear");
+		caml_callback(*caml_named_value("programs_cache_clear"),Val_unit);
+		DEBUG("programs cache clear");
+		caml_callback(*caml_named_value("image_program_cache_clear"),Val_unit);
+		DEBUG("image programs cache clear");
+		payments_destroy();
+		// net finalize NEED, but for doodles it's not used
+		caml_gc_compaction(Val_unit);
+		if (gSndPool != NULL) {
+			(*env)->DeleteGlobalRef(env,gSndPool);
+			gSndPool = NULL;
+			(*env)->DeleteGlobalRef(env,gSndPoolCls);
+			gSndPoolCls = NULL;
+		};
+		render_clear_cached_values ();
+		stage = NULL;
+	}
+}
 /*static jclass gContextCls;
 static jclass gAssetManagerCls;
 static jclass gAssetFdCls;
