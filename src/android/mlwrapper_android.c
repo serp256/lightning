@@ -1185,6 +1185,9 @@ value ml_getStoragePath () {
 JNIEXPORT void Java_ru_redspell_lightning_LightView_lightFinalize(JNIEnv *env, jobject jview) {
 	DEBUG("handleOnDestroy");
 	if (stage) {
+		jfieldID fid = (*env)->GetStaticObjectField(env, jViewCls, "instance");
+		(*env)->SetStaticObjectField(env, jViewCls, fid, NULL);
+
 		(*env)->DeleteGlobalRef(env,jStorage);
 		jStorage = NULL;
 		(*env)->DeleteGlobalRef(env,jStorageEditor);

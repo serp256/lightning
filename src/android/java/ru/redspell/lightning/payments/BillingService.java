@@ -237,12 +237,14 @@ public class BillingService extends Service implements ServiceConnection {
             if (mes != null) {
                 final String fmes = mes;
 
-                LightView.instance.queueEvent(new Runnable() {
-                    @Override
-                    public void run() {
-                        invokeCamlPaymentErrorCb(mProductId, fmes);
-                    }
-                });                
+                if (LightView.instance != null) {
+                    LightView.instance.queueEvent(new Runnable() {
+                        @Override
+                        public void run() {
+                            invokeCamlPaymentErrorCb(mProductId, fmes);
+                        }
+                    });
+                }
             }
         }
     }
@@ -436,13 +438,16 @@ public class BillingService extends Service implements ServiceConnection {
             if (purchases == null) {
                 Log.d(TAG, "purchases == null");
 
-                LightView.instance.queueEvent(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d(TAG, "invoking caml payment error cb from BillingService.purchaseStateChanged (purchases not verified)");
-                        invokeCamlPaymentErrorCb("", "error when verifying");
-                    }
-                });
+                if (LightView.instance != null) {
+                    LightView.instance.queueEvent(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d(TAG, "invoking caml payment error cb from BillingService.purchaseStateChanged (purchases not verified)");
+                            invokeCamlPaymentErrorCb("", "error when verifying");
+                        }
+                    });                    
+                }
+
 
                 
                 return;
@@ -459,12 +464,14 @@ public class BillingService extends Service implements ServiceConnection {
                     Log.d(TAG, "invoking caml payment success callback from from BillingService.purchaseStateChanged");
                     Log.d(TAG, "LightView.instance: " + LightView.instance);
 
-                    LightView.instance.queueEvent(new Runnable() {
-                        @Override
-                        public void run() {
-                            invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? sig : "");
-                        }
-                    });
+                    if (LightView.instance != null) {
+                        LightView.instance.queueEvent(new Runnable() {
+                            @Override
+                            public void run() {
+                                invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? sig : "");
+                            }
+                        });
+                    }
 
                     
                     //notifyList.add(vp.notificationId);
