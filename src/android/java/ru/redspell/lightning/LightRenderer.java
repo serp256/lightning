@@ -6,6 +6,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import android.opengl.GLSurfaceView;
 //import ru.redspell.lightning.GLSurfaceView;
+import android.os.Process;
 
 public class LightRenderer implements GLSurfaceView.Renderer {
 
@@ -25,7 +26,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) { 	
 		//Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
-		Log.d("LIGHTNING","SURFACE CREATED");
+		Log.d("LIGHTNING","SURFACE CREATED tid: " + Process.myTid());
 		nativeSurfaceCreated(screenWidth,screenHeight);
 		last = System.nanoTime();
 	}

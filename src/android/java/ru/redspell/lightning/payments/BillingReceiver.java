@@ -22,6 +22,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import java.lang.Thread;
 
 /**
  * This class implements the broadcast receiver for in-app billing. All asynchronous messages from
@@ -48,7 +49,7 @@ public class BillingReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
 
-        Log.d(TAG, "onReceive call, action: " + action);
+        Log.d(TAG, "BillingReceiver onReceive call, action: " + action);
 
         if (Consts.ACTION_PURCHASE_STATE_CHANGED.equals(action)) {
             String signedData = intent.getStringExtra(Consts.INAPP_SIGNED_DATA);
@@ -56,7 +57,6 @@ public class BillingReceiver extends BroadcastReceiver {
             purchaseStateChanged(context, signedData, signature);
         } else if (Consts.ACTION_NOTIFY.equals(action)) {
             String notifyId = intent.getStringExtra(Consts.NOTIFICATION_ID);
-            Log.d(TAG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! IN APP NOTIFY !!!!!!!!!!!!!!!!!!!!!!!!!!! id: " + notifyId);
             notify(context, notifyId);
         } else if (Consts.ACTION_RESPONSE_CODE.equals(action)) {
             long requestId = intent.getLongExtra(Consts.INAPP_REQUEST_ID, -1);
@@ -78,8 +78,6 @@ public class BillingReceiver extends BroadcastReceiver {
      * @param signature the signature for the signedData
      */
     private void purchaseStateChanged(Context context, String signedData, String signature) {
-        Log.d(TAG, "purchaseStateChanged call");
-
         Intent intent = new Intent(Consts.ACTION_PURCHASE_STATE_CHANGED);
         intent.setClass(context, BillingService.class);
         intent.putExtra(Consts.INAPP_SIGNED_DATA, signedData);
@@ -99,8 +97,6 @@ public class BillingReceiver extends BroadcastReceiver {
      * @param notifyId the notification ID
      */
     private void notify(Context context, String notifyId) {
-        Log.d(TAG, "notify call");
-
         Intent intent = new Intent(Consts.ACTION_GET_PURCHASE_INFORMATION);
         intent.setClass(context, BillingService.class);
         intent.putExtra(Consts.NOTIFICATION_ID, notifyId);

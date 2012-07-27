@@ -13,6 +13,8 @@
 #include "render_stub.h"
 #include <fcntl.h>
 #include <inttypes.h>
+#include <pthread.h>
+#include <unistd.h>
 
 
 #define caml_acquire_runtime_system()
@@ -1075,6 +1077,16 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 	CAMLparam0();
 	CAMLlocal2(tr, vprodId);
 
+	// jclass tc = (*env)->FindClass(env, "java/lang/Thread");
+	// jmethodID mid = (*env)->GetStaticMethodID(env, tc, "currentThread", "()Ljava/lang/Thread;");
+	// jobject ct = (*env)->CallStaticObjectMethod(env, tc, mid);
+
+	// mid = (*env)->GetMethodID(env, tc, "getId", "()J");
+	// jlong tid = (*env)->CallLongMethod(env, ct, mid);
+
+	DEBUGF("jni invoke caml payment succ cb %d", gettid());
+
+
 	if (!successCb) {
 		caml_failwith("payment callbacks are not initialized");
 	}
@@ -1093,10 +1105,14 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 
 	caml_callback3(successCb, vprodId, tr, Val_true);
 
+	DEBUG("return jni invoke caml payment succ cb");
+
 	CAMLreturn0;
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaymentErrorCb(JNIEnv *env, jobject this, jstring prodId, jstring mes) {
+	DEBUG("jni invoke caml payment error cb");
+
 	CAMLparam0();
 	CAMLlocal2(vprodId, vmes);
 
@@ -1112,12 +1128,16 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 
 	caml_callback3(errorCb, vprodId, vmes, Val_true);
 
+	DEBUG("return jni invoke caml payment err cb");
+
 	CAMLreturn0;
 }
 
 static jmethodID gConfirmNotif;
 
 void ml_payment_commit_transaction(value transaction) {
+	DEBUG("ml_payment_commit_transaction");
+
 	CAMLparam1(transaction);
 	CAMLlocal1(vnotifId);
 
@@ -1132,6 +1152,8 @@ void ml_payment_commit_transaction(value transaction) {
 	jstring jnotifId = (*env)->NewStringUTF(env, String_val(vnotifId));
 	(*env)->CallVoidMethod(env, jView, gConfirmNotif, jnotifId);
 	(*env)->DeleteLocalRef(env, jnotifId);
+
+	DEBUG("return ml_payment_commit_transaction");
 
 	CAMLreturn0;
 }

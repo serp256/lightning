@@ -37,6 +37,7 @@ import ru.redspell.lightning.payments.ResponseHandler;
 
 import android.media.MediaPlayer;
 import android.media.AudioManager;
+import android.os.Process;
 
 public class LightView extends GLSurfaceView {
 
@@ -205,8 +206,14 @@ public class LightView extends GLSurfaceView {
 	private BillingService bserv;
 	//private File assetsDir;
 
+	public static LightView instance;
+
 	public LightView(Activity activity) {
 		super(activity);
+
+				Log.d("LIGHTNING", "tid: " + Process.myTid());
+
+
 		activity.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		DisplayMetrics dm = new DisplayMetrics();
@@ -216,6 +223,8 @@ public class LightView extends GLSurfaceView {
 		lightInit(activity.getPreferences(0));
 		Log.d("LIGHTNING","lightInit finished");
 		initView(width,height);
+
+		instance = this;
 
 		bserv = new BillingService();
 		bserv.setContext(activity);
