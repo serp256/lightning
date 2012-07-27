@@ -67,7 +67,7 @@ value zero: c;
 value make : textureInfo -> c;
 
 (* value create: textureFormat -> int -> int -> option (Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout) -> c; *)
-value load: ?with_suffix:bool -> ?filter:filter -> string -> c;
+value load: ?with_suffix:bool -> ?filter:filter -> ?use_pvr:bool -> string -> c;
 
 
 type renderbuffer;
@@ -90,7 +90,7 @@ value glRGB:int;
 
 value rendered: ?format:int -> ?filter:filter -> float -> float -> rendered; 
 
-value load_async: ?with_suffix:bool -> ?filter:filter -> string -> ?ecallback:(string -> unit) -> (c -> unit) -> unit;
+value load_async: ?with_suffix:bool -> ?filter:filter -> ?use_pvr:bool -> string -> ?ecallback:(string -> unit) -> (c -> unit) -> unit;
 value check_async: unit -> unit;
 
 

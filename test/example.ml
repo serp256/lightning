@@ -539,10 +539,13 @@ value pallete (stage:Stage.c) =
 *)
 
 value image (stage:Stage.c) =
-  Texture.load_async "tree.png" begin fun t ->
+  Texture.load_async "tl_tile1.png" begin fun t ->
     let image = Image.create t in
-    let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
-    stage#addChild image;
+    (
+      image#setScale 2.;
+(*     let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in *)
+      stage#addChild image;
+    )
   end;
 
 (*
@@ -1147,7 +1150,8 @@ value memory_test (stage:Stage.c) =
 (
   for i = 0 to 200 do
     ignore (Texture.load (Printf.sprintf "memtest/fake%d.png" i));
-  done
+  done;
+  Gc.compact ();
 );
 
 
@@ -1217,7 +1221,8 @@ let stage width height =
 (*           glow_and_gc self; *)
 (*        udid self; *)
 (*        bl_greenhouse self; *)
-          memory_test self;
+(*           memory_test self; *)
+          image self
     end;
   end
 in

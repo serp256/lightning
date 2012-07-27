@@ -26,6 +26,7 @@ int nextPowerOfTwo(int number);
 
 struct tex {
 	GLuint tid;
+	char path[255];// remove this then release
 	int mem;
 };
 
@@ -59,6 +60,7 @@ typedef enum
 } LTextureFormat;
 
 typedef struct {
+	//char path[255];
 	int format;
 	unsigned int width;
 	double realWidth;

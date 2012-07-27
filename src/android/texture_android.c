@@ -203,7 +203,8 @@ int load_png_image(resource *rs,textureInfo *tInfo) {
 }
 
 
-int load_image_info(char *fname,char *suffix,textureInfo *tInfo) {
+// FIXME: need rewrite to try all with suffix and after without
+int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	// Проверить фсю хуйню
 	DEBUGF("LOAD IMAGE INFO: %s[%s]",fname,suffix);
 	char *ext = strrchr(fname,'.');
@@ -236,24 +237,26 @@ int load_image_info(char *fname,char *suffix,textureInfo *tInfo) {
 			return r;
 		} else if (strcasecmp(ext,".plt")) { // если это не палитра
 			// try pvr
-			if (slen != 0) {
-				strcpy(path + bflen + slen, ".pvr");
+			if (use_pvr) {
+				if (slen != 0) {
+					strcpy(path + bflen + slen, ".pvr");
+					if (getResourceFd(path,&r)) {
+						FILE *fptr = fdopen(r.fd,"rb");
+						int res = loadPvrFile3(fptr,r.length,tInfo);
+						fclose(fptr);
+						free(path);
+						return res;
+					}
+				};
+				strcpy(path + bflen, ".pvr");
 				if (getResourceFd(path,&r)) {
 					FILE *fptr = fdopen(r.fd,"rb");
 					int res = loadPvrFile3(fptr,r.length,tInfo);
+					DEBUG("PVR File Loaded");
 					fclose(fptr);
 					free(path);
 					return res;
-				}
-			};
-			strcpy(path + bflen, ".pvr");
-			if (getResourceFd(path,&r)) {
-				FILE *fptr = fdopen(r.fd,"rb");
-				int res = loadPvrFile3(fptr,r.length,tInfo);
-				DEBUG("PVR File Loaded");
-				fclose(fptr);
-				free(path);
-				return res;
+				};
 			};
 			// try plx
 			if (slen != 0) {
@@ -309,12 +312,12 @@ int load_image_info(char *fname,char *suffix,textureInfo *tInfo) {
 
 
 
-value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter) {
+value ml_loadImage(value oldTextureID,value opath,value osuffix,value use_pvr,value filter) {
 	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
 	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
-	int r = load_image_info(String_val(opath),suffix,&tInfo);
+	int r = load_image_info(String_val(opath),suffix,Bool_val(use_pvr),&tInfo);
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);

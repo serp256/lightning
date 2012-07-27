@@ -284,7 +284,7 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
 }
 
 
-int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
+int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 
 	//NSLog(@"LOAD IMAGE: %@[%s]\n",path,suffix);
 	NSString *fullPath = NULL;
@@ -308,12 +308,14 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 				if (suffix != NULL) {
 
 					NSString *pathWithSuffix = [pathWithoutExt stringByAppendingString:[NSString stringWithCString:suffix encoding:NSASCIIStringEncoding]];
-					fname = [pathWithSuffix stringByAppendingPathExtension:@"pvr"];
-					fullPath = pathForBundleResource(fname, bundle); 
-					if (fullPath) {
-						is_pvr = 1; 
-						break; 
-					}
+					if (use_pvr) {
+						fname = [pathWithSuffix stringByAppendingPathExtension:@"pvr"];
+						fullPath = pathForBundleResource(fname, bundle); 
+						if (fullPath) {
+							is_pvr = 1; 
+							break; 
+						}
+					};
 
 					// try plx with with suffix
 					fname = [pathWithSuffix stringByAppendingPathExtension:@"plx"];
@@ -331,9 +333,11 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 				} 
 
 				// try pvr 
-				fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
-				fullPath = pathForBundleResource(fname, bundle);
-				if (fullPath) {is_pvr = 1; break;};
+				if (use_pvr) {
+					fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
+					fullPath = pathForBundleResource(fname, bundle);
+					if (fullPath) {is_pvr = 1; break;};
+				}
 
 				// try plx
 				fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
@@ -355,6 +359,7 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 	if (!fullPath) r = 2;
 	else {
 		//NSLog(@"REAL FILE: %@",fullPath);
+		//[fullPath getCString:tInfo->path maxLength:255 encoding:NSASCIIStringEncoding];
 		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
 		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
@@ -374,11 +379,11 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 	return r;
 }
 
-int load_image_info(char *cpath,char *suffix, textureInfo *tInfo) {
+int load_image_info(char *cpath,char *suffix, int use_pvr,textureInfo *tInfo) {
 	//NSLog(@"LOAD_IMAGE_INFO: %s",cpath);
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	NSString *path = [NSString stringWithCString:cpath encoding:NSASCIIStringEncoding];
-	int r = _load_image(path,suffix,tInfo);
+	int r = _load_image(path,suffix,use_pvr,tInfo);
 	[pool release];
 	//NSLog(@"IMAGE_LOADED: %s",cpath);
 	return r;
@@ -406,7 +411,7 @@ value ml_load_image_info(value opath) {
 */
 
 
-CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value filter) { // if old texture exists when replace
+CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value filter, value use_pvr) { // if old texture exists when replace
 	CAMLparam2(opath,osuffix);
 	CAMLlocal1(mlTex);
 	//NSLog(@"ml_loade image: %s\n",String_val(opath));
@@ -415,7 +420,7 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value 
 
 	textureInfo tInfo;
 	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
-	int r = _load_image(path,suffix,&tInfo);
+	int r = _load_image(path,suffix,Bool_val(use_pvr),&tInfo);
 
 	//double gt1 = CACurrentMediaTime();
 	if (r) {

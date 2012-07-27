@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
 #include <caml/fail.h>
@@ -13,9 +14,9 @@ static unsigned int total_tex_mem = 0;
 
 extern uintnat caml_dependent_size;
 #ifdef DEBUG_MEM
-#define LOGMEM(op,tid,size) DEBUGMSG("TEXTURE MEMORY [%s] <%d> %u -> %u:%u",op,tid,size,total_tex_mem,(unsigned int)caml_dependent_size)
+#define LOGMEM(op,tid,path,size) DEBUGMSG("TEXTURE MEMORY [%s] <%d:%s> %u -> %u:%u",op,tid,path,size,total_tex_mem,(unsigned int)caml_dependent_size)
 #else
-#define LOGMEM(op,tid,size)
+#define LOGMEM(op,tid,path,size)
 #endif
 
 #define TEX(v) ((struct tex*)Data_custom_val(v))
@@ -37,7 +38,8 @@ void ml_texture_id_delete(value textureID) {
 		struct tex *t = TEX(textureID);
 		t->tid = 0;
 		total_tex_mem -= t->mem;
-		LOGMEM("delete",tid,t->mem);
+		//LOGMEM("delete",tid,t->path,t->mem);
+		LOGMEM("delete",tid,"path",t->mem);
 		caml_free_dependent_memory(t->mem);
 	};
 }
@@ -56,7 +58,8 @@ static void textureID_finalize(value textureID) {
 		struct tex *t = TEX(textureID);
 		total_tex_mem -= t->mem;
 		caml_free_dependent_memory(t->mem);
-		LOGMEM("finalize",tid,t->mem);
+		//LOGMEM("finalize",tid,t->path,t->mem);
+		LOGMEM("finalize",tid,"path",t->mem);
 	};
 }
 
@@ -79,21 +82,21 @@ struct custom_operations textureID_ops = {
   custom_deserialize_default
 };
 
-#define Store_textureID(mltex,texID,dataLen) \
+#define Store_textureID(mltex,texID,_path,dataLen) \
 	caml_alloc_dependent_memory(dataLen); \
 	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
-	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",texID,dataLen);}
+	{struct tex *_tex = TEX(mltex); _tex->tid = texID; /*strcpy(_tex->path, _path);*/ _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",texID,_path,dataLen);}
 //*TEXTURE_ID(mlTextureID) = tid;
 
 value alloc_texture_id(GLuint textureID, unsigned int dataLen) {
 	value mlTextureID;
-	Store_textureID(mlTextureID,textureID,dataLen);
+	Store_textureID(mlTextureID,textureID,"alloc",dataLen);
 	return mlTextureID;
 }
 
 value ml_texture_id_zero() {
 	value mlTextureID;
-	Store_textureID(mlTextureID,0,0);
+	Store_textureID(mlTextureID,0,"zero",0);
 	return mlTextureID;
 }
 
@@ -392,10 +395,12 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 
 		if (!textureParams(tInfo,&params)) return 0;
 
+		/*
     if (!params.compressed && ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height)))
 			glPixelStorei(GL_UNPACK_ALIGNMENT,4);
 		else
 			glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+		*/
     
 		GLuint textureID;
 		value mlTextureID;
@@ -403,7 +408,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 			glGenTextures(1, &textureID);
 			PRINT_DEBUG("glGenTextures: <%d>",textureID);
 			checkGLErrors("glGenTexture");
-			Store_textureID(mlTextureID,textureID,tInfo->dataLen);
+			Store_textureID(mlTextureID,textureID,tInfo->path,tInfo->dataLen);
 		} else {
 			// FIXME: check memory detecting incorrect
 			mlTextureID = Field(oldTextureID,0);
@@ -641,7 +646,7 @@ value renderbuffer_to_ml(value orb) {
 	renderbuffer_t *rb = RENDERBUFFER(orb);
 	int s = rb->realWidth * rb->realHeight * 4;
 	renderInfo = caml_alloc_tuple(5);
-	Store_textureID(mlTextureID,rb->tid,s);
+	Store_textureID(mlTextureID,rb->tid,"renderbuffer",s);
 	Store_field(renderInfo,0,mlTextureID);
 	Store_field(renderInfo,1,caml_copy_double(RENDERBUFFER(orb)->width));
 	Store_field(renderInfo,2,caml_copy_double(RENDERBUFFER(orb)->height));
@@ -826,7 +831,7 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 			total_tex_mem -= TEX(Field(renderInfo,0))->mem;
 			caml_free_dependent_memory(TEX(Field(renderInfo,0))->mem);
 			int s = legalWidth*legalHeight*4;
-			Store_textureID(mlTextureID,rb->tid,s);
+			Store_textureID(mlTextureID,rb->tid,"renderbuffer resized",s);
 			Store_field(renderInfo,0,mlTextureID);
 		};
 	};
