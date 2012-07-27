@@ -49,7 +49,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 				int bflen = strlen(fname) - strlen(ext);
 				memcpy(path + rplen,fname,bflen);
 				memcpy(path + rplen + bflen,suffix,slen);
-				strcpy(path + rplen + slen,fname);
+				strcpy(path + rplen + bflen + slen,ext);
 				struct stat s;
 				if (!stat(path,&s)) {
 					int r = loadAlphaFile(path,tInfo);
@@ -214,7 +214,7 @@ void ml_free_image_info(value tInfo) {
 }
 */
 
-value ml_loadImage(value oldTextureID,value opath,value osuffix) {
+value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter) {
 	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
@@ -222,9 +222,9 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix) {
 	int r = load_image_info(String_val(opath),suffix,&tInfo);
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
-		caml_failwith("Can't load image");
+		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);
 	};
-	value textureID = createGLTexture(oldTextureID,&tInfo);
+	value textureID = createGLTexture(oldTextureID,&tInfo,filter);
 	free(tInfo.imgData);
 	// free surface
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));

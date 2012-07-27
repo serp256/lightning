@@ -3,6 +3,7 @@ DEFINE W = 1.;
 DEFINE SIGN(x) = if x < 0. then ~-.1. else 1.;
 
 type t = { a:float; b:float; c:float; d: float; tx: float; ty: float};
+value to_string m = Printf.sprintf "[a:%f,b:%f,c:%f,d:%f,tx:%f,ty:%f]" m.a m.b m.c m.d m.tx m.ty;
 
 value identity = {a=1.0;b=0.;c=0.;d=1.;tx=0.;ty=0.};
 
@@ -76,13 +77,14 @@ value transformPoint m {Point.x = x;y=y} =
 
 
 value transformPoints matrix points = 
-  let () = debug "transformPoints: %s - <%s>" (to_string matrix) (String.concat ";" (List.map Point.to_string (Array.to_list points))) in
+(*   let () = debug "transformPoints: %s - <%s>" (to_string matrix) (String.concat ";" (List.map Point.to_string (Array.to_list points))) in *)
   let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+(* 	let () = debug "transformPoints with matrix: %s [%s]" (to_string matrix) (String.concat ";" (List.map Point.to_string (Array.to_list points))) in *)
   let open Point in
   (
     for i = 0 to (Array.length points) - 1 do
       let p = points.(i) in
-      let () = debug "transform point %s" (Point.to_string p) in
+(*       let () = debug "transform point %s" (Point.to_string p) in *)
       let tp = transformPoint matrix p in
       (
         if ar.(0) > tp.x then ar.(0) := tp.x else ();
@@ -91,6 +93,7 @@ value transformPoints matrix points =
         if ar.(3) < tp.y then ar.(3) := tp.y else ();
       )
     done;
+(* 		debug "transformed"; *)
     ar
   );
   

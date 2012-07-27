@@ -17,6 +17,9 @@ exception Child_not_found;
 external glEnableScissor: int -> int -> int -> int -> unit = "ml_gl_scissor_enable";
 external glDisableScissor: unit -> unit = "ml_gl_scissor_disable";
 
+type rect_mask = { x0 : float ; y0 : float ; x1 : float ; y1 : float };
+value maskStack = Stack.create ();
+
 DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
   match self#stage with
   [ Some stage ->
@@ -35,17 +38,29 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
     [ [| minX; maxX; minY; maxY |] ->
       let sheight = stage#height in
       (
-        let minY = sheight -. maxY
-        and maxY = sheight -. minY in
-        (
-          glEnableScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY)); 
-(*           glEnable gl_scissor_test; *)
-(*           glScissor (int_of_float minX) (int_of_float minY) (int_of_float (maxX -. minX)) (int_of_float (maxY -. minY)); *)
-          call_render;
-(*           glDisable gl_scissor_test; *)
-          glDisableScissor ();
-        )
-      )
+				let os = { x0 = minX ; y0 = minY ; x1 =  maxX ; y1 =  maxY } in
+				let os = 
+					try 
+					 	let a = Stack.top maskStack in
+							{ x0 = max os.x0 a.x0 ; y0 = max os.y0 a.y0 ; x1 = min os.x1 a.x1 ; y1 = min os.y1 a.y1 }
+					with
+						[ Stack.Empty -> os ]
+					in
+					(
+						debug:mask "push %f %f %f %f " os.x0 os.y0 os.x1 os.y1;
+						Stack.push os maskStack;
+						let minY = sheight -. os.y1
+						and maxY = sheight -. os.y0 in
+						let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } in
+						(
+							glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
+							call_render;
+							glDisableScissor ();
+							ignore ( Stack.pop maskStack );
+							debug:mask "pull";
+						);
+					);
+				)
     | _ -> assert False
     ]
   | None -> failwith "render without stage"
@@ -133,7 +148,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit;
+        asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit;
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit; .. 
       >;
 
@@ -150,6 +165,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     value mutable boundsCache = None;
     value mutable parent : option 'parent = None;
 
+		method classes  = ([]:list exn);
 
     method virtual color: color;
     method virtual setColor: color -> unit;
@@ -249,13 +265,41 @@ class virtual _c [ 'parent ] = (*{{{*)
       ];
 
     method parent = parent;
+
+
+		method virtual dispatchEventGlobal: Ev.t -> unit;
     method setParent p = 
     (
       debug:prerender "set parent for %s" self#name;
       parent := Some p;
+			let event = Ev.create ev_ADDED () in
+			self#dispatchEvent event;
+			match p#stage with
+			[ Some _ -> 
+				let event = Ev.create ev_ADDED_TO_STAGE () in
+				self#dispatchEventGlobal event
+			| None -> ()
+			]
     );
 
-    method clearParent () = (parent := None;);
+    method clearParent () = 
+			match parent with
+			[ Some p ->
+				let on_stage = match p#stage with [ Some _ -> True | _ -> False ] in
+				(
+					 parent := None;
+					 let event = Ev.create ev_REMOVED () in
+					 self#dispatchEvent event;
+						match on_stage with
+						[ True ->
+							let event = Ev.create ev_REMOVED_FROM_STAGE () in
+							self#dispatchEventGlobal event
+						| False -> ()
+						];
+				)
+			| None -> ()
+			];
+
     method z =
       match parent with
       [ Some parent -> 
@@ -584,12 +628,7 @@ class virtual _c [ 'parent ] = (*{{{*)
         else ();
       );
 
-    method private hitTestPoint' localPoint isTouch = 
-(*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
-      match Rectangle.containsPoint (self#boundsInSpace (Some self)) localPoint with
-      [ True -> Some (self :> _c 'parent)
-      | False -> None
-      ];
+    method private virtual hitTestPoint': Point.t -> bool -> option (_c 'parent);
 
     method hitTestPoint localPoint isTouch = 
       (* on a touch test, invisible or untouchable objects cause the test to fail *)
@@ -753,15 +792,11 @@ class virtual container = (*{{{*)
     method dcast = `Container self#asDisplayObjectContainer;
 
     (* Сделать enum устойчивым к модификациям и переписать на полное использование енумов или щас ? *)
-    method dispatchEventOnChildren event = 
+    method dispatchEventGlobal event = 
     (
       self#dispatchEvent event;
       Enum.iter begin fun (child:'displayObject) -> (* здесь хуйня с таргетом надо разобраца *)
-        match child#dcast with
-        [ `Container cont -> cont#dispatchEventOnChildren event
-(*           (cont :> < dispatchEventOnChildren: !'a. Ev.t eventType eventData 'displayObject (< .. > as 'a) -> unit >)#dispatchEventOnChildren event *)
-        | `Object obj -> obj#dispatchEvent event
-        ]
+				child#dispatchEventGlobal event
       end self#children;
     );
 
@@ -791,17 +826,6 @@ class virtual container = (*{{{*)
           numChildren := numChildren + 1;
           child#setParent self#asDisplayObjectContainer;
           self#boundsChanged();
-          let event = Ev.create ev_ADDED () in
-          child#dispatchEvent event;
-          match self#stage with
-          [ Some _ -> 
-            let event = Ev.create ev_ADDED_TO_STAGE () in
-            match child#dcast with
-            [ `Container cont -> cont#dispatchEventOnChildren event
-            | `Object _ -> child#dispatchEvent event
-            ]
-          | None -> ()
-          ]
       );
 
     method getChildAt index = 
@@ -903,7 +927,6 @@ class virtual container = (*{{{*)
       let child = Dllist.get child_node in
       (
         let () = debug:children "[%s] removeChild %s" self#name child#name in
-        child#clearParent();
         match children with
         [ Some chldrn ->
           if chldrn == child_node
@@ -917,18 +940,8 @@ class virtual container = (*{{{*)
         | None -> assert False
         ];
         numChildren := numChildren - 1;
+        child#clearParent();
         self#boundsChanged();
-        let event = Ev.create ev_REMOVED () in
-        child#dispatchEvent event;
-        match self#stage with
-        [ Some _ -> 
-          let event = Ev.create ev_REMOVED_FROM_STAGE () in
-          match child#dcast with
-          [ `Container cont -> cont#dispatchEventOnChildren event
-          | `Object _ -> child#dispatchEvent event
-          ]
-        | None -> ()
-        ];
         child;
       );
 
@@ -968,6 +981,7 @@ class virtual container = (*{{{*)
       match children with
       [ None -> ()
       | Some chldrn -> 
+				(*
         let evs = 
           let event = Ev.create ev_REMOVED () in 
           match self#stage with
@@ -984,10 +998,12 @@ class virtual container = (*{{{*)
           | None -> fun child -> child#dispatchEvent event
           ]
         in
+				*)
         (
           children := None;
           numChildren := 0;
-          Dllist.iter (fun (child:'displayObject) -> (child#clearParent();evs child)) chldrn;
+(*           Dllist.iter (fun (child:'displayObject) -> (child#clearParent();evs child)) chldrn; *)
+          Dllist.iter (fun (child:'displayObject) -> child#clearParent()) chldrn;
           self#boundsChanged();
         )
       ];
@@ -1039,7 +1055,7 @@ class virtual container = (*{{{*)
       ];
 
 
-    method! private hitTestPoint' localPoint isTouch = 
+    method private hitTestPoint' localPoint isTouch = 
       match children with
       [ None -> None
       | Some children -> 
@@ -1102,5 +1118,13 @@ class virtual c =
   object(self)
     inherit _c [ container ];
     method dcast = `Object (self :> c);
+    method dispatchEventGlobal event = self#dispatchEvent event;
+    method private hitTestPoint' localPoint isTouch = 
+(*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
+      match Rectangle.containsPoint (self#boundsInSpace (Some self)) localPoint with
+      [ True -> Some (self :> _c 'parent)
+      | False -> None
+      ];
+
   end;
 

@@ -536,12 +536,16 @@ value pallete (stage:Stage.c) =
     stage#addChild img;
   )
 );
+*)
 
 value image (stage:Stage.c) =
-  let image = Image.load "tree.png" in
-  let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
-  stage#addChild image;
+  Texture.load_async "tree.png" begin fun t ->
+    let image = Image.create t in
+    let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
+    stage#addChild image;
+  end;
 
+(*
 value test_gc (stage:Stage.c) = 
   let items = 
     [|
@@ -1052,37 +1056,160 @@ value assets (s:Stage.c) =
       Stage.addTween tw;
     );
 
-    Lightning.extractAssets ();
+    Lightning.extractAssets (fun () -> debug "assets extracted") ();
   );
     
 value udid (self:Stage.c) = 
-  let text = 
-    match TapjoyConnect.getOpenUDID () with
-    [ None -> "NONE"
-    | Some udid -> udid
-    ]
-  in
-  let (_,text) = TLF.create (TLF.p [`text text]) in
+  let text = Lightning.getMACID () in
+  let (_,text) = TLF.create (TLF.p [`text ("<<<< " ^ text ^ " >>>>")]) in
   (
-    text#setY 100.;
+    text#setY 300.;
     self#addChild text;
   );
+
+
+value bl_greenhouse (stage:Stage.c) =
+(*   let texture = Texture.load "28x05.png"  *)
+  let texture = Texture.load "25.png" 
+(*   and pos = {Point.x = ~-.80.; y = 11.}  *)
+  and pos = {Point.x = 59.; y = 23.}
+  and flipX = False 
+  in
+  (
+    (*
+    let house = AtlasNode.create texture (Rectangle.create 124. 74. 127. 133.) ~pos:{Point.x = ~-.153.; y = ~-.52.} ~flipX ()
+    and img1 = ref (AtlasNode.create texture (Rectangle.create 376. 0. 50. 69.) ~pos ~flipX ())
+    and img2 = ref (AtlasNode.create texture (Rectangle.create 224. 0. 50. 69.) ~pos ~flipX ())
+    *)
+(*
+    let house = AtlasNode.create texture (Rectangle.create 246. 672. 254. 266.) ~pos:{Point.x = 51.; y = ~-.103.} ~flipX ()
+    and img1 = ref (AtlasNode.create texture (Rectangle.create 871. 594. 100. 137.) ~pos ~flipX ())
+    and img2 = ref (AtlasNode.create texture (Rectangle.create 871. 455. 100. 137.) ~pos ~flipX ())
+*)
+    let house = AtlasNode.create texture (Rectangle.create 246. 672. 254. 266.) ~pos:{Point.x = 51.; y = ~-.103.} ~flipX ()
+    and img1 = ref (AtlasNode.create texture (Rectangle.create 871. 594. 100. 137.) ~pos ~flipX ())
+    and img2 = ref (AtlasNode.create texture (Rectangle.create 871. 455. 100. 137.) ~pos ~flipX ())
+    in
+    let atlas = Atlas.create texture in
+    (
+      atlas#setScale 0.5;
+      atlas#setPos 200.0 100.0;
+      atlas#addChild house;
+      atlas#addChild !img2;
+      stage#addChild atlas;
+      let timer = Timer.create ~repeatCount:~-1 0.5 "pizda" in
+      (
+        timer#addEventListener Timer.ev_TIMER begin fun _ _ _ ->
+          (
+            (*
+            if atlas#numChildren = 1 
+            then
+            (
+              atlas#clearChildren();
+              atlas#addChild house;
+              atlas#addChild !img2;
+            )
+            else 
+            (
+              atlas#clearChildren();
+              atlas#addChild house;
+            )
+            *)
+            atlas#clearChildren();
+            atlas#addChild house;
+            atlas#addChild !img2;
+            let img = img1.val in
+            (
+              img1.val := !img2;
+              img2.val := img;
+            )
+          )
+        end |> ignore;
+        timer#start();
+      );
+    )
+  );
+
+(* value music (self:Stage.c) =
+(
+  Sound.init ();
+  let sound = Sound.load "sound.mp3" in
+  let channel = Sound.createChannel sound in
+  (
+    channel#play ();
+    channel#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "sound complete") |> ignore;
+  );
+  let timer = Timer.create ~repeatCount:3 5. "GC" in
+  (
+    timer#addEventListener Timer.ev_TIMER (fun _ _ _ -> (debug "call major"; Gc.full_major ())) |> ignore;
+    timer#start ();
+  );
+); *)
+
+value avsound (stage:Stage.c) path =
+(
+  Sound.init ();
+
+    let channel1 = Sound.createChannel (Sound.load "melody0.mp3") in
+    let channel2 = Sound.createChannel (Sound.load "melody0.mp3") in
+      let createImg click =
+        let img = Image.load "Russia.png" in
+        (
+          img#setScaleX 0.5;
+          img#setScaleY 0.5;
+          stage#addChild img;
+
+          ignore(Stage.(
+            img#addEventListener ev_TOUCH (fun ev _ _ ->
+              match touches_of_data ev.Ev.data with
+              [ Some [ touch :: _ ] ->
+                Touch.(
+                    match touch.phase with
+                    [ TouchPhaseEnded -> let () = debug "click!" in click ()
+                    | _ -> ()
+                    ]
+                )
+              | _ -> ()
+              ]
+            )
+          ));
+
+          img;
+        )
+      in
+        let play = createImg channel1#play
+        and stop = createImg channel1#stop
+        and pause = createImg channel1#pause in
+        (
+          ignore(channel1#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "pizda"));
+
+          stage#addChild play;
+          stage#addChild stop;
+          stage#addChild pause;
+
+          stop#setX 150.;
+          pause#setX 300.;
+        );
+);
+  (* ignore(Sound.createChannel path); *)
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      avsound self "melody0.mp3";
+      (* assets self; *)
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
 (*       assets self; *)
-      quad self;
-      tweens self;
+(*       quad self; *)
+(*       tweens self; *)
       (* touchesTest self; *)
 
 (*       accelerometer (); *)
-(*         BitmapFont.register "MyriadPro-Regular.fnt"; *)
+        (* BitmapFont.register "MyriadPro-Regular.fnt"; *)
 (*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
-(*         TLF.default_font_family.val := "Myriad Pro"; *)
+        (* TLF.default_font_family.val := "Myriad Pro"; *)
 (*
         let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
           self#addChild tlf;
@@ -1099,7 +1226,7 @@ let stage width height =
 (*       async_load self; *)
 (*       filters self; *)
 (*         size self; *)
-       tlf self; 
+(*        tlf self;  *)
 (*       external_image self; *)
 (*       sound self; *)
 (*       atlas self; *)
@@ -1131,7 +1258,8 @@ let stage width height =
 (*           quad self; *)
           (* hardware self; *)
 (*           glow_and_gc self; *)
-       udid self;
+(*        udid self; *)
+       (* bl_greenhouse self; *)
     end;
   end
 in

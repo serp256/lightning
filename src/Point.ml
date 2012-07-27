@@ -31,3 +31,4 @@ value intrepolateFromPoint (x1,y1) (x2,y2) ratio =
 *)
 
 value to_string {x=x;y=y} = Printf.sprintf "[%f:%f]" x y;
+value create x y = { x = x; y = y };

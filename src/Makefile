@@ -12,6 +12,9 @@ texture_common.o: texture_common.h light_common.h
 texture_async_loader.o: light_common.h texture_common.h 
 render_stub.o: light_common.h texture_common.h render_stub.h
 filters_stub.o: light_common.h texture_common.h render_stub.h
+ios/texture_ios.o: texture_common.h
+sdl/texture_sdl.o: texture_common.h
+android/texture_android.o: texture_common.h
 
 MLOBJSFLAGS = 
 MLFLAGS +=  -package ojson,extlib -I containers -I utils
@@ -112,7 +115,7 @@ $(MLOBJS): Debug.cmx
 $(MLOBJSB): Debug.cmo
 
 $(MLOBJS) $(MLOBJSB) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
--include debug.conf
+include debug.conf
 	
 
 lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MOBJS) $(MLOBJSB)

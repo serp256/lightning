@@ -46,4 +46,3 @@ value ml_totalMemory() {
 value ml_userMemory() {
   return Val_int(getSysInfo(HW_USERMEM));
 };
-

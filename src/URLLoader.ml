@@ -15,7 +15,7 @@ type request =
 value get_header name headers = 
   let name = String.lowercase name in
   try
-    let hv = MList.find_map (fun (hn,hv) -> match String.lowercase hn = name with [ True -> Some hv | False -> None ]) headers in
+    let hv = MList.find_map_raise (fun (hn,hv) -> match String.lowercase hn = name with [ True -> Some hv | False -> None ]) headers in
     Some hv
   with [ Not_found -> None ];
 
@@ -89,7 +89,7 @@ type loader_wrapper =
 type connection;
 value loaders = Hashtbl.create 1;
 
-external url_connection: string -> string -> list (string*string) -> option string -> connection = "ml_URLConnection";
+external url_connection: string -> http_method -> list (string*string) -> option string -> connection = "ml_URLConnection";
 
 value get_loader ns_connection = 
   try
@@ -132,7 +132,8 @@ Callback.register "url_failed" url_failed;
 
 value start_load wrappers r = 
   let (url,data) = prepare_request r in
-  let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
+  let () = debug "HEADERS: [%s]" (String.concat ";" (List.map (fun (n,v) -> n ^ ":" ^ v) r.headers)) in
+  let ns_connection = url_connection url r.httpMethod r.headers data in
   (
     Hashtbl.add loaders ns_connection wrappers;
     ns_connection;

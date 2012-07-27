@@ -192,10 +192,12 @@ value read_json ?(with_suffix=True) path =
 ELSE IFDEF SDL THEN
 
 value resources_path = "Resources";
-value resource_path ?(with_suffix=True) fname = 
+value resource_path ?(with_suffix=True) fname =
+  let () = debug "resource_path call, %B" with_suffix in
   match with_suffix with
-  [ True ->
+  [ True ->    
     let spath = Filename.concat resources_path (path_with_suffix fname) in
+    let () = debug "spath: %s" spath in
     match Sys.file_exists spath with
     [ True -> spath
     | False -> 

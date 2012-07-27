@@ -11,7 +11,10 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	CAMLparam4(url,method,headers,data);
 	NSURL *nsurl = [[NSURL alloc] initWithString:[NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding]];
 	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:nsurl];
-	[request setHTTPMethod:[NSString stringWithCString:String_val(method) encoding:NSASCIIStringEncoding]];
+	static value ml_POST = 0;
+	if (ml_POST == 0) ml_POST = caml_hash_variant("POST");
+	if (method == ml_POST) [request setHTTPMethod:@"POST"];
+	//[request setHTTPMethod:[NSString stringWithCString:String_val(method) encoding:NSASCIIStringEncoding]];
 	// add headers
 	value el = headers;
 	value mlh;

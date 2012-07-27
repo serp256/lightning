@@ -402,7 +402,7 @@ value ml_load_image_info(value opath) {
 */
 
 
-CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix) { // if old texture exists when replace
+CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value filter) { // if old texture exists when replace
 	CAMLparam2(opath,osuffix);
 	CAMLlocal1(mlTex);
 	//NSLog(@"ml_loade image: %s\n",String_val(opath));
@@ -416,10 +416,10 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix) { // i
 	//double gt1 = CACurrentMediaTime();
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
-		caml_failwith("Can't load image");
+		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);
 	};
 
-	value textureID = createGLTexture(oldTexture,&tInfo);
+	value textureID = createGLTexture(oldTexture,&tInfo,filter);
 	free(tInfo.imgData);
 
 	checkGLErrors("after load texture");

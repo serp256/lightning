@@ -217,21 +217,102 @@ value createChannel snd =
 
 ELSE
   IFDEF ANDROID THEN
-    type sound = int;
+    type avplayer;
+    type sound = [ ALSound of int | AVSound of avplayer ];
+
+    (* type sound = int; *)
     value _SND_DURATION = 5.;
 
     external init : unit -> unit = "ml_alsoundInit";
 
     value setMasterVolume (v:float) = (); (* fixme *)
 
-    external alsoundLoad : string -> sound = "ml_alsoundLoad";
+    external alsoundLoad : string -> int = "ml_alsoundLoad";
     external alsoundPlay : int -> float -> bool -> int = "ml_alsoundPlay"; (* soundId -> volume -> loop -> streamId *)
     external alsoundPause : int -> unit = "ml_alsoundPause";
     external alsoundStop : int -> unit = "ml_alsoundStop";
     external alsoundSetVolume : int -> float -> unit = "ml_alsoundSetVolume";
     external alsoundSetLoop : int -> bool -> unit = "ml_alsoundSetLoop";
 
-    value load = alsoundLoad;
+    external avsound_create_player : string -> avplayer = "ml_avsound_create_player";
+    external avsound_playback : avplayer -> string -> unit = "ml_avsound_playback";
+    external avsound_setLoop : avplayer -> bool -> unit = "ml_avsound_set_loop";
+    external avsound_setVolume : avplayer -> float -> unit = "ml_avsound_set_volume";
+    external avsound_isPlaying : avplayer -> bool = "ml_avsound_is_playing";
+    external avsound_play : avplayer -> (unit -> unit) -> unit = "ml_avsound_play";
+
+    value load path =
+      if ExtString.String.ends_with path ".caf" then
+        ALSound (alsoundLoad path)
+      else
+        AVSound (avsound_create_player path);
+
+  class av_channel plr =    
+    object(self)
+      inherit EventDispatcher.simple [ channel ];
+
+      value player = plr;
+      value mutable paused = False;
+      value mutable completed = False;
+      value mutable volume = 0.;
+
+      method private asEventTarget = (self :> channel);
+
+      method private onSoundComplete () =
+      (
+        completed := True;
+        self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
+      );
+
+      method play () = 
+      (
+        if not paused && not completed then
+          avsound_playback player "prepare"
+        else ();
+
+        paused := False;
+        completed := False;
+        avsound_play player self#onSoundComplete;
+      );
+
+      method private isPlaying () = avsound_isPlaying player;
+      
+      method pause () = 
+        if self#isPlaying () then
+        (
+          paused := True;
+          completed := False;
+
+          avsound_playback player "pause";          
+        )
+        else ();
+      
+      method stop () = 
+        if paused || self#isPlaying () then
+        (
+          paused := False;
+          completed := False;
+
+          avsound_playback player "stop";          
+        )
+        else ();
+      
+      method setVolume v =
+      (        
+        volume := v;
+        avsound_setVolume player v;
+      );
+      
+      method volume = volume;
+      
+      method setLoop loop  = avsound_setLoop player loop;
+      
+      method state = match (paused, self#isPlaying ()) with
+      [ (_, True)         -> SoundPlaying
+      | (True, False)     -> SoundPaused
+      | (False, False)    -> SoundStoped
+      ];
+    end;
 
     class al_channel snd = 
       object(self)
@@ -319,7 +400,13 @@ ELSE
         method state = state;
       end;    
 
-    value createChannel snd = new al_channel snd;
+    (* value createChannel snd = new al_channel snd; *)
+    (* value createChannel snd = new av_channel snd; *)
+    value createChannel snd = 
+      match snd with 
+      [ ALSound als -> new al_channel als
+      | AVSound avs -> new av_channel avs 
+      ];
   ELSE
     (* Sdl version here *)
 

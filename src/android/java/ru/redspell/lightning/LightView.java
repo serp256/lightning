@@ -35,6 +35,9 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
 
+import android.media.MediaPlayer;
+import android.media.AudioManager;
+
 public class LightView extends GLSurfaceView {
 
 	private class ExtractAssetsTask extends AsyncTask<Void, Void, File> {
@@ -43,30 +46,44 @@ public class LightView extends GLSurfaceView {
 		private String ver;
 
 		private void recExtractAssets(File dir) throws IOException {
+			Log.d("LIGHTNING", "recExtractAssets call for " + dir.getPath());
+
 			Context c = getContext();
 			AssetManager am = c.getAssets();
 
 			String subAssetsUri = assetsDirUri.relativize(dir.toURI()).toString();
+
+			Log.d("LIGHTNING", "xyupizda1: " + subAssetsUri);
+
 			String[] subAssets = c.getAssets().list(subAssetsUri != "" ? subAssetsUri.substring(0, subAssetsUri.length() - 1) : subAssetsUri);
+
+			Log.d("LIGHTNING", "xyupizda2");
 
 			for (String subAsset : subAssets) {
 				File subAssetFile = new File(dir, subAsset);
+
+				Log.d("LIGHTNING", "extracting " + assetsDirUri.relativize(subAssetFile.toURI()).toString());
 
 				try {
 					InputStream in = am.open(assetsDirUri.relativize(subAssetFile.toURI()).toString());
 
 					subAssetFile.createNewFile();
-
+					
 					FileOutputStream out = new FileOutputStream(subAssetFile);
 					byte[] buf = new byte[in.available()];
 
 					in.read(buf, 0, in.available());
 					out.write(buf, 0, buf.length);
-
+					
 					in.close();
 					out.close();
 				} catch (FileNotFoundException e) {
+					Log.d("LIGHTNING", "directory");
+
 					subAssetFile.mkdir();
+
+					Log.d("LIGHTNING", "xyu");
+
 					recExtractAssets(subAssetFile);
 				}
 			}
@@ -492,34 +509,33 @@ public class LightView extends GLSurfaceView {
 		Log.d("LIGHTNING", "LightView: mlgetStoragePath");
 		return getContext().getFilesDir().getPath();
 	}
-/*	{
-		this.assetsDir = assetsDir;
 
-		Log.d("LIGHTNING", assetsDir != null ? "assets extracted to " + assetsDir.getAbsolutePath() : "assets are not extracted: no space on device");
-	}*/
 
-/*	protected void cleanLocalStorage() {
-		String[] names = fileList();
+	private class LightMediaPlayer extends MediaPlayer {
+		private class CamlCallbackCompleteListener implements MediaPlayer.OnCompletionListener {
+			private int camlCb;
 
-		for (String name : names) {
-			File file = new File(path);
+			public CamlCallbackCompleteListener(int cb) {
+				camlCb = cb;
+			}
+
+			public native void onCompletion(MediaPlayer mp);
 		}
-	}*/
 
-	// protected void traceAssets(String baseAsset, int indentSize) throws IOException {
-	// 	Context cntxt = getContext();
-	// 	String[] assets = cntxt.getAssets().list(baseAsset);
-	// 	String indent = "";
+		public void start(int cb) {
+			setOnCompletionListener(new CamlCallbackCompleteListener(cb));
+			start();
+		}
+	}
 
-	// 	for (int i = 0; i < indentSize; i++) {
-	// 		indent += "\t";
-	// 	}
+	public MediaPlayer createMediaPlayer(String path) throws IOException {
+		AssetFileDescriptor afd = getContext().getAssets().openFd(path);
 
-	// 	for (String asset : assets) {			
-	// 		Log.d("LIGHTNING", indent + asset);
-	// 		traceAssets(baseAsset != "" ? baseAsset + "/" + asset : asset, indentSize + 1);			
-	// 	}		
-	// }
+		MediaPlayer mp = new LightMediaPlayer();
 
+		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
 
+		return mp;
+	}
 }

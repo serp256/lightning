@@ -63,5 +63,5 @@ class c : [ Texture.c ] ->
   end;
 
 value create: Texture.c -> c;
-value load: string -> c;
-value load_async: string -> (c -> unit) -> unit;
+value load: ?filter:Texture.filter -> string -> c;
+value load_async: string -> ?filter:Texture.filter -> ?ecallback:(string -> unit) -> (c -> unit) -> unit;
