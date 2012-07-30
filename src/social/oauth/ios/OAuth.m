@@ -228,7 +228,7 @@
 	_webview = [[UIWebView alloc] initWithFrame: rect];                                                                                                                                 
 	_webview.delegate = self;                                                                                                                                                           
 	_webview.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;                                                                                     
-	_webview.scalesPageToFit = NO;                                                                                                                                                      
+	_webview.scalesPageToFit = YES;                                                                                                                                                      
 	self.view = _webview;   
 
 	_spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];

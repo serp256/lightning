@@ -539,7 +539,7 @@ value pallete (stage:Stage.c) =
 *)
 
 value image (stage:Stage.c) =
-  Texture.load_async "tl_tile1.png" begin fun t ->
+  Texture.load_async "tl_tile1.png" ~use_pvr:False begin fun t ->
     let image = Image.create t in
     (
       image#setScale 2.;
@@ -1154,12 +1154,23 @@ value memory_test (stage:Stage.c) =
   Gc.compact ();
 );
 
+module Tapjoy = TapjoyConnect;
+value tapjoy (stage:Stage.c) =
+(
+  let tree = Image.load "tree.png" in
+  stage#addChild tree;
+  Tapjoy.init "61d93a92-e6e4-4fbc-b530-402f79d6e416" "j7tSYMazuPY8jJYlEo1w";
+  Tapjoy.setUserID "serp256";
+  onClick stage begin fun _ ->
+    Tapjoy.showOffers ();
+  end;
+);
 
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
-    value bgColor = 0xCCCCCC;
+    value bgColor = 0xAAAAAA;
     initializer begin
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
 (*       assets self; *)
@@ -1222,7 +1233,8 @@ let stage width height =
 (*        udid self; *)
 (*        bl_greenhouse self; *)
 (*           memory_test self; *)
-          image self
+(*           image self *)
+tapjoy self;
     end;
   end
 in

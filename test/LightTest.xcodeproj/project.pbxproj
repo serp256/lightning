@@ -9,12 +9,14 @@
 /* Begin PBXBuildFile section */
 		510C021314FE6C1200BDDCFC /* ra_fertilizer.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */; };
 		510C021614FE6ED800BDDCFC /* stoneBoom.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021514FE6ED800BDDCFC /* stoneBoom.caf */; };
+		5134AA2415C663B300814238 /* close_button.png in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2015C6633200814238 /* close_button.png */; };
+		5134AA2515C663B300814238 /* TJCLoadingView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2115C6633200814238 /* TJCLoadingView.xib */; };
+		5134AA2615C663B300814238 /* TJCVideoView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2215C6633200814238 /* TJCVideoView.xib */; };
 		517411B614FB6A420022E871 /* e_cactus.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B514FB6A420022E871 /* e_cactus.png */; };
 		517411B914FB6A510022E871 /* tree.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B814FB6A510022E871 /* tree.png */; };
 		517411CB14FB749C0022E871 /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 517411CA14FB749C0022E871 /* Shaders */; };
 		5175C4DF156E80DE00A6DB34 /* sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 5175C4DE156E80DE00A6DB34 /* sound.mp3 */; };
 		517D397215C273EE002F92B9 /* tl_tile1.png in Resources */ = {isa = PBXBuildFile; fileRef = 517D397115C273EE002F92B9 /* tl_tile1.png */; };
-		517D397415C2767E002F92B9 /* tl_tile1.pvr in Resources */ = {isa = PBXBuildFile; fileRef = 517D397315C2767E002F92B9 /* tl_tile1.pvr */; };
 		517EB8801522F888009D91B1 /* pallete.plx in Resources */ = {isa = PBXBuildFile; fileRef = 517EB87F1522F888009D91B1 /* pallete.plx */; };
 		517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */; };
 		51846F6514EE704D00FDE684 /* test.native in CopyFiles */ = {isa = PBXBuildFile; fileRef = 51846F6414EE704D00FDE684 /* test.native */; };
@@ -57,12 +59,14 @@
 /* Begin PBXFileReference section */
 		510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = ra_fertilizer.caf; path = ../../lightning/test/Resources/ra_fertilizer.caf; sourceTree = "<group>"; };
 		510C021514FE6ED800BDDCFC /* stoneBoom.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = stoneBoom.caf; path = ../../lightning/test/Resources/stoneBoom.caf; sourceTree = "<group>"; };
+		5134AA2015C6633200814238 /* close_button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close_button.png; sourceTree = "<group>"; };
+		5134AA2115C6633200814238 /* TJCLoadingView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = TJCLoadingView.xib; sourceTree = "<group>"; };
+		5134AA2215C6633200814238 /* TJCVideoView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = TJCVideoView.xib; sourceTree = "<group>"; };
 		517411B514FB6A420022E871 /* e_cactus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = e_cactus.png; path = ../../lightning/test/Resources/e_cactus.png; sourceTree = "<group>"; };
 		517411B814FB6A510022E871 /* tree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tree.png; path = ../../lightning/test/Resources/tree.png; sourceTree = "<group>"; };
 		517411CA14FB749C0022E871 /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shaders; path = ../../lightning/Shaders; sourceTree = "<group>"; };
 		5175C4DE156E80DE00A6DB34 /* sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = sound.mp3; path = Resources/sound.mp3; sourceTree = "<group>"; };
 		517D397115C273EE002F92B9 /* tl_tile1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tl_tile1.png; path = Resources/tl_tile1.png; sourceTree = "<group>"; };
-		517D397315C2767E002F92B9 /* tl_tile1.pvr */ = {isa = PBXFileReference; lastKnownFileType = file; name = tl_tile1.pvr; path = Resources/tl_tile1.pvr; sourceTree = "<group>"; };
 		517EB87F1522F888009D91B1 /* pallete.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = pallete.plx; path = ../../lightning/test/Resources/pallete.plx; sourceTree = "<group>"; };
 		517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular0.alpha"; path = "../../lightning/test/Resources/MyriadPro-Regular0.alpha"; sourceTree = "<group>"; };
 		51846F6414EE704D00FDE684 /* test.native */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = test.native; sourceTree = "<group>"; };
@@ -70,9 +74,7 @@
 		518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "MyriadPro-Regular.fnt"; path = "../../lightning/test/Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
 		5191FD9214FF5FC900DD8677 /* frame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = frame.png; path = ../../lightning/test/Resources/frame.png; sourceTree = "<group>"; };
 		51B5418414F273C300EB2241 /* items */ = {isa = PBXFileReference; lastKnownFileType = folder; name = items; path = ../../lightning/test/Resources/items; sourceTree = "<group>"; };
-		51BC9D9015BD403300A3DCB7 /* library */ = {isa = PBXFileReference; lastKnownFileType = folder; name = library; path = "../../mobile-farm/Resources/library"; sourceTree = "<group>"; };
 		51BCBEBC15BD4CDE00A3DCB7 /* palletes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = palletes; path = "../../mobile-farm/Resources/palletes"; sourceTree = "<group>"; };
-		51BCBEBE15BD50CB00A3DCB7 /* Docroot */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Docroot; path = Resources/Docroot; sourceTree = "<group>"; };
 		51BCBECF15BE985900A3DCB7 /* memtest */ = {isa = PBXFileReference; lastKnownFileType = folder; name = memtest; path = Resources/memtest; sourceTree = "<group>"; };
 		51C72802157768860003B471 /* CCFairyTale_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = CCFairyTale_0.alpha; path = Resources/CCFairyTale_0.alpha; sourceTree = "<group>"; };
 		51C72803157768860003B471 /* CCFairyTale.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = CCFairyTale.fnt; path = Resources/CCFairyTale.fnt; sourceTree = "<group>"; };
@@ -95,16 +97,25 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		5134AA1F15C6633200814238 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				5134AA2015C6633200814238 /* close_button.png */,
+				5134AA2115C6633200814238 /* TJCLoadingView.xib */,
+				5134AA2215C6633200814238 /* TJCVideoView.xib */,
+			);
+			name = Resources;
+			path = ../src/tapjoy/ios/TapjoyConnect/Resources;
+			sourceTree = "<group>";
+		};
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
-				517D397315C2767E002F92B9 /* tl_tile1.pvr */,
+				5134AA1F15C6633200814238 /* Resources */,
 				517D397115C273EE002F92B9 /* tl_tile1.png */,
 				51E5BE0815C267E4003BC236 /* yn_chicken.png */,
 				51BCBECF15BE985900A3DCB7 /* memtest */,
-				51BCBEBE15BD50CB00A3DCB7 /* Docroot */,
 				51BCBEBC15BD4CDE00A3DCB7 /* palletes */,
-				51BC9D9015BD403300A3DCB7 /* library */,
 				51C72807157768C20003B471 /* fb.png */,
 				51C72802157768860003B471 /* CCFairyTale_0.alpha */,
 				51C72803157768860003B471 /* CCFairyTale.fnt */,
@@ -239,7 +250,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				517D397415C2767E002F92B9 /* tl_tile1.pvr in Resources */,
+				5134AA2415C663B300814238 /* close_button.png in Resources */,
+				5134AA2515C663B300814238 /* TJCLoadingView.xib in Resources */,
+				5134AA2615C663B300814238 /* TJCVideoView.xib in Resources */,
 				517D397215C273EE002F92B9 /* tl_tile1.png in Resources */,
 				51E5BE0915C267E4003BC236 /* yn_chicken.png in Resources */,
 				51BCBEBD15BD4CDE00A3DCB7 /* palletes in Resources */,

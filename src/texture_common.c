@@ -395,12 +395,10 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 
 		if (!textureParams(tInfo,&params)) return 0;
 
-		/*
     if (!params.compressed && ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height)))
 			glPixelStorei(GL_UNPACK_ALIGNMENT,4);
 		else
 			glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-		*/
     
 		GLuint textureID;
 		value mlTextureID;
@@ -408,7 +406,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 			glGenTextures(1, &textureID);
 			PRINT_DEBUG("glGenTextures: <%d>",textureID);
 			checkGLErrors("glGenTexture");
-			Store_textureID(mlTextureID,textureID,tInfo->path,tInfo->dataLen);
+			Store_textureID(mlTextureID,textureID,"path"/*tInfo->path*/,tInfo->dataLen);
 		} else {
 			// FIXME: check memory detecting incorrect
 			mlTextureID = Field(oldTextureID,0);
@@ -443,10 +441,12 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 		int level;
     if (!params.compressed)
     {       
+			/*
 				if ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height))
 					glPixelStorei(GL_UNPACK_ALIGNMENT,4);
 				else
 					glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+			*/
 				/*
         if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);

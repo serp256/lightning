@@ -23,6 +23,7 @@
 #include "light_common.h"
 
 int nextPowerOfTwo(int number);
+unsigned long nextPOT(unsigned long x);
 
 struct tex {
 	GLuint tid;

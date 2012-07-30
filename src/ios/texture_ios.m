@@ -105,10 +105,15 @@ int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	//CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
 	//int colorSpace = LTextureFormatRGBA;
 	//createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
-	//int legalWidth  = nextPowerOfTwo(width);
-	//int legalHeight = nextPowerOfTwo(height);
-	int legalWidth  = width;
-	int legalHeight = height;
+	//int legalWidth  = nextPOT((unsigned long)width);
+	//int legalHeight = nextPOT((unsigned long)height);
+	//int legalWidth  = nextPOT(ceil(width));
+	//int legalHeight = nextPOT(ceil(height));
+	int legalWidth = width < 64 ? 64 : width;
+	int legalHeight = height < 64 ? 64 : height;
+	//fprintf(stderr,"%f -> %d, %f -> %d\n",width,legalWidth,height,legalHeight);
+	//int legalWidth  = width;
+	//int legalHeight = height;
     
 	CGColorSpaceRef cgColorSpace;
 	CGBitmapInfo bitmapInfo;
