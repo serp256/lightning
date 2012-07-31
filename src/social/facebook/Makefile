@@ -16,10 +16,12 @@ ifeq ($(PLATFORM),IOS)
 FAKELIBS  =
 CFLAGS  += -DDEBUG -DIOS -Iios/sdk
 MLCOPTS += -DIOS
-MOBJS   +=  ios/fbwrapper_ios.o ios/FacebookController.o ios/FacebookDialogDelegate.o ios/FacebookRequestDelegate.o ios/sdk/Facebook.o \
+MOBJS   +=  ios/fbwrapper_ios.o ios/FacebookController.o ios/FacebookDialogDelegate.o ios/FacebookRequestDelegate.o ios/sdk/FBFrictionlessRequestSettings.o ios/sdk/Facebook.o \
             ios/sdk/FBRequest.o ios/sdk/FBDialog.o ios/sdk/FBLoginDialog.o \
-            ios/sdk/SBJSON.o ios/sdk/SBJsonBase.o ios/sdk/SBJsonParser.o ios/sdk/SBJsonWriter.o \
-            ios/sdk/NSObject+SBJSON.o ios/sdk/NSString+SBJSON.o
+            ios/sdk/JSON/SBJSON.o ios/sdk/JSON/SBJsonBase.o ios/sdk/JSON/SBJsonParser.o ios/sdk/JSON/SBJsonWriter.o \
+            ios/sdk/JSON/NSObject+SBJSON.o ios/sdk/JSON/NSString+SBJSON.o
+
+ios/sdk/Facebook.o ios/sdk/FBRequest.o ios/sdk/FBDialog.o: CFLAGS += -I ios/sdk/JSON
             
 MLPPOPT += -DGLES -DIOS
 LIBFLAGS = -cclib '-framework\ Foundation' \
