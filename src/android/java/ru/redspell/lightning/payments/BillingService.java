@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2010 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package ru.redspell.lightning.payments;
 
 import com.android.vending.billing.IMarketBillingService;
@@ -37,45 +21,20 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.lang.Thread;
+import android.os.Process;
+import ru.redspell.lightning.LightView;
 
-/**
- * This class sends messages to Android Market on behalf of the application by
- * connecting (binding) to the MarketBillingService. The application
- * creates an instance of this class and invokes billing requests through this service.
- *
- * The {@link BillingReceiver} class starts this service to process commands
- * that it receives from Android Market.
- *
- * You should modify and obfuscate this code before using it.
- */
 public class BillingService extends Service implements ServiceConnection {
     private static final String TAG = "LIGHTNING";
 
-    /** The service connection to the remote MarketBillingService. */
     private static IMarketBillingService mService;
 
-    /**
-     * The list of requests that are pending while we are waiting for the
-     * connection to the MarketBillingService to be established.
-     */
     private static LinkedList<BillingRequest> mPendingRequests = new LinkedList<BillingRequest>();
 
-    /**
-     * The list of requests that we have sent to Android Market but for which we have
-     * not yet received a response code. The HashMap is indexed by the
-     * request Id that each request receives when it executes.
-     */
     private static HashMap<Long, BillingRequest> mSentRequests =
         new HashMap<Long, BillingRequest>();
 
-    /**
-     * The base class for all requests that use the MarketBillingService.
-     * Each derived class overrides the run() method to call the appropriate
-     * service interface.  If we are already connected to the MarketBillingService,
-     * then we call the run() method directly. Otherwise, we bind
-     * to the service and save the request on a queue to be run later when
-     * the service is connected.
-     */
     abstract class BillingRequest {
         private final int mStartId;
         protected long mRequestId;
@@ -88,11 +47,6 @@ public class BillingService extends Service implements ServiceConnection {
             return mStartId;
         }
 
-        /**
-         * Run the request, starting the connection if necessary.
-         * @return true if the request was executed or queued; false if there
-         * was an error starting the connection
-         */
         public boolean runRequest() {
             if (runIfConnected()) {
                 return true;
@@ -106,11 +60,6 @@ public class BillingService extends Service implements ServiceConnection {
             return false;
         }
 
-        /**
-         * Try running the request directly if the service is already connected.
-         * @return true if the request ran successfully; false if the service
-         * is not connected or there was an error when trying to use it
-         */
         public boolean runIfConnected() {
             if (Consts.DEBUG) {
                 Log.d(TAG, getClass().getSimpleName());
@@ -132,28 +81,13 @@ public class BillingService extends Service implements ServiceConnection {
             return false;
         }
 
-        /**
-         * Called when a remote exception occurs while trying to execute the
-         * {@link #run()} method.  The derived class can override this to
-         * execute exception-handling code.
-         * @param e the exception
-         */
         protected void onRemoteException(RemoteException e) {
             Log.w(TAG, "remote billing service crashed");
             mService = null;
         }
 
-        /**
-         * The derived class must implement this method.
-         * @throws RemoteException
-         */
         abstract protected long run() throws RemoteException;
 
-        /**
-         * This is called when Android Market sends a response code for this
-         * request.
-         * @param responseCode the response code
-         */
         protected void responseCodeReceived(ResponseCode responseCode) {
         }
 
@@ -174,42 +108,14 @@ public class BillingService extends Service implements ServiceConnection {
         }
     }
 
-    /**
-     * Wrapper class that checks if in-app billing is supported.
-     *
-     * Note: Support for subscriptions implies support for one-time purchases. However, the opposite
-     * is not true.
-     *
-     * Developers may want to perform two checks if both one-time and subscription products are
-     * available.
-     */
     class CheckBillingSupported extends BillingRequest {
         public String mProductType = null;
 
-        /** Legacy contrustor
-         *
-         * This constructor is provided for legacy purposes. Assumes the calling application will
-         * not be using any features not present in API v1, such as subscriptions.
-         */
         @Deprecated
         public CheckBillingSupported() {
-            // This object is never created as a side effect of starting this
-            // service so we pass -1 as the startId to indicate that we should
-            // not stop this service after executing this request.
             super(-1);
         }
 
-        /** Constructor
-         *
-         * Note: Support for subscriptions implies support for one-time purchases. However, the
-         * opposite is not true.
-         *
-         * Developers may want to perform two checks if both one-time and subscription products are
-         * available.
-         *
-         * @pram itemType Either Consts.ITEM_TYPE_INAPP or Consts.ITEM_TYPE_SUBSCRIPTION, indicating
-         * the type of item support is being checked for.
-         */
         public CheckBillingSupported(String itemType) {
             super(-1);
             mProductType = itemType;
@@ -233,47 +139,22 @@ public class BillingService extends Service implements ServiceConnection {
         }
     }
 
-    /**
-     * Wrapper class that requests a purchase.
-     */
     class RequestPurchase extends BillingRequest {
         public final String mProductId;
         public final String mDeveloperPayload;
         public final String mProductType;
 
-        /** Legacy constructor
-         *
-         * @param itemId  The ID of the item to be purchased. Will be assumed to be a one-time
-         *                purchase.
-         */
         @Deprecated
         public RequestPurchase(String itemId) {
             this(itemId, null, null);
         }
 
-        /** Legacy constructor
-         *
-         * @param itemId  The ID of the item to be purchased. Will be assumed to be a one-time
-         *                purchase.
-         * @param developerPayload Optional data.
-         */
         @Deprecated
         public RequestPurchase(String itemId, String developerPayload) {
             this(itemId, null, developerPayload);
         }
 
-        /** Constructor
-         *
-         * @param itemId  The ID of the item to be purchased. Will be assumed to be a one-time
-         *                purchase.
-         * @param itemType  Either Consts.ITEM_TYPE_INAPP or Consts.ITEM_TYPE_SUBSCRIPTION,
-         *                  indicating the type of item type support is being checked for.
-         * @param developerPayload Optional data.
-         */
         public RequestPurchase(String itemId, String itemType, String developerPayload) {
-            // This object is never created as a side effect of starting this
-            // service so we pass -1 as the startId to indicate that we should
-            // not stop this service after executing this request.
             super(-1);
             mProductId = itemId;
             mDeveloperPayload = developerPayload;
@@ -282,6 +163,8 @@ public class BillingService extends Service implements ServiceConnection {
 
         @Override
         protected long run() throws RemoteException {
+            Log.d("LIGHTNING", "request purchase (RequestPurchase.run) " + mProductId + ' ' + mProductType);
+
             Bundle request = makeRequestBundle("REQUEST_PURCHASE");
             request.putString(Consts.BILLING_REQUEST_ITEM_ID, mProductId);
             request.putString(Consts.BILLING_REQUEST_ITEM_TYPE, mProductType);
@@ -319,32 +202,50 @@ public class BillingService extends Service implements ServiceConnection {
 
         @Override
         protected void responseCodeReceived(ResponseCode responseCode) {
+            Log.d("LIGHTNING", "request purchase response code received (RequestPurchase.responseCodeReceived): " + responseCode);
+
+            String mes = null;
+
             switch (responseCode) {
                 case RESULT_USER_CANCELED:
-                    invokeCamlPaymentErrorCb(mProductId, "User cancel operation");
+                    mes = "User cancel operation";
                     break;
 
                 case RESULT_SERVICE_UNAVAILABLE:
-                    invokeCamlPaymentErrorCb(mProductId, "Some network problems");
+                    mes = "Some network problems";
                     break;
 
                 case RESULT_BILLING_UNAVAILABLE:
-                    invokeCamlPaymentErrorCb(mProductId, "Payments are not available");
+                    mes = "Payments are not available";
                     break;
 
                 case RESULT_ITEM_UNAVAILABLE:
-                    invokeCamlPaymentErrorCb(mProductId, "Wrong product id");
+                    mes = "Wrong product id";
                     break;
 
                 case RESULT_DEVELOPER_ERROR:
-                    invokeCamlPaymentErrorCb(mProductId, "Develper error");
+                    mes = "Develper error";
                     break;
 
                 case RESULT_ERROR:
-                    invokeCamlPaymentErrorCb(mProductId, "Server error");
+                    mes = "Server error";
                     break;
             }
-            //ResponseHandler.responseCodeReceived(BillingService.this, this, responseCode);
+
+            Log.d("LIGHTNING", "request purchase response code received mes: " + (mes != null ? mes : "null"));
+
+            if (mes != null) {
+                final String fmes = mes;
+
+                if (LightView.instance != null) {
+                    LightView.instance.queueEvent(new Runnable() {
+                        @Override
+                        public void run() {
+                            invokeCamlPaymentErrorCb(mProductId, fmes);
+                        }
+                    });
+                }
+            }
         }
     }
 
@@ -361,7 +262,7 @@ public class BillingService extends Service implements ServiceConnection {
 
         @Override
         protected long run() throws RemoteException {
-            Log.d(TAG, "!??????????????????????????????confirm notification");
+            Log.d(TAG, "confrim notification (ConfirmNotifications.run)");
 
             Bundle request = makeRequestBundle("CONFIRM_NOTIFICATIONS");
             request.putStringArray(Consts.BILLING_REQUEST_NOTIFY_IDS, mNotifyIds);
@@ -386,6 +287,8 @@ public class BillingService extends Service implements ServiceConnection {
 
         @Override
         protected long run() throws RemoteException {
+            Log.d(TAG, "get purchase information (GetPurchaseInformation.run)");
+
             mNonce = Security.generateNonce();
 
             Bundle request = makeRequestBundle("GET_PURCHASE_INFORMATION");
@@ -441,17 +344,10 @@ public class BillingService extends Service implements ServiceConnection {
         }
     }*/
 
-    public BillingService() {
-        super();
-    }
-
     public void setContext(Context context) {
         attachBaseContext(context);
     }
 
-    /**
-     * We don't support binding to this service, only starting the service.
-     */
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -463,17 +359,10 @@ public class BillingService extends Service implements ServiceConnection {
         handleCommand(intent, startId);
     }
 
-    /**
-     * The {@link BillingReceiver} sends messages to this service using intents.
-     * Each intent has an action and some extra arguments specific to that action.
-     * @param intent the intent containing one of the supported actions
-     * @param startId an identifier for the invocation instance of this service
-     */
     public void handleCommand(Intent intent, int startId) {
-        Log.d(TAG, "handleCommand call, intent: " + intent);
+        Log.d(TAG, "handle command (BillingService.handleCommand), action: " + intent.getAction());
 
         String action = intent.getAction();
-        Log.d(TAG, "handleCommand() action: " + action);
 
         if (Consts.ACTION_CONFIRM_NOTIFICATION.equals(action)) {
             String[] notifyIds = intent.getStringArrayExtra(Consts.NOTIFICATION_ID);
@@ -494,11 +383,6 @@ public class BillingService extends Service implements ServiceConnection {
         }
     }
 
-    /**
-     * Binds to the MarketBillingService and returns true if the bind
-     * succeeded.
-     * @return true if the bind succeeded; false otherwise
-     */
     private boolean bindToMarketBillingService() {
         try {
             if (Consts.DEBUG) {
@@ -520,103 +404,52 @@ public class BillingService extends Service implements ServiceConnection {
         return false;
     }
 
-    /**
-     * Checks if in-app billing is supported. Assumes this is a one-time purchase.
-     *
-     * @return true if supported; false otherwise
-     */
     @Deprecated
     public boolean checkBillingSupported() {
         return new CheckBillingSupported().runRequest();
     }
 
-    /**
-     * Checks if in-app billing is supported.
-     * @pram itemType Either Consts.ITEM_TYPE_INAPP or Consts.ITEM_TYPE_SUBSCRIPTION, indicating the
-     *                type of item support is being checked for.
-     * @return true if supported; false otherwise
-     */
     public boolean checkBillingSupported(String itemType) {
         return new CheckBillingSupported(itemType).runRequest();
     }
 
-    /**
-     * Requests that the given item be offered to the user for purchase. When
-     * the purchase succeeds (or is canceled) the {@link BillingReceiver}
-     * receives an intent with the action {@link Consts#ACTION_NOTIFY}.
-     * Returns false if there was an error trying to connect to Android Market.
-     * @param productId an identifier for the item being offered for purchase
-     * @param itemType  Either Consts.ITEM_TYPE_INAPP or Consts.ITEM_TYPE_SUBSCRIPTION, indicating
-     *                  the type of item type support is being checked for.
-     * @param developerPayload a payload that is associated with a given
-     * purchase, if null, no payload is sent
-     * @return false if there was an error connecting to Android Market
-     */
     public boolean requestPurchase(String productId, String itemType, String developerPayload) {
         return new RequestPurchase(productId, itemType, developerPayload).runRequest();
     }
 
     public boolean requestPurchase(String productId) {
-        Log.d(TAG, "single param requestPurchase call");
         return requestPurchase(productId, Consts.ITEM_TYPE_INAPP, null);
     }
 
-    /**
-     * Requests transaction information for all managed items. Call this only when the
-     * application is first installed or after a database wipe. Do NOT call this
-     * every time the application starts up.
-     * @return false if there was an error connecting to Android Market
-     */
-/*    public boolean restoreTransactions() {
-        return new RestoreTransactions().runRequest();
-    }*/
-
-    /**
-     * Confirms receipt of a purchase state change. Each {@code notifyId} is
-     * an opaque identifier that came from the server. This method sends those
-     * identifiers back to the MarketBillingService, which ACKs them to the
-     * server. Returns false if there was an error trying to connect to the
-     * MarketBillingService.
-     * @param startId an identifier for the invocation instance of this service
-     * @param notifyIds a list of opaque identifiers associated with purchase
-     * state changes.
-     * @return false if there was an error connecting to Market
-     */
     private boolean confirmNotifications(int startId, String[] notifyIds) {
         return new ConfirmNotifications(startId, notifyIds).runRequest();
     }
 
-    /**
-     * Gets the purchase information. This message includes a list of
-     * notification IDs sent to us by Android Market, which we include in
-     * our request. The server responds with the purchase information,
-     * encoded as a JSON string, and sends that to the {@link BillingReceiver}
-     * in an intent with the action {@link Consts#ACTION_PURCHASE_STATE_CHANGED}.
-     * Returns false if there was an error trying to connect to the MarketBillingService.
-     *
-     * @param startId an identifier for the invocation instance of this service
-     * @param notifyIds a list of opaque identifiers associated with purchase
-     * state changes
-     * @return false if there was an error connecting to Android Market
-     */
     private boolean getPurchaseInformation(int startId, String[] notifyIds) {
         return new GetPurchaseInformation(startId, notifyIds).runRequest();
     }
 
-    /**
-     * Verifies that the data was signed with the given signature, and calls
-     * {@link ResponseHandler#purchaseResponse(Context, PurchaseState, String, String, long)}
-     * for each verified purchase.
-     * @param startId an identifier for the invocation instance of this service
-     * @param signedData the signed JSON string (signed, not encrypted)
-     * @param signature the signature for the data, signed with the private key
-     */
     private void purchaseStateChanged(int startId, String signedData, String signature) {
+        Log.d(TAG, "purchase state changed (BillingService.purchaseStateChanged)");
+
+            final String sig = signature;
             ArrayList<Security.VerifiedPurchase> purchases;
             purchases = Security.verifyPurchase(signedData, signature, !Security.hasPubkey());
             if (purchases == null) {
                 Log.d(TAG, "purchases == null");
-                invokeCamlPaymentErrorCb("", "error when verifying");
+
+                if (LightView.instance != null) {
+                    LightView.instance.queueEvent(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d(TAG, "invoking caml payment error cb from BillingService.purchaseStateChanged (purchases not verified)");
+                            invokeCamlPaymentErrorCb("", "error when verifying");
+                        }
+                    });                    
+                }
+
+
+                
                 return;
             }
 
@@ -624,12 +457,23 @@ public class BillingService extends Service implements ServiceConnection {
 
             Log.d(TAG, "purchases len: " + purchases.size());
 
-            for (VerifiedPurchase vp : purchases) {
+            for (final VerifiedPurchase vp : purchases) {
                 Log.d(TAG, "purchases id: " + vp.notificationId);
 
                 if (vp.notificationId != null) {
-                    Log.d(TAG, "!!!!!!!!!!!!!!!!!!!invokeCamlPaymentSuccessCb call");
-                    invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? signature : "");
+                    Log.d(TAG, "invoking caml payment success callback from from BillingService.purchaseStateChanged");
+                    Log.d(TAG, "LightView.instance: " + LightView.instance);
+
+                    if (LightView.instance != null) {
+                        LightView.instance.queueEvent(new Runnable() {
+                            @Override
+                            public void run() {
+                                invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? sig : "");
+                            }
+                        });
+                    }
+
+                    
                     //notifyList.add(vp.notificationId);
                 }
                 // ResponseHandler.purchaseResponse(this, vp.purchaseState, vp.productId,
@@ -643,33 +487,14 @@ public class BillingService extends Service implements ServiceConnection {
         // }
     }
 
-    /**
-     * This is called when we receive a response code from Android Market for a request
-     * that we made. This is used for reporting various errors and for
-     * acknowledging that an order was sent to the server. This is NOT used
-     * for any purchase state changes.  All purchase state changes are received
-     * in the {@link BillingReceiver} and passed to this service, where they are
-     * handled in {@link #purchaseStateChanged(int, String, String)}.
-     * @param requestId a number that identifies a request, assigned at the
-     * time the request was made to Android Market
-     * @param responseCode a response code from Android Market to indicate the state
-     * of the request
-     */
     private void checkResponseCode(long requestId, ResponseCode responseCode) {
-        Log.d(TAG, "-------------------------------------checkResponseCode");
-
         BillingRequest request = mSentRequests.get(requestId);
         if (request != null) {
-            Log.d(TAG, request.getClass().getSimpleName() + ": " + responseCode);
             request.responseCodeReceived(responseCode);
         }
         mSentRequests.remove(requestId);
     }
 
-    /**
-     * Runs any pending requests that are waiting for a connection to the
-     * service to be established.  This runs in the main UI thread.
-     */
     private void runPendingRequests() {
         int maxStartId = -1;
         BillingRequest request;
@@ -702,10 +527,6 @@ public class BillingService extends Service implements ServiceConnection {
         }
     }
 
-    /**
-     * This is called when we are connected to the MarketBillingService.
-     * This runs in the main UI thread.
-     */
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         if (Consts.DEBUG) {
@@ -715,19 +536,12 @@ public class BillingService extends Service implements ServiceConnection {
         runPendingRequests();
     }
 
-    /**
-     * This is called when we are disconnected from the MarketBillingService.
-     */
     @Override
     public void onServiceDisconnected(ComponentName name) {
         Log.w(TAG, "Billing service disconnected");
         mService = null;
     }
 
-    /**
-     * Unbinds from the MarketBillingService. Call this when the application
-     * terminates to avoid leaking a ServiceConnection.
-     */
     public void unbind() {
         try {
             unbindService(this);
@@ -737,11 +551,10 @@ public class BillingService extends Service implements ServiceConnection {
     }
 
     public void confirmNotif(String notifId) {
-        Log.d(TAG, "java confirmNotif call, notifId: " + notifId);
+        Log.d(TAG, "BillingService confirmNotif call " + notifId);
         confirmNotifications(-1, new String[] { notifId });
     }
 
-    //public void invokeCamlPaymentSuccessCb(String prodId, String notifId, String signedData, String signature) {}
     public native void invokeCamlPaymentSuccessCb(String prodId, String notifId, String signedData, String signature);
     public native void invokeCamlPaymentErrorCb(String prodId, String mes);
 }

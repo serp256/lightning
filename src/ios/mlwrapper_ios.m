@@ -235,13 +235,17 @@ void ml_payment_init(value success_cb, value error_cb) {
 
   LightViewController * c = [LightViewController sharedInstance];
 
-  c->payment_success_cb = success_cb;
-  c->payment_error_cb   = error_cb;   
-
-  caml_register_global_root(&(c->payment_success_cb));
-  caml_register_global_root(&(c->payment_error_cb));
-  
-  [[SKPaymentQueue defaultQueue] addTransactionObserver: c];
+	// if init twice?
+	if (c->payment_success_cb == 0) {
+		c->payment_success_cb = success_cb;
+		caml_register_generational_global_root(&(c->payment_success_cb));
+		c->payment_error_cb   = error_cb;   
+		caml_register_generatinal_global_root(&(c->payment_error_cb));
+		[[SKPaymentQueue defaultQueue] addTransactionObserver: c];
+	} else {
+		caml_modify_generational_global_root(&(c->payment_success_cb),success_cb);
+		caml_modify_generational_global_root(&(c->payment_error_cb),error_cb);
+	};
   
   CAMLreturn0;
 }
