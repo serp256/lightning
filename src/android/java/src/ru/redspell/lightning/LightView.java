@@ -39,7 +39,6 @@ import android.media.MediaPlayer;
 import android.media.AudioManager;
 import android.os.Process;
 
-import com.facebook.AndroidFB;
 
 public class LightView extends GLSurfaceView {
 

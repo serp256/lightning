@@ -1,4 +1,4 @@
-package com.facebook;
+package ru.redspell.lightning;
 
 import android.content.Intent;
 import com.facebook.android.*;
