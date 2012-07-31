@@ -2,13 +2,13 @@ OCAMLFIND = /usr/local/bin/ocamlfind -toolchain android
 OCAMLOPT = $(OCAMLFIND) ocamlopt
 OCAMLC = $(OCAMLFIND) ocamlc
 include Makefile.common
+include Makefile.in
 
 so: example.so
 	cp test.so android/libs/armeabi-v7a/libtest.so
 	cd android && ant debug
 	
 
-include Makefile.in
 
 example.so: $(MLXFILES) example.cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \

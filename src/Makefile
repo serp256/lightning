@@ -90,7 +90,7 @@ $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) Hardware.ml LocalNotifications.ml Motion.ml ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
 					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml  Image.ml AtlasNode.ml TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml\
-					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml
+					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) FB.ml Lightning.ml
 
 #Texture.cmo Texture.cmx: MLFLAGS += -package threads -thread
 

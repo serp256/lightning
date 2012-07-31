@@ -17,7 +17,7 @@ android-install:
 	adb install -r android/bin/LightTest-debug.apk
 
 android-log:
-	adb logcat LIGHTNING:* *:E *:F *:S
+	adb logcat LIGHTNING:* LIGHTTEST:* *:E *:F *:S
 
 android-log-error:
 	adb logcat LIGHTNING:* DEBUG:* dalvikvm:* *:E *:F *:S

@@ -78,6 +78,7 @@
          in order to avoid having your file be overridden by tools such as "android update project"
     -->
     <!-- version-tag: 1 -->
-    <import file="antbuild.xml" />
+		<!--    <import file="antbuild.xml" /> -->
+		<import file="${sdk.dir}/tools/ant/build.xml" />
 
 </project>

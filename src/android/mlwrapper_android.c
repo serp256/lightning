@@ -608,6 +608,46 @@ value ml_kv_storage_create() {
 }
 */
 
+/* FACEBOOK FUNCTIONS */
+void ml_fb_init(value app_id) {
+	DEBUGF("+++++++++++++++++++++++++++++++++++++++++");
+	DEBUGF("ml_fb_init");
+  JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	jclass fbCls = (*env)->FindClass(env, "com/facebook/AndroidFB");
+	jmethodID init = (*env)->GetStaticMethodID(env, fbCls, "init", "(Ljava/lang/String;)V");
+	jstring japp_id = (*env)->NewStringUTF(env, String_val(app_id));
+  (*env)->CallStaticVoidMethod(env, fbCls, init, japp_id);
+  (*env)->DeleteLocalRef(env, fbCls);
+	(*env)->DeleteLocalRef(env, japp_id);
+	DEBUGF("ml_fb_init FINISHED");
+}
+
+
+
+void ml_fb_authorize(value permissions) {
+	CAMLparam1(permissions);
+
+	DEBUGF("ml_fb_authorize");
+  JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	DEBUGF("JNI GET");
+	jclass fbCls = (*env)->FindClass(env, "com/facebook/AndroidFB");
+	DEBUGF("CLASS FOUND ");
+	jmethodID auth = (*env)->GetStaticMethodID(env, fbCls, "authorize", "([Ljava/lang/String;)V");
+	DEBUGF("METHOD FOUND");
+	
+	jobjectArray jpermissions = (*env)->NewObjectArray(env,1,(*env)->FindClass(env,"java/lang/String"),(*env)->NewStringUTF(env,"email"));
+
+  (*env)->CallStaticVoidMethod(env, fbCls, auth, jpermissions);
+	DEBUGF("CALL METHOD");
+  (*env)->DeleteLocalRef(env, fbCls);
+  (*env)->DeleteLocalRef(env, jpermissions);
+	DEBUGF("DELETE REF");
+
+	CAMLreturn0;
+}
+
 static int kv_storage_synced = 1;
 
 

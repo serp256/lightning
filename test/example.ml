@@ -1193,12 +1193,20 @@ value avsound (stage:Stage.c) path =
 );
   (* ignore(Sound.createChannel path); *)
 
+value fbtest () = 
+  (
+  (*  FBConnect.init "412548172119201"; *)
+    FB.init "412548172119201"; 
+    FB.auth [];
+  );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      avsound self "melody0.mp3";
+      fbtest ();
+(*      avsound self "melody0.mp3"; *)
       (* assets self; *)
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
 (*       assets self; *)

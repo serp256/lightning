@@ -38,6 +38,8 @@ import ru.redspell.lightning.payments.ResponseHandler;
 import android.media.MediaPlayer;
 import android.media.AudioManager;
 
+import com.facebook.AndroidFB;
+
 public class LightView extends GLSurfaceView {
 
 	private class ExtractAssetsTask extends AsyncTask<Void, Void, File> {
@@ -203,6 +205,7 @@ public class LightView extends GLSurfaceView {
 	private int loader_id;
 	private Handler uithread;
 	private BillingService bserv;
+	private AndroidFB fb; 
 	//private File assetsDir;
 
 	public LightView(Activity activity) {
@@ -220,6 +223,8 @@ public class LightView extends GLSurfaceView {
 		bserv = new BillingService();
 		bserv.setContext(activity);
 		ResponseHandler.register(activity);
+		fb = new AndroidFB();
+		fb.setActivity (activity);
 	}
 
 	protected void initView(int width,int height) {
