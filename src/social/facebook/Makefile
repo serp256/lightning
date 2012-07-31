@@ -21,7 +21,7 @@ MOBJS   +=  ios/fbwrapper_ios.o ios/FacebookController.o ios/FacebookDialogDeleg
             ios/sdk/JSON/SBJSON.o ios/sdk/JSON/SBJsonBase.o ios/sdk/JSON/SBJsonParser.o ios/sdk/JSON/SBJsonWriter.o \
             ios/sdk/JSON/NSObject+SBJSON.o ios/sdk/JSON/NSString+SBJSON.o
 
-ios/sdk/Facebook.o ios/sdk/FBRequest.o ios/sdk/FBDialog.o: CFLAGS += -I ios/sdk/JSON
+ios/fbwrapper_ios.o ios/FacebookController.o ios/FacebookDialogDelegate.o ios/FacebookRequestDelegate.o ios/sdk/Facebook.o ios/sdk/FBRequest.o ios/sdk/FBDialog.o: CFLAGS += -I ios/sdk/JSON
             
 MLPPOPT += -DGLES -DIOS
 LIBFLAGS = -cclib '-framework\ Foundation' \
