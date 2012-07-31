@@ -210,6 +210,7 @@ public class LightView extends GLSurfaceView {
 	//private File assetsDir;
 
 	public static LightView instance;
+	
 
 	public LightView(Activity activity) {
 		super(activity);
