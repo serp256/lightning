@@ -267,7 +267,124 @@ end;
   
 
 ELSE 
-    
+IFDEF ANDROID THEN
+
+external facebook_init : string -> unit = "ml_fb_init";
+external fb_graph_api : ?callback:(string -> unit) -> ?ecallback:(string -> unit) -> string -> int -> list (string*string) -> unit = "ml_fb_graph_api"; (* success callback, error callback, path, length params, params, *)
+
+(*
+value graphAPI  ?callback ?ecallback path params = 
+  fb_graph_api path (List.length params) params ?callback ?ecallback;
+
+value auth perms = fb_auth (List.length perms) perms;
+*)
+value init appid = 
+  (
+    facebook_init appid; 
+  );
+
+(*** SESSION ***)
+module Session = struct
+
+  type status = [ NotAuthorized | Authorizing of Queue.t (bool -> unit) | Authorized ];
+
+  value auth_status = ref NotAuthorized;
+
+  external android_fb_auth : int -> list string -> (unit -> unit) -> (unit -> unit) -> unit = "ml_fb_authorize";
+
+  value fb_auth perms callback ecallback = android_fb_auth (List.length perms) perms callback ecallback;
+
+  value permissions = ref [];
+
+  external android_facebook_check_auth_token : unit -> bool = "ml_fb_check_auth_token";
+  external ios_facebook_get_auth_token : unit -> string = "ml_facebook_get_auth_token";
+
+  value get_auth_token = ios_facebook_get_auth_token;
+
+  value facebook_logged_in () = 
+  (
+    match !auth_status with
+    [ Authorizing callbacks -> (* call pending callbacks *)
+      (
+        while not (Queue.is_empty callbacks) do
+          let c = Queue.pop callbacks in
+          c True
+        done;
+      )
+    | _ -> failwith "Invalid auth status"
+    ];
+  
+    auth_status.val := Authorized;
+  );
+
+  value facebook_session_invalidated () = 
+  (  
+    match !auth_status with
+    [ Authorizing callbacks ->
+      (
+        while not (Queue.is_empty callbacks) do
+          let c = Queue.pop callbacks in
+          c False
+        done;
+      )
+    | _ -> ()
+    ];
+  
+    auth_status.val := NotAuthorized;
+  );
+
+  value authorize perms = 
+    match android_facebook_check_auth_token () with
+    [ True  -> facebook_logged_in ()
+    | False -> fb_auth perms facebook_logged_in facebook_session_invalidated
+    ];
+  
+
+  value with_auth_check callback = 
+    match !auth_status with
+    [ Authorized -> callback True
+    | Authorizing callbacks -> Queue.add callback callbacks
+    | NotAuthorized -> 
+        let callbacks = Queue.create () in
+        (
+          Queue.push callback callbacks;
+          auth_status.val := Authorizing callbacks;
+          authorize !permissions
+        )
+    ];
+
+end;
+
+(*** GRAPH API ***)
+module GraphAPI = struct
+
+  type delegate = 
+  {
+    fb_request_did_fail   : option (string -> unit);    
+    fb_request_did_load   : option (Ojson.t -> unit)
+  };
+
+  value request graph_path params ?delegate () = (); 
+end;
+
+
+
+(*** DIALOGS ***)
+module Dialog = struct
+  type delegate = 
+  {
+    fb_dialog_did_complete              : option (unit -> unit);
+    fb_dialog_did_cancel                : option (unit -> unit);
+    fb_dialog_did_fail                  : option (string -> unit)
+  };
+
+  type users_filter = [ All | AppUsers | NonAppUsers ];
+
+  value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = ();
+end;
+
+ELSE 
+
 value init appid = ();
 
 module Session = struct
@@ -306,5 +423,5 @@ module Dialog = struct
   value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = ();
 end;
 
-
+ENDIF;
 ENDIF;

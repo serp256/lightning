@@ -1196,9 +1196,19 @@ value avsound (stage:Stage.c) path =
 value fbtest () = 
   (
   (*  FBConnect.init "412548172119201"; *)
-    FB.init "412548172119201"; 
-    FB.auth [];
+ (*   debug "FBTEST";  *)
+    FBConnect.init "412548172119201"; 
+
+    FBConnect.Session.authorize ["email"];
+(*
+    let timer = Timer.create ~repeatCount:1 5. "PIZDA" in 
+    (
+      ignore(timer#addEventListener Timer.ev_TIMER_COMPLETE (fun _ _ _ -> FB.graphAPI "me" [ ("pizda_key","pizda_value");  ("key","value"); ("xuj_key","xyj_value"); ] ~callback:(fun resp -> debug "OCAML CALLBACK : %S" resp) ~ecallback:(fun error -> debug "OCAML ERROR CALLBACK : %S" error)));
+      timer#start ();
+    )
+  *)
   );
+
 
 let stage width height = 
   object(self)
