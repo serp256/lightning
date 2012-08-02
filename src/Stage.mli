@@ -43,4 +43,5 @@ class virtual c: [ float ] -> [ float ] ->
     method cacheAsImage: bool;
     method setCacheAsImage: bool -> unit;
     method onUnload: unit -> unit;
+    method dispatchBackPressedEv : unit -> bool;
   end;

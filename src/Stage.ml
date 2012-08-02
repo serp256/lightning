@@ -12,6 +12,7 @@ value ev_ACCELEROMETER = Ev.gen_id "ACCELEROMETER";
 value ev_BACKGROUND = Ev.gen_id "BACKGROUND";
 value ev_FOREGROUND = Ev.gen_id "FOREGROUND";
 value ev_UNLOAD = Ev.gen_id "UNLOAD";
+value ev_BACK_PRESSED = Ev.gen_id "BACK_PRESSED";
 
 value (data_of_touches,touches_of_data) = Ev.makeData ();
 value (data_of_acmtrData,acmtrData_of_data) = Ev.makeData ();
@@ -271,6 +272,13 @@ class virtual c (_width:float) (_height:float) =
         | res -> res
         ]
     ];
+
+  method dispatchBackPressedEv () =
+    let ev = Ev.create ev_BACK_PRESSED () in
+    (
+      self#dispatchEvent ev;
+      ev.Ev.propagation = `Propagate;
+    );
     
   initializer Timers.init 0.;
   

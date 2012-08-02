@@ -549,6 +549,8 @@ public class LightView extends GLSurfaceView {
 
 		MediaPlayer mp = new LightMediaPlayer();
 
+		Log.d("LIGHTNING", path);
+
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
 
