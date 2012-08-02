@@ -4,3 +4,16 @@ include Makefile.in
 INSTALL_OPTS = src/android/libpng/libpng.a
 INSTALL_OPTS += src/android/libjpeg/libjpeg.a
 INSTALL_OPTS += src/android/libcurl/libcurl.a
+
+#lib::
+#	ant -buildfile src/android/java/build.xml release
+#
+#debug::
+#	ant -buildfile src/android/java/build.xml debug
+#
+#install::
+#	sudo mkdir /usr/share/java/lightning
+#	sudo cp src/android/java/bin/classes.jar /usr/share/java/lightning/lightning.jar
+#
+#uninstall::
+#	sudo rm -rf /usr/share/java/lightning
