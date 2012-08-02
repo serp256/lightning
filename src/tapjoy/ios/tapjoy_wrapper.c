@@ -25,25 +25,24 @@
 
 -(void)tapjoyOffersClosed {
 	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: YES];
-  //[self dismissModalViewControllerAnimated: YES];
 }
 
 
 -(void)loadView {
-  self.view = [[UIView alloc] initWithFrame: [UIScreen mainScreen].applicationFrame];
+	UIView *view = [[UIView alloc] initWithFrame: [UIScreen mainScreen].applicationFrame];
   
-    [TapjoyConnect showOffersWithViewController: [LightViewController sharedInstance]];  
+	//[TapjoyConnect showOffersWithViewController: [LightViewController sharedInstance]];  
+	//
+	view.userInteractionEnabled = YES;
+	self.view = view;
   
   if (self.currency) {
-    [self.view addSubview: [TapjoyConnect showOffersWithCurrencyID: self.currency withCurrencySelector: self.currencySelectorVisible]];
+    [TapjoyConnect showOffersWithCurrencyID:self.currency withViewController:self withCurrencySelector:self.currencySelectorVisible];
   } else {
-    [self.view addSubview: [TapjoyConnect showOffers]];  
+    [TapjoyConnect showOffersWithViewController:self];
   } 
-     
-  [[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(tapjoyOffersClosed) name: TJC_VIEW_CLOSED_NOTIFICATION object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(tapjoyOffersClosed) name:TJC_VIEW_CLOSED_NOTIFICATION object:nil];
 }
-
-
 
 @end
 
@@ -95,6 +94,7 @@ void ml_tapjoy_show_offers() {
   c.currency = nil;
   c.currencySelectorVisible = NO;
   [[LightViewController sharedInstance] presentModalViewController: c animated: YES];
+	//[TapjoyConnect showOffersWithViewController:[LightViewController sharedInstance]];
 
   CAMLreturn0;
 }
@@ -107,7 +107,7 @@ void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
   CAMLparam2(currency, show_selector);
   
   TapjoyOffersController * c = [[[TapjoyOffersController alloc] init] autorelease];
-  c.modalPresentationStyle = UIModalPresentationFormSheet;
+  //c.modalPresentationStyle = UIModalPresentationFormSheet;
   c.currency = STR_CAML2OBJC(currency);
   c.currencySelectorVisible = Bool_val(show_selector);
   [[LightViewController sharedInstance] presentModalViewController: c animated: YES];  

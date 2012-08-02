@@ -429,9 +429,11 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV );
 	// RENDER SUBPIXEL FIX HERE
 	//fprintf(stderr,"matrix: tx=%f,ty=%f\n",matrixMV.mat[12],matrixMV.mat[13]);
-	if (matrixMV.mat[0] == 1.0 || matrixMV.mat[5] == 1.0) {
-		matrixMV.mat[12] = (GLint)matrixMV.mat[12];
-		matrixMV.mat[13] = (GLint)matrixMV.mat[13];
+	if (matrixMV.mat[0] == 1.0 && matrixMV.mat[5] == 1.0) {
+		//matrixMV.mat[12] = (GLint)matrixMV.mat[12];
+		//matrixMV.mat[13] = (GLint)matrixMV.mat[13];
+		matrixMV.mat[12] = round(matrixMV.mat[12]);
+		matrixMV.mat[13] = round(matrixMV.mat[13]);
 	};
 	//matrixMV.mat[12] = round(matrixMV.mat[12]);
 	//matrixMV.mat[13] = round(matrixMV.mat[13]);
@@ -1107,7 +1109,7 @@ static lgTexQuad *atlas_quads = NULL;
 static int atlas_quads_len = 0;
 
 
-#define RENDER_SUBPIXEL(x) (GLint)x
+#define RENDER_SUBPIXEL(x) round(x)
 
 // assume that quads it's dynarray
 void ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {

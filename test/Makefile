@@ -7,7 +7,7 @@ clean:
 ios:
 	$(MAKE) -f Makefile.ios
 
-iosclean:
+cleanios:
 	$(MAKE) -f Makefile.ios clean
 
 android: 

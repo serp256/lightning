@@ -14,7 +14,7 @@
 
 static char* resourcePath = "Resources/";
 
-int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
+int load_image_info(char *fname,char* suffix, int use_pvr, textureInfo *tInfo) {
 	PRINT_DEBUG("load_image_info: %s[%s]",fname,suffix);
 	int rplen = strlen(resourcePath);
 	// try pallete first
@@ -33,6 +33,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 				struct stat s;
 				if (!stat(path,&s)) {
 					int r = loadPlxFile(path,tInfo);
+					//strlcpy(tInfo->path,path,255);
 					free(path);
 					return r;
 				}
@@ -53,6 +54,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 				struct stat s;
 				if (!stat(path,&s)) {
 					int r = loadAlphaFile(path,tInfo);
+					//strlcpy(tInfo->path,path,255);
 					free(path);
 					return r;
 				}
@@ -73,6 +75,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 				struct stat s;
 				if (!stat(plxpath,&s)) {
 					int r = loadPlxFile(plxpath,tInfo);
+					//strlcpy(tInfo->path,plxpath,255);
 					free(plxpath);
 					return r;
 				}
@@ -81,6 +84,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 			struct stat s;
 			if (!stat(plxpath,&s)) {// есть plx файл
 				int r = loadPlxFile(plxpath,tInfo);
+				//strlcpy(tInfo->path,plxpath,255);
 				free(plxpath);
 				return r;
 			};
@@ -110,6 +114,7 @@ int load_image_info(char *fname,char* suffix, textureInfo *tInfo) {
 	}
 	fprintf(stderr,"LOAD IMAGE: %s\n",path);
 	SDL_Surface* s = IMG_Load(path);
+	//strlcpy(tInfo->path,path,255);
 	free(path);
 	if (s == NULL) return 2;
 	int width = s->w;
@@ -214,12 +219,12 @@ void ml_free_image_info(value tInfo) {
 }
 */
 
-value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter) {
+value ml_loadImage(value oldTextureID,value opath,value osuffix,value use_pvr,value filter) {
 	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
 	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
-	int r = load_image_info(String_val(opath),suffix,&tInfo);
+	int r = load_image_info(String_val(opath),suffix,Bool_val(use_pvr),&tInfo);
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);

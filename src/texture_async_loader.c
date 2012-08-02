@@ -24,6 +24,7 @@ typedef struct {
 	char *path;
 	char *suffix;
 	value filter;
+	int use_pvr;
 } request_t;
 
 typedef struct {
@@ -53,7 +54,7 @@ void *run_worker(void *param) {
 		if (req == NULL) pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
 		else {
 			textureInfo *tInfo = (textureInfo*)malloc(sizeof(textureInfo));
-			int r = load_image_info(req->path,req->suffix,tInfo);
+			int r = load_image_info(req->path,req->suffix,req->use_pvr,tInfo);
 			if (r) {
 				free(tInfo);
 				if (r == 2) ERROR("ASYNC LOADER. Can't find %s\n",req->path);
@@ -87,7 +88,7 @@ value ml_texture_async_loader_create_runtime(value unit) {
 
 }
 
-void ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value filter) {
+void ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value filter, value use_pvr) {
 	char *path = malloc(caml_string_length(opath) + 1);
 	strcpy(path,String_val(opath));
 	char *suffix;
@@ -101,6 +102,7 @@ void ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value
 	req->path = path;
 	req->suffix = suffix;
 	req->filter = filter;
+	req->use_pvr = Bool_val(use_pvr);
 	thqueue_requests_push(runtime->req_queue,req);
 	pthread_cond_signal(&runtime->cond);
 }

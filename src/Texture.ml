@@ -80,8 +80,10 @@ and c =
     method removeRenderer: renderer -> unit;
   end;
 
+  value zero_textureID = zero_textureID ();
+
 value zero : c = 
-  let renderInfo = { rtextureID = zero_textureID (); rwidth = 0.; rheight = 0.; clipping = None; kind = Simple False } in
+  let renderInfo = { rtextureID = zero_textureID; rwidth = 0.; rheight = 0.; clipping = None; kind = Simple False } in
   object(self)
     method kind = renderInfo.kind;
     method renderInfo = renderInfo;
@@ -106,7 +108,25 @@ type imageInfo;
 (* external freeImageInfo: imageInfo -> unit = "ml_free_image_info"; *)
 (* external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture"; *)
 (* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
-external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> textureInfo = "ml_loadImage";
+external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> bool -> textureInfo = "ml_loadImage";
+(* external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> unit = "ml_loadImage"; 
+value zero_textureInfo = 
+  {
+    texFormat= TextureFormatRGBA;
+    realWidth= 0;
+    width= 0;
+    realHeight= 0;
+    height= 0;
+    pma=False; 
+    memSize= 0;
+    textureID = zero_textureID;
+  };
+value loadImage ?textureID ~path ~suffix filter =
+  (
+    loadImage ?textureID ~path ~suffix filter;
+    zero_textureInfo;
+  );
+*)
 
 module TextureCache = WeakHashtbl.Make (struct
   type t = string;
@@ -227,7 +247,7 @@ value loadPallete palleteID =
     PalleteCache.find palleteCache palleteID
   with 
   [ Not_found -> 
-    let pallete = loadImage (Printf.sprintf "palletes/%d.plt" palleteID) None FilterNearest in
+    let pallete = loadImage (Printf.sprintf "palletes/%d.plt" palleteID) None FilterNearest False in
     (
       PalleteCache.add palleteCache palleteID pallete;
       (* здесь бы финализер повесить на нее, но да хуй с ней нахуй *)
@@ -446,7 +466,7 @@ value make_and_cache path textureInfo =
     (res :> c)
   );
 
-value load ?(with_suffix=True) ?(filter=FilterNearest) path : c = 
+value load ?(with_suffix=True) ?(filter=FilterNearest) ?(use_pvr=True) path : c = 
   let fpath = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
   try
       debug:cache (
@@ -462,7 +482,7 @@ value load ?(with_suffix=True) ?(filter=FilterNearest) path : c =
       | False ->  None
       ]
     in
-    let textureInfo = proftimer:t "Loading texture [%F]" loadImage path suffix filter in
+    let textureInfo = proftimer:t "Loading texture [%F]" loadImage path suffix filter use_pvr in
     let () = 
       debug
         "loaded texture: %s <%ld> [%d->%d; %d->%d] [pma=%s]\n%!" 
@@ -476,7 +496,7 @@ value load ?(with_suffix=True) ?(filter=FilterNearest) path : c =
 
 module type AsyncLoader = sig
 
-  value load: bool -> string -> filter -> ((c -> unit) * (string -> unit)) -> unit;
+  value load: bool -> string -> filter -> bool -> ((c -> unit) * (string -> unit)) -> unit;
   value check_result: unit -> unit;
 
 end;
@@ -551,7 +571,7 @@ end;
 
 type aloader_runtime;
 external aloader_create_runtime: unit -> aloader_runtime = "ml_texture_async_loader_create_runtime";
-external aloader_push: aloader_runtime -> string -> option string -> filter -> unit = "ml_texture_async_loader_push";
+external aloader_push: aloader_runtime -> string -> option string -> filter -> bool -> unit = "ml_texture_async_loader_push";
 external aloader_pop: aloader_runtime -> option (string * bool * option textureInfo) = "ml_texture_async_loader_pop";
 
 module AsyncLoader(P:sig end) : AsyncLoader = struct
@@ -559,7 +579,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
   value waiters = Hashtbl.create 1;
   value cruntime = aloader_create_runtime ();
 
-  value load with_suffix path filter callbacks = 
+  value load with_suffix path filter use_pvr callbacks = 
     let fpath = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
     (
       if not (Hashtbl.mem waiters fpath)
@@ -570,7 +590,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
           | False -> None
           ]
         in
-        aloader_push cruntime path suffix filter
+        aloader_push cruntime path suffix filter use_pvr
       else ();
       Hashtbl.add waiters fpath callbacks
     );
@@ -621,7 +641,7 @@ value check_async () =
 
 value async_ecallback path = raise (Cant_load_texture path);
 
-value load_async ?(with_suffix=True) ?(filter=FilterNearest) path ?(ecallback=async_ecallback) callback = 
+value load_async ?(with_suffix=True) ?(filter=FilterNearest) ?(use_pvr=True) path ?(ecallback=async_ecallback) callback = 
   let () = debug "start async load %s[%b]" path with_suffix in
   let texture = 
     try
@@ -653,7 +673,7 @@ value load_async ?(with_suffix=True) ?(filter=FilterNearest) path ?(ecallback=as
       ]
     in
     let module Loader = (value m:AsyncLoader) in
-    Loader.load with_suffix path filter (callback,ecallback)
+    Loader.load with_suffix path filter use_pvr (callback,ecallback)
   ];
 
 

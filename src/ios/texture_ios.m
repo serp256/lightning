@@ -24,9 +24,8 @@
 
 typedef void (*drawingBlock)(CGContextRef context,void *data);
 
+/*
 void createTextureInfo(int colorSpace, float width, float height, float scale, drawingBlock draw, void *data, textureInfo *tInfo) {
-	//int legalWidth  = nextPowerOfTwo(width  * scale);
-	//int legalHeight = nextPowerOfTwo(height * scale);
 	int legalWidth  = nextPowerOfTwo(width);
 	int legalHeight = nextPowerOfTwo(height);
     
@@ -50,7 +49,7 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
 			bitmapInfo = kCGImageAlphaNone;// kCGBitmapByteOrder32Big | kCGImageAlphaNoneSkipLast;
         tInfo->premultipliedAlpha = NO;
 		}
-    /*}
+    }
     else
     {
         bytesPerPixel = 1;
@@ -58,7 +57,7 @@ void createTextureInfo(int colorSpace, float width, float height, float scale, d
         cgColorSpace = CGColorSpaceCreateDeviceGray();
         bitmapInfo = kCGImageAlphaNone;
         premultipliedAlpha = NO;
-    }*/
+    }
 
 		size_t dataLen = legalWidth * legalHeight * bytesPerPixel;
     void *imageData = malloc(dataLen);
@@ -95,6 +94,7 @@ void drawImage(CGContextRef context, void* data) {
 	//CGContextDrawImage(context, rect, imageRef); 
   [image drawAtPoint:CGPointMake(0, 0)];
 }
+*/
 
 int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	//float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
@@ -105,8 +105,15 @@ int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	//CGImageAlphaInfo info = CGImageGetAlphaInfo(CGImage);
 	//int colorSpace = LTextureFormatRGBA;
 	//createTextureInfo(colorSpace,width,height,scale,*drawImage,(void*)image,tInfo);
-	int legalWidth  = nextPowerOfTwo(width);
-	int legalHeight = nextPowerOfTwo(height);
+	//int legalWidth  = nextPOT((unsigned long)width);
+	//int legalHeight = nextPOT((unsigned long)height);
+	//int legalWidth  = nextPOT(ceil(width));
+	//int legalHeight = nextPOT(ceil(height));
+	int legalWidth = width < 64 ? 64 : width;
+	int legalHeight = height < 64 ? 64 : height;
+	//fprintf(stderr,"%f -> %d, %f -> %d\n",width,legalWidth,height,legalHeight);
+	//int legalWidth  = width;
+	//int legalHeight = height;
     
 	CGColorSpaceRef cgColorSpace;
 	CGBitmapInfo bitmapInfo;
@@ -221,6 +228,7 @@ int loadImageFile(UIImage *image,textureInfo *tInfo) {
 
 
 int loadPvrFile(NSString *path, textureInfo *tInfo) {
+	PRINT_DEBUG("LOAD PVR: %s",[path cStringUsingEncoding:NSASCIIStringEncoding]);
 	FILE* fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"rb");
 	if (fildes < 0) return 1;
 	fseek(fildes, 0, SEEK_END); /* Seek to the end of the file */
@@ -281,7 +289,7 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
 }
 
 
-int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
+int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 
 	//NSLog(@"LOAD IMAGE: %@[%s]\n",path,suffix);
 	NSString *fullPath = NULL;
@@ -305,12 +313,14 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 				if (suffix != NULL) {
 
 					NSString *pathWithSuffix = [pathWithoutExt stringByAppendingString:[NSString stringWithCString:suffix encoding:NSASCIIStringEncoding]];
-					fname = [pathWithSuffix stringByAppendingPathExtension:@"pvr"];
-					fullPath = pathForBundleResource(fname, bundle); 
-					if (fullPath) {
-						is_pvr = 1; 
-						break; 
-					}
+					if (use_pvr) {
+						fname = [pathWithSuffix stringByAppendingPathExtension:@"pvr"];
+						fullPath = pathForBundleResource(fname, bundle); 
+						if (fullPath) {
+							is_pvr = 1; 
+							break; 
+						}
+					};
 
 					// try plx with with suffix
 					fname = [pathWithSuffix stringByAppendingPathExtension:@"plx"];
@@ -328,9 +338,11 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 				} 
 
 				// try pvr 
-				fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
-				fullPath = pathForBundleResource(fname, bundle);
-				if (fullPath) {is_pvr = 1; break;};
+				if (use_pvr) {
+					fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
+					fullPath = pathForBundleResource(fname, bundle);
+					if (fullPath) {is_pvr = 1; break;};
+				}
 
 				// try plx
 				fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
@@ -352,11 +364,13 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 	if (!fullPath) r = 2;
 	else {
 		//NSLog(@"REAL FILE: %@",fullPath);
+		//[fullPath getCString:tInfo->path maxLength:255 encoding:NSASCIIStringEncoding];
 		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
 		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else {
 			//double t1 = CACurrentMediaTime();
+			PRINT_DEBUG("LOAD IMAGE: %s",[fullPath cStringUsingEncoding:NSASCIIStringEncoding]);
 			UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
 			//double t2 = CACurrentMediaTime();
 			//NSLog(@"load from disk: %F",(t2 - t1));
@@ -370,11 +384,11 @@ int _load_image(NSString *path,char *suffix,textureInfo *tInfo) {
 	return r;
 }
 
-int load_image_info(char *cpath,char *suffix, textureInfo *tInfo) {
+int load_image_info(char *cpath,char *suffix, int use_pvr,textureInfo *tInfo) {
 	//NSLog(@"LOAD_IMAGE_INFO: %s",cpath);
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	NSString *path = [NSString stringWithCString:cpath encoding:NSASCIIStringEncoding];
-	int r = _load_image(path,suffix,tInfo);
+	int r = _load_image(path,suffix,use_pvr,tInfo);
 	[pool release];
 	//NSLog(@"IMAGE_LOADED: %s",cpath);
 	return r;
@@ -402,7 +416,7 @@ value ml_load_image_info(value opath) {
 */
 
 
-CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value filter) { // if old texture exists when replace
+CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value filter, value use_pvr) { // if old texture exists when replace
 	CAMLparam2(opath,osuffix);
 	CAMLlocal1(mlTex);
 	//NSLog(@"ml_loade image: %s\n",String_val(opath));
@@ -411,7 +425,7 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value 
 
 	textureInfo tInfo;
 	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
-	int r = _load_image(path,suffix,&tInfo);
+	int r = _load_image(path,suffix,Bool_val(use_pvr),&tInfo);
 
 	//double gt1 = CACurrentMediaTime();
 	if (r) {

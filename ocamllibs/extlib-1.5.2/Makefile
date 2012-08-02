@@ -1,4 +1,5 @@
-default: OCAMLFIND=ocamlfind
+OCAMLFIND=ocamlfind
+
 default: all
 
 ios ios-install: OCAMLFIND=ocamlfind -toolchain ios

@@ -2,7 +2,7 @@
 MLPPOPT = 
 MLFLAGS = -package camlp4,camlp4.macro -syntax camlp4r 
 MLCOMPFLAGS = -w +7+9@5@8-13 -warn-error +10 -g 
-MLNATFLAGS = -S
+MLNATFLAGS =
 
 %.cmi: %.mli
 ifneq (,$(findstring byte,$(LIB)))
