@@ -23,7 +23,7 @@ import ru.redspell.lightning.LightActivity;
 public class LightTest extends LightActivity
 {
 	private LightView lightView;
-/*
+	/*
     @Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);

@@ -356,13 +356,47 @@ module GraphAPI = struct
 
   external fb_graph_api : ?callback:(string -> unit) -> ?ecallback:(string -> unit) -> string -> int -> list (string*string) -> unit = "ml_fb_graph_api"; (* success callback, error callback, path, length params, params, *)
 
-  value request graph_path params ?delegate () =  ();
-
-  (*
-  value graphAPI path params  = 
-    fb_graph_api path (List.length params) params ?callback ?ecallback;
+  value request graph_path params ?delegate () =  
+    let (callback, ecallback) = (Some (fun _ -> ()), None) in
+    (*
+    let callback = Some (fun _ -> ()) in
+    let ecallback = None in
+      match delegate with
+      [ Some d ->
+          match d.fb_request_did_load with
+          [ Some cb ->
+              let callback str = () in
+                let json = Ojson.from_string str in
+                match json with
+                [ `Assoc data -> 
+                    try 
+                      (
+                        ignore(List.assoc "error" data);
+                        match d.fb_request_did_fail with
+                        [ Some f -> f str
+                        | _ -> ()
+                        ]
+                      )
+                    with 
+                      [ Not_found -> cb json ]
+                | _ -> 
+                    match d.fb_request_did_fail with
+                    [ Some f -> f "The operation couldn’t be completed. (facebookErrDomain error 10000.)"
+                    | _ -> ()
+                    ]
+                ]
+              in
+              (Some callback, d.fb_request_did_fail)
+          | _ -> (None, d.fb_request_did_fail)
+          ]
+      | _ -> (None, None)
+      ]
+    in
     *)
-
+    Session.with_auth_check (fun _ -> fb_graph_api ?callback ?ecallback graph_path (List.length params) params);
+(*
+    Session.with_auth_check (fun _ -> fb_graph_api graph_path (List.length params) params ?callback:(Some (fun str -> ())) ?ecallback:None);
+*)
 end;
 
 

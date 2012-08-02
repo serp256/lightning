@@ -1199,7 +1199,13 @@ value fbtest () =
  (*   debug "FBTEST";  *)
     FBConnect.init "412548172119201"; 
 
-    FBConnect.Session.with_auth_check (fun isSuccess -> debug "PIZDA PIZDA %b" isSuccess);
+    let delegate = 
+      {
+        FBConnect.GraphAPI.fb_request_did_fail = Some (fun error -> debug "ERROR : %s" error );
+        FBConnect.GraphAPI.fb_request_did_load = Some (fun _ -> debug "SUCCESS ANSWER"  );
+      }
+    in
+    FBConnect.GraphAPI.request "me" [] ~delegate ();
 (*
     let timer = Timer.create ~repeatCount:1 5. "PIZDA" in 
     (
@@ -1215,10 +1221,11 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      (*
       debug "qweqweqweqwe";
       ignore(self#addEventListener Stage.ev_BACK_PRESSED (fun ev _ _ -> ( debug "pizda"; Ev.stopPropagation ev; )));
-
-      (* fbtest (); *)
+*)
+      fbtest (); 
 (*      avsound self "melody0.mp3"; *)
       (* assets self; *)
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
