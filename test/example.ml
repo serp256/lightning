@@ -1221,10 +1221,11 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      (*
       debug "qweqweqweqwe";
       ignore(self#addEventListener Stage.ev_BACK_PRESSED (fun ev _ _ -> ( debug "pizda"; Ev.stopPropagation ev; )));
-
-      (* fbtest (); *)
+*)
+      fbtest (); 
 (*      avsound self "melody0.mp3"; *)
       (* assets self; *)
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
