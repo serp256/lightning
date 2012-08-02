@@ -16,7 +16,6 @@ public class LightActivity extends Activity
 		super.onCreate(savedInstanceState);
 		//setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		lightView = new LightView(this);
-		Log.d("NANOFARM","view created");
 		setContentView(lightView);
 	}
 
@@ -36,8 +35,9 @@ public class LightActivity extends Activity
 
 	@Override
 	public void onBackPressed() {
-		Log.d("LIGHTNING", "back pressed");
-		if (backHandler()) {
+		boolean pizda = backHandler();
+
+		if (pizda) {
 			super.onBackPressed();
 		}
 	}
