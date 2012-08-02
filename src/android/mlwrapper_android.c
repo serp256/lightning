@@ -628,7 +628,7 @@ void ml_fb_authorize(value olen, value permissions, value cb, value ecb) {
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_AndroidFB_successAuthorize(JNIEnv *env, jobject this) {
-	DEBUGF("SUCCESS CALLBACK");
+	DEBUGF("AUTH SUCCESS CALLBACK");
 	if (fb_auth_success) {
 		caml_callback(fb_auth_success, Val_unit);
 		caml_remove_generational_global_root(&fb_auth_success);
@@ -641,7 +641,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_AndroidFB_successAuthorize(JNI
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_AndroidFB_errorAuthorize(JNIEnv *env, jobject this) {
-	DEBUGF("ERROR CALLBACK");
+	DEBUGF("AUTH ERROR CALLBACK");
 	if (fb_auth_success) {
 		caml_remove_generational_global_root(&fb_auth_success);
 		fb_auth_success = 0;
@@ -719,6 +719,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_AndroidFB_successGraphAPI(JNIE
 
 	DEBUGF("GET STRING: %s",String_val(mresponse));
 	if (fb_graph_callback) {
+			DEBUGF("caml_callback start");
 		caml_callback(fb_graph_callback, mresponse);
 		caml_remove_generational_global_root(&fb_graph_callback);
 		fb_graph_callback = 0;

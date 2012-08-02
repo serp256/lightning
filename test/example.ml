@@ -1199,7 +1199,13 @@ value fbtest () =
  (*   debug "FBTEST";  *)
     FBConnect.init "412548172119201"; 
 
-    FBConnect.Session.with_auth_check (fun isSuccess -> debug "PIZDA PIZDA %b" isSuccess);
+    let delegate = 
+      {
+        FBConnect.GraphAPI.fb_request_did_fail = Some (fun error -> debug "ERROR : %s" error );
+        FBConnect.GraphAPI.fb_request_did_load = Some (fun _ -> debug "SUCCESS ANSWER"  );
+      }
+    in
+    FBConnect.GraphAPI.request "me" [] ~delegate ();
 (*
     let timer = Timer.create ~repeatCount:1 5. "PIZDA" in 
     (

@@ -22,7 +22,7 @@ import java.io.IOException;
 public class LightTest extends Activity
 {
 	private LightView lightView;
-/*
+	/*
     @Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
