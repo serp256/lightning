@@ -1529,7 +1529,7 @@ JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightActivity_backHandler(
 			ml_dispatchBackHandler = caml_hash_variant("dispatchBackPressedEv");
 		}
 
-		return Bool_val(caml_callback(caml_get_public_method(stage->stage, ml_dispatchBackHandler), Val_unit));
+		return Bool_val(caml_callback2(caml_get_public_method(stage->stage, ml_dispatchBackHandler), stage->stage, Val_unit));
 	}
 
 	return 1;

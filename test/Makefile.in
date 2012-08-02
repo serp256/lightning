@@ -12,7 +12,7 @@ OAUTH = ../src/social/oauth/oauth.cma
 example.byte: $(MLFILES) example.cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
 	-I ../src ../src/lightning.cma $(OAUTH) $(SOCIAL) $(MLFILES) example.cmo \
-	-package bigarray,extlib,xmlm,ojson,threads -thread -linkpkg 
+	-package bigarray,extlib,xmlm,ojson 
 
 example.cmo: $(MLFILES)
 
@@ -26,7 +26,7 @@ example.cmx: $(MLXFILES)
 example.native: $(MOBS) $(MLXFILES) example.cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
 	-I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa example.cmx \
-	-package extlib,xmlm,ojson,bigarray,threads -thread -linkpkg 
+	-package extlib,xmlm,ojson,bigarray 
 
 
 .PHONY: clean

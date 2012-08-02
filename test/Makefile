@@ -11,7 +11,7 @@ iosclean:
 	$(MAKE) -f Makefile.ios clean
 
 android: 
-	$(MAKE) -f Makefile.android
+	$(MAKE) -f Makefile.android so
 
 android-install:
 	adb install -r android/bin/LightTest-debug.apk
