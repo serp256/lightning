@@ -115,14 +115,15 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env,
 	if (assetsDir != NULL) {
 		const char *path = (*env)->GetStringUTFChars(env, assetsDir, JNI_FALSE);
 		gAssetsDir = (char*) malloc(strlen(path));
-		strcpy(gAssetsDir, path);		
+		strcpy(gAssetsDir, path);
+		(*env)->ReleaseStringUTFChars(env, assetsDir, path);
 	}
 
 	if (!assetsExtractedCb) {
 		caml_failwith("assets extracted callback is not initialized");
 	}
 
-	caml_callback(assetsExtractedCb, Val_unit);	
+	caml_callback(assetsExtractedCb, Val_unit);
 }
 
 // NEED rewrite it for libzip
@@ -886,7 +887,8 @@ value ml_alsoundLoad(value path) {
 		gGetSndIdMthdId = (*env)->GetMethodID(env, jViewCls, "getSoundId", "(Ljava/lang/String;Landroid/media/SoundPool;)I");
 	}
 
-	jstring jpath = (*env)->NewStringUTF(env, String_val(path));
+	char* cpath = String_val(path);
+	jstring jpath = (*env)->NewStringUTF(env, cpath);
 	jint sndId = (*env)->CallIntMethod(env, jView, gGetSndIdMthdId, jpath, gSndPool);
 	(*env)->DeleteLocalRef(env, jpath);
 
@@ -1049,7 +1051,8 @@ void ml_payment_init(value pubkey, value scb, value ecb) {
 
 		jclass securityCls = (*env)->FindClass(env, "ru/redspell/lightning/payments/Security");
 		jmethodID setPubkey = (*env)->GetStaticMethodID(env, securityCls, "setPubkey", "(Ljava/lang/String;)V");
-		jstring jpubkey = (*env)->NewStringUTF(env, String_val(Field(pubkey, 0)));
+		char* cpubkey = String_val(Field(pubkey, 0));
+		jstring jpubkey = (*env)->NewStringUTF(env, cpubkey);
 
 		(*env)->CallStaticVoidMethod(env, securityCls, setPubkey, jpubkey);
 
@@ -1077,8 +1080,10 @@ void ml_payment_purchase(value prodId) {
 		gRequestPurchase = (*env)->GetMethodID(env, jViewCls, "requestPurchase", "(Ljava/lang/String;)V");
 	}
 
-	jstring jprodId = (*env)->NewStringUTF(env, String_val(prodId));
+	char* cprodId = String_val(prodId);
+	jstring jprodId = (*env)->NewStringUTF(env, cprodId);
 	(*env)->CallVoidMethod(env, jView, gRequestPurchase, jprodId);
+
 	(*env)->DeleteLocalRef(env, jprodId);
 }
 
@@ -1102,6 +1107,11 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 
 	caml_callback3(successCb, vprodId, tr, Val_true);
 
+	(*env)->ReleaseStringUTFChars(env, prodId, cprodId);
+	(*env)->ReleaseStringUTFChars(env, notifId, cnotifId);
+	(*env)->ReleaseStringUTFChars(env, signature, cprodId);
+	(*env)->ReleaseStringUTFChars(env, signedData, csignedData);
+
 	DEBUG("return jni invoke caml payment succ cb");
 
 	CAMLreturn0;
@@ -1124,6 +1134,9 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 
 	caml_callback3(errorCb, vprodId, vmes, Val_true);
 
+	(*env)->ReleaseStringUTFChars(env, prodId, cprodId);
+	(*env)->ReleaseStringUTFChars(env, mes, cmes);
+
 	DEBUG("return jni invoke caml payment err cb");
 
 	CAMLreturn0;
@@ -1132,8 +1145,6 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 static jmethodID gConfirmNotif;
 
 void ml_payment_commit_transaction(value transaction) {
-	DEBUG("ml_payment_commit_transaction");
-
 	CAMLparam1(transaction);
 	CAMLlocal1(vnotifId);
 
@@ -1145,11 +1156,11 @@ void ml_payment_commit_transaction(value transaction) {
 	}
 
 	vnotifId = Field(transaction, 0);
-	jstring jnotifId = (*env)->NewStringUTF(env, String_val(vnotifId));
+	char* cnotifId = String_val(vnotifId);
+	jstring jnotifId = (*env)->NewStringUTF(env, cnotifId);
 	(*env)->CallVoidMethod(env, jView, gConfirmNotif, jnotifId);
-	(*env)->DeleteLocalRef(env, jnotifId);
 
-	DEBUG("return ml_payment_commit_transaction");
+	(*env)->DeleteLocalRef(env, jnotifId);
 
 	CAMLreturn0;
 }
@@ -1169,18 +1180,24 @@ void ml_openURL(value  url) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
-	jstring _url = (*env)->NewStringUTF(env, String_val(url));
+	char* curl = String_val(url);
+	jstring jurl = (*env)->NewStringUTF(env, curl);
 	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "openURL", "(Ljava/lang/String;)V");
-	(*env)->CallVoidMethod(env, jView, mid, _url);
+	(*env)->CallVoidMethod(env, jView, mid, jurl);
+
+	(*env)->DeleteLocalRef(env, jurl);
 }
 
 void ml_addExceptionInfo (value info){
-  JNIEnv *env;
+  	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	jstring _info = (*env)->NewStringUTF(env, String_val(info));
+	char* cinfo = String_val(info);
+	jstring jinfo = (*env)->NewStringUTF(env, cinfo);
 	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "mlAddExceptionInfo", "(Ljava/lang/String;)V");
-	(*env)->CallVoidMethod(env, jView, mid, _info);
+	(*env)->CallVoidMethod(env, jView, mid, jinfo);
+
+	(*env)->DeleteLocalRef(env, jinfo);
 }
 
 void ml_setSupportEmail (value d){
@@ -1188,9 +1205,12 @@ void ml_setSupportEmail (value d){
 	DEBUG("set support email");
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	jstring _d = (*env)->NewStringUTF(env, String_val(d));
+	char* cd = String_val(d);
+	jstring jd = (*env)->NewStringUTF(env, cd);
 	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "mlSetSupportEmail", "(Ljava/lang/String;)V");
-	(*env)->CallVoidMethod(env, jView, mid, _d);
+	(*env)->CallVoidMethod(env, jView, mid, jd);
+
+	(*env)->DeleteLocalRef(env, jd);	
 }
 
 value ml_getLocale () {
@@ -1201,7 +1221,8 @@ value ml_getLocale () {
 	jstring locale = (*env)->CallObjectMethod(env, jView, meth);
 	const char *l = (*env)->GetStringUTFChars(env,locale,JNI_FALSE);
 	value r = caml_copy_string(l);
-	(*env)->ReleaseStringUTFChars(env,locale,l);
+	(*env)->ReleaseStringUTFChars(env, locale, l);
+	(*env)->DeleteLocalRef(env, locale);
 	//value r = string_of_jstring(env, (*env)->CallObjectMethod(env, jView, meth));
 	DEBUGF("getLocale: %s",String_val(r));
   return r;
@@ -1216,6 +1237,7 @@ value ml_getStoragePath () {
 	const char *l = (*env)->GetStringUTFChars(env, path, JNI_FALSE);
 	value r = caml_copy_string(l);
 	(*env)->ReleaseStringUTFChars(env, path, l);
+	(*env)->DeleteLocalRef(env, path);
 	DEBUGF("getStoragePath: %s", String_val(r));
 	return r;
 }
@@ -1225,7 +1247,7 @@ value ml_getStoragePath () {
 JNIEXPORT void Java_ru_redspell_lightning_LightView_lightFinalize(JNIEnv *env, jobject jview) {
 	DEBUG("handleOnDestroy");
 	if (stage) {
-		jfieldID fid = (*env)->GetStaticObjectField(env, jViewCls, "instance");
+		jfieldID fid = (*env)->GetStaticFieldID(env, jViewCls, "instance", "Lru/redspell/lightning;");
 		(*env)->SetStaticObjectField(env, jViewCls, fid, NULL);
 
 		(*env)->DeleteGlobalRef(env,jStorage);
@@ -1337,7 +1359,6 @@ value ml_avsound_create_player(value vpath) {
 	jobject mp = (*env)->CallObjectMethod(env, jView, createMpMid, jpath);
 	jobject gmp = (*env)->NewGlobalRef(env, mp);
 
-	(*env)->ReleaseStringUTFChars(env, jpath, cpath);
 	(*env)->DeleteLocalRef(env, jpath);
 	(*env)->DeleteLocalRef(env, mp);
 
@@ -1498,4 +1519,18 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024LightMediaPlaye
 
 	(*env)->DeleteLocalRef(env, mpCls);
 	(*env)->DeleteLocalRef(env, lnrCls);
+}
+
+static value ml_dispatchBackHandler = 1;
+
+JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightActivity_backHandler(JNIEnv *env, jobject this) {
+	if (stage) {
+		if (ml_dispatchBackHandler == 1) {
+			ml_dispatchBackHandler = caml_hash_variant("dispatchBackPressedEv");
+		}
+
+		return Bool_val(caml_callback(caml_get_public_method(stage->stage, ml_dispatchBackHandler), Val_unit));
+	}
+
+	return 1;
 }
