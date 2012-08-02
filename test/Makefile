@@ -16,6 +16,9 @@ android:
 android-install:
 	adb install -r android/bin/LightTest-debug.apk
 
+android-install-s:
+	adb install -r -s android/bin/LightTest-debug.apk
+
 android-log:
 	adb logcat LIGHTNING:* LIGHTTEST:* *:E *:F *:S
 

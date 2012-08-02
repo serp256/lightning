@@ -22,6 +22,16 @@ import ru.redspell.lightning.LightActivity;
 
 public class LightTest extends LightActivity
 {
+	private LightView lightView;
+/*
+    @Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		lightView.fb.fb.authorizeCallback(requestCode, resultCode, data);
+	}
+	*/
+	//private FrameLayout lightViewParent = null;
+	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{

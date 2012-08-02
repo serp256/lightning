@@ -205,14 +205,16 @@ public class LightView extends GLSurfaceView {
 	private int loader_id;
 	private Handler uithread;
 	private BillingService bserv;
-	private AndroidFB fb; 
+	public AndroidFB fb; 
 	//private File assetsDir;
 
 	public static LightView instance;
 	
+	public Activity activity;
 
-	public LightView(Activity activity) {
-		super(activity);
+	public LightView(Activity _activity) {
+		super(_activity);
+		activity = _activity;
 
 				Log.d("LIGHTNING", "tid: " + Process.myTid());
 
@@ -233,7 +235,7 @@ public class LightView extends GLSurfaceView {
 		bserv.setContext(activity);
 		ResponseHandler.register(activity);
 		fb = new AndroidFB();
-		fb.setActivity (activity);
+		fb.setView (this);
 	}
 
 	protected void initView(int width,int height) {

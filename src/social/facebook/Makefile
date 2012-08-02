@@ -32,6 +32,19 @@ fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
 
 fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
 	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+
+else
+ifeq ($(PLATFORM),ANDROID)
+FAKELIBS  =
+MLCOPTS += -DANDROID
+MLPPOPT += -DGLES -DANDROID
+
+fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
+	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
+
+fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
+	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+
 else
 
 fbconnect.cmxa: $(IFACES) $(MLOBJSN)
@@ -40,6 +53,7 @@ fbconnect.cmxa: $(IFACES) $(MLOBJSN)
 fbconnect.cma: $(IFACES) $(MLOBJS)
 	$(OCAMLC) -a -o fbconnect.cma $(MLOBJS)
 
+endif
 endif
 
 
