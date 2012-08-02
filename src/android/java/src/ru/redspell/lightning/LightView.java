@@ -205,7 +205,7 @@ public class LightView extends GLSurfaceView {
 	private int loader_id;
 	private Handler uithread;
 	private BillingService bserv;
-	private AndroidFB fb; 
+	public AndroidFB fb; 
 	//private File assetsDir;
 
 	public static LightView instance;

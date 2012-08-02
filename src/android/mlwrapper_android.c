@@ -652,6 +652,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_AndroidFB_errorAuthorize(JNIEn
 		fb_auth_error = 0;
 	};
 }
+
 static value fb_graph_callback = 0;
 static value fb_graph_error = 0;
 

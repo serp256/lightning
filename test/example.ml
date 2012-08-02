@@ -1199,7 +1199,7 @@ value fbtest () =
  (*   debug "FBTEST";  *)
     FBConnect.init "412548172119201"; 
 
-    FBConnect.Session.authorize ["email"];
+    FBConnect.Session.with_auth_check (fun isSuccess -> debug "PIZDA PIZDA %b" isSuccess);
 (*
     let timer = Timer.create ~repeatCount:1 5. "PIZDA" in 
     (

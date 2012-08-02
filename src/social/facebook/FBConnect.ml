@@ -270,14 +270,6 @@ ELSE
 IFDEF ANDROID THEN
 
 external facebook_init : string -> unit = "ml_fb_init";
-external fb_graph_api : ?callback:(string -> unit) -> ?ecallback:(string -> unit) -> string -> int -> list (string*string) -> unit = "ml_fb_graph_api"; (* success callback, error callback, path, length params, params, *)
-
-(*
-value graphAPI  ?callback ?ecallback path params = 
-  fb_graph_api path (List.length params) params ?callback ?ecallback;
-
-value auth perms = fb_auth (List.length perms) perms;
-*)
 value init appid = 
   (
     facebook_init appid; 
@@ -297,9 +289,7 @@ module Session = struct
   value permissions = ref [];
 
   external android_facebook_check_auth_token : unit -> bool = "ml_fb_check_auth_token";
-  external ios_facebook_get_auth_token : unit -> string = "ml_facebook_get_auth_token";
-
-  value get_auth_token = ios_facebook_get_auth_token;
+  value get_auth_token () = "";
 
   value facebook_logged_in () = 
   (
@@ -364,7 +354,15 @@ module GraphAPI = struct
     fb_request_did_load   : option (Ojson.t -> unit)
   };
 
-  value request graph_path params ?delegate () = (); 
+  external fb_graph_api : ?callback:(string -> unit) -> ?ecallback:(string -> unit) -> string -> int -> list (string*string) -> unit = "ml_fb_graph_api"; (* success callback, error callback, path, length params, params, *)
+
+  value request graph_path params ?delegate () =  ();
+
+  (*
+  value graphAPI path params  = 
+    fb_graph_api path (List.length params) params ?callback ?ecallback;
+    *)
+
 end;
 
 

@@ -15,21 +15,15 @@ import ru.redspell.lightning.LightView;
 
 
 public class AndroidFB {
-	private static Facebook fb = null;
+	public static Facebook fb = null;
 	private int onCompleteAuth;
 	private static String accessToken = "";
 	private static LightView view =null;
 
 
-    @Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		fb.authorizeCallback(requestCode, resultCode, data);
-	}
-
 	public static boolean check_auth_token () {
-		fb.isSessionValid ();
-	};
+		return fb.isSessionValid ();
+	}
 
 	public static void init (String app_id) {
 	  Log.d("LIGHTNING", "Init FB " + app_id);
@@ -58,26 +52,42 @@ public class AndroidFB {
 						 public void onComplete(Bundle values) {
 							 Log.d("LIGHTNING", "onCOMPLETE"); 
 							 accessToken = values.getString(Facebook.TOKEN);
-							 successAuthorize ();
+								view.queueEvent (new Runnable () {
+									public void run () {
+										successAuthorize();
+									}
+								});
 							 Log.d("LIGHTNING", "authToken="+accessToken); 
 						 }
 
 						 @Override
 						 public void onFacebookError(FacebookError error) { 
 							 Log.d("LIGHTNING","fb_error:" + error.toString ());
-							 errorAuthorize ();
+								view.queueEvent (new Runnable () {
+									public void run () {
+										errorAuthorize();
+									}
+								});
 						 }
 
 						 @Override
 						 public void onError(DialogError e) { 
 							 Log.d("LIGHTNING", "error" + e.toString ());
-							 errorAuthorize ();
+								view.queueEvent (new Runnable () {
+									public void run () {
+										errorAuthorize();
+									}
+								});
 						 }
 
 						 @Override
 						 public void onCancel() {
 							 Log.d("LIGHTNING", "onCANCEL");
-							 errorAuthorize ();
+								view.queueEvent (new Runnable () {
+									public void run () {
+										errorAuthorize();
+									}
+								});
 						 }
 				 });
 			}
