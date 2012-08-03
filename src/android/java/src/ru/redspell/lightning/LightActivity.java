@@ -35,12 +35,16 @@ public class LightActivity extends Activity
 
 	@Override
 	public void onBackPressed() {
-		boolean pizda = backHandler();
-
-		if (pizda) {
+		if (backHandler()) {
 			super.onBackPressed();
 		}
 	}
+
+	@Override
+	protected void onDestroy() {
+         lightView.onDestroy();
+         super.onDestroy();
+    }	
 
 	protected native boolean backHandler();
 }

@@ -39,11 +39,17 @@ FAKELIBS  =
 MLCOPTS += -DANDROID
 MLPPOPT += -DGLES -DANDROID
 
-fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
-	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
+#fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
+#`	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
 
-fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
-	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+#fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
+#	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+
+fbconnect.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o fbconnect.cmxa $(MLOBJSN)
+
+fbconnect.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o fbconnect.cma $(MLOBJS)
 
 else
 

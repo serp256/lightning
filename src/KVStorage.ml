@@ -76,21 +76,23 @@ value get_storage () =
   | None ->
 IFDEF ANDROID THEN 
 		  let path = ((get_storage_path()) ^ "kvstorage") in
-			(Printf.printf "DDD: %s\n%!" path;
-      if Sys.file_exists path 
-      then
-        let s = Marshal.from_channel (open_in_bin path) in
-        (
-          storage.val := Some s;
-          s
-        )
-      else 
-        let s = Hashtbl.create 0 in
-        (
-          storage.val := Some s;
-          commit ();
-          s;
-        )
+			(
+        (* Printf.printf "DDD: %s\n%!" path; *)
+        
+        if Sys.file_exists path 
+        then
+          let s = Marshal.from_channel (open_in_bin path) in
+          (
+            storage.val := Some s;
+            s
+          )
+        else 
+          let s = Hashtbl.create 0 in
+          (
+            storage.val := Some s;
+            commit ();
+            s;
+          )
 		  )
 ELSE
 		  let path = "kvstorage" in
