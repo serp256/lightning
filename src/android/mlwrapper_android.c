@@ -1133,6 +1133,10 @@ void ml_alsoundSetLoop(value streamId, value loop) {
 static jmethodID gAutoPause = NULL;
 static jmethodID gAutoResume = NULL;
 
+static jclass gLmpCls = NULL;
+static jmethodID gLmpPauseAll = NULL;
+static jmethodID gLmpResumeAll = NULL;
+
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
 	if (gSndPool != NULL) {
 		JNIEnv *env;
@@ -1143,6 +1147,16 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 		}
 
 		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
+
+		if (gLmpCls == NULL) {
+			gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
+		}
+
+		if (gLmpPauseAll == NULL) {
+			gLmpPauseAll = (*env)->GetStaticMethodID(env, gLmpCls, "pauseAll", "()V");
+		}
+
+		(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpPauseAll);
 	}
 }
 
@@ -1159,10 +1173,16 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 
 		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
 
-		DEBUG("pizda");
-	}
+		if (gLmpCls == NULL) {
+			gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
+		}
 
-	DEBUG("xyu");
+		if (gLmpResumeAll == NULL) {
+			gLmpResumeAll = (*env)->GetStaticMethodID(env, gLmpCls, "resumeAll", "()V");
+		}
+
+		(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpResumeAll);
+	}
 }
 
 void ml_paymentsTest() {
@@ -1365,24 +1385,32 @@ value ml_getLocale () {
 	const char *l = (*env)->GetStringUTFChars(env,locale,JNI_FALSE);
 	value r = caml_copy_string(l);
 	(*env)->ReleaseStringUTFChars(env, locale, l);
-	(*env)->DeleteLocalRef(env, locale);
+	//(*env)->DeleteLocalRef(env, locale);
 	//value r = string_of_jstring(env, (*env)->CallObjectMethod(env, jView, meth));
 	DEBUGF("getLocale: %s",String_val(r));
   return r;
 }
 
 value ml_getStoragePath () {
-  JNIEnv *env;
 	DEBUG("getStoragePath");
+
+	CAMLparam0();
+	CAMLlocal1(r);
+
+  	JNIEnv *env;	
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetStoragePath", "()Ljava/lang/String;");
 	jstring path = (*env)->CallObjectMethod(env, jView, meth);
 	const char *l = (*env)->GetStringUTFChars(env, path, JNI_FALSE);
-	value r = caml_copy_string(l);
+
+	r = caml_copy_string(l);
 	(*env)->ReleaseStringUTFChars(env, path, l);
 	(*env)->DeleteLocalRef(env, path);
+
 	DEBUGF("getStoragePath: %s", String_val(r));
-	return r;
+
+	CAMLreturn(r);
 }
 
 
@@ -1638,7 +1666,7 @@ void ml_avsound_play(value vmp, value cb) {
 	(*env)->DeleteLocalRef(env, mpCls);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024LightMediaPlayer_00024CamlCallbackCompleteListener_onCompletion(JNIEnv *env, jobject this, jobject mp) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCallbackCompleteListener_onCompletion(JNIEnv *env, jobject this, jobject mp) {
 	jclass lnrCls = (*env)->GetObjectClass(env, this);
 	static jfieldID cbFid;
 

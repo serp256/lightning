@@ -38,7 +38,8 @@ import ru.redspell.lightning.payments.ResponseHandler;
 import android.media.MediaPlayer;
 import android.media.AudioManager;
 import android.os.Process;
-
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class LightView extends GLSurfaceView {
 
@@ -306,7 +307,8 @@ public class LightView extends GLSurfaceView {
 	public void onDestroy() {
 
 		Log.d("LIGHTNING","VIEW.onDestroy");
-		lightFinalize();
+		//lightFinalize();
+		Process.killProcess(Process.myPid());
 	}
 
 
@@ -524,24 +526,6 @@ public class LightView extends GLSurfaceView {
   public String mlGetStoragePath () {
 		Log.d("LIGHTNING", "LightView: mlgetStoragePath");
 		return getContext().getFilesDir().getPath();
-	}
-
-
-	private class LightMediaPlayer extends MediaPlayer {
-		private class CamlCallbackCompleteListener implements MediaPlayer.OnCompletionListener {
-			private int camlCb;
-
-			public CamlCallbackCompleteListener(int cb) {
-				camlCb = cb;
-			}
-
-			public native void onCompletion(MediaPlayer mp);
-		}
-
-		public void start(int cb) {
-			setOnCompletionListener(new CamlCallbackCompleteListener(cb));
-			start();
-		}
 	}
 
 	public MediaPlayer createMediaPlayer(String path) throws IOException {
