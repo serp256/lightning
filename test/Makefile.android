@@ -1,4 +1,4 @@
-OCAMLFIND = /usr/local/bin/ocamlfind -toolchain android
+OCAMLFIND = ocamlfind -toolchain android
 OCAMLOPT = $(OCAMLFIND) ocamlopt
 OCAMLC = $(OCAMLFIND) ocamlc
 include Makefile.common
@@ -9,7 +9,6 @@ so: example.so
 	cd android && ant debug
 	
 
-
 example.so: $(MLXFILES) example.cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
 	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) example.cmx \
@@ -17,3 +16,6 @@ example.so: $(MLXFILES) example.cmx
 
 clean::
 	rm -f LightTest/*.o LighTest/*.so 
+
+
+.DEFAULT_GOAL = so

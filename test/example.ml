@@ -1225,7 +1225,7 @@ let stage width height =
       debug "qweqweqweqwe";
       ignore(self#addEventListener Stage.ev_BACK_PRESSED (fun ev _ _ -> ( debug "pizda"; Ev.stopPropagation ev; )));
 *)
-      fbtest (); 
+(*       fbtest ();  *)
 (*      avsound self "melody0.mp3"; *)
       (* assets self; *)
 (*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
@@ -1243,7 +1243,7 @@ let stage width height =
           self#addChild tlf;
 *)
         (* map self; *)
-(*         image self; *)
+        image self;
 (*         rec_fun self; *)
 (*         test_alpha self; *)
 (*       alert self; *)

@@ -46,8 +46,8 @@ let module M = Camlp4.Register.AstFilter Id MakeFilter in ();
 
 
 value platform = 
-  IFDEF SDL
-  THEN "sdl"
+  IFDEF PC
+  THEN "pc"
   ELSE
     IFDEF IOS
     THEN "ios"

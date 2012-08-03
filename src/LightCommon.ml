@@ -189,7 +189,7 @@ value read_json ?(with_suffix=True) path =
   ];
   
 
-ELSE IFDEF SDL THEN
+ELSE IFDEF PC THEN
 
 value resources_path = "Resources";
 value resource_path ?(with_suffix=True) fname =

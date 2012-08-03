@@ -45,10 +45,10 @@ type stage_constructor = float -> float -> Stage.c;
 
 (* value _stage: ref (option (float -> float -> stage eventTypeDisplayObject eventEmptyData)) = ref None; *)
 
-IFDEF SDL THEN
+IFDEF PC THEN
 value init s = 
   let s = (s :> stage_constructor) in
-  Sdl_run.run s;
+  Pc_run.run s;
 ELSE
 
 value _stage : ref (option stage_constructor) = ref None;
@@ -75,7 +75,7 @@ value () =
 ENDIF;
 
 
-IFDEF SDL THEN
+IFDEF PC THEN
 value getLocale () = "en";
 ELSE
 external getLocale: unit -> string = "ml_getLocale";

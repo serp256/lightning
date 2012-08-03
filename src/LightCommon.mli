@@ -44,7 +44,7 @@ type deviceType = [ Phone | Pad ];
 
 value deviceType: unit -> deviceType;
 
-IFDEF SDL THEN
+IFDEF PC THEN
 value internalDeviceType: ref deviceType;
 ENDIF;
 

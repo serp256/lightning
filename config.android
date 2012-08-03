@@ -1,6 +1,6 @@
 export PLATFORM = ANDROID
 OCAMLDIR = /usr/local/ocaml/android
-export OCAMLFIND = /usr/local/bin/ocamlfind -toolchain android
+export OCAMLFIND = ocamlfind -toolchain android
 OCAMLBINDIR = $(OCAMLDIR)/bin/
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc

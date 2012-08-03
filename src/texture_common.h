@@ -11,9 +11,8 @@
 #include <OpenGLES/ES2/glext.h>
 #include <sys/types.h>
 #else
+#include <OpenGL/gl.h>
 #define GL_GLEXT_PROTOTYPES
-#include <SDL_surface.h>
-#include <SDL_opengl.h>
 #include <sys/types.h>
 #endif
 #endif

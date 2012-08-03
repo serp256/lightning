@@ -14,6 +14,7 @@ render_stub.o: light_common.h texture_common.h render_stub.h
 filters_stub.o: light_common.h texture_common.h render_stub.h
 ios/texture_ios.o: texture_common.h
 sdl/texture_sdl.o: texture_common.h
+glut/texture_glut.o: texture_common.h
 android/texture_android.o: texture_common.h
 
 MLOBJSFLAGS = 
@@ -56,9 +57,18 @@ ifeq ($(PLATFORM),IOS)
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl'
 	else
-	ifeq ($(PLATFORM),GLUT)
-		MOBJS += glut/glut_stub.o 
-		BMLSOURCES = glut/glut.ml
+	ifeq ($(PLATFORM),PC)
+		MOBJS += net_curl.o pc/glut_stub.o texture_load.o pc/texture_pc.o
+		BMLSOURCES = pc/glut.ml
+		AMLSOURCES = pc/pc_run.ml
+		MLOBJSFLAGS = -I pc
+		ifeq ($(OS),macos)
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -framework Cocoa  -framework OpenGL -framework GLUT
+		else
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lGL'
+		endif
+		LIBFLAGS += -lcurl -lpng -ljpeg
+		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
 		MOBJS += net_curl.o sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
@@ -147,7 +157,6 @@ MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLSOURCES:.ml=.mli) RenderFilters.ml  $(MLSOURCES) >> MLDepend.$(PLATFORM)
-# $(OCAMLFIND) ocamldep $(MLFLAGS) -I $(gl) $(MLOBJSFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) *.mli $(MLSOURCES) >> MLDepend.$(PLATFORM)
 
 
 doc:
@@ -161,6 +170,6 @@ doc:
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[iox] *.a *.cmxa *.so *.cmo ios/*.o sdl/*.cmx sdl/*.cmo sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi utils/*.cmi utils/*.cmx utils/*.cmo utils/*.a kazmath/*.o kazmath/GL/*.o android/*.o
+	rm -f *.o *.cm[iox] *.a *.cmxa *.so *.cmo ios/*.o glut/*.cmx glut.*.cmo glut/*.o glut/*.cmi sdl/*.cmx sdl/*.cmo sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi utils/*.cmi utils/*.cmx utils/*.cmo utils/*.a kazmath/*.o kazmath/GL/*.o android/*.o
 
 -include MLDepend.$(PLATFORM)
