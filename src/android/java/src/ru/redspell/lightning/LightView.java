@@ -38,8 +38,6 @@ import ru.redspell.lightning.payments.ResponseHandler;
 import android.media.MediaPlayer;
 import android.media.AudioManager;
 import android.os.Process;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 public class LightView extends GLSurfaceView {
 
@@ -217,7 +215,7 @@ public class LightView extends GLSurfaceView {
 		super(_activity);
 		activity = _activity;
 
-				Log.d("LIGHTNING", "tid: " + Process.myTid());
+		Log.d("LIGHTNING", "tid: " + Process.myTid());
 
 
 		activity.requestWindowFeature(Window.FEATURE_NO_TITLE);

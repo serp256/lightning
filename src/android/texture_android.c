@@ -89,12 +89,12 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 					strcpy(path + bflen + slen, ext);
 					if (getResourceFd(path,&r)) {
 						free(path);
-						return load_jpg_image(&r,tInfo);
+						return load_jpg_image(r.fd,tInfo);
 					}
 				};
 				free(path);
 				if (!getResourceFd(fname,&r)) return 2;
-				return load_jpg_image(r->fd,tInfo);
+				return load_jpg_image(r.fd,tInfo);
 			};
 		};
 		strcpy(path + bflen + slen,ext);
@@ -112,13 +112,13 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 		// IN path alredy good fname!!
 		if (getResourceFd(path,&r)) {
 			free(path);
-			return load_png_image(&r,tInfo);
+			return load_png_image(r.fd,tInfo);
 		}
 		free(path);
 	};
 	if (!getResourceFd(fname,&r)) return 2;
 
-	return load_png_image(r->fd,tInfo);
+	return load_png_image(r.fd,tInfo);
 }
 
 

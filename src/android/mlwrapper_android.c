@@ -15,6 +15,7 @@
 #include <inttypes.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 
 #define caml_acquire_runtime_system()
@@ -1254,6 +1255,8 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 	CAMLparam0();
 	CAMLlocal2(tr, vprodId);
 
+	DEBUGF("Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaymentSuccessCb %d", gettid());
+
 	if (!successCb) return; //caml_failwith("payment callbacks are not initialized");
 
 	const char *cprodId = (*env)->GetStringUTFChars(env, prodId, JNI_FALSE);
@@ -1272,7 +1275,7 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_BillingService_invokeCamlPaym
 
 	(*env)->ReleaseStringUTFChars(env, prodId, cprodId);
 	(*env)->ReleaseStringUTFChars(env, notifId, cnotifId);
-	(*env)->ReleaseStringUTFChars(env, signature, cprodId);
+	(*env)->ReleaseStringUTFChars(env, signature, csignature);
 	(*env)->ReleaseStringUTFChars(env, signedData, csignedData);
 
 	DEBUG("return jni invoke caml payment succ cb");

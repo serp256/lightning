@@ -2,8 +2,8 @@
 #include "caml/memory.h"
 
 #ifdef ANDROID
-#include "libpng/png.h"
-#include "libjpeg/jpeglib.h"
+#include "android/libpng/png.h"
+#include "android/libjpeg/jpeglib.h"
 #else
 #include "png.h"
 #include "jpeglib.h"
