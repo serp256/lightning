@@ -1221,7 +1221,9 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      avsound self "melody0.mp3";
+      (* avsound self "melody0.mp3"; *)
+
+      Lightning.extractAssets (fun () -> ()) ();
       (*
       debug "qweqweqweqwe";
       ignore(self#addEventListener Stage.ev_BACK_PRESSED (fun ev _ _ -> ( debug "pizda"; Ev.stopPropagation ev; )));
