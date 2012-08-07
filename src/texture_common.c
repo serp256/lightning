@@ -554,7 +554,7 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
 	//GLuint legalHeight = nextPowerOfTwo(ih);
 	GLuint legalWidth = nextPOT(iw);
 	GLuint legalHeight = nextPOT(ih);
-#ifdef IOS
+#if defined(IOS) || defined(ANDROID)
 	if (legalWidth <= 8) {
     if (legalWidth > legalHeight) legalHeight = legalWidth;
     else 
@@ -788,7 +788,7 @@ value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 		//GLuint legalHeight = nextPowerOfTwo(ceil(height));
 		GLuint legalWidth = nextPOT(ceil(width));
 		GLuint legalHeight = nextPOT(ceil(height));
-#ifdef IOS
+#if defined(IOS) || defined(ANDROID)
 		if (legalWidth <= 8) {
 			if (legalWidth > legalHeight) legalHeight = legalWidth;
 			else 

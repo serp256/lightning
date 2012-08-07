@@ -26,6 +26,7 @@ type mouse =
 external mouseFunc: (mouse -> unit) -> unit = "ml_glutMouseFunc" "noalloc";
 external motionFunc: (int -> int -> unit) -> unit = "ml_glutMotionFunc" "noalloc";
 external idleFunc: (unit -> unit) -> unit = "ml_glutIdleFunc" "noalloc";
+external timerFunc: float -> (unit -> unit) -> unit = "ml_glutTimerFunc" "noalloc";
 
 
 external postRedisplay: unit -> unit = "ml_glutPostRedisplay" "noalloc";

@@ -115,11 +115,12 @@ int load_image_info(char *fname,char* suffix, int use_pvr, textureInfo *tInfo) {
 		strcpy(path + rplen,fname);
 		break;
 	}
-	// FIXME: add jpeg support
 	fprintf(stderr,"LOAD IMAGE: %s\n",path);
 	int fd = open(path,O_RDONLY);
-	if (!fd) return 2;
-	return load_png_image(fd,tInfo);
+	if (fd < 0) return 2;
+	int res;
+	if (ext && strcasecmp(ext,".jpg")) res = load_jpg_image(fd,tInfo);
+	else load_png_image(fd,tInfo);
 }
 
 

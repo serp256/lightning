@@ -154,7 +154,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
                 | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
                 ];
-                (* self#render_quads ~program:g_make_program 1. False; *)
                 RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
                 Render.restore_matrix ();
                 tex#deactivate ();

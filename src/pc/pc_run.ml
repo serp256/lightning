@@ -2,7 +2,6 @@ open LightCommon;
 
 
 value make_idle_func frameRate stage = 
-  let () = print_endline "GLUT idle" in
   let time = ref (Unix.gettimeofday()) in
   let fps = 1. /. (float frameRate) in 
   fun () ->
@@ -13,9 +12,10 @@ value make_idle_func frameRate stage =
     (
       time.val := now;
       stage#advanceTime diff;
+      print_endline "redisplay";
       Glut.postRedisplay ();
     )
-    else ();
+    else print_endline "wait";
 
 value make_mouse_funcs stage = 
   let currentTouch = ref None in
@@ -69,6 +69,21 @@ value make_mouse_funcs stage =
   in
   (mouse,motion);
 
+value start_cycle frameRate stage = 
+  let fps = 1. /. (float frameRate) in
+  let time = ref (Unix.gettimeofday ()) in
+  let rec advanceTime () =
+    let now = Unix.gettimeofday () in
+    (
+      let diff = now -. !time in
+      stage#advanceTime diff;
+      time.val := now;
+      Glut.postRedisplay ();
+      Glut.timerFunc fps advanceTime;
+    )
+  in
+  Glut.timerFunc fps advanceTime;
+
 
 value run stage_create = 
   let width = ref 768 and height = ref 1024 and frameRate = ref 30
@@ -86,7 +101,8 @@ value run stage_create =
     let stage = stage_create (float !width) (float !height) in
     (
       Glut.displayFunc (fun () -> (stage#renderStage (); Glut.swapBuffers ()));
-      Glut.idleFunc (make_idle_func !frameRate stage);
+      start_cycle !frameRate stage;
+(*       Glut.idleFunc (make_idle_func !frameRate stage); *)
       let (mouse_func,motion_func) = make_mouse_funcs stage in
       (
         Glut.mouseFunc mouse_func;
