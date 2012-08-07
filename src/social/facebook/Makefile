@@ -4,8 +4,6 @@ CFLAGS += -I .
 
 MLFLAGS += -package ojson,extlib 
 
-%.o: %.c
-	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 MLSOURCES = FBConnect.ml
 MLOBJSN = $(MLSOURCES:.ml=.cmx)
@@ -13,9 +11,7 @@ MLOBJS = $(MLSOURCES:.ml=.cmo)
 IFACES = $(MLSOURCES:.ml=.cmi)
 
 ifeq ($(PLATFORM),IOS)
-FAKELIBS  =
 CFLAGS  += -DDEBUG -DIOS -Iios/sdk
-MLCOPTS += -DIOS
 MOBJS   +=  ios/fbwrapper_ios.o ios/FacebookController.o ios/FacebookDialogDelegate.o ios/FacebookRequestDelegate.o ios/sdk/FBFrictionlessRequestSettings.o ios/sdk/Facebook.o \
             ios/sdk/FBRequest.o ios/sdk/FBDialog.o ios/sdk/FBLoginDialog.o \
             ios/sdk/JSON/SBJSON.o ios/sdk/JSON/SBJsonBase.o ios/sdk/JSON/SBJsonParser.o ios/sdk/JSON/SBJsonWriter.o \
@@ -29,29 +25,23 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-framework\ QuartzCore' \
 		   -cclib '-framework\ CoreGraphics' 
 
-fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
+fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN)
 	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
 
-fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
+fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS)
 	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
 else
 ifeq ($(PLATFORM),ANDROID)
-FAKELIBS  =
-MLCOPTS += -DANDROID
+CFLAGS = -DANDROID -I../../ -I../android
 MLPPOPT += -DGLES -DANDROID
+MOBJS += android/fbwrapper_android.o
 
-#fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
-#`	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
+fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN)
+	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
 
-#fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
-#	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
-
-fbconnect.cmxa: $(IFACES) $(MLOBJSN)
-	$(OCAMLOPT) -a -o fbconnect.cmxa $(MLOBJSN)
-
-fbconnect.cma: $(IFACES) $(MLOBJS)
-	$(OCAMLC) -a -o fbconnect.cma $(MLOBJS)
+fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
+	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
 else
 

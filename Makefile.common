@@ -16,3 +16,7 @@ endif
 
 %.cmx: %.ml
 	$(OCAMLOPT) $(MLFLAGS) $(MLNATFLAGS) $(MLCOMPFLAGS) $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(if $(DEBUGS),$(patsubst %,-ppopt -enable-debug -ppopt %,$(DEBUGS)))  -c $<
+
+
+%.o: %.c
+	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
