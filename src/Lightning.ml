@@ -108,7 +108,27 @@ value setSupportEmail (_:string) = ();
 ENDIF;
 
 IFDEF ANDROID THEN
-external extractAssets : (unit -> unit) -> unit -> unit = "ml_extractAssets";
+
+external miniunz : string -> string -> unit = "ml_miniunz";
+external apkPath : string = "ml_apkPath";
+external externalStoragePath : string = "ml_externalStoragePath";
+
+value unzipCbs = Hashtbl.create 0;
+
+value unzip path cb =
+(
+  Hashtbl.add unzipCbs path cb;
+  miniunz path cb;
+);
+
+value unzipComplete path =
+  List.iter (fun cb -> cb ()) (Hashtbl.find_all unzipCbs path);
+
+value extractAssets () =
+  unzip apkPath externalStoragePath; 
+
+Callback.register "unzipComplete" unzipComplete;
+
 ELSE
 value extractAssets (cb:(unit -> unit)) () = ();
 ENDIF;

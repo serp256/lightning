@@ -10,7 +10,6 @@
 #include <sys/stat.h>
 
 #include "assets_extractor.h"
-#include "light_common.h"
 
 void change_file_date(const char *filename,uLong dosdate,tm_unz tmu_date)
 {
@@ -215,31 +214,132 @@ int do_extract_currentfile(unzFile uf, const char* dst)
     return err;
 }
 
-int do_extract(unzFile uf, const char* dst)
+int do_extract(const char* zip_path, const char* dst)
 {
-    uLong i;
-    unz_global_info64 gi;
-    int err;
+  unzFile uf = unzOpen64(zip_path);
 
-    err = unzGetGlobalInfo64(uf,&gi);
-    if (err!=UNZ_OK)
-        PRINT_DEBUG("error %d with zipfile in unzGetGlobalInfo \n",err);
+  if (uf == NULL) {
+    PRINT_DEBUG("cannot unzip file %s", zip_path);
+    return UNZ_ERRNO;
+  }
 
-    for (i=0;i<gi.number_entry;i++)
-    {
-        if (do_extract_currentfile(uf, dst) != UNZ_OK)
-            break;
+  uLong i;
+  unz_global_info64 gi;
+  int err;
 
-        if ((i+1)<gi.number_entry)
-        {
-            err = unzGoToNextFile(uf);
-            if (err!=UNZ_OK)
-            {
-                PRINT_DEBUG("error %d with zipfile in unzGoToNextFile\n",err);
-                break;
-            }
-        }
-    }
+  err = unzGetGlobalInfo64(uf,&gi);
+  if (err!=UNZ_OK) {
+    PRINT_DEBUG("error %d with zipfile in unzGetGlobalInfo \n",err);
+    return err;
+  }
 
-    return 0;
+  for (i=0;i<gi.number_entry;i++)
+  {
+      if (do_extract_currentfile(uf, dst) != UNZ_OK)
+          break;
+
+      if ((i+1)<gi.number_entry)
+      {
+          err = unzGoToNextFile(uf);
+          if (err!=UNZ_OK)
+          {
+              PRINT_DEBUG("error %d with zipfile in unzGoToNextFile\n",err);
+              break;
+          }
+      }
+  }
+
+  unzClose(uf);
+
+  return err;
 }
+
+void ml_miniunz(value zipPath, value dstPath) {
+
+}
+
+static value vapkPath;
+static value vexternalStoragePath;
+
+value getPath(const char* methodName, value* vpath) {
+  if (*vapkPath == NULL) {
+    JNIEnv *env;
+    (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+    jmethodID mid = (*env)->GetMethodID(env, jViewCls, methodName, "()Ljava/lang/String;");
+    jstring jpath = (*env)->CallObjectMethod(env, jView, mid);
+    char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
+
+    *vpath = caml_copy_string(capkPath);
+    caml_register_generational_global_root(vpath);
+
+    (*env)->ReleaseStringUTFChars(env, jpath, cpath);
+    (*env)->DeleteLocalRef(env, jpath);
+  }
+
+  return *vpath;
+}
+
+value ml_apkPath() {
+  return getPath("getApkPath", &vapkPath);
+}
+
+value ml_externalStoragePath() {
+  return getPath("getExternalStoragePath", &vexternalStoragePath);
+}
+
+void ml_miniunz(value vzipPath, value vdstPath) {  
+}
+
+/*JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024ExtractAssetsTask_extractAssets(JNIEnv *env, jobject this, jstring apkPath, jstring dst) {
+  const char* capkPath = (*env)->GetStringUTFChars(env, apkPath, JNI_FALSE);
+  const char* cdst = (*env)->GetStringUTFChars(env, dst, JNI_FALSE);
+
+  do_extract(capkPath, cdst);
+
+  (*env)->ReleaseStringUTFChars(env, apkPath, capkPath);
+  (*env)->ReleaseStringUTFChars(env, dst, cdst);
+}*/
+
+/*JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024ExtractAssetsTask_assetsExtracted(JNIEnv *env, jobject this, jint jcbptr) {
+  value* cbptr = (value*)jcbptr;
+  value cb = *((value*)cbptr);
+
+  caml_callback(cb, Val_unit);
+  caml_remove_generational_global_root(cbptr);  
+}*/
+
+/*void ml_extractAssets(value cb) {
+  value *cbptr = malloc(sizeof(value));
+  *cbptr = cb;
+  caml_register_generational_global_root(cbptr);
+
+  JNIEnv *env;
+  (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+  jmethodID mid = (*env)->GetMethodID(env, jViewCls, "extractAssets", "(I)V");
+  (*env)->CallVoidMethod(env, jView, mid, (jint)cbptr);
+}*/
+
+/*void ml_extractAssets(value callback) {
+  JNIEnv *env;
+  (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+  jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getContext", "()Landroid/content/Context;");
+  jobject context = (*env)->CallObjectMethod(env, jView, mid);
+  
+  jclass contextCls = (*env)->GetObjectClass(env, context);
+  mid = (*env)->GetMethodID(env, contextCls, "getPackageCodePath", "()Ljava/lang/String;");
+  jstring japkPath = (*env)->CallObjectMethod(env, context, mid);
+
+  const char* capkPath = (*env)->GetStringUTFChars(env, japkPath, JNI_FALSE);
+
+  mid = (*env)->GetMethodID(env, jViewCls, "getAssetsDir", "()Ljava/lang/String;");
+  jstring jexternalStoragePath = (*env)->CallObjectMethod(env, jView, mid);
+  const char* cexternalStoragePath = (*env)->GetStringUTFChars(env, jexternalStoragePath, JNI_FALSE);
+
+  int retval = do_extract(capkPath, cexternalStoragePath);
+
+  (*env)->ReleaseStringUTFChars(env, jexternalStoragePath, cexternalStoragePath);
+  (*env)->DeleteLocalRef(env, jexternalStoragePath);
+}*/

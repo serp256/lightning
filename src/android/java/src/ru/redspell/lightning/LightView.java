@@ -40,6 +40,72 @@ import android.media.AudioManager;
 import android.os.Process;
 
 public class LightView extends GLSurfaceView {
+			Context context = getContext();
+			File storageDir = context.getExternalFilesDir(null);
+			File assetsDir = new File(storageDir, "assets");
+
+			if (!assetsDir.exists()) {
+				assetsDir.mkdir();
+			}
+
+			extractAssets(storageDir.getAbsolutePath() + "/", context.getPackageCodePath());
+
+	public String getApkPath() {
+		return getContext().getPackageCodePath();
+	}
+
+	public String getExternalStoragePath() {
+		File storageDir = getContext().getExternalFilesDir(null);
+		File assetsDir = new File(storageDir, "assets");
+
+		if (!assetsDir.exists()) {
+			assetsDir.mkdir();
+		}
+
+		return storageDir.getAbsolutePath() + "/";
+	}
+
+
+/*	private class ExtractAssetsTask extends AsyncTask<Void, Void, Void> {
+		protected int cb;
+
+		public ExtractAssetsTask(int cb) {
+			super();
+			this.cb = cb;
+		}
+
+		protected Void doInBackground(Void... params) {
+			Context context = getContext();
+			File storageDir = context.getExternalFilesDir(null);
+			File assetsDir = new File(storageDir, "assets");
+
+			if (!assetsDir.exists()) {
+				assetsDir.mkdir();
+			}
+
+			extractAssets(storageDir.getAbsolutePath() + "/", context.getPackageCodePath());
+
+			return null;
+		}
+
+		protected void onPostExecute() {
+			queueEvent(new Runnable() {
+				@Override
+				public void run() {
+					assetsExtracted(cb);
+				}
+			});			
+		}
+
+		protected native void extractAssets(String apkPath, String dst);
+		protected native void assetsExtracted(int cb);
+	}
+
+	public void extractAssets(int cb) {
+		(new ExtractAssetsTask(cb)).execute();
+	}
+*/
+
 
 /*	private class ExtractAssetsTask extends AsyncTask<Void, Void, File> {
 		//private File assetsDir;
@@ -205,7 +271,6 @@ public class LightView extends GLSurfaceView {
 	private Handler uithread;
 	private BillingService bserv;
 	public AndroidFB fb; 
-	//private File assetsDir;
 
 	public static LightView instance;
 	
@@ -487,32 +552,6 @@ public class LightView extends GLSurfaceView {
 	public void initBillingServ() {
 		bserv.requestPurchase("android.test.purchased");
 	}
-
-	public void extractAssets() {
-		Log.d("LIGHTNING", "!!!!!!!! package path: " + getContext().getPackageCodePath());
-/*		Log.d("LIGHTNING", "lightview extractAssets call");
-
-		getHandler().post(new Runnable() {
-			public void run() {
-				Log.d("LIGHTNING", "Runnable run call");
-				new ExtractAssetsTask().execute();		
-			}
-		});*/
-	}
-
-	public String getAssetsDir() {
-		File storageDir = getContext().getExternalFilesDir(null);
-		File assetsDir = new File(storageDir, "assets");
-
-		if (!assetsDir.exists()) {
-			assetsDir.mkdir();
-		}
-
-		return storageDir.getAbsolutePath() + "/";
-	}
-
-	private native void assetsExtracted(String assetsDir);
-
 
   public void openURL(String url){
 		Context c = getContext();

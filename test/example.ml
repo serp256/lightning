@@ -1023,23 +1023,16 @@ value touchesTest(stage:Stage.c) =
 );
 
 value assets (s:Stage.c) =
-  let img = Image.load "tree.png" in
+  let img = Image.load "prof.jpg" in
   (
     ignore(Stage.(
       img#addEventListener ev_TOUCH (fun ev _ _ ->
         match touches_of_data ev.Ev.data with
         [ Some [ touch :: _ ] ->
           Touch.(
-(*             let () = debug "touch id: %ld" touch.tid in *)
               match touch.phase with
-              [ TouchPhaseEnded ->
-                let img1 = Image.load "Russia.png" in
-                (
-                  s#addChild img1;
-                  img1#setX 200.;
-                  img1#setY 200.;
-                )
-              | _ -> () (* debug "some other phase" *)
+              [ TouchPhaseEnded -> Lightning.extractAssets (fun () -> debug "assets extracted") ()
+              | _ -> ()
               ]
           )
         | _ -> ()
@@ -1048,14 +1041,6 @@ value assets (s:Stage.c) =
     ));
 
     s#addChild img;
-
-    let tw = Tween.create ~transition:`easeInOut 1. in
-    (
-      tw#animate img#prop'x 200.;
-      Stage.addTween tw;
-    );
-
-    Lightning.extractAssets (fun () -> debug "assets extracted") ();
   );
     
 value udid (self:Stage.c) = 
@@ -1220,6 +1205,7 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      assets self;
 (*       avsound self "melody0.mp3"; *)
       (*
       debug "qweqweqweqwe";
@@ -1283,7 +1269,7 @@ let stage width height =
 (*         zsort self; *)
       (* localNotif (); *)
 (*           music self; *)
-          tlf self;
+          (* tlf self; *)
 (*           quad self; *)
           (* hardware self; *)
 (*           glow_and_gc self; *)
