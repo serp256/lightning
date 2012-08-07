@@ -2,12 +2,15 @@
 #define CASESENSITIVITY (0)
 
 #include <stdio.h>
-// #include "unzip.h";
 #include <string.h>
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
 #include <utime.h>
+#include <sys/stat.h>
+
+#include "assets_extractor.h"
+#include "light_common.h"
 
 void change_file_date(const char *filename,uLong dosdate,tm_unz tmu_date)
 {
@@ -47,7 +50,7 @@ int makedir (char *newdir)
   buffer = (char*)malloc(len+1);
         if (buffer==NULL)
         {
-                printf("Error allocating memory\n");
+                PRINT_DEBUG("Error allocating memory\n");
                 return UNZ_INTERNALERROR;
         }
   strcpy(buffer,newdir);
@@ -72,7 +75,7 @@ int makedir (char *newdir)
       *p = 0;
       if ((mymkdir(buffer) == -1) && (errno == ENOENT))
         {
-          printf("couldn't create directory %s\n",buffer);
+          PRINT_DEBUG("couldn't create directory %s\n",buffer);
           free(buffer);
           return 0;
         }
@@ -95,7 +98,6 @@ int do_extract_currentfile(unzFile uf, const char* dst)
     uInt size_buf;
 
     unz_file_info64 file_info;
-    uLong ratio=0;
     err = unzGetCurrentFileInfo64(uf,&file_info,filename_inzip,sizeof(filename_inzip),NULL,0,NULL,0);
 
     if (!strstr(filename_inzip, "assets")) {
@@ -104,7 +106,7 @@ int do_extract_currentfile(unzFile uf, const char* dst)
 
     if (err!=UNZ_OK)
     {
-        printf("error %d with zipfile in unzGetCurrentFileInfo\n",err);
+        PRINT_DEBUG("error %d with zipfile in unzGetCurrentFileInfo\n",err);
         return err;
     }
 
@@ -112,13 +114,17 @@ int do_extract_currentfile(unzFile uf, const char* dst)
     buf = (void*)malloc(size_buf);
     if (buf==NULL)
     {
-        printf("Error allocating memory\n");
+        PRINT_DEBUG("Error allocating memory\n");
         return UNZ_INTERNALERROR;
     }
 
-    char* write_filename = calloc((strlen(dst) + strlen(filename_inzip)), sizeof(char));
-    strcat(write_filename, dst);
-    strcat(write_filename, filename_inzip);
+    int dstlen = strlen(dst);
+    int filenamelen = strlen(filename_inzip);
+
+    char* write_filename = malloc(dstlen + filenamelen + 1);
+    strcpy(write_filename, dst);
+    strcpy(write_filename + dstlen, filename_inzip);
+    *(write_filename + dstlen + filenamelen) = '\0';
 
     p = filename_withoutpath = write_filename;
 
@@ -140,7 +146,7 @@ int do_extract_currentfile(unzFile uf, const char* dst)
         err = unzOpenCurrentFile(uf);
         if (err!=UNZ_OK)
         {
-            printf("error %d with zipfile in unzOpenCurrentFile\n",err);
+            PRINT_DEBUG("error %d with zipfile in unzOpenCurrentFile\n",err);
         }
 
         if ((skip==0) && (err==UNZ_OK))
@@ -159,26 +165,26 @@ int do_extract_currentfile(unzFile uf, const char* dst)
 
             if (fout==NULL)
             {
-                printf("error opening %s\n",write_filename);
+                PRINT_DEBUG("error opening %s\n",write_filename);
             }
         }
 
         if (fout!=NULL)
         {
-            printf(" extracting: %s\n",write_filename);
+            PRINT_DEBUG(" extracting: %s\n",write_filename);
 
             do
             {
                 err = unzReadCurrentFile(uf,buf,size_buf);
                 if (err<0)
                 {
-                    printf("error %d with zipfile in unzReadCurrentFile\n",err);
+                    PRINT_DEBUG("error %d with zipfile in unzReadCurrentFile\n",err);
                     break;
                 }
                 if (err>0)
                     if (fwrite(buf,err,1,fout)!=1)
                     {
-                        printf("error in writing extracted file\n");
+                        PRINT_DEBUG("error in writing extracted file\n");
                         err=UNZ_ERRNO;
                         break;
                     }
@@ -197,7 +203,7 @@ int do_extract_currentfile(unzFile uf, const char* dst)
             err = unzCloseCurrentFile (uf);
             if (err!=UNZ_OK)
             {
-                printf("error %d with zipfile in unzCloseCurrentFile\n",err);
+                PRINT_DEBUG("error %d with zipfile in unzCloseCurrentFile\n",err);
             }
         }
         else
@@ -214,11 +220,10 @@ int do_extract(unzFile uf, const char* dst)
     uLong i;
     unz_global_info64 gi;
     int err;
-    FILE* fout=NULL;
 
     err = unzGetGlobalInfo64(uf,&gi);
     if (err!=UNZ_OK)
-        printf("error %d with zipfile in unzGetGlobalInfo \n",err);
+        PRINT_DEBUG("error %d with zipfile in unzGetGlobalInfo \n",err);
 
     for (i=0;i<gi.number_entry;i++)
     {
@@ -230,7 +235,7 @@ int do_extract(unzFile uf, const char* dst)
             err = unzGoToNextFile(uf);
             if (err!=UNZ_OK)
             {
-                printf("error %d with zipfile in unzGoToNextFile\n",err);
+                PRINT_DEBUG("error %d with zipfile in unzGoToNextFile\n",err);
                 break;
             }
         }
@@ -238,17 +243,3 @@ int do_extract(unzFile uf, const char* dst)
 
     return 0;
 }
-
-/*int main() {
-	unzFile uf = unzOpen64("../NanoFarm-debug.apk");
-
-	if (uf == NULL) {
-		printf("pizda\n");
-		return 1;
-	}
-
-	int retval = do_extract(uf);
-	unzClose(uf);
-
-	return retval;
-}*/

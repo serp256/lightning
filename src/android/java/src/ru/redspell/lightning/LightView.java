@@ -500,6 +500,17 @@ public class LightView extends GLSurfaceView {
 		});*/
 	}
 
+	public String getAssetsDir() {
+		File storageDir = getContext().getExternalFilesDir(null);
+		File assetsDir = new File(storageDir, "assets");
+
+		if (!assetsDir.exists()) {
+			assetsDir.mkdir();
+		}
+
+		return storageDir.getAbsolutePath() + "/";
+	}
+
 	private native void assetsExtracted(String assetsDir);
 
 

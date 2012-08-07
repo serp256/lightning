@@ -1024,22 +1024,15 @@ value touchesTest(stage:Stage.c) =
 );
 
 value assets (s:Stage.c) =
-  let img = Image.load "tree.png" in
+  let img = Image.load "prof.jpg" in
   (
     ignore(Stage.(
       img#addEventListener ev_TOUCH (fun ev _ _ ->
         match touches_of_data ev.Ev.data with
         [ Some [ touch :: _ ] ->
           Touch.(
-(*             let () = debug "touch id: %ld" touch.tid in *)
               match touch.phase with
-              [ TouchPhaseEnded ->
-                let img1 = Image.load "Russia.png" in
-                (
-                  s#addChild img1;
-                  img1#setX 200.;
-                  img1#setY 200.;
-                )
+              [ TouchPhaseEnded -> proftimer "extract assets: %F" Lightning.extractAssets (fun () -> debug "assets extracted") ()
               | _ -> () (* debug "some other phase" *)
               ]
           )
@@ -1049,14 +1042,6 @@ value assets (s:Stage.c) =
     ));
 
     s#addChild img;
-
-    let tw = Tween.create ~transition:`easeInOut 1. in
-    (
-      tw#animate img#prop'x 200.;
-      Stage.addTween tw;
-    );
-
-    Lightning.extractAssets (fun () -> debug "assets extracted") ();
   );
     
 value udid (self:Stage.c) = 
@@ -1221,9 +1206,13 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+
+
+      (* Lightning.extractAssets (fun () -> debug "assets extracted") (); *)
       (* avsound self "melody0.mp3"; *)
 
-      Lightning.extractAssets (fun () -> ()) ();
+      assets self;
+      (* Lightning.extractAssets (fun () -> ()) (); *)
       (*
       debug "qweqweqweqwe";
       ignore(self#addEventListener Stage.ev_BACK_PRESSED (fun ev _ _ -> ( debug "pizda"; Ev.stopPropagation ev; )));

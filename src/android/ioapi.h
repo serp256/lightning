@@ -55,11 +55,10 @@
 #endif
 #endif
 
-#ifdef macosx
-    #define fopen64 fopen
-    #define ftello64 ftello
-    #define fseeko64 fseeko
-#endif
+#define fopen64 fopen
+#define ftello64 ftello
+#define fseeko64 fseeko
+
 /*
 #ifndef ZPOS64_T
   #ifdef _WIN32

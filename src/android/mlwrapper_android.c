@@ -1334,42 +1334,76 @@ void ml_payment_commit_transaction(value transaction) {
 }
 
 void ml_extractAssets(value callback) {
+	DEBUG("ml_extractAssets call");
+
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
-	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getContext", "()Landroid.content.Context;");
+	DEBUG("getting context...");
+
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getContext", "()Landroid/content/Context;");
 	jobject context = (*env)->CallObjectMethod(env, jView, mid);
+
+	DEBUG("done, getting apk path...");
 	
 	jclass contextCls = (*env)->GetObjectClass(env, context);
-	mid = (*env)->GetMethodID(env, contextCls, "getPackageCodePath", "()Ljava.lang.String;");
-	jstring japkPath = (*env)->CallObjectMethod(env, contextCls, mid);
+	mid = (*env)->GetMethodID(env, contextCls, "getPackageCodePath", "()Ljava/lang/String;");
+	jstring japkPath = (*env)->CallObjectMethod(env, context, mid);
+
+	DEBUG("done");
 
 	const char* capkPath = (*env)->GetStringUTFChars(env, japkPath, JNI_FALSE);
 
+	DEBUG("opening apk...");
+
 	unzFile uf = unzOpen64(capkPath);
 
+	DEBUG("done");
+
 	if (uf == NULL) {
+		DEBUG("error");
+
 		char* exptnMes = calloc(256, sizeof(char));
 		sprintf(exptnMes, "cannot unzip file %s", capkPath);
 		caml_failwith(exptnMes);
 		free(exptnMes);
 	} else {
-		mid = (*env)->GetMethodID(env, contextCls, "getExternalFilesDir", "(Ljava.lang.String;)Ljava.io.File;");
-		jobject externalStorageDir = (*env)->CallObjectMethod(env, context, mid);
+		DEBUG("ok");
+
+		/*
+		mid = (*env)->GetMethodID(env, contextCls, "getExternalFilesDir", "(Ljava/lang/String;)Ljava/io/File;");
+		jstring jtypeParam = (*env)->NewStringUTF(env, "assets");
+		jobject externalStorageDir = (*env)->CallObjectMethod(env, context, mid, jtypeParam);
 
 		jclass fileCls = (*env)->GetObjectClass(env, externalStorageDir);
-		mid = (*env)->GetMethodID(env, fileCls, "getAbsolutePath", "()Ljava.lang.String;");
+		mid = (*env)->GetMethodID(env, fileCls, "getAbsolutePath", "()Ljava/lang/String;");
 		jstring jexternalStoragePath = (*env)->CallObjectMethod(env, externalStorageDir, mid);
 
+		const char* _cexternalStoragePath = (*env)->GetStringUTFChars(env, jexternalStoragePath, JNI_FALSE);
+		int pathlen = strlen(_cexternalStoragePath);
+		char* cexternalStoragePath = malloc(pathlen + 2);
+
+		strcpy(cexternalStoragePath, _cexternalStoragePath);
+		*(cexternalStoragePath + pathlen) = '/';
+		*(cexternalStoragePath + pathlen + 1) = '\0';*/
+
+		mid = (*env)->GetMethodID(env, jViewCls, "getAssetsDir", "()Ljava/lang/String;");
+		jstring jexternalStoragePath = (*env)->CallObjectMethod(env, jView, mid);
 		const char* cexternalStoragePath = (*env)->GetStringUTFChars(env, jexternalStoragePath, JNI_FALSE);
 
-		do_extract(uf, cexternalStoragePath);
+		DEBUG("trying to extract...");
+
+		int retval = do_extract(uf, cexternalStoragePath);
+
+		DEBUGF("done, retval %d", retval);
+
 		unzClose(uf);
 
 		(*env)->ReleaseStringUTFChars(env, jexternalStoragePath, cexternalStoragePath);
 
-		(*env)->DeleteLocalRef(env, externalStorageDir);
-		(*env)->DeleteLocalRef(env, fileCls);
+		//(*env)->DeleteLocalRef(env, jtypeParam);
+		//(*env)->DeleteLocalRef(env, externalStorageDir);
+		//(*env)->DeleteLocalRef(env, fileCls);
 		(*env)->DeleteLocalRef(env, jexternalStoragePath);
 	}
 
