@@ -17,9 +17,9 @@
 #define NILL Val_int(0)
 #define NONE Val_int(0)
 
-JavaVM *gJavaVM;
-jobject jView;
-jclass jViewCls;
+extern JavaVM *gJavaVM;
+extern jobject jView;
+extern jclass jViewCls;
 
 typedef struct {
 	int fd;

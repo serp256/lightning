@@ -6,7 +6,7 @@ MLFLAGS += -I ../src -package extlib -package ojson -I ../src/social -I ../src/t
 
 #MLFILES = panelbg.cmo testz.cmo
 
-SOCIAL= ../src/social/facebook/FBConnect.cmo ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
+SOCIAL=  ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
 OAUTH = ../src/social/oauth/oauth.cma 
 
 example.byte: $(MLFILES) example.cmo 

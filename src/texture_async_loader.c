@@ -82,6 +82,8 @@ value ml_texture_async_loader_create_runtime(value unit) {
 
   pthread_attr_t attr;
   pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
+	//pthread_attr_setschedpolicy
   pthread_create(&runtime->worker, &attr, &run_worker, (void*)runtime);
 
 	return((value)runtime);// может быть стоило финализер повесить ?
