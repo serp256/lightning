@@ -22,7 +22,6 @@
 #include <caml/custom.h>
 #include <caml/bigarray.h>
 #include <caml/fail.h>
-
 #include "light_common.h"
 
 void setPMAGLBlend();

@@ -3,14 +3,13 @@
 #define __MLWRAPPER_ANDROID_H__
 
 #include <jni.h>
-
-#include "light_common.h"
-
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/callback.h>
 #include <caml/alloc.h>
 #include <caml/fail.h>
+
+#include "light_common.h"
 
 #define DEBUG(str) __android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING",str)
 #define DEBUGF(fmt,args...)  __android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING",fmt, ## args)
@@ -19,8 +18,8 @@
 #define NONE Val_int(0)
 
 JavaVM *gJavaVM;
-static jobject jView;
-static jclass jViewCls;
+jobject jView;
+jclass jViewCls;
 
 typedef struct {
 	int fd;
