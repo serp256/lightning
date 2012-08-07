@@ -16,6 +16,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include "unzip.h"
+#include "assets_extractor.h"
 
 
 #define caml_acquire_runtime_system()
@@ -1335,12 +1337,60 @@ void ml_extractAssets(value callback) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getContext", "()Landroid.content.Context;");
+	jobject context = (*env)->CallObjectMethod(env, jView, mid);
+	
+	jclass contextCls = (*env)->GetObjectClass(env, context);
+	mid = (*env)->GetMethodID(env, contextCls, "getPackageCodePath", "()Ljava.lang.String;");
+	jstring japkPath = (*env)->CallObjectMethod(env, contextCls, mid);
+
+	const char* capkPath = (*env)->GetStringUTFChars(env, japkPath, JNI_FALSE);
+
+	unzFile uf = unzOpen64(capkPath);
+
+	if (uf == NULL) {
+		char* exptnMes = calloc(256, sizeof(char));
+		sprintf(exptnMes, "cannot unzip file %s", capkPath);
+		caml_failwith(exptnMes);
+		free(exptnMes);
+	} else {
+		mid = (*env)->GetMethodID(env, contextCls, "getExternalFilesDir", "(Ljava.lang.String;)Ljava.io.File;");
+		jobject externalStorageDir = (*env)->CallObjectMethod(env, context, mid);
+
+		jclass fileCls = (*env)->GetObjectClass(env, externalStorageDir);
+		mid = (*env)->GetMethodID(env, fileCls, "getAbsolutePath", "()Ljava.lang.String;");
+		jstring jexternalStoragePath = (*env)->CallObjectMethod(env, externalStorageDir, mid);
+
+		const char* cexternalStoragePath = (*env)->GetStringUTFChars(env, jexternalStoragePath, JNI_FALSE);
+
+		do_extract(uf, cexternalStoragePath);
+		unzClose(uf);
+
+		(*env)->ReleaseStringUTFChars(env, jexternalStoragePath, cexternalStoragePath);
+
+		(*env)->DeleteLocalRef(env, externalStorageDir);
+		(*env)->DeleteLocalRef(env, fileCls);
+		(*env)->DeleteLocalRef(env, jexternalStoragePath);
+	}
+
+	(*env)->ReleaseStringUTFChars(env, japkPath, capkPath);
+
+	(*env)->DeleteLocalRef(env, context);
+	(*env)->DeleteLocalRef(env, contextCls);
+	(*env)->DeleteLocalRef(env, japkPath);
+}
+/*
+void ml_extractAssets(value callback) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
 	assetsExtractedCb = callback;
 	caml_register_generational_global_root(&callback);
 
 	jmethodID extractResources = (*env)->GetMethodID(env, jViewCls, "extractAssets", "()V");
 	(*env)->CallVoidMethod(env, jView, extractResources);
 }
+*/
 
 void ml_openURL(value  url) {
 	JNIEnv *env;

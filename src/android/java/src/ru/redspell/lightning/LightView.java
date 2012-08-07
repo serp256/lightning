@@ -41,7 +41,7 @@ import android.os.Process;
 
 public class LightView extends GLSurfaceView {
 
-	private class ExtractAssetsTask extends AsyncTask<Void, Void, File> {
+/*	private class ExtractAssetsTask extends AsyncTask<Void, Void, File> {
 		//private File assetsDir;
 		private URI assetsDirUri;
 		private String ver;
@@ -198,7 +198,7 @@ public class LightView extends GLSurfaceView {
 		protected void onPostExecute(File res) {
 			assetsExtracted(res != null ? res.getAbsolutePath() : null);
 		}
-	}
+	}*/
 
 	private LightRenderer renderer;
 	private int loader_id;
@@ -489,14 +489,15 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void extractAssets() {
-		Log.d("LIGHTNING", "lightview extractAssets call");
+		Log.d("LIGHTNING", "!!!!!!!! package path: " + getContext().getPackageCodePath());
+/*		Log.d("LIGHTNING", "lightview extractAssets call");
 
 		getHandler().post(new Runnable() {
 			public void run() {
 				Log.d("LIGHTNING", "Runnable run call");
 				new ExtractAssetsTask().execute();		
 			}
-		});
+		});*/
 	}
 
 	private native void assetsExtracted(String assetsDir);
