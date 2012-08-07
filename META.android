@@ -3,11 +3,6 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm ojson"
 
-package "facebook" (
-  description="Facebook API"
-  archive(byte) = "fbconnect.cma"
-  archive(native) = "fbconnect.cmxa"
-)
 
 package "tapjoy" (
   description="Tapjoy Connect"
