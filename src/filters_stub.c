@@ -514,7 +514,7 @@ void ml_glow_make(value orb, value glow) {
 	for (i = 0; i < gsize; i++) {
 		w /= 2;
 		h /= 2;
-		//fprintf(stderr,"size: %d:%d\n",w,h);
+		PRINT_DEBUG("forward create fb of size: %d:%d\n",w,h);
 		glBindTexture(GL_TEXTURE_2D, txrs[i]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -522,7 +522,7 @@ void ml_glow_make(value orb, value glow) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		legalWidth = w;
 		legalHeight = h;
-#ifdef IOS
+#if defined(IOS) || defined(ANDROID)
 		if (legalWidth <= 8) {
 			if (legalWidth > legalHeight) legalHeight = legalWidth;
 			else 
@@ -536,8 +536,9 @@ void ml_glow_make(value orb, value glow) {
 		glBindFramebuffer(GL_FRAMEBUFFER, bfrs[i]);
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[i],0);
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			fprintf(stderr,"framebuffer %d status: %X\n",bfrs[i],glCheckFramebufferStatus(GL_FRAMEBUFFER));
-			exit(1);
+			char errmsg[255];
+			sprintf(errmsg,"glow make. framebuffer %d, %d:%d status: %X\n",bfrs[i],legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+			caml_failwith(errmsg);
 		};
 		glBindTexture(GL_TEXTURE_2D,ctid);
 		cvp = &vpclps[i].vp;

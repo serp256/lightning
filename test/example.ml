@@ -136,8 +136,8 @@ value onClick obj handler  =
 value tlf (stage:Stage.c) = 
 (
   debug "REGISTR FONT";
-  LightCommon.set_resources_suffix "x2";
   BitmapFont.register "MyriadPro-Regular.fnt";
+  BitmapFont.register "MyriadPro-Bold.fnt";
   BitmapFont.register "CCFairyTale.fnt";
   debug "FONT REGISTRED";
   TLF.default_font_family.val := "Myriad Pro";
@@ -152,12 +152,11 @@ value tlf (stage:Stage.c) =
   in
   *)
 
-  let xml = "<p halign=\"left\" color=\"0x591100\">The cat appreciates sour cream. He'll keep helping you collect combo, and you will get a bonus to your maximum energy!</p>" in
-
-
-  let tlf = TLF.parse xml in
-  let (_,text) = TLF.create ~width:880. ~height:80. tlf in
+  let tlf_text = TLF.p ~fontWeight:"bold" ~halign:`center ~color:0xFFE000 ~fontSize:18 [`text "Add"] in
+  let (_,text) = TLF.create tlf_text in
   (
+    text#setFilters [ Filters.glow ~size:2 ~strength:2. 0x14484D ];
+    text#setPos 100. 100.;
     stage#addChild text;
   );
 );
@@ -1024,15 +1023,22 @@ value touchesTest(stage:Stage.c) =
 );
 
 value assets (s:Stage.c) =
-  let img = Image.load "prof.jpg" in
+  let img = Image.load "tree.png" in
   (
     ignore(Stage.(
       img#addEventListener ev_TOUCH (fun ev _ _ ->
         match touches_of_data ev.Ev.data with
         [ Some [ touch :: _ ] ->
           Touch.(
+(*             let () = debug "touch id: %ld" touch.tid in *)
               match touch.phase with
-              [ TouchPhaseEnded -> proftimer "extract assets: %F" Lightning.extractAssets (fun () -> debug "assets extracted") ()
+              [ TouchPhaseEnded ->
+                let img1 = Image.load "Russia.png" in
+                (
+                  s#addChild img1;
+                  img1#setX 200.;
+                  img1#setY 200.;
+                )
               | _ -> () (* debug "some other phase" *)
               ]
           )
@@ -1042,6 +1048,14 @@ value assets (s:Stage.c) =
     ));
 
     s#addChild img;
+
+    let tw = Tween.create ~transition:`easeInOut 1. in
+    (
+      tw#animate img#prop'x 200.;
+      Stage.addTween tw;
+    );
+
+    Lightning.extractAssets (fun () -> debug "assets extracted") ();
   );
     
 value udid (self:Stage.c) = 
@@ -1206,13 +1220,7 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-
-
-      (* Lightning.extractAssets (fun () -> debug "assets extracted") (); *)
-      (* avsound self "melody0.mp3"; *)
-
-      assets self;
-      (* Lightning.extractAssets (fun () -> ()) (); *)
+(*       avsound self "melody0.mp3"; *)
       (*
       debug "qweqweqweqwe";
       ignore(self#addEventListener Stage.ev_BACK_PRESSED (fun ev _ _ -> ( debug "pizda"; Ev.stopPropagation ev; )));
@@ -1235,6 +1243,7 @@ let stage width height =
           self#addChild tlf;
 *)
         (* map self; *)
+(*         glow self; *)
 (*         image self; *)
 (*         rec_fun self; *)
 (*         test_alpha self; *)
@@ -1274,7 +1283,7 @@ let stage width height =
 (*         zsort self; *)
       (* localNotif (); *)
 (*           music self; *)
-          (* tlf self; *)
+          tlf self;
 (*           quad self; *)
           (* hardware self; *)
 (*           glow_and_gc self; *)

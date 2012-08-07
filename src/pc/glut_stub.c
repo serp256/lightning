@@ -126,6 +126,30 @@ void ml_glutIdleFunc(value idle) {
 	glutIdleFunc (on_idle);
 }
 
+#define NUM_TIMERS 10
+value timers[NUM_TIMERS];
+
+void on_timer(int timer_id) {
+	caml_acquire_runtime_system();
+	value f = timers[timer_id];
+	caml_remove_generational_global_root(timers + timer_id); /* GC ? */
+	timers[timer_id] = 0;
+	caml_callback(f,Val_unit);
+	caml_release_runtime_system();
+}
+
+void ml_glutTimerFunc(value mltime,value tf) {
+	double time = Double_val(mltime);
+	unsigned int msecs = (unsigned int)(time * 1000);
+	fprintf(stderr,"timer on %hd msec\n",msecs);
+	int i = 0;
+	while (i < NUM_TIMERS && timers[i] != 0) i++;
+	if (i >= NUM_TIMERS) caml_failwith("too many timers");
+	timers[i] = tf;
+	caml_register_generational_global_root(timers + i);
+	glutTimerFunc(msecs,on_timer,i);
+}
+
 
 void ml_glutPostRedisplay(void) {
 	glutPostRedisplay();
