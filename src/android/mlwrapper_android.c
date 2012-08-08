@@ -106,8 +106,21 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 }
 */
 
-static char *gAssetsDir = NULL;
-static value assetsExtractedCb;
+static char* gAssetsDir;
+
+void ml_setAssetsDir(value vassDir) {
+	char* cassDir = String_val(vassDir);
+	
+	if (gAssetsDir)	{
+		free(gAssetsDir);
+	}
+
+	gAssetsDir = (char*)malloc(strlen(cassDir) + 1);
+	strcpy(gAssetsDir, cassDir);
+
+	DEBUGF("ml_setAssetsDir %s", gAssetsDir);
+}
+/*static value assetsExtractedCb;
 
 JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env, jobject this, jstring assetsDir) {
 	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, 0);
@@ -124,17 +137,21 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env,
 	}
 
 	caml_callback(assetsExtractedCb, Val_unit);
-}
+}*/
 
 // NEED rewrite it for libzip
 int getResourceFd(const char *path, resource *res) { //{{{
 	DEBUGF("getResourceFD: %s",path);
 
 	if (gAssetsDir != NULL) {
-		char *assetPath = (char*) malloc(strlen(gAssetsDir) + strlen(path) + 1);
+		int assetsDirLen = strlen(gAssetsDir);
+		int pathLen = strlen(path);
+
+		char *assetPath = (char*)malloc(assetsDirLen + pathLen + 1);
 		strcpy(assetPath, gAssetsDir);
-		strcat(assetPath, "/");
-		strcat(assetPath, path);
+		strcpy(assetPath + assetsDirLen, path);
+
+		DEBUGF("assetPath: %s", assetPath);
 
 		int fd = open(assetPath, O_RDONLY);
 		free(assetPath);

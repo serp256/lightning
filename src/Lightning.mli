@@ -26,5 +26,5 @@ value extractAssets: (unit -> unit) -> unit;
 value getMACID: unit -> string;
 
 IFDEF ANDROID THEN
-value unzip : string -> string -> (unit -> unit) -> unit;
+value unzip : ?testPathFunc:(string -> bool) -> string -> string -> (unit -> unit) -> unit;
 ENDIF;

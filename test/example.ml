@@ -902,7 +902,7 @@ value social (stage:Stage.c) =
 
 
 value tweens (stage:Stage.c) =
-  let bt = Image.load "prof.jpg" in 
+  let bt = Image.load "tree.png" in 
   let () = stage#addChild bt in
   let tweenY = Tween.create ~transition:`easeOutBounce 10.
   (* and tweenX = Tween.create 0.7 *)

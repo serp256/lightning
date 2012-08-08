@@ -87,7 +87,7 @@ int makedir (char *newdir)
   return 1;
 }
 
-int do_extract_currentfile(unzFile uf, const char* dst)
+int do_extract_currentfile(unzFile uf, const char* dst, value testPathFunc)
 {
     char filename_inzip[256];
     char* filename_withoutpath;
@@ -100,8 +100,9 @@ int do_extract_currentfile(unzFile uf, const char* dst)
     unz_file_info64 file_info;
     err = unzGetCurrentFileInfo64(uf,&file_info,filename_inzip,sizeof(filename_inzip),NULL,0,NULL,0);
 
-    if (!strstr(filename_inzip, "assets")) {
-        return UNZ_OK;
+    if (caml_callback(testPathFunc, caml_copy_string(filename_inzip)) == Val_false) {
+      PRINT_DEBUG("skiping %s due to test path function fail", filename_inzip);
+      return UNZ_OK;
     }
 
     if (err!=UNZ_OK)
@@ -215,7 +216,7 @@ int do_extract_currentfile(unzFile uf, const char* dst)
     return err;
 }
 
-int do_extract(const char* zip_path, const char* dst)
+int do_extract(const char* zip_path, const char* dst, value testPathFunc)
 {
   unzFile uf = unzOpen64(zip_path);
 
@@ -236,7 +237,7 @@ int do_extract(const char* zip_path, const char* dst)
 
   for (i=0;i<gi.number_entry;i++)
   {
-      if (do_extract_currentfile(uf, dst) != UNZ_OK)
+      if (do_extract_currentfile(uf, dst, testPathFunc) != UNZ_OK)
           break;
 
       if ((i+1)<gi.number_entry)
@@ -288,13 +289,14 @@ value ml_externalStoragePath() {
 typedef struct {
   char* zipPath;
   char* dstPath;
+  value testPathFunc
 } unzip_paths_t;
 
 static jmethodID gCallUnzipCompleteMid;
 
 void* miniunz_thread(void* params) {
   unzip_paths_t* paths = (unzip_paths_t*) params;
-  do_extract(paths->zipPath, paths->dstPath);
+  do_extract(paths->zipPath, paths->dstPath, paths->testPathFunc);
 
   JNIEnv *env;
   (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
@@ -318,14 +320,17 @@ void* miniunz_thread(void* params) {
   pthread_exit(NULL);
 }
 
-void ml_miniunz(value vzipPath, value vdstPath) {
+void ml_miniunz(value vzipPath, value vdstPath, value testPathFunc) {
   unzip_paths_t* paths = (unzip_paths_t*)malloc(sizeof(unzip_paths_t));
 
   char* czipPath = String_val(vzipPath);
   char* cdstPath = String_val(vdstPath);
 
+  caml_register_generational_global_root(&testPathFunc);
+
   paths->zipPath = (char*)malloc(strlen(czipPath) + 1);
   paths->dstPath = (char*)malloc(strlen(cdstPath) + 1);
+  paths->testPathFunc = testPathFunc;
 
   strcpy(paths->zipPath, czipPath);
   strcpy(paths->dstPath, cdstPath);

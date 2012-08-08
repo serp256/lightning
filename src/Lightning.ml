@@ -109,16 +109,17 @@ ENDIF;
 
 IFDEF ANDROID THEN
 
-external miniunz : string -> string -> unit = "ml_miniunz";
+external miniunz : string -> string -> (string -> bool) -> unit = "ml_miniunz";
 external apkPath : unit -> string = "ml_apkPath";
 external externalStoragePath : unit -> string = "ml_externalStoragePath";
+external setAssetsDir : string -> unit = "ml_setAssetsDir";
 
 value unzipCbs = Hashtbl.create 0;
 
-value unzip zipPath dstPath cb =
+value unzip ?testPathFunc zipPath dstPath cb =
 (
   Hashtbl.add unzipCbs (zipPath, dstPath) cb;
-  miniunz zipPath dstPath;
+  miniunz zipPath dstPath (match testPathFunc with [ Some f -> f | _ -> fun _ -> True ]);
 );
 
 value unzipComplete zipPath dstPath =
@@ -129,7 +130,8 @@ value unzipComplete zipPath dstPath =
     ));
 
 value extractAssets cb =
-  unzip (apkPath ()) (externalStoragePath ()) cb;
+  let extrnlStotagePath = externalStoragePath () in
+    unzip ~testPathFunc:(fun path -> ExtString.String.starts_with path "assets") (apkPath ()) extrnlStotagePath (fun () -> ( setAssetsDir (extrnlStotagePath ^ "assets/"); cb (); ));
 
 Callback.register "unzipComplete" unzipComplete;
 
