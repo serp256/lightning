@@ -110,27 +110,31 @@ ENDIF;
 IFDEF ANDROID THEN
 
 external miniunz : string -> string -> unit = "ml_miniunz";
-external apkPath : string = "ml_apkPath";
-external externalStoragePath : string = "ml_externalStoragePath";
+external apkPath : unit -> string = "ml_apkPath";
+external externalStoragePath : unit -> string = "ml_externalStoragePath";
 
 value unzipCbs = Hashtbl.create 0;
 
-value unzip path cb =
+value unzip zipPath dstPath cb =
 (
-  Hashtbl.add unzipCbs path cb;
-  miniunz path cb;
+  Hashtbl.add unzipCbs (zipPath, dstPath) cb;
+  miniunz zipPath dstPath;
 );
 
-value unzipComplete path =
-  List.iter (fun cb -> cb ()) (Hashtbl.find_all unzipCbs path);
+value unzipComplete zipPath dstPath =
+  let key = (zipPath, dstPath) in
+    ExtHashtbl.((
+      List.iter (fun cb -> cb ()) (Hashtbl.find_all unzipCbs key);
+      Hashtbl.remove_all unzipCbs key;
+    ));
 
-value extractAssets () =
-  unzip apkPath externalStoragePath; 
+value extractAssets cb =
+  unzip (apkPath ()) (externalStoragePath ()) cb;
 
 Callback.register "unzipComplete" unzipComplete;
 
 ELSE
-value extractAssets (cb:(unit -> unit)) () = ();
+value extractAssets (cb:(unit -> unit)) = ();
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";

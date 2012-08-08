@@ -902,7 +902,7 @@ value social (stage:Stage.c) =
 
 
 value tweens (stage:Stage.c) =
-  let bt = Image.load "tree.png" in 
+  let bt = Image.load "prof.jpg" in 
   let () = stage#addChild bt in
   let tweenY = Tween.create ~transition:`easeOutBounce 10.
   (* and tweenX = Tween.create 0.7 *)
@@ -916,7 +916,7 @@ value tweens (stage:Stage.c) =
     (* tweenX#animate bt#prop'x 300.; *)
     tweenY#animate bt#prop'y 600.;
     (* tweenAlpha#animate bt#prop'alpha 0.5; *)
-    (* tweenX#setOnComplete (fun () -> Stage.removeTween tweenX); *)
+    (* tweenX#setOnComplete (fun () -> Stage.removeg tweenX); *)
     (* tweenY#setOnComplete (fun () -> Stage.removeTween tweenY); *)
     (* tweenAlpha#setOnComplete begin fun () ->  
       (
@@ -1023,6 +1023,7 @@ value touchesTest(stage:Stage.c) =
 );
 
 value assets (s:Stage.c) =
+(
   let img = Image.load "prof.jpg" in
   (
     ignore(Stage.(
@@ -1031,7 +1032,28 @@ value assets (s:Stage.c) =
         [ Some [ touch :: _ ] ->
           Touch.(
               match touch.phase with
-              [ TouchPhaseEnded -> Lightning.extractAssets (fun () -> debug "assets extracted") ()
+              [ TouchPhaseEnded -> Lightning.extractAssets (fun () -> debug "assets extracted")
+              | _ -> ()
+              ]
+          )
+        | _ -> ()
+        ]
+      )
+    ));
+    s#addChild img;
+  );
+
+  let img = Image.load "prof.jpg" in
+  (
+    ignore(Stage.(
+      img#addEventListener ev_TOUCH (fun ev _ _ ->
+        match touches_of_data ev.Ev.data with
+        [ Some [ touch :: _ ] ->
+          Touch.(
+              match touch.phase with
+              [ TouchPhaseEnded ->
+                let snd = Sound.createChannel (Sound.load "melody0.mp3") in
+                  snd#play ()
               | _ -> ()
               ]
           )
@@ -1040,8 +1062,32 @@ value assets (s:Stage.c) =
       )
     ));
 
+    img#setX 300.;
     s#addChild img;
   );
+
+  let img = Image.load "prof.jpg" in
+  (
+    ignore(Stage.(
+      img#addEventListener ev_TOUCH (fun ev _ _ ->
+        match touches_of_data ev.Ev.data with
+        [ Some [ touch :: _ ] ->
+          Touch.(
+              match touch.phase with
+              [ TouchPhaseEnded -> tweens s
+              | _ -> ()
+              ]
+          )
+        | _ -> ()
+        ]
+      )
+    ));
+
+    img#setY 300.;
+    s#addChild img;
+  );
+);
+
     
 value udid (self:Stage.c) = 
   let text = Lightning.getMACID () in

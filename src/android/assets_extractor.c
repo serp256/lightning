@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/stat.h>
+#include <pthread.h>
 
 #include "assets_extractor.h"
 
@@ -254,23 +255,19 @@ int do_extract(const char* zip_path, const char* dst)
   return err;
 }
 
-void ml_miniunz(value zipPath, value dstPath) {
-
-}
-
 static value vapkPath;
 static value vexternalStoragePath;
 
 value getPath(const char* methodName, value* vpath) {
-  if (*vapkPath == NULL) {
+  if (!(*vpath)) {
     JNIEnv *env;
     (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
     jmethodID mid = (*env)->GetMethodID(env, jViewCls, methodName, "()Ljava/lang/String;");
     jstring jpath = (*env)->CallObjectMethod(env, jView, mid);
-    char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
+    const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
 
-    *vpath = caml_copy_string(capkPath);
+    *vpath = caml_copy_string(cpath);
     caml_register_generational_global_root(vpath);
 
     (*env)->ReleaseStringUTFChars(env, jpath, cpath);
@@ -288,58 +285,84 @@ value ml_externalStoragePath() {
   return getPath("getExternalStoragePath", &vexternalStoragePath);
 }
 
-void ml_miniunz(value vzipPath, value vdstPath) {  
+typedef struct {
+  char* zipPath;
+  char* dstPath;
+} unzip_paths_t;
+
+static jmethodID gCallUnzipCompleteMid;
+
+void* miniunz_thread(void* params) {
+  unzip_paths_t* paths = (unzip_paths_t*) params;
+  do_extract(paths->zipPath, paths->dstPath);
+
+  JNIEnv *env;
+  (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+
+  if (!gCallUnzipCompleteMid) {
+    gCallUnzipCompleteMid = (*env)->GetMethodID(env, jViewCls, "callUnzipComplete", "(Ljava/lang/String;Ljava/lang/String;)V");
+  }
+
+  jstring jzipPath = (*env)->NewStringUTF(env, paths->zipPath);
+  jstring jdstPath = (*env)->NewStringUTF(env, paths->dstPath);
+  (*env)->CallVoidMethod(env, jView, gCallUnzipCompleteMid, jzipPath, jdstPath);
+
+  (*env)->DeleteLocalRef(env, jzipPath);
+  (*env)->DeleteLocalRef(env, jdstPath);
+  (*gJavaVM)->DetachCurrentThread(gJavaVM);
+
+  free(paths->zipPath);
+  free(paths->dstPath);
+  free(paths);
+
+  pthread_exit(NULL);
 }
 
-/*JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024ExtractAssetsTask_extractAssets(JNIEnv *env, jobject this, jstring apkPath, jstring dst) {
-  const char* capkPath = (*env)->GetStringUTFChars(env, apkPath, JNI_FALSE);
-  const char* cdst = (*env)->GetStringUTFChars(env, dst, JNI_FALSE);
+void ml_miniunz(value vzipPath, value vdstPath) {
+  unzip_paths_t* paths = (unzip_paths_t*)malloc(sizeof(unzip_paths_t));
 
-  do_extract(capkPath, cdst);
+  char* czipPath = String_val(vzipPath);
+  char* cdstPath = String_val(vdstPath);
 
-  (*env)->ReleaseStringUTFChars(env, apkPath, capkPath);
-  (*env)->ReleaseStringUTFChars(env, dst, cdst);
-}*/
+  paths->zipPath = (char*)malloc(strlen(czipPath) + 1);
+  paths->dstPath = (char*)malloc(strlen(cdstPath) + 1);
 
-/*JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024ExtractAssetsTask_assetsExtracted(JNIEnv *env, jobject this, jint jcbptr) {
-  value* cbptr = (value*)jcbptr;
-  value cb = *((value*)cbptr);
+  strcpy(paths->zipPath, czipPath);
+  strcpy(paths->dstPath, cdstPath);
 
-  caml_callback(cb, Val_unit);
-  caml_remove_generational_global_root(cbptr);  
-}*/
+  pthread_t tid;
 
-/*void ml_extractAssets(value cb) {
-  value *cbptr = malloc(sizeof(value));
-  *cbptr = cb;
-  caml_register_generational_global_root(cbptr);
+  if (pthread_create(&tid, NULL, miniunz_thread, (void*) paths)) {
+    PRINT_DEBUG("cannot create thread");
+  }
+}
 
-  JNIEnv *env;
-  (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+static jclass gRunnableCls;
+static jfieldID gZipPathFid;
+static jfieldID gDstPathFid;
 
-  jmethodID mid = (*env)->GetMethodID(env, jViewCls, "extractAssets", "(I)V");
-  (*env)->CallVoidMethod(env, jView, mid, (jint)cbptr);
-}*/
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024UnzipCallbackRunnable_run(JNIEnv *env, jobject this) {
+  if (!gRunnableCls) {
+    jclass runnableCls = (*env)->GetObjectClass(env, this);
+    gRunnableCls = (*env)->NewGlobalRef(env, runnableCls);
+    (*env)->DeleteLocalRef(env, runnableCls);
 
-/*void ml_extractAssets(value callback) {
-  JNIEnv *env;
-  (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+    gZipPathFid = (*env)->GetFieldID(env, gRunnableCls, "zipPath", "Ljava/lang/String;");
+    gDstPathFid = (*env)->GetFieldID(env, gRunnableCls, "dstPath", "Ljava/lang/String;");
+  }
 
-  jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getContext", "()Landroid/content/Context;");
-  jobject context = (*env)->CallObjectMethod(env, jView, mid);
-  
-  jclass contextCls = (*env)->GetObjectClass(env, context);
-  mid = (*env)->GetMethodID(env, contextCls, "getPackageCodePath", "()Ljava/lang/String;");
-  jstring japkPath = (*env)->CallObjectMethod(env, context, mid);
+  jstring jzipPath = (*env)->GetObjectField(env, this, gZipPathFid);
+  jstring jdstPath = (*env)->GetObjectField(env, this, gDstPathFid);
+  const char* czipPath = (*env)->GetStringUTFChars(env, jzipPath, JNI_FALSE);
+  const char* cdstPath = (*env)->GetStringUTFChars(env, jdstPath, JNI_FALSE);
 
-  const char* capkPath = (*env)->GetStringUTFChars(env, japkPath, JNI_FALSE);
+  value vzipPath = caml_copy_string(czipPath);
+  value vdstPath = caml_copy_string(cdstPath);
 
-  mid = (*env)->GetMethodID(env, jViewCls, "getAssetsDir", "()Ljava/lang/String;");
-  jstring jexternalStoragePath = (*env)->CallObjectMethod(env, jView, mid);
-  const char* cexternalStoragePath = (*env)->GetStringUTFChars(env, jexternalStoragePath, JNI_FALSE);
+  caml_callback2(*caml_named_value("unzipComplete"), vzipPath, vdstPath);
 
-  int retval = do_extract(capkPath, cexternalStoragePath);
-
-  (*env)->ReleaseStringUTFChars(env, jexternalStoragePath, cexternalStoragePath);
-  (*env)->DeleteLocalRef(env, jexternalStoragePath);
-}*/
+  (*env)->ReleaseStringUTFChars(env, jzipPath, czipPath);
+  (*env)->ReleaseStringUTFChars(env, jdstPath, cdstPath);
+  (*env)->DeleteLocalRef(env, jzipPath);
+  (*env)->DeleteLocalRef(env, jdstPath);
+}

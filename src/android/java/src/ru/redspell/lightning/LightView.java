@@ -40,15 +40,21 @@ import android.media.AudioManager;
 import android.os.Process;
 
 public class LightView extends GLSurfaceView {
-			Context context = getContext();
-			File storageDir = context.getExternalFilesDir(null);
-			File assetsDir = new File(storageDir, "assets");
+	private class UnzipCallbackRunnable implements Runnable {
+		private String zipPath;
+		private String dstPath;
 
-			if (!assetsDir.exists()) {
-				assetsDir.mkdir();
-			}
+		public UnzipCallbackRunnable(String zipPath, String dstPath) {
+			this.zipPath = zipPath;
+			this.dstPath = dstPath;
+		}
 
-			extractAssets(storageDir.getAbsolutePath() + "/", context.getPackageCodePath());
+		public native void run();
+	}
+
+	public void callUnzipComplete(String zipPath, String dstPath) {
+		queueEvent(new UnzipCallbackRunnable(zipPath, dstPath));
+	}
 
 	public String getApkPath() {
 		return getContext().getPackageCodePath();

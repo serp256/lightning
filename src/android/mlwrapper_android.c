@@ -695,17 +695,17 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 		}
 
 		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
-
-		if (gLmpCls == NULL) {
-			gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
-		}
-
-		if (gLmpPauseAll == NULL) {
-			gLmpPauseAll = (*env)->GetStaticMethodID(env, gLmpCls, "pauseAll", "()V");
-		}
-
-		(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpPauseAll);
 	}
+
+	if (gLmpCls == NULL) {
+		gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
+	}
+
+	if (gLmpPauseAll == NULL) {
+		gLmpPauseAll = (*env)->GetStaticMethodID(env, gLmpCls, "pauseAll", "()V");
+	}
+
+	(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpPauseAll);	
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
@@ -720,17 +720,17 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 		}
 
 		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
-
-		if (gLmpCls == NULL) {
-			gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
-		}
-
-		if (gLmpResumeAll == NULL) {
-			gLmpResumeAll = (*env)->GetStaticMethodID(env, gLmpCls, "resumeAll", "()V");
-		}
-
-		(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpResumeAll);
 	}
+
+	if (gLmpCls == NULL) {
+		gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
+	}
+
+	if (gLmpResumeAll == NULL) {
+		gLmpResumeAll = (*env)->GetStaticMethodID(env, gLmpCls, "resumeAll", "()V");
+	}
+
+	(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpResumeAll);	
 }
 
 /* Updated upstream
