@@ -36,5 +36,6 @@ void ml_alsoundSetVolume(value streamId, value vol);
 void ml_alsoundSetLoop(value streamId, value loop);
 void ml_paymentsTest();
 void ml_openURL(value url);
+void ml_setAssetsDir(value vassDir);
 
 #endif

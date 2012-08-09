@@ -106,8 +106,21 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 }
 */
 
-static char *gAssetsDir = NULL;
-static value assetsExtractedCb;
+static char* gAssetsDir;
+
+void ml_setAssetsDir(value vassDir) {
+	char* cassDir = String_val(vassDir);
+	
+	if (gAssetsDir)	{
+		free(gAssetsDir);
+	}
+
+	gAssetsDir = (char*)malloc(strlen(cassDir) + 1);
+	strcpy(gAssetsDir, cassDir);
+
+	DEBUGF("ml_setAssetsDir %s", gAssetsDir);
+}
+/*static value assetsExtractedCb;
 
 JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env, jobject this, jstring assetsDir) {
 	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, 0);
@@ -124,17 +137,21 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env,
 	}
 
 	caml_callback(assetsExtractedCb, Val_unit);
-}
+}*/
 
 // NEED rewrite it for libzip
 int getResourceFd(const char *path, resource *res) { //{{{
 	DEBUGF("getResourceFD: %s",path);
 
 	if (gAssetsDir != NULL) {
-		char *assetPath = (char*) malloc(strlen(gAssetsDir) + strlen(path) + 1);
+		int assetsDirLen = strlen(gAssetsDir);
+		int pathLen = strlen(path);
+
+		char *assetPath = (char*)malloc(assetsDirLen + pathLen + 1);
 		strcpy(assetPath, gAssetsDir);
-		strcat(assetPath, "/");
-		strcat(assetPath, path);
+		strcpy(assetPath + assetsDirLen, path);
+
+		DEBUGF("assetPath: %s", assetPath);
 
 		int fd = open(assetPath, O_RDONLY);
 		free(assetPath);
@@ -711,17 +728,17 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 		}
 
 		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
-
-		if (gLmpCls == NULL) {
-			gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
-		}
-
-		if (gLmpPauseAll == NULL) {
-			gLmpPauseAll = (*env)->GetStaticMethodID(env, gLmpCls, "pauseAll", "()V");
-		}
-
-		(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpPauseAll);
 	}
+
+	if (gLmpCls == NULL) {
+		gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
+	}
+
+	if (gLmpPauseAll == NULL) {
+		gLmpPauseAll = (*env)->GetStaticMethodID(env, gLmpCls, "pauseAll", "()V");
+	}
+
+	(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpPauseAll);	
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
@@ -736,17 +753,17 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 		}
 
 		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
-
-		if (gLmpCls == NULL) {
-			gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
-		}
-
-		if (gLmpResumeAll == NULL) {
-			gLmpResumeAll = (*env)->GetStaticMethodID(env, gLmpCls, "resumeAll", "()V");
-		}
-
-		(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpResumeAll);
 	}
+
+	if (gLmpCls == NULL) {
+		gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
+	}
+
+	if (gLmpResumeAll == NULL) {
+		gLmpResumeAll = (*env)->GetStaticMethodID(env, gLmpCls, "resumeAll", "()V");
+	}
+
+	(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpResumeAll);	
 }
 
 /* Updated upstream
@@ -896,93 +913,6 @@ void ml_payment_commit_transaction(value transaction) {
 }
 */
 
-void ml_extractAssets(value callback) {
-	DEBUG("ml_extractAssets call");
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	DEBUG("getting context...");
-
-	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getContext", "()Landroid/content/Context;");
-	jobject context = (*env)->CallObjectMethod(env, jView, mid);
-
-	DEBUG("done, getting apk path...");
-	
-	jclass contextCls = (*env)->GetObjectClass(env, context);
-	mid = (*env)->GetMethodID(env, contextCls, "getPackageCodePath", "()Ljava/lang/String;");
-	jstring japkPath = (*env)->CallObjectMethod(env, context, mid);
-
-	DEBUG("done");
-
-	const char* capkPath = (*env)->GetStringUTFChars(env, japkPath, JNI_FALSE);
-
-	DEBUG("opening apk...");
-
-	unzFile uf = unzOpen64(capkPath);
-
-	DEBUG("done");
-
-	if (uf == NULL) {
-		DEBUG("error");
-
-		char* exptnMes = calloc(256, sizeof(char));
-		sprintf(exptnMes, "cannot unzip file %s", capkPath);
-		caml_failwith(exptnMes);
-		free(exptnMes);
-	} else {
-		DEBUG("ok");
-
-		/*
-		mid = (*env)->GetMethodID(env, contextCls, "getExternalFilesDir", "(Ljava/lang/String;)Ljava/io/File;");
-		jstring jtypeParam = (*env)->NewStringUTF(env, "assets");
-		jobject externalStorageDir = (*env)->CallObjectMethod(env, context, mid, jtypeParam);
-
-		jclass fileCls = (*env)->GetObjectClass(env, externalStorageDir);
-		mid = (*env)->GetMethodID(env, fileCls, "getAbsolutePath", "()Ljava/lang/String;");
-		jstring jexternalStoragePath = (*env)->CallObjectMethod(env, externalStorageDir, mid);
-
-		const char* _cexternalStoragePath = (*env)->GetStringUTFChars(env, jexternalStoragePath, JNI_FALSE);
-		int pathlen = strlen(_cexternalStoragePath);
-		char* cexternalStoragePath = malloc(pathlen + 2);
-
-		strcpy(cexternalStoragePath, _cexternalStoragePath);
-		*(cexternalStoragePath + pathlen) = '/';
-		*(cexternalStoragePath + pathlen + 1) = '\0';*/
-
-		mid = (*env)->GetMethodID(env, jViewCls, "getAssetsDir", "()Ljava/lang/String;");
-		jstring jexternalStoragePath = (*env)->CallObjectMethod(env, jView, mid);
-		const char* cexternalStoragePath = (*env)->GetStringUTFChars(env, jexternalStoragePath, JNI_FALSE);
-
-		DEBUG("trying to extract...");
-
-		int retval = do_extract(uf, cexternalStoragePath);
-
-		DEBUGF("done, retval %d", retval);
-
-		unzClose(uf);
-
-		(*env)->ReleaseStringUTFChars(env, jexternalStoragePath, cexternalStoragePath);
-
-		//(*env)->DeleteLocalRef(env, jtypeParam);
-		//(*env)->DeleteLocalRef(env, externalStorageDir);
-		//(*env)->DeleteLocalRef(env, fileCls);
-		(*env)->DeleteLocalRef(env, jexternalStoragePath);
-	}
-}
-
-/*
-void ml_extractAssets(value callback) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	assetsExtractedCb = callback;
-	caml_register_generational_global_root(&callback);
-
-	jmethodID extractResources = (*env)->GetMethodID(env, jViewCls, "extractAssets", "()V");
-	(*env)->CallVoidMethod(env, jView, extractResources);
-}
-*/
 
 void ml_openURL(value  url) {
 	JNIEnv *env;

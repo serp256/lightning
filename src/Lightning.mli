@@ -22,5 +22,9 @@ value getLocale: unit -> string;
 
 value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
-value extractAssets: (unit -> unit) -> unit -> unit;
+value extractAssets: (unit -> unit) -> unit;
 value getMACID: unit -> string;
+
+IFDEF ANDROID THEN
+value unzip : ?testPathFunc:(string -> bool) -> string -> string -> (unit -> unit) -> unit;
+ENDIF;

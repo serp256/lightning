@@ -108,9 +108,35 @@ value setSupportEmail (_:string) = ();
 ENDIF;
 
 IFDEF ANDROID THEN
-external extractAssets : (unit -> unit) -> unit -> unit = "ml_extractAssets";
+
+external miniunz : string -> string -> (string -> bool) -> unit = "ml_miniunz";
+external apkPath : unit -> string = "ml_apkPath";
+external externalStoragePath : unit -> string = "ml_externalStoragePath";
+external setAssetsDir : string -> unit = "ml_setAssetsDir";
+
+value unzipCbs = Hashtbl.create 0;
+
+value unzip ?testPathFunc zipPath dstPath cb =
+(
+  Hashtbl.add unzipCbs (zipPath, dstPath) cb;
+  miniunz zipPath dstPath (match testPathFunc with [ Some f -> f | _ -> fun _ -> True ]);
+);
+
+value unzipComplete zipPath dstPath =
+  let key = (zipPath, dstPath) in
+    ExtHashtbl.((
+      List.iter (fun cb -> cb ()) (Hashtbl.find_all unzipCbs key);
+      Hashtbl.remove_all unzipCbs key;
+    ));
+
+value extractAssets cb =
+  let extrnlStotagePath = externalStoragePath () in
+    unzip ~testPathFunc:(fun path -> ExtString.String.starts_with path "assets") (apkPath ()) extrnlStotagePath (fun () -> ( setAssetsDir (extrnlStotagePath ^ "assets/"); cb (); ));
+
+Callback.register "unzipComplete" unzipComplete;
+
 ELSE
-value extractAssets (cb:(unit -> unit)) () = ();
+value extractAssets (cb:(unit -> unit)) = ();
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";

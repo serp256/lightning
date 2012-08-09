@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/stat.h>
+#include <pthread.h>
 
 #include "assets_extractor.h"
-#include "light_common.h"
 
 void change_file_date(const char *filename,uLong dosdate,tm_unz tmu_date)
 {
@@ -87,7 +87,7 @@ int makedir (char *newdir)
   return 1;
 }
 
-int do_extract_currentfile(unzFile uf, const char* dst)
+int do_extract_currentfile(unzFile uf, const char* dst, value testPathFunc)
 {
     char filename_inzip[256];
     char* filename_withoutpath;
@@ -100,8 +100,9 @@ int do_extract_currentfile(unzFile uf, const char* dst)
     unz_file_info64 file_info;
     err = unzGetCurrentFileInfo64(uf,&file_info,filename_inzip,sizeof(filename_inzip),NULL,0,NULL,0);
 
-    if (!strstr(filename_inzip, "assets")) {
-        return UNZ_OK;
+    if (caml_callback(testPathFunc, caml_copy_string(filename_inzip)) == Val_false) {
+      PRINT_DEBUG("skiping %s due to test path function fail", filename_inzip);
+      return UNZ_OK;
     }
 
     if (err!=UNZ_OK)
@@ -215,31 +216,158 @@ int do_extract_currentfile(unzFile uf, const char* dst)
     return err;
 }
 
-int do_extract(unzFile uf, const char* dst)
+int do_extract(const char* zip_path, const char* dst, value testPathFunc)
 {
-    uLong i;
-    unz_global_info64 gi;
-    int err;
+  unzFile uf = unzOpen64(zip_path);
 
-    err = unzGetGlobalInfo64(uf,&gi);
-    if (err!=UNZ_OK)
-        PRINT_DEBUG("error %d with zipfile in unzGetGlobalInfo \n",err);
+  if (uf == NULL) {
+    PRINT_DEBUG("cannot unzip file %s", zip_path);
+    return UNZ_ERRNO;
+  }
 
-    for (i=0;i<gi.number_entry;i++)
-    {
-        if (do_extract_currentfile(uf, dst) != UNZ_OK)
-            break;
+  uLong i;
+  unz_global_info64 gi;
+  int err;
 
-        if ((i+1)<gi.number_entry)
-        {
-            err = unzGoToNextFile(uf);
-            if (err!=UNZ_OK)
-            {
-                PRINT_DEBUG("error %d with zipfile in unzGoToNextFile\n",err);
-                break;
-            }
-        }
-    }
+  err = unzGetGlobalInfo64(uf,&gi);
+  if (err!=UNZ_OK) {
+    PRINT_DEBUG("error %d with zipfile in unzGetGlobalInfo \n",err);
+    return err;
+  }
 
-    return 0;
+  for (i=0;i<gi.number_entry;i++)
+  {
+      if (do_extract_currentfile(uf, dst, testPathFunc) != UNZ_OK)
+          break;
+
+      if ((i+1)<gi.number_entry)
+      {
+          err = unzGoToNextFile(uf);
+          if (err!=UNZ_OK)
+          {
+              PRINT_DEBUG("error %d with zipfile in unzGoToNextFile\n",err);
+              break;
+          }
+      }
+  }
+
+  unzClose(uf);
+
+  return err;
+}
+
+static value vapkPath;
+static value vexternalStoragePath;
+
+value getPath(const char* methodName, value* vpath) {
+  if (!(*vpath)) {
+    JNIEnv *env;
+    (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+    jmethodID mid = (*env)->GetMethodID(env, jViewCls, methodName, "()Ljava/lang/String;");
+    jstring jpath = (*env)->CallObjectMethod(env, jView, mid);
+    const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
+
+    *vpath = caml_copy_string(cpath);
+    caml_register_generational_global_root(vpath);
+
+    (*env)->ReleaseStringUTFChars(env, jpath, cpath);
+    (*env)->DeleteLocalRef(env, jpath);
+  }
+
+  return *vpath;
+}
+
+value ml_apkPath() {
+  return getPath("getApkPath", &vapkPath);
+}
+
+value ml_externalStoragePath() {
+  return getPath("getExternalStoragePath", &vexternalStoragePath);
+}
+
+typedef struct {
+  char* zipPath;
+  char* dstPath;
+  value testPathFunc
+} unzip_paths_t;
+
+static jmethodID gCallUnzipCompleteMid;
+
+void* miniunz_thread(void* params) {
+  unzip_paths_t* paths = (unzip_paths_t*) params;
+  do_extract(paths->zipPath, paths->dstPath, paths->testPathFunc);
+
+  JNIEnv *env;
+  (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+
+  if (!gCallUnzipCompleteMid) {
+    gCallUnzipCompleteMid = (*env)->GetMethodID(env, jViewCls, "callUnzipComplete", "(Ljava/lang/String;Ljava/lang/String;)V");
+  }
+
+  jstring jzipPath = (*env)->NewStringUTF(env, paths->zipPath);
+  jstring jdstPath = (*env)->NewStringUTF(env, paths->dstPath);
+  (*env)->CallVoidMethod(env, jView, gCallUnzipCompleteMid, jzipPath, jdstPath);
+
+  (*env)->DeleteLocalRef(env, jzipPath);
+  (*env)->DeleteLocalRef(env, jdstPath);
+  (*gJavaVM)->DetachCurrentThread(gJavaVM);
+
+  free(paths->zipPath);
+  free(paths->dstPath);
+  free(paths);
+
+  pthread_exit(NULL);
+}
+
+void ml_miniunz(value vzipPath, value vdstPath, value testPathFunc) {
+  unzip_paths_t* paths = (unzip_paths_t*)malloc(sizeof(unzip_paths_t));
+
+  char* czipPath = String_val(vzipPath);
+  char* cdstPath = String_val(vdstPath);
+
+  caml_register_generational_global_root(&testPathFunc);
+
+  paths->zipPath = (char*)malloc(strlen(czipPath) + 1);
+  paths->dstPath = (char*)malloc(strlen(cdstPath) + 1);
+  paths->testPathFunc = testPathFunc;
+
+  strcpy(paths->zipPath, czipPath);
+  strcpy(paths->dstPath, cdstPath);
+
+  pthread_t tid;
+
+  if (pthread_create(&tid, NULL, miniunz_thread, (void*) paths)) {
+    PRINT_DEBUG("cannot create thread");
+  }
+}
+
+static jclass gRunnableCls;
+static jfieldID gZipPathFid;
+static jfieldID gDstPathFid;
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024UnzipCallbackRunnable_run(JNIEnv *env, jobject this) {
+  if (!gRunnableCls) {
+    jclass runnableCls = (*env)->GetObjectClass(env, this);
+    gRunnableCls = (*env)->NewGlobalRef(env, runnableCls);
+    (*env)->DeleteLocalRef(env, runnableCls);
+
+    gZipPathFid = (*env)->GetFieldID(env, gRunnableCls, "zipPath", "Ljava/lang/String;");
+    gDstPathFid = (*env)->GetFieldID(env, gRunnableCls, "dstPath", "Ljava/lang/String;");
+  }
+
+  jstring jzipPath = (*env)->GetObjectField(env, this, gZipPathFid);
+  jstring jdstPath = (*env)->GetObjectField(env, this, gDstPathFid);
+  const char* czipPath = (*env)->GetStringUTFChars(env, jzipPath, JNI_FALSE);
+  const char* cdstPath = (*env)->GetStringUTFChars(env, jdstPath, JNI_FALSE);
+
+  value vzipPath = caml_copy_string(czipPath);
+  value vdstPath = caml_copy_string(cdstPath);
+
+  caml_callback2(*caml_named_value("unzipComplete"), vzipPath, vdstPath);
+
+  (*env)->ReleaseStringUTFChars(env, jzipPath, czipPath);
+  (*env)->ReleaseStringUTFChars(env, jdstPath, cdstPath);
+  (*env)->DeleteLocalRef(env, jzipPath);
+  (*env)->DeleteLocalRef(env, jdstPath);
 }
