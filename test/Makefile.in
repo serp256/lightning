@@ -25,8 +25,8 @@ example.cmx: $(MLXFILES)
 
 example.native: $(MOBS) $(MLXFILES) example.cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa example.cmx \
-	-package extlib,xmlm,ojson,bigarray 
+	-I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa -ccopt -L../src/social/facebook ../src/social/facebook/fbconnect.cmxa example.cmx \
+	-package extlib,xmlm,ojson,bigarray -linkpkg
 
 
 .PHONY: clean

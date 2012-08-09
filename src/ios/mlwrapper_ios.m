@@ -22,6 +22,7 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
   float yConversion = mlstage->height / viewSize.height;
   mltouches = Val_int(0);
 	time = caml_copy_double(0.);
+	NSLog(@"Event number of touches: %d, touches - %d",[event allTouches].count,touches.count);
   for (UITouch *uiTouch in touches) // [event touchesForView:view])
   {
     CGPoint location = [uiTouch locationInView:view];
@@ -240,7 +241,7 @@ void ml_payment_init(value success_cb, value error_cb) {
 		c->payment_success_cb = success_cb;
 		caml_register_generational_global_root(&(c->payment_success_cb));
 		c->payment_error_cb   = error_cb;   
-		caml_register_generatinal_global_root(&(c->payment_error_cb));
+		caml_register_generational_global_root(&(c->payment_error_cb));
 		[[SKPaymentQueue defaultQueue] addTransactionObserver: c];
 	} else {
 		caml_modify_generational_global_root(&(c->payment_success_cb),success_cb);

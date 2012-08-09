@@ -282,58 +282,73 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *
 
 // Touches 
 
-void fireTouch(jint id, jfloat x, jfloat y, int phase) {
-	value touch,touches = 1;
-	Begin_roots1(touch);
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireTouch(JNIEnv *env, jobject thiz, jint id, jfloat x, jfloat y, jint phase) {
+	CAMLparam0();
+	CAMLlocal3(globalX,globalY,touch);
+	value touches = 1;
 	touch = caml_alloc_tuple(8);
+	globalX = caml_copy_double(x);
+	globalY = caml_copy_double(y);
 	Store_field(touch,0,caml_copy_int32(id + 1));
 	Store_field(touch,1,caml_copy_double(0.));
-	Store_field(touch,2,caml_copy_double(x));
-	Store_field(touch,3,caml_copy_double(y));
-	Store_field(touch,4,1);// None
-	Store_field(touch,5,1);// None
+	Store_field(touch,2,globalX);
+	Store_field(touch,3,globalY);
+	Store_field(touch,4,globalX);
+	Store_field(touch,5,globalY);
 	Store_field(touch,6,Val_int(1));// tap_count
 	Store_field(touch,7,Val_int(phase)); 
 	touches = caml_alloc_small(2,0);
 	Field(touches,0) = touch;
 	Field(touches,1) = 1; // None
-	End_roots();
   mlstage_processTouches(stage,touches);
+	CAMLreturn0;
 }
 
-void fireTouches(JNIEnv *env, jintArray ids, jfloatArray xs, jfloatArray ys, int phase) {
-	int size = (*env)->GetArrayLength(env,ids);
-	jint id[size];
-	jfloat x[size];
-	jfloat y[size];
-	(*env)->GetIntArrayRegion(env,ids,0,size,id);
-	(*env)->GetFloatArrayRegion(env,xs,0,size,x);
-	(*env)->GetFloatArrayRegion(env,ys,0,size,y);
-	value touch,globalX,globalY,lst_el,touches;
-	Begin_roots4(touch,touches,globalX,globalY);
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireTouches(JNIEnv *env, jobject thiz, jintArray jids, jfloatArray jxs, jfloatArray jys, jintArray jphases) {
+	CAMLparam0();
+	CAMLlocal5(touch,touches,globalX,globalY,timestamp);
+	int size = (*env)->GetArrayLength(env,jids);
+	jint ids[size];
+	jfloat xs[size];
+	jfloat ys[size];
+	jint phases[size];
+	(*env)->GetIntArrayRegion(env,jids,0,size,ids);
+	(*env)->GetFloatArrayRegion(env,jxs,0,size,xs);
+	(*env)->GetFloatArrayRegion(env,jys,0,size,ys);
+	(*env)->GetIntArrayRegion(env,jphases,0,size,phases);
+	value lst_el;
 	int i = 0;
 	touches = 1;
+	timestamp = caml_copy_double(0.);
 	for (i = 0; i < size; i++) {
-		globalX = caml_copy_double(x[i]);
-		globalY = caml_copy_double(y[i]);
-		touch = caml_alloc_tuple(8);
-		Store_field(touch,0,caml_copy_int32(id[i] + 1));
-		Store_field(touch,1,caml_copy_double(0.));
-		Store_field(touch,2,globalX);
-		Store_field(touch,3,globalY);
-		Store_field(touch,4,globalX);
-		Store_field(touch,5,globalY);
-		Store_field(touch,6,Val_int(1));// tap_count
-		Store_field(touch,7,Val_int(phase)); 
-		lst_el = caml_alloc_small(2,0);
-    Field(lst_el,0) = touch;
-    Field(lst_el,1) = touches;
-    touches = lst_el;
+		if (phases[i] != 2) {
+			PRINT_DEBUG("touch with coord: %f:%f",xs[i],ys[i]);
+			globalX = caml_copy_double(xs[i]);
+			globalY = caml_copy_double(ys[i]);
+			touch = caml_alloc_tuple(8);
+			Store_field(touch,0,caml_copy_int32(ids[i] + 1));
+			Store_field(touch,1,timestamp);
+			Store_field(touch,2,globalX);
+			Store_field(touch,3,globalY);
+			Store_field(touch,4,globalX);
+			Store_field(touch,5,globalY);
+			Store_field(touch,6,Val_int(1));// tap_count
+			Store_field(touch,7,Val_int(phases[i]));
+			lst_el = caml_alloc_small(2,0);
+			Field(lst_el,0) = touch;
+			Field(lst_el,1) = touches;
+			touches = lst_el;
+		}
 	}
   mlstage_processTouches(stage,touches);
-	End_roots();
+	CAMLreturn0;
 }
 
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_cancelAllTouches() {
+	mlstage_cancelAllTouches(stage);
+}
+
+/*
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionDown(JNIEnv *env, jobject thiz, jint id, jfloat x, jfloat y) {
 	fireTouch(id,x,y,0);//TouchePhaseBegan = 0
 }
@@ -349,6 +364,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionCancel(JNIEn
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleActionMove(JNIEnv *env, jobject thiz, jarray ids, jarray xs, jarray ys) {
 	fireTouches(env,ids,xs,ys,1);//TouchePhaseMoved = 1
 }
+*/
 
 /*
 JNIEXPORT void Java_ru_redspell_lightning_lightRenderer_handlekeydown(int keycode) {

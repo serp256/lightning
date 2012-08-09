@@ -84,12 +84,17 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		nativekeydown(keycode);
 	}
 	
-	*/
 
 	public native void handleActionDown(int id, float x, float y);
 	public native void handleActionUp(int id, float x, float y);
 	public native void handleActionCancel(int[] id, float[] x, float[] y);
 	public native void handleActionMove(int[] id, float[] x, float[] y);
+
+	*/
+
+	public native void fireTouch(int id,float x, float y, int phase);
+	public native void fireTouches(int[] ids,float[] xs, float[] ys, int[] phases);
+	public native void cancelAllTouches();
 
 	public native void handleOnPause();
 	public native void handleOnResume();
