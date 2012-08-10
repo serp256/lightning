@@ -537,7 +537,7 @@ void ml_glow_make(value orb, value glow) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[i],0);
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 			char errmsg[255];
-			sprintf(errmsg,"glow make. framebuffer %d, %d:%d status: %X\n",bfrs[i],legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+			sprintf(errmsg,"glow make. framebuffer %d, %d:%d status: %X",bfrs[i],legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
 			caml_failwith(errmsg);
 		};
 		glBindTexture(GL_TEXTURE_2D,ctid);

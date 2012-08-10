@@ -159,7 +159,7 @@ class virtual c (_width:float) (_height:float) =
           List.iter (fun (_,tch) -> tch.n_phase := TouchPhaseStationary) otherTouches;
           let () = debug:touches
               List.iter begin fun (target,touch) ->
-                debug:touches "touch: %f [%f:%f], [%F:%F], %d, %s, [ %s ]\n%!" 
+                debug:touches "touch: %ld %f [%f:%f], [%F:%F], %d, %s, [ %s ]\n%!" touch.n_tid
                   touch.n_timestamp touch.n_globalX touch.n_globalY 
                   touch.n_previousGlobalX touch.n_previousGlobalY
                   touch.n_tapCount (string_of_touchPhase touch.n_phase)

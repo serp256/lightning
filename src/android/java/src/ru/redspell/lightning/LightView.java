@@ -191,66 +191,48 @@ public class LightView extends GLSurfaceView {
 	public boolean onTouchEvent(final MotionEvent event) {
 		Log.d("LIGHTNING","Touch event");
 
-		// these data are used in ACTION_MOVE and ACTION_CANCEL
 		dumpMotionEvent(event);
-		final int pointerNumber = event.getPointerCount();
-		final int[] ids = new int[pointerNumber];
-		final float[] xs = new float[pointerNumber];
-		final float[] ys = new float[pointerNumber];
 
-		for (int i = 0; i < pointerNumber; i++) {
-			ids[i] = event.getPointerId(i);
-			xs[i] = event.getX(i);
-			ys[i] = event.getY(i);
-		}
+		final int idx;
+		final int id;
+		final float x;
+		final float y;
 
-		switch (event.getAction() & MotionEvent.ACTION_MASK) {
+		switch (event.getActionMasked()) {
 
-			case MotionEvent.ACTION_POINTER_DOWN:
-				final int idPointerDown = event.getAction() >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-				final float xPointerDown = event.getX(idPointerDown);
-				final float yPointerDown = event.getY(idPointerDown);
-
+			case MotionEvent.ACTION_MOVE:
+				final int size = event.getPointerCount();
+				final int[] ids = new int[size];
+				final float[] xs = new float[size];
+				final float[] ys = new float[size];
+				final int[] phases = new int[size];
+				final boolean hh = event.getHistorySize() > 0 ? true : false;
+				for (int i = 0; i < size; i++) {
+					ids[i] = event.getPointerId(i);
+					xs[i] = event.getX(i);
+					ys[i] = event.getY(i);
+					if (hh && xs[i] == event.getHistoricalX(i,0) && ys[i] == event.getHistoricalY(i,0)) phases[i] = 2;
+					else phases[i] = 1;
+				};
+				// we need to skip touches without changes of position
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						renderer.handleActionDown(idPointerDown, xPointerDown, yPointerDown);
+						renderer.fireTouches(ids, xs, ys,phases);
 					}
 				});
 				break;
+
 
 			case MotionEvent.ACTION_DOWN:
 				// there are only one finger on the screen
-				final int idDown = event.getPointerId(0);
-				final float xDown = event.getX(idDown);
-				final float yDown = event.getY(idDown);
-
+				id = event.getPointerId(0);
+				x = event.getX(0);
+				y = event.getY(0);
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						renderer.handleActionDown(idDown, xDown, yDown);
-					}
-				});
-				break;
-
-			case MotionEvent.ACTION_MOVE:
-				queueEvent(new Runnable() {
-					@Override
-					public void run() {
-						renderer.handleActionMove(ids, xs, ys);
-					}
-				});
-				break;
-
-			case MotionEvent.ACTION_POINTER_UP:
-				final int idPointerUp = event.getAction() >> MotionEvent.ACTION_POINTER_ID_SHIFT;
-				final float xPointerUp = event.getX(idPointerUp);
-				final float yPointerUp = event.getY(idPointerUp);
-
-				queueEvent(new Runnable() {
-					@Override
-					public void run() {
-						renderer.handleActionUp(idPointerUp, xPointerUp, yPointerUp);
+						renderer.fireTouch(id,x,y,0);
 					}
 				});
 				break;
@@ -258,13 +240,40 @@ public class LightView extends GLSurfaceView {
 			case MotionEvent.ACTION_UP:  
 				// there are only one finger on the screen
 				final int idUp = event.getPointerId(0);
-				final float xUp = event.getX(idUp);
-				final float yUp = event.getY(idUp);
+				final float xUp = event.getX(0);
+				final float yUp = event.getY(0);
 
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						renderer.handleActionUp(idUp, xUp, yUp);
+						//renderer.handleActionUp(idUp, xUp, yUp);
+						renderer.fireTouch(idUp, xUp, yUp,3);
+					}
+				});
+				break;
+
+			case MotionEvent.ACTION_POINTER_DOWN:
+				idx = event.getActionIndex ();
+				id = event.getPointerId(idx);
+				x = event.getX(idx);
+				y = event.getY(idx);
+				queueEvent(new Runnable() {
+					@Override
+					public void run() {
+						renderer.fireTouch(id,x,y,0);
+					}
+				});
+				break;
+
+			case MotionEvent.ACTION_POINTER_UP:
+				idx = event.getActionIndex ();
+				id = event.getPointerId(idx);
+				x = event.getX(idx);
+				y = event.getY(idx);
+				queueEvent(new Runnable() {
+					@Override
+					public void run() {
+						renderer.fireTouch(id,x,y,3);
 					}
 				});
 				break;
@@ -273,10 +282,14 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						renderer.handleActionCancel(ids, xs, ys);
+						//renderer.handleActionCancel(ids, xs, ys);
+						renderer.cancelAllTouches();
 					}
 				});
 				break;
+
+
+
 		}
 		return true;
 	}

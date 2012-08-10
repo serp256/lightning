@@ -86,7 +86,7 @@ value ml_texture_async_loader_create_runtime(value unit) {
 	//pthread_attr_setschedpolicy
   pthread_create(&runtime->worker, &attr, &run_worker, (void*)runtime);
 
-	return((value)runtime);// может быть стоило финализер повесить ?
+	return((value)runtime);
 
 }
 

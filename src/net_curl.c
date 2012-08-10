@@ -179,6 +179,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 void ml_URLConnection_cancel(value r) {
 }
 
+/// thread this
 
 void net_run () {
 	if (net_running > 0) net_perform ();
