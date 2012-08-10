@@ -17,8 +17,8 @@
 #define caml_release_runtime_system()
 
 JavaVM *gJavaVM;
-jobject jView;
-jclass jViewCls;
+jobject jView = NULL;
+jclass jViewCls = NULL;
 
 static int ocaml_initialized = 0;
 static mlstage *stage = NULL;
@@ -40,13 +40,28 @@ typedef enum
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",exn);
 	int i;
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+	jclass jString = (*env)->FindClass(env,"java/lang/String");
+	jobjectArray jbc = (*env)->NewObjectArray(env,bc,jString,NULL);
 	for (i = 0; i < bc; i++) {
-		if (bv[i]) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",bv[i]);
+		if (bv[i]) {
+			__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",bv[i]);
+			jstring jbve = (*env)->NewStringUTF(env,bv[i]);
+			(*env)->SetObjectArrayElement(env,jbc,i,jbve);
+			(*env)->DeleteLocalRef(env,jbve);
+		};
 	};
+	// Need to send email with this error and backtrace
+	jstring jexn = (*env)->NewStringUTF(env,exn);
+	jmethodID mlUncExn = (*env)->GetMethodID(env,jViewCls,"mlUncaughtException","(Ljava/lang/String;[Ljava/lang/String;)V");
+	(*env)->CallVoidMethod(env,jView,mlUncExn,jexn,jbc);
+	(*env)->DeleteLocalRef(env,jbc);
+	(*env)->DeleteLocalRef(env,jexn);
 }
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-	__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
+	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
 	uncaught_exception_callback = &mlUncaughtException;
 	gJavaVM = vm;
 	return JNI_VERSION_1_6; // Check this
@@ -118,7 +133,7 @@ void ml_setAssetsDir(value vassDir) {
 	gAssetsDir = (char*)malloc(strlen(cassDir) + 1);
 	strcpy(gAssetsDir, cassDir);
 
-	DEBUGF("ml_setAssetsDir %s", gAssetsDir);
+	//DEBUGF("ml_setAssetsDir %s", gAssetsDir);
 }
 /*static value assetsExtractedCb;
 
@@ -141,7 +156,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env,
 
 // NEED rewrite it for libzip
 int getResourceFd(const char *path, resource *res) { //{{{
-	DEBUGF("getResourceFD: %s",path);
+	//DEBUGF("getResourceFD: %s",path);
 
 	if (gAssetsDir != NULL) {
 		int assetsDirLen = strlen(gAssetsDir);
@@ -151,7 +166,7 @@ int getResourceFd(const char *path, resource *res) { //{{{
 		strcpy(assetPath, gAssetsDir);
 		strcpy(assetPath + assetsDirLen, path);
 
-		DEBUGF("assetPath: %s", assetPath);
+		//DEBUGF("assetPath: %s", assetPath);
 
 		int fd = open(assetPath, O_RDONLY);
 		free(assetPath);
@@ -241,7 +256,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightSetResourcesPath(JNIEnv
 */
 
 JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview, jobject storage) {
-	DEBUG("lightInit");
+	PRINT_DEBUG("lightInit");
 
 	jView = (*env)->NewGlobalRef(env,jview);
 
@@ -259,26 +274,26 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobje
 	(*env)->DeleteLocalRef(env, storageEditor);*/
 	(*env)->DeleteLocalRef(env, viewCls);
 	if (!ocaml_initialized) {
-		DEBUG("init ocaml");
+		PRINT_DEBUG("init ocaml");
 		char *argv[] = {"android",NULL};
 		caml_startup(argv);
 		ocaml_initialized = 1;
-		DEBUG("caml initialized");
+		PRINT_DEBUG("caml initialized");
 	}
 }
 
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
-	DEBUG("lightRender init");
+	PRINT_DEBUG("lightRender init");
 	if (stage) return;
-	DEBUGF("create stage: [%d:%d]",width,height);
+	PRINT_DEBUG("create stage: [%d:%d]",width,height);
 	stage = mlstage_create((double)width,(double)height); 
-	DEBUGF("stage created");
+	PRINT_DEBUG("stage created");
 }
 
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
-	DEBUGF("GL Changed: %i:%i",width,height);
+	PRINT_DEBUG("GL Changed: %i:%i",width,height);
 }
 
 
@@ -673,7 +688,7 @@ void ml_alsoundStop(value streamId) {
 
 	(*env)->CallVoidMethod(env, gSndPool, gStopMthdId, Int_val(streamId));
 
-	DEBUGF("ml_alsoundStop call %d", Int_val(streamId));
+	PRINT_DEBUG("ml_alsoundStop call %d", Int_val(streamId));
 }
 
 static jmethodID gSetVolMthdId = NULL;
@@ -742,7 +757,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
-	DEBUGF("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
+	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
 
 	if (gSndPool != NULL) {
 		JNIEnv *env;
@@ -953,21 +968,18 @@ void ml_setSupportEmail (value d){
 
 value ml_getLocale () {
 	JNIEnv *env;
-	DEBUG("getLocale");
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetLocale", "()Ljava/lang/String;");
 	jstring locale = (*env)->CallObjectMethod(env, jView, meth);
 	const char *l = (*env)->GetStringUTFChars(env,locale,JNI_FALSE);
 	value r = caml_copy_string(l);
 	(*env)->ReleaseStringUTFChars(env, locale, l);
-	//(*env)->DeleteLocalRef(env, locale);
+	(*env)->DeleteLocalRef(env, locale);
 	//value r = string_of_jstring(env, (*env)->CallObjectMethod(env, jView, meth));
-	DEBUGF("getLocale: %s",String_val(r));
   return r;
 }
 
 value ml_getStoragePath () {
-	DEBUG("getStoragePath");
 
 	CAMLparam0();
 	CAMLlocal1(r);
@@ -983,7 +995,6 @@ value ml_getStoragePath () {
 	(*env)->ReleaseStringUTFChars(env, path, l);
 	(*env)->DeleteLocalRef(env, path);
 
-	DEBUGF("getStoragePath: %s", String_val(r));
 
 	CAMLreturn(r);
 }
@@ -1044,10 +1055,10 @@ value ml_avsound_create_player(value vpath) {
 }
 
 void testMethodId(JNIEnv *env, jclass cls, jmethodID *mid, char* methodName) {
-	DEBUGF("testMethodId %s", methodName);
+	//DEBUGF("testMethodId %s", methodName);
 	if (!*mid) {
 		*mid = (*env)->GetMethodID(env, cls, methodName, "()V");
-		DEBUG("GetMethodID call");
+		//DEBUG("GetMethodID call");
 	}
 }
 
@@ -1068,19 +1079,16 @@ void ml_avsound_playback(value vmp, value vmethodName) {
 	do {
 		if (!strcmp(methodName, "stop")) {
 			mid = &stopMid;
-			DEBUG("stop");
 			break;
 		}
 
 		if (!strcmp(methodName, "pause")) {
 			mid = &pauseMid;
-			DEBUG("pause");
 			break;
 		}
 
 		if (!strcmp(methodName, "prepare")) {
 			mid = &prepareMid;
-			DEBUG("prepare");
 			break;
 		}
 	} while(0);
@@ -1141,7 +1149,7 @@ value ml_avsound_is_playing(value vmp) {
 		isPlayingMid = (*env)->GetMethodID(env, mpCls, "isPlaying", "()Z");
 	}
 
-	DEBUGF("ml_avsound_is_playing %s", (*env)->CallBooleanMethod(env, jmp, isPlayingMid) ? "true" : "false");
+	//DEBUGF("ml_avsound_is_playing %s", (*env)->CallBooleanMethod(env, jmp, isPlayingMid) ? "true" : "false");
 
 	retval = Val_bool((*env)->CallBooleanMethod(env, jmp, isPlayingMid));
 	(*env)->DeleteLocalRef(env, mpCls);
@@ -1198,13 +1206,14 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCall
 
 static value ml_dispatchBackHandler = 1;
 
-JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightActivity_backHandler(JNIEnv *env, jobject this) {
+JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightRenderer_handleBack(JNIEnv *env, jobject this) {
 	if (stage) {
 		if (ml_dispatchBackHandler == 1) {
 			ml_dispatchBackHandler = caml_hash_variant("dispatchBackPressedEv");
 		}
 
-		return Bool_val(caml_callback2(caml_get_public_method(stage->stage, ml_dispatchBackHandler), stage->stage, Val_unit));
+		value res = caml_callback2(caml_get_public_method(stage->stage, ml_dispatchBackHandler), stage->stage, Val_unit);
+		if (Bool_val(res)) exit(0);
 	}
 
 	return 1;

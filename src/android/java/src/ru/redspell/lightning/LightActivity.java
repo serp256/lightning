@@ -35,16 +35,13 @@ public class LightActivity extends Activity
 
 	@Override
 	public void onBackPressed() {
-		if (backHandler()) {
-			super.onBackPressed();
-		}
+		lightView.onBackButton ();
 	}
 
 	@Override
 	protected void onDestroy() {
-         lightView.onDestroy();
-         super.onDestroy();
-    }	
+		lightView.onDestroy();
+		super.onDestroy();
+	}	
 
-	protected native boolean backHandler();
 }

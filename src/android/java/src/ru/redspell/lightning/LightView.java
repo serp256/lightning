@@ -15,6 +15,7 @@ import android.util.DisplayMetrics;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.Intent;
@@ -29,8 +30,8 @@ import java.net.URI;
 import java.util.Locale;
 import android.net.Uri;
 import android.os.Environment;
-import android.os.AsyncTask;
-import android.content.pm.PackageManager.NameNotFoundException;
+//import android.os.AsyncTask;
+//import android.content.pm.PackageManager.NameNotFoundException;
 
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
@@ -39,6 +40,7 @@ import android.media.MediaPlayer;
 import android.media.AudioManager;
 import android.os.Process;
 import android.content.pm.PackageManager;
+import android.content.pm.ApplicationInfo;
 
 public class LightView extends GLSurfaceView {
 	private class UnzipCallbackRunnable implements Runnable {
@@ -391,7 +393,30 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void addExceptionInfo(String d) {
-    openURL("mailto:".concat(supportEmail).concat("?subject=test&body=wtf"));
+    //openURL("mailto:".concat(supportEmail).concat("?subject=test&body=wtf"));
+	}
+
+	public void mlUncaughtException(String exn,String[] bt) {
+		Context c = getContext();
+		ApplicationInfo ai = c.getApplicationInfo ();
+		String label = ai.loadLabel(c.getPackageManager ()).toString();
+		int vers;
+		try { vers = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode; } catch (PackageManager.NameNotFoundException e) {vers = 1;};
+		StringBuffer uri = new StringBuffer("mailto:" + supportEmail);
+		Resources res = c.getResources ();
+		uri.append("?subject="+ Uri.encode(res.getString(R.string.exception_email_subject) + " \"" + label + "\" v" + vers));
+		String t = String.format(res.getString(R.string.exception_email_body),android.os.Build.MODEL,android.os.Build.VERSION.RELEASE,label,vers);
+		StringBuffer body = new StringBuffer(t);
+		body.append("\n------------------\n");
+		body.append(exn);body.append('\n');
+		for (String b : bt) {
+			body.append(b);body.append('\n');
+		};
+		uri.append("&body=" + Uri.encode(body.toString()));
+		Log.d("LIGHTNING","URI: " + uri.toString());
+		Intent sendIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(uri.toString ()));
+		sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		c.startActivity(sendIntent);
 	}
 
   public String mlGetLocale () {
@@ -414,5 +439,15 @@ public class LightView extends GLSurfaceView {
 		mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
 
 		return mp;
+	}
+
+
+	public void onBackButton() {
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				renderer.handleBack();
+			}
+		});
 	}
 }

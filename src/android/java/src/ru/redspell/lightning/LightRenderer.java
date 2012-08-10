@@ -99,6 +99,8 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	public native void handleOnPause();
 	public native void handleOnResume();
 
+	public native void handleBack();
+
 	
 	// public void handleOnPause(){
 	// 	//nativeonpause();

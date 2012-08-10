@@ -540,8 +540,13 @@ value pallete (stage:Stage.c) =
 value image (stage:Stage.c) =
   Texture.load_async "tree.png" begin fun t ->
     let image = Image.create t in
-    let () = image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)) in
-    stage#addChild image;
+    (
+      image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF));
+      onClick image begin fun _ ->
+        failwith("PIZDA LALA");
+      end;
+      stage#addChild image;
+    )
   end;
 
 (*
@@ -1251,7 +1256,7 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      assets self;
+(*       assets self; *)
 (*       avsound self "melody0.mp3"; *)
       (*
       debug "qweqweqweqwe";
@@ -1321,6 +1326,7 @@ let stage width height =
 (*           glow_and_gc self; *)
 (*        udid self; *)
        (* bl_greenhouse self; *)
+       image self;
     end;
   end
 in
