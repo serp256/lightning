@@ -109,34 +109,70 @@ ENDIF;
 
 IFDEF ANDROID THEN
 
-external miniunz : string -> string -> (string -> bool) -> unit = "ml_miniunz";
+external miniunz : string -> string -> option string -> unit = "ml_miniunz";
 external apkPath : unit -> string = "ml_apkPath";
 external externalStoragePath : unit -> string = "ml_externalStoragePath";
 external setAssetsDir : string -> unit = "ml_setAssetsDir";
+external getVersion : unit -> string = "ml_getVersion";
 
 value unzipCbs = Hashtbl.create 0;
 
-value unzip ?testPathFunc zipPath dstPath cb =
+value unzip ?prefix zipPath dstPath cb =
 (
   Hashtbl.add unzipCbs (zipPath, dstPath) cb;
-  miniunz zipPath dstPath (match testPathFunc with [ Some f -> f | _ -> fun _ -> True ]);
+  miniunz zipPath dstPath prefix;
 );
 
-value unzipComplete zipPath dstPath =
+value unzipComplete zipPath dstPath success =
   let key = (zipPath, dstPath) in
-    ExtHashtbl.((
-      List.iter (fun cb -> cb ()) (Hashtbl.find_all unzipCbs key);
-      Hashtbl.remove_all unzipCbs key;
+    ExtHashtbl.Hashtbl.((
+      List.iter (fun cb -> cb success) (find_all unzipCbs key);
+      remove_all unzipCbs key;
     ));
 
+value getVersionFilename () = (externalStoragePath ()) ^ "assets/" ^ (getVersion ());
+
+value assetsExtracted () =
+  Sys.file_exists (getVersionFilename ());
+
+value rec rmdir dir =
+  try
+  (
+    Array.iter
+      (fun file -> let fullPath = dir ^ "/" ^ file in if Sys.is_directory fullPath then rmdir fullPath else Sys.remove fullPath)
+      (Sys.readdir dir);
+    Unix.rmdir dir;
+  )
+  with [ Sys_error _ -> () ];
+
 value extractAssets cb =
-  let extrnlStotagePath = externalStoragePath () in
-    unzip ~testPathFunc:(fun path -> ExtString.String.starts_with path "assets") (apkPath ()) extrnlStotagePath (fun () -> ( setAssetsDir (extrnlStotagePath ^ "assets/"); cb (); ));
+  if assetsExtracted () then    
+    cb True
+  else
+    let extrnlStotagePath = externalStoragePath () in
+      let assetsPath = extrnlStotagePath ^ "assets" in
+        let cb success =
+          (
+            if success then
+            (
+              setAssetsDir (assetsPath ^ "/");
+              close_out (open_out (getVersionFilename ()));
+            )
+            else ();
+
+            cb success;
+          )
+        in
+        (
+          rmdir assetsPath;
+          unzip ~prefix:"assets" (apkPath ()) extrnlStotagePath cb;
+        );
 
 Callback.register "unzipComplete" unzipComplete;
 
 ELSE
 value extractAssets (cb:(unit -> unit)) = ();
+value assetsExtracted () = False;
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";

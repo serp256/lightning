@@ -87,7 +87,7 @@ int makedir (char *newdir)
   return 1;
 }
 
-int do_extract_currentfile(unzFile uf, const char* dst, value testPathFunc)
+int do_extract_currentfile(unzFile uf, const char* dst, const char* prefix)
 {
     char filename_inzip[256];
     char* filename_withoutpath;
@@ -100,7 +100,7 @@ int do_extract_currentfile(unzFile uf, const char* dst, value testPathFunc)
     unz_file_info64 file_info;
     err = unzGetCurrentFileInfo64(uf,&file_info,filename_inzip,sizeof(filename_inzip),NULL,0,NULL,0);
 
-    if (caml_callback(testPathFunc, caml_copy_string(filename_inzip)) == Val_false) {
+    if (!prefix || (strstr(filename_inzip, prefix) != filename_inzip)) {
       PRINT_DEBUG("skiping %s due to test path function fail", filename_inzip);
       return UNZ_OK;
     }
@@ -216,7 +216,7 @@ int do_extract_currentfile(unzFile uf, const char* dst, value testPathFunc)
     return err;
 }
 
-int do_extract(const char* zip_path, const char* dst, value testPathFunc)
+int do_extract(const char* zip_path, const char* dst, const char* prefix)
 {
   unzFile uf = unzOpen64(zip_path);
 
@@ -237,7 +237,7 @@ int do_extract(const char* zip_path, const char* dst, value testPathFunc)
 
   for (i=0;i<gi.number_entry;i++)
   {
-      if (do_extract_currentfile(uf, dst, testPathFunc) != UNZ_OK)
+      if (do_extract_currentfile(uf, dst, prefix) != UNZ_OK)
           break;
 
       if ((i+1)<gi.number_entry)
@@ -259,8 +259,7 @@ int do_extract(const char* zip_path, const char* dst, value testPathFunc)
 static value vapkPath;
 static value vexternalStoragePath;
 
-value getPath(const char* methodName, value* vpath) {
-  if (!(*vpath)) {
+char* getCPath(const char* methodName) {
     JNIEnv *env;
     (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
@@ -268,46 +267,57 @@ value getPath(const char* methodName, value* vpath) {
     jstring jpath = (*env)->CallObjectMethod(env, jView, mid);
     const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
 
-    *vpath = caml_copy_string(cpath);
-    caml_register_generational_global_root(vpath);
+    char* retval = (char*)malloc(strlen(cpath) + 1);
+    strcpy(retval, cpath);
 
     (*env)->ReleaseStringUTFChars(env, jpath, cpath);
     (*env)->DeleteLocalRef(env, jpath);
+
+    return retval;
+}
+
+value getVPath(const char* methodName, value* vpath) {
+  if (!(*vpath)) {
+    char* cpath = getCPath(methodName);
+    *vpath = caml_copy_string(cpath);
+    free(cpath);
+
+    caml_register_generational_global_root(vpath);
   }
 
   return *vpath;
 }
 
 value ml_apkPath() {
-  return getPath("getApkPath", &vapkPath);
+  return getVPath("getApkPath", &vapkPath);
 }
 
 value ml_externalStoragePath() {
-  return getPath("getExternalStoragePath", &vexternalStoragePath);
+  return getVPath("getExternalStoragePath", &vexternalStoragePath);
 }
 
 typedef struct {
   char* zipPath;
   char* dstPath;
-  value testPathFunc
+  char* prefix;
 } unzip_paths_t;
 
 static jmethodID gCallUnzipCompleteMid;
 
 void* miniunz_thread(void* params) {
   unzip_paths_t* paths = (unzip_paths_t*) params;
-  do_extract(paths->zipPath, paths->dstPath, paths->testPathFunc);
+  int unzipRetval = do_extract(paths->zipPath, paths->dstPath, paths->prefix);
 
   JNIEnv *env;
   (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
 
   if (!gCallUnzipCompleteMid) {
-    gCallUnzipCompleteMid = (*env)->GetMethodID(env, jViewCls, "callUnzipComplete", "(Ljava/lang/String;Ljava/lang/String;)V");
+    gCallUnzipCompleteMid = (*env)->GetMethodID(env, jViewCls, "callUnzipComplete", "(Ljava/lang/String;Ljava/lang/String;Z)V");
   }
 
   jstring jzipPath = (*env)->NewStringUTF(env, paths->zipPath);
   jstring jdstPath = (*env)->NewStringUTF(env, paths->dstPath);
-  (*env)->CallVoidMethod(env, jView, gCallUnzipCompleteMid, jzipPath, jdstPath);
+  (*env)->CallVoidMethod(env, jView, gCallUnzipCompleteMid, jzipPath, jdstPath, !unzipRetval);
 
   (*env)->DeleteLocalRef(env, jzipPath);
   (*env)->DeleteLocalRef(env, jdstPath);
@@ -315,25 +325,35 @@ void* miniunz_thread(void* params) {
 
   free(paths->zipPath);
   free(paths->dstPath);
+
+  if (paths->prefix) {
+    free(paths->prefix);
+  }
+
   free(paths);
 
   pthread_exit(NULL);
 }
 
-void ml_miniunz(value vzipPath, value vdstPath, value testPathFunc) {
+void ml_miniunz(value vzipPath, value vdstPath, value vprefix) {
+  PRINT_DEBUG("tid %d", gettid());
+
   unzip_paths_t* paths = (unzip_paths_t*)malloc(sizeof(unzip_paths_t));
 
   char* czipPath = String_val(vzipPath);
   char* cdstPath = String_val(vdstPath);
-
-  caml_register_generational_global_root(&testPathFunc);
-
+  
   paths->zipPath = (char*)malloc(strlen(czipPath) + 1);
   paths->dstPath = (char*)malloc(strlen(cdstPath) + 1);
-  paths->testPathFunc = testPathFunc;
 
   strcpy(paths->zipPath, czipPath);
-  strcpy(paths->dstPath, cdstPath);
+  strcpy(paths->dstPath, cdstPath);  
+
+  if (vprefix != Val_int(0)) {
+    char* cprefix = String_val(Field(vprefix, 0));
+    paths->prefix = (char*)malloc(strlen(cprefix) + 1);
+    strcpy(paths->prefix, cprefix);
+  }
 
   pthread_t tid;
 
@@ -345,6 +365,7 @@ void ml_miniunz(value vzipPath, value vdstPath, value testPathFunc) {
 static jclass gRunnableCls;
 static jfieldID gZipPathFid;
 static jfieldID gDstPathFid;
+static jfieldID gSuccessFid;
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024UnzipCallbackRunnable_run(JNIEnv *env, jobject this) {
   if (!gRunnableCls) {
@@ -354,17 +375,21 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024UnzipCallbackRu
 
     gZipPathFid = (*env)->GetFieldID(env, gRunnableCls, "zipPath", "Ljava/lang/String;");
     gDstPathFid = (*env)->GetFieldID(env, gRunnableCls, "dstPath", "Ljava/lang/String;");
+    gSuccessFid = (*env)->GetFieldID(env, gRunnableCls, "success", "Z");
   }
 
   jstring jzipPath = (*env)->GetObjectField(env, this, gZipPathFid);
   jstring jdstPath = (*env)->GetObjectField(env, this, gDstPathFid);
+  jboolean jsuccess = (*env)->GetBooleanField(env, this, gSuccessFid);
+
   const char* czipPath = (*env)->GetStringUTFChars(env, jzipPath, JNI_FALSE);
   const char* cdstPath = (*env)->GetStringUTFChars(env, jdstPath, JNI_FALSE);
 
   value vzipPath = caml_copy_string(czipPath);
   value vdstPath = caml_copy_string(cdstPath);
+  value vsuccess = jsuccess ? Val_true : Val_false;
 
-  caml_callback2(*caml_named_value("unzipComplete"), vzipPath, vdstPath);
+  caml_callback3(*caml_named_value("unzipComplete"), vzipPath, vdstPath, vsuccess);
 
   (*env)->ReleaseStringUTFChars(env, jzipPath, czipPath);
   (*env)->ReleaseStringUTFChars(env, jdstPath, cdstPath);
