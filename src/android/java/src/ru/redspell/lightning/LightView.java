@@ -191,9 +191,9 @@ public class LightView extends GLSurfaceView {
 
 
 	public boolean onTouchEvent(final MotionEvent event) {
-		Log.d("LIGHTNING","Touch event");
+		//Log.d("LIGHTNING","Touch event");
 
-		dumpMotionEvent(event);
+		//dumpMotionEvent(event);
 
 		final int idx;
 		final int id;

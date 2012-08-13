@@ -355,8 +355,8 @@ public class BillingService extends Service implements ServiceConnection {
 
     @Override
     public void onStart(Intent intent, int startId) {
-        Log.d(TAG, "onStart call, intent: " + intent);
-        handleCommand(intent, startId);
+        //Log.d(TAG, "onStart call, intent: " + intent);
+				if (intent != null) handleCommand(intent, startId);
     }
 
     public void handleCommand(Intent intent, int startId) {
