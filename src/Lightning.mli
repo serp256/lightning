@@ -13,7 +13,11 @@ type malinfo =
     malloc_free: int;
   };
 
+IFDEF PC THEN
+value malinfo: unit -> malinfo;
+ELSE
 external malinfo: unit -> malinfo = "ml_malinfo";
+ENDIF;
 
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 value request_remote_notifications: list remoteNotification ->  (string -> unit) -> (string -> unit) -> unit;

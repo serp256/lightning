@@ -89,7 +89,11 @@ type malinfo =
     malloc_free: int;
   };
 
+IFDEF PC THEN
+value malinfo () = {malloc_total=0;malloc_used=0;malloc_free=0};
+ELSE
 external malinfo: unit -> malinfo = "ml_malinfo";
+ENDIF;
 
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
@@ -171,8 +175,9 @@ value extractAssets cb =
 Callback.register "unzipComplete" unzipComplete;
 
 ELSE
-value extractAssets (cb:(unit -> unit)) = ();
+value extractAssets (cb:(bool -> unit)) = ();
 value assetsExtracted () = False;
+value getVersion () = assert False;
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";

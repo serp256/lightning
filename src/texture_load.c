@@ -18,6 +18,7 @@
     ((unsigned)(unsigned char)(va) << 24))
 
 int load_jpg_image(int fd,textureInfo *tInfo) {
+	fprintf(stderr,"LOAD JPG IMAGE\n");
 
 	/* these are standard libjpeg structures for reading(decompression) */
 	struct jpeg_decompress_struct cinfo;
@@ -86,6 +87,7 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 
 
 int load_png_image(int fd,textureInfo *tInfo) {
+	fprintf(stderr,"LOAD PNG IMAGE\n");
 	//png_byte        header[8]   = {0};
 	png_structp     png_ptr     =   0; 
 	png_infop       info_ptr    = 0;
@@ -103,17 +105,20 @@ int load_png_image(int fd,textureInfo *tInfo) {
 	// init png_struct
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
 	if( png_ptr == NULL ){
+		fprintf(stderr,"can't create png_ptr\n");
 		fclose(fp);
 		return 1;
 	}
 	// init png_info
 	info_ptr = png_create_info_struct(png_ptr);
 	if(info_ptr == NULL ){
+		fprintf(stderr,"can't create info_ptr\n");
 		fclose(fp);
 		png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
 		return 1;
 	}
 
+	fprintf(stderr,"all ok\n");
 	// set the read call back function
 	png_init_io(png_ptr, fp);
 

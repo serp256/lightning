@@ -8,7 +8,7 @@
 #define glGenVertexArrays glGenVertexArraysOES
 #define glBindVertexArray glBindVertexArrayOES
 #else
-#ifdef SDL
+#ifdef PC
 #ifdef __APPLE__
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #define glGenVertexArrays glGenVertexArraysAPPLE
