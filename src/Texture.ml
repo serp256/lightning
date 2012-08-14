@@ -620,7 +620,8 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
             )
           | None -> List.iter (fun (_,f) -> f path) (List.rev waiters)
           ];
-          check_result ();
+					()
+(*           check_result (); *)
         )
       | None -> ()
       ]
