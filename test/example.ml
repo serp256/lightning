@@ -542,9 +542,6 @@ value image (stage:Stage.c) =
     let image = Image.create t in
     (
       image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF));
-      onClick image begin fun _ ->
-        failwith("PIZDA LALA");
-      end;
       stage#addChild image;
     )
   end;

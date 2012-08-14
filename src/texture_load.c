@@ -1,5 +1,4 @@
-
-#include "caml/memory.h"
+#include <stdlib.h>
 
 #ifdef ANDROID
 #include "android/libpng/png.h"
@@ -27,11 +26,6 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	unsigned char * pImageData  = 0;
 	FILE *fp = fdopen(fd,"rb");
 	/* libjpeg data structure for storing one row, that is, scanline of an image */
-	JSAMPROW row_pointer[1];
-	if (row_pointer[1] == NULL) {
-		fclose(fp);
-		return 1;
-	}
 
 	/* here we set up the standard libjpeg error handler */
 	cinfo.err = jpeg_std_error( &jerr );
@@ -46,12 +40,12 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	jpeg_start_decompress( &cinfo );
 
 	// allocate memory and read data
-	unsigned int legalWidth = nextPowerOfTwo(cinfo.image_width);
-	unsigned int legalHeight = nextPowerOfTwo(cinfo.image_height);
+	unsigned int legalWidth = nextPOT(cinfo.image_width);
+	unsigned int legalHeight = nextPOT(cinfo.image_height);
 	unsigned int dataLen = legalHeight * legalWidth * cinfo.num_components;
-	pImageData = caml_stat_alloc(dataLen);
+	pImageData = malloc(dataLen);
 	/* now actually read the jpeg into the raw buffer */
-	row_pointer[0] = (unsigned char *)malloc( cinfo.output_width*cinfo.num_components );
+	JSAMPROW row_pointer = (unsigned char *)malloc( cinfo.output_width*cinfo.num_components );
 
 	/* read one scan line at a time and copy data to image info */
 	//unsigned long location = 0;
@@ -61,14 +55,14 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	//unsigned int rowShift = legalWidth - cinfo.image_width;
 	while( cinfo.output_scanline < cinfo.image_height )
 	{
-		jpeg_read_scanlines( &cinfo, row_pointer, 1 ); //now one row in row_pointer-array
-		memcpy(pImageData + i * bytesPerLegalRow, row_pointer[0], bytesPerRow);
+		jpeg_read_scanlines( &cinfo, &row_pointer, 1 ); //now one row in row_pointer-array
+		memcpy(pImageData + i * bytesPerLegalRow, row_pointer, bytesPerRow);
 		i++;
 	}
 	/* wrap up decompression, destroy objects, free pointers and close open files */
 	jpeg_finish_decompress( &cinfo );
 	jpeg_destroy_decompress( &cinfo );
-	free( row_pointer[0] );
+	free( row_pointer);
 	fclose( fp );
 
 	tInfo->format = LTextureFormatRGB;
@@ -151,7 +145,7 @@ int load_png_image(int fd,textureInfo *tInfo) {
 	unsigned int legalHeight = nextPowerOfTwo(height);
 
 	unsigned int dataLen = legalHeight * legalWidth * bytesPerComponent;
-	pImageData = caml_stat_alloc(dataLen);
+	pImageData = malloc(dataLen);
 
 	png_bytep * rowPointers = png_get_rows(png_ptr, info_ptr);
 

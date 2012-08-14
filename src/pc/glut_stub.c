@@ -131,10 +131,9 @@ value timers[NUM_TIMERS];
 
 void on_timer(int timer_id) {
 	caml_acquire_runtime_system();
-	value f = timers[timer_id];
+	caml_callback(timers[timer_id],Val_unit);
 	caml_remove_generational_global_root(timers + timer_id); /* GC ? */
 	timers[timer_id] = 0;
-	caml_callback(f,Val_unit);
 	caml_release_runtime_system();
 }
 

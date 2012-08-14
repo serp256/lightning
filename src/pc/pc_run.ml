@@ -73,6 +73,8 @@ value start_cycle frameRate stage =
   let fps = 1. /. (float frameRate) in
   let time = ref (Unix.gettimeofday ()) in
   let rec advanceTime () =
+    let () = Gc.compact () in
+    let () = URLLoader.run () in
     let now = Unix.gettimeofday () in
     (
       let diff = now -. !time in
