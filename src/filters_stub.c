@@ -878,5 +878,10 @@ static void colorMatrixFilter(sprogram *sp,void *data) {
 }
 
 value ml_filter_cmatrix(value matrix) {
-	return make_filter(&colorMatrixFilter,NULL,Caml_ba_data_val(matrix));
+	GLfloat *data = malloc(sizeof(GLfloat) * 20);
+	int i;
+	for (i = 0; i < 20; i++) {
+		data[i] = Double_field(matrix,i);
+	};
+	return make_filter(&colorMatrixFilter,free,data);
 }

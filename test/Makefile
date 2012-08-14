@@ -1,8 +1,8 @@
 sdl:
-	$(MAKE) -f Makefile.sdl
+	$(MAKE) -f Makefile.pc
 
 clean: 
-	$(MAKE) -f Makefile.sdl clean
+	$(MAKE) -f Makefile.pc clean
 
 ios:
 	$(MAKE) -f Makefile.ios

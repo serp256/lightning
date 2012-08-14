@@ -241,8 +241,8 @@ class virtual c (_width:float) (_height:float) =
     method run seconds = 
     (
       self#advanceTime seconds;
-      Render.clear bgColor 1.;
       D.prerender ();
+      Render.clear bgColor 1.;
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
     );
 

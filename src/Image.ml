@@ -451,7 +451,7 @@ class _c  _texture =
           (
             programID := GLPrograms.ImageColorMatrix.id;
             match shaderProgram with
-            [ (_,Some f) -> shaderProgram := GLPrograms.ImageColorMatrix.from_filter f
+            [ (_,Some f) -> shaderProgram := GLPrograms.ImageColorMatrix.create f
             | _ -> assert False
             ]
           )
@@ -465,7 +465,7 @@ class _c  _texture =
           (
             programID := GLPrograms.ImagePalleteColorMatrix.id;
             match shaderProgram with
-            [ (_,Some f) -> shaderProgram := GLPrograms.ImagePalleteColorMatrix.from_filter f
+            [ (_,Some f) -> shaderProgram := GLPrograms.ImagePalleteColorMatrix.create f
             | _ -> assert False
             ]
           )

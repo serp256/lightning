@@ -51,9 +51,9 @@ void ml_glutCreateWindow(value title) {
 static value displayFunc = 0;
 
 void on_display(void) {
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	caml_callback(displayFunc,Val_unit);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutDisplayFunc(value display) {
@@ -68,7 +68,7 @@ void ml_glutDisplayFunc(value display) {
 static value mouseFunc = 0;
 void on_mouse(int button, int state, int x, int y) {
 	fprintf(stderr,"on_mouse\n");
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	value b;
 	switch (button) {
 		case GLUT_LEFT_BUTTON: b = Val_int(0);break;
@@ -88,7 +88,7 @@ void on_mouse(int button, int state, int x, int y) {
 	Field(m,2) = Val_long(x);
 	Field(m,3) = Val_long(y);
 	caml_callback(mouseFunc,m);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutMouseFunc(value mouse) {
@@ -101,9 +101,9 @@ void ml_glutMouseFunc(value mouse) {
 static value motionFunc = 0;
 void on_motion(int x, int y) {
 	fprintf(stderr,"on_motion\n");
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	caml_callback2(motionFunc,Val_long(x),Val_long(y));
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutMotionFunc(value motion) {
@@ -115,9 +115,9 @@ void ml_glutMotionFunc(value motion) {
 static value idleFunc = 0;
 
 void on_idle(void) {
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	caml_callback(idleFunc,Val_unit);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutIdleFunc(value idle) {
@@ -130,17 +130,16 @@ void ml_glutIdleFunc(value idle) {
 value timers[NUM_TIMERS];
 
 void on_timer(int timer_id) {
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	caml_callback(timers[timer_id],Val_unit);
 	caml_remove_generational_global_root(timers + timer_id); /* GC ? */
 	timers[timer_id] = 0;
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutTimerFunc(value mltime,value tf) {
 	double time = Double_val(mltime);
 	unsigned int msecs = (unsigned int)(time * 1000);
-	fprintf(stderr,"timer on %hd msec\n",msecs);
 	int i = 0;
 	while (i < NUM_TIMERS && timers[i] != 0) i++;
 	if (i >= NUM_TIMERS) caml_failwith("too many timers");
@@ -159,7 +158,7 @@ void ml_glutSwapBuffers(void) {
 }
 
 void ml_glutMainLoop(value param) {
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 	glutMainLoop ();
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 };

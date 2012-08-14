@@ -45,6 +45,7 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	unsigned int dataLen = legalHeight * legalWidth * cinfo.num_components;
 	pImageData = malloc(dataLen);
 	/* now actually read the jpeg into the raw buffer */
+	//fprintf(stderr,"output_width: %d, image_width: %d, num_components: %d\n",cinfo.output_width,cinfo.image_width,cinfo.num_components);
 	JSAMPROW row_pointer = (unsigned char *)malloc( cinfo.output_width*cinfo.num_components );
 
 	/* read one scan line at a time and copy data to image info */
@@ -52,7 +53,6 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	int i = 0;
 	unsigned int bytesPerRow = cinfo.image_width * cinfo.num_components;
 	unsigned int bytesPerLegalRow = legalWidth * cinfo.num_components;
-	//unsigned int rowShift = legalWidth - cinfo.image_width;
 	while( cinfo.output_scanline < cinfo.image_height )
 	{
 		jpeg_read_scanlines( &cinfo, &row_pointer, 1 ); //now one row in row_pointer-array
@@ -81,7 +81,7 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 
 
 int load_png_image(int fd,textureInfo *tInfo) {
-	fprintf(stderr,"LOAD PNG IMAGE\n");
+	//fprintf(stderr,"LOAD PNG IMAGE\n");
 	//png_byte        header[8]   = {0};
 	png_structp     png_ptr     =   0; 
 	png_infop       info_ptr    = 0;
@@ -112,7 +112,6 @@ int load_png_image(int fd,textureInfo *tInfo) {
 		return 1;
 	}
 
-	fprintf(stderr,"all ok\n");
 	// set the read call back function
 	png_init_io(png_ptr, fp);
 

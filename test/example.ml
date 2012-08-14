@@ -537,6 +537,114 @@ value pallete (stage:Stage.c) =
 );
 *)
 
+
+value items = 
+  [|
+      "bl_blastfurnace.png";
+      "bl_bridge1_break.png";
+      "bl_bridge2_break.png";
+      "bl_chickencoop.png";
+      "bl_chickencoop_gold.png";
+      "bl_chickencoop_gold_lock.png";
+      "bl_chickencoop_lock.png";
+      "bl_collider.png";
+      "bl_collider_lock.png";
+      "bl_cote.png";
+      "bl_cote_gold.png";
+      "bl_cote_gold_lock.png";
+      "bl_cote_lock.png";
+      "bl_cowshed.png";
+      "bl_cowshed_gold.png";
+      "bl_cowshed_gold_lock.png";
+      "bl_cowshed_lock.png";
+      "bl_dam.png";
+      "bl_doghouse.png";
+      "bl_gold_mine.png";
+      "bl_gold_mine_lock.png";
+      "bl_greenhouse.png";
+      "bl_house.png";
+      "bl_hutches.png";
+      "bl_hutches_gold.png";
+      "bl_hutches_gold_lock.png";
+      "bl_hutches_lock.png";
+      "bl_incubator.png";
+      "bl_incubator_lock.png";
+      "bl_ionizer.png";
+      "bl_ionizer_lock.png";
+      "bl_laboratory.png";
+      "bl_laboratory1.png";
+      "bl_laboratory1_lock.png";
+      "bl_laboratory2.png";
+      "bl_laboratory2_lock.png";
+      "bl_laboratory_lock.png";
+      "bl_magnetto.png";
+      "bl_magnetto_lock.png";
+      "bl_mill.png";
+      "bl_neutrino.png";
+      "bl_neutrino_lock.png";
+      "bl_paddock.png";
+      "bl_paddock_gold.png";
+      "bl_paddock_gold_lock.png";
+      "bl_paddock_lock.png";
+      "bl_stable.png";
+      "bl_stable_gold.png";
+      "bl_stable_gold_lock.png";
+      "bl_stable_lock.png";
+      "bl_stratochamber.png";
+      "bl_stratochamber_lock.png";
+      "bl_synchrophasotron.png";
+      "bl_synchrophasotron_lock.png";
+      "bl_teleport.png";
+      "bl_tesla.png";
+      "bl_tesla_lock.png";
+      "bl_turkeycoop.png";
+      "bl_turkeycoop_gold.png";
+      "bl_turkeycoop_gold_lock.png";
+      "bl_turkeycoop_lock.png";
+      "bl_ultrasonic.png";
+      "bl_ultrasonic_lock.png";
+      "bl_warehouse.png";
+      "bl_warehouse_lock.png";
+      "bl_workshop.png";
+      "bl_workshop_lock.png";
+      "bl_xray.png";
+      "bl_xray_lock.png"
+  |];
+
+
+value async_images (stage:Stage.c) = 
+  let load_async fname f = Texture.load_async fname f in (* let t = Texture.load fname in f t in  *)
+  let x = ref 0. and y = ref 0. in
+  Array.iter begin fun it ->
+    let () = prerr_endline it in
+    load_async (Filename.concat "items" it) begin fun t -> 
+      let image = Image.create t in 
+      (
+        image#setPos !x !y; 
+        Printf.printf "x=%f,y=%f\n%!" !x !y;
+        x.val := !x +. 100.;
+        if (!x > fst (Stage.screenSize ())) then (y.val := !y +. 100.; x.val := 0.) else ();
+        Printf.eprintf "next x=%f,y=%f\n%!" !x !y;
+        stage#addChild image;
+      )
+    end
+  end items;
+
+  (*
+    (
+      (
+        stage#addChild image;
+        loop 1 where
+          rec loop i =
+            let i = if i = Array.length items then 0 else i in
+            Timers.start 0.05 begin fun () ->
+              Texture.load_async (Filename.concat "items" items.(i)) (fun t -> (image#setTexture t; loop (i+1)))
+            end |> ignore
+      )
+    )
+  end;
+  *)
+
 value image (stage:Stage.c) =
   Texture.load_async "tree.png" begin fun t ->
     let image = Image.create t in
@@ -1323,7 +1431,7 @@ let stage width height =
 (*           glow_and_gc self; *)
 (*        udid self; *)
        (* bl_greenhouse self; *)
-       image self;
+       async_images self;
     end;
   end
 in

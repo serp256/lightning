@@ -310,6 +310,7 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
             break;
 				case LTextureFormatRGB:
 						p->glTexFormat = GL_RGB;
+						p->bitsPerPixel = 3;
 						break;
         case LTextureFormatAlpha:
             p->glTexFormat = GL_ALPHA;
