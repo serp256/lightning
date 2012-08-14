@@ -27,7 +27,24 @@ external mouseFunc: (mouse -> unit) -> unit = "ml_glutMouseFunc";
 external motionFunc: (int -> int -> unit) -> unit = "ml_glutMotionFunc";
 external idleFunc: (unit -> unit) -> unit = "ml_glutIdleFunc";
 
-external timerFunc: float -> (unit -> unit) -> unit = "ml_glutTimerFunc";
+external timerFunc: float -> int -> unit = "ml_glutTimerFunc";
+
+value timer_id = ref 1;
+value timers : Hashtbl.t int (unit -> unit) = Hashtbl.create 0;
+value timerFunc time f = 
+  (
+    Hashtbl.add timers !timer_id f;
+    timerFunc time !timer_id;
+    incr timer_id;
+  );
+exception Timer_not_found;
+value on_timer timer_id = 
+  let f = try Hashtbl.find timers timer_id with [ Not_found -> raise Timer_not_found ] in
+  f ();
+
+Callback.register "glut_on_timer" on_timer;
+
+
 
 
 external postRedisplay: unit -> unit = "ml_glutPostRedisplay";

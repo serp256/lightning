@@ -211,7 +211,7 @@ value filters (stage:Stage.c) =
       img#setPos 100. 100.;
       sprite#addChild img;
     );
-    sprite#setFilters [ `ColorMatrix disable_filter ];
+(*     sprite#setFilters [ `ColorMatrix disable_filter ]; *)
 (*     sprite#setFilters [ Filters.glow 0xFF0000 ]; *)
     sprite#setPos 100. 100.;
     stage#addChild sprite;
@@ -220,7 +220,7 @@ value filters (stage:Stage.c) =
     let tree = Image.load "tree.png" in
     (
       tree#setPos 100. 350.;
-      tree#setFilters [ `ColorMatrix disable_filter ];
+(*       tree#setFilters [ `ColorMatrix disable_filter ]; *)
 (*       tree#setFilters [ Filters.glow 0xFF0000 ]; *)
       stage#addChild tree;
     );
@@ -616,15 +616,15 @@ value async_images (stage:Stage.c) =
   let load_async fname f = Texture.load_async fname f in (* let t = Texture.load fname in f t in  *)
   let x = ref 0. and y = ref 0. in
   Array.iter begin fun it ->
-    let () = prerr_endline it in
+(*     let () = prerr_endline it in *)
     load_async (Filename.concat "items" it) begin fun t -> 
       let image = Image.create t in 
       (
         image#setPos !x !y; 
-        Printf.printf "x=%f,y=%f\n%!" !x !y;
+(*         Printf.printf "x=%f,y=%f\n%!" !x !y; *)
         x.val := !x +. 100.;
         if (!x > fst (Stage.screenSize ())) then (y.val := !y +. 100.; x.val := 0.) else ();
-        Printf.eprintf "next x=%f,y=%f\n%!" !x !y;
+(*         Printf.eprintf "next x=%f,y=%f\n%!" !x !y; *)
         stage#addChild image;
       )
     end
@@ -841,8 +841,8 @@ value glow (stage:Stage.c) =
   let change_filter el = 
     match el#filters with
     [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ Filters.glow ~kind:`soft ~strength:2. ~size:2 0xFF0000 ]
-    | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ `ColorMatrix gray_filter ]
-    | [ `ColorMatrix m ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ]
+(*     | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ `ColorMatrix gray_filter ] *)
+(*     | [ `ColorMatrix m ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ] *)
     | [ ] -> el#setFilters [ Filters.glow ~kind:`linear ~size:2 0xFF0000 ]
     | _ -> assert False 
     ]

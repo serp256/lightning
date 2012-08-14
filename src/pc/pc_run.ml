@@ -80,9 +80,12 @@ value start_cycle frameRate stage =
     (
       let diff = now -. !time in
       stage#advanceTime diff;
+      debug "end advance time";
       time.val := now;
       DisplayObject.prerender ();
+      debug "end prerender time";
       Glut.postRedisplay ();
+      debug "post redisplay";
       Glut.timerFunc fps advanceTime;
     )
   in
