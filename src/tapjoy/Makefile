@@ -14,6 +14,8 @@ IFACES = $(MLSOURCES:.ml=.cmi)
 
 MLFLAGS += -I ..
 
+MLPPOPT += ../syntax/pa_debug.cmo -enable-debug default
+
 ifeq ($(PLATFORM),IOS)
 FAKELIBS  =
 CFLAGS  += -DDEBUG -DIOS -Iios -Iios/TapjoyConnect
@@ -52,7 +54,6 @@ MOBJS   +=  ios/TapjoyConnect/TJCTBXML.o\
             ios/TapjoyConnect/TJCViewCommons.o\
             ios/TapjoyConnect/TapjoyConnect.o ios/tapjoy_wrapper.o
             
-MLPPOPT += -DGLES -DIOS
 LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-framework\ UIKit' \
 		   -cclib '-framework\ QuartzCore' \

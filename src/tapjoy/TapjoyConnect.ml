@@ -1,6 +1,18 @@
-IFDEF IOS THEN
+
+
+IFPLATFORM(ios android) 
 
 external ml_tapjoy_init : string -> string -> unit = "ml_tapjoy_init";
+
+ELSE
+
+value ml_tapjoy_init appid skey = ();
+
+ENDPLATFORM;
+
+
+IFPLATFORM(ios)
+
 
 external ml_tapjoy_set_user_id : string -> unit = "ml_tapjoy_set_user_id";
 
@@ -16,7 +28,6 @@ external getOpenUDID: unit -> option string = "ml_TJCOpenUDIDvalue";
 
 ELSE 
 
-value ml_tapjoy_init appid skey = ();
 
 value ml_tapjoy_set_user_id user_id = ();
 
@@ -31,7 +42,7 @@ value ml_tapjoy_show_offers_with_currency currency selector = ();
 value getOpenUDID () = None;
 
 
-ENDIF;
+ENDPLATFORM;
 
 (* дергаем тапжой, сообщаем о том, что мы запустили приложение. чем раньше дернем - тем лучше *)
 value init appid skey = ml_tapjoy_init appid skey;

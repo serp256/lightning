@@ -649,7 +649,7 @@ value image (stage:Stage.c) =
   Texture.load_async "tree.png" begin fun t ->
     let image = Image.create t in
     (
-      image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF));
+(*       image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)); *)
       stage#addChild image;
     )
   end;
@@ -1431,7 +1431,8 @@ let stage width height =
 (*           glow_and_gc self; *)
 (*        udid self; *)
        (* bl_greenhouse self; *)
-       async_images self;
+(*        async_images self; *)
+        image self;
     end;
   end
 in

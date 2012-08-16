@@ -35,6 +35,8 @@ import android.os.Environment;
 
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
+import com.tapjoy.TapjoyConnect;
+import com.tapjoy.TapjoyLog;
 
 import android.media.MediaPlayer;
 import android.media.AudioManager;
@@ -193,7 +195,7 @@ public class LightView extends GLSurfaceView {
 	public boolean onTouchEvent(final MotionEvent event) {
 		//Log.d("LIGHTNING","Touch event");
 
-		//dumpMotionEvent(event);
+		dumpMotionEvent(event);
 
 		final int idx;
 		final int id;
@@ -450,4 +452,11 @@ public class LightView extends GLSurfaceView {
 			}
 		});
 	}
+
+
+	public void initTapjoy(String appID, String secretKey) {
+		//TapjoyLog.enableLogging(true);
+		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
+	}
+
 }

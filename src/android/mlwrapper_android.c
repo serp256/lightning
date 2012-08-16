@@ -1244,3 +1244,15 @@ value ml_getVersion() {
 
 	return version;
 }
+
+
+void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
+	DEBUG("init tapjoy");
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	jstring appID = (*env)->NewStringUTF(env,String_val(ml_appID));
+	jstring secretKey = (*env)->NewStringUTF(env,String_val(ml_secretKey));
+	static jmethodID initTapjoyMethod = 0;
+	if (initTapjoyMethod == 0) initTapjoyMethod = (*env)->GetMethodID(env,jViewCls,"initTapjoy","(Ljava/lang/String;Ljava/lang/String;)V");
+	(*env)->CallVoidMethod(env,jView,initTapjoyMethod,appID,secretKey);
+}

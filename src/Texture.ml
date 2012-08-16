@@ -17,6 +17,9 @@ value string_of_textureID textureID =
   let i = int32_of_textureID textureID in
   Int32.to_string i;
 
+value scaleX = ref 1.;
+value scaleY = ref 1.;
+
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -91,7 +94,7 @@ value zero : c =
     method height = 0.;
     method hasPremultipliedAlpha = False;
     method setFilter filter = ();
-(*     method scale = 1.; *)
+(*     method scale = scale; *)
     method textureID = renderInfo.rtextureID;
     method base = None;
     method clipping = None;
@@ -104,10 +107,6 @@ value zero : c =
   end;
 
 type imageInfo;
-(* external loadImageInfo: string -> imageInfo = "ml_load_image_info"; *)
-(* external freeImageInfo: imageInfo -> unit = "ml_free_image_info"; *)
-(* external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture"; *)
-(* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
 external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> bool -> textureInfo = "ml_loadImage";
 (* external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> unit = "ml_loadImage"; 
 value zero_textureInfo = 
@@ -134,15 +133,6 @@ module TextureCache = WeakHashtbl.Make (struct
   value hash = Hashtbl.hash;
 end);
 
-
-(*
-class type r = 
-  object
-    inherit c;
-    method setTextureID: textureID -> unit;
-    method releaseSubTexture: unit -> unit;
-  end;
-*)
 
 class subtexture region (baseTexture:c) = 
   let tw = baseTexture#width
@@ -171,8 +161,8 @@ class subtexture region (baseTexture:c) =
   let renderInfo = 
     {
       rtextureID = baseTexture#textureID;
-      rwidth = region.Rectangle.width;
-      rheight = region.Rectangle.height;
+      rwidth = region.Rectangle.width *. !scaleX;
+      rheight = region.Rectangle.height *. !scaleY;
       clipping = Some (Obj.magic rootClipping);
       kind = baseTexture#kind;
     }
@@ -182,6 +172,8 @@ class subtexture region (baseTexture:c) =
     method kind = renderInfo.kind;
     method width = renderInfo.rwidth;
     method height = renderInfo.rheight;
+    method realWidth = renderInfo.rwidth /. !scaleX;
+    method realHeight = renderInfo.rwidth /. !scaleY;
     method textureID = renderInfo.rtextureID;
     method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
 (*     method scale = baseTexture#scale; *)
