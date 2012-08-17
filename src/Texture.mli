@@ -25,6 +25,8 @@ type filter = [ FilterNearest | FilterLinear ];
 
 type kind = [ Simple of bool | Alpha | Pallete of textureInfo ];
 
+value scale: ref float;
+
 value int32_of_textureID: textureID -> int32;
 
 type renderInfo =
@@ -47,6 +49,7 @@ and c =
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
+    method scale: float;
 (*     method scale: float; *)
     method textureID: textureID;
     method setFilter: filter -> unit;

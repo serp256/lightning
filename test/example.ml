@@ -152,7 +152,7 @@ value tlf (stage:Stage.c) =
   in
   *)
 
-  let tlf_text = TLF.p ~fontWeight:"bold" ~halign:`center ~color:0xFFE000 ~fontSize:18 [`text "Add"] in
+  let tlf_text = TLF.p ~fontWeight:"bold" ~halign:`center ~color:0xFFE000 ~fontSize:18 [`text "Add бля нах"] in
   let (_,text) = TLF.create tlf_text in
   (
     text#setFilters [ Filters.glow ~size:2 ~strength:2. 0x14484D ];
@@ -646,6 +646,12 @@ value async_images (stage:Stage.c) =
   *)
 
 value image (stage:Stage.c) =
+  let image = Image.load "tree.png" in
+  (
+    image#setX 101.; image#setY 102.;
+    stage#addChild image;
+  );
+  (*
   Texture.load_async "tree.png" begin fun t ->
     let image = Image.create t in
     (
@@ -653,6 +659,7 @@ value image (stage:Stage.c) =
       stage#addChild image;
     )
   end;
+  *)
 
 (*
 value test_gc (stage:Stage.c) = 
@@ -1356,6 +1363,12 @@ value fbtest () =
   );
 
 
+value texture_atlas (stage:Stage.c) =
+  let () = Texture.scale.val := 2. in
+  let atlas = TextureAtlas.load "libandroid.bin" in
+  let image = Image.create (TextureAtlas.subTexture atlas "/background_levels/1.png") in
+  stage#addChild image;
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
@@ -1432,7 +1445,9 @@ let stage width height =
 (*        udid self; *)
        (* bl_greenhouse self; *)
 (*        async_images self; *)
-        image self;
+(*         image self; *)
+        texture_atlas self;
+        tlf self
     end;
   end
 in

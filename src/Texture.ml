@@ -17,8 +17,7 @@ value string_of_textureID textureID =
   let i = int32_of_textureID textureID in
   Int32.to_string i;
 
-value scaleX = ref 1.;
-value scaleY = ref 1.;
+value scale = ref 1.;
 
 type textureFormat = 
   [ TextureFormatRGBA
@@ -68,6 +67,7 @@ and c =
   object
     method kind : kind;
     method renderInfo: renderInfo;
+    method scale: float;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
@@ -92,6 +92,7 @@ value zero : c =
     method renderInfo = renderInfo;
     method width = 0.;
     method height = 0.;
+    method scale = 1.;
     method hasPremultipliedAlpha = False;
     method setFilter filter = ();
 (*     method scale = scale; *)
@@ -135,8 +136,9 @@ end);
 
 
 class subtexture region (baseTexture:c) = 
-  let tw = baseTexture#width
-  and th = baseTexture#height in
+  let ts = baseTexture#scale in
+  let tw = baseTexture#width /. ts
+  and th = baseTexture#height /. ts in
   let clipping = Rectangle.create (region.Rectangle.x /. tw) (region.Rectangle.y /. th) (region.Rectangle.width /. tw) (region.Rectangle.height /. th) in
   let rootClipping = Rectangle.tm_of_t clipping in
   let () = 
@@ -161,8 +163,8 @@ class subtexture region (baseTexture:c) =
   let renderInfo = 
     {
       rtextureID = baseTexture#textureID;
-      rwidth = region.Rectangle.width *. !scaleX;
-      rheight = region.Rectangle.height *. !scaleY;
+      rwidth = region.Rectangle.width *. ts; 
+      rheight = region.Rectangle.height *. ts;
       clipping = Some (Obj.magic rootClipping);
       kind = baseTexture#kind;
     }
@@ -172,8 +174,7 @@ class subtexture region (baseTexture:c) =
     method kind = renderInfo.kind;
     method width = renderInfo.rwidth;
     method height = renderInfo.rheight;
-    method realWidth = renderInfo.rwidth /. !scaleX;
-    method realHeight = renderInfo.rwidth /. !scaleY;
+    method scale = baseTexture#scale;
     method textureID = renderInfo.rtextureID;
     method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
 (*     method scale = baseTexture#scale; *)
@@ -270,14 +271,16 @@ class s textureInfo =
   let renderInfo = 
     {
       rtextureID = textureInfo.textureID;
-      rwidth = width;
-      rheight = height;
+      rwidth = width *. !scale;
+      rheight = height *. !scale;
       clipping = clipping;
       kind = kind;
     }
   in
   object(self)
 (*     value mutable textureID = renderInfo.rtextureID; *)
+    value scale = !scale;
+    method scale = scale;
     value renderInfo = renderInfo;
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
@@ -367,6 +370,7 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
   object(self:c)
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
+    method scale = 1.;
     method textureID = renderInfo.rtextureID;
     method width = renderInfo.rwidth;
     method height = renderInfo.rheight;
@@ -734,6 +738,7 @@ class rbt rb =
     method renderInfo = rb.renderInfo;
     method renderbuffer = rb;
     method kind = rb.renderInfo.kind;
+    method scale = 1.;
     value mutable isActive = None;
 (*
     value mutable legalWidth = legalWidth;
