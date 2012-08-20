@@ -22,7 +22,6 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
   float yConversion = mlstage->height / viewSize.height;
   mltouches = Val_int(0);
 	time = caml_copy_double(0.);
-	NSLog(@"Event number of touches: %d, touches - %d",[event allTouches].count,touches.count);
   for (UITouch *uiTouch in touches) // [event touchesForView:view])
   {
     CGPoint location = [uiTouch locationInView:view];
