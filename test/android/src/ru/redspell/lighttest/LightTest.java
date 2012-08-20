@@ -18,6 +18,9 @@ import java.net.MalformedURLException;
 import java.io.IOException;
 import ru.redspell.lightning.LightActivity;
 
+import android.os.Build;
+import android.provider.Settings.Secure;
+import android.provider.Settings;
 
 
 public class LightTest extends LightActivity
@@ -37,6 +40,20 @@ public class LightTest extends LightActivity
 	{
 		super.onCreate(savedInstanceState);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		Log.d("LIGHTNING", "BRAND=" + Build.BRAND);
+		Log.d("LIGHTNING", "DEVICE=" + Build.DEVICE);
+		Log.d("LIGHTNING", "DISPLAY=" + Build.DISPLAY);
+		Log.d("LIGHTNING", "HARDWARE=" + Build.HARDWARE);
+		Log.d("LIGHTNING", "MANUFACTURER=" + Build.MANUFACTURER);
+//		Log.d("LIGHTNING", "SERIAL=" + Build.SERIAL);
+		Log.d("LIGHTNING", "USER=" + Build.USER);
+		Log.d("LIGHTNING", "MODEL=" + Build.MODEL);
+		Log.d("LIGHTNING", "PRODUCT=" + Build.PRODUCT);
+
+
+		Log.d("LIGHTNING", "ANDROID_ID=" + Secure.ANDROID_ID);
+		String deviceId = Settings.System.getString(getContentResolver(),Secure.ANDROID_ID);
+		Log.d("LIGHTNING", "ANDROID_ID=" + deviceId);
 	}
 
 	static {

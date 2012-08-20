@@ -1374,6 +1374,14 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "device id : %s" (match Lightning.deviceIdentifier () with [ Some id -> id | _ -> "NONE"]);
 (*       assets self; *)
 (*       avsound self "melody0.mp3"; *)
       (*
@@ -1446,8 +1454,8 @@ let stage width height =
        (* bl_greenhouse self; *)
 (*        async_images self; *)
 (*         image self; *)
-        texture_atlas self;
-        tlf self
+(*        texture_atlas self; *)
+(*        tlf self *)
     end;
   end
 in

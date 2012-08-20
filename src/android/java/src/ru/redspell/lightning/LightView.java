@@ -43,6 +43,9 @@ import android.media.AudioManager;
 import android.os.Process;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
+import android.provider.Settings.Secure;
+import android.provider.Settings;
+import android.content.Context;
 
 public class LightView extends GLSurfaceView {
 	private class UnzipCallbackRunnable implements Runnable {
@@ -57,6 +60,11 @@ public class LightView extends GLSurfaceView {
 		}
 
 		public native void run();
+	}
+	
+	public String device_id () {
+		return Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
+//		return "PIZDA";
 	}
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {

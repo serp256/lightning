@@ -1256,3 +1256,25 @@ void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
 	if (initTapjoyMethod == 0) initTapjoyMethod = (*env)->GetMethodID(env,jViewCls,"initTapjoy","(Ljava/lang/String;Ljava/lang/String;)V");
 	(*env)->CallVoidMethod(env,jView,initTapjoyMethod,appID,secretKey);
 }
+
+static value device_id;
+
+value ml_device_id() {
+	if (!version) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "device_id", "()Ljava/lang/String;");
+		jstring jdev = (*env)->CallObjectMethod(env, jView, mid);
+		char* cdev = (*env)->GetStringUTFChars(env, jdev, JNI_FALSE);
+
+		device_id = caml_copy_string(cdev);
+		caml_register_generational_global_root(&device_id);
+
+		(*env)->ReleaseStringUTFChars(env, jdev, cdev);
+		(*env)->DeleteLocalRef(env, jdev);
+	}
+
+	return device_id;
+}
+
