@@ -1259,7 +1259,9 @@ void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
 
 static value device_id;
 
-value ml_device_id() {
+value ml_device_id(value unit) {
+	DEBUGF("ML_DEVICE_ID");
+	CAMLparam0();
 	if (!version) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
@@ -1278,3 +1280,21 @@ value ml_device_id() {
 	return device_id;
 }
 
+value ml_device_type(value unit) {
+	DEBUGF("ML_DEVICE_TYPE");
+	CAMLparam0();
+	CAMLlocal1(retval);
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "isTablet", "()Z");
+	jboolean jres = (*env)->CallBooleanMethod(env, jView, mid);
+
+	if (jres) {
+		retval = Val_int(1);
+	} else {
+		retval = Val_int(0);
+	};
+	(*env)->DeleteLocalRef(env, jres);
+	CAMLreturn(retval);
+}

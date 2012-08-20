@@ -236,11 +236,18 @@ IFDEF IOS THEN
 external getDeviceType: unit -> deviceType = "ml_getDeviceType";
 
 
+ELSE IFDEF ANDROID THEN
+external getDeviceType: unit -> deviceType = "ml_device_type"; 
+(*
+value internalDeviceType = ref Pad;
+value getDeviceType () = !internalDeviceType;
+*)
 ELSE
 
 value internalDeviceType = ref Pad;
 value getDeviceType () = !internalDeviceType;
 
+ENDIF;
 ENDIF;
 
 value _deviceType = Lazy.lazy_from_fun getDeviceType;

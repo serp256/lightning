@@ -1381,7 +1381,10 @@ let stage width height =
       debug "++++++++++++++++++++++++++++++++++++++++";
       debug "++++++++++++++++++++++++++++++++++++++++";
       debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "device type : %s" (match LightCommon.deviceType () with [ LightCommon.Pad -> "PAD" | _ -> "PHONE"]);
+      (*
       debug "device id : %s" (match Lightning.deviceIdentifier () with [ Some id -> id | _ -> "NONE"]);
+      *)
 (*       assets self; *)
 (*       avsound self "melody0.mp3"; *)
       (*
