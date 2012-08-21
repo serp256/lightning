@@ -1362,6 +1362,51 @@ value fbtest () =
   *)
   );
 
+value scale (self:Stage.c) = 
+  let img = Image.load "scale.png" in
+  let lib = LightLib.load "BaseDialog" in
+    (
+          self#addChild img;
+          img#setX 13.;
+          img#setY 600.;
+          img#setScaleX 24.;
+          img#setScaleY 33.;
+
+      let img = LightLib.get_symbol lib "ESkins.Background" in
+        (
+          self#addChild img;
+          img#setX 13.;
+          img#setY 17.;
+          img#setScaleX 240.;
+          img#setScaleY 330.;
+          (*
+          let i = ref 1. in
+          let timer = Timer.create ~repeatCount:1000 0.1 "PIZDA" in
+            (
+              ignore(timer#addEventListener Timer.ev_TIMER (fun _ _ _ ->  (debug "SET SCALE %F" !i; img#setScale !i; i.val := !i +. 0.1)));
+              timer#start ();
+            )
+          *)
+        );
+      LightLib.get_symbol_async lib "ESkins.Background" begin fun img -> 
+        (
+          self#addChild img;
+          img#setX 500.;
+          img#setY 17.;
+          img#setScaleX 24.;
+          img#setScaleY 33.;
+          (*
+          let i = ref 1. in
+          let timer = Timer.create ~repeatCount:1000 0.1 "PIZDA" in
+            (
+              ignore(timer#addEventListener Timer.ev_TIMER (fun _ _ _ ->  (debug "SET SCALE %F" !i; img#setScale !i; i.val := !i +. 0.1)));
+              timer#start ();
+            )
+          *)
+        )
+       end;
+    );
+
 
 value texture_atlas (stage:Stage.c) =
   let () = Texture.scale.val := 2. in
@@ -1385,6 +1430,7 @@ let stage width height =
       (*
       debug "device id : %s" (match Lightning.deviceIdentifier () with [ Some id -> id | _ -> "NONE"]);
       *)
+      scale self;
 (*       assets self; *)
 (*       avsound self "melody0.mp3"; *)
       (*
@@ -1455,10 +1501,14 @@ let stage width height =
 (*           glow_and_gc self; *)
 (*        udid self; *)
        (* bl_greenhouse self; *)
+<<<<<<< HEAD
 (*        async_images self; *)
 (*         image self; *)
 (*        texture_atlas self; *)
 (*        tlf self *)
+=======
+(*       async_images self; *)
+>>>>>>> origin/master
     end;
   end
 in

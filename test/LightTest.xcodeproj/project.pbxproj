@@ -12,19 +12,8 @@
 		5134AA2415C663B300814238 /* close_button.png in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2015C6633200814238 /* close_button.png */; };
 		5134AA2515C663B300814238 /* TJCLoadingView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2115C6633200814238 /* TJCLoadingView.xib */; };
 		5134AA2615C663B300814238 /* TJCVideoView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2215C6633200814238 /* TJCVideoView.xib */; };
-		516A41EE15D3D6E600BB71F0 /* MyriadPro-Bold_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41DE15D3D6E600BB71F0 /* MyriadPro-Bold_0.alpha */; };
-		516A41EF15D3D6E600BB71F0 /* MyriadPro-Bold_0x2.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41DF15D3D6E600BB71F0 /* MyriadPro-Bold_0x2.alpha */; };
-		516A41F015D3D6E600BB71F0 /* MyriadPro-Bold_0x05.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E015D3D6E600BB71F0 /* MyriadPro-Bold_0x05.alpha */; };
-		516A41F115D3D6E600BB71F0 /* MyriadPro-Bold_0x05.png in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E115D3D6E600BB71F0 /* MyriadPro-Bold_0x05.png */; };
-		516A41F215D3D6E600BB71F0 /* MyriadPro-Bold_0x06.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E215D3D6E600BB71F0 /* MyriadPro-Bold_0x06.alpha */; };
-		516A41F315D3D6E600BB71F0 /* MyriadPro-Bold_0x12.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E315D3D6E600BB71F0 /* MyriadPro-Bold_0x12.alpha */; };
-		516A41F415D3D6E600BB71F0 /* MyriadPro-Bold_0x12.png in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E415D3D6E600BB71F0 /* MyriadPro-Bold_0x12.png */; };
 		516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */; };
 		516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */; };
-		516A41F715D3D6E600BB71F0 /* MyriadPro-Boldx2.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E715D3D6E600BB71F0 /* MyriadPro-Boldx2.fnt */; };
-		516A41F815D3D6E600BB71F0 /* MyriadPro-Boldx05.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E815D3D6E600BB71F0 /* MyriadPro-Boldx05.fnt */; };
-		516A41F915D3D6E600BB71F0 /* MyriadPro-Boldx06.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E915D3D6E600BB71F0 /* MyriadPro-Boldx06.fnt */; };
-		516A41FA15D3D6E600BB71F0 /* MyriadPro-Boldx12.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41EA15D3D6E600BB71F0 /* MyriadPro-Boldx12.fnt */; };
 		516A41FB15D3D6E600BB71F0 /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */; };
 		516A41FC15D3D6E600BB71F0 /* MyriadPro-Regular0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41ED15D3D6E600BB71F0 /* MyriadPro-Regular0.alpha */; };
 		517411B614FB6A420022E871 /* e_cactus.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B514FB6A420022E871 /* e_cactus.png */; };
@@ -33,15 +22,14 @@
 		517EB8801522F888009D91B1 /* pallete.plx in Resources */ = {isa = PBXBuildFile; fileRef = 517EB87F1522F888009D91B1 /* pallete.plx */; };
 		517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */; };
 		51846F6514EE704D00FDE684 /* test.native in CopyFiles */ = {isa = PBXBuildFile; fileRef = 51846F6414EE704D00FDE684 /* test.native */; };
-		5184FDBD15741E2D001FDC0F /* MyriadPro-Regular_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 5184FDBC15741E2D001FDC0F /* MyriadPro-Regular_0.alpha */; };
 		518D151C14FE441300B5436E /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */; };
 		5191FD9314FF5FC900DD8677 /* frame.png in Resources */ = {isa = PBXBuildFile; fileRef = 5191FD9214FF5FC900DD8677 /* frame.png */; };
 		51BCBEBD15BD4CDE00A3DCB7 /* palletes in Resources */ = {isa = PBXBuildFile; fileRef = 51BCBEBC15BD4CDE00A3DCB7 /* palletes */; };
-		51C72804157768860003B471 /* CCFairyTale_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 51C72802157768860003B471 /* CCFairyTale_0.alpha */; };
-		51C72805157768860003B471 /* CCFairyTale.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 51C72803157768860003B471 /* CCFairyTale.fnt */; };
 		51DC6E1314EE5E960084EB76 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1114EE5E960084EB76 /* InfoPlist.strings */; };
 		51DC6E1F14EE5E960084EB76 /* ViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1D14EE5E960084EB76 /* ViewController_iPhone.xib */; };
 		51DC6E2214EE5E960084EB76 /* ViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E2014EE5E960084EB76 /* ViewController_iPad.xib */; };
+		B5236AF715DCDF0100116007 /* scale.png in Resources */ = {isa = PBXBuildFile; fileRef = B5236AF615DCDF0100116007 /* scale.png */; };
+		B5236AF915DCDF0F00116007 /* BaseDialog in Resources */ = {isa = PBXBuildFile; fileRef = B5236AF815DCDF0F00116007 /* BaseDialog */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,39 +61,20 @@
 		5134AA2015C6633200814238 /* close_button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close_button.png; sourceTree = "<group>"; };
 		5134AA2115C6633200814238 /* TJCLoadingView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = TJCLoadingView.xib; sourceTree = "<group>"; };
 		5134AA2215C6633200814238 /* TJCVideoView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = TJCVideoView.xib; sourceTree = "<group>"; };
-		516A41DE15D3D6E600BB71F0 /* MyriadPro-Bold_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0.alpha"; path = "Resources/MyriadPro-Bold_0.alpha"; sourceTree = "<group>"; };
-		516A41DF15D3D6E600BB71F0 /* MyriadPro-Bold_0x2.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0x2.alpha"; path = "Resources/MyriadPro-Bold_0x2.alpha"; sourceTree = "<group>"; };
-		516A41E015D3D6E600BB71F0 /* MyriadPro-Bold_0x05.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0x05.alpha"; path = "Resources/MyriadPro-Bold_0x05.alpha"; sourceTree = "<group>"; };
-		516A41E115D3D6E600BB71F0 /* MyriadPro-Bold_0x05.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "MyriadPro-Bold_0x05.png"; path = "Resources/MyriadPro-Bold_0x05.png"; sourceTree = "<group>"; };
-		516A41E215D3D6E600BB71F0 /* MyriadPro-Bold_0x06.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0x06.alpha"; path = "Resources/MyriadPro-Bold_0x06.alpha"; sourceTree = "<group>"; };
-		516A41E315D3D6E600BB71F0 /* MyriadPro-Bold_0x12.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0x12.alpha"; path = "Resources/MyriadPro-Bold_0x12.alpha"; sourceTree = "<group>"; };
-		516A41E415D3D6E600BB71F0 /* MyriadPro-Bold_0x12.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "MyriadPro-Bold_0x12.png"; path = "Resources/MyriadPro-Bold_0x12.png"; sourceTree = "<group>"; };
 		516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold.fnt"; path = "Resources/MyriadPro-Bold.fnt"; sourceTree = "<group>"; };
 		516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold0.alpha"; path = "Resources/MyriadPro-Bold0.alpha"; sourceTree = "<group>"; };
-		516A41E715D3D6E600BB71F0 /* MyriadPro-Boldx2.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Boldx2.fnt"; path = "Resources/MyriadPro-Boldx2.fnt"; sourceTree = "<group>"; };
-		516A41E815D3D6E600BB71F0 /* MyriadPro-Boldx05.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Boldx05.fnt"; path = "Resources/MyriadPro-Boldx05.fnt"; sourceTree = "<group>"; };
-		516A41E915D3D6E600BB71F0 /* MyriadPro-Boldx06.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Boldx06.fnt"; path = "Resources/MyriadPro-Boldx06.fnt"; sourceTree = "<group>"; };
-		516A41EA15D3D6E600BB71F0 /* MyriadPro-Boldx12.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Boldx12.fnt"; path = "Resources/MyriadPro-Boldx12.fnt"; sourceTree = "<group>"; };
-		516A41EB15D3D6E600BB71F0 /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
 		516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular.fnt"; path = "Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
 		516A41ED15D3D6E600BB71F0 /* MyriadPro-Regular0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular0.alpha"; path = "Resources/MyriadPro-Regular0.alpha"; sourceTree = "<group>"; };
 		517411B514FB6A420022E871 /* e_cactus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = e_cactus.png; path = ../../lightning/test/Resources/e_cactus.png; sourceTree = "<group>"; };
 		517411B814FB6A510022E871 /* tree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tree.png; path = ../../lightning/test/Resources/tree.png; sourceTree = "<group>"; };
 		517411CA14FB749C0022E871 /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shaders; path = ../../lightning/Shaders; sourceTree = "<group>"; };
-		5175C4DE156E80DE00A6DB34 /* sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = sound.mp3; path = Resources/sound.mp3; sourceTree = "<group>"; };
-		517D397115C273EE002F92B9 /* tl_tile1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tl_tile1.png; path = Resources/tl_tile1.png; sourceTree = "<group>"; };
 		517EB87F1522F888009D91B1 /* pallete.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = pallete.plx; path = ../../lightning/test/Resources/pallete.plx; sourceTree = "<group>"; };
 		517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular0.alpha"; path = "../../lightning/test/Resources/MyriadPro-Regular0.alpha"; sourceTree = "<group>"; };
 		51846F6414EE704D00FDE684 /* test.native */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = test.native; sourceTree = "<group>"; };
-		5184FDBC15741E2D001FDC0F /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
 		518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "MyriadPro-Regular.fnt"; path = "../../lightning/test/Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
 		5191FD9214FF5FC900DD8677 /* frame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = frame.png; path = ../../lightning/test/Resources/frame.png; sourceTree = "<group>"; };
 		51B5418414F273C300EB2241 /* items */ = {isa = PBXFileReference; lastKnownFileType = folder; name = items; path = ../../lightning/test/Resources/items; sourceTree = "<group>"; };
 		51BCBEBC15BD4CDE00A3DCB7 /* palletes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = palletes; path = "../../mobile-farm/Resources/palletes"; sourceTree = "<group>"; };
-		51BCBECF15BE985900A3DCB7 /* memtest */ = {isa = PBXFileReference; lastKnownFileType = folder; name = memtest; path = Resources/memtest; sourceTree = "<group>"; };
-		51C72802157768860003B471 /* CCFairyTale_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = CCFairyTale_0.alpha; path = Resources/CCFairyTale_0.alpha; sourceTree = "<group>"; };
-		51C72803157768860003B471 /* CCFairyTale.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = CCFairyTale.fnt; path = Resources/CCFairyTale.fnt; sourceTree = "<group>"; };
-		51C72807157768C20003B471 /* fb.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = fb.png; path = Resources/fb.png; sourceTree = "<group>"; };
 		51DC6E0414EE5E960084EB76 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		51DC6E0814EE5E960084EB76 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		51DC6E0A14EE5E960084EB76 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -120,7 +89,8 @@
 		51DC6E1B14EE5E960084EB76 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		51DC6E1E14EE5E960084EB76 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPhone.xib; sourceTree = "<group>"; };
 		51DC6E2114EE5E960084EB76 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPad.xib; sourceTree = "<group>"; };
-		51E5BE0815C267E4003BC236 /* yn_chicken.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = yn_chicken.png; path = Resources/yn_chicken.png; sourceTree = "<group>"; };
+		B5236AF615DCDF0100116007 /* scale.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = scale.png; path = Resources/scale.png; sourceTree = "<group>"; };
+		B5236AF815DCDF0F00116007 /* BaseDialog */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BaseDialog; path = Resources/BaseDialog; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -138,32 +108,14 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
-				516A41DE15D3D6E600BB71F0 /* MyriadPro-Bold_0.alpha */,
-				516A41DF15D3D6E600BB71F0 /* MyriadPro-Bold_0x2.alpha */,
-				516A41E015D3D6E600BB71F0 /* MyriadPro-Bold_0x05.alpha */,
-				516A41E115D3D6E600BB71F0 /* MyriadPro-Bold_0x05.png */,
-				516A41E215D3D6E600BB71F0 /* MyriadPro-Bold_0x06.alpha */,
-				516A41E315D3D6E600BB71F0 /* MyriadPro-Bold_0x12.alpha */,
-				516A41E415D3D6E600BB71F0 /* MyriadPro-Bold_0x12.png */,
+				B5236AF815DCDF0F00116007 /* BaseDialog */,
+				B5236AF615DCDF0100116007 /* scale.png */,
 				516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */,
 				516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */,
-				516A41E715D3D6E600BB71F0 /* MyriadPro-Boldx2.fnt */,
-				516A41E815D3D6E600BB71F0 /* MyriadPro-Boldx05.fnt */,
-				516A41E915D3D6E600BB71F0 /* MyriadPro-Boldx06.fnt */,
-				516A41EA15D3D6E600BB71F0 /* MyriadPro-Boldx12.fnt */,
-				516A41EB15D3D6E600BB71F0 /* MyriadPro-Regular_0.alpha */,
 				516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */,
 				516A41ED15D3D6E600BB71F0 /* MyriadPro-Regular0.alpha */,
 				5134AA1F15C6633200814238 /* Resources */,
-				517D397115C273EE002F92B9 /* tl_tile1.png */,
-				51E5BE0815C267E4003BC236 /* yn_chicken.png */,
-				51BCBECF15BE985900A3DCB7 /* memtest */,
 				51BCBEBC15BD4CDE00A3DCB7 /* palletes */,
-				51C72807157768C20003B471 /* fb.png */,
-				51C72802157768860003B471 /* CCFairyTale_0.alpha */,
-				51C72803157768860003B471 /* CCFairyTale.fnt */,
-				5184FDBC15741E2D001FDC0F /* MyriadPro-Regular_0.alpha */,
-				5175C4DE156E80DE00A6DB34 /* sound.mp3 */,
 				517EB8821522F905009D91B1 /* MyriadPro-Regular0.alpha */,
 				517EB87F1522F888009D91B1 /* pallete.plx */,
 				5191FD9214FF5FC900DD8677 /* frame.png */,
@@ -293,28 +245,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				516A41EE15D3D6E600BB71F0 /* MyriadPro-Bold_0.alpha in Resources */,
-				516A41EF15D3D6E600BB71F0 /* MyriadPro-Bold_0x2.alpha in Resources */,
-				516A41F015D3D6E600BB71F0 /* MyriadPro-Bold_0x05.alpha in Resources */,
-				516A41F115D3D6E600BB71F0 /* MyriadPro-Bold_0x05.png in Resources */,
-				516A41F215D3D6E600BB71F0 /* MyriadPro-Bold_0x06.alpha in Resources */,
-				516A41F315D3D6E600BB71F0 /* MyriadPro-Bold_0x12.alpha in Resources */,
-				516A41F415D3D6E600BB71F0 /* MyriadPro-Bold_0x12.png in Resources */,
+				B5236AF915DCDF0F00116007 /* BaseDialog in Resources */,
+				B5236AF715DCDF0100116007 /* scale.png in Resources */,
 				516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */,
 				516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */,
-				516A41F715D3D6E600BB71F0 /* MyriadPro-Boldx2.fnt in Resources */,
-				516A41F815D3D6E600BB71F0 /* MyriadPro-Boldx05.fnt in Resources */,
-				516A41F915D3D6E600BB71F0 /* MyriadPro-Boldx06.fnt in Resources */,
-				516A41FA15D3D6E600BB71F0 /* MyriadPro-Boldx12.fnt in Resources */,
-				5184FDBD15741E2D001FDC0F /* MyriadPro-Regular_0.alpha in Resources */,
 				516A41FB15D3D6E600BB71F0 /* MyriadPro-Regular.fnt in Resources */,
 				516A41FC15D3D6E600BB71F0 /* MyriadPro-Regular0.alpha in Resources */,
 				5134AA2415C663B300814238 /* close_button.png in Resources */,
 				5134AA2515C663B300814238 /* TJCLoadingView.xib in Resources */,
 				5134AA2615C663B300814238 /* TJCVideoView.xib in Resources */,
 				51BCBEBD15BD4CDE00A3DCB7 /* palletes in Resources */,
-				51C72804157768860003B471 /* CCFairyTale_0.alpha in Resources */,
-				51C72805157768860003B471 /* CCFairyTale.fnt in Resources */,
 				517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */,
 				517EB8801522F888009D91B1 /* pallete.plx in Resources */,
 				5191FD9314FF5FC900DD8677 /* frame.png in Resources */,
