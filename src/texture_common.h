@@ -26,7 +26,9 @@ unsigned long nextPOT(unsigned long x);
 
 struct tex {
 	GLuint tid;
-	char path[255];// remove this then release
+#ifdef TEXTURE_LOAD
+	char path[255];
+#endif
 	int mem;
 };
 
@@ -60,7 +62,9 @@ typedef enum
 } LTextureFormat;
 
 typedef struct {
-	//char path[255];
+#ifdef TEXTURE_LOAD
+	char path[255];
+#endif
 	int format;
 	unsigned int width;
 	double realWidth;
