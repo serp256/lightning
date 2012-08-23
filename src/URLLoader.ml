@@ -375,7 +375,7 @@ ENDIF;
 ENDIF;
 }}}*)
 
-IFDEF SDL THEN
+IFDEF PC THEN
 external run: unit -> unit = "net_run";
 ENDIF;
 

@@ -152,7 +152,7 @@ value tlf (stage:Stage.c) =
   in
   *)
 
-  let tlf_text = TLF.p ~fontWeight:"bold" ~halign:`center ~color:0xFFE000 ~fontSize:18 [`text "Add"] in
+  let tlf_text = TLF.p ~fontWeight:"bold" ~halign:`center ~color:0xFFE000 ~fontSize:18 [`text "Add бля нах"] in
   let (_,text) = TLF.create tlf_text in
   (
     text#setFilters [ Filters.glow ~size:2 ~strength:2. 0x14484D ];
@@ -211,7 +211,7 @@ value filters (stage:Stage.c) =
       img#setPos 100. 100.;
       sprite#addChild img;
     );
-    sprite#setFilters [ `ColorMatrix disable_filter ];
+(*     sprite#setFilters [ `ColorMatrix disable_filter ]; *)
 (*     sprite#setFilters [ Filters.glow 0xFF0000 ]; *)
     sprite#setPos 100. 100.;
     stage#addChild sprite;
@@ -220,7 +220,7 @@ value filters (stage:Stage.c) =
     let tree = Image.load "tree.png" in
     (
       tree#setPos 100. 350.;
-      tree#setFilters [ `ColorMatrix disable_filter ];
+(*       tree#setFilters [ `ColorMatrix disable_filter ]; *)
 (*       tree#setFilters [ Filters.glow 0xFF0000 ]; *)
       stage#addChild tree;
     );
@@ -537,17 +537,129 @@ value pallete (stage:Stage.c) =
 );
 *)
 
+
+value items = 
+  [|
+      "bl_blastfurnace.png";
+      "bl_bridge1_break.png";
+      "bl_bridge2_break.png";
+      "bl_chickencoop.png";
+      "bl_chickencoop_gold.png";
+      "bl_chickencoop_gold_lock.png";
+      "bl_chickencoop_lock.png";
+      "bl_collider.png";
+      "bl_collider_lock.png";
+      "bl_cote.png";
+      "bl_cote_gold.png";
+      "bl_cote_gold_lock.png";
+      "bl_cote_lock.png";
+      "bl_cowshed.png";
+      "bl_cowshed_gold.png";
+      "bl_cowshed_gold_lock.png";
+      "bl_cowshed_lock.png";
+      "bl_dam.png";
+      "bl_doghouse.png";
+      "bl_gold_mine.png";
+      "bl_gold_mine_lock.png";
+      "bl_greenhouse.png";
+      "bl_house.png";
+      "bl_hutches.png";
+      "bl_hutches_gold.png";
+      "bl_hutches_gold_lock.png";
+      "bl_hutches_lock.png";
+      "bl_incubator.png";
+      "bl_incubator_lock.png";
+      "bl_ionizer.png";
+      "bl_ionizer_lock.png";
+      "bl_laboratory.png";
+      "bl_laboratory1.png";
+      "bl_laboratory1_lock.png";
+      "bl_laboratory2.png";
+      "bl_laboratory2_lock.png";
+      "bl_laboratory_lock.png";
+      "bl_magnetto.png";
+      "bl_magnetto_lock.png";
+      "bl_mill.png";
+      "bl_neutrino.png";
+      "bl_neutrino_lock.png";
+      "bl_paddock.png";
+      "bl_paddock_gold.png";
+      "bl_paddock_gold_lock.png";
+      "bl_paddock_lock.png";
+      "bl_stable.png";
+      "bl_stable_gold.png";
+      "bl_stable_gold_lock.png";
+      "bl_stable_lock.png";
+      "bl_stratochamber.png";
+      "bl_stratochamber_lock.png";
+      "bl_synchrophasotron.png";
+      "bl_synchrophasotron_lock.png";
+      "bl_teleport.png";
+      "bl_tesla.png";
+      "bl_tesla_lock.png";
+      "bl_turkeycoop.png";
+      "bl_turkeycoop_gold.png";
+      "bl_turkeycoop_gold_lock.png";
+      "bl_turkeycoop_lock.png";
+      "bl_ultrasonic.png";
+      "bl_ultrasonic_lock.png";
+      "bl_warehouse.png";
+      "bl_warehouse_lock.png";
+      "bl_workshop.png";
+      "bl_workshop_lock.png";
+      "bl_xray.png";
+      "bl_xray_lock.png"
+  |];
+
+
+value async_images (stage:Stage.c) = 
+  let load_async fname f = Texture.load_async fname f in (* let t = Texture.load fname in f t in  *)
+  let x = ref 0. and y = ref 0. in
+  Array.iter begin fun it ->
+(*     let () = prerr_endline it in *)
+    load_async (Filename.concat "items" it) begin fun t -> 
+      let image = Image.create t in 
+      (
+        image#setPos !x !y; 
+(*         Printf.printf "x=%f,y=%f\n%!" !x !y; *)
+        x.val := !x +. 100.;
+        if (!x > fst (Stage.screenSize ())) then (y.val := !y +. 100.; x.val := 0.) else ();
+(*         Printf.eprintf "next x=%f,y=%f\n%!" !x !y; *)
+        stage#addChild image;
+      )
+    end
+  end items;
+
+  (*
+    (
+      (
+        stage#addChild image;
+        loop 1 where
+          rec loop i =
+            let i = if i = Array.length items then 0 else i in
+            Timers.start 0.05 begin fun () ->
+              Texture.load_async (Filename.concat "items" items.(i)) (fun t -> (image#setTexture t; loop (i+1)))
+            end |> ignore
+      )
+    )
+  end;
+  *)
+
 value image (stage:Stage.c) =
+  let image = Image.load "tree.png" in
+  (
+    image#setX 101.; image#setY 102.;
+    stage#addChild image;
+  );
+  (*
   Texture.load_async "tree.png" begin fun t ->
     let image = Image.create t in
     (
-      image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF));
-      onClick image begin fun _ ->
-        failwith("PIZDA LALA");
-      end;
+(*       image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)); *)
       stage#addChild image;
     )
   end;
+  *)
 
 (*
 value test_gc (stage:Stage.c) = 
@@ -736,8 +848,8 @@ value glow (stage:Stage.c) =
   let change_filter el = 
     match el#filters with
     [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ Filters.glow ~kind:`soft ~strength:2. ~size:2 0xFF0000 ]
-    | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ `ColorMatrix gray_filter ]
-    | [ `ColorMatrix m ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ]
+(*     | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ `ColorMatrix gray_filter ] *)
+(*     | [ `ColorMatrix m ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ] *)
     | [ ] -> el#setFilters [ Filters.glow ~kind:`linear ~size:2 0xFF0000 ]
     | _ -> assert False 
     ]
@@ -1250,12 +1362,75 @@ value fbtest () =
   *)
   );
 
+value scale (self:Stage.c) = 
+  let img = Image.load "scale.png" in
+  let lib = LightLib.load "BaseDialog" in
+    (
+          self#addChild img;
+          img#setX 13.;
+          img#setY 600.;
+          img#setScaleX 24.;
+          img#setScaleY 33.;
+
+      let img = LightLib.get_symbol lib "ESkins.Background" in
+        (
+          self#addChild img;
+          img#setX 13.;
+          img#setY 17.;
+          img#setScaleX 240.;
+          img#setScaleY 330.;
+          (*
+          let i = ref 1. in
+          let timer = Timer.create ~repeatCount:1000 0.1 "PIZDA" in
+            (
+              ignore(timer#addEventListener Timer.ev_TIMER (fun _ _ _ ->  (debug "SET SCALE %F" !i; img#setScale !i; i.val := !i +. 0.1)));
+              timer#start ();
+            )
+          *)
+        );
+      LightLib.get_symbol_async lib "ESkins.Background" begin fun img -> 
+        (
+          self#addChild img;
+          img#setX 500.;
+          img#setY 17.;
+          img#setScaleX 24.;
+          img#setScaleY 33.;
+          (*
+          let i = ref 1. in
+          let timer = Timer.create ~repeatCount:1000 0.1 "PIZDA" in
+            (
+              ignore(timer#addEventListener Timer.ev_TIMER (fun _ _ _ ->  (debug "SET SCALE %F" !i; img#setScale !i; i.val := !i +. 0.1)));
+              timer#start ();
+            )
+          *)
+        )
+       end;
+    );
+
+
+value texture_atlas (stage:Stage.c) =
+  let () = Texture.scale.val := 2. in
+  let atlas = TextureAtlas.load "libandroid.bin" in
+  let image = Image.create (TextureAtlas.subTexture atlas "/background_levels/1.png") in
+  stage#addChild image;
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "++++++++++++++++++++++++++++++++++++++++";
+      debug "device type : %s" (match LightCommon.deviceType () with [ LightCommon.Pad -> "PAD" | _ -> "PHONE"]);
+      (*
+      debug "device id : %s" (match Lightning.deviceIdentifier () with [ Some id -> id | _ -> "NONE"]);
+      *)
+      scale self;
 (*       assets self; *)
 (*       avsound self "melody0.mp3"; *)
       (*
@@ -1326,7 +1501,14 @@ let stage width height =
 (*           glow_and_gc self; *)
 (*        udid self; *)
        (* bl_greenhouse self; *)
-       image self;
+<<<<<<< HEAD
+(*        async_images self; *)
+(*         image self; *)
+(*        texture_atlas self; *)
+(*        tlf self *)
+=======
+(*       async_images self; *)
+>>>>>>> origin/master
     end;
   end
 in

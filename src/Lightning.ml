@@ -33,12 +33,14 @@ external openURL: string -> unit = "ml_openURL";
 value sendEmail recepient ~subject ?(body="") () = 
   let params = UrlEncoding.mk_url_encoded_parameters [ ("subject",subject); ("body", body)] in
   openURL (Printf.sprintf "mailto:%s?%s" recepient params);
+external _deviceIdentifier: unit -> string = "ml_device_id";
+value deviceIdentifier () = Some (_deviceIdentifier ());
 ELSE
 value openURL _ = ();
 value sendEmail recepient ~subject ?(body="") () = (); 
+value deviceIdentifier () = None;
 ENDIF;
 
-value deviceIdentifier () = None;
 ENDIF;
 
 type stage_constructor = float -> float -> Stage.c;
@@ -89,7 +91,11 @@ type malinfo =
     malloc_free: int;
   };
 
+IFDEF PC THEN
+value malinfo () = {malloc_total=0;malloc_used=0;malloc_free=0};
+ELSE
 external malinfo: unit -> malinfo = "ml_malinfo";
+ENDIF;
 
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
@@ -171,8 +177,9 @@ value extractAssets cb =
 Callback.register "unzipComplete" unzipComplete;
 
 ELSE
-value extractAssets (cb:(bool -> unit)) = cb True;
+value extractAssets (cb:(bool -> unit)) = ();
 value assetsExtracted () = False;
+value getVersion () = assert False;
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";

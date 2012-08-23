@@ -88,6 +88,8 @@ module Program = struct
 
 end;
 
+type filter;
+(*
 module Filter = struct (* remove it from here *)
 
   type t;
@@ -99,8 +101,9 @@ module Filter = struct (* remove it from here *)
   external color_matrix: Filters.colorMatrix -> t = "ml_filter_cmatrix";
 
 end;
+*)
 
-type prg = (Program.t * (option Filter.t));
+type prg = (Program.t * (option filter));
 
 module Quad = struct
   type t;

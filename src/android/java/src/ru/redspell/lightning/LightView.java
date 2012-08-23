@@ -35,12 +35,17 @@ import android.os.Environment;
 
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
+import com.tapjoy.TapjoyConnect;
+import com.tapjoy.TapjoyLog;
 
 import android.media.MediaPlayer;
 import android.media.AudioManager;
 import android.os.Process;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
+import android.provider.Settings.Secure;
+import android.provider.Settings;
+import android.view.Display;
 
 public class LightView extends GLSurfaceView {
 	private class UnzipCallbackRunnable implements Runnable {
@@ -55,6 +60,22 @@ public class LightView extends GLSurfaceView {
 		}
 
 		public native void run();
+	}
+	
+	public String device_id () {
+		return Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
+	}
+
+	public boolean isTablet () {
+    Display display = activity.getWindowManager().getDefaultDisplay();
+    DisplayMetrics displayMetrics = new DisplayMetrics();
+    display.getMetrics(displayMetrics);
+
+    int width = displayMetrics.widthPixels / displayMetrics.densityDpi;
+    int height = displayMetrics.heightPixels / displayMetrics.densityDpi;
+
+    double screenDiagonal = Math.sqrt( width * width + height * height );
+    return (screenDiagonal >= 6.5 );
 	}
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {
@@ -191,7 +212,7 @@ public class LightView extends GLSurfaceView {
 
 
 	public boolean onTouchEvent(final MotionEvent event) {
-		Log.d("LIGHTNING","Touch event");
+		//Log.d("LIGHTNING","Touch event");
 
 		dumpMotionEvent(event);
 
@@ -450,4 +471,11 @@ public class LightView extends GLSurfaceView {
 			}
 		});
 	}
+
+
+	public void initTapjoy(String appID, String secretKey) {
+		//TapjoyLog.enableLogging(true);
+		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
+	}
+
 }

@@ -5,6 +5,8 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import ru.redspell.lightning.LightView;
 import android.util.Log;
+import android.view.WindowManager;
+import android.view.Window;
 
 public class LightActivity extends Activity
 {
@@ -15,6 +17,8 @@ public class LightActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		//setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		lightView = new LightView(this);
 		setContentView(lightView);
 	}

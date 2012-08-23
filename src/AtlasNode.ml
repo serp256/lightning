@@ -18,8 +18,9 @@ type t =
   };
 
 value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=`NoColor) ?(flipX=False) ?(flipY=False) ?(alpha=1.) () = 
-  let tw = texture#width
-  and th = texture#height in
+  let s = texture#scale in
+  let tw = texture#width /. s
+  and th = texture#height /. s in
   let clipping = Rectangle.create_tm (rect.Rectangle.x /. tw) (rect.Rectangle.y /. th) (rect.Rectangle.width /. tw)  (rect.Rectangle.height /. th) in
   (
     Rectangle.( begin
@@ -49,8 +50,8 @@ value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=`
     debug "node clipping: %s" (Rectangle.to_string (Obj.magic clipping));
     {
       texture;
-      width=rect.Rectangle.width;
-      height=rect.Rectangle.height;
+      width=rect.Rectangle.width *. s;
+      height=rect.Rectangle.height *. s;
       pos; color; alpha; flipX; flipY; scaleX; scaleY; rotation=0.;
       bounds=Rectangle.empty;
       clipping=(Obj.magic clipping)

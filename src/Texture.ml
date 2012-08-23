@@ -17,6 +17,8 @@ value string_of_textureID textureID =
   let i = int32_of_textureID textureID in
   Int32.to_string i;
 
+value scale = ref 1.;
+
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -65,6 +67,7 @@ and c =
   object
     method kind : kind;
     method renderInfo: renderInfo;
+    method scale: float;
     method width: float;
     method height: float;
     method hasPremultipliedAlpha:bool;
@@ -89,9 +92,10 @@ value zero : c =
     method renderInfo = renderInfo;
     method width = 0.;
     method height = 0.;
+    method scale = 1.;
     method hasPremultipliedAlpha = False;
     method setFilter filter = ();
-(*     method scale = 1.; *)
+(*     method scale = scale; *)
     method textureID = renderInfo.rtextureID;
     method base = None;
     method clipping = None;
@@ -104,10 +108,6 @@ value zero : c =
   end;
 
 type imageInfo;
-(* external loadImageInfo: string -> imageInfo = "ml_load_image_info"; *)
-(* external freeImageInfo: imageInfo -> unit = "ml_free_image_info"; *)
-(* external loadTexture: ?textureID:textureID -> imageInfo -> textureInfo = "ml_load_texture"; *)
-(* external loadTexture: textureInfo -> option ubyte_array -> textureInfo = "ml_loadTexture"; *)
 external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> bool -> textureInfo = "ml_loadImage";
 (* external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> unit = "ml_loadImage"; 
 value zero_textureInfo = 
@@ -135,18 +135,10 @@ module TextureCache = WeakHashtbl.Make (struct
 end);
 
 
-(*
-class type r = 
-  object
-    inherit c;
-    method setTextureID: textureID -> unit;
-    method releaseSubTexture: unit -> unit;
-  end;
-*)
-
 class subtexture region (baseTexture:c) = 
-  let tw = baseTexture#width
-  and th = baseTexture#height in
+  let ts = baseTexture#scale in
+  let tw = baseTexture#width /. ts
+  and th = baseTexture#height /. ts in
   let clipping = Rectangle.create (region.Rectangle.x /. tw) (region.Rectangle.y /. th) (region.Rectangle.width /. tw) (region.Rectangle.height /. th) in
   let rootClipping = Rectangle.tm_of_t clipping in
   let () = 
@@ -171,8 +163,8 @@ class subtexture region (baseTexture:c) =
   let renderInfo = 
     {
       rtextureID = baseTexture#textureID;
-      rwidth = region.Rectangle.width;
-      rheight = region.Rectangle.height;
+      rwidth = region.Rectangle.width *. ts; 
+      rheight = region.Rectangle.height *. ts;
       clipping = Some (Obj.magic rootClipping);
       kind = baseTexture#kind;
     }
@@ -182,6 +174,7 @@ class subtexture region (baseTexture:c) =
     method kind = renderInfo.kind;
     method width = renderInfo.rwidth;
     method height = renderInfo.rheight;
+    method scale = baseTexture#scale;
     method textureID = renderInfo.rtextureID;
     method hasPremultipliedAlpha = baseTexture#hasPremultipliedAlpha;
 (*     method scale = baseTexture#scale; *)
@@ -278,14 +271,16 @@ class s textureInfo =
   let renderInfo = 
     {
       rtextureID = textureInfo.textureID;
-      rwidth = width;
-      rheight = height;
+      rwidth = width *. !scale;
+      rheight = height *. !scale;
       clipping = clipping;
       kind = kind;
     }
   in
   object(self)
 (*     value mutable textureID = renderInfo.rtextureID; *)
+    value scale = !scale;
+    method scale = scale;
     value renderInfo = renderInfo;
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
@@ -375,6 +370,7 @@ Callback.register "create_ml_texture" begin fun textureID width height clipping 
   object(self:c)
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
+    method scale = 1.;
     method textureID = renderInfo.rtextureID;
     method width = renderInfo.rwidth;
     method height = renderInfo.rheight;
@@ -620,7 +616,8 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
             )
           | None -> List.iter (fun (_,f) -> f path) (List.rev waiters)
           ];
-          check_result ();
+					()
+(*           check_result (); *)
         )
       | None -> ()
       ]
@@ -741,6 +738,7 @@ class rbt rb =
     method renderInfo = rb.renderInfo;
     method renderbuffer = rb;
     method kind = rb.renderInfo.kind;
+    method scale = 1.;
     value mutable isActive = None;
 (*
     value mutable legalWidth = legalWidth;

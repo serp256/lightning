@@ -163,6 +163,7 @@ value register binpath =
             let lineHeight = IO.read_double bininp in
             let ascender = IO.read_double bininp in
             let descender = IO.read_double bininp in
+            let ts = pages.(0)#scale in
             let chars = Hashtbl.create 9 in
             let rec loop n =
               match n with
@@ -180,8 +181,10 @@ value register binpath =
                     let page = IO.read_ui16 bininp in
                      let bc = 
                        let region = Rectangle.create (float x) (float y) (float width) (float height) in
-                       let atlasNode = AtlasNode.create pages.(page) region  () in
-                       { charID; xOffset = float xOffset; yOffset = float yOffset; xAdvance = float xAdvance; atlasNode }
+                       let tex = pages.(page) in
+                       let atlasNode = AtlasNode.create tex region () in
+                       let s = tex#scale in
+                       { charID; xOffset = (float xOffset) *. s; yOffset = (float yOffset) *. s; xAdvance = (float xAdvance) *. s; atlasNode }
                      in
                      Hashtbl.add chars charID bc;
                      loop (n-1)
@@ -190,7 +193,10 @@ value register binpath =
             in
               (
                 loop (IO.read_ui16 bininp);
-                let bf = { chars; texture = pages.(0); scale=1.; ascender; descender; space; lineHeight; } in
+                let bf = 
+                  let ts = pages.(0)#scale in
+                  { chars; texture = pages.(0); scale=1.; ascender = ascender *. ts; descender = descender *. ts; space = space *. ts; lineHeight = lineHeight *. ts } 
+                in
                 let res = MapInt.add size bf res in
                 parse_chars (n-1) res
               )

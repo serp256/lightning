@@ -73,9 +73,13 @@ module ImageColorMatrix = struct (*{{{*)
         ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
         ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
     in
+    (prg,Some matrix);
+(*
     let f = Render.Filter.color_matrix matrix in
     (prg,Some f);
+*)
     
+(*
   value from_filter filter =
     let prg = 
       load id ~vertex:"Image.vsh" ~fragment:"ImageColorMatrix.fsh"
@@ -83,6 +87,7 @@ module ImageColorMatrix = struct (*{{{*)
         ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
     in
     (prg,Some filter);
+*)
 
 end;(*}}}*)
 
@@ -95,9 +100,9 @@ module ImagePalleteColorMatrix = struct (*{{{*)
         ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
         ~uniforms:[| ("u_texture", (UInt 0));  ("u_matrix",UNone) ; ("u_pallete",(UInt 1)) |]
     in
-    let f = Render.Filter.color_matrix matrix in
-    (prg,Some f);
+    (prg,Some matrix);
 
+  (*
   value from_filter filter =
     let prg = 
       load id ~vertex:"Image.vsh" ~fragment:"ImagePalleteColorMatrix.fsh"
@@ -105,6 +110,7 @@ module ImagePalleteColorMatrix = struct (*{{{*)
         ~uniforms:[| ("u_texture", (UInt 0));  ("u_matrix",UNone) ; ("u_pallete",(UInt 1)) |]
     in
     (prg,Some filter);
+  *)
     
 end;(*}}}*)
 
@@ -117,9 +123,9 @@ module ImageAlphaColorMatrix = struct (*{{{*)
         ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
         ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
     in
-    let f = Render.Filter.color_matrix matrix in
-    (prg,Some f);
+    (prg,Some matrix);
     
+  (*
   value from_filter filter =
     let prg = 
       load id ~vertex:"Image.vsh" ~fragment:"ImageAlphaColorMatrix.fsh"
@@ -127,5 +133,6 @@ module ImageAlphaColorMatrix = struct (*{{{*)
         ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
     in
     (prg,Some filter);
+  *)
 
 end;(*}}}*)

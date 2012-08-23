@@ -221,10 +221,20 @@ static void filter_finalize(value fltr) {
 	caml_stat_free(f);
 }
 
+static void filter_compare(value fltr1,value fltr2) {
+	filter *f1 = FILTER(fltr1);
+	filter *f2 = FILTER(fltr2);
+	if (f1 == f2) return 0;
+	else {
+		if (f1 < f2) return -1;
+		return 1;
+	}
+}
+
 struct custom_operations filter_ops = {
   "pointer to a filter",
   filter_finalize,
-  custom_compare_default,
+	filter_compare,
   custom_hash_default,
   custom_serialize_default,
   custom_deserialize_default
@@ -878,5 +888,10 @@ static void colorMatrixFilter(sprogram *sp,void *data) {
 }
 
 value ml_filter_cmatrix(value matrix) {
-	return make_filter(&colorMatrixFilter,NULL,Caml_ba_data_val(matrix));
+	GLfloat *data = malloc(sizeof(GLfloat) * 20);
+	int i;
+	for (i = 0; i < 20; i++) {
+		data[i] = Double_field(matrix,i);
+	};
+	return make_filter(&colorMatrixFilter,free,data);
 }

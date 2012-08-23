@@ -48,12 +48,27 @@ void ml_glutCreateWindow(value title) {
 }
 
 
+static value reshapeFunc = 0;
+void on_reshape(int width,int height) {
+	caml_callback2(reshapeFunc,Val_long(width),Val_long(height));
+}
+
+void ml_glutReshapeFunc(value f) {
+	if (reshapeFunc == 0) {
+		reshapeFunc = f;
+		caml_register_generational_global_root(&reshapeFunc);
+	}
+	else caml_modify_generational_global_root(&reshapeFunc,f);
+	glutReshapeFunc(on_reshape);
+}
+
 static value displayFunc = 0;
 
 void on_display(void) {
-	caml_acquire_runtime_system();
+	//fprintf(stderr,"on_display\n");
+	//caml_acquire_runtime_system();
 	caml_callback(displayFunc,Val_unit);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutDisplayFunc(value display) {
@@ -67,8 +82,8 @@ void ml_glutDisplayFunc(value display) {
 
 static value mouseFunc = 0;
 void on_mouse(int button, int state, int x, int y) {
-	fprintf(stderr,"on_mouse\n");
-	caml_acquire_runtime_system();
+	//fprintf(stderr,"on_mouse\n");
+	//caml_acquire_runtime_system();
 	value b;
 	switch (button) {
 		case GLUT_LEFT_BUTTON: b = Val_int(0);break;
@@ -88,7 +103,7 @@ void on_mouse(int button, int state, int x, int y) {
 	Field(m,2) = Val_long(x);
 	Field(m,3) = Val_long(y);
 	caml_callback(mouseFunc,m);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutMouseFunc(value mouse) {
@@ -100,10 +115,10 @@ void ml_glutMouseFunc(value mouse) {
 
 static value motionFunc = 0;
 void on_motion(int x, int y) {
-	fprintf(stderr,"on_motion\n");
-	caml_acquire_runtime_system();
+	//fprintf(stderr,"on_motion\n");
+	//caml_acquire_runtime_system();
 	caml_callback2(motionFunc,Val_long(x),Val_long(y));
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutMotionFunc(value motion) {
@@ -115,9 +130,9 @@ void ml_glutMotionFunc(value motion) {
 static value idleFunc = 0;
 
 void on_idle(void) {
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	caml_callback(idleFunc,Val_unit);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 void ml_glutIdleFunc(value idle) {
@@ -126,28 +141,28 @@ void ml_glutIdleFunc(value idle) {
 	glutIdleFunc (on_idle);
 }
 
-#define NUM_TIMERS 10
-value timers[NUM_TIMERS];
 
 void on_timer(int timer_id) {
-	caml_acquire_runtime_system();
-	value f = timers[timer_id];
-	caml_remove_generational_global_root(timers + timer_id); /* GC ? */
-	timers[timer_id] = 0;
-	caml_callback(f,Val_unit);
-	caml_release_runtime_system();
+	//caml_acquire_runtime_system();
+	static value *caml_on_timer = NULL;
+	if (caml_on_timer == NULL) caml_on_timer = caml_named_value("glut_on_timer");
+	caml_callback(*caml_on_timer,Val_int(timer_id));
+	//caml_remove_generational_global_root(timers + timer_id); /* GC ? */
+	//timers[timer_id] = 0;
+	//caml_release_runtime_system();
 }
 
-void ml_glutTimerFunc(value mltime,value tf) {
+void ml_glutTimerFunc(value mltime,value timer_id) {
 	double time = Double_val(mltime);
 	unsigned int msecs = (unsigned int)(time * 1000);
-	fprintf(stderr,"timer on %hd msec\n",msecs);
 	int i = 0;
+	/*
 	while (i < NUM_TIMERS && timers[i] != 0) i++;
+	fprintf(stderr,"finded %d timer\n",i);
 	if (i >= NUM_TIMERS) caml_failwith("too many timers");
 	timers[i] = tf;
-	caml_register_generational_global_root(timers + i);
-	glutTimerFunc(msecs,on_timer,i);
+	caml_register_generational_global_root(timers + i);*/
+	glutTimerFunc(msecs,on_timer,Int_val(timer_id));
 }
 
 
@@ -160,7 +175,8 @@ void ml_glutSwapBuffers(void) {
 }
 
 void ml_glutMainLoop(value param) {
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
+	fprintf(stderr,"enter to main loop\n");
 	glutMainLoop ();
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 };

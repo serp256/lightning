@@ -89,6 +89,9 @@ ifeq ($(PLATFORM),IOS)
 	endif
 endif
 
+pc/pc_run.cmo: MLFLAGS += -package threads -thread
+pc/pc_run.cmx: MLFLAGS += -package threads -thread
+
 LIBFLAGS += -cclib '-lz'
 
 

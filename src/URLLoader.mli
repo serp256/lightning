@@ -18,7 +18,7 @@ value ev_IO_ERROR: Ev.id;
 
 value ioerror_of_data: Ev.data -> option (int * string);
 
-IFDEF SDL THEN
+IFDEF PC THEN
 external run: unit -> unit = "net_run";
 ENDIF;
 

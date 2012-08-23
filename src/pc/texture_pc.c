@@ -119,8 +119,9 @@ int load_image_info(char *fname,char* suffix, int use_pvr, textureInfo *tInfo) {
 	int fd = open(path,O_RDONLY);
 	if (fd < 0) return 2;
 	int res;
-	if (ext && strcasecmp(ext,".jpg")) res = load_jpg_image(fd,tInfo);
-	else load_png_image(fd,tInfo);
+	if (ext && !strcasecmp(ext,".jpg")) res = load_jpg_image(fd,tInfo);
+	else res = load_png_image(fd,tInfo);
+	return res;
 }
 
 
