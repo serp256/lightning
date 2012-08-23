@@ -226,7 +226,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       prerender_wait_listener := None;
     );
 
-    method private addPrerender pr =
+    method private addPrerender (pr:unit -> unit) =
     (
       debug:prerender "addPrerender for %s" self#name;
       match Queue.is_empty prerenders with
@@ -374,10 +374,11 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method dispatchEvent' event target =
     (
+      let evd = (target,self) in
+      let () = debug:event "dispatchEvent %s on %s" (Ev.string_of_id event.Ev.evid) self#name in
       MList.apply_assoc 
         (fun l ->
-          let evd = (target,self) in
-          ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
+          ignore(List.for_all (fun (lid,l) -> (debug:event "call listener"; l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
         )
         event.Ev.evid listeners;
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with

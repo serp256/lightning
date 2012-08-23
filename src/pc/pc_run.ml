@@ -107,6 +107,7 @@ value run stage_create =
     Glut.creatWindow "LIGHTNING";
     let stage = stage_create (float !width) (float !height) in
     (
+      Glut.keyboardFunc (fun c x y -> if int_of_char c = 127 then ignore(stage#dispatchBackPressedEv ()) else ());
       Glut.displayFunc (fun () -> (stage#renderStage (); Glut.swapBuffers ()));
       start_cycle !frameRate stage;
 (*       Glut.idleFunc (make_idle_func !frameRate stage); *)
