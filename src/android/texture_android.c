@@ -15,7 +15,7 @@
 
 
 // FIXME: need rewrite to try all with suffix and after without
-int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
+int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	// Проверить фсю хуйню
 	DEBUGF("LOAD IMAGE INFO: %s[%s]",fname,suffix);
 	char *ext = strrchr(fname,'.');
@@ -120,6 +120,119 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 
 	return load_png_image(r.fd,tInfo);
 }
+
+int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
+	// Проверить фсю хуйню
+	DEBUGF("LOAD IMAGE INFO: %s[%s]",fname,suffix);
+	char *ext = strrchr(fname,'.');
+	resource r;
+	int slen = suffix == NULL ? 0 : strlen(suffix);
+	char *path;
+	if (ext && ext != fname ) {
+		DEBUGF("ext is %s",ext);
+		int flen = strlen(fname);
+		int elen = strlen(ext);
+		int bflen = flen - elen;
+		int diff = elen < 4 ? 4 - elen : 0;
+		path = malloc(flen + diff + slen + 1);
+		memcpy(path,fname,bflen);
+		if (slen != 0) memcpy(path + bflen,suffix,slen);
+		if (!strcasecmp(ext,".alpha")) {// if it's alpha, not try to add pvr, plx ...
+			if (slen != 0) {
+				strcpy(path + bflen + slen,ext);
+				if (getResourceFd(path,&r)) {
+					gzFile fptr = gzdopen(r.fd,"rb");
+					int r = loadAlphaPtr(fptr,tInfo);
+					free(path);
+					return r;
+				}
+			}
+			free(path);
+			if (!getResourceFd(fname,&r)) return 2;
+			gzFile fptr = gzdopen(r.fd,"rb");
+			int r = loadAlphaPtr(fptr,tInfo);
+			return r;
+		} else if (strcasecmp(ext,".plt")) { // если это не палитра
+			
+			if (slen != 0) { //with suffix
+				if (use_pvr) { // pvr
+					strcpy(path + bflen + slen, ".pvr");
+					DEBUGF("TRY GET IMAGE %s", path);
+					if (getResourceFd(path,&r)) {
+						FILE *fptr = fdopen(r.fd,"rb");
+						int res = loadPvrFile3(fptr,r.length,tInfo);
+						fclose(fptr);
+						free(path);
+						return res;
+					}
+				};
+
+				strcpy(path + bflen + slen, ".plx"); //plx
+				DEBUGF("TRY GET IMAGE %s", path);
+				if (getResourceFd(path,&r)) {
+					free(path);
+					gzFile fptr = gzdopen(r.fd,"rb");
+					return loadPlxPtr(fptr,tInfo);
+				}
+				if (!strcasecmp(ext,".jpg")) {
+						strcpy(path + bflen + slen, ext);
+						if (getResourceFd(path,&r)) {
+							free(path);
+							return load_jpg_image(r.fd,tInfo);
+						}
+				};
+				if (!strcasecmp(ext,".png")) {
+						strcpy(path + bflen + slen, ext);
+						if (getResourceFd(path,&r)) {
+							free(path);
+							return load_png_image(r.fd,tInfo);
+						}
+				};
+			};
+
+			if (use_pvr) { //pvr withoud suffix 
+				strcpy(path + bflen, ".pvr");
+				DEBUGF("TRY GET IMAGE %s", path);
+				if (getResourceFd(path,&r)) {
+					FILE *fptr = fdopen(r.fd,"rb");
+					int res = loadPvrFile3(fptr,r.length,tInfo);
+					DEBUG("PVR File Loaded");
+					fclose(fptr);
+					free(path);
+					return res;
+				};
+			};
+			// try plx
+			strcpy(path + bflen, ".plx");
+			DEBUGF("TRY GET IMAGE %s", path);
+			if (getResourceFd(path,&r)) {
+				free(path);
+				gzFile fptr = gzdopen(r.fd,"rb");
+				return loadPlxPtr(fptr,tInfo);
+			};
+
+			if (!strcasecmp(ext,".jpg")) {
+				free(path);
+				DEBUGF("TRY GET IMAGE %s", fname);
+				if (!getResourceFd(fname,&r)) return 2;
+				return load_jpg_image(r.fd,tInfo);
+			};
+		};
+	} else { // нету блядь  расширения нахуй
+		if (slen > 0) { 
+			int flen = strlen(fname);
+			path = malloc(flen + slen);
+			memcpy(path,fname,flen);
+			strcpy(path + flen,suffix);
+		} 
+	}
+
+	DEBUGF("FINAL TRY GET IMAGE %s", fname);
+	if (!getResourceFd(fname,&r)) return 2;
+
+	return load_png_image(r.fd,tInfo);
+}
+
 
 
 
