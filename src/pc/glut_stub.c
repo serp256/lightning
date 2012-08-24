@@ -152,6 +152,17 @@ void ml_glutTimerFunc(value mltime,value timer_id) {
 }
 
 
+static value keyboardFunc = 0;
+void onKeyboard(unsigned char k,int x,int y) {
+	caml_callback3(keyboardFunc,Val_int(k),Val_int(x),Val_int(y));
+}
+
+void ml_glutKeyboardFunc(value func) {
+	if (keyboardFunc == 0) caml_register_global_root(&keyboardFunc);
+	keyboardFunc = func;
+	glutKeyboardFunc(onKeyboard);
+}
+
 void ml_glutPostRedisplay(void) {
 	glutPostRedisplay();
 }

@@ -581,6 +581,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
 
   value load with_suffix path filter use_pvr callbacks = 
     let fpath = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
+    let () = debug:async "Load request %s<%b>" fpath with_suffix in 
     (
       if not (Hashtbl.mem waiters fpath)
       then 
@@ -603,6 +604,7 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
       match aloader_pop cruntime with
       [ Some (path,with_suffix,tInfo) -> 
         (
+          let () = debug:async "Loaded %s with suffix %b" path with_suffix in
           let path =  
             match with_suffix with
             [ True -> LightCommon.path_with_suffix path
@@ -610,15 +612,17 @@ module AsyncLoader(P:sig end) : AsyncLoader = struct
             ]
           in
           let () = debug:async "make_and_cache: %s" path in
-          let waiters = MHashtbl.pop_all waiters path in
+          let wtrs = MHashtbl.pop_all waiters path in
+          let () = debug:async "rest waiters: [%s]" (String.concat ";" (ExtList.List.of_enum (MHashtbl.keys waiters))) in
+          let () = debug:async "waiters cnt: %d" (List.length wtrs) in
           match tInfo with
           [ Some textureInfo -> 
             let texture = make_and_cache path textureInfo in
             (
               debug "texture: %s loaded" path;
-              List.iter (fun (f,_) -> f texture) (List.rev waiters);
+              List.iter (fun (f,_) -> f texture) (List.rev wtrs);
             )
-          | None -> List.iter (fun (_,f) -> f path) (List.rev waiters)
+          | None -> List.iter (fun (_,f) -> f path) (List.rev wtrs)
           ];
 					()
 (*           check_result (); *)

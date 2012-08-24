@@ -1406,7 +1406,7 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      scale self;
+(*       scale self; *)
 (*       assets self; *)
 (*       avsound self "melody0.mp3"; *)
       (*
