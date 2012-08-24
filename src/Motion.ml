@@ -17,6 +17,6 @@ value acmtrStart (cb:callback) (interval:float) = ();
 value acmtrStop () = ();
 value paste () = "not SDL";
 value copy _ = ();
-value keyboard _ = ();
+value keyboard _ _ = ();
 ENDIF;
 

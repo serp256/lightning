@@ -352,7 +352,7 @@ static value *ml_url_complete = NULL;
 	return YES;
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)sing
 {
 	NSString * st ;
 	if (range.location == 0 && range.length > 0) st = @""; else
