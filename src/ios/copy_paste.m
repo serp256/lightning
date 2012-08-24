@@ -32,6 +32,13 @@ void ml_keyboard (value updateCallback, value returnCallback)
 	CAMLreturn0;
 }
 
+void ml_hidekeyboard ()
+{
+	CAMLparam0();
+	[[LightViewController sharedInstance] hideKeyboard];
+	CAMLreturn0;
+}
+
 
 /*
 value ml_keyboard_get ()

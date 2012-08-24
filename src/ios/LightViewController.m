@@ -341,18 +341,12 @@ static value *ml_url_complete = NULL;
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
-	caml_callback(keyboardCallbackUpdate, caml_copy_string([kbTextField.text UTF8String]));
-	caml_remove_global_root(&keyboardCallbackReturn);
-	caml_remove_global_root(&keyboardCallbackUpdate);
-	keyboardCallbackReturn = 0;
-	keyboardCallbackUpdate = 0;
-	kbTextField = NULL;
-	[kbTextField removeFromSuperview];
-
+	caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
+	[self hideKeyboard];
 	return YES;
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)sing
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
 	NSString * st ;
 	if (range.location == 0 && range.length > 0) st = @""; else
@@ -380,9 +374,25 @@ static value *ml_url_complete = NULL;
 	return YES;
 }
 
+- (void)hideKeyboard
+{
+	if (kbTextField != NULL) 
+	{
+		caml_remove_global_root(&keyboardCallbackReturn);
+		caml_remove_global_root(&keyboardCallbackUpdate);
+		keyboardCallbackReturn = 0;
+		keyboardCallbackUpdate = 0;
+		[kbTextField removeFromSuperview];
+		kbTextField = NULL;
+	}
+}
 
 - (void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback  {
-	if (kbTextField == NULL) kbTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 0, 0)];
+	if (keyboardCallbackReturn != 0) caml_remove_global_root(&keyboardCallbackReturn);
+	if (keyboardCallbackUpdate != 0) caml_remove_global_root(&keyboardCallbackUpdate);
+
+	if (kbTextField == NULL)
+		kbTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 4, 4)];
 	[[UIApplication sharedApplication].keyWindow addSubview:kbTextField]; 
 	kbTextField.text = @"";
 	[kbTextField setDelegate:self];
@@ -391,8 +401,6 @@ static value *ml_url_complete = NULL;
 	caml_register_generational_global_root(&keyboardCallbackReturn);
 	caml_register_generational_global_root(&keyboardCallbackUpdate);
 	kbTextField.hidden = true;
-	kbTextField.inputView = nil;
-	kbTextField.inputAccessoryView = nil;
 	kbTextField.autocorrectionType =  UITextAutocorrectionTypeNo;
 
 	[kbTextField becomeFirstResponder]; 

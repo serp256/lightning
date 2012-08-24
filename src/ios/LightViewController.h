@@ -38,6 +38,7 @@
 -(void)hideActivityIndicator;
 +(void)setSupportEmail:(NSString*)email;
 
+-(void)hideKeyboard;
 -(void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback;;
 
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
