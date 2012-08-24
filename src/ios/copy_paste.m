@@ -5,6 +5,7 @@
 #import <caml/callback.h>
 #import <caml/mlvalues.h>
 #import <caml/memory.h>
+#import "LightViewController.h"
 
 value ml_paste() {
 	CAMLparam0();
@@ -19,8 +20,25 @@ value ml_paste() {
 void ml_copy (value st)
 {
 	CAMLparam1(st);
-	NSString *s = [[NSString alloc] initWithCString:st];
+	NSString *s = [NSString stringWithCString:String_val(st) encoding:NSUTF8StringEncoding];
 	[[UIPasteboard generalPasteboard] setString:s];
 	CAMLreturn0;
 }
 
+void ml_keyboard (value updateCallback, value returnCallback)
+{
+	CAMLparam2(updateCallback, returnCallback);
+	[[LightViewController sharedInstance] showKeyboard:updateCallback returnCallback:returnCallback];
+	CAMLreturn0;
+}
+
+
+/*
+value ml_keyboard_get ()
+{
+	CAMLparam0();
+	CAMLlocal1(r);
+	r= caml_copy_string ( [[[LightViewController sharedInstance] getKeyboardText] UTF8String] );
+	CAMLreturn (r);
+}
+*/
