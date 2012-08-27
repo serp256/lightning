@@ -337,6 +337,11 @@ static value *ml_url_complete = NULL;
 	supportEmail = [email retain];
 }
 
+- (void)textFieldDidEndEditing:(UITextField *)textField
+{
+	caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
+	[self hideKeyboard];
+}
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
@@ -359,17 +364,7 @@ static value *ml_url_complete = NULL;
 	else
 		st = [kbTextField.text stringByAppendingString:string];
 
-	//value str = caml_alloc_string(st.length) ;
-	//memcpy(String_val(str),[st UTF8String],st.length);
-	//caml_callback(keyboardCallbackUpdate, str);
-	//NSLog(@"%s",[textField.text UTF8String]);
-	//char * a = (char *) malloc ( st.length + 1 );
-	//[st getCString:a maxLength:st.length encoding:NSUTF8StringE   ncoding ];
 	caml_callback(keyboardCallbackUpdate, caml_copy_string( [st UTF8String] ));
-	// */
-	//CAMLlocal1(r);
-	//r = caml_copy_string ( [textField.text UTF8String] );
-	//caml_callback(keyboardCallbackUpdate, r);
 	return YES;
 }
 
