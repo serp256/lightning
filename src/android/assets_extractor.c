@@ -9,6 +9,7 @@
 #include <utime.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include <dirent.h>
 
 #include "assets_extractor.h"
 
@@ -300,12 +301,18 @@ typedef struct {
   char* zipPath;
   char* dstPath;
   char* prefix;
-} unzip_paths_t;
+} unzip_thread_params_t;
+
+typedef struct {
+  char* parent_path;
+  char* name;
+  value* cb;
+} rm_thread_params_t;
 
 static jmethodID gCallUnzipCompleteMid;
 
 void* miniunz_thread(void* params) {
-  unzip_paths_t* paths = (unzip_paths_t*) params;
+  unzip_thread_params_t* paths = (unzip_thread_params_t*) params;
   int unzipRetval = do_extract(paths->zipPath, paths->dstPath, paths->prefix);
 
   JNIEnv *env;
@@ -335,10 +342,49 @@ void* miniunz_thread(void* params) {
   pthread_exit(NULL);
 }
 
+void rm (const char* parent_path, const char* name) {
+  int parent_path_len = strlen(parent_path);
+  int name_len = strlen(name);
+  char* full_path = (char*)malloc(parent_path_len + name_len + 2);
+
+  strcpy(full_path, parent_path);
+  *(full_path + parent_path_len) = '/';
+  strcpy(full_path + parent_path_len + 1, name);
+
+  DIR* dir = opendir(full_path);
+
+  if (dir) {
+    struct dirent* file;
+
+    while (file = readdir(dir)) {
+      if (strcmp(file->d_name, "..") && strcmp(file->d_name, ".")) {
+        rm(full_path, file->d_name);  
+      }
+    }
+
+    closedir(dir);
+  }
+
+  remove(full_path);
+  free(full_path);
+}
+
+void* rm_thread(void* params) {
+  rm_thread_params_t* p = (rm_thread_params_t*) params;
+  rm(p->parent_path, p->name);
+
+  free(p->parent_path);
+  free(p->name);
+/*  caml_remove_generational_global_root(p->cb);
+  free(cb);
+*/
+  pthread_exit(NULL);
+}
+
 void ml_miniunz(value vzipPath, value vdstPath, value vprefix) {
   PRINT_DEBUG("tid %d", gettid());
 
-  unzip_paths_t* paths = (unzip_paths_t*)malloc(sizeof(unzip_paths_t));
+  unzip_thread_params_t* paths = (unzip_thread_params_t*)malloc(sizeof(unzip_thread_params_t));
 
   char* czipPath = String_val(vzipPath);
   char* cdstPath = String_val(vdstPath);
@@ -358,7 +404,29 @@ void ml_miniunz(value vzipPath, value vdstPath, value vprefix) {
   pthread_t tid;
 
   if (pthread_create(&tid, NULL, miniunz_thread, (void*) paths)) {
-    PRINT_DEBUG("cannot create thread");
+    PRINT_DEBUG("cannot create unzip thread");
+  }
+}
+
+void ml_rm(value vparent_path, value vname, value cb) {
+  rm_thread_params_t* params = (rm_thread_params_t*)malloc(sizeof(rm_thread_params_t));
+
+  char* cparent_path = String_val(vparent_path);
+  char* cname = String_val(vname);
+
+  params->parent_path = (char*)malloc(strlen(cparent_path) + 1);
+  params->name = (char*)malloc(strlen(cname) + 1);
+  params->cb = (value*)malloc(sizeof(value));
+
+  strcpy(params->parent_path, cparent_path);
+  strcpy(params->name, cname);
+  *params->cb = cb;
+  caml_register_generational_global_root(params->cb);
+
+  pthread_t tid;
+
+  if (pthread_create(&tid, NULL, rm_thread, (void*) params)) {
+    PRINT_DEBUG("cannot create rm thread");
   }
 }
 
@@ -395,4 +463,24 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024UnzipCallbackRu
   (*env)->ReleaseStringUTFChars(env, jdstPath, cdstPath);
   (*env)->DeleteLocalRef(env, jzipPath);
   (*env)->DeleteLocalRef(env, jdstPath);
+}
+
+static jclass gRmCallbackRunnableCls;
+static jfieldID gThreadParamsFid;
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024RmCallbackRunnable_run(JNIEnv *env, jobject this) {
+  if (!gRmCallbackRunnableCls) {
+    jclass runnableCls = (*env)->GetObjectClass(env, this);
+    gRmCallbackRunnableCls = (*env)->NewGlobalRef(env, runnableCls);
+    (*env)->DeleteLocalRef(env, runnableCls);
+
+    gThreadParamsFid = (*env)->GetFieldID(env, gRunnableCls, "cb", "I");
+  }
+
+  rm_thread_params_t* params = (rm_thread_params_t*)(*env)->GetObjectField(env, this, gThreadParamsFid);
+  caml_callback(*params->cb, Val_unit);
+  caml_register_generational_global_root(params->cb);
+
+  free(params->cb);
+  free(params);
 }

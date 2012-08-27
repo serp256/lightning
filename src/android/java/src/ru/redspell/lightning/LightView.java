@@ -61,6 +61,16 @@ public class LightView extends GLSurfaceView {
 
 		public native void run();
 	}
+
+	private class RmCallbackRunnable implements Runnable {
+		private int threadParams;
+
+		public RmCallbackRunnable(int threadParams) {
+			this.threadParams = threadParams;
+		}
+
+		public native void run();
+	}
 	
 	public String device_id () {
 		return Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
@@ -80,6 +90,10 @@ public class LightView extends GLSurfaceView {
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {
 		queueEvent(new UnzipCallbackRunnable(zipPath, dstPath, success));
+	}
+
+	public void callRmComplete(int cb) {
+		queueEvent(new RmCallbackRunnable(cb));
 	}
 
 	public String getApkPath() {
@@ -110,9 +124,9 @@ public class LightView extends GLSurfaceView {
 
 	public static LightView instance;
 	
-	public Activity activity;
+	public LightActivity activity;
 
-	public LightView(Activity _activity) {
+	public LightView(LightActivity _activity) {
 		super(_activity);
 		activity = _activity;
 
@@ -478,4 +492,8 @@ public class LightView extends GLSurfaceView {
 		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
 	}
 
+
+	public void startExpansionDownloadService() {
+		activity.startExpansionDownloadService();
+	}
 }

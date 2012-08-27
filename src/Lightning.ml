@@ -120,6 +120,7 @@ external apkPath : unit -> string = "ml_apkPath";
 external externalStoragePath : unit -> string = "ml_externalStoragePath";
 external setAssetsDir : string -> unit = "ml_setAssetsDir";
 external getVersion : unit -> string = "ml_getVersion";
+external rm : string -> string -> (unit -> unit) -> unit = "ml_rm";
 
 value unzipCbs = Hashtbl.create 0;
 
@@ -136,12 +137,12 @@ value unzipComplete zipPath dstPath success =
       remove_all unzipCbs key;
     ));
 
-value getVersionFilename () = (externalStoragePath ()) ^ "assets/" ^ (getVersion ());
+value getAssetsVerFilename () = (externalStoragePath ()) ^ "assets/" ^ (getVersion ());
 
 value assetsExtracted () =
-  Sys.file_exists (getVersionFilename ());
+  Sys.file_exists (getAssetsVerFilename ());
 
-value rec rmdir dir =
+(* value rec rmdir dir =
   try
   (
     Array.iter
@@ -149,7 +150,7 @@ value rec rmdir dir =
       (Sys.readdir dir);
     Unix.rmdir dir;
   )
-  with [ Sys_error _ -> () ];
+  with [ Sys_error _ -> () ]; *)
 
 value extractAssets cb =
   if assetsExtracted () then
@@ -162,7 +163,7 @@ value extractAssets cb =
             if success then
             (
               setAssetsDir (assetsPath ^ "/");
-              close_out (open_out (getVersionFilename ()));
+              close_out (open_out (getAssetsVerFilename ()));
             )
             else ();
 

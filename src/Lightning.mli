@@ -32,4 +32,5 @@ value getMACID: unit -> string;
 
 IFDEF ANDROID THEN
 value unzip: ?prefix:string -> string -> string -> (bool -> unit) -> unit;
+value rm: string -> string -> (unit -> unit) -> unit;
 ENDIF;
