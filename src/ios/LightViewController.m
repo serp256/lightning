@@ -339,13 +339,13 @@ static value *ml_url_complete = NULL;
 
 - (void)textFieldDidEndEditing:(UITextField *)textField
 {
-	caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
+	if (keyboardCallbackReturn != 0) caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
 	[self hideKeyboard];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
-	caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
+	if (keyboardCallbackReturn != 0) caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
 	[self hideKeyboard];
 	return YES;
 }
