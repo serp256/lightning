@@ -1385,6 +1385,10 @@ let stage width height =
       (*
       debug "device id : %s" (match Lightning.deviceIdentifier () with [ Some id -> id | _ -> "NONE"]);
       *)
+<<<<<<< HEAD
+=======
+      scale self;
+>>>>>>> 3c2e99f300a914d73117e32b2a4114a8f9247e3e
 (*       assets self; *)
 (*       avsound self "melody0.mp3"; *)
       (*
@@ -1455,10 +1459,20 @@ let stage width height =
 (*           glow_and_gc self; *)
 (*        udid self; *)
        (* bl_greenhouse self; *)
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 3c2e99f300a914d73117e32b2a4114a8f9247e3e
 (*        async_images self; *)
 (*         image self; *)
 (*        texture_atlas self; *)
 (*        tlf self *)
+<<<<<<< HEAD
+=======
+=======
+(*       async_images self; *)
+>>>>>>> origin/master
+>>>>>>> 3c2e99f300a914d73117e32b2a4114a8f9247e3e
     end;
   end
 in

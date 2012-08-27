@@ -152,7 +152,7 @@ value rec rmdir dir =
   with [ Sys_error _ -> () ];
 
 value extractAssets cb =
-  if assetsExtracted () then    
+  if assetsExtracted () then
     cb True
   else
     let extrnlStotagePath = externalStoragePath () in
@@ -170,7 +170,7 @@ value extractAssets cb =
           )
         in
         (
-          rmdir assetsPath;
+          (* rmdir assetsPath; *)
           unzip ~prefix:"assets" (apkPath ()) extrnlStotagePath cb;
         );
 
