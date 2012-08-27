@@ -387,14 +387,15 @@ static value *ml_url_complete = NULL;
 	}
 }
 
-- (void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback  {
+- (void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString {
 	if (keyboardCallbackReturn != 0) caml_remove_global_root(&keyboardCallbackReturn);
 	if (keyboardCallbackUpdate != 0) caml_remove_global_root(&keyboardCallbackUpdate);
 
 	if (kbTextField == NULL)
 		kbTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 4, 4)];
 	[[UIApplication sharedApplication].keyWindow addSubview:kbTextField]; 
-	kbTextField.text = @"";
+
+	kbTextField.text = [NSString stringWithUTF8String:String_val(initString)];
 	[kbTextField setDelegate:self];
 	keyboardCallbackReturn = returnCallback;
 	keyboardCallbackUpdate = updateCallback;
@@ -404,6 +405,7 @@ static value *ml_url_complete = NULL;
 	kbTextField.autocorrectionType =  UITextAutocorrectionTypeNo;
 
 	[kbTextField becomeFirstResponder]; 
+	caml_callback(keyboardCallbackUpdate, caml_copy_string( String_val(initString) ));
 }
 
 @end

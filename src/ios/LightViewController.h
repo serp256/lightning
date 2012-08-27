@@ -39,7 +39,7 @@
 +(void)setSupportEmail:(NSString*)email;
 
 -(void)hideKeyboard;
--(void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback;;
+-(void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString;
 
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
 
