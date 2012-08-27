@@ -9,7 +9,6 @@
 #import "LightViewController.h"
 #import "LightAppDelegate.h"
 #import "LightView.h"
-#import "TextViewController.h" 
 
 #import <caml/mlvalues.h>
 #import <caml/memory.h>
