@@ -88,13 +88,13 @@ class type prerenderObj =
     method name: string;
   end;
 
-value prerender_locked = ref False;
+value prerender_locked = ref None;
 value prerender_objects = RefList.empty ();
 value add_prerender o = 
   let () = debug:prerender "add_prerender: %s" o#name in
   match !prerender_locked with
-  [ True -> failwith "Prerender locked"
-  | False -> RefList.push prerender_objects o
+  [ Some waits -> RefList.push waits o
+  | None -> RefList.push prerender_objects o
   ];
   
 value prerender () =
@@ -103,22 +103,25 @@ value prerender () =
   | False ->
     (
       debug:prerender "start prerender";
-      prerender_locked.val := True;
-      let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
-      let sorted_objects = RefList.empty () in
+      let locked_prerenders = RefList.empty () in
       (
-        RefList.iter (fun o -> 
-          match o#z with
-          [ Some z -> 
-            let () = debug:prerender "object [%s] with z %d added to prerender" o#name z in
-            RefList.add_sort ~cmp sorted_objects (z,o)
-          | None -> o#prerender False
-          ]
-        ) prerender_objects;
-        RefList.iter (fun (_,o) -> o#prerender True) sorted_objects;
-        RefList.clear prerender_objects;
+        prerender_locked.val := Some locked_prerenders;
+        let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
+        let sorted_objects = RefList.empty () in
+        (
+          RefList.iter (fun o -> 
+            match o#z with
+            [ Some z -> 
+              let () = debug:prerender "object [%s] with z %d added to prerender" o#name z in
+              RefList.add_sort ~cmp sorted_objects (z,o)
+            | None -> o#prerender False
+            ]
+          ) prerender_objects;
+          RefList.iter (fun (_,o) -> o#prerender True) sorted_objects;
+        );
+        RefList.copy prerender_objects locked_prerenders;
+        prerender_locked.val := None;
       );
-      prerender_locked.val := False;
     )
   ];
 
@@ -226,7 +229,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       prerender_wait_listener := None;
     );
 
-    method private addPrerender pr =
+    method private addPrerender (pr:unit -> unit) =
     (
       debug:prerender "addPrerender for %s" self#name;
       match Queue.is_empty prerenders with
@@ -374,10 +377,11 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method dispatchEvent' event target =
     (
+      let evd = (target,self) in
+      let () = debug:event "dispatchEvent %s on %s" (Ev.string_of_id event.Ev.evid) self#name in
       MList.apply_assoc 
         (fun l ->
-          let evd = (target,self) in
-          ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
+          ignore(List.for_all (fun (lid,l) -> (debug:event "call listener"; l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
         )
         event.Ev.evid listeners;
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with

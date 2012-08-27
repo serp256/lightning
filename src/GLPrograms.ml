@@ -100,7 +100,7 @@ module ImagePalleteColorMatrix = struct (*{{{*)
         ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
         ~uniforms:[| ("u_texture", (UInt 0));  ("u_matrix",UNone) ; ("u_pallete",(UInt 1)) |]
     in
-    (prg,None);
+    (prg,Some matrix);
 
   (*
   value from_filter filter =
@@ -123,7 +123,7 @@ module ImageAlphaColorMatrix = struct (*{{{*)
         ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
         ~uniforms:[| ("u_texture", (UInt 0)); ("u_matrix",UNone) |]
     in
-    (prg,None);
+    (prg,Some matrix);
     
   (*
   value from_filter filter =

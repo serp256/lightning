@@ -7,7 +7,9 @@
 //
 
 #import "LightViewController.h"
+#import "LightAppDelegate.h"
 #import "LightView.h"
+#import "TextViewController.h" 
 
 #import <caml/mlvalues.h>
 #import <caml/memory.h>
@@ -22,6 +24,8 @@
 
 static LightViewController *instance = NULL;
 static NSString *supportEmail = @"nanofarm@redspell.ru";
+UITextField* kbTextField = NULL;
+value keyboardCallbackUpdate, keyboardCallbackReturn;
 
 static NSMutableArray *exceptionInfo = nil;
 
@@ -332,6 +336,76 @@ static value *ml_url_complete = NULL;
 
 + (void)setSupportEmail:(NSString*)email {
 	supportEmail = [email retain];
+}
+
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+	caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
+	[self hideKeyboard];
+	return YES;
+}
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+	NSString * st ;
+	if (range.location == 0 && range.length > 0) st = @""; else
+	if (range.length > 0 && [kbTextField.text length] > 0)
+	{
+		NSRange ran;
+		ran.location = 0;
+		ran.length = range.location ;
+		st = [kbTextField.text substringWithRange:ran];
+	}
+	else
+		st = [kbTextField.text stringByAppendingString:string];
+
+	//value str = caml_alloc_string(st.length) ;
+	//memcpy(String_val(str),[st UTF8String],st.length);
+	//caml_callback(keyboardCallbackUpdate, str);
+	//NSLog(@"%s",[textField.text UTF8String]);
+	//char * a = (char *) malloc ( st.length + 1 );
+	//[st getCString:a maxLength:st.length encoding:NSUTF8StringE   ncoding ];
+	caml_callback(keyboardCallbackUpdate, caml_copy_string( [st UTF8String] ));
+	// */
+	//CAMLlocal1(r);
+	//r = caml_copy_string ( [textField.text UTF8String] );
+	//caml_callback(keyboardCallbackUpdate, r);
+	return YES;
+}
+
+- (void)hideKeyboard
+{
+	if (kbTextField != NULL) 
+	{
+		caml_remove_global_root(&keyboardCallbackReturn);
+		caml_remove_global_root(&keyboardCallbackUpdate);
+		keyboardCallbackReturn = 0;
+		keyboardCallbackUpdate = 0;
+		[kbTextField removeFromSuperview];
+		kbTextField = NULL;
+	}
+}
+
+- (void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString {
+	if (keyboardCallbackReturn != 0) caml_remove_global_root(&keyboardCallbackReturn);
+	if (keyboardCallbackUpdate != 0) caml_remove_global_root(&keyboardCallbackUpdate);
+
+	if (kbTextField == NULL)
+		kbTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 4, 4)];
+	[[UIApplication sharedApplication].keyWindow addSubview:kbTextField]; 
+
+	kbTextField.text = [NSString stringWithUTF8String:String_val(initString)];
+	[kbTextField setDelegate:self];
+	keyboardCallbackReturn = returnCallback;
+	keyboardCallbackUpdate = updateCallback;
+	caml_register_generational_global_root(&keyboardCallbackReturn);
+	caml_register_generational_global_root(&keyboardCallbackUpdate);
+	kbTextField.hidden = true;
+	kbTextField.autocorrectionType =  UITextAutocorrectionTypeNo;
+
+	[kbTextField becomeFirstResponder]; 
+	caml_callback(keyboardCallbackUpdate, caml_copy_string( String_val(initString) ));
 }
 
 @end

@@ -363,8 +363,10 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 
 	if (!fullPath) r = 2;
 	else {
-		//NSLog(@"REAL FILE: %@",fullPath);
-		//[fullPath getCString:tInfo->path maxLength:255 encoding:NSASCIIStringEncoding];
+		NSLog(@"REAL FILE: %@",fullPath);
+#ifdef TEXTURE_LOAD
+		[fullPath getCString:tInfo->path maxLength:255 encoding:NSASCIIStringEncoding];
+#endif
 		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
 		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);

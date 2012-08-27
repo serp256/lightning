@@ -3,7 +3,9 @@
 type h_t 'a 'b = 
   {
     size: mutable int;
-    data: mutable array (h_bucketlist 'a 'b)
+    data: mutable array (h_bucketlist 'a 'b);
+(*     seed: mutable int;                        (* for randomization *) *)
+(*     initial_size: int                        (* initial array size *) *)
   }
 and h_bucketlist 'a 'b =
   [ Empty 
@@ -18,7 +20,7 @@ external h_conv : t 'a 'b -> h_t 'a 'b = "%identity";
 external h_make : h_t 'a 'b -> t 'a 'b = "%identity";
 
 value is_empty h = (h_conv h).size = 0;
-value empty () = h_make {size=0;data=[| Empty |]};
+value empty () = create 0;
 
 value remove_exn h key =
   let hc = h_conv h in

@@ -221,10 +221,20 @@ static void filter_finalize(value fltr) {
 	caml_stat_free(f);
 }
 
+static void filter_compare(value fltr1,value fltr2) {
+	filter *f1 = FILTER(fltr1);
+	filter *f2 = FILTER(fltr2);
+	if (f1 == f2) return 0;
+	else {
+		if (f1 < f2) return -1;
+		return 1;
+	}
+}
+
 struct custom_operations filter_ops = {
   "pointer to a filter",
   filter_finalize,
-  custom_compare_default,
+	filter_compare,
   custom_hash_default,
   custom_serialize_default,
   custom_deserialize_default
