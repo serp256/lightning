@@ -250,7 +250,7 @@ value registerXML xmlpath =
                    let bc = 
                      let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
                      let atlasNode = AtlasNode.create pages.(XmlParser.ints page) region  () in
-                     { charID; xOffset = floats xOffset; yOffset = floats yOffset; xAdvance = floats xAdvance; atlasNode }
+                     { charID; xOffset = (!Texture.scale *. floats (xOffset)); yOffset = (!Texture.scale *. floats (yOffset)); xAdvance = (!Texture.scale *. floats (xAdvance)); atlasNode }
                    in
                    Hashtbl.add chars charID bc;
                    loop ()
