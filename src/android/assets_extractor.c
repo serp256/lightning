@@ -306,7 +306,7 @@ typedef struct {
 typedef struct {
   char* parent_path;
   char* name;
-  value* cb;
+  value cb;
 } rm_thread_params_t;
 
 static jmethodID gCallUnzipCompleteMid;
@@ -376,6 +376,8 @@ void* rm_thread(void* params) {
   rm_thread_params_t* p = (rm_thread_params_t*) params;
   rm(p->parent_path, p->name);
 
+  PRINT_DEBUG("rm_thread %d %lu", gettid(), p->cb);
+
   free(p->parent_path);
   free(p->name);
 
@@ -420,7 +422,7 @@ void ml_miniunz(value vzipPath, value vdstPath, value vprefix) {
 }
 
 void ml_rm(value vparent_path, value vname, value cb) {
-  PRINT_DEBUG("ml_rm %d", gettid());
+  // PRINT_DEBUG("ml_rm %d", gettid());
 
   rm_thread_params_t* params = (rm_thread_params_t*)malloc(sizeof(rm_thread_params_t));
 
@@ -429,12 +431,13 @@ void ml_rm(value vparent_path, value vname, value cb) {
 
   params->parent_path = (char*)malloc(strlen(cparent_path) + 1);
   params->name = (char*)malloc(strlen(cname) + 1);
-  //params->cb = (value*)malloc(sizeof(value));
+  params->cb = cb;
+
+  PRINT_DEBUG("ml_rm %d %lu", gettid(), params->cb);
 
   strcpy(params->parent_path, cparent_path);
   strcpy(params->name, cname);
-  *params->cb = cb;
-  caml_register_generational_global_root(params->cb);
+  caml_register_generational_global_root(&params->cb);
 
   pthread_t tid;
 
@@ -449,7 +452,7 @@ static jfieldID gDstPathFid;
 static jfieldID gSuccessFid;
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024UnzipCallbackRunnable_run(JNIEnv *env, jobject this) {
-  PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024UnzipCallbackRunnable_run %d", gettid());
+  // PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024UnzipCallbackRunnable_run %d", gettid());
 
   if (!gRunnableCls) {
     jclass runnableCls = (*env)->GetObjectClass(env, this);
@@ -484,8 +487,6 @@ static jclass gRmCallbackRunnableCls;
 static jfieldID gThreadParamsFid;
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024RmCallbackRunnable_run(JNIEnv *env, jobject this) {
-  PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024RmCallbackRunnable_run %d", gettid());
-
   if (!gRmCallbackRunnableCls) {
     jclass runnableCls = (*env)->GetObjectClass(env, this);
     gRmCallbackRunnableCls = (*env)->NewGlobalRef(env, runnableCls);
@@ -495,9 +496,16 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024RmCallbackRunna
   }
 
   rm_thread_params_t* params = (rm_thread_params_t*)(*env)->GetObjectField(env, this, gThreadParamsFid);
-  caml_callback(*params->cb, Val_unit);
-  caml_remove_generational_global_root(params->cb);
 
-  //free(params->cb);
+  PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024RmCallbackRunnable_run %d %lu", gettid(), params->cb);
+
+  caml_callback(params->cb, Val_unit);
+
+  PRINT_DEBUG("before caml_remove_generational_global_root");
+
+  caml_remove_generational_global_root(&params->cb);
+
+  PRINT_DEBUG("after caml_remove_generational_global_root");
+
   free(params);
 }
