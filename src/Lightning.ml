@@ -121,6 +121,7 @@ external externalStoragePath : unit -> string = "ml_externalStoragePath";
 external setAssetsDir : string -> unit = "ml_setAssetsDir";
 external getVersion : unit -> string = "ml_getVersion";
 external rm : string -> string -> (unit -> unit) -> unit = "ml_rm";
+external extractExpansions : unit -> unit = "ml_extractExpansions";
 
 value unzipCbs = Hashtbl.create 0;
 

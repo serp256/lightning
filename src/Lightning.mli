@@ -34,4 +34,5 @@ IFDEF ANDROID THEN
 value externalStoragePath: unit -> string;
 value unzip: ?prefix:string -> string -> string -> (bool -> unit) -> unit;
 value rm: string -> string -> (unit -> unit) -> unit;
+value extractExpansions: unit -> unit;
 ENDIF;

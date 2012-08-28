@@ -35,6 +35,7 @@ import android.os.Environment;
 
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
+import com.google.android.vending.expansion.downloader.Helpers;
 import com.tapjoy.TapjoyConnect;
 import com.tapjoy.TapjoyLog;
 
@@ -48,6 +49,20 @@ import android.provider.Settings;
 import android.view.Display;
 
 public class LightView extends GLSurfaceView {
+    private static class XAPKFile {
+        public final boolean mIsMain;
+        public final int mFileVersion;
+        public final long mFileSize;
+
+        XAPKFile(boolean isMain, int fileVersion, long fileSize) {
+            mIsMain = isMain;
+            mFileVersion = fileVersion;
+            mFileSize = fileSize;
+        }
+    }
+
+    private static final XAPKFile[] xAPKS = { new XAPKFile(true, 3, 687801613L) };    
+
 	private class UnzipCallbackRunnable implements Runnable {
 		private String zipPath;
 		private String dstPath;
@@ -492,8 +507,28 @@ public class LightView extends GLSurfaceView {
 		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
 	}
 
+	public void extractExpansions() {
+		Log.d("LIGHTNING", "extracting expansions");
 
-	public void startExpansionDownloadService() {
-		activity.startExpansionDownloadService();
+	    for (XAPKFile xf : xAPKS) {
+            String fileName = Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion);
+
+            Log.d("LIGHTNING", "checking " + fileName + "...");
+
+            if (!Helpers.doesFileExist(activity, fileName, xf.mFileSize, false)) {
+            	Log.d("LIGHTNING", fileName + " does not exists, start download service");
+
+				activity.startExpansionDownloadService();	            	
+            	return;
+            }
+
+            Log.d("LIGHTNING", "ok");
+        }
+
+        expansionsDownloaded();
+	}
+
+	public void expansionsDownloaded() {
+		Log.d("LIGHTNING", "expansions downloaded");
 	}
 }

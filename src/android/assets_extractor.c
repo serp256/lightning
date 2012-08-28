@@ -512,3 +512,11 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024RmCallbackRunna
 
   free(params);
 }
+
+void ml_extractExpansions() {
+    JNIEnv *env;
+    (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+    jmethodID mid = (*env)->GetMethodID(env, jViewCls, "extractExpansions", "()V");
+    (*env)->CallVoidMethod(env, jView, mid);
+}

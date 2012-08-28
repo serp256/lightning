@@ -6,8 +6,11 @@ include Makefile.in
 
 so: example.so
 	cp test.so android/libs/armeabi-v7a/libtest.so
-	cd android && ant debug
-	
+	ant -f android/build.xml debug
+
+release: example.so
+	cp test.so android/libs/armeabi-v7a/libtest.so
+	ant -f android/build.xml release
 
 example.so: $(MLXFILES) example.cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \

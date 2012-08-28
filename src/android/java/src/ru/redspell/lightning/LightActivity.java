@@ -63,6 +63,9 @@ public class LightActivity extends Activity implements IDownloaderClient
 	}
 
 	public void onDownloadStateChanged(int newState) {
+		if (newState == IDownloaderClient.STATE_COMPLETED) {
+			lightView.expansionsDownloaded();
+		}
 	}
 
 	public void onDownloadProgress(DownloadProgressInfo progress) {

@@ -1375,9 +1375,10 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
       (* Lightning.rm (Lightning.externalStoragePath ()) "pizda" (fun () -> debug "pizda was successfully removed"); *)
-      Lightning.extractAssets (fun _ -> debug "assets extracted");
-      tweens self;
+      (* Lightning.extractAssets (fun _ -> debug "assets extracted"); *)
+      (* tweens self; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
+      Lightning.extractExpansions ();
     end;
   end
 in
