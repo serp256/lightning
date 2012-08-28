@@ -46,6 +46,7 @@ value on_timer timer_id =
 Callback.register "glut_on_timer" on_timer;
 
 
+external keyboardFunc: (char -> int -> int -> unit) -> unit = "ml_glutKeyboardFunc";
 
 
 external postRedisplay: unit -> unit = "ml_glutPostRedisplay";

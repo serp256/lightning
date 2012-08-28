@@ -1362,51 +1362,6 @@ value fbtest () =
   *)
   );
 
-value scale (self:Stage.c) = 
-  let img = Image.load "scale.png" in
-  let lib = LightLib.load "BaseDialog" in
-    (
-          self#addChild img;
-          img#setX 13.;
-          img#setY 600.;
-          img#setScaleX 24.;
-          img#setScaleY 33.;
-
-      let img = LightLib.get_symbol lib "ESkins.Background" in
-        (
-          self#addChild img;
-          img#setX 13.;
-          img#setY 17.;
-          img#setScaleX 240.;
-          img#setScaleY 330.;
-          (*
-          let i = ref 1. in
-          let timer = Timer.create ~repeatCount:1000 0.1 "PIZDA" in
-            (
-              ignore(timer#addEventListener Timer.ev_TIMER (fun _ _ _ ->  (debug "SET SCALE %F" !i; img#setScale !i; i.val := !i +. 0.1)));
-              timer#start ();
-            )
-          *)
-        );
-      LightLib.get_symbol_async lib "ESkins.Background" begin fun img -> 
-        (
-          self#addChild img;
-          img#setX 500.;
-          img#setY 17.;
-          img#setScaleX 24.;
-          img#setScaleY 33.;
-          (*
-          let i = ref 1. in
-          let timer = Timer.create ~repeatCount:1000 0.1 "PIZDA" in
-            (
-              ignore(timer#addEventListener Timer.ev_TIMER (fun _ _ _ ->  (debug "SET SCALE %F" !i; img#setScale !i; i.val := !i +. 0.1)));
-              timer#start ();
-            )
-          *)
-        )
-       end;
-    );
-
 
 value texture_atlas (stage:Stage.c) =
   let () = Texture.scale.val := 2. in
@@ -1419,7 +1374,9 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      Lightning.rm (Lightning.externalStoragePath ()) "pizda" (fun () -> debug "pizda was successfully removed");
       tweens self;
+      (* debug "%s" (Lightning.externalStoragePath ()); *)
     end;
   end
 in

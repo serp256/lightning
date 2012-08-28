@@ -13,7 +13,7 @@
 static unsigned int total_tex_mem = 0;
 
 extern uintnat caml_dependent_size;
-#ifdef DEBUG_MEM
+#ifdef TEXTURE_LOAD
 #define LOGMEM(op,tid,path,size) DEBUGMSG("TEXTURE MEMORY [%s] <%d:%s> %u -> %u:%u",op,tid,path,size,total_tex_mem,(unsigned int)caml_dependent_size)
 #else
 #define LOGMEM(op,tid,path,size)
@@ -38,8 +38,11 @@ void ml_texture_id_delete(value textureID) {
 		struct tex *t = TEX(textureID);
 		t->tid = 0;
 		total_tex_mem -= t->mem;
-		//LOGMEM("delete",tid,t->path,t->mem);
+#ifdef TEXTURE_LOAD
+		LOGMEM("delete",tid,t->path,t->mem);
+#else
 		LOGMEM("delete",tid,"path",t->mem);
+#endif
 		caml_free_dependent_memory(t->mem);
 	};
 }
@@ -58,8 +61,11 @@ static void textureID_finalize(value textureID) {
 		struct tex *t = TEX(textureID);
 		total_tex_mem -= t->mem;
 		caml_free_dependent_memory(t->mem);
-		//LOGMEM("finalize",tid,t->path,t->mem);
+#ifdef TEXTURE_LOAD
+		LOGMEM("finalize",tid,t->path,t->mem);
+#else
 		LOGMEM("finalize",tid,"path",t->mem);
+#endif
 	};
 }
 
@@ -82,10 +88,16 @@ struct custom_operations textureID_ops = {
   custom_deserialize_default
 };
 
+#ifdef TEXTURE_LOAD 
+#define FILL_TEXTURE(texID,_path,dataLen) strcpy(_tex->path, _path); _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",texID,_path,dataLen)
+#else
+#define FILL_TEXTURE(texID,_path,dataLen) _tex->mem = dataLen; total_tex_mem += dataLen
+#endif
+
 #define Store_textureID(mltex,texID,_path,dataLen) \
 	caml_alloc_dependent_memory(dataLen); \
 	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
-	{struct tex *_tex = TEX(mltex); _tex->tid = texID; /*strcpy(_tex->path, _path);*/ _tex->mem = dataLen; total_tex_mem += dataLen; LOGMEM("alloc",texID,_path,dataLen);}
+	{struct tex *_tex = TEX(mltex); _tex->tid = texID; FILL_TEXTURE(texID,_path,dataLen);}
 //*TEXTURE_ID(mlTextureID) = tid;
 
 value alloc_texture_id(GLuint textureID, unsigned int dataLen) {
@@ -407,7 +419,11 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 			glGenTextures(1, &textureID);
 			PRINT_DEBUG("glGenTextures: <%d>",textureID);
 			checkGLErrors("glGenTexture");
-			Store_textureID(mlTextureID,textureID,"path"/*tInfo->path*/,tInfo->dataLen);
+#ifdef TEXTURE_LOAD
+			Store_textureID(mlTextureID,textureID,tInfo->path,tInfo->dataLen);
+#else
+			Store_textureID(mlTextureID,textureID,"",tInfo->dataLen);
+#endif
 		} else {
 			// FIXME: check memory detecting incorrect
 			mlTextureID = Field(oldTextureID,0);

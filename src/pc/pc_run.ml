@@ -106,18 +106,24 @@ value run stage_create =
     Glut.initWindowSize !width !height;
     Glut.creatWindow "LIGHTNING";
     Glut.reshapeFunc begin fun width height ->
-      let () = Glut.reshapeFunc (fun _ _ -> print_endline "RESHAPE") in
       let stage = stage_create (float width) (float height) in
       (
+        Glut.keyboardFunc (fun c x y -> if int_of_char c = 127 then ignore(stage#dispatchBackPressedEv ()) else ());
         Glut.displayFunc (fun () -> (stage#renderStage (); Glut.swapBuffers ()));
         start_cycle !frameRate stage;
   (*       Glut.idleFunc (make_idle_func !frameRate stage); *)
         let (mouse_func,motion_func) = make_mouse_funcs stage in
         (
-          Glut.mouseFunc mouse_func;
-          Glut.motionFunc motion_func;
-        );
-        stage#renderStage ();
+          Glut.displayFunc (fun () -> (stage#renderStage (); Glut.swapBuffers ()));
+          start_cycle !frameRate stage;
+    (*       Glut.idleFunc (make_idle_func !frameRate stage); *)
+          let (mouse_func,motion_func) = make_mouse_funcs stage in
+          (
+            Glut.mouseFunc mouse_func;
+            Glut.motionFunc motion_func;
+          );
+          stage#renderStage ();
+        )
       )
     end;
     Glut.mainLoop ();

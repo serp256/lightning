@@ -356,7 +356,7 @@ void rm (const char* parent_path, const char* name) {
   if (dir) {
     struct dirent* file;
 
-    while (file = readdir(dir)) {
+    while ((file = readdir(dir))) {
       if (strcmp(file->d_name, "..") && strcmp(file->d_name, ".")) {
         rm(full_path, file->d_name);  
       }
@@ -365,9 +365,12 @@ void rm (const char* parent_path, const char* name) {
     closedir(dir);
   }
 
-  remove(full_path);
+  PRINT_DEBUG("rm %s", full_path);
+  // remove(full_path);
   free(full_path);
 }
+
+static jmethodID gCallRmCompleteMid;
 
 void* rm_thread(void* params) {
   rm_thread_params_t* p = (rm_thread_params_t*) params;
@@ -375,14 +378,22 @@ void* rm_thread(void* params) {
 
   free(p->parent_path);
   free(p->name);
-/*  caml_remove_generational_global_root(p->cb);
-  free(cb);
-*/
+
+  JNIEnv *env;
+  (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+
+  if (!gCallRmCompleteMid) {
+    gCallRmCompleteMid = (*env)->GetMethodID(env, jViewCls, "callRmComplete", "(I)V");
+  }
+
+  (*env)->CallVoidMethod(env, jView, gCallRmCompleteMid, (int)p);
+  (*gJavaVM)->DetachCurrentThread(gJavaVM);
+
   pthread_exit(NULL);
 }
 
 void ml_miniunz(value vzipPath, value vdstPath, value vprefix) {
-  PRINT_DEBUG("tid %d", gettid());
+  //PRINT_DEBUG("tid %d", gettid());
 
   unzip_thread_params_t* paths = (unzip_thread_params_t*)malloc(sizeof(unzip_thread_params_t));
 
@@ -409,6 +420,8 @@ void ml_miniunz(value vzipPath, value vdstPath, value vprefix) {
 }
 
 void ml_rm(value vparent_path, value vname, value cb) {
+  PRINT_DEBUG("ml_rm %d", gettid());
+
   rm_thread_params_t* params = (rm_thread_params_t*)malloc(sizeof(rm_thread_params_t));
 
   char* cparent_path = String_val(vparent_path);
@@ -416,7 +429,7 @@ void ml_rm(value vparent_path, value vname, value cb) {
 
   params->parent_path = (char*)malloc(strlen(cparent_path) + 1);
   params->name = (char*)malloc(strlen(cname) + 1);
-  params->cb = (value*)malloc(sizeof(value));
+  //params->cb = (value*)malloc(sizeof(value));
 
   strcpy(params->parent_path, cparent_path);
   strcpy(params->name, cname);
@@ -436,6 +449,8 @@ static jfieldID gDstPathFid;
 static jfieldID gSuccessFid;
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024UnzipCallbackRunnable_run(JNIEnv *env, jobject this) {
+  PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024UnzipCallbackRunnable_run %d", gettid());
+
   if (!gRunnableCls) {
     jclass runnableCls = (*env)->GetObjectClass(env, this);
     gRunnableCls = (*env)->NewGlobalRef(env, runnableCls);
@@ -469,18 +484,20 @@ static jclass gRmCallbackRunnableCls;
 static jfieldID gThreadParamsFid;
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024RmCallbackRunnable_run(JNIEnv *env, jobject this) {
+  PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024RmCallbackRunnable_run %d", gettid());
+
   if (!gRmCallbackRunnableCls) {
     jclass runnableCls = (*env)->GetObjectClass(env, this);
     gRmCallbackRunnableCls = (*env)->NewGlobalRef(env, runnableCls);
     (*env)->DeleteLocalRef(env, runnableCls);
 
-    gThreadParamsFid = (*env)->GetFieldID(env, gRunnableCls, "cb", "I");
+    gThreadParamsFid = (*env)->GetFieldID(env, gRmCallbackRunnableCls, "threadParams", "I");
   }
 
   rm_thread_params_t* params = (rm_thread_params_t*)(*env)->GetObjectField(env, this, gThreadParamsFid);
   caml_callback(*params->cb, Val_unit);
-  caml_register_generational_global_root(params->cb);
+  caml_remove_generational_global_root(params->cb);
 
-  free(params->cb);
+  //free(params->cb);
   free(params);
 }
