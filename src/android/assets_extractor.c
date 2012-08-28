@@ -365,8 +365,11 @@ void rm (const char* parent_path, const char* name) {
     closedir(dir);
   }
 
-  PRINT_DEBUG("rm %s", full_path);
-  // remove(full_path);
+  if (access(full_path, F_OK)) {
+    PRINT_DEBUG("rm %s", full_path);
+    // remove(full_path);
+  }
+  
   free(full_path);
 }
 
