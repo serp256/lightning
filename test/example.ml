@@ -1149,7 +1149,7 @@ value assets (s:Stage.c) =
         [ Some [ touch :: _ ] ->
           Touch.(
               match touch.phase with
-              [ TouchPhaseEnded -> Lightning.extractAssets (fun success -> debug "assets extracted, %B" success)
+              [ TouchPhaseEnded -> Lightning.extractAssetsIfRequired (fun success -> debug "assets extracted, %B" success)
               | _ -> ()
               ]
           )

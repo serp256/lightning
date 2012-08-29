@@ -184,12 +184,21 @@ value extractExpansions cb =
   downloadExpansions ();
 );
 
+value extractAssetsIfRequired cb =
+  if assetsExtracted () then
+  (
+    setAssetsDir (externalStoragePath ^ "assets/");
+    cb True;
+  )
+  else
+    rm (ExtString.String.slice ~last:~-1 externalStoragePath) "assets" (fun () -> extractAssets cb);
+
 value extractAssetsAndExpansionsIfRequired cb =
   if (assetsExtracted ()) && (expansionExtracted ()) then
   (
     setAssetsDir (externalStoragePath ^ "assets/");
     cb True;
-  )    
+  )
   else
     let extractAssetsRes = ref None
     and extractExpansionRes = ref None in
@@ -209,7 +218,6 @@ value extractAssetsAndExpansionsIfRequired cb =
 
 ELSE
 value extractAssets (cb:(bool -> unit)) = ();
-value assetsExtracted () = False;
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";
