@@ -1375,7 +1375,21 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
       (* debug "%s" (Lightning.externalStoragePath ()); *)
-      Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img));
+      (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)
+      tweens self;
+
+      Lightning.extractAssetsAndExpansionsIfRequired (
+        fun success ->
+          if success then
+            let img = Image.load "unnamed-1.jpg"
+            and img1 = Image.load "prof.jpg" in
+            (
+              self#addChild ~index:0 img1;
+              self#addChild ~index:0 img;              
+            )
+          else
+            debug "fail";
+      );
     end;
   end
 in

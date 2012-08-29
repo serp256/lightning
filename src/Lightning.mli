@@ -30,9 +30,10 @@ value extractAssets: (bool -> unit) -> unit;
 value getMACID: unit -> string;
 
 IFDEF ANDROID THEN
-value externalStoragePath: string;
+(* value externalStoragePath: string;
 value unzip: ?prefix:string -> string -> string -> (bool -> unit) -> unit;
 value rm: string -> string -> (unit -> unit) -> unit;
 value extractExpansions: (bool -> unit) -> unit;
-value extractAssets: (bool -> unit) -> unit;
+value extractAssets: (bool -> unit) -> unit; *)
+value extractAssetsAndExpansionsIfRequired: (bool -> unit) -> unit;
 ENDIF;

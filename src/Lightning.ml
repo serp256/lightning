@@ -140,6 +140,8 @@ value unzipComplete zipPath dstPath success =
       remove_all unzipCbs key;
     ));
 
+Callback.register "unzipComplete" unzipComplete;    
+
 value apkPath = _apkPath ();
 value apkVer = _getVersion ();
 value externalStoragePath = _externalStoragePath ();
@@ -153,23 +155,20 @@ value expansionExtracted () =
   Sys.file_exists expansionVerFilename;
 
 value extractAssets cb =
-  if assetsExtracted () then
-    cb True
-  else
-    let assetsPath = externalStoragePath ^ "assets" in
-      let cb success =
+  let assetsPath = externalStoragePath ^ "assets" in
+    let cb success =
+      (
+        if success then
         (
-          if success then
-          (
-            setAssetsDir (assetsPath ^ "/");
-            close_out (open_out assetsVerFilename);
-          )
-          else ();
-
-          cb success;
+          setAssetsDir (assetsPath ^ "/");
+          close_out (open_out assetsVerFilename);
         )
-      in
-        unzip ~prefix:"assets" apkPath externalStoragePath cb;
+        else ();
+
+        cb success;
+      )
+    in
+      unzip ~prefix:"assets" apkPath externalStoragePath cb;
 
 value extractExpansions cb =
 (
@@ -185,7 +184,28 @@ value extractExpansions cb =
   downloadExpansions ();
 );
 
-Callback.register "unzipComplete" unzipComplete;
+value extractAssetsAndExpansionsIfRequired cb =
+  if (assetsExtracted ()) && (expansionExtracted ()) then
+  (
+    setAssetsDir (externalStoragePath ^ "assets/");
+    cb True;
+  )    
+  else
+    let extractAssetsRes = ref None
+    and extractExpansionRes = ref None in
+      let callCb () =
+        match (!extractAssetsRes, !extractExpansionRes) with
+        [ (Some ear, Some eer) ->  cb (ear && eer)
+        | _ -> ()
+        ]
+      in
+        let rmCb () =
+        (
+          extractAssets (fun success -> ( extractAssetsRes.val := Some success; callCb (); ));
+          extractExpansions (fun success -> ( extractExpansionRes.val := Some success; callCb (); ));
+        )
+        in
+          rm (ExtString.String.slice ~last:~-1 externalStoragePath) "assets" rmCb;
 
 ELSE
 value extractAssets (cb:(bool -> unit)) = ();

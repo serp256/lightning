@@ -118,7 +118,8 @@ public class LightActivity extends Activity implements IDownloaderClient
 	protected void onStop() {
 		if (null != mDownloaderClientStub) {
 			mDownloaderClientStub.disconnect(this);
-		}		
+		}
+		super.onStop();
 	}
 
 	@Override

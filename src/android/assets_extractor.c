@@ -365,9 +365,9 @@ void rm (const char* parent_path, const char* name) {
         closedir(dir);
     }
 
-    if (access(full_path, F_OK)) {
+    if (!access(full_path, F_OK)) {
         PRINT_DEBUG("rm %s", full_path);
-        // remove(full_path);
+        remove(full_path);
     }
     
     free(full_path);
@@ -377,9 +377,10 @@ static jmethodID gCallRmCompleteMid;
 
 void* rm_thread(void* params) {
     rm_thread_params_t* p = (rm_thread_params_t*) params;
-    rm(p->parent_path, p->name);
 
-    PRINT_DEBUG("rm_thread %d %lu", gettid(), p->cb);
+    PRINT_DEBUG("rm_thread %s %s", p->parent_path, p->name);
+
+    rm(p->parent_path, p->name);
 
     free(p->parent_path);
     free(p->name);
