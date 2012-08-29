@@ -23,20 +23,18 @@
                 <action android:name="com.android.vending.billing.PURCHASE_STATE_CHANGED" />
             </intent-filter>
         </receiver>
-        <receiver android:name="ru.redspell.lightning.expansions.LightExpansionsAlarmReceiver">
-            <intent-filter>
-                <action android:name="android.app.AlarmManager.RTC_WAKEUP"/>
-            </intent-filter>
-        </receiver>
+        <receiver android:name="ru.redspell.lightning.expansions.LightExpansionsAlarmReceiver"></receiver>
 
     </application>
-		<uses-permission android:name="android.permission.INTERNET" />
-        <uses-permission android:name="com.android.vending.BILLING" />
-        <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
-        <uses-permission android:name="android.permission.WAKE_LOCK" />
-        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-        <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-		<uses-feature android:glEsVersion="0x00020000"></uses-feature>
-		<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"></uses-sdk>
-</manifest> 
+
+	<uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+	<uses-feature android:glEsVersion="0x00020000"></uses-feature>
+	<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"></uses-sdk>
+
+</manifest>

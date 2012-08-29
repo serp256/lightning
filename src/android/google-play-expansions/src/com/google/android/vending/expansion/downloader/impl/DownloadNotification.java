@@ -27,6 +27,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Messenger;
+import android.util.Log;
 
 /**
  * This class handles displaying the notification associated with the download

@@ -116,12 +116,14 @@ ENDIF;
 IFDEF ANDROID THEN
 
 external miniunz : string -> string -> option string -> unit = "ml_miniunz";
-external apkPath : unit -> string = "ml_apkPath";
-external externalStoragePath : unit -> string = "ml_externalStoragePath";
+external _apkPath : unit -> string = "ml_apkPath";
+external _externalStoragePath : unit -> string = "ml_externalStoragePath";
 external setAssetsDir : string -> unit = "ml_setAssetsDir";
-external getVersion : unit -> string = "ml_getVersion";
+external _getVersion : unit -> string = "ml_getVersion";
 external rm : string -> string -> (unit -> unit) -> unit = "ml_rm";
-external extractExpansions : unit -> unit = "ml_extractExpansions";
+external downloadExpansions : unit -> unit = "ml_downloadExpansions";
+external getExpansionPath : bool -> string = "ml_getExpansionPath";
+external getExpansionVer : bool -> int = "ml_getExpansionVer";
 
 value unzipCbs = Hashtbl.create 0;
 
@@ -138,50 +140,56 @@ value unzipComplete zipPath dstPath success =
       remove_all unzipCbs key;
     ));
 
-value getAssetsVerFilename () = (externalStoragePath ()) ^ "assets/" ^ (getVersion ());
+value apkPath = _apkPath ();
+value apkVer = _getVersion ();
+value externalStoragePath = _externalStoragePath ();
+value assetsVerFilename = externalStoragePath ^ "assets/a" ^ apkVer;
+value expansionVerFilename = externalStoragePath ^ "assets/e" ^ (string_of_int (getExpansionVer True));
 
 value assetsExtracted () =
-  Sys.file_exists (getAssetsVerFilename ());
+  Sys.file_exists assetsVerFilename;
 
-(* value rec rmdir dir =
-  try
-  (
-    Array.iter
-      (fun file -> let fullPath = dir ^ "/" ^ file in if Sys.is_directory fullPath then rmdir fullPath else Sys.remove fullPath)
-      (Sys.readdir dir);
-    Unix.rmdir dir;
-  )
-  with [ Sys_error _ -> () ]; *)
+value expansionExtracted () =
+  Sys.file_exists expansionVerFilename;
 
 value extractAssets cb =
   if assetsExtracted () then
     cb True
   else
-    let extrnlStotagePath = externalStoragePath () in
-      let assetsPath = extrnlStotagePath ^ "assets" in
-        let cb success =
-          (
-            if success then
-            (
-              setAssetsDir (assetsPath ^ "/");
-              close_out (open_out (getAssetsVerFilename ()));
-            )
-            else ();
-
-            cb success;
-          )
-        in
+    let assetsPath = externalStoragePath ^ "assets" in
+      let cb success =
         (
-          (* rmdir assetsPath; *)
-          unzip ~prefix:"assets" (apkPath ()) extrnlStotagePath cb;
-        );
+          if success then
+          (
+            setAssetsDir (assetsPath ^ "/");
+            close_out (open_out assetsVerFilename);
+          )
+          else ();
+
+          cb success;
+        )
+      in
+        unzip ~prefix:"assets" apkPath externalStoragePath cb;
+
+value extractExpansions cb =
+(
+  Callback.register "expnsDownloadComplete" (
+    fun () -> unzip (getExpansionPath True) (externalStoragePath ^ "assets/") (
+      fun success ->
+      (
+        if success then close_out (open_out expansionVerFilename) else ();
+        cb success;
+      )
+    )
+  );
+  downloadExpansions ();
+);
 
 Callback.register "unzipComplete" unzipComplete;
 
 ELSE
 value extractAssets (cb:(bool -> unit)) = ();
 value assetsExtracted () = False;
-value getVersion () = assert False;
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";

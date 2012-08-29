@@ -61,7 +61,27 @@ public class LightView extends GLSurfaceView {
         }
     }
 
-    private static final XAPKFile[] xAPKS = { new XAPKFile(true, 3, 687801613L) };    
+    private static final XAPKFile[] xAPKS = { new XAPKFile(true, 1, 54645L) };
+
+    public String getExpansionPath(boolean isMain) {
+    	for (XAPKFile xf : xAPKS) {
+    		if (xf.mIsMain == isMain) {
+    			return Helpers.generateSaveFileName(activity, Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion));
+    		}
+    	}
+
+    	return null;
+    }
+
+    public int getExpansionVer(boolean isMain) {
+    	for (XAPKFile xf : xAPKS) {
+    		if (xf.mIsMain == isMain) {
+    			return xf.mFileVersion;
+    		}
+    	}
+
+    	return -1;
+    }
 
 	private class UnzipCallbackRunnable implements Runnable {
 		private String zipPath;
@@ -518,7 +538,13 @@ public class LightView extends GLSurfaceView {
             if (!Helpers.doesFileExist(activity, fileName, xf.mFileSize, false)) {
             	Log.d("LIGHTNING", fileName + " does not exists, start download service");
 
-				activity.startExpansionDownloadService();	            	
+				getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						activity.startExpansionDownloadService();
+					}
+				});
+
             	return;
             }
 
@@ -528,7 +554,12 @@ public class LightView extends GLSurfaceView {
         expansionsDownloaded();
 	}
 
+	private class ExpansionsExtractedCallbackRunnable implements Runnable {
+		native public void run();
+	}
+
 	public void expansionsDownloaded() {
 		Log.d("LIGHTNING", "expansions downloaded");
+		queueEvent(new ExpansionsExtractedCallbackRunnable());
 	}
 }

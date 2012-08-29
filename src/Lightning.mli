@@ -27,12 +27,12 @@ value getLocale: unit -> string;
 value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
 value extractAssets: (bool -> unit) -> unit;
-value getVersion: unit -> string;
 value getMACID: unit -> string;
 
 IFDEF ANDROID THEN
-value externalStoragePath: unit -> string;
+value externalStoragePath: string;
 value unzip: ?prefix:string -> string -> string -> (bool -> unit) -> unit;
 value rm: string -> string -> (unit -> unit) -> unit;
-value extractExpansions: unit -> unit;
+value extractExpansions: (bool -> unit) -> unit;
+value extractAssets: (bool -> unit) -> unit;
 ENDIF;
