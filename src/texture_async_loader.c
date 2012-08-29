@@ -128,7 +128,7 @@ value ml_texture_async_loader_pop(value oruntime) {
 			mlTex = tInfo;
 		} else mlTex = Val_unit;
 		opath = caml_copy_string(r->path);
-		fprintf(stderr,"path: %s, suffix: %hhu\n",r->path,r->with_suffix);
+		//fprintf(stderr,"path: %s, suffix: %hhu\n",r->path,r->with_suffix);
 		free(r->path);
 		res = caml_alloc_tuple(1);
 		Store_field(res,0,caml_alloc_small(3,0));

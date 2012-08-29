@@ -221,7 +221,7 @@ static void filter_finalize(value fltr) {
 	caml_stat_free(f);
 }
 
-static void filter_compare(value fltr1,value fltr2) {
+static int filter_compare(value fltr1,value fltr2) {
 	filter *f1 = FILTER(fltr1);
 	filter *f2 = FILTER(fltr2);
 	if (f1 == f2) return 0;
