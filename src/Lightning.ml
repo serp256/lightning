@@ -216,6 +216,8 @@ value extractAssetsAndExpansionsIfRequired cb =
         in
           rm (ExtString.String.slice ~last:~-1 externalStoragePath) "assets" rmCb;
 
+(* external test_c_fun: (unit -> unit) -> unit = "ml_test_c_fun"; *)
+
 ELSE
 value extractAssetsIfRequired (cb:(bool -> unit)) = ();
 value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = ();

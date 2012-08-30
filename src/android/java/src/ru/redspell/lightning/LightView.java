@@ -168,9 +168,12 @@ public class LightView extends GLSurfaceView {
 
 		instance = this;
 
+		// FIXME: move it to payments init
 		bserv = new BillingService();
 		bserv.setContext(activity);
 		ResponseHandler.register(activity);
+
+		// FIXME: move it to FB init
 		fb = new AndroidFB();
 		fb.setView (this);
 	}
@@ -179,8 +182,8 @@ public class LightView extends GLSurfaceView {
 		setEGLContextClientVersion(2);
 		Log.d("LIGHTNING","create Renderer");
 		renderer = new LightRenderer(width,height);
-		setFocusableInTouchMode(true);
 		setRenderer(renderer);
+		setFocusableInTouchMode(true);
 	}
 
 	public void surfaceCreated(SurfaceHolder holder) {

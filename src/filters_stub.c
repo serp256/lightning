@@ -221,7 +221,7 @@ static void filter_finalize(value fltr) {
 	caml_stat_free(f);
 }
 
-static void filter_compare(value fltr1,value fltr2) {
+static int filter_compare(value fltr1,value fltr2) {
 	filter *f1 = FILTER(fltr1);
 	filter *f2 = FILTER(fltr2);
 	if (f1 == f2) return 0;
@@ -554,6 +554,7 @@ void ml_glow_make(value orb, value glow) {
 		cvp = &vpclps[i].vp;
 		cvp->x = (legalWidth - w)/2; cvp->y = (legalHeight - h)/2; cvp->w = w; cvp->h = h;
 		glow_make_draw(cvp,cclp);
+		checkGLErrors("glow_make_draw - forward");
 		cclp = &vpclps[i].clp;
 		cclp->x = (double)cvp->x / legalWidth; cclp->y = (double)cvp->y / legalHeight; cclp->width = (double)w / legalWidth; cclp->height = (double)h / legalHeight;
 		ctid = txrs[i];

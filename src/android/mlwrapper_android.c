@@ -67,29 +67,59 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	return JNI_VERSION_1_6; // Check this
 }
 
+/*
+static size_t debug_tag_len = 0;
+static char *debug_tag = NULL;
+static size_t debug_address_len = 0;
+static char *debug_address = NULL;
+static size_t debug_msg_len = 0;
+static char *debug_msg = NULL;
+*/
+
+//#define COPY_STRING(len,dst,src) \
+		if (len < caml_string_length(src)) { \
+			len = caml_string_length(src); \
+			dst = realloc(dst, len + 1); \
+		};\
+		memcpy(dst,String_val(src),len);\
+		dst[len] = '\0'
+
 void android_debug_output(value mtag, value address, value msg) {
 	char *tag;
 	if (mtag == Val_int(0)) tag = "DEFAULT";
-	else tag = String_val(Field(mtag,0));
+	else {
+		tag = String_val(Field(mtag,0));
+		//COPY_STRING(debug_tag_len,debug_tag,Field(mtag,0));
+	};
+	//COPY_STRING(debug_address_len,debug_address,address);
+	//COPY_STRING(debug_msg_len,debug_msg,msg);
+//#undef COPY_STRING
 	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s",tag,String_val(address),String_val(msg)); // this should be APPNAME
+	//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s",debug_tag,debug_address,debug_msg); // this should be APPNAME
+	fprintf(stderr,"%s (%s) %s\n",tag,String_val(address),String_val(msg));
+	//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s","DEFAULT","ADDRESS","MSG"); // this should be APPNAME
 	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING",String_val(msg)); // this should be APPNAME
 //	fputs(String_val(msg),stderr);
 }
 
 void android_debug_output_info(value address,value msg) {
 	__android_log_write(ANDROID_LOG_INFO,"LIGHTNING",String_val(msg));
+	fprintf(stderr,"INFO (%s) %s\n",String_val(address),String_val(msg));
 }
 
 void android_debug_output_warn(value address,value msg) {
 	__android_log_write(ANDROID_LOG_WARN,"LIGHTNING",String_val(msg));
+	fprintf(stderr,"WARN (%s) %s\n",String_val(address),String_val(msg));
 }
 
 void android_debug_output_error(value address, value msg) {
 	__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING",String_val(msg));
+	fprintf(stderr,"ERROR (%s) %s\n",String_val(address),String_val(msg));
 }
 
 void android_debug_output_fatal(value address, value msg) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",String_val(msg));
+	fprintf(stderr,"FATAL (%s) %s\n",String_val(address),String_val(msg));
 }
 
 
@@ -273,21 +303,21 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobje
 	(*env)->DeleteLocalRef(env, storageCls);
 	(*env)->DeleteLocalRef(env, storageEditor);*/
 	(*env)->DeleteLocalRef(env, viewCls);
+}
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+	PRINT_DEBUG("lightRender init");
 	if (!ocaml_initialized) {
 		PRINT_DEBUG("init ocaml");
 		char *argv[] = {"android",NULL};
 		caml_startup(argv);
 		ocaml_initialized = 1;
 		PRINT_DEBUG("caml initialized");
-	}
-}
-
-
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
-	PRINT_DEBUG("lightRender init");
+	};
 	if (stage) return;
 	PRINT_DEBUG("create stage: [%d:%d]",width,height);
-	stage = mlstage_create((double)width,(double)height); 
+	stage = mlstage_create((float)width,(float)height); 
 	PRINT_DEBUG("stage created");
 }
 
@@ -778,6 +808,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 		gLmpResumeAll = (*env)->GetStaticMethodID(env, gLmpCls, "resumeAll", "()V");
 	}
 
+	PRINT_DEBUG("resume ALL players");
 	(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpResumeAll);	
 }
 
@@ -1231,7 +1262,7 @@ value ml_getVersion() {
 
 		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getVersion", "()Ljava/lang/String;");
 		jstring jver = (*env)->CallObjectMethod(env, jView, mid);
-		char* cver = (*env)->GetStringUTFChars(env, jver, JNI_FALSE);
+		const char* cver = (*env)->GetStringUTFChars(env, jver, JNI_FALSE);
 
 		// DEBUGF("cver %s", cver);
 
@@ -1261,14 +1292,13 @@ static value device_id;
 
 value ml_device_id(value unit) {
 	DEBUGF("ML_DEVICE_ID");
-	CAMLparam0();
 	if (!version) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "device_id", "()Ljava/lang/String;");
 		jstring jdev = (*env)->CallObjectMethod(env, jView, mid);
-		char* cdev = (*env)->GetStringUTFChars(env, jdev, JNI_FALSE);
+		const char* cdev = (*env)->GetStringUTFChars(env, jdev, JNI_FALSE);
 
 		device_id = caml_copy_string(cdev);
 		caml_register_generational_global_root(&device_id);
@@ -1295,6 +1325,11 @@ value ml_device_type(value unit) {
 	} else {
 		retval = Val_int(0);
 	};
-	(*env)->DeleteLocalRef(env, jres);
+	//(*env)->DeleteLocalRef(env, jres);
 	CAMLreturn(retval);
+}
+
+
+void ml_test_c_fun(value fun) {
+	caml_callback(fun,Val_unit);
 }
