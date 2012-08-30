@@ -1374,11 +1374,13 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      avsound self "melody0.mp3";
+(*       avsound self "melody0.mp3"; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)
-(*       tweens self;
+(*       tweens self; *)
+      
 
+      (*
       Lightning.extractAssetsAndExpansionsIfRequired (
         fun success ->
           if success then
