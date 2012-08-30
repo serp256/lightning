@@ -1001,6 +1001,9 @@ value ml_getStoragePath () {
 
 
 static void mp_finalize(value vmp) {
+	PRINT_DEBUG("?????????????????????????? mp_finalize");
+
+
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
@@ -1041,6 +1044,7 @@ value ml_avsound_create_player(value vpath) {
 	}
 
 	const char* cpath = String_val(vpath);
+
 	jstring jpath = (*env)->NewStringUTF(env, cpath);
 	jobject mp = (*env)->CallObjectMethod(env, jView, createMpMid, jpath);
 	jobject gmp = (*env)->NewGlobalRef(env, mp);
@@ -1099,6 +1103,8 @@ void ml_avsound_playback(value vmp, value vmethodName) {
 }
 
 void ml_avsound_set_loop(value vmp, value loop) {
+	PRINT_DEBUG("!!!ml_avsound_set_loop call");
+
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
