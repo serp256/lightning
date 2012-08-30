@@ -1149,7 +1149,7 @@ value assets (s:Stage.c) =
         [ Some [ touch :: _ ] ->
           Touch.(
               match touch.phase with
-              [ TouchPhaseEnded -> Lightning.extractAssets (fun success -> debug "assets extracted, %B" success)
+              [ TouchPhaseEnded -> Lightning.extractAssetsIfRequired (fun success -> debug "assets extracted, %B" success)
               | _ -> ()
               ]
           )
@@ -1325,7 +1325,7 @@ value avsound (stage:Stage.c) path =
         )
       in
         let play = createImg channel1#play
-        and stop = createImg channel1#stop
+        and stop = createImg (fun () -> channel1#setLoop True)
         and pause = createImg channel1#pause in
         (
           ignore(channel1#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "pizda"));
@@ -1374,109 +1374,28 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      debug "++++++++++++++++++++++++++++++++++++++++";
-      debug "++++++++++++++++++++++++++++++++++++++++";
-      debug "++++++++++++++++++++++++++++++++++++++++";
-      debug "++++++++++++++++++++++++++++++++++++++++";
-      debug "++++++++++++++++++++++++++++++++++++++++";
-      debug "++++++++++++++++++++++++++++++++++++++++";
-      debug "++++++++++++++++++++++++++++++++++++++++";
-      debug "device type : %s" (match LightCommon.deviceType () with [ LightCommon.Pad -> "PAD" | _ -> "PHONE"]);
-      (*
-      debug "device id : %s" (match Lightning.deviceIdentifier () with [ Some id -> id | _ -> "NONE"]);
-      *)
-<<<<<<< HEAD
-=======
-      scale self;
->>>>>>> 3c2e99f300a914d73117e32b2a4114a8f9247e3e
-(*       assets self; *)
 (*       avsound self "melody0.mp3"; *)
-      (*
-      debug "qweqweqweqwe";
-      ignore(self#addEventListener Stage.ev_BACK_PRESSED (fun ev _ _ -> ( debug "pizda"; Ev.stopPropagation ev; )));
-*)
-      (* fbtest ();  *)
-(*      avsound self "melody0.mp3"; *)
-      (* assets self; *)
-(*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
-(*       assets self; *)
-(*       quad self; *)
+      (* debug "%s" (Lightning.externalStoragePath ()); *)
+      (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)
 (*       tweens self; *)
-      (* touchesTest self; *)
+      
 
-(*       accelerometer (); *)
-        (* BitmapFont.register "MyriadPro-Regular.fnt"; *)
-(*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
-        (* TLF.default_font_family.val := "Myriad Pro"; *)
-(*
-        let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
-          self#addChild tlf;
-*)
-        (* map self; *)
-(*         glow self; *)
-(*         image self; *)
-(*         rec_fun self; *)
-(*         test_alpha self; *)
-(*       alert self; *)
-      (* test_exn self; *)
-   (*   tweens self; *)
-      (* flip self; *)
-(*       social self; *)
-(*       async_load self; *)
-(*       filters self; *)
-(*         size self; *)
-(*        tlf self;  *)
-(*       external_image self; *)
-(*       sound self; *)
-(*       atlas self; *)
-(*       masks self; *)
-(*       half_pixels self; *)
-(*         gradient self; *)
-(*         pallete self; *)
-(*         map self; *)
-(*         test_gc self; *)
-(*         library self; *)
-(*         lang self; *)
-(*         memtest_async self; *)
-(*           url_loader self; *)
-        (* map self; *)
-(*         test_gc self; *)
-(*         filters self; *)
-(*         game_center self; *)
-          (* pvr self; *)
-          (* sound self; *)
-(*           url_loader self; *)
-(*           glow self; *)
-(*           storage self; *)
- (*         sound self; *)
-(*         window self; *)
-(*         zsort self; *)
-      (* localNotif (); *)
-(*           music self; *)
-          (* tlf self; *)
-(*           quad self; *)
-          (* hardware self; *)
-(*           glow_and_gc self; *)
-(*        udid self; *)
-       (* bl_greenhouse self; *)
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 3c2e99f300a914d73117e32b2a4114a8f9247e3e
-(*        async_images self; *)
-(*         image self; *)
-(*        texture_atlas self; *)
-(*        tlf self *)
-<<<<<<< HEAD
-=======
-=======
-(*       async_images self; *)
->>>>>>> origin/master
->>>>>>> 3c2e99f300a914d73117e32b2a4114a8f9247e3e
+      (*
+      Lightning.extractAssetsAndExpansionsIfRequired (
+        fun success ->
+          if success then
+            let img = Image.load "unnamed-1.jpg"
+            and img1 = Image.load "prof.jpg" in
+            (
+              self#addChild ~index:0 img1;
+              self#addChild ~index:0 img;              
+            )
+          else
+            debug "fail";
+      ); *)
     end;
   end
 in
-Lightning.init stage;
-
-
+  Lightning.init stage;
+  
 (* debug "VALUE IN STORAGE: %s" (try KVStorage.get_string "pizda" with [ KVStorage.Kv_not_found -> "NOT FOUND"]); *)

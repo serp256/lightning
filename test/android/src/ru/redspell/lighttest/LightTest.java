@@ -39,7 +39,7 @@ public class LightTest extends LightActivity
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		//setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		Log.d("LIGHTNING", "BRAND=" + Build.BRAND);
 		Log.d("LIGHTNING", "DEVICE=" + Build.DEVICE);
 		Log.d("LIGHTNING", "DISPLAY=" + Build.DISPLAY);
