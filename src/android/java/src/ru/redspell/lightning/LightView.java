@@ -48,23 +48,11 @@ import android.provider.Settings.Secure;
 import android.provider.Settings;
 import android.view.Display;
 
+import ru.redspell.lightning.expansions.XAPKFile;
+
 public class LightView extends GLSurfaceView {
-    private static class XAPKFile {
-        public final boolean mIsMain;
-        public final int mFileVersion;
-        public final long mFileSize;
-
-        XAPKFile(boolean isMain, int fileVersion, long fileSize) {
-            mIsMain = isMain;
-            mFileVersion = fileVersion;
-            mFileSize = fileSize;
-        }
-    }
-
-    private static final XAPKFile[] xAPKS = { new XAPKFile(true, 1, 54645L) };
-
     public String getExpansionPath(boolean isMain) {
-    	for (XAPKFile xf : xAPKS) {
+    	for (XAPKFile xf : activity.getXAPKS()) {
     		if (xf.mIsMain == isMain) {
     			return Helpers.generateSaveFileName(activity, Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion));
     		}
@@ -74,7 +62,7 @@ public class LightView extends GLSurfaceView {
     }
 
     public int getExpansionVer(boolean isMain) {
-    	for (XAPKFile xf : xAPKS) {
+    	for (XAPKFile xf : activity.getXAPKS()) {
     		if (xf.mIsMain == isMain) {
     			return xf.mFileVersion;
     		}
@@ -530,7 +518,7 @@ public class LightView extends GLSurfaceView {
 	public void extractExpansions() {
 		Log.d("LIGHTNING", "extracting expansions");
 
-	    for (XAPKFile xf : xAPKS) {
+	    for (XAPKFile xf : activity.getXAPKS()) {
             String fileName = Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion);
 
             Log.d("LIGHTNING", "checking " + fileName + "...");

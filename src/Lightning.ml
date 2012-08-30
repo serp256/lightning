@@ -217,7 +217,8 @@ value extractAssetsAndExpansionsIfRequired cb =
           rm (ExtString.String.slice ~last:~-1 externalStoragePath) "assets" rmCb;
 
 ELSE
-value extractAssets (cb:(bool -> unit)) = ();
+value extractAssetsIfRequired (cb:(bool -> unit)) = ();
+value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = ();
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";

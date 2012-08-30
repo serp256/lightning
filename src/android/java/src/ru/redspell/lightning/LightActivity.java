@@ -19,10 +19,17 @@ import com.google.android.vending.expansion.downloader.IStub;
 import com.google.android.vending.expansion.downloader.IDownloaderService;
 
 import ru.redspell.lightning.expansions.LightExpansionsDownloadService;
+import ru.redspell.lightning.expansions.XAPKFile;
 import ru.redspell.lightning.LightView;
 
 public class LightActivity extends Activity implements IDownloaderClient
 {
+    protected XAPKFile[] xAPKS = {};
+
+    public XAPKFile[] getXAPKS() {
+    	return xAPKS;
+    }
+
 	private final String LOG_TAG = "LIGHTNING";
 
 	private LightView lightView;

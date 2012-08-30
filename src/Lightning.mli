@@ -28,7 +28,5 @@ value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
 value getMACID: unit -> string;
 
-IFDEF ANDROID THEN
 value extractAssetsIfRequired: (bool -> unit) -> unit;
 value extractAssetsAndExpansionsIfRequired: (bool -> unit) -> unit;
-ENDIF;

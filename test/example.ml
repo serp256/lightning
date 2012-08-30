@@ -1325,7 +1325,7 @@ value avsound (stage:Stage.c) path =
         )
       in
         let play = createImg channel1#play
-        and stop = createImg channel1#stop
+        and stop = createImg (fun () -> channel1#setLoop True)
         and pause = createImg channel1#pause in
         (
           ignore(channel1#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "pizda"));
@@ -1374,9 +1374,10 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      avsound self "melody0.mp3";
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)
-      tweens self;
+(*       tweens self;
 
       Lightning.extractAssetsAndExpansionsIfRequired (
         fun success ->
@@ -1389,7 +1390,7 @@ let stage width height =
             )
           else
             debug "fail";
-      );
+      ); *)
     end;
   end
 in
