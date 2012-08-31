@@ -13,8 +13,14 @@ cleanios:
 android: 
 	$(MAKE) -f Makefile.android so
 
+androidr: 
+	$(MAKE) -f Makefile.android release
+
 android-install:
 	adb install -r android/bin/LightTest-debug.apk
+
+android-installr:
+	adb install -r android/bin/LightTest-release.apk
 
 android-install-s:
 	adb install -r -s android/bin/LightTest-debug.apk

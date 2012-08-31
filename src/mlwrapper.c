@@ -22,6 +22,8 @@ extern void caml_gc_compaction();
 
 
 mlstage *mlstage_create(float width,float height) {
+	CAMLparam0();
+	CAMLlocal1(ml_width);
 	//PRINT_DEBUG("mlstage_create: %d",(unsigned int)pthread_self());
 	//caml_c_thread_register();
 	//caml_acquire_runtime_system();
@@ -35,12 +37,13 @@ mlstage *mlstage_create(float width,float height) {
 	stage->width = width;
 	stage->height = height;
 	caml_acquire_runtime_system();
-	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));// FIXME: GC 
+	ml_width = caml_copy_double(width);
+	stage->stage = caml_callback2(*create_ml_stage,ml_width,caml_copy_double(height));// FIXME: GC 
 	stage->needCancelAllTouches = 0;
 	caml_register_generational_global_root(&stage->stage);
 	caml_release_runtime_system();
 	PRINT_DEBUG("stage successfully created");
-	return stage;
+	CAMLreturnT(mlstage*,stage);
 }
 
 
