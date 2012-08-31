@@ -1297,7 +1297,7 @@ value avsound (stage:Stage.c) path =
 (
   Sound.init ();
 
-    let channel1 = Sound.createChannel (Sound.load "melody0.mp3") in
+    let channel1 = Sound.createChannel (Sound.load "achievement1.caf") in
     let channel2 = Sound.createChannel (Sound.load "melody0.mp3") in
       let createImg click =
         let img = Image.load "Russia.png" in
@@ -1374,7 +1374,7 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-(*       avsound self "melody0.mp3"; *)
+      Lightning.extractAssetsIfRequired (fun _ -> avsound self "melody0.mp3");
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)
 (*       tweens self; *)

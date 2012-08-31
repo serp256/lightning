@@ -19,7 +19,6 @@ import android.content.res.Resources;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.Intent;
-import android.media.SoundPool;
 import android.view.SurfaceHolder;
 import android.content.Context;
 import java.io.FileInputStream;
@@ -39,8 +38,6 @@ import com.google.android.vending.expansion.downloader.Helpers;
 import com.tapjoy.TapjoyConnect;
 import com.tapjoy.TapjoyLog;
 
-import android.media.MediaPlayer;
-import android.media.AudioManager;
 import android.os.Process;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
@@ -194,14 +191,6 @@ public class LightView extends GLSurfaceView {
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		Log.d("LIGHTNING","surfaceDestroyed");
 		super.surfaceDestroyed(holder);
-	}
-
-	public int getSoundId(String path, SoundPool sndPool) throws IOException {
-		if (path.charAt(0) == '/') {
-			return sndPool.load(path, 1);
-		}
-
-		return sndPool.load(getContext().getAssets().openFd(path), 1);
 	}
 
 	public ResourceParams getResource(String path) {
@@ -488,20 +477,6 @@ public class LightView extends GLSurfaceView {
 		Log.d("LIGHTNING", "LightView: mlgetStoragePath");
 		return getContext().getFilesDir().getPath();
 	}
-
-	public MediaPlayer createMediaPlayer(String path) throws IOException {
-		AssetFileDescriptor afd = getContext().getAssets().openFd(path);
-
-		MediaPlayer mp = new LightMediaPlayer();
-
-		Log.d("LIGHTNING", path);
-
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-		mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-
-		return mp;
-	}
-
 
 	public void onBackButton() {
 		queueEvent(new Runnable() {

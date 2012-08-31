@@ -502,15 +502,8 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024RmCallbackRunna
 
     rm_thread_params_t* params = (rm_thread_params_t*)(*env)->GetObjectField(env, this, gThreadParamsFid);
 
-    PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024RmCallbackRunnable_run %d %lu", gettid(), params->cb);
-
     caml_callback(params->cb, Val_unit);
-
-    PRINT_DEBUG("before caml_remove_generational_global_root");
-
     caml_remove_generational_global_root(&params->cb);
-
-    PRINT_DEBUG("after caml_remove_generational_global_root");
 
     free(params);
 }
