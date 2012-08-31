@@ -219,8 +219,8 @@ value extractAssetsAndExpansionsIfRequired cb =
 (* external test_c_fun: (unit -> unit) -> unit = "ml_test_c_fun"; *)
 
 ELSE
-value extractAssetsIfRequired (cb:(bool -> unit)) = ();
-value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = ();
+value extractAssetsIfRequired (cb:(bool -> unit)) =  cb True;
+value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = cb True;
 ENDIF;
 
 external getMACID: unit -> string = "ml_getMACID";
