@@ -21,6 +21,7 @@ import com.google.android.vending.expansion.downloader.IDownloaderService;
 import ru.redspell.lightning.expansions.LightExpansionsDownloadService;
 import ru.redspell.lightning.expansions.XAPKFile;
 import ru.redspell.lightning.LightView;
+import android.content.res.TypedArray;
 
 public class LightActivity extends Activity implements IDownloaderClient
 {
@@ -46,6 +47,14 @@ public class LightActivity extends Activity implements IDownloaderClient
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		lightView = new LightView(this);
 		setContentView(lightView);
+
+		TypedArray expansions = getResources().obtainTypedArray(R.array.expansions);
+		xAPKS = new XAPKFile[expansions.length()];
+
+		for (int i = 0; i < expansions.length(); i++) {
+			String[] expFileParams = expansions.getString(i).split(",");
+			xAPKS[i] = new XAPKFile((new Boolean(expFileParams[0])).booleanValue(), (new Integer(expFileParams[1])).intValue(), (new Long(expFileParams[2])).longValue());	
+		}
 	}
 
 	public boolean startExpansionDownloadService() {
