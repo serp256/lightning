@@ -449,9 +449,7 @@ public class LightView extends GLSurfaceView {
 	}
 
   private String supportEmail = "mail@redspell.ru";
-	public void setSupportEmail(String d){
-		supportEmail = d;
-	}
+	public void setSupportEmail(String d){ supportEmail = d; }
 
 	public void addExceptionInfo(String d) {
     //openURL("mailto:".concat(supportEmail).concat("?subject=test&body=wtf"));

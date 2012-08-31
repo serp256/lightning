@@ -330,9 +330,8 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 
 static value run_method = 1;//None
 void mlstage_run(double timePassed) {
-	if (run_method == 1) // None
-		run_method = caml_hash_variant("run");
 	if (net_running > 0) net_perform();
+	if (run_method == 1) run_method = caml_hash_variant("run");
 	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,caml_copy_double(timePassed));
 }
 
