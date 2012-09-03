@@ -59,6 +59,9 @@ void ml_payment_purchase(value prodId) {
 	}
 
 	char* cprodId = String_val(prodId);
+
+	PRINT_DEBUG("requesting product id %s", cprodId);
+
 	jstring jprodId = (*env)->NewStringUTF(env, cprodId);
 	(*env)->CallVoidMethod(env, jView, gRequestPurchase, jprodId);
 
