@@ -357,15 +357,12 @@ module GraphAPI = struct
   external fb_graph_api : ?callback:(string -> unit) -> ?ecallback:(string -> unit) -> string -> int -> list (string*string) -> unit = "ml_fb_graph_api"; (* success callback, error callback, path, length params, params, *)
 
   value request graph_path params ?delegate () =  
-    let (callback, ecallback) = (Some (fun _ -> ()), None) in
-    (*
-    let callback = Some (fun _ -> ()) in
-    let ecallback = None in
+    let (callback, ecallback) =    
       match delegate with
       [ Some d ->
           match d.fb_request_did_load with
           [ Some cb ->
-              let callback str = () in
+              let callback str =
                 let json = Ojson.from_string str in
                 match json with
                 [ `Assoc data -> 
@@ -391,9 +388,8 @@ module GraphAPI = struct
           ]
       | _ -> (None, None)
       ]
-    in
-    *)
-    Session.with_auth_check (fun _ -> fb_graph_api ?callback ?ecallback graph_path (List.length params) params);
+    in    
+      Session.with_auth_check (fun _ -> fb_graph_api ?callback ?ecallback graph_path (List.length params) params);
 (*
     Session.with_auth_check (fun _ -> fb_graph_api graph_path (List.length params) params ?callback:(Some (fun str -> ())) ?ecallback:None);
 *)
