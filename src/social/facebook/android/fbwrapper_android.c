@@ -1,13 +1,27 @@
 #include "light_common.h"
 #include "android/mlwrapper_android.h"
 
+jclass getFbCls() {
+	static jclass fbCls;
+
+	if (!fbCls) {
+	 	JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+		jclass _fbCls = (*env)->FindClass(env, "ru/redspell/lightning/AndroidFB"); 
+		fbCls = (*env)->NewGlobalRef(env, _fbCls);
+		(*env)->DeleteLocalRef(env, _fbCls);
+	}
+
+	return fbCls;
+}
 
 void ml_fb_init(value app_id) {
 	PRINT_DEBUG("+++++++++++++++++++++++++++++++++++++++++");
 	PRINT_DEBUG("ml_fb_init");
   JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-	jclass fbCls = (*env)->FindClass(env, "ru/redspell/lightning/AndroidFB");
+	jclass fbCls = getFbCls();
 	jmethodID init = (*env)->GetStaticMethodID(env, fbCls, "init", "(Ljava/lang/String;)V");
 	jstring japp_id = (*env)->NewStringUTF(env, String_val(app_id));
   (*env)->CallStaticVoidMethod(env, fbCls, init, japp_id);
@@ -31,7 +45,7 @@ void ml_fb_authorize(value olen, value permissions, value cb, value ecb) {
   JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("JNI GET");
-	jclass fbCls = (*env)->FindClass(env, "ru/redspell/lightning/AndroidFB");
+	jclass fbCls = getFbCls();
 	PRINT_DEBUG("CLASS FOUND ");
 	jmethodID auth = (*env)->GetStaticMethodID(env, fbCls, "authorize", "([Ljava/lang/String;)V");
 	PRINT_DEBUG("METHOD FOUND");
@@ -90,7 +104,7 @@ void ml_fb_graph_api(value cb, value ecb, value path, value oparams_len, value p
 	CAMLparam5(path,oparams_len,params, cb, ecb);
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-	jclass fbCls = (*env)->FindClass(env, "ru/redspell/lightning/AndroidFB");
+	jclass fbCls = getFbCls();
 	PRINT_DEBUG("CLASS FOUND ");
 	jmethodID graph_api = (*env)->GetStaticMethodID(env, fbCls, "graphAPI", "(Ljava/lang/String;[[Ljava/lang/String;)V");
 	PRINT_DEBUG("METHOD FOUND");
@@ -132,7 +146,7 @@ value ml_fb_check_auth_token(value unit) {
 	CAMLparam0();
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-	jclass fbCls = (*env)->FindClass(env, "ru/redspell/lightning/AndroidFB");
+	jclass fbCls = getFbCls();
 	jmethodID check = (*env)->GetStaticMethodID(env, fbCls, "check_auth_token", "()Z");
 	value check_result = (Val_bool((*env)->CallStaticBooleanMethod(env, fbCls, check)));
 	(*env)->DeleteLocalRef(env, fbCls);
@@ -179,4 +193,87 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_AndroidFB_errorGraphAPI(JNIEnv
 	};
 	PRINT_DEBUG("caml_callback finished");
 	(*env)->ReleaseStringUTFChars(env, error, l);
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_AndroidFB_00024AppRequestDelegateRunnable_run(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_AndroidFB_00024AppRequestDelegateRunnable_run");
+
+	static jclass runnableCls;
+	static jfieldID delegateFid;
+	static jfieldID recordFieldNumFid;
+	static jfieldID paramFid;
+
+	if (!runnableCls) {
+		jclass _runnableCls = (*env)->GetObjectClass(env, this);
+		runnableCls = (*env)->NewGlobalRef(env, _runnableCls);
+		(*env)->DeleteLocalRef(env, _runnableCls);
+
+		delegateFid = (*env)->GetFieldID(env, runnableCls, "_delegate", "I");
+		recordFieldNumFid = (*env)->GetFieldID(env, runnableCls, "_recordFieldNum", "I");
+		paramFid = (*env)->GetFieldID(env, runnableCls, "_param", "Ljava/lang/String;");
+	}
+
+	value* pdelegate = (value*)(*env)->GetIntField(env, this, delegateFid);
+	value delegate = *pdelegate;
+
+	if (delegate != Val_int(0)) {
+		int recordFieldNum = (*env)->GetIntField(env, this, recordFieldNumFid);
+		value cb = Field(Field(delegate, 0), recordFieldNum);
+
+		if (cb != Val_int(0)) {
+			jstring jparam = (*env)->GetObjectField(env, this, paramFid);
+			value param = Val_unit;
+
+			if (jparam) {
+				const char* cparam = (*env)->GetStringUTFChars(env, jparam, JNI_FALSE);
+				param = caml_copy_string(cparam);
+				(*env)->ReleaseStringUTFChars(env, jparam, cparam);
+				(*env)->DeleteLocalRef(env, jparam);
+			}
+
+			caml_callback(Field(cb, 0), param);
+		}
+	}
+
+	caml_remove_generational_global_root(pdelegate);
+	free(pdelegate);
+}
+
+void ml_facebook_open_apprequest_dialog(value mes, value recipients, value filter, value title, value delegate) {
+	PRINT_DEBUG("ml_facebook_open_apprequest_dialog call");
+
+	CAMLparam4(mes, recipients, filter, title);	
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jclass fbCls = getFbCls();
+	static jmethodID showAppReqDlgMid;
+
+	if (!showAppReqDlgMid) {
+		showAppReqDlgMid = (*env)->GetStaticMethodID(env, fbCls, "showAppRequestDialog", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V");
+	}
+
+	char* cmes = String_val(mes);
+	char* crecipients = String_val(recipients);
+	char* cfilter = String_val(filter);
+	char* ctitle = String_val(title);
+
+	jstring jmes = (*env)->NewStringUTF(env, cmes);
+	jstring jrecipients = (*env)->NewStringUTF(env, crecipients);
+	jstring jfilter = (*env)->NewStringUTF(env, cfilter);
+	jstring jtitle = (*env)->NewStringUTF(env, ctitle);
+
+	value* pdelegate = malloc(sizeof(value));
+	*pdelegate = delegate;
+	caml_register_generational_global_root(pdelegate);
+
+	(*env)->CallStaticVoidMethod(env, fbCls, showAppReqDlgMid, jmes, jrecipients, jfilter, jtitle, (jint)pdelegate);
+
+	(*env)->DeleteLocalRef(env, jmes);
+	(*env)->DeleteLocalRef(env, jrecipients);
+	(*env)->DeleteLocalRef(env, jfilter);
+	(*env)->DeleteLocalRef(env, jtitle);
+
+	CAMLreturn0;
 }

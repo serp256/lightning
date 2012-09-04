@@ -357,15 +357,12 @@ module GraphAPI = struct
   external fb_graph_api : ?callback:(string -> unit) -> ?ecallback:(string -> unit) -> string -> int -> list (string*string) -> unit = "ml_fb_graph_api"; (* success callback, error callback, path, length params, params, *)
 
   value request graph_path params ?delegate () =  
-    let (callback, ecallback) = (Some (fun _ -> ()), None) in
-    (*
-    let callback = Some (fun _ -> ()) in
-    let ecallback = None in
+    let (callback, ecallback) =    
       match delegate with
       [ Some d ->
           match d.fb_request_did_load with
           [ Some cb ->
-              let callback str = () in
+              let callback str =
                 let json = Ojson.from_string str in
                 match json with
                 [ `Assoc data -> 
@@ -391,9 +388,8 @@ module GraphAPI = struct
           ]
       | _ -> (None, None)
       ]
-    in
-    *)
-    Session.with_auth_check (fun _ -> fb_graph_api ?callback ?ecallback graph_path (List.length params) params);
+    in    
+      Session.with_auth_check (fun _ -> fb_graph_api ?callback ?ecallback graph_path (List.length params) params);
 (*
     Session.with_auth_check (fun _ -> fb_graph_api graph_path (List.length params) params ?callback:(Some (fun str -> ())) ?ecallback:None);
 *)
@@ -405,14 +401,33 @@ end;
 module Dialog = struct
   type delegate = 
   {
-    fb_dialog_did_complete              : option (unit -> unit);
-    fb_dialog_did_cancel                : option (unit -> unit);
-    fb_dialog_did_fail                  : option (string -> unit)
+    fb_dialog_did_complete : option (unit -> unit);
+    fb_dialog_did_cancel : option (unit -> unit);
+    fb_dialog_did_fail : option (string -> unit)
   };
 
   type users_filter = [ All | AppUsers | NonAppUsers ];
 
-  value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = ();
+  value string_of_users_filter filter = 
+    match filter with
+    [ All -> "all"
+    | AppUsers -> "app_users"
+    | NonAppUsers -> "app_non_users"
+    ];
+
+  external facebook_open_apprequest_dialog : string -> string -> string -> string -> option delegate -> unit = "ml_facebook_open_apprequest_dialog";
+
+  value _apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = 
+    let recipientsStr = 
+      match recipients with 
+      [ [] -> ""
+      | _ -> ExtString.String.join "," recipients
+      ] 
+    in
+      facebook_open_apprequest_dialog message recipientsStr (string_of_users_filter filter) title delegate;
+
+  value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = 
+    Session.with_auth_check (fun _ -> _apprequest ~message ~recipients ~filter ?delegate ());
 end;
 
 ELSE 

@@ -28,6 +28,13 @@ public final class TapjoyConnect
 	private static TapjoyConnect tapjoyConnectInstance = null;
 	public static final String TAPJOY_CONNECT 										= "TapjoyConnect";
 	
+	// Offers related.
+	private static TJCOffers tapjoyOffers = null;
+	private static TapjoyFeaturedApp tapjoyFeaturedApp = null;
+	private static TapjoyDisplayAd tapjoyDisplayAd = null;
+	private static TapjoyVideo tapjoyVideo = null;
+	private static TapjoyEvent tapjoyEvent = null;
+	
 	
 	/**
 	 * Performs the Tapjoy Connect call to the Tapjoy server to notify it that
@@ -60,10 +67,27 @@ public final class TapjoyConnect
 	 */
 	public static void requestTapjoyConnect(Context context, String appID, String secretKey, Hashtable<String, String> flags)
 	{
-		TapjoyConnectCore.setSDKType(TapjoyConstants.TJC_SDK_TYPE_CONNECT);
+		TapjoyConnectCore.setSDKType(TapjoyConstants.TJC_SDK_TYPE_OFFERS);
 		TapjoyConnectCore.setPlugin(TapjoyConstants.TJC_PLUGIN_NATIVE);
 		
 		tapjoyConnectInstance = new TapjoyConnect(context, appID, secretKey, flags);
+		tapjoyOffers = new TJCOffers(context);
+		tapjoyFeaturedApp = new TapjoyFeaturedApp(context);
+		tapjoyDisplayAd = new TapjoyDisplayAd(context);
+		tapjoyVideo = new TapjoyVideo(context);
+		tapjoyEvent = new TapjoyEvent(context);
+		
+		tapjoyVideo.initVideoAd(new TapjoyVideoNotifier()
+		{
+			@Override
+			public void videoReady(){}
+			
+			@Override
+			public void videoError(int statusCode){}
+			
+			@Override
+			public void videoComplete(){}
+		}, true);
 	}
 	
 	
@@ -79,7 +103,7 @@ public final class TapjoyConnect
 			android.util.Log.e(TAPJOY_CONNECT, "ERROR -- call requestTapjoyConnect before any other Tapjoy methods");
 			android.util.Log.e(TAPJOY_CONNECT, "----------------------------------------");
 		}
-			
+		
 		return tapjoyConnectInstance;
 	}
 	
@@ -99,6 +123,37 @@ public final class TapjoyConnect
 	
 	
 	/**
+	 * Assigns a user ID for this user/device.  This is used to identify the user
+	 * in your application.  The default user ID is the device id.
+	 * @param userID						User ID you wish to assign to this device.
+	 */
+	public void setUserID(String userID)
+	{
+		TapjoyConnectCore.setUserID(userID);
+	}
+	
+	
+	/**
+	 * Gets the user ID assigned to this device.  By default, this is the device ID.
+	 * @return								User ID assigned to this device.
+	 */
+	public String getUserID()
+	{
+		return TapjoyConnectCore.getUserID();
+	}
+	
+	
+	/**
+	 * Gets the Tapjoy App ID used to identify app.
+	 * @return								Tapjoy App ID used to identify app.
+	 */
+	public String getAppID()
+	{
+		return TapjoyConnectCore.getAppID();
+	}
+	
+	
+	/**
 	 * ONLY USE FOR PAID APP INSTALLS.<br>
 	 * This method should be called in the onCreate() method of your first activity after calling
 	 * {@link #requestTapjoyConnect(Context context, String appID, String secretKey)}.<br>
@@ -113,6 +168,27 @@ public final class TapjoyConnect
 	}
 	
 
+	/**
+	 * ONLY USE FOR NON-MANAGED (by TAPJOY) CURRENCY.<br>
+	 * Sets the multiplier for the virtual currency displayed in Offers, Banner Ads, etc.  The default is 1.0
+	 * @param multiplier
+	 */
+	public void setCurrencyMultiplier(float multiplier)
+	{
+		TapjoyConnectCore.getInstance().setCurrencyMultiplier(multiplier);
+	}
+	
+	
+	/**
+	 * Gets the multiplier for the virtual currency display.
+	 * @return
+	 */
+	public float getCurrencyMultiplier()
+	{
+		return TapjoyConnectCore.getInstance().getCurrencyMultiplier();
+	}
+	
+	
 	//================================================================================
 	// PAY-PER-ACTION Methods
 	//================================================================================
@@ -128,4 +204,234 @@ public final class TapjoyConnect
 		TapjoyConnectCore.getInstance().actionComplete(actionID);
 	}
 	
+	
+	//================================================================================
+	// OFFERS Methods
+	//================================================================================
+	
+	
+	/**
+	 * Show available offers to the user.
+	 */
+	public void showOffers()
+	{
+		tapjoyOffers.showOffers();
+	}
+	
+	
+	/**
+	 * Show available offers using a currencyID and currency selector flag.  
+	 * This should only be used if the application supports multiple currencies and is NON-MANAGED by Tapjoy.
+	 * @param currencyID				ID of the currency to display.
+	 * @param enableCurrencySelector	Whether to display the currency selector to toggle currency.
+	 */
+	public void showOffersWithCurrencyID(String currencyID, boolean enableCurrencySelector)
+	{
+		tapjoyOffers.showOffersWithCurrencyID(currencyID, enableCurrencySelector);
+	}
+	
+	
+	/**
+	 * Gets the virtual currency data from the server for this device.
+	 * The data will be returned in a callback to updatePoints() to the class implementing the notifier.
+	 * @param notifier The class implementing the TapjoyNotifier callback.
+	 */
+	public void getTapPoints(TapjoyNotifier notifier)
+	{
+		tapjoyOffers.getTapPoints(notifier);
+	}
+	
+
+	/**
+	 * Spends virtual currency.  This can only be used for currency managed by Tapjoy.
+	 * The data will be returned in a callback to updatePoints() to the class implementing the notifier.
+	 * @param notifier The class implementing the TapjoySpendPointsNotifier callback.
+	 */
+	public void spendTapPoints(int amount, TapjoySpendPointsNotifier notifier)
+	{
+		tapjoyOffers.spendTapPoints(amount, notifier);
+	}
+	
+	
+	/**
+	 * Awards virtual currency.  This can only be used for currency managed by Tapjoy.
+	 * The data will be returned in a callback to getAwardPointsResponse() to the class implementing the notifier.
+	 * @param notifier The class implementing the TapjoyAwardPointsNotifier callback.
+	 */
+	public void awardTapPoints(int amount, TapjoyAwardPointsNotifier notifier)
+	{
+		tapjoyOffers.awardTapPoints(amount, notifier);
+	}
+	
+	
+	/**
+	 * Sets the notifier which gets informed whenever virtual currency is earned.
+	 * @param notifier						Class implementing TapjoyEarnedPointsNotifier.
+	 */
+	public void setEarnedPointsNotifier(TapjoyEarnedPointsNotifier notifier)
+	{
+		tapjoyOffers.setEarnedPointsNotifier(notifier);
+	}
+	
+	
+	//================================================================================
+	// FEATURED APP Methods
+	//================================================================================
+	
+	
+	/**
+	 * Retrieves the Full Screen Ad data from the server.
+	 * Data is returned to the callback method TapjoyFeaturedAppNotifier.getFeaturedAppResponse().
+	 * @param notifier				Class implementing TapjoyFeaturedAppNotifier for the Full Screen Ad data callback.
+	 */
+	public void getFeaturedApp(TapjoyFeaturedAppNotifier notifier)
+	{
+		tapjoyFeaturedApp.getFeaturedApp(notifier);
+	}
+	
+	
+	/**
+	 * Retrieves the Full Screen Ad data from the server.
+	 * Data is returned to the callback method TapjoyFeaturedAppNotifier.getFeaturedAppResponse().
+	 * This should only be used if the application supports multiple currencies and is NON-MANAGED by Tapjoy.
+	 * @param currencyID			ID of the currency to award.
+	 * @param notifier				Class implementing TapjoyFeaturedAppNotifier for the Full Screen Ad data callback.
+	 */
+	public void getFeaturedAppWithCurrencyID(String currencyID, TapjoyFeaturedAppNotifier notifier)
+	{
+		tapjoyFeaturedApp.getFeaturedApp(currencyID, notifier);
+	}
+	
+	
+	/**
+	 * Sets the maximum number of times the same full screen ad should be displayed.
+	 * @param count					The maximum number of times to display a full screen ad.
+	 */
+	public void setFeaturedAppDisplayCount(int count)
+	{
+		tapjoyFeaturedApp.setDisplayCount(count);
+	}
+	
+	
+	/**
+	 * Displays the Full Screen Ad fullscreen ad.
+	 * Should be called after getFeaturedApp() and after receiving the TapjoyFeaturedAppNotifier.getFeaturedAppResponse callback. 
+	 */
+	public void showFeaturedAppFullScreenAd()
+	{
+		tapjoyFeaturedApp.showFeaturedAppFullScreenAd();
+	}
+	
+	
+	//================================================================================
+	// Banner Ad Methods
+	//================================================================================
+	
+	
+	/**
+	 * Sets the size (dimensions) of the banner ad.  By default this is 320x50.<br>
+	 * Supported sizes are:<br>
+	 * {@link TapjoyDisplayAdSize#TJC_AD_BANNERSIZE_320X50}<br>
+	 * {@link TapjoyDisplayAdSize#TJC_AD_BANNERSIZE_640X100}<br>
+	 * {@link TapjoyDisplayAdSize#TJC_AD_BANNERSIZE_768X90}<br>
+	 * @param dimensions			Dimensions of the banner.
+	 */
+	public void setBannerAdSize(String dimensions)
+	{
+		tapjoyDisplayAd.setBannerAdSize(dimensions);
+	}
+	
+	
+	/**
+	 * Enables automatic refreshing of the banner ads.  Default is FALSE.
+	 * @param shouldAutoRefresh		Whether banner ad should auto-refresh or not.
+	 */
+	public void enableBannerAdAutoRefresh(boolean shouldAutoRefresh)
+	{
+		tapjoyDisplayAd.enableAutoRefresh(shouldAutoRefresh);
+	}
+	
+	
+	/**
+	 * Retrieves the Banner Ad data from the server.
+	 * Data is returned to the callback method TapjoyFeaturedAppNotifier.getFeaturedAppResponse().
+	 * @param notifier				Class implementing TapjoyFeaturedAppNotifier for the Full Screen Ad data callback.
+	 */
+	public void getDisplayAd(TapjoyDisplayAdNotifier notifier)
+	{
+		tapjoyDisplayAd.getDisplayAd(notifier);
+	}
+	
+	
+	/**
+	 * Retrieves the Banner Ad data from the server.
+	 * Data is returned to the callback method TapjoyFeaturedAppNotifier.getFeaturedAppResponse().
+	 * This should only be used if the application supports multiple currencies and is NON-MANAGED by Tapjoy.
+	 * @param currencyID			ID of the currency to award.
+	 * @param notifier				Class implementing TapjoyFeaturedAppNotifier for the Full Screen Ad data callback.
+	 */
+	public void getDisplayAdWithCurrencyID(String currencyID, TapjoyDisplayAdNotifier notifier)
+	{
+		tapjoyDisplayAd.getDisplayAd(currencyID, notifier);
+	}
+	
+	
+	//================================================================================
+	// TAPJOY VIDEO Methods
+	//================================================================================
+	
+	
+	/**
+	 * Initialize video ads so video offers can be made available via the offer wall.  Call this method if you wish
+	 * to enable video offers.
+	 */
+	public void initVideoAd(TapjoyVideoNotifier notifier)
+	{
+		tapjoyVideo.initVideoAd(notifier);
+	}
+	
+	
+	/**
+	 * Sets the limit of number of videos to keep in cache.  The default value is 5.
+	 * @param count							Number of videos to cache.
+	 */
+	public void setVideoCacheCount(int count)
+	{
+		tapjoyVideo.setVideoCacheCount(count);
+	}
+	
+	
+	/**
+	 * Sets whether to enable caching for videos.  By default this is enabled.
+	 * @param enable						TRUE to enable video caching, FALSE to disable video caching.
+	 */
+	public void enableVideoCache(boolean enable)
+	{
+		tapjoyVideo.enableVideoCache(enable);
+	}
+	
+	
+	//================================================================================
+	// Tapjoy Event Methods
+	//================================================================================
+	/**
+	 * Event to send when app shuts down.
+	 */
+	public void sendShutDownEvent()
+	{
+		tapjoyEvent.sendShutDownEvent();
+	}
+	
+	
+	/**
+	 * Event when an In-App-Purchased occurs.
+	 * @param name							Item name.
+	 * @param price							Item price (real life currency).
+	 * @param quantity						Quantity of the item purchased.
+	 * @param currencyCode					Real life currency code purchase was made in.
+	 */
+	public void sendIAPEvent(String name, float price, int quantity, String currencyCode)
+	{
+		tapjoyEvent.sendIAPEvent(name, price, quantity, currencyCode);
+	}
 }
