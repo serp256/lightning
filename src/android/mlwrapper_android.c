@@ -1303,6 +1303,25 @@ void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
 	(*env)->CallVoidMethod(env,jView,initTapjoyMethod,appID,secretKey);
 }
 
+void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
+	PRINT_DEBUG("ml_tapjoy_show_offers_with_currency call");
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jstring jcurrency = (*env)->NewStringUTF(env, String_val(currency));
+	jboolean jshow_selector = Bool_val(show_selector);
+
+	static jmethodID showTapjoyOffersMid;
+
+	if (!showTapjoyOffersMid) {
+		showTapjoyOffersMid = (*env)->GetMethodID(env, jViewCls, "showTapjoyOffers", "(Ljava/lang/String;Z)V");
+	}
+
+	(*env)->CallVoidMethod(env, jView, showTapjoyOffersMid, jcurrency, jshow_selector);
+	(*env)->DeleteLocalRef(env, jcurrency);
+}
+
 static value device_id;
 
 value ml_device_id(value unit) {

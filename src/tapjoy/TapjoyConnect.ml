@@ -3,10 +3,12 @@
 IFPLATFORM(ios android) 
 
 external ml_tapjoy_init : string -> string -> unit = "ml_tapjoy_init";
+external ml_tapjoy_show_offers_with_currency : string -> bool -> unit = "ml_tapjoy_show_offers_with_currency";
 
 ELSE
 
 value ml_tapjoy_init appid skey = ();
+value ml_tapjoy_show_offers_with_currency (currency:string) (selector:bool) = ();
 
 ENDPLATFORM;
 
@@ -22,12 +24,9 @@ external ml_tapjoy_action_complete : string -> unit = "ml_tapjoy_action_complete
 
 external ml_tapjoy_show_offers : unit -> unit = "ml_tapjoy_show_offers";
 
-external ml_tapjoy_show_offers_with_currency : string -> bool -> unit = "ml_tapjoy_show_offers_with_currency";
-
 external getOpenUDID: unit -> option string = "ml_TJCOpenUDIDvalue";
 
 ELSE 
-
 
 value ml_tapjoy_set_user_id user_id = ();
 
@@ -37,10 +36,7 @@ value ml_tapjoy_action_complete action = ();
 
 value ml_tapjoy_show_offers () = ();
 
-value ml_tapjoy_show_offers_with_currency currency selector = ();
-
 value getOpenUDID () = None;
-
 
 ENDPLATFORM;
 
