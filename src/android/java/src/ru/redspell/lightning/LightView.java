@@ -172,7 +172,6 @@ public class LightView extends GLSurfaceView {
 
 		// FIXME: move it to FB init
 		fb = new AndroidFB();
-		fb.setView (this);
 	}
 
 	protected void initView(int width,int height) {
@@ -489,6 +488,10 @@ public class LightView extends GLSurfaceView {
 	public void initTapjoy(String appID, String secretKey) {
 		//TapjoyLog.enableLogging(true);
 		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
+	}
+
+	public void showTapjoyOffers(String currency, boolean enableCurrencySelector) {
+		TapjoyConnect.getTapjoyConnectInstance().showOffersWithCurrencyID(currency, enableCurrencySelector);
 	}
 
 	public void extractExpansions() {

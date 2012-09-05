@@ -401,14 +401,33 @@ end;
 module Dialog = struct
   type delegate = 
   {
-    fb_dialog_did_complete              : option (unit -> unit);
-    fb_dialog_did_cancel                : option (unit -> unit);
-    fb_dialog_did_fail                  : option (string -> unit)
+    fb_dialog_did_complete : option (unit -> unit);
+    fb_dialog_did_cancel : option (unit -> unit);
+    fb_dialog_did_fail : option (string -> unit)
   };
 
   type users_filter = [ All | AppUsers | NonAppUsers ];
 
-  value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = ();
+  value string_of_users_filter filter = 
+    match filter with
+    [ All -> "all"
+    | AppUsers -> "app_users"
+    | NonAppUsers -> "app_non_users"
+    ];
+
+  external facebook_open_apprequest_dialog : string -> string -> string -> string -> option delegate -> unit = "ml_facebook_open_apprequest_dialog";
+
+  value _apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = 
+    let recipientsStr = 
+      match recipients with 
+      [ [] -> ""
+      | _ -> ExtString.String.join "," recipients
+      ] 
+    in
+      facebook_open_apprequest_dialog message recipientsStr (string_of_users_filter filter) title delegate;
+
+  value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = 
+    Session.with_auth_check (fun _ -> _apprequest ~message ~recipients ~filter ?delegate ());
 end;
 
 ELSE 
