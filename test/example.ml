@@ -526,16 +526,16 @@ value window (stage:Stage.c) =
   Testz.init ();
   proftimer "zSort: %F" Testz.zSort ();
 ); *)
+*)
 
 value pallete (stage:Stage.c) =
 (
-  let img = Image.load "pallete.plx" in
+  let img = Image.load "defaulx12.plx" in
   (
     img#setPos 100. 100.;
     stage#addChild img;
   )
 );
-*)
 
 
 value items = 
@@ -1374,6 +1374,7 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      pallete self
 (*       avsound self "melody0.mp3"; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Light Fucking Test</string>
-		<string name="exception_email_subject">Error report for game</string>
-		<string name="exception_email_body">On my %1$s (%2$s) your application "%3$s" (v%4$d) finished with error. Please check and get back to me ASAP, so I can play the game. Thanks! Your customer.</string>
-</resources>

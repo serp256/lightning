@@ -219,6 +219,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			};
 		};
 	} else { // нету блядь  расширения нахуй
+		DEBUGF("image has no extension");
 		if (slen > 0) { 
 			int flen = strlen(fname);
 			path = malloc(flen + slen);
@@ -236,7 +237,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 
 
 
-value ml_loadImage(value oldTextureID,value opath,value osuffix,value use_pvr,value filter) {
+value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,value use_pvr) {
 	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;

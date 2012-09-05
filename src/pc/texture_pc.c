@@ -157,7 +157,7 @@ void ml_free_image_info(value tInfo) {
 }
 */
 
-value ml_loadImage(value oldTextureID,value opath,value osuffix,value use_pvr,value filter) {
+value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,value use_pvr) {
 	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
