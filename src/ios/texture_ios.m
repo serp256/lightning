@@ -363,7 +363,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 
 	if (!fullPath) r = 2;
 	else {
-		NSLog(@"REAL FILE: %@",fullPath);
+		//NSLog(@"REAL FILE: %@",fullPath);
 #ifdef TEXTURE_LOAD
 		[fullPath getCString:tInfo->path maxLength:255 encoding:NSASCIIStringEncoding];
 #endif

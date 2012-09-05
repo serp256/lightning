@@ -487,13 +487,35 @@ struct vpclp {
 	clipping clp;
 };
 
+static GLuint maxFB = 20;
+static GLuint* txrs[14][14] = {NULL};
+static GLuint* bfrs = NULL;
+static GLuint powS( GLuint l )
+{
+	if ( l == 1 ) return 0;
+	if ( l == 2 ) return 1;
+	if ( l == 4 ) return 2;
+	if ( l == 8 ) return 3;
+	if ( l == 16 ) return 4;
+	if ( l == 32 ) return 5;
+	if ( l == 64 ) return 6;
+	if ( l == 128 ) return 7;
+	if ( l == 256 ) return 8;
+	if ( l == 512 ) return 9;
+	if ( l == 1024 ) return 10;
+	if ( l == 2048 ) return 11;
+	if ( l == 4096 ) return 12;
+	if ( l == 8192 ) return 13;
+	char errmsg[255];
+	sprintf(errmsg,"wrong texture size %d", l);
+	caml_failwith(errmsg);
+	return 0;
+};
+
 void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
+	if (gsize == 0) return ;
 	renderbuffer_t *rb = RENDERBUFFER(Field(orb,0));
-
-//	fprintf(stderr,"create glow %d - [%f:%f]\n",gsize,rb->width,rb->height);
-
-	//int pma = Bool_val(Field(kind,0));
 
 	lgResetBoundTextures();
 	framebuffer_state fstate;
@@ -505,15 +527,17 @@ void ml_glow_make(value orb, value glow) {
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
 	glUniform3f(glowPrg->uniforms[0],c.r,c.g,c.b);
 
-	GLuint *txrs = caml_stat_alloc(gsize * sizeof(GLuint));
-  glGenTextures(gsize, txrs);
-	GLuint *bfrs = caml_stat_alloc(gsize * sizeof(GLuint));
-	glGenFramebuffers(gsize, bfrs);
+	if (bfrs == NULL)
+	{
+		bfrs = caml_stat_alloc(maxFB * sizeof(GLuint));
+		glGenFramebuffers(maxFB, bfrs);
+	}
 	struct vpclp *vpclps = caml_stat_alloc(gsize * sizeof(struct vpclp));
 
 	int i;
 	GLuint w = rb->realWidth;
 	GLuint h = rb->realHeight;
+	int tw = powS (w), th = powS (h);
 	GLuint legalWidth;
 	GLuint legalHeight;
 	GLuint ctid = rb->tid;
@@ -521,15 +545,28 @@ void ml_glow_make(value orb, value glow) {
 	clipping clp = {0.,0.,1.,1.};
 	clipping *cclp = &clp;
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
+
+	/*if (txrs == NULL)
+	{
+		txrs = caml_stat_alloc(maxFB * sizeof(GLuint));
+		glGenTextures(maxFB, txrs);
+		for (int i = 0; i < maxFB; i++)
+		{
+			glBindTexture(GL_TEXTURE_2D, txrs[i]);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
+	}*/
+
+	GLuint * first = NULL;
+
+		//fprintf(stdout,"--------");
 	for (i = 0; i < gsize; i++) {
 		w /= 2;
 		h /= 2;
 		PRINT_DEBUG("forward create fb of size: %d:%d\n",w,h);
-		glBindTexture(GL_TEXTURE_2D, txrs[i]);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		legalWidth = w;
 		legalHeight = h;
 #if defined(IOS) || defined(ANDROID)
@@ -542,9 +579,27 @@ void ml_glow_make(value orb, value glow) {
 			if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
 		};
 #endif
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		int tw = powS(legalWidth), th = powS(legalHeight);
+		if ( txrs[tw][th] == NULL)
+		{
+			txrs[tw][th] = caml_stat_alloc(sizeof(GLuint));
+			glGenTextures(1, txrs[tw][th]);
+
+			glBindTexture(GL_TEXTURE_2D, txrs[tw][th][0]);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		}
+		else
+			glBindTexture(GL_TEXTURE_2D, txrs[tw][th][0]);
+
+		//fprintf(stdout,"mas %d %d %d %d \n",tw,th,w,h);
+		if (i == 0) first = txrs[tw][th][0];
+
 		glBindFramebuffer(GL_FRAMEBUFFER, bfrs[i]);
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[i],0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw][th][0],0);
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 			char errmsg[255];
 			sprintf(errmsg,"glow make. framebuffer %d, %d:%d status: %X",bfrs[i],legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
@@ -557,17 +612,32 @@ void ml_glow_make(value orb, value glow) {
 		checkGLErrors("glow_make_draw - forward");
 		cclp = &vpclps[i].clp;
 		cclp->x = (double)cvp->x / legalWidth; cclp->y = (double)cvp->y / legalHeight; cclp->width = (double)w / legalWidth; cclp->height = (double)h / legalHeight;
-		ctid = txrs[i];
+		ctid = txrs[tw][th][0];
 	};
 
 	GLuint cbuf;
 	for (i = gsize - 1; i > 0 ; i--) {
+		legalWidth = w;
+		legalHeight = h;
+#if defined(IOS) || defined(ANDROID)
+		if (legalWidth <= 8) {
+			if (legalWidth > legalHeight) legalHeight = legalWidth;
+			else 
+				if (legalHeight > legalWidth * 2) legalWidth = legalHeight/2; 
+				if (legalWidth > 16) legalWidth = 16;
+		} else {
+			if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
+		};
+#endif
+		int tw = powS(legalWidth), th = powS(legalHeight);
 		w *= 2;
 		h *= 2;
+		//fprintf(stdout,"min %d %d %d %d \n",tw,th,legalWidth,legalHeight);
+		
 		cbuf = bfrs[i-1];
 		glBindFramebuffer(GL_FRAMEBUFFER,cbuf);
 		cvp = &vpclps[i-1].vp;
-		ctid = txrs[i];
+		ctid = txrs[tw][th][0];
 		glBindTexture(GL_TEXTURE_2D,ctid);
 		cclp = &vpclps[i].clp;
 		glow_make_draw(cvp,cclp);
@@ -578,14 +648,15 @@ void ml_glow_make(value orb, value glow) {
 	const prg_t *fglowPrg = final_glow_program();
 	glUniform1f(fglowPrg->uniforms[0],Double_val(Field(glow,2)));
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
-	glBindTexture(GL_TEXTURE_2D,txrs[0]);
+	glBindTexture(GL_TEXTURE_2D,first);
 	viewport vp = {0.,0.,rb->realWidth,rb->realHeight};
 	glow_make_draw(&vp,&vpclps[0].clp);
-
+/*
 	glDeleteFramebuffers(gsize,bfrs);
 	caml_stat_free(bfrs);
 	glDeleteTextures(gsize,txrs);
 	caml_stat_free(txrs);
+*/	
 	caml_stat_free(vpclps);
 
 	glBindTexture(GL_TEXTURE_2D,0);

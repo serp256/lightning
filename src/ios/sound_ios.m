@@ -66,7 +66,7 @@ void ml_sound_init(value mlSessionCategory,value unit) {
 	result = AudioSessionInitialize(NULL, NULL, interruptionCallback, NULL);
 	if (result != kAudioSessionNoError) raise_error("Could not initialize audio",NULL,result);
   UInt32 sessionCategory;
-	switch (Val_int(mlSessionCategory)) {
+	switch (Int_val(mlSessionCategory)) {
 		case 0: sessionCategory = 'ambi'; break;
 		case 1: sessionCategory = 'solo'; break;
 		case 2: sessionCategory = 'medi'; break;

@@ -32,7 +32,7 @@ Callback.register_exception "Audio_error" (Audio_error "");
 
 external init': category -> unit -> unit = "ml_sound_init";
 
-value init () = init' SoloAmbientSound ();
+value init () = init' AmbientSound ();
 
 type albuffer;
 type alsound =
