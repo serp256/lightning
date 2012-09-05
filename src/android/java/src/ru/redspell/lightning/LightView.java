@@ -490,10 +490,6 @@ public class LightView extends GLSurfaceView {
 		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
 	}
 
-	public void showTapjoyOffers(String currency, boolean enableCurrencySelector) {
-		TapjoyConnect.getTapjoyConnectInstance().showOffersWithCurrencyID(currency, enableCurrencySelector);
-	}
-
 	public void extractExpansions() {
 		Log.d("LIGHTNING", "extracting expansions");
 
