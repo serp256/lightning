@@ -1374,7 +1374,10 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      pallete self
+      debug "extensions %s" (Render.get_gl_extensions ());
+(*       let img = Image.load "1.png" in
+        self#addChild img; *)
+      (* pallete self *)
 (*       avsound self "melody0.mp3"; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)
