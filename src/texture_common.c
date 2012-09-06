@@ -242,7 +242,6 @@ int loadPlxPtr(gzFile fptr,textureInfo *tInfo) {
 	//fprintf(stderr,"PLX [%s] file with size %d:%d readed\n",path,width,height);
 
 
-	tInfo->format = LTextureFormatPallete;
 	tInfo->format = (pallete << 16) | LTextureFormatPallete;
 	tInfo->width = tInfo->realWidth = width;
 	tInfo->height = tInfo->realHeight = height;
@@ -437,21 +436,24 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 
+		PRINT_DEBUG("filter is %d",filter);
 		switch (Int_val(filter)) {
 			case 0: 
+				PRINT_DEBUG("SET NEAREST FILTER");
 				if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 				else
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-				break;
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					break;
 			case 1:
+				PRINT_DEBUG("SET LINEAR FILTER");
 				if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 				else
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				break;
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					break;
 			default: break;
 		};
     

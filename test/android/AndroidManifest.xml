@@ -16,14 +16,14 @@
         </activity>
 
 
-		<!--supports-screens 
+		<supports-screens 
 					android:resizeable="false"
 					android:smallScreens="true"
 					android:normalScreens="true"
 					android:largeScreens="true"
 					android:xlargeScreens="true"
 					android:anyDensity="true"
-					/-->
+					/>
 
     <service android:name="ru.redspell.lightning.payments.BillingService" />
     <service android:name="ru.redspell.lightning.expansions.LightExpansionsDownloadService" />
