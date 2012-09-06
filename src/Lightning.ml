@@ -23,6 +23,7 @@ value request_remote_notifications rntypes success error =
   in 
   ml_request_remote_notifications typesBitmask success error;
 
+external getMACID: unit -> string = "ml_getMACID";
 ELSE
 value request_remote_notifications rntypes success error = ();
 value showNativeWaiter _pos = ();
@@ -35,6 +36,7 @@ value sendEmail recepient ~subject ?(body="") () =
   openURL (Printf.sprintf "mailto:%s?%s" recepient params);
 external _deviceIdentifier: unit -> string = "ml_device_id";
 value deviceIdentifier () = Some (_deviceIdentifier ());
+value getMACID = deviceIdentifier;
 ELSE
 value openURL _ = ();
 value sendEmail recepient ~subject ?(body="") () = (); 
@@ -223,4 +225,3 @@ value extractAssetsIfRequired (cb:(bool -> unit)) =  cb True;
 value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = cb True;
 ENDIF;
 
-external getMACID: unit -> string = "ml_getMACID";
