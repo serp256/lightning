@@ -369,6 +369,29 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 #else
 						return 0;
 #endif
+
+        case LTextureFormatDXT1:
+#if (defined IOS || defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 4;        	
+        	p->glTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+
+            break;
+#else
+			return 0;
+#endif
+
+        case LTextureFormatDXT5:
+#if (defined IOS || defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 8;        	
+        	p->glTexFormat = 0x83F3;
+
+            break;
+#else
+			return 0;
+#endif
+
         case LTextureFormat565:
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_RGB;
@@ -385,7 +408,9 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
             p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
             break;
     }
-		return 1;
+
+    PRINT_DEBUG("p->glTexType %d %d", p, p->glTexType);
+	return 1;
 }
 
 
@@ -399,13 +424,12 @@ void ml_delete_texture(value textureID) {
 
 
 value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
-    
 		texParams params;
     params.glTexType = GL_UNSIGNED_BYTE;
     params.bitsPerPixel = 4;
     params.compressed = 0;
 
-		if (!textureParams(tInfo,&params)) return 0;
+	if (!textureParams(tInfo,&params)) return 0;
 
     if (!params.compressed && ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height)))
 			glPixelStorei(GL_UNPACK_ALIGNMENT,4);
@@ -459,7 +483,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     
 		int level;
     if (!params.compressed)
-    {       
+    {
 			/*
 				if ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height))
 					glPixelStorei(GL_UNPACK_ALIGNMENT,4);

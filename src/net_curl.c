@@ -79,6 +79,13 @@ static size_t my_writefunction(char *buffer,size_t size,size_t nitems, void *p) 
 	CAMLreturnT(size_t,s);
 }
 
+void free_request(struct request* r) {
+	free(r->url);
+	if (r->headers != NULL) curl_slist_free_all(r->headers); 
+	if (r->data != NULL) free(r->data);
+	free(r);	
+}
+
 void net_perform() {
 	PRINT_DEBUG("net perform");
 	int running_handles;
@@ -112,10 +119,14 @@ void net_perform() {
 					value mlerror = caml_copy_string(emsg);
 					caml_callback3(*ml_url_failed,(value)r,Val_int(msg->data.result),mlerror);
 				};
+				/*
 				free(r->url);
 				if (r->headers != NULL) curl_slist_free_all(r->headers); 
 				if (r->data != NULL) free(r->data);
 				free(r);
+				*/
+				free_request(r);
+
 				curl_multi_remove_handle(curlm,c);
 				curl_easy_cleanup(c);
 			}
@@ -177,10 +188,27 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 }
 
 void ml_URLConnection_cancel(value r) {
+	PRINT_DEBUG("ml_URLConnection_cancel call %d %d", net_running, r);
+
+	if (!net_running || !curlm) {
+		PRINT_DEBUG("return");
+		return;
+	}
+
+	struct request* req = (struct request*)r;
+	curl_multi_remove_handle(curlm, req->handle);
+	curl_easy_cleanup(req->handle);
+	free_request(req);
+
+	net_running--;
+
+	PRINT_DEBUG("net_running %d", net_running);
 }
 
 /// thread this
 
 void net_run () {
+	PRINT_DEBUG("net_run %d", net_running);
+
 	if (net_running > 0) net_perform ();
 }

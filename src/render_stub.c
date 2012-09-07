@@ -965,10 +965,8 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 
 /////////////////////////////////////////////////////
 //
-//
-//
 // ATLASES
-// ///////////////////
+///////////////////////
 
 typedef struct {
 	GLuint textureID;
