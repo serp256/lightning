@@ -168,7 +168,7 @@ value extractAssets cb =
         cb success;
       )
     in
-      unzip ~prefix:"assets" apkPath externalStoragePath cb;
+    unzip ~prefix:"assets" apkPath externalStoragePath cb;
 
 value extractExpansions cb =
 (

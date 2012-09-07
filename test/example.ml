@@ -116,7 +116,7 @@ Lightning.init stage;
 
 
 value gray_filter = 
-  Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
+  Filters.colorMatrix
     [| 0.3086000084877014; 0.6093999743461609; 0.0820000022649765; 0.; 0.;
         0.3086000084877014; 0.6093999743461609; 0.0820000022649765; 0.; 0.;
         0.3086000084877014; 0.6093999743461609; 0.0820000022649765; 0.; 0.;
@@ -847,9 +847,9 @@ value glow (stage:Stage.c) =
   *)
   let change_filter el = 
     match el#filters with
-    [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ Filters.glow ~kind:`soft ~strength:2. ~size:2 0xFF0000 ]
+    [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ gray_filter ] 
 (*     | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ `ColorMatrix gray_filter ] *)
-(*     | [ `ColorMatrix m ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ] *)
+    | [ `ColorMatrix m ] -> el#setFilters [] (*el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ] *)
     | [ ] -> el#setFilters [ Filters.glow ~kind:`linear ~size:2 0xFF0000 ]
     | _ -> assert False 
     ]
@@ -1374,7 +1374,8 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      pallete self
+(*       pallete self *)
+      glow self;
 (*       avsound self "melody0.mp3"; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)

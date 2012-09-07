@@ -142,21 +142,22 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               let gs = hgs * 2 in
               let rw = bounds.Rectangle.width +. (float gs)
               and rh = bounds.Rectangle.height +. (float gs) in
-              let tex = Texture.rendered rw rh in
               let ip = {Point.x = (float hgs) -. bounds.Rectangle.x;y= (float hgs) -. bounds.Rectangle.y} in
               let cm = Matrix.create ~translate:ip () in
+              let tex = RenderTexture.draw rw rh begin fun fb ->
+                (
+                  Render.push_matrix cm;
+(*                   Render.clear 0 0.; *)
+                  RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
+                  match glow.Filters.glowKind with
+                  [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
+                  | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                  ];
+                  RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
+                  Render.restore_matrix ();
+                )
+              end in
               (
-                tex#activate();
-                Render.push_matrix cm;
-                Render.clear 0 0.;
-                RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
-                match glow.Filters.glowKind with
-                [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
-                | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
-                ];
-                RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
-                Render.restore_matrix ();
-                tex#deactivate ();
                 let g_image = Render.Image.create tex#renderInfo color alpha in
                 (
                   gf.g_matrix := 

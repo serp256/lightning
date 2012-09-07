@@ -73,6 +73,7 @@ value make : textureInfo -> c;
 value load: ?with_suffix:bool -> ?filter:filter -> ?use_pvr:bool -> string -> c;
 
 
+(*
 type renderbuffer;
 
 class type rendered = 
@@ -92,9 +93,8 @@ value glRGBA:int;
 value glRGB:int;
 
 value rendered: ?format:int -> ?filter:filter -> float -> float -> rendered; 
+*)
 
 value load_async: ?with_suffix:bool -> ?filter:filter -> ?use_pvr:bool -> string -> ?ecallback:(string -> unit) -> (c -> unit) -> unit;
 value check_async: unit -> unit;
-
-
 value loadExternal: string -> ~callback:(c -> unit) -> ~errorCallback:option (int -> string -> unit) -> unit;

@@ -69,10 +69,12 @@ void ml_setupOrthographicRendering(value left,value right,value bottom,value top
 }
 
 void ml_clear(value color,value alpha) {
-	color3F c = COLOR3F_FROM_INT(Int_val(color));
+	int clr = Int_val(color);
+	color3F c = COLOR3F_FROM_INT(clr);
 	glClearColor(c.r,c.g,c.b,Double_val(alpha));
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT); // | GL_DEPTH_BUFFER_BIT);
 }
+
 /////////
 /// Matrix
 /////////
@@ -960,56 +962,6 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 
 
 
-void get_framebuffer_state(framebuffer_state *s) {
-
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&s->framebuffer);
-	glGetIntegerv(GL_VIEWPORT,s->viewport);
-	checkGLErrors("get framebuffer state");
-}
-
-value ml_renderbuffer_activate(value ofb) {
-	//printf("bind framebuffer: %ld\n",Long_val(framebufferID));
-
-	framebuffer_state *s = caml_stat_alloc(sizeof(framebuffer_state));
-	get_framebuffer_state(s);
-
-	renderbuffer_t *rb = RENDERBUFFER(ofb);
-	//fprintf(stderr,"activate renderbuffer: %d:%d\n",rb->fbid,rb->tid);
-	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
-
-	glViewport(rb->vp.x,rb->vp.y,rb->vp.w,rb->vp.h);
-
-	kmGLMatrixMode(KM_GL_PROJECTION);
-	kmGLPushMatrix();
-	kmGLLoadIdentity();
-      
-	kmMat4 orthoMatrix;
-	kmMat4OrthographicProjection(&orthoMatrix, 0, (GLfloat)rb->vp.w, 0, (GLfloat)rb->vp.h, -1024, 1024 );
-	kmGLMultMatrix( &orthoMatrix );
-
-	kmGLMatrixMode(KM_GL_MODELVIEW);
-	kmGLPushMatrix();
-	kmGLLoadIdentity();
-	enableSeparateBlend();
-	return (value)s; 
-}
-
-void set_framebuffer_state(framebuffer_state *s) {
-	glBindFramebuffer(GL_FRAMEBUFFER,s->framebuffer);
-	glViewport(s->viewport[0], s->viewport[1], s->viewport[2], s->viewport[3]);
-}
-
-void ml_renderbuffer_deactivate(value ostate) {
-	framebuffer_state *s = (framebuffer_state*)ostate;
-	//fprintf(stderr,"deactivate renderbuffer. oldbuffer: %d\n",s->framebuffer);
-	set_framebuffer_state(s);
-	kmGLMatrixMode(KM_GL_PROJECTION);
-	kmGLPopMatrix();
-	kmGLMatrixMode(KM_GL_MODELVIEW);
-	kmGLPopMatrix();
-	disableSeparateBlend();
-	caml_stat_free(s);
-}
 
 /////////////////////////////////////////////////////
 //

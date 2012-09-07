@@ -80,6 +80,9 @@
 
 extern unsigned int MAX_GC_MEM;
 
+
+#define Val_none 1
+
 #endif
 
 
