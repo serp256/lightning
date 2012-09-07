@@ -526,16 +526,16 @@ value window (stage:Stage.c) =
   Testz.init ();
   proftimer "zSort: %F" Testz.zSort ();
 ); *)
+*)
 
 value pallete (stage:Stage.c) =
 (
-  let img = Image.load "pallete.plx" in
+  let img = Image.load "defaulx12.plx" in
   (
     img#setPos 100. 100.;
     stage#addChild img;
   )
 );
-*)
 
 
 value items = 
@@ -1297,7 +1297,7 @@ value avsound (stage:Stage.c) path =
 (
   Sound.init ();
 
-    let channel1 = Sound.createChannel (Sound.load "achievement1.caf") in
+    let channel1 = Sound.createChannel (Sound.load "melody0.mp3") in
     let channel2 = Sound.createChannel (Sound.load "melody0.mp3") in
       let createImg click =
         let img = Image.load "Russia.png" in
@@ -1374,7 +1374,45 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      Lightning.extractAssetsIfRequired (fun _ -> avsound self "melody0.mp3");
+      let ldr = new URLLoader.loader () in
+      (
+        ldr#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "ldr1 progress %s" (Int64.to_string ldr#bytesLoaded));
+        ldr#addEventListener URLLoader.ev_COMPLETE (fun ev _ _ -> debug "ldr1 complete");
+        ldr#load (URLLoader.request "http://interfacelift.com/wallpaper/D47cd523/03059_amazingmountainsunset_2560x1440.jpg");
+
+        let img = Image.load "Russia.png" in
+        (
+          self#addChild img;
+
+          ignore(Stage.(
+            img#addEventListener ev_TOUCH (fun ev _ _ ->
+              match touches_of_data ev.Ev.data with
+              [ Some [ touch :: _ ] ->
+                Touch.(
+                    match touch.phase with
+                    [ TouchPhaseEnded -> ldr#cancel ()
+                    | _ -> ()
+                    ]
+                )
+              | _ -> ()
+              ]
+            )
+          ));
+        );
+      );
+
+      let ldr = new URLLoader.loader () in
+      (
+        ldr#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "ldr2 progress %s" (Int64.to_string ldr#bytesLoaded));
+        ldr#addEventListener URLLoader.ev_COMPLETE (fun ev _ _ -> debug "ldr2 complete");
+        ldr#load (URLLoader.request "http://interfacelift.com/wallpaper/D47cd523/03058_pollinate_2560x1440.jpg");
+      );
+        
+      (* debug "extensions %s" (Render.get_gl_extensions ()); *)
+(*       let img = Image.load "1.png" in
+        self#addChild img; *)
+      (* pallete self *)
+(*       avsound self "melody0.mp3"; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)
 (*       tweens self; *)

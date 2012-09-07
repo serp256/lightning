@@ -140,8 +140,10 @@ int load_png_image(int fd,textureInfo *tInfo) {
 	int bytesPerComponent = 3;
 	if (hasAlpha) bytesPerComponent = 4;
 
-	unsigned int legalWidth = nextPowerOfTwo(width);
-	unsigned int legalHeight = nextPowerOfTwo(height);
+	//unsigned int legalWidth = nextPowerOfTwo(width);
+	//unsigned int legalHeight = nextPowerOfTwo(height);
+	unsigned int legalWidth = nextPOT(width);
+	unsigned int legalHeight = nextPOT(height);
 
 	unsigned int dataLen = legalHeight * legalWidth * bytesPerComponent;
 	pImageData = malloc(dataLen);
@@ -182,6 +184,8 @@ int load_png_image(int fd,textureInfo *tInfo) {
 
 	png_destroy_read_struct(&png_ptr, &info_ptr, 0);
 	fclose(fp);
+
+	PRINT_DEBUG("loaded PNG image: %d:%d -> %d:%d, has_alpha - %d",width,height,legalWidth,legalHeight,hasAlpha);
 
 	tInfo->format = hasAlpha ? LTextureFormatRGBA : LTextureFormatRGB;
 	tInfo->width = legalWidth;

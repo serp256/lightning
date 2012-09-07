@@ -1303,11 +1303,82 @@ void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
 	(*env)->CallVoidMethod(env,jView,initTapjoyMethod,appID,secretKey);
 }
 
+static jclass gTapjoyCls;
+static jobject gTapjoy;
+
+void getTapjoyJNI() {
+	if (!gTapjoyCls) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+		jclass tapjoyCls = (*env)->FindClass(env, "com/tapjoy/TapjoyConnect");
+		jmethodID mid = (*env)->GetStaticMethodID(env, tapjoyCls, "getTapjoyConnectInstance", "()Lcom/tapjoy/TapjoyConnect;");
+		jobject tapjoy = (*env)->CallStaticObjectMethod(env, tapjoyCls, mid);
+
+		gTapjoyCls = (*env)->NewGlobalRef(env, tapjoyCls);
+		gTapjoy = (*env)->NewGlobalRef(env, tapjoy);
+
+		(*env)->DeleteLocalRef(env, tapjoyCls);
+		(*env)->DeleteLocalRef(env, tapjoy);
+	}
+}
+
+void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
+	getTapjoyJNI();
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jstring jcurrency = (*env)->NewStringUTF(env, String_val(currency));
+	jboolean jshow_selector = Bool_val(show_selector);
+
+	static jmethodID mid;
+
+	if (!mid) {
+		mid = (*env)->GetMethodID(env, gTapjoyCls, "showOffersWithCurrencyID", "(Ljava/lang/String;Z)V");
+	}
+
+	(*env)->CallVoidMethod(env, gTapjoy, mid, jcurrency, jshow_selector);
+	(*env)->DeleteLocalRef(env, jcurrency);
+}
+
+void ml_tapjoy_show_offers() {
+	getTapjoyJNI();
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID mid;
+
+	if (!mid) {
+		mid = (*env)->GetMethodID(env, gTapjoyCls, "showOffers", "()V");
+	}
+
+	(*env)->CallVoidMethod(env, gTapjoy, mid);
+}
+
+void ml_tapjoy_set_user_id(value uid) {
+	getTapjoyJNI();
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID mid;
+
+	if (!mid) {
+		mid = (*env)->GetMethodID(env, gTapjoyCls, "setUserID", "(Ljava/lang/String;)V");
+	}
+
+	jstring juid = (*env)->NewStringUTF(env, String_val(uid));
+	(*env)->CallVoidMethod(env, gTapjoy, mid, juid);
+	(*env)->DeleteLocalRef(env, juid);
+}
+
 static value device_id;
 
 value ml_device_id(value unit) {
-	DEBUGF("ML_DEVICE_ID");
-	if (!version) {
+	/*DEBUGF("ML_DEVICE_ID");*/
+	if (!device_id) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 

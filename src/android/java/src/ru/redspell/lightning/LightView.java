@@ -172,7 +172,6 @@ public class LightView extends GLSurfaceView {
 
 		// FIXME: move it to FB init
 		fb = new AndroidFB();
-		fb.setView (this);
 	}
 
 	protected void initView(int width,int height) {
