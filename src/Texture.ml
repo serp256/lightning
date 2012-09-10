@@ -6,7 +6,8 @@ Callback.register_exception "Cant_load_texture" (Cant_load_texture "");
 type ubyte_array = Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout;
 
 type filter = [ FilterNearest | FilterLinear ];
-value defaultFilter = FilterNearest;
+value defaultFilter = ref FilterNearest;
+value setDefaultFilter v = defaultFilter.val := v;
 
 external glClear: int -> float -> unit = "ml_clear";
 external set_texture_filter: textureID -> filter -> unit = "ml_texture_set_filter" "noalloc";
@@ -371,7 +372,7 @@ value make_and_cache path textureInfo =
     (res :> c)
   );
 
-value load ?(with_suffix=True) ?(filter=FilterNearest) ?(use_pvr=True) path : c = 
+value load ?(with_suffix=True) ?(filter=defaultFilter.val) ?(use_pvr=True) path : c = 
   let fpath = match with_suffix with [ True -> LightCommon.path_with_suffix path | False -> path ] in
   try
       debug:cache (
@@ -484,7 +485,7 @@ value check_async () =
 
 value async_ecallback path = raise (Cant_load_texture path);
 
-value load_async ?(with_suffix=True) ?(filter=FilterNearest) ?(use_pvr=True) path ?(ecallback=async_ecallback) callback = 
+value load_async ?(with_suffix=True) ?(filter=defaultFilter.val) ?(use_pvr=True) path ?(ecallback=async_ecallback) callback = 
   let () = debug "start async load %s[%b]" path with_suffix in
   let texture = 
     try

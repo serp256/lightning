@@ -19,9 +19,12 @@ type textureFormat =
 *)
 exception Cant_load_texture of string;
 
+
+
 type event = [= `RESIZE | `CHANGE ]; 
 
 type filter = [ FilterNearest | FilterLinear ];
+value setDefaultFilter: filter -> unit;
 
 type kind = [ Simple of bool | Alpha | Pallete of textureInfo ];
 
