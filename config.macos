@@ -7,4 +7,4 @@ export CFLAGS = -std=c99 -Wno-trigraphs -fpascal-strings -O0 -DDEBUG -Wreturn-ty
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc
 export OCAMLMKLIB ?= ocamlmklib
-LIB = byte native syntax
+LIB = byte syntax

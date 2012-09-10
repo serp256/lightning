@@ -44,9 +44,9 @@ type glow =
 class virtual base texture = 
   let (programID,shaderProgram) = 
     match texture#kind with
-    [ Texture.Simple _ -> (GLPrograms.Image.id,GLPrograms.Image.create ())
-    | Texture.Alpha -> (GLPrograms.ImageAlpha.id,GLPrograms.ImageAlpha.create ())
-    | Texture.Pallete _ -> (GLPrograms.ImagePallete.id,GLPrograms.ImagePallete.create ())
+    [ Texture.Simple _ -> (GLPrograms.Image.id, GLPrograms.Image.create ())
+    | Texture.Alpha -> (GLPrograms.ImageAlpha.id, GLPrograms.ImageAlpha.create ())
+    | Texture.Pallete _ -> (GLPrograms.ImagePallete.id, GLPrograms.ImagePallete.create ())
     ]
   in
   object(self)
@@ -63,10 +63,16 @@ class virtual base texture =
     method private setGlowFilter g_program glow = 
     (
       match glowFilter with
-      [ Some {g_texture=Some gtex;_} -> gtex#release()
+      [ Some {g_texture=Some gtex;_} -> gtex#release() (* FIXME: может не стоит здесь рушить нахуй текстуру???? а рисовать в ту же, должно быть чутахи быстрее *)
       | _ ->  ()
       ];
-      let g_make_program = match texture#kind with [ Texture.Simple _ -> GLPrograms.Image.create () | Texture.Alpha -> GLPrograms.ImageAlpha.create () | Texture.Pallete _ -> GLPrograms.ImagePallete.create () ] in
+      let g_make_program = 
+        match texture#kind with 
+        [ Texture.Simple _ -> GLPrograms.Image.create () 
+        | Texture.Alpha -> GLPrograms.ImageAlpha.create () 
+        | Texture.Pallete _ -> GLPrograms.ImagePallete.create () 
+        ] 
+      in
       glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_make_program;g_params=glow};
       self#addPrerender self#updateGlowFilter;
     );
@@ -298,19 +304,19 @@ class _c  _texture =
         let gs = hgs * 2 in
         let rw = w +. (float gs)
         and rh = h +. (float gs) in
-        let tex = Texture.rendered rw rh in
         let cm = Matrix.create ~translate:{Point.x = float hgs; y = float hgs} () in
         let image = Render.Image.create renderInfo `NoColor 1. in
+        let tex = RenderTexture.draw rw rh begin fun fb ->
+          (
+            Render.Image.render cm g_make_program image; 
+            match glow.Filters.glowKind with
+            [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
+            | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+            ];
+            Render.Image.render cm g_make_program image; 
+          )
+        end in
         (
-          tex#activate ();
-          Render.clear 0 0.;
-          Render.Image.render cm g_make_program image; 
-          match glow.Filters.glowKind with
-          [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
-          | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
-          ];
-          Render.Image.render cm g_make_program image; 
-          tex#deactivate ();
           let g_image = Render.Image.create tex#renderInfo color alpha in
           (
             if texFlipX then Render.Image.flipTexX g_image else ();
