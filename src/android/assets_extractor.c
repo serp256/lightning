@@ -539,6 +539,7 @@ value ml_getExpansionPath(value isMain) {
     }
 
     jstring jpath = (*env)->CallObjectMethod(env, jView, gGetExpansionPathMid, Bool_val(isMain));
+		if (!jpath) caml_failwith("Expansion path not specified");
     const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
     vpath = caml_copy_string(cpath);
 

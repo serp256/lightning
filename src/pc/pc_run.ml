@@ -74,18 +74,15 @@ value start_cycle frameRate stage =
   let fps = 1. /. (float frameRate) in
   let time = ref (Unix.gettimeofday ()) in
   let rec advanceTime () =
-    let () = Gc.compact () in
     let () = URLLoader.run () in
     let now = Unix.gettimeofday () in
     (
       let diff = now -. !time in
+      let () = debug "diff: %f" diff in
       stage#advanceTime diff;
-      debug "end advance time";
       time.val := now;
       DisplayObject.prerender ();
-      debug "end prerender time";
       Glut.postRedisplay ();
-      debug "post redisplay";
       Glut.timerFunc fps advanceTime;
     )
   in
@@ -111,19 +108,12 @@ value run stage_create =
         Glut.keyboardFunc (fun c x y -> if int_of_char c = 127 then ignore(stage#dispatchBackPressedEv ()) else ());
         Glut.displayFunc (fun () -> (stage#renderStage (); Glut.swapBuffers ()));
         start_cycle !frameRate stage;
-  (*       Glut.idleFunc (make_idle_func !frameRate stage); *)
         let (mouse_func,motion_func) = make_mouse_funcs stage in
         (
-          Glut.displayFunc (fun () -> (stage#renderStage (); Glut.swapBuffers ()));
-          start_cycle !frameRate stage;
-    (*       Glut.idleFunc (make_idle_func !frameRate stage); *)
-          let (mouse_func,motion_func) = make_mouse_funcs stage in
-          (
-            Glut.mouseFunc mouse_func;
-            Glut.motionFunc motion_func;
-          );
-          stage#renderStage ();
-        )
+          Glut.mouseFunc mouse_func;
+          Glut.motionFunc motion_func;
+        );
+        stage#renderStage ();
       )
     end;
     Glut.mainLoop ();

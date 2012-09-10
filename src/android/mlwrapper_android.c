@@ -1377,8 +1377,8 @@ void ml_tapjoy_set_user_id(value uid) {
 static value device_id;
 
 value ml_device_id(value unit) {
-	DEBUGF("ML_DEVICE_ID");
-	if (!version) {
+	/*DEBUGF("ML_DEVICE_ID");*/
+	if (!device_id) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 

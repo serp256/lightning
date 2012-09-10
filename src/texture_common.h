@@ -21,6 +21,22 @@
 #include <zlib.h>
 #include "light_common.h"
 
+
+
+#if defined(IOS) || defined(ANDROID)
+#define TEXTURE_SIZE_FIX(legalWidth,legalHeight) \
+		if (legalWidth <= 8) { \
+			if (legalWidth > legalHeight) legalHeight = legalWidth; \
+			else \
+				if (legalHeight > legalWidth * 2) legalWidth = legalHeight/2; \
+				if (legalWidth > 16) legalWidth = 16; \
+		} else { \
+			if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth; \
+		};
+#else
+#define TEXTURE_SIZE_FIX
+#endif
+
 int nextPowerOfTwo(int number);
 unsigned long nextPOT(unsigned long x);
 
@@ -42,8 +58,9 @@ void setNotPMAGLBlend ();
 void lgGLBindTexture(GLuint textureID, int pma);
 void lgGLBindTextures(GLuint textureID, GLuint textureID1, int newPMA);
 void lgResetBoundTextures();
-value alloc_texture_id(GLuint textureID, unsigned int dataLen);
-void update_texture_id(value mlTextureID,GLuint textureID);
+value texture_id_alloc(GLuint textureID, unsigned int dataLen);
+void texture_id_update(value mlTextureID,GLuint textureID);
+void ml_texture_id_delete(value mlTextureID);
 
 
 typedef enum 
@@ -109,6 +126,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo,value filter);
 
 
 
+/*
 typedef struct {
 	GLfloat x;
 	GLfloat y;
@@ -134,14 +152,11 @@ typedef struct {
 	GLuint realHeight;
 	viewport vp;
 	clipping clp;
-} renderbuffer_t;
+} renderbuffer_t; */
 
 
-#define RENDERBUFFER(v) ((renderbuffer_t*)Data_custom_val(v))
+//#define RENDERBUFFER(v) ((renderbuffer_t*)Data_custom_val(v))
 
 
-int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter);
-int clone_renderbuffer(renderbuffer_t *sr,renderbuffer_t *dr,GLenum filter);
-void delete_renderbuffer(renderbuffer_t *rb);
 
 #endif

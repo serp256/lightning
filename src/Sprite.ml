@@ -6,7 +6,7 @@ module D = DisplayObject;
 type cache_valid = [ CInvalid | CEmpty | CValid ];
 type imageCache = 
   {
-    c_tex: mutable option Texture.rendered;
+    c_tex: mutable option RenderTexture.c;
     c_img: mutable option Render.Image.t;
     c_prg: mutable Render.prg;
     c_mat: mutable Matrix.t;
@@ -85,41 +85,47 @@ class c =
          then c.valid := CEmpty
          else 
          (
-           let get_tex w h = (*{{{*)
+           let draw_texture width height f = (*{{{*)
              match (c_img,c_tex) with 
              [ (Some img, Some tex) -> 
                let () = debug "get_tex [%f:%f] [%f:%f]" w h tex#width tex#height in
-               if tex#width <> w || tex#height <> h
-               then
                (
-                 tex#resize w h;
-                 Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False;
-                 tex
-               ) else tex
+                 match tex#draw ~width ~height f with
+                 [ True -> Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False
+                 | False -> ()
+                 ]
+                 (*
+                   if tex#width <> w || tex#height <> h
+                   then
+                   (
+                     tex#resize w h;
+                     Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False;
+                     tex
+                   ) else tex
+                 *)
+               )
              | (None,None) -> 
-                 let tex = Texture.rendered w h in
+                 let tex = RenderTexture.draw width height f in
                  let img = Render.Image.create tex#renderInfo ~color:`NoColor ~alpha:1. in
                  (
                    c.c_tex := Some tex;
                    c.c_img := Some img;
-                   tex
                  )
              | _ -> assert False
              ]
            in (*}}}*)
            match glow with
            [ None ->
-               let tex = get_tex bounds.Rectangle.width bounds.Rectangle.height in
                let alpha' = alpha in
                (
                  self#setAlpha 1.;
-                 tex#draw begin fun () ->
+                 draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
                    (
                      Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
                      Render.clear 0 0.;
                      super#render' ~transform:False None;
                      Render.restore_matrix ();
-                   );
+                   )
                  end;
                  self#setAlpha alpha';
                  c.c_mat := Matrix.create ~translate:{Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} ();
@@ -131,33 +137,38 @@ class c =
                  let gs = hgs * 2 in
                  let rw = bounds.Rectangle.width +. (float gs)
                  and rh = bounds.Rectangle.height +. (float gs) in
-                 let tex = get_tex rw rh in
                  let m = Matrix.create ~translate:{Point.x = (float hgs) -. bounds.Rectangle.x; y = (float hgs) -. bounds.Rectangle.y} () in
-                 let ctex = tex#clone () in
-                 let cimg = Render.Image.create ctex#renderInfo ~color:`NoColor ~alpha:1. in
-                 (
+                 let ctex = 
                    let alpha' = alpha in
                    (
                      self#setAlpha 1.;
-                     ctex#draw begin fun () ->
+                     let ctex = RenderTexture.draw rw rh begin fun _ ->
                        (
                          Render.push_matrix m;
                          Render.clear 0 0.;
                          super#render' ~transform:False None;
                          Render.restore_matrix ();
                        )
-                     end;
-                     self#setAlpha alpha';
-                   );
-                   tex#activate ();
-                   Render.clear 0 0.;
-                   Render.Image.render Matrix.identity (GLPrograms.Image.create ()) cimg;
-                   match glow.Filters.glowKind with
-                   [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make tex#renderbuffer glow
-                   | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make tex#renderbuffer glow
-                   ];
-                   Render.Image.render Matrix.identity (GLPrograms.Image.create ()) cimg;
-                   tex#deactivate ();
+                     end in
+                     (
+                       self#setAlpha alpha';
+                       ctex
+                     )
+                   )
+                 in
+                 (
+                   let cimg = Render.Image.create ctex#renderInfo ~color:`NoColor ~alpha:1. in
+                   draw_texture rw rh begin fun fb ->
+                     (
+                       Render.clear 0 0.;
+                       Render.Image.render Matrix.identity (GLPrograms.Image.create ()) cimg;
+                       match glow.Filters.glowKind with
+                       [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
+                       | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                       ];
+                       Render.Image.render Matrix.identity (GLPrograms.Image.create ()) cimg;
+                     )
+                   end;
                    ctex#release ();
                  );
                  c.c_mat := Matrix.create ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs)); y = (bounds.Rectangle.y -. (float hgs))} ();
