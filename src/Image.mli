@@ -2,11 +2,12 @@ open LightCommon;
 
 type glow = 
   {
-    g_texture: mutable option Texture.c;
+    g_texture: mutable option RenderTexture.c;
     g_image: mutable option Render.Image.t;
     g_make_program: Render.prg;
     g_program: mutable Render.prg;
     g_matrix: mutable Matrix.t;
+    g_valid: mutable bool;
     g_params: Filters.glow
   };
 
@@ -42,7 +43,7 @@ class _c : [ Texture.c ] ->
     *)
 
     method texture: Texture.c;
-    method onTextureEvent: Texture.event -> Texture.c -> unit;
+    method onTextureEvent: bool -> Texture.c -> unit;
     method setTexture: Texture.c -> unit;
 
 (*       method setTexScale: float -> unit; *)

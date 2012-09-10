@@ -21,8 +21,6 @@ exception Cant_load_texture of string;
 
 
 
-type event = [= `RESIZE | `CHANGE ]; 
-
 type filter = [ FilterNearest | FilterLinear ];
 value setDefaultFilter: filter -> unit;
 
@@ -43,7 +41,7 @@ type renderInfo =
 
 class type renderer = 
   object
-    method onTextureEvent: event -> c -> unit;
+    method onTextureEvent: bool -> c -> unit;
   end
 and c =
   object

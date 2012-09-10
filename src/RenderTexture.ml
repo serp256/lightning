@@ -30,7 +30,6 @@ class c renderInfo =
     value renderers = Renderers.create 1;
     method addRenderer r = Renderers.add renderers r;
     method removeRenderer r = Renderers.remove renderers r;
-    method private changed () = Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> Texture.c)) renderers;
     method setFilter filter = set_texture_filter renderInfo.rtextureID filter;
 
 
@@ -69,7 +68,7 @@ class c renderInfo =
     method draw ?color ?alpha ?width ?height (f:(framebuffer -> unit)) = 
       let resized = renderbuffer_draw_to_texture ?color ?alpha ?width ?height renderInfo f in
       (
-        Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> Texture.c)) renderers;
+        Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
         resized;
       );
 

@@ -7,6 +7,31 @@
 #include "render_stub.h"
 #include "renderbuffer_stub.h"
 
+static int fbs_cnt = 0;
+static GLuint *fbfs = NULL;
+
+static GLuint inline get_framebuffer() {
+	GLuint fbid = 0;
+	int i = 0;
+	while ((i < fbs_cnt) && (fbfs[i] == 0)) {i++;};
+	if (i < fbs_cnt) {
+		fbid = fbfs[i];
+		fbfs[i] = 0;
+	} else glGenFramebuffers(1,&fbid);
+	return fbid;
+}
+
+static void inline back_framebuffer(GLuint fbid) {
+	int i = 0;
+	while (i < fbs_cnt && fbfs[i] != 0) {i++;};
+	if (i < fbs_cnt) fbfs[i] = fbid;
+	else {
+		fbfs = realloc(fbfs,fbs_cnt + 1);
+		fbfs[fbs_cnt] = fbid;
+		++fbs_cnt;
+	}
+}
+
 void get_framebuffer_state(framebuffer_state *s) {
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&s->framebuffer);
 	glGetIntegerv(GL_VIEWPORT,s->viewport);
@@ -62,7 +87,8 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
 	//checkGLErrors("create renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
   glBindTexture(GL_TEXTURE_2D,0);
   GLuint fbid;
-  glGenFramebuffers(1, &fbid);
+  //glGenFramebuffers(1, &fbid);
+	fbid = get_framebuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, fbid);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
@@ -106,7 +132,8 @@ int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr,GLenum filter) {
 
 void delete_renderbuffer(renderbuffer_t *rb) {
 	glDeleteTextures(1,&rb->tid);
-	glDeleteFramebuffers(1,&rb->fbid);
+	//glDeleteFramebuffers(1,&rb->fbid);
+	back_framebuffer(rb->fbid);
 }
 
 
@@ -121,6 +148,7 @@ static void inline gl_clear(value ocolor,value oalpha) {
 	glClearColor(clr.r,clr.g,clr.b,alpha);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
+
 
 value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwidth, value mlheight, value mlfun) {
 	CAMLparam0();
@@ -268,7 +296,8 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 	get_framebuffer_state(&fstate);
 
 	//Теперь делаем фрэймбуффер
-  glGenFramebuffers(1, &rb.fbid);
+  //glGenFramebuffers(1, &rb.fbid);
+	rb.fbid = get_framebuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, rb.fbid);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rb.tid,0);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -289,7 +318,8 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 
 	set_framebuffer_state(&fstate);
 	renderbuffer_deactivate();
-	glDeleteFramebuffers(1,&rb.fbid);
+	//glDeleteFramebuffers(1,&rb.fbid);
+	back_framebuffer(rb.fbid);
 
 	CAMLreturn(Bool_val(resized));
 }
