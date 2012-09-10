@@ -371,7 +371,7 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 #endif
 
         case LTextureFormatDXT1:
-#if (defined IOS || defined ANDROID)
+#if (defined ANDROID)
         	p->compressed = 1;
         	p->bitsPerPixel = 4;        	
         	p->glTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
@@ -382,7 +382,7 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 #endif
 
         case LTextureFormatDXT5:
-#if (defined IOS || defined ANDROID)
+#if (defined ANDROID)
         	p->compressed = 1;
         	p->bitsPerPixel = 8;        	
         	p->glTexFormat = 0x83F3;

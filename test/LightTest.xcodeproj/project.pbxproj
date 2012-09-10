@@ -24,12 +24,12 @@
 		51846F6514EE704D00FDE684 /* test.native in CopyFiles */ = {isa = PBXBuildFile; fileRef = 51846F6414EE704D00FDE684 /* test.native */; };
 		518D151C14FE441300B5436E /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */; };
 		5191FD9314FF5FC900DD8677 /* frame.png in Resources */ = {isa = PBXBuildFile; fileRef = 5191FD9214FF5FC900DD8677 /* frame.png */; };
+		519330C315F635670095DB10 /* test.plx in Resources */ = {isa = PBXBuildFile; fileRef = 519330C215F635670095DB10 /* test.plx */; };
+		519330C515F635780095DB10 /* palletes in Resources */ = {isa = PBXBuildFile; fileRef = 519330C415F635780095DB10 /* palletes */; };
 		51BCBEBD15BD4CDE00A3DCB7 /* palletes in Resources */ = {isa = PBXBuildFile; fileRef = 51BCBEBC15BD4CDE00A3DCB7 /* palletes */; };
 		51DC6E1314EE5E960084EB76 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1114EE5E960084EB76 /* InfoPlist.strings */; };
 		51DC6E1F14EE5E960084EB76 /* ViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1D14EE5E960084EB76 /* ViewController_iPhone.xib */; };
 		51DC6E2214EE5E960084EB76 /* ViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E2014EE5E960084EB76 /* ViewController_iPad.xib */; };
-		B5236AF715DCDF0100116007 /* scale.png in Resources */ = {isa = PBXBuildFile; fileRef = B5236AF615DCDF0100116007 /* scale.png */; };
-		B5236AF915DCDF0F00116007 /* BaseDialog in Resources */ = {isa = PBXBuildFile; fileRef = B5236AF815DCDF0F00116007 /* BaseDialog */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +73,8 @@
 		51846F6414EE704D00FDE684 /* test.native */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = test.native; sourceTree = "<group>"; };
 		518D151A14FE441300B5436E /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "MyriadPro-Regular.fnt"; path = "../../lightning/test/Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
 		5191FD9214FF5FC900DD8677 /* frame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = frame.png; path = ../../lightning/test/Resources/frame.png; sourceTree = "<group>"; };
+		519330C215F635670095DB10 /* test.plx */ = {isa = PBXFileReference; lastKnownFileType = file; name = test.plx; path = Resources/test.plx; sourceTree = "<group>"; };
+		519330C415F635780095DB10 /* palletes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = palletes; path = Resources/palletes; sourceTree = "<group>"; };
 		51B5418414F273C300EB2241 /* items */ = {isa = PBXFileReference; lastKnownFileType = folder; name = items; path = ../../lightning/test/Resources/items; sourceTree = "<group>"; };
 		51BCBEBC15BD4CDE00A3DCB7 /* palletes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = palletes; path = "../../mobile-farm/Resources/palletes"; sourceTree = "<group>"; };
 		51DC6E0414EE5E960084EB76 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -108,6 +110,8 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
+				519330C415F635780095DB10 /* palletes */,
+				519330C215F635670095DB10 /* test.plx */,
 				B5236AF815DCDF0F00116007 /* BaseDialog */,
 				B5236AF615DCDF0100116007 /* scale.png */,
 				516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */,
@@ -245,8 +249,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B5236AF915DCDF0F00116007 /* BaseDialog in Resources */,
-				B5236AF715DCDF0100116007 /* scale.png in Resources */,
+				519330C515F635780095DB10 /* palletes in Resources */,
+				519330C315F635670095DB10 /* test.plx in Resources */,
 				516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */,
 				516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */,
 				516A41FB15D3D6E600BB71F0 /* MyriadPro-Regular.fnt in Resources */,
@@ -323,7 +327,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
-				PATH = "/usr/local/bin:/usr/local/ocaml/main/bin:$PATH";
+				PATH = "/usr/local/ocaml/main/bin:/usr/local/bin:$PATH";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 			};
@@ -341,7 +345,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
-				PATH = "/usr/local/bin:/usr/local/ocaml/main/bin:$PATH";
+				PATH = "/usr/local/ocaml/main/bin:/usr/local/bin:$PATH";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 			};
