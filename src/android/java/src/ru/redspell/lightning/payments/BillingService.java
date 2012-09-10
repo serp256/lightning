@@ -431,6 +431,9 @@ public class BillingService extends Service implements ServiceConnection {
 
     private void purchaseStateChanged(int startId, String signedData, String signature) {
         Log.d(TAG, "purchase state changed (BillingService.purchaseStateChanged)");
+        Log.d("BILLING_SERVICE", "________________");
+        Log.d("BILLING_SERVICE", signedData);
+        Log.d("BILLING_SERVICE", signature);
 
             final String sig = signature;
             ArrayList<Security.VerifiedPurchase> purchases;

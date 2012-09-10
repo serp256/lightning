@@ -1376,7 +1376,39 @@ let stage width height =
     initializer begin
       let ldr = new URLLoader.loader () in
       (
-        ldr#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "ldr1 progress %s" (Int64.to_string ldr#bytesLoaded));
+        let img = Image.load "Russia.png" in
+        (
+          self#addChild img;
+
+          ignore(Stage.(
+            img#addEventListener ev_TOUCH (fun ev _ _ ->
+              match touches_of_data ev.Ev.data with
+              [ Some [ touch :: _ ] ->
+                Touch.(
+                    match touch.phase with
+                    [ TouchPhaseEnded ->
+                      (
+                        if self#numChildren > 1 then
+                          ignore(self#removeChildAtIndex 1)
+                        else ();
+
+                        Texture.loadExternal "http://cs301209.userapi.com/g42665245/a_8992c3ec.jpg" ~callback:(
+                          fun tex -> let img = Image.create tex in ( self#addChild img; img#setX 50.; img#setY 200.; )
+                        ) ~errorCallback:None                        
+                      )
+                    | _ -> ()
+                    ]
+                )
+              | _ -> ()
+              ]
+            )
+          ));
+        );
+      );
+        
+
+
+(*         ldr#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "ldr1 progress %s" (Int64.to_string ldr#bytesLoaded));
         ldr#addEventListener URLLoader.ev_COMPLETE (fun ev _ _ -> debug "ldr1 complete");
         ldr#load (URLLoader.request "http://interfacelift.com/wallpaper/D47cd523/03059_amazingmountainsunset_2560x1440.jpg");
 
@@ -1406,7 +1438,7 @@ let stage width height =
         ldr#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "ldr2 progress %s" (Int64.to_string ldr#bytesLoaded));
         ldr#addEventListener URLLoader.ev_COMPLETE (fun ev _ _ -> debug "ldr2 complete");
         ldr#load (URLLoader.request "http://interfacelift.com/wallpaper/D47cd523/03058_pollinate_2560x1440.jpg");
-      );
+      ); *)
         
       (* debug "extensions %s" (Render.get_gl_extensions ()); *)
 (*       let img = Image.load "1.png" in

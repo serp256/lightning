@@ -14,6 +14,7 @@ import android.view.Window;
 import android.util.DisplayMetrics;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.AssetManager;
@@ -45,9 +46,32 @@ import android.provider.Settings.Secure;
 import android.provider.Settings;
 import android.view.Display;
 
+import java.nio.ByteBuffer;
+
 import ru.redspell.lightning.expansions.XAPKFile;
+import java.util.Formatter;
 
 public class LightView extends GLSurfaceView {
+	private static class TexInfo {
+		public int width;
+		public int height;
+		public int legalWidth;
+		public int legalHeight;
+		public byte[] data;
+	}
+
+	private static class CurlExternCallbackRunnable implements Runnable {
+		private int req;
+		private int texInfo;
+
+		public CurlExternCallbackRunnable(int req, int texInfo) {
+			this.req = req;
+			this.texInfo = texInfo;
+		}
+
+		public native void run();
+	}	
+
     public String getExpansionPath(boolean isMain) {
     	for (XAPKFile xf : activity.getXAPKS()) {
     		if (xf.mIsMain == isMain) {
@@ -524,5 +548,55 @@ public class LightView extends GLSurfaceView {
 	public void expansionsDownloaded() {
 		Log.d("LIGHTNING", "expansions downloaded");
 		queueEvent(new ExpansionsExtractedCallbackRunnable());
+	}
+
+	public TexInfo decodeImg(byte[] src) {
+		Bitmap bmp = BitmapFactory.decodeByteArray(src, 0, src.length);
+		TexInfo retval = new TexInfo();
+
+		retval.width = bmp.getWidth();
+		retval.height = bmp.getHeight();
+		retval.legalWidth = Math.max(64, retval.width);
+		retval.legalHeight = Math.max(64, retval.height);
+
+		if (retval.width != retval.legalWidth || retval.height != retval.legalHeight) {
+			bmp = Bitmap.createBitmap(bmp, 0, 0, retval.legalWidth, retval.legalHeight);
+		}  
+
+		int bytesPerPixel;
+
+		switch (bmp.getConfig ()) {
+			case ARGB_8888:
+				bytesPerPixel = 4;
+				break;
+
+			/*
+			case Bitmap.Config.ALPHA_8:
+				bytesPerPixel = 1;
+				break;
+
+			case Bitmap.Config.RGB_565:
+				bytesPerPixel = 2;
+				break;
+			*/
+
+			default:
+				return null;
+		}
+
+		ByteBuffer buf = ByteBuffer.allocate(bmp.getWidth() * bmp.getHeight() * bytesPerPixel);
+		bmp.copyPixelsToBuffer(buf);
+
+		retval.data = buf.array();
+
+		Formatter f = new Formatter();
+
+		Log.d("LIGHTNING", (f.format("%d %d %d %d %d", retval.width, retval.height, retval.legalWidth, retval.legalHeight, retval.data.length)).toString());
+
+		return retval;
+	}
+
+	public void curlExternalLoaderSuccess(int req, int texInfo) {
+		queueEvent(new CurlExternCallbackRunnable(req, texInfo));
 	}
 }

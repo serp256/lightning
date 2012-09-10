@@ -875,7 +875,8 @@ value rendered ?(format=glRGBA) ?(filter=FilterLinear) width height : rendered =
   new rbt rb;
 
 
-IFDEF IOS THEN
+IFPLATFORM(ios android) 
+
 external loadExternalImage: string -> (textureInfo -> unit) -> option (int -> string -> unit) -> unit = "ml_loadExternalImage";
 value loadExternal url ~callback ~errorCallback = 
   loadExternalImage url begin fun textureInfo ->
@@ -883,13 +884,11 @@ value loadExternal url ~callback ~errorCallback =
     callback (texture :> c)
   end errorCallback;
 
-
-
 ELSE
 
-value loadExternal url ~callback ~errorCallback = (); (* TODO: Get it by URLLoader *)
-
-ENDIF;
+  value loadExternal url ~callback ~errorCallback = (); (* TODO: Get it by URLLoader *)
+  
+ENDPLATFORM;
 
 
 

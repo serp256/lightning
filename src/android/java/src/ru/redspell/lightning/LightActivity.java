@@ -23,6 +23,8 @@ import ru.redspell.lightning.expansions.XAPKFile;
 import ru.redspell.lightning.LightView;
 import android.content.res.TypedArray;
 
+import ru.redspell.lightning.payments.Security;
+
 public class LightActivity extends Activity implements IDownloaderClient
 {
     protected XAPKFile[] xAPKS = {};
