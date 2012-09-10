@@ -1400,12 +1400,31 @@ value scale (self:Stage.c) =
        end;
     );
 
+value testGetFromUrl () = 
+  (
+    let loader = new URLLoader.loader () in
+      ( 
+        ignore(loader#addEventListener URLLoader.ev_IO_ERROR (fun event _ _ -> Debug.e "ERROR"));
+        ignore(loader#addEventListener URLLoader.ev_COMPLETE (fun _ _ _ ->  
+          (
+            debug "proto data : %S" loader#data; 
+          )));
+        let url = "http://carantin-mobile-farm.redspell.ru/pizda.user" in
+          (
+            debug "url = %S" url;
+            let request = URLLoader.request ~httpMethod:`GET ~headers:[("content-type","application/binary-data")] url in
+            loader#load request;
+          )
+      )   
+  );
+
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      testGetFromUrl ();
 (*       scale self; *)
 (*       assets self; *)
 (*       avsound self "melody0.mp3"; *)

@@ -402,6 +402,10 @@ static void *finishedContext = @"finishedContext";
  *   by SDK, NO otherwise.
  */
 - (BOOL)handleOpenURL:(NSURL *)url {
+		NSLog(@"handleOpenURL");
+		NSString *urlString = [url absoluteString];
+		const char *str = [urlString UTF8String];
+		NSLog(@"handleOpenURL %s", str);
     // If the URL's structure doesn't match the structure used for Facebook authorization, abort.
     if (![[url absoluteString] hasPrefix:[self getOwnBaseUrl]]) {
         return NO;
@@ -782,6 +786,7 @@ static void *finishedContext = @"finishedContext";
  * Set the authToken and expirationDate after login succeed
  */
 - (void)fbDialogLogin:(NSString *)token expirationDate:(NSDate *)expirationDate {
+		NSLog(@"fbDialogLogin");
     self.accessToken = token;
     self.expirationDate = expirationDate;
     [_lastAccessTokenUpdate release];

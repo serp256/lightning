@@ -1,4 +1,4 @@
-value init : string -> unit;
+value init : ?callback:(bool -> unit) -> ?ecallback:(bool -> unit) -> string ->  unit;
 
 module Session : 
   sig

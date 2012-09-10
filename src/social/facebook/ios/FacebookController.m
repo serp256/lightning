@@ -34,6 +34,7 @@
  *        
  */
 - (void)fbDidLogin {
+	NSLog(@"fbDidLogin");
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
   [defaults setObject:[self.facebook accessToken] forKey:@"FBAccessTokenKey"];
   [defaults setObject:[self.facebook expirationDate] forKey:@"FBExpirationDateKey"];
@@ -41,6 +42,7 @@
 
   value *mlf = (value*)caml_named_value("facebook_logged_in");
   if (mlf == NULL) {                                                                                                                   
+		NSLog(@"Not found callback");
     return;                                                                                                                          
   }                                               
   caml_callback(*mlf, Val_int(0));  

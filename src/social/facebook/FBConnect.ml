@@ -2,9 +2,14 @@ IFDEF IOS THEN
 
 external ios_facebook_init : string -> unit = "ml_facebook_init";
   
-value init appid = ios_facebook_init appid;
-
-
+value onInitAuthorizeLoggedCallback = ref None;
+value onInitAuthorizeErrorCallback = ref None;
+value init ?callback ?ecallback appid = 
+  (
+    ios_facebook_init appid;
+    onInitAuthorizeLoggedCallback.val := callback;
+    onInitAuthorizeErrorCallback.val := ecallback;
+  );
 
 
 (*** SESSION ***)
@@ -13,10 +18,17 @@ module Session = struct
   type status = [ NotAuthorized | Authorizing of Queue.t (bool -> unit) | Authorized ];
 
   value auth_status = ref NotAuthorized;
+  value str_auth status = 
+    match status with
+    [ NotAuthorized -> "NotAuthorized"
+    | Authorizing clbs -> "Authorizing " ^ (string_of_int (Queue.length clbs))
+    | Authorized -> "Authorized"
+    ];
 
   external ios_facebook_authorize : list string -> unit = "ml_facebook_authorize";
 
   value permissions = ref [];
+  value isUserAuthorize = ref False;
 
   external ios_facebook_check_auth_token : unit -> bool = "ml_facebook_check_auth_token";
   external ios_facebook_get_auth_token : unit -> string = "ml_facebook_get_auth_token";
@@ -25,33 +37,55 @@ module Session = struct
 
   value facebook_logged_in () = 
   (
-    match !auth_status with
-    [ Authorizing callbacks -> (* call pending callbacks *)
+    Printf.eprintf "facebook_logged_in %s\n" (str_auth !auth_status);
+    match !isUserAuthorize with
+    [ True -> 
       (
-        while not (Queue.is_empty callbacks) do
-          let c = Queue.pop callbacks in
-          c True
-        done;
+        match !auth_status with
+        [ Authorizing callbacks -> (* call pending callbacks *)
+          (
+            while not (Queue.is_empty callbacks) do
+              let c = Queue.pop callbacks in
+              c True
+            done;
+          )
+        | _ -> failwith "Invalid auth status"
+        ];
+        isUserAuthorize.val := False 
       )
-    | _ -> failwith "Invalid auth status"
+    | _ -> 
+        match !onInitAuthorizeLoggedCallback with
+        [ Some f -> f True
+        | _ -> ()
+        ]
     ];
-  
     auth_status.val := Authorized;
   );
 
   value facebook_session_invalidated () = 
   (  
-    match !auth_status with
-    [ Authorizing callbacks ->
-      (
-        while not (Queue.is_empty callbacks) do
-          let c = Queue.pop callbacks in
-          c False
-        done;
-      )
-    | _ -> ()
+    Printf.eprintf "facebook_session_invalidated %s\n" (str_auth !auth_status);
+    match !isUserAuthorize with
+    [ True -> 
+        (
+          match !auth_status with
+          [ Authorizing callbacks ->
+            (
+              while not (Queue.is_empty callbacks) do
+                let c = Queue.pop callbacks in
+                c False
+              done;
+            )
+          | _ -> ()
+          ];
+          isUserAuthorize.val := False
+        )
+    | _ -> 
+        match !onInitAuthorizeErrorCallback with
+        [ Some f -> f False
+        | _ -> ()
+        ]
     ];
-  
     auth_status.val := NotAuthorized;
   );
 
@@ -66,12 +100,14 @@ module Session = struct
   
 
   value with_auth_check callback = 
+    let () = Printf.eprintf "with_auth_check %s\n" (str_auth !auth_status) in
     match !auth_status with
     [ Authorized -> callback True
     | Authorizing callbacks -> Queue.add callback callbacks
     | NotAuthorized -> 
         let callbacks = Queue.create () in
         (
+          isUserAuthorize.val := True;
           Queue.push callback callbacks;
           auth_status.val := Authorizing callbacks;
           authorize !permissions
@@ -116,7 +152,11 @@ value _request graph_path params ?delegate () =
 
 value request graph_path params ?delegate () = 
   let f = (fun _ -> _request graph_path params ?delegate:delegate ())
-  in Session.with_auth_check f;
+  in 
+    (
+      Printf.eprintf "GraphAPI.request\n";
+      Session.with_auth_check f;
+    );
 
 
 (* *)
@@ -212,7 +252,11 @@ value _apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?dele
 
 value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?delegate () = 
   let f = (fun _ -> _apprequest ~message ~recipients ~filter ?delegate ())
-  in Session.with_auth_check f;
+  in 
+    (
+      Printf.eprintf "DIALOG.apprequest\n";
+      Session.with_auth_check f;
+    );
 
 
 
@@ -270,7 +314,7 @@ ELSE
 IFDEF ANDROID THEN
 
 external facebook_init : string -> unit = "ml_fb_init";
-value init appid = 
+value init ?callback ?ecallback appid = 
   (
     facebook_init appid; 
   );
@@ -417,7 +461,7 @@ end;
 
 ELSE 
 
-value init appid = ();
+value init ?callback ?ecallback appid = ();
 
 module Session = struct
   value permissions = ref [];
