@@ -52,26 +52,6 @@ import ru.redspell.lightning.expansions.XAPKFile;
 import java.util.Formatter;
 
 public class LightView extends GLSurfaceView {
-	private static class TexInfo {
-		public int width;
-		public int height;
-		public int legalWidth;
-		public int legalHeight;
-		public byte[] data;
-	}
-
-	private static class CurlExternCallbackRunnable implements Runnable {
-		private int req;
-		private int texInfo;
-
-		public CurlExternCallbackRunnable(int req, int texInfo) {
-			this.req = req;
-			this.texInfo = texInfo;
-		}
-
-		public native void run();
-	}	
-
     public String getExpansionPath(boolean isMain) {
     	for (XAPKFile xf : activity.getXAPKS()) {
     		if (xf.mIsMain == isMain) {
@@ -596,7 +576,50 @@ public class LightView extends GLSurfaceView {
 		return retval;
 	}
 
+	private static class TexInfo {
+		public int width;
+		public int height;
+		public int legalWidth;
+		public int legalHeight;
+		public byte[] data;
+	}
+
+	private static class CurlExternCallbackRunnable implements Runnable {
+		private int req;
+		private int texInfo;
+
+		public CurlExternCallbackRunnable(int req, int texInfo) {
+			this.req = req;
+			this.texInfo = texInfo;
+		}
+
+		public native void run();
+	}
+
+	private static class CurlExternErrorCallbackRunnable implements Runnable {
+		private int req;
+		private int errCode;
+		private int errMes;
+
+		public CurlExternErrorCallbackRunnable(int req, int errCode, int errMes) {
+			Log.d("LIGHTNING", "CurlExternErrorCallbackRunnable");
+
+			this.req = req;
+			this.errCode = errCode;
+			this.errMes = errMes;
+		}
+
+		public void run() {
+			Log.d("LIGHTNING", "CurlExternErrorCallbackRunnable run");
+		}
+	}
+
 	public void curlExternalLoaderSuccess(int req, int texInfo) {
 		queueEvent(new CurlExternCallbackRunnable(req, texInfo));
+	}
+
+	public void curlExternalLoaderError(int req, int errCode, int errMes) {
+		Log.d("LIGHTNING", "curlExternalLoaderError");
+		queueEvent(new CurlExternErrorCallbackRunnable(req, errCode, errMes));
 	}
 }

@@ -1392,9 +1392,9 @@ let stage width height =
                           ignore(self#removeChildAtIndex 1)
                         else ();
 
-                        Texture.loadExternal "http://cs301209.userapi.com/g42665245/a_8992c3ec.jpg" ~callback:(
+                        Texture.loadExternal "http://java.sun.com/docs/books/jni/html/functions.html#52110" ~callback:(
                           fun tex -> let img = Image.create tex in ( self#addChild img; img#setX 50.; img#setY 200.; )
-                        ) ~errorCallback:None                        
+                        ) ~errorCallback:(Some (fun errCode errMes -> debug "caml err callback: %d %s" errCode errMes))                     
                       )
                     | _ -> ()
                     ]

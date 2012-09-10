@@ -62,8 +62,22 @@ size_t curl_wfunc(char *ptr, size_t size, size_t nmemb, void *userdata) {
 	return chunk_len;
 }
 
-void caml_error(cel_request_t* req, int errCode, char* errMes) {
-	
+void caml_error(JNIEnv *env, cel_request_t* req, int errCode, char* errMes) {
+	PRINT_DEBUG("caml_error %d %s", errCode, errMes);
+
+	if (req->errCb) {
+		PRINT_DEBUG("callback");
+
+		static jmethodID curlExtLdrErrorMid;
+		if (!curlExtLdrErrorMid) curlExtLdrErrorMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderError", "(III)V");
+
+		char* _errMes = malloc(strlen(errMes) + 1);
+		strcpy(_errMes, errMes);
+
+		PRINT_DEBUG("caml_error %d %s", errCode, _errMes);
+
+		(*env)->CallVoidMethod(env, jView, curlExtLdrErrorMid, (int)req, errCode, (int)_errMes);		
+	}
 }
 
 void loader_thread(void* params) {
@@ -82,7 +96,7 @@ void loader_thread(void* params) {
     jfieldID lhFid;
     jfieldID dataFid;    
     jmethodID decodeImgMid = (*env)->GetMethodID(env, jViewCls, "decodeImg", "([B)Lru/redspell/lightning/LightView$TexInfo;");
-    jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");        
+    jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");
 
 	while (1) {
 		cel_request_t* req = thqueue_cel_reqs_pop(reqs);
@@ -97,7 +111,7 @@ void loader_thread(void* params) {
 			int curl_perform_retval = curl_easy_perform(curl_hndlr);
 
 			if (curl_perform_retval) {
-				caml_error(req, curl_perform_retval, curl_err);
+				caml_error(env, req, curl_perform_retval, curl_err);
 			} else {
 				PRINT_DEBUG("complete");
 
@@ -143,7 +157,7 @@ void loader_thread(void* params) {
 
 				    (*env)->CallVoidMethod(env, jView, curlExtLdrSuccessMid, (int)req, (int)texInfo);
 			    } else {
-			    	caml_error(req, 100, "cannot parse image binary");
+			    	caml_error(env, req, 100, "cannot parse image binary");
 			    }
 
 				free(buf);
@@ -224,3 +238,27 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlExternCallb
 	free(texInfo);
 	freeRequest(req);
 }
+
+// JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlExternErrorCallbackRunnable_run(JNIEnv *env, jobject this) {
+// 	PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024CurlExternErrorCallbackRunnable_run");
+
+// 	static jfieldID reqFid;
+// 	static jfieldID errCodeMid;
+// 	static jfieldID errMesMid;
+
+// 	if (!reqFid) {
+// 		jclass runnableCls = (*env)->GetObjectClass(env, this);
+// 		reqFid = (*env)->GetFieldID(env, runnableCls, "req", "I");
+// 		errCodeMid = (*env)->GetFieldID(env, runnableCls, "errCode", "I");
+// 		errMesMid = (*env)->GetFieldID(env, runnableCls, "errMes", "I");
+// 	}
+
+// 	cel_request_t* req = (*env)->GetIntField(env, this, reqFid);
+// 	int errCode = (*env)->GetIntField(env, this, errCodeMid);
+// 	char* errMes = (char*)(*env)->GetIntField(env, this, errMesMid);
+
+// 	caml_callback2(*(req->errCb), Val_int(errCode), caml_copy_string(errMes));
+
+// 	free(errMes);
+// 	freeRequest(req);
+// }
