@@ -11,6 +11,7 @@ type display_mode =
 
 external initDisplayMode: list display_mode -> unit = "ml_glutInitDisplayMode";
 external creatWindow: string -> unit = "ml_glutCreateWindow" "noalloc";
+external reshapeFunc: (int -> int -> unit) -> unit = "ml_glutReshapeFunc";
 external displayFunc: (unit -> unit) -> unit = "ml_glutDisplayFunc";
 
 type mouse_button = [ BUTTON_LEFT | BUTTON_RIGHT | BUTTON_MIDDLE ];

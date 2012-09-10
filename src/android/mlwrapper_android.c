@@ -67,29 +67,71 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	return JNI_VERSION_1_6; // Check this
 }
 
+jclass get_lmp_class() {
+	static jclass lmpCls;
+
+	if (!lmpCls) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);	
+		lmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
+	}
+
+	return lmpCls;
+}
+
+/*
+static size_t debug_tag_len = 0;
+static char *debug_tag = NULL;
+static size_t debug_address_len = 0;
+static char *debug_address = NULL;
+static size_t debug_msg_len = 0;
+static char *debug_msg = NULL;
+*/
+
+//#define COPY_STRING(len,dst,src) \
+		if (len < caml_string_length(src)) { \
+			len = caml_string_length(src); \
+			dst = realloc(dst, len + 1); \
+		};\
+		memcpy(dst,String_val(src),len);\
+		dst[len] = '\0'
+
 void android_debug_output(value mtag, value address, value msg) {
 	char *tag;
 	if (mtag == Val_int(0)) tag = "DEFAULT";
-	else tag = String_val(Field(mtag,0));
+	else {
+		tag = String_val(Field(mtag,0));
+		//COPY_STRING(debug_tag_len,debug_tag,Field(mtag,0));
+	};
+	//COPY_STRING(debug_address_len,debug_address,address);
+	//COPY_STRING(debug_msg_len,debug_msg,msg);
+//#undef COPY_STRING
 	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s",tag,String_val(address),String_val(msg)); // this should be APPNAME
+	//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s",debug_tag,debug_address,debug_msg); // this should be APPNAME
+	fprintf(stderr,"%s (%s) %s\n",tag,String_val(address),String_val(msg));
+	//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s","DEFAULT","ADDRESS","MSG"); // this should be APPNAME
 	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING",String_val(msg)); // this should be APPNAME
 //	fputs(String_val(msg),stderr);
 }
 
 void android_debug_output_info(value address,value msg) {
 	__android_log_write(ANDROID_LOG_INFO,"LIGHTNING",String_val(msg));
+	fprintf(stderr,"INFO (%s) %s\n",String_val(address),String_val(msg));
 }
 
 void android_debug_output_warn(value address,value msg) {
 	__android_log_write(ANDROID_LOG_WARN,"LIGHTNING",String_val(msg));
+	fprintf(stderr,"WARN (%s) %s\n",String_val(address),String_val(msg));
 }
 
 void android_debug_output_error(value address, value msg) {
 	__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING",String_val(msg));
+	fprintf(stderr,"ERROR (%s) %s\n",String_val(address),String_val(msg));
 }
 
 void android_debug_output_fatal(value address, value msg) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",String_val(msg));
+	fprintf(stderr,"FATAL (%s) %s\n",String_val(address),String_val(msg));
 }
 
 
@@ -273,21 +315,21 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobje
 	(*env)->DeleteLocalRef(env, storageCls);
 	(*env)->DeleteLocalRef(env, storageEditor);*/
 	(*env)->DeleteLocalRef(env, viewCls);
+}
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+	PRINT_DEBUG("lightRender init");
 	if (!ocaml_initialized) {
 		PRINT_DEBUG("init ocaml");
 		char *argv[] = {"android",NULL};
 		caml_startup(argv);
 		ocaml_initialized = 1;
 		PRINT_DEBUG("caml initialized");
-	}
-}
-
-
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
-	PRINT_DEBUG("lightRender init");
+	};
 	if (stage) return;
 	PRINT_DEBUG("create stage: [%d:%d]",width,height);
-	stage = mlstage_create((double)width,(double)height); 
+	stage = mlstage_create((float)width,(float)height); 
 	PRINT_DEBUG("stage created");
 }
 
@@ -300,9 +342,8 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 
 static value run_method = 1;//None
 void mlstage_run(double timePassed) {
-	if (run_method == 1) // None
-		run_method = caml_hash_variant("run");
 	if (net_running > 0) net_perform();
+	if (run_method == 1) run_method = caml_hash_variant("run");
 	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,caml_copy_double(timePassed));
 }
 
@@ -622,13 +663,15 @@ value ml_alsoundLoad(value path) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
+	jclass lmpCls = get_lmp_class();
+
 	if (gGetSndIdMthdId == NULL) {
-		gGetSndIdMthdId = (*env)->GetMethodID(env, jViewCls, "getSoundId", "(Ljava/lang/String;Landroid/media/SoundPool;)I");
+		gGetSndIdMthdId = (*env)->GetStaticMethodID(env, lmpCls, "getSoundId", "(Ljava/lang/String;Landroid/media/SoundPool;)I");
 	}
 
 	char* cpath = String_val(path);
 	jstring jpath = (*env)->NewStringUTF(env, cpath);
-	jint sndId = (*env)->CallIntMethod(env, jView, gGetSndIdMthdId, jpath, gSndPool);
+	jint sndId = (*env)->CallStaticIntMethod(env, lmpCls, gGetSndIdMthdId, jpath, gSndPool);
 	(*env)->DeleteLocalRef(env, jpath);
 
 	return Val_int(sndId);
@@ -729,7 +772,6 @@ void ml_alsoundSetLoop(value streamId, value loop) {
 static jmethodID gAutoPause = NULL;
 static jmethodID gAutoResume = NULL;
 
-static jclass gLmpCls = NULL;
 static jmethodID gLmpPauseAll = NULL;
 static jmethodID gLmpResumeAll = NULL;
 
@@ -745,15 +787,13 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
 	}
 
-	if (gLmpCls == NULL) {
-		gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
-	}
+	jclass lmpCls = get_lmp_class();
 
 	if (gLmpPauseAll == NULL) {
-		gLmpPauseAll = (*env)->GetStaticMethodID(env, gLmpCls, "pauseAll", "()V");
+		gLmpPauseAll = (*env)->GetStaticMethodID(env, lmpCls, "pauseAll", "()V");
 	}
 
-	(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpPauseAll);	
+	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpPauseAll);	
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
@@ -770,15 +810,14 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
 	}
 
-	if (gLmpCls == NULL) {
-		gLmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
-	}
+	jclass lmpCls = get_lmp_class();
 
 	if (gLmpResumeAll == NULL) {
-		gLmpResumeAll = (*env)->GetStaticMethodID(env, gLmpCls, "resumeAll", "()V");
+		gLmpResumeAll = (*env)->GetStaticMethodID(env, lmpCls, "resumeAll", "()V");
 	}
 
-	(*env)->CallStaticVoidMethod(env, gLmpCls, gLmpResumeAll);	
+	PRINT_DEBUG("resume ALL players");
+	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);	
 }
 
 /* Updated upstream
@@ -1035,15 +1074,26 @@ value ml_avsound_create_player(value vpath) {
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 	static jmethodID createMpMid;
+	jclass lmpCls = get_lmp_class();
 
 	if (!createMpMid) {
-		createMpMid = (*env)->GetMethodID(env, jViewCls, "createMediaPlayer", "(Ljava/lang/String;)Landroid/media/MediaPlayer;");
+		createMpMid = (*env)->GetStaticMethodID(env, lmpCls, "createMediaPlayer", "(Ljava/lang/String;Ljava/lang/String;)Landroid/media/MediaPlayer;");
 	}
 
 	const char* cpath = String_val(vpath);
 	jstring jpath = (*env)->NewStringUTF(env, cpath);
-	jobject mp = (*env)->CallObjectMethod(env, jView, createMpMid, jpath);
+	jstring jassetsDir = NULL;
+
+	if (gAssetsDir) {
+		jassetsDir = (*env)->NewStringUTF(env, gAssetsDir);		
+	}
+
+	jobject mp = (*env)->CallStaticObjectMethod(env, lmpCls, createMpMid, jassetsDir, jpath);
 	jobject gmp = (*env)->NewGlobalRef(env, mp);
+
+	if (jassetsDir) {
+		(*env)->DeleteLocalRef(env, jassetsDir);
+	}
 
 	(*env)->DeleteLocalRef(env, jpath);
 	(*env)->DeleteLocalRef(env, mp);
@@ -1099,6 +1149,8 @@ void ml_avsound_playback(value vmp, value vmethodName) {
 }
 
 void ml_avsound_set_loop(value vmp, value loop) {
+	PRINT_DEBUG("!!!ml_avsound_set_loop call");
+
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
@@ -1158,6 +1210,8 @@ value ml_avsound_is_playing(value vmp) {
 }
 
 void ml_avsound_play(value vmp, value cb) {
+	PRINT_DEBUG("ml_avsound_play tid: %d", gettid());
+
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
@@ -1178,12 +1232,14 @@ void ml_avsound_play(value vmp, value cb) {
 	(*env)->DeleteLocalRef(env, mpCls);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCallbackCompleteListener_onCompletion(JNIEnv *env, jobject this, jobject mp) {
-	jclass lnrCls = (*env)->GetObjectClass(env, this);
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCallbackCompleteRunnable_run(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCallbackCompleteRunnable_run tid: %d", gettid());
+
+	jclass runnableCls = (*env)->GetObjectClass(env, this);
 	static jfieldID cbFid;
 
 	if (!cbFid) {
-		cbFid = (*env)->GetFieldID(env, lnrCls, "camlCb", "I");
+		cbFid = (*env)->GetFieldID(env, runnableCls, "cb", "I");
 	}
 
 	value *cbptr = (value*)(*env)->GetIntField(env, this, cbFid);
@@ -1191,17 +1247,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCall
 	caml_callback(cb, Val_unit);
 	caml_remove_generational_global_root(cbptr);
 
-	jclass mpCls = (*env)->GetObjectClass(env, mp);
-	static jmethodID setCmpltLnrMid;
-
-	if (!setCmpltLnrMid) {
-		setCmpltLnrMid = (*env)->GetMethodID(env, mpCls, "setOnCompletionListener", "(Landroid/media/MediaPlayer$OnCompletionListener;)V");
-	}
-
-	(*env)->CallVoidMethod(env, mp, setCmpltLnrMid, NULL);
-
-	(*env)->DeleteLocalRef(env, mpCls);
-	(*env)->DeleteLocalRef(env, lnrCls);
+	(*env)->DeleteLocalRef(env, runnableCls);
 }
 
 static value ml_dispatchBackHandler = 1;
@@ -1231,7 +1277,7 @@ value ml_getVersion() {
 
 		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getVersion", "()Ljava/lang/String;");
 		jstring jver = (*env)->CallObjectMethod(env, jView, mid);
-		char* cver = (*env)->GetStringUTFChars(env, jver, JNI_FALSE);
+		const char* cver = (*env)->GetStringUTFChars(env, jver, JNI_FALSE);
 
 		// DEBUGF("cver %s", cver);
 
@@ -1243,4 +1289,133 @@ value ml_getVersion() {
 	}
 
 	return version;
+}
+
+
+void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
+	DEBUG("init tapjoy");
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	jstring appID = (*env)->NewStringUTF(env,String_val(ml_appID));
+	jstring secretKey = (*env)->NewStringUTF(env,String_val(ml_secretKey));
+	static jmethodID initTapjoyMethod = 0;
+	if (initTapjoyMethod == 0) initTapjoyMethod = (*env)->GetMethodID(env,jViewCls,"initTapjoy","(Ljava/lang/String;Ljava/lang/String;)V");
+	(*env)->CallVoidMethod(env,jView,initTapjoyMethod,appID,secretKey);
+}
+
+static jclass gTapjoyCls;
+static jobject gTapjoy;
+
+void getTapjoyJNI() {
+	if (!gTapjoyCls) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+		jclass tapjoyCls = (*env)->FindClass(env, "com/tapjoy/TapjoyConnect");
+		jmethodID mid = (*env)->GetStaticMethodID(env, tapjoyCls, "getTapjoyConnectInstance", "()Lcom/tapjoy/TapjoyConnect;");
+		jobject tapjoy = (*env)->CallStaticObjectMethod(env, tapjoyCls, mid);
+
+		gTapjoyCls = (*env)->NewGlobalRef(env, tapjoyCls);
+		gTapjoy = (*env)->NewGlobalRef(env, tapjoy);
+
+		(*env)->DeleteLocalRef(env, tapjoyCls);
+		(*env)->DeleteLocalRef(env, tapjoy);
+	}
+}
+
+void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
+	getTapjoyJNI();
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jstring jcurrency = (*env)->NewStringUTF(env, String_val(currency));
+	jboolean jshow_selector = Bool_val(show_selector);
+
+	static jmethodID mid;
+
+	if (!mid) {
+		mid = (*env)->GetMethodID(env, gTapjoyCls, "showOffersWithCurrencyID", "(Ljava/lang/String;Z)V");
+	}
+
+	(*env)->CallVoidMethod(env, gTapjoy, mid, jcurrency, jshow_selector);
+	(*env)->DeleteLocalRef(env, jcurrency);
+}
+
+void ml_tapjoy_show_offers() {
+	getTapjoyJNI();
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID mid;
+
+	if (!mid) {
+		mid = (*env)->GetMethodID(env, gTapjoyCls, "showOffers", "()V");
+	}
+
+	(*env)->CallVoidMethod(env, gTapjoy, mid);
+}
+
+void ml_tapjoy_set_user_id(value uid) {
+	getTapjoyJNI();
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID mid;
+
+	if (!mid) {
+		mid = (*env)->GetMethodID(env, gTapjoyCls, "setUserID", "(Ljava/lang/String;)V");
+	}
+
+	jstring juid = (*env)->NewStringUTF(env, String_val(uid));
+	(*env)->CallVoidMethod(env, gTapjoy, mid, juid);
+	(*env)->DeleteLocalRef(env, juid);
+}
+
+static value device_id;
+
+value ml_device_id(value unit) {
+	/*DEBUGF("ML_DEVICE_ID");*/
+	if (!device_id) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "device_id", "()Ljava/lang/String;");
+		jstring jdev = (*env)->CallObjectMethod(env, jView, mid);
+		const char* cdev = (*env)->GetStringUTFChars(env, jdev, JNI_FALSE);
+
+		device_id = caml_copy_string(cdev);
+		caml_register_generational_global_root(&device_id);
+
+		(*env)->ReleaseStringUTFChars(env, jdev, cdev);
+		(*env)->DeleteLocalRef(env, jdev);
+	}
+
+	return device_id;
+}
+
+value ml_device_type(value unit) {
+	DEBUGF("ML_DEVICE_TYPE");
+	CAMLparam0();
+	CAMLlocal1(retval);
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "isTablet", "()Z");
+	jboolean jres = (*env)->CallBooleanMethod(env, jView, mid);
+
+	if (jres) {
+		retval = Val_int(1);
+	} else {
+		retval = Val_int(0);
+	};
+	//(*env)->DeleteLocalRef(env, jres);
+	CAMLreturn(retval);
+}
+
+
+void ml_test_c_fun(value fun) {
+	caml_callback(fun,Val_unit);
 }

@@ -116,7 +116,7 @@ Lightning.init stage;
 
 
 value gray_filter = 
-  Bigarray.Array1.of_array Bigarray.float32 Bigarray.c_layout
+  Filters.colorMatrix
     [| 0.3086000084877014; 0.6093999743461609; 0.0820000022649765; 0.; 0.;
         0.3086000084877014; 0.6093999743461609; 0.0820000022649765; 0.; 0.;
         0.3086000084877014; 0.6093999743461609; 0.0820000022649765; 0.; 0.;
@@ -152,7 +152,7 @@ value tlf (stage:Stage.c) =
   in
   *)
 
-  let tlf_text = TLF.p ~fontWeight:"bold" ~halign:`center ~color:0xFFE000 ~fontSize:18 [`text "Add"] in
+  let tlf_text = TLF.p ~fontWeight:"bold" ~halign:`center ~color:0xFFE000 ~fontSize:18 [`text "Add бля нах"] in
   let (_,text) = TLF.create tlf_text in
   (
     text#setFilters [ Filters.glow ~size:2 ~strength:2. 0x14484D ];
@@ -526,16 +526,16 @@ value window (stage:Stage.c) =
   Testz.init ();
   proftimer "zSort: %F" Testz.zSort ();
 ); *)
+*)
 
 value pallete (stage:Stage.c) =
 (
-  let img = Image.load "pallete.plx" in
+  let img = Image.load "defaulx12.plx" in
   (
     img#setPos 100. 100.;
     stage#addChild img;
   )
 );
-*)
 
 
 value items = 
@@ -646,13 +646,20 @@ value async_images (stage:Stage.c) =
   *)
 
 value image (stage:Stage.c) =
+  let image = Image.load "tree.png" in
+  (
+    image#setX 101.; image#setY 102.;
+    stage#addChild image;
+  );
+  (*
   Texture.load_async "tree.png" begin fun t ->
     let image = Image.create t in
     (
-      image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF));
+(*       image#setColor (`QColors (qColor 0xFF0000 0x00FF00 0x0000FF 0xFFFFFF)); *)
       stage#addChild image;
     )
   end;
+  *)
 
 (*
 value test_gc (stage:Stage.c) = 
@@ -840,9 +847,9 @@ value glow (stage:Stage.c) =
   *)
   let change_filter el = 
     match el#filters with
-    [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ Filters.glow ~kind:`soft ~strength:2. ~size:2 0xFF0000 ]
+    [ [ `Glow {Filters.glowKind=`linear;_} ] -> el#setFilters [ gray_filter ] 
 (*     | [ `Glow {Filters.glowKind=`soft;_} ] -> el#setFilters [ `ColorMatrix gray_filter ] *)
-(*     | [ `ColorMatrix m ] -> el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ] *)
+    | [ `ColorMatrix m ] -> el#setFilters [] (*el#setFilters [ Filters.glow ~kind:`linear ~strength:1. ~size:2 0xFF0000 ] *)
     | [ ] -> el#setFilters [ Filters.glow ~kind:`linear ~size:2 0xFF0000 ]
     | _ -> assert False 
     ]
@@ -1142,7 +1149,7 @@ value assets (s:Stage.c) =
         [ Some [ touch :: _ ] ->
           Touch.(
               match touch.phase with
-              [ TouchPhaseEnded -> Lightning.extractAssets (fun success -> debug "assets extracted, %B" success)
+              [ TouchPhaseEnded -> Lightning.extractAssetsIfRequired (fun success -> debug "assets extracted, %B" success)
               | _ -> ()
               ]
           )
@@ -1318,7 +1325,7 @@ value avsound (stage:Stage.c) path =
         )
       in
         let play = createImg channel1#play
-        and stop = createImg channel1#stop
+        and stop = createImg (fun () -> channel1#setLoop True)
         and pause = createImg channel1#pause in
         (
           ignore(channel1#addEventListener Sound.ev_SOUND_COMPLETE (fun _ _ _ -> debug "pizda"));
@@ -1355,50 +1362,6 @@ value fbtest () =
   *)
   );
 
-value scale (self:Stage.c) = 
-  let img = Image.load "scale.png" in
-  let lib = LightLib.load "BaseDialog" in
-    (
-          self#addChild img;
-          img#setX 13.;
-          img#setY 600.;
-          img#setScaleX 24.;
-          img#setScaleY 33.;
-
-      let img = LightLib.get_symbol lib "ESkins.Background" in
-        (
-          self#addChild img;
-          img#setX 13.;
-          img#setY 17.;
-          img#setScaleX 240.;
-          img#setScaleY 330.;
-          (*
-          let i = ref 1. in
-          let timer = Timer.create ~repeatCount:1000 0.1 "PIZDA" in
-            (
-              ignore(timer#addEventListener Timer.ev_TIMER (fun _ _ _ ->  (debug "SET SCALE %F" !i; img#setScale !i; i.val := !i +. 0.1)));
-              timer#start ();
-            )
-          *)
-        );
-      LightLib.get_symbol_async lib "ESkins.Background" begin fun img -> 
-        (
-          self#addChild img;
-          img#setX 500.;
-          img#setY 17.;
-          img#setScaleX 24.;
-          img#setScaleY 33.;
-          (*
-          let i = ref 1. in
-          let timer = Timer.create ~repeatCount:1000 0.1 "PIZDA" in
-            (
-              ignore(timer#addEventListener Timer.ev_TIMER (fun _ _ _ ->  (debug "SET SCALE %F" !i; img#setScale !i; i.val := !i +. 0.1)));
-              timer#start ();
-            )
-          *)
-        )
-       end;
-    );
 
 value testGetFromUrl () = 
   (
@@ -1418,89 +1381,44 @@ value testGetFromUrl () =
       )   
   );
 
+value texture_atlas (stage:Stage.c) =
+  let () = Texture.scale.val := 2. in
+  let atlas = TextureAtlas.load "libandroid.bin" in
+  let image = Image.create (TextureAtlas.subTexture atlas "/background_levels/1.png") in
+  stage#addChild image;
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      testGetFromUrl ();
+   (*   testGetFromUrl (); *)(
 (*       scale self; *)
 (*       assets self; *)
+(*       pallete self *)
+      glow self;
 (*       avsound self "melody0.mp3"; *)
-      (*
-      debug "qweqweqweqwe";
-      ignore(self#addEventListener Stage.ev_BACK_PRESSED (fun ev _ _ -> ( debug "pizda"; Ev.stopPropagation ev; )));
-*)
-      (* fbtest ();  *)
-(*      avsound self "melody0.mp3"; *)
-      (* assets self; *)
-(*       debug "START OCAML, locale: %s" (Lightning.getLocale()); *)
-(*       assets self; *)
-(*       quad self; *)
+      (* debug "%s" (Lightning.externalStoragePath ()); *)
+      (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)
 (*       tweens self; *)
-      (* touchesTest self; *)
+      
 
-(*       accelerometer (); *)
-        (* BitmapFont.register "MyriadPro-Regular.fnt"; *)
-(*         BitmapFont.register "MyriadPro-Bold.fnt"; *)
-        (* TLF.default_font_family.val := "Myriad Pro"; *)
-(*
-        let ((w, h), tlf) = TLF.create (TLF.p [ TLF.span [`text "test"]; TLF.img ~paddingLeft:30. (Image.load ("e_cactus.png"))]) in
-          self#addChild tlf;
-*)
-        (* map self; *)
-(*         glow self; *)
-(*         image self; *)
-(*         rec_fun self; *)
-(*         test_alpha self; *)
-(*       alert self; *)
-      (* test_exn self; *)
-   (*   tweens self; *)
-      (* flip self; *)
-(*       social self; *)
-(*       async_load self; *)
-(*       filters self; *)
-(*         size self; *)
-(*        tlf self;  *)
-(*       external_image self; *)
-(*       sound self; *)
-(*       atlas self; *)
-(*       masks self; *)
-(*       half_pixels self; *)
-(*         gradient self; *)
-(*         pallete self; *)
-(*         map self; *)
-(*         test_gc self; *)
-(*         library self; *)
-(*         lang self; *)
-(*         memtest_async self; *)
-(*           url_loader self; *)
-        (* map self; *)
-(*         test_gc self; *)
-(*         filters self; *)
-(*         game_center self; *)
-          (* pvr self; *)
-          (* sound self; *)
-(*           url_loader self; *)
-(*           glow self; *)
-(*           storage self; *)
- (*         sound self; *)
-(*         window self; *)
-(*         zsort self; *)
-      (* localNotif (); *)
-(*           music self; *)
-          (* tlf self; *)
-(*           quad self; *)
-          (* hardware self; *)
-(*           glow_and_gc self; *)
-(*        udid self; *)
-       (* bl_greenhouse self; *)
-(*       async_images self; *)
+      (*
+      Lightning.extractAssetsAndExpansionsIfRequired (
+        fun success ->
+          if success then
+            let img = Image.load "unnamed-1.jpg"
+            and img1 = Image.load "prof.jpg" in
+            (
+              self#addChild ~index:0 img1;
+              self#addChild ~index:0 img;              
+            )
+          else
+            debug "fail";
+      ); *)
     end;
   end
 in
-Lightning.init stage;
-
-
+  Lightning.init stage;
+  
 (* debug "VALUE IN STORAGE: %s" (try KVStorage.get_string "pizda" with [ KVStorage.Kv_not_found -> "NOT FOUND"]); *)

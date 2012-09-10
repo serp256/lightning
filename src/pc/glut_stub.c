@@ -48,6 +48,20 @@ void ml_glutCreateWindow(value title) {
 }
 
 
+static value reshapeFunc = 0;
+void on_reshape(int width,int height) {
+	caml_callback2(reshapeFunc,Val_long(width),Val_long(height));
+}
+
+void ml_glutReshapeFunc(value f) {
+	if (reshapeFunc == 0) {
+		reshapeFunc = f;
+		caml_register_generational_global_root(&reshapeFunc);
+	}
+	else caml_modify_generational_global_root(&reshapeFunc,f);
+	glutReshapeFunc(on_reshape);
+}
+
 static value displayFunc = 0;
 
 void on_display(void) {

@@ -26,10 +26,8 @@ value getLocale: unit -> string;
 
 value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
-value extractAssets: (bool -> unit) -> unit;
-value getVersion: unit -> string;
 value getMACID: unit -> string;
 
-IFDEF ANDROID THEN
-value unzip: ?prefix:string -> string -> string -> (bool -> unit) -> unit;
-ENDIF;
+value extractAssetsIfRequired: (bool -> unit) -> unit;
+value extractAssetsAndExpansionsIfRequired: (bool -> unit) -> unit;
+(* value test_c_fun: (unit -> unit) -> unit; *)

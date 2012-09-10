@@ -3,6 +3,7 @@
 #include "render_stub.h"
 #include <caml/callback.h>
 #include "math.h"
+#include "renderbuffer_stub.h"
 
 extern GLuint currentShaderProgram;
 
@@ -403,6 +404,7 @@ value ml_filter_glow(value color, value strength) { struct glowData *gd = (struc
 */
 
 
+/*
 static inline GLuint powOfTwo(unsigned int p) {
 	GLuint r = 1;
 	unsigned int i;
@@ -411,9 +413,10 @@ static inline GLuint powOfTwo(unsigned int p) {
 	}
 	return r;
 }
+*/
 
 void ml_glow2_make(value orb,value glow) {
-	renderbuffer_t *rb = RENDERBUFFER(Field(orb,0));
+	renderbuffer_t *rb = (renderbuffer_t*)orb;
 	int gsize = Int_val(Field(glow,0));
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
 
@@ -454,7 +457,7 @@ void ml_glow2_make(value orb,value glow) {
 		//fprintf(stderr,"we need return new texture\n");
 		// бля не повезло надо бы тут пошаманить
 		// Ебнуть текстуру старую и перезаписать в ml ную структуру
-		update_texture_id(Field(Field(orb,1),0),rb2.tid);
+		//update_texture_id(Field(Field(orb,1),0),rb2.tid);
 		delete_renderbuffer(rb);
 		rb->tid = rb2.tid;
 		rb->fbid = rb2.fbid;
@@ -488,9 +491,9 @@ struct vpclp {
 };
 
 static GLuint maxFB = 20;
-static GLuint* txrs[14][14] = {NULL};
+static GLuint txrs[12][12] = {{0}};
 static GLuint* bfrs = NULL;
-static GLuint powS( GLuint l )
+static inline GLuint powS( GLuint l )
 {
 	if ( l == 1 ) return 0;
 	if ( l == 2 ) return 1;
@@ -504,8 +507,8 @@ static GLuint powS( GLuint l )
 	if ( l == 512 ) return 9;
 	if ( l == 1024 ) return 10;
 	if ( l == 2048 ) return 11;
-	if ( l == 4096 ) return 12;
-	if ( l == 8192 ) return 13;
+//	if ( l == 4096 ) return 12;
+//	if ( l == 8192 ) return 13;
 	char errmsg[255];
 	sprintf(errmsg,"wrong texture size %d", l);
 	caml_failwith(errmsg);
@@ -515,7 +518,8 @@ static GLuint powS( GLuint l )
 void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
 	if (gsize == 0) return ;
-	renderbuffer_t *rb = RENDERBUFFER(Field(orb,0));
+	renderbuffer_t *rb = (renderbuffer_t *)orb;
+	PRINT_DEBUG("glow make for %d:%d",rb->fbid,rb->tid);
 
 	lgResetBoundTextures();
 	framebuffer_state fstate;
@@ -527,7 +531,7 @@ void ml_glow_make(value orb, value glow) {
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
 	glUniform3f(glowPrg->uniforms[0],c.r,c.g,c.b);
 
-	if (bfrs == NULL)
+	if (bfrs == NULL) // можно пооптимальней это сделать
 	{
 		bfrs = caml_stat_alloc(maxFB * sizeof(GLuint));
 		glGenFramebuffers(maxFB, bfrs);
@@ -546,88 +550,55 @@ void ml_glow_make(value orb, value glow) {
 	clipping *cclp = &clp;
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
-	/*if (txrs == NULL)
-	{
-		txrs = caml_stat_alloc(maxFB * sizeof(GLuint));
-		glGenTextures(maxFB, txrs);
-		for (int i = 0; i < maxFB; i++)
-		{
-			glBindTexture(GL_TEXTURE_2D, txrs[i]);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		}
-	}*/
 
-	GLuint * first = NULL;
+	GLuint first = 0;
 
-		//fprintf(stdout,"--------");
 	for (i = 0; i < gsize; i++) {
 		w /= 2;
 		h /= 2;
 		PRINT_DEBUG("forward create fb of size: %d:%d\n",w,h);
 		legalWidth = w;
 		legalHeight = h;
-#if defined(IOS) || defined(ANDROID)
-		if (legalWidth <= 8) {
-			if (legalWidth > legalHeight) legalHeight = legalWidth;
-			else 
-				if (legalHeight > legalWidth * 2) legalWidth = legalHeight/2; 
-				if (legalWidth > 16) legalWidth = 16;
-		} else {
-			if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
-		};
-#endif
-		int tw = powS(legalWidth), th = powS(legalHeight);
-		if ( txrs[tw][th] == NULL)
+		TEXTURE_SIZE_FIX(legalWidth,legalHeight);
+		tw = powS(legalWidth); th = powS(legalHeight);
+		if ( txrs[tw][th] == 0)
 		{
-			txrs[tw][th] = caml_stat_alloc(sizeof(GLuint));
-			glGenTextures(1, txrs[tw][th]);
-
-			glBindTexture(GL_TEXTURE_2D, txrs[tw][th][0]);
+			glGenTextures(1, &(txrs[tw][th]));
+			glBindTexture(GL_TEXTURE_2D, txrs[tw][th]);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		}
-		else
-			glBindTexture(GL_TEXTURE_2D, txrs[tw][th][0]);
+		};
+		/*else
+			glBindTexture(GL_TEXTURE_2D, txrs[tw][th]); */
 
 		//fprintf(stdout,"mas %d %d %d %d \n",tw,th,w,h);
-		if (i == 0) first = txrs[tw][th][0];
+		if (i == 0) first = txrs[tw][th];
 
 		glBindFramebuffer(GL_FRAMEBUFFER, bfrs[i]);
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw][th][0],0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw][th],0);
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 			char errmsg[255];
-			sprintf(errmsg,"glow make. framebuffer %d, %d:%d status: %X",bfrs[i],legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+			sprintf(errmsg,"glow make. bind framebuffer %d to texture, %d:%d status: %X",bfrs[i],legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
 			caml_failwith(errmsg);
 		};
 		glBindTexture(GL_TEXTURE_2D,ctid);
 		cvp = &vpclps[i].vp;
 		cvp->x = (legalWidth - w)/2; cvp->y = (legalHeight - h)/2; cvp->w = w; cvp->h = h;
 		glow_make_draw(cvp,cclp);
+		checkGLErrors("glow_make_draw - forward");
 		cclp = &vpclps[i].clp;
 		cclp->x = (double)cvp->x / legalWidth; cclp->y = (double)cvp->y / legalHeight; cclp->width = (double)w / legalWidth; cclp->height = (double)h / legalHeight;
-		ctid = txrs[tw][th][0];
+		ctid = txrs[tw][th];
 	};
 
 	GLuint cbuf;
 	for (i = gsize - 1; i > 0 ; i--) {
 		legalWidth = w;
 		legalHeight = h;
-#if defined(IOS) || defined(ANDROID)
-		if (legalWidth <= 8) {
-			if (legalWidth > legalHeight) legalHeight = legalWidth;
-			else 
-				if (legalHeight > legalWidth * 2) legalWidth = legalHeight/2; 
-				if (legalWidth > 16) legalWidth = 16;
-		} else {
-			if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth;
-		};
-#endif
+		TEXTURE_SIZE_FIX(legalWidth,legalHeight);
 		int tw = powS(legalWidth), th = powS(legalHeight);
 		w *= 2;
 		h *= 2;
@@ -636,7 +607,7 @@ void ml_glow_make(value orb, value glow) {
 		cbuf = bfrs[i-1];
 		glBindFramebuffer(GL_FRAMEBUFFER,cbuf);
 		cvp = &vpclps[i-1].vp;
-		ctid = txrs[tw][th][0];
+		ctid = txrs[tw][th];
 		glBindTexture(GL_TEXTURE_2D,ctid);
 		cclp = &vpclps[i].clp;
 		glow_make_draw(cvp,cclp);

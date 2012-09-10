@@ -19,7 +19,6 @@ import android.content.res.Resources;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.Intent;
-import android.media.SoundPool;
 import android.view.SurfaceHolder;
 import android.content.Context;
 import java.io.FileInputStream;
@@ -35,14 +34,40 @@ import android.os.Environment;
 
 import ru.redspell.lightning.payments.BillingService;
 import ru.redspell.lightning.payments.ResponseHandler;
+import com.google.android.vending.expansion.downloader.Helpers;
+import com.tapjoy.TapjoyConnect;
+import com.tapjoy.TapjoyLog;
 
-import android.media.MediaPlayer;
-import android.media.AudioManager;
 import android.os.Process;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
+import android.provider.Settings.Secure;
+import android.provider.Settings;
+import android.view.Display;
+
+import ru.redspell.lightning.expansions.XAPKFile;
 
 public class LightView extends GLSurfaceView {
+    public String getExpansionPath(boolean isMain) {
+    	for (XAPKFile xf : activity.getXAPKS()) {
+    		if (xf.mIsMain == isMain) {
+    			return Helpers.generateSaveFileName(activity, Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion));
+    		}
+    	}
+
+    	return null;
+    }
+
+    public int getExpansionVer(boolean isMain) {
+    	for (XAPKFile xf : activity.getXAPKS()) {
+    		if (xf.mIsMain == isMain) {
+    			return xf.mFileVersion;
+    		}
+    	}
+
+    	return -1;
+    }
+
 	private class UnzipCallbackRunnable implements Runnable {
 		private String zipPath;
 		private String dstPath;
@@ -57,8 +82,38 @@ public class LightView extends GLSurfaceView {
 		public native void run();
 	}
 
+	private class RmCallbackRunnable implements Runnable {
+		private int threadParams;
+
+		public RmCallbackRunnable(int threadParams) {
+			this.threadParams = threadParams;
+		}
+
+		public native void run();
+	}
+	
+	public String device_id () {
+		return Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
+	}
+
+	public boolean isTablet () {
+    Display display = activity.getWindowManager().getDefaultDisplay();
+    DisplayMetrics displayMetrics = new DisplayMetrics();
+    display.getMetrics(displayMetrics);
+
+    int width = displayMetrics.widthPixels / displayMetrics.densityDpi;
+    int height = displayMetrics.heightPixels / displayMetrics.densityDpi;
+
+    double screenDiagonal = Math.sqrt( width * width + height * height );
+    return (screenDiagonal >= 6.5 );
+	}
+
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {
 		queueEvent(new UnzipCallbackRunnable(zipPath, dstPath, success));
+	}
+
+	public void callRmComplete(int cb) {
+		queueEvent(new RmCallbackRunnable(cb));
 	}
 
 	public String getApkPath() {
@@ -89,9 +144,9 @@ public class LightView extends GLSurfaceView {
 
 	public static LightView instance;
 	
-	public Activity activity;
+	public LightActivity activity;
 
-	public LightView(Activity _activity) {
+	public LightView(LightActivity _activity) {
 		super(_activity);
 		activity = _activity;
 
@@ -110,19 +165,21 @@ public class LightView extends GLSurfaceView {
 
 		instance = this;
 
+		// FIXME: move it to payments init
 		bserv = new BillingService();
 		bserv.setContext(activity);
 		ResponseHandler.register(activity);
+
+		// FIXME: move it to FB init
 		fb = new AndroidFB();
-		fb.setView (this);
 	}
 
 	protected void initView(int width,int height) {
 		setEGLContextClientVersion(2);
 		Log.d("LIGHTNING","create Renderer");
 		renderer = new LightRenderer(width,height);
-		setFocusableInTouchMode(true);
 		setRenderer(renderer);
+		setFocusableInTouchMode(true);
 	}
 
 	public void surfaceCreated(SurfaceHolder holder) {
@@ -133,14 +190,6 @@ public class LightView extends GLSurfaceView {
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		Log.d("LIGHTNING","surfaceDestroyed");
 		super.surfaceDestroyed(holder);
-	}
-
-	public int getSoundId(String path, SoundPool sndPool) throws IOException {
-		if (path.charAt(0) == '/') {
-			return sndPool.load(path, 1);
-		}
-
-		return sndPool.load(getContext().getAssets().openFd(path), 1);
 	}
 
 	public ResourceParams getResource(String path) {
@@ -193,7 +242,7 @@ public class LightView extends GLSurfaceView {
 	public boolean onTouchEvent(final MotionEvent event) {
 		//Log.d("LIGHTNING","Touch event");
 
-		//dumpMotionEvent(event);
+		dumpMotionEvent(event);
 
 		final int idx;
 		final int id;
@@ -388,9 +437,7 @@ public class LightView extends GLSurfaceView {
 	}
 
   private String supportEmail = "mail@redspell.ru";
-	public void setSupportEmail(String d){
-		supportEmail = d;
-	}
+	public void setSupportEmail(String d){ supportEmail = d; }
 
 	public void addExceptionInfo(String d) {
     //openURL("mailto:".concat(supportEmail).concat("?subject=test&body=wtf"));
@@ -428,20 +475,6 @@ public class LightView extends GLSurfaceView {
 		return getContext().getFilesDir().getPath();
 	}
 
-	public MediaPlayer createMediaPlayer(String path) throws IOException {
-		AssetFileDescriptor afd = getContext().getAssets().openFd(path);
-
-		MediaPlayer mp = new LightMediaPlayer();
-
-		Log.d("LIGHTNING", path);
-
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-		mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-
-		return mp;
-	}
-
-
 	public void onBackButton() {
 		queueEvent(new Runnable() {
 			@Override
@@ -449,5 +482,47 @@ public class LightView extends GLSurfaceView {
 				renderer.handleBack();
 			}
 		});
+	}
+
+
+	public void initTapjoy(String appID, String secretKey) {
+		//TapjoyLog.enableLogging(true);
+		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
+	}
+
+	public void extractExpansions() {
+		Log.d("LIGHTNING", "extracting expansions");
+
+	    for (XAPKFile xf : activity.getXAPKS()) {
+            String fileName = Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion);
+
+            Log.d("LIGHTNING", "checking " + fileName + "...");
+
+            if (!Helpers.doesFileExist(activity, fileName, xf.mFileSize, false)) {
+            	Log.d("LIGHTNING", fileName + " does not exists, start download service");
+
+				getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						activity.startExpansionDownloadService();
+					}
+				});
+
+            	return;
+            }
+
+            Log.d("LIGHTNING", "ok");
+        }
+
+        expansionsDownloaded();
+	}
+
+	private class ExpansionsExtractedCallbackRunnable implements Runnable {
+		native public void run();
+	}
+
+	public void expansionsDownloaded() {
+		Log.d("LIGHTNING", "expansions downloaded");
+		queueEvent(new ExpansionsExtractedCallbackRunnable());
 	}
 }

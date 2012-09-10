@@ -100,7 +100,7 @@ struct custom_operations textureID_ops = {
 	{struct tex *_tex = TEX(mltex); _tex->tid = texID; FILL_TEXTURE(texID,_path,dataLen);}
 //*TEXTURE_ID(mlTextureID) = tid;
 
-value alloc_texture_id(GLuint textureID, unsigned int dataLen) {
+value texture_id_alloc(GLuint textureID, unsigned int dataLen) {
 	value mlTextureID;
 	Store_textureID(mlTextureID,textureID,"alloc",dataLen);
 	return mlTextureID;
@@ -242,7 +242,6 @@ int loadPlxPtr(gzFile fptr,textureInfo *tInfo) {
 	//fprintf(stderr,"PLX [%s] file with size %d:%d readed\n",path,width,height);
 
 
-	tInfo->format = LTextureFormatPallete;
 	tInfo->format = (pallete << 16) | LTextureFormatPallete;
 	tInfo->width = tInfo->realWidth = width;
 	tInfo->height = tInfo->realHeight = height;
@@ -370,6 +369,29 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 #else
 						return 0;
 #endif
+
+        case LTextureFormatDXT1:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 4;        	
+        	p->glTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+
+            break;
+#else
+			return 0;
+#endif
+
+        case LTextureFormatDXT5:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 8;        	
+        	p->glTexFormat = 0x83F3;
+
+            break;
+#else
+			return 0;
+#endif
+
         case LTextureFormat565:
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_RGB;
@@ -386,7 +408,9 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
             p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
             break;
     }
-		return 1;
+
+    PRINT_DEBUG("p->glTexType %d %d", p, p->glTexType);
+	return 1;
 }
 
 
@@ -400,13 +424,12 @@ void ml_delete_texture(value textureID) {
 
 
 value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
-    
 		texParams params;
     params.glTexType = GL_UNSIGNED_BYTE;
     params.bitsPerPixel = 4;
     params.compressed = 0;
 
-		if (!textureParams(tInfo,&params)) return 0;
+	if (!textureParams(tInfo,&params)) return 0;
 
     if (!params.compressed && ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height)))
 			glPixelStorei(GL_UNPACK_ALIGNMENT,4);
@@ -437,27 +460,30 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 
+		PRINT_DEBUG("filter is %d",filter);
 		switch (Int_val(filter)) {
 			case 0: 
+				PRINT_DEBUG("SET NEAREST FILTER");
 				if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 				else
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-				break;
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					break;
 			case 1:
+				PRINT_DEBUG("SET LINEAR FILTER");
 				if (tInfo->numMipmaps > 0 || tInfo->generateMipmaps)
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 				else
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				break;
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					break;
 			default: break;
 		};
     
 		int level;
     if (!params.compressed)
-    {       
+    {
 			/*
 				if ((tInfo->format & 0xFFFF) == LTextureFormatRGBA || (nextPOT(tInfo->width) == tInfo->width && nextPOT(tInfo->height) == tInfo->height))
 					glPixelStorei(GL_UNPACK_ALIGNMENT,4);
@@ -562,7 +588,7 @@ void ml_free_image_info(value tInfo) {
 */
 
 
-// сделать рендер буфер
+/* сделать рендер буфер
 int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter) {
   GLuint rtid;
 	GLuint iw = ceil(width);
@@ -638,9 +664,12 @@ int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr,GLenum filter) {
 	dr->realHeight = sr->realHeight;
 	return 0;
 }
+*/
 
 
 
+/* RENDERBUFFER 
+ **********************
 struct custom_operations renderbuffer_ops = {
   "pointer to a image",
 	custom_finalize_default,
@@ -710,50 +739,10 @@ value ml_renderbuffer_create(value format, value filter, value width,value heigh
 	checkGLErrors("renderbuffer create");
 	return renderbuffer_to_ml(orb);
 
-	/*
-	CAMLparam0();
-	CAMLlocal1(mlTextureID);
-	GLuint mTextureID;
-	checkGLErrors("start create rendertexture");
-	glGenTextures(1, &mTextureID);
-	lgGLBindTexture(mTextureID,PMA);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
-	int w = Long_val(width),h = Long_val(height);
-	PRINT_DEBUG("create rtexture: [%d:%d]\n",w,h);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	checkGLErrors("tex image 2d for framebuffer %d:%d",w,h);
-	glBindTexture(GL_TEXTURE_2D,0);
-	boundTextureID = 0;
-	GLuint mFramebuffer;
-	GLint oldBuffer;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&oldBuffer);
-	glGenFramebuffers(1, &mFramebuffer);
-	PRINT_DEBUG("generated new framebuffer: %d\n",mFramebuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-	checkGLErrors("bind framebuffer");
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID,0);
-	checkGLErrors("framebuffer texture");
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		PRINT_DEBUG("framebuffer status: %d\n",glCheckFramebufferStatus(GL_FRAMEBUFFER));
-		caml_failwith("failed to create frame buffer for render texture");
-	};
-	//color3F c = COLOR3F_FROM_INT(Int_val(color));
-	//glClearColor(c.r,c.g,c.b,(GLclampf)Double_val(alpha));
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBindFramebuffer(GL_FRAMEBUFFER,oldBuffer);
-	//printf("old buffer: %d\n",oldBuffer);
-	Store_textureID(mlTextureID,mTextureID,w * h * 4);
-	value result = caml_alloc_small(2,0);
-	Field(result,0) = Val_long(mFramebuffer);
-	Field(result,1) = mlTextureID;
-	CAMLreturn(result);
-	*/
-};
+}; */
 
 
+/*
 value ml_renderbuffer_clone(value orb) {
 	CAMLparam1(orb);
 	GLint oldBuffer;
@@ -767,9 +756,10 @@ value ml_renderbuffer_clone(value orb) {
 	checkGLErrors("renderbuffer clone");
 	CAMLreturn(renderbuffer_to_ml(orbc));
 }
+*/
 
 
-/*
+/* VERY OLD
 value ml_resize_texture(value textureID,value width,value height) {
 	GLuint tid = TEXTURE_ID(textureID);
 	int w = Long_val(width);
@@ -786,6 +776,7 @@ value ml_resize_texture(value textureID,value width,value height) {
 }
 */
 
+/*
 value ml_renderbuffer_resize(value orb,value owidth,value oheight) {
 	CAMLparam3(orb,owidth,oheight);
 	CAMLlocal3(renderInfo,clip,clp);
@@ -860,9 +851,9 @@ void ml_renderbuffer_delete(value orb) {
 	renderbuffer_t *rb = RENDERBUFFER(orb);
 	//fprintf(stderr,"delete renderbuffer: %d\n",rb->fbid);
 	glDeleteFramebuffers(1,&rb->fbid);
-}
+} */
 
-/*
+/* OLD OLD OLD
 CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 	CAMLparam2(mlTexInfo,imgData);
 	textureInfo tInfo;
