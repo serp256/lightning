@@ -1387,16 +1387,21 @@ value texture_atlas (stage:Stage.c) =
   let image = Image.create (TextureAtlas.subTexture atlas "/background_levels/1.png") in
   stage#addChild image;
 
+
+value version () = debug "Version %S" (Lightning.getVersion ());
+
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-   (*   testGetFromUrl (); *)(
+      version ();
+   (*   testGetFromUrl (); *)
 (*       scale self; *)
 (*       assets self; *)
 (*       pallete self *)
-      glow self;
+(*      glow self; *)
 (*       avsound self "melody0.mp3"; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)

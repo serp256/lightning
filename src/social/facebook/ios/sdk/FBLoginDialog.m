@@ -46,8 +46,6 @@
  */
 - (void) dialogDidSucceed:(NSURL*)url {
     NSString *q = [url absoluteString];
-		NSLog(@"PIZDA");
-//		NSLog(@"dialogDidSycceed %s",q);
     NSString *token = [self getStringFromUrl:q needle:@"access_token="];
     NSString *expTime = [self getStringFromUrl:q needle:@"expires_in="];
     NSDate *expirationDate =nil;
