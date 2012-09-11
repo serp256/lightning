@@ -83,6 +83,14 @@ ELSE
 external getLocale: unit -> string = "ml_getLocale";
 ENDIF;
 
+IFDEF IOS THEN
+external getVersion: unit -> string = "ml_getVersion";
+ELSE
+value getVersion () = "PC version";
+ENDIF;
+
+
+
 external memUsage: unit -> int = "ml_memUsage";
 type malinfo = 
   {

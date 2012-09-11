@@ -37,7 +37,6 @@ module Session = struct
 
   value facebook_logged_in () = 
   (
-    Printf.eprintf "facebook_logged_in %s\n" (str_auth !auth_status);
     match !isUserAuthorize with
     [ True -> 
       (
@@ -64,7 +63,6 @@ module Session = struct
 
   value facebook_session_invalidated () = 
   (  
-    Printf.eprintf "facebook_session_invalidated %s\n" (str_auth !auth_status);
     match !isUserAuthorize with
     [ True -> 
         (
@@ -100,7 +98,6 @@ module Session = struct
   
 
   value with_auth_check callback = 
-    let () = Printf.eprintf "with_auth_check %s\n" (str_auth !auth_status) in
     match !auth_status with
     [ Authorized -> callback True
     | Authorizing callbacks -> Queue.add callback callbacks
@@ -154,7 +151,6 @@ value request graph_path params ?delegate () =
   let f = (fun _ -> _request graph_path params ?delegate:delegate ())
   in 
     (
-      Printf.eprintf "GraphAPI.request\n";
       Session.with_auth_check f;
     );
 
@@ -254,7 +250,6 @@ value apprequest ?(message="") ?(recipients=[]) ?(filter=All) ?(title="") ?deleg
   let f = (fun _ -> _apprequest ~message ~recipients ~filter ?delegate ())
   in 
     (
-      Printf.eprintf "DIALOG.apprequest\n";
       Session.with_auth_check f;
     );
 

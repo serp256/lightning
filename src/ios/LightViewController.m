@@ -60,6 +60,15 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	return instance;
 }
 
+
++(NSString *) version {
+	NSLog(@"VERSION");
+	NSBundle *bundle = [NSBundle mainBundle];
+	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+	return appVersion;
+}
+
+
 -(id)init {
   self = [super init];
   if (self != nil) {
