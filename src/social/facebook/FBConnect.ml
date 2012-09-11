@@ -289,7 +289,8 @@ module Session = struct
   value permissions = ref [];
 
   external android_facebook_check_auth_token : unit -> bool = "ml_fb_check_auth_token";
-  value get_auth_token () = "";
+  external get_auth_token : unit -> string = "ml_fb_get_auth_token";
+  (* value get_auth_token () = ""; *)
 
   value facebook_logged_in () = 
   (

@@ -47,6 +47,7 @@ import android.provider.Settings;
 import android.view.Display;
 
 import java.nio.ByteBuffer;
+import android.graphics.Color;
 
 import ru.redspell.lightning.expansions.XAPKFile;
 import java.util.Formatter;
@@ -556,33 +557,51 @@ public class LightView extends GLSurfaceView {
 		retval.legalHeight = Math.max(64, retval.height);
 
 		if (retval.width != retval.legalWidth || retval.height != retval.legalHeight) {
-			bmp = Bitmap.createBitmap(bmp, 0, 0, retval.legalWidth, retval.legalHeight);
-		}  
+			Log.d("LIGHTNING", "create new bmp " + String.format("%d %d %d %d", retval.width, retval.height, retval.legalWidth, retval.legalHeight));
+			
+			try {
+				int[] pixels = new int[retval.legalWidth * retval.legalHeight];
+				bmp.getPixels(pixels, 0, retval.legalWidth, 0, 0, retval.width, retval.height);
 
-		int bytesPerPixel;
-
-		switch (bmp.getConfig ()) {
-			case ARGB_8888:
-				bytesPerPixel = 4;
-				break;
-
-			/*
-			case Bitmap.Config.ALPHA_8:
-				bytesPerPixel = 1;
-				break;
-
-			case Bitmap.Config.RGB_565:
-				bytesPerPixel = 2;
-				break;
-			*/
-
-			default:
+				Bitmap _bmp = Bitmap.createBitmap(retval.legalWidth, retval.legalHeight, Bitmap.Config.ARGB_8888);
+				_bmp.setPixels(pixels, 0, retval.legalWidth, 0, 0, retval.legalWidth, retval.legalHeight);
+				bmp.recycle();
+				bmp = _bmp;
+			} catch (Exception e) {
+				Log.d("LIGHTNING", "exception " + e.getMessage());
 				return null;
+			}
 		}
+
+		Log.d("LIGHTNING", bmp.toString());
+
+		int bytesPerPixel = 4;
+
+		/*
+		Config bmpCfg = bmp.getConfig();
+
+		if (bmpCfg == null) {
+			Log.d("LIGHTNING", "unknown config, return null");
+		} else {
+			switch (bmpCfg) {
+				case ARGB_8888:
+					Log.d("LIGHTNING", "ARGB_8888");
+					break;
+
+				case ALPHA_8:
+				case RGB_565:
+				case ARGB_4444:
+					Log.d("LIGHTNING", "wrong bmp cfg " + bmpCfg);
+					return null;
+			}
+		}*/
 
 		ByteBuffer buf = ByteBuffer.allocate(bmp.getWidth() * bmp.getHeight() * bytesPerPixel);
 		bmp.copyPixelsToBuffer(buf);
+		bmp.recycle();
 		retval.data = buf.array();
+
+		Log.d("LIGHTNING", "return texinfo");
 
 		return retval;
 	}

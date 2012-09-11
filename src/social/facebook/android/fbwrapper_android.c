@@ -153,6 +153,26 @@ value ml_fb_check_auth_token(value unit) {
 	CAMLreturn(check_result);
 }
 
+value ml_fb_get_auth_token() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	
+	jclass fbCls = getFbCls();
+	static jmethodID getAuthTokenMid;
+	if (!getAuthTokenMid) getAuthTokenMid = (*env)->GetStaticMethodID(env, fbCls, "getAccessToken", "()Ljava/lang/String;");
+	jstring jauthToken = (*env)->CallStaticObjectMethod(env, fbCls, getAuthTokenMid);
+	char* cauthToken = (*env)->GetStringUTFChars(env, jauthToken, JNI_FALSE);
+
+	PRINT_DEBUG("cauthToken %s", cauthToken);
+
+	value retval = caml_copy_string(cauthToken);
+
+	(*env)->ReleaseStringUTFChars(env, jauthToken, cauthToken);
+	(*env)->DeleteLocalRef(env, jauthToken);
+
+	return retval;
+}
+
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_AndroidFB_successGraphAPI(JNIEnv *env, jobject this, jstring response) {
 	PRINT_DEBUG("SUCCESS CALLBACK");
 	const char *l = (*env)->GetStringUTFChars(env, response, JNI_FALSE);

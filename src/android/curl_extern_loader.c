@@ -3,6 +3,7 @@
 #include "light_common.h"
 #include "texture_common.h"
 #include "thqueue.h"
+#include "net_curl.h"
 
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
@@ -119,9 +120,13 @@ void* loader_thread(void* params) {
 			    (*env)->SetByteArrayRegion(env, src, 0, buf_pos, (jbyte*)buf);
 			    jobject jtexInfo = (*env)->CallObjectMethod(env, jView, decodeImgMid, src);
 
+			    PRINT_DEBUG("jtexInfo %d", jtexInfo);
+
 			    if (jtexInfo) {
+			    	
 				    if (!wFid) {
 				    	jclass texInfoCls = (*env)->GetObjectClass(env, jtexInfo);
+				    	PRINT_DEBUG("texInfoCls %d", texInfoCls);
 
 					    wFid = (*env)->GetFieldID(env, texInfoCls, "width", "I");
 					    hFid = (*env)->GetFieldID(env, texInfoCls, "height", "I");
@@ -156,6 +161,7 @@ void* loader_thread(void* params) {
 				    (*env)->DeleteLocalRef(env, jdata);
 
 				    (*env)->CallVoidMethod(env, jView, curlExtLdrSuccessMid, (int)req, (int)texInfo);
+
 			    } else {
 			    	caml_error(req, 100, "cannot parse image binary");
 			    }
@@ -171,6 +177,8 @@ void* loader_thread(void* params) {
 }
 
 void ml_loadExternalImage(value url, value cb, value errCb) {
+	initCurl();
+
 	JNIEnv *env;
     (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 

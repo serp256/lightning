@@ -23,6 +23,12 @@ public class AndroidFB {
 		return fb.isSessionValid ();
 	}
 
+	public static String getAccessToken() {
+		Log.d("LIGHTNING", "getAccessToken " + fb.getAccessToken());
+
+		return fb.getAccessToken();
+	}
+
 	public static void init (String app_id) {
 	 	Log.d("LIGHTNING", "Init FB " + app_id);
 		fb = new Facebook(app_id);
