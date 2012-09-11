@@ -159,6 +159,9 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               in
               match (g_texture,g_image) with
               [ (Some gtex,Some gimg) ->
+                match gtex#draw ~width:rw ~height:rh drawf with
+                [ True -> RenderImage.update gimg gtex#renderInfo False False
+                ]
               | (None,None) ->
               (
                 let g_image = Render.Image.create tex#renderInfo color alpha in
