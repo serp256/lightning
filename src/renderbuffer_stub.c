@@ -155,6 +155,8 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 
 	caml_callback(mlfun,(value)&rb);
 
+	PRINT_DEBUG("end ocaml drawing function for %d:%d",rb.fbid,rb.tid);
+
 	renderbuffer_deactivate();
 
 	set_framebuffer_state(&fstate);
@@ -221,8 +223,8 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 	rb.realWidth = legalWidth;
 	rb.realHeight = legalHeight;
 	if (resized) {
-		Store_field(renderInfo,1,owidth);
-		Store_field(renderInfo,2,oheight);
+		Store_field(renderInfo,1,caml_copy_double(width));
+		Store_field(renderInfo,2,caml_copy_double(height));
 		value clip;
 		if (legalWidth == width && legalHeight == height) {
 			rb.clp = (clipping){0.,0.,1.,1.};
