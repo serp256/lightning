@@ -76,16 +76,11 @@ void caml_error(cel_request_t* req, int errCode, char* errMes) {
 
 		char* _errMes = malloc(strlen(errMes) + 1);
 		strcpy(_errMes, errMes);
-
-		// PRINT_DEBUG("caml_error %d %s", errCode, _errMes);
-
-		PRINT_DEBUG("curlExtLdrErrorMid %d", curlExtLdrErrorMid);
-
 		(*env)->CallVoidMethod(env, jView, curlExtLdrErrorMid, (int)req, errCode, (int)_errMes);		
 	}
 }
 
-void loader_thread(void* params) {
+void* loader_thread(void* params) {
 	pthread_mutex_lock(&mutex);
 
 	CURL* curl_hndlr = curl_easy_init();
@@ -200,7 +195,7 @@ void ml_loadExternalImage(value url, value cb, value errCb) {
 		caml_failwith("cannot create requests queue");
 	}
 
-	if (!tid && pthread_create(&tid, NULL, loader_thread, NULL)) {
+	if (!tid && pthread_create(&tid, NULL, &loader_thread, NULL)) {
 		caml_failwith("cannot create loader thread");
 	}
 
@@ -231,8 +226,8 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlExternCallb
 		texInfoFid = (*env)->GetFieldID(env, runnableCls, "texInfo", "I");
 	}
 
-	cel_request_t* req = (*env)->GetIntField(env, this, reqFid);
-	textureInfo* texInfo = (*env)->GetIntField(env, this, texInfoFid);
+	cel_request_t* req = (cel_request_t*)(*env)->GetIntField(env, this, reqFid);
+	textureInfo* texInfo = (textureInfo*)(*env)->GetIntField(env, this, texInfoFid);
 
 	value textureID = createGLTexture(1, texInfo, Val_int(1));
 	value mlTex = 0;
@@ -258,7 +253,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlExternError
 		errMesMid = (*env)->GetFieldID(env, runnableCls, "errMes", "I");
 	}
 
-	cel_request_t* req = (*env)->GetIntField(env, this, reqFid);
+	cel_request_t* req = (cel_request_t*)(*env)->GetIntField(env, this, reqFid);
 	int errCode = (*env)->GetIntField(env, this, errCodeMid);
 	char* errMes = (char*)(*env)->GetIntField(env, this, errMesMid);
 
