@@ -441,11 +441,14 @@ public class LightView extends GLSurfaceView {
 	}
 
   private String supportEmail = "mail@redspell.ru";
-	public void setSupportEmail(String d){ supportEmail = d; }
+	public void mlSetSupportEmail(String d){ supportEmail = d; }
 
-	public void addExceptionInfo(String d) {
-    //openURL("mailto:".concat(supportEmail).concat("?subject=test&body=wtf"));
-	}
+  private String additionalExceptionInfo = "\n";
+  public void mlAddExceptionInfo(String d) {
+		additionalExceptionInfo += d;
+		Log.d("LIGHTNING", "additionalExceptionInfo now is" + additionalExceptionInfo + '\n');
+		//openURL("mailto:".concat(supportEmail).concat("?subject=test&body=wtf"));
+  }
 
 	public void mlUncaughtException(String exn,String[] bt) {
 		Context c = getContext();
@@ -463,6 +466,7 @@ public class LightView extends GLSurfaceView {
 		for (String b : bt) {
 			body.append(b);body.append('\n');
 		};
+		body.append(additionalExceptionInfo);
 		uri.append("&body=" + Uri.encode(body.toString()));
 		Log.d("LIGHTNING","URI: " + uri.toString());
 		Intent sendIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(uri.toString ()));

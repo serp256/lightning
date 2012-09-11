@@ -107,10 +107,10 @@ ELSE
 IFDEF ANDROID THEN 
 external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
 external setSupportEmail: string -> unit = "ml_setSupportEmail";
-ENDIF;
-
+ELSE
 value addExceptionInfo (_:string) = ();
 value setSupportEmail (_:string) = ();
+ENDIF;
 ENDIF;
 
 IFDEF ANDROID THEN
