@@ -530,8 +530,24 @@ public class LightView extends GLSurfaceView {
 		queueEvent(new ExpansionsExtractedCallbackRunnable());
 	}
 
+	private static class TexInfo {
+		public int width;
+		public int height;
+		public int legalWidth;
+		public int legalHeight;
+		public byte[] data;
+	}
+
 	public TexInfo decodeImg(byte[] src) {
+		Log.d("LIGHTNING", "decodeImg");
+
 		Bitmap bmp = BitmapFactory.decodeByteArray(src, 0, src.length);
+
+		if (bmp == null) {
+			Log.d("LIGHTNING", "cannot create bitmap");
+			return null;
+		}
+
 		TexInfo retval = new TexInfo();
 
 		retval.width = bmp.getWidth();
@@ -566,22 +582,9 @@ public class LightView extends GLSurfaceView {
 
 		ByteBuffer buf = ByteBuffer.allocate(bmp.getWidth() * bmp.getHeight() * bytesPerPixel);
 		bmp.copyPixelsToBuffer(buf);
-
 		retval.data = buf.array();
 
-		Formatter f = new Formatter();
-
-		Log.d("LIGHTNING", (f.format("%d %d %d %d %d", retval.width, retval.height, retval.legalWidth, retval.legalHeight, retval.data.length)).toString());
-
 		return retval;
-	}
-
-	private static class TexInfo {
-		public int width;
-		public int height;
-		public int legalWidth;
-		public int legalHeight;
-		public byte[] data;
 	}
 
 	private static class CurlExternCallbackRunnable implements Runnable {
@@ -609,9 +612,7 @@ public class LightView extends GLSurfaceView {
 			this.errMes = errMes;
 		}
 
-		public void run() {
-			Log.d("LIGHTNING", "CurlExternErrorCallbackRunnable run");
-		}
+		public native void run();
 	}
 
 	public void curlExternalLoaderSuccess(int req, int texInfo) {
@@ -619,7 +620,7 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void curlExternalLoaderError(int req, int errCode, int errMes) {
-		Log.d("LIGHTNING", "curlExternalLoaderError");
+		Log.d("LIGHTNING", "curlExternalLoaderError " + errCode + " " + errMes);
 		queueEvent(new CurlExternErrorCallbackRunnable(req, errCode, errMes));
 	}
 }
