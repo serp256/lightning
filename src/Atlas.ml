@@ -144,7 +144,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               and rh = bounds.Rectangle.height +. (float gs) in
               let ip = {Point.x = (float hgs) -. bounds.Rectangle.x;y= (float hgs) -. bounds.Rectangle.y} in
               let cm = Matrix.create ~translate:ip () in
-              let tex = RenderTexture.draw rw rh begin fun fb ->
+              let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh begin fun fb ->
                 (
                   Render.push_matrix cm;
 (*                   Render.clear 0 0.; *)

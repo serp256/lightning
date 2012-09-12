@@ -306,7 +306,7 @@ class _c  _texture =
         and rh = h +. (float gs) in
         let cm = Matrix.create ~translate:{Point.x = float hgs; y = float hgs} () in
         let image = Render.Image.create renderInfo `NoColor 1. in
-        let tex = RenderTexture.draw rw rh begin fun fb ->
+        let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh begin fun fb ->
           (
             Render.Image.render cm g_make_program image; 
             match glow.Filters.glowKind with
