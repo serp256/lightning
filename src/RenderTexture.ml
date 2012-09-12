@@ -8,7 +8,7 @@ external delete_textureID: textureID -> unit = "ml_texture_id_delete" "noalloc";
 
 type framebuffer;
 external renderbuffer_draw: ?filter:filter -> ?color:int -> ?alpha:float -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
-external renderbuffer_draw_to_texture: ?color:int -> ?alpha:float -> ?width:float -> ?height:float -> renderInfo -> (framebuffer -> unit) -> bool = "ml_renderbuffer_draw_to_texture_byte" "ml_renderbuffer_draw_to_texture";
+external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?width:float -> ?height:float -> renderInfo -> (framebuffer -> unit) -> bool = "ml_renderbuffer_draw_to_texture_byte" "ml_renderbuffer_draw_to_texture";
 
 
 module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
@@ -66,8 +66,8 @@ class c renderInfo =
 
     *)
 
-    method draw ?color ?alpha ?width ?height (f:(framebuffer -> unit)) = 
-      let resized = renderbuffer_draw_to_texture ?color ?alpha ?width ?height renderInfo f in
+    method draw ?clear ?width ?height (f:(framebuffer -> unit)) = 
+      let resized = renderbuffer_draw_to_texture ?clear ?width ?height renderInfo f in
       (
         Renderers.iter (fun r -> r#onTextureEvent `CHANGE (self :> Texture.c)) renderers;
         resized;

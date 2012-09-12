@@ -110,6 +110,7 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 }
 
 
+/*
 static void inline gl_clear(value ocolor,value oalpha) {
 	color3F clr;
 	if (ocolor == Val_none) clr = (color3F){0.,0.,0.};
@@ -121,6 +122,7 @@ static void inline gl_clear(value ocolor,value oalpha) {
 	glClearColor(clr.r,clr.g,clr.b,alpha);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
+*/
 
 value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwidth, value mlheight, value mlfun) {
 	CAMLparam0();
@@ -151,7 +153,15 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 
 	PRINT_DEBUG("start ocaml drawing function for %d:%d",rb.fbid,rb.tid);
 
-	gl_clear(ocolor,oalpha);
+	color3F clr;
+	if (ocolor == Val_none) clr = (color3F){0.,0.,0.};
+	else {
+		int c = Int_val(Field(ocolor,0));
+		clr = COLOR3F_FROM_INT(c);
+	};
+	GLfloat alpha = oalpha == Val_none ? 0. : Double_val(Field(oalpha,0));
+	glClearColor(clr.r,clr.g,clr.b,alpha);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	caml_callback(mlfun,(value)&rb);
 
@@ -191,7 +201,7 @@ value ml_renderbuffer_draw_byte(value * argv, int n) {
 	return (ml_renderbuffer_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]));
 }
 
-value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, value oheight, value renderInfo, value mlfun) {
+value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight, value renderInfo, value mlfun) {
 	CAMLparam4(renderInfo,owidth,oheight,mlfun);
 	CAMLlocal1(clp);
 
@@ -287,7 +297,14 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 
 	renderbuffer_activate(&rb);
 
-	gl_clear(ocolor,oalpha);
+	if (mlclear != Val_none) {
+		value ca = Field(mlclear,0);
+		int c = Int_val(Field(ca,0));
+		color3F clr = COLOR3F_FROM_INT(c);
+		GLfloat alpha = Double_val(Field(ca,1));
+		glClearColor(clr.r,clr.g,clr.b,alpha);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
 
 	caml_callback(mlfun,(value)&rb);
 
@@ -299,6 +316,6 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 }
 
 value ml_renderbuffer_draw_to_texture_byte(value *argv, int n) {
-	return (ml_renderbuffer_draw_to_texture(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]));
+	return (ml_renderbuffer_draw_to_texture(argv[0],argv[1],argv[2],argv[3],argv[4]));
 }
 

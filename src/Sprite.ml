@@ -90,7 +90,7 @@ class c =
              [ (Some img, Some tex) -> 
                let () = debug "get_tex [%f:%f] [%f:%f]" w h tex#width tex#height in
                (
-                 match tex#draw ~width ~height f with
+                 match tex#draw ~clear:(0,0.) ~width ~height f with
                  [ True -> Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False
                  | False -> ()
                  ]
