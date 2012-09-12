@@ -94,15 +94,6 @@ class c =
                  [ True -> Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False
                  | False -> ()
                  ]
-                 (*
-                   if tex#width <> w || tex#height <> h
-                   then
-                   (
-                     tex#resize w h;
-                     Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False;
-                     tex
-                   ) else tex
-                 *)
                )
              | (None,None) -> 
                  let tex = RenderTexture.draw width height f in
@@ -181,7 +172,7 @@ class c =
     ];
 
     method setFilters fltrs = 
-      let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t filters)) self#name in
+      let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
       (
         filters := fltrs;
         match fltrs with

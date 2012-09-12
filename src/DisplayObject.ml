@@ -122,6 +122,7 @@ value prerender () =
         RefList.copy prerender_objects locked_prerenders;
         prerender_locked.val := None;
       );
+      debug:prerender "end prerender";
     )
   ];
 
@@ -221,6 +222,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     value prerenders : Queue.t (unit -> unit) = Queue.create ();
     method private addToPrerenders _ _ lid = 
     (
+      debug:prerender "addToPrerenders: %s" self#name;
       match Queue.is_empty prerenders with
       [ False -> add_prerender (self :> prerenderObj)
       | True -> ()

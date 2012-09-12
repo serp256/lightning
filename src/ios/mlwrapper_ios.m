@@ -358,6 +358,13 @@ value ml_getLocale() {
 }
 
 
+value ml_getVersion() {
+	PRINT_DEBUG("PIZDA=====================");
+	NSString * vers = [LightViewController version];
+	value s = caml_copy_string([vers UTF8String]);
+	return s;
+}
+
 void ml_addExceptionInfo(value mlinfo) {
 	NSString *info = [NSString stringWithCString:String_val(mlinfo) encoding:NSUTF8StringEncoding];
 	[LightViewController addExceptionInfo:info];

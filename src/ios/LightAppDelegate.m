@@ -70,6 +70,7 @@
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
   
+	NSLog(@"didRegisterForRemote");
   if (Is_long(lightViewController->remote_notification_request_success_cb)) {
     NSLog(@"You requested for remote notifications, but didn't provide a success callback");
     return;
@@ -106,12 +107,18 @@
 
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
+	 	NSString *urlString = [url absoluteString];
+	  const char *str = [urlString UTF8String];
+		NSLog(@"UIApplication handleOpenURL %s", str);
     [[NSNotificationCenter defaultCenter] postNotificationName: @"applicationHandleOpenURL" object: self userInfo: [NSDictionary dictionaryWithObject: url forKey:@"url"]];
     return YES;
 }
 
     
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+	 	NSString *urlString = [url absoluteString];
+	  const char *str = [urlString UTF8String];
+		NSLog(@"UIApplication openURL %s", str);
     [[NSNotificationCenter defaultCenter] postNotificationName: @"applicationHandleOpenURL" object: self userInfo: [NSDictionary dictionaryWithObject: url forKey:@"url"]];
     return YES;
 }
