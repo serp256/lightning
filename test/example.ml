@@ -152,7 +152,7 @@ value tlf (stage:Stage.c) =
   in
   *)
 
-  let tlf_text = TLF.p ~fontWeight:"bold" ~halign:`center ~color:0xFFE000 ~fontSize:18 [`text "Add бля нах"] in
+  let tlf_text = TLF.p (*~fontWeight:"bold"*) ~halign:`center ~color:0xFFE000 ~fontSize:14 [`text "Add бля нах"] in
   let (_,text) = TLF.create tlf_text in
   (
     text#setFilters [ Filters.glow ~size:2 ~strength:2. 0x14484D ];
@@ -889,14 +889,20 @@ value glow (stage:Stage.c) =
     img#setPos 100. 150.;
     stage#addChild img;
   );
+  *)
+
+);
+
+value glow_text (stage:Stage.c) = 
   let text = "Ежедневный бонус PipIy" in
   (
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
     (
+      text#setFilters [ Filters.glow ~size:2 0 ];
       text#setPos 120. 200.;
       stage#addChild text;
-      onClick text change_filter;
     );
+    (*
     let sprite = Sprite.create () in
     (
       let img = Image.load "tree.png" in
@@ -910,7 +916,8 @@ value glow (stage:Stage.c) =
       sprite#setPos 10. 300.;
       onClick sprite change_filter;
     );
-  )
+    *)
+  );
     (*
     let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFF0000 [ `text text ]) in
     (
@@ -918,9 +925,6 @@ value glow (stage:Stage.c) =
       stage#addChild text;
     );
     *)
-  );
-  *)
-);
 
 value quad (stage:Stage.c) = 
   let q = Quad.create (*~color:(`Color 0xFF0000)*) 200. 200. in
@@ -1401,7 +1405,7 @@ let stage width height =
 (*       scale self; *)
 (*       assets self; *)
 (*       pallete self *)
-(*      glow self; *)
+     tlf self;
 (*       avsound self "melody0.mp3"; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)

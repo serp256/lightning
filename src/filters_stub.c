@@ -519,7 +519,7 @@ void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
 	if (gsize == 0) return ;
 	renderbuffer_t *rb = (renderbuffer_t *)orb;
-	PRINT_DEBUG("glow make for %d:%d",rb->fbid,rb->tid);
+	PRINT_DEBUG("glow make for %d:%d, [%f:%f] [%d:%d]",rb->fbid,rb->tid,rb->width,rb->height,rb->realWidth,rb->realHeight);
 
 	lgResetBoundTextures();
 	framebuffer_state fstate;
@@ -541,7 +541,8 @@ void ml_glow_make(value orb, value glow) {
 	int i;
 	GLuint w = rb->realWidth;
 	GLuint h = rb->realHeight;
-	int tw = powS (w), th = powS (h);
+	//int tw = powS (w), th = powS (h);
+	int tw,th;
 	GLuint legalWidth;
 	GLuint legalHeight;
 	GLuint ctid = rb->tid;
@@ -556,7 +557,7 @@ void ml_glow_make(value orb, value glow) {
 	for (i = 0; i < gsize; i++) {
 		w /= 2;
 		h /= 2;
-		PRINT_DEBUG("forward create fb of size: %d:%d\n",w,h);
+		PRINT_DEBUG("forward create fb of size: %d:%d",w,h);
 		legalWidth = w;
 		legalHeight = h;
 		TEXTURE_SIZE_FIX(legalWidth,legalHeight);
@@ -564,6 +565,7 @@ void ml_glow_make(value orb, value glow) {
 		if ( txrs[tw][th] == 0)
 		{
 			glGenTextures(1, &(txrs[tw][th]));
+			PRINT_DEBUG("create texture of size: %d:%d = %d",legalWidth,legalHeight,txrs[tw][th]);
 			glBindTexture(GL_TEXTURE_2D, txrs[tw][th]);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -586,6 +588,7 @@ void ml_glow_make(value orb, value glow) {
 		};
 		glBindTexture(GL_TEXTURE_2D,ctid);
 		cvp = &vpclps[i].vp;
+		PRINT_DEBUG("draw forward to fb %d from tx %d",bfrs[i],ctid);
 		cvp->x = (legalWidth - w)/2; cvp->y = (legalHeight - h)/2; cvp->w = w; cvp->h = h;
 		glow_make_draw(cvp,cclp);
 		checkGLErrors("glow_make_draw - forward");
@@ -599,16 +602,17 @@ void ml_glow_make(value orb, value glow) {
 		legalWidth = w;
 		legalHeight = h;
 		TEXTURE_SIZE_FIX(legalWidth,legalHeight);
-		int tw = powS(legalWidth), th = powS(legalHeight);
+		tw = powS(legalWidth); th = powS(legalHeight);
+
 		w *= 2;
 		h *= 2;
-		//fprintf(stdout,"min %d %d %d %d \n",tw,th,legalWidth,legalHeight);
 		
 		cbuf = bfrs[i-1];
 		glBindFramebuffer(GL_FRAMEBUFFER,cbuf);
 		cvp = &vpclps[i-1].vp;
 		ctid = txrs[tw][th];
 		glBindTexture(GL_TEXTURE_2D,ctid);
+		PRINT_DEBUG("glow back draw to fb %d from tx %d",cbuf,ctid);
 		cclp = &vpclps[i].clp;
 		glow_make_draw(cvp,cclp);
 	};
@@ -619,6 +623,7 @@ void ml_glow_make(value orb, value glow) {
 	glUniform1f(fglowPrg->uniforms[0],Double_val(Field(glow,2)));
 	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
 	glBindTexture(GL_TEXTURE_2D,first);
+	PRINT_DEBUG("glow final draw to fb %d from tx %d",rb->fbid,first);
 	viewport vp = {0.,0.,rb->realWidth,rb->realHeight};
 	glow_make_draw(&vp,&vpclps[0].clp);
 /*

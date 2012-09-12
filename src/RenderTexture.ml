@@ -7,7 +7,7 @@ external delete_textureID: textureID -> unit = "ml_texture_id_delete" "noalloc";
 
 
 type framebuffer;
-external renderbuffer_draw: ?filter:filter -> ?color:int -> ?alpha:float -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
+external renderbuffer_draw: ~filter:filter -> ?color:int -> ?alpha:float -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
 external renderbuffer_draw_to_texture: ?color:int -> ?alpha:float -> ?width:float -> ?height:float -> renderInfo -> (framebuffer -> unit) -> bool = "ml_renderbuffer_draw_to_texture_byte" "ml_renderbuffer_draw_to_texture";
 
 
@@ -76,4 +76,4 @@ class c renderInfo =
   end; (*}}}*)
 
 
-value draw ?filter ?color ?alpha width height f = new c (renderbuffer_draw ?filter width height f);
+value draw ~filter ?color ?alpha width height f = new c (renderbuffer_draw ?filter width height f);
