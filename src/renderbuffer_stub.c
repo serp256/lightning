@@ -91,7 +91,6 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
 	fbid = get_framebuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, fbid);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
   r->fbid = fbid;
   r->tid = rtid;
 	r->vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
@@ -100,6 +99,7 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
   r->height = height;
 	r->realWidth = legalWidth;
 	r->realHeight = legalHeight;
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
 	return 0;
 }
 
@@ -137,6 +137,7 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 }
 
 
+/*
 static void inline gl_clear(value ocolor,value oalpha) {
 	color3F clr;
 	if (ocolor == Val_none) clr = (color3F){0.,0.,0.};
@@ -148,6 +149,7 @@ static void inline gl_clear(value ocolor,value oalpha) {
 	glClearColor(clr.r,clr.g,clr.b,alpha);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
+*/
 
 
 value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwidth, value mlheight, value mlfun) {
@@ -168,7 +170,7 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 	renderbuffer_t rb; 
 	if (create_renderbuffer(Double_val(mlwidth),Double_val(mlheight),&rb,fltr)) {
 		char emsg[255];
-		sprintf(emsg,"renderbuffer_draw. create framebuffer %d error: %d",rb.fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		set_framebuffer_state(&fstate);
 		caml_failwith(emsg);
 	};
@@ -179,9 +181,19 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 
 	PRINT_DEBUG("start ocaml drawing function for %d:%d",rb.fbid,rb.tid);
 
-	gl_clear(ocolor,oalpha);
+	color3F clr;
+	if (ocolor == Val_none) clr = (color3F){0.,0.,0.};
+	else {
+		int c = Int_val(Field(ocolor,0));
+		clr = COLOR3F_FROM_INT(c);
+	};
+	GLfloat alpha = oalpha == Val_none ? 0. : Double_val(Field(oalpha,0));
+	glClearColor(clr.r,clr.g,clr.b,alpha);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	caml_callback(mlfun,(value)&rb);
+
+	PRINT_DEBUG("end ocaml drawing function for %d:%d",rb.fbid,rb.tid);
 
 	renderbuffer_deactivate();
 
@@ -217,12 +229,13 @@ value ml_renderbuffer_draw_byte(value * argv, int n) {
 	return (ml_renderbuffer_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]));
 }
 
-value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, value oheight, value renderInfo, value mlfun) {
+value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight, value renderInfo, value mlfun) {
 	CAMLparam4(renderInfo,owidth,oheight,mlfun);
 	CAMLlocal1(clp);
 
 	double cwidth = Double_val(Field(renderInfo,1));
 	double cheight = Double_val(Field(renderInfo,2));
+
 
 	int resized = 0;
 	double width = cwidth;
@@ -236,6 +249,8 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 		height = Double_val(Field(oheight,0));
 		resized = 1;
 	};
+	PRINT_DEBUG("draw to texture: [%f:%f] -> [%f:%f]",cwidth,cheight,width,height);
+
 	GLuint legalWidth = nextPOT(ceil(width));
 	GLuint legalHeight = nextPOT(ceil(height));
 	TEXTURE_SIZE_FIX(legalWidth,legalHeight);
@@ -246,8 +261,8 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 	rb.realWidth = legalWidth;
 	rb.realHeight = legalHeight;
 	if (resized) {
-		Store_field(renderInfo,1,owidth);
-		Store_field(renderInfo,2,oheight);
+		Store_field(renderInfo,1,caml_copy_double(width));
+		Store_field(renderInfo,2,caml_copy_double(height));
 		value clip;
 		if (legalWidth == width && legalHeight == height) {
 			rb.clp = (clipping){0.,0.,1.,1.};
@@ -301,18 +316,24 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
   glBindFramebuffer(GL_FRAMEBUFFER, rb.fbid);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rb.tid,0);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		set_framebuffer_state(&fstate);
 		char emsg[255];
-		sprintf(emsg,"draw to texture framebuffer %d error: %d\n",rb.fbid,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		sprintf(emsg,"draw to texture framebuffer '%d', texture: '%d' [%d:%d], status: %X\n",rb.fbid,rb.tid,legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		set_framebuffer_state(&fstate);
     caml_failwith(emsg);
   };
 
 	// clear 
 
-
 	renderbuffer_activate(&rb);
 
-	gl_clear(ocolor,oalpha);
+	if (mlclear != Val_none) {
+		value ca = Field(mlclear,0);
+		int c = Int_val(Field(ca,0));
+		color3F clr = COLOR3F_FROM_INT(c);
+		GLfloat alpha = Double_val(Field(ca,1));
+		glClearColor(clr.r,clr.g,clr.b,alpha);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
 
 	caml_callback(mlfun,(value)&rb);
 
@@ -325,6 +346,6 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 }
 
 value ml_renderbuffer_draw_to_texture_byte(value *argv, int n) {
-	return (ml_renderbuffer_draw_to_texture(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]));
+	return (ml_renderbuffer_draw_to_texture(argv[0],argv[1],argv[2],argv[3],argv[4]));
 }
 

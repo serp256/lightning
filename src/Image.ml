@@ -323,7 +323,7 @@ class _c  _texture =
           in
           match (g_texture,g_image) with
           [ (None,None) ->
-            let tex = RenderTexture.draw rw rh drawf in
+            let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
             (
               let g_image = Render.Image.create tex#renderInfo color alpha in
               (
@@ -334,7 +334,7 @@ class _c  _texture =
               gf.g_texture := Some tex;
             )
           | (Some gtex,Some gimg) ->
-              match gtex#draw ~width:rw ~height:rh drawf with
+              match gtex#draw ~clear:(0,0.) ~width:rw ~height:rh drawf with
               [ True -> Render.Image.update gimg gtex#renderInfo ~flipX:texFlipX ~flipY:texFlipY
               | False -> ()
               ]

@@ -522,21 +522,21 @@ value load_async ?(with_suffix=True) ?(filter=defaultFilter.val) ?(use_pvr=True)
 
 
 
-IFDEF IOS THEN
+IFPLATFORM(ios android) 
+
 external loadExternalImage: string -> (textureInfo -> unit) -> option (int -> string -> unit) -> unit = "ml_loadExternalImage";
-value loadExternal url ~callback ~errorCallback = 
+value loadExternal url ~callback ~errorCallback =
+  let url = ExtString.String.(if starts_with url "https://" then let (_, url) = replace url "https://" "http://" in url else url) in
   loadExternalImage url begin fun textureInfo ->
     let texture = make textureInfo in
     callback (texture :> c)
   end errorCallback;
 
-
-
 ELSE
 
-value loadExternal url ~callback ~errorCallback = (); (* TODO: Get it by URLLoader *)
-
-ENDIF;
+  value loadExternal url ~callback ~errorCallback = (); (* TODO: Get it by URLLoader *)
+  
+ENDPLATFORM;
 
 
 

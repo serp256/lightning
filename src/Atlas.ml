@@ -138,6 +138,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
             then
+            (
               let hgs =  (powOfTwo glow.Filters.glowSize) - 1 in
               let gs = hgs * 2 in
               let rw = bounds.Rectangle.width +. (float gs)
@@ -159,13 +160,13 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               in
               match (g_texture,g_image) with
               [ (Some gtex,Some gimg) ->
-                match gtex#draw ~width:rw ~height:rh drawf with
-                [ True -> RenderImage.update gimg gtex#renderInfo False False
+                match gtex#draw ~clear:(0,0.) ~width:rw ~height:rh drawf with
+                [ True -> Render.Image.update gimg gtex#renderInfo False False
+                | False -> ()
                 ]
               | (None,None) ->
-              (
+                let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
                 let g_image = Render.Image.create tex#renderInfo color alpha in
-                let tex = RenderTexture.draw rw rh
                 (
                   gf.g_matrix := 
                     Matrix.create 
@@ -173,9 +174,10 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                   gf.g_texture := Some tex;
                   gf.g_image := Some g_image;
                 )
-              )
               | _ -> assert False
-              ]
+              ];
+              gf.g_valid := True;
+            )
             else gf.g_valid := True
         | _ -> () (* Debug.w "update glow not need" *)
         ];

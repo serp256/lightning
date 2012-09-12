@@ -1374,8 +1374,76 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-(*       pallete self *)
-      glow self;
+      let ldr = new URLLoader.loader () in
+      (
+        let img = Image.load "Russia.png" in
+        (
+          self#addChild img;
+
+          ignore(Stage.(
+            img#addEventListener ev_TOUCH (fun ev _ _ ->
+              match touches_of_data ev.Ev.data with
+              [ Some [ touch :: _ ] ->
+                Touch.(
+                    match touch.phase with
+                    [ TouchPhaseEnded ->
+                      (
+                        if self#numChildren > 1 then
+                          ignore(self#removeChildAtIndex 1)
+                        else ();
+
+                        Texture.loadExternal "https://fbcdn-profile-a.akamaihd.net/hprofile-ak-ash3/48582_100000080434666_1839_q.jpg" ~callback:(
+                          fun tex -> let img = Image.create tex in ( self#addChild img; img#setX 50.; img#setY 200.; )
+                        ) ~errorCallback:(Some (fun errCode errMes -> debug "caml err callback: %d %s" errCode errMes))                     
+                      )
+                    | _ -> ()
+                    ]
+                )
+              | _ -> ()
+              ]
+            )
+          ));
+        );
+      );
+        
+
+
+(*         ldr#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "ldr1 progress %s" (Int64.to_string ldr#bytesLoaded));
+        ldr#addEventListener URLLoader.ev_COMPLETE (fun ev _ _ -> debug "ldr1 complete");
+        ldr#load (URLLoader.request "http://interfacelift.com/wallpaper/D47cd523/03059_amazingmountainsunset_2560x1440.jpg");
+
+        let img = Image.load "Russia.png" in
+        (
+          self#addChild img;
+
+          ignore(Stage.(
+            img#addEventListener ev_TOUCH (fun ev _ _ ->
+              match touches_of_data ev.Ev.data with
+              [ Some [ touch :: _ ] ->
+                Touch.(
+                    match touch.phase with
+                    [ TouchPhaseEnded -> ldr#cancel ()
+                    | _ -> ()
+                    ]
+                )
+              | _ -> ()
+              ]
+            )
+          ));
+        );
+      );
+
+      let ldr = new URLLoader.loader () in
+      (
+        ldr#addEventListener URLLoader.ev_PROGRESS (fun ev _ _ -> debug "ldr2 progress %s" (Int64.to_string ldr#bytesLoaded));
+        ldr#addEventListener URLLoader.ev_COMPLETE (fun ev _ _ -> debug "ldr2 complete");
+        ldr#load (URLLoader.request "http://interfacelift.com/wallpaper/D47cd523/03058_pollinate_2560x1440.jpg");
+      ); *)
+        
+      (* debug "extensions %s" (Render.get_gl_extensions ()); *)
+(*       let img = Image.load "1.png" in
+        self#addChild img; *)
+      (* pallete self *)
 (*       avsound self "melody0.mp3"; *)
       (* debug "%s" (Lightning.externalStoragePath ()); *)
       (* Lightning.extractAssets (fun _ -> Lightning.extractExpansions (fun _ -> let img = Image.load "unnamed-1.jpg" in self#addChild img)); *)

@@ -83,6 +83,14 @@ ELSE
 external getLocale: unit -> string = "ml_getLocale";
 ENDIF;
 
+IFDEF IOS THEN
+external getVersion: unit -> string = "ml_getVersion";
+ELSE
+value getVersion () = "PC version";
+ENDIF;
+
+
+
 external memUsage: unit -> int = "ml_memUsage";
 type malinfo = 
   {
@@ -107,10 +115,10 @@ ELSE
 IFDEF ANDROID THEN 
 external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
 external setSupportEmail: string -> unit = "ml_setSupportEmail";
-ENDIF;
-
+ELSE
 value addExceptionInfo (_:string) = ();
 value setSupportEmail (_:string) = ();
+ENDIF;
 ENDIF;
 
 IFDEF ANDROID THEN

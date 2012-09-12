@@ -38,6 +38,15 @@ size_t my_headerfunction(char *buffer,size_t size,size_t nitems, void *p) {
 }
 */
 
+void initCurl() {
+	static int init;
+
+	if (!init) {
+		curl_global_init(CURL_GLOBAL_SSL);
+		init = 1;
+	}
+}
+
 static void send_headers_to_ml (struct request *r) {
 	CAMLparam0();
 	CAMLlocal1(ml_string);
@@ -136,7 +145,7 @@ void net_perform() {
 
 CAMLprim value ml_URLConnection(value url, value method, value headers, value data) {
 	if (curlm == NULL) {
-		curl_global_init(CURL_GLOBAL_NOTHING);
+		initCurl();
 		curlm = curl_multi_init();
 	};
 	struct request *r = (struct request*)caml_stat_alloc(sizeof(struct request));

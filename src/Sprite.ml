@@ -90,22 +90,13 @@ class c =
              [ (Some img, Some tex) -> 
                let () = debug "get_tex [%f:%f] [%f:%f]" w h tex#width tex#height in
                (
-                 match tex#draw ~width ~height f with
+                 match tex#draw ~clear:(0,0.) ~width ~height f with
                  [ True -> Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False
                  | False -> ()
                  ]
-                 (*
-                   if tex#width <> w || tex#height <> h
-                   then
-                   (
-                     tex#resize w h;
-                     Render.Image.update img tex#renderInfo ~flipX:False ~flipY:False;
-                     tex
-                   ) else tex
-                 *)
                )
              | (None,None) -> 
-                 let tex = RenderTexture.draw width height f in
+                 let tex = RenderTexture.draw ~filter:Texture.FilterLinear width height f in
                  let img = Render.Image.create tex#renderInfo ~color:`NoColor ~alpha:1. in
                  (
                    c.c_tex := Some tex;
@@ -142,7 +133,7 @@ class c =
                    let alpha' = alpha in
                    (
                      self#setAlpha 1.;
-                     let ctex = RenderTexture.draw rw rh begin fun _ ->
+                     let ctex = RenderTexture.draw ~filter:Texture.FilterNearest rw rh begin fun _ ->
                        (
                          Render.push_matrix m;
                          Render.clear 0 0.;
@@ -181,7 +172,7 @@ class c =
     ];
 
     method setFilters fltrs = 
-      let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t filters)) self#name in
+      let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
       (
         filters := fltrs;
         match fltrs with

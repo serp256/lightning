@@ -994,7 +994,7 @@ void ml_addExceptionInfo (value info){
 
 void ml_setSupportEmail (value d){
   JNIEnv *env;
-	DEBUG("set support email");
+	DEBUG("DDD: set support email");
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 	char* cd = String_val(d);
