@@ -287,15 +287,17 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         then
         (
           match glowFilter with
-          [ Some ({g_texture;_} as gf) -> 
+          [ Some {g_valid=True;_} -> 
             (
+(*
               match g_texture with
               [ Some tex -> (tex#release (); gf.g_texture := None)
               | None -> () 
               ];
+*)
               self#addPrerender self#updateGlowFilter;
             )
-          | None -> ()
+          | _ -> ()
           ];
           dirty := True; 
         )
@@ -313,7 +315,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         if DynArray.length children > 0
         then 
           match glowFilter with
-          [ Some {g_image = Some g_image; g_matrix; g_program; _ } -> 
+          [ Some {g_valid = True; g_image = Some g_image; g_matrix; g_program; _ } -> 
             Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' g_image
           | _ -> 
               let alpha = match alpha' with [ Some a -> a *. alpha | None -> alpha ] in
