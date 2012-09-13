@@ -215,6 +215,9 @@ public class Helpers {
     static public String generateSaveFileName(Context c, String fileName) {
         String path = getSaveFilePath(c)
                 + File.separator + fileName;
+
+        Log.d("LIGHTNING", "generateSaveFileName " + path);
+
         return path;
     }
 

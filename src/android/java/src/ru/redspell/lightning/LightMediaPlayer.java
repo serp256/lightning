@@ -9,6 +9,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.io.IOException;
+import java.io.FileInputStream;
 
 public class LightMediaPlayer extends MediaPlayer {
 	private static ArrayList<LightMediaPlayer> instances;
@@ -94,11 +95,27 @@ public class LightMediaPlayer extends MediaPlayer {
 		}
 	}
 
+	private static class OffsetSizePair {
+		public int offset;
+		public int size;
+
+		public OffsetSizePair(int offset, int size) {
+			this.offset = offset;
+			this.size = size;
+		}
+	}
+
+	private static native OffsetSizePair getOffsetSizePair(String path);
+
 	public static MediaPlayer createMediaPlayer(String assetsDir, String path) throws IOException {
 		MediaPlayer mp = new LightMediaPlayer();
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-		if (assetsDir != null) {
+		OffsetSizePair pair = getOffsetSizePair(path);
+
+		if (pair != null) {
+			mp.setDataSource((new FileInputStream(LightView.instance.getExpansionPath(true))).getFD(), pair.offset, pair.size);
+		} else if (assetsDir != null) {
 			mp.setDataSource(assetsDir + (assetsDir.charAt(assetsDir.length() - 1) == '/' ? "" : "/") + path);
 		} else {
 			AssetFileDescriptor afd = LightView.instance.getContext().getAssets().openFd(path);
@@ -109,7 +126,11 @@ public class LightMediaPlayer extends MediaPlayer {
 	}
 
 	public static int getSoundId(String path, SoundPool sndPool) throws IOException {
-		if (path.charAt(0) == '/') {
+		OffsetSizePair pair = getOffsetSizePair(path);
+
+		if (pair != null) {
+			sndPool.load((new FileInputStream(LightView.instance.getExpansionPath(true))).getFD(), pair.offset, pair.size, 1);
+		} else if (path.charAt(0) == '/') {
 			return sndPool.load(path, 1);
 		}
 

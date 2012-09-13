@@ -110,6 +110,8 @@ value zero : c =
 
 type imageInfo;
 external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> bool -> textureInfo = "ml_loadImage";
+
+
 (* external loadImage: ?textureID:textureID -> ~path:string -> ~suffix:option string -> filter -> unit = "ml_loadImage"; 
 value zero_textureInfo = 
   {

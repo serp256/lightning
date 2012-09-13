@@ -646,4 +646,18 @@ public class LightView extends GLSurfaceView {
 		Log.d("LIGHTNING", "curlExternalLoaderError " + errCode + " " + errMes);
 		queueEvent(new CurlExternErrorCallbackRunnable(req, errCode, errMes));
 	}
+
+	private static class ExpansionsCallbackRunnable implements Runnable {
+		private int cb;
+
+		public ExpansionsCallbackRunnable(int cb) {
+			this.cb = cb;
+		}
+
+		public native void run();
+	}
+
+	public void callExpansionsComplete(int cb) {
+		queueEvent(new ExpansionsCallbackRunnable(cb));
+	}
 }

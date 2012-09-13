@@ -527,24 +527,35 @@ void ml_downloadExpansions() {
 static jmethodID gGetExpansionPathMid;
 static jmethodID gGetExpansionVerMid;
 
-value ml_getExpansionPath(value isMain) {
-    CAMLparam1(isMain);
-    CAMLlocal1(vpath);
-
+char* get_expansion_path(int main) {
     JNIEnv *env;
-    (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+    (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+    //(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
     if (!gGetExpansionPathMid) {
         gGetExpansionPathMid = (*env)->GetMethodID(env, jViewCls, "getExpansionPath", "(Z)Ljava/lang/String;");
     }
 
-    jstring jpath = (*env)->CallObjectMethod(env, jView, gGetExpansionPathMid, Bool_val(isMain));
-		if (!jpath) caml_failwith("Expansion path not specified");
+    jstring jpath = (*env)->CallObjectMethod(env, jView, gGetExpansionPathMid, main);
+    if (!jpath) caml_failwith("Expansion path not specified");
     const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
-    vpath = caml_copy_string(cpath);
+
+    char* retval = (char*)malloc(strlen(cpath) + 1);
+    strcpy(retval, cpath);
 
     (*env)->ReleaseStringUTFChars(env, jpath, cpath);
     (*env)->DeleteLocalRef(env, jpath);
+
+    return retval;
+}
+
+value ml_getExpansionPath(value isMain) {
+    CAMLparam1(isMain);
+    CAMLlocal1(vpath);
+
+    char* cpath = get_expansion_path(Bool_val(isMain));
+    vpath = caml_copy_string(cpath);
+    free(cpath);
 
     CAMLreturn(vpath);
 }

@@ -124,6 +124,8 @@ external rm : string -> string -> (unit -> unit) -> unit = "ml_rm";
 external downloadExpansions : unit -> unit = "ml_downloadExpansions";
 external getExpansionPath : bool -> string = "ml_getExpansionPath";
 external getExpansionVer : bool -> int = "ml_getExpansionVer";
+external _extractExpansions : (bool -> unit) -> unit = "ml_extractExpansions";
+external expansionExtracted : unit -> bool = "ml_expansionExtracted";
 
 value unzipCbs = Hashtbl.create 0;
 
@@ -146,13 +148,13 @@ value apkPath = _apkPath ();
 value apkVer = _getVersion ();
 value externalStoragePath = _externalStoragePath ();
 value assetsVerFilename = externalStoragePath ^ "assets/a" ^ apkVer;
-value expansionVerFilename = externalStoragePath ^ "assets/e" ^ (string_of_int (getExpansionVer True));
+(* value expansionVerFilename = externalStoragePath ^ "assets/e" ^ (string_of_int (getExpansionVer True)); *)
 
 value assetsExtracted () =
   Sys.file_exists assetsVerFilename;
 
-value expansionExtracted () =
-  Sys.file_exists expansionVerFilename;
+(* value expansionExtracted () =
+  Sys.file_exists expansionVerFilename; *)
 
 value extractAssets cb =
   let assetsPath = externalStoragePath ^ "assets" in
@@ -172,16 +174,15 @@ value extractAssets cb =
 
 value extractExpansions cb =
 (
-  Callback.register "expnsDownloadComplete" (
-    fun () -> unzip (getExpansionPath True) (externalStoragePath ^ "assets/") (
+  Callback.register "expnsDownloadComplete" (fun () -> _extractExpansions cb);
+  downloadExpansions ();
+(*     fun () -> unzip (getExpansionPath True) (externalStoragePath ^ "assets/") (
       fun success ->
       (
         if success then close_out (open_out expansionVerFilename) else ();
         cb success;
       )
-    )
-  );
-  downloadExpansions ();
+    ) *)
 );
 
 value extractAssetsIfRequired cb =
@@ -193,28 +194,19 @@ value extractAssetsIfRequired cb =
   else
     rm (ExtString.String.slice ~last:~-1 externalStoragePath) "assets" (fun () -> extractAssets cb);
 
-value extractAssetsAndExpansionsIfRequired cb =
-  if (assetsExtracted ()) && (expansionExtracted ()) then
-  (
-    setAssetsDir (externalStoragePath ^ "assets/");
-    cb True;
-  )
-  else
-    let extractAssetsRes = ref None
-    and extractExpansionRes = ref None in
-      let callCb () =
-        match (!extractAssetsRes, !extractExpansionRes) with
-        [ (Some ear, Some eer) ->  cb (ear && eer)
-        | _ -> ()
-        ]
-      in
-        let rmCb () =
-        (
-          extractAssets (fun success -> ( extractAssetsRes.val := Some success; callCb (); ));
-          extractExpansions (fun success -> ( extractExpansionRes.val := Some success; callCb (); ));
-        )
-        in
-          rm (ExtString.String.slice ~last:~-1 externalStoragePath) "assets" rmCb;
+value extractAssetsAndExpansionsIfRequired cb =  
+  let extractAssetsRes = ref None
+  and extractExpansionRes = ref None in
+    let callCb () =
+      match (!extractAssetsRes, !extractExpansionRes) with
+      [ (Some ear, Some eer) ->  cb (ear && eer)
+      | _ -> ()
+      ]
+    in
+    (
+      extractAssetsIfRequired (fun success -> ( extractAssetsRes.val := Some success; callCb (); ));
+      extractExpansions (fun success -> ( extractExpansionRes.val := Some success; callCb (); ));
+    );
 
 (* external test_c_fun: (unit -> unit) -> unit = "ml_test_c_fun"; *)
 

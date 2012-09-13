@@ -11,7 +11,7 @@
 #include "mlwrapper_android.h"
 #include "net_curl.h"
 #include "assets_extractor.h"
-
+#include "khash.h"
 
 #define caml_acquire_runtime_system()
 #define caml_release_runtime_system()
@@ -36,6 +36,11 @@ typedef enum
     St_bool_val, 
     St_string_val, 
   } st_val_type;
+
+typedef struct {
+	int32_t offset;
+	int32_t size;
+} offset_size_pair_t;  
 
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",exn);
@@ -199,76 +204,89 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env,
 // NEED rewrite it for libzip
 int getResourceFd(const char *path, resource *res) { //{{{
 	//DEBUGF("getResourceFD: %s",path);
+	offset_size_pair_t* os_pair;
 
-	if (gAssetsDir != NULL) {
-		int assetsDirLen = strlen(gAssetsDir);
-		int pathLen = strlen(path);
+	if (!get_expansion_offset_size_pair(path, &os_pair)) {
+		char* expnsn_path = get_expansion_path(1);
 
-		char *assetPath = (char*)malloc(assetsDirLen + pathLen + 1);
-		strcpy(assetPath, gAssetsDir);
-		strcpy(assetPath + assetsDirLen, path);
-
-		//DEBUGF("assetPath: %s", assetPath);
-
-		int fd = open(assetPath, O_RDONLY);
-		free(assetPath);
-
-		if (fd < 0) {
-			return 0;
-		}
-
+		int fd = open(expnsn_path, O_RDONLY);
+		if (fd < 0) return 0;
+		lseek(fd, os_pair->offset, SEEK_SET);
+		
 		res->fd = fd;
-		res->length = lseek(fd, 0, SEEK_END);
-		lseek(fd, 0, SEEK_SET);
-	} else {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
-		if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
-		{
-			__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+		res->length = os_pair->size;
+
+		free(expnsn_path);
+	} else
+		if (gAssetsDir != NULL) {
+			int assetsDirLen = strlen(gAssetsDir);
+			int pathLen = strlen(path);
+
+			char *assetPath = (char*)malloc(assetsDirLen + pathLen + 1);
+			strcpy(assetPath, gAssetsDir);
+			strcpy(assetPath + assetsDirLen, path);
+
+			//DEBUGF("assetPath: %s", assetPath);
+
+			PRINT_DEBUG("assetPath %s", assetPath);
+
+			int fd = open(assetPath, O_RDONLY);
+			if (fd < 0) return 0;
+
+			free(assetPath);
+
+			res->fd = fd;
+			res->length = lseek(fd, 0, SEEK_END);
+			lseek(fd, 0, SEEK_SET);
+		} else {
+			JNIEnv *env;
+			(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+			if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
+			{
+				__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+			}
+
+			jclass cls = (*env)->GetObjectClass(env,jView);
+			jmethodID mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
+			(*env)->DeleteLocalRef(env, cls); //
+			
+			if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
+			
+			jstring jpath = (*env)->NewStringUTF(env,path);
+			jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
+			(*env)->DeleteLocalRef(env,jpath);
+			
+			if (!resourceParams) {
+			  return 0;
+			}
+			
+			cls = (*env)->GetObjectClass(env,resourceParams);
+			
+			jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");
+			
+			jobject fileDescriptor = (*env)->GetObjectField(env,resourceParams,fid);
+			jclass fdcls = (*env)->GetObjectClass(env,fileDescriptor);
+			
+			fid = (*env)->GetFieldID(env,fdcls,"descriptor","I");
+
+		//3	(*env)->DeleteLocalRef(env, fdcls);
+			jint fd = (*env)->GetIntField(env,fileDescriptor,fid);
+			fid = (*env)->GetFieldID(env,cls,"startOffset","J");
+			jlong startOffset = (*env)->GetLongField(env,resourceParams,fid);
+			fid = (*env)->GetFieldID(env,cls,"length","J");
+			jlong length = (*env)->GetLongField(env,resourceParams,fid);
+
+			//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld (%s)",startOffset,length, String_val(mlpath));
+			
+			int myfd = dup(fd); 
+			lseek(myfd,startOffset,SEEK_SET);
+			res->fd = myfd;
+			res->length = length;
+			
+			(*env)->DeleteLocalRef(env, fileDescriptor);
+			(*env)->DeleteLocalRef(env, resourceParams);
+			(*env)->DeleteLocalRef(env, cls);		
 		}
-
-		jclass cls = (*env)->GetObjectClass(env,jView);
-		jmethodID mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
-		(*env)->DeleteLocalRef(env, cls); //
-		
-		if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
-		
-		jstring jpath = (*env)->NewStringUTF(env,path);
-		jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
-		(*env)->DeleteLocalRef(env,jpath);
-		
-		if (!resourceParams) {
-		  return 0;
-		}
-		
-		cls = (*env)->GetObjectClass(env,resourceParams);
-		
-		jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");
-		
-		jobject fileDescriptor = (*env)->GetObjectField(env,resourceParams,fid);
-		jclass fdcls = (*env)->GetObjectClass(env,fileDescriptor);
-		
-		fid = (*env)->GetFieldID(env,fdcls,"descriptor","I");
-
-	//3	(*env)->DeleteLocalRef(env, fdcls);
-		jint fd = (*env)->GetIntField(env,fileDescriptor,fid);
-		fid = (*env)->GetFieldID(env,cls,"startOffset","J");
-		jlong startOffset = (*env)->GetLongField(env,resourceParams,fid);
-		fid = (*env)->GetFieldID(env,cls,"length","J");
-		jlong length = (*env)->GetLongField(env,resourceParams,fid);
-
-		//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","startOffset: %lld, length: %lld (%s)",startOffset,length, String_val(mlpath));
-		
-		int myfd = dup(fd); 
-		lseek(myfd,startOffset,SEEK_SET);
-		res->fd = myfd;
-		res->length = length;
-		
-		(*env)->DeleteLocalRef(env, fileDescriptor);
-		(*env)->DeleteLocalRef(env, resourceParams);
-		(*env)->DeleteLocalRef(env, cls);		
-	}
 
 	return 1;
 }//}}}
@@ -1418,4 +1436,157 @@ value ml_device_type(value unit) {
 
 void ml_test_c_fun(value fun) {
 	caml_callback(fun,Val_unit);
+}
+
+void call_caml_failwith(char* format, ...) {
+	char* err_mes = (char*)malloc(255);
+	va_list args;
+
+	va_start(args, format);	
+	vsprintf(err_mes, format, args);
+	va_end(args);
+}
+
+KHASH_MAP_INIT_STR(expnsn_index, offset_size_pair_t*);
+static kh_expnsn_index_t* idx;
+
+void* extract_expansions_thread(void* params) {
+	idx = kh_init_expnsn_index();
+	char* expnsn_path = get_expansion_path(1);
+
+	FILE* in = fopen(expnsn_path, "r");
+	if (!in) call_caml_failwith("cannot open expansions file %s", expnsn_path);
+
+	int32_t index_entries_num;		
+	if (1 != fread(&index_entries_num, sizeof(int32_t), 1, in)) call_caml_failwith("cannot ready expansions index entries number");
+
+	int i = 0;
+	khiter_t k;
+	offset_size_pair_t* pair;
+
+	while (i++ < index_entries_num) {
+		int8_t filename_len;
+		if (1 != fread(&filename_len, sizeof(int8_t), 1, in)) call_caml_failwith("cannot read filename length for index entry %d", i - 1);
+
+		char* filename = malloc(filename_len + 1);
+		int32_t offset;
+		int32_t size;
+
+		if (filename_len != fread(filename, 1, filename_len, in)) call_caml_failwith("cannot read filename for entry %d", i - 1);
+		*(filename + filename_len) = '\0';
+		if (1 != fread(&offset, sizeof(int32_t), 1, in)) call_caml_failwith("cannot read offset for entry %d", i - 1);
+		if (1 != fread(&size, sizeof(int32_t), 1, in)) call_caml_failwith("cannot read size for entry %d", i - 1);
+
+		int ret;
+		pair = (offset_size_pair_t*)malloc(sizeof(offset_size_pair_t));
+		pair->offset = offset;
+		pair->size = size;
+
+		k = kh_put(expnsn_index, idx, filename, &ret);
+		kh_val(idx, k) = pair;
+
+		PRINT_DEBUG("filename: %s; offset: %d; size: %d\n", filename, offset, size);
+	}
+
+	long files_begin_pos = ftell(in);
+	fclose(in);
+	free(expnsn_path);
+
+    for (k = kh_begin(idx); k != kh_end(idx); ++k)
+        if (kh_exist(idx, k)) {
+        	pair = kh_val(idx, k);
+        	pair->offset = pair->offset + files_begin_pos;
+        }
+
+    JNIEnv *env;
+    (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+
+    static jmethodID callExpansionsCompleteMid;
+
+    if (!callExpansionsCompleteMid) {
+        callExpansionsCompleteMid = (*env)->GetMethodID(env, jViewCls, "callExpansionsComplete", "(I)V");
+    }
+
+    (*env)->CallVoidMethod(env, jView, callExpansionsCompleteMid, (int)params);
+    (*gJavaVM)->DetachCurrentThread(gJavaVM);
+
+    pthread_exit(NULL);    
+	//caml_callback(cb, Val_bool(1));
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024ExpansionsCallbackRunnable_run(JNIEnv *env, jobject this) {
+	static jfieldID cbFid;
+
+	if (!cbFid) {
+		jclass selfCls = (*env)->GetObjectClass(env, this);
+		cbFid = (*env)->GetFieldID(env, selfCls, "cb", "I");
+		(*env)->DeleteLocalRef(env, selfCls);
+	}
+
+	value* cb = (value*)(*env)->GetIntField(env, this, cbFid);
+	caml_callback(*cb, Val_bool(1));
+	caml_remove_generational_global_root(cb);
+}
+
+void ml_extractExpansions(value cb) {
+	if (idx) {
+		caml_callback(cb, Val_bool(1));
+		return;
+	}
+
+    pthread_t tid;
+
+    value* params = (value*)malloc(sizeof(value));
+    *params = cb;
+    caml_register_generational_global_root(params);
+
+    if (pthread_create(&tid, NULL, extract_expansions_thread, (void*) params)) {
+        PRINT_DEBUG("cannot create extract expansions thread");
+    }	
+}
+
+value ml_expansionExtracted() {
+	return Val_bool(idx);
+}
+
+int get_expansion_offset_size_pair(char* path, offset_size_pair_t** pair) {
+	if (!idx) {
+		return 1;
+	}
+
+	khiter_t k = kh_get(expnsn_index, idx, path);
+
+	if (k == kh_end(idx)) {
+		PRINT_DEBUG("%s entry not found in expansions index", path);
+		return 1;
+	}
+
+	offset_size_pair_t* val = kh_val(idx, k);	
+	*pair = val;
+	PRINT_DEBUG("%s entry found in expansions index, offset %d, size %d", path, val->offset, val->size);
+
+	return 0;
+}
+
+JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_LightMediaPlayer_getOffsetSizePair(JNIEnv *env, jobject this, jstring path) {
+	offset_size_pair_t* pair;
+	char* cpath = (*env)->GetStringUTFChars(env, path, JNI_FALSE);
+	jobject retval = NULL;
+
+	if (!get_expansion_offset_size_pair(cpath, &pair)) {
+		static jclass offsetSizePairCls;
+		static jmethodID offsetSizePairConstrMid;
+
+		if (!offsetSizePairConstrMid) {
+			jclass _offsetSizePairCls = (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer$OffsetSizePair");
+			offsetSizePairCls = (*env)->NewGlobalRef(env, _offsetSizePairCls);
+			(*env)->DeleteLocalRef(env, _offsetSizePairCls);
+			offsetSizePairConstrMid = (*env)->GetMethodID(env, offsetSizePairCls, "<init>", "(II)V");			
+		}
+
+		retval = (*env)->NewObject(env, offsetSizePairCls, offsetSizePairConstrMid, (jint)pair->offset, (jint)pair->size);
+	}
+
+	(*env)->ReleaseStringUTFChars(env, path, cpath);
+	return retval;
 }
