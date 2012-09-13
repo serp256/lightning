@@ -8,12 +8,12 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
 
   type glow = Image.glow ==
     {
-(*       g_valid: mutable bool; *)
-      g_texture: mutable option Texture.c;
+      g_texture: mutable option RenderTexture.c;
       g_image: mutable option Render.Image.t;
       g_make_program: Render.prg;
       g_program: mutable Render.prg;
       g_matrix: mutable Matrix.t;
+      g_valid: mutable bool;
       g_params: Filters.glow
     };
 
@@ -133,41 +133,52 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       method private updateGlowFilter () = 
         match glowFilter with
-        [ Some ({g_texture = None; g_make_program; g_params = glow; _ } as gf) -> 
+        [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) -> 
             let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
             then
               let hgs =  (powOfTwo glow.Filters.glowSize) - 1 in
-              let gs = hgs * 2 in
-              let rw = bounds.Rectangle.width +. (float gs)
-              and rh = bounds.Rectangle.height +. (float gs) in
-              let ip = {Point.x = (float hgs) -. bounds.Rectangle.x;y= (float hgs) -. bounds.Rectangle.y} in
-              let cm = Matrix.create ~translate:ip () in
-              let tex = RenderTexture.draw rw rh begin fun fb ->
-                (
-                  Render.push_matrix cm;
-(*                   Render.clear 0 0.; *)
-                  RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
-                  match glow.Filters.glowKind with
-                  [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                  | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
-                  ];
-                  RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
-                  Render.restore_matrix ();
-                )
-              end in
               (
-                let g_image = Render.Image.create tex#renderInfo color alpha in
-                (
-                  gf.g_matrix := 
-                    Matrix.create 
-                      ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs)); y = (bounds.Rectangle.y -. (float hgs))} ();
-                  gf.g_texture := Some (tex :> Texture.c);
-                  gf.g_image := Some g_image;
-                )
+                let gs = hgs * 2 in
+                let rw = bounds.Rectangle.width +. (float gs)
+                and rh = bounds.Rectangle.height +. (float gs) in
+                let ip = {Point.x = (float hgs) -. bounds.Rectangle.x;y= (float hgs) -. bounds.Rectangle.y} in
+                let cm = Matrix.create ~translate:ip () in
+                let drawf fb =
+                  (
+                    Render.push_matrix cm;
+  (*                   Render.clear 0 0.; *)
+                    RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
+                    match glow.Filters.glowKind with
+                    [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
+                    | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                    ];
+                    RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
+                    Render.restore_matrix ();
+                  )
+                in
+                match (g_texture,g_image) with
+                [ (Some gtex,Some gimg) ->
+                  match gtex#draw ~clear:(0,0.) ~width:rw ~height:rh drawf with
+                  [ True -> Render.Image.update gimg gtex#renderInfo False False
+                  | False -> ()
+                  ]
+                | (None,None) ->
+                  let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
+                  let g_image = Render.Image.create tex#renderInfo color alpha in
+                  (
+                    gf.g_texture := Some tex;
+                    gf.g_image := Some g_image;
+                  )
+                | _ -> assert False
+                ];
+                gf.g_matrix := 
+                  Matrix.create 
+                    ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs)); y = (bounds.Rectangle.y -. (float hgs))} ();
+                gf.g_valid := True;
               )
-            else ()
+            else gf.g_valid := True
         | _ -> () (* Debug.w "update glow not need" *)
         ];
 
@@ -276,15 +287,17 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         then
         (
           match glowFilter with
-          [ Some ({g_texture;_} as gf) -> 
+          [ Some {g_valid=True;_} -> 
             (
+(*
               match g_texture with
               [ Some tex -> (tex#release (); gf.g_texture := None)
               | None -> () 
               ];
+*)
               self#addPrerender self#updateGlowFilter;
             )
-          | None -> ()
+          | _ -> ()
           ];
           dirty := True; 
         )
@@ -302,7 +315,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         if DynArray.length children > 0
         then 
           match glowFilter with
-          [ Some {g_image = Some g_image; g_matrix; g_program; _ } -> 
+          [ Some {g_valid = True; g_image = Some g_image; g_matrix; g_program; _ } -> 
             Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' g_image
           | _ -> 
               let alpha = match alpha' with [ Some a -> a *. alpha | None -> alpha ] in

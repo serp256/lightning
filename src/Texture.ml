@@ -56,13 +56,9 @@ type renderInfo =
     kind: kind;
   };
 
-type event = [= `RESIZE | `CHANGE ]; 
-
-
-
 class type renderer = 
   object
-    method onTextureEvent: event -> c -> unit;
+    method onTextureEvent: bool -> c -> unit;
   end
 and c =
   object

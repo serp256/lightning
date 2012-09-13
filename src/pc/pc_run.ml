@@ -78,7 +78,6 @@ value start_cycle frameRate stage =
     let now = Unix.gettimeofday () in
     (
       let diff = now -. !time in
-      let () = debug "diff: %f" diff in
       stage#advanceTime diff;
       time.val := now;
       DisplayObject.prerender ();

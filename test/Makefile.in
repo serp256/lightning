@@ -1,4 +1,4 @@
-
+include target
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug default
 
@@ -9,9 +9,9 @@ MLFLAGS += -I ../src -package extlib -package ojson -I ../src/social -I ../src/t
 SOCIAL=  ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
 OAUTH = ../src/social/oauth/oauth.cma 
 
-example.byte: $(MLFILES) example.cmo 
+$(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma $(OAUTH) $(SOCIAL) $(MLFILES) ../src/social/facebook/fbconnect.cma example.cmo \
+	-I ../src ../src/lightning.cma $(OAUTH) $(SOCIAL) $(MLFILES) ../src/social/facebook/fbconnect.cma $(TARGET).cmo \
 	-package bigarray,unix,extlib,xmlm,ojson -linkpkg
 
 example.cmo: $(MLFILES)
@@ -20,12 +20,12 @@ MLXFILES = $(MLFILES:.cmo=.cmx)
 SOCIALX = $(SOCIAL:.cmo=.cmx)
 OAUTHX = ../src/social/oauth/oauth.cmxa 
 
-example.cmx: $(MLXFILES)
+$(TARGET).cmx: $(MLXFILES)
 
 
-example.native: $(MOBS) $(MLXFILES) example.cmx
+$(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa -ccopt -L../src/social/facebook ../src/social/facebook/fbconnect.cmxa example.cmx \
+	-I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa -ccopt -L../src/social/facebook ../src/social/facebook/fbconnect.cmxa $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray -linkpkg
 
 
