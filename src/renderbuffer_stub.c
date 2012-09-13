@@ -242,12 +242,12 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 	//fprintf(stderr,"try resize %d:%d from [%f:%f] to [%f:%f]\n",rb->fbid,rb->tid,rb->width,rb->height,width,height);
 	if (owidth != Val_none) {
 		width = Double_val(Field(owidth,0));
-		resized = 1;
+		resized = (width != cwidth);
 	};
 	double height = cheight;
 	if (oheight != Val_none) {
 		height = Double_val(Field(oheight,0));
-		resized = 1;
+		resized |= (height != cheight);
 	};
 	PRINT_DEBUG("draw to texture: [%f:%f] -> [%f:%f]",cwidth,cheight,width,height);
 
@@ -342,10 +342,11 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 	//glDeleteFramebuffers(1,&rb.fbid);
 	back_framebuffer(rb.fbid);
 
-	CAMLreturn(Bool_val(resized));
+	CAMLreturn(Val_bool(resized));
 }
 
+/*
 value ml_renderbuffer_draw_to_texture_byte(value *argv, int n) {
 	return (ml_renderbuffer_draw_to_texture(argv[0],argv[1],argv[2],argv[3],argv[4]));
-}
+}*/
 

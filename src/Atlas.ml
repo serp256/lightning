@@ -138,46 +138,46 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
             then
-            (
               let hgs =  (powOfTwo glow.Filters.glowSize) - 1 in
-              let gs = hgs * 2 in
-              let rw = bounds.Rectangle.width +. (float gs)
-              and rh = bounds.Rectangle.height +. (float gs) in
-              let ip = {Point.x = (float hgs) -. bounds.Rectangle.x;y= (float hgs) -. bounds.Rectangle.y} in
-              let cm = Matrix.create ~translate:ip () in
-              let drawf fb =
-                (
-                  Render.push_matrix cm;
-(*                   Render.clear 0 0.; *)
-                  RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
-                  match glow.Filters.glowKind with
-                  [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                  | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
-                  ];
-                  RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
-                  Render.restore_matrix ();
-                )
-              in
-              match (g_texture,g_image) with
-              [ (Some gtex,Some gimg) ->
-                match gtex#draw ~clear:(0,0.) ~width:rw ~height:rh drawf with
-                [ True -> Render.Image.update gimg gtex#renderInfo False False
-                | False -> ()
-                ]
-              | (None,None) ->
-                let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
-                let g_image = Render.Image.create tex#renderInfo color alpha in
-                (
-                  gf.g_matrix := 
-                    Matrix.create 
-                      ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs)); y = (bounds.Rectangle.y -. (float hgs))} ();
-                  gf.g_texture := Some tex;
-                  gf.g_image := Some g_image;
-                )
-              | _ -> assert False
-              ];
-              gf.g_valid := True;
-            )
+              (
+                let gs = hgs * 2 in
+                let rw = bounds.Rectangle.width +. (float gs)
+                and rh = bounds.Rectangle.height +. (float gs) in
+                let ip = {Point.x = (float hgs) -. bounds.Rectangle.x;y= (float hgs) -. bounds.Rectangle.y} in
+                let cm = Matrix.create ~translate:ip () in
+                let drawf fb =
+                  (
+                    Render.push_matrix cm;
+  (*                   Render.clear 0 0.; *)
+                    RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
+                    match glow.Filters.glowKind with
+                    [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
+                    | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                    ];
+                    RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
+                    Render.restore_matrix ();
+                  )
+                in
+                match (g_texture,g_image) with
+                [ (Some gtex,Some gimg) ->
+                  match gtex#draw ~clear:(0,0.) ~width:rw ~height:rh drawf with
+                  [ True -> Render.Image.update gimg gtex#renderInfo False False
+                  | False -> ()
+                  ]
+                | (None,None) ->
+                  let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
+                  let g_image = Render.Image.create tex#renderInfo color alpha in
+                  (
+                    gf.g_texture := Some tex;
+                    gf.g_image := Some g_image;
+                  )
+                | _ -> assert False
+                ];
+                gf.g_matrix := 
+                  Matrix.create 
+                    ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs)); y = (bounds.Rectangle.y -. (float hgs))} ();
+                gf.g_valid := True;
+              )
             else gf.g_valid := True
         | _ -> () (* Debug.w "update glow not need" *)
         ];

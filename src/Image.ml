@@ -72,7 +72,7 @@ class virtual base texture =
       in
       glowFilter := Some 
         (match glowFilter with
-        [ Some {g_texture=Some gtex;g_image=Some gimg} -> 
+        [ Some {g_texture=Some gtex;g_image=Some gimg; _} -> 
           {g_image=Some gimg; g_texture=Some gtex; g_matrix=Matrix.identity; g_program;g_make_program;g_params=glow;g_valid=False}
         | _ ->  {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_make_program;g_params=glow;g_valid=False}
         ]);
@@ -335,8 +335,10 @@ class _c  _texture =
             )
           | (Some gtex,Some gimg) ->
               match gtex#draw ~clear:(0,0.) ~width:rw ~height:rh drawf with
-              [ True -> Render.Image.update gimg gtex#renderInfo ~flipX:texFlipX ~flipY:texFlipY
-              | False -> ()
+              [ True -> 
+                let () = debug:glow "texture resized" in
+                Render.Image.update gimg gtex#renderInfo ~flipX:texFlipX ~flipY:texFlipY
+              | False -> debug:glow "texture not resized"
               ]
           | _ -> assert False
           ];
