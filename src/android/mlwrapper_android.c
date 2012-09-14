@@ -794,6 +794,8 @@ static jmethodID gLmpPauseAll = NULL;
 static jmethodID gLmpResumeAll = NULL;
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
+
 	if (gSndPool != NULL) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
@@ -811,7 +813,14 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 		gLmpPauseAll = (*env)->GetStaticMethodID(env, lmpCls, "pauseAll", "()V");
 	}
 
-	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpPauseAll);	
+	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpPauseAll);
+
+	static value dispatchBgHandler = 1;
+
+	if (stage) {
+		if (dispatchBgHandler == 1) dispatchBgHandler = caml_hash_variant("dispatchBackgroundEv");
+		caml_callback2(caml_get_public_method(stage->stage, dispatchBgHandler), stage->stage, Val_unit);
+	}	
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
@@ -835,7 +844,14 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 	}
 
 	PRINT_DEBUG("resume ALL players");
-	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);	
+	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);
+
+	static value dispatchFgHandler = 1;
+
+	if (stage) {
+		if (dispatchFgHandler == 1) dispatchFgHandler = caml_hash_variant("dispatchForegroundEv");
+		caml_callback2(caml_get_public_method(stage->stage, dispatchFgHandler), stage->stage, Val_unit);
+	}
 }
 
 /* Updated upstream

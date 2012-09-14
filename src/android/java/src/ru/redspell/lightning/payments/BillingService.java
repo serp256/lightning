@@ -25,6 +25,10 @@ import java.lang.Thread;
 import android.os.Process;
 import ru.redspell.lightning.LightView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class BillingService extends Service implements ServiceConnection {
     private static final String TAG = "LIGHTNING";
 
@@ -429,15 +433,17 @@ public class BillingService extends Service implements ServiceConnection {
         return new GetPurchaseInformation(startId, notifyIds).runRequest();
     }
 
-    private void purchaseStateChanged(int startId, String signedData, String signature) {
+    private void purchaseStateChanged(int startId, final String signedData, final String signature) {
         Log.d(TAG, "purchase state changed (BillingService.purchaseStateChanged)");
         Log.d("BILLING_SERVICE", "________________");
         Log.d("BILLING_SERVICE", signedData);
         Log.d("BILLING_SERVICE", signature);
 
-            final String sig = signature;
-            ArrayList<Security.VerifiedPurchase> purchases;
-            purchases = Security.verifyPurchase(signedData, signature, !Security.hasPubkey());
+        final String sig = signature;
+        ArrayList<Security.VerifiedPurchase> purchases;
+
+        if (Security.hasPubkey()) {
+            purchases = Security.verifyPurchase(signedData, signature, false);
             if (purchases == null) {
                 Log.d(TAG, "purchases == null");
 
@@ -450,44 +456,79 @@ public class BillingService extends Service implements ServiceConnection {
                         }
                     });                    
                 }
-
-
                 
                 return;
-            }
+            }                
+        } else {
+            if (LightView.instance != null) {
+                JSONObject jObject;
+                JSONArray jTransactionsArray = null;
+                int numTransactions = 0;
 
-            //ArrayList<String> notifyList = new ArrayList<String>();
+                try {
+                    jObject = new JSONObject(signedData);
+                    jTransactionsArray = jObject.optJSONArray("orders");
 
-            Log.d(TAG, "purchases len: " + purchases.size());
-
-            for (final VerifiedPurchase vp : purchases) {
-                Log.d(TAG, "purchases id: " + vp.notificationId);
-
-                if (vp.notificationId != null) {
-                    Log.d(TAG, "invoking caml payment success callback from from BillingService.purchaseStateChanged");
-                    Log.d(TAG, "LightView.instance: " + LightView.instance);
-
-                    if (LightView.instance != null) {
-                        LightView.instance.queueEvent(new Runnable() {
-                            @Override
-                            public void run() {
-                                invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? sig : "");
-                            }
-                        });
+                    if (jTransactionsArray != null) {
+                        numTransactions = jTransactionsArray.length();
                     }
 
-                    
-                    //notifyList.add(vp.notificationId);
+                    for (int i = 0; i < numTransactions; i++) {
+                        JSONObject jElement = jTransactionsArray.getJSONObject(i);
+                        PurchaseState purchaseState = PurchaseState.valueOf(jElement.getInt("purchaseState"));
+
+                        Log.d("LIGHTNING", "purchase state: " + jElement.getInt("purchaseState"));
+                        /*
+                        if (purchaseState == PurchaseState.PURCHASED && !verified && !skip) {
+                            continue;
+                        }
+                        */
+                    }
+
+                } catch (JSONException e) {
+                    Log.e(TAG, "JSONException");
+                    return;
                 }
-                // ResponseHandler.purchaseResponse(this, vp.purchaseState, vp.productId,
-                //         vp.orderId, vp.purchaseTime, vp.developerPayload);
-            }            
 
+                LightView.instance.queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        invokeCamlPaymentSuccessCb(signedData, "", signature, "");
+                    }
+                });
+            }
 
-        // if (!notifyList.isEmpty()) {
-        //     String[] notifyIds = notifyList.toArray(new String[notifyList.size()]);
-        //     confirmNotifications(startId, notifyIds);
-        // }
+            return;
+        }
+
+        Log.d(TAG, "purchases len: " + purchases.size());
+
+        ArrayList<String> notifyList = new ArrayList<String>();
+
+        for (final VerifiedPurchase vp : purchases) {
+            Log.d(TAG, "purchases id: " + vp.notificationId);
+
+            if (vp.notificationId != null) {
+                Log.d(TAG, "invoking caml payment success callback from from BillingService.purchaseStateChanged");
+
+                if (LightView.instance != null) {
+                    LightView.instance.queueEvent(new Runnable() {
+                        @Override
+                        public void run() {
+                            invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? sig : "");
+                        }
+                    });
+                }
+
+                
+                notifyList.add(vp.notificationId);
+            }
+        }
+
+        if (!notifyList.isEmpty()) {
+            String[] notifyIds = notifyList.toArray(new String[notifyList.size()]);
+            confirmNotifications(startId, notifyIds);
+        }
     }
 
     private void checkResponseCode(long requestId, ResponseCode responseCode) {

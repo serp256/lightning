@@ -1374,11 +1374,15 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      Lightning.extractAssetsAndExpansionsIfRequired (fun _ ->
-        avsound self ""
-(*         let img = Image.load "tree.png" in
-          self#addChild img *)
-      );
+
+      debug "pizda";
+
+      debug "back handler %d" (self#addEventListener Stage.ev_BACK_PRESSED (fun _ _ _ -> debug "back pressed"));
+      debug "bg handler %d" (self#addEventListener Stage.ev_BACKGROUND (fun _ _ _ -> debug "background"));
+      debug "fg handler %d" (self#addEventListener Stage.ev_FOREGROUND (fun _ _ _ -> debug "foreground"));
+
+
+
 (*       let ldr = new URLLoader.loader () in
       (
         let img = Image.load "Russia.png" in

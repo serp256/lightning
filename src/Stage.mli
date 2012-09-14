@@ -15,6 +15,8 @@ value screenSize: unit -> (float * float);
 value ev_TOUCH: Ev.id;
 value ev_UNLOAD: Ev.id;
 value ev_BACK_PRESSED: Ev.id;
+value ev_BACKGROUND: Ev.id;
+value ev_FOREGROUND: Ev.id;
 value touches_of_data: (Ev.data -> option (list Touch.t));
 value data_of_touches: (list Touch.t -> Ev.data);
 
@@ -45,4 +47,6 @@ class virtual c: [ float ] -> [ float ] ->
     method setCacheAsImage: bool -> unit;
     method onUnload: unit -> unit;
     method dispatchBackPressedEv : unit -> bool;
+    method dispatchBackgroundEv : unit -> unit;
+    method dispatchForegroundEv : unit -> unit;
   end;

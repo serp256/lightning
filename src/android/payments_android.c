@@ -138,8 +138,8 @@ void ml_payment_commit_transaction(value transaction) {
 		gConfirmNotif = (*env)->GetMethodID(env, jViewCls, "confirmNotif", "(Ljava/lang/String;)V");
 	}
 
-	vnotifId = Field(transaction, 0);
-	char* cnotifId = String_val(vnotifId);
+	// vnotifId = Field(transaction, 0);
+	char* cnotifId = String_val(transaction);
 	jstring jnotifId = (*env)->NewStringUTF(env, cnotifId);
 	(*env)->CallVoidMethod(env, jView, gConfirmNotif, jnotifId);
 
