@@ -46,3 +46,5 @@ class virtual c: [ float ] -> [ float ] ->
     method onUnload: unit -> unit;
     method dispatchBackPressedEv : unit -> bool;
   end;
+
+value instance: ref (option c);
