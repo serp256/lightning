@@ -30,20 +30,17 @@ end;
 (* TODO: доделать передачу receipt *)
 value initialized = ref False;
 
-IFDEF IOS THEN
-
-external ml_init : (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit = "ml_payment_init";
 external ml_purchase : string -> unit = "ml_payment_purchase";
-external ml_commit_transaction : Transaction.t -> unit = "ml_payment_commit_transaction";
 
+IFDEF IOS THEN
+external ml_init : (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit = "ml_payment_init";
+external ml_commit_transaction : Transaction.t -> unit = "ml_payment_commit_transaction";
 ELSE
 
 IFDEF ANDROID THEN
-
 external ml_init : ?pubkey:string -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit = "ml_payment_init";
-external ml_purchase : string -> unit = "ml_payment_purchase";
-external ml_commit_transaction : string -> unit = "ml_payment_commit_transaction";
-
+external _ml_commit_transaction : string -> unit = "ml_payment_commit_transaction";
+value ml_commit_transaction t = _ml_commit_transaction (Transaction.get_id t);
 ELSE
 
 type callbacks = 

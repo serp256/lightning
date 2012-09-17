@@ -503,7 +503,7 @@ public class BillingService extends Service implements ServiceConnection {
 
         Log.d(TAG, "purchases len: " + purchases.size());
 
-        ArrayList<String> notifyList = new ArrayList<String>();
+        //ArrayList<String> notifyList = new ArrayList<String>();
 
         for (final VerifiedPurchase vp : purchases) {
             Log.d(TAG, "purchases id: " + vp.notificationId);
@@ -521,14 +521,16 @@ public class BillingService extends Service implements ServiceConnection {
                 }
 
                 
-                notifyList.add(vp.notificationId);
+                //notifyList.add(vp.notificationId);
             }
         }
 
+	/*
         if (!notifyList.isEmpty()) {
             String[] notifyIds = notifyList.toArray(new String[notifyList.size()]);
             confirmNotifications(startId, notifyIds);
         }
+	*/
     }
 
     private void checkResponseCode(long requestId, ResponseCode responseCode) {
