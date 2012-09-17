@@ -268,8 +268,11 @@ class virtual c (_width:float) (_height:float) =
       ev.Ev.propagation = `Propagate;
     );
 
-  method dispatchBackgroundEv () = self#dispatchEvent (Ev.create ev_BACKGROUND ());
-  method dispatchForegroundEv () = self#dispatchEvent (Ev.create ev_FOREGROUND ());
+(*   method dispatchBackgroundEv () = self#dispatchEvent (Ev.create ev_BACKGROUND ());
+  method dispatchForegroundEv () = self#dispatchEvent (Ev.create ev_FOREGROUND ()); *)
+
+  method dispatchBackgroundEv = on_background;
+  method dispatchForegroundEv = on_foreground;
     
   initializer Timers.init 0.;
   
