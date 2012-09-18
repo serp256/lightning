@@ -91,3 +91,9 @@ value commit_transaction tr =
   [ False -> failwith "Payment not initialized. Call init first"
   | True  ->  ml_commit_transaction tr
   ];  
+
+IFDEF ANDROID THEN
+value commit_transaction_by_id = _ml_commit_transaction;
+ELSE
+value commit_transaction_by_id _ = failwith "cannot commit transaction by id";
+ENDIF;

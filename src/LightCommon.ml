@@ -26,6 +26,18 @@ type qColor =
     qcBottomRight: int;
   };
 
+IFDEF PC THEN
+value getLocale () = "en";
+ELSE
+external getLocale: unit -> string = "ml_getLocale";
+ENDIF;
+
+IFDEF IOS THEN
+external getVersion: unit -> string = "ml_getVersion";
+ELSE
+value getVersion () = "PC version";
+ENDIF;
+
 
 (*
 value qColor ?topRight ?bottomLeft ?bottomRight ~topLeft =
@@ -136,7 +148,7 @@ value resource_path ?(with_suffix=True) path =
 *)
 
 
-value get_resource with_suffix path  = 
+value _get_resource with_suffix path  = 
   match with_suffix with
   [ True -> 
     let spath = path_with_suffix path in
@@ -147,13 +159,33 @@ value get_resource with_suffix path  =
   | False -> bundle_fd_of_resource path
   ];
 
+value get_resource with_suffix path =
+  match _get_resource with_suffix path with
+  [ None ->
+    let locale = getLocale () in
+      let () = debug "cannot find in common resources, try %s" ("locale/" ^ locale ^ "/" ^ path) in
+      match _get_resource with_suffix ("locale/" ^ locale ^ "/" ^ path) with
+      [ None ->
+        let () = debug "cannot find in locale resources" in
+        if locale <> "en" then
+          let () = debug "try en locale" in
+          match _get_resource with_suffix ("locale/en/" ^ path) with
+          [ None -> raise (File_not_exists path)
+          | res -> res
+          ]
+        else
+          let () = debug "xyu" in
+          raise (File_not_exists path)
+      | res -> res
+      ]
+  | res -> res
+  ];
 
 value open_resource ?(with_suffix=True) path = 
   match get_resource with_suffix path with
   [ None -> raise (File_not_exists path)
   | Some (fd,length) -> Unix.in_channel_of_descr fd
   ];
-
 
 value read_resource ?(with_suffix=True) path = 
   match get_resource with_suffix path with

@@ -77,19 +77,8 @@ value () =
 ENDIF;
 
 
-IFDEF PC THEN
-value getLocale () = "en";
-ELSE
-external getLocale: unit -> string = "ml_getLocale";
-ENDIF;
-
-IFDEF IOS THEN
-external getVersion: unit -> string = "ml_getVersion";
-ELSE
-value getVersion () = "PC version";
-ENDIF;
-
-
+value getLocale = LightCommon.getLocale;
+value getVersion = LightCommon.getVersion;
 
 external memUsage: unit -> int = "ml_memUsage";
 type malinfo = 

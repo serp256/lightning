@@ -48,6 +48,8 @@ IFDEF PC THEN
 value internalDeviceType: ref deviceType;
 ENDIF;
 
+value getLocale: unit -> string;
+value getVersion: unit -> string;
 
 module MakeXmlParser(P:sig value path: string; value with_suffix:bool; end): sig
   value close: unit -> unit;
