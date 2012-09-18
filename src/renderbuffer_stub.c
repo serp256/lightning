@@ -295,7 +295,7 @@ value ml_renderbuffer_draw_to_texture(value ocolor, value oalpha, value owidth, 
 	renderbuffer_deactivate();
 	glDeleteFramebuffers(1,&rb.fbid);
 
-	CAMLreturn(Bool_val(resized));
+	CAMLreturn(Val_bool(resized));
 }
 
 value ml_renderbuffer_draw_to_texture_byte(value *argv, int n) {
