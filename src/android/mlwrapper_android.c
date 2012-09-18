@@ -694,6 +694,13 @@ value ml_alsoundLoad(value path) {
 	char* cpath = String_val(path);
 	jstring jpath = (*env)->NewStringUTF(env, cpath);
 	jint sndId = (*env)->CallStaticIntMethod(env, lmpCls, gGetSndIdMthdId, jpath, gSndPool);
+
+	if (sndId < 0) {
+		char mes[255];
+		sprintf(mes, "cannot find %s when adding to sound pool", cpath);
+		caml_failwith(mes);
+	}
+
 	(*env)->DeleteLocalRef(env, jpath);
 
 	return Val_int(sndId);
@@ -1114,9 +1121,7 @@ value ml_avsound_create_player(value vpath) {
 	static jmethodID createMpMid;
 	jclass lmpCls = get_lmp_class();
 
-	if (!createMpMid) {
-		createMpMid = (*env)->GetStaticMethodID(env, lmpCls, "createMediaPlayer", "(Ljava/lang/String;Ljava/lang/String;)Landroid/media/MediaPlayer;");
-	}
+	if (!createMpMid) createMpMid = (*env)->GetStaticMethodID(env, lmpCls, "createMediaPlayer", "(Ljava/lang/String;Ljava/lang/String;)Landroid/media/MediaPlayer;");
 
 	const char* cpath = String_val(vpath);
 	jstring jpath = (*env)->NewStringUTF(env, cpath);
@@ -1127,6 +1132,13 @@ value ml_avsound_create_player(value vpath) {
 	}
 
 	jobject mp = (*env)->CallStaticObjectMethod(env, lmpCls, createMpMid, jassetsDir, jpath);
+
+	if (!mp) {
+		char mes[255];
+		sprintf(mes, "cannot find %s when creating media player", cpath);		
+		caml_failwith(mes);
+	}
+
 	jobject gmp = (*env)->NewGlobalRef(env, mp);
 
 	if (jassetsDir) {

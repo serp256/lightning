@@ -1375,8 +1375,31 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
 
-    let channel1 = Sound.createChannel (Sound.load "melody0.mp3") in
-      channel1#play ();
+    Sound.init ();
+
+        let channel1 = Sound.createChannel (Sound.load "achievement1.caf")
+        and img = Image.load "Russia.png" in
+        (
+          self#addChild img;
+
+          ignore(Stage.(
+            img#addEventListener ev_TOUCH (fun ev _ _ ->
+              match touches_of_data ev.Ev.data with
+              [ Some [ touch :: _ ] ->
+                Touch.(
+                    match touch.phase with
+                    [ TouchPhaseEnded -> channel1#play ()
+                    | _ -> ()
+                    ]
+                )
+              | _ -> ()
+              ]
+            )
+          ));
+        );
+
+    
+      
     (* ignore(LightCommon.read_json "LangRU.json"); *)
     (* debug "%s %s %d" (Hardware.platform ()) (Hardware.hwmodel ()) (Hardware.total_memory ()); *)
 (*       debug "pizda";
