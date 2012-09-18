@@ -13,60 +13,64 @@
  */
 
 
-#import <Foundation/Foundation.h>
 #import <UIKit/UIkit.h>
 
 
+#define TJC_LIBRARY_VERSION_NUMBER			@"8.3.0"				/*!< The SDK version number. */
 
-#define TJC_LIBRARY_VERSION_NUMBER			@"8.2.0"					/*!< The SDK version number. */
-
-#define TJC_SERVICE_URL							@"https://ws.tapjoyads.com/"
+#define TJC_SERVICE_URL						@"https://ws.tapjoyads.com/"
 #define TJC_SERVICE_URL_ALTERNATE			@"https://ws1.tapjoyads.com/"
-#define TJC_TAPJOY_HOST_NAME					@"ws.tapjoyads.com"
-#define TJC_TAPJOY_ALT_HOST_NAME				@"ws1.tapjoyads.com"
+#define TJC_TAPJOY_HOST_NAME				@"ws.tapjoyads.com"
+#define TJC_TAPJOY_ALT_HOST_NAME			@"ws1.tapjoyads.com"
+
 #define TJC_LINKSHARE_HOST_NAME				@"click.linksynergy.com"
-#define TJC_UDID									@"udid"					/*!< The unique device identifier. Deprecated in iOS 5. */
-#define TJC_UNIQUE_MAC_ID						@"mac_address"			/*!< The unique ID retrieved by taking the hash of mac address. */
-#define TJC_UNIQUE_MAC_ID_SHA1				@"sha1_mac_address"	/*!< The SHA1 has of the mac address (uppercase, colon separated) */
-#define TJC_OPEN_UDID							@"open_udid"			/*!< The Open UDID. */
-#define TJC_OPEN_UDID_COUNT					@"open_udid_count"	/*!< The Open UDID slot count. */
-#define TJC_DEVICE_NAME							@"device_name"			/*!< This is the specific device name ("iPhone1,1", "iPod1,1"...) */
-#define TJC_DEVICE_TYPE_NAME					@"device_type"			/*!< The model name of the device. This is less descriptive than the device name. */
+#define TJC_UDID							@"udid"					/*!< The unique device identifier. Deprecated in iOS 5. */
+#define TJC_ID_FOR_ADVERTISING				@"advertising_id"		/*!< The identifier for advertising. Available on iOS 6 and above. */
+#define TJC_AD_TRACKING_ENABLED				@"ad_tracking_enabled"	/*!< Indicates whether advertising tracking is enabled. Introduced in iOS 6. */
+#define TJC_UNIQUE_MAC_ID					@"mac_address"			/*!< The unique ID retrieved by taking the hash of mac address. */
+#define TJC_UNIQUE_MAC_ID_SHA1				@"sha1_mac_address"		/*!< The SHA1 has of the mac address (uppercase, colon separated) */
+#define TJC_OPEN_UDID						@"open_udid"			/*!< The Open UDID. */
+#define TJC_OPEN_UDID_COUNT					@"open_udid_count"		/*!< The Open UDID slot count. */
+#define TJC_DEVICE_NAME						@"device_name"			/*!< This is the specific device name ("iPhone1,1", "iPod1,1"...) */
+#define TJC_DEVICE_TYPE_NAME				@"device_type"			/*!< The model name of the device. This is less descriptive than the device name. */
 #define TJC_DEVICE_OS_VERSION_NAME			@"os_version"			/*!< The device system version. */
-#define TJC_DEVICE_COUNTRY_CODE				@"country_code"		/*!< The country code is retrieved from the locale object, from user data (not device). */
+#define TJC_DEVICE_COUNTRY_CODE				@"country_code"			/*!< The country code is retrieved from the locale object, from user data (not device). */
 #define TJC_DEVICE_LANGUAGE					@"language_code"		/*!< The language is retrieved from the locale object, from user data (not device). */
-#define TJC_DEVICE_LAD							@"lad"					/*!< Little Alien Dude. */
-#define TJC_APP_ID_NAME							@"app_id"				/*!< The application id is set by the developer, and is a unique id provided by Tapjoy. */
-#define TJC_APP_VERSION_NAME					@"app_version"			/*!< The application version is retrieved from the application plist file, from the bundle version. */
-#define TJC_CONNECT_LIBRARY_VERSION_NAME	@"library_version"	/*!< The library version is the SDK version number. */	
-#define TJC_VERIFIER								@"verifier"				/*!< A hashed value that is verified on the server to confirm a valid connect. */
-#define TJC_TIMESTAMP							@"timestamp"			/*!< The time in seconds when a connect call is made. */
-#define TJC_GUID									@"guid"					/*!< Used as part of the verifier. */
-#define TJC_CARRIER_NAME						@"carrier_name"		/*!< The name of the user’s home cellular service provider. */
-#define TJC_ALLOWS_VOIP							@"allows_voip"			/*!< Indicates if the carrier allows VoIP calls to be made on its network. */
-#define TJC_CARRIER_COUNTRY_CODE				@"carrier_country_code"	/*!< The ISO country code for the user’s cellular service provider. */
+#define TJC_DEVICE_LAD						@"lad"					/*!< Little Alien Dude. */
+#define TJC_APP_ID_NAME						@"app_id"				/*!< The application id is set by the developer, and is a unique id provided by Tapjoy. */
+#define TJC_APP_VERSION_NAME				@"app_version"			/*!< The application version is retrieved from the application plist file, from the bundle version. */
+#define TJC_CONNECT_LIBRARY_VERSION_NAME	@"library_version"		/*!< The library version is the SDK version number. */	
+#define TJC_VERIFIER						@"verifier"				/*!< A hashed value that is verified on the server to confirm a valid connect. */
+#define TJC_TIMESTAMP						@"timestamp"			/*!< The time in seconds when a connect call is made. */
+#define TJC_GUID							@"guid"					/*!< Used as part of the verifier. */
+#define TJC_CARRIER_NAME					@"carrier_name"			/*!< The name of the user’s home cellular service provider. */
+#define TJC_ALLOWS_VOIP						@"allows_voip"			/*!< Indicates if the carrier allows VoIP calls to be made on its network. */
+#define TJC_CARRIER_COUNTRY_CODE			@"carrier_country_code"	/*!< The ISO country code for the user’s cellular service provider. */
 #define TJC_MOBILE_COUNTRY_CODE				@"mobile_country_code"	/*!< The mobile country code (MCC) for the user’s cellular service provider. */
 #define TJC_MOBILE_NETWORK_CODE				@"mobile_network_code"	/*!< The mobile network code (MNC) for the user’s cellular service provider. */
-#define TJC_PLATFORM								@"platform"				/*!< The name of the platform. */
-#define TJC_PLATFORM_IOS						@"iOS"					/*!< The parameter value of the platform. */
-#define TJC_PLUGIN								@"plugin"				/*!< The plugin being used, if any. */
-#define TJC_PLUGIN_NATIVE						@"native"				/*!< The default value for the plugin parameter, native means not a plugin. */
-#define TJC_SDK_TYPE								@"sdk_type"				/*!< The type of SDK, advertiser, publisher, virtual goods, etc. */
-// The user ID.
-#define TJC_URL_PARAM_USER_ID					@"publisher_user_id"
+#define TJC_PLATFORM						@"platform"				/*!< The name of the platform. */
+#define TJC_PLATFORM_IOS					@"iOS"					/*!< The parameter value of the platform. */
+#define TJC_PLUGIN							@"plugin"				/*!< The plugin being used, if any. */
+#define TJC_PLUGIN_NATIVE					@"native"				/*!< The default value for the plugin parameter, native means not a plugin. */
+#define TJC_SDK_TYPE						@"sdk_type"				/*!< The type of SDK, advertiser, publisher, virtual goods, etc. */
+#define TJC_URL_PARAM_USER_ID				@"publisher_user_id"	/*!< The user ID. */
 // NOTE: This doesn't actually affect currency earned, just the value displayed on the offer wall.
-#define TJC_URL_PARAM_CURRENCY_MULTIPLIER	@"display_multiplier"/*!< Currency multiplier value. */
-#define TJC_CONNECTION_TYPE_NAME				@"connection_type"	/*!< The type of data connection that is being used. */
-#define TJC_PACKAGE_NAMES						@"package_names"		/*!< Comma separated advertiser URL schemes. */
+#define TJC_URL_PARAM_CURRENCY_MULTIPLIER	@"display_multiplier"	/*!< Currency multiplier value. */
+#define TJC_CONNECTION_TYPE_NAME			@"connection_type"		/*!< The type of data connection that is being used. */
+#define TJC_PACKAGE_NAMES					@"package_names"		/*!< Comma separated advertiser URL schemes. */
 
-#define TJC_CONNECT_API							@"connect"						/*!< API for Tapjoy connect. */
-#define TJC_SET_USER_ID_API					@"set_publisher_user_id"	/*!< API for setting publisher user id. */
-#define TJC_SDK_LESS_CONNECT_API				@"apps_installed"				/*!< API for passing advertiser apps. */
+#define TJC_CONNECT_API						@"connect"				/*!< API for Tapjoy connect. */
+#define TJC_SET_USER_ID_API					@"set_publisher_user_id"/*!< API for setting publisher user id. */
+#define TJC_SDK_LESS_CONNECT_API			@"apps_installed"		/*!< API for passing advertiser apps. */
 
 #define TJC_PASTEBOARD_SLOT_MAX				256
 #define TJC_PASTEBOARD_TYPE					@"public.plain-text" //@"com.tapjoy"
 #define TJC_PASTEBOARD_SLOT_PREFIX			@"com.tapjoy.slot."
-#define TJC_TAPJOY_UUID							@"TJC_TAPJOY_UUID"
+#define TJC_TAPJOY_UUID						@"TJC_TAPJOY_UUID"
+
+// Event tracking API
+#define TJC_EVENT_TRACKING_API				@"user_events"
+#define TJC_URL_PARAM_EVENT_TYPE			@"event_type_id"
 
 enum TJCConnectionType
 {
@@ -74,6 +78,7 @@ enum TJCConnectionType
 	TJC_CONNECT_TYPE_ALT_CONNECT,
 	TJC_CONNECT_TYPE_USER_ID,
 	TJC_CONNECT_TYPE_SDK_LESS,
+  	TJC_CONNECT_TYPE_EVENT_SHUTDOWN,
 	TJC_CONNECT_TYPE_MAX
 };
 
@@ -85,7 +90,7 @@ enum TJCConnectionType
 @interface TapjoyConnect :  NSObject
 {
 @private
-	NSString *appID_;						/*!< The application ID unique to this app. */
+	NSString *appID_;					/*!< The application ID unique to this app. */
 	NSString *secretKey_;				/*!< The Tapjoy secret key for this applicaiton. */
 	NSString *userID_;					/*!< The user ID, used to banner ads. This is the UDID by default. */
 	NSString *plugin_;					/*!< The name of the plugin used. If no plugin is used, this value is set to "native" by default. */
@@ -97,6 +102,7 @@ enum TJCConnectionType
 	NSURLConnection *connectConnection_;
 	NSURLConnection *userIDConnection_;
 	NSURLConnection *SDKLessConnection_;
+    NSURLConnection *eventTrackingConnection_;
 }
 
 @property (nonatomic, copy) NSString *appID;
@@ -104,7 +110,9 @@ enum TJCConnectionType
 @property (nonatomic, copy) NSString *userID;
 @property (nonatomic, copy) NSString *plugin;
 @property (assign) BOOL isInitialConnect;
-
+#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_4_0
+@property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskID;
+#endif
 
 /*!	\fn requestTapjoyConnect:secretKey:(NSString *appID, NSString *secretKey)
  *	\brief This method is called to initialize the TapjoyConnect system.
@@ -141,35 +149,23 @@ enum TJCConnectionType
  */
 + (void)deviceNotificationReceived;
 
-/*!	\fn TJCSHA256CommonParamsWithTimeStamp:(NSString*)timeStamp
+/*!	\fn exitNotificationReceived
+ *	\brief This is called whenever the application is exited or termintated.
+ *
+ *	\param n/a
+ *	\return n/a
+ */
++ (void)exitNotificationReceived;
+
+/*!	\fn TJCSHA256CommonParamsWithTimeStamp:string:(NSString* timeStamp, NSString* string)
  *	\brief Generates a SHA-256 hash value with the given time stamp.
  *
  * The following are sent as common parameters: appID, UDID, and timestamp.
  *	\param timeStamp The time stamp to generate the hash with.
+ *	\param string This is appended to the string that will be hashed.
  *	\return The SHA-256 hash value.
  */
-+ (NSString*)TJCSHA256CommonParamsWithTimeStamp:(NSString*)timeStamp;
-
-/*!	\fn TJCSHA256CommonParamsWithTimeStamp:tapPointsAmount:guid:(NSString* timeStamp, int points, NSString* guid)
- *	\brief Generates a SHA-256 hash value with the time stamp and some common parameters.
- *
- * The following are sent as common parameters: appID, UDID, and timestamp.
- *	\param timeStamp The time stamp to generate the hash with.
- *	\param points The amount of tap points to award to the user.
- *	\param guid A generated GUID for this particular URL request.
- *	\return The SHA-256 hash value.
- */
-+ (NSString*)TJCSHA256CommonParamsWithTimeStamp:(NSString*)timeStamp tapPointsAmount:(int)points guid:(NSString*)guid;
-
-/*!	\fn TJCSHA256CommonParamsWithTimeStamp:tapPointsAmount:guid:(NSString* timeStamp, NSString* packageNames)
- *	\brief Generates a SHA-256 hash value with the time stamp and some common parameters.
- *
- * The following are sent as common parameters: appID, UDID, and timestamp.
- *	\param timeStamp The time stamp to generate the hash with.
- *	\param packageNames Comma separated URL scheme strings.
- *	\return The SHA-256 hash value.
- */
-+ (NSString*)TJCSHA256CommonParamsWithTimeStamp:(NSString *)timeStamp packageNames:(NSString*)packageNames;
++ (NSString*)TJCSHA256CommonParamsWithTimeStamp:(NSString*)timeStamp string:(NSString*)string;
 
 /*!	\fn TJCSHA256WithString:(NSString*)dataStr
  *	\brief Generates a SHA-256 hash value with the given string.
@@ -223,7 +219,7 @@ enum TJCConnectionType
 
 - (void)connectWithType:(int)connectionType withParams:(NSDictionary*)params;
 - (NSString*)getURLStringWithConnectionType:(int)connectionType;
-- (void)initiateConnectionWithConnectionType:(int)connectionType requestString:(NSString*)requestString;
+- (void)initiateConnectionWithConnectionType:(int)connectionType requestString:(NSString*)requestString paramsString:(NSString*)paramsString;
 
 /*! \fn isJailBroken
  *	\brief Simple check to detect jail broken devices/apps.
@@ -296,6 +292,8 @@ enum TJCConnectionType
 + (NSString*)getMACID;
 + (NSString*)getSHA1MacAddress;
 + (NSString*)getUniqueIdentifier;
++ (NSString*)getAdvertisingIdentifier;
++ (NSString*)isAdvertisingTrackingEnabled;
 + (NSString*)getTimeStamp;
 
 @end

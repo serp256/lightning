@@ -16,7 +16,7 @@
 
 @implementation TJCVideoView
 
-@synthesize isVideoReady = isVideoReady_, mainView = mainView_;
+@synthesize isVideoReady = isVideoReady_, mainView = mainView_, adDelegate = adDelegate_;
 
 
 - (void)refreshViewWithViewController:(UIViewController*)vController
@@ -85,7 +85,7 @@
 		// Default to 90 degree rotation.
 		transform = CGAffineTransformMakeRotation((float)(M_PI / 2));
 	}
-
+	
 	mainView_.transform = transform;
 }
 
@@ -99,7 +99,7 @@
 		adDelegate_ = delegate;
 		
 		mainView_ = [[[NSBundle mainBundle] loadNibNamed:@"TJCVideoView" owner:self options:nil] objectAtIndex:0];
-
+		
 		// Init loading view.
 		loadingView_ = [[TJCLoadingView alloc] initWithFrame:mainView_.frame];
 		[mainView_ addSubview:loadingView_.mainView];
@@ -120,21 +120,20 @@
 
 
 - (void)bufferVideoWithPath:(NSString*)path shouldStream:(BOOL)shouldStream
-{	
+{
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(loadStateChanged:)
+                                                 name:MPMoviePlayerLoadStateDidChangeNotification
+                                               object:nil];
+    
 	// Pass along the delegate to each video instance so it can send movie status notifications.
 	[mainVideoLayer_ prepareVideoWithDelegate:adDelegate_ videoURL:path shouldStream:shouldStream];
 	
-	[[NSNotificationCenter defaultCenter] addObserver:self 
-														  selector:@selector(loadStateChanged:)
-																name:MPMoviePlayerLoadStateDidChangeNotification
-															 object:nil];
-	
 	// Set video view here. This is here since iOS5 errors out otherwise.
 	[mainVideoLayer_ setVideoView:mainView_];
-
+	
 	[loadingView_ fadeIn];
 	
-	// JC: TODO: See if this needs to be here.
 	[mainView_ addSubview:mainVideoLayer_.closeButton];
 }
 
@@ -144,7 +143,7 @@
 	MPMoviePlayerController *player = [notification object];
 	[TJCLog logWithLevel:LOG_DEBUG format:@"Movieplayer state: %d", [player loadState]];
 	
-	if ([player loadState] & MPMovieLoadStatePlaythroughOK)
+	if ([player loadState] & (MPMovieLoadStatePlaythroughOK  | MPMovieLoadStatePlayable))
 	{
 		isVideoReady_ = YES;
 		
@@ -165,7 +164,7 @@
 
 
 - (void)playVideoWithOfferID:(NSString*)offerID
-{	
+{
 	NSDictionary *cachedVideoDict = [[TJCVideoManager sharedTJCVideoManager] getCachedVideoDictonary];
 	NSDictionary *cachedVideoObjDict = [[[TJCVideoManager sharedTJCVideoManager] getCachedVideoDictonary] objectForKey:offerID];
 	
@@ -187,15 +186,14 @@
 	}
 	
 	// Buffer video ad in the shared video view.
-	[self bufferVideoWithPath:videoURL shouldStream:shouldStream];	
-
+	[self bufferVideoWithPath:videoURL shouldStream:shouldStream];
+	
 	// Save offer ID, to be used to ping offer complete when video is done.
 	mainVideoLayer_.offerID = offerID;
 	
 	mainVideoLayer_.isFinishedWatching = NO;
 	
 	// Load the video complete screen as the video starts - We want it to be loaded by the time the video is finished.
-	// JC: TODO: Determine where to move place this and place with proper URL.
 	NSMutableDictionary *paramDict = [[TapjoyConnect sharedTapjoyConnect] genericParameters];
 	
 	NSString *userID = [TapjoyConnect getUserID];
@@ -216,9 +214,12 @@
 
 - (IBAction)playActiveVideo
 {
-	if ([adDelegate_ respondsToSelector:@selector(videoAdBegan)])
+	if (adDelegate_)
 	{
-		[adDelegate_ videoAdBegan];
+		if ([adDelegate_ respondsToSelector:@selector(videoAdBegan)])
+		{
+			[adDelegate_ videoAdBegan];
+		}
 	}
 	
 	[mainVideoLayer_ playVideo];
@@ -243,15 +244,24 @@
 }
 
 
+- (IBAction)cancelAndCloseVideo
+{
+	[self cancelVideo:self];
+	[self closeVideoView];
+}
+
+
 - (IBAction)closeVideoView
 {
 	[mainVideoLayer_ stopVideo];
 	[[mainVideoLayer_ videoFeed] setShouldAutoplay:NO];
 	
-	[TJCViewCommons animateTJCView:mainView_ 
-					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons]getReverseTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
-	[self performSelector:@selector(giveBackNotification) withObject:nil afterDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
+	[TJCViewCommons animateTJCView:mainView_
+				 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons]getReverseTransitionEffect]
+						 withDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
+	[self performSelector:@selector(giveBackNotification)
+			   withObject:nil
+			   afterDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
 	
 	[mainVideoLayer_ cleanupVideo];
 	
@@ -272,15 +282,15 @@
 	{
 		[mainVideoLayer_ pauseVideo];
 		// If this video is being played for the first time, show the cancel alert, that currency will not be awarded.
-		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Cancel Video?" 
-																		message:@"Currency will not be awarded, are you sure you want to cancel the video?"
-																	  delegate:self 
-														  cancelButtonTitle:@"End" 
-														  otherButtonTitles:@"Resume", nil];
+		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Cancel Video?"
+														message:@"Currency will not be awarded, are you sure you want to cancel the video?"
+													   delegate:self
+											  cancelButtonTitle:@"End"
+											  otherButtonTitles:@"Resume", nil];
 		
 		// Force orientation to landscape for alert view here.
 		if (([UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortrait) ||
-			 ([UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortraitUpsideDown))
+			([UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortraitUpsideDown))
 		{
 			if ([TJCVideoManager sharedTJCVideoManager].currentOrientation == UIInterfaceOrientationLandscapeLeft)
 			{
@@ -314,15 +324,49 @@
 	{
 		[mainVideoLayer_ pauseVideo];
 		// If this video is being played for the first time, show the cancel alert, that currency will not be awarded.
-		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Cancel Video?" 
-																		message:@"Currency will not be awarded, are you sure you want to cancel the video?"
-																	  delegate:self 
-														  cancelButtonTitle:@"End" 
-														  otherButtonTitles:@"Resume", nil];
+		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Cancel Video?"
+														message:@"Currency will not be awarded, are you sure you want to cancel the video?"
+													   delegate:self
+											  cancelButtonTitle:@"End"
+											  otherButtonTitles:@"Resume", nil];
 		
 		// Force orientation to landscape for alert view here.
 		if (([UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortrait) ||
-			 ([UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortraitUpsideDown))
+			([UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortraitUpsideDown))
+		{
+			if ([TJCVideoManager sharedTJCVideoManager].currentOrientation == UIInterfaceOrientationLandscapeLeft)
+			{
+				[[UIApplication sharedApplication] setStatusBarOrientation:UIInterfaceOrientationLandscapeLeft animated:NO];
+			}
+			else if ([TJCVideoManager sharedTJCVideoManager].currentOrientation == UIInterfaceOrientationLandscapeRight)
+			{
+				[[UIApplication sharedApplication] setStatusBarOrientation:UIInterfaceOrientationLandscapeRight animated:NO];
+			}
+		}
+		
+		[alert show];
+		[alert release];
+		
+		isAlertShowing_ = YES;
+	}
+}
+
+
+- (IBAction)videoError:(id)sender
+{
+	if (!isAlertShowing_)
+	{
+		[mainVideoLayer_ pauseVideo];
+		// If this video is being played for the first time, show the cancel alert, that currency will not be awarded.
+		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Playback Error"
+														message:@"Video playback error has occurred. Please try again later."
+													   delegate:self
+											  cancelButtonTitle:@"OK"
+											  otherButtonTitles:nil];
+		
+		// Force orientation to landscape for alert view here.
+		if (([UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortrait) ||
+			([UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortraitUpsideDown))
 		{
 			if ([TJCVideoManager sharedTJCVideoManager].currentOrientation == UIInterfaceOrientationLandscapeLeft)
 			{
@@ -348,7 +392,7 @@
 	
 	if (buttonIndex == 0)
 	{
-		[self closeVideoView];		
+		[self closeVideoView];
 	}
 	else if (buttonIndex == 1)
 	{
@@ -358,10 +402,13 @@
 
 
 - (void)giveBackNotification
-{	
-	if ([adDelegate_ respondsToSelector:@selector(videoAdClosed)])
+{
+	if (adDelegate_)
 	{
-		[adDelegate_ videoAdClosed];
+		if ([adDelegate_ respondsToSelector:@selector(videoAdClosed)])
+		{
+			[adDelegate_ videoAdClosed];
+		}
 	}
 	
 	// Undo any transformations.
@@ -382,6 +429,7 @@
 
 - (void)dealloc
 {
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[loadingView_ release];
 	[mainVideoLayer_ release];
 	[mainView_ release];

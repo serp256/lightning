@@ -109,6 +109,7 @@
 	NSString *videoCompleteURL = nil;
 	NSString *currencyName = nil;
 	NSString *currencyAmount = nil;
+	NSString *videoURL = nil;
 	
 	for (NSString *part in parts)
 	{
@@ -153,6 +154,14 @@
 			
 			continue;
 		}
+		
+		if (CFStringFind((CFStringRef)part, (CFStringRef)TJC_VIDEO_CLICK_VIDEO_URL, kCFCompareCaseInsensitive).length > 0)
+		{
+			// Video URL found, trim off parameter portion.
+			videoURL = [part stringByReplacingOccurrencesOfString:TJC_VIDEO_CLICK_VIDEO_URL withString:@""];
+			
+			continue;
+		}
 	}
 	
 	// All parts should be set. If not, set error message.
@@ -192,6 +201,7 @@
 	[videoObjDict setObject:currencyName forKey:TJC_VIDEO_OBJ_CURRENCY_NAME];
 	[videoObjDict setObject:currencyAmount forKey:TJC_VIDEO_OBJ_CURRENCY_AMOUNT];
 	[videoObjDict setObject:videoCompleteURL forKey:TJC_VIDEO_OBJ_COMPLETE_URL];
+	[videoObjDict setObject:videoURL forKey:TJC_VIDEO_OBJ_VIDEO_URL];
 	[[TJCVideoManager sharedTJCVideoManager] setAllVideosObjectDict:videoObjDict withKey:offerID];
 	
 	if (shouldPlay)

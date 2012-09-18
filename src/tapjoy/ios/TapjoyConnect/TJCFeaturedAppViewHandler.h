@@ -26,8 +26,6 @@
 
 @property (nonatomic, retain) TJCFeaturedAppView *featuredAppView;
 
-- (void)removeFeaturedWebView;
-
 + (TJCFeaturedAppViewHandler*)sharedTJCFeaturedAppViewHandler;
 
 + (UIView*)showFullScreenAdWithURL:(NSString*)adURL;

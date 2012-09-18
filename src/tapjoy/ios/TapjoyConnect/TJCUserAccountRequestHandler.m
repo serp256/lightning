@@ -99,7 +99,8 @@
 	NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
 	
 	// Replace verifier with a one generated using a guid and currency amount.
-	NSString *newVerifier = [TapjoyConnect TJCSHA256CommonParamsWithTimeStamp:timeStamp tapPointsAmount:points guid:guid];
+	NSString *appendString = [NSString stringWithFormat:@"%@:%@", [NSString stringWithFormat:@"%d", points], guid];
+	NSString *newVerifier = [TapjoyConnect TJCSHA256CommonParamsWithTimeStamp:timeStamp string:appendString];
 	[paramDict setObject:newVerifier forKey:TJC_VERIFIER];
 	
 	// Insert guid to the params.

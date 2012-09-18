@@ -35,7 +35,7 @@ static NSString *currentServiceURL = nil;
 		UIImage *backBtnImg = [UIImage imageNamed:@"close_button.png"];
 		UIImageView *backBtnImgView = [[UIImageView alloc] initWithImage:backBtnImg];
         
-        // JC: NOTE: The coords here are not 0, 0 since that places the button in the center of the super view for some reason.
+        // NOTE: The coords here are not 0, 0 since that places the button in the center of the super view for some reason.
 		backButton_.frame = CGRectMake(-.01f, -.01f,
                                       backBtnImgView.frame.size.width, 
                                       backBtnImgView.frame.size.height);

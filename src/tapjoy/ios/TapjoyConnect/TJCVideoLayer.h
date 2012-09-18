@@ -26,21 +26,22 @@
 	IBOutlet UILabel *statusLabel_;			/*!< Info label on the video that indicates time left. */
 	IBOutlet UIView *completeScreenView_;	/*!< The view that holds the video complete view items. */
 	IBOutlet TJCUIWebPageView *webView_;	/*!< Used for loading web content when the redirect button is pressed. */
-	IBOutlet UIButton *doneButton_;			/*!< The button on the upper right hand corner that dismmisses the complete screen. */
 	IBOutlet UIImageView *tapjoyLogo_;		/*!< The logo that is displayed during video ad playback. */
-	IBOutlet UIButton *closeButton_;			/*!< The close button that can cancel a video, or go back to the complete screen if the video has already been viewed once. */
-	NSTimeInterval duration_;					/*!< The duration of the video currently playing. */
+	IBOutlet UIButton *closeButton_;		/*!< The close button that can cancel a video, or go back to the complete screen if the video has already been viewed once. */
+	NSTimeInterval duration_;				/*!< The duration of the video currently playing. */
 	id<TJCVideoAdDelegate> delegate_;		/*!< The delegate that implements the TJCVideoAdProtocol. */
+	NSMutableArray *videoPlaybackEvents_;
+	NSTimer *timer_;
 @public
-	NSString *fileName_;							/*!< The name of the video file saved locally on this device. */
-	NSString *linkURLString_;					/*!< The redirect URL associated with this video file. */
+	NSString *fileName_;					/*!< The name of the video file saved locally on this device. */
+	NSString *linkURLString_;				/*!< The redirect URL associated with this video file. */
 	MPMoviePlayerController *videoFeed_;	/*!< The video controller object for loading and managing playback of videos. */
-	BOOL isVideoPlaying_;						/*!< Video ad play status. */
-	NSString *offerID_;							/*!< The offer Id for the video currently being played. */
-	BOOL didIconDownload_;						/*!< Flag that indicates whether the video ad icon was downloaded. */
-	BOOL didLogoDownload_;						/*!< Flag that indicates whether the video ad logo was downloaded. */
-	BOOL isFinishedWatching_;					/*!< Flag that indicates whether a video has finished playing once through. */
-	BOOL shouldDisplayLogo_;					/*!< Set to YES if the Tapjoy logo should be displayed, NO otherwise. */
+	BOOL isVideoPlaying_;					/*!< Video ad play status. */
+	NSString *offerID_;						/*!< The offer Id for the video currently being played. */
+	BOOL didIconDownload_;					/*!< Flag that indicates whether the video ad icon was downloaded. */
+	BOOL didLogoDownload_;					/*!< Flag that indicates whether the video ad logo was downloaded. */
+	BOOL isFinishedWatching_;				/*!< Flag that indicates whether a video has finished playing once through. */
+	BOOL shouldDisplayLogo_;				/*!< Set to YES if the Tapjoy logo should be displayed, NO otherwise. */
 }
 
 @property (nonatomic, retain) IBOutlet UIButton *closeButton;
@@ -62,6 +63,8 @@
 - (void)setVideoView:(UIView*)view;
 
 - (void)refreshViewWithBounds:(CGRect)bounds;
+
+- (void)checkVideoPlaybackEvents:(NSTimer*)timer;
 
 /*!	\fn prepareVideoWithDelegate((id<TJCVideoAdDelegate>) delegate, NSString* URLString)
  *	\brief Sets the video protocol delegate and the video URL with which to load the video file.

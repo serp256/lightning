@@ -7,13 +7,13 @@
 // The Tapjoy SDK is bound by the Tapjoy SDK License Agreement and can be found here: https://www.tapjoy.com/sdk/license
 
 
-#define TJC_CONNECT_SUCCESS				@"TJC_Connect_Success"
+#define TJC_CONNECT_SUCCESS					@"TJC_Connect_Success"
 #define TJC_CONNECT_FAILED					@"TJC_Connect_Failed"
 #define TJC_OFFERS_SDK
 #define TJC_SDK_TYPE_VALUE					@"offers"
 
 // This notification is fired after getTapPoints has been called, and indicates that user currency amount has been received from the server.
-#define TJC_TAP_POINTS_RESPONSE_NOTIFICATION					@"TJC_TAP_POINTS_RESPONSE_NOTIFICATION"
+#define TJC_TAP_POINTS_RESPONSE_NOTIFICATION				@"TJC_TAP_POINTS_RESPONSE_NOTIFICATION"
 // This notification is fired after spendTapPoints has been called, and indicates that the user has successfully spent currency.
 #define TJC_SPEND_TAP_POINTS_RESPONSE_NOTIFICATION			@"TJC_SPEND_TAP_POINTS_RESPONSE_NOTIFICATION"
 // This notification is fired after awardTapPoints has been called, and indicates that the user has successfully been awarded currency.
@@ -26,14 +26,19 @@
 // Error notification for awardTapPoints
 #define TJC_AWARD_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR	@"TJC_AWARD_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR"
 
+// Notification that is fired after an event has been logged.
+#define TJC_EVENT_TRACKING_RESPONSE_NOTIFICATION			@"TJC_EVENT_TRACKING_RESPONSE_NOTIFICATION"
+// Error notification for Event Tracking.
+#define TJC_EVENT_TRACKING_RESPONSE_NOTIFICATION_ERROR		@"TJC_EVENT_TRACKING_RESPONSE_NOTIFICATION_ERROR"
+
 // Featured App notification is fired after full screen ad data is received from the server.
 #define TJC_FEATURED_APP_RESPONSE_NOTIFICATION				@"TJC_FEATURED_APP_RESPONSE_NOTIFICATION"
 
 // Notification that a user has just successfully completed an offer and earned currency. This only fires on init/resume.
-#define TJC_TAPPOINTS_EARNED_NOTIFICATION						@"TJC_TAPPOINTS_EARNED_NOTIFICATION"
+#define TJC_TAPPOINTS_EARNED_NOTIFICATION					@"TJC_TAPPOINTS_EARNED_NOTIFICATION"
 
 // Fired when any Tapjoy view is closed.
-#define TJC_VIEW_CLOSED_NOTIFICATION							@"TJC_VIEW_CLOSED_NOTIFICATION"
+#define TJC_VIEW_CLOSED_NOTIFICATION						@"TJC_VIEW_CLOSED_NOTIFICATION"
 
 #import "TJCViewCommons.h"
 #import "TJCNetReachability.h"
@@ -55,3 +60,4 @@
 #import "TJCVideoManager.h"
 #import "TJCAdDelegateProtocol.h"
 #import "TJCVideoAdProtocol.h"
+#import "TJCEventTrackingManager.h"

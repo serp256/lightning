@@ -71,9 +71,22 @@
 	
 	[urlRequest setHTTPMethod:requestMethod_];
 	
-	if (POSTdata_)
+	if ([requestMethod_ isEqualToString:@"POST"])
 	{
-		[urlRequest setHTTPBody:POSTdata_];
+		NSMutableData *postData = [[NSMutableData alloc] init];
+		if (POSTdata_)
+		{
+			[postData appendData:POSTdata_];
+		}
+
+		if (postParameters_)
+		{
+			NSString *postParamString = [TapjoyConnect createQueryStringFromDict:postParameters_];
+			[postData appendData:[postParamString dataUsingEncoding:NSUTF8StringEncoding]];
+		}
+		[urlRequest setHTTPBody:postData];
+		
+		[postData release];
 	}
 	
 	[myURL release];
@@ -275,7 +288,10 @@
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection*)myConnection
-{		
+{
+//	NSString *responseString = [[[NSString alloc] initWithData:data_ encoding:NSUTF8StringEncoding] autorelease];
+//	NSLog(@"TJCCoreFetcher response string: %@", responseString);
+	
 	[TapjoyConnect clearCache];
 	
 	hasFetched_ = YES;

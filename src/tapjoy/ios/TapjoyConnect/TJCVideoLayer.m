@@ -67,8 +67,6 @@ webView = webView_;
 {
 	[completeScreenView_ setAlpha:1];
 	[self bringSubviewToFront:completeScreenView_];
-	
-	[doneButton_ setAlpha:0];
 }
 
 
@@ -76,8 +74,6 @@ webView = webView_;
 {
 	[completeScreenView_ setAlpha:0];
 	[self sendSubviewToBack:completeScreenView_];
-	
-	[doneButton_ setAlpha:1];
 }
 
 
@@ -120,20 +116,31 @@ webView = webView_;
 	[webView_ setDelegate:self];
 	[webView_ setViewToTransparent:NO];
 	
+	if (videoPlaybackEvents_ == nil)
+	{
+		videoPlaybackEvents_ = [[NSMutableArray alloc] init];
+	}
+	[videoPlaybackEvents_ removeAllObjects];
+	
+	timer_ = nil;
+	
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:MPMovieDurationAvailableNotification object:nil];
-	[[NSNotificationCenter defaultCenter] addObserver:self 
-														  selector:@selector(movieDurationAvailable:)
-																name:MPMovieDurationAvailableNotification
-															 object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self
+										   selector:@selector(movieDurationAvailable:)
+												 name:MPMovieDurationAvailableNotification
+											   object:nil];
 	
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
-	[[NSNotificationCenter defaultCenter] addObserver:self 
-														  selector:@selector(movieDidFinishWatching:)
-																name:MPMoviePlayerPlaybackDidFinishNotification
-															 object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(movieDidFinishWatching:)
+												 name:MPMoviePlayerPlaybackDidFinishNotification
+											   object:nil];
 	
 	didIconDownload_ = NO;
 	didLogoDownload_ = NO;
+	
+	// NOTE: Possible iOS6 bug where MPMoviePlayerLoadStateDidChangeNotification was not firing after video buffers.
+	[self playVideo];
 }
 
 
@@ -207,8 +214,13 @@ webView = webView_;
 {
 	duration_ = [videoFeed_ duration];
 	//NSLog(@"Movie Duration:%f", duration_);
+	
+	if (duration_ < 0)
+	{
+		duration_ = 0;
+	}
+	
 	NSString *statusStr = [NSString stringWithFormat:@"%d seconds left", (int)duration_];
-
 	
 	[statusLabel_ setText:statusStr];
 }
@@ -216,23 +228,76 @@ webView = webView_;
 
 - (void)movieDidFinishWatching:(NSNotification*)notification
 {
-	//MPMoviePlayerController *playerController = [notification object];
-	//NSNumber *finishReason = [[notification userInfo] objectForKey:@"MPMoviePlayerPlaybackDidFinishReasonUserInfoKey"];	
-	//NSLog(@"VideoFinishReason: %@", finishReason);
-	
-	// Show video complete screen.
-	[self enableShowVideoCompleteScreen:YES];
-	
-	// Disable timer status text.
-	[self enableShowStatusLabel:NO];
-	
-	isVideoPlaying_ = NO;
-	
-	// Ping servers to notify that video has been completed, currency should be awarded.
-	if (offerID_)
+	// This method gets fired twice so we need to collect all playback events and resolve it later.
+	if (timer_ != nil) 
 	{
-		[[[TJCVideoManager sharedTJCVideoManager] requestHandler] requestVideoCompleteWithOfferID:offerID_];
-		offerID_ = nil;
+		[timer_ invalidate];
+		timer_ = nil;
+	}
+	timer_ = [NSTimer scheduledTimerWithTimeInterval:0.25f 
+											  target:self
+											selector:@selector(checkVideoPlaybackEvents:)
+											userInfo:nil
+											 repeats:NO];
+	
+	//MPMoviePlayerController *playerController = [notification object];
+	NSNumber *finishReason = [[notification userInfo] objectForKey:@"MPMoviePlayerPlaybackDidFinishReasonUserInfoKey"];	
+	[videoPlaybackEvents_ addObject:finishReason];
+//	NSInteger finishReasonVal = [finishReason intValue];
+//	[TJCLog logWithLevel:LOG_DEBUG format:[NSString stringWithFormat:@"VideoFinishReason: %@", finishReason]];
+
+//	NSData *errorLogData = [[videoFeed_ errorLog] extendedLogData];
+//	NSString *errorLogString = [[[NSString alloc] initWithData:errorLogData encoding:[[videoFeed_ errorLog] extendedLogDataStringEncoding]] autorelease];
+//	NSLog(@"Video error log: %@", errorLogString);
+//	NSArray *errorLogEvents = [[videoFeed_ errorLog] events];
+//	
+//	NSData *accessLogData = [[videoFeed_ accessLog] extendedLogData];
+//	NSString *accessLogString = [[[NSString alloc] initWithData:errorLogData encoding:[[videoFeed_ accessLog] extendedLogDataStringEncoding]] autorelease];
+//	NSLog(@"Video access log: %@", accessLogString);
+//	NSArray *accessLogEvents = [[videoFeed_ accessLog] events];
+}
+
+
+- (void)checkVideoPlaybackEvents:(NSTimer*)timer
+{
+	//NSLog(@"checkVideoPlaybackEvents FIRED");
+	
+	timer_ = nil;
+	
+	BOOL didErrorOccur = NO;
+	
+	for (NSNumber *videoFinishReason in videoPlaybackEvents_)
+	{
+		if ([videoFinishReason intValue] == MPMovieFinishReasonPlaybackError)
+		{
+			didErrorOccur = YES;
+		}
+	}
+
+	// Check for playback errors
+	if (didErrorOccur)
+	{
+		[TJCLog logWithLevel:LOG_NONFATAL_ERROR format:@"Video Playback Error"];
+		
+		// Pop up error message.
+		[[[TJCVideoManager sharedTJCVideoManager] videoView] videoError:nil];
+	}
+	else
+	{
+		// Show video complete screen.
+		[self enableShowVideoCompleteScreen:YES];
+		
+		// Disable timer status text.
+		[self enableShowStatusLabel:NO];
+		
+		isVideoPlaying_ = NO;
+		
+		// Ping servers to notify that video has been completed, currency should be awarded.
+		if (offerID_)
+		{
+			[[[TJCVideoManager sharedTJCVideoManager] requestHandler] requestVideoCompleteWithOfferID:offerID_];
+			offerID_ = nil;
+		}
 	}
 	
 	// Set video complete flag for special behavior when cancelling a video.
@@ -249,7 +314,7 @@ webView = webView_;
 - (void)playVideo
 {
 	[self enableShowVideoCompleteScreen:NO];
-
+	
 	// Stop and play from the beginning.
 	//[videoFeed_ stop];
 	[videoFeed_ play];
@@ -333,7 +398,7 @@ webView = webView_;
 	{
 		return;
 	}
-
+	
 	if (enable)
 	{
 		[tapjoyLogo_ setAlpha:1];
@@ -403,14 +468,16 @@ webView = webView_;
 
 - (void)updateStatusText:(NSTimer*)timer
 {
+	int duration = duration_ - videoFeed_.currentPlaybackTime;
 	// Stop the tick when we reach the end of the video.
-	if ((duration_ - videoFeed_.currentPlaybackTime) < 0)
+	if (duration < 0)
 	{
+		duration = 0;
 		[timer invalidate];
 	}
 	
-	NSString *statusStr = [NSString stringWithFormat:@"%d seconds left", (int)(duration_ - videoFeed_.currentPlaybackTime)];	
-
+	NSString *statusStr = [NSString stringWithFormat:@"%d seconds left", duration];	
+	
 	[statusLabel_ setText:statusStr];
 }
 
@@ -447,7 +514,7 @@ webView = webView_;
 		[[[TJCVideoManager sharedTJCVideoManager] videoView] closeVideoView];
 		return NO;
 	}
-
+	
 	// If we see either tapjoy or linkshare host names, we won't open it externally. All other host names will open externally from the app.
 	if ((CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_TAPJOY_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
 		 (CFStringFind((CFStringRef)[[request URL] host], (CFStringRef)TJC_TAPJOY_ALT_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
@@ -462,7 +529,7 @@ webView = webView_;
 																			  delegate:self 
 																	startImmediately:YES];
 	[conn release];
-
+	
 	return NO;
 }
 
@@ -487,6 +554,7 @@ webView = webView_;
 
 - (void)dealloc
 {
+	[videoPlaybackEvents_ release];
 	[offerID_ release];
 	[completeScreenView_ release];
 	[webView_ release];

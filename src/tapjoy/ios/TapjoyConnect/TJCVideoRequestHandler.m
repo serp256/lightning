@@ -31,7 +31,8 @@
 #pragma mark -
 #pragma mark Video Request Methods
 
-- (void)requestVideoData
+
+- (void)requestVideoDataWifi
 {
 	NSString *userID = [TapjoyConnect getUserID];
 	
@@ -47,7 +48,7 @@
 		[paramDict setObject:userID forKey:TJC_URL_PARAM_USER_ID];
 	}
 	
-	[self makeGenericRequestWithURL:requestString alternateURL:alternateString params:paramDict selector:@selector(videoDataReceived:)];
+	[self makeGenericRequestWithURL:requestString alternateURL:alternateString params:paramDict selector:@selector(videoDataReceivedWifi:)];
 	[paramDict release];
 }
 
@@ -104,7 +105,20 @@
 	if (!tjcConnectRetObject)
 		return;
 	
-	[deleg_ fetchResponseSuccessWithData:tjcConnectRetObject withRequestTag:myFetcher.requestTag];
+	[deleg_ fetchResponseSuccessWithData:tjcConnectRetObject withRequestTag:0];
+}
+
+
+- (void)videoDataReceivedWifi:(TJCCoreFetcher*)myFetcher 
+{
+	[TJCLog logWithLevel:LOG_DEBUG format:@"Video Ad Data Response Returned"];
+	
+	TJCTBXMLElement *tjcConnectRetObject = [self validateResponseReturnedObject:myFetcher];
+	
+	if (!tjcConnectRetObject)
+		return;
+	
+	[deleg_ fetchResponseSuccessWithData:tjcConnectRetObject withRequestTag:1];
 }
 
 

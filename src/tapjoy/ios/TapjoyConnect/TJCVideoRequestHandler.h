@@ -16,7 +16,7 @@
  */
 @interface TJCVideoRequestHandler : TJCCoreFetcherHandler<TJCWebFetcherDelegate>
 {
-	BOOL clickSuccessful_;
+	BOOL clickSuccessful_;		/*!< Indicates that the server has successfully recieved the click from the client. */
 }
 
 @property (assign) BOOL clickSuccessful;
@@ -28,7 +28,7 @@
 
 // Video request methods.
 // Requests video data.
-- (void)requestVideoData;
+- (void)requestVideoDataWifi;
 
 // Request video click.
 - (void)recordVideoClickWithURL:(NSString*)URLString;

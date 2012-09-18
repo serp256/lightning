@@ -196,9 +196,8 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCAdView)
 	[clickURL_ release];
 	clickURL_ = [[dataArray objectAtIndex:0] retain];
 	
-	// Save the image data.
+	// Save the image data, and strip out newline chars.
 	NSString *imageDataStr = [[dataArray objectAtIndex:1] stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-	// JC: TODO: This should be removed when the image data is formatted correctly. For now, strip out the newline chars.
 	
 	UIImage *image = [[UIImage imageWithData:[TJCUtil dataWithBase64EncodedString:imageDataStr]] retain];
 	[imageView_ release];

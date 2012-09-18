@@ -71,11 +71,16 @@
 
 + (void)initVideoAdWithDelegate:(id<TJCVideoAdDelegate>)delegate
 {
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_3_2	
-	[[TJCVideoManager sharedTJCVideoManager] initVideoAdsWithDelegate:delegate];
-#else
-	[TJCLog logWithLevel:LOG_NONFATAL_ERROR format:@"Error: Videos require iOS version 3.2 or higher, initialization ignored"];
-#endif
+	// Videos are not supported on iOS versions < 3.2
+	NSString *systemVersion = [[UIDevice currentDevice] systemVersion];
+	if ([systemVersion floatValue] >= 3.2)
+	{
+		[[TJCVideoManager sharedTJCVideoManager] initVideoAdsWithDelegate:delegate];
+	}
+	else
+	{
+		[TJCLog logWithLevel:LOG_NONFATAL_ERROR format:@"Error: Videos require iOS version 3.2 or higher, initialization ignored"];
+	}
 }
 
 
@@ -106,6 +111,11 @@
 + (void)shouldDisplayVideoLogo:(BOOL)display
 {
 	[[TJCVideoManager sharedTJCVideoManager] shouldDisplayLogo:display];
+}
+
++ (void)disableVideo:(BOOL)shouldDisable
+{
+    [[TJCVideoManager sharedTJCVideoManager] setDisableVideo:shouldDisable];
 }
 
 @end
