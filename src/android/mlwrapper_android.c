@@ -1611,11 +1611,11 @@ value ml_platform() {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	static mid;
-	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "platform", "()Ljava/lang/String;");
+	static jmethodID mid;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, jViewCls, "platform", "()Ljava/lang/String;");
 
-	jstring jplat = (*env)->CallObjectMethod(env, jView, mid);
-	char* cplat = (*env)->GetStringUTFChars(env, jplat, JNI_FALSE);
+	jstring jplat = (*env)->CallStaticObjectMethod(env, jView, mid);
+	const char* cplat = (*env)->GetStringUTFChars(env, jplat, JNI_FALSE);
 	value retval = caml_copy_string(cplat);
 
 	(*env)->ReleaseStringUTFChars(env, jplat, cplat);
@@ -1628,11 +1628,11 @@ value ml_hwmodel() {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	static mid;
-	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "hwmodel", "()Ljava/lang/String;");
+	static jmethodID mid;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, jViewCls, "hwmodel", "()Ljava/lang/String;");
 
-	jstring jmodel = (*env)->CallObjectMethod(env, jView, mid);
-	char* cmodel = (*env)->GetStringUTFChars(env, jmodel, JNI_FALSE);
+	jstring jmodel = (*env)->CallStaticObjectMethod(env, jView, mid);
+	const char* cmodel = (*env)->GetStringUTFChars(env, jmodel, JNI_FALSE);
 	value retval = caml_copy_string(cmodel);
 
 	(*env)->ReleaseStringUTFChars(env, jmodel, cmodel);
@@ -1645,9 +1645,9 @@ value ml_totalMemory() {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	static mid;
-	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "hwmodel", "()J");
-	jlong jtotalmem = (*env)->CallLongMethod(env, jView, mid);
+	static jmethodID mid;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, jViewCls, "totalMemory", "()J");
+	jlong jtotalmem = (*env)->CallStaticLongMethod(env, jView, mid);
 
 	return Val_int(jtotalmem);
 }
