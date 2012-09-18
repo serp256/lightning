@@ -22,8 +22,8 @@ ENDIF;
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 value request_remote_notifications: list remoteNotification ->  (string -> unit) -> (string -> unit) -> unit;
 
-(* value getLocale: unit -> string;
-value getVersion: unit -> string; *)
+value getLocale: unit -> string;
+value getVersion: unit -> string;
 
 value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
