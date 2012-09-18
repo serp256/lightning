@@ -228,6 +228,7 @@ public class LightView extends GLSurfaceView {
 	public void onResume() {
 		Log.d("LIGHTNING", "VIEW.onResume");
 		//super.onResume();
+
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -659,5 +660,38 @@ public class LightView extends GLSurfaceView {
 
 	public void callExpansionsComplete(int cb) {
 		queueEvent(new ExpansionsCallbackRunnable(cb));
+	}
+
+
+	public static String platform() {
+		return android.os.Build.VERSION.RELEASE;
+	}
+
+	public static String hwmodel() {
+		return android.os.Build.MODEL;
+	}
+
+	public static long totalMemory() {
+		String meminfo;
+
+		try {
+			java.io.RandomAccessFile f = new java.io.RandomAccessFile("/proc/meminfo", "r");
+			java.util.regex.Pattern regex = java.util.regex.Pattern.compile("^MemTotal:[\\s]*([\\d]+).*$");
+
+			while ((meminfo = f.readLine()) != null) {
+				java.util.regex.Matcher matcher = regex.matcher(meminfo);
+				
+				if (matcher.find()) {
+					meminfo = matcher.group(1);					
+					break;
+				}
+			}
+
+			f.close();
+		} catch (Exception e) {
+			meminfo = null;	
+		}
+
+		return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
 	}
 }

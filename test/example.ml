@@ -1375,11 +1375,12 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
 
-      debug "pizda";
+    debug "%s %s %d" (Hardware.platform ()) (Hardware.hwmodel ()) (Hardware.total_memory ());
+(*       debug "pizda";
 
       debug "back handler %d" (self#addEventListener Stage.ev_BACK_PRESSED (fun _ _ _ -> debug "back pressed"));
       debug "bg handler %d" (self#addEventListener Stage.ev_BACKGROUND (fun _ _ _ -> debug "background"));
-      debug "fg handler %d" (self#addEventListener Stage.ev_FOREGROUND (fun _ _ _ -> debug "foreground"));
+      debug "fg handler %d" (self#addEventListener Stage.ev_FOREGROUND (fun _ _ _ -> debug "foreground")); *)
 
 
 

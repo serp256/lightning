@@ -1610,3 +1610,48 @@ JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_LightMediaPlayer_getOffsetS
 	(*env)->ReleaseStringUTFChars(env, path, cpath);
 	return retval;
 }
+
+value ml_platform() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID mid;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, jViewCls, "platform", "()Ljava/lang/String;");
+
+	jstring jplat = (*env)->CallStaticObjectMethod(env, jView, mid);
+	const char* cplat = (*env)->GetStringUTFChars(env, jplat, JNI_FALSE);
+	value retval = caml_copy_string(cplat);
+
+	(*env)->ReleaseStringUTFChars(env, jplat, cplat);
+	(*env)->DeleteLocalRef(env, jplat);
+
+	return retval;
+}
+
+value ml_hwmodel() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID mid;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, jViewCls, "hwmodel", "()Ljava/lang/String;");
+
+	jstring jmodel = (*env)->CallStaticObjectMethod(env, jView, mid);
+	const char* cmodel = (*env)->GetStringUTFChars(env, jmodel, JNI_FALSE);
+	value retval = caml_copy_string(cmodel);
+
+	(*env)->ReleaseStringUTFChars(env, jmodel, cmodel);
+	(*env)->DeleteLocalRef(env, jmodel);
+
+	return retval;
+}
+
+value ml_totalMemory() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID mid;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, jViewCls, "totalMemory", "()J");
+	jlong jtotalmem = (*env)->CallStaticLongMethod(env, jView, mid);
+
+	return Val_long(jtotalmem);
+}
