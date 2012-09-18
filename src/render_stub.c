@@ -41,6 +41,11 @@
 
 #define setDefaultGLBlend setPMAGLBlend
 
+
+void ml_checkGLErrors(value p) {
+	checkGLErrors(String_val(p));
+}
+
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
 	//fprintf(stderr,"set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
   //glDisable(GL_DEPTH_TEST);
@@ -613,7 +618,8 @@ void print_quad(lgQuad *q) {
 
 void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	lgQuad *q = QUAD(quad);
-	checkGLErrors("start");
+	PRINT_DEBUG("RENDER QUAD");
+	checkGLErrors("start render quad");
 
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
@@ -643,7 +649,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
   glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	checkGLErrors("draw arrays");
+	checkGLErrors("draw quad arrays");
 
 	kmGLPopMatrix();
 }
@@ -899,6 +905,7 @@ void ml_image_flip_tex_y(value image) {
 
 void ml_image_render(value matrix, value program, value alpha, value image) {
 	//fprintf(stderr,"render image\n");
+	PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
 	checkGLErrors("start image render");
 
@@ -951,7 +958,7 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
   glVertexAttribPointer(lgVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, TexVertexSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	checkGLErrors("draw arrays");
+	checkGLErrors("draw arrays image");
 	kmGLPopMatrix();
 };
 
@@ -1063,6 +1070,7 @@ static int atlas_quads_len = 0;
 
 // assume that quads it's dynarray
 void ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {
+	PRINT_DEBUG("RENDER ATLAS");
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
@@ -1284,7 +1292,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
 	glBindVertexArray(0);
 #endif
-	checkGLErrors("after draw atals");
+	checkGLErrors("after draw atlas");
 	kmGLPopMatrix();
 }
 
@@ -1297,8 +1305,11 @@ void ml_atlas_render_byte(value * argv, int n) {
 void ml_atlas_clear(value atlas) {
 	atlas_t *atl = ATLAS(atlas);
 	glBindBuffer(GL_ARRAY_BUFFER,atl->buffersVBO[0]);
+	checkGLErrors("atlas clear bindBuffer");
 	glBufferData(GL_ARRAY_BUFFER,0,NULL,GL_DYNAMIC_DRAW);
+	checkGLErrors("atlas clear BufferData");
 	glBindBuffer(GL_ARRAY_BUFFER,0);
+	checkGLErrors("atlas bind 0 buffer");
 	atl->n_of_quads = 0;
 }
 
@@ -1307,11 +1318,13 @@ void ml_atlas_clear(value atlas) {
 void ml_gl_scissor_enable(value left,value top, value width, value height) {
 	glEnable(GL_SCISSOR_TEST);
 	glScissor(Long_val(left),Long_val(top),Long_val(width),Long_val(height));
+	checkGLErrors("enable scissor");
 }
 
 
 void ml_gl_scissor_disable(value unit) {
 	glDisable(GL_SCISSOR_TEST);
+	checkGLErrors("disable scissor");
 }
 
 value ml_get_gl_extensions(value unit) {

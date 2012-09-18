@@ -221,6 +221,7 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 	value kind = caml_alloc_small(1,0);
 	Field(kind,0) = Val_true;
 	Store_field(renderInfo,4,kind);
+	checkGLErrors("finish render to texture");
 	CAMLreturn(renderInfo);
 }
 
@@ -342,6 +343,7 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 	//glDeleteFramebuffers(1,&rb.fbid);
 	back_framebuffer(rb.fbid);
 
+	checkGLErrors("finish render to texture");
 	CAMLreturn(Val_bool(resized));
 }
 

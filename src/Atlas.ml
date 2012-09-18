@@ -322,10 +322,16 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               RENDER_QUADS(shaderProgram,(if transform then self#transformationMatrix else Matrix.identity),color,alpha)
 (*           | _ -> () (* WE NEED ASSERT HERE ?? *) *)
           ]
-        else 
+        else ();
+        (*
           if dirty
-          then atlas_clear_data atlas
+          then 
+          (
+            dirty := False;
+            atlas_clear_data atlas
+          )
           else ();
+        *)
       );
 
     end;

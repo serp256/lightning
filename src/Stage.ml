@@ -241,9 +241,14 @@ class virtual c (_width:float) (_height:float) =
     method run seconds = 
     (
       self#advanceTime seconds;
+      debug:run "start prerender";
       D.prerender ();
+      debug:run "end prerender";
       Render.clear bgColor 1.;
+      Render.checkErrors "before render";
+      debug:run "start render";
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
+(*       debug:run "end render"; *)
     );
 
   method! hitTestPoint localPoint isTouch =
