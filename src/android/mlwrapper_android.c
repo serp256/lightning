@@ -1649,5 +1649,5 @@ value ml_totalMemory() {
 	if (!mid) mid = (*env)->GetStaticMethodID(env, jViewCls, "totalMemory", "()J");
 	jlong jtotalmem = (*env)->CallStaticLongMethod(env, jView, mid);
 
-	return Val_int(jtotalmem);
+	return Val_long(jtotalmem);
 }
