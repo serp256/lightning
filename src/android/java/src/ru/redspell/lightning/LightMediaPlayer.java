@@ -107,6 +107,22 @@ public class LightMediaPlayer extends MediaPlayer {
 
 	private static native OffsetSizePair getOffsetSizePair(String path);
 
+	private static boolean setMpDataSrc(MediaPlayer mp, String path) {
+		OffsetSizePair pair = getOffsetSizePair(path);
+
+		if (pair != null) {
+			mp.setDataSource((new FileInputStream(LightView.instance.getExpansionPath(true))).getFD(), pair.offset, pair.size);
+			return true;
+		} else if (assetsDir != null) {
+			mp.setDataSource(assetsDir + (assetsDir.charAt(assetsDir.length() - 1) == '/' ? "" : "/") + path);
+		} else {
+			AssetFileDescriptor afd = LightView.instance.getContext().getAssets().openFd(path);
+			mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());	
+		}
+
+		return false;		
+	}
+
 	public static MediaPlayer createMediaPlayer(String assetsDir, String path) throws IOException {
 		MediaPlayer mp = new LightMediaPlayer();
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);

@@ -1375,7 +1375,10 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
 
-    debug "%s %s %d" (Hardware.platform ()) (Hardware.hwmodel ()) (Hardware.total_memory ());
+    let channel1 = Sound.createChannel (Sound.load "melody0.mp3") in
+      channel1#play ();
+    (* ignore(LightCommon.read_json "LangRU.json"); *)
+    (* debug "%s %s %d" (Hardware.platform ()) (Hardware.hwmodel ()) (Hardware.total_memory ()); *)
 (*       debug "pizda";
 
       debug "back handler %d" (self#addEventListener Stage.ev_BACK_PRESSED (fun _ _ _ -> debug "back pressed"));

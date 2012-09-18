@@ -10,3 +10,4 @@ module Transaction :
 value init : ?pubkey:string -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit;
 value purchase : string -> unit;
 value commit_transaction : Transaction.t -> unit;
+value commit_transaction_by_id : string -> unit;
