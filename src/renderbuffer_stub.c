@@ -18,6 +18,7 @@ static GLuint inline get_framebuffer() {
 		fbid = fbfs[i];
 		fbfs[i] = 0;
 	} else glGenFramebuffers(1,&fbid);
+	PRINT_DEBUG("get framebuffer: %d",fbid);
 	return fbid;
 }
 
@@ -30,6 +31,7 @@ static void inline back_framebuffer(GLuint fbid) {
 		fbfs[fbs_cnt] = fbid;
 		++fbs_cnt;
 	}
+	PRINT_DEBUG("back framebuffer: %d",fbid);
 }
 
 void get_framebuffer_state(framebuffer_state *s) {
@@ -84,7 +86,7 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	//checkGLErrors("create renderbuffer texture %d [%d:%d]",rtid,legalWidth,legalHeight);
+	checkGLErrors("create render texture %d [%d:%d]",rtid,legalWidth,legalHeight);
   glBindTexture(GL_TEXTURE_2D,0);
   GLuint fbid;
   //glGenFramebuffers(1, &fbid);
@@ -198,7 +200,8 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 	renderbuffer_deactivate();
 
 	set_framebuffer_state(&fstate);
-	glDeleteFramebuffers(1,&rb.fbid);
+	//glDeleteFramebuffers(1,&rb.fbid);
+	back_framebuffer(rb.fbid);
 
 	// и нужно вернуть текстуру
 	int s = rb.realWidth * rb.realHeight * 4;
@@ -315,6 +318,7 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
   //glGenFramebuffers(1, &rb.fbid);
 	rb.fbid = get_framebuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, rb.fbid);
+	checkGLErrors("draw to texture bind framebuffer");
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rb.tid,0);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		char emsg[255];
