@@ -6,6 +6,7 @@
 
 int loadPvrFile2(FILE *fildes,textureInfo *tInfo);
 int loadPvrFile3(FILE* fildes,size_t len, textureInfo *tInfo);
+int loadDdsFile(FILE* fildes,size_t len, textureInfo *tInfo);
 
 
 #endif

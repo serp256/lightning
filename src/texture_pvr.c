@@ -213,3 +213,136 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 	tInfo->scale = 1;
 	return 0;
 }
+typedef unsigned char uint8;
+typedef signed char int8;
+typedef unsigned short uint16;
+typedef signed short int16;
+
+#if !defined(MAKEFOURCC)
+#define MAKEFOURCC(ch0, ch1, ch2, ch3) \
+    ((uint)((int8)(ch0)) | ((uint)((int8)(ch1)) << 8) | \
+    ((uint)((int8)(ch2)) << 16) | ((uint)((int8)(ch3)) << 24 ))
+#endif
+
+enum DDPF
+{
+    DDPF_ALPHAPIXELS = 0x00000001U,
+    DDPF_ALPHA = 0x00000002U,
+    DDPF_FOURCC = 0x00000004U,
+    DDPF_RGB = 0x00000040U,
+    DDPF_PALETTEINDEXED1 = 0x00000800U,
+    DDPF_PALETTEINDEXED2 = 0x00001000U,
+    DDPF_PALETTEINDEXED4 = 0x00000008U,
+    DDPF_PALETTEINDEXED8 = 0x00000020U,
+    DDPF_LUMINANCE = 0x00020000U,
+    DDPF_ALPHAPREMULT = 0x00008000U,
+
+    // Custom NVTT flags.
+    DDPF_NORMAL = 0x80000000U,
+    DDPF_SRGB = 0x40000000U,
+};
+
+enum FOURCC
+{
+    FOURCC_NVTT = MAKEFOURCC('N', 'V', 'T', 'T'),
+    FOURCC_DDS = MAKEFOURCC('D', 'D', 'S', ' '),
+    FOURCC_DXT1 = MAKEFOURCC('D', 'X', 'T', '1'),
+    FOURCC_DXT2 = MAKEFOURCC('D', 'X', 'T', '2'),
+    FOURCC_DXT3 = MAKEFOURCC('D', 'X', 'T', '3'),
+    FOURCC_DXT4 = MAKEFOURCC('D', 'X', 'T', '4'),
+    FOURCC_DXT5 = MAKEFOURCC('D', 'X', 'T', '5'),
+    FOURCC_RXGB = MAKEFOURCC('R', 'X', 'G', 'B'),
+    FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1'),
+    FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2'),
+    FOURCC_A2XY = MAKEFOURCC('A', '2', 'X', 'Y'),
+    FOURCC_DX10 = MAKEFOURCC('D', 'X', '1', '0'),
+    FOURCC_UVER = MAKEFOURCC('U', 'V', 'E', 'R'),
+};
+
+typedef struct
+{
+    uint size;
+    uint flags;
+    uint fourcc;
+    uint bitcount;
+    uint rmask;
+    uint gmask;
+    uint bmask;
+    uint amask;
+} DDSPixelFormat;
+
+typedef struct
+{
+    uint caps1;
+    uint caps2;
+    uint caps3;
+    uint caps4;
+} DDSCaps;
+
+typedef struct
+{
+    uint fourcc;
+    uint size;
+    uint flags;
+    uint height;
+    uint width;
+    uint pitch;
+    uint depth;
+    uint mipmapcount;
+    uint reserved[11];
+    DDSPixelFormat pf;
+    DDSCaps caps;
+    uint notused;
+} DDSHeader;
+
+int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
+	DDSHeader header;
+
+	if (fsize < sizeof(DDSHeader)) {
+		ERROR("file size less than dds header size");
+		return 1;
+	}
+
+	if (!fread(&header, sizeof(DDSHeader), 1, fildes)) {
+		ERROR("can't read dds header");
+		return 1;
+	}
+
+	if (header.fourcc != FOURCC_DDS) {
+		ERROR("bad dds identifier");
+		return 1;
+	};
+
+	if (header.pf.fourcc == FOURCC_DXT5) {
+		PRINT_DEBUG("DXT5");
+		tInfo->format = LTextureFormatDXT5;
+	} else if (header.pf.fourcc == FOURCC_ATI2) {
+		PRINT_DEBUG("ATI2");
+		tInfo->format = LTextureFormat3DC;
+	} else {
+		ERROR("bad or unsupported dds pixel format");
+		return 1;
+	}
+
+	PRINT_DEBUG("width %d", header.width);
+	PRINT_DEBUG("height %d", header.height);
+	PRINT_DEBUG("mipmaps %d", header.mipmapcount);
+	PRINT_DEBUG("alpha premultiply %d", header.pf.flags & DDPF_ALPHAPREMULT);
+
+	tInfo->width = tInfo->realWidth = header.width;
+	tInfo->height = tInfo->realHeight = header.height;
+	tInfo->numMipmaps = header.mipmapcount - 1;
+	tInfo->generateMipmaps = 0;
+	tInfo->premultipliedAlpha = header.pf.flags & DDPF_ALPHAPREMULT;
+	tInfo->scale = 1;
+	tInfo->dataLen = fsize - sizeof(DDSHeader);
+	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
+
+	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {
+		ERROR("cannot read image data");
+		free(tInfo->imgData);
+		return 1;
+	};	
+
+	return 0;
+}

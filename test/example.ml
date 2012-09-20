@@ -832,7 +832,7 @@ value url_loader (stage:Stage.c) =
   );
 
 value pvr (stage:Stage.c) = 
-  let image = Image.load "map/1.jpg" in
+  let image = Image.load "0.jpg" in
   stage#addChild image;
 
 value glow (stage:Stage.c) = 
@@ -1374,10 +1374,13 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      debug "%s" (Render.get_gl_extensions ());
 
-    Sound.init ();
+      pvr self;
 
-        let channel1 = Sound.createChannel (Sound.load "achievement1.caf")
+    (* Sound.init (); *)
+
+(*         let channel1 = Sound.createChannel (Sound.load "achievement1.caf")
         and img = Image.load "Russia.png" in
         (
           self#addChild img;
@@ -1396,7 +1399,7 @@ let stage width height =
               ]
             )
           ));
-        );
+        ); *)
 
     
       

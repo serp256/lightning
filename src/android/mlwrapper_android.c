@@ -370,7 +370,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *
 	if (net_running > 0) net_perform();
 	if (run_method == 1) run_method = caml_hash_variant("run");
 	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,timePassed);
-	PRINT_DEBUG("caml run ok");
+	// PRINT_DEBUG("caml run ok");
 	CAMLreturn0;
 }
 

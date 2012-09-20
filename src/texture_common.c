@@ -381,6 +381,15 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 			return 0;
 #endif
 
+		case LTextureFormat3DC:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->glTexFormat = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
+            break;
+#else
+			return 0;
+#endif
+
         case LTextureFormatDXT5:
 #if (defined ANDROID)
         	p->compressed = 1;
