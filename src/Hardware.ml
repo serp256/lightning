@@ -17,4 +17,5 @@ ENDIF;
 value cpu_frequency () = 0;
 value internal_user_memory = ref 0;
 value user_memory () = !internal_user_memory;
+value total_memory () = 0;
 ENDIF;
