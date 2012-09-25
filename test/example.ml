@@ -832,7 +832,7 @@ value url_loader (stage:Stage.c) =
   );
 
 value pvr (stage:Stage.c) = 
-  let image = Image.load "0.jpg" in
+  let image = Image.load "Boom.png" in 
   stage#addChild image;
 
 value glow (stage:Stage.c) = 
@@ -1376,7 +1376,11 @@ let stage width height =
     initializer begin
       debug "%s" (Render.get_gl_extensions ());
 
-      pvr self;
+      let timer = Timer.create ~repeatCount:1 2. "PZIDA" in
+        (
+          ignore(timer#addEventListener Timer.ev_TIMER_COMPLETE (fun _ _ _ -> pvr self));
+          timer#start ()
+        );
 
     (* Sound.init (); *)
 
