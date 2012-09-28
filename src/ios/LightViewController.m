@@ -248,7 +248,6 @@ static value *ml_url_complete = NULL;
 
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-	// Return YES for supported orientations
 	if (_orientationDelegate) {
 		BOOL res = [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
 		return res;
@@ -257,6 +256,21 @@ static value *ml_url_complete = NULL;
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
+- (BOOL)shouldAutorotate {
+	if (_orientationDelegate && [_orientationDelegate respondsToSelector:@selector(shouldAutorotate)]) {
+		return [_orientationDelegate shouldAutorotate];
+	}
+	else
+		return YES;
+}
+
+- (NSUInteger)supportedInterfaceOrientations {
+	if (_orientationDelegate && [_orientationDelegate respondsToSelector:@selector(supportedInterfaceOrientations)]) {
+		return [_orientationDelegate supportedInterfaceOrientations];
+	}
+	else
+		return UIInterfaceOrientationPortrait;
+}
 
 
 /* handle payment transactions */
@@ -292,10 +306,15 @@ static value *ml_url_complete = NULL;
 						}
 						if (Is_block(payment_error_cb)) {
 							caml_acquire_runtime_system();
-							caml_callback3(payment_error_cb, 
-														 caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), 
-														 caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]), 
-														 Val_bool(transaction.error.code == SKErrorPaymentCancelled));
+							value ml_product_id = 0, ml_error_msg = 0;
+							NSLog(@"PAYMENT ERORR FOR: '%@'",transaction.payment.productIdentifier);
+							Begin_roots2(ml_product_id,ml_error_msg);
+							ml_product_id = caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]); 
+							if (e.length > 0) 
+								ml_error_msg =  caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]); 
+							else ml_error_msg = caml_alloc_string(0);
+							caml_callback3(payment_error_cb, ml_product_id,ml_error_msg,Val_bool(transaction.error.code == SKErrorPaymentCancelled));
+							End_roots();
 							caml_release_runtime_system();
 						}
 						[[SKPaymentQueue defaultQueue] finishTransaction: transaction];

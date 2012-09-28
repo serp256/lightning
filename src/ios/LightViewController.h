@@ -14,6 +14,8 @@
 
 @protocol OrientationDelegate 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
+- (BOOL)shouldAutorotate;
+- (NSUInteger)supportedInterfaceOrientations;
 @end
 
 @interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate, SKPaymentTransactionObserver> {

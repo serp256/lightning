@@ -36,11 +36,6 @@
  distribution.
  */
 
-#if __has_feature(objc_arc)
-#error This file uses the classic non-ARC retain/release model; hints below... 
-// to selectively compile this file as non-ARC, do as follows:
-// https://img.skitch.com/20120717-g3ag5h9a6ehkgpmpjiuen3qpwp.png
-#endif
 
 #import "TJCOpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access

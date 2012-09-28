@@ -127,6 +127,14 @@
   return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
+-(BOOL)shouldAutorotate {
+	return YES;
+}
+
+- (NSUInteger)supportedInterfaceOrientations {
+  return UIInterfaceOrientationPortrait;
+}
+
 - (void)dealloc {
 	[lightViewController release];
 	[_window release];
