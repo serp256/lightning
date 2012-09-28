@@ -38,7 +38,7 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 
 - (void)updateUserAccountObjWithTBXMLElement:(TJCTBXMLElement*)userAccElement
 {
-	// JC: TODO: Super hack, this prevents an issue where the earned points alert would pop up if the virtual good purchase returned incorrect Tap Points data.
+	// This prevents an issue where the earned points alert would pop up if the virtual good purchase returned incorrect Tap Points data.
 	[userAccountModelObj_ updateWithTBXML:userAccElement shouldCheckEarnedPoints:NO];
 }
 
@@ -48,10 +48,10 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 	if (waitingForResponse_)
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"TJCUserAccountManager warning: getTapPoints cannot be called until response from the server has been received."];
+                      format: @"TJCUserAccountManager warning: getTapPoints cannot be called until response from the server has been received."];
 		
-		[[NSNotificationCenter defaultCenter] postNotificationName:TJC_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR 
-																			 object:nil];
+		[[NSNotificationCenter defaultCenter] postNotificationName:TJC_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR
+                                                            object:nil];
 		
 		return;
 	}
@@ -62,8 +62,8 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 		userAccountGetTapPointsObj_ = nil;
 	}
 	
-	userAccountGetTapPointsObj_ = [[TJCUserAccountRequestHandler alloc] initRequestWithDelegate:self 
-																											andRequestTag:kTJCUserAccountRequestTagGetPoints];
+	userAccountGetTapPointsObj_ = [[TJCUserAccountRequestHandler alloc] initRequestWithDelegate:self
+                                                                                  andRequestTag:kTJCUserAccountRequestTagGetPoints];
 	
 	[userAccountGetTapPointsObj_ requestTapPoints];
 	
@@ -76,10 +76,10 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 	if (waitingForResponse_)
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"TJCUserAccountManager warning: spendTapPoints cannot be called until response from the server has been received."];
+                      format: @"TJCUserAccountManager warning: spendTapPoints cannot be called until response from the server has been received."];
 		
 		[[NSNotificationCenter defaultCenter] postNotificationName:TJC_SPEND_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR
-																			 object:nil];
+                                                            object:nil];
 		
 		return;
 	}
@@ -90,8 +90,8 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 		userAccountSpendTapPointsObj_ = nil;
 	}
 	
-	userAccountSpendTapPointsObj_ = [[TJCUserAccountRequestHandler alloc] initRequestWithDelegate:self 
-																											  andRequestTag:kTJCUserAccountRequestTagSpendPoints];
+	userAccountSpendTapPointsObj_ = [[TJCUserAccountRequestHandler alloc] initRequestWithDelegate:self
+                                                                                    andRequestTag:kTJCUserAccountRequestTagSpendPoints];
 	
 	[userAccountSpendTapPointsObj_ subtractTapPoints:points];
 	
@@ -104,10 +104,10 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 	if (waitingForResponse_)
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"TJCUserAccountManager warning: awardTapPoints cannot be called until response from the server has been received."];
+                      format: @"TJCUserAccountManager warning: awardTapPoints cannot be called until response from the server has been received."];
 		
 		[[NSNotificationCenter defaultCenter] postNotificationName:TJC_AWARD_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR
-																			 object:nil];
+                                                            object:nil];
 		
 		return;
 	}
@@ -118,8 +118,8 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 		userAccountSpendTapPointsObj_ = nil;
 	}
 	
-	userAccountSpendTapPointsObj_ = [[TJCUserAccountRequestHandler alloc] initRequestWithDelegate:self 
-																											  andRequestTag:kTJCUserAccountRequestTagAwardPoints];
+	userAccountSpendTapPointsObj_ = [[TJCUserAccountRequestHandler alloc] initRequestWithDelegate:self
+                                                                                    andRequestTag:kTJCUserAccountRequestTagAwardPoints];
 	
 	[userAccountSpendTapPointsObj_ addTapPoints:points];
 	
@@ -133,25 +133,26 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 	waitingForResponse_ = NO;
 	
 	[userAccountModelObj_ updateWithTBXML:dataObj shouldCheckEarnedPoints:YES];
-
-	switch (aTag) 
+    
+	switch (aTag)
 	{
 		case kTJCUserAccountRequestTagGetPoints:
 		{
 			// Post the notification for the callback method to indicate that the URL request has succeeded.
-			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_TAP_POINTS_RESPONSE_NOTIFICATION 
-																				 object:[NSNumber numberWithInt:userAccountModelObj_.tapPoints]];
+			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_TAP_POINTS_RESPONSE_NOTIFICATION
+                                                                object:[NSNumber numberWithInt:userAccountModelObj_.tapPoints]];
 		}
 			break;
 		case kTJCUserAccountRequestTagSpendPoints:
 		{
-			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_SPEND_TAP_POINTS_RESPONSE_NOTIFICATION 
-																				 object:[NSNumber numberWithInt:userAccountModelObj_.tapPoints]];
+			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_SPEND_TAP_POINTS_RESPONSE_NOTIFICATION
+                                                                object:[NSNumber numberWithInt:userAccountModelObj_.tapPoints]];
 		}
+			break;
 		case kTJCUserAccountRequestTagAwardPoints:
 		{
-			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_AWARD_TAP_POINTS_RESPONSE_NOTIFICATION 
-																				 object:[NSNumber numberWithInt:userAccountModelObj_.tapPoints]];			
+			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_AWARD_TAP_POINTS_RESPONSE_NOTIFICATION
+                                                                object:[NSNumber numberWithInt:userAccountModelObj_.tapPoints]];
 		}
 			break;
 		default:
@@ -163,23 +164,24 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 // raised when error occurs
 - (void)fetchResponseError:(TJCResponseError)errorType errorDescription:(id)errorDescObj requestTag:(int) aTag
 {
-	switch (aTag) 
+	switch (aTag)
 	{
 		case kTJCUserAccountRequestTagGetPoints:
 		{
-			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR 
-																				 object:nil];
+			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR
+                                                                object:nil];
 		}
 			break;
 		case kTJCUserAccountRequestTagSpendPoints:
 		{
 			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_SPEND_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR
-																				 object:nil];
+                                                                object:nil];
 		}
+            break;
 		case kTJCUserAccountRequestTagAwardPoints:
 		{
 			[[NSNotificationCenter defaultCenter] postNotificationName:TJC_AWARD_TAP_POINTS_RESPONSE_NOTIFICATION_ERROR
-																				 object:nil];
+                                                                object:nil];
 		}
 			break;
 		default:
@@ -248,13 +250,13 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCUserAccountManager)
 + (void)showDefaultEarnedCurrencyAlert
 {
 	NSString *msg = [NSString stringWithFormat:@"You've just earned %d %@!", 
-						  [[[NSUserDefaults standardUserDefaults] objectForKey:TJC_POINTS_DELTA_KEY_NAME] intValue], 
-						  [[NSUserDefaults standardUserDefaults] objectForKey:TJC_CURRENCY_KEY_NAME]];
+                     [[[NSUserDefaults standardUserDefaults] objectForKey:TJC_POINTS_DELTA_KEY_NAME] intValue], 
+                     [[NSUserDefaults standardUserDefaults] objectForKey:TJC_CURRENCY_KEY_NAME]];
 	UIAlertView *alertview = [[UIAlertView alloc] initWithTitle:@"Congratulations!"
-																		 message:msg
-																		delegate:nil
-															cancelButtonTitle:@"OK"
-															otherButtonTitles:nil];
+                                                        message:msg
+                                                       delegate:nil
+                                              cancelButtonTitle:@"OK"
+                                              otherButtonTitles:nil];
 	[alertview show];
 	[alertview release];
 	alertview = nil;

@@ -10,13 +10,13 @@
 #ifndef TJC_CONSTANTS_DEC
 #define TJC_CONSTANTS_DEC
 
-#define TJC_CURRENCY_KEY_NAME				@"TJC_CURRENCY_KEY_NAME"
+#define TJC_CURRENCY_KEY_NAME			@"TJC_CURRENCY_KEY_NAME"
 #define TJC_POINTS_KEY_NAME				@"TJC_POINTS_KEY_NAME"
 #define TJC_POINTS_DELTA_KEY_NAME		@"TJC_POINTS_DELTA_KEY_NAME"
-#define TJC_POINT_ID_KEY_NAME				@"TJC_POINT_ID_KEY_NAME"
+#define TJC_POINT_ID_KEY_NAME			@"TJC_POINT_ID_KEY_NAME"
 
 // NSUserDefaults cache for video object dictionary.
-#define TJC_CACHED_VIDEO_DICT				@"TJC_CACHED_VIDEO_DICT"
+#define TJC_CACHED_VIDEO_DICT			@"TJC_CACHED_VIDEO_DICT"
 // Video objects dictionary that contains all video data retrieved from the server.
 #define TJC_ALL_VIDEOS_DICT				@"TJC_ALL_VIDEOS_DICT"
 
@@ -26,6 +26,13 @@
 // Multiple currency parameters.
 #define TJC_URL_PARAM_CURRENCY_ID		@"currency_id"
 #define TJC_URL_PARAM_SELECTOR_ID		@"currency_selector"
+
+// Event tracking API
+#define TJC_URL_PARAM_EVENT_DATA_NAME			@"name"
+#define TJC_URL_PARAM_EVENT_DATA_PRICE			@"price"
+#define	TJC_URL_PARAM_EVENT_DATA_QUANTITY		@"quantity"
+#define TJC_URL_PARAM_EVENT_DATA_CURRENCY_CODE	@"currency_code"
+
 
 // Tap Points APIs.
 #define TJC_URL_PARAM_SPEND_TAP_POINTS	@"points/spend"
@@ -47,13 +54,13 @@
 
 // Featured App APIs.
 #define TJC_FEATURED_FULLSCREEN_URL_NAME	@"get_offers/fullscreenad"
-#define TJC_FEATURED_URL_NAME					@"get_offers/featured"
+#define TJC_FEATURED_URL_NAME				@"get_offers/featured"
 
 // Offers APIs.
 #define TJC_WEB_OFFERS_URL_NAME				@"get_offers/webpage"
 
-// JC: TODO: Used for video ads, check that these are correct.
-#define TJC_GET_OFFERS_API						@"get_offers"
+// Used for video ads.
+#define TJC_GET_OFFERS_API					@"get_offers"
 #define TJC_URL_PARAM_OFFER_ID				@"offer_id"
 #define TJC_URL_PARAM_CLICK_ID				@"click_id"
 
@@ -61,36 +68,39 @@
 #define TJC_BANNER_URL_NAME					@"display_ad"
 
 // Video Ad API
-#define TJC_VIDEO_AD_GET_API					@"videos"			// Retrieves video data.
+#define TJC_VIDEO_AD_GET_API				@"videos"			// Retrieves video data.
 #define TJC_VIDEO_AD_VALIDATE_API			@"validate_video"	// Checks that video is still valid.
 #define TJC_VIDEO_AD_CLICK_API				@"click/video"		// Video begins playing.
 #define TJC_VIDEO_AD_COMPLETE_API			@"offer_complete"	// Video is finished playing.
 #define TJC_URL_PARAM_VIDEO_IDS				@"video_offer_ids"// List of video ids.
 #define TJC_URL_PARAM_WIFI_VIDEOS			@"all_videos=true"// Indicates that video streaming is allowed and all available videos will be displayed on the offer wall.
-#define TJC_VIDEO_CACHE_COUNT					5	// The default number of videos to cache on the device.
-#define TJC_VIDEO_CLICK_PROTOCOL				@"tjvideo"
+#define TJC_URL_PARAM_HIDE_VIDEOS			@"hide_videos=true"
+#define TJC_VIDEO_CACHE_COUNT				5	// The default number of videos to cache on the device.
+#define TJC_VIDEO_CACHE_RETRY_COUNT			5	// The number of times caching will be retried until the video list has been recieved.
+#define TJC_VIDEO_CLICK_PROTOCOL			@"tjvideo"
 #define TJC_VIDEO_CLICK_PROTOCOL_COMPLETE	@"tjvideo://"
-#define TJC_VIDEO_CLICK_ID						@"video_id="
+#define TJC_VIDEO_CLICK_ID					@"video_id="
 #define TJC_VIDEO_CLICK_URL					@"click_url="
 #define TJC_VIDEO_CLICK_COMPLETE_URL		@"video_complete_url="
-#define TJC_VIDEO_CLICK_CURRENCY_AMOUNT	@"amount="
+#define TJC_VIDEO_CLICK_CURRENCY_AMOUNT		@"amount="
 #define TJC_VIDEO_CLICK_CURRENCY_NAME		@"currency_name="
-#define TJC_VIDEO_LOGO_IMAGE_URL				@"https://s3.amazonaws.com/tapjoy/videos/assets/watermark.png"
+#define TJC_VIDEO_CLICK_VIDEO_URL			@"video_url="
+#define TJC_VIDEO_LOGO_IMAGE_URL			@"https://s3.amazonaws.com/tapjoy/videos/assets/watermark.png"
 
 
 // Banner Ad URL size parameter.
 #define TJC_URL_PARAM_DISPLAY_AD_SIZE		@"size"
 
 #define TJC_REQUEST_TIME_OUT			35
-#define TJC_REQUEST_TIME_OUT_SHORT	(10)
+#define TJC_REQUEST_TIME_OUT_SHORT		(20)
 
 #define TJC_URL_PARAM_VG_MAX_INDEX		999
 #define TJC_URL_PARAM_VG_PAGE_INDEX		999
 
 // Used for featured app.
 #define TJC_FEATURED_APP_DEFAULT_MAX_DISPLAY_COUNT	4	// The number of times a particular featured ad will show by default before being skipped
-#define TJC_FEATURED_COUNT_INF							-1	// Used to set featured ads to show indefinitely
-#define TJC_FEATURED_APP_DEFAULT_DELAY_COUNT			0	// The number of times the app must be run (since initial installation) before a featured ad will be displayed
+#define TJC_FEATURED_COUNT_INF						-1	// Used to set featured ads to show indefinitely
+#define TJC_FEATURED_APP_DEFAULT_DELAY_COUNT		0	// The number of times the app must be run (since initial installation) before a featured ad will be displayed
 
 
 //Custom HEXColor function

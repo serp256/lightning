@@ -25,8 +25,8 @@
 {
 @private
 	id<TJCVideoAdDelegate> adDelegate_;				/*!< The delegate that implements the TJCVideoAdProtocol. */
-	BOOL isVideoReady_;									/*!< Set to YES only when a video is ready to be viewed. This prevents playing unloaded videos. */
-	TJCLoadingView *loadingView_;						/*!< The loading view overlay. */
+	BOOL isVideoReady_;								/*!< Set to YES only when a video is ready to be viewed. This prevents playing unloaded videos. */
+	TJCLoadingView *loadingView_;					/*!< The loading view overlay. */
 	BOOL isAlertShowing_;
 	BOOL shouldShowStatusBar_;
 @public
@@ -34,6 +34,7 @@
 	IBOutlet TJCVideoLayer *mainVideoLayer_;		/*!< The main video object that contains the video to be initially loaded and viewed. */
 }
 
+@property (nonatomic, retain) id<TJCVideoAdDelegate> adDelegate;
 @property (nonatomic, retain) UIView *mainView;
 @property (assign) BOOL isVideoReady;
 
@@ -113,6 +114,14 @@
  *	\return n/a
  */
 - (IBAction)cancelVideo:(id)sender;
+
+/*!	\fn videoError:(id)sender
+ *	\brief Error alert for any video playback errors.
+ *
+ *	\param n/a
+ *	\return n/a
+ */
+- (IBAction)videoError:(id)sender;
 
 /*!	\fn giveBackNotification
  *	\brief Removes the video view from the view stack.

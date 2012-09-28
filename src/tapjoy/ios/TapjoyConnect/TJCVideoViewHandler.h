@@ -82,6 +82,15 @@
  */
 + (void)shouldDisplayVideoLogo:(BOOL)display;
 
+/*!	\fn disableVideo:(BOOL)shouldDisable
+ *	\brief Whether the videos should be disabled on this device during runtime. If set to true, no videos will be
+ *  cached nor displayed on the offerwall for streaming (wi-fi only)
+ *
+ *	\param shouldDisableVideo Boolean that indicates whether the Tapjoy videos should be disabled on this device.
+ *	\return n/a
+ */
++ (void)disableVideo:(BOOL)shouldDisable;
+
 @end
 
 

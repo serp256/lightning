@@ -91,6 +91,8 @@ NSString *kTJCAdImageDataStr = @"Image";
 	// Check for valid return data;
 	if(!tjcConnectRetObject) 
 	{
+       	isFetchingData_ = NO;
+        
 		// Initiate fail method call.
 		[deleg_ fetchResponseError:kTJCStatusNotOK errorDescription:nil requestTag:myFetcher.requestTag];
 		return;
@@ -102,6 +104,8 @@ NSString *kTJCAdImageDataStr = @"Image";
 	
 	if (!clickURLObj)
 	{
+        isFetchingData_ = NO;
+        
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
 						  format: @"%s: %d; %s; No data received while attempting to fetch the data from the server", __FILE__, __LINE__, __PRETTY_FUNCTION__];
 		
@@ -113,6 +117,8 @@ NSString *kTJCAdImageDataStr = @"Image";
 	
 	if (!imageDataStrObj)
 	{
+        isFetchingData_ = NO;
+        
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
 						  format: @"%s: %d; %s; No data received while attempting to fetch the data from the server", __FILE__, __LINE__, __PRETTY_FUNCTION__];
 		

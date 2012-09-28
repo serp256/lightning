@@ -13,7 +13,7 @@
 
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
-	PRINT_DEBUG("process touched");
+	PRINT_DEBUG("process touched %d", [touches count]);
 	caml_acquire_runtime_system();
 	value mltouch = 1,mltouches = 1,globalX = 1,globalY = 1,time = 1, lst_el = 1;
   Begin_roots5(mltouch,time,globalX,globalY,mltouches);
@@ -49,6 +49,7 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
 	}
 	End_roots();
 	caml_release_runtime_system();
+  PRINT_DEBUG("process touches end");
 }
 
 

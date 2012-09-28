@@ -57,7 +57,7 @@ static NSString *currentServiceURL = nil;
 
 
 - (void)refreshWithFrame:(CGRect)frame enableNavBar:(BOOL)enableNavigationBar
-{	
+{
 	[self clearWebViewContents];
 	[super refreshWithFrame:frame];
 	
@@ -104,16 +104,16 @@ static NSString *currentServiceURL = nil;
 - (NSString*)setUpOffersURLWithServiceURL:(NSString*)serviceURL
 {
 	NSString *result = [self appendGenericParamsWithURL:serviceURL];
-
+	
 	NSString *userID = [TapjoyConnect getUserID];
 	
 	if (userID)
 	{
 		result = [NSString stringWithFormat:
-					 @"%@&%@=%@",
-					 result,
-					 TJC_URL_PARAM_USER_ID,
-					 [TapjoyConnect createQueryStringFromString:userID]];
+				  @"%@&%@=%@",
+				  result,
+				  TJC_URL_PARAM_USER_ID,
+				  [TapjoyConnect createQueryStringFromString:userID]];
 	}
 	
 	if (currencyID_ && [currencyID_ length] > 0)
@@ -126,36 +126,33 @@ static NSString *currentServiceURL = nil;
 		result = [NSString stringWithFormat:@"%@&%@", result, isSelectorVisible_];
 	}
 	
-	// Only display videos if the flag is set.
-	if ([TJCVideoManager sharedTJCVideoManager].shouldShowVideos)
+	// Only display videos if it's not locally disabled.
+	if (![TJCVideoManager sharedTJCVideoManager].disableVideo)
 	{
-		NSString *connectionType = [TJCNetReachability getReachibilityType];
-		if ([connectionType isEqualToString:@"wifi"])
+		// Send cached videos to the offer wall.
+		NSDictionary *cachedVideoDict = [[TJCVideoManager sharedTJCVideoManager] getCachedVideoDictonary];
+		if ([cachedVideoDict count] > 0)
 		{
-			// Enable streaming for wifi connections. This will display all available videos on the offer wall.
-			result = [NSString stringWithFormat:@"%@&%@", result, TJC_URL_PARAM_WIFI_VIDEOS];
-		}
-		else
-		{
-			// Send cached videos to the offer wall.
-			NSDictionary *cachedVideoDict = [[TJCVideoManager sharedTJCVideoManager] getCachedVideoDictonary];
-			if ([cachedVideoDict count] > 0)
+			NSMutableString *videoIDString = [[NSMutableString alloc] initWithFormat:@"%@=", TJC_URL_PARAM_VIDEO_IDS];
+			
+			// Add video ids.
+			for (NSDictionary *videoObjKey in cachedVideoDict)
 			{
-				NSMutableString *videoIDString = [[NSMutableString alloc] initWithFormat:@"%@=", TJC_URL_PARAM_VIDEO_IDS];
-				
-				// Add video ids.
-				for (NSDictionary *videoObjKey in cachedVideoDict)
-				{
-					NSDictionary *videoObjDict = [cachedVideoDict objectForKey:videoObjKey];
-					[videoIDString appendFormat:@"%@,", [videoObjDict objectForKey:TJC_VIDEO_OBJ_OFFER_ID]];
-				}
-				[videoIDString deleteCharactersInRange:NSMakeRange([videoIDString length] - 1, 1)];
-				
-				result = [NSString stringWithFormat:@"%@&%@", result, videoIDString];
-				
-				[videoIDString release];
+				NSDictionary *videoObjDict = [cachedVideoDict objectForKey:videoObjKey];
+				[videoIDString appendFormat:@"%@,", [videoObjDict objectForKey:TJC_VIDEO_OBJ_OFFER_ID]];
 			}
+			[videoIDString deleteCharactersInRange:NSMakeRange([videoIDString length] - 1, 1)];
+			
+			result = [NSString stringWithFormat:@"%@&%@", result, videoIDString];
+			
+			[videoIDString release];
 		}
+	}
+	
+	if ([TJCVideoManager sharedTJCVideoManager].disableVideo)
+	{
+		// This is needed to ensure that the server is notified that videos should not be displayed no matter what.
+		result = [NSString stringWithFormat:@"%@&%@", result, TJC_URL_PARAM_HIDE_VIDEOS];
 	}
 	
 	return result;
@@ -167,9 +164,9 @@ static NSString *currentServiceURL = nil;
 	if (!URLString)
 	{
 		currentServiceURL = [self setUpOffersURLWithServiceURL:
-									[NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
+							 [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
 	}
-	else 
+	else
 	{
 		currentServiceURL = URLString;
 	}
@@ -204,7 +201,7 @@ static NSString *currentServiceURL = nil;
 - (void)refreshWebView
 {
 	NSString *offersURL = [self setUpOffersURLWithServiceURL:
-								  [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
+						   [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME]];
 	
 	[self loadURLRequest:offersURL withTimeOutInterval:TJC_REQUEST_TIME_OUT];
 }
@@ -215,13 +212,13 @@ static NSString *currentServiceURL = nil;
 
 - (void)webView:(UIWebView*)webView didFailLoadWithError:(NSError*)error
 {
-	if (error.code == NSURLErrorCancelled) 
+	if (error.code == NSURLErrorCancelled)
 	{
 		return; //error 999 fast clicked the links
 	}
 	
 	// 102 error code for slow request completion. This happens when a NSURLConnection is made for opening links externally in Safari.
-	if (error.code == 102) 
+	if (error.code == 102)
 	{
 		return;
 	}
@@ -230,18 +227,18 @@ static NSString *currentServiceURL = nil;
 	if (currentServiceURL == [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL, TJC_WEB_OFFERS_URL_NAME])
 	{
 		currentServiceURL = [self setUpOffersURLWithServiceURL:
-									[NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL_ALTERNATE, TJC_WEB_OFFERS_URL_NAME]];		
+							 [NSString stringWithFormat:@"%@%@?", TJC_SERVICE_URL_ALTERNATE, TJC_WEB_OFFERS_URL_NAME]];
 		[self loadViewWithURL:currentServiceURL];
 	}
 	else
 	{
 		if (isViewVisible_)
 		{
-			UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@"" 
-																				  message:TJC_GENERIC_CONNECTION_ERROR_MESSAGE 
-																				 delegate:self 
-																	 cancelButtonTitle:@"Cancel" 
-																	 otherButtonTitles:@"Retry", nil];
+			UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@""
+																 message:TJC_GENERIC_CONNECTION_ERROR_MESSAGE
+																delegate:self
+													   cancelButtonTitle:@"Cancel"
+													   otherButtonTitles:@"Retry", nil];
 			[alertview show];
 			[alertview release];
 			isAlertViewVisible_ = YES;
@@ -264,10 +261,10 @@ static NSString *currentServiceURL = nil;
 		[loadingView_ fadeIn];
 		[cWebView_ stopLoading];
 		
-		[self loadViewWithURL:nil]; 
+		[self loadViewWithURL:nil];
 	}
 	// The cancel button action.
-	else if(buttonIndex == 0) 
+	else if(buttonIndex == 0)
 	{
 		//Stop Activity Indicator
 		[loadingView_ fadeOut];
@@ -306,16 +303,16 @@ static NSString *currentServiceURL = nil;
 	}
 	// If we see either tapjoy or linkshare host names, we won't open it externally. All other host names will open externally from the app.
 	else if ((CFStringFind((CFStringRef)requestHost, (CFStringRef)TJC_TAPJOY_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
-		 (CFStringFind((CFStringRef)requestHost, (CFStringRef)TJC_TAPJOY_ALT_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
-		 (CFStringFind((CFStringRef)requestHost, (CFStringRef)TJC_LINKSHARE_HOST_NAME, kCFCompareCaseInsensitive).length > 0))
+			 (CFStringFind((CFStringRef)requestHost, (CFStringRef)TJC_TAPJOY_ALT_HOST_NAME, kCFCompareCaseInsensitive).length > 0) ||
+			 (CFStringFind((CFStringRef)requestHost, (CFStringRef)TJC_LINKSHARE_HOST_NAME, kCFCompareCaseInsensitive).length > 0))
 	{
 		return YES;
 	}
 	
 	// Open the link externally.
-	NSURLConnection *conn = [[NSURLConnection alloc] initWithRequest:[NSURLRequest requestWithURL:[request URL]] 
-																			  delegate:self 
-																	startImmediately:YES];
+	NSURLConnection *conn = [[NSURLConnection alloc] initWithRequest:[NSURLRequest requestWithURL:[request URL]]
+															delegate:self
+													startImmediately:YES];
 	[conn release];
 	return NO;
 }
@@ -325,7 +322,7 @@ static NSString *currentServiceURL = nil;
 {
 	isViewVisible_ = YES;
 	
-	[loadingView_ fadeIn];	
+	[loadingView_ fadeIn];
 	
 	// Disable user touch interaction.
 	[webView setUserInteractionEnabled:NO];
@@ -349,13 +346,13 @@ static NSString *currentServiceURL = nil;
 	[UIView beginAnimations:nil context:nil];
 	[UIView setAnimationDuration:0.25];
 	[[navBar_ navBarTitle] titleView].alpha = 1.0f;
-	[UIView commitAnimations];	
+	[UIView commitAnimations];
 }
 
 
-- (NSURLRequest*)connection:(NSURLConnection*)connection 
-				willSendRequest:(NSURLRequest*)request 
-			  redirectResponse:(NSURLResponse*)response
+- (NSURLRequest*)connection:(NSURLConnection*)connection
+			willSendRequest:(NSURLRequest*)request
+		   redirectResponse:(NSURLResponse*)response
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"OPENING EXTERNAL URL NOW ::::::%@", [request URL]];
 	
@@ -387,11 +384,11 @@ static NSString *currentServiceURL = nil;
 {
 	if (isViewVisible_)
 	{
-		UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@"" 
-																			  message:TJC_GENERIC_CONNECTION_ERROR_MESSAGE
-																			 delegate:self 
-																 cancelButtonTitle:@"Cancel" 
-																 otherButtonTitles:@"Retry", nil];
+		UIAlertView * alertview = [[UIAlertView alloc] initWithTitle:@""
+															 message:TJC_GENERIC_CONNECTION_ERROR_MESSAGE
+															delegate:self
+												   cancelButtonTitle:@"Cancel"
+												   otherButtonTitles:@"Retry", nil];
 		[alertview show];
 		[alertview release];
 	}
@@ -406,18 +403,18 @@ static NSString *currentServiceURL = nil;
 
 - (void)backtoGameAction:(id)sender
 {
-	[TJCViewCommons animateTJCView:self 
-					 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons]getReverseTransitionEffect] 
-								withDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
+	[TJCViewCommons animateTJCView:self
+				 withTJCTransition:[[TJCViewCommons sharedTJCViewCommons]getReverseTransitionEffect]
+						 withDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
 	
-	[self performSelector:@selector(giveBackNotification) 
-				  withObject:nil 
-				  afterDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
+	[self performSelector:@selector(giveBackNotification)
+			   withObject:nil
+			   afterDelay:[[TJCViewCommons sharedTJCViewCommons]getTransitionDelay]];
 }
 
 
 - (void)giveBackNotification
-{	
+{
 	isViewVisible_ = NO;
 	
 	// Clear web view contents.
@@ -440,7 +437,7 @@ static NSString *currentServiceURL = nil;
 }
 
 
-- (void)dealloc 
+- (void)dealloc
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"TJCOffersView Dealloc"];
 	[navBar_ release];

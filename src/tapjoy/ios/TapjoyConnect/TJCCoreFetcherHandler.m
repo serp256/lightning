@@ -34,9 +34,9 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 
 
 - (void)makeGenericRequestWithURL:(NSString *)aRequestString 
-							alternateURL:(NSString*)alterURL 
-									params:(NSMutableDictionary *)aParamsList 
-								 selector:(SEL)aSelector
+					 alternateURL:(NSString*)alterURL 
+						   params:(NSMutableDictionary *)aParamsList 
+						 selector:(SEL)aSelector
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"My Base URL is %@",myFetcher_.baseURL];
 	
@@ -67,10 +67,10 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 
 
 - (void) makeGenericPOSTRequestWithURL:(NSString *)aRequestString 
-								  alternateURL:(NSString *)alterURL
-											 data:(NSData*)data
-										  params:(NSMutableDictionary *)aParamsList 
-										selector:(SEL)aSelector
+						  alternateURL:(NSString *)alterURL
+								  data:(NSData*)data
+								params:(NSMutableDictionary *)aParamsList 
+							  selector:(SEL)aSelector
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"My Base URL is %@",myFetcher_.baseURL];
 	
@@ -103,17 +103,17 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 	if ([myFetcher hasError]) 
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"%s: %d; %s; Error while attempting to fetch data from server: %@", 
+					  format: @"%s: %d; %s; Error while attempting to fetch data from server: %@", 
 		 __FILE__, __LINE__, __PRETTY_FUNCTION__, [[myFetcher error] description]];
 		
 		return nil;
 	}
-
+	
 	NSInteger statusCode = [myFetcher responseCode];
 	if (!(statusCode == 200))
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"%s: %d; %s; Unexpected HTTP response status code while attempting to fetch data from server:: Status Code = %d", 
+					  format: @"%s: %d; %s; Unexpected HTTP response status code while attempting to fetch data from server:: Status Code = %d", 
 		 __FILE__, __LINE__, __PRETTY_FUNCTION__, statusCode];
 		
 		return nil;
@@ -123,7 +123,7 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 	if (!myData) 
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"%s: %d; %s; No data received while attempting to fetch data from server.", 
+					  format: @"%s: %d; %s; No data received while attempting to fetch data from server.", 
 		 __FILE__, __LINE__, __PRETTY_FUNCTION__];
 		return nil;
 	}
@@ -146,7 +146,7 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 	if(returnObj == nil)
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"%s: %d; %s; No data received while attempting to fetch the data from the server", 
+					  format: @"%s: %d; %s; No data received while attempting to fetch the data from the server", 
 		 __FILE__, __LINE__, __PRETTY_FUNCTION__];
 		
 		[deleg_ fetchResponseError:kTJCInternetFailure errorDescription:nil requestTag:myFetcher.requestTag];
@@ -158,11 +158,11 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 	NSString *connectReturnObj = [TJCTBXML elementName:returnObj]; 
 	
 	if ((![TJCUtil caseInsenstiveCompare:connectReturnObj AndString2:kTJCCoreFetcherReturnObjStr]) &&
-		 (![TJCUtil caseInsenstiveCompare:connectReturnObj AndString2:kTJCCoreFetcherAdStr]) &&
-		 (![TJCUtil caseInsenstiveCompare:connectReturnObj AndString2:kTJCCoreFetcherVideoStr]))
+		(![TJCUtil caseInsenstiveCompare:connectReturnObj AndString2:kTJCCoreFetcherAdStr]) &&
+		(![TJCUtil caseInsenstiveCompare:connectReturnObj AndString2:kTJCCoreFetcherVideoStr]))
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"%s: %d; %s; No data received while attempting to fetch the data from the server", 
+					  format: @"%s: %d; %s; No data received while attempting to fetch the data from the server", 
 		 __FILE__, __LINE__, __PRETTY_FUNCTION__];
 		
 		[deleg_ fetchResponseError:kTJCStatusNotOK errorDescription:nil requestTag:myFetcher.requestTag];
@@ -174,7 +174,7 @@ NSString *kTJCCoreFetcherVideoStr = @"TapjoyVideos";
 	if(errorElement)
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"%s: %d; %s; No data received while attempting to fetch the data from the server", 
+					  format: @"%s: %d; %s; No data received while attempting to fetch the data from the server", 
 		 __FILE__, __LINE__, __PRETTY_FUNCTION__];
 		
 		[deleg_ fetchResponseError:kTJCStatusNotOK errorDescription:nil requestTag:myFetcher.requestTag];

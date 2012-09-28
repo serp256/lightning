@@ -48,21 +48,27 @@ type stage_constructor = float -> float -> Stage.c;
 (* value _stage: ref (option (float -> float -> stage eventTypeDisplayObject eventEmptyData)) = ref None; *)
 
 IFDEF PC THEN
-value init s = 
+value init s =
   let s = (s :> stage_constructor) in
-  Pc_run.run s;
+    Pc_run.run s;
+
 ELSE
 
 value _stage : ref (option stage_constructor) = ref None;
 
 value init s = 
   let s = (s :> stage_constructor) in
-  _stage.val := Some s;
+    _stage.val := Some s;  
 
 value stage_create width height = 
   match _stage.val with
   [ None -> failwith "Stage not initialized"
-  | Some stage -> stage width height
+  | Some stage ->
+    let s = stage width height in
+    (
+      Stage.instance.val := Some s;
+      s;
+    )
   ];
 
 IFDEF ANDROID THEN (* for link mlwrapper_android *)

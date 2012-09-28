@@ -19,7 +19,7 @@
 
 TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 
-@synthesize videoView = videoView_, requestHandler = requestHandler_, currentOrientation = currentOrientation_, shouldShowVideos = shouldShowVideos_;
+@synthesize videoView = videoView_, requestHandler = requestHandler_, currentOrientation = currentOrientation_, disableVideo = disableVideo_;
 
 
 
@@ -27,34 +27,66 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 {
 	self = [super init];
 	
-	if (self) 
+	if (self)
 	{
 		requestHandler_ = [[TJCVideoRequestHandler alloc] initRequestWithDelegate:self andRequestTag:0];
-		shouldShowVideos_ = NO;
+        disableVideo_ = NO;
 	}
 	
 	return self;
 }
 
 
-- (void)initVideoAdsWithDelegate:(id<TJCVideoAdDelegate>)delegate
+- (void)initVideoAdsWifiOnly
 {
+    if (disableVideo_)
+        return;
+	
 	downloadIndex_ = 0;
 	videoCacheCount_ = TJC_VIDEO_CACHE_COUNT;
+	cacheRetryCount_ = 0;
+	shouldAutoCache_ = NO;
+	shouldCacheWifi_ = NO;
+	shouldCacheMobile_ = NO;
 	
 	// Initiate video request.
-	[requestHandler_ requestVideoData];
+	videosCurrentlyCaching_ = NO;
+	didReceiveVideoList_ = NO;
+	[requestHandler_ requestVideoDataWifi];
 	
-	// Since this can be called more than once to initiate video caching at any point, make sure we do unnecessary allocation.
-	// We also don't want to release and reallocate here since it would possibly screw up any currently playing video.
-	if (!videoView_)
+    if (videoView_ == nil)
+    {
+        videoView_ = [[TJCVideoView alloc] initWithDelegate:nil];
+    }
+	
+	[videoView_ shouldDisplayLogo:YES];
+}
+
+
+- (void)initVideoAdsWithDelegate:(id<TJCVideoAdDelegate>)delegate
+{
+    if (disableVideo_)
+        return;
+    
+	downloadIndex_ = 0;
+	cacheRetryCount_ = 0;
+	
+	// Initiate caching. Also need to check whether the video list has been saved.
+	if (!videosCurrentlyCaching_)
 	{
-		videoView_ = [[TJCVideoView alloc] initWithDelegate:delegate];
+		[self attemptVideoCaching];
+	}
+	
+    if (videoView_ == nil)
+    {
+        videoView_ = [[TJCVideoView alloc] initWithDelegate:delegate];
+    }
+	else
+	{
+		[videoView_ setAdDelegate:delegate];
 	}
 	
 	[videoView_ shouldDisplayLogo:YES];
-	
-	shouldShowVideos_ = YES;
 }
 
 
@@ -113,6 +145,22 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 - (void)fetchResponseSuccessWithData:(void*)dataObj withRequestTag:(int)aTag
 {
 	TJCTBXMLElement *videoElement = [TJCTBXML childElementNamed:@"TapjoyVideo" parentElement:dataObj];
+	NSString *shouldAutoCache = [TJCTBXML valueOfAttributeNamed:@"cache_auto" forElement:dataObj];
+	NSString *shouldCacheWifi = [TJCTBXML valueOfAttributeNamed:@"cache_wifi" forElement:dataObj];
+	NSString *shouldCacheMobile = [TJCTBXML valueOfAttributeNamed:@"cache_mobile" forElement:dataObj];
+	
+	if ([shouldAutoCache isEqualToString:@"true"])
+	{
+		shouldAutoCache_ = YES;
+	}
+	if ([shouldCacheWifi isEqualToString:@"true"])
+	{
+		shouldCacheWifi_ = YES;
+	}
+	if ([shouldCacheMobile isEqualToString:@"true"])
+	{
+		shouldCacheMobile_ = YES;
+	}
 	
 	// Temporary dictionary for new video objects, which will be compared to locally saved one to make sure we clear out old videos from the cache.
 	NSMutableDictionary *videoDict = [[NSMutableDictionary alloc] init];
@@ -149,8 +197,8 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 		{
 			NSString *cachesDirectory = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
 			// Set video file path.
-			[tmpObjDict setObject:[cachesDirectory stringByAppendingFormat:@"/VideoAds/%@", [tmpObjDict objectForKey:TJC_VIDEO_OBJ_FILENAME]] 
-								forKey:TJC_VIDEO_OBJ_DATA_LOCATION];
+			[tmpObjDict setObject:[cachesDirectory stringByAppendingFormat:@"/VideoAds/%@", [tmpObjDict objectForKey:TJC_VIDEO_OBJ_FILENAME]]
+						   forKey:TJC_VIDEO_OBJ_DATA_LOCATION];
 			// Save to user defaults to be pulled up later for app restart.
 			[self setCachedVideoObjectDict:tmpObjDict withKey:[tmpObjDict objectForKey:TJC_VIDEO_OBJ_OFFER_ID]];
 			
@@ -160,7 +208,7 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 			continue;
 		}
 		else
-		{			
+		{
 			// Object not in newly received list, delete the cached video file.
 			NSError *error;
 			[[NSFileManager defaultManager] removeItemAtPath:[videoObjDict objectForKey:TJC_VIDEO_OBJ_DATA_LOCATION] error:&error];
@@ -185,6 +233,8 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 		[tmpObjDict release];
 	}
 	
+	didReceiveVideoList_ = YES;
+	
 	// Check if caching is necessary at this point.
 	if ([[self getCachedVideoDictonary] count] < videoCacheCount_)
 	{
@@ -196,7 +246,10 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 		unCachedVideoObjects_ = [[videoDict allValues] retain];
 		
 		downloadIndex_ = 0;
-		[self beginVideoCaching];
+		if (shouldAutoCache_)
+		{
+			[self attemptVideoCaching];
+		}
 	}
 	
 	[videoDict release];
@@ -206,13 +259,47 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 - (void)fetchResponseError:(TJCResponseError)errorType errorDescription:(id)errorDescObj requestTag:(int)aTag
 {
 	[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-					  format: @"%s: %d; %s; fetch repsonse error", __FILE__, __LINE__, __PRETTY_FUNCTION__];
+				  format: @"%s: %d; %s; fetch repsonse error", __FILE__, __LINE__, __PRETTY_FUNCTION__];
+}
+
+
+- (void)attemptVideoCaching
+{
+	// Begin timer to check video list recieved flag.
+	[NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(retryCaching:) userInfo:nil repeats:YES];
+}
+
+
+- (void)retryCaching:(NSTimer*)timer
+{
+	// Stop the retry if we're currently already caching, or reached cache retry limit.
+	if (videosCurrentlyCaching_ || (cacheRetryCount_ >= TJC_VIDEO_CACHE_RETRY_COUNT))
+	{
+		[timer invalidate];
+		timer = nil;
+	}
+	else if (didReceiveVideoList_)
+	{
+		NSString *connectionType = [TJCNetReachability getReachibilityType];
+		
+		if (([connectionType isEqualToString:@"wifi"] && shouldCacheWifi_) ||
+			([connectionType isEqualToString:@"mobile"] && shouldCacheMobile_))
+		{
+			[self beginVideoCaching];
+		}
+		[timer invalidate];
+		timer = nil;
+	}
+	
+	cacheRetryCount_++;
 }
 
 
 - (void)beginVideoCaching
 {
 	[TJCLog logWithLevel:LOG_DEBUG format:@"TJCVideoManager: Video caching begun with download index:%d", downloadIndex_];
+	
+	videosCurrentlyCaching_ = YES;
 	
 	if (connection_)
 	{
@@ -225,20 +312,20 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 	}
 	
 	// Pull video object to get video URL to be downloaded.
-	if ([unCachedVideoObjects_ count] > 0)
+	if ([unCachedVideoObjects_ count] > downloadIndex_)
 	{
 		NSDictionary *videoObjDict = [unCachedVideoObjects_ objectAtIndex:downloadIndex_];
 		
 		NSURL *url = [NSURL URLWithString:[videoObjDict objectForKey:TJC_VIDEO_OBJ_VIDEO_URL]];
 		NSURLRequest *request = [NSURLRequest requestWithURL:url
-															  cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData 
-														 timeoutInterval:30.0];
+												 cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+											 timeoutInterval:30.0];
 		connection_ = [[NSURLConnection alloc] initWithRequest:request delegate:self];
 	}
 }
 
 
-- (NSCachedURLResponse*)connection:(NSURLConnection*)connection willCacheResponse:(NSCachedURLResponse*)cachedResponse 
+- (NSCachedURLResponse*)connection:(NSURLConnection*)connection willCacheResponse:(NSCachedURLResponse*)cachedResponse
 {
 	// Returning nil will ensure that no cached response will be stored for the connection.
 	// This is in case the cache is being used by something else.
@@ -249,15 +336,15 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
 	[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-					  format: @"%s: %d; %s; video download failure: %@", __FILE__, __LINE__, __PRETTY_FUNCTION__, [error localizedFailureReason]];
+				  format: @"%s: %d; %s; video download failure: %@", __FILE__, __LINE__, __PRETTY_FUNCTION__, [error localizedFailureReason]];
 	
 	[TapjoyConnect clearCache];
 }
 
 
-- (void)connection:(NSURLConnection*)theConnection didReceiveData:(NSData*)incrementalData 
+- (void)connection:(NSURLConnection*)theConnection didReceiveData:(NSData*)incrementalData
 {
-	if (!videoData_) 
+	if (!videoData_)
 	{
 		videoData_ = [[NSMutableData alloc] init];
 	}
@@ -265,10 +352,11 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 }
 
 
-- (void)connectionDidFinishLoading:(NSURLConnection*)theConnection 
+- (void)connectionDidFinishLoading:(NSURLConnection*)theConnection
 {
 	if ([unCachedVideoObjects_ count] <= 0)
 	{
+		videosCurrentlyCaching_ = NO;
 		// No uncached video objects to cache, return.
 		return;
 	}
@@ -282,14 +370,14 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCVideoManager)
 	
 	// Set video file path.
 	NSString *pathDir = [docsDirectory stringByAppendingFormat:@"/VideoAds"];
-	[videoObjDict setObject:[docsDirectory stringByAppendingFormat:@"/VideoAds/%@", [videoObjDict objectForKey:TJC_VIDEO_OBJ_FILENAME]] 
-						  forKey:TJC_VIDEO_OBJ_DATA_LOCATION];
+	[videoObjDict setObject:[docsDirectory stringByAppendingFormat:@"/VideoAds/%@", [videoObjDict objectForKey:TJC_VIDEO_OBJ_FILENAME]]
+					 forKey:TJC_VIDEO_OBJ_DATA_LOCATION];
 	
 	NSError *error;
 	if (![[NSFileManager defaultManager] createDirectoryAtPath:pathDir withIntermediateDirectories:YES attributes:nil error:&error])
 	{
 		[TJCLog logWithLevel: LOG_NONFATAL_ERROR
-						  format: @"%s: %d; %s; cannot write to file: %@", __FILE__, __LINE__, __PRETTY_FUNCTION__, [error localizedFailureReason]];
+					  format: @"%s: %d; %s; cannot write to file: %@", __FILE__, __LINE__, __PRETTY_FUNCTION__, [error localizedFailureReason]];
 		return;
 	}
 	

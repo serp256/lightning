@@ -50,3 +50,5 @@ class virtual c: [ float ] -> [ float ] ->
     method dispatchBackgroundEv : unit -> unit;
     method dispatchForegroundEv : unit -> unit;
   end;
+
+value instance: ref (option c);

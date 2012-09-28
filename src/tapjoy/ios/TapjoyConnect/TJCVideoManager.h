@@ -24,23 +24,30 @@
 {
 @private
 	TJCVideoRequestHandler *requestHandler_;	/*!< The video request handler. */
-	TJCVideoView *videoView_;						/*!< The video view. */
-	NSURLConnection *connection_;					/*!< The connection used for initiating and handling the download of video data. */
-	NSMutableData *videoData_;						/*!< Used to hold video data as it's downloaded from the server. */
-	int videoCacheCount_;							/*!< The number of videos to cache on the device. */
-	int downloadIndex_;								/*!< The counter for caching video ads in order. */
+	TJCVideoView *videoView_;					/*!< The video view. */
+	NSURLConnection *connection_;				/*!< The connection used for initiating and handling the download of video data. */
+	NSMutableData *videoData_;					/*!< Used to hold video data as it's downloaded from the server. */
+	int videoCacheCount_;						/*!< The number of videos to cache on the device. */
+	int downloadIndex_;							/*!< The counter for caching video ads in order. */
 	NSArray *unCachedVideoObjects_;				/*!< The video data dictionary in array form for caching purposes. */
 	UIInterfaceOrientation currentOrientation_;	/*!< The current orientation of the video view. */
-	BOOL shouldShowVideos_;
+    BOOL disableVideo_;                         /*!< Used to disable video caching on a per device basis, during runtime */
+	BOOL videosCurrentlyCaching_;				/*!< Indicates that caching of videos is in process, and to not start another process. */
+	BOOL didReceiveVideoList_;					/*!< Indicates that the video list has been retreived from the server and saved locally. */
+	int cacheRetryCount_;						/*!< If caching is initiated before the video list has been recieved, caching is retried every few seconds until retry count is reached. */
+	BOOL shouldAutoCache_;						/*!< Set on the dashboard, indicates whether the SDK will automatically begin caching after the video list has been recieved. */
+	BOOL shouldCacheWifi_;						/*!< Set on the dashboard, indicates that the SDK should cache if wifi is available. */
+	BOOL shouldCacheMobile_;					/*!< Set on the dashboard, indicates that the SDK should cache if 3G(mobile) is available. */
 }
 
 @property (nonatomic, retain) TJCVideoRequestHandler *requestHandler;
 @property (nonatomic, retain) TJCVideoView *videoView;
 @property (assign) UIInterfaceOrientation currentOrientation;
-@property (assign) BOOL shouldShowVideos;
-
+@property (assign) BOOL disableVideo;
 
 + (TJCVideoManager*)sharedTJCVideoManager;
+
+- (void)initVideoAdsWifiOnly;
 
 - (void)initVideoAdsWithDelegate:(id<TJCVideoAdDelegate>)delegate;
 
@@ -89,6 +96,10 @@
  *	\return n/a
  */
 - (void)setAllVideosObjectDict:(NSDictionary*)videoObjectDict withKey:(NSString*)key;
+
+- (void)attemptVideoCaching;
+
+- (void)retryCaching:(NSTimer*)timer;
 
 - (void)beginVideoCaching;
 

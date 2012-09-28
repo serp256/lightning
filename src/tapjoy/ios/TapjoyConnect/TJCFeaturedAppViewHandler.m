@@ -38,6 +38,12 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCFeaturedAppViewHandler)
 }
 
 
+- (void)reInitWithFrame:(CGRect)frame
+{
+    featuredAppView_ = [[TJCFeaturedAppView alloc] initWithFrame:frame];
+}
+
+
 - (void)dealloc
 {
 	[featuredAppView_ release];
@@ -47,11 +53,11 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCFeaturedAppViewHandler)
 
 - (void)removeFeaturedWebView
 {
-	if ([[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView])
+	if (featuredAppView_)
 	{
-		[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] removeFromSuperview];
-		[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] release];
-		[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler].featuredAppView = nil;
+		[featuredAppView_ removeFromSuperview];
+		[featuredAppView_ release];
+		featuredAppView_ = nil;
 	}
 }
 
@@ -65,7 +71,7 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCFeaturedAppViewHandler)
 + (UIView*)showFullScreenAdWithURL:(NSString *)adURL withFrame:(CGRect)frame
 {
 	[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] removeFeaturedWebView];
-	[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler].featuredAppView = [[TJCFeaturedAppView alloc] initWithFrame:frame];
+	[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] reInitWithFrame:frame];
 
 	[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] loadViewWithURL:adURL];
 	
@@ -85,7 +91,7 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCFeaturedAppViewHandler)
 	}
 	
 	[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] removeFeaturedWebView];
-	[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler].featuredAppView = [[TJCFeaturedAppView alloc] initWithFrame:vController.view.bounds];
+	[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] reInitWithFrame:vController.view.bounds];
 
 	[[[TJCFeaturedAppViewHandler sharedTJCFeaturedAppViewHandler] featuredAppView] loadViewWithURL:adURL];
 	

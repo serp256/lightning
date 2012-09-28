@@ -38,6 +38,12 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCOffersViewHandler)
 }
 
 
+- (void)reInitWithFrame:(CGRect)frame enableNavBar:(BOOL)enableNavigationBar
+{
+    offersWebView_ = [[TJCOffersWebView alloc] initWithFrame:frame enableNavBar:enableNavigationBar];
+}
+
+
 - (void)dealloc
 {
 	[offersWebView_ release];
@@ -47,11 +53,11 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCOffersViewHandler)
 
 - (void)removeOffersWebView
 {
-	if ([TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView)
+	if (offersWebView_)
 	{
-		[[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView removeFromSuperview];
-		[[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView release];
-		[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = nil;
+		[offersWebView_ removeFromSuperview];
+		[offersWebView_ release];
+		offersWebView_ = nil;
 	}
 }
 
@@ -60,7 +66,7 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCOffersViewHandler)
 {
 	// Remove any offers view that might possibly exist.
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] removeOffersWebView];
-	[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = [[TJCOffersWebView alloc] initWithFrame:frame enableNavBar:YES];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] reInitWithFrame:frame enableNavBar:YES];
 	 
 	// For showOffers methods that do not use a parent view controller, we depend on this to be nil for certain initialization purposes.
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].parentVController_ = nil;
@@ -95,7 +101,7 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCOffersViewHandler)
 	
 	// Remove any offers view that might possibly exist.
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] removeOffersWebView];
-	[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = [[TJCOffersWebView alloc] initWithFrame:vController.view.bounds enableNavBar:visible];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] reInitWithFrame:vController.view.bounds enableNavBar:visible];
 	
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].parentVController_ = vController;
 	[[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView] loadViewWithURL:nil];
@@ -113,7 +119,7 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCOffersViewHandler)
 {
 	// Remove any offers view that might possibly exist.
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] removeOffersWebView];
-	[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = [[TJCOffersWebView alloc] initWithFrame:frame enableNavBar:YES];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] reInitWithFrame:frame enableNavBar:YES];
 
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].currencyID_ = [NSString stringWithFormat:@"%@=%@", TJC_URL_PARAM_CURRENCY_ID, currencyID];
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].isSelectorVisible_ = [NSString stringWithFormat:@"%@=%d", TJC_URL_PARAM_SELECTOR_ID, isSelectorVisible];
@@ -154,7 +160,7 @@ TJC_SYNTHESIZE_SINGLETON_FOR_CLASS(TJCOffersViewHandler)
 	}
 	
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] removeOffersWebView];
-	[TJCOffersViewHandler sharedTJCOffersViewHandler].offersWebView = [[TJCOffersWebView alloc] initWithFrame:vController.view.bounds enableNavBar:visible];
+	[[TJCOffersViewHandler sharedTJCOffersViewHandler] reInitWithFrame:vController.view.bounds enableNavBar:visible];
 
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].parentVController_ = vController;
 	[[TJCOffersViewHandler sharedTJCOffersViewHandler] offersWebView].currencyID_ = [NSString stringWithFormat:@"%@=%@", TJC_URL_PARAM_CURRENCY_ID, currencyID];
