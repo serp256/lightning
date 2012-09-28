@@ -49,6 +49,7 @@ struct tex {
 };
 
 #define TEXTURE_ID(v) ((struct tex*)Data_custom_val(v))->tid
+#define TEX(v) ((struct tex*)Data_custom_val(v))
 
 //extern GLuint boundTextureID;
 void setPMAGLBlend ();
@@ -58,9 +59,11 @@ void setNotPMAGLBlend ();
 void lgGLBindTexture(GLuint textureID, int pma);
 void lgGLBindTextures(GLuint textureID, GLuint textureID1, int newPMA);
 void lgResetBoundTextures();
-value texture_id_alloc(GLuint textureID, unsigned int dataLen);
+void resetTextureIfBounded(GLuint tid);
+//value texture_id_alloc(GLuint textureID, unsigned int dataLen);
 void texture_id_update(value mlTextureID,GLuint textureID);
 void ml_texture_id_delete(value mlTextureID);
+void update_texture_id_size(value mlTextureID,unsigned int dataLen);
 
 
 typedef enum 

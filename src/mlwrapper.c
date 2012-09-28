@@ -10,7 +10,7 @@
 
 #define NIL Val_int(0)
 
-extern void caml_gc_compaction();
+extern value caml_gc_compaction(value v);
 
 
 #ifdef ANDROID
@@ -132,6 +132,6 @@ void mlstage_cancelAllTouches(mlstage *mlstage) {
 
 void ml_memoryWarning() {
 	caml_acquire_runtime_system();
-	caml_gc_compaction();
+	caml_gc_compaction(0);
 	caml_release_runtime_system();
 }

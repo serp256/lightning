@@ -1466,9 +1466,10 @@ value ml_device_type(value unit) {
 }
 
 
+/*
 void ml_test_c_fun(value fun) {
 	caml_callback(fun,Val_unit);
-}
+}*/
 
 void call_caml_failwith(char* format, ...) {
 	char* err_mes = (char*)malloc(255);

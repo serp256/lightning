@@ -142,6 +142,9 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				strcpy(path + bflen + slen,ext);
 				if (getResourceFd(path,&r)) {
 					gzFile fptr = gzdopen(r.fd,"rb");
+#ifdef TEXTURE_LOAD
+					strncpy(tInfo->path,path,255);
+#endif
 					int r = loadAlphaPtr(fptr,tInfo);
 					free(path);
 					return r;
@@ -150,6 +153,9 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			free(path);
 			if (!getResourceFd(fname,&r)) return 2;
 			gzFile fptr = gzdopen(r.fd,"rb");
+#ifdef TEXTURE_LOAD
+					strncpy(tInfo->path,fname,255);
+#endif
 			int r = loadAlphaPtr(fptr,tInfo);
 			return r;
 		} else if (strcasecmp(ext,".plt")) { // если это не палитра
@@ -160,6 +166,9 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 					DEBUGF("TRY GET IMAGE %s", path);
 					if (getResourceFd(path,&r)) {
 						FILE *fptr = fdopen(r.fd,"rb");
+#ifdef TEXTURE_LOAD
+					strncpy(tInfo->path,path,255);
+#endif
 						int res = loadPvrFile3(fptr,r.length,tInfo);
 						fclose(fptr);
 						free(path);
@@ -170,6 +179,9 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				strcpy(path + bflen + slen, ".plx"); //plx
 				DEBUGF("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
+#ifdef TEXTURE_LOAD
+					strncpy(tInfo->path,path,255);
+#endif
 					free(path);
 					gzFile fptr = gzdopen(r.fd,"rb");
 					return loadPlxPtr(fptr,tInfo);
@@ -177,6 +189,9 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				if (!strcasecmp(ext,".jpg")) {
 						strcpy(path + bflen + slen, ext);
 						if (getResourceFd(path,&r)) {
+#ifdef TEXTURE_LOAD
+					strncpy(tInfo->path,path,255);
+#endif
 							free(path);
 							return load_jpg_image(r.fd,tInfo);
 						}
@@ -184,6 +199,9 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				if (!strcasecmp(ext,".png")) {
 						strcpy(path + bflen + slen, ext);
 						if (getResourceFd(path,&r)) {
+#ifdef TEXTURE_LOAD
+					strncpy(tInfo->path,path,255);
+#endif
 							free(path);
 							return load_png_image(r.fd,tInfo);
 						}
@@ -195,6 +213,9 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				DEBUGF("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
 					FILE *fptr = fdopen(r.fd,"rb");
+#ifdef TEXTURE_LOAD
+					strncpy(tInfo->path,path,255);
+#endif
 					int res = loadPvrFile3(fptr,r.length,tInfo);
 					DEBUG("PVR File Loaded");
 					fclose(fptr);
@@ -206,12 +227,18 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			strcpy(path + bflen, ".plx");
 			DEBUGF("TRY GET IMAGE %s", path);
 			if (getResourceFd(path,&r)) {
+#ifdef TEXTURE_LOAD
+				strncpy(tInfo->path,path,255);
+#endif
 				free(path);
 				gzFile fptr = gzdopen(r.fd,"rb");
 				return loadPlxPtr(fptr,tInfo);
 			};
 
 			if (!strcasecmp(ext,".jpg")) {
+#ifdef TEXTURE_LOAD
+				strncpy(tInfo->path,path,255);
+#endif
 				free(path);
 				DEBUGF("TRY GET IMAGE %s", fname);
 				if (!getResourceFd(fname,&r)) return 2;
@@ -225,11 +252,15 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			path = malloc(flen + slen);
 			memcpy(path,fname,flen);
 			strcpy(path + flen,suffix);
+			return 2;
 		} 
 	}
 
 	DEBUGF("FINAL TRY GET IMAGE %s", fname);
 	if (!getResourceFd(fname,&r)) return 2;
+#ifdef TEXTURE_LOAD
+	strncpy(tInfo->path,fname,255);
+#endif
 
 	return load_png_image(r.fd,tInfo);
 }

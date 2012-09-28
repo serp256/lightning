@@ -15,11 +15,11 @@ static unsigned int total_tex_mem = 0;
 extern uintnat caml_dependent_size;
 #ifdef TEXTURE_LOAD
 #define LOGMEM(op,tid,path,size) DEBUGMSG("TEXTURE MEMORY [%s] <%d:%s> %u -> %u:%u",op,tid,path,size,total_tex_mem,(unsigned int)caml_dependent_size)
+static int allocated_textures = 0;
 #else
 #define LOGMEM(op,tid,path,size)
 #endif
 
-#define TEX(v) ((struct tex*)Data_custom_val(v))
 
 
 
@@ -40,11 +40,25 @@ void ml_texture_id_delete(value textureID) {
 		total_tex_mem -= t->mem;
 #ifdef TEXTURE_LOAD
 		LOGMEM("delete",tid,t->path,t->mem);
+		if (!strcmp(t->path,"alloc")) {
+			allocated_textures--;
+			DEBUGMSG("ALLOCATED TEXTURES: %d",allocated_textures);
+		}
 #else
 		LOGMEM("delete",tid,"path",t->mem);
 #endif
 		caml_free_dependent_memory(t->mem);
 	};
+}
+
+void update_texture_id_size(value mlTextureID,unsigned int dataLen) {
+	struct tex *t = TEX(mlTextureID);
+	int diff = dataLen - t->mem;
+	total_tex_mem += diff;
+	if (diff > 0)
+		caml_alloc_dependent_memory(diff);
+	else caml_free_dependent_memory(-diff);
+	t->mem = dataLen;
 }
 
 void update_texture_id(value mlTextureID,GLuint textureID) {
@@ -63,6 +77,10 @@ static void textureID_finalize(value textureID) {
 		caml_free_dependent_memory(t->mem);
 #ifdef TEXTURE_LOAD
 		LOGMEM("finalize",tid,t->path,t->mem);
+		if (!strcmp(t->path,"alloc")) {
+			allocated_textures--;
+			DEBUGMSG("ALLOCATED TEXTURES: %d",allocated_textures);
+		};
 #else
 		LOGMEM("finalize",tid,"path",t->mem);
 #endif
@@ -100,11 +118,18 @@ struct custom_operations textureID_ops = {
 	{struct tex *_tex = TEX(mltex); _tex->tid = texID; FILL_TEXTURE(texID,_path,dataLen);}
 //*TEXTURE_ID(mlTextureID) = tid;
 
+
+/*
 value texture_id_alloc(GLuint textureID, unsigned int dataLen) {
 	value mlTextureID;
 	Store_textureID(mlTextureID,textureID,"alloc",dataLen);
+#ifdef TEXTURE_LOAD
+	allocated_textures++;
+	DEBUGMSG("ALLOCATED TEXTURES: %d",allocated_textures);
+#endif
 	return mlTextureID;
 }
+*/
 
 value ml_texture_id_zero() {
 	value mlTextureID;
@@ -204,6 +229,11 @@ void lgResetBoundTextures() {
 		boundTextureID1 = 0;
 	};
 	PMA = -1;
+}
+
+void resetTextureIfBounded(GLuint tid) {
+	if (tid == boundTextureID) {boundTextureID = 0; PMA = -1;};
+	if (tid == boundTextureID1) boundTextureID1 = 0;
 }
 
 
@@ -417,8 +447,6 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
             p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
             break;
     }
-
-    PRINT_DEBUG("p->glTexType %d %d", p, p->glTexType);
 	return 1;
 }
 

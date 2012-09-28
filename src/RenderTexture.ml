@@ -2,7 +2,7 @@ open LightCommon;
 open Texture;
 
 external set_texture_filter: textureID -> filter -> unit = "ml_texture_set_filter" "noalloc";
-external delete_textureID: textureID -> unit = "ml_texture_id_delete" "noalloc";
+external delete_textureID: textureID -> unit = "ml_render_texture_id_delete" "noalloc";
 (* external rendertexture_resize: renderInfo -> float -> float -> bool = "ml_rendertexture_resize"; *)
 
 
@@ -75,4 +75,4 @@ class c renderInfo =
   end; (*}}}*)
 
 
-value draw ~filter ?color ?alpha width height f = new c (renderbuffer_draw ?filter width height f);
+value draw ~filter ?color ?alpha width height f = new c (renderbuffer_draw ~filter ?color ?alpha width height f);

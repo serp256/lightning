@@ -27,12 +27,117 @@ static void inline back_framebuffer(GLuint fbid) {
 	while (i < fbs_cnt && fbfs[i] != 0) {i++;};
 	if (i < fbs_cnt) fbfs[i] = fbid;
 	else {
-		fbfs = realloc(fbfs,fbs_cnt + 1);
+		fbfs = realloc(fbfs,sizeof(GLuint)*(fbs_cnt + 1));
 		fbfs[fbs_cnt] = fbid;
 		++fbs_cnt;
 	}
 	PRINT_DEBUG("back framebuffer: %d",fbid);
 }
+
+static int tx_cnt = 0;
+static GLuint *txs = NULL;
+
+
+static GLuint inline get_texture_id() {
+	GLuint tid = 0;
+	int i = 0;
+	while ((i < tx_cnt) && (txs[i] == 0)) {i++;};
+	if (i < tx_cnt) {
+		tid = txs[i];
+		txs[i] = 0;
+		glBindTexture(GL_TEXTURE_2D, tid);
+	} else {
+		glGenTextures(1,&tid);
+		glBindTexture(GL_TEXTURE_2D, tid);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	};
+	PRINT_DEBUG("get texture: %d",tid);
+	return tid;
+}
+
+static void inline back_texture_id(GLuint tid) {
+	int i = 0;
+	while (i < tx_cnt && txs[i] != 0) {i++;};
+	if (i < tx_cnt) {
+		txs[i] = tid;
+	} else {
+		txs = realloc(txs,sizeof(GLuint)*(tx_cnt + 1));
+		txs[tx_cnt] = tid;
+		++tx_cnt;
+	}
+	PRINT_DEBUG("back texture: %d",tid);
+}
+
+static unsigned int total_tex_mem = 0;
+static unsigned int total_tex_count = 0;
+extern uintnat caml_dependent_size;
+
+#ifdef TEXTURE_LOAD
+#define LOGMEM(op,tid,size) DEBUGMSG("RENDER TEXTURE MEMORY [%s] <%d:%d> -> %d  %u:%u",op,tid,size,total_tex_count,total_tex_mem,caml_dependent_size);
+#else
+#define LOGMEM(op,tid,size)
+#endif
+
+void ml_render_texture_id_delete(value textureID) {
+	GLuint tid = TEXTURE_ID(textureID);
+	if (tid) {
+		back_texture_id(tid);
+		resetTextureIfBounded(tid);
+		checkGLErrors("delete texture");
+		struct tex *t = TEX(textureID);
+		t->tid = 0;
+		total_tex_mem -= t->mem;
+		--total_tex_count;
+		LOGMEM("delete",tid,t->mem);
+		caml_free_dependent_memory(t->mem);
+	};
+}
+
+static void textureID_finalize(value textureID) {
+	GLuint tid = TEXTURE_ID(textureID);
+	if (tid) {
+		PRINT_DEBUG("finalize render texture");
+		back_texture_id(tid);
+		resetTextureIfBounded(tid);
+		checkGLErrors("finalize texture");
+		struct tex *t = TEX(textureID);
+		total_tex_mem -= t->mem;
+		--total_tex_count;
+		caml_free_dependent_memory(t->mem);
+		LOGMEM("finalize",tid,t->mem);
+	};
+}
+
+static int textureID_compare(value texid1,value texid2) {
+	GLuint t1 = TEXTURE_ID(texid1);
+	GLuint t2 = TEXTURE_ID(texid2);
+	if (t1 == t2) return 0;
+	else {
+		if (t1 < t2) return -1;
+		return 1;
+	}
+}
+
+struct custom_operations rendertextureID_ops = {
+  "pointer to render texture id",
+  textureID_finalize,
+  textureID_compare,
+  custom_hash_default,
+  custom_serialize_default,
+  custom_deserialize_default
+};
+
+#define MAX_RENDER_TEXTURES 100
+
+
+value caml_gc_major(value v);
+
+#define Store_rendertextureID(mltex,texID,dataLen) \
+	if (++total_tex_count >= MAX_RENDER_TEXTURES) caml_gc_major(0); \
+	caml_alloc_dependent_memory(dataLen); \
+	mltex = caml_alloc_custom(&rendertextureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
+	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen;  total_tex_mem += dataLen;LOGMEM("new",texID,dataLen)}
 
 void get_framebuffer_state(framebuffer_state *s) {
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&s->framebuffer);
@@ -54,6 +159,7 @@ static void inline renderbuffer_activate(renderbuffer_t *rb) {
 	enableSeparateBlend();
 }
 
+
 void set_framebuffer_state(framebuffer_state *s) {
 	glBindFramebuffer(GL_FRAMEBUFFER,s->framebuffer);
 	glViewport(s->viewport[0], s->viewport[1], s->viewport[2], s->viewport[3]);
@@ -68,6 +174,7 @@ static void inline renderbuffer_deactivate() {
 }
 
 
+static int FRAMEBUFFER_BIND_COUNTER = 0;
 
 // сделать рендер буфер
 int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter) {
@@ -79,20 +186,20 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
 	GLuint legalWidth = nextPOT(iw);
 	GLuint legalHeight = nextPOT(ih);
 	TEXTURE_SIZE_FIX(legalWidth,legalHeight);
-  glGenTextures(1, &rtid);
-  glBindTexture(GL_TEXTURE_2D, rtid);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	rtid = get_texture_id();
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glBindTexture(GL_TEXTURE_2D,0);
 	checkGLErrors("create render texture %d [%d:%d]",rtid,legalWidth,legalHeight);
-  glBindTexture(GL_TEXTURE_2D,0);
   GLuint fbid;
   //glGenFramebuffers(1, &fbid);
 	fbid = get_framebuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, fbid);
+	checkGLErrors("bind framebuffer %d",fbid);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
+	FRAMEBUFFER_BIND_COUNTER++;
+	checkGLErrors("framebuffertexture2d %d -> %d",fbid,rtid);
   r->fbid = fbid;
   r->tid = rtid;
 	r->vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
@@ -120,6 +227,7 @@ int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr,GLenum filter) {
   glGenFramebuffers(1, &fbid);
   glBindFramebuffer(GL_FRAMEBUFFER, fbid);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
+	FRAMEBUFFER_BIND_COUNTER++;
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
 	dr->fbid = fbid;
 	dr->tid = rtid;
@@ -172,7 +280,7 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 	renderbuffer_t rb; 
 	if (create_renderbuffer(Double_val(mlwidth),Double_val(mlheight),&rb,fltr)) {
 		char emsg[255];
-		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);
 		caml_failwith(emsg);
 	};
@@ -197,6 +305,7 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 
 	PRINT_DEBUG("end ocaml drawing function for %d:%d",rb.fbid,rb.tid);
 
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,0,0);
 	renderbuffer_deactivate();
 
 	set_framebuffer_state(&fstate);
@@ -206,7 +315,8 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 	// и нужно вернуть текстуру
 	int s = rb.realWidth * rb.realHeight * 4;
 	renderInfo = caml_alloc_tuple(5);
-	value mlTextureID = texture_id_alloc(rb.tid,s);
+	value mlTextureID; 
+	Store_rendertextureID(mlTextureID,rb.tid,s);
 	Store_field(renderInfo,0,mlTextureID);
 	Store_field(renderInfo,1,caml_copy_double(rb.width));
 	Store_field(renderInfo,2,caml_copy_double(rb.height));
@@ -285,7 +395,7 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 			Store_double_field(clp,3,rb.clp.height);
 			clip = caml_alloc_tuple(1);
 			Store_field(clip,0,clp);
-		};
+		}
 		Store_field(renderInfo,3,clip);
 		if (legalWidth != nextPOT(ceil(cwidth)) || legalHeight != nextPOT(ceil(cheight))) {
 
@@ -297,11 +407,12 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 			/*TEX(Field(renderInfo,0))->tid = 0;
 			total_tex_mem -= TEX(Field(renderInfo,0))->mem;
 			caml_free_dependent_memory(TEX(Field(renderInfo,0))->mem);*/
-			ml_texture_id_delete(Field(renderInfo,0));
+			//ml_texture_id_delete(Field(renderInfo,0));
 			int s = legalWidth*legalHeight*4;
-			value mlTextureID = texture_id_alloc(rb.tid,s);
+			update_texture_id_size(Field(renderInfo,0),s);
+			//value mlTextureID = texture_id_alloc(rb.tid,s);
 			//Store_textureID(mlTextureID,rb->tid,"renderbuffer resized",s);
-			Store_field(renderInfo,0,mlTextureID); // ??
+			//Store_field(renderInfo,0,mlTextureID); // ??
 			checkGLErrors("renderbuffer resize");
 		};
 	} else {
@@ -318,11 +429,13 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
   //glGenFramebuffers(1, &rb.fbid);
 	rb.fbid = get_framebuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, rb.fbid);
+	PRINT_DEBUG("FRAMEBUFFER BINDED");
 	checkGLErrors("draw to texture bind framebuffer");
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rb.tid,0);
+	FRAMEBUFFER_BIND_COUNTER++;
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		char emsg[255];
-		sprintf(emsg,"draw to texture framebuffer '%d', texture: '%d' [%d:%d], status: %X\n",rb.fbid,rb.tid,legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		sprintf(emsg,"draw to texture framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);
     caml_failwith(emsg);
   };
@@ -342,6 +455,8 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 
 	caml_callback(mlfun,(value)&rb);
 
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,0,0);// Detach the texture
+
 	set_framebuffer_state(&fstate);
 	renderbuffer_deactivate();
 	//glDeleteFramebuffers(1,&rb.fbid);
@@ -356,3 +471,56 @@ value ml_renderbuffer_draw_to_texture_byte(value *argv, int n) {
 	return (ml_renderbuffer_draw_to_texture(argv[0],argv[1],argv[2],argv[3],argv[4]));
 }*/
 
+
+
+
+#define CNT_TEST_TEXTURES 200
+void ml_test_c_fun (value f) {
+	GLuint textures[CNT_TEST_TEXTURES];
+	glGenTextures(CNT_TEST_TEXTURES, textures);
+	int i;
+	GLuint rtid;
+	GLenum filter = GL_NEAREST;
+	GLuint legalWidth = 128, legalHeight =128;
+	for (i = 0; i < CNT_TEST_TEXTURES; i++) {
+		rtid = textures[i];
+		glBindTexture(GL_TEXTURE_2D, rtid);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	};
+	glBindTexture(GL_TEXTURE_2D,0);
+	checkGLErrors("after create textures");
+	GLuint fbid = get_framebuffer();
+
+	framebuffer_state fstate;
+	get_framebuffer_state(&fstate);
+
+	PRINT_DEBUG("DEPTH ENABLED: %d",glIsEnabled(GL_STENCIL_TEST));
+	// what about renderbuffer
+	int j;
+	for (i = 0; i < CNT_TEST_TEXTURES; i++) {
+		rtid = textures[i];
+		PRINT_DEBUG("TRY BIND WITH %d",i);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbid);
+		glBindTexture(GL_TEXTURE_2D,rtid);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
+		GLint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if (status != GL_FRAMEBUFFER_COMPLETE) {
+			char msg[255];
+			sprintf(msg,
+					"failed to bind framebuffer and texture: %d:%d - %d %X",
+					fbid,rtid,i,status
+			);
+			caml_failwith(msg);
+		};
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0,0);
+		//glDeleteTextures(1,&rtid);
+	}
+
+	set_framebuffer_state(&fstate);
+
+	back_framebuffer(fbid);
+}

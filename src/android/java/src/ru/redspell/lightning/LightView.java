@@ -387,6 +387,12 @@ public class LightView extends GLSurfaceView {
 			sb.append("(pid " ).append(event.getPointerId(i));
 			sb.append(")=" ).append((int) event.getX(i));
 			sb.append("," ).append((int) event.getY(i));
+			sb.append("<");
+			for (int h = 0; h < event.getHistorySize (); h++) {
+				sb.append((int)event.getHistoricalX(i,h)).append(",").append((int)event.getHistoricalY(i,h));
+				if (h + 1 < event.getHistorySize()) sb.append(";");
+			};
+			sb.append(">");
 			if (i + 1 < event.getPointerCount())
 				sb.append(";" );
 		}

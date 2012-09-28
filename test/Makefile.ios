@@ -13,9 +13,12 @@ include Makefile.common
 MOBS = LightTest/main.o  
 CFLAGS += -I ../src/ios
 
-ios: example.native
 
 include Makefile.in
+
+ios: $(TARGET).native
+
+.DEFAULT_GOAL := ios
 
 clean::
 	rm -f LightTest/*.o

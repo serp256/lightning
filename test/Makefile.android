@@ -4,17 +4,21 @@ OCAMLC = $(OCAMLFIND) ocamlc
 include Makefile.common
 include Makefile.in
 
-so: example.so
+-include target
+
+TARGET ?= example
+
+so: $(TARGET).so
 	cp test.so android/libs/armeabi-v7a/libtest.so
 	ant -f android/build.xml debug
 
-release: example.so
+release: $(TARGET).so
 	cp test.so android/libs/armeabi-v7a/libtest.so
 	ant -f android/build.xml release
 
-example.so: $(MLXFILES) example.cmx
+$(TARGET).so: $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
-	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) ../src/social/facebook/fbconnect.cmxa example.cmx \
+	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) ../src/social/facebook/fbconnect.cmxa $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray  -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" -cclib "-L../src/social/facebook" -output-obj
 
 clean::

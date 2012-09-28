@@ -205,7 +205,7 @@ value extractAssetsAndExpansionsIfRequired cb =
       extractExpansions (fun success -> ( extractExpansionRes.val := Some success; callCb (); ));
     );
 
-(* external test_c_fun: (unit -> unit) -> unit = "ml_test_c_fun"; *)
+external test_c_fun: (unit -> unit) -> unit = "ml_test_c_fun";
 
 ELSE
 value extractAssetsIfRequired (cb:(bool -> unit)) =  cb True;
