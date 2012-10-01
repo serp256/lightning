@@ -18,8 +18,9 @@
 	self.window = [[UIWindow alloc] initWithFrame: [UIScreen mainScreen].applicationFrame];
 	lightViewController = [LightViewController sharedInstance];
 	lightViewController.orientationDelegate = self;
+	//[self.window addSubview:lightViewController.view];    
+	self.window.rootViewController = lightViewController;
 	[self.window makeKeyAndVisible];
-	[self.window addSubview:lightViewController.view];    
 	return YES;
 }
 

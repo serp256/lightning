@@ -1,6 +1,20 @@
-diff -urN ocaml-4.00/otherlibs/threads/pervasives.ml ocaml-4.00-main/otherlibs/threads/pervasives.ml
---- ocaml-4.00/otherlibs/threads/pervasives.ml	2012-04-26 23:17:59.000000000 +0400
-+++ ocaml-4.00-main/otherlibs/threads/pervasives.ml	2012-05-17 14:46:50.000000000 +0400
+diff -urN ocaml-4.00.0/asmrun/amd64.S ocaml-4.00.0-main/asmrun/amd64.S
+--- ocaml-4.00.0/asmrun/amd64.S	2012-07-09 12:35:23.000000000 +0400
++++ ocaml-4.00.0-main/asmrun/amd64.S	2012-08-02 15:45:38.000000000 +0400
+@@ -485,7 +485,10 @@
+         movq    %rax, C_ARG_1         /* arg 1: exception bucket */
+         movq    0(%rsp), C_ARG_2      /* arg 2: pc of raise */
+         leaq    8(%rsp), C_ARG_3      /* arg 3: sp of raise */
++				popq    C_ARG_2               /* arg 2: pc of raise */
++				movq    %rsp, C_ARG_3         /* arg 3: sp at raise */
+         movq    %r14, C_ARG_4         /* arg 4: sp of handler */
++				/* PR#5700: thanks to popq above, stack is now 16-aligned */
+ 	PREPARE_FOR_C_CALL            /* no need to cleanup after */
+         call    GCALL(caml_stash_backtrace)
+         movq    %r12, %rax            /* Recover exception bucket */
+diff -urN ocaml-4.00.0/otherlibs/threads/pervasives.ml ocaml-4.00.0-main/otherlibs/threads/pervasives.ml
+--- ocaml-4.00.0/otherlibs/threads/pervasives.ml	2011-07-27 18:17:02.000000000 +0400
++++ ocaml-4.00.0-main/otherlibs/threads/pervasives.ml	2012-08-02 11:38:03.000000000 +0400
 @@ -87,29 +87,34 @@
  external (-.) : float -> float -> float = "%subfloat"
  external ( *. ) : float -> float -> float = "%mulfloat"
@@ -58,9 +72,9 @@ diff -urN ocaml-4.00/otherlibs/threads/pervasives.ml ocaml-4.00-main/otherlibs/t
  external frexp : float -> float * int = "caml_frexp_float"
  external ldexp : float -> int -> float = "caml_ldexp_float"
  external modf : float -> float * float = "caml_modf_float"
-diff -urN ocaml-4.00/stdlib/pervasives.ml ocaml-4.00-main/stdlib/pervasives.ml
---- ocaml-4.00/stdlib/pervasives.ml	2012-04-26 23:17:52.000000000 +0400
-+++ ocaml-4.00-main/stdlib/pervasives.ml	2012-05-17 14:45:56.000000000 +0400
+diff -urN ocaml-4.00.0/stdlib/pervasives.ml ocaml-4.00.0-main/stdlib/pervasives.ml
+--- ocaml-4.00.0/stdlib/pervasives.ml	2012-01-12 19:46:51.000000000 +0400
++++ ocaml-4.00.0-main/stdlib/pervasives.ml	2012-08-02 11:38:03.000000000 +0400
 @@ -83,31 +83,34 @@
  external ( -. ) : float -> float -> float = "%subfloat"
  external ( *. ) : float -> float -> float = "%mulfloat"
@@ -118,9 +132,9 @@ diff -urN ocaml-4.00/stdlib/pervasives.ml ocaml-4.00-main/stdlib/pervasives.ml
  external frexp : float -> float * int = "caml_frexp_float"
  external ldexp : float -> int -> float = "caml_ldexp_float"
  external modf : float -> float * float = "caml_modf_float"
-diff -urN ocaml-4.00/stdlib/pervasives.mli ocaml-4.00-main/stdlib/pervasives.mli
---- ocaml-4.00/stdlib/pervasives.mli	2012-05-05 17:00:39.000000000 +0400
-+++ ocaml-4.00-main/stdlib/pervasives.mli	2012-05-17 14:45:56.000000000 +0400
+diff -urN ocaml-4.00.0/stdlib/pervasives.mli ocaml-4.00.0-main/stdlib/pervasives.mli
+--- ocaml-4.00.0/stdlib/pervasives.mli	2012-05-02 18:39:52.000000000 +0400
++++ ocaml-4.00.0-main/stdlib/pervasives.mli	2012-08-02 11:38:03.000000000 +0400
 @@ -261,82 +261,84 @@
  external ( /. ) : float -> float -> float = "%divfloat"
  (** Floating-point division. *)
