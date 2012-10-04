@@ -228,11 +228,14 @@ int getResourceFd(const char *path, resource *res) { //{{{
 
 			//DEBUGF("assetPath: %s", assetPath);
 
-			PRINT_DEBUG("assetPath %s", assetPath);
-
 			int fd = open(assetPath, O_RDONLY);
-			if (fd < 0) return 0;
 
+			if (fd < 0) {
+				PRINT_DEBUG("%s not found in extracted assets", path);
+				return 0;
+			}
+
+			PRINT_DEBUG("%s found in extracted assets", path);
 			free(assetPath);
 
 			res->fd = fd;
@@ -351,9 +354,20 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 	PRINT_DEBUG("stage created");
 }
 
+static int onResume = 0;
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	PRINT_DEBUG("GL Changed: %i:%i",width,height);
+
+	if (onResume) {
+		onResume = 0;
+		static value dispatchFgHandler = 1;
+
+		if (stage) {
+			if (dispatchFgHandler == 1) dispatchFgHandler = caml_hash_variant("dispatchForegroundEv");
+			caml_callback2(caml_get_public_method(stage->stage, dispatchFgHandler), stage->stage, Val_unit);
+		}
+	}
 }
 
 
@@ -857,12 +871,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 	PRINT_DEBUG("resume ALL players");
 	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);
 
-	static value dispatchFgHandler = 1;
-
-	if (stage) {
-		if (dispatchFgHandler == 1) dispatchFgHandler = caml_hash_variant("dispatchForegroundEv");
-		caml_callback2(caml_get_public_method(stage->stage, dispatchFgHandler), stage->stage, Val_unit);
-	}
+	onResume = 1;
 }
 
 /* Updated upstream
