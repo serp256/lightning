@@ -11,7 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.text.TextUtils;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;

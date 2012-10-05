@@ -3,7 +3,7 @@ package ru.redspell.lightning;
 
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 import java.io.InputStream;
 import java.io.IOException;
 

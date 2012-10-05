@@ -3,7 +3,7 @@ package ru.redspell.lightning;
 import android.app.Activity;
 import android.view.MotionEvent;
 import android.opengl.GLSurfaceView;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;

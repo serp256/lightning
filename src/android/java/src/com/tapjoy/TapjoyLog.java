@@ -10,7 +10,7 @@
 
 package com.tapjoy;
 
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 /**
  * 

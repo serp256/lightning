@@ -8,7 +8,7 @@ import com.facebook.android.AsyncFacebookRunner.*;
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.io.IOException;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 import android.os.Bundle;
 import android.app.Activity;
 import ru.redspell.lightning.LightView;

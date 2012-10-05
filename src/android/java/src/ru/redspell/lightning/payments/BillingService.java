@@ -16,7 +16,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;

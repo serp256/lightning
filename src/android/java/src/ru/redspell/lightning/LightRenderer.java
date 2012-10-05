@@ -1,6 +1,6 @@
 package ru.redspell.lightning;
 
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 import android.os.Handler;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

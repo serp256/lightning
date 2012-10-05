@@ -34,7 +34,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 public class TapjoyConnectCore
 {

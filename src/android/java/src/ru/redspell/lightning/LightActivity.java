@@ -3,7 +3,7 @@ package ru.redspell.lightning;
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 import android.view.WindowManager;
 import android.view.Window;
 import android.os.Messenger;

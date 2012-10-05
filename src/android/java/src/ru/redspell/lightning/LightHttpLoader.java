@@ -10,7 +10,7 @@ import java.io.OutputStream;
 import java.net.URLConnection;
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;

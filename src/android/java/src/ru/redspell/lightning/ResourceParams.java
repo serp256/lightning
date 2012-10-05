@@ -1,7 +1,7 @@
 package ru.redspell.lightning;
 
 import java.io.FileDescriptor;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 
 class ResourceParams {

@@ -4,7 +4,7 @@ import android.media.MediaPlayer;
 import android.media.AudioManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.SoundPool;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -43,8 +43,6 @@ fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN)
 fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
 	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
-android/fbwrapper_android.o: CFLAGS += -DLDEBUG
-
 else
 
 fbconnect.cmxa: $(IFACES) $(MLOBJSN)

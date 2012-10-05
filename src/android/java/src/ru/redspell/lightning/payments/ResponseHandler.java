@@ -10,7 +10,7 @@ import ru.redspell.lightning.payments.Consts.ResponseCode;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 /**
  * This class contains the methods that handle responses from Android Market.  The

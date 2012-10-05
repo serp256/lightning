@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.FrameLayout;
 import ru.redspell.lightning.LightView;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 import android.content.Intent;
 import com.facebook.android.*;
