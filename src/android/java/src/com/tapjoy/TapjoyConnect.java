@@ -129,7 +129,6 @@ public final class TapjoyConnect
 	 */
 	public void setUserID(String userID)
 	{
-		android.util.Log.d("LIGHNING", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!setUserID call, " + userID);
 		TapjoyConnectCore.setUserID(userID);
 	}
 	

@@ -73,6 +73,20 @@ public class LightView extends GLSurfaceView {
     	return -1;
     }
 
+    private class CamlFailwithRunnable implements Runnable {
+    	private String errMes;
+
+    	public CamlFailwithRunnable(String errMes) {
+    		this.errMes = errMes;
+    	}
+
+    	public native void run();
+    }
+
+    public void camlFailwith(String errMes) {
+    	instance.queueEvent(new CamlFailwithRunnable(errMes));
+    }
+
 	private class UnzipCallbackRunnable implements Runnable {
 		private String zipPath;
 		private String dstPath;
@@ -461,7 +475,7 @@ public class LightView extends GLSurfaceView {
 	public void mlUncaughtException(String exn,String[] bt) {
 		Context c = getContext();
 		ApplicationInfo ai = c.getApplicationInfo ();
-		String label = ai.loadLabel(c.getPackageManager ()).toString();
+		String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android)";
 		int vers;
 		try { vers = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode; } catch (PackageManager.NameNotFoundException e) {vers = 1;};
 		StringBuffer uri = new StringBuffer("mailto:" + supportEmail);

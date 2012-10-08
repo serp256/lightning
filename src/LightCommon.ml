@@ -32,11 +32,11 @@ ELSE
 external getLocale: unit -> string = "ml_getLocale";
 ENDIF;
 
-IFDEF IOS THEN
+IFPLATFORM(ios android)
 external getVersion: unit -> string = "ml_getVersion";
 ELSE
 value getVersion () = "PC version";
-ENDIF;
+ENDPLATFORM;
 
 
 (*

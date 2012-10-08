@@ -1164,8 +1164,10 @@ value ml_avsound_create_player(value vpath) {
 }
 
 void testMethodId(JNIEnv *env, jclass cls, jmethodID *mid, char* methodName) {
-	//DEBUGF("testMethodId %s", methodName);
+	DEBUGF("testMethodId %s", methodName);
 	if (!*mid) {
+		DEBUGF("call %s", methodName);
+
 		*mid = (*env)->GetMethodID(env, cls, methodName, "()V");
 		//DEBUG("GetMethodID call");
 	}
@@ -1480,27 +1482,51 @@ void ml_test_c_fun(value fun) {
 	caml_callback(fun,Val_unit);
 }*/
 
-void call_caml_failwith(char* format, ...) {
-	char* err_mes = (char*)malloc(255);
-	va_list args;
+#define CAML_FAILWITH(...) {																			\
+	char* err_mes = (char*)malloc(255);																	\
+	sprintf(err_mes, __VA_ARGS__);																		\
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "camlFailwith", "(Ljava/lang/String;)V");		\
+	jstring jerrMes = (*env)->NewStringUTF(env, err_mes);												\
+	(*env)->CallVoidMethod(env, jView, mid, jerrMes);													\
+	(*env)->DeleteLocalRef(env, jerrMes);																\
+	free(err_mes);																						\
+	pthread_exit(NULL);																					\
+}
 
-	va_start(args, format);	
-	vsprintf(err_mes, format, args);
-	va_end(args);
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CamlFailwithRunnable_run(JNIEnv *env, jobject this) {
+	static jfieldID errMesFid;
+
+	if (!errMesFid) {
+		jclass selfCls = (*env)->GetObjectClass(env, this);
+		errMesFid = (*env)->GetFieldID(env, selfCls, "errMes", "Ljava/lang/String;");
+		(*env)->DeleteLocalRef(env, selfCls);
+	}
+
+	jstring jerrMes = (*env)->GetObjectField(env, this, errMesFid);
+	const char* cerrMes = (*env)->GetStringUTFChars(env, jerrMes, JNI_FALSE);
+	value verrMes = caml_copy_string(cerrMes);
+
+	(*env)->ReleaseStringUTFChars(env, jerrMes, cerrMes);
+	(*env)->DeleteLocalRef(env, jerrMes);
+	
+	caml_failwith(verrMes);
 }
 
 KHASH_MAP_INIT_STR(expnsn_index, offset_size_pair_t*);
 static kh_expnsn_index_t* idx;
 
 void* extract_expansions_thread(void* params) {
+    JNIEnv *env;
+    (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+
 	idx = kh_init_expnsn_index();
 	char* expnsn_path = get_expansion_path(1);
 
 	FILE* in = fopen(expnsn_path, "r");
-	if (!in) call_caml_failwith("cannot open expansions file %s", expnsn_path);
+	if (!in) CAML_FAILWITH("cannot open expansions file %s", expnsn_path);
 
 	int32_t index_entries_num;		
-	if (1 != fread(&index_entries_num, sizeof(int32_t), 1, in)) call_caml_failwith("cannot ready expansions index entries number");
+	if (1 != fread(&index_entries_num, sizeof(int32_t), 1, in)) CAML_FAILWITH("cannot ready expansions index entries number");
 
 	int i = 0;
 	khiter_t k;
@@ -1508,16 +1534,16 @@ void* extract_expansions_thread(void* params) {
 
 	while (i++ < index_entries_num) {
 		int8_t filename_len;
-		if (1 != fread(&filename_len, sizeof(int8_t), 1, in)) call_caml_failwith("cannot read filename length for index entry %d", i - 1);
+		if (1 != fread(&filename_len, sizeof(int8_t), 1, in)) CAML_FAILWITH("cannot read filename length for index entry %d", i - 1);
 
 		char* filename = malloc(filename_len + 1);
 		int32_t offset;
 		int32_t size;
 
-		if (filename_len != fread(filename, 1, filename_len, in)) call_caml_failwith("cannot read filename for entry %d", i - 1);
+		if (filename_len != fread(filename, 1, filename_len, in)) CAML_FAILWITH("cannot read filename for entry %d", i - 1);
 		*(filename + filename_len) = '\0';
-		if (1 != fread(&offset, sizeof(int32_t), 1, in)) call_caml_failwith("cannot read offset for entry %d", i - 1);
-		if (1 != fread(&size, sizeof(int32_t), 1, in)) call_caml_failwith("cannot read size for entry %d", i - 1);
+		if (1 != fread(&offset, sizeof(int32_t), 1, in)) CAML_FAILWITH("cannot read offset for entry %d", i - 1);
+		if (1 != fread(&size, sizeof(int32_t), 1, in)) CAML_FAILWITH("cannot read size for entry %d", i - 1);
 
 		int ret;
 		pair = (offset_size_pair_t*)malloc(sizeof(offset_size_pair_t));
@@ -1539,9 +1565,6 @@ void* extract_expansions_thread(void* params) {
         	pair = kh_val(idx, k);
         	pair->offset = pair->offset + files_begin_pos;
         }
-
-    JNIEnv *env;
-    (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
 
     static jmethodID callExpansionsCompleteMid;
 

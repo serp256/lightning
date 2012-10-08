@@ -1,4 +1,4 @@
-value ev_SOUND_COMPLETE : Ev.id;
+value ev_SOUND_COMPLETE: Ev.id;
 
 exception Audio_error of string;
 

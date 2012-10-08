@@ -16,6 +16,8 @@ import java.io.File;
 public class LightMediaPlayer extends MediaPlayer {
 	private static ArrayList<LightMediaPlayer> instances;
 	private static ArrayList<LightMediaPlayer> paused;
+	public int id;
+	private static int nextId = 0;
 
 	private class CamlCallbackCompleteRunnable implements Runnable {
 		private int cb;
@@ -40,7 +42,18 @@ public class LightMediaPlayer extends MediaPlayer {
 	}
 
 	public void start(int cb) {
+		Log.d("LMP", "start " + id);
+
+		seekTo(getDuration() - 10000);
 		setOnCompletionListener(new CamlCallbackCompleteListener(cb));
+		setOnErrorListener(new OnErrorListener() {
+			public boolean onError(MediaPlayer mp, int what, int extra) {
+				Log.d("LMP", "mp error " + ((LightMediaPlayer)mp).id);
+
+				return true;
+			}
+		});
+
 		start();
 	}
 
@@ -51,16 +64,30 @@ public class LightMediaPlayer extends MediaPlayer {
 			instances = new ArrayList<LightMediaPlayer>();
 		}
 
+		id = nextId++;
+
+		Log.d("LMP", "new instance " + id);
+
 		instances.add(this);
 	}
 
 	@Override
+	public void stop() {
+		Log.d("LMP", "stop " + id);
+		super.stop();
+	}
+
+	@Override
 	protected void finalize() {
+		Log.d("LMP", "finalize");
+
 		super.finalize();
 		instances.remove(this);
 	}
 
 	public static void resumeAll() {
+		Log.d("LMP", "-----resumeAll");
+
 		if (paused == null) {
 			return;
 		}
@@ -69,13 +96,19 @@ public class LightMediaPlayer extends MediaPlayer {
 		LightMediaPlayer lmp;
 
 		while (iter.hasNext()) {
-			(iter.next()).start();
+			lmp = iter.next();
+
+			Log.d("LMP", "resume mp " + lmp.id);
+			lmp.start();
 		}
 
 		paused.clear();
+		Log.d("LMP", "resumeAll-----");
 	}
 
 	public static void pauseAll() {
+		Log.d("LMP", "-----pauseAll");
+
 		if (instances == null) {
 			return;
 		}
@@ -90,11 +123,19 @@ public class LightMediaPlayer extends MediaPlayer {
 		while (iter.hasNext()) {
 			lmp = iter.next();
 
-			if (lmp.isPlaying()) {
-				paused.add(lmp);
-				lmp.pause();
-			}
+			Log.d("LMP", "pause mp " + lmp.id);
+
+			try {
+				if (lmp.isPlaying()) {
+					Log.d("LMP", "mp " + lmp.id + " is playing");
+
+					paused.add(lmp);
+					lmp.pause();
+				}				
+			} catch (IllegalStateException e) {}
 		}
+
+		Log.d("LMP", "pauseAll-----");
 	}
 
 	private static class OffsetSizePair {

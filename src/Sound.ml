@@ -252,6 +252,7 @@ ELSE
       inherit EventDispatcher.simple [ channel ];
 
       value player = plr;
+      value mutable isPlaying = False;
       value mutable paused = False;
       value mutable completed = False;
       value mutable volume = 0.;
@@ -266,32 +267,35 @@ ELSE
 
       method play () = 
       (
-        if not paused && not completed then
+        if not isPlaying && not paused && not completed then
           avsound_playback player "prepare"
         else ();
 
+        isPlaying := True;
         paused := False;
         completed := False;
         avsound_play player self#onSoundComplete;
       );
 
-      method private isPlaying () = avsound_isPlaying player;
+      (* method private isPlaying () = avsound_isPlaying player; *)
       
       method pause () = 
-        if self#isPlaying () then
+        if isPlaying then
         (
           paused := True;
           completed := False;
+          isPlaying := False;
 
           avsound_playback player "pause";          
         )
         else ();
       
       method stop () = 
-        if paused || self#isPlaying () then
+        if paused || isPlaying then
         (
           paused := False;
           completed := False;
+          isPlaying := False;
 
           avsound_playback player "stop";          
         )
@@ -307,7 +311,7 @@ ELSE
       
       method setLoop loop  = avsound_setLoop player loop;
       
-      method state = match (paused, self#isPlaying ()) with
+      method state = match (paused, isPlaying) with
       [ (_, True)         -> SoundPlaying
       | (True, False)     -> SoundPaused
       | (False, False)    -> SoundStoped
