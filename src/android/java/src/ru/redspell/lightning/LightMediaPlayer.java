@@ -44,7 +44,7 @@ public class LightMediaPlayer extends MediaPlayer {
 	public void start(int cb) {
 		Log.d("LMP", "start " + id);
 
-		seekTo(getDuration() - 10000);
+		//seekTo(getDuration() - 10000);
 		setOnCompletionListener(new CamlCallbackCompleteListener(cb));
 		setOnErrorListener(new OnErrorListener() {
 			public boolean onError(MediaPlayer mp, int what, int extra) {
