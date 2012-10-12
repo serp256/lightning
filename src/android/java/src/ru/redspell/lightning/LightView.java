@@ -116,15 +116,23 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public boolean isTablet () {
-    Display display = activity.getWindowManager().getDefaultDisplay();
-    DisplayMetrics displayMetrics = new DisplayMetrics();
-    display.getMetrics(displayMetrics);
+	    int width = displayMetrics.widthPixels / displayMetrics.densityDpi;
+	    int height = displayMetrics.heightPixels / displayMetrics.densityDpi;
 
-    int width = displayMetrics.widthPixels / displayMetrics.densityDpi;
-    int height = displayMetrics.heightPixels / displayMetrics.densityDpi;
+	    double screenDiagonal = Math.sqrt( width * width + height * height );
+	    return (screenDiagonal >= 6.5);
+	}
 
-    double screenDiagonal = Math.sqrt( width * width + height * height );
-    return (screenDiagonal >= 6.5 );
+	public int getScreenWidth() {
+		return displayMetrics.widthPixels;
+	}
+
+	public int getScreenHeight() {
+		return displayMetrics.heightPixels;
+	}
+
+	public int getDensity() {
+		return displayMetrics.densityDpi;
 	}
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {
@@ -164,10 +172,15 @@ public class LightView extends GLSurfaceView {
 	public static LightView instance;
 	
 	public LightActivity activity;
+	private DisplayMetrics displayMetrics;
 
 	public LightView(LightActivity _activity) {
 		super(_activity);
 		activity = _activity;
+
+	    Display display = activity.getWindowManager().getDefaultDisplay();
+	    displayMetrics = new DisplayMetrics();
+	    display.getMetrics(displayMetrics);
 
 		Log.d("LIGHTNING", "tid: " + Process.myTid());
 

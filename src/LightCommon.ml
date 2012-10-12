@@ -262,14 +262,37 @@ ENDIF;
 
 
 type deviceType = [ Phone | Pad ];
+type androidScreen = [ Small| Normal | Large | Xlarge ];
+type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi ];
+
+value androidScreenToString screen =
+  match screen with
+  [ Small -> "small"
+  | Normal -> "normal"
+  | Large -> "large"
+  | Xlarge -> "xlarge"
+  ];
+
+value androidDensityToString density =
+  match density with
+  [ Ldpi -> "Ldpi"
+  | Mdpi -> "Mdpi"
+  | Hdpi -> "Hdpi"
+  | Xhdpi -> "Xhdpi"
+  ];
 
 IFDEF IOS THEN
 
 external getDeviceType: unit -> deviceType = "ml_getDeviceType";
+value androidScreen () = None;
 
 
 ELSE IFDEF ANDROID THEN
-external getDeviceType: unit -> deviceType = "ml_device_type"; 
+external getDeviceType: unit -> deviceType = "ml_device_type";
+
+external androidScreen: unit -> option (androidScreen * androidDensity) = "ml_androidScreen";
+
+
 (*
 value internalDeviceType = ref Pad;
 value getDeviceType () = !internalDeviceType;
@@ -278,6 +301,9 @@ ELSE
 
 value internalDeviceType = ref Pad;
 value getDeviceType () = !internalDeviceType;
+
+value androidScreen () = None;
+
 
 ENDIF;
 ENDIF;

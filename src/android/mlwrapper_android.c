@@ -93,13 +93,15 @@ static size_t debug_msg_len = 0;
 static char *debug_msg = NULL;
 */
 
-//#define COPY_STRING(len,dst,src) \
+/*
+#define COPY_STRING(len,dst,src) \
 		if (len < caml_string_length(src)) { \
 			len = caml_string_length(src); \
 			dst = realloc(dst, len + 1); \
 		};\
 		memcpy(dst,String_val(src),len);\
 		dst[len] = '\0'
+*/
 
 void android_debug_output(value mtag, value address, value msg) {
 	char *tag;
@@ -200,6 +202,28 @@ JNIEXPORT void Java_ru_redspell_lightning_LightView_assetsExtracted(JNIEnv *env,
 
 	caml_callback(assetsExtractedCb, Val_unit);
 }*/
+
+KHASH_MAP_INIT_STR(expnsn_index, offset_size_pair_t*);
+static kh_expnsn_index_t* idx;
+
+int get_expansion_offset_size_pair(const char* path, offset_size_pair_t** pair) {
+	if (!idx) {
+		return 1;
+	}
+
+	khiter_t k = kh_get(expnsn_index, idx, path);
+
+	if (k == kh_end(idx)) {
+		PRINT_DEBUG("%s entry not found in expansions index", path);
+		return 1;
+	}
+
+	offset_size_pair_t* val = kh_val(idx, k);	
+	*pair = val;
+	PRINT_DEBUG("%s entry found in expansions index, offset %d, size %d", path, val->offset, val->size);
+
+	return 0;
+}
 
 // NEED rewrite it for libzip
 int getResourceFd(const char *path, resource *res) { //{{{
@@ -1457,6 +1481,102 @@ value ml_device_id(value unit) {
 	return device_id;
 }
 
+static value andrScreen;
+
+#define ANDR_SMALL_W 320
+#define ANDR_SMALL_H 426
+#define ANDR_NORMAL_W 320
+#define ANDR_NORMAL_H 470
+#define ANDR_LARGE_W 480
+#define ANDR_LARGE_H 640
+#define ANDR_XLARGE_W 720
+#define ANDR_XLARGE_H 960
+
+value ml_androidScreen() {
+	if (!andrScreen) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+		
+		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreenWidth", "()I");
+		int w = (int)(*env)->CallIntMethod(env, jView, mid);
+		mid = (*env)->GetMethodID(env, jViewCls, "getScreenHeight", "()I");
+		int h = (int)(*env)->CallIntMethod(env, jView, mid);
+		mid = (*env)->GetMethodID(env, jViewCls, "getDensity", "()I");
+		int d = (int)(*env)->CallIntMethod(env, jView, mid);
+
+		if (w > h) {
+			w = w ^ h;
+			h = w ^ h;
+			w = w ^ h;
+		}
+
+		value screen;
+		value density;
+
+		switch (d) {
+			case 120:
+				density = Val_int(0);
+				break;
+
+			case 160:
+				density = Val_int(1);
+				break;
+
+			case 240:
+				density = Val_int(2);
+				break;
+
+			case 320:
+				density = Val_int(3);
+				break;
+		}
+
+		PRINT_DEBUG("android screen %d %d %d", w, h, d);
+
+		if (w == 600 && h == 1024) {
+			if (d == 240) {
+				screen = Val_int(1);
+			} else if (d == 160) {
+				screen = Val_int(2);
+			} else if (d == 120) {
+				screen = Val_int(3);
+			}
+		} else {
+			float dpw = (float)w / ((float)d / 160);
+			float dph = (float)h / ((float)d / 160);
+
+			PRINT_DEBUG("dpw, dph: %f; %f", dpw, dph);
+
+			if (ANDR_SMALL_W <= dpw && dpw < ANDR_NORMAL_W && ANDR_SMALL_H <= dph && dph < ANDR_NORMAL_H) {
+				PRINT_DEBUG("small");
+				screen = Val_int(0);
+			} else if (ANDR_NORMAL_W <= dpw && dpw < ANDR_LARGE_W  && ANDR_NORMAL_H <= dph && dph < ANDR_LARGE_H) {
+				PRINT_DEBUG("normal");
+				screen = Val_int(1);
+			} else if (ANDR_LARGE_W <= dpw && dpw < ANDR_XLARGE_W && ANDR_LARGE_H <= dph && dph < ANDR_XLARGE_H) {
+				PRINT_DEBUG("large");
+				screen = Val_int(2);
+			} else if (ANDR_XLARGE_W <= dpw && ANDR_XLARGE_H <= dph) {
+				PRINT_DEBUG("xlarge");
+				screen = Val_int(3);
+			}			
+		}
+
+		if (!screen || !density) {
+			andrScreen = Val_int(0);
+		} else {
+			value tuple = caml_alloc(2, 0);
+			andrScreen = caml_alloc(1, 0);
+
+			Store_field(tuple, 0, screen);
+			Store_field(tuple, 1, density);
+			Store_field(andrScreen, 0, tuple);
+		}
+	}
+
+	return andrScreen;
+}
+
 value ml_device_type(value unit) {
 	DEBUGF("ML_DEVICE_TYPE");
 	CAMLparam0();
@@ -1504,16 +1624,13 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CamlFailwithRun
 
 	jstring jerrMes = (*env)->GetObjectField(env, this, errMesFid);
 	const char* cerrMes = (*env)->GetStringUTFChars(env, jerrMes, JNI_FALSE);
-	value verrMes = caml_copy_string(cerrMes);
+	//value verrMes = caml_copy_string(cerrMes);
 
 	(*env)->ReleaseStringUTFChars(env, jerrMes, cerrMes);
 	(*env)->DeleteLocalRef(env, jerrMes);
 	
-	caml_failwith(verrMes);
+	caml_failwith(cerrMes);
 }
-
-KHASH_MAP_INIT_STR(expnsn_index, offset_size_pair_t*);
-static kh_expnsn_index_t* idx;
 
 void* extract_expansions_thread(void* params) {
     JNIEnv *env;
@@ -1614,28 +1731,9 @@ value ml_expansionExtracted() {
 	return Val_bool(idx);
 }
 
-int get_expansion_offset_size_pair(char* path, offset_size_pair_t** pair) {
-	if (!idx) {
-		return 1;
-	}
-
-	khiter_t k = kh_get(expnsn_index, idx, path);
-
-	if (k == kh_end(idx)) {
-		PRINT_DEBUG("%s entry not found in expansions index", path);
-		return 1;
-	}
-
-	offset_size_pair_t* val = kh_val(idx, k);	
-	*pair = val;
-	PRINT_DEBUG("%s entry found in expansions index, offset %d, size %d", path, val->offset, val->size);
-
-	return 0;
-}
-
 JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_LightMediaPlayer_getOffsetSizePair(JNIEnv *env, jobject this, jstring path) {
 	offset_size_pair_t* pair;
-	char* cpath = (*env)->GetStringUTFChars(env, path, JNI_FALSE);
+	const char* cpath = (*env)->GetStringUTFChars(env, path, JNI_FALSE);
 	jobject retval = NULL;
 
 	if (!get_expansion_offset_size_pair(cpath, &pair)) {
