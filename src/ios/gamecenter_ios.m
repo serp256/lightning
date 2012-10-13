@@ -191,14 +191,19 @@ void ml_load_users_info(value uids, value callback) {
                 photo = (UIImage *)[pair objectAtIndex: 1];
               }
               
+							NSLog(@"PIZDA id : %@", pl.playerID);
+							if (pl.playerID == nil) continue;
               Store_field(rec,0,caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding])); //
               info = caml_alloc_tuple(2);
               
 							NSLog(@"ALIAS: %@",pl.alias);
-              NSLog(@"photo: %@", photo);
 
-							Store_field(info,0,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
-              
+							if (pl.alias == nil) {
+								Store_field(info,0,caml_copy_string("Unknown Name")); //
+							} else {
+								Store_field(info,0,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
+							}
+              NSLog(@"photo: %@", photo);
               if (photo == nil) {
                 Field(info,1) = Val_int(0); // photo None
               } else {
