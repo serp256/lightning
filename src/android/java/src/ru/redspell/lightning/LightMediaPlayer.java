@@ -141,10 +141,12 @@ public class LightMediaPlayer extends MediaPlayer {
 	private static class OffsetSizePair {
 		public int offset;
 		public int size;
+		public int inMain;
 
-		public OffsetSizePair(int offset, int size) {
+		public OffsetSizePair(int offset, int size, int inMain) {
 			this.offset = offset;
 			this.size = size;
+			this.inMain = inMain;
 		}
 	}
 
@@ -157,7 +159,7 @@ public class LightMediaPlayer extends MediaPlayer {
 		File f = assetsDir != null ? new File(assetsDir + (assetsDir.charAt(assetsDir.length() - 1) == '/' ? "" : "/") + path) : null;
 
 		if (pair != null) {
-			mp.setDataSource((new FileInputStream(LightView.instance.getExpansionPath(true))).getFD(), pair.offset, pair.size);
+			mp.setDataSource((new FileInputStream(LightView.instance.getExpansionPath(pair.inMain == 1))).getFD(), pair.offset, pair.size);
 			return true;
 		} else if (f != null && f.exists()) {
 			mp.setDataSource(f.getAbsolutePath());
@@ -182,7 +184,7 @@ public class LightMediaPlayer extends MediaPlayer {
 
 		if (pair != null) {
 			try {
-				return sndPool.load((new FileInputStream(LightView.instance.getExpansionPath(true))).getFD(), pair.offset, pair.size, 1);	
+				return sndPool.load((new FileInputStream(LightView.instance.getExpansionPath(pair.inMain == 1))).getFD(), pair.offset, pair.size, 1);	
 			} catch (Exception e) {
 				return -1;
 			}			

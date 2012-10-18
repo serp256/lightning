@@ -40,6 +40,7 @@ typedef enum
 typedef struct {
 	int32_t offset;
 	int32_t size;
+	int8_t in_main;
 } offset_size_pair_t;  
 
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
@@ -231,7 +232,7 @@ int getResourceFd(const char *path, resource *res) { //{{{
 	offset_size_pair_t* os_pair;
 
 	if (!get_expansion_offset_size_pair(path, &os_pair)) {
-		char* expnsn_path = get_expansion_path(1);
+		char* expnsn_path = get_expansion_path(os_pair->in_main);
 
 		int fd = open(expnsn_path, O_RDONLY);
 		if (fd < 0) return 0;
@@ -1637,7 +1638,7 @@ void* extract_expansions_thread(void* params) {
     (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
 
 	idx = kh_init_expnsn_index();
-	char* expnsn_path = get_expansion_path(1);
+	char* expnsn_path = get_expansion_path(0);
 
 	FILE* in = fopen(expnsn_path, "r");
 	if (!in) CAML_FAILWITH("cannot open expansions file %s", expnsn_path);
@@ -1656,21 +1657,24 @@ void* extract_expansions_thread(void* params) {
 		char* filename = malloc(filename_len + 1);
 		int32_t offset;
 		int32_t size;
+		int8_t in_main;
 
 		if (filename_len != fread(filename, 1, filename_len, in)) CAML_FAILWITH("cannot read filename for entry %d", i - 1);
 		*(filename + filename_len) = '\0';
 		if (1 != fread(&offset, sizeof(int32_t), 1, in)) CAML_FAILWITH("cannot read offset for entry %d", i - 1);
 		if (1 != fread(&size, sizeof(int32_t), 1, in)) CAML_FAILWITH("cannot read size for entry %d", i - 1);
+		if (1 != fread(&in_main, sizeof(int8_t), 1, in)) CAML_FAILWITH("cannot read in_main flag for entry %d", i - 1);
 
 		int ret;
 		pair = (offset_size_pair_t*)malloc(sizeof(offset_size_pair_t));
 		pair->offset = offset;
 		pair->size = size;
+		pair->in_main = in_main;
 
 		k = kh_put(expnsn_index, idx, filename, &ret);
 		kh_val(idx, k) = pair;
 
-		PRINT_DEBUG("filename: %s; offset: %d; size: %d\n", filename, offset, size);
+		PRINT_DEBUG("filename: %s; offset: %d; size: %d; in_main %d\n", filename, offset, size, in_main);
 	}
 
 	long files_begin_pos = ftell(in);
@@ -1680,7 +1684,7 @@ void* extract_expansions_thread(void* params) {
     for (k = kh_begin(idx); k != kh_end(idx); ++k)
         if (kh_exist(idx, k)) {
         	pair = kh_val(idx, k);
-        	pair->offset = pair->offset + files_begin_pos;
+        	pair->offset = pair->offset + (pair->in_main ? 0 : files_begin_pos);
         }
 
     static jmethodID callExpansionsCompleteMid;
@@ -1744,10 +1748,10 @@ JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_LightMediaPlayer_getOffsetS
 			jclass _offsetSizePairCls = (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer$OffsetSizePair");
 			offsetSizePairCls = (*env)->NewGlobalRef(env, _offsetSizePairCls);
 			(*env)->DeleteLocalRef(env, _offsetSizePairCls);
-			offsetSizePairConstrMid = (*env)->GetMethodID(env, offsetSizePairCls, "<init>", "(II)V");			
+			offsetSizePairConstrMid = (*env)->GetMethodID(env, offsetSizePairCls, "<init>", "(III)V");
 		}
 
-		retval = (*env)->NewObject(env, offsetSizePairCls, offsetSizePairConstrMid, (jint)pair->offset, (jint)pair->size);
+		retval = (*env)->NewObject(env, offsetSizePairCls, offsetSizePairConstrMid, (jint)pair->offset, (jint)pair->size, (jint)pair->in_main);
 	}
 
 	(*env)->ReleaseStringUTFChars(env, path, cpath);
