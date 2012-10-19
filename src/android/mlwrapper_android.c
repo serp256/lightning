@@ -1511,8 +1511,8 @@ value ml_androidScreen() {
 			w = w ^ h;
 		}
 
-		value screen;
-		value density;
+		value screen = 0;
+		value density = 0;
 
 		switch (d) {
 			case 120:
@@ -1548,13 +1548,13 @@ value ml_androidScreen() {
 
 			PRINT_DEBUG("dpw, dph: %f; %f", dpw, dph);
 
-			if (ANDR_SMALL_W <= dpw && dpw < ANDR_NORMAL_W && ANDR_SMALL_H <= dph && dph < ANDR_NORMAL_H) {
+			if (ANDR_SMALL_W <= dpw && dpw <= ANDR_NORMAL_W && ANDR_SMALL_H <= dph && dph <= ANDR_NORMAL_H) {
 				PRINT_DEBUG("small");
 				screen = Val_int(0);
-			} else if (ANDR_NORMAL_W <= dpw && dpw < ANDR_LARGE_W  && ANDR_NORMAL_H <= dph && dph < ANDR_LARGE_H) {
+			} else if (ANDR_NORMAL_W <= dpw && dpw <= ANDR_LARGE_W  && ANDR_NORMAL_H <= dph && dph <= ANDR_LARGE_H) {
 				PRINT_DEBUG("normal");
 				screen = Val_int(1);
-			} else if (ANDR_LARGE_W <= dpw && dpw < ANDR_XLARGE_W && ANDR_LARGE_H <= dph && dph < ANDR_XLARGE_H) {
+			} else if (ANDR_LARGE_W <= dpw && dpw <= ANDR_XLARGE_W && ANDR_LARGE_H <= dph && dph <= ANDR_XLARGE_H) {
 				PRINT_DEBUG("large");
 				screen = Val_int(2);
 			} else if (ANDR_XLARGE_W <= dpw && ANDR_XLARGE_H <= dph) {
@@ -1564,8 +1564,11 @@ value ml_androidScreen() {
 		}
 
 		if (!screen || !density) {
+			PRINT_DEBUG("none");
 			andrScreen = Val_int(0);
 		} else {
+			PRINT_DEBUG("some");
+
 			value tuple = caml_alloc(2, 0);
 			andrScreen = caml_alloc(1, 0);
 
