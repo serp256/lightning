@@ -287,7 +287,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         then
         (
           match glowFilter with
-          [ Some {g_valid=True;_} -> 
+          [ Some ({g_valid=True;_} as g) -> 
             (
 (*
               match g_texture with
@@ -295,6 +295,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               | None -> () 
               ];
 *)
+              g.g_valid := False;
               self#addPrerender self#updateGlowFilter;
             )
           | _ -> ()
