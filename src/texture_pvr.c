@@ -257,6 +257,9 @@ enum FOURCC
     FOURCC_A2XY = MAKEFOURCC('A', '2', 'X', 'Y'),
     FOURCC_DX10 = MAKEFOURCC('D', 'X', '1', '0'),
     FOURCC_UVER = MAKEFOURCC('U', 'V', 'E', 'R'),
+    FOURCC_ATC_RGB = MAKEFOURCC('A', 'T', 'C', ' '),
+    FOURCC_ATC_RGBAE = MAKEFOURCC('A', 'T', 'C', 'A'),
+    FOURCC_ATC_RGBAI = MAKEFOURCC('A', 'T', 'C', 'I')
 };
 
 typedef struct
@@ -313,12 +316,21 @@ int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 		return 1;
 	};
 
-	if (header.pf.fourcc == FOURCC_DXT5) {
+	if (header.pf.fourcc == FOURCC_DXT1) {
+		PRINT_DEBUG("DXT1");
+	 	tInfo->format = LTextureFormatDXT1;
+	} else if (header.pf.fourcc == FOURCC_DXT5) {
 		PRINT_DEBUG("DXT5");
 		tInfo->format = LTextureFormatDXT5;
-	} else if (header.pf.fourcc == FOURCC_ATI2) {
-		PRINT_DEBUG("ATI2");
-		tInfo->format = LTextureFormat3DC;
+	} else if (header.pf.fourcc == FOURCC_ATC_RGB) {
+		PRINT_DEBUG("ATC RGB");
+		tInfo->format = LTextureFormatATCRGB;
+	} else if (header.pf.fourcc == FOURCC_ATC_RGBAE) {
+		PRINT_DEBUG("ATC RGBA explicit");
+		tInfo->format = LTextureFormatATCRGBAE;
+	} else if (header.pf.fourcc == FOURCC_ATC_RGBAI) {
+		PRINT_DEBUG("ATC RGBA interpolated");
+		tInfo->format = LTextureFormatATCRGBAI;
 	} else {
 		ERROR("bad or unsupported dds pixel format");
 		return 1;

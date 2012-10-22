@@ -10,6 +10,7 @@
 #include "mlwrapper_android.h"
 #include "texture_load.h"
 #include "texture_pvr.h"
+#include "mlwrapper.h"
 
 
 
@@ -50,19 +51,19 @@ int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo)
 			// try pvr
 			if (use_pvr) {
 				if (slen != 0) {
-					strcpy(path + bflen + slen, ".pvr");
+					strcpy(path + bflen + slen, compressedExt);
 					if (getResourceFd(path,&r)) {
 						FILE *fptr = fdopen(r.fd,"rb");
-						int res = loadPvrFile3(fptr,r.length,tInfo);
+						int res = loadCompressedTexture(fptr,r.length,tInfo);
 						fclose(fptr);
 						free(path);
 						return res;
 					}
 				};
-				strcpy(path + bflen, ".pvr");
+				strcpy(path + bflen, compressedExt);
 				if (getResourceFd(path,&r)) {
 					FILE *fptr = fdopen(r.fd,"rb");
-					int res = loadPvrFile3(fptr,r.length,tInfo);
+					int res = loadCompressedTexture(fptr,r.length,tInfo);
 					DEBUG("PVR File Loaded");
 					fclose(fptr);
 					free(path);
@@ -162,14 +163,14 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			
 			if (slen != 0) { //with suffix
 				if (use_pvr) { // pvr
-					strcpy(path + bflen + slen, ".pvr");
+					strcpy(path + bflen + slen, compressedExt);
 					DEBUGF("TRY GET IMAGE %s", path);
 					if (getResourceFd(path,&r)) {
 						FILE *fptr = fdopen(r.fd,"rb");
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
 #endif
-						int res = loadPvrFile3(fptr,r.length,tInfo);
+						int res = loadCompressedTexture(fptr,r.length,tInfo);
 						fclose(fptr);
 						free(path);
 						return res;
@@ -209,14 +210,14 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			};
 
 			if (use_pvr) { //pvr withoud suffix 
-				strcpy(path + bflen, ".pvr");
+				strcpy(path + bflen, compressedExt);
 				DEBUGF("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
 					FILE *fptr = fdopen(r.fd,"rb");
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
 #endif
-					int res = loadPvrFile3(fptr,r.length,tInfo);
+					int res = loadCompressedTexture(fptr,r.length,tInfo);
 					DEBUG("PVR File Loaded");
 					fclose(fptr);
 					free(path);
