@@ -418,7 +418,10 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 	} else {
 		// Достать clp из ocaml 
 		clp = Field(renderInfo,3);
-		rb.clp = (clipping) {Double_field(clp,0),Double_field(clp,1),Double_field(clp,2),Double_field(clp,3)};
+		if (clp == Val_none) 
+			rb.clp = (clipping) {0.,0.,1.,1.};
+		else 
+			rb.clp = (clipping) {Double_field(clp,0),Double_field(clp,1),Double_field(clp,2),Double_field(clp,3)};
 	};
 	rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
 
