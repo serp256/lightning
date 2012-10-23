@@ -19,6 +19,7 @@ class c renderInfo =
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
     method scale = 1.;
+    method texture = (self :> Texture.c);
     method width = renderInfo.rwidth;
     method height = renderInfo.rheight;
     method hasPremultipliedAlpha = match renderInfo.kind with [ Simple v -> v | _ -> assert False ];
