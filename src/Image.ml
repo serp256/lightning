@@ -52,6 +52,8 @@ class virtual base texture =
   in
   object(self)
     inherit DisplayObject.c as super;
+    value mutable blend = None;
+    method setBlend b = blend := match b with [ None -> None | Some b -> Some (Render.intblend_of_blend b) ];
     value mutable texture: Texture.c = texture;
     method texture = texture;
     value mutable programID = programID;
@@ -517,8 +519,8 @@ class _c  _texture =
     (
       match glowFilter with
       [ Some {g_valid=True; g_image = Some g_image;g_matrix;g_program;_} -> 
-          Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' g_image
-      | _ -> Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha:alpha' image
+          Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' ?blend:blend g_image
+      | _ -> Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha:alpha' ?blend:blend image
       ]
     ); 
 end;

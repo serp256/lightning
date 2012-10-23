@@ -14,6 +14,8 @@ type glow =
 class virtual base: [ Texture.c ] ->
   object
     inherit DisplayObject.c;
+    value blend: option Render.intblend;
+    method setBlend: option Render.blend -> unit;
     method texture: Texture.c;
     method filters: list Filters.t;
     method setFilters: list Filters.t -> unit;
@@ -25,7 +27,7 @@ class virtual base: [ Texture.c ] ->
 
 class _c : [ Texture.c ] ->
   object
-    inherit DisplayObject.c; 
+    inherit base;
     value texture: Texture.c;
     method setColor: color -> unit;
     method color: color;
@@ -42,16 +44,17 @@ class _c : [ Texture.c ] ->
     method copyTexCoords: Bigarray.Array1.t float Bigarray.float32_elt Bigarray.c_layout -> unit;
     *)
 
-    method texture: Texture.c;
+(*     method texture: Texture.c; *)
     method onTextureEvent: bool -> Texture.c -> unit;
     method setTexture: Texture.c -> unit;
 
+    method private updateGlowFilter: unit -> unit;
 (*       method setTexScale: float -> unit; *)
 
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method boundsInSpace: !'space. option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
-    method filters: list Filters.t;
-    method setFilters: list Filters.t -> unit;
+(*     method filters: list Filters.t; *)
+(*     method setFilters: list Filters.t -> unit; *)
 
   end;
 

@@ -179,11 +179,13 @@ void lgGLBindTexture(GLuint textureID, int newPMA) {
 		boundTextureID = textureID;
 	};
 	if (newPMA != PMA) {
-		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
-			if (separateBlend)
-				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-			else
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		if (newPMA >= 0) {
+			if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
+				if (separateBlend)
+					glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+				else
+					glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		};
 		PMA = newPMA;
 	};
 	if (boundTextureID1) {

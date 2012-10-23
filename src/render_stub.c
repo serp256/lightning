@@ -616,6 +616,18 @@ void print_quad(lgQuad *q) {
 	print_vertex(&(q->tr));
 }
 
+static inline void apply_blend(value mlblend) {
+	value p = Field(mlblend,0);
+	switch (Tag_val(mlblend)) {
+		case 0: // BlendFunc
+			glBlendFunc(Int_val(Field(p,0)),Int_val(Field(p,1)));
+			break;
+		case 1: // BlendFuncSeparate
+			glBlendFuncSeparate(Int_val(Field(p,0)),Int_val(Field(p,1)),Int_val(Field(p,2)),Int_val(Field(p,3)));
+			break;
+	};
+}
+
 void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	lgQuad *q = QUAD(quad);
 	PRINT_DEBUG("RENDER QUAD");
@@ -903,7 +915,7 @@ void ml_image_flip_tex_y(value image) {
 	tq->br.tex = tmp;
 }
 
-void ml_image_render(value matrix, value program, value alpha, value image) {
+void ml_image_render(value matrix, value program, value alpha, value blend, value image) {
 	//fprintf(stderr,"render image\n");
 	PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
@@ -932,9 +944,15 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 		checkGLErrors("apply filters");
 	};
 
+	int pma = -1;
+	if (blend == Val_none) {
+		pma = img->pma;
+	} else {
+		apply_blend(Field(blend,0));
+	};
 	if (img->pallete) {
-		lgGLBindTextures(img->textureID,img->pallete,img->pma);
-	} else lgGLBindTexture(img->textureID,img->pma);
+		lgGLBindTextures(img->textureID,img->pallete,pma);
+	} else lgGLBindTexture(img->textureID,pma);
 	checkGLErrors("bind texture");
 
 	//print_image(tq);
