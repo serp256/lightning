@@ -259,7 +259,8 @@ enum FOURCC
     FOURCC_UVER = MAKEFOURCC('U', 'V', 'E', 'R'),
     FOURCC_ATC_RGB = MAKEFOURCC('A', 'T', 'C', ' '),
     FOURCC_ATC_RGBAE = MAKEFOURCC('A', 'T', 'C', 'A'),
-    FOURCC_ATC_RGBAI = MAKEFOURCC('A', 'T', 'C', 'I')
+    FOURCC_ATC_RGBAI = MAKEFOURCC('A', 'T', 'C', 'I'),
+    FOURCC_RGBA_4444 = MAKEFOURCC('4', '4', '4', '4')
 };
 
 typedef struct
@@ -331,6 +332,9 @@ int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 	} else if (header.pf.fourcc == FOURCC_ATC_RGBAI) {
 		PRINT_DEBUG("ATC RGBA interpolated");
 		tInfo->format = LTextureFormatATCRGBAI;
+	} else if (header.pf.fourcc == FOURCC_RGBA_4444) {
+		PRINT_DEBUG("RGBA 4444");
+		tInfo->format = LTextureFormat4444;;
 	} else {
 		ERROR("bad or unsupported dds pixel format");
 		return 1;
@@ -350,11 +354,13 @@ int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 	tInfo->dataLen = fsize - sizeof(DDSHeader);
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
 
+	PRINT_DEBUG("tInfo->dataLen: %d", tInfo->dataLen);
+
 	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {
 		ERROR("cannot read image data");
 		free(tInfo->imgData);
 		return 1;
-	};	
+	};
 
 	return 0;
 }

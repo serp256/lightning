@@ -543,6 +543,9 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 		};
     
 		int level;
+
+		PRINT_DEBUG("params.compressed %d", params.compressed);
+
     if (!params.compressed)
     {
 			/*
@@ -569,6 +572,9 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 						};
 				*/
         
+						PRINT_DEBUG("tInfo->numMipmaps %d", tInfo->numMipmaps);
+						PRINT_DEBUG("tInfo->generateMipmaps %d", tInfo->generateMipmaps);
+
         if (tInfo->numMipmaps == 0 && tInfo->generateMipmaps) glGenerateMipmap(GL_TEXTURE_2D);
         
         int levelWidth = tInfo->width;

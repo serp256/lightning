@@ -434,7 +434,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireTouch(JNIEnv *env, j
 	touches = caml_alloc_small(2,0);
 	Field(touches,0) = touch;
 	Field(touches,1) = 1; // None
-  mlstage_processTouches(stage,touches);
+  	mlstage_processTouches(stage,touches);
 	CAMLreturn0;
 }
 
