@@ -30,6 +30,7 @@ import java.net.URI;
 import java.util.Locale;
 import android.net.Uri;
 import android.os.Environment;
+import android.content.res.Configuration;
 //import android.os.AsyncTask;
 //import android.content.pm.PackageManager.NameNotFoundException;
 
@@ -124,16 +125,44 @@ public class LightView extends GLSurfaceView {
 	    return (screenDiagonal >= 6.5);
 	}
 
-	public int getScreenWidth() {
-		return displayMetrics.widthPixels;
-	}
+	// public int getScreenWidth() {
+	// 	return displayMetrics.widthPixels;
+	// }
 
-	public int getScreenHeight() {
-		return displayMetrics.heightPixels;
+	// public int getScreenHeight() {
+	// 	return displayMetrics.heightPixels;
+	// }
+
+	public int getScreen() {
+		Configuration conf = getResources().getConfiguration();
+
+		switch (conf.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) {
+			case Configuration.SCREENLAYOUT_SIZE_SMALL:
+				return 0;
+
+			case Configuration.SCREENLAYOUT_SIZE_NORMAL:
+				return 1;
+
+			case Configuration.SCREENLAYOUT_SIZE_LARGE:
+				return 2;
+
+			case Configuration.SCREENLAYOUT_SIZE_UNDEFINED:
+				return -1;
+
+			default:
+				return 3;
+		}		
 	}
 
 	public int getDensity() {
-		return displayMetrics.densityDpi;
+		String density = activity.getString(R.string.density);
+
+		if (density.contentEquals("ldpi")) return 0;
+		if (density.contentEquals("mdpi")) return 1;
+		if (density.contentEquals("hdpi")) return 2;
+		if (density.contentEquals("xhdpi")) return 3;
+
+		return -1;
 	}
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {
