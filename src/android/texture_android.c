@@ -266,12 +266,9 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	return load_png_image(r.fd,tInfo);
 }
 
-
-
-
 value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,value use_pvr) {
 	CAMLparam3(oldTextureID,opath,osuffix);
-	CAMLlocal1(mlTex);
+	CAMLlocal2(mlTex, mlAlphaTex);
 	textureInfo tInfo;
 	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
 	int r = load_image_info(String_val(opath),suffix,Bool_val(use_pvr),&tInfo);
@@ -279,11 +276,48 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,val
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);
 	};
+
 	value textureID = createGLTexture(oldTextureID,&tInfo,filter);
-	free(tInfo.imgData);
-	// free surface
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
-	//SDL_FreeSurface(tInfo.surface);
+	free(tInfo.imgData);
+
+	PRINT_DEBUG("LTextureFormatETC1 %d", LTextureFormatETC1);
+	PRINT_DEBUG("(tInfo.format & 0xFFFF) %d", (tInfo.format & 0xFFFF));
+
+	if ((tInfo.format & 0xFFFF) == LTextureFormatETC1) {
+		textureInfo alphaTexInfo;
+
+		char* _fname = String_val(opath);
+		char* ext = strrchr(_fname, '.');
+		int fnameLen = strlen(_fname);
+		int extLen = strlen(ext);
+
+		char* fname = (char*)malloc(fnameLen + 7);
+		char* insertTo = fname + fnameLen - extLen;
+
+		strcpy(fname, _fname);
+		strcpy(insertTo, "_alpha");
+		strcpy(insertTo + 6, ext);
+
+		PRINT_DEBUG("fname %s", fname);
+
+		r = load_image_info(fname, suffix, Bool_val(use_pvr), &alphaTexInfo);
+
+		PRINT_DEBUG("r: %d", r);
+
+		if (!r) {
+			value alphaTexId = createGLTexture(Val_int(0), &alphaTexInfo, filter);
+			ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, (&alphaTexInfo));
+
+			value block = caml_alloc(1, 1);
+			Store_field(block, 0, mlAlphaTex);
+			Store_field(mlTex, 0, block);
+
+			free(alphaTexInfo.imgData);
+		}
+
+		free(fname);
+	}
+
 	CAMLreturn(mlTex);
 }
-

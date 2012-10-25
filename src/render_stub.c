@@ -739,6 +739,7 @@ void print_image(lgImage *img) {
 				img->pma = Bool_val(Field(kind,0)); \
 				break; \
 			case 1: \
+			case 2: \
 				img->pallete = TEXTURE_ID(Field(Field(kind,0),7)); \
 				img->pma = Bool_val(Field(Field(kind,0),5)); \
 				break; \

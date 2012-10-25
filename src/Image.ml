@@ -48,6 +48,7 @@ class virtual base texture =
     [ Texture.Simple _ -> (GLPrograms.Image.id, GLPrograms.Image.create ())
     | Texture.Alpha -> (GLPrograms.ImageAlpha.id, GLPrograms.ImageAlpha.create ())
     | Texture.Pallete _ -> (GLPrograms.ImagePallete.id, GLPrograms.ImagePallete.create ())
+    | Texture.EtcWithAlpha _ -> (GLPrograms.ImageEtcWithAlpha.id, GLPrograms.ImageEtcWithAlpha.create ())
     ]
   in
   object(self)
@@ -68,6 +69,7 @@ class virtual base texture =
         [ Texture.Simple _ -> GLPrograms.Image.create () 
         | Texture.Alpha -> GLPrograms.ImageAlpha.create () 
         | Texture.Pallete _ -> GLPrograms.ImagePallete.create () 
+        | Texture.EtcWithAlpha _ -> GLPrograms.ImageEtcWithAlpha.create ()
         ] 
       in
       glowFilter := Some 
@@ -140,6 +142,7 @@ class virtual base texture =
               )
             | _ -> ()
             ]
+          | Texture.EtcWithAlpha _ -> ()
           ];(*}}}*)
           match !glow with (*{{{*)
           [ None ->

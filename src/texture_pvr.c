@@ -174,6 +174,11 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 				PRINT_DEBUG("DXT5");
 				tInfo->format = LTextureFormatDXT5;
 				break;
+			case ePVRTPF_ETC1:
+				PRINT_DEBUG("ETC1");
+				tInfo->format = LTextureFormatETC1;
+				break;
+
 			case ePVRTPF_PVRTCII_2bpp:
 				ERROR("unsupported: PVRTCII 2bpp");
 				return 1;

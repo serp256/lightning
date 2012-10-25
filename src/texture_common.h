@@ -78,12 +78,14 @@ typedef enum
 	LTextureFormat565,
 	LTextureFormat5551,
 	LTextureFormat4444,
-	LTextureFormatPallete,
 	LTextureFormatDXT1,
 	LTextureFormatDXT5,
 	LTextureFormatATCRGB,
 	LTextureFormatATCRGBAE,
-	LTextureFormatATCRGBAI
+	LTextureFormatATCRGBAI,
+	LTextureFormatETC1,	
+	LTextureFormatPallete,
+	LTextureFormatETC1WithAlpha
 } LTextureFormat;
 
 typedef struct {

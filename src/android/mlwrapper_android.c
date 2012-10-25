@@ -274,11 +274,16 @@ int getResourceFd(const char *path, resource *res) { //{{{
 				__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
 			}
 
-			jclass cls = (*env)->GetObjectClass(env,jView);
-			jmethodID mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
-			(*env)->DeleteLocalRef(env, cls); //
-			
-			if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
+			jclass cls;
+			static jmethodID mthd;
+
+			if (!mthd) {
+				cls = (*env)->GetObjectClass(env, jView);
+				mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
+				(*env)->DeleteLocalRef(env, cls);
+
+				if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
+			}
 			
 			jstring jpath = (*env)->NewStringUTF(env,path);
 			jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);

@@ -24,7 +24,7 @@ exception Cant_load_texture of string;
 type filter = [ FilterNearest | FilterLinear ];
 value setDefaultFilter: filter -> unit;
 
-type kind = [ Simple of bool | Alpha | Pallete of textureInfo ];
+type kind = [ Simple of bool | Alpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
 
 value scale: ref float;
 
@@ -68,7 +68,7 @@ and c =
 
 value zero: c;
 
-value make : textureInfo -> c;
+value make: textureInfo -> c;
 
 (* value create: textureFormat -> int -> int -> option (Bigarray.Array1.t int Bigarray.int8_unsigned_elt Bigarray.c_layout) -> c; *)
 value load: ?with_suffix:bool -> ?filter:filter -> ?use_pvr:bool -> string -> c;
