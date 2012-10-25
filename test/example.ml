@@ -1369,11 +1369,53 @@ value texture_atlas (stage:Stage.c) =
   let image = Image.create (TextureAtlas.subTexture atlas "/background_levels/1.png") in
   stage#addChild image;
 
+
+value test_vk (stage:Stage.c) = 
+  let module VK = 
+    VK.Make(struct
+      value appid = "2831779";
+      value permissions = [VK.Notify; VK.Friends; VK.Photos; VK.Docs; VK.Notes; VK.Pages; VK.Wall; VK.Groups; VK.Messages; VK.Notifications ; VK.Stats ; VK.Ads; VK.Offline ];
+    end)
+  in
+  let delegate = 
+    {
+      SNTypes.on_error = fun  
+        [ SNTypes.IOError -> debug:friend "VK IOERROR"
+        | SNTypes.SocialNetworkError (code, msg) -> debug:friend "social network error (%s,%s)" code msg
+        | SNTypes.OAuthError e -> debug:friend "OAuth error"
+        ];
+      SNTypes.on_success = fun friends -> 
+        let () = debug:friend "FRIENDS GET" in
+        let my_uid = VK.get_user_id () in
+          match friends with
+          [ `Assoc [ ("response",`List uids)] ->
+            let uids =
+              List.map (fun uid ->
+                match uid with 
+                [ `Int uid -> string_of_int uid 
+                | `String uid |`Intlit uid -> uid 
+                | _ -> assert False 
+                ]
+              ) uids
+            in
+            (
+              debug "%d" (List.length uids);
+            )
+          | _ -> assert False
+          ]
+    }
+  in VK.call_method ~delegate "friends.getAppUsers" [];      
+
+
+
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      test_vk self;
+(*
       debug "%s" (Render.get_gl_extensions ());
 
       let timer = Timer.create ~repeatCount:1 2. "PZIDA" in
@@ -1381,7 +1423,7 @@ let stage width height =
           ignore(timer#addEventListener Timer.ev_TIMER_COMPLETE (fun _ _ _ -> pvr self));
           timer#start ()
         );
-
+*)
     (* Sound.init (); *)
 
 (*         let channel1 = Sound.createChannel (Sound.load "achievement1.caf")
