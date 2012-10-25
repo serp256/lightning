@@ -434,7 +434,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireTouch(JNIEnv *env, j
 	touches = caml_alloc_small(2,0);
 	Field(touches,0) = touch;
 	Field(touches,1) = 1; // None
-  mlstage_processTouches(stage,touches);
+  	mlstage_processTouches(stage,touches);
 	CAMLreturn0;
 }
 
@@ -1484,21 +1484,36 @@ value ml_device_id(value unit) {
 
 static value andrScreen;
 
-#define ANDR_SMALL_W 320
-#define ANDR_SMALL_H 426
-#define ANDR_NORMAL_W 320
-#define ANDR_NORMAL_H 470
-#define ANDR_LARGE_W 480
-#define ANDR_LARGE_H 640
-#define ANDR_XLARGE_W 720
-#define ANDR_XLARGE_H 960
-
 value ml_androidScreen() {
 	if (!andrScreen) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreen", "()I");
+		int s = (int)(*env)->CallIntMethod(env, jView, mid);
+		mid = (*env)->GetMethodID(env, jViewCls, "getDensity", "()I");
+		int d = (int)(*env)->CallIntMethod(env, jView, mid);
+
+		PRINT_DEBUG("s, d: %d %d", s, d);
+
+		if (s < 0 || d < 0) {
+			PRINT_DEBUG("none");
+			andrScreen = Val_int(0);			
+		} else {
+			PRINT_DEBUG("some");
+
+			value tuple = caml_alloc(2, 0);
+			andrScreen = caml_alloc(1, 0);
+
+			Store_field(tuple, 0, Val_int(s));
+			Store_field(tuple, 1, Val_int(d));
+			Store_field(andrScreen, 0, tuple);
+		}
+	}
+
+	return andrScreen;
 		
-		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreenWidth", "()I");
+/*		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreenWidth", "()I");
 		int w = (int)(*env)->CallIntMethod(env, jView, mid);
 		mid = (*env)->GetMethodID(env, jViewCls, "getScreenHeight", "()I");
 		int h = (int)(*env)->CallIntMethod(env, jView, mid);
@@ -1513,6 +1528,8 @@ value ml_androidScreen() {
 
 		value screen = 0;
 		value density = 0;
+
+		int[] 
 
 		switch (d) {
 			case 120:
@@ -1578,7 +1595,7 @@ value ml_androidScreen() {
 		}
 	}
 
-	return andrScreen;
+	return andrScreen;*/
 }
 
 value ml_device_type(value unit) {

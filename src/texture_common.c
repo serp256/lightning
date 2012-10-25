@@ -411,15 +411,6 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 			return 0;
 #endif
 
-		case LTextureFormat3DC:
-#if (defined ANDROID)
-        	p->compressed = 1;
-        	p->glTexFormat = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
-            break;
-#else
-			return 0;
-#endif
-
         case LTextureFormatDXT5:
 #if (defined ANDROID)
         	p->compressed = 1;
@@ -430,6 +421,39 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 #else
 			return 0;
 #endif
+
+        case LTextureFormatATCRGB:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 4;
+        	p->glTexFormat = GL_ATC_RGB_AMD;
+
+            break;
+#else
+			return 0;
+#endif
+
+        case LTextureFormatATCRGBAE:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 8;
+        	p->glTexFormat = GL_ATC_RGBA_EXPLICIT_ALPHA_AMD;
+
+            break;
+#else
+			return 0;
+#endif
+
+        case LTextureFormatATCRGBAI:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 8;
+        	p->glTexFormat = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
+
+            break;
+#else
+			return 0;
+#endif			
 
         case LTextureFormat565:
             p->bitsPerPixel = 2;
@@ -519,6 +543,9 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 		};
     
 		int level;
+
+		PRINT_DEBUG("params.compressed %d", params.compressed);
+
     if (!params.compressed)
     {
 			/*
@@ -545,6 +572,9 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 						};
 				*/
         
+						PRINT_DEBUG("tInfo->numMipmaps %d", tInfo->numMipmaps);
+						PRINT_DEBUG("tInfo->generateMipmaps %d", tInfo->generateMipmaps);
+
         if (tInfo->numMipmaps == 0 && tInfo->generateMipmaps) glGenerateMipmap(GL_TEXTURE_2D);
         
         int levelWidth = tInfo->width;
@@ -554,7 +584,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 
         for (level=0; level <= tInfo->numMipmaps; ++level)
         {                    
-						PRINT_DEBUG("LOAD DATA FOR LEVEL: %d",level);
+			PRINT_DEBUG("LOAD DATA FOR LEVEL: %d",level);
             int size = levelWidth * levelHeight * params.bitsPerPixel;
             glTexImage2D(GL_TEXTURE_2D, level, params.glTexFormat, levelWidth, levelHeight, 0, params.glTexFormat, params.glTexType, levelData);
             levelData += size;
@@ -568,14 +598,17 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
         
         //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tInfo->numMipmaps == 0 ? GL_LINEAR : GL_LINEAR_MIPMAP_NEAREST);
         
-				glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+		glPixelStorei(GL_UNPACK_ALIGNMENT,1);
         int levelWidth = tInfo->width;
         int levelHeight = tInfo->height;
         unsigned char *levelData = tInfo->imgData;
         
+        PRINT_DEBUG("compressed %d", params.glTexFormat);
+
         for (level=0; level<= tInfo->numMipmaps; ++level)
         {                    
-						int size = MAX(32, levelWidth * levelHeight * params.bitsPerPixel / 8);
+        	PRINT_DEBUG("level %d", level);
+			int size = MAX(32, levelWidth * levelHeight * params.bitsPerPixel / 8);
             glCompressedTexImage2D(GL_TEXTURE_2D, level, params.glTexFormat, levelWidth, levelHeight, 0, size, levelData);
             levelData += size;
             levelWidth  /= 2; 
