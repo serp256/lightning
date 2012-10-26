@@ -562,7 +562,7 @@ void ml_glow_make(value orb, value glow) {
 		legalHeight = h;
 		TEXTURE_SIZE_FIX(legalWidth,legalHeight);
 		tw = powS(legalWidth); th = powS(legalHeight);
-		if ( txrs[tw][th] == 0)
+		if (txrs[tw][th] == 0)
 		{
 			glGenTextures(1, &(txrs[tw][th]));
 			PRINT_DEBUG("create texture of size: %d:%d = %d",legalWidth,legalHeight,txrs[tw][th]);
