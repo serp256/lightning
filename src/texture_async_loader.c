@@ -31,7 +31,8 @@ typedef struct {
 	char *path;
 	unsigned char with_suffix;
 	value filter;
-	textureInfo *tInfo;
+	textureInfo* tInfo;
+	textureInfo* alphaTexInfo;
 } response_t;
 
 THQUEUE_INIT(requests,request_t*)
@@ -61,11 +62,14 @@ void *run_worker(void *param) {
 				else ERROR("Can't load image %s\n",req->path);
 				tInfo = NULL;
 			};
+
 			response_t *resp = malloc(sizeof(response_t));
 			resp->path = req->path; 
 			resp->with_suffix = (req->suffix != NULL);
 			resp->filter = req->filter;
 			resp->tInfo = tInfo;
+			resp->alphaTexInfo = loadAtcAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);
+
 			if (req->suffix != NULL) free(req->suffix); free(req);
 			thqueue_responses_push(runtime->resp_queue,resp);
 		}
@@ -107,24 +111,42 @@ void ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value
 	req->use_pvr = Bool_val(use_pvr);
 	thqueue_requests_push(runtime->req_queue,req);
 	pthread_cond_signal(&runtime->cond);
+
+	PRINT_DEBUG("ml_texture_async_loader_push %s", req->path);
 }
 
 
 value ml_texture_async_loader_pop(value oruntime) {
 	CAMLparam0();
-	CAMLlocal3(res,opath,mlTex);
+	CAMLlocal4(res,opath,mlTex,mlAlphaTex);
 	runtime_t *runtime = (runtime_t*)oruntime;
 	response_t *r = thqueue_responses_pop(runtime->resp_queue);
 	if (r == NULL) res = Val_unit;
 	else {
+		PRINT_DEBUG("ml_texture_async_loader_pop %s %d", r->path, (int)r->alphaTexInfo);
+
 		if (r->tInfo != NULL) {
 			value textureID = createGLTexture(1,r->tInfo,r->filter);
 			if (!textureID) caml_failwith("failed to create texture");
 			ML_TEXTURE_INFO(mlTex,textureID,r->tInfo);
+
+			if (r->alphaTexInfo) {
+				value alphaTexId = createGLTexture(Val_int(0), r->alphaTexInfo, r->filter);
+				ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, r->alphaTexInfo);
+
+				value block = caml_alloc(1, 1);
+				Store_field(block, 0, mlAlphaTex);
+				Store_field(mlTex, 0, block);
+
+				free(r->alphaTexInfo->imgData);
+				free(r->alphaTexInfo);
+			}
+			
 			free(r->tInfo->imgData);
 			free(r->tInfo);
 			value tInfo = caml_alloc_small(1,0);
 			Field(tInfo,0) = mlTex;
+
 			mlTex = tInfo;
 		} else mlTex = Val_unit;
 		opath = caml_copy_string(r->path);
@@ -135,6 +157,7 @@ value ml_texture_async_loader_pop(value oruntime) {
 		Field(Field(res,0),0) = opath;
 		Field(Field(res,0),1) = Val_bool(r->with_suffix);
 		Field(Field(res,0),2) = mlTex;
+
 		free(r);
 	};
 	CAMLreturn(res);

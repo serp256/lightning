@@ -271,6 +271,7 @@ int loadPlxPtr(gzFile fptr,textureInfo *tInfo) {
 	gzclose(fptr);
 	//fprintf(stderr,"PLX [%s] file with size %d:%d readed\n",path,width,height);
 
+	PRINT_DEBUG("loadPlxPtr %d", pallete);
 
 	tInfo->format = (pallete << 16) | LTextureFormatPallete;
 	tInfo->width = tInfo->realWidth = width;
@@ -529,7 +530,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 
-		PRINT_DEBUG("filter is %d",filter);
+		// PRINT_DEBUG("filter is %d",filter);
 		switch (Int_val(filter)) {
 			case 0: 
 				PRINT_DEBUG("SET NEAREST FILTER");
@@ -959,5 +960,47 @@ CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 }
 */
 
+textureInfo* loadAtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr) {
+	PRINT_DEBUG("LTextureFormatETC1 %d", LTextureFormatETC1);
+	PRINT_DEBUG("(tInfo.format & 0xFFFF) %d", (tInfo->format & 0xFFFF));
 
+	textureInfo* alphaTexInfo = NULL;
 
+	if ((tInfo->format & 0xFFFF) == LTextureFormatETC1) {
+		alphaTexInfo = (textureInfo*)malloc(sizeof(textureInfo));
+
+		char* ext = strrchr(_fname, '.');
+		int fnameLen = strlen(_fname);
+		int extLen = strlen(ext);
+
+		char* fname = (char*)malloc(fnameLen + 7);
+		char* insertTo = fname + fnameLen - extLen;
+
+		strcpy(fname, _fname);
+		strcpy(insertTo, "_alpha");
+		strcpy(insertTo + 6, ext);
+
+		PRINT_DEBUG("fname %s", fname);
+		int r = load_image_info(fname, suffix, use_pvr, alphaTexInfo, suffix);
+		PRINT_DEBUG("r: %d", r);
+
+		if (r) {
+			free(alphaTexInfo);
+			alphaTexInfo = NULL;
+			/*
+			value alphaTexId = createGLTexture(Val_int(0), &alphaTexInfo, filter);
+			ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, (&alphaTexInfo));
+
+			value block = caml_alloc(1, 1);
+			Store_field(block, 0, mlAlphaTex);
+			Store_field(mlTex, 0, block);
+
+			free(alphaTexInfo.imgData);
+			*/
+		}
+
+		free(fname);
+	}
+
+	return alphaTexInfo;
+}

@@ -31,11 +31,7 @@ mlstage *mlstage_create(float width,float height) {
 
 	PRINT_DEBUG("exts: %s", ext);
 
-	if (strstr(ext, "GL_OES_compressed_ETC1_RGB8_texture")) {
-		loadCompressedTexture = loadPvrFile3;
-		ASSIGN_COMPRESSED_EXT(".etc");
-		PRINT_DEBUG("etc, assign loadDdsFile %s", compressedExt);
-	} else if (strstr(ext, "GL_EXT_texture_compression_s3tc")) {		
+	if (strstr(ext, "GL_EXT_texture_compression_s3tc")) {		
 		loadCompressedTexture = loadDdsFile;
 		ASSIGN_COMPRESSED_EXT(".dds");
 		PRINT_DEBUG("s3tc, assign loadDdsFile %s", compressedExt);
@@ -47,6 +43,10 @@ mlstage *mlstage_create(float width,float height) {
 		loadCompressedTexture = loadDdsFile;
 		ASSIGN_COMPRESSED_EXT(".atc");
 		PRINT_DEBUG("atc, assign loadDdsFile %s", compressedExt);
+	} else if (strstr(ext, "GL_OES_compressed_ETC1_RGB8_texture")) {
+		loadCompressedTexture = loadPvrFile3;
+		ASSIGN_COMPRESSED_EXT(".etc");
+		PRINT_DEBUG("etc, assign loadDdsFile %s", compressedExt);
 	};
 	
 	CAMLparam0();

@@ -18,13 +18,13 @@
 // FIXME: need rewrite to try all with suffix and after without
 int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	// Проверить фсю хуйню
-	DEBUGF("LOAD IMAGE INFO: %s[%s]",fname,suffix);
+	PRINT_DEBUG("LOAD IMAGE INFO: %s[%s]",fname,suffix);
 	char *ext = strrchr(fname,'.');
 	resource r;
 	int slen = suffix == NULL ? 0 : strlen(suffix);
 	char *path;
 	if (ext && ext != fname ) {
-		DEBUGF("ext is %s",ext);
+		PRINT_DEBUG("ext is %s",ext);
 		int flen = strlen(fname);
 		int elen = strlen(ext);
 		int bflen = flen - elen;
@@ -64,7 +64,7 @@ int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo)
 				if (getResourceFd(path,&r)) {
 					FILE *fptr = fdopen(r.fd,"rb");
 					int res = loadCompressedTexture(fptr,r.length,tInfo);
-					DEBUG("PVR File Loaded");
+					PRINT_DEBUG("PVR File Loaded");
 					fclose(fptr);
 					free(path);
 					return res;
@@ -124,13 +124,13 @@ int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo)
 
 int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	// Проверить фсю хуйню
-	DEBUGF("LOAD IMAGE INFO: %s[%s]",fname,suffix);
+	PRINT_DEBUG("LOAD IMAGE INFO: %s[%s]",fname,suffix);
 	char *ext = strrchr(fname,'.');
 	resource r;
 	int slen = suffix == NULL ? 0 : strlen(suffix);
 	char *path;
 	if (ext && ext != fname ) {
-		DEBUGF("ext is %s",ext);
+		PRINT_DEBUG("ext is %s",ext);
 		int flen = strlen(fname);
 		int elen = strlen(ext);
 		int bflen = flen - elen;
@@ -164,7 +164,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			if (slen != 0) { //with suffix
 				if (use_pvr) { // pvr
 					strcpy(path + bflen + slen, compressedExt);
-					DEBUGF("TRY GET IMAGE %s", path);
+					PRINT_DEBUG("TRY GET IMAGE %s", path);
 					if (getResourceFd(path,&r)) {
 						FILE *fptr = fdopen(r.fd,"rb");
 #ifdef TEXTURE_LOAD
@@ -178,7 +178,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				};
 
 				strcpy(path + bflen + slen, ".plx"); //plx
-				DEBUGF("TRY GET IMAGE %s", path);
+				PRINT_DEBUG("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
@@ -211,7 +211,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 
 			if (use_pvr) { //pvr withoud suffix 
 				strcpy(path + bflen, compressedExt);
-				DEBUGF("TRY GET IMAGE %s", path);
+				PRINT_DEBUG("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
 					FILE *fptr = fdopen(r.fd,"rb");
 #ifdef TEXTURE_LOAD
@@ -226,7 +226,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			};
 			// try plx
 			strcpy(path + bflen, ".plx");
-			DEBUGF("TRY GET IMAGE %s", path);
+			PRINT_DEBUG("TRY GET IMAGE %s", path);
 			if (getResourceFd(path,&r)) {
 #ifdef TEXTURE_LOAD
 				strncpy(tInfo->path,path,255);
@@ -241,13 +241,13 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				strncpy(tInfo->path,path,255);
 #endif
 				free(path);
-				DEBUGF("TRY GET IMAGE %s", fname);
+				PRINT_DEBUG("TRY GET IMAGE %s", fname);
 				if (!getResourceFd(fname,&r)) return 2;
 				return load_jpg_image(r.fd,tInfo);
 			};
 		};
 	} else { // нету блядь  расширения нахуй
-		DEBUGF("image has no extension");
+		PRINT_DEBUG("image has no extension");
 		if (slen > 0) { 
 			int flen = strlen(fname);
 			path = malloc(flen + slen);
@@ -257,7 +257,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 		} 
 	}
 
-	DEBUGF("FINAL TRY GET IMAGE %s", fname);
+	PRINT_DEBUG("FINAL TRY GET IMAGE %s", fname);
 	if (!getResourceFd(fname,&r)) return 2;
 #ifdef TEXTURE_LOAD
 	strncpy(tInfo->path,fname,255);
@@ -272,6 +272,7 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,val
 	textureInfo tInfo;
 	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
 	int r = load_image_info(String_val(opath),suffix,Bool_val(use_pvr),&tInfo);
+
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);
@@ -281,7 +282,22 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,val
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
 	free(tInfo.imgData);
 
-	PRINT_DEBUG("LTextureFormatETC1 %d", LTextureFormatETC1);
+	textureInfo* alphaTexInfo = loadAtcAlphaTex(&tInfo, String_val(opath), suffix, Bool_val(use_pvr));
+
+	if (alphaTexInfo) {
+		value alphaTexId = createGLTexture(Val_int(0), alphaTexInfo, filter);
+		ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, alphaTexInfo);
+
+		value block = caml_alloc(1, 1);
+		Store_field(block, 0, mlAlphaTex);
+		Store_field(mlTex, 0, block);
+
+		free(alphaTexInfo->imgData);
+		free(alphaTexInfo);
+	}
+	
+
+/*	PRINT_DEBUG("LTextureFormatETC1 %d", LTextureFormatETC1);
 	PRINT_DEBUG("(tInfo.format & 0xFFFF) %d", (tInfo.format & 0xFFFF));
 
 	if ((tInfo.format & 0xFFFF) == LTextureFormatETC1) {
@@ -317,7 +333,7 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,val
 		}
 
 		free(fname);
-	}
+	}*/
 
 	CAMLreturn(mlTex);
 }

@@ -142,7 +142,20 @@ class virtual base texture =
               )
             | _ -> ()
             ]
-          | Texture.EtcWithAlpha _ -> ()
+          | Texture.EtcWithAlpha _ ->
+            match f with
+            [ `simple when programID <> GLPrograms.ImageEtcWithAlpha.id ->
+              (
+                programID := GLPrograms.ImageEtcWithAlpha.id;
+                shaderProgram := GLPrograms.ImageEtcWithAlpha.create ();
+              )
+            | `cmatrix m when programID <> GLPrograms.ImageEtcWithAlphaColorMatrix.id ->
+              (
+                programID := GLPrograms.ImageEtcWithAlphaColorMatrix.id;
+                shaderProgram := GLPrograms.ImageEtcWithAlphaColorMatrix.create m;
+              )
+            | _ -> ()
+            ]
           ];(*}}}*)
           match !glow with (*{{{*)
           [ None ->
