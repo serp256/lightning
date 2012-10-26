@@ -13,7 +13,11 @@ value ml_paste() {
 	[[UIPasteboard generalPasteboard] containsPasteboardTypes:UIPasteboardTypeListString];
 	UIPasteboard *pasteboard = [UIPasteboard generalPasteboard]; 
 	NSString * a = pasteboard.string;
-  r = caml_copy_string ( [a UTF8String] );
+	if (a==nil) {
+  	r = caml_copy_string ("");
+	} else {
+  	r = caml_copy_string ( [a UTF8String] );
+	}
 	CAMLreturn(r);
 }
 
