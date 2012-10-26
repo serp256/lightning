@@ -61,15 +61,19 @@ void *run_worker(void *param) {
 				if (r == 2) ERROR("ASYNC LOADER. Can't find %s\n",req->path);
 				else ERROR("Can't load image %s\n",req->path);
 				tInfo = NULL;
-			};
+			}
 
 			response_t *resp = malloc(sizeof(response_t));
 			resp->path = req->path; 
 			resp->with_suffix = (req->suffix != NULL);
 			resp->filter = req->filter;
 			resp->tInfo = tInfo;
-			resp->alphaTexInfo = loadAtcAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);
+			resp->alphaTexInfo = NULL;
 
+			if (!r) {
+				resp->alphaTexInfo = loadAtcAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);	
+			}
+			
 			if (req->suffix != NULL) free(req->suffix); free(req);
 			thqueue_responses_push(runtime->resp_queue,resp);
 		}
@@ -118,7 +122,7 @@ void ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value
 
 value ml_texture_async_loader_pop(value oruntime) {
 	CAMLparam0();
-	CAMLlocal4(res,opath,mlTex,mlAlphaTex);
+	CAMLlocal5(res,opath,mlTex,mlAlphaTex, block);
 	runtime_t *runtime = (runtime_t*)oruntime;
 	response_t *r = thqueue_responses_pop(runtime->resp_queue);
 	if (r == NULL) res = Val_unit;
@@ -131,10 +135,10 @@ value ml_texture_async_loader_pop(value oruntime) {
 			ML_TEXTURE_INFO(mlTex,textureID,r->tInfo);
 
 			if (r->alphaTexInfo) {
-				value alphaTexId = createGLTexture(Val_int(0), r->alphaTexInfo, r->filter);
+				value alphaTexId = createGLTexture(1, r->alphaTexInfo, r->filter);
 				ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, r->alphaTexInfo);
 
-				value block = caml_alloc(1, 1);
+				block = caml_alloc(1, 1);
 				Store_field(block, 0, mlAlphaTex);
 				Store_field(mlTex, 0, block);
 

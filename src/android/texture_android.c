@@ -285,7 +285,7 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,val
 	textureInfo* alphaTexInfo = loadAtcAlphaTex(&tInfo, String_val(opath), suffix, Bool_val(use_pvr));
 
 	if (alphaTexInfo) {
-		value alphaTexId = createGLTexture(Val_int(0), alphaTexInfo, filter);
+		value alphaTexId = createGLTexture(1, alphaTexInfo, filter);
 		ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, alphaTexInfo);
 
 		value block = caml_alloc(1, 1);
