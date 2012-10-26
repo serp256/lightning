@@ -1,5 +1,3 @@
-
-
 module Id = struct
   value name    = "Pa Debug";
   value version = "1.0";
@@ -118,6 +116,7 @@ module MakeParser (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
           in
           if !debug 
           then
+            let () = prerr_endline "DEBUG is TRUE" in
             let label = match l with [ Some l -> l | None -> "default" ] in
             match check label with
             [ True -> items
@@ -213,7 +212,7 @@ module MakeParser (Syntax : Camlp4.Sig.Camlp4Syntax) = struct
   END;
 
 
-  Camlp4.Options.add "-disable-all-debugs" (Arg.Set debug) "Disable all debug actions and logs";
+  Camlp4.Options.add "-disable-all-debugs" (Arg.Clear debug) "Disable all debug actions and logs";
   Camlp4.Options.add "-enable-debug" (Arg.String enable_label) "Enable debug label";
   Camlp4.Options.add "-disable-debug" (Arg.String disable_label) "Disable debug label";
 
