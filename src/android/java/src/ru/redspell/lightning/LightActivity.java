@@ -150,4 +150,16 @@ public class LightActivity extends Activity implements IDownloaderClient
 		lightView.onDestroy();
 		super.onDestroy();
 	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		Log.d("LIGHTNING", "onActivityResult call");
+
+		if (AndroidFB.fb != null) {
+			Log.d("LIGHTNING", "invoke fb authorizeCallback");
+			AndroidFB.fb.authorizeCallback(requestCode, resultCode, data);
+		}
+
+		super.onActivityResult(requestCode, resultCode, data);
+	}
 }

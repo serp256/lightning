@@ -6,6 +6,7 @@
 #include <caml/alloc.h>
 #include "light_common.h"
 #include "mlwrapper.h"
+#include "texture_pvr.h"
 
 
 #define NIL Val_int(0)
@@ -20,8 +21,34 @@ extern value caml_gc_compaction(value v);
 #include <caml/threads.h>
 #endif
 
+int (*loadCompressedTexture)(FILE* fildes, size_t fsize, textureInfo *tInfo);
+char* compressedExt;
+
+#define ASSIGN_COMPRESSED_EXT(ext) compressedExt = (char*)malloc(strlen(ext)); strcpy(compressedExt, ext);
 
 mlstage *mlstage_create(float width,float height) {
+	const char *ext = (char*)glGetString(GL_EXTENSIONS);
+
+	PRINT_DEBUG("exts: %s", ext);
+
+	if (strstr(ext, "GL_EXT_texture_compression_s3tc")) {		
+		loadCompressedTexture = loadDdsFile;
+		ASSIGN_COMPRESSED_EXT(".dds");
+		PRINT_DEBUG("s3tc, assign loadDdsFile %s", compressedExt);
+	} else if (strstr(ext, "GL_IMG_texture_compression_pvrtc")) {
+		loadCompressedTexture = loadPvrFile3;
+		ASSIGN_COMPRESSED_EXT(".pvr");
+		PRINT_DEBUG("pvr, assign loadPvrFile3 %s", compressedExt);
+	} else if (strstr(ext, "GL_AMD_compressed_ATC_texture") || strstr(ext, "GL_ATI_texture_compression_atitc")) {
+		loadCompressedTexture = loadDdsFile;
+		ASSIGN_COMPRESSED_EXT(".atc");
+		PRINT_DEBUG("atc, assign loadDdsFile %s", compressedExt);
+	} else if (strstr(ext, "GL_OES_compressed_ETC1_RGB8_texture")) {
+		loadCompressedTexture = loadPvrFile3;
+		ASSIGN_COMPRESSED_EXT(".etc");
+		PRINT_DEBUG("etc, assign loadDdsFile %s", compressedExt);
+	};
+	
 	CAMLparam0();
 	CAMLlocal1(ml_width);
 	//PRINT_DEBUG("mlstage_create: %d",(unsigned int)pthread_self());
@@ -40,6 +67,7 @@ mlstage *mlstage_create(float width,float height) {
 	ml_width = caml_copy_double(width);
 	stage->stage = caml_callback2(*create_ml_stage,ml_width,caml_copy_double(height));// FIXME: GC 
 	stage->needCancelAllTouches = 0;
+
 	caml_register_generational_global_root(&stage->stage);
 	caml_release_runtime_system();
 	PRINT_DEBUG("stage successfully created");

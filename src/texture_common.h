@@ -65,7 +65,6 @@ void texture_id_update(value mlTextureID,GLuint textureID);
 void ml_texture_id_delete(value mlTextureID);
 void update_texture_id_size(value mlTextureID,unsigned int dataLen);
 
-
 typedef enum 
 {
 	LTextureFormatRGBA,
@@ -78,10 +77,14 @@ typedef enum
 	LTextureFormat565,
 	LTextureFormat5551,
 	LTextureFormat4444,
-	LTextureFormatPallete,
 	LTextureFormatDXT1,
 	LTextureFormatDXT5,
-	LTextureFormat3DC
+	LTextureFormatATCRGB,
+	LTextureFormatATCRGBAE,
+	LTextureFormatATCRGBAI,
+	LTextureFormatETC1,	
+	LTextureFormatPallete,
+	LTextureFormatETC1WithAlpha
 } LTextureFormat;
 
 typedef struct {
@@ -100,6 +103,9 @@ typedef struct {
 	unsigned int dataLen;
 	unsigned char* imgData;
 } textureInfo;
+
+
+textureInfo* loadAtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr);
 
 
 int loadPlxPtr(gzFile fptr,textureInfo *tInfo);

@@ -136,3 +136,25 @@ module ImageAlphaColorMatrix = struct (*{{{*)
   *)
 
 end;(*}}}*)
+
+module ImageEtcWithAlpha = struct
+  value id = gen_id ();
+  value create () = 
+    let prg = 
+      load id ~vertex:"Image.vsh" ~fragment:"ImageEtcWithAlpha.fsh"
+        ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+        ~uniforms:[| ("u_texture",(UInt 0)) ; ("u_alpha",(UInt 1)) |]
+    in
+      (prg,None);
+end;
+
+module ImageEtcWithAlphaColorMatrix = struct
+  value id  = gen_id();
+  value create matrix = 
+    let prg = 
+      load id ~vertex:"Image.vsh" ~fragment:"ImageEtcWithAlphaColorMatrix.fsh"
+        ~attributes:[ (AttribPosition,"a_position");  (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color") ]
+        ~uniforms:[| ("u_texture", (UInt 0));  ("u_matrix",UNone) ; ("u_alpha",(UInt 1)) |]
+    in
+    (prg,Some matrix);
+end;

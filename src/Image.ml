@@ -48,6 +48,7 @@ class virtual base texture =
     [ Texture.Simple _ -> (GLPrograms.Image.id, GLPrograms.Image.create ())
     | Texture.Alpha -> (GLPrograms.ImageAlpha.id, GLPrograms.ImageAlpha.create ())
     | Texture.Pallete _ -> (GLPrograms.ImagePallete.id, GLPrograms.ImagePallete.create ())
+    | Texture.EtcWithAlpha _ -> (GLPrograms.ImageEtcWithAlpha.id, GLPrograms.ImageEtcWithAlpha.create ())
     ]
   in
   object(self)
@@ -70,6 +71,7 @@ class virtual base texture =
         [ Texture.Simple _ -> GLPrograms.Image.create () 
         | Texture.Alpha -> GLPrograms.ImageAlpha.create () 
         | Texture.Pallete _ -> GLPrograms.ImagePallete.create () 
+        | Texture.EtcWithAlpha _ -> GLPrograms.ImageEtcWithAlpha.create ()
         ] 
       in
       glowFilter := Some 
@@ -139,6 +141,20 @@ class virtual base texture =
               (
                 programID := GLPrograms.ImageAlphaColorMatrix.id;
                 shaderProgram := GLPrograms.ImageAlphaColorMatrix.create m
+              )
+            | _ -> ()
+            ]
+          | Texture.EtcWithAlpha _ ->
+            match f with
+            [ `simple when programID <> GLPrograms.ImageEtcWithAlpha.id ->
+              (
+                programID := GLPrograms.ImageEtcWithAlpha.id;
+                shaderProgram := GLPrograms.ImageEtcWithAlpha.create ();
+              )
+            | `cmatrix m when programID <> GLPrograms.ImageEtcWithAlphaColorMatrix.id ->
+              (
+                programID := GLPrograms.ImageEtcWithAlphaColorMatrix.id;
+                shaderProgram := GLPrograms.ImageEtcWithAlphaColorMatrix.create m;
               )
             | _ -> ()
             ]

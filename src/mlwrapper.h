@@ -7,6 +7,8 @@
 #include <caml/threads.h>
 #endif
 
+#include "texture_common.h"
+
 void mlrender_clearTexture();
 
 typedef struct {
@@ -39,5 +41,8 @@ typedef enum
 //value mltouch_create(double timestamp,float globalX,float globalY,float previousGlobalX,float previousGlobalY,int tapCount, SPTouchPhase phase);
 //
 void ml_memoryWarning();
+
+int (*loadCompressedTexture)(FILE* fildes, size_t fsize, textureInfo *tInfo);
+char* compressedExt;
 
 #endif

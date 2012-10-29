@@ -174,6 +174,11 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 				PRINT_DEBUG("DXT5");
 				tInfo->format = LTextureFormatDXT5;
 				break;
+			case ePVRTPF_ETC1:
+				PRINT_DEBUG("ETC1");
+				tInfo->format = LTextureFormatETC1;
+				break;
+
 			case ePVRTPF_PVRTCII_2bpp:
 				ERROR("unsupported: PVRTCII 2bpp");
 				return 1;
@@ -257,6 +262,10 @@ enum FOURCC
     FOURCC_A2XY = MAKEFOURCC('A', '2', 'X', 'Y'),
     FOURCC_DX10 = MAKEFOURCC('D', 'X', '1', '0'),
     FOURCC_UVER = MAKEFOURCC('U', 'V', 'E', 'R'),
+    FOURCC_ATC_RGB = MAKEFOURCC('A', 'T', 'C', ' '),
+    FOURCC_ATC_RGBAE = MAKEFOURCC('A', 'T', 'C', 'A'),
+    FOURCC_ATC_RGBAI = MAKEFOURCC('A', 'T', 'C', 'I'),
+    FOURCC_RGBA_4444 = MAKEFOURCC('4', '4', '4', '4')
 };
 
 typedef struct
@@ -313,12 +322,24 @@ int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 		return 1;
 	};
 
-	if (header.pf.fourcc == FOURCC_DXT5) {
+	if (header.pf.fourcc == FOURCC_DXT1) {
+		PRINT_DEBUG("DXT1");
+	 	tInfo->format = LTextureFormatDXT1;
+	} else if (header.pf.fourcc == FOURCC_DXT5) {
 		PRINT_DEBUG("DXT5");
 		tInfo->format = LTextureFormatDXT5;
-	} else if (header.pf.fourcc == FOURCC_ATI2) {
-		PRINT_DEBUG("ATI2");
-		tInfo->format = LTextureFormat3DC;
+	} else if (header.pf.fourcc == FOURCC_ATC_RGB) {
+		PRINT_DEBUG("ATC RGB");
+		tInfo->format = LTextureFormatATCRGB;
+	} else if (header.pf.fourcc == FOURCC_ATC_RGBAE) {
+		PRINT_DEBUG("ATC RGBA explicit");
+		tInfo->format = LTextureFormatATCRGBAE;
+	} else if (header.pf.fourcc == FOURCC_ATC_RGBAI) {
+		PRINT_DEBUG("ATC RGBA interpolated");
+		tInfo->format = LTextureFormatATCRGBAI;
+	} else if (header.pf.fourcc == FOURCC_RGBA_4444) {
+		PRINT_DEBUG("RGBA 4444");
+		tInfo->format = LTextureFormat4444;;
 	} else {
 		ERROR("bad or unsupported dds pixel format");
 		return 1;
@@ -338,11 +359,13 @@ int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 	tInfo->dataLen = fsize - sizeof(DDSHeader);
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
 
+	PRINT_DEBUG("tInfo->dataLen: %d", tInfo->dataLen);
+
 	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {
 		ERROR("cannot read image data");
 		free(tInfo->imgData);
 		return 1;
-	};	
+	};
 
 	return 0;
 }

@@ -30,11 +30,17 @@ type textureFormat =
   | TextureFormatPvrtcRGBA4
   | TextureFormat565
   | TextureFormat5551
-  | TextureFormat4444
+  | TextureFormat4444  
+  | TextureFormatDXT1
+  | TextureFormatDXT5
+  | TextureFormatATCRGB
+  | TextureFormatATCRGBAE
+  | TextureFormatATCRGBAI
+  | TextureFormatETC1
   | TextureFormatPallete of int
-  ];
-
-type textureInfo = 
+  | TextureFormatETC1WithAlpha of textureInfo
+  ]
+and textureInfo = 
   {
     texFormat: textureFormat;
     realWidth: int;
@@ -46,7 +52,7 @@ type textureInfo =
     textureID: textureID;
   };
 
-type kind = [ Simple of bool | Alpha | Pallete of textureInfo ];
+type kind = [ Simple of bool | Alpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
 type renderInfo = 
   {
     rtextureID: textureID;
@@ -239,6 +245,7 @@ value loadPallete palleteID =
     PalleteCache.find palleteCache palleteID
   with 
   [ Not_found -> 
+    let () = assert (palleteID >= 40) in
     let pallete = loadImage (Printf.sprintf "palletes/%d.plt" palleteID) None FilterNearest False in
     (
       PalleteCache.add palleteCache palleteID pallete;
@@ -262,8 +269,9 @@ class s textureInfo =
     match textureInfo.texFormat with
     [ TextureFormatPallete palleteID -> 
       let pallete = loadPallete palleteID in
-      Pallete pallete
+        Pallete pallete
     | TextureFormatAlpha -> Alpha
+    | TextureFormatETC1WithAlpha alphaTexInfo -> let () = debug "TextureFormatETC1WithAlpha of ..." in EtcWithAlpha alphaTexInfo
     | _ -> Simple textureInfo.pma
     ]
   in

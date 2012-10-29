@@ -10,6 +10,7 @@
 #include "mlwrapper_android.h"
 #include "texture_load.h"
 #include "texture_pvr.h"
+#include "mlwrapper.h"
 
 
 
@@ -17,13 +18,13 @@
 // FIXME: need rewrite to try all with suffix and after without
 int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	// Проверить фсю хуйню
-	DEBUGF("LOAD IMAGE INFO: %s[%s]",fname,suffix);
+	PRINT_DEBUG("LOAD IMAGE INFO: %s[%s]",fname,suffix);
 	char *ext = strrchr(fname,'.');
 	resource r;
 	int slen = suffix == NULL ? 0 : strlen(suffix);
 	char *path;
 	if (ext && ext != fname ) {
-		DEBUGF("ext is %s",ext);
+		PRINT_DEBUG("ext is %s",ext);
 		int flen = strlen(fname);
 		int elen = strlen(ext);
 		int bflen = flen - elen;
@@ -50,20 +51,20 @@ int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo)
 			// try pvr
 			if (use_pvr) {
 				if (slen != 0) {
-					strcpy(path + bflen + slen, ".pvr");
+					strcpy(path + bflen + slen, compressedExt);
 					if (getResourceFd(path,&r)) {
 						FILE *fptr = fdopen(r.fd,"rb");
-						int res = loadPvrFile3(fptr,r.length,tInfo);
+						int res = loadCompressedTexture(fptr,r.length,tInfo);
 						fclose(fptr);
 						free(path);
 						return res;
 					}
 				};
-				strcpy(path + bflen, ".pvr");
+				strcpy(path + bflen, compressedExt);
 				if (getResourceFd(path,&r)) {
 					FILE *fptr = fdopen(r.fd,"rb");
-					int res = loadPvrFile3(fptr,r.length,tInfo);
-					DEBUG("PVR File Loaded");
+					int res = loadCompressedTexture(fptr,r.length,tInfo);
+					PRINT_DEBUG("PVR File Loaded");
 					fclose(fptr);
 					free(path);
 					return res;
@@ -123,13 +124,13 @@ int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo)
 
 int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	// Проверить фсю хуйню
-	DEBUGF("LOAD IMAGE INFO: %s[%s]",fname,suffix);
+	PRINT_DEBUG("LOAD IMAGE INFO: %s[%s]",fname,suffix);
 	char *ext = strrchr(fname,'.');
 	resource r;
 	int slen = suffix == NULL ? 0 : strlen(suffix);
 	char *path;
 	if (ext && ext != fname ) {
-		DEBUGF("ext is %s",ext);
+		PRINT_DEBUG("ext is %s",ext);
 		int flen = strlen(fname);
 		int elen = strlen(ext);
 		int bflen = flen - elen;
@@ -162,14 +163,14 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			
 			if (slen != 0) { //with suffix
 				if (use_pvr) { // pvr
-					strcpy(path + bflen + slen, ".pvr");
-					DEBUGF("TRY GET IMAGE %s", path);
+					strcpy(path + bflen + slen, compressedExt);
+					PRINT_DEBUG("TRY GET IMAGE %s", path);
 					if (getResourceFd(path,&r)) {
 						FILE *fptr = fdopen(r.fd,"rb");
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
 #endif
-						int res = loadPvrFile3(fptr,r.length,tInfo);
+						int res = loadCompressedTexture(fptr,r.length,tInfo);
 						fclose(fptr);
 						free(path);
 						return res;
@@ -177,7 +178,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				};
 
 				strcpy(path + bflen + slen, ".plx"); //plx
-				DEBUGF("TRY GET IMAGE %s", path);
+				PRINT_DEBUG("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
@@ -209,14 +210,14 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			};
 
 			if (use_pvr) { //pvr withoud suffix 
-				strcpy(path + bflen, ".pvr");
-				DEBUGF("TRY GET IMAGE %s", path);
+				strcpy(path + bflen, compressedExt);
+				PRINT_DEBUG("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
 					FILE *fptr = fdopen(r.fd,"rb");
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
 #endif
-					int res = loadPvrFile3(fptr,r.length,tInfo);
+					int res = loadCompressedTexture(fptr,r.length,tInfo);
 					DEBUG("PVR File Loaded");
 					fclose(fptr);
 					free(path);
@@ -225,7 +226,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			};
 			// try plx
 			strcpy(path + bflen, ".plx");
-			DEBUGF("TRY GET IMAGE %s", path);
+			PRINT_DEBUG("TRY GET IMAGE %s", path);
 			if (getResourceFd(path,&r)) {
 #ifdef TEXTURE_LOAD
 				strncpy(tInfo->path,path,255);
@@ -240,13 +241,13 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				strncpy(tInfo->path,path,255);
 #endif
 				free(path);
-				DEBUGF("TRY GET IMAGE %s", fname);
+				PRINT_DEBUG("TRY GET IMAGE %s", fname);
 				if (!getResourceFd(fname,&r)) return 2;
 				return load_jpg_image(r.fd,tInfo);
 			};
 		};
 	} else { // нету блядь  расширения нахуй
-		DEBUGF("image has no extension");
+		PRINT_DEBUG("image has no extension");
 		if (slen > 0) { 
 			int flen = strlen(fname);
 			path = malloc(flen + slen);
@@ -256,7 +257,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 		} 
 	}
 
-	DEBUGF("FINAL TRY GET IMAGE %s", fname);
+	PRINT_DEBUG("FINAL TRY GET IMAGE %s", fname);
 	if (!getResourceFd(fname,&r)) return 2;
 #ifdef TEXTURE_LOAD
 	strncpy(tInfo->path,fname,255);
@@ -265,24 +266,74 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	return load_png_image(r.fd,tInfo);
 }
 
-
-
-
 value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,value use_pvr) {
 	CAMLparam3(oldTextureID,opath,osuffix);
-	CAMLlocal1(mlTex);
+	CAMLlocal2(mlTex, mlAlphaTex);
 	textureInfo tInfo;
 	char *suffix = Is_block(osuffix) ? String_val(Field(osuffix,0)) : NULL;
 	int r = load_image_info(String_val(opath),suffix,Bool_val(use_pvr),&tInfo);
+
 	if (r) {
 		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
 		caml_raise_with_arg(*caml_named_value("Cant_load_texture"),opath);
 	};
+
 	value textureID = createGLTexture(oldTextureID,&tInfo,filter);
-	free(tInfo.imgData);
-	// free surface
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
-	//SDL_FreeSurface(tInfo.surface);
+	free(tInfo.imgData);
+
+	textureInfo* alphaTexInfo = loadAtcAlphaTex(&tInfo, String_val(opath), suffix, Bool_val(use_pvr));
+
+	if (alphaTexInfo) {
+		value alphaTexId = createGLTexture(1, alphaTexInfo, filter);
+		ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, alphaTexInfo);
+
+		value block = caml_alloc(1, 1);
+		Store_field(block, 0, mlAlphaTex);
+		Store_field(mlTex, 0, block);
+
+		free(alphaTexInfo->imgData);
+		free(alphaTexInfo);
+	}
+	
+
+/*	PRINT_DEBUG("LTextureFormatETC1 %d", LTextureFormatETC1);
+	PRINT_DEBUG("(tInfo.format & 0xFFFF) %d", (tInfo.format & 0xFFFF));
+
+	if ((tInfo.format & 0xFFFF) == LTextureFormatETC1) {
+		textureInfo alphaTexInfo;
+
+		char* _fname = String_val(opath);
+		char* ext = strrchr(_fname, '.');
+		int fnameLen = strlen(_fname);
+		int extLen = strlen(ext);
+
+		char* fname = (char*)malloc(fnameLen + 7);
+		char* insertTo = fname + fnameLen - extLen;
+
+		strcpy(fname, _fname);
+		strcpy(insertTo, "_alpha");
+		strcpy(insertTo + 6, ext);
+
+		PRINT_DEBUG("fname %s", fname);
+
+		r = load_image_info(fname, suffix, Bool_val(use_pvr), &alphaTexInfo);
+
+		PRINT_DEBUG("r: %d", r);
+
+		if (!r) {
+			value alphaTexId = createGLTexture(Val_int(0), &alphaTexInfo, filter);
+			ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, (&alphaTexInfo));
+
+			value block = caml_alloc(1, 1);
+			Store_field(block, 0, mlAlphaTex);
+			Store_field(mlTex, 0, block);
+
+			free(alphaTexInfo.imgData);
+		}
+
+		free(fname);
+	}*/
+
 	CAMLreturn(mlTex);
 }
-

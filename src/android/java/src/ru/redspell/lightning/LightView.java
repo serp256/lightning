@@ -30,6 +30,7 @@ import java.net.URI;
 import java.util.Locale;
 import android.net.Uri;
 import android.os.Environment;
+import android.content.res.Configuration;
 //import android.os.AsyncTask;
 //import android.content.pm.PackageManager.NameNotFoundException;
 
@@ -51,6 +52,7 @@ import android.graphics.Color;
 
 import ru.redspell.lightning.expansions.XAPKFile;
 import java.util.Formatter;
+import java.util.HashMap;
 
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
@@ -123,16 +125,44 @@ public class LightView extends GLSurfaceView {
 	    return (screenDiagonal >= 6.5);
 	}
 
-	public int getScreenWidth() {
-		return displayMetrics.widthPixels;
-	}
+	// public int getScreenWidth() {
+	// 	return displayMetrics.widthPixels;
+	// }
 
-	public int getScreenHeight() {
-		return displayMetrics.heightPixels;
+	// public int getScreenHeight() {
+	// 	return displayMetrics.heightPixels;
+	// }
+
+	public int getScreen() {
+		Configuration conf = getResources().getConfiguration();
+
+		switch (conf.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) {
+			case Configuration.SCREENLAYOUT_SIZE_SMALL:
+				return 0;
+
+			case Configuration.SCREENLAYOUT_SIZE_NORMAL:
+				return 1;
+
+			case Configuration.SCREENLAYOUT_SIZE_LARGE:
+				return 2;
+
+			case Configuration.SCREENLAYOUT_SIZE_UNDEFINED:
+				return -1;
+
+			default:
+				return 3;
+		}		
 	}
 
 	public int getDensity() {
-		return displayMetrics.densityDpi;
+		String density = activity.getString(R.string.density);
+
+		if (density.contentEquals("ldpi")) return 0;
+		if (density.contentEquals("mdpi")) return 1;
+		if (density.contentEquals("hdpi")) return 2;
+		if (density.contentEquals("xhdpi")) return 3;
+
+		return -1;
 	}
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {
@@ -271,6 +301,21 @@ public class LightView extends GLSurfaceView {
 		Process.killProcess(Process.myPid());
 	}
 
+	private class TouchHistoryItem {
+		public float x;
+		public float y;
+
+		public TouchHistoryItem(float x, float y) {
+			this.x = x;
+			this.y = y;
+		}
+	}
+
+	private HashMap<Integer,TouchHistoryItem> touchHistory = new HashMap<Integer,TouchHistoryItem>();
+
+	private float truncate(float f) {
+		return (new Double(f >= 0 ? Math.floor(f) : Math.ceil(f))).floatValue();
+	}
 
 	public boolean onTouchEvent(final MotionEvent event) {
 		//Log.d("LIGHTNING","Touch event");
@@ -282,6 +327,8 @@ public class LightView extends GLSurfaceView {
 		final float x;
 		final float y;
 
+		TouchHistoryItem hi;
+
 		switch (event.getActionMasked()) {
 
 			case MotionEvent.ACTION_MOVE:
@@ -290,21 +337,45 @@ public class LightView extends GLSurfaceView {
 				final float[] xs = new float[size];
 				final float[] ys = new float[size];
 				final int[] phases = new int[size];
-				final boolean hh = event.getHistorySize() > 0 ? true : false;
+				boolean moved = false;
+				//final boolean hh = event.getHistorySize() > 0;
+
 				for (int i = 0; i < size; i++) {
 					ids[i] = event.getPointerId(i);
-					xs[i] = event.getX(i);
-					ys[i] = event.getY(i);
-					if (hh && xs[i] == event.getHistoricalX(i,0) && ys[i] == event.getHistoricalY(i,0)) phases[i] = 2;
-					else phases[i] = 1;
-				};
-				// we need to skip touches without changes of position
-				queueEvent(new Runnable() {
-					@Override
-					public void run() {
-						renderer.fireTouches(ids, xs, ys,phases);
+					xs[i] = truncate(event.getX(i));
+					ys[i] = truncate(event.getY(i));
+
+					hi = touchHistory.get(event.getPointerId(i));
+
+					if (hi == null || Math.abs(hi.x - xs[i]) > 10 || Math.abs(hi.y - ys[i]) > 10) {
+						if (hi == null) {
+							hi = new TouchHistoryItem(xs[i], ys[i]);
+							touchHistory.put(ids[i], hi);
+						} else {
+							hi.x = xs[i];
+							hi.y = ys[i];
+						}
+
+						phases[i] = 1;
+						moved = true;
+					} else {
+						phases[i] = 2;
 					}
-				});
+				};
+
+				// we need to skip touches without changes of position
+
+				Log.d("LIGHTNING", "moved " + (moved ? "true" : "false"));
+
+				if (moved) {
+					queueEvent(new Runnable() {
+						@Override
+						public void run() {
+							renderer.fireTouches(ids, xs, ys,phases);
+						}
+					});
+				}
+
 				break;
 
 
@@ -313,6 +384,8 @@ public class LightView extends GLSurfaceView {
 				id = event.getPointerId(0);
 				x = event.getX(0);
 				y = event.getY(0);
+				touchHistory.put(id, new TouchHistoryItem(x, y));
+
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
@@ -326,6 +399,7 @@ public class LightView extends GLSurfaceView {
 				final int idUp = event.getPointerId(0);
 				final float xUp = event.getX(0);
 				final float yUp = event.getY(0);
+				touchHistory.remove(idUp);
 
 				queueEvent(new Runnable() {
 					@Override
@@ -341,6 +415,8 @@ public class LightView extends GLSurfaceView {
 				id = event.getPointerId(idx);
 				x = event.getX(idx);
 				y = event.getY(idx);
+				touchHistory.put(id, new TouchHistoryItem(x, y));
+
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
@@ -350,10 +426,12 @@ public class LightView extends GLSurfaceView {
 				break;
 
 			case MotionEvent.ACTION_POINTER_UP:
-				idx = event.getActionIndex ();
+				idx = event.getActionIndex();
 				id = event.getPointerId(idx);
 				x = event.getX(idx);
 				y = event.getY(idx);
+				touchHistory.remove(id);
+
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
@@ -363,6 +441,8 @@ public class LightView extends GLSurfaceView {
 				break;
 
 			case MotionEvent.ACTION_CANCEL:
+				touchHistory.clear();
+
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
