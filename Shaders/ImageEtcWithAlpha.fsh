@@ -12,5 +12,5 @@ void main()
 {
 	vec4 color = texture2D(u_texture, v_texCoord);
 	color.a = texture2D(u_alpha, v_texCoord).r;
-	gl_FragColor = v_fragmentColor * color;
+	gl_FragColor = v_fragmentColor * color * u_parentAlpha;
 }

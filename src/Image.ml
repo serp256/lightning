@@ -503,6 +503,19 @@ class _c  _texture =
             | _ -> assert False
             ]
           )
+        | Texture.EtcWithAlpha _ when programID = GLPrograms.ImageEtcWithAlpha.id -> 
+          (
+            programID := GLPrograms.ImageEtcWithAlpha.id;
+            shaderProgram := GLPrograms.ImageEtcWithAlpha.create ()
+          )
+        | Texture.EtcWithAlpha _ when programID = GLPrograms.ImageEtcWithAlphaColorMatrix.id -> 
+          (
+            programID := GLPrograms.ImageEtcWithAlphaColorMatrix.id;
+            match shaderProgram with
+            [ (_,Some f) -> shaderProgram := GLPrograms.ImageEtcWithAlphaColorMatrix.create f
+            | _ -> assert False
+            ]
+          )
         | _ -> ()
         ];
         match glowFilter with

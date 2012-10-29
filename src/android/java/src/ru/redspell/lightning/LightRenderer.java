@@ -130,6 +130,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 
 	private static native void nativeSurfaceCreated(int width, int height);
 	private static native void nativeSurfaceChanged(int width,int height);
+	public static native void nativeSurfaceDestroyed();
 	private static native void nativeDrawFrame(long nanoseconds);
 
 	/*

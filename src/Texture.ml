@@ -244,8 +244,7 @@ value loadPallete palleteID =
   try
     PalleteCache.find palleteCache palleteID
   with 
-  [ Not_found -> 
-    let () = assert (palleteID >= 40) in
+  [ Not_found ->
     let pallete = loadImage (Printf.sprintf "palletes/%d.plt" palleteID) None FilterNearest False in
     (
       PalleteCache.add palleteCache palleteID pallete;

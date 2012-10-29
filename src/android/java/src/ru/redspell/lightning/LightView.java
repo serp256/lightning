@@ -252,6 +252,13 @@ public class LightView extends GLSurfaceView {
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		Log.d("LIGHTNING","surfaceDestroyed");
 		super.surfaceDestroyed(holder);
+
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				renderer.nativeSurfaceDestroyed();
+			}
+		});		
 	}
 
 	public ResourceParams getResource(String path) {

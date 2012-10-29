@@ -385,19 +385,29 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 }
 
 static int onResume = 0;
+static int surfaceDestroyed = 0;
+
+void callDispatchFgHandler() {
+	static value dispatchFgHandler = 1;
+
+	if (stage) {
+		if (dispatchFgHandler == 1) dispatchFgHandler = caml_hash_variant("dispatchForegroundEv");
+		caml_callback2(caml_get_public_method(stage->stage, dispatchFgHandler), stage->stage, Val_unit);
+	}	
+}
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	PRINT_DEBUG("GL Changed: %i:%i",width,height);
 
 	if (onResume) {
 		onResume = 0;
-		static value dispatchFgHandler = 1;
-
-		if (stage) {
-			if (dispatchFgHandler == 1) dispatchFgHandler = caml_hash_variant("dispatchForegroundEv");
-			caml_callback2(caml_get_public_method(stage->stage, dispatchFgHandler), stage->stage, Val_unit);
-		}
+		callDispatchFgHandler();
 	}
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed call");
+	surfaceDestroyed = 1;
 }
 
 
@@ -696,27 +706,25 @@ value ml_malinfo(value p) {
 }
 
 void ml_alsoundInit() {
-	if (gSndPool != NULL) {
-		caml_failwith("alsound already initialized");
+	if (!gSndPool) {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+		jclass amCls = (*env)->FindClass(env, "android/media/AudioManager");
+		jfieldID strmTypeFid = (*env)->GetStaticFieldID(env, amCls, "STREAM_MUSIC", "I");
+		jint strmType = (*env)->GetStaticIntField(env, amCls, strmTypeFid);
+
+		jclass sndPoolCls = (*env)->FindClass(env, "android/media/SoundPool");
+		jmethodID constrId = (*env)->GetMethodID(env, sndPoolCls, "<init>", "(III)V");
+		jobject sndPool = (*env)->NewObject(env, sndPoolCls, constrId, 100, strmType, 0);
+
+		gSndPoolCls = (*env)->NewGlobalRef(env, sndPoolCls);
+		gSndPool = (*env)->NewGlobalRef(env, sndPool);
+
+		(*env)->DeleteLocalRef(env, amCls);
+		(*env)->DeleteLocalRef(env, sndPoolCls);
+		(*env)->DeleteLocalRef(env, sndPool);		
 	}
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	jclass amCls = (*env)->FindClass(env, "android/media/AudioManager");
-	jfieldID strmTypeFid = (*env)->GetStaticFieldID(env, amCls, "STREAM_MUSIC", "I");
-	jint strmType = (*env)->GetStaticIntField(env, amCls, strmTypeFid);
-
-	jclass sndPoolCls = (*env)->FindClass(env, "android/media/SoundPool");
-	jmethodID constrId = (*env)->GetMethodID(env, sndPoolCls, "<init>", "(III)V");
-	jobject sndPool = (*env)->NewObject(env, sndPoolCls, constrId, 100, strmType, 0);
-
-	gSndPoolCls = (*env)->NewGlobalRef(env, sndPoolCls);
-	gSndPool = (*env)->NewGlobalRef(env, sndPool);
-
-	(*env)->DeleteLocalRef(env, amCls);
-	(*env)->DeleteLocalRef(env, sndPoolCls);
-	(*env)->DeleteLocalRef(env, sndPool);
 }
 
 static jmethodID gGetSndIdMthdId = NULL;
@@ -901,7 +909,12 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *e
 	PRINT_DEBUG("resume ALL players");
 	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);
 
-	onResume = 1;
+	if (surfaceDestroyed) {
+		surfaceDestroyed = 0;
+		onResume = 1;	
+	} else {
+		callDispatchFgHandler();
+	}
 }
 
 /* Updated upstream
@@ -1350,6 +1363,9 @@ JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightRenderer_handleBack(J
 		}
 
 		value res = caml_callback2(caml_get_public_method(stage->stage, ml_dispatchBackHandler), stage->stage, Val_unit);
+
+		PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleBack %d", Bool_val(res));
+
 		if (Bool_val(res)) exit(0);
 	}
 
