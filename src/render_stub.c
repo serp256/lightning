@@ -436,12 +436,12 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV );
 	// RENDER SUBPIXEL FIX HERE
 	//fprintf(stderr,"matrix: tx=%f,ty=%f\n",matrixMV.mat[12],matrixMV.mat[13]);
-	if (matrixMV.mat[0] == 1.0 && matrixMV.mat[5] == 1.0) {
+	//if (matrixMV.mat[0] == 1.0 && matrixMV.mat[5] == 1.0) {
 		//matrixMV.mat[12] = (GLint)matrixMV.mat[12];
 		//matrixMV.mat[13] = (GLint)matrixMV.mat[13];
 		matrixMV.mat[12] = round(matrixMV.mat[12]);
 		matrixMV.mat[13] = round(matrixMV.mat[13]);
-	};
+	//};
 	//matrixMV.mat[12] = round(matrixMV.mat[12]);
 	//matrixMV.mat[13] = round(matrixMV.mat[13]);
 	//fprintf(stderr,"-->matrix: tx=%f,ty=%f\n",matrixMV.mat[12],matrixMV.mat[13]);

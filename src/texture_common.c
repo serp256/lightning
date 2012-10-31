@@ -366,13 +366,16 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
             //p->glTexFormat = GL_ALPHA;
             //p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
 						break;
-
 		case LTextureFormatETC1:
+#ifdef ANDROID
 			p->compressed = 1;
 			p->bitsPerPixel = 4;
 			p->glTexFormat = GL_ETC1_RGB8_OES;
-
 			break;
+#else
+			return 0;
+#endif
+
 
         case LTextureFormatPvrtcRGBA2:
 #if (defined IOS || defined ANDROID)
