@@ -1384,7 +1384,7 @@ value test_vk (stage:Stage.c) =
         SNTypes.on_error = fun  
           [ SNTypes.IOError -> debug "VK IOERROR"
           | SNTypes.SocialNetworkError (code, msg) -> debug "social network error (%s,%s)" code msg
-          | SNTypes.OAuthError e -> debug "OAuth error %s: %s" e.OAuth.error e.OAuth.description
+          | SNTypes.OAuthError e -> debug "OAuth error " 
           ];
         SNTypes.on_success = fun friends -> 
           let () = debug:friend "FRIENDS GET" in
@@ -1426,12 +1426,40 @@ value test_vk (stage:Stage.c) =
       ));
     );
 
+value testKeyboard (stage:Stage.c) = 
+  let img = Image.load "tree.png" in
+    (
+      stage#addChild img;
+      ignore(Stage.(
+        img#addEventListener ev_TOUCH (fun ev _ _ ->
+          match touches_of_data ev.Ev.data with
+          [ Some [ touch :: _ ] ->
+            Touch.(
+                match touch.phase with
+                [ TouchPhaseEnded -> 
+                    Motion.show 
+                      ~inittxt:"pizda"
+                      ~onhide:(fun s -> debug "callback 2 : %s" s)
+                      ~onchange:(fun s -> debug "callback 1 : %s" s)
+                      ()
+                | _ -> ()
+                ]
+            )
+          | _ -> ()
+          ]
+        )
+      ));
+    );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      testKeyboard self;
+      (*
       test_vk self;
+      *)
 (*
       debug "%s" (Render.get_gl_extensions ());
 

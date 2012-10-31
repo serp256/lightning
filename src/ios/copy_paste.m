@@ -29,11 +29,11 @@ void ml_copy (value st)
 	CAMLreturn0;
 }
 
-void ml_keyboard (value initString, value updateCallback, value returnCallback)
+void ml_keyboard (value visible, value size, value initString, value returnCallback, value updateCallback)
 {
-	CAMLparam3(initString, updateCallback, returnCallback);
-// 	NSLog (@"%@", [NSString stringWithCString:String_val(initString) encoding:NSASCIIStringEncoding] ); 
-	[[LightViewController sharedInstance] showKeyboard:updateCallback returnCallback:returnCallback initString:initString];
+	CAMLparam4(size, initString, updateCallback, returnCallback);
+ 	NSLog (@"initString %@", [NSString stringWithCString:String_val(initString) encoding:NSASCIIStringEncoding] ); 
+	[[LightViewController sharedInstance] showKeyboard:visible size:size updateCallback:updateCallback returnCallback:returnCallback initString:initString];
 	CAMLreturn0;
 }
 
