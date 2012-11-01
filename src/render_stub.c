@@ -436,12 +436,12 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV );
 	// RENDER SUBPIXEL FIX HERE
 	//fprintf(stderr,"matrix: tx=%f,ty=%f\n",matrixMV.mat[12],matrixMV.mat[13]);
-	if (matrixMV.mat[0] == 1.0 && matrixMV.mat[5] == 1.0) {
+	//if (matrixMV.mat[0] == 1.0 && matrixMV.mat[5] == 1.0) {
 		//matrixMV.mat[12] = (GLint)matrixMV.mat[12];
 		//matrixMV.mat[13] = (GLint)matrixMV.mat[13];
 		matrixMV.mat[12] = round(matrixMV.mat[12]);
 		matrixMV.mat[13] = round(matrixMV.mat[13]);
-	};
+	//};
 	//matrixMV.mat[12] = round(matrixMV.mat[12]);
 	//matrixMV.mat[13] = round(matrixMV.mat[13]);
 	//fprintf(stderr,"-->matrix: tx=%f,ty=%f\n",matrixMV.mat[12],matrixMV.mat[13]);
@@ -614,6 +614,18 @@ void print_quad(lgQuad *q) {
 	print_vertex(&(q->tl));
 	printf("tr: ");
 	print_vertex(&(q->tr));
+}
+
+static inline void apply_blend(value mlblend) {
+	value p = Field(mlblend,0);
+	switch (Tag_val(mlblend)) {
+		case 0: // BlendFunc
+			glBlendFunc(Int_val(Field(p,0)),Int_val(Field(p,1)));
+			break;
+		case 1: // BlendFuncSeparate
+			glBlendFuncSeparate(Int_val(Field(p,0)),Int_val(Field(p,1)),Int_val(Field(p,2)),Int_val(Field(p,3)));
+			break;
+	};
 }
 
 void ml_quad_render(value matrix, value program, value alpha, value quad) {
@@ -904,7 +916,7 @@ void ml_image_flip_tex_y(value image) {
 	tq->br.tex = tmp;
 }
 
-void ml_image_render(value matrix, value program, value alpha, value image) {
+void ml_image_render(value matrix, value program, value alpha, value blend, value image) {
 	//fprintf(stderr,"render image\n");
 	PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
@@ -933,9 +945,15 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 		checkGLErrors("apply filters");
 	};
 
+	int pma = -1;
+	if (blend == Val_none) {
+		pma = img->pma;
+	} else {
+		apply_blend(Field(blend,0));
+	};
 	if (img->pallete) {
-		lgGLBindTextures(img->textureID,img->pallete,img->pma);
-	} else lgGLBindTexture(img->textureID,img->pma);
+		lgGLBindTextures(img->textureID,img->pallete,pma);
+	} else lgGLBindTexture(img->textureID,pma);
 	checkGLErrors("bind texture");
 
 	//print_image(tq);
