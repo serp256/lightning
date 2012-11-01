@@ -10,6 +10,8 @@ import android.os.Messenger;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.widget.FrameLayout;
+import android.content.Context;
 
 import com.google.android.vending.expansion.downloader.DownloadProgressInfo;
 import com.google.android.vending.expansion.downloader.DownloaderClientMarshaller;
@@ -25,6 +27,13 @@ import android.content.res.TypedArray;
 
 import ru.redspell.lightning.payments.Security;
 
+import android.widget.AbsoluteLayout;
+import android.widget.EditText;
+import android.view.View;
+import android.widget.AbsoluteLayout;
+import android.view.ViewGroup.LayoutParams;
+import android.content.res.Configuration;
+
 public class LightActivity extends Activity implements IDownloaderClient
 {
     protected XAPKFile[] xAPKS = {};
@@ -39,16 +48,23 @@ public class LightActivity extends Activity implements IDownloaderClient
 	private IStub mDownloaderClientStub;
 	private IDownloaderService mRemoteService;
 
+	public AbsoluteLayout viewGrp;
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+
+		getSystemService(Context.CLIPBOARD_SERVICE);
+
 		//setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		lightView = new LightView(this);
-		setContentView(lightView);
+
+		viewGrp = new AbsoluteLayout(this);		
+		viewGrp.addView(lightView = new LightView(this));
+		setContentView(viewGrp);
 
 		TypedArray expansions = getResources().obtainTypedArray(R.array.expansions);
 		xAPKS = new XAPKFile[expansions.length()];
@@ -161,5 +177,11 @@ public class LightActivity extends Activity implements IDownloaderClient
 		}
 
 		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		Log.d("LIGHTNING", "onConfigurationChanged");
+		super.onConfigurationChanged(newConfig);
 	}
 }

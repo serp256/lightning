@@ -325,6 +325,8 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public boolean onTouchEvent(final MotionEvent event) {
+		if (!isEnabled()) return true;
+
 		//Log.d("LIGHTNING","Touch event");
 
 		dumpMotionEvent(event);
@@ -813,5 +815,5 @@ public class LightView extends GLSurfaceView {
 		}
 
 		return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
-	}
+	}	
 }
