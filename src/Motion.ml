@@ -19,7 +19,7 @@ value acmtrStart (cb:callback) (interval:float) = ();
 value acmtrStop () = ();
 value paste () = "not SDL";
 value copy _ = ();
-value show _ _ _ _ = ();
+value show ?visible ?size ?inittxt ?onhide ?onchange () = ();
 value hideKeyboard () = ();
 ENDIF;
 
