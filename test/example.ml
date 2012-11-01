@@ -1377,44 +1377,89 @@ value test_vk (stage:Stage.c) =
       value permissions = [VK.Notify; VK.Friends; VK.Photos; VK.Docs; VK.Notes; VK.Pages; VK.Wall; VK.Groups; VK.Messages; VK.Notifications ; VK.Stats ; VK.Ads; VK.Offline ];
     end)
   in
-  let delegate = 
-    {
-      SNTypes.on_error = fun  
-        [ SNTypes.IOError -> debug:friend "VK IOERROR"
-        | SNTypes.SocialNetworkError (code, msg) -> debug:friend "social network error (%s,%s)" code msg
-        | SNTypes.OAuthError e -> debug:friend "OAuth error"
-        ];
-      SNTypes.on_success = fun friends -> 
-        let () = debug:friend "FRIENDS GET" in
-        let my_uid = VK.get_user_id () in
-          match friends with
-          [ `Assoc [ ("response",`List uids)] ->
-            let uids =
-              List.map (fun uid ->
-                match uid with 
-                [ `Int uid -> string_of_int uid 
-                | `String uid |`Intlit uid -> uid 
-                | _ -> assert False 
+  let img = Image.load "tree.png" in
+  let onTouch () =  
+    let delegate = 
+      {
+        SNTypes.on_error = fun  
+          [ SNTypes.IOError -> debug "VK IOERROR"
+          | SNTypes.SocialNetworkError (code, msg) -> debug "social network error (%s,%s)" code msg
+          | SNTypes.OAuthError e -> debug "OAuth error " 
+          ];
+        SNTypes.on_success = fun friends -> 
+          let () = debug:friend "FRIENDS GET" in
+          let my_uid = VK.get_user_id () in
+            match friends with
+            [ `Assoc [ ("response",`List uids)] ->
+              let uids =
+                List.map (fun uid ->
+                  match uid with 
+                  [ `Int uid -> string_of_int uid 
+                  | `String uid |`Intlit uid -> uid 
+                  | _ -> assert False 
+                  ]
+                ) uids
+              in
+              (
+                debug "%d" (List.length uids);
+              )
+            | _ -> assert False
+            ]
+      }
+    in VK.call_method ~delegate "friends.getAppUsers" []
+  in
+    (
+      stage#addChild img;
+      ignore(Stage.(
+        img#addEventListener ev_TOUCH (fun ev _ _ ->
+          match touches_of_data ev.Ev.data with
+          [ Some [ touch :: _ ] ->
+            Touch.(
+                match touch.phase with
+                [ TouchPhaseEnded -> onTouch ()
+                | _ -> ()
                 ]
-              ) uids
-            in
-            (
-              debug "%d" (List.length uids);
             )
-          | _ -> assert False
+          | _ -> ()
           ]
-    }
-  in VK.call_method ~delegate "friends.getAppUsers" [];      
+        )
+      ));
+    );
 
-
-
+value testKeyboard (stage:Stage.c) = 
+  let img = Image.load "tree.png" in
+    (
+      stage#addChild img;
+      ignore(Stage.(
+        img#addEventListener ev_TOUCH (fun ev _ _ ->
+          match touches_of_data ev.Ev.data with
+          [ Some [ touch :: _ ] ->
+            Touch.(
+                match touch.phase with
+                [ TouchPhaseEnded -> 
+                    Motion.show 
+                      ~inittxt:"pizda"
+                      ~onhide:(fun s -> debug "callback 2 : %s" s)
+                      ~onchange:(fun s -> debug "callback 1 : %s" s)
+                      ()
+                | _ -> ()
+                ]
+            )
+          | _ -> ()
+          ]
+        )
+      ));
+    );
 
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
+      testKeyboard self;
+      (*
       test_vk self;
+      *)
 (*
       debug "%s" (Render.get_gl_extensions ());
 

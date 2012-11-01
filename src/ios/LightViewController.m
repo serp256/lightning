@@ -51,7 +51,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 +alloc {
 	//NSLog(@"Try INIT Light view controller");
 	if (instance != NULL) return NULL; // raise exception
-	NSLog(@"INIT Light view controller");
+	//NSLog(@"INIT Light view controller");
 	char *argv[] = {"ios",NULL};
 	uncaught_exception_callback = &mlUncaughtException;
 	caml_startup(argv);
@@ -62,7 +62,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 
 
 +(NSString *) version {
-	NSLog(@"VERSION");
+	//NSLog(@"VERSION");
 	NSBundle *bundle = [NSBundle mainBundle];
 	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
 	return appVersion;
@@ -92,6 +92,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 
 #pragma mark - View lifecycle
 - (void)loadView {
+	//NSLog(@"loadView");
 	UIInterfaceOrientation orient = self.interfaceOrientation;
 	CGRect rect = [UIScreen mainScreen].applicationFrame;
 	switch (orient) {
@@ -245,10 +246,32 @@ static value *ml_url_complete = NULL;
 	activityIndicator = nil;
 }
 
-
+- (void)changeTextFieldOrientation:(UIInterfaceOrientation)interfaceOrientation {
+	if (kbTextField != nil) {
+		switch (interfaceOrientation) {
+			case UIInterfaceOrientationLandscapeLeft: {
+				kbTextField.transform = CGAffineTransformConcat(kbTextField.transform, CGAffineTransformMakeRotation(M_PI * 3 / 2.0));
+				break;
+			}
+			case UIInterfaceOrientationLandscapeRight: {
+				kbTextField.transform = CGAffineTransformConcat(kbTextField.transform, CGAffineTransformMakeRotation(M_PI / 2.0));
+				break;
+			}
+			case UIInterfaceOrientationPortrait: {
+				kbTextField.transform = CGAffineTransformConcat(kbTextField.transform, CGAffineTransformMakeRotation(0));
+				break;
+			}
+			case UIInterfaceOrientationPortraitUpsideDown: {
+				kbTextField.transform = CGAffineTransformConcat(kbTextField.transform, CGAffineTransformMakeRotation(M_PI));
+				break;
+			}
+			default: break;
+		};
+	};
+}
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-	NSLog(@"Controller shouldAutorotateToInterface called");
+
 	if (_orientationDelegate) {
 		BOOL res = [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
 		return res;
@@ -312,7 +335,7 @@ static value *ml_url_complete = NULL;
 						if (Is_block(payment_error_cb)) {
 							caml_acquire_runtime_system();
 							value ml_product_id = 0, ml_error_msg = 0;
-							NSLog(@"PAYMENT ERORR FOR: '%@'",transaction.payment.productIdentifier);
+							//NSLog(@"PAYMENT ERORR FOR: '%@'",transaction.payment.productIdentifier);
 							Begin_roots2(ml_product_id,ml_error_msg);
 							ml_product_id = caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]); 
 							if (e.length > 0) 
@@ -350,7 +373,7 @@ static value *ml_url_complete = NULL;
 
 
 -(void)didReceiveMemoryWarning {
-	NSLog(@"APP did recieve memory warning");
+	//NSLog(@"APP did recieve memory warning");
 	ml_memoryWarning();
 }
 
@@ -372,13 +395,17 @@ static value *ml_url_complete = NULL;
 
 - (void)textFieldDidEndEditing:(UITextField *)textField
 {
+	//NSLog(@"textFieldDidEndEditing");
 	if (keyboardCallbackReturn != 0) caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
+	//NSLog(@"hideKeyboard frim did end editing");
 	[self hideKeyboard];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
+	//NSLog(@"textFrieldShouldReturn");
 	if (keyboardCallbackReturn != 0) caml_callback(keyboardCallbackReturn, caml_copy_string([kbTextField.text UTF8String]));
+	//NSLog(@"hideKeyboard from should return");
 	[self hideKeyboard];
 	return YES;
 }
@@ -403,36 +430,68 @@ static value *ml_url_complete = NULL;
 
 - (void)hideKeyboard
 {
+	//NSLog(@"hideKeyboard");
 	if (kbTextField != NULL) 
 	{
+		//NSLog(@"Not null");
 		caml_remove_global_root(&keyboardCallbackReturn);
 		caml_remove_global_root(&keyboardCallbackUpdate);
 		keyboardCallbackReturn = 0;
 		keyboardCallbackUpdate = 0;
+		[kbTextField resignFirstResponder];
 		[kbTextField removeFromSuperview];
 		kbTextField = NULL;
+		//NSLog(@"kbTextField is NUll");
 	}
 }
 
-- (void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString {
+- (void)showKeyboard:(value)visible size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString {
+	//NSLog(@"showKeyboard %b; size:[%d; %d]; cb_ret: %d cb_upd : %d", (Bool_val (visible)), (Int_val(Field(size,0))),  (Int_val(Field(size,1))),  keyboardCallbackReturn, keyboardCallbackUpdate);
+	[self hideKeyboard];
 	if (keyboardCallbackReturn != 0) caml_remove_global_root(&keyboardCallbackReturn);
 	if (keyboardCallbackUpdate != 0) caml_remove_global_root(&keyboardCallbackUpdate);
 
-	if (kbTextField == NULL)
-		kbTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 4, 4)];
-	[[UIApplication sharedApplication].keyWindow addSubview:kbTextField]; 
+	CGRect rect = [self view].bounds;
+	if (kbTextField == NULL) {
+		int w = Int_val(Field(size,0));
+		int h = Int_val(Field(size,1));
+		//NSLog(@"stage [%f; %f]", rect.size.width, rect.size.height);
+		kbTextField = [[UITextField alloc] initWithFrame:CGRectMake((rect.size.width - w) / 2., ((rect.size.height / 2.) - h) / 2.  , Int_val(Field(size,0)), Int_val(Field(size,1)))];
+	};
+//	[[UIApplication sharedApplication].keyWindow addSubview:kbTextField]; 
+	[self.view addSubview:kbTextField ];
+//	kbTextField.transform = CGAffineTransformConcat(kbTextField.transform, CGAffineTransformMakeRotation(M_PI * 90 / 180.0));
 
 	kbTextField.text = [NSString stringWithUTF8String:String_val(initString)];
 	[kbTextField setDelegate:self];
-	keyboardCallbackReturn = returnCallback;
-	keyboardCallbackUpdate = updateCallback;
-	caml_register_generational_global_root(&keyboardCallbackReturn);
-	caml_register_generational_global_root(&keyboardCallbackUpdate);
-	kbTextField.hidden = true;
+	if (returnCallback != Val_none) {
+		keyboardCallbackReturn = Field(returnCallback,0);
+		caml_register_generational_global_root(&keyboardCallbackReturn);
+	} else {
+		keyboardCallbackReturn = 0;
+	}
+	if (updateCallback != Val_none) {
+		keyboardCallbackUpdate = Field(updateCallback,0);
+		caml_register_generational_global_root(&keyboardCallbackUpdate);
+	} else {
+		keyboardCallbackUpdate = 0;
+	}
 	kbTextField.autocorrectionType =  UITextAutocorrectionTypeNo;
 
+	kbTextField.hidden = ((Int_val (visible) == 0)) ;
+
+	// Setting the font.
+	[kbTextField setFont:[UIFont fontWithName:@"Times New Roman" size:34]];
+	 
+	// Setting the text alignment
+	[kbTextField setTextAlignment:UITextAlignmentCenter];
+	[kbTextField setBorderStyle:UITextBorderStyleRoundedRect];
+
+	[kbTextField endEditing:YES];
 	[kbTextField becomeFirstResponder]; 
-	caml_callback(keyboardCallbackUpdate, caml_copy_string( String_val(initString) ));
+//	[self changeTextFieldOrientation:self.interfaceOrientation];
+	
+	if (keyboardCallbackUpdate != 0) caml_callback(keyboardCallbackUpdate, caml_copy_string( String_val(initString) ));
 }
 
 @end
