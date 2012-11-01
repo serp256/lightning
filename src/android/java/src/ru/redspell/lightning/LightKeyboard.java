@@ -147,6 +147,8 @@ public class LightKeyboard {
 	}
 
 	public static String pasteFromClipboard() {
-		return getClipboardManager().getText().toString();
+		CharSequence cs = getClipboardManager().getText();
+
+		return cs != null ? cs.toString() : null;
 	}
 }

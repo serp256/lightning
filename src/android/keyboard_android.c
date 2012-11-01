@@ -7,8 +7,10 @@
 
 #define CALLBACK(val, cvar)											\
 	if (val != Val_int(0)) {										\
-		caml_register_generational_global_root(&(Field(val, 0)));	\
-		cvar = (int)(&(Field(val, 0)));								\
+		value* cbptr = (value*)malloc(sizeof(value));				\
+		*cbptr = Field(val, 0); 									\
+		caml_register_generational_global_root(cbptr);				\
+		cvar = (int)cbptr;											\
 	}																\
 
 static jclass kbrdCls = 0;
@@ -82,10 +84,16 @@ value ml_paste() {
 	static jmethodID mid = 0;
 	if (!mid) mid = (*env)->GetStaticMethodID(env, kbrdCls, "pasteFromClipboard", "()Ljava/lang/String;");
 
+	value retval;
 	jstring jtxt = (*env)->CallStaticObjectMethod(env, kbrdCls, mid);
-	const char* ctxt = (*env)->GetStringUTFChars(env, jtxt, JNI_FALSE);
-	value retval = caml_copy_string(ctxt);
-	(*env)->ReleaseStringUTFChars(env, jtxt, ctxt);
+
+	if (jtxt) {
+		const char* ctxt = (*env)->GetStringUTFChars(env, jtxt, JNI_FALSE);
+		retval = caml_copy_string(ctxt);
+		(*env)->ReleaseStringUTFChars(env, jtxt, ctxt);
+	} else {
+		retval = caml_copy_string("");
+	}
 
 	return retval;
 }
@@ -132,6 +140,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightKeyboard_00024OnHideRunna
 
 	if (cchangeCb > -1) {
 		caml_remove_generational_global_root((value*)cchangeCb);
+		free(cchangeCb);
 	}
 
 	if (chideCb > -1) {
@@ -141,6 +150,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightKeyboard_00024OnHideRunna
 
 		caml_callback(*hideCb, caml_copy_string(ctxt));
 		caml_remove_generational_global_root(hideCb);
+		free(hideCb);
 
 		(*env)->ReleaseStringUTFChars(env, jtxt, ctxt);
 	}
