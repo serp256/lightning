@@ -1,5 +1,5 @@
 #include <stdio.h>
-#if OS==LINUX
+#ifdef OSlinux
 #include <GL/freeglut.h>
 #else
 #include <GLUT/glut.h>

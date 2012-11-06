@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #else
 #define GL_GLEXT_PROTOTYPES
-#if OS==LINUX
+#ifdef OSlinux
 #include <GL/gl.h>
 #else
 #include <OpenGL/gl.h>
