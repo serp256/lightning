@@ -97,7 +97,7 @@ LIBFLAGS += -cclib '-lz'
 
 MLPPOPT += -D$(PLATFORM)
 MLCOPTS += -D$(PLATFORM)
-CFLAGS += -D$(PLATFORM) -DOS$(PLATFORM)
+CFLAGS += -D$(PLATFORM) -DOS$(OS)
 
 $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
