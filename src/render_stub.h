@@ -10,7 +10,11 @@
 #include <OpenGLES/ES2/gl.h>
 #else
 #define GL_GLEXT_PROTOTYPES
+#if OS==LINUX
+#include <GL/gl.h>
+#else
 #include <OpenGL/gl.h>
+#endif
 #endif
 #endif
 

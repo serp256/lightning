@@ -20,10 +20,10 @@ void ml_setMaxGC(value max) {
 	MAX_GC_MEM = Int64_val(max);
 }
 
-#ifdef ANDROID 
+#if defined(ANDROID) || OS==LINUX
 
 value ml_getMACID(value p) {
-  return caml_copy_string("xyu");
+  return caml_copy_string("123");
 }
 
 #else
