@@ -11,9 +11,13 @@
 #include <OpenGLES/ES2/glext.h>
 #include <sys/types.h>
 #else
-#include <OpenGL/gl.h>
 #define GL_GLEXT_PROTOTYPES
+#ifdef OSlinux
+#include <GL/gl.h>
+#else
+#include <OpenGL/gl.h>
 #include <sys/types.h>
+#endif
 #endif
 #endif
 

@@ -1,5 +1,9 @@
 #include <stdio.h>
+#ifdef OSlinux
+#include <GL/freeglut.h>
+#else
 #include <GLUT/glut.h>
+#endif
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
