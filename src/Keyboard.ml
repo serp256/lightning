@@ -1,7 +1,7 @@
 IFDEF PC THEN
 value paste () = "not SDL";
 value copy _ = ();
-value show _ _ _ = ();
+value show ?visible ?size ?inittxt ?onhide ?onchange () = ();
 value hide () = ();
 ELSE
 external paste: unit -> string = "ml_paste";

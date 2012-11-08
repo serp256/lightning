@@ -299,7 +299,7 @@ value getDeviceType () = !internalDeviceType;
 *)
 ELSE
 
-value internalDeviceType = ref Pad;
+value internalDeviceType = ref Phone;
 value getDeviceType () = !internalDeviceType;
 
 value androidScreen () = None;
