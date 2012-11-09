@@ -430,38 +430,6 @@ value alert (stage:Stage.c) =
 );*)
 
 
-value game_center (stage:Stage.c) =
-    let text = "Ежедневный бонус PipIy" in
-  (
-    (*
-  GameCenter.init ~callback:begin fun res ->
-    let text = 
-      match res with 
-      [ True -> "Game center success"
-      | False -> "Game center failed"
-      ]
-    in
-    *)
-    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
-    (
-      text#setPos 100. 100.;
-(*       text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ]; *)
-      stage#addChild text;
-    );
-    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
-    (
-      text#setPos 100. 150.;
-      text#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
-      stage#addChild text;
-    );
-
-    let img = Image.load "tree.png" in
-    (
-      img#setPos 50. 300.;
-      img#setFilters [ Filters.glow ~size:1 ~strength:3. 0 ];
-      stage#addChild img;
-    );
-  );
 (*   end (); *)
 
 
@@ -1437,7 +1405,7 @@ value testKeyboard (stage:Stage.c) =
             Touch.(
                 match touch.phase with
                 [ TouchPhaseEnded -> 
-                    Motion.show 
+                    Keyboard.show 
                       ~inittxt:"pizda"
                       ~onhide:(fun s -> debug "callback 2 : %s" s)
                       ~onchange:(fun s -> debug "callback 1 : %s" s)
@@ -1451,13 +1419,36 @@ value testKeyboard (stage:Stage.c) =
       ));
     );
 
+value game_center (stage:Stage.c) =
+    let text = "Ежедневный бонус PipIy" in
+  (
+  GameCenter.init ~callback:begin fun res ->
+    let text = 
+      match res with 
+      [ True -> "Game center success"
+      | False -> "Game center failed"
+      ]
+    in
+    debug "%s" text;
+    (*
+    let (_,text) = TLF.create (TLF.p ~fontWeight:"bold" ~fontSize:26 ~color:0xFFFF00 [ `text text ]) in
+    (
+      text#setPos 100. 100.;
+(*       text#setFilters [ Filters.glow ~size:1 ~strength:10 0 ]; *)
+      stage#addChild text;
+    );
+    *)
+  end ();
+  );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      testKeyboard self;
+      game_center self;
       (*
+      testKeyboard self;
       test_vk self;
       *)
 (*
