@@ -26,6 +26,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
   in
   atlas_render atlas transform program alpha quads;
 
+  (* FIXME: нужно hitTestPoint' - наверное перепиздячить нахуй *)
   class _c texture =
     (*
     let (programID,shaderProgram) = 
@@ -62,7 +63,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               DynArray.insert children index child
             with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (index,DynArray.length children))]
         ];
-        Node.bounds child |> ignore; (* force calc bounds *)
+        Node.sync child;
         self#boundsChanged();
       );
 
@@ -88,7 +89,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         try
           DynArray.set children idx child;
         with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (idx,DynArray.length children))];
-        Node.bounds child |> ignore; (* force calc bounds *)
+        Node.sync child; 
         self#boundsChanged();
       );
 

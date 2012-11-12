@@ -472,16 +472,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method rotation = rotation;
     method setRotation nr = 
       (* clamp between [-180 deg, +180 deg] *)
-      let nr = 
-        if nr < ~-.pi 
-        then loop nr where rec loop nr = let nr = nr +. two_pi in if nr < ~-.pi then loop nr else nr
-        else nr
-      in
-      let nr = 
-        if nr > pi 
-        then loop nr where rec loop nr = let nr = nr -. two_pi in if nr > pi then loop nr else nr
-        else nr
-      in
+      let nr = clamp_rotation nr in
       (
         rotation := nr;
         RESET_CACHE "setRotation";
