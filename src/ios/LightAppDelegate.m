@@ -25,10 +25,6 @@
 }
 
 
--(NSUInteger)application:(UIApplication*)application supportedInterfaceOrientationsForWindow:(UIWindow*)window
-{
-	return UIInterfaceOrientationMaskAllButUpsideDown;
-}     
 
 - (void)applicationWillResignActive:(UIApplication *)application        {
 	NSLog(@"resign active");
@@ -130,15 +126,24 @@
 }
 
 -(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+	NSLog(@"shouldAutorotateToInterfaceOrientation for lLightAppDelegate");
   return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 -(BOOL)shouldAutorotate {
+	NSLog(@"shouldAutorotate for lLightAppDelegate");
 	return YES;
 }
 
+-(NSUInteger)application:(UIApplication*)application supportedInterfaceOrientationsForWindow:(UIWindow*)window
+{
+	return UIInterfaceOrientationMaskAllButUpsideDown;
+}     
+
 - (NSUInteger)supportedInterfaceOrientations {
+	NSLog(@"supportedInterfaceOrientations for lLightAppDelegate");
   return UIInterfaceOrientationPortrait;
+//	return UIInterfaceOrientationMaskLandscape;
 }
 
 - (void)dealloc {
