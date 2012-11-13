@@ -301,7 +301,7 @@ static value *ml_url_complete = NULL;
 	}
 	else {
 		NSLog(@"_orientationDelegate nill");
-		return UIInterfaceOrientationPortrait;
+		return UIInterfaceOrientationMaskPortrait;
 	}
 }
 

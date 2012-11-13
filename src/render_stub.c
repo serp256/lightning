@@ -439,8 +439,8 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
 	if (matrixMV.mat[0] == 1.0 && matrixMV.mat[5] == 1.0) {
 		//matrixMV.mat[12] = (GLint)matrixMV.mat[12];
 		//matrixMV.mat[13] = (GLint)matrixMV.mat[13];
-		//matrixMV.mat[12] = round(matrixMV.mat[12]);
-		//matrixMV.mat[13] = round(matrixMV.mat[13]);
+		matrixMV.mat[12] = round(matrixMV.mat[12]);
+		matrixMV.mat[13] = round(matrixMV.mat[13]);
 	};
 	//matrixMV.mat[12] = round(matrixMV.mat[12]);
 	//matrixMV.mat[13] = round(matrixMV.mat[13]);

@@ -140,7 +140,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
             then
-              let hgs =  (powOfTwo glow.Filters.glowSize) - 1 in
+              let hgs = (powOfTwo glow.Filters.glowSize) - 1 in
               (
                 let gs = hgs * 2 in
                 let rw = bounds.Rectangle.width +. (float gs)
