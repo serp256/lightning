@@ -135,9 +135,12 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       method private updateGlowFilter () = 
         match glowFilter with
-        [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) -> 
-            let () = debug:glow "%s update glow %d" self#name glow.Filters.glowSize in
+        [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) ->  
             let bounds = self#boundsInSpace (Some self) in
+            let () = 
+              debug:glow "%s update glow %d, bounds: [%f:%f:%f:%f]" self#name 
+                glow.Filters.glowSize bounds.Rectangle.x bounds.Rectangle.y bounds.Rectangle.width bounds.Rectangle.height
+            in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
             then
               let hgs = (powOfTwo glow.Filters.glowSize) - 1 in
