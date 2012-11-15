@@ -142,7 +142,7 @@
 
 - (NSUInteger)supportedInterfaceOrientations {
 	NSLog(@"supportedInterfaceOrientations for lLightAppDelegate");
-  return UIInterfaceOrientationPortrait;
+  return UIInterfaceOrientationMaskPortrait;;
 //	return UIInterfaceOrientationMaskLandscape;
 }
 
