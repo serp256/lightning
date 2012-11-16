@@ -14,6 +14,17 @@ value pi  =  3.14159265359;
 value half_pi = pi /. 2.;
 value two_pi =  6.28318530718;
 
+value clamp_rotation nr = 
+  let nr = 
+    if nr < ~-.pi 
+    then loop nr where rec loop nr = let nr = nr +. two_pi in if nr < ~-.pi then loop nr else nr
+    else nr
+  in
+  if nr > pi 
+  then loop nr where rec loop nr = let nr = nr -. two_pi in if nr > pi then loop nr else nr
+  else nr
+;
+
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 
 exception File_not_exists of string;

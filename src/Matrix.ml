@@ -132,8 +132,3 @@ value invert m =
 value scaleX m = SIGN(m.a) *. sqrt(m.a *. m.a +. m.b *. m.b);
 value scaleY m = SIGN(m.d) *. sqrt(m.c *. m.c +. m.d *. m.d);
 value rotation m = atan2 m.b m.a;
-
-
-
-
-
