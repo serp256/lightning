@@ -3,12 +3,13 @@ open LightCommon;
 
 class _c: [ Texture.c ] -> 
   object
-    inherit DisplayObject.c;
+    inherit Image.base;
     method color: color;
     method setColor: color -> unit;
-    method texture: Texture.c;
-    method filters: list Filters.t;
-    method setFilters: list Filters.t -> unit;
+    method private updateGlowFilter: unit -> unit;
+(*     method texture: Texture.c; *)
+(*     method filters: list Filters.t; *)
+(*     method setFilters: list Filters.t -> unit; *)
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method boundsInSpace: !'space. option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
     method addChild: ?index:int -> AtlasNode.t -> unit;

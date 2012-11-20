@@ -179,11 +179,13 @@ void lgGLBindTexture(GLuint textureID, int newPMA) {
 		boundTextureID = textureID;
 	};
 	if (newPMA != PMA) {
-		if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
-			if (separateBlend)
-				glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-			else
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		if (newPMA >= 0) {
+			if (newPMA) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); else 
+				if (separateBlend)
+					glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
+				else
+					glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		};
 		PMA = newPMA;
 	};
 	if (boundTextureID1) {
@@ -364,13 +366,11 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
             //p->glTexFormat = GL_ALPHA;
             //p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
 						break;
-
 		case LTextureFormatETC1:
 #ifdef ANDROID
 			p->compressed = 1;
 			p->bitsPerPixel = 4;
 			p->glTexFormat = GL_ETC1_RGB8_OES;
-
 			break;
 #else
 			return 0;

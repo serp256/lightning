@@ -30,6 +30,7 @@ value nextPowerOfTwo: int -> int;
 value pi:float;
 value half_pi: float;
 value two_pi:float;
+value clamp_rotation: float -> float;
 
 value resources_suffix: unit -> option string;
 value set_resources_suffix: string -> unit;

@@ -1,5 +1,9 @@
 #include <stdio.h>
+#ifdef OSlinux
+#include <GL/freeglut.h>
+#else
 #include <GLUT/glut.h>
+#endif
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
@@ -55,10 +59,12 @@ void on_reshape(int width,int height) {
 
 void ml_glutReshapeFunc(value f) {
 	if (reshapeFunc == 0) {
-		reshapeFunc = f;
-		caml_register_generational_global_root(&reshapeFunc);
-	}
-	else caml_modify_generational_global_root(&reshapeFunc,f);
+		fprintf(stderr,"reshape func register gen\n");
+		//caml_register_generational_global_root(&reshapeFunc);
+		caml_register_global_root(&reshapeFunc);
+	};
+	reshapeFunc = f;
+		// caml_modify_generational_global_root(&reshapeFunc,f);
 	glutReshapeFunc(on_reshape);
 }
 

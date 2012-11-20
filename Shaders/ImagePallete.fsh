@@ -17,9 +17,10 @@ void main()
 #endif
 	// вычислить сцука индекc нахуй
 	// vec4 color = v_fragmentColor * texture2D(u_pallete,vec2((idx.r * 255.)  / 256., idx.a));
-	float x = ((idx.r * 255.) + 0.5) / 256.;
-	float y = ((idx.a * 255.) + 0.5) / 256.;
-	vec4 color = v_fragmentColor * texture2D(u_pallete,vec2( x,y));
+	//float x = ((idx.r * 255.) + 0.5) / 256.;
+	//float y = ((idx.a * 255.) + 0.5) / 256.;
+	// float x = 0; float y = 0;
+	vec4 color = v_fragmentColor * texture2D(u_pallete,vec2(idx.r * 0.99609375 + 0.001953125,idx.a * 0.99609375 + 0.001953125));
 	//vec4 color = v_fragmentColor * texture2D(u_pallete,vec2(idx.r, idx.a));
 	//vec4 color = v_fragmentColor * texture2D(u_pallete, vec2(idx.r,idx.a));
 	gl_FragColor = color * u_parentAlpha; 

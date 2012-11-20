@@ -284,6 +284,7 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 		set_framebuffer_state(&fstate);
 		caml_failwith(emsg);
 	};
+	PRINT_DEBUG("create renderTexture params: %f:%f -> [%f:%f:%f:%f]",rb.width,rb.height,rb.clp.x,rb.clp.y,rb.clp.width,rb.clp.height);
 	lgResetBoundTextures();
 	checkGLErrors("renderbuffer create");
 
@@ -374,6 +375,7 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
   rb.height = height;
 	rb.realWidth = legalWidth;
 	rb.realHeight = legalHeight;
+	rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
 	if (resized) {
 		Store_field(renderInfo,1,caml_copy_double(width));
 		Store_field(renderInfo,2,caml_copy_double(height));
@@ -383,8 +385,8 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 			clip = Val_unit;
 		} else {
 			rb.clp = (clipping) {
-				(double)(double)(legalWidth - width) / (2 * legalWidth),
-				(double)(legalHeight - height) / (2 * legalHeight),
+				(double)rb.vp.x / legalWidth,
+				(double)rb.vp.y / legalHeight,
 				(width / legalWidth),
 				(height / legalHeight)
 			};
@@ -395,7 +397,8 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 			Store_double_field(clp,3,rb.clp.height);
 			clip = caml_alloc_tuple(1);
 			Store_field(clip,0,clp);
-		}
+		};
+		PRINT_DEBUG("update texture params: %f:%f -> [%f:%f:%f:%f]",width,height,rb.clp.x,rb.clp.y,rb.clp.width,rb.clp.height);
 		Store_field(renderInfo,3,clip);
 		if (legalWidth != nextPOT(ceil(cwidth)) || legalHeight != nextPOT(ceil(cheight))) {
 
@@ -425,7 +428,6 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 			rb.clp = (clipping) {Double_field(clp,0),Double_field(clp,1),Double_field(clp,2),Double_field(clp,3)};
 		}
 	};
-	rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
 
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -504,8 +506,6 @@ void ml_test_c_fun (value f) {
 	get_framebuffer_state(&fstate);
 
 	PRINT_DEBUG("DEPTH ENABLED: %d",glIsEnabled(GL_STENCIL_TEST));
-	// what about renderbuffer
-	int j;
 	for (i = 0; i < CNT_TEST_TEXTURES; i++) {
 		rtid = textures[i];
 		PRINT_DEBUG("TRY BIND WITH %d",i);

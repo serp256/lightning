@@ -9,7 +9,53 @@ external clear: int -> float -> unit = "ml_clear";
 external checkErrors: string -> unit = "ml_checkGLErrors";
 
 external get_gl_extensions: unit -> string = "ml_get_gl_extensions";
-module Program = struct
+
+
+
+type blend_dfactor =
+  [= `GL_ZERO
+  | `GL_ONE
+  | `GL_SRC_COLOR
+  | `GL_ONE_MINUS_SRC_COLOR
+  | `GL_DST_COLOR
+  | `GL_ONE_MINUS_DST_COLOR
+  | `GL_SRC_ALPHA
+  | `GL_ONE_MINUS_SRC_ALPHA
+  | `GL_DST_ALPHA
+  | `GL_ONE_MINUS_DST_ALPHA
+  (*
+  | `GL_CONSTANT_COLOR
+  | `GL_ONE_MINUS_CONSTANT_COLOR
+  | `GL_CONSTANT_ALPHA
+  | `GL_ONE_MINUS_CONSTANT_ALPHA
+  *)
+  ];
+
+type blend_sfactor = [= blend_dfactor | `GL_SRC_ALPHA_SATURATE ];
+
+
+value int_of_blend_factor = fun
+  [ `GL_ZERO                -> 0
+  | `GL_ONE                 -> 1
+  | `GL_SRC_COLOR           -> 0x0300
+  | `GL_ONE_MINUS_SRC_COLOR -> 0x0301
+  | `GL_SRC_ALPHA           -> 0x0302
+  | `GL_ONE_MINUS_SRC_ALPHA -> 0x0303
+  | `GL_DST_ALPHA           -> 0x0304
+  | `GL_ONE_MINUS_DST_ALPHA -> 0x0305
+  | `GL_DST_COLOR           -> 0x0306
+  | `GL_ONE_MINUS_DST_COLOR -> 0x0307
+  | `GL_SRC_ALPHA_SATURATE  -> 0x0308
+  ];
+
+type blend = [ BlendSimple of (blend_sfactor * blend_dfactor) | BlendSeparate of (blend_sfactor * blend_dfactor * blend_sfactor * blend_dfactor) ];
+type intblend = [ IntBlendSimple of (int*int) | IntBlendSeparate of (int*int*int*int) ];
+value intblend_of_blend = fun
+  [ BlendSimple s d -> IntBlendSimple ((int_of_blend_factor s),(int_of_blend_factor d))
+  | BlendSeparate sc dc sa da -> IntBlendSeparate ((int_of_blend_factor sc),(int_of_blend_factor dc),(int_of_blend_factor sa),(int_of_blend_factor da))
+  ];
+
+module Program = struct (*{{{*)
 
   type shader_type = [ Vertex | Fragment ];
   type shader;
@@ -39,6 +85,7 @@ module Program = struct
 
   type attribute = [ AttribPosition |  AttribTexCoords | AttribColor ]; (* с атриббутами пока так *)
   type t;
+  type id = int;
 
   value gen_id = 
     let _program_id = ref 0 in
@@ -87,7 +134,7 @@ module Program = struct
   Callback.register "programs_cache_clear" clear;
 
 
-end;
+end;(*}}}*)
 
 type filter;
 (*
@@ -134,7 +181,7 @@ module Image = struct
   external set_alpha: t -> float -> unit = "ml_image_set_alpha" "noalloc";
 (*   external colors: t -> array int = "ml_quad_colors"; *)
   external update: t -> Texture.renderInfo -> ~flipX:bool -> ~flipY:bool -> unit =  "ml_image_update" "noalloc";
-  external render: Matrix.t -> prg -> ?alpha:float -> t -> unit = "ml_image_render" "noalloc"; 
+  external render: Matrix.t -> prg -> ?alpha:float -> ?blend:intblend -> t -> unit = "ml_image_render" "noalloc"; 
 
 end;
 

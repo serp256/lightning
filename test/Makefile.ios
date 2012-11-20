@@ -1,5 +1,5 @@
-PLAT = /Developer/Platforms/iPhoneOS.platform
-SDK = /Developer/SDKs/iPhoneOS5.1.sdk
+PLAT = /Applications/XCode.app/Contents/Developer/Platforms/iPhoneOS.platform
+SDK = /Developer/SDKs/iPhoneOS6.0.sdk
 #OCAMLFIND = /usr/local/bin/ocamlfind -toolchain ios
 OCAMLFIND = ocamlfind -toolchain ios
 OCAMLOPT = $(OCAMLFIND) ocamlopt

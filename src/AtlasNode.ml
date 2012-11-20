@@ -3,7 +3,7 @@ open LightCommon;
 type t = 
   {
     texture: Texture.c;
-    bounds: mutable Rectangle.t;
+    glpoints: mutable (option (array float));
     clipping: Rectangle.t;
     width: float;
     height: float;
@@ -15,9 +15,10 @@ type t =
     scaleX: float;
     scaleY: float;
     rotation: float;
+    bounds: mutable Rectangle.t;
   };
 
-value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=`NoColor) ?(flipX=False) ?(flipY=False) ?(alpha=1.) () = 
+value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(color=`NoColor) ?(flipX=False) ?(flipY=False) ?(alpha=1.) () = 
   let s = texture#scale in
   let tw = texture#width /. s
   and th = texture#height /. s in
@@ -52,7 +53,8 @@ value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=`
       texture;
       width=rect.Rectangle.width *. s;
       height=rect.Rectangle.height *. s;
-      pos; color; alpha; flipX; flipY; scaleX; scaleY; rotation=0.;
+      pos; color; alpha; flipX; flipY; scaleX; scaleY; rotation=match rotation with [ None -> 0. | Some r -> LightCommon.clamp_rotation r];
+      glpoints=None;
       bounds=Rectangle.empty;
       clipping=(Obj.magic clipping)
     };
@@ -61,16 +63,17 @@ value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?(color=`
 value pos t = t.pos;
 value x t = t.pos.Point.x;
 value y t = t.pos.Point.y;
-value setX x t = {(t) with pos = {(t.pos) with Point.x}; bounds=Rectangle.empty};
-value setY y t = {(t) with pos = {(t.pos) with Point.y}; bounds=Rectangle.empty};
-value setPos x y t = {(t) with pos = {Point.x;y};bounds=Rectangle.empty};
-value setPosPoint pos t = {(t) with pos;bounds=Rectangle.empty};
+value setX x t = {(t) with pos = {(t.pos) with Point.x}; glpoints = None; bounds=Rectangle.empty};
+value setY y t = {(t) with pos = {(t.pos) with Point.y}; glpoints = None; bounds=Rectangle.empty};
+value setPos x y t = {(t) with pos = {Point.x;y};glpoints = None; bounds=Rectangle.empty};
+value setPosPoint pos t = {(t) with pos; glpoints = None; bounds=Rectangle.empty};
 value update ?pos ?scale ?color ?alpha t = 
   let (scaleX,scaleY) = match scale with [ None -> (t.scaleX,t.scaleY) | Some s -> (s,s) ] in
   {(t) with 
     pos = match pos with [ None -> t.pos | Some p -> p ]; scaleX; scaleY; 
     color = match color with [ None -> t.color | Some c -> c]; 
     alpha = match alpha with [ None -> t.alpha | Some a -> a];
+    glpoints = None;
     bounds = Rectangle.empty
   };
 
@@ -99,25 +102,50 @@ value setFlipY flipY  t =
   ];
 
 value scaleX t = t.scaleX;
-value setScaleX scaleX t = {(t) with scaleX; bounds=Rectangle.empty};
-
+value setScaleX scaleX t = {(t) with scaleX; glpoints = None; bounds=Rectangle.empty};
 
 value scaleY t = t.scaleY;
-value setScaleY scaleY t = {(t) with scaleY; bounds=Rectangle.empty};
+value setScaleY scaleY t = {(t) with scaleY; glpoints = None; bounds=Rectangle.empty};
 
 value matrix t = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation ();
+
+value calc_glpoints t = 
+  let m = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation () in
+  let open Point in
+  let p0 = Matrix.transformPoint m {x = 0.; y = 0.} 
+  and p1 = Matrix.transformPoint m {x = t.width; y = 0.} 
+  and p2 = Matrix.transformPoint m {x = 0.; y = t.height}
+  and p3 = Matrix.transformPoint m {x = t.width; y = t.height} in
+  [| p0.x; p0.y; p1.x; p1.y; p2.x; p2.y; p3.x; p3.y |];
+
+
+value sync t = 
+  match t.glpoints with
+  [ None -> t.glpoints := Some (calc_glpoints t)
+  | Some _ -> ()
+  ];
 
 value bounds t = 
   match t.bounds == Rectangle.empty with
   [ True ->
-    let m = matrix t in
-    let b = 
-      let ar = Matrix.transformPoints m [| Point.empty; {Point.x=0.;y=t.height}; {Point.x=t.width;y=0.}; {Point.x=t.width;y=t.height} |] in
-      Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
-    in
+    let glpoints = match t.glpoints with [ Some glpoints -> glpoints | None -> let glpoints = calc_glpoints t in (t.glpoints := Some glpoints; glpoints) ] in
+    let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
     (
-      t.bounds := b;
-      b
+      for i = 0 to 3 do
+        let x = glpoints.(i*2)
+        and y = glpoints.(i*2 + 1) in
+        (
+          if ar.(0) > x then ar.(0) := x else ();
+          if ar.(1) < x then ar.(1) := x else ();
+          if ar.(2) > y then ar.(2) := y else ();
+          if ar.(3) < y then ar.(3) := y else ();
+        )
+      done;
+      let b = Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2)) in
+      (
+        t.bounds := b;
+        b
+      )
     )
   | False -> t.bounds
   ];

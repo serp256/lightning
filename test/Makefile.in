@@ -1,4 +1,6 @@
-include target
+-include target
+
+TARGET ?= example
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug default
 

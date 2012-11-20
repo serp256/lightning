@@ -350,6 +350,13 @@ value get_symbol_async lib cls callback =
 
 value symbols lib = ExtHashtbl.Hashtbl.keys lib.symbols;
 
+value get_symbol_data lib cls = try Hashtbl.find lib.symbols cls with [ Not_found -> raise (Symbol_not_found cls) ];
+value get_texture lib tid = 
+    match lib.textures with
+    [ TFiles files -> Texture.load ~with_suffix:False (Filename.concat lib.path files.(tid))
+    | TTextures textures -> textures.(tid)
+    ];
+
 
 (* бинарный формат нахуй *)
 value _load libpath = 
@@ -950,3 +957,6 @@ value release lib =
   [ TTextures tx -> Array.iter (fun t -> t#release ()) tx
   | _ -> ()
   ];
+
+
+

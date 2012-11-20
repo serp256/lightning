@@ -616,6 +616,18 @@ void print_quad(lgQuad *q) {
 	print_vertex(&(q->tr));
 }
 
+static inline void apply_blend(value mlblend) {
+	value p = Field(mlblend,0);
+	switch (Tag_val(mlblend)) {
+		case 0: // BlendFunc
+			glBlendFunc(Int_val(Field(p,0)),Int_val(Field(p,1)));
+			break;
+		case 1: // BlendFuncSeparate
+			glBlendFuncSeparate(Int_val(Field(p,0)),Int_val(Field(p,1)),Int_val(Field(p,2)),Int_val(Field(p,3)));
+			break;
+	};
+}
+
 void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	lgQuad *q = QUAD(quad);
 	PRINT_DEBUG("RENDER QUAD");
@@ -904,7 +916,7 @@ void ml_image_flip_tex_y(value image) {
 	tq->br.tex = tmp;
 }
 
-void ml_image_render(value matrix, value program, value alpha, value image) {
+void ml_image_render(value matrix, value program, value alpha, value blend, value image) {
 	//fprintf(stderr,"render image\n");
 	PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
@@ -933,9 +945,15 @@ void ml_image_render(value matrix, value program, value alpha, value image) {
 		checkGLErrors("apply filters");
 	};
 
+	int pma = -1;
+	if (blend == Val_none) {
+		pma = img->pma;
+	} else {
+		apply_blend(Field(blend,0));
+	};
 	if (img->pallete) {
-		lgGLBindTextures(img->textureID,img->pallete,img->pma);
-	} else lgGLBindTexture(img->textureID,img->pma);
+		lgGLBindTextures(img->textureID,img->pallete,pma);
+	} else lgGLBindTexture(img->textureID,pma);
 	checkGLErrors("bind texture");
 
 	//print_image(tq);
@@ -1146,14 +1164,14 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 		};
 
 		lgTexQuad *q;
-		value child,bounds,clipping,clr,qclr;
+		value child,points,clipping,clr,qclr;
 		double alpha;
 		int ic;
 		double quad[4];
     //fprintf(stderr,"len of quads: %d\n",len);
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
-			bounds = Field(child,1);
+			points = Field(Field(child,1),0);
 			clipping = Field(child,2);
 			//icolor = Int_val(Field(child,6));
 			clr = Field(child,6);
@@ -1233,23 +1251,25 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 #undef MULTIPLY_COLORS
 			};
 
+			/*
 			quad[0] = Double_field(bounds,0);
 			quad[1] = Double_field(bounds,1);
 			quad[2] = Double_field(bounds,2);
 			quad[3] = Double_field(bounds,3);
+			*/
 
 			//fprintf(stderr,"atals quad: %f:%f:%f:%f\n",quad[0],quad[1],quad[2],quad[3]);
 
-			q->bl.v = (vertex2F){RENDER_SUBPIXEL(quad[0]),RENDER_SUBPIXEL(quad[1])};
+			q->bl.v = (vertex2F){RENDER_SUBPIXEL(Double_field(points,0)),RENDER_SUBPIXEL(Double_field(points,1))};
 			q->bl.tex = (tex2F){Double_field(clipping,0),Double_field(clipping,1)};
 
-			q->br.v = (vertex2F){RENDER_SUBPIXEL(quad[0] + quad[2]),q->bl.v.y};
+			q->br.v = (vertex2F){RENDER_SUBPIXEL(Double_field(points,2)),RENDER_SUBPIXEL(Double_field(points,3))};
 			q->br.tex = (tex2F){q->bl.tex.u + Double_field(clipping,2),q->bl.tex.v};
 
-			q->tl.v = (vertex2F){q->bl.v.x,RENDER_SUBPIXEL(quad[1] + quad[3])};
+			q->tl.v = (vertex2F){RENDER_SUBPIXEL(Double_field(points,4)),RENDER_SUBPIXEL(Double_field(points,5))};
 			q->tl.tex = (tex2F){q->bl.tex.u,q->bl.tex.v + Double_field(clipping,3)};
 
-			q->tr.v = (vertex2F){q->br.v.x,q->tl.v.y};
+			q->tr.v = (vertex2F){RENDER_SUBPIXEL(Double_field(points,6)),RENDER_SUBPIXEL(Double_field(points,7))};
 			q->tr.tex = (tex2F){q->br.tex.u,q->tl.tex.v};
 
 		};
