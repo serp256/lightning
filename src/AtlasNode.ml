@@ -107,6 +107,8 @@ value setScaleX scaleX t = {(t) with scaleX; glpoints = None; bounds=Rectangle.e
 value scaleY t = t.scaleY;
 value setScaleY scaleY t = {(t) with scaleY; glpoints = None; bounds=Rectangle.empty};
 
+value matrix t = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation ();
+
 value calc_glpoints t = 
   let m = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation () in
   let open Point in
