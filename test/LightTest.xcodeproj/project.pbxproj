@@ -10,6 +10,8 @@
 		5104680B164D384800F64D53 /* UI_linear in Resources */ = {isa = PBXBuildFile; fileRef = 5104680A164D384800F64D53 /* UI_linear */; };
 		510C021314FE6C1200BDDCFC /* ra_fertilizer.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */; };
 		510C021614FE6ED800BDDCFC /* stoneBoom.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021514FE6ED800BDDCFC /* stoneBoom.caf */; };
+		5121613B1654E96C009900F2 /* test.pvr in Resources */ = {isa = PBXBuildFile; fileRef = 5121613A1654E96C009900F2 /* test.pvr */; };
+		5121613E16552EDD009900F2 /* cow in Resources */ = {isa = PBXBuildFile; fileRef = 5121613D16552EDD009900F2 /* cow */; };
 		5134AA2415C663B300814238 /* close_button.png in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2015C6633200814238 /* close_button.png */; };
 		5134AA2515C663B300814238 /* TJCLoadingView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2115C6633200814238 /* TJCLoadingView.xib */; };
 		5134AA2615C663B300814238 /* TJCVideoView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5134AA2215C6633200814238 /* TJCVideoView.xib */; };
@@ -58,6 +60,8 @@
 		5104680A164D384800F64D53 /* UI_linear */ = {isa = PBXFileReference; lastKnownFileType = folder; name = UI_linear; path = Resources/UI_linear; sourceTree = "<group>"; };
 		510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = ra_fertilizer.caf; path = ../../lightning/test/Resources/ra_fertilizer.caf; sourceTree = "<group>"; };
 		510C021514FE6ED800BDDCFC /* stoneBoom.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = stoneBoom.caf; path = ../../lightning/test/Resources/stoneBoom.caf; sourceTree = "<group>"; };
+		5121613A1654E96C009900F2 /* test.pvr */ = {isa = PBXFileReference; lastKnownFileType = file; name = test.pvr; path = Resources/test.pvr; sourceTree = "<group>"; };
+		5121613D16552EDD009900F2 /* cow */ = {isa = PBXFileReference; lastKnownFileType = folder; name = cow; path = Resources/cow; sourceTree = "<group>"; };
 		5134AA2015C6633200814238 /* close_button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close_button.png; sourceTree = "<group>"; };
 		5134AA2115C6633200814238 /* TJCLoadingView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = TJCLoadingView.xib; sourceTree = "<group>"; };
 		5134AA2215C6633200814238 /* TJCVideoView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = TJCVideoView.xib; sourceTree = "<group>"; };
@@ -106,6 +110,8 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
+				5121613D16552EDD009900F2 /* cow */,
+				5121613A1654E96C009900F2 /* test.pvr */,
 				5104680A164D384800F64D53 /* UI_linear */,
 				516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */,
 				516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */,
@@ -242,6 +248,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5121613E16552EDD009900F2 /* cow in Resources */,
+				5121613B1654E96C009900F2 /* test.pvr in Resources */,
 				5104680B164D384800F64D53 /* UI_linear in Resources */,
 				516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */,
 				516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */,

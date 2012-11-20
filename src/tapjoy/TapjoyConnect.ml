@@ -24,7 +24,7 @@ external ml_tapjoy_get_user_id : unit -> string = "ml_tapjoy_get_user_id";
 
 external ml_tapjoy_action_complete : string -> unit = "ml_tapjoy_action_complete";
 
-external getOpenUDID: unit -> option string = "ml_TJCOpenUDIDvalue";
+(* external getOpenUDID: unit -> option string = "ml_TJCOpenUDIDvalue"; *)
 
 ELSE 
 
@@ -32,7 +32,7 @@ value ml_tapjoy_get_user_id () = "";
 
 value ml_tapjoy_action_complete action = ();
 
-value getOpenUDID () = None;
+(* value getOpenUDID () = None; *)
 
 ENDPLATFORM;
 
