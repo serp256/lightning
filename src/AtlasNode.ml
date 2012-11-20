@@ -105,10 +105,12 @@ value setScaleX scaleX t = {(t) with scaleX; bounds=Rectangle.empty};
 value scaleY t = t.scaleY;
 value setScaleY scaleY t = {(t) with scaleY; bounds=Rectangle.empty};
 
+value matrix t = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation ();
+
 value bounds t = 
   match t.bounds == Rectangle.empty with
   [ True ->
-    let m = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation () in
+    let m = matrix t in
     let b = 
       let ar = Matrix.transformPoints m [| Point.empty; {Point.x=0.;y=t.height}; {Point.x=t.width;y=0.}; {Point.x=t.width;y=t.height} |] in
       Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
