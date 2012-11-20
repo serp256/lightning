@@ -51,11 +51,30 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
 						Stack.push os maskStack;
 						let minY = sheight -. os.y1
 						and maxY = sheight -. os.y0 in
-						let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } in
+						let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } 
+						and np = ref False in
 						(
-							glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
-							call_render;
-							glDisableScissor ();
+						 if (os.x1 > 0.0 && os.y1 > 0.0) then (
+							 if (Stack.length maskStack > 1) then glDisableScissor () else ();
+								glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
+								call_render;
+								glDisableScissor ();
+								if (Stack.length maskStack > 1) then 
+									(
+										np.val := True;
+										ignore ( Stack.pop maskStack );
+										let os = Stack.top maskStack in
+										let minY = sheight -. os.y1
+										and maxY = sheight -. os.y0 in
+										let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } in
+										(
+											glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
+										);
+									)
+								else ();
+							) else ();
+
+							if !np then () else 
 							ignore ( Stack.pop maskStack );
 							debug:mask "pull";
 						);
