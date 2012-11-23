@@ -1441,13 +1441,141 @@ value game_center (stage:Stage.c) =
   end ();
   );
 
+value test_queue () = 
+  let module Q = Timers.TimersQueue in 
+  let queue = Q.make () in
+  let nums = 
+    [
+      17.117207;
+      17.119642;
+      24.271432;
+      25.975168;
+      17.226574;
+      180004.296257;
+      25.840832;
+      19546.711759;
+      25.975168;
+      25.840832;
+    ]
+  in
+  let f () = () in
+  let ids = DynArray.create () in
+  let index = ref 0 in
+  let addTime time = 
+    (
+      Q.add queue (time, !index, f);
+      DynArray.add ids !index;
+      incr index;
+    )
+  in
+    (
+      List.iter addTime nums;
+      Random.self_init ();
+
+      let check () = assert (Q.is_heap queue) in
+      let print_q () = 
+        (
+          debug "===================";
+          debug "print queue";
+          Q.fold (fun () (time,id,_) ->
+            (
+              debug "el %d time : %f" id time;
+            )
+          ) () queue;
+          debug "===================";
+        )
+      in
+      (*
+        let (t,_,_) = Q.first queue in
+        Q.fold (fun () (time,id,_) ->
+          (
+            debug:pizda "first time : %f; cur time ; %f; %b" time t (time >= t);
+            assert (time >= t)
+          )
+        ) () queue
+      in
+      *)
+      let addRandTime () = 
+        let time = Random.float 180. in
+        addTime time
+      in
+      let remove () = 
+        let len = DynArray.length ids in
+        match len with
+        [ 0 -> ()
+        | _ -> 
+            let i = Random.int len in
+            let id = DynArray.get ids i in
+              (
+                DynArray.delete ids i;
+                Q.remove_if (fun (_,id',_) -> id=id') queue;
+
+              )
+        ]
+      in
+      let addDuplicate () = 
+        Q.fold (fun () (time,_,_) ->
+          (
+            addTime time;
+          )
+        ) () queue
+      in 
+        (
+          print_q ();
+          Q.remove_if (fun (_,id,_) -> id = 9) queue;
+          print_q ();
+          check ();
+          failwith "PIZDA";
+        )
+      (*
+      let rec loop () = 
+        (
+          check ();
+          match (Random.int 200) with
+          [ n when n >= 100 -> addRandTime ()
+          | _ -> remove ()
+          ];
+          loop ()
+        )
+      in
+      loop ()
+    *)
+      (*
+      Q.fold (fun () (time,id,_) ->
+          debug "timer %d start from time %f" id time
+      ) () queue;
+      if not (Q.is_empty queue)
+      then 
+        (
+          debug "Not empry";
+          let rec run_timers () =
+            match Q.first queue with
+            [ (t',id,_) ->
+              (
+                debug " first from queue %d-%f" id t'  ;
+                Q.remove_first queue;
+                      match Q.is_empty queue with
+                      [ True -> ()
+                      | False -> run_timers ()
+                      ]
+              )
+            | _ -> debug:timer ""
+            ]
+          in
+          run_timers ()
+        )
+      else ()
+      *)
+    );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      game_center self;
+      test_queue ();
       (*
+      game_center self;
       testKeyboard self;
       test_vk self;
       *)
