@@ -3,7 +3,7 @@ exception Texture_not_found of string;
 
 type t = 
   {
-    regions: Hashtbl.t string (int * Rectangle.t);
+    regions: Hashtbl.t string (int * Rectangle.t * (int * int));
     textures: array Texture.c;
   };
 
@@ -76,7 +76,11 @@ value load binpath =
           let w = IO.read_ui16 bininp in
           let h = IO.read_ui16 bininp in
           let _r = IO.read_byte bininp in
-          Hashtbl.add regions name (i,Rectangle.create (f x) (f y) (f w) (f h));
+          (* считываем позицию *)
+          let posX = IO.read_ui16 bininp in
+          let posY = IO.read_ui16 bininp in
+            Hashtbl.add regions name (i,Rectangle.create (f x) (f y) (f w) (f
+            h), (posX, posY));
         done;
       done;
       close_in inp;
@@ -101,10 +105,14 @@ value loadxml xmlpath =
               (
                 parseSubTextures () where
                   rec parseSubTextures () = 
-                    match XmlParser.parse_element "SubTexture" ["id";"x";"y";"w";"h"] with
-                    [ Some [ name;x;y;width;height] _ ->
+                    match XmlParser.parse_element "SubTexture"
+                    ["id";"x";"y";"w";"h";"posX";"posY"] with
+                    [ Some [ name;x;y;width;height;posX;posY] _ ->
                       (
-                        Hashtbl.add regions name (cnt,(Rectangle.create ((float_of_string x)) ((float_of_string y)) ((float_of_string width)) ((float_of_string height))));
+                        Hashtbl.add regions name (cnt,(Rectangle.create
+                        ((float_of_string x)) ((float_of_string y))
+                        ((float_of_string width)) ((float_of_string
+                        height))),(int_of_string posX, int_of_string posY));
                         parseSubTextures ()
                       )
                     | None -> ()
@@ -126,7 +134,7 @@ value loadxml xmlpath =
 value texture atlas num = atlas.textures.(num); (* FIXME: check *)
 
 value subTexture atlas name = 
-  let (num,region) = 
+  let (num,region,(posX,posY)) = 
     try
       Hashtbl.find atlas.regions name
     with [ Not_found -> raise (Texture_not_found name) ]
@@ -134,7 +142,7 @@ value subTexture atlas name =
   atlas.textures.(num)#subTexture region;
 
 value atlasNode atlas name ?pos ?scaleX ?scaleY ?color ?flipX ?flipY ?alpha () =
-  let (num,region) = 
+  let (num,region,(posX, posY)) = 
     try
       Hashtbl.find atlas.regions name
     with [ Not_found -> raise (Texture_not_found name) ]
@@ -147,3 +155,26 @@ value description atlas name =
     Hashtbl.find atlas.regions name
   with [ Not_found -> raise (Texture_not_found name) ];
 
+(* получаем позицию текстуры*)
+value subTexturePos atlas name = 
+  let (num,region,(posX,posY)) = 
+    try
+      Hashtbl.find atlas.regions name
+    with [ Not_found -> raise (Texture_not_found name) ]
+  in
+  (posX,posY);
+
+(* загрузить все субтекстуры с именем, содержащим путь*)
+value loadRegionsByPrefix atlas path =
+  let regions = ref [] in
+    let func name (num, region, (posX,posY)) =
+      match ExtString.String.starts_with name path with
+      [
+        True -> regions.val := [(name,(atlas.textures.(num)#subTexture region),(posX,posY))::!regions]
+       |False -> ()
+      ]
+    in
+    (
+      Hashtbl.iter func atlas.regions;
+      !regions
+    );
