@@ -272,6 +272,15 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 } 
 
 
+static int texture_enabled = 1;
+#define ENABLE_TEXTURE() if (!texture_enabled) {glEnable(GL_TEXTURE_2D); texture_enabled = 1;};
+#define DISABLE_TEXTURE() if (texture_enabled) {glDisable(GL_TEXTURE_2D); texture_enabled = 0;};
+void glEnableTexture() {
+	ENABLE_TEXTURE();
+}
+void glDisableTexture() {
+	DISABLE_TEXTURE();
+}
 /*
 	void *specUniforms;
 	uniformFun bindUniforms;
@@ -496,6 +505,8 @@ typedef struct
   color4B   c;
 } lgQVertex;
 
+#define QVertexSize sizeof(lgQVertex)
+
 //! 4 ccV3F_C4F_T2F
 typedef struct 
 {
@@ -633,6 +644,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	PRINT_DEBUG("RENDER QUAD");
 	checkGLErrors("start render quad");
 
+	DISABLE_TEXTURE();
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
 	checkGLErrors("quad render use program");
@@ -649,16 +661,14 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	setNotPMAGLBlend();
 	long offset = (long)q;
 
-	#define kQuadSize sizeof(q->bl)
-
   // vertex
   int diff = offsetof( lgQVertex, v);
-  glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
+  glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, QVertexSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
   
   // color
   diff = offsetof( lgQVertex, c);
-  glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
+  glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, QVertexSize, (void*)(offset + diff));
   
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	checkGLErrors("draw quad arrays");
@@ -920,6 +930,7 @@ void ml_image_render(value matrix, value program, value alpha, value blend, valu
 	//fprintf(stderr,"render image\n");
 	PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
+	ENABLE_TEXTURE();
 	checkGLErrors("start image render");
 
 	//print_image(tq);
@@ -1094,6 +1105,8 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
 
+	ENABLE_TEXTURE();
+
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
 	lgGLUniformModelViewProjectionMatrix(sp);
@@ -1167,7 +1180,7 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 		value child,points,clipping,clr,qclr;
 		double alpha;
 		int ic;
-		double quad[4];
+		//double quad[4];
     //fprintf(stderr,"len of quads: %d\n",len);
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
@@ -1353,3 +1366,92 @@ value ml_get_gl_extensions(value unit) {
 	value res = caml_copy_string(ext);
 	return res;
 }
+
+
+///////////////////////////
+/// Shapes
+/////////////////////
+
+typedef struct {
+	GLuint buffer;
+	GLenum method;
+	GLuint len;
+} shape_t;
+
+#define SHAPE(v) ((shape_t*)Data_custom_val(v))
+
+static void shape_finalize(value mlshape) {
+	PRINT_DEBUG("shape finalize");
+	shape_t *shape = SHAPE(mlshape);
+	glDeleteBuffers(1,&shape->buffer);
+}
+
+struct custom_operations shape_ops = {
+  "pointer to shape gl buffers",
+  shape_finalize,
+ 	custom_compare_default,
+  custom_hash_default,
+  custom_serialize_default,
+  custom_deserialize_default
+};
+
+static shape_data_len = 0;
+static lgQVertex *shape_vertexes = NULL;
+
+value ml_shape_init (value mlpoints, value ml_draw_method) {
+	value result = caml_alloc_custom(&shape_ops,sizeof(shape_t),0,1);
+	shape_t *shape = SHAPE(result);
+  glGenBuffers(1, &shape->buffer);
+	// Прохуячить по окамльному массиву и загнать нахуй все в буффер блядь
+	mlsize_t len = caml_array_length(mlpoints);
+	if (len < shape_data_len) {
+		shape_vertexes = realloc(shape_vertexes,sizeof(lgQVertex) * len);
+		shape_data_len = len;
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, shape->buffer);
+	value point;
+	for (int i = 0; i < len; i++) {
+		point = Field(mlpoints,i);
+		shape_vertexes[i].v.x = Double_val(Field(point,0));
+		shape_vertexes[i].v.y = Double_val(Field(point,1));
+		shape_vertexes[i].c = COLOR_FROM_INT(Long_val(Field(point,2)),Double_val(Field(point,3)));
+	};
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lgQVertex) * len, shape_vertexes, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+	shape->len = len;
+	return result;
+}
+
+void ml_shape_render(value mlshape,value matrix,value program,value alpha) {
+	shape_t *shape = SHAPE(mlshape);
+	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
+	DISABLE_TEXTURE();
+	lgGLUseProgram(sp->program);
+	kmGLPushMatrix();
+	applyTransformMatrix(matrix);
+	lgGLUniformModelViewProjectionMatrix(sp);
+	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosColor);
+	/*
+	value fs = Field(program,1);
+	if (fs != Val_unit) {
+		filter *f = FILTER(Field(fs,0));
+		f->render(sp,f->data);
+		checkGLErrors("apply filters");
+	};
+	*/
+	setNotPMAGLBlend();
+	glBindBuffer(GL_ARRAY_BUFFER,shape->buffer);
+	// vertices
+	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, QVertexSize, (GLvoid*) offsetof( lgQVertex, v));
+	// colors
+	glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, QVertexSize, (GLvoid*) offsetof( lgQVertex, c));
+  glDrawArrays(GL_LINES, 0, shape->len);
+	checkGLErrors("draw shape arrays");
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+
+	kmGLPopMatrix();
+}
+
+
+
