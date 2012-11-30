@@ -120,7 +120,7 @@ value remove_index h i =
     set h i y;
     DynArray.delete_last h.heap;
     Hashtbl.remove h.indices x;
-    down_heap h i
+    if (P.order x y) then (down_heap h i) else (up_heap h i);
   );
 
 value remove_first h =

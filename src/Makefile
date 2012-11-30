@@ -65,7 +65,7 @@ ifeq ($(PLATFORM),IOS)
 		ifeq ($(OS),macos)
 			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -framework Cocoa  -framework OpenGL -framework GLUT
 		else
-			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lGL'
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lGL' -cclib '-lglut'
 		endif
 		LIBFLAGS += -lcurl -lpng -ljpeg
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
@@ -97,7 +97,7 @@ LIBFLAGS += -cclib '-lz'
 
 MLPPOPT += -D$(PLATFORM)
 MLCOPTS += -D$(PLATFORM)
-CFLAGS += -D$(PLATFORM)
+CFLAGS += -D$(PLATFORM) -DOS$(OS)
 
 $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 

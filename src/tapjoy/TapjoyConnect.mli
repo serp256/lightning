@@ -4,7 +4,7 @@ value init : string -> string -> unit;
 (* по умолчанию uid равен UDID (или IMEI на android). Если мы используем виртуальную валюту, то нужен нормальный ID *)
 value setUserID : string -> unit;
 value getUserID : unit -> string;
-value getOpenUDID: unit -> option string;
+(* value getOpenUDID: unit -> option string; *)
 
 (* для Pay Per Action - сообщаем о том, что завершили action. Перед вызовом нужно выставить UserID *)
 value actionComplete : string -> unit;

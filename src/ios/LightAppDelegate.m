@@ -25,6 +25,7 @@
 }
 
 
+
 - (void)applicationWillResignActive:(UIApplication *)application        {
 	NSLog(@"resign active");
 	[lightViewController resignActive];
@@ -125,15 +126,24 @@
 }
 
 -(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+	NSLog(@"shouldAutorotateToInterfaceOrientation for lLightAppDelegate");
   return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 -(BOOL)shouldAutorotate {
+	NSLog(@"shouldAutorotate for lLightAppDelegate");
 	return YES;
 }
 
+-(NSUInteger)application:(UIApplication*)application supportedInterfaceOrientationsForWindow:(UIWindow*)window
+{
+	return UIInterfaceOrientationMaskAllButUpsideDown;
+}     
+
 - (NSUInteger)supportedInterfaceOrientations {
-  return UIInterfaceOrientationPortrait;
+	NSLog(@"supportedInterfaceOrientations for lLightAppDelegate");
+  return UIInterfaceOrientationMaskPortrait;;
+//	return UIInterfaceOrientationMaskLandscape;
 }
 
 - (void)dealloc {

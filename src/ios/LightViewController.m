@@ -272,22 +272,26 @@ static value *ml_url_complete = NULL;
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 
+	NSLog(@"Controller shouldAutorotateToInterfaceOrientation called");
 	if (_orientationDelegate) {
 		BOOL res = [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
 		return res;
 	}
-	else
+	else {
+		NSLog(@"_orientationDelegate nill");
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
+	}
 }
 
-/*
 - (BOOL)shouldAutorotate {
 	NSLog(@"Controller shouldAutorotate called");
 	if (_orientationDelegate && [_orientationDelegate respondsToSelector:@selector(shouldAutorotate)]) {
 		return [_orientationDelegate shouldAutorotate];
 	}
-	else
+	else {
+		NSLog(@"_orientationDelegate nill");
 		return YES;
+	}
 }
 
 - (NSUInteger)supportedInterfaceOrientations {
@@ -295,10 +299,11 @@ static value *ml_url_complete = NULL;
 	if (_orientationDelegate && [_orientationDelegate respondsToSelector:@selector(supportedInterfaceOrientations)]) {
 		return [_orientationDelegate supportedInterfaceOrientations];
 	}
-	else
-		return UIInterfaceOrientationPortrait;
+	else {
+		NSLog(@"_orientationDelegate nill");
+		return UIInterfaceOrientationMaskPortrait;
+	}
 }
-*/
 
 
 /* handle payment transactions */
