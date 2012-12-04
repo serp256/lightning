@@ -274,7 +274,7 @@ ENDIF;
 
 type deviceType = [ Phone | Pad ];
 type androidScreen = [ Small| Normal | Large | Xlarge ];
-type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi ];
+type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
 
 value androidScreenToString screen =
   match screen with
@@ -290,6 +290,7 @@ value androidDensityToString density =
   | Mdpi -> "Mdpi"
   | Hdpi -> "Hdpi"
   | Xhdpi -> "Xhdpi"
+  | Tvdpi -> "Tvdpi"
   ];
 
 IFDEF IOS THEN

@@ -43,7 +43,7 @@ value read_json: ?with_suffix:bool -> string -> Ojson.t;
 
 type deviceType = [ Phone | Pad ];
 type androidScreen = [ Small| Normal | Large | Xlarge ];
-type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi ];
+type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
 
 value deviceType: unit -> deviceType;
 

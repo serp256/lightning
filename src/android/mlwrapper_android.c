@@ -1843,3 +1843,8 @@ value ml_totalMemory() {
 
 	return Val_long(jtotalmem);
 }
+
+JNIEXPORT jstring JNICALL Java_ru_redspell_lightning_LightView_glExts(JNIEnv *env, jobject this) {
+	const char *exts = (char*)glGetString(GL_EXTENSIONS);
+	return (*env)->NewStringUTF(env, exts);
+}

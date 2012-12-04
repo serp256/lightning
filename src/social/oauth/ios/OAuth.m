@@ -328,7 +328,7 @@
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)webViewDidFinishLoad:(UIWebView *)webView {                                                                                                                                      
-  //NSLog(@"Finished loading '%@'", webView.request.URL.absoluteString);
+  NSLog(@"Finished loading '%@'", webView.request.URL.absoluteString);
 
   if (!_authorizing) {
     return;
@@ -342,6 +342,8 @@
 	// В VK если сперва вбили левый логин, а потом нажали cancel, то нас не редиректят на blank.html
 	//NSLog(@"Content %@", content);
 	if ([@"security breach" isEqualToString: content] || [@"<pre style=\"word-wrap: break-word; white-space: pre-wrap;\">{\"error\":\"invalid_request\",\"error_description\":\"Security Error\"}</pre>" isEqualToString: content] ) {
+		NSLog(@"123");
+
 		NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
 		[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
 		caml_acquire_runtime_system();
@@ -352,6 +354,8 @@
 		caml_release_runtime_system();
 		return;
 	} else if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+		NSLog(@"345");
+
 		[self setViewportWidth: 540.0f];
 	}
 }
