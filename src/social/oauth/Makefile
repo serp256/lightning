@@ -37,7 +37,7 @@ else
 ifeq ($(PLATFORM),ANDROID)
 FAKELIBS =
 CFLAGS += -DLDEBUG -DANDROID -Iandroid -I../../android -I../..
-MLPPOPT += -DGLES -DANDROID
+MLPPOPT += -DANDROID
 MOBJS += android/oauth_wrapper.o
             
 oauth.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
@@ -47,7 +47,8 @@ oauth.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
 	$(OCAMLMKLIB) -verbose -o oauth $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 else
 
-MLCOPTS += -DSDL
+MLCOPTS += -DPC
+MLPPOPT += -DPC 
 oauth.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o oauth.cmxa $(MLOBJSN)
 
