@@ -38,7 +38,7 @@ Debug.cmx: MLFLAGS += -package unix
 
 
 ifeq ($(PLATFORM),IOS)
-	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o ios/copy_paste.o
+	MOBJS += mlwrapper.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/texture_save.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o ios/copy_paste.o
 	LIBFLAGS = -ccopt '-ObjC' -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
 						 -cclib '-framework\ QuartzCore' \
@@ -58,7 +58,7 @@ ifeq ($(PLATFORM),IOS)
 		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else
 	ifeq ($(PLATFORM),PC)
-		MOBJS += net_curl.o pc/glut_stub.o texture_load.o pc/texture_pc.o
+		MOBJS += net_curl.o pc/glut_stub.o texture_load.o texture_save.o pc/texture_pc.o
 		BMLSOURCES = pc/glut.ml
 		AMLSOURCES = pc/pc_run.ml
 		MLOBJSFLAGS = -I pc

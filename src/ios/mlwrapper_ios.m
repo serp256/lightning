@@ -358,7 +358,6 @@ value ml_getLocale() {
 	return s;
 }
 
-
 value ml_getVersion() {
 	PRINT_DEBUG("PIZDA=====================");
 	NSString * vers = [LightViewController version];
@@ -371,8 +370,17 @@ void ml_addExceptionInfo(value mlinfo) {
 	[LightViewController addExceptionInfo:info];
 }
 
-
 void ml_setSupportEmail(value mlemail) {
 	NSString *email = [NSString stringWithCString:String_val(mlemail) encoding:NSASCIIStringEncoding];
 	[LightViewController setSupportEmail:email];
+}
+
+value ml_getStoragePath(value unit) {
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask,YES);
+	NSString *directory = [paths objectAtIndex:0];
+	NSLog(@"Documents directory: %@",directory);
+	value result = caml_alloc_string(directory.length);
+	[directory getCString:String_val(result) maxLength:(caml_string_length(result) + 1) encoding:NSUTF8StringEncoding];
+	fprintf(stderr,"ocaml string: %s\n",String_val(result));
+	return result;
 }
