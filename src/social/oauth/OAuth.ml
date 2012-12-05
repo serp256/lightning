@@ -39,7 +39,7 @@ type delegate = (auth_response -> unit);
    Парсит урл-encoded строку и достает данные о токене.
    Если нет данных рейзит Not_found. 
 *)
-value token_info_of_string str = 
+value token_info_of_string str =
   let id x = x
   and assoc_opt key list f = 
     try 
@@ -47,7 +47,7 @@ value token_info_of_string str =
       in Some (f v)
     with [ Not_found -> None ]
   in 
-  let params = UrlEncoding.dest_url_encoded_parameters str in     
+  let params = UrlEncoding.dest_url_encoded_parameters str in
   let access_token = List.assoc "access_token" params
   and expires_in = assoc_opt "expires_in" params int_of_string
   and token_type = assoc_opt "token_type" params id 
@@ -369,7 +369,8 @@ value authorization_grant ~client_id ~auth_endpoint ~redirect_uri ~gtype ~params
       | Implicit -> 
           fun url -> 
             let () = debug "Got URL: %s!" url in
-            callback (auth_response_of_url url)
+            let authResp = auth_response_of_url url in
+              callback authResp
       ]
     in 
     authorization_grant auth_url close_button handler
