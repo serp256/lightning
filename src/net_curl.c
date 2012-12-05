@@ -115,6 +115,7 @@ void net_perform() {
 				struct request *r = NULL;
 				curl_easy_getinfo(c,CURLINFO_PRIVATE,&r);
 				PRINT_DEBUG("url_loader complete: %lu",(long)r);
+				PRINT_DEBUG("msg->data.result: %u", msg->data.result);
 				// вызвать окамл и все похерить нахуй
 				if (msg->data.result == CURLE_OK) {
 					if (!r->headers_done) send_headers_to_ml(r);
@@ -144,6 +145,8 @@ void net_perform() {
 }
 
 CAMLprim value ml_URLConnection(value url, value method, value headers, value data) {
+	PRINT_DEBUG("%s", curl_version());
+
 	if (curlm == NULL) {
 		initCurl();
 		curlm = curl_multi_init();

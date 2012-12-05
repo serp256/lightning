@@ -22,6 +22,7 @@ import android.widget.LinearLayout;
 import java.net.URL;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.net.MalformedURLException;
 
 public class OAuthDialog extends Dialog {
 
@@ -35,25 +36,28 @@ public class OAuthDialog extends Dialog {
     // static final String FB_ICON = "icon.png";
 
     private String mUrl;
-    private DialogListener mListener;
     private ProgressDialog mSpinner;
     private ImageView mCrossImage;
     private WebView mWebView;
     private FrameLayout mContent;
 
-    public OAuthDialog(Context context, String url, DialogListener listener) {
-        // super(context);
+    private String mRedirectUrlPath;
+    private Boolean mAuthorizing = false;
+
+    public OAuthDialog(Context context, String url) {
         super(context, android.R.style.Theme_Translucent_NoTitleBar);
+
         mUrl = url;
-        mListener = listener;
 
-        Matcher m = Pattern.compile(".*redirect_uri=([^&]+).*").matcher((new URL(url)).getQuery());
+        try {
+            Matcher m = Pattern.compile(".*redirect_uri=([^&]+).*").matcher((new URL(url)).getQuery());
 
-        if (m.matches ()) {
-            Log.d("LIGHTNING", m.group(1));
-        } else {
-            Log.d("LIGHTNING", "xyu tam");
+            if (m.matches ()) {
+                mRedirectUrlPath = (new URL(java.net.URLDecoder.decode(m.group(1), "ASCII"))).getPath();
+            }            
         }
+        catch (MalformedURLException e) {}
+        catch (java.io.UnsupportedEncodingException e) {}
     }
 
     @Override
@@ -87,11 +91,10 @@ public class OAuthDialog extends Dialog {
     
     private void createCrossImage() {
         mCrossImage = new ImageView(getContext());
-        // Dismiss the dialog when user click on the 'x'
         mCrossImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onCancel();
+                // mListener.onCancel();
                 OAuthDialog.this.dismiss();
             }
         });
@@ -120,12 +123,36 @@ public class OAuthDialog extends Dialog {
         mContent.addView(webViewContainer);
     }
 
+    @Override
+    public void dismiss() {
+        mWebView.stopLoading();
+        mWebView.destroy();
+        super.dismiss();
+    }
+
     private class WebViewClient extends android.webkit.WebViewClient {
+        private native void camlOauthRedirected(String url);
+
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.d("LIGHTNING", "shouldOverrideUrlLoading " + url);
-            // getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-            //OAuthDialog.this.dismiss();
+
+            try {
+                if (mRedirectUrlPath.contentEquals((new URL(url)).getPath())) {
+                    final String _url = new String(url);
+
+                    LightView.instance.queueEvent(new Runnable() {
+                        public void run() {
+                            camlOauthRedirected(_url);
+                        }
+                    });
+
+                    mSpinner.dismiss();
+                    OAuthDialog.this.dismiss();                    
+                    return true;
+                }
+            } catch (MalformedURLException e) {}
+
             return false;
         }
 
@@ -134,8 +161,7 @@ public class OAuthDialog extends Dialog {
             Log.d("LIGHTNING", "onReceivedError");
 
             super.onReceivedError(view, errorCode, description, failingUrl);
-            // mListener.onError(new DialogError(description, errorCode, failingUrl));
-            mListener.onError();
+            // mListener.onError();
             OAuthDialog.this.dismiss();
         }
 
@@ -153,19 +179,28 @@ public class OAuthDialog extends Dialog {
 
             super.onPageFinished(view, url);
             mSpinner.dismiss();
-            /* 
-             * Once webview is fully loaded, set the mContent background to be transparent
-             * and make visible the 'x' image. 
-             */
             mContent.setBackgroundColor(Color.TRANSPARENT);
             mWebView.setVisibility(View.VISIBLE);
             mCrossImage.setVisibility(View.VISIBLE);
-        }
-    }
 
-    public interface DialogListener {
-        public void onComplete(Bundle values);
-        public void onError();
-        public void onCancel();
+
+
+    // if ([@"security breach" isEqualToString: content] || [@"<pre style=\"word-wrap: break-word; white-space: pre-wrap;\">{\"error\":\"invalid_request\",\"error_description\":\"Security Error\"}</pre>" isEqualToString: content] ) {
+    //     NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+    //     [[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
+    //     caml_acquire_runtime_system();
+    //     value *mlf = (value*)caml_named_value("oauth_redirected");
+    //     if (mlf != NULL) {                                                                                                        
+    //         caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
+    //     }
+    //     caml_release_runtime_system();
+    //     return;
+    // } else if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+    //     NSLog(@"345");
+
+    //     [self setViewportWidth: 540.0f];
+    // }
+
+        }
     }
 }

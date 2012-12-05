@@ -55,7 +55,7 @@ ifeq ($(PLATFORM),IOS)
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o net_curl.o texture_load.o android/mlwrapper_android.o android/texture_android.o android/payments_android.o android/unzip.o android/ioapi.o android/assets_extractor.o android/curl_extern_loader.o android/keyboard_android.o
 		GLPARAM = -D__ANDROID__
-		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl'
+		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else
 	ifeq ($(PLATFORM),PC)
 		MOBJS += net_curl.o pc/glut_stub.o texture_load.o pc/texture_pc.o
