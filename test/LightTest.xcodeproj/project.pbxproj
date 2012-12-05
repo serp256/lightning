@@ -9,10 +9,11 @@
 /* Begin PBXBuildFile section */
 		510C021314FE6C1200BDDCFC /* ra_fertilizer.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */; };
 		510C021614FE6ED800BDDCFC /* stoneBoom.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021514FE6ED800BDDCFC /* stoneBoom.caf */; };
+		510D510D166E4B48004CCFCA /* MyriadPro-Regular_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 510D510C166E4B48004CCFCA /* MyriadPro-Regular_0.alpha */; };
+		510D510F166E4B67004CCFCA /* MyriadPro-Bold_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 510D510E166E4B67004CCFCA /* MyriadPro-Bold_0.alpha */; };
 		516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */; };
 		516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */; };
 		516A41FB15D3D6E600BB71F0 /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */; };
-		516A41FC15D3D6E600BB71F0 /* MyriadPro-Regular0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41ED15D3D6E600BB71F0 /* MyriadPro-Regular0.alpha */; };
 		517411B614FB6A420022E871 /* e_cactus.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B514FB6A420022E871 /* e_cactus.png */; };
 		517411B914FB6A510022E871 /* tree.png in Resources */ = {isa = PBXBuildFile; fileRef = 517411B814FB6A510022E871 /* tree.png */; };
 		517411CB14FB749C0022E871 /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 517411CA14FB749C0022E871 /* Shaders */; };
@@ -53,6 +54,8 @@
 /* Begin PBXFileReference section */
 		510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = ra_fertilizer.caf; path = ../../lightning/test/Resources/ra_fertilizer.caf; sourceTree = "<group>"; };
 		510C021514FE6ED800BDDCFC /* stoneBoom.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = stoneBoom.caf; path = ../../lightning/test/Resources/stoneBoom.caf; sourceTree = "<group>"; };
+		510D510C166E4B48004CCFCA /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
+		510D510E166E4B67004CCFCA /* MyriadPro-Bold_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0.alpha"; path = "Resources/MyriadPro-Bold_0.alpha"; sourceTree = "<group>"; };
 		516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold.fnt"; path = "Resources/MyriadPro-Bold.fnt"; sourceTree = "<group>"; };
 		516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold0.alpha"; path = "Resources/MyriadPro-Bold0.alpha"; sourceTree = "<group>"; };
 		516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular.fnt"; path = "Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
@@ -95,6 +98,8 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
+				510D510E166E4B67004CCFCA /* MyriadPro-Bold_0.alpha */,
+				510D510C166E4B48004CCFCA /* MyriadPro-Regular_0.alpha */,
 				516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */,
 				516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */,
 				516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */,
@@ -230,10 +235,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				510D510F166E4B67004CCFCA /* MyriadPro-Bold_0.alpha in Resources */,
+				510D510D166E4B48004CCFCA /* MyriadPro-Regular_0.alpha in Resources */,
 				516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */,
 				516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */,
 				516A41FB15D3D6E600BB71F0 /* MyriadPro-Regular.fnt in Resources */,
-				516A41FC15D3D6E600BB71F0 /* MyriadPro-Regular0.alpha in Resources */,
 				51BCBEBD15BD4CDE00A3DCB7 /* palletes in Resources */,
 				517EB8831522F905009D91B1 /* MyriadPro-Regular0.alpha in Resources */,
 				517EB8801522F888009D91B1 /* pallete.plx in Resources */,

@@ -324,6 +324,12 @@ value _deviceType = Lazy.lazy_from_fun getDeviceType;
 
 value deviceType () = Lazy.force _deviceType;
 
+IFDEF PC THEN
+value storagePath () = "Storage";
+ELSE
+external storagePath: unit -> string = "ml_getStoragePath";
+ENDIF;
+
 
 
 exception Xml_error of string and string;

@@ -58,6 +58,12 @@ ENDIF;
 value getLocale: unit -> string;
 value getVersion: unit -> string;
 
+IFDEF PC THEN
+value storagePath: unit -> string; 
+ELSE
+external storagePath: unit -> string = "ml_getStoragePath";
+ENDIF;
+
 module MakeXmlParser(P:sig value path: string; value with_suffix:bool; end): sig
   value close: unit -> unit;
   value error: Pervasives.format4 'a unit string 'b -> 'a;
