@@ -208,27 +208,13 @@ end;
 
 
 
-external ml_authorization_grant : string -> option close_button -> unit = "ml_authorization_grant";
-
-(* IFDEF IOS THEN
-external ml_authorization_grant : string -> option close_button -> unit = "ml_authorization_grant";
-
-
-external  set_close_button_insets : int -> int -> int -> int -> unit = "ml_set_close_button_insets";
-external  set_close_button_visible : bool -> unit  = "ml_set_close_button_visible";
-external  set_close_button_image_name : string -> unit = "ml_set_close_button_image_name";
-
+IFDEF PC THEN
+value ml_authorization_grant (str:string) (close_button:option close_button) = debug "HAHAHA";
 
 ELSE
+external ml_authorization_grant : string -> option close_button -> unit = "ml_authorization_grant";
 
-value ml_authorization_grant (str:string) (close_button:option close_button) = debug "HAHAHA";
-(*
-value set_close_button_insets (top:int) (left:int) (right:int) (botton:int) = ();
-value set_close_button_visible (visible: bool) = ();
-value set_close_button_image_name (name:string) = ();
-*)
-
-ENDIF; *)
+ENDIF; 
 
 (* ожидаемые авторизации *)
 value pendings = Queue.create ();
