@@ -255,7 +255,8 @@ Callback.register "oauth_redirected" oauth_redirected;
 value refresh_token ~client_id ~token_endpoint ~rtoken ~params callback = 
   let grant_type = "refresh_token" in
   let params = [ ("client_id", client_id) :: [ ("grant_type", grant_type) :: [ ("refresh_token", rtoken) :: params ]]] in
-  let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
+  let token_url = token_endpoint in
+  (* let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in *)
   
   let loader = new URLLoader.loader () in (
     
@@ -277,12 +278,12 @@ value refresh_token ~client_id ~token_endpoint ~rtoken ~params callback =
         ];          
       );
     );
-    
+        
     let request = 
     { 
       URLLoader.httpMethod = `POST;
       headers = [];
-      data = None;
+      data = Some (`String (UrlEncoding.mk_url_encoded_parameters params));
       url = token_url
     } in loader#load request;
 
@@ -294,7 +295,8 @@ value get_token_by_code client_id token_endpoint redirect_uri params code callba
   let grant_type = "authorization_code" in
   let params = 
     [ ( "client_id", client_id) ; ("grant_type", grant_type) ; ("code", code) ; ("redirect_uri", redirect_uri) :: params ] in
-  let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
+  let token_url = token_endpoint in
+  (* let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in *)
 
   
   let loader = new URLLoader.loader () in (  
@@ -317,15 +319,15 @@ value get_token_by_code client_id token_endpoint redirect_uri params code callba
         ];          
       );
     );
-    
+
     let request = 
     { 
       URLLoader.httpMethod = `POST;
       headers = [];
-      data = None;
+      data = Some (`String (UrlEncoding.mk_url_encoded_parameters params));
+      (* data = None; *)
       url = token_url
     } in loader#load request;
-
   );
 
 

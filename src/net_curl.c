@@ -193,6 +193,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	curl_easy_setopt(r->handle,CURLOPT_WRITEFUNCTION,&my_writefunction);
 	curl_easy_setopt(r->handle,CURLOPT_WRITEDATA,(void*)r);
 	curl_easy_setopt(r->handle,CURLOPT_PRIVATE,(void*)r);
+	curl_easy_setopt(r->handle,CURLOPT_SSL_VERIFYPEER,0);
 	curl_multi_add_handle(curlm,r->handle);
 	net_running++;
 	PRINT_DEBUG("created new curl request: %lu",(long)r);

@@ -1638,11 +1638,9 @@ value ml_device_type(value unit) {
 	CAMLreturn(retval);
 }
 
-
-/*
 void ml_test_c_fun(value fun) {
-	caml_callback(fun,Val_unit);
-}*/
+	// caml_callback(fun,Val_unit);
+}
 
 #define CAML_FAILWITH(...) {																			\
 	char* err_mes = (char*)malloc(255);																	\
@@ -1848,3 +1846,5 @@ JNIEXPORT jstring JNICALL Java_ru_redspell_lightning_LightView_glExts(JNIEnv *en
 	const char *exts = (char*)glGetString(GL_EXTENSIONS);
 	return (*env)->NewStringUTF(env, exts);
 }
+
+int save_png_image(value name, char* buffer, unsigned int width, unsigned int height) { return 0; }
