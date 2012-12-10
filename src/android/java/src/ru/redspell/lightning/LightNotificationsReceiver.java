@@ -15,50 +15,39 @@ import java.util.List;
 import ru.redspell.lightning.utils.Log;
 
 public class LightNotificationsReceiver extends BroadcastReceiver {
-	private static boolean activityIsRunning(Context context, String activityClsName) {		
-		ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
-		List<ActivityManager.RunningTaskInfo> tasks = activityManager.getRunningTasks(Integer.MAX_VALUE);
+    public void onReceive(Context context, android.content.Intent intent) {
+        String action = intent.getAction();
 
-	    for (ActivityManager.RunningTaskInfo task : tasks) {
-	        if (activityClsName.equalsIgnoreCase(task.baseActivity.getClassName())) {
-	        	return true;
-	        } 
-	    }
+        if (action != null && action.contentEquals("android.intent.action.BOOT_COMPLETED")) {
+            Log.d("LIGHTNING", "boot compeleted");
+            LightActivity.rescheduleNotifications(context);
 
-	    return false;
-	}
+            return;
+        }
 
-	public void onReceive(Context context, android.content.Intent intent) {
-		Log.d("LIGHTNING", "LightNotificationReceiver onReceive " + context.getClass().getName());
+        Log.d("LIGHTNING", "LightNotificationReceiver onReceive " + LightActivity.isRunning);
 
-		try {
-			Log.d("LIGHTNING", "intent.getExtras().getString(activity) " + intent.getExtras().getString("activity"));
+        Bundle intntExtras = intent.getExtras();
+        LightActivity.removeNotification(context, intntExtras.getString(LightNotifications.NOTIFICATION_ID_KEY),
+            intntExtras.getDouble(LightNotifications.NOTIFICATION_FIREDATE_KEY), intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE_KEY));
 
-			Bundle intntExtras = intent.getExtras();
+        if (LightActivity.isRunning) return;
 
-			Log.d("LIGHTNING", "activityIsRunning " + activityIsRunning(context, intntExtras.getString(LightNotifications.NOTIFICATION_ACTIVITY_BUNDLE_KEY)));
+        PendingIntent pNotifIntnt = PendingIntent.getActivity(context, 0, context.getPackageManager().getLaunchIntentForPackage(context.getPackageName()), PendingIntent.FLAG_UPDATE_CURRENT);
 
-			Intent intnt = new Intent(context, context.getClassLoader().loadClass(intntExtras.getString(LightNotifications.NOTIFICATION_ACTIVITY_BUNDLE_KEY)));
-			PendingIntent pIntnt = PendingIntent.getActivity(context, 0, intnt, PendingIntent.FLAG_UPDATE_CURRENT);
+        String title = intntExtras.getString(LightNotifications.NOTIFICATION_TITLE_KEY);
+        String message = intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE_KEY);
+        if (message != null) {
+            NotificationCompat.Builder notifBldr = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.notif_icon)
+                .setContentTitle(title == null ? context.getPackageManager().getApplicationLabel(context.getApplicationInfo()) : title)
+                .setContentText(intntExtras.getString("message"))
+                .setContentIntent(pNotifIntnt);
 
-			String title = intntExtras.getString(LightNotifications.NOTIFICATION_TITLE_BUNDLE_KEY);
-			String message = intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE_BUNDLE_KEY);
-			int notifIconResId = intntExtras.getInt(LightNotifications.NOTIFICATION_ICON_BUNDLE_KEY);
-
-			if (notifIconResId >= 0 && message != null) {
-				NotificationCompat.Builder notifBldr = new NotificationCompat.Builder(context)
-			        .setSmallIcon(notifIconResId)
-			        .setContentTitle(title == null ? context.getPackageManager().getApplicationLabel(context.getApplicationInfo()) : title)
-			        .setContentText(intntExtras.getString("message"))
-			        .setContentIntent(pIntnt);
-
-				NotificationManager notifMngr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-				notifMngr.notify(0, notifBldr.build());				
-			} else {
-				Log.e("LIGHTNING", "Notification icon resource id or message not specified, notification was not fired");
-			}
-		} catch (java.lang.ClassNotFoundException e) {
-			Log.d("LIGHTNING", "activity class not found");
-		}
-	}
+            NotificationManager notifMngr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+            notifMngr.notify(intent.getDataString().hashCode(), notifBldr.build());                
+        } else {
+            Log.e("LIGHTNING", "Notification message not specified, notification was not fired");
+        }
+    }
 }

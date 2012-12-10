@@ -16,47 +16,58 @@ import android.app.NotificationManager;
 import android.app.Notification;
 
 public class LightNotifications {
-	final public static String NOTIFICATION_TITLE_BUNDLE_KEY = "title";
-	final public static String NOTIFICATION_MESSAGE_BUNDLE_KEY = "message";
-	final public static String NOTIFICATION_ACTIVITY_BUNDLE_KEY = "activity";
-	final public static String NOTIFICATION_ICON_BUNDLE_KEY = "icon";
+	final public static String NOTIFICATION_TITLE_KEY = "title";
+	final public static String NOTIFICATION_MESSAGE_KEY = "message";
+	final public static String NOTIFICATION_FIREDATE_KEY = "firedate";
+	final public static String NOTIFICATION_ID_KEY = "id";
 
-	private static int notifIcon = -1;
+	public static boolean groupNotifications = false;
 
-	private static Uri makeIntentData(String notifId) {
-		return (new Uri.Builder()).scheme("lightnotif").authority(LightView.instance.activity.getPackageName()).path(notifId).build();
+	private static Intent intent;
+
+	private static Uri makeIntentData(Context context, String notifId) {
+		Uri.Builder bldr = new Uri.Builder()
+			.scheme("lightnotif")
+			.authority(context.getPackageName())
+			.path(notifId);
+
+		return bldr.build();
 	}
 
-	private static AlarmManager getAlarmManager() {
-		return (AlarmManager)LightView.instance.activity.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+	private static AlarmManager getAlarmManager(Context context) {
+		return (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 	}
 
 	public static void scheduleNotification(String notifId, double fireDate, String message) {
-		Activity activity = LightView.instance.activity;
-		Intent intnt = new Intent(activity, LightNotificationsReceiver.class);
+		Context context = LightView.instance.activity.getApplicationContext();
+		LightActivity.addNotification(context, notifId, fireDate, message);
+		scheduleNotification(context, notifId, fireDate, message);
+	}
+	
+	public static void scheduleNotification(Context context, String notifId, double fireDate, String message) {
+		Intent intnt = new Intent(context, LightNotificationsReceiver.class);
 
-		intnt.putExtra(NOTIFICATION_MESSAGE_BUNDLE_KEY, message);
-		intnt.putExtra(NOTIFICATION_ACTIVITY_BUNDLE_KEY, activity.getClass().getName());
-		intnt.putExtra(NOTIFICATION_ICON_BUNDLE_KEY, notifIcon);
-		intnt.setData(makeIntentData(notifId));
+		intnt.putExtra(NOTIFICATION_ID_KEY, notifId);
+		intnt.putExtra(NOTIFICATION_FIREDATE_KEY, fireDate);
+		intnt.putExtra(NOTIFICATION_MESSAGE_KEY, message);
+		intnt.setData(makeIntentData(context, notifId));
 
-		PendingIntent pIntnt = PendingIntent.getBroadcast(activity.getApplicationContext(), (int)Calendar.getInstance().getTimeInMillis(), intnt, PendingIntent.FLAG_UPDATE_CURRENT);
-		getAlarmManager().set(AlarmManager.RTC_WAKEUP, (long)fireDate, pIntnt);
+		intent = intnt;
+
+		PendingIntent pIntnt = PendingIntent.getBroadcast(context, intnt.getDataString().hashCode(), intnt, PendingIntent.FLAG_UPDATE_CURRENT);
+		getAlarmManager(context).set(AlarmManager.RTC_WAKEUP, (long)fireDate, pIntnt);
 	}
 
 	public static void cancelNotification(String notifId) {
 		Log.d("LIGHTNING", "cancel call " + notifId);
 
-		Activity activity = LightView.instance.activity;
+		Context context = LightView.instance.activity.getApplicationContext();
+		LightActivity.removeNotification(context, notifId);
+		
+		Intent intnt = new Intent(context, LightNotificationsReceiver.class);
+		intnt.setData(makeIntentData(context, notifId));
 
-		Intent intnt = new Intent(activity, LightNotificationsReceiver.class);
-		intnt.setData(makeIntentData(notifId));
-
-		PendingIntent pIntnt = PendingIntent.getBroadcast(activity.getApplicationContext(), (int)Calendar.getInstance().getTimeInMillis(), intnt, PendingIntent.FLAG_UPDATE_CURRENT);
-		getAlarmManager().cancel(pIntnt);
+		PendingIntent pIntnt = PendingIntent.getBroadcast(context, intnt.getDataString().hashCode(), intnt, PendingIntent.FLAG_UPDATE_CURRENT);
+		getAlarmManager(context).cancel(pIntnt);
 	}
-
-	public static void setNotificationIcon(int notifIconResId) {
-		notifIcon = notifIconResId;
-	}	
 }

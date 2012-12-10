@@ -15,8 +15,8 @@ value ml_lnSchedule(value notifId, value fireDate, value message) {
 	GET_LIGHT_NOTIFICATIONS;
 
 	jstring jnotifId = (*env)->NewStringUTF(env, String_val(notifId));
-	jdouble jfireDate = (jdouble)Double_val(fireDate);
-	jstring jmessage = (*env)->NewStringUTF(env, String_val(notifId));
+	jdouble jfireDate = (jdouble)Double_val(fireDate) * 1000;
+	jstring jmessage = (*env)->NewStringUTF(env, String_val(message));
 
 	static jmethodID mid;
 	if (!mid) mid = (*env)->GetStaticMethodID(env, notifCls, "scheduleNotification", "(Ljava/lang/String;DLjava/lang/String;)V");

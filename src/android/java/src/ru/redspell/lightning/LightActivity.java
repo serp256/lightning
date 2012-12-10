@@ -34,6 +34,13 @@ import android.widget.AbsoluteLayout;
 import android.view.ViewGroup.LayoutParams;
 import android.content.res.Configuration;
 
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+import java.util.ArrayList;
+
+import android.content.SharedPreferences;
+
 public class LightActivity extends Activity implements IDownloaderClient
 {
     protected XAPKFile[] xAPKS = {};
@@ -49,11 +56,124 @@ public class LightActivity extends Activity implements IDownloaderClient
 	private IDownloaderService mRemoteService;
 
 	public AbsoluteLayout viewGrp;
+	public static boolean isRunning = false;
+
+	public static void addNotification(Context context, String notifId, double fireDate, String message) {
+		try {
+			SharedPreferences notifSharedPrefs = context.getSharedPreferences("notifications", Context.MODE_PRIVATE);
+
+			JSONObject jsonNotif = new JSONObject()
+				.put("id", notifId)
+				.put("fd", fireDate)
+				.put("mes", message);
+
+			JSONArray jsonNotifs = new JSONArray(notifSharedPrefs.getString("notifications", "[]"))
+				.put(jsonNotif);
+
+			Log.d("LIGHTNING", "jsonNotifs.toString(): " + jsonNotifs.toString());
+			notifSharedPrefs.edit().putString("notifications", jsonNotifs.toString()).commit();
+		} catch (org.json.JSONException e) {
+			Log.d("LIGHTNING", "addNotification json error");
+		}
+	}
+
+	private interface NotificationComparer {
+		public boolean equal(JSONObject jsonObj, String notifId, double fireDate, String message) throws JSONException;
+	}
+
+	public static void removeNotification(Context context, String notifId) {
+		removeNotification(context, notifId, 0, "", new NotificationComparer() {
+			public boolean equal(JSONObject jsonObj, String notifId, double fireDate, String message) throws JSONException {
+				return jsonObj.getString("id").contentEquals(notifId);
+			}
+		});
+	}
+
+	public static void removeNotification(Context context, String notifId, double fireDate, String message) {
+		removeNotification(context, notifId, fireDate, message, new NotificationComparer() {
+			public boolean equal(JSONObject jsonObj, String notifId, double fireDate, String message) throws JSONException {
+				return jsonObj.getString("id").contentEquals(notifId) && jsonObj.getDouble("fd") == fireDate && jsonObj.getString("mes").contentEquals(message);
+			}
+		});
+	}	
+
+	public static void removeNotification(Context context, String notifId, double fireDate, String message, NotificationComparer comparer) {
+		try {
+			SharedPreferences notifSharedPrefs = context.getSharedPreferences("notifications", Context.MODE_PRIVATE);
+
+			JSONArray jsonNotifs = new JSONArray(notifSharedPrefs.getString("notifications", "[]"));
+			ArrayList<JSONObject> notifs = new ArrayList<JSONObject>();
+
+			for (int i = 0; i < jsonNotifs.length(); i++) {
+				JSONObject jsonNotif = jsonNotifs.getJSONObject(i);
+
+				if (!comparer.equal(jsonNotif, notifId, fireDate, message)) {
+					notifs.add(jsonNotif);
+				}
+			}
+
+			notifSharedPrefs.edit().putString("notifications", new JSONArray(notifs).toString()).commit();
+			Log.d("LIGHTNING", "new JSONArray(notifs).toString() " + new JSONArray(notifs).toString());
+		} catch (JSONException e) {
+			Log.d("LIGHTNING", "removeNotification json error");
+		}		
+	}
+
+	public static void rescheduleNotifications(Context context) {
+		try {
+			SharedPreferences notifSharedPrefs = context.getSharedPreferences("notifications", Context.MODE_PRIVATE);
+
+			JSONArray jsonNotifs = new JSONArray(notifSharedPrefs.getString("notifications", "[]"));
+			ArrayList<JSONObject> notifs = new ArrayList<JSONObject>();
+			Double now = (double)java.util.Calendar.getInstance().getTimeInMillis();
+
+			for (int i = 0; i < jsonNotifs.length(); i++) {
+				JSONObject jsonNotif = jsonNotifs.getJSONObject(i);
+				Double fireDate = jsonNotif.getDouble("fd");
+
+				Log.d("LIGHTNING", jsonNotif.getString("id") + " " + new Double(fireDate).toString() + " " + new Double(now).toString() + " " + new Boolean(fireDate > now).toString());
+
+				if (fireDate > now) {
+					Log.d("LIGHTNING", "rescheduling");
+					LightNotifications.scheduleNotification(context, jsonNotif.getString("id"), fireDate, jsonNotif.getString("mes"));
+					notifs.add(jsonNotif);
+				}
+			}
+
+			Log.d("LIGHTNING", new JSONArray(notifs).toString());
+			notifSharedPrefs.edit().putString("notifications", new JSONArray(notifs).toString()).commit();			
+		} catch (org.json.JSONException e) {
+			Log.d("LIGHTNING", "rescheduleNotifications json error ");
+		}
+	}
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
+		// rescheduleNotifications(this);
+
+		// savedState = savedInstanceState != null ? savedInstanceState : new Bundle();
+		Log.d("LIGHTNING", "savedState " + (savedInstanceState != null));
+
+/*		if (savedState != null) {
+			ArrayList<Bundle> notifs = savedState.getParcelableArrayList(SAVED_STATE_NOTIFS_KEY);
+			
+			if (notifs == null) {
+				Log.d("LIGHTNING", "notifs null");
+			} else {
+				Iterator<Bundle> iter = notifs.iterator();
+
+				while (iter.hasNext()) {
+					Bundle notifBundle = iter.next();
+
+					Log.d("LIGHTNING", notifBundle.getString(LightNotifications.NOTIFICATION_ID_KEY));
+					Log.d("LIGHTNING", new Double((notifBundle.getDouble(LightNotifications.NOTIFICATION_FIREDATE_KEY))).toString());
+					Log.d("LIGHTNING", notifBundle.getString(LightNotifications.NOTIFICATION_MESSAGE_KEY));
+				}
+			}
+		}*/
+		
 		super.onCreate(savedInstanceState);
 
 		getSystemService(Context.CLIPBOARD_SERVICE);
@@ -126,6 +246,7 @@ public class LightActivity extends Activity implements IDownloaderClient
 
     @Override
     protected void onStart() {
+    	isRunning = true;
         if (null != mDownloaderClientStub) {
             mDownloaderClientStub.connect(this);
         }
@@ -134,12 +255,14 @@ public class LightActivity extends Activity implements IDownloaderClient
 
 	@Override
 	protected void onPause() {
+		isRunning = false;
 		super.onPause();
 		lightView.onPause();
 	}
 
 	@Override
 	protected void onResume() {
+		isRunning = true;
 		super.onResume();
 		lightView.onResume();
 
@@ -150,6 +273,7 @@ public class LightActivity extends Activity implements IDownloaderClient
 
 	@Override
 	protected void onStop() {
+		isRunning = false;
 		if (null != mDownloaderClientStub) {
 			mDownloaderClientStub.disconnect(this);
 		}
@@ -163,6 +287,7 @@ public class LightActivity extends Activity implements IDownloaderClient
 
 	@Override
 	protected void onDestroy() {
+		isRunning = false;
 		lightView.onDestroy();
 		super.onDestroy();
 	}
@@ -184,4 +309,4 @@ public class LightActivity extends Activity implements IDownloaderClient
 		Log.d("LIGHTNING", "onConfigurationChanged");
 		super.onConfigurationChanged(newConfig);
 	}
-}
+}	
