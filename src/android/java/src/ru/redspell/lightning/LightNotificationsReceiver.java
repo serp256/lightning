@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
 import android.os.Bundle;
 
 import java.util.List;
@@ -19,33 +18,20 @@ public class LightNotificationsReceiver extends BroadcastReceiver {
         String action = intent.getAction();
 
         if (action != null && action.contentEquals("android.intent.action.BOOT_COMPLETED")) {
-            Log.d("LIGHTNING", "boot compeleted");
-            LightActivity.rescheduleNotifications(context);
-
+            LightNotifications.rescheduleNotifications(context);
             return;
         }
 
-        Log.d("LIGHTNING", "LightNotificationReceiver onReceive " + LightActivity.isRunning);
-
         Bundle intntExtras = intent.getExtras();
-        LightActivity.removeNotification(context, intntExtras.getString(LightNotifications.NOTIFICATION_ID_KEY),
-            intntExtras.getDouble(LightNotifications.NOTIFICATION_FIREDATE_KEY), intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE_KEY));
+        LightNotifications.unlogNotification(context, intntExtras.getString(LightNotifications.NOTIFICATION_ID),
+            intntExtras.getDouble(LightNotifications.NOTIFICATION_FIREDATE), intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE));
 
         if (LightActivity.isRunning) return;
 
-        PendingIntent pNotifIntnt = PendingIntent.getActivity(context, 0, context.getPackageManager().getLaunchIntentForPackage(context.getPackageName()), PendingIntent.FLAG_UPDATE_CURRENT);
-
-        String title = intntExtras.getString(LightNotifications.NOTIFICATION_TITLE_KEY);
-        String message = intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE_KEY);
+        String title = intntExtras.getString(LightNotifications.NOTIFICATION_TITLE);
+        String message = intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE);
         if (message != null) {
-            NotificationCompat.Builder notifBldr = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.notif_icon)
-                .setContentTitle(title == null ? context.getPackageManager().getApplicationLabel(context.getApplicationInfo()) : title)
-                .setContentText(intntExtras.getString("message"))
-                .setContentIntent(pNotifIntnt);
-
-            NotificationManager notifMngr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-            notifMngr.notify(intent.getDataString().hashCode(), notifBldr.build());                
+            LightNotifications.showNotification(context, intent.getData(), title, message);
         } else {
             Log.e("LIGHTNING", "Notification message not specified, notification was not fired");
         }

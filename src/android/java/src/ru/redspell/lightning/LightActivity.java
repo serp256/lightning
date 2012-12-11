@@ -34,12 +34,6 @@ import android.widget.AbsoluteLayout;
 import android.view.ViewGroup.LayoutParams;
 import android.content.res.Configuration;
 
-import org.json.JSONObject;
-import org.json.JSONArray;
-import org.json.JSONException;
-import java.util.ArrayList;
-
-import android.content.SharedPreferences;
 
 public class LightActivity extends Activity implements IDownloaderClient
 {
@@ -57,95 +51,6 @@ public class LightActivity extends Activity implements IDownloaderClient
 
 	public AbsoluteLayout viewGrp;
 	public static boolean isRunning = false;
-
-	public static void addNotification(Context context, String notifId, double fireDate, String message) {
-		try {
-			SharedPreferences notifSharedPrefs = context.getSharedPreferences("notifications", Context.MODE_PRIVATE);
-
-			JSONObject jsonNotif = new JSONObject()
-				.put("id", notifId)
-				.put("fd", fireDate)
-				.put("mes", message);
-
-			JSONArray jsonNotifs = new JSONArray(notifSharedPrefs.getString("notifications", "[]"))
-				.put(jsonNotif);
-
-			Log.d("LIGHTNING", "jsonNotifs.toString(): " + jsonNotifs.toString());
-			notifSharedPrefs.edit().putString("notifications", jsonNotifs.toString()).commit();
-		} catch (org.json.JSONException e) {
-			Log.d("LIGHTNING", "addNotification json error");
-		}
-	}
-
-	private interface NotificationComparer {
-		public boolean equal(JSONObject jsonObj, String notifId, double fireDate, String message) throws JSONException;
-	}
-
-	public static void removeNotification(Context context, String notifId) {
-		removeNotification(context, notifId, 0, "", new NotificationComparer() {
-			public boolean equal(JSONObject jsonObj, String notifId, double fireDate, String message) throws JSONException {
-				return jsonObj.getString("id").contentEquals(notifId);
-			}
-		});
-	}
-
-	public static void removeNotification(Context context, String notifId, double fireDate, String message) {
-		removeNotification(context, notifId, fireDate, message, new NotificationComparer() {
-			public boolean equal(JSONObject jsonObj, String notifId, double fireDate, String message) throws JSONException {
-				return jsonObj.getString("id").contentEquals(notifId) && jsonObj.getDouble("fd") == fireDate && jsonObj.getString("mes").contentEquals(message);
-			}
-		});
-	}	
-
-	public static void removeNotification(Context context, String notifId, double fireDate, String message, NotificationComparer comparer) {
-		try {
-			SharedPreferences notifSharedPrefs = context.getSharedPreferences("notifications", Context.MODE_PRIVATE);
-
-			JSONArray jsonNotifs = new JSONArray(notifSharedPrefs.getString("notifications", "[]"));
-			ArrayList<JSONObject> notifs = new ArrayList<JSONObject>();
-
-			for (int i = 0; i < jsonNotifs.length(); i++) {
-				JSONObject jsonNotif = jsonNotifs.getJSONObject(i);
-
-				if (!comparer.equal(jsonNotif, notifId, fireDate, message)) {
-					notifs.add(jsonNotif);
-				}
-			}
-
-			notifSharedPrefs.edit().putString("notifications", new JSONArray(notifs).toString()).commit();
-			Log.d("LIGHTNING", "new JSONArray(notifs).toString() " + new JSONArray(notifs).toString());
-		} catch (JSONException e) {
-			Log.d("LIGHTNING", "removeNotification json error");
-		}		
-	}
-
-	public static void rescheduleNotifications(Context context) {
-		try {
-			SharedPreferences notifSharedPrefs = context.getSharedPreferences("notifications", Context.MODE_PRIVATE);
-
-			JSONArray jsonNotifs = new JSONArray(notifSharedPrefs.getString("notifications", "[]"));
-			ArrayList<JSONObject> notifs = new ArrayList<JSONObject>();
-			Double now = (double)java.util.Calendar.getInstance().getTimeInMillis();
-
-			for (int i = 0; i < jsonNotifs.length(); i++) {
-				JSONObject jsonNotif = jsonNotifs.getJSONObject(i);
-				Double fireDate = jsonNotif.getDouble("fd");
-
-				Log.d("LIGHTNING", jsonNotif.getString("id") + " " + new Double(fireDate).toString() + " " + new Double(now).toString() + " " + new Boolean(fireDate > now).toString());
-
-				if (fireDate > now) {
-					Log.d("LIGHTNING", "rescheduling");
-					LightNotifications.scheduleNotification(context, jsonNotif.getString("id"), fireDate, jsonNotif.getString("mes"));
-					notifs.add(jsonNotif);
-				}
-			}
-
-			Log.d("LIGHTNING", new JSONArray(notifs).toString());
-			notifSharedPrefs.edit().putString("notifications", new JSONArray(notifs).toString()).commit();			
-		} catch (org.json.JSONException e) {
-			Log.d("LIGHTNING", "rescheduleNotifications json error ");
-		}
-	}
 
 	/** Called when the activity is first created. */
 	@Override
