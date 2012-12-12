@@ -34,6 +34,7 @@ import android.widget.AbsoluteLayout;
 import android.view.ViewGroup.LayoutParams;
 import android.content.res.Configuration;
 
+
 public class LightActivity extends Activity implements IDownloaderClient
 {
     protected XAPKFile[] xAPKS = {};
@@ -49,11 +50,35 @@ public class LightActivity extends Activity implements IDownloaderClient
 	private IDownloaderService mRemoteService;
 
 	public AbsoluteLayout viewGrp;
+	public static boolean isRunning = false;
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
+		// rescheduleNotifications(this);
+
+		// savedState = savedInstanceState != null ? savedInstanceState : new Bundle();
+		Log.d("LIGHTNING", "savedState " + (savedInstanceState != null));
+
+/*		if (savedState != null) {
+			ArrayList<Bundle> notifs = savedState.getParcelableArrayList(SAVED_STATE_NOTIFS_KEY);
+			
+			if (notifs == null) {
+				Log.d("LIGHTNING", "notifs null");
+			} else {
+				Iterator<Bundle> iter = notifs.iterator();
+
+				while (iter.hasNext()) {
+					Bundle notifBundle = iter.next();
+
+					Log.d("LIGHTNING", notifBundle.getString(LightNotifications.NOTIFICATION_ID_KEY));
+					Log.d("LIGHTNING", new Double((notifBundle.getDouble(LightNotifications.NOTIFICATION_FIREDATE_KEY))).toString());
+					Log.d("LIGHTNING", notifBundle.getString(LightNotifications.NOTIFICATION_MESSAGE_KEY));
+				}
+			}
+		}*/
+		
 		super.onCreate(savedInstanceState);
 
 		getSystemService(Context.CLIPBOARD_SERVICE);
@@ -126,6 +151,7 @@ public class LightActivity extends Activity implements IDownloaderClient
 
     @Override
     protected void onStart() {
+    	isRunning = true;
         if (null != mDownloaderClientStub) {
             mDownloaderClientStub.connect(this);
         }
@@ -134,12 +160,14 @@ public class LightActivity extends Activity implements IDownloaderClient
 
 	@Override
 	protected void onPause() {
+		isRunning = false;
 		super.onPause();
 		lightView.onPause();
 	}
 
 	@Override
 	protected void onResume() {
+		isRunning = true;
 		super.onResume();
 		lightView.onResume();
 
@@ -150,6 +178,7 @@ public class LightActivity extends Activity implements IDownloaderClient
 
 	@Override
 	protected void onStop() {
+		isRunning = false;
 		if (null != mDownloaderClientStub) {
 			mDownloaderClientStub.disconnect(this);
 		}
@@ -163,6 +192,7 @@ public class LightActivity extends Activity implements IDownloaderClient
 
 	@Override
 	protected void onDestroy() {
+		isRunning = false;
 		lightView.onDestroy();
 		super.onDestroy();
 	}
@@ -184,4 +214,4 @@ public class LightActivity extends Activity implements IDownloaderClient
 		Log.d("LIGHTNING", "onConfigurationChanged");
 		super.onConfigurationChanged(newConfig);
 	}
-}
+}	

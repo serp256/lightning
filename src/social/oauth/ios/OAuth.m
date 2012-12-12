@@ -328,7 +328,7 @@
  *                                                                                                                                                                                      
  */                                                                                                                                                                                     
 -(void)webViewDidFinishLoad:(UIWebView *)webView {                                                                                                                                      
-  //NSLog(@"Finished loading '%@'", webView.request.URL.absoluteString);
+  NSLog(@"Finished loading '%@'", webView.request.URL.absoluteString);
 
   if (!_authorizing) {
     return;
@@ -352,6 +352,8 @@
 		caml_release_runtime_system();
 		return;
 	} else if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+		NSLog(@"345");
+
 		[self setViewportWidth: 540.0f];
 	}
 }

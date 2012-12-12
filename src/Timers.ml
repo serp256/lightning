@@ -31,6 +31,7 @@ value process dt =
   [ Some t ->
     let t = t +. dt in
     (
+      debug:timer "process dt = %f; t = %f" dt t;
       time.val := Some t;
       if not (TimersQueue.is_empty queue)
       then

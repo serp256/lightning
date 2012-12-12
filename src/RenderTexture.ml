@@ -10,6 +10,7 @@ type framebuffer;
 external renderbuffer_draw: ~filter:filter -> ?color:int -> ?alpha:float -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
 external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?width:float -> ?height:float -> renderInfo -> (framebuffer -> unit) -> bool = "ml_renderbuffer_draw_to_texture";
 
+external renderbuffer_save: renderInfo -> string -> bool = "ml_renderbuffer_save";
 
 module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
 
@@ -72,6 +73,9 @@ class c renderInfo =
         Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
         resized;
       );
+
+    method save filename = renderbuffer_save renderInfo filename;
+
 
   end; (*}}}*)
 

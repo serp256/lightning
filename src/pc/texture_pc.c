@@ -17,104 +17,115 @@
 
 static char* resourcePath = "Resources/";
 
+/////////////////////
+// TODO: Add support of DDS
+/////////////////////
+
+
 int load_image_info(char *fname,char* suffix, int use_pvr, textureInfo *tInfo) {
 	PRINT_DEBUG("load_image_info: %s[%s]",fname,suffix);
-	int rplen = strlen(resourcePath);
-	// try pallete first
+	char *path;
 	char *ext = strrchr(fname,'.');
-	int slen = suffix == NULL ? 0 : strlen(suffix);
-	if (ext && ext != fname && strcasecmp(ext,".plt")) {
-		if (!strcasecmp(ext,".plx")) {
-			// нужно загрузить палитровую картинку нахуй
-			char *path = malloc(rplen + strlen(fname) + slen + 1);
-			memcpy(path,resourcePath,rplen);
-			if (slen != 0) {// need check with prefix first
-				int bflen = strlen(fname) - strlen(ext);
-				memcpy(path + rplen,fname,bflen);
-				memcpy(path + rplen + bflen,suffix,slen);
-				strcpy(path + rplen + bflen + slen,ext);
-				struct stat s;
-				if (!stat(path,&s)) {
-					int r = loadPlxFile(path,tInfo);
-					//strlcpy(tInfo->path,path,255);
-					free(path);
-					return r;
+	size_t flen = strlen(fname);
+	if (flen > 8 && fname[0] == 'S' && fname[1] == 't' && fname[2] == 'o' && fname[3] == 'r' && fname[4] == 'a' && fname[5] == 'g' && fname[6] == 'e' && fname[7] == '/')  path = fname; // it's absolute path
+	else {
+		int rplen = strlen(resourcePath);
+		// try pallete first
+		char *ext = strrchr(fname,'.');
+		int slen = suffix == NULL ? 0 : strlen(suffix);
+		if (ext && ext != fname && strcasecmp(ext,".plt")) {
+			if (!strcasecmp(ext,".plx")) {
+				// нужно загрузить палитровую картинку нахуй
+				char *path = malloc(rplen + flen + slen + 1);
+				memcpy(path,resourcePath,rplen);
+				if (slen != 0) {// need check with prefix first
+					int bflen = flen - strlen(ext);
+					memcpy(path + rplen,fname,bflen);
+					memcpy(path + rplen + bflen,suffix,slen);
+					strcpy(path + rplen + bflen + slen,ext);
+					struct stat s;
+					if (!stat(path,&s)) {
+						int r = loadPlxFile(path,tInfo);
+						//strlcpy(tInfo->path,path,255);
+						free(path);
+						return r;
+					}
 				}
-			}
-			strcpy(path + rplen,fname);
-			int r = loadPlxFile(path,tInfo);
-			free(path);
-			return r;
-		} else if (!strcasecmp(ext,".alpha")) {
-			// загрузить альфу 
-			char *path = malloc(rplen + strlen(fname) + slen + 1);
-			memcpy(path,resourcePath,rplen);
-			if (slen != 0) {
-				int bflen = strlen(fname) - strlen(ext);
-				memcpy(path + rplen,fname,bflen);
-				memcpy(path + rplen + bflen,suffix,slen);
-				strcpy(path + rplen + bflen + slen,ext);
-				struct stat s;
-				if (!stat(path,&s)) {
-					int r = loadAlphaFile(path,tInfo);
-					//strlcpy(tInfo->path,path,255);
-					free(path);
-					return r;
+				strcpy(path + rplen,fname);
+				int r = loadPlxFile(path,tInfo);
+				free(path);
+				return r;
+			} else if (!strcasecmp(ext,".alpha")) {
+				// загрузить альфу 
+				char *path = malloc(rplen + flen + slen + 1);
+				memcpy(path,resourcePath,rplen);
+				if (slen != 0) {
+					int bflen = flen - strlen(ext);
+					memcpy(path + rplen,fname,bflen);
+					memcpy(path + rplen + bflen,suffix,slen);
+					strcpy(path + rplen + bflen + slen,ext);
+					struct stat s;
+					if (!stat(path,&s)) {
+						int r = loadAlphaFile(path,tInfo);
+						//strlcpy(tInfo->path,path,255);
+						free(path);
+						return r;
+					}
 				}
-			}
-			strcpy(path + rplen,fname);
-			int r = loadAlphaFile(path,tInfo);
-			free(path);
-			return r;
-		} else {
-			// проверить этот ебанный plx 
-			int bflen = strlen(fname) - strlen(ext);
-			char *plxpath = malloc(rplen + bflen + slen + 5);
-			memcpy(plxpath,resourcePath,rplen);
-			memcpy(plxpath + rplen,fname,bflen);
-			if (slen != 0) {
-				memcpy(plxpath + rplen + bflen,suffix,slen);
-				strcpy(plxpath + rplen + bflen + slen,".plx");
+				strcpy(path + rplen,fname);
+				int r = loadAlphaFile(path,tInfo);
+				free(path);
+				return r;
+			} else {
+				// проверить этот ебанный plx 
+				int bflen = flen - strlen(ext);
+				char *plxpath = malloc(rplen + bflen + slen + 5);
+				memcpy(plxpath,resourcePath,rplen);
+				memcpy(plxpath + rplen,fname,bflen);
+				if (slen != 0) {
+					memcpy(plxpath + rplen + bflen,suffix,slen);
+					strcpy(plxpath + rplen + bflen + slen,".plx");
+					struct stat s;
+					if (!stat(plxpath,&s)) {
+						int r = loadPlxFile(plxpath,tInfo);
+						//strlcpy(tInfo->path,plxpath,255);
+						free(plxpath);
+						return r;
+					}
+				}
+				strcpy(plxpath + rplen + bflen,".plx");
 				struct stat s;
-				if (!stat(plxpath,&s)) {
+				if (!stat(plxpath,&s)) {// есть plx файл
 					int r = loadPlxFile(plxpath,tInfo);
 					//strlcpy(tInfo->path,plxpath,255);
 					free(plxpath);
 					return r;
-				}
-			}
-			strcpy(plxpath + rplen + bflen,".plx");
-			struct stat s;
-			if (!stat(plxpath,&s)) {// есть plx файл
-				int r = loadPlxFile(plxpath,tInfo);
-				//strlcpy(tInfo->path,plxpath,255);
+				};
 				free(plxpath);
-				return r;
-			};
-			free(plxpath);
+			}
+		};
+		path = malloc(rplen + flen + slen + 1);
+		memcpy(path,resourcePath,rplen);
+		while (1) {
+			if (slen != 0) {
+				if (ext) {
+					int bflen = flen - strlen(ext);
+					memcpy(path + rplen,fname,bflen);
+					memcpy(path + rplen + bflen,suffix,slen);
+					strcpy(path + rplen + bflen + slen,ext);
+				} else {
+					int flen = flen;
+					memcpy(path + rplen,fname,flen);
+					strcpy(path + rplen + flen,suffix);
+				}
+				struct stat s;
+				fprintf(stderr,"try with '%s'\n",path);
+				if (!stat(path,&s)) break;
+			}
+			strcpy(path + rplen,fname);
+			break;
 		}
 	};
-	char *path = malloc(rplen + strlen(fname) + slen + 1);
-	memcpy(path,resourcePath,rplen);
-	while (1) {
-		if (slen != 0) {
-			if (ext) {
-				int bflen = strlen(fname) - strlen(ext);
-				memcpy(path + rplen,fname,bflen);
-				memcpy(path + rplen + bflen,suffix,slen);
-				strcpy(path + rplen + bflen + slen,ext);
-			} else {
-				int flen = strlen(fname);
-				memcpy(path + rplen,fname,flen);
-				strcpy(path + rplen + flen,suffix);
-			}
-			struct stat s;
-			fprintf(stderr,"try with '%s'\n",path);
-			if (!stat(path,&s)) break;
-		}
-		strcpy(path + rplen,fname);
-		break;
-	}
 	fprintf(stderr,"LOAD IMAGE: %s\n",path);
 	int fd = open(path,O_RDONLY);
 	if (fd < 0) return 2;

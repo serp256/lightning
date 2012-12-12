@@ -14,6 +14,17 @@ value pi  =  3.14159265359;
 value half_pi = pi /. 2.;
 value two_pi =  6.28318530718;
 
+value clamp_rotation nr = 
+  let nr = 
+    if nr < ~-.pi 
+    then loop nr where rec loop nr = let nr = nr +. two_pi in if nr < ~-.pi then loop nr else nr
+    else nr
+  in
+  if nr > pi 
+  then loop nr where rec loop nr = let nr = nr -. two_pi in if nr > pi then loop nr else nr
+  else nr
+;
+
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 
 exception File_not_exists of string;
@@ -263,7 +274,7 @@ ENDIF;
 
 type deviceType = [ Phone | Pad ];
 type androidScreen = [ Small| Normal | Large | Xlarge ];
-type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi ];
+type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
 
 value androidScreenToString screen =
   match screen with
@@ -279,6 +290,7 @@ value androidDensityToString density =
   | Mdpi -> "Mdpi"
   | Hdpi -> "Hdpi"
   | Xhdpi -> "Xhdpi"
+  | Tvdpi -> "Tvdpi"
   ];
 
 IFDEF IOS THEN
@@ -299,7 +311,7 @@ value getDeviceType () = !internalDeviceType;
 *)
 ELSE
 
-value internalDeviceType = ref Pad;
+value internalDeviceType = ref Phone;
 value getDeviceType () = !internalDeviceType;
 
 value androidScreen () = None;
@@ -311,6 +323,12 @@ ENDIF;
 value _deviceType = Lazy.lazy_from_fun getDeviceType;
 
 value deviceType () = Lazy.force _deviceType;
+
+IFDEF PC THEN
+value storagePath () = "Storage";
+ELSE
+external storagePath: unit -> string = "ml_getStoragePath";
+ENDIF;
 
 
 

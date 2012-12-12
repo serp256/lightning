@@ -98,10 +98,12 @@ value handle_new_access_token token_info =
 value call_method' meth access_token params callback = 
   let params = [("access_token", access_token) :: params ] in
   let url = Printf.sprintf "https://api.vk.com/method/%s?%s" meth (UrlEncoding.mk_url_encoded_parameters params) in
+  let () = debug "url %s" url in
   let loader = new URLLoader.loader ()  in (    
 
     ignore (
       loader#addEventListener URLLoader.ev_IO_ERROR (
+        let () = debug "URLLoader.ev_IO_ERROR" in
         fun _ _ _ -> callback (Error IOError)
       )
     );
@@ -148,13 +150,15 @@ value call_method ?delegate meth params =
     let redirect_uri = "http://api.vk.com/blank.html"
     and params = [("display", "touch"); ("scope", "friends,notify")]
     and callback = fun 
-      [ OAuth.Token  t ->  
+      [ OAuth.Token  t ->
+        let () = debug "OAuth.Token t" in
           let access_token_info = 
             try 
               Some (handle_new_access_token t)
             with [ Not_found -> None ]
           in match access_token_info with 
-          [ Some (access_token, uid) -> 
+          [ Some (access_token, uid) ->
+            let () = debug "Some (access_token, uid)" in
               let callback = fun
                 [ Data json     ->  call_delegate_success json
                 | Error e       ->  call_delegate_error e

@@ -118,11 +118,11 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public boolean isTablet () {
-	    int width = displayMetrics.widthPixels / displayMetrics.densityDpi;
-	    int height = displayMetrics.heightPixels / displayMetrics.densityDpi;
+	    float width = displayMetrics.widthPixels / displayMetrics.xdpi;
+	    float height = displayMetrics.heightPixels / displayMetrics.ydpi;
 
-	    double screenDiagonal = Math.sqrt( width * width + height * height );
-	    return (screenDiagonal >= 6.5);
+	    double screenDiagonal = Math.sqrt(width * width + height * height);
+	    return (screenDiagonal >= 6);
 	}
 
 	// public int getScreenWidth() {
@@ -134,6 +134,7 @@ public class LightView extends GLSurfaceView {
 	// }
 
 	public int getScreen() {
+		/*
 		Configuration conf = getResources().getConfiguration();
 
 		switch (conf.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) {
@@ -151,12 +152,23 @@ public class LightView extends GLSurfaceView {
 
 			default:
 				return 3;
-		}		
+		}*/
+		String screen = activity.getString(R.string.screen);
+		Log.d("LIGHTNING", "screen " + screen);
+
+		if (screen.contentEquals("small")) return 0;
+		if (screen.contentEquals("normal")) return 1;
+		if (screen.contentEquals("large")) return 2;
+		if (screen.contentEquals("xlarge")) return 3;
+
+		return -1;		
 	}
 
 	public int getDensity() {
 		String density = activity.getString(R.string.density);
+		Log.d("LIGHTNING", "density " + density);
 
+		if (density.contentEquals("tvdpi")) return 4;
 		if (density.contentEquals("ldpi")) return 0;
 		if (density.contentEquals("mdpi")) return 1;
 		if (density.contentEquals("hdpi")) return 2;
@@ -577,7 +589,7 @@ public class LightView extends GLSurfaceView {
 	public void mlUncaughtException(String exn,String[] bt) {
 		Context c = getContext();
 		ApplicationInfo ai = c.getApplicationInfo ();
-		String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android)";
+		String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android, " + activity.getString(R.string.screen) + ", " + activity.getString(R.string.density) + ")";
 		int vers;
 		try { vers = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode; } catch (PackageManager.NameNotFoundException e) {vers = 1;};
 		StringBuffer uri = new StringBuffer("mailto:" + supportEmail);
@@ -589,8 +601,10 @@ public class LightView extends GLSurfaceView {
 		body.append(exn);body.append('\n');
 		for (String b : bt) {
 			body.append(b);body.append('\n');
-		};
+		};		
 		body.append(additionalExceptionInfo);
+		body.append("\n------------------\n");
+		body.append("gl extensions: " + glExts() + "\n");
 		uri.append("&body=" + Uri.encode(body.toString()));
 		Log.d("LIGHTNING","URI: " + uri.toString());
 		Intent sendIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(uri.toString ()));
@@ -816,4 +830,6 @@ public class LightView extends GLSurfaceView {
 
 		return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
 	}	
+
+	public native String glExts();
 }

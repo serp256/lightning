@@ -30,6 +30,7 @@ value nextPowerOfTwo: int -> int;
 value pi:float;
 value half_pi: float;
 value two_pi:float;
+value clamp_rotation: float -> float;
 
 value resources_suffix: unit -> option string;
 value set_resources_suffix: string -> unit;
@@ -42,7 +43,7 @@ value read_json: ?with_suffix:bool -> string -> Ojson.t;
 
 type deviceType = [ Phone | Pad ];
 type androidScreen = [ Small| Normal | Large | Xlarge ];
-type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi ];
+type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
 
 value deviceType: unit -> deviceType;
 
@@ -56,6 +57,12 @@ ENDIF;
 
 value getLocale: unit -> string;
 value getVersion: unit -> string;
+
+IFDEF PC THEN
+value storagePath: unit -> string; 
+ELSE
+external storagePath: unit -> string = "ml_getStoragePath";
+ENDIF;
 
 module MakeXmlParser(P:sig value path: string; value with_suffix:bool; end): sig
   value close: unit -> unit;

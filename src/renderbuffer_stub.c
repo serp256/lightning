@@ -7,6 +7,8 @@
 #include "render_stub.h"
 #include "renderbuffer_stub.h"
 
+#include "texture_save.h"
+
 static int fbs_cnt = 0;
 static GLuint *fbfs = NULL;
 
@@ -284,6 +286,7 @@ value ml_renderbuffer_draw(value filter, value ocolor, value oalpha, value mlwid
 		set_framebuffer_state(&fstate);
 		caml_failwith(emsg);
 	};
+	PRINT_DEBUG("create renderTexture params: %f:%f -> [%f:%f:%f:%f]",rb.width,rb.height,rb.clp.x,rb.clp.y,rb.clp.width,rb.clp.height);
 	lgResetBoundTextures();
 	checkGLErrors("renderbuffer create");
 
@@ -374,6 +377,7 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
   rb.height = height;
 	rb.realWidth = legalWidth;
 	rb.realHeight = legalHeight;
+	rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
 	if (resized) {
 		Store_field(renderInfo,1,caml_copy_double(width));
 		Store_field(renderInfo,2,caml_copy_double(height));
@@ -383,8 +387,8 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 			clip = Val_unit;
 		} else {
 			rb.clp = (clipping) {
-				(double)(double)(legalWidth - width) / (2 * legalWidth),
-				(double)(legalHeight - height) / (2 * legalHeight),
+				(double)rb.vp.x / legalWidth,
+				(double)rb.vp.y / legalHeight,
 				(width / legalWidth),
 				(height / legalHeight)
 			};
@@ -395,7 +399,8 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 			Store_double_field(clp,3,rb.clp.height);
 			clip = caml_alloc_tuple(1);
 			Store_field(clip,0,clp);
-		}
+		};
+		PRINT_DEBUG("update texture params: %f:%f -> [%f:%f:%f:%f]",width,height,rb.clp.x,rb.clp.y,rb.clp.width,rb.clp.height);
 		Store_field(renderInfo,3,clip);
 		if (legalWidth != nextPOT(ceil(cwidth)) || legalHeight != nextPOT(ceil(cheight))) {
 
@@ -425,7 +430,6 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
 			rb.clp = (clipping) {Double_field(clp,0),Double_field(clp,1),Double_field(clp,2),Double_field(clp,3)};
 		}
 	};
-	rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
 
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -478,7 +482,40 @@ value ml_renderbuffer_draw_to_texture_byte(value *argv, int n) {
 
 
 
+value ml_renderbuffer_save(value renderInfo,value filename) {
+	framebuffer_state fstate;
+	get_framebuffer_state(&fstate);
+	double width = Double_val(Field(renderInfo,1));
+	double height = Double_val(Field(renderInfo,2));
+	GLuint legalWidth = nextPOT(ceil(width));
+	GLuint legalHeight = nextPOT(ceil(height));
+	GLuint fbid = get_framebuffer();
+  glBindFramebuffer(GL_FRAMEBUFFER, fbid);
+	GLuint tid = TEXTURE_ID(Field(renderInfo,0));
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,tid,0);
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		char emsg[255];
+		sprintf(emsg,"save framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",fbid,tid,legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
+		set_framebuffer_state(&fstate);
+    caml_failwith(emsg);
+  };
+	viewport vp = (viewport){
+		(GLuint)((legalWidth - width)/2),
+		(GLuint)((legalHeight - height)/2),
+		(GLuint)width,(GLuint)height
+	};
+	printf("size of buffer: %ud\n",4 * (GLuint)width * (GLuint)height);
+	char *pixels = caml_stat_alloc(4 * (GLuint)width * (GLuint)height);
+	printf("pixels: %lu\n",pixels);
+	glReadPixels(vp.x,vp.y,vp.w,vp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	checkGLErrors("after read pixels");
+	int res = save_png_image(filename,pixels,vp.w,vp.h);
+	fprintf(stderr,"save png res: %d\n",res);
+	set_framebuffer_state(&fstate);
+	return Val_bool(res);
+}
 
+/*
 #define CNT_TEST_TEXTURES 200
 void ml_test_c_fun (value f) {
 	GLuint textures[CNT_TEST_TEXTURES];
@@ -504,8 +541,6 @@ void ml_test_c_fun (value f) {
 	get_framebuffer_state(&fstate);
 
 	PRINT_DEBUG("DEPTH ENABLED: %d",glIsEnabled(GL_STENCIL_TEST));
-	// what about renderbuffer
-	int j;
 	for (i = 0; i < CNT_TEST_TEXTURES; i++) {
 		rtid = textures[i];
 		PRINT_DEBUG("TRY BIND WITH %d",i);
@@ -529,3 +564,4 @@ void ml_test_c_fun (value f) {
 
 	back_framebuffer(fbid);
 }
+*/

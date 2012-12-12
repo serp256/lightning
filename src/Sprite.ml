@@ -167,7 +167,7 @@ class c =
            ];
            c.valid := CValid; 
          )
-    | Some _ -> assert False
+    | Some _ -> assert False (* FIXME: иногда срабатывает этот ассерт *)
     | _ -> ()
     ];
 

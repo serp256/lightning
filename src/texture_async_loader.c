@@ -71,7 +71,7 @@ void *run_worker(void *param) {
 			resp->alphaTexInfo = NULL;
 
 			if (!r) {
-				resp->alphaTexInfo = loadAtcAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);	
+				resp->alphaTexInfo = loadEtcAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);	
 			}
 			
 			if (req->suffix != NULL) free(req->suffix); free(req);

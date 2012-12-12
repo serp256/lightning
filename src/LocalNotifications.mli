@@ -1,4 +1,2 @@
-value schedule : ?alertAction:string -> ?badgeNum:int -> string -> float -> string -> bool;
-value cancel : string -> unit;
-value exists : string -> bool;
-value notifFireDate : string -> option float;
+value schedule: ~notifId:string -> ~fireDate:float -> ~mes:string -> unit -> bool;
+value cancel: ~notifId:string -> unit -> unit;
