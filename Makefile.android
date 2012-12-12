@@ -4,6 +4,8 @@ include Makefile.in
 INSTALL_OPTS = src/android/libpng/libpng.a
 INSTALL_OPTS += src/android/libjpeg/libjpeg.a
 INSTALL_OPTS += src/android/libcurl/libcurl.a
+INSTALL_OPTS += src/android/libcurl/libssl.a
+INSTALL_OPTS += src/android/libcurl/libcrypto.a
 
 #lib::
 #	ant -buildfile src/android/java/build.xml release

@@ -964,7 +964,7 @@ CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 }
 */
 
-textureInfo* loadAtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr) {
+textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr) {
 	PRINT_DEBUG("LTextureFormatETC1 %d", LTextureFormatETC1);
 	PRINT_DEBUG("(tInfo.format & 0xFFFF) %d", (tInfo->format & 0xFFFF));
 

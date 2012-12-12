@@ -39,7 +39,7 @@ type delegate = (auth_response -> unit);
    Парсит урл-encoded строку и достает данные о токене.
    Если нет данных рейзит Not_found. 
 *)
-value token_info_of_string str = 
+value token_info_of_string str =
   let id x = x
   and assoc_opt key list f = 
     try 
@@ -47,7 +47,7 @@ value token_info_of_string str =
       in Some (f v)
     with [ Not_found -> None ]
   in 
-  let params = UrlEncoding.dest_url_encoded_parameters str in     
+  let params = UrlEncoding.dest_url_encoded_parameters str in
   let access_token = List.assoc "access_token" params
   and expires_in = assoc_opt "expires_in" params int_of_string
   and token_type = assoc_opt "token_type" params id 
@@ -208,25 +208,13 @@ end;
 
 
 
-IFDEF IOS THEN
-external ml_authorization_grant : string -> option close_button -> unit = "ml_authorization_grant";
-
-(*
-external  set_close_button_insets : int -> int -> int -> int -> unit = "ml_set_close_button_insets";
-external  set_close_button_visible : bool -> unit  = "ml_set_close_button_visible";
-external  set_close_button_image_name : string -> unit = "ml_set_close_button_image_name";
-*)
+IFDEF PC THEN
+value ml_authorization_grant (str:string) (close_button:option close_button) = debug "HAHAHA";
 
 ELSE
+external ml_authorization_grant : string -> option close_button -> unit = "ml_authorization_grant";
 
-value ml_authorization_grant (str:string) (close_button:option close_button) = debug "HAHAHA";
-(*
-value set_close_button_insets (top:int) (left:int) (right:int) (botton:int) = ();
-value set_close_button_visible (visible: bool) = ();
-value set_close_button_image_name (name:string) = ();
-*)
-
-ENDIF;
+ENDIF; 
 
 (* ожидаемые авторизации *)
 value pendings = Queue.create ();
@@ -267,7 +255,8 @@ Callback.register "oauth_redirected" oauth_redirected;
 value refresh_token ~client_id ~token_endpoint ~rtoken ~params callback = 
   let grant_type = "refresh_token" in
   let params = [ ("client_id", client_id) :: [ ("grant_type", grant_type) :: [ ("refresh_token", rtoken) :: params ]]] in
-  let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
+  let token_url = token_endpoint in
+  (* let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in *)
   
   let loader = new URLLoader.loader () in (
     
@@ -289,12 +278,12 @@ value refresh_token ~client_id ~token_endpoint ~rtoken ~params callback =
         ];          
       );
     );
-    
+        
     let request = 
     { 
       URLLoader.httpMethod = `POST;
       headers = [];
-      data = None;
+      data = Some (`String (UrlEncoding.mk_url_encoded_parameters params));
       url = token_url
     } in loader#load request;
 
@@ -306,7 +295,8 @@ value get_token_by_code client_id token_endpoint redirect_uri params code callba
   let grant_type = "authorization_code" in
   let params = 
     [ ( "client_id", client_id) ; ("grant_type", grant_type) ; ("code", code) ; ("redirect_uri", redirect_uri) :: params ] in
-  let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in
+  let token_url = token_endpoint in
+  (* let token_url = Printf.sprintf "%s?%s" token_endpoint (UrlEncoding.mk_url_encoded_parameters params) in *)
 
   
   let loader = new URLLoader.loader () in (  
@@ -329,15 +319,15 @@ value get_token_by_code client_id token_endpoint redirect_uri params code callba
         ];          
       );
     );
-    
+
     let request = 
     { 
       URLLoader.httpMethod = `POST;
       headers = [];
-      data = None;
+      data = Some (`String (UrlEncoding.mk_url_encoded_parameters params));
+      (* data = None; *)
       url = token_url
     } in loader#load request;
-
   );
 
 
@@ -367,7 +357,8 @@ value authorization_grant ~client_id ~auth_endpoint ~redirect_uri ~gtype ~params
       | Implicit -> 
           fun url -> 
             let () = debug "Got URL: %s!" url in
-            callback (auth_response_of_url url)
+            let authResp = auth_response_of_url url in
+              callback authResp
       ]
     in 
     authorization_grant auth_url close_button handler

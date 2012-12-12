@@ -109,7 +109,7 @@ typedef struct {
 } textureInfo;
 
 
-textureInfo* loadAtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr);
+textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr);
 
 
 int loadPlxPtr(gzFile fptr,textureInfo *tInfo);

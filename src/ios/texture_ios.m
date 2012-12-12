@@ -291,75 +291,79 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
 
 int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 
-	//NSLog(@"LOAD IMAGE: %@[%s]\n",path,suffix);
 	NSString *fullPath = NULL;
 	NSString *imgType = [[path pathExtension] lowercaseString];
-	NSBundle *bundle = [NSBundle mainBundle];
 
 	int r;
 	int is_pvr = 0;
 	int is_plx = 0;
 	int is_alpha = 0;
 
-	do  {
+	if ([path isAbsolutePath]) {
 		if ([imgType rangeOfString:@"pvr"].location == 0) is_pvr = 1;
 		else if ([imgType rangeOfString:@"plx"].location == 0) is_plx = 1;
 		else if ([imgType rangeOfString:@"alpha"].location == 0) is_alpha = 1;
-		else if ([imgType rangeOfString:@"plt"].location == 0) {}
-		else {
-			do {
-				NSString *fname = NULL;
-				NSString *pathWithoutExt = [path stringByDeletingPathExtension];
-				if (suffix != NULL) {
+		fullPath = path;
+	} else {
+		NSBundle *bundle = [NSBundle mainBundle];
+		do {
+			if ([imgType rangeOfString:@"pvr"].location == 0) is_pvr = 1;
+			else if ([imgType rangeOfString:@"plx"].location == 0) is_plx = 1;
+			else if ([imgType rangeOfString:@"alpha"].location == 0) is_alpha = 1;
+			else if ([imgType rangeOfString:@"plt"].location == 0) {}
+			else {
+				do { /* {{{ */
+						NSString *fname = NULL;
+						NSString *pathWithoutExt = [path stringByDeletingPathExtension];
+						if (suffix != NULL) {
 
-					NSString *pathWithSuffix = [pathWithoutExt stringByAppendingString:[NSString stringWithCString:suffix encoding:NSASCIIStringEncoding]];
-					if (use_pvr) {
-						fname = [pathWithSuffix stringByAppendingPathExtension:@"pvr"];
-						fullPath = pathForBundleResource(fname, bundle); 
-						if (fullPath) {
-							is_pvr = 1; 
-							break; 
+							NSString *pathWithSuffix = [pathWithoutExt stringByAppendingString:[NSString stringWithCString:suffix encoding:NSASCIIStringEncoding]];
+							if (use_pvr) {
+								fname = [pathWithSuffix stringByAppendingPathExtension:@"pvr"];
+								fullPath = pathForBundleResource(fname, bundle); 
+								if (fullPath) {
+									is_pvr = 1; 
+									break; 
+								}
+							};
+
+							// try plx with with suffix
+							fname = [pathWithSuffix stringByAppendingPathExtension:@"plx"];
+							fullPath = pathForBundleResource(fname,bundle);
+							if (fullPath) {
+								is_plx = 1;
+								break;
+							};
+
+							// try original ext with this suffix
+							fname = [pathWithSuffix stringByAppendingPathExtension:imgType];
+							fullPath = pathForBundleResource(fname, bundle); 
+							if (fullPath) break;
+						} 
+
+						// try pvr 
+						if (use_pvr) {
+							fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
+							fullPath = pathForBundleResource(fname, bundle);
+							if (fullPath) {is_pvr = 1; break;};
 						}
-					};
 
-					// try plx with with suffix
-					fname = [pathWithSuffix stringByAppendingPathExtension:@"plx"];
-					fullPath = pathForBundleResource(fname,bundle);
-					if (fullPath) {
-						is_plx = 1;
-						break;
-					};
+						// try plx
+						fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
+						fullPath = pathForBundleResource(fname, bundle);
+						if (fullPath) {is_plx = 1; break;};
 
-					// try original ext with this suffix
-					fname = [pathWithSuffix stringByAppendingPathExtension:imgType];
-					fullPath = pathForBundleResource(fname, bundle); 
-
-					if (fullPath) break;
-				} 
-
-				// try pvr 
-				if (use_pvr) {
-					fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
+						fullPath = pathForBundleResource(path, bundle);
+					} while (0); /*}}}*/
+					break;
+				};
+				if (suffix != NULL) {
+					NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", [NSString stringWithCString:suffix encoding:NSASCIIStringEncoding], imgType];
 					fullPath = pathForBundleResource(fname, bundle);
-					if (fullPath) {is_pvr = 1; break;};
-				}
-
-				// try plx
-				fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
-				fullPath = pathForBundleResource(fname, bundle);
-				if (fullPath) {is_plx = 1; break;};
-
-				fullPath = pathForBundleResource(path, bundle);
-			} while (0);
-			break;
-		}
-		// if not needed try other exts
-		if (suffix != NULL) {
-			NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", [NSString stringWithCString:suffix encoding:NSASCIIStringEncoding], imgType];
-			fullPath = pathForBundleResource(fname, bundle);
-			if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
-		} else fullPath = pathForBundleResource(path, bundle); 
-	} while(0);
+					if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
+				} else fullPath = pathForBundleResource(path, bundle); 
+			} while(0); 
+	};
 
 	if (!fullPath) r = 2;
 	else {
@@ -422,7 +426,7 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value 
 	CAMLparam2(opath,osuffix);
 	CAMLlocal1(mlTex);
 	//NSLog(@"ml_loade image: %s\n",String_val(opath));
-	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
+	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSUTF8StringEncoding];
 	checkGLErrors("start load image");
 
 	textureInfo tInfo;

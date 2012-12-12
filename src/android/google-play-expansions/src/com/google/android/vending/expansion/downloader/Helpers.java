@@ -241,6 +241,9 @@ public class Helpers {
         // the file may have been delivered by Market --- let's make sure
         // it's the size we expect
         File fileForNewFile = new File(Helpers.generateSaveFileName(c, fileName));
+
+        Log.d("LIGHTNING", "fileForNewFile: " + fileForNewFile);
+
         if (fileForNewFile.exists()) {
             if (fileForNewFile.length() == fileSize) {
                 return true;

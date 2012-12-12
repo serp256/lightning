@@ -26,18 +26,11 @@
 					android:anyDensity="true"
 					/>
 
-    <service android:name="ru.redspell.lightning.payments.BillingService" />
-    <service android:name="ru.redspell.lightning.expansions.LightExpansionsDownloadService" />
-
-        <receiver android:name="ru.redspell.lightning.payments.BillingReceiver">
-            <intent-filter>
-                <action android:name="com.android.vending.billing.IN_APP_NOTIFY" />
-                <action android:name="com.android.vending.billing.RESPONSE_CODE" />
-                <action android:name="com.android.vending.billing.PURCHASE_STATE_CHANGED" />
-            </intent-filter>
+        <receiver android:name="ru.redspell.lightning.LightNotificationsReceiver">
+          <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED" />
+          </intent-filter>
         </receiver>
-        <receiver android:name="ru.redspell.lightning.expansions.LightExpansionsAlarmReceiver"></receiver>
-
     </application>
 
 	<uses-permission android:name="android.permission.INTERNET" />
@@ -47,7 +40,10 @@
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-	<uses-feature android:glEsVersion="0x00020000" android:required="true"></uses-feature>
-	<uses-sdk android:minSdkVersion="9"></uses-sdk>
+	<uses-permission android:name="android.permission.GET_TASKS"/>
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+	<uses-feature android:glEsVersion="0x00020000" android:required="true"/>
+	<!-- <uses-sdk android:minSdkVersion="9"></uses-sdk> -->
 
 </manifest>

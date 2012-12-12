@@ -274,7 +274,7 @@ ENDIF;
 
 type deviceType = [ Phone | Pad ];
 type androidScreen = [ Small| Normal | Large | Xlarge ];
-type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi ];
+type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
 
 value androidScreenToString screen =
   match screen with
@@ -290,6 +290,7 @@ value androidDensityToString density =
   | Mdpi -> "Mdpi"
   | Hdpi -> "Hdpi"
   | Xhdpi -> "Xhdpi"
+  | Tvdpi -> "Tvdpi"
   ];
 
 IFDEF IOS THEN
@@ -322,6 +323,12 @@ ENDIF;
 value _deviceType = Lazy.lazy_from_fun getDeviceType;
 
 value deviceType () = Lazy.force _deviceType;
+
+IFDEF PC THEN
+value storagePath () = "Storage";
+ELSE
+external storagePath: unit -> string = "ml_getStoragePath";
+ENDIF;
 
 
 

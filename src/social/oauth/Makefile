@@ -16,7 +16,7 @@ MLFLAGS += -I ../.. -I ../../utils
 
 MLPPOPT += ../../syntax/pa_debug.cmo -enable-debug default
 ifeq ($(PLATFORM),IOS)
-FAKELIBS  =
+FAKELIBS =
 CFLAGS  += -DDEBUG -DIOS -Iios
 MLCOPTS += -DIOS
 MOBJS   +=  ios/oauth_wrapper.o ios/OAuth.o
@@ -32,15 +32,30 @@ oauth.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
 
 oauth.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
 	$(OCAMLMKLIB) -verbose -o oauth $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+
+else
+ifeq ($(PLATFORM),ANDROID)
+FAKELIBS =
+CFLAGS += -DLDEBUG -DANDROID -Iandroid -I../../android -I../..
+MLPPOPT += -DANDROID
+MOBJS += android/oauth_wrapper.o
+            
+oauth.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
+	$(OCAMLMKLIB) -verbose -o oauth $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
+
+oauth.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
+	$(OCAMLMKLIB) -verbose -o oauth $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 else
 
-MLCOPTS += -DSDL
+MLCOPTS += -DPC
+MLPPOPT += -DPC 
 oauth.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o oauth.cmxa $(MLOBJSN)
 
 oauth.cma: $(IFACES) $(MLOBJS)
 	$(OCAMLC) -a -o oauth.cma $(MLOBJS)
 
+endif
 endif
 
 OAuth.cmx: OAuth.cmi
