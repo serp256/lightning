@@ -1395,22 +1395,23 @@ struct custom_operations shape_ops = {
   custom_deserialize_default
 };
 
-static shape_data_len = 0;
+static int shape_data_len = 0;
 static lgQVertex *shape_vertexes = NULL;
 
-value ml_shape_init (value mlpoints, value ml_draw_method) {
+value ml_shape_create (value mlpoints, value ml_draw_method) {
 	value result = caml_alloc_custom(&shape_ops,sizeof(shape_t),0,1);
 	shape_t *shape = SHAPE(result);
   glGenBuffers(1, &shape->buffer);
 	// Прохуячить по окамльному массиву и загнать нахуй все в буффер блядь
 	mlsize_t len = caml_array_length(mlpoints);
-	if (len < shape_data_len) {
+	if (len > shape_data_len) {
 		shape_vertexes = realloc(shape_vertexes,sizeof(lgQVertex) * len);
 		shape_data_len = len;
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, shape->buffer);
 	value point;
 	for (int i = 0; i < len; i++) {
+		PRINT_DEBUG("get %d shape point",i);
 		point = Field(mlpoints,i);
 		shape_vertexes[i].v.x = Double_val(Field(point,0));
 		shape_vertexes[i].v.y = Double_val(Field(point,1));
@@ -1418,13 +1419,23 @@ value ml_shape_init (value mlpoints, value ml_draw_method) {
 	};
 	glBufferData(GL_ARRAY_BUFFER, sizeof(lgQVertex) * len, shape_vertexes, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER,0);
+	switch Int_val(ml_draw_method) {
+		case 0: shape->method = GL_POINTS;break;
+		case 1: shape->method = GL_LINES;break;
+		case 2: shape->method = GL_LINE_LOOP;break;
+		case 3: shape->method = GL_LINE_STRIP;break;
+		case 4: shape->method = GL_TRIANGLES;break;
+		case 5: shape->method = GL_TRIANGLE_STRIP;break;
+		case 6: shape->method = GL_TRIANGLE_FAN;break;
+	};
 	shape->len = len;
 	return result;
 }
 
-void ml_shape_render(value mlshape,value matrix,value program,value alpha) {
+void ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 	shape_t *shape = SHAPE(mlshape);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
+	glLineWidth(2.);
 	DISABLE_TEXTURE();
 	lgGLUseProgram(sp->program);
 	kmGLPushMatrix();
@@ -1446,7 +1457,7 @@ void ml_shape_render(value mlshape,value matrix,value program,value alpha) {
 	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, QVertexSize, (GLvoid*) offsetof( lgQVertex, v));
 	// colors
 	glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, QVertexSize, (GLvoid*) offsetof( lgQVertex, c));
-  glDrawArrays(GL_LINES, 0, shape->len);
+  glDrawArrays(shape->method, 0, shape->len);
 	checkGLErrors("draw shape arrays");
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 
