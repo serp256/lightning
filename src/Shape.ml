@@ -92,6 +92,6 @@ value circle ?(draw_method=`Line_loop) color alpha radius =
       verticies.(i) := {x=j;y=k;color;alpha}
     done;
     let diametr = radius *. 2. in
-    new c ~draw_method ~bounds:(Rectangle.create 0. 0. diametr diametr) verticies;
+    new c ~draw_method:`Triangle_fan ~bounds:(Rectangle.create 0. 0. diametr diametr) verticies;
   );
 
