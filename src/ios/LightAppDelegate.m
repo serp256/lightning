@@ -33,6 +33,9 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application         {
 	NSLog(@"become active");
+
+  if ([FBSession defaultAppID]) [[FBSession activeSession] handleDidBecomeActive];
+
 	[lightViewController becomeActive];
 }
 
@@ -109,20 +112,22 @@
 
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
-	 	NSString *urlString = [url absoluteString];
+/*	 	NSString *urlString = [url absoluteString];
 	  const char *str = [urlString UTF8String];
 		NSLog(@"UIApplication handleOpenURL %s", str);
     [[NSNotificationCenter defaultCenter] postNotificationName: @"applicationHandleOpenURL" object: self userInfo: [NSDictionary dictionaryWithObject: url forKey:@"url"]];
-    return YES;
+    return YES;*/
+    return [FBSession defaultAppID] ? [[FBSession activeSession] handleOpenURL:url] : YES;
 }
 
     
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
-	 	NSString *urlString = [url absoluteString];
+/*	 	NSString *urlString = [url absoluteString];
 	  const char *str = [urlString UTF8String];
 		NSLog(@"UIApplication openURL %s", str);
     [[NSNotificationCenter defaultCenter] postNotificationName: @"applicationHandleOpenURL" object: self userInfo: [NSDictionary dictionaryWithObject: url forKey:@"url"]];
-    return YES;
+    return YES;*/
+    return [FBSession defaultAppID] ? [[FBSession activeSession] handleOpenURL:url] : YES;
 }
 
 -(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {

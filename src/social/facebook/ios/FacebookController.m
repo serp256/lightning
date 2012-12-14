@@ -1,8 +1,27 @@
-#import <UIKit/UIKit.h>
+#import "FacebookController.h"
+
+@implementation FacebookController
+
+-(void)connect:(NSString*)appId {
+    NSLog(@"ml_fbConnect");
+
+    if (!fbSession) {
+        [FBSession setDefaultAppID:appId];
+        NSLog(@"pizda %d", (int)[FBSession openActiveSessionWithReadPermissions:nil
+            allowLoginUI:YES
+            completionHandler:^(FBSession* session, FBSessionState state, NSError* error) {
+                NSLog(@"sessionStateChanged call block");
+            }
+        ]);
+    }  
+}
+
+@end
+/*#import <UIKit/UIKit.h>
 
 #import "FacebookController.h"
-#import <caml/mlvalues.h>                                                                                                                               
-#import <caml/callback.h>                                                                                                                               
+#import <caml/mlvalues.h>
+#import <caml/callback.h>
 #import <caml/alloc.h>
 
 @implementation FacebookController
@@ -10,9 +29,6 @@
 @synthesize facebook = _facebook;
 
 
-/*
- *
- */
 -(id)initWithAppId:(NSString *)appid {
   self = [super init];
   if (self) {
@@ -22,17 +38,11 @@
   return self;
 }
 
-/*
- *
- */
 - (void)handleOpenURLNofitication:(NSNotification *)notification {
     [self.facebook handleOpenURL:[[notification userInfo] valueForKey: @"url"]]; 
 }
 
 
-/*
- *        
- */
 - (void)fbDidLogin {
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
   [defaults setObject:[self.facebook accessToken] forKey:@"FBAccessTokenKey"];
@@ -47,9 +57,6 @@
 }
 
 
-/*
- *        
- */
 - (void)fbDidLogout {
   value *mlf = (value*)caml_named_value("facebook_logged_out");
   if (mlf == NULL) {                                                                                                                   
@@ -59,9 +66,6 @@
 }
 
 
-/*
- *        
- */
 - (void)fbDidNotLogin:(BOOL)cancelled {
   value *mlf = (value*)caml_named_value("facebook_login_cancelled");
   if (mlf == NULL) {                                                                                                                   
@@ -71,9 +75,6 @@
 }
 
 
-/*
- *        
- */
 - (void)fbSessionInvalidated {
   value *mlf = (value*)caml_named_value("facebook_session_invalidated");
   if (mlf == NULL) {                                                                                                                   
@@ -86,3 +87,4 @@
 
  @end
 
+*/
