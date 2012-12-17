@@ -36,16 +36,33 @@
     }
 
     - (void)dialogCompleteWithUrl:(NSURL*)url {
-        NSLog(@"dialogCompleteWithUrl %@", [url query]);
-        
         NSArray* params = [[[url query] stringByReplacingPercentEscapesUsingEncoding:NSASCIIStringEncoding] componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"&"]];
         NSArray* keyValuePair;
         NSEnumerator* enumer = [params objectEnumerator];
+        NSError* err = nil;
+        NSRegularExpression* paramRegex = [NSRegularExpression regularExpressionWithPattern:@"to\\[\\d+\\]" options:0 error:&err];
+
+        if (err) {
+          caml_failwith([[err localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]);
+        }
+
         id param;
+        usersIds = Val_int(0);
 
         while (param = [enumer nextObject]) {
-            keyValuePair = [(NSString*)param componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"="]];
-            
+          keyValuePair = [(NSString*)param componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"="]];
+          NSString* paramName = (NSString*)[keyValuePair objectAtIndex:0];          
+          NSUInteger matchesNum = [paramRegex numberOfMatchesInString:paramName options:0 range:NSMakeRange(0, [paramName length])];
+
+          if (matchesNum) {
+            NSString* paramValue = (NSString*)[keyValuePair objectAtIndex:1];
+            value lst = caml_alloc(2, 0);
+
+            Store_field(lst, 0, caml_copy_string([paramValue cStringUsingEncoding:NSUTF8StringEncoding]));
+            Store_field(lst, 1, usersIds);
+
+            usersIds = lst;
+          }
         }
     }
 
