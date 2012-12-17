@@ -31,7 +31,7 @@ type span_attribute =
 
 type span_attributes = list span_attribute;
 
-type simple_element = [= `img of (img_attributes * D.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
+type simple_element = [= `img of (img_attributes * D.c) | `span of (span_attributes * simple_elements) | `br | `substring of (string * int * int) | `text of string ]
 and simple_elements = list simple_element;
 
 type p_halign = [= `left | `right | `center ];
@@ -338,7 +338,7 @@ value to_string t =
         Xmlm.output xmlout `El_end;
       )
     | `br -> (Xmlm.output xmlout (`El_start (("","br"),[])); Xmlm.output xmlout `El_end) 
-    | `text text -> Xmlm.output xmlout (`Data text)
+    | `text text | `substring text _ _ -> Xmlm.output xmlout (`Data text)
     | `span attributes children ->
       (
         let el = `El_start (("","span"),List.map span_attribute attributes) in
@@ -570,6 +570,8 @@ DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_NEWLINE = 10;
 
 
+  (*}}}*)
+
 (* width, height вытащить наверно в html тоже *)
 value create ?width ?height ?border ?dest (html:main) = 
   let () = debug 
@@ -584,227 +586,229 @@ value create ?width ?height ?border ?dest (html:main) =
         createLine ?indent font lines;
       )
     in
-    loop [(attributes,elements)] where
-      rec loop = fun
-        [ [] -> () 
-        | [ (_,[]) :: next ] -> loop next 
-        | [ (attributes, [ `img attrs image :: elements ]) :: next ] ->
-          let () = debug "attrs empty %B" (attrs = []) in
-(*           let () = List.iter (fun attr -> match attr with [ `paddingLeft pl -> debug "paddingLeft: %f" pl | _ -> debug "some attr "]) attrs in *)
-          let () = debug "process img: lines: %d" (Stack.length lines) in
-          let (iwidth, iheight) =
-            let (w, h) =
-              match (getAttrOpt (fun [ `width w -> Some w | _ -> None ]) attrs, getAttrOpt (fun [ `height h -> Some h | _ -> None ]) attrs) with
-              [ (Some w, Some h) -> (w, h)
-              | (Some w, None) -> (w, image#height *. w /. image#width)
-              | (None, Some h) -> (image#width *. h /. image#height, h)
-              | _ -> (image#width, image#height)
-              ]
-            in
-            (
-              image#setWidth w;
-              image#setHeight h;
-              (w, h);
-            )
-    (*       let iwidth = match getAttrOpt (fun [ `width w -> Some w | _ -> None ])  attrs with [ Some w -> (image#setWidth w; w) | None -> image#width] (*{{{*)
-          and iheight = match getAttrOpt (fun [ `height h -> Some h | _ -> None ])  attrs with [ Some h -> (image#setHeight h; h) | None -> image#height] *)
-          and paddingLeft = getAttr (fun [ `paddingLeft pl -> Some pl | _ -> None]) 0. attrs in
-          let () = debug "paddingLeft: %f" paddingLeft in
-          let font = getFont attributes in
-          let line = 
-            if Stack.is_empty lines 
-            then createLine ~indent:(getTextIndent attributes) font lines
-            else
-              let line = Stack.top lines in
-              if line.closed 
-              then createLine font lines
-              else 
-                match width with
-                [ None -> line
-                | Some width ->
-                  if line.currentX +. iwidth +. paddingLeft > width 
-                  then 
-                  (
-                    line.closed := True;
-                    createLine font lines;
-                  )
-                  else line
-                ]
-          in
-          (
-            image#setX (line.currentX +. paddingLeft);
-            let paddingRight = getAttr (fun [ `paddingRight pl -> Some pl | _ -> None]) 0. attrs in
-            let eWidth = paddingLeft +. iwidth +. paddingRight in
-            let paddingTop = getAttr (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. attrs in
-            match getAttr (fun [ `valign v -> Some v | _ -> None]) `default attrs with
-            [ `default ->
-              (
-                let textHeight = line.ascender +. line.descender in
-                let dh = (iheight -. textHeight) /. 2. in
-                let y = adjustToLine ~ascender:(line.ascender +. dh) ~descender:(line.descender +. dh) line in
-                image#setY (y +. paddingTop);
-                addToLine eWidth (Img image) line;
-              )
-            | `aboveBaseLine -> 
-              (
-                let y = adjustToLine ~ascender:iheight line in
-                image#setY (y +. paddingTop);
-                addToLine eWidth (Img image) line;
-              )
-            | `underBaseLine -> 
-              (
-                let y = adjustToLine ~descender:iheight line in
-                image#setY (y +. paddingTop);
-                addToLine eWidth (Img image) line
-              )
-            | `centerBaseLine -> 
-              let () = debug "place image by text center" in
-              let h2 = iheight /. 2. in
-              let y = adjustToLine ~ascender:h2 ~descender:h2 line in
-              (
-                image#setY (y +. paddingTop);
-                addToLine eWidth (Img image) line
-              )
-            ];
-            loop [ (attributes,elements) :: next ]
-          )(*}}}*)
-        | [ (attributes,[ `span attribs celements :: elements ]) :: next ] ->
-          (
-            let () = debug "process span" in
-            let sattributes = (attribs :> div_attributes) @ attributes in
-            loop [ (sattributes,celements) ; (attributes,elements) :: next ]
-          )
-        | [ (attributes, [ `text text :: elements ]) :: next ] -> (* рендер text {{{*)
-            let () = debug "process text: [%s] lines: %d" text (Stack.length lines) in
-            let strLength = String.length text in
-            match strLength with
-            [ 0 -> loop [ (attributes, elements) :: next ]
-            | _ ->
-              let color = getAttr (fun [ `color n -> Some n | _ -> None]) 0 attributes in
-              let alpha = getAttr (fun [ `alpha a -> Some a | _ -> None]) 1. attributes in
-              let font = getFont attributes in
-              let () = debug "font scale: %f" font.BitmapFont.scale in
-              let text_whitespace = ref None in
-              let yoffset = ref 0. in
-              let rec add_line currentLine num index = 
-                let () = debug "add line" in
-                let () = currentLine.closed := True in
-                let nextLine = createLine font lines in
-                (
-                  yoffset.val := 0.;
-                  text_whitespace.val := None;
-                  add_char nextLine num index
-                )
-              and add_char line num index = 
-                if index < strLength 
-                then
-                  let code = UChar.code (UTF8.look text index) in
-                  let open BitmapFont in
-                  if code = CHAR_NEWLINE 
-                  then
-                    add_line line (num+1) (UTF8.next text index)
-                   else if code = CHAR_SPACE 
-                   then
-                   (
-                     line.currentX := line.currentX +. font.space;
-                     text_whitespace.val := Some (num,DynArray.length line.lchars);
-                     add_char line (num+1) (UTF8.next text index)
-                   )
-                   else
-                     match try Some (Hashtbl.find font.chars code) with [ Not_found -> None ] with
-                     [ Some bchar ->
-                       let bchar = 
-                         if font.scale <> 1. 
-                         then {(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale} 
-                         else bchar 
-                       in
-                       let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
-                       match width with
-                       [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width && bchar.BitmapFont.xAdvance <= width ->
-                           let () = debug "can't add this char" in
-                           match !text_whitespace with
-                           [ None -> 
-                             match !line_whitespace with
-                             [ None -> 
-                               let () = debug "has no whitespaces on this line" in
-                               add_line line num index 
-                             | Some len ascender descender elements ->
-                               (
-                                 debug "line has whitespace";
-                                 DynArray.delete_range line.lchars len ((DynArray.length line.lchars) - len);
-                                 lineRollback ascender descender line;
-                                 line.closed := True;
-                                 loop elements
-                               )
-                             ]
-                           | Some (num,numAddedChars) ->
-                             (
-                               debug "text has whitespace %d:%d" num numAddedChars;
-                               let cnt_chars_in_line = DynArray.length line.lchars in
-                               DynArray.delete_range line.lchars numAddedChars (cnt_chars_in_line - numAddedChars);
-                               add_line line (num+1) (UTF8.nth text (num + 1))
-                             )
-                           ]
-                       | _ ->
-                         (
-                           let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:(`Color color) ~alpha:alpha bchar.atlasNode in
-                           addToLine bchar.xAdvance (Char b) line;
-                           add_char line (num+1) (UTF8.next text index)
-                         )
-                       ]
-                     | None -> 
+    let rec draw_text attributes text idx strLength elements next = 
+      let color = getAttr (fun [ `color n -> Some n | _ -> None]) 0 attributes in
+      let alpha = getAttr (fun [ `alpha a -> Some a | _ -> None]) 1. attributes in
+      let font = getFont attributes in
+      let () = debug "font scale: %f" font.BitmapFont.scale in
+      let text_whitespace = ref None in
+      let yoffset = ref 0. in
+      let rec add_line currentLine num index = 
+        let () = debug "add line" in
+        let () = currentLine.closed := True in
+        let nextLine = createLine font lines in
+        (
+          yoffset.val := 0.;
+          text_whitespace.val := None;
+          add_char nextLine num index
+        )
+      and add_char line num index = 
+        if index < strLength 
+        then
+          let code = UChar.code (UTF8.look text index) in
+          let open BitmapFont in
+          if code = CHAR_NEWLINE 
+          then
+            add_line line (num+1) (UTF8.next text index)
+           else if code = CHAR_SPACE 
+           then
+           (
+             line.currentX := line.currentX +. font.space;
+             text_whitespace.val := Some (num,DynArray.length line.lchars);
+             add_char line (num+1) (UTF8.next text index)
+           )
+           else
+             match try Some (Hashtbl.find font.chars code) with [ Not_found -> None ] with
+             [ Some bchar ->
+               let bchar = 
+                 if font.scale <> 1. 
+                 then {(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale} 
+                 else bchar 
+               in
+               let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
+               match width with
+               [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width && bchar.BitmapFont.xAdvance <= width ->
+                   let () = debug "can't add this char" in
+                   match !text_whitespace with
+                   [ None -> 
+                     match !line_whitespace with
+                     [ None -> 
+                       let () = debug "has no whitespaces on this line" in
+                       add_line line num index 
+                     | Some len ascender descender elements ->
                        (
-                         Debug.w "char %d not found\n%!" code;
-                         line.currentX := line.currentX +. font.space;
-(*                          lastWhiteSpace.val := DynArray.length line.lchars; *)
-                         add_char line (num+1) (UTF8.next text index)
+                         debug "line has whitespace";
+                         DynArray.delete_range line.lchars len ((DynArray.length line.lchars) - len);
+                         lineRollback ascender descender line;
+                         line.closed := True;
+                         loop elements
                        )
                      ]
-                else 
-                (
-                  match !text_whitespace with
-                  [ Some (num,ws) -> 
-                    let () = debug "set line_whitespace: %d, %d" ws num in
-                    line_whitespace.val := Some ( 
-                      ws , line.ascender, line.descender, 
-                      if num + 1 < UTF8.length text
-                      then 
-                        let index = UTF8.nth text (num + 1) in
-                        [ (attributes, [ `text (String.sub text index (strLength - index)) :: elements ]) :: next ]
-                      else [ (attributes,elements) :: next ]
-                    )
-                  | None -> ()
-                  ];
-                  loop [ (attributes,elements) :: next ]
-                )
-              in
-              let line = 
-                if Stack.is_empty lines 
-                then createLine ~indent:(getTextIndent attributes) font lines
-                else if (Stack.top lines).closed 
-                then createLine font lines
-                else 
-                  let line = Stack.top lines in
-                  (
-                    yoffset.val := adjustToLine ~ascender:font.BitmapFont.ascender ~descender:font.BitmapFont.descender ~height:font.BitmapFont.lineHeight line;
-                    line
-                  )
-              in
-              add_char line 0 0
-              (*}}}*)
-            ]
-        | [ (attributes, [`br :: elements]) :: next ] -> 
+                   | Some (num,numAddedChars) ->
+                     (
+                       debug "text has whitespace %d:%d" num numAddedChars;
+                       let cnt_chars_in_line = DynArray.length line.lchars in
+                       DynArray.delete_range line.lchars numAddedChars (cnt_chars_in_line - numAddedChars);
+                       add_line line (num+1) (UTF8.nth text (num + 1))
+                     )
+                   ]
+               | _ ->
+                 (
+                   let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:(`Color color) ~alpha:alpha bchar.atlasNode in
+                   addToLine bchar.xAdvance (Char b) line;
+                   add_char line (num+1) (UTF8.next text index)
+                 )
+               ]
+             | None -> 
+               (
+                 Debug.w "char %d not found\n%!" code;
+                 line.currentX := line.currentX +. font.space;
+    (*                          lastWhiteSpace.val := DynArray.length line.lchars; *)
+                 add_char line (num+1) (UTF8.next text index)
+               )
+             ]
+        else 
+        (
+          match !text_whitespace with
+          [ Some (num,ws) -> 
+            let () = debug "set line_whitespace: %d, %d" ws num in
+            line_whitespace.val := Some ( 
+              ws , line.ascender, line.descender, 
+              if num + 1 < strLength
+              then 
+                let index = UTF8.nth text (num + 1) in
+                [ (attributes, [ `text (String.sub text index (strLength - index)) :: elements ]) :: next ]
+              else [ (attributes,elements) :: next ]
+            )
+          | None -> ()
+          ];
+          loop [ (attributes,elements) :: next ]
+        )
+      in
+      let line = 
+        if Stack.is_empty lines 
+        then createLine ~indent:(getTextIndent attributes) font lines
+        else if (Stack.top lines).closed 
+        then createLine font lines
+        else 
+          let line = Stack.top lines in
           (
-            if Stack.is_empty lines || (Stack.top lines).closed 
-            then 
-              let line = createLine (getFont attributes) lines in
-              line.closed := True
-            else 
-              let line = Stack.top lines in
-              line.closed := True;
-            loop [ (attributes,elements) :: next ]
+            yoffset.val := adjustToLine ~ascender:font.BitmapFont.ascender ~descender:font.BitmapFont.descender ~height:font.BitmapFont.lineHeight line;
+            line
           )
-        ]
+      in
+      add_char line idx 0
+    and loop = fun
+      [ [] -> () 
+      | [ (_,[]) :: next ] -> loop next 
+      | [ (attributes, [ `img attrs image :: elements ]) :: next ] ->
+        let () = debug "attrs empty %B" (attrs = []) in
+(*           let () = List.iter (fun attr -> match attr with [ `paddingLeft pl -> debug "paddingLeft: %f" pl | _ -> debug "some attr "]) attrs in *)
+        let () = debug "process img: lines: %d" (Stack.length lines) in
+        let (iwidth, iheight) =
+          let (w, h) =
+            match (getAttrOpt (fun [ `width w -> Some w | _ -> None ]) attrs, getAttrOpt (fun [ `height h -> Some h | _ -> None ]) attrs) with
+            [ (Some w, Some h) -> (w, h)
+            | (Some w, None) -> (w, image#height *. w /. image#width)
+            | (None, Some h) -> (image#width *. h /. image#height, h)
+            | _ -> (image#width, image#height)
+            ]
+          in
+          (
+            image#setWidth w;
+            image#setHeight h;
+            (w, h);
+          )
+  (*       let iwidth = match getAttrOpt (fun [ `width w -> Some w | _ -> None ])  attrs with [ Some w -> (image#setWidth w; w) | None -> image#width] (*{{{*)
+        and iheight = match getAttrOpt (fun [ `height h -> Some h | _ -> None ])  attrs with [ Some h -> (image#setHeight h; h) | None -> image#height] *)
+        and paddingLeft = getAttr (fun [ `paddingLeft pl -> Some pl | _ -> None]) 0. attrs in
+        let () = debug "paddingLeft: %f" paddingLeft in
+        let font = getFont attributes in
+        let line = 
+          if Stack.is_empty lines 
+          then createLine ~indent:(getTextIndent attributes) font lines
+          else
+            let line = Stack.top lines in
+            if line.closed 
+            then createLine font lines
+            else 
+              match width with
+              [ None -> line
+              | Some width ->
+                if line.currentX +. iwidth +. paddingLeft > width 
+                then 
+                (
+                  line.closed := True;
+                  createLine font lines;
+                )
+                else line
+              ]
+        in
+        (
+          image#setX (line.currentX +. paddingLeft);
+          let paddingRight = getAttr (fun [ `paddingRight pl -> Some pl | _ -> None]) 0. attrs in
+          let eWidth = paddingLeft +. iwidth +. paddingRight in
+          let paddingTop = getAttr (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. attrs in
+          match getAttr (fun [ `valign v -> Some v | _ -> None]) `default attrs with
+          [ `default ->
+            (
+              let textHeight = line.ascender +. line.descender in
+              let dh = (iheight -. textHeight) /. 2. in
+              let y = adjustToLine ~ascender:(line.ascender +. dh) ~descender:(line.descender +. dh) line in
+              image#setY (y +. paddingTop);
+              addToLine eWidth (Img image) line;
+            )
+          | `aboveBaseLine -> 
+            (
+              let y = adjustToLine ~ascender:iheight line in
+              image#setY (y +. paddingTop);
+              addToLine eWidth (Img image) line;
+            )
+          | `underBaseLine -> 
+            (
+              let y = adjustToLine ~descender:iheight line in
+              image#setY (y +. paddingTop);
+              addToLine eWidth (Img image) line
+            )
+          | `centerBaseLine -> 
+            let () = debug "place image by text center" in
+            let h2 = iheight /. 2. in
+            let y = adjustToLine ~ascender:h2 ~descender:h2 line in
+            (
+              image#setY (y +. paddingTop);
+              addToLine eWidth (Img image) line
+            )
+          ];
+          loop [ (attributes,elements) :: next ]
+        )(*}}}*)
+      | [ (attributes,[ `span attribs celements :: elements ]) :: next ] ->
+        (
+          let () = debug "process span" in
+          let sattributes = (attribs :> div_attributes) @ attributes in
+          loop [ (sattributes,celements) ; (attributes,elements) :: next ]
+        )
+      | [ (attributes, [ `text text :: elements ]) :: next ] -> (* рендер text {{{*)
+          let () = debug "process text: [%s] lines: %d" text (Stack.length lines) in
+          let strLength = String.length text in
+          match strLength with
+          [ 0 -> loop [ (attributes, elements) :: next ]
+          | _ -> draw_text attributes text 0 strLength elements next
+          ]
+      | [ (attributes, [ `substring str idx len :: elements ]) :: next ] -> draw_text attributes str idx len elements next
+      | [ (attributes, [`br :: elements]) :: next ] -> 
+        (
+          if Stack.is_empty lines || (Stack.top lines).closed 
+          then 
+            let line = createLine (getFont attributes) lines in
+            line.closed := True
+          else 
+            let line = Stack.top lines in
+            line.closed := True;
+          loop [ (attributes,elements) :: next ]
+        )
+      ]
+    in
+    loop [(attributes,elements)] 
   in
   let rec process ((width,height) as size) attributes = fun
     [ `div attrs elements -> (* не доделано нихуя вообще нахуй *)
