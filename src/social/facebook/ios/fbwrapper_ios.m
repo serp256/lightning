@@ -1,18 +1,20 @@
 #import "LightAppDelegate.h"
+#import "FBSBJSON.h"
 #import "fbwrapper_ios.h"
 
-#define FBSESSION_CHECK if (!fbSession) caml_failwith("no active facebook session")
-#define FREE_CALLBACK(callback) if (callback) {     \
-    caml_remove_generational_global_root(callback); \
-    free(callback);                                 \
-}                                                   \
+#define FBSESSION_CHECK if (!fbSession) caml_failwith("no active facebook session") \
+
+#define FREE_CALLBACK(callback) if (callback) {                                     \
+    caml_remove_generational_global_root(callback);                                 \
+    free(callback);                                                                 \
+}                                                                                   \
 
 #define REGISTER_CALLBACK(callback, pointer) if (callback != Val_int(0)) {  \
     pointer = (value*)malloc(sizeof(value));                                \
     *pointer = Field(callback, 0);                                          \
     caml_register_generational_global_root(pointer);                        \
 } else {                                                                    \
-    pointer = nil;                                                          \
+    pointer = NULL;                                                         \
 }                                                                           \
 
 @implementation LightFBDialogDelegate
@@ -139,9 +141,8 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
     }    
 }
 
-value ml_fbInit(value appId) {
+void ml_fbInit(value appId) {
     [FBSession setDefaultAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
-    return Val_unit;
 }
 
 void ml_fbConnect() {
@@ -181,7 +182,7 @@ value ml_fbAccessToken(value connect) {
     return caml_copy_string([fbSession.accessToken cStringUsingEncoding:NSASCIIStringEncoding]);
 }
 
-void ml_fbApprequest(value connect, value title, value message, value filter, value successCallback, value failCallback) {
+void ml_fbApprequest(value connect, value title, value message, value successCallback, value failCallback) {
     FBSESSION_CHECK;
 
     if (!fb) {
@@ -191,20 +192,69 @@ void ml_fbApprequest(value connect, value title, value message, value filter, va
     fb.accessToken = fbSession.accessToken;
     fb.expirationDate = fbSession.expirationDate;
 
-    NSString* _title = [NSString stringWithCString:String_val(title) encoding:NSASCIIStringEncoding];
-    NSString* _message = [NSString stringWithCString:String_val(message) encoding:NSASCIIStringEncoding];
-    NSString* _filter = [NSString stringWithCString:String_val(filter) encoding:NSASCIIStringEncoding];
+    NSString* nstitle = [NSString stringWithCString:String_val(title) encoding:NSASCIIStringEncoding];
+    NSString* nsmessage = [NSString stringWithCString:String_val(message) encoding:NSASCIIStringEncoding];
     value* _successCallback;
     value* _failCallback;
 
     REGISTER_CALLBACK(successCallback, _successCallback);
-    REGISTER_CALLBACK(failCallback, _failCallback);  
+    REGISTER_CALLBACK(failCallback, _failCallback);
 
-    NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:_title, @"title", _message, @"message", _filter, @"filter", nil];
+    NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
     [fb dialog:@"apprequests" andParams:params andDelegate:[[LightFBDialogDelegate alloc] initWithSuccessCallback:_successCallback andFailCallback:_failCallback]];
 }
 
-void ml_fbApprequest_byte(value * argv, int argn) {
+void ml_fbApprequest_byte(value * argv, int argn) {}
+
+void ml_fbGraphrequest(value connect, value path, value params, value successCallback, value failCallback) {
+    FBSESSION_CHECK;
+
+    NSString* nspath = [NSString stringWithCString:String_val(path) encoding:NSASCIIStringEncoding];
+    NSDictionary* nsparams = [NSMutableDictionary dictionary];
+
+    if (params != Val_int(0)) {
+        value _params = Field(params, 0);
+        value param;
+
+        while (Is_block(_params)) {
+            param = Field(params, 0);
+            NSString* key = [NSString stringWithCString:String_val(Field(param, 0)) encoding:NSASCIIStringEncoding];
+            NSString* val = [NSString stringWithCString:String_val(Field(param, 1)) encoding:NSASCIIStringEncoding];
+            [nsparams setValue:val forKey:key];
+            _params = Field(_params, 1);
+        }
+    }
+
+    value* _successCallback;
+    value* _failCallback;
+
+    REGISTER_CALLBACK(successCallback, _successCallback);
+    REGISTER_CALLBACK(failCallback, _failCallback);
+
+    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:nil completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+        if (error) {
+            if (_failCallback) {
+                caml_callback(*_failCallback, caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+            }
+        } else {
+            if (_successCallback) {
+                FBSBJSON* json = [[FBSBJSON alloc] init];
+                NSError* err = nil;
+                NSString* jsonResult = [json stringWithObject:result error:&err];
+
+                if (err) {
+                    if (_failCallback) {
+                        caml_callback(*_failCallback, caml_copy_string([[err localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+                    }
+                } else {
+                    caml_callback2(*caml_named_value("fb_graphrequestSuccess"), caml_copy_string([jsonResult cStringUsingEncoding:NSUTF8StringEncoding]), *_successCallback);
+                }
+            }
+        }
+
+        FREE_CALLBACK(_successCallback);
+        FREE_CALLBACK(_failCallback);        
+    }];
 }
 
 /*#import "FBConnect.h"

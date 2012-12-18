@@ -54,15 +54,17 @@ fb.cma: $(IFACES) $(MOBJS) $(MLOBJS)
 
 else
 ifeq ($(PLATFORM),ANDROID)
-CFLAGS = -DANDROID -I../../ -I../android
+CFLAGS = -DANDROID -I../../ -I../../android -I./android
 MLPPOPT += -DGLES -DANDROID
 MOBJS += android/fbwrapper_android.o
 
-fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN)
-	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
+fb.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN)
+	$(OCAMLMKLIB) -verbose -o fb $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 
 
-fbconnect.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
-	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+fb.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
+	$(OCAMLMKLIB) -verbose -o fb $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+
+android/fbwrapper_android.o: CFLAGS += -DLDEBUG
 
 else
 
