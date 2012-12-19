@@ -618,7 +618,7 @@ public class LightView extends GLSurfaceView {
 
   public String mlGetStoragePath () {
 		Log.d("LIGHTNING", "LightView: mlgetStoragePath");
-		return getContext().getFilesDir().getPath();
+		return getContext().getFilesDir().getPath(); // FIXME: try to search external path first
 	}
 
 	public void onBackButton() {
