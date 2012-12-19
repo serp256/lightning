@@ -1,17 +1,21 @@
 #include "mlwrapper_android.h"
 
-#define GET_LIGHT_KEYBOARD 																	\
-	JNIEnv *env;																			\
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);							\
-	if (!kbrdCls) kbrdCls = (*env)->FindClass(env,"ru/redspell/lightning/LightKeyboard");	\
+#define GET_LIGHT_KEYBOARD 															\
+	JNIEnv *env;																	\
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);					\
+	if (!kbrdCls) {																	\
+		jclass cls = (*env)->FindClass(env,"ru/redspell/lightning/LightKeyboard"); 	\
+		kbrdCls = (*env)->NewGlobalRef(env, cls); 									\
+		(*env)->DeleteLocalRef(env, cls); 											\
+	}																				\
 
-#define CALLBACK(val, cvar)											\
-	if (val != Val_int(0)) {										\
-		value* cbptr = (value*)malloc(sizeof(value));				\
-		*cbptr = Field(val, 0); 									\
-		caml_register_generational_global_root(cbptr);				\
-		cvar = (int)cbptr;											\
-	}																\
+#define CALLBACK(val, cvar)								\
+	if (val != Val_int(0)) {							\
+		value* cbptr = (value*)malloc(sizeof(value));	\
+		*cbptr = Field(val, 0); 						\
+		caml_register_generational_global_root(cbptr);	\
+		cvar = (int)cbptr;								\
+	}													\
 
 static jclass kbrdCls = 0;
 static int kbrdVisible = 0;

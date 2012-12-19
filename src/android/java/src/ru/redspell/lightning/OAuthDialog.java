@@ -161,7 +161,6 @@ public class OAuthDialog extends Dialog {
             Log.d("LIGHTNING", "onReceivedError");
 
             super.onReceivedError(view, errorCode, description, failingUrl);
-            // mListener.onError();
             OAuthDialog.this.dismiss();
         }
 

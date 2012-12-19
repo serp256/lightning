@@ -22,6 +22,7 @@ import android.os.Build;
 import android.provider.Settings.Secure;
 import android.provider.Settings;
 
+import ru.redspell.lightning.LightNotifications;
 
 public class LightTest extends LightActivity
 {
@@ -54,6 +55,8 @@ public class LightTest extends LightActivity
 		Log.d("LIGHTNING", "ANDROID_ID=" + Secure.ANDROID_ID);
 		String deviceId = Settings.System.getString(getContentResolver(),Secure.ANDROID_ID);
 		Log.d("LIGHTNING", "ANDROID_ID=" + deviceId);
+
+		LightNotifications.groupNotifications = true;
 	}
 
 	static {

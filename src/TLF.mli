@@ -26,7 +26,7 @@ type span_attribute =
 
 type span_attributes = list span_attribute;
 
-type simple_element = [= `img of (img_attributes * DisplayObject.c) | `span of (span_attributes * simple_elements) | `br | `text of string ]
+type simple_element = [= `img of (img_attributes * DisplayObject.c) | `span of (span_attributes * simple_elements) | `br | `substring of (string*int*int) | `text of string ]
 and simple_elements = list simple_element;
 
 type p_halign = [= `left | `right | `center ];
