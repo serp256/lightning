@@ -4,7 +4,6 @@
 #import <caml/memory.h>
 #import <caml/alloc.h>
 #import <caml/fail.h>
-#import "fbwrapper.h"
 
 @interface LightFBDialogDelegate : NSObject <FBDialogDelegate>
 {

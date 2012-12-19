@@ -12,7 +12,7 @@ IFACES = $(MLSOURCES:.ml=.cmi)
 
 ifeq ($(PLATFORM),IOS)
 CFLAGS  += -DDEBUG -DIOS -Fios/FacebookSDK -I../../ios -Iios/FacebookSDK/include
-MOBJS   += ios/fbwrapper_ios.o ios/FacebookController.o
+MOBJS   += ios/fbwrapper_ios.o
 #MOBJS 	+= ios/FacebookSDK/src/FBCacheDescriptor.o ios/FacebookSDK/src/FBCacheIndex.o ios/FacebookSDK/src/FBContentLink.o \
 #	ios/FacebookSDK/src/FBDataDiskCache.o ios/FacebookSDK/src/FBDialog.o ios/FacebookSDK/src/FBError.o \
 #	ios/FacebookSDK/src/FBFrictionlessRequestSettings.o ios/FacebookSDK/src/FBFriendPickerCacheDescriptor.o \
