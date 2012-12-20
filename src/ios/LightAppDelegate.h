@@ -1,6 +1,9 @@
 #import <UIKit/UIKit.h>
 #import "LightViewController.h"  
-#import <FacebookSDK/FacebookSDK.h>
+
+#define APP_BECOME_ACTIVE_NOTIFICATION @"applicationBecomeActive"
+#define APP_HANDLE_OPEN_URL_NOTIFICATION @"applicationHandleOpenUrl"
+#define APP_HANDLE_OPEN_URL_NOTIFICATION_DATA @"applicationHandleOpenUrl"
 
 @interface LightAppDelegate : NSObject <UIApplicationDelegate,OrientationDelegate> {
     UIAlertView * inappPurchaseActivity;

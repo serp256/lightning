@@ -143,6 +143,23 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 
 void ml_fbInit(value appId) {
     [FBSession setDefaultAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
+    NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
+
+    [notifCntr addObserverForName:APP_HANDLE_OPEN_URL_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
+        NSLog(@"handling open url notification");
+        if ([FBSession defaultAppID]) {
+            NSLog(@"default app id");
+            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_HANDLE_OPEN_URL_NOTIFICATION_DATA]];
+        }
+    }];
+
+    [notifCntr addObserverForName:APP_BECOME_ACTIVE_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
+        NSLog(@"handling application become active");
+        if ([FBSession defaultAppID]) {
+            NSLog(@"default app id");
+            [[FBSession activeSession] handleDidBecomeActive];
+        }
+    }];    
 }
 
 void ml_fbConnect() {
@@ -201,7 +218,9 @@ void ml_fbApprequest(value connect, value title, value message, value successCal
     REGISTER_CALLBACK(failCallback, _failCallback);
 
     NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
-    [fb dialog:@"apprequests" andParams:params andDelegate:[[LightFBDialogDelegate alloc] initWithSuccessCallback:_successCallback andFailCallback:_failCallback]];
+    LightFBDialogDelegate* delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallback:_successCallback andFailCallback:_failCallback];
+    [fb dialog:@"apprequests" andParams:params andDelegate:delegate];
+    [delegate release];
 }
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
@@ -249,6 +268,8 @@ void ml_fbGraphrequest(value connect, value path, value params, value successCal
                 } else {
                     caml_callback2(*caml_named_value("fb_graphrequestSuccess"), caml_copy_string([jsonResult cStringUsingEncoding:NSUTF8StringEncoding]), *_successCallback);
                 }
+
+                [json release];
             }
         }
 
