@@ -36,7 +36,7 @@ package "social" (
     description="Facebook API"
     archive(byte) = "fb.cma"
     archive(native) = "fb.cmxa"
-    linkopts = "-ccopt '-F/Users/nazarov/projects/lightning_android/src/social/facebook/ios/FacebookSDK'"
+    linkopts = "-ccopt '-F%fb_framework_path%'"
   )
 
   package "oauth" (
