@@ -209,7 +209,6 @@ public class LightView extends GLSurfaceView {
 	private int loader_id;
 	private Handler uithread;
 	private BillingService bserv;
-	public AndroidFB fb; 
 
 	public static LightView instance;
 	
@@ -243,9 +242,6 @@ public class LightView extends GLSurfaceView {
 		bserv = new BillingService();
 		bserv.setContext(activity);
 		ResponseHandler.register(activity);
-
-		// FIXME: move it to FB init
-		fb = new AndroidFB();
 	}
 
 	protected void initView(int width,int height) {

@@ -34,8 +34,9 @@ package "social" (
 
   package "facebook" (
     description="Facebook API"
-    archive(byte) = "fbconnect.cma"
-    archive(native) = "fbconnect.cmxa"
+    archive(byte) = "fb.cma"
+    archive(native) = "fb.cmxa"
+    linkopts = "-ccopt '-F%fb_framework_path%'"
   )
 
   package "oauth" (

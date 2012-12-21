@@ -32,7 +32,11 @@
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application         {
-	NSLog(@"become active");
+	// NSLog(@"become active %@", [FBSession defaultAppID]);
+
+
+  // [FBSession defaultAppID] ? [[FBSession activeSession] handleDidBecomeActive] : NO;
+  [[NSNotificationCenter defaultCenter] postNotificationName:APP_BECOME_ACTIVE_NOTIFICATION object:self];
 	[lightViewController becomeActive];
 }
 
@@ -109,20 +113,28 @@
 
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
-	 	NSString *urlString = [url absoluteString];
+/*	 	NSString *urlString = [url absoluteString];
 	  const char *str = [urlString UTF8String];
 		NSLog(@"UIApplication handleOpenURL %s", str);
     [[NSNotificationCenter defaultCenter] postNotificationName: @"applicationHandleOpenURL" object: self userInfo: [NSDictionary dictionaryWithObject: url forKey:@"url"]];
+    return YES;*/
+    [[NSNotificationCenter defaultCenter] postNotificationName:APP_HANDLE_OPEN_URL_NOTIFICATION object:self userInfo:[NSDictionary dictionaryWithObject:url forKey:APP_HANDLE_OPEN_URL_NOTIFICATION_DATA]];
+
     return YES;
+    // return [FBSession defaultAppID] ? [[FBSession activeSession] handleOpenURL:url] : NO;
 }
 
     
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
-	 	NSString *urlString = [url absoluteString];
+/*	 	NSString *urlString = [url absoluteString];
 	  const char *str = [urlString UTF8String];
 		NSLog(@"UIApplication openURL %s", str);
     [[NSNotificationCenter defaultCenter] postNotificationName: @"applicationHandleOpenURL" object: self userInfo: [NSDictionary dictionaryWithObject: url forKey:@"url"]];
+    return YES;*/
+    [[NSNotificationCenter defaultCenter] postNotificationName:APP_HANDLE_OPEN_URL_NOTIFICATION object:self userInfo:[NSDictionary dictionaryWithObject:url forKey:APP_HANDLE_OPEN_URL_NOTIFICATION_DATA]];
+
     return YES;
+    // return [FBSession defaultAppID] ? [[FBSession activeSession] handleOpenURL:url] : NO;
 }
 
 -(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
