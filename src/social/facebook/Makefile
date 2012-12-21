@@ -54,7 +54,7 @@ fb.cma: $(IFACES) $(MOBJS) $(MLOBJS)
 
 else
 ifeq ($(PLATFORM),ANDROID)
-CFLAGS = -DANDROID -I../../ -I../../android -I./android
+CFLAGS += -DANDROID -I../../ -I../../android -I./android
 MLPPOPT += -DGLES -DANDROID
 MOBJS += android/fbwrapper_android.o
 
@@ -67,6 +67,8 @@ fb.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
 android/fbwrapper_android.o: CFLAGS += -DLDEBUG
 
 else
+
+MLPPOPT += -DPC
 
 fb.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o fb.cmxa $(MLOBJSN)

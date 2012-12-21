@@ -2,6 +2,8 @@ type connect = unit;
 
 IFDEF PC THEN
 
+value init ~appId () = ();
+
 value connect ~successCallback ~failCallback () = ();
 value loggedIn () = None;
 
