@@ -51,7 +51,8 @@ endif
 
 install: lib
 ifeq ($(PLATFORM),IOS)
-	install_dir=`$(OCAMLFIND) printconf destdir` && sudo cp -r ./src/social/facebook/ios/FacebookSDK $$install_dir/ && sed "s|%fb_framework_path%|$$install_dir/FacebookSDK|" $(META) > META
+	#install_dir=`$(OCAMLFIND) printconf destdir`/lightning && sudo cp -r ./src/social/facebook/ios/FacebookSDK/FacebookSDK.framework/ $$install_dir/ && sed "s|%fb_framework_path%|$$install_dir|" $(META) > META
+	cdir=`pwd` && sed "s|%fb_framework_path%|$${cdir}/src/social/facebook/ios/FacebookSDK|" $(META) > META
 else
 	cp $(META) META
 endif

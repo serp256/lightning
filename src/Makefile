@@ -49,9 +49,9 @@ ifeq ($(PLATFORM),IOS)
 						 -cclib '-framework\ OpenAL' \
 						 -cclib '-framework\ GameKit' \
 						 -cclib '-framework\ StoreKit' \
-						 -cclib '-framework\ CoreMotion' \
-						 -cclib '-framework\ FacebookSDK'
-	CFLAGS += -Fsocial/facebook/ios/FacebookSDK
+						 -cclib '-framework\ CoreMotion'
+						 #-cclib '-framework\ FacebookSDK'
+	#CFLAGS += -Fsocial/facebook/ios/FacebookSDK
 	else
 	ifeq ($(PLATFORM),ANDROID)
 		MLCOPTS += -D__ANDROID__
