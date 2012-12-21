@@ -34,7 +34,7 @@ fb_native:
 	make -C facebook fb.cmxa
 
 fb_byte:
-	make -C facebook fbconnect.cma
+	make -C facebook fb.cma
 
 native: oauth_native fb_native SNTypes.cmi OK.cmi OK.cmx MM.cmi MM.cmx VK.cmi VK.cmx
 byte:   oauth_byte fb_byte SNTypes.cmi  OK.cmi OK.cmo MM.cmi MM.cmo VK.cmi VK.cmo
