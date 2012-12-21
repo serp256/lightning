@@ -68,11 +68,11 @@ android/fbwrapper_android.o: CFLAGS += -DLDEBUG
 
 else
 
-fbconnect.cmxa: $(IFACES) $(MLOBJSN)
-	$(OCAMLOPT) -a -o fbconnect.cmxa $(MLOBJSN)
+fb.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o fb.cmxa $(MLOBJSN)
 
-fbconnect.cma: $(IFACES) $(MLOBJS)
-	$(OCAMLC) -a -o fbconnect.cma $(MLOBJS)
+fb.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o fb.cma $(MLOBJS)
 
 endif
 endif
