@@ -177,7 +177,7 @@ void ml_fbConnect() {
 
 value ml_fbLoggedIn() {
     if (!fbSession) {
-        if ([FBSession openActiveSessionWithAllowLoginUI:NO]) {
+        if ([FBSession openActiveSessionWithAllowLoginUI:NO] && [FBSession activeSession].isOpen) {
             fbSession = [FBSession activeSession];
         }        
     }

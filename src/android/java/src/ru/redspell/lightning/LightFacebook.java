@@ -177,7 +177,7 @@ public class LightFacebook {
             session = openActiveSession(LightActivity.instance, false, null);
         }
 
-        return session != null;
+        return session != null && session.isOpened();
     }
 
     public static String accessToken() {
