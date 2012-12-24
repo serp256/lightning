@@ -12,3 +12,5 @@ value atlasNode: t -> string -> ?pos:Point.t -> ?scaleX:float -> ?scaleY:float -
 
 value subTexturePos: t -> string -> (int * int);
 value loadRegionsByPrefix: t -> string -> list (string * Texture.c * (int * int));
+
+value symbols: t -> Enum.t string;

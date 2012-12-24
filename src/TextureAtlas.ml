@@ -1,4 +1,6 @@
 open LightCommon;
+open ExtHashtbl;
+
 exception Texture_not_found of string;
 
 type t = 
@@ -149,6 +151,7 @@ value atlasNode atlas name ?pos ?scaleX ?scaleY ?color ?flipX ?flipY ?alpha () =
   in
   AtlasNode.create atlas.textures.(num) region ?pos ?scaleX ?scaleY ?color ?flipX ?flipY ?alpha ();
 
+value symbols atlas = Hashtbl.keys atlas.regions;
 
 value description atlas name = 
   try
@@ -169,9 +172,8 @@ value loadRegionsByPrefix atlas path =
   let regions = ref [] in
     let func name (num, region, (posX,posY)) =
       match ExtString.String.starts_with name path with
-      [
-        True -> regions.val := [(name,(atlas.textures.(num)#subTexture region),(posX,posY))::!regions]
-       |False -> ()
+      [ True -> regions.val := [(name,(atlas.textures.(num)#subTexture region),(posX,posY))::!regions]
+      | False -> ()
       ]
     in
     (

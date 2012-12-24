@@ -19,6 +19,7 @@ class c renderInfo =
   object(self)
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
+    method asTexture = (self :> Texture.c);
     method scale = 1.;
     method texture = (self :> Texture.c);
     method width = renderInfo.rwidth;
