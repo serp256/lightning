@@ -96,6 +96,11 @@
         FREE_CALLBACK(_successCallback);
         FREE_CALLBACK(_failCallback);
     }
+
+    - (void)dealloc {
+        NSLog(@"!!!dealloc");
+        [super dealloc];
+    }
 @end
 
 static FBSession* fbSession = nil;
@@ -220,7 +225,8 @@ void ml_fbApprequest(value connect, value title, value message, value successCal
     NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
     LightFBDialogDelegate* delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallback:_successCallback andFailCallback:_failCallback];
     [fb dialog:@"apprequests" andParams:params andDelegate:delegate];
-    [delegate release];
+    
+    // [delegate release];
 }
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
