@@ -95,6 +95,9 @@
     - (void)freeCallbacks {
         FREE_CALLBACK(_successCallback);
         FREE_CALLBACK(_failCallback);
+
+        _successCallback = nil;
+        _failCallback = nil;
     }
 
     - (void)dealloc {
