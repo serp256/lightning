@@ -85,7 +85,7 @@ value ml_fbAccessToken(value connect) {
     return vaccessToken;
 }
 
-void ml_fbApprequest(value connect, value title, value message, value successCallback, value failCallback) {
+void ml_fbApprequest(value connect, value title, value message, value recipient, value successCallback, value failCallback) {
     value* _successCallback;
     value* _failCallback;
 
@@ -96,14 +96,16 @@ void ml_fbApprequest(value connect, value title, value message, value successCal
 
     jstring jtitle = (*env)->NewStringUTF(env, String_val(title));
     jstring jmessage = (*env)->NewStringUTF(env, String_val(message));
+    jstring jrecipient = Is_block(recipient) ? (*env)->NewStringUTF(env, String_val(Field(recipient, 0))) : NULL;
 
     static jmethodID mid;
-    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "apprequest", "(Ljava/lang/String;Ljava/lang/String;II)Z");
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "apprequest", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)Z");
 
-    jboolean allRight = (*env)->CallStaticBooleanMethod(env, lightFacebookCls, mid, jtitle, jmessage, (int)_successCallback, (int)_failCallback);
+    jboolean allRight = (*env)->CallStaticBooleanMethod(env, lightFacebookCls, mid, jtitle, jmessage, jrecipient, (int)_successCallback, (int)_failCallback);
 
     (*env)->DeleteLocalRef(env, jtitle);
     (*env)->DeleteLocalRef(env, jmessage);
+    if (jrecipient) (*env)->DeleteLocalRef(env, jrecipient);
 
     if (!allRight) caml_failwith("no active facebook session");
 }
@@ -147,7 +149,7 @@ void ml_fbGraphrequest(value connect, value path, value params, value successCal
         value param;
 
         while (Is_block(_params)) {
-            param = Field(params, 0);
+            param = Field(_params, 0);
 
             key = (*env)->NewStringUTF(env, String_val(Field(param, 0)));
             val = (*env)->NewStringUTF(env, String_val(Field(param, 1)));

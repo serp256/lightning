@@ -184,13 +184,13 @@ public class LightFacebook {
         return session != null ? session.getAccessToken() : null;
     }
 
-    public static boolean apprequest(final String title, final String message, final int successCallback, final int failCallback) {
+    public static boolean apprequest(final String title, final String message, final String recipient, final int successCallback, final int failCallback) {
         if (session == null) return false;
 
         LightView.instance.post(new Runnable() {
             @Override
             public void run() {
-                new WebDialog.RequestsDialogBuilder(LightActivity.instance, session)
+                WebDialog.RequestsDialogBuilder bldr = new WebDialog.RequestsDialogBuilder(LightActivity.instance, session)
                     .setTitle(title)
                     .setMessage(message)
                     .setOnCompleteListener(new WebDialog.OnCompleteListener() {
@@ -218,9 +218,13 @@ public class LightFacebook {
                             
                             LightView.instance.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
                         }
-                    })
-                    .build()
-                    .show();
+                    });
+                
+                if (recipient != null) {
+                    bldr.setTo(recipient);                    
+                }
+
+                bldr.build().show();
             }
         });
 
