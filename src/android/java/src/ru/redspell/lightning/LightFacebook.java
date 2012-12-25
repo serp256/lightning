@@ -133,7 +133,7 @@ public class LightFacebook {
     public static void connect() {
         Log.d("LIGHTNING", "connect call");
 
-        openActiveSession(LightActivity.instance, true, new Session.StatusCallback() {
+        LightFacebook.session = openActiveSession(LightActivity.instance, true, new Session.StatusCallback() {
             @Override
             public void call(Session session, SessionState state, Exception exception) {
                 Log.d("LIGHTNING", "Session.StatusCallback call ");
@@ -141,8 +141,6 @@ public class LightFacebook {
                 if (state.isOpened()) {
                     if (exception == null) {
                         Log.d("LIGHTNING", "login success");
-
-                        LightFacebook.session = session;
                         LightView.instance.queueEvent(new CamlNamedValueRunnable("fb_success"));
                     } else {
                         Log.d("LIGHTNING", "login is opened with error");
@@ -177,15 +175,20 @@ public class LightFacebook {
             session = openActiveSession(LightActivity.instance, false, null);
         }
 
+        Log.d("LIGHTNING", "session " + session);
+        if (session != null) {
+            Log.d("LIGHTNING", "session isOpened " + session.isOpened());
+        }
+
         return session != null && session.isOpened();
     }
 
     public static String accessToken() {
-        return session != null ? session.getAccessToken() : null;
+        return session != null && session.isOpened() ? session.getAccessToken() : null;
     }
 
     public static boolean apprequest(final String title, final String message, final String recipient, final int successCallback, final int failCallback) {
-        if (session == null) return false;
+        if (session == null || !session.isOpened()) return false;
 
         LightView.instance.post(new Runnable() {
             @Override
@@ -232,7 +235,7 @@ public class LightFacebook {
     }
 
     public static boolean graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback) {
-        if (session == null) return false;
+        if (session == null || !session.isOpened()) return false;
 
         LightView.instance.post(new Runnable() {
             @Override
@@ -252,6 +255,8 @@ public class LightFacebook {
                             } else if (response.getGraphObjectList() != null) {
                                 json = response.getGraphObjectList().getInnerJSONArray().toString();
                             }
+
+                            Log.d("LIGHTNING", "json " + json);
 
                             if (json == null) {
                                 LightView.instance.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, "something wrong with graphrequest response (not json object, not json objects list)"));
