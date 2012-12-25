@@ -181,11 +181,11 @@ public class LightFacebook {
     }
 
     public static String accessToken() {
-        return session != null ? session.getAccessToken() : null;
+        return session != null && session.isOpened() ? session.getAccessToken() : null;
     }
 
     public static boolean apprequest(final String title, final String message, final String recipient, final int successCallback, final int failCallback) {
-        if (session == null) return false;
+        if (session == null || !session.isOpened()) return false;
 
         LightView.instance.post(new Runnable() {
             @Override
@@ -232,7 +232,7 @@ public class LightFacebook {
     }
 
     public static boolean graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback) {
-        if (session == null) return false;
+        if (session == null || !session.isOpened()) return false;
 
         LightView.instance.post(new Runnable() {
             @Override
