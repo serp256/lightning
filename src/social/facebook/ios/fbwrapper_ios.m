@@ -242,7 +242,7 @@ void ml_fbGraphrequest(value connect, value path, value params, value successCal
         value param;
 
         while (Is_block(_params)) {
-            param = Field(params, 0);
+            param = Field(_params, 0);
             NSString* key = [NSString stringWithCString:String_val(Field(param, 0)) encoding:NSASCIIStringEncoding];
             NSString* val = [NSString stringWithCString:String_val(Field(param, 1)) encoding:NSASCIIStringEncoding];
             [nsparams setValue:val forKey:key];
