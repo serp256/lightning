@@ -44,6 +44,18 @@ public class OAuthDialog extends Dialog {
     private String mRedirectUrlPath;
     private Boolean mAuthorizing = false;
 
+    private static class DialogClosedRunnable implements Runnable {
+        protected String redirectUrlPath;
+
+        public DialogClosedRunnable(String redirectUrlPath) {
+            super();
+            this.redirectUrlPath = redirectUrlPath;
+        }
+
+        @Override
+        public native void run();
+    }
+
     public OAuthDialog(Context context, String url) {
         super(context, android.R.style.Theme_Translucent_NoTitleBar);
 
@@ -125,9 +137,13 @@ public class OAuthDialog extends Dialog {
 
     @Override
     public void dismiss() {
-        mWebView.stopLoading();
-        mWebView.destroy();
+        mWebView.stopLoading();        
         super.dismiss();
+        mWebView.destroy();
+
+        Log.d("LIGHTNING", "dismiss call");
+
+        LightView.instance.queueEvent(new DialogClosedRunnable(mRedirectUrlPath + "#error=access_denied"));
     }
 
     private class WebViewClient extends android.webkit.WebViewClient {
