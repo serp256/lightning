@@ -204,7 +204,7 @@ public class LightFacebook {
                             if (error == null) {
                                 Iterator iter = values.keySet().iterator();
                                 ArrayList<String> to = new ArrayList<String>();
-                                String[] toArr = new String[1];
+                                String[] toArr = new String[0];
 
                                 while (iter.hasNext()) {
                                     String key = (String)iter.next();
