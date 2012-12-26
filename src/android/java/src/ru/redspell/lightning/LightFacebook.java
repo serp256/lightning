@@ -246,6 +246,8 @@ public class LightFacebook {
                         com.facebook.FacebookRequestError error = response.getError();
 
                         if (error != null) {
+                            Log.d("LIGHTNING", "error: " + error);
+
                             LightView.instance.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, error.getErrorMessage()));
                         } else {
                             String json = null;
