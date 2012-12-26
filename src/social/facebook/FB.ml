@@ -8,7 +8,7 @@ value connect ~successCallback ~failCallback () = ();
 value loggedIn () = None;
 
 value accessToken connect = "";
-value apprequest ~title ~message ?recipients ?successCallback ?failCallback connect = ();
+value apprequest ~title ~message ?recipient ?successCallback ?failCallback connect = ();
 value graphrequest ~path ?params ?successCallback ?failCallback connect = ();
 
 ELSE
