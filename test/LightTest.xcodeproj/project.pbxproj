@@ -27,6 +27,7 @@
 		51DC6E1314EE5E960084EB76 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1114EE5E960084EB76 /* InfoPlist.strings */; };
 		51DC6E1F14EE5E960084EB76 /* ViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E1D14EE5E960084EB76 /* ViewController_iPhone.xib */; };
 		51DC6E2214EE5E960084EB76 /* ViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC6E2014EE5E960084EB76 /* ViewController_iPad.xib */; };
+		B55A6B20168B3221004010DD /* map in Resources */ = {isa = PBXBuildFile; fileRef = B55A6B1F168B3221004010DD /* map */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +87,7 @@
 		51DC6E1B14EE5E960084EB76 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		51DC6E1E14EE5E960084EB76 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPhone.xib; sourceTree = "<group>"; };
 		51DC6E2114EE5E960084EB76 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPad.xib; sourceTree = "<group>"; };
+		B55A6B1F168B3221004010DD /* map */ = {isa = PBXFileReference; lastKnownFileType = folder; name = map; path = Resources/map; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +115,7 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
+				B55A6B1F168B3221004010DD /* map */,
 				212279F31679B7B800231740 /* AdSupport.framework */,
 				212279F11679B7AD00231740 /* Social.framework */,
 				212279EF1679B7A200231740 /* Accounts.framework */,
@@ -252,6 +255,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B55A6B20168B3221004010DD /* map in Resources */,
 				516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */,
 				516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */,
 				516A41FB15D3D6E600BB71F0 /* MyriadPro-Regular.fnt in Resources */,
