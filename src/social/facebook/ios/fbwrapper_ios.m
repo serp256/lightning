@@ -1,4 +1,5 @@
 #import "LightAppDelegate.h"
+#import "LightViewController.h"
 #import "FBSBJSON.h"
 #import "fbwrapper_ios.h"
 
@@ -35,6 +36,7 @@
         }
 
         [self freeCallbacks];
+        [[LightViewController sharedInstance] becomeActive];
     }
 
     - (void)dialogCompleteWithUrl:(NSURL*)url {
@@ -75,6 +77,7 @@
 
     - (void)dialogDidNotComplete:(FBDialog*)dialog {
         NSLog(@"dialogDidNotComplete");
+        [[LightViewController sharedInstance] becomeActive];
     }
 
     - (void)dialog:(FBDialog*)dialog didFailWithError:(NSError*)error {
@@ -85,10 +88,12 @@
         }
 
         [self freeCallbacks];
+        [[LightViewController sharedInstance] becomeActive];
     }
 
     - (BOOL)dialog:(FBDialog*)dialog shouldOpenURLInExternalBrowser:(NSURL*)url {
         NSLog(@"dialog shouldOpenURLInExternalBrowser call");
+        [[LightViewController sharedInstance] becomeActive];
         return YES;
     }
 
@@ -236,6 +241,7 @@ void ml_fbApprequest(value connect, value title, value message, value recipient,
     static LightFBDialogDelegate* delegate;
     if (!delegate) delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallback:_successCallback andFailCallback:_failCallback];
 
+    [[LightViewController sharedInstance] resignActive];
     [fb dialog:@"apprequests" andParams:params andDelegate:delegate];
 }
 
