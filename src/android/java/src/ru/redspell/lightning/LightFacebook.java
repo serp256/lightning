@@ -204,7 +204,7 @@ public class LightFacebook {
                             if (error == null) {
                                 Iterator iter = values.keySet().iterator();
                                 ArrayList<String> to = new ArrayList<String>();
-                                String[] toArr = new String[1];
+                                String[] toArr = new String[0];
 
                                 while (iter.hasNext()) {
                                     String key = (String)iter.next();
@@ -246,6 +246,8 @@ public class LightFacebook {
                         com.facebook.FacebookRequestError error = response.getError();
 
                         if (error != null) {
+                            Log.d("LIGHTNING", "error: " + error);
+
                             LightView.instance.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, error.getErrorMessage()));
                         } else {
                             String json = null;

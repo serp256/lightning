@@ -286,11 +286,11 @@ value androidScreenToString screen =
 
 value androidDensityToString density =
   match density with
-  [ Ldpi -> "Ldpi"
-  | Mdpi -> "Mdpi"
-  | Hdpi -> "Hdpi"
-  | Xhdpi -> "Xhdpi"
-  | Tvdpi -> "Tvdpi"
+  [ Ldpi -> "ldpi"
+  | Mdpi -> "mdpi"
+  | Hdpi -> "hdpi"
+  | Xhdpi -> "xhdpi"
+  | Tvdpi -> "tvdpi"
   ];
 
 IFDEF IOS THEN

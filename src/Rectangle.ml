@@ -3,6 +3,7 @@ type t = {x:float; y:float; width:float; height:float;};
 type tm = {m_x:mutable float; m_y: mutable float; m_width: mutable float; m_height: mutable float };
 value empty = {x=0.;y=0.;width=0.;height=0.};
 value create x y width height = {x;y;width;height};
+value mult rect m = {x=rect.x *. m; y=rect.y *. m; width = rect.width *. m; height = rect.height *. m};
 
 value tm_of_t r = {m_x=r.x;m_y=r.y;m_width=r.width;m_height=r.height};
 value create_tm x y width height = {m_x=x;m_y=y;m_width=width;m_height=height};
