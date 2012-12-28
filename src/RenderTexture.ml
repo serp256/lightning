@@ -12,6 +12,9 @@ external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?width:float -> ?he
 
 external renderbuffer_save: renderInfo -> string -> bool = "ml_renderbuffer_save";
 
+type data = Bigarray.Array2.t int32 Bigarray.int32_elt Bigarray.c_layout;
+external renderbuffer_data: renderInfo -> data = "ml_renderbuffer_data";
+
 module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
 
 class c renderInfo = 
@@ -75,6 +78,7 @@ class c renderInfo =
         resized;
       );
 
+    method data () = renderbuffer_data renderInfo;
     method save filename = renderbuffer_save renderInfo filename;
 
 
