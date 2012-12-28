@@ -481,6 +481,45 @@ value ml_renderbuffer_draw_to_texture_byte(value *argv, int n) {
 }*/
 
 
+value ml_renderbuffer_data(value renderInfo) {
+	CAMLparam1(renderInfo);
+	framebuffer_state fstate;
+	get_framebuffer_state(&fstate);
+	double width = Double_val(Field(renderInfo,1));
+	double height = Double_val(Field(renderInfo,2));
+	GLuint legalWidth = nextPOT(ceil(width));
+	GLuint legalHeight = nextPOT(ceil(height));
+	GLuint fbid = get_framebuffer();
+  glBindFramebuffer(GL_FRAMEBUFFER, fbid);
+	GLuint tid = TEXTURE_ID(Field(renderInfo,0));
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,tid,0);
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		char emsg[255];
+		sprintf(emsg,"save framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",fbid,tid,legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
+		set_framebuffer_state(&fstate);
+    caml_failwith(emsg);
+  };
+	viewport vp = (viewport){
+		(GLuint)((legalWidth - width)/2),
+		(GLuint)((legalHeight - height)/2),
+		(GLuint)width,(GLuint)height
+	};
+	char *pixels = caml_stat_alloc(4 * (GLuint)width * (GLuint)height);
+
+	glReadPixels(vp.x,vp.y,vp.w,vp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+
+	checkGLErrors("after read pixels");
+
+	intnat dims[2];
+	dims[0] = width;
+	dims[1] = height;
+
+	value vbuf = caml_ba_alloc(CAML_BA_MANAGED|CAML_BA_INT32, 2, pixels, dims);
+
+	set_framebuffer_state(&fstate);
+
+	CAMLreturn(vbuf);
+}
 
 value ml_renderbuffer_save(value renderInfo,value filename) {
 	framebuffer_state fstate;
@@ -504,13 +543,10 @@ value ml_renderbuffer_save(value renderInfo,value filename) {
 		(GLuint)((legalHeight - height)/2),
 		(GLuint)width,(GLuint)height
 	};
-	printf("size of buffer: %ud\n",4 * (GLuint)width * (GLuint)height);
 	char *pixels = caml_stat_alloc(4 * (GLuint)width * (GLuint)height);
-	printf("pixels: %lu\n",pixels);
 	glReadPixels(vp.x,vp.y,vp.w,vp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 	checkGLErrors("after read pixels");
 	int res = save_png_image(filename,pixels,vp.w,vp.h);
-	fprintf(stderr,"save png res: %d\n",res);
 	set_framebuffer_state(&fstate);
 	return Val_bool(res);
 }

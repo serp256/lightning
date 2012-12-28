@@ -1115,6 +1115,26 @@ value ml_getLocale () {
   return r;
 }
 
+value ml_getInternalStoragePath () {
+
+	CAMLparam0();
+	CAMLlocal1(r);
+
+  	JNIEnv *env;	
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetInternalStoragePath", "()Ljava/lang/String;");
+	jstring path = (*env)->CallObjectMethod(env, jView, meth);
+	const char *l = (*env)->GetStringUTFChars(env, path, JNI_FALSE);
+
+	r = caml_copy_string(l);
+	(*env)->ReleaseStringUTFChars(env, path, l);
+	(*env)->DeleteLocalRef(env, path);
+
+
+	CAMLreturn(r);
+}
+
 value ml_getStoragePath () {
 
 	CAMLparam0();

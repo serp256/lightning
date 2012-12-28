@@ -47,7 +47,7 @@ ELSE
 type t = Hashtbl.t string string;
 
 IFDEF ANDROID THEN
-external get_storage_path: unit -> string = "ml_getStoragePath";
+external get_storage_path: unit -> string = "ml_getInternalStoragePath";
 ENDIF;
 
 value storage = ref None;
