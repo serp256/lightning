@@ -1025,9 +1025,8 @@ value storage (stage:Stage.c) =
 value localNotif () =
   let time = Unix.time () in
   (
-    ignore(LocalNotifications.schedule "xyu" (time +. 5.) "xyu");
-    ignore(LocalNotifications.schedule ~badgeNum:10 "pizda" (time +. 15.) "pizda");
-    LocalNotifications.cancel "xyu";
+    ignore(LocalNotifications.schedule ~notifId:"xyu" ~fireDate:(time +. 5.) ~mes:"xyu");
+    LocalNotifications.cancel ~notifId:"xyu" ();
   );
 
 value accelerometer () =
@@ -1312,8 +1311,8 @@ value fbtest () =
   (
   (*  FBConnect.init "412548172119201"; *)
  (*   debug "FBTEST";  *)
-    FBConnect.init "412548172119201"; 
-
+(*
+    FB.init "412548172119201"; 
     let delegate = 
       {
         FBConnect.GraphAPI.fb_request_did_fail = Some (fun error -> debug "ERROR : %s" error );
@@ -1321,6 +1320,7 @@ value fbtest () =
       }
     in
     FBConnect.GraphAPI.request "me" [] ~delegate ();
+    *)
 (*
     let timer = Timer.create ~repeatCount:1 5. "PIZDA" in 
     (
@@ -1568,13 +1568,142 @@ value test_queue () =
       *)
     );
 
+module Isometric = struct 
+  value scale = ref 1.;
+end;
+
+value test_map (self:Stage.c) =
+  let background = new Sprite.c in
+  let map_file i = Printf.sprintf "map/%d.jpg" i in
+    (
+      let img = Image.load (map_file 5) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=0.; y=0.; width=1020.; height=1020.} !Isometric.scale ));
+        background#addChild img;
+      );
+
+      let img = Image.load (map_file 4) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=4.; y=0.; width=1016.; height=1020.} !Isometric.scale));
+        img#setX (Isometric.scale.val *. 1020.);
+        background#addChild img;
+      );
+
+      let img = Image.load (map_file 3) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=4.; y=0.; width=1016.; height=1020.} !Isometric.scale));
+        img#setX (Isometric.scale.val *. 2036.);
+        background#addChild img;
+      );
+
+      let img = Image.load (map_file 2) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=4.; y=0.; width=1016.; height=1020.} !Isometric.scale));
+        img#setX (!Isometric.scale *. 3052.);
+        background#addChild img;
+      );
+
+      let img = Image.load (map_file 1) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=4.; y=0.; width=1020.; height=1020.} !Isometric.scale));
+        img#setX (4068. *. !Isometric.scale);
+        background#addChild img;
+      );
+
+      let img = Image.load (map_file 6) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=0.; y=4.; width=1020.; height=1016.} !Isometric.scale));
+        img#setY (1020. *. !Isometric.scale);
+        background#addChild img;
+      );
+
+      let img = Image.load (map_file 7) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=0.; y=4.; width=1020.; height=1020.} !Isometric.scale));
+        img#setY (2036. *. !Isometric.scale);
+        background#addChild img;
+      );
+
+      let img = Image.load (map_file 8) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=6.; y=12.; width=2026.; height=2036.} !Isometric.scale));
+        img#setX (1020. *. !Isometric.scale);
+        img#setY (1020. *. !Isometric.scale);
+        background#addChild img;
+      );
+
+      let img = Image.load (map_file 9) in
+      (
+        img#setTexture (img#texture#subTexture (Rectangle.mult {Rectangle.x=6.; y=12.; width=2042.; height=2036.} !Isometric.scale));
+        img#setX (3046. *. !Isometric.scale);
+        img#setY (1020. *. !Isometric.scale);
+        background#addChild img;
+      );
+      (*
+      let img =  Image.load (map_file 13) in
+        (
+          img#setTexture (img#texture#subTexture {Rectangle.x = 4.; y=4.; width=1016.; height=1016.});
+          background#addChild img;
+          img#setY 2100.;
+        );
+      let img =  Image.load (map_file 14) in
+        (
+          img#setTexture (img#texture#subTexture {Rectangle.x = 4.; y=4.; width=1016.; height=1016.});
+          background#addChild img;
+          img#setX 1016.;
+          img#setY 2100.;
+        );
+
+      let img =  Image.load (map_file 11) in
+        (
+          background#addChild img;
+          img#setY 1100.;
+        );
+      let img =  Image.load (map_file 12) in
+        (
+          background#addChild img;
+          img#setX 1020.;
+          img#setY 1100.;
+        );
+
+
+      let img =  Image.load (map_file 12) in
+        (
+          background#addChild img;
+          img#setX 1020.;
+        );
+
+      let img =  Image.load (map_file 11) in
+        (
+          background#addChild img;
+        );
+      *)
+
+      background#setName "board background";
+      background#setScale 1.;
+      self#addChild background;
+
+      ignore(background#addEventListener Stage.ev_TOUCH begin fun ev _ _ ->
+          match Stage.touches_of_data ev.Ev.data with
+          [ Some [ touch :: _ ] -> 
+              (
+                background#setX (touch.Touch.globalX -. touch.Touch.previousGlobalX +. background#x);
+                background#setY (touch.Touch.globalY -. touch.Touch.previousGlobalY +. background#y);
+              )
+          | _ -> ()
+          ]
+        end;
+      );
+    );
+
 let stage width height = 
   object(self)
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      test_queue ();
+      test_map self;
       (*
+      test_queue ();
       game_center self;
       testKeyboard self;
       test_vk self;

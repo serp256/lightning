@@ -8,7 +8,7 @@ value connect ~successCallback ~failCallback () = ();
 value loggedIn () = None;
 
 value accessToken connect = "";
-value apprequest ~title ~message ?successCallback ?failCallback connect = ();
+value apprequest ~title ~message ?recipient ?successCallback ?failCallback connect = ();
 value graphrequest ~path ?params ?successCallback ?failCallback connect = ();
 
 ELSE
@@ -21,7 +21,7 @@ external _connect: unit -> unit = "ml_fbConnect";
 external _loggedIn: unit -> option connect = "ml_fbLoggedIn";
 
 external _accessToken: connect -> string = "ml_fbAccessToken";
-external _apprequest: connect -> string -> string -> option (list string -> unit) -> option (string -> unit) -> unit = "ml_fbApprequest_byte" "ml_fbApprequest";
+external _apprequest: connect -> string -> string -> option string -> option (list string -> unit) -> option (string -> unit) -> unit = "ml_fbApprequest_byte" "ml_fbApprequest";
 external _graphrequest: connect -> string -> option (list (string * string)) -> option (Ojson.t -> unit) -> option (string -> unit) -> unit = "ml_fbGraphrequest";
 
 value status = ref NotConnected;
@@ -82,7 +82,7 @@ value loggedIn () = _loggedIn ();
 
 value accessToken connect = _accessToken connect;
 
-value apprequest ~title ~message ?successCallback ?failCallback connect = _apprequest connect title message successCallback failCallback;
+value apprequest ~title ~message ?recipient ?successCallback ?failCallback connect = _apprequest connect title message recipient successCallback failCallback;
 
 value graphrequestSuccess json callback = callback (Ojson.from_string json);
 

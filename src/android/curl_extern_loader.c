@@ -88,6 +88,7 @@ void* loader_thread(void* params) {
 	char* curl_err = (char*)malloc(CURL_ERROR_SIZE);
 	curl_easy_setopt(curl_hndlr, CURLOPT_ERRORBUFFER, curl_err);
 	curl_easy_setopt(curl_hndlr, CURLOPT_WRITEFUNCTION, curl_wfunc);
+	curl_easy_setopt(curl_hndlr, CURLOPT_FOLLOWLOCATION, 1);
 
     JNIEnv *env;
     (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);

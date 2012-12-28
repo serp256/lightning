@@ -1,4 +1,5 @@
 #import "LightAppDelegate.h"
+#import "LightViewController.h"
 #import "FBSBJSON.h"
 #import "fbwrapper_ios.h"
 
@@ -35,6 +36,7 @@
         }
 
         [self freeCallbacks];
+        [[LightViewController sharedInstance] becomeActive];
     }
 
     - (void)dialogCompleteWithUrl:(NSURL*)url {
@@ -75,6 +77,7 @@
 
     - (void)dialogDidNotComplete:(FBDialog*)dialog {
         NSLog(@"dialogDidNotComplete");
+        [[LightViewController sharedInstance] becomeActive];
     }
 
     - (void)dialog:(FBDialog*)dialog didFailWithError:(NSError*)error {
@@ -85,16 +88,26 @@
         }
 
         [self freeCallbacks];
+        [[LightViewController sharedInstance] becomeActive];
     }
 
     - (BOOL)dialog:(FBDialog*)dialog shouldOpenURLInExternalBrowser:(NSURL*)url {
         NSLog(@"dialog shouldOpenURLInExternalBrowser call");
+        [[LightViewController sharedInstance] becomeActive];
         return YES;
     }
 
     - (void)freeCallbacks {
         FREE_CALLBACK(_successCallback);
         FREE_CALLBACK(_failCallback);
+
+        _successCallback = nil;
+        _failCallback = nil;
+    }
+
+    - (void)dealloc {
+        NSLog(@"!!!dealloc");
+        [super dealloc];
     }
 @end
 
@@ -199,7 +212,7 @@ value ml_fbAccessToken(value connect) {
     return caml_copy_string([fbSession.accessToken cStringUsingEncoding:NSASCIIStringEncoding]);
 }
 
-void ml_fbApprequest(value connect, value title, value message, value successCallback, value failCallback) {
+void ml_fbApprequest(value connect, value title, value message, value recipient, value successCallback, value failCallback) {
     FBSESSION_CHECK;
 
     if (!fb) {
@@ -211,6 +224,7 @@ void ml_fbApprequest(value connect, value title, value message, value successCal
 
     NSString* nstitle = [NSString stringWithCString:String_val(title) encoding:NSASCIIStringEncoding];
     NSString* nsmessage = [NSString stringWithCString:String_val(message) encoding:NSASCIIStringEncoding];
+
     value* _successCallback;
     value* _failCallback;
 
@@ -218,9 +232,17 @@ void ml_fbApprequest(value connect, value title, value message, value successCal
     REGISTER_CALLBACK(failCallback, _failCallback);
 
     NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
-    LightFBDialogDelegate* delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallback:_successCallback andFailCallback:_failCallback];
+
+    if (Is_block(recipient)) {
+        NSString* nsrecipient = [NSString stringWithCString:String_val(Field(recipient, 0)) encoding:NSASCIIStringEncoding];
+        [params setObject:nsrecipient forKey:@"to"];
+    }
+
+    static LightFBDialogDelegate* delegate;
+    if (!delegate) delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallback:_successCallback andFailCallback:_failCallback];
+
+    [[LightViewController sharedInstance] resignActive];
     [fb dialog:@"apprequests" andParams:params andDelegate:delegate];
-    [delegate release];
 }
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
@@ -236,7 +258,7 @@ void ml_fbGraphrequest(value connect, value path, value params, value successCal
         value param;
 
         while (Is_block(_params)) {
-            param = Field(params, 0);
+            param = Field(_params, 0);
             NSString* key = [NSString stringWithCString:String_val(Field(param, 0)) encoding:NSASCIIStringEncoding];
             NSString* val = [NSString stringWithCString:String_val(Field(param, 1)) encoding:NSASCIIStringEncoding];
             [nsparams setValue:val forKey:key];
