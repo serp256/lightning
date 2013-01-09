@@ -140,9 +140,7 @@ class virtual c (_width:float) (_height:float) =
               let ((target,touch),cts) = 
                 try 
                   MList.pop_if (fun (target,eTouch) -> eTouch.n_tid = nt.n_tid) !cTouches 
-                with 
-                [ Not_found -> raise Touch_not_found 
-                ] 
+                with [ Not_found -> raise Touch_not_found ] 
               in 
               (
                 cTouches.val := cts;
@@ -152,7 +150,7 @@ class virtual c (_width:float) (_height:float) =
                 [ None -> 
                   match self#hitTestPoint {Point.x=nt.n_globalX;y=nt.n_globalY} True with
                   [ Some target -> (target,nt)
-                  | None -> assert False
+                  | None -> assert False (* FIXME: it's impossible case, but ... *)
                   ]
                 | Some _ -> (target,nt) 
                 ]
