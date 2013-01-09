@@ -48,7 +48,7 @@ class c ?(draw_method=`Points) ?bounds points =
   in
   object(self)
     inherit DisplayObject.c;
-    value shaderProgram = GLPrograms.Quad.create ();
+    value shaderProgram = GLPrograms.Quad.Normal.create ();
     value gl_data  = ml_shape_create points (int_of_draw_method draw_method);
 
     value bounds = bounds;

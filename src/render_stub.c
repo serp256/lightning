@@ -1410,7 +1410,8 @@ value ml_shape_create (value mlpoints, value ml_draw_method) {
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, shape->buffer);
 	value point;
-	for (int i = 0; i < len; i++) {
+	int i;
+	for (i = 0; i < len; i++) {
 		PRINT_DEBUG("get %d shape point",i);
 		point = Field(mlpoints,i);
 		shape_vertexes[i].v.x = Double_val(Field(point,0));
