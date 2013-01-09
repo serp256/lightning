@@ -6,7 +6,7 @@ open LightCommon;
     object(self)
       inherit DisplayObject.c as super;
 
-      value shaderProgram = GLPrograms.Quad.create ();
+      value shaderProgram = GLPrograms.Quad.Normal.create ();
       value quad = Render.Quad.create width height color 1.;
       method! setAlpha a =
       (

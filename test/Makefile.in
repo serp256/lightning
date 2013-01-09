@@ -13,7 +13,7 @@ OAUTH = ../src/social/oauth/oauth.cma
 
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma $(OAUTH) $(SOCIAL) $(MLFILES) ../src/social/facebook/fbconnect.cma $(TARGET).cmo \
+	-I ../src ../src/lightning.cma ../src/social/facebook/fb.cma $(OAUTH) $(SOCIAL) $(MLFILES) $(TARGET).cmo \
 	-package bigarray,unix,extlib,xmlm,ojson -linkpkg
 
 example.cmo: $(MLFILES)
@@ -27,8 +27,9 @@ $(TARGET).cmx: $(MLXFILES)
 
 $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa -ccopt -L../src/social/facebook ../src/social/facebook/fbconnect.cmxa $(TARGET).cmx \
+	-ccopt "-F../src/social/facebook/ios/FacebookSDK" -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa -ccopt -L../src/social/facebook ../src/social/facebook/fb.cmxa $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray -linkpkg
+
 
 
 .PHONY: clean

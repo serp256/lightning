@@ -34,7 +34,7 @@
 
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),(GLubyte)(alpha * 255.)}
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
-#define UPDATE_PMA_ALPHA(c,alpha) (c.r = (GLubyte)((double)c.r * alpha), c.g = (GLubyte)((double)c.g * alpha), c.b = (GLubyte)((double)c.b * alpha), c.a = (GLubyte)(a * 255))
+#define UPDATE_PMA_ALPHA(c,alpha) {double ak=c.a/255.0; c.r = (GLubyte)(((double)c.r/ak)* alpha); c.g = (GLubyte)(((double)c.g/ak)* alpha); c.b = (GLubyte)(((double)c.b/ak) * alpha); c.a = (GLubyte)(a * 255);}
 
 
 

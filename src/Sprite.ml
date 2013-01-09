@@ -152,12 +152,12 @@ class c =
                    draw_texture rw rh begin fun fb ->
                      (
                        Render.clear 0 0.;
-                       Render.Image.render Matrix.identity (GLPrograms.Image.create ()) cimg;
+                       Render.Image.render Matrix.identity (GLPrograms.Image.Normal.create ()) cimg;
                        match glow.Filters.glowKind with
                        [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
                        | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
                        ];
-                       Render.Image.render Matrix.identity (GLPrograms.Image.create ()) cimg;
+                       Render.Image.render Matrix.identity (GLPrograms.Image.Normal.create ()) cimg;
                      )
                    end;
                    ctex#release ();
@@ -189,7 +189,7 @@ class c =
             )
           | Some c -> 
             (
-              c.c_prg := GLPrograms.Image.create ();
+              c.c_prg := GLPrograms.Image.Normal.create ();
               if c.glow <> None
               then
               (
@@ -218,7 +218,10 @@ class c =
                 ]
               end `simple fltrs
             in
-            let c_prg = match prg with [ `simple -> GLPrograms.Image.create () | `cmatrix m -> GLPrograms.ImageColorMatrix.create m ] in
+            let c_prg = 
+              let module Prg=  GLPrograms.Image in
+              match prg with [ `simple -> Prg.Normal.create () | `cmatrix m -> Prg.ColorMatrix.create m ] 
+            in
             match imageCache with
             [ None -> 
               (

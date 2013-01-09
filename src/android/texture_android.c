@@ -1,5 +1,6 @@
 
 
+#include <fcntl.h>
 #include <zlib.h>
 #include <caml/memory.h>
 #include <caml/mlvalues.h>
@@ -15,7 +16,7 @@
 
 
 
-// FIXME: need rewrite to try all with suffix and after without
+/*
 int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	// Проверить фсю хуйню
 	PRINT_DEBUG("LOAD IMAGE INFO: %s[%s]",fname,suffix);
@@ -121,10 +122,15 @@ int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo)
 
 	return load_png_image(r.fd,tInfo);
 }
+*/
 
 int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
-	// Проверить фсю хуйню
 	PRINT_DEBUG("LOAD IMAGE INFO: %s[%s]",fname,suffix);
+	if (fname[0] == '/') {
+		int fd = open(fname, O_RDONLY);
+		if (fd < 0) return 1;
+		return load_png_image(fd,tInfo);
+	};
 	char *ext = strrchr(fname,'.');
 	resource r;
 	int slen = suffix == NULL ? 0 : strlen(suffix);
