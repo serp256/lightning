@@ -272,7 +272,7 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 } 
 
 
-static int texture_enabled = 1;
+/*static int texture_enabled = 1;
 #define ENABLE_TEXTURE() if (!texture_enabled) {glEnable(GL_TEXTURE_2D); texture_enabled = 1;};
 #define DISABLE_TEXTURE() if (texture_enabled) {glDisable(GL_TEXTURE_2D); texture_enabled = 0;};
 void glEnableTexture() {
@@ -280,7 +280,8 @@ void glEnableTexture() {
 }
 void glDisableTexture() {
 	DISABLE_TEXTURE();
-}
+}*/
+
 /*
 	void *specUniforms;
 	uniformFun bindUniforms;
@@ -644,7 +645,6 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	PRINT_DEBUG("RENDER QUAD");
 	checkGLErrors("start render quad");
 
-	DISABLE_TEXTURE();
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
 	checkGLErrors("quad render use program");
@@ -930,7 +930,6 @@ void ml_image_render(value matrix, value program, value alpha, value blend, valu
 	//fprintf(stderr,"render image\n");
 	PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
-	ENABLE_TEXTURE();
 	checkGLErrors("start image render");
 
 	//print_image(tq);
@@ -1104,8 +1103,6 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
-
-	ENABLE_TEXTURE();
 
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
@@ -1436,8 +1433,6 @@ value ml_shape_create (value mlpoints, value ml_draw_method) {
 void ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 	shape_t *shape = SHAPE(mlshape);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
-	glLineWidth(2.);
-	DISABLE_TEXTURE();
 	lgGLUseProgram(sp->program);
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
@@ -1452,7 +1447,8 @@ void ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 		checkGLErrors("apply filters");
 	};
 	*/
-	setNotPMAGLBlend();
+	//setNotPMAGLBlend();
+	lgGLBindTexture(0,0);
 	glBindBuffer(GL_ARRAY_BUFFER,shape->buffer);
 	// vertices
 	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, QVertexSize, (GLvoid*) offsetof( lgQVertex, v));
