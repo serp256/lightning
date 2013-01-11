@@ -172,13 +172,14 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 					strcpy(path + bflen + slen, compressedExt);
 					PRINT_DEBUG("TRY GET IMAGE %s", path);
 					if (getResourceFd(path,&r)) {
-						FILE *fptr = fdopen(r.fd,"rb");
+						gzFile* gzf = gzdopen(r.fd, "rb");
 #ifdef TEXTURE_LOAD
-					strncpy(tInfo->path,path,255);
+						strncpy(tInfo->path,path,255);
 #endif
-						int res = loadCompressedTexture(fptr,r.length,tInfo);
-						fclose(fptr);
+						int res = loadCompressedTexture(gzf, tInfo);
+						gzclose(gzf);
 						free(path);
+
 						return res;
 					}
 				};
@@ -219,14 +220,14 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				strcpy(path + bflen, compressedExt);
 				PRINT_DEBUG("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
-					FILE *fptr = fdopen(r.fd,"rb");
+					gzFile* gzf = gzdopen(r.fd, "rb");
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
 #endif
-					int res = loadCompressedTexture(fptr,r.length,tInfo);
-					DEBUG("PVR File Loaded");
-					fclose(fptr);
+					int res = loadCompressedTexture(gzf, tInfo);
+					gzclose(gzf);
 					free(path);
+
 					return res;
 				};
 			};

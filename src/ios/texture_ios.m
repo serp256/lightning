@@ -229,18 +229,22 @@ int loadImageFile(UIImage *image,textureInfo *tInfo) {
 
 int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	PRINT_DEBUG("LOAD PVR: %s",[path cStringUsingEncoding:NSASCIIStringEncoding]);
-	FILE* fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"rb");
-	if (fildes < 0) return 1;
-	fseek(fildes, 0, SEEK_END); /* Seek to the end of the file */
-	long fsize = ftell(fildes); /* Find out how many bytes into the file we are */
-	fseek(fildes, 0, SEEK_SET); /* Go back to the beginning of the file */
-	int r = loadPvrFile3(fildes,fsize,tInfo);
-	fclose(fildes);
-	if (r != 0) {
+	gzFile* gzf = gzopen([path cStringUsingEncoding:NSASCIIStringEncoding], "rb");
+
+	if (!gzf) return 1;
+
+/*	fseek(fildes, 0, SEEK_END);
+	long fsize = ftell(fildes);
+	fseek(fildes, 0, SEEK_SET);*/
+
+	int r = loadPvrFile3(gzf, tInfo);
+	gzclose(gzf);
+
+/*	if (r != 0) {
 		fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"rb");
 		r = loadPvrFile2(fildes,tInfo);
 		fclose(fildes);
-	}
+	}*/
 	return r;
 }
 
