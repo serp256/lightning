@@ -7,6 +7,7 @@
 #include "light_common.h"
 #include "mlwrapper.h"
 #include "texture_pvr.h"
+#include <string.h>
 
 
 #define NIL Val_int(0)
@@ -21,7 +22,7 @@ extern value caml_gc_compaction(value v);
 #include <caml/threads.h>
 #endif
 
-int (*loadCompressedTexture)(FILE* fildes, size_t fsize, textureInfo *tInfo);
+int (*loadCompressedTexture)(gzFile* gzf, textureInfo *tInfo);
 char* compressedExt;
 
 #define ASSIGN_COMPRESSED_EXT(ext) compressedExt = (char*)malloc(strlen(ext)); strcpy(compressedExt, ext);
