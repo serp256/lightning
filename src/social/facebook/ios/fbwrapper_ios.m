@@ -119,7 +119,7 @@ void fbError(NSError* error) {
 }
 
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error) {
-    NSLog(@"sessionStateChanged call");
+    NSLog(@"sessionStateChanged call with error %x", error);
 
     switch (state) {
         case FBSessionStateOpen:
@@ -145,7 +145,10 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
             NSLog(@"FBSessionStateClosedLoginFailed");
 
             [[FBSession activeSession] closeAndClearTokenInformation];
-            fbError(error);
+
+						/** FIXME - иногда error может быть NULL **/
+						if (!error) caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("Unknown Error"));
+						else fbError(error);
             break;
 
         default:
