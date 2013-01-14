@@ -180,3 +180,17 @@ value loadRegionsByPrefix atlas path =
       Hashtbl.iter func atlas.regions;
       !regions
     );
+(*вернуть все субтекстуры атласа *)    
+value loadRegions atlas =
+  let regions = Array.create (Hashtbl.length atlas.regions)
+  (Texture.zero,(0.,0.)) in
+    let func name (num, region, (posX,posY)) =
+      (
+        let i = int_of_string (Filename.chop_extension name) in
+        regions.(i) := ((atlas.textures.(num)#subTexture region),(float_of_int posX, float_of_int posY));
+      )
+    in
+    (
+      Hashtbl.iter func atlas.regions;
+      regions
+    );
