@@ -1866,5 +1866,3 @@ JNIEXPORT jstring JNICALL Java_ru_redspell_lightning_LightView_glExts(JNIEnv *en
 	const char *exts = (char*)glGetString(GL_EXTENSIONS);
 	return (*env)->NewStringUTF(env, exts);
 }
-
-int save_png_image(value name, char* buffer, unsigned int width, unsigned int height) { return 0; }
