@@ -18,7 +18,7 @@ release: $(TARGET).so
 
 $(TARGET).so: $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
-	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) ../src/social/facebook/fbconnect.cmxa $(TARGET).cmx \
+	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES)  $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray  -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" -cclib "-L../src/social/facebook" -output-obj
 
 clean::

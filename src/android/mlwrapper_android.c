@@ -68,6 +68,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
+	PRINT_DEBUG("JNI ON LOAD");
 	uncaught_exception_callback = &mlUncaughtException;
 	gJavaVM = vm;
 	return JNI_VERSION_1_6; // Check this
@@ -378,10 +379,6 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 		ocaml_initialized = 1;
 		PRINT_DEBUG("caml initialized");
 	};
-	if (stage) return;
-	PRINT_DEBUG("create stage: [%d:%d]",width,height);
-	stage = mlstage_create((float)width,(float)height); 
-	PRINT_DEBUG("stage created");
 }
 
 static int onResume = 0;
@@ -399,10 +396,15 @@ void callDispatchFgHandler() {
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	PRINT_DEBUG("GL Changed: %i:%i",width,height);
 
-	if (onResume) {
+	if (!stage) {
+		PRINT_DEBUG("create stage: [%d:%d]",width,height);
+		stage = mlstage_create((float)width,(float)height); 
+		PRINT_DEBUG("stage created");
+	} else if (onResume) {
 		onResume = 0;
 		callDispatchFgHandler();
 	}
+
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(JNIEnv *env, jobject this) {
@@ -1866,5 +1868,3 @@ JNIEXPORT jstring JNICALL Java_ru_redspell_lightning_LightView_glExts(JNIEnv *en
 	const char *exts = (char*)glGetString(GL_EXTENSIONS);
 	return (*env)->NewStringUTF(env, exts);
 }
-
-int save_png_image(value name, char* buffer, unsigned int width, unsigned int height) { return 0; }

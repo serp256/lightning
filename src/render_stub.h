@@ -30,6 +30,8 @@
 
 void setPMAGLBlend();
 void setNotPMAGLBlend();
+void glEnableTexture();
+void glDisableTexture();
 
 typedef struct 
 {
