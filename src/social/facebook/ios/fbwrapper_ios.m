@@ -215,7 +215,9 @@ value ml_fbAccessToken(value connect) {
     return caml_copy_string([fbSession.accessToken cStringUsingEncoding:NSASCIIStringEncoding]);
 }
 
-void ml_fbApprequest(value connect, value title, value message, value recipient, value successCallback, value failCallback) {
+void ml_fbApprequest(value connect, value title, value message, value recipient, value data, value successCallback, value failCallback) {
+//		CAMLparam5(connect, title, message, recipient, data);
+	//	CAMLxparam2(successCallback,failCallback);
     FBSESSION_CHECK;
 
     if (!fb) {
@@ -239,6 +241,12 @@ void ml_fbApprequest(value connect, value title, value message, value recipient,
     if (Is_block(recipient)) {
         NSString* nsrecipient = [NSString stringWithCString:String_val(Field(recipient, 0)) encoding:NSASCIIStringEncoding];
         [params setObject:nsrecipient forKey:@"to"];
+    }
+
+    if (Is_block(data)) {
+//				NSLog (@"data str: %@",String_val(Field(data, 0) ));
+        NSString* nsdata = [NSString stringWithCString:String_val(Field(data, 0)) encoding:NSASCIIStringEncoding];
+        [params setObject:nsdata forKey:@"data"];
     }
 
     static LightFBDialogDelegate* delegate;
