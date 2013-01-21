@@ -221,7 +221,9 @@ value pendings = Queue.create ();
 type state = [ Standby | Authorizing of (string -> unit) ]; 
 value state = ref Standby;
 
-value authorization_grant url close_button callback = 
+value authorization_grant url close_button callback =
+  let () = Printf.eprintf "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!authorization_grant" in
+  let () = debug "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!authorization_grant" in
   match !state with
   [ Standby -> 
     (
@@ -233,7 +235,9 @@ value authorization_grant url close_button callback =
   | Authorizing _ -> Queue.push (url,close_button,callback) pendings
   ];
 
-value oauth_redirected url = 
+value oauth_redirected url =
+  let () = Printf.eprintf "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!oauth_redirected" in
+  let () = debug "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!oauth_redirected" in
   match !state with 
   [ Authorizing cb ->
       (
