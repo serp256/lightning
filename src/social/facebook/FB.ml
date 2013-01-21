@@ -8,7 +8,7 @@ value connect ~successCallback ~failCallback () = ();
 value loggedIn () = None;
 
 value accessToken connect = "";
-value apprequest ~title ~message ?recipient ?successCallback ?failCallback connect = ();
+value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback connect = ();
 value graphrequest ~path ?params ?successCallback ?failCallback connect = ();
 
 ELSE
@@ -67,7 +67,8 @@ value init ~appId () = _init appId;
 value connect  ~successCallback ~failCallback () =
 	match !status with
 	[ Connected -> successCallback ()
-	| Connecting -> failwith "facebook connecting alredy in progress"
+	| Connecting -> ()
+        (*failwith "facebook connecting alredy in progress"*)
 	| NotConnected ->
 		(
 			_successCallback.val := Some successCallback;
