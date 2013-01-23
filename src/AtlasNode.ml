@@ -3,6 +3,7 @@ open LightCommon;
 type t = 
   {
     texture: Texture.c;
+    name: option string;
     glpoints: mutable (option (array float));
     clipping: Rectangle.t;
     width: float;
@@ -18,7 +19,7 @@ type t =
     bounds: mutable Rectangle.t;
   };
 
-value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(color=`NoColor) ?(flipX=False) ?(flipY=False) ?(alpha=1.) () = 
+value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(flipX=False) ?(flipY=False) ?(color=`NoColor)  ?(alpha=1.) () = 
   let s = texture#scale in
   let tw = texture#width /. s
   and th = texture#height /. s in
@@ -67,12 +68,14 @@ value setX x t = {(t) with pos = {(t.pos) with Point.x}; glpoints = None; bounds
 value setY y t = {(t) with pos = {(t.pos) with Point.y}; glpoints = None; bounds=Rectangle.empty};
 value setPos x y t = {(t) with pos = {Point.x;y};glpoints = None; bounds=Rectangle.empty};
 value setPosPoint pos t = {(t) with pos; glpoints = None; bounds=Rectangle.empty};
-value update ?pos ?scale ?color ?alpha t = 
+value update ?pos ?scale ?rotation ?flipX ?flipY ?color ?alpha t = 
   let (scaleX,scaleY) = match scale with [ None -> (t.scaleX,t.scaleY) | Some s -> (s,s) ] in
+  let clipping = 
   {(t) with 
     pos = match pos with [ None -> t.pos | Some p -> p ]; scaleX; scaleY; 
     color = match color with [ None -> t.color | Some c -> c]; 
     alpha = match alpha with [ None -> t.alpha | Some a -> a];
+    rotation = match rotation with [ None -> t.rotation | Some r -> LightCommon.clamp_rotation r];
     glpoints = None;
     bounds = Rectangle.empty
   };
