@@ -5,6 +5,7 @@ IFDEF PC THEN
 value init ~appId () = ();
 
 value connect ~successCallback ~failCallback () = ();
+value disconnect connect = ();
 value loggedIn () = None;
 
 value accessToken connect = "";
