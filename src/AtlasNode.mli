@@ -1,0 +1,23 @@
+
+type t;
+value create: 
+  Texture.c ->  Rectangle.t -> ?name:string -> ?pos:Point.t -> ?scaleX:float -> ?scaleY:float -> 
+    ?rotation:float -> ?flipX:bool -> ?flipY:bool -> ?color:LightCommon.color ->  ?alpha:float -> unit -> t;
+
+
+value pos: t -> Point.t;
+value x: t -> float;
+value y: t -> float;
+value width: t -> float;
+value height: t -> float;
+
+value setPosPoint: Point.t -> t -> t;
+value setX: float -> t -> t;
+value setY: float -> t -> t;
+
+value update: ?pos:Point.t -> ?scale:float -> ?rotation:float -> ?flipX:bool -> ?flipY:bool -> ?color:LightCommon.color ->  ?alpha:float -> t -> t;
+
+value texture: t -> Texture.c;
+
+value sync: t -> unit;
+value bounds: t -> Rectangle.t;
