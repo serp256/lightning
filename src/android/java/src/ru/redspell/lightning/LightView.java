@@ -561,6 +561,10 @@ public class LightView extends GLSurfaceView {
 	public void confirmNotif(String notifId) {
 		bserv.confirmNotif(notifId);
 	}	
+
+	public void restoreTransactions() {
+		bserv.restoreTransactions();
+	}
 	
 	public void initBillingServ() {
 		bserv.requestPurchase("android.test.purchased");

@@ -40,6 +40,7 @@ ELSE
 IFDEF ANDROID THEN
 external ml_init : ?pubkey:string -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit = "ml_payment_init";
 external _ml_commit_transaction : string -> unit = "ml_payment_commit_transaction";
+external restoreTransactions: unit -> unit = "ml_restoreTransactions";
 value ml_commit_transaction t = _ml_commit_transaction (Transaction.get_id t);
 ELSE
 
@@ -56,6 +57,8 @@ value ml_init success error = callbacks.val := Some {on_success = success; on_er
 value ml_purchase (id:string) = ();
 
 value ml_commit_transaction (tr:Transaction.t) = ();
+
+value restoreTransactions () = ();
 
 ENDIF;
 ENDIF;
