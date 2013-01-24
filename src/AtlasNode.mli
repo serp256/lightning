@@ -11,9 +11,22 @@ value y: t -> float;
 value width: t -> float;
 value height: t -> float;
 
-value setPosPoint: Point.t -> t -> t;
 value setX: float -> t -> t;
 value setY: float -> t -> t;
+value setPos: float -> float -> t -> t;
+value setPosPoint: Point.t -> t -> t;
+
+value flipX: t -> bool;
+value setFlipX: bool -> t -> t;
+
+value flipY: t -> bool;
+value setFlipY: bool -> t -> t;
+
+value color: t -> LightCommon.color;
+value setColor: LightCommon.color -> t -> t;
+
+value alpha: t -> float;
+value setAlpha: float -> t -> t;
 
 value update: ?pos:Point.t -> ?scale:float -> ?rotation:float -> ?flipX:bool -> ?flipY:bool -> ?color:LightCommon.color ->  ?alpha:float -> t -> t;
 

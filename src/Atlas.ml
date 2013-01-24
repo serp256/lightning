@@ -47,7 +47,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       method addChild ?index child = 
       (
-        assert(child.Node.texture = texture);
+        assert(Node.texture child = texture);
         match index with
         [ None -> DynArray.add children child
         | Some index ->
@@ -77,7 +77,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       method updateChild idx child =
       (
-        assert(child.Node.texture = texture);
+        assert((Node.texture child)= texture);
         try
           DynArray.set children idx child;
         with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (idx,DynArray.length children))];
