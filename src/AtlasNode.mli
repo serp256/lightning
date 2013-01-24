@@ -28,6 +28,9 @@ value setColor: LightCommon.color -> t -> t;
 value alpha: t -> float;
 value setAlpha: float -> t -> t;
 
+value name: t -> option string;
+value setName: option string -> t -> t;
+
 value update: ?pos:Point.t -> ?scale:float -> ?rotation:float -> ?flipX:bool -> ?flipY:bool -> ?color:LightCommon.color ->  ?alpha:float -> t -> t;
 
 value texture: t -> Texture.c;

@@ -3,7 +3,6 @@ open LightCommon;
 type t = 
   {
     texture: Texture.c;
-    name: option string;
     glpoints: mutable (option (array float));
     clipping: Rectangle.t;
     width: float;
@@ -17,6 +16,7 @@ type t =
     scaleY: float;
     rotation: float;
     bounds: mutable Rectangle.t;
+    name: option string;
   };
 
 value create texture rect ?name ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(flipX=False) ?(flipY=False) ?(color=`NoColor)  ?(alpha=1.) () = 
@@ -172,5 +172,7 @@ value bounds t =
 
 value width t = (bounds t).Rectangle.width;
 value height t = (bounds t).Rectangle.height;
+value name t = t.name;
+value setName name t = {(t) with name = name};
 
 value texture t = t.texture;
