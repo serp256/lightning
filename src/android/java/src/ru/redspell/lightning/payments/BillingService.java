@@ -542,21 +542,21 @@ public class BillingService extends Service implements ServiceConnection {
         for (final VerifiedPurchase vp : purchases) {
             Log.d(TAG, "purchases id: " + vp.notificationId);
 
-            if (vp.notificationId != null) {
+            //if (vp.notificationId != null) {
                 Log.d(TAG, "invoking caml payment success callback from from BillingService.purchaseStateChanged");
 
                 if (LightView.instance != null) {
                     LightView.instance.queueEvent(new Runnable() {
                         @Override
                         public void run() {
-                            invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? sig : "");
+                            invokeCamlPaymentSuccessCb(vp.productId, (vp.notificationId != null)? vp.notificationId: "", vp.jobj.toString(), Security.hasPubkey() ? sig : "");
                         }
                     });
                 }
 
                 
                 //notifyList.add(vp.notificationId);
-            }
+           // }
         }
 
 	/*
