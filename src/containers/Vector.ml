@@ -231,3 +231,6 @@ value pop vect =
   
 value sort f vect =
   vect.data := DynArray.to_list vect.data |>  List.fast_sort f |> DynArray.of_list;
+
+value delete vect index =
+  DynArray.delete vect.data index;
