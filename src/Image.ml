@@ -44,12 +44,9 @@ type glow =
 
 class virtual base texture = 
   let (programID,shaderProgram) = 
-    match texture#kind with
-    [ Texture.Simple _ -> (GLPrograms.Image.id, GLPrograms.Image.create ())
-    | Texture.Alpha -> (GLPrograms.ImageAlpha.id, GLPrograms.ImageAlpha.create ())
-    | Texture.Pallete _ -> (GLPrograms.ImagePallete.id, GLPrograms.ImagePallete.create ())
-    | Texture.EtcWithAlpha _ -> (GLPrograms.ImageEtcWithAlpha.id, GLPrograms.ImageEtcWithAlpha.create ())
-    ]
+    let prgm = GLPrograms.select_by_texture texture#kind in
+    let module Prg = (value prgm:GLPrograms.Programs) in
+    (Prg.Normal.id,Prg.Normal.create ()) 
   in
   object(self)
     inherit DisplayObject.c as super;
@@ -67,12 +64,8 @@ class virtual base texture =
     method private setGlowFilter g_program glow = 
     (
       let g_make_program = 
-        match texture#kind with 
-        [ Texture.Simple _ -> GLPrograms.Image.create () 
-        | Texture.Alpha -> GLPrograms.ImageAlpha.create () 
-        | Texture.Pallete _ -> GLPrograms.ImagePallete.create () 
-        | Texture.EtcWithAlpha _ -> GLPrograms.ImageEtcWithAlpha.create ()
-        ] 
+        let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+        Prg.Normal.create () 
       in
       glowFilter := Some 
         (match glowFilter with
@@ -100,65 +93,20 @@ class virtual base texture =
           end `simple fltrs 
         in
         (
-          (* this is ugly, need rewrite *)
-          match texture#kind with (*{{{*)
-          [ Texture.Simple _ ->
-            match f with
-            [ `simple when programID <> GLPrograms.Image.id -> 
-              (
-                programID := GLPrograms.Image.id;
-                shaderProgram := GLPrograms.Image.create ()
-              )
-            | `cmatrix m when programID  <> GLPrograms.ImageColorMatrix.id -> 
-              (
-                programID := GLPrograms.ImageColorMatrix.id;
-                shaderProgram := GLPrograms.ImageColorMatrix.create m
-              )
-            | _ -> ()
-            ]
-          | Texture.Pallete _ ->
-            match f with
-            [ `simple when programID <> GLPrograms.ImagePallete.id -> 
-              (
-                programID := GLPrograms.ImagePallete.id;
-                shaderProgram := GLPrograms.ImagePallete.create ()
-              )
-            | `cmatrix m when programID <> GLPrograms.ImagePalleteColorMatrix.id -> 
-              (
-                programID := GLPrograms.ImagePalleteColorMatrix.id;
-                shaderProgram := GLPrograms.ImagePalleteColorMatrix.create m
-              )
-            | _ -> ()
-            ]
-          | Texture.Alpha ->
-            match f with
-            [ `simple when programID <> GLPrograms.ImageAlpha.id -> 
-              (
-                programID := GLPrograms.ImageAlpha.id;
-                shaderProgram := GLPrograms.ImageAlpha.create ()
-              )
-            | `cmatrix m when programID <> GLPrograms.ImageAlphaColorMatrix.id -> 
-              (
-                programID := GLPrograms.ImageAlphaColorMatrix.id;
-                shaderProgram := GLPrograms.ImageAlphaColorMatrix.create m
-              )
-            | _ -> ()
-            ]
-          | Texture.EtcWithAlpha _ ->
-            match f with
-            [ `simple when programID <> GLPrograms.ImageEtcWithAlpha.id ->
-              (
-                programID := GLPrograms.ImageEtcWithAlpha.id;
-                shaderProgram := GLPrograms.ImageEtcWithAlpha.create ();
-              )
-            | `cmatrix m when programID <> GLPrograms.ImageEtcWithAlphaColorMatrix.id ->
-              (
-                programID := GLPrograms.ImageEtcWithAlphaColorMatrix.id;
-                shaderProgram := GLPrograms.ImageEtcWithAlphaColorMatrix.create m;
-              )
-            | _ -> ()
-            ]
-          ];(*}}}*)
+          let module ShaderM = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+          match f with
+          [ `simple when programID <> ShaderM.Normal.id -> 
+            (
+              programID := ShaderM.Normal.id;
+              shaderProgram := ShaderM.Normal.create ()
+            )
+          | `cmatrix m when programID  <> ShaderM.ColorMatrix.id -> 
+            (
+              programID := ShaderM.ColorMatrix.id;
+              shaderProgram := ShaderM.ColorMatrix.create m
+            )
+          | _ -> ()
+          ];
           match !glow with (*{{{*)
           [ None ->
               match glowFilter with 
@@ -175,8 +123,8 @@ class virtual base texture =
           | Some glow ->
             let gprg = 
               match f with
-              [ `simple -> GLPrograms.Image.create ()
-              | `cmatrix m  -> GLPrograms.ImageColorMatrix.create m
+              [ `simple -> GLPrograms.Image.Normal.create ()
+              | `cmatrix m  -> GLPrograms.Image.ColorMatrix.create m
               ]
             in
             match glowFilter with
@@ -476,47 +424,24 @@ class _c  _texture =
         then self#updateSize ()
         else Render.Image.update image texture#renderInfo texFlipX texFlipY;
         nt#addRenderer (self :> Texture.renderer);
-        match texture#kind with
-        [ Texture.Simple _ when programID = GLPrograms.ImagePallete.id ->
-          (
-            debug "set program to simple";
-            programID := GLPrograms.Image.id;
-            shaderProgram := GLPrograms.Image.create ()
-          )
-        | Texture.Simple _ when programID = GLPrograms.ImagePalleteColorMatrix.id -> 
-          (
-            programID := GLPrograms.ImageColorMatrix.id;
-            match shaderProgram with
-            [ (_,Some f) -> shaderProgram := GLPrograms.ImageColorMatrix.create f
-            | _ -> assert False
+        let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+        let pkind = 
+          List.fold_left begin fun res -> fun
+            [ `ColorMatrix m -> `matrix m
+            | _ -> res
             ]
-          )
-        | Texture.Pallete _ when programID = GLPrograms.Image.id -> 
+          end `simple filters
+        in
+        match pkind with
+        [ `simple when programID <> Prg.Normal.id -> 
           (
-            debug "set program to pallete";
-            programID := GLPrograms.ImagePallete.id;
-            shaderProgram := GLPrograms.ImagePallete.create ()
+            programID := Prg.Normal.id;
+            shaderProgram := Prg.Normal.create ()
           )
-        | Texture.Pallete _ when programID = GLPrograms.ImageColorMatrix.id -> 
+        | `matrix m when programID <> Prg.ColorMatrix.id -> 
           (
-            programID := GLPrograms.ImagePalleteColorMatrix.id;
-            match shaderProgram with
-            [ (_,Some f) -> shaderProgram := GLPrograms.ImagePalleteColorMatrix.create f
-            | _ -> assert False
-            ]
-          )
-        | Texture.EtcWithAlpha _ when programID = GLPrograms.ImageEtcWithAlpha.id -> 
-          (
-            programID := GLPrograms.ImageEtcWithAlpha.id;
-            shaderProgram := GLPrograms.ImageEtcWithAlpha.create ()
-          )
-        | Texture.EtcWithAlpha _ when programID = GLPrograms.ImageEtcWithAlphaColorMatrix.id -> 
-          (
-            programID := GLPrograms.ImageEtcWithAlphaColorMatrix.id;
-            match shaderProgram with
-            [ (_,Some f) -> shaderProgram := GLPrograms.ImageEtcWithAlphaColorMatrix.create f
-            | _ -> assert False
-            ]
+            programID := Prg.ColorMatrix.id;
+            shaderProgram := Prg.ColorMatrix.create m
           )
         | _ -> ()
         ];

@@ -8,6 +8,7 @@
 #endif
 
 #include "texture_common.h"
+#include <zlib.h>
 
 void mlrender_clearTexture();
 
@@ -42,7 +43,7 @@ typedef enum
 //
 void ml_memoryWarning();
 
-int (*loadCompressedTexture)(FILE* fildes, size_t fsize, textureInfo *tInfo);
+int (*loadCompressedTexture)(gzFile* gzf, textureInfo *tInfo);
 char* compressedExt;
 
 #endif

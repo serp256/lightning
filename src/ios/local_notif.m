@@ -5,24 +5,18 @@
 
 #define ID_KEY [NSString stringWithCString:"id" encoding:NSASCIIStringEncoding]
 
-value ml_lnSchedule(value alertAction, value badgeNum, value nid, value fireDate, value alertBody) {
+value ml_lnSchedule(value nid, value fireDate, value alertBody) {
     UILocalNotification *notif = [[UILocalNotification alloc] init];
 
     if (notif == nil) {
         return Val_false;
     }
 
+    NSLog(@"pizda lala: %s", String_val(nid));
+
     notif.fireDate = [NSDate dateWithTimeIntervalSince1970:Double_val(fireDate)];
     notif.alertBody = [NSString stringWithCString:String_val(alertBody) encoding:NSUTF8StringEncoding];
     notif.userInfo = [NSDictionary dictionaryWithObject:[NSString stringWithCString:String_val(nid) encoding:NSASCIIStringEncoding] forKey:ID_KEY];
-
-    if (!Is_long(alertAction)) {
-        notif.alertAction = [NSString stringWithCString:String_val(Field(alertAction, 0)) encoding:NSUTF8StringEncoding];
-    }
-
-    if (!Is_long(badgeNum)) {
-        notif.applicationIconBadgeNumber = Int_val(Field(badgeNum, 0));
-    }
 
     [[UIApplication sharedApplication] scheduleLocalNotification:notif];
     [notif release];

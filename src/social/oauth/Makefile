@@ -39,6 +39,8 @@ FAKELIBS =
 CFLAGS += -DLDEBUG -DANDROID -Iandroid -I../../android -I../..
 MLPPOPT += -DANDROID
 MOBJS += android/oauth_wrapper.o
+
+OAuth.cmx: DEBUGS += default
             
 oauth.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN) $(FAKELIBS)
 	$(OCAMLMKLIB) -verbose -o oauth $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 

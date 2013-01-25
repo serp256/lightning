@@ -108,6 +108,7 @@ class virtual c (_width:float) (_height:float) =
     method! setScaleX _ = raise Restricted_operation;
     method! setScaleY _ = raise Restricted_operation;
     method! setRotation _ = raise Restricted_operation;
+    method! setVisible _ = raise Restricted_operation;
 
     method resize w h = 
     (
@@ -136,7 +137,11 @@ class virtual c (_width:float) (_height:float) =
           List.map begin fun nt ->
             let () = nt.n_timestamp := now in
             try
-              let ((target,touch),cts) = try MList.pop_if (fun (target,eTouch) -> eTouch.n_tid = nt.n_tid) !cTouches with [ Not_found -> raise Touch_not_found ] in 
+              let ((target,touch),cts) = 
+                try 
+                  MList.pop_if (fun (target,eTouch) -> eTouch.n_tid = nt.n_tid) !cTouches 
+                with [ Not_found -> raise Touch_not_found ] 
+              in 
               (
                 cTouches.val := cts;
                 nt.n_previousGlobalX := touch.n_globalX; 
@@ -144,8 +149,8 @@ class virtual c (_width:float) (_height:float) =
                 match target#stage with
                 [ None -> 
                   match self#hitTestPoint {Point.x=nt.n_globalX;y=nt.n_globalY} True with
-                  [ None -> assert False
-                  | Some target -> (target,nt)
+                  [ Some target -> (target,nt)
+                  | None -> assert False (* FIXME: it's impossible case, but ... *)
                   ]
                 | Some _ -> (target,nt) 
                 ]
@@ -258,19 +263,23 @@ class virtual c (_width:float) (_height:float) =
     );
 
   method! hitTestPoint localPoint isTouch =
-    match isTouch && (not visible || not touchable) with
+    (*
+    match isTouch && (not touchable) with
     [ True -> None 
     | False ->
+        *)
         match super#hitTestPoint localPoint isTouch with
-        [ None -> (* different to other containers, the stage should acknowledge touches even in empty parts. *)
-          let bounds = Rectangle.create pos.Point.x pos.Point.y width height in
-          match Rectangle.containsPoint bounds localPoint with
-          [ True -> Some self#asDisplayObject
-          | False -> None
-          ]
+        [ None -> Some self#asDisplayObject(* different to other containers, the stage should acknowledge touches even in empty parts. *)
+          (*
+            let bounds = Rectangle.create pos.Point.x pos.Point.y width height in
+            match Rectangle.containsPoint bounds localPoint with
+            [ True -> 
+            | False -> None
+            ]
+          *)
         | res -> res
-        ]
-    ];
+        ];
+(*     ]; *)
 
   method dispatchBackPressedEv () =
     let ev = Ev.create ev_BACK_PRESSED () in

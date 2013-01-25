@@ -189,7 +189,7 @@ public class LightView extends GLSurfaceView {
 		return getContext().getPackageCodePath();
 	}
 
-	public String getExternalStoragePath() {
+	public String getAssetsPath() {
 		File storageDir = getContext().getExternalFilesDir(null);
 		File assetsDir = new File(storageDir, "assets");
 
@@ -209,7 +209,6 @@ public class LightView extends GLSurfaceView {
 	private int loader_id;
 	private Handler uithread;
 	private BillingService bserv;
-	public AndroidFB fb; 
 
 	public static LightView instance;
 	
@@ -243,9 +242,6 @@ public class LightView extends GLSurfaceView {
 		bserv = new BillingService();
 		bserv.setContext(activity);
 		ResponseHandler.register(activity);
-
-		// FIXME: move it to FB init
-		fb = new AndroidFB();
 	}
 
 	protected void initView(int width,int height) {
@@ -565,6 +561,10 @@ public class LightView extends GLSurfaceView {
 	public void confirmNotif(String notifId) {
 		bserv.confirmNotif(notifId);
 	}	
+
+	public void restoreTransactions() {
+		bserv.restoreTransactions();
+	}
 	
 	public void initBillingServ() {
 		bserv.requestPurchase("android.test.purchased");
@@ -616,8 +616,14 @@ public class LightView extends GLSurfaceView {
 		return Locale.getDefault().getLanguage();
 	}
 
-  public String mlGetStoragePath () {
+  public String mlGetInternalStoragePath () {
 		Log.d("LIGHTNING", "LightView: mlgetStoragePath");
+		return getContext().getFilesDir().getPath(); // FIXME: try to search external path first
+	}
+
+	public String mlGetStoragePath() {
+		File storageDir = getContext().getExternalFilesDir(null);
+		if (storageDir != null) return storageDir.getPath();
 		return getContext().getFilesDir().getPath();
 	}
 

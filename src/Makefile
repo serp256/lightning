@@ -50,10 +50,12 @@ ifeq ($(PLATFORM),IOS)
 						 -cclib '-framework\ GameKit' \
 						 -cclib '-framework\ StoreKit' \
 						 -cclib '-framework\ CoreMotion'
+						 #-cclib '-framework\ FacebookSDK'
+	#CFLAGS += -Fsocial/facebook/ios/FacebookSDK
 	else
 	ifeq ($(PLATFORM),ANDROID)
 		MLCOPTS += -D__ANDROID__
-		MOBJS += mlwrapper.o net_curl.o texture_load.o android/local_notif.o android/mlwrapper_android.o android/texture_android.o android/payments_android.o android/unzip.o android/ioapi.o android/assets_extractor.o android/curl_extern_loader.o android/keyboard_android.o
+		MOBJS += mlwrapper.o net_curl.o texture_load.o texture_save.o android/local_notif.o android/mlwrapper_android.o android/texture_android.o android/payments_android.o android/unzip.o android/ioapi.o android/assets_extractor.o android/curl_extern_loader.o android/keyboard_android.o
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else
@@ -102,15 +104,16 @@ CFLAGS += -D$(PLATFORM) -DOS$(OS)
 $(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) Hardware.ml LocalNotifications.ml Keyboard.ml Motion.ml ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
-					DisplayObject.ml GLPrograms.ml Quad.ml Texture.ml  RenderTexture.ml Image.ml AtlasNode.ml TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml\
-					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) FB.ml Lightning.ml
+					DisplayObject.ml GLPrograms.ml Shape.ml Quad.ml Texture.ml  RenderTexture.ml Image.ml AtlasNode.ml \
+					TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml\
+					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml
 
 #Texture.cmo Texture.cmx: MLFLAGS += -package threads -thread
 
 $(gl)/gl_stub.o: $(gl)/gl_stub.c
 	$(OCAMLOPT) -verbose -g $(if $(GLPARAM),$(patsubst %,-ccopt %,$(GLPARAM))) -ccopt '-o $(gl)/gl_stub.o' -c $(gl)/gl_stub.c
 
-MLCONTAINERS = containers/MList.ml containers/HSet.ml containers/MHashtbl.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml containers/ThreadSafeQueue.ml
+MLCONTAINERS = containers/MList.ml containers/Vector.ml containers/HSet.ml containers/MHashtbl.ml containers/PriorityQueue.ml containers/WeakHashtbl.ml containers/ThreadSafeQueue.ml
 MLUTILS = utils/UrlEncoding.ml
 
 
@@ -165,7 +168,7 @@ MLDepend.$(PLATFORM):
 doc:
 	mkdir -p docs
 	$(OCAMLFIND) ocamldoc -short-functors -html -d docs $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) $(MLFLAGS) \
-		containers/MList.ml containers/HSet.mli containers/PriorityQueue.mli containers/WeakHashtbl.mli WeakMemo.mli LightCommon.mli Ev.mli EventDispatcher.mli Point.ml Rectangle.ml Matrix.ml DisplayObject.mli Sprite.mli Quad.mli \
+		containers/MList.ml containers/Vector.mli containers/HSet.mli containers/PriorityQueue.mli containers/WeakHashtbl.mli WeakMemo.mli LightCommon.mli Ev.mli EventDispatcher.mli Point.ml Rectangle.ml Matrix.ml DisplayObject.mli Sprite.mli Quad.mli \
 		Texture.mli TextureAtlas.mli Image.mli Touch.ml BitmapFont.mli Clip.mli LightLib.mli TLF.mli Stage.mli GameCenter.mli Lightning.mli
 
 

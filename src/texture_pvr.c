@@ -36,7 +36,7 @@ enum PVRPixelType
   OGL_PVRTC4
 };
 
-int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
+/*int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
 
 	PRINT_DEBUG("LoadPvrFile2");
 
@@ -87,7 +87,7 @@ int loadPvrFile2(FILE *fildes, textureInfo *tInfo) {
 	tInfo->scale = 1.0;
 	return 0;
 }
-
+*/
 
 // -- PVR 3 
 const uint32_t PVRTEX3_IDENT = 0x03525650;  // 'P''V''R'3
@@ -129,17 +129,20 @@ typedef struct
   uint32_t  u32MetaDataSize;  //Size of the accompanying meta data.
 } __attribute__((packed)) PVRTextureHeader3;
 
-int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
-
-	PRINT_DEBUG("LoadPvrFile3 of size: %d, %d, %u",fsize,ftell(fildes),sizeof(PVRTextureHeader3));
-	if (fsize < sizeof(PVRTextureHeader3)) {return 1;};
-
+int loadPvrFile3(gzFile* gzf, textureInfo *tInfo) {
 	PVRTextureHeader3 header;
-	if (!fread(&header,sizeof(PVRTextureHeader3),1,fildes)) {ERROR("can't read pvr header");return 1;};
+	int bytes_to_read = sizeof(PVRTextureHeader3);
+
+	if (gzread(gzf, &header, bytes_to_read) < bytes_to_read) {
+		ERROR("can't read pvr header");
+		return 1;
+	};
+
 	if (header.u32Version != PVRTEX3_IDENT) {
 		ERROR("bad pvr3 version");
 		return 1;
 	};
+
 	tInfo->width = tInfo->realWidth = header.u32Width;
 	tInfo->height = tInfo->realHeight = header.u32Height;
 	tInfo->numMipmaps = header.u32MIPMapCount - 1;
@@ -147,36 +150,44 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 	tInfo->premultipliedAlpha = header.u32Flags & PVRTEX3_PREMULTIPLIED;
 	PRINT_DEBUG("width: %d, height: %d, pma: %d",tInfo->width,tInfo->height,tInfo->premultipliedAlpha);
 	union PVR3PixelType pt = (union PVR3PixelType)(header.u64PixelFormat);
+	int bpp = 0;
 	if (pt.Part.High == 0) {
 		switch (pt.PixelTypeID)
 		{
 			case ePVRTPF_PVRTCI_2bpp_RGB:
 				PRINT_DEBUG("PVRTCI 2bpp RGB");
 				tInfo->format = LTextureFormatPvrtcRGB2;
+				bpp = 2;
 				break;
 			case ePVRTPF_PVRTCI_2bpp_RGBA:
 				PRINT_DEBUG("PVRTCI 2bpp RGBA");
 				tInfo->format = LTextureFormatPvrtcRGBA2;
+				bpp = 2;
 				break;
 			case ePVRTPF_PVRTCI_4bpp_RGB:
 				PRINT_DEBUG("PVRTCI 4bpp RGB");
 				tInfo->format = LTextureFormatPvrtcRGB4;
+				bpp = 4;
 				break;
 			case ePVRTPF_PVRTCI_4bpp_RGBA:
 				PRINT_DEBUG("PVRTCI 4bpp RGBA");
 				tInfo->format = LTextureFormatPvrtcRGBA4;
+				bpp = 4;
 				break;
 			case ePVRTPF_DXT1:
 				PRINT_DEBUG("DXT1");
 				tInfo->format = LTextureFormatDXT1;
+				bpp = 4;
 				break;				
 			case ePVRTPF_DXT5:
 				PRINT_DEBUG("DXT5");
 				tInfo->format = LTextureFormatDXT5;
+				bpp = 8;
 				break;
 			case ePVRTPF_ETC1:
 				PRINT_DEBUG("ETC1");
 				tInfo->format = LTextureFormatETC1;
+				bpp = 4;
 				break;
 
 			case ePVRTPF_PVRTCII_2bpp:
@@ -192,7 +203,12 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 		if (!memcmp("rgba",pt.PixelTypeChar,4)) {
 			uint32_t *bpc = (uint32_t*)(pt.PixelTypeChar + 4);
 			switch (*bpc) {
-				case 67372036: PRINT_DEBUG("RGBA:4444"); tInfo->format = LTextureFormat4444; break;
+				case 67372036:
+					PRINT_DEBUG("RGBA:4444");
+					tInfo->format = LTextureFormat4444;
+					bpp = 16;
+					break;
+
 				default:
 					ERROR("unsupported: SPEC rgba format [%hhu,%hhu,%hhu,%hhu]",pt.PixelTypeChar[4],pt.PixelTypeChar[5],pt.PixelTypeChar[6],pt.PixelTypeChar[7]);
 					return 1;
@@ -203,18 +219,20 @@ int loadPvrFile3(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 		}
 	};
 	// skip meta
-	int p;
+
 	if (header.u32MetaDataSize > 0) {
 		PRINT_DEBUG("move on metaSize");
-		p = fseek(fildes,header.u32MetaDataSize,SEEK_CUR);
-	} else p = ftell(fildes);
-	PRINT_DEBUG("metadataSize: %d, curlp: %d",header.u32MetaDataSize,p);
+		gzseek(gzf, header.u32MetaDataSize, SEEK_CUR);
+	}	
 
-	tInfo->dataLen = fsize - sizeof(PVRTextureHeader3) - header.u32MetaDataSize;
-	PRINT_DEBUG("pvr data size: %d",tInfo->dataLen);
+	tInfo->dataLen = header.u32Width * header.u32Height * bpp / 8;
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
 
-	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {free(tInfo->imgData);return 1;};
+	if (gzread(gzf, tInfo->imgData, tInfo->dataLen) < tInfo->dataLen) {
+		free(tInfo->imgData);
+		return 1;
+	}
+
 	tInfo->scale = 1;
 	return 0;
 }
@@ -304,15 +322,12 @@ typedef struct
     uint notused;
 } DDSHeader;
 
-int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
+int loadDdsFile(gzFile* gzf, textureInfo *tInfo) {
 	DDSHeader header;
 
-	if (fsize < sizeof(DDSHeader)) {
-		ERROR("file size less than dds header size");
-		return 1;
-	}
+	int bytes_to_read = sizeof(DDSHeader);
 
-	if (!fread(&header, sizeof(DDSHeader), 1, fildes)) {
+	if (gzread(gzf, &header, bytes_to_read) < bytes_to_read) {
 		ERROR("can't read dds header");
 		return 1;
 	}
@@ -322,24 +337,32 @@ int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 		return 1;
 	};
 
+	int bpp = 0;
+
 	if (header.pf.fourcc == FOURCC_DXT1) {
 		PRINT_DEBUG("DXT1");
 	 	tInfo->format = LTextureFormatDXT1;
+	 	bpp = 4;
 	} else if (header.pf.fourcc == FOURCC_DXT5) {
 		PRINT_DEBUG("DXT5");
 		tInfo->format = LTextureFormatDXT5;
+		bpp = 8;
 	} else if (header.pf.fourcc == FOURCC_ATC_RGB) {
 		PRINT_DEBUG("ATC RGB");
 		tInfo->format = LTextureFormatATCRGB;
+		bpp = 4;
 	} else if (header.pf.fourcc == FOURCC_ATC_RGBAE) {
 		PRINT_DEBUG("ATC RGBA explicit");
 		tInfo->format = LTextureFormatATCRGBAE;
+		bpp = 8;
 	} else if (header.pf.fourcc == FOURCC_ATC_RGBAI) {
 		PRINT_DEBUG("ATC RGBA interpolated");
 		tInfo->format = LTextureFormatATCRGBAI;
+		bpp = 8;
 	} else if (header.pf.fourcc == FOURCC_RGBA_4444) {
 		PRINT_DEBUG("RGBA 4444");
-		tInfo->format = LTextureFormat4444;;
+		tInfo->format = LTextureFormat4444;
+		bpp = 16;
 	} else {
 		ERROR("bad or unsupported dds pixel format");
 		return 1;
@@ -356,12 +379,12 @@ int loadDdsFile(FILE* fildes,size_t fsize, textureInfo *tInfo) {
 	tInfo->generateMipmaps = 0;
 	tInfo->premultipliedAlpha = header.pf.flags & DDPF_ALPHAPREMULT;
 	tInfo->scale = 1;
-	tInfo->dataLen = fsize - sizeof(DDSHeader);
+	tInfo->dataLen = header.width * header.height * bpp / 8;
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
 
 	PRINT_DEBUG("tInfo->dataLen: %d", tInfo->dataLen);
 
-	if (!fread(tInfo->imgData,tInfo->dataLen,1,fildes)) {
+	if (gzread(gzf, tInfo->imgData, tInfo->dataLen) < tInfo->dataLen) {
 		ERROR("cannot read image data");
 		free(tInfo->imgData);
 		return 1;

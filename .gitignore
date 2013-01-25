@@ -17,3 +17,5 @@ myconfig.macos
 gen
 bin
 gen
+META
+Makefile

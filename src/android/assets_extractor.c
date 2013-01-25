@@ -294,7 +294,7 @@ value ml_apkPath() {
 }
 
 value ml_externalStoragePath() {
-    return getVPath("getExternalStoragePath", &vexternalStoragePath);
+    return getVPath("getAssetsPath", &vexternalStoragePath);
 }
 
 typedef struct {

@@ -28,14 +28,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
   (* FIXME: нужно hitTestPoint' - наверное перепиздячить нахуй *)
   class _c texture =
-    (*
-    let (programID,shaderProgram) = 
-      match texture#kind with
-      [ Texture.Simple -> (GLPrograms.Image.id,GLPrograms.Image.create ())
-      | Texture.Pallete _ -> (GLPrograms.ImagePallete.id,GLPrograms.ImagePallete.create ())
-      ]
-    in
-    *)
     object(self)
       inherit Image.base texture as super;
 
@@ -55,7 +47,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       method addChild ?index child = 
       (
-        assert(child.Node.texture = texture);
+        assert(Node.texture child = texture);
         match index with
         [ None -> DynArray.add children child
         | Some index ->
@@ -85,7 +77,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       method updateChild idx child =
       (
-        assert(child.Node.texture = texture);
+        assert((Node.texture child)= texture);
         try
           DynArray.set children idx child;
         with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (idx,DynArray.length children))];
@@ -118,20 +110,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             self#childrenDirty();
           )
         else raise (DisplayObject.Invalid_index (nidx,DynArray.length children));
-
-(*       value mutable glowFilter = None; *)
-
-      (*
-      method private setGlowFilter glow = 
-      (
-        match glowFilter with
-        [ Some {g_texture=Some gtex;_} -> gtex#release()
-        | _ -> ()
-        ];
-        glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_valid=False;g_params=glow};
-        self#addPrerender self#updateGlowFilter;
-      );
-      *)
 
       method private updateGlowFilter () = 
         match glowFilter with
@@ -186,66 +164,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             else gf.g_valid := True
         | _ -> () (* Debug.w "update glow not need" *)
         ];
-
-      (*
-      value mutable fltrs = [];
-      method! setFilters f = fltrs := f;
-      *)
-
-      (*
-      value mutable filters = [];
-      method filters = filters;
-      method setFilters fltrs =
-      (
-        debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name;
-        let hasGlow = ref False in
-        (
-          let f = 
-            List.fold_left begin fun c -> fun
-              [ `Glow glow ->
-                (
-                  hasGlow.val := True;
-                  match glowFilter with
-                  [ Some g when g.g_params = glow -> ()
-                  | _ -> self#setGlowFilter glow
-                  ];
-                  c
-                )
-              | `ColorMatrix m -> `cmatrix m
-              ]
-            end `simple fltrs 
-          in
-          match f with
-          [ `simple when programID <> GLPrograms.Image.id -> 
-            (
-              programID := GLPrograms.Image.id;
-              shaderProgram := GLPrograms.Image.create ()
-            )
-          | `cmatrix m -> 
-            (
-              programID := GLPrograms.ImageColorMatrix.id;
-              shaderProgram := GLPrograms.ImageColorMatrix.create m
-            )
-          | _ -> ()
-          ];
-          if not !hasGlow 
-          then 
-            match glowFilter with 
-            [ Some {g_texture;_} -> 
-              (
-                match g_texture with
-                [ Some gtex -> gtex#release() 
-                | None -> ()
-                ];
-                glowFilter := None;
-              )
-            | _ -> () 
-            ]  
-          else ();
-        );
-        filters := fltrs;
-      );
-      *)
 
       method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
         match DynArray.length children with

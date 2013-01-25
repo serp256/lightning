@@ -49,8 +49,14 @@ endif
 #uninstall::
 #	sudo $(OCAMLFIND) remove lightning
 
-install: lib 
+install: lib
+	echo $(PLATFORM)
+ifeq ($(PLATFORM),IOS)
+	#install_dir=`$(OCAMLFIND) printconf destdir`/lightning && sudo cp -r ./src/social/facebook/ios/FacebookSDK/FacebookSDK.framework/ $$install_dir/ && sed "s|%fb_framework_path%|$$install_dir|" $(META) > META
+	cdir=`pwd` && sed "s|%fb_framework_path%|$$cdir/src/social/facebook/ios/FacebookSDK|" $(META) > META
+else
 	cp $(META) META
+endif
 	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli\
 	                                                          src/social/facebook/*.mli src/social/facebook/*.cmi \
 	                                                          src/tapjoy/*.cmi src/tapjoy/*.mli \

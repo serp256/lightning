@@ -7,10 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		212279F01679B7A200231740 /* Accounts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 212279EF1679B7A200231740 /* Accounts.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		212279F21679B7AD00231740 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 212279F11679B7AD00231740 /* Social.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		212279F41679B7B800231740 /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 212279F31679B7B800231740 /* AdSupport.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		510C021314FE6C1200BDDCFC /* ra_fertilizer.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */; };
 		510C021614FE6ED800BDDCFC /* stoneBoom.caf in Resources */ = {isa = PBXBuildFile; fileRef = 510C021514FE6ED800BDDCFC /* stoneBoom.caf */; };
-		510D510D166E4B48004CCFCA /* MyriadPro-Regular_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 510D510C166E4B48004CCFCA /* MyriadPro-Regular_0.alpha */; };
-		510D510F166E4B67004CCFCA /* MyriadPro-Bold_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 510D510E166E4B67004CCFCA /* MyriadPro-Bold_0.alpha */; };
 		516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */; };
 		516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */; };
 		516A41FB15D3D6E600BB71F0 /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */; };
@@ -52,10 +53,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		212279EF1679B7A200231740 /* Accounts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accounts.framework; path = System/Library/Frameworks/Accounts.framework; sourceTree = SDKROOT; };
+		212279F11679B7AD00231740 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
+		212279F31679B7B800231740 /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = System/Library/Frameworks/AdSupport.framework; sourceTree = SDKROOT; };
 		510C021214FE6C1200BDDCFC /* ra_fertilizer.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = ra_fertilizer.caf; path = ../../lightning/test/Resources/ra_fertilizer.caf; sourceTree = "<group>"; };
 		510C021514FE6ED800BDDCFC /* stoneBoom.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = stoneBoom.caf; path = ../../lightning/test/Resources/stoneBoom.caf; sourceTree = "<group>"; };
-		510D510C166E4B48004CCFCA /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
-		510D510E166E4B67004CCFCA /* MyriadPro-Bold_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0.alpha"; path = "Resources/MyriadPro-Bold_0.alpha"; sourceTree = "<group>"; };
 		516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold.fnt"; path = "Resources/MyriadPro-Bold.fnt"; sourceTree = "<group>"; };
 		516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold0.alpha"; path = "Resources/MyriadPro-Bold0.alpha"; sourceTree = "<group>"; };
 		516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular.fnt"; path = "Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
@@ -86,6 +88,19 @@
 		51DC6E2114EE5E960084EB76 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPad.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		212279EE1679B78300231740 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				212279F41679B7B800231740 /* AdSupport.framework in Frameworks */,
+				212279F21679B7AD00231740 /* Social.framework in Frameworks */,
+				212279F01679B7A200231740 /* Accounts.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		5134AA1F15C6633200814238 /* Resources */ = {
 			isa = PBXGroup;
@@ -98,8 +113,9 @@
 		51DC6DF914EE5E960084EB76 = {
 			isa = PBXGroup;
 			children = (
-				510D510E166E4B67004CCFCA /* MyriadPro-Bold_0.alpha */,
-				510D510C166E4B48004CCFCA /* MyriadPro-Regular_0.alpha */,
+				212279F31679B7B800231740 /* AdSupport.framework */,
+				212279F11679B7AD00231740 /* Social.framework */,
+				212279EF1679B7A200231740 /* Accounts.framework */,
 				516A41E515D3D6E600BB71F0 /* MyriadPro-Bold.fnt */,
 				516A41E615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha */,
 				516A41EC15D3D6E600BB71F0 /* MyriadPro-Regular.fnt */,
@@ -192,6 +208,7 @@
 			buildPhases = (
 				51DC6E0214EE5E960084EB76 /* Resources */,
 				51DC6E3614EE627D0084EB76 /* CopyFiles */,
+				212279EE1679B78300231740 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -235,8 +252,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				510D510F166E4B67004CCFCA /* MyriadPro-Bold_0.alpha in Resources */,
-				510D510D166E4B48004CCFCA /* MyriadPro-Regular_0.alpha in Resources */,
 				516A41F515D3D6E600BB71F0 /* MyriadPro-Bold.fnt in Resources */,
 				516A41F615D3D6E600BB71F0 /* MyriadPro-Bold0.alpha in Resources */,
 				516A41FB15D3D6E600BB71F0 /* MyriadPro-Regular.fnt in Resources */,
@@ -381,6 +396,10 @@
 		51DC6E2614EE5E960084EB76 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				GCC_VERSION = com.apple.compilers.llvmgcc42;
@@ -395,6 +414,10 @@
 		51DC6E2714EE5E960084EB76 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				GCC_VERSION = com.apple.compilers.llvmgcc42;

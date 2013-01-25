@@ -314,7 +314,7 @@ public class BillingService extends Service implements ServiceConnection {
     /**
      * Wrapper class that sends a RESTORE_TRANSACTIONS message to the server.
      */
-/*    class RestoreTransactions extends BillingRequest {
+    class RestoreTransactions extends BillingRequest {
         long mNonce;
 
         public RestoreTransactions() {
@@ -344,9 +344,39 @@ public class BillingService extends Service implements ServiceConnection {
 
         @Override
         protected void responseCodeReceived(ResponseCode responseCode) {
-            ResponseHandler.responseCodeReceived(BillingService.this, this, responseCode);
+            Log.d("LIGHTNING", "RestoreTransactions response code received (RestoreTransactions.responseCodeReceived): " + responseCode);
+
+            String mes = null;
+
+            switch (responseCode) {
+                case RESULT_USER_CANCELED:
+                    mes = "User cancel operation";
+                    break;
+
+                case RESULT_SERVICE_UNAVAILABLE:
+                    mes = "Some network problems";
+                    break;
+
+                case RESULT_BILLING_UNAVAILABLE:
+                    mes = "Payments are not available";
+                    break;
+
+                case RESULT_ITEM_UNAVAILABLE:
+                    mes = "Wrong product id";
+                    break;
+
+                case RESULT_DEVELOPER_ERROR:
+                    mes = "Develper error";
+                    break;
+
+                case RESULT_ERROR:
+                    mes = "Server error";
+                    break;
+            }
+
+            Log.d("LIGHTNING", "RestoreTransactions response code received mes: " + (mes != null ? mes : "null"));
         }
-    }*/
+    }
 
     public void setContext(Context context) {
         attachBaseContext(context);
@@ -423,6 +453,10 @@ public class BillingService extends Service implements ServiceConnection {
 
     public boolean requestPurchase(String productId) {
         return requestPurchase(productId, Consts.ITEM_TYPE_INAPP, null);
+    }
+
+    public boolean restoreTransactions() {
+        return (new RestoreTransactions()).runRequest();
     }
 
     private boolean confirmNotifications(int startId, String[] notifyIds) {
@@ -508,21 +542,21 @@ public class BillingService extends Service implements ServiceConnection {
         for (final VerifiedPurchase vp : purchases) {
             Log.d(TAG, "purchases id: " + vp.notificationId);
 
-            if (vp.notificationId != null) {
+            //if (vp.notificationId != null) {
                 Log.d(TAG, "invoking caml payment success callback from from BillingService.purchaseStateChanged");
 
                 if (LightView.instance != null) {
                     LightView.instance.queueEvent(new Runnable() {
                         @Override
                         public void run() {
-                            invokeCamlPaymentSuccessCb(vp.productId, vp.notificationId, vp.jobj.toString(), Security.hasPubkey() ? sig : "");
+                            invokeCamlPaymentSuccessCb(vp.productId, (vp.notificationId != null)? vp.notificationId: "", vp.jobj.toString(), Security.hasPubkey() ? sig : "");
                         }
                     });
                 }
 
                 
                 //notifyList.add(vp.notificationId);
-            }
+           // }
         }
 
 	/*

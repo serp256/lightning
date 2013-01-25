@@ -16,15 +16,16 @@ type t =
     scaleY: float;
     rotation: float;
     bounds: mutable Rectangle.t;
+    name: option string;
   };
 
-value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(color=`NoColor) ?(flipX=False) ?(flipY=False) ?(alpha=1.) () = 
+value create texture rect ?name ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(flipX=False) ?(flipY=False) ?(color=`NoColor)  ?(alpha=1.) () = 
   let s = texture#scale in
   let tw = texture#width /. s
   and th = texture#height /. s in
   let clipping = Rectangle.create_tm (rect.Rectangle.x /. tw) (rect.Rectangle.y /. th) (rect.Rectangle.width /. tw)  (rect.Rectangle.height /. th) in
   (
-    Rectangle.( begin
+    Rectangle.(begin
       adjustClipping texture where
         rec adjustClipping texture =
           match texture#clipping with
@@ -47,10 +48,11 @@ value create texture rect ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation
       if flipY
       then (clipping.m_y := clipping.m_y +. clipping.m_height; clipping.m_height := ~-.(clipping.m_height))
       else ();
-    end );
+    end);
     debug "node clipping: %s" (Rectangle.to_string (Obj.magic clipping));
     {
       texture;
+      name;
       width=rect.Rectangle.width *. s;
       height=rect.Rectangle.height *. s;
       pos; color; alpha; flipX; flipY; scaleX; scaleY; rotation=match rotation with [ None -> 0. | Some r -> LightCommon.clamp_rotation r];
@@ -67,12 +69,30 @@ value setX x t = {(t) with pos = {(t.pos) with Point.x}; glpoints = None; bounds
 value setY y t = {(t) with pos = {(t.pos) with Point.y}; glpoints = None; bounds=Rectangle.empty};
 value setPos x y t = {(t) with pos = {Point.x;y};glpoints = None; bounds=Rectangle.empty};
 value setPosPoint pos t = {(t) with pos; glpoints = None; bounds=Rectangle.empty};
-value update ?pos ?scale ?color ?alpha t = 
+value update ?pos ?scale ?rotation ?flipX ?flipY ?color ?alpha t = 
   let (scaleX,scaleY) = match scale with [ None -> (t.scaleX,t.scaleY) | Some s -> (s,s) ] in
+  let (flipX,clipping) = 
+    match flipX with
+    [ Some fx when t.flipX <> fx -> 
+      let open Rectangle in
+      (fx,{(t.clipping) with x = t.clipping.x +. t.clipping.width; width = ~-.(t.clipping.width)})
+    | _ -> (t.flipX,t.clipping)
+    ]
+  in
+  let (flipY,clipping) = 
+    match flipY with
+    [ Some fy when t.flipY <> fy -> 
+      let open Rectangle in
+      (fy, {(clipping) with y = clipping.y +. clipping.height; height = ~-.(clipping.height)})
+    | _ -> (t.flipY,clipping)
+    ]
+  in
   {(t) with 
     pos = match pos with [ None -> t.pos | Some p -> p ]; scaleX; scaleY; 
     color = match color with [ None -> t.color | Some c -> c]; 
     alpha = match alpha with [ None -> t.alpha | Some a -> a];
+    rotation = match rotation with [ None -> t.rotation | Some r -> LightCommon.clamp_rotation r];
+    flipX; flipY; clipping;
     glpoints = None;
     bounds = Rectangle.empty
   };
@@ -152,5 +172,7 @@ value bounds t =
 
 value width t = (bounds t).Rectangle.width;
 value height t = (bounds t).Rectangle.height;
+value name t = t.name;
+value setName name t = {(t) with name = name};
 
 value texture t = t.texture;

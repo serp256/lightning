@@ -352,20 +352,24 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
         case LTextureFormatRGBA:
             p->glTexFormat = GL_RGBA;
             break;
-				case LTextureFormatRGB:
-						p->glTexFormat = GL_RGB;
-						p->bitsPerPixel = 3;
-						break;
+
+		case LTextureFormatRGB:
+			p->glTexFormat = GL_RGB;
+			p->bitsPerPixel = 3;
+			break;
+
         case LTextureFormatAlpha:
             p->glTexFormat = GL_ALPHA;
-						p->bitsPerPixel = 1;
+			p->bitsPerPixel = 1;
             break;
-				case LTextureFormatPallete:
-						p->glTexFormat = GL_LUMINANCE_ALPHA;
+
+		case LTextureFormatPallete:
+			p->glTexFormat = GL_LUMINANCE_ALPHA;
             p->bitsPerPixel = 2;
             //p->glTexFormat = GL_ALPHA;
             //p->glTexType = GL_UNSIGNED_SHORT_4_4_4_4;                    
-						break;
+			break;
+			
 		case LTextureFormatETC1:
 #ifdef ANDROID
 			p->compressed = 1;

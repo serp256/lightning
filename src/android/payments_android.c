@@ -147,3 +147,13 @@ void ml_payment_commit_transaction(value transaction) {
 
 	CAMLreturn0;
 }
+
+void ml_restoreTransactions() {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	static jmethodID mid;
+
+	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "restoreTransactions", "()V");
+	(*env)->CallVoidMethod(env, jView, mid);
+}

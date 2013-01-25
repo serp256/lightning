@@ -37,6 +37,8 @@ import android.content.res.Configuration;
 
 public class LightActivity extends Activity implements IDownloaderClient
 {
+	public static Activity instance = null;
+
     protected XAPKFile[] xAPKS = {};
 
     public XAPKFile[] getXAPKS() {
@@ -56,6 +58,8 @@ public class LightActivity extends Activity implements IDownloaderClient
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
+		instance = this;
+
 		// rescheduleNotifications(this);
 
 		// savedState = savedInstanceState != null ? savedInstanceState : new Bundle();
@@ -201,12 +205,12 @@ public class LightActivity extends Activity implements IDownloaderClient
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		Log.d("LIGHTNING", "onActivityResult call");
 
-		if (AndroidFB.fb != null) {
-			Log.d("LIGHTNING", "invoke fb authorizeCallback");
-			AndroidFB.fb.authorizeCallback(requestCode, resultCode, data);
-		}
-
 		super.onActivityResult(requestCode, resultCode, data);
+		com.facebook.Session session = com.facebook.Session.getActiveSession();
+
+		if (session != null) {
+			session.onActivityResult(this, requestCode, resultCode, data);	
+		}
 	}
 
 	@Override
