@@ -5,6 +5,7 @@ IFDEF PC THEN
 value init ~appId () = ();
 
 value connect ~successCallback ~failCallback () = ();
+value disconnect connect = ();
 value loggedIn () = None;
 
 value accessToken connect = "";
@@ -19,6 +20,7 @@ external _init: string -> unit = "ml_fbInit";
 
 external _connect: unit -> unit = "ml_fbConnect";
 external _loggedIn: unit -> option connect = "ml_fbLoggedIn";
+external _disconnect: connect -> unit = "ml_fbDisconnect";
 
 external _accessToken: connect -> string = "ml_fbAccessToken";
 external _apprequest: connect -> string -> string -> option string -> option string -> option (list string -> unit) -> option (string -> unit) -> unit = "ml_fbApprequest_byte" "ml_fbApprequest";
@@ -27,6 +29,8 @@ external _graphrequest: connect -> string -> option (list (string * string)) -> 
 value status = ref NotConnected;
 value _successCallback = ref None;
 value _failCallback = ref None;
+
+value disconnect connect = _disconnect connect;
 
 value success () =
 (

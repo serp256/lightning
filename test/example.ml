@@ -1307,20 +1307,49 @@ value avsound (stage:Stage.c) path =
 );
   (* ignore(Sound.createChannel path); *)
 
-value fbtest () = 
+value fbtest (stage:Stage.c) = 
   (
   (*  FBConnect.init "412548172119201"; *)
  (*   debug "FBTEST";  *)
-(*
-    FB.init "412548172119201"; 
-    let delegate = 
-      {
-        FBConnect.GraphAPI.fb_request_did_fail = Some (fun error -> debug "ERROR : %s" error );
-        FBConnect.GraphAPI.fb_request_did_load = Some (fun _ -> debug "SUCCESS ANSWER"  );
-      }
-    in
-    FBConnect.GraphAPI.request "me" [] ~delegate ();
-    *)
+    FB.init ~appId:"412548172119201" ();
+
+    let img = Image.load "tree.png" in
+      (
+        stage#addChild img;
+        ignore(img#addEventListener Stage.ev_TOUCH begin fun ev _ _ ->
+            match Stage.touches_of_data ev.Ev.data with
+            [ Some [ touch :: _ ] ->
+              Touch.(
+                  match touch.phase with
+                  [ TouchPhaseEnded -> FB.connect ~successCallback:(fun _ -> Printf.printf "successCallback \n%!") ~failCallback:(fun error -> Printf.printf "failCallback %s\n%!" error) ()
+                  | _ -> ()
+                  ]
+              )
+            | _ -> ()
+            ]
+        end);
+      );
+    let img = Image.load "tree.png" in
+      (
+        stage#addChild img;
+        img#setX 200.;
+        ignore(img#addEventListener Stage.ev_TOUCH begin fun ev _ _ ->
+            match Stage.touches_of_data ev.Ev.data with
+            [ Some [ touch :: _ ] ->
+              Touch.(
+                  match touch.phase with
+                  [ TouchPhaseEnded ->
+                      match FB.loggedIn () with
+                      [ Some connect -> FB.disconnect connect
+                      | _ -> ()
+                      ]
+                  | _ -> ()
+                  ]
+              )
+            | _ -> ()
+            ]
+        end);
+      );
 (*
     let timer = Timer.create ~repeatCount:1 5. "PIZDA" in 
     (
@@ -1701,8 +1730,9 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      test_map self;
+      fbtest self;
       (*
+      test_map self;
       test_queue ();
       game_center self;
       testKeyboard self;

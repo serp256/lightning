@@ -11,3 +11,4 @@ value init : ?pubkey:string -> (string -> Transaction.t -> bool -> unit) -> (str
 value purchase : string -> unit;
 value commit_transaction : Transaction.t -> unit;
 value commit_transaction_by_id : string -> unit;
+value restoreTransactions: unit -> unit;

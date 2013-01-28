@@ -191,6 +191,19 @@ void ml_fbConnect() {
     }
 }
 
+value ml_fbDisconnect(value connect) {
+	NSLog(@"ml_fbDisconnect");
+	if (fbSession) {
+		fbSession.closeAndClearTokenInformation;
+		fbSession.close;
+		[FBSession setActiveSession:nil];
+		fbSession = nil;
+	}
+//	if (fbSession) {
+//		fvSession.closeAndClearTokenInformation;
+//	}
+}
+
 value ml_fbLoggedIn() {
     if (!fbSession) {
         if ([FBSession openActiveSessionWithAllowLoginUI:NO] && [FBSession activeSession].isOpen) {
