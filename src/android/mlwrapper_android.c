@@ -227,9 +227,7 @@ int get_expansion_offset_size_pair(const char* path, offset_size_pair_t** pair) 
 	return 0;
 }
 
-// NEED rewrite it for libzip
 int getResourceFd(const char *path, resource *res) { //{{{
-	//DEBUGF("getResourceFD: %s",path);
 	offset_size_pair_t* os_pair;
 
 	if (!get_expansion_offset_size_pair(path, &os_pair)) {
@@ -324,6 +322,11 @@ int getResourceFd(const char *path, resource *res) { //{{{
 
 	return 1;
 }//}}}
+
+
+value caml_existsResource(value rname) {
+	resource *res
+}
 
 // получим параметры нах
 value caml_getResource(value mlpath,value suffix) {

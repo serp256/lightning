@@ -56,7 +56,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		long now = System.nanoTime();
 		long interval = now - last;
 		
-		Log.d("LIGHTNING","onDraw Frame " + interval);
+		//Log.d("LIGHTNING","onDraw Frame " + interval);
 		// should render a frame when onDrawFrame() is called
 		// or there is a "ghost"
 		nativeDrawFrame(interval);   	

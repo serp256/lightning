@@ -34,7 +34,7 @@ static char* buf;
 static size_t buf_len = 0;
 static size_t buf_pos = 0;
 
-size_t curl_wfunc(char *ptr, size_t size, size_t nmemb, void *userdata) {
+static size_t curl_wfunc(char *ptr, size_t size, size_t nmemb, void *userdata) {
 	size_t chunk_len = size * nmemb;
 	size_t free_space = buf_len - buf_pos;
 
@@ -63,7 +63,7 @@ size_t curl_wfunc(char *ptr, size_t size, size_t nmemb, void *userdata) {
 	return chunk_len;
 }
 
-void caml_error(cel_request_t* req, int errCode, char* errMes) {
+static void caml_error(cel_request_t* req, int errCode, char* errMes) {
 	PRINT_DEBUG("caml_error %d %s", errCode, errMes);
 
 	if (req->errCb) {
@@ -81,7 +81,7 @@ void caml_error(cel_request_t* req, int errCode, char* errMes) {
 	}
 }
 
-void* loader_thread(void* params) {
+static void* loader_thread(void* params) {
 	pthread_mutex_lock(&mutex);
 
 	CURL* curl_hndlr = curl_easy_init();
@@ -145,10 +145,10 @@ void* loader_thread(void* params) {
 			    	texInfo->height = (*env)->GetIntField(env, jtexInfo, lhFid);
 			    	texInfo->realWidth = (*env)->GetIntField(env, jtexInfo, wFid);
 			    	texInfo->realHeight = (*env)->GetIntField(env, jtexInfo, hFid);
-					texInfo->generateMipmaps = 0;
-					texInfo->numMipmaps = 0;
-					texInfo->premultipliedAlpha = 0;
-					texInfo->scale = 1.0f;
+						texInfo->generateMipmaps = 0;
+						texInfo->numMipmaps = 0;
+						texInfo->premultipliedAlpha = 0;
+						texInfo->scale = 1.0f;
 
 			    	jbyteArray jdata = (*env)->GetObjectField(env, jtexInfo, dataFid);
 			    	size_t bmp_bytes_len = (*env)->GetArrayLength(env, jdata);
@@ -212,7 +212,7 @@ void ml_loadExternalImage(value url, value cb, value errCb) {
 	pthread_cond_signal(&cond);
 }
 
-void freeRequest(cel_request_t* req) {
+static void freeRequest(cel_request_t* req) {
 	caml_remove_generational_global_root(req->cb);
 
 	if (req->errCb) {

@@ -476,3 +476,11 @@ class loader ?request () =
       ];
 
   end;
+
+
+
+IFDEF ANDROID THEN
+external download: ~url:string -> ~path:string -> ?ecallback:(int -> string -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile";
+ELSE
+value downlaod (url:sring) (path:string) ?(ecallback:(int -> string -> unit))  (callback:(unit -> unit))  = assert False;
+END;

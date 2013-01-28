@@ -674,6 +674,9 @@ public class LightView extends GLSurfaceView {
 		queueEvent(new ExpansionsExtractedCallbackRunnable());
 	}
 
+	//////////////////////////////////
+	// EXTERNAL IMAGE LAODER
+	//////////////////////////////////
 	private static class TexInfo {
 		public int width;
 		public int height;
@@ -785,6 +788,55 @@ public class LightView extends GLSurfaceView {
 		Log.d("LIGHTNING", "curlExternalLoaderError " + errCode + " " + errMes);
 		queueEvent(new CurlExternErrorCallbackRunnable(req, errCode, errMes));
 	}
+	/////////////////////////////////
+	///// END EXTERNAL IMAGE LOADER
+	/////////////////////////////////
+	
+
+	////////////////////
+	// FILE DOWNLOADER
+	////////////////////////
+	
+
+	private static class CurlDownloaderCallbackRunnable implements Runnable {
+		private int req;
+
+		public CurlDownloaderCallbackRunnable(int req) {
+			this.req = req;
+		}
+
+		public native void run();
+	}
+
+	private static class CurlDownloaderErrorCallbackRunnable implements Runnable {
+		private int req;
+		private int errCode;
+		private int errMes;
+
+		public CurlDownloaderErrorCallbackRunnable(int req, int errCode, int errMes) {
+			Log.d("LIGHTNING", "CurlDownloaderErrorCallbackRunnable");
+
+			this.req = req;
+			this.errCode = errCode;
+			this.errMes = errMes;
+		}
+
+		public native void run();
+	}
+
+	public void curlDownloaderSuccess(int req) {
+		Log.d("LIGHTNING", "curlDownloaderSuccess");
+		queueEvent(new CurlDownloaderCallbackRunnable(req));
+	}
+
+	public void curlDownloaderError(int req, int errCode, int errMes) {
+		Log.d("LIGHTNING", "curlDownloaderError " + errCode + " " + errMes);
+		queueEvent(new CurlDownloaderErrorCallbackRunnable(req, errCode, errMes));
+	}
+
+	////////////////////
+	// END FILE DOWNLOADER
+	// ///////////////////
 
 	private static class ExpansionsCallbackRunnable implements Runnable {
 		private int cb;

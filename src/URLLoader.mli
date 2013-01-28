@@ -35,3 +35,10 @@ class loader: [ ?request:request] -> [ unit ] ->
     method load: request -> unit;
     method cancel: unit -> unit;
   end;
+
+
+IFDEF ANDROID THEN
+external download: ~url:string -> ~path:string -> ?ecallback:(int -> string -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile";
+ELSE
+value download: ~url:string -> ~path:string -> ?ecallback:(int -> string -> unit) -> (unit -> unit)  -> unit;
+END;
