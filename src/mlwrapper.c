@@ -76,6 +76,12 @@ mlstage *mlstage_create(float width,float height) {
 }
 
 
+int mlstage_getFrameRate(mlstage *mlstage) {
+	value frameRate = caml_get_public_method(mlstage->stage,caml_hash_variant("frameRate"));
+	value res = caml_callback(frameRate,mlstage->stage);
+	return Int_val(res);
+}
+
 void mlstage_resize(mlstage *mlstage,float width,float height) {
 	printf("stage: %ld,w=%f,h=%f\n",mlstage->stage,width,height);
 	mlstage->width = width;

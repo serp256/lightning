@@ -70,8 +70,8 @@ value make_mouse_funcs stage =
   in
   (mouse,motion);
 
-value start_cycle frameRate stage = 
-  let fps = 1. /. (float frameRate) in
+value start_cycle stage = 
+  let fps = 1. /. (float stage#frameRate) in
   let time = ref (Unix.gettimeofday ()) in
   let rec advanceTime () =
     let () = URLLoader.run () in
@@ -89,11 +89,11 @@ value start_cycle frameRate stage =
 
 
 value run stage_create = 
-  let width = ref 768 and height = ref 1024 and frameRate = ref 30
+  let width = ref 768 and height = ref 1024 
   and setDeviceType = fun s -> internalDeviceType.val := match s with [ "pad" -> Pad | "phone" -> Phone | _ -> failwith "unknown device type"] in
   (
     Arg.parse [
-      ("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");("-fps",Arg.Set_int frameRate,"frame rate");
+      ("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");
       ("-dt",Arg.String setDeviceType,"Set deviceType [phone | pad] default pad");
       ("-um",Arg.Set_int Hardware.internal_user_memory,"Set Hardware.user_memory (default 0)")
     ] (fun _ -> ()) "";
@@ -106,7 +106,7 @@ value run stage_create =
       (
         Glut.keyboardFunc (fun c x y -> if int_of_char c = 127 then ignore(stage#dispatchBackPressedEv ()) else ());
         Glut.displayFunc (fun () -> (stage#renderStage (); Glut.swapBuffers ()));
-        start_cycle !frameRate stage;
+        start_cycle stage;
         let (mouse_func,motion_func) = make_mouse_funcs stage in
         (
           Glut.mouseFunc mouse_func;

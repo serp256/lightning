@@ -12,7 +12,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 
 	private final static long NANOSECONDSPERSECOND = 1000000000L;
 	private final static long NANOSECONDSPERMINISECOND = 1000000;
-	private static long animationInterval = (long)(1.0 / 30 * NANOSECONDSPERSECOND);
+	private long animationInterval = 0;//(long)(1.0 / 30 * NANOSECONDSPERSECOND);
 	private long last;
 	
 	private int screenWidth;
@@ -46,14 +46,17 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	public void onSurfaceChanged(GL10 gl, int w, int h) {  	
 		Log.d("LIGHTNING","size: " + w + ":" + h);
 		nativeSurfaceChanged(w,h);
+		int fr = nativeGetFrameRate();
+		Log.d("LIGHTNING","frameRate: " + fr);
+		if (fr > 0) animationInterval = (long)(1.0 / fr * NANOSECONDSPERSECOND);
 	}
     
 	public void onDrawFrame(GL10 gl) {
     	
-		// Log.d("LIGHTNING","onDraw Frame");
 		long now = System.nanoTime();
 		long interval = now - last;
 		
+		Log.d("LIGHTNING","onDraw Frame " + interval);
 		// should render a frame when onDrawFrame() is called
 		// or there is a "ghost"
 		nativeDrawFrame(interval);   	
@@ -123,13 +126,16 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	// 	last = System.nanoTime();
 	// }
 	
+	/*
 	public static void setAnimationInterval(double interval){
 		animationInterval = (long)(interval * NANOSECONDSPERSECOND);
 	}
+	*/
 
 
 	private static native void nativeSurfaceCreated(int width, int height);
 	private static native void nativeSurfaceChanged(int width,int height);
+	private static native int nativeGetFrameRate();
 	public static native void nativeSurfaceDestroyed();
 	private static native void nativeDrawFrame(long nanoseconds);
 

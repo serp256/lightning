@@ -30,11 +30,10 @@
 
 @implementation LightView
 
-#define REFRESH_RATE 30
+#define REFRESH_RATE 60 // This is 
 
 //@synthesize stage = mStage;
 @synthesize displayLink = mDisplayLink;
-@synthesize frameRate = mFrameRate;
 
 - (id)initWithFrame:(CGRect)frame 
 {    
@@ -64,7 +63,7 @@
     //if ([currSysVer compare:@"3.1" options:NSNumericSearch] != NSOrderedAscending) mDisplayLinkSupported = YES;
     
 		self.multipleTouchEnabled = YES;
-    self.frameRate = 30.0f;
+    //self.frameRate = 30.0f;
     
     // get the layer
     CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
@@ -134,10 +133,18 @@
         return; // buffers not yet initialized
     }
 
+
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     
     double now = CACurrentMediaTime();
     double timePassed = now - mLastFrameTimestamp;
+
+		/*
+		if (mDisplayLink) {
+			NSLog(@"frameInerval: %d, duration: %f, timestamp: %f, timePassed: %f",[mDisplayLink frameInterval],[mDisplayLink duration],[mDisplayLink timestamp],timePassed);
+		} else {
+			NSLog(@"DisplayLink is NIL");
+		}*/
 
 		/* 
     mlstage_advanceTime(mStage,timePassed);
@@ -182,14 +189,14 @@
 
 - (void)setDisplayLink:(id)newDisplayLink
 {
-    if (mDisplayLink != newDisplayLink)
-    {
-        [mDisplayLink invalidate];
-        mDisplayLink = newDisplayLink;
-    }
+	if (mDisplayLink != newDisplayLink)
+	{
+		[mDisplayLink invalidate];
+		mDisplayLink = newDisplayLink;
+	}
 }
 
-- (void)setFrameRate:(float)value
+/*- (void)setFrameRate:(float)value
 {    
 	int frameInterval = 1;            
 	while (REFRESH_RATE / frameInterval > value) ++frameInterval;
@@ -200,34 +207,36 @@
 		//[self stop];
 		//[self start];
 	}
-}
+}*/
 
 - (BOOL)isStarted
 {
     //return mTimer || mDisplayLink;
-		return (mDisplayLink != nil);
+		return (mDisplayLink != nil && !mDisplayLink.paused);
 }
 
 - (void)start
 {
 	NSLog(@"START view");
 	if (self.isStarted) return;
-	if (mFrameRate > 0.0f)
-	{
-		mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
-		[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / mFrameRate)];
-		[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-		/*caml_acquire_runtime_system();
-		mlstage_start(mStage);
-		caml_release_runtime_system();*/
-	}
+	int frameRate = mlstage_getFrameRate(mStage);
+	NSLog(@"frameRate: %d",frameRate);
+	if (frameRate > REFRESH_RATE) frameRate = REFRESH_RATE;
+	else if (frameRate < 1) frameRate = 1;
+	mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
+	[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / frameRate)];
+	[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+	/*caml_acquire_runtime_system();
+	mlstage_start(mStage);
+	caml_release_runtime_system();*/
 }
 
 - (void)stop
 {
 	NSLog(@"STOP View");
 	if (! mDisplayLink) return;
-	self.displayLink = nil;
+	mDisplayLink.paused = YES;
+	//self.displayLink = nil;
 	/*caml_acquire_runtime_system();
 	mlstage_stop(mStage);
 	caml_release_runtime_system();*/

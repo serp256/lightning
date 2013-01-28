@@ -7,4 +7,5 @@ value loggedIn: unit -> option connect;
 
 value accessToken: connect -> string;
 value apprequest: ~title:string -> ~message:string -> ?recipient:string -> ?data:string -> ?successCallback:(list string -> unit) -> ?failCallback:(string -> unit) -> connect -> unit; (* list string in success callback -- user ids, which received request *)
-value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?successCallback:(Ojson.t -> unit) -> ?failCallback:(string -> unit) -> connect -> unit;
+value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?successCallback:(Ojson.json -> unit) -> ?failCallback:(string -> unit) -> connect -> unit;
+value disconnect: connect -> unit;

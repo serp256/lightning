@@ -407,10 +407,16 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 
 }
 
+JNIEXPORT jint Java_ru_redspell_lightning_LightRenderer_nativeGetFrameRate(JNIEnv *env, jobject this) {
+	if (!stage) return 0;
+	return mlstage_getFrameRate(stage);
+}
+
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(JNIEnv *env, jobject this) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed call");
 	surfaceDestroyed = 1;
 }
+
 
 
 

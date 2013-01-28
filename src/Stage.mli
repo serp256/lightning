@@ -33,6 +33,7 @@ class virtual c: [ float ] -> [ float ] ->
   object
     inherit DisplayObject.container;
     value virtual bgColor: int;
+    method frameRate: int;
     method color: color;
     method setColor: color -> unit;
     method processTouches: list Touch.n -> unit;
@@ -49,6 +50,7 @@ class virtual c: [ float ] -> [ float ] ->
     method dispatchBackPressedEv : unit -> bool;
     method dispatchBackgroundEv : unit -> unit;
     method dispatchForegroundEv : unit -> unit;
+    method traceFPS: (int -> DisplayObject.c) -> unit;
   end;
 
 value instance: ref (option c);

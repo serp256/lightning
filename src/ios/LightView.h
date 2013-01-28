@@ -43,9 +43,9 @@
     GLuint mRenderbuffer;
     GLuint mFramebuffer;    
     
-    float mFrameRate;
+    //float mFrameRate;
     //NSTimer *mTimer;
-    id mDisplayLink;
+    CADisplayLink *mDisplayLink;
     //BOOL mDisplayLinkSupported;        
     double mLastFrameTimestamp;
     double mLastTouchTimestamp;
@@ -60,7 +60,7 @@
 @property (nonatomic, readonly) BOOL isStarted;
 
 /// Assigns the desired framerate. Only dividers of 60 are allowed (60, 30, 20, 15, 12, 10, etc.)
-@property (nonatomic, assign) float frameRate;
+//@property (nonatomic, assign) float frameRate;
 
 /// The stage object that will be processed.
 //@property (nonatomic, retain) mlstage *stage;

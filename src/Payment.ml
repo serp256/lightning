@@ -35,6 +35,7 @@ external ml_purchase : string -> unit = "ml_payment_purchase";
 IFDEF IOS THEN
 external ml_init : (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit = "ml_payment_init";
 external ml_commit_transaction : Transaction.t -> unit = "ml_payment_commit_transaction";
+value restoreTransactions () = ();
 ELSE
 
 IFDEF ANDROID THEN

@@ -85,6 +85,7 @@ class virtual c (_width:float) (_height:float) =
   object(self)
     inherit D.container as super;
     value virtual bgColor: int;
+    method frameRate = 30;
     method color = `NoColor;
     method setColor (_:color) = raise Restricted_operation;
     value mutable width = _width;
@@ -204,7 +205,7 @@ class virtual c (_width:float) (_height:float) =
       [ [] -> ()
       | touches ->
         (
-          currentTouches := []; (* FIXME:  не проверяем что таргет на сцене *)
+          currentTouches := []; (* FIXME: не проверяем что таргет на сцене *)
           let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target ({(Touch.t_of_n touch) with phase = TouchPhaseCancelled}) res) [] touches in
           let event = Ev.create ~bubbles:True ev_TOUCH () in
           List.iter begin fun ((target:D.c),touches) ->
@@ -215,11 +216,14 @@ class virtual c (_width:float) (_height:float) =
       ];
 
 
+    value mutable fpsTrace : option DisplayObject.c = None;
+
     method renderStage () =
     (
 (*       proftimer:perfomance "Prerender: %F" D.prerender(); *)
       Render.clear bgColor 1.;
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
+      match fpsTrace with [ None -> () | Some fps -> fps#render None ];
       (*
       debug "start render";
       debug "end render";
@@ -227,6 +231,7 @@ class virtual c (_width:float) (_height:float) =
     );
 
     value runtweens = Queue.create ();
+
 
     method advanceTime (seconds:float) = 
     (
@@ -248,6 +253,31 @@ class virtual c (_width:float) (_height:float) =
       debug "end advance time";
     );
 
+
+    method traceFPS (show:(int -> #DisplayObject.c)) = 
+      let f =
+        object
+          value mutable frames = 0;
+          value mutable time = 0.;
+          method process dt = 
+            let osecs = int_of_float time in
+            (
+              time := time +. dt;
+              let seconds = (int_of_float time) - osecs in
+              match seconds with
+              [ 0 ->  frames := frames + 1
+              | _ -> 
+                (
+                  fpsTrace := Some (show (frames / seconds));
+                  frames := 1;
+                )
+              ];
+              True;
+            );
+        end
+      in
+      addTween f;
+
     method !z = Some 0;
     method run seconds = 
     (
@@ -259,6 +289,7 @@ class virtual c (_width:float) (_height:float) =
       Render.checkErrors "before render";
       debug:run "start render";
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
+      match fpsTrace with [ None -> () | Some fps -> fps#render None ];
 (*       debug:run "end render"; *)
     );
 

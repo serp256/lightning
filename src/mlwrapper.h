@@ -20,6 +20,7 @@ typedef struct {
 } mlstage;
 
 mlstage *mlstage_create(float width,float height);
+int mlstage_getFrameRate(mlstage *stage);
 void mlstage_resize(mlstage *stage,float width,float height);
 void mlstage_destroy(mlstage *stage);
 void mlstage_advanceTime(mlstage *stage,double timePassed);

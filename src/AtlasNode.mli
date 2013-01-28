@@ -35,5 +35,7 @@ value update: ?pos:Point.t -> ?scale:float -> ?rotation:float -> ?flipX:bool -> 
 
 value texture: t -> Texture.c;
 
+value matrix: t -> Matrix.t;
+
 value sync: t -> unit;
 value bounds: t -> Rectangle.t;

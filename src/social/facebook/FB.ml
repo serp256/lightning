@@ -22,7 +22,7 @@ external _loggedIn: unit -> option connect = "ml_fbLoggedIn";
 
 external _accessToken: connect -> string = "ml_fbAccessToken";
 external _apprequest: connect -> string -> string -> option string -> option string -> option (list string -> unit) -> option (string -> unit) -> unit = "ml_fbApprequest_byte" "ml_fbApprequest";
-external _graphrequest: connect -> string -> option (list (string * string)) -> option (Ojson.t -> unit) -> option (string -> unit) -> unit = "ml_fbGraphrequest";
+external _graphrequest: connect -> string -> option (list (string * string)) -> option (Ojson.json -> unit) -> option (string -> unit) -> unit = "ml_fbGraphrequest";
 
 value status = ref NotConnected;
 value _successCallback = ref None;
