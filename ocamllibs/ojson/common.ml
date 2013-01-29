@@ -10,26 +10,26 @@ exception End_of_tuple
 exception End_of_input
 
 type in_param = {
-  string_buf : Buffer.t
+  string_buf : Bi_outbuf.t
 }
 
 let create_in_param ?(len = 256) () = {
-  string_buf = Buffer.create len
+  string_buf = Bi_outbuf.create len
 }
 
 
 let utf8_of_bytes buf a b c d =
   let i = (a lsl 12) lor (b lsl 8) lor (c lsl 4) lor d in
   if i < 0x80 then
-    Buffer.add_char buf (Char.chr i)
+    Bi_outbuf.add_char buf (Char.chr i)
   else if i < 0x800 then (
-    Buffer.add_char buf (Char.chr (0xc0 lor ((i lsr 6) land 0x1f)));
-    Buffer.add_char buf (Char.chr (0x80 lor (i land 0x3f)))
+    Bi_outbuf.add_char buf (Char.chr (0xc0 lor ((i lsr 6) land 0x1f)));
+    Bi_outbuf.add_char buf (Char.chr (0x80 lor (i land 0x3f)))
   )
   else (* i < 0x10000 *) (
-    Buffer.add_char buf (Char.chr (0xe0 lor ((i lsr 12) land 0xf)));
-    Buffer.add_char buf (Char.chr (0x80 lor ((i lsr 6) land 0x3f)));
-    Buffer.add_char buf (Char.chr (0x80 lor (i land 0x3f)))
+    Bi_outbuf.add_char buf (Char.chr (0xe0 lor ((i lsr 12) land 0xf)));
+    Bi_outbuf.add_char buf (Char.chr (0x80 lor ((i lsr 6) land 0x3f)));
+    Bi_outbuf.add_char buf (Char.chr (0x80 lor (i land 0x3f)))
   )
 
 
@@ -41,8 +41,8 @@ let is_object_or_array x =
 
 
 type lexer_state = {
-  buf : Buffer.t;
-    (* Buffer used to accumulate substrings *)
+  buf : Bi_outbuf.t;
+    (* Bi_outbuf used to accumulate substrings *)
 
   mutable lnum : int;
     (* Current line number (starting from 1) *)
@@ -58,7 +58,7 @@ type lexer_state = {
 module Lexer_state =
 struct
   type t = lexer_state = {
-    buf : Buffer.t;
+    buf : Bi_outbuf.t;
     mutable lnum : int;
     mutable bol : int;
     mutable fname : string option;
@@ -68,7 +68,7 @@ end
 let init_lexer ?buf ?fname ?(lnum = 1) () =
   let buf =
     match buf with
-	None -> Buffer.create 256
+	None -> Bi_outbuf.create 256
       | Some buf -> buf
   in
   {

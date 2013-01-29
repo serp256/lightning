@@ -11,7 +11,7 @@ val prettify : ?std:bool -> string -> string
 (** {2 JSON readers} *)
 
 val from_string :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fname:string ->
   ?lnum:int ->
   string -> Type.json
@@ -24,7 +24,7 @@ val from_string :
   *)
 
 val from_channel :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fname:string ->
   ?lnum:int ->
   in_channel -> Type.json
@@ -32,7 +32,7 @@ val from_channel :
       See [from_string] for the meaning of the optional arguments. *)
 
 val from_file :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fname:string ->
   ?lnum:int ->
   string -> Type.json
@@ -40,13 +40,13 @@ val from_file :
       See [from_string] for the meaning of the optional arguments. *)
 
 val from_function :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fname:string ->
   ?lnum:int ->
   (string -> int -> int) -> Type.json
 
 type lexer_state = Common.Lexer_state.t = {
-  buf : Buffer.t;
+  buf : Bi_outbuf.t;
   mutable lnum : int;
   mutable bol : int;
   mutable fname : string option;
@@ -56,7 +56,7 @@ type lexer_state = Common.Lexer_state.t = {
     *)
 
 val init_lexer :
-  ?buf: Buffer.t ->
+  ?buf: Bi_outbuf.t ->
   ?fname: string ->
   ?lnum: int -> 
   unit -> lexer_state
@@ -76,7 +76,7 @@ val from_lexbuf :
       the end of the JSON value and the end of the input. *)
 
 val stream_from_string :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fname:string ->
   ?lnum:int ->
   string -> Type.json Stream.t
@@ -85,7 +85,7 @@ val stream_from_string :
       See [from_string] for the meaning of the optional arguments. *)
 
 val stream_from_channel :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fin:(unit -> unit) ->
   ?fname:string ->
   ?lnum:int ->
@@ -99,7 +99,7 @@ val stream_from_channel :
       See [from_string] for the meaning of the other optional arguments. *)
 
 val stream_from_file :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fname:string ->
   ?lnum:int ->
   string -> Type.json Stream.t
@@ -124,7 +124,7 @@ type json_line = [ `Json of Type.json | `Exn of exn ]
     (** The type of values resulting from a parsing attempt of a JSON value. *)
 
 val linestream_from_channel :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fin:(unit -> unit) ->
   ?fname:string ->
   ?lnum:int ->
@@ -138,7 +138,7 @@ val linestream_from_channel :
       See [from_string] for the meaning of the other optional arguments. *)
 
 val linestream_from_file :
-  ?buf:Buffer.t ->
+  ?buf:Bi_outbuf.t ->
   ?fname:string ->
   ?lnum:int ->
   string -> json_line Stream.t

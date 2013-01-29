@@ -4,9 +4,11 @@ exception Json_error of string
 
 val json_error : string -> 'a
 
+val is_object_or_array: Type.json -> bool
+
 type lexer_state = {
-  buf : Buffer.t;
-    (** Buffer used to accumulate substrings *)
+  buf : Bi_outbuf.t;
+    (** Bi_outbuf used to accumulate substrings *)
   
   mutable lnum : int;
     (** Current line number (counting from 1) *)
@@ -22,7 +24,7 @@ type lexer_state = {
 module Lexer_state :
 sig
   type t = lexer_state = {
-    buf : Buffer.t;
+    buf : Bi_outbuf.t;
     mutable lnum : int;
     mutable bol : int;
     mutable fname : string option;
@@ -30,7 +32,7 @@ sig
 end
 
 val init_lexer :
-  ?buf: Buffer.t ->
+  ?buf: Bi_outbuf.t ->
   ?fname: string ->
   ?lnum: int -> 
   unit -> lexer_state
@@ -45,6 +47,6 @@ exception End_of_object
 exception End_of_tuple
 exception End_of_input
 
-val utf8_of_bytes: Buffer.t -> int -> int -> int -> int -> unit
+val utf8_of_bytes: Bi_outbuf.t -> int -> int -> int -> int -> unit
 (* end undocumented section *)
 (**/**)

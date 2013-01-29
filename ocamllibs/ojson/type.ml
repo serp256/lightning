@@ -14,6 +14,88 @@ type json =
     | `Assoc of (string * json) list
     | `List of json list
     ]
+
+exception OJson_error of string 
+
+module Build = struct
+
+let null = `Null
+let bool x = `Bool x
+let int x = `Int x
+let intlit x = `Intlit x
+let string x = `String x
+let float x = `Float x
+let assoc x = `Assoc x
+let list f x = `List (List.map f x)
+let array l = `List l 
+
+let opt f v = 
+  match v with 
+    Some x -> f x
+  | None -> `Null
+
+
+end
+
+module Browse = struct
+  
+let json_error s = raise (OJson_error s)
+
+let type_mismatch s  = json_error (Printf.sprintf "type mismatch %s " s)
+
+let null = function
+    `Null -> ()
+  | x -> type_mismatch "null"
+
+let string = function 
+    `String s -> s
+  | x -> type_mismatch "string"
+
+let bool = function
+    `Bool x -> x
+  | x -> type_mismatch "bool"
+
+let int = function
+    `Int i -> i
+  | x -> type_mismatch "int"
+
+let float = function 
+    `Float f -> f
+  | x -> type_mismatch "float"
+
+let array = function
+    `List l -> l
+  | x -> type_mismatch "list"
+
+let list f x = List.map f (array x)
+
+let assoc = function 
+    `Assoc x -> x
+  | x -> type_mismatch "assoc"
+
+let assoc_field convert field = function
+    `Assoc x -> 
+      let v = List.assoc field x in
+      convert v
+  | x -> type_mismatch "assoc"
+
+let assoc_field_opt convert field json = 
+  try 
+    Some (assoc_field convert field json)
+  with Not_found -> None
+
+let assoc_table = function
+    `Assoc x ->
+      let h = Hashtbl.create 0 in
+      List.iter (fun (k,v) -> Hashtbl.add h k v) x;
+      h
+  | x -> type_mismatch "assoc"
+
+let assoc_field_table convert field table = 
+  convert (Hashtbl.find table field)
+
+end
+
 (**
 All possible cases defined in Yojson:
 - `Null: JSON null
