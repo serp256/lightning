@@ -24,9 +24,9 @@ type clipcmd =
 
 type frame = (children * option (list clipcmd)); 
 
-class clip texture frames labels = 
+class clip ?(fps=default_fps.val) texture frames labels = 
   object(self)
-    inherit base [ frame ] !default_fps frames labels;
+    inherit base [ frame ] fps frames labels;
     inherit Atlas._c texture;
     method private applyChildren children =
     (
@@ -182,9 +182,9 @@ value getSubTextureAsync lib (tid,rect) callback =
   | TTextures textures -> f textures.(tid)
   ];
 
-class iclip ?fps first_texture lib frames labels =
+class iclip ?(fps=default_fps.val) first_texture lib frames labels =
   object(self)
-    inherit base [ iframe ] ~fps:!default_fps ~frames ~labels;
+    inherit base [ iframe ] ~fps ~frames ~labels;
     inherit Image._c first_texture;
 
     method applyFrame _ frame = 
@@ -209,7 +209,7 @@ value iclip_async ?fps lib frames labels callback =
     callback obj
   end;
 
-value create_element lib = fun
+value create_element ?fps lib = fun
   [ Image img -> 
     let res = new Image.c (getSubTexture lib img) in
     (res :> c)
@@ -255,14 +255,14 @@ value create_element lib = fun
         end children;
         (atlas :> c)
       )
-  | ImageClip frames labels -> ((iclip lib frames labels) :> c)
+  | ImageClip frames labels -> ((iclip ?fps lib frames labels) :> c)
   | Clip tid frames labels -> 
-      let res = new clip (getTexture lib tid) frames labels in
+      let res = new clip ?fps (getTexture lib tid) frames labels in
       (res :> c)
   ]
 ;
 
-value create_element_async lib symbol callback = 
+value create_element_async ?fps lib symbol callback = 
   match symbol with
   [ Image img -> 
     getSubTextureAsync lib img begin fun texture ->
@@ -327,10 +327,10 @@ value create_element_async lib symbol callback =
           callback (atlas :> c)
         )
       end
-  | ImageClip frames labels -> iclip_async lib frames labels (fun ic -> callback (ic :> c))
+  | ImageClip frames labels -> iclip_async ?fps lib frames labels (fun ic -> callback (ic :> c))
   | Clip tid frames labels -> 
       getTextureAsync lib tid begin fun texture ->
-        let res = new clip texture frames labels in
+        let res = new clip ?fps texture frames labels in
         callback (res :> c)
       end
   ]
@@ -338,15 +338,15 @@ value create_element_async lib symbol callback =
 
 
 exception Symbol_not_found of string;
-value get_symbol lib cls =
+value get_symbol ?fps lib cls =
   let () = debug:load "get %s from %s" cls lib.path in
   let symbol = try Hashtbl.find lib.symbols cls with [ Not_found -> raise (Symbol_not_found cls) ] in
-  create_element lib symbol;
+  create_element ?fps lib symbol;
 
-value get_symbol_async lib cls callback = 
+value get_symbol_async ?fps lib cls callback = 
   let () = debug:load "get async %s from %s" cls lib.path in
   let symbol = try Hashtbl.find lib.symbols cls with [ Not_found -> raise (Symbol_not_found cls) ] in
-  create_element_async lib symbol callback;
+  create_element_async ?fps lib symbol callback;
 
 value symbols lib = ExtHashtbl.Hashtbl.keys lib.symbols;
 
