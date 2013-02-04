@@ -150,6 +150,8 @@ static void* loader_thread(void* params) {
 			    	else if (!strcmp(cformat, "ARGB_8888")) texInfo->format = LTextureFormatRGBA;
 			    	else if (!strcmp(cformat, "RGB_565")) texInfo->format = LTextureFormat565;
 
+			    	(*env)->ReleaseStringUTFChars(env, jformat, cformat);
+
 			    	texInfo->width = (*env)->GetIntField(env, jtexInfo, lwFid);
 			    	texInfo->height = (*env)->GetIntField(env, jtexInfo, lhFid);
 			    	texInfo->realWidth = (*env)->GetIntField(env, jtexInfo, wFid);
