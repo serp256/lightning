@@ -75,3 +75,5 @@ module MakeXmlParser(P:sig value path: string; value with_suffix:bool; end): sig
   value get_attributes: string -> list string -> list Xmlm.attribute -> list string;
   value parse_element: string -> list string -> option (list string * list Xmlm.attribute);
 end;
+
+value pathExistsInExpansions: string -> bool;

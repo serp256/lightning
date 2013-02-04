@@ -1873,3 +1873,8 @@ JNIEXPORT jstring JNICALL Java_ru_redspell_lightning_LightView_glExts(JNIEnv *en
 	const char *exts = (char*)glGetString(GL_EXTENSIONS);
 	return (*env)->NewStringUTF(env, exts);
 }
+
+value ml_pathExistsInExpansions(value path) {
+	offset_size_pair_t* os_pair;
+	return get_expansion_offset_size_pair(String_val(path), &os_pair) ? Val_false : Val_true;
+}
