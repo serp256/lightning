@@ -96,7 +96,8 @@ static void* loader_thread(void* params) {
     jfieldID hFid;
     jfieldID lwFid;
     jfieldID lhFid;
-    jfieldID dataFid;    
+    jfieldID dataFid;
+    jfieldID formatFid;    
     jmethodID decodeImgMid = (*env)->GetMethodID(env, jViewCls, "decodeImg", "([B)Lru/redspell/lightning/LightView$TexInfo;");
     jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");
 
@@ -134,13 +135,21 @@ static void* loader_thread(void* params) {
 					    lwFid = (*env)->GetFieldID(env, texInfoCls, "legalWidth", "I");
 					    lhFid = (*env)->GetFieldID(env, texInfoCls, "legalHeight", "I");
 					    dataFid = (*env)->GetFieldID(env, texInfoCls, "data", "[B");
+					    formatFid = (*env)->GetFieldID(env, texInfoCls, "format", "Ljava/lang/String;");
 
 					    (*env)->DeleteLocalRef(env, texInfoCls);
 				    }
 
 			    	textureInfo* texInfo = malloc(sizeof(textureInfo));
 
-			    	texInfo->format = LTextureFormatRGBA;
+			    	jstring jformat = (*env)->GetObjectField(env, jtexInfo, formatFid);
+			    	const char* cformat = (*env)->GetStringUTFChars(env, jformat, JNI_FALSE);
+
+			    	if (!strcmp(cformat, "ALPHA_8")) texInfo->format = LTextureFormatAlpha;
+			    	else if (!strcmp(cformat, "ARGB_4444")) texInfo->format = LTextureFormat4444;
+			    	else if (!strcmp(cformat, "ARGB_8888")) texInfo->format = LTextureFormatRGBA;
+			    	else if (!strcmp(cformat, "RGB_565")) texInfo->format = LTextureFormat565;
+
 			    	texInfo->width = (*env)->GetIntField(env, jtexInfo, lwFid);
 			    	texInfo->height = (*env)->GetIntField(env, jtexInfo, lhFid);
 			    	texInfo->realWidth = (*env)->GetIntField(env, jtexInfo, wFid);

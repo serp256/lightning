@@ -324,10 +324,6 @@ int getResourceFd(const char *path, resource *res) { //{{{
 }//}}}
 
 
-value caml_existsResource(value rname) {
-	resource *res
-}
-
 // получим параметры нах
 value caml_getResource(value mlpath,value suffix) {
 	CAMLparam1(mlpath);
