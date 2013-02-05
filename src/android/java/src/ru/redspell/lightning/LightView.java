@@ -154,27 +154,27 @@ public class LightView extends GLSurfaceView {
 				return 3;
 		}*/
 		String screen = activity.getString(R.string.screen);
-		Log.d("LIGHTNING", "screen " + screen);
+		Log.d("LIGHTNING", "java screen " + screen);
 
-		if (screen.contentEquals("small")) return 0;
-		if (screen.contentEquals("normal")) return 1;
-		if (screen.contentEquals("large")) return 2;
-		if (screen.contentEquals("xlarge")) return 3;
+		if (screen.contentEquals("small")) return 1;
+		if (screen.contentEquals("normal")) return 2;
+		if (screen.contentEquals("large")) return 3;
+		if (screen.contentEquals("xlarge")) return 4;
 
-		return -1;		
+		return 0;		
 	}
 
 	public int getDensity() {
 		String density = activity.getString(R.string.density);
-		Log.d("LIGHTNING", "density " + density);
+		Log.d("LIGHTNING", "java density " + density);
 
-		if (density.contentEquals("tvdpi")) return 4;
-		if (density.contentEquals("ldpi")) return 0;
-		if (density.contentEquals("mdpi")) return 1;
-		if (density.contentEquals("hdpi")) return 2;
-		if (density.contentEquals("xhdpi")) return 3;
+		if (density.contentEquals("tvdpi")) return 5;
+		if (density.contentEquals("ldpi")) return 1;
+		if (density.contentEquals("mdpi")) return 2;
+		if (density.contentEquals("hdpi")) return 3;
+		if (density.contentEquals("xhdpi")) return 4;
 
-		return -1;
+		return 0;
 	}
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {

@@ -1,5 +1,12 @@
-value (|>) a b = b a;
+open ExtString;
+
+(* external (|>) : 'a -> ('a -> 'b) -> 'b = "%apply%" (*= b a*); *)
+(* external (<|): ('a -> 'b) -> 'a -> 'b = "%revapply%" (*= f v*); *)
+
+
+value (|>) v f = f v;
 value (<|) f v = f v;
+
 value color_white = 0xFFFFFF;
 value color_black = 0x000000;
 
@@ -37,11 +44,11 @@ type qColor =
     qcBottomRight: int;
   };
 
-IFDEF PC THEN
+IFPLATFORM(pc)
 value getLocale () = "en";
 ELSE
 external getLocale: unit -> string = "ml_getLocale";
-ENDIF;
+ENDPLATFORM;
 
 IFPLATFORM(ios android)
 external getVersion: unit -> string = "ml_getVersion";
@@ -116,7 +123,7 @@ value floats_of_color color =
 
 Callback.register_exception "File_not_exists" (File_not_exists "");
 
-IFDEF IOS THEN
+IFPLATFORM(ios)
 
 external bundle_path_for_resource: string -> option string -> option string = "ml_bundle_path_for_resource";
 
@@ -143,7 +150,7 @@ value read_json ?with_suffix path =
 
 value read_resource ?with_suffix path = Std.input_all (open_resource ?with_suffix path);
 
-ELSE IFDEF ANDROID THEN
+ELSPLATFORM(android) 
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
 
@@ -222,7 +229,7 @@ value read_json ?(with_suffix=True) path =
   ];
   
 
-ELSE IFDEF PC THEN
+ELSPLATFORM(pc)
 
 value resources_path = "Resources";
 value resource_path ?(with_suffix=True) fname =
@@ -256,19 +263,29 @@ value read_json ?with_suffix path =
   let ch = open_resource ?with_suffix path in                                                                                                                
   Ojson.from_channel ch;
 
-ENDIF;
-ENDIF;
-ENDIF;
+ENDPLATFORM;
 
 
 
 type deviceType = [ Phone | Pad ];
-type androidScreen = [ Small| Normal | Large | Xlarge ];
-type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
+
+IFPLATFORM(ios android)
+value deviceType = ref None;
+external getDeviceType: unit -> deviceType = "ml_getDeviceType";
+ELSE
+value internalDeviceType = ref Pad;
+value getDeviceType () = !internalDeviceType;
+ENDPLATFORM;
+
+
+type ios_device = [ IPhoneOld | IPhone3GS | IPhone4 | IPhone5 | IPhoneNew | IPad1 | IPad2 | IPad3 | IPadNew | IUnknown ];
+type androidScreen = [ UnknownScreen | Small | Normal | Large | Xlarge ];
+type androidDensity = [ UnknownDensity | Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
 
 value androidScreenToString screen =
   match screen with
-  [ Small -> "small"
+  [ UnknownScreen -> "unknown"
+  | Small -> "small"
   | Normal -> "normal"
   | Large -> "large"
   | Xlarge -> "xlarge"
@@ -276,49 +293,71 @@ value androidScreenToString screen =
 
 value androidDensityToString density =
   match density with
-  [ Ldpi -> "ldpi"
+  [ UnknownDensity -> "unknown"
+  | Ldpi -> "ldpi"
   | Mdpi -> "mdpi"
   | Hdpi -> "hdpi"
   | Xhdpi -> "xhdpi"
   | Tvdpi -> "tvdpi"
   ];
 
-IFDEF IOS THEN
 
-external getDeviceType: unit -> deviceType = "ml_getDeviceType";
-value androidScreen () = None;
+type device = [ Android of (androidScreen * androidDensity) | IOS of ios_device ];
 
-
-ELSE IFDEF ANDROID THEN
-external getDeviceType: unit -> deviceType = "ml_device_type";
-
-external androidScreen: unit -> option (androidScreen * androidDensity) = "ml_androidScreen";
-
-
-(*
-value internalDeviceType = ref Pad;
-value getDeviceType () = !internalDeviceType;
-*)
-ELSE
-
-value internalDeviceType = ref Phone;
-value getDeviceType () = !internalDeviceType;
-
-value androidScreen () = None;
-
-
-ENDIF;
-ENDIF;
+IFPLATFORM(android)
+external androidScreen: unit -> (androidScreen * androidDensity) = "ml_androidScreen";
+value getDevice () = Android (androidScreen ());
+ELSPLATFORM(ios)
+external ios_platfrom: unit -> string = "ml_platform";
+value getDevice () = 
+  let d : ios_device = 
+    let ip = ios_platfrom () in
+    if String.starts_with ip "iPhone" 
+    then 
+      if String.starts_with ip "iPhone1" then IPhoneOld
+      else if String.starts_with ip "iPhone2" then IPhone3GS
+      else if String.starts_with ip "iPhone3" then IPhone4
+      else if String.starts_with ip "iPhone4" then IPhone4
+      else if String.starts_with ip "iPhone5" then IPhone5
+      else IPhoneNew 
+    else begin
+      if String.starts_with ip "iPod" 
+      then 
+        if String.starts_with ip "iPod1" || String.starts_with ip "iPod2" then IPhoneOld
+        else if String.starts_with ip "iPod3" then IPhone3GS
+        else if String.starts_with ip "iPod4" then IPhone4
+        else if String.starts_with ip "iPod5" then IPhone5
+        else IPhoneNew 
+      else
+        if String.starts_with ip "iPad"
+        then
+          if String.starts_with ip "iPad1" then IPad1
+          else if String.starts_with ip "iPad2" then IPad2
+          else if String.starts_with ip "iPad3" then IPad3
+          else if String.starts_with ip "iPad4" then IPad3
+          else IPadNew
+        else IUnknown
+    end
+  in
+  IOS d;
+ELSPLATFORM(pc)
+value internal_device = ref (IOS IPad2);
+value getDevice () = !internal_device;
+ENDPLATFORM;
 
 value _deviceType = Lazy.lazy_from_fun getDeviceType;
-
 value deviceType () = Lazy.force _deviceType;
 
-IFDEF PC THEN
+value _device = Lazy.lazy_from_fun getDevice;
+value device () : device = Lazy.force _device;
+
+
+
+IFPLATFORM(pc)
 value storagePath () = "Storage";
 ELSE
 external storagePath: unit -> string = "ml_getStoragePath";
-ENDIF;
+ENDPLATFORM;
 
 
 

@@ -324,10 +324,6 @@ int getResourceFd(const char *path, resource *res) { //{{{
 }//}}}
 
 
-value caml_existsResource(value rname) {
-	resource *res
-}
-
 // получим параметры нах
 value caml_getResource(value mlpath,value suffix) {
 	CAMLparam1(mlpath);
@@ -1534,34 +1530,23 @@ value ml_device_id(value unit) {
 	return device_id;
 }
 
-static value andrScreen;
-
 value ml_androidScreen() {
-	if (!andrScreen) {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	CAMLparam0();
+	CAMLlocal1(andrScreen);
 
-		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreen", "()I");
-		int s = (int)(*env)->CallIntMethod(env, jView, mid);
-		mid = (*env)->GetMethodID(env, jViewCls, "getDensity", "()I");
-		int d = (int)(*env)->CallIntMethod(env, jView, mid);
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-		PRINT_DEBUG("s, d: %d %d", s, d);
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreen", "()I");
+	int s = (int)(*env)->CallIntMethod(env, jView, mid);
+	mid = (*env)->GetMethodID(env, jViewCls, "getDensity", "()I");
+	int d = (int)(*env)->CallIntMethod(env, jView, mid);
 
-		if (s < 0 || d < 0) {
-			PRINT_DEBUG("none");
-			andrScreen = Val_int(0);			
-		} else {
-			PRINT_DEBUG("some");
+	PRINT_DEBUG("s, d: %d %d", s, d);
 
-			value tuple = caml_alloc(2, 0);
-			andrScreen = caml_alloc(1, 0);
-
-			Store_field(tuple, 0, Val_int(s));
-			Store_field(tuple, 1, Val_int(d));
-			Store_field(andrScreen, 0, tuple);
-		}
-	}
+	andrScreen = caml_alloc_tuple(2);
+	Store_field(andrScreen, 0, Val_int(s));
+	Store_field(andrScreen, 1, Val_int(d));
 
 	return andrScreen;
 		
@@ -1650,7 +1635,7 @@ value ml_androidScreen() {
 	return andrScreen;*/
 }
 
-value ml_device_type(value unit) {
+value ml_getDeviceType(value unit) {
 	DEBUGF("ML_DEVICE_TYPE");
 	CAMLparam0();
 	CAMLlocal1(retval);

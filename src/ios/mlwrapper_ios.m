@@ -384,3 +384,8 @@ value ml_getStoragePath(value unit) {
 	fprintf(stderr,"ocaml string: %s\n",String_val(result));
 	return result;
 }
+
+
+
+value ml_IOSDevice(value unit) {
+}
