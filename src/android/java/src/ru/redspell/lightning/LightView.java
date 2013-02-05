@@ -687,10 +687,11 @@ public class LightView extends GLSurfaceView {
 		public int legalWidth;
 		public int legalHeight;
 		public byte[] data;
+		public String format;
 	}
 
 	public TexInfo decodeImg(byte[] src) {
-		Log.d("LIGHTNING", "decodeImg");
+		Log.d("LIGHTNING", "decodeImg " + src.length);
 
 		Bitmap bmp = BitmapFactory.decodeByteArray(src, 0, src.length);
 
@@ -706,9 +707,25 @@ public class LightView extends GLSurfaceView {
 		retval.legalWidth = Math.max(64, retval.width);
 		retval.legalHeight = Math.max(64, retval.height);
 
+		switch (bmp.getConfig()) {
+			case ALPHA_8:
+				retval.format = "ALPHA_8";
+				break;
+
+			case ARGB_4444:
+				retval.format = "ARGB_4444";
+				break;
+
+			case ARGB_8888:
+				retval.format = "ARGB_8888";
+				break;
+
+			case RGB_565:
+				retval.format = "RGB_565";
+				break;
+		}
+
 		if (retval.width != retval.legalWidth || retval.height != retval.legalHeight) {
-			Log.d("LIGHTNING", "create new bmp " + String.format("%d %d %d %d", retval.width, retval.height, retval.legalWidth, retval.legalHeight));
-			
 			try {
 				int[] pixels = new int[retval.legalWidth * retval.legalHeight];
 				bmp.getPixels(pixels, 0, retval.legalWidth, 0, 0, retval.width, retval.height);
@@ -723,30 +740,7 @@ public class LightView extends GLSurfaceView {
 			}
 		}
 
-		Log.d("LIGHTNING", bmp.toString());
-
-		int bytesPerPixel = 4;
-
-		/*
-		Config bmpCfg = bmp.getConfig();
-
-		if (bmpCfg == null) {
-			Log.d("LIGHTNING", "unknown config, return null");
-		} else {
-			switch (bmpCfg) {
-				case ARGB_8888:
-					Log.d("LIGHTNING", "ARGB_8888");
-					break;
-
-				case ALPHA_8:
-				case RGB_565:
-				case ARGB_4444:
-					Log.d("LIGHTNING", "wrong bmp cfg " + bmpCfg);
-					return null;
-			}
-		}*/
-
-		ByteBuffer buf = ByteBuffer.allocate(bmp.getWidth() * bmp.getHeight() * bytesPerPixel);
+		ByteBuffer buf = ByteBuffer.allocate(bmp.getRowBytes() * bmp.getHeight());
 		bmp.copyPixelsToBuffer(buf);
 		bmp.recycle();
 		retval.data = buf.array();

@@ -55,6 +55,8 @@ struct tex {
 #define TEXTURE_ID(v) ((struct tex*)Data_custom_val(v))->tid
 #define TEX(v) ((struct tex*)Data_custom_val(v))
 
+value ml_texture_id_zero();
+
 //extern GLuint boundTextureID;
 void setPMAGLBlend ();
 void enableSeparateBlend ();

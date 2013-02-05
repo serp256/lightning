@@ -1,17 +1,19 @@
 //
-//  AppDelegate.h
-//  LightTest
+//  NanoFarmAppDelegate.h
+//  NanoFarm
 //
-//  Created by Sergey Plaksin on 2/17/12.
-//  Copyright (c) 2012 RedSpell. All rights reserved.
+//  Created by Sergey Plaksin on 7/18/11.
+//  Copyright 2011 RedSpell. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
-#import "LightAppDelegate.h"
+//#import "LightAppDelegate.h"
+//
 
-@interface AppDelegate : LightAppDelegate <UIApplicationDelegate>
+@interface LightAppDelegate : UIResponder <UIApplicationDelegate>
 
-@property (strong, nonatomic) UIWindow *window;
-@property (strong, nonatomic) LightViewController *viewController;
+@end
+
+@interface AppDelegate : LightAppDelegate 
 
 @end

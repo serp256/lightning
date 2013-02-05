@@ -89,10 +89,14 @@
 		if ([self respondsToSelector:@selector(contentScaleFactor)]) {
 			[self setContentScaleFactor:[UIScreen mainScreen].scale];
 		};
+		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &mWidth);
+		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &mHeight);
+		NSLog(@"glsize: %d:%d",mWidth,mHeight);
 
-		mStage = NULL;
+		mStage = mlstage_create(mWidth,mHeight);		  
 }
 
+/*
 - (void)layoutSubviews 
 {
 		NSLog(@"Layout subviews");
@@ -101,14 +105,14 @@
 		  mlstage_resize(mStage,mWidth,mHeight);	
 		} else {
 		  mStage = mlstage_create(mWidth,mHeight);		  
-		}
-
+		};
     mLastFrameTimestamp = CACurrentMediaTime();
-    [self renderStage];        // fill buffer immediately to avoid flickering
+    [self renderStage]; // fill buffer immediately to avoid flickering
 
 		NSLog(@"end of layoutSubviews");
 }
-
+*/
+/*
 -(void)resizeFramebuffer
 {
 	glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
@@ -117,6 +121,7 @@
 	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &mHeight);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) NSLog(@"failed to create framebuffer: %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
 }
+*/
 
 - (void)destroyFramebuffer 
 {
@@ -128,52 +133,52 @@
 
 - (void)renderStage
 {
-    if (mFramebuffer == 0 || mRenderbuffer == 0) {
-        NSLog(@"buffers not yet initialized");
-        return; // buffers not yet initialized
-    }
+	if (mFramebuffer == 0 || mRenderbuffer == 0) {
+		NSLog(@"buffers not yet initialized");
+		return; // buffers not yet initialized
+	}
 
 
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    
-    double now = CACurrentMediaTime();
-    double timePassed = now - mLastFrameTimestamp;
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-		/*
-		if (mDisplayLink) {
-			NSLog(@"frameInerval: %d, duration: %f, timestamp: %f, timePassed: %f",[mDisplayLink frameInterval],[mDisplayLink duration],[mDisplayLink timestamp],timePassed);
-		} else {
-			NSLog(@"DisplayLink is NIL");
-		}*/
+	double now = CACurrentMediaTime();
+	double timePassed = now - mLastFrameTimestamp;
 
-		/* 
-    mlstage_advanceTime(mStage,timePassed);
-    mLastFrameTimestamp = now;
-    [EAGLContext setCurrentContext:mContext];
-    glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-    mlstage_render(mStage);
-    glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
-    [mContext presentRenderbuffer:GL_RENDERBUFFER];
-		*/
-		caml_acquire_runtime_system();
+	/*
+		 if (mDisplayLink) {
+		 NSLog(@"frameInerval: %d, duration: %f, timestamp: %f, timePassed: %f",[mDisplayLink frameInterval],[mDisplayLink duration],[mDisplayLink timestamp],timePassed);
+		 } else {
+		 NSLog(@"DisplayLink is NIL");
+		 }*/
 
-    //printf("lastupTime: %f; now: %f; now - accLastUpTime: %f; accUpInterval: %f\n", accLastUpTime, now, now - accLastUpTime, accUpInterval);
+	/* 
+		 mlstage_advanceTime(mStage,timePassed);
+		 mLastFrameTimestamp = now;
+		 [EAGLContext setCurrentContext:mContext];
+		 glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+		 mlstage_render(mStage);
+		 glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
+		 [mContext presentRenderbuffer:GL_RENDERBUFFER];
+		 */
+	caml_acquire_runtime_system();
 
-    if (accEnabled && (now - accLastUpTime >= accUpInterval)) {
-        acmtrGetData(now);
-    }
+	//printf("lastupTime: %f; now: %f; now - accLastUpTime: %f; accUpInterval: %f\n", accLastUpTime, now, now - accLastUpTime, accUpInterval);
 
-    mlstage_advanceTime(mStage,timePassed);
-		// prerender here
-		mlstage_preRender();
-    mLastFrameTimestamp = now;
-    [EAGLContext setCurrentContext:mContext];
-    glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);    
-    mlstage_render(mStage);    
-    glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
-    [mContext presentRenderbuffer:GL_RENDERBUFFER];
-		caml_release_runtime_system();
-		[pool release];
+	if (accEnabled && (now - accLastUpTime >= accUpInterval)) {
+		acmtrGetData(now);
+	}
+
+	mlstage_advanceTime(mStage,timePassed);
+	// prerender here
+	mlstage_preRender();
+	mLastFrameTimestamp = now;
+	[EAGLContext setCurrentContext:mContext];
+	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);    
+	mlstage_render(mStage);    
+	glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
+	[mContext presentRenderbuffer:GL_RENDERBUFFER];
+	caml_release_runtime_system();
+	[pool release];
 }
 
 /*
@@ -187,6 +192,7 @@
 }
 */
 
+/*
 - (void)setDisplayLink:(id)newDisplayLink
 {
 	if (mDisplayLink != newDisplayLink)
@@ -195,6 +201,7 @@
 		mDisplayLink = newDisplayLink;
 	}
 }
+*/
 
 /*- (void)setFrameRate:(float)value
 {    
@@ -218,14 +225,17 @@
 - (void)start
 {
 	NSLog(@"START view");
-	if (self.isStarted) return;
-	int frameRate = mlstage_getFrameRate(mStage);
-	NSLog(@"frameRate: %d",frameRate);
-	if (frameRate > REFRESH_RATE) frameRate = REFRESH_RATE;
-	else if (frameRate < 1) frameRate = 1;
-	mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
-	[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / frameRate)];
-	[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+	if (!mDisplayLink) {
+		int frameRate = mlstage_getFrameRate(mStage);
+		NSLog(@"frameRate: %d",frameRate);
+		if (frameRate > REFRESH_RATE) frameRate = REFRESH_RATE;
+		else if (frameRate < 1) frameRate = 1;
+		mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
+		[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / frameRate)];
+		[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [self renderStage]; 
+    mLastFrameTimestamp = CACurrentMediaTime();
+	} else mDisplayLink.paused = NO;
 	/*caml_acquire_runtime_system();
 	mlstage_start(mStage);
 	caml_release_runtime_system();*/
@@ -234,7 +244,7 @@
 - (void)stop
 {
 	NSLog(@"STOP View");
-	if (! mDisplayLink) return;
+	if (!mDisplayLink) return;
 	mDisplayLink.paused = YES;
 	//self.displayLink = nil;
 	/*caml_acquire_runtime_system();
@@ -256,7 +266,7 @@
 
 + (Class)layerClass 
 {
-    return [CAEAGLLayer class];
+	return [CAEAGLLayer class];
 }
 
 //#define PROCESS_TOUCH_EVENT if (self.isStarted && mLastTouchTimestamp != event.timestamp) { process_touches(self,touches,event,mStage); mLastTouchTimestamp = event.timestamp; }    
@@ -300,12 +310,12 @@
 
 - (void)dealloc 
 {    
-    self.displayLink = nil; // invalidates displayLink        
+		[mDisplayLink invalidate];
+    mDisplayLink = nil; 
 
 		mlstage_destroy(mStage);
 
-    if ([EAGLContext currentContext] == mContext) 
-        [EAGLContext setCurrentContext:nil];
+    if ([EAGLContext currentContext] == mContext) [EAGLContext setCurrentContext:nil];
     
     [mContext release];
     //[mRenderSupport release];

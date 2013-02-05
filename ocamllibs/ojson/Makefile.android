@@ -1,5 +1,0 @@
-OCAMLFIND = ocamlfind -toolchain android
-all: byte native
-include Makefile.in
-
-

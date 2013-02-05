@@ -47,8 +47,8 @@ value image_async: string -> (c -> unit) -> unit;
 value release: lib -> unit;
 
 value symbols: lib -> Enum.t string;
-value get_symbol: lib -> string -> c;
-value get_symbol_async: lib -> string -> (c -> unit) -> unit;
+value get_symbol: ?fps:int -> lib -> string -> c;
+value get_symbol_async: ?fps:int -> lib -> string -> (c -> unit) -> unit;
 
 value get_symbol_data: lib -> string -> element;
 value get_texture: lib -> int -> Texture.c;

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "texture_common.h"
 #include "render_stub.h"
 #include <kazmath/GL/matrix.h>
@@ -43,7 +44,7 @@
 
 
 void ml_checkGLErrors(value p) {
-	checkGLErrors(String_val(p));
+	checkGLErrors("%s",String_val(p));
 }
 
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
@@ -1000,9 +1001,43 @@ void ml_image_render(value matrix, value program, value alpha, value blend, valu
 
 
 /////////////////////////////////////////////////////
-//
 // ATLASES
 ///////////////////////
+//
+//////
+/// BUFFERS
+
+// For now 2 buffers in 1 element
+struct glbuffer_el
+{
+	GLuint buffers[2];
+	struct glbuffer_el *next;
+};
+
+static struct glbuffer_el *glbuffers = NULL;
+
+void getGLBuffers(GLuint buffers[2]) {
+	// First try get from our list
+	if (glbuffers != NULL) {
+		memcpy(buffers,glbuffers->buffers,2 * sizeof(GLuint));
+		struct glbuffer_el *tmp = glbuffers;
+		glbuffers = glbuffers->next;
+		free(tmp);
+	} else glGenBuffers(2,buffers);
+	PRINT_DEBUG("GET GL BUFFERS: %d:%d",buffers[0],buffers[1]);
+}
+
+void backGLBuffers(GLuint buffers[2]) {
+	struct glbuffer_el *e = (struct glbuffer_el*)malloc(sizeof(struct glbuffer_el));
+	memcpy(e->buffers,buffers,2 * sizeof(GLuint));
+	e->next = glbuffers;
+	glbuffers = e;
+	PRINT_DEBUG("BACK BUFFERS: %d:%d",buffers[0],buffers[1]);
+}
+
+
+
+//////////////
 
 typedef struct {
 	GLuint textureID;
@@ -1020,7 +1055,8 @@ typedef struct {
 static void atlas_finalize(value atlas) {
 	PRINT_DEBUG("atlas finalize");
 	atlas_t *atl = ATLAS(atlas);
-	glDeleteBuffers(2,atl->buffersVBO);
+	//glDeleteBuffers(2,atl->buffersVBO);
+	backGLBuffers(atl->buffersVBO);
 #ifdef HAS_VAO
     glDeleteVertexArrays(1, &atl->vaoname);
 #endif    
@@ -1055,7 +1091,8 @@ value ml_atlas_init(value textureInfo) {
   glBindVertexArray(atl->vaoname);
 #endif
 
-  glGenBuffers(2, atl->buffersVBO);
+  //glGenBuffers(2, atl->buffersVBO);
+	getGLBuffers(atl->buffersVBO);
 
   atl->index_size = 0;
   atl->n_of_quads = 0;
@@ -1087,7 +1124,7 @@ value ml_atlas_init(value textureInfo) {
 	CAMLreturn(result);
 }
 
-// TODO: finzlie this static arrays 
+// TODO: finalizlie this static arrays 
 static GLushort *atlas_indices = NULL;
 static int atlas_indices_len = 0;
 
@@ -1099,7 +1136,7 @@ static int atlas_quads_len = 0;
 
 // assume that quads it's dynarray
 void ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {
-	PRINT_DEBUG("RENDER ATLAS");
+	//PRINT_DEBUG("RENDER ATLAS");
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
