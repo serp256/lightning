@@ -230,68 +230,54 @@ int get_expansion_offset_size_pair(const char* path, offset_size_pair_t** pair) 
 int getResourceFd(const char *path, resource *res) { //{{{
 	offset_size_pair_t* os_pair;
 
-	if (!get_expansion_offset_size_pair(path, &os_pair)) {
-		char* expnsn_path = get_expansion_path(os_pair->in_main);
+	if (gAssetsDir != NULL) {
+		int assetsDirLen = strlen(gAssetsDir);
+		int pathLen = strlen(path);
 
-		int fd = open(expnsn_path, O_RDONLY);
-		if (fd < 0) return 0;
-		lseek(fd, os_pair->offset, SEEK_SET);
-		
-		res->fd = fd;
-		res->length = os_pair->size;
+		char *assetPath = (char*)malloc(assetsDirLen + pathLen + 1);
+		strcpy(assetPath, gAssetsDir);
+		strcpy(assetPath + assetsDirLen, path);
 
-		free(expnsn_path);
-	} else
-		if (gAssetsDir != NULL) {
-			int assetsDirLen = strlen(gAssetsDir);
-			int pathLen = strlen(path);
+		//DEBUGF("assetPath: %s", assetPath);
 
-			char *assetPath = (char*)malloc(assetsDirLen + pathLen + 1);
-			strcpy(assetPath, gAssetsDir);
-			strcpy(assetPath + assetsDirLen, path);
+		int fd = open(assetPath, O_RDONLY);
 
-			//DEBUGF("assetPath: %s", assetPath);
-
-			int fd = open(assetPath, O_RDONLY);
-
-			if (fd < 0) {
-				PRINT_DEBUG("%s not found in extracted assets", path);
-				return 0;
-			}
-
+		if (fd >= 0) {
 			PRINT_DEBUG("%s found in extracted assets", path);
 			free(assetPath);
 
 			res->fd = fd;
 			res->length = lseek(fd, 0, SEEK_END);
 			lseek(fd, 0, SEEK_SET);
-		} else {
-			JNIEnv *env;
-			(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
-			if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
-			{
-				__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
-			}
 
-			jclass cls;
-			static jmethodID mthd;
+			return 1;
+		}
 
-			if (!mthd) {
-				cls = (*env)->GetObjectClass(env, jView);
-				mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
-				(*env)->DeleteLocalRef(env, cls);
+		PRINT_DEBUG("%s not found in extracted assets", path);
+	} else {
+		JNIEnv *env;
+		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+		if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
+		{
+			__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Failed to get the environment using AttachCurrentThread()");
+		}
 
-				if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
-			}
-			
-			jstring jpath = (*env)->NewStringUTF(env,path);
-			jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
-			(*env)->DeleteLocalRef(env,jpath);
-			
-			if (!resourceParams) {
-			  return 0;
-			}
-			
+		jclass cls;
+		static jmethodID mthd;
+
+		if (!mthd) {
+			cls = (*env)->GetObjectClass(env, jView);
+			mthd = (*env)->GetMethodID(env,cls,"getResource","(Ljava/lang/String;)Lru/redspell/lightning/ResourceParams;");
+			(*env)->DeleteLocalRef(env, cls);
+
+			if (!mthd) __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING","Cant find getResource method");
+		}
+		
+		jstring jpath = (*env)->NewStringUTF(env,path);
+		jobject resourceParams = (*env)->CallObjectMethod(env,jView,mthd,jpath);
+		(*env)->DeleteLocalRef(env,jpath);
+		
+		if (resourceParams) {
 			cls = (*env)->GetObjectClass(env,resourceParams);
 			
 			jfieldID fid = (*env)->GetFieldID(env,cls,"fd","Ljava/io/FileDescriptor;");
@@ -317,10 +303,29 @@ int getResourceFd(const char *path, resource *res) { //{{{
 			
 			(*env)->DeleteLocalRef(env, fileDescriptor);
 			(*env)->DeleteLocalRef(env, resourceParams);
-			(*env)->DeleteLocalRef(env, cls);		
-		}
+			(*env)->DeleteLocalRef(env, cls);
 
-	return 1;
+			return 1;		  
+		}
+	}
+
+	if (!get_expansion_offset_size_pair(path, &os_pair)) {
+		char* expnsn_path = get_expansion_path(os_pair->in_main);
+
+		int fd = open(expnsn_path, O_RDONLY);
+
+		if (fd >= 0) {
+			lseek(fd, os_pair->offset, SEEK_SET);
+			
+			res->fd = fd;
+			res->length = os_pair->size;
+
+			free(expnsn_path);
+			return 1;
+		}
+	}
+
+	return 0;
 }//}}}
 
 
