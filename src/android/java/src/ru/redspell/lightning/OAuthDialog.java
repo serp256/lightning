@@ -107,7 +107,7 @@ public class OAuthDialog extends Dialog {
             @Override
             public void onClick(View v) {
                 // mListener.onCancel();
-                OAuthDialog.this.dismiss();
+                OAuthDialog.this.close();
             }
         });
         Drawable crossDrawable = getContext().getResources().getDrawable(R.drawable.close);
@@ -137,12 +137,15 @@ public class OAuthDialog extends Dialog {
 
     @Override
     public void dismiss() {
+        Log.d("LIGHTNING", "dismiss call");
+
         mWebView.stopLoading();        
         super.dismiss();
         mWebView.destroy();
+    }
 
-        Log.d("LIGHTNING", "dismiss call");
-
+    public void close() {
+        dismiss();
         LightView.instance.queueEvent(new DialogClosedRunnable(mRedirectUrlPath + "#error=access_denied"));
     }
 
@@ -164,7 +167,7 @@ public class OAuthDialog extends Dialog {
                     });
 
                     mSpinner.dismiss();
-                    OAuthDialog.this.dismiss();                    
+                    OAuthDialog.this.dismiss();
                     return true;
                 }
             } catch (MalformedURLException e) {}
