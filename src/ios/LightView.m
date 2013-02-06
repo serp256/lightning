@@ -61,6 +61,10 @@
     // A system version of 3.1 or greater is required to use CADisplayLink.
     //NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
     //if ([currSysVer compare:@"3.1" options:NSNumericSearch] != NSOrderedAscending) mDisplayLinkSupported = YES;
+
+		if ([self respondsToSelector:@selector(contentScaleFactor)]) {
+			[self setContentScaleFactor:[UIScreen mainScreen].scale];
+		};
     
 		self.multipleTouchEnabled = YES;
     //self.frameRate = 30.0f;
@@ -86,9 +90,6 @@
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, mRenderbuffer);
 		[mContext renderbufferStorage:GL_RENDERBUFFER fromDrawable:eaglLayer];
     
-		if ([self respondsToSelector:@selector(contentScaleFactor)]) {
-			[self setContentScaleFactor:[UIScreen mainScreen].scale];
-		};
 		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &mWidth);
 		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &mHeight);
 		NSLog(@"glsize: %d:%d",mWidth,mHeight);
