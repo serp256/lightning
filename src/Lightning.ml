@@ -153,8 +153,8 @@ value _apkVer = Lazy.lazy_from_fun _getVersion;
 value apkVer () = Lazy.force _apkVer;
 (* value _assetsPath = Lazy.lazy_from_fun _assetPath; *)
 (* value assetsPath () = Lazy.force _assetsPath; *)
-value assetsPath () = (LightCommon.storagePath ()) ^ "/assets";
-value assetsVerFilename () = (assetsPath()) ^ "/a" ^ (apkVer ());
+value assetsPath () = (LightCommon.storagePath ()) ^ "/assets/";
+value assetsVerFilename () = (assetsPath()) ^ "a" ^ (apkVer ());
 
 value assetsExtracted () = Sys.file_exists (assetsVerFilename ());
 
@@ -163,7 +163,7 @@ value extractAssets cb =
     (
       if success then
       (
-        setAssetsDir ((assetsPath ()) ^ "/");
+        setAssetsDir ((assetsPath ()));
         close_out (open_out (assetsVerFilename ()));
       )
       else ();
