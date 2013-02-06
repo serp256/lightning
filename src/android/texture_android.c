@@ -126,12 +126,18 @@ int load_image_info_old(char *fname,char *suffix,int use_pvr,textureInfo *tInfo)
 
 int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	PRINT_DEBUG("LOAD IMAGE INFO: %s[%s]",fname,suffix);
+	
+	char *ext = strrchr(fname,'.');
+
 	if (fname[0] == '/') {
 		int fd = open(fname, O_RDONLY);
 		if (fd < 0) return 1;
-		return load_png_image(fd,tInfo);
-	};
-	char *ext = strrchr(fname,'.');
+
+		if (!strcasecmp(ext,".jpg")) return load_jpg_image(fd, tInfo);
+		else if (!strcasecmp(ext,".png")) return load_png_image(fd,tInfo);
+		else return 2;
+	}
+	
 	resource r;
 	int slen = suffix == NULL ? 0 : strlen(suffix);
 	char *path;
