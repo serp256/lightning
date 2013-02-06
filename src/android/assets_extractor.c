@@ -49,11 +49,11 @@ int makedir (char *newdir)
         return 0;
 
     buffer = (char*)malloc(len+1);
-                if (buffer==NULL)
-                {
-                                PRINT_DEBUG("Error allocating memory\n");
-                                return UNZ_INTERNALERROR;
-                }
+		if (buffer==NULL)
+		{
+			PRINT_DEBUG("Error allocating memory\n");
+			return UNZ_INTERNALERROR;
+		}
     strcpy(buffer,newdir);
 
     if (buffer[len-1] == '/') {
@@ -90,131 +90,131 @@ int makedir (char *newdir)
 
 int do_extract_currentfile(unzFile uf, const char* dst, const char* prefix)
 {
-        char filename_inzip[256];
-        char* filename_withoutpath;
-        char* p;
-        int err=UNZ_OK;
-        FILE *fout=NULL;
-        void* buf;
-        uInt size_buf;
+		char filename_inzip[256];
+		char* filename_withoutpath;
+		char* p;
+		int err=UNZ_OK;
+		FILE *fout=NULL;
+		void* buf;
+		uInt size_buf;
 
-        unz_file_info64 file_info;
-        err = unzGetCurrentFileInfo64(uf,&file_info,filename_inzip,sizeof(filename_inzip),NULL,0,NULL,0);
+		unz_file_info64 file_info;
+		err = unzGetCurrentFileInfo64(uf,&file_info,filename_inzip,sizeof(filename_inzip),NULL,0,NULL,0);
 
-        if (prefix && (strstr(filename_inzip, prefix) != filename_inzip)) {
-            PRINT_DEBUG("skiping %s due to test path function fail", filename_inzip);
-            return UNZ_OK;
-        }
+		if (prefix && (strstr(filename_inzip, prefix) != filename_inzip)) {
+				PRINT_DEBUG("skiping %s due to test path function fail", filename_inzip);
+				return UNZ_OK;
+		}
 
-        if (err!=UNZ_OK)
-        {
-                PRINT_DEBUG("error %d with zipfile in unzGetCurrentFileInfo\n",err);
-                return err;
-        }
+		if (err!=UNZ_OK)
+		{
+				PRINT_DEBUG("error %d with zipfile in unzGetCurrentFileInfo\n",err);
+				return err;
+		}
 
-        size_buf = WRITEBUFFERSIZE;
-        buf = (void*)malloc(size_buf);
-        if (buf==NULL)
-        {
-                PRINT_DEBUG("Error allocating memory\n");
-                return UNZ_INTERNALERROR;
-        }
+		size_buf = WRITEBUFFERSIZE;
+		buf = (void*)malloc(size_buf);
+		if (buf==NULL)
+		{
+					PRINT_DEBUG("Error allocating memory\n");
+					return UNZ_INTERNALERROR;
+		}
 
-        int dstlen = strlen(dst);
-        int filenamelen = strlen(filename_inzip);
+		int dstlen = strlen(dst);
+		int filenamelen = strlen(filename_inzip);
 
-        char* write_filename = malloc(dstlen + filenamelen + 1);
-        strcpy(write_filename, dst);
-        strcpy(write_filename + dstlen, filename_inzip);
-        *(write_filename + dstlen + filenamelen) = '\0';
+		char* write_filename = malloc(dstlen + filenamelen + 1);
+		strcpy(write_filename, dst);
+		strcpy(write_filename + dstlen, filename_inzip);
+		*(write_filename + dstlen + filenamelen) = '\0';
 
-        p = filename_withoutpath = write_filename;
+		p = filename_withoutpath = write_filename;
 
-        while ((*p) != '\0')
-        {
-                if (((*p)=='/') || ((*p)=='\\'))
-                        filename_withoutpath = p+1;
-                p++;
-        }
+		while ((*p) != '\0')
+		{
+						if (((*p)=='/') || ((*p)=='\\'))
+										filename_withoutpath = p+1;
+						p++;
+		}
 
-        if ((*filename_withoutpath)=='\0')
-        {
-                makedir(write_filename);
-        }
-        else
-        {
-                int skip=0;
+		if ((*filename_withoutpath)=='\0')
+		{
+						makedir(write_filename);
+		}
+		else
+		{
+						int skip=0;
 
-                err = unzOpenCurrentFile(uf);
-                if (err!=UNZ_OK)
-                {
-                        PRINT_DEBUG("error %d with zipfile in unzOpenCurrentFile\n",err);
-                }
+						err = unzOpenCurrentFile(uf);
+						if (err!=UNZ_OK)
+						{
+										PRINT_DEBUG("error %d with zipfile in unzOpenCurrentFile\n",err);
+						}
 
-                if ((skip==0) && (err==UNZ_OK))
-                {
-                        fout=fopen64(write_filename,"wb");
+						if ((skip==0) && (err==UNZ_OK))
+						{
+										fout=fopen64(write_filename,"wb");
 
-                        /* some zipfile don't contain directory alone before file */
-                        if ((fout==NULL) && (filename_withoutpath!=(char*)filename_inzip))
-                        {
-                                char c=*(filename_withoutpath-1);
-                                *(filename_withoutpath-1)='\0';
-                                makedir(write_filename);
-                                *(filename_withoutpath-1)=c;
-                                fout=fopen64(write_filename,"wb");
-                        }
+										/* some zipfile don't contain directory alone before file */
+										if ((fout==NULL) && (filename_withoutpath!=(char*)filename_inzip))
+										{
+														char c=*(filename_withoutpath-1);
+														*(filename_withoutpath-1)='\0';
+														makedir(write_filename);
+														*(filename_withoutpath-1)=c;
+														fout=fopen64(write_filename,"wb");
+										}
 
-                        if (fout==NULL)
-                        {
-                                PRINT_DEBUG("error opening %s\n",write_filename);
-                        }
-                }
+										if (fout==NULL)
+										{
+														PRINT_DEBUG("error opening %s\n",write_filename);
+										}
+						}
 
-                if (fout!=NULL)
-                {
-                        PRINT_DEBUG(" extracting: %s\n",write_filename);
+						if (fout!=NULL)
+						{
+										PRINT_DEBUG(" extracting: %s\n",write_filename);
 
-                        do
-                        {
-                                err = unzReadCurrentFile(uf,buf,size_buf);
-                                if (err<0)
-                                {
-                                        PRINT_DEBUG("error %d with zipfile in unzReadCurrentFile\n",err);
-                                        break;
-                                }
-                                if (err>0)
-                                        if (fwrite(buf,err,1,fout)!=1)
-                                        {
-                                                PRINT_DEBUG("error in writing extracted file\n");
-                                                err=UNZ_ERRNO;
-                                                break;
-                                        }
-                        }
-                        while (err>0);
-                        if (fout)
-                                        fclose(fout);
+										do
+										{
+														err = unzReadCurrentFile(uf,buf,size_buf);
+														if (err<0)
+														{
+																		PRINT_DEBUG("error %d with zipfile in unzReadCurrentFile\n",err);
+																		break;
+														}
+														if (err>0)
+																		if (fwrite(buf,err,1,fout)!=1)
+																		{
+																						PRINT_DEBUG("error in writing extracted file\n");
+																						err=UNZ_ERRNO;
+																						break;
+																		}
+										}
+										while (err>0);
+										if (fout)
+																		fclose(fout);
 
-                        if (err==0)
-                                change_file_date(write_filename,file_info.dosDate,
-                                                                 file_info.tmu_date);
-                }
+										if (err==0)
+														change_file_date(write_filename,file_info.dosDate,
+																														 file_info.tmu_date);
+						}
 
-                if (err==UNZ_OK)
-                {
-                        err = unzCloseCurrentFile (uf);
-                        if (err!=UNZ_OK)
-                        {
-                                PRINT_DEBUG("error %d with zipfile in unzCloseCurrentFile\n",err);
-                        }
-                }
-                else
-                        unzCloseCurrentFile(uf); /* don't lose the error */
-        }
+						if (err==UNZ_OK)
+						{
+										err = unzCloseCurrentFile (uf);
+										if (err!=UNZ_OK)
+										{
+														PRINT_DEBUG("error %d with zipfile in unzCloseCurrentFile\n",err);
+										}
+						}
+						else
+										unzCloseCurrentFile(uf); /* don't lose the error */
+		}
 
-        free(write_filename);
-        free(buf);
-        return err;
+		free(write_filename);
+		free(buf);
+		return err;
 }
 
 int do_extract(const char* zip_path, const char* dst, const char* prefix)
@@ -232,24 +232,24 @@ int do_extract(const char* zip_path, const char* dst, const char* prefix)
 
     err = unzGetGlobalInfo64(uf,&gi);
     if (err!=UNZ_OK) {
-        PRINT_DEBUG("error %d with zipfile in unzGetGlobalInfo \n",err);
-        return err;
+			PRINT_DEBUG("error %d with zipfile in unzGetGlobalInfo \n",err);
+			return err;
     }
 
     for (i=0;i<gi.number_entry;i++)
     {
-            if (do_extract_currentfile(uf, dst, prefix) != UNZ_OK)
-                    break;
+			if (do_extract_currentfile(uf, dst, prefix) != UNZ_OK)
+				break;
 
-            if ((i+1)<gi.number_entry)
-            {
-                    err = unzGoToNextFile(uf);
-                    if (err!=UNZ_OK)
-                    {
-                            PRINT_DEBUG("error %d with zipfile in unzGoToNextFile\n",err);
-                            break;
-                    }
-            }
+			if ((i+1)<gi.number_entry)
+			{
+				err = unzGoToNextFile(uf);
+				if (err!=UNZ_OK)
+				{
+					PRINT_DEBUG("error %d with zipfile in unzGoToNextFile\n",err);
+					break;
+				}
+			}
     }
 
     unzClose(uf);
@@ -257,45 +257,43 @@ int do_extract(const char* zip_path, const char* dst, const char* prefix)
     return err;
 }
 
-static value vapkPath;
-static value vexternalStoragePath;
-
-char* getCPath(const char* methodName) {
-        JNIEnv *env;
-        (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-        jmethodID mid = (*env)->GetMethodID(env, jViewCls, methodName, "()Ljava/lang/String;");
-        jstring jpath = (*env)->CallObjectMethod(env, jView, mid);
-        const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
-
-        char* retval = (char*)malloc(strlen(cpath) + 1);
-        strcpy(retval, cpath);
-
-        (*env)->ReleaseStringUTFChars(env, jpath, cpath);
-        (*env)->DeleteLocalRef(env, jpath);
-
-        return retval;
+/*
+static char* getCPath(const char* methodName) {
+	PRINT_DEBUG("getCPath: %s",methodName);
+	return retval;
 }
 
-value getVPath(const char* methodName, value* vpath) {
-    if (!(*vpath)) {
-        char* cpath = getCPath(methodName);
-        *vpath = caml_copy_string(cpath);
-        free(cpath);
+static value getVPath(const char* methodName, value* vpath) {
+	if (!(*vpath)) {
+		char* cpath = getCPath(methodName);
 
-        caml_register_generational_global_root(vpath);
-    }
+		caml_register_generational_global_root(vpath);
+	}
 
-    return *vpath;
-}
+	return *vpath;
+}*/
 
 value ml_apkPath() {
-    return getVPath("getApkPath", &vapkPath);
+	CAMLparam0();
+	CAMLlocal1(vpath);
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getApkPath", "()Ljava/lang/String;");
+	jstring jpath = (*env)->CallObjectMethod(env, jView, mid);
+	const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
+
+	vpath = caml_copy_string(cpath);
+
+	(*env)->ReleaseStringUTFChars(env, jpath, cpath);
+	(*env)->DeleteLocalRef(env, jpath);
+	CAMLreturn(vpath);
 }
 
+/*
 value ml_externalStoragePath() {
-    return getVPath("getAssetsPath", &vexternalStoragePath);
-}
+	return getVPath("getAssetsPath", &vexternalStoragePath);
+}*/
 
 typedef struct {
     char* zipPath;
@@ -334,7 +332,7 @@ void* miniunz_thread(void* params) {
     free(paths->dstPath);
 
     if (paths->prefix) {
-        free(paths->prefix);
+			free(paths->prefix);
     }
 
     free(paths);
@@ -492,20 +490,20 @@ static jclass gRmCallbackRunnableCls;
 static jfieldID gThreadParamsFid;
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024RmCallbackRunnable_run(JNIEnv *env, jobject this) {
-    if (!gRmCallbackRunnableCls) {
-        jclass runnableCls = (*env)->GetObjectClass(env, this);
-        gRmCallbackRunnableCls = (*env)->NewGlobalRef(env, runnableCls);
-        (*env)->DeleteLocalRef(env, runnableCls);
+	if (!gRmCallbackRunnableCls) {
+			jclass runnableCls = (*env)->GetObjectClass(env, this);
+			gRmCallbackRunnableCls = (*env)->NewGlobalRef(env, runnableCls);
+			(*env)->DeleteLocalRef(env, runnableCls);
 
-        gThreadParamsFid = (*env)->GetFieldID(env, gRmCallbackRunnableCls, "threadParams", "I");
-    }
+			gThreadParamsFid = (*env)->GetFieldID(env, gRmCallbackRunnableCls, "threadParams", "I");
+	}
 
-    rm_thread_params_t* params = (rm_thread_params_t*)(*env)->GetObjectField(env, this, gThreadParamsFid);
+	rm_thread_params_t* params = (rm_thread_params_t*)(*env)->GetObjectField(env, this, gThreadParamsFid);
 
-    caml_callback(params->cb, Val_unit);
-    caml_remove_generational_global_root(&params->cb);
+	caml_callback(params->cb, Val_unit);
+	caml_remove_generational_global_root(&params->cb);
 
-    free(params);
+	free(params);
 }
 
 static int expnsExtractInProgress = 0;
@@ -528,36 +526,36 @@ static jmethodID gGetExpansionPathMid;
 static jmethodID gGetExpansionVerMid;
 
 char* get_expansion_path(int main) {
-    JNIEnv *env;
-    (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
-    //(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	JNIEnv *env;
+	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+	//(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
-    if (!gGetExpansionPathMid) {
-        gGetExpansionPathMid = (*env)->GetMethodID(env, jViewCls, "getExpansionPath", "(Z)Ljava/lang/String;");
-    }
+	if (!gGetExpansionPathMid) {
+			gGetExpansionPathMid = (*env)->GetMethodID(env, jViewCls, "getExpansionPath", "(Z)Ljava/lang/String;");
+	}
 
-    jstring jpath = (*env)->CallObjectMethod(env, jView, gGetExpansionPathMid, main);
-    if (!jpath) caml_failwith("Expansion path not specified");
-    const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
+	jstring jpath = (*env)->CallObjectMethod(env, jView, gGetExpansionPathMid, main);
+	if (!jpath) caml_failwith("Expansion path not specified");
+	const char* cpath = (*env)->GetStringUTFChars(env, jpath, JNI_FALSE);
 
-    char* retval = (char*)malloc(strlen(cpath) + 1);
-    strcpy(retval, cpath);
+	char* retval = (char*)malloc(strlen(cpath) + 1);
+	strcpy(retval, cpath);
 
-    (*env)->ReleaseStringUTFChars(env, jpath, cpath);
-    (*env)->DeleteLocalRef(env, jpath);
+	(*env)->ReleaseStringUTFChars(env, jpath, cpath);
+	(*env)->DeleteLocalRef(env, jpath);
 
-    return retval;
+	return retval;
 }
 
 value ml_getExpansionPath(value isMain) {
-    CAMLparam1(isMain);
-    CAMLlocal1(vpath);
+	CAMLparam1(isMain);
+	CAMLlocal1(vpath);
 
-    char* cpath = get_expansion_path(Bool_val(isMain));
-    vpath = caml_copy_string(cpath);
-    free(cpath);
+	char* cpath = get_expansion_path(Bool_val(isMain));
+	vpath = caml_copy_string(cpath);
+	free(cpath);
 
-    CAMLreturn(vpath);
+	CAMLreturn(vpath);
 }
 
 value ml_getExpansionVer(value isMain) {

@@ -1133,7 +1133,7 @@ value ml_getInternalStoragePath () {
 	CAMLparam0();
 	CAMLlocal1(r);
 
-  	JNIEnv *env;	
+	JNIEnv *env;	
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetInternalStoragePath", "()Ljava/lang/String;");
@@ -1155,7 +1155,7 @@ value ml_getStoragePath () {
 
 	PRINT_DEBUG("GET STORAGE PATH");
 
-  	JNIEnv *env;	
+	JNIEnv *env;	
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetStoragePath", "()Ljava/lang/String;");

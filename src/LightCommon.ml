@@ -357,7 +357,8 @@ IFPLATFORM(pc)
 value storagePath () = "Storage";
 ELSE
 external storagePath: unit -> string = "ml_getStoragePath";
-value _storagePath = 
+value _storagePath = Lazy.lazy_from_fun storagePath;
+value storagePath () = Lazy.force _storagePath;
 ENDPLATFORM;
 
 

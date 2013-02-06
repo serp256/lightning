@@ -50,7 +50,7 @@ type stage_constructor = float -> float -> Stage.c;
 IFDEF PC THEN
 value init s =
   let s = (s :> stage_constructor) in
-    Pc_run.run s;
+  Pc_run.run s;
 
 ELSE
 
@@ -119,8 +119,8 @@ ENDIF;
 IFDEF ANDROID THEN
 
 external miniunz : string -> string -> option string -> unit = "ml_miniunz";
-external _apkPath : unit -> string = "ml_apkPath";
-external _externalStoragePath : unit -> string = "ml_externalStoragePath";
+external getApkPath : unit -> string = "ml_apkPath";
+(* external _assetsPath : unit -> string = "ml_assetsPath";*)
 external setAssetsDir : string -> unit = "ml_setAssetsDir";
 external _getVersion : unit -> string = "ml_getVersion";
 external rm : string -> string -> (unit -> unit) -> unit = "ml_rm";
@@ -147,33 +147,30 @@ value unzipComplete zipPath dstPath success =
 
 Callback.register "unzipComplete" unzipComplete;    
 
-value apkPath = _apkPath ();
-value apkVer = _getVersion ();
-value externalStoragePath = _externalStoragePath ();
-value assetsVerFilename = externalStoragePath ^ "assets/a" ^ apkVer;
-(* value expansionVerFilename = externalStoragePath ^ "assets/e" ^ (string_of_int (getExpansionVer True)); *)
+(* value _apkPath = Lazy.lazy_from_fun _apkPath; *)
+(* value apkPath () = Lazy.force _apkPath; *)
+value _apkVer = Lazy.lazy_from_fun _getVersion;
+value apkVer () = Lazy.force _apkVer;
+(* value _assetsPath = Lazy.lazy_from_fun _assetPath; *)
+(* value assetsPath () = Lazy.force _assetsPath; *)
+value assetsPath () = (LightCommon.storagePath ()) ^ "/assets";
+value assetsVerFilename () = (assetsPath()) ^ "/a" ^ (apkVer ());
 
-value assetsExtracted () =
-  Sys.file_exists assetsVerFilename;
-
-(* value expansionExtracted () =
-  Sys.file_exists expansionVerFilename; *)
+value assetsExtracted () = Sys.file_exists (assetsVerFilename ());
 
 value extractAssets cb =
-  let assetsPath = externalStoragePath ^ "assets" in
-    let cb success =
+  let cb success =
+    (
+      if success then
       (
-        if success then
-        (
-          setAssetsDir (assetsPath ^ "/");
-          close_out (open_out assetsVerFilename);
-        )
-        else ();
-
-        cb success;
+        setAssetsDir ((assetsPath ()) ^ "/");
+        close_out (open_out (assetsVerFilename ()));
       )
-    in
-    unzip ~prefix:"assets" apkPath externalStoragePath cb;
+      else ();
+      cb success;
+    )
+  in
+  unzip ~prefix:"assets" (getApkPath ()) (LightCommon.storagePath() ^ "/") cb;
 
 value extractExpansions cb =
 (
@@ -191,11 +188,12 @@ value extractExpansions cb =
 value extractAssetsIfRequired cb =
   if assetsExtracted () then
   (
-    setAssetsDir (externalStoragePath ^ "assets/");
+    setAssetsDir (assetsPath ());
     cb True;
   )
   else
-    rm (ExtString.String.slice ~last:~-1 externalStoragePath) "assets" (fun () -> extractAssets cb);
+(*     rm (ExtString.String.slice ~last:~-1 (LightCommon.storagePath())) "assets" (fun () -> extractAssets cb); *)
+    rm (LightCommon.storagePath()) "assets" (fun () -> extractAssets cb);
 
 value extractAssetsAndExpansionsIfRequired cb =  
   let extractAssetsRes = ref None
@@ -210,8 +208,6 @@ value extractAssetsAndExpansionsIfRequired cb =
       extractAssetsIfRequired (fun success -> ( extractAssetsRes.val := Some success; callCb (); ));
       extractExpansions (fun success -> ( extractExpansionRes.val := Some success; callCb (); ));
     );
-
-external test_c_fun: (unit -> unit) -> unit = "ml_test_c_fun";
 
 ELSE
 value extractAssetsIfRequired (cb:(bool -> unit)) =  cb True;
