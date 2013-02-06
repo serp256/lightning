@@ -186,10 +186,13 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public String getApkPath() {
+		Log.d("LIGHTNING","getApkPath");
 		return getContext().getPackageCodePath();
 	}
 
+	/*
 	public String getAssetsPath() {
+		Log.d("LIGHTNING", "getAssetsPath");
 		File storageDir = getContext().getExternalFilesDir(null);
 		File assetsDir = new File(storageDir, "assets");
 
@@ -198,7 +201,7 @@ public class LightView extends GLSurfaceView {
 		}
 
 		return storageDir.getAbsolutePath() + "/";
-	}
+	}*/
 
 	public String getVersion() throws PackageManager.NameNotFoundException {
 		Context c = getContext();
@@ -622,6 +625,7 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public String mlGetStoragePath() {
+		Log.d("LIGHTNING", "getStoragePath ");
 		File storageDir = getContext().getExternalFilesDir(null);
 		if (storageDir != null) return storageDir.getPath();
 		return getContext().getFilesDir().getPath();

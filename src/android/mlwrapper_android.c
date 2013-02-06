@@ -1124,6 +1124,7 @@ value ml_getLocale () {
 
 value ml_getInternalStoragePath () {
 
+	PRINT_DEBUG("GET INTERNAL STORAGE PATH");
 	CAMLparam0();
 	CAMLlocal1(r);
 
@@ -1146,6 +1147,8 @@ value ml_getStoragePath () {
 
 	CAMLparam0();
 	CAMLlocal1(r);
+
+	PRINT_DEBUG("GET STORAGE PATH");
 
   	JNIEnv *env;	
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
@@ -1399,30 +1402,21 @@ JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightRenderer_handleBack(J
 	return 1;
 }
 
-static value version;
 
 value ml_getVersion() {
-	// DEBUG("ml_getVersion");
+	CAMLparam0();
+	CAMLlocal1(version);
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	if (!version) {
-		// DEBUG("!version");
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-
-		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getVersion", "()Ljava/lang/String;");
-		jstring jver = (*env)->CallObjectMethod(env, jView, mid);
-		const char* cver = (*env)->GetStringUTFChars(env, jver, JNI_FALSE);
-
-		// DEBUGF("cver %s", cver);
-
-		version = caml_copy_string(cver);
-		caml_register_generational_global_root(&version);
-
-		(*env)->ReleaseStringUTFChars(env, jver, cver);
-		(*env)->DeleteLocalRef(env, jver);
-	}
-
-	return version;
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getVersion", "()Ljava/lang/String;");
+	jstring jver = (*env)->CallObjectMethod(env, jView, mid);
+	const char* cver = (*env)->GetStringUTFChars(env, jver, JNI_FALSE);
+	// DEBUGF("cver %s", cver);
+	version = caml_copy_string(cver);
+	(*env)->ReleaseStringUTFChars(env, jver, cver);
+	(*env)->DeleteLocalRef(env, jver);
+	CAMLreturn(version);
 }
 
 
@@ -1548,7 +1542,7 @@ value ml_androidScreen() {
 	Store_field(andrScreen, 0, Val_int(s));
 	Store_field(andrScreen, 1, Val_int(d));
 
-	return andrScreen;
+	CAMLreturn(andrScreen);
 		
 /*		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreenWidth", "()I");
 		int w = (int)(*env)->CallIntMethod(env, jView, mid);

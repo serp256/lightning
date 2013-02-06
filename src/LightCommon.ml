@@ -357,6 +357,7 @@ IFPLATFORM(pc)
 value storagePath () = "Storage";
 ELSE
 external storagePath: unit -> string = "ml_getStoragePath";
+value _storagePath = 
 ENDPLATFORM;
 
 
