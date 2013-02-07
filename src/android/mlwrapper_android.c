@@ -1538,6 +1538,8 @@ value ml_device_id(value unit) {
 static value andrScreen;
 
 value ml_androidScreen() {
+	PRINT_DEBUG("ml_androidScreen call");
+
 	if (!andrScreen) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
@@ -1557,6 +1559,7 @@ value ml_androidScreen() {
 
 			value tuple = caml_alloc(2, 0);
 			andrScreen = caml_alloc(1, 0);
+			caml_register_generational_global_root(&andrScreen);
 
 			Store_field(tuple, 0, Val_int(s));
 			Store_field(tuple, 1, Val_int(d));

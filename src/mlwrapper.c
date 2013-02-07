@@ -63,13 +63,20 @@ mlstage *mlstage_create(float width,float height) {
 	};
 	PRINT_DEBUG("create stage with size: %f:%f",width,height);
 	stage->width = width;
+	PRINT_DEBUG("CHECKPNT1");
 	stage->height = height;
+	PRINT_DEBUG("CHECKPNT2");
 	caml_acquire_runtime_system();
+	PRINT_DEBUG("CHECKPNT3");
 	ml_width = caml_copy_double(width);
+	PRINT_DEBUG("CHECKPNT4");
 	stage->stage = caml_callback2(*create_ml_stage,ml_width,caml_copy_double(height));// FIXME: GC 
+	PRINT_DEBUG("CHECKPNT5");
 	stage->needCancelAllTouches = 0;
+	PRINT_DEBUG("CHECKPNT6");
 
 	caml_register_generational_global_root(&stage->stage);
+	PRINT_DEBUG("CHECKPNT7");
 	caml_release_runtime_system();
 	PRINT_DEBUG("stage successfully created");
 	CAMLreturnT(mlstage*,stage);
