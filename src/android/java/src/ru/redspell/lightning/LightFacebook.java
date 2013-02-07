@@ -168,6 +168,39 @@ public class LightFacebook {
         });
     }
 
+		public static void disconnect () {
+			Log.d("LIGHTNING", "disconnect call");
+						if (session != null) {
+							Log.d("LIGHTNING", "closeAndClear");
+							session.closeAndClearTokenInformation ();
+							Log.d("LIGHTNING", "close");
+							session.close ();
+							Log.d("LIGHTNING", "setActiveSession");
+							session.setActiveSession(null);
+							Log.d("LIGHTNING", "session null");
+							session = null;
+						}
+			/*
+			LightView.instance.post(new Runnable() {
+					@Override
+					public void run() {
+						if (session != null) {
+							Log.d("LIGHTNING", "closeAndClear");
+							session.closeAndClearTokenInformation ();
+							Log.d("LIGHTNING", "close");
+							session.close ();
+							Log.d("LIGHTNING", "setActiveSession");
+							session.setActiveSession(null);
+							Log.d("LIGHTNING", "session null");
+							session = null;
+						}
+						Log.d("LIGHTNING", "end disconnect");
+					}
+				}
+			);
+			*/
+		}
+
     public static boolean loggedIn() {
         Log.d("LIGHTNING", "loggedIn call");
 

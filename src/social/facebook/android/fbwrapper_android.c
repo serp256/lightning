@@ -67,6 +67,16 @@ value ml_fbLoggedIn() {
     return retval;
 }
 
+value ml_fbDisconnect(value connect) {
+    PRINT_DEBUG("ml_fbDisconnect");
+
+    GET_LIGHTFACEBOOK;
+
+    static jmethodID mid;
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "disconnect", "()V");
+    (*env)->CallStaticVoidMethod(env, lightFacebookCls, mid);
+}
+
 value ml_fbAccessToken(value connect) {
     PRINT_DEBUG("ml_fbAccessToken");
 
