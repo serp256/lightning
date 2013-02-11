@@ -222,9 +222,9 @@ public class LightView extends GLSurfaceView {
 		super(_activity);
 		activity = _activity;
 
-	    Display display = activity.getWindowManager().getDefaultDisplay();
-	    displayMetrics = new DisplayMetrics();
-	    display.getMetrics(displayMetrics);
+		Display display = activity.getWindowManager().getDefaultDisplay();
+		displayMetrics = new DisplayMetrics();
+		display.getMetrics(displayMetrics);
 
 		Log.d("LIGHTNING", "tid: " + Process.myTid());
 

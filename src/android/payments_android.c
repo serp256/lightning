@@ -1,5 +1,6 @@
 #include "mlwrapper_android.h"
 
+/*
 void ml_paymentsTest() {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
@@ -7,6 +8,7 @@ void ml_paymentsTest() {
 	jmethodID mthdId = (*env)->GetMethodID(env, jViewCls, "initBillingServ", "()V");
 	(*env)->CallIntMethod(env, jView, mthdId);
 }
+*/
 
 static value successCb = 0;
 static value errorCb = 0;
