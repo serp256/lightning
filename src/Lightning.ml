@@ -219,4 +219,3 @@ value getMACID () = _deviceIdentifier ();
 ELSE
 external getMACID: unit -> string = "ml_getMACID";
 ENDIF;
-

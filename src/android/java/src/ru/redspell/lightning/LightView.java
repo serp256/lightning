@@ -54,6 +54,10 @@ import ru.redspell.lightning.expansions.XAPKFile;
 import java.util.Formatter;
 import java.util.HashMap;
 
+import ru.redspell.lightning.payments.google.LightGooglePayments;
+import ru.redspell.lightning.payments.amazon.LightAmazonPayments;
+import ru.redspell.lightning.payments.ILightPayments;
+
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
     	for (XAPKFile xf : activity.getXAPKS()) {
@@ -211,7 +215,7 @@ public class LightView extends GLSurfaceView {
 	private LightRenderer renderer;
 	private int loader_id;
 	private Handler uithread;
-	private BillingService bserv;
+	// private BillingService bserv;
 
 	public static LightView instance;
 	
@@ -242,9 +246,9 @@ public class LightView extends GLSurfaceView {
 		instance = this;
 
 		// FIXME: move it to payments init
-		bserv = new BillingService();
-		bserv.setContext(activity);
-		ResponseHandler.register(activity);
+		// bserv = new BillingService();
+		// bserv.setContext(activity);
+		// ResponseHandler.register(activity);
 	}
 
 	protected void initView(int width,int height) {
@@ -557,6 +561,7 @@ public class LightView extends GLSurfaceView {
 	private native void lightInit(SharedPreferences p);
 	private native void lightFinalize();
 
+	/*
 	public void requestPurchase(String prodId) {
 		bserv.requestPurchase(prodId);
 	}
@@ -572,6 +577,7 @@ public class LightView extends GLSurfaceView {
 	public void initBillingServ() {
 		bserv.requestPurchase("android.test.purchased");
 	}
+	*/
 
   public void openURL(String url){
 		Context c = getContext();
@@ -888,4 +894,36 @@ public class LightView extends GLSurfaceView {
 	}	
 
 	public native String glExts();
+
+	private ILightPayments payments;
+
+	public void paymentsInit(boolean googleMarket, String key) {
+		if (googleMarket) {
+			payments = new LightGooglePayments(key);
+		} else {
+			payments = new LightAmazonPayments(LightActivity.instance);
+		}
+
+		payments.init();
+	}
+
+	public void paymentsInit(boolean googleMarket) {
+		paymentsInit(googleMarket, null);	
+	}
+
+	public void paymentsPurchase(String sku) throws Error {
+		if (payments == null) {
+			throw new Error("payments not initialized");
+		}
+
+		payments.purchase(sku);
+	}
+
+	public void paymentsConsumePurchase(String purchaseToken) {
+		payments.comsumePurchase(purchaseToken);
+	}
+
+	public void restorePurchases() {
+		payments.restorePurchases();
+	}
 }
