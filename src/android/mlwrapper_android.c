@@ -172,7 +172,7 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 }
 */
 
-static char* gAssetsDir;
+static char* gAssetsDir = NULL;
 
 void ml_setAssetsDir(value vassDir) {
 	char* cassDir = String_val(vassDir);
