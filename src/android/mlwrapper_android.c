@@ -432,6 +432,7 @@ static value run_method = 1;//None
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
 	CAMLparam0();
 	CAMLlocal1(timePassed);
+	PRINT_DEBUG("DRAW FRAME!!!!");
 	timePassed = caml_copy_double((double)interval / 1000000000L);
 	//mlstage_run(timePassed);
 	if (net_running > 0) net_perform();
@@ -1536,10 +1537,9 @@ value ml_device_id(value unit) {
 	return device_id;
 }
 
-static value andrScreen;
-
 value ml_androidScreen() {
-	if (!andrScreen) {
+	CAMLparam0();
+	CAMLlocal1(andrScreen);
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
@@ -1556,16 +1556,14 @@ value ml_androidScreen() {
 		} else {
 			PRINT_DEBUG("some");
 
-			value tuple = caml_alloc(2, 0);
 			andrScreen = caml_alloc(1, 0);
 
+			value tuple = caml_alloc(2, 0);
 			Store_field(tuple, 0, Val_int(s));
 			Store_field(tuple, 1, Val_int(d));
 			Store_field(andrScreen, 0, tuple);
-		}
-	}
-
-	return andrScreen;
+		};
+	CAMLreturn(andrScreen);
 		
 /*		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreenWidth", "()I");
 		int w = (int)(*env)->CallIntMethod(env, jView, mid);
