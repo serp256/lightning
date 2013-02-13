@@ -172,7 +172,7 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 }
 */
 
-static char* gAssetsDir;
+static char* gAssetsDir = NULL;
 
 void ml_setAssetsDir(value vassDir) {
 	char* cassDir = String_val(vassDir);
@@ -255,6 +255,7 @@ int getResourceFd(const char *path, resource *res) { //{{{
 
 		PRINT_DEBUG("%s not found in extracted assets", path);
 	} else {
+		PRINT_DEBUG("TRY GET FROM APK ZIP");
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
 		if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
@@ -301,11 +302,11 @@ int getResourceFd(const char *path, resource *res) { //{{{
 			res->fd = myfd;
 			res->length = length;
 			
-			(*env)->DeleteLocalRef(env, fileDescriptor);
-			(*env)->DeleteLocalRef(env, resourceParams);
-			(*env)->DeleteLocalRef(env, cls);
+			(*env)->DeleteLocalRef(env,fileDescriptor);
+			(*env)->DeleteLocalRef(env,resourceParams);
+			(*env)->DeleteLocalRef(env,cls);
 
-			return 1;		  
+			return 1;
 		}
 	}
 

@@ -95,23 +95,27 @@ value ml_fbAccessToken(value connect) {
     return vaccessToken;
 }
 
-void ml_fbApprequest(value connect, value title, value message, value recipient, value successCallback, value failCallback) {
+void ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
     value* _successCallback;
     value* _failCallback;
+    PRINT_DEBUG("ml_fbAppRequest %d",gettid());
 
     REGISTER_CALLBACK(successCallback, _successCallback);
     REGISTER_CALLBACK(failCallback, _failCallback);
+
+		PRINT_DEBUG("successCallback: %ld",_successCallback);
 
     GET_LIGHTFACEBOOK;
 
     jstring jtitle = (*env)->NewStringUTF(env, String_val(title));
     jstring jmessage = (*env)->NewStringUTF(env, String_val(message));
     jstring jrecipient = Is_block(recipient) ? (*env)->NewStringUTF(env, String_val(Field(recipient, 0))) : NULL;
+		jstring jdata = Is_block(data) ? (*env)->NewStringUTF(env,String_val(Field(data,0))) : NULL;
 
     static jmethodID mid;
-    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "apprequest", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)Z");
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "apprequest", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)Z");
 
-    jboolean allRight = (*env)->CallStaticBooleanMethod(env, lightFacebookCls, mid, jtitle, jmessage, jrecipient, (int)_successCallback, (int)_failCallback);
+    jboolean allRight = (*env)->CallStaticBooleanMethod(env, lightFacebookCls, mid, jtitle, jmessage, jrecipient, jdata, (int)_successCallback, (int)_failCallback);
 
     (*env)->DeleteLocalRef(env, jtitle);
     (*env)->DeleteLocalRef(env, jmessage);
@@ -122,7 +126,7 @@ void ml_fbApprequest(value connect, value title, value message, value recipient,
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-void ml_fbGraphrequest(value connect, value path, value params, value successCallback, value failCallback) {
+void ml_fbGraphrequest(value path, value params, value successCallback, value failCallback) {
     PRINT_DEBUG("ml_fbGraphrequest");
 
     value* _successCallback;
@@ -282,6 +286,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightFacebook_00024CamlNamedVa
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightFacebook_00024CamlCallbackWithStringArrayParamRunnable_run(JNIEnv *env, jobject this) {
     static jfieldID callbackFid;
     static jfieldID paramFid;
+		PRINT_DEBUG("Java_ru_redspell_lightning_LightFacebook_00024CamlCallbackWithStringArrayParamRunnable_run %d",gettid());
 
     if (!callbackFid) {
         jclass selfCls = (*env)->GetObjectClass(env, this);
@@ -291,38 +296,47 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightFacebook_00024CamlCallbac
     }
 
     value* vcallback = (value*)(*env)->GetIntField(env, this, callbackFid);
+		PRINT_DEBUG("successCallback: %ld",vcallback);
 
     if (vcallback) {
         jobjectArray jids = (*env)->GetObjectField(env, this, paramFid);
         int idsNum = (*env)->GetArrayLength(env, jids);
         value vids = Val_int(0);
-        value vid;
+        value vid = 0;
         const char* cid;
         jstring jid;
-        value head;
+        value head = 0;
         int i;
 
+				Begin_roots3(vid,head,vids);
+
         for (i = 0; i < idsNum; i++) {
-            jid = (*env)->GetObjectArrayElement(env, jids, i);
-            cid = (*env)->GetStringUTFChars(env, jid, JNI_FALSE);
-            vid = caml_copy_string(cid);
-            (*env)->ReleaseStringUTFChars(env, jid, cid);
+					jid = (*env)->GetObjectArrayElement(env, jids, i);
+					cid = (*env)->GetStringUTFChars(env, jid, JNI_FALSE);
+					PRINT_DEBUG("array el: %s",cid);
+					vid = caml_copy_string(cid);
+					(*env)->ReleaseStringUTFChars(env, jid, cid);
 
-            head = caml_alloc(2, 0);
-            Store_field(head, 0, vid);
-            Store_field(head, 1, vids);
+					head = caml_alloc(2, 0);
+					Store_field(head, 0, vid);
+					Store_field(head, 1, vids);
 
-            vids = head;
-        }
+					vids = head;
+        };
         
         caml_callback(*vcallback, vids);
-    }
+				End_roots();
+
+				PRINT_DEBUG("END Java_ru_redspell_lightning_LightFacebook_00024CamlCallbackWithStringArrayParamRunnable_run");
+    };
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightFacebook_00024CamlNamedValueWithStringAndValueParamsRunnable_run(JNIEnv *env, jobject this) {
     static jfieldID nameFid;
     static jfieldID param1Fid;
     static jfieldID param2Fid;
+
+		PRINT_DEBUG("Java_ru_redspell_lightning_LightFacebook_00024CamlNamedValueWithStringAndValueParamsRunnable_run");
 
     if (!nameFid) {
         jclass selfCls = (*env)->GetObjectClass(env, this);
@@ -357,6 +371,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightFacebook_00024CamlNamedVa
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightFacebook_00024ReleaseCamlCallbacksRunnable_run(JNIEnv *env, jobject this) {
     static jfieldID successCbFid;
     static jfieldID failCbFid;
+		PRINT_DEBUG("Java_ru_redspell_lightning_LightFacebook_00024ReleaseCamlCallbacksRunnable_run");
 
     if (!successCbFid) {
         jclass selfCls = (*env)->GetObjectClass(env, this);
@@ -370,4 +385,5 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightFacebook_00024ReleaseCaml
 
     FREE_CALLBACK(successCallback);
     FREE_CALLBACK(failCallback);
+		PRINT_DEBUG("END Java_ru_redspell_lightning_LightFacebook_00024ReleaseCamlCallbacksRunnable_run");
 }
