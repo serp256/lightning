@@ -255,6 +255,7 @@ int getResourceFd(const char *path, resource *res) { //{{{
 
 		PRINT_DEBUG("%s not found in extracted assets", path);
 	} else {
+		PRINT_DEBUG("TRY GET FROM APK ZIP");
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
 		if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
@@ -301,11 +302,11 @@ int getResourceFd(const char *path, resource *res) { //{{{
 			res->fd = myfd;
 			res->length = length;
 			
-			(*env)->DeleteLocalRef(env, fileDescriptor);
-			(*env)->DeleteLocalRef(env, resourceParams);
-			(*env)->DeleteLocalRef(env, cls);
+			(*env)->DeleteLocalRef(env,fileDescriptor);
+			(*env)->DeleteLocalRef(env,resourceParams);
+			(*env)->DeleteLocalRef(env,cls);
 
-			return 1;		  
+			return 1;
 		}
 	}
 
@@ -431,6 +432,7 @@ static value run_method = 1;//None
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
 	CAMLparam0();
 	CAMLlocal1(timePassed);
+	PRINT_DEBUG("DRAW FRAME!!!!");
 	timePassed = caml_copy_double((double)interval / 1000000000L);
 	//mlstage_run(timePassed);
 	if (net_running > 0) net_perform();

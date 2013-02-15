@@ -7,13 +7,15 @@
 
 @interface LightFBDialogDelegate : NSObject <FBDialogDelegate>
 {
-	value* _successCallback;
-	value* _failCallback;
+	value* _successCallbackRequest;
+	value* _failCallbackRequest;
+	value* _successCallbackGraphApi;
+	value* _failCallbackGraphApi;
 	value usersIds;
 }
 
-- (id)initWithSuccessCallback:(value*)successCallback andFailCallback:(value*)failCallback;
-- (void)freeCallbacks;
+- (id)initWithSuccessCallbackRequest:(value*)successCallback andFailCallback:(value*)failCallback;
+- (void)freeCallbacksRequests;
 @end
 
 void ml_fbInit(value appid);

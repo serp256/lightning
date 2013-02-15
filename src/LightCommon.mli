@@ -3,6 +3,7 @@ value (<|): ('a -> 'b) -> 'a -> 'b;
 value color_white: int;
 value color_black: int;
 
+value round : float -> float;
 
 type qColor = 
   {

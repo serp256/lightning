@@ -19,11 +19,12 @@
 }                                                                           \
 
 @implementation LightFBDialogDelegate
-    - (id)initWithSuccessCallback:(value*)successCallback andFailCallback:(value*)failCallback {
+    - (id)initWithSuccessCallbackRequest:(value*)successCallback andFailCallback:(value*)failCallback {
         self = [super init];
 
-        _successCallback = successCallback;
-        _failCallback = failCallback;
+				NSLog(@"initWithSuccessCallback");
+        _successCallbackRequest = successCallback;
+        _failCallbackRequest = failCallback;
 
         return self;
     }
@@ -31,11 +32,15 @@
     - (void)dialogDidComplete:(FBDialog*)dialog {
         NSLog(@"dialogDidComplete");
 
-        if (_successCallback) {            
-            caml_callback(*_successCallback, usersIds);
-        }
+        if (_successCallbackRequest) {            
+						NSLog(@"successCallback is call");
+            caml_callback(*_successCallbackRequest, usersIds);
+        } else {
+						NSLog(@"successCallback not found");
+				}
 
-        [self freeCallbacks];
+				NSLog(@"frrCallbacks");
+        [self freeCallbacksRequests];
         [[LightViewController sharedInstance] becomeActive];
     }
 
@@ -83,11 +88,12 @@
     - (void)dialog:(FBDialog*)dialog didFailWithError:(NSError*)error {
         NSLog(@"dialog didFailWithError call");
 
-        if (_failCallback) {
-            caml_callback(*_failCallback, caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+        if (_failCallbackRequest) {
+            caml_callback(*_failCallbackRequest, caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
         }
 
-        [self freeCallbacks];
+				NSLog(@"!!!!!!!!!!!!!frrCallbacks");
+        [self freeCallbacksRequests];
         [[LightViewController sharedInstance] becomeActive];
     }
 
@@ -97,12 +103,13 @@
         return YES;
     }
 
-    - (void)freeCallbacks {
-        FREE_CALLBACK(_successCallback);
-        FREE_CALLBACK(_failCallback);
+    - (void)freeCallbacksRequests {
+				NSLog(@"freeCallback");
+        FREE_CALLBACK(_successCallbackRequest);
+        FREE_CALLBACK(_failCallbackRequest);
 
-        _successCallback = nil;
-        _failCallback = nil;
+        _successCallbackRequest = nil;
+        _failCallbackRequest = nil;
     }
 
     - (void)dealloc {
@@ -240,14 +247,21 @@ void ml_fbApprequest(value connect, value title, value message, value recipient,
     fb.accessToken = fbSession.accessToken;
     fb.expirationDate = fbSession.expirationDate;
 
-    NSString* nstitle = [NSString stringWithCString:String_val(title) encoding:NSASCIIStringEncoding];
-    NSString* nsmessage = [NSString stringWithCString:String_val(message) encoding:NSASCIIStringEncoding];
+    NSString* nstitle = [NSString stringWithCString:String_val(title) encoding:NSUTF8StringEncoding];
+    NSString* nsmessage = [NSString stringWithCString:String_val(message) encoding:NSUTF8StringEncoding];
+		NSLog(@"title=%@; message=%@",nstitle, nsmessage);
 
-    value* _successCallback;
-    value* _failCallback;
+    value* _successCallbackRequest;
+    value* _failCallbackRequest;
 
-    REGISTER_CALLBACK(successCallback, _successCallback);
-    REGISTER_CALLBACK(failCallback, _failCallback);
+		NSLog(@"INIT SUCCESS CALLBACK IN APP REQUEST");
+    REGISTER_CALLBACK(successCallback, _successCallbackRequest);
+		if (_successCallbackRequest) {
+			NSLog(@"success callback is init");
+		} else {
+			NSLog(@"success callback is NOT init");
+		}
+    REGISTER_CALLBACK(failCallback, _failCallbackRequest);
 
     NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
 
@@ -263,10 +277,16 @@ void ml_fbApprequest(value connect, value title, value message, value recipient,
     }
 
     static LightFBDialogDelegate* delegate;
-    if (!delegate) delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallback:_successCallback andFailCallback:_failCallback];
+//    if (!delegate) delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
+    delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
 
     [[LightViewController sharedInstance] resignActive];
     [fb dialog:@"apprequests" andParams:params andDelegate:delegate];
+		if (_successCallbackRequest) {
+			NSLog(@"success callback is init");
+		} else {
+			NSLog(@"success callback is NOT init");
+		}
 }
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
@@ -290,37 +310,43 @@ void ml_fbGraphrequest(value connect, value path, value params, value successCal
         }
     }
 
-    value* _successCallback;
-    value* _failCallback;
-
-    REGISTER_CALLBACK(successCallback, _successCallback);
-    REGISTER_CALLBACK(failCallback, _failCallback);
+    value* _successCallbackGraphApi;
+    value* _failCallbackGraphApi;
+				
+    REGISTER_CALLBACK(successCallback, _successCallbackGraphApi);
+		if (_successCallbackGraphApi) {
+			NSLog(@"success callback is init in graphApi");
+		} else {
+			NSLog(@"success callback is NOT init in graph");
+		}
+    REGISTER_CALLBACK(failCallback, _failCallbackGraphApi);
 
     [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:nil completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
         if (error) {
-            if (_failCallback) {
-                caml_callback(*_failCallback, caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+            if (_failCallbackGraphApi) {
+                caml_callback(*_failCallbackGraphApi, caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
             }
         } else {
-            if (_successCallback) {
+            if (_successCallbackGraphApi) {
                 FBSBJSON* json = [[FBSBJSON alloc] init];
                 NSError* err = nil;
                 NSString* jsonResult = [json stringWithObject:result error:&err];
 
                 if (err) {
-                    if (_failCallback) {
-                        caml_callback(*_failCallback, caml_copy_string([[err localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+                    if (_failCallbackGraphApi) {
+                        caml_callback(*_failCallbackGraphApi, caml_copy_string([[err localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
                     }
                 } else {
-                    caml_callback2(*caml_named_value("fb_graphrequestSuccess"), caml_copy_string([jsonResult cStringUsingEncoding:NSUTF8StringEncoding]), *_successCallback);
+                    caml_callback2(*caml_named_value("fb_graphrequestSuccess"), caml_copy_string([jsonResult cStringUsingEncoding:NSUTF8StringEncoding]), *_successCallbackGraphApi);
                 }
 
                 [json release];
             }
         }
 
-        FREE_CALLBACK(_successCallback);
-        FREE_CALLBACK(_failCallback);        
+				NSLog(@"FREE SUCESSCALLBACK IN GRAPH API");
+        FREE_CALLBACK(_successCallbackGraphApi);
+        FREE_CALLBACK(_failCallbackGraphApi);        
     }];
 }
 
