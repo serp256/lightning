@@ -4,6 +4,9 @@ exception Kv_not_found;
 IFPLATFORM(android) 
 external get_storage_path: unit -> string = "ml_getInternalStoragePath";
 ENDPLATFORM;
+IFPLATFORM(pc) 
+value get_storage_path () = ".";
+ENDPLATFORM;
 
 IFPLATFORM(ios) 
 external commit : unit -> unit = "ml_kv_storage_commit";
@@ -30,7 +33,6 @@ ELSE
 
 type t = Hashtbl.t string string;
 
-value get_storage_path () = ".";
 
 value storage_file = 
   ifplatform(android)
