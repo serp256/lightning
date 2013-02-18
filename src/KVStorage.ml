@@ -30,6 +30,8 @@ ELSE
 
 type t = Hashtbl.t string string;
 
+value get_storage_path () = ".";
+
 value storage_file = 
   ifplatform(android)
     (get_storage_path ()) ^ "kvstorage"
