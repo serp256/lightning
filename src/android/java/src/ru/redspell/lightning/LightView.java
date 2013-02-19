@@ -1,5 +1,7 @@
 package ru.redspell.lightning; 
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import android.app.Activity;
 import android.view.MotionEvent;
 import android.opengl.GLSurfaceView;
@@ -31,11 +33,9 @@ import java.util.Locale;
 import android.net.Uri;
 import android.os.Environment;
 import android.content.res.Configuration;
-//import android.os.AsyncTask;
-//import android.content.pm.PackageManager.NameNotFoundException;
 
-import ru.redspell.lightning.payments.BillingService;
-import ru.redspell.lightning.payments.ResponseHandler;
+//import ru.redspell.lightning.payments.BillingService;
+//import ru.redspell.lightning.payments.ResponseHandler;
 import com.google.android.vending.expansion.downloader.Helpers;
 import com.tapjoy.TapjoyConnect;
 import com.tapjoy.TapjoyLog;
@@ -53,6 +53,8 @@ import android.graphics.Color;
 import ru.redspell.lightning.expansions.XAPKFile;
 import java.util.Formatter;
 import java.util.HashMap;
+
+//import ru.redspell.lightning.LightEGLContextFactory;
 
 import ru.redspell.lightning.payments.google.LightGooglePayments;
 import ru.redspell.lightning.payments.amazon.LightAmazonPayments;
@@ -253,29 +255,14 @@ public class LightView extends GLSurfaceView {
 	}
 
 	protected void initView(int width,int height) {
-		setEGLContextClientVersion(2);
+		//setEGLContextFactory(new LightEGLContextFactory());
 		Log.d("LIGHTNING","create Renderer");
+		setEGLContextClientVersion(2);
 		renderer = new LightRenderer(width,height);
 		setRenderer(renderer);
 		setFocusableInTouchMode(true);
 	}
 
-	public void surfaceCreated(SurfaceHolder holder) {
-		Log.d("LIGHTNING","surfaceCreated");
-		super.surfaceCreated(holder);
-	}
-
-	public void surfaceDestroyed(SurfaceHolder holder) {
-		Log.d("LIGHTNING","surfaceDestroyed");
-		super.surfaceDestroyed(holder);
-
-		queueEvent(new Runnable() {
-			@Override
-			public void run() {
-				renderer.nativeSurfaceDestroyed();
-			}
-		});		
-	}
 
 	public ResourceParams getResource(String path) {
 
@@ -293,9 +280,44 @@ public class LightView extends GLSurfaceView {
 		return res;
 	}
 
+
+	ArrayList<Runnable> waitingEvents = new ArrayList();
+	boolean paused = false;
+
+	@Override
+	public void queueEvent(Runnable r) {
+		if (paused) waitingEvents.add(r);
+		else super.queueEvent(r);
+	}
+		
+	public void surfaceCreated(SurfaceHolder holder) {
+		Log.d("LIGHTNING","surfaceCreated");
+		super.surfaceCreated(holder);
+		paused = false;
+		// push all events
+		if (!waitingEvents.isEmpty()) {
+			Iterator<Runnable> iter = waitingEvents.iterator();
+			while (iter.hasNext()) {
+				Runnable r = iter.next();
+				super.queueEvent(r);
+			}
+		};
+	}
+
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		Log.d("LIGHTNING","surfaceDestroyed");
+		super.surfaceDestroyed(holder);
+		super.queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				renderer.nativeSurfaceDestroyed();
+			}
+		});
+		paused = true;
+	}
+
 	public void onPause(){
 		Log.d("LIGHTNING", "VIEW.onPause");
-
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -307,18 +329,16 @@ public class LightView extends GLSurfaceView {
 
 	public void onResume() {
 		Log.d("LIGHTNING", "VIEW.onResume");
-		//super.onResume();
-
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
 				renderer.handleOnResume();
 			}
 		});
+		//super.onResume();
 	}
 
 	public void onDestroy() {
-
 		Log.d("LIGHTNING","VIEW.onDestroy");
 		//lightFinalize();
 		Process.killProcess(Process.myPid());

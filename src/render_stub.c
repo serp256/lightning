@@ -460,7 +460,7 @@ void lgGLUniformModelViewProjectionMatrix(sprogram *sp) {
   kmMat4Multiply(&matrixMVP, &matrixP, &matrixMV);
 
 	//printf("matrix uniform location: %d\n",sp->uniforms[lgUniformMVPMatrix]);
-  glUniformMatrix4fv( sp->std_uniforms[lgUniformMVPMatrix], 1, GL_FALSE, matrixMVP.mat);
+  glUniformMatrix4fv(sp->std_uniforms[lgUniformMVPMatrix], 1, GL_FALSE, matrixMVP.mat);
 }
 
 static value caml_hash_Color = 0;

@@ -25,7 +25,7 @@ import ru.redspell.lightning.expansions.XAPKFile;
 import ru.redspell.lightning.LightView;
 import android.content.res.TypedArray;
 
-import ru.redspell.lightning.payments.Security;
+//import ru.redspell.lightning.payments.Security;
 
 import android.widget.AbsoluteLayout;
 import android.widget.EditText;
@@ -179,17 +179,15 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		Log.d(LOG_TAG, "onDownloadProgress call");
 	}
 
-    @Override
-    protected void onStart() {
-    	isRunning = true;
-        if (null != mDownloaderClientStub) {
-            mDownloaderClientStub.connect(this);
-        }
-        super.onStart();
-        // mPlusClient.connect();
-
-        
-    }
+	@Override
+	protected void onStart() {
+		isRunning = true;
+		if (null != mDownloaderClientStub) {
+				mDownloaderClientStub.connect(this);
+		}
+		super.onStart();
+		// mPlusClient.connect();
+	}
 
 	@Override
 	protected void onPause() {
