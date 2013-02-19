@@ -54,6 +54,10 @@ import ru.redspell.lightning.expansions.XAPKFile;
 import java.util.Formatter;
 import java.util.HashMap;
 
+import ru.redspell.lightning.payments.google.LightGooglePayments;
+import ru.redspell.lightning.payments.amazon.LightAmazonPayments;
+import ru.redspell.lightning.payments.ILightPayments;
+
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
     	for (XAPKFile xf : activity.getXAPKS()) {
@@ -154,27 +158,27 @@ public class LightView extends GLSurfaceView {
 				return 3;
 		}*/
 		String screen = activity.getString(R.string.screen);
-		Log.d("LIGHTNING", "screen " + screen);
+		Log.d("LIGHTNING", "java screen " + screen);
 
-		if (screen.contentEquals("small")) return 0;
-		if (screen.contentEquals("normal")) return 1;
-		if (screen.contentEquals("large")) return 2;
-		if (screen.contentEquals("xlarge")) return 3;
+		if (screen.contentEquals("small")) return 1;
+		if (screen.contentEquals("normal")) return 2;
+		if (screen.contentEquals("large")) return 3;
+		if (screen.contentEquals("xlarge")) return 4;
 
-		return -1;		
+		return 0;		
 	}
 
 	public int getDensity() {
 		String density = activity.getString(R.string.density);
-		Log.d("LIGHTNING", "density " + density);
+		Log.d("LIGHTNING", "java density " + density);
 
-		if (density.contentEquals("tvdpi")) return 4;
-		if (density.contentEquals("ldpi")) return 0;
-		if (density.contentEquals("mdpi")) return 1;
-		if (density.contentEquals("hdpi")) return 2;
-		if (density.contentEquals("xhdpi")) return 3;
+		if (density.contentEquals("tvdpi")) return 5;
+		if (density.contentEquals("ldpi")) return 1;
+		if (density.contentEquals("mdpi")) return 2;
+		if (density.contentEquals("hdpi")) return 3;
+		if (density.contentEquals("xhdpi")) return 4;
 
-		return -1;
+		return 0;
 	}
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {
@@ -186,10 +190,13 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public String getApkPath() {
+		Log.d("LIGHTNING","getApkPath");
 		return getContext().getPackageCodePath();
 	}
 
+	/*
 	public String getAssetsPath() {
+		Log.d("LIGHTNING", "getAssetsPath");
 		File storageDir = getContext().getExternalFilesDir(null);
 		File assetsDir = new File(storageDir, "assets");
 
@@ -198,7 +205,7 @@ public class LightView extends GLSurfaceView {
 		}
 
 		return storageDir.getAbsolutePath() + "/";
-	}
+	}*/
 
 	public String getVersion() throws PackageManager.NameNotFoundException {
 		Context c = getContext();
@@ -208,7 +215,7 @@ public class LightView extends GLSurfaceView {
 	private LightRenderer renderer;
 	private int loader_id;
 	private Handler uithread;
-	private BillingService bserv;
+	// private BillingService bserv;
 
 	public static LightView instance;
 	
@@ -219,15 +226,16 @@ public class LightView extends GLSurfaceView {
 		super(_activity);
 		activity = _activity;
 
-	    Display display = activity.getWindowManager().getDefaultDisplay();
-	    displayMetrics = new DisplayMetrics();
-	    display.getMetrics(displayMetrics);
+		Display display = activity.getWindowManager().getDefaultDisplay();
+		displayMetrics = new DisplayMetrics();
+		display.getMetrics(displayMetrics);
 
 		Log.d("LIGHTNING", "tid: " + Process.myTid());
 
 
 		activity.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 		DisplayMetrics dm = new DisplayMetrics();
 		activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
 		int width = dm.widthPixels;
@@ -239,9 +247,9 @@ public class LightView extends GLSurfaceView {
 		instance = this;
 
 		// FIXME: move it to payments init
-		bserv = new BillingService();
-		bserv.setContext(activity);
-		ResponseHandler.register(activity);
+		// bserv = new BillingService();
+		// bserv.setContext(activity);
+		// ResponseHandler.register(activity);
 	}
 
 	protected void initView(int width,int height) {
@@ -554,6 +562,7 @@ public class LightView extends GLSurfaceView {
 	private native void lightInit(SharedPreferences p);
 	private native void lightFinalize();
 
+	/*
 	public void requestPurchase(String prodId) {
 		bserv.requestPurchase(prodId);
 	}
@@ -569,6 +578,7 @@ public class LightView extends GLSurfaceView {
 	public void initBillingServ() {
 		bserv.requestPurchase("android.test.purchased");
 	}
+	*/
 
   public void openURL(String url){
 		Context c = getContext();
@@ -622,6 +632,7 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public String mlGetStoragePath() {
+		Log.d("LIGHTNING", "getStoragePath ");
 		File storageDir = getContext().getExternalFilesDir(null);
 		if (storageDir != null) return storageDir.getPath();
 		return getContext().getFilesDir().getPath();
@@ -884,4 +895,36 @@ public class LightView extends GLSurfaceView {
 	}	
 
 	public native String glExts();
+
+	private ILightPayments payments;
+
+	public void paymentsInit(boolean googleMarket, String key) {
+		if (googleMarket) {
+			payments = new LightGooglePayments(key);
+		} else {
+			payments = new LightAmazonPayments(LightActivity.instance);
+		}
+
+		payments.init();
+	}
+
+	public void paymentsInit(boolean googleMarket) {
+		paymentsInit(googleMarket, null);	
+	}
+
+	public void paymentsPurchase(String sku) throws Error {
+		if (payments == null) {
+			throw new Error("payments not initialized");
+		}
+
+		payments.purchase(sku);
+	}
+
+	public void paymentsConsumePurchase(String purchaseToken) {
+		payments.comsumePurchase(purchaseToken);
+	}
+
+	public void restorePurchases() {
+		payments.restorePurchases();
+	}
 }

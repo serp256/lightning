@@ -90,16 +90,16 @@ static void* loader_thread(void* params) {
 	curl_easy_setopt(curl_hndlr, CURLOPT_WRITEFUNCTION, curl_wfunc);
 	curl_easy_setopt(curl_hndlr, CURLOPT_FOLLOWLOCATION, 1);
 
-    JNIEnv *env;
-    (*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
-    jfieldID wFid;
-    jfieldID hFid;
-    jfieldID lwFid;
-    jfieldID lhFid;
-    jfieldID dataFid;
-    jfieldID formatFid;    
-    jmethodID decodeImgMid = (*env)->GetMethodID(env, jViewCls, "decodeImg", "([B)Lru/redspell/lightning/LightView$TexInfo;");
-    jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");
+	JNIEnv *env;
+	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+	jfieldID wFid;
+	jfieldID hFid;
+	jfieldID lwFid;
+	jfieldID lhFid;
+	jfieldID dataFid;
+	jfieldID formatFid;    
+	jmethodID decodeImgMid = (*env)->GetMethodID(env, jViewCls, "decodeImg", "([B)Lru/redspell/lightning/LightView$TexInfo;");
+	jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");
 
 	while (1) {
 		cel_request_t* req = thqueue_cel_reqs_pop(reqs);
@@ -121,6 +121,7 @@ static void* loader_thread(void* params) {
 			    jbyteArray src = (*env)->NewByteArray(env, buf_pos);
 			    (*env)->SetByteArrayRegion(env, src, 0, buf_pos, (jbyte*)buf);
 			    jobject jtexInfo = (*env)->CallObjectMethod(env, jView, decodeImgMid, src);
+					(*env)->DeleteLocalRef(env,src);
 
 			    PRINT_DEBUG("jtexInfo %d", jtexInfo);
 
@@ -152,6 +153,8 @@ static void* loader_thread(void* params) {
 
 			    	(*env)->ReleaseStringUTFChars(env, jformat, cformat);
 
+						(*env)->DeleteLocalRef(env,jformat);
+
 			    	texInfo->width = (*env)->GetIntField(env, jtexInfo, lwFid);
 			    	texInfo->height = (*env)->GetIntField(env, jtexInfo, lhFid);
 			    	texInfo->realWidth = (*env)->GetIntField(env, jtexInfo, wFid);
@@ -171,6 +174,7 @@ static void* loader_thread(void* params) {
 
 				    (*env)->ReleaseByteArrayElements(env, jdata, cdata, 0);
 				    (*env)->DeleteLocalRef(env, jdata);
+						(*env)->DeleteLocalRef(env,jtexInfo);
 
 				    (*env)->CallVoidMethod(env, jView, curlExtLdrSuccessMid, (int)req, (int)texInfo);
 

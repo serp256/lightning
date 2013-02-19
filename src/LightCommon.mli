@@ -3,6 +3,7 @@ value (<|): ('a -> 'b) -> 'a -> 'b;
 value color_white: int;
 value color_black: int;
 
+value round : float -> float;
 
 type qColor = 
   {
@@ -42,12 +43,15 @@ value read_resource: ?with_suffix:bool -> string -> string;
 value read_json: ?with_suffix:bool -> string -> Ojson.json;
 
 type deviceType = [ Phone | Pad ];
-type androidScreen = [ Small| Normal | Large | Xlarge ];
-type androidDensity = [ Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
-
 value deviceType: unit -> deviceType;
 
-value androidScreen: unit -> option (androidScreen * androidDensity);
+type ios_device = [ IPhoneOld | IPhone3GS | IPhone4 | IPhone5 | IPhoneNew | IPad1 | IPad2 | IPad3 | IPadNew | IUnknown ];
+type androidScreen = [ UnknownScreen | Small | Normal | Large | Xlarge ];
+type androidDensity = [ UnknownDensity | Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
+type device = [ Android of (androidScreen * androidDensity) | IOS of ios_device ];
+value device: unit -> device;
+
+(* value androidScreen: unit -> option (androidScreen * androidDensity); *)
 value androidScreenToString: androidScreen -> string;
 value androidDensityToString: androidDensity -> string;
 
@@ -58,11 +62,7 @@ ENDIF;
 value getLocale: unit -> string;
 value getVersion: unit -> string;
 
-IFDEF PC THEN
 value storagePath: unit -> string; 
-ELSE
-external storagePath: unit -> string = "ml_getStoragePath";
-ENDIF;
 
 module MakeXmlParser(P:sig value path: string; value with_suffix:bool; end): sig
   value close: unit -> unit;

@@ -172,7 +172,7 @@ static value string_of_jstring(JNIEnv* env, jstring jstr)
 }
 */
 
-static char* gAssetsDir;
+static char* gAssetsDir = NULL;
 
 void ml_setAssetsDir(value vassDir) {
 	char* cassDir = String_val(vassDir);
@@ -255,6 +255,7 @@ int getResourceFd(const char *path, resource *res) { //{{{
 
 		PRINT_DEBUG("%s not found in extracted assets", path);
 	} else {
+		PRINT_DEBUG("TRY GET FROM APK ZIP");
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
 		if ((*gJavaVM)->AttachCurrentThread(gJavaVM,&env, 0) < 0)
@@ -301,11 +302,11 @@ int getResourceFd(const char *path, resource *res) { //{{{
 			res->fd = myfd;
 			res->length = length;
 			
-			(*env)->DeleteLocalRef(env, fileDescriptor);
-			(*env)->DeleteLocalRef(env, resourceParams);
-			(*env)->DeleteLocalRef(env, cls);
+			(*env)->DeleteLocalRef(env,fileDescriptor);
+			(*env)->DeleteLocalRef(env,resourceParams);
+			(*env)->DeleteLocalRef(env,cls);
 
-			return 1;		  
+			return 1;
 		}
 	}
 
@@ -431,6 +432,7 @@ static value run_method = 1;//None
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
 	CAMLparam0();
 	CAMLlocal1(timePassed);
+	PRINT_DEBUG("DRAW FRAME!!!!");
 	timePassed = caml_copy_double((double)interval / 1000000000L);
 	//mlstage_run(timePassed);
 	if (net_running > 0) net_perform();
@@ -1129,10 +1131,11 @@ value ml_getLocale () {
 
 value ml_getInternalStoragePath () {
 
+	PRINT_DEBUG("GET INTERNAL STORAGE PATH");
 	CAMLparam0();
 	CAMLlocal1(r);
 
-  	JNIEnv *env;	
+	JNIEnv *env;	
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetInternalStoragePath", "()Ljava/lang/String;");
@@ -1152,7 +1155,9 @@ value ml_getStoragePath () {
 	CAMLparam0();
 	CAMLlocal1(r);
 
-  	JNIEnv *env;	
+	PRINT_DEBUG("GET STORAGE PATH");
+
+	JNIEnv *env;	
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetStoragePath", "()Ljava/lang/String;");
@@ -1404,30 +1409,21 @@ JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightRenderer_handleBack(J
 	return 1;
 }
 
-static value version;
 
 value ml_getVersion() {
-	// DEBUG("ml_getVersion");
+	CAMLparam0();
+	CAMLlocal1(version);
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	if (!version) {
-		// DEBUG("!version");
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-
-		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getVersion", "()Ljava/lang/String;");
-		jstring jver = (*env)->CallObjectMethod(env, jView, mid);
-		const char* cver = (*env)->GetStringUTFChars(env, jver, JNI_FALSE);
-
-		// DEBUGF("cver %s", cver);
-
-		version = caml_copy_string(cver);
-		caml_register_generational_global_root(&version);
-
-		(*env)->ReleaseStringUTFChars(env, jver, cver);
-		(*env)->DeleteLocalRef(env, jver);
-	}
-
-	return version;
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getVersion", "()Ljava/lang/String;");
+	jstring jver = (*env)->CallObjectMethod(env, jView, mid);
+	const char* cver = (*env)->GetStringUTFChars(env, jver, JNI_FALSE);
+	// DEBUGF("cver %s", cver);
+	version = caml_copy_string(cver);
+	(*env)->ReleaseStringUTFChars(env, jver, cver);
+	(*env)->DeleteLocalRef(env, jver);
+	CAMLreturn(version);
 }
 
 
@@ -1535,39 +1531,25 @@ value ml_device_id(value unit) {
 	return device_id;
 }
 
-static value andrScreen;
-
 value ml_androidScreen() {
-	PRINT_DEBUG("ml_androidScreen call");
+	CAMLparam0();
+	CAMLlocal1(andrScreen);
 
-	if (!andrScreen) {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreen", "()I");
-		int s = (int)(*env)->CallIntMethod(env, jView, mid);
-		mid = (*env)->GetMethodID(env, jViewCls, "getDensity", "()I");
-		int d = (int)(*env)->CallIntMethod(env, jView, mid);
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreen", "()I");
+	int s = (int)(*env)->CallIntMethod(env, jView, mid);
+	mid = (*env)->GetMethodID(env, jViewCls, "getDensity", "()I");
+	int d = (int)(*env)->CallIntMethod(env, jView, mid);
 
-		PRINT_DEBUG("s, d: %d %d", s, d);
+	PRINT_DEBUG("s, d: %d %d", s, d);
 
-		if (s < 0 || d < 0) {
-			PRINT_DEBUG("none");
-			andrScreen = Val_int(0);			
-		} else {
-			PRINT_DEBUG("some");
+	andrScreen = caml_alloc_tuple(2);
+	Store_field(andrScreen, 0, Val_int(s));
+	Store_field(andrScreen, 1, Val_int(d));
 
-			value tuple = caml_alloc(2, 0);
-			andrScreen = caml_alloc(1, 0);
-			caml_register_generational_global_root(&andrScreen);
-
-			Store_field(tuple, 0, Val_int(s));
-			Store_field(tuple, 1, Val_int(d));
-			Store_field(andrScreen, 0, tuple);
-		}
-	}
-
-	return andrScreen;
+	CAMLreturn(andrScreen);
 		
 /*		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getScreenWidth", "()I");
 		int w = (int)(*env)->CallIntMethod(env, jView, mid);
@@ -1654,7 +1636,7 @@ value ml_androidScreen() {
 	return andrScreen;*/
 }
 
-value ml_device_type(value unit) {
+value ml_getDeviceType(value unit) {
 	DEBUGF("ML_DEVICE_TYPE");
 	CAMLparam0();
 	CAMLlocal1(retval);

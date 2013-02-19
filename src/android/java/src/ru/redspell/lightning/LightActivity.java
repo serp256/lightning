@@ -34,9 +34,15 @@ import android.widget.AbsoluteLayout;
 import android.view.ViewGroup.LayoutParams;
 import android.content.res.Configuration;
 
+import ru.redspell.lightning.payments.google.LightGooglePayments;
 
-public class LightActivity extends Activity implements IDownloaderClient
-{
+/*import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
+import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.plus.PlusClient;
+import com.google.android.gms.common.Scopes;*/
+
+public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
 	public static Activity instance = null;
 
     protected XAPKFile[] xAPKS = {};
@@ -54,10 +60,30 @@ public class LightActivity extends Activity implements IDownloaderClient
 	public AbsoluteLayout viewGrp;
 	public static boolean isRunning = false;
 
+/*
+	private PlusClient mPlusClient;
+
+
+	public void onConnected() {
+		Log.d("LIGHTNING", "!!!!!!!!!!!!!onConnected");
+	}
+
+	public void onDisconnected() {
+		Log.d("LIGHTNING", "!!!!!!!!!!!!!onDisconnected");
+	}
+
+	public void onConnectionFailed(ConnectionResult result) {
+		Log.d("LIGHTNING", "!!!!!!!!!!!!!onConnectionFailed");
+	}
+*/
+
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
+		// mPlusClient = new PlusClient(this, this, this, Scopes.PLUS_PROFILE);
+
 		instance = this;
 
 		// rescheduleNotifications(this);
@@ -160,6 +186,9 @@ public class LightActivity extends Activity implements IDownloaderClient
             mDownloaderClientStub.connect(this);
         }
         super.onStart();
+        // mPlusClient.connect();
+
+        
     }
 
 	@Override
@@ -187,6 +216,7 @@ public class LightActivity extends Activity implements IDownloaderClient
 			mDownloaderClientStub.disconnect(this);
 		}
 		super.onStop();
+		// mPlusClient.disconnect();
 	}
 
 	@Override
@@ -199,6 +229,10 @@ public class LightActivity extends Activity implements IDownloaderClient
 		isRunning = false;
 		lightView.onDestroy();
 		super.onDestroy();
+
+		if (LightGooglePayments.instance != null) {
+			LightGooglePayments.instance.contextDestroyed(this);
+		}
 	}
 
 	@Override
@@ -210,6 +244,10 @@ public class LightActivity extends Activity implements IDownloaderClient
 
 		if (session != null) {
 			session.onActivityResult(this, requestCode, resultCode, data);	
+		}
+
+		if (requestCode == LightGooglePayments.REQUEST_CODE && LightGooglePayments.instance != null) {
+			LightGooglePayments.instance.onActivityResult(requestCode, resultCode, data);
 		}
 	}
 

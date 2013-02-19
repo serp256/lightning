@@ -1,116 +1,85 @@
 exception Kv_not_found;
 
-IFDEF IOS THEN
-(* external ml_create : unit -> t = "ml_kv_storage_create"; *)
+IFPLATFORM(pc)
+value get_storage_path () = ".";
+ENDPLATFORM;
+
+IFPLATFORM(android) 
+external get_storage_path: unit -> string = "ml_getInternalStoragePath";
+ENDPLATFORM;
+IFPLATFORM(pc) 
+value get_storage_path () = "";
+ENDPLATFORM;
+
+IFPLATFORM(ios) 
 external commit : unit -> unit = "ml_kv_storage_commit";
 
 external get_string_opt : string -> option string = "ml_kv_storage_get_string";
 external get_bool_opt : string -> option bool = "ml_kv_storage_get_bool";
 external get_int_opt : string -> option int = "ml_kv_storage_get_int";
-(*external get_float_opt : string -> option float = "ml_kv_storage_get_float";*)
 
 external put_string : string -> string -> unit = "ml_kv_storage_put_string";
 external put_bool :  string -> bool -> unit = "ml_kv_storage_put_bool";
 external put_int  :  string -> int -> unit = "ml_kv_storage_put_int";
-(*external put_float : string -> float -> unit = "ml_kv_storage_put_float";*)
 external remove   :  string -> unit = "ml_kv_storage_remove";
 external exists   :  string -> bool = "ml_kv_storage_exists"; 
 
 
 
-(*
-value create = ml_create;
-value commit = ml_commit;
-*)
-
-(*
-value get_string_opt = ml_get_string;
-value get_bool_opt  = ml_get_bool;
-value get_int_opt   = ml_get_int;
-*)
 
 value get_string  k = match get_string_opt k with [ Some s -> s | None -> raise Kv_not_found ];
 value get_bool    k = match get_bool_opt k with [ Some b -> b   | None -> raise Kv_not_found ];
 value get_int     k = match get_int_opt k with [ Some i -> i    | None -> raise Kv_not_found ];
-(*value get_float k = match get_float_opt k with [ Some f -> f | None -> raise Kv_not_found ];*)
-
-(*
-value put_string = ml_put_string;
-value put_bool = ml_put_bool;
-value put_int = ml_put_int;
-value remove  = ml_remove;
-value exists  = ml_exists;
-*)
 
 ELSE
 
+
 type t = Hashtbl.t string string;
 
-IFDEF ANDROID THEN
-external get_storage_path: unit -> string = "ml_getInternalStoragePath";
-ENDIF;
+value storage_file = 
+  ifplatform(android)
+    (get_storage_path ()) ^ "kvstorage"
+  else "kvstorage";
+
+
+value storage_file_tmp = (get_storage_path ()) ^ ".kvstorage.tmp";
+
 
 value storage = ref None;
 value commit () =
   match !storage with
   [ None -> ()
   | Some s -> 
-IFDEF ANDROID THEN
-		 let ch = open_out_bin ((get_storage_path ()) ^ "kvstorage") in
+		 let ch = open_out_bin storage_file_tmp in
      (
        Marshal.to_channel ch s [];
-       close_out ch
+       close_out ch;
+       Sys.rename storage_file_tmp storage_file;
      )
-ELSE
-		 let ch = open_out_bin "kvstorage" in
-     (
-       Marshal.to_channel ch s [];
-       close_out ch
-     )
-ENDIF
   ];
 
 value get_storage () = 
   match !storage with
   [ Some s -> s
   | None ->
-IFDEF ANDROID THEN 
-		  let path = ((get_storage_path()) ^ "kvstorage") in
-			(
-        (* Printf.printf "DDD: %s\n%!" path; *)
-        
-        if Sys.file_exists path 
-        then
-          let s = Marshal.from_channel (open_in_bin path) in
-          (
-            storage.val := Some s;
-            s
-          )
-        else 
-          let s = Hashtbl.create 0 in
-          (
-            storage.val := Some s;
-            commit ();
-            s;
-          )
-		  )
-ELSE
-		  let path = "kvstorage" in
-      if Sys.file_exists path 
-      then
-        let s = Marshal.from_channel (open_in_bin path) in
-        (
-          storage.val := Some s;
-          s
-        )
-      else 
-        let s = Hashtbl.create 0 in
-        (
-          storage.val := Some s;
-          commit ();
-          s;
-        )
-ENDIF
+    if Sys.file_exists storage_file 
+    then
+      let (s:Hashtbl.t string string) = 
+        try
+          Marshal.from_channel (open_in_bin storage_file)
+        with [ End_of_file -> Hashtbl.create 0 ]
+      in
+      (
+        storage.val := Some s;
+        s
+      )
+    else 
+      let s = Hashtbl.create 0 in
+      (
+        storage.val := Some s;
+        commit ();
+        s;
+      )
   ];
 
 value get_string k = try Hashtbl.find (get_storage()) k with [ Not_found -> raise Kv_not_found ];
@@ -130,5 +99,5 @@ value get_bool_opt k = try Some (get_bool k) with [ Kv_not_found -> None ];
 value get_int_opt k = try Some (get_int k) with [ Kv_not_found -> None ];
 (*value get_float_opt k = try Some (get_float k) with [ Kv_not_found -> None ];*)
 
-ENDIF;
+ENDPLATFORM;
 

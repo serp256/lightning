@@ -168,6 +168,39 @@ public class LightFacebook {
         });
     }
 
+		public static void disconnect () {
+			Log.d("LIGHTNING", "disconnect call");
+						if (session != null) {
+							Log.d("LIGHTNING", "closeAndClear");
+							session.closeAndClearTokenInformation ();
+							Log.d("LIGHTNING", "close");
+							session.close ();
+							Log.d("LIGHTNING", "setActiveSession");
+							session.setActiveSession(null);
+							Log.d("LIGHTNING", "session null");
+							session = null;
+						}
+			/*
+			LightView.instance.post(new Runnable() {
+					@Override
+					public void run() {
+						if (session != null) {
+							Log.d("LIGHTNING", "closeAndClear");
+							session.closeAndClearTokenInformation ();
+							Log.d("LIGHTNING", "close");
+							session.close ();
+							Log.d("LIGHTNING", "setActiveSession");
+							session.setActiveSession(null);
+							Log.d("LIGHTNING", "session null");
+							session = null;
+						}
+						Log.d("LIGHTNING", "end disconnect");
+					}
+				}
+			);
+			*/
+		}
+
     public static boolean loggedIn() {
         Log.d("LIGHTNING", "loggedIn call");
 
@@ -187,7 +220,7 @@ public class LightFacebook {
         return session != null && session.isOpened() ? session.getAccessToken() : null;
     }
 
-    public static boolean apprequest(final String title, final String message, final String recipient, final int successCallback, final int failCallback) {
+    public static boolean apprequest(final String title, final String message, final String recipient, final String data, final int successCallback, final int failCallback) {
         if (session == null || !session.isOpened()) return false;
 
         LightView.instance.post(new Runnable() {
@@ -196,27 +229,29 @@ public class LightFacebook {
                 WebDialog.RequestsDialogBuilder bldr = new WebDialog.RequestsDialogBuilder(LightActivity.instance, session)
                     .setTitle(title)
                     .setMessage(message)
+										.setData(data)
                     .setOnCompleteListener(new WebDialog.OnCompleteListener() {
                         @Override
                         public void onComplete(Bundle values, FacebookException error) {
                             Log.d("LIGHTNING", "onComplete");
-
                             if (error == null) {
-                                Iterator iter = values.keySet().iterator();
-                                ArrayList<String> to = new ArrayList<String>();
-                                String[] toArr = new String[0];
+															Iterator iter = values.keySet().iterator();
+															ArrayList<String> to = new ArrayList<String>();
+															String[] toArr = new String[0];
 
-                                while (iter.hasNext()) {
-                                    String key = (String)iter.next();
+															while (iter.hasNext()) {
+																String key = (String)iter.next();
 
-                                    if (java.util.regex.Pattern.matches("to\\[\\d+\\]", key)) {
-                                        to.add(values.get(key).toString());
-                                    }
-                                }
+																if (java.util.regex.Pattern.matches("to\\[\\d+\\]", key)) {
+																	to.add(values.get(key).toString());
+																}
+															};
 
-                                LightView.instance.queueEvent(new CamlCallbackWithStringArrayParamRunnable(successCallback, to.toArray(toArr)));
+															LightView.instance.queueEvent(new CamlCallbackWithStringArrayParamRunnable(successCallback, to.toArray(toArr)));
                             } else {
-                                LightView.instance.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, error.getMessage()));
+															String msg = error.getMessage ();
+															Log.d("LIGHTNING","error: " + error + ", message: " + error.getMessage ());
+															LightView.instance.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, msg != null ? msg : error.toString()));
                             }
                             
                             LightView.instance.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
