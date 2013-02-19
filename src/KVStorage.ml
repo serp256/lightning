@@ -7,6 +7,9 @@ ENDPLATFORM;
 IFPLATFORM(android) 
 external get_storage_path: unit -> string = "ml_getInternalStoragePath";
 ENDPLATFORM;
+IFPLATFORM(pc) 
+value get_storage_path () = "";
+ENDPLATFORM;
 
 IFPLATFORM(ios) 
 external commit : unit -> unit = "ml_kv_storage_commit";
