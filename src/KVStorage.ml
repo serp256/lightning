@@ -1,5 +1,8 @@
 exception Kv_not_found;
 
+IFPLATFORM(pc)
+value get_storage_path () = ".";
+ENDPLATFORM;
 
 IFPLATFORM(android) 
 external get_storage_path: unit -> string = "ml_getInternalStoragePath";
@@ -29,8 +32,6 @@ ELSE
 
 
 type t = Hashtbl.t string string;
-
-value get_storage_path () = ".";
 
 value storage_file = 
   ifplatform(android)
