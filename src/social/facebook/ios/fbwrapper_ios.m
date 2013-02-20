@@ -235,7 +235,7 @@ value ml_fbAccessToken(value connect) {
     return caml_copy_string([fbSession.accessToken cStringUsingEncoding:NSASCIIStringEncoding]);
 }
 
-void ml_fbApprequest(value connect, value title, value message, value recipient, value data, value successCallback, value failCallback) {
+void ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
 //		CAMLparam5(connect, title, message, recipient, data);
 	//	CAMLxparam2(successCallback,failCallback);
     FBSESSION_CHECK;
@@ -291,7 +291,7 @@ void ml_fbApprequest(value connect, value title, value message, value recipient,
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-void ml_fbGraphrequest(value connect, value path, value params, value successCallback, value failCallback) {
+void ml_fbGraphrequest(value path, value params, value successCallback, value failCallback) {
     FBSESSION_CHECK;
 
     NSString* nspath = [NSString stringWithCString:String_val(path) encoding:NSASCIIStringEncoding];
