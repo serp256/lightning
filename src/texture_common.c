@@ -349,6 +349,10 @@ typedef struct {
 static inline int textureParams(textureInfo *tInfo,texParams *p) {
     switch (tInfo->format & 0xFFFF)
     {
+    	case LTextureLuminance:
+    		p->glTexFormat = GL_LUMINANCE;
+    		break;
+
         case LTextureFormatRGBA:
             p->glTexFormat = GL_RGBA;
             break;
@@ -470,7 +474,7 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
             break;
 #else
 			return 0;
-#endif			
+#endif
 
         case LTextureFormat565:
             p->bitsPerPixel = 2;
@@ -607,7 +611,9 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
             levelData += size;
             levelWidth  /= 2; 
             levelHeight /= 2;
-        }            
+        }
+
+        PRINT_DEBUG("pizda");
     }
     else
     {

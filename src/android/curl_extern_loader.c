@@ -146,6 +146,8 @@ static void* loader_thread(void* params) {
 			    	jstring jformat = (*env)->GetObjectField(env, jtexInfo, formatFid);
 			    	const char* cformat = (*env)->GetStringUTFChars(env, jformat, JNI_FALSE);
 
+			    	PRINT_DEBUG("!!!FORMAT %s", cformat);
+
 			    	if (!strcmp(cformat, "ALPHA_8")) texInfo->format = LTextureFormatAlpha;
 			    	else if (!strcmp(cformat, "ARGB_4444")) texInfo->format = LTextureFormat4444;
 			    	else if (!strcmp(cformat, "ARGB_8888")) texInfo->format = LTextureFormatRGBA;

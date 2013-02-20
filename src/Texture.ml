@@ -39,6 +39,7 @@ type textureFormat =
   | TextureFormatETC1
   | TextureFormatPallete of int
   | TextureFormatETC1WithAlpha of textureInfo
+  | TextureLuminance
   ]
 and textureInfo = 
   {

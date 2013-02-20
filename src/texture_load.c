@@ -48,6 +48,8 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	//fprintf(stderr,"output_width: %d, image_width: %d, num_components: %d\n",cinfo.output_width,cinfo.image_width,cinfo.num_components);
 	JSAMPROW row_pointer = (unsigned char *)malloc( cinfo.output_width*cinfo.num_components );
 
+	PRINT_DEBUG("READ JPEG %d", cinfo.num_components);
+
 	/* read one scan line at a time and copy data to image info */
 	//unsigned long location = 0;
 	int i = 0;
@@ -65,7 +67,7 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	free( row_pointer);
 	fclose( fp );
 
-	tInfo->format = LTextureFormatRGB;
+	tInfo->format = cinfo.num_components == 1 ? LTextureLuminance : LTextureFormatRGB;
 	tInfo->width = legalWidth;
 	tInfo->realWidth = cinfo.image_width;
 	tInfo->height = legalHeight;
