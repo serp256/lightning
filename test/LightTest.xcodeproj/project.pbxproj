@@ -392,6 +392,7 @@
 		51DC6E2614EE5E960084EB76 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Sergey Plaksin (5ZR8R38XZE)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -403,6 +404,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
 				LD_NO_PIE = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "B76FC5BA-56AD-408A-ACB4-811E5BA39F9C";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;

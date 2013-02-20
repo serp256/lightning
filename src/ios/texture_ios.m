@@ -307,7 +307,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 		if ([imgType rangeOfString:@"pvr"].location == 0) is_pvr = 1;
 		else if ([imgType rangeOfString:@"plx"].location == 0) is_plx = 1;
 		else if ([imgType rangeOfString:@"alpha"].location == 0) is_alpha = 1;
-		fullPath = path;
+		if ([[NSFileManager defaultManager] fileExistsAtPath:path]) fullPath = path;
 	} else {
 		NSBundle *bundle = [NSBundle mainBundle];
 		do {
@@ -455,6 +455,7 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value 
 
 
 void ml_loadExternalImage(value url,value successCallback, value errorCallback) {
+	NSLog(@"external loader: %s",String_val(url));
 	LightImageLoader *imageLoader = [[LightImageLoader alloc] initWithURL:[NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding] successCallback:successCallback errorCallback:errorCallback];
 	[imageLoader start];
 	[imageLoader release];
