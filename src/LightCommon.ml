@@ -312,6 +312,7 @@ value androidDensityToString density =
 
 
 type device = [ Android of (androidScreen * androidDensity) | IOS of ios_device ];
+value internal_device = ref (IOS IPad2);
 
 IFPLATFORM(android)
 external androidScreen: unit -> (androidScreen * androidDensity) = "ml_androidScreen";
@@ -350,7 +351,6 @@ value getDevice () =
   in
   IOS d;
 ELSPLATFORM(pc)
-value internal_device = ref (IOS IPad2);
 value getDevice () = !internal_device;
 ENDPLATFORM;
 

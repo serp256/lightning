@@ -55,9 +55,8 @@ value device: unit -> device;
 value androidScreenToString: androidScreen -> string;
 value androidDensityToString: androidDensity -> string;
 
-IFDEF PC THEN
 value internalDeviceType: ref deviceType;
-ENDIF;
+value internal_device : ref device;
 
 value getLocale: unit -> string;
 value getVersion: unit -> string;

@@ -90,11 +90,14 @@ value start_cycle stage =
 
 value run stage_create = 
   let width = ref 768 and height = ref 1024 
-  and setDeviceType = fun s -> internalDeviceType.val := match s with [ "pad" -> Pad | "phone" -> Phone | _ -> failwith "unknown device type"] in
+  and setDeviceType = fun s -> internalDeviceType.val := match s with [ "pad" -> Pad | "phone" -> Phone | _ -> failwith "unknown device type"] 
+  and setDevice = fun s -> internal_device.val := match s with [ "pad1" -> IOS IPad1 | "pad2" -> IOS IPad2 | "pad3" -> IOS IPad3 | "pad4" -> IOS IPadNew 
+	| "phone4" -> IOS IPhone4 | "phone5" -> IOS IPhone5 | _ -> failwith "unknown device type"] in
   (
     Arg.parse [
       ("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");
       ("-dt",Arg.String setDeviceType,"Set deviceType [phone | pad] default pad");
+      ("-d",Arg.String setDevice, "Set device [pad1 pad2 pad3 pad4 phone ] default pad2");
       ("-um",Arg.Set_int Hardware.internal_user_memory,"Set Hardware.user_memory (default 0)")
     ] (fun _ -> ()) "";
     Glut.init ();
