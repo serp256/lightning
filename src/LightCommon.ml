@@ -277,12 +277,12 @@ ENDPLATFORM;
 
 
 type deviceType = [ Phone | Pad ];
+value internalDeviceType = ref Pad;
 
 IFPLATFORM(ios android)
 value deviceType = ref None;
 external getDeviceType: unit -> deviceType = "ml_getDeviceType";
 ELSE
-value internalDeviceType = ref Pad;
 value getDeviceType () = !internalDeviceType;
 ENDPLATFORM;
 
