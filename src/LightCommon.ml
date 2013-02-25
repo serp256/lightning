@@ -373,7 +373,9 @@ value androidDensityToString density =
 
 value deviceToStr dev =
   match dev with
-  [ Android (scrn, dnsty) -> Printf.sprintf "android(%s,%s)" (androidScreenToString scrn) (androidDensityToString dnsty)
+  [ Android (scrn, dnsty) ->
+    let devStr = Printf.sprintf "android(%s,%s)" (androidScreenToString scrn) (androidDensityToString dnsty) in
+      String.lowercase devStr
   | IOS dev ->
     let devStr = 
       match dev with
@@ -389,7 +391,8 @@ value deviceToStr dev =
       | IUnknown -> "IUnknown"
       ]
     in
-      Printf.sprintf "ios(%s)" devStr
+      let devStr = Printf.sprintf "ios(%s)" devStr in
+        String.lowercase devStr
   ];
 
 
