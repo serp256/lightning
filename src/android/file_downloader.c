@@ -92,12 +92,19 @@ static void* downloader_thread(void* params) {
 				unlink(tmpfname);
 				caml_error(req, curl_perform_retval, curl_err);
 			} else {
-				PRINT_DEBUG("complete loading %s",req->path);				
-				rename(tmpfname,req->path);
-				//(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
-				(*env)->CallVoidMethod(env, jView, curlDownloadSuccessMid, (int)req);
-				//(*gJavaVM)->DetachCurrentThread(gJavaVM);
-				*curl_err = '\0';				
+				long respCode;
+				curl_easy_getinfo(curl_hndlr, CURLINFO_RESPONSE_CODE, &respCode);
+
+				// if (respCode != 200) {
+				// 	caml_error(req, (int)respCode, "http code is not 200");
+				// } else {
+					PRINT_DEBUG("complete loading %s %ld",req->path, respCode);
+					rename(tmpfname,req->path);
+					//(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+					(*env)->CallVoidMethod(env, jView, curlDownloadSuccessMid, (int)req);
+					//(*gJavaVM)->DetachCurrentThread(gJavaVM);
+					*curl_err = '\0';
+				// }
 			};
 			free(tmpfname);
 		}

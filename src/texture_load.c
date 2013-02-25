@@ -9,6 +9,7 @@
 #endif
 
 #include "texture_load.h"
+#include <inttypes.h>
 
 #define CC_RGB_PREMULTIPLY_APLHA(vr, vg, vb, va) \
     (unsigned)(((unsigned)((unsigned char)(vr) * ((unsigned char)(va) + 1)) >> 8) | \
@@ -18,6 +19,27 @@
 
 int load_jpg_image(int fd,textureInfo *tInfo) {
 	fprintf(stderr,"LOAD JPG IMAGE\n");
+	PRINT_DEBUG("LOAD JPG IMAGE");
+
+	int16_t jpeg_mrkr;
+	size_t int16_size = sizeof(int16_t);
+
+	/**
+	 *	checking first couple of bytes to prevent application crash when trying to read non-jpeg file
+	 *	comparing jpeg_mrkr with 0xd8ff but not with 0xffd8 cause android is little endian, first read byte (0xff)
+	 *	become least significant byte, second byte (0xd8) become most significant
+	 *
+	 */
+
+	if (read(fd, &jpeg_mrkr, int16_size) != int16_size) return 1;
+	if (jpeg_mrkr != (int16_t)0xd8ff) {
+		PRINT_DEBUG("jpeg test failed");
+		return 1;
+	}
+
+	PRINT_DEBUG("jpeg test success");
+
+	lseek(fd, 0, SEEK_SET);
 
 	/* these are standard libjpeg structures for reading(decompression) */
 	struct jpeg_decompress_struct cinfo;
@@ -25,6 +47,7 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 
 	unsigned char * pImageData  = 0;
 	FILE *fp = fdopen(fd,"rb");
+
 	/* libjpeg data structure for storing one row, that is, scanline of an image */
 
 	/* here we set up the standard libjpeg error handler */
@@ -32,10 +55,13 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	/* setup decompression process and source, then read JPEG header */
 	jpeg_create_decompress( &cinfo );
 	/* this makes the library read from file */
+
 	jpeg_stdio_src( &cinfo, fp );
+
 	/* reading the image header which contains image information */
+	// jpeg_read_header( &cinfo, TRUE );
 	jpeg_read_header( &cinfo, TRUE );
-	
+
 	/* Start decompression jpeg here */
 	jpeg_start_decompress( &cinfo );
 

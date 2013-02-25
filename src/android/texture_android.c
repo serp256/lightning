@@ -129,10 +129,16 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 	
 	char *ext = strrchr(fname,'.');
 
-	if (fname[0] == '/') {
-		int fd = open(fname, O_RDONLY);
-		if (fd < 0) return 1;
+	PRINT_DEBUG("checkpnt0 %d", (int)(fname[0] == '/'));
 
+	if (fname[0] == '/') {
+		PRINT_DEBUG("checkpnt1");
+		int fd = open(fname, O_RDONLY);
+		PRINT_DEBUG("checkpnt2");
+		if (fd < 0) return 1;
+		PRINT_DEBUG("checkpnt3");
+
+		PRINT_DEBUG("checkpnt4 %d %d", strcasecmp(ext,".jpg"), strcasecmp(ext,".png"));
 		if (!strcasecmp(ext,".jpg")) return load_jpg_image(fd, tInfo);
 		else if (!strcasecmp(ext,".png")) return load_png_image(fd,tInfo);
 		else return 2;
