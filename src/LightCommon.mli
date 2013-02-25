@@ -58,7 +58,7 @@ value androidScreenToString: androidScreen -> string;
 value androidDensityToString: androidDensity -> string;
 
 value internalDeviceType: ref deviceType;
-value internal_device : ref device;
+value internal_device: ref device;
 
 value getLocale: unit -> string;
 value getVersion: unit -> string;

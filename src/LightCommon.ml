@@ -275,12 +275,10 @@ value read_json ?with_suffix path =
 ENDPLATFORM;
 
 
-
 type deviceType = [ Phone | Pad ];
 value internalDeviceType = ref Pad;
 
 IFPLATFORM(ios android)
-value deviceType = ref None;
 external getDeviceType: unit -> deviceType = "ml_getDeviceType";
 ELSE
 value getDeviceType () = !internalDeviceType;
@@ -290,26 +288,6 @@ ENDPLATFORM;
 type ios_device = [ IPhoneOld | IPhone3GS | IPhone4 | IPhone5 | IPhoneNew | IPad1 | IPad2 | IPad3 | IPadNew | IUnknown ];
 type androidScreen = [ UnknownScreen | Small | Normal | Large | Xlarge ];
 type androidDensity = [ UnknownDensity | Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
-
-value androidScreenToString screen =
-  match screen with
-  [ UnknownScreen -> "unknown"
-  | Small -> "small"
-  | Normal -> "normal"
-  | Large -> "large"
-  | Xlarge -> "xlarge"
-  ];
-
-value androidDensityToString density =
-  match density with
-  [ UnknownDensity -> "unknown"
-  | Ldpi -> "ldpi"
-  | Mdpi -> "mdpi"
-  | Hdpi -> "hdpi"
-  | Xhdpi -> "xhdpi"
-  | Tvdpi -> "tvdpi"
-  ];
-
 
 type device = [ Android of (androidScreen * androidDensity) | IOS of ios_device ];
 value internal_device = ref (IOS IPad2);
@@ -351,19 +329,48 @@ value getDevice () =
   in
   IOS d;
 ELSPLATFORM(pc)
-value getDevice () = !internal_device;
+value getDevice () = let () = debug "internal_device call" in !internal_device;
 ENDPLATFORM;
 
+IFPLATFORM(pc)
+value deviceType = getDeviceType;
+ELSE
 value _deviceType = Lazy.lazy_from_fun getDeviceType;
 value deviceType () = Lazy.force _deviceType;
+ENDPLATFORM;
+
 value deviceTypeToStr devType =
   match devType with
   [ Pad -> "Pad"
   | Phone -> "Phone"
   ];
 
+IFPLATFORM(pc)
+value device = getDevice;
+ELSE
 value _device = Lazy.lazy_from_fun getDevice;
-value device () : device = Lazy.force _device;
+value device () : device = let () = assert False in Lazy.force _device;
+ENDPLATFORM;
+
+value androidScreenToString screen =
+  match screen with
+  [ UnknownScreen -> "unknown"
+  | Small -> "small"
+  | Normal -> "normal"
+  | Large -> "large"
+  | Xlarge -> "xlarge"
+  ];
+
+value androidDensityToString density =
+  match density with
+  [ UnknownDensity -> "unknown"
+  | Ldpi -> "ldpi"
+  | Mdpi -> "mdpi"
+  | Hdpi -> "hdpi"
+  | Xhdpi -> "xhdpi"
+  | Tvdpi -> "tvdpi"
+  ];
+
 value deviceToStr dev =
   match dev with
   [ Android (scrn, dnsty) -> Printf.sprintf "android(%s,%s)" (androidScreenToString scrn) (androidDensityToString dnsty)
@@ -384,7 +391,6 @@ value deviceToStr dev =
     in
       Printf.sprintf "ios(%s)" devStr
   ];
-
 
 
 IFPLATFORM(pc)
