@@ -349,7 +349,7 @@ IFPLATFORM(pc)
 value device = getDevice;
 ELSE
 value _device = Lazy.lazy_from_fun getDevice;
-value device () : device = let () = assert False in Lazy.force _device;
+value device () : device = Lazy.force _device;
 ENDPLATFORM;
 
 value androidScreenToString screen =
