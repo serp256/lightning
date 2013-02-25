@@ -356,9 +356,34 @@ ENDPLATFORM;
 
 value _deviceType = Lazy.lazy_from_fun getDeviceType;
 value deviceType () = Lazy.force _deviceType;
+value deviceTypeToStr devType =
+  match devType with
+  [ Pad -> "Pad"
+  | Phone -> "Phone"
+  ];
 
 value _device = Lazy.lazy_from_fun getDevice;
 value device () : device = Lazy.force _device;
+value deviceToStr dev =
+  match dev with
+  [ Android (scrn, dnsty) -> Printf.sprintf "android(%s,%s)" (androidScreenToString scrn) (androidDensityToString dnsty)
+  | IOS dev ->
+    let devStr = 
+      match dev with
+      [ IPhoneOld -> "IPhoneOld"
+      | IPhone3GS -> "IPhone3GS"
+      | IPhone4 -> "IPhone4"
+      | IPhone5 -> "IPhone5"
+      | IPhoneNew -> "IPhoneNew"
+      | IPad1 -> "IPad1"
+      | IPad2 -> "IPad2"
+      | IPad3 -> "IPad3"
+      | IPadNew -> "IPadNew"
+      | IUnknown -> "IUnknown"
+      ]
+    in
+      Printf.sprintf "ios(%s)" devStr
+  ];
 
 
 
