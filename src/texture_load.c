@@ -23,6 +23,7 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 
 	int16_t jpeg_mrkr;
 	size_t int16_size = sizeof(int16_t);
+	off_t fpos = lseek(fd, 0, SEEK_SET);
 
 	/**
 	 *	checking first couple of bytes to prevent application crash when trying to read non-jpeg file
@@ -39,7 +40,7 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 
 	PRINT_DEBUG("jpeg test success");
 
-	lseek(fd, 0, SEEK_SET);
+	lseek(fd, fpos, SEEK_SET);
 
 	/* these are standard libjpeg structures for reading(decompression) */
 	struct jpeg_decompress_struct cinfo;
@@ -60,7 +61,9 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 
 	/* reading the image header which contains image information */
 	// jpeg_read_header( &cinfo, TRUE );
+	PRINT_DEBUG("read headers");
 	jpeg_read_header( &cinfo, TRUE );
+	PRINT_DEBUG("end read headers");
 
 	/* Start decompression jpeg here */
 	jpeg_start_decompress( &cinfo );
