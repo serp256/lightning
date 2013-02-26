@@ -2,6 +2,8 @@
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 
 IFDEF IOS THEN
+value showUrl _ = failwith "ios version now doesnt support this function";
+
 external showNativeWaiter: Point.t -> unit = "ml_showActivityIndicator";
 external hideNativeWaiter: unit -> unit = "ml_hideActivityIndicator";
 external _deviceIdentifier: unit -> string = "ml_deviceIdentifier";
@@ -35,7 +37,9 @@ value sendEmail recepient ~subject ?(body="") () =
   openURL (Printf.sprintf "mailto:%s?%s" recepient params);
 external _deviceIdentifier: unit -> string = "ml_device_id";
 value deviceIdentifier () = Some (_deviceIdentifier ());
+external showUrl: string -> unit = "ml_showUrl";
 ELSE
+value showUrl _ = ();
 value openURL _ = ();
 value sendEmail recepient ~subject ?(body="") () = (); 
 value deviceIdentifier () = None;

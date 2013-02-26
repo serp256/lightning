@@ -947,4 +947,13 @@ public class LightView extends GLSurfaceView {
 	public void restorePurchases() {
 		payments.restorePurchases();
 	}
+
+	public void showUrl(final String url) {
+		LightView.instance.getHandler().post(new Runnable() {
+			@Override
+			public void run() {
+				(new LightUrlDialog(getContext(), url)).show();
+			}
+		});
+	}
 }

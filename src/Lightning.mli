@@ -33,3 +33,5 @@ value extractAssetsIfRequired: (bool -> unit) -> unit;
 value extractAssetsAndExpansionsIfRequired: (bool -> unit) -> unit;
 
 (* external test_c_fun: (unit -> unit) -> unit = "ml_test_c_fun"; *)
+
+value showUrl: string -> unit; (* display WebView with specified url *)

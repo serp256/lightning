@@ -1868,3 +1868,17 @@ value ml_pathExistsInExpansions(value path) {
 	offset_size_pair_t* os_pair;
 	return get_expansion_offset_size_pair(String_val(path), &os_pair) ? Val_false : Val_true;
 }
+
+void ml_showUrl(value v_url) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "showUrl", "(Ljava/lang/String;)V");
+
+	char* c_url = String_val(v_url);
+	jstring j_url = (*env)->NewStringUTF(env, c_url);
+
+	(*env)->CallVoidMethod(env, jView, mid, j_url);
+	(*env)->DeleteLocalRef(env, j_url);
+}

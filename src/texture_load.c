@@ -23,7 +23,7 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 
 	int16_t jpeg_mrkr;
 	size_t int16_size = sizeof(int16_t);
-	off_t fpos = lseek(fd, 0, SEEK_SET);
+	off_t fpos = lseek(fd, 0, SEEK_CUR);
 
 	/**
 	 *	checking first couple of bytes to prevent application crash when trying to read non-jpeg file
@@ -31,6 +31,10 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	 *	become least significant byte, second byte (0xd8) become most significant
 	 *
 	 */
+
+	int8_t* byte1 = (int8_t*)&jpeg_mrkr;
+
+	PRINT_DEBUG("%x %x %x", jpeg_mrkr, *byte1, *(byte1 + 1));
 
 	if (read(fd, &jpeg_mrkr, int16_size) != int16_size) return 1;
 	if (jpeg_mrkr != (int16_t)0xd8ff) {
