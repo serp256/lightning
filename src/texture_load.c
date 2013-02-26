@@ -32,10 +32,6 @@ int load_jpg_image(int fd,textureInfo *tInfo) {
 	 *
 	 */
 
-	int8_t* byte1 = (int8_t*)&jpeg_mrkr;
-
-	PRINT_DEBUG("%x %x %x", jpeg_mrkr, *byte1, *(byte1 + 1));
-
 	if (read(fd, &jpeg_mrkr, int16_size) != int16_size) return 1;
 	if (jpeg_mrkr != (int16_t)0xd8ff) {
 		PRINT_DEBUG("jpeg test failed");
