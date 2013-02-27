@@ -42,7 +42,7 @@ value success () =
 			successCallback ();
 			_successCallback.val := None;
 		)
-	| _ -> failwith "something wrong with facebook connect success callback"
+	| _ -> (* failwith "something wrong with facebook connect success callback" *)()
 	];
 );
 
@@ -56,7 +56,7 @@ value fail description =
 			failCallback description;
 			_failCallback.val := None;
 		)
-	| _ -> failwith "something wrong with facebook connect fail callback"
+	| _ -> (* failwith "something wrong with facebook connect fail callback" *)()
 	];
 );
 
