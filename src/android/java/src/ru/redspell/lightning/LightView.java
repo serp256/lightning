@@ -301,6 +301,8 @@ public class LightView extends GLSurfaceView {
 				Runnable r = iter.next();
 				super.queueEvent(r);
 			}
+
+			waitingEvents.clear();
 		};
 	}
 

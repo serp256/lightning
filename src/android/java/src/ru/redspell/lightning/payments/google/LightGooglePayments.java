@@ -121,16 +121,9 @@ public class LightGooglePayments implements ILightPayments {
 
             PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
 
-            if (pendingIntent == null) {
-                Log.d("LIGHTNING", "pendingIntent null");
-            } else {
-                Log.d("LIGHTNING", "pendingIntent not null");
-            }
-
-            if (pendingIntent.getIntentSender() == null) {
-                Log.d("LIGHTNING", "pizda");
-            } else {
-                Log.d("LIGHTNING", "ok");
+            if (pendingIntent == null || pendingIntent.getIntentSender() == null) {
+                LightPaymentsCamlCallbacks.fail(sku, "looks like '" + sku + "' already purchased and transaction is not commited");
+                return;
             }
 
             LightActivity.instance.startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));            
@@ -199,6 +192,8 @@ public class LightGooglePayments implements ILightPayments {
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
+            Log.d("LIGHTNING", "onActivityResult call");
+
             if (requestCode == REQUEST_CODE) {           
                 int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
                 String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
