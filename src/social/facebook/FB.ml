@@ -18,7 +18,7 @@ type status = [ NotConnected | Connecting | Connected ];
 
 external _init: string -> unit = "ml_fbInit";
 
-external _connect: unit -> unit = "ml_fbConnect";
+external _connect: option (list string) -> unit -> unit = "ml_fbConnect";
 external _loggedIn: unit -> option connect = "ml_fbLoggedIn";
 external _disconnect: connect -> unit = "ml_fbDisconnect";
 
@@ -68,7 +68,7 @@ Callback.register "fb_sessionClosed" sessionClosed;
 
 value init ~appId () = _init appId;
 
-value connect  ~successCallback ~failCallback () =
+value connect ?permissions ~successCallback ~failCallback () =
 	match !status with
 	[ Connected -> successCallback ()
 	| Connecting -> ()
@@ -79,7 +79,7 @@ value connect  ~successCallback ~failCallback () =
 			_failCallback.val := Some failCallback;
 
 			status.val := Connecting;
-			_connect ();
+			_connect permissions ();
 		)		
 	];
 
