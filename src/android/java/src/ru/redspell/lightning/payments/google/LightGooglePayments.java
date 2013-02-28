@@ -70,6 +70,8 @@ public class LightGooglePayments implements ILightPayments {
         Log.d("LIGHTNING", "LightGooglePayments end");
     }
 
+    ArrayList<Runnable> pendingRequests = new ArrayList();
+
     @Override
     public void init() {
         Log.d("LIGHTNING", "init call");
@@ -90,6 +92,14 @@ public class LightGooglePayments implements ILightPayments {
            public void onServiceConnected(ComponentName name, IBinder service) {
                 Log.d("LIGHTNING", "service binded");
                 mService = IInAppBillingService.Stub.asInterface(service);
+
+                java.util.Iterator<Runnable> iter = pendingRequests.iterator();
+                while (iter.hasNext()) {
+                    Log.d("LIGHTNING", "running pending request");
+                    iter.next().run();
+                }
+
+                pendingRequests.clear();
            }
         };
 
@@ -98,10 +108,20 @@ public class LightGooglePayments implements ILightPayments {
     }
 
     @Override
-    public void purchase(String sku) {
+    public void purchase(final String sku) {
         try {
             if (mService == null) {
-                throw new Error("Google billing service not initiated");
+                Log.d("LIGHTNING", "adding purchase request to pendings");
+
+                // throw new Error("Google billing service not initiated");
+                pendingRequests.add(new Runnable() {
+                    @Override
+                    public void run() {
+                        purchase(sku);
+                    }
+                });
+
+                return;
             }
 
             String developerPayload;
@@ -153,7 +173,17 @@ public class LightGooglePayments implements ILightPayments {
         Log.d("LIGHTNING", "restorePurchases call");
 
         if (mService == null) {
-            throw new Error("Google billing service not initiated");
+            // throw new Error("Google billing service not initiated");
+            Log.d("LIGHTNING", "adding restorePurchases request to pendings");
+
+            pendingRequests.add(new Runnable() {
+                @Override
+                public void run() {
+                    restorePurchases();
+                }
+            });
+
+            return;
         }
 
         String continuationToken = null;
