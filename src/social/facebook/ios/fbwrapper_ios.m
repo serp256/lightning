@@ -272,8 +272,9 @@ void ml_fbInit(value appId) {
 void ml_fbConnect(value permissions) {
     NSLog(@"ml_fbConnect");
 
-    if (permissions != Val_int(0)) {
+    if (permissions != Val_int(0)) {        
         NSLog(@"parsing permission list");
+        NSArray* publish_permissions = [NSArray arrayWithObjects:@"publish_actions", @"publish_actions",  @"ads_management", @"create_event", @"rsvp_event", @"manage_friendlists", @"manage_notifications", @"manage_pages", nil];
         value perms = Field(permissions, 0);
 
         while (Is_block(perms)) {
@@ -281,13 +282,13 @@ void ml_fbConnect(value permissions) {
 
             NSLog(@"permission %@", nsperm);
 
-            NSError* err;
+/*            NSError* err;
             NSRegularExpression* permRegex = [NSRegularExpression regularExpressionWithPattern:@"^(publish|manage).*" options:0 error:&err];
-            NSUInteger matchesNum = [permRegex numberOfMatchesInString:nsperm options:0 range:NSMakeRange(0, [nsperm length])];
+            NSUInteger matchesNum = [permRegex numberOfMatchesInString:nsperm options:0 range:NSMakeRange(0, [nsperm length])];*/
             
-            NSLog(@"matchesNum %lu", (unsigned long)matchesNum);
+            // NSLog(@"matchesNum %lu", (unsigned long)matchesNum);
 
-            if (matchesNum) {
+            if ([publish_permissions indexOfObject:nsperm] != NSNotFound) {
                 if (!publishPermissions) publishPermissions = [[NSMutableArray alloc] init];
                 [publishPermissions addObject:nsperm];                
             } else {
@@ -297,6 +298,8 @@ void ml_fbConnect(value permissions) {
 
             perms = Field(perms, 1);
         }
+
+        [publish_permissions release];
     }
 
     if (!fbSession) {
