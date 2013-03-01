@@ -36,15 +36,43 @@ void ml_fbInit(value appId) {
     (*env)->DeleteLocalRef(env, jappId);
 }
 
-void ml_fbConnect() {
+void ml_fbConnect(value perms) {
     PRINT_DEBUG("ml_fbConnect");
     
     GET_LIGHTFACEBOOK;
 
     static jmethodID mid;
-    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "connect", "()V");
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "connect", "([Ljava/lang/String;)V");
+    
+    jstring c_perms[256];
+    int perms_num = 0;
 
-    (*env)->CallStaticVoidMethod(env, lightFacebookCls, mid);
+    if (perms != Val_int(0)) {
+        value _perms = Field(perms, 0);
+        value perm;
+
+        while (Is_block(_perms)) {
+            perm = Field(_perms, 0);
+            jstring j_perm = (*env)->NewStringUTF(env, String_val(perm));
+            c_perms[perms_num++] = j_perm;
+
+            _perms = Field(_perms, 1);
+        }
+    }
+
+    jclass stringCls = (*env)->FindClass(env, "Ljava/lang/String;");    
+    jobjectArray j_perms = (*env)->NewObjectArray(env, perms_num, stringCls, NULL);
+    (*env)->DeleteLocalRef(env, stringCls);
+    
+    int i;
+
+    for (i = 0; i < perms_num; i++) {
+        (*env)->SetObjectArrayElement(env, j_perms, i, c_perms[i]);
+        (*env)->DeleteLocalRef(env, c_perms[i]);
+    }
+
+    (*env)->CallStaticVoidMethod(env, lightFacebookCls, mid, j_perms);
+    (*env)->DeleteLocalRef(env, j_perms);
 }
 
 value ml_fbLoggedIn() {

@@ -144,10 +144,78 @@ public class LightFacebook {
         LightFacebook.appId = appId;
     }
 
-    private static Runnable pendingGraphReq = null;
+    private static ArrayList readPerms = null;
+    private static ArrayList publishPerms = null;
 
-    public static void connect() {
+    private Session.StatusCallback readPermsCallback =
+        new Session.StatusCallback() {
+            @Override
+            public void call(Session session, SessionState state, Exception exception) {
+                if (session.isOpened()) {
+                    readPerms.clear();
+                    readPerms = null;
+                    session.removeCallback(this);
+
+                    requestPublishPerms();
+                }
+            }
+        }
+
+    private Session.StatusCallback publishPermsCallback =
+        new Session.StatusCallback() {
+            @Override
+            public void call(Session session, SessionState state, Exception exception) {
+                if (session.isOpened()) {
+                    publishPerms.clear();
+                    publishPerms = null;
+                    session.removeCallback(this);
+
+                    connectSuccess();
+                }
+            }            
+        }
+
+    private static void requestPublishPerms() {
+        if (publishPerms != null && publishPerms.length > 0) {
+            LightFacebook.session.addCallback(publishPermsCallback);
+
+            Session.NewPermissionsRequest request = new Session.NewPermissionsRequest(LightActivity.instance, publishPerms);
+            LightFacebook.session.requestNewPublishPermissions(request);
+        } else {
+            connectSuccess();
+        }
+    }
+
+    private static void requestReadPerms() {
+        if (readPerms != null && readPerms.length > 0) {
+            LightFacebook.session.addCallback(readPermsCallback);
+
+            Session.NewPermissionsRequest request = new Session.NewPermissionsRequest(LightActivity.instance, readPerms);
+            LightFacebook.session.requestNewReadPermissions(request);
+        } else {
+            requestPublishPerms();
+        }
+    }
+
+    private static connectSuccess() {
+        LightView.instance.queueEvent(new CamlNamedValueRunnable("fb_success"));
+    }
+
+    public static void connect(String[] perms) {
         Log.d("LIGHTNING", "connect call");
+
+        for (int i = 0; i < perms.length(); i++) {            
+            String perm = perms[i];
+            Log.d("LIGHTNING", "additional permission " + perm);
+
+            if (perm.startsWith("publish_") || perm.startsWith("manage_")) {
+                if (publishPerms == null) publishPerms = new ArrayList();
+                publishPerms.add(perm);
+            } else {
+                if (readPerms == null) readPerms = new ArrayList();
+                readPerms.add(perm);
+            }
+        }
 
         LightFacebook.session = openActiveSession(LightActivity.instance, true, new Session.StatusCallback() {
             @Override
@@ -156,13 +224,14 @@ public class LightFacebook {
 
                 if (state.isOpened()) {
                     if (exception == null) {
-                        Log.d("LIGHTNING", "login success");
-                        LightView.instance.queueEvent(new CamlNamedValueRunnable("fb_success"));
+                        Log.d("LIGHTNING", "session opened");
 
-                        if (pendingGraphReq != null) {
-                            pendingGraphReq.run();
-                            pendingGraphReq = null;
-                        }
+                        // LightView.instance.queueEvent(new CamlNamedValueRunnable("fb_success"));
+
+                        // if (pendingGraphReq != null) {
+                        //     pendingGraphReq.run();
+                        //     pendingGraphReq = null;
+                        // }
                     } else {
                         Log.d("LIGHTNING", "login is opened with error");
 
