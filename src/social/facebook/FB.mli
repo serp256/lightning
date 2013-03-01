@@ -2,7 +2,7 @@ type connect;
 
 value init: ~appId:string -> unit -> unit;
 
-value connect: ~successCallback:(connect -> unit) -> ~failCallback:(string -> unit) -> unit -> unit;
+value connect: ?permissions:(list string) -> ~successCallback:(connect -> unit) -> ~failCallback:(string -> unit) -> unit -> unit;
 value loggedIn: unit -> option connect;
 
 value accessToken: connect -> string;

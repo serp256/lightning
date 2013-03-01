@@ -36,15 +36,64 @@ void ml_fbInit(value appId) {
     (*env)->DeleteLocalRef(env, jappId);
 }
 
-void ml_fbConnect() {
+void ml_fbConnect(value perms) {
     PRINT_DEBUG("ml_fbConnect");
     
     GET_LIGHTFACEBOOK;
 
-    static jmethodID mid;
-    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "connect", "()V");
+    PRINT_DEBUG("chckpnt1");
 
-    (*env)->CallStaticVoidMethod(env, lightFacebookCls, mid);
+    static jmethodID mid;
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "connect", "([Ljava/lang/String;)V");
+
+    PRINT_DEBUG("chckpnt2");
+    
+    jstring c_perms[256];
+    int perms_num = 0;
+
+    if (perms != Val_int(0)) {
+        PRINT_DEBUG("chckpnt2.1");
+
+        value _perms = Field(perms, 0);
+        value perm;
+
+        PRINT_DEBUG("chckpnt2.2");
+
+        while (Is_block(_perms)) {
+            perm = Field(_perms, 0);
+            PRINT_DEBUG("perms %s", String_val(perm));
+            jstring j_perm = (*env)->NewStringUTF(env, String_val(perm));
+            c_perms[perms_num++] = j_perm;
+
+            _perms = Field(_perms, 1);
+        }
+    }
+
+    PRINT_DEBUG("chckpnt3");
+
+    jclass stringCls = (*env)->FindClass(env, "java/lang/String");
+    jobjectArray j_perms = (*env)->NewObjectArray(env, perms_num, stringCls, NULL);
+    (*env)->DeleteLocalRef(env, stringCls);
+
+    PRINT_DEBUG("chckpnt4");
+    
+    int i;
+
+    for (i = 0; i < perms_num; i++) {
+        PRINT_DEBUG("4.1");
+
+        (*env)->SetObjectArrayElement(env, j_perms, i, c_perms[i]);
+        PRINT_DEBUG("4.2");
+        (*env)->DeleteLocalRef(env, c_perms[i]);
+        PRINT_DEBUG("4.3");
+    }
+
+    PRINT_DEBUG("chckpnt5");
+
+    (*env)->CallStaticVoidMethod(env, lightFacebookCls, mid, j_perms);
+    (*env)->DeleteLocalRef(env, j_perms);
+
+    PRINT_DEBUG("chckpnt6");
 }
 
 value ml_fbLoggedIn() {

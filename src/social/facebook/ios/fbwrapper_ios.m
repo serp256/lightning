@@ -125,16 +125,88 @@ void fbError(NSError* error) {
     caml_callback(*caml_named_value("fb_fail"), caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
 }
 
+NSMutableArray* readPermissions = nil;
+NSMutableArray* publishPermissions = nil;
+
+void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error);
+
+/*void readPermissionsHandler(FBSession *session, NSError *error) {
+    if (readPermissions) {
+        [session reauthorizeWithReadPermissions:readPermissions completionHandler:^(FBSession *session, NSError *error) {
+            [readPermissions dealloc];
+            readPermissions = nil;            
+        }]
+
+
+    }
+    sessionStateChanged(session, FBSessionStateOpen, error);
+};
+
+void publishPermissionsHandler(FBSession *session, NSError *error) {
+    if (publishPermissions) {
+        [publishPermissions dealloc];
+        publishPermissions = nil;
+    }
+    sessionStateChanged(session, FBSessionStateOpen, error);
+};*/
+
+void requestPublishPermissions() {
+    if (publishPermissions && [publishPermissions count]) {
+        NSLog(@"requesting additional publish permissions");
+        [[FBSession activeSession] reauthorizeWithPublishPermissions:publishPermissions defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:^(FBSession *session, NSError *error) {
+            NSLog(@"publish perms completionHandler");
+            [publishPermissions removeAllObjects];
+            [publishPermissions release];
+            publishPermissions = nil;
+
+            fbSession = session;
+            caml_callback(*caml_named_value("fb_success"), Val_unit);
+        }];
+    } else {
+        NSLog(@"skip additional publish permissions");
+        fbSession = [FBSession activeSession];
+        caml_callback(*caml_named_value("fb_success"), Val_unit);
+    }
+}
+
+void requestReadPermissions() {
+    if (readPermissions && [readPermissions count]) {
+        NSLog(@"requesting additional read permissions");
+        [[FBSession activeSession] reauthorizeWithReadPermissions:readPermissions completionHandler:^(FBSession *session, NSError *error) {
+            NSLog(@"read perms completionHandler");
+            [readPermissions removeAllObjects];
+            [readPermissions release];
+            readPermissions = nil;
+
+            requestPublishPermissions();
+        }];
+    } else {
+        NSLog(@"skip additional read permissions");
+        requestPublishPermissions();
+    }
+}
+
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error) {
-    NSLog(@"sessionStateChanged call with error %x", error);
+    NSLog(@"sessionStateChanged call with error %@", error);
 
     switch (state) {
         case FBSessionStateOpen:
             NSLog(@"FBSessionStateOpen");
 
             if (!error) {
-                fbSession = session;
-                caml_callback(*caml_named_value("fb_success"), Val_unit);
+                requestReadPermissions();
+                // if (readPermissions && [readPermissions count]) {
+                //     NSLog(@"requesting additional read permissions");
+                //     [session reauthorizeWithReadPermissions:readPermissions completionHandler:^(FBSession *session, NSError *error) { readPermissionsHandler(session, error); }];
+                // } else if (publishPermissions && [publishPermissions count]) {
+                //     NSLog(@"requesting additional publish permissions");
+                //     [session reauthorizeWithPublishPermissions:publishPermissions defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:^(FBSession *session, NSError *error) { publishPermissionsHandler(session, error); }];
+                // } else {
+                //     NSLog(@"all needed permission requested");
+
+                //     fbSession = session;
+                //     caml_callback(*caml_named_value("fb_success"), Val_unit);
+                // }
             } else {
                 fbError(error);   
             }
@@ -158,8 +230,20 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 						else fbError(error);
             break;
 
-        default:
-            NSLog(@"default");
+        case FBSessionStateCreated:
+            NSLog(@"FBSessionStateCreated");
+            break;
+
+        case FBSessionStateCreatedTokenLoaded:
+            NSLog(@"FBSessionStateCreatedTokenLoaded");
+            break;
+
+        case FBSessionStateCreatedOpening:
+            NSLog(@"FBSessionStateCreatedOpening");
+            break;
+
+        case FBSessionStateOpenTokenExtended:
+            NSLog(@"FBSessionStateOpenTokenExtended");
             break;
     }    
 }
@@ -185,8 +269,38 @@ void ml_fbInit(value appId) {
     }];    
 }
 
-void ml_fbConnect() {
+void ml_fbConnect(value permissions) {
     NSLog(@"ml_fbConnect");
+
+    if (permissions != Val_int(0)) {        
+        NSLog(@"parsing permission list");
+        NSArray* publish_permissions = [NSArray arrayWithObjects:@"publish_actions", @"publish_actions",  @"ads_management", @"create_event", @"rsvp_event", @"manage_friendlists", @"manage_notifications", @"manage_pages", nil];
+        value perms = Field(permissions, 0);
+
+        while (Is_block(perms)) {
+            NSString* nsperm = [NSString stringWithCString:(String_val(Field(perms, 0))) encoding:NSASCIIStringEncoding];
+
+            NSLog(@"permission %@", nsperm);
+
+/*            NSError* err;
+            NSRegularExpression* permRegex = [NSRegularExpression regularExpressionWithPattern:@"^(publish|manage).*" options:0 error:&err];
+            NSUInteger matchesNum = [permRegex numberOfMatchesInString:nsperm options:0 range:NSMakeRange(0, [nsperm length])];*/
+            
+            // NSLog(@"matchesNum %lu", (unsigned long)matchesNum);
+
+            if ([publish_permissions indexOfObject:nsperm] != NSNotFound) {
+                if (!publishPermissions) publishPermissions = [[NSMutableArray alloc] init];
+                [publishPermissions addObject:nsperm];                
+            } else {
+                if (!readPermissions) readPermissions = [[NSMutableArray alloc] init];
+                [readPermissions addObject:nsperm];                
+            }
+
+            perms = Field(perms, 1);
+        }
+
+        [publish_permissions release];
+    }
 
     if (!fbSession) {
         [FBSession openActiveSessionWithReadPermissions:nil
@@ -291,11 +405,54 @@ void ml_fbApprequest(value title, value message, value recipient, value data, va
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
+/*void fbGraphrequest(NSString* nspath, NSDictionary* nsparams, value* successCallbackGraphApi, value* failCallbackGraphApi) {
+    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:@"POST" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+        NSLog(@"completionHandler");
+
+        if (error) {
+            NSArray *perms =[NSArray arrayWithObjects:@"publish_actions", nil];
+
+            //fix it
+            [[FBSession activeSession] reauthorizeWithPublishPermissions:perms defaultAudience:FBSessionDefaultAudienceEveryone
+                                           completionHandler:^(FBSession *session, NSError *error) {
+                                               fbGraphrequest(nspath, nsparams, successCallbackGraphApi, failCallbackGraphApi);
+                                           }];
+            return;
+        } else {
+            if (successCallbackGraphApi) {
+                
+                
+                FBSBJSON* json = [[FBSBJSON alloc] init];
+                NSError* err = nil;
+                NSString* jsonResult = [json stringWithObject:result error:&err];
+
+                NSLog(@"jsonResult %@", jsonResult);
+
+                if (err) {
+                    if (failCallbackGraphApi) {
+                        caml_callback(*failCallbackGraphApi, caml_copy_string([[err localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+                    }
+                } else {
+                    caml_callback2(*caml_named_value("fb_graphrequestSuccess"), caml_copy_string([jsonResult cStringUsingEncoding:NSUTF8StringEncoding]), *successCallbackGraphApi);
+                }
+
+                [json release];
+            }
+        }
+
+        NSLog(@"FREE SUCESSCALLBACK IN GRAPH API");
+        FREE_CALLBACK(successCallbackGraphApi);
+        FREE_CALLBACK(failCallbackGraphApi);        
+    }];
+}*/
+
 void ml_fbGraphrequest(value path, value params, value successCallback, value failCallback) {
     FBSESSION_CHECK;
 
     NSString* nspath = [NSString stringWithCString:String_val(path) encoding:NSASCIIStringEncoding];
     NSDictionary* nsparams = [NSMutableDictionary dictionary];
+
+    NSLog(@"graph request %@", nspath);
 
     if (params != Val_int(0)) {
         value _params = Field(params, 0);
@@ -321,7 +478,10 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
 		}
     REGISTER_CALLBACK(failCallback, _failCallbackGraphApi);
 
-    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:nil completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+    // fbGraphrequest(nspath, nsparams, _successCallbackGraphApi, _failCallbackGraphApi);
+    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:@"POST" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+        NSLog(@"completionHandler");
+
         if (error) {
             if (_failCallbackGraphApi) {
                 caml_callback(*_failCallbackGraphApi, caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
@@ -331,6 +491,8 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
                 FBSBJSON* json = [[FBSBJSON alloc] init];
                 NSError* err = nil;
                 NSString* jsonResult = [json stringWithObject:result error:&err];
+
+                NSLog(@"jsonResult %@", jsonResult);
 
                 if (err) {
                     if (_failCallbackGraphApi) {
@@ -344,7 +506,7 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
             }
         }
 
-				NSLog(@"FREE SUCESSCALLBACK IN GRAPH API");
+	    NSLog(@"FREE SUCESSCALLBACK IN GRAPH API");
         FREE_CALLBACK(_successCallbackGraphApi);
         FREE_CALLBACK(_failCallbackGraphApi);        
     }];
