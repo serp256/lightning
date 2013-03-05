@@ -121,22 +121,74 @@ ENDIF;
 ENDIF;
 
 IFDEF ANDROID THEN
+external downloadExpansions: unit -> unit = "ml_downloadExpansions";
 
-external miniunz : string -> string -> option string -> unit = "ml_miniunz";
-external getApkPath : unit -> string = "ml_apkPath";
+value expansionsInProgress = ref False;
+value _errorCallback = ref None;
+value _progressCallback = ref None;
+value _completeCallback = ref None;
+
+value expansionsError reason = (
+  match !_errorCallback with
+  [ Some errorCallback -> errorCallback reason
+  | _ -> ()
+  ];
+
+  expansionsInProgress.val := False;
+);
+
+value expansionsProgress total progress timeRemain =
+  match !_progressCallback with
+  [ Some progressCallback -> progressCallback ~total ~progress ~timeRemain ()
+  | _ -> ()
+  ];
+
+value expansionsComplete () = (
+  match !_completeCallback with
+  [ Some completeCallback -> completeCallback ()
+  | _ -> failwith "expansions complete callback cannot be None"
+  ];
+
+  expansionsInProgress.val := False;
+);
+
+value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () =
+  if not !expansionsInProgress
+  then (
+    expansionsInProgress.val := True;
+
+    Callback.register "expansionsError" expansionsError;
+    Callback.register "expansionsProgress" expansionsProgress;
+    Callback.register "expansionsComplete" expansionsComplete;
+
+    _errorCallback.val := errorCallback;
+    _progressCallback.val := progressCallback;
+    _completeCallback.val := Some completeCallback;
+
+    downloadExpansions ();
+  )
+  else (); 
+ELSE
+value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () = ();
+ENDIF;
+
+(* IFDEF ANDROID THEN
+
+(* external miniunz : string -> string -> option string -> unit = "ml_miniunz"; *)
+(* external getApkPath : unit -> string = "ml_apkPath"; *)
 (* external _assetsPath : unit -> string = "ml_assetsPath";*)
-external setAssetsDir : string -> unit = "ml_setAssetsDir";
-external _getVersion : unit -> string = "ml_getVersion";
-external rm : string -> string -> (unit -> unit) -> unit = "ml_rm";
-external downloadExpansions : unit -> unit = "ml_downloadExpansions";
-external getExpansionPath : bool -> string = "ml_getExpansionPath";
-external getExpansionVer : bool -> int = "ml_getExpansionVer";
-external _extractExpansions : (bool -> unit) -> unit = "ml_extractExpansions";
-external expansionExtracted : unit -> bool = "ml_expansionExtracted";
+(* external setAssetsDir : string -> unit = "ml_setAssetsDir"; *)
+(* external _getVersion : unit -> string = "ml_getVersion"; *)
+(* external rm : string -> string -> (unit -> unit) -> unit = "ml_rm"; *)
+(* external downloadExpansions : unit -> unit = "ml_downloadExpansions"; *)
+(* external getExpansionPath : bool -> string = "ml_getExpansionPath"; *)
+(* external getExpansionVer : bool -> int = "ml_getExpansionVer"; *)
+(* external _extractExpansions : (bool -> unit) -> unit = "ml_extractExpansions"; *)
+(* external expansionExtracted : unit -> bool = "ml_expansionExtracted"; *)
 
-value unzipCbs = Hashtbl.create 0;
+(* value unzipCbs = Hashtbl.create 0; *)
 
-value unzip ?prefix zipPath dstPath cb =
+(* value unzip ?prefix zipPath dstPath cb =
 (
   Hashtbl.add unzipCbs (zipPath, dstPath) cb;
   miniunz zipPath dstPath prefix;
@@ -149,20 +201,20 @@ value unzipComplete zipPath dstPath success =
       remove_all unzipCbs key;
     ));
 
-Callback.register "unzipComplete" unzipComplete;    
+Callback.register "unzipComplete" unzipComplete;     *)
 
 (* value _apkPath = Lazy.lazy_from_fun _apkPath; *)
 (* value apkPath () = Lazy.force _apkPath; *)
-value _apkVer = Lazy.lazy_from_fun _getVersion;
-value apkVer () = Lazy.force _apkVer;
+(* value _apkVer = Lazy.lazy_from_fun _getVersion; *)
+(* value apkVer () = Lazy.force _apkVer; *)
 (* value _assetsPath = Lazy.lazy_from_fun _assetPath; *)
 (* value assetsPath () = Lazy.force _assetsPath; *)
-value assetsPath () = (LightCommon.storagePath ()) ^ "/assets/";
-value assetsVerFilename () = (assetsPath()) ^ "a" ^ (apkVer ());
+(* value assetsPath () = (LightCommon.storagePath ()) ^ "/assets/"; *)
+(* value assetsVerFilename () = (assetsPath()) ^ "a" ^ (apkVer ()); *)
 
 value assetsExtracted () = Sys.file_exists (assetsVerFilename ());
 
-value extractAssets cb =
+(* value extractAssets cb =
   let cb success =
     (
       if success then
@@ -174,20 +226,20 @@ value extractAssets cb =
       cb success;
     )
   in
-  unzip ~prefix:"assets" (getApkPath ()) (LightCommon.storagePath() ^ "/") cb;
+  unzip ~prefix:"assets" (getApkPath ()) (LightCommon.storagePath() ^ "/") cb; *)
 
-value extractExpansions cb =
+(* value extractExpansions cb =
 (
   Callback.register "expnsDownloadComplete" (fun () -> _extractExpansions cb);
   downloadExpansions ();
-(*     fun () -> unzip (getExpansionPath True) (externalStoragePath ^ "assets/") (
+    fun () -> unzip (getExpansionPath True) (externalStoragePath ^ "assets/") (
       fun success ->
       (
         if success then close_out (open_out expansionVerFilename) else ();
         cb success;
       )
-    ) *)
-);
+    )
+); *)
 
 value extractAssetsIfRequired cb =
   if assetsExtracted () then
@@ -216,7 +268,7 @@ value extractAssetsAndExpansionsIfRequired cb =
 ELSE
 value extractAssetsIfRequired (cb:(bool -> unit)) =  cb True;
 value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = cb True;
-ENDIF;
+ENDIF; *)
 
 IFDEF ANDROID THEN
 value getMACID () = _deviceIdentifier ();

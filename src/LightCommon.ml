@@ -463,8 +463,8 @@ module MakeXmlParser(P:sig value path: string; value with_suffix: bool; end) = s
 
 end;
 
-IFDEF ANDROID THEN
+(* IFDEF ANDROID THEN
 external pathExistsInExpansions: string -> bool = "ml_pathExistsInExpansions";
 ELSE
 value pathExistsInExpansions (path:string) = False;
-ENDIF;
+ENDIF; *)

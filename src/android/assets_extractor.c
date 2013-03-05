@@ -508,19 +508,19 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024RmCallbackRunna
 
 static int expnsExtractInProgress = 0;
 
-void ml_downloadExpansions() {
-    if (expnsExtractInProgress) {
-        return;  
-    }
+// void ml_downloadExpansions() {
+//     if (expnsExtractInProgress) {
+//         return;  
+//     }
 
-    expnsExtractInProgress = 1;
+//     expnsExtractInProgress = 1;
 
-    JNIEnv *env;
-    (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+//     JNIEnv *env;
+//     (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
-    jmethodID mid = (*env)->GetMethodID(env, jViewCls, "extractExpansions", "()V");
-    (*env)->CallVoidMethod(env, jView, mid);
-}
+//     jmethodID mid = (*env)->GetMethodID(env, jViewCls, "extractExpansions", "()V");
+//     (*env)->CallVoidMethod(env, jView, mid);
+// }
 
 static jmethodID gGetExpansionPathMid;
 static jmethodID gGetExpansionVerMid;
