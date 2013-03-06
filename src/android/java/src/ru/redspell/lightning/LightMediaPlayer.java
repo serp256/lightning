@@ -141,71 +141,63 @@ public class LightMediaPlayer extends MediaPlayer {
 	private static class OffsetSizePair {
 		public int offset;
 		public int size;
-		public int inMain;
+		public int location;
 
-		public OffsetSizePair(int offset, int size, int inMain) {
+		public OffsetSizePair(int offset, int size, int location) {
 			this.offset = offset;
 			this.size = size;
-			this.inMain = inMain;
+			this.location = location;
 		}
 	}
 
 	private static native OffsetSizePair getOffsetSizePair(String path);
 
-	private static boolean setMpDataSrc(MediaPlayer mp, String assetsDir, String path) throws IOException {
+	private static String getFpathByLocation(int location) {
+		if (location == 0) {
+			return LightView.instance.getApkPath();
+		}
+
+		return LightView.instance.getExpansionPath(location == 2);
+	}
+
+	private static boolean setMpDataSrc(MediaPlayer mp, String path) throws IOException {
 		Log.d("LIGHTNING", "setMpDataSrc: " + path);
 
 		OffsetSizePair pair = getOffsetSizePair(path);
-		File f = assetsDir != null ? new File(assetsDir + (assetsDir.charAt(assetsDir.length() - 1) == '/' ? "" : "/") + path) : null;
 
-		if (pair != null) {
-			mp.setDataSource((new FileInputStream(LightView.instance.getExpansionPath(pair.inMain == 1))).getFD(), pair.offset, pair.size);
-			return true;
-		} else if (f != null && f.exists()) {
-			mp.setDataSource(f.getAbsolutePath());
-			return true;
-		}
+		if (pair == null) return false;
 
-		try {
-			AssetFileDescriptor afd = LightView.instance.getContext().getAssets().openFd(path);
-			mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+		String fpath = getFpathByLocation(pair.location);
+		if (fpath == null) return false;
 
-			return true;
-		} catch (IOException e) {
-			return false;
-		}
+		mp.setDataSource(new FileInputStream(fpath).getFD(), pair.offset, pair.size);
+		return true;
 	}
 
 	private static int soundPoolLoad(SoundPool sndPool, String path) {
 		Log.d("LIGHTNING", "soundPoolLoad: " + path);
 
 		OffsetSizePair pair = getOffsetSizePair(path);
-		File f = path.charAt(0) == '/' ? new File(path) : null;
 
-		if (pair != null) {
-			try {
-				return sndPool.load((new FileInputStream(LightView.instance.getExpansionPath(pair.inMain == 1))).getFD(), pair.offset, pair.size, 1);	
-			} catch (Exception e) {
-				return -1;
-			}			
-		} else if (f != null && f.exists()) {
-			return sndPool.load(path, 1);
-		}
+		if (pair == null) return -1;
+
+		String fpath = getFpathByLocation(pair.location);
+		if (fpath == null) return -1;
 
 		try {
-			return sndPool.load(LightView.instance.getContext().getAssets().openFd(path), 1);	
-		} catch (IOException e) {
+			return sndPool.load(new FileInputStream(fpath).getFD(), pair.offset, pair.size, 1);	
+		} catch (Exception e) {
 			return -1;
 		}
 	}
 
-	public static MediaPlayer createMediaPlayer(String assetsDir, String path) throws IOException {
+	public static MediaPlayer createMediaPlayer(String path) throws IOException {
 		MediaPlayer mp = new LightMediaPlayer();
 		String locale = Locale.getDefault().getLanguage();
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-		if (!setMpDataSrc(mp, assetsDir, path) && !setMpDataSrc(mp, assetsDir, "locale/" + locale + "/" + path)) {
-			if (locale != "en" && !setMpDataSrc(mp, assetsDir, "locale/en/" + path)) {
+		if (!setMpDataSrc(mp, path) && !setMpDataSrc(mp, "locale/" + locale + "/" + path)) {
+			if (locale != "en" && !setMpDataSrc(mp, "locale/en/" + path)) {
 				return null;
 			}
 		}

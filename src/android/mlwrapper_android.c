@@ -1335,11 +1335,12 @@ value ml_avsound_create_player(value vpath) {
 	static jmethodID createMpMid;
 	jclass lmpCls = get_lmp_class();
 
-	if (!createMpMid) createMpMid = (*env)->GetStaticMethodID(env, lmpCls, "createMediaPlayer", "(Ljava/lang/String;Ljava/lang/String;)Landroid/media/MediaPlayer;");
+	// if (!createMpMid) createMpMid = (*env)->GetStaticMethodID(env, lmpCls, "createMediaPlayer", "(Ljava/lang/String;Ljava/lang/String;)Landroid/media/MediaPlayer;");
+	if (!createMpMid) createMpMid = (*env)->GetStaticMethodID(env, lmpCls, "createMediaPlayer", "(Ljava/lang/String;)Landroid/media/MediaPlayer;");
 
 	const char* cpath = String_val(vpath);
 	jstring jpath = (*env)->NewStringUTF(env, cpath);
-	jstring jassetsDir = NULL;
+	// jstring jassetsDir = NULL;
 
 	// if (gAssetsDir) {
 	// 	jassetsDir = (*env)->NewStringUTF(env, gAssetsDir);		
@@ -1347,7 +1348,8 @@ value ml_avsound_create_player(value vpath) {
 
 	// FIXME
 
-	jobject mp = (*env)->CallStaticObjectMethod(env, lmpCls, createMpMid, jassetsDir, jpath);
+	// jobject mp = (*env)->CallStaticObjectMethod(env, lmpCls, createMpMid, jassetsDir, jpath);
+	jobject mp = (*env)->CallStaticObjectMethod(env, lmpCls, createMpMid, jpath);
 
 	if (!mp) {
 		char mes[255];
@@ -1357,9 +1359,9 @@ value ml_avsound_create_player(value vpath) {
 
 	jobject gmp = (*env)->NewGlobalRef(env, mp);
 
-	if (jassetsDir) {
-		(*env)->DeleteLocalRef(env, jassetsDir);
-	}
+	// if (jassetsDir) {
+	// 	(*env)->DeleteLocalRef(env, jassetsDir);
+	// }
 
 	(*env)->DeleteLocalRef(env, jpath);
 	(*env)->DeleteLocalRef(env, mp);
@@ -1920,12 +1922,12 @@ void* extract_expansions_thread(void* params) {
 // 	return Val_bool(idx);
 // }
 
-/*JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_LightMediaPlayer_getOffsetSizePair(JNIEnv *env, jobject this, jstring path) {
+JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_LightMediaPlayer_getOffsetSizePair(JNIEnv *env, jobject this, jstring path) {
 	offset_size_pair_t* pair;
 	const char* cpath = (*env)->GetStringUTFChars(env, path, JNI_FALSE);
 	jobject retval = NULL;
 
-	if (!get_expansion_offset_size_pair(cpath, &pair)) {
+	if (!get_offset_size_pair(cpath, &pair)) {
 		static jclass offsetSizePairCls;
 		static jmethodID offsetSizePairConstrMid;
 
@@ -1936,12 +1938,12 @@ void* extract_expansions_thread(void* params) {
 			offsetSizePairConstrMid = (*env)->GetMethodID(env, offsetSizePairCls, "<init>", "(III)V");
 		}
 
-		retval = (*env)->NewObject(env, offsetSizePairCls, offsetSizePairConstrMid, (jint)pair->offset, (jint)pair->size, (jint)pair->in_main);
+		retval = (*env)->NewObject(env, offsetSizePairCls, offsetSizePairConstrMid, (jint)pair->offset, (jint)pair->size, (jint)pair->location);
 	}
 
 	(*env)->ReleaseStringUTFChars(env, path, cpath);
 	return retval;
-}*/
+}
 
 value ml_platform() {
 	JNIEnv *env;
