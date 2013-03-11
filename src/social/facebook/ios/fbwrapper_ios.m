@@ -150,36 +150,30 @@ void publishPermissionsHandler(FBSession *session, NSError *error) {
     sessionStateChanged(session, FBSessionStateOpen, error);
 };*/
 
+enum {
+    NotRequested,
+    ReadPermissionsRequsted,
+    PublishPermissionsRequsted,
+} extraPermsState = NotRequested;
+
 void requestPublishPermissions() {
     if (publishPermissions && [publishPermissions count]) {
         NSLog(@"requesting additional publish permissions");
-        [[FBSession activeSession] reauthorizeWithPublishPermissions:publishPermissions defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:^(FBSession *session, NSError *error) {
-            NSLog(@"publish perms completionHandler");
-            [publishPermissions removeAllObjects];
-            [publishPermissions release];
-            publishPermissions = nil;
-
-            fbSession = session;
-            caml_callback(*caml_named_value("fb_success"), Val_unit);
-        }];
+        extraPermsState = PublishPermissionsRequsted;
+        [[FBSession activeSession] reauthorizeWithPublishPermissions:publishPermissions defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:nil];
     } else {
         NSLog(@"skip additional publish permissions");
         fbSession = [FBSession activeSession];
+        extraPermsState = NotRequested;
         caml_callback(*caml_named_value("fb_success"), Val_unit);
     }
 }
 
 void requestReadPermissions() {
-    if (readPermissions && [readPermissions count]) {
+    if (readPermissions && [readPermissions count]) {        
         NSLog(@"requesting additional read permissions");
-        [[FBSession activeSession] reauthorizeWithReadPermissions:readPermissions completionHandler:^(FBSession *session, NSError *error) {
-            NSLog(@"read perms completionHandler");
-            [readPermissions removeAllObjects];
-            [readPermissions release];
-            readPermissions = nil;
-
-            requestPublishPermissions();
-        }];
+        extraPermsState = ReadPermissionsRequsted;
+        [[FBSession activeSession] reauthorizeWithReadPermissions:readPermissions completionHandler:nil];
     } else {
         NSLog(@"skip additional read permissions");
         requestPublishPermissions();
@@ -189,26 +183,14 @@ void requestReadPermissions() {
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error) {
     NSLog(@"sessionStateChanged call with error %@", error);
 
+    //do nothing in this function when requesting extra permissions
+
     switch (state) {
         case FBSessionStateOpen:
-            NSLog(@"FBSessionStateOpen");
+            NSLog(@"FBSessionStateOpen %@", extraPermsState == NotRequested ? @"true" : @"false");
 
-            if (!error) {
+            if (extraPermsState == NotRequested) {
                 requestReadPermissions();
-                // if (readPermissions && [readPermissions count]) {
-                //     NSLog(@"requesting additional read permissions");
-                //     [session reauthorizeWithReadPermissions:readPermissions completionHandler:^(FBSession *session, NSError *error) { readPermissionsHandler(session, error); }];
-                // } else if (publishPermissions && [publishPermissions count]) {
-                //     NSLog(@"requesting additional publish permissions");
-                //     [session reauthorizeWithPublishPermissions:publishPermissions defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:^(FBSession *session, NSError *error) { publishPermissionsHandler(session, error); }];
-                // } else {
-                //     NSLog(@"all needed permission requested");
-
-                //     fbSession = session;
-                //     caml_callback(*caml_named_value("fb_success"), Val_unit);
-                // }
-            } else {
-                fbError(error);   
             }
 
             break;
@@ -224,10 +206,8 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
             NSLog(@"FBSessionStateClosedLoginFailed");
 
             [[FBSession activeSession] closeAndClearTokenInformation];
-
-						/** FIXME - иногда error может быть NULL **/
-						if (!error) caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("Unknown Error"));
-						else fbError(error);
+    		if (!error) caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("Unknown Error"));
+    		else fbError(error);
             break;
 
         case FBSessionStateCreated:
@@ -244,6 +224,30 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 
         case FBSessionStateOpenTokenExtended:
             NSLog(@"FBSessionStateOpenTokenExtended");
+
+            switch (extraPermsState) {
+                case ReadPermissionsRequsted:
+                    NSLog(@"ReadPermissionsRequsted");
+
+                    [readPermissions removeAllObjects];
+                    [readPermissions release];
+                    readPermissions = nil;
+                    requestPublishPermissions();
+                    break;
+
+                case PublishPermissionsRequsted:
+                    NSLog(@"PublishPermissionsRequsted");
+
+                    [publishPermissions removeAllObjects];
+                    [publishPermissions release];
+                    publishPermissions = nil;
+                    fbSession = session;
+                    extraPermsState = NotRequested;
+                    caml_callback(*caml_named_value("fb_success"), Val_unit);
+                    break;
+            }
+
+
             break;
     }    
 }
@@ -299,7 +303,7 @@ void ml_fbConnect(value permissions) {
             perms = Field(perms, 1);
         }
 
-        [publish_permissions release];
+        // [publish_permissions release];
     }
 
     if (!fbSession) {
