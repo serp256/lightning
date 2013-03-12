@@ -169,7 +169,10 @@ value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () =
   )
   else (); 
 ELSE
-value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () = ();
+value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () = 
+(
+	completeCallback ();
+);
 ENDIF;
 
 (* IFDEF ANDROID THEN
