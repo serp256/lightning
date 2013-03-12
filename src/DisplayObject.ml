@@ -179,6 +179,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
 		initializer
 		(
+			(*
 			 Gc.finalise (fun _ -> (
 			 		decr object_count;
 					) ) self;
@@ -188,6 +189,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 					 debug:count "DO [%d] COUNT [%d] " (Oo.id self) !object_count 
 				)
 			 else ();
+			*)
 		);
 
     value mutable name = "";
