@@ -432,7 +432,7 @@ static value run_method = 1;//None
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
 	CAMLparam0();
 	CAMLlocal1(timePassed);
-	PRINT_DEBUG("DRAW FRAME!!!!");
+	// PRINT_DEBUG("DRAW FRAME!!!!");
 	timePassed = caml_copy_double((double)interval / 1000000000L);
 	//mlstage_run(timePassed);
 	if (net_running > 0) net_perform();
