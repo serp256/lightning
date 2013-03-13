@@ -384,13 +384,13 @@ void ml_fbApprequest(value title, value message, value recipient, value data, va
     NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
 
     if (Is_block(recipient)) {
-        NSString* nsrecipient = [NSString stringWithCString:String_val(Field(recipient, 0)) encoding:NSASCIIStringEncoding];
+        NSString* nsrecipient = [NSString stringWithCString:String_val(Field(recipient, 0)) encoding:NSUTF8StringEncoding];
         [params setObject:nsrecipient forKey:@"to"];
     }
 
     if (Is_block(data)) {
 //				NSLog (@"data str: %@",String_val(Field(data, 0) ));
-        NSString* nsdata = [NSString stringWithCString:String_val(Field(data, 0)) encoding:NSASCIIStringEncoding];
+        NSString* nsdata = [NSString stringWithCString:String_val(Field(data, 0)) encoding:NSUTF8StringEncoding];
         [params setObject:nsdata forKey:@"data"];
     }
 
@@ -409,47 +409,6 @@ void ml_fbApprequest(value title, value message, value recipient, value data, va
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-/*void fbGraphrequest(NSString* nspath, NSDictionary* nsparams, value* successCallbackGraphApi, value* failCallbackGraphApi) {
-    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:@"POST" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
-        NSLog(@"completionHandler");
-
-        if (error) {
-            NSArray *perms =[NSArray arrayWithObjects:@"publish_actions", nil];
-
-            //fix it
-            [[FBSession activeSession] reauthorizeWithPublishPermissions:perms defaultAudience:FBSessionDefaultAudienceEveryone
-                                           completionHandler:^(FBSession *session, NSError *error) {
-                                               fbGraphrequest(nspath, nsparams, successCallbackGraphApi, failCallbackGraphApi);
-                                           }];
-            return;
-        } else {
-            if (successCallbackGraphApi) {
-                
-                
-                FBSBJSON* json = [[FBSBJSON alloc] init];
-                NSError* err = nil;
-                NSString* jsonResult = [json stringWithObject:result error:&err];
-
-                NSLog(@"jsonResult %@", jsonResult);
-
-                if (err) {
-                    if (failCallbackGraphApi) {
-                        caml_callback(*failCallbackGraphApi, caml_copy_string([[err localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
-                    }
-                } else {
-                    caml_callback2(*caml_named_value("fb_graphrequestSuccess"), caml_copy_string([jsonResult cStringUsingEncoding:NSUTF8StringEncoding]), *successCallbackGraphApi);
-                }
-
-                [json release];
-            }
-        }
-
-        NSLog(@"FREE SUCESSCALLBACK IN GRAPH API");
-        FREE_CALLBACK(successCallbackGraphApi);
-        FREE_CALLBACK(failCallbackGraphApi);        
-    }];
-}*/
-
 void ml_fbGraphrequest(value path, value params, value successCallback, value failCallback) {
     FBSESSION_CHECK;
 
@@ -464,8 +423,8 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
 
         while (Is_block(_params)) {
             param = Field(_params, 0);
-            NSString* key = [NSString stringWithCString:String_val(Field(param, 0)) encoding:NSASCIIStringEncoding];
-            NSString* val = [NSString stringWithCString:String_val(Field(param, 1)) encoding:NSASCIIStringEncoding];
+            NSString* key = [NSString stringWithCString:String_val(Field(param, 0)) encoding:NSUTF8StringEncoding];
+            NSString* val = [NSString stringWithCString:String_val(Field(param, 1)) encoding:NSUTF8StringEncoding];
             [nsparams setValue:val forKey:key];
             _params = Field(_params, 1);
         }
@@ -515,105 +474,3 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
         FREE_CALLBACK(_failCallbackGraphApi);        
     }];
 }
-
-/*#import "FBConnect.h"
-#import "FacebookController.h"
-#import "FacebookDialogDelegate.h"
-#import "FacebookRequestDelegate.h"
-#import "fbwrapper_ios.h"
-
-static FacebookController * fbcontroller = nil;
-
-void ml_facebook_init(value appid) {
-  CAMLparam1(appid);
-  
-  if (fbcontroller == nil) {
-    fbcontroller = [[FacebookController alloc] initWithAppId: [NSString stringWithCString:String_val(appid) encoding:NSASCIIStringEncoding]];
-  }
-  
-  CAMLreturn0;
-}
-
-value ml_facebook_check_auth_token() {
-  CAMLparam0();
-  
-  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-  if ([defaults objectForKey:@"FBAccessTokenKey"] && [defaults objectForKey:@"FBExpirationDateKey"]) {
-      fbcontroller.facebook.accessToken = [defaults objectForKey:@"FBAccessTokenKey"];
-      fbcontroller.facebook.expirationDate = [defaults objectForKey:@"FBExpirationDateKey"];
-  }  
-
-  CAMLreturn(Val_bool([fbcontroller.facebook isSessionValid]));
-}
-
-
-
-value ml_facebook_get_auth_token() {
-  CAMLparam0();
-  
-  if (fbcontroller != nil) {
-    CAMLreturn(caml_copy_string([fbcontroller.facebook.accessToken UTF8String]));
-  } else {
-    CAMLreturn(caml_copy_string(""));
-  }
-  
-}
-
-void ml_facebook_authorize(value permissions) {
-  CAMLparam1(permissions);
-  
-  if (fbcontroller) {
-    [fbcontroller.facebook authorize: nil];
-  }
-  
-  CAMLreturn0;
-}
-
-
-void ml_facebook_request(value graph_path, value params, value request_id) {
-  CAMLparam3(graph_path, params, request_id);
-  
-  NSMutableDictionary * paramsDict = [[NSMutableDictionary alloc] initWithCapacity: 3];
-  NSString * gPath = [NSString stringWithCString:String_val(graph_path) encoding:NSASCIIStringEncoding];
-
-  value el = params;
-  value prm;
-  
-  while (Is_block(el)) {
-    prm = Field(el,0);
-    NSString * key = [NSString stringWithCString:String_val(Field(prm,0)) encoding:NSASCIIStringEncoding];
-    NSString * val = [NSString stringWithCString:String_val(Field(prm,1)) encoding:NSASCIIStringEncoding];
-    [paramsDict setValue:val forKey:key];
-    el = Field(el,1);
-  }
-      
-  FacebookRequestDelegate * fbrDelegate = [[FacebookRequestDelegate alloc] initWithRequestID: Int_val(request_id)];
-  [fbcontroller.facebook requestWithGraphPath:gPath andParams:paramsDict andDelegate:fbrDelegate];
-  CAMLreturn0;
-}
-
-void ml_facebook_open_apprequest_dialog(value ml_message, value ml_recipients, value ml_filter, value ml_title, value ml_dialog_id) {
-  CAMLparam5(ml_message, ml_recipients, ml_filter, ml_title, ml_dialog_id);
-
-  NSMutableDictionary * paramsDict = [NSMutableDictionary dictionaryWithCapacity: 3];
-  
-  if (caml_string_length(ml_message) > 0) {
-    [paramsDict setValue: [NSString stringWithCString:String_val(ml_message) encoding:NSASCIIStringEncoding] forKey: @"message"];
-  }
-  
-  if (caml_string_length(ml_filter) > 0) {
-    [paramsDict setValue: [NSString stringWithCString:String_val(ml_filter) encoding:NSASCIIStringEncoding] forKey: @"filter"];
-  }
-  
-  if (caml_string_length(ml_title) > 0) {
-    [paramsDict setValue: [NSString stringWithCString:String_val(ml_title) encoding:NSASCIIStringEncoding] forKey: @"title"];
-  }  
-  
-  if (caml_string_length(ml_recipients) > 0) {
-    [paramsDict setValue: [NSString stringWithCString:String_val(ml_recipients) encoding:NSASCIIStringEncoding] forKey: @"to"];
-  }    
-
-  FacebookDialogDelegate * fbdDelegate = [[FacebookDialogDelegate alloc] initWithDialogID: Int_val(ml_dialog_id)];
-  [fbcontroller.facebook dialog:@"apprequests" andParams:paramsDict  andDelegate: fbdDelegate];
-  CAMLreturn0;
-}*/
