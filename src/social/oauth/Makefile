@@ -2,7 +2,7 @@ include ../../../Makefile.common
 
 CFLAGS += -I . 
 
-MLFLAGS += -package ojson,extlib
+MLFLAGS += -package ojson,extlib,redspell.syntax.debug
 
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
@@ -14,7 +14,7 @@ IFACES = $(MLSOURCES:.ml=.cmi)
 
 MLFLAGS += -I ../.. -I ../../utils
 
-MLPPOPT += ../../syntax/pa_debug.cmo -enable-debug default
+MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 ifeq ($(PLATFORM),IOS)
 FAKELIBS =
 CFLAGS  += -DDEBUG -DIOS -Iios

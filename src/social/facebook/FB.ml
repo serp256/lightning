@@ -4,7 +4,7 @@ IFDEF PC THEN
 
 value init ~appId () = ();
 
-value connect ~successCallback ~failCallback () = ();
+value connect ?permissions ~successCallback ~failCallback () = ();
 value disconnect connect = ();
 value loggedIn () = None;
 

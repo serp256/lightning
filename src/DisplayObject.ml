@@ -12,6 +12,7 @@ exception Invalid_index of (int*int);
 Printexc.register_printer (fun [ Invalid_index (c,n) -> Some (Printf.sprintf "DisplayObject.Invalid_index %d %d" c n) | _ -> None ]);
 exception Child_not_found;
 
+
 (* приходит массив точек, к ним применяется трасформация и в результате получаем min и максимальные координаты *)
 
 external glEnableScissor: int -> int -> int -> int -> unit = "ml_gl_scissor_enable";
@@ -124,19 +125,19 @@ value prerender () =
       debug:prerender "start prerender";
       let locked_prerenders = RefList.empty () in
       (
+        debug:perfomance "PRERENDER CNT: %d" (RefList.length prerender_objects);
         prerender_locked.val := Some locked_prerenders;
         let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
         let sorted_objects = RefList.empty () in
         (
-          RefList.iter (fun o -> 
+          proftimer:pprerender "SORT OBJECTS %F"
+          (RefList.iter (fun o -> 
             match o#z with
-            [ Some z -> 
-              let () = debug:prerender "object [%s] with z %d added to prerender" o#name z in
-              RefList.add_sort ~cmp sorted_objects (z,o)
+            [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
             | None -> o#prerender False
             ]
-          ) prerender_objects;
-          RefList.iter (fun (_,o) -> o#prerender True) sorted_objects;
+          ) prerender_objects);
+          proftimer:pprerender "EXECUTE %F" (RefList.iter (fun (_,o) -> o#prerender True) sorted_objects);
         );
         RefList.copy prerender_objects locked_prerenders;
         prerender_locked.val := None;
@@ -144,6 +145,8 @@ value prerender () =
       debug:prerender "end prerender";
     )
   ];
+
+value prerender () = proftimer:perfomance "PRERENDER: %F" prerender ();
 
 
 Callback.register "prerender" prerender;
@@ -325,9 +328,9 @@ class virtual _c [ 'parent ] = (*{{{*)
 			];
 
     method z =
+      let () = debug "pizda %s" 1 in
       match parent with
       [ Some parent -> 
-        let () = debug "i have parent" in
         match parent#z with
         [ Some z -> Some (z + (parent#getChildIndex' (self :> _c 'parent)) + 1)
         | None -> None
@@ -840,6 +843,7 @@ class virtual container = (*{{{*)
               ]
           ];
           numChildren := numChildren + 1;
+(*           if numChildren > 550 then failwith (Printf.sprintf "numChildrend 550 in '%s'" self#name) else (); *)
           child#setParent self#asDisplayObjectContainer;
           self#boundsChanged();
       );

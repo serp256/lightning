@@ -165,7 +165,7 @@ external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "ca
 
 value request_remote_notifications rntypes success error = ();
 
-value _get_resource with_suffix path  = 
+value _get_resource with_suffix path = 
   match with_suffix with
   [ True -> 
     let spath = path_with_suffix path in

@@ -18,7 +18,7 @@ glut/texture_glut.o: texture_common.h
 android/texture_android.o: texture_common.h
 
 MLOBJSFLAGS = 
-MLFLAGS +=  -package ojson,extlib -I containers -I utils
+MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
 byte: lightning.cma tapjoy.cma flurry.cma social_byte
@@ -29,11 +29,10 @@ syntax: syntax/pa_prop.cmo
 
 KAZMATHOBJS = utility.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o neon_matrix_impl.o GL/mat4stack.o GL/matrix.o
 KAZMATH = $(patsubst %,kazmath/%,$(KAZMATHOBJS))
-MLPPOPT = syntax/pa_debug.cmo
+MLPPOPT = syntax/pa_platform.cmo
 
-SYNTAX = syntax/pa_prop.cmo syntax/pa_debug.cmo
+SYNTAX = syntax/pa_prop.cmo syntax/pa_platform.cmo
 $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend,camlp4.macro -syntax camlp4r 
-Debug.cmx: MLFLAGS += -package unix
 
 
 
@@ -101,7 +100,7 @@ MLPPOPT += -D$(PLATFORM)
 MLCOPTS += -D$(PLATFORM)
 CFLAGS += -D$(PLATFORM) -DOS$(OS)
 
-$(SYNTAX) Debug.cmx Debug.cmo: MLPPOPT := -D$(PLATFORM)
+$(SYNTAX): MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) Hardware.ml LocalNotifications.ml Keyboard.ml Motion.ml ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
 					DisplayObject.ml GLPrograms.ml Shape.ml Quad.ml Texture.ml  RenderTexture.ml Image.ml AtlasNode.ml \
@@ -127,18 +126,15 @@ MLUTILSOBJSB = $(MLUTILS:.ml=.cmo)
 MLOBJS = $(MLSOURCES:.ml=.cmx)
 MLOBJSB = $(MLSOURCES:.ml=.cmo)
 $(MLOBJS) $(MLOBJSB) doc: MLFLAGS += -package xmlm  $(MLOBJSFLAGS)
-$(MLOBJS): Debug.cmx
-$(MLOBJSB): Debug.cmo
-
-$(MLOBJS) $(MLOBJSB) MLDepend.$(PLATFORM): syntax/pa_debug.cmo 
+$(MLOBJS) $(MLOBJSB) MLDepend.$(PLATFORM): syntax/pa_platform.cmo
 include debug.conf
 	
 
 lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MOBJS) $(MLOBJSB)
-	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmo $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MLOBJSB) $(LIBFLAGS) 
+	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MLOBJSB) $(LIBFLAGS) 
 
 lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
-	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) Debug.cmx $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
+	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
 
 
 tapjoy.cma:

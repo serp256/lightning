@@ -1,5 +1,5 @@
 PLAT = /Applications/XCode.app/Contents/Developer/Platforms/iPhoneOS.platform
-SDK = /Developer/SDKs/iPhoneOS6.0.sdk
+SDK = /Developer/SDKs/iPhoneOS6.1.sdk
 #OCAMLFIND = /usr/local/bin/ocamlfind -toolchain ios
 OCAMLFIND = ocamlfind -toolchain ios
 OCAMLOPT = $(OCAMLFIND) ocamlopt
@@ -10,13 +10,14 @@ CC = $(PLAT)/Developer/usr/bin/gcc $(ARCH)
 CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLLIBDIR) -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=4.2 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT
 include Makefile.common
 
-MOBS = LightTest/AppDelegate.o LightTest/main.o 
+MOBS = ios/AppDelegate.o ios/main.o 
 CFLAGS += -I ../src/ios
 
 
 include Makefile.in
 
 ios: $(TARGET).native
+	cp test.native ios/LightTestBin
 
 .DEFAULT_GOAL := ios
 
