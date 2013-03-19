@@ -45,10 +45,10 @@ import com.google.android.gms.common.Scopes;*/
 public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
 	public static Activity instance = null;
 
-    protected XAPKFile[] xAPKS = {};
+    protected XAPKFile[] expansions = {};
 
-    public XAPKFile[] getXAPKS() {
-    	return xAPKS;
+    public XAPKFile[] getExpansions() {
+    	return expansions;
     }
 
 	private final String LOG_TAG = "LIGHTNING";
@@ -117,17 +117,17 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+		TypedArray rexp = getResources().obtainTypedArray(R.array.expansions);
+		expansions = new XAPKFile[rexp.length()];
+
+		for (int i = 0; i < rexp.length(); i++) {
+			String[] expFileParams = rexp.getString(i).split(",");
+			expansions[i] = new XAPKFile((new Boolean(expFileParams[0])).booleanValue(), (new Integer(expFileParams[1])).intValue(), (new Long(expFileParams[2])).longValue());	
+		}
+
 		viewGrp = new AbsoluteLayout(this);		
 		viewGrp.addView(lightView = new LightView(this));
 		setContentView(viewGrp);
-
-		TypedArray expansions = getResources().obtainTypedArray(R.array.expansions);
-		xAPKS = new XAPKFile[expansions.length()];
-
-		for (int i = 0; i < expansions.length(); i++) {
-			String[] expFileParams = expansions.getString(i).split(",");
-			xAPKS[i] = new XAPKFile((new Boolean(expFileParams[0])).booleanValue(), (new Integer(expFileParams[1])).intValue(), (new Long(expFileParams[2])).longValue());	
-		}
 	}
 
 	public boolean startExpansionDownloadService() {
@@ -138,15 +138,13 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 		PendingIntent pendingIntent = PendingIntent.getActivity(LightActivity.this, 0, notifierIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-		// Start the download service (if required)
 		int startResult = 0;
 		try {
 			startResult = DownloaderClientMarshaller.startDownloadServiceIfRequired(this, pendingIntent, LightExpansionsDownloadService.class);
 		} catch (PackageManager.NameNotFoundException e) {
-			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+			e.printStackTrace();
 		}
 
-		// If download has started, initialize this activity to show download progress
 		boolean retval = startResult != DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED;
 
 		Log.d(LOG_TAG, "startResult " + startResult);
@@ -170,13 +168,35 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	public void onDownloadStateChanged(int newState) {
 		Log.d(LOG_TAG, "onDownloadStateChanged call");
 
-		if (newState == IDownloaderClient.STATE_COMPLETED) {
-			lightView.expansionsDownloaded();
+		switch (newState) {
+			case IDownloaderClient.STATE_COMPLETED:
+				lightView.expansionsDownloaded();
+				break;
+
+		    case STATE_PAUSED_NETWORK_UNAVAILABLE:
+		    case STATE_PAUSED_BY_REQUEST:
+		    case STATE_PAUSED_WIFI_DISABLED_NEED_CELLULAR_PERMISSION:
+		    case STATE_PAUSED_NEED_CELLULAR_PERMISSION:
+		    case STATE_PAUSED_WIFI_DISABLED:
+		    case STATE_PAUSED_NEED_WIFI:
+		    case STATE_PAUSED_ROAMING:
+		    case STATE_PAUSED_NETWORK_SETUP_FAILURE:
+		    case STATE_PAUSED_SDCARD_UNAVAILABLE:
+		    case STATE_FAILED_UNLICENSED:
+		    case STATE_FAILED_FETCHING_URL:
+		    case STATE_FAILED_SDCARD_FULL:
+		    case STATE_FAILED_CANCELED:
+		    case STATE_FAILED:
+		    	lightView.expansionsError(getString(com.google.android.vending.expansion.downloader.Helpers.getDownloaderStringResourceIDFromState(newState)));
+		    	break;
+
+		    default: break;
 		}
 	}
 
 	public void onDownloadProgress(DownloadProgressInfo progress) {
 		Log.d(LOG_TAG, "onDownloadProgress call");
+		lightView.expansionsProgress(progress.mOverallTotal, progress.mOverallProgress, progress.mTimeRemaining);
 	}
 
 	@Override

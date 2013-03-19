@@ -166,6 +166,8 @@ DEFINE RESET_BOUNDS_CACHE =
 
 DEFINE RESET_CACHE(what) = (debug "%s changed [%s]" self#name what; RESET_TRANSFORMATION_MATRIX; RESET_BOUNDS_CACHE);
 
+value object_count = ref 0;
+
 class virtual _c [ 'parent ] = (*{{{*)
 
   object(self:'self)
@@ -177,6 +179,21 @@ class virtual _c [ 'parent ] = (*{{{*)
         asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit;
         name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit; .. 
       >;
+
+		initializer
+		(
+			(*
+			 Gc.finalise (fun _ -> (
+			 		decr object_count;
+					) ) self;
+			 incr object_count;
+			 if !object_count mod 100 = 0 then
+				(
+					 debug:count "DO [%d] COUNT [%d] " (Oo.id self) !object_count 
+				)
+			 else ();
+			*)
+		);
 
     value mutable name = "";
     method name = if name = ""  then Printf.sprintf "instance%d" (Oo.id self) else name;
