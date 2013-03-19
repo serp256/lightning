@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Ancestors</key>
+	<array>
+		<string>com.apple.dt.unit.bundleBase</string>
+		<string>com.apple.dt.unit.iPhoneBase</string>
+	</array>
+
+	<key>Concrete</key>
+	<true/>
+
+	<key>Definitions</key>
+	<dict>
+		<key>main.m</key>
+		<dict>
+			<key>Path</key>
+			<string>main.m</string>
+		</dict>
+
+		<key>AppDelegate.m</key>
+		<dict>
+			<key>Path</key>
+			<string>AppDelegate.m</string>
+		</dict>
+
+		<key>AppDelegate.h</key>
+		<dict>
+			<key>Path</key>
+			<string>AppDelegate.h</string>
+		</dict>
+
+		<key>___PACKAGENAME___-Info.plist:Basics</key>
+		<string>
+			&lt;key&gt;CFBundleDevelopmentRegion&lt;/key&gt;
+			&lt;string&gt;en&lt;/string&gt;
+			&lt;key&gt;CFBundleExecutable&lt;/key&gt;
+			&lt;string&gt;___PACKAGENAME___Bin&lt;/string&gt;
+			&lt;key&gt;CFBundleInfoDictionaryVersion&lt;/key&gt;
+			&lt;string&gt;6.0&lt;/string&gt;
+			&lt;key&gt;CFBundleName&lt;/key&gt;
+			&lt;string&gt;${PRODUCT_NAME}&lt;/string&gt;
+			&lt;key&gt;CFBundlePackageType&lt;/key&gt;
+			&lt;string&gt;APPL&lt;/string&gt;
+			&lt;key&gt;CFBundleSignature&lt;/key&gt;
+			&lt;string&gt;????&lt;/string&gt;
+		</string>		
+	</dict>
+
+	<key>Description</key>
+	<string>Lightning application template.</string>
+
+	<key>Identifier</key>
+	<string>ru.redspell.lightningApp</string>
+
+	<key>Kind</key>
+	<string>Xcode.Xcode3.ProjectTemplateUnitKind</string>
+
+	<key>Nodes</key>
+	<array>
+		<string>AppDelegate.m</string>
+		<string>AppDelegate.h</string>
+		<string>main.m</string>
+ 		<string>___PACKAGENAME___Bin</string>
+ 		<string>___PACKAGENAME___-Info.plist:Basics</string>
+		<string>___PACKAGENAME___-Prefix.pch:Availability</string>
+		<string>___PACKAGENAME___-Prefix.pch:objC:importCocoa</string>
+	</array>
+
+	<key>Targets</key>
+	<array>
+		<dict>
+			<key>ProductType</key>
+			<string>com.apple.product-type.application</string>
+
+			<key>SharedSettings</key>
+			<dict>
+				<key>WRAPPER_EXTENSION</key>
+				<string>app</string>
+
+				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+				<string>5.1</string>
+			</dict>
+
+			<key>BuildPhases</key>
+			<array></array>
+
+    		<key>Dependencies</key>
+    		<array><integer>1</integer></array>
+		</dict>
+
+		<dict>
+			<key>Name</key>
+        	<string>___PACKAGENAME___Bin</string>
+			<key>TargetType</key>
+			<string>Legacy</string>
+			<key>BuildToolPath</key>
+			<string>/usr/bin/make</string>
+			<key>BuildToolArgsString</key>
+			<string>-C .. ios</string>
+			<key>SharedSettings</key>
+			<dict>
+				<key>OTHER_CFLAGS</key>
+				<string></string>
+				<key>OTHER_LDFLAGS</key>
+				<string></string>
+				<key>PATH</key>
+				<string>/usr/local/bin:$PATH</string>
+			</dict>
+			<key>Configurations</key>
+			<dict>
+				<key>Debug</key>
+				<dict>
+					<key>DEBUGGING_SYMBOLS</key>
+					<string>YES</string>
+					<key>GCC_GENERATE_DEBUGGING_SYMBOLS</key>
+					<string>YES</string>
+					<key>GCC_OPTIMIZATION_LEVEL</key>
+					<string>0</string>
+				</dict>
+				<key>Release</key>
+				<dict/>
+			</dict>
+		</dict>
+	</array>
+
+</dict>
+</plist>

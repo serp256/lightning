@@ -1,0 +1,5 @@
+1. run 'install' script.
+2. open Xcode, create new project, when choosing template for your project, select 'Lightning' in left column, then choose 'Lightning App' template, JerkOff, for example.
+3. select target 'JerkOff'(target name same as your project name), and add build phase 'Copy Files'. In 'Destination' drop-down list choose 'Executables', click '+' button, and select 'JerkOffBin'(or your project name with postfix 'Bin').
+4. add 'Copy Bundle Resources' build phase and select needed resources.
+5. run project.
