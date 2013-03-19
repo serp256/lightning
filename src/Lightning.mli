@@ -29,8 +29,9 @@ value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
 value getMACID: unit -> string;
 
-value extractAssetsIfRequired: (bool -> unit) -> unit;
-value extractAssetsAndExpansionsIfRequired: (bool -> unit) -> unit;
+value downloadExpansions: ?errorCallback:(string -> unit) -> ?progressCallback:(~total:int -> ~progress:int -> ~timeRemain:int -> unit -> unit) -> ~completeCallback:(unit -> unit) -> unit -> unit;
+(* value extractAssetsIfRequired: (bool -> unit) -> unit;
+value extractAssetsAndExpansionsIfRequired: (bool -> unit) -> unit; *)
 
 (* external test_c_fun: (unit -> unit) -> unit = "ml_test_c_fun"; *)
 

@@ -24,6 +24,7 @@ import android.content.res.AssetFileDescriptor;
 import android.content.Intent;
 import android.view.SurfaceHolder;
 import android.content.Context;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.File;
@@ -62,7 +63,7 @@ import ru.redspell.lightning.payments.ILightPayments;
 
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
-    	for (XAPKFile xf : activity.getXAPKS()) {
+    	for (XAPKFile xf : activity.getExpansions()) {
     		if (xf.mIsMain == isMain) {
     			return Helpers.generateSaveFileName(activity, Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion));
     		}
@@ -72,7 +73,7 @@ public class LightView extends GLSurfaceView {
     }
 
     public int getExpansionVer(boolean isMain) {
-    	for (XAPKFile xf : activity.getXAPKS()) {
+    	for (XAPKFile xf : activity.getExpansions()) {
     		if (xf.mIsMain == isMain) {
     			return xf.mFileVersion;
     		}
@@ -242,11 +243,49 @@ public class LightView extends GLSurfaceView {
 		activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
 		int width = dm.widthPixels;
 		int height = dm.heightPixels;
-		lightInit(activity.getPreferences(0));
-		Log.d("LIGHTNING","lightInit finished");
-		initView(width,height);
 
-		instance = this;
+		AssetManager am = activity.getAssets();
+
+		AssetFileDescriptor indexFd = null;
+		AssetFileDescriptor assetsFd = null;
+
+		try {
+			indexFd = am.openFd("index");
+			assetsFd = am.openFd("assets");
+
+			ru.redspell.lightning.expansions.XAPKFile[] expansions = activity.getExpansions();
+			String mainExpPath = null;
+			String patchExpPath = null;
+
+			if (expansions.length > 2) {
+				mlUncaughtException("something wrong: more than 2 expansion files", new String[]{});
+			} else if (expansions.length == 2) {
+				if (expansions[0].mIsMain) {
+					mainExpPath = Helpers.getExpansionAPKFileName(activity, expansions[0].mIsMain, expansions[0].mFileVersion);
+					patchExpPath = Helpers.getExpansionAPKFileName(activity, expansions[1].mIsMain, expansions[1].mFileVersion);
+				} else {
+					patchExpPath = Helpers.getExpansionAPKFileName(activity, expansions[0].mIsMain, expansions[0].mFileVersion);
+					mainExpPath = Helpers.getExpansionAPKFileName(activity, expansions[1].mIsMain, expansions[1].mFileVersion);				
+				}
+			} else if (expansions.length == 1) {
+				mainExpPath = Helpers.getExpansionAPKFileName(activity, expansions[0].mIsMain, expansions[0].mFileVersion);
+			}
+
+			if (mainExpPath != null) mainExpPath = Helpers.generateSaveFileName(activity, mainExpPath);
+			if (patchExpPath != null) patchExpPath = Helpers.generateSaveFileName(activity, patchExpPath);
+
+			String err = lightInit(activity.getPreferences(0), indexFd.getStartOffset(), assetsFd.getStartOffset(), getApkPath(), mainExpPath, patchExpPath);
+
+			if (err != null ) {
+				Log.d("LIGHTNING","lightInit finished");
+				initView(width,height);
+				instance = this;
+			} else {
+				mlUncaughtException(err, new String[]{});
+			}			
+		} catch (java.io.IOException e) {
+			mlUncaughtException(e.getMessage(), new String[]{});
+		}
 
 		// FIXME: move it to payments init
 		// bserv = new BillingService();
@@ -581,7 +620,7 @@ public class LightView extends GLSurfaceView {
 	}*/
 
 
-	private native void lightInit(SharedPreferences p);
+	private native String lightInit(SharedPreferences p, long indexOffset, long assetsOffset, String assetsPath, String mainExpPath, String patchExpPath);
 	private native void lightFinalize();
 
 	/*
@@ -675,10 +714,10 @@ public class LightView extends GLSurfaceView {
 		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
 	}
 
-	public void extractExpansions() {
+	public void downloadExpansions() {
 		Log.d("LIGHTNING", "extracting expansions");
 
-	    for (XAPKFile xf : activity.getXAPKS()) {
+	    for (XAPKFile xf : activity.getExpansions()) {
             String fileName = Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion);
 
             Log.d("LIGHTNING", "checking " + fileName + "...");
@@ -702,13 +741,47 @@ public class LightView extends GLSurfaceView {
         expansionsDownloaded();
 	}
 
-	private class ExpansionsExtractedCallbackRunnable implements Runnable {
+	private class ExpansionsCompleteCallbackRunnable implements Runnable {
+		native public void run();
+	}
+
+	private class ExpansionsProgressCallbackRunnable implements Runnable {
+		private long total;
+		private long progress;
+		private long timeRamain;
+
+		public ExpansionsProgressCallbackRunnable(long total, long progress, long timeRamain) {
+			this.total = total;
+			this.progress = progress;
+			this.timeRamain = timeRamain;
+		}
+
+		native public void run();
+	}
+
+	private class ExpansionsErrorCallbackRunnable implements Runnable {
+		private String reason;
+
+		public ExpansionsErrorCallbackRunnable(String reason) {
+			this.reason = reason;
+		}
+
 		native public void run();
 	}
 
 	public void expansionsDownloaded() {
 		Log.d("LIGHTNING", "expansions downloaded");
-		queueEvent(new ExpansionsExtractedCallbackRunnable());
+		queueEvent(new ExpansionsCompleteCallbackRunnable());
+	}
+
+	public void expansionsProgress(long total, long progress, long timeRamain) {
+		Log.d("LIGHTNING", "expansions progress");
+		queueEvent(new ExpansionsProgressCallbackRunnable(total, progress, timeRamain));
+	}
+
+	public void expansionsError(String reason) {
+		Log.d("LIGHTNING", "expansions error");
+		queueEvent(new ExpansionsErrorCallbackRunnable(reason));
 	}
 
 	//////////////////////////////////
