@@ -2,7 +2,8 @@ open LightCommon;
 
 exception Texture_not_found of string;
 type t;
-value load: string -> t;
+value load: ?filter:Texture.filter -> ?use_pvr:bool -> string -> t;
+value load_async: ?filter:Texture.filter -> ?use_pvr:bool -> ?ecallback:(string -> unit) -> string -> (t -> unit) -> unit;
 value loadxml: string -> t;
 value texture: t -> int -> Texture.c;
 
