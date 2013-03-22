@@ -1,0 +1,301 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2167880116FC68F6004793E5 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2191076D16FC5664003DD529 /* LightTestBin */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2191076316FC5663003DD529 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2191075B16FC5663003DD529 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2191076216FC5663003DD529;
+			remoteInfo = LightTestBin;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2167880016FC68EA004793E5 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				2167880116FC68F6004793E5 /* LightTestBin in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		2191076016FC5663003DD529 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2191076716FC5664003DD529 /* LightTest-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LightTest-Info.plist"; sourceTree = "<group>"; };
+		2191076916FC5664003DD529 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		2191076A16FC5664003DD529 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		2191076B16FC5664003DD529 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		2191076C16FC5664003DD529 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		2191076D16FC5664003DD529 /* LightTestBin */ = {isa = PBXFileReference; lastKnownFileType = text; path = LightTestBin; sourceTree = "<group>"; };
+		2191076E16FC5664003DD529 /* LightTest-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LightTest-Prefix.pch"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		2191075A16FC5663003DD529 = {
+			isa = PBXGroup;
+			children = (
+				2191076516FC5663003DD529 /* LightTest */,
+				2191076116FC5663003DD529 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2191076116FC5663003DD529 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2191076016FC5663003DD529 /* LightTest.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2191076516FC5663003DD529 /* LightTest */ = {
+			isa = PBXGroup;
+			children = (
+				2191076A16FC5664003DD529 /* AppDelegate.m */,
+				2191076B16FC5664003DD529 /* AppDelegate.h */,
+				2191076C16FC5664003DD529 /* main.m */,
+				2191076D16FC5664003DD529 /* LightTestBin */,
+				2191076616FC5664003DD529 /* Supporting Files */,
+			);
+			path = LightTest;
+			sourceTree = "<group>";
+		};
+		2191076616FC5664003DD529 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				2191076716FC5664003DD529 /* LightTest-Info.plist */,
+				2191076816FC5664003DD529 /* InfoPlist.strings */,
+				2191076E16FC5664003DD529 /* LightTest-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		2191076216FC5663003DD529 /* LightTestBin */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "-C .. ios";
+			buildConfigurationList = 2191077116FC5664003DD529 /* Build configuration list for PBXLegacyTarget "LightTestBin" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			dependencies = (
+			);
+			name = LightTestBin;
+			passBuildSettingsInEnvironment = 1;
+			productName = LightTestBin;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXNativeTarget section */
+		2191075F16FC5663003DD529 /* LightTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2191077416FC5664003DD529 /* Build configuration list for PBXNativeTarget "LightTest" */;
+			buildPhases = (
+				2167880016FC68EA004793E5 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2191076416FC5663003DD529 /* PBXTargetDependency */,
+			);
+			name = LightTest;
+			productName = LightTest;
+			productReference = 2191076016FC5663003DD529 /* LightTest.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2191075B16FC5663003DD529 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+				ORGANIZATIONNAME = "Andrey Nazarov";
+			};
+			buildConfigurationList = 2191075E16FC5663003DD529 /* Build configuration list for PBXProject "LightTest" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 2191075A16FC5663003DD529;
+			productRefGroup = 2191076116FC5663003DD529 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2191075F16FC5663003DD529 /* LightTest */,
+				2191076216FC5663003DD529 /* LightTestBin */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXTargetDependency section */
+		2191076416FC5663003DD529 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2191076216FC5663003DD529 /* LightTestBin */;
+			targetProxy = 2191076316FC5663003DD529 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		2191076816FC5664003DD529 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2191076916FC5664003DD529 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		2191076F16FC5664003DD529 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		2191077016FC5664003DD529 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		2191077216FC5664003DD529 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PATH = "/usr/local/bin:$PATH";
+			};
+			name = Debug;
+		};
+		2191077316FC5664003DD529 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PATH = "/usr/local/bin:$PATH";
+			};
+			name = Release;
+		};
+		2191077516FC5664003DD529 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
+				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "000E30C1-B6F7-4884-BA5F-D15CB83A7DCE";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		2191077616FC5664003DD529 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
+				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "000E30C1-B6F7-4884-BA5F-D15CB83A7DCE";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2191075E16FC5663003DD529 /* Build configuration list for PBXProject "LightTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2191076F16FC5664003DD529 /* Debug */,
+				2191077016FC5664003DD529 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2191077116FC5664003DD529 /* Build configuration list for PBXLegacyTarget "LightTestBin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2191077216FC5664003DD529 /* Debug */,
+				2191077316FC5664003DD529 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2191077416FC5664003DD529 /* Build configuration list for PBXNativeTarget "LightTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2191077516FC5664003DD529 /* Debug */,
+				2191077616FC5664003DD529 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2191075B16FC5663003DD529 /* Project object */;
+}

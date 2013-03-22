@@ -6,6 +6,7 @@ clean:
 
 ios:
 	$(MAKE) -f Makefile.ios
+	cp test.native LightTest/LightTest/LightTestBin
 
 cleanios:
 	$(MAKE) -f Makefile.ios clean
