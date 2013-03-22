@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "khash.h"
+#include "light_common.h"
 
 typedef struct {
 	int32_t offset;

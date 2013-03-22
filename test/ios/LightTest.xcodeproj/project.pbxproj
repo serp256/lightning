@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		2167880116FC68F6004793E5 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2191076D16FC5664003DD529 /* LightTestBin */; };
+		217B62EF16FCA6E3002A14AA /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 217B62EB16FCA6D5002A14AA /* assets */; };
+		217B62F016FCA6E3002A14AA /* index in Resources */ = {isa = PBXBuildFile; fileRef = 217B62EC16FCA6D5002A14AA /* index */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +36,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		217B62EB16FCA6D5002A14AA /* assets */ = {isa = PBXFileReference; lastKnownFileType = text; path = assets; sourceTree = "<group>"; };
+		217B62EC16FCA6D5002A14AA /* index */ = {isa = PBXFileReference; lastKnownFileType = file; path = index; sourceTree = "<group>"; };
 		2191076016FC5663003DD529 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2191076716FC5664003DD529 /* LightTest-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LightTest-Info.plist"; sourceTree = "<group>"; };
 		2191076916FC5664003DD529 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -64,6 +68,8 @@
 		2191076516FC5663003DD529 /* LightTest */ = {
 			isa = PBXGroup;
 			children = (
+				217B62EB16FCA6D5002A14AA /* assets */,
+				217B62EC16FCA6D5002A14AA /* index */,
 				2191076A16FC5664003DD529 /* AppDelegate.m */,
 				2191076B16FC5664003DD529 /* AppDelegate.h */,
 				2191076C16FC5664003DD529 /* main.m */,
@@ -107,6 +113,7 @@
 			buildConfigurationList = 2191077416FC5664003DD529 /* Build configuration list for PBXNativeTarget "LightTest" */;
 			buildPhases = (
 				2167880016FC68EA004793E5 /* CopyFiles */,
+				217B62EA16FCA6B9002A14AA /* Resources */,
 			);
 			buildRules = (
 			);
@@ -144,6 +151,18 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		217B62EA16FCA6B9002A14AA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				217B62EF16FCA6E3002A14AA /* assets in Resources */,
+				217B62F016FCA6E3002A14AA /* index in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
 		2191076416FC5663003DD529 /* PBXTargetDependency */ = {
