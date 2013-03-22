@@ -130,26 +130,6 @@ NSMutableArray* publishPermissions = nil;
 
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error);
 
-/*void readPermissionsHandler(FBSession *session, NSError *error) {
-    if (readPermissions) {
-        [session reauthorizeWithReadPermissions:readPermissions completionHandler:^(FBSession *session, NSError *error) {
-            [readPermissions dealloc];
-            readPermissions = nil;            
-        }]
-
-
-    }
-    sessionStateChanged(session, FBSessionStateOpen, error);
-};
-
-void publishPermissionsHandler(FBSession *session, NSError *error) {
-    if (publishPermissions) {
-        [publishPermissions dealloc];
-        publishPermissions = nil;
-    }
-    sessionStateChanged(session, FBSessionStateOpen, error);
-};*/
-
 enum {
     NotRequested,
     ReadPermissionsRequsted,
@@ -242,6 +222,7 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
                     [publishPermissions release];
                     publishPermissions = nil;
                     fbSession = session;
+                    [FBSession setActiveSession:session];
                     extraPermsState = NotRequested;
                     caml_callback(*caml_named_value("fb_success"), Val_unit);
                     break;
@@ -253,6 +234,8 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 }
 
 void ml_fbInit(value appId) {
+    [FBSettings setLoggingBehavior:[NSSet setWithObjects:FBLoggingBehaviorFBRequests, FBLoggingBehaviorFBURLConnections, nil]];
+
     [FBSession setDefaultAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
     NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
 
@@ -286,12 +269,6 @@ void ml_fbConnect(value permissions) {
 
             NSLog(@"permission %@", nsperm);
 
-/*            NSError* err;
-            NSRegularExpression* permRegex = [NSRegularExpression regularExpressionWithPattern:@"^(publish|manage).*" options:0 error:&err];
-            NSUInteger matchesNum = [permRegex numberOfMatchesInString:nsperm options:0 range:NSMakeRange(0, [nsperm length])];*/
-            
-            // NSLog(@"matchesNum %lu", (unsigned long)matchesNum);
-
             if ([publish_permissions indexOfObject:nsperm] != NSNotFound) {
                 if (!publishPermissions) publishPermissions = [[NSMutableArray alloc] init];
                 [publishPermissions addObject:nsperm];                
@@ -302,8 +279,6 @@ void ml_fbConnect(value permissions) {
 
             perms = Field(perms, 1);
         }
-
-        // [publish_permissions release];
     }
 
     if (!fbSession) {
@@ -324,9 +299,6 @@ value ml_fbDisconnect(value connect) {
 		[FBSession setActiveSession:nil];
 		fbSession = nil;
 	}
-//	if (fbSession) {
-//		fvSession.closeAndClearTokenInformation;
-//	}
 }
 
 value ml_fbLoggedIn() {
@@ -414,10 +386,13 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
 
     NSString* nspath = [NSString stringWithCString:String_val(path) encoding:NSASCIIStringEncoding];
     NSDictionary* nsparams = [NSMutableDictionary dictionary];
+    NSString* reqMethod = @"GET";
 
     NSLog(@"graph request %@", nspath);
 
     if (params != Val_int(0)) {
+        reqMethod = @"POST";
+
         value _params = Field(params, 0);
         value param;
 
@@ -442,7 +417,7 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
     REGISTER_CALLBACK(failCallback, _failCallbackGraphApi);
 
     // fbGraphrequest(nspath, nsparams, _successCallbackGraphApi, _failCallbackGraphApi);
-    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:@"POST" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:reqMethod completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
         NSLog(@"completionHandler");
 
         if (error) {
