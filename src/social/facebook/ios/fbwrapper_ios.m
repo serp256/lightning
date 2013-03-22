@@ -442,7 +442,7 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
     REGISTER_CALLBACK(failCallback, _failCallbackGraphApi);
 
     // fbGraphrequest(nspath, nsparams, _successCallbackGraphApi, _failCallbackGraphApi);
-    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:@"POST" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
         NSLog(@"completionHandler");
 
         if (error) {
