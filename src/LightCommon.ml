@@ -132,7 +132,7 @@ value floats_of_color color =
 
 Callback.register_exception "File_not_exists" (File_not_exists "");
 
-IFPLATFORM(ios)
+(* IFPLATFORM(ios)
 
 external bundle_path_for_resource: string -> option string -> option string = "ml_bundle_path_for_resource";
 
@@ -159,7 +159,8 @@ value read_json ?with_suffix path =
 
 value read_resource ?with_suffix path = Std.input_all (open_resource ?with_suffix path);
 
-ELSPLATFORM(android) 
+ELSPLATFORM(android)  *)
+IFPLATFORM(android ios)
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
 

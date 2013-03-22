@@ -11,6 +11,22 @@
 #import "mlwrapper_ios.h"
 #import "LightViewController.h"
 
+char* bundle_path(char* c_path) {
+  NSString *ns_path = [NSString stringWithCString:c_path encoding:NSASCIIStringEncoding];
+  NSString *bundlePath = nil;
+  NSArray * components = [ns_path pathComponents];
+  NSString * ext = [ns_path pathExtension];
+
+  if (bundlePath == nil) {
+    if ([components count] > 1) {
+      bundlePath = [[NSBundle mainBundle] pathForResource: [components lastObject] ofType:nil inDirectory: [ns_path stringByDeletingLastPathComponent]];
+    } else {
+      bundlePath = [[NSBundle mainBundle] pathForResource:ns_path ofType:nil];
+    }
+  }
+
+  return [bundlePath cStringUsingEncoding:NSASCIIStringEncoding];
+}
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
 	PRINT_DEBUG("process touched %d", [touches count]);

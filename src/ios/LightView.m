@@ -9,6 +9,7 @@
 #import "mlwrapper_ios.h"
 #import <CoreMotion/CMAccelerometer.h>
 #import "motion.h"
+#import "mobile_res.h"
 
 // --- private interface ---------------------------------------------------------------------------
 
@@ -94,7 +95,18 @@
 		glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &mHeight);
 		NSLog(@"glsize: %d:%d",mWidth,mHeight);
 
-		mStage = mlstage_create(mWidth,mHeight);		  
+		mStage = mlstage_create(mWidth,mHeight);
+
+	char* index_bpath = bundle_path("index");
+
+	if (index_bpath == nil) {
+		NSLog(@"resources index file not found");
+		caml_failwith("resources index file not found");
+	}
+
+	FILE* res_indx = fopen(index_bpath, "r");
+	read_res_index(res_indx, 0);
+	fclose(res_indx);
 }
 
 /*

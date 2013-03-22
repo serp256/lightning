@@ -26,11 +26,6 @@ extern JavaVM *gJavaVM;
 extern jobject jView;
 extern jclass jViewCls;
 
-typedef struct {
-	int fd;
-	int64_t length;
-} resource;
-
 int getResourceFd(const char *path, resource *res);
 
 value ml_alsoundLoad(value path);
