@@ -57,7 +57,7 @@ value load xmlpath =
 *)
 
 
-value load binpath = 
+value load ?filter ?use_pvr binpath = 
   let dirname = Filename.dirname binpath in
   let inp = open_resource binpath in
   (
@@ -69,7 +69,7 @@ value load binpath =
       let f = float_of_int in
       for i = 0 to cnt_atlases - 1 do
         let path = IO.read_string bininp in
-        textures.(i) := Texture.load ~with_suffix:False (Filename.concat dirname path);
+        textures.(i) := Texture.load ?filter ?use_pvr ~with_suffix:False (Filename.concat dirname path);
         let cnt_items = IO.read_ui16 bininp in
         for j = 0 to cnt_items - 1 do
           let name = IO.read_string bininp in
@@ -81,8 +81,7 @@ value load binpath =
           (* считываем позицию *)
           let posX = IO.read_ui16 bininp in
           let posY = IO.read_ui16 bininp in
-            Hashtbl.add regions name (i,Rectangle.create (f x) (f y) (f w) (f
-            h), (posX, posY));
+            Hashtbl.add regions name (i,Rectangle.create (f x) (f y) (f w) (f h), (posX, posY));
         done;
       done;
       close_in inp;
@@ -90,6 +89,54 @@ value load binpath =
     )
   );
 
+value load_async ?filter ?use_pvr ?ecallback binpath callback = 
+  let dirname = Filename.dirname binpath in
+  let inp = open_resource binpath in
+  let bininp = IO.input_channel inp in
+  let cnt_atlases = IO.read_byte bininp in
+  let regions = Hashtbl.create 3 in
+  let textures = Array.make cnt_atlases Texture.zero in
+  let f = float_of_int in
+  let rec loop i = 
+    match i >= cnt_atlases with
+    [ True ->
+        (
+          close_in inp;
+          callback {textures; regions};
+        )
+    | _ -> 
+        let path = IO.read_string bininp in
+        let callback tex = 
+          (
+            textures.(i) := tex;
+            let cnt_items = IO.read_ui16 bininp in
+            for j = 0 to cnt_items - 1 do
+              let name = IO.read_string bininp in
+              let x = IO.read_ui16 bininp in
+              let y = IO.read_ui16 bininp in
+              let w = IO.read_ui16 bininp in
+              let h = IO.read_ui16 bininp in
+              let _r = IO.read_byte bininp in
+              (* считываем позицию *)
+              let posX = IO.read_ui16 bininp in
+              let posY = IO.read_ui16 bininp in
+                Hashtbl.add regions name (i,Rectangle.create (f x) (f y) (f w) (f h), (posX, posY));
+            done;
+            loop (i+1)
+          )
+        and ecallback path =
+          (
+            close_in inp;
+            match ecallback with
+            [ Some cb -> cb path
+            | _ -> ()
+            ]
+          )
+        in
+        Texture.load_async ?filter ?use_pvr ~with_suffix:False ~ecallback (Filename.concat dirname path) callback
+    ]
+  in
+  loop 0;
 
 value loadxml xmlpath = 
   let module XmlParser = MakeXmlParser(struct value path = xmlpath; value with_suffix = True; end) in
