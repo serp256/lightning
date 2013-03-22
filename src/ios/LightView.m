@@ -99,6 +99,8 @@
 
 	char* index_bpath = bundle_path("index");
 
+	NSLog(@"index_bpath %s", index_bpath);
+
 	if (index_bpath == nil) {
 		NSLog(@"resources index file not found");
 		caml_failwith("resources index file not found");

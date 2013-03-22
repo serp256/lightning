@@ -10,6 +10,8 @@ static kh_res_index_t* res_indx;
 }
 
 char* read_res_index(FILE* index, int offset_inc) {
+	res_indx = kh_init_res_index();
+
 	if (!index) READ_RES_FAIL("cannot read index file");
 
 	int32_t index_entries_num;		
@@ -34,6 +36,8 @@ char* read_res_index(FILE* index, int offset_inc) {
 		if (1 != fread(&size, sizeof(int32_t), 1, index)) READ_RES_FAIL("cannot read size for entry %d", i - 1);
 		if (1 != fread(&location, sizeof(int8_t), 1, index)) READ_RES_FAIL("cannot read location for entry %d", i - 1);
 
+		PRINT_DEBUG("fname: %s; original offset: %d; size: %d; location %d\n", fname, offset, size, location);
+
 		int ret;
 		pair = (offset_size_pair_t*)malloc(sizeof(offset_size_pair_t));
 		pair->offset = offset + (location == 0 ? offset_inc : 0);
@@ -42,8 +46,6 @@ char* read_res_index(FILE* index, int offset_inc) {
 
 		k = kh_put(res_index, res_indx, fname, &ret);
 		kh_val(res_indx, k) = pair;
-
-		PRINT_DEBUG("fname: %s; original offset: %d; offset: %d; size: %d; location %d\n", fname, offset, pair->offset, size, location);
 	}
 }
 
