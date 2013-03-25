@@ -26,9 +26,13 @@ CAMLprim value ml_device_scale_factor() {
 */
 
 int getResourceFd(const char *path, resource *res) {
+	PRINT_DEBUG("getResourceFd call %s", path);
+
 	offset_size_pair_t* os_pair;
 
 	if (!get_offset_size_pair(path, &os_pair)) {
+		PRINT_DEBUG("found");
+
 		int fd;
 
 		if (os_pair->location == 0) {
@@ -49,8 +53,12 @@ int getResourceFd(const char *path, resource *res) {
 		res->fd = fd;
 		res->length = os_pair->size;
 
+		PRINT_DEBUG("fd for %s opened", path);
+
 		return 1;
 	}
+
+	PRINT_DEBUG("not found");
 
 	return 0;
 }

@@ -21,7 +21,6 @@
 #import "texture_pvr.h"
 #import "LightImageLoader.h"
 
-
 typedef void (*drawingBlock)(CGContextRef context,void *data);
 
 /*
@@ -225,26 +224,23 @@ int loadImageFile(UIImage *image,textureInfo *tInfo) {
 	 return 0;
 }*/
 
-
-
 int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	PRINT_DEBUG("LOAD PVR: %s",[path cStringUsingEncoding:NSASCIIStringEncoding]);
 	gzFile* gzf = gzopen([path cStringUsingEncoding:NSASCIIStringEncoding], "rb");
 
 	if (!gzf) return 1;
+	int r = loadPvrFile3(gzf, tInfo);
+	gzclose(gzf);
 
-/*	fseek(fildes, 0, SEEK_END);
-	long fsize = ftell(fildes);
-	fseek(fildes, 0, SEEK_SET);*/
+	return r;
+}
+
+int loadPvrPtr(gzFile* gzf, textureInfo *tInfo) {
+	if (!gzf) return 1;
 
 	int r = loadPvrFile3(gzf, tInfo);
 	gzclose(gzf);
 
-/*	if (r != 0) {
-		fildes = fopen([path cStringUsingEncoding:NSASCIIStringEncoding],"rb");
-		r = loadPvrFile2(fildes,tInfo);
-		fclose(fildes);
-	}*/
 	return r;
 }
 
@@ -292,106 +288,107 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
     return bundlePath;
 }
 
+#define CHECK_PATH(path, flag) if (getResourceFd([path cStringUsingEncoding:NSASCIIStringEncoding], &res)) {	\
+	flag = 1;																									\
+	break;																										\
+}																												\
 
 int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
-
 	NSString *fullPath = NULL;
 	NSString *imgType = [[path pathExtension] lowercaseString];
 
-	int r;
 	int is_pvr = 0;
 	int is_plx = 0;
 	int is_alpha = 0;
+	int not_compressed = 0;
+
+	resource res;
+
+	NSLog(@"_load_image call %@", path);
 
 	if ([path isAbsolutePath]) {
-		if ([imgType rangeOfString:@"pvr"].location == 0) is_pvr = 1;
-		else if ([imgType rangeOfString:@"plx"].location == 0) is_plx = 1;
-		else if ([imgType rangeOfString:@"alpha"].location == 0) is_alpha = 1;
-		if ([[NSFileManager defaultManager] fileExistsAtPath:path]) fullPath = path;
+		if ([imgType rangeOfString:@"pvr"].location == 0) return loadPvrFile(path,tInfo);
+		else if ([imgType rangeOfString:@"plx"].location == 0) return loadPlxFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
+		else if ([imgType rangeOfString:@"alpha"].location == 0) return loadAlphaFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
+
+		if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+			UIImage *img = [[UIImage alloc] initWithContentsOfFile:fullPath];
+			int retval = loadImageFile(img, tInfo);
+			[img release];
+
+			return retval;
+		}
+
+		return 2;
 	} else {
-		NSBundle *bundle = [NSBundle mainBundle];
+		PRINT_DEBUG("path not absolute");
+
 		do {
-			if ([imgType rangeOfString:@"pvr"].location == 0) is_pvr = 1;
-			else if ([imgType rangeOfString:@"plx"].location == 0) is_plx = 1;
-			else if ([imgType rangeOfString:@"alpha"].location == 0) is_alpha = 1;
-			else if ([imgType rangeOfString:@"plt"].location == 0) {}
-			else {
-				do { /* {{{ */
-						NSString *fname = NULL;
-						NSString *pathWithoutExt = [path stringByDeletingPathExtension];
-						if (suffix != NULL) {
+			if ([imgType rangeOfString:@"pvr"].location == 0) {
+				PRINT_DEBUG("explicit pvr");
+				is_pvr = 1;
+			} else if ([imgType rangeOfString:@"plx"].location == 0) {
+				PRINT_DEBUG("explicit plx");
+				is_plx = 1;
+			} else if ([imgType rangeOfString:@"alpha"].location == 0) {
+				PRINT_DEBUG("explicit alpha");
+				is_alpha = 1;
+			} else if ([imgType rangeOfString:@"plt"].location == 0) {
+				PRINT_DEBUG("explicit plt");
+			} else {
+				do {
+					NSString *pathWithoutExt = [path stringByDeletingPathExtension];
 
-							NSString *pathWithSuffix = [pathWithoutExt stringByAppendingString:[NSString stringWithCString:suffix encoding:NSASCIIStringEncoding]];
-							if (use_pvr) {
-								fname = [pathWithSuffix stringByAppendingPathExtension:@"pvr"];
-								fullPath = pathForBundleResource(fname, bundle); 
-								if (fullPath) {
-									is_pvr = 1; 
-									break; 
-								}
-							};
-
-							// try plx with with suffix
-							fname = [pathWithSuffix stringByAppendingPathExtension:@"plx"];
-							fullPath = pathForBundleResource(fname,bundle);
-							if (fullPath) {
-								is_plx = 1;
-								break;
-							};
-
-							// try original ext with this suffix
-							fname = [pathWithSuffix stringByAppendingPathExtension:imgType];
-							fullPath = pathForBundleResource(fname, bundle); 
-							if (fullPath) break;
-						} 
-
-						// try pvr 
+					if (suffix != NULL) {
+						NSString *pathWithSuffix = [pathWithoutExt stringByAppendingString:[NSString stringWithCString:suffix encoding:NSASCIIStringEncoding]];
 						if (use_pvr) {
-							fname = [pathWithoutExt stringByAppendingPathExtension:@"pvr"];
-							fullPath = pathForBundleResource(fname, bundle);
-							if (fullPath) {is_pvr = 1; break;};
-						}
+							CHECK_PATH([pathWithSuffix stringByAppendingPathExtension:@"pvr"], is_pvr);
+						};
 
-						// try plx
-						fname = [pathWithoutExt stringByAppendingPathExtension:@"plx"];
-						fullPath = pathForBundleResource(fname, bundle);
-						if (fullPath) {is_plx = 1; break;};
+						CHECK_PATH([pathWithSuffix stringByAppendingPathExtension:@"plx"], is_plx);
+						CHECK_PATH([pathWithSuffix stringByAppendingPathExtension:imgType], not_compressed);
+					} 
 
-						fullPath = pathForBundleResource(path, bundle);
-					} while (0); /*}}}*/
-					break;
-				};
-				if (suffix != NULL) {
-					NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", [NSString stringWithCString:suffix encoding:NSASCIIStringEncoding], imgType];
-					fullPath = pathForBundleResource(fname, bundle);
-					if (!fullPath) fullPath = pathForBundleResource(path, bundle); 
-				} else fullPath = pathForBundleResource(path, bundle); 
-			} while(0); 
+					if (use_pvr) {
+						CHECK_PATH([pathWithoutExt stringByAppendingPathExtension:@"pvr"], is_pvr);
+					}
+
+					CHECK_PATH([pathWithoutExt stringByAppendingPathExtension:@"plx"], is_plx);
+					CHECK_PATH(path, not_compressed);
+				} while (0);
+
+				break;
+			};
+
+			if (suffix != NULL) {
+				NSString *fname = [[path stringByDeletingPathExtension] stringByAppendingFormat:@"%@.%@", [NSString stringWithCString:suffix encoding:NSASCIIStringEncoding], imgType];
+
+				CHECK_PATH(fname, not_compressed);
+				CHECK_PATH(path, not_compressed);
+			} else {
+				CHECK_PATH(path, not_compressed);
+			}
+		} while(0);
 	};
 
-	if (!fullPath) r = 2;
-	else {
-		//NSLog(@"REAL FILE: %@",fullPath);
-#ifdef TEXTURE_LOAD
-		[fullPath getCString:tInfo->path maxLength:255 encoding:NSASCIIStringEncoding];
-#endif
-		if (is_pvr) r = loadPvrFile(fullPath,tInfo);
-		else if (is_plx) r = loadPlxFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
-		else if (is_alpha) r = loadAlphaFile([fullPath cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
-		else {
-			//double t1 = CACurrentMediaTime();
-			PRINT_DEBUG("LOAD IMAGE: %s",[fullPath cStringUsingEncoding:NSASCIIStringEncoding]);
-			UIImage *image = [[UIImage alloc] initWithContentsOfFile:fullPath];
-			//double t2 = CACurrentMediaTime();
-			//NSLog(@"load from disk: %F",(t2 - t1));
-			//t1 = CACurrentMediaTime();
-			r = loadImageFile(image, tInfo);
-			//t2 = CACurrentMediaTime();
-			//NSLog(@"decode img: [%f]",(t2 - t1));
-			[image release];
-		}
-	}
-	return r;
+	PRINT_DEBUG("%d %d %d %d", is_pvr, is_plx, is_alpha, not_compressed);
+
+	if (!(is_pvr || is_plx || is_alpha || not_compressed)) return 2;
+	if (is_pvr) return loadPvrPtr(gzdopen(res.fd, "rb"), tInfo);
+	if (is_plx) return loadPlxPtr(gzdopen(res.fd, "rb"), tInfo);
+	if (is_alpha) return loadAlphaPtr(gzdopen(res.fd, "rb"), tInfo);
+
+	void* buf = malloc(res.length);
+	if (read(res.fd, buf, res.length) != res.length) return 1;
+
+	NSData* imgData = [[NSData alloc] initWithBytesNoCopy:buf length:res.length];
+	UIImage* img = [[UIImage alloc] initWithData:imgData];
+	int retval = loadImageFile(img, tInfo);
+
+	[img release];
+	[imgData release];
+
+	return retval;
 }
 
 int load_image_info(char *cpath,char *suffix, int use_pvr,textureInfo *tInfo) {
