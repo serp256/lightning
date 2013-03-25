@@ -1,6 +1,6 @@
 [
 	{
 		"path":"/",
-		"include": ["Shaders", "tree.*" ]
+		"include": ["Shaders", "tree.*", "litso.mp3" ]
 	}
 ]

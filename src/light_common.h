@@ -85,6 +85,7 @@ extern unsigned int MAX_GC_MEM;
 
 typedef struct {
 	int fd;
+	int64_t offset;
 	int64_t length;
 } resource;
 

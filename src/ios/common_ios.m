@@ -51,6 +51,7 @@ int getResourceFd(const char *path, resource *res) {
 		lseek(fd, os_pair->offset, SEEK_SET);
 
 		res->fd = fd;
+		res->offset = os_pair->offset;
 		res->length = os_pair->size;
 
 		PRINT_DEBUG("fd for %s opened", path);
