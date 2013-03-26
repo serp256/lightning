@@ -54,6 +54,8 @@ public class LightKeyboard {
 	}
 
 	public static void showKeyboard(final boolean visible, final int w, final int h, final String inittxt, final int onhide, final int onchange) {
+		Log.d("LIGHTNING", "showKeyboard call");
+
 		final LightView view = LightView.instance;
 		
 		view.getHandler().post(new Runnable() {
@@ -88,9 +90,9 @@ public class LightKeyboard {
 						if (!backPressed) imm.hideSoftInputFromWindow(let.getWindowToken(), 0);
 						activity.viewGrp.removeView(letc);
 
-						if (onhide > -1 || onchange > -1) {
-							LightView.instance.queueEvent(new OnHideRunnable(onchange, onhide, let.getText().toString()));	
-						}
+						// if (onhide > -1 || onchange > -1) {
+						LightView.instance.queueEvent(new OnHideRunnable(onchange, onhide, let.getText().toString()));	
+						// }
 
 						view.setEnabled(true);
 						kbrdVisible = false;						
@@ -103,6 +105,7 @@ public class LightKeyboard {
 					}
 				});
 
+				Log.d("LIGHTNING", "adding view");
 				activity.viewGrp.addView(letc, visible ? 1 : 0);
 				let.setText(inittxt);
 				let.setOnKeyboardHideListener(khl);
