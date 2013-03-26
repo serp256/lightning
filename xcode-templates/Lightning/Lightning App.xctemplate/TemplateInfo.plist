@@ -11,6 +11,18 @@
 	<key>Concrete</key>
 	<true/>
 
+	<key>Project</key>
+	<dict>
+		<key>SharedSettings</key>
+		<dict>
+			<key>TARGETED_DEVICE_FAMILY</key>
+			<string>1,2</string>
+
+			<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+			<string>5.1</string>
+		</dict>
+	</dict>	
+
 	<key>Definitions</key>
 	<dict>
 		<key>main.m</key>
@@ -66,6 +78,8 @@
  		<string>___PACKAGENAME___-Info.plist:Basics</string>
 		<string>___PACKAGENAME___-Prefix.pch:Availability</string>
 		<string>___PACKAGENAME___-Prefix.pch:objC:importCocoa</string>
+		<string>___PACKAGENAME___-Info.plist:UISupportedInterfaceOrientations~iPhone</string>
+		<string>___PACKAGENAME___-Info.plist:UISupportedInterfaceOrientations~iPad</string>		
 	</array>
 
 	<key>Targets</key>
@@ -107,6 +121,8 @@
 				<string></string>
 				<key>PATH</key>
 				<string>/Users/___USERNAME___/bin:/usr/local/bin:$PATH</string>
+				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+				<string>5.1</string>				
 			</dict>
 			<key>Configurations</key>
 			<dict>
