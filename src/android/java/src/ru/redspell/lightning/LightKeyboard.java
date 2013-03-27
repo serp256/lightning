@@ -42,7 +42,7 @@ public class LightKeyboard {
 		native public void run();
 	}
 
-	private static boolean kbrdVisible = false;
+	// private static boolean kbrdVisible = false;
 	private static ClipboardManager cbrdMngr;
 
 	private static ClipboardManager getClipboardManager() {
@@ -61,88 +61,89 @@ public class LightKeyboard {
 		view.getHandler().post(new Runnable() {
 			public void run() {				
 				final LightActivity activity = view.activity;
-				final LightEditTextContainer letc = (LightEditTextContainer)activity.getLayoutInflater().inflate(R.layout.editor, activity.viewGrp, false);
-				final LightEditText let = (LightEditText)letc.findViewById(R.id.editor);
 				final InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-				final TextWatcher tw = new TextWatcher() {
-					public void afterTextChanged(Editable s) {
-						Log.d("LIGHTNING", "afterTextChanged " + s.toString());
-					}
+				final LightEditTextContainer letc;
+				final LightEditText let;
 
-					public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-						Log.d("LIGHTNING", "beforeTextChanged " + s.toString());
-					}
+				if (activity.viewGrp.getChildCount() == 2) {
+					letc = (LightEditTextContainer)activity.viewGrp.findViewById(R.id.editor_container);
+					let = (LightEditText)letc.findViewById(R.id.editor);
+				} else {
+					letc = (LightEditTextContainer)activity.getLayoutInflater().inflate(R.layout.editor, activity.viewGrp, false);
+					let = (LightEditText)letc.findViewById(R.id.editor);
+					final TextWatcher tw = new TextWatcher() {
+						public void afterTextChanged(Editable s) {
+							Log.d("LIGHTNING", "afterTextChanged " + s.toString());
+						}
 
-					public void onTextChanged(CharSequence s, int start, int before, int count) {
-						Log.d("LIGHTNING", "onTextChanged " + s.toString());
+						public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+							Log.d("LIGHTNING", "beforeTextChanged " + s.toString());
+						}
 
-						if (onchange > -1) {
-							LightView.instance.queueEvent(new OnChangeRunnable(onchange, s.toString()));
-						}						
-					}
-				};
-				final LightEditText.OnKeyboardHideListener khl = new LightEditText.OnKeyboardHideListener() {
-					public void onKeyboardHide(boolean backPressed) {
-						Log.d("LIGHTNING", "LightTextEdit.OnKeyboardHideListener onKeyboardHide");
+						public void onTextChanged(CharSequence s, int start, int before, int count) {
+							Log.d("LIGHTNING", "onTextChanged " + s.toString());
 
-						let.removeTextChangedListener(tw);
-						let.resetOnKeyboardHideListener();
-						if (!backPressed) imm.hideSoftInputFromWindow(let.getWindowToken(), 0);
-						activity.viewGrp.removeView(letc);
+							if (onchange > -1) {
+								LightView.instance.queueEvent(new OnChangeRunnable(onchange, s.toString()));
+							}						
+						}
+					};
+					final LightEditText.OnKeyboardHideListener khl = new LightEditText.OnKeyboardHideListener() {
+						public void onKeyboardHide(boolean backPressed) {
+							Log.d("LIGHTNING", "LightTextEdit.OnKeyboardHideListener onKeyboardHide");
 
-						// if (onhide > -1 || onchange > -1) {
-						LightView.instance.queueEvent(new OnHideRunnable(onchange, onhide, let.getText().toString()));	
-						// }
+							let.removeTextChangedListener(tw);
+							let.resetOnKeyboardHideListener();
+							if (!backPressed) imm.hideSoftInputFromWindow(let.getWindowToken(), 0);
+							activity.viewGrp.removeView(letc);
 
-						view.setEnabled(true);
-						kbrdVisible = false;						
-					}
-				};
 
-				((android.widget.Button)letc.findViewById(R.id.editor_ok_bt)).setOnClickListener(new View.OnClickListener() {
-					public void onClick(View view) {
-						khl.onKeyboardHide(false);
-					}
-				});
+							LightView.instance.queueEvent(new OnHideRunnable(onchange, onhide, let.getText().toString()));	
+							view.setEnabled(true);
+						}
+					};
 
-				Log.d("LIGHTNING", "adding view");
-				activity.viewGrp.addView(letc, visible ? 1 : 0);
-				let.setText(inittxt);
-				let.setOnKeyboardHideListener(khl);
-				let.requestFocus();
-				let.addTextChangedListener(tw);
+					((android.widget.Button)letc.findViewById(R.id.editor_ok_bt)).setOnClickListener(new View.OnClickListener() {
+						public void onClick(View view) {
+							khl.onKeyboardHide(false);
+						}
+					});
 
-				if (w > -1) let.setWidth(w);
-				if (h > -1) let.setHeight(h);
+					Log.d("LIGHTNING", "adding view");
+					activity.viewGrp.addView(letc, visible ? 1 : 0);
+					let.setText(inittxt);
+					let.setOnKeyboardHideListener(khl);
+					let.requestFocus();
+					let.addTextChangedListener(tw);
+
+					if (w > -1) let.setWidth(w);
+					if (h > -1) let.setHeight(h);
+
+					if (visible) view.setEnabled(false);					
+				}
 
 				imm.showSoftInput(let, InputMethodManager.SHOW_FORCED);
-
-				view.setEnabled(false);
-				kbrdVisible = true;
 			}
 		});
 	}
 
 	public static void hideKeyboard() {
-		Log.d("LIGHTNING", "hideKeyboard " + (new Boolean(kbrdVisible)).toString());
+		Log.d("LIGHTNING", "hideKeyboard");
 
-		if (kbrdVisible) {
-			final LightView view = LightView.instance;
+		final LightView view = LightView.instance;
 
-			view.getHandler().post(new Runnable() {
-				public void run() {
-					view.setEnabled(true);
-					kbrdVisible = false;
+		view.getHandler().post(new Runnable() {
+			public void run() {
+				view.setEnabled(true);
 
-					LightActivity activity = view.activity;
-					View editor = activity.viewGrp.findViewById(R.id.editor);
+				LightActivity activity = view.activity;
+				View editor = activity.viewGrp.findViewById(R.id.editor);
 
-					if (editor != null) {
-						((InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(editor.getWindowToken(), 0);
-					}
+				if (editor != null) {
+					((InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(editor.getWindowToken(), 0);
 				}
-			});
-		}
+			}
+		});
 	}
 
 	public static void copyToClipboard(String txt) {
