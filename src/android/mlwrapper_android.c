@@ -625,17 +625,25 @@ void ml_setSupportEmail (value d){
 	(*env)->DeleteLocalRef(env, jd);	
 }
 
-value ml_getLocale () {
+char* get_locale() {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetLocale", "()Ljava/lang/String;");
 	jstring locale = (*env)->CallObjectMethod(env, jView, meth);
 	const char *l = (*env)->GetStringUTFChars(env,locale,JNI_FALSE);
-	value r = caml_copy_string(l);
+	char* retval = (char*)malloc(strlen(l) + 1);
+	strcpy(retval, l);
 	(*env)->ReleaseStringUTFChars(env, locale, l);
 	(*env)->DeleteLocalRef(env, locale);
-	//value r = string_of_jstring(env, (*env)->CallObjectMethod(env, jView, meth));
-  return r;
+
+	return retval;		
+}
+
+value ml_getLocale () {
+	char *c_locale = get_locale();
+	value v_locale = caml_copy_string(c_locale);
+	free(c_locale);
+  	return v_locale;
 }
 
 value ml_getInternalStoragePath () {

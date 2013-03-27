@@ -38,7 +38,7 @@ Debug.cmx: MLFLAGS += -package unix
 
 
 ifeq ($(PLATFORM),IOS)
-	MOBJS += mlwrapper.o mobile_res.o ios/mlwrapper_ios.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/texture_save.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o ios/copy_paste.o
+	MOBJS += mlwrapper.o ios/mlwrapper_ios.o mobile_res.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/texture_save.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o ios/copy_paste.o
 	LIBFLAGS = -ccopt '-ObjC' -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
 						 -cclib '-framework\ QuartzCore' \
@@ -55,7 +55,7 @@ ifeq ($(PLATFORM),IOS)
 	else
 	ifeq ($(PLATFORM),ANDROID)
 		MLCOPTS += -D__ANDROID__
-		MOBJS += mlwrapper.o net_curl.o texture_load.o texture_save.o android/local_notif.o android/mlwrapper_android.o android/texture_android.o android/payments_android.o android/unzip.o android/ioapi.o android/assets_extractor.o android/curl_extern_loader.o android/file_downloader.o android/keyboard_android.o
+		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/local_notif.o android/mlwrapper_android.o android/texture_android.o android/payments_android.o android/unzip.o android/ioapi.o android/assets_extractor.o android/curl_extern_loader.o android/file_downloader.o android/keyboard_android.o
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else

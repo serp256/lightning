@@ -367,11 +367,21 @@ value ml_malinfo(value p) {
 	return res;
 }
 
+char* get_locale() {
+  NSString *identifier = [[NSLocale preferredLanguages] objectAtIndex:0];
+  const char* locale = [identifier cStringUsingEncoding:NSASCIIStringEncoding];
+  char* retval = (char*)malloc(strlen(locale) + 1);
+  strcpy(retval, locale);
+
+  return retval;
+}
 
 value ml_getLocale() {
-	NSString *identifier = [[NSLocale preferredLanguages] objectAtIndex:0];
-	value s = caml_copy_string([identifier cStringUsingEncoding:NSASCIIStringEncoding]);
-	return s;
+  char* c_locale = get_locale();
+	value v_locale = caml_copy_string(c_locale);
+  free(c_locale);
+
+	return v_locale;
 }
 
 value ml_getVersion() {

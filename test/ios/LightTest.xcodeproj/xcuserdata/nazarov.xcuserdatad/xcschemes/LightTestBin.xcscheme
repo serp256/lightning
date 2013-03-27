@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "21C6AD6E16F89A7700B44FE0"
+               BlueprintIdentifier = "21CFE3481701CA5800BC0856"
                BuildableName = "LightTestBin"
                BlueprintName = "LightTestBin"
                ReferencedContainer = "container:LightTest.xcodeproj">

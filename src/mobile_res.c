@@ -1,4 +1,12 @@
 #include "mobile_res.h"
+#import "ios/mlwrapper_ios.h"
+
+#ifdef ANDROID
+#include "android/mlwrapper_android.h"	
+#elif IOS
+#import "ios/mlwrapper_ios.h"
+#else
+#endif
 
 KHASH_MAP_INIT_STR(res_index, offset_size_pair_t*);
 static kh_res_index_t* res_indx;
@@ -7,6 +15,19 @@ static kh_res_index_t* res_indx;
 	char* err_mes = (char*)malloc(255);	\
 	sprintf(err_mes, __VA_ARGS__);		\
 	return err_mes;						\
+}										\
+
+char* get_local_path(char* locale, char* path) {
+	int locale_len = strlen(locale);
+	int path_len = strlen(path);
+	char* retval = (char*)malloc(8 + locale_len + path_len); // 8 = 6('locale') + 1 ('/') + 1('/' after locale identifier)
+
+	memcpy(retval, "locale/", 7);
+	memcpy(retval + 7, locale, locale_len);
+	*(retval + 7 + locale_len) = '/';
+	strcpy(retval + locale_len + 8, path);
+
+	return retval;
 }
 
 char* read_res_index(FILE* index, int offset_inc) {
@@ -49,17 +70,37 @@ char* read_res_index(FILE* index, int offset_inc) {
 	}
 }
 
+static char* locale = NULL;
+
 int get_offset_size_pair(const char* path, offset_size_pair_t** pair) {
 	if (!res_indx) {
 		return 1;
 	}
 
-	khiter_t k = kh_get(res_index, res_indx, path);
+	if (!locale)
+#ifdef PC
+		locale = "en";
+#else
+		locale = get_locale();
+#endif
 
-	if (k == kh_end(res_indx)) {
+	khiter_t k;
+
+	do {
+		char* local_path = get_local_path(locale, path);
+
+		PRINT_DEBUG("trying localized path %s", local_path);
+		k = kh_get(res_index, res_indx, local_path);
+		free(local_path);
+		if (k != kh_end(res_indx)) break;
+
+		PRINT_DEBUG("trying original path %s", path);
+		k = kh_get(res_index, res_indx, path);
+		if (k != kh_end(res_indx)) break;
+
 		PRINT_DEBUG("%s entry not found in expansions index", path);
 		return 1;
-	}
+	} while(0);
 
 	offset_size_pair_t* val = kh_val(res_indx, k);	
 	*pair = val;
