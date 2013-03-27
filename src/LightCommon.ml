@@ -53,11 +53,11 @@ type qColor =
     qcBottomRight: int;
   };
 
-IFPLATFORM(pc)
+(* IFPLATFORM(pc)
 value getLocale () = "en";
 ELSE
 external getLocale: unit -> string = "ml_getLocale";
-ENDPLATFORM;
+ENDPLATFORM; *)
 
 IFPLATFORM(ios android)
 external getVersion: unit -> string = "ml_getVersion";
@@ -180,7 +180,7 @@ value _get_resource with_suffix path  =
 value get_resource with_suffix path =
   match _get_resource with_suffix path with
   [ None ->
-    let locale = getLocale () in
+(*     let locale = getLocale () in
       let () = debug "cannot find in common resources, try %s" ("locale/" ^ locale ^ "/" ^ path) in
       match _get_resource with_suffix ("locale/" ^ locale ^ "/" ^ path) with
       [ None ->
@@ -195,7 +195,7 @@ value get_resource with_suffix path =
           let () = debug "xyu" in
           raise (File_not_exists path)
       | res -> res
-      ]
+      ] *)
   | res -> res
   ];
 
