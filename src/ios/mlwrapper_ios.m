@@ -25,7 +25,13 @@ char* bundle_path(char* c_path) {
     }
   }
 
-  return [bundlePath cStringUsingEncoding:NSASCIIStringEncoding];
+  const char* bpath = [bundlePath cStringUsingEncoding:NSASCIIStringEncoding];
+  if (!bpath) return nil;
+  
+  char* retval = (char*)malloc(strlen(bpath) + 1);
+  strcpy(retval, bpath);
+
+  return retval;
 }
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {

@@ -54,6 +54,8 @@ void *run_worker(void *param) {
 		request_t *req = thqueue_requests_pop(runtime->req_queue);
 		if (req == NULL) pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
 		else {
+			PRINT_DEBUG("texture run worker %s", req->path);
+
 			textureInfo *tInfo = (textureInfo*)malloc(sizeof(textureInfo));
 			int r = load_image_info(req->path,req->suffix,req->use_pvr,tInfo);
 			if (r) {

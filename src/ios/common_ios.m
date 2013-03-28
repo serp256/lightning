@@ -25,6 +25,8 @@ CAMLprim value ml_device_scale_factor() {
 }
 */
 
+static char* assets_path = nil;
+
 int getResourceFd(const char *path, resource *res) {
 	PRINT_DEBUG("getResourceFd call %s", path);
 
@@ -36,13 +38,14 @@ int getResourceFd(const char *path, resource *res) {
 		int fd;
 
 		if (os_pair->location == 0) {
-			char* bpath = bundle_path("assets");
-			if (bpath == nil) {
+			if (!assets_path) assets_path = bundle_path("assets");
+
+			if (assets_path == nil) {
 				PRINT_DEBUG("bundlePath == nil for '%s'", path);
 				return 0;
 			}
 
-			fd = open(bpath, O_RDONLY);
+			fd = open(assets_path, O_RDONLY);
 		} else {
 			PRINT_DEBUG("invalid location for path %s", path);
 			return 0;
