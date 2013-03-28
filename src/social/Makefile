@@ -2,7 +2,7 @@ include ../../Makefile.common
 
 #CFLAGS += -I . 
 
-MLFLAGS += -package ojson,extlib
+MLFLAGS += -package ojson,extlib,redspell.syntax.debug
 
 #.o: %.c
 #	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
@@ -15,7 +15,7 @@ MLFLAGS += -I .. -I ../utils -I oauth
 #MLCOPTS += -DIOS
 #MOBJS   +=  
             
-MLPPOPT += ../syntax/pa_debug.cmo -enable-debug default
+MLPPOPT += ../syntax/pa_platform.cmo -enable-debug default
 #LIBFLAGS = -cclib '-framework\ Foundation' \
 #		   -cclib '-framework\ UIKit' \
 #		   -cclib '-framework\ QuartzCore' \

@@ -18,13 +18,13 @@
 	}													\
 
 static jclass kbrdCls = 0;
-static int kbrdVisible = 0;
+// static int kbrdVisible = 0;
 
 void ml_keyboard(value visible, value size, value inittxt, value onhide, value onchange) {
-	PRINT_DEBUG("ml_keyboard %d", kbrdVisible);
+	PRINT_DEBUG("ml_keyboard");
 
-	if (kbrdVisible) return;
-	kbrdVisible = 1;
+	// if (kbrdVisible) return;
+	// kbrdVisible = 1;
 
 	GET_LIGHT_KEYBOARD;
 
@@ -57,10 +57,10 @@ void ml_keyboard_byte(value* argv, int argc) {
 }
 
 void ml_hidekeyboard() {
-	PRINT_DEBUG("ml_hidekeyboard %d", kbrdVisible);
+	PRINT_DEBUG("ml_hidekeyboard %d");
 
-	if (!kbrdVisible) return;
-	kbrdVisible = 0;
+	// if (!kbrdVisible) return;
+	// kbrdVisible = 0;
 
 	GET_LIGHT_KEYBOARD;
 
@@ -125,7 +125,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightKeyboard_00024OnChangeRun
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightKeyboard_00024OnHideRunnable_run(JNIEnv *env, jobject this) {
-	kbrdVisible = 0;
+	// kbrdVisible = 0;
 
 	static jfieldID changeCbFid;
 	static jfieldID hideCbFid;

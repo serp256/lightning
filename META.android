@@ -1,7 +1,7 @@
 version="0.01"
 archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
-requires="bigarray extlib xmlm ojson"
+requires="bigarray extlib xmlm ojson redspell.debug"
 
 
 package "tapjoy" (
@@ -21,9 +21,9 @@ package "syntax" (
 		description = "Syntactic sugars make obj props for tween"
 		archive(syntax,preprocessor) = "pa_prop.cmo"
 	)
-	package "debug" (
+	package "platform" (
 		description = "Syntactic sugars make obj props for tween"
-		archive(syntax,preprocessor) = "pa_debug.cmo"
+		archive(syntax,preprocessor) = "pa_platform.cmo"
 	)
 )
 

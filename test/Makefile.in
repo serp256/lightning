@@ -2,9 +2,9 @@
 
 TARGET ?= example
 
-MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_debug.cmo -enable-debug default
+MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_platform.cmo -enable-debug default
 
-MLFLAGS += -I ../src -package extlib -package ojson -I ../src/social -I ../src/tapjoy -I ../src/social/facebook
+MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/tapjoy -I ../src/social/facebook
 
 #MLFILES = panelbg.cmo testz.cmo
 
@@ -14,7 +14,7 @@ OAUTH = ../src/social/oauth/oauth.cma
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
 	-I ../src ../src/lightning.cma ../src/social/facebook/fb.cma $(OAUTH) $(SOCIAL) $(MLFILES) $(TARGET).cmo \
-	-package bigarray,unix,extlib,xmlm,ojson -linkpkg
+	-package bigarray,unix,extlib,xmlm,ojson,redspell.debug -linkpkg
 
 example.cmo: $(MLFILES)
 
@@ -28,7 +28,7 @@ $(TARGET).cmx: $(MLXFILES)
 $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
 	-ccopt "-F../src/social/facebook/ios/FacebookSDK" -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa -ccopt -L../src/social/facebook ../src/social/facebook/fb.cmxa $(TARGET).cmx \
-	-package extlib,xmlm,ojson,bigarray -linkpkg
+	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg
 
 
 

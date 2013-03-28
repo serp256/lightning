@@ -1,6 +1,6 @@
 include myconfig.ios
 export PLATFORM = IOS
-SDK_VERSION ?= 6.0
+SDK_VERSION ?= 6.1
 GCC ?= gcc
 ARCH ?= armv7
 PLAT ?= /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform

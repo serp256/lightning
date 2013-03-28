@@ -18,7 +18,7 @@ INSTALL_OPTS =
 
 BYTE_FILES = src/lightning.cma src/dlllightning.so src/liblightning.a
 NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a
-SYNTAX_FILES = src/syntax/pa_prop.cmo src/syntax/pa_debug.cmo
+SYNTAX_FILES = src/syntax/pa_prop.cmo src/syntax/pa_platform.cmo
 INSTALL_FILES = 
 
 ifneq (,$(findstring byte,$(LIB)))

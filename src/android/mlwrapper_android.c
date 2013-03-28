@@ -100,42 +100,34 @@ static char *debug_msg = NULL;
 		dst[len] = '\0'
 */
 
-void android_debug_output(value mtag, value address, value msg) {
+void android_debug_output(value mtag, value mname, value mline, value msg) {
 	char *tag;
 	if (mtag == Val_int(0)) tag = "DEFAULT";
 	else {
 		tag = String_val(Field(mtag,0));
-		//COPY_STRING(debug_tag_len,debug_tag,Field(mtag,0));
 	};
-	//COPY_STRING(debug_address_len,debug_address,address);
-	//COPY_STRING(debug_msg_len,debug_msg,msg);
-//#undef COPY_STRING
-	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s",tag,String_val(address),String_val(msg)); // this should be APPNAME
-	//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s",debug_tag,debug_address,debug_msg); // this should be APPNAME
-	fprintf(stderr,"%s (%s) %s\n",tag,String_val(address),String_val(msg));
-	//__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s (%s)] %s","DEFAULT","ADDRESS","MSG"); // this should be APPNAME
-	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING",String_val(msg)); // this should be APPNAME
-//	fputs(String_val(msg),stderr);
+	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s(%s:%d)] %s",tag,String_val(mname),Int_val(mline),String_val(msg)); // this should be APPNAME
+	//fprintf(stderr,"%s (%s) %s\n",tag,String_val(address),String_val(msg));
 }
 
-void android_debug_output_info(value address,value msg) {
-	__android_log_write(ANDROID_LOG_INFO,"LIGHTNING",String_val(msg));
-	fprintf(stderr,"INFO (%s) %s\n",String_val(address),String_val(msg));
+void android_debug_output_info(value mname,value mline,value msg) {
+	__android_log_print(ANDROID_LOG_INFO,"LIGHTNING","[%s:%d] %s",String_val(mname),Int_val(mline),String_val(msg));
+	//fprintf(stderr,"INFO (%s) %s\n",String_val(mname),Int_val(mline),String_val(msg));
 }
 
-void android_debug_output_warn(value address,value msg) {
-	__android_log_write(ANDROID_LOG_WARN,"LIGHTNING",String_val(msg));
-	fprintf(stderr,"WARN (%s) %s\n",String_val(address),String_val(msg));
+void android_debug_output_warn(value mname,value mline,value msg) {
+	__android_log_print(ANDROID_LOG_WARN,"LIGHTNING","[%s:%d] %s",String_val(mname),Int_val(mline),String_val(msg));
+	//fprintf(stderr,"WARN (%s) %s\n",String_val(mname),Int_val(mline),String_val(msg));
 }
 
-void android_debug_output_error(value address, value msg) {
+void android_debug_output_error(value mname, value mline, value msg) {
 	__android_log_write(ANDROID_LOG_ERROR,"LIGHTNING",String_val(msg));
-	fprintf(stderr,"ERROR (%s) %s\n",String_val(address),String_val(msg));
+	//fprintf(stderr,"ERROR (%s) %s\n",String_val(mname),Int_val(mline),String_val(msg));
 }
 
-void android_debug_output_fatal(value address, value msg) {
+void android_debug_output_fatal(value mname, value mline, value msg) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",String_val(msg));
-	fprintf(stderr,"FATAL (%s) %s\n",String_val(address),String_val(msg));
+	//fprintf(stderr,"FATAL (%s) %s\n",String_val(mname),Int_val(mline),String_val(msg));
 }
 
 static char* apk_path = NULL;

@@ -7,113 +7,128 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		216F0D511701D50600171057 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 21CFE3511701CB4D00BC0856 /* LightTestBin */; };
-		21CFE3561701CB6000BC0856 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 21CFE34F1701CB4D00BC0856 /* assets */; };
-		21CFE3571701CB6000BC0856 /* index in Resources */ = {isa = PBXBuildFile; fileRef = 21CFE3501701CB4D00BC0856 /* index */; };
-		21CFE3591701CC5B00BC0856 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 21CFE3581701CC5B00BC0856 /* Default.png */; };
-		21CFE35B1701CC6000BC0856 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 21CFE35A1701CC6000BC0856 /* Default@2x.png */; };
-		21CFE35D1701CC6400BC0856 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 21CFE35C1701CC6400BC0856 /* Default-568h@2x.png */; };
+		5181418216F6F61A009D7846 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5181418116F6F61A009D7846 /* LightTestBin */; };
+		5181418516F6F699009D7846 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5181418316F6F699009D7846 /* InfoPlist.strings */; };
+		5181418916F6F6C2009D7846 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418616F6F6C2009D7846 /* Default-568h@2x.png */; };
+		5181418A16F6F6C2009D7846 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418716F6F6C2009D7846 /* Default.png */; };
+		5181418B16F6F6C2009D7846 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418816F6F6C2009D7846 /* Default@2x.png */; };
+		5181418D16F6F775009D7846 /* image.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5181418C16F6F775009D7846 /* image.jpg */; };
+		5181418F16F6F797009D7846 /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 5181418E16F6F797009D7846 /* Shaders */; };
+		5181419E16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 5181419A16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha */; };
+		5181419F16F6F9D2009D7846 /* MyriadPro-Bold.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 5181419B16F6F9D2009D7846 /* MyriadPro-Bold.fnt */; };
+		518141A016F6F9D2009D7846 /* MyriadPro-Regular_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 5181419C16F6F9D2009D7846 /* MyriadPro-Regular_0.alpha */; };
+		518141A116F6F9D2009D7846 /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 5181419D16F6F9D2009D7846 /* MyriadPro-Regular.fnt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		21CFE34C1701CA8F00BC0856 /* PBXContainerItemProxy */ = {
+		5181417E16F6F5D0009D7846 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 21CFE3201701CA3300BC0856 /* Project object */;
+			containerPortal = 51ABA22416F6F4A100FC8928 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 21CFE3481701CA5800BC0856;
+			remoteGlobalIDString = 5181417A16F6F5B8009D7846;
 			remoteInfo = LightTestBin;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		21CFE34E1701CB3000BC0856 /* CopyFiles */ = {
+		5181418016F6F60B009D7846 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				216F0D511701D50600171057 /* LightTestBin in CopyFiles */,
+				5181418216F6F61A009D7846 /* LightTestBin in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		21CFE3281701CA3300BC0856 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		21CFE32B1701CA3300BC0856 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		21CFE32D1701CA3300BC0856 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		21CFE32F1701CA3300BC0856 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		21CFE3331701CA3300BC0856 /* LightTest-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LightTest-Info.plist"; sourceTree = "<group>"; };
-		21CFE3351701CA3300BC0856 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		21CFE3371701CA3300BC0856 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		21CFE3391701CA3300BC0856 /* LightTest-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LightTest-Prefix.pch"; sourceTree = "<group>"; };
-		21CFE33A1701CA3300BC0856 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		21CFE33B1701CA3300BC0856 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		21CFE33D1701CA3400BC0856 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
-		21CFE33F1701CA3400BC0856 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
-		21CFE3411701CA3400BC0856 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
-		21CFE34F1701CB4D00BC0856 /* assets */ = {isa = PBXFileReference; lastKnownFileType = file; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
-		21CFE3501701CB4D00BC0856 /* index */ = {isa = PBXFileReference; lastKnownFileType = file; name = index; path = LightTest/index; sourceTree = "<group>"; };
-		21CFE3511701CB4D00BC0856 /* LightTestBin */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = LightTestBin; path = LightTest/LightTestBin; sourceTree = "<group>"; };
-		21CFE3581701CC5B00BC0856 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
-		21CFE35A1701CC6000BC0856 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
-		21CFE35C1701CC6400BC0856 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		5181418116F6F61A009D7846 /* LightTestBin */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = LightTestBin; sourceTree = "<group>"; };
+		5181418416F6F699009D7846 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
+		5181418616F6F6C2009D7846 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		5181418716F6F6C2009D7846 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
+		5181418816F6F6C2009D7846 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
+		5181418C16F6F775009D7846 /* image.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = image.jpg; path = ../Resources/image.jpg; sourceTree = "<group>"; };
+		5181418E16F6F797009D7846 /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shaders; path = ../Resources/Shaders; sourceTree = "<group>"; };
+		5181419016F6F919009D7846 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Resources; path = ../Resources; sourceTree = "<group>"; };
+		5181419116F6F919009D7846 /* MyriadPro-Bold_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0.alpha"; path = "../Resources/MyriadPro-Bold_0.alpha"; sourceTree = "<group>"; };
+		5181419216F6F919009D7846 /* MyriadPro-Bold.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold.fnt"; path = "../Resources/MyriadPro-Bold.fnt"; sourceTree = "<group>"; };
+		5181419316F6F919009D7846 /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "../Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
+		5181419416F6F919009D7846 /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular.fnt"; path = "../Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
+		5181419A16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0.alpha"; path = "../Resources/MyriadPro-Bold_0.alpha"; sourceTree = "<group>"; };
+		5181419B16F6F9D2009D7846 /* MyriadPro-Bold.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold.fnt"; path = "../Resources/MyriadPro-Bold.fnt"; sourceTree = "<group>"; };
+		5181419C16F6F9D2009D7846 /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "../Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
+		5181419D16F6F9D2009D7846 /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular.fnt"; path = "../Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
+		51ABA22C16F6F4A100FC8928 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		51ABA22F16F6F4A100FC8928 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		51ABA23116F6F4A100FC8928 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		51ABA23316F6F4A100FC8928 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		51ABA23716F6F4A100FC8928 /* LightTest-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LightTest-Info.plist"; sourceTree = "<group>"; };
+		51ABA24116F6F4A100FC8928 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
+		51ABA24316F6F4A100FC8928 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
+		51ABA24516F6F4A100FC8928 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		21CFE31F1701CA3300BC0856 = {
+		51ABA22316F6F4A100FC8928 = {
 			isa = PBXGroup;
 			children = (
-				21CFE35C1701CC6400BC0856 /* Default-568h@2x.png */,
-				21CFE35A1701CC6000BC0856 /* Default@2x.png */,
-				21CFE3581701CC5B00BC0856 /* Default.png */,
-				21CFE34F1701CB4D00BC0856 /* assets */,
-				21CFE3501701CB4D00BC0856 /* index */,
-				21CFE3511701CB4D00BC0856 /* LightTestBin */,
-				21CFE3311701CA3300BC0856 /* LightTest */,
-				21CFE32A1701CA3300BC0856 /* Frameworks */,
-				21CFE3291701CA3300BC0856 /* Products */,
+				5181419A16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha */,
+				5181419B16F6F9D2009D7846 /* MyriadPro-Bold.fnt */,
+				5181419C16F6F9D2009D7846 /* MyriadPro-Regular_0.alpha */,
+				5181419D16F6F9D2009D7846 /* MyriadPro-Regular.fnt */,
+				5181419016F6F919009D7846 /* Resources */,
+				5181419116F6F919009D7846 /* MyriadPro-Bold_0.alpha */,
+				5181419216F6F919009D7846 /* MyriadPro-Bold.fnt */,
+				5181419316F6F919009D7846 /* MyriadPro-Regular_0.alpha */,
+				5181419416F6F919009D7846 /* MyriadPro-Regular.fnt */,
+				5181418E16F6F797009D7846 /* Shaders */,
+				5181418C16F6F775009D7846 /* image.jpg */,
+				5181418616F6F6C2009D7846 /* Default-568h@2x.png */,
+				5181418716F6F6C2009D7846 /* Default.png */,
+				5181418816F6F6C2009D7846 /* Default@2x.png */,
+				5181418116F6F61A009D7846 /* LightTestBin */,
+				51ABA23516F6F4A100FC8928 /* LightTest */,
+				51ABA22E16F6F4A100FC8928 /* Frameworks */,
+				51ABA22D16F6F4A100FC8928 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		21CFE3291701CA3300BC0856 /* Products */ = {
+		51ABA22D16F6F4A100FC8928 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				21CFE3281701CA3300BC0856 /* LightTest.app */,
+				51ABA22C16F6F4A100FC8928 /* LightTest.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		21CFE32A1701CA3300BC0856 /* Frameworks */ = {
+		51ABA22E16F6F4A100FC8928 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				21CFE32B1701CA3300BC0856 /* UIKit.framework */,
-				21CFE32D1701CA3300BC0856 /* Foundation.framework */,
-				21CFE32F1701CA3300BC0856 /* CoreGraphics.framework */,
+				51ABA22F16F6F4A100FC8928 /* UIKit.framework */,
+				51ABA23116F6F4A100FC8928 /* Foundation.framework */,
+				51ABA23316F6F4A100FC8928 /* CoreGraphics.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		21CFE3311701CA3300BC0856 /* LightTest */ = {
+		51ABA23516F6F4A100FC8928 /* LightTest */ = {
 			isa = PBXGroup;
 			children = (
-				21CFE33A1701CA3300BC0856 /* AppDelegate.h */,
-				21CFE33B1701CA3300BC0856 /* AppDelegate.m */,
-				21CFE3321701CA3300BC0856 /* Supporting Files */,
+				51ABA23616F6F4A100FC8928 /* Supporting Files */,
 			);
 			path = LightTest;
 			sourceTree = "<group>";
 		};
-		21CFE3321701CA3300BC0856 /* Supporting Files */ = {
+		51ABA23616F6F4A100FC8928 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				21CFE3331701CA3300BC0856 /* LightTest-Info.plist */,
-				21CFE3341701CA3300BC0856 /* InfoPlist.strings */,
-				21CFE3371701CA3300BC0856 /* main.m */,
-				21CFE3391701CA3300BC0856 /* LightTest-Prefix.pch */,
-				21CFE33D1701CA3400BC0856 /* Default.png */,
-				21CFE33F1701CA3400BC0856 /* Default@2x.png */,
-				21CFE3411701CA3400BC0856 /* Default-568h@2x.png */,
+				5181418316F6F699009D7846 /* InfoPlist.strings */,
+				51ABA23716F6F4A100FC8928 /* LightTest-Info.plist */,
+				51ABA24116F6F4A100FC8928 /* Default.png */,
+				51ABA24316F6F4A100FC8928 /* Default@2x.png */,
+				51ABA24516F6F4A100FC8928 /* Default-568h@2x.png */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -121,14 +136,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
-		21CFE3481701CA5800BC0856 /* LightTestBin */ = {
+		5181417A16F6F5B8009D7846 /* LightTestBin */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "-C .. ios";
-			buildConfigurationList = 21CFE34B1701CA5800BC0856 /* Build configuration list for PBXLegacyTarget "LightTestBin" */;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 5181417B16F6F5B8009D7846 /* Build configuration list for PBXLegacyTarget "LightTestBin" */;
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = "";
 			dependencies = (
 			);
 			name = LightTestBin;
@@ -138,78 +152,83 @@
 /* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
-		21CFE3271701CA3300BC0856 /* LightTest */ = {
+		51ABA22B16F6F4A100FC8928 /* LightTest */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 21CFE3451701CA3400BC0856 /* Build configuration list for PBXNativeTarget "LightTest" */;
+			buildConfigurationList = 51ABA24916F6F4A100FC8928 /* Build configuration list for PBXNativeTarget "LightTest" */;
 			buildPhases = (
-				21CFE34E1701CB3000BC0856 /* CopyFiles */,
-				21CFE3551701CB5A00BC0856 /* Resources */,
+				51ABA22A16F6F4A100FC8928 /* Resources */,
+				5181418016F6F60B009D7846 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				21CFE34D1701CA8F00BC0856 /* PBXTargetDependency */,
+				5181417F16F6F5D0009D7846 /* PBXTargetDependency */,
 			);
 			name = LightTest;
 			productName = LightTest;
-			productReference = 21CFE3281701CA3300BC0856 /* LightTest.app */;
+			productReference = 51ABA22C16F6F4A100FC8928 /* LightTest.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		21CFE3201701CA3300BC0856 /* Project object */ = {
+		51ABA22416F6F4A100FC8928 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0460;
-				ORGANIZATIONNAME = "Andrey Nazarov";
+				ORGANIZATIONNAME = "Sergey Plaksin";
 			};
-			buildConfigurationList = 21CFE3231701CA3300BC0856 /* Build configuration list for PBXProject "LightTest" */;
+			buildConfigurationList = 51ABA22716F6F4A100FC8928 /* Build configuration list for PBXProject "LightTest" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 			);
-			mainGroup = 21CFE31F1701CA3300BC0856;
-			productRefGroup = 21CFE3291701CA3300BC0856 /* Products */;
+			mainGroup = 51ABA22316F6F4A100FC8928;
+			productRefGroup = 51ABA22D16F6F4A100FC8928 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				21CFE3271701CA3300BC0856 /* LightTest */,
-				21CFE3481701CA5800BC0856 /* LightTestBin */,
+				51ABA22B16F6F4A100FC8928 /* LightTest */,
+				5181417A16F6F5B8009D7846 /* LightTestBin */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		21CFE3551701CB5A00BC0856 /* Resources */ = {
+		51ABA22A16F6F4A100FC8928 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				21CFE3561701CB6000BC0856 /* assets in Resources */,
-				21CFE3571701CB6000BC0856 /* index in Resources */,
-				21CFE3591701CC5B00BC0856 /* Default.png in Resources */,
-				21CFE35B1701CC6000BC0856 /* Default@2x.png in Resources */,
-				21CFE35D1701CC6400BC0856 /* Default-568h@2x.png in Resources */,
+				5181419E16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha in Resources */,
+				5181419F16F6F9D2009D7846 /* MyriadPro-Bold.fnt in Resources */,
+				518141A016F6F9D2009D7846 /* MyriadPro-Regular_0.alpha in Resources */,
+				518141A116F6F9D2009D7846 /* MyriadPro-Regular.fnt in Resources */,
+				5181418F16F6F797009D7846 /* Shaders in Resources */,
+				5181418D16F6F775009D7846 /* image.jpg in Resources */,
+				5181418916F6F6C2009D7846 /* Default-568h@2x.png in Resources */,
+				5181418A16F6F6C2009D7846 /* Default.png in Resources */,
+				5181418B16F6F6C2009D7846 /* Default@2x.png in Resources */,
+				5181418516F6F699009D7846 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		21CFE34D1701CA8F00BC0856 /* PBXTargetDependency */ = {
+		5181417F16F6F5D0009D7846 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 21CFE3481701CA5800BC0856 /* LightTestBin */;
-			targetProxy = 21CFE34C1701CA8F00BC0856 /* PBXContainerItemProxy */;
+			target = 5181417A16F6F5B8009D7846 /* LightTestBin */;
+			targetProxy = 5181417E16F6F5D0009D7846 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		21CFE3341701CA3300BC0856 /* InfoPlist.strings */ = {
+		5181418316F6F699009D7846 /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
-				21CFE3351701CA3300BC0856 /* en */,
+				5181418416F6F699009D7846 /* en */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -217,7 +236,39 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		21CFE3431701CA3400BC0856 /* Debug */ = {
+		5181417C16F6F5B8009D7846 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				DEBUGGING_SYMBOLS = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		5181417D16F6F5B8009D7846 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		51ABA24716F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -228,7 +279,6 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -244,13 +294,12 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				ONLY_ACTIVE_ARCH = YES;
-				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		21CFE3441701CA3400BC0856 /* Release */ = {
+		51ABA24816F6F4A100FC8928 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -261,7 +310,6 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -270,104 +318,66 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
-		21CFE3461701CA3400BC0856 /* Debug */ = {
+		51ABA24A16F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
-				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
+				INFOPLIST_FILE = "LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
 		};
-		21CFE3471701CA3400BC0856 /* Release */ = {
+		51ABA24B16F6F4A100FC8928 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
-				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
+				INFOPLIST_FILE = "LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
-			};
-			name = Release;
-		};
-		21CFE3491701CA5800BC0856 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				DEBUGGING_SYMBOLS = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PATH = "/usr/local/bin:$PATH";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-			};
-			name = Debug;
-		};
-		21CFE34A1701CA5800BC0856 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PATH = "/usr/local/bin:$PATH";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		21CFE3231701CA3300BC0856 /* Build configuration list for PBXProject "LightTest" */ = {
+		5181417B16F6F5B8009D7846 /* Build configuration list for PBXLegacyTarget "LightTestBin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				21CFE3431701CA3400BC0856 /* Debug */,
-				21CFE3441701CA3400BC0856 /* Release */,
+				5181417C16F6F5B8009D7846 /* Debug */,
+				5181417D16F6F5B8009D7846 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		51ABA22716F6F4A100FC8928 /* Build configuration list for PBXProject "LightTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				51ABA24716F6F4A100FC8928 /* Debug */,
+				51ABA24816F6F4A100FC8928 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		21CFE3451701CA3400BC0856 /* Build configuration list for PBXNativeTarget "LightTest" */ = {
+		51ABA24916F6F4A100FC8928 /* Build configuration list for PBXNativeTarget "LightTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				21CFE3461701CA3400BC0856 /* Debug */,
-				21CFE3471701CA3400BC0856 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		21CFE34B1701CA5800BC0856 /* Build configuration list for PBXLegacyTarget "LightTestBin" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				21CFE3491701CA5800BC0856 /* Debug */,
-				21CFE34A1701CA5800BC0856 /* Release */,
+				51ABA24A16F6F4A100FC8928 /* Debug */,
+				51ABA24B16F6F4A100FC8928 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 21CFE3201701CA3300BC0856 /* Project object */;
+	rootObject = 51ABA22416F6F4A100FC8928 /* Project object */;
 }
