@@ -8,11 +8,16 @@ include Makefile.in
 
 TARGET ?= example
 
-so: $(TARGET).so
+res:	
+	aresmkr -concat -i Resources -o android/assets/assets
+	aresmkr -merge -o android/assets/index android/assets/assets
+	rm android/assets/assets.index
+
+so: $(TARGET).so res
 	cp test.so android/libs/armeabi-v7a/libtest.so
 	ant -f android/build.xml debug
 
-release: $(TARGET).so
+release: $(TARGET).so res
 	cp test.so android/libs/armeabi-v7a/libtest.so
 	ant -f android/build.xml release
 

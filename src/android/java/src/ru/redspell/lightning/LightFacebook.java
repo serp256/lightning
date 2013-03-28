@@ -421,7 +421,7 @@ public class LightFacebook {
         LightView.instance.post(new Runnable() {
             @Override
             public void run() {
-                new com.facebook.Request(session, path, params, com.facebook.HttpMethod.POST, new com.facebook.Request.Callback() {
+                new com.facebook.Request(session, path, params, params.size() == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.Request.Callback() {
                     @Override
                     public void onCompleted(com.facebook.Response response) {
                         com.facebook.FacebookRequestError error = response.getError();
