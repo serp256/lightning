@@ -20,7 +20,7 @@ static kh_res_index_t* res_indx;
 char* get_local_path(char* locale, char* path) {
 	int locale_len = strlen(locale);
 	int path_len = strlen(path);
-	char* retval = (char*)malloc(8 + locale_len + path_len); // 8 = 6('locale') + 1 ('/') + 1('/' after locale identifier)
+	char* retval = (char*)malloc(9 + locale_len + path_len); // 8 = 6('locale') + 1 ('/') + 1('/' after locale identifier) + 1 ('\0')
 
 	memcpy(retval, "locale/", 7);
 	memcpy(retval + 7, locale, locale_len);
@@ -85,13 +85,11 @@ int get_offset_size_pair(const char* path, offset_size_pair_t** pair) {
 #endif
 
 	khiter_t k;
+	char* local_path = get_local_path(locale, path);
 
 	do {
-		char* local_path = get_local_path(locale, path);
-
 		PRINT_DEBUG("trying localized path %s", local_path);
-		k = kh_get(res_index, res_indx, local_path);
-		free(local_path);
+		k = kh_get(res_index, res_indx, local_path);		
 		if (k != kh_end(res_indx)) break;
 
 		PRINT_DEBUG("trying original path %s", path);
@@ -105,6 +103,7 @@ int get_offset_size_pair(const char* path, offset_size_pair_t** pair) {
 	offset_size_pair_t* val = kh_val(res_indx, k);	
 	*pair = val;
 	PRINT_DEBUG("%s entry found in index, offset %d, size %d, location %d", path, val->offset, val->size, val->location);
+	free(local_path);
 
 	return 0;
 }

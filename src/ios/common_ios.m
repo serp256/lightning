@@ -40,7 +40,7 @@ int getResourceFd(const char *path, resource *res) {
 		if (os_pair->location == 0) {
 			if (!assets_path) assets_path = bundle_path("assets");
 
-			if (assets_path == nil) {
+			if (!assets_path) {
 				PRINT_DEBUG("bundlePath == nil for '%s'", path);
 				return 0;
 			}

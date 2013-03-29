@@ -65,6 +65,8 @@ void *run_worker(void *param) {
 				tInfo = NULL;
 			}
 
+			PRINT_DEBUG("create response");
+
 			response_t *resp = malloc(sizeof(response_t));
 			resp->path = req->path; 
 			resp->with_suffix = (req->suffix != NULL);
@@ -72,12 +74,16 @@ void *run_worker(void *param) {
 			resp->tInfo = tInfo;
 			resp->alphaTexInfo = NULL;
 
+			PRINT_DEBUG("ok");
+
 			if (!r) {
 				resp->alphaTexInfo = loadEtcAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);	
 			}
 			
+			PRINT_DEBUG("free suffix");
 			if (req->suffix != NULL) free(req->suffix); free(req);
 			thqueue_responses_push(runtime->resp_queue,resp);
+			PRINT_DEBUG("response pushed");
 		}
 	}
 }

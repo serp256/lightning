@@ -220,18 +220,26 @@ int loadPvrFile3(gzFile* gzf, textureInfo *tInfo) {
 	};
 	// skip meta
 
+	PRINT_DEBUG("before skiping meta...");
+
 	if (header.u32MetaDataSize > 0) {
 		PRINT_DEBUG("move on metaSize");
 		gzseek(gzf, header.u32MetaDataSize, SEEK_CUR);
-	}	
+	}
+
+	PRINT_DEBUG("after skiping meta");
 
 	tInfo->dataLen = header.u32Width * header.u32Height * bpp / 8;
 	tInfo->imgData = (unsigned char*)malloc(tInfo->dataLen);
+
+	PRINT_DEBUG("malloc success");
 
 	if (gzread(gzf, tInfo->imgData, tInfo->dataLen) < tInfo->dataLen) {
 		free(tInfo->imgData);
 		return 1;
 	}
+
+	PRINT_DEBUG("read success");
 
 	tInfo->scale = 1;
 	return 0;

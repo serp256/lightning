@@ -17,13 +17,13 @@ char* bundle_path(char* c_path) {
   NSArray * components = [ns_path pathComponents];
   NSString * ext = [ns_path pathExtension];
 
-  if (bundlePath == nil) {
-    if ([components count] > 1) {
-      bundlePath = [[NSBundle mainBundle] pathForResource: [components lastObject] ofType:nil inDirectory: [ns_path stringByDeletingLastPathComponent]];
-    } else {
-      bundlePath = [[NSBundle mainBundle] pathForResource:ns_path ofType:nil];
-    }
+  if ([components count] > 1) {
+    bundlePath = [[NSBundle mainBundle] pathForResource: [components lastObject] ofType:nil inDirectory: [ns_path stringByDeletingLastPathComponent]];
+  } else {
+    bundlePath = [[NSBundle mainBundle] pathForResource:ns_path ofType:nil];
   }
+
+  if (!bundlePath) return nil;
 
   const char* bpath = [bundlePath cStringUsingEncoding:NSASCIIStringEncoding];
   if (!bpath) return nil;

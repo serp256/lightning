@@ -236,10 +236,15 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 }
 
 int loadPvrPtr(gzFile* gzf, textureInfo *tInfo) {
+	PRINT_DEBUG("loadPvrPtr call %d", (int)!gzf);
+
 	if (!gzf) return 1;
 
+	PRINT_DEBUG("before reading pvr");
 	int r = loadPvrFile3(gzf, tInfo);
+	PRINT_DEBUG("after reading pvr");
 	gzclose(gzf);
+	PRINT_DEBUG("closed");
 
 	return r;
 }
@@ -294,7 +299,6 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
 }																												\
 
 int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
-	NSString *fullPath = NULL;
 	NSString *imgType = [[path pathExtension] lowercaseString];
 
 	int is_pvr = 0;
@@ -312,7 +316,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 		else if ([imgType rangeOfString:@"alpha"].location == 0) return loadAlphaFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 
 		if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-			UIImage *img = [[UIImage alloc] initWithContentsOfFile:fullPath];
+			UIImage *img = [[UIImage alloc] initWithContentsOfFile:path];
 			int retval = loadImageFile(img, tInfo);
 			[img release];
 
@@ -392,12 +396,11 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 }
 
 int load_image_info(char *cpath,char *suffix, int use_pvr,textureInfo *tInfo) {
-	//NSLog(@"LOAD_IMAGE_INFO: %s",cpath);
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	NSString *path = [NSString stringWithCString:cpath encoding:NSASCIIStringEncoding];
 	int r = _load_image(path,suffix,use_pvr,tInfo);
 	[pool release];
-	//NSLog(@"IMAGE_LOADED: %s",cpath);
+
 	return r;
 }
 

@@ -455,7 +455,7 @@ void ml_alsource_delete(value mlAlSourceID) {
 				caml_failwith(fail_mes);
 			}
 
-			NSData* sndData = [NSData dataWithBytesNoCopy:buf length:res.length freeWhenDone:YES];
+			NSData* sndData = [NSData dataWithBytesNoCopy:buf length:res.length];
 			NSError* err = nil;
 
 			_player = [[AVAudioPlayer alloc] initWithData:sndData error:&err];
