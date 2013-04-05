@@ -115,6 +115,8 @@ static void* downloader_thread(void* params) {
 void ml_DownloadFile(value url, value path, value errCb, value cb) {
 	initCurl();
 
+	PRINT_DEBUG("START DOWNLOAD FILE");
+
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 

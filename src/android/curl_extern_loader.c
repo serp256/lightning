@@ -197,6 +197,7 @@ static void* loader_thread(void* params) {
 void ml_loadExternalImage(value url, value cb, value errCb) {
 	initCurl();
 
+	PRINT_DEBUG("LOAD EXTERNAL IMAGE");
 	JNIEnv *env;
     (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 

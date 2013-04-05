@@ -216,8 +216,16 @@ class virtual _c [ 'parent ] = (*{{{*)
     method transformationMatrix = 
       match transformationMatrix with
       [ None -> 
-        let translate = match transformPoint with [ {Point.x=0.;y=0.} -> pos | _ -> Point.addPoint pos transformPoint ] in
-        let m = Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate () in
+(*         let translate = match transformPoint with [ {Point.x=0.;y=0.} -> pos | _ -> Point.addPoint pos transformPoint ] in *)
+        let m = Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate:pos () in
+        let m = 
+          match transformPoint with 
+          [ {Point.x = 0.; y = 0.} -> m 
+          | p -> 
+              let m' = Matrix.create ~translate:p () in
+              Matrix.concat m' m
+          ] 
+        in
         (
           transformationMatrix := Some m;
           m;
