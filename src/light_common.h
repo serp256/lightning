@@ -83,6 +83,10 @@ extern unsigned int MAX_GC_MEM;
 
 #define Val_none 1
 
+typedef struct {
+	int fd;
+	int64_t offset;
+	int64_t length;
+} resource;
+
 #endif
-
-

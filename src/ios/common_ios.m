@@ -7,6 +7,8 @@
 #import <caml/alloc.h>
 #import <caml/fail.h>
 
+#import "mlwrapper_ios.h"
+#import "mobile_res.h"
 
 /*
 float deviceScaleFactor() {
@@ -23,8 +25,49 @@ CAMLprim value ml_device_scale_factor() {
 }
 */
 
+static char* assets_path = nil;
 
-CAMLprim value ml_bundle_path_for_resource(value mlpath,value mlsuffix) {
+int getResourceFd(const char *path, resource *res) {
+	PRINT_DEBUG("getResourceFd call %s", path);
+
+	offset_size_pair_t* os_pair;
+
+	if (!get_offset_size_pair(path, &os_pair)) {
+		PRINT_DEBUG("found");
+
+		int fd;
+
+		if (os_pair->location == 0) {
+			if (!assets_path) assets_path = bundle_path("assets");
+
+			if (!assets_path) {
+				PRINT_DEBUG("bundlePath == nil for '%s'", path);
+				return 0;
+			}
+
+			fd = open(assets_path, O_RDONLY);
+		} else {
+			PRINT_DEBUG("invalid location for path %s", path);
+			return 0;
+		}
+
+		lseek(fd, os_pair->offset, SEEK_SET);
+
+		res->fd = fd;
+		res->offset = os_pair->offset;
+		res->length = os_pair->size;
+
+		PRINT_DEBUG("fd for %s opened", path);
+
+		return 1;
+	}
+
+	PRINT_DEBUG("not found");
+
+	return 0;
+}
+
+/*CAMLprim value ml_bundle_path_for_resource(value mlpath,value mlsuffix) {
 	CAMLparam1(mlpath);
 	CAMLlocal1(res);
 
@@ -61,7 +104,7 @@ CAMLprim value ml_bundle_path_for_resource(value mlpath,value mlsuffix) {
 	}
 
 	CAMLreturn(res);
-}
+}*/
 
 
 

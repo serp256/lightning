@@ -193,28 +193,29 @@ public class LightMediaPlayer extends MediaPlayer {
 
 	public static MediaPlayer createMediaPlayer(String path) throws IOException {
 		MediaPlayer mp = new LightMediaPlayer();
-		String locale = Locale.getDefault().getLanguage();
+		// String locale = Locale.getDefault().getLanguage();
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		return setMpDataSrc(mp, path) ? mp : null;
 
-		if (!setMpDataSrc(mp, path) && !setMpDataSrc(mp, "locale/" + locale + "/" + path)) {
+/*		if (!setMpDataSrc(mp, path) && !setMpDataSrc(mp, "locale/" + locale + "/" + path)) {
 			if (locale != "en" && !setMpDataSrc(mp, "locale/en/" + path)) {
 				return null;
 			}
 		}
 
-		return mp;
+		return mp;*/
 	}
 
 	public static int getSoundId(String path, SoundPool sndPool) throws IOException {
-		String locale = Locale.getDefault().getLanguage();
-		int retval;
+		// String locale = Locale.getDefault().getLanguage();
+		// int retval = soundPoolLoad(sndPool, path);
 
-		if ((retval = soundPoolLoad(sndPool, path)) < 0 && (retval = soundPoolLoad(sndPool, "locale/" + locale + "/" + path)) < 0) {
+/*		if ((retval = soundPoolLoad(sndPool, path)) < 0 && (retval = soundPoolLoad(sndPool, "locale/" + locale + "/" + path)) < 0) {
 			if (locale != "en") {
 				retval = soundPoolLoad(sndPool, "locale/en/" + path);
 			}
-		}
+		}*/
 
-		return retval;
+		return soundPoolLoad(sndPool, path);
 	}	
 }

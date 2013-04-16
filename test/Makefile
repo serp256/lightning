@@ -4,9 +4,17 @@ sdl:
 clean: 
 	$(MAKE) -f Makefile.pc clean
 
+ios-res:
+	mkdir -p .ios/res
+	lsync -i Resources -o .ios/res ios/res.lsync
+	aresmkr -concat -i .ios/res -o ios/LightTest/assets
+	aresmkr -merge -o ios/LightTest/index ios/LightTest/assets
+	rm ios/LightTest/assets.index
+	rm -rf .ios/res
+
 ios:
 	$(MAKE) -f Makefile.ios
-	cp test.native LightTest/LightTest/LightTestBin
+	cp test.native ios/LightTest/LightTestBin
 
 cleanios:
 	$(MAKE) -f Makefile.ios clean

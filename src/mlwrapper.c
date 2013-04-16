@@ -177,3 +177,26 @@ void ml_memoryWarning() {
 	caml_gc_compaction(0);
 	caml_release_runtime_system();
 }
+
+value caml_getResource(value mlpath,value suffix) {
+	PRINT_DEBUG("caml_getResource call");
+
+	CAMLparam1(mlpath);
+	CAMLlocal2(res,mlfd);
+	resource r;
+	if (getResourceFd(String_val(mlpath),&r)) {
+		PRINT_DEBUG("getResourceFd return true");
+
+		mlfd = caml_alloc_tuple(2);
+		Store_field(mlfd,0,Val_int(r.fd));
+		Store_field(mlfd,1,caml_copy_int64(r.length));
+		res = caml_alloc_tuple(1);
+		Store_field(res,0,mlfd);
+	} else res = Val_int(0);
+
+	PRINT_DEBUG("return");
+
+	CAMLreturn(res);
+}
+
+
