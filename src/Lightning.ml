@@ -273,8 +273,4 @@ value extractAssetsIfRequired (cb:(bool -> unit)) =  cb True;
 value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = cb True;
 ENDIF; *)
 
-IFDEF ANDROID THEN
-value getMACID () = _deviceIdentifier ();
-ELSE
 external getMACID: unit -> string = "ml_getMACID";
-ENDIF;

@@ -55,6 +55,8 @@ import ru.redspell.lightning.expansions.XAPKFile;
 import java.util.Formatter;
 import java.util.HashMap;
 
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiInfo;
 //import ru.redspell.lightning.LightEGLContextFactory;
 
 import ru.redspell.lightning.payments.google.LightGooglePayments;
@@ -124,11 +126,29 @@ public class LightView extends GLSurfaceView {
 		return Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
 	}
 
+	public String get_mac_id () {
+		Log.d ("LIGHTNING", "get_mac_id call");
+
+		WifiManager manager = (WifiManager)  (getContext ()).getSystemService(Context.WIFI_SERVICE);
+		WifiInfo info = manager.getConnectionInfo();
+		String macAddress = info.getMacAddress().toUpperCase ();
+		if (macAddress == null) {
+			macAddress = "";
+		}
+		return macAddress;
+	}
+
 	public boolean isTablet () {
+			
+			Log.d("LIGHTNING", "widthPixels " + displayMetrics.widthPixels + "xhdpi" + displayMetrics.xdpi );
 	    float width = displayMetrics.widthPixels / displayMetrics.xdpi;
+			Log.d("LIGHTNING", "width" + width);
+			Log.d("LIGHTNING", "heightPixels " + displayMetrics.heightPixels + "yhdpi" + displayMetrics.ydpi );
 	    float height = displayMetrics.heightPixels / displayMetrics.ydpi;
+			Log.d("LIGHTNING", "height" + height);
 
 	    double screenDiagonal = Math.sqrt(width * width + height * height);
+			Log.d("LIGHTNING", "diagonal" + screenDiagonal);
 	    return (screenDiagonal >= 6);
 	}
 
@@ -780,7 +800,7 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void expansionsError(String reason) {
-		Log.d("LIGHTNING", "expansions error");
+		Log.d("LIGHTNING", "expansions error: " + reason);
 		queueEvent(new ExpansionsErrorCallbackRunnable(reason));
 	}
 
