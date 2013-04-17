@@ -26,11 +26,6 @@ extern JavaVM *gJavaVM;
 extern jobject jView;
 extern jclass jViewCls;
 
-typedef struct {
-	int fd;
-	int64_t length;
-} resource;
-
 int getResourceFd(const char *path, resource *res);
 
 value ml_alsoundLoad(value path);
@@ -42,5 +37,6 @@ void ml_alsoundSetLoop(value streamId, value loop);
 void ml_paymentsTest();
 void ml_openURL(value url);
 void ml_setAssetsDir(value vassDir);
+char* get_locale();
 
 #endif

@@ -16,6 +16,7 @@
 #include <caml/custom.h>
 #import <caml/alloc.h>
 #import <caml/threads.h>
+#import <errno.h>
 
 static unsigned int total_sound_mem = 0;
 
@@ -123,7 +124,7 @@ struct custom_operations albuffer_ops = {
 };
 
 
-NSString* pathForResource(NSString *path) {
+/*NSString* pathForResource(NSString *path) {
 	NSString *fullPath = NULL;
 	if ([path isAbsolutePath]) {
 			fullPath = path; 
@@ -136,14 +137,45 @@ NSString* pathForResource(NSString *path) {
 		caml_raise_with_string(*caml_named_value("File_not_exists"), fname);
 	}
 	return fullPath;
+}*/
+
+OSStatus MyAudioFile_ReadProc(void* inClientData, SInt64 inPosition, UInt32 requestCount, void* buffer, UInt32* actualCount) {
+	resource* res = (resource*)inClientData;
+
+	int seek_res = lseek(res->fd, res->offset + inPosition, SEEK_SET);
+
+	if (seek_res < 0) {
+		if (errno == EBADF) return kAudioFileNotOpenError;
+		if (errno == EOVERFLOW) return kAudioFilePositionError;
+
+		return kAudioFileUnspecifiedError;
+	}
+
+	*actualCount = read(res->fd, buffer, requestCount);
+	if (*actualCount < 0) return kAudioFileUnspecifiedError;
+
+	return noErr;
+}
+
+OSStatus MyAudioFile_WriteProc (void *inClientData, SInt64 inPosition, UInt32 requestCount, void *buffer, UInt32 *actualCount) {
+	return kAudioFileOperationNotSupportedError;
+}
+
+SInt64 MyAudioFile_GetSizeProc (void *inClientData) {
+	return ((resource*)inClientData)->length;
+}
+
+SInt64 MyAudioFile_SetSizeProc (void *inClientData) {
+	return -1;
 }
 
 CAMLprim value ml_albuffer_create(value mlpath) {
 	CAMLparam1(mlpath);
 	CAMLlocal2(mlBuffer,mlres);
 
-	NSString *path = [NSString stringWithCString:String_val(mlpath) encoding:NSASCIIStringEncoding];
-	NSString *fullPath = pathForResource(path);
+	char* c_path = String_val(mlpath);
+	NSString *path = [NSString stringWithCString:c_path encoding:NSASCIIStringEncoding];
+	// NSString *fullPath = pathForResource(path);
 
 	AudioFileID fileID = 0;
 	void *soundBuffer = NULL;
@@ -154,7 +186,17 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 
 	OSStatus result = noErr;
 
-	result = AudioFileOpenURL((CFURLRef) [NSURL fileURLWithPath:fullPath], kAudioFileReadPermission, 0, &fileID);
+	if ([path isAbsolutePath]) {	
+		result = AudioFileOpenURL((CFURLRef) [NSURL fileURLWithPath:path], kAudioFileReadPermission, 0, &fileID);
+	} else {
+		resource* res = (resource*)malloc(sizeof(resource));
+		if (!getResourceFd(c_path, res)) {
+			free(res);
+			raise_error("could not obtain resource fd", String_val(mlpath), kAudioFileInvalidFileError);
+		}
+
+		result = AudioFileOpenWithCallbacks((void*)res, MyAudioFile_ReadProc, MyAudioFile_WriteProc, MyAudioFile_GetSizeProc, MyAudioFile_SetSizeProc, 0, &fileID);
+	}
 	
 	if (result != noErr) raise_error("could not read audio file",String_val(mlpath),result);
 
@@ -380,18 +422,48 @@ void ml_alsource_delete(value mlAlSourceID) {
 -(id)initWithFilename: (NSString *)fname {
 	self = [super init];
 	if (self) {
-		NSURL * sndurl = [[NSBundle mainBundle] URLForResource: fname withExtension: nil];
-		if (sndurl == nil) {
-			[self release];
-			caml_failwith("can't find sound");
+
+		if ([fname isAbsolutePath]) {
+			NSURL * sndurl = [[NSBundle mainBundle] URLForResource: fname withExtension: nil];
+			if (sndurl == nil) {
+				[self release];
+				caml_failwith("can't find sound");
+			}
+
+			NSError *error = nil;                                                                                                                                                              
+			_player  = [[AVAudioPlayer alloc] initWithContentsOfURL:sndurl error:&error];
+			if (_player == nil) {
+				[self release];
+				caml_failwith("can't create player");
+			};			
+		} else {
+			resource res;
+			const char* c_fname = [fname cStringUsingEncoding:NSASCIIStringEncoding];
+
+			if (!getResourceFd(c_fname, &res)) {
+				[self release];
+				char* fail_mes = (char*)malloc(255);
+				sprintf(fail_mes, "can't obtain resource fd for av sound %s", c_fname);
+				caml_failwith(fail_mes);
+			}
+
+			void* buf = malloc(res.length);
+			if (read(res.fd, buf, res.length) != res.length) {
+				[self release];
+				char* fail_mes = (char*)malloc(255);
+				sprintf(fail_mes, "can't read data for av sound %s", c_fname);
+				caml_failwith(fail_mes);
+			}
+
+			NSData* sndData = [NSData dataWithBytesNoCopy:buf length:res.length];
+			NSError* err = nil;
+
+			_player = [[AVAudioPlayer alloc] initWithData:sndData error:&err];
+			if (_player == nil) {
+				[self release];
+				caml_failwith("can't create player");
+			}
 		}
-		
-		NSError *error = nil;                                                                                                                                                              
-		_player  = [[AVAudioPlayer alloc] initWithContentsOfURL:sndurl error:&error];
-		if (_player == nil) {
-			[self release];
-			caml_failwith("can't create player");
-		};
 
 		_sound_stopped_handler = 0;
 		_player.delegate = self;

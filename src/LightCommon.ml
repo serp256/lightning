@@ -132,7 +132,7 @@ value floats_of_color color =
 
 Callback.register_exception "File_not_exists" (File_not_exists "");
 
-IFPLATFORM(ios)
+(* IFPLATFORM(ios)
 
 external bundle_path_for_resource: string -> option string -> option string = "ml_bundle_path_for_resource";
 
@@ -159,7 +159,8 @@ value read_json ?with_suffix path =
 
 value read_resource ?with_suffix path = Std.input_all (open_resource ?with_suffix path);
 
-ELSPLATFORM(android) 
+ELSPLATFORM(android)  *)
+IFPLATFORM(android ios)
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
 
@@ -177,9 +178,10 @@ value _get_resource with_suffix path =
   ];
 
 value get_resource with_suffix path =
+  let () = debug "get_resource call %s" path in
   match _get_resource with_suffix path with
-  [ None ->
-    let locale = getLocale () in
+  [ None -> raise (File_not_exists path)
+(*     let locale = getLocale () in
       let () = debug "cannot find in common resources, try %s" ("locale/" ^ locale ^ "/" ^ path) in
       match _get_resource with_suffix ("locale/" ^ locale ^ "/" ^ path) with
       [ None ->
@@ -194,11 +196,12 @@ value get_resource with_suffix path =
           let () = debug "xyu" in
           raise (File_not_exists path)
       | res -> res
-      ]
+      ] *)
   | res -> res
   ];
 
-value open_resource ?(with_suffix=True) path = 
+value open_resource ?(with_suffix=True) path =
+  let () = debug "open_resource call %s" path in
   match get_resource with_suffix path with
   [ None -> raise (File_not_exists path)
   | Some (fd,length) -> Unix.in_channel_of_descr fd
@@ -213,6 +216,7 @@ value read_resource ?(with_suffix=True) path =
       and ic = Unix.in_channel_of_descr fd in
       (
         really_input ic buff 0 length;
+        close_in ic;
         buff
       )
   ];
@@ -223,18 +227,23 @@ value read_json ?(with_suffix=True) path =
   | Some (fd, length) ->  
     let read = ref Int64.zero
     and ic = Unix.in_channel_of_descr fd in
-    Ojson.from_function begin fun buff len -> 
-      match Int64.compare !read length with
-      [ x when x >= 0 -> 0
-      | _ ->
-        let n = input ic buff 0 len in 
-        let () = read.val := Int64.add (Int64.of_int n) !read in
+    let retval =
+      Ojson.from_function begin fun buff len -> 
         match Int64.compare !read length with
-        [ x when x >= 0 -> Int64.to_int (Int64.sub length (Int64.sub !read (Int64.of_int n)))
-        | _ -> n
-        ]  
-      ]
-    end
+        [ x when x >= 0 -> 0
+        | _ ->
+          let n = input ic buff 0 len in 
+          let () = read.val := Int64.add (Int64.of_int n) !read in
+          match Int64.compare !read length with
+          [ x when x >= 0 -> Int64.to_int (Int64.sub length (Int64.sub !read (Int64.of_int n)))
+          | _ -> n
+          ]  
+        ]
+      end
+    in (
+      close_in ic;
+      retval;
+    )
   ];
   
 

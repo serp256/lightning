@@ -54,6 +54,8 @@ void *run_worker(void *param) {
 		request_t *req = thqueue_requests_pop(runtime->req_queue);
 		if (req == NULL) pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
 		else {
+			PRINT_DEBUG("texture run worker %s", req->path);
+
 			textureInfo *tInfo = (textureInfo*)malloc(sizeof(textureInfo));
 			int r = load_image_info(req->path,req->suffix,req->use_pvr,tInfo);
 			if (r) {
@@ -63,6 +65,8 @@ void *run_worker(void *param) {
 				tInfo = NULL;
 			}
 
+			PRINT_DEBUG("create response");
+
 			response_t *resp = malloc(sizeof(response_t));
 			resp->path = req->path; 
 			resp->with_suffix = (req->suffix != NULL);
@@ -70,12 +74,16 @@ void *run_worker(void *param) {
 			resp->tInfo = tInfo;
 			resp->alphaTexInfo = NULL;
 
+			PRINT_DEBUG("ok");
+
 			if (!r) {
 				resp->alphaTexInfo = loadEtcAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);	
 			}
 			
+			PRINT_DEBUG("free suffix");
 			if (req->suffix != NULL) free(req->suffix); free(req);
 			thqueue_responses_push(runtime->resp_queue,resp);
+			PRINT_DEBUG("response pushed");
 		}
 	}
 }

@@ -11,6 +11,28 @@
 #import "mlwrapper_ios.h"
 #import "LightViewController.h"
 
+char* bundle_path(char* c_path) {
+  NSString *ns_path = [NSString stringWithCString:c_path encoding:NSASCIIStringEncoding];
+  NSString *bundlePath = nil;
+  NSArray * components = [ns_path pathComponents];
+  NSString * ext = [ns_path pathExtension];
+
+  if ([components count] > 1) {
+    bundlePath = [[NSBundle mainBundle] pathForResource: [components lastObject] ofType:nil inDirectory: [ns_path stringByDeletingLastPathComponent]];
+  } else {
+    bundlePath = [[NSBundle mainBundle] pathForResource:ns_path ofType:nil];
+  }
+
+  if (!bundlePath) return nil;
+
+  const char* bpath = [bundlePath cStringUsingEncoding:NSASCIIStringEncoding];
+  if (!bpath) return nil;
+  
+  char* retval = (char*)malloc(strlen(bpath) + 1);
+  strcpy(retval, bpath);
+
+  return retval;
+}
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
 	PRINT_DEBUG("process touched %d", [touches count]);
@@ -351,11 +373,21 @@ value ml_malinfo(value p) {
 	return res;
 }
 
+char* get_locale() {
+  NSString *identifier = [[NSLocale preferredLanguages] objectAtIndex:0];
+  const char* locale = [identifier cStringUsingEncoding:NSASCIIStringEncoding];
+  char* retval = (char*)malloc(strlen(locale) + 1);
+  strcpy(retval, locale);
+
+  return retval;
+}
 
 value ml_getLocale() {
-	NSString *identifier = [[NSLocale preferredLanguages] objectAtIndex:0];
-	value s = caml_copy_string([identifier cStringUsingEncoding:NSASCIIStringEncoding]);
-	return s;
+  char* c_locale = get_locale();
+	value v_locale = caml_copy_string(c_locale);
+  free(c_locale);
+
+	return v_locale;
 }
 
 value ml_getVersion() {
