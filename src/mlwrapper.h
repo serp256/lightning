@@ -44,7 +44,7 @@ typedef enum
 //
 void ml_memoryWarning();
 
-int (*loadCompressedTexture)(gzFile* gzf, textureInfo *tInfo);
+int (*loadCompressedTexture)(gzFile gzf, textureInfo *tInfo);
 char* compressedExt;
 
 #endif

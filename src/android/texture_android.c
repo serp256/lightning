@@ -12,6 +12,7 @@
 #include "texture_load.h"
 #include "texture_pvr.h"
 #include "mlwrapper.h"
+#include <errno.h>
 
 
 
@@ -184,7 +185,8 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 					strcpy(path + bflen + slen, compressedExt);
 					PRINT_DEBUG("TRY GET IMAGE %s", path);
 					if (getResourceFd(path,&r)) {
-						gzFile* gzf = gzdopen(r.fd, "rb");
+						gzFile gzf = gzdopen(r.fd, "rb");
+						PRINT_DEBUG("gzf == GZ_NULL %d %s", gzf == Z_NULL, strerror(errno));
 #ifdef TEXTURE_LOAD
 						strncpy(tInfo->path,path,255);
 #endif
@@ -232,7 +234,8 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 				strcpy(path + bflen, compressedExt);
 				PRINT_DEBUG("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
-					gzFile* gzf = gzdopen(r.fd, "rb");
+					gzFile gzf = gzdopen(r.fd, "rb");
+					PRINT_DEBUG("gzf == GZ_NULL %d %s", gzf == Z_NULL, strerror(errno));
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
 #endif
