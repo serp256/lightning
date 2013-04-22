@@ -1776,23 +1776,6 @@ value ml_getDeviceType(value unit) {
 	CAMLreturn(retval);
 }
 
-void ml_test_c_fun(value fun) {
-	// caml_callback(fun,Val_unit);
-}
-
-/*
-#define CAML_FAILWITH(...) {																			\
-	char* err_mes = (char*)malloc(255);																	\
-	sprintf(err_mes, __VA_ARGS__);																		\
-	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "camlFailwith", "(Ljava/lang/String;)V");		\
-	jstring jerrMes = (*env)->NewStringUTF(env, err_mes);												\
-	(*env)->CallVoidMethod(env, jView, mid, jerrMes);													\
-	(*env)->DeleteLocalRef(env, jerrMes);																\
-	free(err_mes);																						\
-	pthread_exit(NULL);																					\
-}
-*/
-
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CamlFailwithRunnable_run(JNIEnv *env, jobject this) {
 	static jfieldID errMesFid;
 

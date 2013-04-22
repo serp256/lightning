@@ -19,7 +19,6 @@ MLPPOPT += ../syntax/pa_platform.cmo -enable-debug default
 ifeq ($(PLATFORM),IOS)
 FAKELIBS  =
 CFLAGS  += -DDEBUG -DIOS -Iios 
-#-Iios/TapjoyConnect
 MLCOPTS += -DIOS
 MOBJS   +=  ios/tapjoy_wrapper.o\
 				ios/TJCAdManager.o\
