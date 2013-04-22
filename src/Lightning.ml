@@ -6,8 +6,10 @@ value showUrl _ = failwith "ios version now doesnt support this function";
 
 external showNativeWaiter: Point.t -> unit = "ml_showActivityIndicator";
 external hideNativeWaiter: unit -> unit = "ml_hideActivityIndicator";
+(*
 external _deviceIdentifier: unit -> string = "ml_deviceIdentifier";
 value deviceIdentifier () = Some (_deviceIdentifier ());
+*)
 external openURL: string -> unit = "ml_openURL";
 value sendEmail recepient ~subject ?(body="") () = 
   let params = UrlEncoding.mk_url_encoded_parameters [ ("subject",subject); ("body", body)] in
@@ -35,14 +37,18 @@ external openURL: string -> unit = "ml_openURL";
 value sendEmail recepient ~subject ?(body="") () = 
   let params = UrlEncoding.mk_url_encoded_parameters [ ("subject",subject); ("body", body)] in
   openURL (Printf.sprintf "mailto:%s?%s" recepient params);
+  (*
 external _deviceIdentifier: unit -> string = "ml_device_id";
 value deviceIdentifier () = Some (_deviceIdentifier ());
+*)
 external showUrl: string -> unit = "ml_showUrl";
 ELSE
 value showUrl _ = ();
 value openURL _ = ();
 value sendEmail recepient ~subject ?(body="") () = (); 
+(*
 value deviceIdentifier () = None;
+*)
 ENDIF;
 
 ENDIF;
@@ -274,3 +280,4 @@ value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = cb True;
 ENDIF; *)
 
 external getMACID: unit -> string = "ml_getMACID";
+external getUDID: unit -> string = "ml_getUDID";
