@@ -136,7 +136,10 @@ struct custom_operations rendertextureID_ops = {
 value caml_gc_major(value v);
 
 #define Store_rendertextureID(mltex,texID,dataLen) \
-	if (++total_tex_count >= MAX_RENDER_TEXTURES) caml_gc_major(0); \
+	if (++total_tex_count >= MAX_RENDER_TEXTURES) { \
+		PRINT_DEBUG("gc call"); \
+		caml_gc_major(0); \
+	} \
 	caml_alloc_dependent_memory(dataLen); \
 	mltex = caml_alloc_custom(&rendertextureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
 	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen;  total_tex_mem += dataLen;LOGMEM("new",texID,dataLen)}
@@ -176,6 +179,22 @@ static void inline renderbuffer_deactivate() {
 }
 
 
+#define GL_ERROR  																						\
+GLenum gl_err = glGetError();																			\
+char* gl_err_str;																						\
+																										\
+switch (gl_err) {																						\
+	case GL_NO_ERROR: gl_err_str = "GL_NO_ERROR"; break;												\
+	case GL_INVALID_ENUM: gl_err_str = "GL_INVALID_ENUM"; break;										\
+	case GL_INVALID_VALUE: gl_err_str = "GL_INVALID_VALUE"; break;										\
+	case GL_INVALID_OPERATION: gl_err_str = "GL_INVALID_OPERATION"; break;								\
+	case GL_INVALID_FRAMEBUFFER_OPERATION: gl_err_str = "GL_INVALID_FRAMEBUFFER_OPERATION"; break;		\
+	case GL_OUT_OF_MEMORY: gl_err_str = "GL_OUT_OF_MEMORY"; break;										\
+	default: gl_err_str = "unknown gl error";															\
+}																										\
+																										\
+PRINT_DEBUG("GL ERROR: %s", gl_err_str);																\
+
 static int FRAMEBUFFER_BIND_COUNTER = 0;
 
 // сделать рендер буфер
@@ -210,8 +229,25 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
   r->height = height;
 	r->realWidth = legalWidth;
 	r->realHeight = legalHeight;
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
-	return 0;
+
+	GLenum buf_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+	if (buf_status == GL_FRAMEBUFFER_COMPLETE) return 0;
+
+		char* status_str = NULL;
+
+		switch (buf_status) {
+			case GL_FRAMEBUFFER_COMPLETE: status_str = "GL_FRAMEBUFFER_COMPLETE"; break;
+			case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: status_str = "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"; break;
+			case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: status_str = "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"; break;
+			case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: status_str = "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS"; break;
+			case GL_FRAMEBUFFER_UNSUPPORTED: status_str = "GL_FRAMEBUFFER_UNSUPPORTED"; break;
+			default: status_str = "status_str xyu znaet chto";
+		}
+
+		PRINT_DEBUG("glCheckFramebufferStatus %s", status_str);
+		GL_ERROR
+	  	return 1;
 }
 
 int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr,GLenum filter) {
@@ -230,7 +266,11 @@ int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr,GLenum filter) {
   glBindFramebuffer(GL_FRAMEBUFFER, fbid);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtid,0);
 	FRAMEBUFFER_BIND_COUNTER++;
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+  	PRINT_DEBUG("clone_renderbuffer");
+  	GL_ERROR;
+  	return 1;
+  }
 	dr->fbid = fbid;
 	dr->tid = rtid;
 	dr->vp = sr->vp;
@@ -443,6 +483,9 @@ value ml_renderbuffer_draw_to_texture(value mlclear, value owidth, value oheight
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rb.tid,0);
 	FRAMEBUFFER_BIND_COUNTER++;
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+  		PRINT_DEBUG("ml_renderbuffer_draw_to_texture");
+  		GL_ERROR;
+
 		char emsg[255];
 		sprintf(emsg,"draw to texture framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);
@@ -494,6 +537,9 @@ value ml_renderbuffer_data(value renderInfo) {
 	GLuint tid = TEXTURE_ID(Field(renderInfo,0));
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,tid,0);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+  		PRINT_DEBUG("ml_renderbuffer_data");
+  		GL_ERROR;
+
 		char emsg[255];
 		sprintf(emsg,"save framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",fbid,tid,legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);

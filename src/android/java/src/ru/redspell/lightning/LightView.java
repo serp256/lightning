@@ -55,11 +55,14 @@ import ru.redspell.lightning.expansions.XAPKFile;
 import java.util.Formatter;
 import java.util.HashMap;
 
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiInfo;
 //import ru.redspell.lightning.LightEGLContextFactory;
 
 import ru.redspell.lightning.payments.google.LightGooglePayments;
 import ru.redspell.lightning.payments.amazon.LightAmazonPayments;
 import ru.redspell.lightning.payments.ILightPayments;
+import java.util.UUID;
 
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
@@ -119,16 +122,43 @@ public class LightView extends GLSurfaceView {
 
 		public native void run();
 	}
-	
+
+	/*
 	public String device_id () {
 		return Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
 	}
 
+	public String get_mac_id () {
+		Log.d ("LIGHTNING", "get_mac_id call");
+
+		WifiManager manager = (WifiManager)  (getContext ()).getSystemService(Context.WIFI_SERVICE);
+		String macAddress = "";
+		if (manager != null) {
+			Log.d ("LIGHTNING", "wifi manager not null");
+			WifiInfo info = manager.getConnectionInfo();
+			if (info != null) { 
+				Log.d ("LIGHTNING", "wifi info not null");
+				macAddress = info.getMacAddress();
+				if (macAddress == null) {
+					macAddress = "";
+				}
+			}
+		}
+		return macAddress.toUpperCase ();
+	}
+*/
+
 	public boolean isTablet () {
+			
+			Log.d("LIGHTNING", "widthPixels " + displayMetrics.widthPixels + " xhdpi " + displayMetrics.xdpi );
 	    float width = displayMetrics.widthPixels / displayMetrics.xdpi;
+			Log.d("LIGHTNING", "width" + width);
+			Log.d("LIGHTNING", "heightPixels " + displayMetrics.heightPixels + " yhdpi " + displayMetrics.ydpi );
 	    float height = displayMetrics.heightPixels / displayMetrics.ydpi;
+			Log.d("LIGHTNING", "height : " + height);
 
 	    double screenDiagonal = Math.sqrt(width * width + height * height);
+			Log.d("LIGHTNING", "diagonal=" + screenDiagonal);
 	    return (screenDiagonal >= 6);
 	}
 
@@ -225,6 +255,11 @@ public class LightView extends GLSurfaceView {
 	public LightActivity activity;
 	private DisplayMetrics displayMetrics;
 
+	protected static final String PREFS_FILE = "device_id.xml";
+	protected static final String PREFS_DEVICE_ID = "device_id";
+
+	protected volatile static String uuid;
+
 	public LightView(LightActivity _activity) {
 		super(_activity);
 		activity = _activity;
@@ -235,6 +270,26 @@ public class LightView extends GLSurfaceView {
 
 		Log.d("LIGHTNING", "tid: " + Process.myTid());
 
+		if (uuid == null) {
+			Log.d("LIGHTNING", "get preferences" );
+			final SharedPreferences prefs = (getContext ()).getSharedPreferences( PREFS_FILE, 0);
+			Log.d("LIGHTNING", "get deviec id" );
+			final String id = prefs.getString(PREFS_DEVICE_ID, null );
+			if (id == null) {
+				Log.d("LIGHTNING", "id is null");
+				final String android_id = Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
+				if (!"9774d56d682e549c".equals(android_id)) {
+					uuid =android_id;
+				} else {
+					uuid = (UUID.randomUUID ()).toString ();
+				};
+				prefs.edit().putString(PREFS_DEVICE_ID, uuid.toString() ).commit();
+			} else {
+				Log.d("LIGHTNING", "id is not null");
+				uuid = id;
+			}
+		Log.d("LIGHTNING", "uuid: " + uuid);
+		};
 
 		activity.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -275,14 +330,17 @@ public class LightView extends GLSurfaceView {
 			if (patchExpPath != null) patchExpPath = Helpers.generateSaveFileName(activity, patchExpPath);
 
 			String err = lightInit(activity.getPreferences(0), indexFd.getStartOffset(), assetsFd.getStartOffset(), getApkPath(), mainExpPath, patchExpPath);
+			Log.d("LIGHTNING", "");
 
-			if (err != null ) {
-				Log.d("LIGHTNING","lightInit finished");
+			if (err == null) {
+				Log.d("LIGHTNING", "lightInit finished");
 				initView(width,height);
 				instance = this;
 			} else {
 				mlUncaughtException(err, new String[]{});
-			}			
+			}
+
+			Log.d("LIGHTNING", "alalaspizda");
 		} catch (java.io.IOException e) {
 			mlUncaughtException(e.getMessage(), new String[]{});
 		}
@@ -302,6 +360,9 @@ public class LightView extends GLSurfaceView {
 		setFocusableInTouchMode(true);
 	}
 
+	public String getUDID () {
+		return uuid;
+	}
 
 	public ResourceParams getResource(String path) {
 
@@ -325,6 +386,8 @@ public class LightView extends GLSurfaceView {
 
 	@Override
 	public void queueEvent(Runnable r) {
+		Log.d("LIGHTNING", "queueEvent Runnable " + (r == null ? "null" : "not null"));
+
 		if (paused) waitingEvents.add(r);
 		else super.queueEvent(r);
 	}
@@ -780,7 +843,7 @@ public class LightView extends GLSurfaceView {
 	}
 
 	public void expansionsError(String reason) {
-		Log.d("LIGHTNING", "expansions error");
+		Log.d("LIGHTNING", "expansions error: " + reason);
 		queueEvent(new ExpansionsErrorCallbackRunnable(reason));
 	}
 
