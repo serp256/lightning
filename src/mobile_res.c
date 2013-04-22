@@ -68,6 +68,9 @@ char* read_res_index(FILE* index, int offset_inc) {
 		k = kh_put(res_index, res_indx, fname, &ret);
 		kh_val(res_indx, k) = pair;
 	}
+
+	PRINT_DEBUG("ok");
+	return NULL;
 }
 
 static char* locale = NULL;

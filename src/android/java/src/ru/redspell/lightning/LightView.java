@@ -275,14 +275,17 @@ public class LightView extends GLSurfaceView {
 			if (patchExpPath != null) patchExpPath = Helpers.generateSaveFileName(activity, patchExpPath);
 
 			String err = lightInit(activity.getPreferences(0), indexFd.getStartOffset(), assetsFd.getStartOffset(), getApkPath(), mainExpPath, patchExpPath);
+			Log.d("LIGHTNING", "");
 
-			if (err != null ) {
-				Log.d("LIGHTNING","lightInit finished");
+			if (err == null) {
+				Log.d("LIGHTNING", "lightInit finished");
 				initView(width,height);
 				instance = this;
 			} else {
 				mlUncaughtException(err, new String[]{});
-			}			
+			}
+
+			Log.d("LIGHTNING", "alalaspizda");
 		} catch (java.io.IOException e) {
 			mlUncaughtException(e.getMessage(), new String[]{});
 		}
@@ -325,6 +328,8 @@ public class LightView extends GLSurfaceView {
 
 	@Override
 	public void queueEvent(Runnable r) {
+		Log.d("LIGHTNING", "queueEvent Runnable " + (r == null ? "null" : "not null"));
+
 		if (paused) waitingEvents.add(r);
 		else super.queueEvent(r);
 	}

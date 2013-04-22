@@ -163,6 +163,8 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 
 	jclass viewCls = (*env)->GetObjectClass(env, jView);
 	jViewCls = (*env)->NewGlobalRef(env, viewCls);
+	PRINT_DEBUG("qweqweqwe");
+	(*env)->DeleteLocalRef(env, viewCls);
 
 	const char* _cstr;
 	int len;
@@ -176,7 +178,7 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 	res_indx = kh_init_res_index();
 	FILE* in = fopen(apk_path, "r");
 	fseek(in, j_indexOffset, SEEK_SET);
-	read_res_index(in, j_assetsOffset);
+	char* err = read_res_index(in, j_assetsOffset);
 	fclose(in);
 	
 	/* shared preferences 
@@ -187,7 +189,17 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 	jStorageEditor = (*env)->NewGlobalRef(env, storageEditor);
 	(*env)->DeleteLocalRef(env, storageCls);
 	(*env)->DeleteLocalRef(env, storageEditor);*/
-	(*env)->DeleteLocalRef(env, viewCls);
+	
+	
+	// PRINT_DEBUG("qweqweqwe111");
+
+	jstring retval = NULL;
+	if (err) {
+		retval = (*env)->NewStringUTF(env, err);
+		free(err);
+	}
+
+	return retval;
 }
 
 #define GET_FD(PATH)								\
@@ -619,7 +631,7 @@ void ml_setSupportEmail (value d){
 
 char* get_locale() {
 	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL); //it's possible to call this function from another thread, so to be sure, that env valid on any thread, call AttachCurrentThread instead of GetEnv
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetLocale", "()Ljava/lang/String;");
 	jstring locale = (*env)->CallObjectMethod(env, jView, meth);
 	const char *l = (*env)->GetStringUTFChars(env,locale,JNI_FALSE);

@@ -133,8 +133,16 @@ int loadPvrFile3(gzFile* gzf, textureInfo *tInfo) {
 	PVRTextureHeader3 header;
 	int bytes_to_read = sizeof(PVRTextureHeader3);
 
-	if (gzread(gzf, &header, bytes_to_read) < bytes_to_read) {
+	
+
+	int bytes_read = gzread(gzf, &header, bytes_to_read);
+	PRINT_DEBUG("!!!!!!!!!! %d %d", bytes_read, bytes_to_read);
+
+	if (bytes_read < bytes_to_read) {
 		ERROR("can't read pvr header");
+
+		PRINT_DEBUG("pizda lala %s", gzerror(gzf, &bytes_read));
+
 		return 1;
 	};
 
