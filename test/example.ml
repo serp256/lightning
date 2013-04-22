@@ -1180,6 +1180,7 @@ value assets (s:Stage.c) =
 
     
 value udid (self:Stage.c) = 
+  (*
   let text = Lightning.getMACID () in
   let device_id = 
     match Lightning.deviceIdentifier () with
@@ -1187,7 +1188,8 @@ value udid (self:Stage.c) =
     | _ -> "NONE"
     ]
   in
-  let () = debug "mac : %s; device_id : %s" text device_id in
+  *)
+  let () = debug "udid: %s" (Lightning.getUDID ()) in
   ();
   (*
   let (_,text) = TLF.create (TLF.p [`text ("<<<< mac_id:" ^ text ^ "; device_id=" ^ device_id ^ " >>>>")]) in

@@ -25,7 +25,7 @@ void ml_setMaxGC(value max) {
 #else 
 #if OS==LINUX
 
-value ml_getMACID(value p) {
+value ml_getUDID(value p) {
   return caml_copy_string("123");
 }
 
@@ -36,7 +36,7 @@ value ml_getMACID(value p) {
 #include <net/if.h>
 #include <net/if_dl.h>
 
-value ml_getMACID(value p) {
+value ml_getUDID(value p) {
 	int                 mib[6];
   size_t              len;
   char                *buf;
