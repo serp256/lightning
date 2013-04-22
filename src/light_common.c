@@ -20,9 +20,12 @@ void ml_setMaxGC(value max) {
 	MAX_GC_MEM = Int64_val(max);
 }
 
-#if defined(ANDROID) || OS==LINUX
+#if defined(ANDROID) 
+//in android/mlwrapper_android.c 
+#else 
+#if OS==LINUX
 
-value ml_getMACID(value p) {
+value ml_getUDID(value p) {
   return caml_copy_string("123");
 }
 
@@ -33,7 +36,7 @@ value ml_getMACID(value p) {
 #include <net/if.h>
 #include <net/if_dl.h>
 
-value ml_getMACID(value p) {
+value ml_getUDID(value p) {
 	int                 mib[6];
   size_t              len;
   char                *buf;
@@ -77,4 +80,5 @@ value ml_getMACID(value p) {
   return res;
 }
 
+#endif
 #endif

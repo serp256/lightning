@@ -1,5 +1,5 @@
 
-value deviceIdentifier: unit -> option string;
+(*value deviceIdentifier: unit -> option string;*)
 
 value init: (float -> float -> #Stage.c) -> unit;
 value openURL : string -> unit;
@@ -27,7 +27,8 @@ value getVersion: unit -> string;
 
 value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
-value getMACID: unit -> string;
+(*value getMACID: unit -> string;*)
+value getUDID: unit -> string;
 
 value downloadExpansions: ?errorCallback:(string -> unit) -> ?progressCallback:(~total:int -> ~progress:int -> ~timeRemain:int -> unit -> unit) -> ~completeCallback:(unit -> unit) -> unit -> unit;
 (* value extractAssetsIfRequired: (bool -> unit) -> unit;
