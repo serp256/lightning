@@ -279,5 +279,5 @@ value extractAssetsIfRequired (cb:(bool -> unit)) =  cb True;
 value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = cb True;
 ENDIF; *)
 
-external getMACID: unit -> string = "ml_getMACID";
+(*external getMACID: unit -> string = "ml_getMACID";*)
 external getUDID: unit -> string = "ml_getUDID";
