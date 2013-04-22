@@ -22,7 +22,7 @@ extern value caml_gc_compaction(value v);
 #include <caml/threads.h>
 #endif
 
-int (*loadCompressedTexture)(gzFile* gzf, textureInfo *tInfo);
+int (*loadCompressedTexture)(gzFile gzf, textureInfo *tInfo);
 char* compressedExt;
 
 #define ASSIGN_COMPRESSED_EXT(ext) compressedExt = (char*)malloc(strlen(ext)); strcpy(compressedExt, ext);

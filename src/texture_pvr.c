@@ -1,5 +1,6 @@
 #include "texture_pvr.h"
 #include <string.h>
+#include <errno.h>
 
 // --- PVR 2 structs & enums -------------------------------------------------------------------------
 
@@ -129,19 +130,23 @@ typedef struct
   uint32_t  u32MetaDataSize;  //Size of the accompanying meta data.
 } __attribute__((packed)) PVRTextureHeader3;
 
-int loadPvrFile3(gzFile* gzf, textureInfo *tInfo) {
+int loadPvrFile3(gzFile gzf, textureInfo *tInfo) {
 	PVRTextureHeader3 header;
 	int bytes_to_read = sizeof(PVRTextureHeader3);
 
-	
 
+	// PRINT_DEBUG("gzf %d, %s", gzf == Z_NULL, strerror(errno));
+	errno = 0;
 	int bytes_read = gzread(gzf, &header, bytes_to_read);
 	PRINT_DEBUG("!!!!!!!!!! %d %d", bytes_read, bytes_to_read);
 
 	if (bytes_read < bytes_to_read) {
 		ERROR("can't read pvr header");
 
-		PRINT_DEBUG("pizda lala %s", gzerror(gzf, &bytes_read));
+		if (bytes_read == Z_ERRNO) {
+			PRINT_DEBUG("pizda lala '%s'", strerror(errno));
+		}
+		
 
 		return 1;
 	};
@@ -338,7 +343,7 @@ typedef struct
     uint notused;
 } DDSHeader;
 
-int loadDdsFile(gzFile* gzf, textureInfo *tInfo) {
+int loadDdsFile(gzFile gzf, textureInfo *tInfo) {
 	DDSHeader header;
 
 	int bytes_to_read = sizeof(DDSHeader);

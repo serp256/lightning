@@ -13,6 +13,7 @@
 #include "assets_extractor.h"
 #include "khash.h"
 #include "mobile_res.h"
+#include <errno.h>
 
 #define caml_acquire_runtime_system()
 #define caml_release_runtime_system()
@@ -144,7 +145,7 @@ static kh_res_index_t* res_indx;
 		_cstr = (*env)->GetStringUTFChars(env, jstr, JNI_FALSE);	\
 		PRINT_DEBUG("%s",_cstr);									\
 		len = (*env)->GetStringUTFLength(env, jstr);				\
-		cstr = (char*)malloc(len);									\
+		cstr = (char*)malloc(len + 1);								\
 		strcpy(cstr, _cstr);										\
 		(*env)->ReleaseStringUTFChars(env, jstr, _cstr);			\
 	}																\
@@ -202,12 +203,16 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 	return retval;
 }
 
-#define GET_FD(PATH)								\
-	if (!PATH) {									\
-		PRINT_DEBUG("path '%s' is NULL", #PATH);	\
-		return 0;									\
-	}												\
-	fd = open(PATH, O_RDONLY);						\
+#define GET_FD(PATH)																	\
+	if (!PATH) {																		\
+		PRINT_DEBUG("path '%s' is NULL", #PATH);										\
+		return 0;																		\
+	}																					\
+	fd = open(PATH, O_RDONLY);															\
+	if (fd < 0) {																		\
+		PRINT_DEBUG("failed to open path '%s' due to '%s'", PATH, strerror(errno));		\
+		return 0;																		\
+	}																					\
 
 int getResourceFd(const char *path, resource *res) {
 	offset_size_pair_t* os_pair;
