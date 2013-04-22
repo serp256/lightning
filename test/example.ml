@@ -1116,7 +1116,13 @@ value assets (s:Stage.c) =
         [ Some [ touch :: _ ] ->
           Touch.(
               match touch.phase with
-              [ TouchPhaseEnded -> Lightning.extractAssetsIfRequired (fun success -> debug "assets extracted, %B" success)
+              [ TouchPhaseEnded ->
+                  (
+                    (*
+                    Lightning.extractAssetsIfRequired (fun success -> debug "assets extracted, %B" success)
+                  *)
+                    Lightning.downloadExpansions ~completeCallback:(fun _ -> ()) ();
+                  )
               | _ -> ()
               ]
           )
@@ -1175,11 +1181,21 @@ value assets (s:Stage.c) =
     
 value udid (self:Stage.c) = 
   let text = Lightning.getMACID () in
-  let (_,text) = TLF.create (TLF.p [`text ("<<<< " ^ text ^ " >>>>")]) in
+  let device_id = 
+    match Lightning.deviceIdentifier () with
+    [ Some str -> str 
+    | _ -> "NONE"
+    ]
+  in
+  let () = debug "mac : %s; device_id : %s" text device_id in
+  ();
+  (*
+  let (_,text) = TLF.create (TLF.p [`text ("<<<< mac_id:" ^ text ^ "; device_id=" ^ device_id ^ " >>>>")]) in
   (
     text#setY 300.;
     self#addChild text;
   );
+  *)
 
 
 value bl_greenhouse (stage:Stage.c) =
@@ -1730,8 +1746,10 @@ let stage width height =
     inherit Stage.c width height as super;
     value bgColor = 0xCCCCCC;
     initializer begin
-      fbtest self;
+  debug "REGISTR FONT";
+      udid self;
       (*
+      fbtest self;
       test_map self;
       test_queue ();
       game_center self;
