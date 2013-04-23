@@ -477,3 +477,5 @@ external pathExistsInExpansions: string -> bool = "ml_pathExistsInExpansions";
 ELSE
 value pathExistsInExpansions (path:string) = False;
 ENDIF; *)
+
+value exitApp () = ignore(exit 0);
