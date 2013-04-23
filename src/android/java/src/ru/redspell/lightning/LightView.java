@@ -894,12 +894,16 @@ public class LightView extends GLSurfaceView {
 				break;
 		}
 
+		// retval.format = "ARGB_8888";
+
+		Log.d("LIGHTNING", "retval.format " + retval.format);
+
 		if (retval.width != retval.legalWidth || retval.height != retval.legalHeight) {
 			try {
 				int[] pixels = new int[retval.legalWidth * retval.legalHeight];
 				bmp.getPixels(pixels, 0, retval.legalWidth, 0, 0, retval.width, retval.height);
 
-				Bitmap _bmp = Bitmap.createBitmap(retval.legalWidth, retval.legalHeight, Bitmap.Config.ARGB_8888);
+				Bitmap _bmp = Bitmap.createBitmap(retval.legalWidth, retval.legalHeight, bmp.getConfig());
 				_bmp.setPixels(pixels, 0, retval.legalWidth, 0, 0, retval.legalWidth, retval.legalHeight);
 				bmp.recycle();
 				bmp = _bmp;
