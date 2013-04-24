@@ -92,12 +92,12 @@ static void* loader_thread(void* params) {
 
 	JNIEnv *env;
 	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
-	jfieldID wFid;
-	jfieldID hFid;
-	jfieldID lwFid;
-	jfieldID lhFid;
-	jfieldID dataFid;
-	jfieldID formatFid;    
+	static jfieldID wFid = 0;
+	static jfieldID hFid;
+	static jfieldID lwFid;
+	static jfieldID lhFid;
+	static jfieldID dataFid;
+	static jfieldID formatFid;    
 	jmethodID decodeImgMid = (*env)->GetMethodID(env, jViewCls, "decodeImg", "([B)Lru/redspell/lightning/LightView$TexInfo;");
 	jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");
 
@@ -141,9 +141,16 @@ static void* loader_thread(void* params) {
 					    (*env)->DeleteLocalRef(env, texInfoCls);
 				    }
 
+						PRINT_DEBUG("after static init");
+
 			    	textureInfo* texInfo = malloc(sizeof(textureInfo));
 
+						PRINT_DEBUG("after malloc");
+
 			    	jstring jformat = (*env)->GetObjectField(env, jtexInfo, formatFid);
+
+						PRINT_DEBUG("JFORMAT %d", jformat);
+
 			    	const char* cformat = (*env)->GetStringUTFChars(env, jformat, JNI_FALSE);
 
 			    	PRINT_DEBUG("!!!FORMAT %s", cformat);
@@ -179,7 +186,7 @@ static void* loader_thread(void* params) {
 						(*env)->DeleteLocalRef(env,jtexInfo);
 
 				    (*env)->CallVoidMethod(env, jView, curlExtLdrSuccessMid, (int)req, (int)texInfo);
-
+						PRINT_DEBUG("after success call");
 			    } else {
 			    	caml_error(req, 100, "cannot parse image binary");
 			    }
