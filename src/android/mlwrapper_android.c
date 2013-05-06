@@ -19,6 +19,7 @@
 #define caml_release_runtime_system()
 
 JavaVM *gJavaVM;
+jobject jActivity = NULL;
 jobject jView = NULL;
 jclass jViewCls = NULL;
 
@@ -156,10 +157,11 @@ static kh_res_index_t* res_indx;
 	return (*env)->NewStringUTF(env, err_mes);	\
 }												\
 
-JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview, jobject storage, jlong j_indexOffset, jlong j_assetsOffset,
+JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview, jobject jactivity, jobject storage, jlong j_indexOffset, jlong j_assetsOffset,
 																jstring j_apkPath, jstring j_mainExpPath, jstring j_patchExpPath) {
 	PRINT_DEBUG("lightInit");
 
+	jActivity = (*env)->NewGlobalRef(env,jactivity);
 	jView = (*env)->NewGlobalRef(env,jview);
 
 	jclass viewCls = (*env)->GetObjectClass(env, jView);

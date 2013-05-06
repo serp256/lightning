@@ -26,6 +26,12 @@ package "syntax" (
 	)
 )
 
+package "mobileapptracking" (
+	description="MobileAppTracking"
+	archive(byte)="mobileapptracking.cma"
+	archive(native)="mobileapptracking.cmxa"
+	linkopts = "-ccopt '-F%lightning_path%/src/plugins/mobileapptracking/ios'"
+)
 
 package "social" (
 
@@ -36,7 +42,7 @@ package "social" (
     description="Facebook API"
     archive(byte) = "fb.cma"
     archive(native) = "fb.cmxa"
-    linkopts = "-ccopt '-F%fb_framework_path%'"
+		linkopts = "-ccopt '-F%lightning_path%/src/social/facebook/ios/FacebookSDK'"
   )
 
   package "oauth" (

@@ -16,6 +16,12 @@ package "flurry" (
   archive(native) = "flurry.cmxa"
 )
 
+package "mobileapptracking" (
+	description="MobileAppTracking"
+	archive(byte)="mobileapptracking.cma"
+	archive(native)="mobileapptracking.cmxa"
+)
+
 package "syntax" (
 	package "prop" (
 		description = "Syntactic sugars make obj props for tween"

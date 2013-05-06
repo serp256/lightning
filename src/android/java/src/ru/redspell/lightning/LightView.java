@@ -329,7 +329,7 @@ public class LightView extends GLSurfaceView {
 			if (mainExpPath != null) mainExpPath = Helpers.generateSaveFileName(activity, mainExpPath);
 			if (patchExpPath != null) patchExpPath = Helpers.generateSaveFileName(activity, patchExpPath);
 
-			String err = lightInit(activity.getPreferences(0), indexFd.getStartOffset(), assetsFd.getStartOffset(), getApkPath(), mainExpPath, patchExpPath);
+			String err = lightInit(activity,activity.getPreferences(0), indexFd.getStartOffset(), assetsFd.getStartOffset(), getApkPath(), mainExpPath, patchExpPath);
 			Log.d("LIGHTNING", "");
 
 			if (err == null) {
@@ -683,7 +683,7 @@ public class LightView extends GLSurfaceView {
 	}*/
 
 
-	private native String lightInit(SharedPreferences p, long indexOffset, long assetsOffset, String assetsPath, String mainExpPath, String patchExpPath);
+	private native String lightInit(LightActivity activity,SharedPreferences p, long indexOffset, long assetsOffset, String assetsPath, String mainExpPath, String patchExpPath);
 	private native void lightFinalize();
 
 	/*
