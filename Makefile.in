@@ -23,15 +23,15 @@ INSTALL_FILES =
 
 ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(BYTE_FILES)
-	INSTALL_FILES += $(wildcard src/social/facebook/*.cma src/tapjoy/*.cma src/flurry/*.cma src/social/oauth/*.cma src/social/*.cmo src/social/*.o)
-	INSTALL_FILES += $(wildcard src/social/facebook/*.so src/tapjoy/*.so src/flurry/*.so src/social/oauth/*.so)
+	INSTALL_FILES += $(wildcard src/social/facebook/*.cma src/plugins/tapjoy/*.cma src/flurry/*.cma src/social/oauth/*.cma src/social/*.cmo src/social/*.o)
+	INSTALL_FILES += $(wildcard src/social/facebook/*.so src/plugins/tapjoy/*.so src/flurry/*.so src/social/oauth/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cma src/plugins/mobileapptracking/*.so)
 endif
 
 ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(NATIVE_FILES)
-	INSTALL_FILES += $(wildcard src/social/facebook/*.cmxa src/tapjoy/*.cmxa src/flurry/*.cmxa src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o) 
-	INSTALL_FILES += $(wildcard src/social/facebook/*.a src/tapjoy/*.a src/flurry/*.a src/social/oauth/*.a)
+	INSTALL_FILES += $(wildcard src/social/facebook/*.cmxa src/plugins/tapjoy/*.cmxa src/flurry/*.cmxa src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o) 
+	INSTALL_FILES += $(wildcard src/social/facebook/*.a src/plugins/tapjoy/*.a src/flurry/*.a src/social/oauth/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cmxa src/plugins/mobileapptracking/*.a)
 endif
@@ -62,7 +62,7 @@ else
 endif
 	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli\
 	                                                          src/social/facebook/*.mli src/social/facebook/*.cmi \
-	                                                          src/tapjoy/*.cmi src/tapjoy/*.mli \
+	                                                          src/plugins/tapjoy/*.cmi src/plugins/tapjoy/*.mli \
 	                                                          src/flurry/*.cmi src/flurry/*.mli \
 	                                                          src/social/oauth/*.cmi src/social/oauth/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
@@ -79,7 +79,7 @@ doc:
 
 clean:
 	$(MAKE) -C src clean
-	$(MAKE) -C src/tapjoy clean
+	$(MAKE) -C src/plugins/tapjoy clean
 	$(MAKE) -C src/flurry clean
 	$(MAKE) -C src/social clean
 	$(MAKE) -C src/plugins/mobileapptracking clean

@@ -38,8 +38,6 @@ import android.content.res.Configuration;
 //import ru.redspell.lightning.payments.BillingService;
 //import ru.redspell.lightning.payments.ResponseHandler;
 import com.google.android.vending.expansion.downloader.Helpers;
-import com.tapjoy.TapjoyConnect;
-import com.tapjoy.TapjoyLog;
 
 import android.os.Process;
 import android.content.pm.PackageManager;
@@ -772,10 +770,12 @@ public class LightView extends GLSurfaceView {
 	}
 
 
+	/*
 	public void initTapjoy(String appID, String secretKey) {
 		//TapjoyLog.enableLogging(true);
 		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
 	}
+	*/
 
 	public void downloadExpansions() {
 		Log.d("LIGHTNING", "extracting expansions");

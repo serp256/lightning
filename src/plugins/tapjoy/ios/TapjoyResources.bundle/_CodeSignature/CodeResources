@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>files</key>
+	<dict>
+		<key>TJCLoadingView.nib</key>
+		<data>
+		rS3Ogff2Wn2T07CqRGAZf1AGcIc=
+		</data>
+		<key>TJCVideoView.nib</key>
+		<data>
+		bIsjoiVD8L1dvBPUDYwRKp34pEk=
+		</data>
+		<key>TJCclose_button.png</key>
+		<data>
+		X4LcHdvRRn/pGd2wdfhyMfITIEo=
+		</data>
+		<key>TJCclose_button@2x.png</key>
+		<data>
+		8uildWRD+BRVce6tZPGMM66f9Z8=
+		</data>
+		<key>embedded.mobileprovision</key>
+		<data>
+		zWjl93rVM9ytNYZBnCofvSH3glk=
+		</data>
+	</dict>
+	<key>rules</key>
+	<dict>
+		<key>.*</key>
+		<true/>
+		<key>Info.plist</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>10</real>
+		</dict>
+		<key>ResourceRules.plist</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>100</real>
+		</dict>
+	</dict>
+</dict>
+</plist>

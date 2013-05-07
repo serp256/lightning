@@ -138,10 +138,10 @@ lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJ
 
 
 tapjoy.cma:
-	make -C tapjoy tapjoy.cma
+	make -C plugins/tapjoy tapjoy.cma
 
 tapjoy.cmxa:
-	make -C tapjoy tapjoy.cmxa
+	make -C plugins/tapjoy tapjoy.cmxa
 
 flurry.cma:
 	make -C flurry flurry.cma
