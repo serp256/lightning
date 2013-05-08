@@ -77,20 +77,27 @@ ifeq ($(PLATFORM),ANDROID)
 CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android
 COBJS   +=  android/tapjoy_wrapper.o
 
-#tapjoy.cmxa: $(IFACES) $(MLOBJSN)
-#	$(OCAMLOPT) -a -o tapjoy.cmxa $(MLOBJSN)
-
-#tapjoy.cma: $(IFACES) $(MLOBJS)
-#	$(OCAMLC) -a -o tapjoy.cma $(MLOBJS)
 
 endif
 endif
 
+
+ifeq (($PLATFORM),PC)
+	
+tapjoy.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o tapjoy.cmxa $(MLOBJSN)
+
+tapjoy.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o tapjoy.cma $(MLOBJS)
+
+else
 tapjoy.cmxa: $(IFACES) $(COBJS) $(MLOBJSN) 
 	$(OCAMLMKLIB) -verbose -o tapjoy $(COBJS) $(MLOBJSN) $(LIBFLAGS)
 
 tapjoy.cma: $(IFACES) $(COBJS) $(MLOBJS) 
 	$(OCAMLMKLIB) -verbose -o tapjoy $(COBJS) $(MLOBJS) $(LIBFLAGS) 
+endif
+
 
 .PHONY : clean
 clean: 
