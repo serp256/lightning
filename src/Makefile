@@ -23,7 +23,7 @@ MLDEPFLAGS =
 
 byte: lightning.cma tapjoy.cma flurry.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa mopub.cmxa mobileapptracking.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa mobileapptracking.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
