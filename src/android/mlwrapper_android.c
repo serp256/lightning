@@ -946,10 +946,10 @@ value ml_getVersion() {
 
 
 
+/*
 static value device_id;
 
 value ml_device_id(value unit) {
-	/*DEBUGF("ML_DEVICE_ID");*/
 	if (!device_id) {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
@@ -989,6 +989,7 @@ value ml_getMACID(value unit) {
 
 	return mac_id;
 }
+*/
 
 static value udid;
 
@@ -1011,6 +1012,7 @@ value ml_getUDID(value unit) {
 
 	return udid;
 }
+
 value ml_androidScreen() {
 	CAMLparam0();
 	CAMLlocal1(andrScreen);

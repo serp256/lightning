@@ -20,16 +20,13 @@ void ml_setMaxGC(value max) {
 	MAX_GC_MEM = Int64_val(max);
 }
 
-#if defined(ANDROID) 
-//in android/mlwrapper_android.c 
-#else 
-#if OS==LINUX
+#if OS==linux
 
 value ml_getUDID(value p) {
   return caml_copy_string("123");
 }
 
-#else
+#elif OS==macos
 
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -80,5 +77,4 @@ value ml_getUDID(value p) {
   return res;
 }
 
-#endif
 #endif

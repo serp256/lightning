@@ -21,7 +21,7 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-weak_framework\ Accounts' \
 		   -cclib '-weak_framework\ Social' \
 		   -cclib '-weak_framework\ AdSupport' \
-		   -cclib '-framework\ FacebookSDK' \
+		   -cclib '-framework\ FacebookSDK'
 
 #fbconnect.cmxa: $(IFACES) $(MOBJS) $(MLOBJSN)
 #	$(OCAMLMKLIB) -verbose -o fbconnect $(MOBJS) $(MLOBJSN) $(LIBFLAGS) 

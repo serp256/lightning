@@ -15,7 +15,7 @@ char* bundle_path(char* c_path) {
   NSString *ns_path = [NSString stringWithCString:c_path encoding:NSASCIIStringEncoding];
   NSString *bundlePath = nil;
   NSArray * components = [ns_path pathComponents];
-  NSString * ext = [ns_path pathExtension];
+  //NSString * ext = [ns_path pathExtension];
 
   if ([components count] > 1) {
     bundlePath = [[NSBundle mainBundle] pathForResource: [components lastObject] ofType:nil inDirectory: [ns_path stringByDeletingLastPathComponent]];
@@ -89,11 +89,13 @@ void ml_hideActivityIndicator(value p) {
 }
 
 
+/*
 value ml_deviceIdentifier(value p) {
 	CAMLparam0();
 	NSString *ident = [[UIDevice currentDevice] uniqueIdentifier];
 	CAMLreturn(caml_copy_string([ident cStringUsingEncoding:NSASCIIStringEncoding]));
 }
+*/
 
 
 void ml_openURL(value mlurl) {
@@ -418,6 +420,86 @@ value ml_getStoragePath(value unit) {
 }
 
 
+#include <sys/socket.h>
+#include <sys/sysctl.h>
+#include <net/if.h>
+#include <net/if_dl.h>
+#import "OpenUDID.h"
 
-value ml_IOSDevice(value unit) {
+
+value ml_getUDID(value p) {
+	int                 mib[6];
+  size_t              len;
+  char                *buf;
+  unsigned char       *ptr;
+  struct if_msghdr    *ifm;
+  struct sockaddr_dl  *sdl;
+
+  mib[0] = CTL_NET;
+  mib[1] = AF_ROUTE;
+  mib[2] = 0;
+  mib[3] = AF_LINK;
+  mib[4] = NET_RT_IFLIST;
+
+
+  if ((mib[5] = if_nametoindex("en0")) == 0)
+  {
+		NSString *udid = [OpenUDID value];
+		if (udid) return caml_copy_string([udid UTF8String]);
+		else caml_failwith("can't get udid");
+		/*
+		PRINT_DEBUG("TRY TO GET IDENTIFIER FOR VENDOR");
+		NSString *uuid = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+		NSLog(@"IDENTIFIER FOR VENDOR: %@",uuid);
+		if (uuid) return caml_copy_string([uuid UTF8String]);
+		else {
+			PRINT_DEBUG("TRY TO GEN UUID");
+			NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+			uuid = [userDefaults stringForKey:@"__UUID__"];
+			if (uuid) return caml_copy_string([uuid UTF8String]);
+			else {
+				NSString *uuidString = nil;
+				CFUUIDRef uuid = CFUUIDCreate(NULL);
+				if (uuid) {
+					CFStringRef uuidString = CFUUIDCreateString(NULL, uuid);
+					[userDefaults setObject:(NSString*)uuidString forKey:@"__UUID__"];
+					[userDefaults synchronize];
+					NSLog(@"UUID now is: %@",[userDefaults stringForKey:@"__UUID__"]);
+					CFRelease(uuid);
+					CFIndex len = CFStringGetLength(uuidString) + 1;
+					value res = caml_alloc_string(len);
+					CFStringGetCString(uuidString,String_val(res),len,kCFStringEncodingUTF8);
+					CFRelease(uuidString);
+					return res;
+				} else {
+					caml_failwith("can't get UUID");
+				}
+			}
+		}
+		*/
+  } else {
+
+		if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0)
+		{
+			caml_failwith("Error: sysctl, take 1");
+		}
+
+		if ((buf = malloc(len)) == NULL)
+		{
+			caml_failwith("Could not allocate memory. error!");
+		}
+
+		if (sysctl(mib, 6, buf, &len, NULL, 0) < 0)
+		{
+			caml_failwith("Error: sysctl, take 2");
+		}
+
+		ifm = (struct if_msghdr *)buf;
+		sdl = (struct sockaddr_dl *)(ifm + 1);
+		ptr = (unsigned char *)LLADDR(sdl);
+		value res = caml_alloc_string(2 * 6);
+		sprintf(String_val(res),"%02X%02X%02X%02X%02X%02X",*ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+5));
+		free(buf);
+		return res;
+	}
 }
