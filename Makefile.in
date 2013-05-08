@@ -28,11 +28,11 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cma src/plugins/mobileapptracking/*.so)
 endif
 
+#INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
 ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(NATIVE_FILES)
 	INSTALL_FILES += $(wildcard src/social/facebook/*.cmxa src/plugins/tapjoy/*.cmxa src/flurry/*.cmxa src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o) 
 	INSTALL_FILES += $(wildcard src/social/facebook/*.a src/plugins/tapjoy/*.a src/flurry/*.a src/social/oauth/*.a)
-	INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cmxa src/plugins/mobileapptracking/*.a)
 endif
 
