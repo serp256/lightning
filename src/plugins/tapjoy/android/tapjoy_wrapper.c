@@ -8,14 +8,15 @@ void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-	// ENABLE LOGGING
+	/* ENABLE LOGGING
 	// TapjoyLog.enableLogging(true);
 	jclass jTapjoyLog = (*env)->FindClass(env,"com/tapjoy/TapjoyLog");
 	jmethodID jenableLogging = (*env)->GetStaticMethodID(env,jTapjoyLog,"enableLogging","(Z)V");
 	(*env)->CallStaticVoidMethod(env,jTapjoyLog,jenableLogging,JNI_TRUE);
 	(*env)->DeleteLocalRef(env,jTapjoyLog);
-
 	PRINT_DEBUG("LOGGING ENABLED");
+	*/
+
 	//
 	//TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
 	jclass jLightActivityCls = (*env)->GetObjectClass(env,jActivity);
