@@ -23,6 +23,7 @@
 #define NONE Val_int(0)
 
 extern JavaVM *gJavaVM;
+extern jobject jActivity;
 extern jobject jView;
 extern jclass jViewCls;
 

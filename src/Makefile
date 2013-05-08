@@ -23,7 +23,7 @@ MLDEPFLAGS =
 
 byte: lightning.cma tapjoy.cma flurry.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa mobileapptracking.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -138,10 +138,10 @@ lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJ
 
 
 tapjoy.cma:
-	make -C tapjoy tapjoy.cma
+	make -C plugins/tapjoy tapjoy.cma
 
 tapjoy.cmxa:
-	make -C tapjoy tapjoy.cmxa
+	make -C plugins/tapjoy tapjoy.cmxa
 
 flurry.cma:
 	make -C flurry flurry.cma
@@ -154,6 +154,12 @@ social_byte:
 
 social_native:
 	make -C social native
+
+mopub.cmxa:
+	make -C plugins/mopub mopub.cmxa
+
+mobileapptracking.cmxa:
+	make -C plugins/mobileapptracking mobileapptracking.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)

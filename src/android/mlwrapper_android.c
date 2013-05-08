@@ -19,6 +19,7 @@
 #define caml_release_runtime_system()
 
 JavaVM *gJavaVM;
+jobject jActivity = NULL;
 jobject jView = NULL;
 jclass jViewCls = NULL;
 
@@ -156,10 +157,11 @@ static kh_res_index_t* res_indx;
 	return (*env)->NewStringUTF(env, err_mes);	\
 }												\
 
-JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview, jobject storage, jlong j_indexOffset, jlong j_assetsOffset,
+JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview, jobject jactivity, jobject storage, jlong j_indexOffset, jlong j_assetsOffset,
 																jstring j_apkPath, jstring j_mainExpPath, jstring j_patchExpPath) {
 	PRINT_DEBUG("lightInit");
 
+	jActivity = (*env)->NewGlobalRef(env,jactivity);
 	jView = (*env)->NewGlobalRef(env,jview);
 
 	jclass viewCls = (*env)->GetObjectClass(env, jView);
@@ -943,87 +945,6 @@ value ml_getVersion() {
 }
 
 
-void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
-	DEBUG("init tapjoy");
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-	jstring appID = (*env)->NewStringUTF(env,String_val(ml_appID));
-	jstring secretKey = (*env)->NewStringUTF(env,String_val(ml_secretKey));
-	static jmethodID initTapjoyMethod = 0;
-	if (initTapjoyMethod == 0) initTapjoyMethod = (*env)->GetMethodID(env,jViewCls,"initTapjoy","(Ljava/lang/String;Ljava/lang/String;)V");
-	(*env)->CallVoidMethod(env,jView,initTapjoyMethod,appID,secretKey);
-}
-
-static jclass gTapjoyCls;
-static jobject gTapjoy;
-
-void getTapjoyJNI() {
-	if (!gTapjoyCls) {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-
-		jclass tapjoyCls = (*env)->FindClass(env, "com/tapjoy/TapjoyConnect");
-		jmethodID mid = (*env)->GetStaticMethodID(env, tapjoyCls, "getTapjoyConnectInstance", "()Lcom/tapjoy/TapjoyConnect;");
-		jobject tapjoy = (*env)->CallStaticObjectMethod(env, tapjoyCls, mid);
-
-		gTapjoyCls = (*env)->NewGlobalRef(env, tapjoyCls);
-		gTapjoy = (*env)->NewGlobalRef(env, tapjoy);
-
-		(*env)->DeleteLocalRef(env, tapjoyCls);
-		(*env)->DeleteLocalRef(env, tapjoy);
-	}
-}
-
-void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
-	getTapjoyJNI();
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-
-	jstring jcurrency = (*env)->NewStringUTF(env, String_val(currency));
-	jboolean jshow_selector = Bool_val(show_selector);
-
-	static jmethodID mid;
-
-	if (!mid) {
-		mid = (*env)->GetMethodID(env, gTapjoyCls, "showOffersWithCurrencyID", "(Ljava/lang/String;Z)V");
-	}
-
-	(*env)->CallVoidMethod(env, gTapjoy, mid, jcurrency, jshow_selector);
-	(*env)->DeleteLocalRef(env, jcurrency);
-}
-
-void ml_tapjoy_show_offers() {
-	getTapjoyJNI();
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-
-	static jmethodID mid;
-
-	if (!mid) {
-		mid = (*env)->GetMethodID(env, gTapjoyCls, "showOffers", "()V");
-	}
-
-	(*env)->CallVoidMethod(env, gTapjoy, mid);
-}
-
-void ml_tapjoy_set_user_id(value uid) {
-	getTapjoyJNI();
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-
-	static jmethodID mid;
-
-	if (!mid) {
-		mid = (*env)->GetMethodID(env, gTapjoyCls, "setUserID", "(Ljava/lang/String;)V");
-	}
-
-	jstring juid = (*env)->NewStringUTF(env, String_val(uid));
-	(*env)->CallVoidMethod(env, gTapjoy, mid, juid);
-	(*env)->DeleteLocalRef(env, juid);
-}
 
 static value device_id;
 
@@ -1128,10 +1049,6 @@ value ml_getDeviceType(value unit) {
 	};
 	//(*env)->DeleteLocalRef(env, jres);
 	CAMLreturn(retval);
-}
-
-void ml_test_c_fun(value fun) {
-	// caml_callback(fun,Val_unit);
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CamlFailwithRunnable_run(JNIEnv *env, jobject this) {

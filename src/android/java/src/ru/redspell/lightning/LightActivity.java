@@ -43,7 +43,7 @@ import com.google.android.gms.plus.PlusClient;
 import com.google.android.gms.common.Scopes;*/
 
 public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
-	public static Activity instance = null;
+	public static LightActivity instance = null;
 
     protected XAPKFile[] expansions = {};
 
@@ -53,7 +53,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 	private final String LOG_TAG = "LIGHTNING";
 
-	private LightView lightView;
+	public LightView lightView;
 	private IStub mDownloaderClientStub;
 	private IDownloaderService mRemoteService;
 

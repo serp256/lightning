@@ -59,9 +59,6 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	caml_startup(argv);
 	caml_release_runtime_system();
 	instance = [super alloc];
-
-	
-
 	return instance;
 }
 
