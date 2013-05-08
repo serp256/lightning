@@ -210,6 +210,7 @@ public class LightView extends GLSurfaceView {
 		if (density.contentEquals("mdpi")) return 2;
 		if (density.contentEquals("hdpi")) return 3;
 		if (density.contentEquals("xhdpi")) return 4;
+		if (density.contentEquals("xxhdpi")) return 6;
 
 		return 0;
 	}

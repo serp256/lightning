@@ -48,7 +48,7 @@ value deviceTypeToStr: deviceType -> string;
 
 type ios_device = [ IPhoneOld | IPhone3GS | IPhone4 | IPhone5 | IPhoneNew | IPad1 | IPad2 | IPad3 | IPadNew | IUnknown ];
 type androidScreen = [ UnknownScreen | Small | Normal | Large | Xlarge ];
-type androidDensity = [ UnknownDensity | Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi ];
+type androidDensity = [ UnknownDensity | Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi | Xxhdpi ];
 type device = [ Android of (androidScreen * androidDensity) | IOS of ios_device ];
 value device: unit -> device;
 value deviceToStr: device -> string;

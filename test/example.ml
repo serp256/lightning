@@ -1750,6 +1750,7 @@ let stage width height =
     initializer begin
   debug "REGISTR FONT";
       udid self;
+      pvr self;
       (*
       fbtest self;
       test_map self;
