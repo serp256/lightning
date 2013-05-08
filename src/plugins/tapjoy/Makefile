@@ -68,6 +68,7 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-framework\ CoreTelephony' \
 		   -cclib '-framework\ SystemConfiguration' \
 		   -cclib '-framework\ MediaPlayer' \
+			 -cclib '-weak_framework\ AdSupport' \
 		   -cclib '-lsqlite3'
 		   
 
