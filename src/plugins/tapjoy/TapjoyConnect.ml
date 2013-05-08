@@ -20,6 +20,6 @@ value init appid skey = ();
 value setUserID user_id = ();
 value showOffers () = ();
 value showOffersWithCurrency (currency:string) (selector:bool) = ();
-value actionComplete (s:string) -> ();
+value actionComplete (s:string) = ();
 ENDPLATFORM;
 value getUserID () = "";
