@@ -20,13 +20,14 @@ void ml_setMaxGC(value max) {
 	MAX_GC_MEM = Int64_val(max);
 }
 
-#if OS==linux
+#ifdef OSlinux
 
 value ml_getUDID(value p) {
+	pizda_lala = 1;
   return caml_copy_string("123");
 }
 
-#elif OS==macos
+#elif OSmacos
 
 #include <sys/socket.h>
 #include <sys/sysctl.h>
