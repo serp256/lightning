@@ -37,6 +37,7 @@ external ml_init : (string -> Transaction.t -> bool -> unit) -> (string -> strin
 external ml_commit_transaction : Transaction.t -> unit = "ml_payment_commit_transaction";
 external ml_purchase : string -> unit = "ml_payment_purchase";
 value restorePurchases () = ();
+external restoreCompletedPurchases: unit -> unit = "ml_payment_restore_completed_transactions";
 ELSE
 
 IFDEF ANDROID THEN
@@ -47,6 +48,7 @@ external _ml_commit_transaction : string -> unit = "ml_paymentsCommitTransaction
 external ml_restorePurchases: unit -> unit = "ml_restorePurchases";
 
 value ml_commit_transaction t = _ml_commit_transaction (Transaction.get_id t);
+value restoreCompletedPurchases () = ();
 value restorePurchases = ml_restorePurchases;
 
 ELSE
@@ -66,6 +68,7 @@ value ml_purchase (id:string) = ();
 value ml_commit_transaction (tr:Transaction.t) = ();
 
 value restorePurchases () = ();
+value restoreCompletedPurchases () = ();
 
 ENDIF;
 ENDIF;

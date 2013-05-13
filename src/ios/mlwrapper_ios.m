@@ -320,6 +320,10 @@ CAMLprim value ml_payment_get_transaction_receipt(value t) {
   CAMLreturn(receipt);
 }
 
+void ml_payment_restore_completed_transactions(value p) {
+	[[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
+}
+
 
 // 
 void ml_request_remote_notifications(value rntype, value success_cb, value error_cb) {

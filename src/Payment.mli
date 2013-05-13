@@ -13,3 +13,4 @@ value purchase: string -> unit;
 value commit_transaction: Transaction.t -> unit;
 value commit_transaction_by_id: string -> unit;
 value restorePurchases: unit -> unit;
+value restoreCompletedPurchases: unit -> unit;
