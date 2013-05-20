@@ -83,7 +83,7 @@ endif
 endif
 
 
-ifeq (($PLATFORM),PC)
+ifeq ($(PLATFORM),PC)
 	
 tapjoy.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o tapjoy.cmxa $(MLOBJSN)

@@ -28,11 +28,23 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 endif
 endif
 
+ifeq ($(PLATFORM),PC)
+	
+mobileapptracking.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o mobileapptracking.cmxa $(MLOBJSN)
+
+mobileapptracking.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o mobileapptracking.cma $(MLOBJS)
+
+else
 mobileapptracking.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
-	  $(OCAMLMKLIB) -verbose -o mobileapptracking $(COBJS) $(MLOBJSN) $(LIBFLAGS)
+	  $(OCAMLMKLIB) -o mobileapptracking $(COBJS) $(MLOBJSN) $(LIBFLAGS)
 
 mobileapptracking.cma: $(IFACES) $(COBJS) $(MLOBJS)
-	  $(OCAMLMKLIB) -verbose -o mobileapptracking $(COBJS) $(MLOBJS) $(LIBFLAGS)
+	  $(OCAMLMKLIB) -o mobileapptracking $(COBJS) $(MLOBJS) $(LIBFLAGS)
+
+
+endif
 
 clean:
 	rm -f *.a *.o *.so android/*.o ios/*.o *.cmx *.cmo *.cmxa *.cma
