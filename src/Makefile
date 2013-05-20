@@ -21,7 +21,7 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma tapjoy.cma flurry.cma social_byte
+byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma social_byte
 native: MLDEPFLAGS += -native
 native: lightning.cmxa tapjoy.cmxa flurry.cmxa mobileapptracking.cmxa social_native
 syntax: syntax/pa_prop.cmo
@@ -157,6 +157,9 @@ social_native:
 
 mopub.cmxa:
 	make -C plugins/mopub mopub.cmxa
+
+mobileapptracking.cma:
+	make -C plugins/mobileapptracking mobileapptracking.cma
 
 mobileapptracking.cmxa:
 	make -C plugins/mobileapptracking mobileapptracking.cmxa
