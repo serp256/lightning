@@ -270,24 +270,24 @@ public class LightView extends GLSurfaceView {
 		Log.d("LIGHTNING", "tid: " + Process.myTid());
 
 		if (uuid == null) {
-			Log.d("LIGHTNING", "get preferences" );
-			final SharedPreferences prefs = (getContext ()).getSharedPreferences( PREFS_FILE, 0);
-			Log.d("LIGHTNING", "get deviec id" );
-			final String id = prefs.getString(PREFS_DEVICE_ID, null );
-			if (id == null) {
 				Log.d("LIGHTNING", "id is null");
 				final String android_id = Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
 				if (!"9774d56d682e549c".equals(android_id) && !"0000000000000000".equals(android_id)  ) {
 					uuid =android_id;
 				} else {
-					uuid = (UUID.randomUUID ()).toString ();
+					Log.d("LIGHTNING", "get preferences" );
+					final SharedPreferences prefs = (getContext ()).getSharedPreferences( PREFS_FILE, 0);
+					Log.d("LIGHTNING", "get deviec id" );
+					final String id = prefs.getString(PREFS_DEVICE_ID, null );
+					if (id == null) {
+						uuid = (UUID.randomUUID ()).toString ();
+						prefs.edit().putString(PREFS_DEVICE_ID, uuid).commit();
+					} else {
+						Log.d("LIGHTNING", "id is not null");
+						uuid = id;
+					}
 				};
-				prefs.edit().putString(PREFS_DEVICE_ID, uuid.toString() ).commit();
-			} else {
-				Log.d("LIGHTNING", "id is not null");
-				uuid = id;
-			}
-		Log.d("LIGHTNING", "uuid: " + uuid);
+			Log.d("LIGHTNING", "uuid: " + uuid);
 		};
 
 		activity.requestWindowFeature(Window.FEATURE_NO_TITLE);
