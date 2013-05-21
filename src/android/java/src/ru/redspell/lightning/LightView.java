@@ -277,7 +277,7 @@ public class LightView extends GLSurfaceView {
 			if (id == null) {
 				Log.d("LIGHTNING", "id is null");
 				final String android_id = Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
-				if (!"9774d56d682e549c".equals(android_id)) {
+				if (!"9774d56d682e549c".equals(android_id) && !"0000000000000000".equals(android_id)  ) {
 					uuid =android_id;
 				} else {
 					uuid = (UUID.randomUUID ()).toString ();
