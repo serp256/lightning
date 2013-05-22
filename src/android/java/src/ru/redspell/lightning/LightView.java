@@ -62,6 +62,11 @@ import ru.redspell.lightning.payments.amazon.LightAmazonPayments;
 import ru.redspell.lightning.payments.ILightPayments;
 import java.util.UUID;
 
+import android.os.Build;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
     	for (XAPKFile xf : activity.getExpansions()) {
@@ -259,6 +264,33 @@ public class LightView extends GLSurfaceView {
 
 	protected volatile static String uuid;
 
+
+	public static final String md5(final String s) {
+			try {
+					// Create MD5 Hash
+					MessageDigest digest = java.security.MessageDigest
+									.getInstance("MD5");
+					digest.update(s.getBytes());
+					byte messageDigest[] = digest.digest();
+
+					// Create Hex String
+					StringBuffer hexString = new StringBuffer();
+					for (int i = 0; i < messageDigest.length; i++) {
+							String h = Integer.toHexString(0xFF & messageDigest[i]);
+							while (h.length() < 2)
+									h = "0" + h;
+							hexString.append(h);
+					}
+					return hexString.toString();
+
+			} catch (NoSuchAlgorithmException e) {
+					e.printStackTrace();
+			}
+			return "00000000000000000000000000000000";
+	}
+
+
+
 	public LightView(LightActivity _activity) {
 		super(_activity);
 		activity = _activity;
@@ -271,6 +303,31 @@ public class LightView extends GLSurfaceView {
 
 		if (uuid == null) {
 				Log.d("LIGHTNING", "id is null");
+//				String serial = android.os.Build.HARDWARE; 
+				String serial = md5 (
+				Build.BOARD + Build.BRAND
+				+ Build.CPU_ABI + Build.DEVICE
+				+ Build.DISPLAY + Build.HOST
+				+ Build.ID + Build.MANUFACTURER
+				+ Build.MODEL + Build.PRODUCT
+				+ Build.TAGS + Build.TYPE
+				+ Build.USER);
+		
+				Log.d ("LIGHTNING", "Board: " + Build.BOARD);
+				Log.d ("LIGHTNING", "Brand: " + Build.BRAND);
+				Log.d ("LIGHTNING", "CPU_ABI: " + Build.CPU_ABI);
+				Log.d ("LIGHTNING", "DISPLAY: " + Build.DISPLAY);
+				Log.d ("LIGHTNING", "ID: " + Build.ID);
+				Log.d ("LIGHTNING", "DEVICE: " + Build.DEVICE);
+				Log.d ("LIGHTNING", "HOST: " + Build.HOST);
+				Log.d ("LIGHTNING", "MANUFACTURER: " + Build.MANUFACTURER);
+				Log.d ("LIGHTNING", "MODEL: " + Build.MODEL);
+				Log.d ("LIGHTNING", "TAGS: " + Build.TAGS);
+				Log.d ("LIGHTNING", "PRODUCT: " + Build.PRODUCT);
+				Log.d ("LIGHTNING", "TYPE: " + Build.TYPE);
+				Log.d ("LIGHTNING", "USER: " + Build.USER);
+
+				Log.d("LIGHTNING", "serial: " + serial);
 				final String android_id = Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
 				if (!"9774d56d682e549c".equals(android_id) && !"0000000000000000".equals(android_id)  ) {
 					uuid =android_id;
@@ -287,6 +344,7 @@ public class LightView extends GLSurfaceView {
 						uuid = id;
 					}
 				};
+			uuid = uuid + "_" + serial;
 			Log.d("LIGHTNING", "uuid: " + uuid);
 		};
 
