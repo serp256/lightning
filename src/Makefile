@@ -21,9 +21,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma social_byte
+byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma facebook.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa mobileapptracking.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa mobileapptracking.cmxa facebook.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -143,6 +143,12 @@ tapjoy.cma:
 tapjoy.cmxa:
 	make -C plugins/tapjoy tapjoy.cmxa
 
+facebook.cma:
+	make -C plugins/facebook facebook.cma
+
+facebook.cmxa:
+	make -C plugins/facebook facebook.cmxa
+
 flurry.cma:
 	make -C flurry flurry.cma
 
@@ -182,5 +188,10 @@ doc:
 .PHONY : clean
 clean: 
 	rm -f *.o *.cm[iox] *.a *.cmxa *.so *.cmo ios/*.o glut/*.cmx glut.*.cmo glut/*.o glut/*.cmi sdl/*.cmx sdl/*.cmo sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi utils/*.cmi utils/*.cmx utils/*.cmo utils/*.a kazmath/*.o kazmath/GL/*.o android/*.o pc/*.o
+	$(MAKE) -C flurry clean
+	$(MAKE) -C social clean
+	$(MAKE) -C plugins/tapjoy clean
+	$(MAKE) -C plugins/facebook clean
+	$(MAKE) -C plugins/mobileapptracking clean
 
 -include MLDepend.$(PLATFORM)

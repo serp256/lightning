@@ -13,7 +13,7 @@
 	<key>CFBundleExecutable</key>
 	<string>LightTestBin</string>
 	<key>CFBundleIdentifier</key>
-	<string>ru.redspell.lighttest</string>
+	<string>com.redspell.LightTest</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -34,6 +34,17 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb453798714689190</string>
+			</array>
+		</dict>
+	</array>
+	<key>FacebookAppID</key>
+	<string>453798714689190</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

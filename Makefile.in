@@ -23,16 +23,16 @@ INSTALL_FILES =
 
 ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(BYTE_FILES)
-	INSTALL_FILES += $(wildcard src/social/facebook/*.cma src/plugins/tapjoy/*.cma src/flurry/*.cma src/social/oauth/*.cma src/social/*.cmo src/social/*.o)
-	INSTALL_FILES += $(wildcard src/social/facebook/*.so src/plugins/tapjoy/*.so src/flurry/*.so src/social/oauth/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/facebook/*.cma src/plugins/tapjoy/*.cma src/flurry/*.cma src/social/oauth/*.cma src/social/*.cmo src/social/*.o)
+	INSTALL_FILES += $(wildcard src/plugins/facebook/*.so src/plugins/tapjoy/*.so src/flurry/*.so src/social/oauth/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cma src/plugins/mobileapptracking/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
 ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(NATIVE_FILES)
-	INSTALL_FILES += $(wildcard src/social/facebook/*.cmxa src/plugins/tapjoy/*.cmxa src/flurry/*.cmxa src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o) 
-	INSTALL_FILES += $(wildcard src/social/facebook/*.a src/plugins/tapjoy/*.a src/flurry/*.a src/social/oauth/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/facebook/*.cmxa src/plugins/tapjoy/*.cmxa src/flurry/*.cmxa src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o) 
+	INSTALL_FILES += $(wildcard src/plugins/facebook/*.a src/plugins/tapjoy/*.a src/flurry/*.a src/social/oauth/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cmxa src/plugins/mobileapptracking/*.a)
 endif
 
@@ -40,28 +40,17 @@ ifneq (,$(findstring syntax,$(LIB)))
 	INSTALL_FILES += $(SYNTAX_FILES)
 endif
 
-#install:: lib 
-#	cp $(META) META
-#	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli\
-#	                                                          src/social/facebook/*.mli src/social/facebook/*.cmi \
-#	                                                          src/tapjoy/*.cmi src/tapjoy/*.mli \
-#	                                                          src/flurry/*.cmi src/flurry/*.mli \
-#	                                                          src/social/oauth/*.cmi src/social/oauth/*.mli \
-#	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
-#
-#uninstall::
-#	sudo $(OCAMLFIND) remove lightning
 
 install: lib
 	echo $(PLATFORM)
 ifeq ($(PLATFORM),IOS)
-	#install_dir=`$(OCAMLFIND) printconf destdir`/lightning && sudo cp -r ./src/social/facebook/ios/FacebookSDK/FacebookSDK.framework/ $$install_dir/ && sed "s|%fb_framework_path%|$$install_dir|" $(META) > META
+	#install_dir=`$(OCAMLFIND) printconf destdir`/lightning && sudo cp -r ./src/plugins/facebook/ios/FacebookSDK/FacebookSDK.framework/ $$install_dir/ && sed "s|%fb_framework_path%|$$install_dir|" $(META) > META
 	cdir=`pwd` && sed "s|%lightning_path%|$$cdir|" $(META) > META
 else
 	cp $(META) META
 endif
 	sudo $(OCAMLFIND) install lightning META $(INSTALL_FILES) src/*.cmi src/*.mli src/containers/*.cmi src/containers/*.mli\
-	                                                          src/social/facebook/*.mli src/social/facebook/*.cmi \
+	                                                          src/plugins/facebook/*.mli src/plugins/facebook/*.cmi \
 	                                                          src/plugins/tapjoy/*.cmi src/plugins/tapjoy/*.mli \
 	                                                          src/plugins/mobileapptracking/*.cmi src/plugins/mobileapptracking/*.mli \
 	                                                          src/flurry/*.cmi src/flurry/*.mli \
@@ -80,7 +69,3 @@ doc:
 
 clean:
 	$(MAKE) -C src clean
-	$(MAKE) -C src/plugins/tapjoy clean
-	$(MAKE) -C src/flurry clean
-	$(MAKE) -C src/social clean
-	$(MAKE) -C src/plugins/mobileapptracking clean

@@ -6,8 +6,8 @@ MODULES = \
 
 # the list is topologically sorted
 
-OCAMLOPT=$(OCAMLFIND) ocamlopt
-OCAMLC=$(OCAMLFIND) ocamlc
+OCAMLOPT=$(OCAMLFIND) ocamlopt -verbose
+OCAMLC=$(OCAMLFIND) ocamlc -verbose
 
 MLI = $(MODULES:=.mli)
 SRC = $(MLI) $(MODULES:=.ml) extLib.ml

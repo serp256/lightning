@@ -23,7 +23,10 @@ import com.google.android.vending.expansion.downloader.IDownloaderService;
 import ru.redspell.lightning.expansions.LightExpansionsDownloadService;
 import ru.redspell.lightning.expansions.XAPKFile;
 import ru.redspell.lightning.LightView;
+import ru.redspell.lightning.LightActivityResultHandler;
 import android.content.res.TypedArray;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 //import ru.redspell.lightning.payments.Security;
 
@@ -42,14 +45,16 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.plus.PlusClient;
 import com.google.android.gms.common.Scopes;*/
 
+
+
 public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
 	public static LightActivity instance = null;
 
-    protected XAPKFile[] expansions = {};
+	protected XAPKFile[] expansions = {};
 
-    public XAPKFile[] getExpansions() {
+	public XAPKFile[] getExpansions() {
     	return expansions;
-    }
+	}
 
 	private final String LOG_TAG = "LIGHTNING";
 
@@ -59,6 +64,10 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 	public AbsoluteLayout viewGrp;
 	public static boolean isRunning = false;
+	private ArrayList<LightActivityResultHandler> onActivityResultHandlers = new ArrayList();
+	public void addOnActivityResultHandler(LightActivityResultHandler h) {
+		onActivityResultHandlers.add(h);
+	}
 
 /*
 	private PlusClient mPlusClient;
@@ -258,10 +267,11 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		Log.d("LIGHTNING", "onActivityResult call");
 
 		super.onActivityResult(requestCode, resultCode, data);
-		com.facebook.Session session = com.facebook.Session.getActiveSession();
 
-		if (session != null) {
-			session.onActivityResult(this, requestCode, resultCode, data);	
+		Iterator<LightActivityResultHandler> iter = onActivityResultHandlers.iterator();
+		while (iter.hasNext()) {
+			LightActivityResultHandler r = iter.next();
+			r.onActivityResult(requestCode,resultCode,data);
 		}
 
 		if (requestCode == LightGooglePayments.REQUEST_CODE && LightGooglePayments.instance != null) {

@@ -22,6 +22,12 @@ package "mobileapptracking" (
 	archive(native)="mobileapptracking.cmxa"
 )
 
+package "facebook" (
+	description="Facebook API"
+	archive(byte) = "facebook.cma"
+	archive(native) = "facebook.cmxa"
+)
+
 package "syntax" (
 	package "prop" (
 		description = "Syntactic sugars make obj props for tween"
@@ -38,11 +44,6 @@ package "social" (
   archive(bytes) = "SNTypes.cmi"
   archive(native) = "SNTypes.cmi"
 
-  package "facebook" (
-    description="Facebook API"
-    archive(byte) = "fb.cma"
-    archive(native) = "fb.cmxa"
-  )
 
   package "oauth" (
     description="OAuth"
