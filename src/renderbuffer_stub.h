@@ -41,10 +41,9 @@ typedef struct {
 void get_framebuffer_state(framebuffer_state *s);
 void set_framebuffer_state(framebuffer_state *s);
 
-
-int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter);
+int create_renderbuffer(GLuint texId, double vp_x, double vp_y, double width, double height, renderbuffer_t *r,GLenum filter);
+// int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter);
 int clone_renderbuffer(renderbuffer_t *sr,renderbuffer_t *dr,GLenum filter);
 void delete_renderbuffer(renderbuffer_t *rb);
-
 
 #endif

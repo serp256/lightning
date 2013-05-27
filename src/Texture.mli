@@ -37,6 +37,8 @@ type renderInfo =
     rheight: float;
     clipping: option Rectangle.t;
     kind: kind;
+    rx: int;
+    ry: int;
   };
 
 class type renderer = 
