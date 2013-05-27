@@ -1,5 +1,6 @@
 open LightCommon;
 open Texture;
+open ExtList;
 
 external set_texture_filter: textureID -> filter -> unit = "ml_texture_set_filter" "noalloc";
 external delete_textureID: textureID -> unit = "ml_render_texture_id_delete" "noalloc";
@@ -7,7 +8,7 @@ external delete_textureID: textureID -> unit = "ml_render_texture_id_delete" "no
 
 
 type framebuffer;
-external renderbuffer_draw: ~filter:filter -> ?clear:(int*float) -> textureID -> float -> float -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
+external renderbuffer_draw: ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
 external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?new_params:(textureID * int * int * float * float) -> renderInfo -> (framebuffer -> unit) -> unit = "ml_renderbuffer_draw_to_texture";
 external create_renderbuffer_tex: unit -> textureID = "ml_create_renderbuffer_tex";
 
@@ -325,14 +326,13 @@ module FramebufferTexture = struct
       );
 
       value remove bin x y =
-        let rects = List.remove_if (fun rect -> Rectangle.x rect = x && Rectangle.y rect = y) bin.rects in
-          if rects <> bin.rects
-          then (
-            bin.rects := rects;
+        try
+          let rect = List.find (fun rect -> Rectangle.x rect = x && Rectangle.y rect = y) bin.rects in (
+            bin.rects := List.remove bin.rects rect;
             bin.holes := [ rect :: bin.holes ];
             bin.needRepair := True;
           )
-          else ();
+        with [ Not_found -> () ];
 
       value clean bin = (
         bin.holes := [ Rectangle.fromCoordsAndDims 0 0 bin.width bin.height ];
@@ -349,7 +349,7 @@ module FramebufferTexture = struct
     let (tid, bin) = tidBinPair in
       (tid, Bin.add bin w h);
 
-  value freeRect x y =
+  value freeRect tid x y =
     let (_, bin) = tidBinPair in
       Bin.remove bin x y;
 end;
@@ -391,23 +391,26 @@ class c renderInfo =
       ];
 
     method draw ?clear ?width ?height (f:(framebuffer -> unit)) =
-      let (changed, w) = match width with [ Some width when width != renderInfo.rwidth -> (True, width) | _ -> (False, 0) ] in
-      let (changed, h) = match height with [ Some height when height != renderInfo.rheight -> (True, height) | _ -> (False, 0) ] in
+      let (changed, w) = match width with [ Some width when width != renderInfo.rwidth -> (True, ceil width) | _ -> (False, 0.) ] in
+      let (changed, h) = match height with [ Some height when height != renderInfo.rheight -> (True, ceil height) | _ -> (False, 0.) ] in
+      let resized = 
         if changed
         then
-          let (tid, pos) = FramebufferTexture.getRect w h in (
-            FramebufferTexture.freeRect renderInfo.rx renderInfo.ry;
+          let (tid, pos) = FramebufferTexture.getRect (int_of_float w) (int_of_float h) in (
+            FramebufferTexture.freeRect renderInfo.rtextureID renderInfo.rx renderInfo.ry;
 
-            let new_params = Some (tid, FramebufferTexture.Point.x pos, FramebufferTexture.Point.y pos, w, h) in
+            let new_params = (tid, FramebufferTexture.Point.x pos, FramebufferTexture.Point.y pos, w, h) in
               renderbuffer_draw_to_texture ?clear ~new_params renderInfo f;
-
-            Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
             True;
           )
         else (
           renderbuffer_draw_to_texture ?clear renderInfo f;
           False;
-        );
+        )
+      in (
+        Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
+        resized;
+      );
 
     method data () = renderbuffer_data renderInfo;
     method save filename = renderbuffer_save renderInfo filename;
@@ -417,7 +420,7 @@ class c renderInfo =
 
 
 value draw ~filter ?color ?alpha width height f =
-  let (tid, pos) = FramebufferTexture.getRect width height in
+  let (tid, pos) = FramebufferTexture.getRect (int_of_float (ceil width)) (int_of_float (ceil height)) in
   let clear =
     match (color, alpha) with
     [ (Some color, Some alpha) -> Some (color, alpha)

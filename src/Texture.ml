@@ -54,13 +54,15 @@ and textureInfo =
   };
 
 type kind = [ Simple of bool | Alpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
-type renderInfo = 
+type renderInfo =
   {
     rtextureID: textureID;
     rwidth: float;
     rheight: float;
     clipping: option Rectangle.t;
     kind: kind;
+    rx: int;
+    ry: int;
   };
 
 class type renderer = 
@@ -90,7 +92,7 @@ and c =
   value zero_textureID = zero_textureID ();
 
 value zero : c = 
-  let renderInfo = { rtextureID = zero_textureID; rwidth = 0.; rheight = 0.; clipping = None; kind = Simple False } in
+  let renderInfo = { rtextureID = zero_textureID; rwidth = 0.; rheight = 0.; clipping = None; kind = Simple False; rx = 0; ry = 0 } in
   object(self)
     method kind = renderInfo.kind;
     method renderInfo = renderInfo;
@@ -173,6 +175,8 @@ class subtexture region (baseTexture:c) =
       rheight = region.Rectangle.height *. ts;
       clipping = Some (Obj.magic rootClipping);
       kind = baseTexture#kind;
+      rx = 0;
+      ry = 0;
     }
   in
   object(self)
@@ -282,6 +286,8 @@ class s textureInfo =
       rheight = height *. !scale;
       clipping = clipping;
       kind = kind;
+      rx = 0;
+      ry = 0;
     }
   in
   object(self)

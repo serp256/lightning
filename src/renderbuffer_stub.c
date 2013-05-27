@@ -8,12 +8,15 @@
 #include "renderbuffer_stub.h"
 
 #include "texture_save.h"
+#include "inline_shaders.h"
+
+extern GLuint currentShaderProgram;
 
 static int fbs_cnt = 0;
 static GLuint *fbfs = NULL;
 
 static GLuint getFbTexSize() {
-    static GLuint size = 0;
+    static GLint size = 0;
     if (!size) glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
 
     return size;
@@ -152,7 +155,7 @@ value caml_gc_major(value v);
 	{struct tex *_tex = TEX(mltex); _tex->tid = texID; _tex->mem = dataLen;  total_tex_mem += dataLen;LOGMEM("new",texID,dataLen)}
 
 void get_framebuffer_state(framebuffer_state *s) {
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING,&s->framebuffer);
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &s->framebuffer);
 	glGetIntegerv(GL_VIEWPORT,s->viewport);
 	checkGLErrors("get framebuffer state");
 }
@@ -297,7 +300,7 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 
 value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, value mly, value mlwidth, value mlheight, value mlfun) {
 	CAMLparam0();
-	CAMLlocal2(renderInfo, clp);
+	CAMLlocal3(renderInfo, clp, clip);
 
 /*	GLenum fltr;
 	switch (Int_val(filter)) {
@@ -337,7 +340,7 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 	int s = rb.realWidth * rb.realHeight * 4;
 	renderInfo = caml_alloc_tuple(7);
 
-	Store_field(renderInfo,0, rid);
+	Store_field(renderInfo,0, tid);
 	Store_field(renderInfo,1, caml_copy_double(rb.width));
 	Store_field(renderInfo,2, caml_copy_double(rb.height));
 	clp = caml_alloc(4 * Double_wosize,Double_array_tag);
@@ -359,7 +362,7 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 }
 
 value ml_renderbuffer_draw_byte(value * argv, int n) {
-	return (ml_renderbuffer_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]));
+	return (ml_renderbuffer_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6],argv[7]));
 }
 
 void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value renderInfo, value mlfun) {
