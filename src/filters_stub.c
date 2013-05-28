@@ -4,10 +4,11 @@
 #include <caml/callback.h>
 #include "math.h"
 #include "renderbuffer_stub.h"
+#include "inline_shaders.h"
 
 extern GLuint currentShaderProgram;
 
-typedef struct {
+/*typedef struct {
 	GLuint prg;
 	GLint uniforms[4];
 } prg_t;
@@ -100,7 +101,7 @@ static prg_t* simple_program() {
 		}
 	} else glUseProgram(prg.prg);
 	return &prg;
-}
+}*/
 
 /*
 value create_ml_texture(renderbuffer_t *rb) {
@@ -273,7 +274,7 @@ static GLuint final_glow_vertex_shader() {
 }
 */
 
-static GLuint glow_fragment_shader() {
+/*static GLuint glow_fragment_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
 		shader = compile_shader(GL_FRAGMENT_SHADER,
@@ -371,7 +372,7 @@ static const prg_t* glow2_program() {
 		}
 	} else glUseProgram(prg.prg);
 	return &prg;
-}
+}*/
 
 
 /*
@@ -440,7 +441,7 @@ void ml_glow2_make(value orb,value glow) {
 	checkGLErrors("bind glow uniforms");
 
 	renderbuffer_t rb2;
-	clone_renderbuffer(rb,&rb2,GL_NEAREST); // м.б. clone
+	// clone_renderbuffer(rb,&rb2,GL_NEAREST); // м.б. clone
 	renderbuffer_t *drb = &rb2;
 	renderbuffer_t *srb = rb;
 	renderbuffer_t *trb;
@@ -468,10 +469,11 @@ void ml_glow2_make(value orb,value glow) {
 	set_framebuffer_state(&fstate);
 }
 
-static void inline glow_make_draw(viewport *vp,clipping *clp) {
-	//fprintf(stderr,"glow_make_draw: [%d:%d:%d:%d] [%f:%f:%f:%f]\n",vp->x,vp->y,vp->w,vp->h,clp->x,clp->y,clp->width,clp->height);
+static void inline glow_make_draw(viewport *vp,clipping *clp, int clear) {
+	// fprintf(stderr,"glow_make_draw: [%d:%d:%d:%d] [%f:%f:%f:%f]\n",vp->x,vp->y,vp->w,vp->h,clp->x,clp->y,clp->width,clp->height);
 	glViewport(vp->x,vp->y,vp->w,vp->h);
-	glClear(GL_COLOR_BUFFER_BIT);
+	if (clear) glClear(GL_COLOR_BUFFER_BIT);
+
 	texCoords[0][0] = clp->x;
 	texCoords[0][1] = clp->y;
 	texCoords[1][0] = clp->x + clp->width;
@@ -480,6 +482,13 @@ static void inline glow_make_draw(viewport *vp,clipping *clp) {
 	texCoords[2][1] = clp->y + clp->height;
 	texCoords[3][0] = texCoords[1][0];
 	texCoords[3][1] = texCoords[2][1];
+
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		PRINT_DEBUG("%d: [%f; %f]", i, texCoords[i][0], texCoords[i][1]);
+	}	
+
 	glVertexAttribPointer(lgVertexAttrib_Position,2,GL_FLOAT,GL_FALSE,0,quads);
 	glVertexAttribPointer(lgVertexAttrib_TexCoords,2,GL_FLOAT,GL_FALSE,0,texCoords);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -515,6 +524,49 @@ static inline GLuint powS( GLuint l )
 	return 0;
 };
 
+static save_tex_cnt = 0;
+
+void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_lev_tex, viewport* vp, clipping* clp) {
+	PRINT_DEBUG("draw_glow_level w:%d h:%d fid:%d tid:%d", w, h, frm_buf_id, *prev_glow_lev_tex);
+	PRINT_DEBUG("vp [%d,%d,%d,%d]", vp->x, vp->y, vp->w, vp->h);
+	PRINT_DEBUG("clp [%f,%f,%f,%f]", clp->x, clp->y, clp->width, clp->height);
+
+	int tw = powS(w);
+	int th = powS(h);
+
+	if (txrs[tw][th] == 0) {
+		glGenTextures(1, &(txrs[tw][th]));
+		glBindTexture(GL_TEXTURE_2D, txrs[tw][th]);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frm_buf_id);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw][th], 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		char errmsg[255];
+		// sprintf(errmsg,"glow make. bind framebuffer %d to texture, %d:%d status: %X",frm_buf_id,w,h,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		caml_failwith(errmsg);
+	};
+
+	glBindTexture(GL_TEXTURE_2D, *prev_glow_lev_tex);
+	glow_make_draw(vp, clp, 1);
+	*prev_glow_lev_tex = txrs[tw][th];
+
+	//------------------
+/*	char* pixels = caml_stat_alloc(4 * (GLuint)w * (GLuint)h);
+	char* fname = malloc(255);
+	sprintf(fname, "/tmp/pizda%d.png", save_tex_cnt++);
+	glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,w,h);*/
+	//------------------
+}
+
+#define VP_FOR_CUR_GLOW_LEVEL vp.x = 0; vp.y = 0; vp.w = glow_lev_w; vp.h = glow_lev_h;
+
 void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
 	if (gsize == 0) return ;
@@ -536,219 +588,75 @@ void ml_glow_make(value orb, value glow) {
 		bfrs = caml_stat_alloc(maxFB * sizeof(GLuint));
 		glGenFramebuffers(maxFB, bfrs);
 	}
-	struct vpclp *vpclps = caml_stat_alloc(gsize * sizeof(struct vpclp));
 
 	int i;
 	GLuint w = rb->realWidth;
 	GLuint h = rb->realHeight;
-	//int tw = powS (w), th = powS (h);
-	int tw,th;
-	GLuint legalWidth;
-	GLuint legalHeight;
-	GLuint ctid = rb->tid;
-	viewport *cvp;
-	clipping clp = {0.,0.,1.,1.};
-	clipping *cclp = &clp;
+
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
+	GLuint fst_scalein_w = w / 2;
+	GLuint fst_scalein_h = h / 2;
+	GLuint glow_lev_w = nextPOT(fst_scalein_w);
+	GLuint glow_lev_h = nextPOT(fst_scalein_h);
+	GLuint prev_glow_lev_tex = rb->tid;
 
-	GLuint first = 0;
+	PRINT_DEBUG("fst_scalein_w %d, fst_scalein_h %d, glow_lev_w %d, glow_lev_h %d", fst_scalein_w, fst_scalein_h, glow_lev_w, glow_lev_h);
 
-	for (i = 0; i < gsize; i++) {
-		w /= 2;
-		h /= 2;
-		PRINT_DEBUG("forward create fb of size: %d:%d",w,h);
-		legalWidth = w;
-		legalHeight = h;
-		TEXTURE_SIZE_FIX(legalWidth,legalHeight);
-		tw = powS(legalWidth); th = powS(legalHeight);
-		if (txrs[tw][th] == 0)
-		{
-			glGenTextures(1, &(txrs[tw][th]));
-			PRINT_DEBUG("create texture of size: %d:%d = %d",legalWidth,legalHeight,txrs[tw][th]);
-			glBindTexture(GL_TEXTURE_2D, txrs[tw][th]);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, legalWidth, legalHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		};
-		/*else
-			glBindTexture(GL_TEXTURE_2D, txrs[tw][th]); */
+	viewport vp = { (glow_lev_w - fst_scalein_w ) / 2, (glow_lev_h - fst_scalein_h) / 2, fst_scalein_w, fst_scalein_h };
+	clipping fst_scalein_clp = { (GLfloat)vp.x / glow_lev_w, (GLfloat)vp.y / glow_lev_h, (GLfloat)fst_scalein_w / glow_lev_w, (GLfloat)fst_scalein_h / glow_lev_h };
+	clipping full_clp = { 0., 0., 1., 1. };
 
-		//fprintf(stdout,"mas %d %d %d %d \n",tw,th,w,h);
-		if (i == 0) first = txrs[tw][th];
+	//------------
+/*	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
+	char* pixels = caml_stat_alloc(4 * (GLuint)RENDERBUFFER_TEX_SIZE * (GLuint)RENDERBUFFER_TEX_SIZE);
+	char* fname = malloc(255);
+	sprintf(fname, "/tmp/xyu.png");
+	glReadPixels(0,0,RENDERBUFFER_TEX_SIZE,RENDERBUFFER_TEX_SIZE,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,RENDERBUFFER_TEX_SIZE,RENDERBUFFER_TEX_SIZE);	*/
+	//------------
 
-		glBindFramebuffer(GL_FRAMEBUFFER, bfrs[i]);
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw][th],0);
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			char errmsg[255];
-			sprintf(errmsg,"glow make. bind framebuffer %d to texture, %d:%d status: %X",bfrs[i],legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
-			caml_failwith(errmsg);
-		};
-		glBindTexture(GL_TEXTURE_2D,ctid);
-		cvp = &vpclps[i].vp;
-		PRINT_DEBUG("draw forward to fb %d from tx %d",bfrs[i],ctid);
-		cvp->x = (legalWidth - w)/2; cvp->y = (legalHeight - h)/2; cvp->w = w; cvp->h = h;
-		glow_make_draw(cvp,cclp);
-		checkGLErrors("glow_make_draw - forward");
-		cclp = &vpclps[i].clp;
-		cclp->x = (double)cvp->x / legalWidth; cclp->y = (double)cvp->y / legalHeight; cclp->width = (double)w / legalWidth; cclp->height = (double)h / legalHeight;
-		ctid = txrs[tw][th];
-	};
 
-	GLuint cbuf;
-	for (i = gsize - 1; i > 0 ; i--) {
-		legalWidth = w;
-		legalHeight = h;
-		TEXTURE_SIZE_FIX(legalWidth,legalHeight);
-		tw = powS(legalWidth); th = powS(legalHeight);
+	draw_glow_level(glow_lev_w, glow_lev_h, bfrs[0], &prev_glow_lev_tex, &vp, &rb->clp);
+	GLuint fst_scalein_tex_id = prev_glow_lev_tex;
 
-		w *= 2;
-		h *= 2;
-		
-		cbuf = bfrs[i-1];
-		glBindFramebuffer(GL_FRAMEBUFFER,cbuf);
-		cvp = &vpclps[i-1].vp;
-		ctid = txrs[tw][th];
-		glBindTexture(GL_TEXTURE_2D,ctid);
-		PRINT_DEBUG("glow back draw to fb %d from tx %d",cbuf,ctid);
-		cclp = &vpclps[i].clp;
-		glow_make_draw(cvp,cclp);
-	};
-	// и теперь с блэндингом нахуй 
+	for (i = 1; i < gsize; i++) {
+		PRINT_DEBUG("drawing UP level %d", i);
+		glow_lev_w /= 2;
+		glow_lev_h /= 2;
+
+		VP_FOR_CUR_GLOW_LEVEL;
+		draw_glow_level(glow_lev_w, glow_lev_h, bfrs[i], &prev_glow_lev_tex, &vp, &full_clp);
+		PRINT_DEBUG("OK");
+	}
+
+	for (i = gsize - 1; i > 0; i--) {
+		PRINT_DEBUG("drawing down level %d", i);
+		glow_lev_w *= 2;
+		glow_lev_h *= 2;
+
+		VP_FOR_CUR_GLOW_LEVEL;
+		draw_glow_level(glow_lev_w, glow_lev_h, bfrs[i - 1], &prev_glow_lev_tex, &vp, &full_clp);
+	}
+
 	glEnable(GL_BLEND);
 	setNotPMAGLBlend (); // WARNING - ensure what separate blend enabled
 	const prg_t *fglowPrg = final_glow_program();
 	glUniform1f(fglowPrg->uniforms[0],Double_val(Field(glow,2)));
-	glBindFramebuffer(GL_FRAMEBUFFER,rb->fbid);
-	glBindTexture(GL_TEXTURE_2D,first);
-	PRINT_DEBUG("glow final draw to fb %d from tx %d",rb->fbid,first);
-	viewport vp = {0.,0.,rb->realWidth,rb->realHeight};
-	glow_make_draw(&vp,&vpclps[0].clp);
-/*
-	glDeleteFramebuffers(gsize,bfrs);
-	caml_stat_free(bfrs);
-	glDeleteTextures(gsize,txrs);
-	caml_stat_free(txrs);
-*/	
-	caml_stat_free(vpclps);
+	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
+	glBindTexture(GL_TEXTURE_2D, fst_scalein_tex_id);
+
+	PRINT_DEBUG("!!vp [%d,%d,%d,%d]", rb->vp.x, rb->vp.y, rb->vp.w, rb->vp.h);
+	PRINT_DEBUG("!!clip [%f,%f,%f,%f]", fst_scalein_clp.x, fst_scalein_clp.y, fst_scalein_clp.width, fst_scalein_clp.height);
+	PRINT_DEBUG("!!fst_scalein_tex_id %d", fst_scalein_tex_id);
+
+	glow_make_draw(&rb->vp, &fst_scalein_clp, 0);
 
 	glBindTexture(GL_TEXTURE_2D,0);
 	glUseProgram(0);
 	currentShaderProgram = 0;
 	set_framebuffer_state(&fstate);
 	checkGLErrors("end of glow");
-
-	/*
-	renderbuffer_t ib;
-	create_renderbuffer(rwidth/2,rheight/2,&ib,GL_LINEAR);
-	GLuint tid = TEXTURE_ID(Field(textureInfo,0));
-	value clip = Field(textureInfo,3);
-	clipping clp;
-	if (clip != 1) {
-		value c = Field(clip,0);
-		clp.x = Double_field(c,0);
-		clp.y = Double_field(c,1);
-		clp.width = Double_field(c,2);
-		clp.height = Double_field(c,3);
-	} else { 
-		clp.x = 0;
-		clp.y = 0;
-		clp.width = 1.;
-		clp.height = 1.;
-	};
-	glBindTexture(GL_TEXTURE_2D,tid);
-	*/
-	/*GLint filter;
-	glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,&filter);
-	fprintf(stderr,"filter: %x\n",filter);
-	if (filter != GL_LINEAR) {
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	};
-	*/
-	//drawTexture(&ib,tid,ib->width,ib->height,&clp,1);
-	/*if (filter != GL_LINEAR) {
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,filter);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,filter);
-	};*/
-	/*
-	if (gsize > 1) {
-		renderbuffer_t *crb = &ib;
-		renderbuffer_t *rbfs;
-		rbfs = caml_stat_alloc(gsize*sizeof(renderbuffer_t));
-		int i;
-		double w = ib.width, h = ib.height;
-		renderbuffer_t *prb;
-		for (i = 0; i < gsize - 1; i++) {
-			w /= 2;
-			h /= 2;
-			prb = rbfs + i;
-			create_renderbuffer(w,h,prb,GL_LINEAR);
-			checkGLErrors("create renderbuffer");
-			PRINT_DEBUG("draw forward %i",i);
-			drawTexture(prb, crb->tid, w, h, &crb->clp,1);
-			crb = prb;
-			checkGLErrors("draw forward");
-		};
-		for (i = gsize - 2; i > 0 ; i--) {
-			prb = rbfs + i;
-			crb = prb - 1;
-			PRINT_DEBUG("draw back %i",i);
-			drawTexture(crb,prb->tid,crb->width,crb->height,&prb->clp,1);
-			checkGLErrors("draw back");
-			delete_renderbuffer(prb);
-		};
-		drawTexture(&ib,crb->tid,ib.width,ib.height,&crb->clp,1);
-		delete_renderbuffer(crb);
-		caml_stat_free(rbfs);
-	};
-	*/
-
-	// теперь новое... нужно создать новый буфер и туда насрать ib и поверх оригирал с блендингом 
-	/*renderbuffer_t rb;
-	create_renderbuffer(rwidth,rheight,&rb,GL_NEAREST);
-	*/
-	/*glEnable(GL_BLEND);
-	glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-	GLuint fglowPrg = final_glow_program();
-	glUseProgram(fglowPrg);
-	glUniform1i(glGetUniformLocation(fglowPrg,"u_strength"),Long_val(Field(glow,2)));
-
-	//glClearColor(1.,1.,1.,0.);
-	drawTexture(&rb,ib.tid,rwidth,rheight,&ib.clp,1);
-	delete_renderbuffer(&ib);
-	checkGLErrors("draw blurred");
-
-	*/
-
-	// делаем activate и заворачивалку с 'c' rendered текстур и пиздиец
-	// а потом с хитрым шейдером еще разок, сравниваем префоманс - и чего-то уже решаем 
-
-	//glEnable(GL_BLEND);
-
-	/*
-	if (pma) glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA); 
-	else glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE);
-
-	GLuint simplePrg = simple_program();
-	glUseProgram(simplePrg);
-	drawTexture(&ib,tid,iwidth,iheight,&clp,0);
-	*/
-
-
-	/*value res = create_ml_texture(&ib);
-	glDeleteFramebuffers(1,&ib.fbid);
-
-	glBindTexture(GL_TEXTURE_2D,0);
-	glBindFramebuffer(GL_FRAMEBUFFER,0); 
-	glUseProgram(0);
-	currentShaderProgram = 0;
-	checkGLErrors("glow make finished");
-	set_framebuffer_state(&fstate);
-	checkGLErrors("framebuffer state back after make glow");
-	return res;*/
 }
 
 /*

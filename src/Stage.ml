@@ -283,7 +283,7 @@ class virtual c (_width:float) (_height:float) =
     (
       self#advanceTime seconds;
       debug:run "start prerender";
-      D.prerender ();
+      proftimer:perfomance "prerender %f" (D.prerender ());
       debug:run "end prerender";
       Render.clear bgColor 1.;
       Render.checkErrors "before render";

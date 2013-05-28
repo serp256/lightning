@@ -498,9 +498,9 @@ class c texture =
 value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
 *)
 
-value load ?filter path = 
+value load ?filter path =
   let texture = Texture.load ?filter path in
-  new c texture;
+    new c texture;
 
 value load_async path ?filter ?ecallback callback = Texture.load_async path ?filter ?ecallback (fun texture -> callback (new c texture));
 

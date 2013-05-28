@@ -11,6 +11,10 @@ type framebuffer;
 external renderbuffer_draw: ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
 external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?new_params:(textureID * int * int * float * float) -> renderInfo -> (framebuffer -> unit) -> unit = "ml_renderbuffer_draw_to_texture";
 external create_renderbuffer_tex: unit -> textureID = "ml_create_renderbuffer_tex";
+external _renderbuffer_tex_size: unit -> int = "ml_renderbuffer_tex_size";
+
+
+value renderbufferTexSize = _renderbuffer_tex_size ();
 
 external renderbuffer_save: renderInfo -> string -> bool = "ml_renderbuffer_save";
 
@@ -147,6 +151,7 @@ module FramebufferTexture = struct
       value getHole bin indx = List.nth bin.holes (indx mod (List.length bin.holes));
       value width bin = bin.width;
       value height bin = bin.height;
+      value needRepair bin = bin.needRepair;
 
       value holesSquare holes =
         let rec prepare holeA holes nextPassHoles retval =
@@ -172,9 +177,11 @@ module FramebufferTexture = struct
 
       value rectsSquare rects = List.fold_left (fun square rect -> square + Rectangle.(width rect * height rect)) 0 rects;
 
+      value isConsistent bin = (holesSquare bin.holes) + (rectsSquare bin.rects) = bin.width * bin.height;
+
       value repair bin =
         if bin.needRepair
-        then 
+        then
           let () = debug "+++rects %s" (String.concat ";" (List.map (fun hole -> Rectangle.toString hole) bin.rects)) in
           let () = debug "+++holes %s" (String.concat ";" (List.map (fun hole -> Rectangle.toString hole) bin.holes)) in
 
@@ -261,69 +268,76 @@ module FramebufferTexture = struct
           )
         else ();
 
-      value add bin width height = (
-        if bin.needRepair
-        then repair bin
-        else ();
-
-        let holeToPlace = 
-          List.fold_left (fun holeToPlace hole ->
-            if Rectangle.width hole >= width && Rectangle.height hole >= height
-            then
-              let bestPos = Rectangle.leftBottom holeToPlace in
-              let holeLb = Rectangle.leftBottom hole in
-                if Point.(y holeLb < y bestPos || y holeLb = y bestPos && x holeLb < x bestPos)
-                then hole
+      value add bin width height =
+        let w = width in
+        let h = height in
+          try
+            let hole = List.find (fun rect -> Rectangle.(width rect = w && height rect = h)) bin.holes in (
+              bin.holes := List.remove bin.holes hole;
+              bin.rects := [ hole :: bin.rects ];
+              Point.create (Rectangle.x hole) (Rectangle.y hole);
+            )
+          with
+          [ Not_found ->
+            (* let () = if bin.needRepair then repair bin else () in *)
+            let holeToPlace = 
+              List.fold_left (fun holeToPlace hole ->
+                if Rectangle.width hole >= width && Rectangle.height hole >= height
+                then
+                  let bestPos = Rectangle.leftBottom holeToPlace in
+                  let holeLb = Rectangle.leftBottom hole in
+                    if Point.(y holeLb < y bestPos || y holeLb = y bestPos && x holeLb < x bestPos)
+                    then hole
+                    else holeToPlace
                 else holeToPlace
-            else holeToPlace
-          ) (Rectangle.fromCoordsAndDims max_int max_int max_int max_int) bin.holes
-        in
-          if Point.x (Rectangle.leftBottom holeToPlace) = max_int
-          then raise CantPlace
-          else
-            let rectPos = Rectangle.leftBottom holeToPlace in
-            let placedRect = Rectangle.fromPntAndDims rectPos width height in
-
-            let filterHoles hole maxHoles = 
-              let rec filterHoles hole maxHoles retval =
-                if maxHoles = []
-                then [ hole :: retval]
-                else
-                  let maxHole = List.hd maxHoles in
-                    if Rectangle.rectInside hole maxHole
-                    then filterHoles hole (List.tl maxHoles) retval
-                    else
-                      if Rectangle.rectInside maxHole hole
-                      then retval @ maxHoles
-                      else filterHoles hole (List.tl maxHoles) [ maxHole :: retval ]
-              in
-                filterHoles hole maxHoles [] 
+              ) (Rectangle.fromCoordsAndDims max_int max_int max_int max_int) bin.holes
             in
+              if Point.x (Rectangle.leftBottom holeToPlace) = max_int
+              then raise CantPlace
+              else
+                let rectPos = Rectangle.leftBottom holeToPlace in
+                let placedRect = Rectangle.fromPntAndDims rectPos width height in
 
-            let splitHoles holes =
-              let () = debug "split holes call" in
-              let rec splitHoles holes (maxHoles, notAffected) =
-                if holes = []
-                then maxHoles @ notAffected
-                else
-                  let hole = List.hd holes in
-                  let () = debug "scan hole %s, %B" (Rectangle.toString hole) (Rectangle.intersects placedRect hole) in
-                    if Rectangle.intersects placedRect hole
-                    then
-                      let cuttings = Hole.minus hole placedRect in
-                      let maxHoles = List.fold_left (fun maxHoles cutting -> filterHoles cutting maxHoles) maxHoles cuttings in
-                        splitHoles (List.tl holes) (maxHoles, notAffected)
-                    else splitHoles (List.tl holes) (maxHoles, [ hole :: notAffected ])
-              in
-                splitHoles holes ([], [])
-            in (
-              bin.holes := splitHoles bin.holes;
-              bin.rects := [ placedRect :: bin.rects ];
+                let filterHoles hole maxHoles = 
+                  let rec filterHoles hole maxHoles retval =
+                    if maxHoles = []
+                    then [ hole :: retval]
+                    else
+                      let maxHole = List.hd maxHoles in
+                        if Rectangle.rectInside hole maxHole
+                        then filterHoles hole (List.tl maxHoles) retval
+                        else
+                          if Rectangle.rectInside maxHole hole
+                          then retval @ maxHoles
+                          else filterHoles hole (List.tl maxHoles) [ maxHole :: retval ]
+                  in
+                    filterHoles hole maxHoles [] 
+                in
 
-              debug "holes: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.holes));
-              rectPos;
-            );      
-      );
+                let splitHoles holes =
+                  let () = debug "split holes call" in
+                  let rec splitHoles holes (maxHoles, notAffected) =
+                    if holes = []
+                    then maxHoles @ notAffected
+                    else
+                      let hole = List.hd holes in
+                      let () = debug "scan hole %s, %B" (Rectangle.toString hole) (Rectangle.intersects placedRect hole) in
+                        if Rectangle.intersects placedRect hole
+                        then
+                          let cuttings = Hole.minus hole placedRect in
+                          let maxHoles = List.fold_left (fun maxHoles cutting -> filterHoles cutting maxHoles) maxHoles cuttings in
+                            splitHoles (List.tl holes) (maxHoles, notAffected)
+                        else splitHoles (List.tl holes) (maxHoles, [ hole :: notAffected ])
+                  in
+                    splitHoles holes ([], [])
+                in (
+                  bin.holes := splitHoles bin.holes;
+                  bin.rects := [ placedRect :: bin.rects ];
+
+                  debug "holes: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.holes));
+                  rectPos;
+                )            
+          ];
 
       value remove bin x y =
         try
@@ -339,22 +353,45 @@ module FramebufferTexture = struct
         bin.rects := [];
         bin.needRepair = False;
       );
-
-      value isConsistent bin = (holesSquare bin.holes) + (rectsSquare bin.rects) = bin.width * bin.height;
     end;
 
-  value tidBinPair = Lazy.force (lazy (create_renderbuffer_tex (), Bin.create 2048 2048));
+  value bins = ref [];
+
+  value findPos w h =
+    let rec findPos binsLst =
+      match binsLst with
+      [ [] ->
+        let tid = create_renderbuffer_tex () in
+        let bin = Bin.create renderbufferTexSize renderbufferTexSize in (
+          bins.val := [ (tid, bin) :: !bins ];
+          (tid, Bin.add bin w h)
+        )
+      | [ (tid, bin) :: binsLst ] ->
+        try (tid, Bin.add bin w h)
+        with
+        [ Bin.CantPlace ->
+          let () = debug:createtex "trying to rapair bin %B" (Bin.needRepair bin) in
+          if Bin.needRepair bin
+          then (
+            Bin.repair bin;
+            try (tid, Bin.add bin w h) with [ Bin.CantPlace -> let () = debug:createtex "fail" in findPos binsLst ]
+          )
+          else findPos binsLst
+        ]
+      ]
+    in
+      findPos !bins;
 
   value getRect w h =
-    let (tid, bin) = tidBinPair in
-      (tid, Bin.add bin w h);
+    let (tid, pos) = findPos w h in
+    let () = debug:createtex "pos %s %s, texs num %d" (Int32.to_string (int32_of_textureID tid)) (Point.toString pos) (List.length !bins) in
+      (tid, pos);
 
   value freeRect tid x y =
-    let (_, bin) = tidBinPair in
+    let () = debug:createtex "freerect at %d %d" x y in
+    let bin = List.assoc tid !bins in
       Bin.remove bin x y;
 end;
-
-
 
 class c renderInfo = 
   let () = debug "create rendered texture <%ld>" (int32_of_textureID renderInfo.rtextureID) in
@@ -395,14 +432,15 @@ class c renderInfo =
       let (changed, h) = match height with [ Some height when height != renderInfo.rheight -> (True, ceil height) | _ -> (False, 0.) ] in
       let resized = 
         if changed
-        then
-          let (tid, pos) = FramebufferTexture.getRect (int_of_float w) (int_of_float h) in (
-            FramebufferTexture.freeRect renderInfo.rtextureID renderInfo.rx renderInfo.ry;
+        then (
+          FramebufferTexture.freeRect renderInfo.rtextureID renderInfo.rx renderInfo.ry;
 
-            let new_params = (tid, FramebufferTexture.Point.x pos, FramebufferTexture.Point.y pos, w, h) in
-              renderbuffer_draw_to_texture ?clear ~new_params renderInfo f;
+          let (tid, pos) = FramebufferTexture.getRect (int_of_float w) (int_of_float h) in
+          let new_params = (tid, FramebufferTexture.Point.x pos, FramebufferTexture.Point.y pos, w, h) in (
+            renderbuffer_draw_to_texture ?clear ~new_params renderInfo f;
             True;
-          )
+          );
+        )
         else (
           renderbuffer_draw_to_texture ?clear renderInfo f;
           False;
@@ -423,13 +461,13 @@ value draw ~filter ?color ?alpha width height f =
   let (tid, pos) = FramebufferTexture.getRect (int_of_float (ceil width)) (int_of_float (ceil height)) in
   let clear =
     match (color, alpha) with
-    [ (Some color, Some alpha) -> Some (color, alpha)
-    | (Some color, _) -> Some (color, 0.)
-    | (_, Some alpha) -> Some (0x000000, alpha)
-    | _ -> None
+    [ (Some color, Some alpha) -> (color, alpha)
+    | (Some color, _) -> (color, 0.)
+    | (_, Some alpha) -> (0x000000, alpha)
+    | _ -> (0x000000, 0.)
     ]
   in
-  let tex = new c (renderbuffer_draw ~filter ?clear tid (FramebufferTexture.Point.x pos) (FramebufferTexture.Point.y pos) width height f) in (
+  let tex = new c (renderbuffer_draw ~filter ~clear tid (FramebufferTexture.Point.x pos) (FramebufferTexture.Point.y pos) width height f) in (
     Gc.finalise (fun tex -> tex#release ()) tex;
     tex;
   );

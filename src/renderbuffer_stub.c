@@ -16,10 +16,14 @@ static int fbs_cnt = 0;
 static GLuint *fbfs = NULL;
 
 static GLuint getFbTexSize() {
-    static GLint size = 0;
-    if (!size) glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
+    static GLint size = 1024;
+    // if (!size) glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
 
     return size;
+}
+
+value ml_renderbuffer_tex_size() {
+	return Val_int(getFbTexSize());
 }
 
 static GLuint inline get_framebuffer() {
@@ -208,7 +212,10 @@ PRINT_DEBUG("GL ERROR: %s", gl_err_str);																\
 static int FRAMEBUFFER_BIND_COUNTER = 0;
 
 void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
+	PRINT_DEBUG("clear_renderbuffer call");
+
 	if (mlclear != Val_none) {
+		PRINT_DEBUG("clear_renderbuffer mlclear != Val_none");
 		value ca = Field(mlclear,0);
 		int c = Int_val(Field(ca,0));
 		color3F clr = COLOR3F_FROM_INT(c);
@@ -230,24 +237,36 @@ void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 }
 
 int create_renderbuffer(GLuint tid, int x, int y, double width, double height, renderbuffer_t *r/*, GLenum filter*/) {
+	PRINT_DEBUG("\tcreate_renderbuffer CALL");
+
     double w = ceil(width);
     double h = ceil(height);
 	GLuint gl_w = (GLuint)w;
 	GLuint gl_h = (GLuint)h;
+
+	PRINT_DEBUG("\tcheckpoint 1");
 
     GLuint fbid;
 	fbid = get_framebuffer();
     glBindFramebuffer(GL_FRAMEBUFFER, fbid);
 	checkGLErrors("bind framebuffer %d",fbid);
 
+	PRINT_DEBUG("\tcheckpoint 2");
+
     glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tid, 0);
 	FRAMEBUFFER_BIND_COUNTER++;
 	checkGLErrors("framebuffertexture2d %d -> %d",fbid, tid);
 
+	PRINT_DEBUG("\tcheckpoint 2");
+
 	double texSize = (double)getFbTexSize();
+
+	PRINT_DEBUG("\tcheckpoint 3");
 
     r->fbid = fbid;
     r->tid = tid;
+
+    PRINT_DEBUG("\tcheckpoint 4");
 
 	r->vp = (viewport){ (GLuint)x, (GLuint)y, gl_w, gl_h };
 	r->clp = (clipping){ (double)r->vp.x / texSize, (double)r->vp.y / texSize, w / texSize, h / texSize };
@@ -256,12 +275,16 @@ int create_renderbuffer(GLuint tid, int x, int y, double width, double height, r
 	r->realWidth = gl_w;
 	r->realHeight = gl_h;
 
+	PRINT_DEBUG("\tcheckpoint 5");
+
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
+
+	PRINT_DEBUG("\tcheckpoint 6");
   	return 0;
 }
 
-/*
-int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr, GLenum filter) {
+
+/*int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr, GLenum filter) {
 	GLuint rtid;
  	glGenTextures(1, &rtid);
   	glBindTexture(GL_TEXTURE_2D, rtid);
@@ -291,14 +314,16 @@ int clone_renderbuffer(renderbuffer_t *sr, renderbuffer_t *dr, GLenum filter) {
 	dr->realWidth = sr->realWidth;
 	dr->realHeight = sr->realHeight;
 	return 0;
-}*/
-
+}
+*/
 void delete_renderbuffer(renderbuffer_t *rb) {
 	glDeleteTextures(1,&rb->tid);
 	back_framebuffer(rb->fbid);
 }
 
 value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, value mly, value mlwidth, value mlheight, value mlfun) {
+	PRINT_DEBUG("ml_renderbuffer_draw CALL");
+
 	CAMLparam0();
 	CAMLlocal3(renderInfo, clp, clip);
 
@@ -317,28 +342,43 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 	get_framebuffer_state(&fstate);
 	renderbuffer_t rb;
 
-	if (create_renderbuffer(TEXTURE_ID(tid), Double_val(mlx), Double_val(mly), Double_val(mlwidth), Double_val(mlheight), &rb)) {
+	PRINT_DEBUG("check point 1");
+
+	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), Double_val(mlwidth), Double_val(mlheight), &rb)) {
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);
 		caml_failwith(emsg);
 	};
 
+	PRINT_DEBUG("check point 2");
+
 	lgResetBoundTextures();
 	checkGLErrors("renderbuffer create");
 	renderbuffer_activate(&rb);
 
+	PRINT_DEBUG("check point 3");
+
 	clear_renderbuffer(&rb, mlclear);
+
 	caml_callback(mlfun,(value)&rb);
+
+	PRINT_DEBUG("check point 4");
 
  	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 	renderbuffer_deactivate();
 
+	PRINT_DEBUG("check point 5");
+
 	set_framebuffer_state(&fstate);
 	back_framebuffer(rb.fbid);
 
+	PRINT_DEBUG("check point 6");
+
 	int s = rb.realWidth * rb.realHeight * 4;
 	renderInfo = caml_alloc_tuple(7);
+
+	PRINT_DEBUG("check point 7");
 
 	Store_field(renderInfo,0, tid);
 	Store_field(renderInfo,1, caml_copy_double(rb.width));
@@ -358,6 +398,8 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 	Store_field(renderInfo,6,Val_int(rb.vp.y));
 	checkGLErrors("finish render to texture");
 
+	PRINT_DEBUG("check point 8");
+
 	CAMLreturn(renderInfo);
 }
 
@@ -366,6 +408,8 @@ value ml_renderbuffer_draw_byte(value * argv, int n) {
 }
 
 void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value renderInfo, value mlfun) {
+	PRINT_DEBUG("ml_renderbuffer_draw_to_texture call");
+
 	CAMLparam4(mlclear, new_params, renderInfo, mlfun);
 	CAMLlocal3(clp, clip, vtid);
 
@@ -377,12 +421,16 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value rend
 	int resized = 0;
 
 	if (new_params == Val_none) {
+		PRINT_DEBUG("old params");
+
 		tid = TEXTURE_ID(Field(renderInfo,0));
 		x = Int_val(Field(renderInfo, 5));
 		y = Int_val(Field(renderInfo, 6));
 		w = Double_val(Field(renderInfo,1));
 		h = Double_val(Field(renderInfo,2));
 	} else {
+		PRINT_DEBUG("new params");
+
 		value _new_params = Field(new_params, 0);
 		tid = TEXTURE_ID(Field(_new_params,0));
 		x = Int_val(Field(_new_params, 1));
@@ -391,6 +439,7 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value rend
 		h = Double_val(Field(_new_params, 4));
 		resized = 1;
 	}
+
 
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -407,13 +456,20 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value rend
 	if (resized) {
 		GLuint texSize = getFbTexSize();
 		int size = (int)(texSize * texSize * 4);
+		PRINT_DEBUG("before Store_rendertextureID");
 		Store_rendertextureID(vtid, tid, size);
+		PRINT_DEBUG("after Store_rendertextureID");
 
 		Store_field(renderInfo,0, vtid);
+		PRINT_DEBUG("after store vtid");
 		Store_field(renderInfo,1, caml_copy_double(w));
+		PRINT_DEBUG("after store w");
 		Store_field(renderInfo,2, caml_copy_double(h));
+		PRINT_DEBUG("after store h");
 		Store_field(renderInfo,5, Val_int(x));
+		PRINT_DEBUG("after store x");
 		Store_field(renderInfo,6, Val_int(y));
+		PRINT_DEBUG("after store y");
 
 		clp = caml_alloc(4 * Double_wosize,Double_array_tag);
 		Store_double_field(clp,0,rb.clp.x);
@@ -425,15 +481,23 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value rend
 		Store_field(renderInfo,3,clip);
 	}
 
+	PRINT_DEBUG("check point 1");
+
 	renderbuffer_activate(&rb);
+
+	PRINT_DEBUG("check point 2");
 
 	clear_renderbuffer(&rb, mlclear);
 	caml_callback(mlfun,(value)&rb);
+
+	PRINT_DEBUG("check point 3");
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D, 0, 0);
 	set_framebuffer_state(&fstate);
 	renderbuffer_deactivate();
 	back_framebuffer(rb.fbid);
+
+	PRINT_DEBUG("check point 4");
 
 	checkGLErrors("finish render to texture");
 }
@@ -512,6 +576,8 @@ value ml_renderbuffer_save(value renderInfo,value filename) {
 }
 
 value ml_create_renderbuffer_tex() {
+	PRINT_DEBUG("ml_create_renderbuffer_tex call");
+
 	CAMLparam0();
 	CAMLlocal1(vtid);
 
@@ -529,9 +595,10 @@ value ml_create_renderbuffer_tex() {
 	glBindTexture(GL_TEXTURE_2D,0);
 	checkGLErrors("create render texture %d [%d:%d]", tid, texSize, texSize);
 
+	PRINT_DEBUG("generated texture %d", tid);
+
 	int size = (int)(texSize * texSize * 4);
 	Store_rendertextureID(vtid, tid, size);	
 	
 	return vtid;
 }
-

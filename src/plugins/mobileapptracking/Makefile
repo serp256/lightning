@@ -9,22 +9,27 @@ IFACES = $(MLSOURCES:.ml=.cmi)
 
 MLPPOPT += ../../syntax/pa_platform.cmo 
 
+
 ifeq ($(PLATFORM),ANDROID)
 
 CFLAGS += -DANDROID -I../../ -I../../android -I./android 
 COBJS  += android/mobileapptracker_android.o
+MLPPOPT += -DANDROID
 
 else
 ifeq ($(PLATFORM),IOS)
 
 CFLAGS  += -DIOS -Fios 
 COBJS   += ios/mobileapptracker_ios.o
+MLPPOPT += -DIOS
 
 LIBFLAGS = -cclib '-framework\ Foundation' \
        -cclib '-framework\ UIKit' \
        -cclib '-framework\ MobileAppTracker' \
 			 -cclib '-framework\ MobileCoreServices'
+else
 
+MLPPOPT += -DPC
 
 endif
 endif
