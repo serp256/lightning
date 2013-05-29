@@ -526,7 +526,7 @@ static inline GLuint powS( GLuint l )
 
 static save_tex_cnt = 0;
 
-void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_lev_tex, viewport* vp, clipping* clp) {
+void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_lev_tex, viewport* vp, clipping* clp, int bind) {
 	PRINT_DEBUG("draw_glow_level w:%d h:%d fid:%d tid:%d", w, h, frm_buf_id, *prev_glow_lev_tex);
 	PRINT_DEBUG("vp [%d,%d,%d,%d]", vp->x, vp->y, vp->w, vp->h);
 	PRINT_DEBUG("clp [%f,%f,%f,%f]", clp->x, clp->y, clp->width, clp->height);
@@ -545,12 +545,15 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, frm_buf_id);
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw][th], 0);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		char errmsg[255];
-		// sprintf(errmsg,"glow make. bind framebuffer %d to texture, %d:%d status: %X",frm_buf_id,w,h,glCheckFramebufferStatus(GL_FRAMEBUFFER));
-		caml_failwith(errmsg);
-	};
+
+	if (bind) {
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw][th], 0);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			char errmsg[255];
+			sprintf(errmsg,"glow make. bind framebuffer %d to texture, %d:%d status: %X",frm_buf_id,w,h,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+			caml_failwith(errmsg);
+		}
+	}
 
 	glBindTexture(GL_TEXTURE_2D, *prev_glow_lev_tex);
 	glow_make_draw(vp, clp, 1);
@@ -617,7 +620,7 @@ void ml_glow_make(value orb, value glow) {
 	//------------
 
 
-	draw_glow_level(glow_lev_w, glow_lev_h, bfrs[0], &prev_glow_lev_tex, &vp, &rb->clp);
+	draw_glow_level(glow_lev_w, glow_lev_h, bfrs[0], &prev_glow_lev_tex, &vp, &rb->clp, 1);
 	GLuint fst_scalein_tex_id = prev_glow_lev_tex;
 
 	for (i = 1; i < gsize; i++) {
@@ -626,7 +629,7 @@ void ml_glow_make(value orb, value glow) {
 		glow_lev_h /= 2;
 
 		VP_FOR_CUR_GLOW_LEVEL;
-		draw_glow_level(glow_lev_w, glow_lev_h, bfrs[i], &prev_glow_lev_tex, &vp, &full_clp);
+		draw_glow_level(glow_lev_w, glow_lev_h, bfrs[i], &prev_glow_lev_tex, &vp, &full_clp, 1);
 		PRINT_DEBUG("OK");
 	}
 
@@ -636,7 +639,7 @@ void ml_glow_make(value orb, value glow) {
 		glow_lev_h *= 2;
 
 		VP_FOR_CUR_GLOW_LEVEL;
-		draw_glow_level(glow_lev_w, glow_lev_h, bfrs[i - 1], &prev_glow_lev_tex, &vp, &full_clp);
+		draw_glow_level(glow_lev_w, glow_lev_h, bfrs[i - 1], &prev_glow_lev_tex, &vp, &full_clp, 0);
 	}
 
 	glEnable(GL_BLEND);

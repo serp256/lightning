@@ -112,6 +112,7 @@ class c =
                  self#setAlpha 1.;
                  draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
                    (
+                      debug:drawf "sprite drawf";
                      Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
                      Render.clear 0 0.;
                      super#render' ~transform:False None;

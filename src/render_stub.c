@@ -704,6 +704,8 @@ struct custom_operations image_ops = {
 
 
 static inline void set_image_uv(lgTexQuad *tq, value clipping) {
+	PRINT_DEBUG("clipping %d", clipping);
+
 	if (clipping != 1) {
 		value c = Field(clipping,0);
 		double x = Double_field(c,0);

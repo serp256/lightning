@@ -429,7 +429,7 @@ class c renderInfo =
 
     method draw ?clear ?width ?height (f:(framebuffer -> unit)) =      
       let (changed, w) = match width with [ Some width when ceil width <> renderInfo.rwidth -> (True, ceil width) | _ -> (False, renderInfo.rwidth) ] in
-      let (changed, h) = match height with [ Some height when ceil height <> renderInfo.rheight -> (True, ceil height) | _ -> (False, renderInfo.rheight) ] in
+      let (changed, h) = match height with [ Some height when ceil height <> renderInfo.rheight -> (True, ceil height) | _ -> (changed, renderInfo.rheight) ] in
       let () = debug:createtex "%B %f %f %f %f" changed w h renderInfo.rwidth renderInfo.rheight in
       let resized = 
         if changed
@@ -445,12 +445,18 @@ class c renderInfo =
           );
         )
         else (
-          renderbuffer_draw_to_texture ?clear renderInfo f;
+          debug:createtex "before major";
+
+          Gc.major ();
+
+          match clear with [ Some (i, f) -> debug:createtex "clear %d %f" i f | _ -> debug:createtex "none" ];
+
+          renderbuffer_draw_to_texture ?clear renderInfo (* (fun fb -> (debug:createtex "renderbuffer_draw_to_texture func"; f fb; )()) *)f;
           False;
         )
       in (
         debug:createtex "before renderers notify";
-        (* Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers; *)
+        Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
         debug:createtex "after renderers notify";
         resized;
       );
@@ -476,3 +482,4 @@ value draw ~filter ?color ?alpha width height f =
     Gc.finalise (fun tex -> tex#release ()) tex;
     tex;
   );
+
