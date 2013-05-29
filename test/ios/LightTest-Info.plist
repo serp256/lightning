@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>LightTestBin</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.redspell.NanoFarm</string>
+	<string>com.redspell.LightTest</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
