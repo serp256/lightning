@@ -1118,6 +1118,7 @@ class virtual container = (*{{{*)
 
 
     method private render' ?alpha:(alpha') ~transform rect = 
+      let () = debug:render "rendering container" in
       match children with
       [ None -> ()
       | Some children -> 

@@ -990,6 +990,8 @@ void ml_image_render(value matrix, value program, value alpha, value blend, valu
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	checkGLErrors("draw arrays image");
 	kmGLPopMatrix();
+
+	PRINT_DEBUG("RENDER IMAGE end");
 };
 
 
@@ -1136,7 +1138,7 @@ static int atlas_quads_len = 0;
 
 // assume that quads it's dynarray
 void ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {
-	//PRINT_DEBUG("RENDER ATLAS");
+	PRINT_DEBUG("RENDER ATLAS");
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);

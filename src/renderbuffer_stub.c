@@ -324,7 +324,8 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, value mly, value mlwidth, value mlheight, value mlfun) {
 	PRINT_DEBUG("ml_renderbuffer_draw CALL");
 
-	CAMLparam0();
+	CAMLparam5(filter, mlclear, tid, mlx, mly);
+	CAMLxparam3(mlwidth, mlheight, mlfun);
 	CAMLlocal3(renderInfo, clp, clip);
 
 /*	GLenum fltr;
@@ -373,9 +374,6 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 	set_framebuffer_state(&fstate);
 	back_framebuffer(rb.fbid);
 
-	PRINT_DEBUG("check point 6");
-
-	int s = rb.realWidth * rb.realHeight * 4;
 	renderInfo = caml_alloc_tuple(7);
 
 	PRINT_DEBUG("check point 7");
@@ -389,7 +387,7 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 	Store_double_field(clp,2,rb.clp.width);
 	Store_double_field(clp,3,rb.clp.height);
 	clip = caml_alloc_small(1,0);
-	Field(clip,0) = clp;
+	Store_field(clip,0,clp);
 	Store_field(renderInfo,3,clip);
 	value kind = caml_alloc_small(1,0);
 	Field(kind,0) = Val_true;
@@ -407,11 +405,21 @@ value ml_renderbuffer_draw_byte(value * argv, int n) {
 	return (ml_renderbuffer_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6],argv[7]));
 }
 
-void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value renderInfo, value mlfun) {
+void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_tid, value renderInfo, value mlfun) {
 	PRINT_DEBUG("ml_renderbuffer_draw_to_texture call");
 
-	CAMLparam4(mlclear, new_params, renderInfo, mlfun);
-	CAMLlocal3(clp, clip, vtid);
+	PRINT_DEBUG("0 gc full");
+	// caml_gc_major(0);
+
+	CAMLparam5(mlclear, new_params, new_tid, renderInfo, mlfun);
+
+	PRINT_DEBUG("0.5 gc full");
+	// caml_gc_major(0);
+
+	CAMLlocal2(clp, clip);
+
+	PRINT_DEBUG("1 gc full");
+	// caml_gc_major(0);
 
 	int x;
 	int y;
@@ -423,7 +431,6 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value rend
 	if (new_params == Val_none) {
 		PRINT_DEBUG("old params");
 
-		tid = TEXTURE_ID(Field(renderInfo,0));
 		x = Int_val(Field(renderInfo, 5));
 		y = Int_val(Field(renderInfo, 6));
 		w = Double_val(Field(renderInfo,1));
@@ -432,19 +439,33 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value rend
 		PRINT_DEBUG("new params");
 
 		value _new_params = Field(new_params, 0);
-		tid = TEXTURE_ID(Field(_new_params,0));
-		x = Int_val(Field(_new_params, 1));
-		y = Int_val(Field(_new_params, 2));
-		w = Double_val(Field(_new_params, 3));
-		h = Double_val(Field(_new_params, 4));
+		x = Int_val(Field(_new_params, 0));
+		y = Int_val(Field(_new_params, 1));
+		w = Double_val(Field(_new_params, 2));
+		h = Double_val(Field(_new_params, 3));
 		resized = 1;
 	}
 
+	PRINT_DEBUG("2 gc full");
+	// caml_gc_major(0);
+
+	if (new_tid == Val_none) {
+		PRINT_DEBUG("old tid");
+		tid = TEXTURE_ID(Field(renderInfo, 0));
+	} else {
+		PRINT_DEBUG("new tid");
+
+		tid = TEXTURE_ID(Field(new_tid, 0));
+		// Store_field(renderInfo, 0, Field(new_tid, 0));
+	}
 
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
 
 	renderbuffer_t rb;
+
+	PRINT_DEBUG("3 gc full");
+	// caml_gc_major(0);
 
 	if (create_renderbuffer(tid, x, y, w, h, &rb)) {
 		char emsg[255];
@@ -453,23 +474,17 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value rend
 		caml_failwith(emsg);
 	};
 
-	if (resized) {
-		GLuint texSize = getFbTexSize();
-		int size = (int)(texSize * texSize * 4);
-		PRINT_DEBUG("before Store_rendertextureID");
-		Store_rendertextureID(vtid, tid, size);
-		PRINT_DEBUG("after Store_rendertextureID");
+	PRINT_DEBUG("4 gc full");
+	// caml_gc_major(0);	
 
-		Store_field(renderInfo,0, vtid);
-		PRINT_DEBUG("after store vtid");
+	if (resized) {
+		// GLuint texSize = getFbTexSize();
+		// int size = (int)(texSize * texSize * 4);
+
 		Store_field(renderInfo,1, caml_copy_double(w));
-		PRINT_DEBUG("after store w");
 		Store_field(renderInfo,2, caml_copy_double(h));
-		PRINT_DEBUG("after store h");
 		Store_field(renderInfo,5, Val_int(x));
-		PRINT_DEBUG("after store x");
 		Store_field(renderInfo,6, Val_int(y));
-		PRINT_DEBUG("after store y");
 
 		clp = caml_alloc(4 * Double_wosize,Double_array_tag);
 		Store_double_field(clp,0,rb.clp.x);
@@ -477,29 +492,29 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value rend
 		Store_double_field(clp,2,rb.clp.width);
 		Store_double_field(clp,3,rb.clp.height);
 		clip = caml_alloc_small(1,0);
-		Field(clip,0) = clp;
+		Store_field(clip,0,clp);
 		Store_field(renderInfo,3,clip);
 	}
 
-	PRINT_DEBUG("check point 1");
-
 	renderbuffer_activate(&rb);
-
-	PRINT_DEBUG("check point 2");
 
 	clear_renderbuffer(&rb, mlclear);
 	caml_callback(mlfun,(value)&rb);
 
-	PRINT_DEBUG("check point 3");
+	PRINT_DEBUG("5 gc full");
+	// caml_gc_major(0);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D, 0, 0);
 	set_framebuffer_state(&fstate);
 	renderbuffer_deactivate();
 	back_framebuffer(rb.fbid);
 
-	PRINT_DEBUG("check point 4");
+	PRINT_DEBUG("6 gc full");
+	// caml_gc_major(0);
 
 	checkGLErrors("finish render to texture");
+
+	PRINT_DEBUG("ml_renderbuffer_draw_to_texture end");
 }
 
 value ml_renderbuffer_data(value renderInfo) {
@@ -578,9 +593,6 @@ value ml_renderbuffer_save(value renderInfo,value filename) {
 value ml_create_renderbuffer_tex() {
 	PRINT_DEBUG("ml_create_renderbuffer_tex call");
 
-	CAMLparam0();
-	CAMLlocal1(vtid);
-
 	GLuint tid;
 	GLuint texSize = getFbTexSize();
 
@@ -597,6 +609,7 @@ value ml_create_renderbuffer_tex() {
 
 	PRINT_DEBUG("generated texture %d", tid);
 
+	value vtid;
 	int size = (int)(texSize * texSize * 4);
 	Store_rendertextureID(vtid, tid, size);	
 	

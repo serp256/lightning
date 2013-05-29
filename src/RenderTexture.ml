@@ -9,7 +9,7 @@ external delete_textureID: textureID -> unit = "ml_render_texture_id_delete" "no
 
 type framebuffer;
 external renderbuffer_draw: ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
-external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?new_params:(textureID * int * int * float * float) -> renderInfo -> (framebuffer -> unit) -> unit = "ml_renderbuffer_draw_to_texture";
+external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?new_params:(int * int * float * float) -> ?new_tid:textureID -> renderInfo -> (framebuffer -> unit) -> unit = "ml_renderbuffer_draw_to_texture";
 external create_renderbuffer_tex: unit -> textureID = "ml_create_renderbuffer_tex";
 external _renderbuffer_tex_size: unit -> int = "ml_renderbuffer_tex_size";
 
@@ -384,7 +384,7 @@ module FramebufferTexture = struct
 
   value getRect w h =
     let (tid, pos) = findPos w h in
-    let () = debug:createtex "pos %s %s, texs num %d" (Int32.to_string (int32_of_textureID tid)) (Point.toString pos) (List.length !bins) in
+    let () = debug:createtex "pos %s, texs num %d" (* (Int32.to_string (int32_of_textureID tid))  *)(Point.toString pos) (List.length !bins) in
       (tid, pos);
 
   value freeRect tid x y =
@@ -427,17 +427,20 @@ class c renderInfo =
       | True -> ()
       ];
 
-    method draw ?clear ?width ?height (f:(framebuffer -> unit)) =
-      let (changed, w) = match width with [ Some width when width != renderInfo.rwidth -> (True, ceil width) | _ -> (False, 0.) ] in
-      let (changed, h) = match height with [ Some height when height != renderInfo.rheight -> (True, ceil height) | _ -> (False, 0.) ] in
+    method draw ?clear ?width ?height (f:(framebuffer -> unit)) =      
+      let (changed, w) = match width with [ Some width when ceil width <> renderInfo.rwidth -> (True, ceil width) | _ -> (False, renderInfo.rwidth) ] in
+      let (changed, h) = match height with [ Some height when ceil height <> renderInfo.rheight -> (True, ceil height) | _ -> (False, renderInfo.rheight) ] in
+      let () = debug:createtex "%B %f %f %f %f" changed w h renderInfo.rwidth renderInfo.rheight in
       let resized = 
         if changed
         then (
           FramebufferTexture.freeRect renderInfo.rtextureID renderInfo.rx renderInfo.ry;
 
           let (tid, pos) = FramebufferTexture.getRect (int_of_float w) (int_of_float h) in
-          let new_params = (tid, FramebufferTexture.Point.x pos, FramebufferTexture.Point.y pos, w, h) in (
-            renderbuffer_draw_to_texture ?clear ~new_params renderInfo f;
+          let new_tid = if tid = renderInfo.rtextureID then None else Some tid in
+          let new_params = (FramebufferTexture.Point.x pos, FramebufferTexture.Point.y pos, w, h) in (
+            renderbuffer_draw_to_texture ?clear ~new_params ?new_tid renderInfo f;
+            (* debug:createtex "tid: %s" (Int32.to_string (int32_of_textureID renderInfo.rtextureID)); *)
             True;
           );
         )
@@ -446,7 +449,9 @@ class c renderInfo =
           False;
         )
       in (
-        Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
+        debug:createtex "before renderers notify";
+        (* Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers; *)
+        debug:createtex "after renderers notify";
         resized;
       );
 
