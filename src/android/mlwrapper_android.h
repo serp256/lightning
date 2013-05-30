@@ -27,6 +27,8 @@ extern jobject jActivity;
 extern jobject jView;
 extern jclass jViewCls;
 
+jobject jApplicationContext(JNIEnv *env);
+
 int getResourceFd(const char *path, resource *res);
 
 value ml_alsoundLoad(value path);
