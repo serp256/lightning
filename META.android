@@ -10,6 +10,12 @@ package "tapjoy" (
   archive(native) = "tapjoy.cmxa"
 )
 
+package "chartboost" (
+  description="Charboost Analytics"
+  archive(byte) = "chartboost.cma"
+  archive(native) = "chartboost.cmxa"
+)
+
 package "flurry" (
   description="Flurry Analytics"
   archive(byte) = "flurry.cma"

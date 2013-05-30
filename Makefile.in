@@ -26,6 +26,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.cma src/plugins/tapjoy/*.cma src/plugins/flurry/*.cma src/social/oauth/*.cma src/social/*.cmo src/social/*.o)
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.so src/plugins/tapjoy/*.so src/plugins/flurry/*.so src/social/oauth/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cma src/plugins/mobileapptracking/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/chartboost/*.cma src/plugins/chartboost/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
@@ -34,6 +35,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.cmxa src/plugins/tapjoy/*.cmxa src/plugins/flurry/*.cmxa src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o) 
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.a src/plugins/tapjoy/*.a src/plugins/flurry/*.a src/social/oauth/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cmxa src/plugins/mobileapptracking/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/chartboost/*.cmxa src/plugins/chartboost/*.a)
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))
@@ -53,6 +55,7 @@ endif
 	                                                          src/plugins/facebook/*.mli src/plugins/facebook/*.cmi \
 	                                                          src/plugins/flurry/*.mli src/plugins/flurry/*.cmi \
 	                                                          src/plugins/tapjoy/*.cmi src/plugins/tapjoy/*.mli \
+	                                                          src/plugins/chartboost/*.cmi src/plugins/chartboost/*.mli \
 	                                                          src/plugins/mobileapptracking/*.cmi src/plugins/mobileapptracking/*.mli \
 	                                                          src/social/oauth/*.cmi src/social/oauth/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 

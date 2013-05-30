@@ -21,9 +21,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma social_byte
+byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa mobileapptracking.cmxa sponsorpay.cmxa facebook.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa mobileapptracking.cmxa sponsorpay.cmxa facebook.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -182,6 +182,12 @@ flurry.cma:
 flurry.cmxa:
 	make -C plugins/flurry flurry.cmxa
 
+chartboost.cma:
+	make -C plugins/chartboost chartboost.cma
+
+chartboost.cmxa:
+	make -C plugins/chartboost chartboost.cmxa
+
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
@@ -201,6 +207,7 @@ doc:
 clean: 
 	rm -f *.o *.cm[iox] *.a *.cmxa *.so *.cmo ios/*.o glut/*.cmx glut.*.cmo glut/*.o glut/*.cmi sdl/*.cmx sdl/*.cmo sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi utils/*.cmi utils/*.cmx utils/*.cmo utils/*.a kazmath/*.o kazmath/GL/*.o android/*.o pc/*.o
 	$(MAKE) -C flurry clean
+	$(MAKE) -C chartboost clean
 	$(MAKE) -C social clean
 	$(MAKE) -C plugins/tapjoy clean
 	$(MAKE) -C plugins/facebook clean

@@ -1,12 +1,7 @@
-#include "mlwrapper_android.h"
+#include "plugin_common.h"
 
 static jstring appId = NULL;
 static jclass flurryAgentCls = NULL;
-static jobject activity = NULL;
-
-#define GET_ENV													\
-	JNIEnv *env;												\
-	(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
 
 #define GET_FLURRY_AGENT														\
 	if (!flurryAgentCls) {														\
@@ -15,24 +10,9 @@ static jobject activity = NULL;
 		(*env)->DeleteLocalRef(env, tmp);										\
 	}
 
-#define GET_ACTIVITY																									\
-	if (!activity) {																									\
-		jclass activityCls = (*env)->FindClass(env, "ru/redspell/lightning/LightActivity");								\
-		jfieldID fid = (*env)->GetStaticFieldID(env, activityCls, "instance", "Lru/redspell/lightning/LightActivity;");	\
-		jobject tmp = (*env)->GetStaticObjectField(env, activityCls, fid);												\
-		activity = (*env)->NewGlobalRef(env, tmp);																		\
-		(*env)->DeleteLocalRef(env, activityCls);																		\
-		(*env)->DeleteLocalRef(env, tmp);																				\
-	}
-
 void ml_flurryInit(value v_appId) {
 	GET_ENV;
-
-	if (appId) (*env)->DeleteGlobalRef(env, appId);
-	jstring tmp = (*env)->NewStringUTF(env, String_val(v_appId));
-
-	appId = (*env)->NewGlobalRef(env, tmp);
-	(*env)->DeleteLocalRef(env, tmp);
+	MAKE_JAVA_STRING(v_appId, appId);
 }
 
 void ml_flurryStartSession() {
