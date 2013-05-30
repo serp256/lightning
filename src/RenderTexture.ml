@@ -71,8 +71,9 @@ class c renderInfo =
 
     *)
 
-    method draw ?clear ?width ?height (f:(framebuffer -> unit)) = 
-      let resized = renderbuffer_draw_to_texture ?clear ?width ?height renderInfo f in
+    method draw ?clear ?width ?height (f:(framebuffer -> unit)) =
+      proftimer:texgc "\t\tRenderTexture draw %f"
+      let resized = proftimer:texgc "\t\trenderbuffer_draw_to_texture call %f" (renderbuffer_draw_to_texture ?clear ?width ?height renderInfo f) in
       (
         Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
         resized;

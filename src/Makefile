@@ -155,11 +155,11 @@ sponsorpay.cma:
 sponsorpay.cmxa:
 	make -C plugins/sponsorpay sponsorpay.cmxa
 
-flurry.cma:
-	make -C flurry flurry.cma
+# flurry.cma:
+# 	make -C flurry flurry.cma
 
-flurry.cmxa:
-	make -C flurry flurry.cmxa
+# flurry.cmxa:
+# 	make -C flurry flurry.cmxa
 
 social_byte:
 	make -C social byte
@@ -175,6 +175,12 @@ mobileapptracking.cma:
 
 mobileapptracking.cmxa:
 	make -C plugins/mobileapptracking mobileapptracking.cmxa
+
+flurry.cma:
+	make -C plugins/flurry flurry.cma
+
+flurry.cmxa:
+	make -C plugins/flurry flurry.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
@@ -199,5 +205,6 @@ clean:
 	$(MAKE) -C plugins/tapjoy clean
 	$(MAKE) -C plugins/facebook clean
 	$(MAKE) -C plugins/mobileapptracking clean
+	$(MAKE) -C plugins/flurry clean
 
 -include MLDepend.$(PLATFORM)
