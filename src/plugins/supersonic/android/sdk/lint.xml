@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <issue id="DefaultLocale">
+        <ignore path="src/org/json/simple/JSONValue.java" />
+    </issue>
+    <issue id="UseValueOf">
+        <ignore path="src/org/json/simple/parser/JSONParser.java" />
+        <ignore path="src/org/json/simple/parser/Yylex.java" />
+    </issue>
+</lint>

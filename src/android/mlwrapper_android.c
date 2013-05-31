@@ -71,6 +71,16 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	return JNI_VERSION_1_6; // Check this
 }
 
+
+jobject jApplicationContext(JNIEnv *env) {
+	jclass jLightActivityCls = (*env)->GetObjectClass(env,jActivity);
+	jmethodID jGetApplicationContextMethod = (*env)->GetMethodID(env,jLightActivityCls,"getApplicationContext","()Landroid/content/Context;");
+	jobject res = (*env)->CallObjectMethod(env,jActivity,jGetApplicationContextMethod);
+	(*env)->DeleteLocalRef(env,jLightActivityCls);
+	return res;
+}
+
+
 jclass get_lmp_class() {
 	static jclass lmpCls;
 

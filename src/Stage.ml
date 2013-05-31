@@ -280,6 +280,7 @@ class virtual c (_width:float) (_height:float) =
 
     method !z = Some 0;
     method run seconds = 
+proftimer:frame "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!frame %f"
     (
       self#advanceTime seconds;
       debug:run "start prerender";

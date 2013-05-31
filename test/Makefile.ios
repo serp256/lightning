@@ -10,7 +10,7 @@ CC = $(PLAT)/Developer/usr/bin/gcc $(ARCH)
 CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLLIBDIR) -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=4.2 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT
 include Makefile.common
 
-MOBS = ios/AppDelegate.o ios/main.o 
+MOBS = test_c_stub.o ios/AppDelegate.o ios/main.o 
 CFLAGS += -I ../src/ios
 
 

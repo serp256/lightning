@@ -28,16 +28,9 @@ oauth_native:
 oauth_byte:
 	make -C oauth oauth.cma
 
-#fb_native:
-#	make -C facebook fbconnect.cmxa
-fb_native:
-	make -C facebook fb.cmxa
 
-fb_byte:
-	make -C facebook fb.cma
-
-native: oauth_native fb_native SNTypes.cmi OK.cmi OK.cmx MM.cmi MM.cmx VK.cmi VK.cmx
-byte:   oauth_byte fb_byte SNTypes.cmi  OK.cmi OK.cmo MM.cmi MM.cmo VK.cmi VK.cmo
+native: oauth_native SNTypes.cmi OK.cmi OK.cmx MM.cmi MM.cmx VK.cmi VK.cmx
+byte:   oauth_byte SNTypes.cmi  OK.cmi OK.cmo MM.cmi MM.cmo VK.cmi VK.cmo
 
 OK.cmi: SNTypes.cmi
 OK.cmo: OK.cmi oauth/oauth.cma
@@ -53,5 +46,4 @@ VK.cmx: VK.cmi oauth/oauth.cmxa
 clean: 
 	rm -f *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/sdk/*.o ios/*.o
 	make -C oauth clean
-	make -C facebook clean
 

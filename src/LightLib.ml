@@ -364,6 +364,15 @@ value _load libpath =
   let path = Filename.concat libpath "lib.bin" in
   let inp = open_resource path in
   let bininp = IO.input_channel inp in
+	let read_un_byte bininp =
+	(
+		let k = IO.read_byte bininp 
+		in
+		if k land (1 lsl 7) = 0 
+		then k 
+		else (k mod (1 lsl 7)) * (1 lsl 8) + (IO.read_byte bininp);
+	)
+	in
   (
     let read_option_string () =
       let len = IO.read_byte bininp in
@@ -378,7 +387,7 @@ value _load libpath =
     let items = Hashtbl.create n_items in
     (
       let read_children () = (*{{{*)
-        let n_children = IO.read_byte bininp in
+        let n_children = read_un_byte bininp in
         let tid = ref 0 in
         let children = 
           List.init n_children begin fun _ ->
@@ -398,7 +407,7 @@ value _load libpath =
         in
         (!tid,children) (*}}}*)
       and read_sprite_children () = (*{{{*)
-        let n_children = IO.read_byte bininp in
+        let n_children = read_un_byte bininp in
         List.init n_children begin fun _ ->
           match IO.read_byte bininp with
           [ 0 ->
@@ -411,7 +420,7 @@ value _load libpath =
             | _ -> failwith "sprite children not an image"
             ]
           | 1 -> (* atlas *)
-            let cnt = IO.read_byte bininp in
+            let cnt = read_un_byte bininp in
             let tid = ref 0 in
             let children = 
               List.init cnt begin fun _ ->

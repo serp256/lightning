@@ -19,12 +19,7 @@ void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
 
 	//
 	//TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
-	jclass jLightActivityCls = (*env)->GetObjectClass(env,jActivity);
-	jmethodID jGetApplicationContextMethod = (*env)->GetMethodID(env,jLightActivityCls,"getApplicationContext","()Landroid/content/Context;");
-	PRINT_DEBUG("get app context method: %d",jGetApplicationContextMethod);
-	jobject jAppContext = (*env)->CallObjectMethod(env,jActivity,jGetApplicationContextMethod);
-	(*env)->DeleteLocalRef(env,jLightActivityCls);
-	PRINT_DEBUG("APP CONTEXT CREATED");
+	jobject jAppContext = jApplicationContext(env);
 
 	jclass cls = (*env)->FindClass(env, "com/tapjoy/TapjoyConnect");
 	gTapjoyCls = (*env)->NewGlobalRef(env, cls);

@@ -4,8 +4,9 @@ TARGET ?= example
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_platform.cmo -enable-debug default
 
-MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/tapjoy -I ../src/social/facebook -I ../src/mopub
+MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/plugins/tapjoy -I ../src/plugins/flurry -I ../src/plugins/facebook -I ../src/plugins/mopub -I ../src/plugins/mobileapptracking -I ../src/plugins/chartboost -I ../src/plugins/sponsorpay -I ../src/plugins/appflood -I ../src/plugins/supersonic
 
+CFLAGS = -DLDEBUG
 #MLFILES = panelbg.cmo testz.cmo
 
 SOCIAL=  ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
@@ -14,7 +15,7 @@ MOPUB = ../src/mopub/mopub.cma
 
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma ../src/social/facebook/fb.cma $(OAUTH) $(SOCIAL) $(MLFILES) $(TARGET).cmo \
+	-I ../src ../src/lightning.cma ../src/plugins/facebook/facebook.cma $(OAUTH) $(SOCIAL) $(MLFILES) $(TARGET).cmo \
 	-package bigarray,unix,extlib,xmlm,ojson,redspell.debug -linkpkg
 
 example.cmo: $(MLFILES)
@@ -28,9 +29,12 @@ $(TARGET).cmx: $(MLXFILES)
 
 $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	-ccopt "-F../src/social/facebook/ios/FacebookSDK" -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/tapjoy ../src/tapjoy/tapjoy.cmxa -ccopt -L../src/social/facebook ../src/social/facebook/fb.cmxa $(TARGET).cmx \
-	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg
+	  -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/plugins/flurry -ccopt -L../src/plugins/appflood ../src/plugins/chartboost/appflood.cmxa -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
+	-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios"   -linkpkg
 
+
+#
+#
 
 
 .PHONY: clean

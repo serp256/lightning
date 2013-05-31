@@ -9,9 +9,6 @@ import ru.redspell.lightning.LightView;
 import ru.redspell.lightning.utils.Log;
 
 import android.content.Intent;
-import com.facebook.android.*;
-import com.facebook.android.Facebook.*;
-import com.facebook.android.AsyncFacebookRunner.*;
 
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
@@ -57,6 +54,8 @@ public class LightTest extends LightActivity
 		Log.d("LIGHTNING", "ANDROID_ID=" + deviceId);
 
 		LightNotifications.groupNotifications = true;
+
+		//ru.redspell.lightning.plugins.LightChartboost.init("pizda", "lala");
 	}
 
 	static {
