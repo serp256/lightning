@@ -48,4 +48,4 @@ mobileapptracking.cma: $(IFACES) $(COBJS) $(MLOBJS)
 endif
 
 clean:
-	rm -f *.a *.o *.so android/*.o ios/*.o *.cmx *.cmo *.cmxa *.cma
+	rm -f *.a *.o *.so android/*.o ios/*.o *.cmx *.cmo *.cmxa *.cma *.cmi

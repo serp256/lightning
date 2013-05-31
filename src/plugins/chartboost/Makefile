@@ -18,6 +18,14 @@ chartboost.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 chartboost.cma: $(IFACES) $(MOBJS) $(CLOBJS)
 		$(OCAMLMKLIB) -verbose -o chartboost $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
+else
+
+chartboost.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o chartboost.cmxa $(MLOBJSN)
+
+chartboost.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o chartboost.cma $(MLOBJS)
+
 endif
 
 clean: 

@@ -18,6 +18,13 @@ appflood.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 appflood.cma: $(IFACES) $(MOBJS) $(CLOBJS)
 		$(OCAMLMKLIB) -verbose -o appflood $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
+else
+
+appflood.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o appflood.cmxa $(MLOBJSN)
+
+appflood.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o appflood.cma $(MLOBJS)
 endif
 
 clean: 

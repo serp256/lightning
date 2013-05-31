@@ -240,7 +240,7 @@ int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum fil
 			case GL_FRAMEBUFFER_COMPLETE: status_str = "GL_FRAMEBUFFER_COMPLETE"; break;
 			case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: status_str = "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"; break;
 			case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: status_str = "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"; break;
-			case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: status_str = "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS"; break;
+			//case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: status_str = "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS"; break;
 			case GL_FRAMEBUFFER_UNSUPPORTED: status_str = "GL_FRAMEBUFFER_UNSUPPORTED"; break;
 			default: status_str = "status_str xyu znaet chto";
 		}
