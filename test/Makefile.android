@@ -21,9 +21,10 @@ release: $(TARGET).so
 	cp test.so android/libs/armeabi-v7a/libtest.so
 	ant -f android/build.xml release
 
-$(TARGET).so: $(MLXFILES) $(TARGET).cmx
+
+
+$(TARGET).so: $(CFILES) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
-	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MLXFILES)  $(TARGET).cmx \
 	-I ../src ../src/lightning.cmxa \
 	../src/plugins/facebook/facebook.cmxa \
 	-cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa \

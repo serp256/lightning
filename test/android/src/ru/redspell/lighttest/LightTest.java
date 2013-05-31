@@ -55,7 +55,7 @@ public class LightTest extends LightActivity
 
 		LightNotifications.groupNotifications = true;
 
-		ru.redspell.lightning.plugins.LightChartboost.init("pizda", "lala");
+		//ru.redspell.lightning.plugins.LightChartboost.init("pizda", "lala");
 	}
 
 	static {
