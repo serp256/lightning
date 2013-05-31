@@ -219,5 +219,6 @@ clean:
 	$(MAKE) -C plugins/mobileapptracking clean
 	$(MAKE) -C plugins/flurry clean
 	$(MAKE) -C plugins/appflood clean
+	$(MAKE) -C plugins/sponsorpay clean
 
 -include MLDepend.$(PLATFORM)
