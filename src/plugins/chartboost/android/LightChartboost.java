@@ -3,7 +3,7 @@ package ru.redspell.lightning.plugins;
 import ru.redspell.lightning.LightActivity;
 import com.chartboost.sdk.Chartboost;
 
-class LightChartboost {
+public class LightChartboost {
 	private static String appId;
 	private static String appSig;
 
