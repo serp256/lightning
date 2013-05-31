@@ -26,15 +26,15 @@ release: $(TARGET).so
 $(TARGET).so: $(CFILES) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
 	-I ../src ../src/lightning.cmxa \
-	../src/plugins/facebook/facebook.cmxa \
+	-cclib "-L../src/plugins/facebook" ../src/plugins/facebook/facebook.cmxa \
 	-cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa \
-	../src/plugins/tapjoy/tapjoy.cmxa \
-	../src/plugins/chartboost/chartboost.cmxa \
-	../src/plugins/flurry/flurry.cmxa \
-	../src/plugins/sponsorpay/sponsorpay.cmxa \
-	../src/plugins/appflood/appflood.cmxa \
-	../src/plugins/supersonic/supersonic.cmxa \
-	$(OAUTHX) $(SOCIALX) $(MLXFILES)  $(TARGET).cmx \
+	-cclib "-L../src/plugins/tapjoy" ../src/plugins/tapjoy/tapjoy.cmxa \
+	-cclib "-L../src/plugins/chartboost" ../src/plugins/chartboost/chartboost.cmxa \
+	-cclib "-L../src/plugins/flurry" ../src/plugins/flurry/flurry.cmxa \
+	-cclib "-L../src/plugins/sponsorpay" ../src/plugins/sponsorpay/sponsorpay.cmxa \
+	-cclib "-L../src/plugins/appflood" ../src/plugins/appflood/appflood.cmxa \
+	-cclib "-L../src/plugins/supersonic" ../src/plugins/supersonic/supersonic.cmxa \
+	$(OAUTHX) $(SOCIALX) $(MLXFILES) $(CFILES) $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" \
 	-output-obj
 
