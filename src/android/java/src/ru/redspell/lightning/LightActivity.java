@@ -1,6 +1,5 @@
 package ru.redspell.lightning;
 
-import com.chartboost.sdk.*;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
