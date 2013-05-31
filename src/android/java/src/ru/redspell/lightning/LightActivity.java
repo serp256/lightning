@@ -1,7 +1,5 @@
 package ru.redspell.lightning;
 
-import com.chartboost.sdk.*;
-
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
@@ -50,8 +48,6 @@ import com.google.android.gms.common.Scopes;*/
 
 
 public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
-	// private Chartboost cb;
-
 	public static LightActivity instance = null;
 
 	protected XAPKFile[] expansions = {};
@@ -142,11 +138,6 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		viewGrp.addView(lightView = new LightView(this));
 		setContentView(viewGrp);
 
-// this.cb = Chartboost.sharedChartboost();
-// String appId = "51a75fae1d6988e01f000015";
-// String appSignature = "98af7c1d7612f5b35ccb46c66b1f85b85bdd2cb8";
-// this.cb.onCreate(this, appId, appSignature, null);
-// this.cb.startSession();		
 	}
 
 	public boolean startExpansionDownloadService() {

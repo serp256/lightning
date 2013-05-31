@@ -2,16 +2,11 @@
 
 static jclass chartboostCls = NULL;
 
-#define GET_CHARTBOOST																			\
-	if (!chartboostCls) {																		\
-		jclass tmp = (*env)->FindClass(env, "ru/redspell/lightning/plugins/LightChartboost");	\
-		chartboostCls = (*env)->NewGlobalRef(env, tmp);											\
-		(*env)->DeleteLocalRef(env, tmp);														\
-	}
+#define GET_CLS GET_PLUGIN_CLASS(chartboostCls,ru/redspell/lightning/plugins/LightChartboost);
 
 void ml_chartBoostInit(value v_appId, value v_appSig) {
 	GET_ENV;
-	GET_CHARTBOOST;
+	GET_CLS;
 
 	jstring j_appId = (*env)->NewStringUTF(env, String_val(v_appId));
 	jstring j_appSig = (*env)->NewStringUTF(env, String_val(v_appSig));
@@ -22,7 +17,7 @@ void ml_chartBoostInit(value v_appId, value v_appSig) {
 
 void ml_chartBoostStartSession() {
 	GET_ENV;
-	GET_CHARTBOOST;
+	GET_CLS;
 
 	jmethodID mid = (*env)->GetStaticMethodID(env, chartboostCls, "startSession", "()V");
 	(*env)->CallStaticVoidMethod(env, chartboostCls, mid);

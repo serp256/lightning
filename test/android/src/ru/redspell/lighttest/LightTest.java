@@ -54,6 +54,8 @@ public class LightTest extends LightActivity
 		Log.d("LIGHTNING", "ANDROID_ID=" + deviceId);
 
 		LightNotifications.groupNotifications = true;
+
+		ru.redspell.lightning.plugins.LightChartboost.init("pizda", "lala");
 	}
 
 	static {

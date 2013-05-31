@@ -4,7 +4,7 @@ TARGET ?= example
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_platform.cmo -enable-debug default
 
-MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/plugins/tapjoy -I ../src/plugins/flurry -I ../src/plugins/facebook -I ../src/plugins/mopub -I ../src/plugins/mobileapptracking -I ../src/plugins/chartboost
+MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/plugins/tapjoy -I ../src/plugins/flurry -I ../src/plugins/facebook -I ../src/plugins/mopub -I ../src/plugins/mobileapptracking -I ../src/plugins/chartboost -I ../src/plugins/appflood
 
 #MLFILES = panelbg.cmo testz.cmo
 
@@ -28,7 +28,7 @@ $(TARGET).cmx: $(MLXFILES)
 
 $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  \
-	  -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/plugins/flurry -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
+	  -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/plugins/flurry -ccopt -L../src/plugins/appflood ../src/plugins/chartboost/appflood.cmxa -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios"   -linkpkg
 
 

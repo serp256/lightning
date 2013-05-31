@@ -23,4 +23,10 @@ static jobject activity;
 		jstr = (*env)->NewGlobalRef(env, tmp);						\
 		(*env)->DeleteLocalRef(env, tmp);							\
 	}
-	
+
+#define GET_PLUGIN_CLASS(cls, classname)					\
+	if (!cls) {												\
+		jclass tmp = (*env)->FindClass(env, #classname);	\
+		cls = (*env)->NewGlobalRef(env, tmp);				\
+		(*env)->DeleteLocalRef(env, tmp);					\
+	}

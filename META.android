@@ -16,6 +16,12 @@ package "chartboost" (
   archive(native) = "chartboost.cmxa"
 )
 
+package "appflood" (
+  description="Appflood"
+  archive(byte) = "appflood.cma"
+  archive(native) = "appflood.cmxa"
+)
+
 package "flurry" (
   description="Flurry Analytics"
   archive(byte) = "flurry.cma"
