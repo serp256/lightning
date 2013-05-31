@@ -16,10 +16,11 @@ static jobject activity;
 		(*env)->DeleteLocalRef(env, tmp);																				\
 	}
 
-#define MAKE_JAVA_STRING(val, jstr)									\
+#define MAKE_GLOB_JAVA_STRING(val, jstr)							\
 	{																\
 		if (jstr) (*env)->DeleteGlobalRef(env, jstr);				\
 		jstring tmp = (*env)->NewStringUTF(env, String_val(val));	\
 		jstr = (*env)->NewGlobalRef(env, tmp);						\
 		(*env)->DeleteLocalRef(env, tmp);							\
 	}
+	

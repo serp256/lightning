@@ -1,38 +1,29 @@
 #include "plugin_common.h"
 
+static jclass chartboostCls = NULL;
+
+#define GET_CHARTBOOST																			\
+	if (!chartboostCls) {																		\
+		jclass tmp = (*env)->FindClass(env, "ru/redspell/lightning/plugins/LightChartboost");	\
+		chartboostCls = (*env)->NewGlobalRef(env, tmp);											\
+		(*env)->DeleteLocalRef(env, tmp);														\
+	}
 
 void ml_chartBoostInit(value v_appId, value v_appSig) {
 	GET_ENV;
+	GET_CHARTBOOST;
 
-	jstring appId = NULL;
-	jstring appSig = NULL;
+	jstring j_appId = (*env)->NewStringUTF(env, String_val(v_appId));
+	jstring j_appSig = (*env)->NewStringUTF(env, String_val(v_appSig));
 
-	static jclass chartboostCls = NULL;
-	static jobject chartboost = NULL;
-
-	if (!chartboostCls) {
-		PRINT_DEBUG("_________________");
-		jclass tmpCls = (*env)->FindClass(env, "com/chartboost/sdk/Chartboost");
-		chartboostCls = (*env)->NewGlobalRef(env, tmpCls);
-		(*env)->DeleteLocalRef(env, tmpCls);
-		jmethodID mid = (*env)->GetStaticMethodID(env, chartboostCls, "sharedChartboost", "()Lcom/chartboost/sdk/Chartboost;");
-		jobject tmpInstnc = (*env)->CallStaticObjectMethod(env, chartboostCls, mid);
-		chartboost = (*env)->NewGlobalRef(env, tmpInstnc);
-		(*env)->DeleteLocalRef(env, tmpInstnc);
-		PRINT_DEBUG("_________________");
-	}
-
-	MAKE_JAVA_STRING(v_appId, appId);
-	MAKE_JAVA_STRING(v_appSig, appSig);
+	jmethodID mid = (*env)->GetStaticMethodID(env, chartboostCls, "init", "(Ljava/lang/String;Ljava/lang/String;)V");
+	(*env)->CallStaticVoidMethod(env, chartboostCls, mid, j_appId, j_appSig);
 }
 
 void ml_chartBoostStartSession() {
 	GET_ENV;
+	GET_CHARTBOOST;
 
-	// static jmethodID mid = 0;
-	// if (!mid) mid = (*env)->GetMethodID(env, chartboostCls, "onCreate", "(Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;Lcom/chartboost/sdk/ChartboostDelegate;)V");
-	// PRINT_DEBUG("!!!pizda2");
-
-	// (*env)->CallVoidMethod(env, chartboost, mid, activity, appId, appSig, NULL);
-	// PRINT_DEBUG("!!!pizda3");
+	jmethodID mid = (*env)->GetStaticMethodID(env, chartboostCls, "startSession", "()V");
+	(*env)->CallStaticVoidMethod(env, chartboostCls, mid);
 }

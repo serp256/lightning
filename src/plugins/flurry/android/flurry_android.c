@@ -12,7 +12,7 @@ static jclass flurryAgentCls = NULL;
 
 void ml_flurryInit(value v_appId) {
 	GET_ENV;
-	MAKE_JAVA_STRING(v_appId, appId);
+	MAKE_GLOB_JAVA_STRING(v_appId, appId);
 }
 
 void ml_flurryStartSession() {
