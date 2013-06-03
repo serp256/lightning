@@ -46,6 +46,12 @@ package "facebook" (
 	archive(native) = "facebook.cmxa"
 )
 
+package "sponsorpay" (
+	description="SponsorPay SDK"
+	archive(byte) = "sponsorpay.cma"
+	archive(native) = "sponsorpay.cmxa"
+)
+
 package "syntax" (
 	package "prop" (
 		description = "Syntactic sugars make obj props for tween"
