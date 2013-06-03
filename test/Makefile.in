@@ -28,8 +28,8 @@ $(TARGET).cmx: $(MLXFILES)
 
 
 $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
-	$(OCAMLOPT) -verbose -o test.native  -g  \
-	  -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/plugins/flurry -ccopt -L../src/plugins/appflood ../src/plugins/chartboost/appflood.cmxa -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
+	$(OCAMLOPT) -verbose -o test.native  -g  -ccopt -miphoneos-version-min=5.1\
+	  -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES) -ccopt -L../src/plugins/flurry -ccopt -L../src/plugins/appflood ../src/plugins/chartboost/chartboost.cmxa -ccopt -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa -ccopt -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios"   -linkpkg
 
 
