@@ -18,6 +18,14 @@ supersonic.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 supersonic.cma: $(IFACES) $(MOBJS) $(CLOBJS)
 		$(OCAMLMKLIB) -verbose -o supersonic $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
+else
+
+supersonic.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o supersonic.cmxa $(MLOBJSN)
+
+supersonic.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o supersonic.cma $(MLOBJS)
+
 endif
 
 clean: 
