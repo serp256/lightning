@@ -100,7 +100,7 @@ public class Constants {
     public static final boolean LOGX = true;
 
     /** Enable verbose logging */
-    public static final boolean LOGV = false;
+    public static final boolean LOGV = true;
     
     /** Enable super-verbose logging */
     private static final boolean LOCAL_LOGVV = false;

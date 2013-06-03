@@ -166,7 +166,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	}
 
 	public void onDownloadStateChanged(int newState) {
-		Log.d(LOG_TAG, "onDownloadStateChanged call");
+		Log.d(LOG_TAG, "onDownloadStateChanged call " + newState);
 
 		switch (newState) {
 			case IDownloaderClient.STATE_COMPLETED:

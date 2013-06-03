@@ -10,7 +10,8 @@ TARGET ?= example
 
 res:	
 	aresmkr -concat -i Resources -o android/assets/assets
-	aresmkr -merge -o android/assets/index android/assets/assets
+	aresmkr -concat -i Resources -o android-expansion 
+	aresmkr -merge -o android/assets/index android/assets/assets android-expansion
 	#rm android/assets/assets.index
 
 so: $(TARGET).so res
@@ -23,8 +24,8 @@ release: $(TARGET).so
 
 $(TARGET).so: $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
-	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MLXFILES) ../src/social/facebook/fb.cmxa ../src/plugins/mopub/mopub.cmxa ../src/plugins/tapjoy/tapjoy.cmxa $(TARGET).cmx \
-	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" -cclib "-L../src/social/facebook" -cclib "-L../src/plugins/mopub" -cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa  -cclib "-L../src/plugins/tapjoy"  -output-obj
+	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MLXFILES) ../src/social/facebook/fb.cmxa ../src/plugins/tapjoy/tapjoy.cmxa $(TARGET).cmx \
+	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" -cclib "-L../src/social/facebook" -cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa  -cclib "-L../src/plugins/tapjoy"  -output-obj
 
 clean::
 	rm -f LightTest/*.o LighTest/*.so 
