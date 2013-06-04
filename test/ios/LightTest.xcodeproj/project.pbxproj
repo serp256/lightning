@@ -309,7 +309,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Sergey Plaksin (5ZR8R38XZE)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
-				INFOPLIST_FILE = "LightTest-Info.plist";
+				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "F26B0B9F-73BF-448A-9D0C-878F70BAA76B";
@@ -322,7 +322,7 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
-				INFOPLIST_FILE = "LightTest-Info.plist";
+				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;

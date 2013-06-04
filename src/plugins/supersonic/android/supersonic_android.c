@@ -2,7 +2,7 @@
 
 static jclass supersonicCls = NULL;
 
-#define GET_CLS GET_PLUGIN_CLASS(supersonicCls,ru/redspell/lightning/plugins/LightSupersonic);
+#define GET_CLS GET_PLUGIN_CLASS(supersonicCls,ru/redspell/lightplugins/LightSupersonic);
 
 void ml_supersonicInit(value v_appKey, value v_appUid) {
 	GET_ENV;

@@ -2,7 +2,7 @@
 
 static jclass appfloodCls = NULL;
 
-#define GET_CLS GET_PLUGIN_CLASS(appfloodCls,ru/redspell/lightning/plugins/LightAppflood);
+#define GET_CLS GET_PLUGIN_CLASS(appfloodCls,ru/redspell/lightplugins/LightAppflood);
 
 void ml_appfloodInit(value v_appKey, value v_secKey) {
 	GET_ENV;

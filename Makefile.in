@@ -29,6 +29,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/chartboost/*.cma src/plugins/chartboost/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/appflood/*.cma src/plugins/appflood/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/supersonic/*.cma src/plugins/supersonic/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/sponsorpay/*.cma src/plugins/sponsorpay/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
@@ -40,6 +41,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/chartboost/*.cmxa src/plugins/chartboost/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/appflood/*.cmxa src/plugins/appflood/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/supersonic/*.cmxa src/plugins/supersonic/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/sponsorpay/*.cmxa src/plugins/sponsorpay/*.a)
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))
@@ -63,6 +65,7 @@ endif
 	                                                          src/plugins/appflood/*.cmi src/plugins/appflood/*.mli \
 	                                                          src/plugins/supersonic/*.cmi src/plugins/supersonic/*.mli \
 	                                                          src/plugins/mobileapptracking/*.cmi src/plugins/mobileapptracking/*.mli \
+	                                                          src/plugins/sponsorpay/*.cmi src/plugins/sponsorpay/*.mli \
 	                                                          src/social/oauth/*.cmi src/social/oauth/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
 

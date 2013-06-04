@@ -1,4 +1,4 @@
-package ru.redspell.lightning.plugins;
+package ru.redspell.lightplugins;
 
 import ru.redspell.lightning.LightActivity;
 import com.supersonicads.sdk.android.SupersonicAdsPublisherAgent;

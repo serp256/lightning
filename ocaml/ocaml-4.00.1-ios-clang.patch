@@ -136,7 +136,7 @@ diff -urN ocaml-4.00.1/Makefile ocaml-4.00.1-ios/Makefile
  include .depend
 diff -urN ocaml-4.00.1/asmcomp/arm/arch.ml ocaml-4.00.1-ios/asmcomp/arm/arch.ml
 --- ocaml-4.00.1/asmcomp/arm/arch.ml	2012-02-24 14:13:02.000000000 +0400
-+++ ocaml-4.00.1-ios/asmcomp/arm/arch.ml	2013-05-27 14:57:19.000000000 +0400
++++ ocaml-4.00.1-ios/asmcomp/arm/arch.ml	2013-06-03 18:02:18.000000000 +0400
 @@ -213,6 +213,36 @@
     and rotated right by 0 ... 30 bits.
     In Thumb/Thumb-2 mode we utilize 26 ... 30. *)
@@ -1246,7 +1246,7 @@ diff -urN ocaml-4.00.1/byterun/printexc.c ocaml-4.00.1-ios/byterun/printexc.c
  }
 diff -urN ocaml-4.00.1/config/Makefile ocaml-4.00.1-ios/config/Makefile
 --- ocaml-4.00.1/config/Makefile	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00.1-ios/config/Makefile	2013-05-17 12:00:44.000000000 +0400
++++ ocaml-4.00.1-ios/config/Makefile	2013-06-04 15:28:00.000000000 +0400
 @@ -0,0 +1,73 @@
 +PREFIX=/usr/local/ocaml/ios-dev
 +PLATFORM=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
@@ -1264,9 +1264,9 @@ diff -urN ocaml-4.00.1/config/Makefile ocaml-4.00.1-ios/config/Makefile
 +BNG_ASM_LEVEL=0
 +PTHREAD_LINK=-cclib -pthread
 +LIBBFD_LINK=-lbfd -ldl -liberty -lz
-+BYTECC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch armv7 -isysroot $(SDK)
-+BYTECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
-+BYTECCCOMPOPTS=-no-cpp-precomp -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
++BYTECC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch armv7 -isysroot $(SDK) -miphoneos-version-min=5.1 -fmessage-length=0 -std=gnu99 -fpascal-strings -Os -fstrict-aliasing -fvisibility=hidden
++#
++BYTECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -g
 +BYTECCLINKOPTS= -Wl
 +BYTECCLIBS= -lpthread
 +BYTECCRPATH=-Wl,-rpath,
@@ -1285,7 +1285,7 @@ diff -urN ocaml-4.00.1/config/Makefile ocaml-4.00.1-ios/config/Makefile
 +MODEL=armv7
 +SYSTEM=linux_eabihf
 +NATIVECC=$(BYTECC)
-+NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -miphoneos-version-min=5.1 -fmessage-length=0 -std=gnu99 -fpascal-strings -Os  -fstrict-aliasing -g -fvisibility=hidden
++NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -g
 +# -gdwarf-2 -fexceptions
 +NATIVECCPROFOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
 +NATIVECCLINKOPTS=
@@ -1316,8 +1316,8 @@ diff -urN ocaml-4.00.1/config/Makefile ocaml-4.00.1-ios/config/Makefile
 +TOOLCHAIN=cc
 +NATDYNLINK=false
 +CMXS=cmxa
-+MKEXE=$(BYTECC)
-+MKDLL=$(NATIVECC) -bundle -flat_namespace -undefined suppress
++MKEXE=$(NATIVECC) -miphoneos-version-min=5.1 -dead_strip -fobjc-link-runtime
++MKDLL=$(MKEXE)  -bundle -flat_namespace -undefined suppress
 +MKMAINDLL=$(MKDLL)
 +RUNTIMED=noruntimed
 +ASM_CFI_SUPPORTED=true
@@ -1398,7 +1398,7 @@ diff -urN ocaml-4.00.1/config/s.h ocaml-4.00.1-ios/config/s.h
 +#undef HAS_LIBBFD
 diff -urN ocaml-4.00.1/ocamlcomp.sh ocaml-4.00.1-ios/ocamlcomp.sh
 --- ocaml-4.00.1/ocamlcomp.sh	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00.1-ios/ocamlcomp.sh	2013-05-17 19:49:13.000000000 +0400
++++ ocaml-4.00.1-ios/ocamlcomp.sh	2013-06-04 15:28:20.000000000 +0400
 @@ -0,0 +1,17 @@
 +#!/bin/sh
 +
