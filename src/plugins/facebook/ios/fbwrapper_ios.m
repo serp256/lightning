@@ -43,6 +43,7 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
     pointer = NULL;                                                         \
 }                                                                           \
 
+/*
 @implementation LightFBDialogDelegate
     - (id)initWithSuccessCallbackRequest:(value*)successCallback andFailCallback:(value*)failCallback {
         self = [super init];
@@ -114,96 +115,8 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
 				[[LightViewController sharedInstance] becomeActive];
 		 }
 
-		/*
-    - (void)dialogDidComplete:(FBDialog*)dialog {
-        NSLog(@"dialogDidComplete");
-
-        if (_successCallbackRequest) {            
-						NSLog(@"successCallback is call");
-            caml_callback(*_successCallbackRequest, usersIds);
-        } else {
-						NSLog(@"successCallback not found");
-				}
-
-				NSLog(@"frrCallbacks");
-        [self freeCallbacksRequests];
-        [[LightViewController sharedInstance] becomeActive];
-    }
-
-    - (void)dialogCompleteWithUrl:(NSURL*)url {
-        NSArray* params = [[[url query] stringByReplacingPercentEscapesUsingEncoding:NSASCIIStringEncoding] componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"&"]];
-        NSArray* keyValuePair;
-        NSEnumerator* enumer = [params objectEnumerator];
-        NSError* err = nil;
-        NSRegularExpression* paramRegex = [NSRegularExpression regularExpressionWithPattern:@"to\\[\\d+\\]" options:0 error:&err];
-
-        if (err) {
-          caml_failwith([[err localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]);
-        }
-
-        id param;
-        usersIds = Val_int(0);
-
-        while (param = [enumer nextObject]) {
-          keyValuePair = [(NSString*)param componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"="]];
-          NSString* paramName = (NSString*)[keyValuePair objectAtIndex:0];          
-          NSUInteger matchesNum = [paramRegex numberOfMatchesInString:paramName options:0 range:NSMakeRange(0, [paramName length])];
-
-          if (matchesNum) {
-            NSString* paramValue = (NSString*)[keyValuePair objectAtIndex:1];
-            value lst = caml_alloc(2, 0);
-
-            Store_field(lst, 0, caml_copy_string([paramValue cStringUsingEncoding:NSUTF8StringEncoding]));
-            Store_field(lst, 1, usersIds);
-
-            usersIds = lst;
-          }
-        }
-    }
-
-    - (void)dialogDidNotCompleteWithUrl:(NSURL*)url {
-        NSLog(@"dialogDidNotCompleteWithUrl");
-        usersIds = Val_int(0);
-    }
-
-    - (void)dialogDidNotComplete:(FBDialog*)dialog {
-        NSLog(@"dialogDidNotComplete");
-        [[LightViewController sharedInstance] becomeActive];
-    }
-
-    - (void)dialog:(FBDialog*)dialog didFailWithError:(NSError*)error {
-        NSLog(@"dialog didFailWithError call");
-
-        if (_failCallbackRequest) {
-            caml_callback(*_failCallbackRequest, caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
-        }
-
-				NSLog(@"!!!!!!!!!!!!!frrCallbacks");
-        [self freeCallbacksRequests];
-        [[LightViewController sharedInstance] becomeActive];
-    }
-
-    - (BOOL)dialog:(FBDialog*)dialog shouldOpenURLInExternalBrowser:(NSURL*)url {
-        NSLog(@"dialog shouldOpenURLInExternalBrowser call");
-        [[LightViewController sharedInstance] becomeActive];
-        return YES;
-    }
-
-    - (void)freeCallbacksRequests {
-				NSLog(@"freeCallback");
-        FREE_CALLBACK(_successCallbackRequest);
-        FREE_CALLBACK(_failCallbackRequest);
-
-        _successCallbackRequest = nil;
-        _failCallbackRequest = nil;
-    }
-
-    - (void)dealloc {
-        NSLog(@"!!!dealloc");
-        [super dealloc];
-    }
-		*/
 @end
+*/
 
 static FBSession* fbSession = nil;
 
@@ -224,11 +137,11 @@ enum {
 
 static inline void requestPublishPermissions() {
     if (publishPermissions && [publishPermissions count]) {
-        NSLog(@"requesting additional publish permissions");
+        //NSLog(@"requesting additional publish permissions");
         extraPermsState = PublishPermissionsRequsted;
         [[FBSession activeSession] requestNewPublishPermissions:publishPermissions defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:nil];
     } else {
-        NSLog(@"skip additional publish permissions");
+        //NSLog(@"skip additional publish permissions");
         fbSession = [FBSession activeSession];
         extraPermsState = NotRequested;
         caml_callback(*caml_named_value("fb_success"), Val_unit);
@@ -237,23 +150,23 @@ static inline void requestPublishPermissions() {
 
 static inline void requestReadPermissions() {
     if (readPermissions && [readPermissions count]) {        
-        NSLog(@"requesting additional read permissions");
+        //NSLog(@"requesting additional read permissions");
         extraPermsState = ReadPermissionsRequsted;
         [[FBSession activeSession] requestNewReadPermissions:readPermissions completionHandler:nil];
     } else {
-        NSLog(@"skip additional read permissions");
+        //NSLog(@"skip additional read permissions");
         requestPublishPermissions();
     }
 }
 
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error) {
-    NSLog(@"sessionStateChanged call with error %@", error);
+    //NSLog(@"sessionStateChanged call with error %@", error);
 
     //do nothing in this function when requesting extra permissions
 
     switch (state) {
         case FBSessionStateOpen:
-            NSLog(@"FBSessionStateOpen %@", extraPermsState == NotRequested ? @"true" : @"false");
+            //NSLog(@"FBSessionStateOpen %@", extraPermsState == NotRequested ? @"true" : @"false");
 
             if (extraPermsState == NotRequested) {
                 requestReadPermissions();
@@ -262,14 +175,14 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
             break;
 
         case FBSessionStateClosed:
-            NSLog(@"FBSessionStateClosed");
+            //NSLog(@"FBSessionStateClosed");
 
             [[FBSession activeSession] closeAndClearTokenInformation];
             caml_callback(*caml_named_value("fb_sessionClosed"), Val_unit);
             break;
 
         case FBSessionStateClosedLoginFailed:
-            NSLog(@"FBSessionStateClosedLoginFailed");
+            //NSLog(@"FBSessionStateClosedLoginFailed");
 
             [[FBSession activeSession] closeAndClearTokenInformation];
 						if (!error) caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("Unknown Error"));
@@ -277,23 +190,23 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
             break;
 
         case FBSessionStateCreated:
-            NSLog(@"FBSessionStateCreated");
+            //NSLog(@"FBSessionStateCreated");
             break;
 
         case FBSessionStateCreatedTokenLoaded:
-            NSLog(@"FBSessionStateCreatedTokenLoaded");
+            //NSLog(@"FBSessionStateCreatedTokenLoaded");
             break;
 
         case FBSessionStateCreatedOpening:
-            NSLog(@"FBSessionStateCreatedOpening");
+            //NSLog(@"FBSessionStateCreatedOpening");
             break;
 
         case FBSessionStateOpenTokenExtended:
-            NSLog(@"FBSessionStateOpenTokenExtended");
+            //NSLog(@"FBSessionStateOpenTokenExtended");
 
             switch (extraPermsState) {
                 case ReadPermissionsRequsted:
-                    NSLog(@"ReadPermissionsRequsted");
+                    //NSLog(@"ReadPermissionsRequsted");
 
                     [readPermissions removeAllObjects];
                     [readPermissions release];
@@ -302,7 +215,7 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
                     break;
 
                 case PublishPermissionsRequsted:
-                    NSLog(@"PublishPermissionsRequsted");
+                    //NSLog(@"PublishPermissionsRequsted");
 
                     [publishPermissions removeAllObjects];
                     [publishPermissions release];
@@ -327,14 +240,14 @@ void ml_fbInit(value appId) {
     NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
 
     [notifCntr addObserverForName:APP_HANDLE_OPEN_URL_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        NSLog(@"handling open url notification");
+        //NSLog(@"handling open url notification");
         if ([FBSettings defaultAppID]) {
             [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_HANDLE_OPEN_URL_NOTIFICATION_DATA]];
         }
     }];
 
     [notifCntr addObserverForName:APP_BECOME_ACTIVE_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        NSLog(@"handling application become active");
+        //NSLog(@"handling application become active");
         if ([FBSettings defaultAppID]) {
             [[FBSession activeSession] handleDidBecomeActive];
         }
@@ -342,7 +255,7 @@ void ml_fbInit(value appId) {
 }
 
 void ml_fbConnect(value permissions) {
-    NSLog(@"ml_fbConnect");
+    //NSLog(@"ml_fbConnect");
 
     if (permissions != Val_int(0)) {        
         //NSLog(@"parsing permission list");
@@ -377,7 +290,7 @@ void ml_fbConnect(value permissions) {
 }
 
 void ml_fbDisconnect(value connect) {
-	NSLog(@"ml_fbDisconnect");
+	//NSLog(@"ml_fbDisconnect");
 	if (fbSession) {
 		[fbSession closeAndClearTokenInformation];
 		//[fbSession close];
@@ -425,7 +338,8 @@ void ml_fbApprequest(value title, value message, value recipient, value data, va
     REGISTER_CALLBACK(successCallback, _successCallbackRequest);
     REGISTER_CALLBACK(failCallback, _failCallbackRequest);
 
-    NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
+    //NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
+		NSMutableDictionary *params = [NSMutableDictionary dictionaryWithCapacity:2];
 
     if (Is_block(recipient)) {
         NSString* nsrecipient = [NSString stringWithCString:String_val(Field(recipient, 0)) encoding:NSUTF8StringEncoding];
@@ -438,10 +352,61 @@ void ml_fbApprequest(value title, value message, value recipient, value data, va
         [params setObject:nsdata forKey:@"data"];
     }
 
-    LightFBDialogDelegate* delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
-		[FBWebDialogs presentDialogModallyWithSession:nil dialog:@"apprequests" parameters:params handler:nil delegate:delegate];
-		//[delegate release];
+    //LightFBDialogDelegate* delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
+		//[FBWebDialogs presentDialogModallyWithSession:nil dialog:@"apprequests" parameters:params handler:nil delegate:delegate];
+		[[LightViewController sharedInstance] resignActive];
+		FBWebDialogHandler handler = ^(FBWebDialogResult result, NSURL *resultURL, NSError *error) {
+				switch (result) {
+					case FBWebDialogResultDialogCompleted:
+						//NSLog(@"Dismiss FBWebDialogResultDialogCompleted");
+						if (_successCallbackRequest) {
+							NSArray* params = [[[resultURL query] stringByReplacingPercentEscapesUsingEncoding:NSASCIIStringEncoding] componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"&"]];
+							NSArray* keyValuePair;
+							NSEnumerator* enumer = [params objectEnumerator];
+							NSRegularExpression* paramRegex = [NSRegularExpression regularExpressionWithPattern:@"to\\[\\d+\\]" options:0 error:nil];
 
+							value lst = 1;
+							value usersIds = Val_int(0);
+							Begin_roots2(usersIds,lst);
+							id param;
+
+							while (param = [enumer nextObject]) {
+								keyValuePair = [(NSString*)param componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"="]];
+								NSString* paramName = (NSString*)[keyValuePair objectAtIndex:0];          
+								NSUInteger matchesNum = [paramRegex numberOfMatchesInString:paramName options:0 range:NSMakeRange(0, [paramName length])];
+
+								if (matchesNum) {
+									NSString* paramValue = (NSString*)[keyValuePair objectAtIndex:1];
+									lst = caml_alloc(2, 0);
+
+									Store_field(lst, 0, caml_copy_string([paramValue cStringUsingEncoding:NSUTF8StringEncoding]));
+									Store_field(lst, 1, usersIds);
+
+									usersIds = lst;
+								}
+							}
+							caml_callback(*_successCallbackRequest,usersIds);
+							End_roots();
+						};
+						break;
+					case FBWebDialogResultDialogNotCompleted:
+						//NSLog(@"Dismiss FBWebDialogResultDialogNotCompleted");
+						if (_failCallbackRequest) {
+							value mlError;
+							if (error) mlError = caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]);
+							else mlError = caml_copy_string("Dialog Not Completed");
+							caml_callback(*_failCallbackRequest, mlError);
+						};
+						break;
+				};
+				FREE_CALLBACK(_successCallbackRequest);
+				FREE_CALLBACK(_failCallbackRequest);
+				[[LightViewController sharedInstance] becomeActive];
+		};
+		static FBFrictionlessRecipientCache *cache = nil;
+		if (!cache) cache = [[FBFrictionlessRecipientCache alloc] init];
+		[FBWebDialogs presentRequestsDialogModallyWithSession:nil message:nsmessage title:nstitle parameters:params handler:handler friendCache:cache];
+		//[delegate release];
 		//if (!delegate) delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
     //delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
     //[[LightViewController sharedInstance] resignActive];
@@ -462,7 +427,7 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
     NSDictionary* nsparams = [NSMutableDictionary dictionary];
     NSString* reqMethod = @"GET";
 
-    NSLog(@"graph request %@", nspath);
+    //NSLog(@"graph request %@", nspath);
 
     if (params != Val_int(0)) {
         reqMethod = @"POST";
@@ -484,15 +449,15 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
 				
     REGISTER_CALLBACK(successCallback, _successCallbackGraphApi);
 		if (_successCallbackGraphApi) {
-			NSLog(@"success callback is init in graphApi");
+			//NSLog(@"success callback is init in graphApi");
 		} else {
-			NSLog(@"success callback is NOT init in graph");
+			//NSLog(@"success callback is NOT init in graph");
 		}
     REGISTER_CALLBACK(failCallback, _failCallbackGraphApi);
 
     // fbGraphrequest(nspath, nsparams, _successCallbackGraphApi, _failCallbackGraphApi);
     [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:reqMethod completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
-        NSLog(@"completionHandler");
+        //NSLog(@"completionHandler");
 
         if (error) {
             if (_failCallbackGraphApi) {
