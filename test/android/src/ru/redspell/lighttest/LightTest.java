@@ -57,6 +57,7 @@ public class LightTest extends LightActivity
 		Log.d("LIGHTNING", "ANDROID_ID=" + deviceId);
 
 		LightNotifications.groupNotifications = true;
+		LightActivity.enableLocalExpansions();
 	}
 
 	static {

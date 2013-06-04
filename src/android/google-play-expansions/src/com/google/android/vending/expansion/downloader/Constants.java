@@ -23,7 +23,9 @@ import java.io.File;
  * Contains the internal constants that are used in the download manager.
  * As a general rule, modifying these constants should be done with care.
  */
-public class Constants {    
+public class Constants {
+    public static String LOCAL_EXP_URL = null;
+
     /** Tag used for debugging/logging */
     public static final String TAG = "LVLDL";
 

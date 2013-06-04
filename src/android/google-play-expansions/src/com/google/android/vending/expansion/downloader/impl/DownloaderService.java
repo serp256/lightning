@@ -762,220 +762,220 @@ public abstract class DownloaderService extends CustomIntentService implements I
             // re-check
             aep.resetPolicy();
 
-            android.content.res.TypedArray rexp = getResources().obtainTypedArray(com.android.vending.expansion.downloader.R.array.expansions);
-            DownloadsDB db = DownloadsDB.getDB(mContext);
-            int status = 0;
 
-            for (int i = 0; i < rexp.length(); i++) {
-                String[] expFileParams = rexp.getString(i).split(",");
+            if (Constants.LOCAL_EXP_URL != null) {
+                android.content.res.TypedArray rexp = getResources().obtainTypedArray(com.android.vending.expansion.downloader.R.array.expansions);
+                DownloadsDB db = DownloadsDB.getDB(mContext);
+                int status = 0;
 
-                String currentFileName = Helpers.getExpansionAPKFileName(mContext, (new Boolean(expFileParams[0])).booleanValue(), (new Integer(expFileParams[1])).intValue());
-                DownloadInfo di = new DownloadInfo(i, currentFileName, mContext.getPackageName());
-                long fileSize = (new Long(expFileParams[2])).longValue();
+                for (int i = 0; i < rexp.length(); i++) {
+                    String[] expFileParams = rexp.getString(i).split(",");
 
-                if (handleFileUpdated(db, i, currentFileName, fileSize)) {
-                    status |= -1;
-                    di.resetDownload();
-                    di.mUri = /*aep.getExpansionURL(i)*/"http://expansions.redspell.ru/" + currentFileName;
-                    di.mTotalBytes = fileSize;
-                    di.mStatus = status;
-                    db.updateDownload(di);
-                } else {
-                    // we need to read the download
-                    // information
-                    // from
-                    // the database
-                    DownloadInfo dbdi = db.getDownloadInfoByFileName(di.mFileName);
-                    if (null == dbdi) {
-                        // the file exists already and is
-                        // the
-                        // correct size
-                        // was delivered by Market or
-                        // through
-                        // another mechanism
-                        Log.d(LOG_TAG, "file " + di.mFileName
-                                + " found. Not downloading.");
-                        di.mStatus = STATUS_SUCCESS;
-                        di.mTotalBytes = fileSize;
-                        di.mCurrentBytes = fileSize;
-                        di.mUri = /*aep.getExpansionURL(i)*/"http://expansions.redspell.ru/" + currentFileName;
-                        db.updateDownload(di);
-                    } else if (dbdi.mStatus != STATUS_SUCCESS) {
-                        // we just update the URL
-                        dbdi.mUri = aep.getExpansionURL(i);
-                        db.updateDownload(dbdi);
+                    String currentFileName = Helpers.getExpansionAPKFileName(mContext, (new Boolean(expFileParams[0])).booleanValue(), (new Integer(expFileParams[1])).intValue());
+                    DownloadInfo di = new DownloadInfo(i, currentFileName, mContext.getPackageName());
+                    long fileSize = (new Long(expFileParams[2])).longValue();
+
+                    if (handleFileUpdated(db, i, currentFileName, fileSize)) {
                         status |= -1;
+                        di.resetDownload();
+                        di.mUri = Constants.LOCAL_EXP_URL + "/" + currentFileName;
+                        di.mTotalBytes = fileSize;
+                        di.mStatus = status;
+                        db.updateDownload(di);
+                    } else {
+                        // we need to read the download
+                        // information
+                        // from
+                        // the database
+                        DownloadInfo dbdi = db.getDownloadInfoByFileName(di.mFileName);
+                        if (null == dbdi) {
+                            // the file exists already and is
+                            // the
+                            // correct size
+                            // was delivered by Market or
+                            // through
+                            // another mechanism
+                            Log.d(LOG_TAG, "file " + di.mFileName
+                                    + " found. Not downloading.");
+                            di.mStatus = STATUS_SUCCESS;
+                            di.mTotalBytes = fileSize;
+                            di.mCurrentBytes = fileSize;
+                            di.mUri = Constants.LOCAL_EXP_URL + "/" + currentFileName;
+                            db.updateDownload(di);
+                        } else if (dbdi.mStatus != STATUS_SUCCESS) {
+                            // we just update the URL
+                            dbdi.mUri = Constants.LOCAL_EXP_URL + "/" + currentFileName;
+                            db.updateDownload(dbdi);
+                            status |= -1;
+                        }
                     }
-                }
 
-                PackageInfo pi;
-                try {
-                    pi = mContext.getPackageManager().getPackageInfo(
-                            mContext.getPackageName(), 0);
-                    db.updateMetadata(pi.versionCode, status);
-                    Class<?> serviceClass = DownloaderService.this.getClass();
-                    switch (startDownloadServiceIfRequired(mContext, mPendingIntent,
-                            serviceClass)) {
-                        case NO_DOWNLOAD_REQUIRED:
-                            mNotification
-                                    .onDownloadStateChanged(IDownloaderClient.STATE_COMPLETED);
-                            break;
-                        case LVL_CHECK_REQUIRED:
-                            // DANGER WILL ROBINSON!
-                            Log.e(LOG_TAG, "In LVL checking loop!");
-                            mNotification
-                                    .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_UNLICENSED);
-                            throw new RuntimeException(
-                                    "Error with LVL checking and database integrity");
-                        case DOWNLOAD_REQUIRED:
-                            // do nothing. the download will notify the
-                            // application
-                            // when things are done
-                            break;
-                    }
-                } catch (NameNotFoundException e1) {
-                    e1.printStackTrace();
-                    throw new RuntimeException(
-                            "Error with getting information from package name");
-                }
-            }
-
-
-            // let's try and get the OBB file from LVL first
-            // Construct the LicenseChecker with a Policy.
-/*            final LicenseChecker checker = new LicenseChecker(mContext, aep,
-                    getPublicKey() // Your public licensing key.
-            );
-            checker.checkAccess(new LicenseCheckerCallback() {
-
-                @Override
-                public void allow(int reason) {
+                    PackageInfo pi;
                     try {
-                        int count = aep.getExpansionURLCount();
-                        DownloadsDB db = DownloadsDB.getDB(mContext);
-                        int status = 0;
-                        if (count != 0) {
-                            for (int i = 0; i < count; i++) {
-                                String currentFileName = aep
-                                        .getExpansionFileName(i);
-                                if (null != currentFileName) {
-                                    DownloadInfo di = new DownloadInfo(i,
-                                            currentFileName, mContext.getPackageName());
+                        pi = mContext.getPackageManager().getPackageInfo(
+                                mContext.getPackageName(), 0);
+                        db.updateMetadata(pi.versionCode, status);
+                        Class<?> serviceClass = DownloaderService.this.getClass();
+                        switch (startDownloadServiceIfRequired(mContext, mPendingIntent,
+                                serviceClass)) {
+                            case NO_DOWNLOAD_REQUIRED:
+                                mNotification
+                                        .onDownloadStateChanged(IDownloaderClient.STATE_COMPLETED);
+                                break;
+                            case LVL_CHECK_REQUIRED:
+                                // DANGER WILL ROBINSON!
+                                Log.e(LOG_TAG, "In LVL checking loop!");
+                                mNotification
+                                        .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_UNLICENSED);
+                                throw new RuntimeException(
+                                        "Error with LVL checking and database integrity");
+                            case DOWNLOAD_REQUIRED:
+                                // do nothing. the download will notify the
+                                // application
+                                // when things are done
+                                break;
+                        }
+                    } catch (NameNotFoundException e1) {
+                        e1.printStackTrace();
+                        throw new RuntimeException(
+                                "Error with getting information from package name");
+                    }
+                }
+            } else {
+                // let's try and get the OBB file from LVL first
+                // Construct the LicenseChecker with a Policy.
+                final LicenseChecker checker = new LicenseChecker(mContext, aep,
+                        getPublicKey() // Your public licensing key.
+                );
+                checker.checkAccess(new LicenseCheckerCallback() {
 
-                                    long fileSize = aep.getExpansionFileSize(i);
-                                    if (handleFileUpdated(db, i, currentFileName,
-                                            fileSize)) {
-                                        status |= -1;
-                                        di.resetDownload();
-                                        di.mUri = aep.getExpansionURL(i);
-                                        di.mTotalBytes = fileSize;
-                                        di.mStatus = status;
-                                        db.updateDownload(di);
-                                    } else {
-                                        // we need to read the download
-                                        // information
-                                        // from
-                                        // the database
-                                        DownloadInfo dbdi = db
-                                                .getDownloadInfoByFileName(di.mFileName);
-                                        if (null == dbdi) {
-                                            // the file exists already and is
-                                            // the
-                                            // correct size
-                                            // was delivered by Market or
-                                            // through
-                                            // another mechanism
-                                            Log.d(LOG_TAG, "file " + di.mFileName
-                                                    + " found. Not downloading.");
-                                            di.mStatus = STATUS_SUCCESS;
-                                            di.mTotalBytes = fileSize;
-                                            di.mCurrentBytes = fileSize;
-                                            di.mUri = aep.getExpansionURL(i);
-                                            db.updateDownload(di);
-                                        } else if (dbdi.mStatus != STATUS_SUCCESS) {
-                                            // we just update the URL
-                                            dbdi.mUri = aep.getExpansionURL(i);
-                                            db.updateDownload(dbdi);
+                    @Override
+                    public void allow(int reason) {
+                        try {
+                            int count = aep.getExpansionURLCount();
+                            DownloadsDB db = DownloadsDB.getDB(mContext);
+                            int status = 0;
+                            if (count != 0) {
+                                for (int i = 0; i < count; i++) {
+                                    String currentFileName = aep
+                                            .getExpansionFileName(i);
+                                    if (null != currentFileName) {
+                                        DownloadInfo di = new DownloadInfo(i,
+                                                currentFileName, mContext.getPackageName());
+
+                                        long fileSize = aep.getExpansionFileSize(i);
+                                        if (handleFileUpdated(db, i, currentFileName,
+                                                fileSize)) {
                                             status |= -1;
+                                            di.resetDownload();
+                                            di.mUri = aep.getExpansionURL(i);
+                                            di.mTotalBytes = fileSize;
+                                            di.mStatus = status;
+                                            db.updateDownload(di);
+                                        } else {
+                                            // we need to read the download
+                                            // information
+                                            // from
+                                            // the database
+                                            DownloadInfo dbdi = db
+                                                    .getDownloadInfoByFileName(di.mFileName);
+                                            if (null == dbdi) {
+                                                // the file exists already and is
+                                                // the
+                                                // correct size
+                                                // was delivered by Market or
+                                                // through
+                                                // another mechanism
+                                                Log.d(LOG_TAG, "file " + di.mFileName
+                                                        + " found. Not downloading.");
+                                                di.mStatus = STATUS_SUCCESS;
+                                                di.mTotalBytes = fileSize;
+                                                di.mCurrentBytes = fileSize;
+                                                di.mUri = aep.getExpansionURL(i);
+                                                db.updateDownload(di);
+                                            } else if (dbdi.mStatus != STATUS_SUCCESS) {
+                                                // we just update the URL
+                                                dbdi.mUri = aep.getExpansionURL(i);
+                                                db.updateDownload(dbdi);
+                                                status |= -1;
+                                            }
                                         }
                                     }
                                 }
                             }
+                            // first: do we need to do an LVL update?
+                            // we begin by getting our APK version from the package
+                            // manager
+                            PackageInfo pi;
+                            try {
+                                pi = mContext.getPackageManager().getPackageInfo(
+                                        mContext.getPackageName(), 0);
+                                db.updateMetadata(pi.versionCode, status);
+                                Class<?> serviceClass = DownloaderService.this.getClass();
+                                switch (startDownloadServiceIfRequired(mContext, mPendingIntent,
+                                        serviceClass)) {
+                                    case NO_DOWNLOAD_REQUIRED:
+                                        mNotification
+                                                .onDownloadStateChanged(IDownloaderClient.STATE_COMPLETED);
+                                        break;
+                                    case LVL_CHECK_REQUIRED:
+                                        // DANGER WILL ROBINSON!
+                                        Log.e(LOG_TAG, "In LVL checking loop!");
+                                        mNotification
+                                                .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_UNLICENSED);
+                                        throw new RuntimeException(
+                                                "Error with LVL checking and database integrity");
+                                    case DOWNLOAD_REQUIRED:
+                                        // do nothing. the download will notify the
+                                        // application
+                                        // when things are done
+                                        break;
+                                }
+                            } catch (NameNotFoundException e1) {
+                                e1.printStackTrace();
+                                throw new RuntimeException(
+                                        "Error with getting information from package name");
+                            }
+                        } finally {
+                            setServiceRunning(false);
                         }
-                        // first: do we need to do an LVL update?
-                        // we begin by getting our APK version from the package
-                        // manager
-                        PackageInfo pi;
-                        try {
-                            pi = mContext.getPackageManager().getPackageInfo(
-                                    mContext.getPackageName(), 0);
-                            db.updateMetadata(pi.versionCode, status);
-                            Class<?> serviceClass = DownloaderService.this.getClass();
-                            switch (startDownloadServiceIfRequired(mContext, mPendingIntent,
-                                    serviceClass)) {
-                                case NO_DOWNLOAD_REQUIRED:
-                                    mNotification
-                                            .onDownloadStateChanged(IDownloaderClient.STATE_COMPLETED);
-                                    break;
-                                case LVL_CHECK_REQUIRED:
-                                    // DANGER WILL ROBINSON!
-                                    Log.e(LOG_TAG, "In LVL checking loop!");
+                    }
+
+                    @Override
+                    public void dontAllow(int reason) {
+                        try
+                        {
+                            switch (reason) {
+                                case Policy.NOT_LICENSED:
                                     mNotification
                                             .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_UNLICENSED);
-                                    throw new RuntimeException(
-                                            "Error with LVL checking and database integrity");
-                                case DOWNLOAD_REQUIRED:
-                                    // do nothing. the download will notify the
-                                    // application
-                                    // when things are done
+                                    break;
+                                case Policy.RETRY:
+                                    Log.d("testapp", "dontAllow");
+                                    mNotification
+                                            .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_FETCHING_URL);
                                     break;
                             }
-                        } catch (NameNotFoundException e1) {
-                            e1.printStackTrace();
-                            throw new RuntimeException(
-                                    "Error with getting information from package name");
+                        } finally {
+                            setServiceRunning(false);
                         }
-                    } finally {
-                        setServiceRunning(false);
-                    }
-                }
 
-                @Override
-                public void dontAllow(int reason) {
-                    try
-                    {
-                        switch (reason) {
-                            case Policy.NOT_LICENSED:
-                                mNotification
-                                        .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_UNLICENSED);
-                                break;
-                            case Policy.RETRY:
-								Log.d("testapp", "dontAllow");
-                                mNotification
-                                        .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_FETCHING_URL);
-                                break;
+                    }
+
+                    @Override
+                    public void applicationError(int errorCode) {
+                        try {
+                            Log.d("testapp", "applicationError");
+                            mNotification
+                                    .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_FETCHING_URL);
+                        } finally {
+                            setServiceRunning(false);
                         }
-                    } finally {
-                        setServiceRunning(false);
                     }
 
-                }
-
-                @Override
-                public void applicationError(int errorCode) {
-                    try {
-						Log.d("testapp", "applicationError");
-                        mNotification
-                                .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_FETCHING_URL);
-                    } finally {
-                        setServiceRunning(false);
-                    }
-                }
-
-            });*/
-
+                });
+            }
         }
-
     };
 
     /**
