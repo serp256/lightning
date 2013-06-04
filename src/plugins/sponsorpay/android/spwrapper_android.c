@@ -8,9 +8,11 @@ void ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken) {
 	GET_ENV;
 	GET_CLS;
 
+	PRINT_DEBUG("user id: %s", Is_block(v_userId) ? String_val(Field(v_userId, 0)) : "");
+
 	jstring j_appId = (*env)->NewStringUTF(env, String_val(v_appId));
-	jstring j_userId = (*env)->NewStringUTF(env, String_val(v_userId));
-	jstring j_securityToken = (*env)->NewStringUTF(env, String_val(v_securityToken));
+	jstring j_userId = (*env)->NewStringUTF(env, Is_block(v_userId) ? String_val(Field(v_userId, 0)) : "");
+	jstring j_securityToken = (*env)->NewStringUTF(env, Is_block(v_securityToken) ? String_val(Field(v_securityToken, 0)) : "");
 
 	jmethodID mid = (*env)->GetStaticMethodID(env, sponsorpayCls, "init", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
 	(*env)->CallStaticVoidMethod(env, sponsorpayCls, mid, j_appId, j_userId, j_securityToken);
