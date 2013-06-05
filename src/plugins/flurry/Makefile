@@ -15,7 +15,16 @@ COBJS  += android/flurry_android.o
 endif
 
 
-ifeq ($(PLATFORM),PC)
+ifeq ($(PLATFORM),ANDROID)
+
+flurry.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
+		$(OCAMLMKLIB) -verbose -o flurry $(COBJS) $(MLOBJSN) $(LIBFLAGS) 
+
+flurry.cma: $(IFACES) $(MOBJS) $(CLOBJS)
+		$(OCAMLMKLIB) -verbose -o flurry $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
+
+else
+
 
 flurry.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o flurry.cmxa $(MLOBJSN)
@@ -23,13 +32,6 @@ flurry.cmxa: $(IFACES) $(MLOBJSN)
 flurry.cma: $(IFACES) $(MLOBJS)
 	$(OCAMLC) -a -o flurry.cma $(MLOBJS)
 
-else
-
-flurry.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
-		$(OCAMLMKLIB) -verbose -o flurry $(COBJS) $(MLOBJSN) $(LIBFLAGS) 
-
-flurry.cma: $(IFACES) $(MOBJS) $(CLOBJS)
-		$(OCAMLMKLIB) -verbose -o flurry $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
 endif
 
