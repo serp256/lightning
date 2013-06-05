@@ -15,6 +15,30 @@ package "flurry" (
   archive(native) = "flurry.cmxa"
 )
 
+package "chartboost" (
+  description="Charboost Analytics"
+  archive(byte) = "chartboost.cma"
+  archive(native) = "chartboost.cmxa"
+)
+
+package "appflood" (
+  description="Appflood"
+  archive(byte) = "appflood.cma"
+  archive(native) = "appflood.cmxa"
+)
+
+package "supersonic" (
+  description="Supersonic Ads"
+  archive(byte) = "supersonic.cma"
+  archive(native) = "supersonic.cmxa"
+)
+
+package "sponsorpay" (
+	description="SponsorPay SDK"
+	archive(byte) = "sponsorpay.cma"
+	archive(native) = "sponsorpay.cmxa"
+)
+
 package "syntax" (
 	package "prop" (
 		description = "Syntactic sugars make obj props for tween"
