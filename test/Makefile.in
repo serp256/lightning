@@ -33,6 +33,7 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	  -ccopt -L../src/plugins/flurry/ios -ccopt -L../src/plugins/flurry ../src/plugins/flurry/flurry.cmxa \
 	  -ccopt -L../src/plugins/appflood/ios -ccopt -L../src/plugins/appflood ../src/plugins/appflood/appflood.cmxa\
 	  -ccopt -L../src/plugins/chartboost/ios -ccopt -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa\
+	  -ccopt -L../src/plugins/supersonic/ios -ccopt -L../src/plugins/supersonic ../src/plugins/supersonic/supersonic.cmxa\
 	  -ccopt -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa\
 	  -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa\
 	  -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \

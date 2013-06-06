@@ -11,5 +11,4 @@ void ml_chartBoostStartSession(value v_appId, value v_appSig) {
     [cb startSession];
 
 	started = 1;
-	NSLog(@"chartboost started");
 }
