@@ -53,4 +53,4 @@ class virtual c: [ float ] -> [ float ] ->
     method traceFPS: (int -> DisplayObject.c) -> unit;
   end;
 
-value instance: ref (option c);
+value instance: unit -> c;
