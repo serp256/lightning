@@ -1,6 +1,7 @@
 #include "plugin_common.h"
 
-static jstring appId = NULL;
+// static jstring appId = NULL;
+static int started = 0;
 static jclass flurryAgentCls = NULL;
 
 #define GET_FLURRY_AGENT														\
@@ -10,31 +11,28 @@ static jclass flurryAgentCls = NULL;
 		(*env)->DeleteLocalRef(env, tmp);										\
 	}
 
-void ml_flurryInit(value v_appId) {
-	GET_ENV;
-	MAKE_GLOB_JAVA_STRING(v_appId, appId);
-}
-
-void ml_flurryStartSession() {
-	if (!appId) caml_failwith("call Flurry.init with app id before starting session");
+void ml_flurryStartSession(value v_appId) {
+	if (started) return;
 
 	GET_ENV;
 	GET_FLURRY_AGENT;
-	GET_ACTIVITY;
 
 	static jmethodID mid = 0;
 	if (!mid) mid = (*env)->GetStaticMethodID(env, flurryAgentCls, "onStartSession", "(Landroid/content/Context;Ljava/lang/String;)V");
 
-	(*env)->CallStaticVoidMethod(env, flurryAgentCls, mid, activity, appId);
+	jstring j_appId = (*env)->NewStringUTF(env, String_val(v_appId));
+	(*env)->CallStaticVoidMethod(env, flurryAgentCls, mid, jActivity, j_appId);
+	(*env)->DeleteLocalRef(env, j_appId);
+	started = 1;
 }
 
 void ml_flurryEndSession() {
 	GET_ENV;
 	GET_FLURRY_AGENT;
-	GET_ACTIVITY;
 
 	static jmethodID mid = 0;
 	if (!mid) mid = (*env)->GetStaticMethodID(env, flurryAgentCls, "onEndSession", "(Landroid/content/Context;)V");
 
-	(*env)->CallStaticVoidMethod(env, flurryAgentCls, mid, activity);
+	(*env)->CallStaticVoidMethod(env, flurryAgentCls, mid, jActivity);
+	started = 0;
 }
