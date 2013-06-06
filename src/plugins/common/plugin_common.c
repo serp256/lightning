@@ -1,1 +1,0 @@
-static jobject activity = NULL;

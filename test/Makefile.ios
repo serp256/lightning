@@ -10,11 +10,16 @@ CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolch
 CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK)  -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=5.1 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT
 include Makefile.common
 
-MOBS = test_c_stub.o ios/AppDelegate.o ios/main.o 
+MOBS = ios/AppDelegate.o ios/main.o 
 CFLAGS += -I ../src/ios
 
 
 include Makefile.in
+
+res:
+	aresmkr -concat -i Resources -o ios/LightTest/assets
+	aresmkr -merge -o ios/LightTest/index ios/LightTest/assets
+	rm ios/LightTest/assets.index
 
 ios: $(TARGET).native
 	cp test.native ios/LightTestBin

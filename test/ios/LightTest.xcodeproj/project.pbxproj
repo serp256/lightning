@@ -41,8 +41,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		5106D8F517295F6700D03E1A /* assets */ = {isa = PBXFileReference; lastKnownFileType = file; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
-		5106D8F617295F6700D03E1A /* index */ = {isa = PBXFileReference; lastKnownFileType = file; name = index; path = LightTest/index; sourceTree = "<group>"; };
+		5106D8F517295F6700D03E1A /* assets */ = {isa = PBXFileReference; lastKnownFileType = text; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
+		5106D8F617295F6700D03E1A /* index */ = {isa = PBXFileReference; lastKnownFileType = text; name = index; path = LightTest/index; sourceTree = "<group>"; };
 		513A2814173937B000EE18A3 /* TapjoyResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = TapjoyResources.bundle; path = ../../src/plugins/tapjoy/ios/TapjoyResources.bundle; sourceTree = "<group>"; };
 		5181418116F6F61A009D7846 /* LightTestBin */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = LightTestBin; sourceTree = "<group>"; };
 		5181418416F6F699009D7846 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
@@ -115,11 +115,12 @@
 /* Begin PBXLegacyTarget section */
 		5181417A16F6F5B8009D7846 /* LightTestBin */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION)";
+			buildArgumentsString = "-C .. ios";
 			buildConfigurationList = 5181417B16F6F5B8009D7846 /* Build configuration list for PBXLegacyTarget "LightTestBin" */;
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "";
 			dependencies = (
 			);
 			name = LightTestBin;
@@ -223,7 +224,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
-				PATH = "/usr/local/ocaml/main/bin:$PATH";
+				PATH = "/usr/local/bin:/usr/local/ocaml/main/bin:$PATH";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -240,7 +241,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
-				PATH = "/usr/local/ocaml/main/bin:$PATH";
+				PATH = "/usr/local/bin:/usr/local/ocaml/main/bin:$PATH";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -306,13 +307,13 @@
 		51ABA24A16F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Sergey Plaksin (5ZR8R38XZE)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "F26B0B9F-73BF-448A-9D0C-878F70BAA76B";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "A76B6DD9-2076-499E-BB30-0ABAB6152113";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
