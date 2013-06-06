@@ -4,15 +4,7 @@ import ru.redspell.lightning.LightActivity;
 import com.chartboost.sdk.Chartboost;
 
 public class LightChartboost {
-	private static String appId;
-	private static String appSig;
-
-	public static void init(String _appId, String _appSig) {
-		appId = _appId;
-		appSig = _appSig;
-	}
-
-	public static void startSession() {
+	public static void startSession(final String appId, final String appSig) {
 		LightActivity.instance.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {

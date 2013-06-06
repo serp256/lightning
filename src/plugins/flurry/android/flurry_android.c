@@ -1,6 +1,6 @@
 #include "plugin_common.h"
 
-static int started = 0;
+
 static jclass flurryAgentCls = NULL;
 
 #define GET_FLURRY_AGENT														\
@@ -11,6 +11,7 @@ static jclass flurryAgentCls = NULL;
 	}
 
 void ml_flurryStartSession(value v_appId) {
+	static int started = 0;
 	if (started) return;
 
 	GET_ENV;

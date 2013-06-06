@@ -4,7 +4,7 @@ import ru.redspell.lightning.LightActivity;
 import com.supersonicads.sdk.android.SupersonicAdsPublisherAgent;
 
 public class LightSupersonic {
-	public static void showOfferts(String appKey, String appUid) {
+	public static void showOfferts(final String appKey, final String appUid) {
 		LightActivity.instance.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {

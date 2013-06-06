@@ -20,7 +20,7 @@ void ml_appfloodStartSession(value v_appKey, value v_secKey) {
 	(*env)->DeleteLocalRef(env, j_appKey);
 	(*env)->DeleteLocalRef(env, j_secKey);	
 
-	jmethodID mid = (*env)->GetStaticMethodID(env, appfloodCls, "startSession", "()V");
+	mid = (*env)->GetStaticMethodID(env, appfloodCls, "startSession", "()V");
 	(*env)->CallStaticVoidMethod(env, appfloodCls, mid);
 	started = 1;
 }
