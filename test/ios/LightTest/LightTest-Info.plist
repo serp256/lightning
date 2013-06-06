@@ -45,6 +45,8 @@
 	</array>
 	<key>FacebookAppID</key>
 	<string>453798714689190</string>
+	<key>UIStatusBarHidden</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
