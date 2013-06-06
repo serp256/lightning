@@ -1,6 +1,5 @@
 #include "plugin_common.h"
 
-// static jstring appId = NULL;
 static int started = 0;
 static jclass flurryAgentCls = NULL;
 
@@ -24,15 +23,4 @@ void ml_flurryStartSession(value v_appId) {
 	(*env)->CallStaticVoidMethod(env, flurryAgentCls, mid, jActivity, j_appId);
 	(*env)->DeleteLocalRef(env, j_appId);
 	started = 1;
-}
-
-void ml_flurryEndSession() {
-	GET_ENV;
-	GET_FLURRY_AGENT;
-
-	static jmethodID mid = 0;
-	if (!mid) mid = (*env)->GetStaticMethodID(env, flurryAgentCls, "onEndSession", "(Landroid/content/Context;)V");
-
-	(*env)->CallStaticVoidMethod(env, flurryAgentCls, mid, jActivity);
-	started = 0;
 }
