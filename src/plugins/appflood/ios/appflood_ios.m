@@ -3,7 +3,6 @@
 
 void ml_appfloodStartSession(value v_appKey, value v_secKey) {
 	static int started = 0;
-
 	if (started) return;
 
 	NSString* m_appKey = [NSString stringWithCString:String_val(v_appKey) encoding:NSASCIIStringEncoding];
