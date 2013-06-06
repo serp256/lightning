@@ -176,7 +176,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	}
 
 	public void onDownloadStateChanged(int newState) {
-		Log.d(LOG_TAG, "onDownloadStateChanged call");
+		Log.d(LOG_TAG, "onDownloadStateChanged call " + newState);
 
 		switch (newState) {
 			case IDownloaderClient.STATE_COMPLETED:
@@ -205,7 +205,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	}
 
 	public void onDownloadProgress(DownloadProgressInfo progress) {
-		Log.d(LOG_TAG, "onDownloadProgress call");
+		Log.d(LOG_TAG, "onDownloadProgress call " + progress.mOverallTotal + " " + progress.mOverallProgress + " " + progress.mTimeRemaining);
 		lightView.expansionsProgress(progress.mOverallTotal, progress.mOverallProgress, progress.mTimeRemaining);
 	}
 
@@ -288,5 +288,9 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	public void onConfigurationChanged(Configuration newConfig) {
 		Log.d("LIGHTNING", "onConfigurationChanged");
 		super.onConfigurationChanged(newConfig);
+	}
+
+	public static void enableLocalExpansions() {
+		com.google.android.vending.expansion.downloader.Constants.LOCAL_EXP_URL = "http://expansions.redspell.ru";
 	}
 }	

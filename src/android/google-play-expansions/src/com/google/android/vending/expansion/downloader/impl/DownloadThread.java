@@ -304,6 +304,7 @@ public class DownloadThread {
 
         processResponseHeaders(state, innerState, response);
         InputStream entityStream = openResponseEntity(state, response);
+
         mNotification.onDownloadStateChanged(IDownloaderClient.STATE_DOWNLOADING);
         transferData(state, innerState, data, entityStream);
     }
@@ -675,6 +676,9 @@ public class DownloadThread {
         header = response.getFirstHeader("Content-Type");
         if (header != null) {
             headerContentType = header.getValue();
+
+            Log.v(Constants.TAG, "headerContentType " + headerContentType);
+
             if (!headerContentType.equals("application/vnd.android.obb")) {
                 throw new StopRequest(DownloaderService.STATUS_FILE_DELIVERED_INCORRECTLY,
                         "file delivered with incorrect Mime type");
