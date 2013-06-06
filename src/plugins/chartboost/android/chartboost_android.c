@@ -2,7 +2,7 @@
 
 static jclass chartboostCls = NULL;
 
-#define GET_CLS GET_PLUGIN_CLASS(chartboostCls,ru/redspell/lightplugins/LightChartboost);
+#define GET_CLS GET_PLUGIN_CLASS(chartboostCls,ru/redspell/lightning/plugins/LightChartboost);
 
 void ml_chartBoostInit(value v_appId, value v_appSig) {
 	GET_ENV;

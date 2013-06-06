@@ -1,7 +1,7 @@
 include ../../../Makefile.common
 
 CFLAGS += -I . 
-#CFLAGS += -DLDEBUG
+CFLAGS += -DLDEBUG
 
 MLFLAGS += -package redspell.syntax.debug
 
@@ -11,7 +11,7 @@ MLFLAGS += -package redspell.syntax.debug
 MLSOURCES = SponsorPay.ml
 MLOBJSN = $(MLSOURCES:.ml=.cmx)
 MLOBJS = $(MLSOURCES:.ml=.cmo)
-#IFACES = $(MLSOURCES:.ml=.cmi)
+IFACES = $(MLSOURCES:.ml=.cmi)
 
 MLFLAGS += -I ..
 
@@ -28,7 +28,7 @@ LIBFLAGS = -cclib '-framework\ Foundation'
 else
 ifeq ($(PLATFORM),ANDROID)
 
-CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android
+CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android -I ../common
 COBJS   +=  android/spwrapper_android.o
 
 

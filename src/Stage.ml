@@ -51,7 +51,8 @@ exception Touch_not_found;
 
 value _screenSize = ref (0.,0.);
 value screenSize () = !_screenSize;
-value instance = ref None;
+value _instance = ref None;
+value instance () = match !_instance with [ Some s -> s | None -> failwith "Stage not created" ];
 
 value onBackground = ref None;
 value on_background () = 
@@ -62,7 +63,7 @@ value on_background () =
     | None -> ()
     ];
 
-    match !instance with
+    match !_instance with
     [ Some s -> s#cancelAllTouches ()
     | _ -> ()
     ];
@@ -95,6 +96,10 @@ class virtual c (_width:float) (_height:float) =
       self#setName "STAGE";
       setupOrthographicRendering 0. width height 0.;
       _screenSize.val := (width,height);
+      match !_instance with
+      [ None -> _instance.val := Some (self :> c)
+      | Some _ -> failwith "Stage alredy created"
+      ];
     );
     method cacheAsImage = False;
     method setCacheAsImage = raise Restricted_operation;

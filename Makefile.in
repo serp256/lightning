@@ -65,7 +65,7 @@ endif
 	                                                          src/plugins/appflood/*.cmi src/plugins/appflood/*.mli \
 	                                                          src/plugins/supersonic/*.cmi src/plugins/supersonic/*.mli \
 	                                                          src/plugins/mobileapptracking/*.cmi src/plugins/mobileapptracking/*.mli \
-	                                                          src/plugins/sponsorpay/*.cmi src/plugins/sponsorpay/*.mli \
+	                                                          src/plugins/sponsorpay/*.cmi \
 	                                                          src/social/oauth/*.cmi src/social/oauth/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
 
