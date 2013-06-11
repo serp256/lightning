@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		21123ABA1760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21123AB81760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib */; };
-		21123ABB1760B6D5006EAD57 /* SupersonicAdsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21123AB91760B6D5006EAD57 /* SupersonicAdsViewController.xib */; };
-		21FF095D1766FAC0000AEE5D /* x.png in Resources */ = {isa = PBXBuildFile; fileRef = 21FF095C1766FAC0000AEE5D /* x.png */; };
 		5106D8F717295F6700D03E1A /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F517295F6700D03E1A /* assets */; };
 		5106D8F817295F6700D03E1A /* index in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F617295F6700D03E1A /* index */; };
 		513A2815173937B000EE18A3 /* TapjoyResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 513A2814173937B000EE18A3 /* TapjoyResources.bundle */; };
@@ -44,9 +41,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		21123AB81760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = "SupersonicAdsViewController-iPad.xib"; path = "../../src/plugins/supersonic/ios/SupersonicAdsViewController-iPad.xib"; sourceTree = "<group>"; };
-		21123AB91760B6D5006EAD57 /* SupersonicAdsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = SupersonicAdsViewController.xib; path = ../../src/plugins/supersonic/ios/SupersonicAdsViewController.xib; sourceTree = "<group>"; };
-		21FF095C1766FAC0000AEE5D /* x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = x.png; path = ../../src/plugins/supersonic/ios/x.png; sourceTree = "<group>"; };
 		5106D8F517295F6700D03E1A /* assets */ = {isa = PBXFileReference; lastKnownFileType = text; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
 		5106D8F617295F6700D03E1A /* index */ = {isa = PBXFileReference; lastKnownFileType = text; name = index; path = LightTest/index; sourceTree = "<group>"; };
 		513A2814173937B000EE18A3 /* TapjoyResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = TapjoyResources.bundle; path = ../../src/plugins/tapjoy/ios/TapjoyResources.bundle; sourceTree = "<group>"; };
@@ -67,9 +61,6 @@
 		51ABA22316F6F4A100FC8928 = {
 			isa = PBXGroup;
 			children = (
-				21FF095C1766FAC0000AEE5D /* x.png */,
-				21123AB81760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib */,
-				21123AB91760B6D5006EAD57 /* SupersonicAdsViewController.xib */,
 				513A2814173937B000EE18A3 /* TapjoyResources.bundle */,
 				5106D8F517295F6700D03E1A /* assets */,
 				5106D8F617295F6700D03E1A /* index */,
@@ -195,9 +186,6 @@
 				5181418A16F6F6C2009D7846 /* Default.png in Resources */,
 				5181418B16F6F6C2009D7846 /* Default@2x.png in Resources */,
 				5181418516F6F699009D7846 /* InfoPlist.strings in Resources */,
-				21123ABA1760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib in Resources */,
-				21123ABB1760B6D5006EAD57 /* SupersonicAdsViewController.xib in Resources */,
-				21FF095D1766FAC0000AEE5D /* x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
