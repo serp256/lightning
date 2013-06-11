@@ -24,6 +24,7 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
 
 @implementation SPOfferWallViewController {
     BOOL _usingLegacyMode;
+    UIImageView* _closeCross;
 }
 
 #pragma mark - Deprecated initializers
@@ -87,14 +88,46 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
     [self startLoadingOfferWall];
 }
 
+- (void)alignCloseCross {
+    CGRect parentBnds = self.view.bounds;
+    CGRect crossBnds = _closeCross.bounds;    
+    _closeCross.frame = CGRectMake(CGRectGetWidth(parentBnds) - CGRectGetWidth(crossBnds) - 20, 20, CGRectGetWidth(crossBnds), CGRectGetHeight(crossBnds));
+}
+
+- (void)closeCrossTapped {    
+    [self animateLoadingViewOut];
+    [_closeCross removeFromSuperview];
+    // [_closeCross release];
+
+    [self dismissAnimated:YES];
+}
+
 - (void)startLoadingOfferWall
 {
     NSURL *offerWallURL = [self URLForOfferWall];
     
     [SPLogger log:@"SponsorPay Mobile Offer Wall will be requested using url: %@", offerWallURL];
 
+    NSBundle* bndl = [NSBundle mainBundle];
+    NSString* imgPath = [bndl pathForResource:@"x" ofType:@"png"];
+    UIImage* img = [UIImage imageWithContentsOfFile:imgPath];
+    _closeCross = [[UIImageView alloc] initWithImage:img];
+    [img release];
+
+    [self alignCloseCross];   
+    [self.view addSubview:_closeCross];
+
+    UITapGestureRecognizer *tapRcgnzr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(closeCrossTapped)];
+    [_closeCross addGestureRecognizer:tapRcgnzr];
+    [_closeCross setUserInteractionEnabled:YES];
+
     [self animateLoadingViewIn];
     [self loadURLInWebView:offerWallURL];
+}
+
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
+    [self alignCloseCross];
+    [super didRotateFromInterfaceOrientation:fromInterfaceOrientation];
 }
 
 - (NSURL *)URLForOfferWall
@@ -113,6 +146,8 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
 - (void)webViewDidFinishLoad
 {
     [self animateLoadingViewOut];
+    [_closeCross removeFromSuperview];
+    // [_closeCross release];
 }
 
 - (void)dismissAnimated:(BOOL)animated
