@@ -363,8 +363,7 @@ module FramebufferTexture = struct
       match binsLst with
       [ [] ->
         let tid = create_renderbuffer_tex () in
-        let bin = Bin.create renderbufferTexSize renderbufferTexSize in
-        let () = debug:newtex "new render texture" in (
+        let bin = Bin.create renderbufferTexSize renderbufferTexSize in (
           bins.val := [ (tid, bin) :: !bins ];
           (tid, Bin.add bin w h)
         )
@@ -372,11 +371,10 @@ module FramebufferTexture = struct
         try (tid, Bin.add bin w h)
         with
         [ Bin.CantPlace ->
-          let () = debug:newtex "trying to rapair bin %B" (Bin.needRepair bin) in
           if Bin.needRepair bin
           then (
             Bin.repair bin;
-            try (tid, Bin.add bin w h) with [ Bin.CantPlace -> let () = debug:newtex "fail" in findPos binsLst ]
+            try (tid, Bin.add bin w h) with [ Bin.CantPlace -> findPos binsLst ]
           )
           else findPos binsLst
         ]
@@ -384,13 +382,12 @@ module FramebufferTexture = struct
     in
       findPos !bins;
 
-  value getRect w h =
+  value getRect w h =    
     let (tid, pos) = findPos w h in
-    let () = debug:newtex "pos %s, texs num %d" (* (Int32.to_string (int32_of_textureID tid))  *)(Point.toString pos) (List.length !bins) in
+    let () = debug:texnum "texs num: %d" (List.length !bins) in
       (tid, pos);
 
   value freeRect tid x y =
-    let () = debug:newtex "freerect at %d %d" x y in
     let bin = List.assoc tid !bins in
       Bin.remove bin x y;
 end;
@@ -423,7 +420,6 @@ class c renderInfo =
       match released with
       [ False ->
         (
-          debug:release "render texture release";
           FramebufferTexture.freeRect renderInfo.rtextureID renderInfo.rx renderInfo.ry;
           released := True;
         )
