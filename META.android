@@ -40,12 +40,6 @@ package "mobileapptracking" (
 	archive(native)="mobileapptracking.cmxa"
 )
 
-package "facebook" (
-	description="Facebook API"
-	archive(byte) = "facebook.cma"
-	archive(native) = "facebook.cmxa"
-)
-
 package "sponsorpay" (
 	description="SponsorPay SDK"
 	archive(byte) = "sponsorpay.cma"
@@ -61,6 +55,12 @@ package "syntax" (
 		description = "Syntactic sugars make obj props for tween"
 		archive(syntax,preprocessor) = "pa_platform.cmo"
 	)
+)
+
+package "facebook" (
+  description="Facebook API"
+  archive(byte) = "facebook.cma"
+  archive(native) = "facebook.cmxa"
 )
 
 package "social" (
@@ -95,5 +95,4 @@ package "social" (
     archive(native) = "ok.cmx"
     requires = "lightning.social.oauth"
   )
-  
 )

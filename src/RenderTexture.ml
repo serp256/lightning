@@ -335,6 +335,7 @@ module FramebufferTexture = struct
                   bin.rects := [ placedRect :: bin.rects ];
 
                   debug "holes: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.holes));
+                  debug "rects: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.rects));
                   rectPos;
                 )            
           ];
@@ -362,7 +363,8 @@ module FramebufferTexture = struct
       match binsLst with
       [ [] ->
         let tid = create_renderbuffer_tex () in
-        let bin = Bin.create renderbufferTexSize renderbufferTexSize in (
+        let bin = Bin.create renderbufferTexSize renderbufferTexSize in
+        let () = debug:newtex "new render texture" in (
           bins.val := [ (tid, bin) :: !bins ];
           (tid, Bin.add bin w h)
         )
@@ -370,11 +372,11 @@ module FramebufferTexture = struct
         try (tid, Bin.add bin w h)
         with
         [ Bin.CantPlace ->
-          let () = debug:createtex "trying to rapair bin %B" (Bin.needRepair bin) in
+          let () = debug:newtex "trying to rapair bin %B" (Bin.needRepair bin) in
           if Bin.needRepair bin
           then (
             Bin.repair bin;
-            try (tid, Bin.add bin w h) with [ Bin.CantPlace -> let () = debug:createtex "fail" in findPos binsLst ]
+            try (tid, Bin.add bin w h) with [ Bin.CantPlace -> let () = debug:newtex "fail" in findPos binsLst ]
           )
           else findPos binsLst
         ]
@@ -384,11 +386,11 @@ module FramebufferTexture = struct
 
   value getRect w h =
     let (tid, pos) = findPos w h in
-    let () = debug:createtex "pos %s, texs num %d" (* (Int32.to_string (int32_of_textureID tid))  *)(Point.toString pos) (List.length !bins) in
+    let () = debug:newtex "pos %s, texs num %d" (* (Int32.to_string (int32_of_textureID tid))  *)(Point.toString pos) (List.length !bins) in
       (tid, pos);
 
   value freeRect tid x y =
-    let () = debug:createtex "freerect at %d %d" x y in
+    let () = debug:newtex "freerect at %d %d" x y in
     let bin = List.assoc tid !bins in
       Bin.remove bin x y;
 end;
@@ -421,6 +423,7 @@ class c renderInfo =
       match released with
       [ False ->
         (
+          debug:release "render texture release";
           FramebufferTexture.freeRect renderInfo.rtextureID renderInfo.rx renderInfo.ry;
           released := True;
         )
@@ -430,7 +433,6 @@ class c renderInfo =
     method draw ?clear ?width ?height (f:(framebuffer -> unit)) =      
       let (changed, w) = match width with [ Some width when ceil width <> renderInfo.rwidth -> (True, ceil width) | _ -> (False, renderInfo.rwidth) ] in
       let (changed, h) = match height with [ Some height when ceil height <> renderInfo.rheight -> (True, ceil height) | _ -> (changed, renderInfo.rheight) ] in
-      let () = debug:createtex "%B %f %f %f %f" changed w h renderInfo.rwidth renderInfo.rheight in
       let resized = 
         if changed
         then (
@@ -440,24 +442,15 @@ class c renderInfo =
           let new_tid = if tid = renderInfo.rtextureID then None else Some tid in
           let new_params = (FramebufferTexture.Point.x pos, FramebufferTexture.Point.y pos, w, h) in (
             renderbuffer_draw_to_texture ?clear ~new_params ?new_tid renderInfo f;
-            (* debug:createtex "tid: %s" (Int32.to_string (int32_of_textureID renderInfo.rtextureID)); *)
             True;
           );
         )
         else (
-          debug:createtex "before major";
-
-          Gc.major ();
-
-          match clear with [ Some (i, f) -> debug:createtex "clear %d %f" i f | _ -> debug:createtex "none" ];
-
-          renderbuffer_draw_to_texture ?clear renderInfo (* (fun fb -> (debug:createtex "renderbuffer_draw_to_texture func"; f fb; )()) *)f;
+          renderbuffer_draw_to_texture ?clear renderInfo f;
           False;
         )
       in (
-        debug:createtex "before renderers notify";
         Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
-        debug:createtex "after renderers notify";
         resized;
       );
 

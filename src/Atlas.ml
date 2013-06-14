@@ -18,11 +18,11 @@ external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynAr
       g_params: Filters.glow
     };
 
-DEFINE RENDER_QUADS(program,transform,color,alpha) =
-  let quads = None
-(*     if dirty 
+DEFINE RENDER_QUADS(program,transform,color,alpha) = 
+  let quads = 
+    if dirty 
     then (dirty := False; Some (children,color))
-    else None  *)
+    else None 
   in
   atlas_render atlas transform program alpha quads;
 
@@ -130,8 +130,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 let cm = Matrix.create ~translate:ip () in
                 let drawf fb =
                   (
-                    debug:drawf "atlas drawf";
-
                     Render.push_matrix cm;
   (*                   Render.clear 0 0.; *)
                     RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
@@ -145,7 +143,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 in
                 match (g_texture,g_image) with
                 [ (Some gtex,Some gimg) ->
-                  let () = debug:drawf "altas #draw" in
                   match gtex#draw ~clear:(0,0.) ~width:rw ~height:rh drawf with
                   [ True -> Render.Image.update gimg gtex#renderInfo False False
                   | False -> ()

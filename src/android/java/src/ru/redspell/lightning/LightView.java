@@ -870,12 +870,12 @@ public class LightView extends GLSurfaceView {
 	private class ExpansionsProgressCallbackRunnable implements Runnable {
 		private long total;
 		private long progress;
-		private long timeRamain;
+		private long timeRemain;
 
-		public ExpansionsProgressCallbackRunnable(long total, long progress, long timeRamain) {
+		public ExpansionsProgressCallbackRunnable(long total, long progress, long timeRemain) {
 			this.total = total;
 			this.progress = progress;
-			this.timeRamain = timeRamain;
+			this.timeRemain = timeRemain;
 		}
 
 		native public void run();
@@ -896,9 +896,9 @@ public class LightView extends GLSurfaceView {
 		queueEvent(new ExpansionsCompleteCallbackRunnable());
 	}
 
-	public void expansionsProgress(long total, long progress, long timeRamain) {
+	public void expansionsProgress(long total, long progress, long timeRemain) {
 		Log.d("LIGHTNING", "expansions progress");
-		queueEvent(new ExpansionsProgressCallbackRunnable(total, progress, timeRamain));
+		queueEvent(new ExpansionsProgressCallbackRunnable(total, progress, timeRemain));
 	}
 
 	public void expansionsError(String reason) {

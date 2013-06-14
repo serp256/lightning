@@ -289,4 +289,8 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		Log.d("LIGHTNING", "onConfigurationChanged");
 		super.onConfigurationChanged(newConfig);
 	}
+
+	public static void enableLocalExpansions() {
+		com.google.android.vending.expansion.downloader.Constants.LOCAL_EXP_URL = "http://expansions.redspell.ru";
+	}	
 }	

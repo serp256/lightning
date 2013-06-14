@@ -11,7 +11,7 @@ MLFLAGS += -package redspell.syntax.debug
 MLSOURCES = SponsorPay.ml
 MLOBJSN = $(MLSOURCES:.ml=.cmx)
 MLOBJS = $(MLSOURCES:.ml=.cmo)
-#IFACES = $(MLSOURCES:.ml=.cmi)
+IFACES = $(MLSOURCES:.ml=.cmi)
 
 MLFLAGS += -I ..
 

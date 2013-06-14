@@ -23,7 +23,9 @@ import java.io.File;
  * Contains the internal constants that are used in the download manager.
  * As a general rule, modifying these constants should be done with care.
  */
-public class Constants {    
+public class Constants {
+    public static String LOCAL_EXP_URL = null;
+
     /** Tag used for debugging/logging */
     public static final String TAG = "LVLDL";
 
@@ -100,7 +102,7 @@ public class Constants {
     public static final boolean LOGX = true;
 
     /** Enable verbose logging */
-    public static final boolean LOGV = false;
+    public static final boolean LOGV = true;
     
     /** Enable super-verbose logging */
     private static final boolean LOCAL_LOGVV = false;

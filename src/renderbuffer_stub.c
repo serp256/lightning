@@ -16,8 +16,11 @@ static int fbs_cnt = 0;
 static GLuint *fbfs = NULL;
 
 static GLuint getFbTexSize() {
-    static GLint size = 1024;
-    // if (!size) glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
+    static GLint size = 0;
+    if (!size) {
+    	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
+    	size /= 2;
+    }
 
     return size;
 }
@@ -214,7 +217,7 @@ static int FRAMEBUFFER_BIND_COUNTER = 0;
 void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 	PRINT_DEBUG("clear_renderbuffer call");
 
-	if (mlclear != Val_none) {
+	if (Is_block(mlclear)) {
 		PRINT_DEBUG("clear_renderbuffer mlclear != Val_none");
 		value ca = Field(mlclear,0);
 		int c = Int_val(Field(ca,0));
@@ -248,6 +251,7 @@ int create_renderbuffer(GLuint tid, int x, int y, double width, double height, r
 
     glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tid, 0);
 	FRAMEBUFFER_BIND_COUNTER++;
+	PRINT_DEBUG("tid %d", tid);
 	checkGLErrors("framebuffertexture2d %d -> %d",fbid, tid);
 
 	double texSize = (double)getFbTexSize();
@@ -310,7 +314,8 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 
 	CAMLparam5(filter, mlclear, tid, mlx, mly);
 	CAMLxparam3(mlwidth, mlheight, mlfun);
-	CAMLlocal3(renderInfo, clp, clip);
+	CAMLlocal4(renderInfo, clp, clip, kind);
+
 
 /*	GLenum fltr;
 	switch (Int_val(filter)) {
@@ -327,8 +332,6 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 	get_framebuffer_state(&fstate);
 	renderbuffer_t rb;
 
-	PRINT_DEBUG("check point 1");
-
 	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), Double_val(mlwidth), Double_val(mlheight), &rb)) {
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
@@ -343,28 +346,29 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 	clear_renderbuffer(&rb, mlclear);
 	caml_callback(mlfun,(value)&rb);
 
-
  	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 	renderbuffer_deactivate();
 
 	set_framebuffer_state(&fstate);
 	back_framebuffer(rb.fbid);
 
-	renderInfo = caml_alloc_tuple(7);
-
-	Store_field(renderInfo,0, tid);
-	Store_field(renderInfo,1, caml_copy_double(rb.width));
-	Store_field(renderInfo,2, caml_copy_double(rb.height));
 	clp = caml_alloc(4 * Double_wosize,Double_array_tag);
 	Store_double_field(clp,0,rb.clp.x);
 	Store_double_field(clp,1,rb.clp.y);
 	Store_double_field(clp,2,rb.clp.width);
 	Store_double_field(clp,3,rb.clp.height);
-	clip = caml_alloc_small(1,0);
+	clip = caml_alloc_tuple(1);
 	Store_field(clip,0,clp);
+
+	kind = caml_alloc_tuple(1);
+	Store_field(kind,0,Val_true);
+
+	renderInfo = caml_alloc_tuple(7);
+
+	Store_field(renderInfo,0, tid);
+	Store_field(renderInfo,1, caml_copy_double(rb.width));
+	Store_field(renderInfo,2, caml_copy_double(rb.height));
 	Store_field(renderInfo,3,clip);
-	value kind = caml_alloc_small(1,0);
-	Field(kind,0) = Val_true;
 	Store_field(renderInfo,4,kind);
 	Store_field(renderInfo,5,Val_int(rb.vp.x));
 	Store_field(renderInfo,6,Val_int(rb.vp.y));
@@ -378,16 +382,8 @@ value ml_renderbuffer_draw_byte(value * argv, int n) {
 }
 
 void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_tid, value renderInfo, value mlfun) {
-	PRINT_DEBUG("before gc 0");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 0");
-
 	CAMLparam5(mlclear, new_params, new_tid, renderInfo, mlfun);
 	CAMLlocal2(clp, clip);
-
-	PRINT_DEBUG("before gc 1");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 1");	
 
 	int x;
 	int y;
@@ -396,45 +392,26 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 	GLuint tid;
 	int resized = 0;
 
-	PRINT_DEBUG("before gc 2");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 2");	
-
-	if (new_params == Val_none) {
-		PRINT_DEBUG("old params");
-
-		x = Int_val(Field(renderInfo, 5));
-		y = Int_val(Field(renderInfo, 6));
-		w = Double_val(Field(renderInfo,1));
-		h = Double_val(Field(renderInfo,2));
-	} else {
-		PRINT_DEBUG("new params");
-
+	if (Is_block(new_params)) {
 		value _new_params = Field(new_params, 0);
 		x = Int_val(Field(_new_params, 0));
 		y = Int_val(Field(_new_params, 1));
 		w = Double_val(Field(_new_params, 2));
 		h = Double_val(Field(_new_params, 3));
 		resized = 1;
-	}
-
-	PRINT_DEBUG("before gc 3");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 3");	
-
-	if (new_tid == Val_none) {
-		PRINT_DEBUG("old tid");
-		tid = TEXTURE_ID(Field(renderInfo, 0));
 	} else {
-		PRINT_DEBUG("new tid");
-
-		tid = TEXTURE_ID(Field(new_tid, 0));
-		Store_field(renderInfo, 0, Field(new_tid, 0));
+		x = Int_val(Field(renderInfo, 5));
+		y = Int_val(Field(renderInfo, 6));
+		w = Double_val(Field(renderInfo,1));
+		h = Double_val(Field(renderInfo,2));
 	}
 
-	PRINT_DEBUG("before gc 4");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 4");	
+	if (Is_block(new_tid)) {
+		tid = TEXTURE_ID(Field(new_tid, 0));
+		Store_field(renderInfo, 0, Field(new_tid, 0));		
+	} else {
+		tid = TEXTURE_ID(Field(renderInfo, 0));
+	}
 
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -447,10 +424,6 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 		set_framebuffer_state(&fstate);
 		caml_failwith(emsg);
 	};
-
-	PRINT_DEBUG("before gc 5");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 5");	
 
 	if (resized) {
 		Store_field(renderInfo,1, caml_copy_double(w));
@@ -468,31 +441,28 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 		Store_field(renderInfo,3,clip);
 	}
 
-	PRINT_DEBUG("before gc 6");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 6");	
-
+	lgResetBoundTextures();
+	checkGLErrors("renderbuffer create");
 	renderbuffer_activate(&rb);
 
 	clear_renderbuffer(&rb, mlclear);
 	caml_callback(mlfun,(value)&rb);
 
-	PRINT_DEBUG("before gc 7");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 7");	
+/*	//------------------
+	char* pixels = caml_stat_alloc(4 * 2048 * 2048);
+	char* fname = "/tmp/pizda.png";
+	glReadPixels(0,0,2048,2048,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,2048,2048);
+	//------------------	*/
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D, 0, 0);
 	set_framebuffer_state(&fstate);
 	renderbuffer_deactivate();
 	back_framebuffer(rb.fbid);
 
-	PRINT_DEBUG("before gc 8");
-	caml_gc_major(0);
-	PRINT_DEBUG("after gc 8");	
-
 	checkGLErrors("finish render to texture");
 
-	PRINT_DEBUG("ml_renderbuffer_draw_to_texture end");
+	CAMLreturn0;
 }
 
 value ml_renderbuffer_data(value renderInfo) {

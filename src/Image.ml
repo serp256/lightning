@@ -279,8 +279,6 @@ class _c  _texture =
           let image = Render.Image.create renderInfo `NoColor 1. in
           let drawf fb =
             (
-              debug:drawf "image drawf";
-
               Render.Image.render cm g_make_program image; 
               match glow.Filters.glowKind with
               [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
@@ -302,7 +300,6 @@ class _c  _texture =
               gf.g_texture := Some tex;
             )
           | (Some gtex,Some gimg) ->
-              let () = debug:drawf "image #draw" in
               match gtex#draw ~clear:(0,0.) ~width:rw ~height:rh drawf with
               [ True -> 
                 let () = debug:glow "texture resized" in
@@ -501,9 +498,9 @@ class c texture =
 value cast: #D.c -> option c = fun x -> try Some (memo#find x) with [ Not_found -> None ];
 *)
 
-value load ?filter path =
+value load ?filter path = 
   let texture = Texture.load ?filter path in
-    new c texture;
+  new c texture;
 
 value load_async path ?filter ?ecallback callback = Texture.load_async path ?filter ?ecallback (fun texture -> callback (new c texture));
 

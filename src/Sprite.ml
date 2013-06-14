@@ -112,9 +112,8 @@ class c =
                  self#setAlpha 1.;
                  draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
                    (
-                      debug:drawf "sprite drawf";
                      Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
-                     Render.clear 0 0.;
+                     (* Render.clear 0 0.; *)
                      super#render' ~transform:False None;
                      Render.restore_matrix ();
                    )
@@ -137,7 +136,7 @@ class c =
                      let ctex = RenderTexture.draw ~filter:Texture.FilterNearest rw rh begin fun _ ->
                        (
                          Render.push_matrix m;
-                         Render.clear 0 0.;
+                         (* Render.clear 0 0.; *)
                          super#render' ~transform:False None;
                          Render.restore_matrix ();
                        )
@@ -152,7 +151,7 @@ class c =
                    let cimg = Render.Image.create ctex#renderInfo ~color:`NoColor ~alpha:1. in
                    draw_texture rw rh begin fun fb ->
                      (
-                       Render.clear 0 0.;
+                       (* Render.clear 0 0.; *)
                        Render.Image.render Matrix.identity (GLPrograms.Image.Normal.create ()) cimg;
                        match glow.Filters.glowKind with
                        [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
@@ -172,7 +171,7 @@ class c =
     | _ -> ()
     ];
 
-    method setFilters fltrs = 
+    method setFilters fltrs =
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
       (
         filters := fltrs;

@@ -470,7 +470,6 @@ void ml_glow2_make(value orb,value glow) {
 }
 
 static void inline glow_make_draw(viewport *vp,clipping *clp, int clear) {
-	// fprintf(stderr,"glow_make_draw: [%d:%d:%d:%d] [%f:%f:%f:%f]\n",vp->x,vp->y,vp->w,vp->h,clp->x,clp->y,clp->width,clp->height);
 	glViewport(vp->x,vp->y,vp->w,vp->h);
 	if (clear) glClear(GL_COLOR_BUFFER_BIT);
 
@@ -559,13 +558,13 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 	glow_make_draw(vp, clp, 1);
 	*prev_glow_lev_tex = txrs[tw][th];
 
-	//------------------
-/*	char* pixels = caml_stat_alloc(4 * (GLuint)w * (GLuint)h);
+/*	//------------------
+	char* pixels = caml_stat_alloc(4 * (GLuint)w * (GLuint)h);
 	char* fname = malloc(255);
 	sprintf(fname, "/tmp/pizda%d.png", save_tex_cnt++);
 	glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,w,h);*/
-	//------------------
+	save_png_image(caml_copy_string(fname),pixels,w,h);
+	//------------------*/
 }
 
 #define VP_FOR_CUR_GLOW_LEVEL vp.x = 0; vp.y = 0; vp.w = glow_lev_w; vp.h = glow_lev_h;
@@ -610,15 +609,6 @@ void ml_glow_make(value orb, value glow) {
 	clipping fst_scalein_clp = { (GLfloat)vp.x / glow_lev_w, (GLfloat)vp.y / glow_lev_h, (GLfloat)fst_scalein_w / glow_lev_w, (GLfloat)fst_scalein_h / glow_lev_h };
 	clipping full_clp = { 0., 0., 1., 1. };
 
-	//------------
-/*	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
-	char* pixels = caml_stat_alloc(4 * (GLuint)RENDERBUFFER_TEX_SIZE * (GLuint)RENDERBUFFER_TEX_SIZE);
-	char* fname = malloc(255);
-	sprintf(fname, "/tmp/xyu.png");
-	glReadPixels(0,0,RENDERBUFFER_TEX_SIZE,RENDERBUFFER_TEX_SIZE,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,RENDERBUFFER_TEX_SIZE,RENDERBUFFER_TEX_SIZE);	*/
-	//------------
-
 
 	draw_glow_level(glow_lev_w, glow_lev_h, bfrs[0], &prev_glow_lev_tex, &vp, &rb->clp, 1);
 	GLuint fst_scalein_tex_id = prev_glow_lev_tex;
@@ -654,6 +644,15 @@ void ml_glow_make(value orb, value glow) {
 	PRINT_DEBUG("!!fst_scalein_tex_id %d", fst_scalein_tex_id);
 
 	glow_make_draw(&rb->vp, &fst_scalein_clp, 0);
+
+/*	//------------
+	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
+	char* pixels = caml_stat_alloc(4 * (GLuint)1024 * (GLuint)1024);
+	char* fname = malloc(255);
+	sprintf(fname, "/tmp/xyu%02d.png", save_tex_cnt++);
+	glReadPixels(0,0,1024,1024,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,1024,1024);	
+	//------------*/
 
 	glBindTexture(GL_TEXTURE_2D,0);
 	glUseProgram(0);
