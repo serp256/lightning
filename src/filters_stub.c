@@ -526,10 +526,6 @@ static inline GLuint powS( GLuint l )
 static save_tex_cnt = 0;
 
 void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_lev_tex, viewport* vp, clipping* clp, int bind) {
-	PRINT_DEBUG("draw_glow_level w:%d h:%d fid:%d tid:%d", w, h, frm_buf_id, *prev_glow_lev_tex);
-	PRINT_DEBUG("vp [%d,%d,%d,%d]", vp->x, vp->y, vp->w, vp->h);
-	PRINT_DEBUG("clp [%f,%f,%f,%f]", clp->x, clp->y, clp->width, clp->height);
-
 	int tw = powS(w);
 	int th = powS(h);
 
@@ -558,16 +554,14 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 	glow_make_draw(vp, clp, 1);
 	*prev_glow_lev_tex = txrs[tw][th];
 
-	//------------------
+/*	//------------------
 	char* pixels = caml_stat_alloc(4 * (GLuint)w * (GLuint)h);
 	char* fname = malloc(255);
 	sprintf(fname, "/sdcard/pizda%03d.png", save_tex_cnt++);
 	glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 	save_png_image(caml_copy_string(fname),pixels,w,h);
-	//------------------
+	//------------------*/
 }
-
-// #define VP_FOR_CUR_GLOW_LEVEL vp.x = 0; vp.y = 0; vp.w = glow_lev_w; vp.h = glow_lev_h;
 
 void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
@@ -597,61 +591,43 @@ void ml_glow_make(value orb, value glow) {
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
-	GLuint glow_lev_w = w / 2;
-	GLuint glow_lev_h = h / 2;
-	GLuint correct_lev_w = nextPOT(glow_lev_w);
-	GLuint correct_lev_h = nextPOT(glow_lev_h);
-	TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
-
-	PRINT_DEBUG("correct %d %d %d %d", glow_lev_w, glow_lev_h, correct_lev_w, correct_lev_h);
-
+	GLuint glow_lev_w = w;
+	GLuint glow_lev_h = h;
+	GLuint correct_lev_w;
+	GLuint correct_lev_h;
 	GLuint prev_glow_lev_tex = rb->tid;
 
-	viewport vp = { (correct_lev_w - glow_lev_w) / 2, (correct_lev_h - glow_lev_h) / 2, glow_lev_w, glow_lev_h };
+	GLuint fst_scalein_tex_id = 0;
+	viewport* vp;
+	clipping* clp = &rb->clp;
 	viewport vps[gsize];
-	vps[0] = vp;
-
-	draw_glow_level(correct_lev_w, correct_lev_h, bfrs[0], &prev_glow_lev_tex, &vp, &rb->clp, 1);
-	GLuint fst_scalein_tex_id = prev_glow_lev_tex;
-
-	clipping clp = { (GLfloat)vp.x / correct_lev_w, (GLfloat)vp.y / correct_lev_h, (GLfloat)glow_lev_w / correct_lev_w, (GLfloat)glow_lev_h / correct_lev_h };
 	clipping clps[gsize];
-	clps[0] = clp;	
 
-	for (i = 1; i < gsize; i++) {
-		PRINT_DEBUG("drawing UP level %d", i);
+	for (i = 0; i < gsize; i++) {
 		glow_lev_w /= 2;
 		glow_lev_h /= 2;
 		correct_lev_w = nextPOT(glow_lev_w);
 		correct_lev_h = nextPOT(glow_lev_h);
 		TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
 
-		PRINT_DEBUG("correct %d %d %d %d", glow_lev_w, glow_lev_h, correct_lev_w, correct_lev_h);
+		vp = &vps[i];
+		vp->x = (correct_lev_w - glow_lev_w) / 2; vp->y = (correct_lev_h - glow_lev_h) / 2; vp->w = glow_lev_w; vp->h = glow_lev_h;
 
-		vp = vps[i];
-		vp.x = (correct_lev_w - glow_lev_w) / 2; vp.y = (correct_lev_h - glow_lev_h) / 2; vp.w = glow_lev_w; vp.h = glow_lev_h;
-
-		draw_glow_level(correct_lev_w, correct_lev_h, bfrs[i], &prev_glow_lev_tex, &vp, &clp, 1);
+		draw_glow_level(correct_lev_w, correct_lev_h, bfrs[i], &prev_glow_lev_tex, vp, clp, 1);
+		if (!fst_scalein_tex_id) fst_scalein_tex_id = prev_glow_lev_tex;
 		
-		clp = clps[i];
-		clp.x = (GLfloat)vp.x / correct_lev_w; clp.y = (GLfloat)vp.y / correct_lev_h; clp.width = (GLfloat)glow_lev_w / correct_lev_w; clp.height = (GLfloat)glow_lev_h / correct_lev_h;
-		PRINT_DEBUG("!!!!!!!!!!!!!!!clp [%f,%f,%f,%f]", clp.x, clp.y, clp.width, clp.height);
+		clp = &clps[i];
+		clp->x = (GLfloat)vp->x / correct_lev_w; clp->y = (GLfloat)vp->y / correct_lev_h; clp->width = (GLfloat)glow_lev_w / correct_lev_w; clp->height = (GLfloat)glow_lev_h / correct_lev_h;
 	}
 
 	for (i = gsize - 1; i > 0; i--) {
-		PRINT_DEBUG("drawing down level %d", i);
 		glow_lev_w *= 2;
 		glow_lev_h *= 2;
 		correct_lev_w = nextPOT(glow_lev_w);
 		correct_lev_h = nextPOT(glow_lev_h);
 		TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
-
-		PRINT_DEBUG("correct %d %d %d %d", glow_lev_w, glow_lev_h, correct_lev_w, correct_lev_h);
-
 		draw_glow_level(correct_lev_w, correct_lev_h, bfrs[i - 1], &prev_glow_lev_tex, &vps[i - 1], &clps[i], 0);
 	}
-
-	PRINT_DEBUG("checkpoint0");
 
 	glEnable(GL_BLEND);
 	setNotPMAGLBlend (); // WARNING - ensure what separate blend enabled
@@ -660,9 +636,7 @@ void ml_glow_make(value orb, value glow) {
 	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
 	glBindTexture(GL_TEXTURE_2D, fst_scalein_tex_id);
 
-	glow_make_draw(&rb->vp, &clp, 0);
-
-	PRINT_DEBUG("checkpoint1");
+	glow_make_draw(&rb->vp, clps, 0);
 
 /*	//------------
 	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
