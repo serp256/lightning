@@ -1,2 +1,1 @@
-value init: ~appId:string -> ~appSig:string -> unit -> unit;
-value startSession: unit -> unit;
+value startSession: ~appId:string -> ~appSig:string -> unit -> unit;

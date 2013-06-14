@@ -443,8 +443,6 @@ public class LightView extends GLSurfaceView {
 
 	@Override
 	public void queueEvent(Runnable r) {
-		Log.d("LIGHTNING", "queueEvent Runnable " + (r == null ? "null" : "not null"));
-
 		if (paused) waitingEvents.add(r);
 		else super.queueEvent(r);
 	}

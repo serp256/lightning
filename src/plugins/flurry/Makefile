@@ -14,6 +14,14 @@ COBJS  += android/flurry_android.o
 
 endif
 
+ifeq ($(PLATFORM),IOS)
+
+CFLAGS += -I ./ios
+COBJS += ios/flurry_ios.o
+LIBFLAGS += -lflurry-sdk
+
+endif
+
 
 ifeq ($(PLATFORM),PC)
 
@@ -32,8 +40,6 @@ flurry.cma: $(IFACES) $(MOBJS) $(CLOBJS)
 		$(OCAMLMKLIB) -verbose -o flurry $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
 endif
-
-
 
 
 clean: 

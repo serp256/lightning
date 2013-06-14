@@ -1,4 +1,4 @@
-package ru.redspell.lightplugins;
+package ru.redspell.lightning.plugins;
 
 import ru.redspell.lightning.LightActivity;
 import com.appflood.AppFlood;

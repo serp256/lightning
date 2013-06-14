@@ -8,9 +8,25 @@ IFACES = $(MLSOURCES:.ml=.cmi)
 MLPPOPT += ../../syntax/pa_platform.cmo
 
 ifeq ($(PLATFORM),ANDROID)
-
 CFLAGS += -DANDROID -DLDEBUG -I../../ -I../../android -I./android -I../common
 COBJS  += android/appflood_android.o
+endif
+
+ifeq ($(PLATFORM),IOS)
+CFLAGS += -I ./ios
+COBJS += ios/appflood_ios.o
+LIBFLAGS += -lappflood-sdk
+endif
+
+ifeq ($(PLATFORM),PC)
+
+appflood.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o appflood.cmxa $(MLOBJSN)
+
+appflood.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o appflood.cma $(MLOBJS)
+
+else
 
 appflood.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 		$(OCAMLMKLIB) -verbose -o appflood $(COBJS) $(MLOBJSN) $(LIBFLAGS) 
@@ -18,13 +34,6 @@ appflood.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 appflood.cma: $(IFACES) $(MOBJS) $(CLOBJS)
 		$(OCAMLMKLIB) -verbose -o appflood $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
-else
-
-appflood.cmxa: $(IFACES) $(MLOBJSN)
-	$(OCAMLOPT) -a -o appflood.cmxa $(MLOBJSN)
-
-appflood.cma: $(IFACES) $(MLOBJS)
-	$(OCAMLC) -a -o appflood.cma $(MLOBJS)
 endif
 
 clean: 

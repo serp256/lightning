@@ -34,6 +34,9 @@
           </intent-filter>
         </receiver>
 
+    <service android:name="ru.redspell.lightning.expansions.LightExpansionsDownloadService"/>
+    <receiver android:name="ru.redspell.lightning.expansions.LightExpansionsAlarmReceiver"/>
+
 			<!--service android:name="ru.redspell.lightning.payments.BillingService" /-->
 			<!--activity android:name="com.mopub.mobileads.MoPubActivity" android:configChanges="keyboardHidden"/>
 			<activity android:name="com.mopub.mobileads.MraidActivity" android:configChanges="keyboardHidden|orientation"/>

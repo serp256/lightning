@@ -1,7 +1,5 @@
-IFPLATFORM(android)
-external init: ~appKey:string -> ~appUid:string -> unit -> unit = "ml_supersonicInit";
-external showOffers: unit -> unit = "ml_supersonicShowOffers";
+IFPLATFORM(android ios)
+external showOffers: ~appKey:string -> ~appUid:string -> unit -> unit = "ml_supersonicShowOffers";
 ELSE
-value init ~appKey:string ~appUid:string () = ();
-value showOffers () = ();
+value showOffers ~appKey:string ~appUid:string () = ();
 ENDPLATFORM;

@@ -70,12 +70,7 @@ value init s =
 value stage_create width height = 
   match _stage.val with
   [ None -> failwith "Stage not initialized"
-  | Some stage ->
-    let s = stage width height in
-    (
-      Stage.instance.val := Some s;
-      s;
-    )
+  | Some stage -> stage width height 
   ];
 
 IFDEF ANDROID THEN (* for link mlwrapper_android *)

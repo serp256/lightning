@@ -2,9 +2,12 @@
 
 static jclass appfloodCls = NULL;
 
-#define GET_CLS GET_PLUGIN_CLASS(appfloodCls,ru/redspell/lightplugins/LightAppflood);
+#define GET_CLS GET_PLUGIN_CLASS(appfloodCls,ru/redspell/lightning/plugins/LightAppflood);
 
-void ml_appfloodInit(value v_appKey, value v_secKey) {
+void ml_appfloodStartSession(value v_appKey, value v_secKey) {
+	static int started = 0;
+	if (started) return;
+
 	GET_ENV;
 	GET_CLS;
 
@@ -16,12 +19,8 @@ void ml_appfloodInit(value v_appKey, value v_secKey) {
 
 	(*env)->DeleteLocalRef(env, j_appKey);
 	(*env)->DeleteLocalRef(env, j_secKey);	
-}
 
-void ml_appfloodStartSession() {
-	GET_ENV;
-	GET_CLS;
-
-	jmethodID mid = (*env)->GetStaticMethodID(env, appfloodCls, "startSession", "()V");
+	mid = (*env)->GetStaticMethodID(env, appfloodCls, "startSession", "()V");
 	(*env)->CallStaticVoidMethod(env, appfloodCls, mid);
+	started = 1;
 }
