@@ -557,7 +557,7 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 /*	//------------------
 	char* pixels = caml_stat_alloc(4 * (GLuint)w * (GLuint)h);
 	char* fname = malloc(255);
-	sprintf(fname, "/sdcard/pizda%03d.png", save_tex_cnt++);
+	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
 	glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 	save_png_image(caml_copy_string(fname),pixels,w,h);
 	//------------------*/
@@ -567,8 +567,15 @@ void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
 	if (gsize == 0) return ;
 	renderbuffer_t *rb = (renderbuffer_t *)orb;
+	PRINT_DEBUG("save_tex_cnt %d", save_tex_cnt);
 	PRINT_DEBUG("glow make for %d:%d, [%f:%f] [%d:%d]",rb->fbid,rb->tid,rb->width,rb->height,rb->realWidth,rb->realHeight);
 
+/*	char* pixels = caml_stat_alloc(4 * (GLuint)512 * (GLuint)512);
+	char* fname = malloc(255);
+	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
+	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,512,512);
+*/
 	lgResetBoundTextures();
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -586,16 +593,20 @@ void ml_glow_make(value orb, value glow) {
 	}
 
 	int i;
-	GLuint w = rb->realWidth;
-	GLuint h = rb->realHeight;
+/*	GLuint w = rb->realWidth;
+	GLuint h = rb->realHeight;*/
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
-	GLuint glow_lev_w = w;
-	GLuint glow_lev_h = h;
+	float glow_lev_w = rb->width;
+	float glow_lev_h = rb->height;
+	int iglow_lev_w;
+	int iglow_lev_h;
 	GLuint correct_lev_w;
 	GLuint correct_lev_h;
 	GLuint prev_glow_lev_tex = rb->tid;
+
+	PRINT_DEBUG("!!!!!! %d, vp: [%d, %d, %d, %d] clp: [%f, %f, %f, %f]", rb->tid, rb->vp.x, rb->vp.y, rb->vp.w, rb->vp.h, rb->clp.x, rb->clp.y, rb->clp.width, rb->clp.height);
 
 	GLuint fst_scalein_tex_id = 0;
 	viewport* vp;
@@ -603,28 +614,40 @@ void ml_glow_make(value orb, value glow) {
 	viewport vps[gsize];
 	clipping clps[gsize];
 
-	for (i = 0; i < gsize; i++) {
+	for (i = 0; i < gsize; i++) {		
 		glow_lev_w /= 2;
 		glow_lev_h /= 2;
-		correct_lev_w = nextPOT(glow_lev_w);
-		correct_lev_h = nextPOT(glow_lev_h);
+
+		iglow_lev_w = (int)ceil(glow_lev_w);
+		iglow_lev_h = (int)ceil(glow_lev_h);
+
+		PRINT_DEBUG("glow_lev_w %f, glow_lev_h %f", glow_lev_w, glow_lev_h);
+		correct_lev_w = nextPOT(iglow_lev_w);
+		correct_lev_h = nextPOT(iglow_lev_w);
+		PRINT_DEBUG("correct_lev_w %d, correct_lev_h %d", correct_lev_w, correct_lev_h);
 		TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
 
 		vp = &vps[i];
-		vp->x = (correct_lev_w - glow_lev_w) / 2; vp->y = (correct_lev_h - glow_lev_h) / 2; vp->w = glow_lev_w; vp->h = glow_lev_h;
+		vp->x = (correct_lev_w - iglow_lev_w) / 2; vp->y = (correct_lev_h - iglow_lev_h) / 2; vp->w = iglow_lev_w; vp->h = iglow_lev_h;
 
 		draw_glow_level(correct_lev_w, correct_lev_h, bfrs[i], &prev_glow_lev_tex, vp, clp, 1);
 		if (!fst_scalein_tex_id) fst_scalein_tex_id = prev_glow_lev_tex;
 		
 		clp = &clps[i];
-		clp->x = (GLfloat)vp->x / correct_lev_w; clp->y = (GLfloat)vp->y / correct_lev_h; clp->width = (GLfloat)glow_lev_w / correct_lev_w; clp->height = (GLfloat)glow_lev_h / correct_lev_h;
+		clp->x = (GLfloat)vp->x / correct_lev_w; clp->y = (GLfloat)vp->y / correct_lev_h; clp->width = (GLfloat)iglow_lev_w / correct_lev_w; clp->height = (GLfloat)iglow_lev_h / correct_lev_h;
 	}
 
 	for (i = gsize - 1; i > 0; i--) {
 		glow_lev_w *= 2;
 		glow_lev_h *= 2;
-		correct_lev_w = nextPOT(glow_lev_w);
-		correct_lev_h = nextPOT(glow_lev_h);
+
+		iglow_lev_w = (int)ceil(glow_lev_w);
+		iglow_lev_h = (int)ceil(glow_lev_h);
+
+		PRINT_DEBUG("glow_lev_w %f, glow_lev_h %f", glow_lev_w, glow_lev_h);
+		correct_lev_w = nextPOT(iglow_lev_w);
+		correct_lev_h = nextPOT(iglow_lev_w);
+		PRINT_DEBUG("correct_lev_w %d, correct_lev_h %d", correct_lev_w, correct_lev_h);
 		TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
 		draw_glow_level(correct_lev_w, correct_lev_h, bfrs[i - 1], &prev_glow_lev_tex, &vps[i - 1], &clps[i], 0);
 	}
@@ -640,11 +663,11 @@ void ml_glow_make(value orb, value glow) {
 
 /*	//------------
 	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
-	char* pixels = caml_stat_alloc(4 * (GLuint)1024 * (GLuint)1024);
-	char* fname = malloc(255);
-	sprintf(fname, "/tmp/xyu%02d.png", save_tex_cnt++);
-	glReadPixels(0,0,1024,1024,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,1024,1024);	
+	pixels = caml_stat_alloc(4 * (GLuint)512 * (GLuint)512);
+	fname = malloc(255);
+	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
+	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,512,512);	
 	//------------*/
 
 	glBindTexture(GL_TEXTURE_2D,0);

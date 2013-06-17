@@ -2,6 +2,7 @@ open LightCommon;
 
 module D = DisplayObject;
 
+value pizdalala = ref 0;
 
 type cache_valid = [ CInvalid | CEmpty | CValid ];
 type imageCache = 
@@ -112,6 +113,7 @@ class c =
                  self#setAlpha 1.;
                  draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
                    (
+                    debug:drawf "sprite none glow drawf";
                      Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
                      (* Render.clear 0 0.; *)
                      super#render' ~transform:False None;
@@ -134,7 +136,7 @@ class c =
                    (
                      self#setAlpha 1.;
                      let ctex = RenderTexture.draw ~filter:Texture.FilterNearest rw rh begin fun _ ->
-                       (
+                       (                        
                          Render.push_matrix m;
                          (* Render.clear 0 0.; *)
                          super#render' ~transform:False None;
@@ -143,7 +145,10 @@ class c =
                      end in
                      (
                        self#setAlpha alpha';
-                       ctex
+                       debug:drawf "!!!!!!%d %f %f" !pizdalala rw rh;
+                       ignore(ctex#save (Printf.sprintf "/sdcard/pizdalala%d.png" !pizdalala));
+                       incr pizdalala;
+                       ctex;
                      )
                    )
                  in
@@ -151,6 +156,7 @@ class c =
                    let cimg = Render.Image.create ctex#renderInfo ~color:`NoColor ~alpha:1. in
                    draw_texture rw rh begin fun fb ->
                      (
+                      debug:drawf "sprite some glow drawf";
                        (* Render.clear 0 0.; *)
                        Render.Image.render Matrix.identity (GLPrograms.Image.Normal.create ()) cimg;
                        match glow.Filters.glowKind with

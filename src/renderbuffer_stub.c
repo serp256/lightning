@@ -19,7 +19,7 @@ static GLuint getFbTexSize() {
     static GLint size = 0;
     if (!size) {
     	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
-    	size /= 2;
+    	size = size / 4;
     }
 
     return size;
@@ -249,7 +249,7 @@ int create_renderbuffer(GLuint tid, int x, int y, double width, double height, r
     glBindFramebuffer(GL_FRAMEBUFFER, fbid);
 	checkGLErrors("bind framebuffer %d",fbid);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tid, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tid, 0);    
 	FRAMEBUFFER_BIND_COUNTER++;
 	PRINT_DEBUG("tid %d", tid);
 	checkGLErrors("framebuffertexture2d %d -> %d",fbid, tid);
@@ -309,6 +309,8 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 	back_framebuffer(rb->fbid);
 }
 
+static int pizdalala = 0;
+
 value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, value mly, value mlwidth, value mlheight, value mlfun) {
 	PRINT_DEBUG("ml_renderbuffer_draw CALL");
 
@@ -345,6 +347,15 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 
 	clear_renderbuffer(&rb, mlclear);
 	caml_callback(mlfun,(value)&rb);
+
+/*	//------------
+	// glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
+	char* pixels = caml_stat_alloc(4 * (GLuint)512 * (GLuint)512);
+	char* fname = malloc(255);
+	sprintf(fname, "/sdcard/xyu_%d_%03d.png", TEXTURE_ID(tid), pizdalala++);
+	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,512,512);	
+	//------------*/
 
  	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 	renderbuffer_deactivate();
@@ -448,12 +459,14 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 	clear_renderbuffer(&rb, mlclear);
 	caml_callback(mlfun,(value)&rb);
 
-/*	//------------------
-	char* pixels = caml_stat_alloc(4 * 2048 * 2048);
-	char* fname = "/tmp/pizda.png";
-	glReadPixels(0,0,2048,2048,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,2048,2048);
-	//------------------	*/
+/*	//------------
+	// glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
+	char* pixels = caml_stat_alloc(4 * (GLuint)512 * (GLuint)512);
+	char* fname = malloc(255);
+	sprintf(fname, "/sdcard/xyu_%d_%03d.png", TEXTURE_ID(tid), pizdalala++);
+	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,512,512);	
+	//------------*/
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D, 0, 0);
 	set_framebuffer_state(&fstate);

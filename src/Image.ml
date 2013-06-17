@@ -279,6 +279,7 @@ class _c  _texture =
           let image = Render.Image.create renderInfo `NoColor 1. in
           let drawf fb =
             (
+              debug:drawf "image drawf";
               Render.Image.render cm g_make_program image; 
               match glow.Filters.glowKind with
               [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow

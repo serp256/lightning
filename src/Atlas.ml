@@ -130,6 +130,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 let cm = Matrix.create ~translate:ip () in
                 let drawf fb =
                   (
+                    debug:drawf "atlas drawf";
                     Render.push_matrix cm;
   (*                   Render.clear 0 0.; *)
                     RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);

@@ -141,10 +141,11 @@ module FramebufferTexture = struct
         height: int;
         holes: mutable list Rectangle.t;
         rects: mutable list Rectangle.t;
+        returnedRects: mutable list Rectangle.t;
         needRepair: mutable bool;
       };
 
-      value create width height = { width; height; holes = [ Rectangle.fromCoordsAndDims 0 0 width height ]; rects = []; needRepair = False };
+      value create width height = { width; height; holes = [ Rectangle.fromCoordsAndDims 0 0 width height ]; rects = []; returnedRects = []; needRepair = False };
       value rects bin = bin.rects;
       value holes bin = bin.holes;
       value getRect bin indx = List.nth bin.rects (indx mod (List.length bin.rects));
@@ -177,7 +178,7 @@ module FramebufferTexture = struct
 
       value rectsSquare rects = List.fold_left (fun square rect -> square + Rectangle.(width rect * height rect)) 0 rects;
 
-      value isConsistent bin = (holesSquare bin.holes) + (rectsSquare bin.rects) = bin.width * bin.height;
+      value isConsistent bin = (holesSquare bin.holes) + (rectsSquare bin.rects) + (rectsSquare bin.returnedRects) = bin.width * bin.height;
 
       value repair bin =
         if bin.needRepair
@@ -263,18 +264,23 @@ module FramebufferTexture = struct
                 else merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
             ]
           in (
-            bin.holes := mergePass bin.holes [];
+            bin.holes := mergePass (bin.holes @ bin.returnedRects) [];
+            bin.returnedRects := [];
             bin.needRepair := False;
           )
         else ();
 
       value add bin width height =
+(*         let () = debug:consistent "holes before: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.holes)) in
+        let () = debug:consistent "rects before: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.rects)) in *)
+
         let w = width in
         let h = height in
           try
-            let hole = List.find (fun rect -> Rectangle.(width rect = w && height rect = h)) bin.holes in (
-              bin.holes := List.remove bin.holes hole;
+            let hole = List.find (fun rect -> Rectangle.(width rect = w && height rect = h)) bin.returnedRects in (
+              bin.returnedRects := List.remove bin.returnedRects hole;
               bin.rects := [ hole :: bin.rects ];
+              assert (isConsistent bin);
               Point.create (Rectangle.x hole) (Rectangle.y hole);
             )
           with
@@ -334,9 +340,13 @@ module FramebufferTexture = struct
                   bin.holes := splitHoles bin.holes;
                   bin.rects := [ placedRect :: bin.rects ];
 
-                  debug "holes: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.holes));
-                  debug "rects: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.rects));
+(*                   debug:consistent "holes after: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.holes));
+                  debug:consistent "rects after: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.rects));
+                  assert (isConsistent bin); *)
+
                   rectPos;
+
+                  
                 )            
           ];
 
@@ -344,8 +354,9 @@ module FramebufferTexture = struct
         try
           let rect = List.find (fun rect -> Rectangle.x rect = x && Rectangle.y rect = y) bin.rects in (
             bin.rects := List.remove bin.rects rect;
-            bin.holes := [ rect :: bin.holes ];
+            bin.returnedRects := [ rect :: bin.returnedRects ];
             bin.needRepair := True;
+            (* assert (isConsistent bin); *)
           )
         with [ Not_found -> () ];
 
