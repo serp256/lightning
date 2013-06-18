@@ -239,11 +239,11 @@ void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 	}
 }
 
-int create_renderbuffer(GLuint tid, int x, int y, double width, double height, renderbuffer_t *r/*, GLenum filter*/) {
+int create_renderbuffer(GLuint tid, int x, int y, double width, double height, int realW, int realH, renderbuffer_t *r/*, GLenum filter*/) {
     double w = ceil(width);
     double h = ceil(height);
-	GLuint gl_w = (GLuint)w;
-	GLuint gl_h = (GLuint)h;
+	// GLuint gl_w = (GLuint)w;
+	// GLuint gl_h = (GLuint)h;
 
     GLuint fbid = get_framebuffer();
     glBindFramebuffer(GL_FRAMEBUFFER, fbid);
@@ -254,17 +254,20 @@ int create_renderbuffer(GLuint tid, int x, int y, double width, double height, r
 	PRINT_DEBUG("tid %d", tid);
 	checkGLErrors("framebuffertexture2d %d -> %d",fbid, tid);
 
-	double texSize = (double)getFbTexSize();
+
+	// double texSize = (double)getFbTexSize();
+
 
     r->fbid = fbid;
     r->tid = tid;
 
-	r->vp = (viewport){ (GLuint)x, (GLuint)y, gl_w, gl_h };
-	r->clp = (clipping){ (double)r->vp.x / texSize, (double)r->vp.y / texSize, w / texSize, h / texSize };
+    // PRINT_DEBUG("create_renderbuffer %d %d %d %d", x, y, gl_w, gl_h);
+	r->vp = (viewport){ (GLuint)x, (GLuint)y, (GLuint)w, (GLuint)h };
+	r->clp = (clipping){ (double)r->vp.x / (double)realW, (double)r->vp.y / (double)realH, w / (double)realW, h / (double)realH };
     r->width = w;
     r->height = h;
-	r->realWidth = gl_w;
-	r->realHeight = gl_h;
+	r->realWidth = realW;
+	r->realHeight = realH;
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
 
@@ -311,7 +314,7 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 
 static int pizdalala = 0;
 
-value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, value mly, value mlwidth, value mlheight, value mlfun) {
+value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value tid, value mlx, value mly, value mlwidth, value mlheight, value mlfun) {
 	PRINT_DEBUG("ml_renderbuffer_draw CALL");
 
 	CAMLparam5(filter, mlclear, tid, mlx, mly);
@@ -334,7 +337,17 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 	get_framebuffer_state(&fstate);
 	renderbuffer_t rb;
 
-	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), Double_val(mlwidth), Double_val(mlheight), &rb)) {
+	double w = Double_val(mlwidth), h = Double_val(mlheight);
+	int realW, realH;
+
+	if (dedicated == Val_true) {
+		realW = nextPOT(ceil(w));
+		realH = nextPOT(ceil(h));
+	} else {
+		realW = realH = getFbTexSize();
+	}
+
+	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), w, h, realW, realH, &rb)) {
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);
@@ -347,15 +360,6 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 
 	clear_renderbuffer(&rb, mlclear);
 	caml_callback(mlfun,(value)&rb);
-
-/*	//------------
-	// glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
-	char* pixels = caml_stat_alloc(4 * (GLuint)512 * (GLuint)512);
-	char* fname = malloc(255);
-	sprintf(fname, "/sdcard/xyu_%d_%03d.png", TEXTURE_ID(tid), pizdalala++);
-	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,512,512);	
-	//------------*/
 
  	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 	renderbuffer_deactivate();
@@ -389,10 +393,11 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 }
 
 value ml_renderbuffer_draw_byte(value * argv, int n) {
-	return (ml_renderbuffer_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6],argv[7]));
+	return (ml_renderbuffer_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6],argv[7],argv[8]));
 }
 
 void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_tid, value renderInfo, value mlfun) {
+	PRINT_DEBUG("ml_renderbuffer_draw_to_texture");
 	CAMLparam5(mlclear, new_params, new_tid, renderInfo, mlfun);
 	CAMLlocal2(clp, clip);
 
@@ -429,7 +434,7 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 
 	renderbuffer_t rb;
 
-	if (create_renderbuffer(tid, x, y, w, h, &rb)) {
+	if (create_renderbuffer(tid, x, y, w, h, getFbTexSize(), getFbTexSize(), &rb)) {
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);
@@ -477,6 +482,138 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 
 	CAMLreturn0;
 }
+
+value ml_renderbuffer_draw_to_dedicated_texture(value mlclear, value owidth, value oheight, value renderInfo, value mlfun) {
+	CAMLparam4(renderInfo,owidth,oheight,mlfun);
+	CAMLlocal1(clp);
+
+	double cwidth = Double_val(Field(renderInfo,1));
+	double cheight = Double_val(Field(renderInfo,2));
+
+
+	int resized = 0;
+	double width = cwidth;
+	//fprintf(stderr,"try resize %d:%d from [%f:%f] to [%f:%f]\n",rb->fbid,rb->tid,rb->width,rb->height,width,height);
+	if (owidth != Val_none) {
+		width = Double_val(Field(owidth,0));
+		resized = (width != cwidth);
+	};
+	double height = cheight;
+	if (oheight != Val_none) {
+		height = Double_val(Field(oheight,0));
+		resized |= (height != cheight);
+	};
+	PRINT_DEBUG("draw to texture: [%f:%f] -> [%f:%f]",cwidth,cheight,width,height);
+
+	GLuint legalWidth = nextPOT(ceil(width));
+	GLuint legalHeight = nextPOT(ceil(height));
+	TEXTURE_SIZE_FIX(legalWidth,legalHeight);
+	renderbuffer_t rb;
+	rb.tid = TEXTURE_ID(Field(renderInfo,0));
+  rb.width = width;
+  rb.height = height;
+	rb.realWidth = legalWidth;
+	rb.realHeight = legalHeight;
+	rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
+	if (resized) {
+		Store_field(renderInfo,1,caml_copy_double(width));
+		Store_field(renderInfo,2,caml_copy_double(height));
+		value clip;
+		if (legalWidth == width && legalHeight == height) {
+			rb.clp = (clipping){0.,0.,1.,1.};
+			clip = Val_unit;
+		} else {
+			rb.clp = (clipping) {
+				(double)rb.vp.x / legalWidth,
+				(double)rb.vp.y / legalHeight,
+				(width / legalWidth),
+				(height / legalHeight)
+			};
+			clp = caml_alloc(4 * Double_wosize,Double_array_tag);
+			Store_double_field(clp,0,rb.clp.x);
+			Store_double_field(clp,1,rb.clp.y);
+			Store_double_field(clp,2,rb.clp.width);
+			Store_double_field(clp,3,rb.clp.height);
+			clip = caml_alloc_tuple(1);
+			Store_field(clip,0,clp);
+		};
+		PRINT_DEBUG("update texture params: %f:%f -> [%f:%f:%f:%f]",width,height,rb.clp.x,rb.clp.y,rb.clp.width,rb.clp.height);
+		Store_field(renderInfo,3,clip);
+		if (legalWidth != nextPOT(ceil(cwidth)) || legalHeight != nextPOT(ceil(cheight))) {
+
+			lgGLBindTexture(rb.tid,1);
+			glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,legalWidth,legalHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
+			//rb->realWidth = legalWidth;
+			//rb->realHeight = legalHeight;
+
+			/*TEX(Field(renderInfo,0))->tid = 0;
+			total_tex_mem -= TEX(Field(renderInfo,0))->mem;
+			caml_free_dependent_memory(TEX(Field(renderInfo,0))->mem);*/
+			//ml_texture_id_delete(Field(renderInfo,0));
+			int s = legalWidth*legalHeight*4;
+			update_texture_id_size(Field(renderInfo,0),s);
+			//value mlTextureID = texture_id_alloc(rb.tid,s);
+			//Store_textureID(mlTextureID,rb->tid,"renderbuffer resized",s);
+			//Store_field(renderInfo,0,mlTextureID); // ??
+			checkGLErrors("renderbuffer resize");
+		};
+	} else {
+		// Достать clp из ocaml 
+		clp = Field(renderInfo,3);
+		if (clp == Val_none)
+      rb.clp = (clipping) {0.,0.,1.,1.};
+    else {
+			clp = Field(clp,0);
+			rb.clp = (clipping) {Double_field(clp,0),Double_field(clp,1),Double_field(clp,2),Double_field(clp,3)};
+		}
+	};
+
+	framebuffer_state fstate;
+	get_framebuffer_state(&fstate);
+
+	//Теперь делаем фрэймбуффер
+  //glGenFramebuffers(1, &rb.fbid);
+	rb.fbid = get_framebuffer();
+  glBindFramebuffer(GL_FRAMEBUFFER, rb.fbid);
+	PRINT_DEBUG("FRAMEBUFFER BINDED");
+	checkGLErrors("draw to texture bind framebuffer");
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rb.tid,0);
+	FRAMEBUFFER_BIND_COUNTER++;
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+  		PRINT_DEBUG("ml_renderbuffer_draw_to_texture");
+  		GL_ERROR;
+
+		char emsg[255];
+		sprintf(emsg,"draw to texture framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,legalWidth,legalHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
+		set_framebuffer_state(&fstate);
+    caml_failwith(emsg);
+  };
+
+	// clear 
+
+	renderbuffer_activate(&rb);
+
+	if (mlclear != Val_none) {
+		value ca = Field(mlclear,0);
+		int c = Int_val(Field(ca,0));
+		color3F clr = COLOR3F_FROM_INT(c);
+		GLfloat alpha = Double_val(Field(ca,1));
+		glClearColor(clr.r,clr.g,clr.b,alpha);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+
+	caml_callback(mlfun,(value)&rb);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,0,0);// Detach the texture
+
+	set_framebuffer_state(&fstate);
+	renderbuffer_deactivate();
+	//glDeleteFramebuffers(1,&rb.fbid);
+	back_framebuffer(rb.fbid);
+
+	checkGLErrors("finish render to texture");
+	CAMLreturn(Val_bool(resized));
+ }
 
 value ml_renderbuffer_data(value renderInfo) {
 	CAMLparam1(renderInfo);
@@ -539,11 +676,10 @@ value ml_renderbuffer_save(value renderInfo,value filename) {
     caml_failwith(emsg);
   };
 	viewport vp = (viewport){
-		(GLuint)((legalWidth - width)/2),
-		(GLuint)((legalHeight - height)/2),
-		(GLuint)width,(GLuint)height
+		Int_val(Field(renderInfo, 5)), Int_val(Field(renderInfo, 6)),(GLuint)width,(GLuint)height
 	};
 	char *pixels = caml_stat_alloc(4 * (GLuint)width * (GLuint)height);
+	PRINT_DEBUG("vp.x %d,vp.y %d,vp.w %d,vp.h %d", vp.x,vp.y,vp.w,vp.h);
 	glReadPixels(vp.x,vp.y,vp.w,vp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 	checkGLErrors("after read pixels");
 	int res = save_png_image(filename,pixels,vp.w,vp.h);
@@ -551,14 +687,20 @@ value ml_renderbuffer_save(value renderInfo,value filename) {
 	return Val_bool(res);
 }
 
-value ml_create_renderbuffer_tex() {
+value ml_create_renderbuffer_tex(value v_size) {
 	PRINT_DEBUG("ml_create_renderbuffer_tex call");
 
 	CAMLparam0();
 	CAMLlocal1(vtid);
 
-	GLuint tid;
-	GLuint texSize = getFbTexSize();
+	GLuint tid, texW, texH;
+
+	if (Is_block(v_size)) {
+		texW = nextPOT(Int_val(Field(Field(v_size, 0), 0)));
+		texH = nextPOT(Int_val(Field(Field(v_size, 0), 1)));
+	} else {
+		texW = texH = getFbTexSize();
+	}
 
 	glGenTextures(1, &tid);
 	glBindTexture(GL_TEXTURE_2D, tid);
@@ -567,11 +709,11 @@ value ml_create_renderbuffer_tex() {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texSize, texSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texW, texH, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glBindTexture(GL_TEXTURE_2D,0);
-	checkGLErrors("create render texture %d [%d:%d]", tid, texSize, texSize);
+	checkGLErrors("create render texture %d [%d:%d]", tid, texW, texH);
 
-	int size = (int)(texSize * texSize * 4);
+	int size = (int)(texW * texH * 4);
 	Store_rendertextureID(vtid, tid, size);	
 	
 	CAMLreturn(vtid);

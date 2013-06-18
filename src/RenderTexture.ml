@@ -8,9 +8,10 @@ external delete_textureID: textureID -> unit = "ml_render_texture_id_delete" "no
 
 
 type framebuffer;
-external renderbuffer_draw: ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
+external renderbuffer_draw: ~dedicated:bool -> ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
 external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?new_params:(int * int * float * float) -> ?new_tid:textureID -> renderInfo -> (framebuffer -> unit) -> unit = "ml_renderbuffer_draw_to_texture";
-external create_renderbuffer_tex: unit -> textureID = "ml_create_renderbuffer_tex";
+external renderbuffer_draw_to_dedicated_texture: ?clear:(int*float) -> ?width:float -> ?height:float -> renderInfo -> (framebuffer -> unit) -> bool = "ml_renderbuffer_draw_to_dedicated_texture";
+external create_renderbuffer_tex: ?size:(int * int) -> unit -> textureID = "ml_create_renderbuffer_tex";
 external _renderbuffer_tex_size: unit -> int = "ml_renderbuffer_tex_size";
 
 
@@ -396,14 +397,17 @@ module FramebufferTexture = struct
   value getRect w h =    
     let (tid, pos) = findPos w h in
     let () = debug:texnum "texs num: %d" (List.length !bins) in
+    let () = debug:texpos "tex pos %d %d" (Point.x pos) (Point.y pos) in
       (tid, pos);
 
   value freeRect tid x y =
-    let bin = List.assoc tid !bins in
-      Bin.remove bin x y;
+    try
+      let bin = List.assoc tid !bins in
+        Bin.remove bin x y;
+    with [ Not_found -> (debug:texnum "not found %ld" (int32_of_textureID tid); assert False; ) ];
 end;
 
-class c renderInfo = 
+class virtual base renderInfo = 
   let () = debug "create rendered texture <%ld>" (int32_of_textureID renderInfo.rtextureID) in
   object(self)
     method renderInfo = renderInfo;
@@ -427,6 +431,16 @@ class c renderInfo =
 
     value mutable released = False;
     method released = released;
+    method virtual release: unit -> unit;
+    method virtual draw: ?clear:(int*float) -> ?width:float -> ?height:float -> (framebuffer -> unit) -> bool;
+    method data () = renderbuffer_data renderInfo;
+    method save filename = renderbuffer_save renderInfo filename;
+  end; (*}}}*)
+
+class shared renderInfo =
+  object(self)
+    inherit base renderInfo;
+
     method release () = 
       match released with
       [ False ->
@@ -437,7 +451,7 @@ class c renderInfo =
       | True -> ()
       ];
 
-    method draw ?clear ?width ?height (f:(framebuffer -> unit)) =      
+    method draw ?clear ?width ?height (f:(framebuffer -> unit)) =
       let (changed, w) = match width with [ Some width when ceil width <> renderInfo.rwidth -> (True, ceil width) | _ -> (False, renderInfo.rwidth) ] in
       let (changed, h) = match height with [ Some height when ceil height <> renderInfo.rheight -> (True, ceil height) | _ -> (changed, renderInfo.rheight) ] in
       let resized = 
@@ -459,17 +473,51 @@ class c renderInfo =
       in (
         Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
         resized;
+      );    
+  end;
+
+class dedicated renderInfo =
+  object(self)
+    inherit base renderInfo;
+
+    method release () = 
+      match released with
+      [ False ->
+        (
+          delete_textureID renderInfo.rtextureID;
+          released := True;
+        )
+      | True -> ()
+      ];
+
+    method draw ?clear ?width ?height (f:(framebuffer -> unit)) = 
+      let resized = renderbuffer_draw_to_dedicated_texture ?clear ?width ?height renderInfo f in
+      (
+        Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
+        resized;
       );
+  end;
 
-    method data () = renderbuffer_data renderInfo;
-    method save filename = renderbuffer_save renderInfo filename;
+class type c =
+  object
+    inherit Texture.c;
+    method asTexture: Texture.c;
+    method draw: ?clear:(int*float) -> ?width:float -> ?height:float -> (framebuffer -> unit) -> bool;
+    method texture: Texture.c;
+    method save: string -> bool;
+    method data: unit -> data; 
+  end;  
 
 
-  end; (*}}}*)
+value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
+  let dedicated = dedicated || (width > (float renderbufferTexSize) /. 2.) || (height > (float renderbufferTexSize) /. 2.) in
+  let () = debug:texnum "dedicated %b" dedicated in
 
-
-value draw ~filter ?color ?alpha width height f =
-  let (tid, pos) = FramebufferTexture.getRect (int_of_float (ceil width)) (int_of_float (ceil height)) in
+  let (tid, pos) =
+    if dedicated
+    then (create_renderbuffer_tex ~size:(int_of_float (ceil width), int_of_float (ceil height)) (), FramebufferTexture.Point.create 0 0)
+    else FramebufferTexture.getRect (int_of_float (ceil width)) (int_of_float (ceil height))
+  in
   let clear =
     match (color, alpha) with
     [ (Some color, Some alpha) -> (color, alpha)
@@ -478,8 +526,11 @@ value draw ~filter ?color ?alpha width height f =
     | _ -> (0x000000, 0.)
     ]
   in
-  let tex = new c (renderbuffer_draw ~filter ~clear tid (FramebufferTexture.Point.x pos) (FramebufferTexture.Point.y pos) width height f) in (
-    Gc.finalise (fun tex -> tex#release ()) tex;
-    tex;
-  );
-
+  let renderInfo = renderbuffer_draw ~dedicated ~filter ~clear tid (FramebufferTexture.Point.x pos) (FramebufferTexture.Point.y pos) width height f in
+    if dedicated
+    then new dedicated renderInfo
+    else
+      let tex = new shared renderInfo in (
+        Gc.finalise (fun tex -> tex#release ()) tex;
+        tex;        
+      );

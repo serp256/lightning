@@ -135,12 +135,12 @@ class c =
                    let alpha' = alpha in
                    (
                      self#setAlpha 1.;
-                     let ctex = RenderTexture.draw ~filter:Texture.FilterNearest rw rh begin fun _ ->
+                     let ctex = RenderTexture.draw ~filter:Texture.FilterNearest ~dedicated:True rw rh begin fun _ ->
                        (                        
                          Render.push_matrix m;
                          (* Render.clear 0 0.; *)
                          super#render' ~transform:False None;
-                         Render.restore_matrix ();
+                         Render.restore_matrix ();                         
                        )
                      end in
                      (

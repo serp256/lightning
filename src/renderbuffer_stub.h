@@ -41,7 +41,7 @@ typedef struct {
 void get_framebuffer_state(framebuffer_state *s);
 void set_framebuffer_state(framebuffer_state *s);
 
-int create_renderbuffer(GLuint tid, int x, int y, double width, double height, renderbuffer_t *r);
+int create_renderbuffer(GLuint tid, int x, int y, double width, double height, int realW, int realH, renderbuffer_t *r);
 value ml_create_renderbuffer_tex();
 
 // int create_renderbuffer(GLuint texId, double vp_x, double vp_y, double width, double height, renderbuffer_t *r,GLenum filter);

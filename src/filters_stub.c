@@ -482,12 +482,6 @@ static void inline glow_make_draw(viewport *vp,clipping *clp, int clear) {
 	texCoords[3][0] = texCoords[1][0];
 	texCoords[3][1] = texCoords[2][1];
 
-	int i;
-
-	for (i = 0; i < 4; i++) {
-		PRINT_DEBUG("%d: [%f; %f]", i, texCoords[i][0], texCoords[i][1]);
-	}	
-
 	glVertexAttribPointer(lgVertexAttrib_Position,2,GL_FLOAT,GL_FALSE,0,quads);
 	glVertexAttribPointer(lgVertexAttrib_TexCoords,2,GL_FLOAT,GL_FALSE,0,texCoords);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -574,8 +568,8 @@ void ml_glow_make(value orb, value glow) {
 	char* fname = malloc(255);
 	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
 	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,512,512);
-*/
+	save_png_image(caml_copy_string(fname),pixels,512,512);*/
+
 	lgResetBoundTextures();
 	framebuffer_state fstate;
 	get_framebuffer_state(&fstate);
@@ -592,12 +586,9 @@ void ml_glow_make(value orb, value glow) {
 		glGenFramebuffers(maxFB, bfrs);
 	}
 
-	int i;
-/*	GLuint w = rb->realWidth;
-	GLuint h = rb->realHeight;*/
-
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
+	int i;
 	float glow_lev_w = rb->width;
 	float glow_lev_h = rb->height;
 	int iglow_lev_w;
@@ -623,7 +614,7 @@ void ml_glow_make(value orb, value glow) {
 
 		PRINT_DEBUG("glow_lev_w %f, glow_lev_h %f", glow_lev_w, glow_lev_h);
 		correct_lev_w = nextPOT(iglow_lev_w);
-		correct_lev_h = nextPOT(iglow_lev_w);
+		correct_lev_h = nextPOT(iglow_lev_h);
 		PRINT_DEBUG("correct_lev_w %d, correct_lev_h %d", correct_lev_w, correct_lev_h);
 		TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
 
@@ -646,7 +637,7 @@ void ml_glow_make(value orb, value glow) {
 
 		PRINT_DEBUG("glow_lev_w %f, glow_lev_h %f", glow_lev_w, glow_lev_h);
 		correct_lev_w = nextPOT(iglow_lev_w);
-		correct_lev_h = nextPOT(iglow_lev_w);
+		correct_lev_h = nextPOT(iglow_lev_h);
 		PRINT_DEBUG("correct_lev_w %d, correct_lev_h %d", correct_lev_w, correct_lev_h);
 		TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
 		draw_glow_level(correct_lev_w, correct_lev_h, bfrs[i - 1], &prev_glow_lev_tex, &vps[i - 1], &clps[i], 0);
@@ -668,15 +659,13 @@ void ml_glow_make(value orb, value glow) {
 	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
 	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 	save_png_image(caml_copy_string(fname),pixels,512,512);	
-	//------------*/
-
+	//------------
+*/
 	glBindTexture(GL_TEXTURE_2D,0);
 	glUseProgram(0);
 	currentShaderProgram = 0;
 	set_framebuffer_state(&fstate);
 	checkGLErrors("end of glow");
-
-	PRINT_DEBUG("checkpoint2");
 }
 
 /*
