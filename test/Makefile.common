@@ -13,3 +13,6 @@ MLFLAGS = -package camlp4,camlp4.macro -syntax camlp4r -w +7+9 -g
 
 %.cmx: %.ml
 	$(OCAMLOPT) $(MLFLAGS) -S $(if $(MLPPOPT),$(patsubst %,-ppopt %,$(MLPPOPT))) -c $<
+
+%.o: %.c
+	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS)))  -ccopt '-o $@' -c $<

@@ -7,17 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		21123ABA1760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21123AB81760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib */; };
+		21123ABB1760B6D5006EAD57 /* SupersonicAdsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21123AB91760B6D5006EAD57 /* SupersonicAdsViewController.xib */; };
+		5106D8F717295F6700D03E1A /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F517295F6700D03E1A /* assets */; };
+		5106D8F817295F6700D03E1A /* index in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F617295F6700D03E1A /* index */; };
+		513A2815173937B000EE18A3 /* TapjoyResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 513A2814173937B000EE18A3 /* TapjoyResources.bundle */; };
 		5181418216F6F61A009D7846 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5181418116F6F61A009D7846 /* LightTestBin */; };
 		5181418516F6F699009D7846 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5181418316F6F699009D7846 /* InfoPlist.strings */; };
 		5181418916F6F6C2009D7846 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418616F6F6C2009D7846 /* Default-568h@2x.png */; };
 		5181418A16F6F6C2009D7846 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418716F6F6C2009D7846 /* Default.png */; };
 		5181418B16F6F6C2009D7846 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418816F6F6C2009D7846 /* Default@2x.png */; };
-		5181418D16F6F775009D7846 /* image.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5181418C16F6F775009D7846 /* image.jpg */; };
-		5181418F16F6F797009D7846 /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 5181418E16F6F797009D7846 /* Shaders */; };
-		5181419E16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 5181419A16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha */; };
-		5181419F16F6F9D2009D7846 /* MyriadPro-Bold.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 5181419B16F6F9D2009D7846 /* MyriadPro-Bold.fnt */; };
-		518141A016F6F9D2009D7846 /* MyriadPro-Regular_0.alpha in Resources */ = {isa = PBXBuildFile; fileRef = 5181419C16F6F9D2009D7846 /* MyriadPro-Regular_0.alpha */; };
-		518141A116F6F9D2009D7846 /* MyriadPro-Regular.fnt in Resources */ = {isa = PBXBuildFile; fileRef = 5181419D16F6F9D2009D7846 /* MyriadPro-Regular.fnt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,47 +43,34 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		21123AB81760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = "SupersonicAdsViewController-iPad.xib"; path = "../../src/plugins/supersonic/ios/SupersonicAdsViewController-iPad.xib"; sourceTree = "<group>"; };
+		21123AB91760B6D5006EAD57 /* SupersonicAdsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = SupersonicAdsViewController.xib; path = ../../src/plugins/supersonic/ios/SupersonicAdsViewController.xib; sourceTree = "<group>"; };
+		5106D8F517295F6700D03E1A /* assets */ = {isa = PBXFileReference; lastKnownFileType = text; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
+		5106D8F617295F6700D03E1A /* index */ = {isa = PBXFileReference; lastKnownFileType = text; name = index; path = LightTest/index; sourceTree = "<group>"; };
+		513A2814173937B000EE18A3 /* TapjoyResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = TapjoyResources.bundle; path = ../../src/plugins/tapjoy/ios/TapjoyResources.bundle; sourceTree = "<group>"; };
 		5181418116F6F61A009D7846 /* LightTestBin */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = LightTestBin; sourceTree = "<group>"; };
 		5181418416F6F699009D7846 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
 		5181418616F6F6C2009D7846 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		5181418716F6F6C2009D7846 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
 		5181418816F6F6C2009D7846 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
-		5181418C16F6F775009D7846 /* image.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = image.jpg; path = ../Resources/image.jpg; sourceTree = "<group>"; };
-		5181418E16F6F797009D7846 /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shaders; path = ../Resources/Shaders; sourceTree = "<group>"; };
 		5181419016F6F919009D7846 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Resources; path = ../Resources; sourceTree = "<group>"; };
-		5181419116F6F919009D7846 /* MyriadPro-Bold_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0.alpha"; path = "../Resources/MyriadPro-Bold_0.alpha"; sourceTree = "<group>"; };
-		5181419216F6F919009D7846 /* MyriadPro-Bold.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold.fnt"; path = "../Resources/MyriadPro-Bold.fnt"; sourceTree = "<group>"; };
-		5181419316F6F919009D7846 /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "../Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
-		5181419416F6F919009D7846 /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular.fnt"; path = "../Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
-		5181419A16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold_0.alpha"; path = "../Resources/MyriadPro-Bold_0.alpha"; sourceTree = "<group>"; };
-		5181419B16F6F9D2009D7846 /* MyriadPro-Bold.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Bold.fnt"; path = "../Resources/MyriadPro-Bold.fnt"; sourceTree = "<group>"; };
-		5181419C16F6F9D2009D7846 /* MyriadPro-Regular_0.alpha */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular_0.alpha"; path = "../Resources/MyriadPro-Regular_0.alpha"; sourceTree = "<group>"; };
-		5181419D16F6F9D2009D7846 /* MyriadPro-Regular.fnt */ = {isa = PBXFileReference; lastKnownFileType = file; name = "MyriadPro-Regular.fnt"; path = "../Resources/MyriadPro-Regular.fnt"; sourceTree = "<group>"; };
 		51ABA22C16F6F4A100FC8928 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		51ABA22F16F6F4A100FC8928 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		51ABA23116F6F4A100FC8928 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		51ABA23316F6F4A100FC8928 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		51ABA23716F6F4A100FC8928 /* LightTest-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LightTest-Info.plist"; sourceTree = "<group>"; };
-		51ABA24116F6F4A100FC8928 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
-		51ABA24316F6F4A100FC8928 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
-		51ABA24516F6F4A100FC8928 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		51ABA22316F6F4A100FC8928 = {
 			isa = PBXGroup;
 			children = (
-				5181419A16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha */,
-				5181419B16F6F9D2009D7846 /* MyriadPro-Bold.fnt */,
-				5181419C16F6F9D2009D7846 /* MyriadPro-Regular_0.alpha */,
-				5181419D16F6F9D2009D7846 /* MyriadPro-Regular.fnt */,
+				21123AB81760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib */,
+				21123AB91760B6D5006EAD57 /* SupersonicAdsViewController.xib */,
+				513A2814173937B000EE18A3 /* TapjoyResources.bundle */,
+				5106D8F517295F6700D03E1A /* assets */,
+				5106D8F617295F6700D03E1A /* index */,
 				5181419016F6F919009D7846 /* Resources */,
-				5181419116F6F919009D7846 /* MyriadPro-Bold_0.alpha */,
-				5181419216F6F919009D7846 /* MyriadPro-Bold.fnt */,
-				5181419316F6F919009D7846 /* MyriadPro-Regular_0.alpha */,
-				5181419416F6F919009D7846 /* MyriadPro-Regular.fnt */,
-				5181418E16F6F797009D7846 /* Shaders */,
-				5181418C16F6F775009D7846 /* image.jpg */,
 				5181418616F6F6C2009D7846 /* Default-568h@2x.png */,
 				5181418716F6F6C2009D7846 /* Default.png */,
 				5181418816F6F6C2009D7846 /* Default@2x.png */,
@@ -126,9 +112,6 @@
 			children = (
 				5181418316F6F699009D7846 /* InfoPlist.strings */,
 				51ABA23716F6F4A100FC8928 /* LightTest-Info.plist */,
-				51ABA24116F6F4A100FC8928 /* Default.png */,
-				51ABA24316F6F4A100FC8928 /* Default@2x.png */,
-				51ABA24516F6F4A100FC8928 /* Default-568h@2x.png */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -138,11 +121,12 @@
 /* Begin PBXLegacyTarget section */
 		5181417A16F6F5B8009D7846 /* LightTestBin */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION)";
+			buildArgumentsString = "-C .. ios";
 			buildConfigurationList = 5181417B16F6F5B8009D7846 /* Build configuration list for PBXLegacyTarget "LightTestBin" */;
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "";
 			dependencies = (
 			);
 			name = LightTestBin;
@@ -201,16 +185,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5181419E16F6F9D2009D7846 /* MyriadPro-Bold_0.alpha in Resources */,
-				5181419F16F6F9D2009D7846 /* MyriadPro-Bold.fnt in Resources */,
-				518141A016F6F9D2009D7846 /* MyriadPro-Regular_0.alpha in Resources */,
-				518141A116F6F9D2009D7846 /* MyriadPro-Regular.fnt in Resources */,
-				5181418F16F6F797009D7846 /* Shaders in Resources */,
-				5181418D16F6F775009D7846 /* image.jpg in Resources */,
+				513A2815173937B000EE18A3 /* TapjoyResources.bundle in Resources */,
+				5106D8F717295F6700D03E1A /* assets in Resources */,
+				5106D8F817295F6700D03E1A /* index in Resources */,
 				5181418916F6F6C2009D7846 /* Default-568h@2x.png in Resources */,
 				5181418A16F6F6C2009D7846 /* Default.png in Resources */,
 				5181418B16F6F6C2009D7846 /* Default@2x.png in Resources */,
 				5181418516F6F699009D7846 /* InfoPlist.strings in Resources */,
+				21123ABA1760B6D5006EAD57 /* SupersonicAdsViewController-iPad.xib in Resources */,
+				21123ABB1760B6D5006EAD57 /* SupersonicAdsViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,15 +222,17 @@
 		5181417C16F6F5B8009D7846 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = armv7;
 				DEBUGGING_SYMBOLS = YES;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
+				PATH = "/usr/local/bin:/usr/local/ocaml/main/bin:$PATH";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -256,13 +241,15 @@
 		5181417D16F6F5B8009D7846 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = armv7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
+				PATH = "/usr/local/bin:/usr/local/ocaml/main/bin:$PATH";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -279,7 +266,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Sergey Plaksin (5ZR8R38XZE)";
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -294,6 +281,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				ONLY_ACTIVE_ARCH = YES;
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "93863857-4F2E-445F-8484-4132E3676ACD";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -327,11 +315,13 @@
 		51ABA24A16F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
-				INFOPLIST_FILE = "LightTest-Info.plist";
+				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "A76B6DD9-2076-499E-BB30-0ABAB6152113";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -341,7 +331,7 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
-				INFOPLIST_FILE = "LightTest-Info.plist";
+				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
@@ -358,6 +348,7 @@
 				5181417D16F6F5B8009D7846 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		51ABA22716F6F4A100FC8928 /* Build configuration list for PBXProject "LightTest" */ = {
 			isa = XCConfigurationList;

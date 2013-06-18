@@ -1,0 +1,1 @@
+value startSession: ~appKey:string -> ~secKey:string -> unit -> unit;

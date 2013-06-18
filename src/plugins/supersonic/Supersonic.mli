@@ -1,0 +1,1 @@
+value showOffers: ~appKey:string -> ~appUid:string -> unit -> unit;

@@ -6,8 +6,8 @@ OCAMLOPT = $(OCAMLFIND) ocamlopt
 OCAMLC = $(OCAMLFIND) ocamlc
 OCAMLLIBDIR = $(shell ${OCAMLOPT} -where)
 ARCH = -arch armv7
-CC = $(PLAT)/Developer/usr/bin/gcc $(ARCH)
-CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLLIBDIR) -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=4.2 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT
+CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang $(ARCH)
+CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -Os -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK)  -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=5.1 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT
 include Makefile.common
 
 MOBS = ios/AppDelegate.o ios/main.o 
@@ -15,6 +15,11 @@ CFLAGS += -I ../src/ios
 
 
 include Makefile.in
+
+res:
+	aresmkr -concat -i Resources -o ios/LightTest/assets
+	aresmkr -merge -o ios/LightTest/index ios/LightTest/assets
+	rm ios/LightTest/assets.index
 
 ios: $(TARGET).native
 	cp test.native ios/LightTestBin

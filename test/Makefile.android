@@ -22,10 +22,22 @@ release: $(TARGET).so
 	cp test.so android/libs/armeabi-v7a/libtest.so
 	ant -f android/build.xml release
 
-$(TARGET).so: $(MLXFILES) $(TARGET).cmx
+
+
+$(TARGET).so: $(CFILES) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
-	-I ../src ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MLXFILES) ../src/social/facebook/fb.cmxa ../src/plugins/tapjoy/tapjoy.cmxa $(TARGET).cmx \
-	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" -cclib "-L../src/social/facebook" -cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa  -cclib "-L../src/plugins/tapjoy"  -output-obj
+	-I ../src ../src/lightning.cmxa \
+	-cclib "-L../src/plugins/facebook" ../src/plugins/facebook/facebook.cmxa \
+	-cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa \
+	-cclib "-L../src/plugins/tapjoy" ../src/plugins/tapjoy/tapjoy.cmxa \
+	-cclib "-L../src/plugins/chartboost" ../src/plugins/chartboost/chartboost.cmxa \
+	-cclib "-L../src/plugins/flurry" ../src/plugins/flurry/flurry.cmxa \
+	-cclib "-L../src/plugins/sponsorpay" ../src/plugins/sponsorpay/sponsorpay.cmxa \
+	-cclib "-L../src/plugins/appflood" ../src/plugins/appflood/appflood.cmxa \
+	-cclib "-L../src/plugins/supersonic" ../src/plugins/supersonic/supersonic.cmxa \
+	$(OAUTHX) $(SOCIALX) $(MLXFILES) $(CFILES) $(TARGET).cmx \
+	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" \
+	-output-obj
 
 clean::
 	rm -f LightTest/*.o LighTest/*.so 

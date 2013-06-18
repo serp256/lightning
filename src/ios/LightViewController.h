@@ -40,9 +40,9 @@
 -(void)showActivityIndicator:(LightActivityIndicatorView *)indicator;
 -(void)hideActivityIndicator;
 +(void)setSupportEmail:(NSString*)email;
+- (void)showKeyboard:(value)visible size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString;
 
 -(void)hideKeyboard;
--(void)showKeyboard:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString;
 
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
 

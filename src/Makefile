@@ -21,9 +21,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma social_byte
+byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa mobileapptracking.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -143,11 +143,23 @@ tapjoy.cma:
 tapjoy.cmxa:
 	make -C plugins/tapjoy tapjoy.cmxa
 
-flurry.cma:
-	make -C flurry flurry.cma
+facebook.cma:
+	make -C plugins/facebook facebook.cma
 
-flurry.cmxa:
-	make -C flurry flurry.cmxa
+facebook.cmxa:
+	make -C plugins/facebook facebook.cmxa
+
+sponsorpay.cma:
+	make -C plugins/sponsorpay sponsorpay.cma
+
+sponsorpay.cmxa:
+	make -C plugins/sponsorpay sponsorpay.cmxa
+
+# flurry.cma:
+# 	make -C flurry flurry.cma
+
+# flurry.cmxa:
+# 	make -C flurry flurry.cmxa
 
 social_byte:
 	make -C social byte
@@ -163,6 +175,30 @@ mobileapptracking.cma:
 
 mobileapptracking.cmxa:
 	make -C plugins/mobileapptracking mobileapptracking.cmxa
+
+flurry.cma:
+	make -C plugins/flurry flurry.cma
+
+flurry.cmxa:
+	make -C plugins/flurry flurry.cmxa
+
+chartboost.cma:
+	make -C plugins/chartboost chartboost.cma
+
+chartboost.cmxa:
+	make -C plugins/chartboost chartboost.cmxa
+
+appflood.cma:
+	make -C plugins/appflood appflood.cma
+
+appflood.cmxa:
+	make -C plugins/appflood appflood.cmxa
+
+supersonic.cma:
+	make -C plugins/supersonic supersonic.cma
+
+supersonic.cmxa:
+	make -C plugins/supersonic supersonic.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
@@ -182,5 +218,14 @@ doc:
 .PHONY : clean
 clean: 
 	rm -f *.o *.cm[iox] *.a *.cmxa *.so *.cmo ios/*.o glut/*.cmx glut.*.cmo glut/*.o glut/*.cmi sdl/*.cmx sdl/*.cmo sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi utils/*.cmi utils/*.cmx utils/*.cmo utils/*.a kazmath/*.o kazmath/GL/*.o android/*.o pc/*.o
+	$(MAKE) -C plugins/chartboost clean
+	$(MAKE) -C social clean
+	$(MAKE) -C plugins/tapjoy clean
+	$(MAKE) -C plugins/facebook clean
+	$(MAKE) -C plugins/mobileapptracking clean
+	$(MAKE) -C plugins/flurry clean
+	$(MAKE) -C plugins/appflood clean
+	$(MAKE) -C plugins/sponsorpay clean
+	$(MAKE) -C plugins/supersonic clean
 
 -include MLDepend.$(PLATFORM)

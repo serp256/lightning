@@ -10,6 +10,24 @@ package "tapjoy" (
   archive(native) = "tapjoy.cmxa"
 )
 
+package "chartboost" (
+  description="Charboost Analytics"
+  archive(byte) = "chartboost.cma"
+  archive(native) = "chartboost.cmxa"
+)
+
+package "appflood" (
+  description="Appflood"
+  archive(byte) = "appflood.cma"
+  archive(native) = "appflood.cmxa"
+)
+
+package "supersonic" (
+  description="Supersonic Ads"
+  archive(byte) = "supersonic.cma"
+  archive(native) = "supersonic.cmxa"
+)
+
 package "flurry" (
   description="Flurry Analytics"
   archive(byte) = "flurry.cma"
@@ -20,6 +38,18 @@ package "mobileapptracking" (
 	description="MobileAppTracking"
 	archive(byte)="mobileapptracking.cma"
 	archive(native)="mobileapptracking.cmxa"
+)
+
+package "facebook" (
+	description="Facebook API"
+	archive(byte) = "facebook.cma"
+	archive(native) = "facebook.cmxa"
+)
+
+package "sponsorpay" (
+	description="SponsorPay SDK"
+	archive(byte) = "sponsorpay.cma"
+	archive(native) = "sponsorpay.cmxa"
 )
 
 package "syntax" (
@@ -38,11 +68,6 @@ package "social" (
   archive(bytes) = "SNTypes.cmi"
   archive(native) = "SNTypes.cmi"
 
-  package "facebook" (
-    description="Facebook API"
-    archive(byte) = "fb.cma"
-    archive(native) = "fb.cmxa"
-  )
 
   package "oauth" (
     description="OAuth"
