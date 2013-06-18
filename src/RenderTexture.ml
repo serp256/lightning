@@ -149,6 +149,7 @@ module FramebufferTexture = struct
       value create width height = { width; height; holes = [ Rectangle.fromCoordsAndDims 0 0 width height ]; rects = []; returnedRects = []; needRepair = False };
       value rects bin = bin.rects;
       value holes bin = bin.holes;
+      value returnedRects bin = bin.returnedRects;
       value getRect bin indx = List.nth bin.rects (indx mod (List.length bin.rects));
       value getHole bin indx = List.nth bin.holes (indx mod (List.length bin.holes));
       value width bin = bin.width;
@@ -182,6 +183,7 @@ module FramebufferTexture = struct
       value isConsistent bin = (holesSquare bin.holes) + (rectsSquare bin.rects) + (rectsSquare bin.returnedRects) = bin.width * bin.height;
 
       value repair bin =
+        let () = debug:holesnum "repair call %b" bin.needRepair in
         if bin.needRepair
         then
           let () = debug "+++rects %s" (String.concat ";" (List.map (fun hole -> Rectangle.toString hole) bin.rects)) in
@@ -268,6 +270,7 @@ module FramebufferTexture = struct
             bin.holes := mergePass (bin.holes @ bin.returnedRects) [];
             bin.returnedRects := [];
             bin.needRepair := False;
+            assert (isConsistent bin);
           )
         else ();
 
@@ -281,7 +284,6 @@ module FramebufferTexture = struct
             let hole = List.find (fun rect -> Rectangle.(width rect = w && height rect = h)) bin.returnedRects in (
               bin.returnedRects := List.remove bin.returnedRects hole;
               bin.rects := [ hole :: bin.rects ];
-              assert (isConsistent bin);
               Point.create (Rectangle.x hole) (Rectangle.y hole);
             )
           with
@@ -352,14 +354,24 @@ module FramebufferTexture = struct
           ];
 
       value remove bin x y =
+        let () = debug:holesnum "++++++remove call" in
         try
           let rect = List.find (fun rect -> Rectangle.x rect = x && Rectangle.y rect = y) bin.rects in (
             bin.rects := List.remove bin.rects rect;
             bin.returnedRects := [ rect :: bin.returnedRects ];
             bin.needRepair := True;
-            (* assert (isConsistent bin); *)
+            repair bin;
+
+(*             let () = debug:holesnum "(List.length bin.returnedRects) + (List.length bin.holes) %d" (List.length bin.returnedRects + List.length bin.holes) in
+            if (List.length bin.returnedRects) + (List.length bin.holes) > 30
+            then
+              let () = debug:holesnum "repair on remove" in (
+                repair bin;
+                debug:holesnum "after repair %d" (List.length bin.returnedRects + List.length bin.holes);
+              )
+            else (); *)
           )
-        with [ Not_found -> () ];
+        with [ Not_found -> debug:holesnum "REMOVE NOT FOUND" ];
 
       value clean bin = (
         bin.holes := [ Rectangle.fromCoordsAndDims 0 0 bin.width bin.height ];
@@ -371,21 +383,25 @@ module FramebufferTexture = struct
   value bins = ref [];
 
   value findPos w h =
+    let () = debug:holesnum "++++++findPos call %d" (List.length !bins) in
     let rec findPos binsLst =
       match binsLst with
       [ [] ->
+        let () = debug:holesnum "create new tex" in
         let tid = create_renderbuffer_tex () in
         let bin = Bin.create renderbufferTexSize renderbufferTexSize in (
-          bins.val := [ (tid, bin) :: !bins ];
+          bins.val := !bins @ [ (tid, bin) ];
           (tid, Bin.add bin w h)
         )
       | [ (tid, bin) :: binsLst ] ->
         try (tid, Bin.add bin w h)
         with
         [ Bin.CantPlace ->
+          let () = debug:holesnum "Bin.CantPlace %b" (Bin.needRepair bin) in
           if Bin.needRepair bin
           then (
             Bin.repair bin;
+            debug:holesnum "repair bin(%ld), holes num: %d" (int32_of_textureID tid) (List.length (Bin.holes bin) + List.length (Bin.returnedRects bin));
             try (tid, Bin.add bin w h) with [ Bin.CantPlace -> findPos binsLst ]
           )
           else findPos binsLst
@@ -396,15 +412,11 @@ module FramebufferTexture = struct
 
   value getRect w h =    
     let (tid, pos) = findPos w h in
-    let () = debug:texnum "texs num: %d" (List.length !bins) in
-    let () = debug:texpos "tex pos %d %d" (Point.x pos) (Point.y pos) in
       (tid, pos);
 
   value freeRect tid x y =
-    try
-      let bin = List.assoc tid !bins in
-        Bin.remove bin x y;
-    with [ Not_found -> (debug:texnum "not found %ld" (int32_of_textureID tid); assert False; ) ];
+    let bin = List.assoc tid !bins in
+      Bin.remove bin x y;
 end;
 
 class virtual base renderInfo = 
@@ -511,7 +523,6 @@ class type c =
 
 value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
   let dedicated = dedicated || (width > (float renderbufferTexSize) /. 2.) || (height > (float renderbufferTexSize) /. 2.) in
-  let () = debug:texnum "dedicated %b" dedicated in
 
   let (tid, pos) =
     if dedicated
@@ -531,6 +542,6 @@ value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
     then new dedicated renderInfo
     else
       let tex = new shared renderInfo in (
-        Gc.finalise (fun tex -> tex#release ()) tex;
+        Gc.finalise (fun tex -> ( debug:holesnum "render texture finalizer"; tex#release (); )) tex;
         tex;        
       );

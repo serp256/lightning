@@ -101,6 +101,7 @@ extern uintnat caml_dependent_size;
 void ml_render_texture_id_delete(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
 	if (tid) {
+		PRINT_DEBUG("ml_render_texture_id_delete");
 		back_texture_id(tid);
 		resetTextureIfBounded(tid);
 		checkGLErrors("delete texture");
@@ -215,10 +216,10 @@ PRINT_DEBUG("GL ERROR: %s", gl_err_str);																\
 static int FRAMEBUFFER_BIND_COUNTER = 0;
 
 void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
-	PRINT_DEBUG("clear_renderbuffer call");
+	// PRINT_DEBUG("clear_renderbuffer call");
 
 	if (Is_block(mlclear)) {
-		PRINT_DEBUG("clear_renderbuffer mlclear != Val_none");
+		// PRINT_DEBUG("clear_renderbuffer mlclear != Val_none");
 		value ca = Field(mlclear,0);
 		int c = Int_val(Field(ca,0));
 		color3F clr = COLOR3F_FROM_INT(c);
@@ -251,7 +252,7 @@ int create_renderbuffer(GLuint tid, int x, int y, double width, double height, i
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tid, 0);    
 	FRAMEBUFFER_BIND_COUNTER++;
-	PRINT_DEBUG("tid %d", tid);
+	// PRINT_DEBUG("tid %d", tid);
 	checkGLErrors("framebuffertexture2d %d -> %d",fbid, tid);
 
 
@@ -315,7 +316,7 @@ void delete_renderbuffer(renderbuffer_t *rb) {
 static int pizdalala = 0;
 
 value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value tid, value mlx, value mly, value mlwidth, value mlheight, value mlfun) {
-	PRINT_DEBUG("ml_renderbuffer_draw CALL");
+	// sPRINT_DEBUG("ml_renderbuffer_draw CALL");
 
 	CAMLparam5(filter, mlclear, tid, mlx, mly);
 	CAMLxparam3(mlwidth, mlheight, mlfun);
@@ -397,7 +398,7 @@ value ml_renderbuffer_draw_byte(value * argv, int n) {
 }
 
 void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_tid, value renderInfo, value mlfun) {
-	PRINT_DEBUG("ml_renderbuffer_draw_to_texture");
+	// PRINT_DEBUG("ml_renderbuffer_draw_to_texture");
 	CAMLparam5(mlclear, new_params, new_tid, renderInfo, mlfun);
 	CAMLlocal2(clp, clip);
 
@@ -503,7 +504,7 @@ value ml_renderbuffer_draw_to_dedicated_texture(value mlclear, value owidth, val
 		height = Double_val(Field(oheight,0));
 		resized |= (height != cheight);
 	};
-	PRINT_DEBUG("draw to texture: [%f:%f] -> [%f:%f]",cwidth,cheight,width,height);
+	// PRINT_DEBUG("draw to texture: [%f:%f] -> [%f:%f]",cwidth,cheight,width,height);
 
 	GLuint legalWidth = nextPOT(ceil(width));
 	GLuint legalHeight = nextPOT(ceil(height));
@@ -514,7 +515,8 @@ value ml_renderbuffer_draw_to_dedicated_texture(value mlclear, value owidth, val
   rb.height = height;
 	rb.realWidth = legalWidth;
 	rb.realHeight = legalHeight;
-	rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
+	// rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
+	rb.vp = (viewport){0,0,(GLuint)width,(GLuint)height};
 	if (resized) {
 		Store_field(renderInfo,1,caml_copy_double(width));
 		Store_field(renderInfo,2,caml_copy_double(height));
@@ -537,7 +539,7 @@ value ml_renderbuffer_draw_to_dedicated_texture(value mlclear, value owidth, val
 			clip = caml_alloc_tuple(1);
 			Store_field(clip,0,clp);
 		};
-		PRINT_DEBUG("update texture params: %f:%f -> [%f:%f:%f:%f]",width,height,rb.clp.x,rb.clp.y,rb.clp.width,rb.clp.height);
+		// PRINT_DEBUG("update texture params: %f:%f -> [%f:%f:%f:%f]",width,height,rb.clp.x,rb.clp.y,rb.clp.width,rb.clp.height);
 		Store_field(renderInfo,3,clip);
 		if (legalWidth != nextPOT(ceil(cwidth)) || legalHeight != nextPOT(ceil(cheight))) {
 
@@ -575,12 +577,12 @@ value ml_renderbuffer_draw_to_dedicated_texture(value mlclear, value owidth, val
   //glGenFramebuffers(1, &rb.fbid);
 	rb.fbid = get_framebuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, rb.fbid);
-	PRINT_DEBUG("FRAMEBUFFER BINDED");
+	// PRINT_DEBUG("FRAMEBUFFER BINDED");
 	checkGLErrors("draw to texture bind framebuffer");
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rb.tid,0);
 	FRAMEBUFFER_BIND_COUNTER++;
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-  		PRINT_DEBUG("ml_renderbuffer_draw_to_texture");
+  		// PRINT_DEBUG("ml_renderbuffer_draw_to_texture");
   		GL_ERROR;
 
 		char emsg[255];
