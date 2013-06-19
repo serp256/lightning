@@ -19,11 +19,9 @@ MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS  += -DIOS -Iios 
-COBJS   +=  ios/spwrapper_ios.o
-            
-LIBFLAGS = -cclib '-framework\ Foundation' 
-		   
+CFLAGS  += -DIOS -Iios -Iios/include -I../../ios
+COBJS   +=  ios/spwrapper_ios.o            
+LIBFLAGS += -cclib '-framework\ Foundation' -lsponsorpay-sdk
 
 else
 ifeq ($(PLATFORM),ANDROID)
