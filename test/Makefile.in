@@ -11,11 +11,11 @@ CFLAGS += -DLDEBUG
 
 SOCIAL=  ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
 OAUTH = ../src/social/oauth/oauth.cma 
-MOPUB = ../src/mopub/mopub.cma 
+PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma 
 
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma ../src/plugins/facebook/facebook.cma $(OAUTH) $(SOCIAL) $(MLFILES) $(TARGET).cmo \
+	-I ../src ../src/lightning.cma ../src/plugins/facebook/facebook.cma $(OAUTH) $(SOCIAL) $(PLUGINS) $(MLFILES) $(TARGET).cmo \
 	-package bigarray,unix,extlib,xmlm,ojson,redspell.debug -linkpkg
 
 example.cmo: $(MLFILES)
