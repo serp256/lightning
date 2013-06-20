@@ -386,15 +386,29 @@ static value *ml_url_complete = NULL;
 
 
 - (void)presentModalViewController:(UIViewController *)modalViewController animated:(BOOL)animated {
+	NSLog(@"presentModalViewController");
   [self resignActive];
   [super presentModalViewController: modalViewController animated: animated];
 }
 
+/*- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion {
+	NSLog(@"presentViewController");
+	[self resignActive];
+	[super presentViewController: viewControllerToPresent animated: flag completion: completion];
+}*/
+
 
 - (void)dismissModalViewControllerAnimated:(BOOL)animated {
+	NSLog(@"dismissModalViewControllerAnimated");
 	 [super dismissModalViewControllerAnimated: animated];
 	 [self becomeActive];
 }
+
+/*- (void)dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion {
+	NSLog(@"dismissViewControllerAnimated");
+	 [super dismissModalViewControllerAnimated: flag completion:completion];
+	 [self becomeActive];	
+}*/
 
 + (void)setSupportEmail:(NSString*)email {
 	supportEmail = [email retain];

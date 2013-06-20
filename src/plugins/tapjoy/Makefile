@@ -75,7 +75,7 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 else
 ifeq ($(PLATFORM),ANDROID)
 
-CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android
+CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android -I../common
 COBJS   +=  android/tapjoy_wrapper.o
 
 

@@ -1,8 +1,0 @@
-<MovieClip>
-	<Textures>
-		<Texture path="Background.png"/>
-	</Textures>
-	<Frames>
-		<Frame textureID="0" x="0" y="0" width="512" height="565" posX="0.35" posY="0.6" label="null"/>
-	</Frames>
-</MovieClip>
