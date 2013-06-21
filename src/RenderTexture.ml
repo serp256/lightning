@@ -18,6 +18,7 @@ external _renderbuffer_tex_size: unit -> int = "ml_renderbuffer_tex_size";
 value renderbufferTexSize = _renderbuffer_tex_size ();
 
 external renderbuffer_save: renderInfo -> string -> bool = "ml_renderbuffer_save";
+external dumptex: textureID -> unit = "ml_dumptex";
 
 type data = Bigarray.Array2.t int32 Bigarray.int32_elt Bigarray.c_layout;
 external renderbuffer_data: renderInfo -> data = "ml_renderbuffer_data";
@@ -142,19 +143,20 @@ module FramebufferTexture = struct
         height: int;
         holes: mutable list Rectangle.t;
         rects: mutable list Rectangle.t;
-        returnedRects: mutable list Rectangle.t;
-        needRepair: mutable bool;
+        reuseRects: mutable list Rectangle.t;
+        reuseCoeff: mutable int;
+        suspendedRemove: mutable bool;
       };
 
-      value create width height = { width; height; holes = [ Rectangle.fromCoordsAndDims 0 0 width height ]; rects = []; returnedRects = []; needRepair = False };
+      value create width height = { width; height; holes = [ Rectangle.fromCoordsAndDims 0 0 width height ]; rects = []; reuseRects = []; reuseCoeff = 0; suspendedRemove = False };
       value rects bin = bin.rects;
       value holes bin = bin.holes;
-      value returnedRects bin = bin.returnedRects;
+      value reuseRects bin = bin.reuseRects;
       value getRect bin indx = List.nth bin.rects (indx mod (List.length bin.rects));
       value getHole bin indx = List.nth bin.holes (indx mod (List.length bin.holes));
       value width bin = bin.width;
       value height bin = bin.height;
-      value needRepair bin = bin.needRepair;
+      value suspendedRemove bin = bin.suspendedRemove;
 
       value holesSquare holes =
         let rec prepare holeA holes nextPassHoles retval =
@@ -180,14 +182,19 @@ module FramebufferTexture = struct
 
       value rectsSquare rects = List.fold_left (fun square rect -> square + Rectangle.(width rect * height rect)) 0 rects;
 
-      value isConsistent bin = (holesSquare bin.holes) + (rectsSquare bin.rects) + (rectsSquare bin.returnedRects) = bin.width * bin.height;
+      value isConsistent bin = (holesSquare bin.holes) + (rectsSquare bin.rects) + (rectsSquare bin.reuseRects) = bin.width * bin.height;
 
       value repair bin =
-        let () = debug:holesnum "repair call %b" bin.needRepair in
-        if bin.needRepair
+        if bin.suspendedRemove && bin.reuseCoeff > 15
         then
+          let () = debug:reuse "repair call for: suspended: %B, reuseCoeff: %d, res: %B" bin.suspendedRemove bin.reuseCoeff (bin.suspendedRemove && bin.reuseCoeff > 15) in
+
           let () = debug "+++rects %s" (String.concat ";" (List.map (fun hole -> Rectangle.toString hole) bin.rects)) in
           let () = debug "+++holes %s" (String.concat ";" (List.map (fun hole -> Rectangle.toString hole) bin.holes)) in
+
+          let () = debug:consistent "let rects = [%s] in" ((String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "(%d,%d,%d,%d)" (x rect) (y rect) (width rect) (height rect))) bin.rects))) in
+          let () = debug:consistent "let holes = [%s] in" ((String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "(%d,%d,%d,%d)" (x rect) (y rect) (width rect) (height rect))) bin.holes))) in
+
 
           let rec mergePass holes retval =
             let () = debug "mergePass call %s" (String.concat "," (List.map (fun hole -> Rectangle.toString hole) holes)) in
@@ -267,28 +274,37 @@ module FramebufferTexture = struct
                 else merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
             ]
           in (
-            bin.holes := mergePass (bin.holes @ bin.returnedRects) [];
-            bin.returnedRects := [];
-            bin.needRepair := False;
-            assert (isConsistent bin);
+            bin.holes := mergePass (bin.holes @ bin.reuseRects) [];
+            bin.reuseRects := [];
+            bin.reuseCoeff := 0;
+            bin.suspendedRemove := False;
+
+            if not (isConsistent bin)
+            then (
+              debug:consistent "let rects = [%s] in" ((String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "(%d,%d,%d,%d)" (x rect) (y rect) (width rect) (height rect))) bin.rects)));
+              debug:consistent "let holes = [%s] in" ((String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "(%d,%d,%d,%d)" (x rect) (y rect) (width rect) (height rect))) bin.holes)));
+              (* assert False; *)
+            ) else ();
+
+            True;
           )
-        else ();
+        else False;
 
       value add bin width height =
-(*         let () = debug:consistent "holes before: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.holes)) in
-        let () = debug:consistent "rects before: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.rects)) in *)
+        let () = debug:consistent "holes before: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.holes)) in
+        let () = debug:consistent "rects before: %s" (String.concat "," (List.map (fun rect -> Rectangle.toString rect) bin.rects)) in
 
         let w = width in
         let h = height in
           try
-            let hole = List.find (fun rect -> Rectangle.(width rect = w && height rect = h)) bin.returnedRects in (
-              bin.returnedRects := List.remove bin.returnedRects hole;
+            let hole = List.find (fun rect -> Rectangle.(width rect = w && height rect = h)) bin.reuseRects in (
+              bin.reuseRects := List.remove bin.reuseRects hole;
+              bin.reuseCoeff := bin.reuseCoeff - 1;
               bin.rects := [ hole :: bin.rects ];
               Point.create (Rectangle.x hole) (Rectangle.y hole);
             )
           with
           [ Not_found ->
-            (* let () = if bin.needRepair then repair bin else () in *)
             let holeToPlace = 
               List.fold_left (fun holeToPlace hole ->
                 if Rectangle.width hole >= width && Rectangle.height hole >= height
@@ -348,64 +364,51 @@ module FramebufferTexture = struct
                   assert (isConsistent bin); *)
 
                   rectPos;
-
-                  
                 )            
           ];
 
       value remove bin x y =
-        let () = debug:holesnum "++++++remove call" in
         try
           let rect = List.find (fun rect -> Rectangle.x rect = x && Rectangle.y rect = y) bin.rects in (
             bin.rects := List.remove bin.rects rect;
-            bin.returnedRects := [ rect :: bin.returnedRects ];
-            bin.needRepair := True;
-            repair bin;
-
-(*             let () = debug:holesnum "(List.length bin.returnedRects) + (List.length bin.holes) %d" (List.length bin.returnedRects + List.length bin.holes) in
-            if (List.length bin.returnedRects) + (List.length bin.holes) > 30
-            then
-              let () = debug:holesnum "repair on remove" in (
-                repair bin;
-                debug:holesnum "after repair %d" (List.length bin.returnedRects + List.length bin.holes);
-              )
-            else (); *)
+            bin.reuseRects := [ rect :: bin.reuseRects ];
+            bin.reuseCoeff := bin.reuseCoeff + 1;
+            bin.suspendedRemove := True;
+            ignore(repair bin);
           )
-        with [ Not_found -> debug:holesnum "REMOVE NOT FOUND" ];
+        with [ Not_found -> () ];
 
       value clean bin = (
         bin.holes := [ Rectangle.fromCoordsAndDims 0 0 bin.width bin.height ];
         bin.rects := [];
-        bin.needRepair = False;
+        bin.suspendedRemove = False;
       );
     end;
 
   value bins = ref [];
 
   value findPos w h =
-    let () = debug:holesnum "++++++findPos call %d" (List.length !bins) in
-    let rec findPos binsLst =
+    let rec findPosWithRepair repairCnt binsLst =
       match binsLst with
-      [ [] ->
-        let () = debug:holesnum "create new tex" in
+      [ [ (tid, bin) :: binsLst ] when repairCnt < 3 ->
+        let repaired = Bin.repair bin in
+          try (tid, Bin.add bin w h)
+          with [ Bin.CantPlace -> findPosWithRepair (if repaired then repairCnt + 1 else repairCnt) binsLst ]
+      | _ ->
         let tid = create_renderbuffer_tex () in
         let bin = Bin.create renderbufferTexSize renderbufferTexSize in (
           bins.val := !bins @ [ (tid, bin) ];
           (tid, Bin.add bin w h)
-        )
+        )          
+      ]
+    in
+
+    let rec findPos binsLst =
+      match binsLst with
+      [ [] -> findPosWithRepair 0 !bins
       | [ (tid, bin) :: binsLst ] ->
         try (tid, Bin.add bin w h)
-        with
-        [ Bin.CantPlace ->
-          let () = debug:holesnum "Bin.CantPlace %b" (Bin.needRepair bin) in
-          if Bin.needRepair bin
-          then (
-            Bin.repair bin;
-            debug:holesnum "repair bin(%ld), holes num: %d" (int32_of_textureID tid) (List.length (Bin.holes bin) + List.length (Bin.returnedRects bin));
-            try (tid, Bin.add bin w h) with [ Bin.CantPlace -> findPos binsLst ]
-          )
-          else findPos binsLst
-        ]
+        with [ Bin.CantPlace -> findPos binsLst ]
       ]
     in
       findPos !bins;
@@ -417,6 +420,20 @@ module FramebufferTexture = struct
   value freeRect tid x y =
     let bin = List.assoc tid !bins in
       Bin.remove bin x y;
+
+  value binsNum () = List.length !bins;
+
+  value dumpTextures () =
+    List.iter (fun (tid, bin) -> (
+      dumptex tid;
+
+      let out = open_out (Printf.sprintf "/sdcard/%ld.holes" (int32_of_textureID tid)) in (
+        output_string out (Printf.sprintf "%s\n" (String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "%d,%d,%d,%d" (x rect) (y rect) (width rect) (height rect))) (Bin.rects bin))));
+        output_string out (Printf.sprintf "%s\n" (String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "%d,%d,%d,%d" (x rect) (y rect) (width rect) (height rect))) (Bin.holes bin))));
+        output_string out (Printf.sprintf "%s\n" (String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "%d,%d,%d,%d" (x rect) (y rect) (width rect) (height rect))) (Bin.reuseRects bin))));
+        close_out out;
+      )
+    )) !bins;
 end;
 
 class virtual base renderInfo = 
@@ -520,9 +537,14 @@ class type c =
     method data: unit -> data; 
   end;  
 
+value dedicatedCnt = ref 0;
 
 value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
+  let () = debug:dedicated "draw call %f %f (%f %f), dedicated %B" width height ((float renderbufferTexSize) /. 2.) ((float renderbufferTexSize) /. 2.) dedicated in
+  let () = debug:dedicated "dedicated || (width > (float renderbufferTexSize) /. 2.) || (height > (float renderbufferTexSize) /. 2.) %B" (dedicated || (width > (float renderbufferTexSize) /. 2.) || (height > (float renderbufferTexSize) /. 2.)) in
   let dedicated = dedicated || (width > (float renderbufferTexSize) /. 2.) || (height > (float renderbufferTexSize) /. 2.) in
+  let () = if dedicated then incr dedicatedCnt else () in
+  let () = debug:dedicated "dedicated cnt %d" !dedicatedCnt in
 
   let (tid, pos) =
     if dedicated
@@ -542,6 +564,9 @@ value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
     then new dedicated renderInfo
     else
       let tex = new shared renderInfo in (
-        Gc.finalise (fun tex -> ( debug:holesnum "render texture finalizer"; tex#release (); )) tex;
+        Gc.finalise (fun tex -> tex#release () ) tex;
         tex;        
       );
+
+value sharedTexsNum = FramebufferTexture.binsNum;
+value dumpTextures = FramebufferTexture.dumpTextures;

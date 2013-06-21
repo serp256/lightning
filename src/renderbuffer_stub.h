@@ -38,6 +38,7 @@ typedef struct {
 	GLsizei viewport[4];
 } framebuffer_state; 
 
+static GLuint inline get_framebuffer();
 void get_framebuffer_state(framebuffer_state *s);
 void set_framebuffer_state(framebuffer_state *s);
 

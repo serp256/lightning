@@ -518,12 +518,14 @@ static inline GLuint powS( GLuint l )
 };
 
 static save_tex_cnt = 0;
+static glow_tex_cnt = 0;
 
 void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_lev_tex, viewport* vp, clipping* clp, int bind) {
 	int tw = powS(w);
 	int th = powS(h);
 
 	if (txrs[tw][th] == 0) {
+		PRINT_DEBUG("glow_tex_cnt %d %d %d", tw, th, ++glow_tex_cnt);
 		glGenTextures(1, &(txrs[tw][th]));
 		glBindTexture(GL_TEXTURE_2D, txrs[tw][th]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -548,6 +550,9 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 	glow_make_draw(vp, clp, 1);
 	*prev_glow_lev_tex = txrs[tw][th];
 
+	if (!bind) {
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);	
+	}
 /*	//------------------
 	char* pixels = caml_stat_alloc(4 * (GLuint)w * (GLuint)h);
 	char* fname = malloc(255);
@@ -563,12 +568,6 @@ void ml_glow_make(value orb, value glow) {
 	renderbuffer_t *rb = (renderbuffer_t *)orb;
 	PRINT_DEBUG("save_tex_cnt %d", save_tex_cnt);
 	PRINT_DEBUG("glow make for %d:%d, [%f:%f] [%d:%d]",rb->fbid,rb->tid,rb->width,rb->height,rb->realWidth,rb->realHeight);
-
-/*	char* pixels = caml_stat_alloc(4 * (GLuint)512 * (GLuint)512);
-	char* fname = malloc(255);
-	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
-	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,512,512);*/
 
 	lgResetBoundTextures();
 	framebuffer_state fstate;
@@ -652,15 +651,6 @@ void ml_glow_make(value orb, value glow) {
 
 	glow_make_draw(&rb->vp, clps, 0);
 
-/*	//------------
-	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
-	pixels = caml_stat_alloc(4 * (GLuint)512 * (GLuint)512);
-	fname = malloc(255);
-	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
-	glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,512,512);	
-	//------------
-*/
 	glBindTexture(GL_TEXTURE_2D,0);
 	glUseProgram(0);
 	currentShaderProgram = 0;

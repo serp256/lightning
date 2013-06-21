@@ -2,8 +2,6 @@ open LightCommon;
 
 module D = DisplayObject;
 
-value pizdalala = ref 0;
-
 type cache_valid = [ CInvalid | CEmpty | CValid ];
 type imageCache = 
   {
@@ -145,9 +143,6 @@ class c =
                      end in
                      (
                        self#setAlpha alpha';
-                       debug:drawf "!!!!!!%d %f %f" !pizdalala rw rh;
-                       ignore(ctex#save (Printf.sprintf "/sdcard/pizdalala%d.png" !pizdalala));
-                       incr pizdalala;
                        ctex;
                      )
                    )

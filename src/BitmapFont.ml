@@ -41,7 +41,7 @@ value get ?(applyScale=False) ?(style="regular") ?size name =
     match f with
     [ Some f -> f
     | None -> 
-        let () = Debug.e "SCALE FONT: %s:%s:%d" name style size in
+        (* let () = Debug.e "SCALE FONT: %s:%s:%d" name style size in *)
         let (fsize,font) = 
           match MapInt.is_empty r with
           [ False -> MapInt.min_binding r
