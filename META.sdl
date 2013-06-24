@@ -41,11 +41,11 @@ package "social" (
   archive(bytes) = "SNTypes.cmi"
   archive(native) = "SNTypes.cmi"
 
-	package "facebook" (
-		description="Facebook API"
-		archive(byte) = "facebook.cma"
-		archive(native) = "facebook.cmxa"
-	)
+  package "facebook" (
+    description="Facebook API"
+    archive(byte) = "facebook.cma"
+    archive(native) = "facebook.cmxa"
+  )
 
   package "oauth" (
     description="OAuth"
@@ -55,22 +55,22 @@ package "social" (
 
   package "mm"  (
     description="Social network: Moy Mir"
-    archive(byte) = "mm.cmo"
-    archive(native) = "mm.cmx"
+    archive(byte) = "MM.cmo"
+    archive(native) = "MM.cmx"
     requires = "lightning.social.oauth"
   )
   
   package "vk" (
     description="VK API"
-    archive(byte) = "vk.cmo"
-    archive(native) = "vk.cmx"
+    archive(byte) = "VK.cmo"
+    archive(native) = "VK.cmx"
     requires = "lightning.social.oauth"
   )
   
   package "ok" (
     description="Odniklassniki API"
-    archive(byte) = "ok.cmo"
-    archive(native) = "ok.cmx"
+    archive(byte) = "OK.cmo"
+    archive(native) = "OK.cmx"
     requires = "lightning.social.oauth"
   )
   
