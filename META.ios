@@ -57,18 +57,18 @@ package "mobileapptracking" (
 	linkopts = "-ccopt '-F%lightning_path%/src/plugins/mobileapptracking/ios'"
 )
 
-package "facebook" (
-	description="Facebook API"
-	archive(byte) = "facebook.cma"
-	archive(native) = "facebook.cmxa"
-	linkopts = "-ccopt '-F%lightning_path%/src/plugins/facebook/ios'"
-)
-
-
 package "social" (
 
   archive(bytes) = "SNTypes.cmi"
   archive(native) = "SNTypes.cmi"
+
+  package "facebook" (
+	description="Facebook API"
+	archive(byte) = "facebook.cma"
+	archive(native) = "facebook.cmxa"
+	linkopts = "-ccopt '-F%lightning_path%/src/plugins/facebook/ios'"
+  )
+
 
   package "oauth" (
     description="OAuth"

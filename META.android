@@ -40,12 +40,6 @@ package "mobileapptracking" (
 	archive(native)="mobileapptracking.cmxa"
 )
 
-package "facebook" (
-	description="Facebook API"
-	archive(byte) = "facebook.cma"
-	archive(native) = "facebook.cmxa"
-)
-
 package "sponsorpay" (
 	description="SponsorPay SDK"
 	archive(byte) = "sponsorpay.cma"
@@ -68,6 +62,11 @@ package "social" (
   archive(bytes) = "SNTypes.cmi"
   archive(native) = "SNTypes.cmi"
 
+  package "facebook" (
+	description="Facebook API"
+	archive(byte) = "facebook.cma"
+	archive(native) = "facebook.cmxa"
+  )
 
   package "oauth" (
     description="OAuth"
