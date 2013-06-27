@@ -691,3 +691,24 @@ value ml_dumptex(value tid) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	//------------
 }
+
+void ml_redraw_test() {
+	GLuint tids[2];
+	glGenTextures(2, tids);
+
+	FILE* tex_in = fopen("/sdcard/14.png", "r");
+	fseek(tex_in, 0, SEEK_END);
+	size_t tex_in_size = ftell(tex_in);
+	char data[tex_in_size];
+	fread(data, tex_in_size, 1, tex_in);
+	fclose(tex_in);
+
+	glBindTexture(GL_TEXTURE_2D, tids[0]);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	
+}

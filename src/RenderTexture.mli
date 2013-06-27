@@ -17,4 +17,5 @@ class type c =
 
 value draw: ~filter:Texture.filter -> ?color:int -> ?alpha:float -> ?dedicated:bool -> float ->  float -> (framebuffer -> unit) -> c; 
 value sharedTexsNum: unit -> int;
-value dumpTextures: unit -> unit;
+(* value dumpTextures: unit -> unit;
+value repairBenchmark: int -> int -> int -> (int * int * int * float * float * float * float); *)

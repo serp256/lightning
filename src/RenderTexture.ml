@@ -38,6 +38,7 @@ module FramebufferTexture = struct
       value xBetween (x, _) (xA, _) (xB, _) = ((min xA xB) <= x) && (x <= (max xA xB));
       value yBetween (_, y) (_, yA) (_, yB) = ((min yA yB) <= y) && (y <= (max yA yB));
       value equal (xA, yA) (xB, yB) = xA = xB && yA = yB;
+      value clone (x, y) = create x y;
     end;
 
   module Rectangle = 
@@ -98,6 +99,7 @@ module FramebufferTexture = struct
           || (y lbA = y lbB || y lbA = y rtB) && (xBetween lbA lbB rtB || xBetween rtA lbB rtB));
 
       value equal (lbA, rtA) (lbB, rtB) = Point.(equal lbA lbB && equal rtA rtB);
+      value clone (lb, rt) = (Point.clone lb, Point.clone rt); 
     end;
 
   module Hole =
@@ -153,6 +155,13 @@ module FramebufferTexture = struct
           retval;
         );
 
+      value clone bin =
+        let cloneRectLst lst = List.map (fun rect -> Rectangle.clone rect) lst in
+        let retval = { id = !cnt; width = bin.width; height = bin.height; holes = cloneRectLst bin.holes; rects = cloneRectLst bin.rects; reuseRects = cloneRectLst bin.reuseRects; reuseCoeff = bin.reuseCoeff } in (
+          incr cnt;
+          retval;
+        );
+
       value rects bin = bin.rects;
       value holes bin = bin.holes;
       value reuseRects bin = bin.reuseRects;
@@ -196,123 +205,30 @@ module FramebufferTexture = struct
         bin.reuseCoeff := 0;
       );
 
-      value repair bin =
-        if needRepair bin
-        then
-          if bin.rects = []
-          then clean bin
-          else
-            let rec mergePass holes retval =
-              match holes with
-              [ [ holeA :: holes ] -> merge holeA holes [] retval False
-              | _ -> assert False
-              ]
-
-            and merge holeA holes checkedHoles retval changed =
-              match holes with
-              [ [] ->
-                  if changed
-                  then mergePass ((List.rev retval) @ (List.rev checkedHoles) @ [ holeA ]) []
-                  else
-                    match checkedHoles with
-                    [ [] -> [ holeA :: retval ]
-                    | _ -> mergePass checkedHoles [ holeA :: retval ] 
-                    ]
-              | _ ->
-                let holeB = List.hd holes in
-                  if Rectangle.rectInside holeA holeB
-                  then merge holeA (List.tl holes) checkedHoles retval changed
-                  else
-
-                  if Rectangle.rectInside holeB holeA
-                  then merge holeB (List.tl holes) checkedHoles retval True
-                  else
-
-                  if Rectangle.intersects holeA holeB
-                  then              
-                    match Hole.plus holeA holeB with
-                    [ [ newHoleA; newHoleB ] when Rectangle.(equal newHoleA holeA && equal newHoleB holeB || equal newHoleA holeB && equal newHoleB holeA) ->
-                        merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
-                    | [ newHoleA; newHoleB ] ->
-                      let allHoles = [ holeA :: holes @ checkedHoles @ retval ] in
-                      let (changed, checkedHoles) =
-                        if List.exists (fun hole -> Rectangle.rectInside hole newHoleB) allHoles
-                        then (changed, checkedHoles)
-                        else (True, [ newHoleB :: checkedHoles ])
-                      in
-                      let (changed, checkedHoles) =
-                        if List.exists (fun hole -> Rectangle.rectInside hole newHoleA) allHoles
-                        then (changed, checkedHoles)
-                        else (True, [ newHoleA :: checkedHoles ])
-                      in
-                        merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
-                    | [ newHole ] when Rectangle.rectInside newHole holeA && Rectangle.rectInside newHole holeB -> merge newHole (List.tl holes) checkedHoles retval True
-                    | [ newHole ] when Rectangle.rectInside newHole holeA -> merge newHole (List.tl holes) [ holeB :: checkedHoles ] retval True
-                    | [ newHole ] when Rectangle.rectInside newHole holeB -> merge holeA (List.tl holes) [ newHole :: checkedHoles ] retval True
-                    | [ newHole ] ->
-                      let allHoles = [ holeA :: holes @ checkedHoles @ retval ] in
-                      let (changed, checkedHoles) =
-                        if List.exists (fun hole -> Rectangle.rectInside hole newHole) allHoles
-                        then (changed, checkedHoles)
-                        else (True, [ newHole :: checkedHoles ])
-                      in
-                       merge holeA (List.tl holes) [ holeB :: checkedHoles] retval changed
-                    | [] -> merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed (* this case is when rects contacts by single vertex *)
-                    | _ -> assert False
-                    ]
-                  else merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
-              ]
-            in (
-              debug:consistent "before repair: %d r:%d; ru:%d; h:%d" (bin.id) (List.length bin.rects) (List.length bin.reuseRects) (List.length bin.holes);
-
-              let reuseRects = bin.reuseRects in (
-                bin.reuseRects := [];
-                bin.reuseCoeff := 0;
-                (* reseting reuseRects called before merging cause when merging gc may finalize some rects on bin and when we reset reusedRects after merge -- we can lose whose rects *)
-                bin.holes := mergePass (bin.holes @ reuseRects) [];
-              );
-
-              debug:consistent "repair complete: %d r:%d; ru:%d; h:%d" (bin.id) (List.length bin.rects) (List.length bin.reuseRects) (List.length bin.holes);
-              (* assert (isConsistent bin); *)
-            )
-        else ();
-
-      value reuse bin width height =
-        let w = width in
-        let h = height in
-          try
-            let hole =
-              List.find (fun rect ->
-                let wdiff = Rectangle.width rect - w in
-                let hdiff = Rectangle.height rect - h in
-                   wdiff >= 0 && wdiff < 10 && hdiff >= 0 && hdiff < 10
-              ) bin.reuseRects
-            in (
-              bin.reuseRects := List.remove bin.reuseRects hole;
-              bin.reuseCoeff := bin.reuseCoeff - 1;
-              bin.rects := [ hole :: bin.rects ];
-              Some (Rectangle.leftBottom hole);
-            )
-          with [ Not_found -> None ];
-
-      value add bin width height =
-        let holeToPlace = 
-          List.fold_left (fun holeToPlace hole ->
-            if Rectangle.width hole >= width && Rectangle.height hole >= height
-            then
-              let bestPos = Rectangle.leftBottom holeToPlace in
-              let holeLb = Rectangle.leftBottom hole in
-                if Point.(y holeLb < y bestPos || y holeLb = y bestPos && x holeLb < x bestPos)
-                then hole
+      value add bin ?pos width height =
+        let pos =
+          match pos with
+          [ Some pos -> pos
+          | _ ->
+            let holeToPlace =
+              List.fold_left (fun holeToPlace hole ->
+                if Rectangle.width hole >= width && Rectangle.height hole >= height
+                then
+                  let bestPos = Rectangle.leftBottom holeToPlace in
+                  let holeLb = Rectangle.leftBottom hole in
+                    if Point.(y holeLb < y bestPos || y holeLb = y bestPos && x holeLb < x bestPos)
+                    then hole
+                    else holeToPlace
                 else holeToPlace
-            else holeToPlace
-          ) (Rectangle.fromCoordsAndDims max_int max_int max_int max_int) bin.holes
+              ) (Rectangle.fromCoordsAndDims max_int max_int max_int max_int) bin.holes
+            in
+              Rectangle.leftBottom holeToPlace
+          ]
         in
-          if Point.x (Rectangle.leftBottom holeToPlace) = max_int
+          if Point.x pos = max_int
           then None
           else
-            let rectPos = Rectangle.leftBottom holeToPlace in
-            let placedRect = Rectangle.fromPntAndDims rectPos width height in
+            let placedRect = Rectangle.fromPntAndDims pos width height in
 
             let filterHoles hole maxHoles = 
               let rec filterHoles hole maxHoles retval =
@@ -347,8 +263,116 @@ module FramebufferTexture = struct
             in (
               bin.holes := splitHoles bin.holes;
               bin.rects := [ placedRect :: bin.rects ];
-              Some rectPos;
+              Some pos;
             );
+
+      value repairByAdd bin =
+        let rects = bin.rects in (
+          clean bin;
+          List.iter (fun rect -> ignore(add bin ~pos:(Rectangle.leftBottom rect) (Rectangle.width rect) (Rectangle.height rect))) rects;
+        );
+
+      value repairByMerge bin =
+        let rec mergePass holes retval =
+          match holes with
+          [ [ holeA :: holes ] -> merge holeA holes [] retval False
+          | _ -> assert False
+          ]
+
+        and merge holeA holes checkedHoles retval changed =
+          match holes with
+          [ [] ->
+              if changed
+              then mergePass ((List.rev retval) @ (List.rev checkedHoles) @ [ holeA ]) []
+              else
+                match checkedHoles with
+                [ [] -> [ holeA :: retval ]
+                | _ -> mergePass checkedHoles [ holeA :: retval ] 
+                ]
+          | _ ->
+            let holeB = List.hd holes in
+              if Rectangle.rectInside holeA holeB
+              then merge holeA (List.tl holes) checkedHoles retval changed
+              else
+
+              if Rectangle.rectInside holeB holeA
+              then merge holeB (List.tl holes) checkedHoles retval True
+              else
+
+              if Rectangle.intersects holeA holeB
+              then              
+                match Hole.plus holeA holeB with
+                [ [ newHoleA; newHoleB ] when Rectangle.(equal newHoleA holeA && equal newHoleB holeB || equal newHoleA holeB && equal newHoleB holeA) ->
+                    merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
+                | [ newHoleA; newHoleB ] ->
+                  let allHoles = [ holeA :: holes @ checkedHoles @ retval ] in
+                  let (changed, checkedHoles) =
+                    if List.exists (fun hole -> Rectangle.rectInside hole newHoleB) allHoles
+                    then (changed, checkedHoles)
+                    else (True, [ newHoleB :: checkedHoles ])
+                  in
+                  let (changed, checkedHoles) =
+                    if List.exists (fun hole -> Rectangle.rectInside hole newHoleA) allHoles
+                    then (changed, checkedHoles)
+                    else (True, [ newHoleA :: checkedHoles ])
+                  in
+                    merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
+                | [ newHole ] when Rectangle.rectInside newHole holeA && Rectangle.rectInside newHole holeB -> merge newHole (List.tl holes) checkedHoles retval True
+                | [ newHole ] when Rectangle.rectInside newHole holeA -> merge newHole (List.tl holes) [ holeB :: checkedHoles ] retval True
+                | [ newHole ] when Rectangle.rectInside newHole holeB -> merge holeA (List.tl holes) [ newHole :: checkedHoles ] retval True
+                | [ newHole ] ->
+                  let allHoles = [ holeA :: holes @ checkedHoles @ retval ] in
+                  let (changed, checkedHoles) =
+                    if List.exists (fun hole -> Rectangle.rectInside hole newHole) allHoles
+                    then (changed, checkedHoles)
+                    else (True, [ newHole :: checkedHoles ])
+                  in
+                   merge holeA (List.tl holes) [ holeB :: checkedHoles] retval changed
+                | [] -> merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed (* this case is when rects contacts by single vertex *)
+                | _ -> assert False
+                ]
+              else merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
+          ]
+        in (
+          debug:consistent "before repair: %d r:%d; ru:%d; h:%d" (bin.id) (List.length bin.rects) (List.length bin.reuseRects) (List.length bin.holes);
+
+          let reuseRects = bin.reuseRects in (
+            bin.reuseRects := [];
+            bin.reuseCoeff := 0;
+            (* reseting reuseRects called before merging cause when merging gc may finalize some rects on bin and when we reset reusedRects after merge -- we can lose whose rects *)
+            bin.holes := mergePass (bin.holes @ reuseRects) [];
+          );
+
+          debug:consistent "repair complete: %d r:%d; ru:%d; h:%d" (bin.id) (List.length bin.rects) (List.length bin.reuseRects) (List.length bin.holes);
+          (* assert (isConsistent bin); *)
+        );
+
+      value repair bin =
+        if needRepair bin
+        then
+          let () = debug:consistent "repair call" in
+          if bin.rects = []
+          then clean bin
+          else repairByAdd bin
+        else ();
+
+      value reuse bin width height =
+        let w = width in
+        let h = height in
+          try
+            let hole =
+              List.find (fun rect ->
+                let wdiff = Rectangle.width rect - w in
+                let hdiff = Rectangle.height rect - h in
+                   wdiff >= 0 && wdiff < 10 && hdiff >= 0 && hdiff < 10
+              ) bin.reuseRects
+            in (
+              bin.reuseRects := List.remove bin.reuseRects hole;
+              bin.reuseCoeff := bin.reuseCoeff - 1;
+              bin.rects := [ hole :: bin.rects ];
+              Some (Rectangle.leftBottom hole);
+            )
+          with [ Not_found -> None ];
 
       value remove bin x y =
         let () = debug:consistent "%d: remove call for (%d,%d), reuse coeff %d" (bin.id) x y (bin.reuseCoeff + 1) in
@@ -442,6 +466,97 @@ module FramebufferTexture = struct
         close_out out;
       )
     )) !bins;
+
+(*   value addRepairTime bin = ~-.0.001706 +. 8.567 *. 1e-05 *. (float (List.length bin.rects)) +. 1.551 *. 1e-05 *. (float (List.length bin.holes)) +. 1.761 *. 1e-05 *. (float (List.length bin.reuseRects));
+  value mergeRepairTime bin = ~-.0.731 +. 0.003802 *. (float (List.length bin.rects)) +. 0.021 *. (float (List.length bin.holes)) +. 0.018 *. (float (List.length bin.reuseRects)); *)
+
+  value repairBenchmark rectsNum rmPct minimizeLevel =
+    let () = Random.self_init () in
+    let bin1 = Bin.create 512 512 in
+    let (rectPoss, bin2) =
+      if minimizeLevel > 0
+      then (
+        ignore(Bin.add bin1 300 300);
+
+        if minimizeLevel > 1
+        then (ignore(Bin.add bin1 150 150);ignore(Bin.add bin1 250 150);)
+        else ();
+
+        if minimizeLevel > 2
+        then (ignore(Bin.add bin1 50 50);ignore(Bin.add bin1 350 50);ignore(Bin.add bin1 260 50);)
+        else ();
+
+        let rec split changed rects retval =
+          match rects with
+          [ [] when (List.length retval < rectsNum) && changed -> split False retval []
+          | [ rect :: rest ] when (List.length retval) + (List.length rects) < rectsNum ->
+            if Rectangle.(width rect <= 10 || height rect <= 10)
+            then split changed rest [ rect :: retval ]
+            else
+              let lbx = Rectangle.x rect in
+              let lby = Rectangle.y rect in
+              let rtx = lbx + Rectangle.width rect in
+              let rty = lby + Rectangle.height rect in
+                if Random.int 1000 mod 2 = 0
+                then let x = Random.int (rtx - lbx - 10) + 5 in split True rest [ (Rectangle.fromCoords lbx lby (lbx + x) rty) :: [(Rectangle.fromCoords (lbx + x) lby rtx rty) :: retval] ]
+                else let y = Random.int (rty - lby - 10) + 5 in split True rest [ (Rectangle.fromCoords lbx lby rtx (lby + y)) :: [(Rectangle.fromCoords lbx (lby + y) rtx rty) :: retval] ]
+          | _ -> rects @ retval
+          ]
+        in (
+          bin1.Bin.rects := split False bin1.Bin.rects [];
+
+          for i = 0 to Random.int 10 + 5 do {
+            bin1.Bin.rects := List.sort ~cmp:(fun _ _ -> Random.int 1000 mod 3 - 1) bin1.Bin.rects;
+          };
+
+          assert (Bin.isConsistent bin1);
+          (List.map (fun rect -> Rectangle.leftBottom rect) bin1.Bin.rects, Bin.clone bin1);
+        );
+      )
+      else
+        let bin2 = Bin.create 512 512 in
+          (List.init rectsNum (fun _ ->
+                      let (w, h) =
+                        if Random.int 1000 mod 11 = 0
+                        then ((Random.int 30 + 10), (Random.int 30 + 10))
+                        else
+                          if Random.int 100 mod 2 = 0
+                          then ((Random.int 10 + 20), (Random.int 10 + 5))
+                          else ((Random.int 10 + 5), (Random.int 10 + 20))
+                      in
+                        (ignore(Bin.add bin1 w h); match Bin.add bin2 w h with [ Some pos -> pos | _ -> assert False ];)
+                    ), bin2)
+    in
+
+    let rectToRm = ref rectPoss in (
+      for i = 0 to Random.int 5 + 10 do {
+        rectToRm.val := List.sort ~cmp:(fun _ _ -> Random.int 10000 mod 3 - 1) !rectToRm;
+      };
+
+      List.iter (fun (x, y) -> (Bin.remove bin1 x y;Bin.remove bin2 x y)) (List.take (rectsNum * rmPct / 100) !rectToRm);
+
+      let rectsNum = List.length bin1.Bin.rects in
+      let holesNum = List.length bin1.Bin.holes in
+      let reuseNum = List.length bin1.Bin.reuseRects in (
+        (* let prognosis1 = Bin.addRepairTime bin1 in *)
+        let ptmr1 = ProfTimer.start () in (
+          debug:rprbnchmk "processing %d,%d,%d..." rectsNum holesNum reuseNum;
+
+          Bin.repairByAdd bin1;
+          ProfTimer.stop ptmr1;
+          assert (Bin.isConsistent bin1);
+
+          (* let prognosis2 = Bin.mergeRepairTime bin2 in *)
+          let ptmr2 = ProfTimer.start () in (
+            Bin.repairByMerge bin2;
+            ProfTimer.stop ptmr2;
+            assert (Bin.isConsistent bin2);
+            debug:rprbnchmk "done";
+            (rectsNum, holesNum, reuseNum, ProfTimer.length ptmr1, (* prognosis1,  *)ProfTimer.length ptmr2(* , prognosis2 *));
+          );
+        );
+      );        
+    );
 end;
 
 class virtual base renderInfo = 
@@ -577,4 +692,5 @@ value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
       );
 
 value sharedTexsNum = FramebufferTexture.binsNum;
-value dumpTextures = FramebufferTexture.dumpTextures;
+(* value dumpTextures = FramebufferTexture.dumpTextures; *)
+(* value repairBenchmark = FramebufferTexture.repairBenchmark; *)
