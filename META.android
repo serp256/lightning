@@ -68,6 +68,11 @@ package "social" (
   archive(bytes) = "SNTypes.cmi"
   archive(native) = "SNTypes.cmi"
 
+  package "facebook" (
+	description="Facebook API"
+	archive(byte) = "facebook.cma"
+	archive(native) = "facebook.cmxa"
+  )
 
   package "oauth" (
     description="OAuth"

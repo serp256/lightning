@@ -18,3 +18,5 @@
 		cls = (*env)->NewGlobalRef(env, tmp);				\
 		(*env)->DeleteLocalRef(env, tmp);					\
 	}
+
+#define JString_val(jstr,val) jstring jstr = (*env)->NewStringUTF(env, String_val(val));

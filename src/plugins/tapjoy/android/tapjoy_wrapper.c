@@ -1,12 +1,23 @@
-
-#include "mlwrapper_android.h"
+#include "plugin_common.h"
+// #include "mlwrapper_android.h"
 
 static jclass gTapjoyCls = 0;
 
+#define GET_CLS GET_PLUGIN_CLASS(gTapjoyCls,ru/redspell/lightning/plugins/LightTapjoy);
+
 void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
-	DEBUG("init tapjoy");
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	GET_ENV;
+	GET_CLS;
+
+	JString_val(j_appId, ml_appID);
+	JString_val(j_secKey, ml_secretKey);
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, gTapjoyCls, "init", "(Ljava/lang/String;Ljava/lang/String;)V");
+
+	(*env)->CallStaticVoidMethod(env, gTapjoyCls, mid, j_appId, j_secKey);
+	(*env)->DeleteLocalRef(env, j_appId);
+	(*env)->DeleteLocalRef(env, j_secKey);
 
 	/* ENABLE LOGGING
 	// TapjoyLog.enableLogging(true);
@@ -17,9 +28,11 @@ void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
 	PRINT_DEBUG("LOGGING ENABLED");
 	*/
 
+
+
 	//
 	//TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
-	jobject jAppContext = jApplicationContext(env);
+/*	jobject jAppContext = jApplicationContext(env);
 
 	jclass cls = (*env)->FindClass(env, "com/tapjoy/TapjoyConnect");
 	gTapjoyCls = (*env)->NewGlobalRef(env, cls);
@@ -30,11 +43,11 @@ void ml_tapjoy_init(value ml_appID,value ml_secretKey) {
 	(*env)->DeleteLocalRef(env,jAppContext);
 	(*env)->DeleteLocalRef(env,appID);
 	(*env)->DeleteLocalRef(env,secretKey);
-	(*env)->DeleteLocalRef(env,cls);
+	(*env)->DeleteLocalRef(env,cls);*/
 }
 
 
-static jobject inline getTapjoyJNI(JNIEnv *env) {
+/*static jobject inline getTapjoyJNI(JNIEnv *env) {
 	static jobject gTapjoy = NULL;
 	if (!gTapjoy) {
 
@@ -47,11 +60,21 @@ static jobject inline getTapjoyJNI(JNIEnv *env) {
 		(*env)->DeleteLocalRef(env, tapjoy);
 	}
 	return gTapjoy;
-}
+}*/
 
 void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
+	GET_ENV;
+	GET_CLS;
 
-	JNIEnv *env;
+	JString_val(j_currency, currency);
+	jboolean jshow_selector = Bool_val(show_selector);
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, gTapjoyCls, "showOffersWithCurrencyID", "(Ljava/lang/String;Z)V");
+
+	(*env)->CallStaticVoidMethod(env, gTapjoyCls, mid, j_currency, jshow_selector);
+	(*env)->DeleteLocalRef(env, j_currency);
+/*	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 	jobject jTapjoy = getTapjoyJNI(env);
@@ -66,12 +89,19 @@ void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
 	}
 
 	(*env)->CallVoidMethod(env, jTapjoy, mid, jcurrency, jshow_selector);
-	(*env)->DeleteLocalRef(env, jcurrency);
+	(*env)->DeleteLocalRef(env, jcurrency);*/
 }
 
 void ml_tapjoy_show_offers() {
+	GET_ENV;
+	GET_CLS;
 
-	JNIEnv *env;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, gTapjoyCls, "showOffers", "()V");
+
+	(*env)->CallStaticVoidMethod(env, gTapjoyCls, mid);
+
+/*	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
 	jobject jTapjoy = getTapjoyJNI(env);
@@ -81,12 +111,22 @@ void ml_tapjoy_show_offers() {
 		mid = (*env)->GetMethodID(env, gTapjoyCls, "showOffers", "()V");
 	}
 
-	(*env)->CallVoidMethod(env, jTapjoy, mid);
+	(*env)->CallVoidMethod(env, jTapjoy, mid);*/
 }
 
 void ml_tapjoy_set_user_id(value uid) {
+	GET_ENV;
+	GET_CLS;
 
-	JNIEnv *env;
+	JString_val(j_uid, uid);
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, gTapjoyCls, "setUserID", "(Ljava/lang/String;)V");
+
+	(*env)->CallStaticVoidMethod(env, gTapjoyCls, mid, j_uid);
+	(*env)->DeleteLocalRef(env, j_uid);
+
+/*	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 	jobject jTapjoy = getTapjoyJNI(env);
 
@@ -98,11 +138,23 @@ void ml_tapjoy_set_user_id(value uid) {
 
 	jstring juid = (*env)->NewStringUTF(env, String_val(uid));
 	(*env)->CallVoidMethod(env, jTapjoy, mid, juid);
-	(*env)->DeleteLocalRef(env, juid);
+	(*env)->DeleteLocalRef(env, juid);*/
 }
 
 void ml_tapjoy_action_complete(value action) {
-	JNIEnv *env;
+	GET_ENV;
+	GET_CLS;
+
+	JString_val(j_action, action);
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, gTapjoyCls, "actionComplete", "(Ljava/lang/String;)V");
+
+	(*env)->CallStaticVoidMethod(env, gTapjoyCls, mid, j_action);
+	(*env)->DeleteLocalRef(env, j_action);
+
+
+/*	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 	jobject jTapjoy = getTapjoyJNI(env);
 
@@ -116,6 +168,6 @@ void ml_tapjoy_action_complete(value action) {
 
 	(*env)->CallVoidMethod(env,jTapjoy,mid,jaction);
 
-	(*env)->DeleteLocalRef(env,jaction);
+	(*env)->DeleteLocalRef(env,jaction);*/
 
 }
