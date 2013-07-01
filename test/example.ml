@@ -1,4 +1,5 @@
 open LightCommon;
+(*
 
 (* Gc.set {(Gc.get ()) with Gc.verbose  = (0x001 lor 0x002 lor 0x004 lor 0x010 lor 0x040 lor 0x080)}; *)
 
@@ -1022,13 +1023,13 @@ value storage (stage:Stage.c) =
   debug "get_string: %s" (KVStorage.get_string "pizda");
 );
 
-value localNotif () =
-  let time = Unix.time () in
-  (
-    ignore(LocalNotifications.schedule ~notifId:"xyu" ~fireDate:(time +. 5.) ~mes:"xyu");
-    LocalNotifications.cancel ~notifId:"xyu" ();
-  );
-
+value localNotif () =();
+(*   let time = Unix.time () in *)
+(*   ( *)
+(* (*     ignore(LocalNotifications.schedule ~notifId:"xyu" ~fireDate:(time +. 5.) ~mes:"xyu"); *) *)
+(* (* (*     LocalNotifications.cancel ~notifId:"xyu" (); *) *) *)
+(*   ); *)
+(* (*  *) *)
 value accelerometer () =
   Motion.acmtrStart (fun data -> debug "%f %f %f" data.Motion.accX data.Motion.accY data.Motion.accZ) 1.;
 
@@ -1329,7 +1330,7 @@ value fbtest (stage:Stage.c) =
   (
   (*  FBConnect.init "412548172119201"; *)
  (*   debug "FBTEST";  *)
-    FB.init ~appId:"412548172119201" ();
+    Facebook.init ~appId:"412548172119201" ();
 
     let img = Image.load "tree.png" in
       (
@@ -1339,7 +1340,7 @@ value fbtest (stage:Stage.c) =
             [ Some [ touch :: _ ] ->
               Touch.(
                   match touch.phase with
-                  [ TouchPhaseEnded -> FB.connect ~successCallback:(fun _ -> Printf.printf "successCallback \n%!") ~failCallback:(fun error -> Printf.printf "failCallback %s\n%!" error) ()
+                  [ TouchPhaseEnded -> Facebook.connect ~successCallback:(fun _ -> Printf.printf "successCallback \n%!") ~failCallback:(fun error -> Printf.printf "failCallback %s\n%!" error) ()
                   | _ -> ()
                   ]
               )
@@ -1357,8 +1358,8 @@ value fbtest (stage:Stage.c) =
               Touch.(
                   match touch.phase with
                   [ TouchPhaseEnded ->
-                      match FB.loggedIn () with
-                      [ Some connect -> FB.disconnect connect
+                      match Facebook.loggedIn () with
+                      [ Some connect -> Facebook.disconnect connect
                       | _ -> ()
                       ]
                   | _ -> ()
@@ -1385,6 +1386,7 @@ value texture_atlas (stage:Stage.c) =
   stage#addChild image;
 
 
+(*
 value test_vk (stage:Stage.c) = 
   let module VK = 
     VK.Make(struct
@@ -1440,6 +1442,7 @@ value test_vk (stage:Stage.c) =
         )
       ));
     );
+		*)
 
 value testKeyboard (stage:Stage.c) = 
   let img = Image.load "tree.png" in
@@ -1742,6 +1745,47 @@ value test_map (self:Stage.c) =
         end;
       );
     );
+		*)
+
+
+(*
+ value rec getFBFriends ?(autoConnect = False) ?callbackOk ?callbackCancel () =
+   let () = debug "getFBFriends" in
+   match Facebook.loggedIn () with
+   [ Some connect ->
+     let () = debug "some connect" in
+     let callbackOk id =
+       match Facebook.loggedIn () with
+       [ Some connect ->
+           Requests.getFriendsFB (fun inp -> (
+             SocialCommand.onComplete inp;
+             SocialCommand.execute ();
+             match callbackOk with
+             [ Some callback -> callback ()
+             | _ -> ()
+             ]
+           )) (Facebook.accessToken connect) id
+       | _ -> ()
+       ]
+     in
+     let failCallback error =
+       (
+         debug "faileCallback : %s" error;
+         match callbackCancel with
+         [ Some cb -> cb ()
+         | _ -> ()
+         ]
+       )
+     in
+		 	debug "HZ"
+(*      withFbId ~failCallback callbackOk connect *)
+   | _ when autoConnect ->
+     let () = debug "none connect, autoconnect" in
+       Facebook.connect ~successCallback:(fun _ -> let () = debug "success callback" in getFBFriends ?callbackOk ?callbackCancel ()) ~failCallback:(fun _ -> let () = debug "fail callback" in ()) ()
+   | _ ->
+     let () = debug:fb "none connect" in ()
+   ];
+	 *)
 
 let stage width height = 
   object(self)
@@ -1749,8 +1793,114 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
   debug "REGISTR FONT";
-      udid self;
-      pvr self;
+    Facebook.init ~appId:"453798714689190" ();
+
+(* 		match Facebook.loggedIn () with *)
+(* 		[ Some connect ->  *)
+(* 			( *)
+(* 				debug "connect"; *)
+(* 		 		debug "ID %s" (Facebook.accessToken connect); *)
+(* 			) *)
+(* 		| _ ->  *)
+(* 		(	 *)
+(* 			debug "fail"; *)
+(* 		 Facebook.connect ~successCallback:(fun _ -> let () = debug "success callback" in  *)
+(* 		 ( *)
+(* 		 	match Facebook.loggedIn () with  *)
+(* 			[ Some connect -> *)
+(* 		 		debug "ID %s" (Facebook.accessToken connect) *)
+(* 			| _ -> assert False  *)
+(* 			]; *)
+(* 		 )) ~failCallback:(fun _ -> let () = debug "fail callback" in ()) (); *)
+(* 		) *)
+(* 		]; *)
+
+
+				let quad = Quad.create ~color:(`Color 0xff0000) 200.0 200.0 in 
+				(
+					ignore(quad#addEventListener Stage.ev_TOUCH (fun ev _ _ -> ( 
+						let open Touch in
+						match Stage.touches_of_data ev.Ev.data with
+						[ Some [ touch  :: _ ] ->
+							match touch.phase with
+							[ TouchPhaseBegan ->
+								(
+									match Facebook.loggedIn () with
+									[ Some connect -> 
+										(
+											Facebook.disconnect connect;
+											debug "disconnected";
+										)
+									| _ -> debug "disconnect fail - not connect "
+									];
+								) 
+							| _ -> ()
+							]
+						| _ -> ()
+						];
+					) ) ) ;
+
+					self#addChild quad;
+				);
+
+				let quad = Quad.create ~color:(`Color 0x00ff00) 200.0 200.0 in 
+				(
+					ignore(quad#addEventListener Stage.ev_TOUCH (fun ev _ _ -> ( 
+						let open Touch in
+						match Stage.touches_of_data ev.Ev.data with
+						[ Some [ touch  :: _ ] ->
+							match touch.phase with
+							[ TouchPhaseBegan ->
+								(
+									match Facebook.loggedIn () with
+									[ Some connect -> 
+										(
+											debug "connect ID %s" (Facebook.accessToken connect)
+										)
+									| _ -> debug "not connect"
+									];
+		 						)
+		  			 | _ -> ()
+						 ]
+					| _ -> ()
+					];
+					) ) ) ;
+
+					self#addChild quad;
+					quad#setX 200.0;
+				);
+
+				let quad = Quad.create ~color:(`Color 0x00ff) 200.0 200.0 in 
+				(
+					ignore(quad#addEventListener Stage.ev_TOUCH (fun ev _ _ -> ( 
+						let open Touch in
+						match Stage.touches_of_data ev.Ev.data with
+						[ Some [ touch  :: _ ] ->
+							match touch.phase with
+							[ TouchPhaseBegan ->
+								(
+									 Facebook.connect ~successCallback:(fun _ -> let () = debug "success callback" in 
+									 (
+										match Facebook.loggedIn () with 
+										[ Some connect ->
+											debug "ID %s" (Facebook.accessToken connect)
+										| _ -> assert False 
+										];
+									 )) ~failCallback:(fun _ -> let () = debug "fail callback" in ()) ()
+		 						)
+		  			 | _ -> ()
+						 ]
+					| _ -> ()
+					];
+		 ) ));
+
+					self#addChild quad;
+					quad#setX 400.0;
+				)
+
+
+(*       udid self; *)
+(*       pvr self; *)
       (*
       fbtest self;
       test_map self;

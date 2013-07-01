@@ -3,7 +3,7 @@ OCAMLOPT=$(OCAMLFIND) ocamlopt
 OCAMLC=$(OCAMLFIND) ocamlc
 
 all:
-	$(OCAMLOPT) -c src/xmlm.mli
+	$(OCAMLOPT) -verbose -c src/xmlm.mli
 	$(OCAMLC) -c -annot -I src -I test src/xmlm.ml
 	$(OCAMLOPT) -c -annot -I src -I test  src/xmlm.ml
 
