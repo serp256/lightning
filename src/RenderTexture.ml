@@ -14,8 +14,9 @@ external renderbuffer_draw_to_dedicated_texture: ?clear:(int*float) -> ?width:fl
 external create_renderbuffer_tex: ?size:(int * int) -> unit -> textureID = "ml_create_renderbuffer_tex";
 external _renderbuffer_tex_size: unit -> int = "ml_renderbuffer_tex_size";
 
+value lazy_renderbuffer_tex_size = Lazy.from_fun _renderbuffer_tex_size;
 
-value renderbufferTexSize = _renderbuffer_tex_size ();
+value renderbufferTexSize () = Lazy.force lazy_renderbuffer_tex_size;
 
 external renderbuffer_save: renderInfo -> string -> bool = "ml_renderbuffer_save";
 external dumptex: textureID -> unit = "ml_dumptex";
@@ -390,7 +391,7 @@ module FramebufferTexture = struct
   value findPos w h =
     let newRenderbuffTex () =
       let tid = create_renderbuffer_tex () in
-      let bin = Bin.create renderbufferTexSize renderbufferTexSize in (
+      let bin = Bin.create (renderbufferTexSize ()) (renderbufferTexSize ()) in (
         bins.val := [ (tid, bin) :: !bins ];
 
         match Bin.add bin w h with
@@ -663,11 +664,8 @@ class type c =
 value dedicatedCnt = ref 0;
 
 value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
-  let () = debug:dedicated "draw call %f %f (%f %f), dedicated %B" width height ((float renderbufferTexSize) /. 2.) ((float renderbufferTexSize) /. 2.) dedicated in
-  let () = debug:dedicated "dedicated || (width > (float renderbufferTexSize) /. 2.) || (height > (float renderbufferTexSize) /. 2.) %B" (dedicated || (width > (float renderbufferTexSize) /. 2.) || (height > (float renderbufferTexSize) /. 2.)) in
-  let dedicated = dedicated || (width > (float renderbufferTexSize) /. 2.) || (height > (float renderbufferTexSize) /. 2.) in
+  let dedicated = dedicated || (width > (float (renderbufferTexSize ())) /. 2.) || (height > (float (renderbufferTexSize ())) /. 2.) in
   let () = if dedicated then incr dedicatedCnt else () in
-  let () = debug:dedicated "dedicated cnt %d" !dedicatedCnt in
 
   let (tid, pos) =
     if dedicated

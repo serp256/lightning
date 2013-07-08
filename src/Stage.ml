@@ -229,7 +229,8 @@ class virtual c (_width:float) (_height:float) =
       proftimer:perfomance "Prerender: %F" D.prerender();
       Render.clear bgColor 1.;
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
-      match fpsTrace with [ None -> () | Some fps -> fps#render None ];    
+      match fpsTrace with [ None -> () | Some fps -> fps#render None ];
+      match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
       (*
       debug "start render";
       debug "end render";

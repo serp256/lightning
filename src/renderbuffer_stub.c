@@ -19,7 +19,7 @@ static GLuint getFbTexSize() {
     static GLint size = 0;
     if (!size) {
 #ifdef PC
-			size = 512;
+		size = 512;
 #else
     	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
     	size = size / 4;
