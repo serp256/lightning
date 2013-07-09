@@ -32,7 +32,7 @@ void initCurl() {
 
 #include "thqueue.h"
 
-static  = NULL;
+// static  = NULL;
 
 typedef struct {
 	CURL *handle;
@@ -57,15 +57,17 @@ typedef struct {
 	char *data;
 } response_data;
 
+typedef struct response_el response_el;
 
-typedef struct {
+struct response_el {
 	int ev;
+	response_el* next;
+
 	union {
 		response_header header;
 		response_data data;
-	}
-	response_el *next;
-} response_el;
+	} content;
+};
 
 enum {
 	RHEADER = 1,
@@ -76,19 +78,19 @@ enum {
 
 
 typedef struct {
-	request_t req;
-	request_el *events
+	request_t* req;
+	response_el *events;
 } response_t;
 
 
-THQUEUE_INIT(requests,request_t*)
-THQUEUE_INIT(responses,response_t*)
+THQUEUE_INIT(url_ldr_req,request_t*)
+THQUEUE_INIT(url_ldr_resp,response_t*)
 
 
 typedef struct {
 	CURLM *curlm;
-	thqueue_requests_t *req_queue;
-	thqueue_responses_t *resp_queue;
+	thqueue_url_ldr_req_t *req_queue;
+	thqueue_url_ldr_resp_t *resp_queue;
 	int net_running; 
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
@@ -98,23 +100,21 @@ typedef struct {
 
 
 
-static response_part* get_header(struct request *r) {
+static response_el* get_header(request_t *r) {
 	response_el *p = (response_el*)malloc(sizeof(response_el));
 	p->ev = RHEADER;
-	response_header *h = &p->header;
+	response_header *h = &p->content.header;
 	curl_easy_getinfo(r->handle,CURLINFO_RESPONSE_CODE,&h->http_code);
-	double content_length;
 	curl_easy_getinfo(r->handle,CURLINFO_CONTENT_LENGTH_DOWNLOAD,&h->content_length);
-	PRINT_DEBUG("content-length: %llu",(uint64_t)content_length);
 	char *content_type;
 	curl_easy_getinfo(r->handle,CURLINFO_CONTENT_TYPE,&content_type);
-	PRINT_DEBUG("content-type: %s",content_type);
 	if (content_type != NULL) {
 		size_t len = strlen(content_type);
 		h->content_type = malloc(len+1);
 		strcpy(h->content_type,content_type);
 	} h->content_type = NULL;
 	p->next = NULL;
+	r->headers_done = 1;
 	return p;
 }
 
@@ -125,21 +125,21 @@ static size_t my_writefunction(char *buffer,size_t size,size_t nitems, void *p) 
 	resp->req = req;
 	response_el **ev = &resp->events;
 	if (!req->headers_done) {
-		response_part *hp = get_header(req);
+		response_el *hp = get_header(req);
 		*ev = hp;
 		ev = &hp->next;
 	}
 	size_t s = size * nitems;
 	response_el *evd = (response_el*)malloc(sizeof(response_el));
 	evd->ev = RDATA;
-	evd->data.len = s;
+	evd->content.data.len = s;
 	if (s > 0) {
-		evd->data.data = malloc(s);
-		memcpy(&evd->data.data,buffer,s);
+		evd->content.data.data = malloc(s);
+		memcpy(&evd->content.data.data,buffer,s);
 	}
 	evd->next = NULL;
 	*ev = evd;
-	thqueue_responses_push((thqueue_responses_t*)(req->resp_queue),resp);
+	thqueue_url_ldr_resp_push((thqueue_url_ldr_resp_t*)(req->resp_queue),resp);
 	return s;
 }
 
@@ -152,97 +152,99 @@ static void *run_worker(void *param) {
 	while (1) {
 
 		while (1) {
-			request_t *req = thqueue_requests_pop(runtime->req_queue);
+			request_t *req = thqueue_url_ldr_req_pop(runtime->req_queue);
 			if (req != NULL) {
-				curl_multi_add_handle(curlm,req->handle);
+				curl_multi_add_handle(runtime->curlm,req->handle);
 				req->resp_queue = runtime->resp_queue;
 				runtime->net_running++;
 			} else break;
 		};
 
-		if (runtime->net_running <= 0) pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
-		} else {
-
-		fd_set fdread;
-    fd_set fdwrite;
-    fd_set fdexcep;
-    int maxfd = -1;
-    long curl_timeo = -1;
-    FD_ZERO(&fdread);
-    FD_ZERO(&fdwrite);
-    FD_ZERO(&fdexcep);
-
-		/* set a suitable timeout to play around with */
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 300000;
-
-		curl_multi_timeout(multi_handle, &curl_timeo);
-    if(curl_timeo >= 0 && curl_timeo < 300) {
-			timeout.tv_usec = curl_timeo * 1000;
-    }
-
-    /* get file descriptors from the transfers */
-    curl_multi_fdset(multi_handle, &fdread, &fdwrite, &fdexcep, &maxfd);
-		//TODO: check return value and fail error
-
-    /* In a real-world program you OF COURSE check the return code of the
-       function calls.  On success, the value of maxfd is guaranteed to be
-       greater or equal than -1.  We call select(maxfd + 1, ...), specially in
-       case of (maxfd == -1), we call select(0, ...), which is basically equal
-       to sleep. */
-
-		rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
-		//TODO: check return value and fail error
-
-		int running_handles;
-		int r = curl_multi_perform(curlm,&running_handles);
-		if (r != CURLM_OK && r != CURLM_CALL_MULTI_PERFORM) {
-			const char *err = curl_multi_strerror(r);
-			ERROR("curl error: %s",err);
-			exit(3); // ?????
-			//TODO: fail error
+		if (runtime->net_running <= 0) {
+			pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
 		}
-		if (running_handles < net_running) { // we need check info
-			runtime->net_running = running_handles;
-			CURLMsg *msg; /* for picking up messages with the transfer status */
-			int msgs_left; /* how many messages are left */
-			CURL *c;
-			while ((msg = curl_multi_info_read(curlm, &msgs_left))) {
-				if (msg->msg == CURLMSG_DONE) {
-					c = msg->easy_handle;
-					struct request *r = NULL;
-					curl_easy_getinfo(c,CURLINFO_PRIVATE,&r);
-					PRINT_DEBUG("url_loader complete: %lu",(long)r);
-					PRINT_DEBUG("msg->data.result: %u", msg->data.result);
-					response_t *resp = (response_t*)malloc(sizeof(response_t));
-					resp->req = r;
-					// вызвать окамл и все похерить нахуй
-					if (msg->data.result == CURLE_OK) {
-						response_ev **ev = &r->events;
-						if (!r->headers_done) {
-							response_el *hev = get_header(r);
-							*ev = hev;
-							ev = &hev->next;
-						}
-						response_el *cev = (response_el*)malloc(sizeof(response_el));
-						cev->ev = RCOMPLETE;
-						cev->next = NULL;
-						*ev = cev;
-					} else {
-						const char* emsg = curl_easy_strerror(msg->data.result);
-						// we need to clean up this string or it's curl owned string ????
-						response_el *eev = (response_el*)malloc(sizeof(response_el));
-						eev->ev = RERROR;
-						eev->data.len = msg->data.result;
-						eev->data.data = emsg;
-						r->events = eev;
-					};
-					curl_multi_remove_handle(curlm,c);
-					thqueue_responses_push(runtime->response,resp);
+		else {
+			fd_set fdread;
+		    fd_set fdwrite;
+		    fd_set fdexcep;
+		    int maxfd = -1;
+		    long curl_timeo = -1;
+		    FD_ZERO(&fdread);
+		    FD_ZERO(&fdwrite);
+		    FD_ZERO(&fdexcep);
+
+			/* set a suitable timeout to play around with */
+		    timeout.tv_sec = 0;
+		    timeout.tv_usec = 300000;
+
+				curl_multi_timeout(runtime->curlm, &curl_timeo);
+		    if(curl_timeo >= 0 && curl_timeo < 300) {
+					timeout.tv_usec = curl_timeo * 1000;
+		    }
+
+		    /* get file descriptors from the transfers */
+		    curl_multi_fdset(runtime->curlm, &fdread, &fdwrite, &fdexcep, &maxfd);
+			//TODO: check return value and fail error
+
+	    /* In a real-world program you OF COURSE check the return code of the
+	       function calls.  On success, the value of maxfd is guaranteed to be
+	       greater or equal than -1.  We call select(maxfd + 1, ...), specially in
+	       case of (maxfd == -1), we call select(0, ...), which is basically equal
+	       to sleep. */
+
+			rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
+			//TODO: check return value and fail error
+
+			int running_handles;
+			int r = curl_multi_perform(runtime->curlm,&running_handles);
+			if (r != CURLM_OK && r != CURLM_CALL_MULTI_PERFORM) {
+				const char *err = curl_multi_strerror(r);
+				ERROR("curl error: %s",err);
+				exit(3); // ?????
+				//TODO: fail error
+			}
+			if (running_handles < runtime->net_running) { // we need check info
+				runtime->net_running = running_handles;
+				CURLMsg *msg; /* for picking up messages with the transfer status */
+				int msgs_left; /* how many messages are left */
+				CURL *c;
+				while ((msg = curl_multi_info_read(runtime->curlm, &msgs_left))) {
+					if (msg->msg == CURLMSG_DONE) {
+						c = msg->easy_handle;
+						request_t *r = NULL;
+						curl_easy_getinfo(c,CURLINFO_PRIVATE,&r);
+						PRINT_DEBUG("url_loader complete: %lu",(long)r);
+						PRINT_DEBUG("msg->data.result: %u", msg->data.result);
+						response_t *resp = (response_t*)malloc(sizeof(response_t));
+						resp->req = r;
+						// вызвать окамл и все похерить нахуй
+						if (msg->data.result == CURLE_OK) {
+							response_el **ev = &resp->events;
+							if (!r->headers_done) {
+								response_el *hev = get_header(r);
+								*ev = hev;
+								ev = &hev->next;
+							}
+							response_el *cev = (response_el*)malloc(sizeof(response_el));
+							cev->ev = RCOMPLETE;
+							cev->next = NULL;
+							*ev = cev;
+						} else {
+							const char* emsg = curl_easy_strerror(msg->data.result);
+							// we need to clean up this string or it's curl owned string ????
+							response_el *eev = (response_el*)malloc(sizeof(response_el));
+							eev->ev = RERROR;
+							eev->content.data.len = msg->data.result;
+							eev->content.data.data = (char*)emsg;
+							resp->events = eev;
+						};
+						curl_multi_remove_handle(runtime->curlm,c);
+						thqueue_url_ldr_resp_push(runtime->resp_queue,resp);
+					}
 				}
 			}
 		}
-	};
+	}
 }
 
 static runtime_t *runtime = NULL;
@@ -253,8 +255,8 @@ static void init() {
 	
 	runtime = (runtime_t*)malloc(sizeof(runtime_t));
 	runtime->curlm = curl_multi_init();
-	runtime->req_queue = thqueue_requests_create();
-	runtime->resp_queue = thqueue_responses_create();
+	runtime->req_queue = thqueue_url_ldr_req_create();
+	runtime->resp_queue = thqueue_url_ldr_resp_create();
 	pthread_mutex_init(&(runtime->mutex),NULL);
 	pthread_cond_init(&(runtime->cond),NULL);
 
@@ -272,7 +274,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 
 	if (runtime == NULL) init ();
 
-	struct request *r = (struct request*)caml_stat_alloc(sizeof(struct request));
+	request_t *r = (request_t*)caml_stat_alloc(sizeof(request_t));
 	r->handle = curl_easy_init();
 	r->url = strdup(String_val(url));
 	PRINT_DEBUG("curl req: [%s]",r->url);
@@ -315,45 +317,48 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	curl_easy_setopt(r->handle,CURLOPT_WRITEDATA,(void*)r);
 	curl_easy_setopt(r->handle,CURLOPT_PRIVATE,(void*)r);
 	curl_easy_setopt(r->handle,CURLOPT_SSL_VERIFYPEER,0);
-	thqueue_requests_push(runtime->req_queue,r);
+	thqueue_url_ldr_req_push(runtime->req_queue,r);
 	pthread_cond_signal(&runtime->cond);
 	PRINT_DEBUG("created new curl request: %lu",(long)r);
 	return (value)r;
 }
 
-void ml_URLConnection_cancel(value r) {
-	PRINT_DEBUG("ml_URLConnection_cancel call %d %d", net_running, r);
-
-	if (!net_running || !curlm) {
-		PRINT_DEBUG("return");
-		return;
-	}
-
-	struct request* req = (struct request*)r;
-	curl_multi_remove_handle(curlm, req->handle);
-	curl_easy_cleanup(req->handle);
-	free_request(req);
-
-	net_running--;
-
-	PRINT_DEBUG("net_running %d", net_running);
-}
-
-void free_request(struct request* r) {
+void free_request(request_t* r) {
 	free(r->url);
 	if (r->headers != NULL) curl_slist_free_all(r->headers); 
 	if (r->data != NULL) free(r->data);
 	free(r);	
 }
 
+void ml_URLConnection_cancel(value r) {
+	PRINT_DEBUG("ml_URLConnection_cancel call %d %d", runtime->net_running, r);
+
+	if (!runtime->net_running || !runtime->curlm) {
+		PRINT_DEBUG("return");
+		return;
+	}
+
+	request_t* req = (request_t*)r;
+	curl_multi_remove_handle(runtime->curlm, req->handle);
+	curl_easy_cleanup(req->handle);
+	free_request(req);
+
+	runtime->net_running--;
+
+	PRINT_DEBUG("net_running %d", runtime->net_running);
+}
+
+
+
 ////////////////////
 /// thread this ///
 
 void net_run () {
 	// нужно пробовать вычитвать ебучие ответы
-	if (!runtime) return;
+/*	if (!runtime) return;
 
 	static value *ml_url_response = NULL;
+
 	if (ml_url_response == NULL) ml_url_response = caml_named_value("url_response");
 	else ml_string = caml_alloc_string(0);
 	value args[4];
@@ -379,7 +384,5 @@ void net_run () {
 	free_request(r);
 	curl_easy_cleanup(c);
 
-	CAMLreturn0;
-}
-
+	CAMLreturn0;*/
 }
