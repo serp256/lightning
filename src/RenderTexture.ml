@@ -668,7 +668,7 @@ value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
   let height = int_of_float (ceil height) in
 
   (* when dedicated texture used, we choose next pot as texture dimensions, when shared -- we need allocate rect with next-devisible-by-8 sides, cause such values guarantee perfect scaling result, when making glow *)
-  let dedicated = True in
+  (* let dedicated = True in *)
   let (rectw,recth) = if dedicated then LightCommon.((nextPowerOfTwo width, nextPowerOfTwo height)) else (width + 8 - width mod 8, height + 8 - height mod 8) in
   let offsetx = (rectw - width) / 2 in
   let offsety = (recth - height) / 2 in 

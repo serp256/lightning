@@ -239,6 +239,7 @@ void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 		glUseProgram(0);
 		currentShaderProgram = 0;
 		glEnable(GL_BLEND);
+		glViewport(vp->x, vp->y, vp->w, vp->h);
 	}
 }
 
@@ -359,7 +360,6 @@ value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value t
 	}
 	else {
 		clear_renderbuffer(&rb, mlclear);
-		glViewport(rb.vp.x, rb.vp.y, rb.vp.w, rb.vp.h);
 	}
 
 	caml_callback(mlfun,(value)&rb);
@@ -400,6 +400,8 @@ value ml_renderbuffer_draw_byte(value * argv, int n) {
 }
 
 void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_tid, value renderInfo, value mlfun) {
+	PRINT_DEBUG("ml_renderbuffer_draw_to_texture CALL");
+
 	CAMLparam5(mlclear, new_params, new_tid, renderInfo, mlfun);
 	CAMLlocal2(clp, clip);
 
@@ -436,7 +438,7 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 
 	renderbuffer_t rb;
 
-	if (create_renderbuffer(tid, x, y, w, h, getFbTexSize(), getFbTexSize(), &rb, 0)) {
+	if (create_renderbuffer(tid, x, y, w, h, nextDBE(ceil(w)), nextDBE(ceil(h)), &rb, 0)) {
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);
