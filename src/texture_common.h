@@ -43,6 +43,8 @@
 
 int nextPowerOfTwo(int number);
 unsigned long nextPOT(unsigned long x);
+// next divisible by eight
+unsigned long nextDBE(unsigned long x);
 
 struct tex {
 	GLuint tid;

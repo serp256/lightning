@@ -521,11 +521,12 @@ static save_tex_cnt = 0;
 static glow_tex_cnt = 0;
 
 void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_lev_tex, viewport* vp, clipping* clp, int bind) {
+	PRINT_DEBUG("draw_glow_level %f %f %f %f", clp->x, clp->y, clp->width, clp->height);
+
 	int tw = powS(w);
 	int th = powS(h);
 
 	if (txrs[tw][th] == 0) {
-		PRINT_DEBUG("glow_tex_cnt %d %d %d", tw, th, ++glow_tex_cnt);
 		glGenTextures(1, &(txrs[tw][th]));
 		glBindTexture(GL_TEXTURE_2D, txrs[tw][th]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -550,9 +551,6 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 	glow_make_draw(vp, clp, 1);
 	*prev_glow_lev_tex = txrs[tw][th];
 
-	if (!bind) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);	
-	}
 /*	//------------------
 	char* pixels = caml_stat_alloc(4 * (GLuint)w * (GLuint)h);
 	char* fname = malloc(255);
@@ -560,14 +558,40 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 	glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 	save_png_image(caml_copy_string(fname),pixels,w,h);
 	//------------------*/
+
+	if (!bind) {
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);	
+	}
 }
 
 void ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
 	if (gsize == 0) return ;
 	renderbuffer_t *rb = (renderbuffer_t *)orb;
-	PRINT_DEBUG("save_tex_cnt %d", save_tex_cnt);
-	PRINT_DEBUG("glow make for %d:%d, [%f:%f] [%d:%d]",rb->fbid,rb->tid,rb->width,rb->height,rb->realWidth,rb->realHeight);
+
+	int rectw = rb->realWidth;
+	int recth = rb->realHeight;
+	viewport rbvp = { rb->vp.x - (rectw - rb->vp.w) / 2, rb->vp.y - (recth - rb->vp.h) / 2, rectw, recth };
+
+	double texw = rb->vp.w / rb->clp.width;
+	double texh = rb->vp.h / rb->clp.height;
+	PRINT_DEBUG("texw %f, texh %f", texw, texh);
+	clipping rbclp = { (GLfloat)rbvp.x / texw, (GLfloat)rbvp.y / texh, (GLfloat)rbvp.w  / texw, (GLfloat)rbvp.h  / texh };
+
+	PRINT_DEBUG("!!!!!! vp: [%d, %d, %d, %d] clp: [%f, %f, %f, %f]", rbvp.x, rbvp.y, rbvp.w, rbvp.h, rbclp.x, rbclp.y, rbclp.width, rbclp.height);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
+
+/*	char* pixels = caml_stat_alloc(4 * (GLuint)rbvp.w * (GLuint)rbvp.h);
+	char* fname = malloc(255);
+	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
+	glReadPixels(0,0,rbvp.w,rbvp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,rbvp.w,rbvp.h);*/
+
+	checkGLErrors("end of glow");
+
+/*	PRINT_DEBUG("save_tex_cnt %d", save_tex_cnt);
+	PRINT_DEBUG("glow make for %d:%d, [%f:%f] [%d:%d]",rb->fbid,rb->tid,rb->width,rb->height,rb->realWidth,rb->realHeight);*/
 
 	lgResetBoundTextures();
 	framebuffer_state fstate;
@@ -588,19 +612,17 @@ void ml_glow_make(value orb, value glow) {
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
 	int i;
-	float glow_lev_w = rb->width;
-	float glow_lev_h = rb->height;
+	float glow_lev_w = rectw;
+	float glow_lev_h = recth;
 	int iglow_lev_w;
 	int iglow_lev_h;
 	GLuint correct_lev_w;
 	GLuint correct_lev_h;
 	GLuint prev_glow_lev_tex = rb->tid;
 
-	PRINT_DEBUG("!!!!!! %d, vp: [%d, %d, %d, %d] clp: [%f, %f, %f, %f]", rb->tid, rb->vp.x, rb->vp.y, rb->vp.w, rb->vp.h, rb->clp.x, rb->clp.y, rb->clp.width, rb->clp.height);
-
 	GLuint fst_scalein_tex_id = 0;
 	viewport* vp;
-	clipping* clp = &rb->clp;
+	clipping* clp = &rbclp;
 	viewport vps[gsize];
 	clipping clps[gsize];
 
@@ -649,7 +671,13 @@ void ml_glow_make(value orb, value glow) {
 	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
 	glBindTexture(GL_TEXTURE_2D, fst_scalein_tex_id);
 
-	glow_make_draw(&rb->vp, clps, 0);
+	glow_make_draw(&rbvp, clps, 0);
+
+/*	pixels = caml_stat_alloc(4 * (GLuint)rbvp.w * (GLuint)rbvp.h);
+	fname = malloc(255);
+	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
+	glReadPixels(rbvp.x,rbvp.y,rbvp.w,rbvp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+	save_png_image(caml_copy_string(fname),pixels,rbvp.w,rbvp.h);	*/
 
 	glBindTexture(GL_TEXTURE_2D,0);
 	glUseProgram(0);

@@ -227,7 +227,8 @@ void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 		GLfloat alpha = Double_val(Field(ca,1));
 
 		viewport* vp = &rb->vp;
-		glViewport(vp->x, vp->y, vp->w, vp->h);
+
+		glViewport(vp->x - (rb->realWidth - vp->w) / 2, vp->y - (rb->realHeight - vp->h) / 2, rb->realWidth, rb->realHeight);
 		glDisable(GL_BLEND);
 		const prg_t* clear_progr = clear_quad_progr();
 		lgGLEnableVertexAttribs(lgVertexAttribFlag_Position);
@@ -241,7 +242,7 @@ void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 	}
 }
 
-int create_renderbuffer(GLuint tid, int x, int y, double width, double height, int realW, int realH, renderbuffer_t *r/*, GLenum filter*/) {
+int create_renderbuffer(GLuint tid, int x, int y, double width, double height, int realW, int realH, renderbuffer_t *r, int dedicated/*, GLenum filter*/) {
     double w = ceil(width);
     double h = ceil(height);
 
@@ -256,11 +257,23 @@ int create_renderbuffer(GLuint tid, int x, int y, double width, double height, i
     r->fbid = fbid;
     r->tid = tid;
 	r->vp = (viewport){ (GLuint)x, (GLuint)y, (GLuint)w, (GLuint)h };
-	r->clp = (clipping){ (double)r->vp.x / (double)realW, (double)r->vp.y / (double)realH, w / (double)realW, h / (double)realH };
+
+	if (!dedicated) {
+		// when shared texture used, clipping should be calculated using shaded texture size, but realW realH containes expanded rect dimensions (devisible by 8, cause such values guarantee perfect result, when making glow effect)
+		double fb_tex_size = (double)getFbTexSize();
+		r->clp = (clipping){ (double)r->vp.x / (double)fb_tex_size, (double)r->vp.y / (double)fb_tex_size, w / (double)fb_tex_size, h / (double)fb_tex_size };
+	} else {
+		//when dedicated texture used, realW and realH contains real texture size and therefore we use these values for clipping calculations
+		r->clp = (clipping){ (double)r->vp.x / (double)realW, (double)r->vp.y / (double)realH, w / (double)realW, h / (double)realH };
+	}
+	
     r->width = w;
     r->height = h;
 	r->realWidth = realW;
 	r->realHeight = realH;
+
+	PRINT_DEBUG("create_renderbuffer %d %d %d %d", r->vp.x, r->vp.y, r->vp.w, r->vp.h);
+	PRINT_DEBUG("create_renderbuffer %f %f %f %f", r->clp.x, r->clp.y, r->clp.width, r->clp.height);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
   	return 0;
@@ -320,10 +333,11 @@ value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value t
 		realW = nextPOT(ceil(w));
 		realH = nextPOT(ceil(h));
 	} else {
-		realW = realH = getFbTexSize();
+		realW = nextDBE(ceil(w));
+		realH = nextDBE(ceil(h));
 	}
 
-	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), w, h, realW, realH, &rb)) {
+	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), w, h, realW, realH, &rb, dedicated == Val_true)) {
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);
@@ -334,7 +348,20 @@ value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value t
 	checkGLErrors("renderbuffer create");
 	renderbuffer_activate(&rb);
 
-	clear_renderbuffer(&rb, mlclear);
+	if (dedicated == Val_true) {
+		value ca = Field(mlclear,0);
+		int c = Int_val(Field(ca,0));
+		color3F clr = COLOR3F_FROM_INT(c);
+		GLfloat alpha = Double_val(Field(ca,1));
+
+		glClearColor(clr.r, clr.g, clr.b, alpha);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	else {
+		clear_renderbuffer(&rb, mlclear);
+		glViewport(rb.vp.x, rb.vp.y, rb.vp.w, rb.vp.h);
+	}
+
 	caml_callback(mlfun,(value)&rb);
 
  	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
@@ -409,7 +436,7 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 
 	renderbuffer_t rb;
 
-	if (create_renderbuffer(tid, x, y, w, h, getFbTexSize(), getFbTexSize(), &rb)) {
+	if (create_renderbuffer(tid, x, y, w, h, getFbTexSize(), getFbTexSize(), &rb, 0)) {
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);

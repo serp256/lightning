@@ -460,7 +460,7 @@ module FramebufferTexture = struct
     List.iter (fun (tid, bin) -> (
       dumptex tid;
 
-      let out = open_out (Printf.sprintf "/sdcard/%ld.holes" (int32_of_textureID tid)) in (
+      let out = open_out (Printf.sprintf "/tmp/%ld.holes" (int32_of_textureID tid)) in (
         output_string out (Printf.sprintf "%s\n" (String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "%d,%d,%d,%d" (x rect) (y rect) (width rect) (height rect))) (Bin.rects bin))));
         output_string out (Printf.sprintf "%s\n" (String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "%d,%d,%d,%d" (x rect) (y rect) (width rect) (height rect))) (Bin.holes bin))));
         output_string out (Printf.sprintf "%s\n" (String.concat ";" (List.map (fun rect -> Rectangle.(Printf.sprintf "%d,%d,%d,%d" (x rect) (y rect) (width rect) (height rect))) (Bin.reuseRects bin))));
@@ -664,13 +664,24 @@ class type c =
 value dedicatedCnt = ref 0;
 
 value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
-  let dedicated = dedicated || (width > (float (renderbufferTexSize ())) /. 2.) || (height > (float (renderbufferTexSize ())) /. 2.) in
+  let width = int_of_float (ceil width) in
+  let height = int_of_float (ceil height) in
+
+  (* when dedicated texture used, we choose next pot as texture dimensions, when shared -- we need allocate rect with next-devisible-by-8 sides, cause such values guarantee perfect scaling result, when making glow *)
+  let dedicated = True in
+  let (rectw,recth) = if dedicated then LightCommon.((nextPowerOfTwo width, nextPowerOfTwo height)) else (width + 8 - width mod 8, height + 8 - height mod 8) in
+  let offsetx = (rectw - width) / 2 in
+  let offsety = (recth - height) / 2 in 
+
+  let dedicated = dedicated || (rectw > (renderbufferTexSize ()) / 2) || (recth > (renderbufferTexSize ()) / 2) in
   let () = if dedicated then incr dedicatedCnt else () in
 
   let (tid, pos) =
     if dedicated
-    then (create_renderbuffer_tex ~size:(int_of_float (ceil width), int_of_float (ceil height)) (), FramebufferTexture.Point.create 0 0)
-    else FramebufferTexture.getRect (int_of_float (ceil width)) (int_of_float (ceil height))
+    then (create_renderbuffer_tex ~size:(rectw, recth) (), FramebufferTexture.Point.create offsetx offsety)
+    else
+      let (tid, pos) = FramebufferTexture.getRect rectw recth in
+        (tid, FramebufferTexture.Point.create (FramebufferTexture.Point.x pos + offsetx) (FramebufferTexture.Point.y pos + offsety))
   in
   let clear =
     match (color, alpha) with
@@ -680,7 +691,7 @@ value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
     | _ -> (0x000000, 0.)
     ]
   in
-  let renderInfo = renderbuffer_draw ~dedicated ~filter ~clear tid (FramebufferTexture.Point.x pos) (FramebufferTexture.Point.y pos) width height f in
+  let renderInfo = renderbuffer_draw ~dedicated ~filter ~clear tid (FramebufferTexture.Point.x pos) (FramebufferTexture.Point.y pos) (float width) (float height) f in
     if dedicated
     then new dedicated renderInfo
     else
