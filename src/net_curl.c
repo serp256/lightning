@@ -247,6 +247,7 @@ static void *run_worker(void *param) {
 							resp->events = eev;
 						};
 						curl_multi_remove_handle(runtime->curlm,c);
+						curl_easy_cleanup(c);
 						thqueue_url_ldr_resp_push(runtime->resp_queue,resp);
 					}
 				}
@@ -374,6 +375,8 @@ void net_run () {
 		request_t* req = resp->req;
 		response_el* ev = resp->events;
 
+		int free_req = 0;
+
 		while (ev) {
 			switch (ev->ev) {
 				case RHEADER: {
@@ -389,6 +392,8 @@ void net_run () {
 					args[3] = caml_copy_string(hdr->content_type ? hdr->content_type : "unknown");
 					caml_callbackN(*ml_url_response,4,args);
 
+					free(hdr->content_type);
+
 					break;					
 				}
 
@@ -402,6 +407,8 @@ void net_run () {
 					memcpy(String_val(vdata), ev->content.data.data, ev->content.data.len);
 					caml_callback2(*ml_url_data,(value)req, vdata);
 
+					free(ev->content.data.data);
+
 					break;					
 				}
 
@@ -410,6 +417,8 @@ void net_run () {
 
 					CAML_NAMED_VALUE(url_complete)
 					caml_callback(*ml_url_complete,(value)req);
+
+					free_req = 1;
 
 					break;					
 				}
@@ -420,11 +429,24 @@ void net_run () {
 					CAML_NAMED_VALUE(url_failed)
 					caml_callback3(*ml_url_failed,(value)req,Val_int(ev->content.data.len), caml_copy_string(ev->content.data.data));
 
+					free_req = 1;
+
 					break;					
 				}
 			}
 
-			ev = ev->next;
+			response_el* next = ev->next;
+			free(ev);
+			ev = next;
+		}
+
+		free(resp);
+
+		if (free_req) {
+			free(req->url);
+			free(req->data);
+			curl_slist_free_all(req->headers);
+			free(req);
 		}
 	}
 
