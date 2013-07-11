@@ -112,7 +112,9 @@ static response_el* get_header(request_t *r) {
 		size_t len = strlen(content_type);
 		h->content_type = malloc(len+1);
 		strcpy(h->content_type,content_type);
-	} h->content_type = NULL;
+	}
+	else h->content_type = NULL;
+
 	p->next = NULL;
 	r->headers_done = 1;
 	return p;
@@ -124,22 +126,25 @@ static size_t my_writefunction(char *buffer,size_t size,size_t nitems, void *p) 
 	response_t *resp = (response_t*)malloc(sizeof(response_t));
 	resp->req = req;
 	response_el **ev = &resp->events;
+
 	if (!req->headers_done) {
 		response_el *hp = get_header(req);
 		*ev = hp;
 		ev = &hp->next;
 	}
+
 	size_t s = size * nitems;
 	response_el *evd = (response_el*)malloc(sizeof(response_el));
 	evd->ev = RDATA;
 	evd->content.data.len = s;
 	if (s > 0) {
 		evd->content.data.data = malloc(s);
-		memcpy(&evd->content.data.data,buffer,s);
+		memcpy(evd->content.data.data,buffer,s);
 	}
 	evd->next = NULL;
 	*ev = evd;
 	thqueue_url_ldr_resp_push((thqueue_url_ldr_resp_t*)(req->resp_queue),resp);
+
 	return s;
 }
 
@@ -177,7 +182,7 @@ static void *run_worker(void *param) {
 		    timeout.tv_sec = 0;
 		    timeout.tv_usec = 300000;
 
-				curl_multi_timeout(runtime->curlm, &curl_timeo);
+			curl_multi_timeout(runtime->curlm, &curl_timeo);
 		    if(curl_timeo >= 0 && curl_timeo < 300) {
 					timeout.tv_usec = curl_timeo * 1000;
 		    }
@@ -192,7 +197,9 @@ static void *run_worker(void *param) {
 	       case of (maxfd == -1), we call select(0, ...), which is basically equal
 	       to sleep. */
 
+	       	PRINT_DEBUG("waiting on select...");
 			rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
+			PRINT_DEBUG("fall out select");
 			//TODO: check return value and fail error
 
 			int running_handles;
@@ -234,6 +241,7 @@ static void *run_worker(void *param) {
 							// we need to clean up this string or it's curl owned string ????
 							response_el *eev = (response_el*)malloc(sizeof(response_el));
 							eev->ev = RERROR;
+							eev->next = NULL;
 							eev->content.data.len = msg->data.result;
 							eev->content.data.data = (char*)emsg;
 							resp->events = eev;
@@ -260,12 +268,10 @@ static void init() {
 	pthread_mutex_init(&(runtime->mutex),NULL);
 	pthread_cond_init(&(runtime->cond),NULL);
 
-  pthread_attr_t attr;
-  pthread_attr_init(&attr);
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
-	//pthread_attr_setschedpolicy
-  pthread_create(&runtime->worker, &attr, &run_worker, (void*)runtime);
-
+	pthread_create(&runtime->worker, &attr, &run_worker, (void*)runtime);
 }
 
 
@@ -331,7 +337,7 @@ void free_request(request_t* r) {
 }
 
 void ml_URLConnection_cancel(value r) {
-	PRINT_DEBUG("ml_URLConnection_cancel call %d %d", runtime->net_running, r);
+/*	PRINT_DEBUG("ml_URLConnection_cancel call %d %d", runtime->net_running, r);
 
 	if (!runtime->net_running || !runtime->curlm) {
 		PRINT_DEBUG("return");
@@ -345,7 +351,7 @@ void ml_URLConnection_cancel(value r) {
 
 	runtime->net_running--;
 
-	PRINT_DEBUG("net_running %d", runtime->net_running);
+	PRINT_DEBUG("net_running %d", runtime->net_running);*/
 }
 
 
@@ -353,7 +359,75 @@ void ml_URLConnection_cancel(value r) {
 ////////////////////
 /// thread this ///
 
+#define CAML_NAMED_VALUE(name) static value* ml_ ## name = NULL; if (ml_ ## name == NULL) ml_ ## name = caml_named_value(#name);
+
 void net_run () {
+	// PRINT_DEBUG("net run");
+
+	if (!runtime) return;
+
+	response_t* resp;
+
+	while (resp = thqueue_url_ldr_resp_pop(runtime->resp_queue)) {
+		PRINT_DEBUG("responses");
+
+		request_t* req = resp->req;
+		response_el* ev = resp->events;
+
+		while (ev) {
+			switch (ev->ev) {
+				case RHEADER: {
+					PRINT_DEBUG("RHEADER");
+					CAML_NAMED_VALUE(url_response)
+					// static value* ml_url_response = NULL; if (ml_url_response == NULL) ml_url_response = caml_named_value("url_response");
+
+					response_header* hdr = &ev->content.header;
+					value args[4];
+					args[0] = (value)req;
+					args[1] = Val_int(hdr->http_code);
+					args[2] = caml_copy_int64((uint64_t)hdr->content_length);
+					args[3] = caml_copy_string(hdr->content_type ? hdr->content_type : "unknown");
+					caml_callbackN(*ml_url_response,4,args);
+
+					break;					
+				}
+
+
+				case RDATA: {
+					PRINT_DEBUG("RDATA");
+
+					CAML_NAMED_VALUE(url_data)
+
+					value vdata = caml_alloc_string(ev->content.data.len);
+					memcpy(String_val(vdata), ev->content.data.data, ev->content.data.len);
+					caml_callback2(*ml_url_data,(value)req, vdata);
+
+					break;					
+				}
+
+				case RCOMPLETE: {
+					PRINT_DEBUG("RCOMPLETE");
+
+					CAML_NAMED_VALUE(url_complete)
+					caml_callback(*ml_url_complete,(value)req);
+
+					break;					
+				}
+
+				case RERROR: {
+					PRINT_DEBUG("RERROR");
+
+					CAML_NAMED_VALUE(url_failed)
+					caml_callback3(*ml_url_failed,(value)req,Val_int(ev->content.data.len), caml_copy_string(ev->content.data.data));
+
+					break;					
+				}
+			}
+
+			ev = ev->next;
+		}
+	}
+
 	// нужно пробовать вычитвать ебучие ответы
 /*	if (!runtime) return;
 
