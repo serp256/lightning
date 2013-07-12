@@ -18,7 +18,9 @@ value ev_IO_ERROR: Ev.id;
 
 value ioerror_of_data: Ev.data -> option (int * string);
 
+IFDEF PC THEN
 value run: unit -> unit;
+ENDIF;
 
 class loader: [ ?request:request] -> [ unit ] ->
   object
