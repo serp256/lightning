@@ -41,7 +41,21 @@ typedef struct {
 	char *data;
 	int headers_done;
 	void *resp_queue;
+
+	int complete;
+	int canceled;
+	// we need canceled_resp_pushed flag cause it's possible, that canceled flag will be setted before add request will be handled, therefore cancel response
+	// will be pushed to queue twice and app will crash when trying to handle second cancel response (trying to free already freed request structure)
+	int canceled_resp_pushed;
 } request_t;
+
+/*
+	может получиться так, что мы взвели canceled до того, как обработался реквест на добавление запроса в run_worker,
+	соотвественно при обработка запросов canceled уже взведен и в очереди будут два фейковых calcel-респонза, соотвественно
+	будет попытка освободить уже освобожденный реквест в net_run
+
+	соотвественно нужен ещё флажок 
+*/
 
 
 ////////////////////////////
@@ -73,7 +87,8 @@ enum {
 	RHEADER = 1,
 	RDATA = 1 << 2,
 	RCOMPLETE = 1 << 3,
-	RERROR = 1 << 4
+	RERROR = 1 << 4,
+	RCANCELED = 1 << 5
 };
 
 
@@ -122,7 +137,7 @@ static response_el* get_header(request_t *r) {
 
 static size_t my_writefunction(char *buffer,size_t size,size_t nitems, void *p) {
 	request_t *req = (request_t*)p;
-	PRINT_DEBUG("writefunction %lu",(long)req);
+	// PRINT_DEBUG("writefunction %lu",(long)req);
 	response_t *resp = (response_t*)malloc(sizeof(response_t));
 	resp->req = req;
 	response_el **ev = &resp->events;
@@ -159,9 +174,27 @@ static void *run_worker(void *param) {
 		while (1) {
 			request_t *req = thqueue_url_ldr_req_pop(runtime->req_queue);
 			if (req != NULL) {
-				curl_multi_add_handle(runtime->curlm,req->handle);
-				req->resp_queue = runtime->resp_queue;
-				runtime->net_running++;
+				if (!req->canceled) {
+					curl_multi_add_handle(runtime->curlm, req->handle);
+					req->resp_queue = runtime->resp_queue;
+					runtime->net_running++;
+				} else {
+					PRINT_DEBUG("req->complete %d; req->canceled %d", req->complete, req->canceled);
+					if (!req->complete && !req->canceled_resp_pushed) {
+						req->canceled_resp_pushed = 1;
+						curl_multi_remove_handle(runtime->curlm, req->handle);
+						runtime->net_running--;
+
+						response_el *ev = (response_el*)malloc(sizeof(response_el));
+						ev->ev = RCANCELED;
+						ev->next = NULL;
+
+						response_t *resp = (response_t*)malloc(sizeof(response_t));
+						resp->req = req;
+						resp->events = ev;
+						thqueue_url_ldr_resp_push(runtime->resp_queue, resp);
+					}
+				}
 			} else break;
 		};
 
@@ -197,9 +230,9 @@ static void *run_worker(void *param) {
 	       case of (maxfd == -1), we call select(0, ...), which is basically equal
 	       to sleep. */
 
-	       	PRINT_DEBUG("waiting on select...");
+	       	// PRINT_DEBUG("waiting on select...");
 			rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
-			PRINT_DEBUG("fall out select");
+			// PRINT_DEBUG("fall out select");
 			//TODO: check return value and fail error
 
 			int running_handles;
@@ -224,6 +257,7 @@ static void *run_worker(void *param) {
 						PRINT_DEBUG("msg->data.result: %u", msg->data.result);
 						response_t *resp = (response_t*)malloc(sizeof(response_t));
 						resp->req = r;
+						r->complete = 1;
 						// вызвать окамл и все похерить нахуй
 						if (msg->data.result == CURLE_OK) {
 							response_el **ev = &resp->events;
@@ -247,7 +281,7 @@ static void *run_worker(void *param) {
 							resp->events = eev;
 						};
 						curl_multi_remove_handle(runtime->curlm,c);
-						curl_easy_cleanup(c);
+						// curl_easy_cleanup(c);
 						thqueue_url_ldr_resp_push(runtime->resp_queue,resp);
 					}
 				}
@@ -282,6 +316,9 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	if (runtime == NULL) init ();
 
 	request_t *r = (request_t*)caml_stat_alloc(sizeof(request_t));
+	r->canceled = 0;
+	r->canceled_resp_pushed = 0;
+	r->complete = 0;
 	r->handle = curl_easy_init();
 	r->url = strdup(String_val(url));
 	PRINT_DEBUG("curl req: [%s]",r->url);
@@ -330,14 +367,11 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	return (value)r;
 }
 
-void free_request(request_t* r) {
-	free(r->url);
-	if (r->headers != NULL) curl_slist_free_all(r->headers); 
-	if (r->data != NULL) free(r->data);
-	free(r);	
-}
-
 void ml_URLConnection_cancel(value r) {
+	PRINT_DEBUG("ml_URLConnection_cancel call");	
+	request_t* req = (request_t*)r;
+	req->canceled = 1;
+	thqueue_url_ldr_req_push(runtime->req_queue, req);
 /*	PRINT_DEBUG("ml_URLConnection_cancel call %d %d", runtime->net_running, r);
 
 	if (!runtime->net_running || !runtime->curlm) {
@@ -382,15 +416,17 @@ void net_run () {
 				case RHEADER: {
 					PRINT_DEBUG("RHEADER");
 					CAML_NAMED_VALUE(url_response)
+					response_header* hdr = &ev->content.header;
 					// static value* ml_url_response = NULL; if (ml_url_response == NULL) ml_url_response = caml_named_value("url_response");
 
-					response_header* hdr = &ev->content.header;
-					value args[4];
-					args[0] = (value)req;
-					args[1] = Val_int(hdr->http_code);
-					args[2] = caml_copy_int64((uint64_t)hdr->content_length);
-					args[3] = caml_copy_string(hdr->content_type ? hdr->content_type : "unknown");
-					caml_callbackN(*ml_url_response,4,args);
+					if (!req->canceled) {
+						value args[4];
+						args[0] = (value)req;
+						args[1] = Val_int(hdr->http_code);
+						args[2] = caml_copy_int64((uint64_t)hdr->content_length);
+						args[3] = caml_copy_string(hdr->content_type ? hdr->content_type : "unknown");
+						caml_callbackN(*ml_url_response,4,args);
+					}
 
 					free(hdr->content_type);
 
@@ -400,12 +436,13 @@ void net_run () {
 
 				case RDATA: {
 					PRINT_DEBUG("RDATA");
-
 					CAML_NAMED_VALUE(url_data)
 
-					value vdata = caml_alloc_string(ev->content.data.len);
-					memcpy(String_val(vdata), ev->content.data.data, ev->content.data.len);
-					caml_callback2(*ml_url_data,(value)req, vdata);
+					if (!req->canceled) {
+						value vdata = caml_alloc_string(ev->content.data.len);
+						memcpy(String_val(vdata), ev->content.data.data, ev->content.data.len);
+						caml_callback2(*ml_url_data,(value)req, vdata);						
+					}
 
 					free(ev->content.data.data);
 
@@ -414,9 +451,11 @@ void net_run () {
 
 				case RCOMPLETE: {
 					PRINT_DEBUG("RCOMPLETE");
-
 					CAML_NAMED_VALUE(url_complete)
-					caml_callback(*ml_url_complete,(value)req);
+
+					if (!req->canceled) {
+						caml_callback(*ml_url_complete,(value)req);	
+					}
 
 					free_req = 1;
 
@@ -425,13 +464,21 @@ void net_run () {
 
 				case RERROR: {
 					PRINT_DEBUG("RERROR");
-
 					CAML_NAMED_VALUE(url_failed)
-					caml_callback3(*ml_url_failed,(value)req,Val_int(ev->content.data.len), caml_copy_string(ev->content.data.data));
+
+					if (!req->canceled) {
+						caml_callback3(*ml_url_failed,(value)req,Val_int(ev->content.data.len), caml_copy_string(ev->content.data.data));	
+					}
 
 					free_req = 1;
 
 					break;					
+				}
+
+				case RCANCELED: {
+					PRINT_DEBUG("RCANCELED");
+					free_req = 1;
+					break;
 				}
 			}
 
@@ -443,9 +490,11 @@ void net_run () {
 		free(resp);
 
 		if (free_req) {
+			PRINT_DEBUG("freeing request");
 			free(req->url);
 			free(req->data);
 			curl_slist_free_all(req->headers);
+			curl_easy_cleanup(req->handle);
 			free(req);
 		}
 	}
