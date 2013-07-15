@@ -1,1 +1,1 @@
-value tweet: unit -> unit;
+value tweet: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~text:string -> unit -> unit;
