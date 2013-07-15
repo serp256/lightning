@@ -11,30 +11,37 @@ external hwmodel: unit -> string = "ml_hwmodel";
 (*
 external total_memory: unit -> int = "ml_totalMemory";
 *)
-value total_memory () = 
-  let inp = IO.input_channel (open_in "/proc/meminfo") in
-  let str = IO.read_all inp in
-    (
-      IO.close_in inp;
-      let index = (ExtString.String.find str "MemTotal:" + 9) in
-      let str = String.sub str index ((String.length str) - index) in
-      let res = ref "" in
-        (
-          debug:hardware "mem : %S" str;
-          try
-            String.iter begin fun c -> 
-              match c with
-              [ '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> res.val := !res ^ (ExtString.String.of_char c) 
-              | ' ' -> ()
-              | _ -> raise Exit
-              ]
-            end str;
-          with
-            [ Exit -> () ];
-          debug:hardware "PIZDA: %S" !res;
-          ExtString.String.to_int !res; 
-        )
-    );
+value get_total_memory () = 
+  try
+    let inp = IO.input_channel (open_in "/proc/meminfo") in
+    let str = IO.read_all inp in
+      (
+        IO.close_in inp;
+        let index = (ExtString.String.find str "MemTotal:" + 9) in
+        let str = String.sub str index ((String.length str) - index) in
+        let res = ref "" in
+          (
+            debug:hardware "mem : %S" str;
+            try
+              String.iter begin fun c -> 
+                match c with
+                [ '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> res.val := !res ^ (ExtString.String.of_char c) 
+                | ' ' -> ()
+                | _ -> raise Exit
+                ]
+              end str;
+            with
+              [ Exit -> () ];
+            debug:hardware "PIZDA: %S" !res;
+            ExtString.String.to_int !res; 
+          )
+      )
+  with
+    [ _ -> 0 ];
+
+value _total_mem = Lazy.lazy_from_fun get_total_memory;
+value total_memory () = Lazy.force _total_mem;
+
 ELSE
 value platform () = "PLATFORM";
 value hwmodel () = "HWMODEL";
