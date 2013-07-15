@@ -45,4 +45,4 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 
 .PHONY: clean
 clean::
-	rm -f *.o *.cmo *.cmx *.cmi *.byte *.native
+	rm -f *.o *.cmo *.cmx *.cmi *.byte *.native *.so

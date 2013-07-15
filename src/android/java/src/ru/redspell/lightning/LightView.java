@@ -67,6 +67,9 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import android.app.ActivityManager;
+import android.app.ActivityManager.MemoryInfo;
+
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
     	for (XAPKFile xf : activity.getExpansions()) {
