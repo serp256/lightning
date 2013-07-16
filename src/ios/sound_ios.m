@@ -62,7 +62,7 @@ static ALCdevice  *device  = NULL;
 static ALCcontext *context = NULL;
 
 value ml_sound_init(value mlSessionCategory,value unit) {
-	if (device) return;
+	if (device) return Val_unit;
 	OSStatus result;
 	result = AudioSessionInitialize(NULL, NULL, interruptionCallback, NULL);
 	if (result != kAudioSessionNoError) raise_error("Could not initialize audio",NULL,result);

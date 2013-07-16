@@ -92,17 +92,18 @@ value ml_report_achivement(value identifier, value percentComplete) {
  * возвращаем список строк - идентификаторов друзей
  */
 value ml_get_friends_identifiers(value callback) {
-  static value cb = 0;
 
   CAMLparam1(callback);
+
+  static value cb = 0;
+
   GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
   
   cb = callback;
 
   if (!localPlayer.authenticated) {
     caml_callback(callback, Val_int(0));
-    CAMLreturn0;
-  }
+  } else {
   
   caml_register_global_root(&cb);
 
@@ -131,6 +132,7 @@ value ml_get_friends_identifiers(value callback) {
       //caml_enter_blocking_section();
     }
   ];
+	}
   
   CAMLreturn(Val_unit);
 }
@@ -157,8 +159,7 @@ value ml_load_users_info(value uids, value callback) {
   
   if ([identifiers count] == 0) {
     caml_callback(callback, Val_int(0));
-    CAMLreturn0;
-  }
+  } else {
   
   value *cb = malloc(sizeof(value));
   *cb = callback;
@@ -294,6 +295,7 @@ value ml_load_users_info(value uids, value callback) {
 				});
       }
    }];
+	}
           
   CAMLreturn(Val_unit);
 }

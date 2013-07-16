@@ -32,13 +32,12 @@ value ml_acmtrStart(value cb, value interval) {
 
 	CMMotionManager *mm = getMmInstance();
 
-	if (!mm.accelerometerAvailable) {
-		return;
-	}
+	if (mm.accelerometerAvailable) {
 
-	if (!mm.accelerometerActive) {
-		accEnabled = YES;
-		[mm startAccelerometerUpdates];
+		if (!mm.accelerometerActive) {
+			accEnabled = YES;
+			[mm startAccelerometerUpdates];
+		}
 	}
 	return Val_unit;
 }
