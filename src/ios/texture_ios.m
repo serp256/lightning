@@ -404,27 +404,6 @@ int load_image_info(char *cpath,char *suffix, int use_pvr,textureInfo *tInfo) {
 	return r;
 }
 
-/*
-value ml_load_image_info(value opath) {
-	// NEED NSPool here
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSASCIIStringEncoding];
-	caml_release_runtime_system();
-	PRINT_DEBUG("runtime released from load image thread");
-	textureInfo *tInfo = malloc(sizeof(textureInfo));
-	int r = _load_image(path,tInfo);
-	[pool release];
-	caml_acquire_runtime_system();
-	PRINT_DEBUG("runtime acquired from load image thread");
-	if (r) {
-		free(tInfo);
-		if (r == 2) caml_raise_with_arg(*caml_named_value("File_not_exists"),opath);
-		caml_failwith("Can't load image");
-	};
-	return ((value)tInfo);
-}
-*/
-
 
 CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value filter, value use_pvr) { // if old texture exists when replace
 	CAMLparam2(opath,osuffix);
@@ -454,9 +433,10 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value 
 }
 
 
-void ml_loadExternalImage(value url,value successCallback, value errorCallback) {
+value ml_loadExternalImage(value url,value successCallback, value errorCallback) {
 	NSLog(@"external loader: %s",String_val(url));
 	LightImageLoader *imageLoader = [[LightImageLoader alloc] initWithURL:[NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding] successCallback:successCallback errorCallback:errorCallback];
 	[imageLoader start];
 	[imageLoader release];
+	return Val_unit;
 }

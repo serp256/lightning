@@ -57,7 +57,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	char *argv[] = {"ios",NULL};
 	uncaught_exception_callback = &mlUncaughtException;
 	caml_startup(argv);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 	instance = [super alloc];
 	return instance;
 }
@@ -164,7 +164,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 static value *ml_url_response = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSHTTPURLResponse *)response {
 	//NSLog(@"did recieve response %lld",response.expectedContentLength);
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	if (ml_url_response == NULL) 
 		ml_url_response = caml_named_value("url_response");
 	value contentType;
@@ -177,25 +177,25 @@ static value *ml_url_response = NULL;
 	args[3] = contentType;
 	caml_callbackN(*ml_url_response,4,args);
 	End_roots();
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 static value *ml_url_data = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
 	//NSLog(@"did revieve data");
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	if (ml_url_data == NULL) 
 		ml_url_data = caml_named_value("url_data");
 	int size = data.length;
 	value mldata = caml_alloc_string(size); memcpy(String_val(mldata),data.bytes,size);
 	caml_callback2(*ml_url_data,(value)connection,mldata);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 static value *ml_url_failed = NULL;
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
 	//NSLog(@"did fail with error");
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	if (ml_url_failed == NULL)
 		ml_url_failed = caml_named_value("url_failed");
 	NSString *errdesc = [error localizedDescription];
@@ -203,19 +203,19 @@ static value *ml_url_failed = NULL;
 	//NSLog(@"connection didFailWithError with [%s]",String_val(errmessage));
 	caml_callback3(*ml_url_failed,(value)connection,Val_int(error.code),errmessage);
 	[connection release];
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 
 static value *ml_url_complete = NULL;
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
 	//NSLog(@"did finish loading");
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	if (ml_url_complete == NULL)
 		ml_url_complete = caml_named_value("url_complete");
 	caml_callback(*ml_url_complete,(value)connection);
 	[connection release];
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 // end URL connection
@@ -340,7 +340,7 @@ static value *ml_url_complete = NULL;
 							e = @"Cancelled";
 						}
 						if (Is_block(payment_error_cb)) {
-							caml_acquire_runtime_system();
+							//caml_acquire_runtime_system();
 							value ml_product_id = 0, ml_error_msg = 0;
 							//NSLog(@"PAYMENT ERORR FOR: '%@'",transaction.payment.productIdentifier);
 							Begin_roots2(ml_product_id,ml_error_msg);
@@ -350,7 +350,7 @@ static value *ml_url_complete = NULL;
 							else ml_error_msg = caml_alloc_string(0);
 							caml_callback3(payment_error_cb, ml_product_id,ml_error_msg,Val_bool(transaction.error.code == SKErrorPaymentCancelled));
 							End_roots();
-							caml_release_runtime_system();
+							//caml_release_runtime_system();
 						}
 						[[SKPaymentQueue defaultQueue] finishTransaction: transaction];
 						break;
@@ -362,13 +362,13 @@ static value *ml_url_complete = NULL;
 							//NSLog(@"Purchased");
 							if (Is_block(payment_success_cb)) {
 								[transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
-								caml_acquire_runtime_system();
+								//caml_acquire_runtime_system();
 								caml_callback3(
 									payment_success_cb, 
 									caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
 									(value)transaction,
 									Val_bool(restored));
-									caml_release_runtime_system();
+									//caml_release_runtime_system();
 							}
 							[self hideActivityIndicator];
 							break;

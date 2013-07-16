@@ -50,6 +50,9 @@
 		5181418716F6F6C2009D7846 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
 		5181418816F6F6C2009D7846 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		5181419016F6F919009D7846 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Resources; path = ../Resources; sourceTree = "<group>"; };
+		519334B41793F07800ACAAD7 /* render_stub.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = render_stub.c; path = ../../../src/render_stub.c; sourceTree = "<group>"; };
+		519334B51793F09600ACAAD7 /* renderbuffer_stub.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = renderbuffer_stub.c; path = ../../../src/renderbuffer_stub.c; sourceTree = "<group>"; };
+		519334B61794167A00ACAAD7 /* test_c_stub.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = test_c_stub.c; path = ../../test_c_stub.c; sourceTree = "<group>"; };
 		51ABA22C16F6F4A100FC8928 /* LightTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LightTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		51ABA22F16F6F4A100FC8928 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		51ABA23116F6F4A100FC8928 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -96,6 +99,9 @@
 		51ABA23516F6F4A100FC8928 /* LightTest */ = {
 			isa = PBXGroup;
 			children = (
+				519334B61794167A00ACAAD7 /* test_c_stub.c */,
+				519334B51793F09600ACAAD7 /* renderbuffer_stub.c */,
+				519334B41793F07800ACAAD7 /* render_stub.c */,
 				51ABA23616F6F4A100FC8928 /* Supporting Files */,
 			);
 			path = LightTest;
@@ -307,13 +313,13 @@
 		51ABA24A16F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Sergey Plaksin (5ZR8R38XZE)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "A76B6DD9-2076-499E-BB30-0ABAB6152113";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "F26B0B9F-73BF-448A-9D0C-878F70BAA76B";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;

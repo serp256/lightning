@@ -21,27 +21,26 @@ value ml_paste() {
 	CAMLreturn(r);
 }
 
-void ml_copy (value st)
+value ml_copy (value st)
 {
 	CAMLparam1(st);
 	NSString *s = [NSString stringWithCString:String_val(st) encoding:NSUTF8StringEncoding];
 	[[UIPasteboard generalPasteboard] setString:s];
-	CAMLreturn0;
+	CAMLreturn(Val_unit);
 }
 
-void ml_keyboard (value visible, value size, value initString, value returnCallback, value updateCallback)
+value ml_keyboard (value visible, value size, value initString, value returnCallback, value updateCallback)
 {
 	CAMLparam4(size, initString, updateCallback, returnCallback);
  	NSLog (@"initString %@", [NSString stringWithCString:String_val(initString) encoding:NSASCIIStringEncoding] ); 
 	[[LightViewController sharedInstance] showKeyboard:visible size:size updateCallback:updateCallback returnCallback:returnCallback initString:initString];
-	CAMLreturn0;
+	CAMLreturn(Val_unit);
 }
 
-void ml_hidekeyboard ()
+value ml_hidekeyboard ()
 {
-	CAMLparam0();
 	[[LightViewController sharedInstance] hideKeyboard];
-	CAMLreturn0;
+	return Val_unit;
 }
 
 

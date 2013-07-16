@@ -209,12 +209,12 @@
 	[_webview stopLoading];
 	NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
 	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
-  caml_acquire_runtime_system();
+  //caml_acquire_runtime_system();
   value *mlf = (value*)caml_named_value("oauth_redirected");
   if (mlf != NULL) {                                                                                                        
     caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
   }
-  caml_release_runtime_system();
+  //caml_release_runtime_system();
   
 }
 
@@ -317,10 +317,10 @@
 	NSString * errorUrl = [NSString stringWithFormat: @"%@#error=server_error&error_description=webViewdidFailLoadWithError", _redirectURIpath];
 	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
 	NSCAssert([NSThread isMainThread],@"OAuth didFail not in main thread");
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	value * mlf = (value*)caml_named_value("oauth_redirected"); 
 	caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
-	caml_release_runtime_system();        	
+	//caml_release_runtime_system();        	
 }       
 
 
@@ -344,12 +344,12 @@
 	if ([@"security breach" isEqualToString: content] || [@"<pre style=\"word-wrap: break-word; white-space: pre-wrap;\">{\"error\":\"invalid_request\",\"error_description\":\"Security Error\"}</pre>" isEqualToString: content] ) {
 		NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
 		[[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
-		caml_acquire_runtime_system();
+		//caml_acquire_runtime_system();
 		value *mlf = (value*)caml_named_value("oauth_redirected");
 		if (mlf != NULL) {                                                                                                        
 		    caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
 		}
-		caml_release_runtime_system();
+		//caml_release_runtime_system();
 		return;
 	} else if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
 		NSLog(@"345");
@@ -379,10 +379,10 @@
 			_authorizing = NO;
 			[_spinner stopAnimating];
 			[[LightViewController sharedInstance] dismissModalViewControllerAnimated:NO];
-			caml_acquire_runtime_system();
+			//caml_acquire_runtime_system();
 			value * mlf = (value*)caml_named_value("oauth_redirected"); 
 			caml_callback(*mlf, caml_copy_string([request.URL.absoluteString UTF8String]));
-			caml_release_runtime_system();        
+			//caml_release_runtime_system();        
 			//NSLog(@"ml callback successfully called");
 			return NO;
 		}

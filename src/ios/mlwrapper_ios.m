@@ -36,7 +36,7 @@ char* bundle_path(char* c_path) {
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
 	PRINT_DEBUG("process touched %d", [touches count]);
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	value mltouch = 1,mltouches = 1,globalX = 1,globalY = 1,time = 1, lst_el = 1;
   Begin_roots5(mltouch,time,globalX,globalY,mltouches);
   CGSize viewSize = view.bounds.size;
@@ -70,7 +70,7 @@ void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mls
 		mlstage_cancelAllTouches(mlstage);
 	}
 	End_roots();
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
   PRINT_DEBUG("process touches end");
 }
 
@@ -320,13 +320,14 @@ CAMLprim value ml_payment_get_transaction_receipt(value t) {
   CAMLreturn(receipt);
 }
 
-void ml_payment_restore_completed_transactions(value p) {
+value ml_payment_restore_completed_transactions(value p) {
 	[[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
+	return Val_unit;
 }
 
 
 // 
-void ml_request_remote_notifications(value rntype, value success_cb, value error_cb) {
+value ml_request_remote_notifications(value rntype, value success_cb, value error_cb) {
   LightViewController * c = [LightViewController sharedInstance];
 
   if (Is_block(c->remote_notification_request_success_cb)) {
@@ -345,7 +346,7 @@ void ml_request_remote_notifications(value rntype, value success_cb, value error
 
   [[UIApplication sharedApplication] registerForRemoteNotificationTypes: Int_val(rntype)];
 
-  return;  
+  return Val_unit;  
 }
 
 /*
@@ -403,14 +404,16 @@ value ml_getVersion() {
 	return s;
 }
 
-void ml_addExceptionInfo(value mlinfo) {
+value ml_addExceptionInfo(value mlinfo) {
 	NSString *info = [NSString stringWithCString:String_val(mlinfo) encoding:NSUTF8StringEncoding];
 	[LightViewController addExceptionInfo:info];
+	return Val_unit;
 }
 
-void ml_setSupportEmail(value mlemail) {
+value ml_setSupportEmail(value mlemail) {
 	NSString *email = [NSString stringWithCString:String_val(mlemail) encoding:NSASCIIStringEncoding];
 	[LightViewController setSupportEmail:email];
+	return Val_unit;
 }
 
 value ml_getStoragePath(value unit) {

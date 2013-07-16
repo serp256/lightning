@@ -367,7 +367,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	return (value)r;
 }
 
-void ml_URLConnection_cancel(value r) {
+value ml_URLConnection_cancel(value r) {
 	PRINT_DEBUG("ml_URLConnection_cancel call");	
 	request_t* req = (request_t*)r;
 	req->canceled = 1;
@@ -387,6 +387,7 @@ void ml_URLConnection_cancel(value r) {
 	runtime->net_running--;
 
 	PRINT_DEBUG("net_running %d", runtime->net_running);*/
+	return Val_unit;
 }
 
 

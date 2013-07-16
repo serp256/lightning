@@ -68,6 +68,7 @@
 		pos = sprintf(buf + pos,"(%s:%d) gl error: %X [",__FILE__,__LINE__,error); \
     pos += sprintf(buf + pos,fmt,## args);\
     pos += sprintf(buf + pos, "]\n"); \
+		PRINT_ERROR(buf); \
 		error = glGetError(); \
 		is_error = 1; \
 	}; \

@@ -1,3 +1,4 @@
+//// NOT USED NOW
 
 static int kv_storage_synced = 1;
 

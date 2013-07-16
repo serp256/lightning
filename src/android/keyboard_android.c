@@ -20,7 +20,7 @@
 static jclass kbrdCls = 0;
 // static int kbrdVisible = 0;
 
-void ml_keyboard(value visible, value size, value inittxt, value onhide, value onchange) {
+value ml_keyboard(value visible, value size, value inittxt, value onhide, value onchange) {
 	PRINT_DEBUG("ml_keyboard");
 
 	// if (kbrdVisible) return;
@@ -49,14 +49,16 @@ void ml_keyboard(value visible, value size, value inittxt, value onhide, value o
 	jstring jinittxt = (*env)->NewStringUTF(env, cinittxt);
 	(*env)->CallStaticVoidMethod(env, kbrdCls, mid, cvisible, cw, ch, jinittxt, conhide, conchange);
 	(*env)->DeleteLocalRef(env, jinittxt);
+
+	return Val_unit;
 }
 
-void ml_keyboard_byte(value* argv, int argc) {
+value ml_keyboard_byte(value* argv, int argc) {
 	PRINT_DEBUG("ml_keyboard_byte");
-	ml_keyboard(argv[0], argv[1], argv[2], argv[3], argv[4]);
+	return ml_keyboard(argv[0], argv[1], argv[2], argv[3], argv[4]);
 }
 
-void ml_hidekeyboard() {
+value ml_hidekeyboard() {
 	PRINT_DEBUG("ml_hidekeyboard %d");
 
 	// if (!kbrdVisible) return;
@@ -68,9 +70,11 @@ void ml_hidekeyboard() {
 	if (!mid) mid = (*env)->GetStaticMethodID(env, kbrdCls, "hideKeyboard", "()V");
 
 	(*env)->CallStaticVoidMethod(env, kbrdCls, mid);
+
+	return Val_unit;
 }
 
-void ml_copy(value txt) {
+value ml_copy(value txt) {
 	GET_LIGHT_KEYBOARD;
 
 	static jmethodID mid = 0;
@@ -80,6 +84,7 @@ void ml_copy(value txt) {
 	jstring jtxt = (*env)->NewStringUTF(env, ctxt);
 	(*env)->CallStaticVoidMethod(env, kbrdCls, mid, jtxt);
 	(*env)->DeleteLocalRef(env, jtxt);
+	return Val_unit;
 }
 
 value ml_paste() {
