@@ -29,7 +29,7 @@ value ml_lnSchedule(value notifId, value fireDate, value message) {
 	return Val_true;
 }
 
-void ml_lnCancel(value notifId) {
+value ml_lnCancel(value notifId) {
 	GET_LIGHT_NOTIFICATIONS;
 
 	static jmethodID mid;
@@ -38,4 +38,6 @@ void ml_lnCancel(value notifId) {
 	jstring jnotifId = (*env)->NewStringUTF(env, String_val(notifId));
 	(*env)->CallStaticVoidMethod(env, notifCls, mid, jnotifId);
 	(*env)->DeleteLocalRef(env, jnotifId);
+
+	return Val_unit;
 }

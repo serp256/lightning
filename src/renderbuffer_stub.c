@@ -102,7 +102,7 @@ extern uintnat caml_dependent_size;
 #define LOGMEM(op,tid,size)
 #endif
 
-void ml_render_texture_id_delete(value textureID) {
+value ml_render_texture_id_delete(value textureID) {
 	GLuint tid = TEXTURE_ID(textureID);
 	if (tid) {
 		PRINT_DEBUG("ml_render_texture_id_delete");
@@ -116,6 +116,7 @@ void ml_render_texture_id_delete(value textureID) {
 		LOGMEM("delete",tid,t->mem);
 		caml_free_dependent_memory(t->mem);
 	};
+	return Val_unit;
 }
 
 static void textureID_finalize(value textureID) {
@@ -362,7 +363,9 @@ value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value t
 		clear_renderbuffer(&rb, mlclear);
 	}
 
+	PRINT_DEBUG("CALL ML in draw");
 	caml_callback(mlfun,(value)&rb);
+	PRINT_DEBUG("AFTER ML in draw");
 
  	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 	renderbuffer_deactivate();
@@ -399,7 +402,7 @@ value ml_renderbuffer_draw_byte(value * argv, int n) {
 	return (ml_renderbuffer_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5],argv[6],argv[7],argv[8]));
 }
 
-void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_tid, value renderInfo, value mlfun) {
+value ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_tid, value renderInfo, value mlfun) {
 	PRINT_DEBUG("ml_renderbuffer_draw_to_texture CALL");
 
 	CAMLparam5(mlclear, new_params, new_tid, renderInfo, mlfun);
@@ -475,7 +478,7 @@ void ml_renderbuffer_draw_to_texture(value mlclear, value new_params, value new_
 
 	checkGLErrors("finish render to texture");
 
-	CAMLreturn0;
+	CAMLreturn(Val_unit);
 }
 
 value ml_renderbuffer_draw_to_dedicated_texture(value mlclear, value owidth, value oheight, value renderInfo, value mlfun) {

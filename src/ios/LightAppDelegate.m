@@ -82,7 +82,7 @@
     return;
   }
 
-  caml_acquire_runtime_system();
+  //caml_acquire_runtime_system();
   value token;
   Begin_roots1(token);
 
@@ -93,13 +93,13 @@
   [self clearRemoteNotificationsRequestCallbacks];
   
   End_roots();
-  caml_release_runtime_system();
+  //caml_release_runtime_system();
 }
 
 
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
 
-  caml_acquire_runtime_system();
+  //caml_acquire_runtime_system();
 
   if (Is_block(lightViewController->remote_notification_request_error_cb)) {
     NSString *errdesc = [error localizedDescription];                                                                                                                                                     
@@ -108,7 +108,7 @@
 
   [self clearRemoteNotificationsRequestCallbacks];
   
-  caml_release_runtime_system();  
+  //caml_release_runtime_system();  
 }
 
 

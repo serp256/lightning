@@ -66,7 +66,7 @@ mlstage *mlstage_create(float width,float height) {
 	PRINT_DEBUG("CHECKPNT1");
 	stage->height = height;
 	PRINT_DEBUG("CHECKPNT2");
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	PRINT_DEBUG("CHECKPNT3");
 	ml_width = caml_copy_double(width);
 	PRINT_DEBUG("CHECKPNT4");
@@ -77,7 +77,7 @@ mlstage *mlstage_create(float width,float height) {
 
 	caml_register_generational_global_root(&stage->stage);
 	PRINT_DEBUG("CHECKPNT7");
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 	PRINT_DEBUG("stage successfully created");
 	CAMLreturnT(mlstage*,stage);
 }
@@ -93,7 +93,7 @@ void mlstage_resize(mlstage *mlstage,float width,float height) {
 	printf("stage: %ld,w=%f,h=%f\n",mlstage->stage,width,height);
 	mlstage->width = width;
 	mlstage->height = height;
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	value w = Val_unit, h = Val_unit;
 	Begin_roots2(w,h);
 	w = caml_copy_double(width);
@@ -101,15 +101,15 @@ void mlstage_resize(mlstage *mlstage,float width,float height) {
 	value resize = caml_get_public_method(mlstage->stage,caml_hash_variant("resize"));
 	caml_callback3(resize,mlstage->stage,w,h);
 	End_roots();
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 
 void mlstage_destroy(mlstage *mlstage) {
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	caml_remove_generational_global_root(&mlstage->stage);
 	//caml_gc_compaction(Val_int(0));
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 	free(mlstage);
 }
 
@@ -173,9 +173,9 @@ void mlstage_cancelAllTouches(mlstage *mlstage) {
 
 
 void ml_memoryWarning() {
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	caml_gc_compaction(0);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 value caml_getResource(value mlpath,value suffix) {

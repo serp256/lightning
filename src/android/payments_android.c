@@ -160,7 +160,7 @@ void ml_paymentsTest() {
 // 	(*env)->CallVoidMethod(env, jView, mid);
 // }
 
-void ml_paymentsInit(value marketType) {
+value ml_paymentsInit(value marketType) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
@@ -188,9 +188,11 @@ void ml_paymentsInit(value marketType) {
 	} else {
 		caml_failwith("something wrong with marketType, permited only '`Amazon' or '`Google of (option string)'");
 	}
+
+	return Val_unit;
 }
 
-void ml_paymentsPurchase(value sku) {
+value ml_paymentsPurchase(value sku) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
@@ -202,9 +204,11 @@ void ml_paymentsPurchase(value sku) {
 
 	(*env)->CallVoidMethod(env, jView, mid, j_sku);
 	(*env)->DeleteLocalRef(env, j_sku);
+
+	return Val_unit;
 }
 
-void ml_paymentsCommitTransaction(value purchaseToken) {
+value ml_paymentsCommitTransaction(value purchaseToken) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
@@ -216,9 +220,10 @@ void ml_paymentsCommitTransaction(value purchaseToken) {
 
 	(*env)->CallVoidMethod(env, jView, mid, j_purchaseToken);
 	(*env)->DeleteLocalRef(env, j_purchaseToken);
+	return Val_unit;
 }
 
-void ml_restorePurchases() {
+value ml_restorePurchases() {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
@@ -226,6 +231,8 @@ void ml_restorePurchases() {
 	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "restorePurchases", "()V");
 
 	(*env)->CallVoidMethod(env, jView, mid);
+
+	return Val_unit;
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_payments_LightPaymentsCamlCallbacks_00024Success_run(JNIEnv *env, jobject this) {

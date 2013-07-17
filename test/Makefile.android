@@ -10,9 +10,9 @@ TARGET ?= example
 
 res:	
 	aresmkr -concat -i Resources -o android/assets/assets
-	aresmkr -concat -i Resources -o android-expansion 
-	aresmkr -merge -o android/assets/index android/assets/assets android-expansion
-	#rm android/assets/assets.index
+	#aresmkr -concat -i Resources -o android-expansion 
+	aresmkr -merge -o android/assets/index android/assets/assets
+	rm android/assets/assets.index
 
 so: $(TARGET).so res
 	cp test.so android/libs/armeabi-v7a/libtest.so

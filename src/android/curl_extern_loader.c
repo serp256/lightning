@@ -201,7 +201,7 @@ static void* loader_thread(void* params) {
 	}
 }
 
-void ml_loadExternalImage(value url, value cb, value errCb) {
+value ml_loadExternalImage(value url, value cb, value errCb) {
 	initCurl();
 
 	PRINT_DEBUG("LOAD EXTERNAL IMAGE");
@@ -235,6 +235,8 @@ void ml_loadExternalImage(value url, value cb, value errCb) {
 
 	thqueue_cel_reqs_push(reqs, req);
 	pthread_cond_signal(&cond);
+
+	return Val_unit;
 }
 
 static void freeRequest(cel_request_t* req) {

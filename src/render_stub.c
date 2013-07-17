@@ -43,8 +43,9 @@
 #define setDefaultGLBlend setPMAGLBlend
 
 
-void ml_checkGLErrors(value p) {
+value ml_checkGLErrors(value p) {
 	checkGLErrors("%s",String_val(p));
+	return Val_unit;
 }
 
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
@@ -70,15 +71,17 @@ void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLf
 }
 
 
-void ml_setupOrthographicRendering(value left,value right,value bottom,value top) {
+value ml_setupOrthographicRendering(value left,value right,value bottom,value top) {
 	setupOrthographicRendering(Double_val(left),Double_val(right),Double_val(bottom),Double_val(top));
+	return Val_unit;
 }
 
-void ml_clear(value color,value alpha) {
+value ml_clear(value color,value alpha) {
 	int clr = Int_val(color);
 	color3F c = COLOR3F_FROM_INT(clr);
 	glClearColor(c.r,c.g,c.b,Double_val(alpha));
 	glClear(GL_COLOR_BUFFER_BIT); // | GL_DEPTH_BUFFER_BIT);
+	return Val_unit;
 }
 
 /////////
@@ -112,14 +115,16 @@ void applyTransformMatrix(value matrix) {
   kmGLMultMatrix( &transfrom4x4 );
 }
 
-void ml_push_matrix(value matrix) {
+value ml_push_matrix(value matrix) {
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
+	return Val_unit;
 }
 
 
-void ml_restore_matrix(value p) {
+value ml_restore_matrix(value p) {
 	kmGLPopMatrix();
+	return Val_unit;
 }
 
 
@@ -588,9 +593,10 @@ value ml_quad_color(value quad) {
 }
 */
 
-void ml_quad_set_color(value quad,value color) {
+value ml_quad_set_color(value quad,value color) {
 	lgQuad *q = QUAD(quad);
 	extract_color(color,((double)q->bl.c.a / 255.),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
+	return Val_unit;
 }
 
 value ml_quad_alpha(value quad) {
@@ -598,7 +604,7 @@ value ml_quad_alpha(value quad) {
 	return (caml_copy_double((double)(q->bl.c.a / 255)));
 }
 
-void ml_quad_set_alpha(value quad,value alpha) {
+value ml_quad_set_alpha(value quad,value alpha) {
 	lgQuad *q = QUAD(quad);
 	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);
 	//printf("set quad alpha to: %d\n",a);
@@ -606,6 +612,7 @@ void ml_quad_set_alpha(value quad,value alpha) {
 	q->br.c.a = a;
 	q->tl.c.a = a;
 	q->tr.c.a = a;
+	return Val_unit;
 }
 
 ////////////////////
@@ -641,7 +648,7 @@ static inline void apply_blend(value mlblend) {
 	};
 }
 
-void ml_quad_render(value matrix, value program, value alpha, value quad) {
+value ml_quad_render(value matrix, value program, value alpha, value quad) {
 	lgQuad *q = QUAD(quad);
 	PRINT_DEBUG("RENDER QUAD");
 	checkGLErrors("start render quad");
@@ -675,6 +682,7 @@ void ml_quad_render(value matrix, value program, value alpha, value quad) {
 	checkGLErrors("draw quad arrays");
 
 	kmGLPopMatrix();
+	return Val_unit;
 }
 
 ///////////////
@@ -825,10 +833,11 @@ value ml_image_points(value image) {
 }
 
 
-void ml_image_set_color(value image,value color) {
+value ml_image_set_color(value image,value color) {
 	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &img->quad;
 	extract_color(color,(((GLfloat)tq->bl.c.a) / 255.),1,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
+	return Val_unit;
 }
 
 /*
@@ -864,7 +873,7 @@ void ml_image_set_colors(value image,value colors) {
 }
 */
 
-void ml_image_set_alpha(value image,value alpha) {
+value ml_image_set_alpha(value image,value alpha) {
 	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	double a = Double_val(alpha);
@@ -872,9 +881,10 @@ void ml_image_set_alpha(value image,value alpha) {
 	UPDATE_PMA_ALPHA(tq->br.c,a);
 	UPDATE_PMA_ALPHA(tq->tl.c,a);
 	UPDATE_PMA_ALPHA(tq->tr.c,a);
+	return Val_unit;
 }
 
-void ml_image_update(value image, value textureInfo, value flipX, value flipY) {
+value ml_image_update(value image, value textureInfo, value flipX, value flipY) {
 	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	value width = Field(textureInfo,1);
@@ -901,13 +911,14 @@ void ml_image_update(value image, value textureInfo, value flipX, value flipY) {
 	};
 	img->textureID = TEXTURE_ID(Field(textureInfo,0));
 	APPLY_TEXTURE_INFO_KIND(img,textureInfo);
+	return Val_unit;
 }
 
 
 #define SWAP_TEX_COORDS(c1,c2) {tex2F tmp = tq->c1.tex, tq->c1.tex = tq->c2.tex,tq->c2.tex = tmp}
 
 
-void ml_image_flip_tex_x(value image) {
+value ml_image_flip_tex_x(value image) {
 	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	tex2F tmp = tq->tl.tex;
@@ -916,9 +927,10 @@ void ml_image_flip_tex_x(value image) {
 	tmp = tq->bl.tex;
 	tq->bl.tex = tq->br.tex;
 	tq->br.tex = tmp;
+	return Val_unit;
 }
 
-void ml_image_flip_tex_y(value image) {
+value ml_image_flip_tex_y(value image) {
 	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	tex2F tmp = tq->tl.tex;
@@ -927,10 +939,12 @@ void ml_image_flip_tex_y(value image) {
 	tmp = tq->tr.tex;
 	tq->tr.tex = tq->br.tex;
 	tq->br.tex = tmp;
+	return Val_unit;
 }
 
-void ml_image_render(value matrix, value program, value alpha, value blend, value image) {
+value ml_image_render(value matrix, value program, value alpha, value blend, value image) {
 	//fprintf(stderr,"render image\n");
+
 	PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
 	checkGLErrors("start image render");
@@ -994,6 +1008,8 @@ void ml_image_render(value matrix, value program, value alpha, value blend, valu
 	kmGLPopMatrix();
 
 	PRINT_DEBUG("RENDER IMAGE end");
+
+	return Val_unit;
 };
 
 
@@ -1139,7 +1155,7 @@ static int atlas_quads_len = 0;
 #define RENDER_SUBPIXEL(x) round(x)
 
 // assume that quads it's dynarray
-void ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {
+value ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {
 	PRINT_DEBUG("RENDER ATLAS");
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
@@ -1366,6 +1382,8 @@ void ml_atlas_render(value atlas, value matrix,value program, value alpha, value
 #endif
 	checkGLErrors("after draw atlas");
 	kmGLPopMatrix();
+
+	return Val_unit;
 }
 
 /*
@@ -1387,16 +1405,18 @@ void ml_atlas_clear(value atlas) {
 
 
 
-void ml_gl_scissor_enable(value left,value top, value width, value height) {
+value ml_gl_scissor_enable(value left,value top, value width, value height) {
 	glEnable(GL_SCISSOR_TEST);
 	glScissor(Long_val(left),Long_val(top),Long_val(width),Long_val(height));
 	checkGLErrors("enable scissor");
+	return Val_unit;
 }
 
 
-void ml_gl_scissor_disable(value unit) {
+value ml_gl_scissor_disable(value unit) {
 	glDisable(GL_SCISSOR_TEST);
 	checkGLErrors("disable scissor");
+	return Val_unit;
 }
 
 value ml_get_gl_extensions(value unit) {
@@ -1471,7 +1491,7 @@ value ml_shape_create (value mlpoints, value ml_draw_method) {
 	return result;
 }
 
-void ml_shape_render(value matrix,value program,value alpha, value mlshape) {
+value ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 	shape_t *shape = SHAPE(mlshape);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
@@ -1500,6 +1520,8 @@ void ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 
 	kmGLPopMatrix();
+
+	return Val_unit;
 }
 
 

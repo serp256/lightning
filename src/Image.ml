@@ -474,7 +474,7 @@ class _c  _texture =
     (
       match glowFilter with
       [ Some {g_valid=True; g_image = Some g_image;g_matrix;g_program;_} -> 
-          Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' ?blend:blend g_image
+        Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' ?blend:blend g_image
       | _ -> Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha:alpha' ?blend:blend image
       ]
     ); 

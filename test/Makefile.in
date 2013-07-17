@@ -15,7 +15,9 @@ PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma
 
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma ../src/plugins/facebook/facebook.cma $(OAUTH) $(SOCIAL) $(PLUGINS) $(MLFILES) $(TARGET).cmo \
+	../src/plugins/facebook/facebook.cma \
+	../src/plugins/tapjoy/tapjoy.cma \
+	-I ../src ../src/lightning.cma  $(OAUTH) $(SOCIAL) $(PLUGINS) $(MLFILES) $(TARGET).cmo \
 	-package bigarray,unix,extlib,xmlm,ojson,redspell.debug -linkpkg
 
 example.cmo: $(MLFILES)

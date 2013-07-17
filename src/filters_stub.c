@@ -416,7 +416,7 @@ static inline GLuint powOfTwo(unsigned int p) {
 }
 */
 
-void ml_glow2_make(value orb,value glow) {
+value ml_glow2_make(value orb,value glow) {
 	renderbuffer_t *rb = (renderbuffer_t*)orb;
 	int gsize = Int_val(Field(glow,0));
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
@@ -467,6 +467,7 @@ void ml_glow2_make(value orb,value glow) {
 	glUseProgram(0);
 	currentShaderProgram = 0;
 	set_framebuffer_state(&fstate);
+	return Val_unit;
 }
 
 static void inline glow_make_draw(viewport *vp,clipping *clp, int clear) {
@@ -517,8 +518,6 @@ static inline GLuint powS( GLuint l )
 	return 0;
 };
 
-static save_tex_cnt = 0;
-static glow_tex_cnt = 0;
 
 void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_lev_tex, viewport* vp, clipping* clp, int bind) {
 	PRINT_DEBUG("draw_glow_level %f %f %f %f", clp->x, clp->y, clp->width, clp->height);
@@ -564,9 +563,9 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 	}
 }
 
-void ml_glow_make(value orb, value glow) {
+value ml_glow_make(value orb, value glow) {
 	int gsize = Int_val(Field(glow,0));
-	if (gsize == 0) return ;
+	if (gsize == 0) return Val_unit;
 	renderbuffer_t *rb = (renderbuffer_t *)orb;
 
 	int rectw = rb->realWidth;
@@ -684,6 +683,8 @@ void ml_glow_make(value orb, value glow) {
 	currentShaderProgram = 0;
 	set_framebuffer_state(&fstate);
 	checkGLErrors("end of glow");
+
+	return Val_unit;
 }
 
 /*

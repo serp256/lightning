@@ -40,10 +40,10 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 	//NSLog(@"ImageLoader did fail with error");
 	if (errorCallback != 0) {
 		NSString *errdesc = [error localizedDescription];
-		caml_acquire_runtime_system();
+		//caml_acquire_runtime_system();
 		value errmessage = caml_copy_string([errdesc cStringUsingEncoding:NSUTF8StringEncoding]);
 		caml_callback2(errorCallback,Val_int(error.code),errmessage);
-		caml_release_runtime_system();
+		//caml_release_runtime_system();
 	}
 	[connection_ release];
 }
@@ -55,9 +55,9 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 
 -(void)badImageData {
 	if (errorCallback != 0) {
-		caml_acquire_runtime_system();
+		//caml_acquire_runtime_system();
 		caml_callback2(errorCallback,Int_val(0),caml_copy_string("Bad image data"));
-		caml_release_runtime_system();
+		//caml_release_runtime_system();
 	}
 }
 
@@ -73,7 +73,7 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 		[image release];
 		if (r) [self badImageData];
 		else {
-			caml_acquire_runtime_system();
+			//caml_acquire_runtime_system();
 			value textureID = createGLTexture(1,&tInfo,Val_int(1));
 			value mlTex = 0;
 			Begin_roots2(textureID,mlTex);
@@ -83,7 +83,7 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 			ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
 			caml_callback(successCallback,mlTex);
 			End_roots();
-			caml_release_runtime_system();
+			//caml_release_runtime_system();
 		}
 	} else {
 		[self badImageData];
@@ -94,10 +94,10 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 
 -(void)dealloc {
 	//NSLog(@"dealloc external image loader");
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	caml_remove_generational_global_root(&successCallback);
 	if (errorCallback != 0) caml_remove_generational_global_root(&errorCallback);
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 	[data_ release];
 	[super dealloc];
 }

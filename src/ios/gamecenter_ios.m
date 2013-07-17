@@ -21,11 +21,11 @@ value ml_game_center_init(value param) {
 	[localPlayer authenticateWithCompletionHandler:^(NSError *error) {
 		NSLog(@"GameCenter Initialized");
 		NSCAssert([NSThread isMainThread],@"GameCenter Init call not in main thread");
-		caml_leave_blocking_section();
+		//caml_leave_blocking_section();
 		value res = Val_false;
 		if (localPlayer.isAuthenticated) res = Val_true;
 		caml_callback(*caml_named_value("game_center_initialized"),res);
-		caml_enter_blocking_section();
+		//caml_enter_blocking_section();
 	 }];
 	return Val_true;
 }
@@ -44,27 +44,28 @@ value ml_playerID(value unit) {
 	CAMLreturn(res);
 }
 
-void ml_report_leaderboard(value category, value score) {
+value ml_report_leaderboard(value category, value score) {
 	GKScore *scoreReporter = [[[GKScore alloc] initWithCategory: [NSString stringWithCString:String_val(category) encoding:NSASCIIStringEncoding]] autorelease];
 	scoreReporter.value = Int64_val(score);
 	[scoreReporter reportScoreWithCompletionHandler:^(NSError *error) {
 		printf("report leaderboard failed\n");
 		if (error != nil && error.code == GKErrorCommunicationsFailure) {
-			caml_leave_blocking_section();
+			//caml_leave_blocking_section();
 			value category,score;
 			Begin_roots2(category,score);
 			category = caml_copy_string([scoreReporter.category cStringUsingEncoding:NSASCIIStringEncoding]);
 			score = caml_copy_int64(scoreReporter.value);
 			caml_callback2(*caml_named_value("report_leader_board_failed"),category,score);
 			End_roots();
-			caml_enter_blocking_section();
+			//caml_enter_blocking_section();
 		}
 	}];
+	return Val_unit;
 }
 
 
 
-void ml_report_achivement(value identifier, value percentComplete) {
+value ml_report_achivement(value identifier, value percentComplete) {
 	GKAchievement *achievement = [[[GKAchievement alloc] initWithIdentifier: [NSString stringWithCString:String_val(identifier) encoding:NSASCIIStringEncoding]] autorelease];
 	if (achievement) {
 		achievement.percentComplete = Double_val(percentComplete);
@@ -73,41 +74,43 @@ void ml_report_achivement(value identifier, value percentComplete) {
 			if (error != nil && error.code == GKErrorCommunicationsFailure)
 			{
 				// Retain the achievement object and try again later (not shown).
-				caml_leave_blocking_section();
+				//caml_leave_blocking_section();
 				value identifier,percentComplete;
 				Begin_roots2(identifier,percentComplete);
 				identifier = caml_copy_string([achievement.identifier cStringUsingEncoding:NSASCIIStringEncoding]);
 				percentComplete = caml_copy_double(achievement.percentComplete);
 				caml_callback2(*caml_named_value("report_achivement_failed"),identifier,percentComplete);
 				End_roots();
-				caml_enter_blocking_section();
+				//caml_enter_blocking_section();
 			}
 		}];
 	}
+	return Val_unit;
 }
 
 /*
  * возвращаем список строк - идентификаторов друзей
  */
-void ml_get_friends_identifiers(value callback) {
-  static value cb = 0;
+value ml_get_friends_identifiers(value callback) {
 
   CAMLparam1(callback);
+
+  static value cb = 0;
+
   GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
   
   cb = callback;
 
   if (!localPlayer.authenticated) {
     caml_callback(callback, Val_int(0));
-    CAMLreturn0;
-  }
+  } else {
   
   caml_register_global_root(&cb);
 
   [localPlayer loadFriendsWithCompletionHandler:^(NSArray *friends, NSError *error) 
     {
 			NSCAssert([NSThread isMainThread],@"GameCenter Get ids call not in main thread");
-      caml_leave_blocking_section();
+      //caml_leave_blocking_section();
       if (error != nil || [friends count] == 0) {
         caml_callback(cb, Val_int(0));
       } else {
@@ -126,11 +129,12 @@ void ml_get_friends_identifiers(value callback) {
         End_roots();
       }
       caml_remove_global_root(&cb);
-      caml_enter_blocking_section();
+      //caml_enter_blocking_section();
     }
   ];
+	}
   
-  CAMLreturn0;
+  CAMLreturn(Val_unit);
 }
 
 /*
@@ -139,7 +143,7 @@ void ml_get_friends_identifiers(value callback) {
 int loadImageFile(UIImage *image, textureInfo *tInfo);
 
 
-void ml_load_users_info(value uids, value callback) {
+value ml_load_users_info(value uids, value callback) {
   CAMLparam2(uids, callback);
   CAMLlocal2(lst, item);
   
@@ -155,8 +159,7 @@ void ml_load_users_info(value uids, value callback) {
   
   if ([identifiers count] == 0) {
     caml_callback(callback, Val_int(0));
-    CAMLreturn0;
-  }
+  } else {
   
   value *cb = malloc(sizeof(value));
   *cb = callback;
@@ -176,7 +179,7 @@ void ml_load_users_info(value uids, value callback) {
 
         void (^retBlock)(void) = ^(void){
             NSLog(@"RETURN GC DATA TO ML");
-            caml_leave_blocking_section();  
+            //caml_leave_blocking_section();  
             value result = 0, rec = 0, info = 0, textureID = 0, mlTex = 0;
             Begin_roots5(result,rec,info,textureID,mlTex);
             result = Val_unit;
@@ -250,7 +253,7 @@ void ml_load_users_info(value uids, value callback) {
             End_roots();
             caml_remove_generational_global_root(cb);
             free(cb);
-            caml_enter_blocking_section();
+            //caml_enter_blocking_section();
         };
         
         if ([GKPlayer instancesRespondToSelector: @selector(loadPhotoForSize:withCompletionHandler:)]) { // фотки поддерживаются только с ios 5.0
@@ -292,15 +295,18 @@ void ml_load_users_info(value uids, value callback) {
 				});
       }
    }];
+	}
           
-  CAMLreturn0;
+  CAMLreturn(Val_unit);
 }
 
 
-void ml_show_leaderboard(value p) {
+value ml_show_leaderboard(value p) {
 	[[LightViewController sharedInstance] showLeaderboard];
+	return Val_unit;
 }
 
-void ml_show_achivements(value p) {
+value ml_show_achivements(value p) {
 	[[LightViewController sharedInstance] showAchievements];
+	return Val_unit;
 }
