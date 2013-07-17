@@ -1,6 +1,6 @@
 #define REG_CALLBACK(name) \
 	value* name = NULL; \
-	if (Is_block(v_##name)) { \		
+	if (Is_block(v_##name)) { \
 		name = (value*)malloc(sizeof(value)); \
 		*name = Field(v_##name, 0); \
 		caml_register_generational_global_root(name); \

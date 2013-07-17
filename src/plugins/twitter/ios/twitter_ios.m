@@ -34,18 +34,18 @@ value ml_tweet(value v_success, value v_fail, value v_text) {
 			req.account = [accnts objectAtIndex:0];
 			[req performRequestWithHandler:^(NSData *responseData, NSHTTPURLResponse *urlResponse, NSError *error) {
 				if (error != nil) {
-					if (Is_block(*fail)) {
+					if (fail) {
 						caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));	
 					}
 				} else {
 					NSArray* errs = [[NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil] valueForKey:@"errors"];
 
 					if (errs == nil) {
-						if (Is_block(*success)) {
+						if (success) {
 							caml_callback(*success, Val_unit);
 						}
 					} else {
-						if (Is_block(*fail)) {
+						if (fail) {
 							caml_callback(*fail, caml_copy_string([[[errs objectAtIndex:0] valueForKey:@"message"] UTF8String]));
 						}
 					}

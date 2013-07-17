@@ -1,5 +1,5 @@
 IFPLATFORM(ios pc)
-value init ?comsumerKey ?consumerSecret () = ();
+value init ?consumerKey ?consumerSecret () = ();
 ELSE
 external init: ?consumerKey:string -> ?consumerSecret:string -> unit -> unit = "ml_init";
 ENDPLATFORM;
