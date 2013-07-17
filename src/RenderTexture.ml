@@ -376,7 +376,6 @@ module FramebufferTexture = struct
           with [ Not_found -> None ];
 
       value remove bin x y =
-        let () = debug:consistent "%d: remove call for (%d,%d), reuse coeff %d" (bin.id) x y (bin.reuseCoeff + 1) in
         try
           let rect = List.find (fun rect -> Rectangle.x rect = x && Rectangle.y rect = y) bin.rects in (
             bin.rects := List.remove bin.rects rect;
@@ -404,7 +403,7 @@ module FramebufferTexture = struct
     let rec tryWithNeedRepair repairsCnt binsLst =
       match binsLst with
       [ [] -> newRenderbuffTex ()
-      | binsLst when repairsCnt > 1 -> newRenderbuffTex ()
+      | binsLst when repairsCnt > 3 -> newRenderbuffTex ()
       | [ (tid, bin) :: binsLst ] ->
         if Bin.needRepair bin
         then (
@@ -422,7 +421,8 @@ module FramebufferTexture = struct
       match binsLst with
       [ [] ->
         let rec shuffle bins cnt times = if cnt = times then bins else shuffle (List.sort ~cmp:(fun _ _ -> (Random.int 3) - 1) bins) (cnt + 1) times in
-          tryWithNeedRepair 0 (shuffle (List.filter (fun (tid, bin) -> Bin.needRepair bin) !bins) 0 5)
+        let needRepair = shuffle (List.filter (fun (tid, bin) -> Bin.needRepair bin) !bins) 0 5 in
+          tryWithNeedRepair 0 needRepair
       | [ (tid, bin) :: binsLst ] ->
         if not (Bin.needRepair bin)
         then
@@ -590,6 +590,8 @@ class virtual base renderInfo =
     method save filename = renderbuffer_save renderInfo filename;
   end; (*}}}*)
 
+value texRectDimCorrection dim = 8 - dim mod 8;
+
 class shared renderInfo =
   object(self)
     inherit base renderInfo;
@@ -597,8 +599,10 @@ class shared renderInfo =
     method release () = 
       match released with
       [ False ->
+        let rx = renderInfo.rx - (texRectDimCorrection (int_of_float (ceil renderInfo.rwidth))) / 2 in
+        let ry = renderInfo.ry - (texRectDimCorrection (int_of_float (ceil renderInfo.rheight))) / 2 in
         (
-          FramebufferTexture.freeRect renderInfo.rtextureID renderInfo.rx renderInfo.ry;
+          FramebufferTexture.freeRect renderInfo.rtextureID rx ry;
           released := True;
         )
       | True -> ()
@@ -669,9 +673,12 @@ value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
 
   (* when dedicated texture used, we choose next pot as texture dimensions, when shared -- we need allocate rect with next-devisible-by-8 sides, cause such values guarantee perfect scaling result, when making glow *)
   (* let dedicated = True in *)
-  let (rectw,recth) = if dedicated then LightCommon.((nextPowerOfTwo width, nextPowerOfTwo height)) else (width + 8 - width mod 8, height + 8 - height mod 8) in
-  let offsetx = (rectw - width) / 2 in
-  let offsety = (recth - height) / 2 in 
+
+  let widthCrrcnt = texRectDimCorrection width in
+  let heightCrrcnt = texRectDimCorrection height in
+  let (rectw,recth) = if dedicated then LightCommon.((nextPowerOfTwo width, nextPowerOfTwo height)) else (width + widthCrrcnt, height + heightCrrcnt) in
+  let offsetx = widthCrrcnt / 2 in
+  let offsety = heightCrrcnt / 2 in 
 
   let dedicated = dedicated || (rectw > (renderbufferTexSize ()) / 2) || (recth > (renderbufferTexSize ()) / 2) in
   let () = if dedicated then incr dedicatedCnt else () in

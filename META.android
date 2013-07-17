@@ -10,6 +10,12 @@ package "tapjoy" (
   archive(native) = "tapjoy.cmxa"
 )
 
+package "twitter" (
+  description="Twitter"
+  archive(byte) = "twitter.cma"
+  archive(native) = "twitter.cmxa"
+)
+
 package "chartboost" (
   description="Charboost Analytics"
   archive(byte) = "chartboost.cma"

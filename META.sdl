@@ -4,6 +4,11 @@ archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm threads ojson redspell.debug"
 
 
+package "twitter" (
+  description="Twitter"
+  archive(byte) = "twitter.cma"
+  archive(native) = "twitter.cmxa"
+)
 
 package "flurry" (
   description="Flurry Analytics"

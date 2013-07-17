@@ -30,6 +30,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/appflood/*.cma src/plugins/appflood/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/supersonic/*.cma src/plugins/supersonic/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/sponsorpay/*.cma src/plugins/sponsorpay/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/twitter/*.cma src/plugins/twitter/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
@@ -42,6 +43,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/appflood/*.cmxa src/plugins/appflood/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/supersonic/*.cmxa src/plugins/supersonic/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/sponsorpay/*.cmxa src/plugins/sponsorpay/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/twitter/*.cmxa src/plugins/twitter/*.a)
 endif
 
 ifeq ($(PLATFORM),IOS)
