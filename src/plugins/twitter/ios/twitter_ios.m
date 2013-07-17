@@ -11,37 +11,48 @@
 #import "LightViewController.h"
 #import <caml/callback.h>
 #import <caml/alloc.h>
+#import <caml/memory.h>
 
-void ml_tweet(value success, value fail, value text) {
+#import "twitter_common.h"
+
+value ml_tweet(value v_success, value v_fail, value v_text) {
+	CAMLparam3(v_success, v_fail, v_text);
+
 	ACAccountStore* accntStore = [[ACAccountStore alloc] init];
 	ACAccountType* twitterAccnt = [accntStore accountTypeWithAccountTypeIdentifier:ACAccountTypeIdentifierTwitter];
+
+	REG_CALLBACK(success);
+	REG_CALLBACK(fail);
 
 	[accntStore requestAccessToAccountsWithType:twitterAccnt withCompletionHandler:^(BOOL granted, NSError *error) {
 		NSArray* accnts = [accntStore accountsWithAccountType:twitterAccnt];
 
 		if (granted && [accnts count] > 0) {
 			TWRequest* req = [[TWRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update.json"]
-												parameters:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(text)], @"status", nil]
+												parameters:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(v_text)], @"status", nil]
 												requestMethod:TWRequestMethodPOST];
 			req.account = [accnts objectAtIndex:0];
 			[req performRequestWithHandler:^(NSData *responseData, NSHTTPURLResponse *urlResponse, NSError *error) {
 				if (error != nil) {
-					if (Is_block(fail)) {
-						caml_callback(Field(fail,0), caml_copy_string([[error localizedDescription] UTF8String]));	
+					if (Is_block(*fail)) {
+						caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));	
 					}
 				} else {
 					NSArray* errs = [[NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil] valueForKey:@"errors"];
 
 					if (errs == nil) {
-						if (Is_block(success)) {
-							caml_callback(Field(success, 0), Val_unit);
+						if (Is_block(*success)) {
+							caml_callback(*success, Val_unit);
 						}
 					} else {
-						if (Is_block(fail)) {
-							caml_callback(Field(fail, 0), caml_copy_string([[[errs objectAtIndex:0] valueForKey:@"message"] UTF8String]));
+						if (Is_block(*fail)) {
+							caml_callback(*fail, caml_copy_string([[[errs objectAtIndex:0] valueForKey:@"message"] UTF8String]));
 						}
 					}
 				}
+
+				UNREG_CALLBACK(success);
+				UNREG_CALLBACK(fail);
 
 				[accntStore release];
 				[req release];				
@@ -73,4 +84,6 @@ void ml_tweet(value success, value fail, value text) {
 			});
 		}
 	}];
+
+	CAMLreturn(Val_unit);
 }

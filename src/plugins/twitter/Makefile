@@ -1,7 +1,7 @@
 include ../../../Makefile.common
 
 CFLAGS += -I . 
-#CFLAGS += -DLDEBUG
+CFLAGS += -DLDEBUG
 
 MLFLAGS += -package redspell.syntax.debug
 
@@ -30,7 +30,7 @@ else
 ifeq ($(PLATFORM),ANDROID)
 
 CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android -I../common
-COBJS   +=  android/twitter_wrapper.o
+COBJS   +=  android/twitter_android.o
 
 
 endif

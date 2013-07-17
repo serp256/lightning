@@ -5,6 +5,9 @@ static jclass appfloodCls = NULL;
 #define GET_CLS GET_PLUGIN_CLASS(appfloodCls,ru/redspell/lightning/plugins/LightAppflood);
 
 void ml_appfloodStartSession(value v_appKey, value v_secKey) {
+	PRINT_DEBUG("pizda lala");
+
+	
 	static int started = 0;
 	if (started) return;
 
