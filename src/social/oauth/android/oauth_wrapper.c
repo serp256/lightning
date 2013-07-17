@@ -14,34 +14,15 @@ void ml_authorization_grant(value url, value closeBt) {
 	(*env)->DeleteLocalRef(env, oauthCls);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_OAuthDialog_00024WebViewClient_camlOauthRedirected(JNIEnv *env, jobject this, jstring url) {
-	value* mlf = (value*)caml_named_value("oauth_redirected");
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_OAuthDialog_00024DefaultRedirectHandler_run(JNIEnv *env, jobject this, jstring url) {
+	static value* oauth_redirect = 0;
+	if (!oauth_redirect) oauth_redirect = (value*)caml_named_value("oauth_redirected");
+
 	const char *curl = (*env)->GetStringUTFChars(env, url, JNI_FALSE);
-	caml_callback(*mlf, caml_copy_string(curl));
+	caml_callback(*oauth_redirect, caml_copy_string(curl));
 	(*env)->ReleaseStringUTFChars(env, url, curl);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_OAuthDialog_00024DialogClosedRunnable_run(JNIEnv *env, jobject this) {
-	value *mlf = (value*)caml_named_value("oauth_redirected");
-
-	if (mlf) {
-		static jfieldID fid;
-
-		if (!fid) {
-			jclass cls = (*env)->GetObjectClass(env, this);
-			fid = (*env)->GetFieldID(env, cls, "redirectUrlPath", "Ljava/lang/String;");
-			(*env)->DeleteLocalRef(env, cls);
-		}
-
-		jstring jurlPath = (*env)->GetObjectField(env, this, fid);
-
-		if (jurlPath) {
-			const char* curlPath = (*env)->GetStringUTFChars(env, jurlPath, JNI_FALSE);
-			caml_callback(*mlf, caml_copy_string(curlPath));
-
-			(*env)->ReleaseStringUTFChars(env, jurlPath, curlPath);			
-		}
-
-		(*env)->DeleteLocalRef(env, jurlPath);
-	}
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_OAuthDialog_00024DefaultDialogClosedRunnable_run(JNIEnv *env, jobject this, jstring url) {
+	Java_ru_redspell_lightning_OAuthDialog_00024DefaultRedirectHandler_run(env, this, url);
 }
