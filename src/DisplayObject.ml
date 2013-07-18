@@ -52,11 +52,12 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
 						Stack.push os maskStack;
 						let minY = sheight -. os.y1
 						and maxY = sheight -. os.y0 in
-						let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } 
+						let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY }
 						and np = ref False in
 						(
 						 if (os.x1 > 0.0 && os.y1 > 0.0) then (
 							 if (Stack.length maskStack > 1) then glDisableScissor () else ();
+               debug:mask "push %f %f %f %f " os.x0 os.y0 os.x1 os.y1;
 								glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
 								call_render;
 								glDisableScissor ();
@@ -351,7 +352,6 @@ class virtual _c [ 'parent ] = (*{{{*)
 			];
 
     method z =
-      let () = debug "pizda %s" 1 in
       match parent with
       [ Some parent -> 
         match parent#z with
@@ -634,6 +634,9 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     (* если придумать какое-то кэширование ? *)
     value mutable mask: option (bool * Rectangle.t * (array Point.t)) = None;
+
+    method mask = match mask with [ Some (onSelf, rect, _) -> Some (onSelf, rect) | _ -> None ];
+    method resetMask () = mask := None;
     method setMask ?(onSelf=False) rect = 
       let open Rectangle in 
       mask := Some (onSelf, rect, Rectangle.points rect); (* FIXME: можно сразу преобразовать этот рект и закэшировать нах *)
@@ -641,15 +644,18 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
 
-    method render ?alpha:(parentAlpha) ?(transform=True) rect = 
+    method render ?alpha:(parentAlpha) ?(transform=True) rect =
+      let () = debug "display object render" in
       let () = debug:tmp "render [%s]" self#name in
       proftimer:render ("render [%s] %f" self#name)
       (
         if visible && alpha > 0. 
         then
+          let () = debug "visible && alpha" in
           match mask with
           [ None -> self#render' ?alpha:parentAlpha ~transform rect 
           | Some (onSelf,maskRect,maskPoints) ->
+            let () = debug "some mask" in
               let maskRect = 
                 match onSelf with
                 [ True -> maskRect
@@ -658,11 +664,14 @@ class virtual _c [ 'parent ] = (*{{{*)
                     Matrix.transformRectangle (Matrix.invert m) maskRect
                 ]
               in
+              let () = debug "mask rect %s, rect = None: %B" (Rectangle.to_string maskRect) (rect = None) in
               match rect with
               [ None -> RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some maskRect))
               | Some rect -> 
                   match Rectangle.intersection maskRect rect with
-                  [ Some inRect -> RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some inRect))
+                  [ Some inRect ->
+                    let () = debug "Rectangle.intersection maskRect rect %s" (Rectangle.to_string inRect) in
+                      RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some inRect))
                   | None -> ()
                   ]
               ]
