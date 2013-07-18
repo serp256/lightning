@@ -92,6 +92,8 @@ class virtual _c [ 'parent ] :
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method globalToLocal: Point.t -> Point.t;
     method localToGlobal: Point.t -> Point.t;
+    method mask: option (bool * Rectangle.t);
+    method resetMask: unit -> unit;
     method setMask: ?onSelf:bool -> Rectangle.t -> unit;
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private addPrerender: (unit -> unit) -> unit;

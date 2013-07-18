@@ -665,23 +665,23 @@ class type c =
     method data: unit -> data; 
   end;  
 
-value dedicatedCnt = ref 0;
-
 value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
   let width = int_of_float (ceil width) in
   let height = int_of_float (ceil height) in
 
-  (* when dedicated texture used, we choose next pot as texture dimensions, when shared -- we need allocate rect with next-devisible-by-8 sides, cause such values guarantee perfect scaling result, when making glow *)
-  (* let dedicated = True in *)
+  let dedicated = dedicated || (width > (renderbufferTexSize ()) / 2) || (height > (renderbufferTexSize ()) / 2) in
 
-  let widthCrrcnt = texRectDimCorrection width in
-  let heightCrrcnt = texRectDimCorrection height in
-  let (rectw,recth) = if dedicated then LightCommon.((nextPowerOfTwo width, nextPowerOfTwo height)) else (width + widthCrrcnt, height + heightCrrcnt) in
-  let offsetx = widthCrrcnt / 2 in
-  let offsety = heightCrrcnt / 2 in 
-
-  let dedicated = dedicated || (rectw > (renderbufferTexSize ()) / 2) || (recth > (renderbufferTexSize ()) / 2) in
-  let () = if dedicated then incr dedicatedCnt else () in
+  let (rectw,recth,offsetx,offsety) =
+    if dedicated
+    then
+      let rectw = nextPowerOfTwo width in
+      let recth = nextPowerOfTwo height in
+        (rectw, recth, (rectw - width) / 2, (recth - height) / 2)
+    else
+      let widthCrrcnt = texRectDimCorrection width in
+      let heightCrrcnt = texRectDimCorrection height in
+        (width + widthCrrcnt, height + heightCrrcnt, widthCrrcnt / 2, heightCrrcnt / 2)
+  in
 
   let (tid, pos) =
     if dedicated
