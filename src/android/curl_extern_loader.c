@@ -3,7 +3,6 @@
 #include "light_common.h"
 #include "texture_common.h"
 #include "thqueue.h"
-#include "net_curl.h"
 
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
@@ -200,6 +199,8 @@ static void* loader_thread(void* params) {
 		}
 	}
 }
+
+extern void initCurl();
 
 value ml_loadExternalImage(value url, value cb, value errCb) {
 	initCurl();

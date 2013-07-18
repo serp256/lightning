@@ -292,6 +292,10 @@ static void *run_worker(void *param) {
 
 static runtime_t *runtime = NULL;
 
+int net_running() {
+	return !runtime ? 0 : runtime->net_running;
+}
+
 static void init() {
 
 	initCurl();

@@ -47,6 +47,19 @@ value ml_tweet(value v_success, value v_fail, value v_text) {
 	CAMLreturn(Val_unit);
 }
 
+value ml_tweet_pic() {
+	CAMLparam0();
+
+	GET_ENV;
+	GET_CLS;
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, twitterCls, "tweetPic", "()V");
+	(*env)->CallStaticVoidMethod(env, twitterCls, mid);
+
+	CAMLreturn(Val_unit);
+}
+
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightTwitter_00024Callbacks_nativeSuccess(JNIEnv *env, jobject this, jint cb) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightTwitter_00024Callbacks_nativeSuccess call");
 	caml_callback(*(value*)cb, Val_unit);

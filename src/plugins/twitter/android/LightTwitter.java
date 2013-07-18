@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.io.File;
 
 import twitter4j.AsyncTwitterFactory;
 import twitter4j.AsyncTwitter;
@@ -14,6 +15,8 @@ import twitter4j.Status;
 
 import twitter4j.auth.RequestToken;
 import twitter4j.auth.AccessToken;
+
+import twitter4j.media.ImageUploadFactory;
 
 import ru.redspell.lightning.OAuth;
 import ru.redspell.lightning.OAuthDialog.UrlRunnable;
@@ -64,7 +67,7 @@ public class LightTwitter {
 
 	private static AsyncTwitter twitter;
 	private static boolean hasAccessToken = false;
-	private static String pendingStatus = null;
+	private static Runnable pendingRequest = null;
 	private static LinkedList<Callbacks> callbackQueue = new LinkedList<Callbacks>();
 
 	public static void init(String consumerKey, String consumerSecret) {
@@ -102,9 +105,11 @@ public class LightTwitter {
 				editor.apply();
 				hasAccessToken = true;
 
-				if (pendingStatus != null) {
-					twitter.updateStatus(pendingStatus);
-					pendingStatus = null;
+				if (pendingRequest != null) {
+					pendingRequest.run();
+					pendingRequest = null;
+/*					twitter.updateStatus(pendingStatus);
+					pendingStatus = null;*/
 				}
 			}
 
@@ -145,7 +150,32 @@ public class LightTwitter {
 		});		
 	}
 
-	public static void tweet(String text, int success, int fail) {
+	private static void requestAccessToken(Runnable request) {
+		SharedPreferences shrdPrefs = LightActivity.instance.getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+
+		if (shrdPrefs.contains(SHARED_PREFS_TOKEN) && shrdPrefs.contains(SHARED_PREFS_SECRET)) {
+			Log.d("LIGHTNING", "restoring access token from shared prefs " + shrdPrefs.getString(SHARED_PREFS_TOKEN, "") + " " + shrdPrefs.getString(SHARED_PREFS_SECRET, ""));
+
+			hasAccessToken = true;
+			twitter.setOAuthAccessToken(new AccessToken(shrdPrefs.getString(SHARED_PREFS_TOKEN, ""), shrdPrefs.getString(SHARED_PREFS_SECRET, "")));
+			request.run();
+		} else {
+			Log.d("LIGHTNING", "requesting access token");
+
+	 		pendingRequest = request;
+			twitter.getOAuthRequestTokenAsync("http://twitter.redspell.ru/access_token/ok");				
+		}
+	}
+
+	private static void runRequest(Runnable request) {
+		if (!hasAccessToken) {
+			requestAccessToken(request);
+		} else {
+			request.run();
+		}
+	}
+
+	public static void tweet(final String text, int success, int fail) {
 		Log.d("LIGHTNING", "tweet " + (new Integer(success)).toString() + " " + (new Integer(fail)).toString());
 
 		Callbacks cbs = new Callbacks(success, fail);
@@ -157,20 +187,33 @@ public class LightTwitter {
 		}
 
 		callbackQueue.add(cbs);
-
-		if (!hasAccessToken) {
-			SharedPreferences shrdPrefs = LightActivity.instance.getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-
-			if (shrdPrefs.contains(SHARED_PREFS_TOKEN) && shrdPrefs.contains(SHARED_PREFS_SECRET)) {
-				hasAccessToken = true;
-				twitter.setOAuthAccessToken(new AccessToken(shrdPrefs.getString(SHARED_PREFS_TOKEN, ""), shrdPrefs.getString(SHARED_PREFS_SECRET, "")));
+		runRequest(new Runnable() {
+			@Override public void run() {
 				twitter.updateStatus(new String(text)); //passing new String(text) as parameter cause if passing directly text it leads to strange segfault on some devices
-			} else {
-		 		pendingStatus = new String(text);
-				twitter.getOAuthRequestTokenAsync("http://twitter.redspell.ru/access_token/ok");				
 			}
-		} else {
-			twitter.updateStatus(new String(text));
+		});
+	}
+
+	public static void tweetPic() {
+		Log.d("LIGHTNING", "tweetPic");
+
+		if (twitter == null) {
+			// cbs.fail("twitter not initialized");
+			// cbs.free();
+			return;
 		}
+
+		runRequest(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Log.d("LIGHTNING", "tweetPic runnable");
+					(new ImageUploadFactory(twitter.getConfiguration())).getInstance().upload(new File("/tmp/pic.jpg"), "pic tweet");
+					Log.d("LIGHTNING", "tweetPic ok");
+				} catch (TwitterException e) {
+					Log.d("LIGHTNING", "TwitterException when uploading picture " + e.getMessage());
+				}				
+			}
+		});
 	}
 }
