@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.Queue;
 import java.util.LinkedList;
 import java.io.File;
+import java.lang.Exception;
 
 import twitter4j.AsyncTwitterFactory;
 import twitter4j.AsyncTwitter;
@@ -17,6 +18,7 @@ import twitter4j.auth.RequestToken;
 import twitter4j.auth.AccessToken;
 
 import twitter4j.media.ImageUploadFactory;
+import twitter4j.media.ImageUpload;
 
 import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
@@ -29,6 +31,7 @@ import ru.redspell.lightning.utils.Log;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 
 public class LightTwitter {
 	private static final String SHARED_PREFS_NAME = "light_twitter";
@@ -218,28 +221,61 @@ public class LightTwitter {
 		}, success, fail);
 	}
 
-	public static void tweetPic(int success, int fail) {
-		Log.d("LIGHTNING", "tweetPic");
+	private static ImageUpload upload;
+	private static ImageUpload uploadInstance() throws Exception, TwitterException {
+		if (upload == null) {
+			if (twitter == null) {
+				throw new Exception("initialize twitter before getting upload instance");
+			}
 
+			AccessToken token = twitter.getOAuthAccessToken();
+			Configuration conf = new ConfigurationBuilder()
+			    .setOAuthConsumerKey(consumerKey)
+			    .setOAuthConsumerSecret(consumerSecret)
+			    .setOAuthAccessToken(token.getToken())
+			    .setOAuthAccessTokenSecret(token.getTokenSecret())
+			    .build();					
+
+			upload = (new ImageUploadFactory(conf)).getInstance();
+		}
+
+		return upload;
+	}
+
+	private static class UploadParam {
+		public String fname;
+		public String text;
+
+		public UploadParam(String fname, String text) {
+			this.fname = fname;
+			this.text = text;
+		}
+	}
+
+	private static class UploadTask extends AsyncTask<UploadParam, Void, Exception> {
+		protected Exception doInBackground(UploadParam... params) {
+			try {
+				uploadInstance().upload(new File(params[0].fname), params[0].text);
+				return null;
+			} catch (Exception e) {
+				return e;
+			}
+		}
+
+		protected void onPostExecute(Exception result) {
+		 	if (result != null) {
+		 		fail(result.getMessage());
+		 	} else {
+		 		success();
+		 	}
+		}
+	 }
+
+	public static void tweetPic(int success, int fail, final String fname, final String text) {
 		runRequest(new Runnable() {
 			@Override
 			public void run() {
-				try {
-					Log.d("LIGHTNING", "tweetPic runnable");
-
-					AccessToken token = twitter.getOAuthAccessToken();
-					Configuration conf = new ConfigurationBuilder()
-					    .setOAuthConsumerKey(consumerKey)
-					    .setOAuthConsumerSecret(consumerSecret)
-					    .setOAuthAccessToken(token.getToken())
-					    .setOAuthAccessTokenSecret(token.getTokenSecret())
-					    .build();					
-
-					(new ImageUploadFactory(conf)).getInstance().upload(new File("/sdcard/pic.jpg"), "pic tweet");
-					success();					
-				} catch (TwitterException e) {
-					fail(e.getMessage());
-				}
+				(new UploadTask()).execute(new UploadParam(fname, text));
 			}
 		}, success, fail);
 	}

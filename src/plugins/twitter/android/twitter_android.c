@@ -47,19 +47,23 @@ value ml_tweet(value v_success, value v_fail, value v_text) {
 	CAMLreturn(Val_unit);
 }
 
-value ml_tweet_pic(value v_success, value v_fail) {
-	CAMLparam2(v_success, v_fail);
+value ml_tweet_pic(value v_success, value v_fail, value v_fname, value v_text) {
+	CAMLparam4(v_success, v_fail, v_fname, v_text);
 
 	GET_ENV;
 	GET_CLS;
 
 	REG_CALLBACK(success);
 	REG_CALLBACK(fail);
+	jstring j_fname = (*env)->NewStringUTF(env, String_val(v_fname));
+	jstring j_text = (*env)->NewStringUTF(env, String_val(v_text));
 
 	static jmethodID mid = 0;
-	if (!mid) mid = (*env)->GetStaticMethodID(env, twitterCls, "tweetPic", "(II)V");
-	(*env)->CallStaticVoidMethod(env, twitterCls, mid, (jint)success, (jint)fail);
+	if (!mid) mid = (*env)->GetStaticMethodID(env, twitterCls, "tweetPic", "(IILjava/lang/String;Ljava/lang/String;)V");
+	(*env)->CallStaticVoidMethod(env, twitterCls, mid, (jint)success, (jint)fail, j_fname, j_text);
 
+	(*env)->DeleteLocalRef(env, j_text);
+	(*env)->DeleteLocalRef(env, j_fname);
 	CAMLreturn(Val_unit);
 }
 
