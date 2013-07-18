@@ -18,6 +18,9 @@ import twitter4j.auth.AccessToken;
 
 import twitter4j.media.ImageUploadFactory;
 
+import twitter4j.conf.Configuration;
+import twitter4j.conf.ConfigurationBuilder;
+
 import ru.redspell.lightning.OAuth;
 import ru.redspell.lightning.OAuthDialog.UrlRunnable;
 import ru.redspell.lightning.LightActivity;
@@ -66,11 +69,34 @@ public class LightTwitter {
 	}
 
 	private static AsyncTwitter twitter;
+	private static String consumerKey;
+	private static String consumerSecret;
 	private static boolean hasAccessToken = false;
 	private static Runnable pendingRequest = null;
 	private static LinkedList<Callbacks> callbackQueue = new LinkedList<Callbacks>();
 
-	public static void init(String consumerKey, String consumerSecret) {
+	private static void success(Callbacks cbs) {
+		cbs.success();
+		cbs.free();
+	}
+
+	private static void success() {
+		success(callbackQueue.remove());
+	}
+
+	private static void fail(Callbacks cbs, String reason) {
+		cbs.fail(reason);
+		cbs.free();
+	}
+
+	private static void fail(String reason) {
+		fail(callbackQueue.remove(), reason);
+	}
+
+	public static void init(String _consumerKey, String _consumerSecret) {
+		consumerKey = _consumerKey;
+		consumerSecret = _consumerSecret;
+
 		twitter = AsyncTwitterFactory.getSingleton();
 		twitter.setOAuthConsumer(consumerKey, consumerSecret);
 		twitter.addListener(new TwitterAdapter() {
@@ -116,10 +142,7 @@ public class LightTwitter {
 			@Override
 			public void updatedStatus(Status status) {
 				Log.d("LIGHTNING", "status updated");
-
-				Callbacks cbs = callbackQueue.remove();
-				cbs.success();
-				cbs.free();
+				success();
 			}
 
 			@Override
@@ -142,9 +165,7 @@ public class LightTwitter {
 				}
 
 				if (reason != null) {
-					Callbacks cbs = callbackQueue.remove();
-					cbs.fail(reason);
-					cbs.free();
+					fail(reason);
 				}
 			}
 		});		
@@ -154,66 +175,72 @@ public class LightTwitter {
 		SharedPreferences shrdPrefs = LightActivity.instance.getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
 
 		if (shrdPrefs.contains(SHARED_PREFS_TOKEN) && shrdPrefs.contains(SHARED_PREFS_SECRET)) {
-			Log.d("LIGHTNING", "restoring access token from shared prefs " + shrdPrefs.getString(SHARED_PREFS_TOKEN, "") + " " + shrdPrefs.getString(SHARED_PREFS_SECRET, ""));
-
 			hasAccessToken = true;
-			twitter.setOAuthAccessToken(new AccessToken(shrdPrefs.getString(SHARED_PREFS_TOKEN, ""), shrdPrefs.getString(SHARED_PREFS_SECRET, "")));
+			twitter.setOAuthAccessToken(new AccessToken(shrdPrefs.getString(SHARED_PREFS_TOKEN, ""), shrdPrefs.getString(SHARED_PREFS_SECRET, "")));			
 			request.run();
 		} else {
-			Log.d("LIGHTNING", "requesting access token");
-
 	 		pendingRequest = request;
 			twitter.getOAuthRequestTokenAsync("http://twitter.redspell.ru/access_token/ok");				
 		}
 	}
 
-	private static void runRequest(Runnable request) {
-		if (!hasAccessToken) {
-			requestAccessToken(request);
-		} else {
-			request.run();
+	private static Callbacks checkTwitterInstance(int success, int fail) {
+		Callbacks cbs = new Callbacks(success, fail);
+		if (twitter == null) {
+			fail(cbs, "twitter not initialized");
+			return null;
 		}
+
+		return cbs;
 	}
+
+	private static void runRequest(Runnable request, int success, int fail) {
+		Callbacks cbs;
+
+		if ((cbs = checkTwitterInstance(success, fail)) != null) {
+			callbackQueue.add(cbs);
+
+			if (!hasAccessToken) {
+				requestAccessToken(request);
+			} else {
+				request.run();
+			}			
+		}
+	}	
 
 	public static void tweet(final String text, int success, int fail) {
 		Log.d("LIGHTNING", "tweet " + (new Integer(success)).toString() + " " + (new Integer(fail)).toString());
 
-		Callbacks cbs = new Callbacks(success, fail);
-
-		if (twitter == null) {
-			cbs.fail("twitter not initialized");
-			cbs.free();
-			return;
-		}
-
-		callbackQueue.add(cbs);
 		runRequest(new Runnable() {
 			@Override public void run() {
 				twitter.updateStatus(new String(text)); //passing new String(text) as parameter cause if passing directly text it leads to strange segfault on some devices
 			}
-		});
+		}, success, fail);
 	}
 
-	public static void tweetPic() {
+	public static void tweetPic(int success, int fail) {
 		Log.d("LIGHTNING", "tweetPic");
-
-		if (twitter == null) {
-			// cbs.fail("twitter not initialized");
-			// cbs.free();
-			return;
-		}
 
 		runRequest(new Runnable() {
 			@Override
 			public void run() {
 				try {
 					Log.d("LIGHTNING", "tweetPic runnable");
-					(new ImageUploadFactory(twitter.getConfiguration())).getInstance().upload(new File("/tmp/pic.jpg"), "pic tweet");
-					Log.d("LIGHTNING", "tweetPic ok");
+
+					AccessToken token = twitter.getOAuthAccessToken();
+					Configuration conf = new ConfigurationBuilder()
+					    .setOAuthConsumerKey(consumerKey)
+					    .setOAuthConsumerSecret(consumerSecret)
+					    .setOAuthAccessToken(token.getToken())
+					    .setOAuthAccessTokenSecret(token.getTokenSecret())
+					    .build();					
+
+					(new ImageUploadFactory(conf)).getInstance().upload(new File("/sdcard/pic.jpg"), "pic tweet");
+					success();					
 				} catch (TwitterException e) {
-					Log.d("LIGHTNING", "TwitterException when uploading picture " + e.getMessage());
-				}				
+					fail(e.getMessage());
+				}
 			}
-		});
+		}, success, fail);
 	}
 }

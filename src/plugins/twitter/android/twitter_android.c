@@ -47,15 +47,18 @@ value ml_tweet(value v_success, value v_fail, value v_text) {
 	CAMLreturn(Val_unit);
 }
 
-value ml_tweet_pic() {
-	CAMLparam0();
+value ml_tweet_pic(value v_success, value v_fail) {
+	CAMLparam2(v_success, v_fail);
 
 	GET_ENV;
 	GET_CLS;
 
+	REG_CALLBACK(success);
+	REG_CALLBACK(fail);
+
 	static jmethodID mid = 0;
-	if (!mid) mid = (*env)->GetStaticMethodID(env, twitterCls, "tweetPic", "()V");
-	(*env)->CallStaticVoidMethod(env, twitterCls, mid);
+	if (!mid) mid = (*env)->GetStaticMethodID(env, twitterCls, "tweetPic", "(II)V");
+	(*env)->CallStaticVoidMethod(env, twitterCls, mid, (jint)success, (jint)fail);
 
 	CAMLreturn(Val_unit);
 }
