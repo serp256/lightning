@@ -37,6 +37,7 @@ $(TARGET).so: $(CFILES) $(MLXFILES) $(TARGET).cmx
 	-cclib "-L../src/plugins/supersonic" ../src/plugins/supersonic/supersonic.cmxa \
 	-cclib "-L../src/plugins/twitter" ../src/plugins/twitter/twitter.cmxa \
 	-cclib "-L../src/plugins/instagram" ../src/plugins/instagram/instagram.cmxa \
+	-cclib "-L../src/plugins/whatsapp" ../src/plugins/whatsapp/whatsapp.cmxa \
 	$(OAUTHX) $(SOCIALX) $(MLXFILES) $(CFILES) $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" \
 	-output-obj

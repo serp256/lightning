@@ -4,7 +4,7 @@ TARGET ?= example
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_platform.cmo -enable-debug default
 
-MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/plugins/tapjoy -I ../src/plugins/flurry -I ../src/plugins/facebook -I ../src/plugins/mopub -I ../src/plugins/mobileapptracking -I ../src/plugins/chartboost -I ../src/plugins/sponsorpay -I ../src/plugins/appflood -I ../src/plugins/supersonic  -I ../src/plugins/twitter -I ../src/plugins/instagram
+MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/plugins/tapjoy -I ../src/plugins/flurry -I ../src/plugins/facebook -I ../src/plugins/mopub -I ../src/plugins/mobileapptracking -I ../src/plugins/chartboost -I ../src/plugins/sponsorpay -I ../src/plugins/appflood -I ../src/plugins/supersonic  -I ../src/plugins/twitter -I ../src/plugins/instagram  -I ../src/plugins/whatsapp
 
 CFLAGS += -DLDEBUG
 #MLFILES = panelbg.cmo testz.cmo
