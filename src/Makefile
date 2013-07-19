@@ -21,9 +21,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma social_byte
+byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -204,7 +204,13 @@ twitter.cma:
 	make -C plugins/twitter twitter.cma
 
 twitter.cmxa:
-	make -C plugins/twitter twitter.cmxa	
+	make -C plugins/twitter twitter.cmxa
+
+instagram.cma:
+	make -C plugins/instagram instagram.cma
+
+instagram.cmxa:
+	make -C plugins/instagram instagram.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
@@ -234,5 +240,6 @@ clean:
 	$(MAKE) -C plugins/sponsorpay clean
 	$(MAKE) -C plugins/supersonic clean
 	$(MAKE) -C plugins/twitter clean
+	$(MAKE) -C plugins/instagram clean
 
 -include MLDepend.$(PLATFORM)

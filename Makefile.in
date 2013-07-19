@@ -31,6 +31,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/supersonic/*.cma src/plugins/supersonic/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/sponsorpay/*.cma src/plugins/sponsorpay/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/twitter/*.cma src/plugins/twitter/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/instagram/*.cma src/plugins/instagram/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
@@ -44,6 +45,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/supersonic/*.cmxa src/plugins/supersonic/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/sponsorpay/*.cmxa src/plugins/sponsorpay/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/twitter/*.cmxa src/plugins/twitter/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/instagram/*.cmxa src/plugins/instagram/*.a)
 endif
 
 ifeq ($(PLATFORM),IOS)
@@ -77,6 +79,8 @@ endif
 	                                                          src/plugins/mobileapptracking/*.cmi src/plugins/mobileapptracking/*.mli \
 	                                                          src/plugins/sponsorpay/*.cmi \
 	                                                          src/social/oauth/*.cmi src/social/oauth/*.mli \
+	                                                          src/social/twitter/*.cmi src/social/twitter/*.mli \
+	                                                          src/social/instagram/*.cmi src/social/instagram/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
 
 uninstall:

@@ -3,6 +3,11 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm threads ojson redspell.debug"
 
+package "instagram" (
+  description="Instagram"
+  archive(byte) = "instagram.cma"
+  archive(native) = "instagram.cmxa"
+)
 
 package "twitter" (
   description="Twitter"
