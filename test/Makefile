@@ -1,4 +1,4 @@
-sdl:
+pc:
 	$(MAKE) -f Makefile.pc
 
 clean: 

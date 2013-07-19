@@ -7,4 +7,4 @@ MLFLAGS += -I ../src/glut
 
 include Makefile.in
 
-.DEFAULT_GOAL := $(TARGET).native
+#.DEFAULT_GOAL := $(TARGET).native
