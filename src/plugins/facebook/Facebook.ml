@@ -11,8 +11,18 @@ value loggedIn () = None;
 value accessToken connect = "";
 value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback connect = ();
 value graphrequest ~path ?params ?successCallback ?failCallback connect = ();
+value sharePicUsingNativeApp ~fname ~text () = ();
+value sharePic ?success ?fail ~fname ~text connect = ();
 
 ELSE
+
+IFDEF ANDROID THEN
+external sharePicUsingNativeApp: ~fname:string -> ~text:string -> unit -> bool = "ml_fb_share_pic_using_native_app";
+external sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit = "ml_fb_share_pic";
+ELSE
+value sharePicUsingNativeApp ~fname ~text () = False;
+value sharePic ?success ?fail ~fname ~text connect = ();
+ENDIF;
 
 type status = [ NotConnected | Connecting | Connected ];
 

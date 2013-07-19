@@ -1,4 +1,5 @@
 #include "fbwrapper_android.h"
+#include "plugin_common.h"
 
 #define GET_LIGHTFACEBOOK                                                       \
 JNIEnv *env;                                                                    \
@@ -145,12 +146,9 @@ value ml_fbAccessToken(value connect) {
 void ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
     value* _successCallback;
     value* _failCallback;
-    PRINT_DEBUG("ml_fbAppRequest %d",gettid());
 
     REGISTER_CALLBACK(successCallback, _successCallback);
     REGISTER_CALLBACK(failCallback, _failCallback);
-
-		PRINT_DEBUG("successCallback: %ld",_successCallback);
 
     GET_LIGHTFACEBOOK;
 
@@ -343,7 +341,6 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStri
     }
 
     value* vcallback = (value*)(*env)->GetIntField(env, this, callbackFid);
-		PRINT_DEBUG("successCallback: %ld",vcallback);
 
     if (vcallback) {
         jobjectArray jids = (*env)->GetObjectField(env, this, paramFid);
@@ -433,4 +430,47 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024ReleaseCamlCallbacks
     FREE_CALLBACK(successCallback);
     FREE_CALLBACK(failCallback);
 		PRINT_DEBUG("END Java_ru_redspell_lightning_LightFacebook_00024ReleaseCamlCallbacksRunnable_run");
+}
+
+value ml_fb_share_pic_using_native_app(value v_fname, value v_text) {
+    GET_LIGHTFACEBOOK;
+
+    JString_val(j_fname, v_fname);
+    JString_val(j_text, v_text);
+
+    static jmethodID mid = 0;
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "sharePicUsingNativeApp", "(Ljava/lang/String;Ljava/lang/String;)Z");
+
+    jboolean retval = (*env)->CallStaticBooleanMethod(env, lightFacebookCls, mid, j_fname, j_text);
+    (*env)->DeleteLocalRef(env, j_fname);
+    (*env)->DeleteLocalRef(env, j_text);
+
+    return (retval ? Val_true : Val_false);
+}
+
+value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text) {
+    CAMLparam4(v_fname, v_text, v_success, v_fail);
+
+    GET_LIGHTFACEBOOK;
+
+    value* _success;
+    value* _fail;
+
+    REGISTER_CALLBACK(v_success, _success);
+    REGISTER_CALLBACK(v_fail, _fail);
+
+    JString_val(j_fname, v_fname);
+    JString_val(j_text, v_text);    
+
+    static jmethodID mid = 0;
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "sharePic", "(Ljava/lang/String;Ljava/lang/String;II)Z");
+
+    jboolean retval = (*env)->CallStaticBooleanMethod(env, lightFacebookCls, mid, j_fname, j_text, (jint)_success, (jint)_fail);
+
+    (*env)->DeleteLocalRef(env, j_fname);
+    (*env)->DeleteLocalRef(env, j_text);
+
+    if (!retval) caml_failwith("no active facebook session");
+
+    CAMLreturn(Val_unit);
 }
