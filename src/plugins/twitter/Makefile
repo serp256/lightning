@@ -57,4 +57,3 @@ endif
 .PHONY : clean
 clean: 
 	rm -f *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/twitter_ios.o android/twitter_android.o
-

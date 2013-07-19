@@ -19,9 +19,8 @@ public class LightInstagram {
 				Intent intent = new Intent(Intent.ACTION_SEND);
 				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				intent.setType("image/*");
-/*				intent.putExtra(Intent.EXTRA_TEXT, text);
-				intent.putExtra(Intent.EXTRA_SUBJECT, text);
-*/				intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + text));
+				intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + text));
+
 				intent.setPackage("com.instagram.android");
 				cntxt.startActivity(intent);
 
