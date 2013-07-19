@@ -511,7 +511,7 @@ value ml_renderbuffer_draw_to_dedicated_texture(value mlclear, value owidth, val
 	rb.realWidth = legalWidth;
 	rb.realHeight = legalHeight;
 	// rb.vp = (viewport){(GLuint)((legalWidth - width)/2),(GLuint)((legalHeight - height)/2),(GLuint)width,(GLuint)height};
-	rb.vp = (viewport){0,0,(GLuint)width,(GLuint)height};
+	rb.vp = (viewport){(GLuint)(legalWidth - ceil(width)) / 2,(GLuint)(legalHeight - ceil(height)) / 2,(GLuint)width,(GLuint)height};
 	if (resized) {
 		Store_field(renderInfo,1,caml_copy_double(width));
 		Store_field(renderInfo,2,caml_copy_double(height));

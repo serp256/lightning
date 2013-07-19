@@ -79,8 +79,8 @@ endif
 	                                                          src/plugins/mobileapptracking/*.cmi src/plugins/mobileapptracking/*.mli \
 	                                                          src/plugins/sponsorpay/*.cmi \
 	                                                          src/social/oauth/*.cmi src/social/oauth/*.mli \
-	                                                          src/social/twitter/*.cmi src/social/twitter/*.mli \
-	                                                          src/social/instagram/*.cmi src/social/instagram/*.mli \
+	                                                          src/plugins/twitter/*.cmi src/plugins/twitter/*.mli \
+	                                                          src/plugins/instagram/*.cmi src/plugins/instagram/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
 
 uninstall:
