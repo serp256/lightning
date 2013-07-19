@@ -226,7 +226,8 @@ class virtual c (_width:float) (_height:float) =
 
     method renderStage () =
     (
-      proftimer:perfomance "Prerender: %F" D.prerender();
+(*       proftimer:perfomance "Prerender: %F" D.prerender(); *)
+      debug:render "RENDER STAGE";
       Render.clear bgColor 1.;
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
       match fpsTrace with [ None -> () | Some fps -> fps#render None ];

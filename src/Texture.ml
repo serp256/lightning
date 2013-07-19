@@ -143,11 +143,13 @@ module TextureCache = WeakHashtbl.Make (struct
 end);
 
 
-class subtexture region (baseTexture:c) = 
+
+class subtexture region clipping ts (baseTexture:c) = 
+  (*
   let ts = baseTexture#scale in
   let tw = baseTexture#width /. ts
   and th = baseTexture#height /. ts in
-  let clipping = Rectangle.create (region.Rectangle.x /. tw) (region.Rectangle.y /. th) (region.Rectangle.width /. tw) (region.Rectangle.height /. th) in
+  *)
   let rootClipping = Rectangle.tm_of_t clipping in
   let () = 
     let open Rectangle in
@@ -193,7 +195,15 @@ class subtexture region (baseTexture:c) =
     method setFilter filter = set_texture_filter baseTexture#textureID filter;
     method rootClipping = renderInfo.clipping;
 (*     method update path = baseTexture#update path; *)
-    method subTexture region = ((new subtexture region (self :> c)) :> c);
+    method subTexture region = 
+      let clipping = 
+        Rectangle.create 
+          (region.Rectangle.x /. renderInfo.rwidth) 
+          (region.Rectangle.y /. renderInfo.rheight) 
+          (region.Rectangle.width /. renderInfo.rwidth) 
+          (region.Rectangle.height /. renderInfo.rheight) 
+      in
+      ((new subtexture region clipping baseTexture#scale (self :> c)) :> c);
 (*     method releaseSubTexture () = baseTexture#releaseSubTexture (); *)
     method released = baseTexture#released;
     method release () = ();(* let () = debug:gc "release subtexture" in baseTexture#releaseSubTexture (); *)
@@ -258,6 +268,11 @@ value loadPallete palleteID =
     )
   ];
 
+module SubTextureCache = WeakHashtbl.Make(struct
+  type t = Rectangle.t;
+  value equal = (=);
+  value hash = Hashtbl.hash;
+end);
 
 class s textureInfo = 
   let () = debug "make texture: <%ld>, width=[%d->%d],height=[%d -> %d]" (int32_of_textureID textureInfo.textureID) textureInfo.realWidth textureInfo.width textureInfo.realHeight textureInfo.height in
@@ -329,7 +344,36 @@ class s textureInfo =
     method clipping = renderInfo.clipping;
     method rootClipping = renderInfo.clipping;
 (*       method update path = ignore(loadImage ~textureID ~path ~contentScaleFactor:1.);  (* Fixme cache it *) *)
-    method subTexture region = ((new subtexture region (self :> c)) :> c);
+    value mutable subTextureCache = None;
+    method subTexture region = 
+      let clipping = 
+        Rectangle.create 
+          (region.Rectangle.x /. renderInfo.rwidth) 
+          (region.Rectangle.y /. renderInfo.rheight) 
+          (region.Rectangle.width /. renderInfo.rwidth) 
+          (region.Rectangle.height /. renderInfo.rheight) 
+      in
+      let sTexCache = 
+        match subTextureCache with
+        [ None -> 
+          let c = SubTextureCache.create 1 in
+          (
+            subTextureCache := Some c;
+            c
+          )
+        | Some c -> c
+        ]
+      in
+      try
+        SubTextureCache.find sTexCache clipping
+      with [ Not_found -> 
+        let st = ((new subtexture region clipping scale (self :> c)) :> c) in
+        (
+          SubTextureCache.add sTexCache clipping st;
+          st
+        )
+      ];
+
     method addRenderer (_:renderer) = ();
     method removeRenderer (_:renderer) = ();
     (*

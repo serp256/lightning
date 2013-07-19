@@ -6,6 +6,9 @@ class _c: [ Texture.c ] ->
     inherit Image.base;
     method color: color;
     method setColor: color -> unit;
+
+    method private setGlowFilter: Render.prg -> Filters.glow -> unit;
+    method private removeGlowFilter: unit -> unit;
     method private updateGlowFilter: unit -> unit;
 (*     method texture: Texture.c; *)
 (*     method filters: list Filters.t; *)
