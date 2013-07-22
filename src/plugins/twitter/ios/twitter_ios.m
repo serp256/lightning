@@ -33,7 +33,6 @@ void performRequest(TWRequest* req, value v_success, value v_fail) {
 						caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));	
 					}
 				} else {
-					NSLog(@"json %@", [NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil]);
 					NSArray* errs = [[NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil] valueForKey:@"errors"];
 
 					if (errs == nil) {
@@ -108,10 +107,36 @@ value ml_tweet_pic(value v_success, value v_fail, value v_fname, value v_text) {
 	TWRequest* req = [[TWRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update_with_media.json"]
 										parameters:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(v_text)], @"status", nil]
 										requestMethod:TWRequestMethodPOST];
-	UIImage* img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil]];
-	NSData* imgData = UIImageJPEGRepresentation(img, 1.);
-	[req addMultiPartData:imgData withName:@"media[]" type:@"image/jpeg"];
 
+	NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
+	UIImage* img = [UIImage imageWithContentsOfFile:path];
+	uint8_t c;
+	[[NSData dataWithContentsOfFile:path] getBytes:&c length:1];	
+
+	NSString* imgType;
+	NSData* imgData;
+
+	switch (c) {
+		case 0xFF:
+			imgData = UIImageJPEGRepresentation(img, 1.f);
+		    imgType = @"image/jpeg";
+
+		    break;
+		case 0x89:
+			imgData = UIImagePNGRepresentation(img);
+			imgType = @"image/png";
+
+		    break;
+
+		default:
+			if (Is_block(v_fail)) {
+				caml_callback(Field(v_fail, 0), caml_copy_string("unsupported image type"));
+			}
+
+			CAMLreturn(Val_unit);
+	}
+
+	[req addMultiPartData:imgData withName:@"media[]" type:imgType];
 	performRequest(req, v_success, v_fail);
 
 	CAMLreturn(Val_unit);

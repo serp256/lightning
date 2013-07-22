@@ -20,7 +20,7 @@ MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 ifeq ($(PLATFORM),IOS)
 
 CFLAGS  += -DIOS -Iios -I../../ios
-#COBJS   +=  ios/instagram_ios.o
+COBJS   +=  ios/instagram_ios.o ios/Instagram.o
 
 else
 ifeq ($(PLATFORM),ANDROID)
