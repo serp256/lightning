@@ -137,7 +137,7 @@ static response_el* get_header(request_t *r) {
 
 static size_t my_writefunction(char *buffer,size_t size,size_t nitems, void *p) {
 	request_t *req = (request_t*)p;
-	// PRINT_DEBUG("writefunction %lu",(long)req);
+	PRINT_DEBUG("writefunction %lu",(long)req);
 	response_t *resp = (response_t*)malloc(sizeof(response_t));
 	resp->req = req;
 	response_el **ev = &resp->events;
@@ -165,6 +165,8 @@ static size_t my_writefunction(char *buffer,size_t size,size_t nitems, void *p) 
 
 
 static void *run_worker(void *param) {
+	PRINT_DEBUG("run_worker");
+
 	runtime_t *runtime = (runtime_t*)param;
 	pthread_mutex_lock(&(runtime->mutex));
 	struct timeval timeout;
@@ -173,7 +175,10 @@ static void *run_worker(void *param) {
 
 		while (1) {
 			request_t *req = thqueue_url_ldr_req_pop(runtime->req_queue);
+			PRINT_DEBUG("req %d", req);
 			if (req != NULL) {
+				PRINT_DEBUG("req->canceled %d", req->canceled);
+
 				if (!req->canceled) {
 					curl_multi_add_handle(runtime->curlm, req->handle);
 					req->resp_queue = runtime->resp_queue;
@@ -243,6 +248,9 @@ static void *run_worker(void *param) {
 				exit(3); // ?????
 				//TODO: fail error
 			}
+
+			PRINT_DEBUG("running_handles %d, running_handles %d", running_handles, runtime->net_running);
+
 			if (running_handles < runtime->net_running) { // we need check info
 				runtime->net_running = running_handles;
 				CURLMsg *msg; /* for picking up messages with the transfer status */
@@ -260,6 +268,8 @@ static void *run_worker(void *param) {
 						r->complete = 1;
 						// вызвать окамл и все похерить нахуй
 						if (msg->data.result == CURLE_OK) {
+							PRINT_DEBUG("msg->data.result == CURLE_OK");
+
 							response_el **ev = &resp->events;
 							if (!r->headers_done) {
 								response_el *hev = get_header(r);
@@ -271,6 +281,8 @@ static void *run_worker(void *param) {
 							cev->next = NULL;
 							*ev = cev;
 						} else {
+							PRINT_DEBUG("msg->data.result error");
+
 							const char* emsg = curl_easy_strerror(msg->data.result);
 							// we need to clean up this string or it's curl owned string ????
 							response_el *eev = (response_el*)malloc(sizeof(response_el));
@@ -304,6 +316,7 @@ static void init() {
 	runtime->curlm = curl_multi_init();
 	runtime->req_queue = thqueue_url_ldr_req_create();
 	runtime->resp_queue = thqueue_url_ldr_resp_create();
+	runtime->net_running = 0;
 	pthread_mutex_init(&(runtime->mutex),NULL);
 	pthread_cond_init(&(runtime->cond),NULL);
 
@@ -402,7 +415,7 @@ value ml_URLConnection_cancel(value r) {
 #define CAML_NAMED_VALUE(name) static value* ml_ ## name = NULL; if (ml_ ## name == NULL) ml_ ## name = caml_named_value(#name);
 
 void net_run () {
-	// PRINT_DEBUG("net run");
+	PRINT_DEBUG("net run");
 
 	if (!runtime) return;
 
