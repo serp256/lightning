@@ -15,9 +15,7 @@
 
 #import "twitter_common.h"
 
-value ml_tweet(value v_success, value v_fail, value v_text) {
-	CAMLparam3(v_success, v_fail, v_text);
-
+void performRequest(TWRequest* req, value v_success, value v_fail) {
 	ACAccountStore* accntStore = [[ACAccountStore alloc] init];
 	ACAccountType* twitterAccnt = [accntStore accountTypeWithAccountTypeIdentifier:ACAccountTypeIdentifierTwitter];
 
@@ -28,9 +26,6 @@ value ml_tweet(value v_success, value v_fail, value v_text) {
 		NSArray* accnts = [accntStore accountsWithAccountType:twitterAccnt];
 
 		if (granted && [accnts count] > 0) {
-			TWRequest* req = [[TWRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update.json"]
-												parameters:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(v_text)], @"status", nil]
-												requestMethod:TWRequestMethodPOST];
 			req.account = [accnts objectAtIndex:0];
 			[req performRequestWithHandler:^(NSData *responseData, NSHTTPURLResponse *urlResponse, NSError *error) {
 				if (error != nil) {
@@ -38,6 +33,7 @@ value ml_tweet(value v_success, value v_fail, value v_text) {
 						caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));	
 					}
 				} else {
+					NSLog(@"json %@", [NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil]);
 					NSArray* errs = [[NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil] valueForKey:@"errors"];
 
 					if (errs == nil) {
@@ -46,7 +42,15 @@ value ml_tweet(value v_success, value v_fail, value v_text) {
 						}
 					} else {
 						if (fail) {
-							caml_callback(*fail, caml_copy_string([[[errs objectAtIndex:0] valueForKey:@"message"] UTF8String]));
+							NSDictionary* err = [errs objectAtIndex:0];
+
+							if (err) {
+								NSMutableString* mes = [NSMutableString stringWithCapacity:255];
+								[mes appendFormat:@"%@(err code %@)", [err valueForKey:@"message"], [err valueForKey:@"code"]];
+								caml_callback(*fail, caml_copy_string([mes UTF8String]));
+							} else {
+								caml_callback(*fail, caml_copy_string("unknown error"));
+							}
 						}
 					}
 				}
@@ -84,6 +88,31 @@ value ml_tweet(value v_success, value v_fail, value v_text) {
 			});
 		}
 	}];
+
+}
+
+value ml_tweet(value v_success, value v_fail, value v_text) {
+	CAMLparam3(v_success, v_fail, v_text);
+
+	TWRequest* req = [[TWRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update.json"]
+										parameters:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(v_text)], @"status", nil]
+										requestMethod:TWRequestMethodPOST];
+	performRequest(req, v_success, v_fail);
+
+	CAMLreturn(Val_unit);
+}
+
+value ml_tweet_pic(value v_success, value v_fail, value v_fname, value v_text) {
+	CAMLparam4(v_success, v_fail, v_fname, v_text);
+
+	TWRequest* req = [[TWRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update_with_media.json"]
+										parameters:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(v_text)], @"status", nil]
+										requestMethod:TWRequestMethodPOST];
+	UIImage* img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil]];
+	NSData* imgData = UIImageJPEGRepresentation(img, 1.);
+	[req addMultiPartData:imgData withName:@"media[]" type:@"image/jpeg"];
+
+	performRequest(req, v_success, v_fail);
 
 	CAMLreturn(Val_unit);
 }

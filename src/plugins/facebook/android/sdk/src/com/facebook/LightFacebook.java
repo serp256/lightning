@@ -528,7 +528,7 @@ public class LightFacebook {
                 intent.setPackage("com.facebook.katana");
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + fname));
-                intent.putExtra(Intent.EXTRA_TEXT, android.text.Html.fromHtml("<p>" + text + ".</p>"));
+                intent.putExtra(Intent.EXTRA_TEXT, android.text.Html.fromHtml(text));
 /*                intent.putExtra(Intent.EXTRA_TEXT, text);
                 intent.putExtra(Intent.EXTRA_SUBJECT, text);*/
                 
