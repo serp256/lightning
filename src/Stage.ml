@@ -116,6 +116,12 @@ class virtual c (_width:float) (_height:float) =
     method! setRotation _ = raise Restricted_operation;
     method! setVisible _ = raise Restricted_operation;
 
+    method _stageResized w h = (
+      self#resize w h;
+      self#stageResized ();
+    );
+
+
     method resize w h = 
     (
       width := w;

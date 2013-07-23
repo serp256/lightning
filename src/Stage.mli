@@ -52,6 +52,7 @@ class virtual c: [ float ] -> [ float ] ->
     method dispatchForegroundEv : unit -> unit;
     method traceFPS: (int -> DisplayObject.c) -> unit;
     method traceSharedTexNum: (int -> DisplayObject.c) -> unit;
+    method _stageResized: float -> float -> unit;
   end;
 
 value instance: unit -> c;

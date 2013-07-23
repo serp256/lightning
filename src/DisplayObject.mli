@@ -110,6 +110,8 @@ class virtual _c [ 'parent ] :
     method clearParent: (* hidden *) unit -> unit;
     method setParent: (* hidden *) 'parent -> unit;
 		method classes: list exn;
+
+    method virtual stageResized: unit -> unit;
   end;
 
 
@@ -145,6 +147,7 @@ class virtual container:
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
 		method classes: list exn;
+    method stageResized: unit -> unit;
   end;
 
 
@@ -153,5 +156,6 @@ class virtual c:
     inherit _c  [ container ];
     method dcast: [= `Object of c | `Container of container ];
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
-		method dispatchEventGlobal: Ev.t -> unit;
+	method dispatchEventGlobal: Ev.t -> unit;
+    method stageResized: unit -> unit;
   end;

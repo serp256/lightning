@@ -269,9 +269,21 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 		PRINT_DEBUG("create stage: [%d:%d]",width,height);
 		stage = mlstage_create((float)width,(float)height); 
 		PRINT_DEBUG("stage created");
-	} else if (onResume) {
-		onResume = 0;
-		callDispatchFgHandler();
+	} else {
+		float fwidth = (float)width;
+		float fheight = (float)height;
+
+		if (stage->width != fwidth || stage->height != fheight) {
+			stage->width = width;
+			stage->height = height;
+
+			caml_callback3(caml_get_public_method(stage->stage, caml_hash_variant("_stageResized")), stage->stage, caml_copy_double(fwidth), caml_copy_double(fheight));
+		}
+
+		if (onResume) {
+			onResume = 0;
+			callDispatchFgHandler();
+		}
 	}
 
 }

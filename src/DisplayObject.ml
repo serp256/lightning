@@ -740,6 +740,8 @@ class virtual _c [ 'parent ] = (*{{{*)
     method boundsChanged () = RESET_BOUNDS_CACHE;
 
 
+    method virtual stageResized: unit -> unit;
+
   end;(*}}}*)
 
 
@@ -1163,6 +1165,12 @@ class virtual container = (*{{{*)
           )
       ];
 
+    method stageResized () =
+      match children with
+      [ Some children -> Dllist.iter (fun (child:'displayObject) -> child#stageResized ()) children
+      | _ -> ()
+      ];
+      
   end;(*}}}*)
 
 
@@ -1179,5 +1187,6 @@ class virtual c =
       | False -> None
       ];
 
+    method stageResized () = ();
   end;
 
