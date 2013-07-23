@@ -19,7 +19,7 @@ MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS  += -DIOS -Iios -I../../ -I../../ios -I../common
+CFLAGS  += -DIOS -Iios -I../../ -I../../ios -I../common/ios
 COBJS   +=  ios/whatsapp_ios.o
 
 else

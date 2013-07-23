@@ -1,45 +1,57 @@
-#include "Instagram.h"
+#include "DocInteraction.h"
 #import "LightViewController.h"
 
-@interface Instagram ()
+static NSString* UTI = nil;
+static NSString* captionKey = nil;
 
-+ (Instagram *)sharedInstance;
+@interface DocInteraction ()
+
++ (DocInteraction*)sharedInstance;
 
 @end
 
-@implementation Instagram
+@implementation DocInteraction
 
 - (void) documentInteractionControllerDidDismissOpenInMenu: (UIDocumentInteractionController *) controller {
     [controller release];
 }    
 
-+ (Instagram *)sharedInstance
++ (DocInteraction *)sharedInstance
 {
-    static Instagram* sharedInstance = nil;
+    static DocInteraction* sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        sharedInstance = [[Instagram alloc] init];
+        sharedInstance = [[DocInteraction alloc] init];
     });
     return sharedInstance;
 }
 
++ (void)setUTI:(NSString*)uti {
+    UTI = uti;
+}
+
++ (void)setUTI:(NSString*)uti andCaptionKey:(NSString*)key {
+    UTI = uti;
+    captionKey = key;
+}
+
 + (BOOL) postImage:(NSString*)fname {
-    return [[Instagram sharedInstance] postImage:fname withCaption:nil];
+    return [[DocInteraction sharedInstance] postImage:fname withCaption:nil];
 }
 + (BOOL) postImage:(NSString*)fname withCaption:(NSString*)caption {
-    return [[Instagram sharedInstance] postImage:fname withCaption:caption];
+    return [[DocInteraction sharedInstance] postImage:fname withCaption:caption];
 }
 
 - (BOOL) postImage:(NSString*)fname withCaption:(NSString*)caption {
     NSURL* igFileURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:fname ofType:nil]];
 
     UIDocumentInteractionController* documentController = [UIDocumentInteractionController interactionControllerWithURL:igFileURL];
-    documentController.UTI = @"com.instagram.exclusivegram";
+    documentController.UTI = UTI;
     documentController.delegate = self;
     [documentController retain];
 
-    if (caption) {
-        documentController.annotation = [NSDictionary dictionaryWithObject:caption forKey:@"InstagramCaption"];
+    if (caption && captionKey) {
+        documentController.annotation = [NSDictionary dictionaryWithObject:caption forKey:captionKey];
     }
 
     return [documentController presentOpenInMenuFromRect:CGRectZero inView:[LightViewController sharedInstance].view animated:YES];
