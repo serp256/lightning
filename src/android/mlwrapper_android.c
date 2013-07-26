@@ -252,6 +252,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 
 static int onResume = 0;
 static int surfaceDestroyed = 0;
+static int paused = 0;
 
 void callDispatchFgHandler() {
 	static value dispatchFgHandler = 1;
@@ -263,7 +264,11 @@ void callDispatchFgHandler() {
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
-	PRINT_DEBUG("GL Changed: %i:%i",width,height);
+	PRINT_DEBUG("GL Changed: %i:%i, paused %d",width,height, paused);
+
+	if (paused) {
+		return;
+	}
 
 	if (!stage) {
 		PRINT_DEBUG("create stage: [%d:%d]",width,height);
@@ -398,6 +403,7 @@ value ml_malinfo(value p) {
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
 
+	paused = 1;
 	sound_pause(env);
 
 	static value dispatchBgHandler = 1;
@@ -412,6 +418,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *en
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
 
+	paused = 0;
 	sound_resume(env);
 
 	if (surfaceDestroyed) {
