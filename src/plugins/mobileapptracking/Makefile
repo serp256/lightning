@@ -5,7 +5,7 @@ MLSOURCES = MobileAppTracking.ml
 MLOBJSN = $(MLSOURCES:.ml=.cmx)
 MLOBJS = $(MLSOURCES:.ml=.cmo)
 IFACES = $(MLSOURCES:.ml=.cmi)
-#CFLAGS += -DLDEBUG 
+CFLAGS += -DLDEBUG 
 
 MLPPOPT += ../../syntax/pa_platform.cmo 
 
