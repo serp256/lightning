@@ -1325,6 +1325,7 @@ value avsound (stage:Stage.c) path =
 );
   (* ignore(Sound.createChannel path); *)
 
+(*
 value fbtest (stage:Stage.c) = 
   (
   (*  FBConnect.init "412548172119201"; *)
@@ -1376,7 +1377,7 @@ value fbtest (stage:Stage.c) =
     )
   *)
   );
-
+*)
 
 value texture_atlas (stage:Stage.c) =
   let () = Texture.scale.val := 2. in
@@ -1749,9 +1750,10 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
   debug "REGISTR FONT";
+      hardware self;
+      (*
       udid self;
       pvr self;
-      (*
       fbtest self;
       test_map self;
       test_queue ();
