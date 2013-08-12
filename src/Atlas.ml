@@ -7,16 +7,16 @@ external atlas_init: Texture.renderInfo -> atlas = "ml_atlas_init";
 external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
 external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynArray.t Node.t * color) -> unit = "ml_atlas_render" "noalloc";
 
-  type glow = Image.glow ==
-    {
-      g_texture: mutable option RenderTexture.c;
-      g_image: mutable option Render.Image.t;
-      g_make_program: Render.prg;
-      g_program: mutable Render.prg;
-      g_matrix: mutable Matrix.t;
-      g_valid: mutable bool;
-      g_params: Filters.glow
-    };
+type glow = 
+  {
+    g_texture: mutable option RenderTexture.c;
+    g_image: mutable option Render.Image.t;
+    g_make_program: Render.prg;
+    g_program: mutable Render.prg;
+    g_matrix: mutable Matrix.t;
+    g_valid: mutable bool;
+    g_params: mutable Filters.glow
+  };
 
 DEFINE RENDER_QUADS(program,transform,color,alpha) = 
   let quads = 
@@ -111,6 +111,43 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           )
         else raise (DisplayObject.Invalid_index (nidx,DynArray.length children));
 
+
+
+      value mutable glowFilter = None;
+      method private setGlowFilter g_program glow = 
+        match glowFilter with
+        [ Some ({g_params;_} as g) when g_params = glow -> g.g_program := g_program
+        | Some g -> 
+          (
+            g.g_valid := False;
+            g.g_program := g_program;
+            g.g_params := glow;
+            self#addPrerender self#updateGlowFilter;
+          )
+        | _ ->  
+          (
+            let g_make_program = 
+              let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+              Prg.Normal.create () 
+            in
+            glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_make_program;g_params=glow;g_valid=False};
+            self#addPrerender self#updateGlowFilter;
+          )
+        ];
+
+      method private removeGlowFilter () = 
+        match glowFilter with 
+        [ Some {g_texture;_} -> 
+          (
+            match g_texture with
+            [ Some gtex -> gtex#release() 
+            | None -> ()
+            ];
+            glowFilter := None;
+          )
+        | _ -> () 
+        ];  
+
       method private updateGlowFilter () = 
         match glowFilter with
         [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) ->  
@@ -130,6 +167,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 let cm = Matrix.create ~translate:ip () in
                 let drawf fb =
                   (
+                    debug:drawf "atlas drawf";
                     Render.push_matrix cm;
   (*                   Render.clear 0 0.; *)
                     RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);

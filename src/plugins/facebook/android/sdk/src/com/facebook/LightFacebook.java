@@ -2,6 +2,7 @@ package com.facebook;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
@@ -19,6 +20,10 @@ import android.content.Intent;
 import ru.redspell.lightning.utils.Log;
 import ru.redspell.lightning.LightActivity;
 import ru.redspell.lightning.LightActivityResultHandler;
+
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 
 public class LightFacebook {
     private static String appId;
@@ -455,8 +460,7 @@ public class LightFacebook {
                             if (json == null) {
                                 LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, "something wrong with graphrequest response (not json object, not json objects list)"));
                             } else {
-                                //LightActivity.instance.lightView.queueEvent(new CamlNamedValueWithStringAndValueParamsRunnable("fb_graphrequestSuccess", json, successCallback));
-															LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(successCallback,json));
+								LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(successCallback,json));
                             }
 
                             LightActivity.instance.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
@@ -467,5 +471,73 @@ public class LightFacebook {
         });
 
         return true;
+    }
+
+    public static boolean sharePic(final String fname, final String text, final int success, final int fail) {
+        if (session == null || !session.isOpened()) return false;
+
+        LightActivity.instance.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                com.facebook.Request req = com.facebook.Request.newUploadPhotoRequest(session, android.graphics.BitmapFactory.decodeFile(fname), new com.facebook.Request.Callback() {
+                    @Override
+                    public void onCompleted(com.facebook.Response response) {
+                        com.facebook.FacebookRequestError error = response.getError();
+
+                        if (error != null) {
+                            Log.d("LIGHTNING", "error: " + error);
+                            LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(fail, error.getErrorMessage()));
+                        } else {
+                            String json = null;
+
+                            if (response.getGraphObject() != null) {
+                                json = response.getGraphObject().getInnerJSONObject().toString();
+                            } else if (response.getGraphObjectList() != null) {
+                                json = response.getGraphObjectList().getInnerJSONArray().toString();
+                            }
+
+                            Log.d("LIGHTNING", "json " + json);
+
+                            if (json == null) {
+                                LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(fail, "something wrong with graphrequest response (not json object, not json objects list)"));
+                            } else {
+                                LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(success,json));
+                            }
+
+                            LightActivity.instance.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(success, fail));
+                        }
+                    }
+                });
+                
+                req.getParameters().putString("message", text);
+                req.executeAsync();
+            }
+        });
+
+        return true;
+    }
+
+    public static boolean sharePicUsingNativeApp(String fname, String text) {
+        Context cntxt = LightActivity.instance.getApplicationContext();
+        PackageManager pm = cntxt.getPackageManager();
+
+        for (PackageInfo pi : pm.getInstalledPackages(0)) {
+            if (pi.packageName.contentEquals("com.facebook.katana")) {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("image/*");
+                intent.setPackage("com.facebook.katana");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + fname));
+                intent.putExtra(Intent.EXTRA_TEXT, android.text.Html.fromHtml(text));
+/*                intent.putExtra(Intent.EXTRA_TEXT, text);
+                intent.putExtra(Intent.EXTRA_SUBJECT, text);*/
+                
+
+                cntxt.startActivity(intent);
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -1,5 +1,7 @@
 open LightCommon;
 
+exception GL_error of string;
+
 external push_matrix: Matrix.t -> unit = "ml_push_matrix";
 external restore_matrix: unit -> unit = "ml_restore_matrix";
 external clear: int -> float -> unit = "ml_clear";

@@ -1,0 +1,1 @@
+value post: ~fname:string -> ~text:string -> unit -> bool;

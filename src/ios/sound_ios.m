@@ -61,8 +61,8 @@ void interruptionCallback (void *inUserData, UInt32 interruptionState) {
 static ALCdevice  *device  = NULL;
 static ALCcontext *context = NULL;
 
-void ml_sound_init(value mlSessionCategory,value unit) {
-	if (device) return;
+value ml_sound_init(value mlSessionCategory,value unit) {
+	if (device) return Val_unit;
 	OSStatus result;
 	result = AudioSessionInitialize(NULL, NULL, interruptionCallback, NULL);
 	if (result != kAudioSessionNoError) raise_error("Could not initialize audio",NULL,result);
@@ -90,13 +90,15 @@ void ml_sound_init(value mlSessionCategory,value unit) {
 
 	BOOL success = alcMakeContextCurrent(context);
 	if (!success) raise_error("Could not set current OpenAL context",NULL,0);
+	return Val_unit;
 }
 
 
 // ALSOUND 
 
-void ml_al_setMasterVolume(value mlVolume) {
+value ml_al_setMasterVolume(value mlVolume) {
 	alListenerf(AL_GAIN, Double_val(mlVolume));
+	return Val_unit;
 }
 
 struct albuffer {
@@ -326,43 +328,47 @@ CAMLprim value ml_alsource_create(value mlAlBuffer) {
 	uint bufferID = ALBUFFER(mlAlBuffer)->bufferID;
 	alSourcei(sourceID, AL_BUFFER, bufferID);
 	PRINT_DEBUG("created alsource: %d for buffer %d",sourceID,bufferID);
-	checkOpenALError("create alsource: %d - %d",bufferID,sourceID);
+	//checkOpenALError("create alsource: %d - %d",bufferID,sourceID);
 	//mlAlSourceID = caml_alloc_custom(&alsource_ops,sizeof(uint),1,0);
 	//*ALSOURCEID(mlAlSourceID) = sourceID;
 	mlAlSourceID = caml_copy_int32(sourceID);
 	CAMLreturn(mlAlSourceID);
 }
 
-void ml_alsource_play(value mlAlSourceID) {
+value ml_alsource_play(value mlAlSourceID) {
 	//uint sourceID = *ALSOURCEID(mlAlSourceID);
 	uint sourceID = Int32_val(mlAlSourceID);
 	alSourcePlay(sourceID);
 	PRINT_DEBUG("play source: %d",sourceID);
 	// remove after debug
-	checkOpenALError("play: %d",sourceID);
+	//checkOpenALError("play: %d",sourceID);
+	return Val_unit;
 }
 
-void ml_alsource_pause(value mlAlSourceID) {
+value ml_alsource_pause(value mlAlSourceID) {
 	//uint sourceID = *ALSOURCEID(mlAlSourceID);
 	uint sourceID = Int32_val(mlAlSourceID);
 	alSourcePause(sourceID);
 	PRINT_DEBUG("pause alsource: %d",sourceID);
 	// remove after debug
-	checkOpenALError("pause: %d",sourceID);
+	//checkOpenALError("pause: %d",sourceID);
+	return Val_unit;
 }
 
-void ml_alsource_stop(value mlAlSourceID) {
+value ml_alsource_stop(value mlAlSourceID) {
 	//uint sourceID = *ALSOURCEID(mlAlSourceID);
 	uint sourceID = Int32_val(mlAlSourceID);
 	alSourceStop(sourceID);
 	PRINT_DEBUG("stop alsource: %d",sourceID);
 	// remove after debug
-	checkOpenALError("play: %d",sourceID);
+	//checkOpenALError("play: %d",sourceID);
+	return Val_unit;
 }
 
-void ml_alsource_setLoop(value mlAlSourceID,value loop) {
+value ml_alsource_setLoop(value mlAlSourceID,value loop) {
 	//alSourcei(*ALSOURCEID(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
 	alSourcei(Int32_val(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
+	return Val_unit;
 }
 
 value ml_alsource_state(value mlAlSourceID) {
@@ -395,16 +401,13 @@ CAMLprim value ml_alsource_getVolume(value mlAlSourceID) {
 }
 
 
-void ml_alsource_delete(value mlAlSourceID) {
+value ml_alsource_delete(value mlAlSourceID) {
 	uint sourceID = Int32_val(mlAlSourceID);
 	alSourceStop(sourceID);
 	alSourcei(sourceID, AL_BUFFER, 0);
 	alDeleteSources(1, &sourceID);
+	return Val_unit;
 }
-
-
-
-
 
 
 
@@ -515,11 +518,11 @@ void ml_alsource_delete(value mlAlSourceID) {
 
 - (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {    
 	if (_sound_stopped_handler) {
-		caml_acquire_runtime_system();
+		//caml_acquire_runtime_system();
 		caml_callback(_sound_stopped_handler, Val_unit);
 		caml_remove_generational_global_root(&_sound_stopped_handler);
 		_sound_stopped_handler = 0;
-		caml_release_runtime_system();
+		//caml_release_runtime_system();
 	};
 }
 
@@ -590,34 +593,37 @@ void ml_avsound_release(value playerController) {
 /*
  * Let's play
 */
-void ml_avsound_play(value playerController, value stopHandler) {
+value ml_avsound_play(value playerController, value stopHandler) {
   CAMLparam1(playerController);
 	[*AVPLAYER(playerController) play:stopHandler];
-  CAMLreturn0;
+  CAMLreturn(Val_unit);
 }
 
 
 /*
  * Pause
  */
-void ml_avsound_pause(value playerController) {
+value ml_avsound_pause(value playerController) {
   [*AVPLAYER(playerController) pause];
+	return Val_unit;
 }
 
 
 /*
  * Stop
  */
-void ml_avsound_stop(value playerController) {
+value ml_avsound_stop(value playerController) {
   [*AVPLAYER(playerController) stop];
+	return Val_unit;
 }
 
 
 /* 
  * Set volume
  */
-void ml_avsound_set_volume(value playerController, value volume) {
+value ml_avsound_set_volume(value playerController, value volume) {
   [*AVPLAYER(playerController) setVolume: Double_val(volume)];
+	return Val_unit;
 }
 
 /* 
@@ -631,8 +637,9 @@ CAMLprim value ml_avsound_get_volume(value playerController) {
 /*
  * Loop sound or not
  */
-void ml_avsound_set_loop(value playerController, value loop) {
+value ml_avsound_set_loop(value playerController, value loop) {
   [*AVPLAYER(playerController) setLoop: Bool_val(loop)];
+	return Val_unit;
 }
 
 

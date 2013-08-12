@@ -116,6 +116,12 @@ class virtual c (_width:float) (_height:float) =
     method! setRotation _ = raise Restricted_operation;
     method! setVisible _ = raise Restricted_operation;
 
+    method _stageResized w h = (
+      self#resize w h;
+      self#stageResized ();
+    );
+
+
     method resize w h = 
     (
       width := w;
@@ -222,13 +228,16 @@ class virtual c (_width:float) (_height:float) =
 
 
     value mutable fpsTrace : option DisplayObject.c = None;
+    value mutable sharedTexNum: option DisplayObject.c = None;
 
     method renderStage () =
     (
 (*       proftimer:perfomance "Prerender: %F" D.prerender(); *)
+      debug:render "RENDER STAGE";
       Render.clear bgColor 1.;
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
       match fpsTrace with [ None -> () | Some fps -> fps#render None ];
+      match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
       (*
       debug "start render";
       debug "end render";
@@ -283,19 +292,35 @@ class virtual c (_width:float) (_height:float) =
       in
       addTween f;
 
+    method traceSharedTexNum (show:(int -> #DisplayObject.c)) =
+      let f =
+        object
+          method process dt = 
+            let () = debug:stn "!!!!pizdalalalallaal" in
+            let dobj = show (RenderTexture.sharedTexsNum ()) in
+            let m = Matrix.create ~translate:(Point.create 150. 0.) () in (
+              dobj#setTransformationMatrix m;
+              sharedTexNum := Some dobj;
+              True;
+            );
+        end
+      in
+        addTween f;    
+
     method !z = Some 0;
     method run seconds = 
 proftimer:frame "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!frame %f"
     (
       self#advanceTime seconds;
       debug:run "start prerender";
-      D.prerender ();
+      proftimer:perfomance "prerender %f" (D.prerender ());
       debug:run "end prerender";
       Render.clear bgColor 1.;
       Render.checkErrors "before render";
       debug:run "start render";
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
       match fpsTrace with [ None -> () | Some fps -> fps#render None ];
+      match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
 (*       debug:run "end render"; *)
     );
 

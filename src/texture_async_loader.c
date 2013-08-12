@@ -47,7 +47,7 @@ typedef struct {
 } runtime_t;
 
 
-void *run_worker(void *param) {
+static void *run_worker(void *param) {
 	runtime_t *runtime = (runtime_t*)param;
 	pthread_mutex_lock(&(runtime->mutex));
 	while (1) {
@@ -106,7 +106,7 @@ value ml_texture_async_loader_create_runtime(value unit) {
 
 }
 
-void ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value filter, value use_pvr) {
+value ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value filter, value use_pvr) {
 	char *path = malloc(caml_string_length(opath) + 1);
 	strcpy(path,String_val(opath));
 	char *suffix;
@@ -125,6 +125,7 @@ void ml_texture_async_loader_push(value oruntime,value opath,value osuffix,value
 	pthread_cond_signal(&runtime->cond);
 
 	PRINT_DEBUG("ml_texture_async_loader_push %s", req->path);
+	return Val_unit;
 }
 
 

@@ -16,8 +16,9 @@ value ml_memUsage(value p) {
 	return Val_long(ru.ru_maxrss);
 }
 
-void ml_setMaxGC(value max) {
+value ml_setMaxGC(value max) {
 	MAX_GC_MEM = Int64_val(max);
+	return Val_unit;
 }
 
 #ifdef OSlinux

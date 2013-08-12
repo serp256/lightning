@@ -92,6 +92,8 @@ class virtual _c [ 'parent ] :
     method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method globalToLocal: Point.t -> Point.t;
     method localToGlobal: Point.t -> Point.t;
+    method mask: option (bool * Rectangle.t);
+    method resetMask: unit -> unit;
     method setMask: ?onSelf:bool -> Rectangle.t -> unit;
     method virtual private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private addPrerender: (unit -> unit) -> unit;
@@ -108,6 +110,8 @@ class virtual _c [ 'parent ] :
     method clearParent: (* hidden *) unit -> unit;
     method setParent: (* hidden *) 'parent -> unit;
 		method classes: list exn;
+
+    method virtual stageResized: unit -> unit;
   end;
 
 
@@ -143,6 +147,7 @@ class virtual container:
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
 		method classes: list exn;
+    method stageResized: unit -> unit;
   end;
 
 
@@ -151,5 +156,6 @@ class virtual c:
     inherit _c  [ container ];
     method dcast: [= `Object of c | `Container of container ];
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
-		method dispatchEventGlobal: Ev.t -> unit;
+	method dispatchEventGlobal: Ev.t -> unit;
+    method stageResized: unit -> unit;
   end;

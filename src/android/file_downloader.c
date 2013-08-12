@@ -6,7 +6,6 @@
 
 #include "light_common.h"
 #include "thqueue.h"
-#include "net_curl.h"
 
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
@@ -112,7 +111,9 @@ static void* downloader_thread(void* params) {
 	return NULL;
 }
 
-void ml_DownloadFile(value url, value path, value errCb, value cb) {
+extern void initCurl();
+
+value ml_DownloadFile(value url, value path, value errCb, value cb) {
 	initCurl();
 
 	PRINT_DEBUG("START DOWNLOAD FILE");
@@ -150,6 +151,9 @@ void ml_DownloadFile(value url, value path, value errCb, value cb) {
 
 	thqueue_download_reqs_push(reqs, req);
 	pthread_cond_signal(&cond);
+
+
+	return Val_unit;
 }
 
 static void freeRequest(download_request_t* req) {

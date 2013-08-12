@@ -5,7 +5,7 @@ CFLAGS += -I .
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
-MOBJS = light_common.o texture_common.o texture_pvr.o texture_async_loader.o renderbuffer_stub.o filters_stub.o render_stub.o
+MOBJS = inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o renderbuffer_stub.o filters_stub.o render_stub.o
 
 light_common.o: light_common.h
 texture_common.o: texture_common.h light_common.h
@@ -21,9 +21,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma social_byte
+byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -54,7 +54,7 @@ ifeq ($(PLATFORM),IOS)
 	else
 	ifeq ($(PLATFORM),ANDROID)
 		MLCOPTS += -D__ANDROID__
-		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/local_notif.o android/mlwrapper_android.o android/texture_android.o android/payments_android.o android/unzip.o android/ioapi.o android/assets_extractor.o android/curl_extern_loader.o android/file_downloader.o android/keyboard_android.o
+		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/local_notif.o android/mlwrapper_android.o android/texture_android.o android/sound_android.o android/payments_android.o android/unzip.o android/ioapi.o android/assets_extractor.o android/curl_extern_loader.o android/file_downloader.o android/keyboard_android.o
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else
@@ -200,6 +200,24 @@ supersonic.cma:
 supersonic.cmxa:
 	make -C plugins/supersonic supersonic.cmxa
 
+twitter.cma:
+	make -C plugins/twitter twitter.cma
+
+twitter.cmxa:
+	make -C plugins/twitter twitter.cmxa
+
+instagram.cma:
+	make -C plugins/instagram instagram.cma
+
+instagram.cmxa:
+	make -C plugins/instagram instagram.cmxa
+
+whatsapp.cma:
+	make -C plugins/whatsapp whatsapp.cma
+
+whatsapp.cmxa:
+	make -C plugins/whatsapp whatsapp.cmxa
+
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
@@ -227,5 +245,8 @@ clean:
 	$(MAKE) -C plugins/appflood clean
 	$(MAKE) -C plugins/sponsorpay clean
 	$(MAKE) -C plugins/supersonic clean
+	$(MAKE) -C plugins/twitter clean
+	$(MAKE) -C plugins/instagram clean
+	$(MAKE) -C plugins/whatsapp clean
 
 -include MLDepend.$(PLATFORM)

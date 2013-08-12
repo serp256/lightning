@@ -20,7 +20,7 @@ CMMotionManager* getMmInstance() {
 
 static value accCb = 0;
 
-void ml_acmtrStart(value cb, value interval) {
+value ml_acmtrStart(value cb, value interval) {
 	accUpInterval = Double_val(interval);
 
 	if (accCb == 0) {
@@ -32,14 +32,14 @@ void ml_acmtrStart(value cb, value interval) {
 
 	CMMotionManager *mm = getMmInstance();
 
-	if (!mm.accelerometerAvailable) {
-		return;
-	}
+	if (mm.accelerometerAvailable) {
 
-	if (!mm.accelerometerActive) {
-		accEnabled = YES;
-		[mm startAccelerometerUpdates];
+		if (!mm.accelerometerActive) {
+			accEnabled = YES;
+			[mm startAccelerometerUpdates];
+		}
 	}
+	return Val_unit;
 }
 
 void acmtrGetData (CFTimeInterval now) {
@@ -59,7 +59,7 @@ void acmtrGetData (CFTimeInterval now) {
 	caml_callback(accCb, acmtrData);
 }
 
-void ml_acmtrStop() {
+value ml_acmtrStop() {
 	if (accCb != 0) {
 		caml_remove_generational_global_root(&accCb);
 		accCb = 0;		
@@ -69,4 +69,6 @@ void ml_acmtrStop() {
 	[mmInstance release];
 	mmInstance = nil;
 	accEnabled = NO;
+
+	return Val_unit;
 }

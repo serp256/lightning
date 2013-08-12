@@ -4,7 +4,7 @@ TARGET ?= example
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_platform.cmo -enable-debug default
 
-MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/plugins/tapjoy -I ../src/plugins/flurry -I ../src/plugins/facebook -I ../src/plugins/mopub -I ../src/plugins/mobileapptracking -I ../src/plugins/chartboost -I ../src/plugins/sponsorpay -I ../src/plugins/appflood -I ../src/plugins/supersonic
+MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/plugins/tapjoy -I ../src/plugins/flurry -I ../src/plugins/facebook -I ../src/plugins/mopub -I ../src/plugins/mobileapptracking -I ../src/plugins/chartboost -I ../src/plugins/sponsorpay -I ../src/plugins/appflood -I ../src/plugins/supersonic  -I ../src/plugins/twitter -I ../src/plugins/instagram -I ../src/plugins/whatsapp
 
 CFLAGS += -DLDEBUG
 #MLFILES = panelbg.cmo testz.cmo
@@ -15,7 +15,9 @@ PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma
 
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
-	-I ../src ../src/lightning.cma ../src/plugins/facebook/facebook.cma $(OAUTH) $(SOCIAL) $(PLUGINS) $(MLFILES) $(TARGET).cmo \
+	../src/plugins/facebook/facebook.cma \
+	../src/plugins/tapjoy/tapjoy.cma \
+	-I ../src ../src/lightning.cma  $(OAUTH) $(SOCIAL) $(PLUGINS) $(MLFILES) $(TARGET).cmo \
 	-package bigarray,unix,extlib,xmlm,ojson,redspell.debug -linkpkg
 
 example.cmo: $(MLFILES)
@@ -35,7 +37,11 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	  -ccopt -L../src/plugins/chartboost/ios -ccopt -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa\
 	  -ccopt -L../src/plugins/supersonic/ios -ccopt -L../src/plugins/supersonic ../src/plugins/supersonic/supersonic.cmxa\
 	  -ccopt -L../src/plugins/sponsorpay/ios -ccopt -L../src/plugins/sponsorpay ../src/plugins/sponsorpay/sponsorpay.cmxa\
+	  -ccopt -L../src/plugins/twitter/ios -ccopt -L../src/plugins/twitter ../src/plugins/twitter/twitter.cmxa\
 	  -ccopt -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa\
+	  -ccopt -L../src/plugins/twitter ../src/plugins/twitter/twitter.cmxa\
+	  -ccopt -L../src/plugins/instagram ../src/plugins/instagram/instagram.cmxa\
+	  -ccopt -L../src/plugins/whatsapp ../src/plugins/whatsapp/whatsapp.cmxa\
 	  -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa\
 	  -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios"   -linkpkg

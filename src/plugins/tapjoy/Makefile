@@ -19,57 +19,72 @@ MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS  += -DIOS -Iios 
-COBJS   +=  ios/tapjoy_wrapper.o\
-ios/TJCAdManager.o \
-ios/TJCAdRequestHandler.o \
-ios/TJCAdView.o \
-ios/TJCCallsWrapper.o \
-ios/TJCCoreFetcher.o \
-ios/TJCCoreFetcherHandler.o \
-ios/TJCCrossPromoAdManager.o \
-ios/TJCDailyRewardAdManager.o \
-ios/TJCDailyRewardAdRequestHandler.o \
-ios/TJCDailyRewardAdView.o \
-ios/TJCEventTrackingManager.o \
-ios/TJCEventTrackingRequestHandler.o \
-ios/TJCFullScreenAdManager.o \
-ios/TJCFullScreenAdRequestHandler.o \
-ios/TJCFullScreenAdView.o \
-ios/TJCHardwareUtil.o \
-ios/TJCLoadingMainView.o \
-ios/TJCLoadingView.o \
-ios/TJCLog.o \
-ios/TJCNetReachability.o \
-ios/TJCOffersManager.o \
-ios/TJCOffersRequestHandler.o \
-ios/TJCOffersView.o \
-ios/TJCTBXML.o \
-ios/TJCUIWebPageView.o \
-ios/TJCUserAccountManager.o \
-ios/TJCUserAccountModel.o \
-ios/TJCUserAccountRequestHandler.o \
-ios/TJCUtil.o \
-ios/TJCVideoLayer.o \
-ios/TJCVideoManager.o \
-ios/TJCVideoObject.o \
-ios/TJCVideoRequestHandler.o \
-ios/TJCVideoView.o \
-ios/TJCVideoViewHandler.o \
-ios/TJCViewCommons.o \
-ios/TapjoyConnect.o \
-ios/TapjoyConnectAdvertiser.o \
-ios/TapjoyConnectPublisher.o
+CFLAGS  += -DIOS -Fios 
+
+COBJS   +=  ios/tapjoy_wrapper.o
+#ios/TJCAdManager.o \
+#ios/TJCAdRequestHandler.o \
+#ios/TJCAdView.o \
+#ios/TJCCallsWrapper.o \
+#ios/TJCCoreFetcher.o \
+#ios/TJCCoreFetcherHandler.o \
+#ios/TJCCrossPromoAdManager.o \
+#ios/TJCDailyRewardAdManager.o \
+#ios/TJCDailyRewardAdRequestHandler.o \
+#ios/TJCDailyRewardAdView.o \
+#ios/TJCEventTrackingManager.o \
+#ios/TJCEventTrackingRequestHandler.o \
+#ios/TJCFullScreenAdManager.o \
+#ios/TJCFullScreenAdRequestHandler.o \
+#ios/TJCFullScreenAdView.o \
+#ios/TJCHardwareUtil.o \
+#ios/TJCLoadingMainView.o \
+#ios/TJCLoadingView.o \
+#ios/TJCLog.o \
+#ios/TJCNetReachability.o \
+#ios/TJCOffersManager.o \
+#ios/TJCOffersRequestHandler.o \
+#ios/TJCOffersView.o \
+#ios/TJCTBXML.o \
+#ios/TJCUIWebPageView.o \
+#ios/TJCUserAccountManager.o \
+#ios/TJCUserAccountModel.o \
+#ios/TJCUserAccountRequestHandler.o \
+#ios/TJCUtil.o \
+#ios/TJCVideoLayer.o \
+#ios/TJCVideoManager.o \
+#ios/TJCVideoObject.o \
+#ios/TJCVideoRequestHandler.o \
+#ios/TJCVideoView.o \
+#ios/TJCVideoViewHandler.o \
+#ios/TJCViewCommons.o \
+#ios/TapjoyConnect.o \
+#ios/TapjoyConnectAdvertiser.o \
+#ios/TapjoyConnectPublisher.o
             
 LIBFLAGS = -cclib '-framework\ Foundation' \
-		   -cclib '-framework\ UIKit' \
-		   -cclib '-framework\ QuartzCore' \
-		   -cclib '-framework\ CoreGraphics' \
-		   -cclib '-framework\ CoreTelephony' \
-		   -cclib '-framework\ SystemConfiguration' \
-		   -cclib '-framework\ MediaPlayer' \
 			 -cclib '-weak_framework\ AdSupport' \
-		   -cclib '-lsqlite3'
+			 -cclib '-framework\ CFNetwork' \
+		   -cclib '-framework\ CoreGraphics' \
+		   -cclib '-framework\ CoreLocation' \
+		   -cclib '-framework\ CoreMotion' \
+		   -cclib '-weak_framework\ CoreTelephony' \
+		   -cclib '-framework\ EventKitUI' \
+		   -cclib '-framework\ EventKit' \
+		   -cclib '-lsqlite3' \
+		   -cclib '-lxml2' \
+		   -cclib '-lz' \
+		   -cclib '-framework\ MapKit' \
+		   -cclib '-framework\ MediaPlayer' \
+		   -cclib '-framework\ MessageUI' \
+		   -cclib '-framework\ MobileCoreServices' \
+		   -cclib '-framework\ QuartzCore' \
+		   -cclib '-weak_framework\ Social' \
+		   -cclib '-framework\ StoreKit' \
+		   -cclib '-framework\ SystemConfiguration' \
+		   -cclib '-framework\ Twitter' \
+		   -cclib '-framework\ UIKit' \
+			 -cclib '-framework\ Tapjoy'
 		   
 
 else

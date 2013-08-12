@@ -24,7 +24,7 @@ value ml_lnSchedule(value nid, value fireDate, value alertBody) {
     return Val_true;
 }
 
-void ml_lnCancel(value nid) {
+value ml_lnCancel(value nid) {
     NSString *nsNid = [NSString stringWithCString:String_val(nid) encoding:NSASCIIStringEncoding];
     UIApplication *app = [UIApplication sharedApplication];
 
@@ -43,6 +43,7 @@ void ml_lnCancel(value nid) {
 
         return *stop;
     }];
+		return Val_unit;
 }
 
 int nidToIndex(value nid) {

@@ -36,17 +36,18 @@ void ml_MATinit(value advertiser_id, value conversion_key, value site_id, value 
 	};
 }
 
-void ml_MATsetUserId(value user_id) {
+value ml_MATsetUserId(value user_id) {
 	if (!mobileTracker) caml_failwith("MobileAppTracker not initialized");
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	jmethodID setUserId = (*env)->GetMethodID(env,mobileTrackerCls,"setUserId","(Ljava/lang/String;)V");
 	jobject juid = (*env)->NewStringUTF(env,String_val(user_id));
-	(*env)->CallVoidMethod(env,setUserId,mobileTracker,setUserId,juid);
+	(*env)->CallVoidMethod(env,mobileTracker,setUserId,juid);
 	(*env)->DeleteLocalRef(env,juid);
+	return Val_unit;
 }
 
-void ml_MATinstall(value unit) {
+value ml_MATinstall(value unit) {
 	PRINT_DEBUG("MAT INSTALL");
 	if (!mobileTracker) caml_failwith("MobileAppTracker not initialized");
 	JNIEnv *env;
@@ -54,13 +55,52 @@ void ml_MATinstall(value unit) {
 	jmethodID trackInstall = (*env)->GetMethodID(env,mobileTrackerCls,"trackInstall","()I");
 	PRINT_DEBUG("trackInstall: %d",trackInstall);
 	(*env)->CallVoidMethod(env,mobileTracker,trackInstall);
+	return Val_unit;
 }
 
-void ml_MATupdate(value unit) {
+value ml_MATupdate(value unit) {
 	if (!mobileTracker) caml_failwith("MobileAppTracker not initialized");
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	jmethodID trackUpdate = (*env)->GetMethodID(env,mobileTrackerCls,"trackUpdate","()I");
 	(*env)->CallVoidMethod(env,mobileTracker,trackUpdate);
+	return Val_unit;
 }
 
+
+value ml_MATtrackAction(value eventID) {
+	if (!mobileTracker) caml_failwith("MobileAppTracker not initialized");
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	static jmethodID trackActionMethod = NULL;
+	// FIXME: 
+	if (!trackActionMethod) trackActionMethod = (*env)->GetMethodID(env,mobileTrackerCls,"trackAction","(Ljava/lang/String;)I");
+	jobject jeventID = (*env)->NewStringUTF(env,String_val(eventID));
+	PRINT_DEBUG("trackAcitonMethod: %d",trackActionMethod);
+	(*env)->CallVoidMethod(env,mobileTracker,trackActionMethod,jeventID);
+	(*env)->DeleteLocalRef(env,jeventID);
+	return Val_unit;
+}
+
+value ml_MATtrackPurchase(value eventID,value amount,value currency) {
+	if (!mobileTracker) caml_failwith("MobileAppTracker not initialized");
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	static jmethodID trackActionMethod = NULL;
+	if (!trackActionMethod) trackActionMethod = (*env)->GetMethodID(env,mobileTrackerCls,"trackAction","(Ljava/lang/String;DLjava/lang/String;)I");
+	jstring jeventID = (*env)->NewStringUTF(env,String_val(eventID));
+	/*
+	jclass jDoubleClass = (*env)->FindClass(env, "java/lang/Double");
+	jmethodID jDoubleInit = (*env)->GetMethodID(env, jDoubleClass, "<init>", "(D)V");
+	jobject jamount = (*env)->NewObject(env,jDoubleClass,jDoubleInit,Double_val(amount));
+	*/
+
+	jstring  jcurrency =  (*env)->NewStringUTF(env,String_val(currency));
+	(*env)->CallVoidMethod(env,mobileTracker,trackActionMethod,jeventID,Double_val(amount),jcurrency);
+
+	(*env)->DeleteLocalRef(env,jeventID);
+	//(*env)->DeleteLocalRef(env,jDoubleClass);
+	//(*env)->DeleteLocalRef(env,jamount);
+	(*env)->DeleteLocalRef(env,jcurrency);
+	return Val_unit;
+}

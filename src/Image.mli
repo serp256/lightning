@@ -1,5 +1,6 @@
 open LightCommon;
 
+(*
 type glow = 
   {
     g_texture: mutable option RenderTexture.c;
@@ -10,6 +11,7 @@ type glow =
     g_valid: mutable bool;
     g_params: Filters.glow
   };
+*)
 
 class virtual base: [ Texture.c ] ->
   object
@@ -19,10 +21,11 @@ class virtual base: [ Texture.c ] ->
     method texture: Texture.c;
     method filters: list Filters.t;
     method setFilters: list Filters.t -> unit;
-    value glowFilter: option glow;
+(*     value glowFilter: option glow; *)
     value shaderProgram: Render.prg;
+    method virtual private removeGlowFilter: unit -> unit;
+    method virtual private setGlowFilter: Render.prg -> Filters.glow -> unit;
     method virtual private updateGlowFilter: unit -> unit;
-    method private setGlowFilter: Render.prg -> Filters.glow -> unit;
   end;
 
 class _c : [ Texture.c ] ->
@@ -48,6 +51,8 @@ class _c : [ Texture.c ] ->
     method onTextureEvent: bool -> Texture.c -> unit;
     method setTexture: Texture.c -> unit;
 
+    method private removeGlowFilter: unit -> unit;
+    method private setGlowFilter: Render.prg -> Filters.glow -> unit;
     method private updateGlowFilter: unit -> unit;
 (*       method setTexScale: float -> unit; *)
 

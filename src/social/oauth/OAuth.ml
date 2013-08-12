@@ -222,22 +222,16 @@ type state = [ Standby | Authorizing of (string -> unit) ];
 value state = ref Standby;
 
 value authorization_grant url close_button callback =
-  let () = Printf.eprintf "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!authorization_grant" in
-  let () = debug "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!authorization_grant" in
   match !state with
   [ Standby -> 
     (
       state.val := Authorizing callback;
-      debug "call ml_auth_grant";
       ml_authorization_grant url close_button;
-      debug "called auth grant";
     )
   | Authorizing _ -> Queue.push (url,close_button,callback) pendings
   ];
 
 value oauth_redirected url =
-  let () = Printf.eprintf "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!oauth_redirected" in
-  let () = debug "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!oauth_redirected" in
   match !state with 
   [ Authorizing cb ->
       (

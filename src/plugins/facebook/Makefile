@@ -27,7 +27,7 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 
 else
 ifeq ($(PLATFORM),ANDROID)
-CFLAGS += -DANDROID -I../../ -I../../android -I./android
+CFLAGS += -DANDROID -I../../ -I../../android -I./android -I../common
 MLPPOPT += -DANDROID
 MOBJS += android/fbwrapper_android.o
 

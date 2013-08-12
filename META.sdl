@@ -3,7 +3,23 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm threads ojson redspell.debug"
 
+package "whatsapp" (
+  description="Whatsapp"
+  archive(byte) = "whatsapp.cma"
+  archive(native) = "whatsapp.cmxa"
+)
 
+package "instagram" (
+  description="Instagram"
+  archive(byte) = "instagram.cma"
+  archive(native) = "instagram.cmxa"
+)
+
+package "twitter" (
+  description="Twitter"
+  archive(byte) = "twitter.cma"
+  archive(native) = "twitter.cmxa"
+)
 
 package "flurry" (
   description="Flurry Analytics"
@@ -35,6 +51,11 @@ package "tapjoy" (
   archive(native) = "tapjoy.cmxa"
 )
 
+package "facebook" (
+	description="Facebook API"
+	archive(byte) = "facebook.cma"
+	archive(native) = "facebook.cmxa"
+)
 
 package "facebook" (
 	description="Facebook API"

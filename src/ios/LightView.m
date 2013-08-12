@@ -174,7 +174,7 @@
 		 glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
 		 [mContext presentRenderbuffer:GL_RENDERBUFFER];
 		 */
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 
 	//printf("lastupTime: %f; now: %f; now - accLastUpTime: %f; accUpInterval: %f\n", accLastUpTime, now, now - accLastUpTime, accUpInterval);
 
@@ -191,7 +191,7 @@
 	mlstage_render(mStage);    
 	glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
 	[mContext presentRenderbuffer:GL_RENDERBUFFER];
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 	[pool release];
 }
 
@@ -268,14 +268,14 @@
 
 -(void)background 
 {
-	caml_acquire_runtime_system();
+	//caml_acquire_runtime_system();
 	mlstage_background();
 }
 
 -(void)foreground
 {
 	mlstage_foreground();
-	caml_release_runtime_system();
+	//caml_release_runtime_system();
 }
 
 + (Class)layerClass 

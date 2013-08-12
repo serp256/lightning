@@ -44,32 +44,48 @@ public class OAuthDialog extends Dialog {
     private String mRedirectUrlPath;
     private Boolean mAuthorizing = false;
 
-    private static class DialogClosedRunnable implements Runnable {
-        protected String redirectUrlPath;
+    public interface UrlRunnable {
+        public void run(String url);
+    }
 
-        public DialogClosedRunnable(String redirectUrlPath) {
-            super();
-            this.redirectUrlPath = redirectUrlPath;
-        }
-
+    private static class DefaultDialogClosedRunnable implements UrlRunnable {
         @Override
-        public native void run();
+        public native void run(String url);
+    }
+
+    private static class DefaultRedirectHandler implements UrlRunnable {
+        @Override
+        public native void run(String url);
     }
 
     public OAuthDialog(Context context, String url) {
+        this(context, url, new DefaultDialogClosedRunnable(), new DefaultRedirectHandler(), null);
+    }
+
+    private UrlRunnable closeHandler;
+    private UrlRunnable redirectHandler;
+
+    public OAuthDialog(Context context, String url, UrlRunnable closeHandler, UrlRunnable redirectHandler, String redirectUrlPath) {
         super(context, android.R.style.Theme_Translucent_NoTitleBar);
+
+        this.closeHandler = closeHandler;
+        this.redirectHandler = redirectHandler;
 
         mUrl = url;
 
-        try {
-            Matcher m = Pattern.compile(".*redirect_uri=([^&]+).*").matcher((new URL(url)).getQuery());
+        if (redirectUrlPath != null) {
+            mRedirectUrlPath = redirectUrlPath;
+        } else {
+            try {
+                Matcher m = Pattern.compile(".*redirect_uri=([^&]+).*").matcher((new URL(url)).getQuery());
 
-            if (m.matches ()) {
-                mRedirectUrlPath = (new URL(java.net.URLDecoder.decode(m.group(1), "ASCII"))).getPath();
-            }            
+                if (m.matches ()) {
+                    mRedirectUrlPath = (new URL(java.net.URLDecoder.decode(m.group(1), "ASCII"))).getPath();
+                }
+            }
+            catch (MalformedURLException e) {}
+            catch (java.io.UnsupportedEncodingException e) {}            
         }
-        catch (MalformedURLException e) {}
-        catch (java.io.UnsupportedEncodingException e) {}
     }
 
     @Override
@@ -146,31 +162,35 @@ public class OAuthDialog extends Dialog {
 
     public void close() {
         dismiss();
-        LightView.instance.queueEvent(new DialogClosedRunnable(mRedirectUrlPath + "#error=access_denied"));
+        if (closeHandler != null) {
+            LightView.instance.queueEvent(new Runnable() { @Override public void run() { closeHandler.run(mRedirectUrlPath + "#error=access_denied"); }});
+        }
     }
 
     private class WebViewClient extends android.webkit.WebViewClient {
-        private native void camlOauthRedirected(String url);
-
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.d("LIGHTNING", "shouldOverrideUrlLoading " + url);
 
-            try {
-                if (mRedirectUrlPath.contentEquals((new URL(url)).getPath())) {
-                    final String _url = new String(url);
+            if (redirectHandler != null) {
+                try {
+                    Log.d("LIGHTNING", "mRedirectUrlPath " + mRedirectUrlPath);
+                    Log.d("LIGHTNING", "(new URL(url)).getPath() " + (new URL(url)).getPath());
+                    if (mRedirectUrlPath != null && mRedirectUrlPath.contentEquals((new URL(url)).getPath())) {
+                        final String _url = new String(url);
 
-                    LightView.instance.queueEvent(new Runnable() {
-                        public void run() {
-                            camlOauthRedirected(_url);
-                        }
-                    });
+                        LightView.instance.queueEvent(new Runnable() {
+                            public void run() {
+                                redirectHandler.run(_url);
+                            }
+                        });
 
-                    mSpinner.dismiss();
-                    OAuthDialog.this.dismiss();
-                    return true;
-                }
-            } catch (MalformedURLException e) {}
+                        mSpinner.dismiss();
+                        OAuthDialog.this.dismiss();
+                        return true;
+                    }
+                } catch (MalformedURLException e) {}
+            }
 
             return false;
         }

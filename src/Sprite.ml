@@ -2,7 +2,6 @@ open LightCommon;
 
 module D = DisplayObject;
 
-
 type cache_valid = [ CInvalid | CEmpty | CValid ];
 type imageCache = 
   {
@@ -112,8 +111,9 @@ class c =
                  self#setAlpha 1.;
                  draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
                    (
+                    debug:drawf "sprite none glow drawf";
                      Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
-                     Render.clear 0 0.;
+                     (* Render.clear 0 0.; *)
                      super#render' ~transform:False None;
                      Render.restore_matrix ();
                    )
@@ -133,17 +133,17 @@ class c =
                    let alpha' = alpha in
                    (
                      self#setAlpha 1.;
-                     let ctex = RenderTexture.draw ~filter:Texture.FilterNearest rw rh begin fun _ ->
-                       (
+                     let ctex = RenderTexture.draw ~filter:Texture.FilterNearest ~dedicated:True rw rh begin fun _ ->
+                       (                        
                          Render.push_matrix m;
-                         Render.clear 0 0.;
+                         (* Render.clear 0 0.; *)
                          super#render' ~transform:False None;
-                         Render.restore_matrix ();
+                         Render.restore_matrix ();                         
                        )
                      end in
                      (
                        self#setAlpha alpha';
-                       ctex
+                       ctex;
                      )
                    )
                  in
@@ -151,7 +151,8 @@ class c =
                    let cimg = Render.Image.create ctex#renderInfo ~color:`NoColor ~alpha:1. in
                    draw_texture rw rh begin fun fb ->
                      (
-                       Render.clear 0 0.;
+                      debug:drawf "sprite some glow drawf";
+                       (* Render.clear 0 0.; *)
                        Render.Image.render Matrix.identity (GLPrograms.Image.Normal.create ()) cimg;
                        match glow.Filters.glowKind with
                        [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
@@ -167,11 +168,12 @@ class c =
            ];
            c.valid := CValid; 
          )
-    | Some _ -> assert False (* FIXME: иногда срабатывает этот ассерт *)
+    | Some _ -> ()
+(* 		assert False (* FIXME: иногда срабатывает этот ассерт *) *)
     | _ -> ()
     ];
 
-    method setFilters fltrs = 
+    method setFilters fltrs =
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
       (
         filters := fltrs;

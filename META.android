@@ -3,11 +3,28 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm ojson redspell.debug"
 
+package "whatsapp" (
+  description="Whatsapp"
+  archive(byte) = "whatsapp.cma"
+  archive(native) = "whatsapp.cmxa"
+)
+
+package "instagram" (
+  description="Instagram"
+  archive(byte) = "instagram.cma"
+  archive(native) = "instagram.cmxa"
+)
 
 package "tapjoy" (
   description="Tapjoy Connect"
   archive(byte) = "tapjoy.cma"
   archive(native) = "tapjoy.cmxa"
+)
+
+package "twitter" (
+  description="Twitter"
+  archive(byte) = "twitter.cma"
+  archive(native) = "twitter.cmxa"
 )
 
 package "chartboost" (
@@ -57,6 +74,12 @@ package "syntax" (
 	)
 )
 
+package "facebook" (
+  description="Facebook API"
+  archive(byte) = "facebook.cma"
+  archive(native) = "facebook.cmxa"
+)
+
 package "social" (
 
   archive(bytes) = "SNTypes.cmi"
@@ -94,5 +117,4 @@ package "social" (
     archive(native) = "ok.cmx"
     requires = "lightning.social.oauth"
   )
-  
 )
