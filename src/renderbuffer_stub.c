@@ -339,6 +339,7 @@ value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value t
 		realH = nextDBE(ceil(h));
 	}
 
+	// закэшировать нах. этот ебанный фреймбуффер и вьюпорт, без выеба GL
 	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), w, h, realW, realH, &rb, dedicated == Val_true)) {
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);

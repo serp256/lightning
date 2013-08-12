@@ -25,6 +25,7 @@ package "tapjoy" (
   description="Tapjoy Connect"
   archive(byte) = "tapjoy.cma"
   archive(native) = "tapjoy.cmxa"
+	linkopts = "-ccopt '-F%lightning_path%/src/plugins/tapjoy/ios'"
 )
 
 package "flurry" (

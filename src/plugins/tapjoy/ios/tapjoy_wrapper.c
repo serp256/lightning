@@ -1,9 +1,17 @@
-#import "TapjoyConnectConstants.h"
-#import "TapjoyConnect.h"
-#include "tapjoy_wrapper.h"
-#import "../../ios/LightViewController.h"
+//#import "TapjoyConnectConstants.h"
+#import <Tapjoy/Tapjoy.h>
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <caml/memory.h>
+#import <caml/mlvalues.h>
+#import <caml/alloc.h>
+
+
+#import "../../ios/LightViewController.h"
+
+
+
+#define STR_CAML2OBJC(mlstr) [NSString stringWithCString:String_val(mlstr) encoding:NSASCIIStringEncoding]
 
 @interface TapjoyOffersController : UIViewController {
   NSString * _currency;
@@ -36,9 +44,9 @@
 	self.view = view;
   
   if (self.currency) {
-    [TapjoyConnect showOffersWithCurrencyID:self.currency withViewController:self withCurrencySelector:self.currencySelectorVisible];
+    [Tapjoy showOffersWithCurrencyID:self.currency withViewController:self withCurrencySelector:self.currencySelectorVisible];
   } else {
-    [TapjoyConnect showOffersWithViewController:self];
+    [Tapjoy showOffersWithViewController:self];
   } 
   [[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(tapjoyOffersClosed) name:TJC_VIEW_CLOSED_NOTIFICATION object:nil];
 }
@@ -50,8 +58,8 @@
  */
 void ml_tapjoy_init(value appid, value skey) {
     CAMLparam2(appid, skey);
-		[TapjoyConnect enableLogging:YES];
-    [TapjoyConnect requestTapjoyConnect: STR_CAML2OBJC(appid) secretKey: STR_CAML2OBJC(skey)];
+		[Tapjoy enableLogging:YES];
+    [Tapjoy requestTapjoyConnect: STR_CAML2OBJC(appid) secretKey: STR_CAML2OBJC(skey)];
     CAMLreturn0;    
 }
 
@@ -61,7 +69,7 @@ void ml_tapjoy_init(value appid, value skey) {
  */
 void ml_tapjoy_set_user_id(value userid) {
   CAMLparam1(userid);
-  [TapjoyConnect setUserID: STR_CAML2OBJC(userid)];
+  [Tapjoy setUserID: STR_CAML2OBJC(userid)];
   CAMLreturn0;
 }
 
@@ -71,7 +79,7 @@ void ml_tapjoy_set_user_id(value userid) {
  */
 CAMLprim value ml_tapjoy_get_user_id() {
   CAMLparam0();
-  CAMLreturn(caml_copy_string([[TapjoyConnect getUserID] UTF8String]));
+  CAMLreturn(caml_copy_string([[Tapjoy getUserID] UTF8String]));
 }
 
 /*
@@ -79,7 +87,7 @@ CAMLprim value ml_tapjoy_get_user_id() {
  */
 void ml_tapjoy_action_complete(value action) {
   CAMLparam1(action);
-  [TapjoyConnect actionComplete: STR_CAML2OBJC(action)];
+  [Tapjoy actionComplete: STR_CAML2OBJC(action)];
   CAMLreturn0;
 }
 
