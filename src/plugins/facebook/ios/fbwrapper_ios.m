@@ -414,3 +414,57 @@ value ml_fbGraphrequest(value path, value params, value successCallback, value f
 
 		return Val_unit;
 }
+
+value ml_fb_share_pic_using_native_app(value v_fname, value v_text) {
+    return Val_false;
+}
+
+value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text) {
+    CAMLparam4(v_fname, v_text, v_success, v_fail);
+
+    value* success;
+    value* fail;
+
+    REGISTER_CALLBACK(v_success, success);
+    REGISTER_CALLBACK(v_fail, fail);
+
+    NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
+    UIImage* img = [UIImage imageWithContentsOfFile:path];
+
+    BOOL displayedNativeDialog = [FBDialogs
+        presentOSIntegratedShareDialogModallyFrom:[LightViewController sharedInstance]
+        initialText:[NSString stringWithUTF8String:String_val(v_text)]
+        image:img
+        url:nil
+        handler:^(FBOSIntegratedShareDialogResult result, NSError *error) {
+            if (!error) {
+                switch (result) {
+                    case FBOSIntegratedShareDialogResultSucceeded:
+                        if (success) caml_callback(*success, Val_unit);
+                        break;
+
+                    case FBOSIntegratedShareDialogResultCancelled:
+                        if (fail) caml_callback(*fail, caml_copy_string("cancelled"));
+                        break;
+
+                    case FBOSIntegratedShareDialogResultError:
+                        if (fail) caml_callback(*fail, caml_copy_string("cancelled"));
+                        break;
+                }                
+            } else {
+                if (fail) caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));
+            }
+
+            FREE_CALLBACK(success);
+            FREE_CALLBACK(fail);             
+        }];
+
+    if (!displayedNativeDialog) {
+        if (fail) caml_callback(*fail, caml_copy_string("cannot display dialog"));
+
+        FREE_CALLBACK(success);
+        FREE_CALLBACK(fail);        
+    }
+
+    CAMLreturn(Val_unit);
+}

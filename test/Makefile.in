@@ -38,7 +38,7 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	  -ccopt -L../src/plugins/supersonic/ios -ccopt -L../src/plugins/supersonic ../src/plugins/supersonic/supersonic.cmxa\
 	  -ccopt -L../src/plugins/sponsorpay/ios -ccopt -L../src/plugins/sponsorpay ../src/plugins/sponsorpay/sponsorpay.cmxa\
 	  -ccopt -L../src/plugins/twitter/ios -ccopt -L../src/plugins/twitter ../src/plugins/twitter/twitter.cmxa\
-	  -ccopt -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa\
+	  -ccopt -F../src/plugins/tapjoy/ios -ccopt -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa\
 	  -ccopt -L../src/plugins/twitter ../src/plugins/twitter/twitter.cmxa\
 	  -ccopt -L../src/plugins/instagram ../src/plugins/instagram/instagram.cmxa\
 	  -ccopt -L../src/plugins/whatsapp ../src/plugins/whatsapp/whatsapp.cmxa\

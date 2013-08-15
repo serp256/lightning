@@ -16,12 +16,12 @@ value sharePic ?success ?fail ~fname ~text connect = ();
 
 ELSE
 
-IFDEF ANDROID THEN
-external sharePicUsingNativeApp: ~fname:string -> ~text:string -> unit -> bool = "ml_fb_share_pic_using_native_app";
-external sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit = "ml_fb_share_pic";
-ELSE
+IFDEF PC THEN
 value sharePicUsingNativeApp ~fname ~text () = False;
 value sharePic ?success ?fail ~fname ~text connect = ();
+ELSE
+external sharePicUsingNativeApp: ~fname:string -> ~text:string -> unit -> bool = "ml_fb_share_pic_using_native_app";
+external sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit = "ml_fb_share_pic";
 ENDIF;
 
 type status = [ NotConnected | Connecting | Connected ];

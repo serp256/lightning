@@ -10,5 +10,5 @@ value apprequest: ~title:string -> ~message:string -> ?recipient:string -> ?data
 (* value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?successCallback:(Ojson.json -> unit) -> ?failCallback:(string -> unit) -> connect -> unit; *)
 value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?successCallback:(string -> unit) -> ?failCallback:(string -> unit) -> connect -> unit;
 value disconnect: connect -> unit;
-value sharePicUsingNativeApp: ~fname:string -> ~text:string -> unit -> bool; (* text skipped on android *)
+value sharePicUsingNativeApp: ~fname:string -> ~text:string -> unit -> bool; (* this method works only on android, share on ios using next method; text parameter skipped now due to facebook policy *)
 value sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit;
