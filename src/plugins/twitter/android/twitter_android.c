@@ -9,7 +9,7 @@ value ml_init(value v_consumerKey, value v_consumerSecret) {
 	CAMLparam2(v_consumerKey, v_consumerSecret);
 
 	if (!Is_block(v_consumerKey) || !Is_block(v_consumerSecret)) {
-		caml_failwith("consumerKey and consumerSecret on Android shouldn't be None values");
+		caml_failwith("consumerKey and consumerSecret on Android must be Some _ values");
 	}
 
 	GET_ENV;
