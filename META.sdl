@@ -57,12 +57,6 @@ package "facebook" (
 	archive(native) = "facebook.cmxa"
 )
 
-package "facebook" (
-	description="Facebook API"
-	archive(byte) = "facebook.cma"
-	archive(native) = "facebook.cmxa"
-)
-
 package "social" (
 
   archive(bytes) = "SNTypes.cmi"
