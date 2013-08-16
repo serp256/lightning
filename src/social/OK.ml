@@ -168,11 +168,11 @@ value call_method ?delegate meth params =
 
   let show_auth () =  (* функция показа авторизации. при успехе выполняем REST метод *)
     let redirect_uri = "http://api.odnoklassniki.ru/success.html"
-    and params = [("client_secret", P.private_key)] in
-    let params = 
+    and params' = [("client_secret", P.private_key)] in
+    let params' = 
       match P.permissions with
-      [ [] -> params
-      | perms -> [ ("scope", (scope_of_perms perms)) :: params ]
+      [ [] -> params'
+      | perms -> [ ("scope", (scope_of_perms perms)) :: params' ]
       ] 
     and callback = fun 
       [ OAuth.Token  t ->  
@@ -194,7 +194,7 @@ value call_method ?delegate meth params =
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
     in 
-    OAuth.authorization_grant ~client_id:P.appid ~auth_endpoint ~gtype:(OAuth.Code token_endpoint) ~redirect_uri  ~params ~close_button callback
+    OAuth.authorization_grant ~client_id:P.appid ~auth_endpoint ~gtype:(OAuth.Code token_endpoint) ~redirect_uri  ~params:params' ~close_button callback
   in
   let refresh_token rtoken =  (* функция рефреша токена. если не получилось зарефрешить - поднимаем авторизацию *)
     let callback = fun 
