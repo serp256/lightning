@@ -99,6 +99,8 @@ value call_method' meth access_token params callback =
   let params = [("access_token", access_token) :: params ] in
   let url = Printf.sprintf "https://api.vk.com/method/%s?%s" meth (UrlEncoding.mk_url_encoded_parameters params) in
   let () = debug "url %s" url in
+  let () = debug "perms %s" (scope_of_perms P.permissions) in
+  let () = debug "call_method' %s : %s" meth (String.concat "; " (List.map (fun (p,v) -> p ^ "=" ^ v) params)) in
   let loader = new URLLoader.loader ()  in (    
 
     ignore (
@@ -148,7 +150,6 @@ value call_method ?delegate meth params =
   (* функция показа авторизации. при успехе выполняем REST метод *)
   let show_auth () = 
     let redirect_uri = "http://api.vk.com/blank.html"
-    and params = [("display", "touch"); ("scope", "friends,notify")]
     and callback = fun 
       [ OAuth.Token  t ->
         let () = debug "OAuth.Token t" in
@@ -168,7 +169,15 @@ value call_method ?delegate meth params =
           ]
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
-    in OAuth.authorization_grant ~client_id:P.appid ~auth_endpoint ~gtype:OAuth.Implicit ~redirect_uri ~params callback
+    and params' = [("display", "touch")] 
+    in
+    let params' = 
+      match P.permissions with
+      [ [] -> params'
+      | perms -> [ ("scope", (scope_of_perms perms)) :: params' ]
+      ] 
+    in
+    OAuth.authorization_grant ~client_id:P.appid ~auth_endpoint ~gtype:OAuth.Implicit ~redirect_uri ~params:params' callback
 
   in try 
     let (access_token,token_expires) = 
