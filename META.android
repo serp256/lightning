@@ -57,6 +57,12 @@ package "mobileapptracking" (
 	archive(native)="mobileapptracking.cmxa"
 )
 
+package "appsflyer" (
+	description="AppsFLyer"
+	archive(byte)="appsflyer.cma"
+	archive(native)="appsflyer.cmxa"
+)
+
 package "sponsorpay" (
 	description="SponsorPay SDK"
 	archive(byte) = "sponsorpay.cma"

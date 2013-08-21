@@ -44,6 +44,11 @@ package "mobileapptracking" (
 	archive(native)="mobileapptracking.cmxa"
 )
 
+package "appsflyer" (
+	description="AppsFLyer"
+	archive(byte)="appsflyer.cma"
+	archive(native)="appsflyer.cmxa"
+)
 
 package "tapjoy" (
   description="Tapjoy Connect"
