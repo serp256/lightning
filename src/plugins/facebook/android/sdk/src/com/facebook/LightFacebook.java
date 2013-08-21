@@ -19,7 +19,6 @@ import android.content.Intent;
 
 import ru.redspell.lightning.utils.Log;
 import ru.redspell.lightning.LightActivity;
-import ru.redspell.lightning.LightActivityResultHandler;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -28,6 +27,106 @@ import android.net.Uri;
 public class LightFacebook {
     private static String appId;
     public static Session session;
+
+    private static Session.StatusCallback sessionCallback = new Session.StatusCallback() {
+        @Override
+        public void call(Session session, SessionState state, Exception exception) {
+            Log.d("LIGHTNING", "Session.StatusCallback call " + state.toString());
+
+            switch (state) {
+                case OPENED:
+                    if (extraPermsState == EXTRA_PERMS_NOT_REQUESTED) {
+                        requestReadPerms();    
+                    }
+                    
+                    break;
+
+                case OPENED_TOKEN_UPDATED:
+                    switch (extraPermsState) {
+                        case READ_PERMS_REQUESTED:
+                            readPerms.clear();
+                            readPerms = null;
+                            requestPublishPerms();
+
+                            break;
+
+                        case PUBLISH_PERMS_REQUESTED:
+                            publishPerms.clear();
+                            publishPerms = null;
+                            extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
+                            connectSuccess();
+                            
+                            break;
+                    }
+
+                    break;
+
+                case CLOSED:
+                    if (LightFacebook.session != null) {
+                        LightFacebook.session.closeAndClearTokenInformation();
+                    }
+
+                    LightActivity.instance.lightView.queueEvent(new CamlNamedValueRunnable("fb_sessionClosed"));
+
+                    break;
+
+                case CLOSED_LOGIN_FAILED:
+                    if (LightFacebook.session != null) {
+                        LightFacebook.session.closeAndClearTokenInformation();
+                    }
+
+                    fbError(exception);
+
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    };
+
+    private static class UiLifecycleHelper implements ru.redspell.lightning.IUiLifecycleHelper {
+        private com.facebook.UiLifecycleHelper backend;
+        private com.facebook.widget.FacebookDialog.Callback callback;
+
+        public UiLifecycleHelper(com.facebook.widget.FacebookDialog.Callback callback) {
+            backend = new com.facebook.UiLifecycleHelper(LightActivity.instance, sessionCallback);
+            this.callback = callback;
+        }
+
+        public void onCreate(Bundle savedInstanceState) {
+            backend.onCreate(savedInstanceState);
+        }
+
+        public void onResume() {
+            backend.onResume();
+        }
+
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            Log.d("LIGHTNING", "onActivityResult UiLifecycleHelper");
+            backend.onActivityResult(requestCode, resultCode, data, callback);
+        }
+
+        public void onSaveInstanceState(Bundle outState) {
+            backend.onSaveInstanceState(outState);
+        }
+
+        public void onPause() {
+            backend.onPause();
+        }
+
+        public void onStop() {
+            backend.onStop();
+        }
+
+        public void onDestroy() {
+            backend.onDestroy();
+        }
+
+        public void trackPendingDialogCall(com.facebook.widget.FacebookDialog.PendingCall pendingCall) {
+            backend.trackPendingDialogCall(pendingCall);
+        }
+    }
 
     private static class CamlCallbackRunnable implements Runnable {
         protected int callback;
@@ -142,15 +241,23 @@ public class LightFacebook {
 
     public static void init(String appId) {
         LightFacebook.appId = appId;
-				LightActivity.instance.addOnActivityResultHandler(new LightActivityResultHandler() {
-					@Override
-					public void onActivityResult(int requestCode, int resultCode, Intent data) {
-						com.facebook.Session session = com.facebook.Session.getActiveSession();
-						if (session != null) {
-							session.onActivityResult(LightActivity.instance, requestCode, resultCode, data);	
-						}
-					}
-				});
+
+        LightActivity.instance.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
+            public void onCreate(Bundle savedInstanceState) {}
+            public void onResume() {}
+
+            public void onActivityResult(int requestCode, int resultCode, Intent data) {
+                com.facebook.Session session = com.facebook.Session.getActiveSession();
+                if (session != null) {
+                    session.onActivityResult(LightActivity.instance, requestCode, resultCode, data);
+                }
+            }
+
+            public void onSaveInstanceState(Bundle outState) {}
+            public void onPause() {}
+            public void onStop() {}
+            public void onDestroy() {}
+        });
     }
 
     private static ArrayList readPerms = null;
@@ -262,89 +369,7 @@ public class LightFacebook {
             }
         }
 
-        LightFacebook.session = openActiveSession(LightActivity.instance, true, new Session.StatusCallback() {
-            @Override
-            public void call(Session session, SessionState state, Exception exception) {
-                Log.d("LIGHTNING", "Session.StatusCallback call " + state.toString());
-
-                switch (state) {
-                    case OPENED:
-                        if (extraPermsState == EXTRA_PERMS_NOT_REQUESTED) {
-                            requestReadPerms();    
-                        }
-                        
-                        break;
-
-                    case OPENED_TOKEN_UPDATED:
-                        switch (extraPermsState) {
-                            case READ_PERMS_REQUESTED:
-                                readPerms.clear();
-                                readPerms = null;
-                                requestPublishPerms();
-
-                                break;
-
-                            case PUBLISH_PERMS_REQUESTED:
-                                publishPerms.clear();
-                                publishPerms = null;
-                                extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
-                                connectSuccess();
-                                
-                                break;
-                        }
-
-                        break;
-
-                    case CLOSED:
-                        if (LightFacebook.session != null) {
-                            LightFacebook.session.closeAndClearTokenInformation();
-                        }
-
-                        LightActivity.instance.lightView.queueEvent(new CamlNamedValueRunnable("fb_sessionClosed"));
-
-                        break;
-
-                    case CLOSED_LOGIN_FAILED:
-                        if (LightFacebook.session != null) {
-                            LightFacebook.session.closeAndClearTokenInformation();
-                        }
-
-                        fbError(exception);
-
-                        break;
-
-                    default:
-                        break;
-                }
-
-/*                if (state.isOpened()) {
-                    if (exception == null) {
-                        Log.d("LIGHTNING", "session opened");
-                        requestReadPerms();
-                    } else {
-                        Log.d("LIGHTNING", "login is opened with error");
-
-                        fbError(exception);
-                    }
-                } else if (state == SessionState.CLOSED_LOGIN_FAILED) {
-                    Log.d("LIGHTNING", "login failed " + exception.getMessage());
-
-                    if (LightFacebook.session != null) {
-                        LightFacebook.session.closeAndClearTokenInformation();
-                    }
-
-                    fbError(exception);
-                } else if (state == SessionState.CLOSED) {
-                    Log.d("LIGHTNING", "session closed");
-
-                    if (LightFacebook.session != null) {
-                        LightFacebook.session.closeAndClearTokenInformation();
-                    }
-
-                    LightView.instance.queueEvent(new CamlNamedValueRunnable("fb_sessionClosed"));                    
-                }*/
-            }
-        });
+        LightFacebook.session = openActiveSession(LightActivity.instance, true, sessionCallback);
 
         Log.d("LIGHTNING", "lightfacebook session " + (LightFacebook.session == null ? "null" : "not null"));
     }
@@ -539,5 +564,36 @@ public class LightFacebook {
         }
 
         return false;
+    }
+
+    public static void shareDialogTest() {
+        try {
+            com.facebook.widget.FacebookDialog.ShareDialogBuilder bldr = new com.facebook.widget.FacebookDialog.ShareDialogBuilder(LightActivity.instance)
+                // .setName("pizda lala")
+                .setLink("http://ya.ru");
+                // .setPicture("file:///sdcard/tree.png");
+
+            if (bldr.canPresent()) {
+                com.facebook.widget.FacebookDialog.Callback callback = new com.facebook.widget.FacebookDialog.Callback() {
+                    public void onComplete(com.facebook.widget.FacebookDialog.PendingCall pendingCall, Bundle data) {
+                        Log.d("LIGHTNING", "share dialog complete");
+                    }
+
+                    public void onError(com.facebook.widget.FacebookDialog.PendingCall pendingCall, Exception error, Bundle data) {
+                        Log.d("LIGHTNING", "share dialog error " + error.toString());
+                        Log.d("LIGHTNING", "pendingCall " + pendingCall.toString());
+                        Log.d("LIGHTNING", "data " + data.toString());
+                    }
+                };
+
+                UiLifecycleHelper helper = new UiLifecycleHelper(callback);
+                LightActivity.instance.addUiLifecycleHelper(helper);
+                helper.trackPendingDialogCall(bldr.build().present());
+            } else {
+                Log.d("LIGHTNING", "cannot present share dialog");
+            }                     
+        } catch (java.lang.Exception e) {
+            Log.d("LIGHTNING", "fail when displaying share dialog " + e.toString());
+        }
     }
 }

@@ -106,4 +106,6 @@ value graphrequestSuccess json callback = callback json;
 
 value graphrequest ~path ?params ?successCallback ?failCallback connect = _graphrequest path params successCallback failCallback;
 
+external testShareDialog: unit -> unit = "ml_fbTestShareDialog";
+
 ENDIF;

@@ -474,3 +474,13 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
 
     CAMLreturn(Val_unit);
 }
+
+value ml_fbTestShareDialog() {
+    GET_LIGHTFACEBOOK;
+
+    static jmethodID mid = 0;
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "shareDialogTest", "()V");
+    (*env)->CallStaticVoidMethod(env, lightFacebookCls, mid);
+
+    return Val_unit;
+}

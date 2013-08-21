@@ -12,3 +12,5 @@ value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?success
 value disconnect: connect -> unit;
 value sharePicUsingNativeApp: ~fname:string -> ~text:string -> unit -> bool; (* this method works only on android, share on ios using next method; text parameter skipped now due to facebook policy *)
 value sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit;
+
+value testShareDialog: unit -> unit;

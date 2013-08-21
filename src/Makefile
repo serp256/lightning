@@ -23,7 +23,7 @@ MLDEPFLAGS =
 
 byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa social_native appsflyer.cmxa
 syntax: syntax/pa_prop.cmo
 
 
@@ -206,6 +206,12 @@ twitter.cma:
 twitter.cmxa:
 	make -C plugins/twitter twitter.cmxa
 
+appsflyer.cma:
+	make -C plugins/appsflyer appsflyer.cma
+
+appsflyer.cmxa:
+	make -C plugins/appsflyer appsflyer.cmxa
+
 instagram.cma:
 	make -C plugins/instagram instagram.cma
 
@@ -248,5 +254,6 @@ clean:
 	$(MAKE) -C plugins/twitter clean
 	$(MAKE) -C plugins/instagram clean
 	$(MAKE) -C plugins/whatsapp clean
+	$(MAKE) -C plugins/appsflyer clean
 
 -include MLDepend.$(PLATFORM)
