@@ -5,25 +5,31 @@ static jclass twitterCls = NULL;
 
 #define GET_CLS GET_PLUGIN_CLASS(twitterCls,ru/redspell/lightning/plugins/LightTwitter);
 
+static int inited = 0;
+
 value ml_init(value v_consumerKey, value v_consumerSecret) {
 	CAMLparam2(v_consumerKey, v_consumerSecret);
 
-	if (!Is_block(v_consumerKey) || !Is_block(v_consumerSecret)) {
-		caml_failwith("consumerKey and consumerSecret on Android shouldn't be None values");
+	if (!inited) {
+		inited = 1;
+
+		if (!Is_block(v_consumerKey) || !Is_block(v_consumerSecret)) {
+			caml_failwith("consumerKey and consumerSecret on Android must be Some _ values");
+		}
+
+		GET_ENV;
+		GET_CLS;
+
+		JString_val(j_consumerSecret, Field(v_consumerSecret, 0));
+		JString_val(j_consumerKey, Field(v_consumerKey, 0));
+
+		static jmethodID mid = 0;
+		if (!mid) mid = (*env)->GetStaticMethodID(env, twitterCls, "init", "(Ljava/lang/String;Ljava/lang/String;)V");
+
+		(*env)->CallStaticVoidMethod(env, twitterCls, mid, j_consumerKey, j_consumerSecret);
+		(*env)->DeleteLocalRef(env, j_consumerKey);
+		(*env)->DeleteLocalRef(env, j_consumerSecret);		
 	}
-
-	GET_ENV;
-	GET_CLS;
-
-	JString_val(j_consumerSecret, Field(v_consumerSecret, 0));
-	JString_val(j_consumerKey, Field(v_consumerKey, 0));
-
-	static jmethodID mid = 0;
-	if (!mid) mid = (*env)->GetStaticMethodID(env, twitterCls, "init", "(Ljava/lang/String;Ljava/lang/String;)V");
-
-	(*env)->CallStaticVoidMethod(env, twitterCls, mid, j_consumerKey, j_consumerSecret);
-	(*env)->DeleteLocalRef(env, j_consumerKey);
-	(*env)->DeleteLocalRef(env, j_consumerSecret);
 
 	CAMLreturn(Val_unit);
 }
