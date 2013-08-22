@@ -20,3 +20,4 @@
 	}
 
 #define JString_val(jstr,val) jstring jstr = (*env)->NewStringUTF(env, String_val(val));
+#define JString_optval(jstr,val) jstring jstr = Is_block(val) ? (*env)->NewStringUTF(env, String_val(Field(val,0))) : NULL;

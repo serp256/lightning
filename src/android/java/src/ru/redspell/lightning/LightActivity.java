@@ -23,7 +23,6 @@ import com.google.android.vending.expansion.downloader.IDownloaderService;
 import ru.redspell.lightning.expansions.LightExpansionsDownloadService;
 import ru.redspell.lightning.expansions.XAPKFile;
 import ru.redspell.lightning.LightView;
-import ru.redspell.lightning.LightActivityResultHandler;
 import android.content.res.TypedArray;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -48,6 +47,16 @@ import com.google.android.gms.common.Scopes;*/
 
 
 public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
+	private static ArrayList<IUiLifecycleHelper> uiLfcclHlprs = new ArrayList();
+
+	public static void addUiLifecycleHelper(IUiLifecycleHelper helper) {
+		uiLfcclHlprs.add(helper);	
+	}
+
+	public static void removeUiLifecycleHelper(IUiLifecycleHelper helper) {
+		uiLfcclHlprs.remove(helper);
+	}
+
 	public static LightActivity instance = null;
 
 	protected XAPKFile[] expansions = {};
@@ -64,60 +73,14 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 	public AbsoluteLayout viewGrp;
 	public static boolean isRunning = false;
-	private ArrayList<LightActivityResultHandler> onActivityResultHandlers = new ArrayList();
-	public void addOnActivityResultHandler(LightActivityResultHandler h) {
-		onActivityResultHandlers.add(h);
-	}
-
-/*
-	private PlusClient mPlusClient;
-
-
-	public void onConnected() {
-		Log.d("LIGHTNING", "!!!!!!!!!!!!!onConnected");
-	}
-
-	public void onDisconnected() {
-		Log.d("LIGHTNING", "!!!!!!!!!!!!!onDisconnected");
-	}
-
-	public void onConnectionFailed(ConnectionResult result) {
-		Log.d("LIGHTNING", "!!!!!!!!!!!!!onConnectionFailed");
-	}
-*/
-
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
-		// mPlusClient = new PlusClient(this, this, this, Scopes.PLUS_PROFILE);
-
 		instance = this;
 
-		// rescheduleNotifications(this);
-
-		// savedState = savedInstanceState != null ? savedInstanceState : new Bundle();
-		//Log.d("LIGHTNING", "savedState " + (savedInstanceState != null));
-		//Log.d("LIGHTNING", "intent " + (getIntent()).toString());
-
-/*		if (savedState != null) {
-			ArrayList<Bundle> notifs = savedState.getParcelableArrayList(SAVED_STATE_NOTIFS_KEY);
-			
-			if (notifs == null) {
-				Log.d("LIGHTNING", "notifs null");
-			} else {
-				Iterator<Bundle> iter = notifs.iterator();
-
-				while (iter.hasNext()) {
-					Bundle notifBundle = iter.next();
-
-					Log.d("LIGHTNING", notifBundle.getString(LightNotifications.NOTIFICATION_ID_KEY));
-					Log.d("LIGHTNING", new Double((notifBundle.getDouble(LightNotifications.NOTIFICATION_FIREDATE_KEY))).toString());
-					Log.d("LIGHTNING", notifBundle.getString(LightNotifications.NOTIFICATION_MESSAGE_KEY));
-				}
-			}
-		}*/
+		Log.d("LIGHTNING", "savedState " + (savedInstanceState != null));
 		
 		super.onCreate(savedInstanceState);
 
@@ -139,6 +102,11 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		viewGrp.addView(lightView = new LightView(this));
 		setContentView(viewGrp);
 
+		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
+		while (iter.hasNext()) {
+			IUiLifecycleHelper h = iter.next();
+			h.onCreate(savedInstanceState);
+		}
 	}
 
 	public boolean startExpansionDownloadService() {
@@ -226,6 +194,12 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		isRunning = false;
 		super.onPause();
 		lightView.onPause();
+
+		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
+		while (iter.hasNext()) {
+			IUiLifecycleHelper h = iter.next();
+			h.onPause();
+		}		
 	}
 
 	@Override
@@ -236,7 +210,13 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 		if (null != mDownloaderClientStub) {
 			mDownloaderClientStub.connect(this);
-		}		
+		}
+
+		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
+		while (iter.hasNext()) {
+			IUiLifecycleHelper h = iter.next();
+			h.onResume();
+		}
 	}
 
 	@Override
@@ -246,8 +226,12 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 			mDownloaderClientStub.disconnect(this);
 		}
 		super.onStop();
-		// this.cb.onStop(this);
-		// mPlusClient.disconnect();
+
+		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
+		while (iter.hasNext()) {
+			IUiLifecycleHelper h = iter.next();
+			h.onStop();
+		}
 	}
 
 	@Override
@@ -265,7 +249,11 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 			LightGooglePayments.instance.contextDestroyed(this);
 		}
 
-		// this.cb.onDestroy(this);
+		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
+		while (iter.hasNext()) {
+			IUiLifecycleHelper h = iter.next();
+			h.onDestroy();
+		}		
 	}
 
 	@Override
@@ -274,10 +262,10 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 		super.onActivityResult(requestCode, resultCode, data);
 
-		Iterator<LightActivityResultHandler> iter = onActivityResultHandlers.iterator();
+		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
 		while (iter.hasNext()) {
-			LightActivityResultHandler r = iter.next();
-			r.onActivityResult(requestCode,resultCode,data);
+			IUiLifecycleHelper h = iter.next();
+			h.onActivityResult(requestCode, resultCode, data);
 		}
 
 		if (requestCode == LightGooglePayments.REQUEST_CODE && LightGooglePayments.instance != null) {
@@ -285,43 +273,22 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		}
 	}
 
-	/*
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
+		while (iter.hasNext()) {
+			IUiLifecycleHelper h = iter.next();
+			h.onSaveInstanceState(outState);
+		}
+	}
+
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		Log.d("LIGHTNING", "onConfigurationChanged");
 		super.onConfigurationChanged(newConfig);
-	}*/
+	}
 
 	public static void enableLocalExpansions() {
 		com.google.android.vending.expansion.downloader.Constants.LOCAL_EXP_URL = "http://expansions.redspell.ru";
 	}
-
-	private static native void mlSetReferrer(String type,String nid);
-
-	public void convertIntent() {
-		Bundle extras = getIntent().getExtras();
-		if (extras != null) {
-			String nid = extras.getString("localNotification");
-			if (nid != null) mlSetReferrer("local",nid);
-			else {
-				nid = extras.getString("remoteNotification");
-				if (nid != null) mlSetReferrer("remote",nid);
-			}
-		}
-	}
-
-	@Override
-	protected void onNewIntent(Intent intent) {
-		Log.d("LIGHTNING","onNewIntent");
-		setIntent(intent);
-		if (lightView != null) {
-			lightView.queueEvent(new Runnable() {
-			 @Override
-			 public void run() {
-				 convertIntent();
-			 }
-			});
-		}
-	}
-
 }	
