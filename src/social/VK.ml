@@ -115,6 +115,7 @@ value call_method' meth access_token params callback =
         fun _ _ _ -> 
           let cb = 
             try 
+              let () = debug "callback ev_COMPLETE" in
               let json_data = Ojson.from_string loader#data in 
               try 
                 let error = extract_error_from_json json_data
@@ -139,7 +140,7 @@ exception Show_auth;
 
 (* Вызываем REST method. Если нужно, проводим авторизацию *)
 value call_method ?delegate meth params = 
-  
+  let () = debug "call_method %s" meth  in
   let (call_delegate_success, call_delegate_error) =  
     match delegate with 
     [ None -> (fun _ -> (), fun _ -> ())

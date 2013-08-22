@@ -90,6 +90,7 @@ public class OAuthDialog extends Dialog {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("LIGHTNING", "onCreate");
         super.onCreate(savedInstanceState);
         mSpinner = new ProgressDialog(getContext());
         mSpinner.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -118,6 +119,7 @@ public class OAuthDialog extends Dialog {
     }
     
     private void createCrossImage() {
+        Log.d("LIGHTNING", "createCrossImage");
         mCrossImage = new ImageView(getContext());
         mCrossImage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -135,6 +137,7 @@ public class OAuthDialog extends Dialog {
     }
 
     private void setUpWebView(int margin) {
+        Log.d("LIGHTNING", "setUpWebView");
         LinearLayout webViewContainer = new LinearLayout(getContext());
         mWebView = new WebView(getContext());
         mWebView.setVerticalScrollBarEnabled(false);
@@ -161,6 +164,7 @@ public class OAuthDialog extends Dialog {
     }
 
     public void close() {
+        Log.d("LIGHTNING", "close");
         dismiss();
         if (closeHandler != null) {
             LightView.instance.queueEvent(new Runnable() { @Override public void run() { closeHandler.run(mRedirectUrlPath + "#error=access_denied"); }});

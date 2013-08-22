@@ -235,6 +235,7 @@ value oauth_redirected url =
   match !state with 
   [ Authorizing cb ->
       (
+        debug "oauth_redirected";
         cb url;
         try 
           let (url,close_button,callback) = Queue.pop pendings in
