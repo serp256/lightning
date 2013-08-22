@@ -152,7 +152,7 @@ int loadPvrFile3(gzFile gzf, textureInfo *tInfo) {
 	};
 
 	if (header.u32Version != PVRTEX3_IDENT) {
-		ERROR("bad pvr3 version");
+		ERROR("bad pvr3 version: %X",header.u32Version);
 		return 1;
 	};
 

@@ -30,32 +30,49 @@ void performRequest(TWRequest* req, value v_success, value v_fail) {
 			[req performRequestWithHandler:^(NSData *responseData, NSHTTPURLResponse *urlResponse, NSError *error) {
 				if (error != nil) {
 					if (fail) {
-						caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));	
+						NSString *err_msg = [[error localizedDescription] retain];
+						dispatch_async(dispatch_get_main_queue(),^{
+							caml_callback(*fail, caml_copy_string([err_msg UTF8String]));	
+							[err_msg release];
+							UNREG_CALLBACK(success);
+							UNREG_CALLBACK(fail);
+						});
 					}
 				} else {
 					NSArray* errs = [[NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil] valueForKey:@"errors"];
 
 					if (errs == nil) {
 						if (success) {
-							caml_callback(*success, Val_unit);
+							dispatch_async(dispatch_get_main_queue(),^{
+								caml_callback(*success, Val_unit);
+								UNREG_CALLBACK(success);
+								UNREG_CALLBACK(fail);
+							});
 						}
 					} else {
 						if (fail) {
 							NSDictionary* err = [errs objectAtIndex:0];
 
 							if (err) {
-								NSMutableString* mes = [NSMutableString stringWithCapacity:255];
+								NSMutableString* mes = [[NSMutableString alloc] initWithCapacity:255];
 								[mes appendFormat:@"%@(err code %@)", [err valueForKey:@"message"], [err valueForKey:@"code"]];
-								caml_callback(*fail, caml_copy_string([mes UTF8String]));
+								dispatch_async(dispatch_get_main_queue(),^{
+									caml_callback(*fail, caml_copy_string([mes UTF8String]));
+									[mes release];
+									UNREG_CALLBACK(success);
+									UNREG_CALLBACK(fail);
+								});
 							} else {
-								caml_callback(*fail, caml_copy_string("unknown error"));
+								dispatch_async(dispatch_get_main_queue(),^{
+									caml_callback(*fail, caml_copy_string("unknown error"));
+									UNREG_CALLBACK(success);
+									UNREG_CALLBACK(fail);
+								});
 							}
 						}
 					}
 				}
 
-				UNREG_CALLBACK(success);
-				UNREG_CALLBACK(fail);
 
 				[accntStore release];
 				[req release];				
