@@ -434,7 +434,10 @@ value ml_getStoragePath(value unit) {
 #import "OpenUDID.h"
 
 
-value ml_getUDID(value p) {
+static char *mac_address = NULL;
+static const char default_mac_address[12]= "020000000000";
+
+const char* getMacAddress() {
 	int                 mib[6];
   size_t              len;
   char                *buf;
@@ -451,9 +454,7 @@ value ml_getUDID(value p) {
 
   if ((mib[5] = if_nametoindex("en0")) == 0)
   {
-		NSString *udid = [OpenUDID value];
-		if (udid) return caml_copy_string([udid UTF8String]);
-		else caml_failwith("can't get udid");
+		return default_mac_address;
 		/*
 		PRINT_DEBUG("TRY TO GET IDENTIFIER FOR VENDOR");
 		NSString *uuid = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
@@ -488,25 +489,45 @@ value ml_getUDID(value p) {
 
 		if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0)
 		{
-			caml_failwith("Error: sysctl, take 1");
+			//caml_failwith("Error: sysctl, take 1");
+			return default_mac_address;
 		}
 
 		if ((buf = malloc(len)) == NULL)
 		{
-			caml_failwith("Could not allocate memory. error!");
+			//caml_failwith("Could not allocate memory. error!");
+			return default_mac_address;
 		}
 
 		if (sysctl(mib, 6, buf, &len, NULL, 0) < 0)
 		{
-			caml_failwith("Error: sysctl, take 2");
+			//caml_failwith("Error: sysctl, take 2");
+			return default_mac_address;
 		}
 
 		ifm = (struct if_msghdr *)buf;
 		sdl = (struct sockaddr_dl *)(ifm + 1);
 		ptr = (unsigned char *)LLADDR(sdl);
-		value res = caml_alloc_string(2 * 6);
-		sprintf(String_val(res),"%02X%02X%02X%02X%02X%02X",*ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+5));
-		free(buf);
-		return res;
+		if (mac_address == NULL) mac_address = malloc(12);
+		sprintf(mac_address,"%02X%02X%02X%02X%02X%02X",*ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+5));
+		return mac_address;
 	}
+}
+
+
+value ml_getUDID(value p) {
+	CAMLparam0();
+	CAMLlocal1(res);
+	const char* mac_address = getMacAddress();
+	NSString *udid = [OpenUDID value];
+	if (!udid) caml_failwith("can't get udid");
+	// если он дефолтный, то плохо
+	if (!strcmp(mac_address,default_mac_address)) {
+		res = caml_copy_string([udid UTF8String]);
+	} else {
+		size_t len = 2 * 6 + 1 + [udid lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
+		res = caml_alloc_string(len);
+		sprintf(String_val(res),"%s_%s",mac_address,[udid UTF8String]);
+	};
+	CAMLreturn(res);
 }

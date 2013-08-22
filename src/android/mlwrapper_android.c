@@ -245,7 +245,13 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 		PRINT_DEBUG("init ocaml");
 		char *argv[] = {"android",NULL};
 		caml_startup(argv);
+		// insert here get intent
 		ocaml_initialized = 1;
+		// get intent
+		jclass jLightActivityCls = (*env)->GetObjectClass(env,jActivity);
+		jmethodID jm = (*env)->GetMethodID(env,jLightActivityCls,"convertIntent","()V");
+		(*env)->CallVoidMethod(env,jActivity,jm);
+		(*env)->DeleteLocalRef(env,jLightActivityCls);
 		PRINT_DEBUG("caml initialized");
 	};
 }
@@ -837,4 +843,17 @@ value ml_downloadExpansions() {
 
 	(*env)->CallVoidMethod(env, jView, mid);	
 	return Val_unit;
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightActivity_mlSetReferrer(JNIEnv *env, jobject this, jstring jtype, jstring jnid) {
+	CAMLparam0();
+	CAMLlocal2(mltype,mlnid);
+	const char *type = (*env)->GetStringUTFChars(env,jtype,JNI_FALSE);
+	const char *nid = (*env)->GetStringUTFChars(env,jnid,JNI_FALSE);
+	mltype = caml_copy_string(type);
+	mlnid = caml_copy_string(nid);
+	set_referrer_ml(mltype,mlnid);
+	(*env)->DeleteLocalRef(env,jtype);
+	(*env)->DeleteLocalRef(env,jnid);
+	CAMLreturn0;
 }

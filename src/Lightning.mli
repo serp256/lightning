@@ -18,6 +18,8 @@ value malinfo: unit -> malinfo;
 ELSE
 external malinfo: unit -> malinfo = "ml_malinfo";
 ENDIF;
+value getReferrer: unit -> option (string*string);
+value clearReferrer: unit -> unit;
 
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 value request_remote_notifications: list remoteNotification ->  (string -> unit) -> (string -> unit) -> unit;
