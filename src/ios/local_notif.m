@@ -12,7 +12,6 @@ value ml_lnSchedule(value nid, value fireDate, value alertBody) {
         return Val_false;
     }
 
-    NSLog(@"pizda lala: %s", String_val(nid));
 
     notif.fireDate = [NSDate dateWithTimeIntervalSince1970:Double_val(fireDate)];
     notif.alertBody = [NSString stringWithCString:String_val(alertBody) encoding:NSUTF8StringEncoding];

@@ -23,15 +23,16 @@ public class LightNotificationsReceiver extends BroadcastReceiver {
         }
 
         Bundle intntExtras = intent.getExtras();
-        LightNotifications.unlogNotification(context, intntExtras.getString(LightNotifications.NOTIFICATION_ID),
-            intntExtras.getDouble(LightNotifications.NOTIFICATION_FIREDATE), intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE));
+				String nid = intntExtras.getString(LightNotifications.NOTIFICATION_ID);
+        String title = intntExtras.getString(LightNotifications.NOTIFICATION_TITLE);
+        String message = intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE);
+
+        LightNotifications.unlogNotification(context, nid, intntExtras.getDouble(LightNotifications.NOTIFICATION_FIREDATE), message);
 
         if (LightActivity.isRunning) return;
 
-        String title = intntExtras.getString(LightNotifications.NOTIFICATION_TITLE);
-        String message = intntExtras.getString(LightNotifications.NOTIFICATION_MESSAGE);
         if (message != null) {
-            LightNotifications.showNotification(context, intent.getData(), title, message);
+            LightNotifications.showNotification(context, nid, title, message);
         } else {
             Log.e("LIGHTNING", "Notification message not specified, notification was not fired");
         }

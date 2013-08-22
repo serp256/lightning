@@ -1,6 +1,13 @@
 
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 
+
+value referrer = ref None;
+value set_referrer tp key = referrer.val := Some (tp,key);
+Callback.register "set_referrer" set_referrer;
+value getReferrer () = !referrer;
+value clearReferrer () = referrer.val := None;
+
 IFDEF IOS THEN
 value showUrl _ = failwith "ios version now doesnt support this function";
 

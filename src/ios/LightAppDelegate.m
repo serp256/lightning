@@ -9,6 +9,17 @@
 #import <caml/alloc.h>
 #import <caml/callback.h>
 #import <caml/threads.h>
+#import "mlwrapper.h"
+
+
+void set_referrer(char *type,NSString *nid) {
+	CAMLparam0();
+	CAMLlocal2(mltype,mlnid);
+	mltype = caml_copy_string(type);
+	mlnid = caml_copy_string([nid cStringUsingEncoding:NSASCIIStringEncoding]);
+	set_referrer_ml(mltype,mlnid);
+	CAMLreturn0;
+}
 
 @implementation LightAppDelegate
 
@@ -20,6 +31,21 @@
 	lightViewController.orientationDelegate = self;
 	//[self.window addSubview:lightViewController.view];    
 	self.window.rootViewController = lightViewController;
+	// For local notifications
+	UILocalNotification *ln = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+	if (ln) {
+		NSString *nid = [ln.userInfo objectForKey:@"id"];
+		NSLog(@"didReceiveLocalNotification: %@",nid);
+		if (nid) set_referrer("local",nid);
+	} else {
+		// For remote notifications
+		NSDictionary *rn = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+		if (rn) {
+			NSString *nid = [rn objectForKey:@"id"];
+			NSLog(@"didReceiveRemoteNotification: %@",nid);
+			if (nid) set_referrer("remote",nid);
+		};
+	};
 	[self.window makeKeyAndVisible];
 	return YES;
 }
@@ -73,6 +99,20 @@
   
 }
 
+/*
+-(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+	// This is remote notification
+}
+*/
+
+
+-(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification {
+	// This is local notification
+	// Get the user data
+	NSString *nid = [notification.userInfo objectForKey:@"id"];
+	NSLog(@"didReceiveLocalNotification: %@",nid);
+	if (nid) set_referrer("local",nid);
+}
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
   

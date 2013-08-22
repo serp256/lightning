@@ -31,6 +31,7 @@ public class LightNotifications {
 
 	public static boolean groupNotifications = false;
 
+	// data required for cancel intent throught filterIntent
 	private static Uri makeIntentData(Context context, String notifId) {
 		Uri.Builder bldr = new Uri.Builder()
 			.scheme("lightnotif")
@@ -148,7 +149,7 @@ public class LightNotifications {
 					LightNotifications.scheduleNotification(context, jsonNotif.getString("id"), fireDate, jsonNotif.getString("mes"));
 					notifs.add(jsonNotif);
 				} else {
-					showNotification(context, makeIntentData(context, jsonNotif.getString("id")), null, jsonNotif.getString("mes"));
+					LightNotifications.showNotification(context, jsonNotif.getString("id"), null, jsonNotif.getString("mes"));
 				}
 			}
 			
@@ -158,12 +159,11 @@ public class LightNotifications {
 		}
 	}
 
-	public static void showNotification(Context context, Uri id, String title, String message) {
-		showNotification(context, id.getAuthority(), title, message);
-	}
-
 	public static void showNotification(Context context, String id, String title, String message) {
-		PendingIntent pNotifIntnt = PendingIntent.getActivity(context, 0, context.getPackageManager().getLaunchIntentForPackage(context.getPackageName()), PendingIntent.FLAG_UPDATE_CURRENT);
+		Intent startIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+		startIntent.putExtra("localNotification",id);
+
+		PendingIntent pNotifIntnt = PendingIntent.getActivity(context, 0, startIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder notifBldr = new NotificationCompat.Builder(context)
             .setSmallIcon(R.drawable.notif_icon)
             .setContentTitle(title == null ? context.getPackageManager().getApplicationLabel(context.getApplicationInfo()) : title)

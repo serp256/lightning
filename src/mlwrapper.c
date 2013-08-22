@@ -190,4 +190,9 @@ value caml_getResource(value mlpath,value suffix) {
 	CAMLreturn(res);
 }
 
+void set_referrer_ml(value type,value id) {
+	static value *ml_set_referrer = NULL;
+	if (ml_set_referrer == NULL) ml_set_referrer = caml_named_value("set_referrer");
+	caml_callback2(*ml_set_referrer,type,id);
+}
 

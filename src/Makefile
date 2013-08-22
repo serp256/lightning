@@ -21,9 +21,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma social_byte
+byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa social_native
+native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -197,6 +197,9 @@ appflood.cmxa:
 supersonic.cma:
 	make -C plugins/supersonic supersonic.cma
 
+appsflyer.cma:
+	make -C plugins/appsflyer appsflyer.cma
+
 supersonic.cmxa:
 	make -C plugins/supersonic supersonic.cmxa
 
@@ -217,6 +220,9 @@ whatsapp.cma:
 
 whatsapp.cmxa:
 	make -C plugins/whatsapp whatsapp.cmxa
+
+appsflyer.cmxa:
+	make -C plugins/appsflyer appsflyer.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
@@ -248,5 +254,6 @@ clean:
 	$(MAKE) -C plugins/twitter clean
 	$(MAKE) -C plugins/instagram clean
 	$(MAKE) -C plugins/whatsapp clean
+	$(MAKE) -C plugins/appsflyer clean
 
 -include MLDepend.$(PLATFORM)

@@ -98,7 +98,8 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		// rescheduleNotifications(this);
 
 		// savedState = savedInstanceState != null ? savedInstanceState : new Bundle();
-		Log.d("LIGHTNING", "savedState " + (savedInstanceState != null));
+		//Log.d("LIGHTNING", "savedState " + (savedInstanceState != null));
+		//Log.d("LIGHTNING", "intent " + (getIntent()).toString());
 
 /*		if (savedState != null) {
 			ArrayList<Bundle> notifs = savedState.getParcelableArrayList(SAVED_STATE_NOTIFS_KEY);
@@ -284,13 +285,43 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		}
 	}
 
+	/*
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		Log.d("LIGHTNING", "onConfigurationChanged");
 		super.onConfigurationChanged(newConfig);
-	}
+	}*/
 
 	public static void enableLocalExpansions() {
 		com.google.android.vending.expansion.downloader.Constants.LOCAL_EXP_URL = "http://expansions.redspell.ru";
 	}
+
+	private static native void mlSetReferrer(String type,String nid);
+
+	public void convertIntent() {
+		Bundle extras = getIntent().getExtras();
+		if (extras != null) {
+			String nid = extras.getString("localNotification");
+			if (nid != null) mlSetReferrer("local",nid);
+			else {
+				nid = extras.getString("remoteNotification");
+				if (nid != null) mlSetReferrer("remote",nid);
+			}
+		}
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		Log.d("LIGHTNING","onNewIntent");
+		setIntent(intent);
+		if (lightView != null) {
+			lightView.queueEvent(new Runnable() {
+			 @Override
+			 public void run() {
+				 convertIntent();
+			 }
+			});
+		}
+	}
+
 }	

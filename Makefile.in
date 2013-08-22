@@ -26,6 +26,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.cma src/plugins/tapjoy/*.cma src/plugins/flurry/*.cma src/social/oauth/*.cma src/social/*.cmo src/social/*.o)
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.so src/plugins/tapjoy/*.so src/plugins/flurry/*.so src/social/oauth/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cma src/plugins/mobileapptracking/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/appsflyer/*.cma src/plugins/appsflyer/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/chartboost/*.cma src/plugins/chartboost/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/appflood/*.cma src/plugins/appflood/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/supersonic/*.cma src/plugins/supersonic/*.so)
@@ -41,6 +42,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.cmxa src/plugins/tapjoy/*.cmxa src/plugins/flurry/*.cmxa src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o) 
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.a src/plugins/tapjoy/*.a src/plugins/flurry/*.a src/social/oauth/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cmxa src/plugins/mobileapptracking/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/appsflyer/*.cmxa src/plugins/appsflyer/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/chartboost/*.cmxa src/plugins/chartboost/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/appflood/*.cmxa src/plugins/appflood/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/supersonic/*.cmxa src/plugins/supersonic/*.a)
@@ -52,6 +54,7 @@ endif
 
 ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/appflood/ios/libappflood-sdk.a
+	INSTALL_FILES += src/plugins/appsflyer/ios/libappsflyer-sdk.a
 	INSTALL_FILES += src/plugins/chartboost/ios/libchartboost-sdk.a
 	INSTALL_FILES += src/plugins/flurry/ios/libflurry-sdk.a
 	INSTALL_FILES += src/plugins/sponsorpay/ios/libsponsorpay-sdk.a
@@ -84,6 +87,7 @@ endif
 	                                                          src/plugins/twitter/*.cmi src/plugins/twitter/*.mli \
 	                                                          src/plugins/instagram/*.cmi src/plugins/instagram/*.mli \
 	                                                          src/plugins/whatsapp/*.cmi src/plugins/whatsapp/*.mli \
+	                                                          src/plugins/appsflyer/*.cmi src/plugins/appsflyer/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
 
 uninstall:

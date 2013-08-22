@@ -1,7 +1,7 @@
 
 MLPPOPT = 
 MLFLAGS = -package camlp4,camlp4.macro -syntax camlp4r 
-MLCOMPFLAGS = -w +7+9@5@8-13 -warn-error +10 -g 
+MLCOMPFLAGS = -w +7+9@5@8-13 -warn-error +10 -g -verbose
 MLNATFLAGS =
 
 %.cmi: %.mli

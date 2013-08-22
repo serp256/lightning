@@ -42,6 +42,7 @@ typedef enum
 
 //value mltouch_create(double timestamp,float globalX,float globalY,float previousGlobalX,float previousGlobalY,int tapCount, SPTouchPhase phase);
 //
+void set_referrer_ml(value type,value id);
 void ml_memoryWarning();
 
 int (*loadCompressedTexture)(gzFile gzf, textureInfo *tInfo);

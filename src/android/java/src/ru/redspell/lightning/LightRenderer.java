@@ -24,15 +24,21 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		screenHeight = height;
 	}
 
+	private void getIntent() {
+
+	};
+
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) { 	
 		//Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
 		Log.d("LIGHTNING","SURFACE CREATED tid: " + Process.myTid());
 		nativeSurfaceCreated(screenWidth,screenHeight);
+
+		getIntent();
+
 		last = System.nanoTime();
 
+		/*
 		String exts = gl.glGetString(GL10.GL_EXTENSIONS);
-
-		
 		Log.d("LIGHTNING", "exts: " + exts);
 		Log.d("LIGHTNING", "pvr support: " + exts.contains("GL_IMG_texture_compression_pvrtc"));
 		Log.d("LIGHTNING", "S3TC support: " + exts.contains("GL_OES_texture_compression_S3TC"));
@@ -40,6 +46,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		Log.d("LIGHTNING", "dxt1 support: " + exts.contains("GL_EXT_texture_compression_dxt1"));
 		Log.d("LIGHTNING", "dxt3 support: " + exts.contains("GL_EXT_texture_compression_dxt3"));
 		Log.d("LIGHTNING", "dxt5 support: " + exts.contains("GL_EXT_texture_compression_dxt5"));
+		*/
 		
 	}
 
