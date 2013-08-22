@@ -34,6 +34,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/twitter/*.cma src/plugins/twitter/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/instagram/*.cma src/plugins/instagram/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/whatsapp/*.cma src/plugins/whatsapp/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/appsflyer/*.cma src/plugins/appsflyer/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
@@ -50,6 +51,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/twitter/*.cmxa src/plugins/twitter/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/instagram/*.cmxa src/plugins/instagram/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/whatsapp/*.cmxa src/plugins/whatsapp/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/appsflyer/*.cmxa src/plugins/appsflyer/*.a)
 endif
 
 ifeq ($(PLATFORM),IOS)
@@ -59,6 +61,7 @@ ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/flurry/ios/libflurry-sdk.a
 	INSTALL_FILES += src/plugins/sponsorpay/ios/libsponsorpay-sdk.a
 	INSTALL_FILES += src/plugins/supersonic/ios/libsupersonic-sdk.a
+	INSTALL_FILES += src/plugins/supersonic/ios/libappsflyer-sdk.a
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))

@@ -30,13 +30,24 @@ import ru.redspell.lightning.LightView;
 import ru.redspell.lightning.utils.Log;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 
-public class LightTwitter {
+public class LightTwitter extends LightIntentPlugin {
 	private static final String SHARED_PREFS_NAME = "light_twitter";
 	private static final String SHARED_PREFS_TOKEN = "token";
 	private static final String SHARED_PREFS_SECRET = "secret";
+
+	private static LightTwitter instance;
+
+	private static LightTwitter getInstance() {
+		if (instance == null) {
+			instance = new LightTwitter();
+		}
+
+		return instance;
+	}
 
 	private static class Callbacks {
 		private int _success;
@@ -214,11 +225,25 @@ public class LightTwitter {
 	public static void tweet(final String text, int success, int fail) {
 		Log.d("LIGHTNING", "tweet " + (new Integer(success)).toString() + " " + (new Integer(fail)).toString());
 
+		Intent intent = new Intent(Intent.ACTION_SEND);
+		intent.setType("text/plain");
+		intent.setPackage("com.twitter.android");
+		intent.putExtra(Intent.EXTRA_TEXT, text);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+		if (getInstance().sendIntent("com.twitter.android", intent)) {
+			Callbacks cbs = new Callbacks(success, fail);
+			cbs.success ();
+			cbs.free ();
+
+			return;
+		}
+
 		runRequest(new Runnable() {
 			@Override public void run() {
 				twitter.updateStatus(new String(text)); //passing new String(text) as parameter cause if passing directly text it leads to strange segfault on some devices
 			}
-		}, success, fail);
+		}, success, fail);		
 	}
 
 	private static ImageUpload upload;
@@ -272,6 +297,21 @@ public class LightTwitter {
 	 }
 
 	public static void tweetPic(int success, int fail, final String fname, final String text) {
+		Intent intent = new Intent(Intent.ACTION_SEND);
+		intent.setType("image/*");
+		intent.setPackage("com.twitter.android");
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		intent.putExtra(Intent.EXTRA_TEXT, text);
+		intent.putExtra(Intent.EXTRA_STREAM, android.net.Uri.parse("file://" + fname));
+
+		if (getInstance().sendIntent("com.twitter.android", intent)) {
+			Callbacks cbs = new Callbacks(success, fail);
+			cbs.success ();
+			cbs.free ();
+
+			return;			
+		}
+
 		runRequest(new Runnable() {
 			@Override
 			public void run() {

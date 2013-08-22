@@ -19,6 +19,6 @@ public abstract class LightIntentPlugin {
 			}
 		}
 
-		return false;		
+		return false;
 	}
 }
