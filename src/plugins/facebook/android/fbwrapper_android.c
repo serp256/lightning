@@ -475,12 +475,30 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
     CAMLreturn(Val_unit);
 }
 
-value ml_fbTestShareDialog() {
+value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, value v_fail, value unit) {
+    CAMLparam5(v_text, v_link, v_picUrl, v_success, v_fail);
     GET_LIGHTFACEBOOK;
 
-    static jmethodID mid = 0;
-    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "shareDialogTest", "()V");
-    (*env)->CallStaticVoidMethod(env, lightFacebookCls, mid);
+    value* success;
+    value* fail;
 
-    return Val_unit;
+    REGISTER_CALLBACK(v_success, success);
+    REGISTER_CALLBACK(v_fail, fail);
+    JString_optval(j_link, v_link);
+    JString_optval(j_text, v_text);    
+    JString_optval(j_picUrl, v_picUrl);    
+
+    static jmethodID mid = 0;
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "share", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V");
+    (*env)->CallStaticVoidMethod(env, lightFacebookCls, mid, j_text, j_link, j_picUrl, (jint)success, (jint)fail);
+
+    if (j_text) (*env)->DeleteLocalRef(env, j_text);
+    if (j_link) (*env)->DeleteLocalRef(env, j_link);
+    if (j_picUrl) (*env)->DeleteLocalRef(env, j_picUrl);
+
+    CAMLreturn(Val_unit);
+}
+
+value ml_fb_share_byte(value* argv, int argn) {
+    return ml_fb_share(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }

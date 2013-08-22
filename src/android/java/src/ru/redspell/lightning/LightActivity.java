@@ -53,6 +53,10 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		uiLfcclHlprs.add(helper);	
 	}
 
+	public static void removeUiLifecycleHelper(IUiLifecycleHelper helper) {
+		uiLfcclHlprs.remove(helper);
+	}
+
 	public static LightActivity instance = null;
 
 	protected XAPKFile[] expansions = {};

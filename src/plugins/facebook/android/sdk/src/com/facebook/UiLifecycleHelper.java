@@ -260,13 +260,19 @@ public class UiLifecycleHelper {
         if (data == null) {
             // We understand the request code, but have no Intent. This can happen if the called Activity crashes
             // before it can be started; we treat this as a cancellation because we have no other information.
-            Log.d("LIGHTNING", "data is null");
             cancelPendingAppCall(facebookDialogCallback);
             return true;
         }
 
+        Bundle extras = data.getExtras();
+
+        java.util.Iterator<String> iter = extras.keySet().iterator();
+        while (iter.hasNext()) {
+            String key = iter.next();
+        }
+
+
         String callIdString = data.getStringExtra(NativeProtocol.EXTRA_PROTOCOL_CALL_ID);
-        Log.d("LIGHTNING", "callIdString " + (callIdString == null ? "null" : "not null"));
         UUID callId = null;
         if (callIdString != null) {
             try {
@@ -276,9 +282,7 @@ public class UiLifecycleHelper {
         }
 
         // Was this result for the call we are waiting on?
-        Log.d("LIGHTNING", "UUID " + (callId == null ? "null" : "not null"));
         if (callId != null) {
-            Log.d("LIGHTNING", "UUID " + callId.toString());
         }
 
         if (callId != null && pendingFacebookDialogCall.getCallId().equals(callId)) {
@@ -288,7 +292,6 @@ public class UiLifecycleHelper {
         } else {
             // No, send a cancellation error to the pending call and ignore the result, because we
             // don't know what to do with it.
-            Log.d("LIGHTNING", "call id doesn't match");
             cancelPendingAppCall(facebookDialogCallback);
         }
 
@@ -297,7 +300,6 @@ public class UiLifecycleHelper {
     }
 
     private void cancelPendingAppCall(FacebookDialog.Callback facebookDialogCallback) {
-        Log.d("LIGHTNING", "cancelPendingAppCall");
 
         if (facebookDialogCallback != null) {
             Intent pendingIntent = pendingFacebookDialogCall.getRequestIntent();

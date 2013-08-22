@@ -87,7 +87,7 @@ public class LightFacebook {
 
     private static class UiLifecycleHelper implements ru.redspell.lightning.IUiLifecycleHelper {
         private com.facebook.UiLifecycleHelper backend;
-        private com.facebook.widget.FacebookDialog.Callback callback;
+        public com.facebook.widget.FacebookDialog.Callback callback;
 
         public UiLifecycleHelper(com.facebook.widget.FacebookDialog.Callback callback) {
             backend = new com.facebook.UiLifecycleHelper(LightActivity.instance, sessionCallback);
@@ -542,7 +542,7 @@ public class LightFacebook {
         return true;
     }
 
-    public static boolean sharePicUsingNativeApp(String fname, String text) {
+/*    public static boolean sharePicUsingNativeApp(String fname, String text) {
         Context cntxt = LightActivity.instance.getApplicationContext();
         PackageManager pm = cntxt.getPackageManager();
 
@@ -554,9 +554,6 @@ public class LightFacebook {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + fname));
                 intent.putExtra(Intent.EXTRA_TEXT, android.text.Html.fromHtml(text));
-/*                intent.putExtra(Intent.EXTRA_TEXT, text);
-                intent.putExtra(Intent.EXTRA_SUBJECT, text);*/
-                
 
                 cntxt.startActivity(intent);
                 return true;
@@ -564,36 +561,46 @@ public class LightFacebook {
         }
 
         return false;
-    }
+    }*/
 
-    public static void shareDialogTest() {
+    private static UiLifecycleHelper helper;
+
+    public static void share(String text, String link, String picUrl, final int success, final int fail) {
         try {
-            com.facebook.widget.FacebookDialog.ShareDialogBuilder bldr = new com.facebook.widget.FacebookDialog.ShareDialogBuilder(LightActivity.instance)
-                // .setName("pizda lala")
-                .setLink("http://ya.ru");
-                // .setPicture("file:///sdcard/tree.png");
+            com.facebook.widget.FacebookDialog.ShareDialogBuilder bldr = new com.facebook.widget.FacebookDialog.ShareDialogBuilder(LightActivity.instance, appId);
 
+            if (text != null) bldr.setName(text);
+            if (link != null) bldr.setLink(link);
+            if (picUrl != null) bldr.setPicture(picUrl);
+                
             if (bldr.canPresent()) {
                 com.facebook.widget.FacebookDialog.Callback callback = new com.facebook.widget.FacebookDialog.Callback() {
                     public void onComplete(com.facebook.widget.FacebookDialog.PendingCall pendingCall, Bundle data) {
-                        Log.d("LIGHTNING", "share dialog complete");
+                        (new CamlCallbackRunnable(success)).run();
+                        (new ReleaseCamlCallbacksRunnable(success, fail)).run();
                     }
 
                     public void onError(com.facebook.widget.FacebookDialog.PendingCall pendingCall, Exception error, Bundle data) {
-                        Log.d("LIGHTNING", "share dialog error " + error.toString());
-                        Log.d("LIGHTNING", "pendingCall " + pendingCall.toString());
-                        Log.d("LIGHTNING", "data " + data.toString());
+                        (new CamlCallbackWithStringParamRunnable(fail, error.toString())).run();
+                        (new ReleaseCamlCallbacksRunnable(success, fail)).run();
                     }
                 };
 
-                UiLifecycleHelper helper = new UiLifecycleHelper(callback);
-                LightActivity.instance.addUiLifecycleHelper(helper);
+                if (helper == null) {
+                    helper = new UiLifecycleHelper(callback);
+                    LightActivity.instance.addUiLifecycleHelper(helper);
+                } else {
+                    helper.callback = callback;
+                }
+                
                 helper.trackPendingDialogCall(bldr.build().present());
             } else {
-                Log.d("LIGHTNING", "cannot present share dialog");
+                (new CamlCallbackWithStringParamRunnable(fail, "cannot present share dialog")).run();
+                (new ReleaseCamlCallbacksRunnable(success, fail)).run();
             }                     
         } catch (java.lang.Exception e) {
-            Log.d("LIGHTNING", "fail when displaying share dialog " + e.toString());
+            (new CamlCallbackWithStringParamRunnable(fail, e.toString())).run();
+            (new ReleaseCamlCallbacksRunnable(success, fail)).run();
         }
     }
 }

@@ -16,13 +16,15 @@ value sharePic ?success ?fail ~fname ~text connect = ();
 
 ELSE
 
-IFDEF PC THEN
-value sharePicUsingNativeApp ~fname ~text () = False;
-value sharePic ?success ?fail ~fname ~text connect = ();
-ELSE
-external sharePicUsingNativeApp: ~fname:string -> ~text:string -> unit -> bool = "ml_fb_share_pic_using_native_app";
 external sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit = "ml_fb_share_pic";
+
+IFDEF ANDROID THEN
+external share: ?text:string -> ?link:string -> ?picUrl:string -> ?success:(unit -> unit) -> ?fail:(string -> unit) -> unit -> unit = "ml_fb_share_byte" "ml_fb_share";
+ELSE
+value share ?text ?link ?picUrl ?success ?fail () = match fail with [ Some fail -> fail "this method not supported on pc and ios" | _ -> () ];
 ENDIF;
+
+
 
 type status = [ NotConnected | Connecting | Connected ];
 
@@ -99,13 +101,8 @@ value accessToken connect = _accessToken connect;
 
 value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback connect = _apprequest title message recipient data successCallback failCallback;
 
-(* value graphrequestSuccess json callback = callback (Ojson.from_string json); *)
 value graphrequestSuccess json callback = callback json;
 
-(* Callback.register "fb_graphrequestSuccess" graphrequestSuccess; *)
-
 value graphrequest ~path ?params ?successCallback ?failCallback connect = _graphrequest path params successCallback failCallback;
-
-external testShareDialog: unit -> unit = "ml_fbTestShareDialog";
 
 ENDIF;
