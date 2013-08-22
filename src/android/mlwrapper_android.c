@@ -226,7 +226,23 @@ int getResourceFd(const char *path, resource *res) {
 
 		lseek(fd, os_pair->offset, SEEK_SET);
 
-		PRINT_DEBUG("get resource: %s: %ld",path,os_pair->size);
+		PRINT_DEBUG("get resource: %s: %ld,%ld",path,os_pair->offset,os_pair->size);
+
+		/*
+		char buf[15];
+		int r = read(fd,buf,15);
+		char vbuf[15*2 + 1];
+		int c = 0;
+		for (c = 0;c < 15; c++) {
+			sprintf(vbuf+(c*2),"%x",*(buf+c));
+		};
+		vbuf[30] = '\0';
+
+		PRINT_DEBUG("First 15 bytes: [%s]",vbuf);
+
+		lseek(fd, os_pair->offset, SEEK_SET);
+		*/
+
 		res->fd = fd;
 		res->length = os_pair->size;
 
