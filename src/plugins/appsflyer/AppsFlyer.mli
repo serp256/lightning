@@ -9,4 +9,4 @@ value setUserId: string -> unit;
 value setCurrencyCode: string -> unit;
 value sendTracking: unit -> unit;
 value sendTrackingWithEvent: string -> string -> unit;
-
+value getUID : unit -> string;
