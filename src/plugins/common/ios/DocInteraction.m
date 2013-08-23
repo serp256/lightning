@@ -43,7 +43,8 @@ static NSString* captionKey = nil;
 }
 
 - (BOOL) postImage:(NSString*)fname withCaption:(NSString*)caption {
-    NSURL* igFileURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:fname ofType:nil]];
+    // NSURL* igFileURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:fname ofType:nil]];
+    NSURL* igFileURL = [NSURL fileURLWithPath:fname];
 
     UIDocumentInteractionController* documentController = [UIDocumentInteractionController interactionControllerWithURL:igFileURL];
     documentController.UTI = UTI;

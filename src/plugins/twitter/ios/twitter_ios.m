@@ -125,13 +125,16 @@ value ml_tweet_pic(value v_success, value v_fail, value v_fname, value v_text) {
 										parameters:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(v_text)], @"status", nil]
 										requestMethod:TWRequestMethodPOST];
 
-	NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
+	// NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
+	NSString* path = [NSString stringWithUTF8String:String_val(v_fname)];
 	UIImage* img = [UIImage imageWithContentsOfFile:path];
 	uint8_t c;
 	[[NSData dataWithContentsOfFile:path] getBytes:&c length:1];	
 
 	NSString* imgType;
 	NSData* imgData;
+
+	NSLog(@"first byte %x", (int)c);
 
 	switch (c) {
 		case 0xFF:
