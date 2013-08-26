@@ -32,12 +32,26 @@ value ml_af_set_user_id(value uid) {
 }
 
 
-value ml_set_currency_code(value code) {
+value ml_af_set_currency_code(value code) {
 	return Val_unit;
 }
 
 
-value ml_send_tracking(value p) {
+value ml_af_get_uid(value p) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	PRINT_DEBUG("ml_send_tracking");
+	jclass afCls = getAFCls(env);
+	jmethodID jGetAppUserIdM = (*env)->GetStaticMethodID(env,afCls,"getAppUserId","()Ljava/lang/String;");
+	jstring jUID = (*env)->CallStaticObjectMethod(env,afCls,jGetAppUserIdM);
+	const char *cuid = (*env)->GetStringUTFChars(env,jUID,JNI_FALSE);
+	value res = caml_copy_string(cuid);
+	(*env)->ReleaseStringUTFChars(env,jUID,cuid);
+	return res;
+}
+
+
+value ml_af_send_tracking(value p) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_send_tracking");
@@ -50,7 +64,7 @@ value ml_send_tracking(value p) {
 }
 
 
-value ml_send_tracking_with_event(value evkey,value evval) {
+value ml_af_send_tracking_with_event(value evkey,value evval) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	jclass afCls = getAFCls(env);
