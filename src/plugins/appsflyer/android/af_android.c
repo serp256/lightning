@@ -42,11 +42,13 @@ value ml_af_get_uid(value p) {
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_send_tracking");
 	jclass afCls = getAFCls(env);
-	jmethodID jGetAppUserIdM = (*env)->GetStaticMethodID(env,afCls,"getAppUserId","()Ljava/lang/String;");
-	jstring jUID = (*env)->CallStaticObjectMethod(env,afCls,jGetAppUserIdM);
+	jmethodID jGetAppUserIdM = (*env)->GetStaticMethodID(env,afCls,"getAppsFlyerUID","(Landroid/content/Context;)Ljava/lang/String;");
+	jobject jcontext = jApplicationContext(env);
+	jstring jUID = (*env)->CallStaticObjectMethod(env,afCls,jGetAppUserIdM,jcontext);
 	const char *cuid = (*env)->GetStringUTFChars(env,jUID,JNI_FALSE);
 	value res = caml_copy_string(cuid);
 	(*env)->ReleaseStringUTFChars(env,jUID,cuid);
+	(*env)->DeleteLocalRef(env,jcontext);
 	return res;
 }
 
