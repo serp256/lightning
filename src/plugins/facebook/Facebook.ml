@@ -11,9 +11,10 @@ value loggedIn () = None;
 value accessToken connect = "";
 value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback connect = ();
 value graphrequest ~path ?params ?successCallback ?failCallback connect = ();
-value sharePicUsingNativeApp ~fname:string ~text:string () = False;
+(* value sharePicUsingNativeApp ~fname:string ~text:string () = False; *)
 value sharePic ?success ?fail ~fname ~text connect = ();
 
+value share ?text ?link ?picUrl ?success ?fail () = match fail with [ Some fail -> fail "this method not supported on pc and ios" | _ -> () ];
 ELSE
 
 external sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit = "ml_fb_share_pic";

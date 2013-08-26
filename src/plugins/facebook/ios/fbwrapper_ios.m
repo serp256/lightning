@@ -428,7 +428,8 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
     REGISTER_CALLBACK(v_success, success);
     REGISTER_CALLBACK(v_fail, fail);
 
-    NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
+    // NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
+    NSString* path = [NSString stringWithUTF8String:String_val(v_fname)];
     UIImage* img = [UIImage imageWithContentsOfFile:path];
 
     BOOL displayedNativeDialog = [FBDialogs

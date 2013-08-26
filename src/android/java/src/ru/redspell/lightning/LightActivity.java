@@ -291,4 +291,33 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	public static void enableLocalExpansions() {
 		com.google.android.vending.expansion.downloader.Constants.LOCAL_EXP_URL = "http://expansions.redspell.ru";
 	}
+
+
+	private static native void mlSetReferrer(String type,String nid);
+
+        public void convertIntent() {
+                Bundle extras = getIntent().getExtras();
+                if (extras != null) {
+                        String nid = extras.getString("localNotification");
+                        if (nid != null) mlSetReferrer("local",nid);
+                        else {
+                                nid = extras.getString("remoteNotification");
+                                if (nid != null) mlSetReferrer("remote",nid);
+                        }
+                }
+        }
+
+        @Override
+        protected void onNewIntent(Intent intent) {
+                Log.d("LIGHTNING","onNewIntent");
+                setIntent(intent);
+                if (lightView != null) {
+                        lightView.queueEvent(new Runnable() {
+                         @Override
+                         public void run() {
+                                 convertIntent();
+                         }
+                        });
+                }
+        }
 }	

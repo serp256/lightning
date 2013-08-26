@@ -24,22 +24,26 @@ value ml_af_set_user_id(value uid) {
 }
 
 
+value ml_af_get_uid(value p) {
+	NSString *uid = [AppsFlyer getAppsFlyerUID];
+	return caml_copy_string([uid UTF8String]);
+}
 
-value ml_set_currency_code(value code) {
+value ml_af_set_currency_code(value code) {
 	NSString *nscode = [NSString stringWithCString:String_val(code) encoding:NSASCIIStringEncoding];
 	[AppsFlyer setCurrencyCode:nscode];
 	return Val_unit;
 }
 
 
-value ml_send_tracking(value p) {
+value ml_af_send_tracking(value p) {
 	if (!appID) caml_failwith("AppsFlyer not initialized");
 	[AppsFlyer notifyAppID:appID];
 	return Val_unit;
 }
 
 
-value ml_send_tracking_with_event(value evkey,value evval) {
+value ml_af_send_tracking_with_event(value evkey,value evval) {
 	if (!appID) caml_failwith("AppsFlyer not initialized");
 	NSLog(@"send_tracking_with_event");
 	NSString *nsev = [NSString stringWithCString:String_val(evkey) encoding:NSASCIIStringEncoding];

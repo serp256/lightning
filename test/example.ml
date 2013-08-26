@@ -1393,7 +1393,7 @@ value test_vk (stage:Stage.c) =
       value permissions = [VK.Notify; VK.Friends; VK.Photos; VK.Docs; VK.Notes; VK.Pages; VK.Wall; VK.Groups; VK.Messages; VK.Notifications ; VK.Stats ; VK.Ads; VK.Offline ];
     end)
   in
-  let img = Image.load "tree.png" in
+  let img = Image.load "cow.png" in
   let onTouch () =  
     let delegate = 
       {
@@ -1751,6 +1751,7 @@ let stage width height =
     initializer begin
   debug "REGISTR FONT";
       hardware self;
+      test_vk self;
       (*
       udid self;
       pvr self;
