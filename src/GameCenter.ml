@@ -113,9 +113,9 @@ ENDPLATFORM;
 IFPLATFORM(ios)
 
 external report_achievement: string -> float -> unit = "ml_gamecenter_report_achievement";
-value report_achivement_failed identifier percentComplete = Debug.e "report achievement failed"; (* FIXME: try to save this in local data *)
+value report_achievement_failed identifier percentComplete = Debug.e "report achievement failed"; (* FIXME: try to save this in local data *)
 Callback.register "report_achievement_failed" report_achievement_failed;
-value reportAchivement identifier percentComplete = 
+value reportAchievement identifier percentComplete = 
   let () = debug "report achievement" in
   match !state with
   [ NotInitialized -> failwith "GameCenter not initialized"
@@ -129,6 +129,8 @@ value reportAchivement identifier percentComplete =
   | Initialized -> report_achievement identifier percentComplete
   | InitFailed -> report_achievement_failed identifier percentComplete
   ];
+
+value unlockAchievement identifier = reportAchievement identifier 100.;
 
 value report_leaderboard_failed category score = Debug.e "report leaderboard failed";
 Callback.register "report_leaderboard_failed" report_leaderboard_failed;
@@ -151,7 +153,6 @@ value reportLeaderboard category score =
 
 
 
-value unlockAchievement identifier = reportAchievement identifier 100.;
 
 
 ELSPLATFORM(android)
@@ -232,8 +233,14 @@ value showAchivements () = ();
 
 ENDPLATFORM;
 
+
+(***************************
+ *  GET_FRIENDS LOAD_USERS
+ ************************** 
+ *)
+
 IFPLATFORM(ios)
-external get_friends_identifiers : (list string -> unit) -> unit = "ml_get_friends_identifiers";
+external get_friends_identifiers : (list string -> unit) -> unit = "ml_gamecenter_get_friends_identifiers";
 value getFriends cb = 
   match !state with
   [ NotInitialized -> failwith "GameCenter not initialized" 
@@ -247,15 +254,15 @@ value getFriends cb =
   | InitFailed -> cb []
   ];
 
-external load_users_info : list string -> (list (string*(string*option Texture.textureInfo)) -> unit) -> unit = "ml_load_users_info";
+external load_users_info : list string -> (list (string*string*option Texture.textureInfo) -> unit) -> unit = "ml_gamecenter_load_users_info";
 
 value loadUserInfo identifiers cb = 
   let lcb infos = 
     cb (List.map 
-      begin fun (playerId, (alias, photoTInfo)) ->
+      begin fun (playerId, alias, photoTInfo) ->
         match photoTInfo with
-        [ None -> (playerId, (alias, None))
-        | Some tinfo -> (playerId, (alias, (Some (Texture.make tinfo))))
+        [ None -> {id=playerId;name=alias;icon= None}
+        | Some tinfo -> {id=playerId; name=alias; icon = Some (Texture.make tinfo)}
         ]
       end infos)
   in 

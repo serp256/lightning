@@ -10,7 +10,7 @@
 
 #include "texture_common.h"
 
-value ml_game_center_init(value param) {
+value ml_gamecenter_init(value param) {
 	BOOL localPlayerClassAvailable = (NSClassFromString(@"GKLocalPlayer")) != nil;
 	// The device must be running iOS 4.1 or later.
 	if (!localPlayerClassAvailable) return Val_false;
@@ -30,7 +30,7 @@ value ml_game_center_init(value param) {
 	return Val_true;
 }
 
-value ml_playerID(value unit) {
+value ml_gamecenter_playerID(value unit) {
 	CAMLparam0();
 	CAMLlocal1(pid);
 	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
@@ -44,7 +44,7 @@ value ml_playerID(value unit) {
 	CAMLreturn(res);
 }
 
-value ml_report_leaderboard(value category, value score) {
+value ml_gamecenter_report_leaderboard(value category, value score) {
 	GKScore *scoreReporter = [[[GKScore alloc] initWithCategory: [NSString stringWithCString:String_val(category) encoding:NSASCIIStringEncoding]] autorelease];
 	scoreReporter.value = Int64_val(score);
 	[scoreReporter reportScoreWithCompletionHandler:^(NSError *error) {
@@ -64,8 +64,12 @@ value ml_report_leaderboard(value category, value score) {
 }
 
 
+value ml_gamecenter_current_player(value p) {
+	return Val_none;
+}
 
-value ml_report_achievement(value identifier, value percentComplete) {
+
+value ml_gamecenter_report_achievement(value identifier, value percentComplete) {
 	GKAchievement *achievement = [[[GKAchievement alloc] initWithIdentifier: [NSString stringWithCString:String_val(identifier) encoding:NSASCIIStringEncoding]] autorelease];
 	if (achievement) {
 		achievement.percentComplete = Double_val(percentComplete);
@@ -91,7 +95,7 @@ value ml_report_achievement(value identifier, value percentComplete) {
 /*
  * возвращаем список строк - идентификаторов друзей
  */
-value ml_get_friends_identifiers(value callback) {
+value ml_gamecenter_get_friends_identifiers(value callback) {
 
   CAMLparam1(callback);
 
@@ -143,7 +147,7 @@ value ml_get_friends_identifiers(value callback) {
 int loadImageFile(UIImage *image, textureInfo *tInfo);
 
 
-value ml_load_users_info(value uids, value callback) {
+value ml_gamecenter_load_users_info(value uids, value callback) {
   CAMLparam2(uids, callback);
   CAMLlocal2(lst, item);
   
@@ -181,7 +185,7 @@ value ml_load_users_info(value uids, value callback) {
             NSLog(@"RETURN GC DATA TO ML");
             //caml_leave_blocking_section();  
             value result = 0, rec = 0, info = 0, textureID = 0, mlTex = 0;
-            Begin_roots5(result,rec,textureID,mlTex);
+            Begin_roots4(result,rec,textureID,mlTex);
             result = Val_unit;
 						value img,lst_elt;
                     
@@ -278,12 +282,12 @@ value ml_load_users_info(value uids, value callback) {
 }
 
 
-value ml_show_leaderboard(value p) {
+value ml_gamecenter_show_leaderboard(value p) {
 	[[LightViewController sharedInstance] showLeaderboard];
 	return Val_unit;
 }
 
-value ml_show_achievements(value p) {
+value ml_gamecenter_show_achievements(value p) {
 	[[LightViewController sharedInstance] showAchievements];
 	return Val_unit;
 }

@@ -121,10 +121,12 @@ value ml_gamecenter_current_player(value p) {
 		jCurrentPlayerM = (*env)->GetMethodID(env,gcCls,"currentPlayer","()Lcom/google/android/gms/games/Player;");
 	};
 	jobject jPlayer = (*env)->CallObjectMethod(env,jGameCenter,jCurrentPlayerM);
-	player = convertPlayer(env,jPlayer);
-	(*env)->DeleteLocalRef(env,jPlayer);
-	value res = caml_alloc_small(0,1);
-	Field(res,0) = player;
+	if (jPlayer != NULL) {
+		player = convertPlayer(env,jPlayer);
+		(*env)->DeleteLocalRef(env,jPlayer);
+		value res = caml_alloc_small(0,1);
+		Field(res,0) = player;
+	} else res = Val_none;
 	CAMLreturn(res);
 }
 
