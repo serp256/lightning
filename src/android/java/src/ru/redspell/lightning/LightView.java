@@ -830,13 +830,6 @@ public class LightView extends GLSurfaceView {
 	}
 
 
-	/*
-	public void initTapjoy(String appID, String secretKey) {
-		//TapjoyLog.enableLogging(true);
-		TapjoyConnect.requestTapjoyConnect(getContext().getApplicationContext(),appID,secretKey);
-	}
-	*/
-
 	public void downloadExpansions() {
 		Log.d("LIGHTNING", "extracting expansions");
 

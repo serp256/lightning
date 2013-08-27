@@ -16,8 +16,8 @@ static int fbs_cnt = 0;
 static GLuint *fbfs = NULL;
 
 
-static viewport 
-static GLuint currentFramebuffer = 0;
+//static viewport 
+//static GLuint currentFramebuffer = 0;
 
 static GLuint getFbTexSize() {
     static GLint size = 0;

@@ -65,7 +65,7 @@ value ml_report_leaderboard(value category, value score) {
 
 
 
-value ml_report_achivement(value identifier, value percentComplete) {
+value ml_report_achievement(value identifier, value percentComplete) {
 	GKAchievement *achievement = [[[GKAchievement alloc] initWithIdentifier: [NSString stringWithCString:String_val(identifier) encoding:NSASCIIStringEncoding]] autorelease];
 	if (achievement) {
 		achievement.percentComplete = Double_val(percentComplete);
@@ -79,7 +79,7 @@ value ml_report_achivement(value identifier, value percentComplete) {
 				Begin_roots2(identifier,percentComplete);
 				identifier = caml_copy_string([achievement.identifier cStringUsingEncoding:NSASCIIStringEncoding]);
 				percentComplete = caml_copy_double(achievement.percentComplete);
-				caml_callback2(*caml_named_value("report_achivement_failed"),identifier,percentComplete);
+				caml_callback2(*caml_named_value("report_achievement_failed"),identifier,percentComplete);
 				End_roots();
 				//caml_enter_blocking_section();
 			}
@@ -181,12 +181,12 @@ value ml_load_users_info(value uids, value callback) {
             NSLog(@"RETURN GC DATA TO ML");
             //caml_leave_blocking_section();  
             value result = 0, rec = 0, info = 0, textureID = 0, mlTex = 0;
-            Begin_roots5(result,rec,info,textureID,mlTex);
+            Begin_roots5(result,rec,textureID,mlTex);
             result = Val_unit;
 						value img,lst_elt;
                     
             for (NSArray * pair in loadedPhotos) {
-              rec = caml_alloc_tuple(2);
+              rec = caml_alloc_tuple(3);
               GKPlayer * pl = (GKPlayer *)[pair objectAtIndex: 0];
               UIImage  * photo = nil;
               
@@ -194,21 +194,17 @@ value ml_load_users_info(value uids, value callback) {
                 photo = (UIImage *)[pair objectAtIndex: 1];
               }
               
-							NSLog(@"PIZDA id : %@", pl.playerID);
 							if (pl.playerID == nil) continue;
               Store_field(rec,0,caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding])); //
               info = caml_alloc_tuple(2);
               
-							NSLog(@"ALIAS: %@",pl.alias);
-
 							if (pl.alias == nil) {
-								Store_field(info,0,caml_copy_string("Unknown Name")); //
+								Store_field(info,1,caml_copy_string("Unknown Name")); //
 							} else {
-								Store_field(info,0,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
+								Store_field(info,1,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
 							}
-              NSLog(@"photo: %@", photo);
               if (photo == nil) {
-                Field(info,1) = Val_int(0); // photo None
+								Store_field(rec,2,Val_none);// Phono None
               } else {
                 textureInfo tInfo;
                 loadImageFile(photo, &tInfo);
@@ -216,35 +212,16 @@ value ml_load_users_info(value uids, value callback) {
                 free(tInfo.imgData);
                 ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
               
-                /*NSLog(@"PRINT PREV LIST:");
-                value r,inf,mt;
-                lst_elt = result;
-                while (lst_elt != Val_unit) {
-                  r = Field(lst_elt,0);
-                  inf = Field(r,1);
-                  img = Field(inf,1);
-                  mt = Field(img,0);
-                  NSLog(@"textureID: %d",TEXTURE_ID(Field(mt,7)));
-                  lst_elt = Field(lst_elt,1);              
-                };
-                NSLog(@"------------");*/  
-
 								img = caml_alloc_small(1,0);
 								Field(img,0) = mlTex;
-                //Field(info, 1) = img;
 
-                Store_field(info,1,img);
+                Store_field(rec,2,img);
               }
-
-              //NSLog(@"ALLOCATED TEXTURE: %d",TEXTURE_ID(Field(Field(Field(Field(info,1),1),1),0),7));
-
-              Store_field(rec,1,info);
 
               lst_elt = caml_alloc_small(2,0);
               Field(lst_elt, 0) = rec;
               Field(lst_elt, 1) = result;
               result = lst_elt;
-
               
             }
             
@@ -306,7 +283,7 @@ value ml_show_leaderboard(value p) {
 	return Val_unit;
 }
 
-value ml_show_achivements(value p) {
+value ml_show_achievements(value p) {
 	[[LightViewController sharedInstance] showAchievements];
 	return Val_unit;
 }
