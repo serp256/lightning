@@ -17,15 +17,15 @@ type state = [ NotInitialized | Initializing of Queue.t (bool -> unit) | Initial
 
 value state = ref NotInitialized;
 
-value initializer_handler = ref None;
-
-external gamecenter_init: unit -> bool = "ml_gamecenter_init";
-
 value is_connected () = 
   match !state with
   [ Initialized -> True
   | _ -> False 
   ];
+
+value initializer_handler = ref None;
+
+external gamecenter_init: unit -> bool = "ml_gamecenter_init";
 
 value game_center_initialized success = 
   let () = debug "GameCenter initialized" in
@@ -102,8 +102,10 @@ value init ?callback () =
   ];
 
 value playerID () = None;
+value is_connected () = False;
 
 ENDPLATFORM;
+
 
 (************************************
  * LEADERBOARDS AND ACHIEVEMNTS REPORT
@@ -181,7 +183,7 @@ ELSE
 
 value reportLeaderboard (category:string) (scores:int64) = ();
 value reportAchievement (identifier:string) (percentComplete:float) = ();
-value unlockAchievemnt (identifier:string) = ();
+value unlockAchievement (identifier:string) = ();
 
 
 ENDPLATFORM;
@@ -229,7 +231,7 @@ value showLeaderboard () =
 ELSE
 
 value showLeaderboard () = ();
-value showAchivements () = ();
+value showAchievements () = ();
 
 ENDPLATFORM;
 
@@ -300,7 +302,7 @@ value currentPlayer () =
   ];
 
 ELSE
-value currentPlayer () = {id = 0; name = ""; icon = None };
+value currentPlayer () = None;
 ENDPLATFORM;
 
 
