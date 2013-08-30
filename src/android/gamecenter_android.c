@@ -121,10 +121,11 @@ value ml_gamecenter_current_player(value p) {
 		jCurrentPlayerM = (*env)->GetMethodID(env,gcCls,"currentPlayer","()Lcom/google/android/gms/games/Player;");
 	};
 	jobject jPlayer = (*env)->CallObjectMethod(env,jGameCenter,jCurrentPlayerM);
+	value res;
 	if (jPlayer != NULL) {
 		player = convertPlayer(env,jPlayer);
 		(*env)->DeleteLocalRef(env,jPlayer);
-		value res = caml_alloc_small(0,1);
+		res = caml_alloc_small(0,1);
 		Field(res,0) = player;
 	} else res = Val_none;
 	CAMLreturn(res);
@@ -148,6 +149,16 @@ value ml_gamecenter_unlock_achievement(value name) {
 
 
 value ml_gamecenter_show_achievements(value p) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	PRINT_DEBUG("GC show achievements");
+	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
+	static jmethodID jShowAchievementsM = NULL;
+	if (!jShowAchievementsM) { 
+		jclass gcCls = getGcCls(env);
+		jShowAchievementsM = (*env)->GetMethodID(env,gcCls,"showAchievements","()V");
+	};
+	(*env)->CallVoidMethod(env,jGameCenter,jShowAchievementsM);
 	return Val_unit;
 }
 

@@ -34,13 +34,15 @@ value ml_gamecenter_playerID(value unit) {
 	CAMLparam0();
 	CAMLlocal1(pid);
 	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
+	PRINT_DEBUG("gamcenters: palyerID");
 	value res;
 	if (localPlayer.isAuthenticated) {
 		NSString *playerID = localPlayer.playerID;
 		pid = caml_copy_string([playerID cStringUsingEncoding:NSASCIIStringEncoding]);
+		PRINT_DEBUG("playerID: %s",String_val(pid));
 		res = caml_alloc_small(1,0);
 		Field(res,0) = pid;
-	} else res = Val_unit;
+	} else res = Val_none;
 	CAMLreturn(res);
 }
 
@@ -61,11 +63,6 @@ value ml_gamecenter_report_leaderboard(value category, value score) {
 		}
 	}];
 	return Val_unit;
-}
-
-
-value ml_gamecenter_current_player(value p) {
-	return Val_none;
 }
 
 
@@ -106,7 +103,7 @@ value ml_gamecenter_get_friends_identifiers(value callback) {
   cb = callback;
 
   if (!localPlayer.authenticated) {
-    caml_callback(callback, Val_int(0));
+    caml_callback(callback, Val_none);
   } else {
   
   caml_register_global_root(&cb);
@@ -147,10 +144,29 @@ value ml_gamecenter_get_friends_identifiers(value callback) {
 int loadImageFile(UIImage *image, textureInfo *tInfo);
 
 
+value ml_gamecenter_current_player(value p) {
+	CAMLparam0();
+	CAMLlocal1(player);
+	PRINT_DEBUG("current player");
+  GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
+	value res;
+  if (!localPlayer.authenticated) res = Val_none;
+	else {
+		player = caml_alloc_tuple(3);
+		Store_field(player,0,caml_copy_string([[localPlayer playerID] cStringUsingEncoding:NSUTF8StringEncoding]));
+		Store_field(player,1,caml_copy_string([[localPlayer displayName] cStringUsingEncoding:NSUTF8StringEncoding]));
+		Store_field(player,2,Val_none);
+		res = caml_alloc_small(1,0);
+		Field(res,0) = player;
+	};
+	CAMLreturn(res);
+}
+
 value ml_gamecenter_load_users_info(value uids, value callback) {
   CAMLparam2(uids, callback);
   CAMLlocal2(lst, item);
   
+	PRINT_DEBUG("load users info");
   lst = uids;
   
   NSMutableArray * identifiers = [NSMutableArray arrayWithCapacity: 1];
@@ -184,7 +200,7 @@ value ml_gamecenter_load_users_info(value uids, value callback) {
         void (^retBlock)(void) = ^(void){
             NSLog(@"RETURN GC DATA TO ML");
             //caml_leave_blocking_section();  
-            value result = 0, rec = 0, info = 0, textureID = 0, mlTex = 0;
+            value result = 0, rec = 0, textureID = 0, mlTex = 0;
             Begin_roots4(result,rec,textureID,mlTex);
             result = Val_unit;
 						value img,lst_elt;
@@ -200,12 +216,11 @@ value ml_gamecenter_load_users_info(value uids, value callback) {
               
 							if (pl.playerID == nil) continue;
               Store_field(rec,0,caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding])); //
-              info = caml_alloc_tuple(2);
               
 							if (pl.alias == nil) {
-								Store_field(info,1,caml_copy_string("Unknown Name")); //
+								Store_field(rec,1,caml_copy_string("Unknown Name")); //
 							} else {
-								Store_field(info,1,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
+								Store_field(rec,1,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
 							}
               if (photo == nil) {
 								Store_field(rec,2,Val_none);// Phono None
