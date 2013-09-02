@@ -15,14 +15,18 @@ extern GLuint currentShaderProgram;
 static int fbs_cnt = 0;
 static GLuint *fbfs = NULL;
 
+
+//static viewport 
+//static GLuint currentFramebuffer = 0;
+
 static GLuint getFbTexSize() {
     static GLint size = 0;
     if (!size) {
 #ifdef PC
 		size = 512;
 #else
-    	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
-    	size = size / 4;
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
+		size = size / 4;
 #endif
     }
 
@@ -250,35 +254,35 @@ int create_renderbuffer(GLuint tid, int x, int y, double width, double height, i
 
     GLuint fbid = get_framebuffer();
     glBindFramebuffer(GL_FRAMEBUFFER, fbid);
-	checkGLErrors("bind framebuffer %d",fbid);
+		checkGLErrors("bind framebuffer %d",fbid);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tid, 0);
-	FRAMEBUFFER_BIND_COUNTER++;
-	checkGLErrors("framebuffertexture2d %d -> %d",fbid, tid);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tid, 0);
+		FRAMEBUFFER_BIND_COUNTER++;
+		checkGLErrors("framebuffertexture2d %d -> %d",fbid, tid);
 
     r->fbid = fbid;
     r->tid = tid;
-	r->vp = (viewport){ (GLuint)x, (GLuint)y, (GLuint)w, (GLuint)h };
+		r->vp = (viewport){ (GLuint)x, (GLuint)y, (GLuint)w, (GLuint)h };
 
-	if (!dedicated) {
-		// when shared texture used, clipping should be calculated using shaded texture size, but realW realH containes expanded rect dimensions (devisible by 8, cause such values guarantee perfect result, when making glow effect)
-		double fb_tex_size = (double)getFbTexSize();
-		r->clp = (clipping){ (double)r->vp.x / (double)fb_tex_size, (double)r->vp.y / (double)fb_tex_size, w / (double)fb_tex_size, h / (double)fb_tex_size };
-	} else {
-		//when dedicated texture used, realW and realH contains real texture size and therefore we use these values for clipping calculations
-		r->clp = (clipping){ (double)r->vp.x / (double)realW, (double)r->vp.y / (double)realH, w / (double)realW, h / (double)realH };
-	}
+		if (!dedicated) {
+			// when shared texture used, clipping should be calculated using shaded texture size, but realW realH containes expanded rect dimensions (devisible by 8, cause such values guarantee perfect result, when making glow effect)
+			double fb_tex_size = (double)getFbTexSize();
+			r->clp = (clipping){ (double)r->vp.x / (double)fb_tex_size, (double)r->vp.y / (double)fb_tex_size, w / (double)fb_tex_size, h / (double)fb_tex_size };
+		} else {
+			//when dedicated texture used, realW and realH contains real texture size and therefore we use these values for clipping calculations
+			r->clp = (clipping){ (double)r->vp.x / (double)realW, (double)r->vp.y / (double)realH, w / (double)realW, h / (double)realH };
+		}
 	
     r->width = w;
     r->height = h;
-	r->realWidth = realW;
-	r->realHeight = realH;
+		r->realWidth = realW;
+		r->realHeight = realH;
 
-	PRINT_DEBUG("create_renderbuffer %d %d %d %d", r->vp.x, r->vp.y, r->vp.w, r->vp.h);
-	PRINT_DEBUG("create_renderbuffer %f %f %f %f", r->clp.x, r->clp.y, r->clp.width, r->clp.height);
+		PRINT_DEBUG("create_renderbuffer %d %d %d %d", r->vp.x, r->vp.y, r->vp.w, r->vp.h);
+		PRINT_DEBUG("create_renderbuffer %f %f %f %f", r->clp.x, r->clp.y, r->clp.width, r->clp.height);
 
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
-  	return 0;
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 1;
+		return 0;
 }
 
 

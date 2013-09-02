@@ -10,7 +10,7 @@
 
 #include "texture_common.h"
 
-value ml_game_center_init(value param) {
+value ml_gamecenter_init(value param) {
 	BOOL localPlayerClassAvailable = (NSClassFromString(@"GKLocalPlayer")) != nil;
 	// The device must be running iOS 4.1 or later.
 	if (!localPlayerClassAvailable) return Val_false;
@@ -30,21 +30,23 @@ value ml_game_center_init(value param) {
 	return Val_true;
 }
 
-value ml_playerID(value unit) {
+value ml_gamecenter_playerID(value unit) {
 	CAMLparam0();
 	CAMLlocal1(pid);
 	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
+	PRINT_DEBUG("gamcenters: palyerID");
 	value res;
 	if (localPlayer.isAuthenticated) {
 		NSString *playerID = localPlayer.playerID;
 		pid = caml_copy_string([playerID cStringUsingEncoding:NSASCIIStringEncoding]);
+		PRINT_DEBUG("playerID: %s",String_val(pid));
 		res = caml_alloc_small(1,0);
 		Field(res,0) = pid;
-	} else res = Val_unit;
+	} else res = Val_none;
 	CAMLreturn(res);
 }
 
-value ml_report_leaderboard(value category, value score) {
+value ml_gamecenter_report_leaderboard(value category, value score) {
 	GKScore *scoreReporter = [[[GKScore alloc] initWithCategory: [NSString stringWithCString:String_val(category) encoding:NSASCIIStringEncoding]] autorelease];
 	scoreReporter.value = Int64_val(score);
 	[scoreReporter reportScoreWithCompletionHandler:^(NSError *error) {
@@ -64,8 +66,7 @@ value ml_report_leaderboard(value category, value score) {
 }
 
 
-
-value ml_report_achivement(value identifier, value percentComplete) {
+value ml_gamecenter_report_achievement(value identifier, value percentComplete) {
 	GKAchievement *achievement = [[[GKAchievement alloc] initWithIdentifier: [NSString stringWithCString:String_val(identifier) encoding:NSASCIIStringEncoding]] autorelease];
 	if (achievement) {
 		achievement.percentComplete = Double_val(percentComplete);
@@ -79,7 +80,7 @@ value ml_report_achivement(value identifier, value percentComplete) {
 				Begin_roots2(identifier,percentComplete);
 				identifier = caml_copy_string([achievement.identifier cStringUsingEncoding:NSASCIIStringEncoding]);
 				percentComplete = caml_copy_double(achievement.percentComplete);
-				caml_callback2(*caml_named_value("report_achivement_failed"),identifier,percentComplete);
+				caml_callback2(*caml_named_value("report_achievement_failed"),identifier,percentComplete);
 				End_roots();
 				//caml_enter_blocking_section();
 			}
@@ -91,7 +92,7 @@ value ml_report_achivement(value identifier, value percentComplete) {
 /*
  * возвращаем список строк - идентификаторов друзей
  */
-value ml_get_friends_identifiers(value callback) {
+value ml_gamecenter_get_friends_identifiers(value callback) {
 
   CAMLparam1(callback);
 
@@ -102,7 +103,7 @@ value ml_get_friends_identifiers(value callback) {
   cb = callback;
 
   if (!localPlayer.authenticated) {
-    caml_callback(callback, Val_int(0));
+    caml_callback(callback, Val_none);
   } else {
   
   caml_register_global_root(&cb);
@@ -143,10 +144,29 @@ value ml_get_friends_identifiers(value callback) {
 int loadImageFile(UIImage *image, textureInfo *tInfo);
 
 
-value ml_load_users_info(value uids, value callback) {
+value ml_gamecenter_current_player(value p) {
+	CAMLparam0();
+	CAMLlocal1(player);
+	PRINT_DEBUG("current player");
+  GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
+	value res;
+  if (!localPlayer.authenticated) res = Val_none;
+	else {
+		player = caml_alloc_tuple(3);
+		Store_field(player,0,caml_copy_string([[localPlayer playerID] cStringUsingEncoding:NSUTF8StringEncoding]));
+		Store_field(player,1,caml_copy_string([[localPlayer displayName] cStringUsingEncoding:NSUTF8StringEncoding]));
+		Store_field(player,2,Val_none);
+		res = caml_alloc_small(1,0);
+		Field(res,0) = player;
+	};
+	CAMLreturn(res);
+}
+
+value ml_gamecenter_load_users_info(value uids, value callback) {
   CAMLparam2(uids, callback);
   CAMLlocal2(lst, item);
   
+	PRINT_DEBUG("load users info");
   lst = uids;
   
   NSMutableArray * identifiers = [NSMutableArray arrayWithCapacity: 1];
@@ -180,13 +200,13 @@ value ml_load_users_info(value uids, value callback) {
         void (^retBlock)(void) = ^(void){
             NSLog(@"RETURN GC DATA TO ML");
             //caml_leave_blocking_section();  
-            value result = 0, rec = 0, info = 0, textureID = 0, mlTex = 0;
-            Begin_roots5(result,rec,info,textureID,mlTex);
+            value result = 0, rec = 0, textureID = 0, mlTex = 0;
+            Begin_roots4(result,rec,textureID,mlTex);
             result = Val_unit;
 						value img,lst_elt;
                     
             for (NSArray * pair in loadedPhotos) {
-              rec = caml_alloc_tuple(2);
+              rec = caml_alloc_tuple(3);
               GKPlayer * pl = (GKPlayer *)[pair objectAtIndex: 0];
               UIImage  * photo = nil;
               
@@ -194,21 +214,16 @@ value ml_load_users_info(value uids, value callback) {
                 photo = (UIImage *)[pair objectAtIndex: 1];
               }
               
-							NSLog(@"PIZDA id : %@", pl.playerID);
 							if (pl.playerID == nil) continue;
               Store_field(rec,0,caml_copy_string([pl.playerID  cStringUsingEncoding:NSASCIIStringEncoding])); //
-              info = caml_alloc_tuple(2);
               
-							NSLog(@"ALIAS: %@",pl.alias);
-
 							if (pl.alias == nil) {
-								Store_field(info,0,caml_copy_string("Unknown Name")); //
+								Store_field(rec,1,caml_copy_string("Unknown Name")); //
 							} else {
-								Store_field(info,0,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
+								Store_field(rec,1,caml_copy_string([pl.alias  cStringUsingEncoding:NSUTF8StringEncoding])); //
 							}
-              NSLog(@"photo: %@", photo);
               if (photo == nil) {
-                Field(info,1) = Val_int(0); // photo None
+								Store_field(rec,2,Val_none);// Phono None
               } else {
                 textureInfo tInfo;
                 loadImageFile(photo, &tInfo);
@@ -216,35 +231,16 @@ value ml_load_users_info(value uids, value callback) {
                 free(tInfo.imgData);
                 ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
               
-                /*NSLog(@"PRINT PREV LIST:");
-                value r,inf,mt;
-                lst_elt = result;
-                while (lst_elt != Val_unit) {
-                  r = Field(lst_elt,0);
-                  inf = Field(r,1);
-                  img = Field(inf,1);
-                  mt = Field(img,0);
-                  NSLog(@"textureID: %d",TEXTURE_ID(Field(mt,7)));
-                  lst_elt = Field(lst_elt,1);              
-                };
-                NSLog(@"------------");*/  
-
 								img = caml_alloc_small(1,0);
 								Field(img,0) = mlTex;
-                //Field(info, 1) = img;
 
-                Store_field(info,1,img);
+                Store_field(rec,2,img);
               }
-
-              //NSLog(@"ALLOCATED TEXTURE: %d",TEXTURE_ID(Field(Field(Field(Field(info,1),1),1),0),7));
-
-              Store_field(rec,1,info);
 
               lst_elt = caml_alloc_small(2,0);
               Field(lst_elt, 0) = rec;
               Field(lst_elt, 1) = result;
               result = lst_elt;
-
               
             }
             
@@ -301,12 +297,12 @@ value ml_load_users_info(value uids, value callback) {
 }
 
 
-value ml_show_leaderboard(value p) {
+value ml_gamecenter_show_leaderboard(value p) {
 	[[LightViewController sharedInstance] showLeaderboard];
 	return Val_unit;
 }
 
-value ml_show_achivements(value p) {
+value ml_gamecenter_show_achievements(value p) {
 	[[LightViewController sharedInstance] showAchievements];
 	return Val_unit;
 }

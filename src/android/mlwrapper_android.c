@@ -237,9 +237,7 @@ int getResourceFd(const char *path, resource *res) {
 			sprintf(vbuf+(c*2),"%x",*(buf+c));
 		};
 		vbuf[30] = '\0';
-
 		PRINT_DEBUG("First 15 bytes: [%s]",vbuf);
-
 		lseek(fd, os_pair->offset, SEEK_SET);
 		*/
 
