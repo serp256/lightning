@@ -25,14 +25,16 @@ void performRequest(TWRequest* req, value v_success, value v_fail) {
 	[accntStore requestAccessToAccountsWithType:twitterAccnt withCompletionHandler:^(BOOL granted, NSError *error) {
 		NSArray* accnts = [accntStore accountsWithAccountType:twitterAccnt];
 
-		if (granted && [accnts count] > 0) {
+		NSLog(@"granted %d accounts len %d", (int)granted, [accnts count]);
+
+		if (granted && ([accnts count] > 0)) {
 			req.account = [accnts objectAtIndex:0];
 			[req performRequestWithHandler:^(NSData *responseData, NSHTTPURLResponse *urlResponse, NSError *error) {
 				if (error != nil) {
 					if (fail) {
 						NSString *err_msg = [[error localizedDescription] retain];
 						dispatch_async(dispatch_get_main_queue(),^{
-							caml_callback(*fail, caml_copy_string([err_msg UTF8String]));	
+							CALL(fail, caml_copy_string([err_msg UTF8String]));	
 							[err_msg release];
 							UNREG_CALLBACK(success);
 							UNREG_CALLBACK(fail);
@@ -44,7 +46,7 @@ void performRequest(TWRequest* req, value v_success, value v_fail) {
 					if (errs == nil) {
 						if (success) {
 							dispatch_async(dispatch_get_main_queue(),^{
-								caml_callback(*success, Val_unit);
+								CALL(success, Val_unit);
 								UNREG_CALLBACK(success);
 								UNREG_CALLBACK(fail);
 							});
@@ -57,14 +59,14 @@ void performRequest(TWRequest* req, value v_success, value v_fail) {
 								NSMutableString* mes = [[NSMutableString alloc] initWithCapacity:255];
 								[mes appendFormat:@"%@(err code %@)", [err valueForKey:@"message"], [err valueForKey:@"code"]];
 								dispatch_async(dispatch_get_main_queue(),^{
-									caml_callback(*fail, caml_copy_string([mes UTF8String]));
+									CALL(fail, caml_copy_string([mes UTF8String]));
 									[mes release];
 									UNREG_CALLBACK(success);
 									UNREG_CALLBACK(fail);
 								});
 							} else {
 								dispatch_async(dispatch_get_main_queue(),^{
-									caml_callback(*fail, caml_copy_string("unknown error"));
+									CALL(fail, caml_copy_string("unknown error"));
 									UNREG_CALLBACK(success);
 									UNREG_CALLBACK(fail);
 								});
@@ -81,18 +83,43 @@ void performRequest(TWRequest* req, value v_success, value v_fail) {
 			UIViewController* tweetComposer;
 			LightViewController* lvc = [LightViewController sharedInstance];
 
-			if([SLComposeViewController class] != nil) {
+			if ([SLComposeViewController class] != nil) {
+				if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeTwitter]) {
+					dispatch_async(dispatch_get_main_queue(),^{ //this is case, when application is not permited use integrated twitter account
+						CALL(fail, caml_copy_string("application not permited to send tweets"));
+						UNREG_CALLBACK(success);
+						UNREG_CALLBACK(fail);
+					});
+
+					return;					
+				}
+
 			    tweetComposer = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeTwitter];
 			    [(SLComposeViewController *)tweetComposer setCompletionHandler:^(SLComposeViewControllerResult result) {
 			        [lvc dismissViewControllerAnimated:NO completion:nil];
 			    }];
 			}
-			else {
-			    tweetComposer = [[TWTweetComposeViewController alloc] init];
+			else if ([TWTweetComposeViewController class] != nil) {
+				if ([TWTweetComposeViewController canSendTweet]) { //this is case, when application is not permited use integrated twitter account
+					dispatch_async(dispatch_get_main_queue(),^{
+						CALL(fail, caml_copy_string("application not permited to send tweets"));
+						UNREG_CALLBACK(success);
+						UNREG_CALLBACK(fail);
+					});
 
+					return;
+				}
+
+			    tweetComposer = [[TWTweetComposeViewController alloc] init];
 			    [(TWTweetComposeViewController *)tweetComposer setCompletionHandler:^(TWTweetComposeViewControllerResult result) {
 			        [lvc dismissViewControllerAnimated:NO completion:nil];
 			    }];
+			} else {
+				dispatch_async(dispatch_get_main_queue(),^{
+					CALL(fail, caml_copy_string("outdated ios version, no twitter support"));
+					UNREG_CALLBACK(success);
+					UNREG_CALLBACK(fail);
+				});
 			}
 
 			dispatch_async(dispatch_get_main_queue(), ^{

@@ -7,3 +7,4 @@
 	}
 
 #define UNREG_CALLBACK(name) if (name) { caml_remove_generational_global_root(name); }
+#define CALL(name,param) if (name) { caml_callback(*name, param); }
