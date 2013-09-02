@@ -388,7 +388,7 @@ value _load libpath =
     (
       let read_children () = (*{{{*)
         let n_children = read_un_byte bininp in
-        let tid = ref 0 in
+        let tid = ref None in
         let children = 
           List.init n_children begin fun _ ->
             let id = IO.read_ui16 bininp in
@@ -398,7 +398,7 @@ value _load libpath =
             match Hashtbl.find items id with
             [ Image (tid',rect) -> 
               (
-                tid.val := tid';
+                match tid.val with [ None -> tid.val := Some tid' | Some _ -> () ];
                 (rect,name,{Point.x = posx; y = posy})
               )
             | _ -> failwith "sprite children not an image"
@@ -504,13 +504,13 @@ value _load libpath =
             let n_frames = IO.read_ui16 bininp in
             let labels = Hashtbl.create 0 in
             let frames = DynArray.create () in
-            let tid = ref 0 in
+            let tid = ref None in
             (
               for i = 0 to n_frames - 1 do
                 let duration = IO.read_byte bininp in
                 let label = read_option_string () in
                 let (tid',children) = read_children () in
-                let () = tid.val := tid' in
+                let () = match !tid with [ None -> match tid' with [ Some t -> tid.val := Some t | None -> () ] | Some _ -> () ] in
                 let commands = 
                   match IO.read_byte bininp with
                   [ 0 -> None
@@ -568,7 +568,7 @@ value _load libpath =
                   )
                 )
               done;
-              Hashtbl.add items id (Clip !tid (DynArray.to_array frames) labels);
+              Hashtbl.add items id (Clip (OPTGET !tid) (DynArray.to_array frames) labels);
             )
         | n -> failwith (Printf.sprintf "unkonwn el type %d" n)
         ]
