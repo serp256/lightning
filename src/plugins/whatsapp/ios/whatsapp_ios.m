@@ -2,6 +2,10 @@
 #import <caml/memory.h>
 #import <DocInteraction.h>
 
+value ml_whatsapp_installed(value p) {
+	return Val_bool([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"whatsapp://app"]]);
+}
+
 value ml_whatsapp_text(value v_text) {
 	CAMLparam1(v_text);
 

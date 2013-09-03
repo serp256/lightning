@@ -2,6 +2,12 @@
 #import <caml/memory.h>
 #import <DocInteraction.h>
 
+
+
+value ml_instagram_installed(value p) {
+	return Val_bool([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"instagram://app"]]);
+}
+
 value ml_instagram_post(value v_fname, value v_text) {
 	CAMLparam2(v_fname, v_text);
 

@@ -14,6 +14,7 @@ public class LightWhatsapp extends LightIntentPlugin {
 		return instance;
 	}
 
+
 	public static boolean text(String txt) {
 		Intent intent = new Intent(android.content.Intent.ACTION_SEND);
 		intent.setType("text/plain");
@@ -32,5 +33,10 @@ public class LightWhatsapp extends LightIntentPlugin {
 		intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + pic));
 
 		return getInstance().sendIntent("com.whatsapp", intent);
+	}
+
+
+	public static boolean isInstalled() {
+		return getInstance().isAppInstalled("com.whatsapp");
 	}
 }

@@ -14,6 +14,11 @@ public class LightInstagram extends LightIntentPlugin {
 		return instance;
 	}
 
+	public static boolean isInstalled() {
+		return getInstance().isAppInstalled("com.instagram.android");
+	}
+
+
 	public static boolean post(String fname, String text) {
 		Intent intent = new Intent(Intent.ACTION_SEND);
 		intent.setType("image/*");

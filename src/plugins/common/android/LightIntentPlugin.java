@@ -21,4 +21,13 @@ public abstract class LightIntentPlugin {
 
 		return false;
 	}
+
+	protected boolean isAppInstalled(String pckg) {
+		Context cntxt = LightActivity.instance.getApplicationContext();
+		PackageManager pm = cntxt.getPackageManager();
+		for (PackageInfo pi : pm.getInstalledPackages(0)) {
+			if (pi.packageName.contentEquals(pckg)) return true;
+		}
+		return false;
+	}
 }

@@ -4,6 +4,17 @@ static jclass instagramCls = NULL;
 
 #define GET_CLS GET_PLUGIN_CLASS(instagramCls,ru/redspell/lightning/plugins/LightInstagram);
 
+value ml_instagram_installed(value p) {
+	GET_ENV;
+	GET_CLS;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, instagramCls, "isInstalled", "()Z");
+
+	jboolean retval = (*env)->CallStaticBooleanMethod(env, instagramCls, mid);
+
+	return (retval ? Val_true : Val_false);
+}
+
 value ml_instagram_post(value v_fname, value v_text) {
 	CAMLparam2(v_fname, v_text);
 

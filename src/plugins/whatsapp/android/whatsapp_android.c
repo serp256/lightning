@@ -4,6 +4,17 @@ static jclass whatsappCls = NULL;
 
 #define GET_CLS GET_PLUGIN_CLASS(whatsappCls,ru/redspell/lightning/plugins/LightWhatsapp);
 
+value ml_whatsapp_installed(value p) {
+	GET_ENV;
+	GET_CLS;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, whatsappCls, "isInstalled", "()Z");
+
+	jboolean retval = (*env)->CallStaticBooleanMethod(env, whatsappCls, mid);
+
+	return (retval ? Val_true : Val_false);
+}
+
 value ml_whatsapp_text(value v_text) {
 	GET_ENV;
 	GET_CLS;
@@ -33,3 +44,5 @@ value ml_whatsapp_picture(value v_pic) {
 
 	return (retval ? Val_true : Val_false);
 }
+
+
