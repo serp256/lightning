@@ -871,3 +871,34 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightActivity_mlSetReferrer(JN
 	(*env)->DeleteLocalRef(env,jnid);
 	CAMLreturn0;
 }
+
+
+
+
+value ml_show_nativeWait(value message) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "showNativeWait", "(Ljava/lang/String;)V");
+
+	jstring jmsg = Is_block(message) ? (*env)->NewStringUTF(env,String_val(Field(message,0))) : NULL;
+
+	(*env)->CallVoidMethod(env,jView,mid,NULL);	
+
+	if (jmsg) (*env)->DeleteLocalRef(env,jmsg);
+	return Val_unit;
+}
+
+
+
+value ml_hide_nativeWait(value p) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "hideNativeWait", "()V");
+
+	(*env)->CallVoidMethod(env,jView,mid);	
+	return Val_unit;
+}

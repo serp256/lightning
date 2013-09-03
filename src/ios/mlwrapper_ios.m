@@ -531,3 +531,15 @@ value ml_getUDID(value p) {
 	};
 	CAMLreturn(res);
 }
+
+
+
+value ml_show_nativeWait(value message) {
+	return Val_unit;
+
+}
+
+
+value ml_hide_nativeWait(value p) {
+	return Val_unit;
+}

@@ -280,3 +280,11 @@ ENDIF; *)
 
 (*external getMACID: unit -> string = "ml_getMACID";*)
 external getUDID: unit -> string = "ml_getUDID";
+
+IFPLATFORM(ios android)
+external showNativeWait: ?message:string -> unit -> unit = "ml_show_nativeWait";
+external hideNativeWait: unit -> unit = "ml_hide_nativeWait";
+ELSE
+value showNativeWait ?message () = ();
+value hideNativeWait () = ();
+ENDPLATFORM;

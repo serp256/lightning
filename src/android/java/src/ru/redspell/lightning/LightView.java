@@ -34,6 +34,7 @@ import java.util.Locale;
 import android.net.Uri;
 import android.os.Environment;
 import android.content.res.Configuration;
+import android.app.ProgressDialog;
 
 //import ru.redspell.lightning.payments.BillingService;
 //import ru.redspell.lightning.payments.ResponseHandler;
@@ -1150,5 +1151,27 @@ public class LightView extends GLSurfaceView {
 				(new LightUrlDialog(getContext(), url)).show();
 			}
 		});
+	}
+
+
+	private ProgressDialog progressDialog;
+
+	public void showNativeWait(final String message) {
+		if (progressDialog != null) progressDialog.dismiss();
+		post(new Runnable() {
+			@Override
+			public void run() {
+				progressDialog = new ProgressDialog(getContext());
+				progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+				progressDialog.setIndeterminate(true);
+				progressDialog.setCancelable(false);
+				if (message != null) progressDialog.setMessage(message);
+				progressDialog.show();
+			}
+		});
+	}
+
+	public void hideNativeWait() {
+		if (progressDialog != null) progressDialog.dismiss();
 	}
 }
