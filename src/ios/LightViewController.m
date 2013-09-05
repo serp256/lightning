@@ -129,26 +129,26 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 }
 
 -(void)showLeaderboard {
-    GKLeaderboardViewController *leaderboardController = [[GKLeaderboardViewController alloc] init];
-    if (leaderboardController != nil) {
-        leaderboardController.leaderboardDelegate = self;
-        [self presentModalViewController: leaderboardController animated: YES];
-    }
+	GKLeaderboardViewController *leaderboardController = [[GKLeaderboardViewController alloc] init];
+	if (leaderboardController != nil) {
+		leaderboardController.leaderboardDelegate = self;
+		[self presentModalViewController: leaderboardController animated: YES];
+	}
 }
 
 
 -(void)leaderboardViewControllerDidFinish:(GKLeaderboardViewController *)viewController {
-    [self dismissModalViewControllerAnimated:YES];
+ [self dismissModalViewControllerAnimated:YES];
 }
 
 
 -(void)showAchievements { 
-    GKAchievementViewController *achievements = [[GKAchievementViewController alloc] init];
-    if (achievements != nil){
-        achievements.achievementDelegate = self;
-        [self presentModalViewController: achievements animated: YES];
-    }
-    [achievements release];
+	GKAchievementViewController *achievements = [[GKAchievementViewController alloc] init];
+	if (achievements != nil){
+		achievements.achievementDelegate = self;
+		[self presentModalViewController: achievements animated: YES];
+	}
+	[achievements release];
 }
 
 
@@ -399,7 +399,7 @@ static value *ml_url_complete = NULL;
 
 
 - (void)dismissModalViewControllerAnimated:(BOOL)animated {
-	NSLog(@"dismissModalViewControllerAnimated");
+   NSLog(@"dismissModalViewControllerAnimated");
 	 [super dismissModalViewControllerAnimated: animated];
 	 [self becomeActive];
 }

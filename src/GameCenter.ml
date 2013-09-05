@@ -13,7 +13,7 @@ type player =
 IFPLATFORM(ios android)
 
 
-type state = [ NotInitialized | Initializing of Queue.t (bool -> unit) | Initialized | InitFailed ];
+type state = [ NotInitialized | Initializing of Queue.t (bool -> unit) | Initialized ];
 
 value state = ref NotInitialized;
 
@@ -35,14 +35,11 @@ value game_center_initialized success =
       state.val := 
         match success with
         [ True -> Initialized
-        | False -> InitFailed
+        | False -> NotInitialized
         ];
       match !initializer_handler with
-      [ Some f -> 
-        (
-          initializer_handler.val := None;
-          f success;
-        )
+      [ Some f -> f success
+(*           initializer_handler.val := None; *)
       | _ -> ()
       ];
       while not (Queue.is_empty callbacks) do
@@ -57,7 +54,6 @@ value game_center_initialized success =
 Callback.register "game_center_initialized" game_center_initialized;
 
 value init ?callback () = 
-(
   match !state with 
   [ NotInitialized -> 
     match gamecenter_init () with
@@ -69,19 +65,17 @@ value init ?callback () =
       )
     | False -> ()
     ]
-  | Initializing callbacks -> ()
+  | Initializing callbacks -> 
+      match callback with
+      [ Some c -> Queue.add c callbacks
+      | None -> ()
+      ]
   | Initialized ->
       match callback with
       [ Some f -> f True
       | None ->  ()
       ]
-  | InitFailed ->
-      match callback with
-      [ Some f -> f False
-      | None -> ()
-      ]
   ];
-);
 
 
 external _playerID: unit -> option string = "ml_gamecenter_playerID";
@@ -120,7 +114,7 @@ Callback.register "report_achievement_failed" report_achievement_failed;
 value reportAchievement identifier percentComplete = 
   let () = debug "report achievement" in
   match !state with
-  [ NotInitialized -> failwith "GameCenter not initialized"
+  [ NotInitialized -> report_achievement_failed identifier percentComplete
   | Initializing callbacks ->
       let c = fun
         [ True -> report_achievement identifier percentComplete
@@ -129,7 +123,6 @@ value reportAchievement identifier percentComplete =
       in
       Queue.push c callbacks
   | Initialized -> report_achievement identifier percentComplete
-  | InitFailed -> report_achievement_failed identifier percentComplete
   ];
 
 value unlockAchievement identifier = reportAchievement identifier 100.;
@@ -140,7 +133,7 @@ Callback.register "report_leaderboard_failed" report_leaderboard_failed;
 external report_leaderboard: string -> int64 -> unit = "ml_gamecenter_report_leaderboard";
 value reportLeaderboard category score = 
   match !state with
-  [ NotInitialized -> failwith("GameCenter not initialized")
+  [ NotInitialized -> report_leaderboard_failed category score
   | Initializing callbacks -> 
       let c = fun 
         [ True -> report_leaderboard category score
@@ -149,7 +142,6 @@ value reportLeaderboard category score =
       in
       Queue.push c callbacks
   | Initialized -> report_leaderboard category score
-  | InitFailed -> report_leaderboard_failed category score
   ];
 
 
@@ -165,7 +157,7 @@ value unlock_achievement_failed identifier = Debug.e "unlock achievement '%s' fa
 
 value unlockAchievement identifier =
   match !state with
-  [ NotInitialized -> failwith "GameCenter not initialized"
+  [ NotInitialized -> unlock_achievement_failed identifier 
   | Initializing callbacks ->
       let c = fun
         [ True -> unlock_achievement identifier 
@@ -174,7 +166,6 @@ value unlockAchievement identifier =
       in
       Queue.push c callbacks
   | Initialized -> unlock_achievement identifier 
-  | InitFailed -> unlock_achievement_failed identifier 
   ];
 
 
@@ -200,7 +191,7 @@ external show_achievements: unit -> unit = "ml_gamecenter_show_achievements";
 
 value showAchievements () =
   match !state with
-  [ NotInitialized -> failwith "GameCenter not initialized"
+  [ NotInitialized -> ()
   | Initializing callbacks ->
       let c = fun
         [ True -> show_achievements ()
@@ -209,13 +200,12 @@ value showAchievements () =
       in
       Queue.push c callbacks
   | Initialized -> show_achievements ()
-  | InitFailed -> ()
   ];
 
 external show_leaderboard: unit -> unit = "ml_gamecenter_show_leaderboard";
 value showLeaderboard () = 
   match !state with
-  [ NotInitialized -> failwith "GameCenter not initialized"
+  [ NotInitialized -> ()
   | Initializing callbacks -> 
       let c = fun
         [ True -> show_leaderboard ()
@@ -224,7 +214,6 @@ value showLeaderboard () =
       in
       Queue.push c callbacks
   | Initialized -> show_leaderboard ()
-  | InitFailed -> ()
   ];
 
 
@@ -245,7 +234,7 @@ IFPLATFORM(ios)
 external get_friends_identifiers : (list string -> unit) -> unit = "ml_gamecenter_get_friends_identifiers";
 value getFriends cb = 
   match !state with
-  [ NotInitialized -> failwith "GameCenter not initialized" 
+  [ NotInitialized -> cb []
   | Initializing callbacks -> 
       let c = fun 
         [ True  -> get_friends_identifiers cb
@@ -253,7 +242,6 @@ value getFriends cb =
         ]
       in Queue.push c callbacks
   | Initialized -> get_friends_identifiers cb
-  | InitFailed -> cb []
   ];
 
 external load_users_info : list string -> (list (string*string*option Texture.textureInfo) -> unit) -> unit = "ml_gamecenter_load_users_info";
@@ -269,7 +257,7 @@ value loadUserInfo identifiers cb =
       end infos)
   in 
   match !state with
-  [ NotInitialized -> failwith "GameCenter not initialized" 
+  [ NotInitialized -> lcb []
   | Initializing callbacks -> 
       let c = fun 
         [ True  -> load_users_info identifiers lcb
@@ -277,7 +265,6 @@ value loadUserInfo identifiers cb =
         ]
       in Queue.push c callbacks
   | Initialized -> load_users_info identifiers lcb
-  | InitFailed -> lcb []
   ];
 
 ELSE
@@ -315,13 +302,12 @@ ENDPLATFORM;
 IFPLATFORM(android)
 
 external sign_out: unit -> unit = "ml_gamecenter_signout";
-value game_center_disconnected () =
+value game_center_disconnected () = (* ????? *)
   let () = debug "GameCenter disconnected" in
   match !state with
   [ NotInitialized -> ()
   | Initializing queue -> ()
   | Initialized -> state.val := NotInitialized
-  | InitFailed -> ()
   ];
 
 Callback.register "game_center_disconnected" game_center_disconnected;

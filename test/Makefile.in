@@ -11,7 +11,11 @@ CFLAGS += -DLDEBUG
 
 SOCIAL=  ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
 OAUTH = ../src/social/oauth/oauth.cma 
-PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma 
+PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma  \
+					../src/plugins/instagram/instagram.cma \
+					../src/plugins/whatsapp/whatsapp.cma \
+					../src/plugins/tapjoy/tapjoy.cma \
+					../src/plugins/appsflyer/appsflyer.cma
 
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \

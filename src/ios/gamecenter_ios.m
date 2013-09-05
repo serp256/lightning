@@ -27,6 +27,16 @@ value ml_gamecenter_init(value param) {
 		caml_callback(*caml_named_value("game_center_initialized"),res);
 		//caml_enter_blocking_section();
 	 }];
+	/*[localPlayer authenticateHandler:^(UIViewController *viewController, NSError *error) {
+		NSLog(@"GameCenter Initialized");
+		if (viewController) [[LightViewController instance] presentViewController:viewController];
+		else {
+			NSCAssert([NSThread isMainThread],@"GameCenter Init call not in main thread");
+			value res = Val_false;
+			if (localPlayer.isAuthenticated) res = Val_true;
+			caml_callback(*caml_named_value("game_center_initialized"),res);
+		}
+	}];*/
 	return Val_true;
 }
 
