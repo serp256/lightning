@@ -428,8 +428,8 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
     REGISTER_CALLBACK(v_success, success);
     REGISTER_CALLBACK(v_fail, fail);
 
-    // NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
-    NSString* path = [NSString stringWithUTF8String:String_val(v_fname)];
+    NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
+    // NSString* path = [NSString stringWithUTF8String:String_val(v_fname)];
     UIImage* img = [UIImage imageWithContentsOfFile:path];
 
     BOOL displayedNativeDialog = [FBDialogs
@@ -455,6 +455,8 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
             } else {
                 if (fail) caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));
             }
+
+            [[LightViewController sharedInstance] becomeActive];
 
             FREE_CALLBACK(success);
             FREE_CALLBACK(fail);             
