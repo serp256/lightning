@@ -174,7 +174,7 @@ value downloadExpansions ?errorCallback ?progressCallback ~pubkey ~completeCallb
   )
   else (); 
 ELSE
-value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () = 
+value downloadExpansions ?errorCallback ?progressCallback ~pubkey ~completeCallback () = 
 (
 	completeCallback ();
 );
