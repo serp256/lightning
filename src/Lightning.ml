@@ -126,7 +126,7 @@ ENDIF;
 ENDIF;
 
 IFDEF ANDROID THEN
-external downloadExpansions: unit -> unit = "ml_downloadExpansions";
+external downloadExpansions: string -> unit = "ml_downloadExpansions";
 
 value expansionsInProgress = ref False;
 value _errorCallback = ref None;
@@ -157,7 +157,7 @@ value expansionsComplete () = (
   expansionsInProgress.val := False;
 );
 
-value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () =
+value downloadExpansions ?errorCallback ?progressCallback ~pubkey ~completeCallback () =
   if not !expansionsInProgress
   then (
     expansionsInProgress.val := True;
@@ -170,11 +170,11 @@ value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () =
     _progressCallback.val := progressCallback;
     _completeCallback.val := Some completeCallback;
 
-    downloadExpansions ();
+    downloadExpansions pubkey;
   )
   else (); 
 ELSE
-value downloadExpansions ?errorCallback ?progressCallback ~completeCallback () = 
+value downloadExpansions ?errorCallback ?progressCallback ~pubkey ~completeCallback () = 
 (
 	completeCallback ();
 );

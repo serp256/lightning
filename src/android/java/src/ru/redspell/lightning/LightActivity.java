@@ -109,9 +109,10 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		}
 	}
 
-	public boolean startExpansionDownloadService() {
+	public boolean startExpansionDownloadService(String pubKey) {
 		Log.d(LOG_TAG, "startExpansionDownloadService call");
 
+		LightExpansionsDownloadService.setPubKey(pubKey);
 		Intent notifierIntent = new Intent(this, this.getClass());
 		notifierIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
