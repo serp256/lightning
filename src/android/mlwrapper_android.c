@@ -638,25 +638,34 @@ value ml_getMACID(value unit) {
 }
 */
 
-static value udid;
-
 value ml_getUDID(value unit) {
 	DEBUGF("ML_UDID");
-	if (!udid) {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
-		jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getUDID", "()Ljava/lang/String;");
-		jstring jdev = (*env)->CallObjectMethod(env, jView, mid);
-		const char* cdev = (*env)->GetStringUTFChars(env, jdev, JNI_FALSE);
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getUDID", "()Ljava/lang/String;");
+	jstring jdev = (*env)->CallObjectMethod(env, jView, mid);
+	const char* cdev = (*env)->GetStringUTFChars(env, jdev, JNI_FALSE);
 
-		udid = caml_copy_string(cdev);
-		caml_register_generational_global_root(&udid);
+	value udid = caml_copy_string(cdev);
+	(*env)->ReleaseStringUTFChars(env, jdev, cdev);
+	(*env)->DeleteLocalRef(env, jdev);
+	return udid;
+}
 
-		(*env)->ReleaseStringUTFChars(env, jdev, cdev);
-		(*env)->DeleteLocalRef(env, jdev);
-	}
+value ml_getOldUDID(value unit) {
+	DEBUGF("ML_OLD_UDID");
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
+	jmethodID mid = (*env)->GetMethodID(env, jViewCls, "getOldUDID", "()Ljava/lang/String;");
+	jstring jdev = (*env)->CallObjectMethod(env, jView, mid);
+	const char* cdev = (*env)->GetStringUTFChars(env, jdev, JNI_FALSE);
+
+	value udid = caml_copy_string(cdev);
+
+	(*env)->ReleaseStringUTFChars(env, jdev, cdev);
+	(*env)->DeleteLocalRef(env, jdev);
 	return udid;
 }
 

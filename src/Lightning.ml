@@ -279,7 +279,15 @@ value extractAssetsAndExpansionsIfRequired (cb:(bool -> unit)) = cb True;
 ENDIF; *)
 
 (*external getMACID: unit -> string = "ml_getMACID";*)
+IFPLATFORM (ios android)
 external getUDID: unit -> string = "ml_getUDID";
+value _udid = Lazy.lazy_from_fun getUDID;
+value getUDID () = Lazy.force _udid;
+external getOldUDID: unit -> string = "ml_getOldUDID";
+ELSE
+value getUDID () = "PC_UDID";
+value getOldUDID () = "PC_UDID";
+ENDPLATFORM;
 
 IFPLATFORM(ios android)
 external showNativeWait: ?message:string -> unit -> unit = "ml_show_nativeWait";
