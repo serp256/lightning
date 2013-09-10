@@ -846,7 +846,7 @@ public class LightView extends GLSurfaceView {
 	}
 
 
-	public void downloadExpansions() {
+	public void downloadExpansions(final String pubKey) {
 		Log.d("LIGHTNING", "extracting expansions");
 
 	    for (XAPKFile xf : activity.getExpansions()) {
@@ -860,7 +860,7 @@ public class LightView extends GLSurfaceView {
 				getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						activity.startExpansionDownloadService();
+						activity.startExpansionDownloadService(pubKey);
 					}
 				});
 
