@@ -33,7 +33,7 @@ value setSupportEmail: string -> unit;
 value getUDID: unit -> string;
 value getOldUDID: unit -> string;
 
-value downloadExpansions: ?errorCallback:(string -> unit) -> ?progressCallback:(~total:int -> ~progress:int -> ~timeRemain:int -> unit -> unit) -> ~completeCallback:(unit -> unit) -> unit -> unit;
+value downloadExpansions: ?errorCallback:(string -> unit) -> ?progressCallback:(~total:int -> ~progress:int -> ~timeRemain:int -> unit -> unit) -> ~pubkey:string -> ~completeCallback:(unit -> unit) -> unit -> unit;
 (* value extractAssetsIfRequired: (bool -> unit) -> unit;
 value extractAssetsAndExpansionsIfRequired: (bool -> unit) -> unit; *)
 

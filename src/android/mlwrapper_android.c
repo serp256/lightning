@@ -857,14 +857,17 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024ExpansionsError
 	caml_callback(*caml_named_value("expansionsError"), v_reason);
 }
 
-value ml_downloadExpansions() {
+value ml_downloadExpansions(value v_pubkey) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
 	static jmethodID mid = 0;
-	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "downloadExpansions", "()V");
+	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "downloadExpansions", "(Ljava/lang/String;)V");
 
-	(*env)->CallVoidMethod(env, jView, mid);	
+	jstring j_pubkey = (*env)->NewStringUTF(env, String_val(v_pubkey));
+	(*env)->CallVoidMethod(env, jView, mid, j_pubkey);
+	(*env)->DeleteLocalRef(env, j_pubkey);
+
 	return Val_unit;
 }
 
