@@ -398,7 +398,6 @@ value ml_getLocale() {
 }
 
 value ml_getVersion() {
-	PRINT_DEBUG("PIZDA=====================");
 	NSString * vers = [LightViewController version];
 	value s = caml_copy_string([vers UTF8String]);
 	return s;

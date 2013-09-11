@@ -1,14 +1,14 @@
 include myconfig.ios
 export PLATFORM = IOS
-SDK_VERSION ?= 6.1
+SDK_VERSION ?= 7.0
 #GCC ?= clang
 ARCH ?= armv7
-PLAT ?= /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform
+PLAT ?= /Applications/Xcode5-DP6.app/Contents/Developer/Platforms/iPhoneOS.platform
 SDK ?= /Developer/SDKs/iPhoneOS$(SDK_VERSION).sdk
 OCAMLDIR ?= /usr/local/ocaml/ios
 export OCAMLFIND ?= ocamlfind -toolchain ios
 OCAMLBINDIR = $(OCAMLDIR)/bin/
-export CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch $(ARCH)
+export CC = /Applications/Xcode5-DP6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch $(ARCH)
 export CFLAGS = -x objective-c -std=c99 -Wno-trigraphs -fpascal-strings -O0 -Wreturn-type -Wunused-variable -isysroot $(PLAT)$(SDK) -isystem $(OCAMLDIR)/lib -DCAML_NAME_SPACE -fexceptions -miphoneos-version-min=5.1 -gdwarf-2 -D_FILE_OFFSET_BITS=64 -D_REENTRANT
 export OCAMLOPT = $(OCAMLFIND) ocamlopt
 export OCAMLC = $(OCAMLFIND) ocamlc

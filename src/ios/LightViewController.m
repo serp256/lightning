@@ -296,6 +296,11 @@ static value *ml_url_complete = NULL;
 	}
 }
 
+- (BOOL)prefersStatusBarHidden
+{
+	return YES;
+}
+
 - (NSUInteger)supportedInterfaceOrientations {
 	//NSLog(@"Controller supportedOrientations called");
 	if (_orientationDelegate && [_orientationDelegate respondsToSelector:@selector(supportedInterfaceOrientations)]) {
