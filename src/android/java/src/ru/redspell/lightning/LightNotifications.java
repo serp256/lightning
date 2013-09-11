@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import ru.redspell.lightning.LightView;
+import ru.redspell.lightning.LightActivity;
 import ru.redspell.lightning.utils.Log;
 
 public class LightNotifications {
@@ -46,7 +46,7 @@ public class LightNotifications {
 	}
 
 	public static void scheduleNotification(String notifId, double fireDate, String message) {
-		Context context = LightView.instance.activity.getApplicationContext();
+		Context context = LightActivity.instance.getApplicationContext();
 		logNotification(context, notifId, fireDate, message);
 		scheduleNotification(context, notifId, fireDate, message);
 	}
@@ -63,15 +63,41 @@ public class LightNotifications {
 		getAlarmManager(context).set(AlarmManager.RTC_WAKEUP, (long)fireDate, pScheduleIntent);
 	}
 
-	public static void cancelNotification(String notifId) {
-		Context context = LightView.instance.activity.getApplicationContext();
-		unlogNotification(context, notifId);
-		
+
+	private static void _cancelNotification(Context context,String notifId) {
 		Intent cancelIntent = new Intent(context, LightNotificationsReceiver.class);
 		cancelIntent.setData(makeIntentData(context, notifId));
 
 		PendingIntent pCancelIntent = PendingIntent.getBroadcast(context, cancelIntent.getDataString().hashCode(), cancelIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		getAlarmManager(context).cancel(pCancelIntent);
+	}
+
+	public static void cancelNotification(String notifId) {
+		Context context = LightActivity.instance.getApplicationContext();
+		unlogNotification(context, notifId);
+		_cancelNotification(context,notifId);
+	}
+
+
+	public static void cancelAll() {
+		Context context = LightActivity.instance.getApplicationContext();
+		SharedPreferences notifSharedPrefs = context.getSharedPreferences(NOTIFICATIONS_SHARED_PREF, Context.MODE_PRIVATE);
+		String snotifs = notifSharedPrefs.getString(NOTIFICATIONS_SHARED_PREF, "[]");
+		notifSharedPrefs.edit().putString(NOTIFICATIONS_SHARED_PREF, "[]").commit();
+
+		try {
+
+			JSONArray jsonNotifs = new JSONArray(snotifs);
+
+			for (int i = 0; i < jsonNotifs.length(); i++) {
+				JSONObject jsonNotif = jsonNotifs.getJSONObject(i);
+				String notifId = jsonNotif.getString("id");
+				_cancelNotification(context,notifId);
+			}
+			
+		} catch (org.json.JSONException e) {
+			Log.d("LIGHTNING", "cancelAll json error");
+		}
 	}
 
 	public static void logNotification(Context context, String notifId, double fireDate, String message) {

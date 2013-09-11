@@ -45,7 +45,7 @@ value ml_lnCancel(value nid) {
 		return Val_unit;
 }
 
-int nidToIndex(value nid) {
+static int nidToIndex(value nid) {
     NSString *nsNid = [NSString stringWithCString:String_val(nid) encoding:NSASCIIStringEncoding];
 
     return [[UIApplication sharedApplication].scheduledLocalNotifications indexOfObjectPassingTest:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -56,6 +56,7 @@ int nidToIndex(value nid) {
     }];    
 }
 
+/*
 value ml_lnExists(value nid) {
     return Val_bool(nidToIndex(nid) != NSNotFound);
 }
@@ -73,4 +74,10 @@ value ml_notifFireDate(value nid) {
     Store_field(tuple, 0, caml_copy_double([notif.fireDate timeIntervalSince1970]));
 
     return tuple;
+}
+*/
+
+
+value ml_lnCancelAll(value p) {
+	[[UIApplication sharedApplication] cancelAllLocalNotifications];
 }
