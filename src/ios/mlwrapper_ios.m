@@ -539,6 +539,7 @@ value ml_getUDID(value p) {
 	if ([device respondsToSelector:@selector(identifierForVendor)]) {
 		NSUUID *udid = [UIDevice currentDevice].identifierForVendor;
 		if (udid) nsres = [udid UUIDString];
+		if ([nsres compare:@"00000000-0000-0000-0000-000000000000"] == NSOrderedSame) nsres = nil;
 	};
 	if (!nsres) nsres = [OpenUDID value];
 	if (!nsres) caml_failwith("can't get UDID");
