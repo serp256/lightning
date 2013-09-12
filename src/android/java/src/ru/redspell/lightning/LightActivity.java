@@ -35,6 +35,8 @@ import android.view.View;
 import android.widget.AbsoluteLayout;
 import android.view.ViewGroup.LayoutParams;
 import android.content.res.Configuration;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import 	com.google.android.gms.common.ConnectionResult;
 
 import ru.redspell.lightning.payments.google.LightGooglePayments;
 
@@ -66,8 +68,9 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	}
 
 	private final String LOG_TAG = "LIGHTNING";
+	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
-	public isPlayServicesAvailable = false;
+	public boolean isPlayServicesAvailable = false;
 	public LightView lightView;
 	private IStub mDownloaderClientStub;
 	private IDownloaderService mRemoteService;
@@ -330,15 +333,14 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	}
 
 
-	@Override
 	private void checkPlayServices() {
 		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
     if (resultCode != ConnectionResult.SUCCESS) {
         if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
             GooglePlayServicesUtil.getErrorDialog(resultCode, this, PLAY_SERVICES_RESOLUTION_REQUEST).show();
         };
-        isGooglePlayServicesAvailable = false;
+        isPlayServicesAvailable = false;
     }
-		isGooglePlayServicesAvailable = true;
+		isPlayServicesAvailable = true;
 	};
 }	
