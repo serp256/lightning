@@ -1,6 +1,7 @@
 package ru.redspell.lightning.utils;
 
 public class Log {
+		private static final String TAG = "LIGHTNING";
     public static boolean enabled = true;
 
     public static int v(String tag, String msg) {
@@ -14,6 +15,9 @@ public class Log {
     public static int d(String tag, String msg) {
         return enabled ? android.util.Log.d(tag, msg) : 0;
     }
+		public static int d(String msg) {
+        return enabled ? android.util.Log.d(TAG, msg) : 0;
+		}
 
     public static int d(String tag, String msg, Throwable tr) {
         return enabled ? android.util.Log.d(tag, msg, tr) : 0;

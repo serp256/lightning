@@ -20,6 +20,7 @@ import java.util.List;
 import ru.redspell.lightning.utils.Log;
 
 public class OpenUDID {
+	public final static String LOG_TAG = "LIGHTNING";
 	public final static String PREF_KEY = "openudid";
 	public final static String PREFS_NAME = "openudid_prefs";
 	
@@ -63,7 +64,7 @@ public class OpenUDID {
 	 * Generate a new OpenUDID
 	 */
 	private static void generateOpenUDIDInContext(Context mContext) {
-		Log.d("Generating openUDID");
+		Log.d(LOG_TAG,"Generating openUDID");
 		List<String> ids = new java.util.ArrayList();
 
 		//Try to get the ANDROID_ID
@@ -105,7 +106,7 @@ public class OpenUDID {
 		*/
 		
 		
-		Log.d(_openUdid);
+		Log.d(LOG_TAG,_openUdid);
 		
 	}
 	

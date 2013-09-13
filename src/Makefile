@@ -21,9 +21,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma social_byte
+byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa social_native
+native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -135,6 +135,12 @@ lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJ
 
 lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
 	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
+	
+remote-notifications.cma:
+	make -C plugins/remote-notifications remote-notifications.cma
+
+remote-notifications.cmxa:
+	make -C plugins/remote-notifications remote-notifications.cmxa
 
 
 tapjoy.cma:

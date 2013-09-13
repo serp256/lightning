@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import ru.redspell.lightning.LightView;
+import ru.redspell.lightning.LightActivity;
 import ru.redspell.lightning.utils.Log;
 
 public class LightNotifications {
@@ -46,7 +46,7 @@ public class LightNotifications {
 	}
 
 	public static void scheduleNotification(String notifId, double fireDate, String message) {
-		Context context = LightView.instance.activity.getApplicationContext();
+		Context context = LightActivity.instance.getApplicationContext();
 		logNotification(context, notifId, fireDate, message);
 		scheduleNotification(context, notifId, fireDate, message);
 	}

@@ -27,6 +27,7 @@ release: $(TARGET).so
 $(TARGET).so: $(CFILES) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
 	-I ../src ../src/lightning.cmxa \
+	-cclib "-L../src/plugins/remote-notifications" ../src/plugins/remote-notifications/remote-notifications.cmxa \
 	-cclib "-L../src/plugins/facebook" ../src/plugins/facebook/facebook.cmxa \
 	-cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa \
 	-cclib "-L../src/plugins/tapjoy" ../src/plugins/tapjoy/tapjoy.cmxa \
