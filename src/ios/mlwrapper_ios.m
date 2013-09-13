@@ -326,29 +326,6 @@ value ml_payment_restore_completed_transactions(value p) {
 }
 
 
-// 
-value ml_request_remote_notifications(value rntype, value success_cb, value error_cb) {
-  LightViewController * c = [LightViewController sharedInstance];
-
-  if (Is_block(c->remote_notification_request_success_cb)) {
-    caml_remove_global_root(&(c->remote_notification_request_success_cb));
-  }
-  
-  if (Is_block(c->remote_notification_request_error_cb)) {
-    caml_remove_global_root(&(c->remote_notification_request_error_cb));
-  }
-  
-  c->remote_notification_request_success_cb = success_cb;
-  c->remote_notification_request_error_cb   = error_cb;
-
-  caml_register_global_root(&(c->remote_notification_request_success_cb));
-  caml_register_global_root(&(c->remote_notification_request_error_cb));
-
-  [[UIApplication sharedApplication] registerForRemoteNotificationTypes: Int_val(rntype)];
-
-  return Val_unit;  
-}
-
 /*
 void ml_uncatchedError(value message) {
 	NSString *error = [NSString stringWithCString:String_val(message) encoding:NSUTF8StringEncoding];
