@@ -35,6 +35,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.content.res.Configuration;
 import android.app.ProgressDialog;
+import android.telephony.TelephonyManager;
 
 //import ru.redspell.lightning.payments.BillingService;
 //import ru.redspell.lightning.payments.ResponseHandler;
@@ -70,6 +71,7 @@ import java.security.NoSuchAlgorithmException;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
+import ru.redspell.lightning.OpenUDID;
 
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
@@ -266,7 +268,7 @@ public class LightView extends GLSurfaceView {
 	protected static final String PREFS_FILE = "device_id.xml";
 	protected static final String PREFS_DEVICE_ID = "device_id";
 
-	protected volatile static String uuid;
+	protected volatile static String old_udid;
 
 
 	public static final String md5(final String s) {
@@ -294,6 +296,53 @@ public class LightView extends GLSurfaceView {
 	}
 
 
+	private void initOldUDID() {
+			Log.d("LIGHTNING", "INIT OLD UDID");
+			String serial = md5 (
+				Build.BOARD + Build.BRAND
+				+ Build.CPU_ABI + Build.DEVICE
+				+ Build.DISPLAY + Build.HOST
+				+ Build.ID + Build.MANUFACTURER
+				+ Build.MODEL + Build.PRODUCT
+				+ Build.TAGS + Build.TYPE
+				+ Build.USER);
+	
+			Log.d ("LIGHTNING", "Board: " + Build.BOARD);
+			Log.d ("LIGHTNING", "Brand: " + Build.BRAND);
+			Log.d ("LIGHTNING", "CPU_ABI: " + Build.CPU_ABI);
+			Log.d ("LIGHTNING", "DISPLAY: " + Build.DISPLAY);
+			Log.d ("LIGHTNING", "ID: " + Build.ID);
+			Log.d ("LIGHTNING", "DEVICE: " + Build.DEVICE);
+			Log.d ("LIGHTNING", "HOST: " + Build.HOST);
+			Log.d ("LIGHTNING", "MANUFACTURER: " + Build.MANUFACTURER);
+			Log.d ("LIGHTNING", "MODEL: " + Build.MODEL);
+			Log.d ("LIGHTNING", "TAGS: " + Build.TAGS);
+			Log.d ("LIGHTNING", "PRODUCT: " + Build.PRODUCT);
+			Log.d ("LIGHTNING", "TYPE: " + Build.TYPE);
+			Log.d ("LIGHTNING", "USER: " + Build.USER);
+
+			Log.d("LIGHTNING", "SERIAL: " + serial);
+
+
+			final String android_id = Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
+			Log.d("LIGHTNING","ANDROID_ID = " + android_id);
+			if (android_id != null && !"9774d56d682e549c".equals(android_id) && !"0000000000000000".equals(android_id)  ) {
+				old_udid =android_id;
+			} else {
+				Log.d("LIGHTNING","ANDROID_ID is bad " + android_id);
+				final SharedPreferences prefs = (getContext ()).getSharedPreferences( PREFS_FILE, 0);
+				Log.d("LIGHTNING", "get deviec id" );
+				final String id = prefs.getString(PREFS_DEVICE_ID, null );
+				if (id == null) {
+					old_udid = (UUID.randomUUID ()).toString ();
+					prefs.edit().putString(PREFS_DEVICE_ID, old_udid).commit();
+				} else {
+					Log.d("LIGHTNING", "id is not null");
+					old_udid = id;
+				}
+			};
+			old_udid = old_udid + "_" + serial;
+	}
 
 	public LightView(LightActivity _activity) {
 		super(_activity);
@@ -305,52 +354,13 @@ public class LightView extends GLSurfaceView {
 
 		Log.d("LIGHTNING", "tid: " + Process.myTid());
 
-		if (uuid == null) {
-				Log.d("LIGHTNING", "id is null");
-//				String serial = android.os.Build.HARDWARE; 
-				String serial = md5 (
-				Build.BOARD + Build.BRAND
-				+ Build.CPU_ABI + Build.DEVICE
-				+ Build.DISPLAY + Build.HOST
-				+ Build.ID + Build.MANUFACTURER
-				+ Build.MODEL + Build.PRODUCT
-				+ Build.TAGS + Build.TYPE
-				+ Build.USER);
-		
-				Log.d ("LIGHTNING", "Board: " + Build.BOARD);
-				Log.d ("LIGHTNING", "Brand: " + Build.BRAND);
-				Log.d ("LIGHTNING", "CPU_ABI: " + Build.CPU_ABI);
-				Log.d ("LIGHTNING", "DISPLAY: " + Build.DISPLAY);
-				Log.d ("LIGHTNING", "ID: " + Build.ID);
-				Log.d ("LIGHTNING", "DEVICE: " + Build.DEVICE);
-				Log.d ("LIGHTNING", "HOST: " + Build.HOST);
-				Log.d ("LIGHTNING", "MANUFACTURER: " + Build.MANUFACTURER);
-				Log.d ("LIGHTNING", "MODEL: " + Build.MODEL);
-				Log.d ("LIGHTNING", "TAGS: " + Build.TAGS);
-				Log.d ("LIGHTNING", "PRODUCT: " + Build.PRODUCT);
-				Log.d ("LIGHTNING", "TYPE: " + Build.TYPE);
-				Log.d ("LIGHTNING", "USER: " + Build.USER);
 
-				Log.d("LIGHTNING", "serial: " + serial);
-				final String android_id = Settings.System.getString((getContext ()).getContentResolver(),Secure.ANDROID_ID);
-				if (!"9774d56d682e549c".equals(android_id) && !"0000000000000000".equals(android_id)  ) {
-					uuid =android_id;
-				} else {
-					Log.d("LIGHTNING", "get preferences" );
-					final SharedPreferences prefs = (getContext ()).getSharedPreferences( PREFS_FILE, 0);
-					Log.d("LIGHTNING", "get deviec id" );
-					final String id = prefs.getString(PREFS_DEVICE_ID, null );
-					if (id == null) {
-						uuid = (UUID.randomUUID ()).toString ();
-						prefs.edit().putString(PREFS_DEVICE_ID, uuid).commit();
-					} else {
-						Log.d("LIGHTNING", "id is not null");
-						uuid = id;
-					}
-				};
-			uuid = uuid + "_" + serial;
+		OpenUDID.syncContext(activity.getApplicationContext());
+		/*
+		if (uuid == null) {
 			Log.d("LIGHTNING", "uuid: " + uuid);
-		};
+			initUUID();
+		};*/
 
 		activity.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -421,8 +431,13 @@ public class LightView extends GLSurfaceView {
 		setFocusableInTouchMode(true);
 	}
 
+	public String getOldUDID () {
+		if (old_udid == null) initOldUDID();
+		return old_udid;
+	}
+
 	public String getUDID () {
-		return uuid;
+		return OpenUDID.getOpenUDIDInContext();
 	}
 
 	public ResourceParams getResource(String path) {

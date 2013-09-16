@@ -31,6 +31,7 @@ value addExceptionInfo: string -> unit;
 value setSupportEmail: string -> unit;
 (*value getMACID: unit -> string;*)
 value getUDID: unit -> string;
+value getOldUDID: unit -> string;
 
 value downloadExpansions: ?errorCallback:(string -> unit) -> ?progressCallback:(~total:int -> ~progress:int -> ~timeRemain:int -> unit -> unit) -> ~pubkey:string -> ~completeCallback:(unit -> unit) -> unit -> unit;
 (* value extractAssetsIfRequired: (bool -> unit) -> unit;

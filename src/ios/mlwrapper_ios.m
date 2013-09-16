@@ -515,7 +515,7 @@ const char* getMacAddress() {
 }
 
 
-value ml_getUDID(value p) {
+value ml_getOldUDID(value p) {
 	CAMLparam0();
 	CAMLlocal1(res);
 	const char* mac_address = getMacAddress();
@@ -530,6 +530,22 @@ value ml_getUDID(value p) {
 		sprintf(String_val(res),"%s_%s",mac_address,[udid UTF8String]);
 	};
 	CAMLreturn(res);
+}
+
+
+value ml_getUDID(value p) {
+	NSString *nsres = nil;
+	UIDevice *device = [UIDevice currentDevice];
+	if ([device respondsToSelector:@selector(identifierForVendor)]) {
+		NSUUID *udid = [UIDevice currentDevice].identifierForVendor;
+		if (udid) nsres = [udid UUIDString];
+		if ([nsres compare:@"00000000-0000-0000-0000-000000000000"] == NSOrderedSame) nsres = nil;
+	};
+	if (!nsres) nsres = [OpenUDID value];
+	if (!nsres) caml_failwith("can't get UDID");
+	NSLog(@"nsres: %@",nsres);
+	value res = caml_copy_string([nsres cStringUsingEncoding:NSASCIIStringEncoding]);
+	return res;
 }
 
 
