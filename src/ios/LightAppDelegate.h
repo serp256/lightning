@@ -5,6 +5,7 @@
 #define APP_HANDLE_OPEN_URL_NOTIFICATION @"applicationHandleOpenUrl"
 #define APP_HANDLE_OPEN_URL_NOTIFICATION_DATA @"applicationHandleOpenUrl"
 
+
 @interface LightAppDelegate : NSObject <UIApplicationDelegate,OrientationDelegate> {
     UIAlertView * inappPurchaseActivity;
     LightViewController * lightViewController;

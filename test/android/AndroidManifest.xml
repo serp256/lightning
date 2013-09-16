@@ -29,16 +29,25 @@
 					android:anyDensity="true"
 				/>
 
-        <receiver android:name="ru.redspell.lightning.LightNotificationsReceiver">
-          <intent-filter>
-            <action android:name="android.intent.action.BOOT_COMPLETED" />
-          </intent-filter>
-        </receiver>
+		<receiver android:name="ru.redspell.lightning.LightNotificationsReceiver">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
+		</receiver>
 
 		<meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/app_id" />
 
     <service android:name="ru.redspell.lightning.expansions.LightExpansionsDownloadService"/>
     <receiver android:name="ru.redspell.lightning.expansions.LightExpansionsAlarmReceiver"/>
+
+		<receiver 
+			android:name="ru.redspell.lightning.plugins.GcmBroadcastReceiver"
+			android:permission="com.google.android.c2dm.permission.SEND" >
+			<intent-filter>
+				<action android:name="com.google.android.c2dm.intent.RECEIVE" />
+				<category android:name="ru.redspell.lighttest"/>
+			</intent-filter>
+		</receiver>
 
 			<!--service android:name="ru.redspell.lightning.payments.BillingService" /-->
 			<!--activity android:name="com.mopub.mobileads.MoPubActivity" android:configChanges="keyboardHidden"/>
@@ -62,6 +71,7 @@
 
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+	<uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
 
 

@@ -156,7 +156,7 @@ public class LightNotifications {
 			notifSharedPrefs.edit().putString(NOTIFICATIONS_SHARED_PREF, new JSONArray(notifs).toString()).commit();
 		} catch (JSONException e) {
 			Log.d("LIGHTNING", "unlogNotification json error");
-		}		
+		}
 	}
 
 	public static void rescheduleNotifications(Context context) {

@@ -17,10 +17,10 @@ import android.provider.Settings.Secure;
 import android.text.TextUtils;
 
 import java.util.List;
-import android.util.Log;
+import ru.redspell.lightning.utils.Log;
 
 public class OpenUDID {
-	public final static String TAG = "OpenUDID";//for Log
+	public final static String LOG_TAG = "LIGHTNING";
 	public final static String PREF_KEY = "openudid";
 	public final static String PREFS_NAME = "openudid_prefs";
 	
@@ -29,10 +29,6 @@ public class OpenUDID {
 	//we recommend adding BT permission over  READ_PHONE_STATE permission as the will be less privacy concerns
 	private final static boolean _UseBlueToothFailback = false; // false if you don't wanna include BT permission or android 1.6
 	private final static boolean LOG = true; //Display or not debug message
-	private static void _debugLog(String lmsg){
-		if(!LOG) return;
-		Log.d(TAG, lmsg);
-	}
 
 	public static void syncContext(Context mContext){
 		if(_openUdid==null){
@@ -68,7 +64,7 @@ public class OpenUDID {
 	 * Generate a new OpenUDID
 	 */
 	private static void generateOpenUDIDInContext(Context mContext) {
-		if (LOG) _debugLog( "Generating openUDID");
+		Log.d(LOG_TAG,"Generating openUDID");
 		List<String> ids = new java.util.ArrayList();
 
 		//Try to get the ANDROID_ID
@@ -110,9 +106,8 @@ public class OpenUDID {
 		*/
 		
 		
-		_debugLog(_openUdid);
+		Log.d(LOG_TAG,_openUdid);
 		
-		_debugLog("done");
 	}
 	
 	private static String generateImeiId(Context mContext) {
@@ -137,6 +132,7 @@ public class OpenUDID {
     	String m_szBTMAC = m_BluetoothAdapter.getAddress();
     	if(null!=m_szBTMAC){
     		_openUdid = "BTMAC:"+m_szBTMAC;
+
     	}
 		}catch(Exception ex){
 		
@@ -149,7 +145,7 @@ public class OpenUDID {
 			WifiManager wifiMan = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 			WifiInfo wifiInf = wifiMan.getConnectionInfo();
 
-			_debugLog(String.format("%s",wifiInf.getMacAddress()));
+			//Log.d(String.format("%s",wifiInf.getMacAddress()));
 		
 			String macAddr = wifiInf.getMacAddress();
 			if(macAddr!=null){
