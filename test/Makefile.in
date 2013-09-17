@@ -4,7 +4,21 @@ TARGET ?= example
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_platform.cmo -enable-debug default
 
-MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/plugins/tapjoy -I ../src/plugins/flurry -I ../src/plugins/facebook -I ../src/plugins/mopub -I ../src/plugins/mobileapptracking -I ../src/plugins/chartboost -I ../src/plugins/sponsorpay -I ../src/plugins/appflood -I ../src/plugins/supersonic  -I ../src/plugins/twitter -I ../src/plugins/instagram -I ../src/plugins/whatsapp -I ../src/plugins/appsflyer
+MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social \
+					 -I ../src/plugins/remote-notifications \
+					 -I ../src/plugins/tapjoy \
+					 -I ../src/plugins/flurry \
+					 -I ../src/plugins/facebook \
+					 -I ../src/plugins/mopub \
+					 -I ../src/plugins/mobileapptracking \
+					 -I ../src/plugins/chartboost \
+					 -I ../src/plugins/sponsorpay \
+					 -I ../src/plugins/appflood \
+					 -I ../src/plugins/supersonic \
+					 -I ../src/plugins/twitter \
+					 -I ../src/plugins/instagram \
+					 -I ../src/plugins/whatsapp \
+					 -I ../src/plugins/appsflyer
 
 CFLAGS += -DLDEBUG
 #MLFILES = panelbg.cmo testz.cmo
@@ -35,6 +49,7 @@ $(TARGET).cmx: $(MLXFILES)
 $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.native  -g  -ccopt -miphoneos-version-min=5.1\
 	  -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES)\
+	  -ccopt -L../src/plugins/remote-notifications/ios -ccopt -L../src/plugins/remote-notifications ../src/plugins/remote-notifications/remote-notifications.cmxa \
 	  -ccopt -L../src/plugins/flurry/ios -ccopt -L../src/plugins/flurry ../src/plugins/flurry/flurry.cmxa \
 	  -ccopt -L../src/plugins/appflood/ios -ccopt -L../src/plugins/appflood ../src/plugins/appflood/appflood.cmxa\
 	  -ccopt -L../src/plugins/chartboost/ios -ccopt -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa\

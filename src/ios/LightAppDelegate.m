@@ -85,6 +85,7 @@ void set_referrer(char *type,NSString *nid) {
 }
 
 
+/*
 -(void)clearRemoteNotificationsRequestCallbacks {
 
   if (Is_block(lightViewController->remote_notification_request_success_cb)) {
@@ -98,6 +99,7 @@ void set_referrer(char *type,NSString *nid) {
   }
   
 }
+*/
 
 /*
 -(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
@@ -115,40 +117,18 @@ void set_referrer(char *type,NSString *nid) {
 }
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
-  
-	NSLog(@"didRegisterForRemote");
-  if (Is_long(lightViewController->remote_notification_request_success_cb)) {
-    NSLog(@"You requested for remote notifications, but didn't provide a success callback");
-    return;
-  }
-
-  //caml_acquire_runtime_system();
-  value token;
-  Begin_roots1(token);
-
-  token = caml_alloc_string([deviceToken length]);
-  memmove(String_val(token), (const char *)[deviceToken bytes], [deviceToken length]);  
-  caml_callback(lightViewController->remote_notification_request_success_cb,token);
-  
-  [self clearRemoteNotificationsRequestCallbacks];
-  
-  End_roots();
-  //caml_release_runtime_system();
+	if (lightViewController && lightViewController.rnDelegate) {
+		[lightViewController.rnDelegate didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
+		lightViewController.rnDelegate = nil;
+	}
 }
 
 
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
-
-  //caml_acquire_runtime_system();
-
-  if (Is_block(lightViewController->remote_notification_request_error_cb)) {
-    NSString *errdesc = [error localizedDescription];                                                                                                                                                     
-    caml_callback(lightViewController->remote_notification_request_error_cb, caml_copy_string([errdesc cStringUsingEncoding:NSUTF8StringEncoding]));
-  }
-
-  [self clearRemoteNotificationsRequestCallbacks];
-  
-  //caml_release_runtime_system();  
+	if (lightViewController && lightViewController.rnDelegate) {
+		[lightViewController.rnDelegate didFailToRegisterForRemoteNotificationsWithError:error];
+		lightViewController.rnDelegate = nil;
+	}
 }
 
 

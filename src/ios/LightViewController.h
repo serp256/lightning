@@ -14,14 +14,22 @@
 - (NSUInteger)supportedInterfaceOrientations;
 @end
 
+@protocol RemoteNotificationsRegisterDelegate 
+-(void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
+-(void)didFailToRegisterForRemoteNotificationsWithError:(NSError *)error;
+@end
+
 @interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate, SKPaymentTransactionObserver> {
 	id<OrientationDelegate> _orientationDelegate;
+	id<RemoteNotificationsRegisterDelegate> _rnDelegate;
 	LightActivityIndicatorView*	activityIndicator;
 @public
+	// Payments need refactoring for deprecated api. 
+	// Лучше будет переписать их через Callback механизм, так как их не может быть много
 	value payment_success_cb;
 	value payment_error_cb;
-	value remote_notification_request_success_cb;
-	value remote_notification_request_error_cb;
+	//value remote_notification_request_success_cb;
+	//value remote_notification_request_error_cb;
 }
 
 +(LightViewController*)sharedInstance;
@@ -41,6 +49,7 @@
 -(void)hideKeyboard;
 
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
+@property (retain) id<RemoteNotificationsRegisterDelegate> rnDelegate;
 
 @end
 

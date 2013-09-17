@@ -3,6 +3,12 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm threads ojson redspell.debug"
 
+package "remote-notifications" (
+  description="Remote Notifications"
+  archive(byte) = "remote-notifications.cma"
+  archive(native) = "remote-notifications.cmxa"
+)
+
 package "whatsapp" (
   description="Whatsapp"
   archive(byte) = "whatsapp.cma"

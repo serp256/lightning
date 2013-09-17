@@ -35,6 +35,8 @@ import android.view.View;
 import android.widget.AbsoluteLayout;
 import android.view.ViewGroup.LayoutParams;
 import android.content.res.Configuration;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import 	com.google.android.gms.common.ConnectionResult;
 
 import ru.redspell.lightning.payments.google.LightGooglePayments;
 
@@ -66,13 +68,16 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	}
 
 	private final String LOG_TAG = "LIGHTNING";
+	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
+	public boolean isPlayServicesAvailable = false;
 	public LightView lightView;
 	private IStub mDownloaderClientStub;
 	private IDownloaderService mRemoteService;
 
 	public AbsoluteLayout viewGrp;
 	public static boolean isRunning = false;
+
 
 	/** Called when the activity is first created. */
 	@Override
@@ -106,7 +111,10 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		while (iter.hasNext()) {
 			IUiLifecycleHelper h = iter.next();
 			h.onCreate(savedInstanceState);
-		}
+		};
+
+		checkPlayServices();
+
 	}
 
 	public boolean startExpansionDownloadService(String pubKey) {
@@ -138,11 +146,13 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		return retval;
 	}
 
+
+
+
 	public void onServiceConnected(Messenger m) {
 		Log.d(LOG_TAG, "onServiceConnected call");
-
-        mRemoteService = DownloaderServiceMarshaller.CreateProxy(m);
-        mRemoteService.onClientUpdated(mDownloaderClientStub.getMessenger());		
+		mRemoteService = DownloaderServiceMarshaller.CreateProxy(m);
+		mRemoteService.onClientUpdated(mDownloaderClientStub.getMessenger());		
 	}
 
 	public void onDownloadStateChanged(int newState) {
@@ -296,29 +306,41 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 	private static native void mlSetReferrer(String type,String nid);
 
-        public void convertIntent() {
-                Bundle extras = getIntent().getExtras();
-                if (extras != null) {
-                        String nid = extras.getString("localNotification");
-                        if (nid != null) mlSetReferrer("local",nid);
-                        else {
-                                nid = extras.getString("remoteNotification");
-                                if (nid != null) mlSetReferrer("remote",nid);
-                        }
-                }
-        }
+	public void convertIntent() {
+		Bundle extras = getIntent().getExtras();
+		if (extras != null) {
+			String nid = extras.getString("localNotification");
+			if (nid != null) mlSetReferrer("local",nid);
+			else {
+				nid = extras.getString("remoteNotification");
+				if (nid != null) mlSetReferrer("remote",nid);
+			}
+		}
+	}
 
-        @Override
-        protected void onNewIntent(Intent intent) {
-                Log.d("LIGHTNING","onNewIntent");
-                setIntent(intent);
-                if (lightView != null) {
-                        lightView.queueEvent(new Runnable() {
-                         @Override
-                         public void run() {
-                                 convertIntent();
-                         }
-                        });
-                }
-        }
+	@Override
+	protected void onNewIntent(Intent intent) {
+		Log.d("LIGHTNING","onNewIntent");
+		setIntent(intent);
+		if (lightView != null) {
+				lightView.queueEvent(new Runnable() {
+				 @Override
+				 public void run() {
+								 convertIntent();
+				 }
+				});
+		}
+	}
+
+
+	private void checkPlayServices() {
+		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+    if (resultCode != ConnectionResult.SUCCESS) {
+        if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+            GooglePlayServicesUtil.getErrorDialog(resultCode, this, PLAY_SERVICES_RESOLUTION_REQUEST).show();
+        };
+        isPlayServicesAvailable = false;
+    }
+		isPlayServicesAvailable = true;
+	};
 }	

@@ -22,6 +22,7 @@
 @implementation LightViewController
 
 @synthesize orientationDelegate=_orientationDelegate;
+@synthesize rnDelegate=_rnDelegae;
 
 static LightViewController *instance = NULL;
 static NSString *supportEmail = @"nanofarm@redspell.ru";
@@ -76,8 +77,10 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
   if (self != nil) {
 		payment_success_cb = 0;
 		payment_error_cb   = 0;
-		remote_notification_request_success_cb = Val_int(1);
-		remote_notification_request_error_cb   = Val_int(1);
+		_orientationDelegate = nil;
+		_rnDelegate = nil;
+		//remote_notification_request_success_cb = Val_int(1);
+		//remote_notification_request_error_cb   = Val_int(1);
   }
   return self;
 }
@@ -294,6 +297,11 @@ static value *ml_url_complete = NULL;
 		//NSLog(@"_orientationDelegate nill");
 		return YES;
 	}
+}
+
+- (BOOL)prefersStatusBarHidden
+{
+	return YES;
 }
 
 - (NSUInteger)supportedInterfaceOrientations {
