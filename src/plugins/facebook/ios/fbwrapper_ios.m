@@ -419,6 +419,27 @@ value ml_fb_share_pic_using_native_app(value v_fname, value v_text) {
     return Val_false;
 }
 
+void fb_upload_photo_req(UIImage* img, NSString* text, value* success, value* fail) {
+    NSLog(@"fb_upload_photo_req call");
+
+    FBRequest* req = [FBRequest requestForUploadPhoto:img];
+    [req.parameters setValue:text forKey:@"message"];
+    [req startWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+        NSLog(@"complete handler %@", error);
+
+        if (!error) {
+            NSLog(@"result %@", result);
+
+            if (success) caml_callback(*success, Val_unit);
+        } else {
+            if (fail) caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));
+        }
+
+        FREE_CALLBACK(success);
+        FREE_CALLBACK(fail);
+    }];
+}
+
 value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text) {
     CAMLparam4(v_fname, v_text, v_success, v_fail);
 
@@ -428,17 +449,20 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
     REGISTER_CALLBACK(v_success, success);
     REGISTER_CALLBACK(v_fail, fail);
 
-    // NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
-    NSString* path = [NSString stringWithUTF8String:String_val(v_fname)];
-    UIImage* img = [UIImage imageWithContentsOfFile:path];
-		__block BOOL handlerCalled = NO;
+    NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
+    // NSString* path = [NSString stringWithUTF8String:String_val(v_fname)];
+    __block UIImage* img = [UIImage imageWithContentsOfFile:path];
+	__block BOOL handlerCalled = NO;
+    __block NSString* text = [NSString stringWithUTF8String:String_val(v_text)];
 
     BOOL displayedNativeDialog = [FBDialogs
         presentOSIntegratedShareDialogModallyFrom:[LightViewController sharedInstance]
-        initialText:[NSString stringWithUTF8String:String_val(v_text)]
+        initialText:text
         image:img
         url:nil
         handler:^(FBOSIntegratedShareDialogResult result, NSError *error) {
+            NSLog(@"share pic handler err %@", error);
+
             if (!error) {
                 switch (result) {
                     case FBOSIntegratedShareDialogResultSucceeded:
@@ -454,24 +478,27 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
                         break;
                 }                
             } else {
-                if (fail) caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));
+                NSLog(@"call upload photo from block");
+
+                [[LightViewController sharedInstance] becomeActive];
+                fb_upload_photo_req(img, text, success, fail);                
+                // if (fail) caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));
             }
 
-            [[LightViewController sharedInstance] becomeActive];
-
-            FREE_CALLBACK(success);
-            FREE_CALLBACK(fail);             
+/*            FREE_CALLBACK(success);
+            FREE_CALLBACK(fail);*/
 						
 			handlerCalled = YES;
         }];
 
     if (!displayedNativeDialog && !handlerCalled) {
-        NSLog("@xyupizdalala!!!!");
 
-        if (fail) caml_callback(*fail, caml_copy_string("cannot display dialog"));
+        NSLog(@"call upload photo outside block");
+        fb_upload_photo_req(img, text, success, fail);
+        // if (fail) caml_callback(*fail, caml_copy_string("cannot display dialog"));
 
-        FREE_CALLBACK(success);
-        FREE_CALLBACK(fail);        
+/*        FREE_CALLBACK(success);
+        FREE_CALLBACK(fail);*/
     }
 
     CAMLreturn(Val_unit);
