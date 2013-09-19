@@ -462,10 +462,12 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
             FREE_CALLBACK(success);
             FREE_CALLBACK(fail);             
 						
-						handlerCalled = YES;
+			handlerCalled = YES;
         }];
 
     if (!displayedNativeDialog && !handlerCalled) {
+        NSLog("@xyupizdalala!!!!");
+
         if (fail) caml_callback(*fail, caml_copy_string("cannot display dialog"));
 
         FREE_CALLBACK(success);
