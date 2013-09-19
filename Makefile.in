@@ -23,7 +23,7 @@ INSTALL_FILES =
 
 ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(BYTE_FILES)
-	INSTALL_FILE += $(wildcard src/social/oauth/*.cma src/social/oauth/*.so src/social/*.cmo src/social/*.o)
+	INSTALL_FILES += $(wildcard src/social/oauth/*.cma src/social/oauth/*.so src/social/*.cmo src/social/*.o)
 	INSTALL_FILES += $(wildcard src/plugins/remote-notifications/*.cma src/plugins/remote-notifications/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.cma src/plugins/facebook/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/mobileapptracking/*.cma src/plugins/mobileapptracking/*.so)
