@@ -431,6 +431,7 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
     // NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
     NSString* path = [NSString stringWithUTF8String:String_val(v_fname)];
     UIImage* img = [UIImage imageWithContentsOfFile:path];
+		__block BOOL handlerCalled = NO;
 
     BOOL displayedNativeDialog = [FBDialogs
         presentOSIntegratedShareDialogModallyFrom:[LightViewController sharedInstance]
@@ -460,9 +461,11 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
 
             FREE_CALLBACK(success);
             FREE_CALLBACK(fail);             
+						
+						handlerCalled = YES;
         }];
 
-    if (!displayedNativeDialog) {
+    if (!displayedNativeDialog && !handlerCalled) {
         if (fail) caml_callback(*fail, caml_copy_string("cannot display dialog"));
 
         FREE_CALLBACK(success);
