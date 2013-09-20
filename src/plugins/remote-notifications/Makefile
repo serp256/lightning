@@ -35,7 +35,7 @@ endif
 
 ifeq ($(PLATFORM),PC)
 	
-remote-notificaions.cmxa: $(IFACES) $(MLOBJSN)
+remote-notifications.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o RemoteNotifications.cmxa $(MLOBJSN)
 
 remote-notifications.cma: $(IFACES) $(MLOBJS)
