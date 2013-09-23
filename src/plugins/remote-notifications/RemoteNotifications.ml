@@ -1,6 +1,10 @@
 
 type rn_type = [= `RNBadge | `RNSound | `RNAlert ];
 
+
+IFPLATFORM(pc)
+value init ~rn_type ~sender_id ~success ~error = ();
+ELSE
 value convert_rn_types rntypes =
   List.fold_left begin fun mask -> fun 
     [ `RNBadge -> mask lor 1
@@ -47,3 +51,4 @@ value on_error (err:string) =
 
 Callback.register "remote_notifications_success" on_success;
 Callback.register "remote_notifications_error" on_error;
+ENDPLATFORM;
