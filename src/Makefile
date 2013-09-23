@@ -261,5 +261,6 @@ clean:
 	$(MAKE) -C plugins/instagram clean
 	$(MAKE) -C plugins/whatsapp clean
 	$(MAKE) -C plugins/appsflyer clean
+	$(MAKE) -C plugins/remote-notifications clean
 
 -include MLDepend.$(PLATFORM)
