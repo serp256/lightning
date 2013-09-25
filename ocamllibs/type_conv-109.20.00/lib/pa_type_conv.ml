@@ -6,6 +6,17 @@ open Camlp4
 open PreCast
 open Ast
 
+let parsing_mli = ref false
+let with_parsing_mli b f =
+  let old = !parsing_mli in
+  parsing_mli := b;
+  try let v = f () in
+      parsing_mli := old;
+      v
+  with e ->
+    parsing_mli := old;
+    raise e
+
 (* Utility functions *)
 
 let get_loc_err loc msg =
@@ -408,7 +419,7 @@ module Gen = struct
     inherit map as super
     method sig_item sig_item =
       match super#sig_item sig_item with
-      | <:sig_item@loc< value $id$ : $ctyp$ >> ->
+      | <:sig_item@loc< value $id$ : $ctyp$ >> when not !parsing_mli ->
         <:sig_item@loc< value $id$ : _no_unused_value_warning_ $ctyp$ >>
       | sig_item -> sig_item
     method str_item str_item =
@@ -853,6 +864,32 @@ EXTEND Gram
         <:sig_item< exception $cd$; $sig_item$ >>
     ]];
 
+  (* CR-someday vgatien-baron: and by someday I mean when we switch to ppx rewriters
+     There are several problems with field generators:
+     1. using positions as keys is not awesome. If there are several labels at the same
+        position then it is going to behave weirdly. It is not really expected because
+        we can't generate ast containing a 'with defaut(...)' for instance, but when we
+        switch to ppx it will be possible and then positions could be arbitrarily bad.
+     2. The hashtbl is not cleaned, which means that, in combination with 1., there can
+        be other weird behaviours. For instance:
+        $ ocaml-latest
+        # open Core.Std;;
+        # type t = { a : int with default(1) };;
+        type t = { a : int; }
+        # type t = { a : int with default(1) };;
+        Error: Failure: "several default expressions are given"
+     3. There is no warning when field generators are not used.
+
+     When we swich to ppx rewriters, we could solve the problem like so:
+     1. and 2. don't use positions and don't use a hashtbl either
+       [with default(...)] will be replaced by an extension point [@default ...]
+       so sexplib etc. can simply look in the ast instead of in the hashtbl
+     3. we can provide a function in a lib for the syntax extensions that takes an ast and
+        and and extension name and puts a mark in the ast that says that name was used
+        (for instance [lookup t "default"] puts [@default_was_used] on [t]) and then a ppx
+        rewriter at the very end would complain about all unused extensions. To deal with
+        extension points that are allowed not to be used (?), presumably the ppx extension
+        could be parameterized on a set of symbols that it should not complain about? *)
   label_declaration:
     [[ name = a_LIDENT; ":"; tp = poly_type;
        "with"; drvs = LIST1 generator SEP "," ->
@@ -1058,26 +1095,22 @@ let ignore = object (self)
     | sig_item -> next_defs, acc, self#sig_item sig_item
 end
 
-let strip = object
-  inherit Ast.map as super
-
-  method sig_item = function
-  | <:sig_item@loc< value $id$ : _no_unused_value_warning_ $ctyp$  >> ->
-    <:sig_item@loc< value $id$ : $ctyp$ >>
-  | sig_item -> super#sig_item sig_item
-end
-
 let () =
   (* above, the parser used 'sig' and 'end' as anchors but an mli is a signature
      without the sig and end. So here we catch all the elements that have been inserted
      at toplevel in the mli *)
-  let _, current_sig_parser = Register.current_parser () in
+  let current_str_parser, current_sig_parser = Register.current_parser () in
   Register.register_sig_item_parser (fun ?directive_handler _loc stream ->
-    let mli = current_sig_parser ?directive_handler _loc stream in
-    match Signature_stack.Item.delayed_sigs Signature_stack.bottom with
-    | [] -> mli
-    | sig_items -> <:sig_item< $list: mli :: sig_items$ >>
+    with_parsing_mli true (fun () ->
+      let mli = current_sig_parser ?directive_handler _loc stream in
+      match Signature_stack.Item.delayed_sigs Signature_stack.bottom with
+      | [] -> mli
+      | sig_items -> <:sig_item< $list: mli :: sig_items$ >>
+    )
   );
-  AstFilters.register_sig_item_filter strip#sig_item;
-  AstFilters.register_str_item_filter ignore#str_item;
-  AstFilters.register_topphrase_filter ignore#str_item
+  Register.register_str_item_parser (fun ?directive_handler _loc stream ->
+    with_parsing_mli false (fun () ->
+      let ml = current_str_parser ?directive_handler _loc stream in
+      ignore#str_item ml
+    )
+  )
