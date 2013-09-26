@@ -19,6 +19,12 @@ let native_only_rules () = (* native only compilation *)
     ~prod:"%.cmi"
     ~deps:["%.mli"; "%.mli.depends"]
     (Ocaml_compiler.byte_compile_ocaml_interf "%.mli" "%.cmi");
+  rule "ocaml: ml & cmi -> cmo"
+    ~tags:["ocaml"; "byte"]
+    ~prod:"%.cmo"
+    ~deps:["%.mli"(* This one is inserted to force this rule to be skiped when
+    a .ml is provided without a .mli *); "%.ml"; "%.ml.depends"; "%.cmi"]
+    (Ocaml_compiler.byte_compile_ocaml_implem "%.ml" "%.cmo");
   rule "ocaml: ml & cmi -> cmx & o"
     ~tags:["ocaml"; "native"]
     ~prods:["%.cmx"; "%.o"]
