@@ -1,6 +1,6 @@
 diff -urN ocaml-4.00.1/Makefile ocaml-4.00.1-ios/Makefile
 --- ocaml-4.00.1/Makefile	2012-09-17 20:23:06.000000000 +0400
-+++ ocaml-4.00.1-ios/Makefile	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/Makefile	2013-09-26 14:04:45.000000000 +0400
 @@ -17,17 +17,17 @@
  include config/Makefile
  include stdlib/StdlibModules
@@ -134,9 +134,49 @@ diff -urN ocaml-4.00.1/Makefile ocaml-4.00.1-ios/Makefile
 +
 +
  include .depend
+diff -urN ocaml-4.00.1/asmcomp/arm/arch.ml ocaml-4.00.1-ios/asmcomp/arm/arch.ml
+--- ocaml-4.00.1/asmcomp/arm/arch.ml	2012-02-24 14:13:02.000000000 +0400
++++ ocaml-4.00.1-ios/asmcomp/arm/arch.ml	2013-09-26 14:04:45.000000000 +0400
+@@ -213,6 +213,36 @@
+    and rotated right by 0 ... 30 bits.
+    In Thumb/Thumb-2 mode we utilize 26 ... 30. *)
+ 
++let count_leading_zeros v =
++  if v = 0l then 32
++  else
++    let rec loop shift v res =
++      let tmp = Int32.shift_right_logical v shift in
++      let (v,res) =
++        if tmp = 0l then (v,(res lor shift)) else  (tmp,res)
++      in
++      let shift = shift lsr 1 in
++      if shift = 0 then res else loop shift v res
++      in
++      loop 16 v 0
++
++let is_immediate (v:Int32.t) =
++  if Int32.logand v 0xffffff00l = 0l then true
++  else
++    let vs = if Int32.logand v 0xffl = 0l then Int32.shift_right_logical v 8 else v in
++    let imm = Int32.logand vs 0xffl in
++    let u = Int32.logor imm (Int32.shift_left imm 16) in
++    if vs = u then true
++    else
++      if vs = (Int32.logor u (Int32.shift_left u 8)) then true
++      else
++        let rotAmt = count_leading_zeros v in
++        if rotAmt >= 24 then false
++        else
++          let r =  Int32.logor (Int32.shift_right_logical 0xff000000l rotAmt) (Int32.shift_left 0xff000000l ((32 - rotAmt) land 31)) in
++          if Int32.logand r v = v then true
++          else false
++
+ let is_immediate n =
+   let n = ref n in
+   let s = ref 0 in
 diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.mlp
 --- ocaml-4.00.1/asmcomp/arm/emit.mlp	2012-07-30 22:59:07.000000000 +0400
-+++ ocaml-4.00.1-ios/asmcomp/arm/emit.mlp	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/asmcomp/arm/emit.mlp	2013-09-26 14:04:45.000000000 +0400
 @@ -32,25 +32,20 @@
  (* Output a label *)
  
@@ -169,7 +209,175 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
  
  (* Output a pseudo-register *)
  
-@@ -750,8 +745,10 @@
+@@ -318,7 +313,7 @@
+   end;
+   if !symbol_literals <> [] then begin
+     let offset = if !thumb then 4 else 8 in
+-    let suffix = if !pic_code then "(GOT)" else "" in
++    let suffix = "" in (* if !pic_code then "(GOT)" else "" in *)
+     `	.align	2\n`;
+     List.iter
+       (fun (l, lbl) ->
+@@ -348,7 +343,8 @@
+               else phys_reg 8 (*r12*) in
+     `	ldr	{emit_reg tmp}, {emit_label lbl_got}\n`;
+     `	ldr	{emit_reg dst}, {emit_label lbl_sym}\n`;
+-    `{emit_label lbl_pic}:	add	{emit_reg tmp}, pc, {emit_reg tmp}\n`;
++    (* `{emit_label lbl_pic}:	add	{emit_reg tmp}, pc, {emit_reg tmp}\n`; *)
++    `{emit_label lbl_pic}:	add	{emit_reg tmp}, pc\n`;
+     `	ldr	{emit_reg dst}, [{emit_reg tmp}, {emit_reg dst}] @ {emit_symbol s}\n`;
+     4
+   end else if !arch > ARMv6 && not !Clflags.dlcode && !fastcode_flag then begin
+@@ -372,15 +368,15 @@
+         if src.loc = dst.loc then 0 else begin
+           begin match (src, dst) with
+             {loc = Reg _; typ = Float}, {loc = Reg _} ->
+-              `	fcpyd	{emit_reg dst}, {emit_reg src}\n`
++              `	vmov	{emit_reg dst}, {emit_reg src}\n`
+           | {loc = Reg _}, {loc = Reg _} ->
+               `	mov	{emit_reg dst}, {emit_reg src}\n`
+           | {loc = Reg _; typ = Float}, _ ->
+-              `	fstd	{emit_reg src}, {emit_stack dst}\n`
++              `	vstr.f64	{emit_reg src}, {emit_stack dst}\n`
+           | {loc = Reg _}, _ ->
+               `	str	{emit_reg src}, {emit_stack dst}\n`
+           | {typ = Float}, _ ->
+-              `	fldd	{emit_reg dst}, {emit_stack src}\n`
++              `	vldr.f64	{emit_reg dst}, {emit_stack src}\n`
+           | _ ->
+               `	ldr	{emit_reg dst}, {emit_stack src}\n`
+           end; 1
+@@ -404,7 +400,7 @@
+         end
+     | Lop(Iconst_float f) ->
+         let encode imm =
+-          let sg = Int64.to_int (Int64.shift_right_logical imm 63) in
++          (* let sg = Int64.to_int (Int64.shift_right_logical imm 63) in *)
+           let ex = Int64.to_int (Int64.shift_right_logical imm 52) in
+           let ex = (ex land 0x7ff) - 1023 in
+           let mn = Int64.logand imm 0xfffffffffffffL in
+@@ -415,16 +411,18 @@
+             let mn = Int64.to_int (Int64.shift_right_logical mn 48) in
+             if mn land 0x0f <> mn then
+               None
+-            else
++            else Some f
++						(*
+               let ex = ((ex + 3) land 0x07) lxor 0x04 in
+               Some((sg lsl 7) lor (ex lsl 4) lor mn)
++						*)
+           end in
+         begin match encode (Int64.bits_of_float (float_of_string f)) with
+           None ->
+             let lbl = float_literal f in
+-            `	fldd	{emit_reg i.res.(0)}, {emit_label lbl} @ {emit_string f}\n`
++            ` vldr.f64	{emit_reg i.res.(0)}, {emit_label lbl} @ {emit_string f}\n`
+         | Some imm8 ->
+-            `	fconstd	{emit_reg i.res.(0)}, #{emit_int imm8} @ {emit_string f}\n`
++            ` vmov.f64	{emit_reg i.res.(0)}, #{emit_string imm8}\n`
+         end; 1
+     | Lop(Iconst_symbol s) ->
+         emit_load_symbol_addr i.res.(0) s
+@@ -470,7 +468,7 @@
+         ninstr
+     | Lop(Iload(Single, addr)) when !fpu >= VFPv3_D16 ->
+         `	flds	s14, {emit_addressing addr i.arg 0}\n`;
+-        `	fcvtds	{emit_reg i.res.(0)}, s14\n`; 2
++        `	vcvt.f64.f32	{emit_reg i.res.(0)}, s14\n`; 2
+     | Lop(Iload((Double | Double_u), addr)) when !fpu = Soft ->
+         (* Use LDM or LDRD if possible *)
+         begin match i.res.(0), i.res.(1), addr with
+@@ -499,12 +497,12 @@
+           | Sixteen_unsigned -> "ldrh"
+           | Sixteen_signed -> "ldrsh"
+           | Double
+-          | Double_u -> "fldd"
++          | Double_u -> "vldr.f64"
+           | _ (* 32-bit quantities *) -> "ldr" in
+         `	{emit_string instr}	{emit_reg r}, {emit_addressing addr i.arg 0}\n`; 1
+     | Lop(Istore(Single, addr)) when !fpu >= VFPv3_D16 ->
+-        `	fcvtsd	s14, {emit_reg i.arg.(0)}\n`;
+-        `	fsts	s14, {emit_addressing addr i.arg 1}\n`; 2
++        `	vcvt.f32.f64	s14, {emit_reg i.arg.(0)}\n`;
++        `	vstr.f32	s14, {emit_addressing addr i.arg 1}\n`; 2
+     | Lop(Istore((Double | Double_u), addr)) when !fpu = Soft ->
+         (* Use STM or STRD if possible *)
+         begin match i.arg.(0), i.arg.(1), addr with
+@@ -528,7 +526,7 @@
+           | Sixteen_unsigned
+           | Sixteen_signed -> "strh"
+           | Double
+-          | Double_u -> "fstd"
++          | Double_u -> "vstr.f64"
+           | _ (* 32-bit quantities *) -> "str" in
+         `	{emit_string instr}	{emit_reg r}, {emit_addressing addr i.arg 1}\n`; 1
+     | Lop(Ialloc n) ->
+@@ -624,6 +622,7 @@
+         `	mov	{emit_reg i.res.(0)}, {emit_reg i.arg.(0)}, {emit_string shift} #{emit_int n}\n`; 1
+     | Lop(Iintop_imm(op, n)) ->
+         let instr = name_for_int_operation op in
++				let instr = if n > 0xff then (match instr with | "add" -> "add.w" | "sub" -> "sub.w" | _ -> instr) else instr in
+         `	{emit_string instr}     {emit_reg i.res.(0)}, {emit_reg i.arg.(0)}, #{emit_int n}\n`; 1
+     | Lop(Iabsf | Inegf as op) when !fpu = Soft ->
+         let instr = (match op with
+@@ -633,33 +632,33 @@
+         `	{emit_string instr}	{emit_reg i.res.(1)}, {emit_reg i.arg.(1)}, #0x80000000\n`; 1
+     | Lop(Iabsf | Inegf | Ispecific Isqrtf as op) ->
+         let instr = (match op with
+-                       Iabsf            -> "fabsd"
+-                     | Inegf            -> "fnegd"
+-                     | Ispecific Isqrtf -> "fsqrtd"
++                       Iabsf            -> "vabs.f64"
++                     | Inegf            -> "vneg.f64"
++                     | Ispecific Isqrtf -> "vsqrt.f64"
+                      | _                -> assert false) in
+         `	{emit_string instr}	{emit_reg i.res.(0)}, {emit_reg i.arg.(0)}\n`; 1
+     | Lop(Ifloatofint) ->
+         `	fmsr	s14, {emit_reg i.arg.(0)}\n`;
+-        `	fsitod	{emit_reg i.res.(0)}, s14\n`; 2
++        `	vcvt.f64.s32	{emit_reg i.res.(0)}, s14\n`; 2
+     | Lop(Iintoffloat) ->
+-        `	ftosizd	s14, {emit_reg i.arg.(0)}\n`;
++        `	vcvt.s32.f64	s14, {emit_reg i.arg.(0)}\n`;
+         `	fmrs	{emit_reg i.res.(0)}, s14\n`; 2
+     | Lop(Iaddf | Isubf | Imulf | Idivf | Ispecific Inegmulf as op) ->
+         let instr = (match op with
+-                       Iaddf              -> "faddd"
+-                     | Isubf              -> "fsubd"
+-                     | Imulf              -> "fmuld"
+-                     | Idivf              -> "fdivd"
+-                     | Ispecific Inegmulf -> "fnmuld"
++                       Iaddf              -> "vadd.f64"
++                     | Isubf              -> "vsub.f64"
++                     | Imulf              -> "vmul.f64"
++                     | Idivf              -> "vdiv.f64"
++                     | Ispecific Inegmulf -> "vnmul.f64"
+                      | _                  -> assert false) in
+         `	{emit_string instr}	{emit_reg i.res.(0)}, {emit_reg i.arg.(0)}, {emit_reg i.arg.(1)}\n`;
+         1
+     | Lop(Ispecific(Imuladdf | Inegmuladdf | Imulsubf | Inegmulsubf as op)) ->
+         let instr = (match op with
+-                       Imuladdf    -> "fmacd"
+-                     | Inegmuladdf -> "fnmacd"
+-                     | Imulsubf    -> "fmscd"
+-                     | Inegmulsubf -> "fnmscd"
++                       Imuladdf    -> "vmla.f64"
++                     | Inegmuladdf -> "vmls.f64"
++                     | Imulsubf    -> "vnmls.f64"
++                     | Inegmulsubf -> "vnmla.f64"
+                      | _ -> assert false) in
+         `	{emit_string instr}	{emit_reg i.res.(0)}, {emit_reg i.arg.(1)}, {emit_reg i.arg.(2)}\n`;
+         1
+@@ -720,7 +719,7 @@
+                         | (Cgt, true)  -> "le"
+                         | (Cge, false) -> "ge"
+                         | (Cge, true)  -> "lt") in
+-            `	fcmpd	{emit_reg i.arg.(0)}, {emit_reg i.arg.(1)}\n`;
++            `	vcmp.f64	{emit_reg i.arg.(0)}, {emit_reg i.arg.(1)}\n`;
+             `	fmstat\n`;
+             `	b{emit_string comp}	{emit_label lbl}\n`; 3
+         | Ioddtest ->
+@@ -750,8 +749,10 @@
            (* The Thumb-2 TBH instruction supports only forward branches,
               so we need to generate appropriate trampolines for all labels
               that appear before this switch instruction (PR#5623) *)
@@ -180,7 +388,7 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
            for j = 0 to Array.length tramtbl - 1 do
              let rec label i =
                match i.desc with
-@@ -759,7 +756,7 @@
+@@ -759,7 +760,7 @@
                | Llabel lbl when lbl = tramtbl.(j) -> lbl
                | _ -> label i.next in
              tramtbl.(j) <- label i.next;
@@ -189,7 +397,7 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
            done;
            (* Generate the necessary trampolines *)
            for j = 0 to Array.length tramtbl - 1 do
-@@ -847,13 +844,13 @@
+@@ -847,13 +848,13 @@
    call_gc_sites := [];
    bound_error_sites := [];
    `	.text\n`;
@@ -205,7 +413,7 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
    `{emit_symbol fundecl.fun_name}:\n`;
    emit_debug_info fundecl.fun_dbg;
    cfi_startproc();
-@@ -869,9 +866,7 @@
+@@ -869,9 +870,7 @@
    emit_literals();
    List.iter emit_call_gc !call_gc_sites;
    List.iter emit_call_bound_error !bound_error_sites;
@@ -216,7 +424,7 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
  
  (* Emission of data *)
  
-@@ -900,6 +895,7 @@
+@@ -900,6 +899,7 @@
  let begin_assembly() =
    reset_debug_info();
    `	.syntax	unified\n`;
@@ -224,7 +432,7 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
    begin match !arch with
    | ARMv4   -> `	.arch	armv4t\n`
    | ARMv5   -> `	.arch	armv5t\n`
-@@ -913,6 +909,7 @@
+@@ -913,6 +913,7 @@
    | VFPv3_D16 -> `	.fpu	vfpv3-d16\n`
    | VFPv3     -> `	.fpu	vfpv3\n`
    end;
@@ -232,7 +440,7 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
    `trap_ptr	.req	r8\n`;
    `alloc_ptr	.req	r10\n`;
    `alloc_limit	.req	r11\n`;
-@@ -923,13 +920,15 @@
+@@ -923,13 +924,15 @@
    let lbl_begin = Compilenv.make_symbol (Some "code_begin") in
    `	.text\n`;
    `	.globl	{emit_symbol lbl_begin}\n`;
@@ -249,7 +457,7 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
    let lbl_end = Compilenv.make_symbol (Some "data_end") in
    `	.data\n`;
    `	.globl	{emit_symbol lbl_end}\n`;
-@@ -940,7 +939,7 @@
+@@ -940,7 +943,7 @@
    `{emit_symbol lbl}:\n`;
    emit_frames
      { efa_label = (fun lbl ->
@@ -258,7 +466,7 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
                         `	.word	{emit_label lbl}\n`);
        efa_16 = (fun n -> `	.short	{emit_int n}\n`);
        efa_32 = (fun n -> `	.long	{emit_int32 n}\n`);
-@@ -949,12 +948,4 @@
+@@ -949,12 +952,4 @@
        efa_label_rel = (fun lbl ofs ->
                             `	.word	{emit_label lbl} - . + {emit_int32 ofs}\n`);
        efa_def_label = (fun lbl -> `{emit_label lbl}:\n`);
@@ -272,9 +480,30 @@ diff -urN ocaml-4.00.1/asmcomp/arm/emit.mlp ocaml-4.00.1-ios/asmcomp/arm/emit.ml
 -  | _ -> ()
 -  end
 +      efa_string = (fun s -> emit_string_directive "	.asciz	" s) }
+diff -urN ocaml-4.00.1/asmcomp/arm/selection.ml ocaml-4.00.1-ios/asmcomp/arm/selection.ml
+--- ocaml-4.00.1/asmcomp/arm/selection.ml	2012-02-05 12:47:16.000000000 +0400
++++ ocaml-4.00.1-ios/asmcomp/arm/selection.ml	2013-09-26 14:04:45.000000000 +0400
+@@ -171,13 +171,15 @@
+     when n = 1 lsl Misc.log2 n ->
+       (Iintop_imm(Idiv, n), [arg])
+   | (Cdivi, args) ->
+-      (Iextcall("__aeabi_idiv", false), args)
++(*       (Iextcall("__aeabi_idiv", false), args) *)
++      (Iextcall("__divsi3", false), args)
+   | (Cmodi, [arg; Cconst_int n])
+     when n = 1 lsl Misc.log2 n ->
+       (Iintop_imm(Imod, n), [arg])
+   | (Cmodi, args) ->
+       (* See above for fix up of return register *)
+-      (Iextcall("__aeabi_idivmod", false), args)
++(*       (Iextcall("__aeabi_idivmod", false), args) *)
++      (Iextcall("__modsi3", false), args)
+   (* Turn floating-point operations into runtime ABI calls for softfp *)
+   | (op, args) when !fpu = Soft -> self#select_operation_softfp op args
+   (* Select operations for VFPv3 *)
 diff -urN ocaml-4.00.1/asmrun/arm.S ocaml-4.00.1-ios/asmrun/arm.S
 --- ocaml-4.00.1/asmrun/arm.S	2012-07-30 22:59:07.000000000 +0400
-+++ ocaml-4.00.1-ios/asmrun/arm.S	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/asmrun/arm.S	2013-09-26 14:04:45.000000000 +0400
 @@ -17,11 +17,27 @@
  /* Asm part of the runtime system, ARM processor */
  /* Must be preprocessed by cpp */
@@ -861,7 +1090,7 @@ diff -urN ocaml-4.00.1/asmrun/arm.S ocaml-4.00.1-ios/asmrun/arm.S
 +
 diff -urN ocaml-4.00.1/asmrun/backtrace.c ocaml-4.00.1-ios/asmrun/backtrace.c
 --- ocaml-4.00.1/asmrun/backtrace.c	2012-02-10 20:15:24.000000000 +0400
-+++ ocaml-4.00.1-ios/asmrun/backtrace.c	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/asmrun/backtrace.c	2013-09-26 14:04:45.000000000 +0400
 @@ -162,12 +162,12 @@
    li->loc_endchr = ((info2 & 0xF) << 6) | (info1 >> 26);
  }
@@ -923,9 +1152,24 @@ diff -urN ocaml-4.00.1/asmrun/backtrace.c ocaml-4.00.1-ios/asmrun/backtrace.c
  /* Convert the backtrace to a data structure usable from OCaml */
  
  CAMLprim value caml_get_exception_backtrace(value unit)
+diff -urN ocaml-4.00.1/build/distclean.sh ocaml-4.00.1-ios/build/distclean.sh
+--- ocaml-4.00.1/build/distclean.sh	2011-07-27 18:17:02.000000000 +0400
++++ ocaml-4.00.1-ios/build/distclean.sh	2013-09-26 14:04:45.000000000 +0400
+@@ -23,9 +23,9 @@
+ rm -rf _build
+ rm -f boot/ocamlrun boot/ocamlrun.exe boot/camlheader \
+       boot/myocamlbuild boot/myocamlbuild.native boot/myocamlbuild.native.exe \
+-      myocamlbuild_config.ml config/config.sh config/Makefile \
++      myocamlbuild_config.ml config/config.sh \
+       boot/ocamlyacc tools/cvt_emit.bak tools/*.bak \
+-      config/s.h config/m.h boot/*.cm* _log _*_log*
++      boot/*.cm* _log _*_log*
+ 
+ # from partial boot
+ rm -f driver/main.byte driver/optmain.byte lex/main.byte \
 diff -urN ocaml-4.00.1/byterun/Makefile.common ocaml-4.00.1-ios/byterun/Makefile.common
 --- ocaml-4.00.1/byterun/Makefile.common	2012-03-24 12:13:21.000000000 +0400
-+++ ocaml-4.00.1-ios/byterun/Makefile.common	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/byterun/Makefile.common	2013-09-26 14:04:45.000000000 +0400
 @@ -61,6 +61,13 @@
  	cp ld.conf $(LIBDIR)/ld.conf
  .PHONY: install
@@ -942,7 +1186,7 @@ diff -urN ocaml-4.00.1/byterun/Makefile.common ocaml-4.00.1-ios/byterun/Makefile
  install-noruntimed:
 diff -urN ocaml-4.00.1/byterun/backtrace.c ocaml-4.00.1-ios/byterun/backtrace.c
 --- ocaml-4.00.1/byterun/backtrace.c	2012-02-10 20:15:24.000000000 +0400
-+++ ocaml-4.00.1-ios/byterun/backtrace.c	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/byterun/backtrace.c	2013-09-26 14:04:45.000000000 +0400
 @@ -274,6 +274,11 @@
    }
  }
@@ -957,7 +1201,7 @@ diff -urN ocaml-4.00.1/byterun/backtrace.c ocaml-4.00.1-ios/byterun/backtrace.c
  CAMLprim value caml_get_exception_backtrace(value unit)
 diff -urN ocaml-4.00.1/byterun/backtrace.h ocaml-4.00.1-ios/byterun/backtrace.h
 --- ocaml-4.00.1/byterun/backtrace.h	2011-07-27 18:17:02.000000000 +0400
-+++ ocaml-4.00.1-ios/byterun/backtrace.h	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/byterun/backtrace.h	2013-09-26 14:04:45.000000000 +0400
 @@ -29,5 +29,6 @@
  extern void caml_stash_backtrace(value exn, code_t pc, value * sp);
  #endif
@@ -967,7 +1211,7 @@ diff -urN ocaml-4.00.1/byterun/backtrace.h ocaml-4.00.1-ios/byterun/backtrace.h
  #endif /* CAML_BACKTRACE_H */
 diff -urN ocaml-4.00.1/byterun/fail.h ocaml-4.00.1-ios/byterun/fail.h
 --- ocaml-4.00.1/byterun/fail.h	2012-01-08 00:55:28.000000000 +0400
-+++ ocaml-4.00.1-ios/byterun/fail.h	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/byterun/fail.h	2013-09-26 14:04:45.000000000 +0400
 @@ -62,6 +62,9 @@
  extern "C" {
  #endif
@@ -978,50 +1222,9 @@ diff -urN ocaml-4.00.1/byterun/fail.h ocaml-4.00.1-ios/byterun/fail.h
  CAMLextern void caml_raise (value bucket) Noreturn;
  CAMLextern void caml_raise_constant (value tag) Noreturn;
  CAMLextern void caml_raise_with_arg (value tag, value arg) Noreturn;
-diff -urN ocaml-4.00.1/byterun/jumptbl.h ocaml-4.00.1-ios/byterun/jumptbl.h
---- ocaml-4.00.1/byterun/jumptbl.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00.1-ios/byterun/jumptbl.h	2013-03-18 19:44:21.000000000 +0400
-@@ -0,0 +1,37 @@
-+  &&lbl_ACC0, &&lbl_ACC1, &&lbl_ACC2, &&lbl_ACC3, &&lbl_ACC4, &&lbl_ACC5, &&lbl_ACC6, &&lbl_ACC7,
-+  &&lbl_ACC, &&lbl_PUSH,
-+  &&lbl_PUSHACC0, &&lbl_PUSHACC1, &&lbl_PUSHACC2, &&lbl_PUSHACC3,
-+  &&lbl_PUSHACC4, &&lbl_PUSHACC5, &&lbl_PUSHACC6, &&lbl_PUSHACC7,
-+  &&lbl_PUSHACC, &&lbl_POP, &&lbl_ASSIGN,
-+  &&lbl_ENVACC1, &&lbl_ENVACC2, &&lbl_ENVACC3, &&lbl_ENVACC4, &&lbl_ENVACC,
-+  &&lbl_PUSHENVACC1, &&lbl_PUSHENVACC2, &&lbl_PUSHENVACC3, &&lbl_PUSHENVACC4, &&lbl_PUSHENVACC,
-+  &&lbl_PUSH_RETADDR, &&lbl_APPLY, &&lbl_APPLY1, &&lbl_APPLY2, &&lbl_APPLY3,
-+  &&lbl_APPTERM, &&lbl_APPTERM1, &&lbl_APPTERM2, &&lbl_APPTERM3,
-+  &&lbl_RETURN, &&lbl_RESTART, &&lbl_GRAB,
-+  &&lbl_CLOSURE, &&lbl_CLOSUREREC,
-+  &&lbl_OFFSETCLOSUREM2, &&lbl_OFFSETCLOSURE0, &&lbl_OFFSETCLOSURE2, &&lbl_OFFSETCLOSURE,
-+  &&lbl_PUSHOFFSETCLOSUREM2, &&lbl_PUSHOFFSETCLOSURE0,
-+  &&lbl_PUSHOFFSETCLOSURE2, &&lbl_PUSHOFFSETCLOSURE,
-+  &&lbl_GETGLOBAL, &&lbl_PUSHGETGLOBAL, &&lbl_GETGLOBALFIELD, &&lbl_PUSHGETGLOBALFIELD, &&lbl_SETGLOBAL,
-+  &&lbl_ATOM0, &&lbl_ATOM, &&lbl_PUSHATOM0, &&lbl_PUSHATOM,
-+  &&lbl_MAKEBLOCK, &&lbl_MAKEBLOCK1, &&lbl_MAKEBLOCK2, &&lbl_MAKEBLOCK3, &&lbl_MAKEFLOATBLOCK,
-+  &&lbl_GETFIELD0, &&lbl_GETFIELD1, &&lbl_GETFIELD2, &&lbl_GETFIELD3, &&lbl_GETFIELD, &&lbl_GETFLOATFIELD,
-+  &&lbl_SETFIELD0, &&lbl_SETFIELD1, &&lbl_SETFIELD2, &&lbl_SETFIELD3, &&lbl_SETFIELD, &&lbl_SETFLOATFIELD,
-+  &&lbl_VECTLENGTH, &&lbl_GETVECTITEM, &&lbl_SETVECTITEM,
-+  &&lbl_GETSTRINGCHAR, &&lbl_SETSTRINGCHAR,
-+  &&lbl_BRANCH, &&lbl_BRANCHIF, &&lbl_BRANCHIFNOT, &&lbl_SWITCH, &&lbl_BOOLNOT,
-+  &&lbl_PUSHTRAP, &&lbl_POPTRAP, &&lbl_RAISE, &&lbl_CHECK_SIGNALS,
-+  &&lbl_C_CALL1, &&lbl_C_CALL2, &&lbl_C_CALL3, &&lbl_C_CALL4, &&lbl_C_CALL5, &&lbl_C_CALLN,
-+  &&lbl_CONST0, &&lbl_CONST1, &&lbl_CONST2, &&lbl_CONST3, &&lbl_CONSTINT,
-+  &&lbl_PUSHCONST0, &&lbl_PUSHCONST1, &&lbl_PUSHCONST2, &&lbl_PUSHCONST3, &&lbl_PUSHCONSTINT,
-+  &&lbl_NEGINT, &&lbl_ADDINT, &&lbl_SUBINT, &&lbl_MULINT, &&lbl_DIVINT, &&lbl_MODINT,
-+  &&lbl_ANDINT, &&lbl_ORINT, &&lbl_XORINT, &&lbl_LSLINT, &&lbl_LSRINT, &&lbl_ASRINT,
-+  &&lbl_EQ, &&lbl_NEQ, &&lbl_LTINT, &&lbl_LEINT, &&lbl_GTINT, &&lbl_GEINT,
-+  &&lbl_OFFSETINT, &&lbl_OFFSETREF, &&lbl_ISINT,
-+  &&lbl_GETMETHOD,
-+  &&lbl_BEQ, &&lbl_BNEQ,  &&lbl_BLTINT, &&lbl_BLEINT, &&lbl_BGTINT, &&lbl_BGEINT,
-+  &&lbl_ULTINT, &&lbl_UGEINT,
-+  &&lbl_BULTINT, &&lbl_BUGEINT,
-+  &&lbl_GETPUBMET, &&lbl_GETDYNMET,
-+  &&lbl_STOP,
-+  &&lbl_EVENT, &&lbl_BREAK
 diff -urN ocaml-4.00.1/byterun/printexc.c ocaml-4.00.1-ios/byterun/printexc.c
 --- ocaml-4.00.1/byterun/printexc.c	2011-12-21 20:31:01.000000000 +0400
-+++ ocaml-4.00.1-ios/byterun/printexc.c	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/byterun/printexc.c	2013-09-26 14:04:45.000000000 +0400
 @@ -26,6 +26,8 @@
  #include "mlvalues.h"
  #include "printexc.h"
@@ -1058,11 +1261,11 @@ diff -urN ocaml-4.00.1/byterun/printexc.c ocaml-4.00.1-ios/byterun/printexc.c
  }
 diff -urN ocaml-4.00.1/config/Makefile ocaml-4.00.1-ios/config/Makefile
 --- ocaml-4.00.1/config/Makefile	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00.1-ios/config/Makefile	2013-03-18 19:44:35.000000000 +0400
++++ ocaml-4.00.1-ios/config/Makefile	2013-09-26 14:04:55.000000000 +0400
 @@ -0,0 +1,73 @@
 +PREFIX=/usr/local/ocaml/ios
 +PLATFORM=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
-+SDK=$(PLATFORM)/SDKs/iPhoneOS6.1.sdk
++SDK=$(PLATFORM)/SDKs/iPhoneOS7.0.sdk
 +BINDIR=$(PREFIX)/bin
 +LIBDIR=$(PREFIX)/lib
 +STUBLIBDIR=$(LIBDIR)/stublibs
@@ -1076,9 +1279,9 @@ diff -urN ocaml-4.00.1/config/Makefile ocaml-4.00.1-ios/config/Makefile
 +BNG_ASM_LEVEL=0
 +PTHREAD_LINK=-cclib -pthread
 +LIBBFD_LINK=-lbfd -ldl -liberty -lz
-+BYTECC=$(PLATFORM)/usr/bin/gcc -arch armv7 -isysroot $(SDK)
-+#BYTECCCOMPOPTS=-fno-defer-pop -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
-+BYTECCCOMPOPTS=-fno-defer-pop -no-cpp-precomp -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
++BYTECC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch armv7 -isysroot $(SDK) -miphoneos-version-min=5.1 -fmessage-length=0 -std=gnu99 -fpascal-strings -Os -fstrict-aliasing -fvisibility=hidden
++#
++BYTECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -g
 +BYTECCLINKOPTS= -Wl
 +BYTECCLIBS= -lpthread
 +BYTECCRPATH=-Wl,-rpath,
@@ -1097,7 +1300,7 @@ diff -urN ocaml-4.00.1/config/Makefile ocaml-4.00.1-ios/config/Makefile
 +MODEL=armv7
 +SYSTEM=linux_eabihf
 +NATIVECC=$(BYTECC)
-+NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -miphoneos-version-min=4.3
++NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -g
 +# -gdwarf-2 -fexceptions
 +NATIVECCPROFOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
 +NATIVECCLINKOPTS=
@@ -1128,14 +1331,14 @@ diff -urN ocaml-4.00.1/config/Makefile ocaml-4.00.1-ios/config/Makefile
 +TOOLCHAIN=cc
 +NATDYNLINK=false
 +CMXS=cmxa
-+MKEXE=$(BYTECC)
-+MKDLL=$(NATIVECC) -bundle -flat_namespace -undefined suppress
++MKEXE=$(NATIVECC) -miphoneos-version-min=5.1 -dead_strip -fobjc-link-runtime
++MKDLL=$(MKEXE)  -bundle -flat_namespace -undefined suppress
 +MKMAINDLL=$(MKDLL)
 +RUNTIMED=noruntimed
-+ASM_CFI_SUPPORTED=false
++ASM_CFI_SUPPORTED=true
 diff -urN ocaml-4.00.1/config/m.h ocaml-4.00.1-ios/config/m.h
 --- ocaml-4.00.1/config/m.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00.1-ios/config/m.h	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/config/m.h	2013-09-26 14:04:45.000000000 +0400
 @@ -0,0 +1,16 @@
 +#ifndef __PIC__
 +#  define ARCH_CODE32
@@ -1155,7 +1358,7 @@ diff -urN ocaml-4.00.1/config/m.h ocaml-4.00.1-ios/config/m.h
 +#define ASM_CFI_SUPPORTED
 diff -urN ocaml-4.00.1/config/s.h ocaml-4.00.1-ios/config/s.h
 --- ocaml-4.00.1/config/s.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00.1-ios/config/s.h	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/config/s.h	2013-09-26 14:04:45.000000000 +0400
 @@ -0,0 +1,51 @@
 +#define OCAML_OS_TYPE "Unix"
 +#define OCAML_STDLIB_DIR "/usr/local/ocaml/ios/4.00/lib"
@@ -1208,9 +1411,24 @@ diff -urN ocaml-4.00.1/config/s.h ocaml-4.00.1-ios/config/s.h
 +#undef HAS_STACK_OVERFLOW_DETECTION
 +#define HAS_SIGWAIT
 +#undef HAS_LIBBFD
+diff -urN ocaml-4.00.1/driver/optmain.ml ocaml-4.00.1-ios/driver/optmain.ml
+--- ocaml-4.00.1/driver/optmain.ml	2012-05-30 17:29:48.000000000 +0400
++++ ocaml-4.00.1-ios/driver/optmain.ml	2013-09-26 14:04:45.000000000 +0400
+@@ -56,6 +56,11 @@
+     ccobjs := (Filename.chop_suffix (Filename.basename name) ".c" ^ ext_obj)
+               :: !ccobjs
+   end
++  else if Filename.check_suffix name ".m" then begin
++    Optcompile.c_file name;
++    ccobjs := (Filename.chop_suffix (Filename.basename name) ".m" ^ ext_obj)
++              :: !ccobjs
++  end
+   else
+     raise(Arg.Bad("don't know what to do with " ^ name))
+ 
 diff -urN ocaml-4.00.1/ocamlcomp.sh ocaml-4.00.1-ios/ocamlcomp.sh
 --- ocaml-4.00.1/ocamlcomp.sh	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.00.1-ios/ocamlcomp.sh	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/ocamlcomp.sh	2013-09-26 14:04:45.000000000 +0400
 @@ -0,0 +1,17 @@
 +#!/bin/sh
 +
@@ -1231,7 +1449,7 @@ diff -urN ocaml-4.00.1/ocamlcomp.sh ocaml-4.00.1-ios/ocamlcomp.sh
 +exec ocamlc.opt -nostdlib -I $topdir/stdlib "$@"
 diff -urN ocaml-4.00.1/otherlibs/Makefile.shared ocaml-4.00.1-ios/otherlibs/Makefile.shared
 --- ocaml-4.00.1/otherlibs/Makefile.shared	2011-07-27 18:17:02.000000000 +0400
-+++ ocaml-4.00.1-ios/otherlibs/Makefile.shared	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/otherlibs/Makefile.shared	2013-09-26 14:04:45.000000000 +0400
 @@ -20,7 +20,7 @@
  
  # Compilation options
@@ -1257,7 +1475,7 @@ diff -urN ocaml-4.00.1/otherlibs/Makefile.shared ocaml-4.00.1-ios/otherlibs/Make
  	rm -f *.cm*
 diff -urN ocaml-4.00.1/otherlibs/dynlink/Makefile ocaml-4.00.1-ios/otherlibs/dynlink/Makefile
 --- ocaml-4.00.1/otherlibs/dynlink/Makefile	2012-05-30 17:29:48.000000000 +0400
-+++ ocaml-4.00.1-ios/otherlibs/dynlink/Makefile	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/otherlibs/dynlink/Makefile	2013-09-26 14:04:45.000000000 +0400
 @@ -17,7 +17,7 @@
  
  include ../../config/Makefile
@@ -1269,7 +1487,7 @@ diff -urN ocaml-4.00.1/otherlibs/dynlink/Makefile ocaml-4.00.1-ios/otherlibs/dyn
  COMPFLAGS=-warn-error A -I ../../stdlib $(INCLUDES)
 diff -urN ocaml-4.00.1/otherlibs/systhreads/Makefile ocaml-4.00.1-ios/otherlibs/systhreads/Makefile
 --- ocaml-4.00.1/otherlibs/systhreads/Makefile	2012-06-08 15:35:37.000000000 +0400
-+++ ocaml-4.00.1-ios/otherlibs/systhreads/Makefile	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/otherlibs/systhreads/Makefile	2013-09-26 14:04:45.000000000 +0400
 @@ -17,7 +17,7 @@
  
  CAMLC=../../ocamlcomp.sh -I ../unix
@@ -1300,7 +1518,7 @@ diff -urN ocaml-4.00.1/otherlibs/systhreads/Makefile ocaml-4.00.1-ios/otherlibs/
  	cp $(THREAD_OBJS:.cmo=.cmx) threads.cmxa threads.a $(LIBDIR)/threads
 diff -urN ocaml-4.00.1/otherlibs/threads/pervasives.ml ocaml-4.00.1-ios/otherlibs/threads/pervasives.ml
 --- ocaml-4.00.1/otherlibs/threads/pervasives.ml	2011-07-27 18:17:02.000000000 +0400
-+++ ocaml-4.00.1-ios/otherlibs/threads/pervasives.ml	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/otherlibs/threads/pervasives.ml	2013-09-26 14:04:45.000000000 +0400
 @@ -87,29 +87,29 @@
  external (-.) : float -> float -> float = "%subfloat"
  external ( *. ) : float -> float -> float = "%mulfloat"
@@ -1355,7 +1573,7 @@ diff -urN ocaml-4.00.1/otherlibs/threads/pervasives.ml ocaml-4.00.1-ios/otherlib
  external modf : float -> float * float = "caml_modf_float"
 diff -urN ocaml-4.00.1/stdlib/Makefile ocaml-4.00.1-ios/stdlib/Makefile
 --- ocaml-4.00.1/stdlib/Makefile	2011-07-27 18:17:02.000000000 +0400
-+++ ocaml-4.00.1-ios/stdlib/Makefile	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/stdlib/Makefile	2013-09-26 14:04:45.000000000 +0400
 @@ -15,7 +15,7 @@
  
  include Makefile.shared
@@ -1376,7 +1594,7 @@ diff -urN ocaml-4.00.1/stdlib/Makefile ocaml-4.00.1-ios/stdlib/Makefile
  installopt-noprof:
 diff -urN ocaml-4.00.1/stdlib/Makefile.shared ocaml-4.00.1-ios/stdlib/Makefile.shared
 --- ocaml-4.00.1/stdlib/Makefile.shared	2012-04-19 17:12:23.000000000 +0400
-+++ ocaml-4.00.1-ios/stdlib/Makefile.shared	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/stdlib/Makefile.shared	2013-09-26 14:04:45.000000000 +0400
 @@ -14,14 +14,12 @@
  # $Id: Makefile.shared 12383 2012-04-19 13:12:23Z xleroy $
  
@@ -1410,7 +1628,7 @@ diff -urN ocaml-4.00.1/stdlib/Makefile.shared ocaml-4.00.1-ios/stdlib/Makefile.s
  $(OBJS) std_exit.cmo: pervasives.cmi
 diff -urN ocaml-4.00.1/stdlib/camlinternalOO.ml ocaml-4.00.1-ios/stdlib/camlinternalOO.ml
 --- ocaml-4.00.1/stdlib/camlinternalOO.ml	2011-12-22 11:30:18.000000000 +0400
-+++ ocaml-4.00.1-ios/stdlib/camlinternalOO.ml	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/stdlib/camlinternalOO.ml	2013-09-26 14:04:45.000000000 +0400
 @@ -78,9 +78,9 @@
      accu := 223 * !accu + Char.code s.[i]
    done;
@@ -1425,7 +1643,7 @@ diff -urN ocaml-4.00.1/stdlib/camlinternalOO.ml ocaml-4.00.1-ios/stdlib/camlinte
  
 diff -urN ocaml-4.00.1/stdlib/pervasives.ml ocaml-4.00.1-ios/stdlib/pervasives.ml
 --- ocaml-4.00.1/stdlib/pervasives.ml	2012-01-12 19:46:51.000000000 +0400
-+++ ocaml-4.00.1-ios/stdlib/pervasives.ml	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/stdlib/pervasives.ml	2013-09-26 14:04:45.000000000 +0400
 @@ -72,7 +72,7 @@
  external ( lsr ) : int -> int -> int = "%lsrint"
  external ( asr ) : int -> int -> int = "%asrint"
@@ -1491,7 +1709,7 @@ diff -urN ocaml-4.00.1/stdlib/pervasives.ml ocaml-4.00.1-ios/stdlib/pervasives.m
  external modf : float -> float * float = "caml_modf_float"
 diff -urN ocaml-4.00.1/stdlib/pervasives.mli ocaml-4.00.1-ios/stdlib/pervasives.mli
 --- ocaml-4.00.1/stdlib/pervasives.mli	2012-05-02 18:39:52.000000000 +0400
-+++ ocaml-4.00.1-ios/stdlib/pervasives.mli	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/stdlib/pervasives.mli	2013-09-26 14:04:45.000000000 +0400
 @@ -261,82 +261,81 @@
  external ( /. ) : float -> float -> float = "%divfloat"
  (** Floating-point division. *)
@@ -1615,7 +1833,7 @@ diff -urN ocaml-4.00.1/stdlib/pervasives.mli ocaml-4.00.1-ios/stdlib/pervasives.
     is the quotient [a /. b] rounded towards zero to an integer. *)
 diff -urN ocaml-4.00.1/tools/Makefile.shared ocaml-4.00.1-ios/tools/Makefile.shared
 --- ocaml-4.00.1/tools/Makefile.shared	2012-05-31 16:41:49.000000000 +0400
-+++ ocaml-4.00.1-ios/tools/Makefile.shared	2013-03-18 19:42:18.000000000 +0400
++++ ocaml-4.00.1-ios/tools/Makefile.shared	2013-09-26 14:04:45.000000000 +0400
 @@ -14,10 +14,10 @@
  
  include ../config/Makefile

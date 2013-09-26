@@ -29,26 +29,27 @@ external gamecenter_init: unit -> bool = "ml_gamecenter_init";
 
 value game_center_initialized success = 
   let () = debug "GameCenter initialized" in
-  match !state with
-  [ Initializing callbacks -> 
-    (
-      state.val := 
-        match success with
-        [ True -> Initialized
-        | False -> NotInitialized
-        ];
-      match !initializer_handler with
-      [ Some f -> f success
-(*           initializer_handler.val := None; *)
-      | _ -> ()
+  let callbacks =
+    match !state with
+    [ Initializing callbacks -> callbacks
+    | _ -> Queue.create ()
+    ]
+  in
+  (
+    state.val := 
+      match success with
+      [ True -> Initialized
+      | False -> NotInitialized
       ];
-      while not (Queue.is_empty callbacks) do
-        let c = Queue.pop callbacks in
-        c success
-      done
-    )
-  | _ -> Debug.w "Game center state incosistent"
-  ];
+    match !initializer_handler with
+    [ Some f -> f success
+    | _ -> ()
+    ];
+    while not (Queue.is_empty callbacks) do
+      let c = Queue.pop callbacks in
+      c success
+    done
+  );
 
 
 Callback.register "game_center_initialized" game_center_initialized;

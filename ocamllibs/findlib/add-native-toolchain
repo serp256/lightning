@@ -4,11 +4,25 @@
 
 version="1.4"
 
+toolchain_name=
 
-toolchain_path=$1
+if [ "$1" = "-name" ]; then
+	toolchain_name=$2
+	if [ -z "$toolchain_name" ]; then
+		echo "!!! specify name"
+		exit 1
+	fi
+	toolchain_path=$3
+elif [ "$1" = "-h" ]; then
+	echo "add-native-toolchain [-name <toolchain name>] <toolchain path>"
+	echo "	if name specified then toolchain would be added to main findlib.conf"
+	exit 0
+else
+	toolchain_path=$1
+fi
 
 if [ ! -d "$toolchain_path" ]; then
-	echo "Please specify toolchain dir"
+	echo "!!! icorrect toolchain dir"
 	exit 1
 fi
 
@@ -111,3 +125,13 @@ sudo cp findlib.conf.toolchain "${ETC}/findlib.conf"
 for x in `ls site-lib-src`; do if [ -f "site-lib-src/$x/META" ]; then sudo mkdir -p "${SITELIB}/$x"; sudo cp site-lib-src/$x/META "${SITELIB}/$x"; echo "$x done"; fi; done
 sudo mkdir -p "${SITELIB}/findlib"
 sudo cp src/findlib/META "${SITELIB}/findlib/"
+
+
+if [ ! -z "$toolchain_name" ]; then
+	main_conf=`ocamlfind -printconf conf`
+	echo "# TOOLCHAIN $toolchain_name" | sudo tee -a $main_conf
+	echo "destdir(${toolchain_name})=\"${SITELIB}\"" | sudo tee -a $main_conf
+	echo "path(${toolchain_name})=\"${SITELIB}\"" | sudo tee -a $main_conf
+	echo "stdlib(${toolchain_name})=\"${STDLIB}\"" | sudo tee -a $main_conf
+	echo "ocamlopt(${toolchain_name})=\"${OCAMLOPT}\"" | sudo tee -a $main_conf
+fi
