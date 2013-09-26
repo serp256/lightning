@@ -21,7 +21,7 @@ class base [ 'target,'currentTarget ] = (*{{{*)
             [ None -> {counter = 1; lstnrs = [ (0,listener) ]}
             | Some l ->
                 (
-                  l.lstnrs := [ (l.counter,listener) :: l.lstnrs ];
+                  l.lstnrs := l.lstnrs @ [ (l.counter,listener) ];
                   res.val := l.counter;
                   l.counter := l.counter + 1;
                   l
@@ -58,7 +58,7 @@ class virtual simple [ 'target ]  =
       let t = self#asEventTarget in 
       let evd = (t,t) in
       match try Some (List.assoc event.Ev.evid listeners) with [ Not_found -> None ] with
-      [ Some l -> ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation = `StopImmediate)) l.lstnrs)
+      [ Some l -> ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.lstnrs)
       | None -> ()
       ];
 

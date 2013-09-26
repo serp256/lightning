@@ -99,8 +99,9 @@ done
 
 sed -e "s/@VERSION@/$version/g" src/findlib/META.in > src/findlib/META
 
-echo "INSTALLING..."
 # INSTALL
+echo "INSTALLING..."
+
 
 sudo mkdir -p $SITELIB || exit 1
 sudo mkdir -p $ETC || exit 1
