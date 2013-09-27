@@ -119,8 +119,10 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
             NSLog(@"FBSessionStateOpen %d", [session.permissions count]);
 
             if (ios6()) {
+                /* io6 doesn't call this function each time session change its state; insted it calls blocks which given in requestNewPublishPermissions and requestNewReadPermissions calls */
                 requestReadPermissions();
             } else {
+                /* ios7 ignores blocks from requestNewPublishPermissions and requestNewReadPermissions calls and calls this function each time session changes its state */
                 if (publishPermsRequested) {
                     publishPermsComplete(session, error);
                 } else if (readPermsRequested) {
