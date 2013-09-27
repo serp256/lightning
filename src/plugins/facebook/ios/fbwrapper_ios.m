@@ -6,6 +6,7 @@
 #import <caml/memory.h>
 #import <caml/alloc.h>
 #import <caml/fail.h>
+#import <UIKit/UIDevice.h>
 
 @interface LightFBDialogDelegate : NSObject <FBWebDialogsDelegate>
 {
@@ -51,23 +52,46 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 // } extraPermsState = NotRequested;
 // int extraPermsRequested = 0;
 
+BOOL ios6() {
+    return ([[[UIDevice currentDevice] systemVersion] floatValue] < 7.0);
+}
+
+static inline void requestPublishPermissions();
+static inline void requestReadPermissions();
+
+BOOL readPermsRequested = NO;
+BOOL publishPermsRequested = NO;
+
+void (^publishPermsComplete)(FBSession *session,NSError *error) = ^(FBSession *session,NSError *error) {
+    // some shit happens with this block: it called if only new publish permissions requested. if requsted both read and publish permissions -- called only requestNewReadPermissions completionHandler
+    NSLog(@"requestPublishPermissions completionHandler");
+
+    [publishPermissions removeAllObjects];
+    [publishPermissions release];
+    publishPermissions = nil;
+    fbSession = session;
+    [FBSession setActiveSession:session];
+    // extraPermsState = NotRequested;
+    // extraPermsRequested = 0;
+    caml_callback(*caml_named_value("fb_success"), Val_unit);            
+};
+
+void (^readPermsCompelete)(FBSession *session,NSError *error) = ^(FBSession *session,NSError *error) {
+    NSLog(@"requestReadPermissions completionHandler");
+
+    [readPermissions removeAllObjects];
+    [readPermissions release];
+    readPermissions = nil;
+    requestPublishPermissions();           
+};
+
 static inline void requestPublishPermissions() {
+    publishPermsRequested = YES;
+
     if (publishPermissions && [publishPermissions count]) {
         NSLog(@"requesting additional publish permissions");
         // extraPermsState = PublishPermissionsRequsted;
-        [[FBSession activeSession] requestNewPublishPermissions:publishPermissions defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:^(FBSession *session,NSError *error) {
-            // some shit happens with this block: it called if only new publish permissions requested. if requsted both read and publish permissions -- called only requestNewReadPermissions completionHandler
-            NSLog(@"requestPublishPermissions completionHandler");
-
-            [publishPermissions removeAllObjects];
-            [publishPermissions release];
-            publishPermissions = nil;
-            fbSession = session;
-            [FBSession setActiveSession:session];
-            // extraPermsState = NotRequested;
-            // extraPermsRequested = 0;
-            caml_callback(*caml_named_value("fb_success"), Val_unit);            
-        }];
+        [[FBSession activeSession] requestNewPublishPermissions:publishPermissions defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:publishPermsComplete];
     } else {
         NSLog(@"skip additional publish permissions");
         fbSession = [FBSession activeSession];
@@ -77,17 +101,12 @@ static inline void requestPublishPermissions() {
 }
 
 static inline void requestReadPermissions() {
-    if (readPermissions && [readPermissions count]) {        
+    readPermsRequested = YES;
+
+    if (readPermissions && [readPermissions count]) {
         NSLog(@"requesting additional read permissions");
         // extraPermsState = ReadPermissionsRequsted;
-        [[FBSession activeSession] requestNewReadPermissions:readPermissions completionHandler:^(FBSession *session,NSError *error) {
-            NSLog(@"requestReadPermissions completionHandler");
-
-            [readPermissions removeAllObjects];
-            [readPermissions release];
-            readPermissions = nil;
-            requestPublishPermissions();           
-        }];
+        [[FBSession activeSession] requestNewReadPermissions:readPermissions completionHandler:readPermsCompelete];
     } else {
         NSLog(@"skip additional read permissions");
         requestPublishPermissions();
@@ -96,16 +115,24 @@ static inline void requestReadPermissions() {
 
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error) {
     switch (state) {
-        case FBSessionStateOpen:
+        case FBSessionStateOpen: {
             NSLog(@"FBSessionStateOpen %d", [session.permissions count]);
 
-            for (id perm in session.permissions) {
-                NSLog(@"permission %@", perm);
-            }
-
-            requestReadPermissions();
+            if (ios6()) {
+                requestReadPermissions();
+            } else {
+                if (publishPermsRequested) {
+                    publishPermsComplete(session, error);
+                } else if (readPermsRequested) {
+                    readPermsCompelete(session, error);
+                } else {
+                    requestReadPermissions();
+                }
+            }            
 
             break;
+        }
+
 
         case FBSessionStateClosed:
             NSLog(@"FBSessionStateClosed");
