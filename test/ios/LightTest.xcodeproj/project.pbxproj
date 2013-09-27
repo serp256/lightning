@@ -9,12 +9,7 @@
 /* Begin PBXBuildFile section */
 		5106D8F717295F6700D03E1A /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F517295F6700D03E1A /* assets */; };
 		5106D8F817295F6700D03E1A /* index in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F617295F6700D03E1A /* index */; };
-		513A2815173937B000EE18A3 /* TapjoyResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 513A2814173937B000EE18A3 /* TapjoyResources.bundle */; };
 		5181418216F6F61A009D7846 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5181418116F6F61A009D7846 /* LightTestBin */; };
-		5181418516F6F699009D7846 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5181418316F6F699009D7846 /* InfoPlist.strings */; };
-		5181418916F6F6C2009D7846 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418616F6F6C2009D7846 /* Default-568h@2x.png */; };
-		5181418A16F6F6C2009D7846 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418716F6F6C2009D7846 /* Default.png */; };
-		5181418B16F6F6C2009D7846 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5181418816F6F6C2009D7846 /* Default@2x.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -119,7 +114,7 @@
 /* Begin PBXLegacyTarget section */
 		5181417A16F6F5B8009D7846 /* LightTestBin */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "-C .. ios";
+			buildArgumentsString = "-C ../..";
 			buildConfigurationList = 5181417B16F6F5B8009D7846 /* Build configuration list for PBXLegacyTarget "LightTestBin" */;
 			buildPhases = (
 			);
@@ -183,13 +178,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				513A2815173937B000EE18A3 /* TapjoyResources.bundle in Resources */,
 				5106D8F717295F6700D03E1A /* assets in Resources */,
 				5106D8F817295F6700D03E1A /* index in Resources */,
-				5181418916F6F6C2009D7846 /* Default-568h@2x.png in Resources */,
-				5181418A16F6F6C2009D7846 /* Default.png in Resources */,
-				5181418B16F6F6C2009D7846 /* Default@2x.png in Resources */,
-				5181418516F6F699009D7846 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -311,13 +301,13 @@
 		51ABA24A16F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Sergey Plaksin (5ZR8R38XZE)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "F26B0B9F-73BF-448A-9D0C-878F70BAA76B";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "A76B6DD9-2076-499E-BB30-0ABAB6152113";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
