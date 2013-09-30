@@ -115,7 +115,7 @@ diff -urN ocaml-4.01.0/Makefile ocaml-android/Makefile
  	done
 diff -urN ocaml-4.01.0/asmrun/backtrace.c ocaml-android/asmrun/backtrace.c
 --- ocaml-4.01.0/asmrun/backtrace.c	2013-07-23 18:48:47.000000000 +0400
-+++ ocaml-android/asmrun/backtrace.c	2013-09-26 18:06:47.000000000 +0400
++++ ocaml-android/asmrun/backtrace.c	2013-09-30 15:23:30.000000000 +0400
 @@ -252,12 +252,12 @@
     useless. We kept it to keep code identical to the byterun/
     implementation. */
@@ -131,23 +131,24 @@ diff -urN ocaml-4.01.0/asmrun/backtrace.c ocaml-android/asmrun/backtrace.c
  
    if (li->loc_is_raise) {
      /* Initial raise if index == 0, re-raise otherwise */
-@@ -271,13 +271,21 @@
+@@ -271,13 +271,22 @@
      else
        info = "Called from";
    }
 +	char *res = NULL;
    if (! li->loc_valid) {
 -    fprintf(stderr, "%s unknown location\n", info);
-+		if (need_msg) fprintf(stderr,"%s unknown location\n", info);
-+		else asprintf(&res, "%s unknown location\n", info);
++		if (need_msg) asprintf(&res, "%s unknown location\n", info);
++		else fprintf(stderr,"%s unknown location\n", info);
    } else {
 -    fprintf (stderr, "%s file \"%s\", line %d, characters %d-%d\n",
-+		if (need_msg) fprintf(stderr,"%s file \"%s\", line %d, characters %d-%d\n",
++		if (need_msg) 
++			asprintf(&res, "%s file \"%s\", line %d, characters %d-%d\n",
               info, li->loc_filename, li->loc_lnum,
               li->loc_startchr, li->loc_endchr);
 -  }
 +		else
-+    asprintf(&res, "%s file \"%s\", line %d, characters %d-%d\n",
++			fprintf(stderr,"%s file \"%s\", line %d, characters %d-%d\n",
 +             info, li->loc_filename, li->loc_lnum,
 +             li->loc_startchr, li->loc_endchr);
 +  };
@@ -156,7 +157,7 @@ diff -urN ocaml-4.01.0/asmrun/backtrace.c ocaml-android/asmrun/backtrace.c
  }
  
  /* Print a backtrace */
-@@ -289,10 +297,26 @@
+@@ -289,10 +298,26 @@
  
    for (i = 0; i < caml_backtrace_pos; i++) {
      extract_location_info((frame_descr *) (caml_backtrace_buffer[i]), &li);

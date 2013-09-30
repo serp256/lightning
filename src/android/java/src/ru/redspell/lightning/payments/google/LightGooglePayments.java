@@ -246,9 +246,14 @@ public class LightGooglePayments implements ILightPayments {
 
                     if (!developerPayloadSkuMap.containsKey(developerPayload)) {
                         failReason = "unknown developerPayload " + developerPayload;
-                    } else if (key != null && !LightGoogleSecurity.verifyPurchase(key, purchaseData, dataSignature)) {
-                        failReason = "signature verification failed";
-                    }
+										} else {
+											int purchaseState = o.optInt("purchaseState",1);
+											if (purchaseState != 0) {
+													failReason = "purchaseState is " + purchaseState;
+											} else if (key != null && !LightGoogleSecurity.verifyPurchase(key, purchaseData, dataSignature)) {
+													failReason = "signature verification failed";
+											}
+										}
                 }
 
                 if (failReason != null) {
