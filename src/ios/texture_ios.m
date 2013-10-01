@@ -293,7 +293,7 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
     return bundlePath;
 }
 
-#define CHECK_PATH(path, flag) if (getResourceFd([path cStringUsingEncoding:NSASCIIStringEncoding], &res)) {	\
+#define CHECK_PATH(path, flag) if (getResourceFd([path cStringUsingEncoding:NSUTF8StringEncoding], &res)) {	\
 	flag = 1;																									\
 	break;																										\
 }																												\
