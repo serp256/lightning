@@ -7,6 +7,11 @@ value makeData (type s) () =
   let module M = struct exception E of s; end in
   ((fun x -> M.E x), (fun [ M.E x -> Some x | _ -> None]));
 
+module NewData(P:sig type t;end) = struct
+  exception E of P.t;
+  value pack x = E x;
+  value unpack = fun [ E x -> Some x | _ -> None];
+end;
 
 value ((data_of_bool:(bool -> data)),bool_of_data) = makeData ();
 value ((data_of_int:(int -> data)),int_of_data) = makeData ();

@@ -25,7 +25,7 @@ value init ~rn_type ~sender_id ~success ~error =
       callbacks.val := Some (success,error);
       init (convert_rn_types rn_type) sender_id;
     )
-  | Some _ -> failwith("RemoteNotificaions initialization in progress")
+  | Some _ -> callbacks.val := Some (success,error)
   ];
 
 
