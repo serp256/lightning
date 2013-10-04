@@ -4,6 +4,10 @@ type id;
 type data;
 
 value makeData: unit -> (('a -> data) * (data -> option 'a));
+module NewData(P:sig type t;end): sig
+  value pack: P.t -> data;
+  value unpack: data -> option P.t;
+end;
 
 
 value data_of_bool: bool -> data;

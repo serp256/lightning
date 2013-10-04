@@ -190,14 +190,15 @@ public class LightNotifications {
 		startIntent.putExtra("localNotification",id);
 
 		PendingIntent pNotifIntnt = PendingIntent.getActivity(context, 0, startIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Builder notifBldr = new NotificationCompat.Builder(context)
-            .setSmallIcon(R.drawable.notif_icon)
-            .setContentTitle(title == null ? context.getPackageManager().getApplicationLabel(context.getApplicationInfo()) : title)
-            .setContentText(message)
-            .setContentIntent(pNotifIntnt)
-            .setAutoCancel(true);
+		NotificationCompat.Builder notifBldr = new NotificationCompat.Builder(context)
+			.setSmallIcon(R.drawable.notif_icon)
+			.setContentTitle(title == null ? context.getPackageManager().getApplicationLabel(context.getApplicationInfo()) : title)
+			.setContentText(message)
+			.setContentIntent(pNotifIntnt)
+			.setDefaults(android.app.Notification.DEFAULT_ALL)
+			.setAutoCancel(true);
 
-        NotificationManager notifMngr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notifMngr.notify(id.hashCode(), notifBldr.build());		
+		NotificationManager notifMngr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+		notifMngr.notify(id.hashCode(), notifBldr.build());		
 	}
 }
