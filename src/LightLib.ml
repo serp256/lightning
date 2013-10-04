@@ -35,7 +35,7 @@ class clip ?(fps=default_fps.val) texture frames labels =
    (*   let i = ref 0. in*)
       List.iter begin fun (rect,name,pos) ->
         let () = debug:quest "name:%s; img:( %d, %s) " (match name with [ Some name -> name | _ -> "None" ]) (fst img) (Rectangle.to_string (snd img)) in
-        let el = AtlasNode.create texture rect ~pos () in
+        let el = AtlasNode.create texture rect ?name ~pos () in
         (
 (*           el#setPosPoint pos; *)
           (*
@@ -58,7 +58,7 @@ class clip ?(fps=default_fps.val) texture frames labels =
         List.iter begin fun 
           [ ClpPlace idx rect name pos ->
             let () = debug "place img at %d" idx in
-            let el = AtlasNode.create texture rect ~pos () in
+            let el = AtlasNode.create texture rect ?name ~pos () in
             (
 (*               el#setPosPoint pos; *)
 (*               match name with [ Some name -> el#setName name | None -> ()]; *)
@@ -229,7 +229,7 @@ value create_element ?fps lib = fun
               let atlas = Atlas.create texture in
               (
                 List.iter begin fun (rect,name,pos) ->
-                  let node = AtlasNode.create texture rect ~pos () in
+                  let node = AtlasNode.create texture rect ?name ~pos () in
                   atlas#addChild node
                 end els;
                 sprite#addChild atlas;
@@ -250,7 +250,7 @@ value create_element ?fps lib = fun
       let atlas = new Atlas.c texture in
       (
         List.iter begin fun (rect,name,pos) ->
-          let node = AtlasNode.create texture rect ~pos () in
+          let node = AtlasNode.create texture rect ?name ~pos () in
           atlas#addChild node
         end children;
         (atlas :> c)
@@ -293,7 +293,7 @@ value create_element_async ?fps lib symbol callback =
                   let atlas = Atlas.create texture in
                   (
                     List.iter begin fun (rect,name,pos) ->
-                      let node = AtlasNode.create texture rect ~pos () in
+                      let node = AtlasNode.create texture rect ?name ~pos () in
                       atlas#addChild node
                     end els;
                     if i < sprite#numChildren
@@ -321,7 +321,7 @@ value create_element_async ?fps lib symbol callback =
         let atlas = new Atlas.c texture in
         (
           List.iter begin fun (rect,name,pos) ->
-            let node = AtlasNode.create texture rect ~pos () in
+            let node = AtlasNode.create texture rect ?name ~pos () in
             atlas#addChild node
           end children;
           callback (atlas :> c)
