@@ -1431,7 +1431,7 @@ value ml_get_gl_extensions(value unit) {
 /////////////////////
 
 typedef struct {
-	GLubyte color[3];
+	GLfloat color[3];
 	GLfloat alpha;
 	GLenum method;
 	GLfloat line_width;
@@ -1465,6 +1465,8 @@ static int shape_data_len = 0;
 static vertex2F *shape_vertexes = NULL;
 
 value ml_shape_create (value mlpoints, value mllayers) {
+	CAMLparam2(mlpoints, mllayers);
+
 	value result = caml_alloc_custom(&shape_ops,sizeof(shape_t),0,1);
 	shape_t *shape = SHAPE(result);
   	glGenBuffers(1, &shape->buffer);
@@ -1478,10 +1480,9 @@ value ml_shape_create (value mlpoints, value mllayers) {
 	value point;
 	int i;
 	for (i = 0; i < len; i++) {
-		PRINT_DEBUG("get %d shape point",i);
-		point = Field(mlpoints,i);
-		shape_vertexes[i].x = Double_val(Field(point,0));
-		shape_vertexes[i].y = Double_val(Field(point,1));
+		point = Field(mlpoints, i);
+		shape_vertexes[i].x = Double_field(point,0);
+		shape_vertexes[i].y = Double_field(point,1);
 		// shape_vertexes[i].c = COLOR_FROM_INT(Long_val(Field(point,2)),Double_val(Field(point,3)));
 	};
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex2F) * len, shape_vertexes, GL_STATIC_DRAW);
@@ -1490,30 +1491,33 @@ value ml_shape_create (value mlpoints, value mllayers) {
 
 	int layers_num = 0;
 	value mllayer = mllayers;
-	shape_layer_t layer;
+	value _mllayer;
+	shape_layer_t* layer;
 	int color;
 
 	while (Is_block(mllayer)) {
-		shape->layers = realloc(shape->layers, sizeof(shape_layer_t) * ++layers_num);
-		layer = shape->layers[layers_num - 1];
+		_mllayer = Field(mllayer, 0);
 
-		switch Int_val(Field(mllayer, 0)) {
-			case 0: layer.method = GL_POINTS;break;
-			case 1: layer.method = GL_LINES;break;
-			case 2: layer.method = GL_LINE_LOOP;break;
-			case 3: layer.method = GL_LINE_STRIP;break;
-			case 4: layer.method = GL_TRIANGLES;break;
-			case 5: layer.method = GL_TRIANGLE_STRIP;break;
-			case 6: layer.method = GL_TRIANGLE_FAN;break;
+		shape->layers = realloc(shape->layers, sizeof(shape_layer_t) * ++layers_num);
+		layer = &shape->layers[layers_num - 1];
+
+		switch Int_val(Field(_mllayer, 0)) {
+			case 0: layer->method = GL_POINTS;break;
+			case 1: layer->method = GL_LINES;break;
+			case 2: layer->method = GL_LINE_LOOP;break;
+			case 3: layer->method = GL_LINE_STRIP;break;
+			case 4: layer->method = GL_TRIANGLES;break;
+			case 5: layer->method = GL_TRIANGLE_STRIP;break;
+			case 6: layer->method = GL_TRIANGLE_FAN;break;
 		};
 
-		color = Int_val(Field(mllayer, 1));
+		color = Int_val(Field(_mllayer, 1));
 
-		layer.color[0] = COLOR_PART_RED(color);
-		layer.color[1] = COLOR_PART_GREEN(color);
-		layer.color[2] = COLOR_PART_BLUE(color);
-		layer.alpha = Double_val(Field(mllayer, 2));
-		layer.line_width = Int_val(Field(mllayer, 3));
+		layer->color[0] = COLOR_PART_RED(color) / 255;
+		layer->color[1] = COLOR_PART_GREEN(color) / 255;
+		layer->color[2] = COLOR_PART_BLUE(color) / 255;
+		layer->alpha = Double_val(Field(_mllayer, 2));
+		layer->line_width = Double_val(Field(_mllayer, 3));
 
 		mllayer = Field(mllayer, 1);
 	}
@@ -1521,7 +1525,7 @@ value ml_shape_create (value mlpoints, value mllayers) {
 	shape->layers_num = layers_num;
 	shape->len = len;
 
-	return result;
+	CAMLreturn(result);
 }
 
 value ml_shape_render(value matrix,value program,value alpha, value mlshape) {
@@ -1532,12 +1536,10 @@ value ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 	applyTransformMatrix(matrix);
 	lgGLUniformModelViewProjectionMatrix(sp);
 
-	// glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
-
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_Position);
 	lgGLBindTexture(0,0);
 	glBindBuffer(GL_ARRAY_BUFFER,shape->buffer);
-	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, sizeof(vertex2F), 0);
+	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, sizeof(vertex2F), (GLvoid*) 0);
 
 	int i;
 	shape_layer_t layer;
@@ -1546,7 +1548,7 @@ value ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 		glLineWidth(layer.line_width);
 
 		glUniform1f(sp->std_uniforms[lgUniformAlpha], layer.alpha);
-		glUniform3iv(sp->uniforms[0], 3, layer.color);
+		glUniform3fv(sp->uniforms[0], 1, layer.color);
 
 		glDrawArrays(layer.method, 0, shape->len);
 	}
