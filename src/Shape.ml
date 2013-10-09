@@ -1,19 +1,23 @@
 open LightCommon;
 
-type point = 
+(* type point = 
   {
     x:float;
     y:float;
     color:int;
     alpha:float;
   };
-value point0 = {x=0.;y=0.;color=0;alpha=0.};
-
+value point0 = {x=0.;y=0.;color=0;alpha=0.}; *)
+type point =
+  {
+    x: float;
+    y: float;
+  };
 
 type draw_method = [= `Points | `Lines | `Line_loop | `Line_strip | `Triangles | `Triangle_strip | `Triangle_fan ];
 value int_of_draw_method = fun
   [ `Points -> 0
-  | `Lines -> 1
+  | `Lines _ -> 1
   | `Line_loop -> 2
   | `Line_strip -> 3
   | `Triangles -> 4
@@ -21,11 +25,21 @@ value int_of_draw_method = fun
   | `Triangle_fan -> 6
   ];
 
+type layer =
+  {
+    drawMethod: int;
+    color: int;
+    alpha: float;
+    lineWidth: float;
+  };
+
+value layer ?(drawMethod = `Points) ?(color = 0xffffff) ?(alpha = 1.) ?(lineWidth = 1.) () = { drawMethod = int_of_draw_method drawMethod; color; alpha; lineWidth };
+
 type shape_data;
-external ml_shape_create: array point -> int -> shape_data = "ml_shape_create";
+external ml_shape_create: array point -> list layer -> shape_data = "ml_shape_create";
 external ml_shape_render: Matrix.t -> Render.prg -> ?alpha:float -> shape_data -> unit = "ml_shape_render";
 
-class c ?(draw_method=`Points) ?bounds points =
+class c ?(layers = [ layer () ]) ?bounds points =
   let bounds = 
     match bounds with
     [ Some b -> b
@@ -48,8 +62,8 @@ class c ?(draw_method=`Points) ?bounds points =
   in
   object(self)
     inherit DisplayObject.c;
-    value shaderProgram = GLPrograms.Quad.Normal.create ();
-    value gl_data  = ml_shape_create points (int_of_draw_method draw_method);
+    value shaderProgram = GLPrograms.Shape.create ();
+    value gl_data  = ml_shape_create points layers;
 
     value bounds = bounds;
 
@@ -78,7 +92,7 @@ class c ?(draw_method=`Points) ?bounds points =
 
 value create = new c;
 
-value circle ?(draw_method=`Line_loop) color alpha radius = 
+(* value circle ?(draw_method=`Line_loop) color alpha radius = 
   let segs = 360 in
   let offset = radius in
   let verticies = Array.make (segs + 1) point0 in
@@ -93,5 +107,5 @@ value circle ?(draw_method=`Line_loop) color alpha radius =
     done;
     let diametr = radius *. 2. in
     new c ~draw_method:`Triangle_fan ~bounds:(Rectangle.create 0. 0. diametr diametr) verticies;
-  );
+  ); *)
 

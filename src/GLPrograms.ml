@@ -13,6 +13,18 @@ module type Programs = sig
   end;
 end;
 
+module Shape =
+  struct
+    value id = gen_id ();
+    value create () =
+      let prg = 
+        load id ~vertex:"Shape.vsh" ~fragment:"Shape.fsh" 
+          ~attributes:[ (Render.Program.AttribPosition,"a_position") ] 
+          ~uniforms:[| ("u_color",(UInt 0)) |]
+      in
+        (prg,None);
+  end;
+
 module Quad = struct
 
   module Normal = struct
