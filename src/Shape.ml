@@ -38,6 +38,7 @@ value layer ?(drawMethod = `Points) ?(color = 0xffffff) ?(alpha = 1.) ?(lineWidt
 type shape_data;
 external ml_shape_create: array point -> list layer -> shape_data = "ml_shape_create";
 external ml_shape_render: Matrix.t -> Render.prg -> ?alpha:float -> shape_data -> unit = "ml_shape_render";
+external ml_shape_set_points: shape_data -> array point -> unit = "ml_shape_set_points";
 
 class c ?(layers = [ layer () ]) ?bounds points =
   let bounds = 
@@ -87,6 +88,7 @@ class c ?(layers = [ layer () ]) ?bounds points =
     method private render' ?alpha ~transform _ =
       ml_shape_render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha gl_data;
 
+    method setPoints points = ml_shape_set_points gl_data points;
   end;
 
 
