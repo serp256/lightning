@@ -14,6 +14,8 @@ type point =
     y: float;
   };
 
+value point0 = {x=0.;y=0.};
+
 type draw_method = [= `Points | `Lines | `Line_loop | `Line_strip | `Triangles | `Triangle_strip | `Triangle_fan ];
 value int_of_draw_method = fun
   [ `Points -> 0
@@ -94,7 +96,7 @@ class c ?(layers = [ layer () ]) ?bounds points =
 
 value create = new c;
 
-(* value circle ?(draw_method=`Line_loop) color alpha radius = 
+value circle color alpha radius =
   let segs = 360 in
   let offset = radius in
   let verticies = Array.make (segs + 1) point0 in
@@ -105,9 +107,9 @@ value create = new c;
       let j = radius *. (cos rads) +. offset
       and k = radius *. (sin rads) +. offset
       in
-      verticies.(i) := {x=j;y=k;color;alpha}
+      verticies.(i) := {x=j;y=k}
     done;
     let diametr = radius *. 2. in
-    new c ~draw_method:`Triangle_fan ~bounds:(Rectangle.create 0. 0. diametr diametr) verticies;
-  ); *)
+    new c ~layers:[ layer ~drawMethod:`Triangle_fan ~alpha ~color () ] ~bounds:(Rectangle.create 0. 0. diametr diametr) verticies;
+  );
 
