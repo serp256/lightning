@@ -1469,6 +1469,7 @@ GLuint buffer_of_mlpoints(value mlpoints) {
 	glGenBuffers(1, &buf_id);
 	glBindBuffer(GL_ARRAY_BUFFER, buf_id);
 
+	// Прохуячить по окамльному массиву и загнать нахуй все в буффер блядь
 	mlsize_t len = caml_array_length(mlpoints);
 
 	if (len > shape_data_len) {
@@ -1499,25 +1500,6 @@ value ml_shape_create (value mlpoints, value mllayers) {
 	shape_t *shape = SHAPE(result);
 
 	shape->buffer = buffer_of_mlpoints(mlpoints);	
-/*  	glGenBuffers(1, &shape->buffer);
-	// Прохуячить по окамльному массиву и загнать нахуй все в буффер блядь
-	mlsize_t len = caml_array_length(mlpoints);
-	if (len > shape_data_len) {
-		shape_vertexes = realloc(shape_vertexes,sizeof(vertex2F) * len);
-		shape_data_len = len;
-	}
-	glBindBuffer(GL_ARRAY_BUFFER, shape->buffer);
-	value point;
-	int i;
-	for (i = 0; i < len; i++) {
-		point = Field(mlpoints, i);
-		shape_vertexes[i].x = Double_field(point,0);
-		shape_vertexes[i].y = Double_field(point,1);
-		// shape_vertexes[i].c = COLOR_FROM_INT(Long_val(Field(point,2)),Double_val(Field(point,3)));
-	};
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex2F) * len, shape_vertexes, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER,0);*/
-
 
 	int layers_num = 0;
 	value mllayer = mllayers;
