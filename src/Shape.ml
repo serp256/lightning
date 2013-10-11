@@ -15,6 +15,7 @@ type point =
   };
 
 value point0 = {x=0.;y=0.};
+value point x y = { x; y };
 
 type draw_method = [= `Points | `Lines | `Line_loop | `Line_strip | `Triangles | `Triangle_strip | `Triangle_fan ];
 value int_of_draw_method = fun
@@ -83,12 +84,17 @@ class c ?(layers = [ layer () ]) ?bounds points =
       [ Some ts when ts#asDisplayObject = self#asDisplayObject -> bounds
       | _ -> 
         let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
-        let () = debug:matrix "call transformPoints" in
         Matrix.transformRectangle transformationMatrix bounds
       ];
 
     method private render' ?alpha ~transform _ =
-      ml_shape_render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha gl_data;
+      let alpha =
+        match alpha with
+        [ Some palpha -> palpha *. self#alpha
+        | _ -> self#alpha
+        ]
+      in
+        ml_shape_render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ~alpha gl_data;
 
     method setPoints points = ml_shape_set_points gl_data points;
   end;

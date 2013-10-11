@@ -1473,7 +1473,9 @@ GLuint buffer_of_mlpoints(value mlpoints) {
 	mlsize_t len = caml_array_length(mlpoints);
 
 	if (len > shape_data_len) {
+		PRINT_DEBUG("realloc1 before");
 		shape_vertexes = realloc(shape_vertexes,sizeof(vertex2F) * len);
+		PRINT_DEBUG("realloc1 after");
 		shape_data_len = len;
 	}
 
@@ -1499,7 +1501,8 @@ value ml_shape_create (value mlpoints, value mllayers) {
 	value result = caml_alloc_custom(&shape_ops,sizeof(shape_t),0,1);
 	shape_t *shape = SHAPE(result);
 
-	shape->buffer = buffer_of_mlpoints(mlpoints);	
+	shape->buffer = buffer_of_mlpoints(mlpoints);
+	shape->layers = NULL;
 
 	int layers_num = 0;
 	value mllayer = mllayers;
@@ -1510,7 +1513,9 @@ value ml_shape_create (value mlpoints, value mllayers) {
 	while (Is_block(mllayer)) {
 		_mllayer = Field(mllayer, 0);
 
+		PRINT_DEBUG("realloc2 before");
 		shape->layers = realloc(shape->layers, sizeof(shape_layer_t) * ++layers_num);
+		PRINT_DEBUG("realloc2 after");
 		layer = &shape->layers[layers_num - 1];
 
 		switch Int_val(Field(_mllayer, 0)) {
@@ -1525,9 +1530,15 @@ value ml_shape_create (value mlpoints, value mllayers) {
 
 		color = Int_val(Field(_mllayer, 1));
 
-		layer->color[0] = COLOR_PART_RED(color) / 255;
-		layer->color[1] = COLOR_PART_GREEN(color) / 255;
-		layer->color[2] = COLOR_PART_BLUE(color) / 255;
+		int clr_cmpnnt = COLOR_PART_RED(color);
+		layer->color[0] = (GLfloat)clr_cmpnnt / 255.;
+
+		clr_cmpnnt = COLOR_PART_GREEN(color);
+		layer->color[1] = (GLfloat)clr_cmpnnt / 255.;
+
+		clr_cmpnnt = COLOR_PART_BLUE(color);
+		layer->color[2] = (GLfloat)clr_cmpnnt / 255.;		
+
 		layer->alpha = Double_val(Field(_mllayer, 2));
 		layer->line_width = Double_val(Field(_mllayer, 3));
 
@@ -1547,6 +1558,9 @@ value ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
 	lgGLUniformModelViewProjectionMatrix(sp);
+	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
+
+	PRINT_DEBUG("ml_shape_render %d %f", alpha == Val_unit, (GLfloat)(alpha == Val_unit ? 1 : Double_val(Field(alpha,0))));
 
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_Position);
 	lgGLBindTexture(0,0);
@@ -1559,8 +1573,8 @@ value ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 		layer = shape->layers[i];
 		glLineWidth(layer.line_width);
 
-		glUniform1f(sp->std_uniforms[lgUniformAlpha], layer.alpha);
 		glUniform3fv(sp->uniforms[0], 1, layer.color);
+		glUniform1f(sp->uniforms[1], layer.alpha);
 
 		glDrawArrays(layer.method, 0, shape->len);
 	}

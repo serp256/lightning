@@ -20,7 +20,7 @@ module Shape =
       let prg = 
         load id ~vertex:"Shape.vsh" ~fragment:"Shape.fsh" 
           ~attributes:[ (Render.Program.AttribPosition,"a_position") ] 
-          ~uniforms:[| ("u_color", UNone) |]
+          ~uniforms:[| ("u_color", UNone); ("u_alpha", UNone) |]
       in
         (prg,None);
   end;
