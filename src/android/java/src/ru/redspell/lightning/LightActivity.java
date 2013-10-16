@@ -47,15 +47,19 @@ import com.google.android.gms.plus.PlusClient;
 import com.google.android.gms.common.Scopes;*/
 
 
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
-	private static ArrayList<IUiLifecycleHelper> uiLfcclHlprs = new ArrayList();
+	// private static ArrayList<IUiLifecycleHelper> uiLfcclHlprs = new ArrayList();
+	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
 
 	public static void addUiLifecycleHelper(IUiLifecycleHelper helper) {
+		Log.d("LIGHTNING", "addUiLifecycleHelper call " + Thread.currentThread().getId());
 		uiLfcclHlprs.add(helper);	
 	}
 
 	public static void removeUiLifecycleHelper(IUiLifecycleHelper helper) {
+		Log.d("LIGHTNING", "removeUiLifecycleHelper call " + Thread.currentThread().getId());
 		uiLfcclHlprs.remove(helper);
 	}
 
@@ -269,7 +273,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		Log.d("LIGHTNING", "onActivityResult call");
+		Log.d("LIGHTNING", "onActivityResult call " +  + Thread.currentThread().getId());
 
 		super.onActivityResult(requestCode, resultCode, data);
 
