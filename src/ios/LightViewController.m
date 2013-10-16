@@ -276,25 +276,22 @@ static value *ml_url_complete = NULL;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-
-	//NSLog(@"Controller shouldAutorotateToInterfaceOrientation called");
+	NSLog(@"controller shouldAutofotateToInterfaceOrientation");
 	if (_orientationDelegate) {
 		BOOL res = [_orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
 		return res;
 	}
 	else {
-		//NSLog(@"_orientationDelegate nill");
-    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+    return (interfaceOrientation == UIInterfaceOrientationPortrait || interfaceOrientation == UIInterfaceOrientationMaskPortraitUpsideDown);
 	}
 }
 
 - (BOOL)shouldAutorotate {
-	//NSLog(@"Controller shouldAutorotate called");
+	NSLog(@"controller shouldAutofotate");
 	if (_orientationDelegate && [_orientationDelegate respondsToSelector:@selector(shouldAutorotate)]) {
 		return [_orientationDelegate shouldAutorotate];
 	}
 	else {
-		//NSLog(@"_orientationDelegate nill");
 		return YES;
 	}
 }

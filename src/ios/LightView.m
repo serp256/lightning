@@ -22,7 +22,7 @@
 - (void)destroyFramebuffer;
 
 - (void)renderStage;
--(void)resizeFramebuffer;
+//-(void)resizeFramebuffer;
 //- (void)processTouchEvent:(UIEvent*)event;
 
 @end
@@ -284,30 +284,34 @@
 }
 
 //#define PROCESS_TOUCH_EVENT if (self.isStarted && mLastTouchTimestamp != event.timestamp) { process_touches(self,touches,event,mStage); mLastTouchTimestamp = event.timestamp; }    
-#define PROCESS_TOUCH_EVENT if (self.isStarted) {\
+//#define PROCESS_TOUCH_EVENT if (self.isStarted) {
+#define PROCESS_TOUCH_EVENT \
 	NSAssert(!processTouchesInProgress,@"PROCESS TOUCH EVENT while processTouchesInProgress"); \
 	processTouchesInProgress = YES; \
 	process_touches(self,touches,event,mStage);\
-	processTouchesInProgress = NO;\
-}
+	processTouchesInProgress = NO;
 
-- (void) touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event 
+- (void)touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event 
 {   
+	//NSLog(@"touches Began");
 	PROCESS_TOUCH_EVENT;
 } 
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event 
 {	
+	//NSLog(@"touches Moved");
 	PROCESS_TOUCH_EVENT;
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event 
 {
+	//NSLog(@"touches Ended");
 	PROCESS_TOUCH_EVENT;
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {    
+	//NSLog(@"touches Cancelled");
     mLastTouchTimestamp -= 0.0001f; // cancelled touch events have an old timestamp -> workaround
 		if (processTouchesInProgress) {
 			NSLog(@"TOuch in progress, needCacnelAllTouches");

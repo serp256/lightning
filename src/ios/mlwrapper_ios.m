@@ -35,7 +35,7 @@ char* bundle_path(char* c_path) {
 }
 
 void process_touches(UIView *view, NSSet* touches, UIEvent *event,  mlstage *mlstage) {
-	PRINT_DEBUG("process touched %d", [touches count]);
+	PRINT_DEBUG("process touches %d", [touches count]);
 	//caml_acquire_runtime_system();
 	value mltouch = 1,mltouches = 1,globalX = 1,globalY = 1,time = 1, lst_el = 1;
   Begin_roots5(mltouch,time,globalX,globalY,mltouches);

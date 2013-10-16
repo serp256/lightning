@@ -34,12 +34,12 @@
 	NSLog(@"shouldAutorotateToInterfaceOrientation from nano delegate");
 	return ((interfaceOrientation == UIInterfaceOrientationLandscapeLeft) || (interfaceOrientation == UIInterfaceOrientationLandscapeRight));
 }
+*/
 
 -(NSUInteger)supportedInterfaceOrientations {
 	NSLog(@"supportedInterfaceOrientations from nano delegate");
   return UIInterfaceOrientationMaskLandscape;
 }
-*/
 
 
 

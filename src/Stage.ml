@@ -180,7 +180,7 @@ class virtual c (_width:float) (_height:float) =
         (* let () = debug:touches "Length of other touches: %d" (List.length otherTouches) in *)
         (
           List.iter (fun (_,tch) -> tch.n_phase := TouchPhaseStationary) otherTouches;
-(*           let () = debug:touches
+          let () = debug:touches
               List.iter begin fun (target,touch) ->
                 debug:touches "touch: %ld %f [%f:%f], [%F:%F], %d, %s, [ %s ]\n%!" touch.n_tid
                   touch.n_timestamp touch.n_globalX touch.n_globalY 
@@ -188,7 +188,7 @@ class virtual c (_width:float) (_height:float) =
                   touch.n_tapCount (string_of_touchPhase touch.n_phase)
                   target#name
               end (processedTouches @ otherTouches)
-          in *)
+          in
           (* группируем их по таргетам и вперед - incorrect *) 
           let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) [] processedTouches in
           let fireTouches = 

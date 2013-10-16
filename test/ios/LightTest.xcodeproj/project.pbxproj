@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		5106D8F717295F6700D03E1A /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F517295F6700D03E1A /* assets */; };
 		5106D8F817295F6700D03E1A /* index in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F617295F6700D03E1A /* index */; };
+		5180CA04180EC7B0004D51DA /* Default-Landscape~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 5180CA03180EC2A8004D51DA /* Default-Landscape~ipad.png */; };
+		5180CA05180EC7B6004D51DA /* Default~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 5180CA02180EC1EF004D51DA /* Default~ipad.png */; };
 		5181418216F6F61A009D7846 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5181418116F6F61A009D7846 /* LightTestBin */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +41,8 @@
 		5106D8F517295F6700D03E1A /* assets */ = {isa = PBXFileReference; lastKnownFileType = text; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
 		5106D8F617295F6700D03E1A /* index */ = {isa = PBXFileReference; lastKnownFileType = text; name = index; path = LightTest/index; sourceTree = "<group>"; };
 		513A2814173937B000EE18A3 /* TapjoyResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = TapjoyResources.bundle; path = ../../src/plugins/tapjoy/ios/TapjoyResources.bundle; sourceTree = "<group>"; };
+		5180CA02180EC1EF004D51DA /* Default~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default~ipad.png"; sourceTree = "<group>"; };
+		5180CA03180EC2A8004D51DA /* Default-Landscape~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-Landscape~ipad.png"; sourceTree = "<group>"; };
 		5181418116F6F61A009D7846 /* LightTestBin */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = LightTestBin; sourceTree = "<group>"; };
 		5181418416F6F699009D7846 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
 		5181418616F6F6C2009D7846 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
@@ -58,6 +62,8 @@
 		51ABA22316F6F4A100FC8928 = {
 			isa = PBXGroup;
 			children = (
+				5180CA03180EC2A8004D51DA /* Default-Landscape~ipad.png */,
+				5180CA02180EC1EF004D51DA /* Default~ipad.png */,
 				513A2814173937B000EE18A3 /* TapjoyResources.bundle */,
 				5106D8F517295F6700D03E1A /* assets */,
 				5106D8F617295F6700D03E1A /* index */,
@@ -114,7 +120,7 @@
 /* Begin PBXLegacyTarget section */
 		5181417A16F6F5B8009D7846 /* LightTestBin */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "-C ../..";
+			buildArgumentsString = "";
 			buildConfigurationList = 5181417B16F6F5B8009D7846 /* Build configuration list for PBXLegacyTarget "LightTestBin" */;
 			buildPhases = (
 			);
@@ -154,6 +160,11 @@
 			attributes = {
 				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = "Sergey Plaksin";
+				TargetAttributes = {
+					51ABA22B16F6F4A100FC8928 = {
+						DevelopmentTeam = 685ZNZAUW2;
+					};
+				};
 			};
 			buildConfigurationList = 51ABA22716F6F4A100FC8928 /* Build configuration list for PBXProject "LightTest" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -178,6 +189,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5180CA05180EC7B6004D51DA /* Default~ipad.png in Resources */,
+				5180CA04180EC7B0004D51DA /* Default-Landscape~ipad.png in Resources */,
 				5106D8F717295F6700D03E1A /* assets in Resources */,
 				5106D8F817295F6700D03E1A /* index in Resources */,
 			);
@@ -301,13 +314,15 @@
 		51ABA24A16F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "A76B6DD9-2076-499E-BB30-0ABAB6152113";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "F26B0B9F-73BF-448A-9D0C-878F70BAA76B";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -315,11 +330,14 @@
 		51ABA24B16F6F4A100FC8928 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

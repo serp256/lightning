@@ -26,7 +26,10 @@ void set_referrer(char *type,NSString *nid) {
 @synthesize window=_window;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-	self.window = [[UIWindow alloc] initWithFrame: [UIScreen mainScreen].applicationFrame];
+	[application setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
+	//CGRect frame = [UIScreen mainScreen].bounds;
+	//NSLog(@"window size: %f:%f:%f:%f",frame.origin.x,frame.origin.y,frame.size.width,frame.size.height);
+	self.window = [[UIWindow alloc] initWithFrame: [UIScreen mainScreen].bounds];
 	lightViewController = [LightViewController sharedInstance];
 	lightViewController.orientationDelegate = self;
 	//[self.window addSubview:lightViewController.view];    
@@ -157,25 +160,42 @@ void set_referrer(char *type,NSString *nid) {
     // return [FBSession defaultAppID] ? [[FBSession activeSession] handleOpenURL:url] : NO;
 }
 
--(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-	NSLog(@"shouldAutorotateToInterfaceOrientation for lLightAppDelegate");
-  return (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
-
 -(BOOL)shouldAutorotate {
-	NSLog(@"shouldAutorotate for lLightAppDelegate");
+	NSLog(@"delegate shouldAutorotate");
 	return YES;
 }
 
+/*
+-(BOOL)shouldAutorotate:(UIInterfaceOrientation)interfaceOrientation {
+	  NSLog(@"delegate shouldAutotaitate interfaceOrientation");
+		return ((interfaceOrientation == UIInterfaceOrientationPortrait) || (interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown));
+}
+*/
+
+/*
+-(BOOL)shouldAutorotate:(UIInterfaceOrientation)interfaceOrientation {
+	  NSLog(@"delegate shouldAutotaitate interfaceOrientation");
+		return ((interfaceOrientation == UIInterfaceOrientationPortrait) || (interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown));
+}
+*/
+
+/*
 -(NSUInteger)application:(UIApplication*)application supportedInterfaceOrientationsForWindow:(UIWindow*)window
 {
-	return UIInterfaceOrientationMaskAllButUpsideDown;
+	NSLog(@"delegate application supportedInterfaceOrienationsForWindow");
+	return UIInterfaceOrientationMaskPortrait;
+	//return UIInterfaceOrientationMaskAllButUpsideDown;
 }     
+*/
+
+-(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+  NSLog(@"shouldAutorotateToInterfaceOrientation from nano delegate");
+	return (interfaceOrientation == UIInterfaceOrientationPortrait || interfaceOrientation == UIInterfaceOrientationMaskPortraitUpsideDown);
+}
 
 - (NSUInteger)supportedInterfaceOrientations {
-	NSLog(@"supportedInterfaceOrientations for lLightAppDelegate");
-  return UIInterfaceOrientationMaskPortrait;;
-//	return UIInterfaceOrientationMaskLandscape;
+	NSLog(@"delegate supportedInterfaceOrientations");
+  return (UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskAllButUpsideDown);
 }
 
 - (void)dealloc {
