@@ -1,5 +1,4 @@
 #include "mobile_res.h"
-#import "ios/mlwrapper_ios.h"
 
 #ifdef ANDROID
 #include "android/mlwrapper_android.h"	

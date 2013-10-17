@@ -1,4 +1,4 @@
-
+#import <UIKit/UIKit.h> 
 #import "mlwrapper.h"
 
 #define STR_CAML2OBJC(mlstr) [NSString stringWithCString:String_val(mlstr) encoding:NSASCIIStringEncoding]

@@ -100,6 +100,12 @@ public class LightNotifications {
 		}
 	}
 
+	public static void clearAll() {
+		Context context = LightActivity.instance.getApplicationContext();
+		NotificationManager notifMngr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+		notifMngr.cancelAll();
+	}
+
 	public static void logNotification(Context context, String notifId, double fireDate, String message) {
 		try {
 			SharedPreferences notifSharedPrefs = context.getSharedPreferences(NOTIFICATIONS_SHARED_PREF, Context.MODE_PRIVATE);

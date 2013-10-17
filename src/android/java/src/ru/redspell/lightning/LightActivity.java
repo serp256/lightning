@@ -330,7 +330,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 				lightView.queueEvent(new Runnable() {
 				 @Override
 				 public void run() {
-								 convertIntent();
+					 convertIntent();
 				 }
 				});
 		}

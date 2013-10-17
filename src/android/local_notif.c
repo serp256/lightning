@@ -52,3 +52,14 @@ value ml_lnCancelAll(value p) {
 
 	return Val_unit;
 }
+
+value ml_lnClearAll(value p) {
+	GET_LIGHT_NOTIFICATIONS;
+
+	static jmethodID mid;
+	if (!mid) mid = (*env)->GetStaticMethodID(env, notifCls, "clearAll", "()V");
+
+	(*env)->CallStaticVoidMethod(env, notifCls, mid);
+
+	return Val_unit;
+}
