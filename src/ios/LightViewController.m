@@ -64,7 +64,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 }
 
 
-+(NSString *) version {
++(NSString *)version {
 	//NSLog(@"VERSION");
 	NSBundle *bundle = [NSBundle mainBundle];
 	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
@@ -168,8 +168,7 @@ static value *ml_url_response = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSHTTPURLResponse *)response {
 	//NSLog(@"did recieve response %lld",response.expectedContentLength);
 	//caml_acquire_runtime_system();
-	if (ml_url_response == NULL) 
-		ml_url_response = caml_named_value("url_response");
+	if (ml_url_response == NULL) ml_url_response = caml_named_value("url_response");
 	value contentType;
   Begin_roots1(contentType);
 	contentType = caml_copy_string([[response MIMEType] cStringUsingEncoding:NSUTF8StringEncoding]);

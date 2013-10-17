@@ -27,9 +27,9 @@ void set_referrer(char *type,NSString *nid) {
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 	[application setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
-	//CGRect frame = [UIScreen mainScreen].bounds;
+	//CGRect frame = [UIScreen mainScreen].applicationFrame;
 	//NSLog(@"window size: %f:%f:%f:%f",frame.origin.x,frame.origin.y,frame.size.width,frame.size.height);
-	self.window = [[UIWindow alloc] initWithFrame: [UIScreen mainScreen].bounds];
+	self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].applicationFrame];
 	lightViewController = [LightViewController sharedInstance];
 	lightViewController.orientationDelegate = self;
 	//[self.window addSubview:lightViewController.view];    
