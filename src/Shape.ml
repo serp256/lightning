@@ -20,7 +20,7 @@ value point x y = { x; y };
 type draw_method = [= `Points | `Lines | `Line_loop | `Line_strip | `Triangles | `Triangle_strip | `Triangle_fan ];
 value int_of_draw_method = fun
   [ `Points -> 0
-  | `Lines _ -> 1
+  | `Lines -> 1
   | `Line_loop -> 2
   | `Line_strip -> 3
   | `Triangles -> 4
