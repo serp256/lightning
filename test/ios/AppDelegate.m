@@ -17,24 +17,24 @@
 	lightViewController.orientationDelegate = self;
 	return YES;
 }
+*/
 
 -(NSUInteger)application:(UIApplication*)application supportedInterfaceOrientationsForWindow:(UIWindow*)window
 {
-	return UIInterfaceOrientationMaskAllButUpsideDown;
+	return UIInterfaceOrientationMaskAll;
 }
-*/
 
 /*
 -(BOOL)shouldAutorotate:(UIInterfaceOrientation)interfaceOrientation {
 	NSLog(@"shouldAutotaitate from nano delegate");
 	return ((interfaceOrientation == UIInterfaceOrientationLandscapeLeft) || (interfaceOrientation == UIInterfaceOrientationLandscapeRight));
 }
+*/
 
 -(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 	NSLog(@"shouldAutorotateToInterfaceOrientation from nano delegate");
 	return ((interfaceOrientation == UIInterfaceOrientationLandscapeLeft) || (interfaceOrientation == UIInterfaceOrientationLandscapeRight));
 }
-*/
 
 -(NSUInteger)supportedInterfaceOrientations {
 	NSLog(@"supportedInterfaceOrientations from nano delegate");

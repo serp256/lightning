@@ -287,7 +287,7 @@ static value *ml_url_complete = NULL;
 
 - (BOOL)shouldAutorotate {
 	NSLog(@"controller shouldAutofotate");
-	if (_orientationDelegate && [_orientationDelegate respondsToSelector:@selector(shouldAutorotate)]) {
+	if (_orientationDelegate /*&& [_orientationDelegate respondsToSelector:@selector(shouldAutorotate)]*/) {
 		return [_orientationDelegate shouldAutorotate];
 	}
 	else {
@@ -302,7 +302,7 @@ static value *ml_url_complete = NULL;
 
 - (NSUInteger)supportedInterfaceOrientations {
 	//NSLog(@"Controller supportedOrientations called");
-	if (_orientationDelegate && [_orientationDelegate respondsToSelector:@selector(supportedInterfaceOrientations)]) {
+	if (_orientationDelegate /*&& [_orientationDelegate respondsToSelector:@selector(supportedInterfaceOrientations)]*/) {
 		return [_orientationDelegate supportedInterfaceOrientations];
 	}
 	else {

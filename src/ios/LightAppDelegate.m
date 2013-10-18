@@ -179,14 +179,12 @@ void set_referrer(char *type,NSString *nid) {
 }
 */
 
-/*
 -(NSUInteger)application:(UIApplication*)application supportedInterfaceOrientationsForWindow:(UIWindow*)window
 {
 	NSLog(@"delegate application supportedInterfaceOrienationsForWindow");
-	return UIInterfaceOrientationMaskPortrait;
-	//return UIInterfaceOrientationMaskAllButUpsideDown;
+	//return UIInterfaceOrientationMaskPortrait;
+	return UIInterfaceOrientationMaskAll;
 }     
-*/
 
 -(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
   NSLog(@"shouldAutorotateToInterfaceOrientation from nano delegate");
