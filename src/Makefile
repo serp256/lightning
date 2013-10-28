@@ -5,7 +5,7 @@ CFLAGS += -I .
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
-MOBJS = inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o renderbuffer_stub.o filters_stub.o render_stub.o
+MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o renderbuffer_stub.o filters_stub.o render_stub.o
 
 light_common.o: light_common.h
 texture_common.o: texture_common.h light_common.h
@@ -104,7 +104,7 @@ $(SYNTAX): MLPPOPT := -D$(PLATFORM)
 
 MLSOURCES = $(BMLSOURCES) Hardware.ml LocalNotifications.ml Keyboard.ml Motion.ml ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
 					DisplayObject.ml GLPrograms.ml Shape.ml Quad.ml Texture.ml  RenderTexture.ml Image.ml AtlasNode.ml \
-					TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml\
+					TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml BezierObject.ml \
 					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml
 
 #Texture.cmo Texture.cmx: MLFLAGS += -package threads -thread
