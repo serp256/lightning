@@ -152,29 +152,28 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         match glowFilter with
         [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) ->  
             let bounds = self#boundsInSpace (Some self) in
-            let () = 
-              debug:glow "%s update glow %d, bounds: [%f:%f:%f:%f]" self#name 
-                glow.Filters.glowSize bounds.Rectangle.x bounds.Rectangle.y bounds.Rectangle.width bounds.Rectangle.height
-            in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
             then
               let hgs = (powOfTwo glow.Filters.glowSize) - 1 in
               (
                 let gs = hgs * 2 in
-                let rw = bounds.Rectangle.width +. (float gs)
-                and rh = bounds.Rectangle.height +. (float gs) in
+                let rw = bounds.Rectangle.width +. (float gs) +. (abs_float (float glow.Filters.x))
+                and rh = bounds.Rectangle.height +. (float gs) +. (abs_float (float glow.Filters.y)) in
                 let ip = {Point.x = (float hgs) -. bounds.Rectangle.x;y= (float hgs) -. bounds.Rectangle.y} in
                 let cm = Matrix.create ~translate:ip () in
                 let drawf fb =
                   (
                     debug:drawf "atlas drawf";
-                    Render.push_matrix cm;
-  (*                   Render.clear 0 0.; *)
+                    Render.push_matrix (glowFirstDrawMatrix cm glow.Filters.x glow.Filters.y);
                     RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
+
                     match glow.Filters.glowKind with
-                    [ `linear  -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
+                    [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
                     | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
                     ];
+
+                    Render.restore_matrix ();
+                    Render.push_matrix (glowLastDrawMatrix cm glow.Filters.x glow.Filters.y);
                     RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
                     Render.restore_matrix ();
                   )
@@ -196,7 +195,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 ];
                 gf.g_matrix := 
                   Matrix.create 
-                    ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs)); y = (bounds.Rectangle.y -. (float hgs))} ();
+                    ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs) +. (float glow.Filters.x)); y = (bounds.Rectangle.y -. (float hgs) +. (float glow.Filters.y))} ();
                 gf.g_valid := True;
               )
             else gf.g_valid := True

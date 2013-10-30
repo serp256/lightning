@@ -48,6 +48,7 @@ value ml_create_renderbuffer_tex();
 // int create_renderbuffer(GLuint texId, double vp_x, double vp_y, double width, double height, renderbuffer_t *r,GLenum filter);
 // int create_renderbuffer(double width,double height, renderbuffer_t *r,GLenum filter);
 // int clone_renderbuffer(renderbuffer_t *sr,renderbuffer_t *dr,GLenum filter);
-// void delete_renderbuffer(renderbuffer_t *rb);
+void delete_renderbuffer(renderbuffer_t *rb);
+void _clear_renderbuffer(renderbuffer_t* rb, color3F clr, GLfloat alpha);
 
 #endif

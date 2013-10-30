@@ -123,7 +123,8 @@ class c =
                )
            | Some glow ->
                (* рассчитать размер глоу *)
-               let hgs =  (powOfTwo glow.Filters.glowSize) - 1 in
+              let absf a = if a < 0. then -. a else a in
+              let hgs = (powOfTwo glow.Filters.glowSize) - 1 in
                (
                  let gs = hgs * 2 in
                  let rw = bounds.Rectangle.width +. (float gs)
@@ -134,7 +135,7 @@ class c =
                    (
                      self#setAlpha 1.;
                      let ctex = RenderTexture.draw ~filter:Texture.FilterNearest ~dedicated:True rw rh begin fun _ ->
-                       (                        
+                       (
                          Render.push_matrix m;
                          (* Render.clear 0 0.; *)
                          super#render' ~transform:False None;
@@ -149,16 +150,17 @@ class c =
                  in
                  (
                    let cimg = Render.Image.create ctex#renderInfo ~color:`NoColor ~alpha:1. in
-                   draw_texture rw rh begin fun fb ->
+                   draw_texture (rw +. (abs_float (float glow.Filters.x))) (rh +. (abs_float (float glow.Filters.y))) begin fun fb ->
                      (
                       debug:drawf "sprite some glow drawf";
-                       (* Render.clear 0 0.; *)
-                       Render.Image.render Matrix.identity (GLPrograms.Image.Normal.create ()) cimg;
-                       match glow.Filters.glowKind with
-                       [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                       | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
-                       ];
-                       Render.Image.render Matrix.identity (GLPrograms.Image.Normal.create ()) cimg;
+                       Render.Image.render (glowFirstDrawMatrix Matrix.identity glow.Filters.x glow.Filters.y) (GLPrograms.Image.Normal.create ()) cimg;
+
+                        match glow.Filters.glowKind with
+                        [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
+                        | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                        ];
+
+                        Render.Image.render (glowLastDrawMatrix Matrix.identity glow.Filters.x glow.Filters.y) (GLPrograms.Image.Normal.create ()) cimg;
                      )
                    end;
                    ctex#release ();

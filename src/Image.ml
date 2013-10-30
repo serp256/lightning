@@ -301,7 +301,6 @@ class _c  _texture =
       | _ -> () 
       ];  
       *)
-    
 
     method private updateGlowFilter () =
       match glowFilter with
@@ -313,32 +312,33 @@ class _c  _texture =
             [ Some glowc -> 
               let () = debug:glow "get it from cache" in
               glowc
-            | None -> 
+            | None ->
                 let renderInfo = texture#renderInfo in
                 let w = renderInfo.Texture.rwidth
                 and h = renderInfo.Texture.rheight in
-                let hgs =  (powOfTwo glow.Filters.glowSize) - 1 in
+                let hgs = (powOfTwo glow.Filters.glowSize) - 1 in
                 let gs = hgs * 2 in
                 let mhgs = float ~-hgs in
-                let g_matrix = Matrix.create ~translate:{Point.x = mhgs; y = mhgs} () in
-                let rw = w +. (float gs)
-                and rh = h +. (float gs) in
+                let g_matrix = glowMatrix mhgs glow.Filters.x glow.Filters.y in
+                let rw = w +. (float gs) +. (abs_float (float glow.Filters.x))
+                and rh = h +. (float gs) +. (abs_float (float glow.Filters.y)) in
                 let glowc = GlowCache.get glowc_id in
                 let cm = Matrix.create ~translate:{Point.x = float hgs; y = float hgs} () in
                 let image = Render.Image.create renderInfo `NoColor 1. in
                 let drawf fb =
                   (
-                    debug:drawf "image drawf";
-                    Render.Image.render cm g_make_program image; 
+                    Render.Image.render (glowFirstDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
+
                     match glow.Filters.glowKind with
                     [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
                     | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
                     ];
-                    Render.Image.render cm g_make_program image; 
+
+                    Render.Image.render (glowLastDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
                   )
                 in
                 let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
-                GlowCache.create glowc_id texture tex g_matrix
+                  GlowCache.create glowc_id texture tex g_matrix
             ]
           in
           (

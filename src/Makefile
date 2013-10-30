@@ -102,7 +102,7 @@ CFLAGS += -D$(PLATFORM) -DOS$(OS)
 
 $(SYNTAX): MLPPOPT := -D$(PLATFORM)
 
-MLSOURCES = $(BMLSOURCES) Hardware.ml LocalNotifications.ml Keyboard.ml Motion.ml ProfTimer.ml  WeakMemo.ml LightCommon.ml Ev.ml EventDispatcher.ml Point.ml Rectangle.ml Matrix.ml Render.ml Filters.ml \
+MLSOURCES = $(BMLSOURCES) Hardware.ml LocalNotifications.ml Keyboard.ml Motion.ml ProfTimer.ml  WeakMemo.ml Rectangle.ml Point.ml Matrix.ml LightCommon.ml Ev.ml EventDispatcher.ml Render.ml Filters.ml \
 					DisplayObject.ml GLPrograms.ml Shape.ml Quad.ml Texture.ml  RenderTexture.ml Image.ml AtlasNode.ml \
 					TextureAtlas.ml Atlas.ml Clip.ml BitmapFont.ml Sprite.ml TLF.ml Timers.ml Timer.ml  LightLib.ml BezierObject.ml \
 					Touch.ml Stage.ml Tween.ml Sound.ml GameCenter.ml URLLoader.ml KVStorage.ml Payment.ml $(AMLSOURCES) Lightning.ml

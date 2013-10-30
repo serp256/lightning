@@ -224,6 +224,22 @@ PRINT_DEBUG("GL ERROR: %s", gl_err_str);																\
 
 static int FRAMEBUFFER_BIND_COUNTER = 0;
 
+void _clear_renderbuffer(renderbuffer_t* rb, color3F clr, GLfloat alpha) {
+	viewport* vp = &rb->vp;
+	glViewport(vp->x - (rb->realWidth - vp->w) / 2, vp->y - (rb->realHeight - vp->h) / 2, rb->realWidth, rb->realHeight);
+	glDisable(GL_BLEND);
+	const prg_t* clear_progr = clear_quad_progr();
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_Position);
+	static GLfloat vertices[8] = { -1., -1., 1., -1., -1., 1., 1., 1. };
+	glUniform4f(clear_progr->uniforms[0], clr.r, clr.g, clr.b, alpha);
+ 	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glUseProgram(0);
+	currentShaderProgram = 0;
+	glEnable(GL_BLEND);
+	glViewport(vp->x, vp->y, vp->w, vp->h);
+}
+
 void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 	if (Is_block(mlclear)) {
 		value ca = Field(mlclear,0);
@@ -231,7 +247,8 @@ void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 		color3F clr = COLOR3F_FROM_INT(c);
 		GLfloat alpha = Double_val(Field(ca,1));
 
-		viewport* vp = &rb->vp;
+		_clear_renderbuffer(rb, clr, alpha);
+/*		viewport* vp = &rb->vp;
 
 		glViewport(vp->x - (rb->realWidth - vp->w) / 2, vp->y - (rb->realHeight - vp->h) / 2, rb->realWidth, rb->realHeight);
 		glDisable(GL_BLEND);
@@ -244,7 +261,7 @@ void clear_renderbuffer(renderbuffer_t* rb, value mlclear) {
 		glUseProgram(0);
 		currentShaderProgram = 0;
 		glEnable(GL_BLEND);
-		glViewport(vp->x, vp->y, vp->w, vp->h);
+		glViewport(vp->x, vp->y, vp->w, vp->h);*/
 	}
 }
 
@@ -360,7 +377,6 @@ value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value t
 		int c = Int_val(Field(ca,0));
 		color3F clr = COLOR3F_FROM_INT(c);
 		GLfloat alpha = Double_val(Field(ca,1));
-
 		glClearColor(clr.r, clr.g, clr.b, alpha);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
