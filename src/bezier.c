@@ -192,9 +192,11 @@ static void makeTexGrid(Pt *tex, double tX, double tY, double tW, double tH, int
 	int vPos = 0;
 	double x;
 	double y = 1 - step;
-	for(int i=0; i<lineLen; ++i){
+	int i;
+	for(i=0; i<lineLen; ++i){
 		x = 0;
-		for(int j=0; j<lineLen; ++j){
+		int j;
+		for(j=0; j<lineLen; ++j){
 			tex[vPos].x = x * tW + tX;
 			tex[vPos].y = y * tH + tY;
 			++vPos;
@@ -269,7 +271,8 @@ CAMLprim value ml_make_grid_tex(value vLineLen, value texClp, value vStep){
 	Arrays *arr = Data_custom_val(res);
 	Pt* tex = malloc(sizeof(Pt) * resQty);
 	GLbyte (*colors)[4] = malloc(sizeof(GLbyte[4]) * resQty);
-	for(int i=0; i< resQty; ++i){
+	int i;
+	for(i=0; i< resQty; ++i){
 		colors[i][0] = 1;
 		colors[i][1] = 1;
 		colors[i][2] = 1;
