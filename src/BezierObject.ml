@@ -42,6 +42,25 @@ value indexToInt a = match a with
 						|LeftBottom	-> 6
 						|Left		-> 7];
 
+value linesCrossing (a,b) (c,d) =
+	let open Point in
+	let signf a = if a = 0.
+					then 0.
+				  else if a < 0.
+					then -1.
+				  else 1. in
+	let fixf a = if a < 0.001 && a > (-. 0.001) then 0. else a in
+	let vectorMul v1 v2 = signf (fixf (v1.x *. v2.y -. v2.x *. v1.y)) in
+	let mkv b a = {x = a.x -. b.x; y = a.y -. b.y} in
+	let abc = vectorMul (mkv a b) (mkv a c)
+	and abd = vectorMul (mkv a b) (mkv a d)
+	and cda = vectorMul (mkv c d) (mkv c a)
+	and cdb = vectorMul (mkv c d) (mkv c b) in
+	if (abc <> abd && cda <> cdb) || (abc = 0. && abd = 0. && cda = 0. && cdb = 0.)
+		then 1
+		else 0;
+
+
 class c pts s q t =
 	let getClp t =
 		let open Texture in
@@ -107,6 +126,20 @@ class c pts s q t =
 		value mutable filters = [];
 		method filters = filters;
 	    method setFilters f = filters := f;
+		method! hitTestPoint' pt _ = 
+			let _ = Printf.printf "%f %f\n%!" pt.Point.x pt.Point.y in
+			let maxP = 8 in
+			let w = tex#width in
+			let h = tex#height in
+			let pts = Array.map (fun p -> Point.({x = p.x *. w /. 2.; y = p.y *. h /. 2.})) points in
+			let rec loop n acc testPair = if n >= 8
+				then acc + linesCrossing (pts.(0), pts.(7)) testPair
+				else loop (n+1) (acc + linesCrossing (pts.(n-1), pts.(n)) testPair) testPair in
+			let crossCounts = loop 1 0 (pt, Point.create 100000. 0.) in
+			if crossCounts mod 2 = 1
+				then Some (self :> DisplayObject.c)
+				else None;
+
 		method! width =
 			let open Point in
 			let startVal = points.(0).x in
@@ -125,8 +158,8 @@ class c pts s q t =
 		method relativeHeight = self#height -. tex#height;
 		method boundsInSpace targetCoordinateSpace = (
 			let open Point in
-			let tw = tex#width
-			and th = tex#height in
+			let tw = tex#width /. 2.
+			and th = tex#height /. 2. in
 			let pts = match targetCoordinateSpace with
 							[Some o when o#asDisplayObject = self#asDisplayObject -> Array.map (fun p -> {x = p.x *. tw; y = p.y *. th}) (correctForm points)
 							|_ ->
@@ -137,8 +170,8 @@ class c pts s q t =
 			let foldFunc (xm,ym,xM,yM) {x=x;y=y} = (min x xm, min y ym, max x xM, max y yM) in
 			let fp = pts.(0) in
 			let (lmx,lmy,lMx,lMy) = Array.fold_left foldFunc (fp.x,fp.y,fp.x,fp.y) pts in
-			let w = ((lMx -. lmx) /. 2.) and h = ((lMy -. lmy) /. 2.) in
-			Rectangle.create (lmx +. w /. 2.) (lmy +. h /. 2.) w h;
+			let w = lMx -. lmx and h = lMy -. lmy in
+			Rectangle.create lmx lmy w h;
 		);	
 
 		method private render' ?alpha:(a) ~transform rect =
