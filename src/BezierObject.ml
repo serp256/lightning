@@ -127,11 +127,11 @@ class c pts s q t =
 		method filters = filters;
 	    method setFilters f = filters := f;
 		method! hitTestPoint' pt _ = 
-			let _ = Printf.printf "%f %f\n%!" pt.Point.x pt.Point.y in
+			(* let _ = Printf.printf "%f %f\n%!" pt.Point.x pt.Point.y in *)
 			let maxP = 8 in
 			let w = tex#width in
 			let h = tex#height in
-			let pts = Array.map (fun p -> Point.({x = p.x *. w /. 2.; y = p.y *. h /. 2.})) points in
+			let pts = Array.map (fun p -> Point.({x = p.x *. w /. 2.; y = p.y *. h /. 2.})) (correctForm points) in
 			let rec loop n acc testPair = if n >= 8
 				then acc + linesCrossing (pts.(0), pts.(7)) testPair
 				else loop (n+1) (acc + linesCrossing (pts.(n-1), pts.(n)) testPair) testPair in
