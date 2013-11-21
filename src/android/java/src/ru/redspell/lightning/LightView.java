@@ -344,6 +344,8 @@ public class LightView extends GLSurfaceView {
 			old_udid = old_udid + "_" + serial;
 	}
 
+	public static boolean rendererReady = false;
+
 	public LightView(LightActivity _activity) {
 		super(_activity);
 		activity = _activity;
