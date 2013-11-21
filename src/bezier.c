@@ -15,6 +15,8 @@
 #endif
 #endif
 
+#include "light_common.h"
+
 #include <caml/callback.h>
 #include <caml/alloc.h>
 #include <caml/mlvalues.h>
@@ -262,15 +264,20 @@ struct custom_operations arrays_ops = {
 CAMLprim value ml_make_grid_tex(value vLineLen, value texClp, value vStep){
 	CAMLparam3(vLineLen,texClp,vStep);
 
+// PRINT_DEBUG("MAKE GRID CALL\n");
+
 	int llen = Int_val(vLineLen);
 	int qty = llen * llen;
 	int qtyOfPts = qty * 4;
 	int qtyOfNonDrawingP = qty * 2;
 	int resQty = qtyOfPts + qtyOfNonDrawingP;
+// PRINT_DEBUG("ALL IN STACK");
 	value res = caml_alloc_custom(&arrays_ops,sizeof(Arrays),0,1);
+// PRINT_DEBUG("MEMORY FOR ARRAYS COMPLETED");
 	Arrays *arr = Data_custom_val(res);
-	Pt* tex = malloc(sizeof(Pt) * resQty);
+	Pt* tex = malloc(sizeof(Pt) * (resQty + 4));
 	GLbyte (*colors)[4] = malloc(sizeof(GLbyte[4]) * resQty);
+// PRINT_DEBUG("MALLOC COMPLETED");
 	int i;
 	for(i=0; i< resQty; ++i){
 		colors[i][0] = 1;
@@ -287,7 +294,7 @@ CAMLprim value ml_make_grid_tex(value vLineLen, value texClp, value vStep){
 	double step = Double_val(vStep);
 
 	makeTexGrid(tex, tX, tY, tW, tH, llen, step, resQty);
-	
+// PRINT_DEBUG("C MAKE GRID CALLED");	
 	/* далее идет VBO */
 	glGenBuffers(1,&(arr -> bufferTex));
 	glBindBuffer(GL_ARRAY_BUFFER, arr -> bufferTex);
@@ -297,10 +304,17 @@ CAMLprim value ml_make_grid_tex(value vLineLen, value texClp, value vStep){
 	glBufferData(GL_ARRAY_BUFFER,sizeof(GLbyte[4]) * resQty, colors, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glGenBuffers(1,&(arr -> bufferVert));
-	
+
+// PRINT_DEBUG("BUFFERS INITED");
+
 	free(tex);
+
+// PRINT_DEBUG("ARRAY TEX DELETED");
+
 	free(colors);
-	
+
+// PRINT_DEBUG("ARRAY COLORS DELETED");
+
 	CAMLreturn(res);
 }
 

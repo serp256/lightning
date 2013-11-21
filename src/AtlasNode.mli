@@ -39,3 +39,6 @@ value matrix: t -> Matrix.t;
 
 value sync: t -> unit;
 value bounds: t -> Rectangle.t;
+
+value setScaleX: float -> t -> t;
+value setScaleY: float -> t -> t;
