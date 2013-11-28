@@ -309,20 +309,20 @@ class virtual c (_width:float) (_height:float) =
 
     method !z = Some 0;
     method run seconds = 
-proftimer:frame "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!frame %f"
-    (
-      self#advanceTime seconds;
-      debug:run "start prerender";
-      proftimer:perfomance "prerender %f" (D.prerender ());
-      debug:run "end prerender";
-      Render.clear bgColor 1.;
-      Render.checkErrors "before render";
-      debug:run "start render";
-      proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
-      match fpsTrace with [ None -> () | Some fps -> fps#render None ];
-      match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
-(*       debug:run "end render"; *)
-    );
+      proftimer:frame "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!frame %f"
+      (
+        self#advanceTime seconds;
+        debug:run "start prerender";
+        proftimer:perfomance "prerender %f" (D.prerender ());
+        debug:run "end prerender";
+        Render.clear bgColor 1.;
+        Render.checkErrors "before render";
+        debug:run "start render";
+        proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
+        match fpsTrace with [ None -> () | Some fps -> fps#render None ];
+        match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
+  (*       debug:run "end render"; *)
+      );
 
   method! hitTestPoint localPoint isTouch =
     (*

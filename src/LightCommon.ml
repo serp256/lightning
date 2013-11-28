@@ -81,6 +81,7 @@ value qColor ~topLeft ~topRight ~bottomLeft ~bottomRight =
 
 type color = [= `NoColor | `Color of int | `QColors of qColor ];
 
+(*
 value rec nextPowerOfTwo number =
   let rec loop result = 
     if result < number 
@@ -88,15 +89,19 @@ value rec nextPowerOfTwo number =
     else result
   in 
   loop 1;
+*)
 
-value powOfTwo p =
-  let r = ref 1 in
-  (
-    for i = 0 to p -1 do
-      r.val := !r * 2; 
-    done;
-    !r;
-  );
+
+
+value nextPowerOfTwo x =
+  let x = x - 1 in
+  let x = x lor (x lsr 1) in
+  let x = x lor (x lsr 2) in
+  let x = x lor (x lsr 4) in
+  let x = x lor (x lsr 8) in
+  let x = x lor (x lsr 16) in
+  x + 1;
+
 
 DEFINE COLOR_PART_ALPHA(color) = (color lsr 24) land 0xff;
 DEFINE COLOR_PART_RED(color) = (color lsr 16) land 0xff;

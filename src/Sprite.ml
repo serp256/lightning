@@ -75,7 +75,7 @@ class c =
       super#boundsChanged();
     );
 
-    method private updateImageCache () = 
+    method private _updateImageCache () = 
       match imageCache with
       [ Some ({c_img; c_tex; glow; valid = CInvalid;  _} as c) -> 
          let () = debug:prerender "update cacheImage %s" self#name in
@@ -109,15 +109,16 @@ class c =
                let alpha' = alpha in
                (
                  self#setAlpha 1.;
-                 draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
-                   (
-                    debug:drawf "sprite none glow drawf";
-                     Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
-                     (* Render.clear 0 0.; *)
-                     super#render' ~transform:False None;
-                     Render.restore_matrix ();
-                   )
-                 end;
+                 proftimer:icache "drawTexture: %f"
+                   draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
+                     (
+                      debug:drawf "sprite none glow drawf";
+                       Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
+                       (* Render.clear 0 0.; *)
+                       proftimer:icache "render %f" (super#render' ~transform:False None);
+                       Render.restore_matrix ();
+                     )
+                   end;
                  self#setAlpha alpha';
                  c.c_mat := Matrix.create ~translate:{Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} ();
                )
@@ -138,7 +139,7 @@ class c =
                        (
                          Render.push_matrix m;
                          (* Render.clear 0 0.; *)
-                         super#render' ~transform:False None;
+                         proftimer:icache "render %f" (super#render' ~transform:False None);
                          Render.restore_matrix ();                         
                        )
                      end in
@@ -174,6 +175,8 @@ class c =
 (* 		assert False (* FIXME: иногда срабатывает этот ассерт *) *)
     | _ -> ()
     ];
+    
+    method private updateImageCache () = proftimer:icache "updateImageCache %f" self#_updateImageCache();
 
     method setFilters fltrs =
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in

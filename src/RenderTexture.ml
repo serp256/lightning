@@ -8,13 +8,25 @@ external delete_textureID: textureID -> unit = "ml_render_texture_id_delete" "no
 
 
 type framebuffer;
-external renderbuffer_draw: ~dedicated:bool -> ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
+
+(*
+external renderbuffer_draw_dedicated: ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_dedicated_byte"
+"ml_renderbuffer_draw_dedicated";
+external renderbuffer_draw: ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
+*)
 external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?new_params:(int * int * float * float) -> ?new_tid:textureID -> renderInfo -> (framebuffer -> unit) -> unit = "ml_renderbuffer_draw_to_texture";
 external renderbuffer_draw_to_dedicated_texture: ?clear:(int*float) -> ?width:float -> ?height:float -> renderInfo -> (framebuffer -> unit) -> bool = "ml_renderbuffer_draw_to_dedicated_texture";
+
+
 external create_renderbuffer_tex: ?size:(int * int) -> unit -> textureID = "ml_create_renderbuffer_tex";
+external create_renderbuffer: unit -> (framebuffer,textureID) = "ml_create_renderbuffer";
 external _renderbuffer_tex_size: unit -> int = "ml_renderbuffer_tex_size";
 
-value lazy_renderbuffer_tex_size = Lazy.from_fun _renderbuffer_tex_size;
+value lazy_renderbuffer_tex_size = 
+  Lazy.from_fun (
+    debug (fun () -> let res = _renderbuffer_tex_size () in (debug "renderbuffer_tex_size %d" res; res))
+    else _renderbuffer_tex_size;
+  );
 
 value renderbufferTexSize () = Lazy.force lazy_renderbuffer_tex_size;
 
@@ -318,17 +330,23 @@ module FramebufferTexture = struct
                     else (True, [ newHoleA :: checkedHoles ])
                   in
                     merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed
-                | [ newHole ] when Rectangle.rectInside newHole holeA && Rectangle.rectInside newHole holeB -> merge newHole (List.tl holes) checkedHoles retval True
-                | [ newHole ] when Rectangle.rectInside newHole holeA -> merge newHole (List.tl holes) [ holeB :: checkedHoles ] retval True
-                | [ newHole ] when Rectangle.rectInside newHole holeB -> merge holeA (List.tl holes) [ newHole :: checkedHoles ] retval True
-                | [ newHole ] ->
-                  let allHoles = [ holeA :: holes @ checkedHoles @ retval ] in
-                  let (changed, checkedHoles) =
-                    if List.exists (fun hole -> Rectangle.rectInside hole newHole) allHoles
-                    then (changed, checkedHoles)
-                    else (True, [ newHole :: checkedHoles ])
-                  in
-                   merge holeA (List.tl holes) [ holeB :: checkedHoles] retval changed
+                | [ newHole ] -> 
+                    let inA = Rectangle.rectInside newHole holeA
+                    and inB = Rectangle.rectInside newHole holeB in
+                    if inA && inB 
+                    then merge newHole (List.tl holes) checkedHoles retval True
+                    else
+                      if inA then merge newHole (List.tl holes) [ holeB :: checkedHoles ] retval True
+                      else 
+                        if inB then merge holeA (List.tl holes) [ newHole :: checkedHoles ] retval True
+                        else
+                          let allHoles = [ holeA :: holes @ checkedHoles @ retval ] in
+                          let (changed, checkedHoles) =
+                            if List.exists (fun hole -> Rectangle.rectInside hole newHole) allHoles
+                            then (changed, checkedHoles)
+                            else (True, [ newHole :: checkedHoles ])
+                          in
+                           merge holeA (List.tl holes) [ holeB :: checkedHoles] retval changed
                 | [] -> merge holeA (List.tl holes) [ holeB :: checkedHoles ] retval changed (* this case is when rects contacts by single vertex *)
                 | _ -> assert False
                 ]
@@ -377,8 +395,8 @@ module FramebufferTexture = struct
 
       value remove bin x y =
         try
-          let rect = List.find (fun rect -> Rectangle.x rect = x && Rectangle.y rect = y) bin.rects in (
-            bin.rects := List.remove bin.rects rect;
+          let (rect,rects) = MList.pop_if (fun rect -> Rectangle.x rect = x && Rectangle.y rect = y) bin.rects in (
+            bin.rects := rects;
             bin.reuseRects := [ rect :: bin.reuseRects ];
             bin.reuseCoeff := bin.reuseCoeff + 1;
           )
@@ -389,7 +407,7 @@ module FramebufferTexture = struct
 
   value findPos w h =
     let newRenderbuffTex () =
-      let tid = create_renderbuffer_tex () in
+      let (fb,tid) = create_renderbuffer () in
       let bin = Bin.create (renderbufferTexSize ()) (renderbufferTexSize ()) in (
         bins.val := [ (tid, bin) :: !bins ];
 
@@ -665,31 +683,15 @@ class type c =
     method data: unit -> data; 
   end;  
 
+
+
+
+external
+
 value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
   let width = int_of_float (ceil width) in
   let height = int_of_float (ceil height) in
 
-  let dedicated = dedicated || (width > (renderbufferTexSize ()) / 2) || (height > (renderbufferTexSize ()) / 2) in
-
-  let (rectw,recth,offsetx,offsety) =
-    if dedicated
-    then
-      let rectw = nextPowerOfTwo width in
-      let recth = nextPowerOfTwo height in
-        (rectw, recth, (rectw - width) / 2, (recth - height) / 2)
-    else
-      let widthCrrcnt = texRectDimCorrection width in
-      let heightCrrcnt = texRectDimCorrection height in
-        (width + widthCrrcnt, height + heightCrrcnt, widthCrrcnt / 2, heightCrrcnt / 2)
-  in
-
-  let (tid, pos) =
-    if dedicated
-    then (create_renderbuffer_tex ~size:(rectw, recth) (), FramebufferTexture.Point.create offsetx offsety)
-    else
-      let (tid, pos) = FramebufferTexture.getRect rectw recth in
-        (tid, FramebufferTexture.Point.create (FramebufferTexture.Point.x pos + offsetx) (FramebufferTexture.Point.y pos + offsety))
-  in
   let clear =
     match (color, alpha) with
     [ (Some color, Some alpha) -> (color, alpha)
@@ -698,14 +700,38 @@ value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
     | _ -> (0x000000, 0.)
     ]
   in
-  let renderInfo = renderbuffer_draw ~dedicated ~filter ~clear tid (FramebufferTexture.Point.x pos) (FramebufferTexture.Point.y pos) (float width) (float height) f in
-    if dedicated
-    then new dedicated renderInfo
-    else
+
+  let dedicated = dedicated || (width > (renderbufferTexSize ()) / 2) || (height > (renderbufferTexSize ()) / 2) in
+
+  match dedicated with
+  [ True ->
+      let rectw = nextPowerOfTwo width
+      and recth = nextPowerOfTwo height in
+      let offsetx = (rectw - width) / 2
+      and offsety = (recth - height) / 2 in
+      let tid = create_renderbuffer_tex ~size:(rectw, recth) in
+      let renderInfo = renderbuffer_draw ~filter ~clear tid offsetx offsety (float width) (float height) f
+      new dedicated renderInfo;
+  | False ->
+      let (rectw,recth,offsetx,offsety) =
+        let widthCrrcnt = texRectDimCorrection width in
+        let heightCrrcnt = texRectDimCorrection height in
+          (width + widthCrrcnt, height + heightCrrcnt, widthCrrcnt / 2, heightCrrcnt / 2)
+      in
+
+      let ((fb,tid), pos) = proftimer:perfomance "FramebufferTexture.getRect %f" (FramebufferTexture.getRect rectw recth) in
+      let posx = FramebufferTexture.Point.x pos + offsetx
+      and posy = FramebufferTexture.Point.y pos + offsety
+      in
+      let renderInfo = 
+        proftimer:perfomance "renderbuffer_draw %f" (
+          renderbuffer_draw_shared fb ~filter ~clear posx posy (float width) (float height) f
+        ) in
       let tex = new shared renderInfo in (
         Gc.finalise (fun tex -> tex#release () ) tex;
         tex;        
-      );
+      )
+  ];
 
 value sharedTexsNum = FramebufferTexture.binsNum;
 (* value dumpTextures = FramebufferTexture.dumpTextures; *)

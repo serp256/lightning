@@ -321,7 +321,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 		method virtual dispatchEventGlobal: Ev.t -> unit;
     method setParent p = 
     (
-      debug:prerender "set parent for %s" self#name;
+(*       debug:prerender "set parent for %s" self#name; *)
       parent := Some p;
 			let event = Ev.create ev_ADDED () in
 			self#dispatchEvent event;
