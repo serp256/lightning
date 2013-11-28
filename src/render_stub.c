@@ -1597,3 +1597,67 @@ value ml_shape_set_points(value mlshape, value mlpoints) {
 
 	CAMLreturn(Val_unit);
 }
+
+////////////////////////
+// GRID
+////////////////////////
+
+struct pt{
+	GLfloat x;
+	GLfloat y;
+};
+typedef struct pt Pt;
+
+struct arrays{
+	int len;
+	GLuint bufferTex;
+	GLuint bufferCol;
+	GLuint bufferVert;
+};
+typedef struct arrays Arrays;
+
+#define prerr(a) printf("log: %s\n",(a)); fflush(stdout);
+#define mulP(p,m) p.x *= m; p.y *= m;
+#define SZ 10
+
+// ренденринг для BezierObject
+value ml_render_grid(value matrix, value vGrid, value vTexId, value program){
+	Arrays *ars = Data_custom_val(vGrid);
+	int qty = ars -> len;
+
+	GLint texId  = ((struct tex*)Data_custom_val(vTexId)) -> tid;
+	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
+	lgGLUseProgram(sp->program);
+	
+	kmGLPushMatrix();
+	applyTransformMatrix(matrix);
+	checkGLErrors("image render use program");
+	lgGLUniformModelViewProjectionMatrix(sp);
+	checkGLErrors("bind matrix uniform");
+
+	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)1);
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
+	checkGLErrors("render image: uniforms and attribs");
+	
+	int pma = -1;
+	lgGLBindTexture(texId,pma);
+	/* типа inline */
+
+	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
+	// VERTEX
+	glBindBuffer(GL_ARRAY_BUFFER, ars -> bufferVert);
+	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	// TEXTURE COORD
+	glBindBuffer(GL_ARRAY_BUFFER, ars -> bufferTex);	
+	glVertexAttribPointer(lgVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	// COLORS
+	glBindBuffer(GL_ARRAY_BUFFER, ars -> bufferCol);
+	glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, NULL);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, qty);
+	checkGLErrors("draw");
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	/* inline end */
+	kmGLPopMatrix();
+	return Val_unit;
+}

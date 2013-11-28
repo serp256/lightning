@@ -76,6 +76,48 @@ prg_t* clear_quad_progr() {
 	return &prg;
 }
 
+#define SHADOW_VERTICAL_BLUR 																	\
+	"#ifdef GL_ES\n 																			\
+	precision lowp float;\n																		\
+	#endif\n																					\
+	varying vec2 v_texCoord;																	\
+	uniform sampler2D u_texture;																\
+	uniform float u_radius;																		\
+	uniform float u_height;																		\
+	uniform vec3 u_color;																		\
+	void main()																					\
+	{																							\
+		float a = texture2D(u_texture, v_texCoord).a;											\
+	    for (float i = 0.; i < u_radius; i = i + 1.) {											\
+	        a += texture2D(u_texture, vec2(v_texCoord.x, v_texCoord.y + (1.5 + 2. * i) / u_height)).a;		\
+	        a += texture2D(u_texture, vec2(v_texCoord.x, v_texCoord.y - (1.5 + 2. * i) / u_height)).a;		\
+	    }																						\
+		gl_FragColor = vec4(u_color, a / 2. / u_radius);										\
+	}"
+
+#define SHADOW_HORIZONTAL_BLUR 																	\
+	"#ifdef GL_ES\n 																			\
+	precision lowp float;\n																		\
+	#endif\n																					\
+	varying vec2 v_texCoord;																	\
+	uniform sampler2D u_texture;																\
+	uniform float u_radius;																		\
+	uniform float u_width;																		\
+	uniform vec3 u_color;																		\
+	void main()																					\
+	{																							\
+		float a = texture2D(u_texture, v_texCoord).a;											\
+	    for (float i = 0.; i < u_radius; i = i + 1.) {											\
+	        a += texture2D(u_texture, vec2(v_texCoord.x + (1.5 + 2. * i) / u_width, v_texCoord.y)).a;		\
+	        a += texture2D(u_texture, vec2(v_texCoord.x - (1.5 + 2. * i) / u_width, v_texCoord.y)).a;		\
+	    }																						\
+		gl_FragColor = vec4(u_color, a / 2. / u_radius);										\
+	}"
+
+
+SHADER(shadow_vertical_fshader, GL_FRAGMENT_SHADER, SHADOW_VERTICAL_BLUR)
+SHADER(shadow_horizontal_fshader, GL_FRAGMENT_SHADER, SHADOW_HORIZONTAL_BLUR)
+
 GLuint simple_vertex_shader() {
 	static GLuint shader = 0;
 	if (shader == 0) {
@@ -143,6 +185,38 @@ prg_t* simple_program() {
 		if (prg.prg) {
 			glUseProgram(prg.prg);
 			glUniform1i(glGetUniformLocation(prg.prg,"u_texture"),0);
+		}
+	} else glUseProgram(prg.prg);
+	return &prg;
+}
+
+prg_t* shadow_vertical_blur_prog() {
+	static prg_t prg = {0,{0,0,0,0}};
+	if (prg.prg == 0) {
+		char *attribs[2] = {"a_position","a_texCoord"};
+		prg.prg = create_program(simple_vertex_shader(),shadow_vertical_fshader(),2,attribs);
+		if (prg.prg) {
+			glUseProgram(prg.prg);
+			glUniform1i(glGetUniformLocation(prg.prg,"u_texture"),0);
+			prg.uniforms[0] = glGetUniformLocation(prg.prg, "u_radius");
+			prg.uniforms[1] = glGetUniformLocation(prg.prg, "u_height");
+			prg.uniforms[2] = glGetUniformLocation(prg.prg, "u_color");
+		}
+	} else glUseProgram(prg.prg);
+	return &prg;
+}
+
+prg_t* shadow_horizontal_blur_prog() {
+	static prg_t prg = {0,{0,0,0,0}};
+	if (prg.prg == 0) {
+		char *attribs[2] = {"a_position","a_texCoord"};
+		prg.prg = create_program(simple_vertex_shader(),shadow_horizontal_fshader(),2,attribs);
+		if (prg.prg) {
+			glUseProgram(prg.prg);
+			glUniform1i(glGetUniformLocation(prg.prg,"u_texture"),0);
+			prg.uniforms[0] = glGetUniformLocation(prg.prg, "u_radius");
+			prg.uniforms[1] = glGetUniformLocation(prg.prg, "u_width");
+			prg.uniforms[2] = glGetUniformLocation(prg.prg, "u_color");
 		}
 	} else glUseProgram(prg.prg);
 	return &prg;
@@ -246,4 +320,131 @@ const prg_t* glow2_program() {
 		}
 	} else glUseProgram(prg.prg);
 	return &prg;
+}
+
+GLuint normal_horizontal_blur_fsh(){
+	static GLuint shader=0;
+	if (shader == 0) {
+		shader = compile_shader(GL_FRAGMENT_SHADER,"\
+				varying vec2 v_texCoord;\
+				uniform sampler2D u_texture;\
+				uniform int winRad;\
+				uniform float ml;\
+				uniform float width;\
+				void main()\
+				{\
+					vec4 tc = vec4(0.0,0.0,0.0,0.0);\
+					for (int i=0; i<winRad; i++)\
+					{\
+						vec2 shift = vec2((float(i) - 0.5) / width,0.0);\
+						tc += texture2D(u_texture, v_texCoord + shift);\
+						tc += texture2D(u_texture, v_texCoord - shift);\
+					}\
+					tc = tc * ml;\
+					gl_FragColor = tc;\
+				}"); 
+	};
+	return shader;
+}
+
+GLuint normal_vertical_blur_fsh(){
+	static GLuint shader=0;
+	if (shader == 0) {
+		shader = compile_shader(GL_FRAGMENT_SHADER,"\
+				varying vec2 v_texCoord;\
+				uniform sampler2D u_texture;\
+				uniform int winRad;\
+				uniform float ml;\
+				uniform float width;\
+				void main()\
+				{\
+					vec4 tc = vec4(0.0,0.0,0.0,0.0);\
+					for (int i=0; i<winRad; i++)\
+					{\
+						vec2 shift = vec2(0.0,(float(i) - 0.5) / width);\
+						tc += texture2D(u_texture, v_texCoord + shift);\
+						tc += texture2D(u_texture, v_texCoord - shift);\
+					}\
+					tc = tc * ml;\
+					gl_FragColor = tc;\
+				}");
+	};
+	return shader;
+}
+
+GLuint horizontal_blur_fsh(){
+	static GLuint shader=0;
+	if (shader == 0) {
+		shader = compile_shader(GL_FRAGMENT_SHADER,"\
+varying vec2 v_texCoord;\
+uniform sampler2D u_texture;\
+uniform int winRad;\
+uniform float ml;\
+uniform float width;\
+uniform float vecSh;\
+void main()\
+{\
+	vec4 tc = vec4(0.0,0.0,0.0,0.0);\
+	vec2 vecShv = vec2(vecSh / width,0.0);\
+	for (int i=0; i<winRad; i++)\
+	{\
+		vec2 shift = vec2((float(i) - 0.5) / width,0.0);\
+		tc += texture2D(u_texture, v_texCoord + shift + vecShv);\
+		tc += texture2D(u_texture, v_texCoord - shift + vecShv);\
+	}\
+	tc = tc * ml;\
+	gl_FragColor = tc;\
+}"); 
+	};
+	return shader;
+}
+// here
+GLuint vertical_blur_fsh(){
+	static GLuint shader=0;
+	if (shader == 0) {
+/*		shader = compile_shader(GL_FRAGMENT_SHADER,"\
+varying vec2 v_texCoord;\
+uniform sampler2D u_texture;\
+uniform int winRad;\
+uniform float ml;\
+uniform float width;\
+void main()\
+{\
+	vec4 tc = vec4(0.0,0.0,0.0,0.0);\
+	for (int i=0; i<winRad; i++)\
+	{\
+		vec2 shift = vec2(0.0,(float(i) - 0.5) / width);\
+		tc += texture2D(u_texture, v_texCoord + shift);\
+		tc += texture2D(u_texture, v_texCoord - shift);\
+	}\
+	tc = tc * ml;\
+	gl_FragColor = tc;\
+}");*/
+		shader = compile_shader(GL_FRAGMENT_SHADER,"\
+varying vec2 v_texCoord;\
+uniform sampler2D u_texture;\
+uniform int winRad;\
+uniform float ml;\
+uniform float vecSh;\
+uniform float width;\
+uniform float redFL;\
+uniform float greenFL;\
+uniform float blueFL;\
+void main()\
+{\
+	vec4 tc = vec4(0.0,0.0,0.0,0.0);\
+	vec2 vecShv = vec2(0.0,vecSh / width);\
+	for (int i=0; i<winRad; i++)\
+	{\
+		vec2 shift = vec2(0.0,(float(i) - 0.5) / width);\
+		tc += texture2D(u_texture, v_texCoord + shift + vecShv);\
+		tc += texture2D(u_texture, v_texCoord - shift + vecShv);\
+	}\
+	tc = tc * ml;\
+	gl_FragColor = tc * vec4(redFL,greenFL,blueFL,1.0);\
+/*	gl_FragColor = vec4(redFL,greenFL,blueFL,tc.a); */\
+}");
+	};
+	return shader;
+
 }

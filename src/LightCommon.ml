@@ -480,3 +480,12 @@ value pathExistsInExpansions (path:string) = False;
 ENDIF; *)
 
 value exitApp () = ignore(exit 0);
+
+value positiveOrZero a = float (if a > 0 then a else 0);
+value negativeOrZero a = float (if a < 0 then a else 0);
+value invertNegativeOrZero a = float (if a < 0 then ~-a else 0);
+
+value glowMatrix mhgs x y = Matrix.create ~translate:{ Point.x = mhgs +. (negativeOrZero x); y = mhgs +. (negativeOrZero y)} ();
+value glowFirstDrawMatrix originaMtx x y = Matrix.translate originaMtx (positiveOrZero x, positiveOrZero y);
+value glowLastDrawMatrix originaMtx x y = Matrix.translate originaMtx (invertNegativeOrZero x, invertNegativeOrZero y);
+

@@ -25,6 +25,18 @@ module Shape =
         (prg,None);
   end;
 
+module Shadow =
+  struct
+    value id = gen_id ();
+    value create () =
+      let prg =
+        load id ~vertex:"ShadowFirstPass.vsh" ~fragment:"ShadowFirstPass.fsh"
+          ~attributes:[ (Render.Program.AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord") ]
+          ~uniforms:[| ("u_texture",(UInt 0)); ("u_radius", UNone); ("u_color", UNone); ("u_height", UNone) |]
+      in
+        (prg, None);
+  end;
+
 module Quad = struct
 
   module Normal = struct

@@ -17,7 +17,9 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	
 	private int screenWidth;
 	private int screenHeight;
-	
+
+	public boolean ready = false;
+
 	public LightRenderer(int width,int height) {
 		super();
 		screenWidth = width;
@@ -32,6 +34,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		//Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
 		Log.d("LIGHTNING","SURFACE CREATED tid: " + Process.myTid());
 		nativeSurfaceCreated(screenWidth,screenHeight);
+		LightView.rendererReady = true;
 
 		getIntent();
 
