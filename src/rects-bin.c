@@ -227,7 +227,7 @@ void bin_add_rect_at(bin_t* bin, uint16_t x, uint16_t y, uint16_t width, uint16_
 					rlist_unshift(&max_holes, cutting->data);
 				}
 
-				// if cutting become new max hole -- no need to free its data, cause data just moved to max_holes list. if cutting we inside another max hole, it must be completely freed
+				// if cutting become new max hole -- no need to free its data, cause data just moved to max_holes list. if cutting were inside another max hole, it must be completely freed
 				cutting = rlist_remove(NULL, cutting, !new_max_hole); 
 			}
 

@@ -255,10 +255,9 @@ value ml_kv_storage_exists(value key_ml) {
 
 /* PAYMENTS */
 
-void ml_payment_init(value success_cb, value error_cb) {
-  CAMLparam2(success_cb, error_cb);
-
-  LightViewController * c = [LightViewController sharedInstance];
+void ml_payment_init(value vskus, value success_cb, value error_cb) {
+	CAMLparam3(vskus, success_cb, error_cb);
+	LightViewController * c = [LightViewController sharedInstance];
 
 	// if init twice?
 	if (c->payment_success_cb == 0) {
@@ -271,10 +270,41 @@ void ml_payment_init(value success_cb, value error_cb) {
 		caml_modify_generational_global_root(&(c->payment_success_cb),success_cb);
 		caml_modify_generational_global_root(&(c->payment_error_cb),error_cb);
 	};
+
+	if (Is_block(vskus)) {
+		NSCountedSet* skus = [[NSCountedSet alloc] initWithCapacity:10];
+		value vsku = Field(vskus, 0);
+
+		while (Is_block(vsku)) {
+			char* csku = String_val(Field(vsku, 0));
+			NSString* sku = [NSString stringWithUTF8String:csku];
+
+			if (![skus member:sku]) {
+				[skus addObject:sku];
+			}
+
+			vsku = Field(vsku, 1);
+		}
+
+		SKProductsRequest *preq = [[SKProductsRequest alloc] initWithProductIdentifiers:skus];
+		preq.delegate = c;
+		[preq start];
+	}	
   
-  CAMLreturn0;
+	CAMLreturn0;
 }
 
+value ml_product_price(value vprod) {
+	CAMLparam1(vprod);
+	SKProduct* prod = (SKProduct*)vprod;
+	CAMLreturn(caml_copy_double([prod.price doubleValue]));
+}
+
+value ml_product_currency(value vprod) {
+	CAMLparam1(vprod);
+	NSString* currency = [[(SKProduct*)vprod priceLocale] objectForKey:NSLocaleCurrencyCode];
+	CAMLreturn(caml_copy_string([currency UTF8String]));
+}
 
 void ml_payment_purchase(value product_id) {
 	NSLog(@"PAYMENT: %s",String_val(product_id));

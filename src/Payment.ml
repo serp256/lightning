@@ -26,6 +26,26 @@ ENDIF;
   
 end;
 
+module Product =
+  struct
+    IFDEF IOS THEN
+      type t;
+
+      value prods = Hashtbl.create 10;
+      value register sku prod = Hashtbl.add prods sku prod;
+
+      value get sku = try Some (Hashtbl.find prods sku) with [ Not_found -> None ];
+      external price: t -> float = "ml_product_price";
+      external currency: t -> string = "ml_product_currency";
+    ELSE
+      type t;
+
+      value get sku = None;
+      value price p = 1.;
+      value currency p = "";
+    ENDIF;
+  end;
+
 
 (* TODO: доделать передачу receipt *)
 value initialized = ref False;
@@ -33,11 +53,13 @@ type marketType = [= `Google of (option string) | `Amazon ];
 
 
 IFDEF IOS THEN
-external ml_init : (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit = "ml_payment_init";
+external ml_init : ?skus:list string -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit)-> unit = "ml_payment_init";
 external ml_commit_transaction : Transaction.t -> unit = "ml_payment_commit_transaction";
 external ml_purchase : string -> unit = "ml_payment_purchase";
 value restorePurchases () = ();
 external restoreCompletedPurchases: unit -> unit = "ml_payment_restore_completed_transactions";
+
+Callback.register "register_product" Product.register;
 ELSE
 
 IFDEF ANDROID THEN
@@ -80,7 +102,7 @@ ENDIF;
   Второй - error, принимает product_id, строку ошибки и флаг, показывающий, что юзер отменил транзакцию.
 *)
 
-value init ?(marketType = `Google None) success_cb error_cb = (
+value init ?(marketType = `Google None) ?skus success_cb error_cb = (
   IFDEF ANDROID THEN
   (
     Callback.register "camlPaymentsSuccess" success_cb;
@@ -88,7 +110,7 @@ value init ?(marketType = `Google None) success_cb error_cb = (
     ml_init marketType
   )
   ELSE
-    ml_init success_cb error_cb
+    ml_init ?skus success_cb error_cb
   ENDIF;
 
   initialized.val := True;
