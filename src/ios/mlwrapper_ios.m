@@ -297,29 +297,31 @@ void ml_payment_init(value vskus, value success_cb, value error_cb) {
 value ml_product_price(value vprod) {
 	CAMLparam1(vprod);
 	SKProduct* prod = (SKProduct*)vprod;
-	CAMLreturn(caml_copy_double([prod.price doubleValue]));
+	CAMLreturn(caml_copy_string([[NSString stringWithFormat:@"%@ %@", prod.price, [[prod priceLocale] objectForKey:NSLocaleCurrencyCode]] UTF8String]));
 }
 
-value ml_product_currency(value vprod) {
-	CAMLparam1(vprod);
-	NSString* currency = [[(SKProduct*)vprod priceLocale] objectForKey:NSLocaleCurrencyCode];
-	CAMLreturn(caml_copy_string([currency UTF8String]));
+void purchase(value prod, int by_sku) {
+	PRINT_DEBUG("purchase call %d", by_sku);
+
+	if ([SKPaymentQueue canMakePayments]) {
+    	SKPayment *payment = by_sku ? [SKPayment paymentWithProductIdentifier: STR_CAML2OBJC(prod)] : [SKPayment paymentWithProduct:(SKProduct*)prod];
+    	[[SKPaymentQueue defaultQueue] addPayment:payment];
+	} else {
+    	[[[[UIAlertView alloc] initWithTitle:@"error" message:@"In App Purchases are currently disabled. Please adjust your settings to enable In App Purchases." delegate:nil cancelButtonTitle:@"close" otherButtonTitles:nil] autorelease] show];
+	}
 }
 
-void ml_payment_purchase(value product_id) {
-	NSLog(@"PAYMENT: %s",String_val(product_id));
+value ml_payment_purchase_deprecated(value product_id) {
   CAMLparam1(product_id);
-  
-  if ([SKPaymentQueue canMakePayments]) {
-    SKPayment *payment = [SKPayment paymentWithProductIdentifier: STR_CAML2OBJC(product_id)];
-    [[SKPaymentQueue defaultQueue] addPayment:payment];
-  } else {
-    [[[[UIAlertView alloc] initWithTitle:@"error" message:@"In App Purchases are currently disabled. Please adjust your settings to enable In App Purchases." delegate:nil cancelButtonTitle:@"close" otherButtonTitles:nil] autorelease] show];
-  }      
-  
-  CAMLreturn0;
+  purchase(product_id, 1);
+  CAMLreturn(Val_unit);
 }
 
+value ml_payment_purchase(value vprod) {
+	CAMLparam1(vprod);
+	purchase(vprod, 0);
+	CAMLreturn(Val_unit);
+}
 
 void ml_payment_commit_transaction(value t) {
   CAMLparam1(t);

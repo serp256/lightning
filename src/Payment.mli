@@ -1,10 +1,7 @@
 module Product:
   sig
     type t;
-
-    value get: string -> option t;
-    value price: t -> float;
-    value currency: t -> string;
+    value price: string -> option string; 
   end;
 
 module Transaction : 

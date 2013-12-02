@@ -26,7 +26,7 @@ public class LightAmazonPayments extends BasePurchasingObserver implements ILigh
     }
 
     @Override
-    public void init() {
+    public void init(String[] skus) {
         PurchasingManager.registerObserver(this);
     }
 
@@ -86,6 +86,8 @@ public class LightAmazonPayments extends BasePurchasingObserver implements ILigh
             }
         } else {
             LightPaymentsCamlCallbacks.fail("none", "purchase request status " + status);
-        }        
+        }
     }
+
+    public void getSkuDetails(String[] skus) {}
 }

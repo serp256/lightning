@@ -28,21 +28,26 @@ end;
 
 module Product =
   struct
-    IFDEF IOS THEN
+    IFDEF PC THEN
       type t;
+      value price sku = None;
+    ELSE
+      IFDEF IOS THEN
+        type t;
+      ELSE
+        type t = string;
+      ENDIF;
 
       value prods = Hashtbl.create 10;
       value register sku prod = Hashtbl.add prods sku prod;
-
       value get sku = try Some (Hashtbl.find prods sku) with [ Not_found -> None ];
-      external price: t -> float = "ml_product_price";
-      external currency: t -> string = "ml_product_currency";
-    ELSE
-      type t;
 
-      value get sku = None;
-      value price p = 1.;
-      value currency p = "";
+      IFDEF IOS THEN
+        external price: t -> string = "ml_product_price";
+        value price sku = match get sku with [ Some p -> Some (price p) | _ -> None ];
+      ELSE
+        value price = get;
+      ENDIF;      
     ENDIF;
   end;
 
@@ -55,7 +60,9 @@ type marketType = [= `Google of (option string) | `Amazon ];
 IFDEF IOS THEN
 external ml_init : ?skus:list string -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit)-> unit = "ml_payment_init";
 external ml_commit_transaction : Transaction.t -> unit = "ml_payment_commit_transaction";
-external ml_purchase : string -> unit = "ml_payment_purchase";
+external ml_purchase_deprecated : string -> unit = "ml_payment_purchase_deprecated";
+external ml_purchase : Product.t -> unit = "ml_payment_purchase";
+value ml_purchase sku = match Product.get sku with [ Some p -> ml_purchase p | _ -> ml_purchase_deprecated sku ];
 value restorePurchases () = ();
 external restoreCompletedPurchases: unit -> unit = "ml_payment_restore_completed_transactions";
 
@@ -64,7 +71,7 @@ ELSE
 
 IFDEF ANDROID THEN
 
-external ml_init : marketType -> unit = "ml_paymentsInit";
+external ml_init : ?skus:list string -> marketType -> unit = "ml_paymentsInit";
 external ml_purchase : string -> unit = "ml_paymentsPurchase";
 external _ml_commit_transaction : string -> unit = "ml_paymentsCommitTransaction";
 external ml_restorePurchases: unit -> unit = "ml_restorePurchases";
@@ -73,6 +80,7 @@ value ml_commit_transaction t = _ml_commit_transaction (Transaction.get_id t);
 value restoreCompletedPurchases () = ();
 value restorePurchases = ml_restorePurchases;
 
+Callback.register "register_product" Product.register;
 ELSE
 
 type callbacks = 
@@ -83,7 +91,7 @@ type callbacks =
 
 value callbacks = ref None;
 
-value ml_init success error = callbacks.val := Some {on_success = success; on_error = error};
+value ml_init ?skus success error = callbacks.val := Some {on_success = success; on_error = error};
 
 value ml_purchase (id:string) = ();
 
@@ -107,7 +115,7 @@ value init ?(marketType = `Google None) ?skus success_cb error_cb = (
   (
     Callback.register "camlPaymentsSuccess" success_cb;
     Callback.register "camlPaymentsFail" error_cb;
-    ml_init marketType
+    ml_init ?skus marketType
   )
   ELSE
     ml_init ?skus success_cb error_cb

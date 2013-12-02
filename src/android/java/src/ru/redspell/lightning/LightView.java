@@ -1131,18 +1131,18 @@ public class LightView extends GLSurfaceView {
 
 	private ILightPayments payments;
 
-	public void paymentsInit(boolean googleMarket, String key) {
+	public void paymentsInit(boolean googleMarket, String key, String[] skus) {
 		if (googleMarket) {
 			payments = new LightGooglePayments(key);
 		} else {
 			payments = new LightAmazonPayments(LightActivity.instance);
 		}
 
-		payments.init();
+		payments.init(skus);
 	}
 
 	public void paymentsInit(boolean googleMarket) {
-		paymentsInit(googleMarket, null);	
+		paymentsInit(googleMarket, null, new String[] {});	
 	}
 
 	public void paymentsPurchase(String sku) throws Error {

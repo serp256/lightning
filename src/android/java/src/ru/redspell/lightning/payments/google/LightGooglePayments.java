@@ -73,7 +73,7 @@ public class LightGooglePayments implements ILightPayments {
     ArrayList<Runnable> pendingRequests = new ArrayList();
 
     @Override
-    public void init() {
+    public void init(final String[] skus) {
         Log.d("LIGHTNING", "init call");
 
         Context cntxt = LightActivity.instance;
@@ -92,6 +92,8 @@ public class LightGooglePayments implements ILightPayments {
            public void onServiceConnected(ComponentName name, IBinder service) {
                 Log.d("LIGHTNING", "service binded");
                 mService = IInAppBillingService.Stub.asInterface(service);
+
+                (new SkuDetailsTask()).execute(skus);
 
                 java.util.Iterator<Runnable> iter = pendingRequests.iterator();
                 while (iter.hasNext()) {
@@ -224,7 +226,7 @@ public class LightGooglePayments implements ILightPayments {
         try {
             Log.d("LIGHTNING", "onActivityResult call");
 
-            if (requestCode == REQUEST_CODE) {           
+            if (data != null && requestCode == REQUEST_CODE) {           
                 int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
                 String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
                 String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
@@ -276,6 +278,54 @@ public class LightGooglePayments implements ILightPayments {
     public void contextDestroyed(Context context) {
         if (mServiceConn != null) {
             context.unbindService(mServiceConn);
+        }
+    }
+
+    private native void registerProduct(String sku, String price);
+
+    private class SkuDetailsTask extends android.os.AsyncTask<String, Void, Bundle> {
+        @Override
+        protected Bundle doInBackground(String... skus) {
+            Bundle querySkus = new Bundle();
+            querySkus.putStringArrayList("ITEM_ID_LIST", new ArrayList<String>(java.util.Arrays.asList(skus)));
+            Bundle retval = null;
+
+            try {
+                retval = mService.getSkuDetails(3, LightActivity.instance.getPackageName(), "inapp", querySkus);
+            } catch (android.os.RemoteException e) {
+                retval = null;
+            }
+
+            return retval;
+        }
+
+        @Override
+        protected void onPostExecute(Bundle skuDetails) {
+            Log.d("LIGHTNING", "onPostExecute");
+
+            if (skuDetails != null && skuDetails.getInt("RESPONSE_CODE") == 0) {
+                ArrayList<String> responseList = skuDetails.getStringArrayList("DETAILS_LIST");
+
+                Log.d("LIGHTNING", "resp list " + (new Integer(responseList.size())).toString());
+
+                for (String thisResponse : responseList) {
+                    try {
+                        JSONObject object = new JSONObject(thisResponse);
+                        final String sku = object.getString("productId");
+                        final String price = object.getString("price");
+
+                        LightView.instance.queueEvent(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.d("LIGHTNING", "got sku " + sku + " price " + price);
+                                registerProduct(sku, price);
+                            }
+                        });
+                    } catch (org.json.JSONException e) {
+
+                    }
+                }
+            }
         }
     }
 }
