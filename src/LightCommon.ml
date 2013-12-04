@@ -44,6 +44,9 @@ value clamp_rotation nr =
 type remoteNotification = [= `RNBadge | `RNSound | `RNAlert ];
 
 exception File_not_exists of string;
+exception Extra_resources of string;
+
+Callback.register_exception "extra_resources" (Extra_resources "");
 
 type qColor = 
   {
@@ -163,6 +166,7 @@ ELSPLATFORM(android)  *)
 IFPLATFORM(android ios)
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
+external regExtraResources: ~fname:string -> unit -> unit = "ml_reg_extra_resources";
 
 value request_remote_notifications rntypes success error = ();
 

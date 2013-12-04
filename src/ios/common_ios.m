@@ -47,8 +47,23 @@ int getResourceFd(const char *path, resource *res) {
 
 			fd = open(assets_path, O_RDONLY);
 		} else {
-			PRINT_DEBUG("invalid location for path %s", path);
-			return 0;
+			char* extra_res_fname = get_extra_res_fname(os_pair->location);
+
+			if (!extra_res_fname) {
+				PRINT_DEBUG("unknown location value in offset-size pair for path %s", path);
+				return 0;
+			}
+
+			if (!extra_res_fname) {
+				PRINT_DEBUG("path '%s' is NULL", #PATH);
+				return 0;
+			}
+
+			fd = open(extra_res_fname, O_RDONLY);
+			if (fd < 0) {
+				PRINT_DEBUG("failed to open path '%s' due to '%s'", PATH, strerror(errno));
+				return 0;
+			}
 		}
 
 		lseek(fd, os_pair->offset, SEEK_SET);

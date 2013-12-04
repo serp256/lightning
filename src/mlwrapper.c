@@ -8,7 +8,7 @@
 #include "mlwrapper.h"
 #include "texture_pvr.h"
 #include <string.h>
-
+#include "mobile_res.h"
 
 #define NIL Val_int(0)
 
@@ -196,3 +196,18 @@ void set_referrer_ml(value type,value id) {
 	caml_callback2(*ml_set_referrer,type,id);
 }
 
+value ml_reg_extra_resources(value vfname) {
+	CAMLparam1(vfname);
+
+	char* cfname = String_val(vfname);
+	FILE* in = fopen(cfname, "r");
+	int force_location = register_extra_res_fname(cfname);
+	char* err = read_res_index(in, 0, force_location);
+	fclose(in);
+
+	if (err != NULL) {
+		caml_raise_with_string(*caml_named_value("extra_resources"), err);
+	}
+
+	CAMLreturn(Val_unit);
+}

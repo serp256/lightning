@@ -104,7 +104,7 @@
 		}
 
 		FILE* res_indx = fopen(index_bpath, "r");
-		read_res_index(res_indx, 0);
+		read_res_index(res_indx, 0, -1);
 		fclose(res_indx);
 
 		mStage = mlstage_create(mWidth,mHeight);
