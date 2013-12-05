@@ -203,7 +203,7 @@ value ml_reg_extra_resources(value vfname) {
 	FILE* in = fopen(cfname, "r");
 	int force_location = register_extra_res_fname(cfname);
 	char* err = read_res_index(in, 0, force_location);
-	fclose(in);
+	if (in) fclose(in);
 
 	if (err != NULL) {
 		caml_raise_with_string(*caml_named_value("extra_resources"), err);

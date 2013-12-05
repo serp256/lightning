@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import android.app.Activity;
 import android.view.MotionEvent;
-import android.opengl.GLSurfaceView;
+import ru.redspell.lightning.opengl.GLSurfaceView;
 import ru.redspell.lightning.utils.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
@@ -418,6 +418,8 @@ public class LightView extends GLSurfaceView {
 			mlUncaughtException(e.getMessage(), new String[]{});
 		}
 
+		setPreserveEGLContextOnPause(true);
+
 		// FIXME: move it to payments init
 		// bserv = new BillingService();
 		// bserv.setContext(activity);
@@ -504,7 +506,7 @@ public class LightView extends GLSurfaceView {
 				renderer.handleOnPause();
 			}
 		});
-		//super.onPause();
+		super.onPause();
 	}
 
 	public void onResume() {
@@ -515,7 +517,7 @@ public class LightView extends GLSurfaceView {
 				renderer.handleOnResume();
 			}
 		});
-		//super.onResume();
+		super.onResume();
 	}
 
 	public void onDestroy() {

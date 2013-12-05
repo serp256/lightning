@@ -1,4 +1,6 @@
 #include "mobile_res.h"
+#include <errno.h>
+#include <string.h>
 
 #ifdef ANDROID
 #include "android/mlwrapper_android.h"	
@@ -33,9 +35,9 @@ char* read_res_index(FILE* index, int offset_inc, int force_location) {
 	PRINT_DEBUG("read_res_index CALL");
 
 	if (!res_indx) res_indx = kh_init_res_index();
-	if (!index) READ_RES_FAIL("cannot read index file");
+	if (!index) READ_RES_FAIL("cannot read index file %s", strerror(errno));
 
-	int32_t index_entries_num;		
+	int32_t index_entries_num;
 	if (1 != fread(&index_entries_num, sizeof(int32_t), 1, index)) READ_RES_FAIL("cannot read resources index entries number");
 
 	int i = 0;
