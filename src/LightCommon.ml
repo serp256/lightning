@@ -285,6 +285,8 @@ value read_json ?with_suffix path =
   let ch = open_resource ?with_suffix path in                                                                                                                
   Ojson.from_channel ch;
 
+value regExtraResources ~fname () = ();
+
 ENDPLATFORM;
 
 
