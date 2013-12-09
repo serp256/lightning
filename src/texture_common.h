@@ -93,7 +93,8 @@ typedef enum
 	LTextureFormatETC1,	
 	LTextureFormatPallete,
 	LTextureFormatETC1WithAlpha,
-	LTextureLuminance
+	LTextureLuminance,
+	LTextureLuminanceAlpha
 } LTextureFormat;
 
 typedef struct {
@@ -119,8 +120,8 @@ textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int
 
 int loadPlxPtr(gzFile fptr,textureInfo *tInfo);
 int loadPlxFile(const char *path,textureInfo *tInfo);
-int loadAlphaPtr(gzFile fptr,textureInfo *tInfo);
-int loadAlphaFile(const char *path,textureInfo *tInfo);
+int loadAlphaPtr(gzFile fptr,textureInfo *tInfo, int with_lum);
+int loadAlphaFile(const char *path,textureInfo *tInfo, int with_lum);
 
 value createGLTexture(value oldTextureID, textureInfo *tInfo,value filter);
 

@@ -311,18 +311,22 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 	return loadPlxPtr(fptr,tInfo);
 };
 
-int loadAlphaPtr(gzFile fptr,textureInfo *tInfo) {
+int loadAlphaPtr(gzFile fptr,textureInfo *tInfo, int with_lum) {
+	PRINT_DEBUG("loadAlphaPtr %d", fptr);
 	if (!fptr) { return 2;};
 	unsigned int size;
 	gzread(fptr,&size,sizeof(size));
 	unsigned short width = size & 0xFFFF;
 	unsigned short height = size >> 16;
 	size_t dataSize = width * height;
+	if (with_lum) dataSize *= 2;
 	unsigned char *data = malloc(dataSize);
 	if (gzread(fptr,data,dataSize) < dataSize) {free(data);gzclose(fptr);return 1;};
 	gzclose(fptr);
 
-	tInfo->format = LTextureFormatAlpha;
+	PRINT_DEBUG("with_lum %d", with_lum);
+
+	tInfo->format = with_lum ? LTextureLuminanceAlpha : LTextureFormatAlpha;
 	tInfo->width = tInfo->realWidth = width;
 	tInfo->height = tInfo->realHeight = height;
 	tInfo->numMipmaps = 0;
@@ -335,10 +339,10 @@ int loadAlphaPtr(gzFile fptr,textureInfo *tInfo) {
 	return 0;
 }
 
-int loadAlphaFile(const char *path,textureInfo *tInfo) {
+int loadAlphaFile(const char *path,textureInfo *tInfo, int with_lum) {
 	PRINT_DEBUG("LOAD ALPHA: '%s'",path);
 	gzFile fptr = gzopen(path,"rb");
-	return loadAlphaPtr(fptr,tInfo);
+	return loadAlphaPtr(fptr,tInfo, with_lum);
 }
 
 #define MAX(p1,p2) p1 > p2 ? p1 : p2

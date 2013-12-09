@@ -55,53 +55,59 @@ int load_image_info(char *fname,char* suffix, int use_pvr, textureInfo *tInfo) {
 				int r = loadPlxFile(path,tInfo);
 				free(path);
 				return r;
-			} else if (!strcasecmp(ext,".alpha")) {
-				// загрузить альфу 
-				char *path = malloc(rplen + flen + slen + 1);
-				memcpy(path,resourcePath,rplen);
-				if (slen != 0) {
-					int bflen = flen - strlen(ext);
-					memcpy(path + rplen,fname,bflen);
-					memcpy(path + rplen + bflen,suffix,slen);
-					strcpy(path + rplen + bflen + slen,ext);
-					struct stat s;
-					if (!stat(path,&s)) {
-						int r = loadAlphaFile(path,tInfo);
-						//strlcpy(tInfo->path,path,255);
-						free(path);
-						return r;
-					}
-				}
-				strcpy(path + rplen,fname);
-				int r = loadAlphaFile(path,tInfo);
-				free(path);
-				return r;
 			} else {
-				// проверить этот ебанный plx 
-				int bflen = flen - strlen(ext);
-				char *plxpath = malloc(rplen + bflen + slen + 5);
-				memcpy(plxpath,resourcePath,rplen);
-				memcpy(plxpath + rplen,fname,bflen);
-				if (slen != 0) {
-					memcpy(plxpath + rplen + bflen,suffix,slen);
-					strcpy(plxpath + rplen + bflen + slen,".plx");
+				int with_lum = !strcasecmp(ext,".lumal");
+
+				PRINT_DEBUG("tex pc %d", with_lum);
+
+				if (!strcasecmp(ext,".alpha") || with_lum) {
+					// загрузить альфу 
+					char *path = malloc(rplen + flen + slen + 1);
+					memcpy(path,resourcePath,rplen);
+					if (slen != 0) {
+						int bflen = flen - strlen(ext);
+						memcpy(path + rplen,fname,bflen);
+						memcpy(path + rplen + bflen,suffix,slen);
+						strcpy(path + rplen + bflen + slen,ext);
+						struct stat s;
+						if (!stat(path,&s)) {
+							int r = loadAlphaFile(path, tInfo, with_lum);
+							//strlcpy(tInfo->path,path,255);
+							free(path);
+							return r;
+						}
+					}
+					strcpy(path + rplen,fname);
+					int r = loadAlphaFile(path, tInfo, with_lum);
+					free(path);
+					return r;
+				} else {
+					// проверить этот ебанный plx 
+					int bflen = flen - strlen(ext);
+					char *plxpath = malloc(rplen + bflen + slen + 5);
+					memcpy(plxpath,resourcePath,rplen);
+					memcpy(plxpath + rplen,fname,bflen);
+					if (slen != 0) {
+						memcpy(plxpath + rplen + bflen,suffix,slen);
+						strcpy(plxpath + rplen + bflen + slen,".plx");
+						struct stat s;
+						if (!stat(plxpath,&s)) {
+							int r = loadPlxFile(plxpath,tInfo);
+							//strlcpy(tInfo->path,plxpath,255);
+							free(plxpath);
+							return r;
+						}
+					}
+					strcpy(plxpath + rplen + bflen,".plx");
 					struct stat s;
-					if (!stat(plxpath,&s)) {
+					if (!stat(plxpath,&s)) {// есть plx файл
 						int r = loadPlxFile(plxpath,tInfo);
 						//strlcpy(tInfo->path,plxpath,255);
 						free(plxpath);
 						return r;
-					}
-				}
-				strcpy(plxpath + rplen + bflen,".plx");
-				struct stat s;
-				if (!stat(plxpath,&s)) {// есть plx файл
-					int r = loadPlxFile(plxpath,tInfo);
-					//strlcpy(tInfo->path,plxpath,255);
+					};
 					free(plxpath);
-					return r;
-				};
-				free(plxpath);
+				}				
 			}
 		};
 		path = malloc(rplen + flen + slen + 1);

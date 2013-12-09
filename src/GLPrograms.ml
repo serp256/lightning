@@ -182,10 +182,31 @@ module ImageEtcWithAlpha = struct (*{{{*)
   end;
 end; (*}}}*)
 
+module StrokedTlfAtlas =
+  struct
+    module Normal =
+      struct
+        value id = gen_id ();
+        value create () = 
+          let prg = 
+            load id ~vertex:"Image.vsh" ~fragment:"StrokenAtlas.fsh"
+              ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+              ~uniforms:[| ("u_texture",(UInt 0)) |]
+          in
+          (prg,None);        
+      end;
+
+    module ColorMatrix = struct
+      value id  = gen_id();
+      value create matrix = assert False;
+    end;
+  end;
+
 
 value select_by_texture = fun
   [ Texture.Simple _ -> (module Image:Programs)
   | Texture.Alpha -> (module ImageAlpha:Programs)
   | Texture.Pallete _ -> (module ImagePallete:Programs)
   | Texture.EtcWithAlpha _ -> (module ImageEtcWithAlpha:Programs)
+  | Texture.LuminanceAlpha -> (module StrokedTlfAtlas:Programs)
   ];

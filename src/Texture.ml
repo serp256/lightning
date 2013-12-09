@@ -40,6 +40,7 @@ type textureFormat =
   | TextureFormatPallete of int
   | TextureFormatETC1WithAlpha of textureInfo
   | TextureLuminance
+  | TextureLuminanceAlpha
   ]
 and textureInfo = 
   {
@@ -53,7 +54,7 @@ and textureInfo =
     textureID: textureID;
   };
 
-type kind = [ Simple of bool | Alpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
+type kind = [ Simple of bool | Alpha | LuminanceAlpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
 type renderInfo =
   {
     rtextureID: textureID;
@@ -293,6 +294,7 @@ class s textureInfo =
       let pallete = loadPallete palleteID in
         Pallete pallete
     | TextureFormatAlpha -> Alpha
+    | TextureLuminanceAlpha -> LuminanceAlpha
     | TextureFormatETC1WithAlpha alphaTexInfo -> let () = debug "TextureFormatETC1WithAlpha of ..." in EtcWithAlpha alphaTexInfo
     | _ -> Simple textureInfo.pma
     ]

@@ -270,7 +270,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         super#boundsChanged();
       );        
         
-
       method private render' ?alpha:(alpha') ~transform rect = 
       (
         if DynArray.length children > 0
@@ -294,13 +293,22 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           else ();
         *)
       );
-
     end;
 
   class c texture = 
     object(self)
       inherit _c texture;
       method ccast: [= `Atlas of c ] = `Atlas (self :> c);
+    end;
+
+  class tlf texture =
+    object(self)
+      inherit c texture;
+
+      value mutable strokeColor = None;
+      method strokeColor = strokeColor;
+      method setStrokeColor (c:int) = strokeColor := Some c;
+      method resetStrokeColor () = strokeColor := None;
     end;
 
 value create = new c;

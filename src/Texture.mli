@@ -24,7 +24,7 @@ exception Cant_load_texture of string;
 type filter = [ FilterNearest | FilterLinear ];
 value setDefaultFilter: filter -> unit;
 
-type kind = [ Simple of bool | Alpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
+type kind = [ Simple of bool | Alpha | LuminanceAlpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
 
 value scale: ref float;
 

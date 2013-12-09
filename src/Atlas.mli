@@ -33,4 +33,13 @@ class c: [ Texture.c ] ->
     method ccast: [= `Atlas of c ];
   end;
 
+class tlf: [ Texture.c ] ->
+  object
+    inherit c;
+
+    method strokeColor: option int;
+    method setStrokeColor: int -> unit;
+    method resetStrokeColor: unit -> unit;
+  end;  
+
 value create: Texture.c -> c;
