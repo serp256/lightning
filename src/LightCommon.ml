@@ -166,7 +166,7 @@ ELSPLATFORM(android)  *)
 IFPLATFORM(android ios)
 
 external bundle_fd_of_resource: string -> option (Unix.file_descr * int64) = "caml_getResource";
-external regExtraResources: ~fname:string -> unit -> unit = "ml_reg_extra_resources";
+external regExtraResources: ~fname:string -> unit = "ml_reg_extra_resources";
 
 value request_remote_notifications rntypes success error = ();
 

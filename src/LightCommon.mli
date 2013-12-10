@@ -88,4 +88,4 @@ value glowMatrix: float -> int -> int -> Matrix.t;
 value glowFirstDrawMatrix: Matrix.t -> int -> int -> Matrix.t;
 value glowLastDrawMatrix: Matrix.t -> int -> int -> Matrix.t;
 
-value regExtraResources: ~fname:string -> unit -> unit;
+value regExtraResources: ~fname:string -> unit;
