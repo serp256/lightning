@@ -90,11 +90,11 @@ typedef enum
 	LTextureFormatATCRGB,
 	LTextureFormatATCRGBAE,
 	LTextureFormatATCRGBAI,
-	LTextureFormatETC1,	
-	LTextureFormatPallete,
-	LTextureFormatETC1WithAlpha,
+	LTextureFormatETC1,
 	LTextureLuminance,
-	LTextureLuminanceAlpha
+	LTextureLuminanceAlpha,	
+	LTextureFormatPallete,
+	LTextureFormatETC1WithAlpha
 } LTextureFormat;
 
 typedef struct {
@@ -131,8 +131,9 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo,value filter);
 
 #define ML_TEXTURE_INFO(mlTex,textureID,tInfo) \
 	mlTex = caml_alloc_tuple(8);\
-	if ((tInfo->format & 0xFFFF) != LTextureFormatPallete) \
+	if ((tInfo->format & 0xFFFF) != LTextureFormatPallete) {\
 		Field(mlTex,0) = Val_int(tInfo->format);\
+	} \
 	else { Store_field(mlTex,0,caml_alloc(1,0)); Field(Field(mlTex,0),0) = Val_int(tInfo->format >> 16);} \
 	Field(mlTex,1) = Val_long((unsigned int)tInfo->realWidth);\
 	Field(mlTex,2) = Val_long(tInfo->width);\

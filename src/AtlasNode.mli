@@ -1,7 +1,7 @@
 
 type t;
 value create: 
-  Texture.c ->  Rectangle.t -> ?name:string -> ?pos:Point.t -> ?scaleX:float -> ?scaleY:float -> 
+  Texture.c ->  Rectangle.t -> ?transformPoint:Point.t -> ?name:string -> ?pos:Point.t -> ?scaleX:float -> ?scaleY:float -> 
     ?rotation:float -> ?flipX:bool -> ?flipY:bool -> ?color:LightCommon.color ->  ?alpha:float -> unit -> t;
 
 

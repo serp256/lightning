@@ -144,7 +144,10 @@ value register binpath =
       [ 0 -> res
       | _ ->
           let file = IO.read_string bininp in
-          loop (n - 1) [  Texture.load ~with_suffix:False (Filename.concat dirname file) :: res  ] 
+          let () = debug "texture load" in
+            (
+              loop (n - 1) [  Texture.load ~with_suffix:False (Filename.concat dirname file) :: res  ];
+            )
       ]
     in
     Array.of_list (List.rev (loop (IO.read_ui16 bininp) []))
@@ -154,10 +157,10 @@ value register binpath =
       let style = String.uncapitalize (IO.read_string bininp) in
       let kerning = IO.read_byte bininp in
       let pages = parse_pages () in
-      let rec parse_chars n res = 
+      let rec parse_chars n res =
         match n with
         [ 0 -> res 
-        | _ -> 
+        | _ ->
             let space = IO.read_double bininp in
             let size = IO.read_ui16 bininp in
             let lineHeight = IO.read_double bininp in
@@ -179,10 +182,15 @@ value register binpath =
                     let width = IO.read_ui16 bininp in
                     let height = IO.read_ui16 bininp in
                     let page = IO.read_ui16 bininp in
+                    let glyphx = IO.read_ui16 bininp in
+                    let glyphy = IO.read_ui16 bininp in
+                    let glyphx = 0 in
+                    let glyphy = 0 in
                      let bc = 
                        let region = Rectangle.create (float x) (float y) (float width) (float height) in
                        let tex = pages.(page) in
-                       let atlasNode = AtlasNode.create tex region () in
+                       let transformPoint = if glyphx = 0 && glyphy = 0 then None else Some (Point.create (float glyphy) (float glyphy)) in
+                       let atlasNode = AtlasNode.create ?transformPoint tex region () in
                        let s = tex#scale in
                        { charID; xOffset = (float xOffset) *. s; yOffset = (float yOffset) *. s; xAdvance = (float xAdvance) *. s; atlasNode }
                      in
@@ -203,6 +211,7 @@ value register binpath =
         ]
       in
       let sizes = parse_chars (IO.read_ui16 bininp) (try Hashtbl.find fonts (face,style) with [ Not_found -> MapInt.empty ]) in
+      let () = debug "register %s %s" face style in
       Hashtbl.replace fonts (face,style) sizes;
 
       close_in inp;
@@ -243,13 +252,16 @@ value registerXML xmlpath =
           [ [ space; size; lineHeight; ascender; descender ] ->
             let chars = Hashtbl.create 9 in
             let rec loop () = 
-              match XmlParser.parse_element "char" [ "id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance";"page" ] with
-              [ Some [ id;x;y;width;height;xOffset;yOffset;xAdvance;page] _ -> (* запихнуть *)
+              match XmlParser.parse_element "char" [ "id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance";"page";"glyphx";"glyphy" ] with
+              [ Some [ id;x;y;width;height;xOffset;yOffset;xAdvance;page;glyphx;glyphy] _ -> (* запихнуть *)
                 (
                   let charID = XmlParser.ints id in
                    let bc = 
                      let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
-                     let atlasNode = AtlasNode.create pages.(XmlParser.ints page) region  () in
+                     let glyphx = floats glyphx in
+                     let glyphy = floats glyphy in
+                     let transformPoint = if glyphx = 0. && glyphy = 0. then None else Some (Point.create glyphx glyphy) in
+                     let atlasNode = AtlasNode.create ?transformPoint pages.(XmlParser.ints page) region  () in
                      { charID; xOffset = (!Texture.scale *. floats (xOffset)); yOffset = (!Texture.scale *. floats (yOffset)); xAdvance = (!Texture.scale *. floats (xAdvance)); atlasNode }
                    in
                    Hashtbl.add chars charID bc;

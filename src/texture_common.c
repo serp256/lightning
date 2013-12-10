@@ -324,8 +324,6 @@ int loadAlphaPtr(gzFile fptr,textureInfo *tInfo, int with_lum) {
 	if (gzread(fptr,data,dataSize) < dataSize) {free(data);gzclose(fptr);return 1;};
 	gzclose(fptr);
 
-	PRINT_DEBUG("with_lum %d", with_lum);
-
 	tInfo->format = with_lum ? LTextureLuminanceAlpha : LTextureFormatAlpha;
 	tInfo->width = tInfo->realWidth = width;
 	tInfo->height = tInfo->realHeight = height;
@@ -358,6 +356,11 @@ typedef struct {
 static inline int textureParams(textureInfo *tInfo,texParams *p) {
     switch (tInfo->format & 0xFFFF)
     {
+    	case LTextureLuminanceAlpha:
+    		p->glTexFormat = GL_LUMINANCE_ALPHA;
+    		p->bitsPerPixel = 2;
+    		break;
+
     	case LTextureLuminance:
     		p->glTexFormat = GL_LUMINANCE;
     		break;
@@ -614,8 +617,8 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 
         for (level=0; level <= tInfo->numMipmaps; ++level)
         {                    
-			PRINT_DEBUG("LOAD DATA FOR LEVEL: %d",level);
             int size = levelWidth * levelHeight * params.bitsPerPixel;
+            PRINT_DEBUG("LOAD DATA FOR LEVEL: %d %d; levelWidth %d levelHeight %d",level, size, levelWidth, levelHeight);
             glTexImage2D(GL_TEXTURE_2D, level, params.glTexFormat, levelWidth, levelHeight, 0, params.glTexFormat, params.glTexType, levelData);
             levelData += size;
             levelWidth  /= 2; 

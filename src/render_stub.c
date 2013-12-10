@@ -758,7 +758,7 @@ void print_image(lgImage *img) {
 #define APPLY_TEXTURE_INFO_KIND(img,textureInfo) \
 	value kind = Field(textureInfo,4); \
 	if (Is_long(kind)) { \
-		if (Int_val(kind) == 0) { \
+		if (Int_val(kind) < 2) { \
 			img->pallete = 0;\
 			img->pma = 1; \
 		} else { \

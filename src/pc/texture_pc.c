@@ -58,8 +58,6 @@ int load_image_info(char *fname,char* suffix, int use_pvr, textureInfo *tInfo) {
 			} else {
 				int with_lum = !strcasecmp(ext,".lumal");
 
-				PRINT_DEBUG("tex pc %d", with_lum);
-
 				if (!strcasecmp(ext,".alpha") || with_lum) {
 					// загрузить альфу 
 					char *path = malloc(rplen + flen + slen + 1);
@@ -175,6 +173,7 @@ void ml_free_image_info(value tInfo) {
 */
 
 value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,value use_pvr) {
+	PRINT_DEBUG("ml_loadImage");
 	CAMLparam3(oldTextureID,opath,osuffix);
 	CAMLlocal1(mlTex);
 	textureInfo tInfo;
@@ -187,7 +186,9 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,val
 	value textureID = createGLTexture(oldTextureID,&tInfo,filter);
 	free(tInfo.imgData);
 	// free surface
+	PRINT_DEBUG("!!!!!!!%d %d", tInfo.format & 0xFFFF, LTextureFormatPallete);
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
+	PRINT_DEBUG("Field(mlTex,0) %d", Int_val(Field(mlTex,0)));
 	//SDL_FreeSurface(tInfo.surface);
 	CAMLreturn(mlTex);
 }

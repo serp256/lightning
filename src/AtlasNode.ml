@@ -17,9 +17,10 @@ type t =
     rotation: float;
     bounds: mutable Rectangle.t;
     name: option string;
+    transformPoint: option Point.t;
   };
 
-value create texture rect ?name ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(flipX=False) ?(flipY=False) ?(color=`NoColor)  ?(alpha=1.) () = 
+value create texture rect ?transformPoint ?name ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(flipX=False) ?(flipY=False) ?(color=`NoColor)  ?(alpha=1.) () = 
   let s = texture#scale in
   let tw = texture#width /. s
   and th = texture#height /. s in
@@ -58,7 +59,8 @@ value create texture rect ?name ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?ro
       pos; color; alpha; flipX; flipY; scaleX; scaleY; rotation=match rotation with [ None -> 0. | Some r -> LightCommon.clamp_rotation r];
       glpoints=None;
       bounds=Rectangle.empty;
-      clipping=(Obj.magic clipping)
+      clipping=(Obj.magic clipping);
+      transformPoint
     };
   );
 
@@ -127,11 +129,13 @@ value setScaleX scaleX t = {(t) with scaleX; glpoints = None; bounds=Rectangle.e
 value scaleY t = t.scaleY;
 value setScaleY scaleY t = {(t) with scaleY; glpoints = None; bounds=Rectangle.empty};
 
-value matrix t = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation ();
+value matrix t =
+  let translate = match t.transformPoint with [ Some p -> Point.subtractPoint t.pos p | _ -> t.pos ] in
+    Matrix.create ~translate ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation ();
 
 value calc_glpoints t = 
-  let m = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation () in
   let open Point in
+  let m = matrix t in
   let p0 = Matrix.transformPoint m {x = 0.; y = 0.} 
   and p1 = Matrix.transformPoint m {x = t.width; y = 0.} 
   and p2 = Matrix.transformPoint m {x = 0.; y = t.height}
