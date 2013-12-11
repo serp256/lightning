@@ -573,7 +573,7 @@ DEFINE CHAR_NEWLINE = 10;
   (*}}}*)
 
 (* width, height вытащить наверно в html тоже *)
-value create ?width ?height ?border ?dest (html:main) = 
+value create ?stroke ?width ?height ?border ?dest (html:main) = 
   let () = debug 
     let opt = fun [ Some f -> string_of_float f | None -> "NONE" ] in
     Debug.d "create %s:%s" (opt width) (opt height) 
@@ -921,7 +921,7 @@ value create ?width ?height ?border ?dest (html:main) =
   let ((width,height),lines) = process (no_zero width,no_zero height) [] html in
   let _container = ref (match dest with [ Some s -> Some (s :> Sprite.c) | None -> None  ]) in
   let container () = match !_container with [ Some c -> c | None -> let c = Sprite.create () in (_container.val := Some c; c) ] in
-  let atlases : Hashtbl.t Texture.c Atlas.c = Hashtbl.create 1 in
+  let atlases : Hashtbl.t Texture.c Atlas.tlf = Hashtbl.create 1 in
   (
     List.iter begin fun line ->
       for i = 0 to (DynArray.length line.lchars) - 1 do
@@ -939,8 +939,13 @@ value create ?width ?height ?border ?dest (html:main) =
             try
                Hashtbl.find atlases atex
             with [ Not_found -> 
-              let (atl : Atlas.c) = Atlas.create atex in
+              let (atl : Atlas.tlf) = Atlas.tlf atex in
               (
+                match stroke with
+                [ Some c -> atl#setStrokeColor c
+                | _ -> ()
+                ];
+
                 Hashtbl.add atlases atex atl;
                 atl
               )

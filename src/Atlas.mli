@@ -43,3 +43,4 @@ class tlf: [ Texture.c ] ->
   end;  
 
 value create: Texture.c -> c;
+value tlf: Texture.c -> tlf;

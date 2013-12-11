@@ -307,9 +307,21 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       value mutable strokeColor = None;
       method strokeColor = strokeColor;
-      method setStrokeColor (c:int) = strokeColor := Some c;
-      method resetStrokeColor () = strokeColor := None;
+
+      method setStrokeColor (c:int) =
+        let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+          (
+            shaderProgram := Prg.Stroke.create ~color:c ();
+            strokeColor := Some c;
+          );
+
+      method resetStrokeColor () =
+        let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+          (
+            shaderProgram := Prg.Normal.create ();
+            strokeColor := None;
+          );
     end;
 
 value create = new c;
-
+value tlf = new tlf;

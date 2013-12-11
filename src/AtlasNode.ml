@@ -130,8 +130,11 @@ value scaleY t = t.scaleY;
 value setScaleY scaleY t = {(t) with scaleY; glpoints = None; bounds=Rectangle.empty};
 
 value matrix t =
-  let translate = match t.transformPoint with [ Some p -> Point.subtractPoint t.pos p | _ -> t.pos ] in
-    Matrix.create ~translate ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation ();
+  let m = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation () in 
+    match t.transformPoint with
+    [ Some p -> Matrix.translate m (~-.(p.x *. t.scaleX), ~-.(p.y *. t.scaleY))
+    | _ -> m
+    ];
 
 value calc_glpoints t = 
   let open Point in

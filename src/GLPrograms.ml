@@ -11,6 +11,10 @@ module type Programs = sig
     value id: id;
     value create:  Render.filter -> Render.prg;
   end;
+  module Stroke: sig
+    value id: id;
+    value create: ~color:int -> unit -> Render.prg;
+  end;
 end;
 
 module Shape =
@@ -55,6 +59,12 @@ module Quad = struct
     value id = gen_id();
     value create () = assert False;
   end;
+
+  module Stroke = struct
+    value id = gen_id();
+    value create ~color () = assert False;
+  end;
+
 
 end;
 
@@ -102,6 +112,11 @@ module Image = struct (*{{{*)
       (prg,Some matrix);
   end;
 
+  module Stroke = struct
+    value id = gen_id();
+    value create ~color () = assert False;
+  end;  
+
 end;(*}}}*)
 
 module ImagePallete = struct (*{{{*)
@@ -127,6 +142,11 @@ module ImagePallete = struct (*{{{*)
       in
       (prg,Some matrix);
   end;
+
+  module Stroke = struct
+    value id = gen_id();
+    value create ~color () = assert False;
+  end;  
 
 end;(*}}}*)
 
@@ -155,6 +175,10 @@ module ImageAlpha = struct (*{{{*)
       (prg,Some matrix);
   end;
 
+  module Stroke = struct
+    value id = gen_id ();
+    value create ~color () = Normal.create ();
+  end;
 end;(*}}}*)
 
 module ImageEtcWithAlpha = struct (*{{{*)
@@ -180,26 +204,32 @@ module ImageEtcWithAlpha = struct (*{{{*)
       in
       (prg,Some matrix);
   end;
+
+  module Stroke = struct
+    value id = gen_id();
+    value create ~color () = assert False;
+  end;  
 end; (*}}}*)
 
-module StrokedTlfAtlas =
+module TlfAtlas =
   struct
-    module Normal =
-      struct
-        value id = gen_id ();
-        value create () = 
-          let prg = 
-            load id ~vertex:"Image.vsh" ~fragment:"StrokedTlf.fsh"
-              ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
-              ~uniforms:[| ("u_texture",(UInt 0)) |]
-          in
-          (prg,None);        
-      end;
+    module Normal = ImageAlpha.Normal;
 
     module ColorMatrix = struct
       value id  = gen_id();
       value create matrix = assert False;
     end;
+
+    module Stroke = struct
+      value id = gen_id();
+      value create ~color () =
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"StrokedTlf.fsh"
+            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+            ~uniforms:[| ("u_texture",(UInt 0)); ("u_strokeColor", (UNone)) |]
+        in
+          (prg, Some (Filters.stroke (color land 0x00ffffff lor 0xff000000)));
+    end;    
   end;
 
 
@@ -208,5 +238,5 @@ value select_by_texture = fun
   | Texture.Alpha -> (module ImageAlpha:Programs)
   | Texture.Pallete _ -> (module ImagePallete:Programs)
   | Texture.EtcWithAlpha _ -> (module ImageEtcWithAlpha:Programs)
-  | Texture.LuminanceAlpha -> (module StrokedTlfAtlas:Programs)
+  | Texture.LuminanceAlpha -> (module TlfAtlas:Programs)
   ];

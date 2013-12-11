@@ -1,6 +1,6 @@
 [
 	{
 		"path":"/",
-		"include": ["Shaders", "tree.*", "locale" ]
+		"include": ["Shaders", "*.fnt", "*.alpha", "*.lumal", "stroke" ]
 	}
 ]

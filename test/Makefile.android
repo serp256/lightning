@@ -9,9 +9,9 @@ include Makefile.in
 TARGET ?= example
 
 res:	
-	aresmkr -concat -i Resources -o android/assets/assets
-	#aresmkr -concat -i Resources -o android-expansion 
-	aresmkr -merge -o android/assets/index android/assets/assets
+	resmkr -concat -i Resources -o android/assets/assets
+	#resmkr -concat -i Resources -o android-expansion 
+	resmkr -merge -o android/assets/index android/assets/assets
 	rm android/assets/assets.index
 
 so: $(TARGET).so res
