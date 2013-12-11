@@ -132,7 +132,9 @@ value setScaleY scaleY t = {(t) with scaleY; glpoints = None; bounds=Rectangle.e
 value matrix t =
   let m = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation () in 
     match t.transformPoint with
-    [ Some p -> Matrix.translate m (~-.(p.x *. t.scaleX), ~-.(p.y *. t.scaleY))
+    [ Some p ->
+      let m' = Matrix.create ~translate:p () in
+        Matrix.concat m' m
     | _ -> m
     ];
 
