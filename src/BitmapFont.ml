@@ -182,16 +182,10 @@ value register binpath =
                     let width = IO.read_ui16 bininp in
                     let height = IO.read_ui16 bininp in
                     let page = IO.read_ui16 bininp in
-                    let glyphx = IO.read_i16 bininp in
-                    let glyphy = IO.read_i16 bininp in
-                    (* let () = debug "glyphx %d; glyphy %d" glyphx glyphy in *)
-                    (* let glyphx = 0 in *)
-                    (* let glyphy = 0 in *)
                      let bc = 
                        let region = Rectangle.create (float x) (float y) (float width) (float height) in
                        let tex = pages.(page) in
-                       let transformPoint = if glyphx = 0 && glyphy = 0 then None else Some (Point.create (float glyphy) (float glyphy)) in
-                       let atlasNode = AtlasNode.create ?transformPoint tex region () in
+                       let atlasNode = AtlasNode.create tex region () in
                        let s = tex#scale in
                        { charID; xOffset = (float xOffset) *. s; yOffset = (float yOffset) *. s; xAdvance = (float xAdvance) *. s; atlasNode }
                      in
@@ -253,16 +247,13 @@ value registerXML xmlpath =
           [ [ space; size; lineHeight; ascender; descender ] ->
             let chars = Hashtbl.create 9 in
             let rec loop () = 
-              match XmlParser.parse_element "char" [ "id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance";"page";"glyphx";"glyphy" ] with
-              [ Some [ id;x;y;width;height;xOffset;yOffset;xAdvance;page;glyphx;glyphy] _ -> (* запихнуть *)
+              match XmlParser.parse_element "char" [ "id";"x";"y";"width";"height";"xoffset";"yoffset";"xadvance";"page" ] with
+              [ Some [ id;x;y;width;height;xOffset;yOffset;xAdvance;page] _ -> (* запихнуть *)
                 (
                   let charID = XmlParser.ints id in
                    let bc = 
                      let region = Rectangle.create (floats x) (floats y) (floats width) (floats height) in
-                     let glyphx = floats glyphx in
-                     let glyphy = floats glyphy in
-                     let transformPoint = if glyphx = 0. && glyphy = 0. then None else Some (Point.create glyphx glyphy) in
-                     let atlasNode = AtlasNode.create ?transformPoint pages.(XmlParser.ints page) region  () in
+                     let atlasNode = AtlasNode.create pages.(XmlParser.ints page) region  () in
                      { charID; xOffset = (!Texture.scale *. floats (xOffset)); yOffset = (!Texture.scale *. floats (yOffset)); xAdvance = (!Texture.scale *. floats (xAdvance)); atlasNode }
                    in
                    Hashtbl.add chars charID bc;

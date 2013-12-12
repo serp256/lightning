@@ -17,10 +17,9 @@ type t =
     rotation: float;
     bounds: mutable Rectangle.t;
     name: option string;
-    transformPoint: option Point.t;
   };
 
-value create texture rect ?transformPoint ?name ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(flipX=False) ?(flipY=False) ?(color=`NoColor)  ?(alpha=1.) () = 
+value create texture rect ?name ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?rotation ?(flipX=False) ?(flipY=False) ?(color=`NoColor)  ?(alpha=1.) () = 
   let s = texture#scale in
   let tw = texture#width /. s
   and th = texture#height /. s in
@@ -60,7 +59,6 @@ value create texture rect ?transformPoint ?name ?(pos=Point.empty) ?(scaleX=1.) 
       glpoints=None;
       bounds=Rectangle.empty;
       clipping=(Obj.magic clipping);
-      transformPoint
     };
   );
 
@@ -129,14 +127,7 @@ value setScaleX scaleX t = {(t) with scaleX; glpoints = None; bounds=Rectangle.e
 value scaleY t = t.scaleY;
 value setScaleY scaleY t = {(t) with scaleY; glpoints = None; bounds=Rectangle.empty};
 
-value matrix t =
-  let m = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation () in 
-    match t.transformPoint with
-    [ Some p ->
-      let m' = Matrix.create ~translate:p () in
-        Matrix.concat m' m
-    | _ -> m
-    ];
+value matrix t = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation ();
 
 value calc_glpoints t = 
   let open Point in
