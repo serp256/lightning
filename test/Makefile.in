@@ -18,7 +18,6 @@ MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extl
 					 -I ../src/plugins/twitter \
 					 -I ../src/plugins/instagram \
 					 -I ../src/plugins/whatsapp \
-					 -I ../src/plugins/appsflyer
 
 CFLAGS += -DLDEBUG
 #MLFILES = panelbg.cmo testz.cmo
@@ -29,7 +28,6 @@ PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma  \
 					../src/plugins/instagram/instagram.cma \
 					../src/plugins/whatsapp/whatsapp.cma \
 					../src/plugins/tapjoy/tapjoy.cma \
-					../src/plugins/appsflyer/appsflyer.cma
 
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
@@ -61,7 +59,6 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	  -ccopt -L../src/plugins/twitter ../src/plugins/twitter/twitter.cmxa\
 	  -ccopt -L../src/plugins/instagram ../src/plugins/instagram/instagram.cmxa\
 	  -ccopt -L../src/plugins/whatsapp ../src/plugins/whatsapp/whatsapp.cmxa\
-	  -ccopt -L../src/plugins/appsflyer -ccopt -L../src/plugins/appsflyer/ios ../src/plugins/appsflyer/appsflyer.cmxa\
 	  -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa\
 	  -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
 		-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios"   -linkpkg

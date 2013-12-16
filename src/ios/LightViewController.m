@@ -453,6 +453,20 @@ static value *ml_url_complete = NULL;
 	return YES;
 }
 
+- (void)productsRequest:(SKProductsRequest *)request didReceiveResponse:(SKProductsResponse *)response
+{
+	static value* reg_callback = 0;
+	if (!reg_callback) reg_callback = caml_named_value("register_product");
+
+	for (SKProduct* prod in response.products) {
+		[prod retain];
+		NSLog(@"got product info for %@", prod.productIdentifier);
+		caml_callback2(*reg_callback, caml_copy_string([prod.productIdentifier UTF8String]), (value)prod);
+    }
+
+    [request release];
+}
+
 - (void)hideKeyboard
 {
 	//NSLog(@"hideKeyboard");

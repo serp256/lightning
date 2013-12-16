@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import android.app.Activity;
 import android.view.MotionEvent;
-import android.opengl.GLSurfaceView;
+import ru.redspell.lightning.opengl.GLSurfaceView;
 import ru.redspell.lightning.utils.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
@@ -418,6 +418,8 @@ public class LightView extends GLSurfaceView {
 			mlUncaughtException(e.getMessage(), new String[]{});
 		}
 
+		setPreserveEGLContextOnPause(true);
+
 		// FIXME: move it to payments init
 		// bserv = new BillingService();
 		// bserv.setContext(activity);
@@ -504,7 +506,7 @@ public class LightView extends GLSurfaceView {
 				renderer.handleOnPause();
 			}
 		});
-		//super.onPause();
+		super.onPause();
 	}
 
 	public void onResume() {
@@ -515,7 +517,7 @@ public class LightView extends GLSurfaceView {
 				renderer.handleOnResume();
 			}
 		});
-		//super.onResume();
+		super.onResume();
 	}
 
 	public void onDestroy() {
@@ -1131,18 +1133,18 @@ public class LightView extends GLSurfaceView {
 
 	private ILightPayments payments;
 
-	public void paymentsInit(boolean googleMarket, String key) {
+	public void paymentsInit(boolean googleMarket, String key, String[] skus) {
 		if (googleMarket) {
 			payments = new LightGooglePayments(key);
 		} else {
 			payments = new LightAmazonPayments(LightActivity.instance);
 		}
 
-		payments.init();
+		payments.init(skus);
 	}
 
 	public void paymentsInit(boolean googleMarket) {
-		paymentsInit(googleMarket, null);	
+		paymentsInit(googleMarket, null, new String[] {});	
 	}
 
 	public void paymentsPurchase(String sku) throws Error {

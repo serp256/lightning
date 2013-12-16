@@ -4,7 +4,7 @@ import ru.redspell.lightning.utils.Log;
 import android.os.Handler;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-import android.opengl.GLSurfaceView;
+import ru.redspell.lightning.opengl.GLSurfaceView;
 //import ru.redspell.lightning.GLSurfaceView;
 import android.os.Process;
 
@@ -62,6 +62,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	}
     
 	public void onDrawFrame(GL10 gl) {
+		Log.d("LIGHTNING", "onDrawFrame");
     	
 		long now = System.nanoTime();
 		long interval = now - last;

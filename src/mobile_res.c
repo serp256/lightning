@@ -1,4 +1,6 @@
 #include "mobile_res.h"
+#include <errno.h>
+#include <string.h>
 
 #ifdef ANDROID
 #include "android/mlwrapper_android.h"	
@@ -8,7 +10,7 @@
 #endif
 
 KHASH_MAP_INIT_STR(res_index, offset_size_pair_t*);
-static kh_res_index_t* res_indx;
+static kh_res_index_t* res_indx = NULL;
 
 #define READ_RES_FAIL(...) {			\
 	char* err_mes = (char*)malloc(255);	\
@@ -16,7 +18,7 @@ static kh_res_index_t* res_indx;
 	return err_mes;						\
 }										\
 
-char* get_local_path(char* locale, char* path) {
+char* get_locale_path(char* locale, char* path) {
 	int locale_len = strlen(locale);
 	int path_len = strlen(path);
 	char* retval = (char*)malloc(9 + locale_len + path_len); // 8 = 6('locale') + 1 ('/') + 1('/' after locale identifier) + 1 ('\0')
@@ -29,17 +31,20 @@ char* get_local_path(char* locale, char* path) {
 	return retval;
 }
 
-char* read_res_index(FILE* index, int offset_inc) {
-	res_indx = kh_init_res_index();
+char* read_res_index(FILE* index, int offset_inc, int force_location) {
+	PRINT_DEBUG("read_res_index CALL");
 
-	if (!index) READ_RES_FAIL("cannot read index file");
+	if (!res_indx) res_indx = kh_init_res_index();
+	if (!index) READ_RES_FAIL("cannot read index file %s", strerror(errno));
 
-	int32_t index_entries_num;		
+	int32_t index_entries_num;
 	if (1 != fread(&index_entries_num, sizeof(int32_t), 1, index)) READ_RES_FAIL("cannot read resources index entries number");
 
 	int i = 0;
 	khiter_t k;
 	offset_size_pair_t* pair;
+
+	PRINT_DEBUG("entries num %d", index_entries_num);
 
 	while (i++ < index_entries_num) {
 		int8_t fname_len;
@@ -62,9 +67,15 @@ char* read_res_index(FILE* index, int offset_inc) {
 		pair = (offset_size_pair_t*)malloc(sizeof(offset_size_pair_t));
 		pair->offset = offset + (location == 0 ? offset_inc : 0);
 		pair->size = size;
-		pair->location = location;
+		pair->location = force_location < 0 ? location : force_location;
 
 		k = kh_put(res_index, res_indx, fname, &ret);
+
+		// ret == 0 means that some value is already binded to key; to prevent memleaks need to free previous value
+		if (ret == 0) {
+			free(kh_val(res_indx, k));			
+		}
+
 		kh_val(res_indx, k) = pair;
 	}
 
@@ -87,7 +98,7 @@ int get_offset_size_pair(const char* path, offset_size_pair_t** pair) {
 #endif
 
 	khiter_t k;
-	char* local_path = get_local_path(locale, path);
+	char* local_path = get_locale_path(locale, path);
 
 	do {
 		PRINT_DEBUG("trying localized path %s", local_path);
@@ -108,4 +119,22 @@ int get_offset_size_pair(const char* path, offset_size_pair_t** pair) {
 	free(local_path);
 
 	return 0;
+}
+
+#define EXTRA_RES_BASE_ID 50
+#define EXTRA_RES_MAX_NUM 150
+
+static int extra_res_id = EXTRA_RES_BASE_ID;
+static char* extra_res_fnames[EXTRA_RES_MAX_NUM];
+
+int register_extra_res_fname(char* fname) {
+	PRINT_DEBUG ("register_extra_res %s %d", fname, extra_res_id - EXTRA_RES_BASE_ID);
+	char *name = malloc(strlen(fname) + 1);
+	strcpy(name,fname);
+	extra_res_fnames[extra_res_id - EXTRA_RES_BASE_ID] = name;
+	return extra_res_id++;
+}
+
+char* get_extra_res_fname(int id) {
+	return (id - EXTRA_RES_BASE_ID < EXTRA_RES_MAX_NUM ? extra_res_fnames[id - EXTRA_RES_BASE_ID] : NULL);
 }
