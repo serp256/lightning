@@ -34,6 +34,7 @@ PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma  \
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
 	../src/plugins/facebook/facebook.cma \
+	../src/plugins/remote-notifications/RemoteNotifications.cmo \
 	-I ../src ../src/lightning.cma  $(OAUTH) $(SOCIAL) $(PLUGINS) $(MLFILES) $(TARGET).cmo \
 	-package bigarray,unix,extlib,xmlm,ojson,redspell.debug -linkpkg
 

@@ -174,17 +174,18 @@ uint8_t bin_need_repair(bin_t* bin) {
 	return(bin->reuse_rects_num > 15);
 }
 
-void bin_find_pos(bin_t* bin, uint16_t width, uint16_t height, uint8_t* found, pnt_t* pnt) {
+uint8_t bin_find_pos(bin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
 	rlist_t* hole = bin->holes;
 
+	uint8_t found = 0;
 	while (hole) {
 		rect_t* rect = hole->data;
 
 		if (rect->width >= width && rect->height >= height) {
-			if (!(*found)) {
+			if (!found) { 
 				pnt->x = rect->left_bottom.x;
 				pnt->y = rect->left_bottom.y;
-				*found = 1;
+				found = 1;
 			} else {
 				if (rect->left_bottom.y < pnt->y || (rect->left_bottom.y == pnt->y && rect->left_bottom.x < pnt->x)) {
 					pnt->x = rect->left_bottom.x;
@@ -194,7 +195,9 @@ void bin_find_pos(bin_t* bin, uint16_t width, uint16_t height, uint8_t* found, p
 		}
 
 		hole = hole->next;
-	}
+	};
+
+	return found;
 }
 
 void bin_add_rect_at(bin_t* bin, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
@@ -241,7 +244,7 @@ void bin_add_rect_at(bin_t* bin, uint16_t x, uint16_t y, uint16_t width, uint16_
 	rlist_unshift(&bin->rects, rect);
 }
 
-void bin_reuse_rect(bin_t* bin, uint16_t width, uint16_t height, uint8_t* reused, pnt_t* pnt) {
+uint8_t bin_reuse_rect(bin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
 	rlist_t* rect = bin->reuse_rects;
 
 	while (rect) {
@@ -253,31 +256,26 @@ void bin_reuse_rect(bin_t* bin, uint16_t width, uint16_t height, uint8_t* reused
 			rlist_remove(&bin->reuse_rects, rect, 0);
 			bin->reuse_rects_num--;
 
-			*reused = 1;
 			pnt->x = rect->data->left_bottom.x;
 			pnt->y = rect->data->left_bottom.y;
 
-			return;
+			return 1;
 		}
 
 		rect = rect->next;
 	}
 
-	*reused = 0;
+	return 0;
 }
 
-void bin_add_rect(bin_t* bin, uint16_t width, uint16_t height, uint8_t* added, pnt_t* pnt) {
-	bin_reuse_rect(bin, width, height, added, pnt);
+uint8_t bin_add_rect(bin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
+	//if (bin_reuse_rect(bin, width, height, pnt)) return 1;
 
-	if (*added) {
-		return;
-	}
+	uint8_t finded = bin_find_pos(bin, width, height, added, pnt);
 
-	bin_find_pos(bin, width, height, added, pnt);
+	if (finded) bin_add_rect_at(bin, pnt->x, pnt->y, width, height);
+	return finded
 
-	if (*added) {
-		bin_add_rect_at(bin, pnt->x, pnt->y, width, height);
-	}
 }
 
 void bin_repair(bin_t* bin) {

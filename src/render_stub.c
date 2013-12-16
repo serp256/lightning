@@ -712,7 +712,6 @@ struct custom_operations image_ops = {
 
 
 static inline void set_image_uv(lgTexQuad *tq, value clipping) {
-	PRINT_DEBUG("clipping %d", clipping);
 
 	if (clipping != 1) {
 		value c = Field(clipping,0);
@@ -1156,7 +1155,6 @@ static int atlas_quads_len = 0;
 
 // assume that quads it's dynarray
 value ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {
-	PRINT_DEBUG("RENDER ATLAS");
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
@@ -1338,6 +1336,9 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 
 			q->tr.v = (vertex2F){RENDER_SUBPIXEL(Double_field(points,6)),RENDER_SUBPIXEL(Double_field(points,7))};
 			q->tr.tex = (tex2F){q->br.tex.u,q->tl.tex.v};
+
+			PRINT_DEBUG("atlas node verts: [%f:%f] [%f:%f] [%f:%f] [%f:%f]",q->bl.v.x,q->bl.v.y,q->br.v.x,q->br.v.y,q->tl.v.x,q->tl.v.y,q->tr.v.x,q->tr.v.y);
+			PRINT_DEBUG("atlas node uv: [%f:%f] [%f:%f] [%f:%f] [%f:%f]",q->bl.tex.u,q->bl.tex.v,q->br.tex.u,q->br.tex.v,q->tl.tex.u,q->tl.tex.v,q->tr.tex.u,q->tr.tex.v);
 
 		};
 

@@ -16,9 +16,6 @@ static int fbs_cnt = 0;
 static GLuint *fbfs = NULL;
 
 
-//static viewport 
-//static GLuint currentFramebuffer = 0;
-
 static GLuint getFbTexSize() {
     static GLint size = 0;
     if (!size) {
@@ -159,7 +156,6 @@ struct custom_operations rendertextureID_ops = {
 
 #define MAX_RENDER_TEXTURES 100
 
-
 value caml_gc_major(value v);
 
 #define Store_rendertextureID(mltex,texID,dataLen) \
@@ -211,7 +207,6 @@ void get_framebuffer_state(framebuffer_state *s) {
 }
 
 static void inline renderbuffer_activate(renderbuffer_t *rb) {
-	glViewport(rb->vp.x,rb->vp.y,rb->vp.w,rb->vp.h);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLPushMatrix();
 	kmGLLoadIdentity();
