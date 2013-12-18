@@ -50,6 +50,15 @@ import com.google.android.gms.common.Scopes;*/
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
+	public class MarketType {
+		public static final String GOOGLE = "google";
+		public static final String AMAZON = "amazon";
+	}
+
+	public String marketType() {
+		return MarketType.GOOGLE;
+	}
+
 	// private static ArrayList<IUiLifecycleHelper> uiLfcclHlprs = new ArrayList();
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
 
@@ -117,8 +126,9 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 			h.onCreate(savedInstanceState);
 		};
 
-		checkPlayServices();
-
+		if (marketType() == MarketType.GOOGLE) {
+			checkPlayServices();	
+		}
 	}
 
 	public boolean startExpansionDownloadService(String pubKey) {
