@@ -166,21 +166,10 @@ value ml_paymentsInit(value vskus, value marketType) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
+	PRINT_DEBUG("ML PAYMENTS INIT");
+
 	static jmethodID mid = 0;
 	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "paymentsInit", "(ZLjava/lang/String;[Ljava/lang/String;)V");
-
-	if (Is_long(marketType) && marketType == caml_hash_variant("Amazon")) {
-		(*env)->CallVoidMethod(env, jView, mid, JNI_FALSE, NULL);
-	} else if (Is_block(marketType) && Field(marketType, 0) == caml_hash_variant("Google")) {
-		jstring j_key;
-		value v_key = Field(marketType, 1);
-
-		if (v_key == Val_int(0)) {
-			j_key = NULL;
-		} else {
-			char* c_key = String_val(Field(v_key, 0));
-			j_key = (*env)->NewStringUTF(env, c_key);
-		}
 
 		int skus_num = 0;
 		char* cskus[255]; 
@@ -206,6 +195,21 @@ value ml_paymentsInit(value vskus, value marketType) {
 			jsku = (*env)->NewStringUTF(env, cskus[i]);
 			(*env)->SetObjectArrayElement(env, jskus, i, jsku);
 			(*env)->DeleteLocalRef(env, jsku);
+		}
+
+
+	if (Is_long(marketType) && marketType == caml_hash_variant("Amazon")) {
+		PRINT_DEBUG("INIT AMAZON");
+		(*env)->CallVoidMethod(env, jView, mid, JNI_FALSE, NULL, jskus);
+	} else if (Is_block(marketType) && Field(marketType, 0) == caml_hash_variant("Google")) {
+		jstring j_key;
+		value v_key = Field(marketType, 1);
+
+		if (v_key == Val_int(0)) {
+			j_key = NULL;
+		} else {
+			char* c_key = String_val(Field(v_key, 0));
+			j_key = (*env)->NewStringUTF(env, c_key);
 		}
 
 		(*env)->CallVoidMethod(env, jView, mid, JNI_TRUE, j_key, jskus);
@@ -260,6 +264,8 @@ value ml_restorePurchases() {
 	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "restorePurchases", "()V");
 
 	(*env)->CallVoidMethod(env, jView, mid);
+
+	PRINT_DEBUG("ml_restorePurchase done");
 
 	return Val_unit;
 }
