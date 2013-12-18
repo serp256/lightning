@@ -128,7 +128,10 @@ static int extra_res_id = EXTRA_RES_BASE_ID;
 static char* extra_res_fnames[EXTRA_RES_MAX_NUM];
 
 int register_extra_res_fname(char* fname) {
-	extra_res_fnames[extra_res_id - EXTRA_RES_BASE_ID] = fname;
+	PRINT_DEBUG ("register_extra_res %s %d", fname, extra_res_id - EXTRA_RES_BASE_ID);
+	char *name = malloc(strlen(fname) + 1);
+	strcpy(name,fname);
+	extra_res_fnames[extra_res_id - EXTRA_RES_BASE_ID] = name;
 	return extra_res_id++;
 }
 

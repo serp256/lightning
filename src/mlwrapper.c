@@ -171,7 +171,7 @@ void ml_memoryWarning() {
 
 value caml_getResource(value mlpath,value suffix) {
 	PRINT_DEBUG("caml_getResource call");
-
+	PRINT_DEBUG("mlpath: %s suffix: %s", mlpath, suffix);
 	CAMLparam1(mlpath);
 	CAMLlocal2(res,mlfd);
 	resource r;
