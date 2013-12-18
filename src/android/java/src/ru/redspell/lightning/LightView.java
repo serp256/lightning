@@ -1068,6 +1068,24 @@ public class LightView extends GLSurfaceView {
 		public native void run();
 	}
 
+	private static class CurlDownloaderProgressCallbackRunnable implements Runnable {
+		private int cb;
+		private double progress;
+		private double total;
+
+		public CurlDownloaderProgressCallbackRunnable(int cb, double progress, double total) {
+			this.cb = cb;
+			this.progress = progress;
+			this.total = total;
+		}
+
+		public native void run(int cb, double progress, double total);
+
+		public void run() {
+			run(cb, progress, total);
+		}
+	}
+
 	public void curlDownloaderSuccess(int req) {
 		Log.d("LIGHTNING", "curlDownloaderSuccess");
 		queueEvent(new CurlDownloaderCallbackRunnable(req));
@@ -1076,6 +1094,10 @@ public class LightView extends GLSurfaceView {
 	public void curlDownloaderError(int req, int errCode, int errMes) {
 		Log.d("LIGHTNING", "curlDownloaderError " + errCode + " " + errMes);
 		queueEvent(new CurlDownloaderErrorCallbackRunnable(req, errCode, errMes));
+	}
+
+	public void curlDownloadProgress(int cb, double progress, double total) {
+		queueEvent(new CurlDownloaderProgressCallbackRunnable(cb, progress, total));
 	}
 
 	////////////////////
