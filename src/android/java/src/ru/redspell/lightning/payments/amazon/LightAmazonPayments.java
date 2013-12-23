@@ -78,7 +78,7 @@ public class LightAmazonPayments extends BasePurchasingObserver implements ILigh
 
             while (iterator.hasNext()) {
                 Receipt receipt = iterator.next();
-                LightPaymentsCamlCallbacks.success(receipt.getSku(), receipt.getPurchaseToken(), receipt.getPurchaseToken(), purchaseUpdatesResponse.getUserId(), false);
+                LightPaymentsCamlCallbacks.success(receipt.getSku(), receipt.getPurchaseToken(), receipt.getPurchaseToken(), purchaseUpdatesResponse.getUserId(), true);
             }
 
             if (purchaseUpdatesResponse.isMore()) {
