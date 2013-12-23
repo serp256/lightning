@@ -530,6 +530,7 @@ static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,c
 	};
 }
 
+
 ////////////////////////////////////
 /////// QUADS 
 //! a Point with a vertex point, and color 4B
@@ -1258,14 +1259,14 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 			} else {
         //fprintf(stderr,"render_atlas: acolor is QColor\n");
 				value qcolor = Field(acolor,1);
-				int c = Long_val(Field(qcolor,0));
-				tlc = COLOR_FROM_INT(c,1.);
-				c = Long_val(Field(qcolor,1));
-				trc = COLOR_FROM_INT(c,1.);
-				c = Long_val(Field(qcolor,2));
-				blc = COLOR_FROM_INT(c,1.);
-				c = Long_val(Field(qcolor,3));
-				brc = COLOR_FROM_INT(c,1.);
+				int c = Int32_val(Field(qcolor,0));
+				tlc = COLOR_FROM_INT32(c,1.);
+				c = Int32_val(Field(qcolor,1));
+				trc = COLOR_FROM_INT32(c,1.);
+				c = Int32_val(Field(qcolor,2));
+				blc = COLOR_FROM_INT32(c,1.);
+				c = Int32_val(Field(qcolor,3));
+				brc = COLOR_FROM_INT32(c,1.);
 			}
 		};
 
@@ -1308,20 +1309,25 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 						} else {
 							qclr = Field(clr,1);
 							
-							ic = Long_val(Field(qclr,0));
-							q->tl.c = COLOR_FROM_INT_PMA(ic,alpha);
+							ic = Int32_val(Field(qclr,0));
+
+							color4B* vclr = &q->tl.c;
+							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
 							MULTIPLY_COLORS(q->tl.c,tlc);
 
-							ic = Long_val(Field(qclr,1));
-							q->tr.c = COLOR_FROM_INT_PMA(ic,alpha);
+							vclr = &q->tr.c;
+							ic = Int32_val(Field(qclr,1));
+							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
 							MULTIPLY_COLORS(q->tr.c,tlc);
 
-							ic = Long_val(Field(qclr,2));
-							q->bl.c = COLOR_FROM_INT_PMA(ic,alpha);
+							vclr = &q->bl.c;
+							ic = Int32_val(Field(qclr,2));
+							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
 							MULTIPLY_COLORS(q->bl.c,tlc);
 
-							ic = Long_val(Field(qclr,3));
-							q->br.c = COLOR_FROM_INT_PMA(ic,alpha);
+							vclr = &q->br.c;
+							ic = Int32_val(Field(qclr,3));
+							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
 							MULTIPLY_COLORS(q->br.c,tlc);
 						}
 					} else {
@@ -1336,20 +1342,24 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
             } else {
               qclr = Field(clr,1);
 
-  						ic = Long_val(Field(qclr,0));
-  						q->tl.c = COLOR_FROM_INT_PMA(ic,alpha);
+              			color4B* vclr = &q->tl.c;
+  						ic = Int32_val(Field(qclr,0));
+  						COLOR_FROM_INT32_PMA(vclr, ic,alpha);
   						MULTIPLY_COLORS(q->tl.c,tlc);
 
-  						ic = Long_val(Field(qclr,1));
-  						q->tr.c = COLOR_FROM_INT_PMA(ic,alpha);
+  						vclr = &q->tr.c;
+  						ic = Int32_val(Field(qclr,1));
+  						COLOR_FROM_INT32_PMA(vclr, ic,alpha);
   						MULTIPLY_COLORS(q->tr.c,trc);
 
-  						ic = Long_val(Field(qclr,2));
-  						q->bl.c = COLOR_FROM_INT_PMA(ic,alpha);
+  						vclr = &q->bl.c;
+  						ic = Int32_val(Field(qclr,2));
+  						COLOR_FROM_INT32_PMA(vclr, ic,alpha);
   						MULTIPLY_COLORS(q->bl.c,blc);
 
-  						ic = Long_val(Field(qclr,3));
-  						q->br.c = COLOR_FROM_INT_PMA(ic,alpha);
+  						vclr = &q->br.c;
+  						ic = Int32_val(Field(qclr,3));
+  						COLOR_FROM_INT32_PMA(vclr, ic,alpha);
   						MULTIPLY_COLORS(q->br.c,brc);
   					}
           }
