@@ -229,7 +229,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       (
         super#setAlpha a;
         match glowFilter with
-        [ Some {g_image=Some img;_} -> Render.Image.set_alpha img a
+        [ Some {g_image=Some img;_} -> Render.Image.set_alpha img a False
         | _ -> ()
         ];
       );

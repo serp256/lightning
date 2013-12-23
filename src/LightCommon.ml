@@ -50,10 +50,10 @@ Callback.register_exception "extra_resources" (Extra_resources "");
 
 type qColor = 
   {
-    qcTopLeft: int;
-    qcTopRight: int;
-    qcBottomLeft: int;
-    qcBottomRight: int;
+    qcTopLeft: int32;
+    qcTopRight: int32;
+    qcBottomLeft: int32;
+    qcBottomRight: int32;
   };
 
 IFPLATFORM(pc)

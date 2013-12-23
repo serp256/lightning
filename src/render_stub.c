@@ -34,8 +34,12 @@
 #define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
 
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),(GLubyte)(alpha * 255.)}
+#define COLOR_FROM_INT32(c, alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),COLOR_PART_ALPHA(c) * (GLubyte)(alpha * 255.)}
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
+#define COLOR_FROM_INT32_PMA(res, c, alpha) { double a = (double)COLOR_PART_ALPHA(c) / 255. * alpha; res->r = (GLubyte)(COLOR_PART_RED(c) * a); res->g = (GLubyte)(COLOR_PART_GREEN(c) * a); res->b = (GLubyte)(COLOR_PART_BLUE(c) * a); res->a = (GLubyte)(a * 255); }
 #define UPDATE_PMA_ALPHA(c,alpha) {double ak=c.a/255.0; c.r = (GLubyte)(((double)c.r/ak)* alpha); c.g = (GLubyte)(((double)c.g/ak)* alpha); c.b = (GLubyte)(((double)c.b/ak) * alpha); c.a = (GLubyte)(a * 255);}
+#define UPDATE_PMA_ALPHA_MUL(c,alpha) { c.r = (GLubyte)(c.r * alpha); c.g = (GLubyte)(c.g * alpha); c.b = (GLubyte)(c.b * alpha); c.a = (GLubyte)(c.a * alpha);}
+
 
 
 
@@ -488,7 +492,7 @@ static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,c
 			*tl = *tr = *bl = *br = clr;
 		} else { // QColors
       //fprintf(stderr,"extract_color: QColors\n");
-			value qcolor = Field(color,1);
+/*			value qcolor = Field(color,1);
 			int c = Long_val(Field(qcolor,0));
 			*tl = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);
 			c = Long_val(Field(qcolor,1));
@@ -496,7 +500,32 @@ static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,c
 			c = Long_val(Field(qcolor,2));
 			*bl = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);
 			c = Long_val(Field(qcolor,3));
-			*br = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);
+			*br = pma ? COLOR_FROM_INT_PMA(c,alpha) : COLOR_FROM_INT(c,alpha);*/
+
+			value qcolor = Field(color,1);
+			int32 c = Int32_val(Field(qcolor,0));
+
+			if (pma) {
+				PRINT_DEBUG("PMA QCOLOR");
+				COLOR_FROM_INT32_PMA(tl, c, alpha);
+
+				c = Int32_val(Field(qcolor,1));
+				COLOR_FROM_INT32_PMA(tr, c, alpha);
+
+				c = Int32_val(Field(qcolor,2));
+				COLOR_FROM_INT32_PMA(bl, c, alpha);
+
+				c = Int32_val(Field(qcolor,3));
+				COLOR_FROM_INT32_PMA(br, c, alpha);
+			} else {
+				*tl = COLOR_FROM_INT32(c,alpha);
+				c = Int32_val(Field(qcolor,1));
+				*tr = COLOR_FROM_INT32(c,alpha);
+				c = Int32_val(Field(qcolor,2));
+				*bl = COLOR_FROM_INT32(c,alpha);
+				c = Int32_val(Field(qcolor,3));
+				*br = COLOR_FROM_INT32(c,alpha);				
+			}
 		}
 	};
 }
@@ -606,12 +635,12 @@ value ml_quad_alpha(value quad) {
 
 value ml_quad_set_alpha(value quad,value alpha) {
 	lgQuad *q = QUAD(quad);
-	GLubyte a = (GLubyte)(Double_val(alpha) * 255.0);
+	double a = Double_val(alpha);
 	//printf("set quad alpha to: %d\n",a);
-	q->bl.c.a = a;
-	q->br.c.a = a;
-	q->tl.c.a = a;
-	q->tr.c.a = a;
+	q->bl.c.a = (GLubyte)((double)q->bl.c.a * a);
+	q->br.c.a = (GLubyte)((double)q->br.c.a * a);
+	q->tl.c.a = (GLubyte)((double)q->tl.c.a * a);
+	q->tr.c.a = (GLubyte)((double)q->tr.c.a * a);
 	return Val_unit;
 }
 
@@ -793,7 +822,7 @@ value ml_image_create(value textureInfo,value color,value oalpha) {
 	value res = caml_alloc_custom(&image_ops,sizeof(lgImage),0,1); // 
 	lgImage *img = IMAGE(res);
 	lgTexQuad *tq = &(img->quad);
-	extract_color(color,Double_val(oalpha),1,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
+	extract_color(color,Double_val(oalpha),1.,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
 	value width = Field(textureInfo,1);
 	value height = Field(textureInfo,2);
 	//fprintf(stderr,"width: %f, height: %f\n",TEX_SIZE(width),TEX_SIZE(height));
@@ -836,7 +865,8 @@ value ml_image_points(value image) {
 value ml_image_set_color(value image,value color) {
 	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &img->quad;
-	extract_color(color,(((GLfloat)tq->bl.c.a) / 255.),1,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
+	// extract_color(color,(((GLfloat)tq->bl.c.a) / 255.),1,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
+	extract_color(color,1.,1,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
 	return Val_unit;
 }
 
@@ -873,14 +903,23 @@ void ml_image_set_colors(value image,value colors) {
 }
 */
 
-value ml_image_set_alpha(value image,value alpha) {
+value ml_image_set_alpha(value image,value alpha,value qcolor) {
 	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	double a = Double_val(alpha);
-	UPDATE_PMA_ALPHA(tq->bl.c,a); // check PMA
-	UPDATE_PMA_ALPHA(tq->br.c,a);
-	UPDATE_PMA_ALPHA(tq->tl.c,a);
-	UPDATE_PMA_ALPHA(tq->tr.c,a);
+
+	if (qcolor == Val_true) {
+		UPDATE_PMA_ALPHA_MUL(tq->bl.c,a);
+		UPDATE_PMA_ALPHA_MUL(tq->br.c,a);
+		UPDATE_PMA_ALPHA_MUL(tq->tl.c,a);
+		UPDATE_PMA_ALPHA_MUL(tq->tr.c,a);
+	} else {
+		UPDATE_PMA_ALPHA(tq->bl.c,a); // check PMA
+		UPDATE_PMA_ALPHA(tq->br.c,a);
+		UPDATE_PMA_ALPHA(tq->tl.c,a);
+		UPDATE_PMA_ALPHA(tq->tr.c,a);		
+	}
+
 	return Val_unit;
 }
 

@@ -7,14 +7,14 @@ value round : float -> float;
 
 type qColor = 
   {
-    qcTopLeft: int;
-    qcTopRight: int;
-    qcBottomLeft: int;
-    qcBottomRight: int;
+    qcTopLeft: int32;
+    qcTopRight: int32;
+    qcBottomLeft: int32;
+    qcBottomRight: int32;
   };
 
-value qColor: ~topLeft:int -> ~topRight:int -> ~bottomLeft:int ->
-  ~bottomRight:int -> qColor;
+value qColor: ~topLeft:int32 -> ~topRight:int32 -> ~bottomLeft:int32 ->
+  ~bottomRight:int32 -> qColor;
 
 type color = [= `NoColor | `Color of int | `QColors of qColor ];
 
