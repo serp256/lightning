@@ -34,7 +34,7 @@
 #define COLOR(r, g, b)     (((int)(r) << 16) | ((int)(g) << 8) | (int)(b))
 
 #define COLOR_FROM_INT(c,alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),(GLubyte)(alpha * 255.)}
-#define COLOR_FROM_INT32(c, alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),COLOR_PART_ALPHA(c) * (GLubyte)(alpha * 255.)}
+#define COLOR_FROM_INT32(c, alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),(GLubyte)((double)COLOR_PART_ALPHA(c) * alpha)}
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
 #define COLOR_FROM_INT32_PMA(res, c, alpha) { double a = (double)COLOR_PART_ALPHA(c) / 255. * alpha; res->r = (GLubyte)(COLOR_PART_RED(c) * a); res->g = (GLubyte)(COLOR_PART_GREEN(c) * a); res->b = (GLubyte)(COLOR_PART_BLUE(c) * a); res->a = (GLubyte)(a * 255); }
 #define UPDATE_PMA_ALPHA(c,alpha) {double ak=c.a/255.0; c.r = (GLubyte)(((double)c.r/ak)* alpha); c.g = (GLubyte)(((double)c.g/ak)* alpha); c.b = (GLubyte)(((double)c.b/ak) * alpha); c.a = (GLubyte)(a * 255);}
@@ -985,7 +985,7 @@ value ml_image_flip_tex_y(value image) {
 value ml_image_render(value matrix, value program, value alpha, value blend, value image) {
 	//fprintf(stderr,"render image\n");
 
-	PRINT_DEBUG("RENDER IMAGE");
+	// PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
 	checkGLErrors("start image render");
 
@@ -1047,7 +1047,7 @@ value ml_image_render(value matrix, value program, value alpha, value blend, val
 	checkGLErrors("draw arrays image");
 	kmGLPopMatrix();
 
-	PRINT_DEBUG("RENDER IMAGE end");
+	// PRINT_DEBUG("RENDER IMAGE end");
 
 	return Val_unit;
 };
@@ -1196,7 +1196,7 @@ static int atlas_quads_len = 0;
 
 // assume that quads it's dynarray
 value ml_atlas_render(value atlas, value matrix,value program, value alpha, value atlasInfo) {
-	PRINT_DEBUG("RENDER ATLAS");
+	// PRINT_DEBUG("RENDER ATLAS");
 	atlas_t *atl = ATLAS(atlas);
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
@@ -1253,20 +1253,26 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 		if (!Is_long(acolor)) {
 			if (caml_hash_Color == 0) caml_hash_Color = caml_hash_variant("Color");
 			if (Field(acolor,0) == caml_hash_Color) {
-        int c = Long_val(Field(acolor,1));
-        //fprintf(stderr,"redern_atlas: acolor is Color: %x\n",c);
+        		int c = Long_val(Field(acolor,1));
 				tlc = COLOR_FROM_INT(c,1.);// alpha = 1. PMA not need
 			} else {
-        //fprintf(stderr,"render_atlas: acolor is QColor\n");
 				value qcolor = Field(acolor,1);
+
+				color4B* vclr = &tlc;
 				int c = Int32_val(Field(qcolor,0));
-				tlc = COLOR_FROM_INT32(c,1.);
+				COLOR_FROM_INT32_PMA(vclr, c,1.);
+
+				vclr = &trc;
 				c = Int32_val(Field(qcolor,1));
-				trc = COLOR_FROM_INT32(c,1.);
+				COLOR_FROM_INT32_PMA(vclr, c,1.);
+
+				vclr = &blc;
 				c = Int32_val(Field(qcolor,2));
-				blc = COLOR_FROM_INT32(c,1.);
+				COLOR_FROM_INT32_PMA(vclr, c,1.);
+
+				vclr = &brc;
 				c = Int32_val(Field(qcolor,3));
-				brc = COLOR_FROM_INT32(c,1.);
+				COLOR_FROM_INT32_PMA(vclr, c,1.);
 			}
 		};
 
@@ -1274,13 +1280,10 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 		value child,points,clipping,clr,qclr;
 		double alpha;
 		int ic;
-		//double quad[4];
-    //fprintf(stderr,"len of quads: %d\n",len);
 		for (i = 0; i < len; i++) {
 			child = Field(arr,i);
 			points = Field(Field(child,1),0);
 			clipping = Field(child,2);
-			//icolor = Int_val(Field(child,6));
 			clr = Field(child,6);
 			alpha = Double_val(Field(child,7));
 
@@ -1292,13 +1295,19 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 					if (Field(acolor,0) == caml_hash_Color)
 						q->tl.c = q->tr.c = q->bl.c = q->br.c = tlc;
 					else {
+						PRINT_DEBUG("SKDFHASLKDJFAS;DFA");
 						q->tl.c = tlc;
 						q->tr.c = trc;
 						q->bl.c = blc;
 						q->br.c = brc;
+
+						UPDATE_PMA_ALPHA_MUL(q->tl.c, alpha);
+						UPDATE_PMA_ALPHA_MUL(q->tr.c, alpha);
+						UPDATE_PMA_ALPHA_MUL(q->bl.c, alpha);
+						UPDATE_PMA_ALPHA_MUL(q->br.c, alpha);
 					}
 				} else {
-#define MULTIPLY_COLORS(c,cm) (c.r = (c.r * cm.r) / 255, c.g = (c.g * cm.g) / 255, c.b = (c.b * cm.b) / 255)
+					#define MULTIPLY_COLORS(c,cm) (c.r = (c.r * cm.r) / 255, c.g = (c.g * cm.g) / 255, c.b = (c.b * cm.b) / 255, c.a = (c.a * cm.a) / 255 )
 
 					if (Field(acolor,0) == caml_hash_Color) {
 						if (Field(clr,0) == caml_hash_Color) {
@@ -1309,62 +1318,61 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 						} else {
 							qclr = Field(clr,1);
 							
-							ic = Int32_val(Field(qclr,0));
-
 							color4B* vclr = &q->tl.c;
+							ic = Int32_val(Field(qclr,0));
 							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
 							MULTIPLY_COLORS(q->tl.c,tlc);
 
 							vclr = &q->tr.c;
 							ic = Int32_val(Field(qclr,1));
 							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
-							MULTIPLY_COLORS(q->tr.c,tlc);
+							MULTIPLY_COLORS(q->tr.c,trc);
 
 							vclr = &q->bl.c;
 							ic = Int32_val(Field(qclr,2));
 							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
-							MULTIPLY_COLORS(q->bl.c,tlc);
+							MULTIPLY_COLORS(q->bl.c,blc);
 
 							vclr = &q->br.c;
 							ic = Int32_val(Field(qclr,3));
 							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
-							MULTIPLY_COLORS(q->br.c,tlc);
+							MULTIPLY_COLORS(q->br.c,brc);
 						}
 					} else {
-            if (Field(clr,0) == caml_hash_Color) {
-              ic = Long_val(Field(clr,1));
-              q->tl.c = COLOR_FROM_INT_PMA(ic,alpha);
-              q->tr.c = q->bl.c = q->br.c = q->tl.c;
-              MULTIPLY_COLORS(q->tl.c,tlc);
-              MULTIPLY_COLORS(q->tr.c,trc);
-              MULTIPLY_COLORS(q->bl.c,blc);
-              MULTIPLY_COLORS(q->br.c,brc);
-            } else {
-              qclr = Field(clr,1);
+				        if (Field(clr,0) == caml_hash_Color) {
+							ic = Long_val(Field(clr,1));
+							q->tl.c = COLOR_FROM_INT_PMA(ic,alpha);
+							q->tr.c = q->bl.c = q->br.c = q->tl.c;
+							MULTIPLY_COLORS(q->tl.c,tlc);
+							MULTIPLY_COLORS(q->tr.c,trc);
+							MULTIPLY_COLORS(q->bl.c,blc);
+							MULTIPLY_COLORS(q->br.c,brc);
+				        } else {
+				          qclr = Field(clr,1);
 
-              			color4B* vclr = &q->tl.c;
-  						ic = Int32_val(Field(qclr,0));
-  						COLOR_FROM_INT32_PMA(vclr, ic,alpha);
-  						MULTIPLY_COLORS(q->tl.c,tlc);
+							color4B* vclr = &q->tl.c;
+							ic = Int32_val(Field(qclr,0));
+							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
+							MULTIPLY_COLORS(q->tl.c,tlc);
 
-  						vclr = &q->tr.c;
-  						ic = Int32_val(Field(qclr,1));
-  						COLOR_FROM_INT32_PMA(vclr, ic,alpha);
-  						MULTIPLY_COLORS(q->tr.c,trc);
+							vclr = &q->tr.c;
+							ic = Int32_val(Field(qclr,1));
+							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
+							MULTIPLY_COLORS(q->tr.c,trc);
 
-  						vclr = &q->bl.c;
-  						ic = Int32_val(Field(qclr,2));
-  						COLOR_FROM_INT32_PMA(vclr, ic,alpha);
-  						MULTIPLY_COLORS(q->bl.c,blc);
+							vclr = &q->bl.c;
+							ic = Int32_val(Field(qclr,2));
+							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
+							MULTIPLY_COLORS(q->bl.c,blc);
 
-  						vclr = &q->br.c;
-  						ic = Int32_val(Field(qclr,3));
-  						COLOR_FROM_INT32_PMA(vclr, ic,alpha);
-  						MULTIPLY_COLORS(q->br.c,brc);
-  					}
-          }
+							vclr = &q->br.c;
+							ic = Int32_val(Field(qclr,3));
+							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
+							MULTIPLY_COLORS(q->br.c,brc);
+						}
+				    }
 				}
-#undef MULTIPLY_COLORS
+				#undef MULTIPLY_COLORS
 			};
 
 			/*
