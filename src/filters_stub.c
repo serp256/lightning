@@ -547,6 +547,11 @@ value ml_glow_make(value orb, value glow) {
 //// COLOR MATRIX
 /////////////////////
 
+typedef struct {
+	GLfloat matrix[20];
+	GLfloat color[4];
+} strokecolormatrix_t;
+
 static void colorMatrixFilter(sprogram *sp,void *data) {
 	glUniform1fv(sp->uniforms[1],20,(GLfloat*)data);
 }
@@ -558,6 +563,26 @@ value ml_filter_cmatrix(value matrix) {
 		data[i] = Double_field(matrix,i);
 	};
 	return make_filter(&colorMatrixFilter,free,data);
+}
+
+value ml_filter_cmatrix_extract(value vfilter) {
+	PRINT_DEBUG("ml_filter_cmatrix_extract call");
+
+	CAMLparam1(vfilter);
+	CAMLlocal1(retval);
+
+	filter* f = FILTER(vfilter);
+	GLfloat* data = (GLfloat*)f->data;
+	retval = caml_alloc(20, Double_array_tag);
+	int i;
+	for (i = 0; i < 20; i++) {
+		PRINT_DEBUG("%f", *(data + i));
+		Store_double_field(retval, i, *(data + i));
+	}
+
+	PRINT_DEBUG("ml_filter_cmatrix_extract return");
+
+	CAMLreturn(retval);
 }
 
 static void strokeFilter(sprogram* sp, void* data) {
@@ -573,4 +598,33 @@ value ml_filter_stroke(value vcolor) {
 	*(data + 2) = (GLfloat)COLOR_PART_BLUE(color) / 255.;
 	*(data + 3) = (GLfloat)COLOR_PART_ALPHA(color) / 255.;
 	return make_filter(&strokeFilter, free, data);
+}
+
+static void strokeColorMatrixFilter(sprogram* sp, void* data) {
+	PRINT_DEBUG("strokeColorMatrixFilter");
+
+	strokecolormatrix_t* d = (strokecolormatrix_t*)data;
+
+	glUniform4fv(sp->uniforms[1], 1, d->color);
+	glUniform1fv(sp->uniforms[2], 20,d->matrix);
+
+	PRINT_DEBUG("strokeColorMatrixFilter done");
+}
+
+value ml_filter_strkclrmtx(value vcolor, value matrix) {
+	CAMLparam2(matrix, vcolor);
+	strokecolormatrix_t* data = malloc(sizeof(strokecolormatrix_t));
+	int color = Int_val(vcolor);
+
+	data->color[0] = (GLfloat)COLOR_PART_RED(color) / 255.;
+	data->color[1] = (GLfloat)COLOR_PART_GREEN(color) / 255.;
+	data->color[2] = (GLfloat)COLOR_PART_BLUE(color) / 255.;
+	data->color[3] = (GLfloat)COLOR_PART_ALPHA(color) / 255.;
+
+	int i;
+	for (i = 0; i < 20; i++) {
+		data->matrix[i] = Double_field(matrix,i);
+	};
+
+	CAMLreturn(make_filter(&strokeColorMatrixFilter, free, data));
 }

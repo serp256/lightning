@@ -119,12 +119,12 @@ class virtual base texture =
           [ `simple when programID <> ShaderM.Normal.id -> 
             (
               programID := ShaderM.Normal.id;
-              shaderProgram := ShaderM.Normal.create ()
+              shaderProgram := ShaderM.Normal.create ();
             )
           | `cmatrix m when programID  <> ShaderM.ColorMatrix.id -> 
             (
               programID := ShaderM.ColorMatrix.id;
-              shaderProgram := ShaderM.ColorMatrix.create m
+              shaderProgram := ShaderM.ColorMatrix.create m;
             )
           | _ -> ()
           ];

@@ -303,24 +303,68 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
   class tlf texture =
     object(self)
-      inherit c texture;
+      inherit c texture as super;
 
       value mutable strokeColor = None;
       method strokeColor = strokeColor;
 
+      method private getColorMatrix () =
+        try Some (ExtList.List.find_map (fun f -> match f with [ `ColorMatrix m -> Some (m, Filters.extractColorMatrix m) | _ -> None ]) self#filters)
+        with [ Not_found -> None ];
+
       method setStrokeColor (c:int) =
         let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
-          (
-            shaderProgram := Prg.Stroke.create ~color:c ();
-            strokeColor := Some c;
-          );
+          match self#getColorMatrix () with
+          [ Some (_, m) ->
+            (
+              Printf.printf "!!!!!! %d %s\n%!" (Array.length m) (String.concat "," (List.map (fun f -> string_of_float f) (Array.to_list m)));
+              programID := Prg.StrokeWithColorMatrix.id;
+              shaderProgram := Prg.StrokeWithColorMatrix.create ~stroke:c ~matrix:m ();
+            )
+          | _ ->
+            (
+              programID := Prg.Stroke.id;
+              shaderProgram := Prg.Stroke.create ~color:c ();
+              strokeColor := Some c;
+            )
+          ];
 
       method resetStrokeColor () =
         let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
-          (
-            shaderProgram := Prg.Normal.create ();
-            strokeColor := None;
-          );
+          match self#getColorMatrix () with
+          [ Some (m, _) ->
+            (
+              programID := Prg.ColorMatrix.id;
+              shaderProgram := Prg.ColorMatrix.create m;
+            )
+          | _ ->
+            (
+              programID := Prg.Normal.id;
+              shaderProgram := Prg.Normal.create ();
+              strokeColor := None;
+            )
+          ];        
+
+      method! setFilters fltrs =
+        (
+          super#setFilters fltrs;
+
+          let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+            match (strokeColor, self#getColorMatrix ()) with
+            [ (Some c, Some (_, m)) ->
+              (
+                Printf.printf "!!!!!! %d %s\n%!" (Array.length m) (String.concat "," (List.map (fun f -> string_of_float f) (Array.to_list m)));
+                programID := Prg.StrokeWithColorMatrix.id;
+                shaderProgram := Prg.StrokeWithColorMatrix.create ~stroke:c ~matrix:m ();
+              )
+            | (Some c, _) ->
+              (
+                programID := Prg.Stroke.id;
+                shaderProgram := Prg.Stroke.create ~color:c ();
+              )          
+            | _ -> ()
+            ];
+        );
     end;
 
 value create = new c;
