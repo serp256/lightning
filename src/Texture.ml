@@ -224,7 +224,7 @@ class subtexture region clipping ts (baseTexture:c) =
 
 value cache = TextureCache.create 11;
 
-
+value createSubtex region clipping ts baseTexture = ((new subtexture region clipping ts baseTexture) :> c);
 
 
 (*
