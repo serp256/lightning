@@ -317,7 +317,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           match self#getColorMatrix () with
           [ Some (_, m) ->
             (
-              Printf.printf "!!!!!! %d %s\n%!" (Array.length m) (String.concat "," (List.map (fun f -> string_of_float f) (Array.to_list m)));
               programID := Prg.StrokeWithColorMatrix.id;
               shaderProgram := Prg.StrokeWithColorMatrix.create ~stroke:c ~matrix:m ();
             )
@@ -353,7 +352,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             match (strokeColor, self#getColorMatrix ()) with
             [ (Some c, Some (_, m)) ->
               (
-                Printf.printf "!!!!!! %d %s\n%!" (Array.length m) (String.concat "," (List.map (fun f -> string_of_float f) (Array.to_list m)));
                 programID := Prg.StrokeWithColorMatrix.id;
                 shaderProgram := Prg.StrokeWithColorMatrix.create ~stroke:c ~matrix:m ();
               )

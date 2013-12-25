@@ -566,21 +566,16 @@ value ml_filter_cmatrix(value matrix) {
 }
 
 value ml_filter_cmatrix_extract(value vfilter) {
-	PRINT_DEBUG("ml_filter_cmatrix_extract call");
-
 	CAMLparam1(vfilter);
 	CAMLlocal1(retval);
 
 	filter* f = FILTER(vfilter);
 	GLfloat* data = (GLfloat*)f->data;
-	retval = caml_alloc(20, Double_array_tag);
+	retval = caml_alloc(20 * Double_wosize, Double_array_tag);
 	int i;
 	for (i = 0; i < 20; i++) {
-		PRINT_DEBUG("%f", *(data + i));
 		Store_double_field(retval, i, *(data + i));
 	}
-
-	PRINT_DEBUG("ml_filter_cmatrix_extract return");
 
 	CAMLreturn(retval);
 }
@@ -601,14 +596,10 @@ value ml_filter_stroke(value vcolor) {
 }
 
 static void strokeColorMatrixFilter(sprogram* sp, void* data) {
-	PRINT_DEBUG("strokeColorMatrixFilter");
-
 	strokecolormatrix_t* d = (strokecolormatrix_t*)data;
 
 	glUniform4fv(sp->uniforms[1], 1, d->color);
 	glUniform1fv(sp->uniforms[2], 20,d->matrix);
-
-	PRINT_DEBUG("strokeColorMatrixFilter done");
 }
 
 value ml_filter_strkclrmtx(value vcolor, value matrix) {
