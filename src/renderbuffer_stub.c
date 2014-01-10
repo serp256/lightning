@@ -702,6 +702,7 @@ value ml_renderbuffer_save(value renderInfo,value filename) {
 	glReadPixels(vp.x,vp.y,vp.w,vp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 	checkGLErrors("after read pixels");
 	int res = save_png_image(filename,pixels,vp.w,vp.h);
+	back_framebuffer(fbid);
 	set_framebuffer_state(&fstate);
 	return Val_bool(res);
 }
