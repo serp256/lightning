@@ -16,7 +16,7 @@ int save_png_image(value name, char* buffer, unsigned int width, unsigned int he
   png_infop info_ptr;
 
   if (( fp = fopen(String_val(name), "wb")) == NULL ){
-		free(buffer);
+		caml_stat_free(buffer);
     //caml_failwith("png file open failed");
 		PRINT_ERROR("png file open failed");
 		return 0;
@@ -24,7 +24,7 @@ int save_png_image(value name, char* buffer, unsigned int width, unsigned int he
 
   if ((png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL)) == NULL ){
     fclose(fp);
-		free(buffer);
+		caml_stat_free(buffer);
 		PRINT_ERROR("png_create_write_struct");
 		return 0;
     //caml_failwith("png_create_write_struct");
@@ -33,7 +33,7 @@ int save_png_image(value name, char* buffer, unsigned int width, unsigned int he
   if( (info_ptr = png_create_info_struct(png_ptr)) == NULL ){
     fclose(fp);
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-		free(buffer);
+		caml_stat_free(buffer);
     //caml_failwith("png_create_info_struct");
 		PRINT_ERROR("png_create_info_struct");
 		return 0;
@@ -44,7 +44,7 @@ int save_png_image(value name, char* buffer, unsigned int width, unsigned int he
     /* Free all of the memory associated with the png_ptr and info_ptr */
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(fp);
-		free(buffer);
+		caml_stat_free(buffer);
     /* If we get here, we had a problem writing the file */
     //caml_failwith("png write error");
     PRINT_ERROR("png write error");

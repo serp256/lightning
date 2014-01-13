@@ -70,10 +70,12 @@ static GLuint inline get_texture_id() {
 	int i = 0;
 	while ((i < tx_cnt) && (txs[i] == 0)) {i++;};
 	if (i < tx_cnt) {
+		PRINT_DEBUG("get_texture_id from pull");
 		tid = txs[i];
 		txs[i] = 0;
 		glBindTexture(GL_TEXTURE_2D, tid);
 	} else {
+		PRINT_DEBUG("get_texture_id new id");
 		glGenTextures(1,&tid);
 		glBindTexture(GL_TEXTURE_2D, tid);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -362,6 +364,8 @@ value ml_renderbuffer_draw(value dedicated, value filter, value mlclear, value t
 
 	// закэшировать нах. этот ебанный фреймбуффер и вьюпорт, без выеба GL
 	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), w, h, realW, realH, &rb, dedicated == Val_true)) {
+		GL_ERROR;
+
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X, counter: %d",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER),FRAMEBUFFER_BIND_COUNTER);
 		set_framebuffer_state(&fstate);

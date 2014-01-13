@@ -49,6 +49,12 @@
 			</intent-filter>
 		</receiver>
 
+		<receiver android:name = "com.amazon.inapp.purchasing.ResponseReceiver" >
+          <intent-filter>
+            <action android:name = "com.amazon.inapp.purchasing.NOTIFY" android:permission = "com.amazon.inapp.purchasing.Permission.NOTIFY" />
+          </intent-filter>
+        </receiver>		
+
 			<!--service android:name="ru.redspell.lightning.payments.BillingService" /-->
 			<!--activity android:name="com.mopub.mobileads.MoPubActivity" android:configChanges="keyboardHidden"/>
 			<activity android:name="com.mopub.mobileads.MraidActivity" android:configChanges="keyboardHidden|orientation"/>

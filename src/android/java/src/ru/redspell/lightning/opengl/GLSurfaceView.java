@@ -1144,6 +1144,9 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             if (LOG_EGL) {
                 Log.w("EglHelper", "destroySurface()  tid=" + Thread.currentThread().getId());
             }
+
+            Log.i("EglHelper", "mEglSurface != null && mEglSurface != EGL10.EGL_NO_SURFACE " + (mEglSurface != null && mEglSurface != EGL10.EGL_NO_SURFACE ? "true" : "false"));
+
             if (mEglSurface != null && mEglSurface != EGL10.EGL_NO_SURFACE) {
                 mEgl.eglMakeCurrent(mEglDisplay, EGL10.EGL_NO_SURFACE,
                         EGL10.EGL_NO_SURFACE,
@@ -1227,6 +1230,8 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
          * synchronized(sGLThreadManager) block.
          */
         private void stopEglSurfaceLocked() {
+            Log.i("GLThread", "stopEglSurfaceLocked " + (mHaveEglSurface ? "true" : "false"));
+
             if (mHaveEglSurface) {
                 mHaveEglSurface = false;
                 mEglHelper.destroySurface();
@@ -1244,6 +1249,10 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 sGLThreadManager.releaseEglContextLocked(this);
             }
         }
+
+        private native void foreground();
+        private native void background();
+
         private void guardedRun() throws InterruptedException {
             mEglHelper = new EglHelper();
             mHaveEglContext = false;
@@ -1276,6 +1285,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                             // Update the pause state.
                             if (mPaused != mRequestPaused) {
                                 mPaused = mRequestPaused;
+
                                 sGLThreadManager.notifyAll();
                                 if (LOG_PAUSE_RESUME) {
                                     Log.i("GLThread", "mPaused is now " + mPaused + " tid=" + getId());
@@ -1305,6 +1315,8 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                                 if (LOG_SURFACE) {
                                     Log.i("GLThread", "releasing EGL surface because paused tid=" + getId());
                                 }
+                                // put background here cause stopEglSurfaceLocked call destroys surface and detachs context, but context may be needed in background handler
+                                background();
                                 stopEglSurfaceLocked();
                                 if (!mPreserveEGLContextOnPause || sGLThreadManager.shouldReleaseEGLContextWhenPausing()) {
                                     stopEglContextLocked();
@@ -1455,6 +1467,9 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                         mEglHelper.purgeBuffers();
                         mRenderer.onSurfaceChanged(gl, w, h);
                         sizeChanged = false;
+
+                        foreground();
+                        // put foreground here cause context is now attached as current
                     }
 
                     if (LOG_RENDERER_DRAW_FRAME) {
@@ -1769,7 +1784,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
         }
 
         public synchronized boolean shouldReleaseEGLContextWhenPausing() {
-            ru.redspell.lightning.utils.Log.d("LIGHTNING", "shouldReleaseEGLContextWhenPausing " + (mLimitedGLESContexts ? "true" : "false"));
             // Release the EGL context when pausing even if
             // the hardware supports multiple EGL contexts.
             // Otherwise the device could run out of EGL contexts.

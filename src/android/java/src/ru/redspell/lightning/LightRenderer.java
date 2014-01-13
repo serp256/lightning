@@ -5,7 +5,7 @@ import android.os.Handler;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import ru.redspell.lightning.opengl.GLSurfaceView;
-//import ru.redspell.lightning.GLSurfaceView;
+// import android.opengl.GLSurfaceView;
 import android.os.Process;
 
 public class LightRenderer implements GLSurfaceView.Renderer {
@@ -120,8 +120,8 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	public native void fireTouches(int[] ids,float[] xs, float[] ys, int[] phases);
 	public native void cancelAllTouches();
 
-	public native void handleOnPause();
-	public native void handleOnResume();
+	// public native void handleOnPause();
+	// public native void handleOnResume();
 
 	public native void handleBack();
 

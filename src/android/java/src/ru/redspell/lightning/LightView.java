@@ -5,6 +5,7 @@ import java.util.Iterator;
 import android.app.Activity;
 import android.view.MotionEvent;
 import ru.redspell.lightning.opengl.GLSurfaceView;
+// import android.opengl.GLSurfaceView;
 import ru.redspell.lightning.utils.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
@@ -498,27 +499,27 @@ public class LightView extends GLSurfaceView {
 		paused = true;
 	}
 
-	public void onPause(){
-		Log.d("LIGHTNING", "VIEW.onPause");
-		queueEvent(new Runnable() {
-			@Override
-			public void run() {
-				renderer.handleOnPause();
-			}
-		});
-		super.onPause();
-	}
+	// public void onPause(){
+	// 	Log.d("LIGHTNING", "VIEW.onPause");
+	// 	queueEvent(new Runnable() {
+	// 		@Override
+	// 		public void run() {
+	// 			renderer.handleOnPause();
+	// 		}
+	// 	});
+	// 	super.onPause();
+	// }
 
-	public void onResume() {
-		Log.d("LIGHTNING", "VIEW.onResume");
-		queueEvent(new Runnable() {
-			@Override
-			public void run() {
-				renderer.handleOnResume();
-			}
-		});
-		super.onResume();
-	}
+	// public void onResume() {
+	// 	Log.d("LIGHTNING", "VIEW.onResume");
+	// 	queueEvent(new Runnable() {
+	// 		@Override
+	// 		public void run() {
+	// 			renderer.handleOnResume();
+	// 		}
+	// 	});
+	// 	super.onResume();
+	// }
 
 	public void onDestroy() {
 		Log.d("LIGHTNING","VIEW.onDestroy");
