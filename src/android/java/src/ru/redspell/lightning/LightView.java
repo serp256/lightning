@@ -73,6 +73,7 @@ import java.security.NoSuchAlgorithmException;
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
 import ru.redspell.lightning.OpenUDID;
+import android.os.Vibrator;
 
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
@@ -1215,5 +1216,26 @@ public class LightView extends GLSurfaceView {
 
 	public void hideNativeWait() {
 		if (progressDialog != null) progressDialog.dismiss();
+	}
+
+	public void vibrate(final int time) {
+		Log.d("LIGHTNING","JAVA VIBRATE CALLED");
+		activity.runOnUiThread(new Runnable(){
+					@Override
+					public void run(){
+					// Get instance of Vibrator from current Context
+					Vibrator v = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
+
+					// Output yes if can vibrate, no otherwise
+					//if (v.hasVibrator()) {
+					//	Log.v("Can Vibrate", "YES");
+					//} else {
+					//	Log.v("Can Vibrate", "NO");
+					//}
+
+					v.vibrate(time);
+				}
+			});
+
 	}
 }
