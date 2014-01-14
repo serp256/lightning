@@ -167,7 +167,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
     private final static boolean LOG_ATTACH_DETACH = false;
     private final static boolean LOG_THREADS = false;
     private final static boolean LOG_PAUSE_RESUME = false;
-    private final static boolean LOG_SURFACE = false;
+    private final static boolean LOG_SURFACE = true;
     private final static boolean LOG_RENDERER = false;
     private final static boolean LOG_RENDERER_DRAW_FRAME = false;
     private final static boolean LOG_EGL = false;
@@ -1365,7 +1365,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
                             // Ready to draw?
                             if (readyToDraw()) {
-
                                 // If we don't have an EGL context, try to acquire one.
                                 if (! mHaveEglContext) {
                                     if (askedToReleaseEglContext) {
@@ -1385,6 +1384,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                                 }
 
                                 if (mHaveEglContext && !mHaveEglSurface) {
+                                    Log.d("LIGHTNING", "!!!!!!1");
                                     mHaveEglSurface = true;
                                     createEglSurface = true;
                                     sizeChanged = true;
@@ -1392,6 +1392,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
                                 if (mHaveEglSurface) {
                                     if (mSizeChanged) {
+                                        Log.d("LIGHTNING", "!!!!!!2");
                                         sizeChanged = true;
                                         w = mWidth;
                                         h = mHeight;
@@ -1444,6 +1445,8 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                             Log.w("GLThread", "egl createSurface");
                         }
                         gl = (GL10) mEglHelper.createSurface(getHolder());
+                        // put foreground here cause context is now attached as current
+                        foreground();
                         if (gl == null) {
                             // Couldn't create a surface. Quit quietly.
                             break;
@@ -1467,9 +1470,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                         mEglHelper.purgeBuffers();
                         mRenderer.onSurfaceChanged(gl, w, h);
                         sizeChanged = false;
-
-                        foreground();
-                        // put foreground here cause context is now attached as current
                     }
 
                     if (LOG_RENDERER_DRAW_FRAME) {
@@ -1612,6 +1612,8 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             synchronized (sGLThreadManager) {
                 mWidth = w;
                 mHeight = h;
+
+                Log.d("LIGHTNING", "mSizeChanged = true");
                 mSizeChanged = true;
                 mRequestRender = true;
                 mRenderComplete = false;
