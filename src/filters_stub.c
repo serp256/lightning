@@ -592,6 +592,7 @@ value ml_filter_stroke(value vcolor) {
 	*(data + 1) = (GLfloat)COLOR_PART_GREEN(color) / 255.;
 	*(data + 2) = (GLfloat)COLOR_PART_BLUE(color) / 255.;
 	*(data + 3) = (GLfloat)COLOR_PART_ALPHA(color) / 255.;
+
 	return make_filter(&strokeFilter, free, data);
 }
 

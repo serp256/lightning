@@ -36,10 +36,10 @@ class c: [ Texture.c ] ->
 class tlf: [ Texture.c ] ->
   object
     inherit c;
-
+(* 
     method strokeColor: option int;
     method setStrokeColor: int -> unit;
-    method resetStrokeColor: unit -> unit;
+    method resetStrokeColor: unit -> unit; *)
   end;  
 
 value create: Texture.c -> c;

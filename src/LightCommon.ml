@@ -279,7 +279,13 @@ value resource_path ?(with_suffix=True) fname =
 
 value open_resource ?with_suffix fname = open_in (resource_path ?with_suffix fname);
 
-value read_resource ?with_suffix path = Std.input_all (open_resource ?with_suffix path);
+value read_resource ?with_suffix path =
+  let inp = open_resource ?with_suffix path in
+  let retval = Std.input_all inp in
+    (
+      close_in inp;
+      retval;
+    );
 
 value read_json ?with_suffix path = 
   let ch = open_resource ?with_suffix path in                                                                                                                

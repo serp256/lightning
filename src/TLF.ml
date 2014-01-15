@@ -573,7 +573,7 @@ DEFINE CHAR_NEWLINE = 10;
   (*}}}*)
 
 (* width, height вытащить наверно в html тоже *)
-value create ?stroke ?width ?height ?border ?dest (html:main) = 
+value create ?width ?height ?border ?dest (html:main) = 
   let () = debug 
     let opt = fun [ Some f -> string_of_float f | None -> "NONE" ] in
     Debug.d "create %s:%s" (opt width) (opt height) 
@@ -941,11 +941,11 @@ value create ?stroke ?width ?height ?border ?dest (html:main) =
             with [ Not_found -> 
               let (atl : Atlas.tlf) = Atlas.tlf atex in
               (
-                match stroke with
+(*                 match stroke with
                 [ Some c -> atl#setStrokeColor c
                 | _ -> ()
                 ];
-
+ *)
                 Hashtbl.add atlases atex atl;
                 atl
               )

@@ -232,7 +232,6 @@ class virtual c (_width:float) (_height:float) =
 
     method renderStage () =
     (
-(*       proftimer:perfomance "Prerender: %F" D.prerender(); *)
       debug:render "RENDER STAGE";
       Render.clear bgColor 1.;
       proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
@@ -313,7 +312,7 @@ proftimer:frame "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!frame %f"
     (
       self#advanceTime seconds;
       debug:run "start prerender";
-      proftimer:perfomance "prerender %f" (D.prerender ());
+      proftimer:prerndr "prerender %f" (D.prerender ());
       debug:run "end prerender";
       Render.clear bgColor 1.;
       Render.checkErrors "before render";

@@ -110,6 +110,7 @@ class virtual base texture =
                 c
               )
             | `ColorMatrix m -> `cmatrix m
+            | _ -> c
             ]
           end `simple fltrs 
         in

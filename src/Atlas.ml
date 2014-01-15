@@ -270,7 +270,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         super#boundsChanged();
       );        
         
-      method private render' ?alpha:(alpha') ~transform rect = 
+      method private render' ?alpha:(alpha') ~transform rect =
+        (* proftimer:render "atlas render %f" *)
       (
         if DynArray.length children > 0
         then 
@@ -305,14 +306,27 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
     object(self)
       inherit c texture as super;
 
-      value mutable strokeColor = None;
-      method strokeColor = strokeColor;
+      method! setFilters fltrs =
+        (
+          super#setFilters fltrs;
+          try
+            let f = ExtList.List.find_map (fun f -> match f with [ `Stroke s -> Some s | _ -> None ]) fltrs in
+            let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+              (
+                programID := Prg.Stroke.id;
+                shaderProgram := Prg.Stroke.create f;
+              )
+          with [ Not_found -> () ];          
+        );
 
-      method private getColorMatrix () =
+      (* value mutable strokeColor = None; *)
+      (* method strokeColor = strokeColor; *)
+
+(*       method private getColorMatrix () =
         try Some (ExtList.List.find_map (fun f -> match f with [ `ColorMatrix m -> Some (m, Filters.extractColorMatrix m) | _ -> None ]) self#filters)
-        with [ Not_found -> None ];
+        with [ Not_found -> None ]; *)
 
-      method setStrokeColor (c:int) =
+(*       method setStrokeColor (c:int) =
         let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
           match self#getColorMatrix () with
           [ Some (_, m) ->
@@ -362,7 +376,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               )          
             | _ -> ()
             ];
-        );
+        ); *)
+      
     end;
 
 value create = new c;
