@@ -61,11 +61,10 @@ void set_referrer(char *type,NSString *nid) {
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application         {
-	// NSLog(@"become active %@", [FBSession defaultAppID]);
+	NSLog(@"become active");
 
-
-  // [FBSession defaultAppID] ? [[FBSession activeSession] handleDidBecomeActive] : NO;
-  [[NSNotificationCenter defaultCenter] postNotificationName:APP_BECOME_ACTIVE_NOTIFICATION object:self];
+  	application.applicationIconBadgeNumber = 0;
+  	[[NSNotificationCenter defaultCenter] postNotificationName:APP_BECOME_ACTIVE_NOTIFICATION object:self];
 	[lightViewController becomeActive];
 }
 

@@ -12,10 +12,10 @@ value ml_lnSchedule(value nid, value fireDate, value alertBody) {
         return Val_false;
     }
 
-
     notif.fireDate = [NSDate dateWithTimeIntervalSince1970:Double_val(fireDate)];
     notif.alertBody = [NSString stringWithCString:String_val(alertBody) encoding:NSUTF8StringEncoding];
     notif.userInfo = [NSDictionary dictionaryWithObject:[NSString stringWithCString:String_val(nid) encoding:NSASCIIStringEncoding] forKey:ID_KEY];
+    notif.applicationIconBadgeNumber = 1;
 
     [[UIApplication sharedApplication] scheduleLocalNotification:notif];
     [notif release];
