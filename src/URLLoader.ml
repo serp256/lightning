@@ -479,8 +479,8 @@ class loader ?request () =
 
 
 
-IFDEF ANDROID THEN
-external download: ~url:string -> ~path:string -> ?ecallback:(int -> string -> unit) -> ?progress:(~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile";
-ELSE
+IFDEF PC THEN
 value download ~url:(_:string) ~path:(_:string) ?(ecallback:option (int -> string -> unit)) ?(progress:option (~progress:float -> ~total:float -> unit -> unit)) (callback:(unit -> unit))  : unit = ();
+ELSE
+external download: ~url:string -> ~path:string -> ?ecallback:(int -> string -> unit) -> ?progress:(~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile";
 END;

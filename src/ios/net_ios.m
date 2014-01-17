@@ -7,6 +7,10 @@
 #import <caml/alloc.h>
 #import <caml/callback.h>
 
+#import "LightDownloaderDelegate.h"
+
+#import "light_common.h"
+
 CAMLprim value ml_URLConnection(value url, value method, value headers, value data) {
 	CAMLparam4(url,method,headers,data);
 	NSLog([NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding]);
@@ -40,4 +44,19 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 value ml_URLConnection_cancel(value connection) {
   [(NSURLConnection*)connection cancel];
 	return Val_unit;
+}
+
+value ml_DownloadFile(value vurl, value vpath, value verr, value vprgrss, value vsccss) {
+	CAMLparam5(vurl, vpath, verr, vprgrss, vsccss);
+
+	NSURL* url = [[NSURL alloc] initWithString:[NSString stringWithUTF8String:String_val(vurl)]];
+	NSURLRequest* req = [[NSURLRequest alloc] initWithURL:url];
+	LightDownloaderDelegate* delegate = [[LightDownloaderDelegate alloc] initWithSuccess:vsccss error:verr progress:vprgrss filename:[NSString stringWithUTF8String:String_val(vpath)]];
+	[[NSURLConnection alloc] initWithRequest:req delegate:delegate startImmediately:YES];
+
+	[url release];
+	[req release];
+	[delegate release];
+
+	CAMLreturn(Val_unit);
 }
