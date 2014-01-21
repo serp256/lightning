@@ -638,10 +638,12 @@ value ml_quad_set_alpha(value quad,value alpha) {
 	lgQuad *q = QUAD(quad);
 	double a = Double_val(alpha);
 	//printf("set quad alpha to: %d\n",a);
-	q->bl.c.a = (GLubyte)((double)q->bl.c.a * a);
-	q->br.c.a = (GLubyte)((double)q->br.c.a * a);
-	q->tl.c.a = (GLubyte)((double)q->tl.c.a * a);
-	q->tr.c.a = (GLubyte)((double)q->tr.c.a * a);
+
+	q->bl.c.a = (GLubyte)(255. * a);
+	q->br.c.a = (GLubyte)(255. * a);
+	q->tl.c.a = (GLubyte)(255. * a);
+	q->tr.c.a = (GLubyte)(255. * a);
+
 	return Val_unit;
 }
 
