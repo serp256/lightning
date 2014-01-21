@@ -37,7 +37,9 @@
 #define COLOR_FROM_INT32(c, alpha) (color4B){COLOR_PART_RED(c),COLOR_PART_GREEN(c),COLOR_PART_BLUE(c),(GLubyte)((double)COLOR_PART_ALPHA(c) * alpha)}
 #define COLOR_FROM_INT_PMA(c,alpha) (color4B){(GLubyte)((double)COLOR_PART_RED(c) * alpha),(GLubyte)((double)COLOR_PART_GREEN(c) * alpha),(GLubyte)(COLOR_PART_BLUE(c) * alpha),(GLubyte)(alpha*255)}
 #define COLOR_FROM_INT32_PMA(res, c, alpha) { double a = (double)COLOR_PART_ALPHA(c) / 255. * alpha; res->r = (GLubyte)(COLOR_PART_RED(c) * a); res->g = (GLubyte)(COLOR_PART_GREEN(c) * a); res->b = (GLubyte)(COLOR_PART_BLUE(c) * a); res->a = (GLubyte)(a * 255); }
-#define UPDATE_PMA_ALPHA(c,alpha) {double ak=c.a/255.0; c.r = (GLubyte)(((double)c.r/ak)* alpha); c.g = (GLubyte)(((double)c.g/ak)* alpha); c.b = (GLubyte)(((double)c.b/ak) * alpha); c.a = (GLubyte)(a * 255);}
+#define UPDATE_PMA_ALPHA(c,alpha) if ((GLubyte)(alpha * 255) == 0.) {double ak=c.a/255.0; c.r = (GLubyte)((double)c.r/ak); c.g = (GLubyte)((double)c.g/ak); c.b = (GLubyte)((double)c.b/ak); c.a = 0;} \
+else if (c.a == 0.) {c.r = (GLubyte)((double)c.r * alpha); c.g = (GLubyte)((double)c.g * alpha); c.b = (GLubyte)((double)c.b * alpha); c.a = (GLubyte)(alpha * 255);} \
+else {double ak=c.a/255.0; c.r = (GLubyte)(((double)c.r/ak)* alpha); c.g = (GLubyte)(((double)c.g/ak)* alpha); c.b = (GLubyte)(((double)c.b/ak) * alpha); c.a = (GLubyte)(alpha * 255);}
 #define UPDATE_PMA_ALPHA_MUL(c,alpha) { c.r = (GLubyte)(c.r * alpha); c.g = (GLubyte)(c.g * alpha); c.b = (GLubyte)(c.b * alpha); c.a = (GLubyte)(c.a * alpha);}
 
 
@@ -907,6 +909,8 @@ void ml_image_set_colors(value image,value colors) {
 */
 
 value ml_image_set_alpha(value image,value alpha,value qcolor) {
+	PRINT_DEBUG("ml_image_set_alpha");
+
 	lgImage *img = IMAGE(image);
 	lgTexQuad *tq = &(img->quad);
 	double a = Double_val(alpha);
@@ -917,10 +921,19 @@ value ml_image_set_alpha(value image,value alpha,value qcolor) {
 		UPDATE_PMA_ALPHA_MUL(tq->tl.c,a);
 		UPDATE_PMA_ALPHA_MUL(tq->tr.c,a);
 	} else {
+		PRINT_DEBUG("PIZDA");
+
+		PRINT_DEBUG("%d %d %d %d", tq->bl.c.r, tq->bl.c.g, tq->bl.c.b, tq->bl.c.a);
+
 		UPDATE_PMA_ALPHA(tq->bl.c,a); // check PMA
 		UPDATE_PMA_ALPHA(tq->br.c,a);
 		UPDATE_PMA_ALPHA(tq->tl.c,a);
-		UPDATE_PMA_ALPHA(tq->tr.c,a);		
+		UPDATE_PMA_ALPHA(tq->tr.c,a);
+
+		PRINT_DEBUG("%d %d %d %d", tq->bl.c.r, tq->bl.c.g, tq->bl.c.b, tq->bl.c.a);
+		// PRINT_DEBUG("%d %d %d %d", tq->br.c.r, tq->br.c.g, tq->br.c.b, tq->br.c.a);
+		// PRINT_DEBUG("%d %d %d %d", tq->tl.c.r, tq->tl.c.g, tq->tl.c.b, tq->tl.c.a);
+		// PRINT_DEBUG("%d %d %d %d", tq->tr.c.r, tq->tr.c.g, tq->tr.c.b, tq->tr.c.a);
 	}
 
 	return Val_unit;
