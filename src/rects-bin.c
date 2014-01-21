@@ -269,7 +269,6 @@ uint8_t bin_reuse_rect(bin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) 
 }
 
 uint8_t bin_add_rect(bin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
-	//if (bin_reuse_rect(bin, width, height, pnt)) return 1;
 
 	uint8_t finded = bin_find_pos(bin, width, height, added, pnt);
 
@@ -279,11 +278,11 @@ uint8_t bin_add_rect(bin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
 }
 
 void bin_repair(bin_t* bin) {
-	if (bin_need_repair(bin)) {
+	//if (bin_need_repair(bin)) {
 		if (!bin->rects) {
 			bin_clear(bin);
 		} else {
-			rlist_t* rect = bin->rects;
+			rlist_t* rect = bin->rects;// FIXME:!!!!!
 
 			bin->rects = NULL;
 			bin_clear(bin);
@@ -293,7 +292,7 @@ void bin_repair(bin_t* bin) {
 				rect = rlist_remove(NULL, rect, 1);
 			}
 		}
-	}
+	//}
 }
 
 void bin_rm_rect(bin_t* bin, pnt_t* pnt) {

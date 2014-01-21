@@ -12,7 +12,7 @@ type framebuffer;
 (*
 external renderbuffer_draw_dedicated: ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_dedicated_byte"
 "ml_renderbuffer_draw_dedicated";
-external renderbuffer_draw: ~filter:filter -> ?clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
+external renderbuffer_draw: ~filter:filter -> ~clear:(int*float) -> textureID -> int -> int -> float -> float -> (framebuffer -> unit) -> renderInfo = "ml_renderbuffer_draw_byte" "ml_renderbuffer_draw";
 *)
 external renderbuffer_draw_to_texture: ?clear:(int*float) -> ?new_params:(int * int * float * float) -> ?new_tid:textureID -> renderInfo -> (framebuffer -> unit) -> unit = "ml_renderbuffer_draw_to_texture";
 external renderbuffer_draw_to_dedicated_texture: ?clear:(int*float) -> ?width:float -> ?height:float -> renderInfo -> (framebuffer -> unit) -> bool = "ml_renderbuffer_draw_to_dedicated_texture";
@@ -685,10 +685,9 @@ class type c =
 
 
 
+type kind = [ Shared | Dedicated of Texture.filter ];
 
-external
-
-value draw ~filter ?color ?alpha ?(dedicated = False) width height f =
+value draw ?(kind=Shared) ?color ?alpha width height f =
   let width = int_of_float (ceil width) in
   let height = int_of_float (ceil height) in
 
