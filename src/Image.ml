@@ -188,9 +188,9 @@ class _c  _texture =
     method! setAlpha a =
     (
       super#setAlpha a;
-      Render.Image.set_alpha image a (match color with [ `QColors _ -> True | _ -> False ]);
+      Render.Image.set_alpha image color a (match color with [ `QColors _ -> True | _ -> False ]);
       match glowFilter with
-      [ Some {g_image=Some img;_} -> Render.Image.set_alpha img a (match color with [ `QColors _ -> True | _ -> False ])
+      [ Some {g_image=Some img;_} -> Render.Image.set_alpha img color a (match color with [ `QColors _ -> True | _ -> False ])
       | _ -> ()
       ];
     );
