@@ -914,3 +914,27 @@ value ml_hide_nativeWait(value p) {
 	(*env)->CallVoidMethod(env,jView,mid);	
 	return Val_unit;
 }
+
+
+
+value ml_fire_lightning_event(value event_key) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "fireLightEvent", "(Ljava/lang/String;)V");
+	jstring jevid = (*env)->NewStringUTF(env,String_val(event_key));
+	(*env)->CallVoidMethod(env,jView,mid,jevid);
+	(*env)->DeleteLocalRef(env,jevid);
+	return Val_unit;
+}
+
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireNativeEvent(JNIEnv *env, jobject thiz, jstring jdata) {
+	const char* cdata = (*env)->GetStringUTFChars(env, jdata, JNI_FALSE);
+	value mldata = caml_copy_string(cdata);
+	(*env)->ReleaseStringUTFChars(env,jdata,cdata);
+	static value *mlfun = NULL;
+	if (mlfun == NULL) mlfun = caml_named_value("on_native_event");
+	caml_callback(*mlfun,mldata);
+}

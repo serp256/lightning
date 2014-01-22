@@ -1,0 +1,22 @@
+<els>
+	<!-- <el name="baseScreen"><margin w="100%" h="100%"/></el> -->
+	<el name="initScreen">
+		<el name="redspellLogo"><margin ha="right" r="150"/></el>
+		<el name="picsGrid">
+			<margin ha="center"/>
+			<el name="pics"><margin t="-90" l="-10"/></el>
+		</el>
+		<el name="gameLogo"><margin ha="center"/></el>
+		<el name="logoContainer"><margin ha="center" va="middle" t="-150"/></el>
+		<el name="copyright">
+			<vals gap="10"/>
+			<margin ha="center" va="bottom" b="10" w="600"/>
+			<el name="item"><margin ha="center" w="100%"/></el>
+		</el>
+		<el name="copyrightAmazon">
+			<vals gap="10"/>
+			<margin ha="center" va="bottom" b="30" w="600"/>
+			<el name="item"><margin ha="center" w="100%"/></el>
+		</el>
+	</el>
+</els>

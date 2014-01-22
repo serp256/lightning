@@ -25,3 +25,4 @@ void ml_flurryStartSession(value v_appId) {
 	(*env)->DeleteLocalRef(env, j_appId);
 	started = 1;
 }
+

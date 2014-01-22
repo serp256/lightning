@@ -347,4 +347,10 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
     }
 		isPlayServicesAvailable = true;
 	};
+
+
+
+	public void onLightEvent(String event_key) {
+	
+	};
 }	

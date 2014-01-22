@@ -1,0 +1,1 @@
+ocamlc -o extract_args str.cma extract_args.ml

@@ -9,3 +9,4 @@ void ml_flurryStartSession(value v_appId) {
 	[Flurry startSession:m_appId];
 	started = 1;
 }
+
