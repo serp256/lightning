@@ -160,12 +160,14 @@ void ml_paymentsTest() {
 // 	(*env)->CallVoidMethod(env, jView, mid);
 // }
 
-value ml_paymentsInit(value marketType) {
+value ml_paymentsInit(value vskus, value marketType) {
+	CAMLparam0();
+	CAMLlocal1(vsku);
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
 	static jmethodID mid = 0;
-	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "paymentsInit", "(ZLjava/lang/String;)V");
+	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "paymentsInit", "(ZLjava/lang/String;[Ljava/lang/String;)V");
 
 	if (Is_long(marketType) && marketType == caml_hash_variant("Amazon")) {
 		(*env)->CallVoidMethod(env, jView, mid, JNI_FALSE, NULL);
@@ -180,7 +182,34 @@ value ml_paymentsInit(value marketType) {
 			j_key = (*env)->NewStringUTF(env, c_key);
 		}
 
-		(*env)->CallVoidMethod(env, jView, mid, JNI_TRUE, j_key);
+		int skus_num = 0;
+		char* cskus[255]; 
+
+		if (Is_block(vskus)) {
+			vsku = Field(vskus, 0);
+			while (Is_block(vsku)) {
+				cskus[skus_num++] = String_val(Field(vsku, 0));
+				vsku = Field(vsku, 1);
+			}
+		}
+
+		static jclass jstringCls = NULL;
+		if (!jstringCls) {
+			jstringCls = (*env)->FindClass(env, "java/lang/String");
+		}
+
+		jobjectArray jskus = (*env)->NewObjectArray(env, skus_num, jstringCls, NULL);
+
+		int i;
+		jstring jsku;
+		for (i = 0; i < skus_num; i++) {
+			jsku = (*env)->NewStringUTF(env, cskus[i]);
+			(*env)->SetObjectArrayElement(env, jskus, i, jsku);
+			(*env)->DeleteLocalRef(env, jsku);
+		}
+
+		(*env)->CallVoidMethod(env, jView, mid, JNI_TRUE, j_key, jskus);
+		(*env)->DeleteLocalRef(env, jskus);
 
 		if (j_key != NULL) {
 			(*env)->DeleteLocalRef(env, j_key);
@@ -189,7 +218,7 @@ value ml_paymentsInit(value marketType) {
 		caml_failwith("something wrong with marketType, permited only '`Amazon' or '`Google of (option string)'");
 	}
 
-	return Val_unit;
+	CAMLreturn(Val_unit);
 }
 
 value ml_paymentsPurchase(value sku) {
@@ -290,4 +319,18 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_LightPaymentsCamlCallbacks_00
 	value* cb = caml_named_value("camlPaymentsFail");
 	if (!cb) caml_failwith("payments fail callback not specified");
 	caml_callback3(*cb, v_sku, v_reason, Val_false);	
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_payments_google_LightGooglePayments_registerProduct(JNIEnv *env, jobject this, jstring jsku, jstring jprice) {
+	static value* cb = NULL;
+	if (!cb) cb = caml_named_value("register_product");
+
+	const char* csku = (*env)->GetStringUTFChars(env, jsku, JNI_FALSE);
+	const char* cprice = (*env)->GetStringUTFChars(env, jprice, JNI_FALSE);
+	value vsku = caml_copy_string(csku);
+	value vprice = caml_copy_string(cprice);
+	(*env)->ReleaseStringUTFChars(env, jsku, csku);
+	(*env)->ReleaseStringUTFChars(env, jprice, cprice);
+
+	caml_callback2(*cb, vsku, vprice);
 }

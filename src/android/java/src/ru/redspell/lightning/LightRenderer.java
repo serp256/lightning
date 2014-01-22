@@ -4,7 +4,7 @@ import ru.redspell.lightning.utils.Log;
 import android.os.Handler;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-import android.opengl.GLSurfaceView;
+import ru.redspell.lightning.opengl.GLSurfaceView;
 //import ru.redspell.lightning.GLSurfaceView;
 import android.os.Process;
 
@@ -17,7 +17,9 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	
 	private int screenWidth;
 	private int screenHeight;
-	
+
+	public boolean ready = false;
+
 	public LightRenderer(int width,int height) {
 		super();
 		screenWidth = width;
@@ -32,6 +34,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		//Log.d("LIGHTNING", "GL_EXTENSIONS: " + gl.glGetString(GL10.GL_EXTENSIONS));
 		Log.d("LIGHTNING","SURFACE CREATED tid: " + Process.myTid());
 		nativeSurfaceCreated(screenWidth,screenHeight);
+		LightView.rendererReady = true;
 
 		getIntent();
 
@@ -59,6 +62,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	}
     
 	public void onDrawFrame(GL10 gl) {
+		Log.d("LIGHTNING", "onDrawFrame");
     	
 		long now = System.nanoTime();
 		long interval = now - last;

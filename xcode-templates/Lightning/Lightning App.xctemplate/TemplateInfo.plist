@@ -120,7 +120,7 @@
 				<key>OTHER_LDFLAGS</key>
 				<string></string>
 				<key>PATH</key>
-				<string>/Users/___USERNAME___/bin:/usr/local/bin:$PATH</string>
+				<string>/Users/___USERNAME___/bin:/usr/local/ocaml/main/bin:$PATH</string>
 				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
 				<string>5.1</string>				
 			</dict>

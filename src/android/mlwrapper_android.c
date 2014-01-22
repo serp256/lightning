@@ -172,7 +172,7 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 	res_indx = kh_init_res_index();
 	FILE* in = fopen(apk_path, "r");
 	fseek(in, j_indexOffset, SEEK_SET);
-	char* err = read_res_index(in, j_assetsOffset);
+	char* err = read_res_index(in, j_assetsOffset, -1);
 	fclose(in);
 	
 	/* shared preferences 
@@ -210,8 +210,12 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 int getResourceFd(const char *path, resource *res) {
 	offset_size_pair_t* os_pair;
 
+	PRINT_DEBUG("getResourceFd for path %s", path);
+
 	if (!get_offset_size_pair(path, &os_pair)) {
 		int fd;
+
+		PRINT_DEBUG("location %d", os_pair->location);
 
 		if (os_pair->location == 0) {
 			GET_FD(apk_path)
@@ -220,8 +224,14 @@ int getResourceFd(const char *path, resource *res) {
 		} else if (os_pair->location == 2) {
 			GET_FD(main_exp_path)
 		} else {
-			PRINT_DEBUG("unknown location value in offset-size pair for path %s", path);
-			return 0;
+			char* extra_res_fname = get_extra_res_fname(os_pair->location);
+
+			if (!extra_res_fname) {
+				PRINT_DEBUG("unknown location value in offset-size pair for path %s", path);
+				return 0;
+			}
+
+			GET_FD(extra_res_fname);
 		}
 
 		lseek(fd, os_pair->offset, SEEK_SET);
@@ -876,11 +886,19 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightActivity_mlSetReferrer(JN
 	CAMLlocal2(mltype,mlnid);
 	const char *type = (*env)->GetStringUTFChars(env,jtype,JNI_FALSE);
 	const char *nid = (*env)->GetStringUTFChars(env,jnid,JNI_FALSE);
+	PRINT_DEBUG("jtype %d %s", (int)type, type);
+	PRINT_DEBUG("jnid %d %s", (int)nid, nid);
+
+	PRINT_DEBUG("before copy");
 	mltype = caml_copy_string(type);
+	PRINT_DEBUG("after mltype copy");
 	mlnid = caml_copy_string(nid);
+	PRINT_DEBUG("after mlnid copy");
 	set_referrer_ml(mltype,mlnid);
+	PRINT_DEBUG("after set referrer ml");
 	(*env)->DeleteLocalRef(env,jtype);
 	(*env)->DeleteLocalRef(env,jnid);
+	PRINT_DEBUG("success");
 	CAMLreturn0;
 }
 

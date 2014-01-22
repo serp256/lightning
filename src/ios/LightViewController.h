@@ -19,7 +19,7 @@
 -(void)didFailToRegisterForRemoteNotificationsWithError:(NSError *)error;
 @end
 
-@interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate, SKPaymentTransactionObserver> {
+@interface LightViewController : UIViewController <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate, SKPaymentTransactionObserver, SKProductsRequestDelegate> {
 	id<OrientationDelegate> _orientationDelegate;
 	id<RemoteNotificationsRegisterDelegate> _rnDelegate;
 	LightActivityIndicatorView*	activityIndicator;

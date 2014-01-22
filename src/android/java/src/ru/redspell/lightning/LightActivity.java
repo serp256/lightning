@@ -314,6 +314,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			String nid = extras.getString("localNotification");
+			Log.d("LIGHTNING", "nid: " + nid);
 			if (nid != null) mlSetReferrer("local",nid);
 			else {
 				nid = extras.getString("remoteNotification");
@@ -326,7 +327,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	protected void onNewIntent(Intent intent) {
 		Log.d("LIGHTNING","onNewIntent");
 		setIntent(intent);
-		if (lightView != null) {
+		if (lightView != null && lightView.rendererReady) {
 				lightView.queueEvent(new Runnable() {
 				 @Override
 				 public void run() {

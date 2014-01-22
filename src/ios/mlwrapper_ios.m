@@ -255,10 +255,9 @@ value ml_kv_storage_exists(value key_ml) {
 
 /* PAYMENTS */
 
-void ml_payment_init(value success_cb, value error_cb) {
-  CAMLparam2(success_cb, error_cb);
-
-  LightViewController * c = [LightViewController sharedInstance];
+void ml_payment_init(value vskus, value success_cb, value error_cb) {
+	CAMLparam3(vskus, success_cb, error_cb);
+	LightViewController * c = [LightViewController sharedInstance];
 
 	// if init twice?
 	if (c->payment_success_cb == 0) {
@@ -271,25 +270,58 @@ void ml_payment_init(value success_cb, value error_cb) {
 		caml_modify_generational_global_root(&(c->payment_success_cb),success_cb);
 		caml_modify_generational_global_root(&(c->payment_error_cb),error_cb);
 	};
+
+	if (Is_block(vskus)) {
+		NSCountedSet* skus = [[NSCountedSet alloc] initWithCapacity:10];
+		value vsku = Field(vskus, 0);
+
+		while (Is_block(vsku)) {
+			char* csku = String_val(Field(vsku, 0));
+			NSString* sku = [NSString stringWithUTF8String:csku];
+
+			if (![skus member:sku]) {
+				[skus addObject:sku];
+			}
+
+			vsku = Field(vsku, 1);
+		}
+
+		SKProductsRequest *preq = [[SKProductsRequest alloc] initWithProductIdentifiers:skus];
+		preq.delegate = c;
+		[preq start];
+	}	
   
-  CAMLreturn0;
+	CAMLreturn0;
 }
 
+value ml_product_price(value vprod) {
+	CAMLparam1(vprod);
+	SKProduct* prod = (SKProduct*)vprod;
+	CAMLreturn(caml_copy_string([[NSString stringWithFormat:@"%@ %@", prod.price, [[prod priceLocale] objectForKey:NSLocaleCurrencyCode]] UTF8String]));
+}
 
-void ml_payment_purchase(value product_id) {
-	NSLog(@"PAYMENT: %s",String_val(product_id));
+void purchase(value prod, int by_sku) {
+	PRINT_DEBUG("purchase call %d", by_sku);
+
+	if ([SKPaymentQueue canMakePayments]) {
+    	SKPayment *payment = by_sku ? [SKPayment paymentWithProductIdentifier: STR_CAML2OBJC(prod)] : [SKPayment paymentWithProduct:(SKProduct*)prod];
+    	[[SKPaymentQueue defaultQueue] addPayment:payment];
+	} else {
+    	[[[[UIAlertView alloc] initWithTitle:@"error" message:@"In App Purchases are currently disabled. Please adjust your settings to enable In App Purchases." delegate:nil cancelButtonTitle:@"close" otherButtonTitles:nil] autorelease] show];
+	}
+}
+
+value ml_payment_purchase_deprecated(value product_id) {
   CAMLparam1(product_id);
-  
-  if ([SKPaymentQueue canMakePayments]) {
-    SKPayment *payment = [SKPayment paymentWithProductIdentifier: STR_CAML2OBJC(product_id)];
-    [[SKPaymentQueue defaultQueue] addPayment:payment];
-  } else {
-    [[[[UIAlertView alloc] initWithTitle:@"error" message:@"In App Purchases are currently disabled. Please adjust your settings to enable In App Purchases." delegate:nil cancelButtonTitle:@"close" otherButtonTitles:nil] autorelease] show];
-  }      
-  
-  CAMLreturn0;
+  purchase(product_id, 1);
+  CAMLreturn(Val_unit);
 }
 
+value ml_payment_purchase(value vprod) {
+	CAMLparam1(vprod);
+	purchase(vprod, 0);
+	CAMLreturn(Val_unit);
+}
 
 void ml_payment_commit_transaction(value t) {
   CAMLparam1(t);

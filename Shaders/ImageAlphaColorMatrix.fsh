@@ -4,7 +4,11 @@ precision lowp float;
 #endif
 
 varying vec4 v_fragmentColor;
+#ifdef GL_ES
+varying highp vec2 v_texCoord;
+#else
 varying vec2 v_texCoord;
+#endif
 uniform sampler2D u_texture;
 uniform float u_parentAlpha;
 #ifdef GL_ES
