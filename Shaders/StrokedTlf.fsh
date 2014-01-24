@@ -20,7 +20,7 @@ void main()
 	if (u_strokeColor.a == 0.) {
 		gl_FragColor = glyphColor * u_parentAlpha;	
 	} else {
-		vec4 u_strokeColor = u_strokeColor * lumal.r;
-		gl_FragColor = vec4((1. - glyphColor.a) * u_strokeColor.rgb + glyphColor.rgb, u_strokeColor.a + glyphColor.a) * u_parentAlpha;
+		vec4 strokeColor = u_strokeColor * lumal.r;
+		gl_FragColor = vec4((1. - glyphColor.a) * strokeColor.rgb + glyphColor.rgb, strokeColor.a + glyphColor.a) * u_parentAlpha;
 	}
 }
