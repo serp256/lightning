@@ -35,13 +35,32 @@ public class LightFacebook {
 
             switch (state) {
                 case OPENED:
-                    if (extraPermsState == EXTRA_PERMS_NOT_REQUESTED) {
-                        requestReadPerms();    
+                    switch (extraPermsState) {
+                        // handling same as following in OPENED_TOKEN_UPDATED, but for htc one x, which fires OPENED instead of OPENED_TOKEN_UPDATED
+                        case READ_PERMS_REQUESTED:
+                            readPerms.clear();
+                            readPerms = null;
+                            requestPublishPerms();
+
+                            break;
+
+                        case PUBLISH_PERMS_REQUESTED:
+                            publishPerms.clear();
+                            publishPerms = null;
+                            extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
+                            connectSuccess();
+                            
+                            break;
+
+                        case EXTRA_PERMS_NOT_REQUESTED:
+                            requestReadPerms();
+                            break;
                     }
                     
                     break;
 
                 case OPENED_TOKEN_UPDATED:
+                    // handling state changes for normal devices
                     switch (extraPermsState) {
                         case READ_PERMS_REQUESTED:
                             readPerms.clear();

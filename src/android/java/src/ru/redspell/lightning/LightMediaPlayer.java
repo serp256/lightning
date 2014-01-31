@@ -27,7 +27,7 @@ public class LightMediaPlayer extends MediaPlayer {
 		public void onSaveInstanceState(android.os.Bundle outState) {}
 		public void onStop() {}
 		public void onDestroy() {}
-	};
+	};	
 
 	private class CamlCallbackCompleteRunnable implements Runnable {
 		private int cb;
