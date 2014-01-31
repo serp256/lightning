@@ -436,20 +436,20 @@ value ml_malinfo(value p) {
 	return caml_alloc_tuple(3);
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
+// JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
+// 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
 
-	paused = 1;
-	sound_pause(env);
-}
+// 	paused = 1;
+// 	sound_pause(env);
+// }
 
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
+// JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
+// 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
 
-	paused = 0;
-	sound_resume(env);
-}
+// 	paused = 0;
+// 	sound_resume(env);
+// }
 
 value ml_openURL(value  url) {
 	JNIEnv *env;

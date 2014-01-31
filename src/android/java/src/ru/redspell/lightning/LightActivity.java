@@ -63,12 +63,10 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
 
 	public static void addUiLifecycleHelper(IUiLifecycleHelper helper) {
-		Log.d("LIGHTNING", "addUiLifecycleHelper call " + Thread.currentThread().getId());
-		uiLfcclHlprs.add(helper);	
+		uiLfcclHlprs.add(helper);
 	}
 
 	public static void removeUiLifecycleHelper(IUiLifecycleHelper helper) {
-		Log.d("LIGHTNING", "removeUiLifecycleHelper call " + Thread.currentThread().getId());
 		uiLfcclHlprs.remove(helper);
 	}
 
@@ -129,6 +127,8 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		if (marketType() == MarketType.GOOGLE) {
 			checkPlayServices();	
 		}
+
+		addUiLifecycleHelper(new LightMediaPlayer.LifecycleHelper());
 	}
 
 	public boolean startExpansionDownloadService(String pubKey) {

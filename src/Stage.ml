@@ -231,41 +231,35 @@ class virtual c (_width:float) (_height:float) =
     value mutable sharedTexNum: option DisplayObject.c = None;
 
     method renderStage () =
-    (
-      debug:render "RENDER STAGE";
-      Render.clear bgColor 1.;
-      proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
-      match fpsTrace with [ None -> () | Some fps -> fps#render None ];
-      match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
-      (*
-      debug "start render";
-      debug "end render";
-      *)
-    );
+      proftimer:steam "renderStage %f"
+        (
+          Render.clear bgColor 1.;
+          super#render None;
+          match fpsTrace with [ None -> () | Some fps -> fps#render None ];
+          match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
+        );
 
     value runtweens = Queue.create ();
 
 
-    method advanceTime (seconds:float) = 
-    (
-      debug "advance time: %f" seconds;
-      Texture.check_async();
-      proftimer:perfomance "Stage advanceTime: %F"
-      (
-          Timers.process seconds;
-          Queue.transfer tweens runtweens;
-          while not (Queue.is_empty runtweens) do
-            let tween = Queue.take runtweens in
-            match tween#process seconds with
-            [ True -> Queue.push tween tweens
-            | False -> ()
-            ]
-          done;
-      );
-      proftimer:perfomance "Enter frame: %F" D.dispatchEnterFrame seconds;
-      debug "end advance time";
-    );
-
+    method advanceTime (seconds:float) =
+      let () = debug:steam "---------------------------" in
+      proftimer:steam "advanceTime %f"
+        (
+          Texture.check_async();
+          (
+              Timers.process seconds;
+              Queue.transfer tweens runtweens;
+              while not (Queue.is_empty runtweens) do
+                let tween = Queue.take runtweens in
+                match tween#process seconds with
+                [ True -> Queue.push tween tweens
+                | False -> ()
+                ]
+              done;
+          );
+          D.dispatchEnterFrame seconds;
+        );
 
     method traceFPS (show:(int -> #DisplayObject.c)) = 
       let f =
@@ -308,19 +302,16 @@ class virtual c (_width:float) (_height:float) =
 
     method !z = Some 0;
     method run seconds = 
-proftimer:frame "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!frame %f"
     (
-      self#advanceTime seconds;
-      debug:run "start prerender";
-      proftimer:prerndr "prerender %f" (D.prerender ());
-      debug:run "end prerender";
+      debug:steam "-------------------------------";
+
+      proftimer:steam "advence %f" (self#advanceTime seconds);
+      proftimer:steam "prerender %f" (D.prerender ());
       Render.clear bgColor 1.;
       Render.checkErrors "before render";
-      debug:run "start render";
-      proftimer:perfomance "STAGE rendered %F\n=======================" (super#render None);
+      proftimer:steam "render %f" (super#render None);
       match fpsTrace with [ None -> () | Some fps -> fps#render None ];
-      match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
-(*       debug:run "end render"; *)
+      match sharedTexNum with [ None -> () | Some sharedTexNum -> sharedTexNum#render None ];
     );
 
   method! hitTestPoint localPoint isTouch =

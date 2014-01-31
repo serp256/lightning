@@ -435,3 +435,11 @@ void sound_resume(JNIEnv *env) {
 	PRINT_DEBUG("resume ALL players");
 	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);
 }
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024LifecycleHelper_onResume(JNIEnv *env, jobject this) {
+	sound_resume(env);
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024LifecycleHelper_onPause(JNIEnv *env, jobject this) {
+	sound_pause(env);
+}

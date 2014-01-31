@@ -147,7 +147,7 @@ value prerender () =
     )
   ];
 
-value prerender () = proftimer:perfomance "PRERENDER: %F" prerender ();
+value prerender () = proftimer:steam "prerender: %f" (prerender ());
 
 
 Callback.register "prerender" prerender;
