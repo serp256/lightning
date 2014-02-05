@@ -146,6 +146,15 @@ value remove_if f vect  =
   with
     [ Not_found -> () ];
 
+value pop_if f vect = 
+  let index = DynArray.index_of f vect.data in
+  let v = DynArray.get vect.data index in
+    (
+      DynArray.delete vect.data index; 
+      v
+    );
+
+
 value remove vect v =
   try
     DynArray.index_of (fun data -> data = v)  vect.data |> DynArray.delete vect.data; 
