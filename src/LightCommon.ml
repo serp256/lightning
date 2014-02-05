@@ -318,9 +318,10 @@ external androidScreen: unit -> (androidScreen * androidDensity) = "ml_androidSc
 value getDevice () = Android (androidScreen ());
 ELSPLATFORM(ios)
 external ios_platfrom: unit -> string = "ml_platform";
-value getDevice () = 
+value getDevice () =
   let d : ios_device = 
     let ip = ios_platfrom () in
+    let () = Debug.d "!!!!!!!!!!!!!!!!!ios platform %s" ip in
     if String.starts_with ip "iPhone" 
     then 
       if String.starts_with ip "iPhone1" then IPhoneOld
@@ -328,6 +329,7 @@ value getDevice () =
       else if String.starts_with ip "iPhone3" then IPhone4
       else if String.starts_with ip "iPhone4" then IPhone4
       else if String.starts_with ip "iPhone5" then IPhone5
+      else if String.starts_with ip "iPhone6" then IPhone5
       else IPhoneNew 
     else begin
       if String.starts_with ip "iPod" 

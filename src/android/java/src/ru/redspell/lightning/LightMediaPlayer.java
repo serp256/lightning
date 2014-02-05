@@ -21,8 +21,17 @@ public class LightMediaPlayer extends MediaPlayer {
 
 	public static class LifecycleHelper implements IUiLifecycleHelper {
 		public void onCreate(android.os.Bundle savedInstanceState) {}
-		public native void onResume();
-		public native void onPause();
+
+		public void onResume() {
+			LightMediaPlayer.resumeAll();
+			LightSoundPool.getInstance().autoResume();
+		}
+
+		public void onPause() {
+			LightMediaPlayer.pauseAll();
+			LightSoundPool.getInstance().autoPause();
+		}
+
 		public void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {}
 		public void onSaveInstanceState(android.os.Bundle outState) {}
 		public void onStop() {}

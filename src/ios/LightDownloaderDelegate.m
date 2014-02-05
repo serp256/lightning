@@ -1,9 +1,5 @@
 #import "LightDownloaderDelegate.h"
 
-#define REG_CALLBACK(src, dst) { dst = src; caml_register_generational_global_root(&dst); }
-#define REG_OPT_CALLBACK(src, dst) if (Is_block(src)) { dst = Field(src, 0); caml_register_generational_global_root(&dst); } else { dst = 0; }
-#define FREE_CALLBACK(callback) if (callback) { caml_remove_generational_global_root(&callback); }
-
 @implementation LightDownloaderDelegate
 
 - (id)initWithSuccess: (value) sccss error: (value) err progress: (value) prgrss filename: (NSString*) fname {

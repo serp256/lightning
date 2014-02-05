@@ -176,10 +176,15 @@ value ml_fbInit(value appId) {
     [FBSettings setDefaultAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
     NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
 
-    [notifCntr addObserverForName:APP_HANDLE_OPEN_URL_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        //NSLog(@"handling open url notification");
+    [notifCntr addObserverForName:APP_OPENURL object:nil queue:nil usingBlock:^(NSNotification* notif) {
         if ([FBSettings defaultAppID]) {
-            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_HANDLE_OPEN_URL_NOTIFICATION_DATA]];
+            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
+        }
+    }];
+
+    [notifCntr addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
+        if ([FBSettings defaultAppID]) {
+            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
         }
     }];
 

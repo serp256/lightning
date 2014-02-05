@@ -3,6 +3,7 @@
 #import <caml/callback.h>
 #import <caml/memory.h>
 #import <caml/alloc.h>
+#import "mlwrapper_ios.h"
 
 @interface LightDownloaderDelegate : NSObject <NSURLConnectionDataDelegate> {
 	value success;

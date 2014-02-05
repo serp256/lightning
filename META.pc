@@ -68,6 +68,12 @@ package "facebook" (
 	archive(native) = "facebook.cmxa"
 )
 
+package "native_vk" (
+  description="Vk native SDK support"
+  archive(byte) = "NativeVk.cma"
+  archive(native) = "NativeVk.cmxa"
+)
+
 package "social" (
 
   archive(bytes) = "SNTypes.cmi"
