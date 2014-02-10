@@ -476,13 +476,13 @@ public class LightFacebook {
         return true;
     }
 
-    public static boolean graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback) {
+    public static boolean graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback, final int httpMethod) {
         if (session == null || !session.isOpened()) return false;
 
         LightActivity.instance.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                new com.facebook.Request(session, path, params, params.size() == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.Request.Callback() {
+                new com.facebook.Request(session, path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.Request.Callback() {
                     @Override
                     public void onCompleted(com.facebook.Response response) {
                         com.facebook.FacebookRequestError error = response.getError();

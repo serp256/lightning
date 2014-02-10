@@ -367,17 +367,21 @@ value ml_fbApprequest(value title, value message, value recipient, value data, v
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-value ml_fbGraphrequest(value path, value params, value successCallback, value failCallback) {
+value ml_fbGraphrequest(value path, value params, value successCallback, value failCallback, value http_method) {
     FBSESSION_CHECK;
 
     NSString* nspath = [NSString stringWithCString:String_val(path) encoding:NSASCIIStringEncoding];
     NSDictionary* nsparams = [NSMutableDictionary dictionary];
-    NSString* reqMethod = @"GET";
+
+    static value get_variant = 0;
+    if (!get_variant) get_variant = caml_hash_variant("get");
+
+    NSString* reqMethod = get_variant == http_method ? @"GET" : @"POST";
 
     //NSLog(@"graph request %@", nspath);
 
     if (params != Val_int(0)) {
-        reqMethod = @"POST";
+        // reqMethod = @"POST";
 
         value _params = Field(params, 0);
         value param;
