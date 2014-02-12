@@ -149,7 +149,7 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
 
     @Override
 	public String getPlayerID() {
-		if (amzGamesClient == null || !amzGamesClient.isInitialized()) {
+		if (amzGamesClient == null || !amzGamesClient.isInitialized() || player == null) {
 		  return null;
 		} else {
 		  return player.getPlayerId();
