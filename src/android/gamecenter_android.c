@@ -1,8 +1,8 @@
 
 #include "mlwrapper_android.h"
 
-
 static jclass gcCls = NULL;
+
 
 static jobject getGcCls(JNIEnv *env) {
 	if (gcCls == NULL) {
@@ -14,6 +14,8 @@ static jobject getGcCls(JNIEnv *env) {
 	return gcCls;
 }
 
+
+
 static jobject jGameCenter = NULL;
 
 
@@ -22,31 +24,71 @@ static void clearGameCenter(JNIEnv *env) {
 	jGameCenter = NULL;
 }
 
+
 value ml_gamecenter_init(value param) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_game_center_init");
-	jclass gcCls = getGcCls(env);
-	jmethodID jInitM = (*env)->GetMethodID(env,gcCls,"<init>","()V");
-	jobject jobj = (*env)->NewObject(env,gcCls,jInitM);
-	jGameCenter = (*env)->NewGlobalRef(env,jobj);
-	(*env)->DeleteLocalRef(env,jobj);
+	
+	// get factory class
+	jclass gcManagerCls = (*env)->FindClass(env, "ru/redspell/lightning/gamecenter/LightGameCenterManager");
+	if (gcManagerCls == NULL) {
+        caml_failwith("GameCenterManager not found");
+	}
+	
+	// find static method createGameCenter
+	jmethodID jCreateM = (*env)->GetStaticMethodID(env, gcManagerCls, "createGameCenter", "(I)Lru/redspell/lightning/gamecenter/LightGameCenter;");
+	if (jCreateM == NULL) {
+	    (*env)->DeleteLocalRef(env, gcManagerCls);
+	    caml_failwith("createGameCenter method not found");
+	}
+	
+		
+	// call static method createGameCenter, this creates GC Adapter instance
+//	jobject gcLocalRef = (*env)->CallStaticObjectMethod(env, gcManagerCls, jCreateM);
+	int kind = Int_val(param);
+	jobject gcLocalRef = (*env)->CallStaticIntMethod(env, gcManagerCls, jCreateM, kind);
+	if (gcLocalRef == NULL) {
+  	    (*env)->DeleteLocalRef(env, gcManagerCls);
+  	    (*env)->DeleteLocalRef(env, jCreateM);
+	    caml_failwith("failed to call createGameCenter method");  	    
+	}
+
+
+    // this is a real instance of CG Adapter. Now let's find its class
+	jGameCenter = (*env)->NewGlobalRef(env, gcLocalRef);
+	(*env)->DeleteLocalRef(env, gcLocalRef);
+
+    jclass tmpCls = (*env)->GetObjectClass(env, jGameCenter);
+	gcCls =  (*env)->NewGlobalRef(env, tmpCls);
+	(*env)->DeleteLocalRef(env, tmpCls);
+	
+
+	// call connect 
+    jmethodID jConnectM = (*env)->GetMethodID(env, gcCls, "connect", "()V");
+    if (jConnectM == NULL) {
+        caml_failwith("Can't find connect method");   
+    }
+
+    (*env)->CallVoidMethod(env, jGameCenter, jConnectM);
+    (*env)->DeleteLocalRef(env, jConnectM);
+	
 	return Val_true;
 }
 
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightGameCenter_00024ConnectionSuccessCallbackRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024ConnectionSuccessCallbackRunnable_run(JNIEnv *env, jobject this) {
 	value *ml_gamecenter_initialized = caml_named_value("game_center_initialized");
 	caml_callback(*ml_gamecenter_initialized,Val_true);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightGameCenter_00024ConnectionFailedCallbackRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024ConnectionFailedCallbackRunnable_run(JNIEnv *env, jobject this) {
 	value *ml_gamecenter_initialized = caml_named_value("game_center_initialized");
 	clearGameCenter(env);
 	caml_callback(*ml_gamecenter_initialized,Val_false);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightGameCenter_00024ConnectionDisconnectedCallbackRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024ConnectionDisconnectedCallbackRunnable_run(JNIEnv *env, jobject this) {
 	value *ml_gamecenter_disconnected = caml_named_value("game_center_disconnected");
 	caml_callback(*ml_gamecenter_disconnected,Val_unit);
 }
@@ -85,7 +127,7 @@ static value convertPlayer(JNIEnv *env, jobject jPlayer) {
 	static jmethodID jGetDisplayNameM = NULL;
 	// Add Image here, maybe througt URL and extern image loader????
 	if (!jGetPlayerIDM) {
-		jclass jPlayerCls = (*env)->FindClass(env,"com/google/android/gms/games/Player");
+		jclass jPlayerCls = (*env)->FindClass(env,"ru/redspell/lightning/gamecenter/LightGameCenterPlayer");
 		jGetPlayerIDM = (*env)->GetMethodID(env,jPlayerCls,"getPlayerId","()Ljava/lang/String;");
 		jGetDisplayNameM = (*env)->GetMethodID(env,jPlayerCls,"getDisplayName","()Ljava/lang/String;");
 		(*env)->DeleteLocalRef(env,jPlayerCls);
@@ -118,7 +160,7 @@ value ml_gamecenter_current_player(value p) {
 	static jmethodID jCurrentPlayerM = NULL;
 	if (!jCurrentPlayerM) { 
 		jclass gcCls = getGcCls(env);
-		jCurrentPlayerM = (*env)->GetMethodID(env,gcCls,"currentPlayer","()Lcom/google/android/gms/games/Player;");
+		jCurrentPlayerM = (*env)->GetMethodID(env,gcCls,"currentPlayer","()Lru/redspell/lightning/gamecenter/LightGameCenterPlayer;");
 	};
 	jobject jPlayer = (*env)->CallObjectMethod(env,jGameCenter,jCurrentPlayerM);
 	value res;
