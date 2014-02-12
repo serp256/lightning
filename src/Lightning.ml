@@ -72,6 +72,7 @@ ENDPLATFORM;
 
 IFPLATFORM(android) (* for link mlwrapper_android *)
 external jni_onload: unit -> unit = "JNI_OnLoad";
+external native_activity_dummy: unit -> unit = "android_main";
 ENDPLATFORM;
 
 value getLocale = LightCommon.getLocale;
