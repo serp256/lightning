@@ -1,6 +1,4 @@
-
-
-value init: ?callback:(bool -> unit) -> unit -> unit;
+value init: ?callback:(bool -> unit) ->	?amazon:bool -> unit -> unit;
 value is_connected: unit -> bool;
 value playerID: unit -> option string;
 IFPLATFORM(ios pc)
@@ -10,6 +8,7 @@ ENDPLATFORM;
 value unlockAchievement: string -> unit;
 value showLeaderboard: unit -> unit;
 value showAchievements: unit -> unit;
+value reportAchievement: string -> float -> unit;
 
 
 type player = 

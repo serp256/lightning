@@ -20,6 +20,11 @@ value string_of_textureID textureID =
 
 value scale = ref 1.;
 
+(*  take care of accordance of this type and enum LTextureFormat from texture_common.h.
+    rules to add new format:
+      1) if new constructor has no params, put it at any place, but before first constructor with params
+      2) if constuctor has params, put it at any place, but after last constructor without params
+  *)
 type textureFormat = 
   [ TextureFormatRGBA
   | TextureFormatRGB
@@ -37,9 +42,10 @@ type textureFormat =
   | TextureFormatATCRGBAE
   | TextureFormatATCRGBAI
   | TextureFormatETC1
+  | TextureLuminance
+  | TextureLuminanceAlpha  
   | TextureFormatPallete of int
   | TextureFormatETC1WithAlpha of textureInfo
-  | TextureLuminance
   ]
 and textureInfo = 
   {
@@ -53,7 +59,7 @@ and textureInfo =
     textureID: textureID;
   };
 
-type kind = [ Simple of bool | Alpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
+type kind = [ Simple of bool | Alpha | LuminanceAlpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
 type renderInfo =
   {
     rtextureID: textureID;
@@ -218,7 +224,7 @@ class subtexture region clipping ts (baseTexture:c) =
 
 value cache = TextureCache.create 11;
 
-
+value createSubtex region clipping ts baseTexture = ((new subtexture region clipping ts baseTexture) :> c);
 
 
 (*
@@ -287,13 +293,14 @@ class s textureInfo =
     if textureInfo.realHeight <> textureInfo.height || textureInfo.realWidth <> textureInfo.width 
     then Some (Rectangle.create 0. 0. (width /. (float textureInfo.width)) (height /. (float textureInfo.height)))
     else None 
-  and kind = 
+  and kind =
     match textureInfo.texFormat with
     [ TextureFormatPallete palleteID -> 
       let pallete = loadPallete palleteID in
         Pallete pallete
     | TextureFormatAlpha -> Alpha
-    | TextureFormatETC1WithAlpha alphaTexInfo -> let () = debug "TextureFormatETC1WithAlpha of ..." in EtcWithAlpha alphaTexInfo
+    | TextureLuminanceAlpha -> LuminanceAlpha
+    | TextureFormatETC1WithAlpha alphaTexInfo -> EtcWithAlpha alphaTexInfo
     | _ -> Simple textureInfo.pma
     ]
   in

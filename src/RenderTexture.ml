@@ -575,7 +575,20 @@ class virtual base renderInfo =
     method base : option Texture.c = None;
     method clipping = renderInfo.clipping;
     method rootClipping = renderInfo.clipping;
-    method subTexture (region:Rectangle.t) : Texture.c = assert False;
+
+    method subTexture region =
+      let scale = !scale in
+      let clipping = 
+        let tw = renderInfo.rwidth /. scale
+        and th = renderInfo.rheight /. scale in
+        Rectangle.create 
+          (region.Rectangle.x /. tw) 
+          (region.Rectangle.y /. th) 
+          (region.Rectangle.width /. tw) 
+          (region.Rectangle.height /. th) 
+      in
+        Texture.createSubtex region clipping scale (self :> c);
+
     value renderers = Renderers.create 1;
     method addRenderer r = Renderers.add renderers r;
     method removeRenderer r = Renderers.remove renderers r;

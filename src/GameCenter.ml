@@ -1,4 +1,3 @@
-
 type player = 
   {
     id: string;
@@ -25,7 +24,7 @@ value is_connected () =
 
 value initializer_handler = ref None;
 
-external gamecenter_init: unit -> bool = "ml_gamecenter_init";
+external gamecenter_init: int -> bool = "ml_gamecenter_init";
 
 value game_center_initialized success = 
   let () = debug "GameCenter initialized" in
@@ -54,10 +53,11 @@ value game_center_initialized success =
 
 Callback.register "game_center_initialized" game_center_initialized;
 
-value init ?callback () = 
+value init ?callback ?amazon:(amazon'=False) () =
+  let index = if amazon' then 1 else 0 in
   match !state with 
   [ NotInitialized -> 
-    match gamecenter_init () with
+    match gamecenter_init index with
     [ True ->
       (
         initializer_handler.val := callback;
@@ -90,7 +90,7 @@ value playerID () =
 
 ELSE
 
-value init ?callback () = 
+value init ?callback ?amazon:(amazon'=False) () = 
   match callback with
   [ Some c -> c False
   | None -> ()
@@ -168,7 +168,7 @@ value unlockAchievement identifier =
       Queue.push c callbacks
   | Initialized -> unlock_achievement identifier 
   ];
-
+value reportAchievement (identifier:string) (percentComplete:float) = ();
 
 
 ELSE

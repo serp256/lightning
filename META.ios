@@ -95,6 +95,12 @@ package "facebook" (
 	linkopts = "-ccopt '-F%lightning_path%/src/plugins/facebook/ios'"
 )
 
+package "native_vk" (
+  description="Vk native SDK support"
+  archive(byte) = "NativeVk.cma"
+  archive(native) = "NativeVk.cmxa"
+)
+
 package "social" (
 
   archive(bytes) = "SNTypes.cmi"

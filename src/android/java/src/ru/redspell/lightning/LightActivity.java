@@ -50,16 +50,23 @@ import com.google.android.gms.common.Scopes;*/
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
+	public class MarketType {
+		public static final String GOOGLE = "google";
+		public static final String AMAZON = "amazon";
+	}
+
+	public String marketType() {
+		return MarketType.GOOGLE;
+	}
+
 	// private static ArrayList<IUiLifecycleHelper> uiLfcclHlprs = new ArrayList();
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
 
 	public static void addUiLifecycleHelper(IUiLifecycleHelper helper) {
-		Log.d("LIGHTNING", "addUiLifecycleHelper call " + Thread.currentThread().getId());
-		uiLfcclHlprs.add(helper);	
+		uiLfcclHlprs.add(helper);
 	}
 
 	public static void removeUiLifecycleHelper(IUiLifecycleHelper helper) {
-		Log.d("LIGHTNING", "removeUiLifecycleHelper call " + Thread.currentThread().getId());
 		uiLfcclHlprs.remove(helper);
 	}
 
@@ -117,8 +124,11 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 			h.onCreate(savedInstanceState);
 		};
 
-		checkPlayServices();
+		if (marketType() == MarketType.GOOGLE) {
+			checkPlayServices();	
+		}
 
+		addUiLifecycleHelper(new LightMediaPlayer.LifecycleHelper());
 	}
 
 	public boolean startExpansionDownloadService(String pubKey) {

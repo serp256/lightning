@@ -157,7 +157,10 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 		path = malloc(flen + diff + slen + 1);
 		memcpy(path,fname,bflen);
 		if (slen != 0) memcpy(path + bflen,suffix,slen);
-		if (!strcasecmp(ext,".alpha")) {// if it's alpha, not try to add pvr, plx ...
+
+		int with_lum = !strcasecmp(ext,".lumal");
+
+		if (!strcasecmp(ext,".alpha") || with_lum) {// if it's alpha, not try to add pvr, plx ...
 			if (slen != 0) {
 				strcpy(path + bflen + slen,ext);
 				if (getResourceFd(path,&r)) {
@@ -165,7 +168,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
 #endif
-					int r = loadAlphaPtr(fptr,tInfo);
+					int r = loadAlphaPtr(fptr,tInfo,with_lum);
 					free(path);
 					return r;
 				}
@@ -176,7 +179,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,fname,255);
 #endif
-			int r = loadAlphaPtr(fptr,tInfo);
+			int r = loadAlphaPtr(fptr,tInfo,with_lum);
 			return r;
 		} else if (strcasecmp(ext,".plt")) { // если это не палитра
 			

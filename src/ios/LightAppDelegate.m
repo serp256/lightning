@@ -61,11 +61,10 @@ void set_referrer(char *type,NSString *nid) {
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application         {
-	// NSLog(@"become active %@", [FBSession defaultAppID]);
+	NSLog(@"become active");
 
-
-  // [FBSession defaultAppID] ? [[FBSession activeSession] handleDidBecomeActive] : NO;
-  [[NSNotificationCenter defaultCenter] postNotificationName:APP_BECOME_ACTIVE_NOTIFICATION object:self];
+  	application.applicationIconBadgeNumber = 0;
+  	[[NSNotificationCenter defaultCenter] postNotificationName:APP_BECOME_ACTIVE_NOTIFICATION object:self];
 	[lightViewController becomeActive];
 }
 
@@ -136,28 +135,21 @@ void set_referrer(char *type,NSString *nid) {
 
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
-/*	 	NSString *urlString = [url absoluteString];
-	  const char *str = [urlString UTF8String];
-		NSLog(@"UIApplication handleOpenURL %s", str);
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"applicationHandleOpenURL" object: self userInfo: [NSDictionary dictionaryWithObject: url forKey:@"url"]];
-    return YES;*/
-    [[NSNotificationCenter defaultCenter] postNotificationName:APP_HANDLE_OPEN_URL_NOTIFICATION object:self userInfo:[NSDictionary dictionaryWithObject:url forKey:APP_HANDLE_OPEN_URL_NOTIFICATION_DATA]];
-
+	[url retain];
+	NSDictionary* data = [NSDictionary dictionaryWithObject:url forKey:APP_URL_DATA];
+	
+    [[NSNotificationCenter defaultCenter] postNotificationName:APP_OPENURL object:self userInfo:data];
     return YES;
-    // return [FBSession defaultAppID] ? [[FBSession activeSession] handleOpenURL:url] : NO;
 }
 
     
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
-/*	 	NSString *urlString = [url absoluteString];
-	  const char *str = [urlString UTF8String];
-		NSLog(@"UIApplication openURL %s", str);
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"applicationHandleOpenURL" object: self userInfo: [NSDictionary dictionaryWithObject: url forKey:@"url"]];
-    return YES;*/
-    [[NSNotificationCenter defaultCenter] postNotificationName:APP_HANDLE_OPEN_URL_NOTIFICATION object:self userInfo:[NSDictionary dictionaryWithObject:url forKey:APP_HANDLE_OPEN_URL_NOTIFICATION_DATA]];
+	[url retain];
+	[sourceApplication retain];
+	NSDictionary* data = [NSDictionary dictionaryWithObjectsAndKeys: url, APP_URL_DATA, sourceApplication, APP_SOURCEAPP_DATA, nil];
 
+    [[NSNotificationCenter defaultCenter] postNotificationName:APP_OPENURL_SOURCEAPP object:self userInfo:data];
     return YES;
-    // return [FBSession defaultAppID] ? [[FBSession activeSession] handleOpenURL:url] : NO;
 }
 
 -(BOOL)shouldAutorotate {

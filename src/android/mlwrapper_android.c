@@ -264,7 +264,7 @@ int getResourceFd(const char *path, resource *res) {
 // получим параметры нах
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
-	PRINT_DEBUG("lightRender init");
+	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated");
 	if (!ocaml_initialized) {
 		PRINT_DEBUG("init ocaml");
 		char *argv[] = {"android",NULL};
@@ -280,20 +280,37 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 	};
 }
 
-static int onResume = 0;
-static int surfaceDestroyed = 0;
+// static int onResume = 0;
+// static int surfaceDestroyed = 0;
 static int paused = 0;
+static int started = 0;
 
-void callDispatchFgHandler() {
+JNIEXPORT void Java_ru_redspell_lightning_opengl_GLSurfaceView_00024GLThread_background(JNIEnv *env, jobject this) {
+	static value dispatchBgHandler = 1;
+
+	if (stage) {
+		if (dispatchBgHandler == 1) dispatchBgHandler = caml_hash_variant("dispatchBackgroundEv");
+		caml_callback2(caml_get_public_method(stage->stage, dispatchBgHandler), stage->stage, Val_unit);
+	}
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_opengl_GLSurfaceView_00024GLThread_foreground(JNIEnv *env, jobject this) {
+	// first call should be ignored cause it is not foreground but application start
+	if (!started) {
+		started = 1;
+		return;
+	}
+
 	static value dispatchFgHandler = 1;
 
 	if (stage) {
 		if (dispatchFgHandler == 1) dispatchFgHandler = caml_hash_variant("dispatchForegroundEv");
 		caml_callback2(caml_get_public_method(stage->stage, dispatchFgHandler), stage->stage, Val_unit);
-	}	
+	}
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged");
 	PRINT_DEBUG("GL Changed: %i:%i, paused %d",width,height, paused);
 
 	if (paused) {
@@ -314,11 +331,6 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 
 			caml_callback3(caml_get_public_method(stage->stage, caml_hash_variant("_stageResized")), stage->stage, caml_copy_double(fwidth), caml_copy_double(fheight));
 		}
-
-		if (onResume) {
-			onResume = 0;
-			callDispatchFgHandler();
-		}
 	}
 
 }
@@ -330,15 +342,9 @@ JNIEXPORT jint Java_ru_redspell_lightning_LightRenderer_nativeGetFrameRate(JNIEn
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(JNIEnv *env, jobject this) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed call");
-	surfaceDestroyed = 1;
 }
 
-
-
-
-static value run_method = 1;//None
-//void mlstage_run(double timePassed) {
-//}
+static value run_method = 1;
 
 extern int net_running();
 extern void net_run();
@@ -430,34 +436,20 @@ value ml_malinfo(value p) {
 	return caml_alloc_tuple(3);
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
+// JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
+// 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
 
-	paused = 1;
-	sound_pause(env);
-
-	static value dispatchBgHandler = 1;
-
-	if (stage) {
-		if (dispatchBgHandler == 1) dispatchBgHandler = caml_hash_variant("dispatchBackgroundEv");
-		caml_callback2(caml_get_public_method(stage->stage, dispatchBgHandler), stage->stage, Val_unit);
-	}	
-}
+// 	paused = 1;
+// 	sound_pause(env);
+// }
 
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
+// JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
+// 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
 
-	paused = 0;
-	sound_resume(env);
-
-	if (surfaceDestroyed) {
-		surfaceDestroyed = 0;
-		onResume = 1;	
-	} else {
-		callDispatchFgHandler();
-	}
-}
+// 	paused = 0;
+// 	sound_resume(env);
+// }
 
 value ml_openURL(value  url) {
 	JNIEnv *env;

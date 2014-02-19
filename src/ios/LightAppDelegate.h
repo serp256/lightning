@@ -2,8 +2,12 @@
 #import "LightViewController.h"  
 
 #define APP_BECOME_ACTIVE_NOTIFICATION @"applicationBecomeActive"
-#define APP_HANDLE_OPEN_URL_NOTIFICATION @"applicationHandleOpenUrl"
-#define APP_HANDLE_OPEN_URL_NOTIFICATION_DATA @"applicationHandleOpenUrl"
+
+#define APP_OPENURL @"APP_OPENURL"
+#define APP_OPENURL_SOURCEAPP @"APP_OPENURL_SOURCEAPP"
+
+#define APP_URL_DATA @"APP_URL_DATA"
+#define APP_SOURCEAPP_DATA @"APP_SOURCEAPP_DATA"
 
 
 @interface LightAppDelegate : NSObject <UIApplicationDelegate,OrientationDelegate> {

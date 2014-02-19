@@ -58,7 +58,7 @@ value create texture rect ?name ?(pos=Point.empty) ?(scaleX=1.) ?(scaleY=1.) ?ro
       pos; color; alpha; flipX; flipY; scaleX; scaleY; rotation=match rotation with [ None -> 0. | Some r -> LightCommon.clamp_rotation r];
       glpoints=None;
       bounds=Rectangle.empty;
-      clipping=(Obj.magic clipping)
+      clipping=(Obj.magic clipping);
     };
   );
 
@@ -130,8 +130,8 @@ value setScaleY scaleY t = {(t) with scaleY; glpoints = None; bounds=Rectangle.e
 value matrix t = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation ();
 
 value calc_glpoints t = 
-  let m = Matrix.create ~translate:t.pos ~scale:(t.scaleX,t.scaleY) ~rotation:t.rotation () in
   let open Point in
+  let m = matrix t in
   let p0 = Matrix.transformPoint m {x = 0.; y = 0.} 
   and p1 = Matrix.transformPoint m {x = t.width; y = 0.} 
   and p2 = Matrix.transformPoint m {x = 0.; y = t.height}

@@ -110,6 +110,7 @@ class virtual base texture =
                 c
               )
             | `ColorMatrix m -> `cmatrix m
+            | _ -> c
             ]
           end `simple fltrs 
         in
@@ -119,12 +120,12 @@ class virtual base texture =
           [ `simple when programID <> ShaderM.Normal.id -> 
             (
               programID := ShaderM.Normal.id;
-              shaderProgram := ShaderM.Normal.create ()
+              shaderProgram := ShaderM.Normal.create ();
             )
           | `cmatrix m when programID  <> ShaderM.ColorMatrix.id -> 
             (
               programID := ShaderM.ColorMatrix.id;
-              shaderProgram := ShaderM.ColorMatrix.create m
+              shaderProgram := ShaderM.ColorMatrix.create m;
             )
           | _ -> ()
           ];
@@ -187,9 +188,9 @@ class _c  _texture =
     method! setAlpha a =
     (
       super#setAlpha a;
-      Render.Image.set_alpha image a;
+      Render.Image.set_alpha image color a (match color with [ `QColors _ -> True | _ -> False ]);
       match glowFilter with
-      [ Some {g_image=Some img;_} -> Render.Image.set_alpha img a
+      [ Some {g_image=Some img;_} -> Render.Image.set_alpha img color a (match color with [ `QColors _ -> True | _ -> False ])
       | _ -> ()
       ];
     );

@@ -176,10 +176,15 @@ value ml_fbInit(value appId) {
     [FBSettings setDefaultAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
     NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
 
-    [notifCntr addObserverForName:APP_HANDLE_OPEN_URL_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        //NSLog(@"handling open url notification");
+    [notifCntr addObserverForName:APP_OPENURL object:nil queue:nil usingBlock:^(NSNotification* notif) {
         if ([FBSettings defaultAppID]) {
-            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_HANDLE_OPEN_URL_NOTIFICATION_DATA]];
+            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
+        }
+    }];
+
+    [notifCntr addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
+        if ([FBSettings defaultAppID]) {
+            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
         }
     }];
 
@@ -362,17 +367,21 @@ value ml_fbApprequest(value title, value message, value recipient, value data, v
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-value ml_fbGraphrequest(value path, value params, value successCallback, value failCallback) {
+value ml_fbGraphrequest(value path, value params, value successCallback, value failCallback, value http_method) {
     FBSESSION_CHECK;
 
     NSString* nspath = [NSString stringWithCString:String_val(path) encoding:NSASCIIStringEncoding];
     NSDictionary* nsparams = [NSMutableDictionary dictionary];
-    NSString* reqMethod = @"GET";
+
+    static value get_variant = 0;
+    if (!get_variant) get_variant = caml_hash_variant("get");
+
+    NSString* reqMethod = get_variant == http_method ? @"GET" : @"POST";
 
     //NSLog(@"graph request %@", nspath);
 
     if (params != Val_int(0)) {
-        reqMethod = @"POST";
+        // reqMethod = @"POST";
 
         value _params = Field(params, 0);
         value param;

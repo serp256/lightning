@@ -9,8 +9,16 @@ module type Programs = sig
   end;
   module ColorMatrix: sig
     value id: id;
-    value create:  Render.filter -> Render.prg;
+    value create: Render.filter -> Render.prg;
   end;
+  module Stroke: sig
+    value id: id;
+    value create: Render.filter -> Render.prg;
+  end;
+(*   module StrokeWithColorMatrix: sig
+    value id: id;
+    value create: ~matrix:(array float) -> ~stroke:int -> unit -> Render.prg;
+  end;   *)
 end;
 
 module Shape =
@@ -55,6 +63,12 @@ module Quad = struct
     value id = gen_id();
     value create () = assert False;
   end;
+
+  module Stroke = struct
+    value id = gen_id();
+    value create stroke = assert False;
+  end;
+
 
 end;
 
@@ -102,6 +116,15 @@ module Image = struct (*{{{*)
       (prg,Some matrix);
   end;
 
+  module Stroke = struct
+    value id = gen_id();
+    value create stroke = assert False;
+  end;
+
+(*   module StrokeWithColorMatrix = struct
+    value id = gen_id();
+    value create ~matrix ~stroke () = assert False;
+  end; *)
 end;(*}}}*)
 
 module ImagePallete = struct (*{{{*)
@@ -127,6 +150,16 @@ module ImagePallete = struct (*{{{*)
       in
       (prg,Some matrix);
   end;
+
+  module Stroke = struct
+    value id = gen_id();
+    value create stroke = assert False;
+  end;
+
+(*   module StrokeWithColorMatrix = struct
+    value id = gen_id();
+    value create ~matrix ~stroke () = assert False;
+  end; *)
 
 end;(*}}}*)
 
@@ -155,6 +188,16 @@ module ImageAlpha = struct (*{{{*)
       (prg,Some matrix);
   end;
 
+  module Stroke = struct
+    value id = gen_id ();
+    value create stroke = Normal.create ();
+  end;
+
+
+(*   module StrokeWithColorMatrix = struct
+    value id = gen_id ();
+    value create ~matrix ~stroke () = ColorMatrix.create (Filters._colorMatrix matrix);
+  end; *)
 end;(*}}}*)
 
 module ImageEtcWithAlpha = struct (*{{{*)
@@ -180,7 +223,46 @@ module ImageEtcWithAlpha = struct (*{{{*)
       in
       (prg,Some matrix);
   end;
+
+  module Stroke = struct
+    value id = gen_id();
+    value create stroke = assert False;
+  end;
+
+(*   module StrokeWithColorMatrix = struct
+    value id = gen_id ();
+    value create ~matrix ~stroke () = assert False;
+  end; *)
 end; (*}}}*)
+
+module TlfAtlas =
+  struct
+    module Normal = ImageAlpha.Normal;
+
+    module ColorMatrix = ImageAlpha.ColorMatrix;
+
+    module Stroke = struct
+      value id = gen_id();
+      value create stroke =
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"StrokedTlf.fsh"
+            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+            ~uniforms:[| ("u_texture",(UInt 0)); ("u_strokeColor", (UNone)) |]
+        in
+          (prg, Some stroke);
+    end;
+
+(*     module StrokeWithColorMatrix = struct
+      value id = gen_id ();
+      value create ~matrix ~stroke () =
+        let prg = 
+          load id ~vertex:"Image.vsh" ~fragment:"StrokedTlfWithColorMatrix.fsh"
+            ~attributes:[ (AttribPosition,"a_position"); (AttribTexCoords,"a_texCoord"); (AttribColor,"a_color")  ]
+            ~uniforms:[| ("u_texture",(UInt 0)); ("u_strokeColor", (UNone)); ("u_matrix",UNone) |]
+        in
+          (prg, Some (Filters.strokeWithColorMatrix (stroke land 0x00ffffff lor 0xff000000) matrix));
+    end; *)
+  end;
 
 
 value select_by_texture = fun
@@ -188,4 +270,5 @@ value select_by_texture = fun
   | Texture.Alpha -> (module ImageAlpha:Programs)
   | Texture.Pallete _ -> (module ImagePallete:Programs)
   | Texture.EtcWithAlpha _ -> (module ImageEtcWithAlpha:Programs)
+  | Texture.LuminanceAlpha -> (module TlfAtlas:Programs)
   ];
