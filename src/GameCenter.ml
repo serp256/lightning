@@ -106,6 +106,31 @@ ENDPLATFORM;
  * LEADERBOARDS AND ACHIEVEMNTS REPORT
  **************************************)
 
+IFPLATFORM(ios android)
+
+value report_leaderboard_failed category score = Debug.e "report leaderboard failed";
+Callback.register "report_leaderboard_failed" report_leaderboard_failed;
+
+external report_leaderboard: string -> int64 -> unit = "ml_gamecenter_report_leaderboard";
+value reportLeaderboard category score = 
+  match !state with
+  [ NotInitialized -> report_leaderboard_failed category score
+  | Initializing callbacks -> 
+      let c = fun 
+        [ True -> report_leaderboard category score
+        | False -> report_leaderboard_failed category score
+        ]
+      in
+      Queue.push c callbacks
+  | Initialized -> report_leaderboard category score
+  ];
+
+ELSE
+
+value reportLeaderboard (category:string) (scores:int64) = ();
+
+ENDPLATFORM;
+
 
 IFPLATFORM(ios)
 
@@ -127,27 +152,6 @@ value reportAchievement identifier percentComplete =
   ];
 
 value unlockAchievement identifier = reportAchievement identifier 100.;
-
-value report_leaderboard_failed category score = Debug.e "report leaderboard failed";
-Callback.register "report_leaderboard_failed" report_leaderboard_failed;
-
-external report_leaderboard: string -> int64 -> unit = "ml_gamecenter_report_leaderboard";
-value reportLeaderboard category score = 
-  match !state with
-  [ NotInitialized -> report_leaderboard_failed category score
-  | Initializing callbacks -> 
-      let c = fun 
-        [ True -> report_leaderboard category score
-        | False -> report_leaderboard_failed category score
-        ]
-      in
-      Queue.push c callbacks
-  | Initialized -> report_leaderboard category score
-  ];
-
-
-
-
 
 
 ELSPLATFORM(android)
@@ -173,7 +177,6 @@ value reportAchievement (identifier:string) (percentComplete:float) = ();
 
 ELSE
 
-value reportLeaderboard (category:string) (scores:int64) = ();
 value reportAchievement (identifier:string) (percentComplete:float) = ();
 value unlockAchievement (identifier:string) = ();
 

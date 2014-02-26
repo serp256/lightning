@@ -6,7 +6,7 @@ static jclass gcCls = NULL;
 
 static jobject getGcCls(JNIEnv *env) {
 	if (gcCls == NULL) {
-		jclass cls = (*env)->FindClass(env, "ru/redspell/lightning/LightGameCenter");
+		jclass cls = (*env)->FindClass(env, "ru/redspell/lightning/gamecenter/LightGameCenter");
 		if (cls == NULL) caml_failwith("GameCenter not found");
 		gcCls = (*env)->NewGlobalRef(env,cls);
 		(*env)->DeleteLocalRef(env,cls);
@@ -171,6 +171,23 @@ value ml_gamecenter_current_player(value p) {
 		Field(res,0) = player;
 	} else res = Val_none;
 	CAMLreturn(res);
+}
+
+value ml_gamecenter_report_leaderboard(value boardId, value score) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	PRINT_DEBUG("GC report leaderboard");
+	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
+	static jmethodID jSubmitScoreM = NULL;
+	if (!jSubmitScoreM) { 
+		jclass gcCls = getGcCls(env);
+		jSubmitScoreM = (*env)->GetMethodID(env,gcCls,"submitScore","(Ljava/lang/String;J)V");
+	};
+	jstring jid = (*env)->NewStringUTF(env,String_val(boardId));
+	jlong jscore = Long_val(score);  
+	(*env)->CallVoidMethod(env,jGameCenter,jSubmitScoreM,jid,jscore);
+	(*env)->DeleteLocalRef(env,jid);
+	return Val_unit;
 }
 
 value ml_gamecenter_unlock_achievement(value name) {

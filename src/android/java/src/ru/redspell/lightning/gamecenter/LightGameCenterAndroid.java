@@ -167,6 +167,19 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 		return player;
 	}
 
+	
+	@Override
+	public void submitScore(final String leaderboard_id, final long score) {
+		LightActivity.instance.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				Log.d ("LIGHTNING", "submit score");
+				mGamesClient.submitScore(leaderboard_id, score);
+			}
+		});
+	}
+
+
 
     @Override
 	public void unlockAchievement(final String achievement_id) {

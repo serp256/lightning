@@ -13,6 +13,7 @@ public interface LightGameCenter {
     public void showAchievements();
     
     public void unlockAchievement(final String achievement_id);
+		public void submitScore(final String leaderboard_id, final long score); 
   
     public void signOut();  
 }

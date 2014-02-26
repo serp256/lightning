@@ -167,6 +167,11 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
 	}
 
 
+    @Override
+	public void submitScore(final String leaderboard_id, final long score) {
+	}
+
+
 
     @Override
 	public void unlockAchievement(final String achievement_id) {
