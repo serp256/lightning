@@ -206,8 +206,31 @@ value showAchievements () =
   | Initialized -> show_achievements ()
   ];
 
+ELSE
+
+value showAchievements () = ();
+
+ENDPLATFORM;
+
+IFPLATFORM (android)
+external show_leaderboard: string -> unit = "ml_gamecenter_show_leaderboard";
+value showLeaderboard boardId = 
+  match !state with
+  [ NotInitialized -> ()
+  | Initializing callbacks -> 
+      let c = fun
+        [ True -> show_leaderboard boardId
+        | False -> ()
+        ]
+      in
+      Queue.push c callbacks
+  | Initialized -> show_leaderboard boardId
+  ];
+
+ELSPLATFORM (ios)  
+
 external show_leaderboard: unit -> unit = "ml_gamecenter_show_leaderboard";
-value showLeaderboard () = 
+value showLeaderboard boardId = 
   match !state with
   [ NotInitialized -> ()
   | Initializing callbacks -> 
@@ -219,12 +242,9 @@ value showLeaderboard () =
       Queue.push c callbacks
   | Initialized -> show_leaderboard ()
   ];
-
-
 ELSE
 
-value showLeaderboard () = ();
-value showAchievements () = ();
+value showLeaderboard boardId = ();
 
 ENDPLATFORM;
 

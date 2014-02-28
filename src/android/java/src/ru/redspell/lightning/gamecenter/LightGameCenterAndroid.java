@@ -173,7 +173,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 		LightActivity.instance.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				Log.d ("LIGHTNING", "submit score");
+				Log.d ("LIGHTNING.GameCenterAndroid", String.format("value = %d", score));
 				mGamesClient.submitScore(leaderboard_id, score);
 			}
 		});
@@ -193,6 +193,8 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 
 
 	private static int SHOW_ACHIEVEMENT_REQUEST = 912345679;
+	private static int SHOW_LEADERBOARD_REQUEST = 912345680;
+
 
 	public void showAchievements() {
 		if (mGamesClient == null) return;
@@ -223,6 +225,34 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 		});
 	}
 
+	public void showLeaderboard(final String boardId) {
+		if (mGamesClient == null) return;
+		if (!mGamesClient.isConnected()) return;
+		LightActivity.instance.runOnUiThread(new Runnable() {
+			@Override 
+			public void run() {
+				IUiLifecycleHelper helper = new IUiLifecycleHelper() {
+					@Override
+					public void onActivityResult(int requestCode, int resultCode, Intent data) {
+						if (requestCode == SHOW_LEADERBOARD_REQUEST) {
+							LightActivity.instance.removeUiLifecycleHelper(this);
+							Log.d("LIGHTNING","Result code is: " + resultCode);
+							if (resultCode == GamesActivityResultCodes.RESULT_RECONNECT_REQUIRED) mGamesClient.reconnect ();
+						}
+					}
+					@Override public void onDestroy() {};
+					@Override public void onStop() {};
+					@Override public void onPause() {};
+					@Override public void onResume() {};
+					@Override public void onCreate(Bundle b) {};
+					@Override public void onSaveInstanceState(Bundle b) {};
+				};
+				LightActivity.instance.addUiLifecycleHelper(helper);
+				Intent intent = mGamesClient.getLeaderboardIntent(boardId);
+				LightActivity.instance.startActivityForResult(intent,SHOW_LEADERBOARD_REQUEST);
+			}
+		});
+	}
 
 	public void signOut() {
 		if (mGamesClient != null) 

@@ -11,6 +11,7 @@ public interface LightGameCenter {
     public LightGameCenterPlayer currentPlayer();
   
     public void showAchievements();
+		public void showLeaderboard (final String boardId);
     
     public void unlockAchievement(final String achievement_id);
 		public void submitScore(final String leaderboard_id, final long score); 

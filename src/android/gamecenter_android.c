@@ -184,7 +184,7 @@ value ml_gamecenter_report_leaderboard(value boardId, value score) {
 		jSubmitScoreM = (*env)->GetMethodID(env,gcCls,"submitScore","(Ljava/lang/String;J)V");
 	};
 	jstring jid = (*env)->NewStringUTF(env,String_val(boardId));
-	jlong jscore = Long_val(score);  
+	jlong jscore = Int64_val(score);  
 	(*env)->CallVoidMethod(env,jGameCenter,jSubmitScoreM,jid,jscore);
 	(*env)->DeleteLocalRef(env,jid);
 	return Val_unit;
@@ -222,7 +222,20 @@ value ml_gamecenter_show_achievements(value p) {
 }
 
 
-value ml_gamecenter_show_leaderboard(value p) {
+value ml_gamecenter_show_leaderboard(value board_id) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	PRINT_DEBUG("GC show leaderboard");
+	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
+	static jmethodID jShowLeaderboardM = NULL;
+	if (!jShowLeaderboardM) { 
+		jclass gcCls = getGcCls(env);
+		jShowLeaderboardM = (*env)->GetMethodID(env,gcCls,"showLeaderboard","(Ljava/lang/String;)V");
+	};
+	jstring jid = (*env)->NewStringUTF(env,String_val(board_id));
+	(*env)->CallVoidMethod(env,jGameCenter,jShowLeaderboardM, jid);
+	(*env)->DeleteLocalRef(env,jid);
+
 	return Val_unit;
 }
 

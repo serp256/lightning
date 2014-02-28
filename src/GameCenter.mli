@@ -6,7 +6,7 @@ value reportAchievement: string -> float -> unit;
 ENDPLATFORM;
 value reportLeaderboard: string -> int64 -> unit;
 value unlockAchievement: string -> unit;
-value showLeaderboard: unit -> unit;
+value showLeaderboard: string -> unit;
 value showAchievements: unit -> unit;
 value reportAchievement: string -> float -> unit;
 
