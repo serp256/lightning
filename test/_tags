@@ -1,6 +1,0 @@
-<**/*.ml{,i}>: package(camlp4),syntax(camlp4r),package(extlib),package(lightning),package(lightning.syntax.debug),package(ojson),package(lightning.tapjoy),package(camlp4.macro),package(lightning.social.facebook)
-"gui": include
-"configs": include
-true:debug
-<*.{native,byte,so}>: package(lightning), package(lightning.tapjoy), package(lightning.social.facebook)
-<*.byte>: custom
