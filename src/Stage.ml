@@ -303,8 +303,6 @@ class virtual c (_width:float) (_height:float) =
     method !z = Some 0;
     method run seconds = 
     (
-      debug:steam "-------------------------------";
-
       proftimer:steam "advence %f" (self#advanceTime seconds);
       proftimer:steam "prerender %f" (D.prerender ());
       Render.clear bgColor 1.;

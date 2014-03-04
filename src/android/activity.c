@@ -16,51 +16,27 @@
  */
 
 //BEGIN_INCLUDE(all)
-#include <jni.h>
 #include <errno.h>
 
 #include <EGL/egl.h>
 #include <GLES/gl.h>
 
-#include <android/sensor.h>
 #include <android/log.h>
-#include "android_native_app_glue.h"
+#include <android/asset_manager.h>
+#include "mlwrapper_android.h"
+#include "mobile_res.h"
+#include <sys/time.h>
+#include "activity.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
-/**
- * Our saved state data.
- */
-struct saved_state {
-    float angle;
-    int32_t x;
-    int32_t y;
-};
-
-/**
- * Shared state for our app.
- */
-struct engine {
-    struct android_app* app;
-
-    ASensorManager* sensorManager;
-    const ASensor* accelerometerSensor;
-    ASensorEventQueue* sensorEventQueue;
-
-    int animating;
-    EGLDisplay display;
-    EGLSurface surface;
-    EGLContext context;
-    int32_t width;
-    int32_t height;
-    struct saved_state state;
-};
+struct engine engine;
 
 /**
  * Initialize an EGL context for the current display.
  */
-static int engine_init_display(struct engine* engine) {
+static int engine_init_display(engine_t engine) {
     // initialize OpenGL ES and EGL
 
     /*
@@ -122,30 +98,56 @@ static int engine_init_display(struct engine* engine) {
     glShadeModel(GL_SMOOTH);
     glDisable(GL_DEPTH_TEST);
 
+    stage = mlstage_create((float)w, (float)h);
+    engine->animating = 1;
+
     return 0;
 }
+
+static value run_method = 1;
+static struct timeval last_draw_time;
 
 /**
  * Just the current frame in the display.
  */
-static void engine_draw_frame(struct engine* engine) {
-    if (engine->display == NULL) {
-        // No display.
-        return;
+static void engine_draw_frame(engine_t engine) {
+    PRINT_DEBUG("engine_draw_frame");
+
+    CAMLparam0();
+    CAMLlocal1(timePassed);
+
+    struct timeval now;
+    if (!gettimeofday(&now, NULL)) {
+        double diff = (double)(now.tv_usec - last_draw_time.tv_usec) / 1000000.;
+
+        last_draw_time = now;
+        timePassed = caml_copy_double(diff);
+
+        net_run();
+        if (run_method == 1) run_method = caml_hash_variant("run");
+        caml_callback2(caml_get_public_method(stage->stage,run_method), stage->stage, timePassed);
+        eglSwapBuffers(engine->display, engine->surface);
     }
 
-    // Just fill the screen with a color.
-    glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
-            ((float)engine->state.y)/engine->height, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+    CAMLreturn0;
 
-    eglSwapBuffers(engine->display, engine->surface);
+    // if (engine->display == NULL) {
+    //     // No display.
+    //     return;
+    // }
+
+    // // Just fill the screen with a color.
+    // glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
+    //         ((float)engine->state.y)/engine->height, 1);
+    // glClear(GL_COLOR_BUFFER_BIT);
+
+    // eglSwapBuffers(engine->display, engine->surface);
 }
 
 /**
  * Tear down the EGL context currently associated with the display.
  */
-static void engine_term_display(struct engine* engine) {
+static void engine_term_display(engine_t engine) {
     if (engine->display != EGL_NO_DISPLAY) {
         eglMakeCurrent(engine->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (engine->context != EGL_NO_CONTEXT) {
@@ -156,6 +158,7 @@ static void engine_term_display(struct engine* engine) {
         }
         eglTerminate(engine->display);
     }
+    PRINT_DEBUG("engine_term_display engine->animating = 0");
     engine->animating = 0;
     engine->display = EGL_NO_DISPLAY;
     engine->context = EGL_NO_CONTEXT;
@@ -166,8 +169,9 @@ static void engine_term_display(struct engine* engine) {
  * Process the next input event.
  */
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
-    struct engine* engine = (struct engine*)app->userData;
+    engine_t engine = (engine_t)app->userData;
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+        PRINT_DEBUG("engine_handle_input engine->animating = 1");
         engine->animating = 1;
         engine->state.x = AMotionEvent_getX(event, 0);
         engine->state.y = AMotionEvent_getY(event, 0);
@@ -180,7 +184,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
  * Process the next main command.
  */
 static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
-    struct engine* engine = (struct engine*)app->userData;
+    engine_t engine = (engine_t)app->userData;
     switch (cmd) {
         case APP_CMD_SAVE_STATE:
             // The system has asked us to save our current state.  Do so.
@@ -217,6 +221,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
                         engine->accelerometerSensor);
             }
             // Also stop animating.
+            PRINT_DEBUG("APP_CMD_LOST_FOCUS engine->animating = 0");
             engine->animating = 0;
             engine_draw_frame(engine);
             break;
@@ -229,8 +234,6 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
  * event loop for receiving input events and doing other things.
  */
 void android_main(struct android_app* state) {
-    struct engine engine;
-
     // Make sure glue isn't stripped.
     app_dummy();
 
@@ -240,12 +243,32 @@ void android_main(struct android_app* state) {
     state->onInputEvent = engine_handle_input;
     engine.app = state;
 
+    PRINT_DEBUG("reading assets index");
+
+    AAssetManager* mngr = state->activity->assetManager;
+    AAsset* ass = AAssetManager_open(mngr, "assets", AASSET_MODE_UNKNOWN);
+    AAsset* indx = AAssetManager_open(mngr, "index", AASSET_MODE_UNKNOWN);
+    off_t ass_offset, ass_len, indx_offset, indx_len;
+
+    int ass_fd = AAsset_openFileDescriptor(ass, &ass_offset, &ass_len);
+    int indx_fd = AAsset_openFileDescriptor(indx, &indx_offset, &indx_len);
+
+    AAsset_close(ass);
+    AAsset_close(indx);
+
+    FILE* f = fdopen(ass_fd, "r");
+    fseek(f, indx_offset, SEEK_SET);
+    char* err = read_res_index(f, ass_offset, -1);
+    
+    fclose(f);
+    close(indx_fd);
+
     // Prepare to monitor accelerometer
-    engine.sensorManager = ASensorManager_getInstance();
-    engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
-            ASENSOR_TYPE_ACCELEROMETER);
-    engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager,
-            state->looper, LOOPER_ID_USER, NULL, NULL);
+    // engine.sensorManager = ASensorManager_getInstance();
+    // engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
+            // ASENSOR_TYPE_ACCELEROMETER);
+    // engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager,
+            // state->looper, LOOPER_ID_USER, NULL, NULL);
 
     if (state->savedState != NULL) {
         // We are starting with a previous saved state; restore from it.
@@ -253,6 +276,9 @@ void android_main(struct android_app* state) {
     }
 
     // loop waiting for stuff to do.
+
+    char *argv[] = {"android",NULL};
+    caml_startup(argv);
 
     while (1) {
         // Read all pending events.
@@ -263,6 +289,7 @@ void android_main(struct android_app* state) {
         // If not animating, we will block forever waiting for events.
         // If animating, we loop until all events are read, then continue
         // to draw the next frame of animation.
+
         while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
                 (void**)&source)) >= 0) {
 
@@ -272,7 +299,7 @@ void android_main(struct android_app* state) {
             }
 
             // If a sensor has data, process it now.
-            if (ident == LOOPER_ID_USER) {
+/*            if (ident == LOOPER_ID_USER) {
                 if (engine.accelerometerSensor != NULL) {
                     ASensorEvent event;
                     while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
@@ -282,7 +309,7 @@ void android_main(struct android_app* state) {
                                 event.acceleration.z);
                     }
                 }
-            }
+            }*/
 
             // Check if we are exiting.
             if (state->destroyRequested != 0) {

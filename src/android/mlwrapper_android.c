@@ -491,7 +491,7 @@ value ml_setSupportEmail (value d){
 	return Val_unit;
 }
 
-char* get_locale() {
+/*char* get_locale() {
 	JNIEnv *env;
 	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL); //it's possible to call this function from another thread, so to be sure, that env valid on any thread, call AttachCurrentThread instead of GetEnv
 	jmethodID meth = (*env)->GetMethodID(env, jViewCls, "mlGetLocale", "()Ljava/lang/String;");
@@ -503,13 +503,15 @@ char* get_locale() {
 	(*env)->DeleteLocalRef(env, locale);
 
 	return retval;		
-}
+}*/
 
+/*NATIVEACTIVITY FIXME*/
 value ml_getLocale () {
-	char *c_locale = get_locale();
-	value v_locale = caml_copy_string(c_locale);
-	free(c_locale);
-	return v_locale;
+	return caml_copy_string("en");
+	// char *c_locale = get_locale();
+	// value v_locale = caml_copy_string(c_locale);
+	// free(c_locale);
+	// return v_locale;
 }
 
 value ml_getInternalStoragePath () {

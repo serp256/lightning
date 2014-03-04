@@ -37,6 +37,6 @@ int getResourceFd(const char *path, resource *res);
 //void ml_paymentsTest();
 value ml_openURL(value url);
 //void ml_setAssetsDir(value vassDir);
-char* get_locale();
+// char* get_locale();
 
 #endif

@@ -36,13 +36,14 @@ ELSE
 
 type t = Hashtbl.t string string;
 
-value storage_file = 
-  ifplatform(android)
+value storage_file = "/sdcard/kvstorage"; (* NATIVEACTIVITY FIXME *)
+(*   ifplatform(android)
     (get_storage_path ()) ^ "kvstorage"
-  else "kvstorage";
+  else "kvstorage"; *)
 
 
-value storage_file_tmp = (get_storage_path ()) ^ ".kvstorage.tmp";
+(* value storage_file_tmp = (get_storage_path ()) ^ ".kvstorage.tmp"; *)
+value storage_file_tmp = "/sdcard/kvstorage.tmp";
 
 
 value storage = ref None;
