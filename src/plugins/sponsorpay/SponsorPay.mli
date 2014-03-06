@@ -1,12 +1,5 @@
+type network = [= `applifier of string ];
 
-
-IFPLATFORM(android)
-
-external start: ~appId:string -> ?userId:string -> ?securityToken:string -> unit -> unit = "ml_sponsorPay_start";
-external showOffers: unit -> unit = "ml_sponsorPay_showOffers";
-
-ELSE
-
-value start: ~appId:string -> ?userId:string -> ?securityToken:string -> unit -> unit; 
-value showOffers: unit -> unit;
-ENDPLATFORM;
+value start: ~appId:string -> ?userId:string -> ?securityToken:string -> ?networks:list network -> unit -> unit; 
+value requestVideo: ~callback:(bool -> unit) -> unit -> unit;
+value showVideo: ~callback:(unit -> unit) -> unit -> unit;

@@ -63,7 +63,7 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	  -ccopt -L../src/plugins/vk ../src/plugins/vk/NativeVk.cmxa\
 	  -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa\
 	  -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
-		-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios"   -linkpkg
+		-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios" -ccopt "-F../src/plugins/sponsorpay/ios"   -linkpkg
 
 #
 #

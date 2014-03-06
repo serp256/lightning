@@ -1,6 +1,6 @@
 //
 //  SPCallbackSendingOperation.m
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Created by David Davila on 12/3/12.
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
@@ -8,9 +8,8 @@
 
 #import "SPCallbackSendingOperation.h"
 #import "SPURLGenerator.h"
-#import "Utils/SPLogger.h"
+#import "SPLogger.h"
 
-static const NSTimeInterval SPCallbackOperationTimeout = 60.0;
 static NSString *const SPURLParamKeySuccessfulAnswerReceived = @"answer_received";
 static NSString *const SPURLParameterKeyActionId = @"action_id";
 
@@ -18,42 +17,8 @@ static NSString *const SPURLParameterKeyActionId = @"action_id";
 
 - (void)main
 {
-    if (self.isCancelled) {
-        return;
-    }
-
-    @autoreleasepool {
-        NSURL *callbackURL = [self callbackURL];
-
-        [SPLogger log:@"%@ will send callback on thread: %@ using url:\n%@", self, [NSThread currentThread], callbackURL];
-
-        if (!callbackURL) {
-            self.didCallbackSucceed = NO;
-            [SPLogger log:@"%@ failed to send callback due to a nil NSURL", self];
-            return;
-        }
-
-        NSURLRequest *request=[NSURLRequest requestWithURL:callbackURL
-                                               cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
-                                           timeoutInterval:SPCallbackOperationTimeout];
-
-        NSHTTPURLResponse *response = nil;
-        NSError *requestError = nil;
-
-        [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&requestError];
-
-        if (requestError) {
-            self.didCallbackSucceed = NO;
-            [SPLogger log:@"Callback request failed with error: %@", requestError];
-
-            return;
-        }
-
-        [SPLogger log:@"%@ received response to callback with status code: %d", self, response.statusCode];
-        
-        self.httpStatusCode = response.statusCode;
-        self.didCallbackSucceed = self.httpStatusCode == 200;
-    }
+    self.url = [self callbackURL];
+    [super main];
 }
 
 - (NSURL *)callbackURL
@@ -92,9 +57,7 @@ static NSString *const SPURLParameterKeyActionId = @"action_id";
         self.actionId = actionId;
         self.answerAlreadyReceived = answerReceived;
     }
-    
     return self;
-
 }
 
 - (NSString *)description
@@ -103,14 +66,6 @@ static NSString *const SPURLParameterKeyActionId = @"action_id";
             "answerAlreadyReceived = %d}",
             [super description], self.appId, self.actionId,
             self.answerAlreadyReceived];
-}
-
-- (void)dealloc
-{
-    self.appId = nil;
-    self.baseURLString = nil;
-    self.actionId = nil;
-    [super dealloc];
 }
 
 + (id)operationForAppId:(NSString *)appId
@@ -124,6 +79,6 @@ static NSString *const SPURLParameterKeyActionId = @"action_id";
                                              actionId:actionId
                                        answerReceived:answerReceived];
 
-    return [operation autorelease];
+    return operation;
 }
 @end

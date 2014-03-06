@@ -1,6 +1,6 @@
 //
 //  SPAdvertisementViewController.m
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Created by David Davila on 10/22/12.
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
@@ -10,12 +10,13 @@
 #import "SPAdvertisementViewController_SDKPrivate.h"
 #import "SPAdvertisementViewControllerSubclass.h"
 #import "SPTargetedNotificationFilter.h"
+#import "SPLogger.h"
 
 @interface SPAdvertisementViewController ()
 
-@property (nonatomic, retain) NSString *appId;
-@property (nonatomic, retain) NSString *userId;
-@property (readwrite, retain, nonatomic) NSString *currencyName;
+@property (nonatomic, strong) NSString *appId;
+@property (nonatomic, strong) NSString *userId;
+@property (readwrite, strong, nonatomic) NSString *currencyName;
 @property (copy) SPViewControllerDisposalBlock disposalBlock;
 
 - (id)initWithUserId:(NSString *)userId appId:(NSString *)appId;
@@ -64,7 +65,6 @@
     rootView.backgroundColor = [UIColor clearColor];
     rootView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.view = rootView;
-    [rootView release];  
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -185,7 +185,7 @@
     BOOL shouldContinueLoading = self.sponsorpaySchemeParser.requestsContinueWebViewLoading;
 
     if (self.sponsorpaySchemeParser.requestsClosing) {
-        [self dismissAnimated:!openingExternalDestination];
+        [self dismissAnimated:!openingExternalDestination withStatus:self.sponsorpaySchemeParser.closeStatus];
     }
     
     return shouldContinueLoading;
@@ -209,7 +209,7 @@
 
 #pragma mark - Unimplemented methods
 
-- (void)dismissAnimated:(BOOL)animated
+- (void)dismissAnimated:(BOOL)animated withStatus:(NSInteger)status
 {
     
 }
@@ -229,12 +229,7 @@
 - (void)presentAsChildOfViewController:(UIViewController *)parentViewController
 {
     self.publisherViewController = parentViewController;
-    
-    if ([parentViewController respondsToSelector:@selector(presentViewController:animated:completion:)]) {
-        [parentViewController presentViewController:self animated:YES completion:nil];
-    } else {
-        [parentViewController presentModalViewController:self animated:YES];
-    }
+    [parentViewController presentViewController:self animated:YES completion:nil];
 }
 
 - (void)dismissFromPublisherViewControllerAnimated:(BOOL)animated
@@ -243,19 +238,14 @@
         return;
     }
 
-    UIViewController* publisherVC = [self.publisherViewController retain];
+    UIViewController* publisherVC = self.publisherViewController;
 
     self.publisherViewController = nil;
 
     dispatch_async(dispatch_get_main_queue(), self.disposalBlock);
 
-    if ([publisherVC respondsToSelector:@selector(dismissViewControllerAnimated:completion:)]) {
-        [publisherVC dismissViewControllerAnimated:animated completion:nil];
-    } else {
-        [publisherVC dismissModalViewControllerAnimated:animated];
-    }
+    [publisherVC dismissViewControllerAnimated:animated completion:nil];
 
-    [publisherVC release];
 }
 
 #pragma mark - Currency name change notification
@@ -276,7 +266,7 @@
         id newCurrencyName = notification.userInfo[SPNewCurrencyNameKey];
         if ([newCurrencyName isKindOfClass:[NSString class]]) {
             self.currencyName = newCurrencyName;
-            [SPLogger log:@"%@ currency name is now: %@", self, self.currencyName];
+            SPLogInfo(@"%@ currency name is now: %@", self, self.currencyName);
         }
     }
 }
@@ -296,8 +286,7 @@
 - (void)setWebView:(UIWebView *)webView
 {
     [_webView setDelegate:nil];
-    [_webView release];
-    _webView = [webView retain];
+    _webView = webView;
 }
 
 - (SPLoadingIndicator *)loadingProgressView
@@ -310,8 +299,7 @@
 
 - (void)setLoadingProgressView:(SPLoadingIndicator *)loadingProgressView
 {
-    [_loadingProgressView release];
-    _loadingProgressView = [loadingProgressView retain];
+    _loadingProgressView = loadingProgressView;
 }
 
 - (SPSchemeParser *)sponsorpaySchemeParser {
@@ -323,8 +311,7 @@
 
 - (void)setSponsorpaySchemeParser:(SPSchemeParser *)sponsorpaySchemeParser
 {
-    [_sponsorpaySchemeParser release];
-    _sponsorpaySchemeParser = [sponsorpaySchemeParser retain];
+    _sponsorpaySchemeParser = sponsorpaySchemeParser;
 }
 
 - (UIViewController *)publisherViewController
@@ -347,16 +334,12 @@
 
 - (void)dealloc
 {
-    [SPLogger log:@"Deallocing advertisement VC: %@", self];
+    SPLogDebug(@"Deallocing advertisement VC: %@", self);
 
     self.webView = nil;
-    self.appId = nil;
-    self.userId = nil;
     self.loadingProgressView = nil;
     self.sponsorpaySchemeParser = nil;
-    self.customParameters = nil;
     
-    [super dealloc];
 }
 
 @end

@@ -1,6 +1,6 @@
 //
 //  SPPersistence.m
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Created by David Davila on 9/28/11.
 //  Copyright (c) 2011 SponsorPay. All rights reserved.

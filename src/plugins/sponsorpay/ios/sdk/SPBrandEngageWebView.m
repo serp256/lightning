@@ -9,6 +9,7 @@
 #import "SPLogger.h"
 #import "NSURL+SPParametersParsing.h"
 #import "NSString+SPURLEncoding.h"
+#import "SPResourceLoader.h"
 
 #define kSPCustomURLScheme                          @"sponsorpay"
 
@@ -22,15 +23,23 @@
 #define kSPRequestStatusParameterCloseAbortedValue  @"CLOSE_ABORTED"
 #define kSPRequestStatusParameterError              @"ERROR"
 
+#define kSPRequestValidate                          @"validate"
+#define kSPThirtPartyNetworkParameter               @"tpn"
+#define kSPTPNIDParameter                           @"id"
+#define kSPRequestPlay                              @"play"
+
 #define kSPRequestExit                              @"exit"
 #define kSPRequestURLParameterKey                   @"url"
 
 
-#define kSPJsInvokationStartOffer @"Sponsorpay.MBE.SDKInterface.do_start()"
+#define kSPJsInvocationStartOffer @"Sponsorpay.MBE.SDKInterface.do_start()"
+#define kSPJsInvocationNotify @"Sponsorpay.MBE.SDKInterface.notify"
+#define kSPJsInvocationGetOffer @"Sponsorpay.MBE.SDKInterface.do_getOffer()"
+
 
 @interface SPBrandEngageWebView ()
 
-@property (retain) UIButton *closeButton;
+@property (strong) UIButton *closeButton;
 
 - (void)processSponsorPayScheme:(NSURL *)url;
 - (void)javascriptReportedOffers:(int)numberOfOffers;
@@ -66,15 +75,15 @@
         self.scrollView.scrollEnabled = NO;
         self.delegate = self;
     }
+    SPLogDebug(@"MBEWebView %x initialized", [self hash]);
+
     return self;
 }
 
 - (void)dealloc
 {
-//    [SPLogger log:@"brandengage webview: %@ is being deallocated", self];
+    SPLogDebug(@"MBEWebView %x is being deallocated", [self hash]);
     self.delegate = nil;
-    self.closeButton = nil;
-    [super dealloc];
 }
 
 #pragma mark - UIWebView delegate methods
@@ -83,11 +92,13 @@
  navigationType:(UIWebViewNavigationType)navigationType
 {
     NSURL *url = [request URL];
+
 	NSString *scheme = [url scheme];
     if ([scheme isEqualToString:kSPCustomURLScheme]) {
         [self processSponsorPayScheme:url];
         return NO;
     }
+    SPLogDebug(@"[BET] Webview will start loading request: %@ with navigation type: %d", request, navigationType);
     return YES;
 }
 
@@ -95,24 +106,19 @@
 {
     switch (error.code) {
         case 102: // Loadingus interruptus
-            [SPLogger log:@"Loading of BrandEngageWebView was interrupted. This is normal if we are, for instance, leaving the app to follow an offer."];
+            SPLogDebug(@"Loading of BEWebView (%x) was interrupted. This is normal if we are, for instance, leaving the app to follow an offer.", [self hash]);
             break;
         case -1004: // "Could not connect to the server."
         case -1009: // "The Internet connection appears to be offline." error
-            [SPLogger log:@"BrandEndageWebView couldn't load because due to a network issue: %d, %@", error.code, error.localizedDescription];
+            SPLogError(@"BEWebView (%x) couldn't load due to a network issue: %d, %@", [self hash], error.code, error.localizedDescription);
             if (self.delegate) {
                 [self.brandEngageDelegate brandEngageWebView:self didFailWithError:error];
             }
             break;
         default:
-            [SPLogger log:@"Brand Engage webView:didFailLoadWithError: %d %@", error.code, error.localizedDescription];
+            SPLogError(@"Brand Engage webView:(%x) didFailLoadWithError: %d %@", [self hash], error.code, error.localizedDescription);
             break;
     }
-}
-
-- (void)webViewDidFinishLoad:(UIWebView *)webView
-{
-//    [SPLogger log:@"Brand Engage webViewDidFinishLoad:"];
 }
 
 #pragma mark -
@@ -194,11 +200,10 @@
                                                          kSPMBENativeCloseButtonInsetSize,
                                                          kSPMBENativeCloseButtonInsetSize);
         closeButton.backgroundColor = [UIColor clearColor];
-        [closeButton setImage:[UIImage imageNamed:@"CloseX"] forState:UIControlStateNormal];
+        [closeButton setImage:[self closeButtonImage] forState:UIControlStateNormal];
         [closeButton addTarget:self action:@selector(closeButtonWasTapped)
               forControlEvents:UIControlEventTouchUpInside];
         self.closeButton = closeButton;
-        [closeButton release];
     }
     
     self.closeButton.alpha = 0.0;
@@ -207,6 +212,11 @@
                          self.closeButton.alpha = 1.0;
                      }];
     [self addSubview:self.closeButton];
+}
+
+- (UIImage *)closeButtonImage
+{
+    return [SPResourceLoader imageWithName:@"SPCloseX"];
 }
 
 - (void)hideCloseButton
@@ -230,28 +240,36 @@
     }
 }
 
+- (BOOL)currentOfferUsesTPN
+{
+    NSString *usesTPNJSON = [self stringByEvaluatingJavaScriptFromString:kSPJsInvocationGetOffer];
+    NSError *error;
+    id usesTPN = [NSJSONSerialization JSONObjectWithData:[usesTPNJSON dataUsingEncoding:NSUTF8StringEncoding]
+                                                 options:0
+                                                   error:&error];
+
+    NSNumber *r = usesTPN[@"uses_tpn"];
+
+    SPLogInfo(@"Current offer will be played through a third party network: %@", [r boolValue] ? @"YES" : @"NO");
+
+    return [r boolValue];
+}
+
 - (void)startOffer
 {
     _startNotificationReceived = NO;
-    [self stringByEvaluatingJavaScriptFromString:kSPJsInvokationStartOffer];
+
+    SPLogDebug(@"[BET] invoking %@", kSPJsInvocationStartOffer);
+    [self stringByEvaluatingJavaScriptFromString:kSPJsInvocationStartOffer];
     [self performSelector:@selector(startOfferTimerDue) withObject:nil
                afterDelay:kSPMBEStartOfferTimeout];
 }
-
-- (void)park
-{
-    [self loadData:[@"" dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES]
-          MIMEType:@"text/plain"
-  textEncodingName:@"utf-8"
-           baseURL:nil];
-}
-
 
 #pragma mark - SponsorPay schema handling
 
 - (void)processSponsorPayScheme:(NSURL *)url
 {
-   [SPLogger log:@"Processing SponsorPay scheme: %@", [url absoluteString]];
+    SPLogDebug(@"Processing SponsorPay scheme: %@", [url absoluteString]);
     
     NSString *command = [url host];
     NSDictionary *parameters = [url SPQueryDictionary];
@@ -267,7 +285,63 @@
     } else if ([command isEqualToString:kSPRequestExit]) {
         NSString *urlString = [parameters objectForKey:kSPRequestURLParameterKey];
         [self javascriptExitNotificationReceivedWithOfferURLParameterValue:urlString];
+    } else if ([command isEqualToString:kSPRequestValidate]) {
+        NSString *tpnName = parameters[kSPThirtPartyNetworkParameter];
+        NSDictionary *contextData = @{kSPTPNIDParameter : parameters[kSPTPNIDParameter]};
+
+        SPLogInfo(@"MBE client asks to validate a third party network: %@", tpnName);
+
+        [self.brandEngageDelegate brandEngageWebView:self
+                             requestsValidationOfTPN:tpnName
+                                         contextData:contextData];
+    } else if ([command isEqualToString:kSPRequestPlay]) {
+        NSString *tpnName = parameters[kSPThirtPartyNetworkParameter];
+        NSDictionary *contextData = @{kSPTPNIDParameter : parameters[kSPTPNIDParameter]};
+
+        SPLogInfo(@"[BET] MBE client asks to play an offer from a third party network: %@", tpnName);
+
+        [self.brandEngageDelegate brandEngageWebView:self
+                              requestsPlayVideoOfTPN:tpnName
+                                         contextData:contextData];
     }
+}
+
+#pragma mark -
+
+- (void)notifyOfValidationResult:(NSString *)validationResult
+                          forTPN:(NSString *)tpnName
+                     contextData:(NSDictionary *)contextData
+{
+    NSString *js = [NSString stringWithFormat:@"%@('validate', {tpn:'%@', id:%@, result:'%@'})",
+                    kSPJsInvocationNotify, tpnName, contextData[kSPTPNIDParameter],
+                    validationResult];
+
+    SPLogDebug(@"%s (%x) invoking javascript in the webview: %@", __PRETTY_FUNCTION__ , [self hash], js);
+
+    [self stringByEvaluatingJavaScriptFromString:js];
+}
+
+- (void)notifyOfVideoEvent:(NSString *)videoEventName
+                    forTPN:(NSString *)tpnName
+               contextData:(NSDictionary *)contextData
+{
+    NSString *js = [NSString stringWithFormat:@"%@('play', {tpn:'%@', id:%@, result:'%@'})",
+                    kSPJsInvocationNotify, tpnName, contextData[kSPTPNIDParameter],
+                    videoEventName];
+    
+    SPLogDebug(@"%s (%x) invoking javascript in the webview: %@", __PRETTY_FUNCTION__ , [self hash], js);
+
+    [self stringByEvaluatingJavaScriptFromString:js];
+}
+
+#pragma mark -
+
+- (void)loadRequest:(NSURLRequest *)request
+{
+    SPLogDebug(@"MBEWebView %x will load request with URL %@",
+     [self hash], request.URL.absoluteString);
+
+    [super loadRequest:request];
 }
 
 @end

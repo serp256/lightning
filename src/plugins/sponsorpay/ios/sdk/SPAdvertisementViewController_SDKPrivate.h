@@ -1,6 +1,6 @@
 //
 //  SPAdvertisementViewControllerSubclass.h
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
 //
@@ -12,9 +12,9 @@ typedef void (^SPViewControllerDisposalBlock)(void);
 
 @interface SPAdvertisementViewController (SDKPrivate)
 
-@property (nonatomic, retain) NSString *appId;
-@property (nonatomic, retain) NSString *userId;
-@property (readwrite, retain, nonatomic) NSString *currencyName;
+@property (nonatomic, strong) NSString *appId;
+@property (nonatomic, strong) NSString *userId;
+@property (readwrite, strong, nonatomic) NSString *currencyName;
 @property (copy) SPViewControllerDisposalBlock disposalBlock;
 
 - (id)initWithUserId:(NSString *)userId

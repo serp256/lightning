@@ -2,12 +2,13 @@
 //  SPOfferWallViewController.m
 //  SponsorPay iOS SDK
 //
-//  Copyright 2011 SponsorPay. All rights reserved.
+//  Copyright 2011-2013 SponsorPay. All rights reserved.
 //
 
 #import "SPOfferWallViewController.h"
 #import "SPAdvertisementViewController_SDKPrivate.h"
 #import "SPAdvertisementViewControllerSubclass.h"
+#import "SPLoadingIndicator.h"
 
 #import "SP_SDK_versions.h"
 #import "SPURLGenerator.h"
@@ -24,30 +25,7 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
 
 @implementation SPOfferWallViewController {
     BOOL _usingLegacyMode;
-    UIImageView* _closeCross;
-}
-
-#pragma mark - Deprecated initializers
-
-- (id)initWithUserId:(NSString *)userId
-               appId:(NSString *)appId
-    customParameters:(NSDictionary *)customParameters
-{
-    self = [super initWithUserId:userId appId:appId disposalBlock:nil];
-    
-    if (self) {
-        _usingLegacyMode = YES;
-        self.customParameters = customParameters;
-        self.shouldFinishOnRedirect = SHOULD_OFFERWALL_FINISH_ON_REDIRECT_DEFAULT;
-    }
-    
-    return self;
-}
-
-- (id)initWithUserId:(NSString *)userId
-               appId:(NSString *)appId
-{
-    return [self initWithUserId:userId appId:appId customParameters:nil];
+    BOOL _shouldRestoreStatusBar;
 }
 
 #pragma mark - Initializers
@@ -71,6 +49,17 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
     [self attachWebViewToViewHierarchy];
 }
 
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    // Hides the status bar before displaying the webview
+    if (![UIApplication sharedApplication].statusBarHidden) {
+        _shouldRestoreStatusBar = YES;
+        [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    }
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -78,6 +67,20 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
     if (_usingLegacyMode) {
         [self startLoadingOfferWall];
     }
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [super viewDidDisappear:animated];
+    
+    if (_shouldRestoreStatusBar) {
+        [[UIApplication sharedApplication] setStatusBarHidden:NO];
+    }
+}
+
+- (BOOL)prefersStatusBarHidden
+{
+    return YES;
 }
 
 #pragma mark - Standard OfferWall flow
@@ -88,46 +91,14 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
     [self startLoadingOfferWall];
 }
 
-- (void)alignCloseCross {
-    CGRect parentBnds = self.view.bounds;
-    CGRect crossBnds = _closeCross.bounds;    
-    _closeCross.frame = CGRectMake(CGRectGetWidth(parentBnds) - CGRectGetWidth(crossBnds) - 20, 20, CGRectGetWidth(crossBnds), CGRectGetHeight(crossBnds));
-}
-
-- (void)closeCrossTapped {    
-    [self animateLoadingViewOut];
-    [_closeCross removeFromSuperview];
-    // [_closeCross release];
-
-    [self dismissAnimated:YES];
-}
-
 - (void)startLoadingOfferWall
 {
     NSURL *offerWallURL = [self URLForOfferWall];
     
-    [SPLogger log:@"SponsorPay Mobile Offer Wall will be requested using url: %@", offerWallURL];
-
-    NSBundle* bndl = [NSBundle mainBundle];
-    NSString* imgPath = [bndl pathForResource:@"x" ofType:@"png"];
-    UIImage* img = [UIImage imageWithContentsOfFile:imgPath];
-    _closeCross = [[UIImageView alloc] initWithImage:img];
-    [img release];
-
-    [self alignCloseCross];   
-    [self.view addSubview:_closeCross];
-
-    UITapGestureRecognizer *tapRcgnzr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(closeCrossTapped)];
-    [_closeCross addGestureRecognizer:tapRcgnzr];
-    [_closeCross setUserInteractionEnabled:YES];
+    SPLogDebug(@"SponsorPay Mobile Offer Wall will be requested using url: %@", offerWallURL);
 
     [self animateLoadingViewIn];
     [self loadURLInWebView:offerWallURL];
-}
-
-- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
-    [self alignCloseCross];
-    [super didRotateFromInterfaceOrientation:fromInterfaceOrientation];
 }
 
 - (NSURL *)URLForOfferWall
@@ -146,14 +117,14 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
 - (void)webViewDidFinishLoad
 {
     [self animateLoadingViewOut];
-    [_closeCross removeFromSuperview];
-    // [_closeCross release];
 }
 
-- (void)dismissAnimated:(BOOL)animated
+- (void)dismissAnimated:(BOOL)animated withStatus:(NSInteger)status
 {
+    SPLogInfo(@"Dismissing offerwal with status: %d", status);
+
     if ([self.delegate respondsToSelector:@selector(offerWallViewController:isFinishedWithStatus:)]) {
-        [self.delegate offerWallViewController:self isFinishedWithStatus:0];
+        [self.delegate offerWallViewController:self isFinishedWithStatus:(int)status];
     }
 
     if (!_usingLegacyMode) {
@@ -172,7 +143,6 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
                                           otherButtonTitles: nil];
     alert.tag = kOfferWallLoadingErrorAlertTag;
     [alert show];
-    [alert autorelease];
 }
 
 #pragma mark - UIAlertViewDelegate methods
@@ -190,8 +160,7 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
 
 + (void)overrideBaseURLWithURLString:(NSString *)newUrl
 {
-    [offerWallBaseUrl release];
-    offerWallBaseUrl = [newUrl retain];
+    offerWallBaseUrl = newUrl;
 }
 
 + (void)restoreBaseURLToDefault

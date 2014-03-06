@@ -1,6 +1,6 @@
 //
 //  SPActionIdValidator.h
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Created by David Davila on 12/6/12.
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
