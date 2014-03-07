@@ -19,7 +19,10 @@ MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS  += -fobjc-arc -DIOS -Iios -Iios/sdk -Iios/include -I../../ios -I../.. -Fios
+CFLAGS  += -DIOS \
+	-fobjc-arc \
+	-I../.. -I../../ios -Iios -Iios/sdk -Iios/include -Iios/networks/applovin/headers \
+	-Fios/networks/applifier
 COBJS   += ios/sdk/NSString+SPURLEncoding.o ios/sdk/NSURL+SPParametersParsing.o ios/sdk/SPActionIdValidator.o ios/sdk/SPAdvertisementViewController.o ios/sdk/SPAdvertiserManager.o \
 	ios/sdk/SPAppIdValidator.o ios/sdk/SPAppleAdvertiserIDProvider.o ios/sdk/SPBaseNetwork.o ios/sdk/SPBrandEngageClient.o ios/sdk/SPBrandEngageViewController.o \
 	ios/sdk/SPBrandEngageWebView.o ios/sdk/SPBufferedLogger.o ios/sdk/SPCallbackSendingOperation.o ios/sdk/SPConstants.o ios/sdk/SPCredentials.o ios/sdk/SPCredentialsManager.o \
@@ -33,7 +36,12 @@ COBJS   += ios/sdk/NSString+SPURLEncoding.o ios/sdk/NSURL+SPParametersParsing.o 
 	ios/adapters/Applifier/SPApplifierNetwork.o ios/adapters/Applifier/SPApplifierRewardedVideoAdapter.o \
 	ios/adapters/AppLovin/SPAppLovinInterstitialAdapter.o ios/adapters/AppLovin/SPAppLovinNetwork.o ios/adapters/AppLovin/SPAppLovinRewardedVideoAdapter.o \
 	ios/spwrapper_ios.o ios/VideoDelegate.o
-LIBFLAGS += -cclib '-framework\ Foundation' -cclib '-framework\ ApplifierImpact' -cclib '-framework\ StoreKit' -cclib '-framework\ AdSupport' -cclib '-framework\ CoreMedia'
+LIBFLAGS += -lAppLovinSdk \
+	-framework Foundation \
+	-framework ApplifierImpact \
+	-framework StoreKit \
+	-framework AdSupport \
+	-framework CoreMedia
 
 else
 ifeq ($(PLATFORM),ANDROID)

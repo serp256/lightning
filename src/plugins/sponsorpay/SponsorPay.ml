@@ -1,4 +1,4 @@
-type network = [= `applifier of string ];
+type network = [= `applifier of string | `applovin of string ];
 
 IFPLATFORM(android ios)
 

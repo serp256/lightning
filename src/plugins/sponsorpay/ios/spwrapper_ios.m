@@ -19,16 +19,27 @@ value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, 
 	if (Is_block(v_networks)) {
 		ntwks = Field(v_networks, 0);
 
+		value applifier_variant = caml_hash_variant("applifier");
+		value applovin_variant = caml_hash_variant("applovin");
+
 		while (Is_block(ntwks)) {
 			ntwk = Field(ntwks, 0);
 			ntwks = Field(ntwks, 1);
 
 			while (1) {
-				if (Field(ntwk, 0) == caml_hash_variant("applifier")) {
+				if (Field(ntwk, 0) == applifier_variant) {
 					NSDictionary* params = [NSDictionary dictionaryWithObjectsAndKeys:@YES, @"SPApplifierShowOffers", [NSString stringWithUTF8String:String_val(Field(ntwk, 1))], @"SPApplifierGameId", nil];
 					NSDictionary* network = [NSDictionary dictionaryWithObjectsAndKeys:@"Applifier", @"SPNetworkName", params, @"SPNetworkParameters", nil];
 					[networks addObject:network];
 
+					break;
+				}
+
+				if (Field(ntwk, 0) == applovin_variant) {
+					NSDictionary* params = [NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(Field(ntwk, 1))], @"SPAppLovinSdkKey", nil];
+					NSDictionary* network = [NSDictionary dictionaryWithObjectsAndKeys:@"AppLovin", @"SPNetworkName", params, @"SPNetworkParameters", nil];
+					[networks addObject:network];
+					
 					break;
 				}
 			}
