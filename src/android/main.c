@@ -19,19 +19,21 @@
 #include <errno.h>
 
 #include <EGL/egl.h>
-#include <GLES/gl.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #include <android/log.h>
 #include <android/asset_manager.h>
 #include "mlwrapper_android.h"
 #include "mobile_res.h"
 #include <sys/time.h>
-#include "activity.h"
+#include "main.h"
+#include "helper.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
-struct engine engine;
+extern struct engine engine;
 
 /**
  * Initialize an EGL context for the current display.
@@ -74,8 +76,9 @@ static int engine_init_display(engine_t engine) {
 
     ANativeWindow_setBuffersGeometry(engine->app->window, 0, 0, format);
 
+    EGLint const context_attrib_list[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
     surface = eglCreateWindowSurface(display, config, engine->app->window, NULL);
-    context = eglCreateContext(display, config, NULL, NULL);
+    context = eglCreateContext(display, config, NULL, context_attrib_list);
 
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
         LOGW("Unable to eglMakeCurrent");
@@ -93,10 +96,10 @@ static int engine_init_display(engine_t engine) {
     engine->state.angle = 0;
 
     // Initialize GL state.
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-    glEnable(GL_CULL_FACE);
-    glShadeModel(GL_SMOOTH);
-    glDisable(GL_DEPTH_TEST);
+    // glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+    // glEnable(GL_CULL_FACE);
+    // glShadeModel(GL_SMOOTH);
+    // glDisable(GL_DEPTH_TEST);
 
     stage = mlstage_create((float)w, (float)h);
     engine->animating = 1;
@@ -237,13 +240,12 @@ void android_main(struct android_app* state) {
     // Make sure glue isn't stripped.
     app_dummy();
 
-    memset(&engine, 0, sizeof(engine));
     state->userData = &engine;
     state->onAppCmd = engine_handle_cmd;
     state->onInputEvent = engine_handle_input;
-    engine.app = state;
-
-    PRINT_DEBUG("reading assets index");
+    
+    engine_init(state);
+    helper_init();
 
     AAssetManager* mngr = state->activity->assetManager;
     AAsset* ass = AAssetManager_open(mngr, "assets", AASSET_MODE_UNKNOWN);
@@ -330,5 +332,7 @@ void android_main(struct android_app* state) {
             engine_draw_frame(&engine);
         }
     }
+
+    engine_release();
 }
 //END_INCLUDE(all)

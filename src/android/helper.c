@@ -1,21 +1,31 @@
-#include "activity.h"
+#include "engine.h"
+#include "helper.h"
+#include "mlwrapper_android.h"
 
-static JNIEnv* env;
 static jclass helper_cls;
 
 void helper_init() {
-/*    (*VM)->AttachCurrentThread(VM, &env, NULL);
+    jstring cls_name = (*ENV)->NewStringUTF(ENV, "ru/redspell/lightning/LightNativeActivityHelper");
+    jclass cls = FIND_CLASS(cls_name);
+    helper_cls = (*ENV)->NewGlobalRef(ENV, cls);
 
-    jclass cls = (*env)->GetObjectClass(env, ACTIVITY->clazz);
-    jmethodID mid = (*env)->GetMethodID(env, cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
-    jobject cls_ldr = (*env)->CallObjectMethod(env, ACTIVITY->clazz, mid);
-    cls = (*env)->GetObjectClass(env, cls_ldr);
-    mid = (*env)->GetMethodID(env, cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-    jstring jcls_name = (*env)->NewStringUTF(env, "ru.redspell.lightning.LightNativeActivityHelper");
-    helper_cls = (*env)->CallObjectMethod(env, cls_ldr, mid, jcls_name);
-    (*env)->DeleteLocalRef(env, jcls_name);
-*/}
+    (*ENV)->DeleteLocalRef(ENV, cls);
+    (*ENV)->DeleteLocalRef(ENV, cls_name);
+}
 
-char* get_locale() {
-	return "en";	
+char* helper_get_locale() {
+	static char* retval = NULL;
+
+    if (!retval) {
+        jmethodID mid = (*ENV)->GetStaticMethodID(ENV, helper_cls, "locale", "()Ljava/lang/String;");
+        jstring jlocale = (*ENV)->CallStaticObjectMethod(ENV, helper_cls, mid);
+        const char* clocale = (*ENV)->GetStringUTFChars(ENV, jlocale, NULL);
+        retval = malloc(strlen(clocale) + 1);
+        strcpy(retval, clocale);
+
+        (*ENV)->ReleaseStringUTFChars(ENV, jlocale, clocale);
+        (*ENV)->DeleteLocalRef(ENV, jlocale);
+    }
+
+    return retval;
 }

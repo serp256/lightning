@@ -11,6 +11,7 @@
 #include "assets_extractor.h"
 #include "khash.h"
 #include "mobile_res.h"
+#include "engine.h"
 #include <errno.h>
 
 #define caml_acquire_runtime_system()
@@ -123,9 +124,9 @@ value android_debug_output_fatal(value mname, value mline, value msg) {
 	return Val_unit;
 }
 
-static char* apk_path = NULL;
+/*static char* apk_path = NULL;
 static char* main_exp_path = NULL;
-static char* patch_exp_path = NULL;
+static char* patch_exp_path = NULL;*/
 
 KHASH_MAP_INIT_STR(res_index, offset_size_pair_t*);
 static kh_res_index_t* res_indx;
@@ -152,7 +153,7 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 																jstring j_apkPath, jstring j_mainExpPath, jstring j_patchExpPath) {
 	PRINT_DEBUG("lightInit");
 
-	jActivity = (*env)->NewGlobalRef(env,jactivity);
+/*	jActivity = (*env)->NewGlobalRef(env,jactivity);
 	jView = (*env)->NewGlobalRef(env,jview);
 
 	jclass viewCls = (*env)->GetObjectClass(env, jView);
@@ -167,7 +168,7 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 	JSTRING_TO_CSTRING(j_mainExpPath, main_exp_path);	
 	JSTRING_TO_CSTRING(j_patchExpPath, patch_exp_path);	
 
-	PRINT_DEBUG("apk_path %s", apk_path);
+	// PRINT_DEBUG("apk_path %s", apk_path);
 
 	res_indx = kh_init_res_index();
 	FILE* in = fopen(apk_path, "r");
@@ -175,82 +176,46 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 	char* err = read_res_index(in, j_assetsOffset, -1);
 	fclose(in);
 	
-	/* shared preferences 
-	jStorage = (*env)->NewGlobalRef(env, storage);
-	jclass storageCls = (*env)->GetObjectClass(env, storage);
-	jmethodID jmthd_edit = (*env)->GetMethodID(env, storageCls, "edit", "()Landroid/content/SharedPreferences$Editor;");
-	jobject storageEditor = (*env)->CallObjectMethod(env, storage, jmthd_edit);
-	jStorageEditor = (*env)->NewGlobalRef(env, storageEditor);
-	(*env)->DeleteLocalRef(env, storageCls);
-	(*env)->DeleteLocalRef(env, storageEditor);*/
-	
-	
-	// PRINT_DEBUG("qweqweqwe111");
 
 	jstring retval = NULL;
 	if (err) {
 		retval = (*env)->NewStringUTF(env, err);
 		free(err);
-	}
+	}*/
 
-	return retval;
+	return NULL;
 }
 
-#define GET_FD(PATH)																	\
-	if (!PATH) {																		\
-		PRINT_DEBUG("path '%s' is NULL", #PATH);										\
+#define GET_FD(path)																	\
+	if (!path) {																		\
+		PRINT_DEBUG("path '%s' is NULL", #path);										\
 		return 0;																		\
 	}																					\
-	fd = open(PATH, O_RDONLY);															\
+	fd = open(path, O_RDONLY);															\
 	if (fd < 0) {																		\
-		PRINT_DEBUG("failed to open path '%s' due to '%s'", PATH, strerror(errno));		\
+		PRINT_DEBUG("failed to open path '%s' due to '%s'", path, strerror(errno));		\
 		return 0;																		\
 	}																					\
 
 int getResourceFd(const char *path, resource *res) {
 	offset_size_pair_t* os_pair;
 
-	PRINT_DEBUG("getResourceFd for path %s", path);
-
 	if (!get_offset_size_pair(path, &os_pair)) {
 		int fd;
 
-		PRINT_DEBUG("location %d", os_pair->location);
-
 		if (os_pair->location == 0) {
-			GET_FD(apk_path)
+			GET_FD(engine.apk_path);
 		} else if (os_pair->location == 1) {
-			GET_FD(patch_exp_path)
+			GET_FD(engine.patch_exp_path)
 		} else if (os_pair->location == 2) {
-			GET_FD(main_exp_path)
+			GET_FD(engine.main_exp_path)
 		} else {
 			char* extra_res_fname = get_extra_res_fname(os_pair->location);
-
-			if (!extra_res_fname) {
-				PRINT_DEBUG("unknown location value in offset-size pair for path %s", path);
-				return 0;
-			}
-
+			if (!extra_res_fname) return 0;
 			GET_FD(extra_res_fname);
 		}
 
 		lseek(fd, os_pair->offset, SEEK_SET);
-
-		PRINT_DEBUG("get resource: %s: %ld,%ld",path,os_pair->offset,os_pair->size);
-
-		/*
-		char buf[15];
-		int r = read(fd,buf,15);
-		char vbuf[15*2 + 1];
-		int c = 0;
-		for (c = 0;c < 15; c++) {
-			sprintf(vbuf+(c*2),"%x",*(buf+c));
-		};
-		vbuf[30] = '\0';
-		PRINT_DEBUG("First 15 bytes: [%s]",vbuf);
-		lseek(fd, os_pair->offset, SEEK_SET);
-		*/
-
 		res->fd = fd;
 		res->length = os_pair->size;
 

@@ -3,7 +3,11 @@
 #include <string.h>
 
 #ifdef ANDROID
-#include "android/mlwrapper_android.h"	
+#include "android/mlwrapper_android.h"
+#include "android/helper.h"
+
+#define get_locale helper_get_locale
+
 #elif IOS
 #import "ios/mlwrapper_ios.h"
 #else

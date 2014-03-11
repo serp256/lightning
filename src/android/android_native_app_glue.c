@@ -344,6 +344,10 @@ static void onDestroy(ANativeActivity* activity) {
 
 static void onStart(ANativeActivity* activity) {
     LOGV("Start: %p\n", activity);
+
+    JNIEnv* env = activity->env;
+    
+
     android_app_set_activity_state((struct android_app*)activity->instance, APP_CMD_START);
 }
 
