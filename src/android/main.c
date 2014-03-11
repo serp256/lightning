@@ -24,6 +24,8 @@
 
 #include <android/log.h>
 #include <android/asset_manager.h>
+#include <android/window.h>
+ 
 #include "mlwrapper_android.h"
 #include "mobile_res.h"
 #include <sys/time.h>
@@ -264,6 +266,8 @@ void android_main(struct android_app* state) {
     
     fclose(f);
     close(indx_fd);
+
+    ANativeActivity_setWindowFlags(state->activity, AWINDOW_FLAG_FULLSCREEN, 0);
 
     // Prepare to monitor accelerometer
     // engine.sensorManager = ASensorManager_getInstance();
