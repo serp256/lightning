@@ -11,5 +11,6 @@ ELSE
 
 value start: ~appId:string -> ?userId:string -> ?securityToken:string -> ?networks:list network -> unit -> unit = fun ~appId ?userId ?securityToken ?mediatedNetworks () -> ();
 value showOffers () = ();
-value requestVideo () = ();
+value requestVideo ~callback () = ();
+value showVideo ~callback () = ();
 ENDPLATFORM;

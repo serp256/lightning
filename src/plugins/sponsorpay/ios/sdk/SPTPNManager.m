@@ -76,6 +76,7 @@ static NSString *const SPNetworkParameters = @"SPNetworkParameters";
         NSString *networkName = providerData[SPNetworkName];
         NSString *networkClassName = [self getClassName:networkName];
 
+        NSLog(@"!!!!!networkClassName %@", networkClassName);
         Class NetworkClass = NSClassFromString(networkClassName);
         if (!NetworkClass) {
             SPLogError(@"Class %@ could not be found", networkClassName);

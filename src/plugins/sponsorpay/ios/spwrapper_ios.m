@@ -1,5 +1,6 @@
 #import "caml/mlvalues.h"
 #import "SponsorPaySDK.h"
+#import "SPLogger.h"
 #import <objc/runtime.h>
 #import "LightViewController.h"
 #import <caml/memory.h>
@@ -86,6 +87,8 @@ VideoDelegate* delegate = nil;
 value ml_request_video(value callback) {
 	CAMLparam1(callback);
 	INIT_ENGAGE_CLIENT;
+
+	NSLog(@"ml_request_video call");
 	
 	if ([engageClient canRequestOffers]) {
 		[delegate setRequestCallback:callback];

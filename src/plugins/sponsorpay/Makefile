@@ -41,6 +41,7 @@ LIBFLAGS += -lAppLovinSdk \
 	-framework ApplifierImpact \
 	-framework StoreKit \
 	-framework AdSupport \
+	-framework MediaPlayer \
 	-framework CoreMedia
 
 else
