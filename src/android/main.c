@@ -1,21 +1,3 @@
-/*
- * Copyright (C) 2010 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-//BEGIN_INCLUDE(all)
 #include <errno.h>
 
 #include <EGL/egl.h>
@@ -26,9 +8,11 @@
 #include <android/asset_manager.h>
 #include <android/window.h>
  
+#include <sys/time.h>
+#include <math.h>
+
 #include "mlwrapper_android.h"
 #include "mobile_res.h"
-#include <sys/time.h>
 #include "main.h"
 #include "helper.h"
 
@@ -37,17 +21,7 @@
 
 extern struct engine engine;
 
-/**
- * Initialize an EGL context for the current display.
- */
 static int engine_init_display(engine_t engine) {
-    // initialize OpenGL ES and EGL
-
-    /*
-     * Here specify the attributes of the desired configuration.
-     * Below, we select an EGLConfig with at least 8 bits per color
-     * component compatible with on-screen windows
-     */
     const EGLint attribs[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_BLUE_SIZE, 8,
@@ -64,16 +38,7 @@ static int engine_init_display(engine_t engine) {
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
     eglInitialize(display, 0, 0);
-
-    /* Here, the application chooses the configuration it desires. In this
-     * sample, we have a very simplified selection process, where we pick
-     * the first EGLConfig that matches our criteria */
     eglChooseConfig(display, attribs, &config, 1, &numConfigs);
-
-    /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
-     * guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
-     * As soon as we picked a EGLConfig, we can safely reconfigure the
-     * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
 
     ANativeWindow_setBuffersGeometry(engine->app->window, 0, 0, format);
@@ -97,12 +62,6 @@ static int engine_init_display(engine_t engine) {
     engine->height = h;
     engine->state.angle = 0;
 
-    // Initialize GL state.
-    // glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-    // glEnable(GL_CULL_FACE);
-    // glShadeModel(GL_SMOOTH);
-    // glDisable(GL_DEPTH_TEST);
-
     stage = mlstage_create((float)w, (float)h);
     engine->animating = 1;
 
@@ -112,12 +71,7 @@ static int engine_init_display(engine_t engine) {
 static value run_method = 1;
 static struct timeval last_draw_time;
 
-/**
- * Just the current frame in the display.
- */
 static void engine_draw_frame(engine_t engine) {
-    PRINT_DEBUG("engine_draw_frame");
-
     CAMLparam0();
     CAMLlocal1(timePassed);
 
@@ -135,18 +89,6 @@ static void engine_draw_frame(engine_t engine) {
     }
 
     CAMLreturn0;
-
-    // if (engine->display == NULL) {
-    //     // No display.
-    //     return;
-    // }
-
-    // // Just fill the screen with a color.
-    // glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
-    //         ((float)engine->state.y)/engine->height, 1);
-    // glClear(GL_COLOR_BUFFER_BIT);
-
-    // eglSwapBuffers(engine->display, engine->surface);
 }
 
 /**
@@ -163,84 +105,194 @@ static void engine_term_display(engine_t engine) {
         }
         eglTerminate(engine->display);
     }
-    PRINT_DEBUG("engine_term_display engine->animating = 0");
     engine->animating = 0;
     engine->display = EGL_NO_DISPLAY;
     engine->context = EGL_NO_CONTEXT;
     engine->surface = EGL_NO_SURFACE;
 }
 
-/**
- * Process the next input event.
- */
+typedef struct {
+    float x;
+    float y;
+} touch_track_t;
+
+// tt means touch track
+KHASH_MAP_INIT_INT(tt, touch_track_t*);
+kh_tt_t* touch_track = NULL;
+
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
+    CAMLparam0();
+    CAMLlocal5(vtouches, vtouch, vtmp, vtx, vty);
+
+    vtouches = Val_int(0);
     engine_t engine = (engine_t)app->userData;
+
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-        PRINT_DEBUG("engine_handle_input engine->animating = 1");
-        engine->animating = 1;
-        engine->state.x = AMotionEvent_getX(event, 0);
-        engine->state.y = AMotionEvent_getY(event, 0);
-        return 1;
+#define MAKE_TOUCH(touch, id, x, y, phase) touch = caml_alloc_tuple(8); \
+    vtx = caml_copy_double(x); \
+    vty = caml_copy_double(y); \
+    Store_field(touch,0,caml_copy_int32(id + 1)); \
+    Store_field(touch,1,caml_copy_double(0.)); \
+    Store_field(touch,2,vtx); \
+    Store_field(touch,3,vty); \
+    Store_field(touch,4,vtx); \
+    Store_field(touch,5,vty); \
+    Store_field(touch,6,Val_int(1)); \
+    Store_field(touch,7,Val_int(phase));
+
+#define APPEND_TOUCH vtmp = vtouches; \
+    vtouches = caml_alloc_small(2,0); \
+    Store_field(vtouches, 0, vtouch); \
+    Store_field(vtouches, 1, vtmp);
+        int32_t action = AMotionEvent_getAction(event);
+        size_t ptr_indx = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+        action &= AMOTION_EVENT_ACTION_MASK;
+
+#define GET_TOUCH_PARAMS tid = AMotionEvent_getPointerId(event, ptr_indx); \
+    tx = AMotionEvent_getX(event, ptr_indx); \
+    ty = AMotionEvent_getY(event, ptr_indx);
+
+#define KEEP_TACK(tid, tx, ty) { \
+        k = kh_get(tt, touch_track, tid); \
+        touch_track_t* touch; \
+        if (k != kh_end(touch_track)) { \
+            touch = kh_val(touch_track, k); \
+        } else { \
+            touch = (touch_track_t*)malloc(sizeof(touch_track_t)); \
+            int ret; \
+            k = kh_put(tt, touch_track, tid, &ret); \
+            kh_val(touch_track, k) = touch; \
+        } \
+        touch->x = tx; \
+        touch->y = ty; \
     }
-    return 0;
+
+#define LOSE_TRACK(id) k = kh_get(tt, touch_track, id); \
+    if (k != kh_end(touch_track)) { \
+        free(kh_val(touch_track, k)); \
+        kh_del(tt, touch_track, k); \
+    }
+
+#define GET_TRACK(id, track) k = kh_get(tt, touch_track, id); \
+    track = k != kh_end(touch_track) ? kh_val(touch_track, k) : NULL;
+
+        int32_t tid;
+        float tx, ty;
+        khiter_t k;
+        int8_t process_touches = 0;
+
+        switch (action) {
+            case AMOTION_EVENT_ACTION_MOVE: {
+                size_t ptr_cnt = AMotionEvent_getPointerCount(event);
+                touch_track_t* touch;
+
+                for (ptr_indx = 0; ptr_indx < ptr_cnt; ptr_indx++) {
+                    GET_TOUCH_PARAMS;
+                    GET_TRACK(tid, touch);
+
+                    if (!touch || fabs(touch->x - tx) > 10 || fabs(touch->y - ty) > 10) {
+                        if (!touch) {
+                            KEEP_TACK(tid, tx, ty);
+                        } else {
+                            touch->x = tx;
+                            touch->y = ty;
+                        }
+
+                        process_touches = 1;
+                        MAKE_TOUCH(vtouch, tid, tx, ty, 1);
+                    } else {
+                        MAKE_TOUCH(vtouch, tid, tx, ty, 2);
+                    }
+
+                    APPEND_TOUCH;
+                }
+
+                break;
+            }
+
+            case AMOTION_EVENT_ACTION_DOWN:
+            case AMOTION_EVENT_ACTION_POINTER_DOWN:
+                process_touches = 1;
+                if (action == AMOTION_EVENT_ACTION_DOWN) ptr_indx = 0;
+
+                GET_TOUCH_PARAMS;
+                KEEP_TACK(tid, tx, ty);
+                MAKE_TOUCH(vtouch, tid, tx, ty, 0);
+                APPEND_TOUCH;
+
+                break;
+
+            case AMOTION_EVENT_ACTION_UP:
+            case AMOTION_EVENT_ACTION_POINTER_UP:
+                process_touches = 1;
+                if (action == AMOTION_EVENT_ACTION_UP) ptr_indx = 0;
+
+                GET_TOUCH_PARAMS;
+                LOSE_TRACK(tid);
+                MAKE_TOUCH(vtouch, tid, tx, ty, 3);
+                APPEND_TOUCH;
+
+                break;
+
+            case AMOTION_EVENT_ACTION_CANCEL:
+                mlstage_cancelAllTouches(stage);
+                break;
+        }
+
+        if (process_touches) {
+            mlstage_processTouches(stage, vtouches);
+        }
+
+#undef MAKE_TOUCH
+#undef APPEND_TOUCH
+#undef KEEP_TACK
+#undef LOSE_TACK
+#undef GET_TOUCH_PARAMS
+
+        CAMLreturn(1);
+    }
+
+    CAMLreturn(0);
 }
 
-/**
- * Process the next main command.
- */
 static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
     engine_t engine = (engine_t)app->userData;
     switch (cmd) {
         case APP_CMD_SAVE_STATE:
-            // The system has asked us to save our current state.  Do so.
             engine->app->savedState = malloc(sizeof(struct saved_state));
             *((struct saved_state*)engine->app->savedState) = engine->state;
             engine->app->savedStateSize = sizeof(struct saved_state);
             break;
         case APP_CMD_INIT_WINDOW:
-            // The window is being shown, get it ready.
             if (engine->app->window != NULL) {
                 engine_init_display(engine);
                 engine_draw_frame(engine);
             }
             break;
         case APP_CMD_TERM_WINDOW:
-            // The window is being hidden or closed, clean it up.
             engine_term_display(engine);
             break;
         case APP_CMD_GAINED_FOCUS:
-            // When our app gains focus, we start monitoring the accelerometer.
             if (engine->accelerometerSensor != NULL) {
-                ASensorEventQueue_enableSensor(engine->sensorEventQueue,
-                        engine->accelerometerSensor);
-                // We'd like to get 60 events per second (in us).
-                ASensorEventQueue_setEventRate(engine->sensorEventQueue,
-                        engine->accelerometerSensor, (1000L/60)*1000);
+                ASensorEventQueue_enableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
+                ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->accelerometerSensor, (1000L/60)*1000);
             }
             break;
         case APP_CMD_LOST_FOCUS:
-            // When our app loses focus, we stop monitoring the accelerometer.
-            // This is to avoid consuming battery while not being used.
             if (engine->accelerometerSensor != NULL) {
                 ASensorEventQueue_disableSensor(engine->sensorEventQueue,
                         engine->accelerometerSensor);
             }
-            // Also stop animating.
-            PRINT_DEBUG("APP_CMD_LOST_FOCUS engine->animating = 0");
             engine->animating = 0;
             engine_draw_frame(engine);
             break;
     }
 }
 
-/**
- * This is the main entry point of a native application that is using
- * android_native_app_glue.  It runs in its own thread, with its own
- * event loop for receiving input events and doing other things.
- */
 void android_main(struct android_app* state) {
-    // Make sure glue isn't stripped.
     app_dummy();
+
+    touch_track = kh_init_tt();
 
     state->userData = &engine;
     state->onAppCmd = engine_handle_cmd;
@@ -269,55 +321,25 @@ void android_main(struct android_app* state) {
 
     ANativeActivity_setWindowFlags(state->activity, AWINDOW_FLAG_FULLSCREEN, 0);
 
-    // Prepare to monitor accelerometer
-    // engine.sensorManager = ASensorManager_getInstance();
-    // engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
-            // ASENSOR_TYPE_ACCELEROMETER);
-    // engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager,
-            // state->looper, LOOPER_ID_USER, NULL, NULL);
-
     if (state->savedState != NULL) {
-        // We are starting with a previous saved state; restore from it.
         engine.state = *(struct saved_state*)state->savedState;
     }
-
-    // loop waiting for stuff to do.
 
     char *argv[] = {"android",NULL};
     caml_startup(argv);
 
     while (1) {
-        // Read all pending events.
         int ident;
         int events;
         struct android_poll_source* source;
 
-        // If not animating, we will block forever waiting for events.
-        // If animating, we loop until all events are read, then continue
-        // to draw the next frame of animation.
-
         while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
                 (void**)&source)) >= 0) {
 
-            // Process this event.
             if (source != NULL) {
                 source->process(state, source);
             }
 
-            // If a sensor has data, process it now.
-/*            if (ident == LOOPER_ID_USER) {
-                if (engine.accelerometerSensor != NULL) {
-                    ASensorEvent event;
-                    while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
-                            &event, 1) > 0) {
-                        LOGI("accelerometer: x=%f y=%f z=%f",
-                                event.acceleration.x, event.acceleration.y,
-                                event.acceleration.z);
-                    }
-                }
-            }*/
-
-            // Check if we are exiting.
             if (state->destroyRequested != 0) {
                 engine_term_display(&engine);
                 return;
@@ -325,18 +347,10 @@ void android_main(struct android_app* state) {
         }
 
         if (engine.animating) {
-            // Done with events; draw next animation frame.
-            engine.state.angle += .01f;
-            if (engine.state.angle > 1) {
-                engine.state.angle = 0;
-            }
-
-            // Drawing is throttled to the screen update rate, so there
-            // is no need to do timing here.
             engine_draw_frame(&engine);
         }
     }
 
+    kh_destroy(tt, touch_track);
     engine_release();
 }
-//END_INCLUDE(all)
