@@ -56,7 +56,7 @@ ifeq ($(PLATFORM),IOS)
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/android_native_app_glue.o android/engine.o android/helper.o android/main.o android/local_notif.o android/mlwrapper_android.o android/texture_android.o android/sound_android.o android/payments_android.o android/unzip.o android/ioapi.o android/assets_extractor.o android/curl_extern_loader.o android/file_downloader.o android/keyboard_android.o android/gamecenter_android.o android/vibration.o
 		GLPARAM = -D__ANDROID__
-		LIBFLAGS = -cclib -landroid -cclib -lEGL -cclib -llog -cclib -lz -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
+		LIBFLAGS = -cclib -landroid -cclib -lOpenSLES -cclib -lEGL -cclib -llog -cclib -lz -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else
 	ifeq ($(PLATFORM),PC)
 		MOBJS += net_curl.o pc/glut_stub.o texture_load.o texture_save.o pc/texture_pc.o

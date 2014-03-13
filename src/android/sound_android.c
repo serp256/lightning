@@ -1,4 +1,105 @@
+#include <SLES/OpenSLES.h>
+#include <SLES/OpenSLES_Android.h>
+
+/*#include <caml/mlvalues.h>
+#include <caml/memory.h>
+#include <caml/alloc.h>
+#include <caml/callback.h>
+#include <caml/fail.h>*/
 #include "mlwrapper_android.h"
+
+static SLObjectItf engineObject = NULL;
+static SLEngineItf engineEngine;
+static SLObjectItf outputMixObject = NULL;
+static SLObjectItf bqPlayerObject = NULL;
+static SLPlayItf bqPlayerPlay;
+static SLPlayItf fdPlayerPlay;
+static SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
+
+#define SOUND_ASSERT(cond, mes) if (!cond) caml_raise_with_string(*caml_named_value("Audio_error"), mes);
+
+value ml_alsoundInit() {
+	CAMLparam0();
+
+
+	SLresult r;
+	r = slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
+	SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot create OpenSLES engine");
+
+
+    r = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot realize OpenSLES engine");
+
+
+    r = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot obtain OpenSLES engine interface");
+
+
+    r = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 0, NULL, NULL);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot create OpenSLES output mix");
+
+
+    r = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot realize OpenSLES output mix");
+
+    SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 1};
+    SLDataFormat_PCM format_pcm = {SL_DATAFORMAT_PCM, 1, SL_SAMPLINGRATE_8, SL_PCMSAMPLEFORMAT_FIXED_16, SL_PCMSAMPLEFORMAT_FIXED_16, SL_SPEAKER_FRONT_CENTER, SL_BYTEORDER_LITTLEENDIAN};
+    SLDataSource audioSrc = {&loc_bufq, &format_pcm};
+    SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
+    SLDataSink audioSnk = {&loc_outmix, NULL};
+
+    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
+    const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    r = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 2, ids, req);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannnot create OpenSLES audio player");
+
+
+    r = (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot realize OpenSLES audio player");
+
+
+    r = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_PLAY, &bqPlayerPlay);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot obtain OpenSLES audio player interface");
+
+
+    r = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_BUFFERQUEUE, &bqPlayerBufferQueue);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot obtain OpenSLES buffer queue interface");
+
+
+    r = (*fdPlayerPlay)->SetPlayState(fdPlayerPlay, SL_PLAYSTATE_PLAYING);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == r, "cannot set OpenSLES audio player state");
+
+
+	CAMLreturn(Val_unit);
+}
+
+value ml_alsoundLoad(value vpath) {
+	CAMLparam1(vpath);
+
+	resource r;
+	SOUND_ASSERT(getResourceFd(String_val(vpath), &r), "cannot load sound");
+
+	void* buf = malloc(r.length);
+	read(r.fd, buf, r.length);
+	close(r.fd);
+
+	CAMLreturn(Val_int(0));
+}
+
+value ml_alsoundPlay(value soundId, value vol, value loop) {}
+value ml_alsoundPause(value streamId) {}
+value ml_alsoundStop(value streamId) {}
+value ml_alsoundSetVolume(value streamId, value vol) {}
+value ml_alsoundSetLoop(value streamId, value loop) {}
+
+value ml_avsound_create_player(value vpath) {}
+value ml_avsound_playback(value vmp, value vmethodName) {}
+value ml_avsound_set_loop(value vmp, value loop) {}
+value ml_avsound_set_volume(value vmp, value vol) {}
+value ml_avsound_is_playing(value vmp) {}
+value ml_avsound_play(value vmp, value cb) {}
+
+/*#include "mlwrapper_android.h"
 #include <caml/custom.h>
 
 
@@ -390,58 +491,4 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCall
 	caml_remove_generational_global_root(cbptr);
 
 	(*env)->DeleteLocalRef(env, runnableCls);
-}
-
-
-// void sound_pause(JNIEnv *env) {
-
-// 	if (gSndPool != NULL) {
-// 		JNIEnv *env;
-// 		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-// 		if (gAutoPause == NULL) {
-// 			gAutoPause = (*env)->GetMethodID(env, gSndPoolCls, "autoPause", "()V");
-// 		}
-
-// 		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
-// 	}
-
-// 	jclass lmpCls = get_lmp_class();
-
-// 	if (gLmpPauseAll == NULL) {
-// 		gLmpPauseAll = (*env)->GetStaticMethodID(env, lmpCls, "pauseAll", "()V");
-// 	}
-
-// 	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpPauseAll);
-// }
-
-// void sound_resume(JNIEnv *env) {
-
-// 	if (gSndPool != NULL) {
-// 		JNIEnv *env;
-// 		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-		
-// 		if (gAutoResume == NULL) {
-// 			gAutoResume = (*env)->GetMethodID(env, gSndPoolCls, "autoResume", "()V");
-// 		}
-
-// 		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
-// 	}
-
-// 	jclass lmpCls = get_lmp_class();
-
-// 	if (gLmpResumeAll == NULL) {
-// 		gLmpResumeAll = (*env)->GetStaticMethodID(env, lmpCls, "resumeAll", "()V");
-// 	}
-
-// 	PRINT_DEBUG("resume ALL players");
-// 	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);
-// }
-
-// JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024LifecycleHelper_onResume(JNIEnv *env, jobject this) {
-// 	sound_resume(env);
-// }
-
-// JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024LifecycleHelper_onPause(JNIEnv *env, jobject this) {
-// 	sound_pause(env);
-// }
+}*/
