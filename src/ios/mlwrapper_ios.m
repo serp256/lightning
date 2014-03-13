@@ -567,3 +567,14 @@ value ml_show_nativeWait(value message) {
 value ml_hide_nativeWait(value p) {
 	return Val_unit;
 }
+
+value ml_str_to_lower(value vsrc) {
+	CAMLparam1(vsrc);
+	CAMLreturn(caml_copy_string([[[NSString stringWithUTF8String:String_val(vsrc)] lowercaseString] UTF8String]));
+}
+
+value ml_str_to_upper(value vsrc) {
+	CAMLparam1(vsrc);
+	CAMLreturn(caml_copy_string([[[NSString stringWithUTF8String:String_val(vsrc)] uppercaseString] UTF8String]));
+}
+

@@ -503,3 +503,16 @@ value glowMatrix mhgs x y = Matrix.create ~translate:{ Point.x = mhgs +. (negati
 value glowFirstDrawMatrix originaMtx x y = Matrix.translate originaMtx (positiveOrZero x, positiveOrZero y);
 value glowLastDrawMatrix originaMtx x y = Matrix.translate originaMtx (invertNegativeOrZero x, invertNegativeOrZero y);
 
+IFPLATFORM(pc)
+value strToLower str = str;
+value strToUpper str = str;
+ELSE
+external strToLower: string -> string = "ml_str_to_lower";
+external strToUpper: string -> string = "ml_str_to_upper";
+ENDPLATFORM;
+
+value strCapitalize str =
+  let fstCharPos = UTF8.nth str 1 in
+  let fst = String.sub str 0 fstCharPos in
+  let rest = String.sub str fstCharPos (String.length str - fstCharPos) in
+    (strToUpper fst) ^ rest;

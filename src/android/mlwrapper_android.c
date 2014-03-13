@@ -948,3 +948,47 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireNativeEvent(JNIEnv *
 	if (mlfun == NULL) mlfun = caml_named_value("on_native_event");
 	caml_callback(*mlfun,mldata);
 }
+
+#define INVERSE_CASE_MID(method) static jmethodID mid = 0; \
+	if (!mid) { \
+		jclass cls = (*env)->FindClass(env, "java/lang/String"); \
+		mid = (*env)->GetMethodID(env, cls, #method, "()Ljava/lang/String;"); \
+		(*env)->DeleteLocalRef(env, cls); \
+	}
+
+#define INVERSE_CASE jstring jsrc = (*env)->NewStringUTF(env, String_val(vsrc)); \
+	jstring jdst = (*env)->CallObjectMethod(env, jsrc, mid); \
+	const char* cdst = (*env)->GetStringUTFChars(env, jdst, NULL); \
+	vdst = caml_copy_string(cdst); \
+	(*env)->ReleaseStringUTFChars(env, jdst, cdst); \
+	(*env)->DeleteLocalRef(env, jsrc); \
+	(*env)->DeleteLocalRef(env, jdst);
+
+value ml_str_to_lower(value vsrc) {
+	CAMLparam1(vsrc);
+	CAMLlocal1(vdst);
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	INVERSE_CASE_MID(toLowerCase);
+	INVERSE_CASE;
+
+	CAMLreturn(vdst);
+}
+
+value ml_str_to_upper(value vsrc) {
+	CAMLparam1(vsrc);
+	CAMLlocal1(vdst);
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	INVERSE_CASE_MID(toUpperCase);
+	INVERSE_CASE;
+
+	CAMLreturn(vdst);
+}
+
+#undef INVERSE_CASE_MID
+#undef INVERSE_CASE
