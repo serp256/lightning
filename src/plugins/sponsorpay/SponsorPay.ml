@@ -7,7 +7,7 @@ external showOffers: unit -> unit = "ml_sponsorPay_showOffers";
 
 ELSE
 
-value start: ~appId:string -> ?userId:string -> ?securityToken:string -> ?networks:list network -> unit -> unit = fun ~appId ?userId ?securityToken ?mediatedNetworks () -> ();
+value start ~appId ?userId ?securityToken ?networks () = ();
 value showOffers () = ();
 
 ENDPLATFORM;
