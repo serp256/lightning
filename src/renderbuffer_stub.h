@@ -21,7 +21,7 @@ typedef struct {
 #define IS_CLIPPING(clp) (clp.x == 0. && clp.y == 0. && clp.width == 1. && clp.height == 1.)
 
 typedef struct {
-  GLuint fbid;
+	GLuint fbid;
 	GLuint tid;
 	double width;
 	double height;

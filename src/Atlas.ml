@@ -185,7 +185,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                   | False -> ()
                   ]
                 | (None,None) ->
-                  let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
+                  let tex = RenderTexture.draw rw rh drawf in
                   let g_image = Render.Image.create tex#renderInfo color alpha in
                   (
                     gf.g_texture := Some tex;

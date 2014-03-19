@@ -500,3 +500,11 @@ value glowMatrix mhgs x y = Matrix.create ~translate:{ Point.x = mhgs +. (negati
 value glowFirstDrawMatrix originaMtx x y = Matrix.translate originaMtx (positiveOrZero x, positiveOrZero y);
 value glowLastDrawMatrix originaMtx x y = Matrix.translate originaMtx (invertNegativeOrZero x, invertNegativeOrZero y);
 
+value powOfTwo p =
+  let r = ref 1 in
+  (
+    for i = 0 to p -1 do
+      r.val := !r * 2; 
+    done;
+    !r;
+  );

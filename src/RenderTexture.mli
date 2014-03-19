@@ -17,6 +17,6 @@ class type c =
 
 type kind = [ Shared | Dedicated of Texture.filter ];
 value draw: ?kind:kind-> ?color:int -> ?alpha:float -> float ->  float -> (framebuffer -> unit) -> c; 
-value sharedTexsNum: unit -> int;
+(* value sharedTexsNum: unit -> int; *)
 (* value dumpTextures: unit -> unit; *)
 (* value repairBenchmark: int -> int -> int -> (int * int * int * float * float * float * float); *)

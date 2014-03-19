@@ -297,7 +297,8 @@ class virtual c (_width:float) (_height:float) =
         object
           method process dt = 
             let () = debug:stn "!!!!pizdalalalallaal" in
-            let dobj = show (RenderTexture.sharedTexsNum ()) in
+            (* let dobj = show (RenderTexture.sharedTexsNum ()) in *)
+            let dobj = show 0 in
             let m = Matrix.create ~translate:(Point.create 150. 0.) () in (
               dobj#setTransformationMatrix m;
               sharedTexNum := Some dobj;

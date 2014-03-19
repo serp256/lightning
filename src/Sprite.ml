@@ -95,7 +95,7 @@ class c =
                  ]
                )
              | (None,None) -> 
-                 let tex = RenderTexture.draw ~filter:Texture.FilterLinear width height f in
+                 let tex = RenderTexture.draw width height f in
                  let img = Render.Image.create tex#renderInfo ~color:`NoColor ~alpha:1. in
                  (
                    c.c_tex := Some tex;
@@ -135,7 +135,7 @@ class c =
                    let alpha' = alpha in
                    (
                      self#setAlpha 1.;
-                     let ctex = RenderTexture.draw ~filter:Texture.FilterNearest ~dedicated:True rw rh begin fun _ ->
+                     let ctex = RenderTexture.draw ~kind:(RenderTexture.Dedicated Texture.FilterNearest) rw rh begin fun _ ->
                        (
                          Render.push_matrix m;
                          (* Render.clear 0 0.; *)

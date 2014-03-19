@@ -337,7 +337,7 @@ class _c  _texture =
                     Render.Image.render (glowLastDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
                   )
                 in
-                let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
+                let tex = RenderTexture.draw rw rh drawf in
                   GlowCache.create glowc_id texture tex g_matrix
             ]
           in

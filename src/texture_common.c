@@ -250,7 +250,7 @@ unsigned long nextPOT(unsigned long x)
     return x + 1;
 }
 
-// next divisible by four
+// next divisible by eight
 unsigned long nextDBE(unsigned long x) {
 	return x + (8 - x % 8);
 }

@@ -52,6 +52,7 @@ struct tex {
 	char path[255];
 #endif
 	int mem;
+	GLuint fbid; //this fiedls used only with render textures
 };
 
 #define TEXTURE_ID(v) ((struct tex*)Data_custom_val(v))->tid
