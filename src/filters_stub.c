@@ -80,8 +80,8 @@ value ml_glow2_make(value orb,value glow) {
 	int gsize = Int_val(Field(glow,0));
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
 
-	framebuffer_state fstate;
-	get_framebuffer_state(&fstate);
+/*	framebuffer_state fstate;
+	get_framebuffer_state(&fstate);*/
 	lgResetBoundTextures();
 	setNotPMAGLBlend ();
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
@@ -113,7 +113,8 @@ value ml_glow2_make(value orb,value glow) {
 	if (strength != 1.) glUniform1f(prg->uniforms[3],1.);
 	// и вот здесь вопрос чего вернуть
 	glBindTexture(GL_TEXTURE_2D,0);
-	if (srb->fbid != rb->fbid) {
+
+/*	if (srb->fbid != rb->fbid) {
 		//fprintf(stderr,"we need return new texture\n");
 		// бля не повезло надо бы тут пошаманить
 		// Ебнуть текстуру старую и перезаписать в ml ную структуру
@@ -121,11 +122,12 @@ value ml_glow2_make(value orb,value glow) {
 		delete_renderbuffer(rb);
 		rb->tid = rb2.tid;
 		rb->fbid = rb2.fbid;
-		fstate.framebuffer = rb->fbid;
-	} else delete_renderbuffer(&rb2);
+		// fstate.framebuffer = rb->fbid;
+	} else delete_renderbuffer(&rb2);*/
+		
 	glUseProgram(0);
 	currentShaderProgram = 0;
-	set_framebuffer_state(&fstate);
+	// set_framebuffer_state(&fstate);
 	return Val_unit;
 }
 
@@ -227,8 +229,8 @@ void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_le
 
 void ml_shadow_make(value orb, value shadow){
 	lgResetBoundTextures();
-	framebuffer_state fstate;
-	get_framebuffer_state(&fstate);
+/*	framebuffer_state fstate;
+	get_framebuffer_state(&fstate);*/
 	glDisable(GL_BLEND);
 	glClearColor(0.,0.,0.,0.);
 
@@ -308,7 +310,7 @@ void ml_shadow_make(value orb, value shadow){
 	glBindTexture(GL_TEXTURE_2D,0);
 	glUseProgram(0);
 	currentShaderProgram = 0;
-	set_framebuffer_state(&fstate);
+	// set_framebuffer_state(&fstate);
 	checkGLErrors("end of shadow");
 
 
@@ -442,8 +444,8 @@ value ml_glow_make(value orb, value glow) {
 	PRINT_DEBUG("glow make for %d:%d, [%f:%f] [%d:%d]",rb->fbid,rb->tid,rb->width,rb->height,rb->realWidth,rb->realHeight);*/
 
 	lgResetBoundTextures();
-	framebuffer_state fstate;
-	get_framebuffer_state(&fstate);
+/*	framebuffer_state fstate;
+	get_framebuffer_state(&fstate);*/
 	glDisable(GL_BLEND);
 	glClearColor(0.,0.,0.,0.);
 
@@ -516,7 +518,7 @@ value ml_glow_make(value orb, value glow) {
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
-	_clear_renderbuffer(rb, (color3F) { 0., 0., 0.}, 0.);
+	// _clear_renderbuffer(rb, (color3F) { 0., 0., 0.}, 0.);
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
 	glEnable(GL_BLEND);
@@ -536,7 +538,7 @@ value ml_glow_make(value orb, value glow) {
 	glBindTexture(GL_TEXTURE_2D,0);
 	glUseProgram(0);
 	currentShaderProgram = 0;
-	set_framebuffer_state(&fstate);
+	// set_framebuffer_state(&fstate);
 	checkGLErrors("end of glow");
 
 	return Val_unit;

@@ -115,6 +115,7 @@ value run stage_create =
           Glut.mouseFunc mouse_func;
           Glut.motionFunc motion_func;
         );
+        Glut.restoreFramebuffer ();
         stage#renderStage ();
       )
     end;

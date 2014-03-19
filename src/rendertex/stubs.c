@@ -39,6 +39,8 @@ struct custom_operations rendertextureID_ops = {
 };
 
 value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, value vheight, value vdraw_func) {
+	PRINT_DEBUG("rendertex_create call");
+
 	CAMLparam5(vkind, vcolor, valpha, vwidth, vheight);
 	CAMLxparam1(vdraw_func);
 	CAMLlocal4(vrender_inf, vtid, vtmp, vclipping);
@@ -48,6 +50,8 @@ value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, va
 	GLuint tex_size = renderbuf_shared_tex_size();
 	int8_t dedicated = (w > (tex_size / 2)) || (h > (tex_size / 2));
 	GLuint filter = GL_LINEAR;
+
+	PRINT_DEBUG("w %f, h %f, dedicated %d", w, h, dedicated);
 	
 	if (Is_block(vkind)) {
 		if (Tag_val(vkind) == 0) {
@@ -66,6 +70,8 @@ value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, va
 
 	color3F color = Is_block(vcolor) ? COLOR3F_FROM_INT(Field(vcolor, 0)) : (color3F){ 0., 0., 0. };
 	GLfloat alpha = Is_block(valpha) ? Double_val(Field(valpha, 0)) : 0.;
+
+	PRINT_DEBUG("color %f,%f,%f, alpha %f", color.r, color.g, color.b, alpha);
 
 	if (dedicated) {
 		rendertex_dedicated_create(&renderbuf, w, h, filter, &color, alpha, vdraw_func, &vtid);
@@ -129,4 +135,9 @@ value rendertex_draw(value vclear, value vwidth, value vheight, value vrender_in
 
 value rendertex_draw_byte(value *argv, int n) {
 	return rendertex_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
+}
+
+value ml_renderbuffer_data(value vrender_inf) {
+	CAMLparam1(vrender_inf);
+	CAMLreturn(Val_unit);
 }

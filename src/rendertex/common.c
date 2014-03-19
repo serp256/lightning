@@ -92,7 +92,7 @@ void inline tex_return_id(GLuint tid) {
 static int framebuf_num = 0;
 static GLuint *framebufs = NULL;
 
-GLuint inline framebuf_get_id() {
+GLuint framebuf_get_id() {
 	GLuint fbid = 0;
 	int i = 0;
 	while ((i < framebuf_num) && (framebufs[i] == 0)) {i++;};
@@ -104,7 +104,7 @@ GLuint inline framebuf_get_id() {
 	return fbid;
 }
 
-void inline framebuf_return_id(GLuint fbid) {
+void framebuf_return_id(GLuint fbid) {
 	int i = 0;
 	while (i < framebuf_num && framebufs[i] != 0) {i++;};
 	if (i < framebuf_num) framebufs[i] = fbid;

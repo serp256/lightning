@@ -6,7 +6,7 @@ CFLAGS += -I .
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 #MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o renderbuffer_stub.o filters_stub.o render_stub.o
-MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o rendertex/common.o rendertex/shared.o rendertex/dedicated.o rendertex/stubs.o filters_stub.o render_stub.o
+MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o rects-bin.o rendertex/common.o rendertex/shared.o rendertex/dedicated.o rendertex/stubs.o filters_stub.o render_stub.o
 
 light_common.o: light_common.h
 texture_common.o: texture_common.h light_common.h

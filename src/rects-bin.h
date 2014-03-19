@@ -31,7 +31,7 @@ typedef struct {
 	int reuse_rects_num;
 } rbin_t;
 
-rbin_t*	rbin_init(rbin_t* bin, uint16_t width, uint16_t height);// fill nah
+void	rbin_init(rbin_t* bin, uint16_t width, uint16_t height);// fill nah
 void	rbin_free(rbin_t* bin);
 
 uint8_t rbin_reuse_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt);

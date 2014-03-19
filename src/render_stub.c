@@ -48,9 +48,25 @@ value ml_checkGLErrors(value p) {
 	return Val_unit;
 }
 
-void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
+GLfloat viewport[4];
+
+void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, uint8_t save_vp);
+
+void restore_default_viewport() {
+	setupOrthographicRendering(viewport[0], viewport[1], viewport[2], viewport[3], 0);
+}
+
+void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, uint8_t save_vp) {
 	//fprintf(stderr,"set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
   //glDisable(GL_DEPTH_TEST);
+	if (save_vp) {
+		viewport[0] = left;
+		viewport[1] = right;
+		viewport[2] = bottom;
+		viewport[3] = top;		
+	}
+
+
   glEnable(GL_BLEND);
   
 	glViewport(left, top, (GLsizei)(right), (GLsizei)(bottom));
@@ -72,7 +88,7 @@ void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLf
 
 
 value ml_setupOrthographicRendering(value left,value right,value bottom,value top) {
-	setupOrthographicRendering(Double_val(left),Double_val(right),Double_val(bottom),Double_val(top));
+	setupOrthographicRendering(Double_val(left),Double_val(right),Double_val(bottom),Double_val(top), 1);
 	return Val_unit;
 }
 

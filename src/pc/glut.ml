@@ -53,3 +53,4 @@ external postRedisplay: unit -> unit = "ml_glutPostRedisplay";
 external swapBuffers: unit -> unit = "ml_glutSwapBuffers" "noalloc";
 
 external mainLoop: unit -> unit = "ml_glutMainLoop";
+external restoreFramebuffer: unit -> unit = "ml_restore_framebuffer";

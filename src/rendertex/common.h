@@ -51,16 +51,16 @@ typedef struct {
 	clipping clp;
 } renderbuffer_t;
 
-void inline	renderbuf_activate 		(renderbuffer_t *rb);
-void inline	renderbuf_deactivate	();
+void 	renderbuf_activate 		(renderbuffer_t *rb);
+void 	renderbuf_deactivate	();
 
-GLuint inline	tex_get_id		();
-void inline		tex_return_id	(GLuint tid);
+GLuint	tex_get_id				();
+void	tex_return_id			(GLuint tid);
 
-GLuint inline	framebuf_get_id			();
-void inline		framebuf_return_id		(GLuint fbid);
-void 			framebuf_push		(GLuint fbid, viewport *vp, int8_t apply);
-void			framebuf_pop		();
-GLuint			framebuf_restore	(int8_t apply_viewport);
+GLuint	framebuf_get_id			();
+void	framebuf_return_id		(GLuint fbid);
+void 	framebuf_push			(GLuint fbid, viewport *vp, int8_t apply);
+void	framebuf_pop			();
+GLuint	framebuf_restore		(int8_t apply_viewport);
 
 #endif

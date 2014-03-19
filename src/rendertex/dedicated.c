@@ -44,16 +44,22 @@ static struct custom_operations rendetex_opts = {
 value caml_gc_major(value v);
 
 void rendertex_dedicated_clear(color3F *color, GLfloat alpha) {
+	PRINT_DEBUG("rendertex_dedicated_clear call");
+
 	glClearColor(color->r, color->g, color->b, alpha);
 	glClear(GL_COLOR_BUFFER_BIT);	
 }
 
 void rendertex_dedicated_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t h, GLuint filter, color3F *color, GLfloat alpha, value draw_func, value *tex_id) {
+	PRINT_DEBUG("rendertex_dedicated_create call");
+
 	GLuint texw = (GLuint)nextPOT(w);
 	GLuint texh = (GLuint)nextPOT(h);
 	int tex_data_size = texw * texh * 4;
 	GLuint x = (texw - w) / 2;
 	GLuint y = (texh - h) / 2;
+
+	PRINT_DEBUG("w %d, h %d, texw %d, texh %d, x %d, y %d", w, h, texw, texh, x, y);
 
 	renderbuf->fbid = framebuf_get_id();
     renderbuf->tid = tex_get_id();

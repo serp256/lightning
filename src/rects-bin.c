@@ -264,25 +264,25 @@ uint8_t rbin_reuse_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt
 
 uint8_t rbin_add_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
 
-	uint8_t finded = bin_find_pos(bin, width, height, added, pnt);
+	uint8_t finded = rbin_find_pos(bin, width, height, pnt);
 
-	if (finded) bin_add_rect_at(bin, pnt->x, pnt->y, width, height);
-	return finded
+	if (finded) rbin_add_rect_at(bin, pnt->x, pnt->y, width, height);
+	return finded;
 
 }
 
 void rbin_repair(rbin_t* bin) {
 	//if (bin_need_repair(bin)) {
 		if (!bin->rects) {
-			bin_clear(bin);
+			rbin_clear(bin);
 		} else {
 			rlist_t* rect = bin->rects;// FIXME:!!!!!
 
 			bin->rects = NULL;
-			bin_clear(bin);
+			rbin_clear(bin);
 			
 			while (rect) {
-				bin_add_rect_at(bin, rect->data->left_bottom.x, rect->data->left_bottom.y, rect->data->width, rect->data->height);
+				rbin_add_rect_at(bin, rect->data->left_bottom.x, rect->data->left_bottom.y, rect->data->width, rect->data->height);
 				rect = rlist_remove(NULL, rect, 1);
 			}
 		}
