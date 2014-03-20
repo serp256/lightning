@@ -39,19 +39,18 @@ struct custom_operations rendertextureID_ops = {
 };
 
 value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, value vheight, value vdraw_func) {
-	PRINT_DEBUG("rendertex_create call");
+	PRINT_DEBUG("!!!rendertex_create call");
 
 	CAMLparam5(vkind, vcolor, valpha, vwidth, vheight);
 	CAMLxparam1(vdraw_func);
-	CAMLlocal4(vrender_inf, vtid, vtmp, vclipping);
+	CAMLlocal5(vrender_inf, vtid, vtmp, vclipping, vretval);
 
-	uint16_t w = ceil(Double_val(vwidth));
-	uint16_t h = ceil(Double_val(vheight));
-	GLuint tex_size = renderbuf_shared_tex_size();
-	int8_t dedicated = (w > (tex_size / 2)) || (h > (tex_size / 2));
 	GLuint filter = GL_LINEAR;
-
-	PRINT_DEBUG("w %f, h %f, dedicated %d", w, h, dedicated);
+	uint16_t w = (uint16_t)ceil(Double_val(vwidth));
+	uint16_t h = (uint16_t)ceil(Double_val(vheight));
+	GLuint tex_size = renderbuf_shared_tex_size();
+	uint8_t dedicated = (w > tex_size / 2) || (h > tex_size / 2);
+	PRINT_DEBUG("dedicated %d, w %d, h %d", dedicated, w, h);
 	
 	if (Is_block(vkind)) {
 		if (Tag_val(vkind) == 0) {
@@ -65,9 +64,9 @@ value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, va
 		}		
 	}
 
-	renderbuffer_t renderbuf;
-	lgResetBoundTextures();
+	PRINT_DEBUG("dedicated %d", dedicated);
 
+	renderbuffer_t renderbuf;
 	color3F color = Is_block(vcolor) ? COLOR3F_FROM_INT(Field(vcolor, 0)) : (color3F){ 0., 0., 0. };
 	GLfloat alpha = Is_block(valpha) ? Double_val(Field(valpha, 0)) : 0.;
 
@@ -90,6 +89,9 @@ value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, va
 	vkind = caml_alloc_tuple(1);
 	Store_field(vkind, 0, Val_true);
 
+	renderbuf_save_current(caml_copy_string("/tmp/xyu.png"));
+	PRINT_DEBUG("renderbuf %d, %d, %f, %f, %d, %d, (%d, %d, %d, %d), (%f, %f, %f, %f)", renderbuf.fbid, renderbuf.tid, renderbuf.width, renderbuf.height, renderbuf.realWidth, renderbuf.realHeight, renderbuf.vp.x, renderbuf.vp.y, renderbuf.vp.w, renderbuf.vp.h, renderbuf.clp.x, renderbuf.clp.y, renderbuf.clp.w, renderbuf.clp.h);
+
 	vrender_inf = caml_alloc_tuple(7);
 	Store_field(vrender_inf, 0, vtid);
 	Store_field(vrender_inf, 1, caml_copy_double(renderbuf.width));
@@ -100,7 +102,11 @@ value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, va
 	Store_field(vrender_inf, 6, Val_int(renderbuf.vp.y));
 	checkGLErrors("finish render to texture");
 
-	CAMLreturn(vrender_inf);
+	vretval = caml_alloc_tuple(2);
+	Store_field(vretval, 0, vrender_inf);
+	Store_field(vretval, 1, Val_bool(dedicated));
+
+	CAMLreturn(vretval);
 }
 
 value rendertex_create_byte(value *argv, int n) {
@@ -108,6 +114,8 @@ value rendertex_create_byte(value *argv, int n) {
 }
 
 value rendertex_draw(value vclear, value vwidth, value vheight, value vrender_inf, value vdraw_func, value vdedicated) {
+	PRINT_DEBUG("!!!rendertex_draw call");
+
 	CAMLparam5(vclear, vwidth, vheight, vrender_inf, vdraw_func);
 	CAMLxparam1(vdedicated);
 	CAMLlocal1(vtmp);
@@ -135,6 +143,15 @@ value rendertex_draw(value vclear, value vwidth, value vheight, value vrender_in
 
 value rendertex_draw_byte(value *argv, int n) {
 	return rendertex_draw(argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
+}
+
+value rendertex_save(value vrender_inf, value vpath) {
+	CAMLparam1(vpath);
+
+	renderbuffer_t renderbuf;
+	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT);
+
+	CAMLreturn(Val_bool(renderbuf_save(&renderbuf, vpath)));
 }
 
 value ml_renderbuffer_data(value vrender_inf) {

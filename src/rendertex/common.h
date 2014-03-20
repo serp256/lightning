@@ -53,6 +53,8 @@ typedef struct {
 
 void 	renderbuf_activate 		(renderbuffer_t *rb);
 void 	renderbuf_deactivate	();
+uint8_t renderbuf_save			(renderbuffer_t *rb, value path);
+uint8_t renderbuf_save_current	(value path);
 
 GLuint	tex_get_id				();
 void	tex_return_id			(GLuint tid);

@@ -84,29 +84,11 @@ class shared renderInfo =
       ]; *)
 
     method draw ?clear ?width ?height (f:(framebuffer -> unit)) =
-      rendertexDraw ?clear ?width ?height renderInfo f False;
-(*       let (changed, w) = match width with [ Some width when ceil width <> renderInfo.rwidth -> (True, ceil width) | _ -> (False, renderInfo.rwidth) ] in
-      let (changed, h) = match height with [ Some height when ceil height <> renderInfo.rheight -> (True, ceil height) | _ -> (changed, renderInfo.rheight) ] in
-      let resized = 
-        if changed
-        then (
-          FramebufferTexture.freeRect renderInfo.rtextureID renderInfo.rx renderInfo.ry;
-
-          let (tid, pos) = FramebufferTexture.getRect (int_of_float w) (int_of_float h) in
-          let new_tid = if tid = renderInfo.rtextureID then None else Some tid in
-          let new_params = (FramebufferTexture.Point.x pos, FramebufferTexture.Point.y pos, w, h) in (
-            renderbuffer_draw_to_texture ?clear ~new_params ?new_tid renderInfo f;
-            True;
-          );
-        )
-        else (
-          renderbuffer_draw_to_texture ?clear renderInfo f;
-          False;
-        )
-      in (
-        Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
-        resized;
-      );  *)   
+      let resized = rendertexDraw ?clear ?width ?height renderInfo f False in
+        (
+          Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
+          resized;
+        ); 
   end;
 
 class dedicated renderInfo =
@@ -123,13 +105,12 @@ class dedicated renderInfo =
       | True -> ()
       ]; *)
 
-    method draw ?clear ?width ?height (f:(framebuffer -> unit)) = 
-      rendertexDraw ?clear ?width ?height renderInfo f True;
-(*       let resized = renderbuffer_draw_to_dedicated_texture ?clear ?width ?height renderInfo f in
-      (
-        Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
-        resized;
-      ); *)
+    method draw ?clear ?width ?height (f:(framebuffer -> unit)) =
+      let resized = rendertexDraw ?clear ?width ?height renderInfo f True in
+        (
+          Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
+          resized;
+        );
   end;
 
 class type c =
@@ -146,14 +127,13 @@ class type c =
 
 type kind = [ Shared | Dedicated of Texture.filter ];
 
-external rendertexCreate: ?kind:kind -> ?color:int -> ?alpha:float -> float -> float -> (framebuffer -> unit) -> renderInfo = "rendertex_create_byte" "rendertex_create";
+external rendertexCreate: ?kind:kind -> ?color:int -> ?alpha:float -> float -> float -> (framebuffer -> unit) -> (renderInfo * bool) = "rendertex_create_byte" "rendertex_create";
 
 value draw ?(kind=Shared) ?color ?alpha width height f =
-  let renderInfo = rendertexCreate ~kind ?color ?alpha width height f in
-    match kind with
-    [ Shared -> new shared renderInfo
-    | Dedicated _ -> new dedicated renderInfo
-    ];
+  let (renderInfo, dedicated) = rendertexCreate ~kind ?color ?alpha width height f in
+    if dedicated
+    then new dedicated renderInfo
+    else new shared renderInfo;
 
 (* value draw ?(kind=Shared) ?color ?alpha width height f =
   let width = int_of_float (ceil width) in

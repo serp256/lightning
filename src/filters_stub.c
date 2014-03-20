@@ -3,8 +3,8 @@
 #include "render_stub.h"
 #include <caml/callback.h>
 #include "math.h"
-#include "renderbuffer_stub.h"
 #include "inline_shaders.h"
+#include "rendertex/common.h"
 
 extern GLuint currentShaderProgram;
 
@@ -24,10 +24,10 @@ static void drawRenderbuffer(renderbuffer_t *drb,renderbuffer_t *srb,int clear) 
 	clipping *clp = &srb->clp;
 	texCoords[0][0] = clp->x;
 	texCoords[0][1] = clp->y;
-	texCoords[1][0] = clp->x + clp->width;
+	texCoords[1][0] = clp->x + clp->w;
 	texCoords[1][1] = clp->y;
 	texCoords[2][0] = clp->x;
-	texCoords[2][1] = clp->y + clp->height;
+	texCoords[2][1] = clp->y + clp->h;
 	texCoords[3][0] = texCoords[1][0];
 	texCoords[3][1] = texCoords[2][1];
 	glVertexAttribPointer(lgVertexAttrib_Position,2,GL_FLOAT,GL_FALSE,0,quads);
@@ -131,16 +131,15 @@ value ml_glow2_make(value orb,value glow) {
 	return Val_unit;
 }
 
-static void inline glow_make_draw(viewport *vp,clipping *clp, int clear) {
-	glViewport(vp->x,vp->y,vp->w,vp->h);
+static void inline glow_make_draw(clipping *clp, int clear) {
 	if (clear) glClear(GL_COLOR_BUFFER_BIT);
 
 	texCoords[0][0] = clp->x;
 	texCoords[0][1] = clp->y;
-	texCoords[1][0] = clp->x + clp->width;
+	texCoords[1][0] = clp->x + clp->w;
 	texCoords[1][1] = clp->y;
 	texCoords[2][0] = clp->x;
-	texCoords[2][1] = clp->y + clp->height;
+	texCoords[2][1] = clp->y + clp->h;
 	texCoords[3][0] = texCoords[1][0];
 	texCoords[3][1] = texCoords[2][1];
 
@@ -194,225 +193,34 @@ static inline GLuint powS( GLuint l )
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);	\
 	}
 
-void draw_glow_level(GLuint w, GLuint h, GLuint frm_buf_id, GLuint* prev_glow_lev_tex, viewport* vp, clipping* clp, int bind) {
-	PRINT_DEBUG("draw_glow_level %f %f %f %f", clp->x, clp->y, clp->width, clp->height);
+static int xyu = 0;
+
+void draw_glow_level(GLuint w, GLuint h, GLuint* prev_glow_lev_tex, clipping* clp, uint8_t mag) { //mag means magnification; when minifying we should bind texture to framebuffer and unbind when magnifying
+	PRINT_DEBUG("draw_glow_level clipping %f %f %f %f", clp->x, clp->y, clp->w, clp->h);
 
 	int tw, th;
 	INIT_TEX(w, h, tw, th);
-	glBindFramebuffer(GL_FRAMEBUFFER, frm_buf_id);
 
-	if (bind) {
+	if (!mag) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw][th], 0);
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 			char errmsg[255];
-			sprintf(errmsg,"glow make. bind framebuffer %d to texture, %d:%d status: %X",frm_buf_id,w,h,glCheckFramebufferStatus(GL_FRAMEBUFFER));
+			sprintf(errmsg,"glow make. bind framebuffer, %d:%d status: %X", w, h, glCheckFramebufferStatus(GL_FRAMEBUFFER));
 			caml_failwith(errmsg);
 		}
 	}
 
 	glBindTexture(GL_TEXTURE_2D, *prev_glow_lev_tex);
-	glow_make_draw(vp, clp, 1);
+	glow_make_draw(clp, 1);
 	*prev_glow_lev_tex = txrs[tw][th];
 
-/*	//------------------
-	char* pixels = caml_stat_alloc(4 * (GLuint)w * (GLuint)h);
-	char* fname = malloc(255);
-	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
-	glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,w,h);
-	//------------------*/
+	char fname[100];
+	sprintf(fname, "/tmp/%d.png", xyu++);
+	renderbuf_save_current(caml_copy_string(fname));
 
-	if (!bind) {
+	if (mag < 0) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);	
 	}
-}
-
-void ml_shadow_make(value orb, value shadow){
-	lgResetBoundTextures();
-/*	framebuffer_state fstate;
-	get_framebuffer_state(&fstate);*/
-	glDisable(GL_BLEND);
-	glClearColor(0.,0.,0.,0.);
-
-	int size = Int_val(Field(shadow,0));
-	color3F color = COLOR3F_FROM_INT(Int_val(Field(shadow,1)));
-	int sx = Int_val(Field(shadow,2));
-	int sy = Int_val(Field(shadow,3));
-
-	renderbuffer_t* dst_rb = (renderbuffer_t*)orb;
-
-	int tex_w = nextPOT(dst_rb->vp.w);
-	int tex_h = nextPOT(dst_rb->vp.h);
-	TEXTURE_SIZE_FIX(tex_w, tex_h);
-	int tw_indx, th_indx;
-	INIT_TEX(tex_w, tex_h, tw_indx, th_indx);
-
-	INIT_BUFFERS;
-
-	glBindFramebuffer(GL_FRAMEBUFFER, bfrs[0]);
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, txrs[tw_indx][th_indx], 0);
-	checkGLErrors("binding texture to buffer");
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		char errmsg[255];
-		sprintf(errmsg,"shadow make. bind framebuffer %d to texture, status: %X", dst_rb->fbid, glCheckFramebufferStatus(GL_FRAMEBUFFER));
-		caml_failwith(errmsg);
-	}
-
-	glBindTexture(GL_TEXTURE_2D, dst_rb->tid);
-	checkGLErrors("binding texture");
-
-	currentShaderProgram = 0;
-	prg_t* prog = shadow_vertical_blur_prog();
-	checkGLErrors("program");
-
-	float radius = (float)size;
-	float width = (float)dst_rb->realWidth;
-	float height = (float)tex_h;
-	viewport vp = (viewport){ (tex_w - dst_rb->vp.w) / 2, (tex_h - dst_rb->vp.h) / 2, dst_rb->vp.w, dst_rb->vp.h };
-	GLfloat ftex_w = (GLfloat)tex_w;
-	GLfloat ftex_h = (GLfloat)tex_h;
-	clipping clp = (clipping){ (GLfloat)vp.x / ftex_w, (GLfloat)vp.y / ftex_h, (GLfloat)vp.w / ftex_w, (GLfloat)vp.h / ftex_h };
-
-
-	glUniform1fv(prog->uniforms[0], 1, &radius);
-	glUniform1fv(prog->uniforms[1], 1, &height);
-	glUniform3f(prog->uniforms[2],color.r,color.g,color.b);
-	glow_make_draw(&vp, &dst_rb->clp, 1);
-
-/*	char* pixels = caml_stat_alloc(4 * (GLuint)tex_w * (GLuint)tex_h);
-	char* fname = malloc(255);
-	static int save_tex_cnt = 0;
-	sprintf(fname, "/tmp/pizda%04d.png", save_tex_cnt++);
-	glReadPixels(0,0,tex_w,tex_h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,tex_w,tex_h);*/
-
-	glEnable(GL_BLEND);
-	setNotPMAGLBlend ();
-	glBindFramebuffer(GL_FRAMEBUFFER, dst_rb->fbid);
-	glBindTexture(GL_TEXTURE_2D, txrs[tw_indx][th_indx]);
-	prog = shadow_horizontal_blur_prog();
-
-	glUniform1fv(prog->uniforms[0], 1, &radius);
-	glUniform1fv(prog->uniforms[1], 1, &width);
-	glUniform3f(prog->uniforms[2],color.r,color.g,color.b);
-	vp = (viewport){ dst_rb->vp.x + sx, dst_rb->vp.y + sy, dst_rb->vp.w, dst_rb->vp.h };
-	glow_make_draw(&vp, &clp, 0);
-
-/*	pixels = caml_stat_alloc(4 * (GLuint)dst_rb->realWidth * (GLuint)dst_rb->realHeight);
-	fname = malloc(255);
-	sprintf(fname, "/tmp/pizda%04d.png", save_tex_cnt++);
-	glReadPixels(0,0,dst_rb->realWidth,dst_rb->realHeight,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,dst_rb->realWidth,dst_rb->realHeight);*/
-
-	checkGLErrors("make draw");
-
-	glBindTexture(GL_TEXTURE_2D,0);
-	glUseProgram(0);
-	currentShaderProgram = 0;
-	// set_framebuffer_state(&fstate);
-	checkGLErrors("end of shadow");
-
-
-
-//	Int_val(glow) // ocaml-int to C-int
-//	Val_int(glow) // C-int to ocaml
-/*
-	texture: * orb has this type
- 	typedef struct {
-		GLuint fbid;
-		GLuint tid;
-		double width;
-		double height;
-		GLuint realWidth;
-		GLuint realHeight;
-		viewport vp;
-		clipping clp;
-	} renderbuffer_t;
-	typedef struct {
-		GLuint prg;
-		GLint uniforms[4];
-	} prg_t
-*/
-/*	lgResetBoundTextures();
-	int rad = Int_val(Field(shadow,0));
-	int colors = Int_val(Field(shadow,1));
-	double redC   = (double) ((colors & 0xff0000) / 0x010000);
-	double greenC = (double) ((colors & 0x00ff00) / 0x000100);
-	double blueC  = (double) (colors & 0x0000ff);
-	double vecX = Double_val(Field(shadow,2));
-	double vecY = Double_val(Field(shadow,3));
-//	printf("prg: %d %lf %lf\n", rad, vecX, vecY);
-//	fflush(stdout);
-	if (rad < 1)
-		return; 
-	// пикча
-	renderbuffer_t *pic = (renderbuffer_t*)orb;
-	currentShaderProgram = 0;
-
-	// грузим шейдеры
-	char *attribs[2] = {"a_position","a_texCoord"};
-	GLuint prgH = create_program(simple_vertex_shader(),horizontal_blur_fsh(),2,attribs);
-	glUseProgram(prgH);
-	// инициализация
-	glUniform1i(glGetUniformLocation(prgH,"u_texture"), 0);
-	glUniform1f(glGetUniformLocation(prgH,"width"),(GLfloat)pic -> width);
-	glUniform1i(glGetUniformLocation(prgH,"winRad"),(GLint)rad);
-	glUniform1f(glGetUniformLocation(prgH,"ml"),(GLfloat)(1.0 / (rad * 2)));
-	glUniform1f(glGetUniformLocation(prgH,"vecSh"),(GLfloat) vecX);
-
-	GLuint prgV = create_program(simple_vertex_shader(),vertical_blur_fsh(),2,attribs);
-	glUseProgram(prgV);
-	glUniform1i(glGetUniformLocation(prgV,"u_texture"), 0);
-	glUniform1f(glGetUniformLocation(prgV,"width"),(GLfloat)pic -> width);
-	glUniform1i(glGetUniformLocation(prgV,"winRad"),(GLint)rad);
-	glUniform1f(glGetUniformLocation(prgV,"ml"),(GLfloat)(1.0 / (rad * 2)));
-	glUniform1f(glGetUniformLocation(prgV,"vecSh"),(GLfloat) vecY);
-	glUniform1f(glGetUniformLocation(prgV,"redFL"), (GLfloat) redC);
-	glUniform1f(glGetUniformLocation(prgV,"greenFL"), (GLfloat) greenC);
-	glUniform1f(glGetUniformLocation(prgV,"blueFL"), (GLfloat) blueC);
-
-	renderbuffer_t buf;
-	renderbuffer_t *hBuffer = &buf;
-
-	// create_renderbuffer(GLuint tid, int x, int y, double width, double height, int realW, int realH, renderbuffer_t *r, int dedicated);
-	// create_renderbuffer(pic -> width, pic -> height, hBuffer, GL_LINEAR);
-
-	int rectw = rb->realWidth;
-	int recth = rb->realHeight;
-	viewport rbvp = { rb->vp.x - (rectw - rb->vp.w) / 2, rb->vp.y - (recth - rb->vp.h) / 2, rectw, recth };
-
-	double texw = rb->vp.w / rb->clp.width;
-	double texh = rb->vp.h / rb->clp.height;
-	clipping rbclp = { (GLfloat)rbvp.x / texw, (GLfloat)rbvp.y / texh, (GLfloat)rbvp.w  / texw, (GLfloat)rbvp.h  / texh };
-	
-	glUseProgram(prgH);
-
-	glBindTexture(GL_TEXTURE_2D, pic -> tid);
-/*	glEnable(GL_TEXTURE_2D);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pic -> realWidth, pic -> realHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glBindFramebuffer(GL_FRAMEBUFFER, hBuffer -> fbid);
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, hBuffer -> tid, 0);
-	drawRenderbuffer(hBuffer,pic,1);
-
-	glUseProgram(prgV);
-
-	glBindTexture(GL_TEXTURE_2D, hBuffer -> tid);
-	glEnable(GL_TEXTURE_2D);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hBuffer -> realWidth, hBuffer -> realHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glBindFramebuffer(GL_FRAMEBUFFER, pic -> fbid);
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pic -> tid,0);
-	drawRenderbuffer(pic,hBuffer,1);
-
-	delete_renderbuffer(hBuffer);*/
 }
 
 value ml_glow_make(value orb, value glow) {
@@ -424,122 +232,86 @@ value ml_glow_make(value orb, value glow) {
 	int recth = rb->realHeight;
 	viewport rbvp = { rb->vp.x - (rectw - rb->vp.w) / 2, rb->vp.y - (recth - rb->vp.h) / 2, rectw, recth };
 
-	double texw = rb->vp.w / rb->clp.width;
-	double texh = rb->vp.h / rb->clp.height;
+	double texw = rb->vp.w / rb->clp.w;
+	double texh = rb->vp.h / rb->clp.h;
 	clipping rbclp = { (GLfloat)rbvp.x / texw, (GLfloat)rbvp.y / texh, (GLfloat)rbvp.w  / texw, (GLfloat)rbvp.h  / texh };
 
-	PRINT_DEBUG("!!!!!! vp: [%d, %d, %d, %d] clp: [%f, %f, %f, %f]", rbvp.x, rbvp.y, rbvp.w, rbvp.h, rbclp.x, rbclp.y, rbclp.width, rbclp.height);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
-
-/*	char* pixels = caml_stat_alloc(4 * (GLuint)rbvp.w * (GLuint)rbvp.h);
-	char* fname = malloc(255);
-	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
-	glReadPixels(0,0,rbvp.w,rbvp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,rbvp.w,rbvp.h);*/
-
-	checkGLErrors("end of glow");
-
-/*	PRINT_DEBUG("save_tex_cnt %d", save_tex_cnt);
-	PRINT_DEBUG("glow make for %d:%d, [%f:%f] [%d:%d]",rb->fbid,rb->tid,rb->width,rb->height,rb->realWidth,rb->realHeight);*/
-
+	/* at a glance no need in this call, but it is important:
+		first, it guarantees needed framebuffer id will be setted (generally it is already setted)
+		second, it applies viewport differ than default when poping from stack
+	*/
+	framebuf_push(rb->fbid, &rbvp, FRAMEBUF_APPLY_BUF);
 	lgResetBoundTextures();
-/*	framebuffer_state fstate;
-	get_framebuffer_state(&fstate);*/
 	glDisable(GL_BLEND);
 	glClearColor(0.,0.,0.,0.);
 
 	const prg_t *glowPrg = glow_program();
 	color3F c = COLOR3F_FROM_INT(Int_val(Field(glow,1)));
 	glUniform3f(glowPrg->uniforms[0],c.r,c.g,c.b);
-
-	/*
-	if (bfrs == NULL) // можно пооптимальней это сделать
-	{
-		bfrs = caml_stat_alloc(maxFB * sizeof(GLuint));
-		glGenFramebuffers(maxFB, bfrs);
-	}
-	*/
 	INIT_BUFFERS;
-
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
 	int i;
-	float glow_lev_w = rectw;
-	float glow_lev_h = recth;
-	int iglow_lev_w;
-	int iglow_lev_h;
-	GLuint correct_lev_w;
-	GLuint correct_lev_h;
+	float glow_w = rectw;
+	float glow_h = recth;
+	int iglow_w;
+	int iglow_h;
+	GLuint glow_texw;
+	GLuint glow_texh;
 	GLuint prev_glow_lev_tex = rb->tid;
 
-	GLuint fst_scalein_tex_id = 0;
-	viewport* vp;
-	clipping* clp = &rbclp;
-	viewport vps[gsize];
+	GLuint backtobuf_tid = 0; // texture from which we draw back into renderbuffer after sequential minifying/magnifying 
+	clipping *clp = &rbclp;
 	clipping clps[gsize];
 
 	for (i = 0; i < gsize; i++) {		
-		glow_lev_w /= 2;
-		glow_lev_h /= 2;
+		glow_w /= 2;
+		glow_h /= 2;
 
-		iglow_lev_w = (int)ceil(glow_lev_w);
-		iglow_lev_h = (int)ceil(glow_lev_h);
+		iglow_w = (int)ceil(glow_w);
+		iglow_h = (int)ceil(glow_h);
 
-		PRINT_DEBUG("glow_lev_w %f, glow_lev_h %f", glow_lev_w, glow_lev_h);
-		correct_lev_w = nextPOT(iglow_lev_w);
-		correct_lev_h = nextPOT(iglow_lev_h);
-		PRINT_DEBUG("correct_lev_w %d, correct_lev_h %d", correct_lev_w, correct_lev_h);
-		TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
+		glow_texw = nextPOT(iglow_w);
+		glow_texh = nextPOT(iglow_h);
+		TEXTURE_SIZE_FIX(glow_texw, glow_texh);
 
-		vp = &vps[i];
-		vp->x = (correct_lev_w - iglow_lev_w) / 2; vp->y = (correct_lev_h - iglow_lev_h) / 2; vp->w = iglow_lev_w; vp->h = iglow_lev_h;
-
-		draw_glow_level(correct_lev_w, correct_lev_h, bfrs[i], &prev_glow_lev_tex, vp, clp, 1);
-		if (!fst_scalein_tex_id) fst_scalein_tex_id = prev_glow_lev_tex;
-		
+		viewport vp = (viewport) { (glow_texw - iglow_w) / 2, (glow_texh - iglow_h) / 2, iglow_w, iglow_h };
+		framebuf_push(bfrs[i], &vp, FRAMEBUF_APPLY_ALL);
+		draw_glow_level(glow_texw, glow_texh, &prev_glow_lev_tex, clp, 0);
+		if (!backtobuf_tid) backtobuf_tid = prev_glow_lev_tex;
 		clp = &clps[i];
-		clp->x = (GLfloat)vp->x / correct_lev_w; clp->y = (GLfloat)vp->y / correct_lev_h; clp->width = (GLfloat)iglow_lev_w / correct_lev_w; clp->height = (GLfloat)iglow_lev_h / correct_lev_h;
+		clp->x = (GLfloat)vp.x / glow_texw;
+		clp->y = (GLfloat)vp.y / glow_texh;
+		clp->w = (GLfloat)vp.w / glow_texw;
+		clp->h = (GLfloat)vp.h / glow_texh;
 	}
 
 	for (i = gsize - 1; i > 0; i--) {
-		glow_lev_w *= 2;
-		glow_lev_h *= 2;
+		glow_w *= 2;
+		glow_h *= 2;
+		glow_texw = (GLuint)glow_w;
+		glow_texh = (GLuint)glow_h;
+		TEXTURE_SIZE_FIX(glow_texw, glow_texh);
 
-		iglow_lev_w = (int)ceil(glow_lev_w);
-		iglow_lev_h = (int)ceil(glow_lev_h);
-
-		PRINT_DEBUG("glow_lev_w %f, glow_lev_h %f", glow_lev_w, glow_lev_h);
-		correct_lev_w = nextPOT(iglow_lev_w);
-		correct_lev_h = nextPOT(iglow_lev_h);
-		PRINT_DEBUG("correct_lev_w %d, correct_lev_h %d", correct_lev_w, correct_lev_h);
-		TEXTURE_SIZE_FIX(correct_lev_w, correct_lev_h);
-		draw_glow_level(correct_lev_w, correct_lev_h, bfrs[i - 1], &prev_glow_lev_tex, &vps[i - 1], &clps[i], 0);
+		framebuf_pop();
+		draw_glow_level(glow_texw, glow_texh, &prev_glow_lev_tex, &clps[i], 1);
 	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, rb->fbid);
-	// _clear_renderbuffer(rb, (color3F) { 0., 0., 0.}, 0.);
-	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTex);
 
 	glEnable(GL_BLEND);
 	setNotPMAGLBlend (); // WARNING - ensure what separate blend enabled
 	const prg_t *fglowPrg = final_glow_program();
-	glUniform1f(fglowPrg->uniforms[0],Double_val(Field(glow,2)));
-	glBindTexture(GL_TEXTURE_2D, fst_scalein_tex_id);
+	glUniform1f(fglowPrg->uniforms[0], Double_val(Field(glow,2)));
+	glBindTexture(GL_TEXTURE_2D, backtobuf_tid);
 
-	glow_make_draw(&rbvp, clps, 0);
-
-/*	pixels = caml_stat_alloc(4 * (GLuint)rbvp.w * (GLuint)rbvp.h);
-	fname = malloc(255);
-	sprintf(fname, "/sdcard/pizda%04d.png", save_tex_cnt++);
-	glReadPixels(rbvp.x,rbvp.y,rbvp.w,rbvp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-	save_png_image(caml_copy_string(fname),pixels,rbvp.w,rbvp.h);	*/
-
-	glBindTexture(GL_TEXTURE_2D,0);
+	framebuf_pop(); //this call pops our renderbuffer this unusual viewport 
+	PRINT_DEBUG("final clipping %f %f %f %f", clps->x, clps->y, clps->w, clps->h);
+	glow_make_draw(clps, 0);
+	renderbuf_save_current(caml_copy_string("/tmp/pizda.png"));
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glUseProgram(0);
 	currentShaderProgram = 0;
-	// set_framebuffer_state(&fstate);
 	checkGLErrors("end of glow");
+	framebuf_pop(); //this call finally returns to state before this function called (generally it is renderbuffer with std viewport)
 
 	return Val_unit;
 }

@@ -1,5 +1,6 @@
 #include "common.h"
 #include <kazmath/GL/matrix.h>
+#include <stdio.h>
 
 struct framebuf_state {
 	GLuint fbid;
@@ -12,6 +13,7 @@ typedef struct framebuf_state framebuf_state_t;
 static framebuf_state_t *framebuf_stack = NULL;
 
 void framebuf_push(GLuint fbid, viewport *vp, int8_t apply) {
+	PRINT_DEBUG("+++framebuf_push id %d, vp (%d, %d, %d, %d), apply id %d, apply vp %d", fbid, vp->x, vp->y, vp->w, vp->h, apply & FRAMEBUF_APPLY_BUF, apply & FRAMEBUF_APPLY_VIEWPORT);
 	framebuf_state_t *state = (framebuf_state_t*)malloc(sizeof(framebuf_state_t));
 
 	state->fbid = fbid;
@@ -20,15 +22,20 @@ void framebuf_push(GLuint fbid, viewport *vp, int8_t apply) {
 	framebuf_stack = state;
 
 	if (apply & FRAMEBUF_APPLY_BUF) glBindFramebuffer(GL_FRAMEBUFFER, fbid);
-	if (apply & FRAMEBUF_APPLY_VIEWPORT) glViewport(vp->x,vp->y,vp->w,vp->h);
+	if (apply & FRAMEBUF_APPLY_VIEWPORT) glViewport(vp->x, vp->y, vp->w, vp->h);
 }
 
 GLuint framebuf_restore(int8_t apply_viewport) {
+	PRINT_DEBUG("???framebuf_restore %d %d %d %d",framebuf_stack->viewport.x, framebuf_stack->viewport.y, framebuf_stack->viewport.w, framebuf_stack->viewport.h);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuf_stack->fbid);
 	if (apply_viewport) glViewport(framebuf_stack->viewport.x, framebuf_stack->viewport.y, framebuf_stack->viewport.w, framebuf_stack->viewport.h);
 }
 
 void framebuf_pop() {
+	PRINT_DEBUG("---framebuf_pop");
+
+	if (!framebuf_stack) return;
+
 	framebuf_state_t *state = framebuf_stack->prev;
 	free(framebuf_stack);
 	framebuf_stack = state;
@@ -55,6 +62,28 @@ void inline renderbuf_deactivate() {
 	kmGLMatrixMode(KM_GL_MODELVIEW);
 	kmGLPopMatrix();
 	disableSeparateBlend();// FIXME: incorrect in case deep rendering!!!!
+}
+
+uint8_t renderbuf_save_current(value path) {
+	GLfloat vp[4];
+	glGetFloatv(GL_VIEWPORT, vp);
+
+	PRINT_DEBUG("renderbuf_save_current %f %f %f %f", vp[0], vp[1], vp[2], vp[3]);
+
+	char *pixels = malloc(4 * (GLuint)vp[2] * (GLuint)vp[3]); //why caml_stat_alloc leads to segfault?
+	glReadPixels((GLint)vp[0], (GLint)vp[1], (GLsizei)vp[2], (GLsizei)vp[3], GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	uint8_t retval = save_png_image(path, pixels, (unsigned int)vp[2], (unsigned int)vp[3]);
+
+	return retval;	
+} 
+
+uint8_t renderbuf_save(renderbuffer_t *renderbuf, value path) {
+	PRINT_DEBUG("renderbuf_save %d, vp %d %d %d %d", renderbuf->fbid, renderbuf->vp.x, renderbuf->vp.y, renderbuf->vp.w, renderbuf->vp.h);
+	framebuf_push(renderbuf->fbid, &renderbuf->vp, FRAMEBUF_APPLY_ALL);
+	uint8_t retval = renderbuf_save_current(path);
+	framebuf_pop();
+
+	return retval;
 }
 
 static int tex_num = 0;
@@ -100,7 +129,7 @@ GLuint framebuf_get_id() {
 		fbid = framebufs[i];
 		framebufs[i] = 0;
 	} else glGenFramebuffers(1,&fbid);
-	PRINT_DEBUG("get framebuffer: %d",fbid);
+	// PRINT_DEBUG("get framebuffer: %d",fbid);
 	return fbid;
 }
 
@@ -113,5 +142,5 @@ void framebuf_return_id(GLuint fbid) {
 		framebufs[framebuf_num] = fbid;
 		++framebuf_num;
 	}
-	PRINT_DEBUG("back framebuffer: %d",fbid);
+	// PRINT_DEBUG("back framebuffer: %d",fbid);
 }

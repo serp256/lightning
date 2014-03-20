@@ -44,7 +44,7 @@ static struct custom_operations rendetex_opts = {
 value caml_gc_major(value v);
 
 void rendertex_dedicated_clear(color3F *color, GLfloat alpha) {
-	PRINT_DEBUG("rendertex_dedicated_clear call");
+	PRINT_DEBUG("rendertex_dedicated_clear call %f %f %f %f", color->r, color->g, color->b, alpha);
 
 	glClearColor(color->r, color->g, color->b, alpha);
 	glClear(GL_COLOR_BUFFER_BIT);	
@@ -61,24 +61,29 @@ void rendertex_dedicated_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t 
 
 	PRINT_DEBUG("w %d, h %d, texw %d, texh %d, x %d, y %d", w, h, texw, texh, x, y);
 
-	renderbuf->fbid = framebuf_get_id();
     renderbuf->tid = tex_get_id();
-
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texw, texh, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	checkGLErrors("create render texture %d [%d:%d]", renderbuf->tid, texw, texh);
 
-	renderbuf->vp = (viewport){ x, y, texw, texh };
+	renderbuf->width = w;
+	renderbuf->height = h;
+	renderbuf->realWidth = texw;
+	renderbuf->realHeight = texh;
+	renderbuf->vp = (viewport){ x, y, w, h };
 	renderbuf->clp = (clipping){ (double)x / (double)texw, (double)y / (double)texh, w / (double)texw, h / (double)texh };
 
+	PRINT_DEBUG("viewport %d %d %d %d", renderbuf->vp.x, renderbuf->vp.y, renderbuf->vp.w, renderbuf->vp.h);
+	PRINT_DEBUG("clipping %f %f %f %f", renderbuf->clp.x, renderbuf->clp.y, renderbuf->clp.w, renderbuf->clp.h);
+
+	renderbuf->fbid = framebuf_get_id();
 	framebuf_push(renderbuf->fbid, &renderbuf->vp, FRAMEBUF_APPLY_ALL);
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderbuf->tid, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) caml_failwith("Framebuffer status error");
 
 	lgResetBoundTextures();
 	renderbuf_activate(renderbuf);
-
 	rendertex_dedicated_clear(color, alpha);
 	caml_callback(draw_func, (value)renderbuf);
 	

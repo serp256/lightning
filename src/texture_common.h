@@ -38,7 +38,7 @@
 			if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth; \
 		};
 #else
-#define TEXTURE_SIZE_FIX
+#define TEXTURE_SIZE_FIX(legalWidth,legalHeight)
 #endif
 
 int nextPowerOfTwo(int number);
