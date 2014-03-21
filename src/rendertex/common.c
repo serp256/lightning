@@ -1,6 +1,7 @@
 #include "common.h"
 #include <kazmath/GL/matrix.h>
 #include <stdio.h>
+#include <caml/memory.h>
 
 struct framebuf_state {
 	GLuint fbid;
@@ -14,8 +15,10 @@ static framebuf_state_t *framebuf_stack = NULL;
 
 void framebuf_push(GLuint fbid, viewport *vp, int8_t apply) {
 	PRINT_DEBUG("+++framebuf_push id %d, vp (%d, %d, %d, %d), apply id %d, apply vp %d", fbid, vp->x, vp->y, vp->w, vp->h, apply & FRAMEBUF_APPLY_BUF, apply & FRAMEBUF_APPLY_VIEWPORT);
-	framebuf_state_t *state = (framebuf_state_t*)malloc(sizeof(framebuf_state_t));
 
+	if (framebuf_stack && framebuf_stack->fbid == fbid) apply &= FRAMEBUF_APPLY_BUF ^ FRAMEBUF_APPLY_BUF;
+
+	framebuf_state_t *state = (framebuf_state_t*)malloc(sizeof(framebuf_state_t));
 	state->fbid = fbid;
 	state->viewport = *vp;
 	state->prev = framebuf_stack;
@@ -28,6 +31,7 @@ void framebuf_push(GLuint fbid, viewport *vp, int8_t apply) {
 void framebuf_restore(int8_t apply_viewport) {
 	PRINT_DEBUG("???framebuf_restore %d %d %d %d",framebuf_stack->viewport.x, framebuf_stack->viewport.y, framebuf_stack->viewport.w, framebuf_stack->viewport.h);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuf_stack->fbid);
+
 	if (apply_viewport) glViewport(framebuf_stack->viewport.x, framebuf_stack->viewport.y, framebuf_stack->viewport.w, framebuf_stack->viewport.h);
 }
 
@@ -70,7 +74,7 @@ uint8_t renderbuf_save_current(value path) {
 
 	PRINT_DEBUG("renderbuf_save_current %f %f %f %f", vp[0], vp[1], vp[2], vp[3]);
 
-	char *pixels = malloc(4 * (GLuint)vp[2] * (GLuint)vp[3]); //why caml_stat_alloc leads to segfault?
+	char *pixels = caml_stat_alloc(4 * (GLuint)vp[2] * (GLuint)vp[3]);
 	glReadPixels((GLint)vp[0], (GLint)vp[1], (GLsizei)vp[2], (GLsizei)vp[3], GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	uint8_t retval = save_png_image(path, pixels, (unsigned int)vp[2], (unsigned int)vp[3]);
 
@@ -89,7 +93,51 @@ uint8_t renderbuf_save(renderbuffer_t *renderbuf, value path, uint8_t whole) {
 	return retval;
 }
 
-static int tex_num = 0;
+static int framebuf_len = 0;
+static GLuint *framebufs = NULL;
+
+void framebuf_get_id(GLuint *fbid, GLuint *tid, GLuint w, GLuint h, GLuint filter) {
+	int i = 0;
+	while ((i < framebuf_len) && (framebufs[i] == 0)) { i += 2; };
+	if (i < framebuf_len) {
+		*fbid = framebufs[i];
+		*tid = framebufs[i + 1];
+		framebufs[i] = 0;
+		framebufs[i + 1] = 0;
+	} else {
+		glGenTextures(1, tid);
+		glBindTexture(GL_TEXTURE_2D, *tid);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+		glGenFramebuffers(1, fbid);
+	}
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+	glBindFramebuffer(GL_FRAMEBUFFER, *fbid);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tid, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) caml_failwith("framebuffer status error");	
+}
+
+void framebuf_return_id(GLuint fbid, GLuint tid) {
+	int i = 0;
+	while (i < framebuf_len && framebufs[i] != 0) { i += 2; };
+	if (i < framebuf_len) {
+		framebufs[i] = fbid;
+		framebufs[i + 1] = tid;
+	}
+	else {
+		framebufs = realloc(framebufs,sizeof(GLuint)*(2 * framebuf_len + 2));
+		framebufs[framebuf_len] = fbid;
+		framebufs[framebuf_len + 1] = tid;
+		framebuf_len += 2;
+	}
+}
+
+
+/*static int tex_num = 0;
 static GLuint *texs = NULL;
 
 GLuint inline tex_get_id() {
@@ -146,4 +194,4 @@ void framebuf_return_id(GLuint fbid) {
 		++framebuf_num;
 	}
 	// PRINT_DEBUG("back framebuffer: %d",fbid);
-}
+}*/

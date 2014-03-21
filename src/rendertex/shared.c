@@ -113,17 +113,12 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 	caml_register_generational_global_root(&shared_tex->vtid);
 
 	tex = TEX(shared_tex->vtid);
-	tex->fbid = framebuf_get_id();
-	tex->tid = tex_get_id();
+	framebuf_get_id(&tex->fbid, &tex->tid, tex_size, tex_size, GL_LINEAR);
 	tex->mem = tex_size * tex_size * 4;	
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+/*	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_size, tex_size, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, tex->fbid);
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex->tid, 0);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 0;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_size, tex_size, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);*/
 
 	if (!rbin_add_rect(&shared_tex->bin, rectw, recth, &pnt)) return 0;
 FINDED:
@@ -155,8 +150,6 @@ static void rendertex_shared_clear(color3F *color, GLfloat alpha) {
 	currentShaderProgram = 0;
 	glEnable(GL_BLEND);	
 }
-
-static int i = 10;
 
 void rendertex_shared_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t h, GLuint filter, color3F *color, GLfloat alpha, value draw_func, value *tex_id) {
 	PRINT_DEBUG("rendertex_shared_create call");

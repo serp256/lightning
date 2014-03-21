@@ -11,8 +11,7 @@ static void rendertex_finalize(value vtid) {
 	struct tex *t = TEX(vtid);
 
 	if (t) {
-		framebuf_return_id(t->fbid);
-		tex_return_id(t->tid);
+		framebuf_return_id(t->fbid, t->tid);
 		resetTextureIfBounded(t->tid);
 		checkGLErrors("finalize texture");
 
@@ -61,12 +60,6 @@ void rendertex_dedicated_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t 
 
 	PRINT_DEBUG("w %d, h %d, texw %d, texh %d, x %d, y %d", w, h, texw, texh, x, y);
 
-    renderbuf->tid = tex_get_id();
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texw, texh, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	checkGLErrors("create render texture %d [%d:%d]", renderbuf->tid, texw, texh);
-
 	renderbuf->width = w;
 	renderbuf->height = h;
 	renderbuf->realWidth = texw;
@@ -77,16 +70,16 @@ void rendertex_dedicated_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t 
 	PRINT_DEBUG("viewport %d %d %d %d", renderbuf->vp.x, renderbuf->vp.y, renderbuf->vp.w, renderbuf->vp.h);
 	PRINT_DEBUG("clipping %f %f %f %f", renderbuf->clp.x, renderbuf->clp.y, renderbuf->clp.w, renderbuf->clp.h);
 
-	renderbuf->fbid = framebuf_get_id();
-	framebuf_push(renderbuf->fbid, &renderbuf->vp, FRAMEBUF_APPLY_ALL);
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderbuf->tid, 0);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) caml_failwith("Framebuffer status error");
+	framebuf_get_id(&renderbuf->fbid, &renderbuf->tid, texw, texh, filter);
+	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texw, texh, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+	framebuf_push(renderbuf->fbid, &renderbuf->vp, FRAMEBUF_APPLY_ALL);
 	lgResetBoundTextures();
 	renderbuf_activate(renderbuf);
 	rendertex_dedicated_clear(color, alpha);
 	caml_callback(draw_func, (value)renderbuf);
-	
 	renderbuf_deactivate();
 	framebuf_pop();
 

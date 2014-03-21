@@ -2,41 +2,7 @@
 #include "common.h"
 #include "dedicated.h"
 #include "shared.h"
-
-static void textureID_finalize(value textureID) {
-/*	GLuint tid = TEXTURE_ID(textureID);
-	if (tid) {
-		PRINT_DEBUG("finalize render texture");
-		back_texture_id(tid);
-		resetTextureIfBounded(tid);
-		checkGLErrors("finalize texture");
-		struct tex *t = TEX(textureID);
-		rendertex_mem -= t->mem;
-		--rendertex_num;
-		caml_free_dependent_memory(t->mem);
-		LOGMEM("finalize",tid,t->mem);
-	};*/
-}
-
-static int textureID_compare(value texid1,value texid2) {
-/*	GLuint t1 = TEXTURE_ID(texid1);
-	GLuint t2 = TEXTURE_ID(texid2);
-	if (t1 == t2) return 0;
-	else {
-		if (t1 < t2) return -1;
-		return 1;
-	}*/
-	return 0;
-}
-
-struct custom_operations rendertextureID_ops = {
-  "pointer to render texture id",
-  textureID_finalize,
-  textureID_compare,
-  custom_hash_default,
-  custom_serialize_default,
-  custom_deserialize_default
-};
+#include <caml/memory.h>
 
 value rendertex_create(value vcolor, value valpha, value vkind, value vwidth, value vheight, value vdraw_func) {
 	PRINT_DEBUG("!!!rendertex_create call");
@@ -64,6 +30,7 @@ value rendertex_create(value vcolor, value valpha, value vkind, value vwidth, va
 		}		
 	}
 
+	// dedicated = 1;
 	PRINT_DEBUG("dedicated %d", dedicated);
 
 	renderbuffer_t renderbuf;
@@ -157,7 +124,23 @@ value rendertex_save(value vrender_inf, value vpath) {
 
 value rendertex_data(value vrender_inf) {
 	CAMLparam1(vrender_inf);
-	CAMLreturn(Val_unit);
+	CAMLlocal1(vbuf);
+
+	renderbuffer_t renderbuf;
+	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT); //nextPOT used for both dedicated and shared cause realWidth and realHeight are insignificant in this task
+
+	viewport *vp = &renderbuf.vp;
+	framebuf_push(renderbuf.fbid, vp, FRAMEBUF_APPLY_BUF);
+	char *pixels = caml_stat_alloc(4 * vp->w * vp->h);
+	glReadPixels(vp->x, vp->y, vp->w, vp->h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+	intnat dims[2];
+	dims[0] = vp->w;
+	dims[1] = vp->h;
+	vbuf = caml_ba_alloc(CAML_BA_MANAGED|CAML_BA_INT32, 2, pixels, dims);
+	framebuf_pop();
+
+	CAMLreturn(vbuf);
 }
 
 value rendertex_release(value vrender_inf) {

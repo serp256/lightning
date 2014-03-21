@@ -56,11 +56,8 @@ void 	renderbuf_deactivate	();
 uint8_t renderbuf_save			(renderbuffer_t *rb, value path, uint8_t whole);
 uint8_t renderbuf_save_current	(value path);
 
-GLuint	tex_get_id				();
-void	tex_return_id			(GLuint tid);
-
-GLuint	framebuf_get_id			();
-void	framebuf_return_id		(GLuint fbid);
+void	framebuf_get_id			(GLuint *fbid, GLuint *tid, GLuint w, GLuint h, GLuint filter);
+void	framebuf_return_id		(GLuint fbid, GLuint tid);
 void 	framebuf_push			(GLuint fbid, viewport *vp, int8_t apply);
 void	framebuf_pop			();
 void	framebuf_restore		(int8_t apply_viewport);
