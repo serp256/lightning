@@ -71,10 +71,6 @@ void rendertex_dedicated_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t 
 	PRINT_DEBUG("clipping %f %f %f %f", renderbuf->clp.x, renderbuf->clp.y, renderbuf->clp.w, renderbuf->clp.h);
 
 	framebuf_get_id(&renderbuf->fbid, &renderbuf->tid, texw, texh, filter);
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texw, texh, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
 	framebuf_push(renderbuf->fbid, &renderbuf->vp, FRAMEBUF_APPLY_ALL);
 	lgResetBoundTextures();
 	renderbuf_activate(renderbuf);

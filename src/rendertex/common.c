@@ -122,6 +122,7 @@ void framebuf_get_id(GLuint *fbid, GLuint *tid, GLuint w, GLuint h, GLuint filte
 }
 
 void framebuf_return_id(GLuint fbid, GLuint tid) {
+	//maybe release texture memory when returting to pool?
 	int i = 0;
 	while (i < framebuf_len && framebufs[i] != 0) { i += 2; };
 	if (i < framebuf_len) {
@@ -135,63 +136,3 @@ void framebuf_return_id(GLuint fbid, GLuint tid) {
 		framebuf_len += 2;
 	}
 }
-
-
-/*static int tex_num = 0;
-static GLuint *texs = NULL;
-
-GLuint inline tex_get_id() {
-	GLuint tid = 0;
-	int i = 0;
-	while ((i < tex_num) && (texs[i] == 0)) {i++;};
-	if (i < tex_num) {
-		tid = texs[i];
-		texs[i] = 0;
-		glBindTexture(GL_TEXTURE_2D, tid);
-	} else {
-		glGenTextures(1,&tid);
-		glBindTexture(GL_TEXTURE_2D, tid);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	};
-	return tid;
-}
-
-void inline tex_return_id(GLuint tid) {
-	int i = 0;
-	while (i < tex_num && texs[i] != 0) {i++;};
-	if (i < tex_num) {
-		texs[i] = tid;
-	} else {
-		texs = realloc(texs,sizeof(GLuint)*(tex_num + 1));
-		texs[tex_num] = tid;
-		++tex_num;
-	}
-}
-
-static int framebuf_num = 0;
-static GLuint *framebufs = NULL;
-
-GLuint framebuf_get_id() {
-	GLuint fbid = 0;
-	int i = 0;
-	while ((i < framebuf_num) && (framebufs[i] == 0)) {i++;};
-	if (i < framebuf_num) {
-		fbid = framebufs[i];
-		framebufs[i] = 0;
-	} else glGenFramebuffers(1,&fbid);
-	// PRINT_DEBUG("get framebuffer: %d",fbid);
-	return fbid;
-}
-
-void framebuf_return_id(GLuint fbid) {
-	int i = 0;
-	while (i < framebuf_num && framebufs[i] != 0) {i++;};
-	if (i < framebuf_num) framebufs[i] = fbid;
-	else {
-		framebufs = realloc(framebufs,sizeof(GLuint)*(framebuf_num + 1));
-		framebufs[framebuf_num] = fbid;
-		++framebuf_num;
-	}
-	// PRINT_DEBUG("back framebuffer: %d",fbid);
-}*/

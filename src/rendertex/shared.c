@@ -113,12 +113,8 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 	caml_register_generational_global_root(&shared_tex->vtid);
 
 	tex = TEX(shared_tex->vtid);
+	tex->mem = tex_size * tex_size * 4;
 	framebuf_get_id(&tex->fbid, &tex->tid, tex_size, tex_size, GL_LINEAR);
-	tex->mem = tex_size * tex_size * 4;	
-
-/*	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_size, tex_size, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);*/
 
 	if (!rbin_add_rect(&shared_tex->bin, rectw, recth, &pnt)) return 0;
 FINDED:
