@@ -25,7 +25,7 @@ void framebuf_push(GLuint fbid, viewport *vp, int8_t apply) {
 	if (apply & FRAMEBUF_APPLY_VIEWPORT) glViewport(vp->x, vp->y, vp->w, vp->h);
 }
 
-GLuint framebuf_restore(int8_t apply_viewport) {
+void framebuf_restore(int8_t apply_viewport) {
 	PRINT_DEBUG("???framebuf_restore %d %d %d %d",framebuf_stack->viewport.x, framebuf_stack->viewport.y, framebuf_stack->viewport.w, framebuf_stack->viewport.h);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuf_stack->fbid);
 	if (apply_viewport) glViewport(framebuf_stack->viewport.x, framebuf_stack->viewport.y, framebuf_stack->viewport.w, framebuf_stack->viewport.h);
@@ -77,9 +77,12 @@ uint8_t renderbuf_save_current(value path) {
 	return retval;	
 } 
 
-uint8_t renderbuf_save(renderbuffer_t *renderbuf, value path) {
-	PRINT_DEBUG("renderbuf_save %d, vp %d %d %d %d", renderbuf->fbid, renderbuf->vp.x, renderbuf->vp.y, renderbuf->vp.w, renderbuf->vp.h);
-	framebuf_push(renderbuf->fbid, &renderbuf->vp, FRAMEBUF_APPLY_ALL);
+uint8_t renderbuf_save(renderbuffer_t *renderbuf, value path, uint8_t whole) {
+	viewport vp = whole
+		? (viewport){ 0., 0., (float)renderbuf->vp.w / renderbuf->clp.w, (float)renderbuf->vp.h / renderbuf->clp.h }
+		: renderbuf->vp;
+
+	framebuf_push(renderbuf->fbid, &vp, FRAMEBUF_APPLY_ALL);
 	uint8_t retval = renderbuf_save_current(path);
 	framebuf_pop();
 

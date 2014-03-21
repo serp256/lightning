@@ -193,7 +193,7 @@ static inline GLuint powS( GLuint l )
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);	\
 	}
 
-static int xyu = 0;
+// static int xyu = 0;
 
 void draw_glow_level(GLuint w, GLuint h, GLuint* prev_glow_lev_tex, clipping* clp, uint8_t mag) { //mag means magnification; when minifying we should bind texture to framebuffer and unbind when magnifying
 	PRINT_DEBUG("draw_glow_level clipping %f %f %f %f", clp->x, clp->y, clp->w, clp->h);
@@ -214,9 +214,9 @@ void draw_glow_level(GLuint w, GLuint h, GLuint* prev_glow_lev_tex, clipping* cl
 	glow_make_draw(clp, 1);
 	*prev_glow_lev_tex = txrs[tw][th];
 
-	char fname[100];
+/*	char fname[100];
 	sprintf(fname, "/tmp/%d.png", xyu++);
-	renderbuf_save_current(caml_copy_string(fname));
+	renderbuf_save_current(caml_copy_string(fname));*/
 
 	if (mag < 0) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);	
@@ -289,8 +289,8 @@ value ml_glow_make(value orb, value glow) {
 	for (i = gsize - 1; i > 0; i--) {
 		glow_w *= 2;
 		glow_h *= 2;
-		glow_texw = (GLuint)glow_w;
-		glow_texh = (GLuint)glow_h;
+		glow_texw = nextPOT((GLuint)glow_w);
+		glow_texh = nextPOT((GLuint)glow_h);
 		TEXTURE_SIZE_FIX(glow_texw, glow_texh);
 
 		framebuf_pop();
@@ -306,7 +306,6 @@ value ml_glow_make(value orb, value glow) {
 	framebuf_pop(); //this call pops our renderbuffer this unusual viewport 
 	PRINT_DEBUG("final clipping %f %f %f %f", clps->x, clps->y, clps->w, clps->h);
 	glow_make_draw(clps, 0);
-	renderbuf_save_current(caml_copy_string("/tmp/pizda.png"));
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glUseProgram(0);
 	currentShaderProgram = 0;

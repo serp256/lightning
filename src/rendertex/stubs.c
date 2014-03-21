@@ -38,7 +38,7 @@ struct custom_operations rendertextureID_ops = {
   custom_deserialize_default
 };
 
-value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, value vheight, value vdraw_func) {
+value rendertex_create(value vcolor, value valpha, value vkind, value vwidth, value vheight, value vdraw_func) {
 	PRINT_DEBUG("!!!rendertex_create call");
 
 	CAMLparam5(vkind, vcolor, valpha, vwidth, vheight);
@@ -89,7 +89,6 @@ value rendertex_create(value vkind, value vcolor, value valpha, value vwidth, va
 	vkind = caml_alloc_tuple(1);
 	Store_field(vkind, 0, Val_true);
 
-	renderbuf_save_current(caml_copy_string("/tmp/xyu.png"));
 	PRINT_DEBUG("renderbuf %d, %d, %f, %f, %d, %d, (%d, %d, %d, %d), (%f, %f, %f, %f)", renderbuf.fbid, renderbuf.tid, renderbuf.width, renderbuf.height, renderbuf.realWidth, renderbuf.realHeight, renderbuf.vp.x, renderbuf.vp.y, renderbuf.vp.w, renderbuf.vp.h, renderbuf.clp.x, renderbuf.clp.y, renderbuf.clp.w, renderbuf.clp.h);
 
 	vrender_inf = caml_alloc_tuple(7);
@@ -149,12 +148,19 @@ value rendertex_save(value vrender_inf, value vpath) {
 	CAMLparam1(vpath);
 
 	renderbuffer_t renderbuf;
-	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT);
+	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT); //nextPOT used for both dedicated and shared cause realWidth and realHeight are insignificant in this task
+	uint8_t retval = renderbuf_save(&renderbuf, vpath, 0);
 
-	CAMLreturn(Val_bool(renderbuf_save(&renderbuf, vpath)));
+	CAMLreturn(Val_bool(retval));
 }
 
 value ml_renderbuffer_data(value vrender_inf) {
 	CAMLparam1(vrender_inf);
+	CAMLreturn(Val_unit);
+}
+
+value rendertex_release(value vrender_inf) {
+	CAMLparam1(vrender_inf);
+	rendertex_shared_release(vrender_inf);
 	CAMLreturn(Val_unit);
 }

@@ -1,3 +1,4 @@
+#include <math.h>
 #include "shared.h"
 #include "rects-bin.h"
 #include "inline_shaders.h"
@@ -50,7 +51,8 @@ static void rendertex_shared_return_rect(renderbuffer_t *renderbuf) {
 static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_t w, uint16_t h) {
 	int i = 0;
 	pnt_t pnt;
-	sharedtex_t *tex;
+	sharedtex_t *shared_tex;
+	struct tex *tex;
 	
 	GLuint tex_size = renderbuf_shared_tex_size();
 	GLuint w_adjustment = 8 - w % 8;
@@ -58,19 +60,27 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 	GLuint rectw = w + w_adjustment;
 	GLuint recth = h + h_adjustment;
 
+	PRINT_DEBUG("rendertex_shared_get_rect %d %d, rect %d %d", w, h, rectw, recth);
+
 	// try reuse
+	PRINT_DEBUG("trying reuse...");
 	for (i = 0; i < tex_num; i++) {
 		if (rbin_reuse_rect(&texs[i].bin, rectw, recth, &pnt)) {
-			tex = texs + i;
+			shared_tex = texs + i;
+			tex = TEX(shared_tex->vtid);
+			PRINT_DEBUG("reuse");
 			goto FINDED;
 		}
 	};
 	// try add
+	PRINT_DEBUG("trying add...");
 	uint8_t repair_indx = 0;
 	for (i = 0; i < tex_num; i++) {
 		if (!rbin_need_repair(&(texs[i].bin))) {
 			if (rbin_add_rect(&texs[i].bin, rectw, recth, &pnt)) {
-				tex = texs + i;
+				shared_tex = texs + i;
+				tex = TEX(shared_tex->vtid);
+				PRINT_DEBUG("add");
 				goto FINDED;
 			}
 		} else {
@@ -80,44 +90,47 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 		}
 	};
 	// try repair
+	PRINT_DEBUG("try repair...");
 	if (repair_indx > 3) repair_indx = 3;
 	for (i = 0; i < repair_indx; i++) {
 		rbin_repair(&texs[i].bin);
 		if (rbin_add_rect(&texs[i].bin, rectw, recth, &pnt)) {
-			tex = texs + i;
+			shared_tex = texs + i;
+			tex = TEX(shared_tex->vtid);
+			PRINT_DEBUG("repair");
 			goto FINDED;
 		}
 	};
 	// alloc new 
 
+	PRINT_DEBUG("new tex");
 	tex_num++;
 	texs = realloc(texs,sizeof(sharedtex_t) * tex_num);
-	tex = texs + tex_num - 1;
+	shared_tex = texs + tex_num - 1;
 
-	tex->vtid = caml_alloc_custom(&sharedtex_ops, sizeof(struct tex), 0, 1);
-	rbin_init(&tex->bin, tex_size, tex_size);
-	caml_register_generational_global_root(&tex->vtid);
+	shared_tex->vtid = caml_alloc_custom(&sharedtex_ops, sizeof(struct tex), 0, 1);
+	rbin_init(&shared_tex->bin, tex_size, tex_size);
+	caml_register_generational_global_root(&shared_tex->vtid);
 
-	struct tex *t = TEX(tex->vtid);
-	t->fbid = framebuf_get_id();
-	t->tid = tex_get_id();
-	t->mem = tex_size * tex_size * 4;	
+	tex = TEX(shared_tex->vtid);
+	tex->fbid = framebuf_get_id();
+	tex->tid = tex_get_id();
+	tex->mem = tex_size * tex_size * 4;	
 
-	glBindTexture(GL_TEXTURE_2D, t->tid);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_size, tex_size, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, t->fbid);
-	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, t->tid, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, tex->fbid);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex->tid, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return 0;
 
-	if (!rbin_add_rect(&tex->bin, rectw, recth, &pnt)) return 0;
+	if (!rbin_add_rect(&shared_tex->bin, rectw, recth, &pnt)) return 0;
 FINDED:
-	renderbuf->fbid = t->fbid;
-	renderbuf->tid = t->tid;
+	PRINT_DEBUG("found position ad %d %d", pnt.x, pnt.y);
+
+	renderbuf->fbid = tex->fbid;
+	renderbuf->tid = tex->tid;
 	renderbuf->width = w;
 	renderbuf->height = h;
 	renderbuf->realWidth = rectw;
@@ -125,8 +138,10 @@ FINDED:
 	renderbuf->vp = (viewport){ (GLuint)pnt.x + w_adjustment / 2, (GLuint)pnt.y + h_adjustment  / 2, (GLuint)w, (GLuint)h };
 	renderbuf->clp = (clipping){ (double)renderbuf->vp.x / (double)tex_size, (double)renderbuf->vp.y / (double)tex_size, w / (double)tex_size, h / (double)tex_size };
 
-	return tex;
+	return shared_tex;
 }
+
+extern GLuint currentShaderProgram;
 
 static void rendertex_shared_clear(color3F *color, GLfloat alpha) {
 	glDisable(GL_BLEND);
@@ -136,9 +151,16 @@ static void rendertex_shared_clear(color3F *color, GLfloat alpha) {
 	glUniform4f(clear_progr->uniforms[0], color->r, color->g, color->b, alpha);
  	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glUseProgram(0);
+	currentShaderProgram = 0;
+	glEnable(GL_BLEND);	
 }
 
+static int i = 10;
+
 void rendertex_shared_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t h, GLuint filter, color3F *color, GLfloat alpha, value draw_func, value *tex_id) {
+	PRINT_DEBUG("rendertex_shared_create call");
+
 	sharedtex_t *tex = rendertex_shared_get_rect(renderbuf, w, h);
 	if (!tex) {
 		caml_failwith("cannot get fresh rect for shared tex");
@@ -151,9 +173,13 @@ void rendertex_shared_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t h, 
 	lgResetBoundTextures();
 	renderbuf_activate(renderbuf);
 
+	PRINT_DEBUG("cleaning...");
 	rendertex_shared_clear(color, alpha);
+	PRINT_DEBUG("setting viewport %d %d %d %d", vp->x, vp->y, vp->w, vp->h);
 	glViewport(vp->x, vp->y, vp->w, vp->h);
+	PRINT_DEBUG("drawing...");
 	caml_callback(draw_func, (value)renderbuf);
+	PRINT_DEBUG("done");
 
 	renderbuf_deactivate();
 	framebuf_pop();
@@ -213,4 +239,21 @@ uint8_t rendertex_shared_draw(renderbuffer_t *renderbuf, value render_inf, float
 	framebuf_pop();
 
 	CAMLreturn(resized);
+}
+
+void rendertex_shared_release(value render_inf) {
+	value tid = Field(render_inf, 0);
+	int i;
+	sharedtex_t *shared_tex;
+	for (i = 0; i < tex_num; i++) {
+		shared_tex = texs + i;
+		if (shared_tex->vtid == tid) {
+			renderbuffer_t renderbuf;
+			RENDERBUF_OF_RENDERINF(renderbuf, render_inf, nextDBE);
+			pnt_t p = (pnt_t) { renderbuf.vp.x - (renderbuf.realWidth - renderbuf.vp.w) / 2, renderbuf.vp.y - (renderbuf.realHeight - renderbuf.vp.h) / 2 };
+			rbin_rm_rect(&shared_tex->bin, &p);
+
+			break;			
+		}
+	}	
 }

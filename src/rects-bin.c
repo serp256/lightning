@@ -142,9 +142,9 @@ void rbin_init(rbin_t* bin, uint16_t width, uint16_t height) {
 	bin->width = width;
 	bin->height = height;
 	bin->holes = rlist_create(rect_from_coords_n_dims(0, 0, width, height));
-	bin->reuse_rects = NULL;
 	bin->rects = NULL;
-	bin->reuse_rects = 0;
+	bin->reuse_rects = NULL;
+	bin->reuse_rects_num = 0;
 }
 
 void rbin_free(rbin_t* bin) {

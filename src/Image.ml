@@ -548,9 +548,13 @@ class _c  _texture =
     method private render' ?alpha:(alpha') ~transform _ = 
     (
       match glowFilter with
-      [ Some {glowc=`glowc {g_matrix;_}; g_image = Some g_image; g_program;_} -> 
-        Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' ?blend:blend g_image
-      | _ -> Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha:alpha' ?blend:blend image
+      [ Some {glowc=`glowc {g_matrix;g_texture;_}; g_image = Some g_image; g_program;_} ->
+        let () = debug:imgrender "111" in
+        (* let () = if Sys.file_exists "/tmp/qweqweqwe.png" then () else ignore(g_texture#save "/tmp/qweqweqwe.png") in *)
+          Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' ?blend:blend g_image
+      | _ ->
+        let () = debug:imgrender "222" in
+          Render.Image.render (if transform then self#transformationMatrix else Matrix.identity) shaderProgram ?alpha:alpha' ?blend:blend image
       ]
     ); 
 end;

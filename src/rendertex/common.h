@@ -11,12 +11,12 @@
 	\
 	renderbuf.width = Double_val(Field(renderinf, 1)); \
 	renderbuf.height = Double_val(Field(renderinf, 2)); \
-	\
-	value vclipping = Field(Field(renderinf, 4), 0); \
 	renderbuf.realWidth = real_dim_fun(ceil(renderbuf.width)); \
 	renderbuf.realHeight = real_dim_fun(ceil(renderbuf.height)); \
+	\
+	value vclipping = Field(renderinf, 4); \
 	renderbuf.clp = Is_block(vclipping) ? (clipping){ Double_field(vclipping, 0), Double_field(vclipping, 1), Double_field(vclipping, 2), Double_field(vclipping, 3) } : (clipping){ 0., 0., 1., 1. }; \
-	renderbuf.vp = (viewport) { Double_val(Field(renderinf, 5)), Double_val(Field(renderinf, 6)), renderbuf.width, renderbuf.height }; \
+	renderbuf.vp = (viewport) { Int_val(Field(renderinf, 5)), Int_val(Field(renderinf, 6)), renderbuf.width, renderbuf.height }; \
 }
 
 enum {
@@ -53,7 +53,7 @@ typedef struct {
 
 void 	renderbuf_activate 		(renderbuffer_t *rb);
 void 	renderbuf_deactivate	();
-uint8_t renderbuf_save			(renderbuffer_t *rb, value path);
+uint8_t renderbuf_save			(renderbuffer_t *rb, value path, uint8_t whole);
 uint8_t renderbuf_save_current	(value path);
 
 GLuint	tex_get_id				();
@@ -63,6 +63,6 @@ GLuint	framebuf_get_id			();
 void	framebuf_return_id		(GLuint fbid);
 void 	framebuf_push			(GLuint fbid, viewport *vp, int8_t apply);
 void	framebuf_pop			();
-GLuint	framebuf_restore		(int8_t apply_viewport);
+void	framebuf_restore		(int8_t apply_viewport);
 
 #endif
