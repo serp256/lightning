@@ -6,11 +6,11 @@ external set_texture_filter: textureID -> filter -> unit = "ml_texture_set_filte
 
 type framebuffer;
 
-external renderbuffer_save: renderInfo -> string -> bool = "rendertex_save";
+external rendertex_save: renderInfo -> string -> bool = "rendertex_save";
 
 type data = Bigarray.Array2.t int32 Bigarray.int32_elt Bigarray.c_layout;
-external renderbuffer_data: renderInfo -> data = "ml_renderbuffer_data"; (* create backend for this func!!! *)
-external renderbuffer_release: renderInfo -> unit = "rendertex_release";
+external rendertex_data: renderInfo -> data = "rendertex_data"; (* create backend for this func!!! *)
+external rendertex_release: renderInfo -> unit = "rendertex_release";
 
 module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
 
@@ -38,8 +38,8 @@ class virtual base renderInfo =
     method released = released;
     method virtual release: unit -> unit;
     method virtual draw: ?clear:(int*float) -> ?width:float -> ?height:float -> (framebuffer -> unit) -> bool;
-    method data () = renderbuffer_data renderInfo;
-    method save filename = renderbuffer_save renderInfo filename;
+    method data () = rendertex_data renderInfo;
+    method save filename = rendertex_save renderInfo filename;
   end; (*}}}*)
 
 external rendertexDraw: ?clear:(int * float) -> ?width:float -> ?height:float -> renderInfo -> (framebuffer -> unit) -> bool -> bool = "rendertex_draw_byte" "rendertex_draw";
@@ -53,7 +53,7 @@ class shared renderInfo =
       then ()
       else
         (
-          renderbuffer_release renderInfo;
+          rendertex_release renderInfo;
           released := True;
         );
 
@@ -97,4 +97,9 @@ value draw ?(kind=Shared) ?color ?alpha width height f =
   let (renderInfo, dedicated) = rendertexCreate ?color ?alpha kind width height f in
     if dedicated
     then new dedicated renderInfo
-    else new shared renderInfo;
+    else
+      let tex = new shared renderInfo in
+        (
+          Gc.finalise (fun tex -> let () = debug "shared release" in tex#release () ) tex;
+          tex;
+        );

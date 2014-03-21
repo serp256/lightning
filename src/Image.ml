@@ -305,57 +305,57 @@ class _c  _texture =
     method private updateGlowFilter () =
       match glowFilter with
       [ Some ({glowc = `g_id (_,glow); g_make_program; g_image; _ } as gf) ->
-          let () = debug:glow "update glow filter on %s" self#name in
-          let glowc_id = GlowCache.id texture glow in
-          let glowc = 
-            match GlowCache.get glowc_id with
-            [ Some glowc -> 
-              let () = debug:glow "get it from cache" in
-              glowc
-            | None ->
-                let renderInfo = texture#renderInfo in
-                let w = renderInfo.Texture.rwidth
-                and h = renderInfo.Texture.rheight in
-                let hgs = (powOfTwo glow.Filters.glowSize) - 1 in
-                let gs = hgs * 2 in
-                let mhgs = float ~-hgs in
-                let g_matrix = glowMatrix mhgs glow.Filters.x glow.Filters.y in
-                let rw = w +. (float gs) +. (abs_float (float glow.Filters.x))
-                and rh = h +. (float gs) +. (abs_float (float glow.Filters.y)) in
-                let glowc = GlowCache.get glowc_id in
-                let cm = Matrix.create ~translate:{Point.x = float hgs; y = float hgs} () in
-                let image = Render.Image.create renderInfo `NoColor 1. in
-                let drawf fb =
-                  (
-                    Render.Image.render (glowFirstDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
+        let () = debug:glow "update glow filter on %s" self#name in
+        let glowc_id = GlowCache.id texture glow in
+        let glowc = 
+          match GlowCache.get glowc_id with
+          [ Some glowc -> 
+            let () = debug:glow "get it from cache" in
+            glowc
+          | None ->
+              let renderInfo = texture#renderInfo in
+              let w = renderInfo.Texture.rwidth
+              and h = renderInfo.Texture.rheight in
+              let hgs = (powOfTwo glow.Filters.glowSize) - 1 in
+              let gs = hgs * 2 in
+              let mhgs = float ~-hgs in
+              let g_matrix = glowMatrix mhgs glow.Filters.x glow.Filters.y in
+              let rw = w +. (float gs) +. (abs_float (float glow.Filters.x))
+              and rh = h +. (float gs) +. (abs_float (float glow.Filters.y)) in
+              let glowc = GlowCache.get glowc_id in
+              let cm = Matrix.create ~translate:{Point.x = float hgs; y = float hgs} () in
+              let image = Render.Image.create renderInfo `NoColor 1. in
+              let drawf fb =
+                (
+                  Render.Image.render (glowFirstDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
 
-                    match glow.Filters.glowKind with
-                    [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                    | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
-                    ];
+                  match glow.Filters.glowKind with
+                  [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
+                  | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                  ];
 
-                    Render.Image.render (glowLastDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
-                  )
-                in
-                let tex = RenderTexture.draw rw rh drawf in
-                  GlowCache.create glowc_id texture tex g_matrix
-            ]
-          in
-          (
-            gf.glowc := `glowc glowc;
-            match g_image with
-            [ None ->
-              let g_image = Render.Image.create glowc.g_texture#renderInfo color alpha in
-              (
-                if texFlipX then Render.Image.flipTexX g_image else ();
-                if texFlipY then Render.Image.flipTexY g_image else ();
-                gf.g_image := Some g_image;
-              )
-            | Some gimg -> Render.Image.update gimg glowc.g_texture#renderInfo ~flipX:texFlipX ~flipY:texFlipY
-            ];
-          )
-        | _ -> ()
-        ];
+                  Render.Image.render (glowLastDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
+                )
+              in
+              let tex = RenderTexture.draw rw rh drawf in
+                GlowCache.create glowc_id texture tex g_matrix
+          ]
+        in
+        (
+          gf.glowc := `glowc glowc;
+          match g_image with
+          [ None ->
+            let g_image = Render.Image.create glowc.g_texture#renderInfo color alpha in
+            (
+              if texFlipX then Render.Image.flipTexX g_image else ();
+              if texFlipY then Render.Image.flipTexY g_image else ();
+              gf.g_image := Some g_image;
+            )
+          | Some gimg -> Render.Image.update gimg glowc.g_texture#renderInfo ~flipX:texFlipX ~flipY:texFlipY
+          ];
+        )
+      | _ -> ()
+      ];
 
           (*
           match (g_texture,g_image) with

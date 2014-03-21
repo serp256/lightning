@@ -120,7 +120,8 @@ value rendertex_draw(value vclear, value vwidth, value vheight, value vrender_in
 	CAMLlocal1(vtmp);
 
 	renderbuffer_t renderbuf;
-	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT); //fix!!! for shared should be nextDBE
+	if (vdedicated == Val_true) RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT)
+	else RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextDBE)
 
 	float new_w = Is_block(vwidth) ? Double_val(Field(vwidth, 0)) : renderbuf.width, new_h = Is_block(vheight) ? Double_val(Field(vheight, 0)) : renderbuf.height;
 	color3F color;
@@ -154,7 +155,7 @@ value rendertex_save(value vrender_inf, value vpath) {
 	CAMLreturn(Val_bool(retval));
 }
 
-value ml_renderbuffer_data(value vrender_inf) {
+value rendertex_data(value vrender_inf) {
 	CAMLparam1(vrender_inf);
 	CAMLreturn(Val_unit);
 }

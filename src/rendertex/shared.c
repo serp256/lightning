@@ -242,6 +242,8 @@ uint8_t rendertex_shared_draw(renderbuffer_t *renderbuf, value render_inf, float
 }
 
 void rendertex_shared_release(value render_inf) {
+	PRINT_DEBUG("rendertex_shared_release");
+
 	value tid = Field(render_inf, 0);
 	int i;
 	sharedtex_t *shared_tex;
