@@ -69,6 +69,7 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 			shared_tex = texs + i;
 			tex = TEX(shared_tex->vtid);
 			PRINT_DEBUG("reuse");
+			// PRINT_DEBUG("reuse %d, %d", (int)pnt.x, (int)pnt.y);
 			goto FINDED;
 		}
 	};

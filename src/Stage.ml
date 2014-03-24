@@ -230,6 +230,7 @@ class virtual c (_width:float) (_height:float) =
     value mutable fpsTrace : option DisplayObject.c = None;
     value mutable sharedTexNum: option DisplayObject.c = None;
 
+    (* is used by pc and ios versions, android uses run method *)
     method renderStage () =
     (
 (*       proftimer:perfomance "Prerender: %F" D.prerender(); *)
@@ -309,6 +310,7 @@ class virtual c (_width:float) (_height:float) =
         addTween f;    
 
     method !z = Some 0;
+    (* used by android version, ios and pc versions uses renderStage method *)
     method run seconds = 
       proftimer:frame "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!frame %f"
       (

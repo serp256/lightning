@@ -1,7 +1,7 @@
 #include "common.h"
 #include <kazmath/GL/matrix.h>
-#include <stdio.h>
 #include <caml/memory.h>
+#include "texture_save.h"
 
 struct framebuf_state {
 	GLuint fbid;

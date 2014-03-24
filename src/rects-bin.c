@@ -238,6 +238,8 @@ void rbin_add_rect_at(rbin_t* bin, uint16_t x, uint16_t y, uint16_t width, uint1
 	rlist_unshift(&bin->rects, rect);
 }
 
+#include "light_common.h"
+
 uint8_t rbin_reuse_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
 	rlist_t* rect = bin->reuse_rects;
 
@@ -246,12 +248,12 @@ uint8_t rbin_reuse_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt
 		uint16_t hdiff = rect->data->height - height;
 
 		if (0 <= wdiff && wdiff < 10 && 0 <= hdiff && hdiff < 10) {
+			pnt->x = rect->data->left_bottom.x;
+			pnt->y = rect->data->left_bottom.y;
+
 			rlist_unshift(&bin->rects, rect->data);
 			rlist_remove(&bin->reuse_rects, rect, 0);
 			bin->reuse_rects_num--;
-
-			pnt->x = rect->data->left_bottom.x;
-			pnt->y = rect->data->left_bottom.y;
 
 			return 1;
 		}

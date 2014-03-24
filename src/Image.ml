@@ -338,7 +338,6 @@ class _c  _texture =
                 )
               in
               let tex = RenderTexture.draw rw rh drawf in
-              let () = ignore(tex#save "/tmp/test.png") in
                 GlowCache.create glowc_id texture tex g_matrix
           ]
         in

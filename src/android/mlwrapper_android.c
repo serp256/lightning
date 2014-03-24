@@ -12,6 +12,7 @@
 #include "khash.h"
 #include "mobile_res.h"
 #include <errno.h>
+#include "render_stub.h"
 
 #define caml_acquire_runtime_system()
 #define caml_release_runtime_system()
@@ -336,7 +337,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(J
 
 
 
-static value run_method = 1;//None
+// static value run_method = 1;//None
 //void mlstage_run(double timePassed) {
 //}
 
@@ -345,15 +346,21 @@ extern void net_run();
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
 	CAMLparam0();
-	CAMLlocal1(timePassed);
-	// PRINT_DEBUG("DRAW FRAME!!!!");
-	timePassed = caml_copy_double((double)interval / 1000000000L);
-	//mlstage_run(timePassed);
+	net_run();
+	mlstage_advanceTime(stage, (double)interval / 1000000000L);
+	mlstage_preRender();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	restore_default_viewport();
+	mlstage_render(stage);
+
+/*	//mlstage_run(timePassed);
 	net_run();
 	// if (net_running() > 0) net_run();
 	if (run_method == 1) run_method = caml_hash_variant("run");
 	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,timePassed);
-	// PRINT_DEBUG("caml run ok");
+	// PRINT_DEBUG("caml run ok");*/
+
+
 	CAMLreturn0;
 }
 

@@ -187,7 +187,8 @@
 	mlstage_preRender();
 	mLastFrameTimestamp = now;
 	[EAGLContext setCurrentContext:mContext];
-	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);    
+	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+	restore_default_viewport();
 	mlstage_render(mStage);    
 	glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
 	[mContext presentRenderbuffer:GL_RENDERBUFFER];

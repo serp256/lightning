@@ -149,6 +149,7 @@ void lgGLEnableVertexAttribs( unsigned int flags );
 
 
 void render_clear_cached_values ();
+void restore_default_viewport();
 
 
 #endif
