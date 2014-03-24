@@ -5,6 +5,7 @@ import java.util.Iterator;
 import android.app.Activity;
 import android.view.MotionEvent;
 import ru.redspell.lightning.opengl.GLSurfaceView;
+// import android.opengl.GLSurfaceView;
 import ru.redspell.lightning.utils.Log;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
@@ -72,6 +73,7 @@ import java.security.NoSuchAlgorithmException;
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
 import ru.redspell.lightning.OpenUDID;
+import android.os.Vibrator;
 
 public class LightView extends GLSurfaceView {
     public String getExpansionPath(boolean isMain) {
@@ -498,27 +500,27 @@ public class LightView extends GLSurfaceView {
 		paused = true;
 	}
 
-	public void onPause(){
-		Log.d("LIGHTNING", "VIEW.onPause");
-		queueEvent(new Runnable() {
-			@Override
-			public void run() {
-				renderer.handleOnPause();
-			}
-		});
-		super.onPause();
-	}
+	// public void onPause(){
+	// 	Log.d("LIGHTNING", "VIEW.onPause");
+	// 	queueEvent(new Runnable() {
+	// 		@Override
+	// 		public void run() {
+	// 			renderer.handleOnPause();
+	// 		}
+	// 	});
+	// 	super.onPause();
+	// }
 
-	public void onResume() {
-		Log.d("LIGHTNING", "VIEW.onResume");
-		queueEvent(new Runnable() {
-			@Override
-			public void run() {
-				renderer.handleOnResume();
-			}
-		});
-		super.onResume();
-	}
+	// public void onResume() {
+	// 	Log.d("LIGHTNING", "VIEW.onResume");
+	// 	queueEvent(new Runnable() {
+	// 		@Override
+	// 		public void run() {
+	// 			renderer.handleOnResume();
+	// 		}
+	// 	});
+	// 	super.onResume();
+	// }
 
 	public void onDestroy() {
 		Log.d("LIGHTNING","VIEW.onDestroy");
@@ -1068,6 +1070,24 @@ public class LightView extends GLSurfaceView {
 		public native void run();
 	}
 
+	private static class CurlDownloaderProgressCallbackRunnable implements Runnable {
+		private int cb;
+		private double progress;
+		private double total;
+
+		public CurlDownloaderProgressCallbackRunnable(int cb, double progress, double total) {
+			this.cb = cb;
+			this.progress = progress;
+			this.total = total;
+		}
+
+		public native void run(int cb, double progress, double total);
+
+		public void run() {
+			run(cb, progress, total);
+		}
+	}
+
 	public void curlDownloaderSuccess(int req) {
 		Log.d("LIGHTNING", "curlDownloaderSuccess");
 		queueEvent(new CurlDownloaderCallbackRunnable(req));
@@ -1076,6 +1096,10 @@ public class LightView extends GLSurfaceView {
 	public void curlDownloaderError(int req, int errCode, int errMes) {
 		Log.d("LIGHTNING", "curlDownloaderError " + errCode + " " + errMes);
 		queueEvent(new CurlDownloaderErrorCallbackRunnable(req, errCode, errMes));
+	}
+
+	public void curlDownloadProgress(int cb, double progress, double total) {
+		queueEvent(new CurlDownloaderProgressCallbackRunnable(cb, progress, total));
 	}
 
 	////////////////////
@@ -1192,5 +1216,44 @@ public class LightView extends GLSurfaceView {
 
 	public void hideNativeWait() {
 		if (progressDialog != null) progressDialog.dismiss();
+	}
+
+	public void fireNativeEvent(final String data){
+		queueEvent(new Runnable() {
+			@Override
+			public void run() {
+				renderer.fireNativeEvent(data);
+			}
+		});
+	}
+
+	public void fireLightEvent(final String event_key) {
+		LightView.instance.getHandler().post(new Runnable() {
+			@Override
+			public void run() {
+				activity.onLightEvent(event_key);
+			}
+		});
+	};
+
+	public void vibrate(final int time) {
+		Log.d("LIGHTNING","JAVA VIBRATE CALLED");
+		activity.runOnUiThread(new Runnable(){
+					@Override
+					public void run(){
+					// Get instance of Vibrator from current Context
+					Vibrator v = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
+
+					// Output yes if can vibrate, no otherwise
+					//if (v.hasVibrator()) {
+					//	Log.v("Can Vibrate", "YES");
+					//} else {
+					//	Log.v("Can Vibrate", "NO");
+					//}
+
+					v.vibrate(time);
+				}
+			});
+
 	}
 }

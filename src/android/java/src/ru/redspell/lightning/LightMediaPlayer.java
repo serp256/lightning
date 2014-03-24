@@ -19,6 +19,25 @@ public class LightMediaPlayer extends MediaPlayer {
 	public int id;
 	private static int nextId = 0;
 
+	public static class LifecycleHelper implements IUiLifecycleHelper {
+		public void onCreate(android.os.Bundle savedInstanceState) {}
+
+		public void onResume() {
+			LightMediaPlayer.resumeAll();
+			LightSoundPool.getInstance().autoResume();
+		}
+
+		public void onPause() {
+			LightMediaPlayer.pauseAll();
+			LightSoundPool.getInstance().autoPause();
+		}
+
+		public void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {}
+		public void onSaveInstanceState(android.os.Bundle outState) {}
+		public void onStop() {}
+		public void onDestroy() {}
+	};	
+
 	private class CamlCallbackCompleteRunnable implements Runnable {
 		private int cb;
 
@@ -217,5 +236,5 @@ public class LightMediaPlayer extends MediaPlayer {
 		}*/
 
 		return soundPoolLoad(sndPool, path);
-	}	
+	}
 }

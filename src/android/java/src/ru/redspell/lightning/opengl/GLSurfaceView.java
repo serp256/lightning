@@ -167,7 +167,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
     private final static boolean LOG_ATTACH_DETACH = false;
     private final static boolean LOG_THREADS = false;
     private final static boolean LOG_PAUSE_RESUME = false;
-    private final static boolean LOG_SURFACE = false;
+    private final static boolean LOG_SURFACE = true;
     private final static boolean LOG_RENDERER = false;
     private final static boolean LOG_RENDERER_DRAW_FRAME = false;
     private final static boolean LOG_EGL = false;
@@ -1144,6 +1144,9 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             if (LOG_EGL) {
                 Log.w("EglHelper", "destroySurface()  tid=" + Thread.currentThread().getId());
             }
+
+            Log.i("EglHelper", "mEglSurface != null && mEglSurface != EGL10.EGL_NO_SURFACE " + (mEglSurface != null && mEglSurface != EGL10.EGL_NO_SURFACE ? "true" : "false"));
+
             if (mEglSurface != null && mEglSurface != EGL10.EGL_NO_SURFACE) {
                 mEgl.eglMakeCurrent(mEglDisplay, EGL10.EGL_NO_SURFACE,
                         EGL10.EGL_NO_SURFACE,
@@ -1227,6 +1230,8 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
          * synchronized(sGLThreadManager) block.
          */
         private void stopEglSurfaceLocked() {
+            Log.i("GLThread", "stopEglSurfaceLocked " + (mHaveEglSurface ? "true" : "false"));
+
             if (mHaveEglSurface) {
                 mHaveEglSurface = false;
                 mEglHelper.destroySurface();
@@ -1244,6 +1249,10 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 sGLThreadManager.releaseEglContextLocked(this);
             }
         }
+
+        private native void foreground();
+        private native void background();
+
         private void guardedRun() throws InterruptedException {
             mEglHelper = new EglHelper();
             mHaveEglContext = false;
@@ -1276,6 +1285,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                             // Update the pause state.
                             if (mPaused != mRequestPaused) {
                                 mPaused = mRequestPaused;
+
                                 sGLThreadManager.notifyAll();
                                 if (LOG_PAUSE_RESUME) {
                                     Log.i("GLThread", "mPaused is now " + mPaused + " tid=" + getId());
@@ -1305,6 +1315,8 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                                 if (LOG_SURFACE) {
                                     Log.i("GLThread", "releasing EGL surface because paused tid=" + getId());
                                 }
+                                // put background here cause stopEglSurfaceLocked call destroys surface and detachs context, but context may be needed in background handler
+                                background();
                                 stopEglSurfaceLocked();
                                 if (!mPreserveEGLContextOnPause || sGLThreadManager.shouldReleaseEGLContextWhenPausing()) {
                                     stopEglContextLocked();
@@ -1353,7 +1365,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
                             // Ready to draw?
                             if (readyToDraw()) {
-
                                 // If we don't have an EGL context, try to acquire one.
                                 if (! mHaveEglContext) {
                                     if (askedToReleaseEglContext) {
@@ -1373,6 +1384,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                                 }
 
                                 if (mHaveEglContext && !mHaveEglSurface) {
+                                    Log.d("LIGHTNING", "!!!!!!1");
                                     mHaveEglSurface = true;
                                     createEglSurface = true;
                                     sizeChanged = true;
@@ -1380,6 +1392,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
                                 if (mHaveEglSurface) {
                                     if (mSizeChanged) {
+                                        Log.d("LIGHTNING", "!!!!!!2");
                                         sizeChanged = true;
                                         w = mWidth;
                                         h = mHeight;
@@ -1432,6 +1445,8 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                             Log.w("GLThread", "egl createSurface");
                         }
                         gl = (GL10) mEglHelper.createSurface(getHolder());
+                        // put foreground here cause context is now attached as current
+                        foreground();
                         if (gl == null) {
                             // Couldn't create a surface. Quit quietly.
                             break;
@@ -1597,6 +1612,8 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             synchronized (sGLThreadManager) {
                 mWidth = w;
                 mHeight = h;
+
+                Log.d("LIGHTNING", "mSizeChanged = true");
                 mSizeChanged = true;
                 mRequestRender = true;
                 mRenderComplete = false;
@@ -1789,7 +1806,9 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                         ! renderer.startsWith(kMSM7K_RENDERER_PREFIX);
                     notifyAll();
                 }
-                mLimitedGLESContexts = !mMultipleGLESContextsAllowed || renderer.startsWith(kADRENO);
+
+                // mLimitedGLESContexts = !mMultipleGLESContextsAllowed || renderer.startsWith(kADRENO);
+                mLimitedGLESContexts = !mMultipleGLESContextsAllowed;
                 if (LOG_SURFACE) {
                     Log.w(TAG, "checkGLDriver renderer = \"" + renderer + "\" multipleContextsAllowed = "
                         + mMultipleGLESContextsAllowed

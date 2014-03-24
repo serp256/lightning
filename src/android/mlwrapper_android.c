@@ -265,7 +265,7 @@ int getResourceFd(const char *path, resource *res) {
 // получим параметры нах
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
-	PRINT_DEBUG("lightRender init");
+	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated");
 	if (!ocaml_initialized) {
 		PRINT_DEBUG("init ocaml");
 		char *argv[] = {"android",NULL};
@@ -281,20 +281,37 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 	};
 }
 
-static int onResume = 0;
-static int surfaceDestroyed = 0;
+// static int onResume = 0;
+// static int surfaceDestroyed = 0;
 static int paused = 0;
+static int started = 0;
 
-void callDispatchFgHandler() {
+JNIEXPORT void Java_ru_redspell_lightning_opengl_GLSurfaceView_00024GLThread_background(JNIEnv *env, jobject this) {
+	static value dispatchBgHandler = 1;
+
+	if (stage) {
+		if (dispatchBgHandler == 1) dispatchBgHandler = caml_hash_variant("dispatchBackgroundEv");
+		caml_callback2(caml_get_public_method(stage->stage, dispatchBgHandler), stage->stage, Val_unit);
+	}
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_opengl_GLSurfaceView_00024GLThread_foreground(JNIEnv *env, jobject this) {
+	// first call should be ignored cause it is not foreground but application start
+	if (!started) {
+		started = 1;
+		return;
+	}
+
 	static value dispatchFgHandler = 1;
 
 	if (stage) {
 		if (dispatchFgHandler == 1) dispatchFgHandler = caml_hash_variant("dispatchForegroundEv");
 		caml_callback2(caml_get_public_method(stage->stage, dispatchFgHandler), stage->stage, Val_unit);
-	}	
+	}
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged");
 	PRINT_DEBUG("GL Changed: %i:%i, paused %d",width,height, paused);
 
 	if (paused) {
@@ -315,11 +332,6 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 
 			caml_callback3(caml_get_public_method(stage->stage, caml_hash_variant("_stageResized")), stage->stage, caml_copy_double(fwidth), caml_copy_double(fheight));
 		}
-
-		if (onResume) {
-			onResume = 0;
-			callDispatchFgHandler();
-		}
 	}
 
 }
@@ -331,37 +343,20 @@ JNIEXPORT jint Java_ru_redspell_lightning_LightRenderer_nativeGetFrameRate(JNIEn
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(JNIEnv *env, jobject this) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed call");
-	surfaceDestroyed = 1;
 }
-
-
-
-
-// static value run_method = 1;//None
-//void mlstage_run(double timePassed) {
-//}
 
 extern int net_running();
 extern void net_run();
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
-	CAMLparam0();
+ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
+    CAMLparam0();
 	net_run();
 	mlstage_advanceTime(stage, (double)interval / 1000000000L);
 	mlstage_preRender();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	restore_default_viewport();
 	mlstage_render(stage);
-
-/*	//mlstage_run(timePassed);
-	net_run();
-	// if (net_running() > 0) net_run();
-	if (run_method == 1) run_method = caml_hash_variant("run");
-	caml_callback2(caml_get_public_method(stage->stage,run_method),stage->stage,timePassed);
-	// PRINT_DEBUG("caml run ok");*/
-
-
-	CAMLreturn0;
+    CAMLreturn0;
 }
 
 
@@ -437,34 +432,20 @@ value ml_malinfo(value p) {
 	return caml_alloc_tuple(3);
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
+// JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
+// 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
 
-	paused = 1;
-	sound_pause(env);
-
-	static value dispatchBgHandler = 1;
-
-	if (stage) {
-		if (dispatchBgHandler == 1) dispatchBgHandler = caml_hash_variant("dispatchBackgroundEv");
-		caml_callback2(caml_get_public_method(stage->stage, dispatchBgHandler), stage->stage, Val_unit);
-	}	
-}
+// 	paused = 1;
+// 	sound_pause(env);
+// }
 
 
-JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
+// JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnResume(JNIEnv *env, jobject this) {
+// 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnResume call");
 
-	paused = 0;
-	sound_resume(env);
-
-	if (surfaceDestroyed) {
-		surfaceDestroyed = 0;
-		onResume = 1;	
-	} else {
-		callDispatchFgHandler();
-	}
-}
+// 	paused = 0;
+// 	sound_resume(env);
+// }
 
 value ml_openURL(value  url) {
 	JNIEnv *env;
@@ -939,3 +920,71 @@ value ml_hide_nativeWait(value p) {
 	(*env)->CallVoidMethod(env,jView,mid);	
 	return Val_unit;
 }
+
+
+
+value ml_fire_lightning_event(value event_key) {
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+	static jmethodID mid = 0;
+	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "fireLightEvent", "(Ljava/lang/String;)V");
+	jstring jevid = (*env)->NewStringUTF(env,String_val(event_key));
+	(*env)->CallVoidMethod(env,jView,mid,jevid);
+	(*env)->DeleteLocalRef(env,jevid);
+	return Val_unit;
+}
+
+
+
+JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireNativeEvent(JNIEnv *env, jobject thiz, jstring jdata) {
+	const char* cdata = (*env)->GetStringUTFChars(env, jdata, JNI_FALSE);
+	value mldata = caml_copy_string(cdata);
+	(*env)->ReleaseStringUTFChars(env,jdata,cdata);
+	static value *mlfun = NULL;
+	if (mlfun == NULL) mlfun = caml_named_value("on_native_event");
+	caml_callback(*mlfun,mldata);
+}
+
+#define INVERSE_CASE_MID(method) static jmethodID mid = 0; \
+	if (!mid) { \
+		jclass cls = (*env)->FindClass(env, "java/lang/String"); \
+		mid = (*env)->GetMethodID(env, cls, #method, "()Ljava/lang/String;"); \
+		(*env)->DeleteLocalRef(env, cls); \
+	}
+
+#define INVERSE_CASE jstring jsrc = (*env)->NewStringUTF(env, String_val(vsrc)); \
+	jstring jdst = (*env)->CallObjectMethod(env, jsrc, mid); \
+	const char* cdst = (*env)->GetStringUTFChars(env, jdst, NULL); \
+	vdst = caml_copy_string(cdst); \
+	(*env)->ReleaseStringUTFChars(env, jdst, cdst); \
+	(*env)->DeleteLocalRef(env, jsrc); \
+	(*env)->DeleteLocalRef(env, jdst);
+
+value ml_str_to_lower(value vsrc) {
+	CAMLparam1(vsrc);
+	CAMLlocal1(vdst);
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	INVERSE_CASE_MID(toLowerCase);
+	INVERSE_CASE;
+
+	CAMLreturn(vdst);
+}
+
+value ml_str_to_upper(value vsrc) {
+	CAMLparam1(vsrc);
+	CAMLlocal1(vdst);
+
+	JNIEnv *env;
+	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+
+	INVERSE_CASE_MID(toUpperCase);
+	INVERSE_CASE;
+
+	CAMLreturn(vdst);
+}
+
+#undef INVERSE_CASE_MID
+#undef INVERSE_CASE
