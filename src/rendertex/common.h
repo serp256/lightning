@@ -3,6 +3,7 @@
 
 #include "light_common.h"
 #include "texture_common.h"
+#include <stdio.h>
 
 #define RENDERBUF_OF_RENDERINF(renderbuf, renderinf, real_dim_fun) { \
 	struct tex *t = TEX(Field(renderinf, 0)); \

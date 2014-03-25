@@ -3,17 +3,24 @@
 #include "rects-bin.h"
 #include "inline_shaders.h"
 
+static uint8_t shared_tex_id = 0;
+
 typedef struct {
+	uint8_t id;
 	rbin_t bin;
 	value vtid;
 } sharedtex_t;
 
 static int tex_num = 0;
-static sharedtex_t *texs = NULL;
+static sharedtex_t **texs = NULL;
+
+static void finalize(value vtid) {
+	PRINT_DEBUG("!!!!!!!!!!SHARED FINALIZE !!!!!!!!");
+}
 
 static struct custom_operations sharedtex_ops = {
-  "fr.inria.caml.curses_windows",
-  custom_finalize_default,
+  "shared rendertex",
+  finalize,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
@@ -39,10 +46,10 @@ static void rendertex_shared_return_rect(renderbuffer_t *renderbuf) {
 	struct tex *t;
 
 	for (i = 0; i < tex_num; i++) {
-		t = TEX(texs[i].vtid);
+		t = TEX(texs[i]->vtid);
 
 		if (t->fbid == renderbuf->fbid && t->tid == renderbuf->tid) {
-			rbin_rm_rect(&texs[i].bin, &pnt);
+			rbin_rm_rect(&texs[i]->bin, &pnt);
 			break;
 		}
 	}
@@ -65,8 +72,8 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 	// try reuse
 	PRINT_DEBUG("trying reuse...");
 	for (i = 0; i < tex_num; i++) {
-		if (rbin_reuse_rect(&texs[i].bin, rectw, recth, &pnt)) {
-			shared_tex = texs + i;
+		if (rbin_reuse_rect(&texs[i]->bin, rectw, recth, &pnt)) {
+			shared_tex = texs[i];
 			tex = TEX(shared_tex->vtid);
 			PRINT_DEBUG("reuse");
 			// PRINT_DEBUG("reuse %d, %d", (int)pnt.x, (int)pnt.y);
@@ -77,15 +84,15 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 	PRINT_DEBUG("trying add...");
 	uint8_t repair_indx = 0;
 	for (i = 0; i < tex_num; i++) {
-		if (!rbin_need_repair(&(texs[i].bin))) {
-			if (rbin_add_rect(&texs[i].bin, rectw, recth, &pnt)) {
-				shared_tex = texs + i;
+		if (!rbin_need_repair(&texs[i]->bin)) {
+			if (rbin_add_rect(&texs[i]->bin, rectw, recth, &pnt)) {
+				shared_tex = texs[i];
 				tex = TEX(shared_tex->vtid);
 				PRINT_DEBUG("add");
 				goto FINDED;
 			}
 		} else {
-			sharedtex_t tmp = texs[repair_indx];
+			sharedtex_t *tmp = texs[repair_indx];
 			texs[repair_indx++] = texs[i];
 			texs[i] = tmp;
 		}
@@ -94,9 +101,9 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 	PRINT_DEBUG("try repair...");
 	if (repair_indx > 3) repair_indx = 3;
 	for (i = 0; i < repair_indx; i++) {
-		rbin_repair(&texs[i].bin);
-		if (rbin_add_rect(&texs[i].bin, rectw, recth, &pnt)) {
-			shared_tex = texs + i;
+		rbin_repair(&texs[i]->bin);
+		if (rbin_add_rect(&texs[i]->bin, rectw, recth, &pnt)) {
+			shared_tex = texs[i];
 			tex = TEX(shared_tex->vtid);
 			PRINT_DEBUG("repair");
 			goto FINDED;
@@ -104,11 +111,11 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 	};
 	// alloc new 
 
-	PRINT_DEBUG("new tex");
-	tex_num++;
-	texs = realloc(texs,sizeof(sharedtex_t) * tex_num);
-	shared_tex = texs + tex_num - 1;
+	texs = (sharedtex_t**)realloc(texs, sizeof(sharedtex_t*) * ++tex_num);
+	texs[tex_num - 1] = (sharedtex_t*)malloc(sizeof(sharedtex_t));
+	shared_tex = texs[tex_num - 1];
 
+	shared_tex->id = shared_tex_id++;
 	shared_tex->vtid = caml_alloc_custom(&sharedtex_ops, sizeof(struct tex), 0, 1);
 	rbin_init(&shared_tex->bin, tex_size, tex_size);
 	caml_register_generational_global_root(&shared_tex->vtid);
@@ -119,7 +126,7 @@ static sharedtex_t *rendertex_shared_get_rect(renderbuffer_t *renderbuf, uint16_
 
 	if (!rbin_add_rect(&shared_tex->bin, rectw, recth, &pnt)) return 0;
 FINDED:
-	PRINT_DEBUG("found position ad %d %d", pnt.x, pnt.y);
+	PRINT_DEBUG("found position at %d %d, value %d id %d fb %d tid %d", pnt.x, pnt.y, shared_tex->vtid, shared_tex->id, tex->fbid, tex->tid);
 
 	renderbuf->fbid = tex->fbid;
 	renderbuf->tid = tex->tid;
@@ -236,14 +243,12 @@ void rendertex_shared_release(value render_inf) {
 
 	value tid = Field(render_inf, 0);
 	int i;
-	sharedtex_t *shared_tex;
 	for (i = 0; i < tex_num; i++) {
-		shared_tex = texs + i;
-		if (shared_tex->vtid == tid) {
+		if (texs[i]->vtid == tid) {
 			renderbuffer_t renderbuf;
 			RENDERBUF_OF_RENDERINF(renderbuf, render_inf, nextDBE);
 			pnt_t p = (pnt_t) { renderbuf.vp.x - (renderbuf.realWidth - renderbuf.vp.w) / 2, renderbuf.vp.y - (renderbuf.realHeight - renderbuf.vp.h) / 2 };
-			rbin_rm_rect(&shared_tex->bin, &p);
+			rbin_rm_rect(&texs[i]->bin, &p);
 
 			break;			
 		}

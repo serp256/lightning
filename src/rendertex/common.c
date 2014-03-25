@@ -98,24 +98,24 @@ static GLuint *framebufs = NULL;
 
 void framebuf_get_id(GLuint *fbid, GLuint *tid, GLuint w, GLuint h, GLuint filter) {
 	int i = 0;
-	while ((i < framebuf_len) && (framebufs[i] == 0)) { i += 2; };
+	while (i < framebuf_len && framebufs[i] == 0) { i += 2; };
 	if (i < framebuf_len) {
 		*fbid = framebufs[i];
 		*tid = framebufs[i + 1];
 		framebufs[i] = 0;
 		framebufs[i + 1] = 0;
 	} else {
-		glGenTextures(1, tid);
-		glBindTexture(GL_TEXTURE_2D, *tid);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
 		glGenFramebuffers(1, fbid);
+		glGenTextures(1, tid);
 	}
 
+	glBindTexture(GL_TEXTURE_2D, *tid);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, *fbid);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tid, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) caml_failwith("framebuffer status error");	
@@ -130,7 +130,7 @@ void framebuf_return_id(GLuint fbid, GLuint tid) {
 		framebufs[i + 1] = tid;
 	}
 	else {
-		framebufs = realloc(framebufs,sizeof(GLuint)*(2 * framebuf_len + 2));
+		framebufs = realloc(framebufs,sizeof(GLuint) * (framebuf_len + 2));
 		framebufs[framebuf_len] = fbid;
 		framebufs[framebuf_len + 1] = tid;
 		framebuf_len += 2;
