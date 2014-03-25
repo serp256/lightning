@@ -41,7 +41,8 @@ GLuint renderbuf_shared_tex_size() {
 }
 
 static void rendertex_shared_return_rect(renderbuffer_t *renderbuf) {
-	pnt_t pnt = (pnt_t) { renderbuf->vp.x, renderbuf->vp.y };
+	viewport *vp = &renderbuf->vp;
+	pnt_t pnt = (pnt_t) { vp->x - (renderbuf->realWidth - vp->w) / 2, vp->y  - (renderbuf->realHeight - vp->h) / 2 };
 	int i;
 	struct tex *t;
 
@@ -185,12 +186,16 @@ void rendertex_shared_create(renderbuffer_t *renderbuf, uint16_t w, uint16_t h, 
 }
 
 uint8_t rendertex_shared_draw(renderbuffer_t *renderbuf, value render_inf, float new_w, float new_h, color3F *color, GLfloat alpha, value draw_func) {
+	PRINT_DEBUG("rendertex_shared_draw call");
 	CAMLparam2(render_inf, draw_func);
 	CAMLlocal2(vtmp, new_clipping);
 
 	uint8_t resized = 0;
 
+	PRINT_DEBUG("new_w %f; renderbuf->width %f; new_h %f; renderbuf->height %f", new_w, renderbuf->width, new_h, renderbuf->height);
+
 	if (new_w != renderbuf->width || new_h != renderbuf->height) {
+		PRINT_DEBUG("resized");
 		resized = 1;
 
 		rendertex_shared_return_rect(renderbuf);

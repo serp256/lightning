@@ -291,11 +291,14 @@ void rbin_repair(rbin_t* bin) {
 	//}
 }
 
+#include <stdio.h>
+
 void rbin_rm_rect(rbin_t* bin, pnt_t* pnt) {
 	rlist_t* rect = bin->rects;
 
 	while (rect) {
 		if (rect->data->left_bottom.x == pnt->x && rect->data->left_bottom.y == pnt->y) {
+			PRINT_DEBUG("rbin_rm_rect");
 			rlist_unshift(&bin->reuse_rects, rect->data);
 			rlist_remove(&bin->rects, rect, 0);
 			bin->reuse_rects_num++;

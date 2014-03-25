@@ -69,7 +69,7 @@ class c =
     (
 (*         debug "%s bounds changed" self#name; *)
       match imageCache with
-      [ Some ({valid=CValid | CEmpty;_} as c) -> (self#addPrerender self#updateImageCache; c.valid := CInvalid)
+      [ Some ({valid=CValid | CEmpty;_} as c) -> (let () = debug:filters "add pre 4" in self#addPrerender self#updateImageCache; c.valid := CInvalid)
       | _ -> ()
       ];
       super#boundsChanged();
@@ -205,7 +205,7 @@ class c =
                 then 
                   (
                     c.valid := CInvalid;
-                    self#addPrerender self#updateImageCache
+                    let () = debug:filters "add pre 0" in self#addPrerender self#updateImageCache
                   )
                 else ();
               )
@@ -239,7 +239,7 @@ class c =
                   then {c_img = None; c_tex = None; c_mat = Matrix.identity; valid = CEmpty; c_prg; glow = !glow; force = False}
                   else
                   (
-                    self#addPrerender self#updateImageCache;
+                    let () = debug:filters "add pre 1" in self#addPrerender self#updateImageCache;
                     {c_img = None; c_tex = None; c_mat = Matrix.identity; valid = CInvalid; c_prg; glow = !glow; force = False};
                   )
                 end
@@ -251,7 +251,7 @@ class c =
                 then
                 (
                   c.glow := !glow;
-                  if c.valid = CValid then (c.valid := CInvalid; self#addPrerender self#updateImageCache) else ();
+                  if c.valid = CValid then (c.valid := CInvalid; let () = debug:filters "add pre 2" in self#addPrerender self#updateImageCache) else ();
                 )
                 else ();
               )
