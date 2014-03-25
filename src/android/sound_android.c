@@ -22,18 +22,20 @@ value ml_alsoundInit() {
 		JNIEnv *env;
 		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
-		jclass amCls = (*env)->FindClass(env, "android/media/AudioManager");
-		jfieldID strmTypeFid = (*env)->GetStaticFieldID(env, amCls, "STREAM_MUSIC", "I");
-		jint strmType = (*env)->GetStaticIntField(env, amCls, strmTypeFid);
+		// jclass amCls = (*env)->FindClass(env, "android/media/AudioManager");
+		// jfieldID strmTypeFid = (*env)->GetStaticFieldID(env, amCls, "STREAM_MUSIC", "I");
+		// jint strmType = (*env)->GetStaticIntField(env, amCls, strmTypeFid);
 
-		jclass sndPoolCls = (*env)->FindClass(env, "android/media/SoundPool");
-		jmethodID constrId = (*env)->GetMethodID(env, sndPoolCls, "<init>", "(III)V");
-		jobject sndPool = (*env)->NewObject(env, sndPoolCls, constrId, 100, strmType, 0);
+		jclass sndPoolCls = (*env)->FindClass(env, "ru/redspell/lightning/LightSoundPool");
+		jmethodID mid = (*env)->GetStaticMethodID(env, sndPoolCls, "getInstance", "()Lru/redspell/lightning/LightSoundPool;");
+		jobject sndPool = (*env)->CallStaticObjectMethod(env, sndPoolCls, mid);
+		// jmethodID constrId = (*env)->GetMethodID(env, sndPoolCls, "<init>", "(III)V");
+		// jobject sndPool = (*env)->NewObject(env, sndPoolCls, constrId, 100, strmType, 0);
 
 		gSndPoolCls = (*env)->NewGlobalRef(env, sndPoolCls);
 		gSndPool = (*env)->NewGlobalRef(env, sndPool);
 
-		(*env)->DeleteLocalRef(env, amCls);
+		// (*env)->DeleteLocalRef(env, amCls);
 		(*env)->DeleteLocalRef(env, sndPoolCls);
 		(*env)->DeleteLocalRef(env, sndPool);		
 	}
@@ -391,47 +393,55 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCall
 }
 
 
-void sound_pause(JNIEnv *env) {
+// void sound_pause(JNIEnv *env) {
 
-	if (gSndPool != NULL) {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+// 	if (gSndPool != NULL) {
+// 		JNIEnv *env;
+// 		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
-		if (gAutoPause == NULL) {
-			gAutoPause = (*env)->GetMethodID(env, gSndPoolCls, "autoPause", "()V");
-		}
+// 		if (gAutoPause == NULL) {
+// 			gAutoPause = (*env)->GetMethodID(env, gSndPoolCls, "autoPause", "()V");
+// 		}
 
-		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
-	}
+// 		(*env)->CallVoidMethod(env, gSndPool, gAutoPause);
+// 	}
 
-	jclass lmpCls = get_lmp_class();
+// 	jclass lmpCls = get_lmp_class();
 
-	if (gLmpPauseAll == NULL) {
-		gLmpPauseAll = (*env)->GetStaticMethodID(env, lmpCls, "pauseAll", "()V");
-	}
+// 	if (gLmpPauseAll == NULL) {
+// 		gLmpPauseAll = (*env)->GetStaticMethodID(env, lmpCls, "pauseAll", "()V");
+// 	}
 
-	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpPauseAll);
-}
+// 	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpPauseAll);
+// }
 
-void sound_resume(JNIEnv *env) {
+// void sound_resume(JNIEnv *env) {
 
-	if (gSndPool != NULL) {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
+// 	if (gSndPool != NULL) {
+// 		JNIEnv *env;
+// 		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 		
-		if (gAutoResume == NULL) {
-			gAutoResume = (*env)->GetMethodID(env, gSndPoolCls, "autoResume", "()V");
-		}
+// 		if (gAutoResume == NULL) {
+// 			gAutoResume = (*env)->GetMethodID(env, gSndPoolCls, "autoResume", "()V");
+// 		}
 
-		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
-	}
+// 		(*env)->CallVoidMethod(env, gSndPool, gAutoResume);
+// 	}
 
-	jclass lmpCls = get_lmp_class();
+// 	jclass lmpCls = get_lmp_class();
 
-	if (gLmpResumeAll == NULL) {
-		gLmpResumeAll = (*env)->GetStaticMethodID(env, lmpCls, "resumeAll", "()V");
-	}
+// 	if (gLmpResumeAll == NULL) {
+// 		gLmpResumeAll = (*env)->GetStaticMethodID(env, lmpCls, "resumeAll", "()V");
+// 	}
 
-	PRINT_DEBUG("resume ALL players");
-	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);
-}
+// 	PRINT_DEBUG("resume ALL players");
+// 	(*env)->CallStaticVoidMethod(env, lmpCls, gLmpResumeAll);
+// }
+
+// JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024LifecycleHelper_onResume(JNIEnv *env, jobject this) {
+// 	sound_resume(env);
+// }
+
+// JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024LifecycleHelper_onPause(JNIEnv *env, jobject this) {
+// 	sound_pause(env);
+// }

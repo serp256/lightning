@@ -62,6 +62,7 @@ package "sponsorpay" (
 	description="SponsorPay SDK"
 	archive(byte) = "sponsorpay.cma"
 	archive(native) = "sponsorpay.cmxa"
+  linkopts = "-ccopt '-F%lightning_path%/src/plugins/sponsorpay/ios/networks/applifier'"
 )
 
 package "syntax" (
@@ -93,6 +94,12 @@ package "facebook" (
 	archive(byte) = "facebook.cma"
 	archive(native) = "facebook.cmxa"
 	linkopts = "-ccopt '-F%lightning_path%/src/plugins/facebook/ios'"
+)
+
+package "native_vk" (
+  description="Vk native SDK support"
+  archive(byte) = "NativeVk.cma"
+  archive(native) = "NativeVk.cmxa"
 )
 
 package "social" (

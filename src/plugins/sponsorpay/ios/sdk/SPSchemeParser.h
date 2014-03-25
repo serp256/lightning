@@ -1,6 +1,6 @@
 //
 //  SPSchemeParser.h
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Created by David Davila on 10/18/12.
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
@@ -13,7 +13,7 @@
 
 @interface SPSchemeParser : NSObject
 
-@property (retain, nonatomic) NSURL *URL;
+@property (strong, nonatomic) NSURL *URL;
 @property (assign) BOOL shouldRequestCloseWhenOpeningExternalURL;
 
 @property (readonly) BOOL requestsContinueWebViewLoading;
@@ -21,5 +21,6 @@
 @property (readonly) NSURL *externalDestination;
 @property (readonly) BOOL requestsClosing;
 @property (readonly) BOOL requestsStopShowingLoadingActivityIndicator;
+@property (readonly) NSInteger closeStatus;
 
 @end

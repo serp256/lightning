@@ -304,6 +304,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 	int is_pvr = 0;
 	int is_plx = 0;
 	int is_alpha = 0;
+	int with_lum = 0;
 	int not_compressed = 0;
 
 	resource res;
@@ -313,7 +314,8 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 	if ([path isAbsolutePath]) {
 		if ([imgType rangeOfString:@"pvr"].location == 0) return loadPvrFile(path,tInfo);
 		else if ([imgType rangeOfString:@"plx"].location == 0) return loadPlxFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
-		else if ([imgType rangeOfString:@"alpha"].location == 0) return loadAlphaFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
+		else if ([imgType rangeOfString:@"alpha"].location == 0) return loadAlphaFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo, 0);
+		else if ([imgType rangeOfString:@"lumal"].location == 0) return loadAlphaFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo, 1);
 
 		if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
 			UIImage *img = [[UIImage alloc] initWithContentsOfFile:path];
@@ -337,6 +339,10 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 			} else if ([imgType rangeOfString:@"alpha"].location == 0) {
 				PRINT_DEBUG("explicit alpha");
 				is_alpha = 1;
+			} else if ([imgType rangeOfString:@"lumal"].location == 0) {
+				PRINT_DEBUG("explicit luminance alpha");
+				is_alpha = 1;
+				with_lum = 1;
 			} else if ([imgType rangeOfString:@"plt"].location == 0) {
 				PRINT_DEBUG("explicit plt");
 			} else {
@@ -380,7 +386,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 	if (!(is_pvr || is_plx || is_alpha || not_compressed)) return 2;
 	if (is_pvr) return loadPvrPtr(gzdopen(res.fd, "rb"), tInfo);
 	if (is_plx) return loadPlxPtr(gzdopen(res.fd, "rb"), tInfo);
-	if (is_alpha) return loadAlphaPtr(gzdopen(res.fd, "rb"), tInfo);
+	if (is_alpha) return loadAlphaPtr(gzdopen(res.fd, "rb"), tInfo, with_lum);
 
 	void* buf = malloc(res.length);
 	if (read(res.fd, buf, res.length) != res.length) return 1;

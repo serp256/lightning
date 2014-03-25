@@ -345,6 +345,8 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(J
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed call");
 }
 
+static value run_method = 1;
+
 extern int net_running();
 extern void net_run();
 

@@ -33,6 +33,12 @@ package "flurry" (
   archive(native) = "flurry.cmxa"
 )
 
+package "sponsorpay" (
+  description="SponsorPay SDK"
+  archive(byte) = "sponsorpay.cma"
+  archive(native) = "sponsorpay.cmxa"
+)
+
 package "syntax" (
 	package "prop" (
 		description = "Syntactic sugars make obj props for tween"
@@ -66,6 +72,12 @@ package "facebook" (
 	description="Facebook API"
 	archive(byte) = "facebook.cma"
 	archive(native) = "facebook.cmxa"
+)
+
+package "native_vk" (
+  description="Vk native SDK support"
+  archive(byte) = "NativeVk.cma"
+  archive(native) = "NativeVk.cmxa"
 )
 
 package "social" (

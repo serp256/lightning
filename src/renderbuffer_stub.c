@@ -66,10 +66,12 @@ static GLuint inline get_texture_id() {
 	int i = 0;
 	while ((i < tx_cnt) && (txs[i] == 0)) {i++;};
 	if (i < tx_cnt) {
+		PRINT_DEBUG("get_texture_id from pull");
 		tid = txs[i];
 		txs[i] = 0;
 		glBindTexture(GL_TEXTURE_2D, tid);
 	} else {
+		PRINT_DEBUG("get_texture_id new id");
 		glGenTextures(1,&tid);
 		glBindTexture(GL_TEXTURE_2D, tid);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -410,6 +412,8 @@ value ml_renderbuffer_draw(value filter, value mlclear, value tid, value mlx, va
 
 	TIMER_START(tmr);
 	if (create_renderbuffer(TEXTURE_ID(tid), Int_val(mlx), Int_val(mly), w, h, realW, realH, &rb, dedicated == Val_true)) {
+		GL_ERROR;
+
 		char emsg[255];
 		sprintf(emsg,"renderbuffer_draw. create framebuffer '%d', texture: '%d' [%d:%d], status: %X",rb.fbid,rb.tid,rb.realWidth,rb.realHeight,glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		set_framebuffer_state(&fstate);
@@ -751,6 +755,7 @@ value ml_renderbuffer_save(value renderInfo,value filename) {
 	glReadPixels(vp.x,vp.y,vp.w,vp.h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 	checkGLErrors("after read pixels");
 	int res = save_png_image(filename,pixels,vp.w,vp.h);
+	back_framebuffer(fbid);
 	set_framebuffer_state(&fstate);
 	return Val_bool(res);
 }

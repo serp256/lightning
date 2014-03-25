@@ -1,4 +1,5 @@
 type connect;
+type httpMethod = [= `get | `post ];
 
 value init: ~appId:string -> unit -> unit;
 
@@ -7,7 +8,7 @@ value loggedIn: unit -> option connect;
 
 value accessToken: connect -> string;
 value apprequest: ~title:string -> ~message:string -> ?recipient:string -> ?data:string -> ?successCallback:(list string -> unit) -> ?failCallback:(string -> unit) -> connect -> unit; (* list string in success callback -- user ids, which received request *)
-value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?successCallback:(string -> unit) -> ?failCallback:(string -> unit) -> connect -> unit;
+value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?successCallback:(string -> unit) -> ?failCallback:(string -> unit) -> ?httpMethod:httpMethod -> connect -> unit;
 value disconnect: connect -> unit;
 
 value sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit;

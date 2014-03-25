@@ -222,6 +222,7 @@ class c =
                     c
                   )
                 | `ColorMatrix m -> `cmatrix m
+                | _ -> c
                 ]
               end `simple fltrs
             in

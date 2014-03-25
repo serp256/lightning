@@ -50,10 +50,10 @@ Callback.register_exception "extra_resources" (Extra_resources "");
 
 type qColor = 
   {
-    qcTopLeft: int;
-    qcTopRight: int;
-    qcBottomLeft: int;
-    qcBottomRight: int;
+    qcTopLeft: int32;
+    qcTopRight: int32;
+    qcBottomLeft: int32;
+    qcBottomRight: int32;
   };
 
 IFPLATFORM(pc)
@@ -84,16 +84,14 @@ value qColor ~topLeft ~topRight ~bottomLeft ~bottomRight =
 
 type color = [= `NoColor | `Color of int | `QColors of qColor ];
 
-(*
-value rec nextPowerOfTwo number =
-  let rec loop result = 
-    if result < number 
-    then loop (result * 2)
-    else result
-  in 
-  loop 1;
-*)
-
+value powOfTwo p =
+  let r = ref 1 in
+  (
+    for i = 0 to p -1 do
+      r.val := !r * 2; 
+    done;
+    !r;
+  );
 
 
 value nextPowerOfTwo x =
@@ -284,7 +282,13 @@ value resource_path ?(with_suffix=True) fname =
 
 value open_resource ?with_suffix fname = open_in (resource_path ?with_suffix fname);
 
-value read_resource ?with_suffix path = Std.input_all (open_resource ?with_suffix path);
+value read_resource ?with_suffix path =
+  let inp = open_resource ?with_suffix path in
+  let retval = Std.input_all inp in
+    (
+      close_in inp;
+      retval;
+    );
 
 value read_json ?with_suffix path = 
   let ch = open_resource ?with_suffix path in                                                                                                                
@@ -317,9 +321,10 @@ external androidScreen: unit -> (androidScreen * androidDensity) = "ml_androidSc
 value getDevice () = Android (androidScreen ());
 ELSPLATFORM(ios)
 external ios_platfrom: unit -> string = "ml_platform";
-value getDevice () = 
+value getDevice () =
   let d : ios_device = 
     let ip = ios_platfrom () in
+    let () = Debug.d "!!!!!!!!!!!!!!!!!ios platform %s" ip in
     if String.starts_with ip "iPhone" 
     then 
       if String.starts_with ip "iPhone1" then IPhoneOld
@@ -327,6 +332,7 @@ value getDevice () =
       else if String.starts_with ip "iPhone3" then IPhone4
       else if String.starts_with ip "iPhone4" then IPhone4
       else if String.starts_with ip "iPhone5" then IPhone5
+      else if String.starts_with ip "iPhone6" then IPhone5
       else IPhoneNew 
     else begin
       if String.starts_with ip "iPod" 
@@ -500,11 +506,16 @@ value glowMatrix mhgs x y = Matrix.create ~translate:{ Point.x = mhgs +. (negati
 value glowFirstDrawMatrix originaMtx x y = Matrix.translate originaMtx (positiveOrZero x, positiveOrZero y);
 value glowLastDrawMatrix originaMtx x y = Matrix.translate originaMtx (invertNegativeOrZero x, invertNegativeOrZero y);
 
-value powOfTwo p =
-  let r = ref 1 in
-  (
-    for i = 0 to p -1 do
-      r.val := !r * 2; 
-    done;
-    !r;
-  );
+IFPLATFORM(pc)
+value strToLower str = str;
+value strToUpper str = str;
+ELSE
+external strToLower: string -> string = "ml_str_to_lower";
+external strToUpper: string -> string = "ml_str_to_upper";
+ENDPLATFORM;
+
+value strCapitalize str =
+  let fstCharPos = UTF8.nth str 1 in
+  let fst = String.sub str 0 fstCharPos in
+  let rest = String.sub str fstCharPos (String.length str - fstCharPos) in
+    (strToUpper fst) ^ rest;

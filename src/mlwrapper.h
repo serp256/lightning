@@ -48,4 +48,11 @@ void ml_memoryWarning();
 int (*loadCompressedTexture)(gzFile gzf, textureInfo *tInfo);
 char* compressedExt;
 
+#define REG_CALLBACK(src, dst) { dst = src; caml_register_generational_global_root(&dst); }
+#define REG_OPT_CALLBACK(src, dst) if (Is_block(src)) { dst = Field(src, 0); caml_register_generational_global_root(&dst); } else { dst = 0; }
+#define RUN_CALLBACK(cb, arga) if (cb) { caml_callback(cb, arga); }
+#define RUN_CALLBACK2(cb, arga, argb) if (cb) { caml_callback(cb, arga, argb); }
+#define RUN_CALLBACK3(cb, arga, argb, argc) if (cb) { caml_callback(cb, arga, argb, argc); }
+#define FREE_CALLBACK(callback) if (callback) { caml_remove_generational_global_root(&callback); }
+
 #endif

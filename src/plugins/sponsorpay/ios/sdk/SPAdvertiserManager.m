@@ -2,7 +2,7 @@
 //  SPAdvertiserManager.m
 //  SponsorPay iOS SDK
 //
-//  Copyright 2011 SponsorPay. All rights reserved.
+//  Copyright 2011-2013 SponsorPay. All rights reserved.
 //
 
 #import <UIKit/UIDevice.h>
@@ -11,7 +11,7 @@
 #import "SPURLGenerator.h"
 #import "SPAppIdValidator.h"
 #import "SP_SDK_versions.h"
-#import "Utils/SPLogger.h"
+#import "SPLogger.h"
 
 #define CALLBACK_BASE_URL  @"https://service.sponsorpay.com"
 
@@ -26,7 +26,7 @@ static NSOperationQueue *callbackOperationQueue = nil;
 
 @interface SPAdvertiserManager()
 
-@property (retain) NSString *appId;
+@property (strong) NSString *appId;
 
 - initWithAppId:(NSString *)appId;
 - (void)sendCallbackWithAction:(NSString *)actionId;
@@ -36,20 +36,6 @@ static NSOperationQueue *callbackOperationQueue = nil;
 @implementation SPAdvertiserManager
 
 #pragma mark - Initialization and deallocation
-
-+ (SPAdvertiserManager *)sharedManager __deprecated
-{
-    static SPAdvertiserManager *sharedInstance = nil;
-    
-    @synchronized(self)
-    {
-        if(!sharedInstance) {
-            sharedInstance = [[self alloc] initWithAppId:nil];
-        }
-    }
-
-    return sharedInstance;
-}
 
 + (SPAdvertiserManager *)advertiserManagerForAppId:(NSString *)appId
 {
@@ -64,7 +50,6 @@ static NSOperationQueue *callbackOperationQueue = nil;
         if (!advertiserManagers[appId]) {
             SPAdvertiserManager *adManagerForThisAppId = [[self alloc] initWithAppId:appId];
             advertiserManagers[appId] = adManagerForThisAppId;
-            [adManagerForThisAppId release];
         }
     }
     
@@ -82,20 +67,8 @@ static NSOperationQueue *callbackOperationQueue = nil;
     return self;
 }
 
-- (void)dealloc
-{
-    self.appId = nil;
-    [super dealloc];
-}
 
 #pragma mark - Advertiser callback delivery
-
-// Public method to report the offer to the server
-- (void)reportOfferCompleted:(NSString *)appId __deprecated
-{
-    self.appId = appId;
-    [self reportOfferCompleted];
-}
 
 - (void)reportOfferCompleted
 {
@@ -132,7 +105,7 @@ static NSOperationQueue *callbackOperationQueue = nil;
         };
     }
     
-    [callbackBaseURL stringByAppendingString: (actionId ?  : installCallbackURLPath) ];
+    [callbackBaseURL stringByAppendingString: (actionId ? actionsCallbackURLPath : installCallbackURLPath) ];
     
     SPCallbackSendingOperation *callbackOperation =
     [SPCallbackSendingOperation operationForAppId:self.appId
@@ -140,8 +113,9 @@ static NSOperationQueue *callbackOperationQueue = nil;
                                          actionId:actionId
                                    answerReceived:answerAlreadyReceived];
 
+    __weak SPCallbackSendingOperation *weak_callbackOperation = callbackOperation;
     [callbackOperation setCompletionBlock:^{
-        if (callbackOperation.didCallbackSucceed) {
+        if (weak_callbackOperation.didRequestSucceed) {
             callbackSuccessfulCompletionBlock();
         }
     }];
@@ -151,7 +125,7 @@ static NSOperationQueue *callbackOperationQueue = nil;
 
 - (void)performCallbackSendingOperation:(SPCallbackSendingOperation *)callbackOperation
 {
-    [SPLogger log:@"%@ scheduling callback sending operation from thread:%@", self, [NSThread currentThread]];
+    SPLogDebug(@"%@ scheduling callback sending operation from thread:%@", self, [NSThread currentThread]);
     [[SPAdvertiserManager callbackOperationQueue] addOperation:callbackOperation];
 }
 
@@ -176,8 +150,7 @@ static NSOperationQueue *callbackOperationQueue = nil;
 #pragma mark - Base URL management
 
 + (void)overrideBaseURLWithURLString:(NSString *)newUrl {
-    [callbackBaseURL release];
-    callbackBaseURL = [newUrl retain];
+    callbackBaseURL = newUrl;
 }
 
 + (void)restoreBaseURLToDefault {

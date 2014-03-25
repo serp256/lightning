@@ -1,4 +1,3 @@
-
 type player = 
   {
     id: string;
@@ -25,7 +24,7 @@ value is_connected () =
 
 value initializer_handler = ref None;
 
-external gamecenter_init: unit -> bool = "ml_gamecenter_init";
+external gamecenter_init: int -> bool = "ml_gamecenter_init";
 
 value game_center_initialized success = 
   let () = debug "GameCenter initialized" in
@@ -54,10 +53,11 @@ value game_center_initialized success =
 
 Callback.register "game_center_initialized" game_center_initialized;
 
-value init ?callback () = 
+value init ?callback ?amazon:(amazon'=False) () =
+  let index = if amazon' then 1 else 0 in
   match !state with 
   [ NotInitialized -> 
-    match gamecenter_init () with
+    match gamecenter_init index with
     [ True ->
       (
         initializer_handler.val := callback;
@@ -90,7 +90,7 @@ value playerID () =
 
 ELSE
 
-value init ?callback () = 
+value init ?callback ?amazon:(amazon'=False) () = 
   match callback with
   [ Some c -> c False
   | None -> ()
@@ -105,6 +105,31 @@ ENDPLATFORM;
 (************************************
  * LEADERBOARDS AND ACHIEVEMNTS REPORT
  **************************************)
+
+IFPLATFORM(ios android)
+
+value report_leaderboard_failed category score = Debug.e "report leaderboard failed";
+Callback.register "report_leaderboard_failed" report_leaderboard_failed;
+
+external report_leaderboard: string -> int64 -> unit = "ml_gamecenter_report_leaderboard";
+value reportLeaderboard category score = 
+  match !state with
+  [ NotInitialized -> report_leaderboard_failed category score
+  | Initializing callbacks -> 
+      let c = fun 
+        [ True -> report_leaderboard category score
+        | False -> report_leaderboard_failed category score
+        ]
+      in
+      Queue.push c callbacks
+  | Initialized -> report_leaderboard category score
+  ];
+
+ELSE
+
+value reportLeaderboard (category:string) (scores:int64) = ();
+
+ENDPLATFORM;
 
 
 IFPLATFORM(ios)
@@ -128,27 +153,6 @@ value reportAchievement identifier percentComplete =
 
 value unlockAchievement identifier = reportAchievement identifier 100.;
 
-value report_leaderboard_failed category score = Debug.e "report leaderboard failed";
-Callback.register "report_leaderboard_failed" report_leaderboard_failed;
-
-external report_leaderboard: string -> int64 -> unit = "ml_gamecenter_report_leaderboard";
-value reportLeaderboard category score = 
-  match !state with
-  [ NotInitialized -> report_leaderboard_failed category score
-  | Initializing callbacks -> 
-      let c = fun 
-        [ True -> report_leaderboard category score
-        | False -> report_leaderboard_failed category score
-        ]
-      in
-      Queue.push c callbacks
-  | Initialized -> report_leaderboard category score
-  ];
-
-
-
-
-
 
 ELSPLATFORM(android)
 
@@ -168,12 +172,11 @@ value unlockAchievement identifier =
       Queue.push c callbacks
   | Initialized -> unlock_achievement identifier 
   ];
-
+value reportAchievement (identifier:string) (percentComplete:float) = ();
 
 
 ELSE
 
-value reportLeaderboard (category:string) (scores:int64) = ();
 value reportAchievement (identifier:string) (percentComplete:float) = ();
 value unlockAchievement (identifier:string) = ();
 
@@ -203,8 +206,31 @@ value showAchievements () =
   | Initialized -> show_achievements ()
   ];
 
+ELSE
+
+value showAchievements () = ();
+
+ENDPLATFORM;
+
+IFPLATFORM (android)
+external show_leaderboard: string -> unit = "ml_gamecenter_show_leaderboard";
+value showLeaderboard boardId = 
+  match !state with
+  [ NotInitialized -> ()
+  | Initializing callbacks -> 
+      let c = fun
+        [ True -> show_leaderboard boardId
+        | False -> ()
+        ]
+      in
+      Queue.push c callbacks
+  | Initialized -> show_leaderboard boardId
+  ];
+
+ELSPLATFORM (ios)  
+
 external show_leaderboard: unit -> unit = "ml_gamecenter_show_leaderboard";
-value showLeaderboard () = 
+value showLeaderboard boardId = 
   match !state with
   [ NotInitialized -> ()
   | Initializing callbacks -> 
@@ -216,12 +242,9 @@ value showLeaderboard () =
       Queue.push c callbacks
   | Initialized -> show_leaderboard ()
   ];
-
-
 ELSE
 
-value showLeaderboard () = ();
-value showAchievements () = ();
+value showLeaderboard boardId = ();
 
 ENDPLATFORM;
 

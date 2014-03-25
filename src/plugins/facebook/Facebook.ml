@@ -1,4 +1,5 @@
 type connect = unit;
+type httpMethod = [= `get | `post ];
 
 IFDEF PC THEN
 
@@ -10,7 +11,8 @@ value loggedIn () = None;
 
 value accessToken connect = "";
 value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback connect = ();
-value graphrequest ~path ?params ?successCallback ?failCallback connect = ();
+value graphrequest ~path ?params ?successCallback ?failCallback ?httpMethod connect = ();
+
 (* value sharePicUsingNativeApp ~fname:string ~text:string () = False; *)
 value sharePic ?success ?fail ~fname ~text connect = ();
 
@@ -37,7 +39,7 @@ external _disconnect: connect -> unit = "ml_fbDisconnect";
 
 external _accessToken: connect -> string = "ml_fbAccessToken";
 external _apprequest: string -> string -> option string -> option string -> option (list string -> unit) -> option (string -> unit) -> unit = "ml_fbApprequest_byte" "ml_fbApprequest";
-external _graphrequest: string -> option (list (string * string)) -> option (string -> unit) -> option (string -> unit) -> unit = "ml_fbGraphrequest";
+external _graphrequest: string -> option (list (string * string)) -> option (string -> unit) -> option (string -> unit) -> httpMethod -> unit = "ml_fbGraphrequest";
 
 value status = ref NotConnected;
 value _successCallback = ref None;
@@ -104,6 +106,6 @@ value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback
 
 value graphrequestSuccess json callback = callback json;
 
-value graphrequest ~path ?params ?successCallback ?failCallback connect = _graphrequest path params successCallback failCallback;
+value graphrequest ~path ?params ?successCallback ?failCallback ?(httpMethod = `get) connect = _graphrequest path params successCallback failCallback httpMethod;
 
 ENDIF;

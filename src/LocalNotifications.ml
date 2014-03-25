@@ -13,7 +13,7 @@ external cancelAll: unit -> unit = "ml_lnCancelAll";
 ENDPLATFORM;
 
 IFPLATFORM(android)
-external clearAll: unit -> unit = "ml_lnCancelAll";
+external clearAll: unit -> unit = "ml_lnClearAll";
 ELSE
 value clearAll () = ();
 ENDPLATFORM;

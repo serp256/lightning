@@ -1,27 +1,24 @@
 //
 //  SPAdvertisementViewController.h
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Created by David Davila on 10/22/12.
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
-#import "SPSchemeParser.h"
-#import "SPLoadingIndicator.h"
 
-FOUNDATION_EXPORT const CGFloat kSPMostTransparentAlphaForFadeAnimation;
-FOUNDATION_EXPORT const CGFloat kSPMostOpaqueAlpha;
+extern const CGFloat kSPMostTransparentAlphaForFadeAnimation;
+extern const CGFloat kSPMostOpaqueAlpha;
 
-FOUNDATION_EXPORT const NSTimeInterval kSPIntroAnimationLength;
-FOUNDATION_EXPORT const NSTimeInterval kSPOutroAnimationLength;
+extern const NSTimeInterval kSPIntroAnimationLength;
+extern const NSTimeInterval kSPOutroAnimationLength;
 
 
 /**
- SPAdvertisementViewController is a subclass of UIViewController that provides common functionality to request and display advertisements from the SponsorPay platform. It's intended to be subclassed by concrete implementations of SponsorPay products, like the Mobile OfferWall or the Interstitial.
+ SPAdvertisementViewController is a subclass of UIViewController that provides common functionality to request and display advertisements from the SponsorPay platform. It's intended to be subclassed by concrete implementations of SponsorPay products, like the Mobile OfferWall.
  
  @see SPOfferWallViewController
- @see SPInterstitialViewController
  */
 @interface SPAdvertisementViewController : UIViewController <UIWebViewDelegate>
 
@@ -33,18 +30,18 @@ FOUNDATION_EXPORT const NSTimeInterval kSPOutroAnimationLength;
 /** Name of your virtual currency.
  This is a human readable, descriptive name of your virtual currency.
  */
-@property (readonly, retain, nonatomic) NSString *currencyName;
+@property (readonly, strong, nonatomic) NSString *currencyName;
 
 /**
  A dictionary of arbitrary key / value strings to be provided to the SponsorPay platform when requesting the advertisement.
  */
-@property (retain, nonatomic) NSDictionary *customParameters;
+@property (strong, nonatomic) NSDictionary *customParameters;
 
 /**
  Dismisses the presented advertisement.
  
  @param animated Whether the dismissal should be animated.
  */
-- (void)dismissAnimated:(BOOL)animated;
+- (void)dismissAnimated:(BOOL)animated withStatus:(NSInteger)status;
 
 @end

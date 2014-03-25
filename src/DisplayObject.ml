@@ -147,7 +147,7 @@ value prerender () =
     )
   ];
 
-value prerender () = proftimer:perfomance "PRERENDER: %F" prerender ();
+value prerender () = proftimer:steam "prerender: %f" (prerender ());
 
 
 Callback.register "prerender" prerender;
@@ -877,7 +877,6 @@ class virtual container = (*{{{*)
               ]
           ];
           numChildren := numChildren + 1;
-(*           if numChildren > 550 then failwith (Printf.sprintf "numChildrend 550 in '%s'" self#name) else (); *)
           child#setParent self#asDisplayObjectContainer;
           self#boundsChanged();
       );

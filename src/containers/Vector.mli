@@ -44,3 +44,4 @@ value sort: ('a -> 'a -> int) -> t 'a -> unit;
 value swap: t 'a -> int -> int -> unit; 
 value insert: t 'a -> int -> 'a -> unit;
 value delete : t 'a -> int -> unit;
+value pop_if : ('a -> bool) -> t 'a -> 'a;

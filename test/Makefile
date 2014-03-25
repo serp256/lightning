@@ -7,8 +7,8 @@ clean:
 ios-res:
 	mkdir -p .ios/res
 	lsync -i Resources -o .ios/res ios/res.lsync
-	aresmkr -concat -i .ios/res -o ios/LightTest/assets
-	aresmkr -merge -o ios/LightTest/index ios/LightTest/assets
+	resmkr -concat -i .ios/res -o ios/LightTest/assets
+	resmkr -merge -o ios/LightTest/index ios/LightTest/assets
 	rm ios/LightTest/assets.index
 	rm -rf .ios/res
 

@@ -112,6 +112,9 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         else raise (DisplayObject.Invalid_index (nidx,DynArray.length children));
 
 
+      method private glowMakeProgram () = 
+        let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+          Prg.Normal.create ();
 
       value mutable glowFilter = None;
       method private setGlowFilter g_program glow = 
@@ -126,11 +129,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           )
         | _ ->  
           (
-            let g_make_program = 
-              let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
-              Prg.Normal.create () 
-            in
-            glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_make_program;g_params=glow;g_valid=False};
+            let g_make_program = self#glowMakeProgram () in
+              glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_make_program;g_params=glow;g_valid=False};
             self#addPrerender self#updateGlowFilter;
           )
         ];
@@ -229,7 +229,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       (
         super#setAlpha a;
         match glowFilter with
-        [ Some {g_image=Some img;_} -> Render.Image.set_alpha img a
+        [ Some {g_image=Some img;_} -> Render.Image.set_alpha img color a False
         | _ -> ()
         ];
       );
@@ -270,8 +270,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         super#boundsChanged();
       );        
         
-
-      method private render' ?alpha:(alpha') ~transform rect = 
+      method private render' ?alpha:(alpha') ~transform rect =
+        (* proftimer:render "atlas render %f" *)
       (
         if DynArray.length children > 0
         then 
@@ -294,7 +294,6 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           else ();
         *)
       );
-
     end;
 
   class c texture = 
@@ -303,5 +302,36 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       method ccast: [= `Atlas of c ] = `Atlas (self :> c);
     end;
 
-value create = new c;
+  class tlf texture =
+    object(self)
+      inherit c texture as super;
 
+      value mutable stroke = None;
+
+      method! private glowMakeProgram () = 
+        let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+          match stroke with
+          [ Some s -> Prg.Stroke.create s
+          | _ -> Prg.Normal.create ()
+          ];
+
+      method! setFilters fltrs =
+        (
+          stroke := try Some (ExtList.List.find_map (fun f -> match f with [ `Stroke s -> Some s | _ -> None ]) fltrs) with [ Not_found -> None ];
+
+          super#setFilters fltrs;
+
+          match stroke with
+          [ Some s -> 
+            let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
+              (
+                programID := Prg.Stroke.id;
+                shaderProgram := Prg.Stroke.create s;
+              )
+          | _ -> ()          
+          ];
+        );      
+    end;
+
+value create = new c;
+value tlf = new tlf;

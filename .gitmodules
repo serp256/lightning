@@ -1,0 +1,6 @@
+[submodule "src/plugins/vk/ios/sdk"]
+	path = src/plugins/vk/ios/sdk
+	url = https://github.com/VKCOM/vk-ios-sdk
+[submodule "src/plugins/vk/android/sdk"]
+	path = src/plugins/vk/android/sdk
+	url = https://github.com/VKCOM/vk-android-sdk.git

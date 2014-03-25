@@ -24,7 +24,7 @@ exception Cant_load_texture of string;
 type filter = [ FilterNearest | FilterLinear ];
 value setDefaultFilter: filter -> unit;
 
-type kind = [ Simple of bool | Alpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
+type kind = [ Simple of bool | Alpha | LuminanceAlpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
 
 value scale: ref float;
 
@@ -101,3 +101,5 @@ value rendered: ?format:int -> ?filter:filter -> float -> float -> rendered;
 value load_async: ?with_suffix:bool -> ?filter:filter -> ?use_pvr:bool -> string -> ?ecallback:(string -> unit) -> (c -> unit) -> unit;
 value check_async: unit -> unit;
 value loadExternal: string -> ~callback:(c -> unit) -> ~errorCallback:option (int -> string -> unit) -> unit;
+
+value createSubtex: Rectangle.t -> Rectangle.t -> float -> c -> c;

@@ -1,6 +1,6 @@
 //
 //  SPSchemeParser.m
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Created by David Davila on 10/18/12.
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
@@ -42,8 +42,7 @@ static BOOL isEmptyString(NSString *string);
 
 - (void)setURL:(NSURL *)URL
 {
-    [_URL release];
-    _URL = [URL retain];
+    _URL = URL;
     
     [self determineOutputsBasedOnURL];
 }
@@ -76,9 +75,9 @@ static BOOL isEmptyString(NSString *string);
     _requestsOpeningExternalDestination = NO;
     _requestsClosing = NO;
     _requestsStopShowingLoadingActivityIndicator = NO;
+    _closeStatus = 0;
 
     if (_externalDestination) {
-        [_externalDestination release];
         _externalDestination = nil;
     }
 }
@@ -89,13 +88,17 @@ static BOOL isEmptyString(NSString *string);
     NSString *destination = [[queryDict valueForKey:@"url"] SPURLDecodedString];
     
     BOOL isDestinationEmpty = isEmptyString(destination);
-    
+
     if (isDestinationEmpty) {
         _requestsClosing = YES;
     } else {
         _externalDestination = [[NSURL alloc] initWithString:destination];
         _requestsOpeningExternalDestination = YES;
         _requestsClosing =  self.shouldRequestCloseWhenOpeningExternalURL;
+    }
+
+    if (_requestsClosing) {
+        _closeStatus = [[queryDict objectForKey:@"status"] intValue];
     }
 }
 

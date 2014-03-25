@@ -38,6 +38,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/instagram/*.cma src/plugins/instagram/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/whatsapp/*.cma src/plugins/whatsapp/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/appsflyer/*.cma src/plugins/appsflyer/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/vk/*.cma src/plugins/vk/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
@@ -57,6 +58,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/twitter/*.cmxa src/plugins/twitter/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/instagram/*.cmxa src/plugins/instagram/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/whatsapp/*.cmxa src/plugins/whatsapp/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/vk/*.cmxa src/plugins/vk/*.a)
 endif
 
 ifeq ($(PLATFORM),IOS)
@@ -64,8 +66,8 @@ ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/appsflyer/ios/libappsflyer-sdk.a
 	INSTALL_FILES += src/plugins/chartboost/ios/libchartboost-sdk.a
 	INSTALL_FILES += src/plugins/flurry/ios/libflurry-sdk.a
-	INSTALL_FILES += src/plugins/sponsorpay/ios/libsponsorpay-sdk.a
 	INSTALL_FILES += src/plugins/supersonic/ios/libsupersonic-sdk.a
+	INSTALL_FILES += src/plugins/sponsorpay/ios/networks/applovin/libAppLovinSdk.a
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))
@@ -95,6 +97,7 @@ endif
 	                                                          src/plugins/instagram/*.cmi src/plugins/instagram/*.mli \
 	                                                          src/plugins/whatsapp/*.cmi src/plugins/whatsapp/*.mli \
 	                                                          src/plugins/appsflyer/*.cmi src/plugins/appsflyer/*.mli \
+	                                                          src/plugins/vk/*.cmi src/plugins/vk/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
 
 uninstall:

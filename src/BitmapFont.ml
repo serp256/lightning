@@ -144,7 +144,10 @@ value register binpath =
       [ 0 -> res
       | _ ->
           let file = IO.read_string bininp in
-          loop (n - 1) [  Texture.load ~with_suffix:False (Filename.concat dirname file) :: res  ] 
+          let () = debug "texture load" in
+            (
+              loop (n - 1) [  Texture.load ~with_suffix:False (Filename.concat dirname file) :: res  ];
+            )
       ]
     in
     Array.of_list (List.rev (loop (IO.read_ui16 bininp) []))
@@ -154,10 +157,10 @@ value register binpath =
       let style = String.uncapitalize (IO.read_string bininp) in
       let kerning = IO.read_byte bininp in
       let pages = parse_pages () in
-      let rec parse_chars n res = 
+      let rec parse_chars n res =
         match n with
         [ 0 -> res 
-        | _ -> 
+        | _ ->
             let space = IO.read_double bininp in
             let size = IO.read_ui16 bininp in
             let lineHeight = IO.read_double bininp in
@@ -203,6 +206,7 @@ value register binpath =
         ]
       in
       let sizes = parse_chars (IO.read_ui16 bininp) (try Hashtbl.find fonts (face,style) with [ Not_found -> MapInt.empty ]) in
+      let () = debug "register %s %s" face style in
       Hashtbl.replace fonts (face,style) sizes;
 
       close_in inp;

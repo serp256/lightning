@@ -174,3 +174,24 @@ ELSE
 value showNativeWait ?message () = ();
 value hideNativeWait () = ();
 ENDPLATFORM;
+
+
+
+
+IFPLATFORM(android)
+external fireLightningEvent: string -> unit = "ml_fire_lightning_event";
+
+value nativeEventListener = ref None;
+value setNativeEventListener l = nativeEventListener.val := Some l;
+value clearNativeEventListener () = nativeEventListener.val := None;
+value onNativeEvent data = 
+  match !nativeEventListener with
+  [ Some l -> l data
+  | None -> ()
+  ];
+Callback.register "on_native_event" onNativeEvent;
+ELSE
+value fireLightningEvent (_:string) = ();
+value clearNativeEventListener () = ();
+value setNativeEventListener l = ();
+ENDPLATFORM;

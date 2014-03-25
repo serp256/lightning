@@ -8,6 +8,7 @@ value ml_platform() {
   sysctlbyname("hw.machine", NULL, &size, NULL, 0);
 	char answer[size];
   sysctlbyname("hw.machine", answer, &size, NULL, 0);
+  NSLog(@"!!!!!!!!!!!answer %s", answer);
   return caml_copy_string(answer);
 }
 

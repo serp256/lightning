@@ -91,10 +91,11 @@ typedef enum
 	LTextureFormatATCRGB,
 	LTextureFormatATCRGBAE,
 	LTextureFormatATCRGBAI,
-	LTextureFormatETC1,	
+	LTextureFormatETC1,
+	LTextureLuminance,
+	LTextureLuminanceAlpha,	
 	LTextureFormatPallete,
-	LTextureFormatETC1WithAlpha,
-	LTextureLuminance
+	LTextureFormatETC1WithAlpha
 } LTextureFormat;
 
 typedef struct {
@@ -120,8 +121,8 @@ textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int
 
 int loadPlxPtr(gzFile fptr,textureInfo *tInfo);
 int loadPlxFile(const char *path,textureInfo *tInfo);
-int loadAlphaPtr(gzFile fptr,textureInfo *tInfo);
-int loadAlphaFile(const char *path,textureInfo *tInfo);
+int loadAlphaPtr(gzFile fptr,textureInfo *tInfo, int with_lum);
+int loadAlphaFile(const char *path,textureInfo *tInfo, int with_lum);
 
 value createGLTexture(value oldTextureID, textureInfo *tInfo,value filter);
 
@@ -131,8 +132,9 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo,value filter);
 
 #define ML_TEXTURE_INFO(mlTex,textureID,tInfo) \
 	mlTex = caml_alloc_tuple(8);\
-	if ((tInfo->format & 0xFFFF) != LTextureFormatPallete) \
+	if ((tInfo->format & 0xFFFF) != LTextureFormatPallete) {\
 		Field(mlTex,0) = Val_int(tInfo->format);\
+	} \
 	else { Store_field(mlTex,0,caml_alloc(1,0)); Field(Field(mlTex,0),0) = Val_int(tInfo->format >> 16);} \
 	Field(mlTex,1) = Val_long((unsigned int)tInfo->realWidth);\
 	Field(mlTex,2) = Val_long(tInfo->width);\

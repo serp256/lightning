@@ -1,3 +1,6 @@
+
+
+
 //
 //  SPBrandEngageClient.h
 //  SponsorPay iOS SDK
@@ -6,18 +9,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "SPBrandEngageWebView.h"
-#import "SPBrandEngageViewController.h"
-#import "SPURLGenerator.h"
+#import <UIKit/UIKit.h>
 #import "SPVirtualCurrencyServerConnector.h"
-
-#define kSPMBERequestOffersTimeout (NSTimeInterval)10.0
-#define kSPMBERewardNotificationText @"Thanks! Your reward will be payed out shortly"
-
-#define kSPMBEErrorDialogTitle              @"Error"
-#define kSPMBEErrorDialogMessageDefault     @"We're sorry, something went wrong. Please try again."
-#define kSPMBEErrorDialogMessageOffline     @"Your Internet connection has been lost. Please try again later."
-#define kSPMBEErrorDialogButtonTitleDismiss @"Dismiss"
 
 @class SPBrandEngageClient;
 
@@ -76,61 +69,42 @@ typedef enum {
  
  */
 
-@interface SPBrandEngageClient : NSObject <SPBrandEngageWebViewDelegate, UIAlertViewDelegate>
+@interface SPBrandEngageClient : NSObject
 
 /** Your SponsorPay application ID.
  This is the app ID assigned to you by SponsorPay.
  @see SponsorPaySDK
  */
-@property (readonly, retain, nonatomic) NSString *appId;
+@property (readonly, strong, nonatomic) NSString *appId;
 
 /** ID of the current user of your application.
  This string must uniquely identify the current user to the BrandEngage and virtual currency server systems.
  @see SponsorPaySDK
  */
-@property (readonly, retain, nonatomic) NSString *userId;
+@property (readonly, strong, nonatomic) NSString *userId;
 
 /** Name of your virtual currency.
  This is a human readable, descriptive name of your virtual currency.
  @see SponsorPaySDK
  */
-@property (readonly, retain, nonatomic) NSString *currencyName;
+@property (readonly, strong, nonatomic) NSString *currencyName;
 
 /** @name Receiving asynchronous callbacks */
 
 /** Instance of one of your classes implementing the SPBrandEngageClientDelegate protocol, which will be notified of offers availability and engagement status.
  @see SPBrandEngageClientDelegate.
  */
-@property (assign) id<SPBrandEngageClientDelegate> delegate;
+@property (weak) id<SPBrandEngageClientDelegate> delegate;
 
 /** @name Controlling notifications to the user */
 
 /** Whether the SDK should show a toast-like notification to the user when they come back to your application after completing an engagement.
  
- An example notification would be "Thanks! Your reward will be payed out shortly".
+ An example notification would be "Thanks! Your reward will be paid out shortly".
  
  Default value is YES.
   */
 @property (assign) BOOL shouldShowRewardNotificationOnEngagementCompleted;
-
-/** @name Turning on or off the use of the Unique Device Identifier */
-
-/** This property is deprecated and will be removed from a future SDK release.
- The SponsorPaySDK does not fetch anymore the device's UDID, and modifying the value of this property doesn't change the behavior of the SDK. Starting May 1 2013 Apple's App Store will reject submissions of new apps or updates to already existing apps that access the UDID.
- */
-@property (assign) BOOL shouldSendUDID __deprecated;
-
-/** @name Creating an SPBrandEngageClient instance */
-
-/**
- This initializer has been deprecated and will be removed from a future SDK release. Please don't initialize instances of this class directly, rather access them through [SponsorPaySDK brandEngageClient] or [SponsorPaySDK brandEngageClientForCredentials:]
- */
-- (id)initWithAppId:(NSString *)appId
-             userId:(NSString *)userId
-       currencyName:(NSString *)currencyName
-           delegate:(id<SPBrandEngageClientDelegate>)delegate __deprecated;
-
-
 
 /** @name Requesting offers */
 
@@ -141,7 +115,6 @@ typedef enum {
  @return YES if a request for offers can be currently initiated, NO otherwise. If NO is returned, a call to requestOffers will notify your delegate of an error.
  */
 - (BOOL)canRequestOffers;
-
 
 /** Queries the server for BrandEngage offers availability.
  

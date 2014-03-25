@@ -1,9 +1,9 @@
 //
 //  TargetedNotificationFilter.h
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Created by David Davila on 1/27/13.
-//  Copyright (c) 2013 SponsorPay. All rights reserved.
+// Copyright 2011-2013 SponsorPay. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2164ABDF18C9DEA50043BFDD /* ApplifierImpact.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2164ABDE18C9DEA50043BFDD /* ApplifierImpact.bundle */; };
 		21F90E61184F71A10096F03C /* extra in Resources */ = {isa = PBXBuildFile; fileRef = 21F90E5F184F71A10096F03C /* extra */; };
 		21F90E62184F71A10096F03C /* extra1 in Resources */ = {isa = PBXBuildFile; fileRef = 21F90E60184F71A10096F03C /* extra1 */; };
 		5106D8F717295F6700D03E1A /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F517295F6700D03E1A /* assets */; };
@@ -38,6 +39,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2164ABDE18C9DEA50043BFDD /* ApplifierImpact.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = ApplifierImpact.bundle; path = ../../src/plugins/sponsorpay/ios/networks/applifier/ApplifierImpact.bundle; sourceTree = "<group>"; };
 		21F90E5F184F71A10096F03C /* extra */ = {isa = PBXFileReference; lastKnownFileType = file; name = extra; path = "../../../../Desktop/extra-res/extra"; sourceTree = "<group>"; };
 		21F90E60184F71A10096F03C /* extra1 */ = {isa = PBXFileReference; lastKnownFileType = file; name = extra1; path = "../../../../Desktop/extra-res/extra1"; sourceTree = "<group>"; };
 		5106D8F517295F6700D03E1A /* assets */ = {isa = PBXFileReference; lastKnownFileType = text; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
@@ -62,6 +64,7 @@
 		51ABA22316F6F4A100FC8928 = {
 			isa = PBXGroup;
 			children = (
+				2164ABDE18C9DEA50043BFDD /* ApplifierImpact.bundle */,
 				21F90E5F184F71A10096F03C /* extra */,
 				21F90E60184F71A10096F03C /* extra1 */,
 				513A2814173937B000EE18A3 /* TapjoyResources.bundle */,
@@ -189,6 +192,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2164ABDF18C9DEA50043BFDD /* ApplifierImpact.bundle in Resources */,
 				21F90E61184F71A10096F03C /* extra in Resources */,
 				5106D8F717295F6700D03E1A /* assets in Resources */,
 				5106D8F817295F6700D03E1A /* index in Resources */,
@@ -281,7 +285,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				ONLY_ACTIVE_ARCH = YES;
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "93863857-4F2E-445F-8484-4132E3676ACD";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1C1F63A2-9DE7-4511-AFF7-B39C4DEA6720";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -323,7 +327,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "008EE6AF-796A-45E9-B7EF-5BD5FF6B8BC7";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1C1F63A2-9DE7-4511-AFF7-B39C4DEA6720";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;

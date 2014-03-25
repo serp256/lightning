@@ -22,7 +22,8 @@ class virtual base: [ Texture.c ] ->
     method filters: list Filters.t;
     method setFilters: list Filters.t -> unit;
 (*     value glowFilter: option glow; *)
-    value shaderProgram: Render.prg;
+    value mutable programID: Render.Program.id;
+    value mutable shaderProgram: Render.prg;
     method virtual private removeGlowFilter: unit -> unit;
     method virtual private setGlowFilter: Render.prg -> Filters.glow -> unit;
     method virtual private updateGlowFilter: unit -> unit;

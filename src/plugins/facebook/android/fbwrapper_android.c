@@ -171,7 +171,7 @@ void ml_fbApprequest(value title, value message, value recipient, value data, va
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-void ml_fbGraphrequest(value path, value params, value successCallback, value failCallback) {
+void ml_fbGraphrequest(value path, value params, value successCallback, value failCallback, value http_method) {
     PRINT_DEBUG("ml_fbGraphrequest");
 
     value* _successCallback;
@@ -224,9 +224,12 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
     PRINT_DEBUG("checkpoint4");
 
     static jmethodID mid;
-    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "graphrequest", "(Ljava/lang/String;Landroid/os/Bundle;II)Z");
+    if (!mid) mid = (*env)->GetStaticMethodID(env, lightFacebookCls, "graphrequest", "(Ljava/lang/String;Landroid/os/Bundle;III)Z");
 
-    jboolean allRight = (*env)->CallStaticBooleanMethod(env, lightFacebookCls, mid, jpath, jparams, (int)_successCallback, (int)_failCallback);
+    static value get_variant = 0;
+    if (!get_variant) get_variant = caml_hash_variant("get");
+
+    jboolean allRight = (*env)->CallStaticBooleanMethod(env, lightFacebookCls, mid, jpath, jparams, (int)_successCallback, (int)_failCallback, http_method == get_variant ? 0 : 1);
 
     PRINT_DEBUG("checkpoint5");
 
