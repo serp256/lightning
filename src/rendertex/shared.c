@@ -136,7 +136,7 @@ FINDED:
 	renderbuf->realWidth = rectw;
 	renderbuf->realHeight = recth;
 	renderbuf->vp = (viewport){ (GLuint)pnt.x + w_adjustment / 2, (GLuint)pnt.y + h_adjustment  / 2, (GLuint)w, (GLuint)h };
-	renderbuf->clp = (clipping){ (double)renderbuf->vp.x / (double)tex_size, (double)renderbuf->vp.y / (double)tex_size, w / (double)tex_size, h / (double)tex_size };
+	renderbuf->clp = (clipping){ (double)renderbuf->vp.x / (double)tex_size, (double)renderbuf->vp.y / (double)tex_size, (double)w / (double)tex_size, (double)h / (double)tex_size };
 
 	return shared_tex;
 }
@@ -193,6 +193,7 @@ uint8_t rendertex_shared_draw(renderbuffer_t *renderbuf, value render_inf, float
 	uint8_t resized = 0;
 
 	PRINT_DEBUG("new_w %f; renderbuf->width %f; new_h %f; renderbuf->height %f", new_w, renderbuf->width, new_h, renderbuf->height);
+	PRINT_DEBUG("clipping %f %f %f %f", renderbuf->clp.x, renderbuf->clp.y, renderbuf->clp.w, renderbuf->clp.h);
 
 	if (new_w != renderbuf->width || new_h != renderbuf->height) {
 		PRINT_DEBUG("resized");
@@ -251,11 +252,13 @@ void rendertex_shared_release(value render_inf) {
 	for (i = 0; i < tex_num; i++) {
 		if (texs[i]->vtid == tid) {
 			renderbuffer_t renderbuf;
-			RENDERBUF_OF_RENDERINF(renderbuf, render_inf, nextDBE);
+			RENDERBUF_OF_RENDERINF(renderbuf, render_inf, 0);
 			pnt_t p = (pnt_t) { renderbuf.vp.x - (renderbuf.realWidth - renderbuf.vp.w) / 2, renderbuf.vp.y - (renderbuf.realHeight - renderbuf.vp.h) / 2 };
 			rbin_rm_rect(&texs[i]->bin, &p);
 
 			break;			
 		}
-	}	
+	}
+
+	PRINT_DEBUG("release complete");
 }

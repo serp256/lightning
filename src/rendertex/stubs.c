@@ -43,6 +43,7 @@ value rendertex_create(value vcolor, value valpha, value vkind, value vwidth, va
 		rendertex_dedicated_create(&renderbuf, w, h, filter, &color, alpha, vdraw_func, &vtid);
 	} else {
 		rendertex_shared_create(&renderbuf, w, h, filter, &color, alpha, vdraw_func, &vtid);
+		PRINT_DEBUG("shared clipping %f %f %f %f", renderbuf.clp.x, renderbuf.clp.y, renderbuf.clp.w, renderbuf.clp.h);
 	}
 
 	vtmp = caml_alloc(4 * Double_wosize, Double_array_tag);
@@ -87,8 +88,7 @@ value rendertex_draw(value vclear, value vwidth, value vheight, value vrender_in
 	CAMLlocal1(vtmp);
 
 	renderbuffer_t renderbuf;
-	if (vdedicated == Val_true) RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT)
-	else RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextDBE)
+	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, vdedicated == Val_true)
 
 	float new_w = Is_block(vwidth) ? Double_val(Field(vwidth, 0)) : renderbuf.width, new_h = Is_block(vheight) ? Double_val(Field(vheight, 0)) : renderbuf.height;
 	color3F color;
@@ -116,7 +116,7 @@ value rendertex_save(value vrender_inf, value vpath) {
 	CAMLparam1(vpath);
 
 	renderbuffer_t renderbuf;
-	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT); //nextPOT used for both dedicated and shared cause realWidth and realHeight are insignificant in this task
+	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, 1); //passing dedicated == 1 for both dedicated and shared cause realWidth and realHeight are insignificant in this task
 	uint8_t retval = renderbuf_save(&renderbuf, vpath, 0);
 
 	CAMLreturn(Val_bool(retval));
@@ -127,7 +127,7 @@ value rendertex_data(value vrender_inf) {
 	CAMLlocal1(vbuf);
 
 	renderbuffer_t renderbuf;
-	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, nextPOT); //nextPOT used for both dedicated and shared cause realWidth and realHeight are insignificant in this task
+	RENDERBUF_OF_RENDERINF(renderbuf, vrender_inf, 1); //passing dedicated == 1 for both dedicated and shared cause realWidth and realHeight are insignificant in this task
 
 	viewport *vp = &renderbuf.vp;
 	framebuf_push(renderbuf.fbid, vp, FRAMEBUF_APPLY_BUF);

@@ -5,18 +5,20 @@
 #include "texture_common.h"
 #include <stdio.h>
 
-#define RENDERBUF_OF_RENDERINF(renderbuf, renderinf, real_dim_fun) { \
+#define RENDERBUF_OF_RENDERINF(renderbuf, renderinf, dedicated) { \
 	struct tex *t = TEX(Field(renderinf, 0)); \
 	renderbuf.fbid = t->fbid; \
 	renderbuf.tid = t->tid; \
 	\
 	renderbuf.width = Double_val(Field(renderinf, 1)); \
 	renderbuf.height = Double_val(Field(renderinf, 2)); \
-	renderbuf.realWidth = real_dim_fun(ceil(renderbuf.width)); \
-	renderbuf.realHeight = real_dim_fun(ceil(renderbuf.height)); \
+	renderbuf.realWidth = dedicated ? nextPOT(ceil(renderbuf.width)) : nextDBE(ceil(renderbuf.width)); \
+	renderbuf.realHeight = dedicated ? nextPOT(ceil(renderbuf.height)) : nextDBE(ceil(renderbuf.height)); \
 	\
-	value vclipping = Field(renderinf, 4); \
-	renderbuf.clp = Is_block(vclipping) ? (clipping){ Double_field(vclipping, 0), Double_field(vclipping, 1), Double_field(vclipping, 2), Double_field(vclipping, 3) } : (clipping){ 0., 0., 1., 1. }; \
+	value vclipping = Field(renderinf, 3); \
+	vclipping = Is_block(vclipping) ? Field(vclipping, 0) : 0; \
+	PRINT_DEBUG("vclipping %d", vclipping); \
+	renderbuf.clp = vclipping ? (clipping){ Double_field(vclipping, 0), Double_field(vclipping, 1), Double_field(vclipping, 2), Double_field(vclipping, 3) } : (clipping){ 0., 0., 1., 1. }; \
 	renderbuf.vp = (viewport) { Int_val(Field(renderinf, 5)), Int_val(Field(renderinf, 6)), renderbuf.width, renderbuf.height }; \
 }
 
