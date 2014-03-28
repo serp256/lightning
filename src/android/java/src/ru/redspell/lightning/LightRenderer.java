@@ -61,14 +61,14 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		if (fr > 0) animationInterval = (long)(1.0 / fr * NANOSECONDSPERSECOND);
 	}
     
-	public void onDrawFrame(GL10 gl) {
+	public boolean onDrawFrame(GL10 gl) {
 		long now = System.nanoTime();
 		long interval = now - last;
 		
 		//Log.d("LIGHTNING","onDraw Frame " + interval);
 		// should render a frame when onDrawFrame() is called
 		// or there is a "ghost"
-		nativeDrawFrame(interval);   	
+		boolean retval = nativeDrawFrame(interval);   	
 	
 		// fps controlling
 		if (interval < animationInterval){ 
@@ -79,6 +79,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		}	
 		
 		last = now;
+		return retval;
 	}
     
 
@@ -147,7 +148,7 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 	private static native void nativeSurfaceChanged(int width,int height);
 	private static native int nativeGetFrameRate();
 	public static native void nativeSurfaceDestroyed();
-	private static native void nativeDrawFrame(long nanoseconds);
+	private static native boolean nativeDrawFrame(long nanoseconds);
 
 	/*
 	private static native void nativeTouchesBegin(int id, float x, float y);

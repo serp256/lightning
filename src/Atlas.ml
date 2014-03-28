@@ -234,11 +234,15 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         ];
       );
 
-      method setColor c = 
-      (
-        color := c;
-        dirty := True;
-      );
+      method setColor c =
+        if c <> color
+        then
+          (
+            self#forceStageRender ~reason:"atlas set color" ();
+            color := c;
+            dirty := True;
+          )
+        else ();
 
       method color = color;
 

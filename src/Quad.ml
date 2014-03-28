@@ -15,11 +15,16 @@ open LightCommon;
       );
 
       value mutable color = color;
-      method setColor c = 
-      (
-        color := c;
-        Render.Quad.set_color quad c;
-      );
+      method setColor c =
+        if c <> color
+        then
+          (
+            self#forceStageRender ~reason:"quad set color" ();
+            color := c;
+            Render.Quad.set_color quad c;
+          )
+        else ();
+        
       method color = color;
 
       method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)

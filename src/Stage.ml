@@ -86,13 +86,14 @@ class virtual c (_width:float) (_height:float) =
   object(self)
     inherit D.container as super;
     value virtual bgColor: int;
-    method frameRate = 30;
+    method frameRate = 60;
     method color = `NoColor;
     method setColor (_:color) = raise Restricted_operation;
     value mutable width = _width;
     value mutable height = _height;
     initializer 
     (
+      stage := Some (self :> D.container);
       self#setName "STAGE";
       setupOrthographicRendering 0. width height 0.;
       _screenSize.val := (width,height);
@@ -116,6 +117,9 @@ class virtual c (_width:float) (_height:float) =
     method! setRotation _ = raise Restricted_operation;
     method! setVisible _ = raise Restricted_operation;
 
+
+    value mutable renderNeeded = False;
+
     method _stageResized w h = (
       self#resize w h;
       self#stageResized ();
@@ -134,8 +138,6 @@ class virtual c (_width:float) (_height:float) =
       let ev = Ev.create ev_UNLOAD () in
       let () = debug:unload "UNLOAD" in
       self#dispatchEvent ev;
-
-    method! stage = Some self#asDisplayObjectContainer;
 
     value mutable currentTouches = []; (* FIXME: make it weak for target *)
     method processTouches (touches:list Touch.n) = (*{{{*)
@@ -230,14 +232,33 @@ class virtual c (_width:float) (_height:float) =
     value mutable fpsTrace : option DisplayObject.c = None;
     value mutable sharedTexNum: option DisplayObject.c = None;
 
-    (* is used by pc and ios versions, android uses run method *)
-    method renderStage () =
-      proftimer:steam "renderStage %f"
+    method! forceStageRender ?reason () =
+      (
+        debug:render "forceStageRender reason %s" (match reason with [ Some r -> r | _ -> "not specified" ]);
+        renderNeeded := True;
+      );
+
+
+    value mutable skipCount = 0;
+    (* used by all actual versions (pc, android, ios) *)
+    method renderStage () =    
+      if renderNeeded
+      then
+        proftimer:render "renderStage %f"
+          (
+            renderNeeded := False;
+            Render.clear bgColor 1.;
+            super#render None;
+            match fpsTrace with [ None -> () | Some fps -> fps#render None ];
+            match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
+            debug:render "skipped %d frames before render" skipCount;
+            skipCount := 0;
+            True;
+          )
+      else
         (
-          Render.clear bgColor 1.;
-          super#render None;
-          match fpsTrace with [ None -> () | Some fps -> fps#render None ];
-          match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
+          skipCount := skipCount + 1;
+          False;
         );
 
     value runtweens = Queue.create ();
@@ -302,8 +323,8 @@ class virtual c (_width:float) (_height:float) =
         addTween f;
 
     method !z = Some 0;
-    (* used by android version, ios and pc versions uses renderStage method *)
-    method run seconds = 
+    (* used by outdated android version, ios and pc versions uses renderStage method *)
+(*     method run seconds = 
     (
       debug:steam "-------------------------------";
 
@@ -314,7 +335,7 @@ class virtual c (_width:float) (_height:float) =
       proftimer:steam "render %f" (super#render None);
       match fpsTrace with [ None -> () | Some fps -> fps#render None ];
       match sharedTexNum with [ None -> () | Some sharedTexNum -> sharedTexNum#render None ];
-    );
+    ); *)
 
   method! hitTestPoint localPoint isTouch =
     (*
@@ -347,6 +368,12 @@ class virtual c (_width:float) (_height:float) =
 
   method dispatchBackgroundEv = on_background;
   method dispatchForegroundEv = on_foreground;
+
+  method! boundsChanged () =
+    (
+      renderNeeded := True;
+      super#boundsChanged ();
+    );
     
   initializer Timers.init 0.;
   

@@ -122,7 +122,8 @@ class virtual base texture =
               programID := ShaderM.Normal.id;
               shaderProgram := ShaderM.Normal.create ();
             )
-          | `cmatrix m when programID  <> ShaderM.ColorMatrix.id -> 
+          (* | `cmatrix m when programID  <> ShaderM.ColorMatrix.id ->  *) (* condition removed cause when setting color matrix differ from current, program id stays the same and no referesh take place *)
+          | `cmatrix m -> 
             (
               programID := ShaderM.ColorMatrix.id;
               shaderProgram := ShaderM.ColorMatrix.create m;
@@ -140,16 +141,11 @@ class virtual base texture =
             in
             self#setGlowFilter gprg glow
             (* Move this check to setGlowFilter private method *)
-(*
-            match glowFilter with
-            [ Some ({g_params;_} as g) when g_params = glow -> g.g_program := gprg
-            | _ -> self#setGlowFilter gprg glow
-            ]
-*)
           ];(*}}}*)
         )
       );
       filters := fltrs;
+      self#forceStageRender ~reason:"image set filters" ();
     );
   end;
 
@@ -172,15 +168,19 @@ class _c  _texture =
     value mutable color = `NoColor;
     value mutable glowFilter: option glow = None;
 
-    method setColor c = 
-    (
-      color := c;
-      Render.Image.set_color image c;
-      match glowFilter with
-      [ Some {g_image=Some img;_} -> Render.Image.set_color img c
-      | _ -> ()
-      ]
-    );
+    method setColor c =
+      if c <> color
+      then
+        (
+          self#forceStageRender ~reason:"image set color" ();
+          color := c;
+          Render.Image.set_color image c;
+          match glowFilter with
+          [ Some {g_image=Some img;_} -> Render.Image.set_color img c
+          | _ -> ()
+          ]
+        )
+      else ();
 
     method color = color;
 
@@ -289,19 +289,6 @@ class _c  _texture =
 
 
     method private removeGlowFilter () = glowFilter := None;
-      (*
-      match glowFilter with 
-      [ Some {g_texture;_} -> 
-        (
-          match g_texture with
-          [ Some gtex -> gtex#release() 
-          | None -> ()
-          ];
-          glowFilter := None;
-        )
-      | _ -> () 
-      ];  
-      *)
 
     method private updateGlowFilter () =
       match glowFilter with

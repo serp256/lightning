@@ -108,14 +108,15 @@ value run stage_create =
       let stage = stage_create (float width) (float height) in
       (
         Glut.keyboardFunc (fun c x y -> if int_of_char c = 127 then ignore(stage#dispatchBackPressedEv ()) else ());
-        Glut.displayFunc (fun () -> (debug:render "render stage"; Glut.restoreFramebuffer (); stage#renderStage (); Glut.swapBuffers ()));
+        Glut.displayFunc (fun () -> (debug:render "render stage"; Glut.restoreFramebuffer (); if stage#renderStage () then Glut.swapBuffers () else (); ));
         start_cycle stage;
         let (mouse_func,motion_func) = make_mouse_funcs stage in
         (
           Glut.mouseFunc mouse_func;
           Glut.motionFunc motion_func;
         );
-        stage#renderStage ();
+        ignore(stage#renderStage ());
+        Glut.swapBuffers ();
       )
     end;
     Glut.mainLoop ();

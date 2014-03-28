@@ -122,7 +122,14 @@ class c pts s q t =
 		);
 		value mutable color = `NoColor;
 		method color = color; (* raise (StrEx "bezier has no color"); *)
-		method setColor c = color := c;
+		method setColor c =
+			if c <> color
+			then
+				(
+					self#forceStageRender ~reason:"bezier set color" ();
+					color := c;
+				)
+			else ();
 		value mutable filters = [];
 		method filters = filters;
 	    method setFilters f = filters := f;

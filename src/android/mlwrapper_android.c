@@ -345,20 +345,18 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(J
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed call");
 }
 
-static value run_method = 1;
-
 extern int net_running();
 extern void net_run();
 
- JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
+ JNIEXPORT jboolean Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
     CAMLparam0();
 	net_run();
 	mlstage_advanceTime(stage, (double)interval / 1000000000L);
 	mlstage_preRender();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	restore_default_viewport();
-	mlstage_render(stage);
-    CAMLreturn0;
+	uint8_t retval = mlstage_render(stage);
+    CAMLreturn(retval ? JNI_TRUE : JNI_FALSE);
 }
 
 

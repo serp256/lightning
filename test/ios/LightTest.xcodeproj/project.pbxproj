@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		2164ABDF18C9DEA50043BFDD /* ApplifierImpact.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2164ABDE18C9DEA50043BFDD /* ApplifierImpact.bundle */; };
-		21F90E61184F71A10096F03C /* extra in Resources */ = {isa = PBXBuildFile; fileRef = 21F90E5F184F71A10096F03C /* extra */; };
-		21F90E62184F71A10096F03C /* extra1 in Resources */ = {isa = PBXBuildFile; fileRef = 21F90E60184F71A10096F03C /* extra1 */; };
 		5106D8F717295F6700D03E1A /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F517295F6700D03E1A /* assets */; };
 		5106D8F817295F6700D03E1A /* index in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F617295F6700D03E1A /* index */; };
 		5181418216F6F61A009D7846 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5181418116F6F61A009D7846 /* LightTestBin */; };
@@ -40,8 +38,6 @@
 
 /* Begin PBXFileReference section */
 		2164ABDE18C9DEA50043BFDD /* ApplifierImpact.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = ApplifierImpact.bundle; path = ../../src/plugins/sponsorpay/ios/networks/applifier/ApplifierImpact.bundle; sourceTree = "<group>"; };
-		21F90E5F184F71A10096F03C /* extra */ = {isa = PBXFileReference; lastKnownFileType = file; name = extra; path = "../../../../Desktop/extra-res/extra"; sourceTree = "<group>"; };
-		21F90E60184F71A10096F03C /* extra1 */ = {isa = PBXFileReference; lastKnownFileType = file; name = extra1; path = "../../../../Desktop/extra-res/extra1"; sourceTree = "<group>"; };
 		5106D8F517295F6700D03E1A /* assets */ = {isa = PBXFileReference; lastKnownFileType = text; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
 		5106D8F617295F6700D03E1A /* index */ = {isa = PBXFileReference; lastKnownFileType = text; name = index; path = LightTest/index; sourceTree = "<group>"; };
 		513A2814173937B000EE18A3 /* TapjoyResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = TapjoyResources.bundle; path = ../../src/plugins/tapjoy/ios/TapjoyResources.bundle; sourceTree = "<group>"; };
@@ -65,8 +61,6 @@
 			isa = PBXGroup;
 			children = (
 				2164ABDE18C9DEA50043BFDD /* ApplifierImpact.bundle */,
-				21F90E5F184F71A10096F03C /* extra */,
-				21F90E60184F71A10096F03C /* extra1 */,
 				513A2814173937B000EE18A3 /* TapjoyResources.bundle */,
 				5106D8F517295F6700D03E1A /* assets */,
 				5106D8F617295F6700D03E1A /* index */,
@@ -193,10 +187,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				2164ABDF18C9DEA50043BFDD /* ApplifierImpact.bundle in Resources */,
-				21F90E61184F71A10096F03C /* extra in Resources */,
 				5106D8F717295F6700D03E1A /* assets in Resources */,
 				5106D8F817295F6700D03E1A /* index in Resources */,
-				21F90E62184F71A10096F03C /* extra1 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,6 +262,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: RedSpell (685ZNZAUW2)";
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -285,7 +278,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				ONLY_ACTIVE_ARCH = YES;
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1C1F63A2-9DE7-4511-AFF7-B39C4DEA6720";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "868F3FDD-B133-4120-A29C-1111E6D40A52";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -302,7 +295,8 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: RedSpell (685ZNZAUW2)";
+				CODE_SIGN_IDENTITY = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
 				COPY_PHASE_STRIP = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -319,15 +313,15 @@
 		51ABA24A16F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1C1F63A2-9DE7-4511-AFF7-B39C4DEA6720";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "868F3FDD-B133-4120-A29C-1111E6D40A52";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -335,8 +329,8 @@
 		51ABA24B16F6F4A100FC8928 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: andrey Nazarov (ZJNMP9V4CT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LightTest/LightTest-Prefix.pch";
 				INFOPLIST_FILE = "LightTest/LightTest-Info.plist";

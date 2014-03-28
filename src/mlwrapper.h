@@ -24,7 +24,7 @@ int mlstage_getFrameRate(mlstage *stage);
 void mlstage_resize(mlstage *stage,float width,float height);
 void mlstage_destroy(mlstage *stage);
 void mlstage_advanceTime(mlstage *stage,double timePassed);
-void mlstage_render(mlstage *stage);
+uint8_t mlstage_render(mlstage *stage);
 void mlstage_preRender();
 void mlstage_background();
 void mlstage_foreground();

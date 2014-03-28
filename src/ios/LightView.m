@@ -189,9 +189,11 @@
 	[EAGLContext setCurrentContext:mContext];
 	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
 	restore_default_viewport();
-	mlstage_render(mStage);    
-	glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
-	[mContext presentRenderbuffer:GL_RENDERBUFFER];
+	
+	if (mlstage_render(mStage)) {
+		glBindRenderbuffer(GL_RENDERBUFFER, mRenderbuffer);
+		[mContext presentRenderbuffer:GL_RENDERBUFFER];		
+	}
 	//caml_release_runtime_system();
 	[pool release];
 }
@@ -248,8 +250,9 @@
 		mDisplayLink = [NSClassFromString(@"CADisplayLink") displayLinkWithTarget:self selector:@selector(renderStage)];
 		[mDisplayLink setFrameInterval: (int)(REFRESH_RATE / frameRate)];
 		[mDisplayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [self renderStage]; 
-    mLastFrameTimestamp = CACurrentMediaTime();
+		mLastFrameTimestamp = CACurrentMediaTime();
+    	[self renderStage];
+    NSLog(@"mLastFrameTimestamp %f", mLastFrameTimestamp);
 	} else mDisplayLink.paused = NO;
 	/*caml_acquire_runtime_system();
 	mlstage_start(mStage);
