@@ -567,7 +567,6 @@ class virtual _c [ 'parent ] = (*{{{*)
         )
       else ();
 
-
     method asDisplayObject = (self :> _c 'parent);
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
 

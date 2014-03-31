@@ -371,7 +371,7 @@ class virtual c (_width:float) (_height:float) =
 
   method! boundsChanged () =
     (
-      renderNeeded := True;
+      self#forceStageRender ~reason:"bounds changed" ();
       super#boundsChanged ();
     );
     

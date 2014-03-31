@@ -10,6 +10,7 @@ open LightCommon;
       value quad = Render.Quad.create width height color 1.;
       method! setAlpha a =
       (
+        debug:alpha "quad set alpha";
         super#setAlpha a;
         Render.Quad.set_alpha quad a;
       );

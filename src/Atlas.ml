@@ -227,6 +227,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       method! setAlpha a =
       (
+        debug:alpha "atlas set alpha";
         super#setAlpha a;
         match glowFilter with
         [ Some {g_image=Some img;_} -> Render.Image.set_alpha img color a False

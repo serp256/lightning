@@ -187,6 +187,7 @@ class _c  _texture =
 
     method! setAlpha a =
     (
+      debug:alpha "image set alpha";
       super#setAlpha a;
       Render.Image.set_alpha image color a (match color with [ `QColors _ -> True | _ -> False ]);
       match glowFilter with
@@ -480,7 +481,12 @@ class _c  _texture =
         texture := nt;
         if ot#width <> nt#width || ot#height <> nt#height
         then self#updateSize ()
-        else Render.Image.update image texture#renderInfo texFlipX texFlipY;
+        else
+          (
+            Render.Image.update image texture#renderInfo texFlipX texFlipY;
+            self#forceStageRender ();
+          );
+
         nt#addRenderer (self :> Texture.renderer);
         let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
         let pkind = 
