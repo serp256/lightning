@@ -334,6 +334,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               )
           | _ -> ()          
           ];
+
+          self#forceStageRender ~reason:"tlf atlas set filters" ();
         );      
     end;
 
