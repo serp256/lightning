@@ -232,19 +232,14 @@ class virtual c (_width:float) (_height:float) =
     value mutable fpsTrace : option DisplayObject.c = None;
     value mutable sharedTexNum: option DisplayObject.c = None;
 
-    method! forceStageRender ?reason () =
-      (
-        debug:render "forceStageRender reason %s" (match reason with [ Some r -> r | _ -> "not specified" ]);
-        renderNeeded := True;
-      );
-
+    method! forceStageRender ?reason () = renderNeeded := True;
 
     value mutable skipCount = 0;
     (* used by all actual versions (pc, android, ios) *)
     method renderStage () =    
       if renderNeeded
       then
-        proftimer:render "renderStage %f"
+        proftimer:prof "renderStage %f"
           (
             renderNeeded := False;
             Render.clear bgColor 1.;
@@ -265,7 +260,8 @@ class virtual c (_width:float) (_height:float) =
 
 
     method advanceTime (seconds:float) =
-      proftimer:steam "advanceTime %f"
+      let () = debug:prof "-----------" in
+      proftimer:prof "advanceTime %f"
         (
           Texture.check_async();
           (

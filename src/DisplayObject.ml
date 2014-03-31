@@ -119,33 +119,34 @@ value add_prerender o =
   ];
   
 value prerender () =
-  match RefList.is_empty prerender_objects with
-  [ True -> ()
-  | False ->
-    (
-      debug:prerender "start prerender";
-      let locked_prerenders = RefList.empty () in
+  proftimer:prof "prerender %f"
+    match RefList.is_empty prerender_objects with
+    [ True -> ()
+    | False ->
       (
-        debug:perfomance "PRERENDER CNT: %d" (RefList.length prerender_objects);
-        prerender_locked.val := Some locked_prerenders;
-        let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
-        let sorted_objects = RefList.empty () in
+        debug:prerender "start prerender";
+        let locked_prerenders = RefList.empty () in
         (
-          proftimer:pprerender "SORT OBJECTS %F"
-          (RefList.iter (fun o -> 
-            match o#z with
-            [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
-            | None -> o#prerender False
-            ]
-          ) prerender_objects);
-          proftimer:pprerender "EXECUTE %F" (RefList.iter (fun (_,o) -> o#prerender True) sorted_objects);
+          debug:perfomance "PRERENDER CNT: %d" (RefList.length prerender_objects);
+          prerender_locked.val := Some locked_prerenders;
+          let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
+          let sorted_objects = RefList.empty () in
+          (
+            proftimer:pprerender "SORT OBJECTS %F"
+            (RefList.iter (fun o -> 
+              match o#z with
+              [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
+              | None -> o#prerender False
+              ]
+            ) prerender_objects);
+            proftimer:pprerender "EXECUTE %F" (RefList.iter (fun (_,o) -> o#prerender True) sorted_objects);
+          );
+          RefList.copy prerender_objects locked_prerenders;
+          prerender_locked.val := None;
         );
-        RefList.copy prerender_objects locked_prerenders;
-        prerender_locked.val := None;
-      );
-      debug:prerender "end prerender";
-    )
-  ];
+        debug:prerender "end prerender";
+      )
+    ];
 
 value prerender () = proftimer:steam "prerender: %f" (prerender ());
 
