@@ -193,7 +193,7 @@ static inline GLuint powS( GLuint l )
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);	\
 	}
 
-static int xyu = 0;
+// static int xyu = 0;
 
 void draw_glow_level(GLuint w, GLuint h, GLuint* prev_glow_lev_tex, clipping* clp, uint8_t mag) { //mag means magnification; when minifying we should bind texture to framebuffer and unbind when magnifying
 	PRINT_DEBUG("draw_glow_level clipping %f %f %f %f; prev_glow_lev_tex %d", clp->x, clp->y, clp->w, clp->h, *prev_glow_lev_tex);
@@ -210,29 +210,29 @@ void draw_glow_level(GLuint w, GLuint h, GLuint* prev_glow_lev_tex, clipping* cl
 		}
 	}
 
-	char fname[100];
-	sprintf(fname, "/sdcard/%.4d.png", xyu);
+/*	char fname[100];
+	sprintf(fname, "/sdcard/%.4d.png", xyu);*/
 
 
 	glBindTexture(GL_TEXTURE_2D, *prev_glow_lev_tex);
 
 
 
-	GLint _w, _h;
+/*	GLint _w, _h;
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &_w);
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &_h);
 	PRINT_DEBUG("TEXTURE %d params %d;%d", *prev_glow_lev_tex, _w, _h);
 	void *pixels = malloc(_w * _h * 4);
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	save_png_image(fname, pixels, (unsigned int)_w, (unsigned int)_h);
+	save_png_image(fname, pixels, (unsigned int)_w, (unsigned int)_h);*/
 
 
 	glow_make_draw(clp, 1);
 	*prev_glow_lev_tex = txrs[tw][th];
 
-	sprintf(fname, "/sdcard/%.4d.png", xyu + 1);
+/*	sprintf(fname, "/sdcard/%.4d.png", xyu + 1);
 	renderbuf_save_current(caml_copy_string(fname));
-	xyu += 10;
+	xyu += 10;*/
 
 	if (mag < 0) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);	
@@ -258,11 +258,11 @@ value ml_glow_make(value orb, value glow) {
 	*/
 	framebuf_push(rb->fbid, &rbvp, FRAMEBUF_APPLY_BUF);
 
-	PRINT_DEBUG("%.4d.png", xyu);
+/*	PRINT_DEBUG("%.4d.png", xyu);
 	char fname[100];
 	sprintf(fname, "/sdcard/%.4d.png", xyu);
 	xyu += 10;
-	renderbuf_save_current(caml_copy_string(fname));
+	renderbuf_save_current(caml_copy_string(fname));*/
 
 	lgResetBoundTextures();
 	glDisable(GL_BLEND);
