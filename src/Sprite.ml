@@ -182,7 +182,7 @@ class c =
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
       (
         filters := fltrs;
-        self#forceStageRender ~reason:"sprite set fiters" ();
+        self#forceStageRender ~reason:"sprite set filters" ();
         match fltrs with
         [ [] ->
           match imageCache with

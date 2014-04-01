@@ -85,7 +85,8 @@ value start_cycle stage =
       Glut.timerFunc fps advanceTime;
     )
   in
-  Glut.timerFunc fps advanceTime;
+    advanceTime ();
+  (* Glut.timerFunc fps advanceTime; *)
 
 
 value run stage_create = 
@@ -115,7 +116,7 @@ value run stage_create =
           Glut.mouseFunc mouse_func;
           Glut.motionFunc motion_func;
         );
-        ignore(stage#renderStage ());
+        (* ignore(stage#renderStage ()); *)
         Glut.swapBuffers ();
       )
     end;

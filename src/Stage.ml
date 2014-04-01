@@ -232,11 +232,16 @@ class virtual c (_width:float) (_height:float) =
     value mutable fpsTrace : option DisplayObject.c = None;
     value mutable sharedTexNum: option DisplayObject.c = None;
 
-    method! forceStageRender ?reason () = renderNeeded := True;
+    method! forceStageRender ?reason () =
+      (
+        debug:forcerendereason "forceStageRender call, reason %s" (match reason with [ Some r -> r | _ -> "_" ]);
+        renderNeeded := True;
+      );
 
     value mutable skipCount = 0;
     (* used by all actual versions (pc, android, ios) *)
-    method renderStage () =    
+    method renderStage () =
+      (* let () = debug:render "-renderStage" in *)
       if renderNeeded
       then
         proftimer:prof "renderStage %f"
@@ -371,6 +376,9 @@ class virtual c (_width:float) (_height:float) =
       super#boundsChanged ();
     );
     
-  initializer Timers.init 0.;
+  initializer
+    (
+      Timers.init 0.;
+    );
   
 end;

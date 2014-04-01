@@ -99,6 +99,7 @@ class virtual base texture =
     method virtual private updateGlowFilter: unit -> unit;
     method setFilters fltrs = 
     (
+      self#forceStageRender ~reason:"image set filters" ();
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
       let glow = ref None in
       (
@@ -145,7 +146,6 @@ class virtual base texture =
         )
       );
       filters := fltrs;
-      self#forceStageRender ~reason:"image set filters" ();
     );
   end;
 
