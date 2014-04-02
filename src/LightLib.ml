@@ -169,7 +169,7 @@ value getTextureAsync lib tid callback =
 value getSubTexture lib (tid,rect) =
   let t = 
     match lib.textures with
-    [ TFiles files -> Texture.load ~with_suffix:False (Filename.concat lib.path files.(tid))
+    [ TFiles files -> Texture.load ~with_suffix:False ?filter:lib.filter (Filename.concat lib.path files.(tid))
     | TTextures textures -> textures.(tid)
     ]
   in
@@ -178,7 +178,7 @@ value getSubTexture lib (tid,rect) =
 value getSubTextureAsync lib (tid,rect) callback =
   let f texture = callback (texture#subTexture rect) in
   match lib.textures with
-  [ TFiles files -> Texture.load_async ~with_suffix:False (Filename.concat lib.path files.(tid)) f
+  [ TFiles files -> Texture.load_async ~with_suffix:False ?filter:lib.filter (Filename.concat lib.path files.(tid)) f
   | TTextures textures -> f textures.(tid)
   ];
 
