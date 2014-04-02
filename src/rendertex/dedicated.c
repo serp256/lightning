@@ -97,6 +97,8 @@ uint8_t rendertex_dedicated_draw(renderbuffer_t *renderbuf, value render_inf, fl
 	uint8_t resized = 0;
 	float new_real_w = nextPOT(ceil(new_w)), new_real_h = nextPOT(ceil(new_h));
 
+	PRINT_DEBUG("%f; %f ||| %f, %f", new_w, renderbuf->width, new_h, renderbuf->height);
+
 	if (new_w != renderbuf->width || new_h != renderbuf->height) {
 		resized = 1;
 
@@ -132,6 +134,8 @@ uint8_t rendertex_dedicated_draw(renderbuffer_t *renderbuf, value render_inf, fl
 		Store_field(render_inf, 1, caml_copy_double(new_w));
 		Store_field(render_inf, 2, caml_copy_double(new_h));
 		Store_field(render_inf, 3, new_clipping);
+		Store_field(render_inf, 5, Val_int(renderbuf->vp.x));
+		Store_field(render_inf, 6, Val_int(renderbuf->vp.y));
 	}
 
 	framebuf_push(renderbuf->fbid, &renderbuf->vp, FRAMEBUF_APPLY_ALL);
