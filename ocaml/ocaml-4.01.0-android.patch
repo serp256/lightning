@@ -1,1191 +1,888 @@
-diff -crN ocaml-4.01.0-clean/Makefile ocaml-4.01.0-android-new/Makefile
-*** ocaml-4.01.0-clean/Makefile	Mon Jun 17 17:15:18 2013
---- ocaml-4.01.0-android-new/Makefile	Mon Apr 14 15:39:30 2014
-***************
-*** 15,31 ****
-  include config/Makefile
-  include stdlib/StdlibModules
-  
-! CAMLC=boot/ocamlrun boot/ocamlc -nostdlib -I boot
-! CAMLOPT=boot/ocamlrun ./ocamlopt -nostdlib -I stdlib -I otherlibs/dynlink
-  COMPFLAGS=-strict-sequence -w +33..39 -warn-error A $(INCLUDES)
-  LINKFLAGS=
-  
-! CAMLYACC=boot/ocamlyacc
-  YACCFLAGS=-v
-! CAMLLEX=boot/ocamlrun boot/ocamllex
-! CAMLDEP=boot/ocamlrun tools/ocamldep
-  DEPFLAGS=$(INCLUDES)
-! CAMLRUN=byterun/ocamlrun
-  SHELL=/bin/sh
-  MKDIR=mkdir -p
-  
---- 15,31 ----
-  include config/Makefile
-  include stdlib/StdlibModules
-  
-! CAMLC=ocamlc.opt -I boot
-! CAMLOPT=ocamlopt.opt
-  COMPFLAGS=-strict-sequence -w +33..39 -warn-error A $(INCLUDES)
-  LINKFLAGS=
-  
-! CAMLYACC=ocamlyacc
-  YACCFLAGS=-v
-! CAMLLEX=ocamllex.opt
-! CAMLDEP=ocamldep.opt
-  DEPFLAGS=$(INCLUDES)
-! CAMLRUN=ocamlrun
-  SHELL=/bin/sh
-  MKDIR=mkdir -p
-  
-***************
-*** 106,119 ****
-  
-  PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
-  
-! # For users who don't read the INSTALL file
-! defaultentry:
-! 	@echo "Please refer to the installation instructions in file INSTALL."
-! 	@echo "If you've just unpacked the distribution, something like"
-! 	@echo "	./configure"
-! 	@echo "	make world.opt"
-! 	@echo "	make install"
-! 	@echo "should work.  But see the file INSTALL for more details."
-  
-  # Recompile the system using the bootstrap compiler
-  all: runtime ocamlc ocamllex ocamlyacc ocamltools library ocaml \
---- 106,112 ----
-  
-  PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
-  
-! defaultentry: runtime runtimeopt ocamlopt.opt libraryopt otherlibrariesopt 
-  
-  # Recompile the system using the bootstrap compiler
-  all: runtime ocamlc ocamllex ocamlyacc ocamltools library ocaml \
-***************
-*** 269,274 ****
---- 262,294 ----
-  	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
-  	if test -d $(STUBLIBDIR); then : ; else $(MKDIR) $(STUBLIBDIR); fi
-  	if test -d $(COMPLIBDIR); then : ; else $(MKDIR) $(COMPLIBDIR); fi
-+ 	cp VERSION $(LIBDIR)/
-+ 	cd byterun; $(MAKE) installopt
-+ 	cd asmrun; $(MAKE) install
-+ 	cp ocamlopt.opt $(BINDIR)/ocamlopt.opt$(EXE)
-+ 	ln -fs $(BINDIR)/ocamlopt.opt $(BINDIR)/ocamlopt
-+ 	cd stdlib; $(MAKE) installopt
-+ 	for i in $(OTHERLIBRARIES); do \
-+ 	  (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; \
-+ 	done
-+ 	cp asmcomp/*.cmi $(COMPLIBDIR)
-+ 	cp compilerlibs/ocamlcommon.cmxa compilerlibs/ocamlcommon.a \
-+            compilerlibs/ocamloptcomp.cmxa compilerlibs/ocamloptcomp.a \
-+            $(OPTSTART:.cmo=.cmx) $(OPTSTART:.cmo=.o) \
-+            $(COMPLIBDIR)
-+ 	cd $(COMPLIBDIR) && $(RANLIB) ocamlcommon.a ocamloptcomp.a
-+ 	cd ocamldoc; $(MAKE) installopt
-+ 	for i in $(OTHERLIBRARIES); \
-+ 	  do (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; done
-+ 	cp tools/ocamlmklib $(BINDIR)
-+ 	cp config/Makefile $(LIBDIR)/Makefile.config
-+ 
-+ 
-+ installall:
-+ 	if test -d $(BINDIR); then : ; else $(MKDIR) $(BINDIR); fi
-+ 	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
-+ 	if test -d $(STUBLIBDIR); then : ; else $(MKDIR) $(STUBLIBDIR); fi
-+ 	if test -d $(COMPLIBDIR); then : ; else $(MKDIR) $(COMPLIBDIR); fi
-  	if test -d $(MANDIR)/man$(MANEXT); then : ; \
-  	  else $(MKDIR) $(MANDIR)/man$(MANEXT); fi
-  	cp VERSION $(LIBDIR)/
-***************
-*** 491,496 ****
---- 511,519 ----
-  	$(CAMLOPT) $(LINKFLAGS) -o ocamlopt.opt \
-  	   compilerlibs/ocamlcommon.cmxa compilerlibs/ocamloptcomp.cmxa \
-  	   $(OPTSTART:.cmo=.cmx)
-+ 	@sed -e 's|@compiler@|ocamlc.opt|' \
-+ 		driver/ocamlcomp.sh.in > ocamlcomp.sh
-+ 	@chmod +x ocamlcomp.sh
-  	@sed -e 's|@compiler@|$$topdir/ocamlopt.opt|' \
-  	  driver/ocamlcomp.sh.in > ocamlcompopt.sh
-  	@chmod +x ocamlcompopt.sh
-***************
-*** 585,591 ****
-  
-  tools/cvt_emit: tools/cvt_emit.mll
-  	cd tools; \
-! 	$(MAKE) CAMLC="../$(CAMLRUN) ../boot/ocamlc -I ../stdlib" cvt_emit
-  
-  # The "expunge" utility
-  
---- 608,614 ----
-  
-  tools/cvt_emit: tools/cvt_emit.mll
-  	cd tools; \
-! 	$(MAKE) CAMLC="ocamlc" cvt_emit
-  
-  # The "expunge" utility
-  
-***************
-*** 669,674 ****
---- 692,700 ----
-  ocamltools: ocamlc ocamlyacc ocamllex asmcomp/cmx_format.cmi
-  	cd tools; $(MAKE) all
-  
-+ ocamlmklib:
-+ 	cd tools; $(MAKE) ocamlmklib
-+ 
-  ocamltoolsopt: ocamlopt
-  	cd tools; $(MAKE) opt
-  
-***************
-*** 702,708 ****
-  	  (cd otherlibs/$$i; $(MAKE) RUNTIME=$(RUNTIME) all) || exit $$?; \
-  	done
-  
-! otherlibrariesopt:
-  	for i in $(OTHERLIBRARIES); do \
-  	  (cd otherlibs/$$i; $(MAKE) allopt) || exit $$?; \
-  	done
---- 728,734 ----
-  	  (cd otherlibs/$$i; $(MAKE) RUNTIME=$(RUNTIME) all) || exit $$?; \
-  	done
-  
-! otherlibrariesopt: ocamlmklib
-  	for i in $(OTHERLIBRARIES); do \
-  	  (cd otherlibs/$$i; $(MAKE) allopt) || exit $$?; \
-  	done
-diff -crN ocaml-4.01.0-clean/asmcomp/spill.ml ocaml-4.01.0-android-new/asmcomp/spill.ml
-*** ocaml-4.01.0-clean/asmcomp/spill.ml	Mon Oct 15 21:50:56 2012
---- ocaml-4.01.0-android-new/asmcomp/spill.ml	Mon Apr 14 15:40:34 2014
-***************
-*** 291,297 ****
-        let before =
-          match i.desc with
-            Iop Icall_ind | Iop(Icall_imm _) | Iop(Iextcall _)
-!         | Iop(Iintop Icheckbound) | Iop(Iintop_imm(Icheckbound, _)) ->
-              Reg.Set.union before1 !spill_at_raise
-          | _ ->
-              before1 in
---- 291,298 ----
-        let before =
-          match i.desc with
-            Iop Icall_ind | Iop(Icall_imm _) | Iop(Iextcall _)
-!         | Iop(Iintop Icheckbound) | Iop(Iintop_imm(Icheckbound, _))
-!         | Iop(Ispecific(Arch.Ishiftcheckbound _)) ->
-              Reg.Set.union before1 !spill_at_raise
-          | _ ->
-              before1 in
-diff -crN ocaml-4.01.0-clean/asmrun/backtrace.c ocaml-4.01.0-android-new/asmrun/backtrace.c
-*** ocaml-4.01.0-clean/asmrun/backtrace.c	Tue Jul 23 18:48:47 2013
---- ocaml-4.01.0-android-new/asmrun/backtrace.c	Mon Apr 14 15:39:30 2014
-***************
-*** 252,263 ****
-     useless. We kept it to keep code identical to the byterun/
-     implementation. */
-  
-! static void print_location(struct loc_info * li, int index)
-  {
-    char * info;
-  
-    /* Ignore compiler-inserted raise */
-!   if (!li->loc_valid && li->loc_is_raise) return;
-  
-    if (li->loc_is_raise) {
-      /* Initial raise if index == 0, re-raise otherwise */
---- 252,263 ----
-     useless. We kept it to keep code identical to the byterun/
-     implementation. */
-  
-! static char* print_location(struct loc_info * li, int index,int need_msg)
-  {
-    char * info;
-  
-    /* Ignore compiler-inserted raise */
-!   if (!li->loc_valid && li->loc_is_raise) return NULL;
-  
-    if (li->loc_is_raise) {
-      /* Initial raise if index == 0, re-raise otherwise */
-***************
-*** 271,283 ****
-      else
-        info = "Called from";
-    }
-    if (! li->loc_valid) {
-!     fprintf(stderr, "%s unknown location\n", info);
-    } else {
-!     fprintf (stderr, "%s file \"%s\", line %d, characters %d-%d\n",
-               info, li->loc_filename, li->loc_lnum,
-               li->loc_startchr, li->loc_endchr);
-!   }
-  }
-  
-  /* Print a backtrace */
---- 271,292 ----
-      else
-        info = "Called from";
-    }
-+ 	char *res = NULL;
-    if (! li->loc_valid) {
-! 		if (need_msg) asprintf(&res, "%s unknown location\n", info);
-! 		else fprintf(stderr,"%s unknown location\n", info);
-    } else {
-! 		if (need_msg) 
-! 			asprintf(&res, "%s file \"%s\", line %d, characters %d-%d\n",
-               info, li->loc_filename, li->loc_lnum,
-               li->loc_startchr, li->loc_endchr);
-! 		else
-! 			fprintf(stderr,"%s file \"%s\", line %d, characters %d-%d\n",
-!              info, li->loc_filename, li->loc_lnum,
-!              li->loc_startchr, li->loc_endchr);
-!   };
-! 	if (need_msg) fputs(res,stderr);
-! 	return res;
-  }
-  
-  /* Print a backtrace */
-***************
-*** 289,298 ****
-  
-    for (i = 0; i < caml_backtrace_pos; i++) {
-      extract_location_info((frame_descr *) (caml_backtrace_buffer[i]), &li);
-!     print_location(&li, i);
-    }
-  }
-  
-  /* Convert the raw backtrace to a data structure usable from OCaml */
-  
-  CAMLprim value caml_convert_raw_backtrace(value backtrace) {
---- 298,323 ----
-  
-    for (i = 0; i < caml_backtrace_pos; i++) {
-      extract_location_info((frame_descr *) (caml_backtrace_buffer[i]), &li);
-!     print_location(&li, i,0);
-    }
-  }
-  
-+ char **caml_print_get_exception_backtrace(void)
-+ {
-+ 	int i;
-+   struct loc_info li;
-+ 	char **res = NULL;
-+ 
-+ 	if (caml_backtrace_pos > 0) {
-+ 		res = malloc(caml_backtrace_pos * sizeof(char*));
-+ 		for (i = 0; i < caml_backtrace_pos; i++) {
-+ 			extract_location_info((frame_descr *) (caml_backtrace_buffer[i]), &li);
-+ 			res[i] = print_location(&li, i,1);
-+ 		}
-+ 	};
-+ 	return res;
-+ }
-+ 
-  /* Convert the raw backtrace to a data structure usable from OCaml */
-  
-  CAMLprim value caml_convert_raw_backtrace(value backtrace) {
-diff -crN ocaml-4.01.0-clean/build/distclean.sh ocaml-4.01.0-android-new/build/distclean.sh
-*** ocaml-4.01.0-clean/build/distclean.sh	Mon Oct 15 21:50:56 2012
---- ocaml-4.01.0-android-new/build/distclean.sh	Mon Apr 14 15:39:30 2014
-***************
-*** 21,29 ****
-  rm -rf _build
-  rm -f boot/ocamlrun boot/ocamlrun.exe boot/camlheader \
-        boot/myocamlbuild boot/myocamlbuild.native boot/myocamlbuild.native.exe \
-!       myocamlbuild_config.ml config/config.sh config/Makefile \
-        boot/ocamlyacc tools/cvt_emit.bak tools/*.bak \
-!       config/s.h config/m.h boot/*.cm* _log _*_log*
-  
-  # from partial boot
-  rm -f driver/main.byte driver/optmain.byte lex/main.byte \
---- 21,29 ----
-  rm -rf _build
-  rm -f boot/ocamlrun boot/ocamlrun.exe boot/camlheader \
-        boot/myocamlbuild boot/myocamlbuild.native boot/myocamlbuild.native.exe \
-!       myocamlbuild_config.ml config/config.sh \
-        boot/ocamlyacc tools/cvt_emit.bak tools/*.bak \
-!       boot/*.cm* _log _*_log*
-  
-  # from partial boot
-  rm -f driver/main.byte driver/optmain.byte lex/main.byte \
-diff -crN ocaml-4.01.0-clean/byterun/Makefile.common ocaml-4.01.0-android-new/byterun/Makefile.common
-*** ocaml-4.01.0-clean/byterun/Makefile.common	Mon Aug 19 22:21:47 2013
---- ocaml-4.01.0-android-new/byterun/Makefile.common	Mon Apr 14 15:39:30 2014
-***************
-*** 61,66 ****
---- 61,73 ----
-  
-  install:: install-$(RUNTIMED)
-  
-+ installopt:
-+ 	if test -d $(LIBDIR)/caml; then : ; else mkdir $(LIBDIR)/caml; fi
-+ 	for i in $(PUBLIC_INCLUDES); do \
-+ 		sed -f ../tools/cleanup-header $$i > $(LIBDIR)/caml/$$i; \
-+   done
-+ .PHONY: installopt
-+ 
-  install-noruntimed:
-  .PHONY: install-noruntimed
-  
-diff -crN ocaml-4.01.0-clean/byterun/backtrace.c ocaml-4.01.0-android-new/byterun/backtrace.c
-*** ocaml-4.01.0-clean/byterun/backtrace.c	Fri Aug  2 17:54:22 2013
---- ocaml-4.01.0-android-new/byterun/backtrace.c	Mon Apr 14 15:39:30 2014
-***************
-*** 349,354 ****
---- 349,359 ----
-    }
-  }
-  
-+ CAMLexport char** caml_print_get_exception_backtrace(void) {
-+ 	caml_print_exception_backtrace();
-+ 	return NULL;
-+ }
-+ 
-  /* Convert the backtrace to a data structure usable from OCaml */
-  
-  CAMLprim value caml_convert_raw_backtrace(value backtrace)
-diff -crN ocaml-4.01.0-clean/byterun/backtrace.h ocaml-4.01.0-android-new/byterun/backtrace.h
-*** ocaml-4.01.0-clean/byterun/backtrace.h	Mon Oct 15 21:50:56 2012
---- ocaml-4.01.0-android-new/byterun/backtrace.h	Mon Apr 14 15:39:30 2014
-***************
-*** 27,31 ****
---- 27,32 ----
-  extern void caml_stash_backtrace(value exn, code_t pc, value * sp);
-  #endif
-  CAMLextern void caml_print_exception_backtrace(void);
-+ CAMLextern char** caml_print_get_exception_backtrace(void);
-  
-  #endif /* CAML_BACKTRACE_H */
-diff -crN ocaml-4.01.0-clean/byterun/fail.h ocaml-4.01.0-android-new/byterun/fail.h
-*** ocaml-4.01.0-clean/byterun/fail.h	Sun Mar 10 02:38:52 2013
---- ocaml-4.01.0-android-new/byterun/fail.h	Mon Apr 14 15:39:30 2014
-***************
-*** 60,65 ****
---- 60,68 ----
-  extern "C" {
-  #endif
-  
-+ typedef void (*uncaught_exception_callback_t)(const char* exn,int bc,char** bv);
-+ extern uncaught_exception_callback_t uncaught_exception_callback;
-+ 
-  CAMLextern void caml_raise (value bucket) Noreturn;
-  CAMLextern void caml_raise_constant (value tag) Noreturn;
-  CAMLextern void caml_raise_with_arg (value tag, value arg) Noreturn;
-diff -crN ocaml-4.01.0-clean/byterun/printexc.c ocaml-4.01.0-android-new/byterun/printexc.c
-*** ocaml-4.01.0-clean/byterun/printexc.c	Mon Oct 15 21:50:56 2012
---- ocaml-4.01.0-android-new/byterun/printexc.c	Mon Apr 14 15:39:30 2014
-***************
-*** 24,29 ****
---- 24,31 ----
-  #include "mlvalues.h"
-  #include "printexc.h"
-  
-+ uncaught_exception_callback_t uncaught_exception_callback = NULL;
-+ 
-  struct stringbuf {
-    char * ptr;
-    char * end;
-***************
-*** 111,125 ****
-    caml_backtrace_pos = saved_backtrace_pos;
-    /* Display the uncaught exception */
-    fprintf(stderr, "Fatal error: exception %s\n", msg);
--   free(msg);
-    /* Display the backtrace if available */
-    if (caml_backtrace_active
-  #ifndef NATIVE_CODE
-        && !caml_debugger_in_use
-  #endif
-        ) {
-!     caml_print_exception_backtrace();
-    }
-    /* Terminate the process */
-    exit(2);
-  }
---- 113,134 ----
-    caml_backtrace_pos = saved_backtrace_pos;
-    /* Display the uncaught exception */
-    fprintf(stderr, "Fatal error: exception %s\n", msg);
-    /* Display the backtrace if available */
-+ 	char **backtraces = NULL;
-    if (caml_backtrace_active
-  #ifndef NATIVE_CODE
-        && !caml_debugger_in_use
-  #endif
-        ) {
-!     backtraces = caml_print_get_exception_backtrace();
-    }
-    /* Terminate the process */
-+ 	if (uncaught_exception_callback != NULL) uncaught_exception_callback(msg,caml_backtrace_active ? caml_backtrace_pos : 0,backtraces);
-+   free(msg);
-+ 	if (backtraces != NULL) {
-+ 		int i;
-+ 		for (i = 0; i < caml_backtrace_pos; i++) if (backtraces[i]) free(backtraces[i]);
-+ 		free(backtraces);
-+ 	};
-    exit(2);
-  }
-diff -crN ocaml-4.01.0-clean/config/Makefile ocaml-4.01.0-android-new/config/Makefile
-*** ocaml-4.01.0-clean/config/Makefile	Thu Jan  1 03:00:00 1970
---- ocaml-4.01.0-android-new/config/Makefile	Mon Apr 14 15:39:30 2014
-***************
-*** 0 ****
---- 1,77 ----
-+ # generated by ./configure 
-+ PREFIX=/usr/local/ocaml/android
-+ PLATFORM=/Users/serp/android/ndk/platforms/android-8/arch-arm
-+ SDK=/Users/serp/android/ndk/toolchains/arm-linux-androideabi-4.7/prebuilt/darwin-x86
-+ BINDIR=$(PREFIX)/bin
-+ LIBDIR=$(PREFIX)/lib
-+ STUBLIBDIR=$(LIBDIR)/stublibs
-+ MANDIR=$(PREFIX)/man
-+ MANEXT=1
-+ RANLIB=$(SDK)/bin/arm-linux-androideabi-ranlib
-+ RANLIBCMD=$(RANLIB)
-+ ARCMD=$(SDK)/bin/arm-linux-androideabi-ar
-+ SHARPBANGSCRIPTS=true
-+ BNG_ARCH=generic
-+ BNG_ASM_LEVEL=0
-+ PTHREAD_LINK=
-+ LIBBFD_LINK=-lbfd -ldl -liberty -lz
-+ #-mfloat-abi=softfp -mfpu=vfpv3 
-+ BYTECC=$(SDK)/bin/arm-linux-androideabi-gcc -march=armv7-a --sysroot=$(PLATFORM)
-+ BYTECCCOMPOPTS=-fno-defer-pop -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -D__ANDROID__
-+ BYTECCLINKOPTS= -Wl,-E
-+ #BYTECCLIBS= -lm  -ldl -lcurses -lpthread
-+ #BYTECCLIBS= -lm  -ldl -lcurses -lpthread
-+ BYTECCLIBS= -lm  -ldl 
-+ BYTECCRPATH=-Wl,-rpath,
-+ EXE=
-+ SUPPORTS_SHARED_LIBRARIES=true
-+ SHAREDCCCOMPOPTS=-fPIC
-+ MKSHAREDLIBRPATH=-Wl,-rpath,
-+ NATDYNLINKOPTS=-Wl,-E
-+ SYSLIB=-l$(1)
-+ #ml let syslib x = "-l"^x;;
-+ 
-+ ### How to build a static library
-+ MKLIB=$(ARCMD) rc $(1) $(2); $(RANLIB) $(1)
-+ ####ml let mklib out files opts = Printf.sprintf "$(ARCMD) rc %s %s %s;$(RANLIBCMD) %s" out opts files out;;
-+ #ml let mklib out files opts = "$(ARCMD) rc " ^ out ^ " " ^ opts ^ " " ^ files ^ "; $(RANLIBCMD) " ^ out;;
-+ ARCH=arm
-+ MODEL=armv7
-+ SYSTEM=linux_eabihf
-+ NATIVECC=$(BYTECC)
-+ NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -D__ANDROID__
-+ NATIVECCPROFOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -D__ANDROID__
-+ NATIVECCLINKOPTS=
-+ NATIVECCRPATH=-Wl,-rpath,
-+ NATIVECCLIBS= -lm  -ldl
-+ ASM=$(NATIVECC) -D__ARM_EABI__ -c 
-+ ASPP=$(ASM)
-+ ASPPPROFFLAGS=-DPROFILING
-+ PROFILING=noprof
-+ DYNLINKOPTS= -ldl
-+ OTHERLIBRARIES=unix str num dynlink bigarray threads
-+ DEBUGGER=ocamldebugger
-+ CC_PROFILE=-pg
-+ SYSTHREAD_SUPPORT=false
-+ PARTIALLD=$(SDK)/bin/arm-linux-androideabi-ld -r
-+ PACKLD=$(PARTIALLD) $(NATIVECCLINKOPTS) -o\ 
-+ DLLCCCOMPOPTS=
-+ IFLEXDIR=
-+ O=o
-+ A=a
-+ SO=so
-+ EXT_OBJ=.o
-+ EXT_ASM=.s
-+ EXT_LIB=.a
-+ EXT_DLL=.so
-+ EXTRALIBS=
-+ CCOMPTYPE=cc
-+ TOOLCHAIN=cc
-+ NATDYNLINK=true
-+ CMXS=cmxs
-+ MKEXE=$(BYTECC)
-+ MKDLL=$(NATIVECC) -shared
-+ MKMAINDLL=$(NATIVECC) -shared
-+ RUNTIMED=noruntimed
-+ ASM_CFI_SUPPORTED=true
-+ WITH_FRAME_POINTERS=false
-diff -crN ocaml-4.01.0-clean/config/m.h ocaml-4.01.0-android-new/config/m.h
-*** ocaml-4.01.0-clean/config/m.h	Thu Jan  1 03:00:00 1970
---- ocaml-4.01.0-android-new/config/m.h	Mon Apr 14 15:39:30 2014
-***************
-*** 0 ****
---- 1,16 ----
-+ #ifndef __PIC__
-+ #  define ARCH_CODE32
-+ #endif
-+ #undef ARCH_SIXTYFOUR
-+ #define SIZEOF_INT 4
-+ #define SIZEOF_LONG 4
-+ #define SIZEOF_PTR 4
-+ #define SIZEOF_SHORT 2
-+ #define ARCH_INT64_TYPE long long
-+ #define ARCH_UINT64_TYPE unsigned long long
-+ #define ARCH_INT64_PRINTF_FORMAT "ll"
-+ #undef ARCH_BIG_ENDIAN
-+ #undef ARCH_ALIGN_DOUBLE
-+ #undef ARCH_ALIGN_INT64
-+ #undef NONSTANDARD_DIV_MOD
-+ #define ASM_CFI_SUPPORTED
-diff -crN ocaml-4.01.0-clean/config/s.h ocaml-4.01.0-android-new/config/s.h
-*** ocaml-4.01.0-clean/config/s.h	Thu Jan  1 03:00:00 1970
---- ocaml-4.01.0-android-new/config/s.h	Mon Apr 14 15:39:30 2014
-***************
-*** 0 ****
---- 1,51 ----
-+ #define OCAML_OS_TYPE "Unix"
-+ #define OCAML_STDLIB_DIR "/usr/local/ocaml/android/lib"
-+ #define POSIX_SIGNALS
-+ #define HAS_C99_FLOAT_OPS
-+ #define HAS_GETRUSAGE
-+ #define HAS_TIMES
-+ #undef HAS_TERMCAP
-+ #define HAS_SOCKETS
-+ #define HAS_SOCKLEN_T
-+ #define HAS_INET_ATON
-+ #define HAS_IPV6
-+ #define HAS_UNISTD
-+ #define HAS_OFF_T
-+ #define HAS_DIRENT
-+ #define HAS_REWINDDIR
-+ #define HAS_LOCKF
-+ #define HAS_MKFIFO
-+ #define HAS_GETCWD
-+ #define HAS_GETWD
-+ #define HAS_GETPRIORITY
-+ #define HAS_UTIME
-+ #define HAS_UTIMES
-+ #define HAS_DUP2
-+ #define HAS_FCHMOD
-+ #define HAS_TRUNCATE
-+ #define HAS_SYS_SELECT_H
-+ #define HAS_SELECT
-+ #define HAS_SYMLINK
-+ #define HAS_WAITPID
-+ #define HAS_WAIT4
-+ #define HAS_GETGROUPS
-+ #define HAS_SETGROUPS
-+ #define HAS_INITGROUPS
-+ #define HAS_TERMIOS
-+ #define HAS_ASYNC_IO
-+ #define HAS_SETITIMER
-+ #define HAS_GETHOSTNAME
-+ #define HAS_UNAME
-+ #define HAS_GETTIMEOFDAY
-+ #define HAS_MKTIME
-+ #define HAS_SETSID
-+ #define HAS_PUTENV
-+ #define HAS_LOCALE
-+ #define SUPPORT_DYNAMIC_LINKING
-+ #define HAS_MMAP
-+ #define HAS_PWRITE
-+ #define HAS_GETHOSTBYNAME_R 6
-+ #undef HAS_GETHOSTBYADDR_R
-+ #undef HAS_STACK_OVERFLOW_DETECTION
-+ #define HAS_SIGWAIT
-+ #undef HAS_LIBBFD
-diff -crN ocaml-4.01.0-clean/otherlibs/Makefile.shared ocaml-4.01.0-android-new/otherlibs/Makefile.shared
-*** ocaml-4.01.0-clean/otherlibs/Makefile.shared	Tue Jul 23 18:48:47 2013
---- ocaml-4.01.0-android-new/otherlibs/Makefile.shared	Mon Apr 14 15:39:30 2014
-***************
-*** 18,24 ****
-  
-  # Compilation options
-  CC=$(BYTECC)
-! CAMLRUN=$(ROOTDIR)/boot/ocamlrun
-  COMPFLAGS=-w +33..39 -warn-error A -g $(EXTRACAMLFLAGS)
-  MKLIB=$(CAMLRUN) $(ROOTDIR)/tools/ocamlmklib
-  
---- 18,24 ----
-  
-  # Compilation options
-  CC=$(BYTECC)
-! CAMLRUN=ocamlrun
-  COMPFLAGS=-w +33..39 -warn-error A -g $(EXTRACAMLFLAGS)
-  MKLIB=$(CAMLRUN) $(ROOTDIR)/tools/ocamlmklib
-  
-***************
-*** 65,73 ****
---- 65,77 ----
-  	if test -n "$(HEADERS)"; then cp $(HEADERS) $(LIBDIR)/caml/; fi
-  
-  installopt:
-+ 	cp lib$(CLIBNAME).$(A) $(LIBDIR)/
-+ 	cd $(LIBDIR); $(RANLIB) lib$(CLIBNAME).$(A)
-  	cp $(CAMLOBJS_NAT) $(LIBNAME).cmxa $(LIBNAME).$(A) $(LIBDIR)/
-  	cd $(LIBDIR); $(RANLIB) $(LIBNAME).a
-+ 	cp $(CMIFILES) $(CMIFILES:.cmi=.mli) $(LIBDIR)/
-  	if test -f $(LIBNAME).cmxs; then cp $(LIBNAME).cmxs $(LIBDIR)/; fi
-+ 	if test -n "$(HEADERS)"; then cp $(HEADERS) $(LIBDIR)/caml/; fi
-  
-  partialclean:
-  	rm -f *.cm*
-diff -crN ocaml-4.01.0-clean/otherlibs/dynlink/Makefile ocaml-4.01.0-android-new/otherlibs/dynlink/Makefile
-*** ocaml-4.01.0-clean/otherlibs/dynlink/Makefile	Tue Jul 23 18:48:47 2013
---- ocaml-4.01.0-android-new/otherlibs/dynlink/Makefile	Mon Apr 14 15:39:30 2014
-***************
-*** 15,21 ****
-  
-  include ../../config/Makefile
-  
-! CAMLC=../../boot/ocamlrun ../../ocamlc
-  CAMLOPT=../../ocamlcompopt.sh
-  INCLUDES=-I ../../utils -I ../../typing -I ../../bytecomp -I ../../asmcomp
-  COMPFLAGS=-w +33..39 -warn-error A -I ../../stdlib $(INCLUDES)
---- 15,21 ----
-  
-  include ../../config/Makefile
-  
-! CAMLC=../../ocamlcomp.sh
-  CAMLOPT=../../ocamlcompopt.sh
-  INCLUDES=-I ../../utils -I ../../typing -I ../../bytecomp -I ../../asmcomp
-  COMPFLAGS=-w +33..39 -warn-error A -I ../../stdlib $(INCLUDES)
-diff -crN ocaml-4.01.0-clean/otherlibs/systhreads/Makefile ocaml-4.01.0-android-new/otherlibs/systhreads/Makefile
-*** ocaml-4.01.0-clean/otherlibs/systhreads/Makefile	Tue Jul 23 18:48:47 2013
---- ocaml-4.01.0-android-new/otherlibs/systhreads/Makefile	Mon Apr 14 15:39:30 2014
-***************
-*** 15,21 ****
-  
-  CAMLC=../../ocamlcomp.sh -I ../unix
-  CAMLOPT=../../ocamlcompopt.sh -I ../unix
-! MKLIB=../../boot/ocamlrun ../../tools/ocamlmklib
-  COMPFLAGS=-w +33..39 -warn-error A -g
-  
-  BYTECODE_C_OBJS=st_stubs_b.o
---- 15,21 ----
-  
-  CAMLC=../../ocamlcomp.sh -I ../unix
-  CAMLOPT=../../ocamlcompopt.sh -I ../unix
-! MKLIB=../../tools/ocamlmklib
-  COMPFLAGS=-w +33..39 -warn-error A -g
-  
-  BYTECODE_C_OBJS=st_stubs_b.o
-***************
-*** 61,67 ****
-  # modular to me this way. -- Alain
-  
-  
-- $(THREAD_OBJS:.cmo=.cmx): ../../ocamlopt
-  
-  partialclean:
-  	rm -f *.cm*
---- 61,66 ----
-***************
-*** 80,85 ****
---- 79,88 ----
-  	cp threads.h $(LIBDIR)/caml/threads.h
-  
-  installopt:
-+ 	if test -d $(LIBDIR)/threads; then :; else mkdir $(LIBDIR)/threads; fi
-+ 	cp $(THREAD_OBJS:.cmo=.cmi) $(LIBDIR)/threads
-+ 	cp thread.mli mutex.mli condition.mli event.mli threadUnix.mli $(LIBDIR)
-+ 	cp threads.h $(LIBDIR)/caml/threads.h
-  	cp libthreadsnat.a $(LIBDIR)/libthreadsnat.a
-  	cd $(LIBDIR); $(RANLIB) libthreadsnat.a
-  	cp $(THREAD_OBJS:.cmo=.cmx) threads.cmxa threads.a $(LIBDIR)/threads
-diff -crN ocaml-4.01.0-clean/otherlibs/threads/pervasives.ml ocaml-4.01.0-android-new/otherlibs/threads/pervasives.ml
-*** ocaml-4.01.0-clean/otherlibs/threads/pervasives.ml	Tue Jul 23 18:48:47 2013
---- ocaml-4.01.0-android-new/otherlibs/threads/pervasives.ml	Mon Apr 14 15:39:30 2014
-***************
-*** 79,85 ****
-  external (lsr) : int -> int -> int = "%lsrint"
-  external (asr) : int -> int -> int = "%asrint"
-  
-! let min_int = 1 lsl (if 1 lsl 31 = 0 then 30 else 62)
-  let max_int = min_int - 1
-  
-  (* Floating-point operations *)
---- 79,85 ----
-  external (lsr) : int -> int -> int = "%lsrint"
-  external (asr) : int -> int -> int = "%asrint"
-  
-! let min_int = 1 lsl 30
-  let max_int = min_int - 1
-  
-  (* Floating-point operations *)
-***************
-*** 90,120 ****
-  external (-.) : float -> float -> float = "%subfloat"
-  external ( *. ) : float -> float -> float = "%mulfloat"
-  external (/.) : float -> float -> float = "%divfloat"
-! external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
-! external exp : float -> float = "caml_exp_float" "exp" "float"
-! external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
-! external acos : float -> float = "caml_acos_float" "acos" "float"
-! external asin : float -> float = "caml_asin_float" "asin" "float"
-! external atan : float -> float = "caml_atan_float" "atan" "float"
-! external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
-  external hypot : float -> float -> float
-!    = "caml_hypot_float" "caml_hypot" "float"
-! external cos : float -> float = "caml_cos_float" "cos" "float"
-! external cosh : float -> float = "caml_cosh_float" "cosh" "float"
-! external log : float -> float = "caml_log_float" "log" "float"
-! external log10 : float -> float = "caml_log10_float" "log10" "float"
-! external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
-! external sin : float -> float = "caml_sin_float" "sin" "float"
-! external sinh : float -> float = "caml_sinh_float" "sinh" "float"
-! external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
-! external tan : float -> float = "caml_tan_float" "tan" "float"
-! external tanh : float -> float = "caml_tanh_float" "tanh" "float"
-! external ceil : float -> float = "caml_ceil_float" "ceil" "float"
-! external floor : float -> float = "caml_floor_float" "floor" "float"
-  external abs_float : float -> float = "%absfloat"
-  external copysign : float -> float -> float
-!    = "caml_copysign_float" "caml_copysign" "float"
-! external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
-  external frexp : float -> float * int = "caml_frexp_float"
-  external ldexp : float -> int -> float = "caml_ldexp_float"
-  external modf : float -> float * float = "caml_modf_float"
---- 90,120 ----
-  external (-.) : float -> float -> float = "%subfloat"
-  external ( *. ) : float -> float -> float = "%mulfloat"
-  external (/.) : float -> float -> float = "%divfloat"
-! external ( ** ) : float -> float -> float = "caml_power_float" (* "pow" "float" *)
-! external exp : float -> float = "caml_exp_float" (* "exp" "float" *)
-! external expm1 : float -> float = "caml_expm1_float" (* "caml_expm1" "float" *)
-! external acos : float -> float = "caml_acos_float" (* "acos" "float" *)
-! external asin : float -> float = "caml_asin_float" (* "asin" "float" *)
-! external atan : float -> float = "caml_atan_float" (* "atan" "float" *)
-! external atan2 : float -> float -> float = "caml_atan2_float" (* "atan2" "float" *)
-  external hypot : float -> float -> float
-!    = "caml_hypot_float" (* "caml_hypot" "float" *)
-! external cos : float -> float = "caml_cos_float" (* "cos" "float" *)
-! external cosh : float -> float = "caml_cosh_float" (* "cosh" "float" *)
-! external log : float -> float = "caml_log_float" (* "log" "float" *)
-! external log10 : float -> float = "caml_log10_float" (* "log10" "float" *)
-! external log1p : float -> float = "caml_log1p_float" (* "caml_log1p" "float" *)
-! external sin : float -> float = "caml_sin_float" (* "sin" "float" *)
-! external sinh : float -> float = "caml_sinh_float" (* "sinh" "float" *)
-! external sqrt : float -> float = "caml_sqrt_float" (* "sqrt" "float" *)
-! external tan : float -> float = "caml_tan_float" (* "tan" "float" *)
-! external tanh : float -> float = "caml_tanh_float" (* "tanh" "float" *)
-! external ceil : float -> float = "caml_ceil_float" (* "ceil" "float" *)
-! external floor : float -> float = "caml_floor_float" (* "floor" "float" *)
-  external abs_float : float -> float = "%absfloat"
-  external copysign : float -> float -> float
-!    = "caml_copysign_float" (* "caml_copysign" "float" *)
-! external mod_float : float -> float -> float = "caml_fmod_float" (* "fmod" "float" *)
-  external frexp : float -> float * int = "caml_frexp_float"
-  external ldexp : float -> int -> float = "caml_ldexp_float"
-  external modf : float -> float * float = "caml_modf_float"
-diff -crN ocaml-4.01.0-clean/stdlib/Makefile ocaml-4.01.0-android-new/stdlib/Makefile
-*** ocaml-4.01.0-clean/stdlib/Makefile	Mon Oct 15 21:50:56 2012
---- ocaml-4.01.0-android-new/stdlib/Makefile	Mon Apr 14 15:39:30 2014
-***************
-*** 13,19 ****
-  
-  include Makefile.shared
-  
-! allopt: stdlib.cmxa std_exit.cmx allopt-$(PROFILING)
-  
-  allopt-noprof:
-  
---- 13,19 ----
-  
-  include Makefile.shared
-  
-! allopt: stdlib.cmxa std_exit.cmx camlheader camlheader_ur allopt-$(PROFILING)
-  
-  allopt-noprof:
-  
-***************
-*** 23,29 ****
-  installopt: installopt-default installopt-$(PROFILING)
-  
-  installopt-default:
-! 	cp stdlib.cmxa stdlib.a std_exit.o *.cmx $(LIBDIR)
-  	cd $(LIBDIR); $(RANLIB) stdlib.a
-  
-  installopt-noprof:
---- 23,29 ----
-  installopt: installopt-default installopt-$(PROFILING)
-  
-  installopt-default:
-! 	cp stdlib.cmxa stdlib.a std_exit.o *.cmx *.cmi *.mli *.ml camlheader camlheader_ur $(LIBDIR)
-  	cd $(LIBDIR); $(RANLIB) stdlib.a
-  
-  installopt-noprof:
-diff -crN ocaml-4.01.0-clean/stdlib/Makefile.shared ocaml-4.01.0-android-new/stdlib/Makefile.shared
-*** ocaml-4.01.0-clean/stdlib/Makefile.shared	Mon Oct 15 21:50:56 2012
---- ocaml-4.01.0-android-new/stdlib/Makefile.shared	Mon Apr 14 15:39:30 2014
-***************
-*** 12,25 ****
-  #########################################################################
-  
-  include ../config/Makefile
-! RUNTIME=../boot/ocamlrun
-! COMPILER=../ocamlc
-! CAMLC=$(RUNTIME) $(COMPILER)
-  COMPFLAGS=-strict-sequence -w +33..39 -g -warn-error A -nostdlib
-! OPTCOMPILER=../ocamlopt
-! CAMLOPT=$(RUNTIME) $(OPTCOMPILER)
-  OPTCOMPFLAGS=-warn-error A -nostdlib -g
-! CAMLDEP=../boot/ocamlrun ../tools/ocamldep
-  
-  OBJS=pervasives.cmo $(OTHERS)
-  OTHERS=array.cmo list.cmo char.cmo string.cmo sys.cmo \
---- 12,23 ----
-  #########################################################################
-  
-  include ../config/Makefile
-! RUNTIME=ocamlrun
-! CAMLC=ocamlc.opt
-  COMPFLAGS=-strict-sequence -w +33..39 -g -warn-error A -nostdlib
-! CAMLOPT=../ocamlopt.opt
-  OPTCOMPFLAGS=-warn-error A -nostdlib -g
-! CAMLDEP=ocamldep.opt
-  
-  OBJS=pervasives.cmo $(OTHERS)
-  OTHERS=array.cmo list.cmo char.cmo string.cmo sys.cmo \
-***************
-*** 78,88 ****
-  .ml.p.cmx:
-  	$(CAMLOPT) $(OPTCOMPFLAGS) `./Compflags $@` -p -c -o $*.p.cmx $<
-  
-- # Dependencies on the compiler
-- $(OBJS) std_exit.cmo: $(COMPILER)
-- $(OBJS:.cmo=.cmi) std_exit.cmi: $(COMPILER)
-- $(OBJS:.cmo=.cmx) std_exit.cmx: $(OPTCOMPILER)
-- $(OBJS:.cmo=.p.cmx) std_exit.p.cmx: $(OPTCOMPILER)
-  
-  # Dependencies on Pervasives (not tracked by ocamldep)
-  $(OBJS) std_exit.cmo: pervasives.cmi
---- 76,81 ----
-diff -crN ocaml-4.01.0-clean/stdlib/camlinternalOO.ml ocaml-4.01.0-android-new/stdlib/camlinternalOO.ml
-*** ocaml-4.01.0-clean/stdlib/camlinternalOO.ml	Tue Mar 19 11:22:12 2013
---- ocaml-4.01.0-android-new/stdlib/camlinternalOO.ml	Mon Apr 14 15:39:30 2014
-***************
-*** 79,88 ****
-      accu := 223 * !accu + Char.code s.[i]
-    done;
-    (* reduce to 31 bits *)
-!   accu := !accu land (1 lsl 31 - 1);
-!   (* make it signed for 64 bits architectures *)
-!   let tag = if !accu > 0x3FFFFFFF then !accu - (1 lsl 31) else !accu in
-!   (* Printf.eprintf "%s = %d\n" s tag; flush stderr; *)
-    magic tag
-  
-  (**** Sparse array ****)
---- 79,85 ----
-      accu := 223 * !accu + Char.code s.[i]
-    done;
-    (* reduce to 31 bits *)
-!   let tag = !accu land (1 lsl 31 - 1) in
-    magic tag
-  
-  (**** Sparse array ****)
-diff -crN ocaml-4.01.0-clean/stdlib/pervasives.ml ocaml-4.01.0-android-new/stdlib/pervasives.ml
-*** ocaml-4.01.0-clean/stdlib/pervasives.ml	Wed Jun 19 15:46:11 2013
---- ocaml-4.01.0-android-new/stdlib/pervasives.ml	Mon Apr 14 15:39:30 2014
-***************
-*** 75,81 ****
-  external ( lsr ) : int -> int -> int = "%lsrint"
-  external ( asr ) : int -> int -> int = "%asrint"
-  
-! let min_int = 1 lsl (if 1 lsl 31 = 0 then 30 else 62)
-  let max_int = min_int - 1
-  
-  (* Floating-point operations *)
---- 75,81 ----
-  external ( lsr ) : int -> int -> int = "%lsrint"
-  external ( asr ) : int -> int -> int = "%asrint"
-  
-! let min_int = 1 lsl 30
-  let max_int = min_int - 1
-  
-  (* Floating-point operations *)
-***************
-*** 86,116 ****
-  external ( -. ) : float -> float -> float = "%subfloat"
-  external ( *. ) : float -> float -> float = "%mulfloat"
-  external ( /. ) : float -> float -> float = "%divfloat"
-! external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
-! external exp : float -> float = "caml_exp_float" "exp" "float"
-! external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
-! external acos : float -> float = "caml_acos_float" "acos" "float"
-! external asin : float -> float = "caml_asin_float" "asin" "float"
-! external atan : float -> float = "caml_atan_float" "atan" "float"
-! external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
-  external hypot : float -> float -> float
-!                = "caml_hypot_float" "caml_hypot" "float"
-! external cos : float -> float = "caml_cos_float" "cos" "float"
-! external cosh : float -> float = "caml_cosh_float" "cosh" "float"
-! external log : float -> float = "caml_log_float" "log" "float"
-! external log10 : float -> float = "caml_log10_float" "log10" "float"
-! external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
-! external sin : float -> float = "caml_sin_float" "sin" "float"
-! external sinh : float -> float = "caml_sinh_float" "sinh" "float"
-! external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
-! external tan : float -> float = "caml_tan_float" "tan" "float"
-! external tanh : float -> float = "caml_tanh_float" "tanh" "float"
-! external ceil : float -> float = "caml_ceil_float" "ceil" "float"
-! external floor : float -> float = "caml_floor_float" "floor" "float"
-  external abs_float : float -> float = "%absfloat"
-  external copysign : float -> float -> float
-!                   = "caml_copysign_float" "caml_copysign" "float"
-! external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
-  external frexp : float -> float * int = "caml_frexp_float"
-  external ldexp : float -> int -> float = "caml_ldexp_float"
-  external modf : float -> float * float = "caml_modf_float"
---- 86,116 ----
-  external ( -. ) : float -> float -> float = "%subfloat"
-  external ( *. ) : float -> float -> float = "%mulfloat"
-  external ( /. ) : float -> float -> float = "%divfloat"
-! external ( ** ) : float -> float -> float = "caml_power_float" (* "pow" "float" *)
-! external exp : float -> float = "caml_exp_float" (* "exp" "float" *)
-! external expm1 : float -> float = "caml_expm1_float" (* "caml_expm1" "float" *)
-! external acos : float -> float = "caml_acos_float" (* "acos" "float" *)
-! external asin : float -> float = "caml_asin_float" (* "asin" "float" *)
-! external atan : float -> float = "caml_atan_float" (* "atan" "float" *)
-! external atan2 : float -> float -> float = "caml_atan2_float" (* "atan2" "float" *)
-  external hypot : float -> float -> float
-!                = "caml_hypot_float" (* "caml_hypot" "float" *)
-! external cos : float -> float = "caml_cos_float" (* "cos" "float" *)
-! external cosh : float -> float = "caml_cosh_float" (* "cosh" "float" *)
-! external log : float -> float = "caml_log_float" (* "log" "float" *)
-! external log10 : float -> float = "caml_log10_float" (* "log10" "float" *)
-! external log1p : float -> float = "caml_log1p_float" (* "caml_log1p" "float" *)
-! external sin : float -> float = "caml_sin_float" (* "sin" "float" *)
-! external sinh : float -> float = "caml_sinh_float" (* "sinh" "float" *)
-! external sqrt : float -> float = "caml_sqrt_float" (* "sqrt" "float" *)
-! external tan : float -> float = "caml_tan_float" (* "tan" "float" *)
-! external tanh : float -> float = "caml_tanh_float" (* "tanh" "float" *)
-! external ceil : float -> float = "caml_ceil_float" (* "ceil" "float" *)
-! external floor : float -> float = "caml_floor_float" (* "floor" "float" *)
-  external abs_float : float -> float = "%absfloat"
-  external copysign : float -> float -> float
-!                   = "caml_copysign_float" (* "caml_copysign" "float" *)
-! external mod_float : float -> float -> float = "caml_fmod_float" (* "fmod" "float" *)
-  external frexp : float -> float * int = "caml_frexp_float"
-  external ldexp : float -> int -> float = "caml_ldexp_float"
-  external modf : float -> float * float = "caml_modf_float"
-diff -crN ocaml-4.01.0-clean/stdlib/pervasives.mli ocaml-4.01.0-android-new/stdlib/pervasives.mli
-*** ocaml-4.01.0-clean/stdlib/pervasives.mli	Wed Jul 24 13:21:49 2013
---- ocaml-4.01.0-android-new/stdlib/pervasives.mli	Mon Apr 14 15:39:30 2014
-***************
-*** 273,354 ****
-  external ( /. ) : float -> float -> float = "%divfloat"
-  (** Floating-point division. *)
-  
-! external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
-  (** Exponentiation. *)
-  
-! external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
-  (** Square root. *)
-  
-! external exp : float -> float = "caml_exp_float" "exp" "float"
-  (** Exponential. *)
-  
-! external log : float -> float = "caml_log_float" "log" "float"
-  (** Natural logarithm. *)
-  
-! external log10 : float -> float = "caml_log10_float" "log10" "float"
-  (** Base 10 logarithm. *)
-  
-! external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
-  (** [expm1 x] computes [exp x -. 1.0], giving numerically-accurate results
-      even if [x] is close to [0.0].
-      @since 3.12.0
-  *)
-  
-! external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
-  (** [log1p x] computes [log(1.0 +. x)] (natural logarithm),
-      giving numerically-accurate results even if [x] is close to [0.0].
-      @since 3.12.0
-  *)
-  
-! external cos : float -> float = "caml_cos_float" "cos" "float"
-  (** Cosine.  Argument is in radians. *)
-  
-! external sin : float -> float = "caml_sin_float" "sin" "float"
-  (** Sine.  Argument is in radians. *)
-  
-! external tan : float -> float = "caml_tan_float" "tan" "float"
-  (** Tangent.  Argument is in radians. *)
-  
-! external acos : float -> float = "caml_acos_float" "acos" "float"
-  (** Arc cosine.  The argument must fall within the range [[-1.0, 1.0]].
-      Result is in radians and is between [0.0] and [pi]. *)
-  
-! external asin : float -> float = "caml_asin_float" "asin" "float"
-  (** Arc sine.  The argument must fall within the range [[-1.0, 1.0]].
-      Result is in radians and is between [-pi/2] and [pi/2]. *)
-  
-! external atan : float -> float = "caml_atan_float" "atan" "float"
-  (** Arc tangent.
-      Result is in radians and is between [-pi/2] and [pi/2]. *)
-  
-! external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
-  (** [atan2 y x] returns the arc tangent of [y /. x].  The signs of [x]
-      and [y] are used to determine the quadrant of the result.
-      Result is in radians and is between [-pi] and [pi]. *)
-  
-  external hypot : float -> float -> float
-!                = "caml_hypot_float" "caml_hypot" "float"
-  (** [hypot x y] returns [sqrt(x *. x + y *. y)], that is, the length
-    of the hypotenuse of a right-angled triangle with sides of length
-    [x] and [y], or, equivalently, the distance of the point [(x,y)]
-    to origin.
-    @since 4.00.0  *)
-  
-! external cosh : float -> float = "caml_cosh_float" "cosh" "float"
-  (** Hyperbolic cosine.  Argument is in radians. *)
-  
-! external sinh : float -> float = "caml_sinh_float" "sinh" "float"
-  (** Hyperbolic sine.  Argument is in radians. *)
-  
-! external tanh : float -> float = "caml_tanh_float" "tanh" "float"
-  (** Hyperbolic tangent.  Argument is in radians. *)
-  
-! external ceil : float -> float = "caml_ceil_float" "ceil" "float"
-  (** Round above to an integer value.
-      [ceil f] returns the least integer value greater than or equal to [f].
-      The result is returned as a float. *)
-  
-! external floor : float -> float = "caml_floor_float" "floor" "float"
-  (** Round below to an integer value.
-      [floor f] returns the greatest integer value less than or
-      equal to [f].
---- 273,354 ----
-  external ( /. ) : float -> float -> float = "%divfloat"
-  (** Floating-point division. *)
-  
-! external ( ** ) : float -> float -> float = "caml_power_float" (* "pow" "float" *)
-  (** Exponentiation. *)
-  
-! external sqrt : float -> float = "caml_sqrt_float" (* "sqrt" "float" *)
-  (** Square root. *)
-  
-! external exp : float -> float = "caml_exp_float" (* "exp" "float" *)
-  (** Exponential. *)
-  
-! external log : float -> float = "caml_log_float" (* "log" "float" *)
-  (** Natural logarithm. *)
-  
-! external log10 : float -> float = "caml_log10_float" (* "log10" "float" *)
-  (** Base 10 logarithm. *)
-  
-! external expm1 : float -> float = "caml_expm1_float" (* "caml_expm1" "float" *)
-  (** [expm1 x] computes [exp x -. 1.0], giving numerically-accurate results
-      even if [x] is close to [0.0].
-      @since 3.12.0
-  *)
-  
-! external log1p : float -> float = "caml_log1p_float" (* "caml_log1p" "float" *)
-  (** [log1p x] computes [log(1.0 +. x)] (natural logarithm),
-      giving numerically-accurate results even if [x] is close to [0.0].
-      @since 3.12.0
-  *)
-  
-! external cos : float -> float = "caml_cos_float" (* "cos" "float" *)
-  (** Cosine.  Argument is in radians. *)
-  
-! external sin : float -> float = "caml_sin_float" (* "sin" "float" *)
-  (** Sine.  Argument is in radians. *)
-  
-! external tan : float -> float = "caml_tan_float" (* "tan" "float" *)
-  (** Tangent.  Argument is in radians. *)
-  
-! external acos : float -> float = "caml_acos_float" (* "acos" "float" *)
-  (** Arc cosine.  The argument must fall within the range [[-1.0, 1.0]].
-      Result is in radians and is between [0.0] and [pi]. *)
-  
-! external asin : float -> float = "caml_asin_float" (* "asin" "float" *)
-  (** Arc sine.  The argument must fall within the range [[-1.0, 1.0]].
-      Result is in radians and is between [-pi/2] and [pi/2]. *)
-  
-! external atan : float -> float = "caml_atan_float" (* "atan" "float" *)
-  (** Arc tangent.
-      Result is in radians and is between [-pi/2] and [pi/2]. *)
-  
-! external atan2 : float -> float -> float = "caml_atan2_float" (* "atan2" "float" *)
-  (** [atan2 y x] returns the arc tangent of [y /. x].  The signs of [x]
-      and [y] are used to determine the quadrant of the result.
-      Result is in radians and is between [-pi] and [pi]. *)
-  
-  external hypot : float -> float -> float
-!                = "caml_hypot_float" (* "caml_hypot" "float" *)
-  (** [hypot x y] returns [sqrt(x *. x + y *. y)], that is, the length
-    of the hypotenuse of a right-angled triangle with sides of length
-    [x] and [y], or, equivalently, the distance of the point [(x,y)]
-    to origin.
-    @since 4.00.0  *)
-  
-! external cosh : float -> float = "caml_cosh_float" (* "cosh" "float" *)
-  (** Hyperbolic cosine.  Argument is in radians. *)
-  
-! external sinh : float -> float = "caml_sinh_float" (* "sinh" "float" *)
-  (** Hyperbolic sine.  Argument is in radians. *)
-  
-! external tanh : float -> float = "caml_tanh_float" (* "tanh" "float" *)
-  (** Hyperbolic tangent.  Argument is in radians. *)
-  
-! external ceil : float -> float = "caml_ceil_float" (* "ceil" "float" *)
-  (** Round above to an integer value.
-      [ceil f] returns the least integer value greater than or equal to [f].
-      The result is returned as a float. *)
-  
-! external floor : float -> float = "caml_floor_float" (* "floor" "float" *)
-  (** Round below to an integer value.
-      [floor f] returns the greatest integer value less than or
-      equal to [f].
-***************
-*** 358,371 ****
-  (** [abs_float f] returns the absolute value of [f]. *)
-  
-  external copysign : float -> float -> float
-!                   = "caml_copysign_float" "caml_copysign" "float"
-  (** [copysign x y] returns a float whose absolute value is that of [x]
-    and whose sign is that of [y].  If [x] is [nan], returns [nan].
-    If [y] is [nan], returns either [x] or [-. x], but it is not
-    specified which.
-    @since 4.00.0  *)
-  
-! external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
-  (** [mod_float a b] returns the remainder of [a] with respect to
-     [b].  The returned value is [a -. n *. b], where [n]
-     is the quotient [a /. b] rounded towards zero to an integer. *)
---- 358,371 ----
-  (** [abs_float f] returns the absolute value of [f]. *)
-  
-  external copysign : float -> float -> float
-!                   = "caml_copysign_float" (* "caml_copysign" "float" *)
-  (** [copysign x y] returns a float whose absolute value is that of [x]
-    and whose sign is that of [y].  If [x] is [nan], returns [nan].
-    If [y] is [nan], returns either [x] or [-. x], but it is not
-    specified which.
-    @since 4.00.0  *)
-  
-! external mod_float : float -> float -> float = "caml_fmod_float" (* "fmod" "float" *)
-  (** [mod_float a b] returns the remainder of [a] with respect to
-     [b].  The returned value is [a -. n *. b], where [n]
-     is the quotient [a /. b] rounded towards zero to an integer. *)
-diff -crN ocaml-4.01.0-clean/tools/Makefile.shared ocaml-4.01.0-android-new/tools/Makefile.shared
-*** ocaml-4.01.0-clean/tools/Makefile.shared	Wed Jun  5 20:34:40 2013
---- ocaml-4.01.0-android-new/tools/Makefile.shared	Mon Apr 14 15:39:30 2014
-***************
-*** 12,21 ****
-  
-  include ../config/Makefile
-  
-! CAMLRUN=../boot/ocamlrun
-! CAMLC=$(CAMLRUN) ../boot/ocamlc -strict-sequence -nostdlib -I ../boot
-! CAMLOPT=$(CAMLRUN) ../ocamlopt -nostdlib -I ../stdlib
-! CAMLLEX=$(CAMLRUN) ../boot/ocamllex
-  INCLUDES=-I ../utils -I ../parsing -I ../typing -I ../bytecomp -I ../asmcomp \
-  	 -I ../driver
-  COMPFLAGS= -w +32..39 -warn-error A $(INCLUDES)
---- 12,21 ----
-  
-  include ../config/Makefile
-  
-! CAMLRUN=ocamlrun
-! CAMLC=ocamlc.opt -strict-sequence -I ../boot
-! CAMLOPT=ocamlopt.opt
-! CAMLLEX=ocamllex
-  INCLUDES=-I ../utils -I ../parsing -I ../typing -I ../bytecomp -I ../asmcomp \
-  	 -I ../driver
-  COMPFLAGS= -w +32..39 -warn-error A $(INCLUDES)
+diff -urN ocaml-4.01.0-clean/Makefile ocaml-4.01.0/Makefile
+--- ocaml-4.01.0-clean/Makefile	2013-06-17 17:15:18.000000000 +0400
++++ ocaml-4.01.0/Makefile	2014-04-15 12:08:39.000000000 +0400
+@@ -15,17 +15,17 @@
+ include config/Makefile
+ include stdlib/StdlibModules
+ 
+-CAMLC=boot/ocamlrun boot/ocamlc -nostdlib -I boot
+-CAMLOPT=boot/ocamlrun ./ocamlopt -nostdlib -I stdlib -I otherlibs/dynlink
++CAMLC=ocamlc.opt -I boot
++CAMLOPT=ocamlopt.opt
+ COMPFLAGS=-strict-sequence -w +33..39 -warn-error A $(INCLUDES)
+ LINKFLAGS=
+ 
+-CAMLYACC=boot/ocamlyacc
++CAMLYACC=ocamlyacc
+ YACCFLAGS=-v
+-CAMLLEX=boot/ocamlrun boot/ocamllex
+-CAMLDEP=boot/ocamlrun tools/ocamldep
++CAMLLEX=ocamllex.opt
++CAMLDEP=ocamldep.opt
+ DEPFLAGS=$(INCLUDES)
+-CAMLRUN=byterun/ocamlrun
++CAMLRUN=ocamlrun
+ SHELL=/bin/sh
+ MKDIR=mkdir -p
+ 
+@@ -106,14 +106,7 @@
+ 
+ PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
+ 
+-# For users who don't read the INSTALL file
+-defaultentry:
+-	@echo "Please refer to the installation instructions in file INSTALL."
+-	@echo "If you've just unpacked the distribution, something like"
+-	@echo "	./configure"
+-	@echo "	make world.opt"
+-	@echo "	make install"
+-	@echo "should work.  But see the file INSTALL for more details."
++defaultentry: runtime runtimeopt ocamlopt.opt libraryopt otherlibrariesopt 
+ 
+ # Recompile the system using the bootstrap compiler
+ all: runtime ocamlc ocamllex ocamlyacc ocamltools library ocaml \
+@@ -269,6 +262,33 @@
+ 	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
+ 	if test -d $(STUBLIBDIR); then : ; else $(MKDIR) $(STUBLIBDIR); fi
+ 	if test -d $(COMPLIBDIR); then : ; else $(MKDIR) $(COMPLIBDIR); fi
++	cp VERSION $(LIBDIR)/
++	cd byterun; $(MAKE) installopt
++	cd asmrun; $(MAKE) install
++	cp ocamlopt.opt $(BINDIR)/ocamlopt.opt$(EXE)
++	ln -fs $(BINDIR)/ocamlopt.opt $(BINDIR)/ocamlopt
++	cd stdlib; $(MAKE) installopt
++	for i in $(OTHERLIBRARIES); do \
++	  (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; \
++	done
++	cp asmcomp/*.cmi $(COMPLIBDIR)
++	cp compilerlibs/ocamlcommon.cmxa compilerlibs/ocamlcommon.a \
++           compilerlibs/ocamloptcomp.cmxa compilerlibs/ocamloptcomp.a \
++           $(OPTSTART:.cmo=.cmx) $(OPTSTART:.cmo=.o) \
++           $(COMPLIBDIR)
++	cd $(COMPLIBDIR) && $(RANLIB) ocamlcommon.a ocamloptcomp.a
++	cd ocamldoc; $(MAKE) installopt
++	for i in $(OTHERLIBRARIES); \
++	  do (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; done
++	cp tools/ocamlmklib $(BINDIR)
++	cp config/Makefile $(LIBDIR)/Makefile.config
++
++
++installall:
++	if test -d $(BINDIR); then : ; else $(MKDIR) $(BINDIR); fi
++	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
++	if test -d $(STUBLIBDIR); then : ; else $(MKDIR) $(STUBLIBDIR); fi
++	if test -d $(COMPLIBDIR); then : ; else $(MKDIR) $(COMPLIBDIR); fi
+ 	if test -d $(MANDIR)/man$(MANEXT); then : ; \
+ 	  else $(MKDIR) $(MANDIR)/man$(MANEXT); fi
+ 	cp VERSION $(LIBDIR)/
+@@ -491,6 +511,9 @@
+ 	$(CAMLOPT) $(LINKFLAGS) -o ocamlopt.opt \
+ 	   compilerlibs/ocamlcommon.cmxa compilerlibs/ocamloptcomp.cmxa \
+ 	   $(OPTSTART:.cmo=.cmx)
++	@sed -e 's|@compiler@|ocamlc.opt|' \
++		driver/ocamlcomp.sh.in > ocamlcomp.sh
++	@chmod +x ocamlcomp.sh
+ 	@sed -e 's|@compiler@|$$topdir/ocamlopt.opt|' \
+ 	  driver/ocamlcomp.sh.in > ocamlcompopt.sh
+ 	@chmod +x ocamlcompopt.sh
+@@ -585,7 +608,7 @@
+ 
+ tools/cvt_emit: tools/cvt_emit.mll
+ 	cd tools; \
+-	$(MAKE) CAMLC="../$(CAMLRUN) ../boot/ocamlc -I ../stdlib" cvt_emit
++	$(MAKE) CAMLC="ocamlc" cvt_emit
+ 
+ # The "expunge" utility
+ 
+@@ -669,6 +692,9 @@
+ ocamltools: ocamlc ocamlyacc ocamllex asmcomp/cmx_format.cmi
+ 	cd tools; $(MAKE) all
+ 
++ocamlmklib:
++	cd tools; $(MAKE) ocamlmklib
++
+ ocamltoolsopt: ocamlopt
+ 	cd tools; $(MAKE) opt
+ 
+@@ -702,7 +728,7 @@
+ 	  (cd otherlibs/$$i; $(MAKE) RUNTIME=$(RUNTIME) all) || exit $$?; \
+ 	done
+ 
+-otherlibrariesopt:
++otherlibrariesopt: ocamlmklib
+ 	for i in $(OTHERLIBRARIES); do \
+ 	  (cd otherlibs/$$i; $(MAKE) allopt) || exit $$?; \
+ 	done
+diff -urN ocaml-4.01.0-clean/asmcomp/liveness.ml ocaml-4.01.0/asmcomp/liveness.ml
+--- ocaml-4.01.0-clean/asmcomp/liveness.ml	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0/asmcomp/liveness.ml	2014-04-15 12:08:54.000000000 +0400
+@@ -97,7 +97,8 @@
+       let across =
+         match i.desc with
+           Iop Icall_ind | Iop(Icall_imm _) | Iop(Iextcall _)
+-        | Iop(Iintop Icheckbound) | Iop(Iintop_imm(Icheckbound, _)) ->
++        | Iop(Iintop Icheckbound) | Iop(Iintop_imm(Icheckbound, _))
++        | Iop(Ispecific(Arch.Ishiftcheckbound _)) ->
+             (* The function call may raise an exception, branching to the
+                nearest enclosing try ... with. Similarly for bounds checks.
+                Hence, everything that must be live at the beginning of
+diff -urN ocaml-4.01.0-clean/asmcomp/spill.ml ocaml-4.01.0/asmcomp/spill.ml
+--- ocaml-4.01.0-clean/asmcomp/spill.ml	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0/asmcomp/spill.ml	2014-04-15 12:08:39.000000000 +0400
+@@ -291,7 +291,8 @@
+       let before =
+         match i.desc with
+           Iop Icall_ind | Iop(Icall_imm _) | Iop(Iextcall _)
+-        | Iop(Iintop Icheckbound) | Iop(Iintop_imm(Icheckbound, _)) ->
++        | Iop(Iintop Icheckbound) | Iop(Iintop_imm(Icheckbound, _))
++        | Iop(Ispecific(Arch.Ishiftcheckbound _)) ->
+             Reg.Set.union before1 !spill_at_raise
+         | _ ->
+             before1 in
+diff -urN ocaml-4.01.0-clean/asmrun/backtrace.c ocaml-4.01.0/asmrun/backtrace.c
+--- ocaml-4.01.0-clean/asmrun/backtrace.c	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0/asmrun/backtrace.c	2014-04-15 12:08:39.000000000 +0400
+@@ -252,12 +252,12 @@
+    useless. We kept it to keep code identical to the byterun/
+    implementation. */
+ 
+-static void print_location(struct loc_info * li, int index)
++static char* print_location(struct loc_info * li, int index,int need_msg)
+ {
+   char * info;
+ 
+   /* Ignore compiler-inserted raise */
+-  if (!li->loc_valid && li->loc_is_raise) return;
++  if (!li->loc_valid && li->loc_is_raise) return NULL;
+ 
+   if (li->loc_is_raise) {
+     /* Initial raise if index == 0, re-raise otherwise */
+@@ -271,13 +271,22 @@
+     else
+       info = "Called from";
+   }
++	char *res = NULL;
+   if (! li->loc_valid) {
+-    fprintf(stderr, "%s unknown location\n", info);
++		if (need_msg) asprintf(&res, "%s unknown location\n", info);
++		else fprintf(stderr,"%s unknown location\n", info);
+   } else {
+-    fprintf (stderr, "%s file \"%s\", line %d, characters %d-%d\n",
++		if (need_msg) 
++			asprintf(&res, "%s file \"%s\", line %d, characters %d-%d\n",
+              info, li->loc_filename, li->loc_lnum,
+              li->loc_startchr, li->loc_endchr);
+-  }
++		else
++			fprintf(stderr,"%s file \"%s\", line %d, characters %d-%d\n",
++             info, li->loc_filename, li->loc_lnum,
++             li->loc_startchr, li->loc_endchr);
++  };
++	if (need_msg) fputs(res,stderr);
++	return res;
+ }
+ 
+ /* Print a backtrace */
+@@ -289,10 +298,26 @@
+ 
+   for (i = 0; i < caml_backtrace_pos; i++) {
+     extract_location_info((frame_descr *) (caml_backtrace_buffer[i]), &li);
+-    print_location(&li, i);
++    print_location(&li, i,0);
+   }
+ }
+ 
++char **caml_print_get_exception_backtrace(void)
++{
++	int i;
++  struct loc_info li;
++	char **res = NULL;
++
++	if (caml_backtrace_pos > 0) {
++		res = malloc(caml_backtrace_pos * sizeof(char*));
++		for (i = 0; i < caml_backtrace_pos; i++) {
++			extract_location_info((frame_descr *) (caml_backtrace_buffer[i]), &li);
++			res[i] = print_location(&li, i,1);
++		}
++	};
++	return res;
++}
++
+ /* Convert the raw backtrace to a data structure usable from OCaml */
+ 
+ CAMLprim value caml_convert_raw_backtrace(value backtrace) {
+diff -urN ocaml-4.01.0-clean/build/distclean.sh ocaml-4.01.0/build/distclean.sh
+--- ocaml-4.01.0-clean/build/distclean.sh	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0/build/distclean.sh	2014-04-15 12:08:39.000000000 +0400
+@@ -21,9 +21,9 @@
+ rm -rf _build
+ rm -f boot/ocamlrun boot/ocamlrun.exe boot/camlheader \
+       boot/myocamlbuild boot/myocamlbuild.native boot/myocamlbuild.native.exe \
+-      myocamlbuild_config.ml config/config.sh config/Makefile \
++      myocamlbuild_config.ml config/config.sh \
+       boot/ocamlyacc tools/cvt_emit.bak tools/*.bak \
+-      config/s.h config/m.h boot/*.cm* _log _*_log*
++      boot/*.cm* _log _*_log*
+ 
+ # from partial boot
+ rm -f driver/main.byte driver/optmain.byte lex/main.byte \
+diff -urN ocaml-4.01.0-clean/byterun/Makefile.common ocaml-4.01.0/byterun/Makefile.common
+--- ocaml-4.01.0-clean/byterun/Makefile.common	2013-08-19 22:21:47.000000000 +0400
++++ ocaml-4.01.0/byterun/Makefile.common	2014-04-15 12:08:39.000000000 +0400
+@@ -61,6 +61,13 @@
+ 
+ install:: install-$(RUNTIMED)
+ 
++installopt:
++	if test -d $(LIBDIR)/caml; then : ; else mkdir $(LIBDIR)/caml; fi
++	for i in $(PUBLIC_INCLUDES); do \
++		sed -f ../tools/cleanup-header $$i > $(LIBDIR)/caml/$$i; \
++  done
++.PHONY: installopt
++
+ install-noruntimed:
+ .PHONY: install-noruntimed
+ 
+diff -urN ocaml-4.01.0-clean/byterun/backtrace.c ocaml-4.01.0/byterun/backtrace.c
+--- ocaml-4.01.0-clean/byterun/backtrace.c	2013-08-02 17:54:22.000000000 +0400
++++ ocaml-4.01.0/byterun/backtrace.c	2014-04-15 12:08:39.000000000 +0400
+@@ -349,6 +349,11 @@
+   }
+ }
+ 
++CAMLexport char** caml_print_get_exception_backtrace(void) {
++	caml_print_exception_backtrace();
++	return NULL;
++}
++
+ /* Convert the backtrace to a data structure usable from OCaml */
+ 
+ CAMLprim value caml_convert_raw_backtrace(value backtrace)
+diff -urN ocaml-4.01.0-clean/byterun/backtrace.h ocaml-4.01.0/byterun/backtrace.h
+--- ocaml-4.01.0-clean/byterun/backtrace.h	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0/byterun/backtrace.h	2014-04-15 12:08:39.000000000 +0400
+@@ -27,5 +27,6 @@
+ extern void caml_stash_backtrace(value exn, code_t pc, value * sp);
+ #endif
+ CAMLextern void caml_print_exception_backtrace(void);
++CAMLextern char** caml_print_get_exception_backtrace(void);
+ 
+ #endif /* CAML_BACKTRACE_H */
+diff -urN ocaml-4.01.0-clean/byterun/fail.h ocaml-4.01.0/byterun/fail.h
+--- ocaml-4.01.0-clean/byterun/fail.h	2013-03-10 02:38:52.000000000 +0400
++++ ocaml-4.01.0/byterun/fail.h	2014-04-15 12:08:39.000000000 +0400
+@@ -60,6 +60,9 @@
+ extern "C" {
+ #endif
+ 
++typedef void (*uncaught_exception_callback_t)(const char* exn,int bc,char** bv);
++extern uncaught_exception_callback_t uncaught_exception_callback;
++
+ CAMLextern void caml_raise (value bucket) Noreturn;
+ CAMLextern void caml_raise_constant (value tag) Noreturn;
+ CAMLextern void caml_raise_with_arg (value tag, value arg) Noreturn;
+diff -urN ocaml-4.01.0-clean/byterun/printexc.c ocaml-4.01.0/byterun/printexc.c
+--- ocaml-4.01.0-clean/byterun/printexc.c	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0/byterun/printexc.c	2014-04-15 12:08:39.000000000 +0400
+@@ -24,6 +24,8 @@
+ #include "mlvalues.h"
+ #include "printexc.h"
+ 
++uncaught_exception_callback_t uncaught_exception_callback = NULL;
++
+ struct stringbuf {
+   char * ptr;
+   char * end;
+@@ -111,15 +113,22 @@
+   caml_backtrace_pos = saved_backtrace_pos;
+   /* Display the uncaught exception */
+   fprintf(stderr, "Fatal error: exception %s\n", msg);
+-  free(msg);
+   /* Display the backtrace if available */
++	char **backtraces = NULL;
+   if (caml_backtrace_active
+ #ifndef NATIVE_CODE
+       && !caml_debugger_in_use
+ #endif
+       ) {
+-    caml_print_exception_backtrace();
++    backtraces = caml_print_get_exception_backtrace();
+   }
+   /* Terminate the process */
++	if (uncaught_exception_callback != NULL) uncaught_exception_callback(msg,caml_backtrace_active ? caml_backtrace_pos : 0,backtraces);
++  free(msg);
++	if (backtraces != NULL) {
++		int i;
++		for (i = 0; i < caml_backtrace_pos; i++) if (backtraces[i]) free(backtraces[i]);
++		free(backtraces);
++	};
+   exit(2);
+ }
+diff -urN ocaml-4.01.0-clean/config/Makefile ocaml-4.01.0/config/Makefile
+--- ocaml-4.01.0-clean/config/Makefile	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.01.0/config/Makefile	2014-04-15 12:08:39.000000000 +0400
+@@ -0,0 +1,77 @@
++# generated by ./configure 
++PREFIX=/usr/local/ocaml/android
++PLATFORM=/Users/serp/android/ndk/platforms/android-8/arch-arm
++SDK=/Users/serp/android/ndk/toolchains/arm-linux-androideabi-4.7/prebuilt/darwin-x86
++BINDIR=$(PREFIX)/bin
++LIBDIR=$(PREFIX)/lib
++STUBLIBDIR=$(LIBDIR)/stublibs
++MANDIR=$(PREFIX)/man
++MANEXT=1
++RANLIB=$(SDK)/bin/arm-linux-androideabi-ranlib
++RANLIBCMD=$(RANLIB)
++ARCMD=$(SDK)/bin/arm-linux-androideabi-ar
++SHARPBANGSCRIPTS=true
++BNG_ARCH=generic
++BNG_ASM_LEVEL=0
++PTHREAD_LINK=
++LIBBFD_LINK=-lbfd -ldl -liberty -lz
++#-mfloat-abi=softfp -mfpu=vfpv3 
++BYTECC=$(SDK)/bin/arm-linux-androideabi-gcc -march=armv7-a --sysroot=$(PLATFORM)
++BYTECCCOMPOPTS=-fno-defer-pop -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -D__ANDROID__
++BYTECCLINKOPTS= -Wl,-E
++#BYTECCLIBS= -lm  -ldl -lcurses -lpthread
++#BYTECCLIBS= -lm  -ldl -lcurses -lpthread
++BYTECCLIBS= -lm  -ldl 
++BYTECCRPATH=-Wl,-rpath,
++EXE=
++SUPPORTS_SHARED_LIBRARIES=true
++SHAREDCCCOMPOPTS=-fPIC
++MKSHAREDLIBRPATH=-Wl,-rpath,
++NATDYNLINKOPTS=-Wl,-E
++SYSLIB=-l$(1)
++#ml let syslib x = "-l"^x;;
++
++### How to build a static library
++MKLIB=$(ARCMD) rc $(1) $(2); $(RANLIB) $(1)
++####ml let mklib out files opts = Printf.sprintf "$(ARCMD) rc %s %s %s;$(RANLIBCMD) %s" out opts files out;;
++#ml let mklib out files opts = "$(ARCMD) rc " ^ out ^ " " ^ opts ^ " " ^ files ^ "; $(RANLIBCMD) " ^ out;;
++ARCH=arm
++MODEL=armv7
++SYSTEM=linux_eabihf
++NATIVECC=$(BYTECC)
++NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -D__ANDROID__
++NATIVECCPROFOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -D__ANDROID__
++NATIVECCLINKOPTS=
++NATIVECCRPATH=-Wl,-rpath,
++NATIVECCLIBS= -lm  -ldl
++ASM=$(NATIVECC) -D__ARM_EABI__ -c 
++ASPP=$(ASM)
++ASPPPROFFLAGS=-DPROFILING
++PROFILING=noprof
++DYNLINKOPTS= -ldl
++OTHERLIBRARIES=unix str num dynlink bigarray threads
++DEBUGGER=ocamldebugger
++CC_PROFILE=-pg
++SYSTHREAD_SUPPORT=false
++PARTIALLD=$(SDK)/bin/arm-linux-androideabi-ld -r
++PACKLD=$(PARTIALLD) $(NATIVECCLINKOPTS) -o\ 
++DLLCCCOMPOPTS=
++IFLEXDIR=
++O=o
++A=a
++SO=so
++EXT_OBJ=.o
++EXT_ASM=.s
++EXT_LIB=.a
++EXT_DLL=.so
++EXTRALIBS=
++CCOMPTYPE=cc
++TOOLCHAIN=cc
++NATDYNLINK=true
++CMXS=cmxs
++MKEXE=$(BYTECC)
++MKDLL=$(NATIVECC) -shared
++MKMAINDLL=$(NATIVECC) -shared
++RUNTIMED=noruntimed
++ASM_CFI_SUPPORTED=true
++WITH_FRAME_POINTERS=false
+diff -urN ocaml-4.01.0-clean/config/m.h ocaml-4.01.0/config/m.h
+--- ocaml-4.01.0-clean/config/m.h	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.01.0/config/m.h	2014-04-15 12:08:39.000000000 +0400
+@@ -0,0 +1,16 @@
++#ifndef __PIC__
++#  define ARCH_CODE32
++#endif
++#undef ARCH_SIXTYFOUR
++#define SIZEOF_INT 4
++#define SIZEOF_LONG 4
++#define SIZEOF_PTR 4
++#define SIZEOF_SHORT 2
++#define ARCH_INT64_TYPE long long
++#define ARCH_UINT64_TYPE unsigned long long
++#define ARCH_INT64_PRINTF_FORMAT "ll"
++#undef ARCH_BIG_ENDIAN
++#undef ARCH_ALIGN_DOUBLE
++#undef ARCH_ALIGN_INT64
++#undef NONSTANDARD_DIV_MOD
++#define ASM_CFI_SUPPORTED
+diff -urN ocaml-4.01.0-clean/config/s.h ocaml-4.01.0/config/s.h
+--- ocaml-4.01.0-clean/config/s.h	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.01.0/config/s.h	2014-04-15 12:08:39.000000000 +0400
+@@ -0,0 +1,51 @@
++#define OCAML_OS_TYPE "Unix"
++#define OCAML_STDLIB_DIR "/usr/local/ocaml/android/lib"
++#define POSIX_SIGNALS
++#define HAS_C99_FLOAT_OPS
++#define HAS_GETRUSAGE
++#define HAS_TIMES
++#undef HAS_TERMCAP
++#define HAS_SOCKETS
++#define HAS_SOCKLEN_T
++#define HAS_INET_ATON
++#define HAS_IPV6
++#define HAS_UNISTD
++#define HAS_OFF_T
++#define HAS_DIRENT
++#define HAS_REWINDDIR
++#define HAS_LOCKF
++#define HAS_MKFIFO
++#define HAS_GETCWD
++#define HAS_GETWD
++#define HAS_GETPRIORITY
++#define HAS_UTIME
++#define HAS_UTIMES
++#define HAS_DUP2
++#define HAS_FCHMOD
++#define HAS_TRUNCATE
++#define HAS_SYS_SELECT_H
++#define HAS_SELECT
++#define HAS_SYMLINK
++#define HAS_WAITPID
++#define HAS_WAIT4
++#define HAS_GETGROUPS
++#define HAS_SETGROUPS
++#define HAS_INITGROUPS
++#define HAS_TERMIOS
++#define HAS_ASYNC_IO
++#define HAS_SETITIMER
++#define HAS_GETHOSTNAME
++#define HAS_UNAME
++#define HAS_GETTIMEOFDAY
++#define HAS_MKTIME
++#define HAS_SETSID
++#define HAS_PUTENV
++#define HAS_LOCALE
++#define SUPPORT_DYNAMIC_LINKING
++#define HAS_MMAP
++#define HAS_PWRITE
++#define HAS_GETHOSTBYNAME_R 6
++#undef HAS_GETHOSTBYADDR_R
++#undef HAS_STACK_OVERFLOW_DETECTION
++#define HAS_SIGWAIT
++#undef HAS_LIBBFD
+diff -urN ocaml-4.01.0-clean/otherlibs/Makefile.shared ocaml-4.01.0/otherlibs/Makefile.shared
+--- ocaml-4.01.0-clean/otherlibs/Makefile.shared	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0/otherlibs/Makefile.shared	2014-04-15 12:08:39.000000000 +0400
+@@ -18,7 +18,7 @@
+ 
+ # Compilation options
+ CC=$(BYTECC)
+-CAMLRUN=$(ROOTDIR)/boot/ocamlrun
++CAMLRUN=ocamlrun
+ COMPFLAGS=-w +33..39 -warn-error A -g $(EXTRACAMLFLAGS)
+ MKLIB=$(CAMLRUN) $(ROOTDIR)/tools/ocamlmklib
+ 
+@@ -65,9 +65,13 @@
+ 	if test -n "$(HEADERS)"; then cp $(HEADERS) $(LIBDIR)/caml/; fi
+ 
+ installopt:
++	cp lib$(CLIBNAME).$(A) $(LIBDIR)/
++	cd $(LIBDIR); $(RANLIB) lib$(CLIBNAME).$(A)
+ 	cp $(CAMLOBJS_NAT) $(LIBNAME).cmxa $(LIBNAME).$(A) $(LIBDIR)/
+ 	cd $(LIBDIR); $(RANLIB) $(LIBNAME).a
++	cp $(CMIFILES) $(CMIFILES:.cmi=.mli) $(LIBDIR)/
+ 	if test -f $(LIBNAME).cmxs; then cp $(LIBNAME).cmxs $(LIBDIR)/; fi
++	if test -n "$(HEADERS)"; then cp $(HEADERS) $(LIBDIR)/caml/; fi
+ 
+ partialclean:
+ 	rm -f *.cm*
+diff -urN ocaml-4.01.0-clean/otherlibs/dynlink/Makefile ocaml-4.01.0/otherlibs/dynlink/Makefile
+--- ocaml-4.01.0-clean/otherlibs/dynlink/Makefile	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0/otherlibs/dynlink/Makefile	2014-04-15 12:08:39.000000000 +0400
+@@ -15,7 +15,7 @@
+ 
+ include ../../config/Makefile
+ 
+-CAMLC=../../boot/ocamlrun ../../ocamlc
++CAMLC=../../ocamlcomp.sh
+ CAMLOPT=../../ocamlcompopt.sh
+ INCLUDES=-I ../../utils -I ../../typing -I ../../bytecomp -I ../../asmcomp
+ COMPFLAGS=-w +33..39 -warn-error A -I ../../stdlib $(INCLUDES)
+diff -urN ocaml-4.01.0-clean/otherlibs/systhreads/Makefile ocaml-4.01.0/otherlibs/systhreads/Makefile
+--- ocaml-4.01.0-clean/otherlibs/systhreads/Makefile	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0/otherlibs/systhreads/Makefile	2014-04-15 12:08:39.000000000 +0400
+@@ -15,7 +15,7 @@
+ 
+ CAMLC=../../ocamlcomp.sh -I ../unix
+ CAMLOPT=../../ocamlcompopt.sh -I ../unix
+-MKLIB=../../boot/ocamlrun ../../tools/ocamlmklib
++MKLIB=../../tools/ocamlmklib
+ COMPFLAGS=-w +33..39 -warn-error A -g
+ 
+ BYTECODE_C_OBJS=st_stubs_b.o
+@@ -61,7 +61,6 @@
+ # modular to me this way. -- Alain
+ 
+ 
+-$(THREAD_OBJS:.cmo=.cmx): ../../ocamlopt
+ 
+ partialclean:
+ 	rm -f *.cm*
+@@ -80,6 +79,10 @@
+ 	cp threads.h $(LIBDIR)/caml/threads.h
+ 
+ installopt:
++	if test -d $(LIBDIR)/threads; then :; else mkdir $(LIBDIR)/threads; fi
++	cp $(THREAD_OBJS:.cmo=.cmi) $(LIBDIR)/threads
++	cp thread.mli mutex.mli condition.mli event.mli threadUnix.mli $(LIBDIR)
++	cp threads.h $(LIBDIR)/caml/threads.h
+ 	cp libthreadsnat.a $(LIBDIR)/libthreadsnat.a
+ 	cd $(LIBDIR); $(RANLIB) libthreadsnat.a
+ 	cp $(THREAD_OBJS:.cmo=.cmx) threads.cmxa threads.a $(LIBDIR)/threads
+diff -urN ocaml-4.01.0-clean/otherlibs/threads/pervasives.ml ocaml-4.01.0/otherlibs/threads/pervasives.ml
+--- ocaml-4.01.0-clean/otherlibs/threads/pervasives.ml	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0/otherlibs/threads/pervasives.ml	2014-04-15 12:08:39.000000000 +0400
+@@ -79,7 +79,7 @@
+ external (lsr) : int -> int -> int = "%lsrint"
+ external (asr) : int -> int -> int = "%asrint"
+ 
+-let min_int = 1 lsl (if 1 lsl 31 = 0 then 30 else 62)
++let min_int = 1 lsl 30
+ let max_int = min_int - 1
+ 
+ (* Floating-point operations *)
+@@ -90,31 +90,31 @@
+ external (-.) : float -> float -> float = "%subfloat"
+ external ( *. ) : float -> float -> float = "%mulfloat"
+ external (/.) : float -> float -> float = "%divfloat"
+-external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
+-external exp : float -> float = "caml_exp_float" "exp" "float"
+-external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
+-external acos : float -> float = "caml_acos_float" "acos" "float"
+-external asin : float -> float = "caml_asin_float" "asin" "float"
+-external atan : float -> float = "caml_atan_float" "atan" "float"
+-external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
++external ( ** ) : float -> float -> float = "caml_power_float" (* "pow" "float" *)
++external exp : float -> float = "caml_exp_float" (* "exp" "float" *)
++external expm1 : float -> float = "caml_expm1_float" (* "caml_expm1" "float" *)
++external acos : float -> float = "caml_acos_float" (* "acos" "float" *)
++external asin : float -> float = "caml_asin_float" (* "asin" "float" *)
++external atan : float -> float = "caml_atan_float" (* "atan" "float" *)
++external atan2 : float -> float -> float = "caml_atan2_float" (* "atan2" "float" *)
+ external hypot : float -> float -> float
+-   = "caml_hypot_float" "caml_hypot" "float"
+-external cos : float -> float = "caml_cos_float" "cos" "float"
+-external cosh : float -> float = "caml_cosh_float" "cosh" "float"
+-external log : float -> float = "caml_log_float" "log" "float"
+-external log10 : float -> float = "caml_log10_float" "log10" "float"
+-external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
+-external sin : float -> float = "caml_sin_float" "sin" "float"
+-external sinh : float -> float = "caml_sinh_float" "sinh" "float"
+-external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
+-external tan : float -> float = "caml_tan_float" "tan" "float"
+-external tanh : float -> float = "caml_tanh_float" "tanh" "float"
+-external ceil : float -> float = "caml_ceil_float" "ceil" "float"
+-external floor : float -> float = "caml_floor_float" "floor" "float"
++   = "caml_hypot_float" (* "caml_hypot" "float" *)
++external cos : float -> float = "caml_cos_float" (* "cos" "float" *)
++external cosh : float -> float = "caml_cosh_float" (* "cosh" "float" *)
++external log : float -> float = "caml_log_float" (* "log" "float" *)
++external log10 : float -> float = "caml_log10_float" (* "log10" "float" *)
++external log1p : float -> float = "caml_log1p_float" (* "caml_log1p" "float" *)
++external sin : float -> float = "caml_sin_float" (* "sin" "float" *)
++external sinh : float -> float = "caml_sinh_float" (* "sinh" "float" *)
++external sqrt : float -> float = "caml_sqrt_float" (* "sqrt" "float" *)
++external tan : float -> float = "caml_tan_float" (* "tan" "float" *)
++external tanh : float -> float = "caml_tanh_float" (* "tanh" "float" *)
++external ceil : float -> float = "caml_ceil_float" (* "ceil" "float" *)
++external floor : float -> float = "caml_floor_float" (* "floor" "float" *)
+ external abs_float : float -> float = "%absfloat"
+ external copysign : float -> float -> float
+-   = "caml_copysign_float" "caml_copysign" "float"
+-external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
++   = "caml_copysign_float" (* "caml_copysign" "float" *)
++external mod_float : float -> float -> float = "caml_fmod_float" (* "fmod" "float" *)
+ external frexp : float -> float * int = "caml_frexp_float"
+ external ldexp : float -> int -> float = "caml_ldexp_float"
+ external modf : float -> float * float = "caml_modf_float"
+diff -urN ocaml-4.01.0-clean/stdlib/Makefile ocaml-4.01.0/stdlib/Makefile
+--- ocaml-4.01.0-clean/stdlib/Makefile	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0/stdlib/Makefile	2014-04-15 12:08:39.000000000 +0400
+@@ -13,7 +13,7 @@
+ 
+ include Makefile.shared
+ 
+-allopt: stdlib.cmxa std_exit.cmx allopt-$(PROFILING)
++allopt: stdlib.cmxa std_exit.cmx camlheader camlheader_ur allopt-$(PROFILING)
+ 
+ allopt-noprof:
+ 
+@@ -23,7 +23,7 @@
+ installopt: installopt-default installopt-$(PROFILING)
+ 
+ installopt-default:
+-	cp stdlib.cmxa stdlib.a std_exit.o *.cmx $(LIBDIR)
++	cp stdlib.cmxa stdlib.a std_exit.o *.cmx *.cmi *.mli *.ml camlheader camlheader_ur $(LIBDIR)
+ 	cd $(LIBDIR); $(RANLIB) stdlib.a
+ 
+ installopt-noprof:
+diff -urN ocaml-4.01.0-clean/stdlib/Makefile.shared ocaml-4.01.0/stdlib/Makefile.shared
+--- ocaml-4.01.0-clean/stdlib/Makefile.shared	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0/stdlib/Makefile.shared	2014-04-15 12:08:39.000000000 +0400
+@@ -12,14 +12,12 @@
+ #########################################################################
+ 
+ include ../config/Makefile
+-RUNTIME=../boot/ocamlrun
+-COMPILER=../ocamlc
+-CAMLC=$(RUNTIME) $(COMPILER)
++RUNTIME=ocamlrun
++CAMLC=ocamlc.opt
+ COMPFLAGS=-strict-sequence -w +33..39 -g -warn-error A -nostdlib
+-OPTCOMPILER=../ocamlopt
+-CAMLOPT=$(RUNTIME) $(OPTCOMPILER)
++CAMLOPT=../ocamlopt.opt
+ OPTCOMPFLAGS=-warn-error A -nostdlib -g
+-CAMLDEP=../boot/ocamlrun ../tools/ocamldep
++CAMLDEP=ocamldep.opt
+ 
+ OBJS=pervasives.cmo $(OTHERS)
+ OTHERS=array.cmo list.cmo char.cmo string.cmo sys.cmo \
+@@ -78,11 +76,6 @@
+ .ml.p.cmx:
+ 	$(CAMLOPT) $(OPTCOMPFLAGS) `./Compflags $@` -p -c -o $*.p.cmx $<
+ 
+-# Dependencies on the compiler
+-$(OBJS) std_exit.cmo: $(COMPILER)
+-$(OBJS:.cmo=.cmi) std_exit.cmi: $(COMPILER)
+-$(OBJS:.cmo=.cmx) std_exit.cmx: $(OPTCOMPILER)
+-$(OBJS:.cmo=.p.cmx) std_exit.p.cmx: $(OPTCOMPILER)
+ 
+ # Dependencies on Pervasives (not tracked by ocamldep)
+ $(OBJS) std_exit.cmo: pervasives.cmi
+diff -urN ocaml-4.01.0-clean/stdlib/camlinternalOO.ml ocaml-4.01.0/stdlib/camlinternalOO.ml
+--- ocaml-4.01.0-clean/stdlib/camlinternalOO.ml	2013-03-19 11:22:12.000000000 +0400
++++ ocaml-4.01.0/stdlib/camlinternalOO.ml	2014-04-15 12:08:39.000000000 +0400
+@@ -79,10 +79,7 @@
+     accu := 223 * !accu + Char.code s.[i]
+   done;
+   (* reduce to 31 bits *)
+-  accu := !accu land (1 lsl 31 - 1);
+-  (* make it signed for 64 bits architectures *)
+-  let tag = if !accu > 0x3FFFFFFF then !accu - (1 lsl 31) else !accu in
+-  (* Printf.eprintf "%s = %d\n" s tag; flush stderr; *)
++  let tag = !accu land (1 lsl 31 - 1) in
+   magic tag
+ 
+ (**** Sparse array ****)
+diff -urN ocaml-4.01.0-clean/stdlib/pervasives.ml ocaml-4.01.0/stdlib/pervasives.ml
+--- ocaml-4.01.0-clean/stdlib/pervasives.ml	2013-06-19 15:46:11.000000000 +0400
++++ ocaml-4.01.0/stdlib/pervasives.ml	2014-04-15 12:08:39.000000000 +0400
+@@ -75,7 +75,7 @@
+ external ( lsr ) : int -> int -> int = "%lsrint"
+ external ( asr ) : int -> int -> int = "%asrint"
+ 
+-let min_int = 1 lsl (if 1 lsl 31 = 0 then 30 else 62)
++let min_int = 1 lsl 30
+ let max_int = min_int - 1
+ 
+ (* Floating-point operations *)
+@@ -86,31 +86,31 @@
+ external ( -. ) : float -> float -> float = "%subfloat"
+ external ( *. ) : float -> float -> float = "%mulfloat"
+ external ( /. ) : float -> float -> float = "%divfloat"
+-external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
+-external exp : float -> float = "caml_exp_float" "exp" "float"
+-external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
+-external acos : float -> float = "caml_acos_float" "acos" "float"
+-external asin : float -> float = "caml_asin_float" "asin" "float"
+-external atan : float -> float = "caml_atan_float" "atan" "float"
+-external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
++external ( ** ) : float -> float -> float = "caml_power_float" (* "pow" "float" *)
++external exp : float -> float = "caml_exp_float" (* "exp" "float" *)
++external expm1 : float -> float = "caml_expm1_float" (* "caml_expm1" "float" *)
++external acos : float -> float = "caml_acos_float" (* "acos" "float" *)
++external asin : float -> float = "caml_asin_float" (* "asin" "float" *)
++external atan : float -> float = "caml_atan_float" (* "atan" "float" *)
++external atan2 : float -> float -> float = "caml_atan2_float" (* "atan2" "float" *)
+ external hypot : float -> float -> float
+-               = "caml_hypot_float" "caml_hypot" "float"
+-external cos : float -> float = "caml_cos_float" "cos" "float"
+-external cosh : float -> float = "caml_cosh_float" "cosh" "float"
+-external log : float -> float = "caml_log_float" "log" "float"
+-external log10 : float -> float = "caml_log10_float" "log10" "float"
+-external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
+-external sin : float -> float = "caml_sin_float" "sin" "float"
+-external sinh : float -> float = "caml_sinh_float" "sinh" "float"
+-external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
+-external tan : float -> float = "caml_tan_float" "tan" "float"
+-external tanh : float -> float = "caml_tanh_float" "tanh" "float"
+-external ceil : float -> float = "caml_ceil_float" "ceil" "float"
+-external floor : float -> float = "caml_floor_float" "floor" "float"
++               = "caml_hypot_float" (* "caml_hypot" "float" *)
++external cos : float -> float = "caml_cos_float" (* "cos" "float" *)
++external cosh : float -> float = "caml_cosh_float" (* "cosh" "float" *)
++external log : float -> float = "caml_log_float" (* "log" "float" *)
++external log10 : float -> float = "caml_log10_float" (* "log10" "float" *)
++external log1p : float -> float = "caml_log1p_float" (* "caml_log1p" "float" *)
++external sin : float -> float = "caml_sin_float" (* "sin" "float" *)
++external sinh : float -> float = "caml_sinh_float" (* "sinh" "float" *)
++external sqrt : float -> float = "caml_sqrt_float" (* "sqrt" "float" *)
++external tan : float -> float = "caml_tan_float" (* "tan" "float" *)
++external tanh : float -> float = "caml_tanh_float" (* "tanh" "float" *)
++external ceil : float -> float = "caml_ceil_float" (* "ceil" "float" *)
++external floor : float -> float = "caml_floor_float" (* "floor" "float" *)
+ external abs_float : float -> float = "%absfloat"
+ external copysign : float -> float -> float
+-                  = "caml_copysign_float" "caml_copysign" "float"
+-external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
++                  = "caml_copysign_float" (* "caml_copysign" "float" *)
++external mod_float : float -> float -> float = "caml_fmod_float" (* "fmod" "float" *)
+ external frexp : float -> float * int = "caml_frexp_float"
+ external ldexp : float -> int -> float = "caml_ldexp_float"
+ external modf : float -> float * float = "caml_modf_float"
+diff -urN ocaml-4.01.0-clean/stdlib/pervasives.mli ocaml-4.01.0/stdlib/pervasives.mli
+--- ocaml-4.01.0-clean/stdlib/pervasives.mli	2013-07-24 13:21:49.000000000 +0400
++++ ocaml-4.01.0/stdlib/pervasives.mli	2014-04-15 12:08:39.000000000 +0400
+@@ -273,82 +273,82 @@
+ external ( /. ) : float -> float -> float = "%divfloat"
+ (** Floating-point division. *)
+ 
+-external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
++external ( ** ) : float -> float -> float = "caml_power_float" (* "pow" "float" *)
+ (** Exponentiation. *)
+ 
+-external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
++external sqrt : float -> float = "caml_sqrt_float" (* "sqrt" "float" *)
+ (** Square root. *)
+ 
+-external exp : float -> float = "caml_exp_float" "exp" "float"
++external exp : float -> float = "caml_exp_float" (* "exp" "float" *)
+ (** Exponential. *)
+ 
+-external log : float -> float = "caml_log_float" "log" "float"
++external log : float -> float = "caml_log_float" (* "log" "float" *)
+ (** Natural logarithm. *)
+ 
+-external log10 : float -> float = "caml_log10_float" "log10" "float"
++external log10 : float -> float = "caml_log10_float" (* "log10" "float" *)
+ (** Base 10 logarithm. *)
+ 
+-external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
++external expm1 : float -> float = "caml_expm1_float" (* "caml_expm1" "float" *)
+ (** [expm1 x] computes [exp x -. 1.0], giving numerically-accurate results
+     even if [x] is close to [0.0].
+     @since 3.12.0
+ *)
+ 
+-external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
++external log1p : float -> float = "caml_log1p_float" (* "caml_log1p" "float" *)
+ (** [log1p x] computes [log(1.0 +. x)] (natural logarithm),
+     giving numerically-accurate results even if [x] is close to [0.0].
+     @since 3.12.0
+ *)
+ 
+-external cos : float -> float = "caml_cos_float" "cos" "float"
++external cos : float -> float = "caml_cos_float" (* "cos" "float" *)
+ (** Cosine.  Argument is in radians. *)
+ 
+-external sin : float -> float = "caml_sin_float" "sin" "float"
++external sin : float -> float = "caml_sin_float" (* "sin" "float" *)
+ (** Sine.  Argument is in radians. *)
+ 
+-external tan : float -> float = "caml_tan_float" "tan" "float"
++external tan : float -> float = "caml_tan_float" (* "tan" "float" *)
+ (** Tangent.  Argument is in radians. *)
+ 
+-external acos : float -> float = "caml_acos_float" "acos" "float"
++external acos : float -> float = "caml_acos_float" (* "acos" "float" *)
+ (** Arc cosine.  The argument must fall within the range [[-1.0, 1.0]].
+     Result is in radians and is between [0.0] and [pi]. *)
+ 
+-external asin : float -> float = "caml_asin_float" "asin" "float"
++external asin : float -> float = "caml_asin_float" (* "asin" "float" *)
+ (** Arc sine.  The argument must fall within the range [[-1.0, 1.0]].
+     Result is in radians and is between [-pi/2] and [pi/2]. *)
+ 
+-external atan : float -> float = "caml_atan_float" "atan" "float"
++external atan : float -> float = "caml_atan_float" (* "atan" "float" *)
+ (** Arc tangent.
+     Result is in radians and is between [-pi/2] and [pi/2]. *)
+ 
+-external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
++external atan2 : float -> float -> float = "caml_atan2_float" (* "atan2" "float" *)
+ (** [atan2 y x] returns the arc tangent of [y /. x].  The signs of [x]
+     and [y] are used to determine the quadrant of the result.
+     Result is in radians and is between [-pi] and [pi]. *)
+ 
+ external hypot : float -> float -> float
+-               = "caml_hypot_float" "caml_hypot" "float"
++               = "caml_hypot_float" (* "caml_hypot" "float" *)
+ (** [hypot x y] returns [sqrt(x *. x + y *. y)], that is, the length
+   of the hypotenuse of a right-angled triangle with sides of length
+   [x] and [y], or, equivalently, the distance of the point [(x,y)]
+   to origin.
+   @since 4.00.0  *)
+ 
+-external cosh : float -> float = "caml_cosh_float" "cosh" "float"
++external cosh : float -> float = "caml_cosh_float" (* "cosh" "float" *)
+ (** Hyperbolic cosine.  Argument is in radians. *)
+ 
+-external sinh : float -> float = "caml_sinh_float" "sinh" "float"
++external sinh : float -> float = "caml_sinh_float" (* "sinh" "float" *)
+ (** Hyperbolic sine.  Argument is in radians. *)
+ 
+-external tanh : float -> float = "caml_tanh_float" "tanh" "float"
++external tanh : float -> float = "caml_tanh_float" (* "tanh" "float" *)
+ (** Hyperbolic tangent.  Argument is in radians. *)
+ 
+-external ceil : float -> float = "caml_ceil_float" "ceil" "float"
++external ceil : float -> float = "caml_ceil_float" (* "ceil" "float" *)
+ (** Round above to an integer value.
+     [ceil f] returns the least integer value greater than or equal to [f].
+     The result is returned as a float. *)
+ 
+-external floor : float -> float = "caml_floor_float" "floor" "float"
++external floor : float -> float = "caml_floor_float" (* "floor" "float" *)
+ (** Round below to an integer value.
+     [floor f] returns the greatest integer value less than or
+     equal to [f].
+@@ -358,14 +358,14 @@
+ (** [abs_float f] returns the absolute value of [f]. *)
+ 
+ external copysign : float -> float -> float
+-                  = "caml_copysign_float" "caml_copysign" "float"
++                  = "caml_copysign_float" (* "caml_copysign" "float" *)
+ (** [copysign x y] returns a float whose absolute value is that of [x]
+   and whose sign is that of [y].  If [x] is [nan], returns [nan].
+   If [y] is [nan], returns either [x] or [-. x], but it is not
+   specified which.
+   @since 4.00.0  *)
+ 
+-external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
++external mod_float : float -> float -> float = "caml_fmod_float" (* "fmod" "float" *)
+ (** [mod_float a b] returns the remainder of [a] with respect to
+    [b].  The returned value is [a -. n *. b], where [n]
+    is the quotient [a /. b] rounded towards zero to an integer. *)
+diff -urN ocaml-4.01.0-clean/tools/Makefile.shared ocaml-4.01.0/tools/Makefile.shared
+--- ocaml-4.01.0-clean/tools/Makefile.shared	2013-06-05 20:34:40.000000000 +0400
++++ ocaml-4.01.0/tools/Makefile.shared	2014-04-15 12:08:39.000000000 +0400
+@@ -12,10 +12,10 @@
+ 
+ include ../config/Makefile
+ 
+-CAMLRUN=../boot/ocamlrun
+-CAMLC=$(CAMLRUN) ../boot/ocamlc -strict-sequence -nostdlib -I ../boot
+-CAMLOPT=$(CAMLRUN) ../ocamlopt -nostdlib -I ../stdlib
+-CAMLLEX=$(CAMLRUN) ../boot/ocamllex
++CAMLRUN=ocamlrun
++CAMLC=ocamlc.opt -strict-sequence -I ../boot
++CAMLOPT=ocamlopt.opt
++CAMLLEX=ocamllex
+ INCLUDES=-I ../utils -I ../parsing -I ../typing -I ../bytecomp -I ../asmcomp \
+ 	 -I ../driver
+ COMPFLAGS= -w +32..39 -warn-error A $(INCLUDES)
