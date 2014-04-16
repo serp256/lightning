@@ -47,7 +47,7 @@ value ml_gamecenter_init(value param) {
 	// call static method createGameCenter, this creates GC Adapter instance
 //	jobject gcLocalRef = (*env)->CallStaticObjectMethod(env, gcManagerCls, jCreateM);
 	int kind = Int_val(param);
-	jobject gcLocalRef = (*env)->CallStaticIntMethod(env, gcManagerCls, jCreateM, kind);
+	jobject gcLocalRef = (*env)->CallStaticObjectMethod(env, gcManagerCls, jCreateM, kind);
 	if (gcLocalRef == NULL) {
   	    (*env)->DeleteLocalRef(env, gcManagerCls);
   	    (*env)->DeleteLocalRef(env, jCreateM);
