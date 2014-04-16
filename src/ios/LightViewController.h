@@ -60,5 +60,4 @@
 @end
 */
 
-
-
+void flushErrlog();

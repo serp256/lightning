@@ -31,24 +31,100 @@ value keyboardCallbackUpdate, keyboardCallbackReturn;
 
 static NSMutableArray *exceptionInfo = nil;
 
+static NSString *errlogPath() {
+	static NSString *path = nil;
+	if (path == nil) path = [NSString stringWithFormat:@"%@error-log", NSTemporaryDirectory()];
+
+	return path;
+}
+
+void flushErrlog() {
+	NSFileManager *fmngr = [NSFileManager defaultManager];
+	NSString *errlog = errlogPath();
+
+	if ([fmngr fileExistsAtPath:errlog]) {
+		NSData *body = [NSData dataWithContentsOfFile:errlog];
+
+		NSString *bodyStr = [[NSString alloc] initWithData:body encoding:NSUTF8StringEncoding];
+		NSLog(@"%@", bodyStr);
+
+		NSString *url = [NSString stringWithFormat:@"http://mconnect.redspell.ru/clers?custom=%@", [[NSBundle mainBundle] bundleIdentifier]];
+		NSLog(@"url %@", url);
+		NSMutableURLRequest *r = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
+		[r setHTTPMethod:@"POST"];
+		[r setHTTPBody:body];
+		[r setTimeoutInterval:0.5];
+
+		if ([NSURLConnection canHandleRequest:r]) {
+			NSURLResponse *response = nil;
+			NSError *err = nil;
+			[NSURLConnection sendSynchronousRequest:r returningResponse:&response error:&err];
+
+			if (err == nil && [response respondsToSelector:@selector(statusCode)] && [response statusCode] == 200) {
+				[fmngr removeItemAtPath:errlog error:nil];
+			}
+		}
+	}
+}
+
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	NSBundle *bundle = [NSBundle mainBundle];
-	NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
-  subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
-	UIDevice * dev = [UIDevice currentDevice];
-	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
-	NSString * body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
-	body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
+	NSDate *now = [NSDate date];
+	UIDevice *dev = [UIDevice currentDevice];
+	NSString *appName = [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"];
+	NSString *appVer = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+	NSString *exnInf = [NSString string];
+	NSString *backtrace = [NSString string];
+
 	for (NSString *info in exceptionInfo) {
-		body = [body stringByAppendingFormat:@"%@\n",info];
+		exnInf = [exnInf stringByAppendingFormat:@"\t%@\n", info];
 	};
-	body = [body stringByAppendingFormat:@"%s\n",exn];
+
 	for (int i = 0; i < bc; i++) {
-		if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
+		if (bv[i]) backtrace = [backtrace stringByAppendingFormat:@"\t%@", [NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
 	};
-	NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", supportEmail, subj, body];
-  email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-  [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];
+
+	NSString *report = [NSString stringWithFormat:@"\n------------------------------------------------------\ndate: %@\ndevice: %@(%@)\napplication: %@(%@)\nexception:\n\t%s\n%@", now, dev.model, dev.systemVersion, appName, appVer, exn, backtrace];
+	if ([exnInf length]) {
+		report = [report stringByAppendingFormat:@"exception info:\n%@\n", exnInf];
+	}
+
+	NSFileManager *fmngr = [NSFileManager defaultManager];
+	NSString *errlog = errlogPath();
+
+	if ([fmngr fileExistsAtPath:errlog] == NO) {
+		[fmngr createFileAtPath:errlog contents:[report dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
+	} else {
+		NSFileHandle *f = [NSFileHandle fileHandleForWritingAtPath:errlog];
+		[f seekToEndOfFile];
+		[f writeData:[report dataUsingEncoding:NSUTF8StringEncoding]];
+		[f closeFile];
+	}
+
+	flushErrlog();
+
+
+
+
+	// NSString *body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
+
+	// NSBundle *bundle = [NSBundle mainBundle];
+	// NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
+ //  subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
+	// UIDevice * dev = [UIDevice currentDevice];
+	// NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+	// NSString * body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
+	// body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
+	// for (NSString *info in exceptionInfo) {
+	// 	body = [body stringByAppendingFormat:@"%@\n",info];
+	// };
+	// body = [body stringByAppendingFormat:@"%s\n",exn];
+	// for (int i = 0; i < bc; i++) {
+	// 	if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
+	// };
+	// NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", supportEmail, subj, body];
+ //  email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+ //  [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];
 }
 
 +alloc {

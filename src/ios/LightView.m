@@ -10,6 +10,7 @@
 #import <CoreMotion/CMAccelerometer.h>
 #import "motion.h"
 #import "mobile_res.h"
+#import "LightViewController.h"
 
 // --- private interface ---------------------------------------------------------------------------
 
@@ -257,6 +258,7 @@
 	/*caml_acquire_runtime_system();
 	mlstage_start(mStage);
 	caml_release_runtime_system();*/
+	flushErrlog();
 }
 
 - (void)stop
