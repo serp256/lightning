@@ -1,4 +1,4 @@
-value init: ?callback:(bool -> unit) ->	?amazon:bool -> unit -> unit;
+value init: ?silent:bool -> ?callback:(bool -> unit) ->	?amazon:bool -> unit -> unit;
 value is_connected: unit -> bool;
 value playerID: unit -> option string;
 IFPLATFORM(ios pc)

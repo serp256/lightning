@@ -25,7 +25,7 @@ static void clearGameCenter(JNIEnv *env) {
 }
 
 
-value ml_gamecenter_init(value param) {
+value ml_gamecenter_init(value silent, value param) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_game_center_init");

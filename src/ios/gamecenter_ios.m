@@ -10,33 +10,60 @@
 
 #include "texture_common.h"
 
-value ml_gamecenter_init(value param) {
+static UIViewController *initViewController = nil;
+static uint8_t silent;
+
+value ml_gamecenter_init(value vsilent, value param) {
+    NSLog(@"ml_gamecenter_init");
 	BOOL localPlayerClassAvailable = (NSClassFromString(@"GKLocalPlayer")) != nil;
 	// The device must be running iOS 4.1 or later.
 	if (!localPlayerClassAvailable) return Val_false;
 	NSString *reqSysVer = @"4.1";
 	NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
 	if ([currSysVer compare:reqSysVer options:NSNumericSearch] == NSOrderedAscending) return Val_false;
-	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
-	[localPlayer authenticateWithCompletionHandler:^(NSError *error) {
-		NSLog(@"GameCenter Initialized");
-		NSCAssert([NSThread isMainThread],@"GameCenter Init call not in main thread");
-		//caml_leave_blocking_section();
-		value res = Val_false;
-		if (localPlayer.isAuthenticated) res = Val_true;
-		caml_callback(*caml_named_value("game_center_initialized"),res);
-		//caml_enter_blocking_section();
-	 }];
-	/*[localPlayer authenticateHandler:^(UIViewController *viewController, NSError *error) {
-		NSLog(@"GameCenter Initialized");
-		if (viewController) [[LightViewController instance] presentViewController:viewController];
-		else {
-			NSCAssert([NSThread isMainThread],@"GameCenter Init call not in main thread");
-			value res = Val_false;
-			if (localPlayer.isAuthenticated) res = Val_true;
-			caml_callback(*caml_named_value("game_center_initialized"),res);
-		}
-	}];*/
+
+    silent = vsilent == Val_true;
+
+    if (initViewController != nil) {
+        NSLog(@"---has viewcontoller to display");
+        [[LightViewController sharedInstance] presentModalViewController:initViewController animated:YES];
+        initViewController = nil;
+    } else {
+        GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
+        localPlayer.authenticateHandler =
+            ^(UIViewController *viewController, NSError *error) {
+                NSLog(@"---authenticateHandler call");
+                value res = Val_true;
+
+                if (error) {
+                    NSLog(@"---error %@", error);
+                    res = Val_false;
+                } else if (viewController != nil) {
+                    NSLog(@"---not null viewController");
+
+                    if (silent) {
+                        NSLog(@"---silent mode, login failed");
+
+                        initViewController = viewController;
+                        res = Val_false;
+                    }
+                    else {
+                        NSLog(@"---presenting login viewController");
+
+                        [[LightViewController sharedInstance] presentModalViewController:viewController animated:YES];
+                        return;
+                    }
+                } else {
+                    NSLog(@"---auth result %d", localPlayer.authenticated);
+                    res = localPlayer.authenticated ? Val_true : Val_false;
+                    initViewController = nil;
+                }
+
+                silent = 0;
+                caml_callback(*caml_named_value("game_center_initialized"), res);
+            };
+    }
+
 	return Val_true;
 }
 
@@ -46,7 +73,7 @@ value ml_gamecenter_playerID(value unit) {
 	GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
 	PRINT_DEBUG("gamcenters: palyerID");
 	value res;
-	if (localPlayer.isAuthenticated) {
+	if (localPlayer.authenticated) {
 		NSString *playerID = localPlayer.playerID;
 		pid = caml_copy_string([playerID cStringUsingEncoding:NSASCIIStringEncoding]);
 		PRINT_DEBUG("playerID: %s",String_val(pid));

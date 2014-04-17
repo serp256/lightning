@@ -57,6 +57,7 @@
 
 - (void)setup
 {
+	flushErrlog();
     NSLog(@"setup LightView");
     if (mContext) return; // already initialized!
     
@@ -258,7 +259,6 @@
 	/*caml_acquire_runtime_system();
 	mlstage_start(mStage);
 	caml_release_runtime_system();*/
-	flushErrlog();
 }
 
 - (void)stop

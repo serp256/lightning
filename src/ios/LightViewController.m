@@ -32,15 +32,14 @@ value keyboardCallbackUpdate, keyboardCallbackReturn;
 static NSMutableArray *exceptionInfo = nil;
 
 static NSString *errlogPath() {
-	static NSString *path = nil;
-	if (path == nil) path = [NSString stringWithFormat:@"%@error-log", NSTemporaryDirectory()];
-
-	return path;
+	return [NSString stringWithFormat:@"%@error-log", NSTemporaryDirectory()];
 }
 
 void flushErrlog() {
 	NSFileManager *fmngr = [NSFileManager defaultManager];
 	NSString *errlog = errlogPath();
+
+	NSLog(@"fmngr %@ %@", fmngr, errlog);
 
 	if ([fmngr fileExistsAtPath:errlog]) {
 		NSData *body = [NSData dataWithContentsOfFile:errlog];
