@@ -68,11 +68,11 @@ value init ?(silent = False) ?callback ?amazon:(amazon'=False) () =
       )
     else ()
   | Initializing callbacks ->
-    let () = debug "Initializing" in
-      match callback with
+    let () = debug "Initializing" in ()
+(*       match callback with
       [ Some c -> Queue.add c callbacks
       | None -> ()
-      ]
+      ] *)
   | Initialized ->
     let () = debug "Initialized" in
       match callback with
