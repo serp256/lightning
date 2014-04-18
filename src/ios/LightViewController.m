@@ -66,6 +66,26 @@ void flushErrlog() {
 	}
 }
 
+void mlMailUncaughtException(const char* exn, int bc, char** bv) {
+        NSBundle *bundle = [NSBundle mainBundle];
+        NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
+  subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
+        UIDevice * dev = [UIDevice currentDevice];
+        NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+        NSString * body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
+        body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
+        for (NSString *info in exceptionInfo) {
+                body = [body stringByAppendingFormat:@"%@\n",info];
+        };
+        body = [body stringByAppendingFormat:@"%s\n",exn];
+        for (int i = 0; i < bc; i++) {
+                if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
+        };
+        NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", supportEmail, subj, body];
+  email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+  [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];
+}
+
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	NSBundle *bundle = [NSBundle mainBundle];
 	NSDate *now = [NSDate date];
@@ -101,29 +121,6 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	}
 
 	flushErrlog();
-
-
-
-
-	// NSString *body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
-
-	// NSBundle *bundle = [NSBundle mainBundle];
-	// NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
- //  subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
-	// UIDevice * dev = [UIDevice currentDevice];
-	// NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
-	// NSString * body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
-	// body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
-	// for (NSString *info in exceptionInfo) {
-	// 	body = [body stringByAppendingFormat:@"%@\n",info];
-	// };
-	// body = [body stringByAppendingFormat:@"%s\n",exn];
-	// for (int i = 0; i < bc; i++) {
-	// 	if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
-	// };
-	// NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", supportEmail, subj, body];
- //  email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
- //  [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];
 }
 
 +alloc {

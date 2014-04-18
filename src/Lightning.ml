@@ -195,3 +195,9 @@ value fireLightningEvent (_:string) = ();
 value clearNativeEventListener () = ();
 value setNativeEventListener l = ();
 ENDPLATFORM;
+
+IFPLATFORM(ios)
+external debugErrReporting: unit -> unit = "ml_debugErrReporting";
+ELSE
+value debugErrReporting () = ();
+ENDPLATFORM;

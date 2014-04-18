@@ -61,3 +61,4 @@
 */
 
 void flushErrlog();
+void mlMailUncaughtException(const char* exn, int bc, char** bv);
