@@ -93,7 +93,7 @@ value playerID () =
 
 ELSE
 
-value init ?callback ?amazon:(amazon'=False) () = 
+value init ?(silent = False) ?callback ?amazon:(amazon'=False) () = 
   match callback with
   [ Some c -> c False
   | None -> ()

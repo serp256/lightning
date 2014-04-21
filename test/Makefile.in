@@ -31,8 +31,8 @@ PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma  \
 					../src/plugins/tapjoy/tapjoy.cma \
 					../src/plugins/vk/NativeVk.cma \
 
-$(TARGET).native: $(MLFILES) $(TARGET).cmo 
-	$(OCAMLC) -custom -verbose -o test.native  -g  \
+$(TARGET).byte: $(MLFILES) $(TARGET).cmo 
+	$(OCAMLC) -custom -verbose -o test.byte  -g  \
 	../src/plugins/facebook/facebook.cma \
 	../src/plugins/remote-notifications/RemoteNotifications.cmo \
 	-I ../src ../src/lightning.cma  $(OAUTH) $(SOCIAL) $(PLUGINS) $(MLFILES) $(TARGET).cmo \
