@@ -189,7 +189,10 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
     PRINT_DEBUG("checkpoint1");
 
     if (!bndlCls) {
-        bndlCls = (*env)->FindClass(env, "android/os/Bundle");
+        jclass cls = (*env)->FindClass(env, "android/os/Bundle");
+        bndlCls = (*env)->NewGlobalRef(env, cls);
+        (*env)->DeleteLocalRef(env, cls);
+
         bndlCid = (*env)->GetMethodID(env, bndlCls, "<init>", "()V");
         bndlPutStrMid = (*env)->GetMethodID(env, bndlCls, "putString", "(Ljava/lang/String;Ljava/lang/String;)V");
     }

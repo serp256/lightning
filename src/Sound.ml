@@ -26,9 +26,9 @@ class type virtual channel  =
   end;
 
 
-IFDEF IOS THEN
-
 Callback.register_exception "Audio_error" (Audio_error "");
+
+IFDEF IOS THEN
 
 external init': category -> unit -> unit = "ml_sound_init";
 
@@ -218,21 +218,25 @@ value createChannel snd =
 ELSE
   IFDEF ANDROID THEN
     type avplayer;
-    type sound = [ ALSound of int | AVSound of avplayer ];
+
+    type alsound;
+    type alplayer;
+
+    type sound = [ ALSound of alsound | AVSound of avplayer ];
 
     (* type sound = int; *)
-    value _SND_DURATION = 5.;
+    (* value _SND_DURATION = 5.; *)
 
     external init : unit -> unit = "ml_alsoundInit";
 
     value setMasterVolume (v:float) = (); (* fixme *)
 
-    external alsoundLoad : string -> int = "ml_alsoundLoad";
-    external alsoundPlay : int -> float -> bool -> int = "ml_alsoundPlay"; (* soundId -> volume -> loop -> streamId *)
-    external alsoundPause : int -> unit = "ml_alsoundPause";
-    external alsoundStop : int -> unit = "ml_alsoundStop";
-    external alsoundSetVolume : int -> float -> unit = "ml_alsoundSetVolume";
-    external alsoundSetLoop : int -> bool -> unit = "ml_alsoundSetLoop";
+    external alsoundLoad : string -> alsound = "ml_alsoundLoad";
+    external alsoundPlay : alsound -> int -> bool -> (unit -> unit) -> alplayer = "ml_alsoundPlay"; (* soundId -> volume -> loop -> streamId *)
+    external alsoundPause : alplayer -> unit = "ml_alsoundPause";
+    external alsoundStop : alplayer -> unit = "ml_alsoundStop";
+    external alsoundSetVolume : alplayer -> int -> unit = "ml_alsoundSetVolume";
+    external alsoundSetLoop : alplayer -> bool -> unit = "ml_alsoundSetLoop";
 
     external avsound_create_player : string -> avplayer = "ml_avsound_create_player";
     external avsound_playback : avplayer -> string -> unit = "ml_avsound_playback";
@@ -255,7 +259,7 @@ ELSE
       value mutable isPlaying = False;
       value mutable paused = False;
       value mutable completed = False;
-      value mutable volume = 0.;
+      value mutable volume = 100.;
 
       method private asEventTarget = (self :> channel);
 
@@ -326,9 +330,6 @@ ELSE
         value mutable stream = None;
         value mutable volume = 1.;
         value mutable loop = False;
-        value mutable startMoment = 0.;
-        value mutable pauseMoment = 0.;
-        value mutable timer_id = None;
         value mutable state = SoundInitial;
         
         method private asEventTarget = (self :> channel);
@@ -336,44 +337,33 @@ ELSE
         method play () = 
         (
 						debug "play\n%!";
-          stream := Some (alsoundPlay sound volume loop);
+          stream := Some (alsoundPlay sound (int_of_float (volume *. 100.)) loop self#finished);
           state := SoundPlaying;
-          timer_id := Some (Timers.start _SND_DURATION self#finished); (* find way to get real duration  *)
         );
 
         method private finished () =
 				(
-						debug "finish to play PAganini!\n%!";
-          if loop then 
-            timer_id := Some (Timers.start _SND_DURATION self#finished) (* find way to get real duration  *)
-          else (
-            timer_id := None;
-            stream := None;
-            self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
-            state := SoundStoped;
-          )
+          stream := None;
+          self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
+          state := SoundStoped;
 				);
 
         method pause () = 
-          match (timer_id, stream) with
-          [ (Some tid, Some stream) ->
+          match stream with
+          [ Some stream ->
             (
-              Timers.stop tid;
-              alsoundPause stream;              
-              timer_id := None;
+              alsoundPause stream;
               state := SoundPaused;
             )
           | _ -> ()
           ];
 
         method stop () = 
-          match (timer_id, stream) with
-          [ (Some tid, Some strm) ->
+          match stream with
+          [ Some strm ->
             (
               stream := None;
-              Timers.stop tid;
-              alsoundStop strm;              
-              timer_id := None;
+              alsoundStop strm;
               state := SoundStoped;
             )
           | _ -> ()
@@ -384,7 +374,7 @@ ELSE
           volume := v;
 
           match stream with
-          [ Some stream -> alsoundSetVolume stream v
+          [ Some stream -> alsoundSetVolume stream (int_of_float (v *. 100.))
           | _ -> ()
           ];
         );
