@@ -1,11 +1,6 @@
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 
-/*#include <caml/mlvalues.h>
-#include <caml/memory.h>
-#include <caml/alloc.h>
-#include <caml/callback.h>
-#include <caml/fail.h>*/
 #include "mlwrapper_android.h"
 
 static SLObjectItf engineObject = NULL;
@@ -46,8 +41,6 @@ void free_bq_player(bq_player_t *bq_plr, uint8_t run_callback) {
 void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
 	bq_player_t *bq_plr = (bq_player_t*)context;
     SOUND_ASSERT(bq == bq_plr->bqPlayerBufferQueue, "alsound buffer queue player callback buffer queue");
-
-    PRINT_DEBUG("player %d finished", bq_plr->id);
 
     // for streaming playback, replace this test by logic to find and fill the next buffer
     if (bq_plr->looped) {
@@ -185,7 +178,6 @@ value ml_alsoundSetVolume(value player, value vol) {
 	CAMLparam2(player, vol);
 
 	bq_player_t *bq_plr = (bq_player_t*)player;
-	PRINT_DEBUG("ATTENUATION %d", ATTENUATION(vol));
     SLresult result = (*bq_plr->bqPlayerVolume)->SetVolumeLevel(bq_plr->bqPlayerVolume, ATTENUATION(vol));
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "alsound set volume");
 
@@ -247,426 +239,136 @@ value ml_alsoundStop(value player) {
 
 
 
-value ml_avsound_create_player(value vpath) {
-	CAMLparam0();
-	CAMLreturn(Val_unit);	
+
+
+typedef struct {
+	SLObjectItf fdPlayerObject;
+	SLPlayItf fdPlayerPlay;
+	SLSeekItf fdPlayerSeek;
+	SLVolumeItf fdPlayerVolume;
+	value callback;
+} fd_player_t;
+
+void fdPlayerCallback(SLPlayItf caller, void *context, SLuint32 event) {
+	PRINT_DEBUG("fdPlayerCallback CALL");
+
+	fd_player_t *fd_plr = (fd_player_t*)context;
+    SOUND_ASSERT(caller == fd_plr->fdPlayerPlay, "avsound strange caller");
+    SOUND_ASSERT(event == SL_PLAYEVENT_HEADATEND, "avsound unexpected event");
+
+    caml_callback(fd_plr->callback, Val_unit);
+    caml_remove_generational_global_root(&fd_plr->callback);
 }
-
-value ml_avsound_playback(value vmp, value vmethodName) {
-	CAMLparam0();
-	CAMLreturn(Val_unit);	
-}
-
-value ml_avsound_set_loop(value vmp, value loop) {
-	CAMLparam0();
-	CAMLreturn(Val_unit);
-}
-
-value ml_avsound_set_volume(value vmp, value vol) {
-	CAMLparam0();
-	CAMLreturn(Val_unit);	
-}
-
-value ml_avsound_is_playing(value vmp) {
-	CAMLparam0();
-	CAMLreturn(Val_unit);	
-}
-
-value ml_avsound_play(value vmp, value cb) {
-	CAMLparam0();
-	CAMLreturn(Val_unit);	
-}
-
-/*#include "mlwrapper_android.h"
-#include <caml/custom.h>
-
-
-static jclass gSndPoolCls = NULL;
-static jobject gSndPool = NULL;
-
-jclass get_lmp_class() {
-	static jclass lmpCls;
-
-	if (!lmpCls) {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);	
-		lmpCls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, "ru/redspell/lightning/LightMediaPlayer"));
-	}
-
-	return lmpCls;
-}
-
-value ml_alsoundInit() {
-	if (!gSndPool) {
-		JNIEnv *env;
-		(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-		// jclass amCls = (*env)->FindClass(env, "android/media/AudioManager");
-		// jfieldID strmTypeFid = (*env)->GetStaticFieldID(env, amCls, "STREAM_MUSIC", "I");
-		// jint strmType = (*env)->GetStaticIntField(env, amCls, strmTypeFid);
-
-		jclass sndPoolCls = (*env)->FindClass(env, "ru/redspell/lightning/LightSoundPool");
-		jmethodID mid = (*env)->GetStaticMethodID(env, sndPoolCls, "getInstance", "()Lru/redspell/lightning/LightSoundPool;");
-		jobject sndPool = (*env)->CallStaticObjectMethod(env, sndPoolCls, mid);
-		// jmethodID constrId = (*env)->GetMethodID(env, sndPoolCls, "<init>", "(III)V");
-		// jobject sndPool = (*env)->NewObject(env, sndPoolCls, constrId, 100, strmType, 0);
-
-		gSndPoolCls = (*env)->NewGlobalRef(env, sndPoolCls);
-		gSndPool = (*env)->NewGlobalRef(env, sndPool);
-
-		// (*env)->DeleteLocalRef(env, amCls);
-		(*env)->DeleteLocalRef(env, sndPoolCls);
-		(*env)->DeleteLocalRef(env, sndPool);		
-	}
-	return Val_unit;
-}
-
-static jmethodID gGetSndIdMthdId = NULL;
-
-value ml_alsoundLoad(value path) {
-	if (gSndPool == NULL) {
-		caml_failwith("alsound is not initialized, try to call Sound.init first, then again Sound.load");
-	}
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	jclass lmpCls = get_lmp_class();
-
-	if (gGetSndIdMthdId == NULL) {
-		gGetSndIdMthdId = (*env)->GetStaticMethodID(env, lmpCls, "getSoundId", "(Ljava/lang/String;Landroid/media/SoundPool;)I");
-	}
-
-	char* cpath = String_val(path);
-	jstring jpath = (*env)->NewStringUTF(env, cpath);
-	jint sndId = (*env)->CallStaticIntMethod(env, lmpCls, gGetSndIdMthdId, jpath, gSndPool);
-
-	if (sndId < 0) {
-		char mes[255];
-		sprintf(mes, "cannot find %s when adding to sound pool", cpath);
-		caml_failwith(mes);
-	}
-
-	(*env)->DeleteLocalRef(env, jpath);
-
-	return Val_int(sndId);
-}
-
-static jmethodID gPlayMthdId = NULL;
-
-value ml_alsoundPlay(value soundId, value vol, value loop) {
-	if (gSndPool == NULL) {
-		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#play");
-	}
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	if (gPlayMthdId == NULL) {
-		gPlayMthdId = (*env)->GetMethodID(env, gSndPoolCls, "play", "(IFFIIF)I");
-	}
-
-	jdouble jvol = Double_val(vol);
-
-	jint streamId = (*env)->CallIntMethod(env, gSndPool, gPlayMthdId, Int_val(soundId), jvol, jvol, 0, Bool_val(loop) ? -1 : 0, 1.0);
-
-	return Val_int(streamId);
-}
-
-static jmethodID gPauseMthdId = NULL;
-
-value ml_alsoundPause(value streamId) {
-	if (gSndPool == NULL) {
-		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#pause");
-	}
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	if (gPauseMthdId == NULL) {
-		gPauseMthdId = (*env)->GetMethodID(env, gSndPoolCls, "pause", "(I)V");
-	}
- 
-	(*env)->CallVoidMethod(env, gSndPool, gPauseMthdId, Int_val(streamId));
-	return Val_unit;
-}
-
-static jmethodID gStopMthdId = NULL;
-
-value ml_alsoundStop(value streamId) {
-	if (gSndPool == NULL) {
-		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#stop");
-	}
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	if (gStopMthdId == NULL) {
-		gStopMthdId = (*env)->GetMethodID(env, gSndPoolCls, "stop", "(I)V");
-	}
-
-	(*env)->CallVoidMethod(env, gSndPool, gStopMthdId, Int_val(streamId));
-
-	PRINT_DEBUG("ml_alsoundStop call %d", Int_val(streamId));
-	return Val_unit;
-}
-
-static jmethodID gSetVolMthdId = NULL;
-
-value ml_alsoundSetVolume(value streamId, value vol) {
-	if (gSndPool == NULL) {
-		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#setVolume");
-	}
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	if (gSetVolMthdId == NULL) {
-		gSetVolMthdId = (*env)->GetMethodID(env, gSndPoolCls, "setVolume", "(IFF)V");
-	}
-
-	jdouble jvol = Double_val(vol);
-	(*env)->CallVoidMethod(env, gSndPool, gSetVolMthdId, Int_val(streamId), jvol, jvol);
-	return Val_unit;
-}
-
-static jmethodID gSetLoopMthdId = NULL;
-
-value ml_alsoundSetLoop(value streamId, value loop) {
-	if (gSndPool == NULL) {
-		caml_failwith("alsound is not initialized, try to call Sound.init first, then Sound.load, then channel#setLoop");
-	}
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
-	if (gSetLoopMthdId == NULL) {
-		gSetLoopMthdId = (*env)->GetMethodID(env, gSndPoolCls, "setLoop", "(II)V");
-	}
-
-	(*env)->CallVoidMethod(env, gSndPool, gSetLoopMthdId, Int_val(streamId), Bool_val(loop) ? -1 : 0);	
-	return Val_unit;
-}
-
-static jmethodID gAutoPause = NULL;
-static jmethodID gAutoResume = NULL;
-
-static jmethodID gLmpPauseAll = NULL;
-static jmethodID gLmpResumeAll = NULL;
-
-
-
-//// Media Player
-//
-//
-static void mp_finalize(value vmp) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
-
-	static jmethodID releaseMid;
-
-	jobject jmp = *(jobject*)Data_custom_val(vmp);
-	jclass mpCls = (*env)->GetObjectClass(env, jmp);
-
-	if (!releaseMid) {
-		releaseMid = (*env)->GetMethodID(env, mpCls, "release", "()V"); 
-	}
-
-	(*env)->CallVoidMethod(env, jmp, releaseMid);
-	(*env)->DeleteLocalRef(env, mpCls);
-	(*env)->DeleteGlobalRef(env, jmp);
-}
-
-struct custom_operations mpOpts = {
-	"pointer to MediaPlayer",
-	mp_finalize,
-	custom_compare_default,
-	custom_hash_default,
-	custom_serialize_default,
-	custom_deserialize_default
-};
 
 value ml_avsound_create_player(value vpath) {
 	CAMLparam1(vpath);
-	CAMLlocal1(retval);
 
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	fd_player_t *fd_plr = (fd_player_t*)malloc(sizeof(fd_player_t));
+	memset(fd_plr, 0, sizeof(fd_player_t));
 
-	static jmethodID createMpMid;
-	jclass lmpCls = get_lmp_class();
+	resource r;
+	SOUND_ASSERT(getResourceFd(String_val(vpath), &r), "cannot load sound");
 
-	if (!createMpMid) createMpMid = (*env)->GetStaticMethodID(env, lmpCls, "createMediaPlayer", "(Ljava/lang/String;)Landroid/media/MediaPlayer;");
+    SLDataLocator_AndroidFD loc_fd = {SL_DATALOCATOR_ANDROIDFD, r.fd, r.offset, r.length};
+    SLDataFormat_MIME format_mime = {SL_DATAFORMAT_MIME, NULL, SL_CONTAINERTYPE_UNSPECIFIED};
+    SLDataSource audioSrc = {&loc_fd, &format_mime};
 
-	const char* cpath = String_val(vpath);
-	jstring jpath = (*env)->NewStringUTF(env, cpath);
-	jobject mp = (*env)->CallStaticObjectMethod(env, lmpCls, createMpMid, jpath);
+    // configure audio sink
+    SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
+    SLDataSink audioSnk = {&loc_outmix, NULL};
 
-	if (!mp) {
-		char mes[255];
-		sprintf(mes, "cannot find %s when creating media player", cpath);		
-		caml_failwith(mes);
-	}
+    // create audio player
+    const SLInterfaceID ids[2] = {SL_IID_SEEK, SL_IID_VOLUME};
+	const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+	SLresult result = (*engineEngine)->CreateAudioPlayer(engineEngine, &fd_plr->fdPlayerObject, &audioSrc, &audioSnk, 2, ids, req);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound create player");
 
-	jobject gmp = (*env)->NewGlobalRef(env, mp);
+    // realize the player
+    result = (*fd_plr->fdPlayerObject)->Realize(fd_plr->fdPlayerObject, SL_BOOLEAN_FALSE);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound create player realize");
 
-	(*env)->DeleteLocalRef(env, jpath);
-	(*env)->DeleteLocalRef(env, mp);
+    // get the play interface
+    result = (*fd_plr->fdPlayerObject)->GetInterface(fd_plr->fdPlayerObject, SL_IID_PLAY, &fd_plr->fdPlayerPlay);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound create player get play interface");
 
-	retval = caml_alloc_custom(&mpOpts, sizeof(jobject), 0, 1);
-	*(jobject*)Data_custom_val(retval) = gmp;
+    // get the seek interface
+    result = (*fd_plr->fdPlayerObject)->GetInterface(fd_plr->fdPlayerObject, SL_IID_SEEK, &fd_plr->fdPlayerSeek);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound create player get seek interface");
 
-	CAMLreturn(retval);
+    // get the volume interface
+    result = (*fd_plr->fdPlayerObject)->GetInterface(fd_plr->fdPlayerObject, SL_IID_VOLUME, &fd_plr->fdPlayerVolume);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound create player get volume interface");
+
+	CAMLreturn((value)fd_plr);
 }
 
+value ml_avsound_set_loop(value player, value loop) {
+	CAMLparam2(player, loop);
 
-static void inline testMethodId(JNIEnv *env, jclass cls, jmethodID *mid, char* methodName) {
-  if (!*mid) {
-    *mid = (*env)->GetMethodID(env, cls, methodName, "()V");
-  }
+	fd_player_t *fd_plr = (fd_player_t*)player;
+    SLresult result = (*fd_plr->fdPlayerSeek)->SetLoop(fd_plr->fdPlayerSeek, loop = Val_true ? SL_BOOLEAN_TRUE : SL_BOOLEAN_FALSE, 0, SL_TIME_UNKNOWN);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound set loop");
+
+	CAMLreturn(Val_unit);
 }
 
-value ml_avsound_playback(value vmp, value vmethodName) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+value ml_avsound_set_volume(value player, value vol) {
+	CAMLparam2(player, vol);
 
-	static jmethodID pauseMid;
-	static jmethodID stopMid;
-	static jmethodID prepareMid;
+	fd_player_t *fd_plr = (fd_player_t*)player;
+    SLresult result = (*fd_plr->fdPlayerVolume)->SetVolumeLevel(fd_plr->fdPlayerVolume, ATTENUATION(vol));
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound set volume");
 
-	char* methodName = String_val(vmethodName);
-
-	jobject jmp = *(jobject*)Data_custom_val(vmp);
-	jclass mpCls = (*env)->GetObjectClass(env, jmp);
-	jmethodID *mid;
-
-	do {
-		if (!strcmp(methodName, "stop")) {
-			mid = &stopMid;
-			break;
-		}
-
-		if (!strcmp(methodName, "pause")) {
-			mid = &pauseMid;
-			break;
-		}
-
-		if (!strcmp(methodName, "prepare")) {
-			mid = &prepareMid;
-			break;
-		}
-	} while(0);
-
-	testMethodId(env, mpCls, mid, methodName);
-	(*env)->CallVoidMethod(env, jmp, *mid);
-	(*env)->DeleteLocalRef(env, mpCls);
-
-	return Val_unit;
+	CAMLreturn(Val_unit);
 }
 
-value ml_avsound_set_loop(value vmp, value loop) {
-	PRINT_DEBUG("!!!ml_avsound_set_loop call");
+value ml_avsound_play(value player, value callback) {
+	PRINT_DEBUG("ml_avsound_play call");
 
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	CAMLparam2(player, callback);
 
-	static jmethodID setLoopMid;
+	fd_player_t *fd_plr = (fd_player_t*)player;
+	fd_plr->callback = callback;
+	caml_register_generational_global_root(&fd_plr->callback);
 
-	jobject jmp = *(jobject*)Data_custom_val(vmp);
-	jclass mpCls = (*env)->GetObjectClass(env, jmp);
+    SLresult result = (*fd_plr->fdPlayerPlay)->SetCallbackEventsMask(fd_plr->fdPlayerPlay, SL_PLAYEVENT_HEADATEND);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound set callback mask");
 
-	if (!setLoopMid) {
-		setLoopMid = (*env)->GetMethodID(env, mpCls, "setLooping", "(Z)V");		
-	}
+    result = (*fd_plr->fdPlayerPlay)->RegisterCallback(fd_plr->fdPlayerPlay, fdPlayerCallback, fd_plr);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound register callback");
 
-	(*env)->CallVoidMethod(env, jmp, setLoopMid, Bool_val(loop));
-	(*env)->DeleteLocalRef(env, mpCls);
-	return Val_unit;
+    result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_PLAYING);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound play");    
+
+	CAMLreturn(Val_unit);
 }
 
-value ml_avsound_set_volume(value vmp, value vol) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+value ml_avsound_stop(value player) {
+	CAMLparam1(player);
 
-	static jmethodID setLoopMid;
+	fd_player_t *fd_plr = (fd_player_t*)player;
+    SLresult result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_STOPPED);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound stop");
 
-	jobject jmp = *(jobject*)Data_custom_val(vmp);
-	jclass mpCls = (*env)->GetObjectClass(env, jmp);
-
-	if (!setLoopMid) {
-		setLoopMid = (*env)->GetMethodID(env, mpCls, "setVolume", "(FF)V");
-	}
-
-	double cvol = Double_val(vol);
-	(*env)->CallVoidMethod(env, jmp, setLoopMid, cvol, cvol);
-	(*env)->DeleteLocalRef(env, mpCls);
-
-	return Val_unit;
+	CAMLreturn(Val_unit);	
 }
 
-value ml_avsound_is_playing(value vmp) {
-	CAMLparam1(vmp);
-	CAMLlocal1(retval);
+value ml_avsound_pause(value player) {
+	CAMLparam1(player);
 
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	fd_player_t *fd_plr = (fd_player_t*)player;
+    SLresult result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_PAUSED);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound pause");
 
-	static jmethodID isPlayingMid;
-
-	jobject jmp = *(jobject*)Data_custom_val(vmp);
-	jclass mpCls = (*env)->GetObjectClass(env, jmp);
-
-	if (!isPlayingMid) {
-		isPlayingMid = (*env)->GetMethodID(env, mpCls, "isPlaying", "()Z");
-	}
-
-	//DEBUGF("ml_avsound_is_playing %s", (*env)->CallBooleanMethod(env, jmp, isPlayingMid) ? "true" : "false");
-
-	retval = Val_bool((*env)->CallBooleanMethod(env, jmp, isPlayingMid));
-	(*env)->DeleteLocalRef(env, mpCls);
-
-	CAMLreturn(retval);
+	CAMLreturn(Val_unit);	
 }
 
-value ml_avsound_play(value vmp, value cb) {
-	PRINT_DEBUG("ml_avsound_play tid: %d", gettid());
+value ml_avsound_release(value player) {
+	CAMLparam1(player);
 
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
+	fd_player_t *fd_plr = (fd_player_t*)player;
+	(*fd_plr->fdPlayerObject)->Destroy(fd_plr->fdPlayerObject);
+	free(fd_plr);
 
-	static jmethodID playMid;
-
-	jobject jmp = *(jobject*)Data_custom_val(vmp);
-	jclass mpCls = (*env)->GetObjectClass(env, jmp);
-
-	if (!playMid) {
-		playMid = (*env)->GetMethodID(env, mpCls, "start", "(I)V");
-	}
-
-	value *cbptr = malloc(sizeof(value));
-	*cbptr = cb;
-	caml_register_generational_global_root(cbptr);
-
-	(*env)->CallVoidMethod(env, jmp, playMid, (jint)cbptr);
-	(*env)->DeleteLocalRef(env, mpCls);
-
-	return Val_unit;
+	CAMLreturn(Val_unit);
 }
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCallbackCompleteRunnable_run(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightMediaPlayer_00024CamlCallbackCompleteRunnable_run tid: %d", gettid());
-
-	jclass runnableCls = (*env)->GetObjectClass(env, this);
-	static jfieldID cbFid;
-
-	if (!cbFid) {
-		cbFid = (*env)->GetFieldID(env, runnableCls, "cb", "I");
-	}
-
-	value *cbptr = (value*)(*env)->GetIntField(env, this, cbFid);
-	value cb = *cbptr;
-	caml_callback(cb, Val_unit);
-	caml_remove_generational_global_root(cbptr);
-
-	(*env)->DeleteLocalRef(env, runnableCls);
-}*/

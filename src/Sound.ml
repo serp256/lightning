@@ -224,26 +224,24 @@ ELSE
 
     type sound = [ ALSound of alsound | AVSound of avplayer ];
 
-    (* type sound = int; *)
-    (* value _SND_DURATION = 5.; *)
-
     external init : unit -> unit = "ml_alsoundInit";
 
     value setMasterVolume (v:float) = (); (* fixme *)
 
     external alsoundLoad : string -> alsound = "ml_alsoundLoad";
-    external alsoundPlay : alsound -> int -> bool -> (unit -> unit) -> alplayer = "ml_alsoundPlay"; (* soundId -> volume -> loop -> streamId *)
+    external alsoundPlay : alsound -> int -> bool -> (unit -> unit) -> alplayer = "ml_alsoundPlay";
     external alsoundPause : alplayer -> unit = "ml_alsoundPause";
     external alsoundStop : alplayer -> unit = "ml_alsoundStop";
     external alsoundSetVolume : alplayer -> int -> unit = "ml_alsoundSetVolume";
     external alsoundSetLoop : alplayer -> bool -> unit = "ml_alsoundSetLoop";
 
     external avsound_create_player : string -> avplayer = "ml_avsound_create_player";
-    external avsound_playback : avplayer -> string -> unit = "ml_avsound_playback";
     external avsound_setLoop : avplayer -> bool -> unit = "ml_avsound_set_loop";
-    external avsound_setVolume : avplayer -> float -> unit = "ml_avsound_set_volume";
-    external avsound_isPlaying : avplayer -> bool = "ml_avsound_is_playing";
+    external avsound_setVolume : avplayer -> int -> unit = "ml_avsound_set_volume";
     external avsound_play : avplayer -> (unit -> unit) -> unit = "ml_avsound_play";
+    external avsound_stop : avplayer -> unit = "ml_avsound_stop";
+    external avsound_pause : avplayer -> unit = "ml_avsound_pause";
+    external avsound_release : avplayer -> unit = "ml_avsound_release";
 
     value load path =
       if ExtString.String.ends_with path ".caf" then
@@ -259,7 +257,12 @@ ELSE
       value mutable isPlaying = False;
       value mutable paused = False;
       value mutable completed = False;
-      value mutable volume = 100.;
+      value mutable volume = 1.;
+
+      initializer
+        (
+          Gc.finalise (fun _ -> avsound_release player) self;
+        );
 
       method private asEventTarget = (self :> channel);
 
@@ -271,17 +274,11 @@ ELSE
 
       method play () = 
       (
-        if not isPlaying && not paused && not completed then
-          avsound_playback player "prepare"
-        else ();
-
         isPlaying := True;
         paused := False;
         completed := False;
         avsound_play player self#onSoundComplete;
       );
-
-      (* method private isPlaying () = avsound_isPlaying player; *)
       
       method pause () = 
         if isPlaying then
@@ -290,7 +287,7 @@ ELSE
           completed := False;
           isPlaying := False;
 
-          avsound_playback player "pause";          
+          avsound_pause player;
         )
         else ();
       
@@ -301,14 +298,14 @@ ELSE
           completed := False;
           isPlaying := False;
 
-          avsound_playback player "stop";          
+          avsound_stop player;
         )
         else ();
       
       method setVolume v =
       (        
         volume := v;
-        avsound_setVolume player v;
+        avsound_setVolume player (int_of_float (volume *. 100.));
       );
       
       method volume = volume;
