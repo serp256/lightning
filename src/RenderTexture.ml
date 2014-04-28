@@ -107,6 +107,7 @@ type kind = [ Shared | Dedicated of Texture.filter ];
 external rendertexCreate: ?color:int -> ?alpha:float -> kind -> float -> float -> (framebuffer -> unit) -> (renderInfo * bool) = "rendertex_create_byte" "rendertex_create";
 
 value draw ?(kind=Shared) ?color ?alpha width height f =
+  let () = debug:draw "draw %f %f" width height in
   let (renderInfo, dedicated) = rendertexCreate ?color ?alpha kind width height f in
     if dedicated
     then new dedicated renderInfo

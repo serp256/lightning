@@ -21,6 +21,22 @@ external glDisableScissor: unit -> unit = "ml_gl_scissor_disable";
 type rect_mask = { x0 : float ; y0 : float ; x1 : float ; y1 : float };
 value maskStack = Stack.create ();
 
+value scissor = ref None;
+value setScissor x y = scissor.val := Some (x, y);
+value resetScissor () = scissor.val := None;
+
+Callback.register "setScissor" setScissor;
+Callback.register "resetScissor" resetScissor;
+
+DEFINE SCISSOR =
+  match !scissor with
+  [ Some (x, y) -> { x0 = os.x0 +. x; y0 = os.y0 +. y; x1 = os.x1 -. os.x0; y1 = os.y1 -. os.y0 }
+  | _ ->
+    let minY = sheight -. os.y1
+    and maxY = sheight -. os.y0 in
+      {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY }
+  ];
+
 DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
   match self#stage with
   [ Some stage ->
@@ -50,15 +66,13 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
 					(
 						debug:mask "push %f %f %f %f " os.x0 os.y0 os.x1 os.y1;
 						Stack.push os maskStack;
-						let minY = sheight -. os.y1
-						and maxY = sheight -. os.y0 in
-						let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY }
-						and np = ref False in
+						let os = SCISSOR in
+						let np = ref False in
 						(
 						 if (os.x1 > 0.0 && os.y1 > 0.0) then (
 							 if (Stack.length maskStack > 1) then glDisableScissor () else ();
                debug:mask "push %f %f %f %f " os.x0 os.y0 os.x1 os.y1;
-								glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
+                glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
 								call_render;
 								glDisableScissor ();
 								if (Stack.length maskStack > 1) then 
@@ -66,9 +80,10 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
 										np.val := True;
 										ignore ( Stack.pop maskStack );
 										let os = Stack.top maskStack in
-										let minY = sheight -. os.y1
+                    let os = SCISSOR in
+(* 										let minY = sheight -. os.y1
 										and maxY = sheight -. os.y0 in
-										let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } in
+										let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } in *)
 										(
 											glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
 										);
@@ -195,8 +210,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 					) ) self;
 			 incr object_count;
 
-       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ _ -> stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
-       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> stage := None));
+       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ _ -> let () = debug:rmfromstage "add to stage" in stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
+       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> let () = debug:rmfromstage "remove from stage" in stage := None));
 
 (* 			 if !object_count mod 100 = 0 then *)
 (* 				( *)
@@ -687,7 +702,7 @@ class virtual _c [ 'parent ] = (*{{{*)
           match mask with
           [ None -> self#render' ?alpha:parentAlpha ~transform rect 
           | Some (onSelf,maskRect,maskPoints) ->
-            let () = debug "some mask" in
+            let () = debug:rendermask "some mask" in
               let maskRect = 
                 match onSelf with
                 [ True -> maskRect
@@ -696,13 +711,13 @@ class virtual _c [ 'parent ] = (*{{{*)
                     Matrix.transformRectangle (Matrix.invert m) maskRect
                 ]
               in
-              let () = debug "mask rect %s, rect = None: %B" (Rectangle.to_string maskRect) (rect = None) in
+              let () = debug:rendermask "mask rect %s, rect = None: %B" (Rectangle.to_string maskRect) (rect = None) in
               match rect with
               [ None -> RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some maskRect))
               | Some rect -> 
                   match Rectangle.intersection maskRect rect with
                   [ Some inRect ->
-                    let () = debug "Rectangle.intersection maskRect rect %s" (Rectangle.to_string inRect) in
+                    let () = debug:rendermask "Rectangle.intersection maskRect rect %s" (Rectangle.to_string inRect) in
                       RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some inRect))
                   | None -> ()
                   ]

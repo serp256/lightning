@@ -148,7 +148,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         | _ -> () 
         ];  
 
-      method private updateGlowFilter () = 
+      method private updateGlowFilter () =
+        let () = debug:updateGlowFilter "atlas updateGlowFilter" in
         match glowFilter with
         [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) ->  
             let bounds = self#boundsInSpace (Some self) in
@@ -336,6 +337,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           | _ -> ()          
           ];
 
+          debug:updateGlowFilter "atlas set filters";
           self#forceStageRender ~reason:"tlf atlas set filters" ();
         );      
     end;

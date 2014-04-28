@@ -292,6 +292,7 @@ class _c  _texture =
     method private removeGlowFilter () = glowFilter := None;
 
     method private updateGlowFilter () =
+      let () = debug:updateGlowFilter "image updateGlowFilter call" in
       match glowFilter with
       [ Some ({glowc = `g_id (_,glow); g_make_program; g_image; _ } as gf) ->
         let () = debug:glow "update glow filter on %s" self#name in

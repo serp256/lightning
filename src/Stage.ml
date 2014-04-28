@@ -244,6 +244,7 @@ class virtual c (_width:float) (_height:float) =
       (* let () = debug:render "-renderStage" in *)
       if renderNeeded
       then
+        let () = debug:forcerendereason "stage render" in
         proftimer:prof "renderStage %f"
           (
             renderNeeded := False;
