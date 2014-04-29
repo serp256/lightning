@@ -520,7 +520,7 @@ class _c  _texture =
         ];
       );
 
-    method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
+    method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->  
       match targetCoordinateSpace with
       [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height 
       | _ -> 
@@ -535,7 +535,8 @@ class _c  _texture =
         let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
         let () = debug:matrix "call transformPoints" in
         let ar = Matrix.transformPoints transformationMatrix vertexCoords in
-        Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
+          self#boundsWithMask (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask
+        
       ];
 
     method private render' ?alpha:(alpha') ~transform _ = 

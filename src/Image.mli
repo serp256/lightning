@@ -58,7 +58,7 @@ class _c : [ Texture.c ] ->
 (*       method setTexScale: float -> unit; *)
 
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
-    method boundsInSpace: !'space. option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
+    method boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
 (*     method filters: list Filters.t; *)
 (*     method setFilters: list Filters.t -> unit; *)
 

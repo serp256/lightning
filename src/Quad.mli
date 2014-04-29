@@ -11,7 +11,7 @@ class c: [ ?color:color ] -> [ float ] -> [ float ] ->
     method setFilters: list Filters.t -> unit;
     method setColor: color -> unit;
     method color: color;
-    method boundsInSpace: !'space. option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
+    method boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: DisplayObject.c; .. > as 'space) -> Rectangle.t;
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
   end;
 

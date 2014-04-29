@@ -79,13 +79,16 @@ class c ?(layers = [ layer () ]) ?bounds points =
     method color = `NoColor;
     method setColor _ = assert False;
 
-    method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
-      match targetCoordinateSpace with
-      [ Some ts when ts#asDisplayObject = self#asDisplayObject -> bounds
-      | _ -> 
-        let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
-        Matrix.transformRectangle transformationMatrix bounds
-      ];
+    method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->
+      let bounds =  
+        match targetCoordinateSpace with
+        [ Some ts when ts#asDisplayObject = self#asDisplayObject -> bounds
+        | _ -> 
+          let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
+          Matrix.transformRectangle transformationMatrix bounds
+        ]
+      in
+        self#boundsWithMask bounds targetCoordinateSpace withMask;
 
     method private render' ?alpha ~transform _ =
       let alpha =

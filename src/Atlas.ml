@@ -203,11 +203,16 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         | _ -> () (* Debug.w "update glow not need" *)
         ];
 
-      method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
+      method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->  
         match DynArray.length children with
         [ 0 -> Rectangle.empty
         | _ ->
-            let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+          let mask =
+            if withMask
+            then self#maskInSpace targetCoordinateSpace
+            else Rectangle.empty
+          in        
+          let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
             (
               let open Rectangle in
               let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
@@ -222,7 +227,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                   if downY > ar.(3) then ar.(3) := downY else ();
                 )
               end children;
-              Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
+
+              self#boundsWithMask (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask;
             )
         ];
 

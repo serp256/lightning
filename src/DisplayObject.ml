@@ -508,7 +508,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setPos x y = (pos := {Point.x=x;y=y}; RESET_CACHE "setPos");
     method setPosPoint p = (pos := p; RESET_CACHE "setPosPoint");
 
-    method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
+    method virtual boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
     method bounds = 
       match boundsCache with
@@ -789,6 +789,31 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method virtual stageResized: unit -> unit;
 
+    method private maskInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t = fun space ->
+      match mask with
+      [ Some (onself, rect, _) ->
+        if onself
+        then
+          match space with
+          [ Some s when s#asDisplayObject = self#asDisplayObject -> rect
+          | _ -> Matrix.transformRectangle (self#transformationMatrixToSpace space) rect
+          ]
+        else
+          match self#parent with
+          [ Some p ->
+            match space with
+            [ Some s when s#asDisplayObject = p#asDisplayObject -> rect
+            | _ -> Matrix.transformRectangle (p#transformationMatrixToSpace space) rect
+            ]
+          | _ -> Rectangle.empty
+          ]
+      | _ -> Rectangle.empty
+      ];
+
+    method private boundsWithMask: !'space. Rectangle.t -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> bool -> Rectangle.t = fun bounds space withMask ->
+      if withMask
+      then match Rectangle.intersection (self#maskInSpace space) bounds with [ Some r -> r | _ -> Rectangle.empty ]
+      else bounds;
   end;(*}}}*)
 
 
@@ -1128,31 +1153,32 @@ class virtual container = (*{{{*)
       let child = child#asDisplayObject in
       self#containsChild' child;
 
-    method boundsInSpace targetCoordinateSpace =
-      match children with
-      [ None -> Rectangle.empty
-      | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace targetCoordinateSpace
-      | Some children -> 
-          let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
-          (
-            let open Rectangle in
-(*             let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in *)
-            let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
-            Dllist.iter begin fun (child:'displayObject) ->
-(*               let childBounds = child#boundsInSpace targetCoordinateSpace in *)
-              let childBounds = Matrix.transformRectangle matrix child#bounds in
-              (
-                if childBounds.x < ar.(0) then ar.(0) := childBounds.x else ();
-                let rightX = childBounds.x +. childBounds.width in
-                if rightX > ar.(1) then ar.(1) := rightX else ();
-                if childBounds.y < ar.(2) then ar.(2) := childBounds.y else ();
-                let downY = childBounds.y +. childBounds.height in
-                if downY > ar.(3) then ar.(3) := downY else ();
-              )
-            end children;
-            Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
-          )
-      ];
+    method boundsInSpace ?(withMask = False) targetCoordinateSpace =
+        match children with
+        [ None -> Rectangle.empty
+        | Some children when children == (Dllist.next children) (* 1 child *) -> self#boundsWithMask ((Dllist.get children)#boundsInSpace ~withMask targetCoordinateSpace) targetCoordinateSpace withMask
+        | Some children -> 
+            let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+            (
+              let open Rectangle in
+  (*             let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in *)
+              let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
+              Dllist.iter begin fun (child:'displayObject) ->
+  (*               let childBounds = child#boundsInSpace targetCoordinateSpace in *)
+                let childBounds = Matrix.transformRectangle matrix child#bounds in
+                (
+                  if childBounds.x < ar.(0) then ar.(0) := childBounds.x else ();
+                  let rightX = childBounds.x +. childBounds.width in
+                  if rightX > ar.(1) then ar.(1) := rightX else ();
+                  if childBounds.y < ar.(2) then ar.(2) := childBounds.y else ();
+                  let downY = childBounds.y +. childBounds.height in
+                  if downY > ar.(3) then ar.(3) := downY else ();
+                )
+              end children;
+
+              self#boundsWithMask (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask;
+            )
+        ];
 
 
     method private hitTestPoint' localPoint isTouch = 
