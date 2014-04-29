@@ -228,7 +228,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                 )
               end children;
 
-              self#boundsWithMask (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask;
+              self#boundsWithMask' (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask;
             )
         ];
 

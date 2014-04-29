@@ -31,13 +31,13 @@ open LightCommon;
       method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->  (*       let () = Printf.printf "bounds in space %s\n" name in *)
         match targetCoordinateSpace with
         [ Some ts when ts#asDisplayObject = self#asDisplayObject ->
-          self#boundsWithMask (Rectangle.create 0. 0. width height) targetCoordinateSpace withMask
+          self#boundsWithMask' (Rectangle.create 0. 0. width height) targetCoordinateSpace withMask
         | _ -> 
           let vertexCoords = Render.Quad.points quad in
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
           let () = debug:matrix "call transformPoints" in
           let ar = Matrix.transformPoints transformationMatrix vertexCoords in
-            self#boundsWithMask (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask
+            self#boundsWithMask' (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask
         ];
 
       method filters = [];

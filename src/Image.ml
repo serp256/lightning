@@ -535,7 +535,7 @@ class _c  _texture =
         let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
         let () = debug:matrix "call transformPoints" in
         let ar = Matrix.transformPoints transformationMatrix vertexCoords in
-          self#boundsWithMask (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask
+          self#boundsWithMask' (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask
         
       ];
 

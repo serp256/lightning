@@ -175,6 +175,7 @@ DEFINE RESET_BOUNDS_CACHE =
     [ Some _ -> boundsCache := None
     | None -> ()
     ];
+
     match parent with
     [ Some p -> p#boundsChanged ()
     | None -> ()
@@ -790,8 +791,10 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual stageResized: unit -> unit;
 
     method private maskInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t = fun space ->
+      let () = debug:boundswithmask "%s maskInSpace call" name in
       match mask with
       [ Some (onself, rect, _) ->
+        let () = debug:boundswithmask "some mask %B %s" onself (Rectangle.to_string rect) in
         if onself
         then
           match space with
@@ -807,12 +810,22 @@ class virtual _c [ 'parent ] = (*{{{*)
             ]
           | _ -> Rectangle.empty
           ]
-      | _ -> Rectangle.empty
+      | _ -> let () = debug:boundswithmask "no mask" in Rectangle.empty
       ];
 
-    method private boundsWithMask: !'space. Rectangle.t -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> bool -> Rectangle.t = fun bounds space withMask ->
+    method private boundsWithMask': !'space. Rectangle.t -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> bool -> Rectangle.t = fun bounds space withMask ->
+      let () = debug:boundswithmask "%s bounds %s withMask %B" name (Rectangle.to_string bounds) withMask in
       if withMask
-      then match Rectangle.intersection (self#maskInSpace space) bounds with [ Some r -> r | _ -> Rectangle.empty ]
+      then
+        let mask = self#maskInSpace space in
+          if Rectangle.isEmpty mask
+          then let () = debug:boundswithmask "empty mask" in bounds
+          else
+            let () = debug:boundswithmask "mask in space %s" (Rectangle.to_string mask) in
+              match Rectangle.intersection mask bounds with
+              [ Some r -> r
+              | _ -> Rectangle.empty
+              ]
       else bounds;
   end;(*}}}*)
 
@@ -1156,8 +1169,9 @@ class virtual container = (*{{{*)
     method boundsInSpace ?(withMask = False) targetCoordinateSpace =
         match children with
         [ None -> Rectangle.empty
-        | Some children when children == (Dllist.next children) (* 1 child *) -> self#boundsWithMask ((Dllist.get children)#boundsInSpace ~withMask targetCoordinateSpace) targetCoordinateSpace withMask
-        | Some children -> 
+        | Some children when children == (Dllist.next children) (* 1 child *) -> let () = debug:boundswithmask "1" in self#boundsWithMask' ((Dllist.get children)#boundsInSpace ~withMask targetCoordinateSpace) targetCoordinateSpace withMask
+        | Some children ->
+          let () = debug:boundswithmask "2" in 
             let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
             (
               let open Rectangle in
@@ -1165,7 +1179,7 @@ class virtual container = (*{{{*)
               let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
               Dllist.iter begin fun (child:'displayObject) ->
   (*               let childBounds = child#boundsInSpace targetCoordinateSpace in *)
-                let childBounds = Matrix.transformRectangle matrix child#bounds in
+                let childBounds = Matrix.transformRectangle matrix (if withMask then child#boundsInSpace ~withMask:True (Some self) else child#bounds) in
                 (
                   if childBounds.x < ar.(0) then ar.(0) := childBounds.x else ();
                   let rightX = childBounds.x +. childBounds.width in
@@ -1176,7 +1190,7 @@ class virtual container = (*{{{*)
                 )
               end children;
 
-              self#boundsWithMask (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask;
+              self#boundsWithMask' (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask;
             )
         ];
 

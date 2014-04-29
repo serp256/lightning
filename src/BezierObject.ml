@@ -178,7 +178,7 @@ class c pts s q t =
 			let fp = pts.(0) in
 			let (lmx,lmy,lMx,lMy) = Array.fold_left foldFunc (fp.x,fp.y,fp.x,fp.y) pts in
 			let w = lMx -. lmx and h = lMy -. lmy in
-				self#boundsWithMask (Rectangle.create lmx lmy w h) targetCoordinateSpace withMask;
+				self#boundsWithMask' (Rectangle.create lmx lmy w h) targetCoordinateSpace withMask;
 		);	
 
 		method private render' ?alpha:(a) ~transform rect =

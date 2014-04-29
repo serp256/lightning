@@ -88,7 +88,7 @@ class c ?(layers = [ layer () ]) ?bounds points =
           Matrix.transformRectangle transformationMatrix bounds
         ]
       in
-        self#boundsWithMask bounds targetCoordinateSpace withMask;
+        self#boundsWithMask' bounds targetCoordinateSpace withMask;
 
     method private render' ?alpha ~transform _ =
       let alpha =
