@@ -479,14 +479,12 @@ class _c  _texture =
     method setTexture nt = 
       let ot = texture in
       (
+        self#forceStageRender ~reason:"image set texture" ();
+
         texture := nt;
         if ot#width <> nt#width || ot#height <> nt#height
         then self#updateSize ()
-        else
-          (
-            Render.Image.update image texture#renderInfo texFlipX texFlipY;
-            self#forceStageRender ();
-          );
+        else Render.Image.update image texture#renderInfo texFlipX texFlipY;
 
         nt#addRenderer (self :> Texture.renderer);
         let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in

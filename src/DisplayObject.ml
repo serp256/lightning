@@ -210,8 +210,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 					) ) self;
 			 incr object_count;
 
-       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ _ -> let () = debug:rmfromstage "add to stage" in stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
-       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> let () = debug:rmfromstage "remove from stage" in stage := None));
+       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ lid -> let () = debug:rmfromstage "add to stage %d lid %d" (Oo.id self) lid in stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
+       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> let () = debug:rmfromstage "remove from stage %d" (Oo.id self) in stage := None));
 
 (* 			 if !object_count mod 100 = 0 then *)
 (* 				( *)
@@ -361,7 +361,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method clearParent () = 
 			match parent with
 			[ Some p ->
-				let on_stage = match p#stage with [ Some _ -> True | _ -> False ] in
+				let on_stage = match self#stage with [ Some _ -> True | _ -> False ] in
 				(
           stage := None;
           parent := None;
@@ -394,6 +394,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual setFilters: list Filters.t -> unit;
 
     method private enterFrameListenerRemovedFromStage  _ _ lid =
+      let () = debug:rmfromstage "enterFrameListenerRemovedFromStage call" in
       let _ = super#removeEventListener ev_REMOVED_FROM_STAGE lid in
       match self#hasEventListeners ev_ENTER_FRAME with
       [ True -> 
@@ -454,10 +455,9 @@ class virtual _c [ 'parent ] = (*{{{*)
     method dispatchEvent' event target =
     (
       let evd = (target,self) in
-      let () = debug:event "dispatchEvent %s on %s" (Ev.string_of_id event.Ev.evid) self#name in
       MList.apply_assoc 
         (fun l ->
-          ignore(List.for_all (fun (lid,l) -> (debug:event "call listener"; l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
+          ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
         )
         event.Ev.evid listeners;
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with
