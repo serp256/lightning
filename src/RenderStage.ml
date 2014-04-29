@@ -40,9 +40,9 @@ class renderer ?kind:(kind:kind = `immediate) obj =
 				]
 			);
 
-		method returnPos () = obj#setPosPoint posBckp;
+		method restorePos () = obj#setPosPoint posBckp;
 
-		method returnParent () = 
+		method restoreParent () = 
 			match parentBckp with
 			[ Some p -> p#addChild ~index:indexBckp obj
 			| _ -> ()
@@ -70,8 +70,8 @@ class renderer ?kind:(kind:kind = `immediate) obj =
 											(Stage.instance ())#removeEventListener DisplayObject.ev_ENTER_FRAME lid;
 											img#setTexture (stage#rendertex ())#asTexture;
 
-											self#returnPos ();
-											self#returnParent ();
+											self#restorePos();
+											self#restoreParent ();
 
 											match callback with
 											[ Some cb -> cb ()
@@ -87,8 +87,8 @@ class renderer ?kind:(kind:kind = `immediate) obj =
 						[ `immediate ->
 						 	let img = Image.create (stage#rendertex ())#asTexture in
 								(
-									self#returnPos ();
-									self#returnParent ();
+									self#restorePos ();
+									self#restoreParent ();
 									img;
 								)
 						| `delayed -> delayed None
