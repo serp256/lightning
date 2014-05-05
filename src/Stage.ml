@@ -125,7 +125,6 @@ class virtual c (_width:float) (_height:float) =
       self#stageResized ();
     );
 
-
     method resize w h = 
     (
       width := w;
@@ -241,7 +240,7 @@ class virtual c (_width:float) (_height:float) =
     value mutable skipCount = 0;
     (* used by all actual versions (pc, android, ios) *)
     method renderStage () =
-      (* let () = debug:render "-renderStage" in *)
+      let () = debug:render "---renderStage %B" renderNeeded in
       if renderNeeded
       then
         let () = debug:forcerendereason "stage render" in
@@ -254,11 +253,13 @@ class virtual c (_width:float) (_height:float) =
             match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
             debug:render "skipped %d frames before render" skipCount;
             skipCount := 0;
+            let () = debug:render "---renderstage done" in
             True;
           )
       else
         (
           skipCount := skipCount + 1;
+          let () = debug:render "---renderstage done" in
           False;
         );
 
@@ -368,7 +369,12 @@ class virtual c (_width:float) (_height:float) =
 (*   method dispatchBackgroundEv () = self#dispatchEvent (Ev.create ev_BACKGROUND ());
   method dispatchForegroundEv () = self#dispatchEvent (Ev.create ev_FOREGROUND ()); *)
 
-  method dispatchBackgroundEv = on_background;
+  method dispatchBackgroundEv () =
+    (
+      self#forceStageRender ~reason:"background" ();
+      on_background ();
+    );
+
   method dispatchForegroundEv = on_foreground;
 
   method! boundsChanged () =

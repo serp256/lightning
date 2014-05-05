@@ -334,6 +334,13 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 		}
 	}
 
+	PRINT_DEBUG("CALL FORCE");
+	CAMLparam0();
+	CAMLlocal1(reason);
+	reason = caml_alloc_tuple(1);
+	Store_field(reason, 0, caml_copy_string("surface changed"));
+	caml_callback3(caml_get_public_method(stage->stage, caml_hash_variant("forceStageRender")), stage->stage, reason, Val_unit);
+	CAMLreturn0;
 }
 
 JNIEXPORT jint Java_ru_redspell_lightning_LightRenderer_nativeGetFrameRate(JNIEnv *env, jobject this) {
