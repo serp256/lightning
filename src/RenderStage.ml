@@ -13,7 +13,9 @@ class c () =
 		method filters = assert False;
 		method setFilters _ = assert False;
 
-		method rendertex () = RenderTexture.draw self#width self#height (fun _ -> self#render None);
+		method rendertex () =
+      let bounds = self#boundsInSpace ~withMask:True (Some self) in
+      RenderTexture.draw bounds.Rectangle.width bounds.Rectangle.height  (fun _ -> self#render None);
 		method !z = Some 0;
 
 		initializer ignore(self#addEventListener DisplayObject.ev_ADDED_TO_STAGE (fun _ _ _ -> assert False));
