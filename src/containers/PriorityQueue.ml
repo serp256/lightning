@@ -1,10 +1,13 @@
 (* base/lib/priorityQueue.ml
 
-   Copyright (C) 2008 Holger Arnold 
+   Copyright (C) 2008 Holger Arnold
 
-   This file may be redistributed and modified under the terms of the 
-   GNU LGPL version 2.1.  See the LICENSE file for details.  
+   This file may be redistributed and modified under the terms of the
+   GNU LGPL version 2.1.  See the LICENSE file for details.
 *)
+
+module DynArray = BatDynArray;
+
 module type OrderedType = sig
   type t;
   value order: t -> t -> bool;
@@ -35,22 +38,22 @@ module Make(P:OrderedType): S  with type elt = P.t = struct
 type elt = P.t;
 
 type queue =
-  { 
-    heap : DynArray.t P.t; 
-    indices : Hashtbl.t P.t int 
+  {
+    heap : DynArray.t P.t;
+    indices : Hashtbl.t P.t int
   };
 
 type t = queue;
 
 value make () =
   {
-    heap = DynArray.make 0; 
+    heap = DynArray.make 0;
     indices = Hashtbl.create 32;
   };
 
 value length h = DynArray.length h.heap;
 value is_empty h = (length h) = 0;
-value get h = DynArray.unsafe_get h.heap;
+value get h i = DynArray.unsafe_get h.heap i;
 value set h i x = (DynArray.unsafe_set h.heap i x; Hashtbl.replace h.indices x i);
 value mem h x = Hashtbl.mem h.indices x;
 
@@ -103,10 +106,10 @@ value first h =
   if is_empty h then failwith "PriorityQueue.first: empty queue" else get h 0;
 
 value add h x =
-  let i = length h in 
+  let i = length h in
   (
-    DynArray.add h.heap x; 
-    Hashtbl.add h.indices x i; 
+    DynArray.add h.heap x;
+    Hashtbl.add h.indices x i;
     up_heap h i
   );
 
@@ -114,14 +117,22 @@ value fold f a t = (* FIXME *)
   DynArray.fold_left f a t.heap;
 
 value remove_index h i =
-  let x = get h i
-  and y = get h ((length h) - 1) in
-  (
-    set h i y;
-    DynArray.delete_last h.heap;
-    Hashtbl.remove h.indices x;
-    if (P.order x y) then (down_heap h i) else (up_heap h i);
-  );
+  let x = get h i in
+  let len = length h -1 in
+  if i = len
+  then
+    (
+      DynArray.delete_last h.heap;
+      Hashtbl.remove h.indices x
+    )
+  else 
+    let y = get h len in
+    (
+      set h i y;
+      DynArray.delete_last h.heap;
+      Hashtbl.remove h.indices x;
+      if (P.order x y) then (down_heap h i) else (up_heap h i)
+    );
 
 value remove_first h =
   if is_empty h
@@ -132,7 +143,7 @@ value remove h x =
   try remove_index h (Hashtbl.find h.indices x) with [ Not_found -> () ];
 
 
-value remove_if f h = 
+value remove_if f h =
   try
     let x = DynArray.index_of f h.heap in
     remove_index h x;
