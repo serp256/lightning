@@ -223,12 +223,6 @@ class c =
                     c
                   )
                 | `ColorMatrix m -> `cmatrix m
-                | `Stroke _ as s -> 
-                  let () = debug:tlf "stroke on sprite" in
-                  (
-                    Enum.iter (fun c -> c#setFilters [ s ]) self#children;
-                    c
-                  )
                 | _ -> c
                 ]
               end `simple fltrs
