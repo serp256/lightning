@@ -21,6 +21,22 @@ external glDisableScissor: unit -> unit = "ml_gl_scissor_disable";
 type rect_mask = { x0 : float ; y0 : float ; x1 : float ; y1 : float };
 value maskStack = Stack.create ();
 
+value scissor = ref None;
+value setScissor x y = scissor.val := Some (x, y);
+value resetScissor () = scissor.val := None;
+
+Callback.register "setScissor" setScissor;
+Callback.register "resetScissor" resetScissor;
+
+DEFINE SCISSOR =
+  match !scissor with
+  [ Some (x, y) -> { x0 = os.x0 +. x; y0 = os.y0 +. y; x1 = os.x1 -. os.x0; y1 = os.y1 -. os.y0 }
+  | _ ->
+    let minY = sheight -. os.y1
+    and maxY = sheight -. os.y0 in
+      {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY }
+  ];
+
 DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
   match self#stage with
   [ Some stage ->
@@ -50,15 +66,13 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
 					(
 						debug:mask "push %f %f %f %f " os.x0 os.y0 os.x1 os.y1;
 						Stack.push os maskStack;
-						let minY = sheight -. os.y1
-						and maxY = sheight -. os.y0 in
-						let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY }
-						and np = ref False in
+						let os = SCISSOR in
+						let np = ref False in
 						(
 						 if (os.x1 > 0.0 && os.y1 > 0.0) then (
 							 if (Stack.length maskStack > 1) then glDisableScissor () else ();
                debug:mask "push %f %f %f %f " os.x0 os.y0 os.x1 os.y1;
-								glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
+                glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
 								call_render;
 								glDisableScissor ();
 								if (Stack.length maskStack > 1) then 
@@ -66,9 +80,10 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
 										np.val := True;
 										ignore ( Stack.pop maskStack );
 										let os = Stack.top maskStack in
-										let minY = sheight -. os.y1
+                    let os = SCISSOR in
+(* 										let minY = sheight -. os.y1
 										and maxY = sheight -. os.y0 in
-										let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } in
+										let os = {(os) with x1 = os.x1 -. os.x0 ; y0 = minY ; y1 = maxY -. minY } in *)
 										(
 											glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
 										);
@@ -160,6 +175,7 @@ DEFINE RESET_BOUNDS_CACHE =
     [ Some _ -> boundsCache := None
     | None -> ()
     ];
+
     match parent with
     [ Some p -> p#boundsChanged ()
     | None -> ()
@@ -195,8 +211,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 					) ) self;
 			 incr object_count;
 
-       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ _ -> stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
-       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> stage := None));
+       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ lid -> let () = debug:rmfromstage "add to stage %d lid %d" (Oo.id self) lid in stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
+       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> let () = debug:rmfromstage "remove from stage %d" (Oo.id self) in stage := None));
 
 (* 			 if !object_count mod 100 = 0 then *)
 (* 				( *)
@@ -346,7 +362,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method clearParent () = 
 			match parent with
 			[ Some p ->
-				let on_stage = match p#stage with [ Some _ -> True | _ -> False ] in
+				let on_stage = match self#stage with [ Some _ -> True | _ -> False ] in
 				(
           stage := None;
           parent := None;
@@ -379,6 +395,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual setFilters: list Filters.t -> unit;
 
     method private enterFrameListenerRemovedFromStage  _ _ lid =
+      let () = debug:rmfromstage "enterFrameListenerRemovedFromStage call" in
       let _ = super#removeEventListener ev_REMOVED_FROM_STAGE lid in
       match self#hasEventListeners ev_ENTER_FRAME with
       [ True -> 
@@ -439,10 +456,9 @@ class virtual _c [ 'parent ] = (*{{{*)
     method dispatchEvent' event target =
     (
       let evd = (target,self) in
-      let () = debug:event "dispatchEvent %s on %s" (Ev.string_of_id event.Ev.evid) self#name in
       MList.apply_assoc 
         (fun l ->
-          ignore(List.for_all (fun (lid,l) -> (debug:event "call listener"; l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
+          ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
         )
         event.Ev.evid listeners;
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with
@@ -493,7 +509,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setPos x y = (pos := {Point.x=x;y=y}; RESET_CACHE "setPos");
     method setPosPoint p = (pos := p; RESET_CACHE "setPosPoint");
 
-    method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
+    method virtual boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
     method bounds = 
       match boundsCache with
@@ -687,7 +703,7 @@ class virtual _c [ 'parent ] = (*{{{*)
           match mask with
           [ None -> self#render' ?alpha:parentAlpha ~transform rect 
           | Some (onSelf,maskRect,maskPoints) ->
-            let () = debug "some mask" in
+            let () = debug:rendermask "some mask" in
               let maskRect = 
                 match onSelf with
                 [ True -> maskRect
@@ -696,13 +712,13 @@ class virtual _c [ 'parent ] = (*{{{*)
                     Matrix.transformRectangle (Matrix.invert m) maskRect
                 ]
               in
-              let () = debug "mask rect %s, rect = None: %B" (Rectangle.to_string maskRect) (rect = None) in
+              let () = debug:rendermask "mask rect %s, rect = None: %B" (Rectangle.to_string maskRect) (rect = None) in
               match rect with
               [ None -> RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some maskRect))
               | Some rect -> 
                   match Rectangle.intersection maskRect rect with
                   [ Some inRect ->
-                    let () = debug "Rectangle.intersection maskRect rect %s" (Rectangle.to_string inRect) in
+                    let () = debug:rendermask "Rectangle.intersection maskRect rect %s" (Rectangle.to_string inRect) in
                       RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some inRect))
                   | None -> ()
                   ]
@@ -774,6 +790,43 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method virtual stageResized: unit -> unit;
 
+    method private maskInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t = fun space ->
+      let () = debug:boundswithmask "%s maskInSpace call" name in
+      match mask with
+      [ Some (onself, rect, _) ->
+        let () = debug:boundswithmask "some mask %B %s" onself (Rectangle.to_string rect) in
+        if onself
+        then
+          match space with
+          [ Some s when s#asDisplayObject = self#asDisplayObject -> rect
+          | _ -> Matrix.transformRectangle (self#transformationMatrixToSpace space) rect
+          ]
+        else
+          match self#parent with
+          [ Some p ->
+            match space with
+            [ Some s when s#asDisplayObject = p#asDisplayObject -> rect
+            | _ -> Matrix.transformRectangle (p#transformationMatrixToSpace space) rect
+            ]
+          | _ -> Rectangle.empty
+          ]
+      | _ -> let () = debug:boundswithmask "no mask" in Rectangle.empty
+      ];
+
+    method private boundsWithMask': !'space. Rectangle.t -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> bool -> Rectangle.t = fun bounds space withMask ->
+      let () = debug:boundswithmask "%s bounds %s withMask %B" name (Rectangle.to_string bounds) withMask in
+      if withMask
+      then
+        let mask = self#maskInSpace space in
+          if Rectangle.isEmpty mask
+          then let () = debug:boundswithmask "empty mask" in bounds
+          else
+            let () = debug:boundswithmask "mask in space %s" (Rectangle.to_string mask) in
+              match Rectangle.intersection mask bounds with
+              [ Some r -> r
+              | _ -> Rectangle.empty
+              ]
+      else bounds;
   end;(*}}}*)
 
 
@@ -1113,31 +1166,33 @@ class virtual container = (*{{{*)
       let child = child#asDisplayObject in
       self#containsChild' child;
 
-    method boundsInSpace targetCoordinateSpace =
-      match children with
-      [ None -> Rectangle.empty
-      | Some children when children == (Dllist.next children) (* 1 child *) -> (Dllist.get children)#boundsInSpace targetCoordinateSpace
-      | Some children -> 
-          let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
-          (
-            let open Rectangle in
-(*             let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in *)
-            let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
-            Dllist.iter begin fun (child:'displayObject) ->
-(*               let childBounds = child#boundsInSpace targetCoordinateSpace in *)
-              let childBounds = Matrix.transformRectangle matrix child#bounds in
-              (
-                if childBounds.x < ar.(0) then ar.(0) := childBounds.x else ();
-                let rightX = childBounds.x +. childBounds.width in
-                if rightX > ar.(1) then ar.(1) := rightX else ();
-                if childBounds.y < ar.(2) then ar.(2) := childBounds.y else ();
-                let downY = childBounds.y +. childBounds.height in
-                if downY > ar.(3) then ar.(3) := downY else ();
-              )
-            end children;
-            Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
-          )
-      ];
+    method boundsInSpace ?(withMask = False) targetCoordinateSpace =
+        match children with
+        [ None -> Rectangle.empty
+        | Some children when children == (Dllist.next children) (* 1 child *) -> let () = debug:boundswithmask "1" in self#boundsWithMask' ((Dllist.get children)#boundsInSpace ~withMask targetCoordinateSpace) targetCoordinateSpace withMask
+        | Some children ->
+          let () = debug:boundswithmask "2" in 
+            let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+            (
+              let open Rectangle in
+  (*             let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in *)
+              let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
+              Dllist.iter begin fun (child:'displayObject) ->
+  (*               let childBounds = child#boundsInSpace targetCoordinateSpace in *)
+                let childBounds = Matrix.transformRectangle matrix (if withMask then child#boundsInSpace ~withMask:True (Some self) else child#bounds) in
+                (
+                  if childBounds.x < ar.(0) then ar.(0) := childBounds.x else ();
+                  let rightX = childBounds.x +. childBounds.width in
+                  if rightX > ar.(1) then ar.(1) := rightX else ();
+                  if childBounds.y < ar.(2) then ar.(2) := childBounds.y else ();
+                  let downY = childBounds.y +. childBounds.height in
+                  if downY > ar.(3) then ar.(3) := downY else ();
+                )
+              end children;
+
+              self#boundsWithMask' (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask;
+            )
+        ];
 
 
     method private hitTestPoint' localPoint isTouch = 

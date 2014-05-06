@@ -163,7 +163,7 @@ class c pts s q t =
 		method texHeight = tex#height;
 		method relativeWidth  = self#width -. tex#width;
 		method relativeHeight = self#height -. tex#height;
-		method boundsInSpace targetCoordinateSpace = (
+		method boundsInSpace ?(withMask = False) targetCoordinateSpace = (
 			let open Point in
 			let tw = tex#width /. 2.
 			and th = tex#height /. 2. in
@@ -178,7 +178,7 @@ class c pts s q t =
 			let fp = pts.(0) in
 			let (lmx,lmy,lMx,lMy) = Array.fold_left foldFunc (fp.x,fp.y,fp.x,fp.y) pts in
 			let w = lMx -. lmx and h = lMy -. lmy in
-			Rectangle.create lmx lmy w h;
+				self#boundsWithMask' (Rectangle.create lmx lmy w h) targetCoordinateSpace withMask;
 		);	
 
 		method private render' ?alpha:(a) ~transform rect =

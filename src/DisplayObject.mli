@@ -91,7 +91,9 @@ class virtual _c [ 'parent ] :
     method transformationMatrix: Matrix.t;
     method setTransformationMatrix: Matrix.t -> unit;
     method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t;
-    method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
+    method private maskInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
+    method private boundsWithMask': !'space. Rectangle.t -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> bool -> Rectangle.t;
+    method virtual boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method globalToLocal: Point.t -> Point.t;
     method localToGlobal: Point.t -> Point.t;
     method mask: option (bool * Rectangle.t);
@@ -148,7 +150,7 @@ class virtual container:
     method containsChild': 'displayObject -> bool;
     method clearChildren: unit -> unit;
 (*     method dispatchEventOnChildren: Ev.t -> unit; *)
-    method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
+    method boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
 		method classes: list exn;

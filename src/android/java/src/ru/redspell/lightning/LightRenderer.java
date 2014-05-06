@@ -60,6 +60,8 @@ public class LightRenderer implements GLSurfaceView.Renderer {
 		Log.d("LIGHTNING","frameRate: " + fr);
 		if (fr > 0) animationInterval = (long)(1.0 / fr * NANOSECONDSPERSECOND);
 	}
+
+	private native void forceRenderStage();
     
 	public boolean onDrawFrame(GL10 gl) {
 		long now = System.nanoTime();
