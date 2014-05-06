@@ -426,7 +426,7 @@ type line =
     closed: mutable bool;
   };
 
-value createSprite () =
+class tlfSprite () =
   object(self)
     inherit Sprite.c as super;
 
@@ -438,6 +438,7 @@ value createSprite () =
           else Enum.iter (fun c -> c#setFilters stroke) self#children;
 
           super#setFilters rest;
+          filters := f;
         );
   end;
 
@@ -935,7 +936,7 @@ value create ?width ?height ?border ?dest (html:main) =
   let no_zero = fun [ Some x when  x <= 0. -> (Debug.w "w or h not correct"; None) | x ->  x ] in
   let ((width,height),lines) = process (no_zero width,no_zero height) [] html in
   let _container = ref (match dest with [ Some s -> Some (s :> Sprite.c) | None -> None  ]) in
-  let container () = match !_container with [ Some c -> c | None -> let c = createSprite () in (_container.val := Some c; c) ] in
+  let container () = match !_container with [ Some c -> c | None -> let c = new tlfSprite () in (_container.val := Some c; c) ] in
   let atlases : Hashtbl.t Texture.c Atlas.tlf = Hashtbl.create 1 in
   (
     List.iter begin fun line ->
@@ -980,7 +981,7 @@ value create ?width ?height ?border ?dest (html:main) =
           let () = debug "result is atlas" in
           (OPTGET (Enum.get (Hashtbl.values atlases)))#asDisplayObject
         else 
-          let c = createSprite () in
+          let c = new tlfSprite () in
           (
             debug "result sprite with atlases";
             Hashtbl.iter (fun _ atlas -> c#addChild atlas) atlases;
