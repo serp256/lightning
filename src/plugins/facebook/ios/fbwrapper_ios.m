@@ -7,6 +7,7 @@
 #import <caml/alloc.h>
 #import <caml/fail.h>
 #import <UIKit/UIDevice.h>
+#import "common_ios.h"
 
 @interface LightFBDialogDelegate : NSObject <FBWebDialogsDelegate>
 {
@@ -51,10 +52,6 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 //     PublishPermissionsRequsted,
 // } extraPermsState = NotRequested;
 // int extraPermsRequested = 0;
-
-BOOL ios6() {
-    return ([[[UIDevice currentDevice] systemVersion] floatValue] < 7.0);
-}
 
 static inline void requestPublishPermissions();
 static inline void requestReadPermissions();
@@ -118,7 +115,7 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
         case FBSessionStateOpen: {
             NSLog(@"FBSessionStateOpen %d", [session.permissions count]);
 
-            if (ios6()) {
+            if (IOS6) {
                 /* io6 doesn't call this function each time session change its state; insted it calls blocks which given in requestNewPublishPermissions and requestNewReadPermissions calls */
                 requestReadPermissions();
             } else {

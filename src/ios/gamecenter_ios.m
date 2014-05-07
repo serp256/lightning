@@ -9,6 +9,7 @@
 #import "LightViewController.h"
 
 #include "texture_common.h"
+#import "common_ios.h"
 
 static UIViewController *initViewController = nil;
 static uint8_t silent;
@@ -22,17 +23,27 @@ value ml_gamecenter_init(value vsilent, value param) {
 	NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
 	if ([currSysVer compare:reqSysVer options:NSNumericSearch] == NSOrderedAscending) return Val_false;
 
+  if (IOS6) {
+    GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
+    [localPlayer authenticateWithCompletionHandler:^(NSError *error) {
+            NSLog(@"GameCenter Initialized");
+            NSCAssert([NSThread isMainThread],@"GameCenter Init call not in main thread");
+            value res = Val_false;
+            if (localPlayer.isAuthenticated) res = Val_true;
+            caml_callback(*caml_named_value("game_center_initialized"),res);
+     }];
+  } else {
     silent = vsilent == Val_true;
 
     if (initViewController != nil) {
         NSLog(@"---has viewcontoller to display");
-        [[LightViewController sharedInstance] presentModalViewController:initViewController animated:YES];
+        [[LightViewController sharedInstance] presentViewController:initViewController animated:YES completion:nil ];
         initViewController = nil;
     } else {
         GKLocalPlayer *localPlayer = [GKLocalPlayer localPlayer];
         localPlayer.authenticateHandler =
             ^(UIViewController *viewController, NSError *error) {
-                NSLog(@"---authenticateHandler call");
+                NSLog(@"---authenticateHandler call. nil view controller: %d; authenticated: %hhd", viewController == nil, localPlayer.authenticated);
                 value res = Val_true;
 
                 if (error) {
@@ -50,7 +61,7 @@ value ml_gamecenter_init(value vsilent, value param) {
                     else {
                         NSLog(@"---presenting login viewController");
 
-                        [[LightViewController sharedInstance] presentModalViewController:viewController animated:YES];
+                        [[LightViewController sharedInstance] presentViewController:viewController animated:YES completion:nil ];
                         return;
                     }
                 } else {
@@ -63,6 +74,7 @@ value ml_gamecenter_init(value vsilent, value param) {
                 caml_callback(*caml_named_value("game_center_initialized"), res);
             };
     }
+  }
 
 	return Val_true;
 }
