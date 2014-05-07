@@ -1,6 +1,6 @@
-diff -urN ocaml-4.01.0-clean/Makefile ocaml-4.01.0/Makefile
---- ocaml-4.01.0-clean/Makefile	2013-06-17 17:15:18.000000000 +0400
-+++ ocaml-4.01.0/Makefile	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/Makefile ocaml-4.01.0-android/Makefile
+--- ocaml-4.01.0/Makefile	2013-06-17 17:15:18.000000000 +0400
++++ ocaml-4.01.0-android/Makefile	2014-05-07 18:59:49.000000000 +0400
 @@ -15,17 +15,17 @@
  include config/Makefile
  include stdlib/StdlibModules
@@ -113,9 +113,9 @@ diff -urN ocaml-4.01.0-clean/Makefile ocaml-4.01.0/Makefile
  	for i in $(OTHERLIBRARIES); do \
  	  (cd otherlibs/$$i; $(MAKE) allopt) || exit $$?; \
  	done
-diff -urN ocaml-4.01.0-clean/asmcomp/liveness.ml ocaml-4.01.0/asmcomp/liveness.ml
---- ocaml-4.01.0-clean/asmcomp/liveness.ml	2012-10-15 21:50:56.000000000 +0400
-+++ ocaml-4.01.0/asmcomp/liveness.ml	2014-04-15 12:08:54.000000000 +0400
+diff -urN ocaml-4.01.0/asmcomp/liveness.ml ocaml-4.01.0-android/asmcomp/liveness.ml
+--- ocaml-4.01.0/asmcomp/liveness.ml	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0-android/asmcomp/liveness.ml	2014-05-07 18:59:49.000000000 +0400
 @@ -97,7 +97,8 @@
        let across =
          match i.desc with
@@ -126,9 +126,9 @@ diff -urN ocaml-4.01.0-clean/asmcomp/liveness.ml ocaml-4.01.0/asmcomp/liveness.m
              (* The function call may raise an exception, branching to the
                 nearest enclosing try ... with. Similarly for bounds checks.
                 Hence, everything that must be live at the beginning of
-diff -urN ocaml-4.01.0-clean/asmcomp/spill.ml ocaml-4.01.0/asmcomp/spill.ml
---- ocaml-4.01.0-clean/asmcomp/spill.ml	2012-10-15 21:50:56.000000000 +0400
-+++ ocaml-4.01.0/asmcomp/spill.ml	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/asmcomp/spill.ml ocaml-4.01.0-android/asmcomp/spill.ml
+--- ocaml-4.01.0/asmcomp/spill.ml	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0-android/asmcomp/spill.ml	2014-05-07 18:59:49.000000000 +0400
 @@ -291,7 +291,8 @@
        let before =
          match i.desc with
@@ -139,9 +139,9 @@ diff -urN ocaml-4.01.0-clean/asmcomp/spill.ml ocaml-4.01.0/asmcomp/spill.ml
              Reg.Set.union before1 !spill_at_raise
          | _ ->
              before1 in
-diff -urN ocaml-4.01.0-clean/asmrun/backtrace.c ocaml-4.01.0/asmrun/backtrace.c
---- ocaml-4.01.0-clean/asmrun/backtrace.c	2013-07-23 18:48:47.000000000 +0400
-+++ ocaml-4.01.0/asmrun/backtrace.c	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/asmrun/backtrace.c ocaml-4.01.0-android/asmrun/backtrace.c
+--- ocaml-4.01.0/asmrun/backtrace.c	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0-android/asmrun/backtrace.c	2014-05-07 18:59:49.000000000 +0400
 @@ -252,12 +252,12 @@
     useless. We kept it to keep code identical to the byterun/
     implementation. */
@@ -211,9 +211,9 @@ diff -urN ocaml-4.01.0-clean/asmrun/backtrace.c ocaml-4.01.0/asmrun/backtrace.c
  /* Convert the raw backtrace to a data structure usable from OCaml */
  
  CAMLprim value caml_convert_raw_backtrace(value backtrace) {
-diff -urN ocaml-4.01.0-clean/build/distclean.sh ocaml-4.01.0/build/distclean.sh
---- ocaml-4.01.0-clean/build/distclean.sh	2012-10-15 21:50:56.000000000 +0400
-+++ ocaml-4.01.0/build/distclean.sh	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/build/distclean.sh ocaml-4.01.0-android/build/distclean.sh
+--- ocaml-4.01.0/build/distclean.sh	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0-android/build/distclean.sh	2014-05-07 18:59:49.000000000 +0400
 @@ -21,9 +21,9 @@
  rm -rf _build
  rm -f boot/ocamlrun boot/ocamlrun.exe boot/camlheader \
@@ -226,9 +226,9 @@ diff -urN ocaml-4.01.0-clean/build/distclean.sh ocaml-4.01.0/build/distclean.sh
  
  # from partial boot
  rm -f driver/main.byte driver/optmain.byte lex/main.byte \
-diff -urN ocaml-4.01.0-clean/byterun/Makefile.common ocaml-4.01.0/byterun/Makefile.common
---- ocaml-4.01.0-clean/byterun/Makefile.common	2013-08-19 22:21:47.000000000 +0400
-+++ ocaml-4.01.0/byterun/Makefile.common	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/byterun/Makefile.common ocaml-4.01.0-android/byterun/Makefile.common
+--- ocaml-4.01.0/byterun/Makefile.common	2013-08-19 22:21:47.000000000 +0400
++++ ocaml-4.01.0-android/byterun/Makefile.common	2014-05-07 18:59:49.000000000 +0400
 @@ -61,6 +61,13 @@
  
  install:: install-$(RUNTIMED)
@@ -243,9 +243,9 @@ diff -urN ocaml-4.01.0-clean/byterun/Makefile.common ocaml-4.01.0/byterun/Makefi
  install-noruntimed:
  .PHONY: install-noruntimed
  
-diff -urN ocaml-4.01.0-clean/byterun/backtrace.c ocaml-4.01.0/byterun/backtrace.c
---- ocaml-4.01.0-clean/byterun/backtrace.c	2013-08-02 17:54:22.000000000 +0400
-+++ ocaml-4.01.0/byterun/backtrace.c	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/byterun/backtrace.c ocaml-4.01.0-android/byterun/backtrace.c
+--- ocaml-4.01.0/byterun/backtrace.c	2013-08-02 17:54:22.000000000 +0400
++++ ocaml-4.01.0-android/byterun/backtrace.c	2014-05-07 18:59:49.000000000 +0400
 @@ -349,6 +349,11 @@
    }
  }
@@ -258,9 +258,9 @@ diff -urN ocaml-4.01.0-clean/byterun/backtrace.c ocaml-4.01.0/byterun/backtrace.
  /* Convert the backtrace to a data structure usable from OCaml */
  
  CAMLprim value caml_convert_raw_backtrace(value backtrace)
-diff -urN ocaml-4.01.0-clean/byterun/backtrace.h ocaml-4.01.0/byterun/backtrace.h
---- ocaml-4.01.0-clean/byterun/backtrace.h	2012-10-15 21:50:56.000000000 +0400
-+++ ocaml-4.01.0/byterun/backtrace.h	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/byterun/backtrace.h ocaml-4.01.0-android/byterun/backtrace.h
+--- ocaml-4.01.0/byterun/backtrace.h	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0-android/byterun/backtrace.h	2014-05-07 18:59:49.000000000 +0400
 @@ -27,5 +27,6 @@
  extern void caml_stash_backtrace(value exn, code_t pc, value * sp);
  #endif
@@ -268,9 +268,9 @@ diff -urN ocaml-4.01.0-clean/byterun/backtrace.h ocaml-4.01.0/byterun/backtrace.
 +CAMLextern char** caml_print_get_exception_backtrace(void);
  
  #endif /* CAML_BACKTRACE_H */
-diff -urN ocaml-4.01.0-clean/byterun/fail.h ocaml-4.01.0/byterun/fail.h
---- ocaml-4.01.0-clean/byterun/fail.h	2013-03-10 02:38:52.000000000 +0400
-+++ ocaml-4.01.0/byterun/fail.h	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/byterun/fail.h ocaml-4.01.0-android/byterun/fail.h
+--- ocaml-4.01.0/byterun/fail.h	2013-03-10 02:38:52.000000000 +0400
++++ ocaml-4.01.0-android/byterun/fail.h	2014-05-07 18:59:49.000000000 +0400
 @@ -60,6 +60,9 @@
  extern "C" {
  #endif
@@ -281,9 +281,9 @@ diff -urN ocaml-4.01.0-clean/byterun/fail.h ocaml-4.01.0/byterun/fail.h
  CAMLextern void caml_raise (value bucket) Noreturn;
  CAMLextern void caml_raise_constant (value tag) Noreturn;
  CAMLextern void caml_raise_with_arg (value tag, value arg) Noreturn;
-diff -urN ocaml-4.01.0-clean/byterun/printexc.c ocaml-4.01.0/byterun/printexc.c
---- ocaml-4.01.0-clean/byterun/printexc.c	2012-10-15 21:50:56.000000000 +0400
-+++ ocaml-4.01.0/byterun/printexc.c	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/byterun/printexc.c ocaml-4.01.0-android/byterun/printexc.c
+--- ocaml-4.01.0/byterun/printexc.c	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0-android/byterun/printexc.c	2014-05-07 18:59:49.000000000 +0400
 @@ -24,6 +24,8 @@
  #include "mlvalues.h"
  #include "printexc.h"
@@ -318,9 +318,9 @@ diff -urN ocaml-4.01.0-clean/byterun/printexc.c ocaml-4.01.0/byterun/printexc.c
 +	};
    exit(2);
  }
-diff -urN ocaml-4.01.0-clean/config/Makefile ocaml-4.01.0/config/Makefile
---- ocaml-4.01.0-clean/config/Makefile	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.01.0/config/Makefile	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/config/Makefile ocaml-4.01.0-android/config/Makefile
+--- ocaml-4.01.0/config/Makefile	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.01.0-android/config/Makefile	2014-05-07 19:00:44.000000000 +0400
 @@ -0,0 +1,77 @@
 +# generated by ./configure 
 +PREFIX=/usr/local/ocaml/android
@@ -373,7 +373,7 @@ diff -urN ocaml-4.01.0-clean/config/Makefile ocaml-4.01.0/config/Makefile
 +ASPPPROFFLAGS=-DPROFILING
 +PROFILING=noprof
 +DYNLINKOPTS= -ldl
-+OTHERLIBRARIES=unix str num dynlink bigarray threads
++OTHERLIBRARIES=unix str num dynlink bigarray threads systhreads
 +DEBUGGER=ocamldebugger
 +CC_PROFILE=-pg
 +SYSTHREAD_SUPPORT=false
@@ -399,9 +399,9 @@ diff -urN ocaml-4.01.0-clean/config/Makefile ocaml-4.01.0/config/Makefile
 +RUNTIMED=noruntimed
 +ASM_CFI_SUPPORTED=true
 +WITH_FRAME_POINTERS=false
-diff -urN ocaml-4.01.0-clean/config/m.h ocaml-4.01.0/config/m.h
---- ocaml-4.01.0-clean/config/m.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.01.0/config/m.h	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/config/m.h ocaml-4.01.0-android/config/m.h
+--- ocaml-4.01.0/config/m.h	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.01.0-android/config/m.h	2014-05-07 18:59:49.000000000 +0400
 @@ -0,0 +1,16 @@
 +#ifndef __PIC__
 +#  define ARCH_CODE32
@@ -419,9 +419,9 @@ diff -urN ocaml-4.01.0-clean/config/m.h ocaml-4.01.0/config/m.h
 +#undef ARCH_ALIGN_INT64
 +#undef NONSTANDARD_DIV_MOD
 +#define ASM_CFI_SUPPORTED
-diff -urN ocaml-4.01.0-clean/config/s.h ocaml-4.01.0/config/s.h
---- ocaml-4.01.0-clean/config/s.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.01.0/config/s.h	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/config/s.h ocaml-4.01.0-android/config/s.h
+--- ocaml-4.01.0/config/s.h	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.01.0-android/config/s.h	2014-05-07 18:59:49.000000000 +0400
 @@ -0,0 +1,51 @@
 +#define OCAML_OS_TYPE "Unix"
 +#define OCAML_STDLIB_DIR "/usr/local/ocaml/android/lib"
@@ -474,9 +474,9 @@ diff -urN ocaml-4.01.0-clean/config/s.h ocaml-4.01.0/config/s.h
 +#undef HAS_STACK_OVERFLOW_DETECTION
 +#define HAS_SIGWAIT
 +#undef HAS_LIBBFD
-diff -urN ocaml-4.01.0-clean/otherlibs/Makefile.shared ocaml-4.01.0/otherlibs/Makefile.shared
---- ocaml-4.01.0-clean/otherlibs/Makefile.shared	2013-07-23 18:48:47.000000000 +0400
-+++ ocaml-4.01.0/otherlibs/Makefile.shared	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/otherlibs/Makefile.shared ocaml-4.01.0-android/otherlibs/Makefile.shared
+--- ocaml-4.01.0/otherlibs/Makefile.shared	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0-android/otherlibs/Makefile.shared	2014-05-07 18:59:49.000000000 +0400
 @@ -18,7 +18,7 @@
  
  # Compilation options
@@ -500,9 +500,9 @@ diff -urN ocaml-4.01.0-clean/otherlibs/Makefile.shared ocaml-4.01.0/otherlibs/Ma
  
  partialclean:
  	rm -f *.cm*
-diff -urN ocaml-4.01.0-clean/otherlibs/dynlink/Makefile ocaml-4.01.0/otherlibs/dynlink/Makefile
---- ocaml-4.01.0-clean/otherlibs/dynlink/Makefile	2013-07-23 18:48:47.000000000 +0400
-+++ ocaml-4.01.0/otherlibs/dynlink/Makefile	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/otherlibs/dynlink/Makefile ocaml-4.01.0-android/otherlibs/dynlink/Makefile
+--- ocaml-4.01.0/otherlibs/dynlink/Makefile	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0-android/otherlibs/dynlink/Makefile	2014-05-07 18:59:49.000000000 +0400
 @@ -15,7 +15,7 @@
  
  include ../../config/Makefile
@@ -512,9 +512,9 @@ diff -urN ocaml-4.01.0-clean/otherlibs/dynlink/Makefile ocaml-4.01.0/otherlibs/d
  CAMLOPT=../../ocamlcompopt.sh
  INCLUDES=-I ../../utils -I ../../typing -I ../../bytecomp -I ../../asmcomp
  COMPFLAGS=-w +33..39 -warn-error A -I ../../stdlib $(INCLUDES)
-diff -urN ocaml-4.01.0-clean/otherlibs/systhreads/Makefile ocaml-4.01.0/otherlibs/systhreads/Makefile
---- ocaml-4.01.0-clean/otherlibs/systhreads/Makefile	2013-07-23 18:48:47.000000000 +0400
-+++ ocaml-4.01.0/otherlibs/systhreads/Makefile	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/otherlibs/systhreads/Makefile ocaml-4.01.0-android/otherlibs/systhreads/Makefile
+--- ocaml-4.01.0/otherlibs/systhreads/Makefile	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0-android/otherlibs/systhreads/Makefile	2014-05-07 18:59:49.000000000 +0400
 @@ -15,7 +15,7 @@
  
  CAMLC=../../ocamlcomp.sh -I ../unix
@@ -543,9 +543,39 @@ diff -urN ocaml-4.01.0-clean/otherlibs/systhreads/Makefile ocaml-4.01.0/otherlib
  	cp libthreadsnat.a $(LIBDIR)/libthreadsnat.a
  	cd $(LIBDIR); $(RANLIB) libthreadsnat.a
  	cp $(THREAD_OBJS:.cmo=.cmx) threads.cmxa threads.a $(LIBDIR)/threads
-diff -urN ocaml-4.01.0-clean/otherlibs/threads/pervasives.ml ocaml-4.01.0/otherlibs/threads/pervasives.ml
---- ocaml-4.01.0-clean/otherlibs/threads/pervasives.ml	2013-07-23 18:48:47.000000000 +0400
-+++ ocaml-4.01.0/otherlibs/threads/pervasives.ml	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/otherlibs/systhreads/st_posix.h ocaml-4.01.0-android/otherlibs/systhreads/st_posix.h
+--- ocaml-4.01.0/otherlibs/systhreads/st_posix.h	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0-android/otherlibs/systhreads/st_posix.h	2014-05-07 19:00:32.000000000 +0400
+@@ -80,7 +80,7 @@
+ 
+ static void st_thread_kill(st_thread_id thr)
+ {
+-  pthread_cancel(thr);
++  //pthread_cancel(thr);
+ }
+ 
+ /* Scheduling hints */
+@@ -323,7 +323,7 @@
+   sigfillset(&mask);
+   pthread_sigmask(SIG_BLOCK, &mask, NULL);
+   /* Allow async cancellation */
+-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
++  //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+   while(1) {
+     /* select() seems to be the most efficient way to suspend the
+        thread for sub-second intervals */
+@@ -342,7 +342,7 @@
+ 
+ static int st_atfork(void (*fn)(void))
+ {
+-  return pthread_atfork(NULL, NULL, fn);
++  return 0;//pthread_atfork(NULL, NULL, fn);
+ }
+ 
+ /* Signal handling */
+diff -urN ocaml-4.01.0/otherlibs/threads/pervasives.ml ocaml-4.01.0-android/otherlibs/threads/pervasives.ml
+--- ocaml-4.01.0/otherlibs/threads/pervasives.ml	2013-07-23 18:48:47.000000000 +0400
++++ ocaml-4.01.0-android/otherlibs/threads/pervasives.ml	2014-05-07 18:59:49.000000000 +0400
 @@ -79,7 +79,7 @@
  external (lsr) : int -> int -> int = "%lsrint"
  external (asr) : int -> int -> int = "%asrint"
@@ -609,9 +639,9 @@ diff -urN ocaml-4.01.0-clean/otherlibs/threads/pervasives.ml ocaml-4.01.0/otherl
  external frexp : float -> float * int = "caml_frexp_float"
  external ldexp : float -> int -> float = "caml_ldexp_float"
  external modf : float -> float * float = "caml_modf_float"
-diff -urN ocaml-4.01.0-clean/stdlib/Makefile ocaml-4.01.0/stdlib/Makefile
---- ocaml-4.01.0-clean/stdlib/Makefile	2012-10-15 21:50:56.000000000 +0400
-+++ ocaml-4.01.0/stdlib/Makefile	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/stdlib/Makefile ocaml-4.01.0-android/stdlib/Makefile
+--- ocaml-4.01.0/stdlib/Makefile	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0-android/stdlib/Makefile	2014-05-07 18:59:49.000000000 +0400
 @@ -13,7 +13,7 @@
  
  include Makefile.shared
@@ -630,9 +660,9 @@ diff -urN ocaml-4.01.0-clean/stdlib/Makefile ocaml-4.01.0/stdlib/Makefile
  	cd $(LIBDIR); $(RANLIB) stdlib.a
  
  installopt-noprof:
-diff -urN ocaml-4.01.0-clean/stdlib/Makefile.shared ocaml-4.01.0/stdlib/Makefile.shared
---- ocaml-4.01.0-clean/stdlib/Makefile.shared	2012-10-15 21:50:56.000000000 +0400
-+++ ocaml-4.01.0/stdlib/Makefile.shared	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/stdlib/Makefile.shared ocaml-4.01.0-android/stdlib/Makefile.shared
+--- ocaml-4.01.0/stdlib/Makefile.shared	2012-10-15 21:50:56.000000000 +0400
++++ ocaml-4.01.0-android/stdlib/Makefile.shared	2014-05-07 18:59:49.000000000 +0400
 @@ -12,14 +12,12 @@
  #########################################################################
  
@@ -664,9 +694,9 @@ diff -urN ocaml-4.01.0-clean/stdlib/Makefile.shared ocaml-4.01.0/stdlib/Makefile
  
  # Dependencies on Pervasives (not tracked by ocamldep)
  $(OBJS) std_exit.cmo: pervasives.cmi
-diff -urN ocaml-4.01.0-clean/stdlib/camlinternalOO.ml ocaml-4.01.0/stdlib/camlinternalOO.ml
---- ocaml-4.01.0-clean/stdlib/camlinternalOO.ml	2013-03-19 11:22:12.000000000 +0400
-+++ ocaml-4.01.0/stdlib/camlinternalOO.ml	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/stdlib/camlinternalOO.ml ocaml-4.01.0-android/stdlib/camlinternalOO.ml
+--- ocaml-4.01.0/stdlib/camlinternalOO.ml	2013-03-19 11:22:12.000000000 +0400
++++ ocaml-4.01.0-android/stdlib/camlinternalOO.ml	2014-05-07 18:59:49.000000000 +0400
 @@ -79,10 +79,7 @@
      accu := 223 * !accu + Char.code s.[i]
    done;
@@ -679,9 +709,9 @@ diff -urN ocaml-4.01.0-clean/stdlib/camlinternalOO.ml ocaml-4.01.0/stdlib/camlin
    magic tag
  
  (**** Sparse array ****)
-diff -urN ocaml-4.01.0-clean/stdlib/pervasives.ml ocaml-4.01.0/stdlib/pervasives.ml
---- ocaml-4.01.0-clean/stdlib/pervasives.ml	2013-06-19 15:46:11.000000000 +0400
-+++ ocaml-4.01.0/stdlib/pervasives.ml	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/stdlib/pervasives.ml ocaml-4.01.0-android/stdlib/pervasives.ml
+--- ocaml-4.01.0/stdlib/pervasives.ml	2013-06-19 15:46:11.000000000 +0400
++++ ocaml-4.01.0-android/stdlib/pervasives.ml	2014-05-07 18:59:49.000000000 +0400
 @@ -75,7 +75,7 @@
  external ( lsr ) : int -> int -> int = "%lsrint"
  external ( asr ) : int -> int -> int = "%asrint"
@@ -745,9 +775,9 @@ diff -urN ocaml-4.01.0-clean/stdlib/pervasives.ml ocaml-4.01.0/stdlib/pervasives
  external frexp : float -> float * int = "caml_frexp_float"
  external ldexp : float -> int -> float = "caml_ldexp_float"
  external modf : float -> float * float = "caml_modf_float"
-diff -urN ocaml-4.01.0-clean/stdlib/pervasives.mli ocaml-4.01.0/stdlib/pervasives.mli
---- ocaml-4.01.0-clean/stdlib/pervasives.mli	2013-07-24 13:21:49.000000000 +0400
-+++ ocaml-4.01.0/stdlib/pervasives.mli	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/stdlib/pervasives.mli ocaml-4.01.0-android/stdlib/pervasives.mli
+--- ocaml-4.01.0/stdlib/pervasives.mli	2013-07-24 13:21:49.000000000 +0400
++++ ocaml-4.01.0-android/stdlib/pervasives.mli	2014-05-07 18:59:49.000000000 +0400
 @@ -273,82 +273,82 @@
  external ( /. ) : float -> float -> float = "%divfloat"
  (** Floating-point division. *)
@@ -868,9 +898,9 @@ diff -urN ocaml-4.01.0-clean/stdlib/pervasives.mli ocaml-4.01.0/stdlib/pervasive
  (** [mod_float a b] returns the remainder of [a] with respect to
     [b].  The returned value is [a -. n *. b], where [n]
     is the quotient [a /. b] rounded towards zero to an integer. *)
-diff -urN ocaml-4.01.0-clean/tools/Makefile.shared ocaml-4.01.0/tools/Makefile.shared
---- ocaml-4.01.0-clean/tools/Makefile.shared	2013-06-05 20:34:40.000000000 +0400
-+++ ocaml-4.01.0/tools/Makefile.shared	2014-04-15 12:08:39.000000000 +0400
+diff -urN ocaml-4.01.0/tools/Makefile.shared ocaml-4.01.0-android/tools/Makefile.shared
+--- ocaml-4.01.0/tools/Makefile.shared	2013-06-05 20:34:40.000000000 +0400
++++ ocaml-4.01.0-android/tools/Makefile.shared	2014-05-07 18:59:49.000000000 +0400
 @@ -12,10 +12,10 @@
  
  include ../config/Makefile
