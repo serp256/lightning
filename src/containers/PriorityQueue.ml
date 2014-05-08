@@ -6,7 +6,6 @@
    GNU LGPL version 2.1.  See the LICENSE file for details.
 *)
 
-module DynArray = BatDynArray;
 
 module type OrderedType = sig
   type t;

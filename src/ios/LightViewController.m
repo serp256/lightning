@@ -44,12 +44,9 @@ void flushErrlog() {
 	if ([fmngr fileExistsAtPath:errlog]) {
 		NSData *body = [NSData dataWithContentsOfFile:errlog];
 
-		NSString *bodyStr = [[NSString alloc] initWithData:body encoding:NSUTF8StringEncoding];
-		NSLog(@"%@", bodyStr);
-
-		NSString *url = [NSString stringWithFormat:@"http://mconnect.redspell.ru/clers?custom=%@", [[NSBundle mainBundle] bundleIdentifier]];
+		NSString *url = [NSString stringWithFormat:@"http://mobile-errors.redspell.ru/submit?app_name=%@", [[NSBundle mainBundle] bundleIdentifier]];
 		NSLog(@"url %@", url);
-		NSMutableURLRequest *r = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
+		NSMutableURLRequest *r = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
 		[r setHTTPMethod:@"POST"];
 		[r setHTTPBody:body];
 		[r setTimeoutInterval:0.5];
@@ -62,7 +59,7 @@ void flushErrlog() {
 			if (err == nil && [response respondsToSelector:@selector(statusCode)] && [response statusCode] == 200) {
 				[fmngr removeItemAtPath:errlog error:nil];
 			}
-		}
+		};
 	}
 }
 
@@ -88,9 +85,9 @@ void mlMailUncaughtException(const char* exn, int bc, char** bv) {
 
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	NSBundle *bundle = [NSBundle mainBundle];
-	NSDate *now = [NSDate date];
+	NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
 	UIDevice *dev = [UIDevice currentDevice];
-	NSString *appName = [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"];
+	//NSString *appName = [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"];
 	NSString *appVer = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
 	NSString *exnInf = [NSString string];
 	NSString *backtrace = [NSString string];
@@ -103,20 +100,34 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 		if (bv[i]) backtrace = [backtrace stringByAppendingFormat:@"\t%@", [NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
 	};
 
-	NSString *report = [NSString stringWithFormat:@"\n------------------------------------------------------\ndate: %@\ndevice: %@(%@)\napplication: %@(%@)\nexception:\n\t%s\n%@", now, dev.model, dev.systemVersion, appName, appVer, exn, backtrace];
+
+	if ([exnInf length]) {
+		backtrace = [backtrace stringByAppendingFormat:@"exception info:\n%@\n", exnInf];
+	}
+
+	NSString *keyArray[5] = {@"date",@"device",@"vers",@"exception",@"data"};
+	NSString *valArray[5] = {[NSString stringWithFormat:@"%f",now],[NSString stringWithFormat:@"%@(%@)",dev.model,dev.systemVersion],appVer,[NSString stringWithCString:exn encoding:NSUTF8StringEncoding],backtrace};
+	/*
+	NSString *report = 
+		[NSString stringWithFormat:@"\n------------------------------------------------------\ndate: %@\ndevice: %@(%@)\napplication: %@(%@)\nexception:\n\t%s\n%@", now, dev.model, dev.systemVersion, appName, appVer, exn, backtrace];
 	if ([exnInf length]) {
 		report = [report stringByAppendingFormat:@"exception info:\n%@\n", exnInf];
 	}
+	*/
 
+	NSDictionary *dict = [NSDictionary dictionaryWithObjects:valArray forKeys:keyArray count:5];
 	NSFileManager *fmngr = [NSFileManager defaultManager];
 	NSString *errlog = errlogPath();
 
+	NSData *js = [NSJSONSerialization dataWithJSONObject:dict options:0 error:NULL];
 	if ([fmngr fileExistsAtPath:errlog] == NO) {
-		[fmngr createFileAtPath:errlog contents:[report dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
+		//[fmngr createFileAtPath:errlog contents:[report dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
+		[fmngr createFileAtPath:errlog contents:js attributes:nil];
 	} else {
 		NSFileHandle *f = [NSFileHandle fileHandleForWritingAtPath:errlog];
 		[f seekToEndOfFile];
-		[f writeData:[report dataUsingEncoding:NSUTF8StringEncoding]];
+		//[f writeData:[report dataUsingEncoding:NSUTF8StringEncoding]];
+		[f writeData:js];
 		[f closeFile];
 	}
 
