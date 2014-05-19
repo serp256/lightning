@@ -40,6 +40,11 @@
 #define PRINT_DEBUG(fmt,args...)
 #endif
 
+#ifdef RELEASE 
+#define NSLog //
+#else 
+#define NSLog NSLog
+#endif
 /*
 #ifndef RELEASE
 #define checkGLErrors(fmt,args...) \

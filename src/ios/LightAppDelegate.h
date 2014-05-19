@@ -9,7 +9,6 @@
 #define APP_URL_DATA @"APP_URL_DATA"
 #define APP_SOURCEAPP_DATA @"APP_SOURCEAPP_DATA"
 
-
 @interface LightAppDelegate : NSObject <UIApplicationDelegate,OrientationDelegate> {
     UIAlertView * inappPurchaseActivity;
     LightViewController * lightViewController;
