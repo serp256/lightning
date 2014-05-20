@@ -96,17 +96,22 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 		exnInf = [exnInf stringByAppendingFormat:@"\t%@\n", info];
 	};
 
-	for (int i = 0; i < bc; i++) {
-		if (bv[i]) backtrace = [backtrace stringByAppendingFormat:@"\t%@", [NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
-	};
+	NSString *exception = [NSString stringWithCString:exn encoding:NSUTF8StringEncoding];
+
+	if (bc > 0) {
+		if (bv[0]) exception = [exception stringByAppendingFormat:@"\n%s",bv[0]];
+		for (int i = 1; i < bc; i++) {
+			if (bv[i]) backtrace = [backtrace stringByAppendingFormat:@"%s\n", bv[i]];
+		};
+	}
 
 
 	if ([exnInf length]) {
-		backtrace = [backtrace stringByAppendingFormat:@"exception info:\n%@\n", exnInf];
+		backtrace = [backtrace stringByAppendingFormat:@"exception info:%@\n", exnInf];
 	}
 
 	NSString *keyArray[5] = {@"date",@"device",@"vers",@"exception",@"data"};
-	NSString *valArray[5] = {[NSString stringWithFormat:@"%f",now],[NSString stringWithFormat:@"%@(%@)",dev.model,dev.systemVersion],appVer,[NSString stringWithCString:exn encoding:NSUTF8StringEncoding],backtrace};
+	NSString *valArray[5] = {[NSString stringWithFormat:@"%f",now],[NSString stringWithFormat:@"%@(%@)",dev.model,dev.systemVersion],appVer,exception,backtrace};
 	/*
 	NSString *report = 
 		[NSString stringWithFormat:@"\n------------------------------------------------------\ndate: %@\ndevice: %@(%@)\napplication: %@(%@)\nexception:\n\t%s\n%@", now, dev.model, dev.systemVersion, appName, appVer, exn, backtrace];
