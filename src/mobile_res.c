@@ -2,12 +2,6 @@
 #include <errno.h>
 #include <string.h>
 
-#ifdef ANDROID
-#include "android/mlwrapper_android.h"	
-#elif IOS
-#import "ios/mlwrapper_ios.h"
-#else
-#endif
 
 KHASH_MAP_INIT_STR(res_index, offset_size_pair_t*);
 static kh_res_index_t* res_indx = NULL;

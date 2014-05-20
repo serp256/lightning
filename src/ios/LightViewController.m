@@ -219,17 +219,23 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	[(LightView *)(self.view) foreground];
 }
 
+- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion {
+	NSLog(@"presentViewController");
+	[self resignActive];
+	[super presentViewController: viewControllerToPresent animated: flag completion: completion];
+}
+
 -(void)showLeaderboard {
 	GKLeaderboardViewController *leaderboardController = [[GKLeaderboardViewController alloc] init];
 	if (leaderboardController != nil) {
 		leaderboardController.leaderboardDelegate = self;
-		[self presentModalViewController: leaderboardController animated: YES];
+		[self presentViewController: leaderboardController animated: YES completion:nil];
 	}
 }
 
 
 -(void)leaderboardViewControllerDidFinish:(GKLeaderboardViewController *)viewController {
- [self dismissModalViewControllerAnimated:YES];
+ [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 
@@ -237,14 +243,14 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	GKAchievementViewController *achievements = [[GKAchievementViewController alloc] init];
 	if (achievements != nil){
 		achievements.achievementDelegate = self;
-		[self presentModalViewController: achievements animated: YES];
+		[self presentViewController: achievements animated: YES completion:nil];
 	}
 	[achievements release];
 }
 
 
 -(void)achievementViewControllerDidFinish:(GKAchievementViewController *)viewController {
-    [self dismissModalViewControllerAnimated:YES];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 
@@ -483,11 +489,7 @@ static value *ml_url_complete = NULL;
 	[super presentModalViewController: modalViewController animated: animated];
 }*/
 
-- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion {
-	NSLog(@"presentViewController");
-	[self resignActive];
-	[super presentViewController: viewControllerToPresent animated: flag completion: completion];
-}
+
 
 
 /*- (void)dismissModalViewControllerAnimated:(BOOL)animated {
