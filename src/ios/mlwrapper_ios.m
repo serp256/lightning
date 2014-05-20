@@ -589,4 +589,5 @@ value ml_alert(value mes) {
 
 value ml_debugErrReporting(value unit) {
 	uncaught_exception_callback = &mlMailUncaughtException;
+	return Val_unit;
 }
