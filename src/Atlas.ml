@@ -34,7 +34,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       value mutable color : color = `NoColor;
       value atlas = atlas_init texture#renderInfo;
 
-      method !name = if name = ""  then Printf.sprintf "atlas%d" (Oo.id self) else name;
+      method! private defaultName = Printf.sprintf "atlas%d" (Oo.id self);
 
 (*       value mutable programID = programID; *)
 (*       value mutable shaderProgram = shaderProgram; *)
@@ -169,8 +169,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                     RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
 
                     match glow.Filters.glowKind with
-                    [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                    | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                    [ `linear -> proftimer:glow "linear time: %f" with RenderFilters.glow_make fb glow
+                    | `soft -> proftimer:glow "soft time: %f" with RenderFilters.glow2_make fb glow
                     ];
 
                     Render.restore_matrix ();

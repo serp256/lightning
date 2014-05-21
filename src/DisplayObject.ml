@@ -38,7 +38,7 @@ DEFINE SCISSOR =
   ];
 
 DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
-  match self#stage with
+  match stage with
   [ Some stage ->
     let matrix = 
       match onSelf with
@@ -114,7 +114,7 @@ value onEnterFrameObjects = ref SetD.empty;
 
 value dispatchEnterFrame seconds = 
   let enterFrameEvent = Ev.create ev_ENTER_FRAME ~data:(Ev.data_of_float seconds) () in
-  SetD.iter (fun obj -> let () = debug:enter_frame "dispatch enter frame on: %s" obj#name in obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
+  SetD.iter (fun obj -> proftimer:prof "dispatch enter frame on: %s = %F" obj#name with obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
 
 
 class type prerenderObj =
@@ -134,7 +134,7 @@ value add_prerender o =
   ];
   
 value prerender () =
-  proftimer:prof "prerender %f"
+  proftimer(0.015):prof "prerender %f" with
     match RefList.is_empty prerender_objects with
     [ True -> ()
     | False ->
@@ -147,14 +147,14 @@ value prerender () =
           let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
           let sorted_objects = RefList.empty () in
           (
-            proftimer:pprerender "SORT OBJECTS %F"
+            proftimer:pprerender "SORT OBJECTS %F" with
             (RefList.iter (fun o -> 
               match o#z with
               [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
               | None -> o#prerender False
               ]
             ) prerender_objects);
-            proftimer:pprerender "EXECUTE %F" (RefList.iter (fun (_,o) -> o#prerender True) sorted_objects);
+            proftimer:pprerender "EXECUTE %F" with (RefList.iter (fun (_,o) -> o#prerender True) sorted_objects);
           );
           RefList.copy prerender_objects locked_prerenders;
           prerender_locked.val := None;
@@ -163,7 +163,7 @@ value prerender () =
       )
     ];
 
-value prerender () = proftimer:steam "prerender: %f" (prerender ());
+value prerender () = proftimer:steam "prerender: %f" with (prerender ());
 
 
 Callback.register "prerender" prerender;
@@ -221,9 +221,10 @@ class virtual _c [ 'parent ] = (*{{{*)
 (* 			 else (); *)
 		);
 
-    value mutable name = "";
-    method name = if name = ""  then Printf.sprintf "instance%d" (Oo.id self) else name;
-    method setName n = name := n;
+    value mutable name = None;
+    method private defaultName = Printf.sprintf "instance%d" (Oo.id self);
+    method name = match name with [ None -> self#defaultName | Some n -> n];
+    method setName n = name := Some n;
 
     value mutable pos  = {Point.x = 0.; y =0.};
     value mutable transformPoint = {Point.x=0.;y=0.};
@@ -308,7 +309,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       debug:prerender "addPrerender for %s" self#name;
       match Queue.is_empty prerenders with
       [ True -> 
-        match self#stage with
+        match stage with
         [ Some _ -> add_prerender (self :> prerenderObj)
         | None -> prerender_wait_listener := Some (self#addEventListener ev_ADDED_TO_STAGE self#addToPrerenders)
         ]
@@ -362,7 +363,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method clearParent () = 
 			match parent with
 			[ Some p ->
-				let on_stage = match self#stage with [ Some _ -> True | _ -> False ] in
+				let on_stage = match stage with [ Some _ -> True | _ -> False ] in
 				(
           stage := None;
           parent := None;
@@ -427,7 +428,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
         match self#hasEventListeners ev_ENTER_FRAME with
         [ False ->
-          match self#stage with
+          match stage with
           [ None -> ignore(super#addEventListener ev_ADDED_TO_STAGE self#enterFrameListenerAddedToStage)
           | Some _ -> self#listenEnterFrame ()
           ]
@@ -444,7 +445,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       then
           match self#hasEventListeners ev_ENTER_FRAME with
           [ False ->
-            match self#stage with
+            match stage with
             [ None -> ()
             | Some _ -> onEnterFrameObjects.val := SetD.remove (self :> dispObj) !onEnterFrameObjects 
             ]
@@ -695,7 +696,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method render ?alpha:(parentAlpha) ?(transform=True) rect =
       let () = debug "display object render" in
       let () = debug:tmp "render [%s]" self#name in
-      proftimer:render ("render [%s] %f" self#name)
+      proftimer:render ("render [%s] %f" self#name) with
       (
         if visible && alpha > 0. 
         then

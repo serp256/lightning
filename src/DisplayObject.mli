@@ -37,7 +37,7 @@ class virtual _c [ 'parent ] :
     method hasEventListeners: Ev.id -> bool;
 
 
-    value name: string;
+    method private defaultName: string;
     method name: string;
     method setName: string -> unit;
     value transformPoint: Point.t;

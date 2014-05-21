@@ -154,7 +154,7 @@ class _c  _texture =
     inherit base _texture as super;
 
 
-    method !name = if name = ""  then Printf.sprintf "image%d" (Oo.id self) else name;
+    method! private defaultName = Printf.sprintf "image%d" (Oo.id self);
 
 
     value image = Render.Image.create _texture#renderInfo `NoColor 1.;
@@ -320,8 +320,8 @@ class _c  _texture =
                   Render.Image.render (glowFirstDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
 
                   match glow.Filters.glowKind with
-                  [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                  | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                  [ `linear -> proftimer:glow "linear time: %f" with RenderFilters.glow_make fb glow
+                  | `soft -> proftimer:glow "soft time: %f" with RenderFilters.glow2_make fb glow
                   ];
 
                   Render.Image.render (glowLastDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;

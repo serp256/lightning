@@ -28,6 +28,7 @@ class clip ?(fps=default_fps.val) texture frames labels =
   object(self)
     inherit base [ frame ] fps frames labels;
     inherit Atlas._c texture;
+    method! private defaultName = Printf.sprintf "clip%d" (Oo.id self);
     method private applyChildren children =
     (
       debug "apply children";
@@ -187,6 +188,7 @@ class iclip ?(fps=default_fps.val) first_texture lib frames labels =
     inherit base [ iframe ] ~fps ~frames ~labels;
     inherit Image._c first_texture;
 
+    method! private defaultName = Printf.sprintf "iclip%d" (Oo.id self);
     method applyFrame _ frame = 
     (
       debug "!!!applyFrame %s" (Point.to_string frame.hotpos);
