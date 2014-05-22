@@ -14,7 +14,7 @@ jclass getAFCls(JNIEnv *env) {
 	return afCls;
 }
 
-value ml_af_set_key(value key) {
+value ml_af_set_key(value appid, value key) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_af_set_key");
