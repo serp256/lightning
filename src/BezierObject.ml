@@ -8,7 +8,7 @@ type t;
 external makeTexGrid	: int -> (float * float * float * float) -> float -> t = "ml_make_grid_tex";
 (* заполняет массивы вертексов *)
 external makeVertGrid	: t -> array cpt -> float -> int -> (float * float) -> unit = "ml_make_grid_vert";
-external renderGrid		: Matrix.t -> t -> LightCommon.textureID -> Render.prg -> unit = "ml_render_grid" "noalloc";
+external renderGrid		: Matrix.t -> float -> t -> LightCommon.textureID -> Render.prg -> unit = "ml_render_grid" "noalloc";
 
 (*
 	порядок точек в массиве:
@@ -181,12 +181,14 @@ class c pts s q t =
 			Rectangle.create lmx lmy w h;
 		);	
 
-		method private render' ?alpha:(a) ~transform rect =
+		method private render' ?alpha ~transform rect =
 			let open Texture in
 			let ri = tex#renderInfo in
 			let id = ri.rtextureID in
 			let () = Lazy.force setVertexArray in
 			renderGrid	(if transform then self#transformationMatrix else Matrix.identity)
+						(*Option.default 1. alpha*)
+						self#alpha
 						self#arrays
 						id
 						(GLPrograms.Image.Normal.create ());
