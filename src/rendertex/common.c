@@ -1,6 +1,7 @@
 #include "common.h"
 #include <kazmath/GL/matrix.h>
 #include <caml/memory.h>
+#include <caml/alloc.h>
 #include "texture_save.h"
 
 struct framebuf_state {
@@ -12,6 +13,8 @@ struct framebuf_state {
 typedef struct framebuf_state framebuf_state_t;
 
 static framebuf_state_t *framebuf_stack = NULL;
+
+#define APPLY_VIEWPORT(vp) { caml_callback2(*caml_named_value("setScissor"), caml_copy_double((double)vp->x), caml_copy_double((double)vp->y)); glViewport(vp->x, vp->y, vp->w, vp->h); }
 
 void framebuf_push(GLuint fbid, viewport *vp, int8_t apply) {
 	PRINT_DEBUG("+++framebuf_push id %d, vp (%d, %d, %d, %d), apply id %d, apply vp %d", fbid, vp->x, vp->y, vp->w, vp->h, apply & FRAMEBUF_APPLY_BUF, apply & FRAMEBUF_APPLY_VIEWPORT);
@@ -25,14 +28,17 @@ void framebuf_push(GLuint fbid, viewport *vp, int8_t apply) {
 	framebuf_stack = state;
 
 	if (apply & FRAMEBUF_APPLY_BUF) glBindFramebuffer(GL_FRAMEBUFFER, fbid);
-	if (apply & FRAMEBUF_APPLY_VIEWPORT) glViewport(vp->x, vp->y, vp->w, vp->h);
+	if (apply & FRAMEBUF_APPLY_VIEWPORT) APPLY_VIEWPORT(vp);
 }
 
 void framebuf_restore(int8_t apply_viewport) {
 	PRINT_DEBUG("???framebuf_restore %d %d %d %d",framebuf_stack->viewport.x, framebuf_stack->viewport.y, framebuf_stack->viewport.w, framebuf_stack->viewport.h);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuf_stack->fbid);
 
-	if (apply_viewport) glViewport(framebuf_stack->viewport.x, framebuf_stack->viewport.y, framebuf_stack->viewport.w, framebuf_stack->viewport.h);
+	if (apply_viewport) {
+		viewport *vp = &framebuf_stack->viewport;
+		APPLY_VIEWPORT(vp);
+	}
 }
 
 void framebuf_pop() {

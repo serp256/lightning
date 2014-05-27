@@ -86,6 +86,7 @@ class virtual c (_width:float) (_height:float) =
   object(self)
     inherit D.container as super;
     value virtual bgColor: int;
+    method! private defaultName = "stage";
     method frameRate = 60;
     method color = `NoColor;
     method setColor (_:color) = raise Restricted_operation;
@@ -124,7 +125,6 @@ class virtual c (_width:float) (_height:float) =
       self#resize w h;
       self#stageResized ();
     );
-
 
     method resize w h = 
     (
@@ -241,10 +241,10 @@ class virtual c (_width:float) (_height:float) =
     value mutable skipCount = 0;
     (* used by all actual versions (pc, android, ios) *)
     method renderStage () =
-      (* let () = debug:render "-renderStage" in *)
       if renderNeeded
       then
-        proftimer:prof "renderStage %f"
+        let () = debug:forcerendereason "stage render" in
+        proftimer(0.015):prof "renderStage %f" with
           (
             renderNeeded := False;
             Render.clear bgColor 1.;
@@ -253,11 +253,13 @@ class virtual c (_width:float) (_height:float) =
             match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
             debug:render "skipped %d frames before render" skipCount;
             skipCount := 0;
+            let () = debug:render "---renderstage done" in
             True;
           )
       else
         (
           skipCount := skipCount + 1;
+          let () = debug:render "---renderstage done" in
           False;
         );
 
@@ -265,8 +267,7 @@ class virtual c (_width:float) (_height:float) =
 
 
     method advanceTime (seconds:float) =
-      let () = debug:prof "-----------" in
-      proftimer:prof "advanceTime %f"
+      proftimer(0.015):prof "advanceTime %f" with
         (
           Texture.check_async();
           (
@@ -280,7 +281,8 @@ class virtual c (_width:float) (_height:float) =
                 ]
               done;
           );
-          D.dispatchEnterFrame seconds;
+          proftimer(0.015):prof "dispatchEnterFrame %F" with
+            D.dispatchEnterFrame seconds;
         );
 
     method traceFPS (show:(int -> #DisplayObject.c)) = 
@@ -367,7 +369,12 @@ class virtual c (_width:float) (_height:float) =
 (*   method dispatchBackgroundEv () = self#dispatchEvent (Ev.create ev_BACKGROUND ());
   method dispatchForegroundEv () = self#dispatchEvent (Ev.create ev_FOREGROUND ()); *)
 
-  method dispatchBackgroundEv = on_background;
+  method dispatchBackgroundEv () =
+    (
+      self#forceStageRender ~reason:"background" ();
+      on_background ();
+    );
+
   method dispatchForegroundEv = on_foreground;
 
   method! boundsChanged () =

@@ -130,7 +130,3 @@ CAMLprim value ml_storage_path(value p) {
 	value result = caml_copy_string([[paths objectAtIndex:0] cStringUsingEncoding:NSASCIIStringEncoding]);
 	CAMLreturn(result);
 }
-
-
-
-

@@ -31,7 +31,7 @@
 }
 
 -(void)tapjoyOffersClosed {
-	[[LightViewController sharedInstance] dismissModalViewControllerAnimated: YES];
+	[[LightViewController sharedInstance] dismissViewControllerAnimated: YES completion:nil];
 }
 
 
@@ -101,7 +101,7 @@ void ml_tapjoy_show_offers() {
   c.modalPresentationStyle = UIModalPresentationFormSheet;
   c.currency = nil;
   c.currencySelectorVisible = NO;
-  [[LightViewController sharedInstance] presentModalViewController: c animated: YES];
+  [[LightViewController sharedInstance] presentViewController: c animated: YES completion:nil];
 	//[TapjoyConnect showOffersWithViewController:[LightViewController sharedInstance]];
 
   CAMLreturn0;
@@ -118,7 +118,7 @@ void ml_tapjoy_show_offers_with_currency(value currency, value show_selector) {
   //c.modalPresentationStyle = UIModalPresentationFormSheet;
   c.currency = STR_CAML2OBJC(currency);
   c.currencySelectorVisible = Bool_val(show_selector);
-  [[LightViewController sharedInstance] presentModalViewController: c animated: YES];  
+  [[LightViewController sharedInstance] presentViewController: c animated: YES completion:nil];  
   
   CAMLreturn0;
 }

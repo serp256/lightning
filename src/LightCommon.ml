@@ -324,7 +324,6 @@ external ios_platfrom: unit -> string = "ml_platform";
 value getDevice () =
   let d : ios_device = 
     let ip = ios_platfrom () in
-    let () = Debug.d "!!!!!!!!!!!!!!!!!ios platform %s" ip in
     if String.starts_with ip "iPhone" 
     then 
       if String.starts_with ip "iPhone1" then IPhoneOld

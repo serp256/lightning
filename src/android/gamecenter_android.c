@@ -25,7 +25,7 @@ static void clearGameCenter(JNIEnv *env) {
 }
 
 
-value ml_gamecenter_init(value param) {
+value ml_gamecenter_init(value silent, value param) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_game_center_init");
@@ -47,7 +47,7 @@ value ml_gamecenter_init(value param) {
 	// call static method createGameCenter, this creates GC Adapter instance
 //	jobject gcLocalRef = (*env)->CallStaticObjectMethod(env, gcManagerCls, jCreateM);
 	int kind = Int_val(param);
-	jobject gcLocalRef = (*env)->CallStaticIntMethod(env, gcManagerCls, jCreateM, kind);
+	jobject gcLocalRef = (*env)->CallStaticObjectMethod(env, gcManagerCls, jCreateM, kind);
 	if (gcLocalRef == NULL) {
   	    (*env)->DeleteLocalRef(env, gcManagerCls);
   	    (*env)->DeleteLocalRef(env, jCreateM);

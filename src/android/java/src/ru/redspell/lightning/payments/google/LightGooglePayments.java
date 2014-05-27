@@ -198,22 +198,24 @@ public class LightGooglePayments implements ILightPayments {
                 if (responseCode == BILLING_RESPONSE_RESULT_OK) {
                     ArrayList<String> ownedSkus = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
                     ArrayList<String> purchaseDataList = ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
-                    ArrayList<String> signatureList = ownedItems.getStringArrayList("INAPP_DATA_SIGNATURE");
+                    ArrayList<String> signatureList = ownedItems.getStringArrayList("INAPP_DATA_SIGNATURE_LIST");
                     continuationToken = ownedItems.getString("INAPP_CONTINUATION_TOKEN");
 
                     Log.d("LIGHTNING", "purchaseDataList.size() " + purchaseDataList.size());
 
                     for (int i = 0; i < purchaseDataList.size(); ++i) {
                         String purchaseData = purchaseDataList.get(i);
-                        String signature = signatureList != null ? signatureList.get(i) : "";
-                        String sku = ownedSkus.get(i);
-
                         JSONObject o = new JSONObject(purchaseData);
                         String token = o.optString("token", o.optString("purchaseToken"));
-
-                        LightPaymentsCamlCallbacks.success(sku, token, purchaseData, signature, true);
+												int purchaseState = o.optInt("purchaseState",1);
+												if (purchaseState == 0) {
+													String signature = signatureList.get(i);
+													if (key != null && !LightGoogleSecurity.verifyPurchase(key, purchaseData, signature)) continue;
+													String sku = ownedSkus.get(i);
+													LightPaymentsCamlCallbacks.success(sku, token, purchaseData, signature, true);
+												}
                     }
-                }  
+                }
             } while (continuationToken != null);            
         } catch (android.os.RemoteException e) {
             LightPaymentsCamlCallbacks.fail("none", "android.os.RemoteException exception");

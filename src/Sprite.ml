@@ -20,7 +20,7 @@ class c =
     method ccast: [= `Sprite of c] = `Sprite (self :> c);
 
     value mutable imageCache = None;
-    method !name = if name = ""  then Printf.sprintf "sprite%d" (Oo.id self) else name;
+    method! private defaultName = Printf.sprintf "sprite%d" (Oo.id self);
     method cacheAsImage = imageCache <> None;
     value mutable filters = [];
 
@@ -109,13 +109,13 @@ class c =
                let alpha' = alpha in
                (
                  self#setAlpha 1.;
-                 proftimer:icache "drawTexture: %f"
+                 proftimer:icache "drawTexture: %f" with
                    draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
                      (
                       debug:drawf "sprite none glow drawf";
                        Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
                        (* Render.clear 0 0.; *)
-                       proftimer:icache "render %f" (super#render' ~transform:False None);
+                       proftimer:icache "render %f" with (super#render' ~transform:False None);
                        Render.restore_matrix ();
                      )
                    end;
@@ -139,7 +139,7 @@ class c =
                        (
                          Render.push_matrix m;
                          (* Render.clear 0 0.; *)
-                         proftimer:icache "render %f" (super#render' ~transform:False None);
+                         proftimer:icache "render %f" with (super#render' ~transform:False None);
                          Render.restore_matrix ();                         
                        )
                      end in
@@ -157,8 +157,8 @@ class c =
                        Render.Image.render (glowFirstDrawMatrix Matrix.identity glow.Filters.x glow.Filters.y) (GLPrograms.Image.Normal.create ()) cimg;
 
                         match glow.Filters.glowKind with
-                        [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                        | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                        [ `linear -> proftimer:glow "linear time: %f" with RenderFilters.glow_make fb glow
+                        | `soft -> proftimer:glow "soft time: %f" with RenderFilters.glow2_make fb glow
                         ];
 
                         Render.Image.render (glowLastDrawMatrix Matrix.identity glow.Filters.x glow.Filters.y) (GLPrograms.Image.Normal.create ()) cimg;
@@ -176,7 +176,7 @@ class c =
     | _ -> ()
     ];
     
-    method private updateImageCache () = proftimer:icache "updateImageCache %f" self#_updateImageCache();
+    method private updateImageCache () = proftimer:icache "updateImageCache %f" with self#_updateImageCache();
 
     method setFilters fltrs =
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in

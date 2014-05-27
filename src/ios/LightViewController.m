@@ -31,24 +31,112 @@ value keyboardCallbackUpdate, keyboardCallbackReturn;
 
 static NSMutableArray *exceptionInfo = nil;
 
-static void mlUncaughtException(const char* exn, int bc, char** bv) {
-	NSBundle *bundle = [NSBundle mainBundle];
-	NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
+static NSString *errlogPath() {
+	return [NSString stringWithFormat:@"%@error-log", NSTemporaryDirectory()];
+}
+
+void flushErrlog() {
+	NSFileManager *fmngr = [NSFileManager defaultManager];
+	NSString *errlog = errlogPath();
+
+	NSLog(@"fmngr %@ %@", fmngr, errlog);
+
+	if ([fmngr fileExistsAtPath:errlog]) {
+		NSData *body = [NSData dataWithContentsOfFile:errlog];
+
+		NSString *url = [NSString stringWithFormat:@"http://mobile-errors.redspell.ru/submit?app_name=%@", [[NSBundle mainBundle] bundleIdentifier]];
+		NSLog(@"url %@", url);
+		NSMutableURLRequest *r = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
+		[r setHTTPMethod:@"POST"];
+		[r setHTTPBody:body];
+		[r setTimeoutInterval:0.5];
+
+		if ([NSURLConnection canHandleRequest:r]) {
+			NSURLResponse *response = nil;
+			NSError *err = nil;
+			[NSURLConnection sendSynchronousRequest:r returningResponse:&response error:&err];
+
+			if (err == nil && [response respondsToSelector:@selector(statusCode)] && [response statusCode] == 200) {
+				[fmngr removeItemAtPath:errlog error:nil];
+			}
+		};
+	}
+}
+
+void mlMailUncaughtException(const char* exn, int bc, char** bv) {
+        NSBundle *bundle = [NSBundle mainBundle];
+        NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
   subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
-	UIDevice * dev = [UIDevice currentDevice];
-	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
-	NSString * body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
-	body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
-	for (NSString *info in exceptionInfo) {
-		body = [body stringByAppendingFormat:@"%@\n",info];
-	};
-	body = [body stringByAppendingFormat:@"%s\n",exn];
-	for (int i = 0; i < bc; i++) {
-		if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
-	};
-	NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", supportEmail, subj, body];
+        UIDevice * dev = [UIDevice currentDevice];
+        NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+        NSString * body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
+        body = [NSString stringWithFormat:[body stringByAppendingString:@"\n----------------------------------\n"],dev.model, dev.systemVersion, appVersion];
+        for (NSString *info in exceptionInfo) {
+                body = [body stringByAppendingFormat:@"%@\n",info];
+        };
+        body = [body stringByAppendingFormat:@"%s\n",exn];
+        for (int i = 0; i < bc; i++) {
+                if (bv[i]) body = [body stringByAppendingString:[NSString stringWithCString:bv[i] encoding:NSASCIIStringEncoding]];
+        };
+        NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", supportEmail, subj, body];
   email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
   [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];
+}
+
+static void mlUncaughtException(const char* exn, int bc, char** bv) {
+	NSBundle *bundle = [NSBundle mainBundle];
+	NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+	UIDevice *dev = [UIDevice currentDevice];
+	//NSString *appName = [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"];
+	NSString *appVer = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+	NSString *exnInf = [NSString string];
+	NSString *backtrace = [NSString string];
+
+	for (NSString *info in exceptionInfo) {
+		exnInf = [exnInf stringByAppendingFormat:@"\t%@\n", info];
+	};
+
+	NSString *exception = [NSString stringWithCString:exn encoding:NSUTF8StringEncoding];
+
+	if (bc > 0) {
+		if (bv[0]) exception = [exception stringByAppendingFormat:@"\n%s",bv[0]];
+		for (int i = 1; i < bc; i++) {
+			if (bv[i]) backtrace = [backtrace stringByAppendingFormat:@"%s\n", bv[i]];
+		};
+	}
+
+
+	if ([exnInf length]) {
+		backtrace = [backtrace stringByAppendingFormat:@"exception info:%@\n", exnInf];
+	}
+
+	NSString *keyArray[5] = {@"date",@"device",@"vers",@"exception",@"data"};
+	NSString *valArray[5] = {[NSString stringWithFormat:@"%f",now],[NSString stringWithFormat:@"%@(%@)",dev.model,dev.systemVersion],appVer,exception,backtrace};
+	/*
+	NSString *report = 
+		[NSString stringWithFormat:@"\n------------------------------------------------------\ndate: %@\ndevice: %@(%@)\napplication: %@(%@)\nexception:\n\t%s\n%@", now, dev.model, dev.systemVersion, appName, appVer, exn, backtrace];
+	if ([exnInf length]) {
+		report = [report stringByAppendingFormat:@"exception info:\n%@\n", exnInf];
+	}
+	*/
+
+	NSDictionary *dict = [NSDictionary dictionaryWithObjects:valArray forKeys:keyArray count:5];
+	NSFileManager *fmngr = [NSFileManager defaultManager];
+	NSString *errlog = errlogPath();
+
+	NSData *js = [NSJSONSerialization dataWithJSONObject:dict options:0 error:NULL];
+	if ([fmngr fileExistsAtPath:errlog] == NO) {
+		//[fmngr createFileAtPath:errlog contents:[report dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
+		[fmngr createFileAtPath:errlog contents:js attributes:nil];
+	} else {
+		NSFileHandle *f = [NSFileHandle fileHandleForWritingAtPath:errlog];
+		[f seekToEndOfFile];
+		//[f writeData:[report dataUsingEncoding:NSUTF8StringEncoding]];
+		[f writeData:js];
+		[f closeFile];
+	}
+
+	flushErrlog();
 }
 
 +alloc {
@@ -131,17 +219,23 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	[(LightView *)(self.view) foreground];
 }
 
+- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion {
+	NSLog(@"presentViewController");
+	[self resignActive];
+	[super presentViewController: viewControllerToPresent animated: flag completion: completion];
+}
+
 -(void)showLeaderboard {
 	GKLeaderboardViewController *leaderboardController = [[GKLeaderboardViewController alloc] init];
 	if (leaderboardController != nil) {
 		leaderboardController.leaderboardDelegate = self;
-		[self presentModalViewController: leaderboardController animated: YES];
+		[self presentViewController: leaderboardController animated: YES completion:nil];
 	}
 }
 
 
 -(void)leaderboardViewControllerDidFinish:(GKLeaderboardViewController *)viewController {
- [self dismissModalViewControllerAnimated:YES];
+ [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 
@@ -149,14 +243,14 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	GKAchievementViewController *achievements = [[GKAchievementViewController alloc] init];
 	if (achievements != nil){
 		achievements.achievementDelegate = self;
-		[self presentModalViewController: achievements animated: YES];
+		[self presentViewController: achievements animated: YES completion:nil];
 	}
 	[achievements release];
 }
 
 
 -(void)achievementViewControllerDidFinish:(GKAchievementViewController *)viewController {
-    [self dismissModalViewControllerAnimated:YES];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 
@@ -389,30 +483,26 @@ static value *ml_url_complete = NULL;
 }
 
 
-- (void)presentModalViewController:(UIViewController *)modalViewController animated:(BOOL)animated {
+/*- (void)presentModalViewController:(UIViewController *)modalViewController animated:(BOOL)animated {
 	NSLog(@"presentModalViewController");
-  [self resignActive];
-  [super presentModalViewController: modalViewController animated: animated];
-}
-
-/*- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion {
-	NSLog(@"presentViewController");
 	[self resignActive];
-	[super presentViewController: viewControllerToPresent animated: flag completion: completion];
+	[super presentModalViewController: modalViewController animated: animated];
 }*/
 
 
-- (void)dismissModalViewControllerAnimated:(BOOL)animated {
-   NSLog(@"dismissModalViewControllerAnimated");
-	 [super dismissModalViewControllerAnimated: animated];
-	 [self becomeActive];
-}
 
-/*- (void)dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion {
+
+/*- (void)dismissModalViewControllerAnimated:(BOOL)animated {
+   	NSLog(@"dismissModalViewControllerAnimated");
+	[super dismissModalViewControllerAnimated: animated];
+	[self becomeActive];
+}*/
+
+- (void)dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion {
 	NSLog(@"dismissViewControllerAnimated");
-	 [super dismissModalViewControllerAnimated: flag completion:completion];
-	 [self becomeActive];	
-}*/
+	[super dismissViewControllerAnimated: flag completion:completion];
+	[self becomeActive];	
+}
 
 + (void)setSupportEmail:(NSString*)email {
 	supportEmail = [email retain];

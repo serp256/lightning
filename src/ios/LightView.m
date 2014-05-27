@@ -10,6 +10,7 @@
 #import <CoreMotion/CMAccelerometer.h>
 #import "motion.h"
 #import "mobile_res.h"
+#import "LightViewController.h"
 
 // --- private interface ---------------------------------------------------------------------------
 
@@ -56,6 +57,7 @@
 
 - (void)setup
 {
+	flushErrlog();
     NSLog(@"setup LightView");
     if (mContext) return; // already initialized!
     

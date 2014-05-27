@@ -456,7 +456,7 @@ value load ?(with_suffix=True) ?(filter=defaultFilter.val) ?(use_pvr=True) path 
       | False ->  None
       ]
     in
-    let textureInfo = proftimer:t "Loading texture [%F]" loadImage path suffix filter use_pvr in
+    let textureInfo = proftimer:t "Loading texture [%F]" with loadImage path suffix filter use_pvr in
     let () = 
       debug
         "loaded texture: %s <%ld> [%d->%d; %d->%d] [pma=%s]\n%!" 

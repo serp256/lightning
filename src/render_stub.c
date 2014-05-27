@@ -53,6 +53,7 @@ void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLf
 
 void restore_default_viewport() {
 	setupOrthographicRendering(viewport[0], viewport[1], viewport[2], viewport[3], 0);
+	caml_callback(*caml_named_value("resetScissor"), Val_unit);
 }
 
 void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, uint8_t save_vp) {
@@ -62,7 +63,7 @@ void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLf
 		viewport[0] = left;
 		viewport[1] = right;
 		viewport[2] = bottom;
-		viewport[3] = top;		
+		viewport[3] = top;
 	}
 
 

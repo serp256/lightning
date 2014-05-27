@@ -578,3 +578,16 @@ value ml_str_to_upper(value vsrc) {
 	CAMLreturn(caml_copy_string([[[NSString stringWithUTF8String:String_val(vsrc)] uppercaseString] UTF8String]));
 }
 
+value ml_alert(value mes) {
+	CAMLparam1(mes);
+
+	UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"pizda" message:@"pizda" delegate:nil cancelButtonTitle:@"pizda" otherButtonTitles:nil];
+	[alert show];
+
+	CAMLreturn(Val_unit);
+}
+
+value ml_debugErrReporting(value unit) {
+	uncaught_exception_callback = &mlMailUncaughtException;
+	return Val_unit;
+}

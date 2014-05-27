@@ -44,4 +44,4 @@ value hideNativeWait: unit -> unit;
 value fireLightningEvent: string -> unit;
 value setNativeEventListener: (string -> unit) -> unit;
 value clearNativeEventListener: unit -> unit;
-
+value debugErrReporting: unit -> unit;

@@ -24,7 +24,7 @@ value is_connected () =
 
 value initializer_handler = ref None;
 
-external gamecenter_init: int -> bool = "ml_gamecenter_init";
+external gamecenter_init: bool -> int -> bool = "ml_gamecenter_init";
 
 value game_center_initialized success = 
   let () = debug "GameCenter initialized" in
@@ -53,25 +53,28 @@ value game_center_initialized success =
 
 Callback.register "game_center_initialized" game_center_initialized;
 
-value init ?callback ?amazon:(amazon'=False) () =
+value init ?(silent = False) ?callback ?amazon:(amazon'=False) () =
+  let () = debug "init call" in
   let index = if amazon' then 1 else 0 in
   match !state with 
-  [ NotInitialized -> 
-    match gamecenter_init index with
-    [ True ->
+  [ NotInitialized ->
+    if gamecenter_init silent index
+    then
+      let () = debug "NotInitialized" in
       (
         initializer_handler.val := callback;
         let callbacks  = Queue.create () in
         state.val := Initializing callbacks;
       )
-    | False -> ()
-    ]
-  | Initializing callbacks -> 
-      match callback with
+    else ()
+  | Initializing callbacks ->
+    let () = debug "Initializing" in ()
+(*       match callback with
       [ Some c -> Queue.add c callbacks
       | None -> ()
-      ]
+      ] *)
   | Initialized ->
+    let () = debug "Initialized" in
       match callback with
       [ Some f -> f True
       | None ->  ()
@@ -90,7 +93,7 @@ value playerID () =
 
 ELSE
 
-value init ?callback ?amazon:(amazon'=False) () = 
+value init ?(silent = False) ?callback ?amazon:(amazon'=False) () = 
   match callback with
   [ Some c -> c False
   | None -> ()

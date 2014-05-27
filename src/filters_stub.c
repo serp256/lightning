@@ -70,7 +70,7 @@ value make_filter(filterRender render,filterFinalize finalize, void *data) {
 	f->render = render;
 	f->finalize = finalize;
 	f->data = data;
-	value res = caml_alloc_custom(&filter_ops,sizeof(filter*),1,0);
+	value res = caml_alloc_custom(&filter_ops,sizeof(filter*),0,1);
 	FILTER(res) = f;
 	return res;
 }

@@ -154,7 +154,7 @@ class _c  _texture =
     inherit base _texture as super;
 
 
-    method !name = if name = ""  then Printf.sprintf "image%d" (Oo.id self) else name;
+    method! private defaultName = Printf.sprintf "image%d" (Oo.id self);
 
 
     value image = Render.Image.create _texture#renderInfo `NoColor 1.;
@@ -292,6 +292,7 @@ class _c  _texture =
     method private removeGlowFilter () = glowFilter := None;
 
     method private updateGlowFilter () =
+      let () = debug:updateGlowFilter "image updateGlowFilter call" in
       match glowFilter with
       [ Some ({glowc = `g_id (_,glow); g_make_program; g_image; _ } as gf) ->
         let () = debug:glow "update glow filter on %s" self#name in
@@ -319,8 +320,8 @@ class _c  _texture =
                   Render.Image.render (glowFirstDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
 
                   match glow.Filters.glowKind with
-                  [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                  | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                  [ `linear -> proftimer:glow "linear time: %f" with RenderFilters.glow_make fb glow
+                  | `soft -> proftimer:glow "soft time: %f" with RenderFilters.glow2_make fb glow
                   ];
 
                   Render.Image.render (glowLastDrawMatrix cm glow.Filters.x glow.Filters.y) g_make_program image;
@@ -478,14 +479,12 @@ class _c  _texture =
     method setTexture nt = 
       let ot = texture in
       (
+        self#forceStageRender ~reason:"image set texture" ();
+
         texture := nt;
         if ot#width <> nt#width || ot#height <> nt#height
         then self#updateSize ()
-        else
-          (
-            Render.Image.update image texture#renderInfo texFlipX texFlipY;
-            self#forceStageRender ();
-          );
+        else Render.Image.update image texture#renderInfo texFlipX texFlipY;
 
         nt#addRenderer (self :> Texture.renderer);
         let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
@@ -521,7 +520,7 @@ class _c  _texture =
         ];
       );
 
-    method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
+    method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->  
       match targetCoordinateSpace with
       [ Some ts when ts#asDisplayObject = self#asDisplayObject -> Rectangle.create 0. 0. texture#width texture#height 
       | _ -> 
@@ -536,7 +535,8 @@ class _c  _texture =
         let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
         let () = debug:matrix "call transformPoints" in
         let ar = Matrix.transformPoints transformationMatrix vertexCoords in
-        Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
+          self#boundsWithMask' (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask
+        
       ];
 
     method private render' ?alpha:(alpha') ~transform _ = 
