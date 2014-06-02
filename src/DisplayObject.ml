@@ -114,7 +114,7 @@ value onEnterFrameObjects = ref SetD.empty;
 
 value dispatchEnterFrame seconds = 
   let enterFrameEvent = Ev.create ev_ENTER_FRAME ~data:(Ev.data_of_float seconds) () in
-  SetD.iter (fun obj -> proftimer:prof "dispatch enter frame on: %s = %F" obj#name with obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
+  SetD.iter (fun obj -> proftimer(0.005):prof "dispatch enter frame on: %s = %F" obj#name with obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
 
 
 class type prerenderObj =
@@ -134,7 +134,7 @@ value add_prerender o =
   ];
   
 value prerender () =
-  proftimer(0.015):prof "prerender %f" with
+  proftimer(0.005):prof "prerender %f" with
     match RefList.is_empty prerender_objects with
     [ True -> ()
     | False ->

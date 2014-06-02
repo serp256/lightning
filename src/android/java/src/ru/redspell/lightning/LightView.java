@@ -405,7 +405,6 @@ public class LightView extends GLSurfaceView {
 			if (patchExpPath != null) patchExpPath = Helpers.generateSaveFileName(activity, patchExpPath);
 
 			String err = lightInit(activity,activity.getPreferences(0), indexFd.getStartOffset(), assetsFd.getStartOffset(), getApkPath(), mainExpPath, patchExpPath);
-			Log.d("LIGHTNING", "");
 
 			if (err == null) {
 				Log.d("LIGHTNING", "lightInit finished");
@@ -415,7 +414,6 @@ public class LightView extends GLSurfaceView {
 				mlUncaughtException(err, new String[]{});
 			}
 
-			Log.d("LIGHTNING", "alalaspizda");
 		} catch (java.io.IOException e) {
 			mlUncaughtException(e.getMessage(), new String[]{});
 		}

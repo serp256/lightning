@@ -288,7 +288,8 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	total_sound_mem += soundSize;
 	LOGMEM("alloc",soundSize);
 
-	mlBuffer = caml_alloc_custom(&albuffer_ops,sizeof(struct albuffer),soundSize,MAX_GC_MEM);
+	//mlBuffer = caml_alloc_custom(&albuffer_ops,sizeof(struct albuffer),soundSize,MAX_GC_MEM);
+	mlBuffer = caml_alloc_custom(&albuffer_ops,sizeof(struct albuffer),0,1);
 	ALBUFFER(mlBuffer)->bufferID = bufferID;
 	ALBUFFER(mlBuffer)->soundSize = soundSize;
 	mlres = caml_alloc_tuple(2);

@@ -293,10 +293,20 @@ NSString *pathForBundleResource(NSString * path, NSBundle * bundle) {
     return bundlePath;
 }
 
-#define CHECK_PATH(path, flag) if (getResourceFd([path cStringUsingEncoding:NSUTF8StringEncoding], &res)) {	\
-	flag = 1;																									\
-	break;																										\
-}																												\
+#ifdef TEXTURE_LOAD
+#define CHECK_PATH(fpath, flag) \
+	if (getResourceFd([fpath cStringUsingEncoding:NSUTF8StringEncoding], &res)) {	\
+		strncpy(tInfo->path,[fpath cStringUsingEncoding:NSUTF8StringEncoding],255);\
+		flag = 1;																									\
+		break;																										\
+	}																												
+#else
+#define CHECK_PATH(path, flag) \
+	if (getResourceFd([path cStringUsingEncoding:NSUTF8StringEncoding], &res)) {	\
+		flag = 1;																									\
+		break;																										\
+	}
+#endif
 
 int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 	NSString *imgType = [[path pathExtension] lowercaseString];

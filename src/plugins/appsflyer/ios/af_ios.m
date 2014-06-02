@@ -20,7 +20,9 @@ value ml_af_set_user_id(value uid) {
 
 value ml_af_get_uid(value p) {
 	NSString *uid = [AppsFlyerTracker sharedTracker].customerUserID;
-	return caml_copy_string([uid UTF8String]);
+	if (uid)
+		return caml_copy_string([uid UTF8String]);
+	else caml_copy_string("");
 }
 
 value ml_af_set_currency_code(value code) {
