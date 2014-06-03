@@ -19,7 +19,7 @@ value ml_af_set_user_id(value uid) {
 
 
 value ml_af_get_uid(value p) {
-	NSString *uid = [AppsFlyerTracker sharedTracker].customerUserID;
+	NSString *uid = [[AppsFlyerTracker sharedTracker] getAppsFlyerUID];
 	return caml_copy_string([uid UTF8String]);
 }
 
