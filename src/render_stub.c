@@ -1692,7 +1692,7 @@ typedef struct arrays Arrays;
 #define SZ 10
 
 // ренденринг для BezierObject
-value ml_render_grid(value matrix, value vGrid, value vTexId, value program){
+value ml_render_grid(value matrix, value alpha, value vGrid, value vTexId, value program){
 	Arrays *ars = Data_custom_val(vGrid);
 	int qty = ars -> len;
 
@@ -1706,7 +1706,7 @@ value ml_render_grid(value matrix, value vGrid, value vTexId, value program){
 	lgGLUniformModelViewProjectionMatrix(sp);
 	checkGLErrors("bind matrix uniform");
 
-	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)1);
+	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat) (Double_val(alpha)));
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
 	checkGLErrors("render image: uniforms and attribs");
 	

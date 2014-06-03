@@ -14,8 +14,9 @@ class c () =
 		method setFilters _ = assert False;
 
 		method rendertex () =
+      proftimer:prof "renderStage render %F" with
       let bounds = self#boundsInSpace ~withMask:True (Some self) in
-      RenderTexture.draw bounds.Rectangle.width bounds.Rectangle.height  (fun _ -> self#render None);
+      RenderTexture.draw bounds.Rectangle.width bounds.Rectangle.height  (fun _ -> proftimer:prof "render to rstage %F" with self#render None);
 		method !z = Some 0;
 
 		initializer ignore(self#addEventListener DisplayObject.ev_ADDED_TO_STAGE (fun _ _ _ -> assert False));

@@ -112,9 +112,10 @@ struct custom_operations textureID_ops = {
 #define FILL_TEXTURE(texID,_path,dataLen) _tex->mem = dataLen; total_tex_mem += dataLen
 #endif
 
+//mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM);
 #define Store_textureID(mltex,texID,_path,dataLen) \
 	caml_alloc_dependent_memory(dataLen); \
-	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), dataLen, MAX_GC_MEM); \
+	mltex = caml_alloc_custom(&textureID_ops, sizeof(struct tex), 0, 1);\
 	{struct tex *_tex = TEX(mltex); _tex->tid = texID; FILL_TEXTURE(texID,_path,dataLen);}
 //*TEXTURE_ID(mlTextureID) = tid;
 

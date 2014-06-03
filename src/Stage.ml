@@ -95,7 +95,6 @@ class virtual c (_width:float) (_height:float) =
     initializer 
     (
       stage := Some (self :> D.container);
-      self#setName "STAGE";
       setupOrthographicRendering 0. width height 0.;
       _screenSize.val := (width,height);
       match !_instance with
@@ -119,7 +118,7 @@ class virtual c (_width:float) (_height:float) =
     method! setVisible _ = raise Restricted_operation;
 
 
-    value mutable renderNeeded = False;
+    value mutable renderNeeded = True;
 
     method _stageResized w h = (
       self#resize w h;
@@ -142,6 +141,7 @@ class virtual c (_width:float) (_height:float) =
     value mutable currentTouches = []; (* FIXME: make it weak for target *)
     method processTouches (touches:list Touch.n) = (*{{{*)
       let () = debug "process touches" in
+      proftimer(0.005) "processTouches %F" with
       match touchable with
       [ True -> 
         let () = debug:touches "process touches %d\n%!" (List.length touches) in
@@ -269,9 +269,10 @@ class virtual c (_width:float) (_height:float) =
     method advanceTime (seconds:float) =
       proftimer(0.015):prof "advanceTime %f" with
         (
-          Texture.check_async();
+          proftimer(0.005):prof "Texture.check_async %F" with Texture.check_async();
+          proftimer(0.005):prof "Process timers %F" with Timers.process seconds;
+          proftimer(0.005):prof "Process tweens %F" with
           (
-              Timers.process seconds;
               Queue.transfer tweens runtweens;
               while not (Queue.is_empty runtweens) do
                 let tween = Queue.take runtweens in
@@ -282,7 +283,7 @@ class virtual c (_width:float) (_height:float) =
               done;
           );
           proftimer(0.015):prof "dispatchEnterFrame %F" with
-            D.dispatchEnterFrame seconds;
+          D.dispatchEnterFrame seconds;
         );
 
     method traceFPS (show:(int -> #DisplayObject.c)) = 
