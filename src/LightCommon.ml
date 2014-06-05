@@ -207,23 +207,39 @@ value get_resource with_suffix path =
   | res -> res
   ];
 
-value open_resource ?(with_suffix=True) path =
+
+value open_resource_unsafe ?(with_suffix=True) path =
   let () = debug "open_resource call %s" path in
   match get_resource with_suffix path with
   [ None -> raise (File_not_exists path)
   | Some (fd,length) -> Unix.in_channel_of_descr fd
   ];
 
+
+value open_resource ?(with_suffix=True) path =
+  let () = debug "open_resource call %s" path in
+  match get_resource with_suffix path with
+  [ None -> raise (File_not_exists path)
+  | Some (fd,length) -> 
+      let length = Int64.to_int length in
+      let pos = ref 0 in
+      let ic = Unix.in_channel_of_descr fd in
+      IO.create_in 
+        ~read:(fun () -> if !pos < length then (incr pos; input_char ic) else raise IO.No_more_input)
+        ~input:(fun buf p l -> if (!pos + l < length) then (pos.val := !pos + l; input ic buf p l) else raise IO.No_more_input)
+        ~close:(fun () -> close_in ic)
+  ];
+
 value read_resource ?(with_suffix=True) path = 
   match get_resource with_suffix path with
   [ None -> raise (File_not_exists path)
   | Some (fd, length) -> 
+      let () = debug:res "%s -> %Ld" path length in
       let length = Int64.to_int length in 
-      let buff = String.create length
-      and ic = Unix.in_channel_of_descr fd in
+      let buff = String.create length in
       (
-        really_input ic buff 0 length;
-        close_in ic;
+        Unix.read fd buff 0 length |> ignore;
+        Unix.close fd;
         buff
       )
   ];
@@ -280,7 +296,8 @@ value resource_path ?(with_suffix=True) fname =
     ]
   ];
 
-value open_resource ?with_suffix fname = open_in (resource_path ?with_suffix fname);
+value open_resource_unsafe ?with_suffix fname = open_in (resource_path ?with_suffix fname);
+value open_resource = open_resource_unsafe;
 
 value read_resource ?with_suffix path =
   let inp = open_resource ?with_suffix path in
@@ -436,7 +453,7 @@ exception Xml_error of string and string;
 
 module MakeXmlParser(P:sig value path: string; value with_suffix: bool; end) = struct
 
-  value input = open_resource ~with_suffix:P.with_suffix P.path;
+  value input = open_resource_unsafe ~with_suffix:P.with_suffix P.path;
 
   value xmlinput = Xmlm.make_input ~strip:True (`Channel input);
 

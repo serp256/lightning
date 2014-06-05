@@ -369,7 +369,7 @@ value get_texture lib tid =
 value _load libpath = 
   let () = debug "bin load %s" libpath in
   let path = Filename.concat libpath "lib.bin" in
-  let inp = open_resource path in
+  let inp = open_resource_unsafe path in
   let bininp = IO.input_channel inp in
 	let read_un_byte bininp =
 	(
