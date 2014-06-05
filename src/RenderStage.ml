@@ -6,6 +6,7 @@ class c () =
 
 		method texture () =
 			(
+				self#stageDispatchEnterFrame 0.;
 				self#stageRunPrerender ();
 
 				let render _ =
