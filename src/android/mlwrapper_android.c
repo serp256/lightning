@@ -359,7 +359,7 @@ extern void net_run();
     CAMLparam0();
 	net_run();
 	mlstage_advanceTime(stage, (double)interval / 1000000000L);
-	mlstage_preRender();
+	mlstage_preRender(stage);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	restore_default_viewport();
 	uint8_t retval = mlstage_render(stage);

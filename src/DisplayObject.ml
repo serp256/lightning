@@ -108,65 +108,7 @@ class type dispObj =
     method name: string;
   end;
 
-module SetD = Set.Make (struct type t = dispObj; value compare d1 d2 = compare d1 d2; end);
-
-value onEnterFrameObjects = ref SetD.empty;
-
-value dispatchEnterFrame seconds = 
-  let enterFrameEvent = Ev.create ev_ENTER_FRAME ~data:(Ev.data_of_float seconds) () in
-  SetD.iter (fun obj -> proftimer(0.005):prof "dispatch enter frame on: %s = %F" obj#name with obj#dispatchEvent enterFrameEvent) !onEnterFrameObjects;
-
-
-class type prerenderObj =
-  object
-    method prerender: bool -> unit;
-    method z: option int;
-    method name: string;
-  end;
-
-value prerender_locked = ref None;
-value prerender_objects = RefList.empty ();
-value add_prerender o = 
-  let () = debug:prerender "add_prerender: %s" o#name in
-  match !prerender_locked with
-  [ Some waits -> RefList.push waits o
-  | None -> RefList.push prerender_objects o
-  ];
-  
-value prerender () =
-  proftimer(0.005):prof "prerender %f" with
-    match RefList.is_empty prerender_objects with
-    [ True -> ()
-    | False ->
-      (
-        debug:prerender "start prerender";
-        let locked_prerenders = RefList.empty () in
-        (
-          debug:perfomance "PRERENDER CNT: %d" (RefList.length prerender_objects);
-          prerender_locked.val := Some locked_prerenders;
-          let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
-          let sorted_objects = RefList.empty () in
-          (
-            proftimer:pprerender "SORT OBJECTS %F" with
-            (RefList.iter (fun o -> 
-              match o#z with
-              [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
-              | None -> o#prerender False
-              ]
-            ) prerender_objects);
-            proftimer:pprerender "EXECUTE %F" with (RefList.iter (fun (_,o) -> o#prerender True) sorted_objects);
-          );
-          RefList.copy prerender_objects locked_prerenders;
-          prerender_locked.val := None;
-        );
-        debug:prerender "end prerender";
-      )
-    ];
-
-value prerender () = proftimer:steam "prerender: %f" with (prerender ());
-
-
-Callback.register "prerender" prerender;
+(* Callback.register "prerender" prerender; *)
 
 DEFINE RESET_TRANSFORMATION_MATRIX = match transformationMatrix with [ Some _ -> transformationMatrix := None | _ -> () ];
 DEFINE RESET_BOUNDS_CACHE =
@@ -186,6 +128,13 @@ DEFINE RESET_CACHE(what) = (debug "%s changed [%s]" self#name what; RESET_TRANSF
 
 value object_count = ref 0;
 
+class type prerenderObj =
+  object
+    method prerender: bool -> unit;
+    method z: option int;
+    method name: string;
+  end;
+
 class virtual _c [ 'parent ] = (*{{{*)
 
   object(self:'self)
@@ -195,9 +144,10 @@ class virtual _c [ 'parent ] = (*{{{*)
     type 'displayObject = _c 'parent;
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit;
-        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit;
-        forceStageRender: ?reason:string -> unit -> unit;
+        stageAddEnterFrameObj: dispObj -> unit; stageRmEnterFrameObj: dispObj -> unit; stageAddPrerenderObj: prerenderObj -> unit; stageRunPrerender: unit -> unit; asDisplayObject: _c _;
+        removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit; name: string;
+        transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit;
+        forceStageRender: ?reason:string -> unit -> unit; height: float;
         .. 
       >;
 
@@ -297,7 +247,11 @@ class virtual _c [ 'parent ] = (*{{{*)
     (
       debug:prerender "addToPrerenders: %s" self#name;
       match Queue.is_empty prerenders with
-      [ False -> add_prerender (self :> prerenderObj)
+      [ False ->
+        match stage with
+        [ Some s -> s#stageAddPrerenderObj (self :> prerenderObj)
+        | _ -> assert False
+        ]
       | True -> ()
       ];
       self#removeEventListener ev_ADDED_TO_STAGE lid;
@@ -310,7 +264,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       match Queue.is_empty prerenders with
       [ True -> 
         match stage with
-        [ Some _ -> add_prerender (self :> prerenderObj)
+        [ Some s -> s#stageAddPrerenderObj (self :> prerenderObj)
         | None -> prerender_wait_listener := Some (self#addEventListener ev_ADDED_TO_STAGE self#addToPrerenders)
         ]
       | False -> ()
@@ -318,7 +272,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       Queue.push pr prerenders;
     );
 
-    method prerender exe = 
+    method prerender exe =
       let () = debug:prerender "prerender %s - %b" self#name exe in
       match exe with
       [ True -> 
@@ -365,8 +319,6 @@ class virtual _c [ 'parent ] = (*{{{*)
 			[ Some p ->
 				let on_stage = match stage with [ Some _ -> True | _ -> False ] in
 				(
-          stage := None;
-          parent := None;
           let event = Ev.create ev_REMOVED () in
           self#dispatchEvent event;
           match on_stage with
@@ -378,6 +330,9 @@ class virtual _c [ 'parent ] = (*{{{*)
               )
           | False -> ()
           ];
+
+          stage := None;
+          parent := None;          
 				)
 			| None -> ()
 			];
@@ -401,7 +356,11 @@ class virtual _c [ 'parent ] = (*{{{*)
       match self#hasEventListeners ev_ENTER_FRAME with
       [ True -> 
         (
-          onEnterFrameObjects.val := SetD.remove (self :> dispObj) !onEnterFrameObjects;
+          match stage with
+          [ Some s -> s#stageRmEnterFrameObj (self :> dispObj)
+          | _ -> ()
+          ];
+
           ignore(super#addEventListener ev_ADDED_TO_STAGE self#enterFrameListenerAddedToStage)
         )
       | False -> ()
@@ -413,12 +372,17 @@ class virtual _c [ 'parent ] = (*{{{*)
         [ True -> self#listenEnterFrame ()
         | False -> () 
         ];
-        super#removeEventListener ev_ADDED_TO_STAGE lid
+
+        super#removeEventListener ev_ADDED_TO_STAGE lid;
       );
 
     method private listenEnterFrame () = 
       (
-        onEnterFrameObjects.val := SetD.add (self :> dispObj) !onEnterFrameObjects;
+        match stage with
+        [ Some s -> s#stageAddEnterFrameObj (self :> dispObj)
+        | _ -> assert False
+        ];
+        
         ignore(super#addEventListener ev_REMOVED_FROM_STAGE self#enterFrameListenerRemovedFromStage);
       );
 
@@ -447,7 +411,7 @@ class virtual _c [ 'parent ] = (*{{{*)
           [ False ->
             match stage with
             [ None -> ()
-            | Some _ -> onEnterFrameObjects.val := SetD.remove (self :> dispObj) !onEnterFrameObjects 
+            | Some s -> s#stageRmEnterFrameObj (self :> dispObj)
             ]
           | True -> ()
           ]
@@ -1257,7 +1221,12 @@ class virtual container = (*{{{*)
       [ Some children -> Dllist.iter (fun (child:'displayObject) -> child#stageResized ()) children
       | _ -> ()
       ];
-      
+
+    method stageAddPrerenderObj _ = assert False;
+    method stageRunPrerender _ = assert False;
+    method stageAddEnterFrameObj: dispObj -> unit = fun _ -> assert False;
+    method stageRmEnterFrameObj _ = assert False;
+    method stageDispatchEnterFrame: float -> unit = fun _ -> assert False;
   end;(*}}}*)
 
 

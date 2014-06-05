@@ -186,7 +186,7 @@
 
 	mlstage_advanceTime(mStage,timePassed);
 	// prerender here
-	mlstage_preRender();
+	mlstage_preRender(mStage);
 	mLastFrameTimestamp = now;
 	[EAGLContext setCurrentContext:mContext];
 	glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);

@@ -25,7 +25,7 @@ void mlstage_resize(mlstage *stage,float width,float height);
 void mlstage_destroy(mlstage *stage);
 void mlstage_advanceTime(mlstage *stage,double timePassed);
 uint8_t mlstage_render(mlstage *stage);
-void mlstage_preRender();
+void mlstage_preRender(mlstage *stage);
 void mlstage_background();
 void mlstage_foreground();
 void mlstage_processTouches(mlstage *stage, value touches);

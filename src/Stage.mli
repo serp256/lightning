@@ -29,23 +29,29 @@ value data_of_acmtrData : (acmtrData -> Ev.data);
 value onBackground: ref (option (unit -> unit));
 value onForeground: ref (option (unit -> unit));
 
-class virtual c: [ float ] -> [ float ] ->
+class virtual base:
   object
     inherit DisplayObject.container;
-    value virtual bgColor: int;
-    method frameRate: int;
+
     method color: color;
     method setColor: color -> unit;
+    method cacheAsImage: bool;
+    method setCacheAsImage: bool -> unit;
+    method setFilters: list Filters.t -> unit;
+    method filters: list Filters.t;
+  end;
+
+class virtual c: [ float ] -> [ float ] ->
+  object
+    inherit base;
+    value virtual bgColor: int;
+    method frameRate: int;
     method processTouches: list Touch.n -> unit;
     method cancelAllTouches: unit -> unit;
     method advanceTime: float -> unit;
     (*method run: float -> unit; (* combine advanceTime and render *)*)
     method renderStage: unit -> bool;
     method resize: float -> float -> unit;
-    method filters: list Filters.t;
-    method setFilters: list Filters.t -> unit;
-    method cacheAsImage: bool;
-    method setCacheAsImage: bool -> unit;
     method onUnload: unit -> unit;
     method dispatchBackPressedEv : unit -> bool;
     method dispatchBackgroundEv : unit -> unit;
