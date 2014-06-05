@@ -81,19 +81,93 @@ value on_foreground () =
 );
 Callback.register "on_foreground" on_foreground;
 
-class virtual c (_width:float) (_height:float) =
+class virtual base =
   object(self)
     inherit D.container as super;
+
+    value mutable prerender_locked = None;
+    value prerender_objects = RefList.empty ();
+
+    method! stageAddPrerenderObj o = 
+      let () = debug:prerender "add_prerender: %s" o#name in
+      match prerender_locked with
+      [ Some waits -> RefList.push waits o
+      | None -> RefList.push prerender_objects o
+      ];
+      
+    method! stageRunPrerender () =
+      proftimer(0.005):prof "prerender %f" with
+        match RefList.is_empty prerender_objects with
+        [ True -> ()
+        | False ->
+          (
+            debug:prerender "start prerender";
+            let locked_prerenders = RefList.empty () in
+            (
+              debug:perfomance "PRERENDER CNT: %d" (RefList.length prerender_objects);
+              prerender_locked := Some locked_prerenders;
+              let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
+              let sorted_objects = RefList.empty () in
+              (
+                proftimer:pprerender "SORT OBJECTS %F" with
+                (RefList.iter (fun o -> 
+                  match o#z with
+                  [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
+                  | None -> o#prerender False
+                  ]
+                ) prerender_objects);
+                proftimer:pprerender "EXECUTE %F" with (RefList.iter (fun (_,o) -> o#prerender True) sorted_objects);
+              );
+              RefList.copy prerender_objects locked_prerenders;
+              prerender_locked := None;
+            );
+            debug:prerender "end prerender";
+          )
+        ];
+
+    value mutable onEnterFrameObjects = SetD.empty;
+
+    method! stageDispatchEnterFrame seconds = 
+      let () = debug:stageenterframe "stageDispatchEnterFrame call %f" seconds in
+      let enterFrameEvent = Ev.create DisplayObject.ev_ENTER_FRAME ~data:(Ev.data_of_float seconds) () in
+        SetD.iter (fun obj ->
+          let () = debug:stageenterframe "\tstageDispatchEnterFrame %s" obj#name in
+          proftimer(0.005):prof "dispatch enter frame on: %s = %F" obj#name with obj#dispatchEvent enterFrameEvent
+        ) onEnterFrameObjects;
+
+    method! stageAddEnterFrameObj o =
+      let () = debug:stageenterframe "stageAddEnterFrameObj %s" o#name in
+        onEnterFrameObjects := SetD.add o onEnterFrameObjects;
+
+    method! stageRmEnterFrameObj o =
+      let () = debug:stageenterframe "stageRmEnterFrameObj %s" o#name in
+        onEnterFrameObjects := SetD.remove o onEnterFrameObjects;
+
+    method color = `NoColor;
+    method setColor (_:color) = raise Restricted_operation;
+    method cacheAsImage = False;
+    method setCacheAsImage = raise Restricted_operation;
+    method setFilters _ = raise Restricted_operation;
+    method filters = [];
+
+    method !z = Some 0;
+
+    initializer
+      (
+        stage := Some (self :> D.container);
+      );
+  end;
+
+class virtual c (_width:float) (_height:float) =
+  object(self)
+    inherit base as super;
     value virtual bgColor: int;
     method! private defaultName = "stage";
     method frameRate = 60;
-    method color = `NoColor;
-    method setColor (_:color) = raise Restricted_operation;
     value mutable width = _width;
     value mutable height = _height;
     initializer 
     (
-      stage := Some (self :> D.container);
       setupOrthographicRendering 0. width height 0.;
       _screenSize.val := (width,height);
       match !_instance with
@@ -101,10 +175,7 @@ class virtual c (_width:float) (_height:float) =
       | Some _ -> failwith "Stage alredy created"
       ];
     );
-    method cacheAsImage = False;
-    method setCacheAsImage = raise Restricted_operation;
-    method setFilters _ = raise Restricted_operation;
-    method filters = [];
+
     method! width = width;
     method! setWidth _ = raise Restricted_operation;
     method! height = height;
@@ -325,7 +396,6 @@ class virtual c (_width:float) (_height:float) =
       in
         addTween f;
 
-    method !z = Some 0;
     (* used by outdated android version, ios and pc versions uses renderStage method *)
 (*     method run seconds = 
     (
@@ -382,65 +452,6 @@ class virtual c (_width:float) (_height:float) =
       self#forceStageRender ~reason:"bounds changed" ();
       super#boundsChanged ();
     );
-
-  value mutable prerender_locked = None;
-  value prerender_objects = RefList.empty ();
-
-  method! stageAddPrerenderObj o = 
-    let () = debug:prerender "add_prerender: %s" o#name in
-    match prerender_locked with
-    [ Some waits -> RefList.push waits o
-    | None -> RefList.push prerender_objects o
-    ];
-    
-  method! stageRunPrerender () =
-    proftimer(0.005):prof "prerender %f" with
-      match RefList.is_empty prerender_objects with
-      [ True -> ()
-      | False ->
-        (
-          debug:prerender "start prerender";
-          let locked_prerenders = RefList.empty () in
-          (
-            debug:perfomance "PRERENDER CNT: %d" (RefList.length prerender_objects);
-            prerender_locked := Some locked_prerenders;
-            let cmp ((z1:int),_) (z2,_) = compare z1 z2 in
-            let sorted_objects = RefList.empty () in
-            (
-              proftimer:pprerender "SORT OBJECTS %F" with
-              (RefList.iter (fun o -> 
-                match o#z with
-                [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
-                | None -> o#prerender False
-                ]
-              ) prerender_objects);
-              proftimer:pprerender "EXECUTE %F" with (RefList.iter (fun (_,o) -> o#prerender True) sorted_objects);
-            );
-            RefList.copy prerender_objects locked_prerenders;
-            prerender_locked := None;
-          );
-          debug:prerender "end prerender";
-        )
-      ];
-
-  value mutable onEnterFrameObjects = SetD.empty;
-
-  method! stageDispatchEnterFrame seconds = 
-    let () = debug:stageenterframe "stageDispatchEnterFrame call %f" seconds in
-    let enterFrameEvent = Ev.create DisplayObject.ev_ENTER_FRAME ~data:(Ev.data_of_float seconds) () in
-      SetD.iter (fun obj ->
-        let () = debug:stageenterframe "\tstageDispatchEnterFrame %s" obj#name in
-        proftimer(0.005):prof "dispatch enter frame on: %s = %F" obj#name with obj#dispatchEvent enterFrameEvent
-      ) onEnterFrameObjects;
-
-  method! stageAddEnterFrameObj o =
-    let () = debug:stageenterframe "stageAddEnterFrameObj %s" o#name in
-      onEnterFrameObjects := SetD.add o onEnterFrameObjects;
-
-  method! stageRmEnterFrameObj o =
-    let () = debug:stageenterframe "stageRmEnterFrameObj %s" o#name in
-      onEnterFrameObjects := SetD.remove o onEnterFrameObjects;
-
 
   initializer
     (

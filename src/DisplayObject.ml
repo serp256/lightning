@@ -272,7 +272,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       Queue.push pr prerenders;
     );
 
-    method prerender exe = 
+    method prerender exe =
       let () = debug:prerender "prerender %s - %b" self#name exe in
       match exe with
       [ True -> 
@@ -358,7 +358,7 @@ class virtual _c [ 'parent ] = (*{{{*)
         (
           match stage with
           [ Some s -> s#stageRmEnterFrameObj (self :> dispObj)
-          | _ -> assert False
+          | _ -> ()
           ];
 
           ignore(super#addEventListener ev_ADDED_TO_STAGE self#enterFrameListenerAddedToStage)
