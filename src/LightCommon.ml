@@ -297,7 +297,9 @@ value resource_path ?(with_suffix=True) fname =
   ];
 
 value open_resource_unsafe ?with_suffix fname = open_in (resource_path ?with_suffix fname);
-value open_resource = open_resource_unsafe;
+value open_resource = 
+  let ch = open_resource_unsafe in
+  IO.input_channel ch;
 
 value read_resource ?with_suffix path =
   let inp = open_resource ?with_suffix path in
