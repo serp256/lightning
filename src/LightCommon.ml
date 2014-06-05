@@ -297,12 +297,12 @@ value resource_path ?(with_suffix=True) fname =
   ];
 
 value open_resource_unsafe ?with_suffix fname = open_in (resource_path ?with_suffix fname);
-value open_resource = 
-  let ch = open_resource_unsafe in
-  IO.input_channel ch;
+value open_resource ?with_suffix fname = 
+  let ch = open_resource_unsafe ?with_suffix fname in
+    IO.input_channel ch;
 
 value read_resource ?with_suffix path =
-  let inp = open_resource ?with_suffix path in
+  let inp = open_resource_unsafe ?with_suffix path in
   let retval = Std.input_all inp in
     (
       close_in inp;
@@ -310,7 +310,7 @@ value read_resource ?with_suffix path =
     );
 
 value read_json ?with_suffix path = 
-  let ch = open_resource ?with_suffix path in                                                                                                                
+  let ch = open_resource_unsafe ?with_suffix path in                                                                                                                
   Ojson.from_channel ch;
 
 value regExtraResources ~fname () = ();
