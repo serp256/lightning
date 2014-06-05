@@ -128,10 +128,15 @@ uint8_t mlstage_render(mlstage *mlstage) {
 }
 
 static value *preRender_fun = NULL;
-void mlstage_preRender() {
+void mlstage_preRender(mlstage *mlstage) {
 	//caml_acquire_runtime_system();
-	if (preRender_fun == NULL) preRender_fun = (value*)caml_named_value("prerender");
-	caml_callback(*preRender_fun,Val_unit);
+	static value prerender = NULL;
+	if (!prerender) prerender = caml_hash_variant("stageRunPrerender");
+
+	caml_callback2(caml_get_public_method(mlstage->stage, prerender), mlstage->stage, Val_unit);
+
+/*	if (preRender_fun == NULL) preRender_fun = (value*)caml_named_value("prerender");
+	caml_callback(*preRender_fun,Val_unit);*/
 	//caml_release_runtime_system();
 }
 
