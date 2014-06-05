@@ -13,8 +13,20 @@ value ev_ENTER_FRAME: Ev.id;
 exception Invalid_index of (int*int);
 exception Child_not_found;
 
-value dispatchEnterFrame: float -> unit;
-value prerender: unit -> unit;
+(* value dispatchEnterFrame: float -> unit; *)
+
+class type prerenderObj =
+  object
+    method prerender: bool -> unit;
+    method z: option int;
+    method name: string;
+  end;
+
+class type dispObj = 
+  object
+    method dispatchEvent: Ev.t -> unit;
+    method name: string;
+  end;  
 
 class virtual _c [ 'parent ] : 
 
@@ -22,10 +34,11 @@ class virtual _c [ 'parent ] :
     type 'displayObject = _c 'parent;
     type 'parent = 
       < 
-        asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit;
-        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; boundsChanged: unit -> unit;
-        forceStageRender: ?reason:string -> unit -> unit;
-        ..
+        stageAddEnterFrameObj: dispObj -> unit; stageRmEnterFrameObj: dispObj -> unit; stageAddPrerenderObj: prerenderObj -> unit; stageRunPrerender: unit -> unit; asDisplayObject: _c _;
+        removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit; name: string;
+        transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit;
+        forceStageRender: ?reason:string -> unit -> unit; height: float;
+        .. 
       >;
 
     type 'listener = Ev.t -> ('displayObject * 'self) -> int -> unit;
@@ -155,6 +168,12 @@ class virtual container:
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
 		method classes: list exn;
     method stageResized: unit -> unit;
+
+    method stageAddPrerenderObj: prerenderObj -> unit;
+    method stageRunPrerender: unit -> unit;
+    method stageAddEnterFrameObj: dispObj -> unit;
+    method stageRmEnterFrameObj: dispObj -> unit;
+    method stageDispatchEnterFrame: float -> unit;
   end;
 
 
