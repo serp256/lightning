@@ -9,21 +9,23 @@ class c () =
 				self#stageDispatchEnterFrame 0.;
 				self#stageRunPrerender ();
 
+				let bounds = self#boundsInSpace ~withMask:True (Some self) in
+				let w = bounds.Rectangle.width in
+				let h = bounds.Rectangle.height in
 				let render _ =
-					let bounds = self#bounds in
-						(
-							self#setPos (-.(bounds.Rectangle.x)) (-.(bounds.Rectangle.y));
-							self#render None;
-						)
+					(
+						self#setPos (-.(bounds.Rectangle.x)) (-.(bounds.Rectangle.y));
+						self#render None;
+					)
 				in
 					match rendertex with
 					[ Some tex ->
 						(
-							ignore(tex#draw ~clear:(0, 0.) ~width:self#width ~height:self#height render);
+							ignore(tex#draw ~clear:(0, 0.) ~width:w ~height:h render);
 							tex;
 						)
 					| _ ->
-						let tex = RenderTexture.(draw ~kind:(Dedicated Texture.FilterLinear) self#width self#height render) in
+						let tex = RenderTexture.(draw ~kind:(Dedicated Texture.FilterLinear) w h render) in
 							(
 								rendertex := Some tex;
 								tex;
