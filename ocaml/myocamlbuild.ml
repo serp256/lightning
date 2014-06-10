@@ -99,10 +99,10 @@ let lightning_dispatch =
             Options.ocamlmklib := S[V "OCAMLFIND"; A"-toolchain"; A t ; A"ocamlmklib"];
         | None -> ())
     | After_rules ->
-        mlxml_rule ();
         (match !native_only with
         | true -> native_only_rules ()
         | false -> ());
+        mlxml_rule ();
         (match !gtoolchain with
         | Some "ios" -> 
             rule "ocaml obj-c stubs: m -> o"
