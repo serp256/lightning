@@ -95,7 +95,9 @@ typedef enum
 	LTextureLuminance,
 	LTextureLuminanceAlpha,	
 	LTextureFormatPallete,
-	LTextureFormatETC1WithAlpha
+	LTextureFormatETC1WithAlpha,
+	LTextureFormatETC2RGB,
+	LTextureFormatETC2RGBA
 } LTextureFormat;
 
 typedef struct {

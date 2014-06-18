@@ -22,33 +22,31 @@ extern value caml_gc_compaction(value v);
 #include <caml/threads.h>
 #endif
 
-int (*loadCompressedTexture)(gzFile gzf, textureInfo *tInfo);
-char* compressedExt;
-
-#define ASSIGN_COMPRESSED_EXT(ext) compressedExt = (char*)malloc(strlen(ext)); strcpy(compressedExt, ext);
-
 mlstage *mlstage_create(float width,float height) {
 	const char *ext = (char*)glGetString(GL_EXTENSIONS);
+	const char *ver = (char*)glGetString(GL_VERSION);
 
+	PRINT_DEBUG("ver: %s", ver);
 	PRINT_DEBUG("exts: %s", ext);
 
-	if (strstr(ext, "GL_EXT_texture_compression_s3tc")) {		
-		loadCompressedTexture = loadDdsFile;
-		ASSIGN_COMPRESSED_EXT(".dds");
-		PRINT_DEBUG("s3tc, assign loadDdsFile %s", compressedExt);
-	} else if (strstr(ext, "GL_IMG_texture_compression_pvrtc")) {
-		loadCompressedTexture = loadPvrFile3;
-		ASSIGN_COMPRESSED_EXT(".pvr");
-		PRINT_DEBUG("pvr, assign loadPvrFile3 %s", compressedExt);
-	} else if (strstr(ext, "GL_AMD_compressed_ATC_texture") || strstr(ext, "GL_ATI_texture_compression_atitc")) {
-		loadCompressedTexture = loadDdsFile;
-		ASSIGN_COMPRESSED_EXT(".atc");
-		PRINT_DEBUG("atc, assign loadDdsFile %s", compressedExt);
-	} else if (strstr(ext, "GL_OES_compressed_ETC1_RGB8_texture")) {
-		loadCompressedTexture = loadPvrFile3;
-		ASSIGN_COMPRESSED_EXT(".etc");
-		PRINT_DEBUG("etc, assign loadDdsFile %s", compressedExt);
-	};
+/*	if (strstr(ver, "OpenGL ES 3.")) {
+		ASSIGN_COMPRESSED_EXT(".etc2");
+		PRINT_DEBUG("gles3, assign ext %s", compressedExt);
+	} else {
+		if (strstr(ext, "GL_EXT_texture_compression_s3tc")) {
+			ASSIGN_COMPRESSED_EXT(".dxt");
+			PRINT_DEBUG("s3tc, assign ext %s", compressedExt);
+		} else if (strstr(ext, "GL_IMG_texture_compression_pvrtc")) {
+			ASSIGN_COMPRESSED_EXT(".pvr");
+			PRINT_DEBUG("pvr, assign ext %s", compressedExt);
+		} else if (strstr(ext, "GL_AMD_compressed_ATC_texture") || strstr(ext, "GL_ATI_texture_compression_atitc")) {
+			ASSIGN_COMPRESSED_EXT(".atc");
+			PRINT_DEBUG("atc, assign ext %s", compressedExt);
+		} else if (strstr(ext, "GL_OES_compressed_ETC1_RGB8_texture")) {
+			ASSIGN_COMPRESSED_EXT(".etc");
+			PRINT_DEBUG("etc, assign ext %s", compressedExt);
+		};
+	}*/
 	
 	CAMLparam0();
 	//PRINT_DEBUG("mlstage_create: %d",(unsigned int)pthread_self());

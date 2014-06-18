@@ -154,7 +154,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 		int elen = strlen(ext);
 		int bflen = flen - elen;
 		int diff = elen < 4 ? 4 - elen : 0;
-		path = malloc(flen + diff + slen + 1);
+		path = malloc(flen + diff + slen + 1 + 10); // why +10? because. we should have reserved bytes to replace 3-symbol extension with much longer such as .cmprs, for example
 		memcpy(path,fname,bflen);
 		if (slen != 0) memcpy(path + bflen,suffix,slen);
 
@@ -185,7 +185,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			
 			if (slen != 0) { //with suffix
 				if (use_pvr) { // pvr
-					strcpy(path + bflen + slen, compressedExt);
+					strcpy(path + bflen + slen, ".cmprs");
 					PRINT_DEBUG("TRY GET IMAGE %s", path);
 					if (getResourceFd(path,&r)) {
 						gzFile gzf = gzdopen(r.fd, "rb");
@@ -193,7 +193,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 #ifdef TEXTURE_LOAD
 						strncpy(tInfo->path,path,255);
 #endif
-						int res = loadCompressedTexture(gzf, tInfo);
+						int res = loadCompressedFile(gzf, tInfo);
 						gzclose(gzf);
 						free(path);
 
@@ -234,7 +234,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 			};
 
 			if (use_pvr) { //pvr withoud suffix 
-				strcpy(path + bflen, compressedExt);
+				strcpy(path + bflen, ".cmprs");
 				PRINT_DEBUG("TRY GET IMAGE %s", path);
 				if (getResourceFd(path,&r)) {
 					gzFile gzf = gzdopen(r.fd, "rb");
@@ -242,7 +242,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 #ifdef TEXTURE_LOAD
 					strncpy(tInfo->path,path,255);
 #endif
-					int res = loadCompressedTexture(gzf, tInfo);
+					int res = loadCompressedFile(gzf, tInfo);
 					gzclose(gzf);
 					free(path);
 

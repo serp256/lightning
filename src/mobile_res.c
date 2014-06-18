@@ -55,7 +55,17 @@ char* read_res_index(FILE* index, int offset_inc, int force_location) {
 		if (1 != fread(&size, sizeof(int32_t), 1, index)) READ_RES_FAIL("cannot read size for entry %d", i - 1);
 		if (1 != fread(&location, sizeof(int8_t), 1, index)) READ_RES_FAIL("cannot read location for entry %d", i - 1);
 
-		PRINT_DEBUG("fname: %s; original offset: %d; size: %d; location %d\n", fname, offset, size, location);
+		PRINT_DEBUG("fname: %s; original offset: %d; size: %d; location %d, fname == %d, xyu == %d\n", fname, offset, size, location, fname == "etc/tree_alpha.cmprs", "xyu" == "xyu");
+
+		if (strstr(fname, "etc/") && strstr(fname, "_alpha")) {
+			const char *qwe = "etc/tree_alpha.cmprs";
+			PRINT_DEBUG("LEN %d %d", strlen(fname), strlen(qwe));
+
+			int i = 0;
+			for (i = 0; i < strlen(fname); i++) {
+				PRINT_DEBUG("%c %c %d", fname[i], qwe[i], fname[i] == qwe[i]);
+			}
+		}
 
 		int ret;
 		pair = (offset_size_pair_t*)malloc(sizeof(offset_size_pair_t));

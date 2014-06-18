@@ -116,7 +116,7 @@ union PVR3PixelType {struct LowHigh {uint32_t Low; uint32_t High;} Part; uint64_
 
 typedef struct 
 {
-	uint32_t  u32Version;     //Version of the file header, used to identify it.
+	// uint32_t  u32Version;     //Version of the file header, used to identify it.
   uint32_t  u32Flags;     //Various format flags.
   uint64_t  u64PixelFormat;   //The pixel format, 8cc value storing the 4 channel identifiers and their respective sizes.
   uint32_t u32ColourSpace;   //The Colour Space of the texture, currently either linear RGB or sRGB.
@@ -151,10 +151,10 @@ int loadPvrFile3(gzFile gzf, textureInfo *tInfo) {
 		return 1;
 	};
 
-	if (header.u32Version != PVRTEX3_IDENT) {
+/*	if (header.u32Version != PVRTEX3_IDENT) {
 		ERROR("bad pvr3 version: %X",header.u32Version);
 		return 1;
-	};
+	};*/
 
 	tInfo->width = tInfo->realWidth = header.u32Width;
 	tInfo->height = tInfo->realHeight = header.u32Height;
@@ -268,6 +268,17 @@ typedef signed short int16;
     ((uint)((int8)(ch2)) << 16) | ((uint)((int8)(ch3)) << 24 ))
 #endif
 
+char *str_of_fourcc(uint32_t fourcc) {
+	char *ret = (char*)malloc(5);
+	ret[0] = (char)(fourcc & 0xff);
+	ret[1] = (char)(fourcc >> 8 & 0xff);
+	ret[2] = (char)(fourcc >> 16 & 0xff);
+	ret[3] = (char)(fourcc >> 24 & 0xff);
+	ret[4] = '\0';
+
+	return ret;
+}
+
 enum DDPF
 {
     DDPF_ALPHAPIXELS = 0x00000001U,
@@ -304,7 +315,10 @@ enum FOURCC
     FOURCC_ATC_RGB = MAKEFOURCC('A', 'T', 'C', ' '),
     FOURCC_ATC_RGBAE = MAKEFOURCC('A', 'T', 'C', 'A'),
     FOURCC_ATC_RGBAI = MAKEFOURCC('A', 'T', 'C', 'I'),
-    FOURCC_RGBA_4444 = MAKEFOURCC('4', '4', '4', '4')
+    FOURCC_RGBA_4444 = MAKEFOURCC('4', '4', '4', '4'),
+    FOURCC_ETC1 = MAKEFOURCC('E', 'T', 'C', '1'),
+    FOURCC_ETC2_RGB = MAKEFOURCC('E', 'T', 'C', '2'),
+    FOURCC_ETC2_RGBA = MAKEFOURCC('E', 'T', '2', 'A')
 };
 
 typedef struct
@@ -329,7 +343,7 @@ typedef struct
 
 typedef struct
 {
-    uint fourcc;
+    // uint fourcc;
     uint size;
     uint flags;
     uint height;
@@ -353,12 +367,16 @@ int loadDdsFile(gzFile gzf, textureInfo *tInfo) {
 		return 1;
 	}
 
-	if (header.fourcc != FOURCC_DDS) {
+/*	if (header.fourcc != FOURCC_DDS) {
 		ERROR("bad dds identifier");
 		return 1;
-	};
+	};*/
 
 	int bpp = 0;
+
+	char *pfmt = str_of_fourcc(header.pf.fourcc);
+	PRINT_DEBUG("DDS CONTAINER, PIXEL FORMAT %s", pfmt);
+	free(pfmt);
 
 	if (header.pf.fourcc == FOURCC_DXT1) {
 		PRINT_DEBUG("DXT1");
@@ -380,12 +398,24 @@ int loadDdsFile(gzFile gzf, textureInfo *tInfo) {
 		PRINT_DEBUG("ATC RGBA interpolated");
 		tInfo->format = LTextureFormatATCRGBAI;
 		bpp = 8;
+	} else if (header.pf.fourcc == FOURCC_ETC1) {
+		PRINT_DEBUG("ETC1");
+		tInfo->format = LTextureFormatETC1;
+		bpp = 4;
+	} else if (header.pf.fourcc == FOURCC_ETC2_RGB) {
+		PRINT_DEBUG("ETC2_RGB");
+		tInfo->format = LTextureFormatETC2RGB;
+		bpp = 4;
+	} else if (header.pf.fourcc == FOURCC_ETC2_RGBA) {
+		PRINT_DEBUG("ETC2_RGBA");
+		tInfo->format = LTextureFormatETC2RGBA;
+		bpp = 8;
 	} else if (header.pf.fourcc == FOURCC_RGBA_4444) {
 		PRINT_DEBUG("RGBA 4444");
 		tInfo->format = LTextureFormat4444;
 		bpp = 16;
 	} else {
-		ERROR("bad or unsupported dds pixel format");
+		ERROR("bad or unsupported dds pixel format %s", str_of_fourcc(header.pf.fourcc));
 		return 1;
 	}
 
@@ -411,5 +441,26 @@ int loadDdsFile(gzFile gzf, textureInfo *tInfo) {
 		return 1;
 	};
 
+	PRINT_DEBUG("OK!");
+
 	return 0;
+}
+
+int loadCompressedFile(gzFile gzf, textureInfo *tInfo) {
+	uint32_t magin_num;
+	if (gzread(gzf, &magin_num, 4) < 4) {
+		ERROR("cannot determine compressed texture container type");
+		return 1;
+	}
+
+	if (magin_num == PVRTEX3_IDENT) {
+		return loadPvrFile3(gzf, tInfo);
+	}
+
+	if (magin_num == FOURCC_DDS) {
+		return loadDdsFile(gzf, tInfo);
+	}
+
+	ERROR("unknown compressed texture container type");
+	return 1;
 }

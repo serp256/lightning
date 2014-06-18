@@ -322,7 +322,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 	NSLog(@"_load_image call %@", path);
 
 	if ([path isAbsolutePath]) {
-		if ([imgType rangeOfString:@"pvr"].location == 0) return loadPvrFile(path,tInfo);
+		if ([imgType rangeOfString:@"cmprs"].location == 0) return loadPvrFile(path,tInfo);
 		else if ([imgType rangeOfString:@"plx"].location == 0) return loadPlxFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo);
 		else if ([imgType rangeOfString:@"alpha"].location == 0) return loadAlphaFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo, 0);
 		else if ([imgType rangeOfString:@"lumal"].location == 0) return loadAlphaFile([path cStringUsingEncoding:NSASCIIStringEncoding],tInfo, 1);
@@ -340,7 +340,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 		PRINT_DEBUG("path not absolute");
 
 		do {
-			if ([imgType rangeOfString:@"pvr"].location == 0) {
+			if ([imgType rangeOfString:@"cmprs"].location == 0) {
 				PRINT_DEBUG("explicit pvr");
 				is_pvr = 1;
 			} else if ([imgType rangeOfString:@"plx"].location == 0) {
@@ -362,7 +362,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 					if (suffix != NULL) {
 						NSString *pathWithSuffix = [pathWithoutExt stringByAppendingString:[NSString stringWithCString:suffix encoding:NSASCIIStringEncoding]];
 						if (use_pvr) {
-							CHECK_PATH([pathWithSuffix stringByAppendingPathExtension:@"pvr"], is_pvr);
+							CHECK_PATH([pathWithSuffix stringByAppendingPathExtension:@"cmprs"], is_pvr);
 						};
 
 						CHECK_PATH([pathWithSuffix stringByAppendingPathExtension:@"plx"], is_plx);
@@ -370,7 +370,7 @@ int _load_image(NSString *path,char *suffix,int use_pvr,textureInfo *tInfo) {
 					} 
 
 					if (use_pvr) {
-						CHECK_PATH([pathWithoutExt stringByAppendingPathExtension:@"pvr"], is_pvr);
+						CHECK_PATH([pathWithoutExt stringByAppendingPathExtension:@"cmprs"], is_pvr);
 					}
 
 					CHECK_PATH([pathWithoutExt stringByAppendingPathExtension:@"plx"], is_plx);

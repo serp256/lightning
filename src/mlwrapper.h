@@ -45,9 +45,6 @@ typedef enum
 void set_referrer_ml(value type,value id);
 void ml_memoryWarning();
 
-int (*loadCompressedTexture)(gzFile gzf, textureInfo *tInfo);
-char* compressedExt;
-
 #define REG_CALLBACK(src, dst) { dst = src; caml_register_generational_global_root(&dst); }
 #define REG_OPT_CALLBACK(src, dst) if (Is_block(src)) { dst = Field(src, 0); caml_register_generational_global_root(&dst); } else { dst = 0; }
 #define RUN_CALLBACK(cb, arga) if (cb) { caml_callback(cb, arga); }

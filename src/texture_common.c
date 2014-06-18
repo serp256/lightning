@@ -354,6 +354,9 @@ typedef struct {
 } texParams;
 
 
+#define GL_COMPRESSED_RGB8_ETC2 0x9274
+#define GL_COMPRESSED_RGBA8_ETC2_EAC 0x9278
+
 static inline int textureParams(textureInfo *tInfo,texParams *p) {
     switch (tInfo->format & 0xFFFF)
     {
@@ -488,6 +491,26 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 #else
 			return 0;
 #endif
+
+        case LTextureFormatETC2RGB:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 4;
+        	p->glTexFormat = GL_COMPRESSED_RGB8_ETC2;
+            break;
+#else
+			return 0;
+#endif
+
+        case LTextureFormatETC2RGBA:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 8;
+        	p->glTexFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;
+            break;
+#else
+			return 0;
+#endif			
 
         case LTextureFormat565:
             p->bitsPerPixel = 2;
