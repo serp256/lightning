@@ -942,12 +942,21 @@ public class LightView extends GLSurfaceView {
 			return null;
 		}
 
+		Log.d("LIGHTNING", "1");
 		TexInfo retval = new TexInfo();
 
+		Log.d("LIGHTNING", "2");
 		retval.width = bmp.getWidth();
 		retval.height = bmp.getHeight();
 		retval.legalWidth = Math.max(64, retval.width);
 		retval.legalHeight = Math.max(64, retval.height);
+
+		Bitmap.Config conf = bmp.getConfig();
+
+		if (conf == null) {
+			Log.d("LIGHTNING", "null config");
+			return null;
+		}
 
 		switch (bmp.getConfig()) {
 			case ALPHA_8:
@@ -965,12 +974,15 @@ public class LightView extends GLSurfaceView {
 			case RGB_565:
 				retval.format = "RGB_565";
 				break;
+
+			default:
+				Log.d("LIGHTNING", "unknown bitmap config");
+				return null;
 		}
 
-		// retval.format = "ARGB_8888";
+		Log.d("LIGHTNING", "retval.format " + (retval.format == null ? "null" : retval.format));
 
-		Log.d("LIGHTNING", "retval.format " + retval.format);
-
+		Log.d("LIGHTNING", "4");
 		if (retval.width != retval.legalWidth || retval.height != retval.legalHeight) {
 			try {
 				int[] pixels = new int[retval.legalWidth * retval.legalHeight];
@@ -985,11 +997,13 @@ public class LightView extends GLSurfaceView {
 				return null;
 			}
 		}
+		Log.d("LIGHTNING", "5");
 
 		ByteBuffer buf = ByteBuffer.allocate(bmp.getRowBytes() * bmp.getHeight());
 		bmp.copyPixelsToBuffer(buf);
 		bmp.recycle();
-		retval.data = buf.array();
+		retval.data = buf.array().clone();
+		Log.d("LIGHTNING", "6");
 
 		Log.d("LIGHTNING", "return texinfo");
 
