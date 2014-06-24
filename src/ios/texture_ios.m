@@ -229,7 +229,7 @@ int loadPvrFile(NSString *path, textureInfo *tInfo) {
 	gzFile* gzf = gzopen([path cStringUsingEncoding:NSASCIIStringEncoding], "rb");
 
 	if (!gzf) return 1;
-	int r = loadPvrFile3(gzf, tInfo);
+	int r = loadCompressedFile(gzf, tInfo);
 	gzclose(gzf);
 
 	return r;
@@ -241,7 +241,7 @@ int loadPvrPtr(gzFile* gzf, textureInfo *tInfo) {
 	if (!gzf) return 1;
 
 	PRINT_DEBUG("before reading pvr");
-	int r = loadPvrFile3(gzf, tInfo);
+	int r = loadCompressedFile(gzf, tInfo);
 	PRINT_DEBUG("after reading pvr");
 	gzclose(gzf);
 	PRINT_DEBUG("closed");
