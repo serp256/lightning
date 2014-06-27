@@ -110,6 +110,7 @@ void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
 	//caml_acquire_runtime_system();
 	if (advanceTime_method == NIL) advanceTime_method = caml_hash_variant("advanceTime");
 	value dt = caml_copy_double(timePassed);
+	PRINT_DEBUG("dt %f", dt);
 	value advanceTimeMethod = caml_get_public_method(mlstage->stage,advanceTime_method);
 	caml_callback2(advanceTimeMethod,mlstage->stage,dt);
 	//caml_release_runtime_system();

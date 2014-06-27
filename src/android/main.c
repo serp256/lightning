@@ -68,24 +68,25 @@ static int engine_init_display(engine_t engine) {
     return 0;
 }
 
-static value run_method = 1;
 static struct timeval last_draw_time;
 
 static void engine_draw_frame(engine_t engine) {
     CAMLparam0();
-    CAMLlocal1(timePassed);
 
     struct timeval now;
     if (!gettimeofday(&now, NULL)) {
         double diff = (double)(now.tv_usec - last_draw_time.tv_usec) / 1000000.;
-
         last_draw_time = now;
-        timePassed = caml_copy_double(diff);
 
         net_run();
-        if (run_method == 1) run_method = caml_hash_variant("run");
-        caml_callback2(caml_get_public_method(stage->stage,run_method), stage->stage, timePassed);
-        eglSwapBuffers(engine->display, engine->surface);
+        mlstage_advanceTime(stage, diff);
+        mlstage_preRender(stage);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        restore_default_viewport();
+
+        if (mlstage_render(stage)) {
+            eglSwapBuffers(engine->display, engine->surface);    
+        }
     }
 
     CAMLreturn0;

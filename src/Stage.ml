@@ -269,6 +269,8 @@ class virtual c (_width:float) (_height:float) =
     method advanceTime (seconds:float) =
       proftimer(0.015):prof "advanceTime %f" with
         (
+          debug:pizda "advanceTime %f" seconds;
+
           proftimer(0.005):prof "Texture.check_async %F" with Texture.check_async();
           proftimer(0.005):prof "Process timers %F" with Timers.process seconds;
           proftimer(0.005):prof "Process tweens %F" with
