@@ -86,14 +86,15 @@ class virtual c (_width:float) (_height:float) =
   object(self)
     inherit D.container as super;
     value virtual bgColor: int;
-    method frameRate = 30;
+    method! private defaultName = "stage";
+    method frameRate = 60;
     method color = `NoColor;
     method setColor (_:color) = raise Restricted_operation;
     value mutable width = _width;
     value mutable height = _height;
     initializer 
     (
-      self#setName "STAGE";
+      stage := Some (self :> D.container);
       setupOrthographicRendering 0. width height 0.;
       _screenSize.val := (width,height);
       match !_instance with
@@ -116,11 +117,13 @@ class virtual c (_width:float) (_height:float) =
     method! setRotation _ = raise Restricted_operation;
     method! setVisible _ = raise Restricted_operation;
 
+
+    value mutable renderNeeded = True;
+
     method _stageResized w h = (
       self#resize w h;
       self#stageResized ();
     );
-
 
     method resize w h = 
     (
@@ -135,11 +138,10 @@ class virtual c (_width:float) (_height:float) =
       let () = debug:unload "UNLOAD" in
       self#dispatchEvent ev;
 
-    method! stage = Some self#asDisplayObjectContainer;
-
     value mutable currentTouches = []; (* FIXME: make it weak for target *)
     method processTouches (touches:list Touch.n) = (*{{{*)
       let () = debug "process touches" in
+      proftimer(0.005) "processTouches %F" with
       match touchable with
       [ True -> 
         let () = debug:touches "process touches %d\n%!" (List.length touches) in
@@ -230,25 +232,47 @@ class virtual c (_width:float) (_height:float) =
     value mutable fpsTrace : option DisplayObject.c = None;
     value mutable sharedTexNum: option DisplayObject.c = None;
 
+    method! forceStageRender ?reason () =
+      (
+        debug:forcerendereason "forceStageRender call, reason %s" (match reason with [ Some r -> r | _ -> "_" ]);
+        renderNeeded := True;
+      );
+
+    value mutable skipCount = 0;
+    (* used by all actual versions (pc, android, ios) *)
     method renderStage () =
-      proftimer:steam "renderStage %f"
+      if renderNeeded
+      then
+        let () = debug:forcerendereason "stage render" in
+        proftimer(0.015):prof "renderStage %f" with
+          (
+            renderNeeded := False;
+            Render.clear bgColor 1.;
+            super#render None;
+            match fpsTrace with [ None -> () | Some fps -> fps#render None ];
+            match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
+            debug:render "skipped %d frames before render" skipCount;
+            skipCount := 0;
+            let () = debug:render "---renderstage done" in
+            True;
+          )
+      else
         (
-          Render.clear bgColor 1.;
-          super#render None;
-          match fpsTrace with [ None -> () | Some fps -> fps#render None ];
-          match sharedTexNum with [ None -> let () = debug:stn "sharedTexNum is none" in () | Some sharedTexNum -> let () = debug:stn "render sharedTexNum" in sharedTexNum#render None ];
+          skipCount := skipCount + 1;
+          let () = debug:render "---renderstage done" in
+          False;
         );
 
     value runtweens = Queue.create ();
 
 
     method advanceTime (seconds:float) =
-      let () = debug:steam "---------------------------" in
-      proftimer:steam "advanceTime %f"
+      proftimer(0.015):prof "advanceTime %f" with
         (
-          Texture.check_async();
+          proftimer(0.005):prof "Texture.check_async %F" with Texture.check_async();
+          proftimer(0.005):prof "Process timers %F" with Timers.process seconds;
+          proftimer(0.005):prof "Process tweens %F" with
           (
-              Timers.process seconds;
               Queue.transfer tweens runtweens;
               while not (Queue.is_empty runtweens) do
                 let tween = Queue.take runtweens in
@@ -258,6 +282,7 @@ class virtual c (_width:float) (_height:float) =
                 ]
               done;
           );
+          proftimer(0.015):prof "dispatchEnterFrame %F" with
           D.dispatchEnterFrame seconds;
         );
 
@@ -290,7 +315,8 @@ class virtual c (_width:float) (_height:float) =
         object
           method process dt = 
             let () = debug:stn "!!!!pizdalalalallaal" in
-            let dobj = show (RenderTexture.sharedTexsNum ()) in
+            (* let dobj = show (RenderTexture.sharedTexsNum ()) in *)
+            let dobj = show 0 in
             let m = Matrix.create ~translate:(Point.create 150. 0.) () in (
               dobj#setTransformationMatrix m;
               sharedTexNum := Some dobj;
@@ -298,10 +324,11 @@ class virtual c (_width:float) (_height:float) =
             );
         end
       in
-        addTween f;    
+        addTween f;
 
     method !z = Some 0;
-    method run seconds = 
+    (* used by outdated android version, ios and pc versions uses renderStage method *)
+(*     method run seconds = 
     (
       proftimer:steam "advence %f" (self#advanceTime seconds);
       proftimer:steam "prerender %f" (D.prerender ());
@@ -310,7 +337,7 @@ class virtual c (_width:float) (_height:float) =
       proftimer:steam "render %f" (super#render None);
       match fpsTrace with [ None -> () | Some fps -> fps#render None ];
       match sharedTexNum with [ None -> () | Some sharedTexNum -> sharedTexNum#render None ];
-    );
+    ); *)
 
   method! hitTestPoint localPoint isTouch =
     (*
@@ -341,9 +368,23 @@ class virtual c (_width:float) (_height:float) =
 (*   method dispatchBackgroundEv () = self#dispatchEvent (Ev.create ev_BACKGROUND ());
   method dispatchForegroundEv () = self#dispatchEvent (Ev.create ev_FOREGROUND ()); *)
 
-  method dispatchBackgroundEv = on_background;
+  method dispatchBackgroundEv () =
+    (
+      self#forceStageRender ~reason:"background" ();
+      on_background ();
+    );
+
   method dispatchForegroundEv = on_foreground;
+
+  method! boundsChanged () =
+    (
+      self#forceStageRender ~reason:"bounds changed" ();
+      super#boundsChanged ();
+    );
     
-  initializer Timers.init 0.;
+  initializer
+    (
+      Timers.init 0.;
+    );
   
 end;

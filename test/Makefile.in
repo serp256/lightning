@@ -19,6 +19,7 @@ MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extl
 					 -I ../src/plugins/instagram \
 					 -I ../src/plugins/whatsapp \
 					 -I ../src/plugins/vk \
+					 -I ../src/plugins/appsflyer \
 
 CFLAGS += -DLDEBUG
 #MLFILES = panelbg.cmo testz.cmo
@@ -34,6 +35,7 @@ PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma  \
 $(TARGET).byte: $(MLFILES) $(TARGET).cmo 
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
 	../src/plugins/facebook/facebook.cma \
+	../src/plugins/remote-notifications/RemoteNotifications.cmo \
 	-I ../src ../src/lightning.cma  $(OAUTH) $(SOCIAL) $(PLUGINS) $(MLFILES) $(TARGET).cmo \
 	-package bigarray,unix,extlib,xmlm,ojson,redspell.debug -linkpkg
 
@@ -54,16 +56,17 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	  -ccopt -L../src/plugins/appflood/ios -ccopt -L../src/plugins/appflood ../src/plugins/appflood/appflood.cmxa\
 	  -ccopt -L../src/plugins/chartboost/ios -ccopt -L../src/plugins/chartboost ../src/plugins/chartboost/chartboost.cmxa\
 	  -ccopt -L../src/plugins/supersonic/ios -ccopt -L../src/plugins/supersonic ../src/plugins/supersonic/supersonic.cmxa\
-	  -ccopt -L../src/plugins/sponsorpay/ios -ccopt -L../src/plugins/sponsorpay ../src/plugins/sponsorpay/sponsorpay.cmxa\
+	  -ccopt -L../src/plugins/sponsorpay/ios -ccopt -L../src/plugins/sponsorpay/ios/networks/applovin -ccopt -L../src/plugins/sponsorpay ../src/plugins/sponsorpay/sponsorpay.cmxa\
 	  -ccopt -L../src/plugins/twitter/ios -ccopt -L../src/plugins/twitter ../src/plugins/twitter/twitter.cmxa\
 	  -ccopt "-F ../src/plugins/tapjoy/ios" -ccopt -L../src/plugins/tapjoy ../src/plugins/tapjoy/tapjoy.cmxa\
 	  -ccopt -L../src/plugins/twitter ../src/plugins/twitter/twitter.cmxa\
 	  -ccopt -L../src/plugins/instagram ../src/plugins/instagram/instagram.cmxa\
 	  -ccopt -L../src/plugins/whatsapp ../src/plugins/whatsapp/whatsapp.cmxa\
 	  -ccopt -L../src/plugins/vk ../src/plugins/vk/NativeVk.cmxa\
+	  -ccopt -L../src/plugins/appsflyer -ccopt -L../src/plugins/appsflyer/ios ../src/plugins/appsflyer/appsflyer.cmxa\
 	  -ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa\
 	  -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
-		-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios"   -linkpkg
+		-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios" -ccopt "-F../src/plugins/sponsorpay/ios/networks/applifier"   -linkpkg
 
 #
 #

@@ -266,6 +266,8 @@ public class LightFacebook {
             public void onResume() {}
 
             public void onActivityResult(int requestCode, int resultCode, Intent data) {
+                Log.d("LIGHTNING", "facebook onActivityResult");
+
                 com.facebook.Session session = com.facebook.Session.getActiveSession();
                 if (session != null) {
                     session.onActivityResult(LightActivity.instance, requestCode, resultCode, data);
@@ -485,6 +487,8 @@ public class LightFacebook {
                 new com.facebook.Request(session, path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.Request.Callback() {
                     @Override
                     public void onCompleted(com.facebook.Response response) {
+                        Log.d("LIGHTNING", "onCompleted");
+
                         com.facebook.FacebookRequestError error = response.getError();
 
                         if (error != null) {

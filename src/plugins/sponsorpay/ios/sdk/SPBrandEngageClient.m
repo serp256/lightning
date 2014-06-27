@@ -7,13 +7,28 @@
 
 #import "SPBrandEngageClient.h"
 #import "SPLogger.h"
-#import "iToast.h"
+#import "SPToast.h"
 #import "SPReachability.h"
 #import "SPVirtualCurrencyServerConnector_SDKPrivate.h"
 #import "SponsorPaySDK.h"
 #import "SPTargetedNotificationFilter.h"
+#import "SPSystemVersionChecker.h"
+#import "SPLoadingIndicator.h"
+#import "SPBrandEngageViewController.h"
+#import "SPURLGenerator.h"
+#import "SPMediationCoordinator.h"
+#import "SPBrandEngageWebView.h"
+#import "SPConstants.h"
 
 #define kSPMBEJSCoreURL @"http://be.sponsorpay.com/mobile"
+
+#define kSPMBERequestOffersTimeout (NSTimeInterval)10.0
+#define kSPMBERewardNotificationText @"Thanks! Your reward will be paid out shortly"
+
+#define kSPMBEErrorDialogTitle              @"Error"
+#define kSPMBEErrorDialogMessageDefault     @"We're sorry, something went wrong. Please try again."
+#define kSPMBEErrorDialogMessageOffline     @"Your Internet connection has been lost. Please try again later."
+#define kSPMBEErrorDialogButtonTitleDismiss @"Dismiss"
 
 static NSString *MBEJSCoreURL = kSPMBEJSCoreURL;
 
@@ -24,21 +39,25 @@ typedef enum {
     SHOWING_OFFERS
 } SPBrandEngageClientOffersRequestStatus;
 
-static BOOL runningOniOS5OrNewer();
-static BOOL runningOniOS6OrNewer();
 
-@interface SPBrandEngageClient ()
+@interface SPBrandEngageClient () <SPBrandEngageWebViewDelegate, UIAlertViewDelegate>
 
-@property (retain, nonatomic) SPBrandEngageWebView *BEWebView;
-@property (retain) SPBrandEngageViewController *activeBEViewController;
-@property (retain) UIViewController *viewControllerToRestore;
+@property (strong, nonatomic) SPBrandEngageWebView *BEWebView;
+@property (strong) SPBrandEngageViewController *activeBEViewController;
+@property (strong) UIViewController *viewControllerToRestore;
 
-@property (readwrite, retain, nonatomic) NSString *appId;
-@property (readwrite, retain, nonatomic) NSString *userId;
-@property (readwrite, retain, nonatomic) NSString *currencyName;
+@property (readwrite, strong, nonatomic) NSString *appId;
+@property (readwrite, strong, nonatomic) NSString *userId;
+@property (readwrite, strong, nonatomic) NSString *currencyName;
+
+@property (assign, nonatomic) BOOL forceHideRewardNotification;
+
+@property (strong) NSTimer *timeoutTimer;
+@property (readwrite, strong, nonatomic) SPMediationCoordinator *mediationCoordinator;
+@property (assign) BOOL playingThroughTPN;
 
 - (NSURLRequest *)requestForWebViewMBEJsCore;
-- (void)dismissActiveBEViewController;
+- (void)engagementDidFinish;
 
 - (void)didChangePublisherParameters;
 - (void)didEnterBackground;
@@ -59,12 +78,14 @@ static BOOL runningOniOS6OrNewer();
                                     completion:(void (^)(void))completion;
 @end
 
+
 @implementation SPBrandEngageClient
 {
     SPBrandEngageClientOffersRequestStatus _offersRequestStatus;
     NSMutableDictionary *_customParams;
     BOOL _mustRestoreStatusBarOnPlayerDismissal;
     SPReachability *_internetReachability;
+    SPLoadingIndicator *_loadingProgressView;
 }
 
 #pragma mark - Properties
@@ -78,8 +99,8 @@ static BOOL runningOniOS6OrNewer();
     }
     
     if (![self canChangePublisherParameters]) {
-        [SPLogger log:@"Cannot add custom parameter while a request to the server is going on"
-         " or an offer is being presented to the user."];
+        SPLogError(@"Cannot add custom parameter while a request to the server is going on"
+         " or an offer is being presented to the user.");
     } else {
         if (!_customParams) {
             _customParams = [[NSMutableDictionary alloc] init];
@@ -127,45 +148,24 @@ static BOOL runningOniOS6OrNewer();
     if (self) {
         _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
         self.shouldShowRewardNotificationOnEngagementCompleted = YES;
-        
+
         [self setUpInternetReachabilityNotifier];
         [self registerForCurrencyNameChangeNotification];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(forceHideRewardNotification:) name:SPVideoHideRewardNotification object:nil];
     }
-    
-    return self;
-}
 
-- (id)initWithAppId:(NSString *)appId
-             userId:(NSString *)userId
-       currencyName:(NSString *)currencyName
-           delegate:(id<SPBrandEngageClientDelegate>)delegate
-{
-    self = [self init]; // because this constructor has been deprecated, - init is our new designated initializer
-    
-    if (self) {
-        self.appId = appId;
-        self.userId = userId;
-        self.currencyName = currencyName;
-        self.delegate = delegate;
-    }
-    
     return self;
 }
 
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    
-    self.appId = nil;
-    self.userId = nil;
-    [_customParams release];
-    [_internetReachability release];
-    
-    [super dealloc];
+
+    if (self.timeoutTimer.isValid)
+        [self.timeoutTimer invalidate];
 }
 
 #pragma mark - Public methods
-
 - (BOOL)canRequestOffers
 {
     return _offersRequestStatus == MUST_QUERY_SERVER_FOR_OFFERS
@@ -175,26 +175,28 @@ static BOOL runningOniOS6OrNewer();
 - (BOOL)requestOffers
 {
     if (![self canRequestOffers]) {
-        [SPLogger log:@"SPBrandEngageClient cannot request offers at this point. "
-         "It might be requesting offers right now or an offer might be currently being presented to the user."];
+        SPLogWarn(@"SPBrandEngageClient cannot request offers at this point. "
+         "It might be requesting offers right now or an offer might be currently being presented to the user.");
 
         return NO;
     }
 
-    if (runningOniOS5OrNewer()) {
+    if ([SPSystemVersionChecker runningOniOS5OrNewer]) {
         _offersRequestStatus = QUERYING_SERVER_FOR_OFFERS;
         
         [self.BEWebView loadRequest:[self requestForWebViewMBEJsCore]];
-        
-        [self performSelector:@selector(requestOffersTimerDue) withObject:nil
-                   afterDelay:kSPMBERequestOffersTimeout];
+
+        self.timeoutTimer =
+        [NSTimer scheduledTimerWithTimeInterval:kSPMBERequestOffersTimeout
+                                         target:self
+                                       selector:@selector(requestOffersTimerDue)
+                                       userInfo:nil repeats:NO];
     } else {
         // iOS 5 or newer is required.
         [self performSelector:@selector(callDelegateWithNoOffers) withObject:nil
                    afterDelay:0.0];
     }
-    
-    
+
     return YES;
 }
 
@@ -206,8 +208,8 @@ static BOOL runningOniOS6OrNewer();
 - (BOOL)startWithParentViewController:(UIViewController *)parentViewController
 {
     if (![self canStartOffers]) {
-        [SPLogger log:@"SPBrandEngageClient is not ready to show offers. Call -requestOffers: "
-         "and wait until your delegate is called with the confirmation that offers have been received."];
+        SPLogError(@"SPBrandEngageClient is not ready to show offers. Call -requestOffers: "
+         "and wait until your delegate is called with the confirmation that offers have been received.");
 
         [self invokeDelegateWithStatus:ERROR];
         
@@ -215,20 +217,41 @@ static BOOL runningOniOS6OrNewer();
     }
     
     _offersRequestStatus = SHOWING_OFFERS;
-    
+
+    BOOL isTPNOffer = self.playingThroughTPN = [self.BEWebView currentOfferUsesTPN];
+
+    if (isTPNOffer) {
+        self.mediationCoordinator.hostViewController = parentViewController;
+        // TODO: introduce timeout for the rare case in which 3rd party SDK
+        // silently fails to start an offer and hostViewController must be released
+        [self animateLoadingViewIn];
+
+    } else {
+        [self presentBEViewControllerWithParent:parentViewController];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didEnterBackground)
+                                                     name:UIApplicationDidEnterBackgroundNotification
+                                                   object:nil];
+    }
+
     [self.BEWebView startOffer];
-    
+
+    return YES;
+}
+
+- (void)presentBEViewControllerWithParent:(UIViewController *)parentViewController
+{
     if (![UIApplication sharedApplication].statusBarHidden) {
+        SPLogDebug(@"Hiding status bar");
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         _mustRestoreStatusBarOnPlayerDismissal = YES;
     }
-    
+
     SPBrandEngageViewController *brandEngageVC = [[SPBrandEngageViewController alloc] initWithWebView:self.BEWebView];
-    
+
     self.activeBEViewController = brandEngageVC;
-    [brandEngageVC release];
     
-    if (runningOniOS6OrNewer()) {
+    if ([SPSystemVersionChecker runningOniOS6OrNewer]) {
         [parentViewController presentViewController:self.activeBEViewController
                                            animated:YES
                                          completion:nil];
@@ -237,13 +260,6 @@ static BOOL runningOniOS6OrNewer();
                                                          withAnimationOptions:UIViewAnimationOptionTransitionCurlDown
                                                                    completion:nil];
     }
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(didEnterBackground)
-                                                 name:UIApplicationDidEnterBackgroundNotification
-                                               object:nil];
-
-    return YES;
 }
 
 # pragma mark - Interrupting engagement if the host app enters background
@@ -251,7 +267,7 @@ static BOOL runningOniOS6OrNewer();
 - (void)didEnterBackground
 {
     _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
-    [self dismissActiveBEViewController];
+    [self engagementDidFinish];
     
     [self invokeDelegateWithStatus:CLOSE_ABORTED];
 }
@@ -261,6 +277,12 @@ static BOOL runningOniOS6OrNewer();
 - (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView
   javascriptReportedOffers:(int)numberOfOffers
 {
+    SPLogDebug(@"%s BEWebView=%x offers=%d",
+     __PRETTY_FUNCTION__, [BEWebView hash], numberOfOffers);
+
+    [self.timeoutTimer invalidate];
+    self.timeoutTimer = nil;
+    
     BOOL areOffersAvailable = (numberOfOffers > 0);
     
     _offersRequestStatus = areOffersAvailable ? READY_TO_SHOW_OFFERS : MUST_QUERY_SERVER_FOR_OFFERS;
@@ -272,7 +294,7 @@ static BOOL runningOniOS6OrNewer();
 
 - (void)brandEngageWebViewJavascriptOnStarted:(SPBrandEngageWebView *)BEWebView
 {
-    [SPLogger log:@"OnStarted event received"];
+    SPLogDebug(@"OnStarted event received");
     
     [self invokeDelegateWithStatus:STARTED];
 }
@@ -281,7 +303,7 @@ static BOOL runningOniOS6OrNewer();
 {
     _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
     
-    [self dismissActiveBEViewController];
+    [self engagementDidFinish];
     
     [self invokeDelegateWithStatus:CLOSE_ABORTED];
 }
@@ -300,7 +322,7 @@ static BOOL runningOniOS6OrNewer();
         } else {
             errorMessage = kSPMBEErrorDialogMessageOffline;
         }
-        
+
         [self showErrorAlertWithMessage:errorMessage];
     }
     else if (preErrorStatus == QUERYING_SERVER_FOR_OFFERS) {
@@ -322,16 +344,55 @@ static BOOL runningOniOS6OrNewer();
                                                  selector:@selector(userReturnedAfterFollowingOffer)
                                                      name:UIApplicationDidBecomeActiveNotification
                                                    object:nil];
-        [SPLogger log:@"Application will follow offer url: %@", offerURL];
-    } else {
-        [self showRewardNotification];
+        SPLogDebug(@"Application will follow offer url: %@", offerURL);
     }
-
     _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
     
-    [self dismissActiveBEViewController];
+    [self engagementDidFinish];
     
-    [self invokeDelegateWithStatus:CLOSE_FINISHED];    
+    if (!willOpenURL) {
+        [self showRewardNotification];
+    }
+    
+    [self invokeDelegateWithStatus:CLOSE_FINISHED];
+}
+
+- (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView
+   requestsValidationOfTPN:(NSString *)tpnName
+               contextData:(NSDictionary *)contextData
+{
+    SPTPNValidationResultBlock resultBlock =
+    ^(NSString *tpnKey, SPTPNValidationResult validationResult) {
+        NSString *validationResultString = SPTPNValidationResultToString(validationResult);
+
+        SPLogInfo(@"Videos from %@ validation result: %@", tpnKey, validationResultString);
+
+        [BEWebView notifyOfValidationResult:validationResultString
+                                     forTPN:tpnKey
+                                contextData:contextData];
+    };
+
+    [self.mediationCoordinator videosFromProvider:tpnName
+                                        available:resultBlock];
+}
+
+- (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView
+    requestsPlayVideoOfTPN:(NSString *)tpnName
+               contextData:(NSDictionary *)contextData
+{
+    [self animateLoadingViewOut];
+    SPTPNVideoEventsHandlerBlock eventsHandlerBlock =
+    ^(NSString *tpnKey, SPTPNVideoEvent event) {
+        NSString *eventName = SPTPNVideoEventToString(event);
+        SPLogDebug(@"Video event from %@: %@", tpnKey, eventName);
+
+        [BEWebView notifyOfVideoEvent:eventName
+                               forTPN:tpnName
+                          contextData:contextData];
+    };
+
+    [self.mediationCoordinator playVideoFromProvider:tpnName
+                                      eventsCallback:eventsHandlerBlock];
 }
 
 #pragma mark - Handling user's return after completing engagement
@@ -341,7 +402,7 @@ static BOOL runningOniOS6OrNewer();
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:UIApplicationDidBecomeActiveNotification
                                                   object:nil];
-    [SPLogger log:@"User returned to app after following offer. Will show notification."];
+    SPLogDebug(@"User returned to app after following offer. Will show notification.");
 
     [self showRewardNotification];
 }
@@ -351,10 +412,10 @@ static BOOL runningOniOS6OrNewer();
 - (void)setUpInternetReachabilityNotifier
 {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:)
-                                                 name:kReachabilityChangedNotification object:nil];
+                                                 name:kSPReachabilityChangedNotification object:nil];
     
     if (!_internetReachability)
-        _internetReachability = [[SPReachability reachabilityForInternetConnection] retain];
+        _internetReachability = [SPReachability reachabilityForInternetConnection];
     
     [_internetReachability startNotifier];
 }
@@ -368,18 +429,18 @@ static BOOL runningOniOS6OrNewer();
     SPNetworkStatus currentNetworkStatus = [curReach currentReachabilityStatus];
     
     switch (currentNetworkStatus) {
-        case ReachableViaWiFi:
-            [SPLogger log:@"Internet is now reachable via WiFi"];
+        case SPReachableViaWiFi:
+            SPLogDebug(@"Internet is now reachable via WiFi");
             break;
-        case ReachableViaWWAN:
-            [SPLogger log:@"Internet is now reachable via WWAN (cellular connection)"];
+        case SPReachableViaWWAN:
+            SPLogDebug(@"Internet is now reachable via WWAN (cellular connection)");
             break;
-        case NotReachable:
-            [SPLogger log:@"Connection to the internet has been lost"];
+        case SPNotReachable:
+            SPLogDebug(@"Connection to the internet has been lost");
             [self didLoseInternetConnection];
             break;
         default:
-            [SPLogger log:@"Unexpected network status received: %d", currentNetworkStatus];
+            SPLogDebug(@"Unexpected network status received: %d", currentNetworkStatus);
             break;
     }
 }
@@ -402,13 +463,12 @@ static BOOL runningOniOS6OrNewer();
                                                    cancelButtonTitle:kSPMBEErrorDialogButtonTitleDismiss
                                                    otherButtonTitles:nil];
     [errorAlertView show];
-    [errorAlertView release];
     
 }
 
 - (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
 {
-    [self dismissActiveBEViewController];
+    [self engagementDidFinish];
     [self invokeDelegateWithStatus:ERROR];
 }
 
@@ -423,64 +483,72 @@ static BOOL runningOniOS6OrNewer();
     [urlGenerator setParameterWithKey:kSPURLParamKeyCurrencyName
                           stringValue:self.currencyName];
     [urlGenerator setParameterWithKey:@"sdk" stringValue:@"on"];
-    
+
     if (_customParams) {
         [urlGenerator setParametersFromDictionary:_customParams];
     }
     
     NSURL *requestURL = [urlGenerator generatedURL];
-    
-    [SPLogger log:@"URL Request for core JS in BE WebView: %@", requestURL];
-    
+
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:requestURL];
     [request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
     
     return request;
 }
 
-- (void)dismissActiveBEViewController
+- (void)engagementDidFinish
 {
-    if (!_activeBEViewController) {
-        [SPLogger log:@"no active BEViewController to dismiss"];
+    SPLogInfo(@"Engagement finished");
+
+    if (self.playingThroughTPN) {
+        self.BEWebView = nil;
         return;
     }
-    
-    void (^vcDismissedCompletionHandler)(void) = ^void(void) {
-        [self.BEWebView removeFromSuperview];
-        self.BEWebView = nil; // Won't reuse BEWebView between engagements
-    };
-    
-    if (runningOniOS6OrNewer()) {
-        [_activeBEViewController.presentingViewController
-         dismissViewControllerAnimated:YES
-         completion:vcDismissedCompletionHandler];
-    } else {
-        NSAssert(self.viewControllerToRestore, @"%@.viewControllerToRestore is nil!", [self class]);
-        
-        [[self class] swapRootViewControllerTo:self.viewControllerToRestore
-                          withAnimationOptions:UIViewAnimationOptionTransitionCurlUp
-                                    completion:vcDismissedCompletionHandler];
-        self.viewControllerToRestore = nil;
+
+    if (_mustRestoreStatusBarOnPlayerDismissal) {
+        [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+        SPLogDebug(@"Restored status bar");
     }
-    
-    [_activeBEViewController release];
-    _activeBEViewController = nil;
+
+    [self dismissEngagementViewController];
     
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:UIApplicationDidEnterBackgroundNotification
                                                   object:nil];
-    
-    if (_mustRestoreStatusBarOnPlayerDismissal) {
-        [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
-        [SPLogger log:@"Restored status bar"];
+}
+
+- (void)dismissEngagementViewController
+{
+    if (!_activeBEViewController) {
+        SPLogWarn(@"no active BEViewController to dismiss");
+        return;
     }
+
+    if ([SPSystemVersionChecker runningOniOS6OrNewer]) {
+        [_activeBEViewController.presentingViewController
+         dismissViewControllerAnimated:YES
+         completion:nil];
+    } else {
+        NSAssert(self.viewControllerToRestore, @"%@.viewControllerToRestore is nil!", [self class]);
+
+        [[self class] swapRootViewControllerTo:self.viewControllerToRestore
+                          withAnimationOptions:UIViewAnimationOptionTransitionCurlUp
+                                    completion:nil];
+        self.viewControllerToRestore = nil;
+    }
+
+    [self.BEWebView removeFromSuperview];
+    self.BEWebView = nil;
+
+    _activeBEViewController = nil;
 }
 
 - (void)requestOffersTimerDue
 {
     if (_offersRequestStatus == QUERYING_SERVER_FOR_OFFERS) {
+        SPLogError(@"Requesting offers timed out");
         [self.BEWebView stopLoading];
-        [self.BEWebView park];
+        self.BEWebView = nil;
         _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
 
         [self callDelegateWithNoOffers];
@@ -496,23 +564,26 @@ static BOOL runningOniOS6OrNewer();
 
 - (void)showRewardNotification
 {
-    [SPLogger log:@"showRewardNotification"];
+    SPLogDebug(@"showRewardNotification");
 
-    if (!self.shouldShowRewardNotificationOnEngagementCompleted) {
+    if (!self.shouldShowRewardNotificationOnEngagementCompleted || self.forceHideRewardNotification) {
+        self.forceHideRewardNotification = NO;
         return;
     }
     
-    [[[[iToast makeText:kSPMBERewardNotificationText]
-       setGravity:iToastGravityBottom] setDuration:iToastDurationNormal] show];
+    [[[[SPToast makeText:kSPMBERewardNotificationText]
+       setGravity:SPToastGravityBottom] setDuration:SPToastDurationNormal] show];
 }
 
 - (void)invokeDelegateWithStatus:(SPBrandEngageClientStatus)status
 {
-    if ([self.delegate respondsToSelector:@selector(brandEngageClient:didChangeStatus:)])
-        [self.delegate brandEngageClient:self didChangeStatus:status];
-    else
-        [SPLogger log:@"SP Brand Engage Client Delegate: %@ cannot be notified of status change "
-         "because it doesn't respond to selector brandEngageClient:didChangeStatus:", self.delegate];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([self.delegate respondsToSelector:@selector(brandEngageClient:didChangeStatus:)])
+            [self.delegate brandEngageClient:self didChangeStatus:status];
+        else
+            SPLogWarn(@"SP Brand Engage Client Delegate: %@ cannot be notified of status change "
+             "because it doesn't respond to selector brandEngageClient:didChangeStatus:", self.delegate);
+    });
 }
 
 + (UIViewController *)swapRootViewControllerTo:(UIViewController *)toVC
@@ -543,6 +614,12 @@ static BOOL runningOniOS6OrNewer();
     return fromVC;
 }
 
+// Some adapters implement their own reward notifications (like AppLovin), so we hide ours.
+- (void)forceHideRewardNotification:(NSNotification *)notification
+{
+    self.forceHideRewardNotification = YES;
+}
+
 #pragma mark - Currency name change notification
 
 - (void)registerForCurrencyNameChangeNotification
@@ -561,9 +638,30 @@ static BOOL runningOniOS6OrNewer();
         id newCurrencyName = notification.userInfo[SPNewCurrencyNameKey];
         if ([newCurrencyName isKindOfClass:[NSString class]]) {
             self.currencyName = newCurrencyName;
-            [SPLogger log:@"%@ currency name is now: %@", self, self.currencyName];
+            SPLogInfo(@"%@ currency name is now: %@", self, self.currencyName);
         }
     }
+}
+
+#pragma mark - Loading indicator
+
+- (SPLoadingIndicator *)loadingProgressView
+{
+    if (nil == _loadingProgressView) {
+        _loadingProgressView = [[SPLoadingIndicator alloc] initFullScreen:YES showSpinner:NO];
+    }
+
+    return _loadingProgressView;
+}
+
+- (void)animateLoadingViewIn
+{
+    [self.loadingProgressView presentWithAnimationTypes:SPAnimationTypeFade];
+}
+
+- (void)animateLoadingViewOut
+{
+    [[self loadingProgressView] dismiss];
 }
 
 #pragma mark - NSObject selectors
@@ -578,8 +676,7 @@ static BOOL runningOniOS6OrNewer();
 
 + (void)overrideMBEJSCoreURLWithURLString:(NSString *)overridingURL
 {
-    [MBEJSCoreURL release];
-    MBEJSCoreURL = [overridingURL retain];
+    MBEJSCoreURL = overridingURL;
 }
 
 + (void)restoreDefaultMBEJSCoreURL
@@ -588,32 +685,3 @@ static BOOL runningOniOS6OrNewer();
 }
 
 @end
-
-#pragma mark - Utilities
-
-static BOOL checkForiOSVersion(NSString *reqSysVer) {
-    NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
-    return ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending);
-}
-
-static BOOL runningOniOS5OrNewer() {
-    static BOOL didCacheResult = NO, cachedResult;
-    
-    if (!didCacheResult) {
-        cachedResult = checkForiOSVersion(@"5.0");
-        didCacheResult = YES;
-    }
-    
-    return cachedResult;
-}
-
-static BOOL runningOniOS6OrNewer() {
-    static BOOL didCacheResult = NO, cachedResult;
-    
-    if (!didCacheResult) {
-        cachedResult = checkForiOSVersion(@"6.0");
-        didCacheResult = YES;
-    }
-    
-    return cachedResult;
-}

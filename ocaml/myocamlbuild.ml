@@ -11,6 +11,20 @@ let native_only = ref false;;
 Options.add ("-toolchain",Arg.String (fun s -> gtoolchain := Some s),"use toolchain");;
 Options.add ("-native-only",Arg.Set native_only,"native only compilation")
 
+let mlxmlpp = A "mlxmlc"
+
+let mlxml_rule () =
+  rule "mlxml: mlxml -> ml"
+    ~prod:"%.ml"
+    ~deps:["%.mlxml"]
+    begin fun env _build ->
+      let mlxml = env "%.mlxml" in
+      let ml = env "%.ml" in
+      let pp = Cmd(S[mlxmlpp; T(tags_of_pathname mlxml++"mlxml"++"pp"); Px mlxml; A"-o"; Px ml]) in
+      pp
+    end
+;;
+
 let native_only_rules () = (* native only compilation *)
   print_endline "native only compilation";
   clear_rules ();
@@ -85,6 +99,7 @@ let lightning_dispatch =
             Options.ocamlmklib := S[V "OCAMLFIND"; A"-toolchain"; A t ; A"ocamlmklib"];
         | None -> ())
     | After_rules ->
+        mlxml_rule ();
         (match !native_only with
         | true -> native_only_rules ()
         | false -> ());

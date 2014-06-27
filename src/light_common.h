@@ -8,6 +8,7 @@
 
 #include <caml/callback.h>
 #include <caml/fail.h>
+#include <sys/time.h>
 
 #ifdef ANDROID
 #define PRINT_ERROR(msg) __android_log_write(ANDROID_LOG_ERROR,"LIGHTNING",msg)
@@ -89,5 +90,10 @@ typedef struct {
 	int64_t offset;
 	int64_t length;
 } resource;
+
+
+#define TIMER_START(tp) gettimeofday(&tp,NULL)
+
+#define TIMER_STOP(st,res) {struct timeval et; gettimeofday(&et,NULL); res = ((double)(et.tv_sec - st.tv_sec) + ((et.tv_usec - st.tv_usec) / 1000000.));}
 
 #endif

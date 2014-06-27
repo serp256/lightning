@@ -10,7 +10,7 @@ MLOBJS = $(MLSOURCES:.ml=.cmo)
 IFACES = $(MLSOURCES:.ml=.cmi)
 
 ifeq ($(PLATFORM),IOS)
-CFLAGS  += -DDEBUG -DIOS -Fios -I../../ios
+CFLAGS  += -DDEBUG -DIOS -Fios -I../.. -I../../ios
 MOBJS   += ios/fbwrapper_ios.o
             
 MLPPOPT += -DIOS

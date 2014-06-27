@@ -23,8 +23,10 @@ class virtual _c [ 'parent ] :
     type 'parent = 
       < 
         asDisplayObject: _c _; removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit;
-        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; boundsChanged: unit -> unit; .. >;
-(*     inherit EventDispatcher.c [ 'event_type, 'event_data , _c _ _ _, _]; *)
+        name: string; transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; height: float; boundsChanged: unit -> unit;
+        forceStageRender: ?reason:string -> unit -> unit;
+        ..
+      >;
 
     type 'listener = Ev.t -> ('displayObject * 'self) -> int -> unit;
     method addEventListener: Ev.id -> 'listener -> int;
@@ -35,7 +37,7 @@ class virtual _c [ 'parent ] :
     method hasEventListeners: Ev.id -> bool;
 
 
-    value name: string;
+    method private defaultName: string;
     method name: string;
     method setName: string -> unit;
     value transformPoint: Point.t;
@@ -89,7 +91,9 @@ class virtual _c [ 'parent ] :
     method transformationMatrix: Matrix.t;
     method setTransformationMatrix: Matrix.t -> unit;
     method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t;
-    method virtual boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
+    method private maskInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
+    method private boundsWithMask': !'space. Rectangle.t -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> bool -> Rectangle.t;
+    method virtual boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method globalToLocal: Point.t -> Point.t;
     method localToGlobal: Point.t -> Point.t;
     method mask: option (bool * Rectangle.t);
@@ -101,8 +105,7 @@ class virtual _c [ 'parent ] :
     method render: ?alpha:float -> ?transform:bool -> option Rectangle.t -> unit;
     method asDisplayObject: _c _;
     method virtual dcast: [= `Object of _c _ | `Container of 'parent ];
-    method root: _c _;
-    method stage: option 'parent;
+    method root: _c _;    
     method bounds: Rectangle.t;
     method boundsChanged: unit -> unit; 
 
@@ -112,6 +115,10 @@ class virtual _c [ 'parent ] :
 		method classes: list exn;
 
     method virtual stageResized: unit -> unit;
+
+    value mutable stage: option 'parent;
+    method stage: option 'parent;
+    method forceStageRender: ?reason:string -> unit -> unit;
   end;
 
 
@@ -143,7 +150,7 @@ class virtual container:
     method containsChild': 'displayObject -> bool;
     method clearChildren: unit -> unit;
 (*     method dispatchEventOnChildren: Ev.t -> unit; *)
-    method boundsInSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
+    method boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: 'displayObject; ..> as 'space) -> Rectangle.t;
     method private render': ?alpha:float -> ~transform:bool -> option Rectangle.t -> unit;
     method private hitTestPoint': Point.t -> bool -> option ('displayObject);
 		method classes: list exn;

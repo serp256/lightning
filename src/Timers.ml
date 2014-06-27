@@ -15,6 +15,7 @@ value start delay (f:(unit -> unit)) =
   [ Some time -> 
     let id = !timer_id in
     (
+      debug:timer "planing timer to time %f %f %f" time delay (time +. delay);
       TimersQueue.add queue ((time +. delay),id,f);
       incr timer_id;
       id
@@ -29,15 +30,17 @@ value init t = time.val := Some t;
 value process dt = 
   match !time with
   [ Some t ->
+    let () = debug:timer "process %f %f" t dt in
     let t = t +. dt in
     (
-      debug:timer "process dt = %f; t = %f" dt t;
+      debug:timer "new t = %f" t;
       time.val := Some t;
       if not (TimersQueue.is_empty queue)
       then
         let rec run_timers () = 
           match TimersQueue.first queue with
           [ (t',_,timer) when t' <= t ->
+            let () = debug:timer "t' %f, t %f" t' t in
             (
               TimersQueue.remove_first queue; 
               timer ();

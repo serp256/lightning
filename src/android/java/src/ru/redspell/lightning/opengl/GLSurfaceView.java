@@ -738,7 +738,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
          * @param gl the GL interface. Use <code>instanceof</code> to
          * test if the interface supports GL11 or higher interfaces.
          */
-        void onDrawFrame(GL10 gl);
+        boolean onDrawFrame(GL10 gl);
     }
 
     /**
@@ -1475,16 +1475,18 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     if (LOG_RENDERER_DRAW_FRAME) {
                         Log.w("GLThread", "onDrawFrame tid=" + getId());
                     }
-                    mRenderer.onDrawFrame(gl);
-                    if (!mEglHelper.swap()) {
-                        if (LOG_SURFACE) {
-                            Log.i("GLThread", "egl context lost tid=" + getId());
-                        }
-                        lostEglContext = true;
-                    }
 
-                    if (wantRenderNotification) {
-                        doRenderNotification = true;
+                    if (mRenderer.onDrawFrame(gl)) {
+                        if (!mEglHelper.swap()) {
+                            if (LOG_SURFACE) {
+                                Log.i("GLThread", "egl context lost tid=" + getId());
+                            }
+                            lostEglContext = true;
+                        }
+
+                        if (wantRenderNotification) {
+                            doRenderNotification = true;
+                        }
                     }
                 }
 

@@ -1,11 +1,12 @@
 //
 //  SPCredentials.m
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
 //
 
 #import "SPCredentials.h"
+#import "SPAppIdValidator.h"
 
 @implementation SPCredentials {
     NSMutableDictionary *_userConfig;
@@ -24,17 +25,6 @@
     return self;
 }
 
-- (void)dealloc
-{
-    self.appId = nil;
-    self.userId = nil;
-    self.securityToken = nil;
-    
-    [_userConfig release];
-    _userConfig = nil;
-    
-    [super dealloc];
-}
 
 #pragma mark - Token generation
 
@@ -78,17 +68,20 @@
                                  userId:(NSString *)userId
                           securityToken:(NSString *)securityToken
 {
+    [SPAppIdValidator validateOrThrow:appId];
+
     SPCredentials *credentials = [[SPCredentials alloc] init];
     credentials.appId = appId;
     credentials.userId = userId;
     credentials.securityToken = securityToken;
     
-    return [credentials autorelease];
+    return credentials;
 }
 
 + (NSString *)credentialsTokenForAppId:(NSString *)appId
                                 userId:(NSString *)userId
 {
+    [SPAppIdValidator validateOrThrow:appId];
     return [NSString stringWithFormat:@"SponsorPayCredentials:%@:%@", appId, userId];
 }
 

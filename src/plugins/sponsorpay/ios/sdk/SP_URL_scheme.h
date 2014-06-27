@@ -1,7 +1,7 @@
 //  SP_URL_scheme.h
 //  SponsorPay iOS SDK
 //
-//  Copyright 2011 SponsorPay. All rights reserved.
+//  Copyright 2011-2013 SponsorPay. All rights reserved.
 //
 
 // Custom URL scheme

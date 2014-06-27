@@ -20,7 +20,7 @@ class c =
     method ccast: [= `Sprite of c] = `Sprite (self :> c);
 
     value mutable imageCache = None;
-    method !name = if name = ""  then Printf.sprintf "sprite%d" (Oo.id self) else name;
+    method! private defaultName = Printf.sprintf "sprite%d" (Oo.id self);
     method cacheAsImage = imageCache <> None;
     value mutable filters = [];
 
@@ -69,13 +69,13 @@ class c =
     (
 (*         debug "%s bounds changed" self#name; *)
       match imageCache with
-      [ Some ({valid=CValid | CEmpty;_} as c) -> (self#addPrerender self#updateImageCache; c.valid := CInvalid)
+      [ Some ({valid=CValid | CEmpty;_} as c) -> (let () = debug:filters "add pre 4" in self#addPrerender self#updateImageCache; c.valid := CInvalid)
       | _ -> ()
       ];
       super#boundsChanged();
     );
 
-    method private updateImageCache () = 
+    method private _updateImageCache () = 
       match imageCache with
       [ Some ({c_img; c_tex; glow; valid = CInvalid;  _} as c) -> 
          let () = debug:prerender "update cacheImage %s" self#name in
@@ -95,7 +95,7 @@ class c =
                  ]
                )
              | (None,None) -> 
-                 let tex = RenderTexture.draw ~filter:Texture.FilterLinear width height f in
+                 let tex = RenderTexture.draw width height f in
                  let img = Render.Image.create tex#renderInfo ~color:`NoColor ~alpha:1. in
                  (
                    c.c_tex := Some tex;
@@ -109,15 +109,16 @@ class c =
                let alpha' = alpha in
                (
                  self#setAlpha 1.;
-                 draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
-                   (
-                    debug:drawf "sprite none glow drawf";
-                     Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
-                     (* Render.clear 0 0.; *)
-                     super#render' ~transform:False None;
-                     Render.restore_matrix ();
-                   )
-                 end;
+                 proftimer:icache "drawTexture: %f" with
+                   draw_texture bounds.Rectangle.width bounds.Rectangle.height begin fun _ ->
+                     (
+                      debug:drawf "sprite none glow drawf";
+                       Render.push_matrix (Matrix.create ~translate:{Point.x = ~-.(bounds.Rectangle.x);y= ~-.(bounds.Rectangle.y)} ());
+                       (* Render.clear 0 0.; *)
+                       proftimer:icache "render %f" with (super#render' ~transform:False None);
+                       Render.restore_matrix ();
+                     )
+                   end;
                  self#setAlpha alpha';
                  c.c_mat := Matrix.create ~translate:{Point.x = bounds.Rectangle.x;y=bounds.Rectangle.y} ();
                )
@@ -134,11 +135,11 @@ class c =
                    let alpha' = alpha in
                    (
                      self#setAlpha 1.;
-                     let ctex = RenderTexture.draw ~filter:Texture.FilterNearest ~dedicated:True rw rh begin fun _ ->
+                     let ctex = RenderTexture.draw ~kind:(RenderTexture.Dedicated Texture.FilterNearest) rw rh begin fun _ ->
                        (
                          Render.push_matrix m;
                          (* Render.clear 0 0.; *)
-                         super#render' ~transform:False None;
+                         proftimer:icache "render %f" with (super#render' ~transform:False None);
                          Render.restore_matrix ();                         
                        )
                      end in
@@ -156,8 +157,8 @@ class c =
                        Render.Image.render (glowFirstDrawMatrix Matrix.identity glow.Filters.x glow.Filters.y) (GLPrograms.Image.Normal.create ()) cimg;
 
                         match glow.Filters.glowKind with
-                        [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                        | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                        [ `linear -> proftimer:glow "linear time: %f" with RenderFilters.glow_make fb glow
+                        | `soft -> proftimer:glow "soft time: %f" with RenderFilters.glow2_make fb glow
                         ];
 
                         Render.Image.render (glowLastDrawMatrix Matrix.identity glow.Filters.x glow.Filters.y) (GLPrograms.Image.Normal.create ()) cimg;
@@ -174,11 +175,14 @@ class c =
 (* 		assert False (* FIXME: иногда срабатывает этот ассерт *) *)
     | _ -> ()
     ];
+    
+    method private updateImageCache () = proftimer:icache "updateImageCache %f" with self#_updateImageCache();
 
     method setFilters fltrs =
       let () = debug:filters "set filters [%s] on %s" (String.concat "," (List.map Filters.string_of_t fltrs)) self#name in
       (
         filters := fltrs;
+        self#forceStageRender ~reason:"sprite set filters" ();
         match fltrs with
         [ [] ->
           match imageCache with
@@ -202,7 +206,7 @@ class c =
                 then 
                   (
                     c.valid := CInvalid;
-                    self#addPrerender self#updateImageCache
+                    let () = debug:filters "add pre 0" in self#addPrerender self#updateImageCache
                   )
                 else ();
               )
@@ -236,7 +240,7 @@ class c =
                   then {c_img = None; c_tex = None; c_mat = Matrix.identity; valid = CEmpty; c_prg; glow = !glow; force = False}
                   else
                   (
-                    self#addPrerender self#updateImageCache;
+                    let () = debug:filters "add pre 1" in self#addPrerender self#updateImageCache;
                     {c_img = None; c_tex = None; c_mat = Matrix.identity; valid = CInvalid; c_prg; glow = !glow; force = False};
                   )
                 end
@@ -248,7 +252,7 @@ class c =
                 then
                 (
                   c.glow := !glow;
-                  if c.valid = CValid then (c.valid := CInvalid; self#addPrerender self#updateImageCache) else ();
+                  if c.valid = CValid then (c.valid := CInvalid; let () = debug:filters "add pre 2" in self#addPrerender self#updateImageCache) else ();
                 )
                 else ();
               )

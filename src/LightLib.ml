@@ -28,6 +28,7 @@ class clip ?(fps=default_fps.val) texture frames labels =
   object(self)
     inherit base [ frame ] fps frames labels;
     inherit Atlas._c texture;
+    method! private defaultName = Printf.sprintf "clip%d" (Oo.id self);
     method private applyChildren children =
     (
       debug "apply children";
@@ -169,7 +170,7 @@ value getTextureAsync lib tid callback =
 value getSubTexture lib (tid,rect) =
   let t = 
     match lib.textures with
-    [ TFiles files -> Texture.load ~with_suffix:False (Filename.concat lib.path files.(tid))
+    [ TFiles files -> Texture.load ~with_suffix:False ?filter:lib.filter (Filename.concat lib.path files.(tid))
     | TTextures textures -> textures.(tid)
     ]
   in
@@ -178,7 +179,7 @@ value getSubTexture lib (tid,rect) =
 value getSubTextureAsync lib (tid,rect) callback =
   let f texture = callback (texture#subTexture rect) in
   match lib.textures with
-  [ TFiles files -> Texture.load_async ~with_suffix:False (Filename.concat lib.path files.(tid)) f
+  [ TFiles files -> Texture.load_async ~with_suffix:False ?filter:lib.filter (Filename.concat lib.path files.(tid)) f
   | TTextures textures -> f textures.(tid)
   ];
 
@@ -187,8 +188,10 @@ class iclip ?(fps=default_fps.val) first_texture lib frames labels =
     inherit base [ iframe ] ~fps ~frames ~labels;
     inherit Image._c first_texture;
 
+    method! private defaultName = Printf.sprintf "iclip%d" (Oo.id self);
     method applyFrame _ frame = 
     (
+      debug "!!!applyFrame %s" (Point.to_string frame.hotpos);
       debug:quest "ic:applyFrame %d %s" (fst frame.image) (Rectangle.to_string (snd frame.image));
       (* TODO: cache subtextures for frames *)
       self#setTexture (getSubTexture lib frame.image);
@@ -200,7 +203,11 @@ class iclip ?(fps=default_fps.val) first_texture lib frames labels =
 value iclip ?fps lib frames labels =
   let first_frame = match frames.(0) with [ KeyFrame _ frame -> frame | Frame _ -> assert False ] in
   let first_texture = getSubTexture lib first_frame.image in
-  new iclip ?fps first_texture lib frames labels;
+  let c = new iclip ?fps first_texture lib frames labels in
+    (
+      c#setTransformPoint first_frame.hotpos;
+      c;
+    );
 
 value iclip_async ?fps lib frames labels callback =
   let first_frame = match frames.(0) with [ KeyFrame _ frame -> frame | Frame _ -> assert False ] in

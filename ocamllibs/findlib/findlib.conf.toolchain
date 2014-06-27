@@ -1,0 +1,4 @@
+destdir="/usr/local/ocaml/android/site-lib"
+path="/usr/local/ocaml/android/site-lib"
+stdlib="/usr/local/ocaml/android/lib"
+ocamlopt="/usr/local/ocaml/android/bin/ocamlopt"

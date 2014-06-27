@@ -7,6 +7,7 @@
 //
 
 #import "SPLoadingIndicator.h"
+#import <UIKit/UIKit.h>
 #import "QuartzCore/QuartzCore.h"
 
 static const CGFloat kSPLoadingProgressViewBGColorRed   = .23;
@@ -25,14 +26,35 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
 
 @interface SPLoadingIndicator()
 
-@property (retain, nonatomic) UIActivityIndicatorView *activityIndicatorView;
-@property (retain, nonatomic) UIView *rootView;
-@property (readonly, nonatomic) UIWindow *parentWindow;
+@property (strong, nonatomic) UIActivityIndicatorView *activityIndicatorView;
+@property (strong, nonatomic) UIView *spinnerView;
+@property (strong, nonatomic) UIView *blackFullScreen;
+@property (strong, nonatomic) UIView *rootView;
+@property (weak, readonly, nonatomic) UIWindow *parentWindow;
 @property (assign) BOOL dismissable;
 
 @end
 
-@implementation SPLoadingIndicator
+@implementation SPLoadingIndicator {
+    BOOL _showFullScreen;
+    BOOL _showSpinner;
+}
+
+- (id)init
+{
+    self = [self initFullScreen:NO showSpinner:YES];
+    return self;
+}
+
+- (id)initFullScreen:(BOOL)fullScreen showSpinner:(BOOL)showSpinner
+{
+    self = [super init];
+    if (self) {
+        _showFullScreen = fullScreen;
+        _showSpinner = fullScreen ? showSpinner : YES;
+    }
+    return self;
+}
 
 #pragma mark - View hierarchy
 
@@ -52,23 +74,60 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
 
 - (UIView *)rootView
 {
-    if (!_rootView) {
-        CGSize sizeForRootView = [self sizeForRootView];
-        _rootView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, // Will be centered in window later
-                                                             sizeForRootView.width, sizeForRootView.height)];
-        
-        _rootView.backgroundColor = [UIColor colorWithRed:kSPLoadingProgressViewBGColorRed
-                                                    green:kSPLoadingProgressViewBGColorGreen
-                                                     blue:kSPLoadingProgressViewBGColorBlue
-                                                    alpha:kSPLoadingProgressViewBGColorAlpha];
-        _rootView.layer.cornerRadius = kSPLoadingProgressViewCornerRadius;
-        
-        self.activityIndicatorView.center = _rootView.center;
-        
-        [_rootView addSubview:self.activityIndicatorView];
+    if (_rootView) {
+        return _rootView;
     }
-    
+
+    if (_showFullScreen) {
+        _rootView = self.blackFullScreen;
+        if (_showSpinner) {
+            [_rootView addSubview:self.spinnerView];
+            self.spinnerView.center = _rootView.center;
+        }
+    }
+    else {
+        _rootView = self.spinnerView;
+    }
+
     return _rootView;
+}
+
+@synthesize spinnerView = _spinnerView;
+
+- (UIView *)spinnerView
+{
+    if (!_spinnerView) {
+        CGSize sizeForSpinnerView = [self sizeForSpinnerView];
+
+        _spinnerView =
+        [[UIView alloc] initWithFrame:CGRectMake(0, 0, // Will be centered in window later
+                                                 sizeForSpinnerView.width, sizeForSpinnerView.height)];
+
+        _spinnerView.backgroundColor = [UIColor colorWithRed:kSPLoadingProgressViewBGColorRed
+                                                       green:kSPLoadingProgressViewBGColorGreen
+                                                        blue:kSPLoadingProgressViewBGColorBlue
+                                                       alpha:kSPLoadingProgressViewBGColorAlpha];
+        _spinnerView.layer.cornerRadius = kSPLoadingProgressViewCornerRadius;
+
+        UIView *activityIndicator = self.activityIndicatorView;
+        activityIndicator.center = _spinnerView.center;
+        [_spinnerView addSubview:activityIndicator];
+    }
+
+    return _spinnerView;
+}
+
+@synthesize blackFullScreen = _blackFullScreen;
+
+- (UIView *)blackFullScreen
+{
+    if (!_blackFullScreen) {
+        CGRect fullScreenFrame = self.parentWindow.rootViewController.view.frame;
+        _blackFullScreen = [[UIView alloc] initWithFrame:fullScreenFrame];
+        _blackFullScreen.backgroundColor = [UIColor blackColor];
+        _blackFullScreen.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    }
+    return _blackFullScreen;
 }
 
 @synthesize parentWindow = _parentWindow;
@@ -82,7 +141,7 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
     return _parentWindow;
 }
 
-- (CGSize)sizeForRootView
+- (CGSize)sizeForSpinnerView
 {
     CGSize activityIndicatorSize = self.activityIndicatorView.frame.size;
     return CGSizeMake(activityIndicatorSize.width + (2 * kSPLoadingProgressViewPadding),
@@ -150,12 +209,5 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
 
 #pragma mark - Housekeeping
 
-- (void)dealloc
-{
-    self.activityIndicatorView = nil;
-    self.rootView = nil;
-    
-    [super dealloc];
-}
 
 @end

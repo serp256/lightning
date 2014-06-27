@@ -171,32 +171,36 @@ value ml_paymentsInit(value vskus, value marketType) {
 	static jmethodID mid = 0;
 	if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "paymentsInit", "(ZLjava/lang/String;[Ljava/lang/String;)V");
 
-		int skus_num = 0;
-		char* cskus[255]; 
+	int skus_num = 0;
+	char* cskus[255];
 
-		if (Is_block(vskus)) {
-			vsku = Field(vskus, 0);
-			while (Is_block(vsku)) {
-				cskus[skus_num++] = String_val(Field(vsku, 0));
-				vsku = Field(vsku, 1);
-			}
+	if (Is_block(vskus)) {
+		vsku = Field(vskus, 0);
+		while (Is_block(vsku)) {
+			cskus[skus_num++] = String_val(Field(vsku, 0));
+			vsku = Field(vsku, 1);
 		}
+	}
 
-		static jclass jstringCls = NULL;
-		if (!jstringCls) {
-			jstringCls = (*env)->FindClass(env, "java/lang/String");
-		}
+	static jclass jstringCls = NULL;
+	if (!jstringCls) {
+		jclass cls = (*env)->FindClass(env, "java/lang/String");
+		jstringCls = (*env)->NewGlobalRef(env, cls);
+		(*env)->DeleteLocalRef(env, cls);
+	}
 
-		jobjectArray jskus = (*env)->NewObjectArray(env, skus_num, jstringCls, NULL);
+	PRINT_DEBUG("1");
+	jobjectArray jskus = (*env)->NewObjectArray(env, skus_num, jstringCls, NULL);
+	PRINT_DEBUG("2");
 
-		int i;
-		jstring jsku;
-		for (i = 0; i < skus_num; i++) {
-			jsku = (*env)->NewStringUTF(env, cskus[i]);
-			(*env)->SetObjectArrayElement(env, jskus, i, jsku);
-			(*env)->DeleteLocalRef(env, jsku);
-		}
-
+	int i;
+	jstring jsku;
+	for (i = 0; i < skus_num; i++) {
+		PRINT_DEBUG("3");
+		jsku = (*env)->NewStringUTF(env, cskus[i]);
+		(*env)->SetObjectArrayElement(env, jskus, i, jsku);
+		(*env)->DeleteLocalRef(env, jsku);
+	}
 
 	if (Is_long(marketType) && marketType == caml_hash_variant("Amazon")) {
 		PRINT_DEBUG("INIT AMAZON");
@@ -221,6 +225,8 @@ value ml_paymentsInit(value vskus, value marketType) {
 	} else {
 		caml_failwith("something wrong with marketType, permited only '`Amazon' or '`Google of (option string)'");
 	}
+
+	PRINT_DEBUG("6");
 
 	CAMLreturn(Val_unit);
 }

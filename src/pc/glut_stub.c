@@ -10,7 +10,7 @@
 #include <caml/fail.h>
 #include <caml/callback.h>
 #include <caml/threads.h>
-
+#include "render_stub.h"
 
 void ml_glutInit() { // FIXME: argc argv надо по идее 
 	char *argv[] = {"glut",NULL};
@@ -197,3 +197,11 @@ void ml_glutMainLoop(value param) {
 	glutMainLoop ();
 	//caml_acquire_runtime_system();
 };
+
+value ml_restore_framebuffer() {
+	CAMLparam0();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	restore_default_viewport();
+	CAMLreturn(Val_unit);
+}
+

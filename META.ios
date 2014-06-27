@@ -62,6 +62,7 @@ package "sponsorpay" (
 	description="SponsorPay SDK"
 	archive(byte) = "sponsorpay.cma"
 	archive(native) = "sponsorpay.cmxa"
+  linkopts = "-ccopt '-F%lightning_path%/src/plugins/sponsorpay/ios/networks/applifier'"
 )
 
 package "syntax" (

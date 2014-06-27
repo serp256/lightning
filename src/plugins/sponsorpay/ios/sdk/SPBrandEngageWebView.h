@@ -21,16 +21,25 @@
 - (void)brandEngageWebViewJavascriptOnStarted:(SPBrandEngageWebView *) BEWebView;
 - (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView didFailWithError:(NSError *)error;
 - (void)brandEngageWebViewOnAborted:(SPBrandEngageWebView *) BEWebView;
+- (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView requestsToCloseFollowingOfferURL:(NSURL *)url;
 - (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView
-      requestsToCloseFollowingOfferURL:(NSURL *)url;
-
+     requestsValidationOfTPN:(NSString *)tpnName
+               contextData:(NSDictionary *)contextData;
+- (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView
+      requestsPlayVideoOfTPN:(NSString *)tpnName
+               contextData:(NSDictionary *)contextData;
 @end
 
 @interface SPBrandEngageWebView : UIWebView <UIWebViewDelegate>
 
-@property (assign) id<SPBrandEngageWebViewDelegate> brandEngageDelegate;
+@property (weak) id<SPBrandEngageWebViewDelegate> brandEngageDelegate;
 
+- (BOOL)currentOfferUsesTPN;
 - (void)startOffer;
-- (void)park;
-
+- (void)notifyOfValidationResult:(NSString *)validationResult
+                          forTPN:(NSString *)tpnName
+                     contextData:(NSDictionary *)contextData;
+- (void)notifyOfVideoEvent:(NSString *)videoEventName
+                    forTPN:(NSString *)tpnName
+               contextData:(NSDictionary *)contextData;
 @end

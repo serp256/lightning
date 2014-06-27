@@ -89,3 +89,8 @@ value glowFirstDrawMatrix: Matrix.t -> int -> int -> Matrix.t;
 value glowLastDrawMatrix: Matrix.t -> int -> int -> Matrix.t;
 
 value regExtraResources: ~fname:string -> unit -> unit;
+
+value strToLower: string -> string;
+value strToUpper: string -> string;
+value strCapitalize: string -> string;
+

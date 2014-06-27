@@ -47,9 +47,26 @@ value ml_checkGLErrors(value p) {
 	return Val_unit;
 }
 
-void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
+GLfloat viewport[4];
+
+void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, uint8_t save_vp);
+
+void restore_default_viewport() {
+	setupOrthographicRendering(viewport[0], viewport[1], viewport[2], viewport[3], 0);
+	caml_callback(*caml_named_value("resetScissor"), Val_unit);
+}
+
+void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, uint8_t save_vp) {
 	//fprintf(stderr,"set ortho rendering [%f:%f:%f:%f]\n",left,right,bottom,top);
   //glDisable(GL_DEPTH_TEST);
+	if (save_vp) {
+		viewport[0] = left;
+		viewport[1] = right;
+		viewport[2] = bottom;
+		viewport[3] = top;
+	}
+
+
   glEnable(GL_BLEND);
   
 	glViewport(left, top, (GLsizei)(right), (GLsizei)(bottom));
@@ -71,7 +88,7 @@ void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLf
 
 
 value ml_setupOrthographicRendering(value left,value right,value bottom,value top) {
-	setupOrthographicRendering(Double_val(left),Double_val(right),Double_val(bottom),Double_val(top));
+	setupOrthographicRendering(Double_val(left),Double_val(right),Double_val(bottom),Double_val(top), 1);
 	return Val_unit;
 }
 
@@ -739,7 +756,6 @@ struct custom_operations image_ops = {
 
 
 static inline void set_image_uv(lgTexQuad *tq, value clipping) {
-	PRINT_DEBUG("clipping %d", clipping);
 
 	if (clipping != 1) {
 		value c = Field(clipping,0);
@@ -1391,6 +1407,9 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 			q->tr.v = (vertex2F){RENDER_SUBPIXEL(Double_field(points,6)),RENDER_SUBPIXEL(Double_field(points,7))};
 			q->tr.tex = (tex2F){q->br.tex.u,q->tl.tex.v};
 
+			PRINT_DEBUG("atlas node verts: [%f:%f] [%f:%f] [%f:%f] [%f:%f]",q->bl.v.x,q->bl.v.y,q->br.v.x,q->br.v.y,q->tl.v.x,q->tl.v.y,q->tr.v.x,q->tr.v.y);
+			PRINT_DEBUG("atlas node uv: [%f:%f] [%f:%f] [%f:%f] [%f:%f]",q->bl.tex.u,q->bl.tex.v,q->br.tex.u,q->br.tex.v,q->tl.tex.u,q->tl.tex.v,q->tr.tex.u,q->tr.tex.v);
+
 		};
 
 
@@ -1673,7 +1692,7 @@ typedef struct arrays Arrays;
 #define SZ 10
 
 // ренденринг для BezierObject
-value ml_render_grid(value matrix, value vGrid, value vTexId, value program){
+value ml_render_grid(value matrix, value alpha, value vGrid, value vTexId, value program){
 	Arrays *ars = Data_custom_val(vGrid);
 	int qty = ars -> len;
 
@@ -1687,7 +1706,7 @@ value ml_render_grid(value matrix, value vGrid, value vTexId, value program){
 	lgGLUniformModelViewProjectionMatrix(sp);
 	checkGLErrors("bind matrix uniform");
 
-	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat)1);
+	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat) (Double_val(alpha)));
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
 	checkGLErrors("render image: uniforms and attribs");
 	

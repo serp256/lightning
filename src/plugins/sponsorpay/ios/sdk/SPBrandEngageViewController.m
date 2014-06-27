@@ -6,10 +6,11 @@
 //
 
 #import "SPBrandEngageViewController.h"
+#import "SPSystemVersionChecker.h"
 
 @interface SPBrandEngageViewController ()
 
-@property (retain) UIWebView *webView;
+@property (strong) UIWebView *webView;
 
 - (CGRect)fullScreenFrameForInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
 
@@ -34,8 +35,6 @@
 - (void)dealloc
 {
     [self.webView setDelegate:nil];
-    [self setWebView:nil];
-    [super dealloc];
 }
 
 #pragma mark - View lifecycle
@@ -46,17 +45,17 @@
     rootView.backgroundColor = [UIColor blackColor];
     rootView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.view = rootView;
-    [rootView release];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     if (!self.webView) {
-        [SPLogger log:@"Brand Engage View Controller's Web View is nil!"];
+        SPLogError(@"Brand Engage View Controller's Web View is nil!");
         return;
     }
 
-    self.view.frame = [self fullScreenFrameForInterfaceOrientation:self.interfaceOrientation];
+    if (![SPSystemVersionChecker runningOniOS6OrNewer]) // <-- fix targeted to iOS 5
+        self.view.frame = [self fullScreenFrameForInterfaceOrientation:self.interfaceOrientation];
 
     if (!self.webView.superview) { // viewWillAppear could be called after the full screen video has finished playing
         self.webView.frame = self.view.frame;
@@ -67,7 +66,6 @@
     [self performSelector:@selector(fadeWebViewIn)
                withObject:nil
                afterDelay:kSPDelayForFadingWebViewIn];
-
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -118,8 +116,6 @@
     [super viewWillLayoutSubviews];
 }
 
-
-
 - (CGRect)fullScreenFrameForInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     CGRect applicationFrame = [[UIScreen mainScreen] applicationFrame];
@@ -136,6 +132,13 @@
     }
     
     return fullScreenFrame;
+}
+
+#pragma mark - Status bar preference
+
+- (BOOL)prefersStatusBarHidden
+{
+    return YES;
 }
 
 #pragma mark -

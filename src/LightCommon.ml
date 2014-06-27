@@ -84,14 +84,6 @@ value qColor ~topLeft ~topRight ~bottomLeft ~bottomRight =
 
 type color = [= `NoColor | `Color of int | `QColors of qColor ];
 
-value rec nextPowerOfTwo number =
-  let rec loop result = 
-    if result < number 
-    then loop (result * 2)
-    else result
-  in 
-  loop 1;
-
 value powOfTwo p =
   let r = ref 1 in
   (
@@ -100,6 +92,17 @@ value powOfTwo p =
     done;
     !r;
   );
+
+
+value nextPowerOfTwo x =
+  let x = x - 1 in
+  let x = x lor (x lsr 1) in
+  let x = x lor (x lsr 2) in
+  let x = x lor (x lsr 4) in
+  let x = x lor (x lsr 8) in
+  let x = x lor (x lsr 16) in
+  x + 1;
+
 
 DEFINE COLOR_PART_ALPHA(color) = (color lsr 24) land 0xff;
 DEFINE COLOR_PART_RED(color) = (color lsr 16) land 0xff;
@@ -321,7 +324,6 @@ external ios_platfrom: unit -> string = "ml_platform";
 value getDevice () =
   let d : ios_device = 
     let ip = ios_platfrom () in
-    let () = Debug.d "!!!!!!!!!!!!!!!!!ios platform %s" ip in
     if String.starts_with ip "iPhone" 
     then 
       if String.starts_with ip "iPhone1" then IPhoneOld
@@ -503,3 +505,16 @@ value glowMatrix mhgs x y = Matrix.create ~translate:{ Point.x = mhgs +. (negati
 value glowFirstDrawMatrix originaMtx x y = Matrix.translate originaMtx (positiveOrZero x, positiveOrZero y);
 value glowLastDrawMatrix originaMtx x y = Matrix.translate originaMtx (invertNegativeOrZero x, invertNegativeOrZero y);
 
+IFPLATFORM(pc)
+value strToLower str = str;
+value strToUpper str = str;
+ELSE
+external strToLower: string -> string = "ml_str_to_lower";
+external strToUpper: string -> string = "ml_str_to_upper";
+ENDPLATFORM;
+
+value strCapitalize str =
+  let fstCharPos = UTF8.nth str 1 in
+  let fst = String.sub str 0 fstCharPos in
+  let rest = String.sub str fstCharPos (String.length str - fstCharPos) in
+    (strToUpper fst) ^ rest;

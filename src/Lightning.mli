@@ -40,3 +40,8 @@ value extractAssetsAndExpansionsIfRequired: (bool -> unit) -> unit; *)
 value showUrl: string -> unit;(* ANDROID ONLY *) (* display WebView with specified url *)
 value showNativeWait: ?message:string -> unit -> unit;
 value hideNativeWait: unit -> unit;
+
+value fireLightningEvent: string -> unit;
+value setNativeEventListener: (string -> unit) -> unit;
+value clearNativeEventListener: unit -> unit;
+value debugErrReporting: unit -> unit;

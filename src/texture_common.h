@@ -38,7 +38,7 @@
 			if (legalHeight <= 8) legalHeight = 16 < legalWidth ? 16 : legalWidth; \
 		};
 #else
-#define TEXTURE_SIZE_FIX
+#define TEXTURE_SIZE_FIX(legalWidth,legalHeight)
 #endif
 
 int nextPowerOfTwo(int number);
@@ -52,6 +52,7 @@ struct tex {
 	char path[255];
 #endif
 	int mem;
+	GLuint fbid; //this fiedls used only with render textures
 };
 
 #define TEXTURE_ID(v) ((struct tex*)Data_custom_val(v))->tid

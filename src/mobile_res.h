@@ -2,6 +2,13 @@
 
 #define MOBILERES_H
 
+#ifdef ANDROID 
+#include "android/mlwrapper_android.h"   
+#elif IOS 
+#import "ios/mlwrapper_ios.h" 
+#else 
+#endif
+
 #include <stdio.h>
 #include "khash.h"
 #include "light_common.h"

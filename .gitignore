@@ -19,3 +19,8 @@ bin
 gen
 META
 Makefile
+src/debug.conf
+LightTestBin
+assets
+index
+test/target

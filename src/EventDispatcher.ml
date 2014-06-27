@@ -11,7 +11,7 @@ type lst 'target 'currentTarget =
 
 
 class base [ 'target,'currentTarget ] = (*{{{*)
-  object
+  object(self)
     value mutable listeners: list (Ev.id * (lst 'target 'currentTarget)) = [];
     method addEventListener eventType listener =
       let res = ref 0 in

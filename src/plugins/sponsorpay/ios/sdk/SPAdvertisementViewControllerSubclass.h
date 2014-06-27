@@ -1,12 +1,14 @@
 //
 //  SPAdvertisementViewControllerSubclass.h
-//  SponsorPaySample
+//  SponsorPay iOS SDK
 //
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 #import "SPAdvertisementViewController.h"
+#import "SPSchemeParser.h"
+#import "SPLoadingIndicator.h"
 
 @interface SPAdvertisementViewController (ForSubclassEyesOnly)
 

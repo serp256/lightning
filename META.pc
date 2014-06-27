@@ -1,7 +1,7 @@
 version="0.01"
 archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
-requires="bigarray extlib xmlm threads ojson redspell.debug"
+requires="bigarray extlib xmlm ojson redspell.debug"
 
 package "remote-notifications" (
   description="Remote Notifications"
@@ -31,6 +31,12 @@ package "flurry" (
   description="Flurry Analytics"
   archive(byte) = "flurry.cma"
   archive(native) = "flurry.cmxa"
+)
+
+package "sponsorpay" (
+  description="SponsorPay SDK"
+  archive(byte) = "sponsorpay.cma"
+  archive(native) = "sponsorpay.cmxa"
 )
 
 package "syntax" (

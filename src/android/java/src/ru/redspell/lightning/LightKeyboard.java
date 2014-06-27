@@ -68,6 +68,7 @@ public class LightKeyboard {
 				if (activity.viewGrp.getChildCount() == 2) {
 					letc = (LightEditTextContainer)activity.viewGrp.findViewById(R.id.editor_container);
 					let = (LightEditText)letc.findViewById(R.id.editor);
+					let.setText(inittxt);
 				} else {
 					letc = (LightEditTextContainer)activity.getLayoutInflater().inflate(R.layout.editor, activity.viewGrp, false);
 					let = (LightEditText)letc.findViewById(R.id.editor);
@@ -111,7 +112,6 @@ public class LightKeyboard {
 
 					Log.d("LIGHTNING", "adding view");
 					activity.viewGrp.addView(letc, visible ? 1 : 0);
-					let.setText(inittxt);
 					let.setOnKeyboardHideListener(khl);
 					let.requestFocus();
 					let.addTextChangedListener(tw);

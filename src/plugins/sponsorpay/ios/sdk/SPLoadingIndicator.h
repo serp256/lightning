@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 
 enum {
     SPAnimationTypeFade = (1UL << 0),
@@ -17,6 +16,7 @@ typedef NSUInteger SPAnimationTypes;
 
 @interface SPLoadingIndicator : NSObject
 
+- (id)initFullScreen:(BOOL)fullScreen showSpinner:(BOOL)showSpinner;
 - (void)presentWithAnimationTypes:(SPAnimationTypes)animationTypes;
 - (void)dismiss;
 

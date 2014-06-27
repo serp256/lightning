@@ -34,7 +34,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       value mutable color : color = `NoColor;
       value atlas = atlas_init texture#renderInfo;
 
-      method !name = if name = ""  then Printf.sprintf "atlas%d" (Oo.id self) else name;
+      method! private defaultName = Printf.sprintf "atlas%d" (Oo.id self);
 
 (*       value mutable programID = programID; *)
 (*       value mutable shaderProgram = shaderProgram; *)
@@ -148,7 +148,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         | _ -> () 
         ];  
 
-      method private updateGlowFilter () = 
+      method private updateGlowFilter () =
+        let () = debug:updateGlowFilter "atlas updateGlowFilter" in
         match glowFilter with
         [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) ->  
             let bounds = self#boundsInSpace (Some self) in
@@ -168,8 +169,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                     RENDER_QUADS(g_make_program,Matrix.identity,`NoColor,1.);
 
                     match glow.Filters.glowKind with
-                    [ `linear -> proftimer:glow "linear time: %f" RenderFilters.glow_make fb glow
-                    | `soft -> proftimer:glow "soft time: %f" RenderFilters.glow2_make fb glow
+                    [ `linear -> proftimer:glow "linear time: %f" with RenderFilters.glow_make fb glow
+                    | `soft -> proftimer:glow "soft time: %f" with RenderFilters.glow2_make fb glow
                     ];
 
                     Render.restore_matrix ();
@@ -185,7 +186,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                   | False -> ()
                   ]
                 | (None,None) ->
-                  let tex = RenderTexture.draw ~filter:Texture.FilterLinear rw rh drawf in
+                  let tex = RenderTexture.draw rw rh drawf in
                   let g_image = Render.Image.create tex#renderInfo color alpha in
                   (
                     gf.g_texture := Some tex;
@@ -202,11 +203,16 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         | _ -> () (* Debug.w "update glow not need" *)
         ];
 
-      method boundsInSpace: !'space. (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun targetCoordinateSpace ->  
+      method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->  
         match DynArray.length children with
         [ 0 -> Rectangle.empty
         | _ ->
-            let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
+          let mask =
+            if withMask
+            then self#maskInSpace targetCoordinateSpace
+            else Rectangle.empty
+          in        
+          let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
             (
               let open Rectangle in
               let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
@@ -221,12 +227,14 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                   if downY > ar.(3) then ar.(3) := downY else ();
                 )
               end children;
-              Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))
+
+              self#boundsWithMask' (Rectangle.create ar.(0) ar.(2) (ar.(1) -. ar.(0)) (ar.(3) -. ar.(2))) targetCoordinateSpace withMask;
             )
         ];
 
       method! setAlpha a =
       (
+        debug:alpha "atlas set alpha";
         super#setAlpha a;
         match glowFilter with
         [ Some {g_image=Some img;_} -> Render.Image.set_alpha img color a False
@@ -234,11 +242,15 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         ];
       );
 
-      method setColor c = 
-      (
-        color := c;
-        dirty := True;
-      );
+      method setColor c =
+        if c <> color
+        then
+          (
+            self#forceStageRender ~reason:"atlas set color" ();
+            color := c;
+            dirty := True;
+          )
+        else ();
 
       method color = color;
 
@@ -330,6 +342,9 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
               )
           | _ -> ()          
           ];
+
+          debug:updateGlowFilter "atlas set filters";
+          self#forceStageRender ~reason:"tlf atlas set filters" ();
         );      
     end;
 

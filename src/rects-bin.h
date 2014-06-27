@@ -29,14 +29,16 @@ typedef struct {
 	rlist_t* rects;
 	rlist_t* reuse_rects;
 	int reuse_rects_num;
-} bin_t;
+} rbin_t;
 
-bin_t*	bin_create(uint16_t width, uint16_t height);
-void	bin_free(bin_t* bin);
-void	bin_add_rect(bin_t* bin, uint16_t width, uint16_t height, uint8_t* added, pnt_t* pnt);
-void 	bin_rm_rect(bin_t* bin, pnt_t* pnt);
-void 	bin_repair(bin_t* bin);
-void 	bin_clear(bin_t* bin);
-uint8_t	bin_need_repair(bin_t* bin);
+void	rbin_init(rbin_t* bin, uint16_t width, uint16_t height);// fill nah
+void	rbin_free(rbin_t* bin);
+
+uint8_t rbin_reuse_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt);
+uint8_t	rbin_add_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt);
+void 	rbin_rm_rect(rbin_t* bin, pnt_t* pnt);
+void 	rbin_repair(rbin_t* bin);
+void 	rbin_clear(rbin_t* bin);
+uint8_t	rbin_need_repair(rbin_t* bin);
 
 #endif

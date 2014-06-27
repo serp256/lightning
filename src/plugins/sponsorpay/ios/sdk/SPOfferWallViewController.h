@@ -2,12 +2,11 @@
 //  SPOfferWallViewController.h
 //  SponsorPay iOS SDK
 //
-//  Copyright 2011 SponsorPay. All rights reserved.
+//  Copyright 2011-2013 SponsorPay. All rights reserved.
 //
 
 
 #import <UIKit/UIKit.h>
-#import "SPLoadingIndicator.h"
 #import "SPAdvertisementViewController.h"
 
 /**
@@ -46,17 +45,7 @@
 /**
  Delegate conforming to the SPOfferWallViewControllerDelegate protocol that will be notified when the OfferWall is closed.
  */
-@property (nonatomic, assign) id<SPOfferWallViewControllerDelegate> delegate;
-
-/**
- This initializer has been deprecated and will be removed from a future SDK release. Please don't initialize instances of this class directly, rather access them through [SponsorPaySDK offerWallViewController] or [SponsorPaySDK offerWallViewControllerForCredentials:]
- */
-- (id)initWithUserId:(NSString *)userId appId:(NSString *)appId __deprecated;
-
-/**
- This initializer has been deprecated and will be removed from a future SDK release. Please don't initialize this class directly, rather access it through [SponsorPaySDK offerWallViewController] or [SponsorPaySDK offerWallViewControllerForCredentials:], and configure your custom parameters via the customParameters property.
- */
-- (id)initWithUserId:(NSString *)userId appId:(NSString *)appId customParameters:(NSDictionary *)customParameters __deprecated;
+@property (nonatomic, weak) id<SPOfferWallViewControllerDelegate> delegate;
 
 /**
  Please don't initialize this class directly, rather access it through [SponsorPaySDK offerWallViewController] or [SponsorPaySDK offerWallViewControllerForCredentials:]

@@ -137,29 +137,23 @@ rlist_t* hole_minus(rect_t* hole, rect_t* rect) {
 
 uint8_t bin_id = 0;
 
-bin_t* bin_create(uint16_t width, uint16_t height) {
-	bin_t* retval = (bin_t*)malloc(sizeof(bin_t));
-
-	retval->id = bin_id++;
-	retval->width = width;
-	retval->height = height;
-	retval->holes = rlist_create(rect_from_coords_n_dims(0, 0, width, height));
-	retval->reuse_rects = NULL;
-	retval->rects = NULL;
-	retval->reuse_rects = 0;
-
-	return retval;
+void rbin_init(rbin_t* bin, uint16_t width, uint16_t height) {
+	bin->id = bin_id++;
+	bin->width = width;
+	bin->height = height;
+	bin->holes = rlist_create(rect_from_coords_n_dims(0, 0, width, height));
+	bin->rects = NULL;
+	bin->reuse_rects = NULL;
+	bin->reuse_rects_num = 0;
 }
 
-void bin_free(bin_t* bin) {
+void rbin_free(rbin_t* bin) {
 	rlist_free(bin->holes);
 	rlist_free(bin->rects);
 	rlist_free(bin->reuse_rects);
-
-	free(bin);
 }
 
-void bin_clear(bin_t* bin) {
+void rbin_clear(rbin_t* bin) {
 	rlist_free(bin->holes);
 	rlist_free(bin->rects);
 	rlist_free(bin->reuse_rects);
@@ -170,21 +164,22 @@ void bin_clear(bin_t* bin) {
 	bin->reuse_rects = 0;
 }
 
-uint8_t bin_need_repair(bin_t* bin) {
+uint8_t rbin_need_repair(rbin_t* bin) {
 	return(bin->reuse_rects_num > 15);
 }
 
-void bin_find_pos(bin_t* bin, uint16_t width, uint16_t height, uint8_t* found, pnt_t* pnt) {
+uint8_t rbin_find_pos(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
 	rlist_t* hole = bin->holes;
 
+	uint8_t found = 0;
 	while (hole) {
 		rect_t* rect = hole->data;
 
 		if (rect->width >= width && rect->height >= height) {
-			if (!(*found)) {
+			if (!found) { 
 				pnt->x = rect->left_bottom.x;
 				pnt->y = rect->left_bottom.y;
-				*found = 1;
+				found = 1;
 			} else {
 				if (rect->left_bottom.y < pnt->y || (rect->left_bottom.y == pnt->y && rect->left_bottom.x < pnt->x)) {
 					pnt->x = rect->left_bottom.x;
@@ -194,10 +189,12 @@ void bin_find_pos(bin_t* bin, uint16_t width, uint16_t height, uint8_t* found, p
 		}
 
 		hole = hole->next;
-	}
+	};
+
+	return found;
 }
 
-void bin_add_rect_at(bin_t* bin, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+void rbin_add_rect_at(rbin_t* bin, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
 	rect_t* rect = rect_from_coords_n_dims(x, y, width, height);
 	rlist_t* hole = bin->holes;
 	rlist_t* max_holes = NULL;
@@ -241,7 +238,9 @@ void bin_add_rect_at(bin_t* bin, uint16_t x, uint16_t y, uint16_t width, uint16_
 	rlist_unshift(&bin->rects, rect);
 }
 
-void bin_reuse_rect(bin_t* bin, uint16_t width, uint16_t height, uint8_t* reused, pnt_t* pnt) {
+#include "light_common.h"
+
+uint8_t rbin_reuse_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
 	rlist_t* rect = bin->reuse_rects;
 
 	while (rect) {
@@ -249,60 +248,57 @@ void bin_reuse_rect(bin_t* bin, uint16_t width, uint16_t height, uint8_t* reused
 		uint16_t hdiff = rect->data->height - height;
 
 		if (0 <= wdiff && wdiff < 10 && 0 <= hdiff && hdiff < 10) {
+			pnt->x = rect->data->left_bottom.x;
+			pnt->y = rect->data->left_bottom.y;
+
 			rlist_unshift(&bin->rects, rect->data);
 			rlist_remove(&bin->reuse_rects, rect, 0);
 			bin->reuse_rects_num--;
 
-			*reused = 1;
-			pnt->x = rect->data->left_bottom.x;
-			pnt->y = rect->data->left_bottom.y;
-
-			return;
+			return 1;
 		}
 
 		rect = rect->next;
 	}
 
-	*reused = 0;
+	return 0;
 }
 
-void bin_add_rect(bin_t* bin, uint16_t width, uint16_t height, uint8_t* added, pnt_t* pnt) {
-	bin_reuse_rect(bin, width, height, added, pnt);
+uint8_t rbin_add_rect(rbin_t* bin, uint16_t width, uint16_t height, pnt_t* pnt) {
 
-	if (*added) {
-		return;
-	}
+	uint8_t finded = rbin_find_pos(bin, width, height, pnt);
 
-	bin_find_pos(bin, width, height, added, pnt);
+	if (finded) rbin_add_rect_at(bin, pnt->x, pnt->y, width, height);
+	return finded;
 
-	if (*added) {
-		bin_add_rect_at(bin, pnt->x, pnt->y, width, height);
-	}
 }
 
-void bin_repair(bin_t* bin) {
-	if (bin_need_repair(bin)) {
+void rbin_repair(rbin_t* bin) {
+	//if (bin_need_repair(bin)) {
 		if (!bin->rects) {
-			bin_clear(bin);
+			rbin_clear(bin);
 		} else {
-			rlist_t* rect = bin->rects;
+			rlist_t* rect = bin->rects;// FIXME:!!!!!
 
 			bin->rects = NULL;
-			bin_clear(bin);
+			rbin_clear(bin);
 			
 			while (rect) {
-				bin_add_rect_at(bin, rect->data->left_bottom.x, rect->data->left_bottom.y, rect->data->width, rect->data->height);
+				rbin_add_rect_at(bin, rect->data->left_bottom.x, rect->data->left_bottom.y, rect->data->width, rect->data->height);
 				rect = rlist_remove(NULL, rect, 1);
 			}
 		}
-	}
+	//}
 }
 
-void bin_rm_rect(bin_t* bin, pnt_t* pnt) {
+#include <stdio.h>
+
+void rbin_rm_rect(rbin_t* bin, pnt_t* pnt) {
 	rlist_t* rect = bin->rects;
 
 	while (rect) {
 		if (rect->data->left_bottom.x == pnt->x && rect->data->left_bottom.y == pnt->y) {
+			PRINT_DEBUG("rbin_rm_rect");
 			rlist_unshift(&bin->reuse_rects, rect->data);
 			rlist_remove(&bin->rects, rect, 0);
 			bin->reuse_rects_num++;

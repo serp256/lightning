@@ -11,7 +11,8 @@ value loggedIn () = None;
 
 value accessToken connect = "";
 value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback connect = ();
-value graphrequest ~path ?params ?successCallback ?failCallback connect = ();
+value graphrequest ~path ?params ?successCallback ?failCallback ?httpMethod connect = ();
+
 (* value sharePicUsingNativeApp ~fname:string ~text:string () = False; *)
 value sharePic ?success ?fail ~fname ~text connect = ();
 

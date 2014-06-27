@@ -63,11 +63,11 @@ endif
 
 ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/appflood/ios/libappflood-sdk.a
-	INSTALL_FILES += src/plugins/appsflyer/ios/libappsflyer-sdk.a
+	INSTALL_FILES += src/plugins/appsflyer/ios/libAppsFlyerLib.a
 	INSTALL_FILES += src/plugins/chartboost/ios/libchartboost-sdk.a
 	INSTALL_FILES += src/plugins/flurry/ios/libflurry-sdk.a
-	INSTALL_FILES += src/plugins/sponsorpay/ios/libsponsorpay-sdk.a
 	INSTALL_FILES += src/plugins/supersonic/ios/libsupersonic-sdk.a
+	INSTALL_FILES += src/plugins/sponsorpay/ios/networks/applovin/libAppLovinSdk.a
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))
