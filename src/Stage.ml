@@ -279,8 +279,8 @@ class virtual c (_width:float) (_height:float) =
               while not (Queue.is_empty runtweens) do
                 let tween = Queue.take runtweens in
                 match tween#process seconds with
-                [ True -> Queue.push tween tweens
-                | False -> ()
+                [ True -> let () = debug:tween "pushing tween back to tweens" in Queue.push tween tweens
+                | False -> let () = debug:tween "doing nothing" in ()
                 ]
               done;
           );

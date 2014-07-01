@@ -68,15 +68,20 @@ static int engine_init_display(engine_t engine) {
     return 0;
 }
 
-static struct timeval last_draw_time;
+static double last_draw_time;
 
 static void engine_draw_frame(engine_t engine) {
     CAMLparam0();
 
     struct timeval now;
     if (!gettimeofday(&now, NULL)) {
-        double diff = (double)(now.tv_usec - last_draw_time.tv_usec) / 1000000.;
-        last_draw_time = now;
+        PRINT_DEBUG("now.tv_sec %ld, now.tv_usec %ld", now.tv_sec, now.tv_usec);
+
+        double _now = (double)now.tv_sec + (double)now.tv_usec / 100000.;
+        PRINT_DEBUG("now %f, last %f", _now, last_draw_time);
+        double diff = _now - last_draw_time;
+        PRINT_DEBUG("DIFF %f", diff)
+        last_draw_time = _now;
 
         net_run();
         mlstage_advanceTime(stage, diff);

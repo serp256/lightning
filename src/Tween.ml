@@ -162,6 +162,7 @@ class c ?(delay=0.) ?(repeat=(-1)) ?(transition=`linear) ?(loop=`LoopNone) time 
 
     method reset () = 
     (
+      debug "assign currentTime 5";
       currentTime := 0.;
       invertTransition := False;
     );
@@ -170,11 +171,13 @@ class c ?(delay=0.) ?(repeat=(-1)) ?(transition=`linear) ?(loop=`LoopNone) time 
 (*       let () = Printf.eprintf "tween process %F\n%!" dt in *)
       let isDelay =
         (
+          debug "assign currentTime 1 %f %f %f" delay currentTime dt;
           currentTime := currentTime +. dt;
           match delay > currentTime with
           [ True -> True
           | _ -> 
               (
+                debug "assign currentTime 2";
                 currentTime := min totalTime (currentTime -. delay);
                 delay := 0.;
                 False 
@@ -186,6 +189,7 @@ class c ?(delay=0.) ?(repeat=(-1)) ?(transition=`linear) ?(loop=`LoopNone) time 
       [ True -> True
       | _ ->  
           (
+            let () = debug "currentTime %f totalTime %f" currentTime totalTime in
             let ratio = currentTime /. totalTime in
               (
                 List.iter begin fun action ->
@@ -214,6 +218,7 @@ class c ?(delay=0.) ?(repeat=(-1)) ?(transition=`linear) ?(loop=`LoopNone) time 
                   [ `LoopRepeat -> 
                     (
                       List.iter (fun action -> action.setValue (action.getValue ())) actions;
+                      debug "assign currentTime 3";
                       currentTime := 0.;
                       match repeat with
                       [ 0 -> 
@@ -247,6 +252,7 @@ class c ?(delay=0.) ?(repeat=(-1)) ?(transition=`linear) ?(loop=`LoopNone) time 
                             *)
                         )
                       end actions;
+                      debug "assign currentTime 4";
                       currentTime := 0.;
                       match repeat with
                       [ 0 ->
