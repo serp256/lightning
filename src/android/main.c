@@ -77,7 +77,7 @@ static void engine_draw_frame(engine_t engine) {
     if (!gettimeofday(&now, NULL)) {
         PRINT_DEBUG("now.tv_sec %ld, now.tv_usec %ld", now.tv_sec, now.tv_usec);
 
-        double _now = (double)now.tv_sec + (double)now.tv_usec / 100000.;
+        double _now = (double)now.tv_sec + (double)now.tv_usec / 1000000.;
         PRINT_DEBUG("now %f, last %f", _now, last_draw_time);
         double diff = _now - last_draw_time;
         PRINT_DEBUG("DIFF %f", diff)
@@ -305,7 +305,7 @@ void android_main(struct android_app* state) {
     state->onInputEvent = engine_handle_input;
     
     engine_init(state);
-    helper_init();
+    helper_init(state->activity->clazz);
 
     AAssetManager* mngr = state->activity->assetManager;
     AAsset* ass = AAssetManager_open(mngr, "assets", AASSET_MODE_UNKNOWN);

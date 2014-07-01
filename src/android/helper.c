@@ -4,10 +4,13 @@
 
 static jclass helper_cls;
 
-void helper_init() {
+void helper_init(jobject activity) {
     jstring cls_name = (*ENV)->NewStringUTF(ENV, "ru/redspell/lightning/LightNativeActivityHelper");
     jclass cls = FIND_CLASS(cls_name);
     helper_cls = (*ENV)->NewGlobalRef(ENV, cls);
+
+    jfieldID fid = (*ENV)->GetStaticFieldID(ENV, helper_cls, "activity", "Landroid/app/Activity;");
+    (*ENV)->SetStaticObjectField(ENV, helper_cls, fid, activity);
 
     (*ENV)->DeleteLocalRef(ENV, cls);
     (*ENV)->DeleteLocalRef(ENV, cls_name);
