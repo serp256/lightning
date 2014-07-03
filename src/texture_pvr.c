@@ -204,12 +204,18 @@ int loadPvrFile3(gzFile gzf, textureInfo *tInfo) {
 				break;
 
 			case ePVRTPF_PVRTCII_2bpp:
-				ERROR("unsupported: PVRTCII 2bpp");
-				return 1;
+				PRINT_DEBUG("PVRTCII 2bpp RGBA");
+				tInfo->format = LTextureFormatPvrtc2RGBA2;
+				bpp = 2;
+/*				ERROR("unsupported: PVRTCII 2bpp");
+				return 1;*/
 				break;
 			case ePVRTPF_PVRTCII_4bpp:
-				ERROR("unsupported: PVRTCII 4bpp");
-				return 1;
+				PRINT_DEBUG("PVRTCII 4bpp RGBA");
+				tInfo->format = LTextureFormatPvrtc2RGBA4;
+				bpp = 4;			
+/*				ERROR("unsupported: PVRTCII 4bpp");
+				return 1;*/
 				break;
 		}
 	} else {
@@ -447,6 +453,10 @@ int loadDdsFile(gzFile gzf, textureInfo *tInfo) {
 }
 
 int loadCompressedFile(gzFile gzf, textureInfo *tInfo) {
+	GLint size;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
+	PRINT_DEBUG("loadCompressedFile max tex size %d", size);
+
 	uint32_t magin_num;
 	if (gzread(gzf, &magin_num, 4) < 4) {
 		ERROR("cannot determine compressed texture container type");
