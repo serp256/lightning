@@ -116,7 +116,7 @@ void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
 static value render_method = NIL;
 
 uint8_t mlstage_render(mlstage *mlstage) {
-	PRINT_DEBUG("mlstage render");
+	//PRINT_DEBUG("mlstage render");
 	//caml_acquire_runtime_system();
 	if (render_method == NIL)
 		render_method = caml_hash_variant("renderStage");
@@ -175,7 +175,7 @@ void ml_memoryWarning() {
 
 value caml_getResource(value mlpath,value suffix) {
 	PRINT_DEBUG("caml_getResource call");
-	PRINT_DEBUG("mlpath: %s suffix: %s", mlpath, suffix);
+	//PRINT_DEBUG("mlpath: %s suffix: %s", mlpath, suffix);
 	CAMLparam1(mlpath);
 	CAMLlocal2(res,mlfd);
 	resource r;
