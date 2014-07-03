@@ -1059,6 +1059,7 @@ textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int
 				size_t suf_len = strlen(suffix);
 
 				fname = (char*)realloc(fname, fnameLen + suf_len + 7);
+				insertTo = fname + fnameLen - extLen;
 				strcpy(insertTo, suffix);
 				strcpy(insertTo + suf_len, "_alpha");
 				strcpy(insertTo + suf_len + 6, ext);
