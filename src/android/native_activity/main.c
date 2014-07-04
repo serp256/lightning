@@ -14,7 +14,8 @@
 #include "mlwrapper_android.h"
 #include "mobile_res.h"
 #include "main.h"
-#include "helper.h"
+#include "lightning_android.h"
+#include "render_stub.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
@@ -29,7 +30,7 @@ static int engine_init_display(engine_t engine) {
             EGL_RED_SIZE, 8,
             EGL_NONE
     };
-    EGLint w, h, dummy, format;
+    EGLint w, h, format;
     EGLint numConfigs;
     EGLConfig config;
     EGLSurface surface;
@@ -75,12 +76,8 @@ static void engine_draw_frame(engine_t engine) {
 
     struct timeval now;
     if (!gettimeofday(&now, NULL)) {
-        PRINT_DEBUG("now.tv_sec %ld, now.tv_usec %ld", now.tv_sec, now.tv_usec);
-
         double _now = (double)now.tv_sec + (double)now.tv_usec / 1000000.;
-        PRINT_DEBUG("now %f, last %f", _now, last_draw_time);
         double diff = _now - last_draw_time;
-        PRINT_DEBUG("DIFF %f", diff)
         last_draw_time = _now;
 
         net_run();
@@ -131,7 +128,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     CAMLlocal5(vtouches, vtouch, vtmp, vtx, vty);
 
     vtouches = Val_int(0);
-    engine_t engine = (engine_t)app->userData;
+    // engine_t engine = (engine_t)app->userData;
 
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
 #define MAKE_TOUCH(touch, id, x, y, phase) touch = caml_alloc_tuple(8); \
@@ -158,7 +155,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     tx = AMotionEvent_getX(event, ptr_indx); \
     ty = AMotionEvent_getY(event, ptr_indx);
 
-#define KEEP_TACK(tid, tx, ty) { \
+#define KEEP_TRACK(tid, tx, ty) { \
         k = kh_get(tt, touch_track, tid); \
         touch_track_t* touch; \
         if (k != kh_end(touch_track)) { \
@@ -198,7 +195,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 
                     if (!touch || fabs(touch->x - tx) > 10 || fabs(touch->y - ty) > 10) {
                         if (!touch) {
-                            KEEP_TACK(tid, tx, ty);
+                            KEEP_TRACK(tid, tx, ty);
                         } else {
                             touch->x = tx;
                             touch->y = ty;
@@ -222,7 +219,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
                 if (action == AMOTION_EVENT_ACTION_DOWN) ptr_indx = 0;
 
                 GET_TOUCH_PARAMS;
-                KEEP_TACK(tid, tx, ty);
+                KEEP_TRACK(tid, tx, ty);
                 MAKE_TOUCH(vtouch, tid, tx, ty, 0);
                 APPEND_TOUCH;
 
@@ -251,8 +248,8 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 
 #undef MAKE_TOUCH
 #undef APPEND_TOUCH
-#undef KEEP_TACK
-#undef LOSE_TACK
+#undef KEEP_TRACK
+#undef LOSE_TRACK
 #undef GET_TOUCH_PARAMS
 
         CAMLreturn(1);
@@ -292,6 +289,10 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             engine->animating = 0;
             engine_draw_frame(engine);
             break;
+
+        case LIGTNING_CMD_PAYMENT_SUCCESS:
+            PRINT_DEBUG("!!!LIGTNING_CMD_PAYMENT_SUCCESS");
+            break;
     }
 }
 
@@ -305,7 +306,7 @@ void android_main(struct android_app* state) {
     state->onInputEvent = engine_handle_input;
     
     engine_init(state);
-    helper_init(state->activity->clazz);
+    lightning_init();
 
     AAssetManager* mngr = state->activity->assetManager;
     AAsset* ass = AAssetManager_open(mngr, "assets", AASSET_MODE_UNKNOWN);
@@ -320,7 +321,7 @@ void android_main(struct android_app* state) {
 
     FILE* f = fdopen(ass_fd, "r");
     fseek(f, indx_offset, SEEK_SET);
-    char* err = read_res_index(f, ass_offset, -1);
+    read_res_index(f, ass_offset, -1);
     
     fclose(f);
     close(indx_fd);

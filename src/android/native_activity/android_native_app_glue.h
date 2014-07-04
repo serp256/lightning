@@ -317,6 +317,8 @@ enum {
  */
 int8_t android_app_read_cmd(struct android_app* android_app);
 
+void android_app_write_cmd(struct android_app* android_app, int8_t cmd);
+
 /**
  * Call with the command returned by android_app_read_cmd() to do the
  * initial pre-processing of the given command.  You can perform your own

@@ -38,7 +38,7 @@ import android.content.res.Configuration;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import 	com.google.android.gms.common.ConnectionResult;
 
-import ru.redspell.lightning.payments.google.LightGooglePayments;
+// import ru.redspell.lightning.payments.google.LightGooglePayments;
 
 /*import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
@@ -270,9 +270,9 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		lightView.onDestroy();
 		super.onDestroy();
 
-		if (LightGooglePayments.instance != null) {
+/*		if (LightGooglePayments.instance != null) {
 			LightGooglePayments.instance.contextDestroyed(this);
-		}
+		}*/
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
 		while (iter.hasNext()) {
@@ -293,9 +293,9 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 			h.onActivityResult(requestCode, resultCode, data);
 		}
 
-		if (requestCode == LightGooglePayments.REQUEST_CODE && LightGooglePayments.instance != null) {
-			LightGooglePayments.instance.onActivityResult(requestCode, resultCode, data);
-		}
+		// if (requestCode == LightGooglePayments.REQUEST_CODE && LightGooglePayments.instance != null) {
+		// 	LightGooglePayments.instance.onActivityResult(requestCode, resultCode, data);
+		// }
 	}
 
 	@Override

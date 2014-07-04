@@ -29,6 +29,9 @@ void engine_init(struct android_app* app) {
 	engine.class_loader = (*ENV)->NewGlobalRef(ENV, ldr);
 	engine.load_class_mid = (*ENV)->GetMethodID(ENV, cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 
+    jstring _jcls_name = (*ENV)->NewStringUTF(ENV, "java/lang/String");
+    jclass _cls = FIND_CLASS(_jcls_name);
+    PRINT_DEBUG("string cls %d", _cls);
 
 	(*ENV)->ReleaseStringUTFChars(ENV, japk_path, capk_path);
 	(*ENV)->DeleteLocalRef(ENV, japk_path);

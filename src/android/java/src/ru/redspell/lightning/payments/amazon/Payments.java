@@ -8,8 +8,7 @@ import com.amazon.inapp.purchasing.PurchaseUpdatesResponse.PurchaseUpdatesReques
 import com.amazon.inapp.purchasing.PurchasingManager;
 import com.amazon.inapp.purchasing.Receipt;
 
-import ru.redspell.lightning.payments.ILightPayments;
-import ru.redspell.lightning.payments.LightPaymentsCamlCallbacks;
+import ru.redspell.lightning.payments.PaymentsCallbacks;
 import ru.redspell.lightning.utils.Log;
 
 import android.content.Context;
@@ -18,34 +17,29 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
-public class LightAmazonPayments extends BasePurchasingObserver implements ILightPayments {
+public class Payments extends BasePurchasingObserver {
     private HashMap<String,String> reqIdSkuMap = new HashMap<String,String>();
 
-    public LightAmazonPayments(Context context) {
+    public Payments(Context context) {
         super(context);
     }
 
-    @Override
     public void init(String[] skus) {
         PurchasingManager.registerObserver(this);
     }
 
-    @Override
     public void purchase(String sku) {
         reqIdSkuMap.put(PurchasingManager.initiatePurchaseRequest(sku), sku);
     }
 
-    @Override
     public void comsumePurchase(String purchaseToken) {
         //no need to do here anything
     }
 
-    @Override
     public void restorePurchases() {
         PurchasingManager.initiatePurchaseUpdatesRequest(com.amazon.inapp.purchasing.Offset.BEGINNING);
     }
 
-    @Override
     public void onPurchaseResponse(PurchaseResponse purchaseResponse) {
         Log.d("LIGHTNING", "onPurchaseResponse call");
 
@@ -55,18 +49,17 @@ public class LightAmazonPayments extends BasePurchasingObserver implements ILigh
 
             if (status == PurchaseRequestStatus.SUCCESSFUL) {
                 Receipt receipt = purchaseResponse.getReceipt();
-                LightPaymentsCamlCallbacks.success(receipt.getSku(), receipt.getPurchaseToken(), receipt.getPurchaseToken(), purchaseResponse.getUserId(), false);
+                PaymentsCallbacks.success(receipt.getSku(), receipt.getPurchaseToken(), receipt.getPurchaseToken(), purchaseResponse.getUserId(), false);
             } else {
-                LightPaymentsCamlCallbacks.fail(reqIdSkuMap.get(requestId), "purchase request status " + status);
+                PaymentsCallbacks.fail(reqIdSkuMap.get(requestId), "purchase request status " + status);
             }
 
             reqIdSkuMap.remove(requestId);            
         } else {
-            LightPaymentsCamlCallbacks.fail("none", "unknown request id");
+            PaymentsCallbacks.fail("none", "unknown request id");
         }
     }
 
-    @Override
     public void onPurchaseUpdatesResponse(PurchaseUpdatesResponse purchaseUpdatesResponse) {
         Log.d("LIGHTNING", "onPurchaseUpdatesResponse call");
 
@@ -78,14 +71,14 @@ public class LightAmazonPayments extends BasePurchasingObserver implements ILigh
 
             while (iterator.hasNext()) {
                 Receipt receipt = iterator.next();
-                LightPaymentsCamlCallbacks.success(receipt.getSku(), receipt.getPurchaseToken(), receipt.getPurchaseToken(), purchaseUpdatesResponse.getUserId(), true);
+                PaymentsCallbacks.success(receipt.getSku(), receipt.getPurchaseToken(), receipt.getPurchaseToken(), purchaseUpdatesResponse.getUserId(), true);
             }
 
             if (purchaseUpdatesResponse.isMore()) {
                 PurchasingManager.initiatePurchaseUpdatesRequest(purchaseUpdatesResponse.getOffset());
             }
         } else {
-            LightPaymentsCamlCallbacks.fail("none", "purchase request status " + status);
+            PaymentsCallbacks.fail("none", "purchase request status " + status);
         }
     }
 

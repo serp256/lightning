@@ -60,9 +60,9 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiInfo;
 //import ru.redspell.lightning.LightEGLContextFactory;
 
-import ru.redspell.lightning.payments.google.LightGooglePayments;
+/*import ru.redspell.lightning.payments.google.LightGooglePayments;
 import ru.redspell.lightning.payments.amazon.LightAmazonPayments;
-import ru.redspell.lightning.payments.ILightPayments;
+import ru.redspell.lightning.payments.ILightPayments;*/
 import java.util.UUID;
 
 import android.os.Build;
@@ -1151,11 +1151,11 @@ public class LightView extends GLSurfaceView {
 		return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
 	}	
 
-	public native String glExts();
+	public static native String glExts();
 
-	private ILightPayments payments;
+	// private ILightPayments payments;
 
-	public void paymentsInit(boolean googleMarket, String key, String[] skus) {
+/*	public void paymentsInit(boolean googleMarket, String key, String[] skus) {
 		if (googleMarket) {
 			payments = new LightGooglePayments(key);
 		} else {
@@ -1183,7 +1183,7 @@ public class LightView extends GLSurfaceView {
 
 	public void restorePurchases() {
 		payments.restorePurchases();
-	}
+	}*/
 
 	public void showUrl(final String url) {
 		LightView.instance.getHandler().post(new Runnable() {

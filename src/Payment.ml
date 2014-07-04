@@ -72,9 +72,14 @@ ELSE
 IFDEF ANDROID THEN
 
 external ml_init : ?skus:list string -> marketType -> unit = "ml_paymentsInit";
-external ml_purchase : string -> unit = "ml_paymentsPurchase";
+(* external ml_purchase : string -> unit = "ml_paymentsPurchase";
 external _ml_commit_transaction : string -> unit = "ml_paymentsCommitTransaction";
-external ml_restorePurchases: unit -> unit = "ml_restorePurchases";
+external ml_restorePurchases: unit -> unit = "ml_restorePurchases"; *)
+
+(* value ml_init = fun ?skus marketType -> (); *)
+value ml_purchase  = fun _ -> ();
+value _ml_commit_transaction = fun _ -> ();
+value ml_restorePurchases = fun _ -> ();
 
 value ml_commit_transaction t = _ml_commit_transaction (Transaction.get_id t);
 value restoreCompletedPurchases () = ();

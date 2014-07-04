@@ -267,7 +267,7 @@ static struct android_app* android_app_create(ANativeActivity* activity,
     android_app->msgread = msgpipe[0];
     android_app->msgwrite = msgpipe[1];
 
-    pthread_attr_t attr; 
+    pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     pthread_create(&android_app->thread, &attr, android_app_entry, android_app);
@@ -282,7 +282,7 @@ static struct android_app* android_app_create(ANativeActivity* activity,
     return android_app;
 }
 
-static void android_app_write_cmd(struct android_app* android_app, int8_t cmd) {
+void android_app_write_cmd(struct android_app* android_app, int8_t cmd) {
     if (write(android_app->msgwrite, &cmd, sizeof(cmd)) != sizeof(cmd)) {
         LOGE("Failure writing android_app cmd: %s\n", strerror(errno));
     }
@@ -441,6 +441,48 @@ void ANativeActivity_onCreate(ANativeActivity* activity,
     activity->callbacks->onNativeWindowDestroyed = onNativeWindowDestroyed;
     activity->callbacks->onInputQueueCreated = onInputQueueCreated;
     activity->callbacks->onInputQueueDestroyed = onInputQueueDestroyed;
-
+    
     activity->instance = android_app_create(activity, savedState, savedStateSize);
+
+/*    JNIEnv *env = activity->env;
+    jclass cls = (*env)->GetObjectClass(env, activity->clazz);
+    LOGI("cls %d", cls);
+    jmethodID mid = (*env)->GetMethodID(env, cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
+    LOGI("mid %d", mid);
+    jobject obj = (*env)->CallObjectMethod(env, activity->clazz, mid);
+    LOGI("obj %d", obj);
+    cls = (*env)->GetObjectClass(env, obj);
+    LOGI("cls %d", cls);
+    mid = (*env)->GetMethodID(env, cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+    LOGI("mid %d", mid);
+    jstring str = (*env)->NewStringUTF(env, "ru/redspell/lightning/LightView");
+
+
+    jclass lcls = (*env)->CallObjectMethod(env, obj, mid, str);
+    LOGI("lcls %d", lcls);
+    jmethodID lmid = (*env)->GetStaticMethodID(env, lcls, "glExts", "()Ljava/lang/String;");
+    LOGI("lmid %d", lmid);
+
+    LOGI("activity %d", (*env)->CallStaticObjectMethod(env, lcls, lmid));*/
+
+/*    JNIEnv *env = activity->env;
+    jclass cls = (*env)->GetObjectClass(env, activity->clazz);
+    LOGI("cls %d", cls);
+    jmethodID mid = (*env)->GetMethodID(env, cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
+    LOGI("mid %d", mid);
+    jobject obj = (*env)->CallObjectMethod(env, activity->clazz, mid);
+    LOGI("obj %d", obj);
+    cls = (*env)->GetObjectClass(env, obj);
+    LOGI("cls %d", cls);
+    mid = (*env)->GetMethodID(env, cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+    LOGI("mid %d", mid);
+    jstring str = (*env)->NewStringUTF(env, "ru/redspell/lightning/v2/Lightning");
+
+
+    jclass lcls = (*env)->CallObjectMethod(env, obj, mid, str);
+    LOGI("lcls %d", lcls);
+    jmethodID lmid = (*env)->GetStaticMethodID(env, lcls, "activity", "()Landroid/app/Activity;");
+    LOGI("lmid %d", lmid);
+
+    LOGI("activity %d", (*env)->CallStaticObjectMethod(env, lcls, lmid));*/
 }

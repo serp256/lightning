@@ -3,7 +3,7 @@ package ru.redspell.lightning.payments;
 import java.lang.Runnable;
 import ru.redspell.lightning.LightView;
 
-public class LightPaymentsCamlCallbacks {
+public class PaymentsCallbacks {
     private static class Success implements Runnable {
         private String sku;
         private String transactionId;

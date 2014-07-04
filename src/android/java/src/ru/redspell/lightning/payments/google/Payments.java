@@ -1,5 +1,7 @@
 package ru.redspell.lightning.payments.google;
 
+import ru.redspell.lightning.v2.Lightning;
+
 import android.app.PendingIntent;
 import android.app.Activity;
 import android.content.ComponentName;
@@ -12,10 +14,8 @@ import android.os.IBinder;
 
 import com.android.vending.billing.IInAppBillingService;
 
-import ru.redspell.lightning.LightActivity;
 import ru.redspell.lightning.LightView;
-import ru.redspell.lightning.payments.ILightPayments;
-import ru.redspell.lightning.payments.LightPaymentsCamlCallbacks;
+import ru.redspell.lightning.payments.PaymentsCallbacks;
 import ru.redspell.lightning.utils.Log;
 
 import java.lang.Error;
@@ -27,7 +27,7 @@ import java.util.Random;
 
 import org.json.JSONObject;
 
-public class LightGooglePayments implements ILightPayments {
+public class Payments {
     public static final int BILLING_RESPONSE_RESULT_OK = 0;
     public static final int BILLING_RESPONSE_RESULT_USER_CANCELED = 1;
     public static final int BILLING_RESPONSE_RESULT_BILLING_UNAVAILABLE = 3;
@@ -40,7 +40,7 @@ public class LightGooglePayments implements ILightPayments {
     public static final int BILLING_API_VER = 3;
     public static final int REQUEST_CODE = 1001;
 
-    public static LightGooglePayments instance;
+    public static Payments instance;
 
     private IInAppBillingService mService;
     private ServiceConnection mServiceConn;
@@ -48,14 +48,12 @@ public class LightGooglePayments implements ILightPayments {
     private Random rand;
     private String key;
 
-    public LightGooglePayments(String key) {
+    public Payments(String key) {
         this();
         this.key = key;
     }
 
-    public LightGooglePayments() {
-        Log.d("LIGHTNING", "LightGooglePayments call");
-
+    public Payments() {
         instance = this;
 
         SecureRandom sRand = new SecureRandom();
@@ -66,20 +64,15 @@ public class LightGooglePayments implements ILightPayments {
         bBuf.put(bytes);
         // rand = new Random(bBuf.getLong());
         rand = new Random();
-
-        Log.d("LIGHTNING", "LightGooglePayments end");
     }
 
     ArrayList<Runnable> pendingRequests = new ArrayList();
 
-    @Override
     public void init(final String[] skus) {
-        Log.d("LIGHTNING", "init call");
+        Context context = Lightning.activity;
 
-        Context cntxt = LightActivity.instance;
-
-        if (cntxt == null) {
-            throw new Error("call LightGooglePayments.init only after LightActivity instantiated");
+        if (context == null) {
+            throw new Error("call Payments.init only after activity instantiated");
         }
 
         mServiceConn = new ServiceConnection() {
@@ -106,10 +99,9 @@ public class LightGooglePayments implements ILightPayments {
         };
 
         Log.d("LIGHTNING", "binding service call");
-        cntxt.bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"), mServiceConn, Context.BIND_AUTO_CREATE);
+        context.bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"), mServiceConn, Context.BIND_AUTO_CREATE);
     }
 
-    @Override
     public void purchase(final String sku) {
         try {
             if (mService == null) {
@@ -133,7 +125,7 @@ public class LightGooglePayments implements ILightPayments {
             } while (developerPayloadSkuMap.containsKey(developerPayload));
 
             developerPayloadSkuMap.put(developerPayload, sku);
-            Bundle buyIntentBundle = mService.getBuyIntent(BILLING_API_VER, LightActivity.instance.getPackageName(), sku, "inapp", developerPayload);
+            Bundle buyIntentBundle = mService.getBuyIntent(BILLING_API_VER, Lightning.activity.getPackageName(), sku, "inapp", developerPayload);
 
             if (buyIntentBundle == null) {
                 Log.d("LIGHTNING", "buyIntentBundle null");
@@ -144,33 +136,31 @@ public class LightGooglePayments implements ILightPayments {
             PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
 
             if (pendingIntent == null || pendingIntent.getIntentSender() == null) {
-                LightPaymentsCamlCallbacks.fail(sku, "looks like '" + sku + "' already purchased and transaction is not commited");
+                PaymentsCallbacks.fail(sku, "looks like '" + sku + "' already purchased and transaction is not commited");
                 return;
             }
 
-            LightActivity.instance.startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));            
+            Lightning.activity.startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));            
         } catch (android.os.RemoteException e) {
-            LightPaymentsCamlCallbacks.fail(sku, "android.os.RemoteException exception");
+            PaymentsCallbacks.fail(sku, "android.os.RemoteException exception");
         } catch (android.content.IntentSender.SendIntentException e) {
-            LightPaymentsCamlCallbacks.fail(sku, "android.content.IntentSender.SendIntentException exception");
+            PaymentsCallbacks.fail(sku, "android.content.IntentSender.SendIntentException exception");
         }
     }
 
-    @Override
     public void comsumePurchase(final String purchaseToken) {
         // should run in view thread? and what about response?
         LightView.instance.getHandler().post(new Runnable() {
             public void run() {
                 try {
-                    mService.consumePurchase(BILLING_API_VER, LightActivity.instance.getPackageName(), purchaseToken);
+                    mService.consumePurchase(BILLING_API_VER, Lightning.activity.getPackageName(), purchaseToken);
                 } catch (android.os.RemoteException e) {
-                    LightPaymentsCamlCallbacks.fail("none", "android.os.RemoteException exception");
+                    PaymentsCallbacks.fail("none", "android.os.RemoteException exception");
                 }
             }
         });
     }
 
-    @Override
     public void restorePurchases() {
         Log.d("LIGHTNING", "restorePurchases call");
 
@@ -192,7 +182,7 @@ public class LightGooglePayments implements ILightPayments {
 
         try {
             do {
-                Bundle ownedItems = mService.getPurchases(BILLING_API_VER, LightActivity.instance.getPackageName(), "inapp", continuationToken);
+                Bundle ownedItems = mService.getPurchases(BILLING_API_VER, Lightning.activity.getPackageName(), "inapp", continuationToken);
                 int responseCode = ownedItems.getInt("RESPONSE_CODE");
 
                 if (responseCode == BILLING_RESPONSE_RESULT_OK) {
@@ -210,17 +200,17 @@ public class LightGooglePayments implements ILightPayments {
 												int purchaseState = o.optInt("purchaseState",1);
 												if (purchaseState == 0) {
 													String signature = signatureList.get(i);
-													if (key != null && !LightGoogleSecurity.verifyPurchase(key, purchaseData, signature)) continue;
+													if (key != null && !Security.verifyPurchase(key, purchaseData, signature)) continue;
 													String sku = ownedSkus.get(i);
-													LightPaymentsCamlCallbacks.success(sku, token, purchaseData, signature, true);
+													PaymentsCallbacks.success(sku, token, purchaseData, signature, true);
 												}
                     }
                 }
             } while (continuationToken != null);            
         } catch (android.os.RemoteException e) {
-            LightPaymentsCamlCallbacks.fail("none", "android.os.RemoteException exception");
+            PaymentsCallbacks.fail("none", "android.os.RemoteException exception");
         } catch (org.json.JSONException e) {
-            LightPaymentsCamlCallbacks.fail("none", "org.json.JSONException exception");
+            PaymentsCallbacks.fail("none", "org.json.JSONException exception");
         }
     }
 
@@ -254,7 +244,7 @@ public class LightGooglePayments implements ILightPayments {
 											int purchaseState = o.optInt("purchaseState",1);
 											if (purchaseState != 0) {
 													failReason = "purchaseState is " + purchaseState;
-											} else if (key != null && !LightGoogleSecurity.verifyPurchase(key, purchaseData, dataSignature)) {
+											} else if (key != null && !Security.verifyPurchase(key, purchaseData, dataSignature)) {
 													failReason = "signature verification failed";
 											}
 										}
@@ -262,18 +252,18 @@ public class LightGooglePayments implements ILightPayments {
 
                 if (failReason != null) {
                     Log.d("LIGHTNING", "fail, reason: " + failReason);
-                    LightPaymentsCamlCallbacks.fail(developerPayload != null ? developerPayloadSkuMap.get(developerPayload) : "none", failReason);
+                    PaymentsCallbacks.fail(developerPayload != null ? developerPayloadSkuMap.get(developerPayload) : "none", failReason);
                 } else {                    
                     String token = o.optString("token", o.optString("purchaseToken"));
 
                     Log.d("LIGHTNING", "success " + sku + " " + token + " " + purchaseData + " " + dataSignature);
-                    LightPaymentsCamlCallbacks.success(sku, token, purchaseData, dataSignature, false);
+                    PaymentsCallbacks.success(sku, token, purchaseData, dataSignature, false);
                 }
 
                 developerPayloadSkuMap.remove(developerPayload);
             }
         } catch (org.json.JSONException e) {
-            LightPaymentsCamlCallbacks.fail("none", "org.json.JSONException exception");
+            PaymentsCallbacks.fail("none", "org.json.JSONException exception");
         }
     }
 
@@ -293,7 +283,7 @@ public class LightGooglePayments implements ILightPayments {
             Bundle retval = null;
 
             try {
-                retval = mService.getSkuDetails(3, LightActivity.instance.getPackageName(), "inapp", querySkus);
+                retval = mService.getSkuDetails(3, Lightning.activity.getPackageName(), "inapp", querySkus);
             } catch (android.os.RemoteException e) {
                 retval = null;
             }

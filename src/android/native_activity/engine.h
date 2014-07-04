@@ -40,6 +40,8 @@ struct engine {
     char* main_exp_path;
     char* patch_exp_path;
     char* locale;
+
+    void *data; // pointer for transfering custom data from main thread to caml thread
 };
 
 struct engine engine;

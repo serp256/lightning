@@ -16,7 +16,7 @@ import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
-public class LightGoogleSecurity {
+public class Security {
     private static final String TAG = "LIGHTNING";
 
     private static final String KEY_FACTORY_ALGORITHM = "RSA";
@@ -30,8 +30,8 @@ public class LightGoogleSecurity {
 
         boolean verified = false;
         if (!TextUtils.isEmpty(signature)) {
-            PublicKey key = LightGoogleSecurity.generatePublicKey(base64PublicKey);
-            verified = LightGoogleSecurity.verify(key, signedData, signature);
+            PublicKey key = Security.generatePublicKey(base64PublicKey);
+            verified = Security.verify(key, signedData, signature);
             if (!verified) {
                 Log.w(TAG, "signature does not match data.");
                 return false;
