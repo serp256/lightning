@@ -14,14 +14,14 @@ jclass lightning_find_class(const char *ccls_name) {
     khiter_t k = kh_get(jclasses, classes, ccls_name);
     if (k != kh_end(classes)) return kh_val(classes, k);
 
-    jstring jcls_name = (*ENV)->NewStringUTF(ENV, ccls_name);
-    jclass cls = FIND_CLASS(jcls_name);
-    (*ENV)->DeleteLocalRef(ENV, cls);
-    (*ENV)->DeleteLocalRef(ENV, jcls_name);
+    jstring jcls_name = (*ML_ENV)->NewStringUTF(ML_ENV, ccls_name);
+    jclass cls = ML_FIND_CLASS(jcls_name);
+    (*ML_ENV)->DeleteLocalRef(ML_ENV, cls);
+    (*ML_ENV)->DeleteLocalRef(ML_ENV, jcls_name);
 
     int ret;
     k = kh_put(jclasses, classes, ccls_name, &ret);
-    kh_val(classes, k) = (*ENV)->NewGlobalRef(ENV, cls);
+    kh_val(classes, k) = (*ML_ENV)->NewGlobalRef(ML_ENV, cls);
 
     return kh_val(classes, k);
 }
@@ -30,30 +30,27 @@ static jclass lightning_cls = NULL;
 
 void lightning_init() {
     lightning_cls = lightning_find_class("ru/redspell/lightning/v2/Lightning");
-
-    jfieldID fid = (*ENV)->GetStaticFieldID(ENV, lightning_cls, "activity", "Landroid/app/Activity;");
-    (*ENV)->SetStaticObjectField(ENV, lightning_cls, fid, JAVA_ACTIVITY);
 }
 
 char *lightning_get_locale() {
 	static char *retval = NULL;
 
     if (!retval) {
-        jmethodID mid = (*ENV)->GetStaticMethodID(ENV, lightning_cls, "locale", "()Ljava/lang/String;");
-        jstring jlocale = (*ENV)->CallStaticObjectMethod(ENV, lightning_cls, mid);
-        const char* clocale = (*ENV)->GetStringUTFChars(ENV, jlocale, NULL);
+        jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "locale", "()Ljava/lang/String;");
+        jstring jlocale = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+        const char* clocale = (*ML_ENV)->GetStringUTFChars(ML_ENV, jlocale, NULL);
         retval = malloc(strlen(clocale) + 1);
         strcpy(retval, clocale);
 
-        (*ENV)->ReleaseStringUTFChars(ENV, jlocale, clocale);
-        (*ENV)->DeleteLocalRef(ENV, jlocale);
+        (*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jlocale, clocale);
+        (*ML_ENV)->DeleteLocalRef(ML_ENV, jlocale);
     }
 
     return retval;
 }
 
-void lightning_runonmlthread(lightning_onmlthreadfunc_t func, void *data) {
-    lightning_onmlthread_t *onmlthread = (lightning_onmlthread_t*)malloc(sizeof(lightning_onmlthread_t));
+void lightning_runonthread(uint8_t cmd, lightning_runnablefunc_t func, void *data) {
+    lightning_runnable_t *onmlthread = (lightning_runnable_t*)malloc(sizeof(lightning_runnable_t));
     onmlthread->func = func;
     onmlthread->data = data;
 
@@ -61,7 +58,7 @@ void lightning_runonmlthread(lightning_onmlthreadfunc_t func, void *data) {
 
     pthread_mutex_lock(&app->mutex);
     engine.data = onmlthread;
-    android_app_write_cmd(app, LIGTNING_CMD_RUN_ON_ML_THREAD);
+    android_app_write_cmd(app, cmd);
     pthread_mutex_unlock(&app->mutex);
 }
 

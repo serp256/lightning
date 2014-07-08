@@ -21,20 +21,20 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 	}
 
 	jclass str_cls = lightning_find_class("java/lang/String");
-	jobjectArray jskus = (*ENV)->NewObjectArray(ENV, skus_num, str_cls, NULL);
+	jobjectArray jskus = (*ML_ENV)->NewObjectArray(ML_ENV, skus_num, str_cls, NULL);
 
 	int i;
 	jstring jsku;
 	for (i = 0; i < skus_num; i++) {
-		jsku = (*ENV)->NewStringUTF(ENV, cskus[i]);
-		(*ENV)->SetObjectArrayElement(ENV, jskus, i, jsku);
-		(*ENV)->DeleteLocalRef(ENV, jsku);
+		jsku = (*ML_ENV)->NewStringUTF(ML_ENV, cskus[i]);
+		(*ML_ENV)->SetObjectArrayElement(ML_ENV, jskus, i, jsku);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jsku);
 	}
 
 	if (Is_long(vmarket_type) && vmarket_type == caml_hash_variant("Amazon")) {
 		payments_cls = lightning_find_class("ru/redspell/lightning/payments/amazon/Payments");
-		jmethodID mid = (*ENV)->GetMethodID(ENV, payments_cls, "<init>", "(Landroid/content/Context;)V");
-		payments = (*ENV)->NewObject(ENV, payments_cls, mid, JAVA_ACTIVITY);
+		jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "<init>", "(Landroid/content/Context;)V");
+		payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, JAVA_ACTIVITY);
 	} else if (Is_block(vmarket_type) && Field(vmarket_type, 0) == caml_hash_variant("Google")) {
 		jstring jkey;
 		value vkey = Field(vmarket_type, 1);
@@ -43,188 +43,168 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 			jkey = NULL;
 		} else {
 			char* ckey = String_val(Field(vkey, 0));
-			jkey = (*ENV)->NewStringUTF(ENV, ckey);
+			jkey = (*ML_ENV)->NewStringUTF(ML_ENV, ckey);
 		}
 
 		payments_cls = lightning_find_class("ru/redspell/lightning/payments/google/Payments");
-		jmethodID mid = (*ENV)->GetMethodID(ENV, payments_cls, "<init>", "(Ljava/lang/String;)V");
-		payments = (*ENV)->NewObject(ENV, payments_cls, mid, jkey);
+		jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "<init>", "(Ljava/lang/String;)V");
+		payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, jkey);
 
-		if (jkey != NULL) (*ENV)->DeleteLocalRef(ENV, jkey);
+		if (jkey != NULL) (*ML_ENV)->DeleteLocalRef(ML_ENV, jkey);
 	} else {
 		caml_failwith("something wrong with marketType, permited only '`Amazon' or '`Google of (option string)'");
 	}
 
-	jmethodID mid = (*ENV)->GetMethodID(ENV, payments_cls, "init", "([Ljava/lang/String;)V");
-	(*ENV)->CallVoidMethod(ENV, payments, mid, jskus);
-	(*ENV)->DeleteLocalRef(ENV, jskus);
+	jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "init", "([Ljava/lang/String;)V");
+	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid, jskus);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jskus);
 
 	CAMLreturn(Val_unit);
 }
 
-void reg_skus(void *data) {
-	CAMLparam0();
-	CAMLlocal3(callback, vsku, vprice);
-
-	jobjectArray jskus = (jobjectArray)data;
-	jsize len = (*ENV)->GetArrayLength(ENV, jskus);
-	int i = 0;
-	callback = *caml_named_value("register_product");
-
-	while (i < len) {
-		jstring jsku = (*ENV)->GetObjectArrayElement(ENV, jskus, i);
-		jstring jprice = (*ENV)->GetObjectArrayElement(ENV, jskus, i + 1);
-		const char* csku = (*ENV)->GetStringUTFChars(ENV, jsku, JNI_FALSE);
-		const char* cprice = (*ENV)->GetStringUTFChars(ENV, jprice, JNI_FALSE);
-
-		vsku = caml_copy_string(csku);
-		vprice = caml_copy_string(cprice);
-		(*ENV)->ReleaseStringUTFChars(ENV, jsku, csku);
-		(*ENV)->ReleaseStringUTFChars(ENV, jprice, cprice);
-		(*ENV)->DeleteLocalRef(ENV, jsku);
-		(*ENV)->DeleteLocalRef(ENV, jprice);
-
-		caml_callback2(callback, vsku, vprice);
-
-		i += 2;
-	}
-
-	(*ENV)->DeleteGlobalRef(ENV, jskus);
-
-	CAMLreturn0;
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_google_Payments_00024SkuDetailsTask_nativeOnPostExecute(JNIEnv *env, jobject this, jobjectArray jskus) {
-	lightning_runonmlthread(&reg_skus, (void*)(*env)->NewGlobalRef(env, jskus));
-}
-
-/*value ml_paymentsPurchase(value vsku) {
+value ml_paymentsPurchase(value vsku) {
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ENV)->GetMethodID(ENV, payments_cls, "purchase", "(Ljava/lang/String;)V");
+	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "purchase", "(Ljava/lang/String;)V");
 
-	jstring jsku = (*ENV)->NewStringUTF(ENV, String_val(vsku));
-	(*ENV)->CallVoidMethod(ENV, payments, mid, jsku);
-	(*ENV)->DeleteLocalRef(ENV, jsku);
+	jstring jsku = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vsku));
+	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid, jsku);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jsku);
 
 	return Val_unit;
 }
 
 value ml_paymentsCommitTransaction(value vtoken) {
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ENV)->GetMethodID(ENV, payments_cls, "consumePurchase", "(Ljava/lang/String;)V");
+	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "consumePurchase", "(Ljava/lang/String;)V");
 
-	jstring jtoken = (*ENV)->NewStringUTF(ENV, String_val(vtoken));
-	(*ENV)->CallVoidMethod(ENV, payments, mid, jtoken);
-	(*ENV)->DeleteLocalRef(ENV, jtoken);
+	jstring jtoken = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vtoken));
+	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid, jtoken);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtoken);	
 
 	return Val_unit;
 }
 
 value ml_restorePurchases() {
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ENV)->GetMethodID(ENV, payments_cls, "restorePurchases", "()V");
+	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "restorePurchases", "()V");
 
-	(*ENV)->CallVoidMethod(ENV, payments, mid);
+	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid);
 
 	return Val_unit;
 }
 
-struct {
+typedef struct {
 	jstring sku;
 	jstring tid;
 	jstring receipt;
 	jstring sig;
-	jstring restored;
+	jboolean restored;
 } success_t;
 
-struct {
+typedef struct {
 	jstring sku;
 	jstring reason;
 } fail_t;
 
-JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_success(JNIEnv *env, jobject this, jstring sku, jstring tid, jstring receipt, jstring sig, jboolean restored) {
-	// success_t *success = (success_t*)malloc(sizeof(success_t));
+void reg_skus(void *data) {
+	CAMLparam0();
+	CAMLlocal3(callback, vsku, vprice);
 
-	// success.sku = sku;
-	// success.tid = tid;
-	// success.receipt = receipt;
-	// success.sig = sig;
-	// success.restored = restored;
+	jobjectArray jskus = (jobjectArray)data;
+	jsize len = (*ML_ENV)->GetArrayLength(ML_ENV, jskus);
+	int i = 0;
+	callback = *caml_named_value("register_product");
+
+	while (i < len) {
+		jstring jsku = (*ML_ENV)->GetObjectArrayElement(ML_ENV, jskus, i);
+		jstring jprice = (*ML_ENV)->GetObjectArrayElement(ML_ENV, jskus, i + 1);
+		const char* csku = (*ML_ENV)->GetStringUTFChars(ML_ENV, jsku, JNI_FALSE);
+		const char* cprice = (*ML_ENV)->GetStringUTFChars(ML_ENV, jprice, JNI_FALSE);
+
+		vsku = caml_copy_string(csku);
+		vprice = caml_copy_string(cprice);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jsku, csku);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jprice, cprice);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jsku);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jprice);
+
+		caml_callback2(callback, vsku, vprice);
+
+		i += 2;
+	}
+
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, jskus);
+
+	CAMLreturn0;
+}
+
+void success(void *data) {
+	CAMLparam0();
+	CAMLlocal5(vsku, vtid, vreceipt, vsig, tr);
+	CAMLlocal1(callback);
+
+	success_t *s = (success_t*)data;
+	JSTRING_TO_VAL(s->sku, vsku);
+	JSTRING_TO_VAL(s->tid, vtid);
+	JSTRING_TO_VAL(s->receipt, vreceipt);
+	JSTRING_TO_VAL(s->sig, vsig);
+
+	tr = caml_alloc_tuple(3);
+	Store_field(tr, 0, vtid);
+	Store_field(tr, 1, vreceipt);
+	Store_field(tr, 2, vsig);
+
+	callback = *caml_named_value("camlPaymentsSuccess");
+	caml_callback3(callback, vsku, tr, s->restored == JNI_TRUE ? Val_true : Val_false);	
+
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->sku);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->tid);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->receipt);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->sig);
+	free(s);
+
+	CAMLreturn0;
+}
+
+void fail(void *data) {
+	CAMLparam0();
+	CAMLlocal3(vsku, vreason, callback);
+
+	fail_t *f = (fail_t*)data;
+	JSTRING_TO_VAL(f->sku, vsku);
+	JSTRING_TO_VAL(f->reason, vreason);
+
+	callback = *caml_named_value("camlPaymentsFail");
+	caml_callback3(callback, vsku, vreason, Val_false);
+
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, f->sku);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, f->reason);
+	free(f);
+
+	CAMLreturn0;
+}
+
+JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_success(JNIEnv *env, jobject this, jstring sku, jstring tid, jstring receipt, jstring sig, jboolean restored) {
+	success_t *s = (success_t*)malloc(sizeof(success_t));
+
+	s->sku = (*env)->NewGlobalRef(env, sku);
+	s->tid = (*env)->NewGlobalRef(env, tid);
+	s->receipt = (*env)->NewGlobalRef(env, receipt);
+	s->sig = (*env)->NewGlobalRef(env, sig);
+	s->restored = restored;
 	
-	android_app_write_cmd(engine.app, LIGTNING_CMD_PAYMENT_SUCCESS);
+	RUN_ON_ML_THREAD(&success, (void*)s);
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_fail(JNIEnv *env, jobject this, jstring sku, jstring reason) {
-}*/
+	fail_t *f = (fail_t*)malloc(sizeof(fail_t));
 
-/*JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_00024Success_run(JNIEnv *env, jobject this) {
-	static jfieldID skuFid = 0;
-	static jfieldID transactionIdFid = 0;
-	static jfieldID receiptFid = 0;
-	static jfieldID signatureFid = 0;
-	static jfieldID restoredFid = 0;
+	f->sku = (*env)->NewGlobalRef(env, sku);
+	f->reason = (*env)->NewGlobalRef(env, reason);
 
-	if (!skuFid) {
-		jclass cls = (*env)->GetObjectClass(env, this);
-
-		GET_FID(sku)
-		GET_FID(transactionId)
-		GET_FID(receipt)
-		GET_FID(signature)
-		restoredFid = (*env)->GetFieldID(env, cls, "restored", "Z");
-
-		(*env)->DeleteLocalRef(env, cls);
-	}
-
-	JNI_TO_VAL(sku)
-	JNI_TO_VAL(transactionId)
-	JNI_TO_VAL(receipt)
-	JNI_TO_VAL(signature)
-	jboolean j_restored = (*env)->GetBooleanField(env, this, restoredFid); 
-
-	value transaction = caml_alloc_tuple(3);
-
-	Store_field(transaction, 0, v_transactionId);
-	Store_field(transaction, 1, v_receipt);
-	Store_field(transaction, 2, v_signature);
-
-	value* cb = caml_named_value("camlPaymentsSuccess");
-	if (!cb) caml_failwith("payments success callback not specified");
-	caml_callback3(*cb, v_sku, transaction, j_restored == JNI_TRUE ? Val_true : Val_false);
+	RUN_ON_ML_THREAD(&fail, (void*)f);
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_00024Fail_run(JNIEnv *env, jobject this) {
-	static jfieldID skuFid = 0;
-	static jfieldID reasonFid = 0;
-
-	if (!skuFid) {
-		jclass cls = (*env)->GetObjectClass(env, this);
-
-		GET_FID(sku)
-		GET_FID(reason)
-
-		(*env)->DeleteLocalRef(env, cls);
-	}
-
-	JNI_TO_VAL(sku)
-	JNI_TO_VAL(reason)
-
-	value* cb = caml_named_value("camlPaymentsFail");
-	if (!cb) caml_failwith("payments fail callback not specified");
-	caml_callback3(*cb, v_sku, v_reason, Val_false);	
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_google_Payments_00024SkuDetailsTask_nativeOnPostExecute(JNIEnv *env, jobject this, jobjectArray jskus) {
+	RUN_ON_ML_THREAD(&reg_skus, (void*)(*env)->NewGlobalRef(env, jskus));
 }
-
-JNIEXPORT void Java_ru_redspell_lightning_payments_google_Payments_registerProduct(JNIEnv *env, jobject this, jstring jsku, jstring jprice) {
-	static value* cb = NULL;
-	if (!cb) cb = caml_named_value("register_product");
-
-	const char* csku = (*env)->GetStringUTFChars(env, jsku, JNI_FALSE);
-	const char* cprice = (*env)->GetStringUTFChars(env, jprice, JNI_FALSE);
-	value vsku = caml_copy_string(csku);
-	value vprice = caml_copy_string(cprice);
-	(*env)->ReleaseStringUTFChars(env, jsku, csku);
-	(*env)->ReleaseStringUTFChars(env, jprice, cprice);
-
-	caml_callback2(*cb, vsku, vprice);
-}
-*/

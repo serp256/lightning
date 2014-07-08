@@ -50,8 +50,11 @@ typedef struct engine* engine_t;
 #define NATIVE_ACTIVITY engine.app->activity
 #define JAVA_ACTIVITY NATIVE_ACTIVITY->clazz
 #define VM NATIVE_ACTIVITY->vm
-#define ENV engine.env
-#define FIND_CLASS(name) (jclass)(*ENV)->CallObjectMethod(ENV, engine.class_loader, engine.load_class_mid, name);
+
+#define ML_ENV engine.env
+#define ML_FIND_CLASS(name) (jclass)(*ML_ENV)->CallObjectMethod(ML_ENV, engine.class_loader, engine.load_class_mid, name);
+
+#define MAIN_ENV NATIVE_ACTIVITY->env
 
 void engine_init(struct android_app* app);
 void engine_release();

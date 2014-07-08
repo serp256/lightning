@@ -4,20 +4,11 @@
         android:versionCode="1"
         android:versionName="1.0">
 
-    <!-- This is the platform API where NativeActivity was introduced. -->
-    <uses-sdk android:minSdkVersion="9" />
-
-    <!-- This .apk has no Java code itself, so set hasCode to false. -->
-    <application android:label="Lightning Native Activity Test" android:icon="@drawable/icon">
-
-        <!-- Our activity is the built-in NativeActivity framework class.
-             This will take care of integrating with our NDK code. -->
-        <activity android:name="android.app.NativeActivity"
-                android:label="Lightning Native Activity Test"
+    <application android:label="Lightning Native" android:icon="@drawable/icon">
+        <activity android:name="ru.redspell.lightning.v2.NativeActivity"
+                android:label="Lightning Native"
                 android:configChanges="orientation|keyboardHidden">
-            <!-- Tell NativeActivity the name of or .so -->
-            <meta-data android:name="android.app.lib_name"
-                    android:value="test" />
+            <meta-data android:name="android.app.lib_name" android:value="test" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -26,5 +17,5 @@
     </application>
 
     <uses-feature android:glEsVersion="0x00020000"></uses-feature>
-    <uses-sdk android:minSdkVersion="8"></uses-sdk>
-</manifest> 
+    <uses-sdk android:minSdkVersion="9"/>
+</manifest>

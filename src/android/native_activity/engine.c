@@ -8,14 +8,14 @@ void engine_init(struct android_app* app) {
 	engine.app = app;
 
 
-	(*VM)->AttachCurrentThread(VM, &ENV, NULL);
-	jclass cls = (*ENV)->GetObjectClass(ENV, JAVA_ACTIVITY);
-	engine.activity_class = (*ENV)->NewGlobalRef(ENV, cls);
+	(*VM)->AttachCurrentThread(VM, &ML_ENV, NULL);
+	jclass cls = (*ML_ENV)->GetObjectClass(ML_ENV, JAVA_ACTIVITY);
+	engine.activity_class = (*ML_ENV)->NewGlobalRef(ML_ENV, cls);
 
 
-	jmethodID mid = (*ENV)->GetMethodID(ENV, cls, "getPackageCodePath", "()Ljava/lang/String;");
-	jstring japk_path = (*ENV)->CallObjectMethod(ENV, JAVA_ACTIVITY, mid);
-	const char* capk_path = (*ENV)->GetStringUTFChars(ENV, japk_path, NULL);
+	jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, cls, "getPackageCodePath", "()Ljava/lang/String;");
+	jstring japk_path = (*ML_ENV)->CallObjectMethod(ML_ENV, JAVA_ACTIVITY, mid);
+	const char* capk_path = (*ML_ENV)->GetStringUTFChars(ML_ENV, japk_path, NULL);
 	engine.apk_path = malloc(strlen(capk_path) + 1);
 	strcpy(engine.apk_path, capk_path);
 
@@ -23,25 +23,25 @@ void engine_init(struct android_app* app) {
         Using class loader to obtain own java classes in native thread cause android jni doesnt provide
         any facility to obtain class references in any thread except main app thread. Even if AttachCurrentThread called.
     */
-	mid = (*ENV)->GetMethodID(ENV, cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
-	jobject ldr = (*ENV)->CallObjectMethod(ENV, JAVA_ACTIVITY, mid);
-	cls = (*ENV)->GetObjectClass(ENV, ldr);
-	engine.class_loader = (*ENV)->NewGlobalRef(ENV, ldr);
-	engine.load_class_mid = (*ENV)->GetMethodID(ENV, cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+	mid = (*ML_ENV)->GetMethodID(ML_ENV, cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
+	jobject ldr = (*ML_ENV)->CallObjectMethod(ML_ENV, JAVA_ACTIVITY, mid);
+	cls = (*ML_ENV)->GetObjectClass(ML_ENV, ldr);
+	engine.class_loader = (*ML_ENV)->NewGlobalRef(ML_ENV, ldr);
+	engine.load_class_mid = (*ML_ENV)->GetMethodID(ML_ENV, cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 
-    jstring _jcls_name = (*ENV)->NewStringUTF(ENV, "java/lang/String");
-    jclass _cls = FIND_CLASS(_jcls_name);
+    jstring _jcls_name = (*ML_ENV)->NewStringUTF(ML_ENV, "java/lang/String");
+    jclass _cls = ML_FIND_CLASS(_jcls_name);
     PRINT_DEBUG("string cls %d", _cls);
 
-	(*ENV)->ReleaseStringUTFChars(ENV, japk_path, capk_path);
-	(*ENV)->DeleteLocalRef(ENV, japk_path);
-	(*ENV)->DeleteLocalRef(ENV, cls);
-	(*ENV)->DeleteLocalRef(ENV, ldr);
+	(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, japk_path, capk_path);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, japk_path);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, cls);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, ldr);
 }
 
 void engine_release() {
-	(*ENV)->DeleteGlobalRef(ENV, engine.activity_class);
-	(*ENV)->DeleteGlobalRef(ENV, engine.class_loader);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, engine.activity_class);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, engine.class_loader);
 	(*VM)->DetachCurrentThread(VM);
 
 	free(engine.apk_path);

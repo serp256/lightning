@@ -13,8 +13,6 @@ import android.os.IBinder;
 
 
 import com.android.vending.billing.IInAppBillingService;
-
-import ru.redspell.lightning.LightView;
 import ru.redspell.lightning.payments.PaymentsCallbacks;
 import ru.redspell.lightning.utils.Log;
 
@@ -26,6 +24,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import org.json.JSONObject;
+import ru.redspell.lightning.IUiLifecycleHelper;
 
 public class Payments {
     public static final int BILLING_RESPONSE_RESULT_OK = 0;
@@ -95,6 +94,81 @@ public class Payments {
                 }
 
                 pendingRequests.clear();
+
+                Lightning.activity().addUiLifecycleHelper(new IUiLifecycleHelper() {
+                    @Override
+                    public void onCreate(Bundle savedInstanceState) {}
+                    
+                    @Override
+                    public void onResume() {}
+                    
+                    @Override
+                    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+                        try {
+                            Log.d("LIGHTNING", "onActivityResult call");
+
+                            if (data != null && requestCode == REQUEST_CODE) {           
+                                int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
+                                String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
+                                String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
+
+                                JSONObject o = null;
+                                String sku = null;
+                                String developerPayload = null;
+
+                                String failReason = null;
+
+                                if (resultCode != Activity.RESULT_OK) {
+                                    failReason = "activity result error " + resultCode;
+                                } else if (responseCode != BILLING_RESPONSE_RESULT_OK) {
+                                    failReason = "response error " + responseCode;
+                                } else {
+                                    o = new JSONObject(purchaseData);
+                                    sku = o.optString("productId");
+                                    developerPayload = o.optString("developerPayload");
+
+                                    if (!developerPayloadSkuMap.containsKey(developerPayload)) {
+                                        failReason = "unknown developerPayload " + developerPayload;
+                                                        } else {
+                                                            int purchaseState = o.optInt("purchaseState",1);
+                                                            if (purchaseState != 0) {
+                                                                    failReason = "purchaseState is " + purchaseState;
+                                                            } else if (key != null && !Security.verifyPurchase(key, purchaseData, dataSignature)) {
+                                                                    failReason = "signature verification failed";
+                                                            }
+                                                        }
+                                }
+
+                                if (failReason != null) {
+                                    Log.d("LIGHTNING", "fail, reason: " + failReason);
+                                    PaymentsCallbacks.fail(developerPayload != null ? developerPayloadSkuMap.get(developerPayload) : "none", failReason);
+                                } else {                    
+                                    String token = o.optString("token", o.optString("purchaseToken"));
+
+                                    Log.d("LIGHTNING", "success " + sku + " " + token + " " + purchaseData + " " + dataSignature);
+                                    PaymentsCallbacks.success(sku, token, purchaseData, dataSignature, false);
+                                }
+
+                                developerPayloadSkuMap.remove(developerPayload);
+                            }
+                        } catch (org.json.JSONException e) {
+                            PaymentsCallbacks.fail("none", "org.json.JSONException exception");
+                        }
+                    }
+                    
+                    @Override
+                    public void onSaveInstanceState(Bundle outState) {}
+                    
+                    @Override
+                    public void onPause() {}
+                    
+                    @Override
+                    public void onStop() {}
+                    
+                    @Override
+                    public void onDestroy() {}
+
+                });
            }
         };
 
@@ -148,17 +222,14 @@ public class Payments {
         }
     }
 
-    public void comsumePurchase(final String purchaseToken) {
-        // should run in view thread? and what about response?
-        LightView.instance.getHandler().post(new Runnable() {
-            public void run() {
-                try {
-                    mService.consumePurchase(BILLING_API_VER, Lightning.activity().getPackageName(), purchaseToken);
-                } catch (android.os.RemoteException e) {
-                    PaymentsCallbacks.fail("none", "android.os.RemoteException exception");
-                }
-            }
-        });
+    public void consumePurchase(final String purchaseToken) {
+        Log.d("LIGHTNING", "comsumePurchase CALL");
+
+        try {
+            mService.consumePurchase(BILLING_API_VER, Lightning.activity().getPackageName(), purchaseToken);
+        } catch (android.os.RemoteException e) {
+            PaymentsCallbacks.fail("none", "android.os.RemoteException exception");
+        }
     }
 
     public void restorePurchases() {
@@ -214,66 +285,11 @@ public class Payments {
         }
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        try {
-            Log.d("LIGHTNING", "onActivityResult call");
-
-            if (data != null && requestCode == REQUEST_CODE) {           
-                int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
-                String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
-                String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
-
-                JSONObject o = null;
-                String sku = null;
-                String developerPayload = null;
-
-                String failReason = null;
-
-                if (resultCode != Activity.RESULT_OK) {
-                    failReason = "activity result error " + resultCode;
-                } else if (responseCode != BILLING_RESPONSE_RESULT_OK) {
-                    failReason = "response error " + responseCode;
-                } else {
-                    o = new JSONObject(purchaseData);
-                    sku = o.optString("productId");
-                    developerPayload = o.optString("developerPayload");
-
-                    if (!developerPayloadSkuMap.containsKey(developerPayload)) {
-                        failReason = "unknown developerPayload " + developerPayload;
-										} else {
-											int purchaseState = o.optInt("purchaseState",1);
-											if (purchaseState != 0) {
-													failReason = "purchaseState is " + purchaseState;
-											} else if (key != null && !Security.verifyPurchase(key, purchaseData, dataSignature)) {
-													failReason = "signature verification failed";
-											}
-										}
-                }
-
-                if (failReason != null) {
-                    Log.d("LIGHTNING", "fail, reason: " + failReason);
-                    PaymentsCallbacks.fail(developerPayload != null ? developerPayloadSkuMap.get(developerPayload) : "none", failReason);
-                } else {                    
-                    String token = o.optString("token", o.optString("purchaseToken"));
-
-                    Log.d("LIGHTNING", "success " + sku + " " + token + " " + purchaseData + " " + dataSignature);
-                    PaymentsCallbacks.success(sku, token, purchaseData, dataSignature, false);
-                }
-
-                developerPayloadSkuMap.remove(developerPayload);
-            }
-        } catch (org.json.JSONException e) {
-            PaymentsCallbacks.fail("none", "org.json.JSONException exception");
-        }
-    }
-
     public void contextDestroyed(Context context) {
         if (mServiceConn != null) {
             context.unbindService(mServiceConn);
         }
     }
-
-    private native void registerProduct(String sku, String price);
 
     private class SkuDetailsTask extends android.os.AsyncTask<String, Void, Bundle> {
         @Override
