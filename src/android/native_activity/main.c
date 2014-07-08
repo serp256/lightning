@@ -69,7 +69,7 @@ static int engine_init_display(engine_t engine) {
     return 0;
 }
 
-static double last_draw_time;
+static double last_draw_time = 0.;
 
 static void engine_draw_frame(engine_t engine) {
     CAMLparam0();
@@ -77,7 +77,7 @@ static void engine_draw_frame(engine_t engine) {
     struct timeval now;
     if (!gettimeofday(&now, NULL)) {
         double _now = (double)now.tv_sec + (double)now.tv_usec / 1000000.;
-        double diff = _now - last_draw_time;
+        double diff = last_draw_time == 0. ? 0. : _now - last_draw_time;
         last_draw_time = _now;
 
         net_run();
@@ -290,8 +290,12 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             engine_draw_frame(engine);
             break;
 
-        case LIGTNING_CMD_PAYMENT_SUCCESS:
-            PRINT_DEBUG("!!!LIGTNING_CMD_PAYMENT_SUCCESS");
+        case LIGTNING_CMD_RUN_ON_ML_THREAD:
+            PRINT_DEBUG("!!!LIGTNING_CMD_RUN_ON_ML_THREAD");
+
+            lightning_onmlthread_t *onmlthread = engine->data;
+            (*onmlthread->func)(onmlthread->data);
+
             break;
     }
 }

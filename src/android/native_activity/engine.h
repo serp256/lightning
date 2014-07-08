@@ -41,7 +41,7 @@ struct engine {
     char* patch_exp_path;
     char* locale;
 
-    void *data; // pointer for transfering custom data from main thread to caml thread
+    void *data; // pointer to any user data. for example, for transfering custom data from main thread to ml thread
 };
 
 struct engine engine;

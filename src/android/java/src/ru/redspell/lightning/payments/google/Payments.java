@@ -69,7 +69,7 @@ public class Payments {
     ArrayList<Runnable> pendingRequests = new ArrayList();
 
     public void init(final String[] skus) {
-        Context context = Lightning.activity;
+        Context context = Lightning.activity();
 
         if (context == null) {
             throw new Error("call Payments.init only after activity instantiated");
@@ -83,7 +83,7 @@ public class Payments {
 
            @Override
            public void onServiceConnected(ComponentName name, IBinder service) {
-                Log.d("LIGHTNING", "service binded");
+                Log.d("LIGHTNING", "service binded, tid " + (new Integer(android.os.Process.myTid()).toString()));
                 mService = IInAppBillingService.Stub.asInterface(service);
 
                 (new SkuDetailsTask()).execute(skus);
@@ -125,7 +125,7 @@ public class Payments {
             } while (developerPayloadSkuMap.containsKey(developerPayload));
 
             developerPayloadSkuMap.put(developerPayload, sku);
-            Bundle buyIntentBundle = mService.getBuyIntent(BILLING_API_VER, Lightning.activity.getPackageName(), sku, "inapp", developerPayload);
+            Bundle buyIntentBundle = mService.getBuyIntent(BILLING_API_VER, Lightning.activity().getPackageName(), sku, "inapp", developerPayload);
 
             if (buyIntentBundle == null) {
                 Log.d("LIGHTNING", "buyIntentBundle null");
@@ -140,7 +140,7 @@ public class Payments {
                 return;
             }
 
-            Lightning.activity.startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));            
+            Lightning.activity().startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));            
         } catch (android.os.RemoteException e) {
             PaymentsCallbacks.fail(sku, "android.os.RemoteException exception");
         } catch (android.content.IntentSender.SendIntentException e) {
@@ -153,7 +153,7 @@ public class Payments {
         LightView.instance.getHandler().post(new Runnable() {
             public void run() {
                 try {
-                    mService.consumePurchase(BILLING_API_VER, Lightning.activity.getPackageName(), purchaseToken);
+                    mService.consumePurchase(BILLING_API_VER, Lightning.activity().getPackageName(), purchaseToken);
                 } catch (android.os.RemoteException e) {
                     PaymentsCallbacks.fail("none", "android.os.RemoteException exception");
                 }
@@ -182,7 +182,7 @@ public class Payments {
 
         try {
             do {
-                Bundle ownedItems = mService.getPurchases(BILLING_API_VER, Lightning.activity.getPackageName(), "inapp", continuationToken);
+                Bundle ownedItems = mService.getPurchases(BILLING_API_VER, Lightning.activity().getPackageName(), "inapp", continuationToken);
                 int responseCode = ownedItems.getInt("RESPONSE_CODE");
 
                 if (responseCode == BILLING_RESPONSE_RESULT_OK) {
@@ -280,10 +280,11 @@ public class Payments {
         protected Bundle doInBackground(String... skus) {
             Bundle querySkus = new Bundle();
             querySkus.putStringArrayList("ITEM_ID_LIST", new ArrayList<String>(java.util.Arrays.asList(skus)));
+            Log.d("LIGHTNING", "doInBackground " + querySkus.toString());
             Bundle retval = null;
 
             try {
-                retval = mService.getSkuDetails(3, Lightning.activity.getPackageName(), "inapp", querySkus);
+                retval = mService.getSkuDetails(3, Lightning.activity().getPackageName(), "inapp", querySkus);
             } catch (android.os.RemoteException e) {
                 retval = null;
             }
@@ -291,31 +292,32 @@ public class Payments {
             return retval;
         }
 
+        protected native void nativeOnPostExecute(String[] skus);
+
         @Override
         protected void onPostExecute(Bundle skuDetails) {
             Log.d("LIGHTNING", "onPostExecute");
 
             if (skuDetails != null && skuDetails.getInt("RESPONSE_CODE") == 0) {
-                ArrayList<String> responseList = skuDetails.getStringArrayList("DETAILS_LIST");
+                Log.d("LIGHTNING", "skuDetails " + skuDetails.toString());
 
+                ArrayList<String> responseList = skuDetails.getStringArrayList("DETAILS_LIST");
                 Log.d("LIGHTNING", "resp list " + (new Integer(responseList.size())).toString());
 
-                for (String thisResponse : responseList) {
-                    try {
-                        JSONObject object = new JSONObject(thisResponse);
-                        final String sku = object.getString("productId");
-                        final String price = object.getString("price");
+                if (responseList.size() > 0) {
+                    ArrayList<String> skus = new ArrayList();
 
-                        LightView.instance.queueEvent(new Runnable() {
-                            @Override
-                            public void run() {
-                                Log.d("LIGHTNING", "got sku " + sku + " price " + price);
-                                registerProduct(sku, price);
-                            }
-                        });
-                    } catch (org.json.JSONException e) {
-
+                    for (String thisResponse : responseList) {
+                        try {
+                            JSONObject object = new JSONObject(thisResponse);
+                            skus.add(object.getString("productId"));
+                            skus.add(object.getString("price"));
+                        } catch (org.json.JSONException e) {
+                        }
                     }
+
+                    String[] skusAr = new String[skus.size()];
+                    nativeOnPostExecute(skus.toArray(skusAr));
                 }
             }
         }

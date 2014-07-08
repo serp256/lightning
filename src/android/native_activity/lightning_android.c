@@ -51,3 +51,20 @@ char *lightning_get_locale() {
 
     return retval;
 }
+
+void lightning_runonmlthread(lightning_onmlthreadfunc_t func, void *data) {
+    lightning_onmlthread_t *onmlthread = (lightning_onmlthread_t*)malloc(sizeof(lightning_onmlthread_t));
+    onmlthread->func = func;
+    onmlthread->data = data;
+
+    struct android_app *app = engine.app;
+
+    pthread_mutex_lock(&app->mutex);
+    engine.data = onmlthread;
+    android_app_write_cmd(app, LIGTNING_CMD_RUN_ON_ML_THREAD);
+    pthread_mutex_unlock(&app->mutex);
+}
+
+JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_v2_Lightning_activity(JNIEnv *env, jclass this) {
+    return JAVA_ACTIVITY;
+}

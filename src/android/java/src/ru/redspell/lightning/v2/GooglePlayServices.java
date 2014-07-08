@@ -14,11 +14,11 @@ public class GooglePlayServices {
         if (!checked) {
             checked = true;
 
-            int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(Lightning.activity);
+            int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(Lightning.activity());
 
             if (resultCode != ConnectionResult.SUCCESS) {
                 if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                    GooglePlayServicesUtil.getErrorDialog(resultCode, Lightning.activity, PLAY_SERVICES_RESOLUTION_REQUEST).show();
+                    GooglePlayServicesUtil.getErrorDialog(resultCode, Lightning.activity(), PLAY_SERVICES_RESOLUTION_REQUEST).show();
                 };
 
                 available = false;

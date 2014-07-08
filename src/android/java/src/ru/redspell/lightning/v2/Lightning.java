@@ -9,4 +9,10 @@ public class Lightning {
     	ru.redspell.lightning.utils.Log.d("LIGHTNING", "locale");
         return java.util.Locale.getDefault().getLanguage();
     }
+
+    public static native Activity activity();
+
+    static {
+        System.loadLibrary("test");
+    }    
 }

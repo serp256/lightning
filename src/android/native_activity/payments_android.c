@@ -1,5 +1,6 @@
 #include "lightning_android.h"
 #include "engine.h"
+#include <caml/alloc.h>
 
 static jclass payments_cls = NULL;
 static jobject payments = NULL;
@@ -59,6 +60,42 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 	(*ENV)->DeleteLocalRef(ENV, jskus);
 
 	CAMLreturn(Val_unit);
+}
+
+void reg_skus(void *data) {
+	CAMLparam0();
+	CAMLlocal3(callback, vsku, vprice);
+
+	jobjectArray jskus = (jobjectArray)data;
+	jsize len = (*ENV)->GetArrayLength(ENV, jskus);
+	int i = 0;
+	callback = *caml_named_value("register_product");
+
+	while (i < len) {
+		jstring jsku = (*ENV)->GetObjectArrayElement(ENV, jskus, i);
+		jstring jprice = (*ENV)->GetObjectArrayElement(ENV, jskus, i + 1);
+		const char* csku = (*ENV)->GetStringUTFChars(ENV, jsku, JNI_FALSE);
+		const char* cprice = (*ENV)->GetStringUTFChars(ENV, jprice, JNI_FALSE);
+
+		vsku = caml_copy_string(csku);
+		vprice = caml_copy_string(cprice);
+		(*ENV)->ReleaseStringUTFChars(ENV, jsku, csku);
+		(*ENV)->ReleaseStringUTFChars(ENV, jprice, cprice);
+		(*ENV)->DeleteLocalRef(ENV, jsku);
+		(*ENV)->DeleteLocalRef(ENV, jprice);
+
+		caml_callback2(callback, vsku, vprice);
+
+		i += 2;
+	}
+
+	(*ENV)->DeleteGlobalRef(ENV, jskus);
+
+	CAMLreturn0;
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_google_Payments_00024SkuDetailsTask_nativeOnPostExecute(JNIEnv *env, jobject this, jobjectArray jskus) {
+	lightning_runonmlthread(&reg_skus, (void*)(*env)->NewGlobalRef(env, jskus));
 }
 
 /*value ml_paymentsPurchase(value vsku) {

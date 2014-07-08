@@ -210,6 +210,8 @@ static void process_cmd(struct android_app* app, struct android_poll_source* sou
 }
 
 static void* android_app_entry(void* param) {
+    LOGV("android_app_entry %d", gettid());
+
     struct android_app* android_app = (struct android_app*)param;
 
     android_app->config = AConfiguration_new();
@@ -427,7 +429,7 @@ static void onInputQueueDestroyed(ANativeActivity* activity, AInputQueue* queue)
 
 void ANativeActivity_onCreate(ANativeActivity* activity,
         void* savedState, size_t savedStateSize) {
-    LOGV("Creating: %p\n", activity);
+    LOGV("Creating: %p, tid %d\n", activity, gettid());
     activity->callbacks->onDestroy = onDestroy;
     activity->callbacks->onStart = onStart;
     activity->callbacks->onResume = onResume;
