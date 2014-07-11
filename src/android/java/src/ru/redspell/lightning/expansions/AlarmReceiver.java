@@ -7,11 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 
-public class LightExpansionsAlarmReceiver extends BroadcastReceiver {
+public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         try {
-            DownloaderClientMarshaller.startDownloadServiceIfRequired(context, intent, LightExpansionsDownloadService.class);
+            DownloaderClientMarshaller.startDownloadServiceIfRequired(context, intent, DownloadService.class);
         } catch (NameNotFoundException e) {
             e.printStackTrace();
         }

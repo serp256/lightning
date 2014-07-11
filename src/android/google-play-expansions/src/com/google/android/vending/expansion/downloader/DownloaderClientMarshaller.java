@@ -152,6 +152,7 @@ public class DownloaderClientMarshaller {
          */
         private ServiceConnection mConnection = new ServiceConnection() {
             public void onServiceConnected(ComponentName className, IBinder service) {
+                Log.d("LIGHTNING", "stub mConnection onServiceConnected");
                 // This is called when the connection with the service has been
                 // established, giving us the object we can use to
                 // interact with the service. We are communicating with the
@@ -171,6 +172,7 @@ public class DownloaderClientMarshaller {
 
         @Override
         public void connect(Context c) {
+            Log.d("LIGHTNING", "stub connect");
             mContext = c;
             Intent bindIntent = new Intent(c, mDownloaderServiceClass);
             bindIntent.putExtra(PARAM_MESSENGER, mMessenger);

@@ -68,7 +68,7 @@ public class Payments {
     ArrayList<Runnable> pendingRequests = new ArrayList();
 
     public void init(final String[] skus) {
-        Context context = Lightning.activity();
+        Context context = Lightning.activity;
 
         if (context == null) {
             throw new Error("call Payments.init only after activity instantiated");
@@ -95,7 +95,7 @@ public class Payments {
 
                 pendingRequests.clear();
 
-                Lightning.activity().addUiLifecycleHelper(new IUiLifecycleHelper() {
+                Lightning.activity.addUiLifecycleHelper(new IUiLifecycleHelper() {
                     @Override
                     public void onCreate(Bundle savedInstanceState) {}
                     
@@ -199,7 +199,7 @@ public class Payments {
             } while (developerPayloadSkuMap.containsKey(developerPayload));
 
             developerPayloadSkuMap.put(developerPayload, sku);
-            Bundle buyIntentBundle = mService.getBuyIntent(BILLING_API_VER, Lightning.activity().getPackageName(), sku, "inapp", developerPayload);
+            Bundle buyIntentBundle = mService.getBuyIntent(BILLING_API_VER, Lightning.activity.getPackageName(), sku, "inapp", developerPayload);
 
             if (buyIntentBundle == null) {
                 Log.d("LIGHTNING", "buyIntentBundle null");
@@ -214,7 +214,7 @@ public class Payments {
                 return;
             }
 
-            Lightning.activity().startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));            
+            Lightning.activity.startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));            
         } catch (android.os.RemoteException e) {
             PaymentsCallbacks.fail(sku, "android.os.RemoteException exception");
         } catch (android.content.IntentSender.SendIntentException e) {
@@ -226,7 +226,7 @@ public class Payments {
         Log.d("LIGHTNING", "comsumePurchase CALL");
 
         try {
-            mService.consumePurchase(BILLING_API_VER, Lightning.activity().getPackageName(), purchaseToken);
+            mService.consumePurchase(BILLING_API_VER, Lightning.activity.getPackageName(), purchaseToken);
         } catch (android.os.RemoteException e) {
             PaymentsCallbacks.fail("none", "android.os.RemoteException exception");
         }
@@ -253,7 +253,7 @@ public class Payments {
 
         try {
             do {
-                Bundle ownedItems = mService.getPurchases(BILLING_API_VER, Lightning.activity().getPackageName(), "inapp", continuationToken);
+                Bundle ownedItems = mService.getPurchases(BILLING_API_VER, Lightning.activity.getPackageName(), "inapp", continuationToken);
                 int responseCode = ownedItems.getInt("RESPONSE_CODE");
 
                 if (responseCode == BILLING_RESPONSE_RESULT_OK) {
@@ -300,7 +300,7 @@ public class Payments {
             Bundle retval = null;
 
             try {
-                retval = mService.getSkuDetails(3, Lightning.activity().getPackageName(), "inapp", querySkus);
+                retval = mService.getSkuDetails(3, Lightning.activity.getPackageName(), "inapp", querySkus);
             } catch (android.os.RemoteException e) {
                 retval = null;
             }

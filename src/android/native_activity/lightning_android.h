@@ -1,7 +1,7 @@
 #ifndef LIGHTNING_ANDROID_H
 #define LIGHTNING_ANDROID_H
 
-#define JSTRING_TO_VAL(jstr, vstr) { const char *cstr = (*ML_ENV)->GetStringUTFChars(ML_ENV, jstr, JNI_FALSE); vstr = caml_copy_string(cstr); (*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jstr, cstr); } 
+#define JSTRING_TO_VAL(jstr, vstr) { const char *cstr = (*ML_ENV)->GetStringUTFChars(ML_ENV, jstr, JNI_FALSE); vstr = caml_copy_string(cstr); (*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jstr, cstr); }
 #define RUN_ON_ML_THREAD(func, data) lightning_runonthread(LIGTNING_CMD_RUN_ON_ML_THREAD, func, data)
 #define RUN_ON_MAIN_THREAD(func, data) lightning_runonthread(LIGTNING_CMD_RUN_ON_MAIN_THREAD, func, data)
 
@@ -9,6 +9,7 @@
 #include <jni.h>
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
+#include <caml/alloc.h>
 
 typedef void (*lightning_runnablefunc_t)(void *data);
 

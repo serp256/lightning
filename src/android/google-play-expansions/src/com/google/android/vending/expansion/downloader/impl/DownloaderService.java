@@ -763,6 +763,8 @@ public abstract class DownloaderService extends CustomIntentService implements I
             aep.resetPolicy();
 
 
+            android.util.Log.d("LIGHTNING", "Constants.LOCAL_EXP_URL != null " + (Constants.LOCAL_EXP_URL != null));
+
             if (Constants.LOCAL_EXP_URL != null) {
                 android.content.res.TypedArray rexp = getResources().obtainTypedArray(com.android.vending.expansion.downloader.R.array.expansions);
                 DownloadsDB db = DownloadsDB.getDB(mContext);
@@ -947,11 +949,12 @@ public abstract class DownloaderService extends CustomIntentService implements I
                         {
                             switch (reason) {
                                 case Policy.NOT_LICENSED:
+                                    Log.d(LOG_TAG, "NOT_LICENSED");
                                     mNotification
                                             .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_UNLICENSED);
                                     break;
                                 case Policy.RETRY:
-                                    Log.d("testapp", "dontAllow");
+                                    Log.d(LOG_TAG, "RETRY");
                                     mNotification
                                             .onDownloadStateChanged(IDownloaderClient.STATE_FAILED_FETCHING_URL);
                                     break;

@@ -138,7 +138,7 @@ void reg_skus(void *data) {
 	CAMLreturn0;
 }
 
-void success(void *data) {
+void payments_success(void *data) {
 	CAMLparam0();
 	CAMLlocal5(vsku, vtid, vreceipt, vsig, tr);
 	CAMLlocal1(callback);
@@ -166,7 +166,7 @@ void success(void *data) {
 	CAMLreturn0;
 }
 
-void fail(void *data) {
+void payments_fail(void *data) {
 	CAMLparam0();
 	CAMLlocal3(vsku, vreason, callback);
 
@@ -193,7 +193,7 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_success(JNI
 	s->sig = (*env)->NewGlobalRef(env, sig);
 	s->restored = restored;
 	
-	RUN_ON_ML_THREAD(&success, (void*)s);
+	RUN_ON_ML_THREAD(&payments_success, (void*)s);
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_fail(JNIEnv *env, jobject this, jstring sku, jstring reason) {
@@ -202,7 +202,7 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_fail(JNIEnv
 	f->sku = (*env)->NewGlobalRef(env, sku);
 	f->reason = (*env)->NewGlobalRef(env, reason);
 
-	RUN_ON_ML_THREAD(&fail, (void*)f);
+	RUN_ON_ML_THREAD(&payments_fail, (void*)f);
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_google_Payments_00024SkuDetailsTask_nativeOnPostExecute(JNIEnv *env, jobject this, jobjectArray jskus) {

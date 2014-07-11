@@ -30,6 +30,8 @@ static jclass lightning_cls = NULL;
 
 void lightning_init() {
     lightning_cls = lightning_find_class("ru/redspell/lightning/v2/Lightning");
+    jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "init", "()V");
+    (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
 }
 
 char *lightning_get_locale() {

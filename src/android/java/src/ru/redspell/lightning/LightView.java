@@ -76,7 +76,7 @@ import ru.redspell.lightning.OpenUDID;
 import android.os.Vibrator;
 
 public class LightView extends GLSurfaceView {
-    public String getExpansionPath(boolean isMain) {
+/*    public String getExpansionPath(boolean isMain) {
     	for (XAPKFile xf : activity.getExpansions()) {
     		if (xf.mIsMain == isMain) {
     			return Helpers.generateSaveFileName(activity, Helpers.getExpansionAPKFileName(activity, xf.mIsMain, xf.mFileVersion));
@@ -84,9 +84,9 @@ public class LightView extends GLSurfaceView {
     	}
 
     	return null;
-    }
+    }*/
 
-    public int getExpansionVer(boolean isMain) {
+/*    public int getExpansionVer(boolean isMain) {
     	for (XAPKFile xf : activity.getExpansions()) {
     		if (xf.mIsMain == isMain) {
     			return xf.mFileVersion;
@@ -94,7 +94,7 @@ public class LightView extends GLSurfaceView {
     	}
 
     	return -1;
-    }
+    }*/
 
     private class CamlFailwithRunnable implements Runnable {
     	private String errMes;
@@ -257,7 +257,7 @@ public class LightView extends GLSurfaceView {
 		return Integer.toString(c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode);
 	}
 
-	private LightRenderer renderer;
+	// private LightRenderer renderer;
 	private int loader_id;
 	private Handler uithread;
 	// private BillingService bserv;
@@ -383,11 +383,11 @@ public class LightView extends GLSurfaceView {
 			indexFd = am.openFd("index");
 			assetsFd = am.openFd("assets");
 
-			ru.redspell.lightning.expansions.XAPKFile[] expansions = activity.getExpansions();
+			// ru.redspell.lightning.expansions.XAPKFile[] expansions = activity.getExpansions();
 			String mainExpPath = null;
 			String patchExpPath = null;
 
-			if (expansions.length > 2) {
+/*			if (expansions.length > 2) {
 				mlUncaughtException("something wrong: more than 2 expansion files", new String[]{});
 			} else if (expansions.length == 2) {
 				if (expansions[0].mIsMain) {
@@ -403,7 +403,7 @@ public class LightView extends GLSurfaceView {
 
 			if (mainExpPath != null) mainExpPath = Helpers.generateSaveFileName(activity, mainExpPath);
 			if (patchExpPath != null) patchExpPath = Helpers.generateSaveFileName(activity, patchExpPath);
-
+*/
 			String err = lightInit(activity,activity.getPreferences(0), indexFd.getStartOffset(), assetsFd.getStartOffset(), getApkPath(), mainExpPath, patchExpPath);
 
 			if (err == null) {
@@ -430,8 +430,8 @@ public class LightView extends GLSurfaceView {
 		//setEGLContextFactory(new LightEGLContextFactory());
 		Log.d("LIGHTNING","create Renderer");
 		setEGLContextClientVersion(2);
-		renderer = new LightRenderer(width,height);
-		setRenderer(renderer);
+		// renderer = new LightRenderer(width,height);
+		// setRenderer(renderer);
 		setFocusableInTouchMode(true);
 	}
 
@@ -492,7 +492,7 @@ public class LightView extends GLSurfaceView {
 		super.queueEvent(new Runnable() {
 			@Override
 			public void run() {
-				renderer.nativeSurfaceDestroyed();
+				// renderer.nativeSurfaceDestroyed();
 			}
 		});
 		paused = true;
@@ -598,7 +598,7 @@ public class LightView extends GLSurfaceView {
 					queueEvent(new Runnable() {
 						@Override
 						public void run() {
-							renderer.fireTouches(ids, xs, ys,phases);
+							// renderer.fireTouches(ids, xs, ys,phases);
 						}
 					});
 				}
@@ -616,7 +616,7 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						renderer.fireTouch(id,x,y,0);
+						// renderer.fireTouch(id,x,y,0);
 					}
 				});
 				break;
@@ -632,7 +632,7 @@ public class LightView extends GLSurfaceView {
 					@Override
 					public void run() {
 						//renderer.handleActionUp(idUp, xUp, yUp);
-						renderer.fireTouch(idUp, xUp, yUp,3);
+						// renderer.fireTouch(idUp, xUp, yUp,3);
 					}
 				});
 				break;
@@ -647,7 +647,7 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						renderer.fireTouch(id,x,y,0);
+						// renderer.fireTouch(id,x,y,0);
 					}
 				});
 				break;
@@ -662,7 +662,7 @@ public class LightView extends GLSurfaceView {
 				queueEvent(new Runnable() {
 					@Override
 					public void run() {
-						renderer.fireTouch(id,x,y,3);
+						// renderer.fireTouch(id,x,y,3);
 					}
 				});
 				break;
@@ -674,7 +674,7 @@ public class LightView extends GLSurfaceView {
 					@Override
 					public void run() {
 						//renderer.handleActionCancel(ids, xs, ys);
-						renderer.cancelAllTouches();
+						// renderer.cancelAllTouches();
 					}
 				});
 				break;
@@ -844,13 +844,13 @@ public class LightView extends GLSurfaceView {
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
-				renderer.handleBack();
+				// renderer.handleBack();
 			}
 		});
 	}
 
 
-	public void downloadExpansions(final String pubKey) {
+/*	public void downloadExpansions(final String pubKey) {
 		Log.d("LIGHTNING", "extracting expansions");
 
 	    for (XAPKFile xf : activity.getExpansions()) {
@@ -875,7 +875,7 @@ public class LightView extends GLSurfaceView {
         }
 
         expansionsDownloaded();
-	}
+	}*/
 
 	private class ExpansionsCompleteCallbackRunnable implements Runnable {
 		native public void run();
@@ -1220,7 +1220,7 @@ public class LightView extends GLSurfaceView {
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
-				renderer.fireNativeEvent(data);
+				// renderer.fireNativeEvent(data);
 			}
 		});
 	}

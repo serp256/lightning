@@ -159,6 +159,8 @@ class LicenseValidator {
             }
         }
 
+        Log.d(TAG, "responseCode " + responseCode);
+
         switch (responseCode) {
             case LICENSED:
             case LICENSED_OLD_KEY:
@@ -207,6 +209,8 @@ class LicenseValidator {
 
         // Given everything we know, including cached data, ask the policy if we should grant
         // access.
+
+        Log.d(TAG, "handleResponse " + mPolicy.allowAccess());
         if (mPolicy.allowAccess()) {
             mCallback.allow(response);
         } else {

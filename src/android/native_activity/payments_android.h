@@ -1,1 +1,0 @@
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_google_Payments_00024SkuDetailsTask_nativeOnPostExecute(JNIEnv *, jobject, jobjectArray);

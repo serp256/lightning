@@ -830,7 +830,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024ExpansionsError
 	caml_callback(*caml_named_value("expansionsError"), v_reason);
 }
 
-value ml_downloadExpansions(value v_pubkey) {
+/*value ml_downloadExpansions(value v_pubkey) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
@@ -842,7 +842,7 @@ value ml_downloadExpansions(value v_pubkey) {
 	(*env)->DeleteLocalRef(env, j_pubkey);
 
 	return Val_unit;
-}
+}*/
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightActivity_mlSetReferrer(JNIEnv *env, jobject this, jstring jtype, jstring jnid) {
 	CAMLparam0();

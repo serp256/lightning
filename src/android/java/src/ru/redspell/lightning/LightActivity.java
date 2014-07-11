@@ -20,8 +20,8 @@ import com.google.android.vending.expansion.downloader.IDownloaderClient;
 import com.google.android.vending.expansion.downloader.IStub;
 import com.google.android.vending.expansion.downloader.IDownloaderService;
 
-import ru.redspell.lightning.expansions.LightExpansionsDownloadService;
-import ru.redspell.lightning.expansions.XAPKFile;
+// import ru.redspell.lightning.expansions.LightExpansionsDownloadService;
+// import ru.redspell.lightning.expansions.XAPKFile;
 import ru.redspell.lightning.LightView;
 import android.content.res.TypedArray;
 import java.util.ArrayList;
@@ -72,11 +72,11 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 	public static LightActivity instance = null;
 
-	protected XAPKFile[] expansions = {};
+	// protected XAPKFile[] expansions = {};
 
-	public XAPKFile[] getExpansions() {
-    	return expansions;
-	}
+	// public XAPKFile[] getExpansions() {
+ //    	return expansions;
+	// }
 
 	private final String LOG_TAG = "LIGHTNING";
 	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
@@ -106,14 +106,14 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-		TypedArray rexp = getResources().obtainTypedArray(R.array.expansions);
+/*		TypedArray rexp = getResources().obtainTypedArray(R.array.expansions);
 		expansions = new XAPKFile[rexp.length()];
 
 		for (int i = 0; i < rexp.length(); i++) {
 			String[] expFileParams = rexp.getString(i).split(",");
 			expansions[i] = new XAPKFile((new Boolean(expFileParams[0])).booleanValue(), (new Integer(expFileParams[1])).intValue(), (new Long(expFileParams[2])).longValue());	
 		}
-
+*/
 		viewGrp = new AbsoluteLayout(this);		
 		viewGrp.addView(lightView = new LightView(this));
 		setContentView(viewGrp);
@@ -128,10 +128,10 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 			checkPlayServices();	
 		}
 
-		addUiLifecycleHelper(new LightMediaPlayer.LifecycleHelper());
+		// addUiLifecycleHelper(new LightMediaPlayer.LifecycleHelper());
 	}
 
-	public boolean startExpansionDownloadService(String pubKey) {
+/*	public boolean startExpansionDownloadService(String pubKey) {
 		Log.d(LOG_TAG, "startExpansionDownloadService call");
 
 		LightExpansionsDownloadService.setPubKey(pubKey);
@@ -158,7 +158,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		}
 
 		return retval;
-	}
+	}*/
 
 
 
