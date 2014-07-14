@@ -245,7 +245,10 @@ public class Helpers {
         Log.d("LIGHTNING", "fileForNewFile: " + fileForNewFile);
 
         if (fileForNewFile.exists()) {
+            Log.d("LIGHTNING", "file exists");
+
             if (fileForNewFile.length() == fileSize) {
+                Log.d("LIGHTNING", "same size");
                 return true;
             }
             if (deleteFileOnMismatch) {
@@ -253,6 +256,10 @@ public class Helpers {
                 // because we cannot confirm the integrity of the file
                 fileForNewFile.delete();
             }
+
+            Log.d("LIGHTNING", "size diff");
+        } else {
+            Log.d("LIGHTNING", "file not exists");
         }
         return false;
     }

@@ -116,11 +116,8 @@ public class Expansions {
 		Log.d("LIGHTNING", "retval " + retval);
 
 		if (retval) {
-			Log.d("LIGHTNING", "???1");
 			stub = DownloaderClientMarshaller.CreateStub(DownloaderClient.instance(), DownloadService.class);
-			Log.d("LIGHTNING", "???2");
 			stub.connect(Lightning.activity);
-			Log.d("LIGHTNING", "???3");
 		}
 
 		return retval;

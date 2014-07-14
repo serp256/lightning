@@ -20,6 +20,8 @@ import ru.redspell.lightning.IUiLifecycleHelper;
 import java.util.EnumSet;
 import java.lang.Enum;
 
+import ru.redspell.lightning.v2.Lightning;
+
 public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallback {
 
 	private AmazonGamesClient amzGamesClient;
@@ -60,7 +62,7 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
         
 		final LightGameCenterAmazon me = this;
 
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				Log.d("LIGHTNING","Amazon Games Client call initialize 1");
@@ -178,7 +180,7 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
 
     @Override
 	public void unlockAchievement(final String achievement_id) {
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
                 AchievementsClient acClient = amzGamesClient.getAchievementsClient();
@@ -193,7 +195,7 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
 		if (amzGamesClient == null) return;
 		if (!amzGamesClient.isInitialized()) return;
 
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override 
 			public void run() {
 			  AchievementsClient acClient = amzGamesClient.getAchievementsClient();
@@ -206,7 +208,7 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
     @Override
 	public void signOut() {
 		if (amzGamesClient != null) 
-			LightActivity.instance.runOnUiThread(new Runnable() {
+			Lightning.activity.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
 					amzGamesClient.release();

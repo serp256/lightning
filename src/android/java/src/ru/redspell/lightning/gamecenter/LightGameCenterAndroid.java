@@ -9,12 +9,12 @@ import android.os.Bundle;
 import android.content.Intent;
 
 import ru.redspell.lightning.utils.Log;
-import ru.redspell.lightning.LightActivity;
+
 import ru.redspell.lightning.IUiLifecycleHelper;
 import com.google.android.gms.games.GamesActivityResultCodes;
 
 
-
+import ru.redspell.lightning.v2.Lightning;
 
 public class LightGameCenterAndroid implements LightGameCenter,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener {
 
@@ -37,9 +37,9 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
      */
     public LightGameCenterAndroid(LightGameCenterConnectionListener l) {
 		Log.d("LIGHTNING","LightGameCenter");
-		GamesClient.Builder builder = new GamesClient.Builder(LightActivity.instance,this,this);
+		GamesClient.Builder builder = new GamesClient.Builder(Lightning.activity,this,this);
 		mGamesClient = builder.create ();
-		mGamesClient.setViewForPopups(LightActivity.instance.viewGrp);
+		// mGamesClient.setViewForPopups(Lightning.activity.viewGrp);
 		listener = l;
     }
 
@@ -58,7 +58,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
      */
     @Override
     public void connect() {
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				Log.d("LIGHTNING","Game client call connect");
@@ -102,7 +102,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 					@Override
 					public void onActivityResult(int requestCode, int resultCode, Intent data) {
 						if (requestCode == INTENT_REQUEST) {
-							LightActivity.instance.removeUiLifecycleHelper(this);
+							Lightning.activity.removeUiLifecycleHelper(this);
 							Log.d("LIGHTNING","Result code is: " + resultCode);
 							if (resultCode ==	android.app.Activity.RESULT_OK) 
 								mGamesClient.connect ();
@@ -123,9 +123,9 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
 				};
-				LightActivity.instance.addUiLifecycleHelper(helper);
+				Lightning.activity.addUiLifecycleHelper(helper);
 				try {
-					result.startResolutionForResult(LightActivity.instance,INTENT_REQUEST);
+					result.startResolutionForResult(Lightning.activity,INTENT_REQUEST);
 				} catch (android.content.IntentSender.SendIntentException e) {
 					Log.d("LIGHTNING","GameCenter send intent exception"); 
 					if (listener != null) {
@@ -170,7 +170,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 	
 	@Override
 	public void submitScore(final String leaderboard_id, final long score) {
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				Log.d ("LIGHTNING.GameCenterAndroid", String.format("value = %d", score));
@@ -183,7 +183,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 
     @Override
 	public void unlockAchievement(final String achievement_id) {
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				mGamesClient.unlockAchievement(achievement_id);
@@ -199,14 +199,14 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 	public void showAchievements() {
 		if (mGamesClient == null) return;
 		if (!mGamesClient.isConnected()) return;
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override 
 			public void run() {
 				IUiLifecycleHelper helper = new IUiLifecycleHelper() {
 					@Override
 					public void onActivityResult(int requestCode, int resultCode, Intent data) {
 						if (requestCode == SHOW_ACHIEVEMENT_REQUEST) {
-							LightActivity.instance.removeUiLifecycleHelper(this);
+							Lightning.activity.removeUiLifecycleHelper(this);
 							Log.d("LIGHTNING","Result code is: " + resultCode);
 							if (resultCode == GamesActivityResultCodes.RESULT_RECONNECT_REQUIRED) mGamesClient.reconnect ();
 						}
@@ -218,9 +218,9 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
 				};
-				LightActivity.instance.addUiLifecycleHelper(helper);
+				Lightning.activity.addUiLifecycleHelper(helper);
 				Intent intent = mGamesClient.getAchievementsIntent();
-				LightActivity.instance.startActivityForResult(intent,SHOW_ACHIEVEMENT_REQUEST);
+				Lightning.activity.startActivityForResult(intent,SHOW_ACHIEVEMENT_REQUEST);
 			}
 		});
 	}
@@ -228,14 +228,14 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 	public void showLeaderboard(final String boardId) {
 		if (mGamesClient == null) return;
 		if (!mGamesClient.isConnected()) return;
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override 
 			public void run() {
 				IUiLifecycleHelper helper = new IUiLifecycleHelper() {
 					@Override
 					public void onActivityResult(int requestCode, int resultCode, Intent data) {
 						if (requestCode == SHOW_LEADERBOARD_REQUEST) {
-							LightActivity.instance.removeUiLifecycleHelper(this);
+							Lightning.activity.removeUiLifecycleHelper(this);
 							Log.d("LIGHTNING","Result code is: " + resultCode);
 							if (resultCode == GamesActivityResultCodes.RESULT_RECONNECT_REQUIRED) mGamesClient.reconnect ();
 						}
@@ -247,16 +247,16 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
 				};
-				LightActivity.instance.addUiLifecycleHelper(helper);
+				Lightning.activity.addUiLifecycleHelper(helper);
 				Intent intent = mGamesClient.getLeaderboardIntent(boardId);
-				LightActivity.instance.startActivityForResult(intent,SHOW_LEADERBOARD_REQUEST);
+				Lightning.activity.startActivityForResult(intent,SHOW_LEADERBOARD_REQUEST);
 			}
 		});
 	}
 
 	public void signOut() {
 		if (mGamesClient != null) 
-			LightActivity.instance.runOnUiThread(new Runnable() {
+			Lightning.activity.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
 					mGamesClient.signOut();
