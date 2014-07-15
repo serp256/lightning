@@ -8,25 +8,29 @@
 KHASH_MAP_INIT_STR(jclasses, jclass);
 static kh_jclasses_t *classes = NULL;
 
-jclass lightning_find_class(const char *ccls_name) {
+jclass lightning_find_class_with_env(JNIEnv *env, const char *ccls_name) {
     if (!classes) classes = kh_init_jclasses();
 
     khiter_t k = kh_get(jclasses, classes, ccls_name);
     if (k != kh_end(classes)) return kh_val(classes, k);
 
-    jstring jcls_name = (*ML_ENV)->NewStringUTF(ML_ENV, ccls_name);
+    jstring jcls_name = (*env)->NewStringUTF(env, ccls_name);
     jclass cls = ML_FIND_CLASS(jcls_name);
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, cls);
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, jcls_name);
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, jcls_name);
 
     int ret;
     k = kh_put(jclasses, classes, ccls_name, &ret);
-    kh_val(classes, k) = (*ML_ENV)->NewGlobalRef(ML_ENV, cls);
+    kh_val(classes, k) = (*env)->NewGlobalRef(env, cls);
 
     return kh_val(classes, k);
 }
 
-static jclass lightning_cls = NULL;
+jclass lightning_find_class(const char *ccls_name) {
+    return lightning_find_class_with_env(ML_ENV, ccls_name);
+}
+
+jclass lightning_cls;
 
 void lightning_init() {
     lightning_cls = lightning_find_class("ru/redspell/lightning/v2/Lightning");

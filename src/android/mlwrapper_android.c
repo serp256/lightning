@@ -8,7 +8,7 @@
 #include <caml/custom.h>
 #include "mlwrapper_android.h"
 // #include "sound_android.h"
-#include "assets_extractor.h"
+// #include "assets_extractor.h"
 #include "khash.h"
 #include "mobile_res.h"
 #include "engine.h"

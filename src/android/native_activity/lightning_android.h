@@ -23,10 +23,13 @@ enum {
 	LIGTNING_CMD_RUN_ON_MAIN_THREAD
 };
 
-void	lightning_init			();
-char*	lightning_get_locale	();
-jclass	lightning_find_class	(const char *); /* use this functions rather than FIND_CLASS macro from engine.h */
-void 	lightning_runonthread	(uint8_t, lightning_runnablefunc_t, void *);
+extern jclass lightning_cls;
+
+void	lightning_init					();
+char*	lightning_get_locale			();
+jclass	lightning_find_class_with_env	(JNIEnv *, const char *);
+jclass	lightning_find_class			(const char *); /* use this functions rather than FIND_CLASS macro from engine.h */
+void 	lightning_runonthread			(uint8_t, lightning_runnablefunc_t, void *);
 
 JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_v2_Lightning_activity(JNIEnv *, jclass);
 

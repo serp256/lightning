@@ -923,7 +923,7 @@ public class LightView extends GLSurfaceView {
 	//////////////////////////////////
 	// EXTERNAL IMAGE LAODER
 	//////////////////////////////////
-	private static class TexInfo {
+/*	private static class TexInfo {
 		public int width;
 		public int height;
 		public int legalWidth;
@@ -994,9 +994,9 @@ public class LightView extends GLSurfaceView {
 		Log.d("LIGHTNING", "return texinfo");
 
 		return retval;
-	}
+	}*/
 
-	private static class CurlExternCallbackRunnable implements Runnable {
+/*	private static class CurlExternCallbackRunnable implements Runnable {
 		private int req;
 		private int texInfo;
 
@@ -1031,7 +1031,7 @@ public class LightView extends GLSurfaceView {
 	public void curlExternalLoaderError(int req, int errCode, int errMes) {
 		Log.d("LIGHTNING", "curlExternalLoaderError " + errCode + " " + errMes);
 		queueEvent(new CurlExternErrorCallbackRunnable(req, errCode, errMes));
-	}
+	}*/
 	/////////////////////////////////
 	///// END EXTERNAL IMAGE LOADER
 	/////////////////////////////////
@@ -1104,7 +1104,8 @@ public class LightView extends GLSurfaceView {
 	// END FILE DOWNLOADER
 	// ///////////////////
 
-	private static class ExpansionsCallbackRunnable implements Runnable {
+	
+/*	private static class ExpansionsCallbackRunnable implements Runnable {
 		private int cb;
 
 		public ExpansionsCallbackRunnable(int cb) {
@@ -1117,7 +1118,7 @@ public class LightView extends GLSurfaceView {
 	public void callExpansionsComplete(int cb) {
 		queueEvent(new ExpansionsCallbackRunnable(cb));
 	}
-
+*/
 
 	public static String platform() {
 		return android.os.Build.VERSION.RELEASE;

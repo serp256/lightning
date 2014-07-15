@@ -51,8 +51,10 @@ typedef struct engine* engine_t;
 #define JAVA_ACTIVITY NATIVE_ACTIVITY->clazz
 #define VM NATIVE_ACTIVITY->vm
 
+#define FIND_CLASS(env,name) (jclass)(*env)->CallObjectMethod(env, engine.class_loader, engine.load_class_mid, name);
+
 #define ML_ENV engine.env
-#define ML_FIND_CLASS(name) (jclass)(*ML_ENV)->CallObjectMethod(ML_ENV, engine.class_loader, engine.load_class_mid, name);
+#define ML_FIND_CLASS(name) FIND_CLASS(ML_ENV, name)
 
 #define MAIN_ENV NATIVE_ACTIVITY->env
 

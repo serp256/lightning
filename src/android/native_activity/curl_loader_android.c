@@ -1,4 +1,5 @@
-#include "mlwrapper_android.h"
+#include "lightning_android.h"
+#include "engine.h"
 
 #include "light_common.h"
 #include "texture_common.h"
@@ -62,21 +63,66 @@ static size_t curl_wfunc(char *ptr, size_t size, size_t nmemb, void *userdata) {
 	return chunk_len;
 }
 
+static void freeRequest(cel_request_t* req) {
+	caml_remove_generational_global_root(req->cb);
+
+	if (req->errCb) {
+		caml_remove_generational_global_root(req->errCb);
+		free(req->errCb);
+	}
+
+	free(req->url);
+	free(req->cb);	
+	free(req);
+}
+
+typedef struct {
+	cel_request_t *req;
+	textureInfo *tex_inf;
+} curl_loader_success_t;
+
+
+typedef struct {
+	cel_request_t *req;
+	int err_code;
+	char *err_mes;
+} curl_loader_error_t;
+
+void curl_loader_success(void *data) {
+	curl_loader_success_t *success = (curl_loader_success_t*)data;
+
+	value textureID = createGLTexture(1, success->tex_inf, Val_int(1));
+	value mlTex = 0;
+	ML_TEXTURE_INFO(mlTex, textureID, success->tex_inf);
+	caml_callback(*(success->req->cb), mlTex);
+
+	free(success->tex_inf->imgData);
+	free(success->tex_inf);
+	freeRequest(success->req);
+	free(success);
+}
+
+void curl_loader_error(void *data) {
+	curl_loader_error_t *error = (curl_loader_error_t*)data;
+
+	caml_callback2(*(error->req->errCb), Val_int(error->err_code), caml_copy_string(error->err_mes));
+
+	free(error->err_mes);
+	freeRequest(error->req);
+	free(error);
+}
+
 static void caml_error(cel_request_t* req, int errCode, char* errMes) {
 	PRINT_DEBUG("caml_error %d %s", errCode, errMes);
 
 	if (req->errCb) {
 		PRINT_DEBUG("callback");
 
-		JNIEnv *env;
-    	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
-
-		static jmethodID curlExtLdrErrorMid;
-		if (!curlExtLdrErrorMid) curlExtLdrErrorMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderError", "(III)V");
-
-		char* _errMes = malloc(strlen(errMes) + 1);
-		strcpy(_errMes, errMes);
-		(*env)->CallVoidMethod(env, jView, curlExtLdrErrorMid, (int)req, errCode, (int)_errMes);		
+		curl_loader_error_t *error = (curl_loader_error_t*)malloc(sizeof(curl_loader_error_t));
+		error->req = req;
+		error->err_code = errCode;
+		error->err_mes = errMes;
+		RUN_ON_ML_THREAD(&curl_loader_error, error);
 	}
 }
 
@@ -90,15 +136,16 @@ static void* loader_thread(void* params) {
 	curl_easy_setopt(curl_hndlr, CURLOPT_FOLLOWLOCATION, 1);
 
 	JNIEnv *env;
-	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+	(*VM)->AttachCurrentThread(VM, &env, NULL);
 	static jfieldID wFid = 0;
 	static jfieldID hFid;
 	static jfieldID lwFid;
 	static jfieldID lhFid;
 	static jfieldID dataFid;
-	static jfieldID formatFid;    
-	jmethodID decodeImgMid = (*env)->GetMethodID(env, jViewCls, "decodeImg", "([B)Lru/redspell/lightning/LightView$TexInfo;");
-	jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");
+	static jfieldID formatFid;
+
+	jmethodID decode_mid = (*env)->GetStaticMethodID(env, lightning_cls, "decodeImg", "([B)Lru/redspell/lightning/v2/Lightning$TexInfo;");
+	// jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");
 
 	while (1) {
 		cel_request_t* req = thqueue_cel_reqs_pop(reqs);
@@ -119,8 +166,9 @@ static void* loader_thread(void* params) {
 
 			    jbyteArray src = (*env)->NewByteArray(env, buf_pos);
 			    (*env)->SetByteArrayRegion(env, src, 0, buf_pos, (jbyte*)buf);
-			    jobject jtexInfo = (*env)->CallObjectMethod(env, jView, decodeImgMid, src);
-					(*env)->DeleteLocalRef(env,src);
+			    PRINT_DEBUG("call decode");
+			    jobject jtexInfo = (*env)->CallStaticObjectMethod(env, lightning_cls, decode_mid, src);
+				(*env)->DeleteLocalRef(env,src);
 
 			    PRINT_DEBUG("jtexInfo %d", jtexInfo);
 
@@ -184,8 +232,12 @@ static void* loader_thread(void* params) {
 				    (*env)->DeleteLocalRef(env, jdata);
 						(*env)->DeleteLocalRef(env,jtexInfo);
 
-				    (*env)->CallVoidMethod(env, jView, curlExtLdrSuccessMid, (int)req, (int)texInfo);
-						PRINT_DEBUG("after success call");
+					curl_loader_success_t *success = (curl_loader_success_t*)malloc(sizeof(curl_loader_success_t));
+					success->req = req;
+					success->tex_inf = texInfo;
+					RUN_ON_ML_THREAD(&curl_loader_success, success);						
+
+					PRINT_DEBUG("after success call");
 			    } else {
 			    	caml_error(req, 100, "cannot parse image binary");
 			    }
@@ -198,6 +250,8 @@ static void* loader_thread(void* params) {
 			}
 		}
 	}
+
+	return NULL;
 }
 
 extern void initCurl();
@@ -206,9 +260,6 @@ value ml_loadExternalImage(value url, value cb, value errCb) {
 	initCurl();
 
 	PRINT_DEBUG("LOAD EXTERNAL IMAGE");
-	JNIEnv *env;
-    (*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-
 	cel_request_t* req = (cel_request_t*)malloc(sizeof(cel_request_t));
 
 	req->url = (char*)malloc(caml_string_length(url) + 1);
@@ -238,64 +289,4 @@ value ml_loadExternalImage(value url, value cb, value errCb) {
 	pthread_cond_signal(&cond);
 
 	return Val_unit;
-}
-
-static void freeRequest(cel_request_t* req) {
-	caml_remove_generational_global_root(req->cb);
-
-	if (req->errCb) {
-		caml_remove_generational_global_root(req->errCb);
-		free(req->errCb);
-	}
-
-	free(req->url);
-	free(req->cb);	
-	free(req);
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlExternCallbackRunnable_run(JNIEnv *env, jobject this) {
-	static jfieldID reqFid;
-	static jfieldID texInfoFid;
-
-	if (!reqFid) {
-		jclass runnableCls = (*env)->GetObjectClass(env, this);
-		reqFid = (*env)->GetFieldID(env, runnableCls, "req", "I");
-		texInfoFid = (*env)->GetFieldID(env, runnableCls, "texInfo", "I");
-	}
-
-	cel_request_t* req = (cel_request_t*)(*env)->GetIntField(env, this, reqFid);
-	textureInfo* texInfo = (textureInfo*)(*env)->GetIntField(env, this, texInfoFid);
-
-	value textureID = createGLTexture(1, texInfo, Val_int(1));
-	value mlTex = 0;
-	ML_TEXTURE_INFO(mlTex, textureID, texInfo);
-	caml_callback(*(req->cb), mlTex);
-
-	free(texInfo->imgData);
-	free(texInfo);
-	freeRequest(req);
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlExternErrorCallbackRunnable_run(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024CurlExternErrorCallbackRunnable_run");
-
-	static jfieldID reqFid;
-	static jfieldID errCodeMid;
-	static jfieldID errMesMid;
-
-	if (!reqFid) {
-		jclass runnableCls = (*env)->GetObjectClass(env, this);
-		reqFid = (*env)->GetFieldID(env, runnableCls, "req", "I");
-		errCodeMid = (*env)->GetFieldID(env, runnableCls, "errCode", "I");
-		errMesMid = (*env)->GetFieldID(env, runnableCls, "errMes", "I");
-	}
-
-	cel_request_t* req = (cel_request_t*)(*env)->GetIntField(env, this, reqFid);
-	int errCode = (*env)->GetIntField(env, this, errCodeMid);
-	char* errMes = (char*)(*env)->GetIntField(env, this, errMesMid);
-
-	caml_callback2(*(req->errCb), Val_int(errCode), caml_copy_string(errMes));
-
-	free(errMes);
-	freeRequest(req);
 }
