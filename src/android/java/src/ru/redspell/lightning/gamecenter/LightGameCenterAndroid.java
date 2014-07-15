@@ -39,8 +39,9 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 		Log.d("LIGHTNING","LightGameCenter");
 		GamesClient.Builder builder = new GamesClient.Builder(Lightning.activity,this,this);
 		mGamesClient = builder.create ();
-		// mGamesClient.setViewForPopups(Lightning.activity.viewGrp);
+		mGamesClient.setViewForPopups(Lightning.activity.viewGrp);
 		listener = l;
+		Log.d("ok");
     }
 
 

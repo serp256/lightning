@@ -17,6 +17,8 @@
 
         <service android:name="ru.redspell.lightning.expansions.DownloadService"/>
         <receiver android:name="ru.redspell.lightning.expansions.AlarmReceiver"/>
+
+        <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/app_id" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

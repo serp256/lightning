@@ -2,12 +2,17 @@ package ru.redspell.lightning.v2;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.FrameLayout;
+
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Iterator;
+
 import ru.redspell.lightning.IUiLifecycleHelper;
 
 public class NativeActivity extends android.app.NativeActivity {
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
+
+	public FrameLayout viewGrp = null;
 
 	public static void addUiLifecycleHelper(IUiLifecycleHelper helper) {
 		uiLfcclHlprs.add(helper);
@@ -20,6 +25,9 @@ public class NativeActivity extends android.app.NativeActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		viewGrp = new FrameLayout(this);
+		addContentView(viewGrp, new android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT));
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
 		while (iter.hasNext()) {
