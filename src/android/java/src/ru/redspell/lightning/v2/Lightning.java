@@ -1,8 +1,10 @@
 package ru.redspell.lightning.v2;
 
+import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.os.Vibrator;
 
 import java.nio.ByteBuffer;
 
@@ -87,6 +89,17 @@ public class Lightning {
     public static String locale() {
     	ru.redspell.lightning.utils.Log.d("LIGHTNING", "locale");
         return java.util.Locale.getDefault().getLanguage();
+    }
+
+    public static void vibrate(final int time) {
+        activity.runOnUiThread(new Runnable(){
+            @Override
+            public void run(){
+                Log.d("LIGHTNING", "vibrate " + time);
+                Vibrator v = (Vibrator)activity.getSystemService(Context.VIBRATOR_SERVICE);
+                v.vibrate(time);
+            }
+        });
     }
 
     public static native NativeActivity activity();
