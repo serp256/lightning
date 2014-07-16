@@ -13,6 +13,7 @@ public class NativeActivity extends android.app.NativeActivity {
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
 
 	public FrameLayout viewGrp = null;
+	public boolean isRunning = false;
 
 	public static void addUiLifecycleHelper(IUiLifecycleHelper helper) {
 		uiLfcclHlprs.add(helper);
@@ -38,6 +39,7 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onResume() {
+		isRunning = true;
 		super.onResume();
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
@@ -71,6 +73,7 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onPause() {
+		isRunning = false;
 		super.onPause();
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();

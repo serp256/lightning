@@ -17,6 +17,11 @@
 
         <service android:name="ru.redspell.lightning.expansions.DownloadService"/>
         <receiver android:name="ru.redspell.lightning.expansions.AlarmReceiver"/>
+        <receiver android:name="ru.redspell.lightning.notifications.Receiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/app_id" />
     </application>

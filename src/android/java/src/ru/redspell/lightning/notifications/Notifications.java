@@ -1,4 +1,4 @@
-package ru.redspell.lightning;
+package ru.redspell.lightning.notifications;
 
 import android.app.Activity;
 import android.app.AlarmManager;
@@ -18,10 +18,10 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import ru.redspell.lightning.LightActivity;
+import ru.redspell.lightning.v2.Lightning;
 import ru.redspell.lightning.utils.Log;
 
-public class LightNotifications {
+public class Notifications {
 	public static final String NOTIFICATION_TITLE = "title";
 	public static final String NOTIFICATION_MESSAGE = "message";
 	public static final String NOTIFICATION_FIREDATE = "firedate";
@@ -46,13 +46,15 @@ public class LightNotifications {
 	}
 
 	public static void scheduleNotification(String notifId, double fireDate, String message) {
-		Context context = LightActivity.instance.getApplicationContext();
+		Context context = Lightning.activity.getApplicationContext();
 		logNotification(context, notifId, fireDate, message);
 		scheduleNotification(context, notifId, fireDate, message);
 	}
 	
 	public static void scheduleNotification(Context context, String notifId, double fireDate, String message) {
-		Intent scheduleIntent = new Intent(context, LightNotificationsReceiver.class);
+		Log.d("LIGHTNING", "scheduleNotification call");
+
+		Intent scheduleIntent = new Intent(context, Receiver.class);
 
 		scheduleIntent.putExtra(NOTIFICATION_ID, notifId);
 		scheduleIntent.putExtra(NOTIFICATION_FIREDATE, fireDate);
@@ -65,7 +67,7 @@ public class LightNotifications {
 
 
 	private static void _cancelNotification(Context context,String notifId) {
-		Intent cancelIntent = new Intent(context, LightNotificationsReceiver.class);
+		Intent cancelIntent = new Intent(context, Receiver.class);
 		cancelIntent.setData(makeIntentData(context, notifId));
 
 		PendingIntent pCancelIntent = PendingIntent.getBroadcast(context, cancelIntent.getDataString().hashCode(), cancelIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -73,14 +75,14 @@ public class LightNotifications {
 	}
 
 	public static void cancelNotification(String notifId) {
-		Context context = LightActivity.instance.getApplicationContext();
+		Context context = Lightning.activity.getApplicationContext();
 		unlogNotification(context, notifId);
 		_cancelNotification(context,notifId);
 	}
 
 
 	public static void cancelAll() {
-		Context context = LightActivity.instance.getApplicationContext();
+		Context context = Lightning.activity.getApplicationContext();
 		SharedPreferences notifSharedPrefs = context.getSharedPreferences(NOTIFICATIONS_SHARED_PREF, Context.MODE_PRIVATE);
 		String snotifs = notifSharedPrefs.getString(NOTIFICATIONS_SHARED_PREF, "[]");
 		notifSharedPrefs.edit().putString(NOTIFICATIONS_SHARED_PREF, "[]").commit();
@@ -101,7 +103,7 @@ public class LightNotifications {
 	}
 
 	public static void clearAll() {
-		Context context = LightActivity.instance.getApplicationContext();
+		Context context = Lightning.activity.getApplicationContext();
 		NotificationManager notifMngr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 		notifMngr.cancelAll();
 	}
@@ -178,10 +180,10 @@ public class LightNotifications {
 				Double fireDate = jsonNotif.getDouble("fd");
 
 				if (fireDate > now) {
-					LightNotifications.scheduleNotification(context, jsonNotif.getString("id"), fireDate, jsonNotif.getString("mes"));
+					Notifications.scheduleNotification(context, jsonNotif.getString("id"), fireDate, jsonNotif.getString("mes"));
 					notifs.add(jsonNotif);
 				} else {
-					LightNotifications.showNotification(context, jsonNotif.getString("id"), null, jsonNotif.getString("mes"));
+					Notifications.showNotification(context, jsonNotif.getString("id"), null, jsonNotif.getString("mes"));
 				}
 			}
 			
@@ -197,7 +199,7 @@ public class LightNotifications {
 
 		PendingIntent pNotifIntnt = PendingIntent.getActivity(context, 0, startIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		NotificationCompat.Builder notifBldr = new NotificationCompat.Builder(context)
-			.setSmallIcon(R.drawable.notif_icon)
+			.setSmallIcon(ru.redspell.lightning.R.drawable.notif_icon)
 			.setContentTitle(title == null ? context.getPackageManager().getApplicationLabel(context.getApplicationInfo()) : title)
 			.setContentText(message)
 			.setContentIntent(pNotifIntnt)
