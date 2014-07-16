@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import org.json.JSONObject;
-import ru.redspell.lightning.IUiLifecycleHelper;
+import ru.redspell.lightning.v2.IUiLifecycleHelper;
 
 public class Payments {
     public static final int BILLING_RESPONSE_RESULT_OK = 0;

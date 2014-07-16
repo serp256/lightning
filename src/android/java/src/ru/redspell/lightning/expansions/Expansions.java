@@ -1,4 +1,4 @@
-package ru.redspell.lightning.v2;
+package ru.redspell.lightning.expansions;
 
 import com.google.android.vending.expansion.downloader.DownloadProgressInfo;
 import com.google.android.vending.expansion.downloader.DownloaderClientMarshaller;

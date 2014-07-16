@@ -15,7 +15,7 @@ import com.amazon.ags.api.achievements.*;
 
 import ru.redspell.lightning.utils.Log;
 import ru.redspell.lightning.LightActivity;
-import ru.redspell.lightning.IUiLifecycleHelper;
+import ru.redspell.lightning.v2.IUiLifecycleHelper;
 
 import java.util.EnumSet;
 import java.lang.Enum;

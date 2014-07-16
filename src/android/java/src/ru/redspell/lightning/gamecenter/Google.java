@@ -10,7 +10,7 @@ import android.content.Intent;
 
 import ru.redspell.lightning.utils.Log;
 
-import ru.redspell.lightning.IUiLifecycleHelper;
+import ru.redspell.lightning.v2.IUiLifecycleHelper;
 import com.google.android.gms.games.GamesActivityResultCodes;
 
 

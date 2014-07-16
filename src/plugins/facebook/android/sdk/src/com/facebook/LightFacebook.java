@@ -104,7 +104,7 @@ public class LightFacebook {
         }
     };
 
-    private static class UiLifecycleHelper implements ru.redspell.lightning.IUiLifecycleHelper {
+    private static class UiLifecycleHelper implements ru.redspell.lightning.v2.IUiLifecycleHelper {
         private com.facebook.UiLifecycleHelper backend;
         public com.facebook.widget.FacebookDialog.Callback callback;
 
@@ -261,7 +261,7 @@ public class LightFacebook {
     public static void init(String appId) {
         LightFacebook.appId = appId;
 
-        LightActivity.instance.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
+        LightActivity.instance.addUiLifecycleHelper(new ru.redspell.lightning.v2.IUiLifecycleHelper() {
             public void onCreate(Bundle savedInstanceState) {}
             public void onResume() {}
 

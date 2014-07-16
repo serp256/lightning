@@ -7,7 +7,7 @@ import android.widget.FrameLayout;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Iterator;
 
-import ru.redspell.lightning.IUiLifecycleHelper;
+import ru.redspell.lightning.v2.IUiLifecycleHelper;
 
 public class NativeActivity extends android.app.NativeActivity {
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();

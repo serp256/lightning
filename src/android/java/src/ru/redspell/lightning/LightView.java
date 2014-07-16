@@ -444,7 +444,7 @@ public class LightView extends GLSurfaceView {
 		return OpenUDID.getOpenUDIDInContext();
 	}
 
-	public ResourceParams getResource(String path) {
+/*	public ResourceParams getResource(String path) {
 
 		ResourceParams res;
 
@@ -458,7 +458,7 @@ public class LightView extends GLSurfaceView {
 			res =  null;
 		}
 		return res;
-	}
+	}*/
 
 
 	ArrayList<Runnable> waitingEvents = new ArrayList();
