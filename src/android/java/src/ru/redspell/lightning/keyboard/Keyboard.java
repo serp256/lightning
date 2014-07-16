@@ -1,4 +1,4 @@
-package ru.redspell.lightning;
+package ru.redspell.lightning.keyboard;
 
 import android.view.inputmethod.InputMethodManager;
 import android.content.Context;
@@ -7,16 +7,18 @@ import android.view.View;
 import android.text.InputType;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.widget.EditText;
 import android.view.View.OnKeyListener;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.view.ViewGroup.LayoutParams;
 import android.text.ClipboardManager;
+
+import ru.redspell.lightning.v2.Lightning;
+import ru.redspell.lightning.v2.NativeActivity;
 import ru.redspell.lightning.utils.Log;
 
-public class LightKeyboard {
-	private static class OnChangeRunnable implements Runnable {
+public class Keyboard {
+/*	private static class OnChangeRunnable implements Runnable {
 		private int cb;
 		private String txt;
 
@@ -41,37 +43,38 @@ public class LightKeyboard {
 
 		native public void run();
 	}
+*/
+	private static native void onChange(String text);
+	private static native void onHide(String text);
 
-	// private static boolean kbrdVisible = false;
 	private static ClipboardManager cbrdMngr;
 
 	private static ClipboardManager getClipboardManager() {
 		if (cbrdMngr == null) {
-			cbrdMngr = (ClipboardManager)LightView.instance.activity.getSystemService(Context.CLIPBOARD_SERVICE);
+			cbrdMngr = (ClipboardManager)Lightning.activity.getSystemService(Context.CLIPBOARD_SERVICE);
 		}
 
 		return cbrdMngr;
 	}
 
-	public static void showKeyboard(final boolean visible, final int w, final int h, final String inittxt, final int onhide, final int onchange) {
+	public static void showKeyboard(final boolean visible, final int w, final int h, final String inittxt) {
 		Log.d("LIGHTNING", "showKeyboard call");
 
-		final LightView view = LightView.instance;
-		
-		view.getHandler().post(new Runnable() {
+		final NativeActivity activity = Lightning.activity;
+
+		activity.runOnUiThread(new Runnable() {
 			public void run() {				
-				final LightActivity activity = view.activity;
 				final InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-				final LightEditTextContainer letc;
-				final LightEditText let;
+				final EditTextContainer letc;
+				final EditText let;
 
 				if (activity.viewGrp.getChildCount() == 2) {
-					letc = (LightEditTextContainer)activity.viewGrp.findViewById(R.id.editor_container);
-					let = (LightEditText)letc.findViewById(R.id.editor);
+					letc = (EditTextContainer)activity.viewGrp.findViewById(ru.redspell.lightning.R.id.editor_container);
+					let = (EditText)letc.findViewById(ru.redspell.lightning.R.id.editor);
 					let.setText(inittxt);
 				} else {
-					letc = (LightEditTextContainer)activity.getLayoutInflater().inflate(R.layout.editor, activity.viewGrp, false);
-					let = (LightEditText)letc.findViewById(R.id.editor);
+					letc = (EditTextContainer)activity.getLayoutInflater().inflate(ru.redspell.lightning.R.layout.editor, activity.viewGrp, false);
+					let = (EditText)letc.findViewById(ru.redspell.lightning.R.id.editor);
 					final TextWatcher tw = new TextWatcher() {
 						public void afterTextChanged(Editable s) {
 							Log.d("LIGHTNING", "afterTextChanged " + s.toString());
@@ -84,12 +87,10 @@ public class LightKeyboard {
 						public void onTextChanged(CharSequence s, int start, int before, int count) {
 							Log.d("LIGHTNING", "onTextChanged " + s.toString());
 
-							if (onchange > -1) {
-								LightView.instance.queueEvent(new OnChangeRunnable(onchange, s.toString()));
-							}						
+							onChange(s.toString());
 						}
 					};
-					final LightEditText.OnKeyboardHideListener khl = new LightEditText.OnKeyboardHideListener() {
+					final EditText.OnKeyboardHideListener khl = new EditText.OnKeyboardHideListener() {
 						public void onKeyboardHide(boolean backPressed) {
 							Log.d("LIGHTNING", "LightTextEdit.OnKeyboardHideListener onKeyboardHide");
 
@@ -98,20 +99,21 @@ public class LightKeyboard {
 							if (!backPressed) imm.hideSoftInputFromWindow(let.getWindowToken(), 0);
 							activity.viewGrp.removeView(letc);
 
-
-							LightView.instance.queueEvent(new OnHideRunnable(onchange, onhide, let.getText().toString()));	
-							view.setEnabled(true);
+							onHide(let.getText().toString());
+							Lightning.enableTouches();
 						}
 					};
 
-					((android.widget.Button)letc.findViewById(R.id.editor_ok_bt)).setOnClickListener(new View.OnClickListener() {
+					((android.widget.Button)letc.findViewById(ru.redspell.lightning.R.id.editor_ok_bt)).setOnClickListener(new View.OnClickListener() {
 						public void onClick(View view) {
 							khl.onKeyboardHide(false);
 						}
 					});
 
 					Log.d("LIGHTNING", "adding view");
-					activity.viewGrp.addView(letc, visible ? 1 : 0);
+
+					activity.viewGrp.addView(letc);
+					letc.setVisibility(visible ? View.INVISIBLE : View.VISIBLE);
 					let.setOnKeyboardHideListener(khl);
 					let.requestFocus();
 					let.addTextChangedListener(tw);
@@ -119,7 +121,7 @@ public class LightKeyboard {
 					if (w > -1) let.setWidth(w);
 					if (h > -1) let.setHeight(h);
 
-					if (visible) view.setEnabled(false);					
+					if (visible) Lightning.disableTouches();
 				}
 
 				imm.showSoftInput(let, InputMethodManager.SHOW_FORCED);
@@ -130,14 +132,12 @@ public class LightKeyboard {
 	public static void hideKeyboard() {
 		Log.d("LIGHTNING", "hideKeyboard");
 
-		final LightView view = LightView.instance;
+		final NativeActivity activity = Lightning.activity;
 
-		view.getHandler().post(new Runnable() {
+		activity.runOnUiThread(new Runnable() {
 			public void run() {
-				view.setEnabled(true);
-
-				LightActivity activity = view.activity;
-				View editor = activity.viewGrp.findViewById(R.id.editor);
+				Lightning.enableTouches();
+				View editor = activity.viewGrp.findViewById(ru.redspell.lightning.R.id.editor);
 
 				if (editor != null) {
 					((InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(editor.getWindowToken(), 0);

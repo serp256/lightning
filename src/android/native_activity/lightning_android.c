@@ -7,9 +7,14 @@
 jclass lightning_cls;
 
 void lightning_init() {
+    PRINT_DEBUG("1");
+
     lightning_cls = engine_find_class("ru/redspell/lightning/v2/Lightning");
+    PRINT_DEBUG("2 %d", lightning_cls);
     jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "init", "()V");
+    PRINT_DEBUG("3");
     (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
+    PRINT_DEBUG("4");
 }
 
 char *lightning_get_locale() {
@@ -31,4 +36,12 @@ char *lightning_get_locale() {
 
 JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_v2_Lightning_activity(JNIEnv *env, jclass this) {
     return JAVA_ACTIVITY;
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_disableTouches(JNIEnv *env, jclass this) {
+    engine.touches_disabled = 1;
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_enableTouches(JNIEnv *env, jclass this) {
+    engine.touches_disabled = 0;
 }

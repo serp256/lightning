@@ -32,8 +32,6 @@ struct engine {
     int32_t height;
     struct saved_state state;
 
-
-
     JNIEnv* env; // this env should be used only with native thread, not with main app thread. dont confuse this env with env from ANativeActivity struct.
     jclass activity_class;
     jobject class_loader;
@@ -44,6 +42,7 @@ struct engine {
     char* locale;
 
     void *data; // pointer to any user data. for example, for transfering custom data from main thread to ml thread
+    uint8_t touches_disabled;
 };
 
 typedef void (*engine_runnablefunc_t)(void *data);

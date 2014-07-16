@@ -22,27 +22,27 @@ import java.lang.Enum;
 
 import ru.redspell.lightning.v2.Lightning;
 
-public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallback {
+public class Amazon implements GameCenter,AmazonGamesCallback {
 
 	private AmazonGamesClient amzGamesClient;
 	
-	private LightGameCenterConnectionListener listener;
+	private ConnectionListener listener;
 	
-	private LightGameCenterPlayer player = null;
+	private Player player = null;
     
 
     /*
-     * LightGameCenterAmazon
+     * Amazon
      */
-	public LightGameCenterAmazon() {
+	public Amazon() {
 	    this(null);
 	}
 
 
     /*
-     * LightGameCenterAmazon
+     * Amazon
      */
-    public LightGameCenterAmazon(LightGameCenterConnectionListener l) {
+    public Amazon(ConnectionListener l) {
 		listener = l;
     }
 
@@ -50,7 +50,7 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
     /*
      * setConnectionListener
      */
-    public void setConnectionListener(LightGameCenterConnectionListener l) {
+    public void setConnectionListener(ConnectionListener l) {
         listener = l;
     }
 
@@ -60,7 +60,7 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
      */
     public void connect() {
         
-		final LightGameCenterAmazon me = this;
+		final Amazon me = this;
 
 		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
@@ -97,10 +97,10 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
 		              Log.d("LIGHTNING","Amazon Profiles Client get player failed");
 		          } else {
 		              
-		              final Player p = response.getPlayer();
+		              final com.amazon.ags.api.profiles.Player p = response.getPlayer();
                       if (p != null) {
                         
-                          player = new LightGameCenterPlayer() {
+                          player = new Player() {
                               @Override
                               public String getPlayerId() {
                                 return p.getPlayerId();
@@ -160,7 +160,7 @@ public class LightGameCenterAmazon implements LightGameCenter,AmazonGamesCallbac
 
 
     @Override
-    public LightGameCenterPlayer currentPlayer() {
+    public Player currentPlayer() {
 		if (amzGamesClient == null || !amzGamesClient.isInitialized()) {
 		  return null;
 		} else {

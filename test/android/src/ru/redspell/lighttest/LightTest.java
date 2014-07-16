@@ -19,7 +19,7 @@ import android.os.Build;
 import android.provider.Settings.Secure;
 import android.provider.Settings;
 
-import ru.redspell.lightning.LightNotifications;
+import ru.redspell.lightning.notifications.Notifications;
 
 public class LightTest extends LightActivity
 {
@@ -53,7 +53,7 @@ public class LightTest extends LightActivity
 		String deviceId = Settings.System.getString(getContentResolver(),Secure.ANDROID_ID);
 		Log.d("LIGHTNING", "ANDROID_ID=" + deviceId);
 
-		LightNotifications.groupNotifications = true;
+		Notifications.groupNotifications = true;
 		// LightActivity.enableLocalExpansions();
 	}
 

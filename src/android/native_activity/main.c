@@ -131,6 +131,11 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     // engine_t engine = (engine_t)app->userData;
 
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+        if (engine.touches_disabled) {
+            mlstage_cancelAllTouches(stage);
+            CAMLreturn(1);
+        }
+
 #define MAKE_TOUCH(touch, id, x, y, phase) touch = caml_alloc_tuple(8); \
     vtx = caml_copy_double(x); \
     vty = caml_copy_double(y); \
@@ -290,12 +295,12 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             engine_draw_frame(engine);
             break;
 
-        case LIGTNING_CMD_RUN_ON_ML_THREAD:
+        case ENGINE_CMD_RUN_ON_ML_THREAD:
             {
                 struct android_app *app = engine->app;
 
                 pthread_mutex_lock(&app->mutex);
-                lightning_runnable_t *onmlthread = engine->data;
+                engine_runnable_t *onmlthread = (engine_runnable_t*)engine->data;
                 (*onmlthread->func)(onmlthread->data);
                 onmlthread->handled = 1;
                 pthread_cond_broadcast(&app->cond);

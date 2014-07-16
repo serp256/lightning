@@ -90,6 +90,8 @@ public class Lightning {
     }
 
     public static native NativeActivity activity();
+    public static native void disableTouches();
+    public static native void enableTouches();
 
     public static void init() {
     	activity = activity();

@@ -1,6 +1,6 @@
 package ru.redspell.lightning.gamecenter;
 
-public interface LightGameCenterConnectionListener {
+public interface ConnectionListener {
     
     public void onConnected();
     

@@ -6,17 +6,17 @@ import ru.redspell.lightning.LightActivity;
 import ru.redspell.lightning.IUiLifecycleHelper;
 
 
-public class LightGameCenterManager {
+public class Manager {
 	// 0 - Google
 	// 1 - Amazon
-    private static class Listener implements LightGameCenterConnectionListener {
+    private static class Listener implements ConnectionListener {
         public native void onConnected();
         public native void onConnectFailed();
         public native void onDisconnected();
     }
 
-    public static LightGameCenter createGameCenter(int type) {
-        LightGameCenter gc = type == 0 ? new LightGameCenterAndroid() : new LightGameCenterAmazon();
+    public static GameCenter createGameCenter(int type) {
+        GameCenter gc = type == 0 ? new Google() : new Amazon();
         gc.setConnectionListener(new Listener());
 
         return gc;

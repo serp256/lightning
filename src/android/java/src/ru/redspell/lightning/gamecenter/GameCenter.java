@@ -1,14 +1,14 @@
 package ru.redspell.lightning.gamecenter;
 
-public interface LightGameCenter {
+public interface GameCenter {
 
-    public void setConnectionListener(LightGameCenterConnectionListener listener);
+    public void setConnectionListener(ConnectionListener listener);
 
     public void connect();
   
     public String getPlayerID();
   
-    public LightGameCenterPlayer currentPlayer();
+    public Player currentPlayer();
   
     public void showAchievements();
 		public void showLeaderboard (final String boardId);

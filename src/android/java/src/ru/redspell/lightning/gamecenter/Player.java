@@ -1,6 +1,6 @@
 package ru.redspell.lightning.gamecenter;
 
-public interface LightGameCenterPlayer {
+public interface Player {
 
     public String getPlayerId();
     

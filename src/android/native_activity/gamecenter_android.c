@@ -7,7 +7,7 @@ static jclass gcCls = NULL;
 
 
 static jobject getGcCls() {
-	return engine_find_class("ru/redspell/lightning/gamecenter/LightGameCenter");
+	return engine_find_class("ru/redspell/lightning/gamecenter/GameCenter");
 }
 
 static jobject jGameCenter = NULL;
@@ -21,13 +21,13 @@ value ml_gamecenter_init(value silent, value param) {
 	PRINT_DEBUG("ml_gamecenter_init");
 
 	// get factory class
-	jclass gcManagerCls = engine_find_class("ru/redspell/lightning/gamecenter/LightGameCenterManager");
+	jclass gcManagerCls = engine_find_class("ru/redspell/lightning/gamecenter/Manager");
 	if (gcManagerCls == NULL) {
         caml_failwith("GameCenterManager not found");
 	}
 	
 	// find static method createGameCenter
-	jmethodID jCreateM = (*ML_ENV)->GetStaticMethodID(ML_ENV, gcManagerCls, "createGameCenter", "(I)Lru/redspell/lightning/gamecenter/LightGameCenter;");
+	jmethodID jCreateM = (*ML_ENV)->GetStaticMethodID(ML_ENV, gcManagerCls, "createGameCenter", "(I)Lru/redspell/lightning/gamecenter/GameCenter;");
 	if (jCreateM == NULL) {
 	    (*ML_ENV)->DeleteLocalRef(ML_ENV, gcManagerCls);
 	    caml_failwith("createGameCenter method not found");
@@ -80,18 +80,18 @@ void gamecenter_disconnected(void *data) {
 	caml_callback(*caml_named_value("game_center_disconnected"), Val_unit);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024Listener_onConnected(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024Listener_onConnected");
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_Manager_00024Listener_onConnected(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_gamecenter_Manager_00024Listener_onConnected");
 	RUN_ON_ML_THREAD(&gamecenter_connected, NULL);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024Listener_onConnectFailed(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024Listener_onConnectFailed");
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_Manager_00024Listener_onConnectFailed(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_gamecenter_Manager_00024Listener_onConnectFailed");
 	RUN_ON_ML_THREAD(&gamecenter_failed, NULL);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024Listener_onDisconnected(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_gamecenter_LightGameCenterManager_00024Listener_onDisconnected");
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_gamecenter_Manager_00024Listener_onDisconnected(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_gamecenter_Manager_00024Listener_onDisconnected");
 	RUN_ON_ML_THREAD(&gamecenter_disconnected, NULL);
 }
 
@@ -128,7 +128,7 @@ static value convertPlayer(jobject jPlayer) {
 	static jmethodID jGetDisplayNameM = NULL;
 	// Add Image here, maybe througt URL and extern image loader????
 	if (!jGetPlayerIDM) {
-		jclass jPlayerCls = engine_find_class("ru/redspell/lightning/gamecenter/LightGameCenterPlayer");
+		jclass jPlayerCls = engine_find_class("ru/redspell/lightning/gamecenter/Player");
 		jGetPlayerIDM = (*ML_ENV)->GetMethodID(ML_ENV,jPlayerCls,"getPlayerId","()Ljava/lang/String;");
 		jGetDisplayNameM = (*ML_ENV)->GetMethodID(ML_ENV,jPlayerCls,"getDisplayName","()Ljava/lang/String;");
 	};
@@ -158,7 +158,7 @@ value ml_gamecenter_current_player(value p) {
 	static jmethodID jCurrentPlayerM = NULL;
 	if (!jCurrentPlayerM) { 
 		jclass gcCls = getGcCls();
-		jCurrentPlayerM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"currentPlayer","()Lru/redspell/lightning/gamecenter/LightGameCenterPlayer;");
+		jCurrentPlayerM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"currentPlayer","()Lru/redspell/lightning/gamecenter/Player;");
 	};
 	jobject jPlayer = (*ML_ENV)->CallObjectMethod(ML_ENV,jGameCenter,jCurrentPlayerM);
 	value res;

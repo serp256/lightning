@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ru.redspell.lightning.LightEditTextContainer xmlns:android="http://schemas.android.com/apk/res/android"
+<ru.redspell.lightning.keyboard.EditTextContainer xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/editor_container"
     android:orientation="vertical"
     android:layout_width="fill_parent"
@@ -14,7 +14,7 @@
         android:layout_weight="0.5"
         android:gravity="center_horizontal|center_vertical">
 
-        <ru.redspell.lightning.LightEditText
+        <ru.redspell.lightning.keyboard.EditText
     		android:id="@+id/editor"
     		android:layout_width="470dp"
     		android:layout_height="wrap_content"
@@ -26,4 +26,4 @@
             android:layout_height="wrap_content"
             android:text="ok"/>
     </LinearLayout>
-</ru.redspell.lightning.LightEditTextContainer>
+</ru.redspell.lightning.keyboard.EditTextContainer>

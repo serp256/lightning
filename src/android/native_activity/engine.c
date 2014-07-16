@@ -30,10 +30,6 @@ void engine_init(struct android_app* app) {
 	engine.class_loader = (*ML_ENV)->NewGlobalRef(ML_ENV, ldr);
 	engine.load_class_mid = (*ML_ENV)->GetMethodID(ML_ENV, cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 
-    jstring _jcls_name = (*ML_ENV)->NewStringUTF(ML_ENV, "java/lang/String");
-    jclass _cls = ML_FIND_CLASS(_jcls_name);
-    PRINT_DEBUG("string cls %d", _cls);
-
 	(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, japk_path, capk_path);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, japk_path);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, cls);

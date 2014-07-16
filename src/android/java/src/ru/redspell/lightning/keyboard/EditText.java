@@ -1,6 +1,5 @@
-package ru.redspell.lightning;
+package ru.redspell.lightning.keyboard;
 
-import android.widget.EditText;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
@@ -8,22 +7,22 @@ import android.view.inputmethod.EditorInfo;
 
 import ru.redspell.lightning.utils.Log;
 
-public class LightEditText extends EditText {
+public class EditText extends android.widget.EditText {
 	public interface OnKeyboardHideListener {
 		void onKeyboardHide(boolean backPressed);
 	}
 
 	protected OnKeyboardHideListener onKeyboardHideListener = null;
 
-	public LightEditText(Context context) {
+	public EditText(Context context) {
 		super(context);
 	}
 
-	public LightEditText(Context context, AttributeSet attrs) {
+	public EditText(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
 
-	public LightEditText(Context context, AttributeSet attrs, int defStyle) {
+	public EditText(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 	}
 

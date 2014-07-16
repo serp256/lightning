@@ -3,7 +3,7 @@ package ru.redspell.lightning.gamecenter;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.games.Player;
+// import com.google.android.gms.games.Player;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.content.Intent;
@@ -16,27 +16,27 @@ import com.google.android.gms.games.GamesActivityResultCodes;
 
 import ru.redspell.lightning.v2.Lightning;
 
-public class LightGameCenterAndroid implements LightGameCenter,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener {
+public class Google implements GameCenter,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener {
 
 	private GamesClient mGamesClient;
 	
-	private LightGameCenterConnectionListener listener;
+	private ConnectionListener listener;
 
-    private LightGameCenterPlayer player;
+    private Player player;
     
     /*
-     * LightGameCenter
+     * 
      */
-	public LightGameCenterAndroid() {
+	public Google() {
 	    this(null);
 	}
 
 
     /*
-     * LightGameCenter
+     * 
      */
-    public LightGameCenterAndroid(LightGameCenterConnectionListener l) {
-		Log.d("LIGHTNING","LightGameCenter");
+    public Google(ConnectionListener l) {
+		Log.d("LIGHTNING","");
 		GamesClient.Builder builder = new GamesClient.Builder(Lightning.activity,this,this);
 		mGamesClient = builder.create ();
 		mGamesClient.setViewForPopups(Lightning.activity.viewGrp);
@@ -49,7 +49,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
      * setConnectionListener
      */
     @Override
-    public void setConnectionListener(LightGameCenterConnectionListener l) {
+    public void setConnectionListener(ConnectionListener l) {
         listener = l;
     }
 
@@ -147,12 +147,12 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 
 
     @Override
-    public LightGameCenterPlayer currentPlayer() {
+    public Player currentPlayer() {
 		if (mGamesClient == null) return null;
 		if (!mGamesClient.isConnected()) return null;
 		
 		if (player == null) {
-		    player = new LightGameCenterPlayer() {
+		    player = new Player() {
 		        @Override
 		        public String getPlayerId() {
 		          return mGamesClient.getCurrentPlayerId();
