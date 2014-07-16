@@ -7,7 +7,7 @@ value ml_downloadExpansions(value vpubkey) {
 	CAMLparam1(vpubkey);
 	jstring jpubkey = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vpubkey));
 	PRINT_DEBUG("2");
-	jclass cls = lightning_find_class("ru/redspell/lightning/v2/Expansions");
+	jclass cls = engine_find_class("ru/redspell/lightning/v2/Expansions");
 	jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "download", "(Ljava/lang/String;)V");
 	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid, jpubkey);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jpubkey);

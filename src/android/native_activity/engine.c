@@ -1,5 +1,6 @@
 #include "engine.h"
 #include "mlwrapper_android.h"
+#include "khash.h"
 
 struct engine engine;
 
@@ -45,4 +46,49 @@ void engine_release() {
 	(*VM)->DetachCurrentThread(VM);
 
 	free(engine.apk_path);
+}
+
+void engine_runonthread(uint8_t cmd, engine_runnablefunc_t func, void *data) {
+    PRINT_DEBUG("engine_runonthread call");
+
+    engine_runnable_t *onmlthread = (engine_runnable_t*)malloc(sizeof(engine_runnable_t));
+    onmlthread->func = func;
+    onmlthread->data = data;
+    onmlthread->handled = 0;
+
+    struct android_app *app = engine.app;
+
+    pthread_mutex_lock(&app->mutex);
+    engine.data = onmlthread;
+    android_app_write_cmd(app, cmd);
+    while (!onmlthread->handled) {
+        pthread_cond_wait(&app->cond, &app->mutex);
+    }    
+    pthread_mutex_unlock(&app->mutex);
+    free(onmlthread);
+}
+
+KHASH_MAP_INIT_STR(jclasses, jclass);
+static kh_jclasses_t *classes = NULL;
+
+jclass engine_find_class_with_env(JNIEnv *env, const char *ccls_name) {
+    if (!classes) classes = kh_init_jclasses();
+
+    khiter_t k = kh_get(jclasses, classes, ccls_name);
+    if (k != kh_end(classes)) return kh_val(classes, k);
+
+    jstring jcls_name = (*env)->NewStringUTF(env, ccls_name);
+    jclass cls = ML_FIND_CLASS(jcls_name);
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, jcls_name);
+
+    int ret;
+    k = kh_put(jclasses, classes, ccls_name, &ret);
+    kh_val(classes, k) = (*env)->NewGlobalRef(env, cls);
+
+    return kh_val(classes, k);
+}
+
+jclass engine_find_class(const char *ccls_name) {
+    return engine_find_class_with_env(ML_ENV, ccls_name);
 }

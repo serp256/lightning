@@ -291,12 +291,19 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             break;
 
         case LIGTNING_CMD_RUN_ON_ML_THREAD:
-            PRINT_DEBUG("!!!LIGTNING_CMD_RUN_ON_ML_THREAD");
+            {
+                struct android_app *app = engine->app;
 
-            lightning_runnable_t *onmlthread = engine->data;
-            (*onmlthread->func)(onmlthread->data);
+                pthread_mutex_lock(&app->mutex);
+                lightning_runnable_t *onmlthread = engine->data;
+                (*onmlthread->func)(onmlthread->data);
+                onmlthread->handled = 1;
+                pthread_cond_broadcast(&app->cond);
+                pthread_mutex_unlock(&app->mutex);
 
-            break;
+                break;                
+            }
+
     }
 }
 

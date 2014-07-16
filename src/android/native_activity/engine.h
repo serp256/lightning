@@ -1,13 +1,15 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-
 #include <android/sensor.h>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include <jni.h>
 #include "android_native_app_glue.h"
+
+#define RUN_ON_ML_THREAD(func, data) engine_runonthread(ENGINE_CMD_RUN_ON_ML_THREAD, func, data)
+#define RUN_ON_MAIN_THREAD(func, data) engine_runonthread(ENGINE_CMD_RUN_ON_MAIN_THREAD, func, data)
 
 struct saved_state {
     float angle;
@@ -44,6 +46,19 @@ struct engine {
     void *data; // pointer to any user data. for example, for transfering custom data from main thread to ml thread
 };
 
+typedef void (*engine_runnablefunc_t)(void *data);
+
+typedef struct {
+    engine_runnablefunc_t func;
+    void *data;
+    uint8_t handled;
+} engine_runnable_t;
+
+enum {
+    ENGINE_CMD_RUN_ON_ML_THREAD = 100,
+    ENGINE_CMD_RUN_ON_MAIN_THREAD
+};
+
 struct engine engine;
 typedef struct engine* engine_t;
 
@@ -60,5 +75,9 @@ typedef struct engine* engine_t;
 
 void engine_init(struct android_app* app);
 void engine_release();
+void engine_runonthread(uint8_t, engine_runnablefunc_t, void *);
+
+jclass engine_find_class_with_env(JNIEnv *, const char *);
+jclass engine_find_class(const char *); /* use this functions rather than FIND_CLASS macro */
 
 #endif

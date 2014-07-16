@@ -1042,7 +1042,7 @@ public class LightView extends GLSurfaceView {
 	////////////////////////
 	
 
-	private static class CurlDownloaderCallbackRunnable implements Runnable {
+/*	private static class CurlDownloaderCallbackRunnable implements Runnable {
 		private int req;
 
 		public CurlDownloaderCallbackRunnable(int req) {
@@ -1098,7 +1098,7 @@ public class LightView extends GLSurfaceView {
 
 	public void curlDownloadProgress(int cb, double progress, double total) {
 		queueEvent(new CurlDownloaderProgressCallbackRunnable(cb, progress, total));
-	}
+	}*/
 
 	////////////////////
 	// END FILE DOWNLOADER

@@ -79,17 +79,17 @@ static void freeRequest(cel_request_t* req) {
 typedef struct {
 	cel_request_t *req;
 	textureInfo *tex_inf;
-} curl_loader_success_t;
+} curl_imgloader_success_t;
 
 
 typedef struct {
 	cel_request_t *req;
 	int err_code;
 	char *err_mes;
-} curl_loader_error_t;
+} curl_imgloader_error_t;
 
-void curl_loader_success(void *data) {
-	curl_loader_success_t *success = (curl_loader_success_t*)data;
+void curl_imgloader_success(void *data) {
+	curl_imgloader_success_t *success = (curl_imgloader_success_t*)data;
 
 	value textureID = createGLTexture(1, success->tex_inf, Val_int(1));
 	value mlTex = 0;
@@ -102,8 +102,8 @@ void curl_loader_success(void *data) {
 	free(success);
 }
 
-void curl_loader_error(void *data) {
-	curl_loader_error_t *error = (curl_loader_error_t*)data;
+void curl_imgloader_error(void *data) {
+	curl_imgloader_error_t *error = (curl_imgloader_error_t*)data;
 
 	caml_callback2(*(error->req->errCb), Val_int(error->err_code), caml_copy_string(error->err_mes));
 
@@ -118,11 +118,11 @@ static void caml_error(cel_request_t* req, int errCode, char* errMes) {
 	if (req->errCb) {
 		PRINT_DEBUG("callback");
 
-		curl_loader_error_t *error = (curl_loader_error_t*)malloc(sizeof(curl_loader_error_t));
+		curl_imgloader_error_t *error = (curl_imgloader_error_t*)malloc(sizeof(curl_imgloader_error_t));
 		error->req = req;
 		error->err_code = errCode;
 		error->err_mes = errMes;
-		RUN_ON_ML_THREAD(&curl_loader_error, error);
+		RUN_ON_ML_THREAD(&curl_imgloader_error, (void*)error);
 	}
 }
 
@@ -145,7 +145,6 @@ static void* loader_thread(void* params) {
 	static jfieldID formatFid;
 
 	jmethodID decode_mid = (*env)->GetStaticMethodID(env, lightning_cls, "decodeImg", "([B)Lru/redspell/lightning/v2/Lightning$TexInfo;");
-	// jmethodID curlExtLdrSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlExternalLoaderSuccess", "(II)V");
 
 	while (1) {
 		cel_request_t* req = thqueue_cel_reqs_pop(reqs);
@@ -232,10 +231,10 @@ static void* loader_thread(void* params) {
 				    (*env)->DeleteLocalRef(env, jdata);
 						(*env)->DeleteLocalRef(env,jtexInfo);
 
-					curl_loader_success_t *success = (curl_loader_success_t*)malloc(sizeof(curl_loader_success_t));
+					curl_imgloader_success_t *success = (curl_imgloader_success_t*)malloc(sizeof(curl_imgloader_success_t));
 					success->req = req;
 					success->tex_inf = texInfo;
-					RUN_ON_ML_THREAD(&curl_loader_success, success);						
+					RUN_ON_ML_THREAD(&curl_imgloader_success, (void*)success);
 
 					PRINT_DEBUG("after success call");
 			    } else {

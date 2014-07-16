@@ -1,14 +1,11 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "mlwrapper_android.h"
+#include "lightning_android.h"
+#include "engine.h"
 
-
-#include "light_common.h"
 #include "thqueue.h"
 
-#include "caml/mlvalues.h"
-#include "caml/memory.h"
 
 #define CURL_DISABLE_TYPECHECK
 #include "android/libcurl/curl.h"
@@ -30,22 +27,68 @@ static pthread_cond_t cond;
 static pthread_t tid;
 static thqueue_download_reqs_t* reqs;
 
-static void caml_error(download_request_t* req, int errCode, char* errMes) {
-	PRINT_DEBUG("caml_error %d %s", errCode, errMes);
+static void freeRequest(download_request_t* req) {
+	caml_remove_generational_global_root(req->cb);
 
 	if (req->errCb) {
-		PRINT_DEBUG("call error callback");
+		caml_remove_generational_global_root(req->errCb);
+		free(req->errCb);
+	}
 
-		JNIEnv *env; 
-		(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+	if (req->prgrssCb) {
+		caml_remove_generational_global_root(req->prgrssCb);
+		free(req->prgrssCb);
+	}
 
-		static jmethodID curlExtLdrErrorMid = 0;
-		if (!curlExtLdrErrorMid) curlExtLdrErrorMid = (*env)->GetMethodID(env, jViewCls, "curlDownloaderError", "(III)V");
+	free(req->url);
+	free(req->path);
+	free(req->cb);
+	free(req);
+}
 
-		char* _errMes = malloc(strlen(errMes) + 1);
-		strcpy(_errMes, errMes);
-		(*env)->CallVoidMethod(env, jView, curlExtLdrErrorMid, (int)req, errCode, (int)_errMes);		
-		//(*gJavaVM)->DetachCurrentThread(gJavaVM);
+typedef struct {
+	download_request_t *req;
+	int err_code;
+	char *err_mes;
+} curl_filedownloader_error_t;
+
+typedef struct {
+	value *callback;
+	double total;
+	double now;
+} curl_filedownloader_progress_t;
+
+void curl_filedownloader_success(void *data) {
+	download_request_t *req = (download_request_t*)data;
+	caml_callback(*(req->cb), Val_unit);
+	freeRequest(req);
+}
+
+void curl_filedownloader_error(void *data) {
+	curl_filedownloader_error_t *error = (curl_filedownloader_error_t*)data;
+	caml_callback2(*(error->req->errCb), Val_int(error->err_code), caml_copy_string(error->err_mes));
+	free(error->err_mes);
+	freeRequest(error->req);
+	free(error);
+}
+
+void curl_filedownloader_progress(void *data) {
+	curl_filedownloader_progress_t *progress = (curl_filedownloader_progress_t*)data;
+	caml_callback3(*progress->callback, caml_copy_double(progress->now), caml_copy_double(progress->total), Val_unit);
+	free(progress);
+}
+
+static void caml_error(download_request_t* req, int errCode, char* errMes) {
+	if (req->errCb) {
+		char* err_mes = malloc(strlen(errMes) + 1);
+		strcpy(err_mes, errMes);
+		
+		curl_filedownloader_error_t *error = (curl_filedownloader_error_t*)malloc(sizeof(curl_filedownloader_error_t));
+		error->req = req;
+		error->err_code = errCode;
+		error->err_mes = err_mes;
+
+		RUN_ON_ML_THREAD(&curl_filedownloader_error, (void*)error);
 	}
 }
 
@@ -53,12 +96,13 @@ static int progress(void *clientp, double dltotal, double dlnow, double ultotal,
 	value* cb = (value*)clientp;
 
 	if (cb) {
-		JNIEnv *env; 
-		(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
+		curl_filedownloader_progress_t *progress = (curl_filedownloader_progress_t*)malloc(sizeof(curl_filedownloader_progress_t));
 
-		static jmethodID mid = 0;
-		if (!mid) mid = (*env)->GetMethodID(env, jViewCls, "curlDownloadProgress", "(IDD)V");
-		(*env)->CallVoidMethod(env, jView, mid, (jint)cb, dlnow, dltotal);
+		progress->callback = cb;
+		progress->total = dltotal;
+		progress->now = dlnow;
+
+		RUN_ON_ML_THREAD(&curl_filedownloader_progress, (void*)progress);
 	}
 
 	return 0;
@@ -73,11 +117,6 @@ static void* downloader_thread(void* params) {
 	curl_easy_setopt(curl_hndlr, CURLOPT_WRITEFUNCTION, NULL);
 	curl_easy_setopt(curl_hndlr, CURLOPT_FOLLOWLOCATION, 1);
 
-	JNIEnv *env;
-	(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
-	jmethodID curlDownloadSuccessMid = (*env)->GetMethodID(env, jViewCls, "curlDownloaderSuccess", "(I)V");
-	//(*gJavaVM)->DetachCurrentThread(gJavaVM);
-
 	while (1) {
 		download_request_t* req = thqueue_download_reqs_pop(reqs);
 
@@ -89,7 +128,7 @@ static void* downloader_thread(void* params) {
 
 			size_t pathlen = strlen(req->path);
 			char *tmpfname = malloc(pathlen + 13);
-			strcpy(tmpfname,req->path);
+			strcpy(tmpfname, req->path);
 			strcpy(tmpfname + pathlen,".downloading");
 			FILE *fd = fopen(tmpfname,"w");
 			if (fd == NULL) {
@@ -125,10 +164,8 @@ static void* downloader_thread(void* params) {
 				 	caml_error(req, (int)respCode, "http code is not 200");
 				 } else {
 					PRINT_DEBUG("complete loading %s %ld",req->path, respCode);
-					rename(tmpfname,req->path);
-					//(*gJavaVM)->AttachCurrentThread(gJavaVM, &env, NULL);
-					(*env)->CallVoidMethod(env, jView, curlDownloadSuccessMid, (int)req);
-					//(*gJavaVM)->DetachCurrentThread(gJavaVM);
+					rename(tmpfname, req->path);
+					RUN_ON_ML_THREAD(&curl_filedownloader_success, (void*)req);
 					*curl_err = '\0';
 				 }
 			};
@@ -144,9 +181,6 @@ value ml_DownloadFile(value url, value path, value errCb, value prgrssCb, value 
 	initCurl();
 
 	PRINT_DEBUG("START DOWNLOAD FILE");
-
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
 	download_request_t* req = (download_request_t*)malloc(sizeof(download_request_t));
 
@@ -187,73 +221,5 @@ value ml_DownloadFile(value url, value path, value errCb, value prgrssCb, value 
 	thqueue_download_reqs_push(reqs, req);
 	pthread_cond_signal(&cond);
 
-
 	return Val_unit;
-}
-
-static void freeRequest(download_request_t* req) {
-	caml_remove_generational_global_root(req->cb);
-
-	if (req->errCb) {
-		caml_remove_generational_global_root(req->errCb);
-		free(req->errCb);
-	}
-
-	if (req->prgrssCb) {
-		caml_remove_generational_global_root(req->prgrssCb);
-		free(req->prgrssCb);
-	}
-
-	free(req->url);
-	free(req->path);
-	free(req->cb);	
-	free(req);
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlDownloaderCallbackRunnable_run(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024CurlDownloaderCallbackRunnable_run");
-	static jfieldID reqFid;
-
-	if (!reqFid) {
-		jclass runnableCls = (*env)->GetObjectClass(env, this);
-		reqFid = (*env)->GetFieldID(env, runnableCls, "req", "I");
-	}
-
-	download_request_t* req = (download_request_t*)(*env)->GetIntField(env, this, reqFid);
- 
-	caml_callback(*(req->cb), Val_unit);
-
-	freeRequest(req);
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlDownloaderErrorCallbackRunnable_run(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_LightView_00024CurlDownloaderErrorCallbackRunnable_run");
-
-	static jfieldID reqFid;
-	static jfieldID errCodeMid;
-	static jfieldID errMesMid;
-
-	if (!reqFid) {
-		jclass runnableCls = (*env)->GetObjectClass(env, this);
-		reqFid = (*env)->GetFieldID(env, runnableCls, "req", "I");
-		errCodeMid = (*env)->GetFieldID(env, runnableCls, "errCode", "I");
-		errMesMid = (*env)->GetFieldID(env, runnableCls, "errMes", "I");
-	}
-
-	download_request_t* req = (download_request_t*)(*env)->GetIntField(env, this, reqFid);
-	int errCode = (*env)->GetIntField(env, this, errCodeMid);
-	char* errMes = (char*)(*env)->GetIntField(env, this, errMesMid);
-
-	caml_callback2(*(req->errCb), Val_int(errCode), caml_copy_string(errMes));
-
-	free(errMes);
-	freeRequest(req);
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CurlDownloaderProgressCallbackRunnable_run(JNIEnv *env, jobject this, jint cb, jdouble progress, jdouble total) {
-	value* vcb = (value*)cb;
-
-	if (vcb) {
-		caml_callback3(*(vcb), caml_copy_double(progress), caml_copy_double(total), Val_unit);
-	}
 }

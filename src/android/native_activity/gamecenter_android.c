@@ -7,7 +7,7 @@ static jclass gcCls = NULL;
 
 
 static jobject getGcCls() {
-	return lightning_find_class("ru/redspell/lightning/gamecenter/LightGameCenter");
+	return engine_find_class("ru/redspell/lightning/gamecenter/LightGameCenter");
 }
 
 static jobject jGameCenter = NULL;
@@ -21,7 +21,7 @@ value ml_gamecenter_init(value silent, value param) {
 	PRINT_DEBUG("ml_gamecenter_init");
 
 	// get factory class
-	jclass gcManagerCls = lightning_find_class("ru/redspell/lightning/gamecenter/LightGameCenterManager");
+	jclass gcManagerCls = engine_find_class("ru/redspell/lightning/gamecenter/LightGameCenterManager");
 	if (gcManagerCls == NULL) {
         caml_failwith("GameCenterManager not found");
 	}
@@ -128,7 +128,7 @@ static value convertPlayer(jobject jPlayer) {
 	static jmethodID jGetDisplayNameM = NULL;
 	// Add Image here, maybe througt URL and extern image loader????
 	if (!jGetPlayerIDM) {
-		jclass jPlayerCls = lightning_find_class("ru/redspell/lightning/gamecenter/LightGameCenterPlayer");
+		jclass jPlayerCls = engine_find_class("ru/redspell/lightning/gamecenter/LightGameCenterPlayer");
 		jGetPlayerIDM = (*ML_ENV)->GetMethodID(ML_ENV,jPlayerCls,"getPlayerId","()Ljava/lang/String;");
 		jGetDisplayNameM = (*ML_ENV)->GetMethodID(ML_ENV,jPlayerCls,"getDisplayName","()Ljava/lang/String;");
 	};

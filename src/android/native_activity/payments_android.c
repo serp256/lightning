@@ -20,7 +20,7 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 		}
 	}
 
-	jclass str_cls = lightning_find_class("java/lang/String");
+	jclass str_cls = engine_find_class("java/lang/String");
 	jobjectArray jskus = (*ML_ENV)->NewObjectArray(ML_ENV, skus_num, str_cls, NULL);
 
 	int i;
@@ -32,7 +32,7 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 	}
 
 	if (Is_long(vmarket_type) && vmarket_type == caml_hash_variant("Amazon")) {
-		payments_cls = lightning_find_class("ru/redspell/lightning/payments/amazon/Payments");
+		payments_cls = engine_find_class("ru/redspell/lightning/payments/amazon/Payments");
 		jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "<init>", "(Landroid/content/Context;)V");
 		payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, JAVA_ACTIVITY);
 	} else if (Is_block(vmarket_type) && Field(vmarket_type, 0) == caml_hash_variant("Google")) {
@@ -46,7 +46,7 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 			jkey = (*ML_ENV)->NewStringUTF(ML_ENV, ckey);
 		}
 
-		payments_cls = lightning_find_class("ru/redspell/lightning/payments/google/Payments");
+		payments_cls = engine_find_class("ru/redspell/lightning/payments/google/Payments");
 		jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "<init>", "(Ljava/lang/String;)V");
 		payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, jkey);
 
