@@ -4,7 +4,7 @@ TARGET ?= example
 
 MLPPOPT = ../src/syntax/pa_prop.cmo ../src/syntax/pa_platform.cmo -enable-debug default
 
-MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social \
+MLFLAGS += -package redspell.syntax.debug,redspell.debug -I ../src -package extlib -package ojson -I ../src/social -I ../src/social/oauth \
 					 -I ../src/plugins/remote-notifications \
 					 -I ../src/plugins/tapjoy \
 					 -I ../src/plugins/flurry \

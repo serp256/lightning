@@ -36,7 +36,7 @@ oauth.cma: $(IFACES) $(MOBJS) $(MLOBJS) $(FAKELIBS)
 else
 ifeq ($(PLATFORM),ANDROID)
 FAKELIBS =
-CFLAGS += -DLDEBUG -DANDROID -Iandroid -I../../android -I../..
+CFLAGS += -DLDEBUG -DANDROID -Iandroid -I../../android -I../../android/native_activity -I../..
 MLPPOPT += -DANDROID
 MOBJS += android/oauth_wrapper.o
 

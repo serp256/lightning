@@ -1,28 +1,35 @@
-#include "mlwrapper_android.h"
+#include "lightning_android.h"
+#include "engine.h"
 
 void ml_authorization_grant(value url, value closeBt) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
-	jclass oauthCls = (*env)->FindClass(env,"ru/redspell/lightning/OAuth");
-	jmethodID mid = (*env)->GetStaticMethodID(env, oauthCls, "dialog","(Ljava/lang/String;)V");
+	// jclass oauthCls = (*ML_ENV)->FindClass(ML_ENV,"ru/redspell/lightning/OAuth");
+	jclass oauthCls = engine_find_class("ru/redspell/lightning/v2/OAuth");
+	jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, oauthCls, "dialog","(Ljava/lang/String;)V");
 
 	char* curl = String_val(url);
-	jstring jurl = (*env)->NewStringUTF(env, curl);
-	(*env)->CallStaticVoidMethod(env, oauthCls, mid, jurl);
+	jstring jurl = (*ML_ENV)->NewStringUTF(ML_ENV, curl);
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, oauthCls, mid, jurl);
 
-	(*env)->DeleteLocalRef(env, jurl);
-	(*env)->DeleteLocalRef(env, oauthCls);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jurl);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, oauthCls);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_OAuthDialog_00024DefaultRedirectHandler_run(JNIEnv *env, jobject this, jstring url) {
-	static value* oauth_redirect = 0;
-	if (!oauth_redirect) oauth_redirect = (value*)caml_named_value("oauth_redirected");
+void oauth_redirect(void *data) {
+	CAMLparam0();
+	CAMLlocal1(vurl);
 
-	const char *curl = (*env)->GetStringUTFChars(env, url, JNI_FALSE);
-	caml_callback(*oauth_redirect, caml_copy_string(curl));
-	(*env)->ReleaseStringUTFChars(env, url, curl);
+	jstring jurl = (jstring)data;
+	JSTRING_TO_VAL(jurl, vurl);
+	caml_callback(*caml_named_value("oauth_redirected"), vurl);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, jurl);
+
+	CAMLreturn0;
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_OAuthDialog_00024DefaultDialogClosedRunnable_run(JNIEnv *env, jobject this, jstring url) {
-	Java_ru_redspell_lightning_OAuthDialog_00024DefaultRedirectHandler_run(env, this, url);
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_OAuthDialog_onRedirect(JNIEnv *env, jobject this, jstring url) {
+	RUN_ON_ML_THREAD(&oauth_redirect, (void*)(*env)->NewGlobalRef(env, url));
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_OAuthDialog_onClose(JNIEnv *env, jobject this, jstring url) {
+	RUN_ON_ML_THREAD(&oauth_redirect, (void*)(*env)->NewGlobalRef(env, url));
 }

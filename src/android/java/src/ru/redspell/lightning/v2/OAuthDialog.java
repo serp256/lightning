@@ -1,4 +1,4 @@
-package ru.redspell.lightning;
+package ru.redspell.lightning.v2;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -44,7 +44,7 @@ public class OAuthDialog extends Dialog {
     private String mRedirectUrlPath;
     private Boolean mAuthorizing = false;
 
-    public interface UrlRunnable {
+/*    public interface UrlRunnable {
         public void run(String url);
     }
 
@@ -56,20 +56,23 @@ public class OAuthDialog extends Dialog {
     private static class DefaultRedirectHandler implements UrlRunnable {
         @Override
         public native void run(String url);
-    }
+    }*/
 
-    public OAuthDialog(Context context, String url) {
+/*    public OAuthDialog(Context context, String url) {
         this(context, url, new DefaultDialogClosedRunnable(), new DefaultRedirectHandler(), null);
     }
+*/
+/*    private UrlRunnable closeHandler;
+    private UrlRunnable redirectHandler;*/
 
-    private UrlRunnable closeHandler;
-    private UrlRunnable redirectHandler;
+    public native void onClose(String url);
+    public native void onRedirect(String url);
 
-    public OAuthDialog(Context context, String url, UrlRunnable closeHandler, UrlRunnable redirectHandler, String redirectUrlPath) {
+    public OAuthDialog(Context context, String url, String redirectUrlPath) {
         super(context, android.R.style.Theme_Translucent_NoTitleBar);
 
-        this.closeHandler = closeHandler;
-        this.redirectHandler = redirectHandler;
+/*        this.closeHandler = closeHandler;
+        this.redirectHandler = redirectHandler;*/
 
         mUrl = url;
 
@@ -128,7 +131,7 @@ public class OAuthDialog extends Dialog {
                 OAuthDialog.this.close();
             }
         });
-        Drawable crossDrawable = getContext().getResources().getDrawable(R.drawable.close);
+        Drawable crossDrawable = getContext().getResources().getDrawable(ru.redspell.lightning.R.drawable.close);
         mCrossImage.setImageDrawable(crossDrawable);
         /* 'x' should not be visible while webview is loading
          * make it visible only after webview has fully loaded
@@ -166,9 +169,10 @@ public class OAuthDialog extends Dialog {
     public void close() {
         Log.d("LIGHTNING", "close");
         dismiss();
-        if (closeHandler != null) {
+/*        if (closeHandler != null) {
             LightView.instance.queueEvent(new Runnable() { @Override public void run() { closeHandler.run(mRedirectUrlPath + "#error=access_denied"); }});
-        }
+        }*/
+        onClose(mRedirectUrlPath + "#error=access_denied");
     }
 
     private class WebViewClient extends android.webkit.WebViewClient {
@@ -176,25 +180,18 @@ public class OAuthDialog extends Dialog {
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.d("LIGHTNING", "shouldOverrideUrlLoading " + url);
 
-            if (redirectHandler != null) {
-                try {
-                    Log.d("LIGHTNING", "mRedirectUrlPath " + mRedirectUrlPath);
-                    Log.d("LIGHTNING", "(new URL(url)).getPath() " + (new URL(url)).getPath());
-                    if (mRedirectUrlPath != null && mRedirectUrlPath.contentEquals((new URL(url)).getPath())) {
-                        final String _url = new String(url);
+            try {
+                Log.d("LIGHTNING", "mRedirectUrlPath " + mRedirectUrlPath);
+                Log.d("LIGHTNING", "(new URL(url)).getPath() " + (new URL(url)).getPath());
+                if (mRedirectUrlPath != null && mRedirectUrlPath.contentEquals((new URL(url)).getPath())) {
+                    final String _url = new String(url);
 
-                        LightView.instance.queueEvent(new Runnable() {
-                            public void run() {
-                                redirectHandler.run(_url);
-                            }
-                        });
-
-                        mSpinner.dismiss();
-                        OAuthDialog.this.dismiss();
-                        return true;
-                    }
-                } catch (MalformedURLException e) {}
-            }
+                    onRedirect(_url);
+                    mSpinner.dismiss();
+                    OAuthDialog.this.dismiss();
+                    return true;
+                }
+            } catch (MalformedURLException e) {}
 
             return false;
         }
