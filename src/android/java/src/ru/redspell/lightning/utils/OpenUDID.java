@@ -1,4 +1,4 @@
-package ru.redspell.lightning;
+package ru.redspell.lightning.utils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

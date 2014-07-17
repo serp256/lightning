@@ -103,6 +103,14 @@ public class Lightning {
         });
     }
 
+    public static String getOldUDID() {
+        return ru.redspell.lightning.utils.UDID.get();
+    }    
+
+    public static String getUDID() {
+        return ru.redspell.lightning.utils.OpenUDID.getOpenUDIDInContext();
+    }
+
     public static native NativeActivity activity();
     public static native void disableTouches();
     public static native void enableTouches();
@@ -110,6 +118,7 @@ public class Lightning {
 
     public static void init() {
     	activity = activity();
+        ru.redspell.lightning.utils.OpenUDID.syncContext(activity.getApplicationContext());
     }
 
     public static void showUrl(final String url) {
