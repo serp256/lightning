@@ -1186,14 +1186,14 @@ public class LightView extends GLSurfaceView {
 		payments.restorePurchases();
 	}*/
 
-	public void showUrl(final String url) {
+/*	public void showUrl(final String url) {
 		LightView.instance.getHandler().post(new Runnable() {
 			@Override
 			public void run() {
 				(new LightUrlDialog(getContext(), url)).show();
 			}
 		});
-	}
+	}*/
 
 
 	private ProgressDialog progressDialog;
@@ -1235,7 +1235,7 @@ public class LightView extends GLSurfaceView {
 		});
 	};
 
-	public void vibrate(final int time) {
+/*	public void vibrate(final int time) {
 		Log.d("LIGHTNING","JAVA VIBRATE CALLED");
 		activity.runOnUiThread(new Runnable(){
 					@Override
@@ -1254,5 +1254,5 @@ public class LightView extends GLSurfaceView {
 				}
 			});
 
-	}
+	}*/
 }

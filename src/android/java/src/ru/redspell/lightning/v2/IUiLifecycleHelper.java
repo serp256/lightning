@@ -1,4 +1,4 @@
-package ru.redspell.lightning;
+package ru.redspell.lightning.v2;
 
 import android.os.Bundle;
 import android.content.Intent;

@@ -18,7 +18,7 @@ import java.util.Iterator;
 import android.content.Intent;
 
 import ru.redspell.lightning.utils.Log;
-import ru.redspell.lightning.LightActivity;
+import ru.redspell.lightning.v2.Lightning;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -85,7 +85,7 @@ public class LightFacebook {
                         LightFacebook.session.closeAndClearTokenInformation();
                     }
 
-                    LightActivity.instance.lightView.queueEvent(new CamlNamedValueRunnable("fb_sessionClosed"));
+                    Lightning.activity.lightView.queueEvent(new CamlNamedValueRunnable("fb_sessionClosed"));
 
                     break;
 
@@ -109,7 +109,7 @@ public class LightFacebook {
         public com.facebook.widget.FacebookDialog.Callback callback;
 
         public UiLifecycleHelper(com.facebook.widget.FacebookDialog.Callback callback) {
-            backend = new com.facebook.UiLifecycleHelper(LightActivity.instance, sessionCallback);
+            backend = new com.facebook.UiLifecycleHelper(Lightning.activity, sessionCallback);
             this.callback = callback;
         }
 
@@ -240,7 +240,7 @@ public class LightFacebook {
         if (SessionState.CREATED_TOKEN_LOADED.equals(session.getState()) || allowLoginUI) {
             Session.setActiveSession(session);
 
-            LightActivity.instance.runOnUiThread(new Runnable() {
+            Lightning.activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     session.openForRead(new Session.OpenRequest(activity).setCallback(callback));
@@ -255,13 +255,13 @@ public class LightFacebook {
 
     private static void fbError(Exception exception) {
         String mes = exception.getMessage();
-        LightActivity.instance.lightView.queueEvent(new CamlNamedValueWithStringParamRunnable("fb_fail", mes != null ? mes : "unknow facebook error"));
+        Lightning.activity.lightView.queueEvent(new CamlNamedValueWithStringParamRunnable("fb_fail", mes != null ? mes : "unknow facebook error"));
     }
 
     public static void init(String appId) {
         LightFacebook.appId = appId;
 
-        LightActivity.instance.addUiLifecycleHelper(new ru.redspell.lightning.v2.IUiLifecycleHelper() {
+        Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.v2.IUiLifecycleHelper() {
             public void onCreate(Bundle savedInstanceState) {}
             public void onResume() {}
 
@@ -270,7 +270,7 @@ public class LightFacebook {
 
                 com.facebook.Session session = com.facebook.Session.getActiveSession();
                 if (session != null) {
-                    session.onActivityResult(LightActivity.instance, requestCode, resultCode, data);
+                    session.onActivityResult(Lightning.activity, requestCode, resultCode, data);
                 }
             }
 
@@ -329,7 +329,7 @@ public class LightFacebook {
             Session session = Session.getActiveSession();
             // session.addCallback(publishPermsCallback);
 
-            Session.NewPermissionsRequest request = new Session.NewPermissionsRequest(LightActivity.instance, publishPerms);
+            Session.NewPermissionsRequest request = new Session.NewPermissionsRequest(Lightning.activity, publishPerms);
             extraPermsState = PUBLISH_PERMS_REQUESTED;
             session.requestNewPublishPermissions(request);
         } else {
@@ -347,7 +347,7 @@ public class LightFacebook {
             Session session = Session.getActiveSession();
             // session.addCallback(readPermsCallback);
 
-            Session.NewPermissionsRequest request = new Session.NewPermissionsRequest(LightActivity.instance, readPerms);
+            Session.NewPermissionsRequest request = new Session.NewPermissionsRequest(Lightning.activity, readPerms);
             extraPermsState = READ_PERMS_REQUESTED;
             session.requestNewReadPermissions(request);
         } else {
@@ -357,7 +357,7 @@ public class LightFacebook {
     }
 
     private static void connectSuccess() {
-        LightActivity.instance.lightView.queueEvent(new CamlNamedValueRunnable("fb_success"));
+        Lightning.activity.lightView.queueEvent(new CamlNamedValueRunnable("fb_success"));
         LightFacebook.session = Session.getActiveSession();
     }
 
@@ -390,7 +390,7 @@ public class LightFacebook {
             }
         }
 
-        LightFacebook.session = openActiveSession(LightActivity.instance, true, sessionCallback);
+        LightFacebook.session = openActiveSession(Lightning.activity, true, sessionCallback);
 
         Log.d("LIGHTNING", "lightfacebook session " + (LightFacebook.session == null ? "null" : "not null"));
     }
@@ -414,7 +414,7 @@ public class LightFacebook {
         Log.d("LIGHTNING", "loggedIn call");
 
         if (session == null) {
-            session = openActiveSession(LightActivity.instance, false, null);
+            session = openActiveSession(Lightning.activity, false, null);
         }
 
         Log.d("LIGHTNING", "session " + session);
@@ -432,10 +432,10 @@ public class LightFacebook {
     public static boolean apprequest(final String title, final String message, final String recipient, final String data, final int successCallback, final int failCallback) {
         if (session == null || !session.isOpened()) return false;
 
-        LightActivity.instance.runOnUiThread(new Runnable() {
+        Lightning.activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                WebDialog.RequestsDialogBuilder bldr = new WebDialog.RequestsDialogBuilder(LightActivity.instance, session)
+                WebDialog.RequestsDialogBuilder bldr = new WebDialog.RequestsDialogBuilder(Lightning.activity, session)
                     .setTitle(title)
                     .setMessage(message)
 										.setData(data)
@@ -456,14 +456,14 @@ public class LightFacebook {
 									}
 								};
 
-								LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringArrayParamRunnable(successCallback, to.toArray(toArr)));
+								Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringArrayParamRunnable(successCallback, to.toArray(toArr)));
                             } else {
 								String msg = error.getMessage ();
 								Log.d("LIGHTNING","error: " + error + ", message: " + error.getMessage ());
-								LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, msg != null ? msg : error.toString()));
+								Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, msg != null ? msg : error.toString()));
                             }
                             
-                            LightActivity.instance.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
+                            Lightning.activity.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
                         }
                     });
                 
@@ -481,7 +481,7 @@ public class LightFacebook {
     public static boolean graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback, final int httpMethod) {
         if (session == null || !session.isOpened()) return false;
 
-        LightActivity.instance.runOnUiThread(new Runnable() {
+        Lightning.activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 new com.facebook.Request(session, path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.Request.Callback() {
@@ -493,7 +493,7 @@ public class LightFacebook {
 
                         if (error != null) {
                             Log.d("LIGHTNING", "error: " + error);
-                            LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, error.getErrorMessage()));
+                            Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, error.getErrorMessage()));
                         } else {
                             String json = null;
 
@@ -506,12 +506,12 @@ public class LightFacebook {
                             Log.d("LIGHTNING", "json " + json);
 
                             if (json == null) {
-                                LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, "something wrong with graphrequest response (not json object, not json objects list)"));
+                                Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, "something wrong with graphrequest response (not json object, not json objects list)"));
                             } else {
-								LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(successCallback,json));
+								Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(successCallback,json));
                             }
 
-                            LightActivity.instance.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
+                            Lightning.activity.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
                         }
                     }
                 }).executeAsync();
@@ -524,7 +524,7 @@ public class LightFacebook {
     public static boolean sharePic(final String fname, final String text, final int success, final int fail) {
         if (session == null || !session.isOpened()) return false;
 
-        LightActivity.instance.runOnUiThread(new Runnable() {
+        Lightning.activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 com.facebook.Request req = com.facebook.Request.newUploadPhotoRequest(session, android.graphics.BitmapFactory.decodeFile(fname), new com.facebook.Request.Callback() {
@@ -534,7 +534,7 @@ public class LightFacebook {
 
                         if (error != null) {
                             Log.d("LIGHTNING", "error: " + error);
-                            LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(fail, error.getErrorMessage()));
+                            Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(fail, error.getErrorMessage()));
                         } else {
                             String json = null;
 
@@ -547,12 +547,12 @@ public class LightFacebook {
                             Log.d("LIGHTNING", "json " + json);
 
                             if (json == null) {
-                                LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(fail, "something wrong with graphrequest response (not json object, not json objects list)"));
+                                Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(fail, "something wrong with graphrequest response (not json object, not json objects list)"));
                             } else {
-                                LightActivity.instance.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(success,json));
+                                Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(success,json));
                             }
 
-                            LightActivity.instance.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(success, fail));
+                            Lightning.activity.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(success, fail));
                         }
                     }
                 });
@@ -566,7 +566,7 @@ public class LightFacebook {
     }
 
 /*    public static boolean sharePicUsingNativeApp(String fname, String text) {
-        Context cntxt = LightActivity.instance.getApplicationContext();
+        Context cntxt = Lightning.activity.getApplicationContext();
         PackageManager pm = cntxt.getPackageManager();
 
         for (PackageInfo pi : pm.getInstalledPackages(0)) {
@@ -590,7 +590,7 @@ public class LightFacebook {
 
     public static void share(String text, String link, String picUrl, final int success, final int fail) {
         try {
-            com.facebook.widget.FacebookDialog.ShareDialogBuilder bldr = new com.facebook.widget.FacebookDialog.ShareDialogBuilder(LightActivity.instance, appId);
+            com.facebook.widget.FacebookDialog.ShareDialogBuilder bldr = new com.facebook.widget.FacebookDialog.ShareDialogBuilder(Lightning.activity, appId);
 
             if (text != null) bldr.setName(text);
             if (link != null) bldr.setLink(link);
@@ -611,7 +611,7 @@ public class LightFacebook {
 
                 if (helper == null) {
                     helper = new UiLifecycleHelper(callback);
-                    LightActivity.instance.addUiLifecycleHelper(helper);
+                    Lightning.activity.addUiLifecycleHelper(helper);
                 } else {
                     helper.callback = callback;
                 }

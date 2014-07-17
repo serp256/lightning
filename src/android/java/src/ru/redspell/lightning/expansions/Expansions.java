@@ -17,6 +17,7 @@ import android.os.Messenger;
 import ru.redspell.lightning.expansions.DownloadService;
 import ru.redspell.lightning.expansions.XAPKFile;
 
+import ru.redspell.lightning.v2.Lightning;
 import ru.redspell.lightning.utils.Log;
 
 public class Expansions {

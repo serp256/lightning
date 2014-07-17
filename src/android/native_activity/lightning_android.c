@@ -45,3 +45,58 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_disableTouches(JN
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_enableTouches(JNIEnv *env, jclass this) {
     engine.touches_disabled = 0;
 }
+
+void lightning_set_referer(const char *ctype, jstring jnid) {
+    CAMLparam0();
+    CAMLlocal2(vtype,vnid);
+
+    vtype = caml_copy_string(ctype);
+    JSTRING_TO_VAL(jnid, vnid);
+    set_referrer_ml(vtype, vnid);
+
+    CAMLreturn0;    
+}
+
+void lightning_convert_intent(void *data) {
+    jobject intent = (jobject)data;
+    static jclass intent_cls = NULL;
+    static jclass bundle_cls = NULL;
+    static jmethodID getextras_mid;
+    static jmethodID getstring_mid;
+
+    if (!intent_cls) {
+        intent_cls = engine_find_class("android/content/Intent");
+        bundle_cls = engine_find_class("android/os/Bundle");
+        getextras_mid = (*ML_ENV)->GetMethodID(ML_ENV, intent_cls, "getExtras", "()Landroid/os/Bundle;");
+        getstring_mid = (*ML_ENV)->GetMethodID(ML_ENV, bundle_cls, "getString", "(Ljava/lang/String;)Ljava/lang/String;");
+    }
+
+    jobject extras = (*ML_ENV)->CallObjectMethod(ML_ENV, intent, getextras_mid);
+    if (extras) {
+        jstring key = (*ML_ENV)->NewStringUTF(ML_ENV, "localNotification");
+        jstring nid = (*ML_ENV)->CallObjectMethod(ML_ENV, extras, getstring_mid, key);
+
+        if (nid) {
+            lightning_set_referer("local", nid);
+            (*ML_ENV)->DeleteLocalRef(ML_ENV, key);
+            (*ML_ENV)->DeleteLocalRef(ML_ENV, nid);
+        } else {
+            (*ML_ENV)->DeleteLocalRef(ML_ENV, key);
+            key = (*ML_ENV)->NewStringUTF(ML_ENV, "remoteNotification");
+            nid = (*ML_ENV)->CallObjectMethod(ML_ENV, extras, getstring_mid, key);
+
+            if (nid) {
+                lightning_set_referer("remote", nid);
+                (*ML_ENV)->DeleteLocalRef(ML_ENV, nid);
+            }
+
+            (*ML_ENV)->DeleteLocalRef(ML_ENV, key);
+        }
+
+        (*ML_ENV)->DeleteLocalRef(ML_ENV, extras);
+    }
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_convertIntent(JNIEnv *env, jclass this, jobject intent) {
+    RUN_ON_ML_THREAD(&lightning_convert_intent, (void*)(*env)->NewGlobalRef(env, intent));
+}

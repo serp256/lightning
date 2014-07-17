@@ -774,7 +774,7 @@ JNIEXPORT jstring JNICALL Java_ru_redspell_lightning_LightView_glExts(JNIEnv *en
 	return (*env)->NewStringUTF(env, exts);
 }
 
-value ml_showUrl(value v_url) {
+/*value ml_showUrl(value v_url) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
@@ -787,7 +787,7 @@ value ml_showUrl(value v_url) {
 	(*env)->CallVoidMethod(env, jView, mid, j_url);
 	(*env)->DeleteLocalRef(env, j_url);
 	return Val_unit;
-}
+}*/
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024ExpansionsCompleteCallbackRunnable_run(JNIEnv *env, jobject this) {
     caml_callback(*caml_named_value("expansionsComplete"), Val_unit); 

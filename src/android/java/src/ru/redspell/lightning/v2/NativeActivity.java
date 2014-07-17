@@ -104,4 +104,9 @@ public class NativeActivity extends android.app.NativeActivity {
 			h.onDestroy();
 		}
 	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		Lightning.convertIntent(intent);
+	}	
 }

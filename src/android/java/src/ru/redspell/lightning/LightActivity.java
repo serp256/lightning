@@ -38,6 +38,8 @@ import android.content.res.Configuration;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import 	com.google.android.gms.common.ConnectionResult;
 
+import ru.redspell.lightning.v2.IUiLifecycleHelper;
+
 // import ru.redspell.lightning.payments.google.LightGooglePayments;
 
 /*import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
@@ -49,7 +51,7 @@ import com.google.android.gms.common.Scopes;*/
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class LightActivity extends Activity implements IDownloaderClient/*, ConnectionCallbacks, OnConnectionFailedListener */{
+public class LightActivity extends Activity /*implements IDownloaderClient, ConnectionCallbacks, OnConnectionFailedListener */{
 	public class MarketType {
 		public static final String GOOGLE = "google";
 		public static final String AMAZON = "amazon";
@@ -163,7 +165,7 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 
 
-	public void onServiceConnected(Messenger m) {
+/*	public void onServiceConnected(Messenger m) {
 		Log.d(LOG_TAG, "onServiceConnected call");
 		mRemoteService = DownloaderServiceMarshaller.CreateProxy(m);
 		mRemoteService.onClientUpdated(mDownloaderClientStub.getMessenger());		
@@ -196,12 +198,12 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 
 		    default: break;
 		}
-	}
+	}*/
 
-	public void onDownloadProgress(DownloadProgressInfo progress) {
+/*	public void onDownloadProgress(DownloadProgressInfo progress) {
 		Log.d(LOG_TAG, "onDownloadProgress call " + progress.mOverallTotal + " " + progress.mOverallProgress + " " + progress.mTimeRemaining);
 		lightView.expansionsProgress(progress.mOverallTotal, progress.mOverallProgress, progress.mTimeRemaining);
-	}
+	}*/
 
 	@Override
 	protected void onStart() {

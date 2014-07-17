@@ -1,6 +1,7 @@
 package ru.redspell.lightning.v2;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -105,9 +106,19 @@ public class Lightning {
     public static native NativeActivity activity();
     public static native void disableTouches();
     public static native void enableTouches();
+    public static native void convertIntent(Intent intent);
 
     public static void init() {
     	activity = activity();
+    }
+
+    public static void showUrl(final String url) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                (new UrlDialog(activity, url)).show();
+            }
+        });
     }
 
     static {

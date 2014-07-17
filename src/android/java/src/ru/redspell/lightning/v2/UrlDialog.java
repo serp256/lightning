@@ -1,4 +1,4 @@
-package ru.redspell.lightning;
+package ru.redspell.lightning.v2;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.net.MalformedURLException;
 
-public class LightUrlDialog extends Dialog {
+public class UrlDialog extends Dialog {
     static final FrameLayout.LayoutParams FILL = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT);
 
     private String mUrl;
@@ -33,7 +33,7 @@ public class LightUrlDialog extends Dialog {
     private WebView mWebView;
     private FrameLayout mContent;
 
-    public LightUrlDialog(Context context, String url) {
+    public UrlDialog(Context context, String url) {
         super(context, android.R.style.Theme_Translucent_NoTitleBar);
         mUrl = url;
     }
@@ -83,10 +83,10 @@ public class LightUrlDialog extends Dialog {
             public void onClick(View v) {
                 // mListener.onCancel();
                 // OAuthDialog.this.close();
-                LightUrlDialog.this.dismiss();
+                UrlDialog.this.dismiss();
             }
         });
-        Drawable crossDrawable = getContext().getResources().getDrawable(R.drawable.close);
+        Drawable crossDrawable = getContext().getResources().getDrawable(ru.redspell.lightning.R.drawable.close);
         mCrossImage.setImageDrawable(crossDrawable);
         /* 'x' should not be visible while webview is loading
          * make it visible only after webview has fully loaded
@@ -99,7 +99,7 @@ public class LightUrlDialog extends Dialog {
         mWebView = new WebView(getContext());
         mWebView.setVerticalScrollBarEnabled(false);
         mWebView.setHorizontalScrollBarEnabled(false);
-        mWebView.setWebViewClient(new LightUrlDialog.WebViewClient());
+        mWebView.setWebViewClient(new UrlDialog.WebViewClient());
         mWebView.getSettings().setJavaScriptEnabled(true);
         mWebView.loadUrl(mUrl);
         mWebView.setLayoutParams(FILL);
@@ -125,7 +125,7 @@ public class LightUrlDialog extends Dialog {
             Log.d("LIGHTNING", "onReceivedError");
 
             super.onReceivedError(view, errorCode, description, failingUrl);
-            LightUrlDialog.this.dismiss();
+            UrlDialog.this.dismiss();
         }
 
         @Override
