@@ -547,7 +547,7 @@ JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightRenderer_handleBack(J
 }
 
 
-value ml_getVersion() {
+/*value ml_getVersion() {
 	CAMLparam0();
 	CAMLlocal1(version);
 	JNIEnv *env;
@@ -561,7 +561,7 @@ value ml_getVersion() {
 	(*env)->ReleaseStringUTFChars(env, jver, cver);
 	(*env)->DeleteLocalRef(env, jver);
 	CAMLreturn(version);
-}
+}*/
 
 
 

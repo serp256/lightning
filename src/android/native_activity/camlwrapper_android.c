@@ -131,3 +131,15 @@ value ml_getStoragePath() {
 
 	return vpath;
 }
+
+value ml_getVersion() {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getVersion", "()Ljava/lang/String;");
+
+	value vver;
+	jstring jver = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	JSTRING_TO_VAL(jver, vver);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jver);
+
+	return vver;
+}

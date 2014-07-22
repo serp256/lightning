@@ -191,6 +191,17 @@ public class Lightning {
         return activity.getFilesDir().getPath();
     }
 
+    public static String getVersion() {
+        String retval;
+        try {
+            retval = Integer.toString(activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionCode);
+        } catch (PackageManager.NameNotFoundException e) {
+            retval = "unknown";
+        }
+
+        return retval;
+    }    
+
     static {
         System.loadLibrary("test");
     }    
