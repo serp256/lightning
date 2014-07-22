@@ -1,5 +1,6 @@
 package ru.redspell.lightning.v2;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -246,6 +247,30 @@ public class Lightning {
 
     public static String hwmodel() {
         return android.os.Build.MODEL;
+    }
+
+    private static ProgressDialog progressDialog;
+
+    public static void showNativeWait(final String message) {
+        if (progressDialog != null) progressDialog.dismiss();
+
+        activity.runOnUiThread(
+            new Runnable() {
+                @Override
+                public void run() {
+                    progressDialog = new ProgressDialog(activity);
+                    progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                    progressDialog.setIndeterminate(true);
+                    progressDialog.setCancelable(false);
+                    if (message != null) progressDialog.setMessage(message);
+                    progressDialog.show();
+                }
+            }
+        );
+    }
+
+    public static void hideNativeWait() {
+        if (progressDialog != null) progressDialog.dismiss();
     }
 
     public static long totalMemory() {

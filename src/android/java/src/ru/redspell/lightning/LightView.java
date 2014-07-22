@@ -1053,7 +1053,7 @@ public class LightView extends GLSurfaceView {
 	}
 */
 
-	public static String platform() {
+/*	public static String platform() {
 		return android.os.Build.VERSION.RELEASE;
 	}
 
@@ -1083,7 +1083,7 @@ public class LightView extends GLSurfaceView {
 		}
 
 		return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
-	}	
+	}*/	
 
 	public static native String glExts();
 
@@ -1129,7 +1129,7 @@ public class LightView extends GLSurfaceView {
 	}*/
 
 
-	private ProgressDialog progressDialog;
+/*	private ProgressDialog progressDialog;
 
 	public void showNativeWait(final String message) {
 		if (progressDialog != null) progressDialog.dismiss();
@@ -1148,9 +1148,9 @@ public class LightView extends GLSurfaceView {
 
 	public void hideNativeWait() {
 		if (progressDialog != null) progressDialog.dismiss();
-	}
+	}*/
 
-	public void fireNativeEvent(final String data){
+/*	public void fireNativeEvent(final String data){
 		queueEvent(new Runnable() {
 			@Override
 			public void run() {
@@ -1166,7 +1166,7 @@ public class LightView extends GLSurfaceView {
 				activity.onLightEvent(event_key);
 			}
 		});
-	};
+	};*/
 
 /*	public void vibrate(final int time) {
 		Log.d("LIGHTNING","JAVA VIBRATE CALLED");

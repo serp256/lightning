@@ -169,8 +169,8 @@ value getOldUDID () = "PC_UDID";
 ENDPLATFORM;
 
 IFPLATFORM(ios android)
-external showNativeWait: ?message:string -> unit -> unit = "ml_show_nativeWait";
-external hideNativeWait: unit -> unit = "ml_hide_nativeWait";
+external showNativeWait: ?message:string -> unit -> unit = "ml_showNativeWait";
+external hideNativeWait: unit -> unit = "ml_hideNativeWait";
 ELSE
 value showNativeWait ?message () = ();
 value hideNativeWait () = ();

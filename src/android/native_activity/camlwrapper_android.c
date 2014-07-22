@@ -202,3 +202,71 @@ value ml_totalMemory() {
 
 	return Val_long(jtotalmem);
 }
+
+value ml_showNativeWait(value vmsg) {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "showNativeWait", "(Ljava/lang/String;)V");
+
+	jstring jmsg = NULL;
+	if (Is_block(vmsg)) VAL_TO_JSTRING(Field(vmsg,0), jmsg);
+
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid, jmsg);
+	if (jmsg) (*ML_ENV)->DeleteLocalRef(ML_ENV, jmsg);
+
+	return Val_unit;
+}
+
+value ml_hideNativeWait(value p) {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "hideNativeWait", "()V");
+
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
+
+	return Val_unit;
+}
+
+value ml_fire_lightning_event(value event_key) {
+	return Val_unit;
+}
+
+value ml_str_to_lower(value vsrc) {
+	CAMLparam1(vsrc);
+	CAMLlocal1(vdst);
+
+	static jmethodID mid = 0;
+	if (!mid) {
+		jclass cls = engine_find_class("java/lang/String");
+		mid = (*ML_ENV)->GetMethodID(ML_ENV, cls, "toLowerCase", "()Ljava/lang/String;");
+	}
+
+	jstring jsrc;
+	VAL_TO_JSTRING(vsrc, jsrc);
+	jstring jdst = (*ML_ENV)->CallObjectMethod(ML_ENV, jsrc, mid);
+	JSTRING_TO_VAL(jdst, vdst);
+
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jsrc);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jdst);	
+
+	CAMLreturn(vdst);
+}
+
+value ml_str_to_upper(value vsrc) {
+	CAMLparam1(vsrc);
+	CAMLlocal1(vdst);
+
+	static jmethodID mid = 0;
+	if (!mid) {
+		jclass cls = engine_find_class("java/lang/String");
+		mid = (*ML_ENV)->GetMethodID(ML_ENV, cls, "toUpperCase", "()Ljava/lang/String;");
+	}
+
+	jstring jsrc;
+	VAL_TO_JSTRING(vsrc, jsrc);
+	jstring jdst = (*ML_ENV)->CallObjectMethod(ML_ENV, jsrc, mid);
+	JSTRING_TO_VAL(jdst, vdst);
+
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jsrc);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jdst);	
+
+	CAMLreturn(vdst);
+}
