@@ -159,7 +159,7 @@ public class LightView extends GLSurfaceView {
 	}
 */
 
-	public boolean isTablet () {
+/*	public boolean isTablet () {
 			
 			Log.d("LIGHTNING", "widthPixels " + displayMetrics.widthPixels + " xhdpi " + displayMetrics.xdpi );
 	    float width = displayMetrics.widthPixels / displayMetrics.xdpi;
@@ -171,7 +171,7 @@ public class LightView extends GLSurfaceView {
 	    double screenDiagonal = Math.sqrt(width * width + height * height);
 			Log.d("LIGHTNING", "diagonal=" + screenDiagonal);
 	    return (screenDiagonal >= 6);
-	}
+	}*/
 
 	// public int getScreenWidth() {
 	// 	return displayMetrics.widthPixels;

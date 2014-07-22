@@ -647,7 +647,7 @@ value ml_getMACID(value unit) {
 	CAMLreturn(andrScreen);
 }*/
 
-value ml_getDeviceType(value unit) {
+/*value ml_getDeviceType(value unit) {
 	DEBUGF("ML_DEVICE_TYPE");
 	CAMLparam0();
 	CAMLlocal1(retval);
@@ -664,7 +664,7 @@ value ml_getDeviceType(value unit) {
 	};
 	//(*env)->DeleteLocalRef(env, jres);
 	CAMLreturn(retval);
-}
+}*/
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_LightView_00024CamlFailwithRunnable_run(JNIEnv *env, jobject this) {
 	static jfieldID errMesFid;

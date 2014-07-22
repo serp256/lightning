@@ -162,3 +162,10 @@ value ml_androidScreen() {
 
 	return vscreen;
 }
+
+value ml_getDeviceType() {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "isTablet", "()Z");
+
+	return (*ML_ENV)->CallStaticBooleanMethod(ML_ENV, lightning_cls, mid) == JNI_TRUE ? Val_true : Val_false;
+}

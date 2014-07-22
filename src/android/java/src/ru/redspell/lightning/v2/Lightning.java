@@ -10,6 +10,8 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.net.Uri;
 import android.os.Vibrator;
+import android.util.DisplayMetrics;
+import android.view.Display;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -224,6 +226,18 @@ public class Lightning {
         if (density.contentEquals("xxhdpi")) return 6;
 
         return 0;
+    }
+
+    public static boolean isTablet() {
+        Display display = activity.getWindowManager().getDefaultDisplay();
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        display.getMetrics(displayMetrics);
+
+        float width = displayMetrics.widthPixels / displayMetrics.xdpi;
+        float height = displayMetrics.heightPixels / displayMetrics.ydpi;
+        double screenDiagonal = Math.sqrt(width * width + height * height);
+
+        return (screenDiagonal >= 6);
     }
 
     static {
