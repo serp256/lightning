@@ -11,6 +11,7 @@ import android.graphics.Bitmap.Config;
 import android.net.Uri;
 import android.os.Vibrator;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Locale;;
 
@@ -178,6 +179,16 @@ public class Lightning {
 
     public static String getLocale() {
         return Locale.getDefault().getLanguage();
+    }
+
+    public static String getInternalStoragePath () {
+        return activity.getFilesDir().getPath();
+    }
+
+    public static String getStoragePath() {
+        File storageDir = activity.getExternalFilesDir(null);
+        if (storageDir != null) return storageDir.getPath();
+        return activity.getFilesDir().getPath();
     }
 
     static {

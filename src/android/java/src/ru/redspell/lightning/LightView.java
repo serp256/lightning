@@ -776,11 +776,11 @@ public class LightView extends GLSurfaceView {
 		c.startActivity(sendIntent);
 	}*/
 
-  public String mlGetLocale () {
+/*  public String mlGetLocale () {
 		return Locale.getDefault().getLanguage();
-	}
+	}*/
 
-  public String mlGetInternalStoragePath () {
+/*  public String mlGetInternalStoragePath () {
 		Log.d("LIGHTNING", "LightView: mlgetStoragePath");
 		return getContext().getFilesDir().getPath(); // FIXME: try to search external path first
 	}
@@ -790,7 +790,7 @@ public class LightView extends GLSurfaceView {
 		File storageDir = getContext().getExternalFilesDir(null);
 		if (storageDir != null) return storageDir.getPath();
 		return getContext().getFilesDir().getPath();
-	}
+	}*/
 
 	public void onBackButton() {
 		queueEvent(new Runnable() {

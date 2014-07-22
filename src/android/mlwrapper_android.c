@@ -482,7 +482,7 @@ value ml_getLocale () {
 	// return v_locale;
 }*/
 
-value ml_getInternalStoragePath () {
+/*value ml_getInternalStoragePath () {
 
 	PRINT_DEBUG("GET INTERNAL STORAGE PATH");
 	CAMLparam0();
@@ -501,9 +501,9 @@ value ml_getInternalStoragePath () {
 
 
 	CAMLreturn(r);
-}
+}*/
 
-value ml_getStoragePath () {
+/*value ml_getStoragePath () {
 
 	CAMLparam0();
 	CAMLlocal1(r);
@@ -523,7 +523,7 @@ value ml_getStoragePath () {
 
 
 	CAMLreturn(r);
-}
+}*/
 
 
 

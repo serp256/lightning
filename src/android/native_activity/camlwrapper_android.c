@@ -107,3 +107,27 @@ value ml_getLocale () {
 	free(clocale);
 	return vlocale;
 }
+
+value ml_getInternalStoragePath() {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getInternalStoragePath", "()Ljava/lang/String;");
+
+	value vpath;
+	jstring jpath = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	JSTRING_TO_VAL(jpath, vpath);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
+
+	return vpath;
+}
+
+value ml_getStoragePath() {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getStoragePath", "()Ljava/lang/String;");
+
+	value vpath;
+	jstring jpath = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	JSTRING_TO_VAL(jpath, vpath);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
+
+	return vpath;
+}
