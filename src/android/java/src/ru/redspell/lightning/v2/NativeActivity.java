@@ -108,5 +108,10 @@ public class NativeActivity extends android.app.NativeActivity {
 	@Override
 	protected void onNewIntent(Intent intent) {
 		Lightning.convertIntent(intent);
-	}	
+	}
+
+	@Override
+	public void onBackPressed() {
+		Lightning.onBackPressed();
+	}
 }

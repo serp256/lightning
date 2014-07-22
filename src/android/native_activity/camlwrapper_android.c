@@ -37,9 +37,7 @@ value ml_getOldUDID() {
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getOldUDID", "()Ljava/lang/String;");
 	
-	PRINT_DEBUG("1");
 	jstring judid = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
-	PRINT_DEBUG("2 %d", judid);
 	JSTRING_TO_VAL(judid, vudid);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, judid);
 

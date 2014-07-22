@@ -51,9 +51,6 @@ static int engine_init_display(engine_t engine) {
     EGLint const context_attrib_list[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
     surface = eglCreateWindowSurface(display, config, engine->app->window, NULL);
 
-    PRINT_DEBUG("surface == EGL_NO_SURFACE %d %x", surface == EGL_NO_SURFACE, eglGetError());
-    PRINT_DEBUG("engine_init_display engine->context == EGL_NO_CONTEXT %d", engine->context == EGL_NO_CONTEXT);
-
     context = engine->context == EGL_NO_CONTEXT 
         ? eglCreateContext(display, config, NULL, context_attrib_list)
         : engine->context;
@@ -74,7 +71,6 @@ static int engine_init_display(engine_t engine) {
     engine->state.angle = 0;
 
     if (!engine->stage) engine->stage = mlstage_create((float)w, (float)h);
-    PRINT_DEBUG("engine_init_display engine->animating = 1");
     engine->animating = 1;
 
     return 0;
@@ -98,7 +94,6 @@ static void engine_draw_frame(engine_t engine) {
         restore_default_viewport();
 
         if (mlstage_render(engine->stage)) {
-            PRINT_DEBUG("swap buffers");
             eglSwapBuffers(engine->display, engine->surface);    
         }
     }
@@ -282,7 +277,6 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             engine->app->savedStateSize = sizeof(struct saved_state);
             break;
         case APP_CMD_INIT_WINDOW:
-            PRINT_DEBUG("APP_CMD_INIT_WINDOW, %d", engine->app->window);
             if (engine->app->window != NULL) {
                 engine_init_display(engine);
                 engine_draw_frame(engine);
@@ -302,7 +296,6 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
                 ASensorEventQueue_disableSensor(engine->sensorEventQueue,
                         engine->accelerometerSensor);
             }
-            PRINT_DEBUG("APP_CMD_LOST_FOCUS engine->animating = 0");
             engine->animating = 0;
             engine_draw_frame(engine);
             break;
@@ -322,8 +315,6 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             }
 
         case APP_CMD_PAUSE:
-            PRINT_DEBUG("APP_CMD_PAUSE");
-
             if (engine->stage) {
                 if (!bg_handler) bg_handler = caml_hash_variant("dispatchBackgroundEv");
                 caml_callback2(caml_get_public_method(engine->stage->stage, bg_handler), engine->stage->stage, Val_unit);                
@@ -332,8 +323,6 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             break;
 
         case APP_CMD_RESUME:
-            PRINT_DEBUG("APP_CMD_RESUME");
-
             if (engine->stage) {
                 if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
                 caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
@@ -390,9 +379,7 @@ void android_main(struct android_app* state) {
 
         while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
                 (void**)&source)) >= 0) {
-
-            PRINT_DEBUG("2 %d", engine.animating);
-
+            
             if (source != NULL) {
                 source->process(state, source);
             }

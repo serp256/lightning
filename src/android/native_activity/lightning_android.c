@@ -31,8 +31,6 @@ void lightning_uncaught_exception(const char* exn, int bc, char** bv) {
 }
 
 void lightning_init() {
-    PRINT_DEBUG("1");
-
     lightning_cls = engine_find_class("ru/redspell/lightning/v2/Lightning");
     jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "init", "()V");
     (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
@@ -122,6 +120,20 @@ void lightning_convert_intent(void *data) {
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_convertIntent(JNIEnv *env, jclass this, jobject intent) {
     RUN_ON_ML_THREAD(&lightning_convert_intent, (void*)(*env)->NewGlobalRef(env, intent));
+}
+
+void lightning_on_backpressed(void *data) {
+    if (engine.stage) {
+        static value back_handler = 0;
+        if (!back_handler) back_handler = caml_hash_variant("dispatchBackPressedEv");
+        value res = caml_callback2(caml_get_public_method(engine.stage->stage, back_handler), engine.stage->stage, Val_unit);
+
+        if (Bool_val(res)) exit(0);
+    }    
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_onBackPressed(JNIEnv *env, jclass this) {
+    RUN_ON_ML_THREAD(&lightning_on_backpressed, NULL);
 }
 
 int getResourceFd(const char *path, resource *res) {

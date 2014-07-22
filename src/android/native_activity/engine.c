@@ -45,8 +45,6 @@ void engine_release() {
 }
 
 void engine_runonthread(uint8_t cmd, engine_runnablefunc_t func, void *data) {
-    PRINT_DEBUG("engine_runonthread call");
-
     engine_runnable_t *onmlthread = (engine_runnable_t*)malloc(sizeof(engine_runnable_t));
     onmlthread->func = func;
     onmlthread->data = data;

@@ -119,6 +119,7 @@ public class Lightning {
     public static native void disableTouches();
     public static native void enableTouches();
     public static native void convertIntent(Intent intent);
+    public static native void onBackPressed();
 
     public static void init() {
     	activity = activity();
