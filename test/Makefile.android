@@ -24,23 +24,25 @@ release: $(TARGET).so
 
 
 
+	#-cclib "-L../src/plugins/remote-notifications" ../src/plugins/remote-notifications/remote-notifications.cmxa \
+	#-cclib "-L../src/plugins/facebook" ../src/plugins/facebook/facebook.cmxa \
+	#-cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa \
+	#-cclib "-L../src/plugins/tapjoy" ../src/plugins/tapjoy/tapjoy.cmxa \
+	#-cclib "-L../src/plugins/chartboost" ../src/plugins/chartboost/chartboost.cmxa \
+	#-cclib "-L../src/plugins/flurry" ../src/plugins/flurry/flurry.cmxa \
+	#-cclib "-L../src/plugins/sponsorpay" ../src/plugins/sponsorpay/sponsorpay.cmxa \
+	#-cclib "-L../src/plugins/appflood" ../src/plugins/appflood/appflood.cmxa \
+	#-cclib "-L../src/plugins/supersonic" ../src/plugins/supersonic/supersonic.cmxa \
+	#-cclib "-L../src/plugins/twitter" ../src/plugins/twitter/twitter.cmxa \
+	#-cclib "-L../src/plugins/instagram" ../src/plugins/instagram/instagram.cmxa \
+	#-cclib "-L../src/plugins/whatsapp" ../src/plugins/whatsapp/whatsapp.cmxa \
+	#-cclib "-L../src/plugins/appsflyer" ../src/plugins/appsflyer/appsflyer.cmxa \
+	#-cclib "-L../src/plugins/vk" ../src/plugins/vk/NativeVk.cmxa \
+
+
 $(TARGET).so: $(CFILES) $(MLXFILES) $(TARGET).cmx
 	$(OCAMLOPT) -verbose -o test.so  -g  \
 	-I ../src ../src/lightning.cmxa \
-	-cclib "-L../src/plugins/remote-notifications" ../src/plugins/remote-notifications/remote-notifications.cmxa \
-	-cclib "-L../src/plugins/facebook" ../src/plugins/facebook/facebook.cmxa \
-	-cclib "-L../src/plugins/mobileapptracking"  ../src/plugins/mobileapptracking/mobileapptracking.cmxa \
-	-cclib "-L../src/plugins/tapjoy" ../src/plugins/tapjoy/tapjoy.cmxa \
-	-cclib "-L../src/plugins/chartboost" ../src/plugins/chartboost/chartboost.cmxa \
-	-cclib "-L../src/plugins/flurry" ../src/plugins/flurry/flurry.cmxa \
-	-cclib "-L../src/plugins/sponsorpay" ../src/plugins/sponsorpay/sponsorpay.cmxa \
-	-cclib "-L../src/plugins/appflood" ../src/plugins/appflood/appflood.cmxa \
-	-cclib "-L../src/plugins/supersonic" ../src/plugins/supersonic/supersonic.cmxa \
-	-cclib "-L../src/plugins/twitter" ../src/plugins/twitter/twitter.cmxa \
-	-cclib "-L../src/plugins/instagram" ../src/plugins/instagram/instagram.cmxa \
-	-cclib "-L../src/plugins/whatsapp" ../src/plugins/whatsapp/whatsapp.cmxa \
-	-cclib "-L../src/plugins/appsflyer" ../src/plugins/appsflyer/appsflyer.cmxa \
-	-cclib "-L../src/plugins/vk" ../src/plugins/vk/NativeVk.cmxa \
 	$(OAUTHX) $(SOCIALX) $(MLXFILES) $(CFILES) $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" \
 	-output-obj

@@ -28,11 +28,11 @@ extern JavaVM *gJavaVM;
 extern jobject jActivity;
 extern jobject jView;
 extern jclass jViewCls;
-extern mlstage *stage;
+// extern mlstage *stage;
 
 jobject jApplicationContext(JNIEnv *env);
 
-int getResourceFd(const char *path, resource *res);
+// int getResourceFd(const char *path, resource *res);
 
 //void ml_paymentsTest();
 value ml_openURL(value url);

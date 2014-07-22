@@ -363,11 +363,11 @@ public class LightView extends GLSurfaceView {
 				initView(width,height);
 				instance = this;
 			} else {
-				mlUncaughtException(err, new String[]{});
+				// mlUncaughtException(err, new String[]{});
 			}
 
 		} catch (java.io.IOException e) {
-			mlUncaughtException(e.getMessage(), new String[]{});
+			// mlUncaughtException(e.getMessage(), new String[]{});
 		}
 
 		setPreserveEGLContextOnPause(true);
@@ -750,7 +750,7 @@ public class LightView extends GLSurfaceView {
 		//openURL("mailto:".concat(supportEmail).concat("?subject=test&body=wtf"));
   }
 
-	public void mlUncaughtException(String exn,String[] bt) {
+/*	public void mlUncaughtException(String exn,String[] bt) {
 		Context c = getContext();
 		ApplicationInfo ai = c.getApplicationInfo ();
 		String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android, " + activity.getString(R.string.screen) + ", " + activity.getString(R.string.density) + ")";
@@ -774,7 +774,7 @@ public class LightView extends GLSurfaceView {
 		Intent sendIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(uri.toString ()));
 		sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		c.startActivity(sendIntent);
-	}
+	}*/
 
   public String mlGetLocale () {
 		return Locale.getDefault().getLanguage();

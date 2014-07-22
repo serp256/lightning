@@ -1,20 +1,43 @@
 #include "engine.h"
 #include "lightning_android.h"
-#include "mlwrapper_android.h"
+#include "mobile_res.h"
 
 #include <pthread.h>
+#include <fcntl.h>
+#include <errno.h>
 
 jclass lightning_cls;
+
+void lightning_uncaught_exception(const char* exn, int bc, char** bv) {
+    __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING", exn);
+    int i;
+
+    jobjectArray jbc = (*ML_ENV)->NewObjectArray(ML_ENV,bc,engine_find_class("java/lang/String"),NULL);
+
+    for (i = 0; i < bc; i++) {
+        if (bv[i]) {
+            __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",bv[i]);
+            jstring jbve = (*ML_ENV)->NewStringUTF(ML_ENV,bv[i]);
+            (*ML_ENV)->SetObjectArrayElement(ML_ENV,jbc,i,jbve);
+            (*ML_ENV)->DeleteLocalRef(ML_ENV,jbve);
+        };
+    };
+
+    // Need to send email with this error and backtrace
+    jstring jexn = (*ML_ENV)->NewStringUTF(ML_ENV,exn);
+    jmethodID mlUncExn = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "mlUncaughtException","(Ljava/lang/String;[Ljava/lang/String;)V");
+    (*ML_ENV)->CallStaticVoidMethod(ML_ENV,jView,mlUncExn,jexn,jbc);
+    (*ML_ENV)->DeleteLocalRef(ML_ENV,jbc);
+}
 
 void lightning_init() {
     PRINT_DEBUG("1");
 
     lightning_cls = engine_find_class("ru/redspell/lightning/v2/Lightning");
-    PRINT_DEBUG("2 %d", lightning_cls);
     jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "init", "()V");
-    PRINT_DEBUG("3");
     (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
-    PRINT_DEBUG("4");
+
+    uncaught_exception_callback = &lightning_uncaught_exception;
 }
 
 char *lightning_get_locale() {
@@ -99,4 +122,45 @@ void lightning_convert_intent(void *data) {
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_convertIntent(JNIEnv *env, jclass this, jobject intent) {
     RUN_ON_ML_THREAD(&lightning_convert_intent, (void*)(*env)->NewGlobalRef(env, intent));
+}
+
+int getResourceFd(const char *path, resource *res) {
+    offset_size_pair_t* os_pair;
+
+    if (!get_offset_size_pair(path, &os_pair)) {
+        int fd;
+
+#define GET_FD(path) if (!path) { \
+        PRINT_DEBUG("path '%s' is NULL", #path); \
+        return 0; \
+    } \
+    fd = open(path, O_RDONLY); \
+    if (fd < 0) { \
+        PRINT_DEBUG("failed to open path '%s' due to '%s'", path, strerror(errno)); \
+        return 0; \
+    }
+
+        if (os_pair->location == 0) {
+            GET_FD(engine.apk_path);
+        } else if (os_pair->location == 1) {
+            GET_FD(engine.patch_exp_path)
+        } else if (os_pair->location == 2) {
+            GET_FD(engine.main_exp_path)
+        } else {
+            char* extra_res_fname = get_extra_res_fname(os_pair->location);
+            if (!extra_res_fname) return 0;
+            GET_FD(extra_res_fname);
+        }
+
+#undef GET_FD        
+
+        lseek(fd, os_pair->offset, SEEK_SET);
+        res->fd = fd;
+        res->offset = os_pair->offset;
+        res->length = os_pair->size;
+
+        return 1;
+    }
+
+    return 0;
 }

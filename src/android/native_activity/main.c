@@ -11,7 +11,6 @@
 #include <sys/time.h>
 #include <math.h>
 
-#include "mlwrapper_android.h"
 #include "mobile_res.h"
 #include "main.h"
 #include "lightning_android.h"
@@ -35,10 +34,15 @@ static int engine_init_display(engine_t engine) {
     EGLConfig config;
     EGLSurface surface;
     EGLContext context;
+    EGLDisplay display;
 
-    EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (engine->display == EGL_NO_DISPLAY) {
+        display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        eglInitialize(display, 0, 0);
+    } else {
+        display = engine->display;
+    }
 
-    eglInitialize(display, 0, 0);
     eglChooseConfig(display, attribs, &config, 1, &numConfigs);
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
 
@@ -46,10 +50,16 @@ static int engine_init_display(engine_t engine) {
 
     EGLint const context_attrib_list[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
     surface = eglCreateWindowSurface(display, config, engine->app->window, NULL);
-    context = eglCreateContext(display, config, NULL, context_attrib_list);
+
+    PRINT_DEBUG("surface == EGL_NO_SURFACE %d %x", surface == EGL_NO_SURFACE, eglGetError());
+    PRINT_DEBUG("engine_init_display engine->context == EGL_NO_CONTEXT %d", engine->context == EGL_NO_CONTEXT);
+
+    context = engine->context == EGL_NO_CONTEXT 
+        ? eglCreateContext(display, config, NULL, context_attrib_list)
+        : engine->context;
 
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
-        LOGW("Unable to eglMakeCurrent");
+        LOGW("Unable to eglMakeCurrent %x", eglGetError());
         return -1;
     }
 
@@ -63,7 +73,8 @@ static int engine_init_display(engine_t engine) {
     engine->height = h;
     engine->state.angle = 0;
 
-    stage = mlstage_create((float)w, (float)h);
+    if (!engine->stage) engine->stage = mlstage_create((float)w, (float)h);
+    PRINT_DEBUG("engine_init_display engine->animating = 1");
     engine->animating = 1;
 
     return 0;
@@ -81,12 +92,13 @@ static void engine_draw_frame(engine_t engine) {
         last_draw_time = _now;
 
         net_run();
-        mlstage_advanceTime(stage, diff);
-        mlstage_preRender(stage);
+        mlstage_advanceTime(engine->stage, diff);
+        mlstage_preRender(engine->stage);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         restore_default_viewport();
 
-        if (mlstage_render(stage)) {
+        if (mlstage_render(engine->stage)) {
+            PRINT_DEBUG("swap buffers");
             eglSwapBuffers(engine->display, engine->surface);    
         }
     }
@@ -98,19 +110,15 @@ static void engine_draw_frame(engine_t engine) {
  * Tear down the EGL context currently associated with the display.
  */
 static void engine_term_display(engine_t engine) {
-    if (engine->display != EGL_NO_DISPLAY) {
+    if (engine->surface != EGL_NO_SURFACE) {
         eglMakeCurrent(engine->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        if (engine->context != EGL_NO_CONTEXT) {
-            eglDestroyContext(engine->display, engine->context);
-        }
+
         if (engine->surface != EGL_NO_SURFACE) {
             eglDestroySurface(engine->display, engine->surface);
         }
-        eglTerminate(engine->display);
     }
+    
     engine->animating = 0;
-    engine->display = EGL_NO_DISPLAY;
-    engine->context = EGL_NO_CONTEXT;
     engine->surface = EGL_NO_SURFACE;
 }
 
@@ -132,7 +140,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
         if (engine.touches_disabled) {
-            mlstage_cancelAllTouches(stage);
+            mlstage_cancelAllTouches(engine.stage);
             CAMLreturn(1);
         }
 
@@ -243,12 +251,12 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
                 break;
 
             case AMOTION_EVENT_ACTION_CANCEL:
-                mlstage_cancelAllTouches(stage);
+                mlstage_cancelAllTouches(engine.stage);
                 break;
         }
 
         if (process_touches) {
-            mlstage_processTouches(stage, vtouches);
+            mlstage_processTouches(engine.stage, vtouches);
         }
 
 #undef MAKE_TOUCH
@@ -265,6 +273,8 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 
 static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
     engine_t engine = (engine_t)app->userData;
+    static value bg_handler = 0, fg_handler = 0;
+
     switch (cmd) {
         case APP_CMD_SAVE_STATE:
             engine->app->savedState = malloc(sizeof(struct saved_state));
@@ -272,6 +282,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             engine->app->savedStateSize = sizeof(struct saved_state);
             break;
         case APP_CMD_INIT_WINDOW:
+            PRINT_DEBUG("APP_CMD_INIT_WINDOW, %d", engine->app->window);
             if (engine->app->window != NULL) {
                 engine_init_display(engine);
                 engine_draw_frame(engine);
@@ -291,6 +302,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
                 ASensorEventQueue_disableSensor(engine->sensorEventQueue,
                         engine->accelerometerSensor);
             }
+            PRINT_DEBUG("APP_CMD_LOST_FOCUS engine->animating = 0");
             engine->animating = 0;
             engine_draw_frame(engine);
             break;
@@ -308,6 +320,26 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 
                 break;                
             }
+
+        case APP_CMD_PAUSE:
+            PRINT_DEBUG("APP_CMD_PAUSE");
+
+            if (engine->stage) {
+                if (!bg_handler) bg_handler = caml_hash_variant("dispatchBackgroundEv");
+                caml_callback2(caml_get_public_method(engine->stage->stage, bg_handler), engine->stage->stage, Val_unit);                
+            }
+
+            break;
+
+        case APP_CMD_RESUME:
+            PRINT_DEBUG("APP_CMD_RESUME");
+
+            if (engine->stage) {
+                if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
+                caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
+            }
+
+            break;
 
     }
 }
@@ -358,6 +390,8 @@ void android_main(struct android_app* state) {
 
         while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
                 (void**)&source)) >= 0) {
+
+            PRINT_DEBUG("2 %d", engine.animating);
 
             if (source != NULL) {
                 source->process(state, source);

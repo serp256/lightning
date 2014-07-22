@@ -24,7 +24,7 @@ jobject jView = NULL;
 jclass jViewCls = NULL;
 
 static int ocaml_initialized = 0;
-mlstage *stage = NULL;
+// mlstage *stage = NULL;
 
 typedef enum 
   { 
@@ -33,7 +33,7 @@ typedef enum
     St_string_val, 
   } st_val_type;
 
-static void mlUncaughtException(const char* exn, int bc, char** bv) {
+/*static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",exn);
 	int i;
 	JNIEnv *env;
@@ -54,12 +54,12 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	(*env)->CallVoidMethod(env,jView,mlUncExn,jexn,jbc);
 	(*env)->DeleteLocalRef(env,jbc);
 	(*env)->DeleteLocalRef(env,jexn);
-}
+}*/
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
 	PRINT_DEBUG("JNI ON LOAD");
-	uncaught_exception_callback = &mlUncaughtException;
+	// uncaught_exception_callback = &mlUncaughtException;
 	gJavaVM = vm;
 	return JNI_VERSION_1_6; // Check this
 }
@@ -187,7 +187,7 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 	return NULL;
 }
 
-#define GET_FD(path)																	\
+/*#define GET_FD(path)																	\
 	if (!path) {																		\
 		PRINT_DEBUG("path '%s' is NULL", #path);										\
 		return 0;																		\
@@ -196,9 +196,9 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 	if (fd < 0) {																		\
 		PRINT_DEBUG("failed to open path '%s' due to '%s'", path, strerror(errno));		\
 		return 0;																		\
-	}																					\
+	}																					\*/
 
-int getResourceFd(const char *path, resource *res) {
+/*int getResourceFd(const char *path, resource *res) {
 	offset_size_pair_t* os_pair;
 
 	if (!get_offset_size_pair(path, &os_pair)) {
@@ -225,7 +225,7 @@ int getResourceFd(const char *path, resource *res) {
 	}
 
 	return 0;
-}
+}*/
 
 
 // получим параметры нах
@@ -252,7 +252,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 static int paused = 0;
 static int started = 0;
 
-JNIEXPORT void Java_ru_redspell_lightning_opengl_GLSurfaceView_00024GLThread_background(JNIEnv *env, jobject this) {
+/*JNIEXPORT void Java_ru_redspell_lightning_opengl_GLSurfaceView_00024GLThread_background(JNIEnv *env, jobject this) {
 	static value dispatchBgHandler = 1;
 
 	if (stage) {
@@ -274,7 +274,7 @@ JNIEXPORT void Java_ru_redspell_lightning_opengl_GLSurfaceView_00024GLThread_for
 		if (dispatchFgHandler == 1) dispatchFgHandler = caml_hash_variant("dispatchForegroundEv");
 		caml_callback2(caml_get_public_method(stage->stage, dispatchFgHandler), stage->stage, Val_unit);
 	}
-}
+}*/
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged");
@@ -284,7 +284,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 		return;
 	}
 
-	if (!stage) {
+/*	if (!stage) {
 		PRINT_DEBUG("create stage: [%d:%d]",width,height);
 		stage = mlstage_create((float)width,(float)height); 
 		PRINT_DEBUG("stage created");
@@ -305,13 +305,13 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 	CAMLlocal1(reason);
 	reason = caml_alloc_tuple(1);
 	Store_field(reason, 0, caml_copy_string("surface changed"));
-	caml_callback3(caml_get_public_method(stage->stage, caml_hash_variant("forceStageRender")), stage->stage, reason, Val_unit);
-	CAMLreturn0;
+	caml_callback3(caml_get_public_method(stage->stage, caml_hash_variant("forceStageRender")), stage->stage, reason, Val_unit);*/
+	// CAMLreturn0;
 }
 
 JNIEXPORT jint Java_ru_redspell_lightning_LightRenderer_nativeGetFrameRate(JNIEnv *env, jobject this) {
-	if (!stage) return 0;
-	return mlstage_getFrameRate(stage);
+/*	if (!stage) return 0;
+	return mlstage_getFrameRate(stage);*/
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceDestroyed(JNIEnv *env, jobject this) {
@@ -322,14 +322,14 @@ extern int net_running();
 extern void net_run();
 
  JNIEXPORT jboolean Java_ru_redspell_lightning_LightRenderer_nativeDrawFrame(JNIEnv *env, jobject thiz, jlong interval) {
-    CAMLparam0();
+/*    CAMLparam0();
 	net_run();
 	mlstage_advanceTime(stage, (double)interval / 1000000000L);
 	mlstage_preRender();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	restore_default_viewport();
 	uint8_t retval = mlstage_render(stage);
-    CAMLreturn(retval ? JNI_TRUE : JNI_FALSE);
+    CAMLreturn(retval ? JNI_TRUE : JNI_FALSE);*/
 }
 
 
@@ -353,7 +353,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireTouch(JNIEnv *env, j
 	touches = caml_alloc_small(2,0);
 	Field(touches,0) = touch;
 	Field(touches,1) = 1; // None
-  	mlstage_processTouches(stage,touches);
+  	// mlstage_processTouches(stage,touches);
 	CAMLreturn0;
 }
 
@@ -393,12 +393,12 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_fireTouches(JNIEnv *env,
 			touches = lst_el;
 		}
 	}
-  mlstage_processTouches(stage,touches);
+  // mlstage_processTouches(stage,touches);
 	CAMLreturn0;
 }
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_cancelAllTouches() {
-	mlstage_cancelAllTouches(stage);
+	// mlstage_cancelAllTouches(stage);
 }
 
 value ml_malinfo(value p) {
@@ -532,7 +532,7 @@ value ml_getStoragePath () {
 static value ml_dispatchBackHandler = 1;
 
 JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightRenderer_handleBack(JNIEnv *env, jobject this) {
-	if (stage) {
+/*	if (stage) {
 		if (ml_dispatchBackHandler == 1) {
 			ml_dispatchBackHandler = caml_hash_variant("dispatchBackPressedEv");
 		}
@@ -542,7 +542,7 @@ JNIEXPORT jboolean JNICALL Java_ru_redspell_lightning_LightRenderer_handleBack(J
 		PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleBack %d", Bool_val(res));
 
 		if (Bool_val(res)) exit(0);
-	}
+	}*/
 
 	return 1;
 }

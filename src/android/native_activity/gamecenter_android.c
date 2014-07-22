@@ -1,5 +1,3 @@
-
-// #include "mlwrapper_android.h"
 #include "lightning_android.h"
 #include "engine.h"
 

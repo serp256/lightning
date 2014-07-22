@@ -7,6 +7,7 @@
 #include <GLES2/gl2ext.h>
 #include <jni.h>
 #include "android_native_app_glue.h"
+#include "mlwrapper.h"
 
 #define RUN_ON_ML_THREAD(func, data) engine_runonthread(ENGINE_CMD_RUN_ON_ML_THREAD, func, data)
 #define RUN_ON_MAIN_THREAD(func, data) engine_runonthread(ENGINE_CMD_RUN_ON_MAIN_THREAD, func, data)
@@ -40,6 +41,7 @@ struct engine {
     char* main_exp_path;
     char* patch_exp_path;
     char* locale;
+    mlstage *stage;
 
     void *data; // pointer to any user data. for example, for transfering custom data from main thread to ml thread
     uint8_t touches_disabled;

@@ -1,7 +1,7 @@
+#include "lightning_android.h"
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
-
-#include "mlwrapper_android.h"
+#include <unistd.h>
 
 static SLObjectItf engineObject = NULL;
 static SLEngineItf engineEngine;

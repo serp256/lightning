@@ -242,6 +242,7 @@ class virtual c (_width:float) (_height:float) =
     (* used by all actual versions (pc, android, ios) *)
     method renderStage () =
       if renderNeeded
+      (* if True *)
       then
         let () = debug:forcerendereason "stage render" in
         proftimer(0.015):prof "renderStage %f" with
@@ -370,13 +371,13 @@ class virtual c (_width:float) (_height:float) =
 (*   method dispatchBackgroundEv () = self#dispatchEvent (Ev.create ev_BACKGROUND ());
   method dispatchForegroundEv () = self#dispatchEvent (Ev.create ev_FOREGROUND ()); *)
 
-  method dispatchBackgroundEv () =
-    (
-      self#forceStageRender ~reason:"background" ();
-      on_background ();
-    );
+  method dispatchBackgroundEv = on_background;
 
-  method dispatchForegroundEv = on_foreground;
+  method dispatchForegroundEv () =
+    (
+      self#forceStageRender ~reason:"foreground" ();
+      on_foreground ();
+    );
 
   method! boundsChanged () =
     (

@@ -10,11 +10,22 @@
 #include <caml/memory.h>
 #include <caml/alloc.h>
 
+#ifdef SILENT
+#define DEBUG(str) 
+#define DEBUGF(fmt,args...) 
+#else
+#define DEBUG(str) __android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING",str)
+#define DEBUGF(fmt,args...) __android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING",fmt, ## args)
+#endif
+
+#define NILL Val_int(0)
+#define NONE Val_int(0)
+
 extern jclass lightning_cls;
 
-void	lightning_init					();
-char*	lightning_get_locale			();
+void	lightning_init			();
+char*	lightning_get_locale	();
 
-JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_v2_Lightning_activity(JNIEnv *, jclass);
+int getResourceFd(const char *path, resource *res);
 
 #endif

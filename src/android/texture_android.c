@@ -8,12 +8,11 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 #include <caml/callback.h>
-#include "mlwrapper_android.h"
 #include "texture_load.h"
 #include "texture_pvr.h"
 #include "mlwrapper.h"
 #include <errno.h>
-
+#include "lightning_android.h"
 
 
 
