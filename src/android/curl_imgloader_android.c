@@ -144,7 +144,7 @@ static void* loader_thread(void* params) {
 	static jfieldID dataFid;
 	static jfieldID formatFid;
 
-	jmethodID decode_mid = (*env)->GetStaticMethodID(env, lightning_cls, "decodeImg", "([B)Lru/redspell/lightning/v2/Lightning$TexInfo;");
+	jmethodID decode_mid = (*env)->GetStaticMethodID(env, lightning_cls, "decodeImg", "([B)Lru/redspell/lightning/Lightning$TexInfo;");
 
 	while (1) {
 		cel_request_t* req = thqueue_cel_reqs_pop(reqs);

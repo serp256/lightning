@@ -1,4 +1,4 @@
-package ru.redspell.lightning.v2;
+package ru.redspell.lightning;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -24,8 +24,16 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.net.MalformedURLException;
 
-public class UrlDialog extends Dialog {
+public class OAuthDialog extends Dialog {
+
+    // static final int FB_BLUE = 0xFF6D84B4;
+    static final float[] DIMENSIONS_DIFF_LANDSCAPE = {20, 60};
+    static final float[] DIMENSIONS_DIFF_PORTRAIT = {40, 60};
     static final FrameLayout.LayoutParams FILL = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT);
+    static final int MARGIN = 4;
+    static final int PADDING = 2;
+    // static final String DISPLAY_STRING = "touch";
+    // static final String FB_ICON = "icon.png";
 
     private String mUrl;
     private ProgressDialog mSpinner;
@@ -33,13 +41,59 @@ public class UrlDialog extends Dialog {
     private WebView mWebView;
     private FrameLayout mContent;
 
-    public UrlDialog(Context context, String url) {
+    private String mRedirectUrlPath;
+    private Boolean mAuthorizing = false;
+
+/*    public interface UrlRunnable {
+        public void run(String url);
+    }
+
+    private static class DefaultDialogClosedRunnable implements UrlRunnable {
+        @Override
+        public native void run(String url);
+    }
+
+    private static class DefaultRedirectHandler implements UrlRunnable {
+        @Override
+        public native void run(String url);
+    }*/
+
+/*    public OAuthDialog(Context context, String url) {
+        this(context, url, new DefaultDialogClosedRunnable(), new DefaultRedirectHandler(), null);
+    }
+*/
+/*    private UrlRunnable closeHandler;
+    private UrlRunnable redirectHandler;*/
+
+    public native void onClose(String url);
+    public native void onRedirect(String url);
+
+    public OAuthDialog(Context context, String url, String redirectUrlPath) {
         super(context, android.R.style.Theme_Translucent_NoTitleBar);
+
+/*        this.closeHandler = closeHandler;
+        this.redirectHandler = redirectHandler;*/
+
         mUrl = url;
+
+        if (redirectUrlPath != null) {
+            mRedirectUrlPath = redirectUrlPath;
+        } else {
+            try {
+                Matcher m = Pattern.compile(".*redirect_uri=([^&]+).*").matcher((new URL(url)).getQuery());
+
+                if (m.matches ()) {
+                    mRedirectUrlPath = (new URL(java.net.URLDecoder.decode(m.group(1), "ASCII"))).getPath();
+                }
+            }
+            catch (MalformedURLException e) {}
+            catch (java.io.UnsupportedEncodingException e) {}            
+        }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("LIGHTNING", "onCreate");
         super.onCreate(savedInstanceState);
         mSpinner = new ProgressDialog(getContext());
         mSpinner.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -66,24 +120,15 @@ public class UrlDialog extends Dialog {
         mContent.addView(mCrossImage, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         addContentView(mContent, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
     }
-
-    @Override
-    public void dismiss() {
-        Log.d("LIGHTNING", "dismiss call");
-
-        mWebView.stopLoading();
-        super.dismiss();
-        mWebView.destroy();
-    }    
     
     private void createCrossImage() {
+        Log.d("LIGHTNING", "createCrossImage");
         mCrossImage = new ImageView(getContext());
         mCrossImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // mListener.onCancel();
-                // OAuthDialog.this.close();
-                UrlDialog.this.dismiss();
+                OAuthDialog.this.close();
             }
         });
         Drawable crossDrawable = getContext().getResources().getDrawable(ru.redspell.lightning.R.drawable.close);
@@ -95,11 +140,12 @@ public class UrlDialog extends Dialog {
     }
 
     private void setUpWebView(int margin) {
+        Log.d("LIGHTNING", "setUpWebView");
         LinearLayout webViewContainer = new LinearLayout(getContext());
         mWebView = new WebView(getContext());
         mWebView.setVerticalScrollBarEnabled(false);
         mWebView.setHorizontalScrollBarEnabled(false);
-        mWebView.setWebViewClient(new UrlDialog.WebViewClient());
+        mWebView.setWebViewClient(new OAuthDialog.WebViewClient());
         mWebView.getSettings().setJavaScriptEnabled(true);
         mWebView.loadUrl(mUrl);
         mWebView.setLayoutParams(FILL);
@@ -111,12 +157,42 @@ public class UrlDialog extends Dialog {
         mContent.addView(webViewContainer);
     }
 
-    private class WebViewClient extends android.webkit.WebViewClient {
-        private native void camlOauthRedirected(String url);
+    @Override
+    public void dismiss() {
+        Log.d("LIGHTNING", "dismiss call");
 
+        mWebView.stopLoading();        
+        super.dismiss();
+        mWebView.destroy();
+    }
+
+    public void close() {
+        Log.d("LIGHTNING", "close");
+        dismiss();
+/*        if (closeHandler != null) {
+            LightView.instance.queueEvent(new Runnable() { @Override public void run() { closeHandler.run(mRedirectUrlPath + "#error=access_denied"); }});
+        }*/
+        onClose(mRedirectUrlPath + "#error=access_denied");
+    }
+
+    private class WebViewClient extends android.webkit.WebViewClient {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.d("LIGHTNING", "shouldOverrideUrlLoading " + url);
+
+            try {
+                Log.d("LIGHTNING", "mRedirectUrlPath " + mRedirectUrlPath);
+                Log.d("LIGHTNING", "(new URL(url)).getPath() " + (new URL(url)).getPath());
+                if (mRedirectUrlPath != null && mRedirectUrlPath.contentEquals((new URL(url)).getPath())) {
+                    final String _url = new String(url);
+
+                    onRedirect(_url);
+                    mSpinner.dismiss();
+                    OAuthDialog.this.dismiss();
+                    return true;
+                }
+            } catch (MalformedURLException e) {}
+
             return false;
         }
 
@@ -125,7 +201,7 @@ public class UrlDialog extends Dialog {
             Log.d("LIGHTNING", "onReceivedError");
 
             super.onReceivedError(view, errorCode, description, failingUrl);
-            UrlDialog.this.dismiss();
+            OAuthDialog.this.dismiss();
         }
 
         @Override
@@ -145,6 +221,25 @@ public class UrlDialog extends Dialog {
             mContent.setBackgroundColor(Color.TRANSPARENT);
             mWebView.setVisibility(View.VISIBLE);
             mCrossImage.setVisibility(View.VISIBLE);
+
+
+
+    // if ([@"security breach" isEqualToString: content] || [@"<pre style=\"word-wrap: break-word; white-space: pre-wrap;\">{\"error\":\"invalid_request\",\"error_description\":\"Security Error\"}</pre>" isEqualToString: content] ) {
+    //     NSString * errorUrl = [NSString stringWithFormat: @"%@#error=access_denied", _redirectURIpath];
+    //     [[LightViewController sharedInstance] dismissModalViewControllerAnimated: NO];
+    //     caml_acquire_runtime_system();
+    //     value *mlf = (value*)caml_named_value("oauth_redirected");
+    //     if (mlf != NULL) {                                                                                                        
+    //         caml_callback(*mlf, caml_copy_string([errorUrl UTF8String]));
+    //     }
+    //     caml_release_runtime_system();
+    //     return;
+    // } else if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+    //     NSLog(@"345");
+
+    //     [self setViewportWidth: 540.0f];
+    // }
+
         }
     }
 }

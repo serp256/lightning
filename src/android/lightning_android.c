@@ -31,7 +31,7 @@ void lightning_uncaught_exception(const char* exn, int bc, char** bv) {
 }
 
 void lightning_init() {
-    lightning_cls = engine_find_class("ru/redspell/lightning/v2/Lightning");
+    lightning_cls = engine_find_class("ru/redspell/lightning/Lightning");
     jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "init", "()V");
     (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
 
@@ -55,15 +55,15 @@ char *lightning_get_locale() {
     return retval;
 }
 
-JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_v2_Lightning_activity(JNIEnv *env, jclass this) {
+JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_Lightning_activity(JNIEnv *env, jclass this) {
     return JAVA_ACTIVITY;
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_disableTouches(JNIEnv *env, jclass this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_Lightning_disableTouches(JNIEnv *env, jclass this) {
     engine.touches_disabled = 1;
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_enableTouches(JNIEnv *env, jclass this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_Lightning_enableTouches(JNIEnv *env, jclass this) {
     engine.touches_disabled = 0;
 }
 
@@ -118,7 +118,7 @@ void lightning_convert_intent(void *data) {
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_convertIntent(JNIEnv *env, jclass this, jobject intent) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_Lightning_convertIntent(JNIEnv *env, jclass this, jobject intent) {
     RUN_ON_ML_THREAD(&lightning_convert_intent, (void*)(*env)->NewGlobalRef(env, intent));
 }
 
@@ -132,7 +132,7 @@ void lightning_on_backpressed(void *data) {
     }    
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Lightning_onBackPressed(JNIEnv *env, jclass this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_Lightning_onBackPressed(JNIEnv *env, jclass this) {
     RUN_ON_ML_THREAD(&lightning_on_backpressed, NULL);
 }
 

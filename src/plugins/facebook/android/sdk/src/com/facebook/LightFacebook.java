@@ -18,7 +18,7 @@ import java.util.Iterator;
 import android.content.Intent;
 
 import ru.redspell.lightning.utils.Log;
-import ru.redspell.lightning.v2.Lightning;
+import ru.redspell.lightning.Lightning;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -104,7 +104,7 @@ public class LightFacebook {
         }
     };
 
-    private static class UiLifecycleHelper implements ru.redspell.lightning.v2.IUiLifecycleHelper {
+    private static class UiLifecycleHelper implements ru.redspell.lightning.IUiLifecycleHelper {
         private com.facebook.UiLifecycleHelper backend;
         public com.facebook.widget.FacebookDialog.Callback callback;
 
@@ -261,7 +261,7 @@ public class LightFacebook {
     public static void init(String appId) {
         LightFacebook.appId = appId;
 
-        Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.v2.IUiLifecycleHelper() {
+        Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
             public void onCreate(Bundle savedInstanceState) {}
             public void onResume() {}
 

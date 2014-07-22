@@ -13,8 +13,8 @@ import android.widget.TextView.OnEditorActionListener;
 import android.view.ViewGroup.LayoutParams;
 import android.text.ClipboardManager;
 
-import ru.redspell.lightning.v2.Lightning;
-import ru.redspell.lightning.v2.NativeActivity;
+import ru.redspell.lightning.Lightning;
+import ru.redspell.lightning.NativeActivity;
 import ru.redspell.lightning.utils.Log;
 
 public class Keyboard {

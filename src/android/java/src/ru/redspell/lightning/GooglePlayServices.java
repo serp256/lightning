@@ -1,4 +1,4 @@
-package ru.redspell.lightning.v2;
+package ru.redspell.lightning;
 
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.ConnectionResult;

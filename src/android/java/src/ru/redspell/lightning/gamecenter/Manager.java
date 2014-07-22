@@ -2,7 +2,7 @@ package ru.redspell.lightning.gamecenter;
 
 
 import ru.redspell.lightning.utils.Log;
-import ru.redspell.lightning.v2.IUiLifecycleHelper;
+import ru.redspell.lightning.IUiLifecycleHelper;
 
 
 public class Manager {

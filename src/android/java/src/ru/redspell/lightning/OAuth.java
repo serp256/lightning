@@ -1,4 +1,4 @@
-package ru.redspell.lightning.v2;
+package ru.redspell.lightning;
 
 public class OAuth {
 	public static void dialog(final String url) {

@@ -9,7 +9,7 @@ import android.provider.Settings.Secure;
 import android.provider.Settings;
 import android.os.Build;
 
-import ru.redspell.lightning.v2.Lightning;
+import ru.redspell.lightning.Lightning;
 
 public class UDID {
 	protected static final String PREFS_FILE = "device_id.xml";

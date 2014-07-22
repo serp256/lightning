@@ -106,7 +106,7 @@ public class LightVk {
 		public void onRenewAccessToken(VKAccessToken token) {}			
 	}
 
-	private static class UiLifecycleHelper implements ru.redspell.lightning.v2.IUiLifecycleHelper {
+	private static class UiLifecycleHelper implements ru.redspell.lightning.IUiLifecycleHelper {
 		public void onCreate(Bundle savedInstanceState) {};
 
 		public void onResume() {

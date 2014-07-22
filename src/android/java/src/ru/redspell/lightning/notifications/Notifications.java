@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import ru.redspell.lightning.v2.Lightning;
+import ru.redspell.lightning.Lightning;
 import ru.redspell.lightning.utils.Log;
 
 public class Notifications {

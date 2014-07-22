@@ -1,6 +1,6 @@
 package ru.redspell.lightning.payments.google;
 
-import ru.redspell.lightning.v2.Lightning;
+import ru.redspell.lightning.Lightning;
 
 import android.app.PendingIntent;
 import android.app.Activity;
@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import org.json.JSONObject;
-import ru.redspell.lightning.v2.IUiLifecycleHelper;
+import ru.redspell.lightning.IUiLifecycleHelper;
 
 public class Payments {
     public static final int BILLING_RESPONSE_RESULT_OK = 0;

@@ -5,7 +5,7 @@
         android:versionName="3.0">
 
     <application android:label="Lightning Native" android:icon="@drawable/icon">
-        <activity android:name="ru.redspell.lightning.v2.NativeActivity"
+        <activity android:name="ru.redspell.lightning.NativeActivity"
                 android:screenOrientation="landscape"
                 android:label="Lightning Native"
                 android:configChanges="orientation|keyboardHidden">

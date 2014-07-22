@@ -10,11 +10,11 @@ import android.content.Intent;
 
 import ru.redspell.lightning.utils.Log;
 
-import ru.redspell.lightning.v2.IUiLifecycleHelper;
+import ru.redspell.lightning.IUiLifecycleHelper;
 import com.google.android.gms.games.GamesActivityResultCodes;
 
 
-import ru.redspell.lightning.v2.Lightning;
+import ru.redspell.lightning.Lightning;
 
 public class Google implements GameCenter,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener {
 

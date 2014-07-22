@@ -43,18 +43,18 @@ void expansions_progress(void *data) {
 	CAMLreturn0;
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Expansions_00024DownloaderClient_success(JNIEnv *env, jobject this) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_v2_Expansions_00024DownloaderClient_success");
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_Expansions_00024DownloaderClient_success(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_Expansions_00024DownloaderClient_success");
 	RUN_ON_ML_THREAD(&expansions_success, NULL);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Expansions_00024DownloaderClient_fail(JNIEnv *env, jobject this, jstring reason) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_v2_Expansions_00024DownloaderClient_fail");
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_Expansions_00024DownloaderClient_fail(JNIEnv *env, jobject this, jstring reason) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_Expansions_00024DownloaderClient_fail");
 	RUN_ON_ML_THREAD(&expansions_fail, (void*)(*env)->NewGlobalRef(env, reason));
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_v2_Expansions_00024DownloaderClient_progress(JNIEnv *env, jobject this, jlong jtotal, jlong jprogress, jlong jtime) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_v2_Expansions_00024DownloaderClient_progress");
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_Expansions_00024DownloaderClient_progress(JNIEnv *env, jobject this, jlong jtotal, jlong jprogress, jlong jtime) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_Expansions_00024DownloaderClient_progress");
 
 	jlong *p = (jlong*)malloc(sizeof(jlong) * 3);
 	p[0] = jtotal;

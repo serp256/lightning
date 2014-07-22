@@ -14,12 +14,12 @@ import com.amazon.ags.api.achievements.*;
 //import com.amazon.ags.api.profiles;
 
 import ru.redspell.lightning.utils.Log;
-import ru.redspell.lightning.v2.IUiLifecycleHelper;
+import ru.redspell.lightning.IUiLifecycleHelper;
 
 import java.util.EnumSet;
 import java.lang.Enum;
 
-import ru.redspell.lightning.v2.Lightning;
+import ru.redspell.lightning.Lightning;
 
 public class Amazon implements GameCenter,AmazonGamesCallback {
 

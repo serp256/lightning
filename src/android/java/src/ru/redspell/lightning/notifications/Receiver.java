@@ -29,7 +29,7 @@ public class Receiver extends BroadcastReceiver {
 
         Notifications.unlogNotification(context, nid, intntExtras.getDouble(Notifications.NOTIFICATION_FIREDATE), message);
 
-        if (ru.redspell.lightning.v2.Lightning.activity.isRunning) return;
+        if (ru.redspell.lightning.Lightning.activity.isRunning) return;
 
         if (message != null) {
             Notifications.showNotification(context, nid, title, message);
