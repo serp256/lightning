@@ -433,7 +433,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_cancelAllTouches() {
 	return Val_unit;
 }*/
 
-value ml_addExceptionInfo (value info){
+/*value ml_addExceptionInfo (value info){
   	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
@@ -444,9 +444,9 @@ value ml_addExceptionInfo (value info){
 
 	(*env)->DeleteLocalRef(env, jinfo);
 	return Val_unit;
-}
+}*/
 
-value ml_setSupportEmail (value d){
+/*value ml_setSupportEmail (value d){
   JNIEnv *env;
 	DEBUG("DDD: set support email");
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
@@ -458,7 +458,7 @@ value ml_setSupportEmail (value d){
 
 	(*env)->DeleteLocalRef(env, jd);	
 	return Val_unit;
-}
+}*/
 
 /*char* get_locale() {
 	JNIEnv *env;
@@ -472,16 +472,15 @@ value ml_setSupportEmail (value d){
 	(*env)->DeleteLocalRef(env, locale);
 
 	return retval;		
-}*/
+}
 
-/*NATIVEACTIVITY FIXME*/
 value ml_getLocale () {
 	return caml_copy_string("en");
 	// char *c_locale = get_locale();
 	// value v_locale = caml_copy_string(c_locale);
 	// free(c_locale);
 	// return v_locale;
-}
+}*/
 
 value ml_getInternalStoragePath () {
 

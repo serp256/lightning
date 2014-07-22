@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Vibrator;
 
 import java.nio.ByteBuffer;
+import java.util.Locale;;
 
 import ru.redspell.lightning.utils.Log;
 
@@ -138,7 +139,7 @@ public class Lightning {
     private static String supportEmail = "mail@redspell.ru";
     private static String additionalExceptionInfo = "\n";
 
-    public static void mlUncaughtException(String exn,String[] bt) {
+    public static void uncaughtException(String exn,String[] bt) {
         Context c = activity;
         ApplicationInfo ai = c.getApplicationInfo ();
         String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android, " + activity.getString(ru.redspell.lightning.R.string.screen) + ", " + activity.getString(ru.redspell.lightning.R.string.density) + ")";
@@ -163,9 +164,21 @@ public class Lightning {
         c.startActivity(sendIntent);
     }
 
+    public static void setSupportEmail(String mail) {
+        supportEmail = mail;
+    }
+
+    public static void addExceptionInfo(String d) {
+        additionalExceptionInfo += d;
+    }
+
     public static void openURL(String url){
         activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-    }    
+    }
+
+    public static String getLocale() {
+        return Locale.getDefault().getLanguage();
+    }
 
     static {
         System.loadLibrary("test");
