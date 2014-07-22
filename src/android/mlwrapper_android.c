@@ -626,7 +626,7 @@ value ml_getMACID(value unit) {
 	return udid;
 }*/
 
-value ml_androidScreen() {
+/*value ml_androidScreen() {
 	CAMLparam0();
 	CAMLlocal1(andrScreen);
 
@@ -645,7 +645,7 @@ value ml_androidScreen() {
 	Store_field(andrScreen, 1, Val_int(d));
 
 	CAMLreturn(andrScreen);
-}
+}*/
 
 value ml_getDeviceType(value unit) {
 	DEBUGF("ML_DEVICE_TYPE");

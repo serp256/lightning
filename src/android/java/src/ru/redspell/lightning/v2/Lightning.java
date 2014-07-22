@@ -200,7 +200,31 @@ public class Lightning {
         }
 
         return retval;
+    }
+
+    public static int getScreen() {
+        String screen = activity.getString(ru.redspell.lightning.R.string.screen);
+
+        if (screen.contentEquals("small")) return 1;
+        if (screen.contentEquals("normal")) return 2;
+        if (screen.contentEquals("large")) return 3;
+        if (screen.contentEquals("xlarge")) return 4;
+
+        return 0;       
     }    
+
+    public static int getDensity() {
+        String density = activity.getString(ru.redspell.lightning.R.string.density);
+
+        if (density.contentEquals("tvdpi")) return 5;
+        if (density.contentEquals("ldpi")) return 1;
+        if (density.contentEquals("mdpi")) return 2;
+        if (density.contentEquals("hdpi")) return 3;
+        if (density.contentEquals("xhdpi")) return 4;
+        if (density.contentEquals("xxhdpi")) return 6;
+
+        return 0;
+    }
 
     static {
         System.loadLibrary("test");

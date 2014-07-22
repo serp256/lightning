@@ -143,3 +143,22 @@ value ml_getVersion() {
 
 	return vver;
 }
+
+value ml_androidScreen() {
+	static jmethodID screen_mid = 0;
+	static jmethodID density_mid = 0;
+
+	if (!screen_mid) {
+		screen_mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getScreen", "()I");
+		density_mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getDensity", "()I");
+	}
+
+	jint jscreen = (*ML_ENV)->CallStaticIntMethod(ML_ENV, lightning_cls, screen_mid);
+	jint jdensity = (*ML_ENV)->CallStaticIntMethod(ML_ENV, lightning_cls, density_mid);
+	
+	value vscreen = caml_alloc_tuple(2);
+	Store_field(vscreen, 0, Val_int(jscreen));
+	Store_field(vscreen, 1, Val_int(jdensity));
+
+	return vscreen;
+}

@@ -181,26 +181,7 @@ public class LightView extends GLSurfaceView {
 	// 	return displayMetrics.heightPixels;
 	// }
 
-	public int getScreen() {
-		/*
-		Configuration conf = getResources().getConfiguration();
-
-		switch (conf.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) {
-			case Configuration.SCREENLAYOUT_SIZE_SMALL:
-				return 0;
-
-			case Configuration.SCREENLAYOUT_SIZE_NORMAL:
-				return 1;
-
-			case Configuration.SCREENLAYOUT_SIZE_LARGE:
-				return 2;
-
-			case Configuration.SCREENLAYOUT_SIZE_UNDEFINED:
-				return -1;
-
-			default:
-				return 3;
-		}*/
+/*	public int getScreen() {
 		String screen = activity.getString(R.string.screen);
 		Log.d("LIGHTNING", "java screen " + screen);
 
@@ -210,9 +191,9 @@ public class LightView extends GLSurfaceView {
 		if (screen.contentEquals("xlarge")) return 4;
 
 		return 0;		
-	}
+	}*/
 
-	public int getDensity() {
+/*	public int getDensity() {
 		String density = activity.getString(R.string.density);
 		Log.d("LIGHTNING", "java density " + density);
 
@@ -224,7 +205,7 @@ public class LightView extends GLSurfaceView {
 		if (density.contentEquals("xxhdpi")) return 6;
 
 		return 0;
-	}
+	}*/
 
 	public void callUnzipComplete(String zipPath, String dstPath, boolean success) {
 		queueEvent(new UnzipCallbackRunnable(zipPath, dstPath, success));
