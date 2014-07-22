@@ -169,3 +169,36 @@ value ml_getDeviceType() {
 
 	return (*ML_ENV)->CallStaticBooleanMethod(ML_ENV, lightning_cls, mid) == JNI_TRUE ? Val_true : Val_false;
 }
+
+
+value ml_platform() {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "platform", "()Ljava/lang/String;");
+
+	value vplat;
+	jstring jplat = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	JSTRING_TO_VAL(jplat, vplat);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jplat);
+
+	return vplat;
+}
+
+value ml_hwmodel() {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "hwmodel", "()Ljava/lang/String;");
+
+	value vmodel;
+	jstring jmodel = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	JSTRING_TO_VAL(jmodel, vmodel)
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jmodel);
+
+	return vmodel;
+}
+
+value ml_totalMemory() {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "totalMemory", "()J");
+	jlong jtotalmem = (*ML_ENV)->CallStaticLongMethod(ML_ENV, lightning_cls, mid);
+
+	return Val_long(jtotalmem);
+}

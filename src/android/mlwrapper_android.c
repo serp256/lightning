@@ -708,7 +708,7 @@ JNIEXPORT jobject JNICALL Java_ru_redspell_lightning_LightMediaPlayer_getOffsetS
 	return retval;
 }
 
-value ml_platform() {
+/*value ml_platform() {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void **)&env, JNI_VERSION_1_4);
 
@@ -751,7 +751,7 @@ value ml_totalMemory() {
 	jlong jtotalmem = (*env)->CallStaticLongMethod(env, jView, mid);
 
 	return Val_long(jtotalmem);
-}
+}*/
 
 JNIEXPORT jstring JNICALL Java_ru_redspell_lightning_LightView_glExts(JNIEnv *env, jobject this) {
 	const char *exts = (char*)glGetString(GL_EXTENSIONS);
