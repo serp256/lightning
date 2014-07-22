@@ -1,5 +1,5 @@
 #include "lightning_android.h"
-#include "engine.h"
+#include "engine_android.h"
 
 #define GET_LIGHT_NOTIFICATIONS if (!cls) cls = engine_find_class("ru/redspell/lightning/notifications/Notifications");
 

@@ -1,5 +1,5 @@
 #include "lightning_android.h"
-#include "engine.h"
+#include "engine_android.h"
 #include <caml/alloc.h>
 
 static jclass payments_cls = NULL;

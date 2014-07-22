@@ -56,7 +56,7 @@ ifeq ($(PLATFORM),IOS)
 	ifeq ($(PLATFORM),ANDROID)
 		CFLAGS += -I android
 		MLCOPTS += -D__ANDROID__
-		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/android_native_app_glue.o android/engine.o android/lightning_android.o android/expansions_android.o android/payments_android.o android/gamecenter_android.o android/sound_android.o android/curl_imgloader_android.o android/curl_filedownloader_android.o android/notifications_android.o android/keyboard_android.o android/camlwrapper_android.o  android/main.o android/vibration_android.o android/texture_android.o
+		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/android_native_app_glue.o android/engine_android.o android/lightning_android.o android/expansions_android.o android/payments_android.o android/gamecenter_android.o android/sound_android.o android/curl_imgloader_android.o android/curl_filedownloader_android.o android/notifications_android.o android/keyboard_android.o android/mlwrapper_android.o  android/main_android.o android/vibration_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib -landroid -cclib -lOpenSLES -cclib -lEGL -cclib -llog -cclib -lz -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else

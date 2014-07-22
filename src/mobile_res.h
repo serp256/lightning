@@ -2,11 +2,8 @@
 
 #define MOBILERES_H
 
-#ifdef ANDROID 
-#include "android/mlwrapper_android.h"   
-#elif IOS 
-#import "ios/mlwrapper_ios.h" 
-#else 
+#if IOS 
+#import "ios/mlwrapper_ios.h"
 #endif
 
 #include <stdio.h>

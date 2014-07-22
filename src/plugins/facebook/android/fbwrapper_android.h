@@ -1,5 +1,4 @@
-#include "mlwrapper_android.h"
-// #include "fbwrapper.h"
+#include "plugin_common.h"
 
 void ml_fbInit(value appId);
 

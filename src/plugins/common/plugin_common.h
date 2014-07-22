@@ -1,5 +1,5 @@
 #include "lightning_android.h"
-#include "engine.h"
+#include "engine_android.h"
 
 #define GET_ENV JNIEnv *env = ML_ENV;
 

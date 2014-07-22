@@ -1,6 +1,6 @@
 
 #include "lightning_android.h"
-#include "engine.h"
+#include "engine_android.h"
 
 static jclass mobileTrackerCls = NULL;
 static jobject mobileTracker = NULL;

@@ -1,7 +1,4 @@
-#include "mlwrapper_android.h"
 #include <caml/custom.h>
-
-
 
 static inline jclass lightMoPub_class(JNIEnv *env) {
 	static jclass jLightMoPub = NULL;

@@ -1,5 +1,4 @@
 #include "plugin_common.h"
-// #include "mlwrapper_android.h"
 
 static jclass gTapjoyCls = 0;
 

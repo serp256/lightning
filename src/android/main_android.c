@@ -12,7 +12,7 @@
 #include <math.h>
 
 #include "mobile_res.h"
-#include "main.h"
+#include "main_android.h"
 #include "lightning_android.h"
 #include "render_stub.h"
 

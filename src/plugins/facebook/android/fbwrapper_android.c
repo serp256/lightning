@@ -1,5 +1,4 @@
 #include "fbwrapper_android.h"
-#include "plugin_common.h"
 
 #define env ML_ENV
 #define GET_LIGHTFACEBOOK if (!lightFacebookCls) lightFacebookCls = engine_find_class("com/facebook/LightFacebook");

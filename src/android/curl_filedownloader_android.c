@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include "lightning_android.h"
-#include "engine.h"
+#include "engine_android.h"
 
 #include "thqueue.h"
 

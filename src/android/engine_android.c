@@ -1,5 +1,4 @@
-#include "engine.h"
-#include "mlwrapper_android.h"
+#include "engine_android.h"
 #include "khash.h"
 
 struct engine engine;

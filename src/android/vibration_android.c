@@ -1,5 +1,5 @@
 #include "lightning_android.h"
-#include "engine.h"
+#include "engine_android.h"
 
 value ml_vibration(value vtime) {
 	int ctime = Int_val(vtime);
