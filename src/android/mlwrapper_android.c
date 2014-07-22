@@ -401,9 +401,9 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_cancelAllTouches() {
 	// mlstage_cancelAllTouches(stage);
 }
 
-value ml_malinfo(value p) {
+/*value ml_malinfo(value p) {
 	return caml_alloc_tuple(3);
-}
+}*/
 
 // JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
 // 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_handleOnPause call");
@@ -420,7 +420,7 @@ value ml_malinfo(value p) {
 // 	sound_resume(env);
 // }
 
-value ml_openURL(value  url) {
+/*value ml_openURL(value  url) {
 	JNIEnv *env;
 	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 
@@ -431,7 +431,7 @@ value ml_openURL(value  url) {
 
 	(*env)->DeleteLocalRef(env, jurl);
 	return Val_unit;
-}
+}*/
 
 value ml_addExceptionInfo (value info){
   	JNIEnv *env;

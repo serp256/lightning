@@ -43,3 +43,20 @@ value ml_getOldUDID() {
 
 	CAMLreturn(vudid);
 }
+
+value ml_malinfo(value p) {
+	return caml_alloc_tuple(3);
+}
+
+value ml_openURL(value vurl) {
+	jstring jurl;
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "openURL", "(Ljava/lang/String;)V");
+
+	VAL_TO_JSTRING(vurl, jurl);
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid, jurl);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jurl);
+	
+	return Val_unit;
+}

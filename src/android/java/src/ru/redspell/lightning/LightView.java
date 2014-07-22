@@ -734,11 +734,11 @@ public class LightView extends GLSurfaceView {
 	}
 	*/
 
-  public void openURL(String url){
+/*  public void openURL(String url){
 		Context c = getContext();
     Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 		c.startActivity(i);
-	}
+	}*/
 
   private String supportEmail = "mail@redspell.ru";
 	public void mlSetSupportEmail(String d){ supportEmail = d; }

@@ -123,7 +123,7 @@ public class Lightning {
 
     public static void init() {
     	activity = activity();
-        ru.redspell.lightning.utils.OpenUDID.syncContext(activity.getApplicationContext());
+        ru.redspell.lightning.utils.OpenUDID.syncContext(activity);
     }
 
     public static void showUrl(final String url) {
@@ -139,7 +139,7 @@ public class Lightning {
     private static String additionalExceptionInfo = "\n";
 
     public static void mlUncaughtException(String exn,String[] bt) {
-        Context c = activity.getApplicationContext();
+        Context c = activity;
         ApplicationInfo ai = c.getApplicationInfo ();
         String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android, " + activity.getString(ru.redspell.lightning.R.string.screen) + ", " + activity.getString(ru.redspell.lightning.R.string.density) + ")";
         int vers;
@@ -161,6 +161,10 @@ public class Lightning {
         Intent sendIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(uri.toString ()));
         sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         c.startActivity(sendIntent);
+    }
+
+    public static void openURL(String url){
+        activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }    
 
     static {
