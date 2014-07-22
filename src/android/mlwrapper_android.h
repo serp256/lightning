@@ -24,18 +24,18 @@
 #define NILL Val_int(0)
 #define NONE Val_int(0)
 
-extern JavaVM *gJavaVM;
-extern jobject jActivity;
-extern jobject jView;
-extern jclass jViewCls;
+//extern JavaVM *gJavaVM;
+//extern jobject jActivity;
+// extern jobject jView;
+//extern jclass jViewCls;
 // extern mlstage *stage;
 
-jobject jApplicationContext(JNIEnv *env);
+// jobject jApplicationContext(JNIEnv *env);
 
 // int getResourceFd(const char *path, resource *res);
 
 //void ml_paymentsTest();
-value ml_openURL(value url);
+// value ml_openURL(value url);
 //void ml_setAssetsDir(value vassDir);
 // char* get_locale();
 

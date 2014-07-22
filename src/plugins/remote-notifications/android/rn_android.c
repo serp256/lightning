@@ -1,34 +1,19 @@
-
-#include "mlwrapper_android.h"
-
-
-static jclass rnCls = NULL;
-
-static jobject getRnCls(JNIEnv *env) {
-	if (rnCls == NULL) {
-		jclass cls = (*env)->FindClass(env, "ru/redspell/lightning/plugins/LightRemoteNotifications");
-		if (cls == NULL) caml_failwith("RemoteNotifications not found");
-		rnCls = (*env)->NewGlobalRef(env,cls);
-		(*env)->DeleteLocalRef(env,cls);
-	}
-	return rnCls;
-}
+#include "lightning_android.h"
+#include "engine.h"
 
 static jobject jRemoteNotifications = NULL;
 
 
 value ml_rnInit(value rntype_unused, value sender_id) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_remote_notifications_init");
-	jclass rnCls = getRnCls(env);
-	jmethodID jInitM = (*env)->GetStaticMethodID(env,rnCls,"init","(Ljava/lang/String;)Lru/redspell/lightning/plugins/LightRemoteNotifications;");
-	jstring jsender_id = (*env)->NewStringUTF(env,String_val(sender_id));
-	jobject jobj = (*env)->CallStaticObjectMethod(env,rnCls,jInitM,jsender_id);
+	jclass rnCls = engine_find_class("ru/redspell/lightning/plugins/LightRemoteNotifications");
+	jmethodID jInitM = (*ML_ENV)->GetStaticMethodID(ML_ENV,rnCls,"init","(Ljava/lang/String;)Lru/redspell/lightning/plugins/LightRemoteNotifications;");
+	jstring jsender_id = (*ML_ENV)->NewStringUTF(ML_ENV,String_val(sender_id));
+	jobject jobj = (*ML_ENV)->CallStaticObjectMethod(ML_ENV,rnCls,jInitM,jsender_id);
 	if (jobj == NULL) return Val_false;
-	jRemoteNotifications = (*env)->NewGlobalRef(env,jobj);
-	(*env)->DeleteLocalRef(env,jsender_id);
-	(*env)->DeleteLocalRef(env,jobj);
+	jRemoteNotifications = (*ML_ENV)->NewGlobalRef(ML_ENV,jobj);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV,jsender_id);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV,jobj);
 	return Val_true;
 }
 

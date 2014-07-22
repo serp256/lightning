@@ -25,7 +25,7 @@ COBJS   +=  ios/rn_ios.o
 else
 ifeq ($(PLATFORM),ANDROID)
 
-CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android -I../common
+CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android -I../../android/native_activity -I../common
 COBJS   +=  android/rn_android.o
 
 

@@ -26,7 +26,7 @@ void lightning_uncaught_exception(const char* exn, int bc, char** bv) {
     // Need to send email with this error and backtrace
     jstring jexn = (*ML_ENV)->NewStringUTF(ML_ENV,exn);
     jmethodID mlUncExn = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "uncaughtException","(Ljava/lang/String;[Ljava/lang/String;)V");
-    (*ML_ENV)->CallStaticVoidMethod(ML_ENV,jView,mlUncExn,jexn,jbc);
+    (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mlUncExn, jexn, jbc);
     (*ML_ENV)->DeleteLocalRef(ML_ENV,jbc);
 }
 

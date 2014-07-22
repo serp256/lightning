@@ -2,7 +2,6 @@ package ru.redspell.lightning.gamecenter;
 
 
 import ru.redspell.lightning.utils.Log;
-import ru.redspell.lightning.LightActivity;
 import ru.redspell.lightning.v2.IUiLifecycleHelper;
 
 

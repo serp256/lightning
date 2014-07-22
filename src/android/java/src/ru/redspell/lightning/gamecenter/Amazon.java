@@ -14,7 +14,6 @@ import com.amazon.ags.api.achievements.*;
 //import com.amazon.ags.api.profiles;
 
 import ru.redspell.lightning.utils.Log;
-import ru.redspell.lightning.LightActivity;
 import ru.redspell.lightning.v2.IUiLifecycleHelper;
 
 import java.util.EnumSet;
@@ -67,7 +66,7 @@ public class Amazon implements GameCenter,AmazonGamesCallback {
 			public void run() {
 				Log.d("LIGHTNING","Amazon Games Client call initialize 1");
 				amzGamesClient = null;
-				AmazonGamesClient.initialize(LightActivity.instance, me, EnumSet.of(AmazonGamesFeature.Achievements));
+				AmazonGamesClient.initialize(Lightning.activity, me, EnumSet.of(AmazonGamesFeature.Achievements));
 				Log.d("LIGHTNING","Amazon Games Client call initialize 2");
 			};
 		});      

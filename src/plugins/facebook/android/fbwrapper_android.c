@@ -1,15 +1,8 @@
 #include "fbwrapper_android.h"
 #include "plugin_common.h"
 
-#define GET_LIGHTFACEBOOK                                                       \
-JNIEnv *env;                                                                    \
-(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);                       \
-                                                                                \
-if (!lightFacebookCls) {                                                        \
-    jclass cls = (*env)->FindClass(env, "com/facebook/LightFacebook"); \
-    lightFacebookCls = (*env)->NewGlobalRef(env, cls);                          \
-    (*env)->DeleteLocalRef(env, cls);                                           \
-}                                                                               \
+#define env ML_ENV
+#define GET_LIGHTFACEBOOK if (!lightFacebookCls) lightFacebookCls = engine_find_class("com/facebook/LightFacebook");
 
 #define FREE_CALLBACK(callback) if (callback) {                                     \
     caml_remove_generational_global_root(callback);                                 \
@@ -242,7 +235,7 @@ void ml_fbGraphrequest(value path, value params, value successCallback, value fa
     if (!allRight) caml_failwith("no active facebook session");
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackRunnable_run(JNIEnv *_env, jobject this) {
     static jfieldID callbackFid;
 
     if (!callbackFid) {
@@ -258,7 +251,7 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackRunnable
     }
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStringParamRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStringParamRunnable_run(JNIEnv *_env, jobject this) {
     static jfieldID callbackFid;
     static jfieldID paramFid;
 
@@ -283,7 +276,7 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStri
     }
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueRunnable_run(JNIEnv *_env, jobject this) {
     static jfieldID nameFid;
 
     if (!nameFid) {
@@ -304,7 +297,7 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueRunnab
     (*env)->DeleteLocalRef(env, jname);    
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithStringParamRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithStringParamRunnable_run(JNIEnv *_env, jobject this) {
     static jfieldID nameFid;
     static jfieldID paramFid;
 
@@ -334,7 +327,7 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithSt
     (*env)->DeleteLocalRef(env, jname);
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStringArrayParamRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStringArrayParamRunnable_run(JNIEnv *_env, jobject this) {
     static jfieldID callbackFid;
     static jfieldID paramFid;
 		PRINT_DEBUG("Java_ru_redspell_lightning_LightFacebook_00024CamlCallbackWithStringArrayParamRunnable_run %d",gettid());
@@ -381,7 +374,7 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStri
     };
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithStringAndValueParamsRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithStringAndValueParamsRunnable_run(JNIEnv *_env, jobject this) {
     static jfieldID nameFid;
     static jfieldID param1Fid;
     static jfieldID param2Fid;
@@ -418,7 +411,7 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithSt
     (*env)->DeleteLocalRef(env, jname);
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024ReleaseCamlCallbacksRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024ReleaseCamlCallbacksRunnable_run(JNIEnv *_env, jobject this) {
     static jfieldID successCbFid;
     static jfieldID failCbFid;
 		PRINT_DEBUG("Java_ru_redspell_lightning_LightFacebook_00024ReleaseCamlCallbacksRunnable_run");

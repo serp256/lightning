@@ -3,11 +3,8 @@
 #include <string.h>
 
 #ifdef ANDROID
-#include "android/mlwrapper_android.h"
-#include "android/native_activity/lightning_android.h"
-
+#include "android/lightning_android.h"
 #define get_locale lightning_get_locale
-
 #elif IOS
 #import "ios/mlwrapper_ios.h"
 #else

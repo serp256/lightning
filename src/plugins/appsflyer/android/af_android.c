@@ -1,24 +1,12 @@
 
-#include "mlwrapper_android.h"
+#include "lightning_android.h"
+#include "engine.h"
 
-
-static jclass afCls = NULL;
-
-jclass getAFCls(JNIEnv *env) {
-	if (afCls == NULL) {
-		jclass cls = (*env)->FindClass(env, "com/appsflyer/AppsFlyerLib");
-		if (cls == NULL) caml_failwith("AppsFlyer not found");
-		afCls = (*env)->NewGlobalRef(env,cls);
-		(*env)->DeleteLocalRef(env,cls);
-	}
-	return afCls;
-}
+#define env ML_ENV
 
 value ml_af_set_key(value appid, value key) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_af_set_key");
-	jclass afCls = getAFCls(env);
+	jclass afCls = engine_find_class("com/appsflyer/AppsFlyerLib");
 	jmethodID jSetKeyM = (*env)->GetStaticMethodID(env,afCls,"setAppsFlyerKey","(Ljava/lang/String;)V");
 	jstring jkey = (*env)->NewStringUTF(env, String_val(key));
 	(*env)->CallStaticVoidMethod(env,afCls,jSetKeyM,jkey);
@@ -38,12 +26,10 @@ value ml_af_set_currency_code(value code) {
 
 
 value ml_af_get_uid(value p) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_send_tracking");
-	jclass afCls = getAFCls(env);
+	jclass afCls = engine_find_class("com/appsflyer/AppsFlyerLib");
 	jmethodID jGetAppUserIdM = (*env)->GetStaticMethodID(env,afCls,"getAppsFlyerUID","(Landroid/content/Context;)Ljava/lang/String;");
-	jobject jcontext = jApplicationContext(env);
+	jobject jcontext = JAVA_ACTIVITY;
 	jstring jUID = (*env)->CallStaticObjectMethod(env,afCls,jGetAppUserIdM,jcontext);
 	const char *cuid = (*env)->GetStringUTFChars(env,jUID,JNI_FALSE);
 	value res = caml_copy_string(cuid);
@@ -54,26 +40,22 @@ value ml_af_get_uid(value p) {
 
 
 value ml_af_send_tracking(value p) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
 	PRINT_DEBUG("ml_send_tracking");
-	jclass afCls = getAFCls(env);
+	jclass afCls = engine_find_class("com/appsflyer/AppsFlyerLib");
 	static jmethodID jSetTrackingM = NULL;
 	if (jSetTrackingM == NULL) jSetTrackingM = (*env)->GetStaticMethodID(env,afCls,"sendTracking","(Landroid/content/Context;)V");
-	jobject jcontext = jApplicationContext(env);
+	jobject jcontext = JAVA_ACTIVITY;
 	(*env)->CallStaticVoidMethod(env,afCls,jSetTrackingM,jcontext);
 	return Val_unit;
 }
 
 
 value ml_af_send_tracking_with_event(value evkey,value evval) {
-	JNIEnv *env;
-	(*gJavaVM)->GetEnv(gJavaVM, (void**) &env, JNI_VERSION_1_4);
-	jclass afCls = getAFCls(env);
+	jclass afCls = engine_find_class("com/appsflyer/AppsFlyerLib");
 	PRINT_DEBUG("ml_send_tracking_with_event");
 	static jmethodID jSetTrackingEvM = NULL;
 	if (jSetTrackingEvM == NULL) jSetTrackingEvM = (*env)->GetStaticMethodID(env,afCls,"sendTrackingWithEvent","(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)V");
-	jobject jcontext = jApplicationContext(env);
+	jobject jcontext = JAVA_ACTIVITY;
 	jstring jevkey = (*env)->NewStringUTF(env,String_val(evkey));
 	jstring jevval = (*env)->NewStringUTF(env,String_val(evval));
 	(*env)->CallStaticVoidMethod(env,afCls,jSetTrackingEvM,jcontext,jevkey,jevval);

@@ -1,8 +1,7 @@
-#include "mlwrapper_android.h"
+#include "lightning_android.h"
+#include "engine.h"
 
-#define GET_ENV													\
-	JNIEnv *env;												\
-	(*gJavaVM)->GetEnv(gJavaVM,(void**)&env,JNI_VERSION_1_4);
+#define GET_ENV JNIEnv *env = ML_ENV;
 
 #define MAKE_GLOB_JAVA_STRING(val, jstr)							\
 	{																\

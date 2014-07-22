@@ -18,20 +18,20 @@
 #define caml_acquire_runtime_system()
 #define caml_release_runtime_system()
 
-JavaVM *gJavaVM;
-jobject jActivity = NULL;
-jobject jView = NULL;
-jclass jViewCls = NULL;
+//JavaVM *gJavaVM;
+//jobject jActivity = NULL;
+// jobject jView = NULL;
+// jclass jViewCls = NULL;
 
-static int ocaml_initialized = 0;
+// static int ocaml_initialized = 0;
 // mlstage *stage = NULL;
 
-typedef enum 
+/*typedef enum 
   { 
     St_int_val, 
     St_bool_val, 
     St_string_val, 
-  } st_val_type;
+  } st_val_type;*/
 
 /*static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",exn);
@@ -56,22 +56,22 @@ typedef enum
 	(*env)->DeleteLocalRef(env,jexn);
 }*/
 
-jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+/*jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
 	PRINT_DEBUG("JNI ON LOAD");
 	// uncaught_exception_callback = &mlUncaughtException;
 	gJavaVM = vm;
 	return JNI_VERSION_1_6; // Check this
-}
+}*/
 
 
-jobject jApplicationContext(JNIEnv *env) {
+/*jobject jApplicationContext(JNIEnv *env) {
 	jclass jLightActivityCls = (*env)->GetObjectClass(env,jActivity);
 	jmethodID jGetApplicationContextMethod = (*env)->GetMethodID(env,jLightActivityCls,"getApplicationContext","()Landroid/content/Context;");
 	jobject res = (*env)->CallObjectMethod(env,jActivity,jGetApplicationContextMethod);
 	(*env)->DeleteLocalRef(env,jLightActivityCls);
 	return res;
-}
+}*/
 
 
 
@@ -94,7 +94,7 @@ static char *debug_msg = NULL;
 		dst[len] = '\0'
 */
 
-value android_debug_output(value mtag, value mname, value mline, value msg) {
+/*value android_debug_output(value mtag, value mname, value mline, value msg) {
 	char *tag;
 	if (mtag == Val_int(0)) tag = "DEFAULT";
 	else {
@@ -123,7 +123,7 @@ value android_debug_output_error(value mname, value mline, value msg) {
 value android_debug_output_fatal(value mname, value mline, value msg) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",String_val(msg));
 	return Val_unit;
-}
+}*/
 
 /*static char* apk_path = NULL;
 static char* main_exp_path = NULL;
@@ -232,7 +232,7 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated");
-	if (!ocaml_initialized) {
+/*	if (!ocaml_initialized) {
 		PRINT_DEBUG("init ocaml");
 		char *argv[] = {"android",NULL};
 		caml_startup(argv);
@@ -244,7 +244,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 		(*env)->CallVoidMethod(env,jActivity,jm);
 		(*env)->DeleteLocalRef(env,jLightActivityCls);
 		PRINT_DEBUG("caml initialized");
-	};
+	};*/
 }
 
 // static int onResume = 0;

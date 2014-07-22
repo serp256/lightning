@@ -25,7 +25,6 @@ MLDEPFLAGS =
 byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma social_byte
 native: MLDEPFLAGS += -native
 native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa social_native
-#native: lightning.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
@@ -55,9 +54,9 @@ ifeq ($(PLATFORM),IOS)
 	#CFLAGS += -Fsocial/facebook/ios/FacebookSDK
 	else
 	ifeq ($(PLATFORM),ANDROID)
-		CFLAGS += -I android -I android/native_activity
+		CFLAGS += -I android
 		MLCOPTS += -D__ANDROID__
-		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/native_activity/android_native_app_glue.o android/native_activity/engine.o android/native_activity/lightning_android.o android/native_activity/expansions_android.o android/native_activity/payments_android.o android/native_activity/gamecenter_android.o android/native_activity/sound_android.o android/native_activity/curl_imgloader_android.o android/native_activity/curl_filedownloader_android.o android/native_activity/notifications_android.o android/native_activity/keyboard_android.o android/native_activity/camlwrapper_android.o  android/native_activity/main.o android/native_activity/vibration_android.o android/mlwrapper_android.o android/texture_android.o
+		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/android_native_app_glue.o android/engine.o android/lightning_android.o android/expansions_android.o android/payments_android.o android/gamecenter_android.o android/sound_android.o android/curl_imgloader_android.o android/curl_filedownloader_android.o android/notifications_android.o android/keyboard_android.o android/camlwrapper_android.o  android/main.o android/vibration_android.o android/texture_android.o
 		GLPARAM = -D__ANDROID__
 		LIBFLAGS = -cclib -landroid -cclib -lOpenSLES -cclib -lEGL -cclib -llog -cclib -lz -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else
