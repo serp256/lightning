@@ -1,6 +1,7 @@
 include ../../../Makefile.common
 
 CFLAGS += -I . 
+CFLAGS += -DLDEBUG
 
 MLFLAGS += -package ojson,extlib 
 

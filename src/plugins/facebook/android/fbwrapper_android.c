@@ -257,6 +257,8 @@ typedef struct {
 } fbandroid_callback_with_str_t;
 
 void fbandroid_callback_with_str(void *d) {
+    PRINT_DEBUG("fbandroid_callback_with_str");
+
     fbandroid_callback_with_str_t *data = (fbandroid_callback_with_str_t*)d;
 
     value vparam;
@@ -268,6 +270,8 @@ void fbandroid_callback_with_str(void *d) {
 }
 
 JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStringParamRunnable_run(JNIEnv *env, jobject this) {
+    PRINT_DEBUG("Java_com_facebook_LightFacebook_00024CamlCallbackWithStringParamRunnable_run");
+
     static jfieldID callbackFid;
     static jfieldID paramFid;
 
