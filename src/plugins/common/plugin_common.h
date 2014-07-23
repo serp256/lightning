@@ -11,12 +11,7 @@
 		(*env)->DeleteLocalRef(env, tmp);							\
 	}
 
-#define GET_PLUGIN_CLASS(cls, classname)					\
-	if (!cls) {												\
-		jclass tmp = (*env)->FindClass(env, #classname);	\
-		cls = (*env)->NewGlobalRef(env, tmp);				\
-		(*env)->DeleteLocalRef(env, tmp);					\
-	}
+#define GET_PLUGIN_CLASS(cls, classname) if (!cls) cls = engine_find_class(#classname);
 
 #define JString_val(jstr,val) jstring jstr = (*env)->NewStringUTF(env, String_val(val));
 #define JString_optval(jstr,val) jstring jstr = Is_block(val) ? (*env)->NewStringUTF(env, String_val(Field(val,0))) : NULL;

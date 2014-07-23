@@ -1,4 +1,5 @@
 #include "plugin_common.h"
+#include <caml/callback.h>
 
 static jclass cls = NULL;
 static int authorized = 0;
@@ -27,7 +28,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 		head = Field(head, 1);
 	}
 
-	jobjectArray jperms = (*env)->NewObjectArray(env, perms_len, (*env)->FindClass(env, "java/lang/String"), NULL);
+	jobjectArray jperms = (*env)->NewObjectArray(env, perms_len, engine_find_class("java/lang/String"), NULL);
 	jstring jperm;
 	int i = 0;
 
@@ -61,28 +62,63 @@ value ml_vk_friends(value vfail, value vsuccess, value vt) {
 	CAMLreturn(Val_unit);
 }
 
+void vkandroid_free_callbacks(void *data) {
+	value *callbacks = (value*)data;
+	FREE_CALLBACK(callbacks[0]);
+	FREE_CALLBACK(callbacks[1]);
+	free(callbacks);
+}
+
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024Callback_freeCallbacks(JNIEnv *env, jobject this, jint jsuccess, jint jfail) {
-	value vsuccess = (value)jsuccess;
-	value vfail = (value)jfail;
-	FREE_CALLBACK(vsuccess);
-	FREE_CALLBACK(vfail);
+	value *callbacks = (value*)malloc(sizeof(value) * 2);
+	callbacks[0] = (value)jsuccess;
+	callbacks[1] = (value)jfail;
+	RUN_ON_ML_THREAD(&vkandroid_free_callbacks, (void*)callbacks);
+}
+
+void vkandroid_auth_success(void *data) {
+	value callbck = (value)data;
+	caml_callback(callbck, Val_unit);
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024AuthSuccess_nativeRun(JNIEnv *env, jobject this, jint jcb) {
-	value vcb = (value)jcb;
-	caml_callback(vcb, Val_unit);
+	RUN_ON_ML_THREAD(&vkandroid_auth_success, (void*)jcb);
+}
+
+typedef struct {
+	value callbck;
+	char *reason;
+} vkandroid_fail_t;
+
+void vkandroid_fail(void *data) {
+	vkandroid_fail_t *fail = (vkandroid_fail_t*)data;
+	caml_callback(fail->callbck, caml_copy_string(fail->reason));
+	free(fail->reason);
+	free(fail);
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024Fail_nativeRun(JNIEnv *env, jobject this, jint jcb, jstring jreason) {
 	const char* creason = (*env)->GetStringUTFChars(env, jreason, JNI_FALSE);
-	value vcb = (value)jcb;
-	value vreason = caml_copy_string(creason);
+	vkandroid_fail_t *fail = (vkandroid_fail_t*)malloc(sizeof(vkandroid_fail_t));
+
+	fail->callbck = (value)jcb;
+	fail->reason = (char*)malloc(strlen(creason) + 1);
+	strcpy(fail->reason, creason);
 
 	(*env)->ReleaseStringUTFChars(env, jreason, creason);
-	caml_callback(vcb, vreason);
+	RUN_ON_ML_THREAD(&vkandroid_fail, fail);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSuccess_nativeRun(JNIEnv *env, jobject this, jint jcb, jobjectArray jids, jobjectArray jnames, jintArray jgenders) {
+typedef struct {
+	value callbck;
+	jobjectArray ids;
+	jobjectArray names;
+	jintArray genders;
+} vkandroid_friends_success_t;
+
+void vkandroid_friends_success(void *data) {
+	vkandroid_friends_success_t *friends_success = (vkandroid_friends_success_t*)data;
+
 	static value* create_friend = NULL;
 	if (!create_friend) create_friend = caml_named_value("create_friend");
 
@@ -90,15 +126,17 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSu
 	CAMLlocal2(retval, head);
 	retval = Val_int(0);
 
-	int cnt = (*env)->GetArrayLength(env, jgenders);
+	PRINT_DEBUG("1");
+
+	int cnt = (*ML_ENV)->GetArrayLength(ML_ENV, friends_success->genders);
 	int i;
-	jint* cgenders = (*env)->GetIntArrayElements(env, jgenders, JNI_FALSE);
+	jint* cgenders = (*ML_ENV)->GetIntArrayElements(ML_ENV, friends_success->genders, JNI_FALSE);
 
 	for (i = 0; i < cnt; i++) {
-		jstring jid = (jstring)(*env)->GetObjectArrayElement(env, jids, i);		
-		jstring jname = (jstring)(*env)->GetObjectArrayElement(env, jnames, i);
-		const char* cid = (*env)->GetStringUTFChars(env, jid, JNI_FALSE);
-		const char* cname = (*env)->GetStringUTFChars(env, jname, JNI_FALSE);
+		jstring jid = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->ids, i);		
+		jstring jname = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->names, i);
+		const char* cid = (*ML_ENV)->GetStringUTFChars(ML_ENV, jid, JNI_FALSE);
+		const char* cname = (*ML_ENV)->GetStringUTFChars(ML_ENV, jname, JNI_FALSE);
 
 		head = caml_alloc_tuple(2);
 		Store_field(head, 0, caml_callback3(*create_friend, caml_copy_string(cid), caml_copy_string(cname), Val_int(cgenders[i])));
@@ -106,13 +144,33 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSu
 
 		retval = head;
 
-		(*env)->ReleaseStringUTFChars(env, jid, cid);
-		(*env)->ReleaseStringUTFChars(env, jname, cname);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jid, cid);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jname, cname);
 	}
 
-	(*env)->ReleaseIntArrayElements(env, jgenders, cgenders, 0);
+	PRINT_DEBUG("2");
 
-	value vcb = (value)jcb;
-	RUN_CALLBACK(vcb, retval);
+	(*ML_ENV)->ReleaseIntArrayElements(ML_ENV, friends_success->genders, cgenders, 0);
+	RUN_CALLBACK(friends_success->callbck, retval);
+
+	PRINT_DEBUG("3");
+
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->ids);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->names);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->genders);
+	free(friends_success);
+
 	CAMLreturn0;
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSuccess_nativeRun(JNIEnv *env, jobject this, jint jcb, jobjectArray jids, jobjectArray jnames, jintArray jgenders) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSuccess_nativeRun");
+
+	vkandroid_friends_success_t *friends_success = (vkandroid_friends_success_t*)malloc(sizeof(vkandroid_friends_success_t));
+	friends_success->callbck = (value)jcb;
+	friends_success->ids = (*env)->NewGlobalRef(env, jids);
+	friends_success->names = (*env)->NewGlobalRef(env, jnames);
+	friends_success->genders = (*env)->NewGlobalRef(env, jgenders);
+
+	RUN_ON_ML_THREAD(&vkandroid_friends_success, (void*)friends_success);
 }

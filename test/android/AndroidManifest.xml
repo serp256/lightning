@@ -16,6 +16,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.vk.sdk.VKOpenAuthActivity" />
+
         <service android:name="ru.redspell.lightning.expansions.DownloadService"/>
         <receiver android:name="ru.redspell.lightning.expansions.AlarmReceiver"/>
         <receiver android:name="ru.redspell.lightning.notifications.Receiver">

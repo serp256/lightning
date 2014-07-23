@@ -1,6 +1,6 @@
 package ru.redspell.lightning.plugins;
 
-import ru.redspell.lightning.LightActivity;
+import ru.redspell.lightning.Lightning;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.VKAccessToken;
@@ -91,26 +91,38 @@ public class LightVk {
 			this.fail = fail;
 		}
 
-		public void onCaptchaError(VKError captchaError) {}
-		public void onTokenExpired(VKAccessToken expiredToken) {}
+		public void onCaptchaError(VKError captchaError) {
+			Log.d("LIGHTNING", "onCaptchaError");
+		}
+
+		public void onTokenExpired(VKAccessToken expiredToken) {
+			Log.d("LIGHTNING", "onTokenExpired");
+		}
 
 		public void onAccessDenied(VKError authorizationError) {
-			LightActivity.instance.lightView.queueEvent(new Fail(success, fail, authorizationError.errorMessage + ": " + authorizationError.errorReason));
+			Log.d("LIGHTNING", "onAccessDenied");
+			(new Fail(success, fail, authorizationError.errorMessage + ": " + authorizationError.errorReason)).run();
 		}
 
 		public void onReceiveNewToken(VKAccessToken newToken) {
-			LightActivity.instance.lightView.queueEvent(new AuthSuccess(success, fail));
+			Log.d("LIGHTNING", "onReceiveNewToken");
+			(new AuthSuccess(success, fail)).run();
 		}
 
-		public void onAcceptUserToken(VKAccessToken token) {}
-		public void onRenewAccessToken(VKAccessToken token) {}			
+		public void onAcceptUserToken(VKAccessToken token) {
+			Log.d("LIGHTNING", "onAcceptUserToken");
+		}
+
+		public void onRenewAccessToken(VKAccessToken token) {
+			Log.d("LIGHTNING", "onRenewAccessToken");
+		}
 	}
 
 	private static class UiLifecycleHelper implements ru.redspell.lightning.IUiLifecycleHelper {
 		public void onCreate(Bundle savedInstanceState) {};
 
 		public void onResume() {
-			VKUIHelper.onResume(LightActivity.instance);
+			VKUIHelper.onResume(Lightning.activity);
 		};
 
 		public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -122,22 +134,24 @@ public class LightVk {
 		public void onStop() {};
 
 		public void onDestroy() {
-			VKUIHelper.onDestroy(LightActivity.instance); 
+			VKUIHelper.onDestroy(Lightning.activity); 
 		};
 	}
 
 	private static boolean authorized = false;
 
 	public static void authorize(String appid, String[] permissions, int success, int fail) {
+		Log.d("LIGHTNING", "authorize call");
 		if (!authorized) {
+			Log.d("LIGHTNING", "xyu");
 			authorized = true;
-			LightActivity.instance.addUiLifecycleHelper(new UiLifecycleHelper());
+			Lightning.activity.addUiLifecycleHelper(new UiLifecycleHelper());
 			/*
 			 cause vk authorization is called after first LightActivity onResume call,
 			 LightVk lifecycle helper misses this call and didn't save activity instance for internal purposes
 			 to make VKSdk work correctly we need to emulate this call
 			*/
-			VKUIHelper.onResume(LightActivity.instance);
+			VKUIHelper.onResume(Lightning.activity);
 			VKSdk.initialize(new VKSdkListener(success, fail), appid);
 			VKSdk.authorize(permissions, false, false);
 		}
@@ -163,19 +177,23 @@ public class LightVk {
 						genders[i] = item.getInt("sex");
 					}
 
-					LightActivity.instance.lightView.queueEvent(new FriendsSuccess(success, fail, ids, names, genders));
+					Log.d("LIGHTNING", "Friends onComplete Success");
+					(new FriendsSuccess(success, fail, ids, names, genders)).run();
 				} catch (org.json.JSONException e) {
-					LightActivity.instance.lightView.queueEvent(new Fail(success, fail, "wrong format of response on friends request"));
+					Log.d("LIGHTNING", "Freiends onComplete Fail");
+					(new Fail(success, fail, "wrong format of response on friends request")).run();
 				}
 			}
 
 			@Override 
 			public void onError(VKError error) {
-				LightActivity.instance.lightView.queueEvent(new Fail(success, fail, error.errorMessage + ": " + error.errorReason));
+				Log.d("LIGHTNING", "Friends onError");
+				(new Fail(success, fail, error.errorMessage + ": " + error.errorReason)).run();
 			}
 
 			@Override 
-			public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) { 
+			public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
+				Log.d("LIGHTNING", "Friends attemptFailed");
 			}
 		});
 	}
