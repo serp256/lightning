@@ -2,6 +2,7 @@
 #define LIGHTNING_ANDROID_H
 
 #define VAL_TO_JSTRING(vstr, jstr) jstr = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vstr));
+#define OPTVAL_TO_JSTRING(vstr, jstr) jstr = Is_block(vstr) ? (*ML_ENV)->NewStringUTF(ML_ENV, String_val(Field(vstr,0))) : NULL
 #define JSTRING_TO_VAL(jstr, vstr) { const char *cstr = (*ML_ENV)->GetStringUTFChars(ML_ENV, jstr, JNI_FALSE); vstr = caml_copy_string(cstr); (*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jstr, cstr); }
 
 #include <light_common.h>

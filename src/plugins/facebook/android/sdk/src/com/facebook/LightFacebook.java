@@ -85,7 +85,7 @@ public class LightFacebook {
                         LightFacebook.session.closeAndClearTokenInformation();
                     }
 
-                    Lightning.activity.lightView.queueEvent(new CamlNamedValueRunnable("fb_sessionClosed"));
+                    (new CamlNamedValueRunnable("fb_sessionClosed")).run();
 
                     break;
 
@@ -255,7 +255,7 @@ public class LightFacebook {
 
     private static void fbError(Exception exception) {
         String mes = exception.getMessage();
-        Lightning.activity.lightView.queueEvent(new CamlNamedValueWithStringParamRunnable("fb_fail", mes != null ? mes : "unknow facebook error"));
+        (new CamlNamedValueWithStringParamRunnable("fb_fail", mes != null ? mes : "unknow facebook error")).run();
     }
 
     public static void init(String appId) {
@@ -357,7 +357,7 @@ public class LightFacebook {
     }
 
     private static void connectSuccess() {
-        Lightning.activity.lightView.queueEvent(new CamlNamedValueRunnable("fb_success"));
+        (new CamlNamedValueRunnable("fb_success")).run();
         LightFacebook.session = Session.getActiveSession();
     }
 
@@ -456,14 +456,14 @@ public class LightFacebook {
 									}
 								};
 
-								Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringArrayParamRunnable(successCallback, to.toArray(toArr)));
+								(new CamlCallbackWithStringArrayParamRunnable(successCallback, to.toArray(toArr))).run();
                             } else {
 								String msg = error.getMessage ();
 								Log.d("LIGHTNING","error: " + error + ", message: " + error.getMessage ());
-								Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, msg != null ? msg : error.toString()));
+								(new CamlCallbackWithStringParamRunnable(failCallback, msg != null ? msg : error.toString())).run();
                             }
                             
-                            Lightning.activity.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
+                            (new ReleaseCamlCallbacksRunnable(successCallback, failCallback)).run();
                         }
                     });
                 
@@ -493,7 +493,7 @@ public class LightFacebook {
 
                         if (error != null) {
                             Log.d("LIGHTNING", "error: " + error);
-                            Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, error.getErrorMessage()));
+                            (new CamlCallbackWithStringParamRunnable(failCallback, error.getErrorMessage())).run();
                         } else {
                             String json = null;
 
@@ -506,12 +506,12 @@ public class LightFacebook {
                             Log.d("LIGHTNING", "json " + json);
 
                             if (json == null) {
-                                Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(failCallback, "something wrong with graphrequest response (not json object, not json objects list)"));
+                                (new CamlCallbackWithStringParamRunnable(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
                             } else {
-								Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(successCallback,json));
+								(new CamlCallbackWithStringParamRunnable(successCallback,json)).run();
                             }
 
-                            Lightning.activity.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(successCallback, failCallback));
+                            (new ReleaseCamlCallbacksRunnable(successCallback, failCallback)).run();
                         }
                     }
                 }).executeAsync();
@@ -534,7 +534,7 @@ public class LightFacebook {
 
                         if (error != null) {
                             Log.d("LIGHTNING", "error: " + error);
-                            Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(fail, error.getErrorMessage()));
+                            (new CamlCallbackWithStringParamRunnable(fail, error.getErrorMessage())).run();
                         } else {
                             String json = null;
 
@@ -547,12 +547,12 @@ public class LightFacebook {
                             Log.d("LIGHTNING", "json " + json);
 
                             if (json == null) {
-                                Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(fail, "something wrong with graphrequest response (not json object, not json objects list)"));
+                                (new CamlCallbackWithStringParamRunnable(fail, "something wrong with graphrequest response (not json object, not json objects list)")).run();
                             } else {
-                                Lightning.activity.lightView.queueEvent(new CamlCallbackWithStringParamRunnable(success,json));
+                                (new CamlCallbackWithStringParamRunnable(success,json)).run();
                             }
 
-                            Lightning.activity.lightView.queueEvent(new ReleaseCamlCallbacksRunnable(success, fail));
+                            (new ReleaseCamlCallbacksRunnable(success, fail)).run();
                         }
                     }
                 });
