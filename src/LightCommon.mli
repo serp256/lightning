@@ -38,7 +38,8 @@ value set_resources_suffix: string -> unit;
 
 value path_with_suffix: string -> string;
 (* value resource_path: ?with_suffix:bool -> string -> string; *)
-value open_resource: ?with_suffix:bool -> string -> in_channel;
+value open_resource_unsafe: ?with_suffix:bool -> string -> in_channel;
+value open_resource: ?with_suffix:bool -> string -> IO.input;
 value read_resource: ?with_suffix:bool -> string -> string;
 value read_json: ?with_suffix:bool -> string -> Ojson.json;
 

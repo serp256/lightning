@@ -13,7 +13,7 @@ value make_idle_func frameRate stage =
       time.val := now;
       URLLoader.run ();
       stage#advanceTime diff;
-      DisplayObject.prerender ();
+      stage#stageRunPrerender ();
       Glut.postRedisplay ();
     )
     else print_endline "wait";
@@ -80,7 +80,7 @@ value start_cycle stage =
       let diff = now -. !time in
       stage#advanceTime diff;
       time.val := now;
-      DisplayObject.prerender ();
+      stage#stageRunPrerender ();
       Glut.postRedisplay ();
       Glut.timerFunc fps advanceTime;
     )

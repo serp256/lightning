@@ -25,7 +25,7 @@ void mlstage_resize(mlstage *stage,float width,float height);
 void mlstage_destroy(mlstage *stage);
 void mlstage_advanceTime(mlstage *stage,double timePassed);
 uint8_t mlstage_render(mlstage *stage);
-void mlstage_preRender();
+void mlstage_preRender(mlstage *stage);
 void mlstage_background();
 void mlstage_foreground();
 void mlstage_processTouches(mlstage *stage, value touches);
@@ -44,9 +44,6 @@ typedef enum
 //
 void set_referrer_ml(value type,value id);
 void ml_memoryWarning();
-
-int (*loadCompressedTexture)(gzFile gzf, textureInfo *tInfo);
-char* compressedExt;
 
 #define REG_CALLBACK(src, dst) { dst = src; caml_register_generational_global_root(&dst); }
 #define REG_OPT_CALLBACK(src, dst) if (Is_block(src)) { dst = Field(src, 0); caml_register_generational_global_root(&dst); } else { dst = 0; }

@@ -136,7 +136,7 @@ value register xmlpath = (*{{{*)
 
 value register binpath =
   let dirname = match Filename.dirname binpath with [ "." -> "" | dir -> dir ] in
-  let inp = open_resource binpath in
+  let inp = open_resource_unsafe binpath in
   let bininp = IO.input_channel inp in
   let parse_pages () =
     let rec loop n res = 

@@ -1,101 +1,37 @@
 class c () =
 	object(self)
-		inherit DisplayObject.container as super;
+		inherit Stage.base as super;
 
-		method! stage = Some self#asDisplayObjectContainer;
+		value mutable rendertex:option RenderTexture.c = None;
 
-		method cacheAsImage = False;
-		method setCacheAsImage _ = ();
+    method! forceStageRender ?reason () = ();
 
-		method color = assert False;
-		method setColor _ = assert False;
-
-		method filters = assert False;
-		method setFilters _ = assert False;
-
-		method rendertex () =
-      proftimer:prof "renderStage render %F" with
-      let bounds = self#boundsInSpace ~withMask:True (Some self) in
-      RenderTexture.draw bounds.Rectangle.width bounds.Rectangle.height  (fun _ -> proftimer:prof "render to rstage %F" with self#render None);
-		method !z = Some 0;
-
-		initializer ignore(self#addEventListener DisplayObject.ev_ADDED_TO_STAGE (fun _ _ _ -> assert False));
-	end;
-
-type kind = [= `immediate | `delayed | `callback of (unit -> unit) ];
-
-class renderer ?kind:(kind:kind = `immediate) obj =
-	object(self)
-		value obj:DisplayObject.c = obj;
-
-		value mutable posBckp = Point.empty;
-		value mutable parentBckp = None;
-		value mutable indexBckp = 0;
-
-		method backupPos () = posBckp := obj#pos;
-
-		method backupParent () =
+		method texture () =
 			(
-				parentBckp := obj#parent;
-				match parentBckp with
-				[ Some p -> indexBckp := p#getChildIndex obj
-				| _ -> ()
-				]
-			);
+				self#stageDispatchEnterFrame 0.;
+				self#stageRunPrerender ();
 
-		method restorePos () = obj#setPosPoint posBckp;
-
-		method restoreParent () = 
-			match parentBckp with
-			[ Some p -> p#addChild ~index:indexBckp obj
-			| _ -> ()
-			];
-
-		method render () =
-			let stage = new c () in
-			let bnds = obj#boundsInSpace (Some obj) in
-				(
-					self#backupPos ();
-					self#backupParent ();
-
-					obj#setPos (-.bnds.Rectangle.x) (-.bnds.Rectangle.y);
-					stage#addChild obj;
-
-					let delayed callback =
-						let img = Image.create Texture.zero in
-						let i = ref 0 in
+				let bounds = self#boundsInSpace ~withMask:True (Some self) in
+				let w = bounds.Rectangle.width in
+				let h = bounds.Rectangle.height in
+				let render _ =
+					(
+						self#setPos (-.(bounds.Rectangle.x)) (-.(bounds.Rectangle.y));
+						self#render None;
+					)
+				in
+					match rendertex with
+					[ Some tex ->
+						(
+							ignore(tex#draw ~clear:(0, 0.) ~width:w ~height:h render);
+							tex;
+						)
+					| _ ->
+						let tex = RenderTexture.(draw ~kind:(Dedicated Texture.FilterLinear) w h render) in
 							(
-								ignore((Stage.instance ())#addEventListener DisplayObject.ev_ENTER_FRAME (fun _ _ lid ->
-									if !i < 1
-									then incr i
-									else
-										(
-											(Stage.instance ())#removeEventListener DisplayObject.ev_ENTER_FRAME lid;
-											img#setTexture (stage#rendertex ())#asTexture;
-
-											self#restorePos();
-											self#restoreParent ();
-
-											match callback with
-											[ Some cb -> cb ()
-											| _ -> ()
-											];
-										)
-								));
-
-								img;
+								rendertex := Some tex;
+								tex;
 							)
-					in
-						match kind with
-						[ `immediate ->
-						 	let img = Image.create (stage#rendertex ())#asTexture in
-								(
-									self#restorePos ();
-									self#restoreParent ();
-									img;
-								)
-						| `delayed -> delayed None
-						| `callback cb -> delayed (Some cb)
-						];
-				);
+					];
+			);
 	end;

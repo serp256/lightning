@@ -22,33 +22,31 @@ extern value caml_gc_compaction(value v);
 #include <caml/threads.h>
 #endif
 
-int (*loadCompressedTexture)(gzFile gzf, textureInfo *tInfo);
-char* compressedExt;
-
-#define ASSIGN_COMPRESSED_EXT(ext) compressedExt = (char*)malloc(strlen(ext)); strcpy(compressedExt, ext);
-
 mlstage *mlstage_create(float width,float height) {
 	const char *ext = (char*)glGetString(GL_EXTENSIONS);
+	const char *ver = (char*)glGetString(GL_VERSION);
 
+	PRINT_DEBUG("ver: %s", ver);
 	PRINT_DEBUG("exts: %s", ext);
 
-	if (strstr(ext, "GL_EXT_texture_compression_s3tc")) {		
-		loadCompressedTexture = loadDdsFile;
-		ASSIGN_COMPRESSED_EXT(".dds");
-		PRINT_DEBUG("s3tc, assign loadDdsFile %s", compressedExt);
-	} else if (strstr(ext, "GL_IMG_texture_compression_pvrtc")) {
-		loadCompressedTexture = loadPvrFile3;
-		ASSIGN_COMPRESSED_EXT(".pvr");
-		PRINT_DEBUG("pvr, assign loadPvrFile3 %s", compressedExt);
-	} else if (strstr(ext, "GL_AMD_compressed_ATC_texture") || strstr(ext, "GL_ATI_texture_compression_atitc")) {
-		loadCompressedTexture = loadDdsFile;
-		ASSIGN_COMPRESSED_EXT(".atc");
-		PRINT_DEBUG("atc, assign loadDdsFile %s", compressedExt);
-	} else if (strstr(ext, "GL_OES_compressed_ETC1_RGB8_texture")) {
-		loadCompressedTexture = loadPvrFile3;
-		ASSIGN_COMPRESSED_EXT(".etc");
-		PRINT_DEBUG("etc, assign loadDdsFile %s", compressedExt);
-	};
+/*	if (strstr(ver, "OpenGL ES 3.")) {
+		ASSIGN_COMPRESSED_EXT(".etc2");
+		PRINT_DEBUG("gles3, assign ext %s", compressedExt);
+	} else {
+		if (strstr(ext, "GL_EXT_texture_compression_s3tc")) {
+			ASSIGN_COMPRESSED_EXT(".dxt");
+			PRINT_DEBUG("s3tc, assign ext %s", compressedExt);
+		} else if (strstr(ext, "GL_IMG_texture_compression_pvrtc")) {
+			ASSIGN_COMPRESSED_EXT(".pvr");
+			PRINT_DEBUG("pvr, assign ext %s", compressedExt);
+		} else if (strstr(ext, "GL_AMD_compressed_ATC_texture") || strstr(ext, "GL_ATI_texture_compression_atitc")) {
+			ASSIGN_COMPRESSED_EXT(".atc");
+			PRINT_DEBUG("atc, assign ext %s", compressedExt);
+		} else if (strstr(ext, "GL_OES_compressed_ETC1_RGB8_texture")) {
+			ASSIGN_COMPRESSED_EXT(".etc");
+			PRINT_DEBUG("etc, assign ext %s", compressedExt);
+		};
+	}*/
 	
 	CAMLparam0();
 	//PRINT_DEBUG("mlstage_create: %d",(unsigned int)pthread_self());
@@ -119,7 +117,7 @@ void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
 static value render_method = NIL;
 
 uint8_t mlstage_render(mlstage *mlstage) {
-	PRINT_DEBUG("mlstage render");
+	//PRINT_DEBUG("mlstage render");
 	//caml_acquire_runtime_system();
 	if (render_method == NIL)
 		render_method = caml_hash_variant("renderStage");
@@ -129,10 +127,15 @@ uint8_t mlstage_render(mlstage *mlstage) {
 }
 
 static value *preRender_fun = NULL;
-void mlstage_preRender() {
+void mlstage_preRender(mlstage *mlstage) {
 	//caml_acquire_runtime_system();
-	if (preRender_fun == NULL) preRender_fun = (value*)caml_named_value("prerender");
-	caml_callback(*preRender_fun,Val_unit);
+	static value prerender = NULL;
+	if (!prerender) prerender = caml_hash_variant("stageRunPrerender");
+
+	caml_callback2(caml_get_public_method(mlstage->stage, prerender), mlstage->stage, Val_unit);
+
+/*	if (preRender_fun == NULL) preRender_fun = (value*)caml_named_value("prerender");
+	caml_callback(*preRender_fun,Val_unit);*/
 	//caml_release_runtime_system();
 }
 
@@ -173,7 +176,7 @@ void ml_memoryWarning() {
 
 value caml_getResource(value mlpath,value suffix) {
 	PRINT_DEBUG("caml_getResource call");
-	PRINT_DEBUG("mlpath: %s suffix: %s", mlpath, suffix);
+	//PRINT_DEBUG("mlpath: %s suffix: %s", mlpath, suffix);
 	CAMLparam1(mlpath);
 	CAMLlocal2(res,mlfd);
 	resource r;

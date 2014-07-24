@@ -354,6 +354,12 @@ typedef struct {
 } texParams;
 
 
+#define GL_COMPRESSED_RGB8_ETC2 0x9274
+#define GL_COMPRESSED_RGBA8_ETC2_EAC 0x9278
+
+#define GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG 0x9137
+#define GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG 0x9138
+
 static inline int textureParams(textureInfo *tInfo,texParams *p) {
     switch (tInfo->format & 0xFFFF)
     {
@@ -424,11 +430,22 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 #else 
 						return 0;
 #endif
-        case LTextureFormatPvrtcRGB4:
+
+        case LTextureFormatPvrtc2RGBA2:
+#if (defined IOS || defined ANDROID)
+            p->compressed = 1;
+            p->bitsPerPixel = 2;
+            p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG;
+            break;
+#else 
+						return 0;
+#endif
+
+        case LTextureFormatPvrtc2RGBA4:
 #if (defined IOS || defined ANDROID)
             p->compressed = 1;
             p->bitsPerPixel = 4;
-            p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
+            p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG;
             break;
 #else
 						return 0;
@@ -489,6 +506,26 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 			return 0;
 #endif
 
+        case LTextureFormatETC2RGB:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 4;
+        	p->glTexFormat = GL_COMPRESSED_RGB8_ETC2;
+            break;
+#else
+			return 0;
+#endif
+
+        case LTextureFormatETC2RGBA:
+#if (defined ANDROID)
+        	p->compressed = 1;
+        	p->bitsPerPixel = 8;
+        	p->glTexFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;
+            break;
+#else
+			return 0;
+#endif			
+
         case LTextureFormat565:
             p->bitsPerPixel = 2;
             p->glTexFormat = GL_RGB;
@@ -519,7 +556,9 @@ void ml_delete_texture(value textureID) {
 
 
 value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
-		texParams params;
+	checkGLErrors("1");
+
+	texParams params;
     params.glTexType = GL_UNSIGNED_BYTE;
     params.bitsPerPixel = 4;
     params.compressed = 0;
@@ -547,13 +586,16 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 			mlTextureID = Field(oldTextureID,0);
 			textureID = TEXTURE_ID(mlTextureID);
 		}
+	checkGLErrors("2");
     glBindTexture(GL_TEXTURE_2D, textureID);
+    checkGLErrors("3");
     
 		
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
+    checkGLErrors("4");
 
 		// PRINT_DEBUG("filter is %d",filter);
 		switch (Int_val(filter)) {
@@ -578,6 +620,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     
 		int level;
 
+		checkGLErrors("5");
 		PRINT_DEBUG("params.compressed %d", params.compressed);
 
     if (!params.compressed)
@@ -614,7 +657,6 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
         int levelWidth = tInfo->width;
         int levelHeight = tInfo->height;
         unsigned char *levelData = tInfo->imgData;
-        
 
         for (level=0; level <= tInfo->numMipmaps; ++level)
         {                    
@@ -635,17 +677,21 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
         //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tInfo->numMipmaps == 0 ? GL_LINEAR : GL_LINEAR_MIPMAP_NEAREST);
         
 		glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+		checkGLErrors("6");
+
         int levelWidth = tInfo->width;
         int levelHeight = tInfo->height;
         unsigned char *levelData = tInfo->imgData;
         
-        PRINT_DEBUG("compressed %d", params.glTexFormat);
+        PRINT_DEBUG("compressed %x", params.glTexFormat);
+        checkGLErrors("7");
 
         for (level=0; level<= tInfo->numMipmaps; ++level)
         {                    
-        	PRINT_DEBUG("level %d", level);
+        	PRINT_DEBUG("level %d gl format %x w %d h %d", level, params.glTexFormat, levelWidth, levelHeight);
 			int size = MAX(32, levelWidth * levelHeight * params.bitsPerPixel / 8);
             glCompressedTexImage2D(GL_TEXTURE_2D, level, params.glTexFormat, levelWidth, levelHeight, 0, size, levelData);
+            checkGLErrors("8");
             levelData += size;
             levelWidth  /= 2; 
             levelHeight /= 2;
@@ -653,7 +699,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
     }
     
 		checkGLErrors("create texture");
-    glBindTexture(GL_TEXTURE_2D, 0);
+    	glBindTexture(GL_TEXTURE_2D, 0);
 		boundTextureID = 0;
     return mlTextureID;
 };
@@ -1007,24 +1053,35 @@ textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int
 		strcpy(insertTo, "_alpha");
 		strcpy(insertTo + 6, ext);
 
-		PRINT_DEBUG("fname %s", fname);
-		int r = load_image_info(fname, suffix, use_pvr, alphaTexInfo, suffix);
-		PRINT_DEBUG("r: %d", r);
+		int r = load_image_info(fname, NULL, use_pvr, alphaTexInfo, suffix);
+		if (r) {
+			if (suffix) {
+				size_t suf_len = strlen(suffix);
+
+				fname = (char*)realloc(fname, fnameLen + suf_len + 7);
+				insertTo = fname + fnameLen - extLen;
+				strcpy(insertTo, suffix);
+				strcpy(insertTo + suf_len, "_alpha");
+				strcpy(insertTo + suf_len + 6, ext);
+
+				r = load_image_info(fname, NULL, use_pvr, alphaTexInfo, suffix);
+
+				if (r) {
+					free(alphaTexInfo);
+					alphaTexInfo = NULL;					
+				}
+			} else {
+				free(alphaTexInfo);
+				alphaTexInfo = NULL;
+			}
+		}
+
+/*		int r = load_image_info(fname, suffix, use_pvr, alphaTexInfo, suffix);
 
 		if (r) {
 			free(alphaTexInfo);
 			alphaTexInfo = NULL;
-			/*
-			value alphaTexId = createGLTexture(Val_int(0), &alphaTexInfo, filter);
-			ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, (&alphaTexInfo));
-
-			value block = caml_alloc(1, 1);
-			Store_field(block, 0, mlAlphaTex);
-			Store_field(mlTex, 0, block);
-
-			free(alphaTexInfo.imgData);
-			*/
-		}
+		}*/
 
 		free(fname);
 	}

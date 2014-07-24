@@ -59,7 +59,7 @@ value load xmlpath =
 
 value load ?filter ?use_pvr binpath = 
   let dirname = Filename.dirname binpath in
-  let inp = open_resource binpath in
+  let inp = open_resource_unsafe binpath in
   (
     let bininp = IO.input_channel inp in
     let cnt_atlases = IO.read_byte bininp in
@@ -91,7 +91,7 @@ value load ?filter ?use_pvr binpath =
 
 value load_async ?filter ?use_pvr ?ecallback binpath callback = 
   let dirname = Filename.dirname binpath in
-  let inp = open_resource binpath in
+  let inp = open_resource_unsafe binpath in
   let bininp = IO.input_channel inp in
   let cnt_atlases = IO.read_byte bininp in
   let regions = Hashtbl.create 3 in
