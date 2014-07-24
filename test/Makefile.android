@@ -45,6 +45,7 @@ $(TARGET).so: $(CFILES) $(MLXFILES) $(TARGET).cmx
 	-I ../src ../src/lightning.cmxa \
 	-cclib "-L../src/plugins/facebook" ../src/plugins/facebook/facebook.cmxa \
 	-cclib "-L../src/plugins/vk" ../src/plugins/vk/NativeVk.cmxa \
+	-cclib "-L../src/plugins/flurry" ../src/plugins/flurry/flurry.cmxa \
 	$(OAUTHX) $(SOCIALX) $(MLXFILES) $(CFILES) $(TARGET).cmx \
 	-package extlib,xmlm,ojson,bigarray,redspell.debug -linkpkg -cclib "-L../src/android/libpng" -cclib "-L../src/android/libjpeg" -cclib "-L../src/android/libcurl" \
 	-output-obj

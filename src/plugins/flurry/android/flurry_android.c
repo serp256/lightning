@@ -1,28 +1,15 @@
 #include "plugin_common.h"
 
-
-static jclass flurryAgentCls = NULL;
-
-#define GET_FLURRY_AGENT														\
-	if (!flurryAgentCls) {														\
-		jclass tmp = (*env)->FindClass(env, "com/flurry/android/FlurryAgent");	\
-		flurryAgentCls = (*env)->NewGlobalRef(env, tmp);						\
-		(*env)->DeleteLocalRef(env, tmp);										\
-	}
-
-void ml_flurryStartSession(value v_appId) {
+void ml_flurryStartSession(value vappid) {
 	static int started = 0;
 	if (started) return;
 
-	GET_ENV;
-	GET_FLURRY_AGENT;
-
+	jclass cls = engine_find_class("com/flurry/android/FlurryAgent");
 	static jmethodID mid = 0;
-	if (!mid) mid = (*env)->GetStaticMethodID(env, flurryAgentCls, "onStartSession", "(Landroid/content/Context;Ljava/lang/String;)V");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "onStartSession", "(Landroid/content/Context;Ljava/lang/String;)V");
 
-	jstring j_appId = (*env)->NewStringUTF(env, String_val(v_appId));
-	(*env)->CallStaticVoidMethod(env, flurryAgentCls, mid, JAVA_ACTIVITY, j_appId);
-	(*env)->DeleteLocalRef(env, j_appId);
+	jstring jappid = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vappid));
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid, JAVA_ACTIVITY, jappid);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jappid);
 	started = 1;
 }
-
