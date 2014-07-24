@@ -17,20 +17,30 @@ value ml_rnInit(value rntype_unused, value sender_id) {
 	return Val_true;
 }
 
+void rnandroid_success(void *data) {
+	PRINT_DEBUG("rnandroid_success");
 
+	jstring jregid = (jstring)data;
+	value vregid;
+	JSTRING_TO_VAL(jregid, vregid)
+	caml_callback(*caml_named_value("remote_notifications_success"), vregid);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, jregid);
+}
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightRemoteNotifications_successCallback(JNIEnv *env, jobject this, jstring jregid) {
-	PRINT_DEBUG("ml_rn_success");
-	value *ml_success = caml_named_value("remote_notifications_success");
-	const char *cregid = (*env)->GetStringUTFChars(env,jregid,JNI_FALSE);
-	value regid = caml_copy_string(cregid);
-	caml_callback(*ml_success,regid);
+	RUN_ON_ML_THREAD(&rnandroid_success, (void*)(*env)->NewGlobalRef(env, jregid));
+}
+
+void rnandroid_err(void *data) {
+	PRINT_DEBUG("rnandroid_err");
+
+	jstring jerr = (jstring)data;
+	value verr;
+	JSTRING_TO_VAL(jerr, verr)
+	caml_callback(*caml_named_value("remote_notifications_error"), verr);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, jerr);
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightRemoteNotifications_errorCallback(JNIEnv *env, jobject this, jstring jerr) {
-	PRINT_DEBUG("ml_rn_fail");
-	value *ml_fail = caml_named_value("remote_notifications_error");
-	const char *cerr = (*env)->GetStringUTFChars(env,jerr,JNI_FALSE);
-	value err = caml_copy_string(cerr);
-	caml_callback(*ml_fail,err);
+	RUN_ON_ML_THREAD(&rnandroid_err, (void*)(*env)->NewGlobalRef(env, jerr));
 }
