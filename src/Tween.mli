@@ -27,6 +27,7 @@ class c: [?delay:float] -> [?repeat:int] -> [?transition:Transitions.kind] -> [?
     method process: float -> bool;
     method reset: unit -> unit;
     method setOnComplete: (unit -> unit) -> unit;
+	method stop: unit -> unit;
   end;
 
 

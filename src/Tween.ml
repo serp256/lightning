@@ -160,14 +160,20 @@ class c ?(delay=0.) ?(repeat=(-1)) ?(transition=`linear) ?(loop=`LoopNone) time 
     method animate (getValue,setValue) endValue = actions := [ {startValue = 0.; endValue; getValue ; setValue}  :: actions ];
     method setOnComplete f = onComplete := Some f;
 
+	value mutable stopFlag = False;
+
+	(* этот метод для остановки твина из #animate *)
+	method stop () = stopFlag := True;
+
     method reset () = 
     (
+	  stopFlag := False;
       currentTime := 0.;
       invertTransition := False;
     );
 
     method process dt = 
-(*       let () = Printf.eprintf "tween process %F\n%!" dt in *)
+	  if stopFlag then False else
       let isDelay =
         (
           currentTime := currentTime +. dt;
