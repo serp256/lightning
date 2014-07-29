@@ -32,6 +32,12 @@ typedef enum
     St_string_val, 
   } st_val_type;
 
+
+static void debug_malinfo(char *msg) {
+//	struct mallinfo s = mallinfo();
+//	__android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING","[%s] malloc_total: %d, malloc_used: %d, malloc_free: %d",msg,s.arena + s.hblkhd,s.uordblks,s.fordblks);
+}
+
 static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	__android_log_write(ANDROID_LOG_FATAL,"LIGHTNING",exn);
 	int i;
@@ -58,6 +64,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	//__android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING","JNI_OnLoad");
 	PRINT_DEBUG("JNI ON LOAD");
+	debug_malinfo("jni on load");
 	uncaught_exception_callback = &mlUncaughtException;
 	gJavaVM = vm;
 	return JNI_VERSION_1_6; // Check this
@@ -152,6 +159,7 @@ static kh_res_index_t* res_indx;
 JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jobject jview, jobject jactivity, jobject storage, jlong j_indexOffset, jlong j_assetsOffset,
 																jstring j_apkPath, jstring j_mainExpPath, jstring j_patchExpPath) {
 	PRINT_DEBUG("lightInit");
+	debug_malinfo("light init start");
 
 	jActivity = (*env)->NewGlobalRef(env,jactivity);
 	jView = (*env)->NewGlobalRef(env,jview);
@@ -194,6 +202,7 @@ JNIEXPORT jstring Java_ru_redspell_lightning_LightView_lightInit(JNIEnv *env, jo
 		free(err);
 	}
 
+	debug_malinfo("light init finished");
 	return retval;
 }
 
@@ -267,6 +276,7 @@ int getResourceFd(const char *path, resource *res) {
 JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNIEnv *env, jobject jrenderer, jint width, jint height) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated");
 	if (!ocaml_initialized) {
+		debug_malinfo("before init ocaml");
 		PRINT_DEBUG("init ocaml");
 		char *argv[] = {"android",NULL};
 		caml_startup(argv);
@@ -278,6 +288,7 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceCreated(JNI
 		(*env)->CallVoidMethod(env,jActivity,jm);
 		(*env)->DeleteLocalRef(env,jLightActivityCls);
 		PRINT_DEBUG("caml initialized");
+		debug_malinfo("after init ocaml");
 	};
 }
 
@@ -436,7 +447,12 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_cancelAllTouches() {
 }
 
 value ml_malinfo(value p) {
-	return caml_alloc_tuple(3);
+	struct mallinfo s = mallinfo();
+	value res = caml_alloc_small(3,0);
+	Field(res,0) = Val_int(s.arena + s.hblkhd);
+	Field(res,1) = Val_int(s.uordblks);
+	Field(res,2) = Val_int(s.fordblks);
+	return res;
 }
 
 // JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_handleOnPause(JNIEnv *env, jobject this) {
