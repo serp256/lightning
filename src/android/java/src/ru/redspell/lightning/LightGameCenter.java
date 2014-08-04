@@ -1,6 +1,8 @@
 package ru.redspell.lightning;
 
-import com.google.android.gms.games.GamesClient;
+//import com.google.android.gms.games.GamesClient;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.games.Games;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.games.Player;
@@ -16,15 +18,15 @@ import 	com.google.android.gms.games.GamesActivityResultCodes;
 
 
 
-public class LightGameCenter implements GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener {
+public class LightGameCenter implements GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener {
 
-	private GamesClient mGamesClient;
+	private GoogleApiClient mGamesClient;
 
 	public LightGameCenter() {
 		Log.d("LIGHTNING","LightGameCenter");
-		GamesClient.Builder builder = new GamesClient.Builder(LightActivity.instance,this,this);
-		mGamesClient = builder.create ();
-		mGamesClient.setViewForPopups(LightActivity.instance.viewGrp);
+		GoogleApiClient.Builder builder = new GoogleApiClient.Builder(LightActivity.instance,this,this);
+		builder.setViewForPopups(LightActivity.instance.viewGrp);
+		mGamesClient = builder.build ();
 		LightActivity.instance.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
@@ -49,6 +51,9 @@ public class LightGameCenter implements GooglePlayServicesClient.ConnectionCallb
 	public void onConnected(Bundle connectionHint) {
 		Log.d("LIGHTNING","Connection onConnected");
 		LightActivity.instance.lightView.queueEvent(new ConnectionSuccessCallbackRunnable());
+	};
+
+	public void onConnectionSuspended (int cause) {
 	};
 
 	public void onDisconnected() {
@@ -97,20 +102,20 @@ public class LightGameCenter implements GooglePlayServicesClient.ConnectionCallb
 
 	public String getPlayerID() {
 		if (mGamesClient == null || !mGamesClient.isConnected()) return null;
-		else return mGamesClient.getCurrentPlayerId();
+		else return Games.Players.getCurrentPlayerId(mGamesClient);
 	}
 
 	public Player currentPlayer() {
 		if (mGamesClient == null) return null;
 		if (!mGamesClient.isConnected()) return null;
-		return mGamesClient.getCurrentPlayer();
+		return Games.Players.getCurrentPlayer(mGamesClient);
 	}
 
 	public void unlockAchievement(final String achievement_id) {
 		LightActivity.instance.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				mGamesClient.unlockAchievement(achievement_id);
+				Games.Achievements.unlock(mGamesClient,achievement_id);
 			}
 		});
 	}
@@ -141,7 +146,8 @@ public class LightGameCenter implements GooglePlayServicesClient.ConnectionCallb
 					@Override public void onSaveInstanceState(Bundle b) {};
 				};
 				LightActivity.instance.addUiLifecycleHelper(helper);
-				Intent intent = mGamesClient.getAchievementsIntent();
+				Intent intent = Games.Achievements.getAchievementsIntent(mGamesClient);
+					//mGamesClient.getAchievementsIntent();
 				LightActivity.instance.startActivityForResult(intent,SHOW_ACHIEVEMENT_REQUEST);
 			}
 		});
@@ -185,7 +191,8 @@ public class LightGameCenter implements GooglePlayServicesClient.ConnectionCallb
 			LightActivity.instance.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					mGamesClient.signOut();
+					//mGamesClient.signOut();
+					mGamesClient.disconnect();
 				}
 			});
 	}

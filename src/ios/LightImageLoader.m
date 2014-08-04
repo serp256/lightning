@@ -8,7 +8,7 @@
 
 
 
-int loadImageFile(UIImage *image, textureInfo *tInfo);
+extern int loadImageFile(UIImage *image, textureInfo *tInfo);
 
 @implementation LightImageLoader 
 
@@ -69,6 +69,9 @@ int loadImageFile(UIImage *image, textureInfo *tInfo);
 		//float height = image.size.height;
 		//NSLog(@"Laded external image of size: %f:%f",width,height);
 		textureInfo tInfo;
+#ifdef TEXTURE_LOAD
+		strncpy(tInfo.path,[connection.currentRequest.URL.absoluteString cStringUsingEncoding:NSUTF8StringEncoding],255);
+#endif
 		int r = loadImageFile(image,&tInfo);
 		[image release];
 		if (r) [self badImageData];

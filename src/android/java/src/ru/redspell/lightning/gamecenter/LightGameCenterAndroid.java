@@ -1,6 +1,7 @@
 package ru.redspell.lightning.gamecenter;
 
-import com.google.android.gms.games.GamesClient;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.games.Games;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.games.Player;
@@ -16,9 +17,9 @@ import com.google.android.gms.games.GamesActivityResultCodes;
 
 
 
-public class LightGameCenterAndroid implements LightGameCenter,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener {
+public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener {
 
-	private GamesClient mGamesClient;
+	private GoogleApiClient mGamesClient;
 	
 	private LightGameCenterConnectionListener listener;
 
@@ -35,13 +36,14 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
     /*
      * LightGameCenter
      */
-    public LightGameCenterAndroid(LightGameCenterConnectionListener l) {
+	public LightGameCenterAndroid(LightGameCenterConnectionListener l) {
 		Log.d("LIGHTNING","LightGameCenter");
-		GamesClient.Builder builder = new GamesClient.Builder(LightActivity.instance,this,this);
-		mGamesClient = builder.create ();
-		mGamesClient.setViewForPopups(LightActivity.instance.viewGrp);
+		GoogleApiClient.Builder builder = new GoogleApiClient.Builder(LightActivity.instance,this,this);
+		builder.setViewForPopups(LightActivity.instance.viewGrp);
+		mGamesClient = builder.build ();
+		//mGamesClient.setViewForPopups(LightActivity.instance.viewGrp);
 		listener = l;
-    }
+	}
 
 
     /*
@@ -77,6 +79,9 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 		if (listener != null) {
 		    listener.onConnected();
 		}
+	};
+
+	public void onConnectionSuspended (int cause) {
 	};
 
 
@@ -140,7 +145,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 	public String getPlayerID() {
 		if (mGamesClient == null || !mGamesClient.isConnected()) return null;
 		else {
-		    return mGamesClient.getCurrentPlayerId();
+		    return Games.Players.getCurrentPlayerId(mGamesClient);
 		}   
 	}
 
@@ -154,12 +159,12 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 		    player = new LightGameCenterPlayer() {
 		        @Override
 		        public String getPlayerId() {
-		          return mGamesClient.getCurrentPlayerId();
+		          return Games.Players.getCurrentPlayerId(mGamesClient);
 		        }
 		        
 		        @Override
 		        public String getDisplayName() {
-		          return mGamesClient.getCurrentPlayer().getDisplayName();
+		          return Games.Players.getCurrentPlayer(mGamesClient).getDisplayName();
 		        }
 		    };
 		}
@@ -174,7 +179,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 			@Override
 			public void run() {
 				Log.d ("LIGHTNING.GameCenterAndroid", String.format("value = %d", score));
-				mGamesClient.submitScore(leaderboard_id, score);
+				Games.Leaderboards.submitScore(mGamesClient,leaderboard_id, score);
 			}
 		});
 	}
@@ -186,7 +191,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 		LightActivity.instance.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				mGamesClient.unlockAchievement(achievement_id);
+				Games.Achievements.unlock(mGamesClient,achievement_id);
 			}
 		});
 	}
@@ -219,7 +224,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 					@Override public void onSaveInstanceState(Bundle b) {};
 				};
 				LightActivity.instance.addUiLifecycleHelper(helper);
-				Intent intent = mGamesClient.getAchievementsIntent();
+				Intent intent = Games.Achievements.getAchievementsIntent(mGamesClient);
 				LightActivity.instance.startActivityForResult(intent,SHOW_ACHIEVEMENT_REQUEST);
 			}
 		});
@@ -248,7 +253,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 					@Override public void onSaveInstanceState(Bundle b) {};
 				};
 				LightActivity.instance.addUiLifecycleHelper(helper);
-				Intent intent = mGamesClient.getLeaderboardIntent(boardId);
+				Intent intent = Games.Leaderboards.getLeaderboardIntent(mGamesClient,boardId);
 				LightActivity.instance.startActivityForResult(intent,SHOW_LEADERBOARD_REQUEST);
 			}
 		});
@@ -259,7 +264,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GooglePlayService
 			LightActivity.instance.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					mGamesClient.signOut();
+					mGamesClient.disconnect();
 				}
 			});
 	}
