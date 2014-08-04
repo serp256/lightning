@@ -97,7 +97,7 @@ class c pts s q t =
 		value mutable points			: form = pts;
 		value mutable step				: float = 0.1;
 		value mutable qty				: int = 10;
-		value mutable arrays 			: lazy_t t = lazy (makeArrays (correctForm pts) s q (t#renderInfo.Texture.rwidth,t#renderInfo.Texture.rheight) (getClp t));
+		value mutable arrays 			: lazy_t t = lazy (makeArrays (*correctForm pts*)pts s q (t#renderInfo.Texture.rwidth,t#renderInfo.Texture.rheight) (getClp t));
 		value mutable setVertexArray	: lazy_t unit = lazy ();
 		method arrays = Lazy.force arrays;
 		method points = Array.copy points;
@@ -106,13 +106,13 @@ class c pts s q t =
 		method texture = tex;	
 		method setPoints p = (
 			points := p;
-			setVertexArray := lazy (makeVertGrid (Lazy.force arrays) (Array.map ptToCpt (correctForm p)) step qty (t#renderInfo.Texture.rwidth,t#renderInfo.Texture.rheight));
+			setVertexArray := lazy (makeVertGrid (Lazy.force arrays) (Array.map ptToCpt (*correctForm p*)p) step qty (t#renderInfo.Texture.rwidth,t#renderInfo.Texture.rheight));
 		);
 		method step = qty;
 		method setStep a = (
 			step := 1. /. (float_of_int a);
 			qty := a;	
-			arrays := lazy (makeArrays (correctForm points) step qty (tex#renderInfo.Texture.rwidth,tex#renderInfo.Texture.rheight) (getClp t));
+			arrays := lazy (makeArrays (*correctForm points*)points step qty (tex#renderInfo.Texture.rwidth,tex#renderInfo.Texture.rheight) (getClp t));
 			setVertexArray := lazy (self#setPoints points);
 		);
 		method setTexture t = (
