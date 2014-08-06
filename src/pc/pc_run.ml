@@ -93,7 +93,7 @@ value run stage_create =
   let width = ref 768 and height = ref 1024 
   and setDeviceType = fun s -> internalDeviceType.val := match s with [ "pad" -> Pad | "phone" -> Phone | _ -> failwith "unknown device type"] 
   and setDevice = fun s -> internal_device.val := match s with [ "pad1" -> IOS IPad1 | "pad2" -> IOS IPad2 | "pad3" -> IOS IPad3 | "pad4" -> IOS IPadNew 
-	| "phone4" -> IOS IPhone4 | "phone5" -> IOS IPhone5 | "phone3" -> IOS IPhone3GS | "xlarge_hdpi" -> Android (Xlarge, Hdpi)  |  _ -> failwith "unknown device type"] in
+	| "phone4" -> IOS IPhone4 | "phone5" -> IOS IPhone5 | "phone3" -> IOS IPhone3GS | "xlarge_hdpi" -> Android (Xlarge, Hdpi) | "normal_xhdpi" -> Android (Normal, Xhdpi)  |  _ -> failwith "unknown device"] in
   (
     Arg.parse [
       ("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");
