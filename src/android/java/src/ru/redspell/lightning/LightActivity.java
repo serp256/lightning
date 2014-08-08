@@ -307,10 +307,28 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		}
 	}
 
+	public class ForceStageRenderRunnable implements Runnable {
+		private String reason = null;
+
+		public ForceStageRenderRunnable(String reason) {
+			this.reason = reason;
+		}
+
+		public native void run(String reason);
+
+		public void run() {
+			run(reason);
+		}
+	}
+
+	public void forceStageRender(String reason) {
+		lightView.queueEvent(new ForceStageRenderRunnable(reason));
+	}
+
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
-		Log.d("LIGHTNING", "onConfigurationChanged");
 		super.onConfigurationChanged(newConfig);
+		forceStageRender("onConfigurationChanged");
 	}
 
 	public static void enableLocalExpansions() {

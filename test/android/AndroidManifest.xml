@@ -5,20 +5,14 @@
       android:versionName="1.0">
 
     <application android:label="light test" android:icon="@drawable/icon" android:debuggable="true">
-				<activity android:name="LightTest" android:label="light test" android:screenOrientation="landscape" android:configChanges="orientation" android:launchMode="singleTask">
+    	<meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+			<activity android:name="LightTest" android:label="light test" android:screenOrientation="portrait" android:configChanges="orientation|screenSize" android:launchMode="singleTask">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name="com.tapjoy.TJCOffersWebView" android:configChanges="keyboardHidden|orientation" />
-				<activity android:name="com.supersonicads.sdk.android.WebViewActivity" android:configChanges="orientation" android:hardwareAccelerated="true"></activity>
-
-        <activity android:name="com.facebook.LoginActivity"/>
-		<activity android:name="com.sponsorpay.sdk.android.publisher.OfferWallActivity" android:configChanges="orientation"/>
-		<activity android:name="com.vk.sdk.VKOpenAuthActivity" />
 
 
 			<supports-screens 

@@ -54,9 +54,13 @@ value screenSize () = !_screenSize;
 value _instance = ref None;
 value instance () = match !_instance with [ Some s -> s | None -> failwith "Stage not created" ];
 
+value backgroundTime = ref 0.;
+
 value onBackground = ref None;
 value on_background () = 
   (
+    backgroundTime.val := Unix.gettimeofday ();
+
     debug "GOING TO BACKGROUND";
     match !onBackground with
     [ Some f -> f()
@@ -75,7 +79,7 @@ value on_foreground () =
 (
   debug "ENTER TO FOREGROUND";
   match !onForeground with
-  [ Some f -> f ()
+  [ Some f -> f (Unix.gettimeofday () -. !backgroundTime)
   | None -> ()
   ];
 );
@@ -188,7 +192,7 @@ class virtual c (_width:float) (_height:float) =
     method! setVisible _ = raise Restricted_operation;
 
 
-    value mutable renderNeeded = True;
+    value mutable renderNeeded = 1;
 
     method _stageResized w h = (
       self#resize w h;
@@ -305,18 +309,20 @@ class virtual c (_width:float) (_height:float) =
     method! forceStageRender ?reason () =
       (
         debug:forcerendereason "forceStageRender call, reason %s" (match reason with [ Some r -> r | _ -> "_" ]);
-        renderNeeded := True;
+        if renderNeeded = 0
+        then renderNeeded := 1
+        else ();
       );
 
     value mutable skipCount = 0;
     (* used by all actual versions (pc, android, ios) *)
     method renderStage () =
-      if renderNeeded
+      if renderNeeded > 0
       then
         let () = debug:forcerendereason "stage render" in
         proftimer(0.015):prof "renderStage %f" with
           (
-            renderNeeded := False;
+            renderNeeded := renderNeeded - 1;
             Render.clear bgColor 1.;
             super#render None;
             match fpsTrace with [ None -> () | Some fps -> fps#render None ];
@@ -439,13 +445,16 @@ class virtual c (_width:float) (_height:float) =
 (*   method dispatchBackgroundEv () = self#dispatchEvent (Ev.create ev_BACKGROUND ());
   method dispatchForegroundEv () = self#dispatchEvent (Ev.create ev_FOREGROUND ()); *)
 
-  method dispatchBackgroundEv () =
-    (
-      self#forceStageRender ~reason:"background" ();
-      on_background ();
-    );
+  
 
-  method dispatchForegroundEv = on_foreground;
+  method dispatchBackgroundEv = on_background;
+
+  method dispatchForegroundEv () =
+    (
+      self#forceStageRender ~reason:"foreground" ();
+      renderNeeded := 10;
+      on_foreground ();
+    );
 
   method! boundsChanged () =
     (

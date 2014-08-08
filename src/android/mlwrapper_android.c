@@ -354,6 +354,20 @@ JNIEXPORT void Java_ru_redspell_lightning_LightRenderer_nativeSurfaceChanged(JNI
 	CAMLreturn0;
 }
 
+JNIEXPORT void Java_ru_redspell_lightning_LightActivity_00024ForceStageRenderRunnable_run(JNIEnv *env, jobject this, jstring jreason) {
+	CAMLparam0();
+	CAMLlocal1(vreason);
+
+	vreason = caml_alloc_tuple(1);
+	const char *creason = (*env)->GetStringUTFChars(env, jreason, JNI_FALSE);
+	Store_field(vreason, 0, caml_copy_string(creason));
+	(*env)->ReleaseStringUTFChars(env, jreason, creason);
+
+	caml_callback3(caml_get_public_method(stage->stage, caml_hash_variant("forceStageRender")), stage->stage, vreason, Val_unit);
+
+	CAMLreturn0;
+}
+
 JNIEXPORT jint Java_ru_redspell_lightning_LightRenderer_nativeGetFrameRate(JNIEnv *env, jobject this) {
 	if (!stage) return 0;
 	return mlstage_getFrameRate(stage);
