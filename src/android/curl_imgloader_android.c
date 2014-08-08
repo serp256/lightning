@@ -18,9 +18,9 @@
 #define MIN_ALLOC_SIZE 4096
 
 typedef struct {
-	char* url;
-	value* cb;
-	value* errCb;
+	char *url;
+	value *cb;
+	value *errCb;
 } cel_request_t;
 
 THQUEUE_INIT(cel_reqs,cel_request_t*);
@@ -256,6 +256,8 @@ static void* loader_thread(void* params) {
 extern void initCurl();
 
 value ml_loadExternalImage(value url, value cb, value errCb) {
+	CAMLparam3(url, cb, errCb);
+
 	initCurl();
 
 	PRINT_DEBUG("LOAD EXTERNAL IMAGE");
@@ -287,5 +289,5 @@ value ml_loadExternalImage(value url, value cb, value errCb) {
 	thqueue_cel_reqs_push(reqs, req);
 	pthread_cond_signal(&cond);
 
-	return Val_unit;
+	CAMLreturn(Val_unit);
 }

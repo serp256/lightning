@@ -9,8 +9,8 @@
 #include "android_native_app_glue.h"
 #include "mlwrapper.h"
 
-#define RUN_ON_ML_THREAD(func, data) engine_runonthread(ENGINE_CMD_RUN_ON_ML_THREAD, func, data)
-#define RUN_ON_MAIN_THREAD(func, data) engine_runonthread(ENGINE_CMD_RUN_ON_MAIN_THREAD, func, data)
+#define RUN_ON_ML_THREAD(func, data) engine_runonmlthread(func, data)
+#define RUN_ON_UI_THREAD(func, data) engine_runonuithread(func, data)
 
 struct saved_state {
     float angle;
@@ -56,8 +56,7 @@ typedef struct {
 } engine_runnable_t;
 
 enum {
-    ENGINE_CMD_RUN_ON_ML_THREAD = 100,
-    ENGINE_CMD_RUN_ON_MAIN_THREAD
+    ENGINE_CMD_RUN_ON_ML_THREAD = 100
 };
 
 struct engine engine;
@@ -76,7 +75,8 @@ typedef struct engine* engine_t;
 
 void engine_init(struct android_app* app);
 void engine_release();
-void engine_runonthread(uint8_t, engine_runnablefunc_t, void *);
+void engine_runonmlthread(engine_runnablefunc_t, void *);
+void engine_runonuithread(engine_runnablefunc_t, void *);
 
 jclass engine_find_class_with_env(JNIEnv *, const char *);
 jclass engine_find_class(const char *); /* use this functions rather than FIND_CLASS macro */

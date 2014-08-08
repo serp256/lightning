@@ -309,9 +309,9 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
                 struct android_app *app = engine->app;
 
                 pthread_mutex_lock(&app->mutex);
-                engine_runnable_t *onmlthread = (engine_runnable_t*)engine->data;
-                (*onmlthread->func)(onmlthread->data);
-                onmlthread->handled = 1;
+                engine_runnable_t *runnable = (engine_runnable_t*)engine->data;
+                (*runnable->func)(runnable->data);
+                runnable->handled = 1;
                 pthread_cond_broadcast(&app->cond);
                 pthread_mutex_unlock(&app->mutex);
 

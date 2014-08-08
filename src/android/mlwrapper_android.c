@@ -140,42 +140,51 @@ value ml_getLocale () {
 }
 
 value ml_getInternalStoragePath() {
+	CAMLparam0();
+	CAMLlocal1(vpath);
+
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getInternalStoragePath", "()Ljava/lang/String;");
 
-	value vpath;
 	jstring jpath = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
 	JSTRING_TO_VAL(jpath, vpath);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
 
-	return vpath;
+	CAMLreturn(vpath);
 }
 
 value ml_getStoragePath() {
+	CAMLparam0();
+	CAMLlocal1(vpath);
+
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getStoragePath", "()Ljava/lang/String;");
 
-	value vpath;
 	jstring jpath = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
 	JSTRING_TO_VAL(jpath, vpath);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
 
-	return vpath;
+	CAMLreturn(vpath);
 }
 
 value ml_getVersion() {
+	CAMLparam0();
+	CAMLlocal1(vver);
+
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getVersion", "()Ljava/lang/String;");
 
-	value vver;
 	jstring jver = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
 	JSTRING_TO_VAL(jver, vver);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jver);
 
-	return vver;
+	CAMLreturn(vver);
 }
 
 value ml_androidScreen() {
+	CAMLparam0();
+	CAMLlocal1(vscreen);
+
 	static jmethodID screen_mid = 0;
 	static jmethodID density_mid = 0;
 
@@ -187,11 +196,11 @@ value ml_androidScreen() {
 	jint jscreen = (*ML_ENV)->CallStaticIntMethod(ML_ENV, lightning_cls, screen_mid);
 	jint jdensity = (*ML_ENV)->CallStaticIntMethod(ML_ENV, lightning_cls, density_mid);
 	
-	value vscreen = caml_alloc_tuple(2);
+	vscreen = caml_alloc_tuple(2);
 	Store_field(vscreen, 0, Val_int(jscreen));
 	Store_field(vscreen, 1, Val_int(jdensity));
 
-	return vscreen;
+	CAMLreturn(vscreen);
 }
 
 value ml_getDeviceType() {
@@ -203,27 +212,31 @@ value ml_getDeviceType() {
 
 
 value ml_platform() {
+	CAMLparam0();
+	CAMLlocal1(vplat);
+
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "platform", "()Ljava/lang/String;");
 
-	value vplat;
 	jstring jplat = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
 	JSTRING_TO_VAL(jplat, vplat);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jplat);
 
-	return vplat;
+	CAMLreturn(vplat);
 }
 
 value ml_hwmodel() {
+	CAMLparam0();
+	CAMLlocal1(vmodel);
+
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "hwmodel", "()Ljava/lang/String;");
 
-	value vmodel;
 	jstring jmodel = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
 	JSTRING_TO_VAL(jmodel, vmodel)
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jmodel);
 
-	return vmodel;
+	CAMLreturn(vmodel);
 }
 
 value ml_totalMemory() {

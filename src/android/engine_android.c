@@ -43,22 +43,39 @@ void engine_release() {
 	free(engine.apk_path);
 }
 
-void engine_runonthread(uint8_t cmd, engine_runnablefunc_t func, void *data) {
-    engine_runnable_t *onmlthread = (engine_runnable_t*)malloc(sizeof(engine_runnable_t));
-    onmlthread->func = func;
-    onmlthread->data = data;
-    onmlthread->handled = 0;
+void engine_runonmlthread(engine_runnablefunc_t func, void *data) {
+    engine_runnable_t *runnable = (engine_runnable_t*)malloc(sizeof(engine_runnable_t));
+    runnable->func = func;
+    runnable->data = data;
+    runnable->handled = 0;
 
     struct android_app *app = engine.app;
 
     pthread_mutex_lock(&app->mutex);
-    engine.data = onmlthread;
-    android_app_write_cmd(app, cmd);
-    while (!onmlthread->handled) {
+    engine.data = runnable;
+    android_app_write_cmd(app, ENGINE_CMD_RUN_ON_ML_THREAD);
+    while (!runnable->handled) {
         pthread_cond_wait(&app->cond, &app->mutex);
     }    
     pthread_mutex_unlock(&app->mutex);
-    free(onmlthread);
+    free(runnable);
+}
+
+void engine_runonuithread(engine_runnablefunc_t func, void *data) {
+    engine_runnable_t *runnable = (engine_runnable_t*)malloc(sizeof(engine_runnable_t));
+    runnable->func = func;
+    runnable->data = data;
+    runnable->handled = 0;
+
+    static jmethodID mid = 0;
+    if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, engine.activity_class, "runOnUiThread", "(I)V");
+    (*ML_ENV)->CallVoidMethod(ML_ENV, JAVA_ACTIVITY, mid, (jint)runnable);
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_NativeActivity_00024NativeRunnable_run(JNIEnv *env, jclass this, jint jrunnable) {
+    engine_runnable_t *runnable = (engine_runnable_t*)jrunnable;
+    (*runnable->func)(runnable->data);
+    free(runnable);   
 }
 
 KHASH_MAP_INIT_STR(jclasses, jclass);

@@ -114,4 +114,23 @@ public class NativeActivity extends android.app.NativeActivity {
 	public void onBackPressed() {
 		Lightning.onBackPressed();
 	}
+
+	private class NativeRunnable implements Runnable {
+		private int runnable;
+
+		public NativeRunnable(int runnable) {
+			this.runnable = runnable;
+		}
+
+		private native void run(int runnable);
+
+		@Override
+		public void run() {
+			run(runnable);
+		}
+	}
+
+	public void runOnUiThread(int runnable) {
+		runOnUiThread(new NativeRunnable(runnable));
+	}
 }

@@ -1,13 +1,9 @@
 #include "lightning_android.h"
 #include "engine_android.h"
 
+#define CLS engine_find_class("ru/redspell/lightning/gamecenter/GameCenter");
+
 static jclass gcCls = NULL;
-
-
-static jobject getGcCls() {
-	return engine_find_class("ru/redspell/lightning/gamecenter/GameCenter");
-}
-
 static jobject jGameCenter = NULL;
 
 static void clearGameCenter() {
@@ -16,6 +12,8 @@ static void clearGameCenter() {
 }
 
 value ml_gamecenter_init(value silent, value param) {
+	CAMLparam2(silent, param);
+
 	PRINT_DEBUG("ml_gamecenter_init");
 
 	// get factory class
@@ -62,7 +60,7 @@ value ml_gamecenter_init(value silent, value param) {
 
     PRINT_DEBUG("2");
 	
-	return Val_true;
+	CAMLreturn(Val_true);
 }
 
 void gamecenter_connected(void *data) {
@@ -102,7 +100,7 @@ value ml_gamecenter_playerID(value param) {
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jGetPlayerIDM = NULL;
 	if (!jGetPlayerIDM) {
-		jclass gcCls = getGcCls();
+		jclass gcCls = CLS;
 		PRINT_DEBUG("TRY TO GET method ID");
 		jGetPlayerIDM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"getPlayerID","()Ljava/lang/String;");
 	};
@@ -150,16 +148,15 @@ static value convertPlayer(jobject jPlayer) {
 
 value ml_gamecenter_current_player(value p) {
 	CAMLparam0();
-	CAMLlocal1(player);
+	CAMLlocal2(res, player);
 	PRINT_DEBUG("GC current player");
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jCurrentPlayerM = NULL;
 	if (!jCurrentPlayerM) { 
-		jclass gcCls = getGcCls();
+		jclass gcCls = CLS;
 		jCurrentPlayerM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"currentPlayer","()Lru/redspell/lightning/gamecenter/Player;");
 	};
 	jobject jPlayer = (*ML_ENV)->CallObjectMethod(ML_ENV,jGameCenter,jCurrentPlayerM);
-	value res;
 	if (jPlayer != NULL) {
 		player = convertPlayer(jPlayer);
 		(*ML_ENV)->DeleteLocalRef(ML_ENV,jPlayer);
@@ -170,18 +167,19 @@ value ml_gamecenter_current_player(value p) {
 }
 
 value ml_gamecenter_report_leaderboard(value boardId, value score) {
+	CAMLparam2(boardId, score);
 	PRINT_DEBUG("GC report leaderboard");
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jSubmitScoreM = NULL;
 	if (!jSubmitScoreM) { 
-		jclass gcCls = getGcCls();
+		jclass gcCls = CLS;
 		jSubmitScoreM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"submitScore","(Ljava/lang/String;J)V");
 	};
 	jstring jid = (*ML_ENV)->NewStringUTF(ML_ENV,String_val(boardId));
 	jlong jscore = Int64_val(score);  
 	(*ML_ENV)->CallVoidMethod(ML_ENV,jGameCenter,jSubmitScoreM,jid,jscore);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV,jid);
-	return Val_unit;
+	CAMLreturn(Val_unit);
 }
 
 value ml_gamecenter_unlock_achievement(value name) {
@@ -189,7 +187,7 @@ value ml_gamecenter_unlock_achievement(value name) {
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jUnlockAchievementM = NULL;
 	if (!jUnlockAchievementM) { 
-		jclass gcCls = getGcCls();
+		jclass gcCls = CLS;
 		jUnlockAchievementM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"unlockAchievement","(Ljava/lang/String;)V");
 	};
 	jstring jid = (*ML_ENV)->NewStringUTF(ML_ENV,String_val(name));
@@ -204,7 +202,7 @@ value ml_gamecenter_show_achievements(value p) {
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jShowAchievementsM = NULL;
 	if (!jShowAchievementsM) { 
-		jclass gcCls = getGcCls();
+		jclass gcCls = CLS;
 		jShowAchievementsM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"showAchievements","()V");
 	};
 	(*ML_ENV)->CallVoidMethod(ML_ENV,jGameCenter,jShowAchievementsM);
@@ -217,7 +215,7 @@ value ml_gamecenter_show_leaderboard(value board_id) {
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jShowLeaderboardM = NULL;
 	if (!jShowLeaderboardM) { 
-		jclass gcCls = getGcCls();
+		jclass gcCls = CLS;
 		jShowLeaderboardM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"showLeaderboard","(Ljava/lang/String;)V");
 	};
 	jstring jid = (*ML_ENV)->NewStringUTF(ML_ENV,String_val(board_id));
@@ -243,7 +241,7 @@ value ml_gamecenter_signout(value p) {
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jSignOutM = NULL;
 	if (!jSignOutM) {
-		jclass gcCls = getGcCls();
+		jclass gcCls = CLS;
 		jSignOutM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"signOut","()V");
 	};
 	(*ML_ENV)->CallVoidMethod(ML_ENV,jGameCenter,jSignOutM);

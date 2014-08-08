@@ -13,11 +13,11 @@
 #define MIN_ALLOC_SIZE 4096
 
 typedef struct {
-	char* url;
-	char* path;
-	value* cb;
-	value* errCb;
-	value* prgrssCb;
+	char *url;
+	char *path;
+	value *cb;
+	value *errCb;
+	value *prgrssCb;
 } download_request_t;
 
 THQUEUE_INIT(download_reqs,download_request_t*);
@@ -178,6 +178,8 @@ static void* downloader_thread(void* params) {
 extern void initCurl();
 
 value ml_DownloadFile(value url, value path, value errCb, value prgrssCb, value cb) {
+	CAMLparam5(url, path, errCb, prgrssCb, cb);
+
 	initCurl();
 
 	PRINT_DEBUG("START DOWNLOAD FILE");
@@ -221,5 +223,5 @@ value ml_DownloadFile(value url, value path, value errCb, value prgrssCb, value 
 	thqueue_download_reqs_push(reqs, req);
 	pthread_cond_signal(&cond);
 
-	return Val_unit;
+	CAMLreturn(Val_unit);
 }
