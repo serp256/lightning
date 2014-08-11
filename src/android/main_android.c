@@ -131,13 +131,19 @@ KHASH_MAP_INIT_INT(tt, touch_track_t*);
 kh_tt_t* touch_track = NULL;
 
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
+    PRINT_DEBUG("engine_handle_input");
+
     CAMLparam0();
     CAMLlocal5(vtouches, vtouch, vtmp, vtx, vty);
 
     vtouches = Val_int(0);
     // engine_t engine = (engine_t)app->userData;
 
+    PRINT_DEBUG("AInputEvent_getType(event) %d, AINPUT_EVENT_TYPE_MOTION %d", AInputEvent_getType(event), AINPUT_EVENT_TYPE_MOTION);
+
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+        PRINT_DEBUG("engine.touches_disabled %d", engine.touches_disabled);
+
         if (engine.touches_disabled) {
             mlstage_cancelAllTouches(engine.stage);
             CAMLreturn(1);
@@ -253,6 +259,8 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
                 mlstage_cancelAllTouches(engine.stage);
                 break;
         }
+
+        PRINT_DEBUG("process touches %d", process_touches);
 
         if (process_touches) {
             mlstage_processTouches(engine.stage, vtouches);

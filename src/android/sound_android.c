@@ -33,6 +33,8 @@ uint8_t bq_players_num = 0;
 #define SOUND_ASSERT(cond, mes) if (cond) {} else caml_raise_with_string(*caml_named_value("Audio_error"), mes);
 #define ATTENUATION(vol) (100 - Int_val(vol)) * -35
 
+
+// calling this function from main ui thread cause from any other thread it blocks forever. reasons unknown
 void bq_player_free(void *d) {
     PRINT_DEBUG("bq_player_free %d", gettid());
     bq_player_t *plr = (bq_player_t*)d;

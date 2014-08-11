@@ -82,19 +82,29 @@ KHASH_MAP_INIT_STR(jclasses, jclass);
 static kh_jclasses_t *classes = NULL;
 
 jclass engine_find_class_with_env(JNIEnv *env, const char *ccls_name) {
+    PRINT_DEBUG("engine_find_class_with_env %s", ccls_name);
+
     if (!classes) classes = kh_init_jclasses();
+
+    PRINT_DEBUG("1");
 
     khiter_t k = kh_get(jclasses, classes, ccls_name);
     if (k != kh_end(classes)) return kh_val(classes, k);
 
+    PRINT_DEBUG("2");
+
     jstring jcls_name = (*env)->NewStringUTF(env, ccls_name);
     jclass cls = ML_FIND_CLASS(jcls_name);
-    (*env)->DeleteLocalRef(env, cls);
     (*env)->DeleteLocalRef(env, jcls_name);
+
+    PRINT_DEBUG("3");
 
     int ret;
     k = kh_put(jclasses, classes, ccls_name, &ret);
     kh_val(classes, k) = (*env)->NewGlobalRef(env, cls);
+    (*env)->DeleteLocalRef(env, cls);
+
+    PRINT_DEBUG("done");
 
     return kh_val(classes, k);
 }
