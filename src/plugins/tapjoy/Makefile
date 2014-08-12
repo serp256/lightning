@@ -79,12 +79,13 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-framework\ MessageUI' \
 		   -cclib '-framework\ MobileCoreServices' \
 		   -cclib '-framework\ QuartzCore' \
+		   -cclib '-framework\ Security' \
 		   -cclib '-weak_framework\ Social' \
 		   -cclib '-framework\ StoreKit' \
 		   -cclib '-framework\ SystemConfiguration' \
 		   -cclib '-framework\ Twitter' \
 		   -cclib '-framework\ UIKit' \
-			 -cclib '-framework\ Tapjoy'
+			-cclib '-framework\ Tapjoy'
 		   
 
 else

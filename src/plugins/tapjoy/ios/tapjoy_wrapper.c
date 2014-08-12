@@ -69,7 +69,7 @@ void ml_tapjoy_init(value appid, value skey) {
  */
 void ml_tapjoy_set_user_id(value userid) {
   CAMLparam1(userid);
-  [Tapjoy setUserID: STR_CAML2OBJC(userid)];
+  [Tapjoy setUserID:STR_CAML2OBJC(userid)];
   CAMLreturn0;
 }
 
@@ -79,7 +79,10 @@ void ml_tapjoy_set_user_id(value userid) {
  */
 CAMLprim value ml_tapjoy_get_user_id() {
   CAMLparam0();
-  CAMLreturn(caml_copy_string([[Tapjoy getUserID] UTF8String]));
+  CAMLlocal1(vuid);
+  NSString *muid = ((Tapjoy*)[Tapjoy sharedTapjoyConnect]).userID;
+  vuid = caml_copy_string([muid UTF8String]);
+  CAMLreturn(vuid);
 }
 
 /*

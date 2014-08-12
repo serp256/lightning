@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 by Tapjoy Inc.
+// Copyright (C) 2014 by Tapjoy Inc.
 //
 // This file is part of the Tapjoy SDK.
 //
@@ -8,14 +8,17 @@
 
 //The Tapjoy iOS SDK.
 
+#ifndef _TAPJOY_H
+#define _TAPJOY_H
 
 #import <UIKit/UIKit.h>
 #import "TapjoyConnectConstants.h"
 #import "TJEvent.h"
 
 
-#define TJC_DEPRECATION_WARNING __attribute__((deprecated("Go to knowledge.tapjoy.com for instructions on how to fix this warning")))
+#define TJC_DEPRECATION_WARNING(VERSION) __attribute__((deprecated("Go to tech.tapjoy.com for instructions on how to fix this warning")))
 #define TJ_DEPRECATED_CLASS     __attribute__((deprecated("TapjoyConnect Class is deprecated, use Tapjoy Class")))
+#define TJC_HIGHEST_UNSUPPORTED_SYSTEM_VERISON	@"4.3.5"
 
 typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
 
@@ -30,7 +33,6 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
 @class TJCVideoManager;
 @class TJCViewHandler;
 @class TJCNetReachability;
-@class TJCPushManager;
 @class TJCUtil;
 @class TJCLog;
 @class TJEvent;
@@ -63,10 +65,8 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
 @property (nonatomic, strong) TJCUserAccountManager *userAccountManager;
 @property (nonatomic, strong) TJCVideoManager *videoManager;
 @property (nonatomic, strong) TJCViewHandler *viewHandler;
-@property (nonatomic, strong) TJCPushManager *pushManager;
 @property (nonatomic, strong) TJCUtil *util;
 @property (nonatomic, strong) TJCLog *log;
-
 
 /** 
  * This method is called to initialize the Tapjoy system and notify the server that this device is running your application.
@@ -86,7 +86,16 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  *
  * @param appID The application ID. Retrieved from the app dashboard in your Tapjoy account.
  * @param secretKey The application secret key. Retrieved from the app dashboard in your Tapjoy account.
- * @param optionsDict NSDictionary of special flags to enable non-standard settings
+ * @param options NSDictionary of special flags to enable non-standard settings. Valid key:value options:
+ *
+ * TJC_OPTION_ENABLE_LOGGING : BOOL to enable logging
+ *
+ * TJC_OPTION_USER_ID : NSString user id that must be set if your currency is not managed by Tapjoy. If you don’t have a user id on launch you can call setUserID later
+ *
+ * TJC_OPTION_DISABLE_GENERIC_ERROR_ALERT : BOOL to disable our default error dialogs
+ *
+ * TJC_OPTION_SEGMENTATION_PARAMS : NSDictionary of values used for event segmentation. See http://tech.tapjoy.com for information about valid segments
+ *
  * @return n/a
  */
 + (void)requestTapjoyConnect:(NSString*)appID secretKey:(NSString*)secretKey options:(NSDictionary*)optionsDict;
@@ -112,7 +121,7 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  * 
  * @return The Tapjoy app ID passed into requestTapjoyConnect
  */
-+ (NSString*)getAppID;
++ (NSString*)getAppID TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Assigns a user ID for this user/device. This is used to identify the user in your application
@@ -127,24 +136,14 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  *
  * @return The Tapjoy user ID.
  */
-+ (NSString*)getUserID;
++ (NSString*)getUserID TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Retrieves the secret key.
  *
  * @return The Tapjoy secret key for this application.
  */
-+ (NSString*)getSecretKey;
-
-/**
- * Sets the plugin.
- *
- * The plugin defaults to "native".
- *
- * @param thePlugin The name of the plugin.
- * @return n/a
- */
-+ (void)setPlugin:(NSString*)thePlugin;
++ (NSString*)getSecretKey TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Sets the currency multiplier for virtual currency to be earned. The default is 1.0.
@@ -171,7 +170,6 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  */
 + (void)enableLogging:(BOOL)enable;
 
-
 /**
  * Returns the SDK version.
  *
@@ -179,6 +177,20 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  */
 + (NSString*)getVersion;
 
+/**
+ * Dismisses both offer wall and fullscreen ads.
+ *
+ * @return n/a
+ */
++ (void)dismissContent;
+
+/**
+ * Sets a dictionary of segmentation parameters for this user
+ *
+ * @param A dictionary of parameters. See http://tech.tapjoy.com for information about valid segment names to use
+ * @return n/a
+ */
++ (void)sendSegmentationParams:(NSDictionary*)params;
 
 @end
 
@@ -224,33 +236,16 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
 
 @end
 
-/**
- * The Tapjoy Video Ad Delegate Protocol.
- */
 @protocol TJCVideoAdDelegate <NSObject>
 
 @optional
 
-/**
- * Called when the video ad begins playing.
- *
- * @return n/a
- */
 - (void)videoAdBegan;
 
-/**
- * Called when the video ad is closed.
- *
- * @return n/a
- */
 - (void)videoAdClosed;
 
-/**
- * Called when an error occurs during video loading or playback.
- *
- * @param errorMsg A string containing a description of the fail error
- * @return n/a
- */
+- (void)videoAdCompleted;
+
 - (void)videoAdError:(NSString*)errorMsg;
 
 @end
@@ -318,23 +313,6 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
 + (id) getDisplayAdWithDelegate:(id<TJCAdDelegate>)deleg currencyID:(NSString*)currencyID;
 
 /**
- * Attempts to load a new Ad.
- *
- * @warning This method is deprecated.
- * @return n/a
- */
-+ (void) refreshDisplayAd TJC_DEPRECATION_WARNING;
-
-/**
- * Attempts to load a new Ad.
- *
- * @warning This method is deprecated.
- * @param currencyID The currency ID specifies which currency to advertise in the display ad.
- * @return n/a
- */
-+ (void) refreshDisplayAdWithCurrencyID:(NSString*)currencyID TJC_DEPRECATION_WARNING;
-
-/**
  * Indicates whether ad data has been successfully loaded.
  *
  * @return YES to indicate that the ad data has been successfully loaded, NO otherwise.
@@ -364,8 +342,6 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  */
 + (void)sendIAPEvent:(NSString*)name price:(float)price quantity:(int)quantity currencyCode:(NSString*)currencyCode;
 
-+ (void)sendIAPEventWithName:(NSString*)name price:(float)price quantity:(int)quantity currencyCode:(NSString*)currencyCode TJC_DEPRECATION_WARNING;
-
 @end
 
 
@@ -377,7 +353,7 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  * @warning This method is deprecated.
  * @return n/a
  */
-+ (void)getFullScreenAd;
++ (void)getFullScreenAd TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Requests for Featured App are notified via the TJC_FULL_SCREEN_AD_RESPONSE_NOTIFICATION notification.
@@ -386,7 +362,7 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  * @param currencyID The GUID for the currency earned when completing this full screen ad.
  * @return n/a
  */
-+ (void)getFullScreenAdWithCurrencyID:(NSString*)currencyID;
++ (void)getFullScreenAdWithCurrencyID:(NSString*)currencyID TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Wrapper method for displaying the Full Screen Featured App Ad.
@@ -396,7 +372,7 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  * @warning This method is deprecated.
  * @return The TJCUIWebPageAdView object.
  */
-+ (UIView*)showFullScreenAd;
++ (UIView*)showFullScreenAd TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Wrapper method for displaying the Full Screen Featured App Ad.
@@ -407,7 +383,7 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  * @param vController Reference to the application's view Controller. (Note: It must not be nil or an invalid object).
  * @return n/a
  */
-+ (void)showFullScreenAdWithViewController:(UIViewController*)vController;
++ (void)showFullScreenAdWithViewController:(UIViewController*)vController TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Sets the delay count for full screen ad.
@@ -416,14 +392,7 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  * @param delayCount The number of times that the app must run (since initial app install) before a full screen ad can be displayed.
  * @return n/a
  */
-+ (void)setFullScreenAdDelayCount:(int)delayCount;
-
-+ (void)getFeaturedApp TJC_DEPRECATION_WARNING;
-+ (void)getFeaturedAppWithCurrencyID:(NSString*)currencyID TJC_DEPRECATION_WARNING;
-+ (UIView*)showFeaturedAppFullScreenAd TJC_DEPRECATION_WARNING;
-+ (void)showFeaturedAppFullScreenAdWithViewController:(UIViewController*)vController TJC_DEPRECATION_WARNING;
-+ (void)setFeaturedAppDisplayCount:(int) displayCount TJC_DEPRECATION_WARNING;
-+ (void)setFeaturedAppDelayCount:(int)delayCount TJC_DEPRECATION_WARNING;
++ (void)setFullScreenAdDelayCount:(int)delayCount TJC_DEPRECATION_WARNING(10.0);
 
 @end
 
@@ -463,82 +432,6 @@ typedef void (^tapPointsCompletion)(NSDictionary *parameters, NSError *error);
  * @return n/a
  */
 + (void)showOffersWithCurrencyID:(NSString*)currencyID withViewController:(UIViewController*)vController withCurrencySelector:(BOOL)isSelectorVisible;
-
-/**
- * Allocates and initializes a TJCOffersWebView.
- *
- * @warning This method is deprecated.
- * @param vController The UIViewController to set as TJCOffersWebView's parentVController_.
- * @param visible TRUE makes the navigation bar visible, FALSE makes it not visible.
- * @return n/a
- */
-+ (void)showOffersWithViewController:(UIViewController*)vController withInternalNavBar:(BOOL)visible TJC_DEPRECATION_WARNING;
-
-/** 
- * Allocates and initializes a TJCOffersWebView. This is only used when multiple currencies are enabled.
- *
- * @warning This method is deprecated.
- * @param vController The UIViewController to set as TJCOffersWebView's parentVController_.
- * @param visible TRUE makes the navigation bar visible, FALSE makes it not visible.
- * @param currencyID The id of the currency to show in the offer wall.
- * @param isSelectorVisible Specifies whether to display the currency selector in the offer wall.
- * @return n/a
- */
-+ (void)showOffersWithCurrencyID:(NSString*)currencyID
-withViewController:(UIViewController*)vController
-withInternalNavBar:(BOOL)visible
-withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
-
-/**
- * Sets the navigation bar background image.
- *
- * @warning This method is deprecated.
- * @param image The UIImage to set the offer wall's navigation bar's background image to.
- * @return n/a
- */
-+ (void)setOffersNavBarImage:(UIImage*)image TJC_DEPRECATION_WARNING;
-
-@end
-
-
-@interface Tapjoy (TJCDailyRewardManager)
-
-/**
- * Requests for daily reward are notified via the TJC_DAILY_REWARD_RESPONSE_NOTIFICATION notification.
- *
- * @warning This method is deprecated.
- * @return n/a
- */
-+ (void)getDailyRewardAd TJC_DEPRECATION_WARNING;
-
-/**
- * Requests for Daily reward are notified via the TJC_DAILY_REWARD_RESPONSE_NOTIFICATION notification.
- *
- * @warning This method is deprecated.
- * @param currencyID The GUID for the currency earned when completing this full screen ad.
- * @return n/a
- */
-+ (void)getDailyRewardAdWithCurrencyID:(NSString*)currencyID TJC_DEPRECATION_WARNING;
-
-/**
- * Wrapper method for displaying the Daily reward.
- *
- * Places the Daily reward UIView on the top of the view stack and animates it into view if an animation transition effect is set.
- *
- * @warning This method is deprecated.
- * @return The TJCUIWebPageAdView object.
- */
-+ (UIView*)showDailyRewardAd TJC_DEPRECATION_WARNING;
-
-/**
- * Wrapper method for displaying the daily reward Ad.
- *
- * Places the daily reward Ad UIView on the top of the view stack and animates it into view if an animation transition effect is set.
- * @warning This method is deprecated.
- * @param vController Reference to the application's view Controller. (Note: It must not be nil or an invalid object).
- * @return n/a
- */
-+ (void)showDailyRewardAdWithViewController:(UIViewController*)vController TJC_DEPRECATION_WARNING;
 
 @end
 
@@ -609,15 +502,6 @@ withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
 @interface Tapjoy (TJCVideoViewHandler)
 
 /**
- * Initializes video ads.
- *
- * @warning This method is deprecated.
- * @param delegate The class that implements the TJCVideoAdDelegate protocol.
- * @return n/a
- */
-+ (void)initVideoAdWithDelegate:(id<TJCVideoAdDelegate>)delegate TJC_DEPRECATION_WARNING;
-
-/**
  * Sets the class that implements the TJCVideoAdDelegate protocol.
  *
  * @param delegate The class that implements the TJCVideoAdDelegate protocol.
@@ -631,7 +515,7 @@ withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
  * @param delegate The class that implements the TJCVideoAdDelegate protocol.
  * @return n/a
  */
-+ (void)cacheVideosWithDelegate:(id<TJCVideoAdDelegate>)delegate;
++ (void)cacheVideosWithDelegate:(id<TJCVideoAdDelegate>)delegate TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Sets the cache count for video ads.
@@ -639,7 +523,7 @@ withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
  * @param count The number of videos to cache to device locally.
  * @return n/a
  */
-+ (void)setVideoCacheCount:(int)count;
++ (void)setVideoCacheCount:(int)count TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Set the visibility of the Tapjoy logo during video playback.
@@ -647,7 +531,7 @@ withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
  * @param display Boolean that indicates whether the Tapjoy logo should be displayed or not during video playback.
  * @return n/a
  */
-+ (void)shouldDisplayVideoLogo:(BOOL)display;
++ (void)shouldDisplayVideoLogo:(BOOL)display TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Whether the videos should be disabled on this device during runtime. If set to true, no videos will be
@@ -656,7 +540,7 @@ withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
  * @param shouldDisable Boolean that indicates whether the Tapjoy videos should be disabled on this device.
  * @return n/a
  */
-+ (void)disableVideo:(BOOL)shouldDisable;
++ (void)disableVideo:(BOOL)shouldDisable TJC_DEPRECATION_WARNING(10.0);
 
 @end
 
@@ -669,28 +553,28 @@ withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
  * @param transitionEffect The transition effect to set, enumerated by TJCTransitionEnum.
  * @return n/a
  */
-+ (void)setTransitionEffect:(TJCTransitionEnum)transitionEffect;
++ (void)setTransitionEffect:(TJCTransitionEnum)transitionEffect TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Gets the transition delay.
  *
  * @return The transition delay.
  */
-+ (float)getTransitionDelay;
++ (float)getTransitionDelay TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Gets the currently set transition effect enumerated value TJCTransitionEnum.
  *
  * @return The currently set transition effect.
  */
-+ (TJCTransitionEnum)getCurrentTransitionEffect;
++ (TJCTransitionEnum)getCurrentTransitionEffect TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Gets the currently set reverse transition effect enumerated value TJCTransitionEnum.
  *
  * @return The currently set reverse transition effect.
  */
-+ (TJCTransitionEnum)getReverseTransitionEffect;
++ (TJCTransitionEnum)getReverseTransitionEffect TJC_DEPRECATION_WARNING(10.0);
 
 /**
  * Sets the delegate that conforms to the TJCViewDelegate protocol to receive Tapjoy view action callbacks.
@@ -702,30 +586,6 @@ withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
 
 @end
 
-
-@interface Tapjoy (TJCPushManager)
-
-+ (NSString*)pushToken;
-
-+ (void)registerForRemoteNotifications;
-
-+ (void)registerForRemoteNotificationsWithAlias:(NSString*)pushAlias;
-
-+ (void)registerForRemoteNotificationsWithAlias:(NSString*)pushAlias tags:(NSArray*)tags;
-
-+ (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)token;
-
-+ (void)didFailToRegisterForRemoteNotificationsWithError:(NSError*)error;
-
-+ (void)didReceiveRemoteNotification:(NSDictionary *)notification;
-
-@end
-
-
-
-
-
-
 @interface TapjoyConnect : NSObject
 
 + (void)requestTapjoyConnect:(NSString*)appID secretKey:(NSString*)secretKey TJ_DEPRECATED_CLASS;
@@ -736,64 +596,35 @@ withCurrencySelector:(BOOL)isSelectorVisible TJC_DEPRECATION_WARNING;
 + (void)setUserID:(NSString*)theUserID TJ_DEPRECATED_CLASS;
 + (NSString*)getUserID TJ_DEPRECATED_CLASS;
 + (NSString*)getSecretKey TJ_DEPRECATED_CLASS;
-+ (void)setPlugin:(NSString*)thePlugin TJ_DEPRECATED_CLASS;
 + (void)setCurrencyMultiplier:(float)mult TJ_DEPRECATED_CLASS;
 + (float)getCurrencyMultiplier TJ_DEPRECATED_CLASS;
 + (void)enableLogging:(BOOL)enable TJ_DEPRECATED_CLASS;
 
 + (id) getDisplayAdWithDelegate:(id <TJCAdDelegate>)deleg TJ_DEPRECATED_CLASS;
 + (id) getDisplayAdWithDelegate:(id<TJCAdDelegate>)deleg currencyID:(NSString*)currencyID TJ_DEPRECATED_CLASS;
-+ (void) refreshDisplayAd TJ_DEPRECATED_CLASS;
-+ (void) refreshDisplayAdWithCurrencyID:(NSString*)currencyID TJ_DEPRECATED_CLASS;
 + (BOOL) isDisplayAdLoaded TJ_DEPRECATED_CLASS;
 + (TJCAdView*) getDisplayAdView TJ_DEPRECATED_CLASS;
 #pragma mark Event Methods
 + (void)sendIAPEvent:(NSString*)name price:(float)price quantity:(int)quantity currencyCode:(NSString*)currencyCode TJ_DEPRECATED_CLASS;
-+ (void)sendIAPEventWithName:(NSString*)name price:(float)price quantity:(int)quantity currencyCode:(NSString*)currencyCode TJ_DEPRECATED_CLASS;
-#pragma mark Full Screen Ad/Daily Reward Ad Methods
+#pragma mark Full Screen Ad Methods
 + (void)getFullScreenAd TJ_DEPRECATED_CLASS;
 + (void)getFullScreenAdWithCurrencyID:(NSString*)currencyID TJ_DEPRECATED_CLASS;
 + (UIView*)showFullScreenAd TJ_DEPRECATED_CLASS;
 + (void)showFullScreenAdWithViewController:(UIViewController*)vController TJ_DEPRECATED_CLASS;
 + (void)setFullScreenAdDelayCount:(int)delayCount TJ_DEPRECATED_CLASS;
-+ (void)getDailyRewardAd TJ_DEPRECATED_CLASS;
-+ (void)getDailyRewardAdWithCurrencyID:(NSString*)currencyID TJ_DEPRECATED_CLASS;
-+ (UIView*)showDailyRewardAd TJ_DEPRECATED_CLASS;
-+ (void)showDailyRewardAdWithViewController:(UIViewController*)vController TJ_DEPRECATED_CLASS;
-+ (void)getFeaturedApp TJ_DEPRECATED_CLASS;
-+ (void)getFeaturedAppWithCurrencyID:(NSString*)currencyID TJ_DEPRECATED_CLASS;
-+ (UIView*)showFeaturedAppFullScreenAd TJ_DEPRECATED_CLASS;
-+ (void)showFeaturedAppFullScreenAdWithViewController:(UIViewController*)vController TJ_DEPRECATED_CLASS;
-+ (void)setFeaturedAppDisplayCount:(int) displayCount TJ_DEPRECATED_CLASS;
-+ (void)setFeaturedAppDelayCount:(int)delayCount TJ_DEPRECATED_CLASS;
 #pragma mark Offers Methods
 + (UIView*)showOffers TJ_DEPRECATED_CLASS;
 + (void)showOffersWithViewController:(UIViewController *)vController TJ_DEPRECATED_CLASS;
-+ (void)showOffersWithViewController:(UIViewController *)vController withInternalNavBar:(BOOL)visible TJ_DEPRECATED_CLASS;
 + (UIView*)showOffersWithCurrencyID:(NSString*)currencyID withCurrencySelector:(BOOL)isSelectorVisible TJ_DEPRECATED_CLASS;
 + (void)showOffersWithCurrencyID:(NSString*)currencyID
 withViewController:(UIViewController*)vController
 withCurrencySelector:(BOOL)isSelectorVisible TJ_DEPRECATED_CLASS;
-+ (void)showOffersWithCurrencyID:(NSString*)currencyID
-withViewController:(UIViewController*)vController
-withInternalNavBar:(BOOL)visible
-withCurrencySelector:(BOOL)isSelectorVisible TJ_DEPRECATED_CLASS;
-+ (void)setOffersNavBarImage:(UIImage*)image TJ_DEPRECATED_CLASS;
-#pragma mark Push Methods
-+ (NSString*)pushToken TJ_DEPRECATED_CLASS;
-+ (void)registerForRemoteNotifications TJ_DEPRECATED_CLASS;
-+ (void)registerForRemoteNotificationsWithAlias:(NSString*)alias TJ_DEPRECATED_CLASS;
-+ (void)registerForRemoteNotificationsWithAlias:(NSString*)alias tags:(NSArray*)tags TJ_DEPRECATED_CLASS;
-+ (void)didFailToRegisterForRemoteNotificationsWithError:(NSError*)error TJ_DEPRECATED_CLASS;
-+ (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)token TJ_DEPRECATED_CLASS;
-+ (void)didReceiveRemoteNotification:(NSDictionary *)notification TJ_DEPRECATED_CLASS;
 #pragma mark User Account Methods
 + (void)getTapPoints TJ_DEPRECATED_CLASS;
 + (void)spendTapPoints:(int)points TJ_DEPRECATED_CLASS;
 + (void)awardTapPoints:(int)points TJ_DEPRECATED_CLASS;
 + (void)showDefaultEarnedCurrencyAlert TJ_DEPRECATED_CLASS;
 #pragma mark Video Methods
-+ (void)initVideoAdWithDelegate:(id<TJCVideoAdDelegate>)delegate TJ_DEPRECATED_CLASS;
 + (void)setVideoAdDelegate:(id<TJCVideoAdDelegate>)delegate TJ_DEPRECATED_CLASS;
 + (void)cacheVideosWithDelegate:(id<TJCVideoAdDelegate>)delegate TJ_DEPRECATED_CLASS;
 + (void)setVideoCacheCount:(int)count TJ_DEPRECATED_CLASS;
@@ -808,3 +639,4 @@ withCurrencySelector:(BOOL)isSelectorVisible TJ_DEPRECATED_CLASS;
 
 @end
 
+#endif

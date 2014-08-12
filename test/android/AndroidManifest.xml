@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="ru.redspell.lighttest"
-      android:versionCode="1"
-      android:versionName="1.0">
+      android:versionCode="5"
+      android:versionName="5.0">
 
-    <application android:label="light test" android:icon="@drawable/icon" android:debuggable="true">
+    <application android:label="light test" android:icon="@drawable/icon" android:debuggable="false">
     	<meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
 			<activity android:name="LightTest" android:label="light test" android:screenOrientation="portrait" android:configChanges="orientation|screenSize" android:launchMode="singleTask">
 
