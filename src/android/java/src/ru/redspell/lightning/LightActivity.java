@@ -154,27 +154,33 @@ public class LightActivity extends Activity implements IDownloaderClient/*, Conn
 		Log.d(LOG_TAG, "retval " + retval);
 
 		if (retval) {
-			String mainExp = (new File(lightView.getExpansionPath(true))).getName();
-			String patchExp = (new File(lightView.getExpansionPath(false))).getName();
-			File[] exps = this.getObbDir().listFiles();
+			File obbDir = this.getObbDir();
 
-			Log.d("LIGHTNING", "-----------------");
-			Log.d("LIGHTNING", "mainExp path " + mainExp);
-			Log.d("LIGHTNING", "patchExp path " + patchExp);			
-			Log.d("LIGHTNING", "exps length " + exps.length);
+			if (obbDir != null) {
+				String mainExp = (new File(lightView.getExpansionPath(true))).getName();
+				String patchExp = (new File(lightView.getExpansionPath(false))).getName();
+				File[] exps = this.getObbDir().listFiles();
 
-			for (File exp : exps) {
-				String fname = exp.getName();
-				Log.d("LIGHTNING", fname + " found in exps dir");
-				if (!fname.contentEquals(mainExp) && !fname.contentEquals(patchExp)) {
-					Log.d("LIGHTNING", "\t" + fname + "doesnt match any needed expansion, remove it");
-					exp.delete();
-				} else {
-					Log.d("LIGHTNING", "\t" + fname + "matches");
+				if (exps != null) {
+					Log.d("LIGHTNING", "-----------------");
+					Log.d("LIGHTNING", "mainExp path " + mainExp);
+					Log.d("LIGHTNING", "patchExp path " + patchExp);			
+					Log.d("LIGHTNING", "exps length " + exps.length);
+
+					for (File exp : exps) {
+						String fname = exp.getName();
+						Log.d("LIGHTNING", fname + " found in exps dir");
+						if (!fname.contentEquals(mainExp) && !fname.contentEquals(patchExp)) {
+							Log.d("LIGHTNING", "\t" + fname + "doesnt match any needed expansion, remove it");
+							exp.delete();
+						} else {
+							Log.d("LIGHTNING", "\t" + fname + "matches");
+						}
+					}
+
+					Log.d("LIGHTNING", "-----------------");
 				}
 			}
-
-			Log.d("LIGHTNING", "-----------------");
 
 			mDownloaderClientStub = DownloaderClientMarshaller.CreateStub(this, LightExpansionsDownloadService.class);
 			mDownloaderClientStub.connect(this);
