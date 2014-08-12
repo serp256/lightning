@@ -161,8 +161,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 					) ) self;
 			 incr object_count;
 
-(*        ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ lid -> let () = debug:rmfromstage "add to stage %d lid %d" (Oo.id self) lid in stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
-       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> let () = debug:rmfromstage "remove from stage %d" (Oo.id self) in stage := None)); *)
+       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ lid -> stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
+       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> stage := None));
 
 (* 			 if !object_count mod 100 = 0 then *)
 (* 				( *)
@@ -304,10 +304,12 @@ class virtual _c [ 'parent ] = (*{{{*)
 		method virtual dispatchEventGlobal: Ev.t -> unit;
     method setParent p = 
     (
-(*       debug:prerender "set parent for %s" self#name; *)
+      debug:prerender "set parent for %s" self#name;
       parent := Some p;
+
 			let event = Ev.create ev_ADDED () in
-			self#dispatchEvent event;
+		  	self#dispatchEvent event;
+
 			match p#stage with
 			[ Some s -> 
 				let event = Ev.create ev_ADDED_TO_STAGE () in
