@@ -140,11 +140,11 @@ class virtual base =
         ) onEnterFrameObjects;
 
     method! stageAddEnterFrameObj o =
-      let () = debug:stageenterframe "stageAddEnterFrameObj %s" o#name in
+      let () = debug:enterframeobj "stageAddEnterFrameObj %s" o#name in
         onEnterFrameObjects := SetD.add o onEnterFrameObjects;
 
     method! stageRmEnterFrameObj o =
-      let () = debug:stageenterframe "stageRmEnterFrameObj %s" o#name in
+      let () = debug:enterframeobj "stageRmEnterFrameObj %s" o#name in
         onEnterFrameObjects := SetD.remove o onEnterFrameObjects;
 
     method color = `NoColor;
