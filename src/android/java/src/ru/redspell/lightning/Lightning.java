@@ -120,14 +120,13 @@ public class Lightning {
         return ru.redspell.lightning.utils.OpenUDID.getOpenUDIDInContext();
     }
 
-    public static native NativeActivity activity();
     public static native void disableTouches();
     public static native void enableTouches();
     public static native void convertIntent(Intent intent);
     public static native void onBackPressed();
 
     public static void init() {
-    	activity = activity();
+    	activity = NativeActivity.instance;
         ru.redspell.lightning.utils.OpenUDID.syncContext(activity);
     }
 
@@ -298,6 +297,29 @@ public class Lightning {
     }    
 
     static {
-        System.loadLibrary("test");
-    }    
+        try {
+            NativeActivity activity = NativeActivity.instance;
+
+            Log.d("LIGHTNING", "--------------------------------");
+
+            for (android.content.pm.ActivityInfo activityInfo : activity.getPackageManager().getPackageInfo(activity.getPackageName(), PackageManager.GET_ACTIVITIES | PackageManager.GET_META_DATA).activities) {
+                Log.d("LIGHTNING", "!!!! activity " + activityInfo.name);
+
+                if (activityInfo.name.contentEquals("ru.redspell.lightning.NativeActivity")) {
+                    android.os.Bundle meta = activityInfo.metaData;
+                    Log.d("LIGHTNING", "meta size " + meta.size());
+                    java.util.Iterator<String> iter = meta.keySet().iterator();
+                    while (iter.hasNext()) {
+                        Log.d("LIGHTNING", "key " + iter.next());
+                    }
+
+                    Log.d("LIGHTNING", "meta.getString " + meta.getString("android.app.lib_name"));
+                    System.loadLibrary(meta.getString("android.app.lib_name"));
+                }
+            }
+
+            Log.d("LIGHTNING", "--------------------------------");
+        } catch (Exception e) {
+        }
+    }
 }

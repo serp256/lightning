@@ -11,9 +11,15 @@ import ru.redspell.lightning.IUiLifecycleHelper;
 
 public class NativeActivity extends android.app.NativeActivity {
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
+	public static NativeActivity instance = null;
 
 	public FrameLayout viewGrp = null;
 	public boolean isRunning = false;
+
+	public NativeActivity() {
+		super();
+		instance = this;
+	}
 
 	public static void addUiLifecycleHelper(IUiLifecycleHelper helper) {
 		uiLfcclHlprs.add(helper);
