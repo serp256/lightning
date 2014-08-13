@@ -50,6 +50,9 @@ class virtual _c [ 'parent ] :
     method hasEventListeners: Ev.id -> bool;
 
 
+    method setStage: 'parent -> unit;
+    method resetStage: unit -> unit;
+
     method private defaultName: string;
     method name: string;
     method setName: string -> unit;

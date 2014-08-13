@@ -161,8 +161,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 					) ) self;
 			 incr object_count;
 
-       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ lid -> stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
-       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> stage := None));
+(*        ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ lid -> stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
+       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> stage := None)); *)
 
 (* 			 if !object_count mod 100 = 0 then *)
 (* 				( *)
@@ -302,9 +302,32 @@ class virtual _c [ 'parent ] = (*{{{*)
     value mutable enterFrameNum = 0;
 
 		method virtual dispatchEventGlobal: Ev.t -> unit;
+
+    method setStage s =
+      (
+        stage := Some s;
+
+        if enterFrameNum > 0
+        then s#stageAddEnterFrameObj (self :> dispObj)
+        else ();        
+      );
+
+    method resetStage () =
+      match stage with
+      [ Some s ->
+        (
+          stage := None;
+
+          if enterFrameNum > 0
+          then s#stageRmEnterFrameObj (self :> dispObj)
+          else ();
+        )
+      | _ -> ()
+      ];
+
     method setParent p = 
     (
-      debug:prerender "set parent for %s" self#name;
+      debug:prerender "set parent %s for %s " p#name self#name;
       parent := Some p;
 
 			let event = Ev.create ev_ADDED () in
@@ -314,12 +337,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 			[ Some s -> 
 				let event = Ev.create ev_ADDED_TO_STAGE () in
           (
-            stage := Some s;
+            self#setStage s;
             self#dispatchEventGlobal event;
-
-            if enterFrameNum > 0
-            then s#stageAddEnterFrameObj (self :> dispObj)
-            else ();
           )
 			| None -> ()
 			]
@@ -336,12 +355,8 @@ class virtual _c [ 'parent ] = (*{{{*)
           [ Some s ->
             let event = Ev.create ev_REMOVED_FROM_STAGE () in
               (
-                stage := None;      
+                self#resetStage ();
                 self#dispatchEventGlobal event;
-
-                if enterFrameNum > 0
-                then s#stageRmEnterFrameObj (self :> dispObj)
-                else ();
               )          
           | _ -> ()
           ];
@@ -924,6 +939,18 @@ class virtual container = (*{{{*)
 				child#dispatchEventGlobal event
       end self#children;
     );
+
+    method! setStage s =
+      (
+        super#setStage s;
+        Enum.iter (fun c -> c#setStage s) self#children;
+      );
+
+    method! resetStage () =
+      (
+        super#resetStage ();
+        Enum.iter (fun c -> c#resetStage ()) self#children;
+      );
 
     method virtual cacheAsImage: bool;
     method virtual setCacheAsImage: bool -> unit;
