@@ -39,6 +39,9 @@ public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.C
 	public LightGameCenterAndroid(LightGameCenterConnectionListener l) {
 		Log.d("LIGHTNING","LightGameCenter");
 		GoogleApiClient.Builder builder = new GoogleApiClient.Builder(LightActivity.instance,this,this);
+		builder.addApi(Games.API);
+		builder.addScope(Games.SCOPE_GAMES);
+
 		builder.setViewForPopups(LightActivity.instance.viewGrp);
 		mGamesClient = builder.build ();
 		//mGamesClient.setViewForPopups(LightActivity.instance.viewGrp);
@@ -82,6 +85,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.C
 	};
 
 	public void onConnectionSuspended (int cause) {
+		Log.d("LIGHTNING","Connection onConnectionSuspended");
 	};
 
 

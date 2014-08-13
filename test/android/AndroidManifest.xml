@@ -5,7 +5,7 @@
       android:versionName="5.0">
 
     <application android:label="light test" android:icon="@drawable/icon" android:debuggable="false">
-    	<meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+    	
 			<activity android:name="LightTest" android:label="light test" android:screenOrientation="portrait" android:configChanges="orientation|screenSize" android:launchMode="singleTask">
 
             <intent-filter>
@@ -30,7 +30,8 @@
 			</intent-filter>
 		</receiver>
 
-		<meta-data android:name="com.google.android.gms.games.APP_ID" android:value="ru.redspell.lighttest" />
+		<meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/google_play_services_appid" />
+		<meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
 
     <service android:name="ru.redspell.lightning.expansions.LightExpansionsDownloadService"/>
     <receiver android:name="ru.redspell.lightning.expansions.LightExpansionsAlarmReceiver"/>
