@@ -5,7 +5,8 @@ struct engine engine;
 
 void engine_init(struct android_app* app) {
 	memset(&engine, 0, sizeof(engine));
-	engine.app = app;
+    engine.app = app;
+	engine.mlthread_id = gettid();
 
 
 	(*VM)->AttachCurrentThread(VM, &ML_ENV, NULL);
@@ -44,21 +45,25 @@ void engine_release() {
 }
 
 void engine_runonmlthread(engine_runnablefunc_t func, void *data) {
-    engine_runnable_t *runnable = (engine_runnable_t*)malloc(sizeof(engine_runnable_t));
-    runnable->func = func;
-    runnable->data = data;
-    runnable->handled = 0;
+    if (engine.mlthread_id == gettid()) {
+        func(data);
+    } else {
+        engine_runnable_t *runnable = (engine_runnable_t*)malloc(sizeof(engine_runnable_t));
+        runnable->func = func;
+        runnable->data = data;
+        runnable->handled = 0;
 
-    struct android_app *app = engine.app;
+        struct android_app *app = engine.app;
 
-    pthread_mutex_lock(&app->mutex);
-    engine.data = runnable;
-    android_app_write_cmd(app, ENGINE_CMD_RUN_ON_ML_THREAD);
-    while (!runnable->handled) {
-        pthread_cond_wait(&app->cond, &app->mutex);
-    }    
-    pthread_mutex_unlock(&app->mutex);
-    free(runnable);
+        pthread_mutex_lock(&app->mutex);
+        engine.data = runnable;
+        android_app_write_cmd(app, ENGINE_CMD_RUN_ON_ML_THREAD);
+        while (!runnable->handled) {
+            pthread_cond_wait(&app->cond, &app->mutex);
+        }    
+        pthread_mutex_unlock(&app->mutex);
+        free(runnable);
+    }
 }
 
 void engine_runonuithread(engine_runnablefunc_t func, void *data) {

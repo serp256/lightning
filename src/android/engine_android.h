@@ -45,6 +45,7 @@ struct engine {
 
     void *data; // pointer to any user data. for example, for transfering custom data from main thread to ml thread
     uint8_t touches_disabled;
+    pid_t mlthread_id;
 };
 
 typedef void (*engine_runnablefunc_t)(void *data);
