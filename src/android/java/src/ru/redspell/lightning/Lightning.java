@@ -297,6 +297,7 @@ public class Lightning {
     }    
 
     static {
+        // System.loadLibrary("test");
         try {
             NativeActivity activity = NativeActivity.instance;
 

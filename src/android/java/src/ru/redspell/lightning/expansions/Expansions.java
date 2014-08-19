@@ -38,6 +38,29 @@ public class Expansions {
 		return list;
 	}
 
+	private static String mainExp = null;
+	private static String patchExp = null;
+
+	private static String exp(boolean main) {
+		for (XAPKFile xf : list()) {
+			if (xf.mIsMain == main) {
+				return Helpers.generateSaveFileName(Lightning.activity, Helpers.getExpansionAPKFileName(Lightning.activity, xf.mIsMain, xf.mFileVersion));
+			}
+		}
+
+		return "";
+	}
+
+	public static String mainExp() {
+		if (mainExp == null) mainExp = exp(true);
+		return mainExp;
+	}
+
+	public static String patchExp() {
+		if (patchExp == null) patchExp = exp(false);
+		return patchExp;
+	}	
+
 	private static class DownloaderClient implements IDownloaderClient {
 		private IDownloaderService service;
 

@@ -158,12 +158,17 @@ public class OAuthDialog extends Dialog {
     }
 
     @Override
+    public void onDetachedFromWindow() {
+        // mWebView.removeAllViews();
+        mWebView.destroy();
+    }
+
+    @Override
     public void dismiss() {
         Log.d("LIGHTNING", "dismiss call");
 
         mWebView.stopLoading();        
         super.dismiss();
-        mWebView.destroy();
     }
 
     public void close() {

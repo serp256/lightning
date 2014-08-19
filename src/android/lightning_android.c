@@ -137,6 +137,29 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_Lightning_onBackPressed(JNIEnv
 }
 
 int getResourceFd(const char *path, resource *res) {
+    static char* main_exp = NULL;
+    static char* patch_exp = NULL;
+
+    if (!main_exp) {
+        jclass cls = engine_find_class("ru/redspell/lightning/expansions/Expansions");
+        jmethodID mid;
+        jstring jexp;
+        const char *cexp;
+
+#define GET_EXP_PATH(exp, method) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, #method, "()Ljava/lang/String;"); \
+    jexp = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, cls, mid); \
+    cexp = (*ML_ENV)->GetStringUTFChars(ML_ENV, jexp, NULL); \
+    exp = (char*)malloc(strlen(cexp) + 1); \
+    strcpy(exp, cexp); \
+    (*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jexp, cexp); \
+    (*ML_ENV)->DeleteLocalRef(ML_ENV, jexp);
+
+        GET_EXP_PATH(main_exp, mainExp);
+        GET_EXP_PATH(patch_exp, patchExp);
+#undef GET_EXP_PATH
+    }
+
+    PRINT_DEBUG("getResourceFd %s", path);
     offset_size_pair_t* os_pair;
 
     if (!get_offset_size_pair(path, &os_pair)) {
@@ -155,9 +178,9 @@ int getResourceFd(const char *path, resource *res) {
         if (os_pair->location == 0) {
             GET_FD(engine.apk_path);
         } else if (os_pair->location == 1) {
-            GET_FD(engine.patch_exp_path)
+            GET_FD(patch_exp)
         } else if (os_pair->location == 2) {
-            GET_FD(engine.main_exp_path)
+            GET_FD(main_exp)
         } else {
             char* extra_res_fname = get_extra_res_fname(os_pair->location);
             if (!extra_res_fname) return 0;

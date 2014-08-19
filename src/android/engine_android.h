@@ -38,8 +38,6 @@ struct engine {
     jobject class_loader;
     jmethodID load_class_mid;
     char* apk_path;
-    char* main_exp_path;
-    char* patch_exp_path;
     char* locale;
     mlstage *stage;
 
