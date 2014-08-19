@@ -161,8 +161,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 					) ) self;
 			 incr object_count;
 
-       ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ lid -> let () = debug:rmfromstage "add to stage %d lid %d" (Oo.id self) lid in stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
-       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> let () = debug:rmfromstage "remove from stage %d" (Oo.id self) in stage := None));
+(*        ignore(self#addEventListener ev_ADDED_TO_STAGE (fun _ _ lid -> stage := match parent with [ Some p -> p#stage | _ -> assert False ]));
+       ignore(self#addEventListener ev_REMOVED_FROM_STAGE (fun _ _ _ -> stage := None)); *)
 
 (* 			 if !object_count mod 100 = 0 then *)
 (* 				( *)
@@ -299,39 +299,68 @@ class virtual _c [ 'parent ] = (*{{{*)
     method parent = parent;
 
 
+    value mutable enterFrameNum = 0;
+
 		method virtual dispatchEventGlobal: Ev.t -> unit;
+
+    method setStage s =
+      (
+        stage := Some s;
+
+        if enterFrameNum > 0
+        then s#stageAddEnterFrameObj (self :> dispObj)
+        else ();        
+      );
+
+    method resetStage () =
+      match stage with
+      [ Some s ->
+        (
+          stage := None;
+
+          if enterFrameNum > 0
+          then s#stageRmEnterFrameObj (self :> dispObj)
+          else ();
+        )
+      | _ -> ()
+      ];
+
     method setParent p = 
     (
-(*       debug:prerender "set parent for %s" self#name; *)
+      debug:prerender "set parent %s for %s " p#name self#name;
       parent := Some p;
+
 			let event = Ev.create ev_ADDED () in
-			self#dispatchEvent event;
+		  	self#dispatchEvent event;
+
 			match p#stage with
-			[ Some _ -> 
+			[ Some s -> 
 				let event = Ev.create ev_ADDED_TO_STAGE () in
-				  self#dispatchEventGlobal event
+          (
+            self#setStage s;
+            self#dispatchEventGlobal event;
+          )
 			| None -> ()
 			]
     );
 
     method clearParent () = 
 			match parent with
-			[ Some p ->
-				let on_stage = match stage with [ Some _ -> True | _ -> False ] in
+			[ Some p ->			
 				(
           let event = Ev.create ev_REMOVED () in
-          self#dispatchEvent event;
-          match on_stage with
-          [ True ->
-          	let event = Ev.create ev_REMOVED_FROM_STAGE () in
+            self#dispatchEvent event;
+
+          match stage with
+          [ Some s ->
+            let event = Ev.create ev_REMOVED_FROM_STAGE () in
               (
-                stage := None;
+                self#resetStage ();
                 self#dispatchEventGlobal event;
-              )
-          | False -> ()
+              )          
+          | _ -> ()
           ];
 
-          stage := None;
           parent := None;          
 				)
 			| None -> ()
@@ -350,7 +379,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual filters: list Filters.t;
     method virtual setFilters: list Filters.t -> unit;
 
-    method private enterFrameListenerRemovedFromStage  _ _ lid =
+(*     method private enterFrameListenerRemovedFromStage  _ _ lid =
       let () = debug:rmfromstage "enterFrameListenerRemovedFromStage call" in
       let _ = super#removeEventListener ev_REMOVED_FROM_STAGE lid in
       match self#hasEventListeners ev_ENTER_FRAME with
@@ -384,20 +413,25 @@ class virtual _c [ 'parent ] = (*{{{*)
         ];
         
         ignore(super#addEventListener ev_REMOVED_FROM_STAGE self#enterFrameListenerRemovedFromStage);
-      );
+      ); *)
+
+    
 
     method! addEventListener eventType (listener:'listener) = 
     (
       if eventType = ev_ENTER_FRAME
       then
-        match self#hasEventListeners ev_ENTER_FRAME with
-        [ False ->
-          match stage with
-          [ None -> ignore(super#addEventListener ev_ADDED_TO_STAGE self#enterFrameListenerAddedToStage)
-          | Some _ -> self#listenEnterFrame ()
-          ]
-        | True -> ()
-        ]
+        (
+          if enterFrameNum = 0
+          then
+            match stage with
+            [ None -> ()
+            | Some s -> s#stageAddEnterFrameObj (self :> dispObj)
+            ]          
+          else ();
+
+          enterFrameNum := enterFrameNum + 1;
+        )
       else ();
       super#addEventListener eventType listener;
     );
@@ -407,14 +441,17 @@ class virtual _c [ 'parent ] = (*{{{*)
       super#removeEventListener eventType lid;
       if eventType = ev_ENTER_FRAME
       then
-          match self#hasEventListeners ev_ENTER_FRAME with
-          [ False ->
+        (
+          enterFrameNum := enterFrameNum - 1;
+
+          if enterFrameNum = 0
+          then
             match stage with
             [ None -> ()
             | Some s -> s#stageRmEnterFrameObj (self :> dispObj)
-            ]
-          | True -> ()
-          ]
+            ]          
+          else ()
+        )
       else ()
     );
 
@@ -902,6 +939,18 @@ class virtual container = (*{{{*)
 				child#dispatchEventGlobal event
       end self#children;
     );
+
+    method! setStage s =
+      (
+        super#setStage s;
+        Enum.iter (fun c -> c#setStage s) self#children;
+      );
+
+    method! resetStage () =
+      (
+        super#resetStage ();
+        Enum.iter (fun c -> c#resetStage ()) self#children;
+      );
 
     method virtual cacheAsImage: bool;
     method virtual setCacheAsImage: bool -> unit;

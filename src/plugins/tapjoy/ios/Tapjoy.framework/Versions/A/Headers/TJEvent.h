@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 by Tapjoy Inc.
+// Copyright (C) 2014 by Tapjoy Inc.
 //
 // This file is part of the Tapjoy SDK.
 //
@@ -31,7 +31,7 @@ typedef enum TJCEventRequestTypeEnum {
  item specified by the identifier with the amount specified by quantity.  If the virtual good
  was successfully rewarded, the app should invoke the completed method; otherwise, it must invoke the
  cancelled method
- - `TJEventRequestCurrency`: a currency change notification.  The user has been  awarded the currency
+ - `TJEventRequestCurrency`: a currency change notification.  The user has been awarded the currency
  specified with identifier, with the amount specified by quantity.  The app should invoke the completed
  method once the request is handled.
  - `TJEventRequestNavigation`: an in-app navigation request.  Your app should attempt to navigate
@@ -105,6 +105,7 @@ typedef enum TJCEventRequestTypeEnum {
  
   - sendEventComplete:withContent: Called when an event is sent successfully
   - sendEventFail:error: Called when an error occurs while sending the event
+  - contentIsReady:Called when content for an event is successfully preloaded
   - contentWillAppear: Called when event content will appear
   - contentDidAppear: Called when event content did appear
   - contentWillDisappear: Called when event content will disappear
@@ -144,6 +145,13 @@ typedef enum TJCEventRequestTypeEnum {
 - (void)sendEventFail:(TJEvent*)event error:(NSError*)error;
 
 /**
+ * Called when content for an event is successfully preloaded
+ * @param event The TJEvent that was sent
+ * @param status The status of the preloaded assets for this event. See TJCEventPreloadStatusEnum for possible values.
+ */
+- (void)contentIsReady:(TJEvent*)event withStatus:(int)status;
+
+/**
  * Called when event content will appear
  * @param event The TJEvent that was sent
  * @return n/a
@@ -174,7 +182,7 @@ typedef enum TJCEventRequestTypeEnum {
 /**
  * Called when an action is requested of your app.
  * @param event The TJEvent that was triggered the action request
- * @param description The TJEventRequest object describing the request.  Your app should process the request
+ * @param request The TJEventRequest object describing the request.  Your app should process the request
  *                    according to the documentation laid out in the TJEventRequest class.
  * @return n/a
  */
@@ -203,10 +211,25 @@ typedef enum TJCEventRequestTypeEnum {
  */
 @interface TJEvent : NSObject
 
+/** The TJEventDelegate used to handle responses that are received upon sending this event*/
 @property (nonatomic, unsafe_unretained) id<TJEventDelegate> delegate;
+
+/** The name of the event */
 @property (nonatomic, copy) NSString *eventName;
+
+/** Additional (optional) value tied to the event */
 @property (nonatomic, strong) NSString *eventValue;
+
+/** Whether content should be shown automatically upon a successful send */
 @property (nonatomic, assign) BOOL presentAutomatically;
+
+/** Whether content should be preloaded when it is received */
+@property (nonatomic, assign) BOOL preload;
+
+/** Whether content has been loaded and is ready to be presented */
+@property (nonatomic, assign, readonly, getter=isContentReady) BOOL contentReady;
+
+/** The UIViewController to show the content in */
 @property (nonatomic, retain) UIViewController* presentationViewController;
 
 /**
@@ -219,10 +242,10 @@ typedef enum TJCEventRequestTypeEnum {
 /**
  * Creates a new instance of TJEvent with additional parameters
  * @param eventName The name of the event
- * @param delegate The class that implements the TJEventDelegate protocol
  * @param value NSString that specifies the additional event value
+ * @param delegate The class that implements the TJEventDelegate protocol
  */
-+ (id)eventWithName:(NSString*)eventName delegate:(id<TJEventDelegate>)delegate value:(NSString*)value;
++ (id)eventWithName:(NSString*)eventName value:(NSString*)value delegate:(id<TJEventDelegate>)delegate;
 
 /**
  * Sends the event to the server

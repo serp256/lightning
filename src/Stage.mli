@@ -27,7 +27,7 @@ value data_of_acmtrData : (acmtrData -> Ev.data);
 *)
 
 value onBackground: ref (option (unit -> unit));
-value onForeground: ref (option (unit -> unit));
+value onForeground: ref (option (float -> unit));
 
 class virtual base:
   object

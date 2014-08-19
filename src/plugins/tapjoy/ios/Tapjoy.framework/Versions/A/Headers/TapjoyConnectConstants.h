@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 by Tapjoy Inc.
+// Copyright (C) 2014 by Tapjoy Inc.
 //
 // This file is part of the Tapjoy SDK.
 //
@@ -31,14 +31,8 @@
 
 // Full Screen Ad notification is fired after full screen ad data is received from the server.
 #define TJC_FULL_SCREEN_AD_RESPONSE_NOTIFICATION			@"TJC_FULL_SCREEN_AD_RESPONSE_NOTIFICATION"
-#define TJC_FEATURED_APP_RESPONSE_NOTIFICATION				@"TJC_FEATURED_APP_RESPONSE_NOTIFICATION"	// Deprecated
 // Error notification for Full Screen Ad.
 #define TJC_FULL_SCREEN_AD_RESPONSE_NOTIFICATION_ERROR		@"TJC_FULL_SCREEN_AD_RESPONSE_NOTIFICATION_ERROR"
-
-// Daily reward notification is fired after the ad data is received from the server.
-#define TJC_DAILY_REWARD_RESPONSE_NOTIFICATION				@"TJC_DAILY_REWARD_RESPONSE_NOTIFICATION"
-// Error notification for daily reward ad.
-#define TJC_DAILY_REWARD_RESPONSE_NOTIFICATION_ERROR		@"TJC_DAILY_REWARD_RESPONSE_NOTIFICATION_ERROR"
 
 // Offers notification is fired after the ad data is loaded.
 #define TJC_OFFERS_RESPONSE_NOTIFICATION			@"TJC_OFFERS_RESPONSE_NOTIFICATION"
@@ -51,6 +45,9 @@
 // Fired when any Tapjoy view is closed.
 #define TJC_VIEW_CLOSED_NOTIFICATION						@"TJC_VIEW_CLOSED_NOTIFICATION"
 
+// Fired when a webview fails to load
+#define TJC_VIEW_LOADING_ERROR_NOTIFICATION                 @"TJC_VIEW_LOADING_ERROR_NOTIFICATION"
+
 // The keys for the options dictionary when calling requestTapjoyConnect.
 #define TJC_OPTION_DISABLE_VIDEOS				@"TJC_OPTION_DISABLE_VIDEOS"
 #define TJC_OPTION_VIDEO_CACHE_COUNT			@"TJC_OPTION_VIDEO_CACHE_COUNT"
@@ -60,16 +57,12 @@
 #define TJC_OPTION_TRANSITION_EFFECT			@"TJC_OPTION_TRANSITION_EFFECT"
 #define TJC_OPTION_CLEAR_SHARED_URL_CACHE		@"TJC_OPTION_CLEAR_SHARED_URL_CACHE"
 #define TJC_OPTION_COLLECT_MAC_ADDRESS			@"TJC_OPTION_COLLECT_MAC_ADDRESS"
-
+#define TJC_OPTION_DISABLE_GENERIC_ERROR_ALERT  @"TJC_OPTION_DISABLE_GENERIC_ERROR_ALERT"
+#define TJC_OPTION_SEGMENTATION_PARAMS			@"TJC_OPTION_SEGMENTATION_PARAMS"
 
 #define TJC_DISPLAY_AD_SIZE_320X50	@"320x50"
 #define TJC_DISPLAY_AD_SIZE_640X100	@"640x100"
 #define TJC_DISPLAY_AD_SIZE_768X90	@"768x90"
-
-// Deprecated
-#define TJC_AD_BANNERSIZE_320X50	@"320x50"
-#define TJC_AD_BANNERSIZE_640X100	@"640x100"
-#define TJC_AD_BANNERSIZE_768X90	@"768x90"
 
 
 /*!	\enum TJCTransitionEnum
@@ -103,6 +96,8 @@ typedef enum TJCTransitionEnum
 typedef enum TJCViewTypeEnum
 {
 	TJC_EVENT_CONTENT_VIEW,		/*!< The content view for an event. */
+	TJC_OFFER_WALL_AD_VIEW,		/*!< The Offer Wall Ad view type. */
+	TJC_FULL_SCREEN_AD_VIEW,	/*!< The Full Screen Ad view type. */
 	TJC_OTHER_AD_VIEW,			/*!< Any other type of Tapjoy view. */
 	TJC_AD_VIEW_MAX,
 } TJCViewTypeEnum;
@@ -117,3 +112,12 @@ typedef enum TJCMacAddressOption
 	TJCMacAddressOptionOffWithVersionCheck,  /*!< Disables collection of MAC address for iOS versions 6.0 and above. */
 	TJCMacAddressOptionOff          /*!< Completely disables collection of MAC address. THIS WILL EFFECTIVELY DISABLE THE SDK FOR IOS VERSIONS BELOW 6.0! */
 } TJCMacAddressOption;
+
+/*!  \enum TJCEventPreloadStatusEnum
+ *  \brief Status codes use in the protocol method for TJEventCallback contentIsReady
+ */
+typedef enum TJCEventPreloadStatusEnum
+{
+	TJCEventPreloadPartial = 0,		/*!< Only some of the assets requested for the event were cached. You can still show content, and the remaining assets will be streamed from the server. */
+	TJCEventPreloadComplete			/*!< All assets requested for the event were cached */
+} TJCEventPreloadStatusEnum;

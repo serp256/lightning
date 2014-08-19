@@ -11,13 +11,15 @@ IFDEF ANDROID THEN
   value get_receipt tr = tr.receipt;
   value get_signature tr = tr.signature;
 ELSE
-  type t;
-  
   IFDEF IOS THEN
+    type t;
+
     external get_id : t -> string = "ml_payment_get_transaction_id";
     external get_receipt : t -> string = "ml_payment_get_transaction_receipt"; 
     value get_signature (tr:t) = "";
   ELSE
+    type t = unit;
+    
     value get_id (tr:t) = "";
     value get_receipt (tr:t) = "";
     value get_signature (tr:t) = "";
@@ -93,7 +95,11 @@ value callbacks = ref None;
 
 value ml_init ?skus success error = callbacks.val := Some {on_success = success; on_error = error};
 
-value ml_purchase (id:string) = ();
+value ml_purchase (id:string) =
+  match !callbacks with
+  [ Some { on_success = c; _ } -> c id () False
+  | _ -> ()
+  ];
 
 value ml_commit_transaction (tr:Transaction.t) = ();
 
