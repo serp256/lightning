@@ -95,10 +95,12 @@ public class LightVk {
 		public void onTokenExpired(VKAccessToken expiredToken) {}
 
 		public void onAccessDenied(VKError authorizationError) {
+			authorized = false;
 			LightActivity.instance.lightView.queueEvent(new Fail(success, fail, authorizationError.errorMessage + ": " + authorizationError.errorReason));
 		}
 
 		public void onReceiveNewToken(VKAccessToken newToken) {
+			authorized = true;
 			LightActivity.instance.lightView.queueEvent(new AuthSuccess(success, fail));
 		}
 
@@ -114,6 +116,7 @@ public class LightVk {
 		};
 
 		public void onActivityResult(int requestCode, int resultCode, Intent data) {
+			Log.d("LIGHTNING", "vk sdk onActivityResult");
 			VKUIHelper.onActivityResult(requestCode, resultCode, data);
 		};
 
@@ -129,8 +132,8 @@ public class LightVk {
 	private static boolean authorized = false;
 
 	public static void authorize(String appid, String[] permissions, int success, int fail) {
+		Log.d("LIGHTNING", "!!!authorized " + authorized);
 		if (!authorized) {
-			authorized = true;
 			LightActivity.instance.addUiLifecycleHelper(new UiLifecycleHelper());
 			/*
 			 cause vk authorization is called after first LightActivity onResume call,
@@ -142,6 +145,14 @@ public class LightVk {
 			VKSdk.authorize(permissions, false, false);
 		}
 	}
+
+	public static String token() {
+		return VKSdk.getAccessToken().accessToken;
+	}
+
+	public static String uid() {
+		return VKSdk.getAccessToken().userId;
+	}	
 
 	public static void friends(final int success, final int fail) {
 		VKRequest request = new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex"));

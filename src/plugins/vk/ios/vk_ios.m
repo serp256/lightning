@@ -6,11 +6,10 @@
 #import "VKApiConst.h"
 
 static LightVkDelegate* delegate; //delegate declared as static, cause VKSdk class stores delegate as weak propety and auto ref counting clean given delegate, if it declared as local variable in ml_vk_authorize
-static int authorized = 0;
+int authorized = 0;
 
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess) {
 	if (authorized) return Val_unit;
-	authorized = 1;
 
 	CAMLparam4(vappid, vpermissions, vfail, vsuccess);
 
@@ -22,7 +21,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
     	[VKSdk processOpenURL:url fromApplication:fromApp];
     }];	
 
-	delegate = [[LightVkDelegate alloc] initWithSuccess:vsuccess andFail:vfail];
+	delegate = [[LightVkDelegate alloc] initWithSuccess:vsuccess andFail:vfail andAuthFlag:(&authorized)];
 	[VKSdk initializeWithDelegate:delegate andAppId:[NSString stringWithUTF8String:String_val(vappid)]];
 
 	value perms = vpermissions;
@@ -36,6 +35,14 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 	[VKSdk authorize:mpermissions];
 
 	CAMLreturn(Val_unit);
+}
+
+value ml_vk_token(value t) {
+	return caml_copy_string([[VKSdk getAccessToken].accessToken UTF8String]);
+}
+
+value ml_vk_uid(value t) {
+	return caml_copy_string([[VKSdk getAccessToken].userId UTF8String]);
 }
 
 value ml_vk_friends(value vfail, value vsuccess, value vt) {

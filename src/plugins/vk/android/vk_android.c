@@ -1,14 +1,10 @@
 #include "plugin_common.h"
 
 static jclass cls = NULL;
-static int authorized = 0;
 
 #define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightVk);
 
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess) {
-	if (authorized) return Val_unit;
-	authorized = 1;
-
 	CAMLparam4(vappid, vpermissions, vfail, vsuccess);
 	CAMLlocal3(success, fail, head);
 
@@ -59,6 +55,38 @@ value ml_vk_friends(value vfail, value vsuccess, value vt) {
 	(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail);
 
 	CAMLreturn(Val_unit);
+}
+
+value ml_vk_token(value t) {
+	CAMLparam0();
+	CAMLlocal1(vtoken);
+
+	GET_ENV;
+	GET_CLS;
+
+	STATIC_MID(cls, token, "()Ljava/lang/String;");
+	jstring jtoken = (*env)->CallStaticObjectMethod(env, cls, mid);
+	const char* ctoken = (*env)->GetStringUTFChars(env, jtoken, JNI_FALSE);
+	vtoken = caml_copy_string(ctoken);
+	(*env)->ReleaseStringUTFChars(env, jtoken, ctoken);
+
+	CAMLreturn(vtoken);
+}
+
+value ml_vk_uid(value t) {
+	CAMLparam0();
+	CAMLlocal1(vuid);
+
+	GET_ENV;
+	GET_CLS;
+
+	STATIC_MID(cls, uid, "()Ljava/lang/String;");
+	jstring juid = (*env)->CallStaticObjectMethod(env, cls, mid);
+	const char* cuid = (*env)->GetStringUTFChars(env, juid, JNI_FALSE);
+	vuid = caml_copy_string(cuid);
+	(*env)->ReleaseStringUTFChars(env, juid, cuid);
+
+	CAMLreturn(vuid);
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024Callback_freeCallbacks(JNIEnv *env, jobject this, jint jsuccess, jint jfail) {

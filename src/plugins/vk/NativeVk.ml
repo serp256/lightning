@@ -22,10 +22,14 @@ type fail = string -> unit;
 IFDEF PC THEN
 value authorize ~appid ~permissions ?fail ~success () = ();
 value friends ?fail ~success t = ();
+value token _ = "";
+value uid _ = "";
 ELSE
 
 Callback.register "create_friend" Friend.create;
 
 external authorize: ~appid:string -> ~permissions:list string -> ?fail:fail -> ~success:(t -> unit) -> unit -> unit = "ml_vk_authorize";
 external friends: ?fail:fail -> ~success:(list Friend.t -> unit) -> t -> unit = "ml_vk_friends";
+external token: t -> string = "ml_vk_token";
+external uid: t -> string = "ml_vk_uid";
 ENDIF;

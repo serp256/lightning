@@ -14,3 +14,5 @@ type fail = string -> unit;
 
 value authorize: ~appid:string -> ~permissions:list string -> ?fail:fail -> ~success:(t -> unit) -> unit -> unit;
 value friends: ?fail:fail -> ~success:(list Friend.t -> unit) -> t -> unit;
+value token: t -> string;
+value uid: t -> string;
