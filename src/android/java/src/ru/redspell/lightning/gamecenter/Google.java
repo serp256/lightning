@@ -4,22 +4,17 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.ConnectionResult;
-// import com.google.android.gms.games.Player;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.content.Intent;
-
 import ru.redspell.lightning.utils.Log;
-
 import ru.redspell.lightning.IUiLifecycleHelper;
 import com.google.android.gms.games.GamesActivityResultCodes;
 
 
 import ru.redspell.lightning.Lightning;
 
-public class Google implements GameCenter,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener {
-
-public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener {
+public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
 	private GoogleApiClient mGamesClient;
 	
@@ -38,17 +33,16 @@ public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.C
     /*
      * 
      */
-	public LightGameCenterAndroid(LightGameCenterConnectionListener l) {
-		Log.d("LIGHTNING","LightGameCenter");
-		GoogleApiClient.Builder builder = new GoogleApiClient.Builder(LightActivity.instance,this,this);
+    public Google(ConnectionListener l) {
+		Log.d("LIGHTNING","");
+		GoogleApiClient.Builder builder = new GoogleApiClient.Builder(Lightning.activity,this,this);
 		builder.addApi(Games.API);
 		builder.addScope(Games.SCOPE_GAMES);
-
-		builder.setViewForPopups(LightActivity.instance.viewGrp);
+		builder.setViewForPopups(Lightning.activity.viewGrp);
 		mGamesClient = builder.build ();
-		//mGamesClient.setViewForPopups(LightActivity.instance.viewGrp);
 		listener = l;
-	}
+		Log.d("ok");
+    }
 
 
     /*
@@ -89,7 +83,6 @@ public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.C
 	public void onConnectionSuspended (int cause) {
 		Log.d("LIGHTNING","Connection onConnectionSuspended");
 	};
-
 
     /*
      *
@@ -152,7 +145,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.C
 		if (mGamesClient == null || !mGamesClient.isConnected()) return null;
 		else {
 		    return Games.Players.getCurrentPlayerId(mGamesClient);
-		}   
+		}
 	}
 
 
@@ -230,7 +223,7 @@ public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.C
 					@Override public void onSaveInstanceState(Bundle b) {};
 				};
 				Lightning.activity.addUiLifecycleHelper(helper);
-				Intent intent = mGamesClient.getAchievementsIntent();
+				Intent intent = Games.Achievements.getAchievementsIntent(mGamesClient);
 				Lightning.activity.startActivityForResult(intent,SHOW_ACHIEVEMENT_REQUEST);
 			}
 		});
@@ -258,9 +251,9 @@ public class LightGameCenterAndroid implements LightGameCenter,GoogleApiClient.C
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
 				};
-				LightActivity.instance.addUiLifecycleHelper(helper);
+				Lightning.activity.addUiLifecycleHelper(helper);
 				Intent intent = Games.Leaderboards.getLeaderboardIntent(mGamesClient,boardId);
-				LightActivity.instance.startActivityForResult(intent,SHOW_LEADERBOARD_REQUEST);
+				Lightning.activity.startActivityForResult(intent,SHOW_LEADERBOARD_REQUEST);
 			}
 		});
 	}

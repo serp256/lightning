@@ -68,12 +68,17 @@ public class UrlDialog extends Dialog {
     }
 
     @Override
+    public void onDetachedFromWindow() {
+        // mWebView.removeAllViews();
+        mWebView.destroy();
+    }
+
+    @Override
     public void dismiss() {
         Log.d("LIGHTNING", "dismiss call");
 
         mWebView.stopLoading();
         super.dismiss();
-        mWebView.destroy();
     }    
     
     private void createCrossImage() {
