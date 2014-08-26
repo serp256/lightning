@@ -5,10 +5,11 @@
 
 @implementation LightVkDelegate
 
-- (id)initWithSuccess:(value)s andFail:(value)f
+- (id)initWithSuccess:(value)s andFail:(value)f andAuthFlag:(int*)fl
 {
 	REG_CALLBACK(s, success);
 	REG_OPT_CALLBACK(f, fail);
+	authorized = fl;
 
 	return self;
 }
@@ -21,6 +22,7 @@
 - (void)vkSdkDidReceiveNewToken:(VKAccessToken *)newToken
 {
 	NSLog(@"!!!vkSdkDidReceiveNewToken");
+	*authorized = 1;
 	RUN_CALLBACK(success, Val_unit);
 }
 
@@ -47,6 +49,7 @@
 - (void)vkSdkUserDeniedAccess:(VKError *)authorizationError
 {
 	NSLog(@"!!!vkSdkUserDeniedAccess");
+	*authorized = 0;
 	RUN_CALLBACK(fail, caml_copy_string([[NSString stringWithFormat:@"%@: %@", authorizationError.errorMessage, authorizationError.errorReason ] UTF8String]));
 }
 

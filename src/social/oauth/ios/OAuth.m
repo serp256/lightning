@@ -79,7 +79,10 @@
 }
 
 -(void)start {
-	[[LightViewController sharedInstance] presentViewController:self animated: YES completion:nil];
+	NSLog(@"!!!start");
+	[[LightViewController sharedInstance] presentViewController:self animated: YES completion:^(void) {
+		NSLog(@"!!!present completion");
+	}];
 }
 
 /*
