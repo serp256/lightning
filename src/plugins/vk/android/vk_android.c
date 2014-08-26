@@ -110,7 +110,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024Fail_nati
 	caml_callback(vcb, vreason);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSuccess_nativeRun(JNIEnv *env, jobject this, jint jcb, jobjectArray jids, jobjectArray jnames, jintArray jgenders) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSuccess_nativeRun(JNIEnv *env, jobject this, jint jcb, jobjectArray jids, jobjectArray jnames, jintArray jgenders, jobjectArray jphotos) {
 	static value* create_friend = NULL;
 	if (!create_friend) create_friend = caml_named_value("create_friend");
 
@@ -125,17 +125,21 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSu
 	for (i = 0; i < cnt; i++) {
 		jstring jid = (jstring)(*env)->GetObjectArrayElement(env, jids, i);		
 		jstring jname = (jstring)(*env)->GetObjectArrayElement(env, jnames, i);
+		jstring jphoto = (jstring)(*env)->GetObjectArrayElement(env, jphotos, i);
 		const char* cid = (*env)->GetStringUTFChars(env, jid, JNI_FALSE);
 		const char* cname = (*env)->GetStringUTFChars(env, jname, JNI_FALSE);
+		const char* cphoto = (*env)->GetStringUTFChars(env, jphoto, JNI_FALSE);
 
 		head = caml_alloc_tuple(2);
-		Store_field(head, 0, caml_callback3(*create_friend, caml_copy_string(cid), caml_copy_string(cname), Val_int(cgenders[i])));
+		value args[4] = { caml_copy_string(cid), caml_copy_string(cname), Val_int(cgenders[i]), caml_copy_string(cphoto) };
+		Store_field(head, 0, caml_callbackN(*create_friend, 4, args));
 		Store_field(head, 1, retval);
 
 		retval = head;
 
 		(*env)->ReleaseStringUTFChars(env, jid, cid);
 		(*env)->ReleaseStringUTFChars(env, jname, cname);
+		(*env)->ReleaseStringUTFChars(env, jphoto, cphoto);
 	}
 
 	(*env)->ReleaseIntArrayElements(env, jgenders, cgenders, 0);

@@ -5,7 +5,8 @@ module Friend:
 
 		value id: t -> string;
 		value name: t -> string;
-		value gender: t -> gender;
+    value gender: t -> gender;
+		value photo: t -> string;
 		value toString: t -> string;
 	end;
 

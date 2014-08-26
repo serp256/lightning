@@ -66,18 +66,20 @@ public class LightVk {
 		private String[] ids;
 		private String[] names;
 		private int[] genders;
+		private String[] photos;
 
-		public FriendsSuccess(int success, int fail, String[] ids, String[] names, int[] genders) {
+		public FriendsSuccess(int success, int fail, String[] ids, String[] names, int[] genders, String[] photos) {
 			super(success, fail);
 			this.ids = ids;
 			this.names = names;
 			this.genders = genders;
+			this.photos = photos;
 		}
 
-		public native void nativeRun(int cb, String[] ids, String[] names, int[] genders);
+		public native void nativeRun(int cb, String[] ids, String[] names, int[] genders, String[] photos);
 
 		public void run() {
-			nativeRun(success, ids, names, genders);
+			nativeRun(success, ids, names, genders, photos);
 			super.run();
 		}
 	}
@@ -155,7 +157,7 @@ public class LightVk {
 	}	
 
 	public static void friends(final int success, final int fail) {
-		VKRequest request = new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex"));
+		VKRequest request = new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max"));
 		request.executeWithListener(new VKRequestListener() { 
 			@Override 
 			public void onComplete(VKResponse response) {
@@ -166,15 +168,17 @@ public class LightVk {
 					String ids[] = new String[cnt];
 					String names[] = new String[cnt];
 					int genders[] = new int[cnt];
+					String photos[] = new String[cnt];
 
 					for (int i = 0; i < cnt; i++) {
 						JSONObject item = items.getJSONObject(i);
 						ids[i] = item.getString("id");
 						names[i] = item.getString("last_name") + " " + item.getString("first_name");
 						genders[i] = item.getInt("sex");
+						photos[i] = item.getString("photo_max");
 					}
 
-					LightActivity.instance.lightView.queueEvent(new FriendsSuccess(success, fail, ids, names, genders));
+					LightActivity.instance.lightView.queueEvent(new FriendsSuccess(success, fail, ids, names, genders, photos));
 				} catch (org.json.JSONException e) {
 					LightActivity.instance.lightView.queueEvent(new Fail(success, fail, "wrong format of response on friends request"));
 				}

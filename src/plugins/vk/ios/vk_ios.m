@@ -57,7 +57,7 @@ value ml_vk_friends(value vfail, value vsuccess, value vt) {
 	static value* create_friend = NULL;
 	if (!create_friend) create_friend = caml_named_value("create_friend");
 
-	VKRequest* req = [[VKApi friends] get:[NSDictionary dictionaryWithObject:@"sex" forKey:VK_API_FIELDS]];
+	VKRequest* req = [[VKApi friends] get:[NSDictionary dictionaryWithObject:@"sex,photo_max" forKey:VK_API_FIELDS]];
 	[req executeWithResultBlock:
 			^(VKResponse* response) {
 				CAMLparam0();
@@ -82,10 +82,13 @@ value ml_vk_friends(value vfail, value vsuccess, value vt) {
 					for (id item in mitems) {
 						NSDictionary* mitem = item;
 
+						NSLog(@"mitem %@", mitem);
+
 						NSNumber* mid = [mitem objectForKey:@"id"];
 						NSString* mfname = [mitem objectForKey:@"first_name"];
 						NSString* mlname = [mitem objectForKey:@"last_name"];
 						NSNumber* mgender = [mitem objectForKey:@"sex"];
+						NSString* mphoto = [mitem objectForKey:@"photo_max"];
 
 						if (!(mid && mfname && mlname && mgender)) {
 							err = 1;
@@ -95,7 +98,8 @@ value ml_vk_friends(value vfail, value vsuccess, value vt) {
 						NSString* mname = [NSString stringWithFormat:@"%@ %@", mlname, mfname];
 						
 						head = caml_alloc_tuple(2);
-						Store_field(head, 0, caml_callback3(*create_friend, caml_copy_string([[mid stringValue] UTF8String]), caml_copy_string([mname UTF8String]), Val_int([mgender intValue])));
+						value args[4] = { caml_copy_string([[mid stringValue] UTF8String]), caml_copy_string([mname UTF8String]), Val_int([mgender intValue]), caml_copy_string([mphoto UTF8String]) };
+						Store_field(head, 0, caml_callbackN(*create_friend, 4, args));
 						Store_field(head, 1, vitems);
 
 						vitems = head;

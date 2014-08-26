@@ -7,13 +7,15 @@ module Friend =
 				id: string;
 				name: string;
 				gender: gender;
+				photo: string;
 			};
 
-		value create id name gender = { id; name; gender = match gender with [ 1 -> `female | 2 -> `male | _ -> `none ] };
+		value create id name gender photo = { id; name; gender = match gender with [ 1 -> `female | 2 -> `male | _ -> `none ]; photo };
 		value id t = t.id;
 		value name t = t.name;
 		value gender t = t.gender;
-		value toString t = Printf.sprintf "%s (id %s, gender %s)" t.name t.id (match t.gender with [ `male -> "male" | `female -> "female" | `none -> "not specified"]);
+		value photo t = t.photo;
+		value toString t = Printf.sprintf "%s (id %s, gender %s, photo %s)" t.name t.id (match t.gender with [ `male -> "male" | `female -> "female" | `none -> "not specified"]) t.photo;
 	end;
 
 type t = unit;
