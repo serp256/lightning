@@ -40,13 +40,13 @@ DEFINE SCISSOR =
 DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
   match stage with
   [ Some stage ->
-    let matrix = 
+    let matrix =
       match onSelf with
       [ True -> self#transformationMatrixToSpace None
-      | False -> 
+      | False ->
           match parent with
           [ Some parent -> parent#transformationMatrixToSpace None
-          | None -> assert False 
+          | None -> assert False
           ]
       ]
     in
@@ -56,8 +56,8 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
       let sheight = stage#height in
       (
 				let os = { x0 = minX ; y0 = minY ; x1 =  maxX ; y1 =  maxY } in
-				let os = 
-					try 
+				let os =
+					try
 					 	let a = Stack.top maskStack in
 							{ x0 = max os.x0 a.x0 ; y0 = max os.y0 a.y0 ; x1 = min os.x1 a.x1 ; y1 = min os.y1 a.y1 }
 					with
@@ -75,7 +75,7 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
                 glEnableScissor (int_of_float os.x0) (int_of_float os.y0) (int_of_float os.x1) (int_of_float os.y1);
 								call_render;
 								glDisableScissor ();
-								if (Stack.length maskStack > 1) then 
+								if (Stack.length maskStack > 1) then
 									(
 										np.val := True;
 										ignore ( Stack.pop maskStack );
@@ -91,7 +91,7 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
 								else ();
 							) else ();
 
-							if !np then () else 
+							if !np then () else
 							ignore ( Stack.pop maskStack );
 							debug:mask "pull";
 						);
@@ -102,7 +102,7 @@ DEFINE RENDER_WITH_MASK(call_render) = (*{{{*)
   | None -> failwith "render without stage"
   ];(*}}}*)
 
-class type dispObj = 
+class type dispObj =
   object
     method dispatchEvent: Ev.t -> unit;
     method name: string;
@@ -142,13 +142,13 @@ class virtual _c [ 'parent ] = (*{{{*)
     inherit EventDispatcher.base [ 'displayObject,'self] as super;
 
     type 'displayObject = _c 'parent;
-    type 'parent = 
-      < 
+    type 'parent =
+      <
         stageAddEnterFrameObj: dispObj -> unit; stageRmEnterFrameObj: dispObj -> unit; stageAddPrerenderObj: prerenderObj -> unit; stageRunPrerender: unit -> unit; asDisplayObject: _c _;
         removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit; name: string;
         transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit;
         forceStageRender: ?reason:string -> unit -> unit; height: float;
-        .. 
+        ..
       >;
 
     value mutable parent : option 'parent = None;
@@ -189,18 +189,18 @@ class virtual _c [ 'parent ] = (*{{{*)
     method virtual color: color;
     method virtual setColor: color -> unit;
 
-    method transformationMatrix = 
+    method transformationMatrix =
       match transformationMatrix with
-      [ None -> 
+      [ None ->
 (*         let translate = match transformPoint with [ {Point.x=0.;y=0.} -> pos | _ -> Point.addPoint pos transformPoint ] in *)
         let m = Matrix.create ~scale:(scaleX,scaleY) ~rotation ~translate:pos () in
-        let m = 
-          match transformPoint with 
-          [ {Point.x = 0.; y = 0.} -> m 
-          | p -> 
+        let m =
+          match transformPoint with
+          [ {Point.x = 0.; y = 0.} -> m
+          | p ->
               let m' = Matrix.create ~translate:p () in
               Matrix.concat m' m
-          ] 
+          ]
         in
         (
           transformationMatrix := Some m;
@@ -211,7 +211,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
 
     method transformPointX = transformPoint.Point.x;
-    method setTransformPointX nv = 
+    method setTransformPointX nv =
       if nv <> transformPoint.Point.x
       then
         (
@@ -232,7 +232,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
 
     method transformPoint = transformPoint;
-    method setTransformPoint p = 
+    method setTransformPoint p =
       if p <> transformPoint
       then
       (
@@ -243,7 +243,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     value mutable prerender_wait_listener = None;
     value prerenders : Queue.t (unit -> unit) = Queue.create ();
-    method private addToPrerenders _ _ lid = 
+    method private addToPrerenders _ _ lid =
     (
       debug:prerender "addToPrerenders: %s" self#name;
       match Queue.is_empty prerenders with
@@ -262,7 +262,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     (
       debug:prerender "addPrerender for %s" self#name;
       match Queue.is_empty prerenders with
-      [ True -> 
+      [ True ->
         match stage with
         [ Some s -> s#stageAddPrerenderObj (self :> prerenderObj)
         | None -> prerender_wait_listener := Some (self#addEventListener ev_ADDED_TO_STAGE self#addToPrerenders)
@@ -275,13 +275,13 @@ class virtual _c [ 'parent ] = (*{{{*)
     method prerender exe =
       let () = debug:prerender "prerender %s - %b" self#name exe in
       match exe with
-      [ True -> 
+      [ True ->
         (
           while not (Queue.is_empty prerenders) do
             (Queue.pop prerenders) ();
           done;
           match prerender_wait_listener with
-          [ Some lid -> 
+          [ Some lid ->
             (
               self#removeEventListener ev_ADDED_TO_STAGE lid;
               prerender_wait_listener := None;
@@ -289,7 +289,7 @@ class virtual _c [ 'parent ] = (*{{{*)
           | None -> ()
           ]
         )
-      | False -> 
+      | False ->
           match prerender_wait_listener with
           [ None -> prerender_wait_listener := Some (self#addEventListener ev_ADDED_TO_STAGE self#addToPrerenders)
           | Some _ -> ()
@@ -309,7 +309,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
         if enterFrameNum > 0
         then s#stageAddEnterFrameObj (self :> dispObj)
-        else ();        
+        else ();
       );
 
     method resetStage () =
@@ -325,7 +325,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       | _ -> ()
       ];
 
-    method setParent p = 
+    method setParent p =
     (
       debug:prerender "set parent %s for %s " p#name self#name;
       parent := Some p;
@@ -334,7 +334,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 		  	self#dispatchEvent event;
 
 			match p#stage with
-			[ Some s -> 
+			[ Some s ->
 				let event = Ev.create ev_ADDED_TO_STAGE () in
           (
             self#setStage s;
@@ -344,9 +344,9 @@ class virtual _c [ 'parent ] = (*{{{*)
 			]
     );
 
-    method clearParent () = 
+    method clearParent () =
 			match parent with
-			[ Some p ->			
+			[ Some p ->
 				(
           let event = Ev.create ev_REMOVED () in
             self#dispatchEvent event;
@@ -357,18 +357,18 @@ class virtual _c [ 'parent ] = (*{{{*)
               (
                 self#resetStage ();
                 self#dispatchEventGlobal event;
-              )          
+              )
           | _ -> ()
           ];
 
-          parent := None;          
+          parent := None;
 				)
 			| None -> ()
 			];
 
     method z =
       match parent with
-      [ Some parent -> 
+      [ Some parent ->
         match parent#z with
         [ Some z -> Some (z + (parent#getChildIndex' (self :> _c 'parent)) + 1)
         | None -> None
@@ -383,7 +383,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       let () = debug:rmfromstage "enterFrameListenerRemovedFromStage call" in
       let _ = super#removeEventListener ev_REMOVED_FROM_STAGE lid in
       match self#hasEventListeners ev_ENTER_FRAME with
-      [ True -> 
+      [ True ->
         (
           match stage with
           [ Some s -> s#stageRmEnterFrameObj (self :> dispObj)
@@ -395,29 +395,29 @@ class virtual _c [ 'parent ] = (*{{{*)
       | False -> ()
       ];
 
-    method private enterFrameListenerAddedToStage _ _ lid = 
+    method private enterFrameListenerAddedToStage _ _ lid =
       (
         match self#hasEventListeners ev_ENTER_FRAME with
         [ True -> self#listenEnterFrame ()
-        | False -> () 
+        | False -> ()
         ];
 
         super#removeEventListener ev_ADDED_TO_STAGE lid;
       );
 
-    method private listenEnterFrame () = 
+    method private listenEnterFrame () =
       (
         match stage with
         [ Some s -> s#stageAddEnterFrameObj (self :> dispObj)
         | _ -> assert False
         ];
-        
+
         ignore(super#addEventListener ev_REMOVED_FROM_STAGE self#enterFrameListenerRemovedFromStage);
       ); *)
 
-    
 
-    method! addEventListener eventType (listener:'listener) = 
+
+    method! addEventListener eventType (listener:'listener) =
     (
       if eventType = ev_ENTER_FRAME
       then
@@ -427,7 +427,7 @@ class virtual _c [ 'parent ] = (*{{{*)
             match stage with
             [ None -> ()
             | Some s -> s#stageAddEnterFrameObj (self :> dispObj)
-            ]          
+            ]
           else ();
 
           enterFrameNum := enterFrameNum + 1;
@@ -436,7 +436,7 @@ class virtual _c [ 'parent ] = (*{{{*)
       super#addEventListener eventType listener;
     );
 
-    method! removeEventListener eventType (lid:int) = 
+    method! removeEventListener eventType (lid:int) =
     (
       super#removeEventListener eventType lid;
       if eventType = ev_ENTER_FRAME
@@ -449,7 +449,7 @@ class virtual _c [ 'parent ] = (*{{{*)
             match stage with
             [ None -> ()
             | Some s -> s#stageRmEnterFrameObj (self :> dispObj)
-            ]          
+            ]
           else ()
         )
       else ()
@@ -458,13 +458,13 @@ class virtual _c [ 'parent ] = (*{{{*)
     method dispatchEvent' event target =
     (
       let evd = (target,self) in
-      MList.apply_assoc 
+      MList.apply_assoc
         (fun l ->
           ignore(List.for_all (fun (lid,l) -> (l event evd lid; event.Ev.propagation <> `StopImmediate)) l.EventDispatcher.lstnrs)
         )
         event.Ev.evid listeners;
       match event.Ev.bubbles && event.Ev.propagation = `Propagate with
-      [ True -> 
+      [ True ->
         match parent with
         [ Some p -> p#dispatchEvent' event target
         | None -> ()
@@ -513,9 +513,9 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method virtual boundsInSpace: !'space. ?withMask:bool -> option (<asDisplayObject: 'displayObject; .. > as 'space) -> Rectangle.t;
 
-    method bounds = 
+    method bounds =
       match boundsCache with
-      [ None -> 
+      [ None ->
           let bounds = self#boundsInSpace parent in
           (
             boundsCache := Some bounds;
@@ -526,7 +526,7 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method width = self#bounds.Rectangle.width;
 
-    method setWidth nw = 
+    method setWidth nw =
     (
       (* this method calls 'self.scaleX' instead of changing mScaleX directly.
           that way, subclasses reacting on size changes need to override only the scaleX method. *)
@@ -538,23 +538,23 @@ class virtual _c [ 'parent ] = (*{{{*)
         self#setScaleX (nw /. actualWidth)
       else self#setScaleX 1.0;
     );
-      
+
     method height = self#bounds.Rectangle.height;
 
-    method setHeight nh = 
+    method setHeight nh =
     (
       scaleY := 1.0;
       RESET_CACHE("setHeight");
       let actualHeight = self#height in
       if actualHeight <> 0.0
       then
-        self#setScaleY (nh /. actualHeight) 
+        self#setScaleY (nh /. actualHeight)
       else self#setScaleY 1.0
     );
-    
+
 
     method rotation = rotation;
-    method setRotation nr = 
+    method setRotation nr =
       (* clamp between [-180 deg, +180 deg] *)
       let nr = clamp_rotation nr in
       (
@@ -589,7 +589,7 @@ class virtual _c [ 'parent ] = (*{{{*)
     method asDisplayObject = (self :> _c 'parent);
     method virtual dcast: [= `Object of 'displayObject | `Container of 'parent ];
 
-    method root = 
+    method root =
       loop (self :> _c 'parent) where
         rec loop currentObject =
           match currentObject#parent with
@@ -607,8 +607,8 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method transformationMatrixToSpace: !'space. option (<asDisplayObject: 'displayObject; ..> as 'space) -> Matrix.t = fun targetCoordinateSpace -> (*{{{*)
       match targetCoordinateSpace with
-      [ None -> 
-        let rec loop currentObject matrix = 
+      [ None ->
+        let rec loop currentObject matrix =
           let matrix = Matrix.concat matrix currentObject#transformationMatrix in
           match currentObject#parent with
           [ Some parent -> loop parent#asDisplayObject matrix
@@ -616,11 +616,11 @@ class virtual _c [ 'parent ] = (*{{{*)
           ]
         in
         loop (self :> _c 'parent) Matrix.identity
-      | Some targetCoordinateSpace -> 
+      | Some targetCoordinateSpace ->
         let targetCoordinateSpace = targetCoordinateSpace#asDisplayObject in
         if targetCoordinateSpace = (self :> _c 'parent)
         then Matrix.identity
-        else 
+        else
           match targetCoordinateSpace#parent with
           [ Some targetParent when targetParent#asDisplayObject = (self :> _c 'parent) -> (* optimization  - this is our child *)
               let targetMatrix = targetCoordinateSpace#transformationMatrix in
@@ -628,34 +628,34 @@ class virtual _c [ 'parent ] = (*{{{*)
           | _ ->
 (*               let () = Printf.eprintf "self: [%s], parent: [%s], targetCoordinateSpace: [%s]\n%!" name (match parent with [ None -> "NONE" | Some s -> s#name ]) targetCoordinateSpace#name in *)
               match parent with
-              [ Some parent when parent#asDisplayObject = targetCoordinateSpace -> self#transformationMatrix (* optimization  - this is our parent *) 
+              [ Some parent when parent#asDisplayObject = targetCoordinateSpace -> self#transformationMatrix (* optimization  - this is our parent *)
               | _ ->
                 (* 1.: Find a common parent of self and the target coordinate space  *)
-                let ancessors = 
+                let ancessors =
                   loop (self :> _c 'parent) where
-                    rec loop currentObject = 
-                      let next = 
+                    rec loop currentObject =
+                      let next =
                         match currentObject#parent with
                         [ None -> []
                         | Some cp -> loop cp#asDisplayObject
                         ]
                       in
-                      [ currentObject :: next ] 
+                      [ currentObject :: next ]
                 in
 (*                 let () = Printf.eprintf "ancessors: [%s]\n%!" (String.concat ";" (List.map (fun o -> o#name) ancessors)) in *)
-                let commonParent = 
+                let commonParent =
                   loop targetCoordinateSpace where
-                    rec loop currentObject = 
+                    rec loop currentObject =
                       match List.mem currentObject ancessors with
                       [ True -> currentObject
-                      | False -> 
+                      | False ->
                           match currentObject#parent with
                           [ None -> failwith "Object not connected to target"
                           | Some cp -> loop cp#asDisplayObject
                           ]
                       ]
                 in
-                let move_up obj = 
+                let move_up obj =
                     loop obj Matrix.identity where
                       rec loop currentObject matrix =
                         match currentObject = commonParent with
@@ -677,7 +677,7 @@ class virtual _c [ 'parent ] = (*{{{*)
               ]
           ]
       ];(*}}}*)
-   
+
 
     (* если придумать какое-то кэширование ? *)
     value mutable mask: option (bool * Rectangle.t * (array Point.t)) = None;
@@ -687,8 +687,8 @@ class virtual _c [ 'parent ] = (*{{{*)
     method setMask ?(onSelf=False) rect =
       (
         self#forceStageRender ~reason:"set mask" ();
-        let open Rectangle in 
-        mask := Some (onSelf, rect, Rectangle.points rect); (* FIXME: можно сразу преобразовать этот рект и закэшировать нах *)        
+        let open Rectangle in
+        mask := Some (onSelf, rect, Rectangle.points rect); (* FIXME: можно сразу преобразовать этот рект и закэшировать нах *)
       );
 
 
@@ -699,25 +699,25 @@ class virtual _c [ 'parent ] = (*{{{*)
       let () = debug:tmp "render [%s]" self#name in
       proftimer:render ("render [%s] %f" self#name) with
       (
-        if visible && alpha > 0. 
+        if visible && alpha > 0.
         then
           let () = debug "visible && alpha" in
           match mask with
-          [ None -> self#render' ?alpha:parentAlpha ~transform rect 
+          [ None -> self#render' ?alpha:parentAlpha ~transform rect
           | Some (onSelf,maskRect,maskPoints) ->
             let () = debug:rendermask "some mask" in
-              let maskRect = 
+              let maskRect =
                 match onSelf with
                 [ True -> maskRect
-                | False -> 
-                    let m = self#transformationMatrix in 
+                | False ->
+                    let m = self#transformationMatrix in
                     Matrix.transformRectangle (Matrix.invert m) maskRect
                 ]
               in
               let () = debug:rendermask "mask rect %s, rect = None: %B" (Rectangle.to_string maskRect) (rect = None) in
               match rect with
               [ None -> RENDER_WITH_MASK (self#render' ?alpha:parentAlpha ~transform (Some maskRect))
-              | Some rect -> 
+              | Some rect ->
                   match Rectangle.intersection maskRect rect with
                   [ Some inRect ->
                     let () = debug:rendermask "Rectangle.intersection maskRect rect %s" (Rectangle.to_string inRect) in
@@ -731,19 +731,19 @@ class virtual _c [ 'parent ] = (*{{{*)
 
     method private virtual hitTestPoint': Point.t -> bool -> option (_c 'parent);
 
-    method hitTestPoint localPoint isTouch = 
+    method hitTestPoint localPoint isTouch =
       (* on a touch test, invisible or untouchable objects cause the test to fail *)
       match (isTouch && (not visible || not touchable)) with
       [ True -> None
-      | False -> 
+      | False ->
         match mask with
         [ None -> self#hitTestPoint' localPoint isTouch
         | Some (onSelf,maskRect,maskPoints) ->
-            let maskRect = 
+            let maskRect =
               match onSelf with
               [ True -> maskRect
-              | False -> 
-                  let m = self#transformationMatrix in 
+              | False ->
+                  let m = self#transformationMatrix in
                   Matrix.transformRectangle (Matrix.invert m) maskRect
               ]
             in
@@ -754,15 +754,15 @@ class virtual _c [ 'parent ] = (*{{{*)
         ]
       ];
 
-    method removeFromParent () = 
+    method removeFromParent () =
       match parent with
       [ Some parent -> parent#removeChild' (self :> _c 'parent)
       | None -> ()
       ];
 
-    method localToGlobal localPoint = 
+    method localToGlobal localPoint =
       (* move up until parent is nil *)
-      let matrix = 
+      let matrix =
         loop (self :> _c 'parent) Matrix.identity where
           rec loop currentObject matrix =
             let matrix = Matrix.concat matrix currentObject#transformationMatrix in
@@ -774,11 +774,11 @@ class virtual _c [ 'parent ] = (*{{{*)
       Matrix.transformPoint matrix localPoint;
 
 
-    method globalToLocal globalPoint = 
+    method globalToLocal globalPoint =
       (* move up until parent is nil, then invert matrix *)
-      let matrix = 
+      let matrix =
         loop (self :> _c 'parent) Matrix.identity where
-          rec loop currentObject matrix = 
+          rec loop currentObject matrix =
             let matrix = Matrix.concat matrix currentObject#transformationMatrix in
             match currentObject#parent with
             [ None -> matrix
@@ -833,12 +833,12 @@ class virtual _c [ 'parent ] = (*{{{*)
 
 
 (* Dll additional functions {{{*)
-value dllist_find node el = 
+value dllist_find node el =
   match Dllist.get node = el with
   [ True -> node
   | False ->
     let rec loop n =
-      if n != node 
+      if n != node
       then
         match Dllist.get n = el with
         [ True -> n
@@ -848,13 +848,13 @@ value dllist_find node el =
     in
     loop (Dllist.next node)
   ];
-  
-value dllist_find_index node el = 
+
+value dllist_find_index node el =
   match Dllist.get node = el with
   [ True -> 0
   | False ->
     let rec loop n i =
-      if n != node 
+      if n != node
       then
         match Dllist.get n = el with
         [ True -> i
@@ -864,13 +864,13 @@ value dllist_find_index node el =
     in
     loop (Dllist.next node) 1
   ];
-  
-value dllist_existsf f node = 
+
+value dllist_existsf f node =
   match f (Dllist.get node) with
   [ True -> True
   | False ->
       let rec loop n =
-        if n != node 
+        if n != node
         then
           match f (Dllist.get n) with
           [ True -> True
@@ -882,12 +882,12 @@ value dllist_existsf f node =
       loop (Dllist.next node)
   ];
 
-value dllist_find_map f node = 
-  match f (Dllist.get node) with 
+value dllist_find_map f node =
+  match f (Dllist.get node) with
   [ Some r -> r
   | None ->
       let rec loop n =
-        if n != node 
+        if n != node
         then
           match f (Dllist.get n) with
           [ Some r -> r
@@ -899,14 +899,14 @@ value dllist_find_map f node =
   ];
 
 
-value dllist_find_map_back f node = 
+value dllist_find_map_back f node =
   let node = Dllist.prev node in
   match f (Dllist.get node) with
   [ Some r -> r
   | None ->
       let rec loop n =
         if n != node
-        then 
+        then
           match f (Dllist.get n) with
           [ Some r -> r
           | None -> loop (Dllist.prev n)
@@ -915,7 +915,7 @@ value dllist_find_map_back f node =
       in
       loop (Dllist.prev node)
   ];
-  
+
 (*}}}*)
 
 
@@ -932,7 +932,7 @@ class virtual container = (*{{{*)
     method dcast = `Container self#asDisplayObjectContainer;
 
     (* Сделать enum устойчивым к модификациям и переписать на полное использование енумов или щас ? *)
-    method dispatchEventGlobal event = 
+    method dispatchEventGlobal event =
     (
       self#dispatchEvent event;
       Enum.iter begin fun (child:'displayObject) -> (* здесь хуйня с таргетом надо разобраца *)
@@ -959,16 +959,16 @@ class virtual container = (*{{{*)
       let child = child#asDisplayObject in
       (
         debug:children "[%s] addChild '%s'" self#name child#name;
-        child#removeFromParent(); 
+        child#removeFromParent();
         match children with
-        [ None -> 
+        [ None ->
           match index with
           [ Some idx when idx > 0 -> raise (Invalid_index (idx,0))
           | _ -> children := Some (Dllist.create child)
           ]
-        | Some chldrn -> 
+        | Some chldrn ->
             match index with
-            [ None -> (* добавить в канец *) Dllist.add (Dllist.prev chldrn) child 
+            [ None -> (* добавить в канец *) Dllist.add (Dllist.prev chldrn) child
             | Some idx when idx > 0 && idx < numChildren -> Dllist.add (Dllist.skip chldrn (idx-1)) child
             | Some idx when idx = 0 -> children := Some (Dllist.prepend chldrn child)
             | Some idx when idx = numChildren -> Dllist.add (Dllist.prev chldrn) child
@@ -980,10 +980,10 @@ class virtual container = (*{{{*)
         self#boundsChanged();
       );
 
-    method getChildAt index = 
+    method getChildAt index =
       match children with
       [ None -> raise (Invalid_index (index,0))
-      | Some children -> 
+      | Some children ->
           match index >= 0 && index < numChildren with
           [ True -> Dllist.get (Dllist.skip children index)
           | False -> raise (Invalid_index (index,numChildren))
@@ -1000,32 +1000,32 @@ class virtual container = (*{{{*)
       match children with
       [ None -> raise Child_not_found
       | Some children ->
-          try 
+          try
             dllist_find_index children child
-          with 
-            [ Not_found -> raise Child_not_found ] 
+          with
+            [ Not_found -> raise Child_not_found ]
       ];
 
 
     method getChildIndex: !'child. ((#_c container) as 'child) -> int = fun child -> self#getChildIndex' child#asDisplayObject;
 
 
-    method setChildIndex: !'child. ((#_c container) as 'child) -> int -> unit = fun child index -> 
+    method setChildIndex: !'child. ((#_c container) as 'child) -> int -> unit = fun child index ->
       match children with
       [ None -> raise Child_not_found
       | Some chldrn ->
           if index >= numChildren || index < 0 then raise (Invalid_index (index,numChildren))
           else
-            let () = debug:children "[%s] setChildIndex %s" self#name child#name in 
+            let () = debug:children "[%s] setChildIndex %s" self#name child#name in
             let child = child#asDisplayObject in
             match Dllist.get chldrn = child with
-            [ True -> 
+            [ True ->
               if index > 0
               then
                 let next_node = Dllist.next chldrn in
                 match next_node == chldrn with
                 [ True -> () (* ничего делать не надо *)
-                | False -> 
+                | False ->
                     let () = Dllist.remove chldrn in
                     let prev = Dllist.skip next_node (index - 1) in
                     let next = Dllist.next prev in
@@ -1036,11 +1036,11 @@ class virtual container = (*{{{*)
                     )
                 ]
               else ()
-            | False -> 
+            | False ->
                 let node = find_node (Dllist.next chldrn) where
                   rec find_node n =
                     if n != chldrn
-                    then 
+                    then
                       match Dllist.get n = child with
                       [ True -> n
                       | False -> find_node (Dllist.next n)
@@ -1087,7 +1087,7 @@ class virtual container = (*{{{*)
             [ True -> children := None
             | False -> children := Some (Dllist.drop child_node)
             ]
-          else 
+          else
             Dllist.remove child_node
         | None -> assert False
         ];
@@ -1097,7 +1097,7 @@ class virtual container = (*{{{*)
         child;
       );
 
-    method removeChild' child = 
+    method removeChild' child =
       match children with
       [ None -> raise Child_not_found
       | Some children ->
@@ -1116,30 +1116,30 @@ class virtual container = (*{{{*)
           ignore(self#removeChild'' n)
       ];
 
-    method removeChildAtIndex index : 'displayObject = 
+    method removeChildAtIndex index : 'displayObject =
       match children with
       [ None -> raise (Invalid_index (index,0))
-      | Some children -> 
+      | Some children ->
         match index >= 0 && index < numChildren with
-        [ True -> 
+        [ True ->
           let n = Dllist.skip children index in
           self#removeChild'' n
         | False -> raise (Invalid_index (index,numChildren))
         ]
       ];
 
-    method clearChildren () = 
+    method clearChildren () =
       let () = debug:children "[%s] clear children" self#name in
       match children with
       [ None -> ()
-      | Some chldrn -> 
+      | Some chldrn ->
 				(*
-        let evs = 
-          let event = Ev.create ev_REMOVED () in 
+        let evs =
+          let event = Ev.create ev_REMOVED () in
           match self#stage with
-          [ Some _ -> 
+          [ Some _ ->
             let sevent = Ev.create ev_REMOVED_FROM_STAGE () in
-            fun (child:'displayObject) -> 
+            fun (child:'displayObject) ->
               (
                 child#dispatchEvent event;
                 match child#dcast with
@@ -1160,17 +1160,17 @@ class virtual container = (*{{{*)
         )
       ];
 
-    method containsChild' child = 
+    method containsChild' child =
       match children with
       [ None -> False
-      | Some children -> 
+      | Some children ->
         dllist_existsf begin fun chld ->
           match chld = child with
           [ True -> True
           | False ->
               match chld#dcast with
               [ `Container container -> container#containsChild' child
-              | _ -> False 
+              | _ -> False
               ]
           ]
         end children
@@ -1185,12 +1185,12 @@ class virtual container = (*{{{*)
         [ None -> Rectangle.empty
         | Some children when children == (Dllist.next children) (* 1 child *) -> let () = debug:boundswithmask "1" in self#boundsWithMask' ((Dllist.get children)#boundsInSpace ~withMask targetCoordinateSpace) targetCoordinateSpace withMask
         | Some children ->
-          let () = debug:boundswithmask "2" in 
+          let () = debug:boundswithmask "2" in
             let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
             (
               let open Rectangle in
   (*             let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in *)
-              let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
+              let matrix = self#transformationMatrixToSpace targetCoordinateSpace in
               Dllist.iter begin fun (child:'displayObject) ->
   (*               let childBounds = child#boundsInSpace targetCoordinateSpace in *)
                 let childBounds = Matrix.transformRectangle matrix (if withMask then child#boundsInSpace ~withMask:True (Some self) else child#bounds) in
@@ -1209,12 +1209,12 @@ class virtual container = (*{{{*)
         ];
 
 
-    method private hitTestPoint' localPoint isTouch = 
+    method private hitTestPoint' localPoint isTouch =
       match children with
       [ None -> None
-      | Some children -> 
+      | Some children ->
         try
-          let res = 
+          let res =
             dllist_find_map_back begin fun child ->
               let transformationMatrix = self#transformationMatrixToSpace (Some child) in
               let transformedPoint = Matrix.transformPoint transformationMatrix localPoint in
@@ -1226,14 +1226,14 @@ class virtual container = (*{{{*)
       ];
 
 
-    method private render' ?alpha:(alpha') ~transform rect = 
+    method private render' ?alpha:(alpha') ~transform rect =
       let () = debug:render "rendering container" in
       match children with
       [ None -> ()
-      | Some children -> 
-          let alpha = 
+      | Some children ->
+          let alpha =
             if alpha <> 1.
-            then 
+            then
               let a = match alpha' with [ None -> alpha | Some a -> a *. alpha ] in
               Some a
             else alpha'
@@ -1242,17 +1242,17 @@ class virtual container = (*{{{*)
             if transform then Render.push_matrix self#transformationMatrix else ();
             match rect with
             [ None -> Dllist.iter (fun (child:'displayObject) -> child#render ?alpha None) children
-            | Some rect -> 
+            | Some rect ->
               Dllist.iter begin fun (child:'displayObject) ->
                 let childAlpha = child#alpha in
-                if (childAlpha > 0.0 && child#visible) 
+                if (childAlpha > 0.0 && child#visible)
                 then
                   let bounds = child#bounds in
                   match Rectangle.intersection rect bounds with
-                  [ Some intRect -> 
+                  [ Some intRect ->
                       match child#dcast with
                       [ `Object _ -> child#render ?alpha None (* FIXME: по идее нужно вызывать таки с ректом, но здесь оптимайзинг, убрать если надо! *)
-                      | `Container (c:container) -> 
+                      | `Container (c:container) ->
                           let childMatrix = self#transformationMatrixToSpace (Some child) in
                           c#render ?alpha ?transform:(Some True) (Some (Matrix.transformRectangle childMatrix intRect))
                       ]
@@ -1285,7 +1285,7 @@ class virtual c =
     inherit _c [ container ];
     method dcast = `Object (self :> c);
     method dispatchEventGlobal event = self#dispatchEvent event;
-    method private hitTestPoint' localPoint isTouch = 
+    method private hitTestPoint' localPoint isTouch =
 (*       let () = Printf.printf "hitTestPoint: %s, %s - %s\n" name (Point.to_string localPoint) (Rectangle.to_string (self#boundsInSpace (Some self#asDisplayObject))) in *)
       match Rectangle.containsPoint (self#boundsInSpace (Some self)) localPoint with
       [ True -> Some (self :> _c 'parent)
@@ -1294,4 +1294,3 @@ class virtual c =
 
     method stageResized () = ();
   end;
-

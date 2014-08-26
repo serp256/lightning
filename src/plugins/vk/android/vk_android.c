@@ -90,6 +90,13 @@ value ml_vk_uid(value t) {
 	CAMLreturn(vuid);
 }
 
+void vkandroid_free_callbacks(void *data) {
+        value *callbacks = (value*)data;
+        FREE_CALLBACK(callbacks[0]);
+        FREE_CALLBACK(callbacks[1]);
+        free(callbacks);
+}
+
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024Callback_freeCallbacks(JNIEnv *env, jobject this, jint jsuccess, jint jfail) {
 	value *callbacks = (value*)malloc(sizeof(value) * 2);
 	callbacks[0] = (value)jsuccess;
@@ -155,12 +162,12 @@ void vkandroid_friends_success(void *data) {
 	jint* cgenders = (*ML_ENV)->GetIntArrayElements(ML_ENV, friends_success->genders, JNI_FALSE);
 
 	for (i = 0; i < cnt; i++) {
-		jstring jid = (jstring)(*env)->GetObjectArrayElement(env, jids, i);		
-		jstring jname = (jstring)(*env)->GetObjectArrayElement(env, jnames, i);
-		jstring jphoto = (jstring)(*env)->GetObjectArrayElement(env, jphotos, i);
-		const char* cid = (*env)->GetStringUTFChars(env, jid, JNI_FALSE);
-		const char* cname = (*env)->GetStringUTFChars(env, jname, JNI_FALSE);
-		const char* cphoto = (*env)->GetStringUTFChars(env, jphoto, JNI_FALSE);
+		jstring jid = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->ids, i);		
+		jstring jname = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->names, i);
+		jstring jphoto = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->photos, i);
+		const char* cid = (*ML_ENV)->GetStringUTFChars(ML_ENV, jid, JNI_FALSE);
+		const char* cname = (*ML_ENV)->GetStringUTFChars(ML_ENV, jname, JNI_FALSE);
+		const char* cphoto = (*ML_ENV)->GetStringUTFChars(ML_ENV, jphoto, JNI_FALSE);
 
 		head = caml_alloc_tuple(2);
 		value args[4] = { caml_copy_string(cid), caml_copy_string(cname), Val_int(cgenders[i]), caml_copy_string(cphoto) };
@@ -169,9 +176,9 @@ void vkandroid_friends_success(void *data) {
 
 		retval = head;
 
-		(*env)->ReleaseStringUTFChars(env, jid, cid);
-		(*env)->ReleaseStringUTFChars(env, jname, cname);
-		(*env)->ReleaseStringUTFChars(env, jphoto, cphoto);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jid, cid);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jname, cname);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jphoto, cphoto);
 	}
 
 	PRINT_DEBUG("2");
