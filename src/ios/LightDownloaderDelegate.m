@@ -16,9 +16,9 @@
 	NSError* err = [[NSError alloc] init];
 
 	if ([data writeToFile:filename options:NSDataWritingAtomic error:&err]) {
-		caml_callback(success, Val_unit);	
+		RUN_CALLBACK(success, Val_unit);
 	} else if (error) {
-		caml_callback2(error, Val_int([err code]), caml_copy_string([[err localizedDescription] UTF8String]));
+		RUN_CALLBACK2(error, Val_int([err code]), caml_copy_string([[err localizedDescription] UTF8String]));
 	}
 
 	[err release];
@@ -27,7 +27,7 @@
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)err {
 	if (error) {
-		caml_callback2(error, Val_int([err code]), caml_copy_string([[err localizedDescription] UTF8String]));
+		RUN_CALLBACK2(error, Val_int([err code]), caml_copy_string([[err localizedDescription] UTF8String]));
 	}
 	[connection release];
 }
@@ -43,7 +43,7 @@
 	[data appendData:chunk];
 
 	if (progress) {
-		caml_callback3(progress, caml_copy_double((double)loadedLen), caml_copy_double((double)expectedLen), Val_unit);
+		RUN_CALLBACK3(progress, caml_copy_double((double)loadedLen), caml_copy_double((double)expectedLen), Val_unit);
 	}
 }
 

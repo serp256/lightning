@@ -50,7 +50,7 @@ static value *create_user = NULL;
 void vk_users_request(VKRequest *req, value vfail, value vsuccess) {
 	CAMLparam2(vfail, vsuccess);
 
-	value fail, success;
+	value *fail, *success;
 	REG_CALLBACK(vsuccess, success);
 	REG_OPT_CALLBACK(vfail, fail);
 	if (!create_user) create_user = caml_named_value("create_user");
@@ -115,7 +115,7 @@ void vk_users_request(VKRequest *req, value vfail, value vsuccess) {
 			}
 
 			FREE_CALLBACK(fail);
-			FREE_CALLBACK(success);			
+			FREE_CALLBACK(success);
 
 			CAMLreturn0;
 		}

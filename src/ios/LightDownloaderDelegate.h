@@ -6,9 +6,9 @@
 #import "mlwrapper_ios.h"
 
 @interface LightDownloaderDelegate : NSObject <NSURLConnectionDataDelegate> {
-	value success;
-	value error;
-	value progress;
+	value *success;
+	value *error;
+	value *progress;
 
 	NSMutableData* data;
 	NSString* filename;

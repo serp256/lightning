@@ -40,7 +40,7 @@ value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, 
 					NSDictionary* params = [NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithUTF8String:String_val(Field(ntwk, 1))], @"SPAppLovinSdkKey", nil];
 					NSDictionary* network = [NSDictionary dictionaryWithObjectsAndKeys:@"AppLovin", @"SPNetworkName", params, @"SPNetworkParameters", nil];
 					[networks addObject:network];
-					
+
 					break;
 				}
 			}
@@ -71,8 +71,8 @@ void ml_sponsorPay_showOffers() {
 	}
 
 	if (class_conformsToProtocol([LightViewController class], objc_getProtocol("SPOfferWallViewControllerDelegate"))) {
-		[SponsorPaySDK showOfferWallWithParentViewController:[LightViewController sharedInstance]];	
-	}	
+		[SponsorPaySDK showOfferWallWithParentViewController:[LightViewController sharedInstance]];
+	}
 }
 
 SPBrandEngageClient* engageClient = nil;
@@ -89,12 +89,13 @@ value ml_request_video(value callback) {
 	INIT_ENGAGE_CLIENT;
 
 	NSLog(@"ml_request_video call");
-	
+
 	if ([engageClient canRequestOffers]) {
 		[delegate setRequestCallback:callback];
-		[engageClient requestOffers];		
+		[engageClient requestOffers];
 	} else {
-		RUN_CALLBACK(callback, Val_false);
+		value *ptr = &callback;
+		RUN_CALLBACK(ptr, Val_false);
 	}
 
 	CAMLreturn(Val_unit);

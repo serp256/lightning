@@ -3,8 +3,8 @@
 
 @interface LightVkDelegate : NSObject <VKSdkDelegate>
 {
-	value success;
-	value fail;
+	value *success;
+	value *fail;
 	int *authorized;
 }
 
