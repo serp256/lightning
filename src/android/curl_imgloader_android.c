@@ -54,7 +54,7 @@ static size_t curl_wfunc(char *ptr, size_t size, size_t nmemb, void *userdata) {
 	} else {
 		PRINT_DEBUG("no need in realloc");
 	}
-	
+
 	memcpy(buf + buf_pos, ptr, chunk_len);
 	buf_pos += chunk_len;
 
@@ -72,7 +72,7 @@ static void freeRequest(cel_request_t* req) {
 	}
 
 	free(req->url);
-	free(req->cb);	
+	free(req->cb);
 	free(req);
 }
 
@@ -103,13 +103,20 @@ void curl_imgloader_success(void *data) {
 }
 
 void curl_imgloader_error(void *data) {
+	PRINT_DEBUG("curl_imgloader_error");
+
 	curl_imgloader_error_t *error = (curl_imgloader_error_t*)data;
+	PRINT_DEBUG("1");
 
 	caml_callback2(*(error->req->errCb), Val_int(error->err_code), caml_copy_string(error->err_mes));
+	PRINT_DEBUG("2");
 
 	free(error->err_mes);
+	PRINT_DEBUG("3");
 	freeRequest(error->req);
+	PRINT_DEBUG("4");
 	free(error);
+	PRINT_DEBUG("5");
 }
 
 static void caml_error(cel_request_t* req, int errCode, char* errMes) {
@@ -154,25 +161,25 @@ static void* loader_thread(void* params) {
 			pthread_cond_wait(&cond, &mutex);
 		} else {
 			PRINT_DEBUG("loading %s...", req->url);
-			
+
 			curl_easy_setopt(curl_hndlr, CURLOPT_URL, req->url);
 			int curl_perform_retval = curl_easy_perform(curl_hndlr);
 
 			if (curl_perform_retval) {
 				caml_error(req, curl_perform_retval, curl_err);
 			} else {
-				PRINT_DEBUG("complete");				
+					PRINT_DEBUG("complete");
 
 			    jbyteArray src = (*env)->NewByteArray(env, buf_pos);
 			    (*env)->SetByteArrayRegion(env, src, 0, buf_pos, (jbyte*)buf);
 			    PRINT_DEBUG("call decode");
 			    jobject jtexInfo = (*env)->CallStaticObjectMethod(env, lightning_cls, decode_mid, src);
-				(*env)->DeleteLocalRef(env,src);
+					(*env)->DeleteLocalRef(env,src);
 
 			    PRINT_DEBUG("jtexInfo %d", jtexInfo);
 
 			    if (jtexInfo) {
-			    	
+
 				    if (!wFid) {
 				    	jclass texInfoCls = (*env)->GetObjectClass(env, jtexInfo);
 				    	PRINT_DEBUG("texInfoCls %d", texInfoCls);
@@ -231,12 +238,12 @@ static void* loader_thread(void* params) {
 				    (*env)->DeleteLocalRef(env, jdata);
 						(*env)->DeleteLocalRef(env,jtexInfo);
 
-					curl_imgloader_success_t *success = (curl_imgloader_success_t*)malloc(sizeof(curl_imgloader_success_t));
-					success->req = req;
-					success->tex_inf = texInfo;
-					RUN_ON_ML_THREAD(&curl_imgloader_success, (void*)success);
+						curl_imgloader_success_t *success = (curl_imgloader_success_t*)malloc(sizeof(curl_imgloader_success_t));
+						success->req = req;
+						success->tex_inf = texInfo;
+						RUN_ON_ML_THREAD(&curl_imgloader_success, (void*)success);
 
-					PRINT_DEBUG("after success call");
+						PRINT_DEBUG("after success call");
 			    } else {
 			    	caml_error(req, 100, "cannot parse image binary");
 			    }
@@ -245,7 +252,7 @@ static void* loader_thread(void* params) {
 				buf = NULL;
 				buf_pos = 0;
 				buf_len = 0;
-				*curl_err = '\0';				
+				*curl_err = '\0';
 			}
 		}
 	}

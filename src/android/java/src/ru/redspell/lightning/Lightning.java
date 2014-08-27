@@ -23,78 +23,93 @@ import ru.redspell.lightning.utils.Log;
 public class Lightning {
 	public static NativeActivity activity = null;
 
-    private static class TexInfo {
-        public int width;
-        public int height;
-        public int legalWidth;
-        public int legalHeight;
-        public byte[] data;
-        public String format;
-    }
+	private static class TexInfo {
+		public int width;
+		public int height;
+		public int legalWidth;
+		public int legalHeight;
+		public byte[] data;
+		public String format;
+	}
 
-    public static TexInfo decodeImg(byte[] src) {
-        Log.d("LIGHTNING", "decodeImg " + src.length);
+	public static TexInfo decodeImg(byte[] src) {
+		Log.d("LIGHTNING", "decodeImg " + src.length);
 
-        Bitmap bmp = BitmapFactory.decodeByteArray(src, 0, src.length);
+		Bitmap bmp = BitmapFactory.decodeByteArray(src, 0, src.length);
 
-        if (bmp == null) {
-            Log.d("LIGHTNING", "cannot create bitmap");
-            return null;
-        }
+		if (bmp == null) {
+			Log.d("LIGHTNING", "cannot create bitmap");
+			return null;
+		}
 
-        TexInfo retval = new TexInfo();
+		Log.d("LIGHTNING", "1");
+		TexInfo retval = new TexInfo();
 
-        retval.width = bmp.getWidth();
-        retval.height = bmp.getHeight();
-        retval.legalWidth = Math.max(64, retval.width);
-        retval.legalHeight = Math.max(64, retval.height);
+		Log.d("LIGHTNING", "2");
+		retval.width = bmp.getWidth();
+		retval.height = bmp.getHeight();
+		retval.legalWidth = Math.max(64, retval.width);
+		retval.legalHeight = Math.max(64, retval.height);
 
-        switch (bmp.getConfig()) {
-            case ALPHA_8:
-                retval.format = "ALPHA_8";
-                break;
+		Bitmap.Config conf = bmp.getConfig();
 
-            case ARGB_4444:
-                retval.format = "ARGB_4444";
-                break;
+		if (conf == null) {
+			Log.d("LIGHTNING", "null config");
+			return null;
+		}
 
-            case ARGB_8888:
-                retval.format = "ARGB_8888";
-                break;
+		switch (bmp.getConfig()) {
+			case ALPHA_8:
+				retval.format = "ALPHA_8";
+				break;
 
-            case RGB_565:
-                retval.format = "RGB_565";
-                break;
-        }
+			case ARGB_4444:
+				retval.format = "ARGB_4444";
+				break;
 
-        // retval.format = "ARGB_8888";
+			case ARGB_8888:
+				retval.format = "ARGB_8888";
+				break;
 
-        Log.d("LIGHTNING", "retval.format " + retval.format);
+			case RGB_565:
+				retval.format = "RGB_565";
+				break;
 
-        if (retval.width != retval.legalWidth || retval.height != retval.legalHeight) {
-            try {
-                int[] pixels = new int[retval.legalWidth * retval.legalHeight];
-                bmp.getPixels(pixels, 0, retval.legalWidth, 0, 0, retval.width, retval.height);
+			default:
+				Log.d("LIGHTNING", "unknown bitmap config");
+				return null;
+		}
 
-                Bitmap _bmp = Bitmap.createBitmap(retval.legalWidth, retval.legalHeight, bmp.getConfig());
-                _bmp.setPixels(pixels, 0, retval.legalWidth, 0, 0, retval.legalWidth, retval.legalHeight);
-                bmp.recycle();
-                bmp = _bmp;
-            } catch (Exception e) {
-                Log.d("LIGHTNING", "exception " + e.getMessage());
-                return null;
-            }
-        }
+		Log.d("LIGHTNING", "retval.format " + (retval.format == null ? "null" : retval.format));
 
-        ByteBuffer buf = ByteBuffer.allocate(bmp.getRowBytes() * bmp.getHeight());
-        bmp.copyPixelsToBuffer(buf);
-        bmp.recycle();
-        retval.data = buf.array();
+		Log.d("LIGHTNING", "4");
+		if (retval.width != retval.legalWidth || retval.height != retval.legalHeight) {
+			try {
+				int[] pixels = new int[retval.legalWidth * retval.legalHeight];
+				bmp.getPixels(pixels, 0, retval.legalWidth, 0, 0, retval.width, retval.height);
 
-        Log.d("LIGHTNING", "return texinfo");
+				Bitmap _bmp = Bitmap.createBitmap(retval.legalWidth, retval.legalHeight, bmp.getConfig());
+				_bmp.setPixels(pixels, 0, retval.legalWidth, 0, 0, retval.legalWidth, retval.legalHeight);
+				bmp.recycle();
+				bmp = _bmp;
+			} catch (Exception e) {
+				Log.d("LIGHTNING", "exception " + e.getMessage());
+				return null;
+			}
+		}
+		Log.d("LIGHTNING", "5");
 
-        return retval;
-    }
+		ByteBuffer buf = ByteBuffer.allocate(bmp.getRowBytes() * bmp.getHeight());
+		bmp.copyPixelsToBuffer(buf);
+		bmp.recycle();
+		retval.data = buf.array().clone();
+		Log.d("LIGHTNING", "6");
+
+		Log.d("LIGHTNING", "return texinfo");
+
+		return retval;
+	}
+
 
     public static String locale() {
     	ru.redspell.lightning.utils.Log.d("LIGHTNING", "locale");
@@ -114,7 +129,7 @@ public class Lightning {
 
     public static String getOldUDID() {
         return ru.redspell.lightning.utils.UDID.get();
-    }    
+    }
 
     public static String getUDID() {
         return ru.redspell.lightning.utils.OpenUDID.getOpenUDIDInContext();
@@ -157,7 +172,7 @@ public class Lightning {
         body.append(exn);body.append('\n');
         for (String b : bt) {
             body.append(b);body.append('\n');
-        };      
+        };
         body.append(additionalExceptionInfo);
         body.append("\n------------------\n");
         uri.append("&body=" + Uri.encode(body.toString()));
@@ -212,8 +227,8 @@ public class Lightning {
         if (screen.contentEquals("large")) return 3;
         if (screen.contentEquals("xlarge")) return 4;
 
-        return 0;       
-    }    
+        return 0;
+    }
 
     public static int getDensity() {
         String density = activity.getString(ru.redspell.lightning.R.string.density);
@@ -281,20 +296,20 @@ public class Lightning {
 
             while ((meminfo = f.readLine()) != null) {
                 java.util.regex.Matcher matcher = regex.matcher(meminfo);
-                
+
                 if (matcher.find()) {
-                    meminfo = matcher.group(1);                 
+                    meminfo = matcher.group(1);
                     break;
                 }
             }
 
             f.close();
         } catch (Exception e) {
-            meminfo = null; 
+            meminfo = null;
         }
 
         return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
-    }    
+    }
 
     static {
         // System.loadLibrary("test");
