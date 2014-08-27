@@ -1,6 +1,6 @@
 include ../../../Makefile.common
 
-CFLAGS += -I . 
+CFLAGS += -I .
 CFLAGS += -DLDEBUG
 
 MLFLAGS += -package redspell.syntax.debug
@@ -19,6 +19,8 @@ MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 
 ifeq ($(PLATFORM),IOS)
 
+MLPPOPT += -DIOS
+
 CFLAGS  += -fmodules -fobjc-arc -DIOS -Iios -I../../ -I../../ios -I../common -I ios/sdk/sdk/sdk
 COBJS   +=  ios/vk_ios.o ios/LightVkDelegate.o ios/sdk/sdk/sdk/NSData+AES256.o ios/sdk/sdk/sdk/NSData+MD5.o ios/sdk/sdk/sdk/NSError+VKError.o \
 	ios/sdk/sdk/sdk/NSString+MD5.o ios/sdk/sdk/sdk/OrderedDictionary.o ios/sdk/sdk/sdk/VKAccessToken.o ios/sdk/sdk/sdk/VKApi.o \
@@ -29,10 +31,12 @@ COBJS   +=  ios/vk_ios.o ios/LightVkDelegate.o ios/sdk/sdk/sdk/NSData+AES256.o i
 	ios/sdk/sdk/sdk/VKImageParameters.o ios/sdk/sdk/sdk/VKLikes.o ios/sdk/sdk/sdk/VKObject.o ios/sdk/sdk/sdk/VKOperation.o \
 	ios/sdk/sdk/sdk/VKPermissions.o ios/sdk/sdk/sdk/VKPhoto.o ios/sdk/sdk/sdk/VKPhotoArray.o ios/sdk/sdk/sdk/VKRequest.o \
 	ios/sdk/sdk/sdk/VKResponse.o ios/sdk/sdk/sdk/VKSdk.o ios/sdk/sdk/sdk/VKUploadPhotoBase.o ios/sdk/sdk/sdk/VKUploadPhotoRequest.o \
-	ios/sdk/sdk/sdk/VKUploadWallPhotoRequest.o ios/sdk/sdk/sdk/VKUser.o ios/sdk/sdk/sdk/VKUsersArray.o ios/sdk/sdk/sdk/VKUtil.o 
+	ios/sdk/sdk/sdk/VKUploadWallPhotoRequest.o ios/sdk/sdk/sdk/VKUser.o ios/sdk/sdk/sdk/VKUsersArray.o ios/sdk/sdk/sdk/VKUtil.o
 
 else
 ifeq ($(PLATFORM),ANDROID)
+
+MLPPOPT += -DANDROID
 
 CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android -I../common
 COBJS   +=  android/vk_android.o
@@ -43,7 +47,9 @@ endif
 
 
 ifeq ($(PLATFORM),PC)
-	
+
+MLPPOPT += -DPC
+
 NativeVk.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o NativeVk.cmxa $(MLOBJSN)
 
@@ -51,14 +57,14 @@ NativeVk.cma: $(IFACES) $(MLOBJS)
 	$(OCAMLC) -a -o NativeVk.cma $(MLOBJS)
 
 else
-NativeVk.cmxa: $(IFACES) $(COBJS) $(MLOBJSN) 
+NativeVk.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 	$(OCAMLMKLIB) -verbose -o NativeVk $(COBJS) $(MLOBJSN) $(LIBFLAGS)
 
-NativeVk.cma: $(IFACES) $(COBJS) $(MLOBJS) 
-	$(OCAMLMKLIB) -verbose -o NativeVk $(COBJS) $(MLOBJS) $(LIBFLAGS) 
+NativeVk.cma: $(IFACES) $(COBJS) $(MLOBJS)
+	$(OCAMLMKLIB) -verbose -o NativeVk $(COBJS) $(MLOBJS) $(LIBFLAGS)
 endif
 
 
 .PHONY : clean
-clean: 
+clean:
 	rm -f ios/sdk/sdk/sdk/*.o *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/*.o android/vk_android.o
