@@ -51,9 +51,27 @@ value ml_vk_friends(value vfail, value vsuccess, value vt) {
 	GET_CLS;
 	STATIC_MID(cls, friends, "(II)V");
 	REG_CALLBACK(vsuccess, success);
-	REG_OPT_CALLBACK(vfail, fail);	
+	REG_OPT_CALLBACK(vfail, fail);
 
 	(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail);
+
+	CAMLreturn(Val_unit);
+}
+
+value ml_vk_users(value vfail, value vsuccess, value vids) {
+	CAMLparam3(vfail, vsuccess, vids);
+	CAMLlocal2(success, fail);
+
+	GET_ENV;
+	GET_CLS;
+	STATIC_MID(cls, users, "(Ljava/lang/String;II)V");
+	REG_CALLBACK(vsuccess, success);
+	REG_OPT_CALLBACK(vfail, fail);
+
+	jstring jids;
+	VAL_TO_JSTRING(vids, jids);
+	(*env)->CallStaticVoidMethod(env, cls, mid, jids, (jint)success, (jint)fail);
+	(*env)->DeleteLocalRef(env, jids);
 
 	CAMLreturn(Val_unit);
 }
@@ -149,7 +167,7 @@ void vkandroid_friends_success(void *data) {
 	vkandroid_friends_success_t *friends_success = (vkandroid_friends_success_t*)data;
 
 	static value* create_friend = NULL;
-	if (!create_friend) create_friend = caml_named_value("create_friend");
+	if (!create_friend) create_friend = caml_named_value("create_user");
 
 	CAMLparam0();
 	CAMLlocal2(retval, head);
@@ -162,7 +180,7 @@ void vkandroid_friends_success(void *data) {
 	jint* cgenders = (*ML_ENV)->GetIntArrayElements(ML_ENV, friends_success->genders, JNI_FALSE);
 
 	for (i = 0; i < cnt; i++) {
-		jstring jid = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->ids, i);		
+		jstring jid = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->ids, i);
 		jstring jname = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->names, i);
 		jstring jphoto = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->photos, i);
 		const char* cid = (*ML_ENV)->GetStringUTFChars(ML_ENV, jid, JNI_FALSE);

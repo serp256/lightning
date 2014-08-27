@@ -1,4 +1,4 @@
-module Friend =
+module User =
 	struct
 		type gender = [= `male | `female | `none ];
 
@@ -28,10 +28,15 @@ value token _ = "";
 value uid _ = "";
 ELSE
 
-Callback.register "create_friend" Friend.create;
+Callback.register "create_user" User.create;
 
 external authorize: ~appid:string -> ~permissions:list string -> ?fail:fail -> ~success:(t -> unit) -> unit -> unit = "ml_vk_authorize";
-external friends: ?fail:fail -> ~success:(list Friend.t -> unit) -> t -> unit = "ml_vk_friends";
+external friends: ?fail:fail -> ~success:(list User.t -> unit) -> t -> unit = "ml_vk_friends";
+external users: option fail -> (list User.t -> unit) -> string -> unit = "ml_vk_users";
+value users ?fail ~success ~ids t =
+	let ids = String.concat "," ids in
+		users fail success ids;
 external token: t -> string = "ml_vk_token";
 external uid: t -> string = "ml_vk_uid";
+
 ENDIF;

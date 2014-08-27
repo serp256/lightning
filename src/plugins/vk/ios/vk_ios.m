@@ -19,7 +19,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
     	NSString* fromApp = [data objectForKey:APP_SOURCEAPP_DATA];
 
     	[VKSdk processOpenURL:url fromApplication:fromApp];
-    }];	
+    }];
 
 	delegate = [[LightVkDelegate alloc] initWithSuccess:vsuccess andFail:vfail andAuthFlag:(&authorized)];
 	[VKSdk initializeWithDelegate:delegate andAppId:[NSString stringWithUTF8String:String_val(vappid)]];
@@ -45,80 +45,98 @@ value ml_vk_uid(value t) {
 	return caml_copy_string([[VKSdk getAccessToken].userId UTF8String]);
 }
 
-value ml_vk_friends(value vfail, value vsuccess, value vt) {
-	CAMLparam2(vfail, vsuccess);
+static value* create_user = NULL;
 
-	value success;
-	value fail;
+void vk_users_request(VKRequest *req, value vfail, value vsuccess) {
+	CAMLparam2(vfail, vsuccess);
+	CAMLlocal2(fail, success);
 
 	REG_CALLBACK(vsuccess, success);
-	REG_OPT_CALLBACK(vsuccess, fail);
+	REG_OPT_CALLBACK(vfail, fail);
+	if (!create_user) create_user = caml_named_value("create_user");
 
-	static value* create_friend = NULL;
-	if (!create_friend) create_friend = caml_named_value("create_friend");
-
-	VKRequest* req = [[VKApi friends] get:[NSDictionary dictionaryWithObject:@"sex,photo_max" forKey:VK_API_FIELDS]];
 	[req executeWithResultBlock:
-			^(VKResponse* response) {
-				CAMLparam0();
-				CAMLlocal2(vitems, head);
-				int err = 0;
+		^(VKResponse* response) {
+			CAMLparam0();
+			CAMLlocal2(vitems, head);
+			int err = 0;
 
-				do {
-					if (![response.json isKindOfClass:[NSDictionary class]]) {
-						err = 1;
-						break;
-					}
+			NSLog(@"response %@", response);
 
-					NSArray* mitems = [response.json objectForKey:@"items"];
+			do {
+				NSArray* mitems = nil;
 
-					if (mitems == nil) {
-						err = 1;
-						break;
-					}
-
-					vitems = Val_int(0);
-
-					for (id item in mitems) {
-						NSDictionary* mitem = item;
-
-						NSLog(@"mitem %@", mitem);
-
-						NSNumber* mid = [mitem objectForKey:@"id"];
-						NSString* mfname = [mitem objectForKey:@"first_name"];
-						NSString* mlname = [mitem objectForKey:@"last_name"];
-						NSNumber* mgender = [mitem objectForKey:@"sex"];
-						NSString* mphoto = [mitem objectForKey:@"photo_max"];
-
-						if (!(mid && mfname && mlname && mgender)) {
-							err = 1;
-							break;
-						}
-
-						NSString* mname = [NSString stringWithFormat:@"%@ %@", mlname, mfname];
-						
-						head = caml_alloc_tuple(2);
-						value args[4] = { caml_copy_string([[mid stringValue] UTF8String]), caml_copy_string([mname UTF8String]), Val_int([mgender intValue]), caml_copy_string([mphoto UTF8String]) };
-						Store_field(head, 0, caml_callbackN(*create_friend, 4, args));
-						Store_field(head, 1, vitems);
-
-						vitems = head;
-					}
-				} while(NO);
-
-				if (!err) {
-					RUN_CALLBACK(success, vitems)
-				} else {
-					RUN_CALLBACK(fail, caml_copy_string("wrong format of response on friends request"));
+				if ([response.json isKindOfClass:[NSDictionary class]]) {
+					mitems = [response.json objectForKey:@"items"];
 				}
 
-				CAMLreturn0;
+				if ([response.json isKindOfClass:[NSArray class]]) {
+					mitems = response.json;
+				}
+
+				if (mitems == nil) {
+					err = 1;
+					break;
+				}
+
+				vitems = Val_int(0);
+
+				for (id item in mitems) {
+					NSDictionary* mitem = item;
+
+					NSLog(@"mitem %@", mitem);
+
+					NSNumber* mid = [mitem objectForKey:@"id"];
+					NSString* mfname = [mitem objectForKey:@"first_name"];
+					NSString* mlname = [mitem objectForKey:@"last_name"];
+					NSNumber* mgender = [mitem objectForKey:@"sex"];
+					NSString* mphoto = [mitem objectForKey:@"photo_max"];
+
+					if (!(mid && mfname && mlname && mgender)) {
+						err = 1;
+						break;
+					}
+
+					NSString* mname = [NSString stringWithFormat:@"%@ %@", mlname, mfname];
+
+					head = caml_alloc_tuple(2);
+					value args[4] = { caml_copy_string([[mid stringValue] UTF8String]), caml_copy_string([mname UTF8String]), Val_int([mgender intValue]), caml_copy_string([mphoto UTF8String]) };
+					Store_field(head, 0, caml_callbackN(*create_user, 4, args));
+					Store_field(head, 1, vitems);
+
+					vitems = head;
+				}
+			} while(NO);
+
+			if (!err) {
+				RUN_CALLBACK(success, vitems)
+			} else {
+				RUN_CALLBACK(fail, caml_copy_string("wrong format of response on friends request"));
+				FREE_CALLBACK(fail);
+				FREE_CALLBACK(success);
 			}
+
+			CAMLreturn0;
+		}
+
 		errorBlock:
 			^(NSError* error) {
 				RUN_CALLBACK(fail, caml_copy_string([[error localizedDescription] UTF8String]));
+				FREE_CALLBACK(fail);
+				FREE_CALLBACK(success);
 			}
 	];
 
-	CAMLreturn(Val_unit);
+	CAMLreturn0;
+}
+
+value ml_vk_friends(value vfail, value vsuccess, value vt) {
+	vk_users_request([[VKApi friends] get:[NSDictionary dictionaryWithObject:@"sex,photo_max" forKey:VK_API_FIELDS]], vfail, vsuccess);
+	return Val_unit;
+}
+
+value ml_vk_users(value vfail, value vsuccess, value vids) {
+	NSString *mids = [NSString stringWithUTF8String:String_val(vids)];
+	vk_users_request([[VKApi users] get:[NSDictionary dictionaryWithObjectsAndKeys:@"sex,photo_max", VK_API_FIELDS, mids, VK_API_USER_IDS, nil ]], vfail, vsuccess);
+	return Val_unit;
 }

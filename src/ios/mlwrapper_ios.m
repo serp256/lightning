@@ -27,7 +27,7 @@ char* bundle_path(char* c_path) {
 
   const char* bpath = [bundlePath cStringUsingEncoding:NSASCIIStringEncoding];
   if (!bpath) return nil;
-  
+
   char* retval = (char*)malloc(strlen(bpath) + 1);
   strcpy(retval, bpath);
 
@@ -145,10 +145,10 @@ value ml_kv_storage_get_string(value key_ml) {
 
 	result = caml_alloc_string(val.length);
 	[val getBytes:String_val(result) length:val.length];
-  
+
   tuple = caml_alloc_tuple(1);
   Store_field(tuple,0,result);
-  
+
   CAMLreturn(tuple);
 }
 
@@ -158,12 +158,12 @@ value ml_kv_storage_get_bool(value key_ml) {
   CAMLlocal1(tuple);
 
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  
+
 	NSUserDefaults *d = USER_DEFAULTS;
   if ([d objectForKey: key] == nil) {
     CAMLreturn(Val_int(0));
   }
-  
+
   BOOL val = [d boolForKey: key];
   tuple = caml_alloc_tuple(1);
   Store_field(tuple,0,Val_bool(val));
@@ -176,16 +176,16 @@ value ml_kv_storage_get_int(value key_ml) {
   CAMLlocal1(tuple);
 
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  
+
 	NSUserDefaults *d = USER_DEFAULTS;
   if ([d objectForKey: key] == nil) {
     CAMLreturn(Val_int(0));
   }
-  
+
   NSInteger val = [d integerForKey: key];
   tuple = caml_alloc_tuple(1);
   Store_field(tuple,0,Val_int(val));
-  
+
   CAMLreturn(tuple);
 }
 
@@ -194,17 +194,17 @@ value ml_kv_storage_get_float(value key_ml) {
   CAMLlocal1(tuple);
 
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  
+
   NSUserDefaults *d = USER_DEFAULTS;
   if ([d objectForKey: key] == nil) {
     CAMLreturn(Val_int(0));
   }
-  
+
   double val = [d doubleForKey: key];
   tuple = caml_alloc_tuple(1);
   Store_field(tuple,0,caml_copy_double(val));
-  
-  CAMLreturn(tuple);  
+
+  CAMLreturn(tuple);
 }
 
 
@@ -235,18 +235,18 @@ void ml_kv_storage_put_float(value key_ml, value val_ml) {
 
 void ml_kv_storage_remove(value key_ml) {
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  [USER_DEFAULTS removeObjectForKey: key];  
+  [USER_DEFAULTS removeObjectForKey: key];
 }
 
 
 value ml_kv_storage_exists(value key_ml) {
   CAMLparam1(key_ml);
   NSString * key = [NSString stringWithCString:String_val(key_ml) encoding:NSUTF8StringEncoding];
-  
+
   if ([USER_DEFAULTS objectForKey: key] == nil) {
     CAMLreturn(Val_false);
   }
-  
+
   CAMLreturn(Val_true);
 }
 
@@ -263,7 +263,7 @@ void ml_payment_init(value vskus, value success_cb, value error_cb) {
 	if (c->payment_success_cb == 0) {
 		c->payment_success_cb = success_cb;
 		caml_register_generational_global_root(&(c->payment_success_cb));
-		c->payment_error_cb   = error_cb;   
+		c->payment_error_cb   = error_cb;
 		caml_register_generational_global_root(&(c->payment_error_cb));
 		[[SKPaymentQueue defaultQueue] addTransactionObserver: c];
 	} else {
@@ -289,8 +289,8 @@ void ml_payment_init(value vskus, value success_cb, value error_cb) {
 		SKProductsRequest *preq = [[SKProductsRequest alloc] initWithProductIdentifiers:skus];
 		preq.delegate = c;
 		[preq start];
-	}	
-  
+	}
+
 	CAMLreturn0;
 }
 
@@ -346,7 +346,7 @@ CAMLprim value ml_payment_get_transaction_receipt(value t) {
   CAMLparam1(t);
   CAMLlocal1(receipt);
   SKPaymentTransaction * transaction = (SKPaymentTransaction *)t;
-  
+
   receipt = caml_alloc_string([transaction.transactionReceipt length]);
   memmove(String_val(receipt), (const char *)[transaction.transactionReceipt bytes], [transaction.transactionReceipt length]);
   CAMLreturn(receipt);
@@ -558,13 +558,13 @@ value ml_getUDID(value p) {
 
 
 
-value ml_show_nativeWait(value message) {
+value ml_showNativeWait(value message) {
 	return Val_unit;
 
 }
 
 
-value ml_hide_nativeWait(value p) {
+value ml_hideNativeWait(value p) {
 	return Val_unit;
 }
 

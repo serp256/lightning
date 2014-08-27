@@ -137,7 +137,7 @@ public class LightVk {
 		public void onStop() {};
 
 		public void onDestroy() {
-			VKUIHelper.onDestroy(Lightning.activity); 
+			VKUIHelper.onDestroy(Lightning.activity);
 		};
 	}
 
@@ -164,17 +164,25 @@ public class LightVk {
 
 	public static String uid() {
 		return VKSdk.getAccessToken().userId;
-	}	
+	}
 
-	public static void friends(final int success, final int fail) {
-		VKRequest request = new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max"));
-		request.executeWithListener(new VKRequestListener() { 
-			@Override 
+	private static void usersRequests(VKRequest request, final int success, final int fail) {
+		request.executeWithListener(new VKRequestListener() {
+			@Override
 			public void onComplete(VKResponse response) {
 				try {
-					JSONObject resp = response.json.getJSONObject("response");
-					int cnt = resp.getInt("count");
-					JSONArray items = resp.getJSONArray("items");
+					Log.d("LIGHTNING", "response " + response.json.toString());
+
+					JSONObject resp = response.json.optJSONObject("response");
+					JSONArray items;
+
+					if (resp != null) {
+						items = resp.getJSONArray("items");
+					} else {
+						items = response.json.getJSONArray("response");
+					}
+
+					int cnt = items.length();
 					String ids[] = new String[cnt];
 					String names[] = new String[cnt];
 					int genders[] = new int[cnt];
@@ -188,6 +196,7 @@ public class LightVk {
 						photos[i] = item.getString("photo_max");
 					}
 
+					Log.d("LIGHTNING", "call success cnt " + cnt);
 					(new FriendsSuccess(success, fail, ids, names, genders, photos)).run();
 				} catch (org.json.JSONException e) {
 					Log.d("LIGHTNING", "Freiends onComplete Fail");
@@ -195,16 +204,24 @@ public class LightVk {
 				}
 			}
 
-			@Override 
+			@Override
 			public void onError(VKError error) {
 				Log.d("LIGHTNING", "Friends onError");
 				(new Fail(success, fail, error.errorMessage + ": " + error.errorReason)).run();
 			}
 
-			@Override 
+			@Override
 			public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
 				Log.d("LIGHTNING", "Friends attemptFailed");
 			}
 		});
+	}
+
+	public static void friends(int success, int fail) {
+		usersRequests(new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max")), success, fail);
+	}
+
+	public static void users(String ids, int success, int fail) {
+		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max", VKApiConst.USER_IDS, ids)), success, fail);
 	}
 }

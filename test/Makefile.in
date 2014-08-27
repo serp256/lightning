@@ -25,14 +25,14 @@ CFLAGS += -DLDEBUG
 #MLFILES = panelbg.cmo testz.cmo
 
 SOCIAL=  ../src/social/OK.cmo ../src/social/VK.cmo -ccopt -L../src/social/oauth
-OAUTH = ../src/social/oauth/oauth.cma 
+OAUTH = ../src/social/oauth/oauth.cma
 PLUGINS = ../src/plugins/mobileapptracking/mobileapptracking.cma  \
 #					../src/plugins/instagram/instagram.cma \
 #					../src/plugins/whatsapp/whatsapp.cma \
 #					../src/plugins/tapjoy/tapjoy.cma \
 #					../src/plugins/vk/NativeVk.cma \
 
-$(TARGET).byte: $(MLFILES) $(TARGET).cmo 
+$(TARGET).byte: $(MLFILES) $(TARGET).cmo
 	$(OCAMLC) -custom -verbose -o test.byte  -g  \
 	../src/plugins/facebook/facebook.cma \
 	../src/plugins/remote-notifications/RemoteNotifications.cmo \
@@ -43,7 +43,7 @@ example.cmo: $(MLFILES)
 
 MLXFILES = $(MLFILES:.cmo=.cmx)
 SOCIALX = $(SOCIAL:.cmo=.cmx)
-OAUTHX = ../src/social/oauth/oauth.cmxa 
+OAUTHX = ../src/social/oauth/oauth.cmxa
 
 $(TARGET).cmx: $(MLXFILES)
 
@@ -53,6 +53,7 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	  -I ../src  ../src/lightning.cmxa  $(OAUTHX) $(SOCIALX) $(MOBS) $(MLXFILES)\
 	  -ccopt -L../src/plugins/vk ../src/plugins/vk/NativeVk.cmxa\
 	  -ccopt -L../src/plugins/facebook ../src/plugins/facebook/facebook.cmxa $(TARGET).cmx \
+		-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios" -ccopt "-F../src/plugins/sponsorpay/ios/networks/applifier"   -linkpkg
 	  #-ccopt -L../src/plugins/remote-notifications/ios -ccopt -L../src/plugins/remote-notifications ../src/plugins/remote-notifications/remote-notifications.cmxa \
 	  #-ccopt -L../src/plugins/flurry/ios -ccopt -L../src/plugins/flurry ../src/plugins/flurry/flurry.cmxa \
 	  #-ccopt -L../src/plugins/appflood/ios -ccopt -L../src/plugins/appflood ../src/plugins/appflood/appflood.cmxa\
@@ -67,7 +68,7 @@ $(TARGET).native: $(MOBS) $(MLXFILES) $(TARGET).cmx
 	  #-ccopt -L../src/plugins/vk ../src/plugins/vk/NativeVk.cmxa\
 	  #-ccopt -L../src/plugins/appsflyer -ccopt -L../src/plugins/appsflyer/ios ../src/plugins/appsflyer/appsflyer.cmxa\
 	  #-ccopt "-F../src/plugins/mobileapptracking/ios" -ccopt -L../src/plugins/mobileapptracking ../src/plugins/mobileapptracking/mobileapptracking.cmxa\
-		-package extlib,xmlm,ojson,bigarray,redspell.debug -ccopt "-F../src/plugins/facebook/ios" -ccopt "-F../src/plugins/sponsorpay/ios/networks/applifier"   -linkpkg
+
 
 #
 #
