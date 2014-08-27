@@ -7,7 +7,7 @@ external atlas_init: Texture.renderInfo -> atlas = "ml_atlas_init";
 external atlas_clear_data: atlas -> unit = "ml_atlas_clear" "noalloc";
 external atlas_render: atlas -> Matrix.t -> Render.prg -> float -> option (DynArray.t Node.t * color) -> unit = "ml_atlas_render" "noalloc";
 
-type glow = 
+type glow =
   {
     g_texture: mutable option RenderTexture.c;
     g_image: mutable option Render.Image.t;
@@ -18,11 +18,11 @@ type glow =
     g_params: mutable Filters.glow
   };
 
-DEFINE RENDER_QUADS(program,transform,color,alpha) = 
-  let quads = 
-    if dirty 
+DEFINE RENDER_QUADS(program,transform,color,alpha) =
+  let quads =
+    if dirty
     then (dirty := False; Some (children,color))
-    else None 
+    else None
   in
   atlas_render atlas transform program alpha quads;
 
@@ -45,7 +45,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       method children = DynArray.enum children;
 (*       method texture = texture; *)
 
-      method addChild ?index child = 
+      method addChild ?index child =
       (
         assert(Node.texture child = texture);
         match index with
@@ -69,7 +69,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       method removeChild node =
         self#removeChildAt (self#childIndex node);
 
-      method removeChildAt idx = 
+      method removeChildAt idx =
         try
           DynArray.delete children idx;
           self#boundsChanged();
@@ -81,11 +81,11 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         try
           DynArray.set children idx child;
         with [ DynArray.Invalid_arg _ -> raise (DisplayObject.Invalid_index (idx,DynArray.length children))];
-        Node.sync child; 
+        Node.sync child;
         self#boundsChanged();
       );
 
-      method clearChildren () = 
+      method clearChildren () =
       (
         if not (DynArray.empty children)
         then
@@ -97,7 +97,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       );
 
       method setChildIndex idx nidx =
-        if nidx < DynArray.length children 
+        if nidx < DynArray.length children
         then
           (
             try
@@ -112,22 +112,22 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         else raise (DisplayObject.Invalid_index (nidx,DynArray.length children));
 
 
-      method private glowMakeProgram () = 
+      method private glowMakeProgram () =
         let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
           Prg.Normal.create ();
 
       value mutable glowFilter = None;
-      method private setGlowFilter g_program glow = 
+      method private setGlowFilter g_program glow =
         match glowFilter with
         [ Some ({g_params;_} as g) when g_params = glow -> g.g_program := g_program
-        | Some g -> 
+        | Some g ->
           (
             g.g_valid := False;
             g.g_program := g_program;
             g.g_params := glow;
             self#addPrerender self#updateGlowFilter;
           )
-        | _ ->  
+        | _ ->
           (
             let g_make_program = self#glowMakeProgram () in
               glowFilter := Some {g_image=None;g_matrix=Matrix.identity;g_texture=None;g_program;g_make_program;g_params=glow;g_valid=False};
@@ -135,23 +135,23 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           )
         ];
 
-      method private removeGlowFilter () = 
-        match glowFilter with 
-        [ Some {g_texture;_} -> 
+      method private removeGlowFilter () =
+        match glowFilter with
+        [ Some {g_texture;_} ->
           (
             match g_texture with
-            [ Some gtex -> gtex#release() 
+            [ Some gtex -> gtex#release()
             | None -> ()
             ];
             glowFilter := None;
           )
-        | _ -> () 
-        ];  
+        | _ -> ()
+        ];
 
       method private updateGlowFilter () =
         let () = debug:updateGlowFilter "atlas updateGlowFilter" in
         match glowFilter with
-        [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) ->  
+        [ Some ({g_valid = False; g_texture; g_image; g_make_program; g_params = glow; _ } as gf) ->
             let bounds = self#boundsInSpace (Some self) in
             if bounds.Rectangle.width <> 0. && bounds.Rectangle.height <> 0.
             then
@@ -194,8 +194,8 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
                   )
                 | _ -> assert False
                 ];
-                gf.g_matrix := 
-                  Matrix.create 
+                gf.g_matrix :=
+                  Matrix.create
                     ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs) +. (float glow.Filters.x)); y = (bounds.Rectangle.y -. (float hgs) +. (float glow.Filters.y))} ();
                 gf.g_valid := True;
               )
@@ -203,7 +203,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         | _ -> () (* Debug.w "update glow not need" *)
         ];
 
-      method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->  
+      method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->
         match DynArray.length children with
         [ 0 -> Rectangle.empty
         | _ ->
@@ -211,11 +211,11 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             if withMask
             then self#maskInSpace targetCoordinateSpace
             else Rectangle.empty
-          in        
+          in
           let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
             (
               let open Rectangle in
-              let matrix = self#transformationMatrixToSpace targetCoordinateSpace in 
+              let matrix = self#transformationMatrixToSpace targetCoordinateSpace in
               DynArray.iter begin fun child ->
                 let childBounds = Matrix.transformRectangle matrix (Node.bounds child) in
                 (
@@ -259,12 +259,12 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         then
         (
           match glowFilter with
-          [ Some ({g_valid=True;_} as g) -> 
+          [ Some ({g_valid=True;_} as g) ->
             (
 (*
               match g_texture with
               [ Some tex -> (tex#release (); gf.g_texture := None)
-              | None -> () 
+              | None -> ()
               ];
 *)
               g.g_valid := False;
@@ -272,7 +272,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
             )
           | _ -> ()
           ];
-          dirty := True; 
+          dirty := True;
         )
         else ();
 
@@ -280,17 +280,17 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       (
         self#childrenDirty();
         super#boundsChanged();
-      );        
-        
+      );
+
       method private render' ?alpha:(alpha') ~transform rect =
         (* proftimer:render "atlas render %f" *)
       (
         if DynArray.length children > 0
-        then 
+        then
           match glowFilter with
-          [ Some {g_valid = True; g_image = Some g_image; g_matrix; g_program; _ } -> 
+          [ Some {g_valid = True; g_image = Some g_image; g_matrix; g_program; _ } ->
             Render.Image.render (if transform then Matrix.concat g_matrix self#transformationMatrix else g_matrix) g_program ?alpha:alpha' g_image
-          | _ -> 
+          | _ ->
               let alpha = match alpha' with [ Some a -> a *. alpha | None -> alpha ] in
               RENDER_QUADS(shaderProgram,(if transform then self#transformationMatrix else Matrix.identity),color,alpha)
 (*           | _ -> () (* WE NEED ASSERT HERE ?? *) *)
@@ -298,7 +298,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
         else ();
         (*
           if dirty
-          then 
+          then
           (
             dirty := False;
             atlas_clear_data atlas
@@ -308,7 +308,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
       );
     end;
 
-  class c texture = 
+  class c texture =
     object(self)
       inherit _c texture;
       method ccast: [= `Atlas of c ] = `Atlas (self :> c);
@@ -320,7 +320,7 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
 
       value mutable stroke = None;
 
-      method! private glowMakeProgram () = 
+      method! private glowMakeProgram () =
         let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
           match stroke with
           [ Some s -> Prg.Stroke.create s
@@ -334,18 +334,18 @@ DEFINE RENDER_QUADS(program,transform,color,alpha) =
           super#setFilters fltrs;
 
           match stroke with
-          [ Some s -> 
+          [ Some s ->
             let module Prg = (value (GLPrograms.select_by_texture texture#kind):GLPrograms.Programs) in
               (
                 programID := Prg.Stroke.id;
                 shaderProgram := Prg.Stroke.create s;
               )
-          | _ -> ()          
+          | _ -> ()
           ];
 
           debug:updateGlowFilter "atlas set filters";
           self#forceStageRender ~reason:"tlf atlas set filters" ();
-        );      
+        );
     end;
 
 value create = new c;
