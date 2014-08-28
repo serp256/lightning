@@ -17,19 +17,15 @@ import android.content.Intent;
 import ru.redspell.lightning.utils.Log;
 
 public class LightVk {
-	private static class Callback implements Runnable {
+	private static abstract class Callback implements Runnable {
 		protected int success;
 		protected int fail;
 
-		protected native void freeCallbacks(int success, int fail);
+		public abstract void run();
 
 		public Callback(int success, int fail) {
 			this.success = success;
 			this.fail = fail;
-		}
-
-		public void run() {
-			freeCallbacks(success, fail);
 		}
 	}
 
@@ -38,11 +34,10 @@ public class LightVk {
 			super(success, fail);
 		}
 
-		public native void nativeRun(int cb);
+		public native void nativeRun(int success, int fail);
 
 		public void run() {
-			nativeRun(success);
-			super.run();
+			nativeRun(success, fail);
 		}
 	}
 
@@ -54,11 +49,10 @@ public class LightVk {
 			this.reason = reason;
 		}
 
-		public native void nativeRun(int cb, String reason);
+		public native void nativeRun(int fail, String reason, int success);
 
 		public void run() {
-			nativeRun(fail, reason);
-			super.run();
+			nativeRun(fail, reason, success);
 		}
 	}
 
@@ -76,13 +70,14 @@ public class LightVk {
 			this.photos = photos;
 		}
 
-		public native void nativeRun(int cb, String[] ids, String[] names, int[] genders, String[] photos);
+		public native void nativeRun(int success, int fail, String[] ids, String[] names, int[] genders, String[] photos);
 
 		public void run() {
-			nativeRun(success, ids, names, genders, photos);
-			super.run();
+			nativeRun(success, fail, ids, names, genders, photos);
 		}
 	}
+
+	private static boolean authorized = false;
 
 	private static class VKSdkListener extends com.vk.sdk.VKSdkListener {
 		private int success;
@@ -103,19 +98,24 @@ public class LightVk {
 
 		public void onAccessDenied(VKError authorizationError) {
 			Log.d("LIGHTNING", "onAccessDenied");
+			authorized = false;
 			(new Fail(success, fail, authorizationError.errorMessage + ": " + authorizationError.errorReason)).run();
 		}
 
 		public void onReceiveNewToken(VKAccessToken newToken) {
 			Log.d("LIGHTNING", "onReceiveNewToken");
+			newToken.saveTokenToSharedPreferences(Lightning.activity, "lightning_nativevk_token");
+			authorized = true;
 			(new AuthSuccess(success, fail)).run();
 		}
 
 		public void onAcceptUserToken(VKAccessToken token) {
+			token.saveTokenToSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 			Log.d("LIGHTNING", "onAcceptUserToken");
 		}
 
 		public void onRenewAccessToken(VKAccessToken token) {
+			token.saveTokenToSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 			Log.d("LIGHTNING", "onRenewAccessToken");
 		}
 	}
@@ -141,20 +141,31 @@ public class LightVk {
 		};
 	}
 
-	private static boolean authorized = false;
-
 	public static void authorize(String appid, String[] permissions, int success, int fail) {
 		Log.d("LIGHTNING", "!!!authorized " + authorized);
-		if (!authorized) {
-			Lightning.activity.addUiLifecycleHelper(new UiLifecycleHelper());
-			/*
-			 cause vk authorization is called after first LightActivity onResume call,
-			 LightVk lifecycle helper misses this call and didn't save activity instance for internal purposes
-			 to make VKSdk work correctly we need to emulate this call
-			*/
-			VKUIHelper.onResume(Lightning.activity);
-			VKSdk.initialize(new VKSdkListener(success, fail), appid);
+
+		if (authorized) {
+			(new AuthSuccess(success, fail)).run();
+			return;
+		}
+
+		Lightning.activity.addUiLifecycleHelper(new UiLifecycleHelper());
+		/*
+		 cause vk authorization is called after first LightActivity onResume call,
+		 LightVk lifecycle helper misses this call and didn't save activity instance for internal purposes
+		 to make VKSdk work correctly we need to emulate this call
+		*/
+		VKUIHelper.onResume(Lightning.activity);
+		VKSdk.initialize(new VKSdkListener(success, fail), appid);
+
+		VKAccessToken token = VKAccessToken.tokenFromSharedPreferences(Lightning.activity, "lightning_nativevk_token");
+
+		if (token == null || token.isExpired()) {
+			Log.d("LIGHTNING", "no token or it is expied");
 			VKSdk.authorize(permissions, false, false);
+		} else {
+			Log.d("LIGHTNING", "has token");
+			VKSdk.setAccessToken(token, false);
 		}
 	}
 
@@ -167,6 +178,7 @@ public class LightVk {
 	}
 
 	private static void usersRequests(VKRequest request, final int success, final int fail) {
+		Log.d("LIGHTNING", "usersRequests CALL");
 		request.executeWithListener(new VKRequestListener() {
 			@Override
 			public void onComplete(VKResponse response) {
@@ -199,7 +211,7 @@ public class LightVk {
 					Log.d("LIGHTNING", "call success cnt " + cnt);
 					(new FriendsSuccess(success, fail, ids, names, genders, photos)).run();
 				} catch (org.json.JSONException e) {
-					Log.d("LIGHTNING", "Freiends onComplete Fail");
+					Log.d("LIGHTNING", "Friends onComplete Fail");
 					(new Fail(success, fail, "wrong format of response on friends request")).run();
 				}
 			}

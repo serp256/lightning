@@ -9,30 +9,42 @@ static LightVkDelegate* delegate; //delegate declared as static, cause VKSdk cla
 int authorized = 0;
 
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess) {
-	if (authorized) return Val_unit;
+	if (authorized) {
+		value *success = &vsuccess;
+		RUN_CALLBACK(success, Val_unit);
+
+		return Val_unit;
+	}
 
 	CAMLparam4(vappid, vpermissions, vfail, vsuccess);
 
-    [[NSNotificationCenter defaultCenter] addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
-    	NSDictionary* data = [notif userInfo];
-    	NSURL* url = [data objectForKey:APP_URL_DATA];
-    	NSString* fromApp = [data objectForKey:APP_SOURCEAPP_DATA];
+	[[NSNotificationCenter defaultCenter] addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
+		NSDictionary* data = [notif userInfo];
+		NSURL* url = [data objectForKey:APP_URL_DATA];
+		NSString* fromApp = [data objectForKey:APP_SOURCEAPP_DATA];
 
-    	[VKSdk processOpenURL:url fromApplication:fromApp];
-    }];
+		[VKSdk processOpenURL:url fromApplication:fromApp];
+	}];
 
 	delegate = [[LightVkDelegate alloc] initWithSuccess:vsuccess andFail:vfail andAuthFlag:(&authorized)];
 	[VKSdk initializeWithDelegate:delegate andAppId:[NSString stringWithUTF8String:String_val(vappid)]];
 
-	value perms = vpermissions;
-	NSMutableArray* mpermissions = [NSMutableArray arrayWithCapacity:0];
+	VKAccessToken *token = [VKAccessToken tokenFromDefaults:@"lightning_nativevk_token"];
+	if (token == nil || token.isExpired == YES) {
+		value perms = vpermissions;
+		NSMutableArray* mpermissions = [NSMutableArray arrayWithCapacity:0];
 
-	while(Is_block(perms)) {
-		[mpermissions addObject:[NSString stringWithUTF8String:String_val(Field(perms, 0))]];
-		perms = Field(perms, 1);
+		while(Is_block(perms)) {
+			[mpermissions addObject:[NSString stringWithUTF8String:String_val(Field(perms, 0))]];
+			perms = Field(perms, 1);
+		}
+
+		[VKSdk authorize:mpermissions];
+	} else {
+		[VKSdk setAccessToken:token];
+		value *success = &vsuccess;
+		RUN_CALLBACK(success, Val_unit);
 	}
-
-	[VKSdk authorize:mpermissions];
 
 	CAMLreturn(Val_unit);
 }
