@@ -79,7 +79,7 @@ value ml_paymentsCommitTransaction(value vtoken) {
 
 	jstring jtoken = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vtoken));
 	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid, jtoken);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtoken);	
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtoken);
 
 	return Val_unit;
 }
@@ -155,7 +155,7 @@ void payments_success(void *data) {
 	Store_field(tr, 2, vsig);
 
 	callback = *caml_named_value("camlPaymentsSuccess");
-	caml_callback3(callback, vsku, tr, s->restored == JNI_TRUE ? Val_true : Val_false);	
+	caml_callback3(callback, vsku, tr, s->restored == JNI_TRUE ? Val_true : Val_false);
 
 	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->sku);
 	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->tid);
@@ -167,19 +167,28 @@ void payments_success(void *data) {
 }
 
 void payments_fail(void *data) {
+	PRINT_DEBUG("payments_fail");
 	CAMLparam0();
 	CAMLlocal3(vsku, vreason, callback);
 
+	PRINT_DEBUG("1");
 	fail_t *f = (fail_t*)data;
+	PRINT_DEBUG("2");
 	JSTRING_TO_VAL(f->sku, vsku);
+	PRINT_DEBUG("3");
 	JSTRING_TO_VAL(f->reason, vreason);
+	PRINT_DEBUG("4");
 
 	callback = *caml_named_value("camlPaymentsFail");
 	caml_callback3(callback, vsku, vreason, Val_false);
+	PRINT_DEBUG("5");
 
 	(*ML_ENV)->DeleteGlobalRef(ML_ENV, f->sku);
+	PRINT_DEBUG("6");
 	(*ML_ENV)->DeleteGlobalRef(ML_ENV, f->reason);
+	PRINT_DEBUG("7");
 	free(f);
+	PRINT_DEBUG("8");
 
 	CAMLreturn0;
 }
@@ -192,7 +201,7 @@ JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_success(JNI
 	s->receipt = (*env)->NewGlobalRef(env, receipt);
 	s->sig = (*env)->NewGlobalRef(env, sig);
 	s->restored = restored;
-	
+
 	RUN_ON_ML_THREAD(&payments_success, (void*)s);
 }
 

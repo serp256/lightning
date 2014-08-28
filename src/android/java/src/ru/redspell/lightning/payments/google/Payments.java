@@ -68,6 +68,8 @@ public class Payments {
     ArrayList<Runnable> pendingRequests = new ArrayList();
 
     public void init(final String[] skus) {
+        Log.d("LIGHTNING", "payments init");
+
         Context context = Lightning.activity;
 
         if (context == null) {
@@ -98,16 +100,16 @@ public class Payments {
                 Lightning.activity.addUiLifecycleHelper(new IUiLifecycleHelper() {
                     @Override
                     public void onCreate(Bundle savedInstanceState) {}
-                    
+
                     @Override
                     public void onResume() {}
-                    
+
                     @Override
                     public void onActivityResult(int requestCode, int resultCode, Intent data) {
                         try {
                             Log.d("LIGHTNING", "onActivityResult call");
 
-                            if (data != null && requestCode == REQUEST_CODE) {           
+                            if (data != null && requestCode == REQUEST_CODE) {
                                 int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
                                 String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
                                 String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
@@ -124,25 +126,32 @@ public class Payments {
                                     failReason = "response error " + responseCode;
                                 } else {
                                     o = new JSONObject(purchaseData);
+
+                                    Log.d("LIGHTNING", "json " + o.toString());
+
                                     sku = o.optString("productId");
                                     developerPayload = o.optString("developerPayload");
 
+                                    java.util.Iterator<java.util.Map.Entry<String,String>> iter = developerPayloadSkuMap.entrySet().iterator();
+                                    while (iter.hasNext()) { java.util.Map.Entry<String,String> e = iter.next(); Log.d("LIGHTNING", "entry " + e.getKey() + " " + e.getValue()); }
+
                                     if (!developerPayloadSkuMap.containsKey(developerPayload)) {
+                                        Log.d("LIGHTNING", "sku " + sku + " developerPayload " + developerPayload);
                                         failReason = "unknown developerPayload " + developerPayload;
-                                                        } else {
-                                                            int purchaseState = o.optInt("purchaseState",1);
-                                                            if (purchaseState != 0) {
-                                                                    failReason = "purchaseState is " + purchaseState;
-                                                            } else if (key != null && !Security.verifyPurchase(key, purchaseData, dataSignature)) {
-                                                                    failReason = "signature verification failed";
-                                                            }
-                                                        }
+                                    } else {
+                                        int purchaseState = o.optInt("purchaseState",1);
+                                        if (purchaseState != 0) {
+                                                failReason = "purchaseState is " + purchaseState;
+                                        } else if (key != null && !Security.verifyPurchase(key, purchaseData, dataSignature)) {
+                                                failReason = "signature verification failed";
+                                        }
+                                    }
                                 }
 
                                 if (failReason != null) {
                                     Log.d("LIGHTNING", "fail, reason: " + failReason);
-                                    PaymentsCallbacks.fail(developerPayload != null ? developerPayloadSkuMap.get(developerPayload) : "none", failReason);
-                                } else {                    
+                                    PaymentsCallbacks.fail("none", failReason);
+                                } else {
                                     String token = o.optString("token", o.optString("purchaseToken"));
 
                                     Log.d("LIGHTNING", "success " + sku + " " + token + " " + purchaseData + " " + dataSignature);
@@ -155,16 +164,16 @@ public class Payments {
                             PaymentsCallbacks.fail("none", "org.json.JSONException exception");
                         }
                     }
-                    
+
                     @Override
                     public void onSaveInstanceState(Bundle outState) {}
-                    
+
                     @Override
                     public void onPause() {}
-                    
+
                     @Override
                     public void onStop() {}
-                    
+
                     @Override
                     public void onDestroy() {}
 
@@ -195,10 +204,15 @@ public class Payments {
             String developerPayload;
 
             do {
-                developerPayload = (new Integer(rand.nextInt(1000))).toString();  
+                developerPayload = (new Integer(rand.nextInt(1000))).toString();
             } while (developerPayloadSkuMap.containsKey(developerPayload));
 
+            Log.d("LIGHTNING", "new developerPayload " + developerPayload);
             developerPayloadSkuMap.put(developerPayload, sku);
+
+            java.util.Iterator<java.util.Map.Entry<String,String>> iter = developerPayloadSkuMap.entrySet().iterator();
+            while (iter.hasNext()) { java.util.Map.Entry<String,String> e = iter.next(); Log.d("LIGHTNING", "entry " + e.getKey() + " " + e.getValue()); }
+
             Bundle buyIntentBundle = mService.getBuyIntent(BILLING_API_VER, Lightning.activity.getPackageName(), sku, "inapp", developerPayload);
 
             if (buyIntentBundle == null) {
@@ -214,7 +228,7 @@ public class Payments {
                 return;
             }
 
-            Lightning.activity.startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));            
+            Lightning.activity.startIntentSenderForResult(pendingIntent.getIntentSender(), REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));
         } catch (android.os.RemoteException e) {
             PaymentsCallbacks.fail(sku, "android.os.RemoteException exception");
         } catch (android.content.IntentSender.SendIntentException e) {
@@ -277,7 +291,7 @@ public class Payments {
 												}
                     }
                 }
-            } while (continuationToken != null);            
+            } while (continuationToken != null);
         } catch (android.os.RemoteException e) {
             PaymentsCallbacks.fail("none", "android.os.RemoteException exception");
         } catch (org.json.JSONException e) {
