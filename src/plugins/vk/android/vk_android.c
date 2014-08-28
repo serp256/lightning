@@ -201,6 +201,9 @@ void vkandroid_friends_success(void *data) {
 		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jid, cid);
 		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jname, cname);
 		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jphoto, cphoto);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jid);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jname);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jphoto);
 	}
 
 	PRINT_DEBUG("2");
