@@ -97,7 +97,7 @@ public class LightVk {
 		}
 
 		public void onAccessDenied(VKError authorizationError) {
-			Log.d("LIGHTNING", "onAccessDenied");
+			Log.d("LIGHTNING", "onAccessDenied " + authorizationError.errorMessage + " " + authorizationError.errorReason);
 			authorized = false;
 			(new Fail(success, fail, authorizationError.errorMessage + ": " + authorizationError.errorReason)).run();
 		}
@@ -141,6 +141,8 @@ public class LightVk {
 		};
 	}
 
+	private static boolean helperAdded = false;
+
 	public static void authorize(String appid, String[] permissions, int success, int fail) {
 		Log.d("LIGHTNING", "!!!authorized " + authorized);
 
@@ -149,15 +151,18 @@ public class LightVk {
 			return;
 		}
 
-		Lightning.activity.addUiLifecycleHelper(new UiLifecycleHelper());
-		/*
-		 cause vk authorization is called after first LightActivity onResume call,
-		 LightVk lifecycle helper misses this call and didn't save activity instance for internal purposes
-		 to make VKSdk work correctly we need to emulate this call
-		*/
-		VKUIHelper.onResume(Lightning.activity);
-		VKSdk.initialize(new VKSdkListener(success, fail), appid);
+		if (!helperAdded) {
+			helperAdded =true;
+			Lightning.activity.addUiLifecycleHelper(new UiLifecycleHelper());
+			/*
+			cause vk authorization is called after first LightActivity onResume call,
+			LightVk lifecycle helper misses this call and didn't save activity instance for internal purposes
+			to make VKSdk work correctly we need to emulate this call
+			*/
+			VKUIHelper.onResume(Lightning.activity);
+		}
 
+		VKSdk.initialize(new VKSdkListener(success, fail), appid);
 		VKAccessToken token = VKAccessToken.tokenFromSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 
 		if (token == null || token.isExpired()) {

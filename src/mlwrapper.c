@@ -47,7 +47,7 @@ mlstage *mlstage_create(float width,float height) {
 			PRINT_DEBUG("etc, assign ext %s", compressedExt);
 		};
 	}*/
-	
+
 	CAMLparam0();
 	//PRINT_DEBUG("mlstage_create: %d",(unsigned int)pthread_self());
 	//caml_c_thread_register();
@@ -62,7 +62,7 @@ mlstage *mlstage_create(float width,float height) {
 	stage->width = width;
 	stage->height = height;
 	//caml_acquire_runtime_system();
-	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));// FIXME: GC 
+	stage->stage = caml_callback2(*create_ml_stage,caml_copy_double(width),caml_copy_double(height));// FIXME: GC
 	stage->needCancelAllTouches = 0;
 
 	caml_register_generational_global_root(&stage->stage);
@@ -108,7 +108,6 @@ void mlstage_advanceTime(mlstage *mlstage,double timePassed) {
 	//caml_acquire_runtime_system();
 	if (advanceTime_method == NIL) advanceTime_method = caml_hash_variant("advanceTime");
 	value dt = caml_copy_double(timePassed);
-	PRINT_DEBUG("dt %f", dt);
 	value advanceTimeMethod = caml_get_public_method(mlstage->stage,advanceTime_method);
 	caml_callback2(advanceTimeMethod,mlstage->stage,dt);
 	//caml_release_runtime_system();

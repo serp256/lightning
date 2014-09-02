@@ -142,12 +142,14 @@ void vkandroid_fail(void *data) {
 	RUN_CALLBACK(fail->fail, caml_copy_string(fail->reason));
 	FREE_CALLBACK(fail->fail);
 	FREE_CALLBACK(fail->success);
+	PRINT_DEBUG("fail->reason %d", fail->reason);
 	free(fail->reason);
 	free(fail);
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024Fail_nativeRun(JNIEnv *env, jobject this, jint jfail, jstring jreason, jint jsuccess) {
 	const char* creason = (*env)->GetStringUTFChars(env, jreason, JNI_FALSE);
+	PRINT_DEBUG("creason '%s'", creason);
 	vkandroid_fail_t *fail = (vkandroid_fail_t*)malloc(sizeof(vkandroid_fail_t));
 
 	fail->fail = (value*)jfail;
