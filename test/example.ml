@@ -1120,8 +1120,8 @@ value assets (s:Stage.c) =
                   (
                     (*
                     Lightning.extractAssetsIfRequired (fun success -> debug "assets extracted, %B" success)
-                  *)
                     Lightning.downloadExpansions ~completeCallback:(fun _ -> ()) ();
+                  *)
                   )
               | _ -> ()
               ]
