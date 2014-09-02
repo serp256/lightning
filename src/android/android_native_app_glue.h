@@ -114,7 +114,7 @@ struct android_app {
     void* userData;
 
     // Fill this in with the function to process main app commands (APP_CMD_*)
-    void (*onAppCmd)(struct android_app* app, int32_t cmd);
+    void (*onAppCmd)(struct android_app* app, int32_t cmd, void *data);
 
     // Fill this in with the function to process input events.  At this point
     // the event has already been pre-dispatched, and it will be finished upon
@@ -311,13 +311,21 @@ enum {
     APP_CMD_DESTROY,
 };
 
+#define CMD_WITH_DATA_MASK 0x80
+
 /**
  * Call when ALooper_pollAll() returns LOOPER_ID_MAIN, reading the next
  * app command message.
  */
-int8_t android_app_read_cmd(struct android_app* android_app);
+typedef struct {
+  int8_t id;
+  void *data;
+} __attribute__((packed)) cmd_t;
+
+cmd_t *android_app_read_cmd(struct android_app* android_app);
 
 void android_app_write_cmd(struct android_app* android_app, int8_t cmd);
+void android_app_write_cmd_with_data(struct android_app* android_app, int8_t cmd, void *data);
 
 /**
  * Call with the command returned by android_app_read_cmd() to do the

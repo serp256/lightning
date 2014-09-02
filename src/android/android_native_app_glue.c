@@ -45,19 +45,32 @@ static void free_saved_state(struct android_app* android_app) {
     pthread_mutex_unlock(&android_app->mutex);
 }
 
-int8_t android_app_read_cmd(struct android_app* android_app) {
-    int8_t cmd;
-    if (read(android_app->msgread, &cmd, sizeof(cmd)) == sizeof(cmd)) {
-        switch (cmd) {
+cmd_t *android_app_read_cmd(struct android_app* android_app) {
+    cmd_t *cmd = (cmd_t*)malloc(sizeof(cmd_t));
+
+    if (read(android_app->msgread, &cmd->id, sizeof(cmd->id)) == sizeof(cmd->id)) {
+        LOGI("cmd->id %x read", cmd->id);
+
+        if (cmd->id & CMD_WITH_DATA_MASK) {
+          cmd->id ^= CMD_WITH_DATA_MASK;
+          LOGI("command with data, real command id %x", cmd->id);
+
+          if (read(android_app->msgread, &cmd->data, sizeof(cmd->data)) != sizeof(cmd->data)) {
+            LOGE("cannot read data for command with data");
+          }
+        }
+
+        switch (cmd->id) {
             case APP_CMD_SAVE_STATE:
                 free_saved_state(android_app);
                 break;
         }
+
         return cmd;
     } else {
         LOGE("No data on command pipe!");
     }
-    return -1;
+    return NULL;
 }
 
 static void print_cur_config(struct android_app* android_app) {
@@ -203,10 +216,15 @@ static void process_input(struct android_app* app, struct android_poll_source* s
 }
 
 static void process_cmd(struct android_app* app, struct android_poll_source* source) {
-    int8_t cmd = android_app_read_cmd(app);
-    android_app_pre_exec_cmd(app, cmd);
-    if (app->onAppCmd != NULL) app->onAppCmd(app, cmd);
-    android_app_post_exec_cmd(app, cmd);
+    cmd_t *cmd = android_app_read_cmd(app);
+
+    if (cmd) {
+        android_app_pre_exec_cmd(app, cmd->id);
+        if (app->onAppCmd != NULL) app->onAppCmd(app, cmd->id, cmd->data);
+        android_app_post_exec_cmd(app, cmd->id);
+
+        free(cmd);
+    }
 }
 
 static void* android_app_entry(void* param) {
@@ -237,8 +255,8 @@ static void* android_app_entry(void* param) {
     pthread_mutex_unlock(&android_app->mutex);
 
     android_main(android_app);
-
     android_app_destroy(android_app);
+
     return NULL;
 }
 
@@ -285,8 +303,22 @@ static struct android_app* android_app_create(ANativeActivity* activity,
 }
 
 void android_app_write_cmd(struct android_app* android_app, int8_t cmd) {
+    LOGI("android_app_write_cmd %d", cmd);
+
     if (write(android_app->msgwrite, &cmd, sizeof(cmd)) != sizeof(cmd)) {
         LOGE("Failure writing android_app cmd: %s\n", strerror(errno));
+    }
+}
+
+void android_app_write_cmd_with_data(struct android_app* android_app, int8_t cmd_id, void *data) {
+    cmd_t cmd;
+    cmd.id = cmd_id |= CMD_WITH_DATA_MASK;
+    cmd.data = data;
+
+    LOGI("android_app_write_cmd_with_data %x", cmd_id);
+
+    if (write(android_app->msgwrite, &cmd, sizeof(cmd)) != sizeof(cmd)) {
+        LOGE("Failure writing android_app cmd with data: %s\n", strerror(errno));
     }
 }
 
@@ -442,6 +474,6 @@ void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_
     activity->callbacks->onNativeWindowDestroyed = onNativeWindowDestroyed;
     activity->callbacks->onInputQueueCreated = onInputQueueCreated;
     activity->callbacks->onInputQueueDestroyed = onInputQueueDestroyed;
-    
+
     activity->instance = android_app_create(activity, savedState, savedStateSize);
 }

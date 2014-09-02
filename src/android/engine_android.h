@@ -51,11 +51,10 @@ typedef void (*engine_runnablefunc_t)(void *data);
 typedef struct {
     engine_runnablefunc_t func;
     void *data;
-    uint8_t handled;
 } engine_runnable_t;
 
 enum {
-    ENGINE_CMD_RUN_ON_ML_THREAD = 100
+    ENGINE_CMD_RUN_ON_ML_THREAD = 0x40
 };
 
 struct engine engine;

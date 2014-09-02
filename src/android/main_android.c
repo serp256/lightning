@@ -311,7 +311,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     CAMLreturn(0);
 }
 
-static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
+static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) {
     PRINT_DEBUG("engine_handle_cmd %d", cmd);
     engine_t engine = (engine_t)app->userData;
     static value bg_handler = 0, fg_handler = 0;
@@ -351,21 +351,18 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 
         case ENGINE_CMD_RUN_ON_ML_THREAD:
             {
-                PRINT_DEBUG("ENGINE_CMD_RUN_ON_ML_THREAD");
-                struct android_app *app = engine->app;
-                PRINT_DEBUG("1");
-                pthread_mutex_lock(&app->mutex);
-                PRINT_DEBUG("2");
-                engine_runnable_t *runnable = (engine_runnable_t*)engine->data;
-                PRINT_DEBUG("3");
+                engine_runnable_t *runnable = (engine_runnable_t*)data;
+
                 (*runnable->func)(runnable->data);
-                PRINT_DEBUG("4");
-                runnable->handled = 1;
-                PRINT_DEBUG("5");
-                pthread_cond_broadcast(&app->cond);
-                PRINT_DEBUG("6");
-                pthread_mutex_unlock(&app->mutex);
-                PRINT_DEBUG("7");
+                free(runnable);
+
+                // struct android_app *app = engine->app;
+                // pthread_mutex_lock(&app->mutex);
+                // engine_runnable_t *runnable = (engine_runnable_t*)engine->data;
+                // (*runnable->func)(runnable->data);
+                // runnable->handled = 1;
+                // pthread_cond_broadcast(&app->cond);
+                // pthread_mutex_unlock(&app->mutex);
 
                 break;
             }
