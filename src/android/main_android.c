@@ -7,7 +7,7 @@
 #include <android/log.h>
 #include <android/asset_manager.h>
 #include <android/window.h>
- 
+
 #include <sys/time.h>
 #include <math.h>
 
@@ -25,16 +25,30 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 
 extern struct engine engine;
 
+#define NEEDED_RED 5
+#define NEEDED_GREEN 6
+#define NEEDED_BLUE 5
+#define NEEDED_ALPHA 0
+#define NEEDED_DEPTH 0
+#define NEEDED_STENCIL 0
+#define CONFIGS_NUM 50
+
 static int engine_init_display(engine_t engine) {
     const EGLint attribs[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-            EGL_BLUE_SIZE, 8,
-            EGL_GREEN_SIZE, 8,
-            EGL_RED_SIZE, 8,
+            EGL_ALPHA_SIZE, NEEDED_ALPHA,
+            EGL_RED_SIZE, NEEDED_RED,
+            EGL_GREEN_SIZE, NEEDED_GREEN,
+            EGL_BLUE_SIZE, NEEDED_BLUE,
+            EGL_DEPTH_SIZE, NEEDED_DEPTH,
+            EGL_STENCIL_SIZE, NEEDED_STENCIL,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
             EGL_NONE
     };
+
     EGLint w, h, format;
     EGLint numConfigs;
+    EGLConfig configs[CONFIGS_NUM];
     EGLConfig config;
     EGLSurface surface;
     EGLContext context;
@@ -47,20 +61,37 @@ static int engine_init_display(engine_t engine) {
         display = engine->display;
     }
 
-    eglChooseConfig(display, attribs, &config, 1, &numConfigs);
-    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
+    eglChooseConfig(display, attribs, configs, CONFIGS_NUM, &numConfigs);
+    EGLint r, g, b, a, s, d;
+    int i;
+    for (i = 0; i < numConfigs; i++) {
+      config = configs[i];
 
+      eglGetConfigAttrib(display, config, EGL_ALPHA_SIZE, &a);
+      eglGetConfigAttrib(display, config, EGL_BLUE_SIZE, &b);
+      eglGetConfigAttrib(display, config, EGL_GREEN_SIZE, &g);
+      eglGetConfigAttrib(display, config, EGL_RED_SIZE, &r);
+      eglGetConfigAttrib(display, config, EGL_DEPTH_SIZE, &d);
+      eglGetConfigAttrib(display, config, EGL_STENCIL_SIZE, &s);
+
+      if (s >= NEEDED_STENCIL && d >= NEEDED_DEPTH) {
+        if (r == NEEDED_RED && g == NEEDED_GREEN && b == NEEDED_BLUE && a == NEEDED_ALPHA) {
+          break;
+        }
+      }
+    }
+
+    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
     ANativeWindow_setBuffersGeometry(engine->app->window, 0, 0, format);
 
-    EGLint const context_attrib_list[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
     surface = eglCreateWindowSurface(display, config, engine->app->window, NULL);
 
-    context = engine->context == EGL_NO_CONTEXT 
-        ? eglCreateContext(display, config, NULL, context_attrib_list)
-        : engine->context;
+    EGLint const context_attrib_list[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+    context = engine->context == EGL_NO_CONTEXT
+      ? eglCreateContext(display, config, NULL, context_attrib_list)
+      : engine->context;
 
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
-        LOGW("Unable to eglMakeCurrent %x", eglGetError());
         return -1;
     }
 
@@ -99,7 +130,7 @@ static void engine_draw_frame(engine_t engine) {
         restore_default_viewport();
 
         if (mlstage_render(engine->stage)) {
-            eglSwapBuffers(engine->display, engine->surface);    
+            eglSwapBuffers(engine->display, engine->surface);
         }
     }
 
@@ -117,7 +148,7 @@ static void engine_term_display(engine_t engine) {
             eglDestroySurface(engine->display, engine->surface);
         }
     }
-    
+
     PRINT_DEBUG("engine_term_display reseting animating flag");
     engine->animating = 0;
     engine->surface = EGL_NO_SURFACE;
@@ -306,7 +337,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
                 ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->accelerometerSensor, (1000L/60)*1000);
             }
             engine->animating = 1;
-            engine_draw_frame(engine);            
+            engine_draw_frame(engine);
             break;
         case APP_CMD_LOST_FOCUS:
             if (engine->accelerometerSensor != NULL) {
@@ -336,13 +367,13 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
                 pthread_mutex_unlock(&app->mutex);
                 PRINT_DEBUG("7");
 
-                break;                
+                break;
             }
 
         case APP_CMD_PAUSE:
             if (engine->stage) {
                 if (!bg_handler) bg_handler = caml_hash_variant("dispatchBackgroundEv");
-                caml_callback2(caml_get_public_method(engine->stage->stage, bg_handler), engine->stage->stage, Val_unit);                
+                caml_callback2(caml_get_public_method(engine->stage->stage, bg_handler), engine->stage->stage, Val_unit);
             }
 
             break;
@@ -366,7 +397,7 @@ void android_main(struct android_app* state) {
     state->userData = &engine;
     state->onAppCmd = engine_handle_cmd;
     state->onInputEvent = engine_handle_input;
-    
+
     engine_init(state);
     lightning_init();
 
@@ -384,7 +415,7 @@ void android_main(struct android_app* state) {
     FILE* f = fdopen(ass_fd, "r");
     fseek(f, indx_offset, SEEK_SET);
     read_res_index(f, ass_offset, -1);
-    
+
     fclose(f);
     close(indx_fd);
 
@@ -395,7 +426,9 @@ void android_main(struct android_app* state) {
     }
 
     char *argv[] = {"android",NULL};
+    PRINT_DEBUG("caml_startup...");
     caml_startup(argv);
+    PRINT_DEBUG("caml_startup done");
 
     while (1) {
         int ident;
@@ -406,7 +439,7 @@ void android_main(struct android_app* state) {
         while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
                 (void**)&source)) >= 0) {
             PRINT_DEBUG("inside poll all while");
-            
+
             if (source != NULL) {
                 source->process(state, source);
             }
