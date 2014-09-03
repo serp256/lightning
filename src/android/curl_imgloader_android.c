@@ -128,7 +128,8 @@ static void caml_error(cel_request_t* req, int errCode, char* errMes) {
 		curl_imgloader_error_t *error = (curl_imgloader_error_t*)malloc(sizeof(curl_imgloader_error_t));
 		error->req = req;
 		error->err_code = errCode;
-		error->err_mes = errMes;
+		error->err_mes = (char*)malloc(strlen(errMes) + 1);
+		strcpy(error->err_mes, errMes);
 		RUN_ON_ML_THREAD(&curl_imgloader_error, (void*)error);
 	}
 }
