@@ -1443,7 +1443,21 @@ value test_vk (stage:Stage.c) =
     );
 
 value testKeyboard (stage:Stage.c) = 
-  let img = Image.load "tree.png" in
+  (
+                    Keyboard.show 
+                      ~visible:False
+                      ~inittxt:""
+                      ~onhide:(fun s -> debug "onhide : %s" s)
+                      ~onchange:(fun s -> debug "onchange : %s" s)
+                      ();
+                    Keyboard.show 
+                      ~visible:False
+                      ~inittxt:""
+                      ~onhide:(fun s -> debug "onhide : %s" s)
+                      ~onchange:(fun s -> debug "onchange : %s" s)
+                      ();
+                      (*
+  let img = Image.load "image.png" in
     (
       stage#addChild img;
       ignore(Stage.(
@@ -1453,11 +1467,15 @@ value testKeyboard (stage:Stage.c) =
             Touch.(
                 match touch.phase with
                 [ TouchPhaseEnded -> 
+                  (
+                    debug "SHOW KEYBOARD";
                     Keyboard.show 
-                      ~inittxt:"pizda"
-                      ~onhide:(fun s -> debug "callback 2 : %s" s)
-                      ~onchange:(fun s -> debug "callback 1 : %s" s)
-                      ()
+                      ~visible:False
+                      ~inittxt:""
+                      ~onhide:(fun s -> debug "onhide : %s" s)
+                      ~onchange:(fun s -> debug "onchange : %s" s)
+                      ();
+                  )
                 | _ -> ()
                 ]
             )
@@ -1466,6 +1484,31 @@ value testKeyboard (stage:Stage.c) =
         )
       ));
     );
+  let img = Image.load "cow_new.png" in
+    (
+      img#setX 200.;
+      stage#addChild img;
+      ignore(Stage.(
+        img#addEventListener ev_TOUCH (fun ev _ _ ->
+          match touches_of_data ev.Ev.data with
+          [ Some [ touch :: _ ] ->
+            Touch.(
+                match touch.phase with
+                [ TouchPhaseEnded -> 
+                  (
+                    debug "HIDE KEYBOARD";
+                    Keyboard.hide ();
+                  )
+                | _ -> ()
+                ]
+            )
+          | _ -> ()
+          ]
+        )
+      ));
+    );
+    *)
+  );
 
 value game_center (stage:Stage.c) =
     let text = "Ежедневный бонус PipIy" in
@@ -1750,16 +1793,16 @@ let stage width height =
     value bgColor = 0xCCCCCC;
     initializer begin
   debug "REGISTR FONT";
+      testKeyboard self;
+      (*
       hardware self;
       test_vk self;
-      (*
       udid self;
       pvr self;
       fbtest self;
       test_map self;
       test_queue ();
       game_center self;
-      testKeyboard self;
       test_vk self;
       *)
 (*

@@ -31,7 +31,7 @@
             </intent-filter>
         </receiver>
 
-        <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/app_id" />
+        <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="test" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
