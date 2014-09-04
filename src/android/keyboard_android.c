@@ -109,8 +109,8 @@ void keyboard_onchange(void *data) {
 		JSTRING_TO_VAL(jtext, vtext);
 		caml_callback(*onchage_callback, vtext);
 	}
-	
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtext);	
+
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtext);
 	CAMLreturn0;
 }
 
@@ -125,14 +125,16 @@ void keyboard_onhide(void *data) {
 		caml_callback(*onhide_callback, vtext);
 		caml_remove_generational_global_root(onhide_callback);
 		free(onhide_callback);
+		onhide_callback = NULL;
 	}
 
 	if (onchage_callback) {
 		caml_remove_generational_global_root(onchage_callback);
 		free(onchage_callback);
+		onchage_callback = NULL;
 	}
-	
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtext);	
+
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtext);
 	CAMLreturn0;
 }
 
