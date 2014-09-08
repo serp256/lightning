@@ -13,7 +13,7 @@ module User:
 type t;
 type fail = string -> unit;
 
-value authorize: ~appid:string -> ~permissions:list string -> ?fail:fail -> ~success:(t -> unit) -> unit -> unit;
+value authorize: ~appid:string -> ~permissions:list string -> ?fail:fail -> ~success:(t -> unit) -> ?force:bool -> unit -> unit;
 value friends: ?fail:fail -> ~success:(list User.t -> unit) -> t -> unit;
 value users: ?fail:fail -> ~success:(list User.t -> unit)-> ~ids:list string -> t -> unit;
 value token: t -> string;

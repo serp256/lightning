@@ -143,7 +143,7 @@ public class LightVk {
 
 	private static boolean helperAdded = false;
 
-	public static void authorize(String appid, String[] permissions, int success, int fail) {
+	public static void authorize(String appid, String[] permissions, int success, int fail, boolean force) {
 		Log.d("LIGHTNING", "!!!authorized " + authorized);
 
 		if (authorized) {
@@ -165,7 +165,7 @@ public class LightVk {
 		VKSdk.initialize(new VKSdkListener(success, fail), appid);
 		VKAccessToken token = VKAccessToken.tokenFromSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 
-		if (token == null || token.isExpired()) {
+		if (token == null || token.isExpired() || force) {
 			Log.d("LIGHTNING", "no token or it is expied");
 			VKSdk.authorize(permissions, false, false);
 		} else {

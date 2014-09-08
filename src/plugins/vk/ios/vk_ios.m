@@ -8,7 +8,7 @@
 static LightVkDelegate* delegate; //delegate declared as static, cause VKSdk class stores delegate as weak propety and auto ref counting clean given delegate, if it declared as local variable in ml_vk_authorize
 int authorized = 0;
 
-value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess) {
+value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess, value vforce) {
 	if (authorized) {
 		value *success = &vsuccess;
 		RUN_CALLBACK(success, Val_unit);
@@ -30,7 +30,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 	[VKSdk initializeWithDelegate:delegate andAppId:[NSString stringWithUTF8String:String_val(vappid)]];
 
 	VKAccessToken *token = [VKAccessToken tokenFromDefaults:@"lightning_nativevk_token"];
-	if (token == nil || token.isExpired == YES) {
+	if (token == nil || token.isExpired == YES || vforce == Val_true) {
 		value perms = vpermissions;
 		NSMutableArray* mpermissions = [NSMutableArray arrayWithCapacity:0];
 
@@ -47,6 +47,10 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 	}
 
 	CAMLreturn(Val_unit);
+}
+
+value rendertex_create_byte(value *argv, int n) {
+	return ml_vk_authorize(argv[0], argv[1], argv[2], argv[3], argv[4]);
 }
 
 value ml_vk_token(value t) {

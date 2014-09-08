@@ -5,7 +5,7 @@ static jclass cls = NULL;
 
 #define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightVk);
 
-value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess) {
+value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess, value vforce) {
 	CAMLparam4(vappid, vpermissions, vfail, vsuccess);
 	CAMLlocal1(head);
 
@@ -13,7 +13,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 
 	GET_ENV;
 	GET_CLS;
-	STATIC_MID(cls, authorize, "(Ljava/lang/String;[Ljava/lang/String;II)V");
+	STATIC_MID(cls, authorize, "(Ljava/lang/String;[Ljava/lang/String;IIZ)V");
 
 	JString_val(jappid, vappid);
 	REG_CALLBACK(vsuccess, success);
@@ -38,11 +38,15 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 		head = Field(head, 1);
 	}
 
-	(*env)->CallStaticVoidMethod(env, cls, mid, jappid, jperms, (jint)success, (jint)fail);
+	(*env)->CallStaticVoidMethod(env, cls, mid, jappid, jperms, (jint)success, (jint)fail, vforce == Val_true ? JNI_TRUE : JNI_FALSE);
 	(*env)->DeleteLocalRef(env, jperms);
 	(*env)->DeleteLocalRef(env, jappid);
 
 	CAMLreturn(Val_unit);
+}
+
+value rendertex_create_byte(value *argv, int n) {
+	return ml_vk_authorize(argv[0], argv[1], argv[2], argv[3], argv[4]);
 }
 
 value ml_vk_friends(value vfail, value vsuccess, value vt) {
