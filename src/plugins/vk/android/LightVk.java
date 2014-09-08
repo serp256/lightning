@@ -144,15 +144,17 @@ public class LightVk {
 	private static boolean helperAdded = false;
 
 	public static void authorize(String appid, String[] permissions, int success, int fail, boolean force) {
-		Log.d("LIGHTNING", "!!!authorized " + authorized);
+		Log.d("LIGHTNING", "!!!authorized " + authorized + " force " + force);
 
 		if (authorized && !force) {
 			(new AuthSuccess(success, fail)).run();
 			return;
 		}
 
+		Log.d("LIGHTNING", "helperAdded " + helperAdded);
 		if (!helperAdded) {
 			helperAdded =true;
+			Log.d("LIGHTNING", "adding lifecycle helper");
 			Lightning.activity.addUiLifecycleHelper(new UiLifecycleHelper());
 			/*
 			cause vk authorization is called after first LightActivity onResume call,
@@ -168,7 +170,8 @@ public class LightVk {
 		// Log.d("LIGHTNING", "token " + (token == null ? "null" : token.accessToken));
 
 		if (force) {
-			VKAccessToken.removeTokenAtKey(Lightning.activity, "lightning_nativevk_token");
+			VKSdk.logout();
+			// VKAccessToken.removeTokenAtKey(Lightning.activity, "lightning_nativevk_token");
 		}
 
 		if (token == null || token.isExpired() || force) {

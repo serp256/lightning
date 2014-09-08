@@ -38,6 +38,8 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 		head = Field(head, 1);
 	}
 
+	PRINT_DEBUG("vforce == Val_true %d", vforce == Val_true);
+
 	(*env)->CallStaticVoidMethod(env, cls, mid, jappid, jperms, (jint)success, (jint)fail, vforce == Val_true ? JNI_TRUE : JNI_FALSE);
 	(*env)->DeleteLocalRef(env, jperms);
 	(*env)->DeleteLocalRef(env, jappid);
