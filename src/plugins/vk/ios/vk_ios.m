@@ -30,6 +30,13 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 	[VKSdk initializeWithDelegate:delegate andAppId:[NSString stringWithUTF8String:String_val(vappid)]];
 
 	VKAccessToken *token = [VKAccessToken tokenFromDefaults:@"lightning_nativevk_token"];
+
+	// if (vforce == Val_true) {
+	// 	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	// 	[defaults removeObjectForKey:@"lightning_nativevk_token"];
+	// 	[defaults synchronize];
+	// }
+
 	if (token == nil || token.isExpired == YES || vforce == Val_true) {
 		value perms = vpermissions;
 		NSMutableArray* mpermissions = [NSMutableArray arrayWithCapacity:0];
