@@ -45,7 +45,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 	CAMLreturn(Val_unit);
 }
 
-value rendertex_create_byte(value *argv, int n) {
+value ml_vk_authorize_byte(value *argv, int n) {
 	return ml_vk_authorize(argv[0], argv[1], argv[2], argv[3], argv[4]);
 }
 
