@@ -9,7 +9,7 @@ static LightVkDelegate* delegate; //delegate declared as static, cause VKSdk cla
 int authorized = 0;
 
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess, value vforce) {
-	if (authorized) {
+	if (authorized && vforce == Val_false) {
 		value *success = &vsuccess;
 		RUN_CALLBACK(success, Val_unit);
 

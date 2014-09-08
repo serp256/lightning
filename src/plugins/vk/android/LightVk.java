@@ -146,7 +146,7 @@ public class LightVk {
 	public static void authorize(String appid, String[] permissions, int success, int fail, boolean force) {
 		Log.d("LIGHTNING", "!!!authorized " + authorized);
 
-		if (authorized) {
+		if (authorized && !force) {
 			(new AuthSuccess(success, fail)).run();
 			return;
 		}
