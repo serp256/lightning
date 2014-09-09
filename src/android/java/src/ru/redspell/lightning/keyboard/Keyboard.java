@@ -68,13 +68,12 @@ public class Keyboard {
 				final EditTextContainer letc;
 				final EditText let;
 
-				Log.d("LIGHTNING", "activity.viewGrp.getChildCount() " + activity.viewGrp.getChildCount());
+				Log.d("LIGHTNING", "activity.viewGrp.getChildCount() " + activity.viewGrp.getChildCount() + " " + inittxt);
 
-				if (activity.viewGrp.getChildCount() == 2) {
+				if (activity.viewGrp.getChildCount() == 1) {
 					Log.d("LIGHTNING", "if1");
 					letc = (EditTextContainer)activity.viewGrp.findViewById(ru.redspell.lightning.R.id.editor_container);
 					let = (EditText)letc.findViewById(ru.redspell.lightning.R.id.editor);
-					let.setText(inittxt);
 					Log.d("LIGHTNING", "if2");
 				} else {
 					Log.d("LIGHTNING", "else1");
@@ -122,6 +121,8 @@ public class Keyboard {
 					let.setOnKeyboardHideListener(khl);
 					let.requestFocus();
 					let.addTextChangedListener(tw);
+					let.setText(inittxt);
+					let.setSelection(inittxt.length());
 
 					if (w > -1) let.setWidth(w);
 					if (h > -1) let.setHeight(h);
@@ -149,7 +150,6 @@ public class Keyboard {
 				Log.d("LIGHTNING", "editor " + editor);
 
 				if (editor != null) {
-					activity.viewGrp.removeView(editorc);
 					((InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(editor.getWindowToken(), 0);
 				}
 			}
