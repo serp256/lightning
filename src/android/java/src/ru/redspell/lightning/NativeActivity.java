@@ -57,6 +57,7 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		ru.redspell.lightning.utils.Log.d("LIGHTNING", "onActivityResult " + requestCode + " " + resultCode + " data " + data);
 		super.onActivityResult(requestCode, resultCode, data);
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();

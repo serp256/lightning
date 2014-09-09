@@ -103,7 +103,7 @@ public class LightVk {
 		}
 
 		public void onReceiveNewToken(VKAccessToken newToken) {
-			// Log.d("LIGHTNING", "onReceiveNewToken " + newToken.accessToken);
+			Log.d("LIGHTNING", "onReceiveNewToken " + newToken.accessToken);
 			newToken.saveTokenToSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 			authorized = true;
 			(new AuthSuccess(success, fail)).run();
@@ -168,11 +168,6 @@ public class LightVk {
 		VKAccessToken token = VKAccessToken.tokenFromSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 
 		// Log.d("LIGHTNING", "token " + (token == null ? "null" : token.accessToken));
-
-		if (force) {
-			VKSdk.logout();
-			// VKAccessToken.removeTokenAtKey(Lightning.activity, "lightning_nativevk_token");
-		}
 
 		if (token == null || token.isExpired() || force) {
 			Log.d("LIGHTNING", "no token or it is expied");
