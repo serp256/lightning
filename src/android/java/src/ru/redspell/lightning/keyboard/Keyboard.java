@@ -98,10 +98,10 @@ public class Keyboard {
 						public void onKeyboardHide(boolean backPressed) {
 							Log.d("LIGHTNING", "LightTextEdit.OnKeyboardHideListener onKeyboardHide");
 
-							let.removeTextChangedListener(tw);
-							let.resetOnKeyboardHideListener();
+							// let.removeTextChangedListener(tw);
+							// let.resetOnKeyboardHideListener();
 							if (!backPressed) imm.hideSoftInputFromWindow(let.getWindowToken(), 0);
-							activity.viewGrp.removeView(letc);
+							// activity.viewGrp.removeView(letc);
 
 							onHide(let.getText().toString());
 							Lightning.enableTouches();
@@ -114,23 +114,20 @@ public class Keyboard {
 						}
 					});
 
-					Log.d("LIGHTNING", "adding view");
-
-					activity.viewGrp.addView(letc);
-					letc.setVisibility(visible ? View.INVISIBLE : View.VISIBLE);
 					let.setOnKeyboardHideListener(khl);
-					let.requestFocus();
 					let.addTextChangedListener(tw);
-					let.setText(inittxt);
-					let.setSelection(inittxt.length());
-
-					if (w > -1) let.setWidth(w);
-					if (h > -1) let.setHeight(h);
-
-					if (visible) Lightning.disableTouches();
-					Log.d("LIGHTNING", "else2");
+					activity.viewGrp.addView(letc);
 				}
 
+				letc.setVisibility(visible ? View.INVISIBLE : View.VISIBLE);
+				let.requestFocus();
+				let.setText(inittxt);
+				let.setSelection(inittxt.length());
+
+				if (w > -1) let.setWidth(w);
+				if (h > -1) let.setHeight(h);
+
+				if (visible) Lightning.disableTouches();
 				imm.showSoftInput(let, InputMethodManager.SHOW_FORCED);
 			}
 		});
@@ -145,9 +142,6 @@ public class Keyboard {
 			public void run() {
 				Lightning.enableTouches();
 				View editor = activity.viewGrp.findViewById(ru.redspell.lightning.R.id.editor);
-				View editorc = activity.viewGrp.findViewById(ru.redspell.lightning.R.id.editor_container);
-
-				Log.d("LIGHTNING", "editor " + editor);
 
 				if (editor != null) {
 					((InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(editor.getWindowToken(), 0);
