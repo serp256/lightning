@@ -63,16 +63,21 @@ public class Keyboard {
 		final NativeActivity activity = Lightning.activity;
 
 		activity.runOnUiThread(new Runnable() {
-			public void run() {				
+			public void run() {
 				final InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
 				final EditTextContainer letc;
 				final EditText let;
 
+				Log.d("LIGHTNING", "activity.viewGrp.getChildCount() " + activity.viewGrp.getChildCount());
+
 				if (activity.viewGrp.getChildCount() == 2) {
+					Log.d("LIGHTNING", "if1");
 					letc = (EditTextContainer)activity.viewGrp.findViewById(ru.redspell.lightning.R.id.editor_container);
 					let = (EditText)letc.findViewById(ru.redspell.lightning.R.id.editor);
 					let.setText(inittxt);
+					Log.d("LIGHTNING", "if2");
 				} else {
+					Log.d("LIGHTNING", "else1");
 					letc = (EditTextContainer)activity.getLayoutInflater().inflate(ru.redspell.lightning.R.layout.editor, activity.viewGrp, false);
 					let = (EditText)letc.findViewById(ru.redspell.lightning.R.id.editor);
 					final TextWatcher tw = new TextWatcher() {
@@ -122,6 +127,7 @@ public class Keyboard {
 					if (h > -1) let.setHeight(h);
 
 					if (visible) Lightning.disableTouches();
+					Log.d("LIGHTNING", "else2");
 				}
 
 				imm.showSoftInput(let, InputMethodManager.SHOW_FORCED);
@@ -138,8 +144,12 @@ public class Keyboard {
 			public void run() {
 				Lightning.enableTouches();
 				View editor = activity.viewGrp.findViewById(ru.redspell.lightning.R.id.editor);
+				View editorc = activity.viewGrp.findViewById(ru.redspell.lightning.R.id.editor_container);
+
+				Log.d("LIGHTNING", "editor " + editor);
 
 				if (editor != null) {
+					activity.viewGrp.removeView(editorc);
 					((InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(editor.getWindowToken(), 0);
 				}
 			}
