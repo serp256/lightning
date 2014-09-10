@@ -10,7 +10,9 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 
 
-import ru.redspell.lightning.LightActivity;
+import ru.redspell.lightning.GooglePlayServices;
+import ru.redspell.lightning.Lightning;
+import ru.redspell.lightning.NativeActivity;
 
 public class LightRemoteNotifications {
 
@@ -23,13 +25,13 @@ public class LightRemoteNotifications {
 	String regid = null;
 
 	static LightRemoteNotifications init(String sid) {
-		if (!LightActivity.instance.isPlayServicesAvailable) return null;
+		if (!GooglePlayServices.available()) return null;
 		return new LightRemoteNotifications(sid);
 	};
 
 
 	public LightRemoteNotifications(String sid) {
-		Context context = LightActivity.instance.getApplicationContext();
+		Context context = Lightning.activity.getApplicationContext();
 		gcm = GoogleCloudMessaging.getInstance(context);
 		senderID = sid;
 		regid = getRegistrationId(context);
@@ -66,14 +68,14 @@ public class LightRemoteNotifications {
 	}
 
 	private SharedPreferences getGCMPreferences(Context context) {
-    return context.getSharedPreferences(LightActivity.class.getSimpleName(), Context.MODE_PRIVATE);
+    return context.getSharedPreferences(NativeActivity.class.getSimpleName(), Context.MODE_PRIVATE);
 	}
 
 	private void registerInBackground() {
 		Log.d("Register in background");
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			private String err = null;
-			@Override 
+			@Override
 			public void run() {
 				Log.d("Register in main thread");
 				new AsyncTask<Void,Void,String>() {
@@ -92,26 +94,15 @@ public class LightRemoteNotifications {
 						@Override
 						protected void onPostExecute(final String res) {
 							Log.d("RN onPostExecute");
-							LightActivity lightActivity = LightActivity.instance;
+							NativeActivity lightActivity = Lightning.activity;
 							Runnable r;
-							if (res == null) 
-								r = new Runnable() {
-									@Override 
-									public void run() {
-										errorCallback(err);
-									}
-								};
-							else {
+							if (res == null) {
+								errorCallback(err);
+							} else {
 								storeRegistrationId(lightActivity.getApplicationContext(),res);
-								r = new Runnable() {
-									@Override 
-									public void run() {
-										successCallback(res);
-									}
-								};
+								successCallback(res);
 							};
 							// Store here, and post to ocaml
-							lightActivity.lightView.queueEvent(r);
 						}
 				}.execute(null, null, null);
 			}
