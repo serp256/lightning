@@ -416,8 +416,6 @@ void android_main(struct android_app* state) {
     fclose(f);
     close(indx_fd);
 
-    ANativeActivity_setWindowFlags(state->activity, AWINDOW_FLAG_FULLSCREEN, 0);
-
     if (state->savedState != NULL) {
         engine.state = *(struct saved_state*)state->savedState;
     }

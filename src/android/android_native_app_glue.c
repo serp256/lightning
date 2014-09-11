@@ -24,6 +24,7 @@
 
 #include "android_native_app_glue.h"
 #include <android/log.h>
+#include <android/window.h>
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "threaded_app", __VA_ARGS__))
 #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, "threaded_app", __VA_ARGS__))
@@ -266,38 +267,46 @@ static void* android_app_entry(void* param) {
 
 static struct android_app* android_app_create(ANativeActivity* activity,
         void* savedState, size_t savedStateSize) {
-    struct android_app* android_app = (struct android_app*)malloc(sizeof(struct android_app));
-    memset(android_app, 0, sizeof(struct android_app));
-    android_app->activity = activity;
+    static struct android_app* android_app = NULL;
 
-    pthread_mutex_init(&android_app->mutex, NULL);
-    pthread_cond_init(&android_app->cond, NULL);
+    if (!android_app) {
+      android_app = (struct android_app*)malloc(sizeof(struct android_app));
+      memset(android_app, 0, sizeof(struct android_app));
+      android_app->activity = activity;
+      ANativeActivity_setWindowFlags(android_app->activity, AWINDOW_FLAG_FULLSCREEN, 0);
 
-    if (savedState != NULL) {
-        android_app->savedState = malloc(savedStateSize);
-        android_app->savedStateSize = savedStateSize;
-        memcpy(android_app->savedState, savedState, savedStateSize);
+      pthread_mutex_init(&android_app->mutex, NULL);
+      pthread_cond_init(&android_app->cond, NULL);
+
+      if (savedState != NULL) {
+          android_app->savedState = malloc(savedStateSize);
+          android_app->savedStateSize = savedStateSize;
+          memcpy(android_app->savedState, savedState, savedStateSize);
+      }
+
+      int msgpipe[2];
+      if (pipe(msgpipe)) {
+          LOGE("could not create pipe: %s", strerror(errno));
+          return NULL;
+      }
+      android_app->msgread = msgpipe[0];
+      android_app->msgwrite = msgpipe[1];
+
+      pthread_attr_t attr;
+      pthread_attr_init(&attr);
+      pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+      pthread_create(&android_app->thread, &attr, android_app_entry, android_app);
+
+      // Wait for thread to start.
+      pthread_mutex_lock(&android_app->mutex);
+      while (!android_app->running) {
+          pthread_cond_wait(&android_app->cond, &android_app->mutex);
+      }
+      pthread_mutex_unlock(&android_app->mutex);
+    } else {
+      android_app->activity = activity;
+      ANativeActivity_setWindowFlags(android_app->activity, AWINDOW_FLAG_FULLSCREEN, 0);
     }
-
-    int msgpipe[2];
-    if (pipe(msgpipe)) {
-        LOGE("could not create pipe: %s", strerror(errno));
-        return NULL;
-    }
-    android_app->msgread = msgpipe[0];
-    android_app->msgwrite = msgpipe[1];
-
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&android_app->thread, &attr, android_app_entry, android_app);
-
-    // Wait for thread to start.
-    pthread_mutex_lock(&android_app->mutex);
-    while (!android_app->running) {
-        pthread_cond_wait(&android_app->cond, &android_app->mutex);
-    }
-    pthread_mutex_unlock(&android_app->mutex);
 
     return android_app;
 }
@@ -418,6 +427,7 @@ static void onPause(ANativeActivity* activity) {
 
 static void onStop(ANativeActivity* activity) {
     LOGV("Stop: %p\n", activity);
+    // exit(0);
     android_app_set_activity_state((struct android_app*)activity->instance, APP_CMD_STOP);
 }
 
@@ -461,6 +471,7 @@ static void onInputQueueDestroyed(ANativeActivity* activity, AInputQueue* queue)
 
 void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
     LOGV("Creating: %p, tid %d\n", activity, gettid());
+
     activity->callbacks->onDestroy = onDestroy;
     activity->callbacks->onStart = onStart;
     activity->callbacks->onResume = onResume;

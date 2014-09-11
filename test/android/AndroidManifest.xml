@@ -8,7 +8,8 @@
         <activity android:name="ru.redspell.lightning.NativeActivity"
                 android:screenOrientation="portrait"
                 android:label="Lightning Native"
-                android:configChanges="orientation|keyboardHidden">
+                android:configChanges="orientation|keyboardHidden"
+                android:launchMode="singleTask">
             <meta-data android:name="android.app.lib_name" android:value="test" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
