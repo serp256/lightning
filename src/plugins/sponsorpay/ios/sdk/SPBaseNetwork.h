@@ -1,6 +1,5 @@
 //
-//  SPProvider.h
-//  SponsorPayTestApp
+//  SponsorPay iOS SDK
 //
 //  Created by Daniel Barden on 15/01/14.
 //  Copyright (c) 2014 SponsorPay. All rights reserved.
@@ -17,6 +16,7 @@ typedef NS_OPTIONS(NSUInteger, SPNetworkSupport)
     SPNetworkSupportInterstitial
 };
 
+@class SPSemanticVersion;
 @protocol SPTPNVideoAdapter;
 
 /**
@@ -36,6 +36,8 @@ typedef NS_OPTIONS(NSUInteger, SPNetworkSupport)
 
 /** The name of the network */
 @property (nonatomic, copy, readonly) NSString *name;
+
++ (SPSemanticVersion *)adapterVersion;
 
 - (BOOL)startNetworkWithName:(NSString *)networkName data:(NSDictionary *)data;
 

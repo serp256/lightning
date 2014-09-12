@@ -24,7 +24,7 @@
  The available providers are fetched by reading the entry "SPProviders" in the main plist file of the project. It also starts, when available,
  the video and interstitial adapters.
  */
-+ (void)startNetworks:(NSArray*)networks;
++ (void)startNetworks;
 
 /**
  Returns the video adapter for a given provider or nil.

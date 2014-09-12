@@ -22,8 +22,8 @@ static NSString *const kSPURLParamKeyAppBundleVersion = @"app_version";
     }
     
     NSDictionary *hostAppBundleParams = @{
-    kSPURLParamKeyAppBundleName : appBundleName,
-    kSPURLParamKeyAppBundleVersion : appVersion
+        kSPURLParamKeyAppBundleName : (appBundleName ?: @"not_specified"),
+        kSPURLParamKeyAppBundleVersion : (appVersion ?: @"not_specified")
     };
     
     return hostAppBundleParams;

@@ -107,11 +107,13 @@ void _SPLogFatal(NSString *format, ...)
 
 - (void)logFormat:(NSString *)format arguments:(va_list)arguments
 {
-    [self.loggers enumerateObjectsUsingBlock:^(id<SPLogAppender> logger, NSUInteger idx, BOOL *stop) {
+    for (id<SPLogAppender>logger in self.loggers) {
+        va_list args_copy;
+        va_copy(args_copy, arguments);
 
-        [logger logFormat:format arguments:arguments];
-
-    }];
+        [logger logFormat:format arguments:args_copy];
+        va_end(args_copy);
+    };
 }
 
 - (void)addLogger:(id<SPLogAppender>)logger

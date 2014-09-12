@@ -8,9 +8,13 @@
 #import "SPBrandEngageWebView.h"
 #import "SPLogger.h"
 #import "NSURL+SPParametersParsing.h"
+#import "NSURL+SPDescription.h"
 #import "NSString+SPURLEncoding.h"
+#import "NSDictionary+SPSerialization.h"
 #import "SPResourceLoader.h"
+#import "SPConstants.h"
 
+// TODO: Change all of these to static NSStrings
 #define kSPCustomURLScheme                          @"sponsorpay"
 
 #define kSPRequestOffersAnswer                      @"requestOffers"
@@ -23,19 +27,23 @@
 #define kSPRequestStatusParameterCloseAbortedValue  @"CLOSE_ABORTED"
 #define kSPRequestStatusParameterError              @"ERROR"
 
-#define kSPRequestValidate                          @"validate"
 #define kSPThirtPartyNetworkParameter               @"tpn"
-#define kSPTPNIDParameter                           @"id"
 #define kSPRequestPlay                              @"play"
 
 #define kSPRequestExit                              @"exit"
 #define kSPRequestURLParameterKey                   @"url"
 
+#define kSPRequestInstall                           @"install"
+#define kSPRequestInstallAppId                      @"id"
 
 #define kSPJsInvocationStartOffer @"Sponsorpay.MBE.SDKInterface.do_start()"
 #define kSPJsInvocationNotify @"Sponsorpay.MBE.SDKInterface.notify"
 #define kSPJsInvocationGetOffer @"Sponsorpay.MBE.SDKInterface.do_getOffer()"
 
+static NSString *const SPTPNLocalName = @"local";
+static NSString *const SPTPNShowAlertParameter = @"showAlert";
+static NSString *const SPTPNAlertMessageParameter = @"alertMessage";
+static NSString *const SPTPNClickThroughURL = @"clickThroughUrl";
 
 @interface SPBrandEngageWebView ()
 
@@ -51,6 +59,7 @@
 - (void)showCloseButton;
 - (void)hideCloseButton;
 - (void)closeButtonWasTapped;
+
 @end
 
 @implementation SPBrandEngageWebView
@@ -98,7 +107,7 @@
         [self processSponsorPayScheme:url];
         return NO;
     }
-    SPLogDebug(@"[BET] Webview will start loading request: %@ with navigation type: %d", request, navigationType);
+    SPLogDebug(@"[BET] Webview will start loading request: %@ with navigation type: %d", [request.URL SPPrettyDescription], navigationType);
     return YES;
 }
 
@@ -285,9 +294,9 @@
     } else if ([command isEqualToString:kSPRequestExit]) {
         NSString *urlString = [parameters objectForKey:kSPRequestURLParameterKey];
         [self javascriptExitNotificationReceivedWithOfferURLParameterValue:urlString];
-    } else if ([command isEqualToString:kSPRequestValidate]) {
+    } else if ([command isEqualToString:SPRequestValidate]) {
         NSString *tpnName = parameters[kSPThirtPartyNetworkParameter];
-        NSDictionary *contextData = @{kSPTPNIDParameter : parameters[kSPTPNIDParameter]};
+        NSDictionary *contextData = @{SPTPNIDParameter : parameters[SPTPNIDParameter]};
 
         SPLogInfo(@"MBE client asks to validate a third party network: %@", tpnName);
 
@@ -296,13 +305,30 @@
                                          contextData:contextData];
     } else if ([command isEqualToString:kSPRequestPlay]) {
         NSString *tpnName = parameters[kSPThirtPartyNetworkParameter];
-        NSDictionary *contextData = @{kSPTPNIDParameter : parameters[kSPTPNIDParameter]};
+        NSDictionary *contextData = @{SPTPNIDParameter : parameters[SPTPNIDParameter]};
 
         SPLogInfo(@"[BET] MBE client asks to play an offer from a third party network: %@", tpnName);
 
-        [self.brandEngageDelegate brandEngageWebView:self
-                              requestsPlayVideoOfTPN:tpnName
-                                         contextData:contextData];
+        // Check if we should play using our own native player
+        if ([tpnName isEqualToString:SPTPNLocalName]) {
+            // Alert configuration
+            BOOL showAlert = [parameters[SPTPNShowAlertParameter] isEqualToString:@"true"];
+            NSString *alertMessage = [parameters[SPTPNAlertMessageParameter] SPURLDecodedString];
+
+            // ClickThrough configuration
+            NSString *clickThroughURLString = [parameters[SPTPNClickThroughURL] SPURLDecodedString];
+            NSURL *clickThroughURL = [NSURL URLWithString:clickThroughURLString];
+
+            [self.brandEngageDelegate brandEngageWebView:self playVideoFromLocalNetwork:tpnName video:parameters[SPTPNIDParameter] showAlert:showAlert alertMessage:alertMessage clickThroughURL:clickThroughURL];
+        } else {
+            [self.brandEngageDelegate brandEngageWebView:self
+                                  requestsPlayVideoOfTPN:tpnName
+                                             contextData:contextData];
+        }
+    } else if ([command isEqualToString:kSPRequestInstall]) {
+        NSString *appId = parameters[kSPRequestInstallAppId];
+        SPLogDebug(@"Opening store with app id: %@", appId);
+        [self.brandEngageDelegate brandEngageWebView:self requestsStoreWithAppId:appId];
     }
 }
 
@@ -312,9 +338,14 @@
                           forTPN:(NSString *)tpnName
                      contextData:(NSDictionary *)contextData
 {
-    NSString *js = [NSString stringWithFormat:@"%@('validate', {tpn:'%@', id:%@, result:'%@'})",
-                    kSPJsInvocationNotify, tpnName, contextData[kSPTPNIDParameter],
-                    validationResult];
+    NSString *contextDataString;
+    if (contextData.count) {
+        contextDataString = [NSString stringWithFormat:@", %@", [contextData SPComponentsJoined]];
+    }
+
+    NSString *js = [NSString stringWithFormat:@"%@('validate', {tpn:'%@', result:'%@'%@})",
+                    kSPJsInvocationNotify, tpnName,
+                    validationResult, contextDataString];
 
     SPLogDebug(@"%s (%x) invoking javascript in the webview: %@", __PRETTY_FUNCTION__ , [self hash], js);
 
@@ -325,9 +356,14 @@
                     forTPN:(NSString *)tpnName
                contextData:(NSDictionary *)contextData
 {
-    NSString *js = [NSString stringWithFormat:@"%@('play', {tpn:'%@', id:%@, result:'%@'})",
-                    kSPJsInvocationNotify, tpnName, contextData[kSPTPNIDParameter],
-                    videoEventName];
+    NSString *contextDataString;
+    if (contextData.count) {
+        contextDataString = [NSString stringWithFormat:@", %@", [contextData SPComponentsJoined]];
+    }
+
+    NSString *js = [NSString stringWithFormat:@"%@('play', {tpn:'%@', result:'%@'%@})",
+                    kSPJsInvocationNotify, tpnName,
+                    videoEventName, contextDataString];
     
     SPLogDebug(@"%s (%x) invoking javascript in the webview: %@", __PRETTY_FUNCTION__ , [self hash], js);
 

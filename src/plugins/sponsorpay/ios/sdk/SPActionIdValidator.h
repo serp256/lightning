@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+FOUNDATION_EXPORT NSString *const SPInvalidActionIdException;
+
 @interface SPActionIdValidator : NSObject
 
 + (BOOL)validate:(NSString *)actionId reasonForInvalid:(NSString **)reason;

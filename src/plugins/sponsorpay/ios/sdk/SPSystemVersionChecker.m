@@ -6,7 +6,7 @@
 // Copyright 2011-2013 SponsorPay. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "UIKit/UIKit.h"
 #import "SPSystemVersionChecker.h"
 
 @implementation SPSystemVersionChecker
@@ -55,4 +55,3 @@
 }
 
 @end
-

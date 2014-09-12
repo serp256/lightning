@@ -9,6 +9,7 @@
 #import "SPNetworkOperation.h"
 #import "SPURLGenerator.h"
 #import "SPLogger.h"
+#import "NSURL+SPDescription.h"
 
 static const NSTimeInterval SPCallbackOperationTimeout = 60.0;
 
@@ -21,7 +22,7 @@ static const NSTimeInterval SPCallbackOperationTimeout = 60.0;
     }
     @autoreleasepool {
 
-        SPLogDebug(@"%@ will send callback on thread: %@ using url:\n%@", self, [NSThread currentThread], self.url);
+        SPLogDebug(@"%@ will send callback on thread: %@ using url and query string: %@", self, [NSThread currentThread], [self.url SPPrettyDescription]);
 
         if (!self.url) {
             self.didRequestSucceed = NO;

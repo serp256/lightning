@@ -59,8 +59,4 @@
  */
 - (void)showOfferWallWithParentViewController:(UIViewController *)parentViewController;
 
-// TODO: extract these two selectors common to all components subject to staging mode
-+ (void)overrideBaseURLWithURLString:(NSString *)newURLString;
-+ (void)restoreBaseURLToDefault;
-
 @end

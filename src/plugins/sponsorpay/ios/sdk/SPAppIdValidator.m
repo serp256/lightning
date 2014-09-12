@@ -8,17 +8,17 @@
 
 #import "SPAppIdValidator.h"
 
+NSString *const SPInvalidAppIdException = @"SPInvalidAppIdException";
 @implementation SPAppIdValidator
 
 + (void)validateOrThrow:(NSString *)appId;
 {
-    if (!appId || [appId isEqualToString:@""] || [appId isEqualToString:@"0"]) {
+    if (!appId.length || [appId isEqualToString:@"0"]) {
         NSString *invalidAppIdReason = [NSString stringWithFormat:
                                         @"A valid App ID must be specified ('%@' was provided)", appId];
         
-        @throw [NSException exceptionWithName:@"SPInvalidAppIdException"
-                                       reason:invalidAppIdReason
-                                     userInfo:nil];
+        [NSException raise:SPInvalidAppIdException format:@"%@", invalidAppIdReason];
     }
 }
+
 @end

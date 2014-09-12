@@ -12,9 +12,15 @@
 @class SPBaseNetwork;
 
 /**
- * Defines the interface required by a video network SDK wrapper.
+ * Defines the interface required by an interstitial network SDK wrapper.
  */
 @protocol SPInterstitialNetworkAdapter <NSObject>
+
+/**
+ * Arbitrary offer data that can be written and read by the SponsorPay SDK to keep track of context.
+ * This property needs to be synthesized in the adapter implementation.
+ */
+@property (strong, nonatomic) NSDictionary *offerData;
 
 /**
  * Returns the name of the interstitial-providing network wrapped by this adapter.
@@ -64,7 +70,7 @@ typedef enum {
  * Protocol that delegates wishing to be notified of interstitial availability
  * and lifecycle must conform to.
  */
-@protocol SPInterstitialNetworkAdapterDelegate
+@protocol SPInterstitialNetworkAdapterDelegate <NSObject>
 
 /**
  * Informs the delegate that an interstitial ad is being displayed.

@@ -6,18 +6,21 @@
 //  Copyright (c) 2013 SponsorPay. All rights reserved.
 //
 
+#import "SPBaseNetwork.h"
 #import "SPTPNManager.h"
 #import "SPLogger.h"
-#import "SPBaseNetwork.h"
+#import "SPSemanticVersion.h"
 
-static NSString *SPAdaptersKey = @"SPNetworks";
+static NSString *const SPAdaptersKey = @"SPNetworks";
 static NSString *const SPNetworkName = @"SPNetworkName";
 static NSString *const SPNetworkSuffix = @"SPNetworkSuffix";
 static NSString *const SPNetworkParameters = @"SPNetworkParameters";
 
+static const NSInteger SPAdapterSupportedVersion = 2;
+
 @interface SPTPNManager()
 
-@property (nonatomic, strong) NSMutableDictionary *networks;
+@property (strong, nonatomic) NSMutableDictionary *networks;
 
 @end
 
@@ -34,9 +37,9 @@ static NSString *const SPNetworkParameters = @"SPNetworkParameters";
     return sharedInstance;
 }
 
-+ (void)startNetworks:(NSArray*)networks
++ (void)startNetworks
 {
-    [[self sharedInstance] startNetworks:networks];
+    [[self sharedInstance] startNetworks];
 }
 
 + (id<SPTPNVideoAdapter>)getRewardedVideoAdapterForNetwork:(NSString *)networkName
@@ -69,43 +72,35 @@ static NSString *const SPNetworkParameters = @"SPNetworkParameters";
     return self;
 }
 
-- (void)startNetworks:(NSArray*)ntwks
+- (void)startNetworks
 {
-    NSArray *networks = ntwks ? ntwks : [[NSBundle mainBundle] infoDictionary][SPAdaptersKey];
+    NSArray *networks = [[NSBundle mainBundle] infoDictionary][SPAdaptersKey];
     [networks enumerateObjectsUsingBlock:^(id providerData, NSUInteger idx, BOOL *stop) {
         NSString *networkName = providerData[SPNetworkName];
         NSString *networkClassName = [self getClassName:networkName];
 
-        NSLog(@"!!!!!networkClassName %@", networkClassName);
         Class NetworkClass = NSClassFromString(networkClassName);
         if (!NetworkClass) {
             SPLogError(@"Class %@ could not be found", networkClassName);
             return;
         }
 
-        // Checks if the provider is already integrated. Since we won't reuse networks, we can check if an object of the network class exists in the networks
-        // Also, sometimes the provider.name is different than suffix used to instantiate the class
-        NSArray *integratedNetworks = [self.networks allValues];
-        NSUInteger index = [integratedNetworks indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-            if ([obj class] == NetworkClass) {
-                *stop = YES;
-                return YES;
-            }
-            return NO;
-        }];
-
-        if (index != NSNotFound) {
+        if ([self isAdapterAlreadyRegistered:NetworkClass]) {
             SPLogError(@"Provider %@ is already registered", networkName);
             return;
         }
 
-        SPBaseNetwork *network = [[NetworkClass alloc] init];
-
-        if (![network isKindOfClass:[SPBaseNetwork class]]) {
-            SPLogError(@"Class %@ is not a subclass of %@", NSStringFromClass([network class]), NSStringFromClass([SPBaseNetwork class]));
+        if (![NetworkClass isSubclassOfClass:[SPBaseNetwork class]]) {
+            SPLogError(@"Class %@ is not a subclass of %@", NSStringFromClass(NetworkClass), NSStringFromClass([SPBaseNetwork class]));
             return;
         }
 
+        if (![self isAdapterVersionValid:[NetworkClass adapterVersion]]) {
+            SPLogError(@"Could not add %@: Adapter version is %@ but this SDK version support only adapters with version %d.X.X", networkName, [NetworkClass adapterVersion], SPAdapterSupportedVersion);
+            return;
+        }
+
+        SPBaseNetwork *network = [[NetworkClass alloc] init];
         // Starts the SDK and Adapters
         BOOL sdkStarted = [network startNetworkWithName:networkName data:providerData[SPNetworkParameters]];
 
@@ -162,6 +157,32 @@ static NSString *const SPNetworkParameters = @"SPNetworkParameters";
 }
 
 #pragma mark - Helper Methods
+
+- (BOOL)isAdapterAlreadyRegistered:(__unsafe_unretained Class)networkClass
+{
+    // Checks if the provider is already integrated. Since we won't reuse networks, we can check if an object of the network class exists in the networks
+    // Also, sometimes the provider.name is different than suffix used to instantiate the class
+    NSArray *integratedNetworks = [self.networks allValues];
+    NSUInteger index = [integratedNetworks indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+        if ([obj class] == networkClass) {
+            *stop = YES;
+            return YES;
+        }
+        return NO;
+    }];
+
+    if (index == NSNotFound) {
+        return NO;
+    }
+    return YES;
+}
+
+// The adapter's major version reflects the version of the interface between the sdk <-> adapter.
+- (BOOL)isAdapterVersionValid:(SPSemanticVersion *)adapterVersion
+{
+    return adapterVersion.major == SPAdapterSupportedVersion;
+}
+
 // Gets the provider class name by concatenating the name.
 - (NSString *)getClassName:(NSString *)networkName
 {

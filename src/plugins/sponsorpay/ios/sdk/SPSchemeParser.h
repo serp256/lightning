@@ -14,13 +14,17 @@
 @interface SPSchemeParser : NSObject
 
 @property (strong, nonatomic) NSURL *URL;
-@property (assign) BOOL shouldRequestCloseWhenOpeningExternalURL;
+@property (assign, nonatomic) BOOL shouldRequestCloseWhenOpeningExternalURL;
 
-@property (readonly) BOOL requestsContinueWebViewLoading;
-@property (readonly) BOOL requestsOpeningExternalDestination;
-@property (readonly) NSURL *externalDestination;
-@property (readonly) BOOL requestsClosing;
-@property (readonly) BOOL requestsStopShowingLoadingActivityIndicator;
-@property (readonly) NSInteger closeStatus;
+@property (assign, nonatomic, readonly) BOOL requestsContinueWebViewLoading;
+@property (assign, nonatomic, readonly) BOOL requestsOpeningExternalDestination;
+@property (strong, nonatomic, readonly) NSURL *externalDestination;
+@property (assign, nonatomic, readonly) BOOL requestsClosing;
+@property (assign, nonatomic, readonly) BOOL requestsStopShowingLoadingActivityIndicator;
+@property (assign, nonatomic, readonly) NSInteger closeStatus;
+
+@property (copy, nonatomic, readonly) NSString *command;
+
+@property (copy, nonatomic, readonly) NSString *appId;
 
 @end

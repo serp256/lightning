@@ -8,6 +8,8 @@
 
 #import "SPActionIdValidator.h"
 
+NSString *const SPInvalidActionIdException = @"SPInvalidActionIdException";
+
 @implementation SPActionIdValidator
 
 + (BOOL)validate:(NSString *)actionId reasonForInvalid:(NSString **)reason
@@ -44,9 +46,7 @@
 {
     NSString *exceptionReason = nil;
     if (![self validate:actionId reasonForInvalid:&exceptionReason]) {
-        @throw [NSException exceptionWithName:@"SPInvalidActionIdException"
-                                       reason:exceptionReason
-                                     userInfo:nil];
+        [NSException raise:SPInvalidActionIdException format:@"%@", exceptionReason];
     }
 }
 

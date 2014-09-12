@@ -13,7 +13,6 @@ NSString *const SPNoCredentialsException = @"SponsorPayNoCredentialsException";
 NSString *const SPNoUniqueCredentialsException = @"SponsorPayNoUniqueCredentialsException";
 NSString *const SPInvalidCredentialsTokenException = @"SponsorPayInvalidCredentialsToken";
 
-
 @interface SPCredentialsManager()
 
 @property (strong) NSMutableDictionary *activeCredentialsItems;
@@ -96,7 +95,7 @@ NSString *const SPInvalidCredentialsTokenException = @"SponsorPayInvalidCredenti
     SPCredentials *credentials = [self.activeCredentialsItems objectForKey:credentialsToken];
 
     if (!credentials) {
-        [self throwInvalidCredentialsTokenException];
+        return nil;
     }
 
     return credentials;
@@ -108,30 +107,21 @@ NSString *const SPInvalidCredentialsTokenException = @"SponsorPayInvalidCredenti
 {
     NSString *exceptionReason = @"Please start the SDK with "
     "[SponsorPaySDK startForAppId:userId:securityToken:] before accessing any of its resources";
-    NSException* exception =  [NSException exceptionWithName:SPNoCredentialsException
-                                                      reason:exceptionReason
-                                                    userInfo:nil];
-    @throw exception;
+    [NSException raise:SPNoCredentialsException format:@"%@", exceptionReason];
 }
 
 - (void)throwInvalidCredentialsTokenException
 {
     NSString *exceptionReason = @"Please use [SponsorPaySDK startForAppId:userId:securityToken:] "
     "to obtain a valid credentials token. (No credentials found for the credentials token specified.)";
-    NSException *exception = [NSException exceptionWithName:SPInvalidCredentialsTokenException
-                                                     reason:exceptionReason
-                                                   userInfo:nil];
-    @throw exception;
+    [NSException raise:SPInvalidCredentialsTokenException format:@"%@", exceptionReason];
 }
 
 - (void)throwNoUniqueCredentialsException
 {
     NSString *exceptionReason = @"More than one active SponsorPay appId / userId. Please use the credentials token "
     "to specify the appId / userId combination for which you're accessing the desired resource.";
-    NSException* exception = [NSException exceptionWithName:SPNoUniqueCredentialsException
-                                                     reason:exceptionReason
-                                                   userInfo:nil];
-    @throw exception;
+    [NSException raise:SPNoUniqueCredentialsException format:@"%@", exceptionReason];
 }
 
 #pragma mark - Default credentials per product
@@ -145,7 +135,6 @@ NSString *const SPInvalidCredentialsTokenException = @"SponsorPayInvalidCredenti
             break;
         }
         case SPSDKHasNoCredentials: {
-            [self throwNoCredentialsException];
             break;
         }
         case SPSDKHasMultipleCredentialsItems: {
@@ -190,12 +179,10 @@ NSString *const SPInvalidCredentialsTokenException = @"SponsorPayInvalidCredenti
 - (void)setConfigurationValueInAllCredentials:(id)value
                                        forKey:(NSString *)key
 {
-    if (!self.activeCredentialsItems.count)
-        @throw [NSException exceptionWithName:@"SponsorPaySDKNotStarted"
-                                       reason:@"Please start the SDK with "
-                "[SponsorPaySDK startForAppId:userId:securityToken:] "
-                "before setting any of its configuration values."
-                                     userInfo:nil];
+    if (!self.activeCredentialsItems.count) {
+        NSString *exceptionReason = @"Please start the SDK with [SponsorPaySDK startForAppId:userId:securityToken:] before setting any of its configuration values.";
+        [NSException raise:@"SponsorPaySDKNotStarted" format:@"%@", exceptionReason];
+    }
 
     NSArray *allCredentialTokens = self.activeCredentialsItems.allKeys;
 

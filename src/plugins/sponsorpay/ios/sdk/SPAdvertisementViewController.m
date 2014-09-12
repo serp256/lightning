@@ -11,8 +11,9 @@
 #import "SPAdvertisementViewControllerSubclass.h"
 #import "SPTargetedNotificationFilter.h"
 #import "SPLogger.h"
+#import <StoreKit/StoreKit.h>
 
-@interface SPAdvertisementViewController ()
+@interface SPAdvertisementViewController () <SKStoreProductViewControllerDelegate, UIAlertViewDelegate>
 
 @property (nonatomic, strong) NSString *appId;
 @property (nonatomic, strong) NSString *userId;
@@ -171,23 +172,35 @@
 {
     self.sponsorpaySchemeParser.URL = request.URL;
     self.sponsorpaySchemeParser.shouldRequestCloseWhenOpeningExternalURL = self.shouldFinishOnRedirect;
-    
-    if (self.sponsorpaySchemeParser.requestsStopShowingLoadingActivityIndicator) {
-        [self animateLoadingViewOut];
-    }
-    
-    BOOL openingExternalDestination = self.sponsorpaySchemeParser.requestsOpeningExternalDestination;
-    
-    if (openingExternalDestination) {
-        [[UIApplication sharedApplication] openURL:self.sponsorpaySchemeParser.externalDestination];
-    }
-
     BOOL shouldContinueLoading = self.sponsorpaySchemeParser.requestsContinueWebViewLoading;
 
-    if (self.sponsorpaySchemeParser.requestsClosing) {
-        [self dismissAnimated:!openingExternalDestination withStatus:self.sponsorpaySchemeParser.closeStatus];
+    NSString *command = self.sponsorpaySchemeParser.command;
+
+    if ([command isEqualToString:SPONSORPAY_START_PATH]) {
+        // Start command
+        [self animateLoadingViewOut];
+    } else if ([command isEqualToString:SPONSORPAY_EXIT_PATH]) {
+        // Exit Command
+        BOOL openingExternalDestination = self.sponsorpaySchemeParser.requestsOpeningExternalDestination;
+
+        if (openingExternalDestination) {
+            [[UIApplication sharedApplication] openURL:self.sponsorpaySchemeParser.externalDestination];
+        }
+
+        if (self.sponsorpaySchemeParser.requestsClosing) {
+            [self dismissAnimated:!openingExternalDestination withStatus:self.sponsorpaySchemeParser.closeStatus];
+        }
+
+    } else if ([command isEqualToString:SPONSORPAY_INSTALL_PATH]) {
+        // Install Command
+        if ([SKStoreProductViewController class]) {
+            [self openStoreWithAppId:self.sponsorpaySchemeParser.appId];
+        } else {
+            [self openITunesWithAppId:self.sponsorpaySchemeParser.appId
+                      requestsClosing:self.sponsorpaySchemeParser.requestsClosing
+                          closeStatus:self.sponsorpaySchemeParser.closeStatus];
+        }
     }
-    
     return shouldContinueLoading;
 }
 
@@ -207,6 +220,51 @@
     [self webViewDidFinishLoad];
 }
 
+#pragma mark - UIAlertViewDelegate methods
+
+- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == 0) {
+        if (self.sponsorpaySchemeParser.requestsClosing) {
+            [self dismissAnimated:YES withStatus:self.sponsorpaySchemeParser.closeStatus];
+        }
+    }
+}
+
+#pragma mark - Private Methods
+- (void)openStoreWithAppId:(NSString *)appId
+{
+    SPLogDebug(@"Opening StoreKit with App Id: %@", appId);
+    SKStoreProductViewController *productViewController = [[SKStoreProductViewController alloc] init];
+    productViewController.delegate = self;
+    [productViewController loadProductWithParameters:@{SKStoreProductParameterITunesItemIdentifier: appId}
+                                     completionBlock:^(BOOL result, NSError *error) {
+        if (!error) {
+            [self presentViewController:productViewController animated:YES completion:nil];
+
+        } else {
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"An Error Happened", nil)
+                                                                message:[error localizedDescription]
+                                                               delegate:self
+                                                      cancelButtonTitle:NSLocalizedString(@"Dismiss", nil)
+                                                      otherButtonTitles:nil];
+            [alertView show];
+        }
+    }];
+
+}
+
+- (void)openITunesWithAppId:(NSString *)appId requestsClosing:(BOOL)requestsClosing closeStatus:(NSInteger)closeStatus
+{
+    NSURL *iTunesURL = [NSURL URLWithString:[NSString stringWithFormat:@"itms-apps://itunes.com/apps/id%@", appId]];
+    SPLogDebug(@"Opening iTunes with URL: %@", iTunesURL);
+    [[UIApplication sharedApplication] openURL:iTunesURL];
+
+    if (requestsClosing) {
+        [self dismissAnimated:NO withStatus:closeStatus];
+    }
+
+}
 #pragma mark - Unimplemented methods
 
 - (void)dismissAnimated:(BOOL)animated withStatus:(NSInteger)status
@@ -325,6 +383,17 @@
     _publisherViewController = publisherViewController;
 }
 
+#pragma mark - Store Kit delegate
+
+- (void)productViewControllerDidFinish:(SKStoreProductViewController *)viewController
+{
+    if (self.sponsorpaySchemeParser.requestsClosing) {
+        [self dismissAnimated:YES withStatus:self.sponsorpaySchemeParser.closeStatus];
+    } else {
+        [viewController dismissViewControllerAnimated:YES completion:nil];
+    }
+}
+
 #pragma mark - Housekeeping
 
 - (void)didReceiveMemoryWarning
@@ -339,7 +408,6 @@
     self.webView = nil;
     self.loadingProgressView = nil;
     self.sponsorpaySchemeParser = nil;
-    
 }
 
 @end

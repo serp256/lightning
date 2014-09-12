@@ -14,6 +14,7 @@
 
 @property (strong, nonatomic) NSDateFormatter *dateFormatter;
 @property (strong, nonatomic) NSMutableString *logMessagesBuffer;
+
 @end
 
 @implementation SPBufferedLogger
@@ -39,18 +40,21 @@
     }
     return self;
 }
+
 - (void)logFormat:(NSString *)format arguments:(va_list)arguments
 {
     NSDate *now = [NSDate date];
     NSString *timeString = [self.dateFormatter stringFromDate:now];
     NSString *logMessage = [[NSString alloc] initWithFormat:format arguments:arguments];
-    NSString *timestampedLogMessage = [NSString stringWithFormat:@"%@ %@", timeString, logMessage];
+    NSString *timestampedLogMessage = [NSString stringWithFormat:@"\n%@ %@", timeString, logMessage];
 
     [self willChangeValueForKey:kSPLoggerBufferedMessagesStringPropertyName];
     if (!_logMessagesBuffer) {
         _logMessagesBuffer = [[NSMutableString alloc] initWithString:timestampedLogMessage];
     } else {
-        [_logMessagesBuffer appendString:timestampedLogMessage];
+        @synchronized(self) {
+            [_logMessagesBuffer appendString:timestampedLogMessage];
+        }
     }
     [self didChangeValueForKey:kSPLoggerBufferedMessagesStringPropertyName];
 

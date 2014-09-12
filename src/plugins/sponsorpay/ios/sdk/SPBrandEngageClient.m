@@ -20,6 +20,8 @@
 #import "SPBrandEngageWebView.h"
 #import "SPConstants.h"
 
+#import <StoreKit/StoreKit.h>
+
 #define kSPMBEJSCoreURL @"http://be.sponsorpay.com/mobile"
 
 #define kSPMBERequestOffersTimeout (NSTimeInterval)10.0
@@ -29,6 +31,9 @@
 #define kSPMBEErrorDialogMessageDefault     @"We're sorry, something went wrong. Please try again."
 #define kSPMBEErrorDialogMessageOffline     @"Your Internet connection has been lost. Please try again later."
 #define kSPMBEErrorDialogButtonTitleDismiss @"Dismiss"
+
+#define kSPMBEErrorDialogGenericTag  0
+#define kSPMBEErrorDialogStoreKitTag 1
 
 static NSString *MBEJSCoreURL = kSPMBEJSCoreURL;
 
@@ -40,7 +45,7 @@ typedef enum {
 } SPBrandEngageClientOffersRequestStatus;
 
 
-@interface SPBrandEngageClient () <SPBrandEngageWebViewDelegate, UIAlertViewDelegate>
+@interface SPBrandEngageClient () <SPBrandEngageWebViewDelegate, UIAlertViewDelegate, SKStoreProductViewControllerDelegate>
 
 @property (strong, nonatomic) SPBrandEngageWebView *BEWebView;
 @property (strong) SPBrandEngageViewController *activeBEViewController;
@@ -56,26 +61,8 @@ typedef enum {
 @property (readwrite, strong, nonatomic) SPMediationCoordinator *mediationCoordinator;
 @property (assign) BOOL playingThroughTPN;
 
-- (NSURLRequest *)requestForWebViewMBEJsCore;
-- (void)engagementDidFinish;
+@property (strong, nonatomic) SPLoadingIndicator *loadingStoreKitView;
 
-- (void)didChangePublisherParameters;
-- (void)didEnterBackground;
-- (void)userReturnedAfterFollowingOffer;
-- (void)requestOffersTimerDue;
-
-- (void)showRewardNotification;
-
-- (void)setUpInternetReachabilityNotifier;
-- (void)reachabilityChanged:(NSNotification*)note;
-- (void)didLoseInternetConnection;
-
-- (void)invokeDelegateWithStatus:(SPBrandEngageClientStatus)status;
-- (void)showErrorAlertWithMessage:(NSString *)message;
-
-+ (UIViewController *)swapRootViewControllerTo:(UIViewController *)toVC
-                          withAnimationOptions:(UIViewAnimationOptions)animationOptions
-                                    completion:(void (^)(void))completion;
 @end
 
 
@@ -86,6 +73,7 @@ typedef enum {
     BOOL _mustRestoreStatusBarOnPlayerDismissal;
     SPReachability *_internetReachability;
     SPLoadingIndicator *_loadingProgressView;
+
 }
 
 #pragma mark - Properties
@@ -148,6 +136,7 @@ typedef enum {
     if (self) {
         _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
         self.shouldShowRewardNotificationOnEngagementCompleted = YES;
+        self.loadingStoreKitView = [[SPLoadingIndicator alloc] initFullScreen:NO showSpinner:YES];
 
         [self setUpInternetReachabilityNotifier];
         [self registerForCurrencyNameChangeNotification];
@@ -225,7 +214,7 @@ typedef enum {
         // TODO: introduce timeout for the rare case in which 3rd party SDK
         // silently fails to start an offer and hostViewController must be released
         [self animateLoadingViewIn];
-
+        [self.BEWebView startOffer];
     } else {
         [self presentBEViewControllerWithParent:parentViewController];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -234,7 +223,7 @@ typedef enum {
                                                    object:nil];
     }
 
-    [self.BEWebView startOffer];
+
 
     return YES;
 }
@@ -254,11 +243,15 @@ typedef enum {
     if ([SPSystemVersionChecker runningOniOS6OrNewer]) {
         [parentViewController presentViewController:self.activeBEViewController
                                            animated:YES
-                                         completion:nil];
+                                         completion:^{
+                                             [self.BEWebView startOffer];
+                                         }];
     } else {
         self.viewControllerToRestore = [[self class] swapRootViewControllerTo:brandEngageVC
                                                          withAnimationOptions:UIViewAnimationOptionTransitionCurlDown
-                                                                   completion:nil];
+                                                                   completion:^{
+                                                                           [self.BEWebView startOffer];
+                                                                   }];
     }
 }
 
@@ -301,10 +294,9 @@ typedef enum {
 
 - (void)brandEngageWebViewOnAborted:(SPBrandEngageWebView *)BEWebView
 {
-    _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
-    
     [self engagementDidFinish];
-    
+
+    _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
     [self invokeDelegateWithStatus:CLOSE_ABORTED];
 }
 
@@ -323,7 +315,7 @@ typedef enum {
             errorMessage = kSPMBEErrorDialogMessageOffline;
         }
 
-        [self showErrorAlertWithMessage:errorMessage];
+        [self showErrorAlertWithMessage:errorMessage tag:kSPMBEErrorDialogGenericTag];
     }
     else if (preErrorStatus == QUERYING_SERVER_FOR_OFFERS) {
         [self invokeDelegateWithStatus:ERROR];
@@ -346,14 +338,14 @@ typedef enum {
                                                    object:nil];
         SPLogDebug(@"Application will follow offer url: %@", offerURL);
     }
-    _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
     
     [self engagementDidFinish];
     
     if (!willOpenURL) {
         [self showRewardNotification];
     }
-    
+
+    _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
     [self invokeDelegateWithStatus:CLOSE_FINISHED];
 }
 
@@ -394,7 +386,55 @@ typedef enum {
     [self.mediationCoordinator playVideoFromProvider:tpnName
                                       eventsCallback:eventsHandlerBlock];
 }
+- (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView requestsStoreWithAppId:(NSString *)appId
+{
+    [BEWebView stopLoading];
+    if ([SKStoreProductViewController class]) {
 
+        [self openStoreWithAppId:appId];
+    } else {
+        NSURL *offerURL = [NSURL URLWithString:[NSString stringWithFormat:@"itms-apps://itunes.com/apps/id%@", appId]];
+        [self brandEngageWebView:BEWebView requestsToCloseFollowingOfferURL:offerURL];
+    }
+}
+
+- (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView playVideoFromLocalNetwork:(NSString *)network video:(NSString *)video showAlert:(BOOL)showAlert alertMessage:(NSString *)alertMessage clickThroughURL:(NSURL *)clickThroughURL
+{
+    // Since our video player supports only landscape, the end card should only support landscape as well
+    self.activeBEViewController.lockToLandscape = YES;
+    [self.activeBEViewController playVideoFromNetwork:network video:video showAlert:showAlert alertMessage:alertMessage clickThroughURL:clickThroughURL];
+}
+
+#pragma mark - StoreKit methods
+- (void)openStoreWithAppId:(NSString *)appId
+{
+    SPLogDebug(@"Opening app store with appId %@", appId);
+    [self.loadingStoreKitView presentWithAnimationTypes:SPAnimationTypeFade];
+    SKStoreProductViewController *productViewController = [[SKStoreProductViewController alloc] init];
+    productViewController.delegate = self;
+    [productViewController loadProductWithParameters:@{SKStoreProductParameterITunesItemIdentifier: appId} completionBlock:^(BOOL result, NSError *error) {
+        [self.loadingStoreKitView dismiss];
+        if (!error) {
+            [self.activeBEViewController presentViewController:productViewController animated:YES completion:nil];
+        } else {
+            [self showErrorAlertWithMessage:[error localizedDescription] tag:kSPMBEErrorDialogStoreKitTag];
+        }
+    }];
+
+}
+
+- (void)productViewControllerDidFinish:(SKStoreProductViewController *)viewController
+{
+    [self dismissProductViewController];
+}
+
+- (void)dismissProductViewController
+{
+    [self showRewardNotification];
+    [self engagementDidFinish];
+    _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
+    [self invokeDelegateWithStatus:CLOSE_FINISHED];
+}
 #pragma mark - Handling user's return after completing engagement
 
 - (void)userReturnedAfterFollowingOffer
@@ -449,27 +489,35 @@ typedef enum {
 {
     if (_offersRequestStatus == SHOWING_OFFERS) {
         _offersRequestStatus = MUST_QUERY_SERVER_FOR_OFFERS;
-        [self showErrorAlertWithMessage:kSPMBEErrorDialogMessageOffline];
+        [self showErrorAlertWithMessage:kSPMBEErrorDialogMessageOffline tag:kSPMBEErrorDialogGenericTag];
     }
 }
 
 #pragma mark - Error alerts
 
-- (void)showErrorAlertWithMessage:(NSString *)message
+- (void)showErrorAlertWithMessage:(NSString *)message tag:(NSInteger)tag
 {
     UIAlertView *errorAlertView = [[UIAlertView alloc] initWithTitle:kSPMBEErrorDialogTitle
                                                              message:message
                                                             delegate:self
                                                    cancelButtonTitle:kSPMBEErrorDialogButtonTitleDismiss
                                                    otherButtonTitles:nil];
+    if (tag) {
+        errorAlertView.tag = tag;
+    }
+
     [errorAlertView show];
     
 }
 
 - (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
 {
-    [self engagementDidFinish];
-    [self invokeDelegateWithStatus:ERROR];
+    if (alertView.tag == kSPMBEErrorDialogGenericTag) {
+        [self engagementDidFinish];
+        [self invokeDelegateWithStatus:ERROR];
+    } else if (alertView.tag == kSPMBEErrorDialogStoreKitTag) {
+        [self dismissProductViewController];
+    }
 }
 
 #pragma mark - Utility methods
@@ -511,7 +559,7 @@ typedef enum {
     }
 
     [self dismissEngagementViewController];
-    
+
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:UIApplicationDidEnterBackgroundNotification
                                                   object:nil];
@@ -524,6 +572,7 @@ typedef enum {
         return;
     }
 
+    self.activeBEViewController.lockToLandscape = NO;
     if ([SPSystemVersionChecker runningOniOS6OrNewer]) {
         [_activeBEViewController.presentingViewController
          dismissViewControllerAnimated:YES
@@ -670,18 +719,6 @@ typedef enum {
 {
     return [NSString stringWithFormat:@"%@ {appId=%@ userId=%@}",
             [super description], self.appId, self.userId];
-}
-
-#pragma mark - Core URL override
-
-+ (void)overrideMBEJSCoreURLWithURLString:(NSString *)overridingURL
-{
-    MBEJSCoreURL = overridingURL;
-}
-
-+ (void)restoreDefaultMBEJSCoreURL
-{
-    [self overrideMBEJSCoreURLWithURLString:kSPMBEJSCoreURL];
 }
 
 @end

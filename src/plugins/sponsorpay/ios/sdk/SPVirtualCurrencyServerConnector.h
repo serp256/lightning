@@ -110,9 +110,6 @@ typedef enum {
 
 /** @name - **/
 
-+ (void)overrideVCSBaseURLWithURLString:(NSString *)overridingURL;
-+ (void)restoreDefaultVCSBaseURL;
-
 + (NSString *)descriptionForErrorType:(SPVirtualCurrencyRequestErrorType) errorType;
 
 @end

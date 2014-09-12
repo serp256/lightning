@@ -7,8 +7,8 @@
 //
 
 #import "SPLoadingIndicator.h"
-#import <UIKit/UIKit.h>
 #import "QuartzCore/QuartzCore.h"
+#import "UIKit/UIKit.h"
 
 static const CGFloat kSPLoadingProgressViewBGColorRed   = .23;
 static const CGFloat kSPLoadingProgressViewBGColorBlue  = .23;
@@ -122,7 +122,7 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
 - (UIView *)blackFullScreen
 {
     if (!_blackFullScreen) {
-        CGRect fullScreenFrame = self.parentWindow.rootViewController.view.frame;
+        CGRect fullScreenFrame = [[UIScreen mainScreen] bounds];
         _blackFullScreen = [[UIView alloc] initWithFrame:fullScreenFrame];
         _blackFullScreen.backgroundColor = [UIColor blackColor];
         _blackFullScreen.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -137,7 +137,7 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
         // It's assumed the parent window won't be deallocated during this instance's lifecyle
         _parentWindow = [[UIApplication sharedApplication] keyWindow];
     }
-    
+
     return _parentWindow;
 }
 
@@ -155,9 +155,9 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
     self.dismissable = YES;
 
     [self.parentWindow addSubview:self.rootView];
-    
+
     [self setupInitialStateForAnimationTypes:animationTypes];
-    
+
     [UIView animateWithDuration:kSPIntroAnimationLength
                      animations:^{
                          if (animationTypes & SPAnimationTypeFade)
@@ -174,8 +174,9 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
     if (!self.dismissable) {
         return;
     }
+
     self.dismissable = NO;
-    
+
     [UIView animateWithDuration:kSPOutroAnimationLength
                      animations:^{
                          self.rootView.alpha = kSPMostTransparentAlphaForFadeAnimation;
@@ -190,7 +191,7 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
 {
     CGFloat initialAlpha;
     CGPoint initialCenter;
-    
+
     if (animationTypes & SPAnimationTypeFade) {
          initialAlpha = kSPMostTransparentAlphaForFadeAnimation;
     } else {
@@ -202,7 +203,7 @@ static const NSTimeInterval kSPOutroAnimationLength = 0.5;
     } else {
         initialCenter = self.parentWindow.center;
     }
-    
+
     self.rootView.alpha = initialAlpha;
     self.rootView.center = initialCenter;
 }

@@ -12,22 +12,20 @@ static BOOL isEmptyString(NSString *string);
 
 @interface SPSchemeParser ()
 
-- (void)resetOutputs;
-- (void)determineOutputsBasedOnURL;
-- (void)processExitCommand;
-- (void)processStartCommand;
+@property (assign, nonatomic, readwrite) BOOL requestsContinueWebViewLoading;
+@property (assign, nonatomic, readwrite) BOOL requestsOpeningExternalDestination;
+@property (strong, nonatomic, readwrite) NSURL *externalDestination;
+@property (assign, nonatomic, readwrite) BOOL requestsClosing;
+@property (assign, nonatomic, readwrite) BOOL requestsStopShowingLoadingActivityIndicator;
+@property (assign, nonatomic, readwrite) NSInteger closeStatus;
+
+@property (copy, nonatomic, readwrite) NSString *command;
+@property (copy, nonatomic, readwrite) NSString *appId;
+
 
 @end
 
 @implementation SPSchemeParser
-
-@synthesize URL = _URL;
-
-@synthesize requestsContinueWebViewLoading = _requestsContinueWebViewLoading;
-@synthesize requestsOpeningExternalDestination = _requestsOpeningExternalDestination;
-@synthesize externalDestination = _externalDestination;
-@synthesize requestsClosing = _requestsClosing;
-@synthesize requestsStopShowingLoadingActivityIndicator = _requestsStopShowingLoadingActivityIndicator;
 
 - (id)init
 {
@@ -60,51 +58,57 @@ static BOOL isEmptyString(NSString *string);
     _requestsContinueWebViewLoading = NO;
     
     NSString *command = [self.URL host];
-    
+    self.command = command;
     if ([command isEqualToString:SPONSORPAY_EXIT_PATH]) {
         [self processExitCommand];
-    }
-    else if ([command isEqualToString:SPONSORPAY_START_PATH]) {
+    } else if ([command isEqualToString:SPONSORPAY_START_PATH]) {
         [self processStartCommand];
+    } else if ([command isEqualToString:SPONSORPAY_INSTALL_PATH]) {
+        [self processInstallCommand];
     }
 }
 
 - (void)resetOutputs
 {
-    _requestsContinueWebViewLoading = YES;
-    _requestsOpeningExternalDestination = NO;
-    _requestsClosing = NO;
-    _requestsStopShowingLoadingActivityIndicator = NO;
-    _closeStatus = 0;
+    self.requestsContinueWebViewLoading = YES;
+    self.requestsOpeningExternalDestination = NO;
+    self.requestsClosing = NO;
+    self.requestsStopShowingLoadingActivityIndicator = NO;
+    self.closeStatus = 0;
+    self.command = nil;
+    self.appId = nil;
+    self.externalDestination = nil;
+}
 
-    if (_externalDestination) {
-        _externalDestination = nil;
-    }
+- (void)processStartCommand
+{
+    self.requestsStopShowingLoadingActivityIndicator = YES;
 }
 
 - (void)processExitCommand
 {
     NSDictionary *queryDict = [self.URL SPQueryDictionary];
-    NSString *destination = [[queryDict valueForKey:@"url"] SPURLDecodedString];
-    
+    NSString *destination = [[queryDict[@"url"] SPURLDecodedString] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     BOOL isDestinationEmpty = isEmptyString(destination);
 
     if (isDestinationEmpty) {
-        _requestsClosing = YES;
+        self.requestsClosing = YES;
     } else {
-        _externalDestination = [[NSURL alloc] initWithString:destination];
-        _requestsOpeningExternalDestination = YES;
-        _requestsClosing =  self.shouldRequestCloseWhenOpeningExternalURL;
+        self.externalDestination = [[NSURL alloc] initWithString:destination];
+        self.requestsOpeningExternalDestination = YES;
+        self.requestsClosing =  self.shouldRequestCloseWhenOpeningExternalURL;
     }
 
-    if (_requestsClosing) {
-        _closeStatus = [[queryDict objectForKey:@"status"] intValue];
+    if (self.requestsClosing) {
+        self.closeStatus = [[queryDict objectForKey:@"status"] intValue];
     }
 }
 
-- (void)processStartCommand
+- (void)processInstallCommand
 {
-    _requestsStopShowingLoadingActivityIndicator = YES;
+    NSDictionary *queryDict = [self.URL SPQueryDictionary];
+    self.appId = [[queryDict valueForKey:@"id"] SPURLDecodedString];
+    self.requestsClosing =  self.shouldRequestCloseWhenOpeningExternalURL;
 }
 
 @end

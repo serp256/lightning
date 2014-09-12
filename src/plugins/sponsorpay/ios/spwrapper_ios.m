@@ -47,7 +47,8 @@ value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, 
 		}
 
 		NSLog(@"networks %@", networks);
-		[SponsorPaySDK startForAppId:m_appId userId:m_userId securityToken:m_securityToken withNetworks:networks];
+		// [SponsorPaySDK startForAppId:m_appId userId:m_userId securityToken:m_securityToken withNetworks:networks];
+		[SponsorPaySDK startForAppId:m_appId userId:m_userId securityToken:m_securityToken];
 	} else {
 		[SponsorPaySDK startForAppId:m_appId userId:m_userId securityToken:m_securityToken];
 	}
