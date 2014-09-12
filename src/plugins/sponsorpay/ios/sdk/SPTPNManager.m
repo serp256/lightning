@@ -37,9 +37,9 @@ static const NSInteger SPAdapterSupportedVersion = 2;
     return sharedInstance;
 }
 
-+ (void)startNetworks
++ (void)startNetworks:(NSArray*)networks
 {
-    [[self sharedInstance] startNetworks];
+    [[self sharedInstance] startNetworks:networks];
 }
 
 + (id<SPTPNVideoAdapter>)getRewardedVideoAdapterForNetwork:(NSString *)networkName
@@ -72,9 +72,9 @@ static const NSInteger SPAdapterSupportedVersion = 2;
     return self;
 }
 
-- (void)startNetworks
+- (void)startNetworks:(NSArray*)ntwks
 {
-    NSArray *networks = [[NSBundle mainBundle] infoDictionary][SPAdaptersKey];
+    NSArray *networks = ntwks ? ntwks : [[NSBundle mainBundle] infoDictionary][SPAdaptersKey];
     [networks enumerateObjectsUsingBlock:^(id providerData, NSUInteger idx, BOOL *stop) {
         NSString *networkName = providerData[SPNetworkName];
         NSString *networkClassName = [self getClassName:networkName];
