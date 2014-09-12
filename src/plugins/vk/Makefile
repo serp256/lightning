@@ -22,16 +22,18 @@ ifeq ($(PLATFORM),IOS)
 MLPPOPT += -DIOS
 
 CFLAGS  += -fmodules -fobjc-arc -DIOS -Iios -I../../ -I../../ios -I../common -I ios/sdk/sdk/sdk -I ios/sdk/sdk/sdk/models -I ios/sdk/sdk/sdk/ShareDialog
-COBJS   +=  ios/vk_ios.o ios/LightVkDelegate.o ios/sdk/sdk/sdk/NSData+AES256.o ios/sdk/sdk/sdk/NSData+MD5.o ios/sdk/sdk/sdk/NSError+VKError.o \
-	ios/sdk/sdk/sdk/NSString+MD5.o ios/sdk/sdk/sdk/OrderedDictionary.o ios/sdk/sdk/sdk/VKAccessToken.o ios/sdk/sdk/sdk/VKApi.o \
-	ios/sdk/sdk/sdk/VKApiBase.o ios/sdk/sdk/sdk/VKApiCaptcha.o ios/sdk/sdk/sdk/VKApiFriends.o ios/sdk/sdk/sdk/VKApiObject.o \
-	ios/sdk/sdk/sdk/VKApiObjectArray.o ios/sdk/sdk/sdk/VKApiPhotos.o ios/sdk/sdk/sdk/VKApiUsers.o ios/sdk/sdk/sdk/VKApiWall.o \
-	ios/sdk/sdk/sdk/VKAuthorizeController.o ios/sdk/sdk/sdk/VKBatchRequest.o ios/sdk/sdk/sdk/VKBundle.o ios/sdk/sdk/sdk/VKCaptchaView.o \
-	ios/sdk/sdk/sdk/VKCaptchaViewController.o ios/sdk/sdk/sdk/VKError.o ios/sdk/sdk/sdk/VKHTTPClient.o ios/sdk/sdk/sdk/VKHTTPOperation.o \
-	ios/sdk/sdk/sdk/VKImageParameters.o ios/sdk/sdk/sdk/VKLikes.o ios/sdk/sdk/sdk/VKObject.o ios/sdk/sdk/sdk/VKOperation.o \
-	ios/sdk/sdk/sdk/VKPermissions.o ios/sdk/sdk/sdk/VKPhoto.o ios/sdk/sdk/sdk/VKPhotoArray.o ios/sdk/sdk/sdk/VKRequest.o \
-	ios/sdk/sdk/sdk/VKResponse.o ios/sdk/sdk/sdk/VKSdk.o ios/sdk/sdk/sdk/VKUploadPhotoBase.o ios/sdk/sdk/sdk/VKUploadPhotoRequest.o \
-	ios/sdk/sdk/sdk/VKUploadWallPhotoRequest.o ios/sdk/sdk/sdk/VKUser.o ios/sdk/sdk/sdk/VKUsersArray.o ios/sdk/sdk/sdk/VKUtil.o
+COBJS   +=  ios/vk_ios.o ios/LightVkDelegate.o ios/sdk/sdk/sdk/models/VKApiObject.o ios/sdk/sdk/sdk/models/VKApiObjectArray.o ios/sdk/sdk/sdk/models/VKAudio.o ios/sdk/sdk/sdk/models/VKCounters.o \
+	ios/sdk/sdk/sdk/models/VKGroup.o ios/sdk/sdk/sdk/models/VKLikes.o ios/sdk/sdk/sdk/models/VKPhoto.o ios/sdk/sdk/sdk/models/VKPhotoSize.o \
+	ios/sdk/sdk/sdk/models/VKRelative.o ios/sdk/sdk/sdk/models/VKSchool.o ios/sdk/sdk/sdk/models/VKUniversity.o ios/sdk/sdk/sdk/models/VKUser.o \
+	ios/sdk/sdk/sdk/NSData+MD5.o ios/sdk/sdk/sdk/NSError+VKError.o ios/sdk/sdk/sdk/NSString+MD5.o ios/sdk/sdk/sdk/OrderedDictionary.o \
+	ios/sdk/sdk/sdk/ShareDialog/VKShareDialogController.o ios/sdk/sdk/sdk/VKAccessToken.o ios/sdk/sdk/sdk/VKApi.o ios/sdk/sdk/sdk/VKApiBase.o \
+	ios/sdk/sdk/sdk/VKApiCaptcha.o ios/sdk/sdk/sdk/VKApiFriends.o ios/sdk/sdk/sdk/VKApiGroups.o ios/sdk/sdk/sdk/VKApiPhotos.o ios/sdk/sdk/sdk/VKApiUsers.o \
+	ios/sdk/sdk/sdk/VKApiWall.o ios/sdk/sdk/sdk/VKAuthorizeController.o ios/sdk/sdk/sdk/VKBatchRequest.o ios/sdk/sdk/sdk/VKBundle.o \
+	ios/sdk/sdk/sdk/VKCaptchaView.o ios/sdk/sdk/sdk/VKCaptchaViewController.o ios/sdk/sdk/sdk/VKError.o ios/sdk/sdk/sdk/VKHTTPClient.o \
+	ios/sdk/sdk/sdk/VKHTTPOperation.o ios/sdk/sdk/sdk/VKImageParameters.o ios/sdk/sdk/sdk/VKObject.o ios/sdk/sdk/sdk/VKOperation.o \
+	ios/sdk/sdk/sdk/VKPermissions.o ios/sdk/sdk/sdk/VKRequest.o ios/sdk/sdk/sdk/VKResponse.o ios/sdk/sdk/sdk/VKSdk.o ios/sdk/sdk/sdk/VKUploadImage.o \
+	ios/sdk/sdk/sdk/VKUploadMessagesPhotoRequest.o ios/sdk/sdk/sdk/VKUploadPhotoBase.o ios/sdk/sdk/sdk/VKUploadPhotoRequest.o \
+	ios/sdk/sdk/sdk/VKUploadWallPhotoRequest.o ios/sdk/sdk/sdk/VKUtil.o
 
 else
 ifeq ($(PLATFORM),ANDROID)
