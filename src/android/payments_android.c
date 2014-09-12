@@ -34,9 +34,9 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 	if (Is_long(vmarket_type) && vmarket_type == caml_hash_variant("Amazon")) {
 		payments_cls = engine_find_class("ru/redspell/lightning/payments/amazon/Payments");
 		jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "<init>", "(Landroid/content/Context;)V");
-		jobject _payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, jkey);
-		payments = (*ML_ENV)->NewGlobalRef(ML_ENV, _payments);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, _payments)
+		// jobject _payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, jkey);
+		// payments = (*ML_ENV)->NewGlobalRef(ML_ENV, _payments);
+		// (*ML_ENV)->DeleteLocalRef(ML_ENV, _payments)
 	} else if (Is_block(vmarket_type) && Field(vmarket_type, 0) == caml_hash_variant("Google")) {
 		jstring jkey;
 		value vkey = Field(vmarket_type, 1);

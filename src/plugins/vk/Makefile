@@ -21,7 +21,7 @@ ifeq ($(PLATFORM),IOS)
 
 MLPPOPT += -DIOS
 
-CFLAGS  += -fmodules -fobjc-arc -DIOS -Iios -I../../ -I../../ios -I../common -I ios/sdk/sdk/sdk
+CFLAGS  += -fmodules -fobjc-arc -DIOS -Iios -I../../ -I../../ios -I../common -I ios/sdk/sdk/sdk -I ios/sdk/sdk/sdk/models -I ios/sdk/sdk/sdk/ShareDialog
 COBJS   +=  ios/vk_ios.o ios/LightVkDelegate.o ios/sdk/sdk/sdk/NSData+AES256.o ios/sdk/sdk/sdk/NSData+MD5.o ios/sdk/sdk/sdk/NSError+VKError.o \
 	ios/sdk/sdk/sdk/NSString+MD5.o ios/sdk/sdk/sdk/OrderedDictionary.o ios/sdk/sdk/sdk/VKAccessToken.o ios/sdk/sdk/sdk/VKApi.o \
 	ios/sdk/sdk/sdk/VKApiBase.o ios/sdk/sdk/sdk/VKApiCaptcha.o ios/sdk/sdk/sdk/VKApiFriends.o ios/sdk/sdk/sdk/VKApiObject.o \
