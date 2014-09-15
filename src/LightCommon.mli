@@ -5,7 +5,7 @@ value color_black: int;
 
 value round : float -> float;
 
-type qColor = 
+type qColor =
   {
     qcTopLeft: int32;
     qcTopRight: int32;
@@ -22,7 +22,7 @@ type color = [= `NoColor | `Color of int | `QColors of qColor ];
 
 exception File_not_exists of string;
 
-type textureID; 
+type textureID;
 type framebufferID = int;
 
 value powOfTwo: int -> int;
@@ -47,7 +47,7 @@ type deviceType = [ Phone | Pad ];
 value deviceType: unit -> deviceType;
 value deviceTypeToStr: deviceType -> string;
 
-type ios_device = [ IPhoneOld | IPhone3GS | IPhone4 | IPhone5 | IPhoneNew | IPad1 | IPad2 | IPad3 | IPadNew | IUnknown ];
+type ios_device = [ IPhoneOld | IPhone3GS | IPhone4 | IPhone5 | IPhone6 | IPhone6plus | IPhoneNew | IPad1 | IPad2 | IPad3 | IPadNew | IUnknown ];
 type androidScreen = [ UnknownScreen | Small | Normal | Large | Xlarge ];
 type androidDensity = [ UnknownDensity | Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi | Xxhdpi ];
 type device = [ Android of (androidScreen * androidDensity) | IOS of ios_device ];
@@ -64,7 +64,7 @@ value internal_device: ref device;
 value getLocale: unit -> string;
 value getVersion: unit -> string;
 
-value storagePath: unit -> string; 
+value storagePath: unit -> string;
 
 module MakeXmlParser(P:sig value path: string; value with_suffix:bool; end): sig
   value close: unit -> unit;
@@ -94,4 +94,3 @@ value regExtraResources: ~fname:string -> unit -> unit;
 value strToLower: string -> string;
 value strToUpper: string -> string;
 value strCapitalize: string -> string;
-

@@ -13,7 +13,6 @@
 
 CAMLprim value ml_URLConnection(value url, value method, value headers, value data) {
 	CAMLparam4(url,method,headers,data);
-	NSLog([NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding]);
 	NSURL *nsurl = [[NSURL alloc] initWithString:[NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding]];
 	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:nsurl];
 	static value ml_POST = 0;
