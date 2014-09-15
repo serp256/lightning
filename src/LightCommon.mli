@@ -53,6 +53,8 @@ type androidDensity = [ UnknownDensity | Ldpi | Mdpi | Hdpi | Xhdpi | Tvdpi | Xx
 type device = [ Android of (androidScreen * androidDensity) | IOS of ios_device ];
 value device: unit -> device;
 value deviceToStr: device -> string;
+value strToDevice: string -> device;
+value deviceToSize: device -> (int * int);
 
 (* value androidScreen: unit -> option (androidScreen * androidDensity); *)
 value androidScreenToString: androidScreen -> string;

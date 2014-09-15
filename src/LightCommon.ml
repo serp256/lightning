@@ -445,6 +445,83 @@ value deviceToStr dev =
   ];
 
 
+value strToDevice s =
+  match String.lowercase s with
+  [ "iphoneold" -> IOS IPhoneOld
+  | "iphone3gs" -> IOS IPhone3GS
+  | "iphone4" -> IOS IPhone4
+  | "iphone5" -> IOS IPhone5
+  | "iphone6" -> IOS IPhone6
+  | "iphone6plus" -> IOS IPhone6plus
+  | "iphonenew" -> IOS IPhoneNew
+  | "ipad1" -> IOS IPad1
+  | "ipad2" -> IOS IPad2
+  | "ipad3" -> IOS IPad3
+  | "ipadnew" -> IOS IPadNew
+  | s ->
+    let (screen, density) =
+      try ExtString.String.split s "-"
+      with
+        [ _ ->
+          try ExtString.String.split s "_"
+          with [ _ -> failwith "unknown device string" ]
+        ]
+    in
+    let screen =
+      match screen with
+      [ "small" -> Small
+      | "normal" -> Normal
+      | "large" -> Large
+      | "xlarge" -> Xlarge
+      | _ -> failwith "unknown android screen string"
+      ]
+    in
+    let density =
+      match density with
+      [ "ldpi" -> Ldpi
+      | "mdpi" -> Mdpi
+      | "hdpi" -> Hdpi
+      | "xhdpi" -> Xhdpi
+      | "tvdpi" -> Tvdpi
+      | "xxhdpi" -> Xxhdpi
+      | _ -> failwith "unknown android density string"
+      ]
+    in
+      Android (screen, density)
+  ];
+
+value deviceToSize = fun
+  [ IOS ios ->
+    match ios with
+    [ IPhoneOld -> (320, 480)
+    | IPhone3GS -> (320, 480)
+    | IPhone4 -> (640, 960)
+    | IPhone5 -> (640, 1136)
+    | IPhone6 -> (750, 1334)
+    | IPhone6plus -> (1080, 1920)
+    | IPad1 -> (768, 1024)
+    | IPad2 -> (768, 1024)
+    | IPad3 -> (1536, 2048)
+    | IPadNew -> (1536, 2048)
+    | _ -> assert False
+    ]
+  | Android android ->
+    match android with
+    [ (Large, Ldpi) -> (480, 800)
+    | (Large, Mdpi) -> (600, 1024)
+    | (Large, Tvdpi) -> (800, 1280)
+    | (Large, Xhdpi) -> (1200, 1920)
+    | (Xlarge, Hdpi) -> (1200, 1920)
+    | (Xlarge, Xhdpi) -> (1600, 2560)
+    | (Normal, Mdpi) -> (320, 480)
+    | (Normal, Hdpi) -> (480, 800)
+    | (Normal, Xhdpi) -> (720, 1280)
+    | (Normal, Xxhdpi) -> (1080, 1920)
+    | _ -> assert False
+    ]
+  ];
+
+
 IFPLATFORM(pc)
 value storagePath () = "Storage";
 ELSE
