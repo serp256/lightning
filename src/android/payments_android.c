@@ -52,7 +52,7 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 		jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "<init>", "(Ljava/lang/String;)V");
 		jobject _payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, jkey);
 		payments = (*ML_ENV)->NewGlobalRef(ML_ENV, _payments);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, _payments)
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, _payments);
 
 		if (jkey != NULL) (*ML_ENV)->DeleteLocalRef(ML_ENV, jkey);
 	} else {

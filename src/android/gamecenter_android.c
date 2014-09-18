@@ -14,57 +14,65 @@ static void clearGameCenter() {
 value ml_gamecenter_init(value silent, value param) {
 	CAMLparam2(silent, param);
 
-	PRINT_DEBUG("ml_gamecenter_init");
+	PRINT_DEBUG("1");
 
 	// get factory class
 	jclass gcManagerCls = engine_find_class("ru/redspell/lightning/gamecenter/Manager");
 	if (gcManagerCls == NULL) {
         caml_failwith("GameCenterManager not found");
 	}
-	
+
+	PRINT_DEBUG("2");
+
 	// find static method createGameCenter
 	jmethodID jCreateM = (*ML_ENV)->GetStaticMethodID(ML_ENV, gcManagerCls, "createGameCenter", "(I)Lru/redspell/lightning/gamecenter/GameCenter;");
 	if (jCreateM == NULL) {
 	    (*ML_ENV)->DeleteLocalRef(ML_ENV, gcManagerCls);
 	    caml_failwith("createGameCenter method not found");
 	}
-	
-		
+
+	PRINT_DEBUG("3");
+
+
 	// call static method createGameCenter, this creates GC Adapter instance
 //	jobject gcLocalRef = (*env)->CallStaticObjectMethod(env, gcManagerCls, jCreateM);
 	int kind = Int_val(param);
 	jobject gcLocalRef = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, gcManagerCls, jCreateM, kind);
 	if (gcLocalRef == NULL) {
-	    caml_failwith("failed to call createGameCenter method");  	    
+	    caml_failwith("failed to call createGameCenter method");
 	}
 
-	PRINT_DEBUG("1");
+	PRINT_DEBUG("4");
 
 
     // this is a real instance of CG Adapter. Now let's find its class
 	jGameCenter = (*ML_ENV)->NewGlobalRef(ML_ENV, gcLocalRef);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, gcLocalRef);
 
+	PRINT_DEBUG("5");
+
     jclass tmpCls = (*ML_ENV)->GetObjectClass(ML_ENV, jGameCenter);
 	gcCls =  (*ML_ENV)->NewGlobalRef(ML_ENV, tmpCls);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, tmpCls);
-	
 
-	// call connect 
+	PRINT_DEBUG("6");
+
+	// call connect
     jmethodID jConnectM = (*ML_ENV)->GetMethodID(ML_ENV, gcCls, "connect", "()V");
+		PRINT_DEBUG("jConnectM %d", jConnectM);
     if (jConnectM == NULL) {
-        caml_failwith("Can't find connect method");   
+        caml_failwith("Can't find connect method");
     }
 
     (*ML_ENV)->CallVoidMethod(ML_ENV, jGameCenter, jConnectM);
 
-    PRINT_DEBUG("2");
-	
+    PRINT_DEBUG("7");
+
 	CAMLreturn(Val_true);
 }
 
 void gamecenter_connected(void *data) {
-	caml_callback(*caml_named_value("game_center_initialized"), Val_true);	
+	caml_callback(*caml_named_value("game_center_initialized"), Val_true);
 }
 
 void gamecenter_failed(void *data) {
@@ -113,7 +121,7 @@ value ml_gamecenter_playerID(value param) {
 		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV,jPlayerID,cpid);
 	} else res = Val_none;
 	(*ML_ENV)->DeleteLocalRef(ML_ENV,jPlayerID);
-	CAMLreturn(res); 
+	CAMLreturn(res);
 }
 
 static value convertPlayer(jobject jPlayer) {
@@ -152,7 +160,7 @@ value ml_gamecenter_current_player(value p) {
 	PRINT_DEBUG("GC current player");
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jCurrentPlayerM = NULL;
-	if (!jCurrentPlayerM) { 
+	if (!jCurrentPlayerM) {
 		jclass gcCls = CLS;
 		jCurrentPlayerM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"currentPlayer","()Lru/redspell/lightning/gamecenter/Player;");
 	};
@@ -171,12 +179,12 @@ value ml_gamecenter_report_leaderboard(value boardId, value score) {
 	PRINT_DEBUG("GC report leaderboard");
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jSubmitScoreM = NULL;
-	if (!jSubmitScoreM) { 
+	if (!jSubmitScoreM) {
 		jclass gcCls = CLS;
 		jSubmitScoreM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"submitScore","(Ljava/lang/String;J)V");
 	};
 	jstring jid = (*ML_ENV)->NewStringUTF(ML_ENV,String_val(boardId));
-	jlong jscore = Int64_val(score);  
+	jlong jscore = Int64_val(score);
 	(*ML_ENV)->CallVoidMethod(ML_ENV,jGameCenter,jSubmitScoreM,jid,jscore);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV,jid);
 	CAMLreturn(Val_unit);
@@ -186,7 +194,7 @@ value ml_gamecenter_unlock_achievement(value name) {
 	PRINT_DEBUG("GC unlock achievement");
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jUnlockAchievementM = NULL;
-	if (!jUnlockAchievementM) { 
+	if (!jUnlockAchievementM) {
 		jclass gcCls = CLS;
 		jUnlockAchievementM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"unlockAchievement","(Ljava/lang/String;)V");
 	};
@@ -201,7 +209,7 @@ value ml_gamecenter_show_achievements(value p) {
 	PRINT_DEBUG("GC show achievements");
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jShowAchievementsM = NULL;
-	if (!jShowAchievementsM) { 
+	if (!jShowAchievementsM) {
 		jclass gcCls = CLS;
 		jShowAchievementsM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"showAchievements","()V");
 	};
@@ -214,7 +222,7 @@ value ml_gamecenter_show_leaderboard(value board_id) {
 	PRINT_DEBUG("GC show leaderboard");
 	if (jGameCenter == NULL) caml_failwith("GameCenter not initialized");
 	static jmethodID jShowLeaderboardM = NULL;
-	if (!jShowLeaderboardM) { 
+	if (!jShowLeaderboardM) {
 		jclass gcCls = CLS;
 		jShowLeaderboardM = (*ML_ENV)->GetMethodID(ML_ENV,gcCls,"showLeaderboard","(Ljava/lang/String;)V");
 	};

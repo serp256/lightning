@@ -10,6 +10,9 @@ import android.content.Intent;
 import ru.redspell.lightning.utils.Log;
 import ru.redspell.lightning.IUiLifecycleHelper;
 import com.google.android.gms.games.GamesActivityResultCodes;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.common.api.ResultCallback;
 
 
 import ru.redspell.lightning.Lightning;
@@ -17,13 +20,13 @@ import ru.redspell.lightning.Lightning;
 public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
 	private GoogleApiClient mGamesClient;
-	
+
 	private ConnectionListener listener;
 
     private Player player;
-    
+
     /*
-     * 
+     *
      */
 	public Google() {
 	    this(null);
@@ -31,15 +34,16 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 
 
     /*
-     * 
+     *
      */
     public Google(ConnectionListener l) {
-		Log.d("LIGHTNING","");
+		Log.d("LIGHTNING","Google");
 		GoogleApiClient.Builder builder = new GoogleApiClient.Builder(Lightning.activity,this,this);
 		builder.addApi(Games.API);
 		builder.addScope(Games.SCOPE_GAMES);
 		builder.setViewForPopups(Lightning.activity.viewGrp);
 		mGamesClient = builder.build ();
+		// Log.d("LIGHTNING", "ACCOUNT " + Games.getCurrentAccountName(mGamesClient));
 		listener = l;
 		Log.d("ok");
     }
@@ -65,7 +69,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 				Log.d("LIGHTNING","Game client call connect");
 				mGamesClient.connect();
 			};
-		});      
+		});
     }
 
 
@@ -78,6 +82,13 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 		if (listener != null) {
 		    listener.onConnected();
 		}
+		try {
+			throw new Exception("pizdalala");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+
 	};
 
 	public void onConnectionSuspended (int cause) {
@@ -108,7 +119,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 						if (requestCode == INTENT_REQUEST) {
 							Lightning.activity.removeUiLifecycleHelper(this);
 							Log.d("LIGHTNING","Result code is: " + resultCode);
-							if (resultCode ==	android.app.Activity.RESULT_OK) 
+							if (resultCode ==	android.app.Activity.RESULT_OK)
 								mGamesClient.connect ();
 							else if (resultCode == GamesActivityResultCodes.RESULT_RECONNECT_REQUIRED)
 								mGamesClient.reconnect ();
@@ -131,7 +142,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 				try {
 					result.startResolutionForResult(Lightning.activity,INTENT_REQUEST);
 				} catch (android.content.IntentSender.SendIntentException e) {
-					Log.d("LIGHTNING","GameCenter send intent exception"); 
+					Log.d("LIGHTNING","GameCenter send intent exception");
 					if (listener != null) {
 					    listener.onConnectFailed();
 					}
@@ -153,25 +164,25 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
     public Player currentPlayer() {
 		if (mGamesClient == null) return null;
 		if (!mGamesClient.isConnected()) return null;
-		
+
 		if (player == null) {
 		    player = new Player() {
 		        @Override
 		        public String getPlayerId() {
 		          return Games.Players.getCurrentPlayerId(mGamesClient);
 		        }
-		        
+
 		        @Override
 		        public String getDisplayName() {
 		          return Games.Players.getCurrentPlayer(mGamesClient).getDisplayName();
 		        }
 		    };
 		}
-		
+
 		return player;
 	}
 
-	
+
 	@Override
 	public void submitScore(final String leaderboard_id, final long score) {
 		Lightning.activity.runOnUiThread(new Runnable() {
@@ -204,7 +215,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 		if (mGamesClient == null) return;
 		if (!mGamesClient.isConnected()) return;
 		Lightning.activity.runOnUiThread(new Runnable() {
-			@Override 
+			@Override
 			public void run() {
 				IUiLifecycleHelper helper = new IUiLifecycleHelper() {
 					@Override
@@ -233,7 +244,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 		if (mGamesClient == null) return;
 		if (!mGamesClient.isConnected()) return;
 		Lightning.activity.runOnUiThread(new Runnable() {
-			@Override 
+			@Override
 			public void run() {
 				IUiLifecycleHelper helper = new IUiLifecycleHelper() {
 					@Override
@@ -259,17 +270,22 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 	}
 
 	public void signOut() {
-		if (mGamesClient != null) 
+		if (mGamesClient != null)
 			Lightning.activity.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					mGamesClient.disconnect();
+					PendingResult<Status> pendingRes = Games.signOut(mGamesClient);
+					pendingRes.setResultCallback(new ResultCallback<Status>() {
+						public void onResult(Status res) {
+							mGamesClient.disconnect();
+						}
+					});
 				}
 			});
 	}
 
 
 
-  
+
 
 };
