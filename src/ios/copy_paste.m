@@ -7,18 +7,19 @@
 #import <caml/memory.h>
 #import "LightViewController.h"
 
-value ml_paste() {
-	CAMLparam0();
+value ml_paste(value vcallback) {
+	CAMLparam1(vcallback);
 	CAMLlocal1(r);
 	[[UIPasteboard generalPasteboard] containsPasteboardTypes:UIPasteboardTypeListString];
-	UIPasteboard *pasteboard = [UIPasteboard generalPasteboard]; 
+	UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
 	NSString * a = pasteboard.string;
 	if (a==nil) {
   	r = caml_copy_string ("");
 	} else {
   	r = caml_copy_string ( [a UTF8String] );
 	}
-	CAMLreturn(r);
+	caml_callback(vcallback, r);
+	CAMLreturn(Val_unit);
 }
 
 value ml_copy (value st)
@@ -32,7 +33,7 @@ value ml_copy (value st)
 value ml_keyboard (value visible, value size, value initString, value returnCallback, value updateCallback)
 {
 	CAMLparam4(size, initString, updateCallback, returnCallback);
- 	NSLog (@"initString %@", [NSString stringWithCString:String_val(initString) encoding:NSASCIIStringEncoding] ); 
+ 	NSLog (@"initString %@", [NSString stringWithCString:String_val(initString) encoding:NSASCIIStringEncoding] );
 	[[LightViewController sharedInstance] showKeyboard:visible size:size updateCallback:updateCallback returnCallback:returnCallback initString:initString];
 	CAMLreturn(Val_unit);
 }

@@ -47,14 +47,19 @@ public class Keyboard {
 	private static native void onChange(String text);
 	private static native void onHide(String text);
 
-	private static ClipboardManager cbrdMngr;
+	private static ClipboardManager clipboardManager = null;
 
-	private static ClipboardManager getClipboardManager() {
-		if (cbrdMngr == null) {
-			cbrdMngr = (ClipboardManager)Lightning.activity.getSystemService(Context.CLIPBOARD_SERVICE);
+	private static void runWhenClipboardReady(final Runnable r) {
+		if (clipboardManager == null) {
+			Lightning.activity.runOnUiThread(new Runnable() {
+				public void run() {
+					clipboardManager = (ClipboardManager)Lightning.activity.getSystemService(Context.CLIPBOARD_SERVICE);
+					r.run();
+				}
+			});
+		} else {
+			r.run();
 		}
-
-		return cbrdMngr;
 	}
 
 	public static void showKeyboard(final boolean visible, final int w, final int h, final String inittxt) {
@@ -150,13 +155,30 @@ public class Keyboard {
 		});
 	}
 
-	public static void copyToClipboard(String txt) {
-		getClipboardManager().setText(txt);
+	public static void copyToClipboard(final String txt) {
+		runWhenClipboardReady(new Runnable() {
+			public void run() {
+				clipboardManager.setText(txt);
+			}
+		});
 	}
 
-	public static String pasteFromClipboard() {
-		CharSequence cs = getClipboardManager().getText();
+	private static class PasteRunnable implements Runnable {
+		private int callback;
 
-		return cs != null ? cs.toString() : null;
+		public PasteRunnable(int callback) {
+			this.callback = callback;
+		}
+
+		private native void nativeRun(int callback, String text);
+
+		public void run() {
+			CharSequence cs = clipboardManager.getText();
+			nativeRun(callback, cs != null ? cs.toString() : null);
+		}
+	}
+
+	public static void pasteFromClipboard(int callback) {
+		runWhenClipboardReady(new PasteRunnable(callback));
 	}
 }

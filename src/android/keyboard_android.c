@@ -79,24 +79,16 @@ value ml_copy(value txt) {
 	return Val_unit;
 }
 
-value ml_paste() {
+value ml_paste(value vcallback) {
 	GET_LIGHT_KEYBOARD;
 
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "pasteFromClipboard", "()Ljava/lang/String;");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "pasteFromClipboard", "(I)V");
+	value *callback;
+	REG_CALLBACK(vcallback, callback);
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid, callback);
 
-	value retval;
-	jstring jtxt = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, cls, mid);
-
-	if (jtxt) {
-		const char* ctxt = (*ML_ENV)->GetStringUTFChars(ML_ENV, jtxt, JNI_FALSE);
-		retval = caml_copy_string(ctxt);
-		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jtxt, ctxt);
-	} else {
-		retval = caml_copy_string("");
-	}
-
-	return retval;
+	return Val_unit;
 }
 
 void keyboard_onchange(void *data) {
@@ -144,4 +136,26 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_keyboard_Keyboard_onChange(JNI
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_keyboard_Keyboard_onHide(JNIEnv *env, jclass this, jstring text) {
 	RUN_ON_ML_THREAD(&keyboard_onhide, (*env)->NewGlobalRef(env, text));
+}
+
+typedef struct {
+	value *callback;
+	jstring text;
+} keyboard_paste_t;
+
+void keyboard_paste(void *d) {
+	keyboard_paste_t *data = (keyboard_paste_t*)d;
+	value vtext;
+	JSTRING_TO_VAL(data->text, vtext);
+	RUN_CALLBACK(data->callback, vtext);
+	FREE_CALLBACK(data->callback);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, data->text);
+	free(data);
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_keyboard_Keyboard_00024PasteRunnable_nativeRun(JNIEnv *env, jclass this, jint jcallback, jstring jtext) {
+	keyboard_paste_t *data = (keyboard_paste_t*)malloc(sizeof(keyboard_paste_t));
+	data->callback = (value*)jcallback;
+	data->text = (*env)->NewGlobalRef(env, jtext);
+	RUN_ON_ML_THREAD(&keyboard_paste, data);
 }
