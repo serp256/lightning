@@ -98,10 +98,10 @@ jclass engine_find_class_with_env(JNIEnv *env, const char *ccls_name) {
     PRINT_DEBUG("2");
 
     jstring jcls_name = (*env)->NewStringUTF(env, ccls_name);
-    jclass cls = ML_FIND_CLASS(jcls_name);
+    jclass cls = FIND_CLASS(env, jcls_name);
     (*env)->DeleteLocalRef(env, jcls_name);
 
-    PRINT_DEBUG("3");
+    PRINT_DEBUG("3 %d", cls);
 
     int ret;
     k = kh_put(jclasses, classes, ccls_name, &ret);

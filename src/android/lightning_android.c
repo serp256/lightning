@@ -12,7 +12,9 @@ void lightning_uncaught_exception(const char* exn, int bc, char** bv) {
     __android_log_write(ANDROID_LOG_FATAL,"LIGHTNING", exn);
     int i;
 
-    jobjectArray jbc = (*ML_ENV)->NewObjectArray(ML_ENV,bc,engine_find_class("java/lang/String"),NULL);
+    PRINT_DEBUG("1 tid %d", gettid());
+    jobjectArray jbc = (*ML_ENV)->NewObjectArray(ML_ENV,bc, engine_find_class("java/lang/String"),NULL);
+    PRINT_DEBUG("2");
 
     for (i = 0; i < bc; i++) {
         if (bv[i]) {
@@ -23,11 +25,17 @@ void lightning_uncaught_exception(const char* exn, int bc, char** bv) {
         };
     };
 
+    PRINT_DEBUG("3");
+
     // Need to send email with this error and backtrace
     jstring jexn = (*ML_ENV)->NewStringUTF(ML_ENV,exn);
+    PRINT_DEBUG("4");
     jmethodID mlUncExn = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "uncaughtException","(Ljava/lang/String;[Ljava/lang/String;)V");
+    PRINT_DEBUG("5");
     (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mlUncExn, jexn, jbc);
+    PRINT_DEBUG("6");
     (*ML_ENV)->DeleteLocalRef(ML_ENV,jbc);
+    PRINT_DEBUG("7");
 }
 
 void lightning_init() {
@@ -75,7 +83,7 @@ void lightning_set_referer(const char *ctype, jstring jnid) {
     JSTRING_TO_VAL(jnid, vnid);
     set_referrer_ml(vtype, vnid);
 
-    CAMLreturn0;    
+    CAMLreturn0;
 }
 
 void lightning_convert_intent(void *data) {
@@ -129,7 +137,7 @@ void lightning_on_backpressed(void *data) {
         value res = caml_callback2(caml_get_public_method(engine.stage->stage, back_handler), engine.stage->stage, Val_unit);
 
         if (Bool_val(res)) exit(0);
-    }    
+    }
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_Lightning_onBackPressed(JNIEnv *env, jclass this) {
@@ -187,7 +195,7 @@ int getResourceFd(const char *path, resource *res) {
             GET_FD(extra_res_fname);
         }
 
-#undef GET_FD        
+#undef GET_FD
 
         lseek(fd, os_pair->offset, SEEK_SET);
         res->fd = fd;

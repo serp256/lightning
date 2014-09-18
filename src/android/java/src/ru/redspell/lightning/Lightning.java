@@ -157,31 +157,6 @@ public class Lightning {
     private static String supportEmail = "mail@redspell.ru";
     private static String additionalExceptionInfo = "\n";
 
-    public static void uncaughtException(String exn,String[] bt) {
-        Context c = activity;
-        ApplicationInfo ai = c.getApplicationInfo ();
-        String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android, " + activity.getString(ru.redspell.lightning.R.string.screen) + ", " + activity.getString(ru.redspell.lightning.R.string.density) + ")";
-        int vers;
-        try { vers = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode; } catch (PackageManager.NameNotFoundException e) {vers = 1;};
-        StringBuffer uri = new StringBuffer("mailto:" + supportEmail);
-        Resources res = c.getResources ();
-        uri.append("?subject="+ Uri.encode(res.getString(ru.redspell.lightning.R.string.exception_email_subject) + " \"" + label + "\" v" + vers));
-        String t = String.format(res.getString(ru.redspell.lightning.R.string.exception_email_body),android.os.Build.MODEL,android.os.Build.VERSION.RELEASE,label,vers);
-        StringBuffer body = new StringBuffer(t);
-        body.append("\n------------------\n");
-        body.append(exn);body.append('\n');
-        for (String b : bt) {
-            body.append(b);body.append('\n');
-        };
-        body.append(additionalExceptionInfo);
-        body.append("\n------------------\n");
-        uri.append("&body=" + Uri.encode(body.toString()));
-        Log.d("LIGHTNING","URI: " + uri.toString());
-        Intent sendIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(uri.toString ()));
-        sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        c.startActivity(sendIntent);
-    }
-
     public static void setSupportEmail(String mail) {
         supportEmail = mail;
     }
@@ -310,6 +285,45 @@ public class Lightning {
 
         return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
     }
+
+		public static boolean silentExceptions = false;
+
+		public static void uncaughtException(String exn,String[] bt) {
+			if (silentExceptions) {
+				uncaughtExceptionSilent(exn, bt);
+			} else {
+				uncaughtExceptionByMail(exn, bt);
+			}
+		}
+
+		public static void uncaughtExceptionSilent(String exn, String[] bt) {
+
+		}
+
+		public static void uncaughtExceptionByMail(String exn, String[] bt) {
+				Context c = activity;
+				ApplicationInfo ai = c.getApplicationInfo ();
+				String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android, " + activity.getString(ru.redspell.lightning.R.string.screen) + ", " + activity.getString(ru.redspell.lightning.R.string.density) + ")";
+				int vers;
+				try { vers = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode; } catch (PackageManager.NameNotFoundException e) {vers = 1;};
+				StringBuffer uri = new StringBuffer("mailto:" + supportEmail);
+				Resources res = c.getResources ();
+				uri.append("?subject="+ Uri.encode(res.getString(ru.redspell.lightning.R.string.exception_email_subject) + " \"" + label + "\" v" + vers));
+				String t = String.format(res.getString(ru.redspell.lightning.R.string.exception_email_body),android.os.Build.MODEL,android.os.Build.VERSION.RELEASE,label,vers);
+				StringBuffer body = new StringBuffer(t);
+				body.append("\n------------------\n");
+				body.append(exn);body.append('\n');
+				for (String b : bt) {
+						body.append(b);body.append('\n');
+				};
+				body.append(additionalExceptionInfo);
+				body.append("\n------------------\n");
+				uri.append("&body=" + Uri.encode(body.toString()));
+				Log.d("LIGHTNING","URI: " + uri.toString());
+				Intent sendIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(uri.toString ()));
+				sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				c.startActivity(sendIntent);
+		}
 
     static {
         // System.loadLibrary("test");
