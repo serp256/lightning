@@ -16,7 +16,19 @@ import android.view.Display;
 
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.util.Locale;;
+import java.util.Locale;
+import java.util.ArrayList;
+import java.util.Iterator;
+import org.json.JSONObject;
+import org.json.JSONException;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.channels.FileChannel;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.HttpResponse;
+import org.apache.http.entity.ByteArrayEntity;
 
 import ru.redspell.lightning.utils.Log;
 
@@ -155,14 +167,14 @@ public class Lightning {
     }
 
     private static String supportEmail = "mail@redspell.ru";
-    private static String additionalExceptionInfo = "\n";
+    private static ArrayList<String> additionalExceptionInfo = new ArrayList<String>();
 
     public static void setSupportEmail(String mail) {
         supportEmail = mail;
     }
 
     public static void addExceptionInfo(String d) {
-        additionalExceptionInfo += d;
+				additionalExceptionInfo.add(d);
     }
 
     public static void openURL(String url){
@@ -286,9 +298,11 @@ public class Lightning {
         return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
     }
 
-		public static boolean silentExceptions = false;
+		public static boolean silentExceptions = true;
 
 		public static void uncaughtException(String exn,String[] bt) {
+			Log.d("LIGHTNING", "silentExceptions " + silentExceptions);
+
 			if (silentExceptions) {
 				uncaughtExceptionSilent(exn, bt);
 			} else {
@@ -296,8 +310,82 @@ public class Lightning {
 			}
 		}
 
-		public static void uncaughtExceptionSilent(String exn, String[] bt) {
+		private static void flushErrLog() {
+			Log.d("LIGHTNING", "flushErrLog");
 
+			try {
+				FileInputStream errLogStream = Lightning.activity.openFileInput("error_log");
+				FileChannel errLogChan = errLogStream.getChannel();
+				ByteBuffer buf = ByteBuffer.allocate((int)errLogChan.size()); // hope error_log never reaches size more than int capacity
+				errLogChan.read(buf);
+
+				HttpClient client = new DefaultHttpClient();
+				HttpPost req = new HttpPost("http://mobile-errors.redspell.ru/submit?app_name=" + Lightning.activity.getPackageName());
+				Log.d("LIGHTNING", "request " + req.getURI());
+				req.setEntity(new ByteArrayEntity(buf.array()));
+				HttpResponse resp = client.execute(req);
+
+				Log.d("LIGHTNING", "RESP CODE " + resp.getStatusLine().getStatusCode());
+				if (resp.getStatusLine().getStatusCode() == 200) {
+					Lightning.activity.deleteFile("error_log");
+				}
+			} catch (Exception e) {
+
+			}
+		}
+
+		public static void uncaughtExceptionSilent(String exn, String[] bt) {
+			long now = System.currentTimeMillis() / 1000L;
+			String dev = android.os.Build.MODEL;
+			int ver;
+			try {
+				ver = Lightning.activity.getPackageManager().getPackageInfo(Lightning.activity.getPackageName(), 0).versionCode;
+			} catch(PackageManager.NameNotFoundException e) {
+				ver = 1;
+			};
+			StringBuffer backtraceBuf = new StringBuffer();
+			StringBuffer expnInfBuf = new StringBuffer();
+			Iterator<String> iter = additionalExceptionInfo.iterator();
+			while (iter.hasNext()) {
+				expnInfBuf.append("\t");
+				expnInfBuf.append(iter.next());
+				expnInfBuf.append("\n");
+			}
+
+			if (bt.length > 0) {
+				if (bt[0] != null) exn += "\n" + bt[0];
+				for (int i = 1; i < bt.length; i++) {
+					if (bt[i] != null) {
+						backtraceBuf.append("\n");
+						backtraceBuf.append(bt[i]);
+					}
+				}
+			}
+
+			if (expnInfBuf.length() > 0) {
+				backtraceBuf.append("exception info:");
+				backtraceBuf.append(expnInfBuf);
+			}
+
+			JSONObject json = new JSONObject();
+			try {
+				json.put("date", now);
+				json.put("device", dev);
+				json.put("vers", (new Integer(ver)).toString());
+				json.put("exception", exn);
+				json.put("data", backtraceBuf.toString());
+			} catch (JSONException e) {
+				Log.d("LIGHTNING", "wtf?" + e.toString());
+			}
+
+			try {
+				FileOutputStream errLogStream = Lightning.activity.openFileOutput("error_log", Context.MODE_APPEND);
+				byte[] bytes = json.toString().getBytes();
+				errLogStream.write(bytes, 0, bytes.length);
+				flushErrLog();
+			} catch (Exception e) {
+
+			}
 		}
 
 		public static void uncaughtExceptionByMail(String exn, String[] bt) {
@@ -316,7 +404,15 @@ public class Lightning {
 				for (String b : bt) {
 						body.append(b);body.append('\n');
 				};
-				body.append(additionalExceptionInfo);
+
+				StringBuffer expnInfBuf = new StringBuffer();
+				Iterator<String> iter = additionalExceptionInfo.iterator();
+				while (iter.hasNext()) {
+					expnInfBuf.append(iter.next());
+					expnInfBuf.append("\n");
+				}
+				body.append(expnInfBuf);
+
 				body.append("\n------------------\n");
 				uri.append("&body=" + Uri.encode(body.toString()));
 				Log.d("LIGHTNING","URI: " + uri.toString());

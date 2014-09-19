@@ -57,7 +57,7 @@ value ml_getUDID() {
 	jstring judid = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
 	JSTRING_TO_VAL(judid, vudid);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, judid);
-	
+
 	CAMLreturn(vudid);
 }
 
@@ -67,7 +67,7 @@ value ml_getOldUDID() {
 
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getOldUDID", "()Ljava/lang/String;");
-	
+
 	jstring judid = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
 	JSTRING_TO_VAL(judid, vudid);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, judid);
@@ -195,7 +195,7 @@ value ml_androidScreen() {
 
 	jint jscreen = (*ML_ENV)->CallStaticIntMethod(ML_ENV, lightning_cls, screen_mid);
 	jint jdensity = (*ML_ENV)->CallStaticIntMethod(ML_ENV, lightning_cls, density_mid);
-	
+
 	vscreen = caml_alloc_tuple(2);
 	Store_field(vscreen, 0, Val_int(jscreen));
 	Store_field(vscreen, 1, Val_int(jdensity));
@@ -289,7 +289,7 @@ value ml_str_to_lower(value vsrc) {
 	JSTRING_TO_VAL(jdst, vdst);
 
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jsrc);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jdst);	
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jdst);
 
 	CAMLreturn(vdst);
 }
@@ -310,7 +310,12 @@ value ml_str_to_upper(value vsrc) {
 	JSTRING_TO_VAL(jdst, vdst);
 
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jsrc);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jdst);	
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jdst);
 
 	CAMLreturn(vdst);
+}
+
+value ml_debugErrReporting() {
+		jfieldID fid = (*ML_ENV)->GetStaticFieldID(ML_ENV, lightning_cls, "silentExceptions", "Z");
+		(*ML_ENV)->SetStaticBooleanField(ML_ENV, lightning_cls, fid, JNI_FALSE);
 }
