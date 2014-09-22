@@ -13,15 +13,14 @@
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-	NSError* err = [[NSError alloc] init];
+	NSError* err = nil;
 
 	if ([data writeToFile:filename options:NSDataWritingAtomic error:&err]) {
 		RUN_CALLBACK(success, Val_unit);
-	} else if (error) {
+	} else if (error && err) {
 		RUN_CALLBACK2(error, Val_int([err code]), caml_copy_string([[err localizedDescription] UTF8String]));
 	}
 
-	[err release];
 	[connection release];
 }
 
@@ -33,9 +32,16 @@
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
+	NSLog(@"!!!!connection didReceiveResponse %lld, %@", [response expectedContentLength], [response allHeaderFields]);
+
 	expectedLen = [response expectedContentLength];
 	loadedLen = 0;
-	data = [[NSMutableData alloc] initWithCapacity:expectedLen];
+
+	if (expectedLen != NSURLResponseUnknownLength) {
+			data = [[NSMutableData alloc] initWithCapacity:expectedLen];
+	} else {
+			data = [[NSMutableData alloc] initWithLength:1];
+	}
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)chunk {

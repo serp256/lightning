@@ -27,14 +27,14 @@ ENDPLATFORM;
 
 IFPLATFORM(ios android)
 external openURL: string -> unit = "ml_openURL";
-value sendEmail recepient ~subject ?(body="") () = 
+value sendEmail recepient ~subject ?(body="") () =
   let params = UrlEncoding.mk_url_encoded_parameters [ ("subject",subject); ("body", body)] in
   openURL (Printf.sprintf "mailto:%s?%s" recepient params);
 
 ELSE
 value showUrl _ = ();
 value openURL _ = ();
-value sendEmail recepient ~subject ?(body="") () = (); 
+value sendEmail recepient ~subject ?(body="") () = ();
 ENDPLATFORM;
 
 
@@ -52,18 +52,18 @@ ELSPLATFORM(ios android)
 
 value _stage : ref (option stage_constructor) = ref None;
 
-value init s = 
+value init s =
   let s = (s :> stage_constructor) in
-    _stage.val := Some s;  
+    _stage.val := Some s;
 
-value stage_create width height = 
+value stage_create width height =
   match _stage.val with
   [ None -> failwith "Stage not initialized"
-  | Some stage -> stage width height 
+  | Some stage -> stage width height
   ];
 
 
-value () = 
+value () =
 (
   Printexc.record_backtrace True;
   Callback.register "stage_create" stage_create;
@@ -79,7 +79,7 @@ value getLocale = LightCommon.getLocale;
 value getVersion = LightCommon.getVersion;
 
 external memUsage: unit -> int = "ml_memUsage";
-type malinfo = 
+type malinfo =
   {
     malloc_total: int;
     malloc_used: int;
@@ -102,7 +102,7 @@ value addExceptionInfo (_:string) = ();
 value setSupportEmail (_:string) = ();
 ENDPLATFORM;
 
-IFPLATFORM(android) 
+IFPLATFORM(android)
 external downloadExpansions: string -> unit = "ml_downloadExpansions";
 
 value expansionsInProgress = ref False;
@@ -149,9 +149,9 @@ value downloadExpansions ?errorCallback ?progressCallback ~pubkey ~completeCallb
 
     downloadExpansions pubkey;
   )
-  else (); 
+  else ();
 ELSE
-value downloadExpansions ?errorCallback ?progressCallback ~pubkey ~completeCallback () = 
+value downloadExpansions ?errorCallback ?progressCallback ~pubkey ~completeCallback () =
 (
 	completeCallback ();
 );
@@ -185,7 +185,7 @@ external fireLightningEvent: string -> unit = "ml_fire_lightning_event";
 value nativeEventListener = ref None;
 value setNativeEventListener l = nativeEventListener.val := Some l;
 value clearNativeEventListener () = nativeEventListener.val := None;
-value onNativeEvent data = 
+value onNativeEvent data =
   match !nativeEventListener with
   [ Some l -> l data
   | None -> ()
@@ -197,8 +197,8 @@ value clearNativeEventListener () = ();
 value setNativeEventListener l = ();
 ENDPLATFORM;
 
-IFPLATFORM(ios)
-external debugErrReporting: unit -> unit = "ml_debugErrReporting";
-ELSE
+IFPLATFORM(pc)
 value debugErrReporting () = ();
+ELSE
+external debugErrReporting: unit -> unit = "ml_debugErrReporting";
 ENDPLATFORM;

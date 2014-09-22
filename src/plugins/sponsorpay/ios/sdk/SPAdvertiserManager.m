@@ -10,7 +10,6 @@
 #import "SPCallbackSendingOperation.h"
 #import "SPURLGenerator.h"
 #import "SPAppIdValidator.h"
-#import "SP_SDK_versions.h"
 #import "SPLogger.h"
 
 #define CALLBACK_BASE_URL  @"https://service.sponsorpay.com"
@@ -106,7 +105,7 @@ static NSOperationQueue *callbackOperationQueue = nil;
     }
     
     [callbackBaseURL stringByAppendingString: (actionId ? actionsCallbackURLPath : installCallbackURLPath) ];
-    
+
     SPCallbackSendingOperation *callbackOperation =
     [SPCallbackSendingOperation operationForAppId:self.appId
                                     baseURLString:[callbackBaseURL stringByAppendingString:callbackURLPath]
@@ -145,16 +144,6 @@ static NSOperationQueue *callbackOperationQueue = nil;
         }
     }
     return callbackOperationQueue;
-}
-
-#pragma mark - Base URL management
-
-+ (void)overrideBaseURLWithURLString:(NSString *)newUrl {
-    callbackBaseURL = newUrl;
-}
-
-+ (void)restoreBaseURLToDefault {
-    [SPAdvertiserManager overrideBaseURLWithURLString:CALLBACK_BASE_URL];
 }
 
 @end

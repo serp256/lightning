@@ -7,6 +7,8 @@
 
 #import <UIKit/UIKit.h>
 
+@protocol SPVideoPlaybackDelegate;
+
 #define kSPMBEStartOfferTimeout (NSTimeInterval)10.0
 
 #define kSPMBEWebViewJavascriptErrorDomain @"kSPMBEWebViewJavascriptErrorDomain"
@@ -28,11 +30,21 @@
 - (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView
       requestsPlayVideoOfTPN:(NSString *)tpnName
                contextData:(NSDictionary *)contextData;
+- (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView
+  requestsStoreWithAppId:(NSString *)appId;
+- (void)brandEngageWebView:(SPBrandEngageWebView *)BEWebView
+ playVideoFromLocalNetwork:(NSString *)network
+                     video:(NSString *)video
+                 showAlert:(BOOL)showAlert 
+              alertMessage:(NSString *)alertMessage
+           clickThroughURL:(NSURL *)clickThroughURL;
+
 @end
 
 @interface SPBrandEngageWebView : UIWebView <UIWebViewDelegate>
 
 @property (weak) id<SPBrandEngageWebViewDelegate> brandEngageDelegate;
+@property (weak) id<SPVideoPlaybackDelegate> videoPlaybackDelegate;
 
 - (BOOL)currentOfferUsesTPN;
 - (void)startOffer;

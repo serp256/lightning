@@ -12,6 +12,8 @@ static NSString *const kSPURLParamKeyJailbroken = @"jailbroken";
 static NSString *const kSPURLParamValueJailbrokenYes = @"true";
 static NSString *const kSPURLParamValueJailbrokenNo = @"false";
 
+
+
 static const char* jailbreakApps[] = {
 	"/Applications/Cydia.app",
 	"/Applications/limera1n.app",
@@ -36,7 +38,7 @@ static const char* jailbreakApps[] = {
 {
     static BOOL jailbrokenValueCached = NO;
     static BOOL jailbrokenStatus = NO;
-    
+
     if (!jailbrokenValueCached) {
         for (int i = 0; jailbreakApps[i] != NULL; ++i) {
             NSString *appPath = [NSString stringWithUTF8String:jailbreakApps[i]];
@@ -47,7 +49,7 @@ static const char* jailbreakApps[] = {
         }
         jailbrokenValueCached = YES;
 	}
-    
+
 	return jailbrokenStatus;
 }
 

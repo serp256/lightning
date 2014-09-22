@@ -23,6 +23,12 @@ static NSString *const SPProviderData = @"SPProviderData";
 
 @implementation SPBaseNetwork
 
++ (SPSemanticVersion *)adapterVersion
+{
+    [NSException raise:NSInternalInconsistencyException format:@"%@", [NSString stringWithFormat:@"You must override %@ in a subclass", NSStringFromSelector(_cmd)]];
+    return nil;
+}
+
 - (BOOL)startNetworkWithName:(NSString *)networkName data:(NSDictionary *)data
 {
     SPLogInfo(@"Starting SDK and mediation adapters for %@", networkName);
@@ -40,9 +46,10 @@ static NSString *const SPProviderData = @"SPProviderData";
 
 - (BOOL)startSDK:(NSDictionary *)data
 {
-    @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                   reason:[NSString stringWithFormat:@"You must override %@ in a subclass", NSStringFromSelector(_cmd)]
-                                 userInfo:nil];
+    NSString *exceptionReason = [NSString stringWithFormat:@"You must override %@ in a subclass", NSStringFromSelector(_cmd)];
+    [NSException raise:NSInternalInconsistencyException format:@"%@", exceptionReason];
+
+    return NO;
 }
 
 - (void)startRewardedVideoAdapter:(NSDictionary *)data

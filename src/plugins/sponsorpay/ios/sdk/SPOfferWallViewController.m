@@ -10,7 +10,6 @@
 #import "SPAdvertisementViewControllerSubclass.h"
 #import "SPLoadingIndicator.h"
 
-#import "SP_SDK_versions.h"
 #import "SPURLGenerator.h"
 #import "SPPersistence.h"
 #import "SPSchemeParser.h"
@@ -69,9 +68,9 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
     }
 }
 
-- (void)viewDidDisappear:(BOOL)animated
+- (void)viewWillDisappear:(BOOL)animated
 {
-    [super viewDidDisappear:animated];
+    [super viewWillDisappear:animated];
     
     if (_shouldRestoreStatusBar) {
         [[UIApplication sharedApplication] setStatusBarHidden:NO];
@@ -154,18 +153,6 @@ static NSString *offerWallBaseUrl = OFFERWALL_BASE_URL;
             [self.delegate offerWallViewController:self isFinishedWithStatus:SPONSORPAY_ERR_NETWORK];
         }
     }
-}
-
-#pragma mark - Development / Staging / Production URLs management
-
-+ (void)overrideBaseURLWithURLString:(NSString *)newUrl
-{
-    offerWallBaseUrl = newUrl;
-}
-
-+ (void)restoreBaseURLToDefault
-{
-    [self overrideBaseURLWithURLString:OFFERWALL_BASE_URL];
 }
 
 @end

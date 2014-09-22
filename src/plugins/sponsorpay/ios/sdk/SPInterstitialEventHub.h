@@ -15,7 +15,4 @@
 @property (nonatomic, copy) NSString *appId;
 @property (nonatomic, copy) NSString *userId;
 
-// Override URLs - Remove these methods before performing a release
-- (void)overrideBaseURLWithURLString:(NSString *)newURLString;
-- (void)restoreBaseURLToDefault;
 @end

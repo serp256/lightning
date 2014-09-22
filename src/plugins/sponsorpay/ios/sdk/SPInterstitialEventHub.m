@@ -40,7 +40,7 @@ static const NSInteger SPMaxConcurrentOperations = 1;
 {
     SPInterstitialEvent *event = (SPInterstitialEvent *)notification.object;
     if (![event isKindOfClass:[SPInterstitialEvent class]]) {
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:NSLocalizedString(@"Notification object is not of SPInterstitialEvent call", nil) userInfo:nil];
+        [NSException raise:NSInvalidArgumentException format:@"%@", NSLocalizedString(@"Notification object is not of SPInterstitialEvent call", nil)];
     }
 
     SPURLGenerator *url = [SPURLGenerator URLGeneratorWithBaseURLString:self.eventURL];
@@ -68,16 +68,6 @@ static const NSInteger SPMaxConcurrentOperations = 1;
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_networkQueue cancelAllOperations];
-}
-
-- (void)overrideBaseURLWithURLString:(NSString *)newURLString
-{
-    self.eventURL = newURLString;
-}
-
-- (void)restoreBaseURLToDefault
-{
-    self.eventURL = SPInterstitialEventURL;
 }
 
 @end

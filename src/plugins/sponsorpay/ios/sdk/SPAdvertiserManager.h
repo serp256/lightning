@@ -20,7 +20,4 @@
 
 - (void)reportActionCompleted:(NSString *)actionId;
 
-+ (void)overrideBaseURLWithURLString:(NSString *)newURLString;
-+ (void)restoreBaseURLToDefault;
-
 @end

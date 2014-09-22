@@ -6,7 +6,7 @@ value openURL : string -> unit;
 value sendEmail : string -> ~subject:string -> ?body:string -> unit -> unit;
 external memUsage: unit -> int = "ml_memUsage";
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
-type malinfo = 
+type malinfo =
   {
     malloc_total: int;
     malloc_used: int;

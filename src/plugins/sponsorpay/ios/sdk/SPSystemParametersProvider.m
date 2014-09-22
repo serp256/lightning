@@ -6,8 +6,8 @@
 //  Copyright (c) 2012 SponsorPay. All rights reserved.
 //
 
+#import "UIKit/UIKit.h"
 #import "SPSystemParametersProvider.h"
-#import <UIKit/UIKit.h>
 
 static NSString *const kSPURLParamKeyOSName = @"os_name";
 static NSString *const kSPURLParamKeyOSVersion = @"os_version";
@@ -20,14 +20,14 @@ static NSString *const kSPURLParamValueManufacturerApple = @"Apple Inc.";
 - (NSDictionary *)dictionaryWithKeyValueParameters
 {
     UIDevice *device = [UIDevice currentDevice];
-    
+
     NSDictionary *systemParametersDictionary = @{
     kSPURLParamKeyOSName : device.systemName,
     kSPURLParamKeyOSVersion : device.systemVersion,
     kSPURLParamKeyPhoneModel : device.model,
     kSPURLParamKeyManufacturer : kSPURLParamValueManufacturerApple
     };
-    
+
     return systemParametersDictionary;
 }
 

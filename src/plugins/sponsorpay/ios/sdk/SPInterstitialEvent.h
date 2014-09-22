@@ -17,7 +17,8 @@ typedef NS_ENUM(NSUInteger, SPInterstitialEventType) {
     SPInterstitialEventTypeImpression,
     SPInterstitialEventTypeClick,
     SPInterstitialEventTypeClose,
-    SPInterstitialEventTypeError
+    SPInterstitialEventTypeError,
+    SPInterstitialEventTypeNoSDK
 };
 
 /**

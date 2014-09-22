@@ -15,6 +15,7 @@ public class Manager {
     }
 
     public static GameCenter createGameCenter(int type) {
+        Log.d("LIGHTNING", "GameCenter " + type);
         GameCenter gc = type == 0 ? new Google() : new Amazon();
         gc.setConnectionListener(new Listener());
 

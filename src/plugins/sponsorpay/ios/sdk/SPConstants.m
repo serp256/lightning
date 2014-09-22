@@ -19,4 +19,13 @@ NSString *const SPInterstitialEventURL = @"http://engine.sponsorpay.com/tracker"
 
 // Url Generator Constants
 NSString *const SPUrlGeneratorRequestIDKey = @"request_id";
+
+// Exceptions Names
+
+NSString *const SPInvalidUserIdException = @"SPInvalidUserIdException";
+
+// MBE Constants
+NSString *const SPRequestValidate = @"validate";
+NSString *const SPTPNIDParameter = @"id";
 @end
+

@@ -25,7 +25,6 @@
     return self;
 }
 
-
 #pragma mark - Token generation
 
 - (NSString *)credentialsToken

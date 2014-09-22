@@ -1,14 +1,14 @@
 open LightCommon;
 
 
-value make_idle_func frameRate stage = 
+value make_idle_func frameRate stage =
   let time = ref (Unix.gettimeofday()) in
-  let fps = 1. /. (float frameRate) in 
+  let fps = 1. /. (float frameRate) in
   fun () ->
     let now = Unix.gettimeofday () in
     let diff = now -. !time in
     if diff >= fps
-    then 
+    then
     (
       time.val := now;
       URLLoader.run ();
@@ -18,17 +18,17 @@ value make_idle_func frameRate stage =
     )
     else print_endline "wait";
 
-value make_mouse_funcs stage = 
+value make_mouse_funcs stage =
   let currentTouch = ref None in
   let touchid = ref 0 in
-  let mouse = 
+  let mouse =
     fun mouse ->
       match !currentTouch with
       [ None when mouse.Glut.button_state = Glut.BUTTON_DOWN ->
         let globalX = float mouse.Glut.mouse_x
         and globalY = float mouse.Glut.mouse_y
         in
-        let touch = 
+        let touch =
           {
             Touch.n_tid = (let r = !touchid in (touchid.val := r + 1; Int32.of_int r));
             n_timestamp = 0.;
@@ -42,12 +42,12 @@ value make_mouse_funcs stage =
           currentTouch.val := Some touch;
         )
       | Some cTouch when mouse.Glut.button_state = Glut.BUTTON_UP ->
-        let touch = 
-          {(cTouch) with 
-            Touch.n_globalX = float mouse.Glut.mouse_x; 
-            n_globalY = float mouse.Glut.mouse_y; 
+        let touch =
+          {(cTouch) with
+            Touch.n_globalX = float mouse.Glut.mouse_x;
+            n_globalY = float mouse.Glut.mouse_y;
             n_phase = Touch.TouchPhaseEnded
-          } 
+          }
         in
         (
           stage#processTouches [ touch ];
@@ -56,8 +56,8 @@ value make_mouse_funcs stage =
       | None -> print_endline "CurrentTouch None but this is not DOWN"
       | Some _ -> print_endline "CurrentTouch Some but this is not UP"
       ]
-  and motion = 
-    fun x y -> 
+  and motion =
+    fun x y ->
       match !currentTouch with
       [ Some touch ->
         let touch = {(touch) with Touch.n_globalX = float x; n_globalY = float y; n_phase = Touch.TouchPhaseMoved} in
@@ -70,7 +70,7 @@ value make_mouse_funcs stage =
   in
   (mouse,motion);
 
-value start_cycle stage = 
+value start_cycle stage =
   let fps = 1. /. (float stage#frameRate) in
   let time = ref (Unix.gettimeofday ()) in
   let rec advanceTime () =
@@ -88,27 +88,38 @@ value start_cycle stage =
     advanceTime ();
   (* Glut.timerFunc fps advanceTime; *)
 
+type orientation = [ Portrain | Landscape ];
 
-value run stage_create = 
-  let width = ref 768 and height = ref 1024 
-  and setDeviceType = fun s -> internalDeviceType.val := match s with [ "pad" -> Pad | "phone" -> Phone | _ -> failwith "unknown device type"] 
-  and setDevice = fun s -> internal_device.val := match s with [ "pad1" -> IOS IPad1 | "pad2" -> IOS IPad2 | "pad3" -> IOS IPad3 | "pad4" -> IOS IPadNew 
-	| "phone4" -> IOS IPhone4 | "phone5" -> IOS IPhone5 | "phone3" -> IOS IPhone3GS | "xlarge_hdpi" -> Android (Xlarge, Hdpi) | "normal_xhdpi" -> Android (Normal, Xhdpi)  
-  | "large_mdpi" ->  Android (Large, Mdpi)
-  | "xlarge_mdpi" ->  Android (Xlarge, Mdpi)
-  | "normal_xxhdpi" -> Android (Normal, Xxhdpi)
-  | "xlarge_xhdpi" -> Android (Xlarge, Xhdpi)
-  |  _ -> failwith "unknown device"] in
+
+value run stage_create =
+  let width = ref 768 in
+  let height = ref 1024 in
+  let orientation = ref Landscape in
+  let setOrientation = fun s -> orientation.val := match String.lowercase s with [ "portrait" -> Portrain | "landscape" -> Landscape | _ -> failwith "wrong orientation string" ]
+  and setDeviceType = fun s -> internalDeviceType.val := match s with [ "pad" -> Pad | "phone" -> Phone | _ -> failwith "unknown device type"]
+  and setDevice = fun s -> (
+      internal_device.val := LightCommon.strToDevice s;
+      let (w, h) = LightCommon.deviceToSize !internal_device in (
+          width.val := w;
+          height.val := h;
+        )
+    )
+  in
   (
     Arg.parse [
       ("-w",Arg.Set_int width,"width");("-h",Arg.Set_int height,"height");
+      ("-dev", Arg.String setDevice, "Set device type. For ios devices -- related to ios_device type from LightCommon module (iphoneold, iphone3gs, ipad2 etc), for android -- screen-density or screen_density, as you wish, for example normal-xhdpi or xlarge_tvdpi. Case insensitive");
+      ("-orient", Arg.String setOrientation, "Set device orientation. portrait or landscape, case insensitive");
       ("-dt",Arg.String setDeviceType,"Set deviceType [phone | pad] default pad");
-      ("-d",Arg.String setDevice, "Set device [pad1 pad2 pad3 pad4 phone ] default pad2");
+      (*("-d",Arg.String setDevice, "Set device [pad1 pad2 pad3 pad4 phone ] default pad2");*)
       ("-um",Arg.Set_int Hardware.internal_user_memory,"Set Hardware.user_memory (default 0)")
     ] (fun _ -> ()) "";
     Glut.init ();
     Glut.initDisplayMode [ Glut.GLUT_RGB ; Glut.GLUT_DOUBLE ];
-    Glut.initWindowSize !width !height;
+    match !orientation with
+    [ Portrain -> Glut.initWindowSize !width !height
+    | Landscape -> Glut.initWindowSize !height !width
+    ];
     Glut.creatWindow "LIGHTNING";
     Glut.reshapeFunc begin fun width height ->
       let stage = stage_create (float width) (float height) in

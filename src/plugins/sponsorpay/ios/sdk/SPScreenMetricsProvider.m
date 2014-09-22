@@ -7,7 +7,7 @@
 //
 
 #import "SPScreenMetricsProvider.h"
-#import <UIKit/UIKit.h>
+#import "UIKit/UIKit.h"
 
 static NSString *const URL_PARAM_SCREEN_WIDTH = @"screen_width";
 static NSString *const URL_PARAM_SCREEN_HEIGHT = @"screen_height";
@@ -20,12 +20,12 @@ static NSString *const URL_PARAM_SCREEN_HEIGHT = @"screen_height";
     CGFloat screenScale = [mainScreen scale] ? mainScreen.scale : 1.0;
     int actualScreenWidth = round(mainScreen.bounds.size.width * screenScale);
     int actualScreenHeight = round(mainScreen.bounds.size.height * screenScale);
-    
+
     NSDictionary *screenMetrics = @{
     URL_PARAM_SCREEN_WIDTH : [NSString stringWithFormat:@"%d", actualScreenWidth],
     URL_PARAM_SCREEN_HEIGHT : [NSString stringWithFormat:@"%d", actualScreenHeight]
     };
-    
+
     return screenMetrics;
 }
 

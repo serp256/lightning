@@ -22,6 +22,7 @@
 #import "SPMacAddressProvider.h"
 #import "SPMD5MacAddressProvider.h"
 #import "SPSHA1MacAddressProvider.h"
+#import "SPSDKFeaturesProvider.h"
 #import "SPSystemVersionChecker.h"
 #import "NSString+SPURLEncoding.h"
 
@@ -241,6 +242,7 @@ static id<SPURLParametersProvider> globalCustomParametersProvider;
     [urlGenerator addParametersProviderWithClass:[SPHostAppBundleParametersProvider class]];
     [urlGenerator addParametersProviderWithClass:[SPAppleAdvertiserIDProvider class]];
     [urlGenerator addParametersProviderWithClass:[SPSDKVersionProvider class]];
+    [urlGenerator addParametersProviderWithClass:[SPSDKFeaturesProvider class]];
 
     if (![SPSystemVersionChecker runningOniOS7OrNewer]) {
 #ifndef kSPShouldNotSendPlainMACAddress

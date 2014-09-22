@@ -17,7 +17,7 @@ extern NSString *const SPInterstitialClientErrorDomain;
 extern const NSInteger SPInterstitialClientCannotInstantiateAdapterErrorCode;
 
 /** Dictionary key used to access the loggable error description (non localized, in English) of the userInfo dictionary included in errors triggered by the SponsorPay interstitial client */
-NSString *const SPInterstitialClientErrorLoggableDescriptionKey;
+extern NSString *const SPInterstitialClientErrorLoggableDescriptionKey;
 
 @protocol SPInterstitialClientDelegate;
 
@@ -42,10 +42,6 @@ NSString *const SPInterstitialClientErrorLoggableDescriptionKey;
  @see checkInterstitialAvailable
  **/
 - (void)showInterstitialFromViewController:(UIViewController *)parentViewController;
-
-// TODO: Remove these methods before creating a release
-+ (void)overrideBaseURLWithURLString:(NSString *)newURLString eventHub:(NSString *)newEventHubURL;
-+ (void)restoreBaseURLToDefault;
 
 @end
 

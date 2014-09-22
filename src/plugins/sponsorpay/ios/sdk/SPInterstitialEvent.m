@@ -25,6 +25,7 @@ static NSString *const EventTypeToString[] = {
     [SPInterstitialEventTypeClick]      = @"click",
     [SPInterstitialEventTypeClose]      = @"close",
     [SPInterstitialEventTypeError]      = @"error",
+    [SPInterstitialEventTypeNoSDK]      = @"no_sdk",
 };
 
 @implementation SPInterstitialEvent
@@ -55,12 +56,15 @@ static NSString *const EventTypeToString[] = {
 {
     NSMutableDictionary *paramDict = [[NSMutableDictionary alloc] init];
     paramDict[SPUrlGeneratorEventKey] = [self typeToString];
-    paramDict[SPUrlGeneratorAdIdKey] = self.adId;
     paramDict[SPUrlGeneratorRequestIDKey] = self.requestId;
     paramDict[SPUrlGeneratorPlatformKey] = self.platform;
     paramDict[SPUrlGeneratorAdFormatKey] = self.adFormat;
     paramDict[SPUrlGeneratorClientKey] = self.client;
     paramDict[SPUrlGeneratorRewardedKey] = [NSNumber numberWithBool:self.rewarded];
+
+    if (self.adId) {
+        paramDict[SPUrlGeneratorAdIdKey] = self.adId;
+    }
 
     if (self.network.length) {
         paramDict[SPUrlGeneratorProviderTypeKey] = self.network;

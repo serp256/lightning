@@ -331,15 +331,6 @@ static NSString *VCSBaseURL = SP_VCS_BASE_URL;
 
 #pragma mark - VCS base URL override
 
-+ (void)overrideVCSBaseURLWithURLString:(NSString *)overridingURL
-{
-    VCSBaseURL = overridingURL;
-}
-
-+ (void)restoreDefaultVCSBaseURL
-{
-    [self overrideVCSBaseURLWithURLString:SP_VCS_BASE_URL];
-}
 
 + (NSString *)descriptionForErrorType:(SPVirtualCurrencyRequestErrorType)errorType
 {

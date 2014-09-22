@@ -12,8 +12,8 @@
 #include <caml/alloc.h>
 
 #ifdef SILENT
-#define DEBUG(str) 
-#define DEBUGF(fmt,args...) 
+#define DEBUG(str)
+#define DEBUGF(fmt,args...)
 #else
 #define DEBUG(str) __android_log_write(ANDROID_LOG_DEBUG,"LIGHTNING",str)
 #define DEBUGF(fmt,args...) __android_log_print(ANDROID_LOG_DEBUG,"LIGHTNING",fmt, ## args)
@@ -24,8 +24,9 @@
 
 extern jclass lightning_cls;
 
-void	lightning_init			();
-char*	lightning_get_locale	();
+void	lightning_init();
+char*	lightning_get_locale();
+void lightning_uncaught_exception(const char*, int, char**);
 
 int getResourceFd(const char *path, resource *res);
 

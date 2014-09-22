@@ -17,13 +17,18 @@
 #import "SPInterstitialEventHub.h"
 #import "SPInterstitialEvent.h"
 #import "SPConstants.h"
+#import "NSURL+SPDescription.h"
 
+/* Error related constants */
 NSString *const SPInterstitialClientErrorDomain = @"SPInterstitialClientErrorDomain";
 const NSInteger SPInterstitialClientCannotInstantiateAdapterErrorCode = -8;
 const NSInteger SPInterstitialClientInvalidStateErrorCode = -9;
 const NSInteger SPInterstitialClientConnectionErrorCode = -10;
-
 NSString *const SPInterstitialClientErrorLoggableDescriptionKey = @"SPInterstitialClientErrorLoggableDescriptionKey";
+
+/* Offer data dictionary keys, accessed only within the implementation of this class */
+static NSString *const SPInterstitialClientOfferDataRequestIdKey = @"SPInterstitialClientOfferDataRequestIdKey";
+static NSString *const SPInterstitialClientOfferDataAdIdKey = @"SPInterstitialClientAdIdKey";
 
 static NSString *const kInterstitialProductionURLString = @"http://engine.sponsorpay.com/interstitial";
 
@@ -103,7 +108,7 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
 - (void)setInterstitialEndPointURLString:(NSString *)interstitialEndPointURLString
 {
     _interstitialEndPointURLString = interstitialEndPointURLString;
-    _URLGenerator = nil;
+    _URLGenerator = nil; // Need to recreate generator with new end point URL
 }
 
 - (void) dealloc
@@ -119,12 +124,6 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
     }
 
     return _URLGenerator;
-}
-
-- (void)setinterstitialEndPointURLString:(NSString *)interstitialEndPointURLString
-{
-    _URLGenerator = nil; // Need to recreate generator with new end point URL
-    _interstitialEndPointURLString = interstitialEndPointURLString;
 }
 
 # pragma mark - Adapter configuration
@@ -169,9 +168,11 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
         if (selectedOffer) {
             canShowInterstitial = YES;
             newState = SPInterstitialClientReadyToShowInterstitialState;
+            [self fireNotification:SPInterstitialEventTypeFill offer:nil];
         } else {
             canShowInterstitial = NO;
             newState = SPInterstitialClientReadyToCheckOffersState;
+            [self fireNotification:SPInterstitialEventTypeNoFill offer:nil];
         }
 
         self.selectedOffer = selectedOffer;
@@ -180,7 +181,7 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
     };
 
     NSURLRequest *requestForOffers = [self URLRequestForOffers];
-    SPLogDebug(@"Requesting interstitial offers: %@", requestForOffers);
+    SPLogDebug(@"Requesting interstitial offers: %@", [requestForOffers.URL SPPrettyDescription]);
     [NSURLConnection sendAsynchronousRequest:requestForOffers
                                        queue:[self queueForRequestCallback]
                            completionHandler:requestCompletionHandler];
@@ -206,7 +207,7 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
 - (SPInterstitialOffer *)offerSelectedFromResponse:(SPInterstitialResponse *)response
 {
     for (SPInterstitialOffer *offer in response.orderedOffers) {
-        if ([self canShowInterstitialFromNetwork:offer]) {
+        if ([self canShowInterstitialForOffer:offer]) {
             [self fireNotification:SPInterstitialEventTypeFill offer:offer];
             return offer;
         }
@@ -219,15 +220,24 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
     return nil;
 }
 
-- (BOOL)canShowInterstitialFromNetwork:(SPInterstitialOffer *)offer
+- (BOOL)canShowInterstitialForOffer:(SPInterstitialOffer *)offer
 {
     id<SPInterstitialNetworkAdapter> adapter = [self adapterForNetworkName:offer.networkName];
-    [adapter setDelegate:self];
-    if (adapter) {
-        [self fireNotification:SPInterstitialEventTypeRequest offer:offer];
-    } else {
+
+    if (!adapter) {
+        [self fireNotification:SPInterstitialEventTypeNoSDK offer:offer];
         SPLogError(@"Interstitial Adapter for %@ could not be found", offer.networkName);
+        return NO;
     }
+
+    [adapter setDelegate:self];
+
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:offer.arbitraryData];
+    dict[SPInterstitialClientOfferDataRequestIdKey] = self.lastRequestID;
+    dict[SPInterstitialClientOfferDataAdIdKey] = offer.adId;
+    adapter.offerData = [NSDictionary dictionaryWithDictionary:dict];
+
+    [self fireNotification:SPInterstitialEventTypeRequest offer:offer];
 
     return [adapter canShowInterstitial];
 }
@@ -277,7 +287,10 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
 - (void)adapter:(id<SPInterstitialNetworkAdapter>)adapter didFailWithError:(NSError *)error
 {
     SPLogError(@"Error received from %@: %@",adapter.networkName, [error localizedDescription]);
-    [self fireNotification:SPInterstitialEventTypeError offer:self.selectedOffer];
+    NSString *adId = adapter.offerData[SPInterstitialClientOfferDataAdIdKey];
+    NSString *request_id = adapter.offerData[SPInterstitialClientOfferDataRequestIdKey];
+
+    [self fireNotification:SPInterstitialEventTypeError network:adapter.networkName adId:adId requestId:request_id];
     [self failWithError:error];
 }
 
@@ -327,27 +340,6 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
     self.didSetCredentials =  NO;
 }
 
-+ (void)overrideBaseURLWithURLString:(NSString *)newURLString eventHub:(NSString *)newEventHubURL
-{
-    [[self sharedClient] setInterstitialEndPointURLString:newURLString];
-    [[self sharedClient] overrideEventHubURL:newEventHubURL];
-}
-
-+ (void)restoreBaseURLToDefault
-{
-    [[self sharedClient] setInterstitialEndPointURLString:kInterstitialProductionURLString];
-    [[self sharedClient] restoreEventHubURLToDefault];
-}
-
-- (void)overrideEventHubURL:(NSString *)newEventHubURL
-{
-    [self.eventHub overrideBaseURLWithURLString:newEventHubURL];
-}
-- (void)restoreEventHubURLToDefault
-{
-    [self.eventHub restoreBaseURLToDefault];
-}
-
 # pragma mark - KVO Observers
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context{
     // Key-Value Observer for change in the appId - Updates the appId from eventHub
@@ -359,11 +351,20 @@ BOOL SPInterstitialClientState_canCheckOffers(SPInterstitialClientState state) {
 }
 
 # pragma mark - Helper methods
-- (void)fireNotification:(SPInterstitialEventType)eventType offer:(SPInterstitialOffer *)offer
+- (void)fireNotification:(SPInterstitialEventType)eventType network:(NSString *)networkName adId:(NSString *)adId requestId:(NSString *)requestId
 {
-    SPInterstitialEvent *event = [[SPInterstitialEvent alloc] initWithEventType:eventType network:offer.networkName adId:offer.adId requestId:self.lastRequestID];
+    SPInterstitialEvent *event = [[SPInterstitialEvent alloc] initWithEventType:eventType
+                                                                        network:networkName
+                                                                           adId:adId
+                                                                      requestId:requestId];
     [[NSNotificationCenter defaultCenter] postNotificationName:SPInterstitialEventNotification object:event];
 }
+
+- (void)fireNotification:(SPInterstitialEventType)eventType offer:(SPInterstitialOffer *)offer
+{
+    [self fireNotification:eventType network:offer.networkName adId:offer.adId requestId:self.lastRequestID];
+}
+
 @end
 
 NSString *SPStringFromInterstitialDismissReason(SPInterstitialDismissReason reason)

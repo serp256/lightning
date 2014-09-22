@@ -4,11 +4,12 @@
         android:versionCode="5"
         android:versionName="5.0">
 
-    <application android:label="Lightning Native" android:icon="@drawable/icon">
+    <application android:label="Lightning Native" android:icon="@drawable/icon" android:debuggable="true">
         <activity android:name="ru.redspell.lightning.NativeActivity"
                 android:screenOrientation="portrait"
                 android:label="Lightning Native"
-                android:configChanges="orientation|keyboardHidden">
+                android:configChanges="orientation|keyboardHidden"
+                android:launchMode="singleTask">
             <meta-data android:name="android.app.lib_name" android:value="test" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,7 +32,8 @@
             </intent-filter>
         </receiver>
 
-        <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="test" />
+        <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/app_id" />
+        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

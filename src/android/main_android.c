@@ -416,8 +416,6 @@ void android_main(struct android_app* state) {
     fclose(f);
     close(indx_fd);
 
-    ANativeActivity_setWindowFlags(state->activity, AWINDOW_FLAG_FULLSCREEN, 0);
-
     if (state->savedState != NULL) {
         engine.state = *(struct saved_state*)state->savedState;
     }
@@ -426,6 +424,14 @@ void android_main(struct android_app* state) {
     PRINT_DEBUG("caml_startup...");
     caml_startup(argv);
     PRINT_DEBUG("caml_startup done");
+
+    engine_find_class("ru/redspell/lightning/expansions/Expansions");
+    engine_find_class("com/flurry/android/FlurryAgent");
+    engine_find_class("ru/redspell/lightning/plugins/LightTapjoy");
+    engine_find_class("com/appsflyer/AppsFlyerLib");
+    engine_find_class("ru/redspell/lightning/notifications/Notifications");
+    engine_find_class("ru/redspell/lightning/keyboard/Keyboard");
+
 
     while (1) {
         int ident;

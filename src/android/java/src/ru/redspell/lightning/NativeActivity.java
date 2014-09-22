@@ -92,6 +92,7 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onStop() {
+		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onStop");
 		super.onStop();
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
@@ -103,6 +104,7 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onDestroy() {
+		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onDestroy");
 		super.onDestroy();
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
@@ -110,6 +112,18 @@ public class NativeActivity extends android.app.NativeActivity {
 			IUiLifecycleHelper h = iter.next();
 			h.onDestroy();
 		}
+	}
+
+	@Override
+	public void onLowMemory() {
+		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onLowMemory");
+		super.onLowMemory();
+	}
+
+	@Override
+	public void onTrimMemory(int level) {
+		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onTrimMemory");
+		super.onTrimMemory(level);
 	}
 
 	@Override

@@ -19,5 +19,11 @@ FOUNDATION_EXPORT NSString *const SPInterstitialEventURL;
 
 FOUNDATION_EXPORT NSString *const SPUrlGeneratorRequestIDKey;
 
+// Exceptions names
+FOUNDATION_EXPORT NSString *const SPInvalidUserIdException;
+
+// MBE Constants
+FOUNDATION_EXPORT NSString *const SPRequestValidate;
+FOUNDATION_EXPORT NSString *const SPTPNIDParameter;
 
 @end

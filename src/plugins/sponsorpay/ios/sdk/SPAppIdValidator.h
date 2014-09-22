@@ -8,6 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
+FOUNDATION_EXPORT NSString *const SPInvalidAppIdException;
+
 @interface SPAppIdValidator : NSObject
+
 + (void)validateOrThrow: (NSString *)appId;
+
 @end

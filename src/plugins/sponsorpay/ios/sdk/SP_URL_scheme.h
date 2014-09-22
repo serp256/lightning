@@ -12,3 +12,5 @@
 
 // the path value to trigger a close on the spinner dialog
 #define SPONSORPAY_START_PATH   @"start"
+
+#define SPONSORPAY_INSTALL_PATH @"install"

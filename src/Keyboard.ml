@@ -1,10 +1,10 @@
 IFDEF PC THEN
-value paste () = "not SDL";
+value paste f = f "not supported on pc";
 value copy _ = ();
 value show ?visible ?size ?inittxt ?onhide ?onchange () = ();
 value hide () = ();
 ELSE
-external paste: unit -> string = "ml_paste";
+external paste: (string -> unit) -> unit = "ml_paste";
 external copy: string -> unit = "ml_copy";
 
 IFDEF ANDROID THEN
