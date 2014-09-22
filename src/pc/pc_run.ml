@@ -95,6 +95,9 @@ value run stage_create =
   and setDevice = fun s -> internal_device.val := match s with [ "pad1" -> IOS IPad1 | "pad2" -> IOS IPad2 | "pad3" -> IOS IPad3 | "pad4" -> IOS IPadNew 
 	| "phone4" -> IOS IPhone4 | "phone5" -> IOS IPhone5 | "phone3" -> IOS IPhone3GS | "xlarge_hdpi" -> Android (Xlarge, Hdpi) | "normal_xhdpi" -> Android (Normal, Xhdpi)  
   | "large_mdpi" ->  Android (Large, Mdpi)
+  | "xlarge_mdpi" ->  Android (Xlarge, Mdpi)
+  | "normal_xxhdpi" -> Android (Normal, Xxhdpi)
+  | "xlarge_xhdpi" -> Android (Xlarge, Xhdpi)
   |  _ -> failwith "unknown device"] in
   (
     Arg.parse [
