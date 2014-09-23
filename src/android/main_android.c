@@ -425,14 +425,6 @@ void android_main(struct android_app* state) {
     caml_startup(argv);
     PRINT_DEBUG("caml_startup done");
 
-    engine_find_class("ru/redspell/lightning/expansions/Expansions");
-    engine_find_class("com/flurry/android/FlurryAgent");
-    engine_find_class("ru/redspell/lightning/plugins/LightTapjoy");
-    engine_find_class("com/appsflyer/AppsFlyerLib");
-    engine_find_class("ru/redspell/lightning/notifications/Notifications");
-    engine_find_class("ru/redspell/lightning/keyboard/Keyboard");
-
-
     while (1) {
         int ident;
         int events;
