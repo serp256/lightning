@@ -1,7 +1,7 @@
 
 type http_method = [= `GET | `POST ];
 type data = [= `Buffer of Buffer.t | `String of string | `URLVariables of list (string*string) ];
-type request = 
+type request =
   {
     httpMethod: mutable http_method;
     headers: mutable list (string*string);
@@ -12,7 +12,7 @@ value get_header: string -> list (string*string) -> option string;
 value request: ?httpMethod:http_method -> ?headers:list (string*string) -> ?data:data -> string -> request;
 type state = [= `Loading | `Complete ];
 
-value ev_PROGRESS: Ev.id; 
+value ev_PROGRESS: Ev.id;
 value ev_COMPLETE: Ev.id;
 value ev_IO_ERROR: Ev.id;
 
@@ -36,9 +36,7 @@ class loader: [ ?request:request] -> [ unit ] ->
     method cancel: unit -> unit;
   end;
 
-
-IFDEF ANDROID THEN
-external download: ~url:string -> ~path:string -> ?ecallback:(int -> string -> unit) -> ?progress:(~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile";
-ELSE
-value download: ~url:string -> ~path:string -> ?ecallback:(int -> string -> unit) -> ?progress:(~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit)  -> unit;
-END;
+value download:
+  ?compress:bool -> ~url:string -> ~path:string ->
+  ?ecallback:(int -> string -> unit) -> ?progress:(~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) ->
+  unit;

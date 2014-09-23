@@ -4,7 +4,7 @@
 type http_method = [= `GET | `POST ];
 type data = [= `Buffer of Buffer.t | `String of string | `URLVariables of list (string*string) ];
 
-type request = 
+type request =
   {
     httpMethod: mutable http_method;
     headers: mutable list (string*string);
@@ -12,7 +12,7 @@ type request =
     url: string;
   };
 
-value get_header name headers = 
+value get_header name headers =
   let name = String.lowercase name in
   try
     let hv = MList.find_map_raise (fun (hn,hv) -> match String.lowercase hn = name with [ True -> Some hv | False -> None ]) headers in
@@ -36,17 +36,17 @@ value (data_of_ioerror,ioerror_of_data) = Ev.makeData();
 
 exception Incorrect_request;
 
-value prepare_request r = 
+value prepare_request r =
   match r.httpMethod with
-  [ `POST -> 
-      let data = 
+  [ `POST ->
+      let data =
         match r.data with
         [ Some d ->
-          let data = 
+          let data =
             match d with
-            [ `Buffer b -> Buffer.contents b 
+            [ `Buffer b -> Buffer.contents b
             | `String s -> s
-            | `URLVariables vars -> 
+            | `URLVariables vars ->
               (
                 match get_header "content-type" r.headers with
                 [ None -> r.headers := [ ("content-type","application/x-www-form-urlencoded; charset=utf-8") :: r.headers ]
@@ -61,11 +61,11 @@ value prepare_request r =
         ]
       in
       (r.url,data)
-  | `GET -> 
-      let url = 
+  | `GET ->
+      let url =
         match r.data with
         [ None -> r.url
-        | Some (`URLVariables variables) -> 
+        | Some (`URLVariables variables) ->
             let params = UrlEncoding.mk_url_encoded_parameters variables in
             match r.url.[String.length r.url - 1] with
             [ '&' -> r.url ^ params
@@ -77,7 +77,7 @@ value prepare_request r =
       (url,None)
   ];
 
-type loader_wrapper = 
+type loader_wrapper =
   {
     onResponse: int -> int64 -> string -> unit;
     onData: string -> unit;
@@ -91,7 +91,7 @@ value loaders = Hashtbl.create 1;
 
 external url_connection: string -> http_method -> list (string*string) -> option string -> connection = "ml_URLConnection";
 
-value get_loader ns_connection = 
+value get_loader ns_connection =
   try
     Hashtbl.find loaders ns_connection
   with [ Not_found -> failwith("HTTPConneciton not found") ];
@@ -103,14 +103,14 @@ value url_response connection httpCode contentLength contentType =
 
 Callback.register "url_response" url_response;
 
-value url_data connection data = 
+value url_data connection data =
   let () = debug "url data" in
   let w = get_loader connection in
   w.onData data;
 
 Callback.register "url_data" url_data;
 
-value url_complete connection = 
+value url_complete connection =
   let () = debug "url complete" in
   let w = get_loader connection in
   (
@@ -120,7 +120,7 @@ value url_complete connection =
 
 Callback.register "url_complete" url_complete;
 
-value url_failed connection code msg = 
+value url_failed connection code msg =
   let () = debug "url failed" in
   let w = get_loader connection in
   (
@@ -130,7 +130,7 @@ value url_failed connection code msg =
 
 Callback.register "url_failed" url_failed;
 
-value start_load wrappers r = 
+value start_load wrappers r =
   let (url,data) = prepare_request r in
   let () = debug "HEADERS: [%s]" (String.concat ";" (List.map (fun (n,v) -> n ^ ":" ^ v) r.headers)) in
   let ns_connection = url_connection url r.httpMethod r.headers data in
@@ -156,7 +156,7 @@ value loaders = Hashtbl.create 1;
 
 external url_connection: string -> string -> list (string*string) -> option string -> connection = "ml_android_connection";
 
-value get_loader ns_connection = 
+value get_loader ns_connection =
   try
     Hashtbl.find loaders ns_connection
   with [ Not_found -> failwith("HTTPConneciton not found") ];
@@ -168,14 +168,14 @@ value url_response ns_connection httpCode contentType totalBytes =
 
 Callback.register "url_response" url_response;
 
-value url_data ns_connection data = 
+value url_data ns_connection data =
   let () = debug "url data" in
   let w = get_loader ns_connection in
   w.onData data;
 
 Callback.register "url_data" url_data;
 
-value url_complete ns_connection = 
+value url_complete ns_connection =
   let () = debug "url complete" in
   let w = get_loader ns_connection in
   (
@@ -185,7 +185,7 @@ value url_complete ns_connection =
 
 Callback.register "url_complete" url_complete;
 
-value url_failed ns_connection code msg = 
+value url_failed ns_connection code msg =
   let () = debug "url failed" in
   let w = get_loader ns_connection in
   (
@@ -196,7 +196,7 @@ value url_failed ns_connection code msg =
 Callback.register "url_failed" url_failed;
 
 
-value start_load wrappers r = 
+value start_load wrappers r =
   let (url,data) = prepare_request r in
   let ns_connection = url_connection url (string_of_httpMethod r.httpMethod) r.headers data in
   (
@@ -239,7 +239,7 @@ module CurlLoader(P:sig end) = struct
 
   value waiting_loaders = Hashtbl.create 1;
   value request_id = ref 0;
-  value push_request loader request = 
+  value push_request loader request =
     (
       incr request_id;
       Hashtbl.add waiting_loaders !request_id loader;
@@ -253,7 +253,7 @@ module CurlLoader(P:sig end) = struct
 
   value response_queue = ThreadSafeQueue.create ();
 
-  value rec check_response () = 
+  value rec check_response () =
     match ThreadSafeQueue.dequeue response_queue with
     [ Some (request_id,result) ->
       (
@@ -278,12 +278,12 @@ module CurlLoader(P:sig end) = struct
     ];
 
   value mutex = Mutex.create ();
-  value run () = 
+  value run () =
     let () = Mutex.lock mutex in
     let buffer = Buffer.create 1024 in
     let dataf = (fun str -> (Buffer.add_string buffer str; String.length str)) in
     loop () where
-      rec loop () = 
+      rec loop () =
         let () = debug "try check requests" in
         match ThreadSafeQueue.dequeue requests_queue with
         [ Some (request_id,url,hmth,headers,body) ->
@@ -294,7 +294,7 @@ module CurlLoader(P:sig end) = struct
               Curl.set_url ccon url;
               match headers with
               [ [] -> ()
-              | _ -> 
+              | _ ->
                   let headers = List.map (fun (n,v) -> Printf.sprintf "%s:%s" n v) headers in
                   Curl.set_httpheader ccon headers
               ];
@@ -303,7 +303,7 @@ module CurlLoader(P:sig end) = struct
               | _ -> ()
               ];
               match body with
-              [ Some b -> 
+              [ Some b ->
                 (
                   Curl.set_postfields ccon b;
                   Curl.set_postfieldsize ccon (String.length b);
@@ -343,25 +343,25 @@ value process_events () =
   | None -> ()
   ];
 
-value start_load wrapper r = 
+value start_load wrapper r =
   let m =
     match !curl_loader with
     [ Some m -> m
-    | None -> 
+    | None ->
         let module Loader = CurlLoader (struct end) in
         let m = (module Loader:CurlLoader) in
         (
           curl_loader.val := Some m;
           m
         )
-        
+
     ]
   in
   let module Loader = (value m:CurlLoader) in
   Loader.push_request wrapper r;
 
-value cancel_load req = 
-  let m = 
+value cancel_load req =
+  let m =
     match !curl_loader with
     [ Some m -> m
     | None -> assert False
@@ -384,7 +384,7 @@ exception Loading_in_progress;
 type state = [= `Loading | `Complete ];
 type istate = [ Loading of connection | Complete ];
 
-class loader ?request () = 
+class loader ?request () =
   object(self)
     inherit EventDispatcher.simple [loader];
     value mutable state = Complete;
@@ -402,16 +402,16 @@ class loader ?request () =
     value data = Buffer.create 10;
     method data = Buffer.contents data;
 
-    method private onResponse c b ct =  
+    method private onResponse c b ct =
     (
       debug "onResponse: %d:%Ld:%s" c b ct;
-      httpCode := c; 
+      httpCode := c;
       bytesTotal := b;
       contentType := ct;
       bytesLoaded := 0L;
     );
 
-    method private onData d = 
+    method private onData d =
       let () = debug "onData" in
       let bytes = String.length d in
       (
@@ -421,7 +421,7 @@ class loader ?request () =
         self#dispatchEvent event;
       );
 
-    method private onError code msg = 
+    method private onError code msg =
     (
       debug "onError";
       state := Complete;
@@ -429,7 +429,7 @@ class loader ?request () =
       self#dispatchEvent event
     );
 
-    method private onComplete () = 
+    method private onComplete () =
     (
       debug "on complete";
       state := Complete;
@@ -440,7 +440,7 @@ class loader ?request () =
     method load r =
       match state with
       [ Complete ->
-        let wrapper = 
+        let wrapper =
           {
             onResponse = self#onResponse;
             onData = self#onData;
@@ -461,7 +461,7 @@ class loader ?request () =
 
     method cancel () =
       match state with
-      [ Loading conn -> 
+      [ Loading conn ->
         (
           cancel_load conn;
           state := Complete;
@@ -480,7 +480,8 @@ class loader ?request () =
 
 
 IFDEF PC THEN
-value download ~url:(_:string) ~path:(_:string) ?(ecallback:option (int -> string -> unit)) ?(progress:option (~progress:float -> ~total:float -> unit -> unit)) (callback:(unit -> unit))  : unit = ();
+value download ?(compress:bool) ~url:(_:string) ~path:(_:string) ?(ecallback:option (int -> string -> unit)) ?(progress:option (~progress:float -> ~total:float -> unit -> unit)) (callback:(unit -> unit))  : unit = ();
 ELSE
-external download: ~url:string -> ~path:string -> ?ecallback:(int -> string -> unit) -> ?progress:(~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile";
+external download: bool -> string -> string -> option (int -> string -> unit) -> option (~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile_byte" "ml_DownloadFile";
+value download ?(compress = True) ~url ~path ?ecallback ?progress success = download compress url path ecallback progress success;
 END;

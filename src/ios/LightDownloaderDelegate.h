@@ -10,12 +10,14 @@
 	value *error;
 	value *progress;
 
-	NSMutableData* data;
+	NSFileHandle *tmpFile;
 	NSString* filename;
+	NSString* tmpFilename;
 	long long expectedLen;
 	long long loadedLen;
+	long long resumeFrom;
 }
 
-- (id)initWithSuccess: (value) sccss error: (value) err progress: (value) prgrss filename: (NSString*) fname;
+- (id)initWithSuccess: (value) sccss error: (value) err progress: (value) prgrss filename: (NSString*) fname tmpFilename: (NSString*) tmpFname tmpFile: (NSFileHandle*) tmpF;
 
 @end

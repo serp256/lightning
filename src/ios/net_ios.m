@@ -11,7 +11,7 @@
 
 #import "light_common.h"
 
-CAMLprim value ml_URLConnection(value url, value method, value headers, value data) {
+value ml_URLConnection(value url, value method, value headers, value data) {
 	CAMLparam4(url,method,headers,data);
 	NSURL *nsurl = [[NSURL alloc] initWithString:[NSString stringWithCString:String_val(url) encoding:NSASCIIStringEncoding]];
 	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:nsurl];
@@ -45,17 +45,54 @@ value ml_URLConnection_cancel(value connection) {
 	return Val_unit;
 }
 
-value ml_DownloadFile(value vurl, value vpath, value verr, value vprgrss, value vsccss) {
+value ml_DownloadFile(value compress, value vurl, value vpath, value verr, value vprgrss, value vsccss) {
 	CAMLparam5(vurl, vpath, verr, vprgrss, vsccss);
 
+	NSString *filename = [NSString stringWithUTF8String:String_val(vpath)];
+	NSString *tmpFilename = [filename stringByAppendingString:@".download"];
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+
+	if (compress == Val_true) {
+			[fileManager removeItemAtPath:tmpFilename error:nil];
+	}
+
+	if (![fileManager fileExistsAtPath:tmpFilename]) {
+		[fileManager createFileAtPath:tmpFilename contents:[NSData data] attributes:nil];
+	}
+
+	NSFileHandle *tmpFile = [NSFileHandle fileHandleForWritingAtPath:tmpFilename];
+
+	if (tmpFile == nil) {
+		if (Is_block(verr)) {
+			caml_callback2(Field(verr, 0), Val_int(-1), caml_copy_string("cannot open tmp file"));
+		}
+
+		CAMLreturn(Val_unit);
+	}
+
+	unsigned long long filesize = compress == Val_false ? [tmpFile seekToEndOfFile] : 0;
 	NSURL* url = [[NSURL alloc] initWithString:[NSString stringWithUTF8String:String_val(vurl)]];
-	NSURLRequest* req = [[NSURLRequest alloc] initWithURL:url];
-	LightDownloaderDelegate* delegate = [[LightDownloaderDelegate alloc] initWithSuccess:vsccss error:verr progress:vprgrss filename:[NSString stringWithUTF8String:String_val(vpath)]];
+	NSMutableURLRequest* req = [[NSMutableURLRequest alloc] initWithURL:url];
+
+	if (compress == Val_true) {
+			[req addValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+	} else {
+			[req addValue:@"identity" forHTTPHeaderField:@"Accept-Encoding"];
+			[req addValue:[NSString stringWithFormat:@"bytes=%lld-", filesize] forHTTPHeaderField:@"Range"];
+	}
+
+	LightDownloaderDelegate* delegate = [[LightDownloaderDelegate alloc] initWithSuccess:vsccss error:verr progress:vprgrss filename:filename tmpFilename:tmpFilename tmpFile:tmpFile];
 	[[NSURLConnection alloc] initWithRequest:req delegate:delegate startImmediately:YES];
+
+	NSLog(@"allHTTPHeaderFields %@", [req allHTTPHeaderFields]);
 
 	[url release];
 	[req release];
 	[delegate release];
 
 	CAMLreturn(Val_unit);
+}
+
+value ml_DownloadFile_byte(value *argv, int n) {
+	return rendertex_draw(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }

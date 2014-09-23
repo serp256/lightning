@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "lightning_android.h"
 #include "engine_android.h"
@@ -15,6 +16,7 @@
 typedef struct {
 	char *url;
 	char *path;
+	uint8_t compress;
 	value *cb;
 	value *errCb;
 	value *prgrssCb;
@@ -82,7 +84,7 @@ static void caml_error(download_request_t* req, int errCode, char* errMes) {
 	if (req->errCb) {
 		char* err_mes = malloc(strlen(errMes) + 1);
 		strcpy(err_mes, errMes);
-		
+
 		curl_filedownloader_error_t *error = (curl_filedownloader_error_t*)malloc(sizeof(curl_filedownloader_error_t));
 		error->req = req;
 		error->err_code = errCode;
@@ -92,15 +94,22 @@ static void caml_error(download_request_t* req, int errCode, char* errMes) {
 	}
 }
 
-static int progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
-	value* cb = (value*)clientp;
+typedef struct {
+	value *callback;
+	long resume_from;
+} progress_data_t;
 
-	if (cb) {
+static int progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
+	if (dltotal == 0 && dlnow == 0) return 0;
+
+	progress_data_t *progress_data = (progress_data_t*)clientp;
+
+	if (progress_data) {
 		curl_filedownloader_progress_t *progress = (curl_filedownloader_progress_t*)malloc(sizeof(curl_filedownloader_progress_t));
 
-		progress->callback = cb;
-		progress->total = dltotal;
-		progress->now = dlnow;
+		progress->callback = progress_data->callback;
+		progress->total = dltotal + progress_data->resume_from;
+		progress->now = dlnow + progress_data->resume_from;
 
 		RUN_ON_ML_THREAD(&curl_filedownloader_progress, (void*)progress);
 	}
@@ -129,19 +138,43 @@ static void* downloader_thread(void* params) {
 			size_t pathlen = strlen(req->path);
 			char *tmpfname = malloc(pathlen + 13);
 			strcpy(tmpfname, req->path);
-			strcpy(tmpfname + pathlen,".downloading");
-			FILE *fd = fopen(tmpfname,"w");
+			strcpy(tmpfname + pathlen,".download");
+
+			FILE *fd = fopen(tmpfname, req->compress ? "w" : "a");
+
 			if (fd == NULL) {
 				strerror_r(errno, curl_err,CURL_ERROR_SIZE);
 				caml_error(req, errno, curl_err);
 				continue;
 			}
-			
+
+			long file_size = 0;
+
+			if (req->compress) {
+					curl_easy_setopt(curl_hndlr, CURLOPT_ACCEPT_ENCODING, "gzip");
+			} else {
+					file_size = ftell(fd);
+
+					if (file_size < 0) {
+						caml_error(req, -1, "cannot obtain file position");
+						continue;
+					}
+
+					curl_easy_setopt(curl_hndlr, CURLOPT_ACCEPT_ENCODING, "identity");
+					curl_easy_setopt(curl_hndlr, CURLOPT_RESUME_FROM, file_size);
+			}
+
 			curl_easy_setopt(curl_hndlr, CURLOPT_URL, req->url);
-			curl_easy_setopt(curl_hndlr, CURLOPT_WRITEDATA,fd);
+			curl_easy_setopt(curl_hndlr, CURLOPT_WRITEDATA, fd);
+
+			progress_data_t *progress_data = NULL;
 
 			if (req->prgrssCb) {
-				curl_easy_setopt(curl_hndlr, CURLOPT_PROGRESSDATA, (void*)req->prgrssCb);
+				progress_data = (progress_data_t*)malloc(sizeof(progress_data_t));
+				progress_data->callback = req->prgrssCb;
+				progress_data->resume_from = file_size;
+
+				curl_easy_setopt(curl_hndlr, CURLOPT_PROGRESSDATA, (void*)progress_data);
 				curl_easy_setopt(curl_hndlr, CURLOPT_PROGRESSFUNCTION, progress);
 				curl_easy_setopt(curl_hndlr, CURLOPT_NOPROGRESS, 0);
 			} else {
@@ -151,8 +184,9 @@ static void* downloader_thread(void* params) {
 			}
 
 			int curl_perform_retval = curl_easy_perform(curl_hndlr);
-
+			if (progress_data) free(progress_data);
 			fclose(fd);
+
 			if (curl_perform_retval) {
 				unlink(tmpfname);
 				caml_error(req, curl_perform_retval, curl_err);
@@ -160,8 +194,9 @@ static void* downloader_thread(void* params) {
 				long respCode;
 				curl_easy_getinfo(curl_hndlr, CURLINFO_RESPONSE_CODE, &respCode);
 
-				 if (respCode != 200) {
-				 	caml_error(req, (int)respCode, "http code is not 200");
+				 if (respCode != 200 && respCode != 206) {
+					unlink(tmpfname);
+				 	caml_error(req, (int)respCode, "http code is not 200 or 206");
 				 } else {
 					PRINT_DEBUG("complete loading %s %ld",req->path, respCode);
 					rename(tmpfname, req->path);
@@ -177,7 +212,7 @@ static void* downloader_thread(void* params) {
 
 extern void initCurl();
 
-value ml_DownloadFile(value url, value path, value errCb, value prgrssCb, value cb) {
+value ml_DownloadFile(value compress, value url, value path, value errCb, value prgrssCb, value cb) {
 	CAMLparam5(url, path, errCb, prgrssCb, cb);
 
 	initCurl();
@@ -186,6 +221,7 @@ value ml_DownloadFile(value url, value path, value errCb, value prgrssCb, value 
 
 	download_request_t* req = (download_request_t*)malloc(sizeof(download_request_t));
 
+	req->compress = compress == Val_true;
 	req->url = (char*)malloc(caml_string_length(url) + 1);
 	strcpy(req->url, String_val(url));
 
@@ -224,4 +260,8 @@ value ml_DownloadFile(value url, value path, value errCb, value prgrssCb, value 
 	pthread_cond_signal(&cond);
 
 	CAMLreturn(Val_unit);
+}
+
+value ml_DownloadFile_byte(value *argv, int n) {
+	return rendertex_draw(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }

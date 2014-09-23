@@ -318,4 +318,5 @@ value ml_str_to_upper(value vsrc) {
 value ml_debugErrReporting() {
 		jfieldID fid = (*ML_ENV)->GetStaticFieldID(ML_ENV, lightning_cls, "silentExceptions", "Z");
 		(*ML_ENV)->SetStaticBooleanField(ML_ENV, lightning_cls, fid, JNI_FALSE);
+		return Val_unit;
 }
