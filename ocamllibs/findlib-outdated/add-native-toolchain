@@ -1,0 +1,137 @@
+#!/bin/bash
+
+
+
+version="1.4"
+
+toolchain_name=
+
+if [ "$1" = "-name" ]; then
+	toolchain_name=$2
+	if [ -z "$toolchain_name" ]; then
+		echo "!!! specify name"
+		exit 1
+	fi
+	toolchain_path=$3
+elif [ "$1" = "-h" ]; then
+	echo "add-native-toolchain [-name <toolchain name>] <toolchain path>"
+	echo "	if name specified then toolchain would be added to main findlib.conf"
+	exit 0
+else
+	toolchain_path=$1
+fi
+
+if [ ! -d "$toolchain_path" ]; then
+	echo "!!! icorrect toolchain dir"
+	exit 1
+fi
+
+OCAMLOPT="${toolchain_path}/bin/ocamlopt"
+
+if [ ! -f "$OCAMLOPT" ]; then
+	echo "Not found ocamlopt in toolchain path"
+	exit 1
+fi
+
+STDLIB="${toolchain_path}/lib"
+
+echo "Check $STDLIB"
+if [ ! -d "$STDLIB" ]; then
+	echo "Not found lib dir in toolchain path"
+	exit 1
+fi
+
+SITELIB="${toolchain_path}/site-lib"
+
+
+ETC="${toolchain_path}/etc"
+
+
+camlp4_dir=`camlp4 -where | tr -d '\015'`
+
+
+# Dynlink check.
+have_natdynlink=0
+natdynlink=""
+camlp4_dynlink=""
+if [ -f "${STDLIB}/dynlink.cmxa" ]; then
+    have_natdynlink=1
+    natdynlink="archive(native) = \"dynlink.cmxa\""
+    camlp4_dynlink="dynlink"
+    echo "native dynlink: found"
+else
+    natdynlink="archive(native) = \"\""
+    echo "native dynlink: not found"
+fi
+
+camlp4_cmd="camlp4"
+camlp4_version=`camlp4 -v 2>&1`
+
+
+# Create findlib.conf
+
+echo "destdir=\"$SITELIB\"" > findlib.conf.toolchain
+echo "path=\"$SITELIB\"" >> findlib.conf.toolchain
+echo "stdlib=\"$STDLIB\"" >> findlib.conf.toolchain
+echo "ocamlopt=\"$OCAMLOPT\"" >> findlib.conf.toolchain
+
+
+# Create META files
+rm -rf "site-lib-src/camlp4"
+mkdir "site-lib-src/camlp4"
+cp "site-lib-src/camlp4.310/META.toolchain" "site-lib-src/camlp4/"
+
+
+l="dynlink num str threads unix stdlib bigarray camlp4 $lcomplibs"
+
+for dir in site-lib-src/*; do
+    # We do not really know if $dir is a directory.
+    rm -f $dir/META
+done
+
+# create META's
+for lib in $l; do
+    if=""
+    if [ -f site-lib-src/$lib/interfaces.out ]; then
+	if=`cat site-lib-src/$lib/interfaces.out`
+    fi
+    m4 -Dos=$os \
+	"-Dtype_of_threads=posix" \
+	"-Dcamlp4_dir=${camlp4_dir}" \
+	"-Dcamlp4_version=${camlp4_version}" \
+	"-Dcamlp4_cmd=${camlp4_cmd}" \
+	"-Dcamlp4_dynlink=${camlp4_dynlink}" \
+	"-Dinterfaces=${if}" \
+	"-Dfindlib_version=${version}" \
+	"-Dnatdynlink=${natdynlink}" \
+	"-Dstdlib_dir=${STDLIB}" \
+	site-lib-src/$lib/META.toolchain >site-lib-src/$lib/META
+    echo "Configuration for $lib written to site-lib-src/$lib/META"
+done
+
+# findlib for oasis
+
+sed -e "s/@VERSION@/$version/g" src/findlib/META.in > src/findlib/META
+
+# INSTALL
+echo "INSTALLING..."
+
+
+sudo mkdir -p $SITELIB || exit 1
+sudo mkdir -p $ETC || exit 1
+# copy metas
+sudo cp findlib.conf.toolchain "${ETC}/findlib.conf"
+
+for x in `ls site-lib-src`; do if [ -f "site-lib-src/$x/META" ]; then sudo mkdir -p "${SITELIB}/$x"; sudo cp site-lib-src/$x/META "${SITELIB}/$x"; echo "$x done"; fi; done
+sudo mkdir -p "${SITELIB}/findlib"
+sudo cp src/findlib/META "${SITELIB}/findlib/"
+
+
+if [ ! -z "$toolchain_name" ]; then
+	main_conf=`ocamlfind -printconf conf`
+	echo "# TOOLCHAIN $toolchain_name" | sudo tee -a $main_conf
+	echo "destdir(${toolchain_name})=\"${SITELIB}\"" | sudo tee -a $main_conf
+	echo "path(${toolchain_name})=\"${SITELIB}\"" | sudo tee -a $main_conf
+	echo "stdlib(${toolchain_name})=\"${STDLIB}\"" | sudo tee -a $main_conf
+	echo "ocamlopt(${toolchain_name})=\"${OCAMLOPT}\"" | sudo tee -a $main_conf
+fi

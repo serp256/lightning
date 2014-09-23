@@ -2366,6 +2366,10 @@ type(
 type(
   int
 )
+"src/xmlm.ml" 150 5105 5121 "src/xmlm.ml" 150 5105 5126
+type(
+  bool
+)
 "src/xmlm.ml" 150 5105 5114 "src/xmlm.ml" 150 5105 5126
 type(
   int
@@ -6262,7 +6266,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 373 13446 13454 "src/xmlm.ml" 373 13446 13484
+  def u "src/xmlm.ml" 373 13446 13459 "src/xmlm.ml" 373 13446 13484
 )
 "src/xmlm.ml" 373 13446 13459 "src/xmlm.ml" 373 13446 13460
 type(
@@ -6326,7 +6330,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 375 13524 13532 "src/xmlm.ml" 376 13555 13590
+  def u "src/xmlm.ml" 375 13524 13537 "src/xmlm.ml" 376 13555 13590
 )
 "src/xmlm.ml" 375 13524 13537 "src/xmlm.ml" 375 13524 13538
 type(
@@ -7074,7 +7078,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 390 14150 14158 "src/xmlm.ml" 390 14150 14209
+  def u "src/xmlm.ml" 390 14150 14163 "src/xmlm.ml" 390 14150 14209
 )
 "src/xmlm.ml" 390 14150 14163 "src/xmlm.ml" 390 14150 14164
 type(
@@ -7154,7 +7158,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 391 14231 14239 "src/xmlm.ml" 391 14231 14263
+  def u "src/xmlm.ml" 391 14231 14244 "src/xmlm.ml" 391 14231 14263
 )
 "src/xmlm.ml" 391 14231 14244 "src/xmlm.ml" 391 14231 14252
 type(
@@ -7194,7 +7198,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 393 14345 14353 "src/xmlm.ml" 393 14345 14378
+  def u "src/xmlm.ml" 393 14345 14358 "src/xmlm.ml" 393 14345 14378
 )
 "src/xmlm.ml" 393 14345 14358 "src/xmlm.ml" 393 14345 14368
 type(
@@ -7245,7 +7249,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 397 14482 14490 "src/xmlm.ml" 397 14482 14541
+  def u "src/xmlm.ml" 397 14482 14495 "src/xmlm.ml" 397 14482 14541
 )
 "src/xmlm.ml" 397 14482 14495 "src/xmlm.ml" 397 14482 14496
 type(
@@ -7325,7 +7329,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 398 14563 14571 "src/xmlm.ml" 398 14563 14595
+  def u "src/xmlm.ml" 398 14563 14576 "src/xmlm.ml" 398 14563 14595
 )
 "src/xmlm.ml" 398 14563 14576 "src/xmlm.ml" 398 14563 14584
 type(
@@ -7357,7 +7361,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 399 14596 14604 "src/xmlm.ml" 399 14596 14635
+  def u "src/xmlm.ml" 399 14596 14610 "src/xmlm.ml" 399 14596 14635
 )
 "src/xmlm.ml" 399 14596 14610 "src/xmlm.ml" 399 14596 14611
 type(
@@ -7429,7 +7433,7 @@ type(
   int
 )
 ident(
-  def u "src/xmlm.ml" 401 14758 14766 "src/xmlm.ml" 401 14758 14833
+  def u "src/xmlm.ml" 401 14758 14771 "src/xmlm.ml" 401 14758 14833
 )
 "src/xmlm.ml" 401 14758 14771 "src/xmlm.ml" 401 14758 14781
 type(
@@ -15499,14 +15503,14 @@ type(
   string
 )
 ident(
-  def p "src/xmlm.ml" 653 23737 23750 "src/xmlm.ml" 654 23810 23871
+  def p "src/xmlm.ml" 653 23737 23755 "src/xmlm.ml" 654 23810 23871
 )
 "src/xmlm.ml" 653 23737 23747 "src/xmlm.ml" 653 23737 23748
 type(
   string
 )
 ident(
-  def l "src/xmlm.ml" 653 23737 23750 "src/xmlm.ml" 654 23810 23871
+  def l "src/xmlm.ml" 653 23737 23755 "src/xmlm.ml" 654 23810 23871
 )
 "src/xmlm.ml" 653 23737 23744 "src/xmlm.ml" 653 23737 23749
 type(
@@ -17168,14 +17172,14 @@ type(
   string
 )
 ident(
-  def p "src/xmlm.ml" 702 25342 25358 "src/xmlm.ml" 739 26778 26788
+  def p "src/xmlm.ml" 702 25342 25363 "src/xmlm.ml" 739 26778 26788
 )
 "src/xmlm.ml" 702 25342 25355 "src/xmlm.ml" 702 25342 25356
 type(
   string
 )
 ident(
-  def l "src/xmlm.ml" 702 25342 25358 "src/xmlm.ml" 739 26778 26788
+  def l "src/xmlm.ml" 702 25342 25363 "src/xmlm.ml" 739 26778 26788
 )
 "src/xmlm.ml" 702 25342 25351 "src/xmlm.ml" 702 25342 25357
 type(
@@ -21254,6 +21258,10 @@ type(
 type(
   (name * string list * bool) list
 )
+"src/xmlm.ml" 823 29554 29570 "src/xmlm.ml" 823 29554 29575
+type(
+  bool
+)
 "src/xmlm.ml" 823 29554 29563 "src/xmlm.ml" 823 29554 29575
 type(
   'o
@@ -21543,6 +21551,9 @@ ident(
   int_ref i "src/xmlm.ml" 831 29752 29771 "src/xmlm.ml" 831 29752 29772
 )
 "src/xmlm.ml" 835 29898 29909 "src/xmlm.ml" 835 29898 29917
+call(
+  stack
+)
 type(
   Buffer.string
 )
@@ -21561,6 +21572,9 @@ ident(
   int_ref d "src/xmlm.ml" 835 29898 29905 "src/xmlm.ml" 835 29898 29906
 )
 "src/xmlm.ml" 836 29921 29927 "src/xmlm.ml" 836 29921 29938
+call(
+  stack
+)
 type(
   bool
 )
@@ -21579,6 +21593,9 @@ ident(
   int_ref i "src/xmlm.ml" 831 29752 29771 "src/xmlm.ml" 831 29752 29772
 )
 "src/xmlm.ml" 836 29921 29944 "src/xmlm.ml" 836 29921 29950
+call(
+  tail
+)
 type(
   'q
 )
@@ -22052,6 +22069,10 @@ ident(
 "src/xmlm.ml" 849 30425 30460 "src/xmlm.ml" 849 30425 30461
 type(
   (name * string list * bool) list
+)
+"src/xmlm.ml" 849 30425 30472 "src/xmlm.ml" 849 30425 30477
+type(
+  bool
 )
 "src/xmlm.ml" 849 30425 30465 "src/xmlm.ml" 849 30425 30477
 type(
@@ -23519,6 +23540,10 @@ type(
 type(
   tag list * 'r list list
 )
+"src/xmlm.ml" 917 32350 32367 "src/xmlm.ml" 917 32350 32372
+type(
+  bool
+)
 "src/xmlm.ml" 917 32350 32360 "src/xmlm.ml" 917 32350 32372
 type(
   'r
@@ -23638,6 +23663,10 @@ type(
 type(
   'r list list
 )
+"src/xmlm.ml" 922 32500 32518 "src/xmlm.ml" 922 32500 32523
+type(
+  bool
+)
 "src/xmlm.ml" 922 32500 32511 "src/xmlm.ml" 922 32500 32523
 type(
   'r
@@ -23653,6 +23682,10 @@ type(
 "src/xmlm.ml" 924 32531 32539 "src/xmlm.ml" 924 32531 32545
 type(
   signal
+)
+"src/xmlm.ml" 924 32531 32556 "src/xmlm.ml" 924 32531 32561
+type(
+  bool
 )
 "src/xmlm.ml" 924 32531 32549 "src/xmlm.ml" 924 32531 32561
 type(
@@ -24117,7 +24150,7 @@ ident(
 )
 "src/xmlm.ml" 961 34080 34088 "src/xmlm.ml" 961 34080 34092
 type(
-  std_string -> int -> int -> unit
+  bytes -> int -> int -> unit
 )
 ident(
   def outs "src/xmlm.ml" 971 34391 34395 "src/xmlm.ml" 979 34642 34719
@@ -24131,7 +24164,7 @@ ident(
 )
 "src/xmlm.ml" 961 34080 34088 "src/xmlm.ml" 961 34080 34098
 type(
-  (std_string -> int -> int -> unit) * (char -> unit)
+  (bytes -> int -> int -> unit) * (char -> unit)
 )
 "src/xmlm.ml" 961 34080 34107 "src/xmlm.ml" 961 34080 34108
 type(
@@ -24153,7 +24186,7 @@ type(
 )
 "src/xmlm.ml" 962 34115 34136 "src/xmlm.ml" 962 34115 34142
 type(
-  out_channel -> std_string -> int -> int -> unit
+  out_channel -> bytes -> int -> int -> unit
 )
 ident(
   ext_ref Pervasives.output
@@ -24170,7 +24203,7 @@ call(
   stack
 )
 type(
-  std_string -> int -> int -> unit
+  bytes -> int -> int -> unit
 )
 "src/xmlm.ml" 962 34115 34148 "src/xmlm.ml" 962 34115 34159
 type(
@@ -24195,7 +24228,7 @@ type(
 )
 "src/xmlm.ml" 962 34115 34135 "src/xmlm.ml" 962 34115 34162
 type(
-  (std_string -> int -> int -> unit) * (char -> unit)
+  (bytes -> int -> int -> unit) * (char -> unit)
 )
 "src/xmlm.ml" 963 34163 34177 "src/xmlm.ml" 963 34163 34178
 type(
@@ -24210,7 +24243,7 @@ type(
 )
 "src/xmlm.ml" 963 34163 34183 "src/xmlm.ml" 963 34163 34207
 type(
-  Std_buffer.t -> std_string -> int -> int -> unit
+  Std_buffer.t -> bytes -> int -> int -> unit
 )
 ident(
   ext_ref Std_buffer.add_substring
@@ -24227,7 +24260,7 @@ call(
   stack
 )
 type(
-  std_string -> int -> int -> unit
+  bytes -> int -> int -> unit
 )
 "src/xmlm.ml" 963 34163 34213 "src/xmlm.ml" 963 34163 34232
 type(
@@ -24252,7 +24285,7 @@ type(
 )
 "src/xmlm.ml" 963 34163 34182 "src/xmlm.ml" 963 34163 34235
 type(
-  (std_string -> int -> int -> unit) * (char -> unit)
+  (bytes -> int -> int -> unit) * (char -> unit)
 )
 "src/xmlm.ml" 964 34236 34247 "src/xmlm.ml" 964 34236 34248
 type(
@@ -24442,7 +24475,7 @@ type(
 )
 "src/xmlm.ml" 969 34376 34377 "src/xmlm.ml" 969 34376 34379
 type(
-  std_string -> int -> int -> unit
+  bytes -> int -> int -> unit
 )
 ident(
   int_ref os "src/xmlm.ml" 965 34253 34258 "src/xmlm.ml" 965 34253 34260
@@ -24456,19 +24489,19 @@ ident(
 )
 "src/xmlm.ml" 969 34376 34377 "src/xmlm.ml" 969 34376 34383
 type(
-  (std_string -> int -> int -> unit) * (char -> unit)
+  (bytes -> int -> int -> unit) * (char -> unit)
 )
 "src/xmlm.ml" 968 34344 34345 "src/xmlm.ml" 969 34376 34383
 type(
-  (std_string -> int -> int -> unit) * (char -> unit)
+  (bytes -> int -> int -> unit) * (char -> unit)
 )
 "src/xmlm.ml" 965 34253 34254 "src/xmlm.ml" 969 34376 34383
 type(
-  (std_string -> int -> int -> unit) * (char -> unit)
+  (bytes -> int -> int -> unit) * (char -> unit)
 )
 "src/xmlm.ml" 961 34080 34101 "src/xmlm.ml" 969 34376 34383
 type(
-  (std_string -> int -> int -> unit) * (char -> unit)
+  (bytes -> int -> int -> unit) * (char -> unit)
 )
 "src/xmlm.ml" 971 34391 34399 "src/xmlm.ml" 971 34391 34407
 type(
@@ -28482,6 +28515,10 @@ type(
 "src/xmlm.ml" 1105 38441 38449 "src/xmlm.ml" 1105 38441 38451
 type(
   'y list list
+)
+"src/xmlm.ml" 1105 38441 38462 "src/xmlm.ml" 1105 38441 38467
+type(
+  bool
 )
 "src/xmlm.ml" 1105 38441 38455 "src/xmlm.ml" 1105 38441 38467
 type(

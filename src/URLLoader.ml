@@ -480,7 +480,7 @@ class loader ?request () =
 
 
 IFDEF PC THEN
-value download ?(compress:bool) ~url:(_:string) ~path:(_:string) ?(ecallback:option (int -> string -> unit)) ?(progress:option (~progress:float -> ~total:float -> unit -> unit)) (callback:(unit -> unit))  : unit = ();
+value download ?compress ~url ~path ?ecallback ?progress callback = ();
 ELSE
 external download: bool -> string -> string -> option (int -> string -> unit) -> option (~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile_byte" "ml_DownloadFile";
 value download ?(compress = True) ~url ~path ?ecallback ?progress success = download compress url path ecallback progress success;
