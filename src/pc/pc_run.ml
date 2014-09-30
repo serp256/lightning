@@ -117,8 +117,8 @@ value run stage_create =
     Glut.init ();
     Glut.initDisplayMode [ Glut.GLUT_RGB ; Glut.GLUT_DOUBLE ];
     match !orientation with
-    [ Landscape -> Glut.initWindowSize !width !height
-    | Portrain -> Glut.initWindowSize !height !width
+    [ Portrain -> Glut.initWindowSize !width !height
+    | Landscape-> Glut.initWindowSize !height !width
     ];
     Glut.creatWindow "LIGHTNING";
     Glut.reshapeFunc begin fun width height ->
