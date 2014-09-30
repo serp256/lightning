@@ -1,6 +1,6 @@
 open LightCommon;
 
-(* type point = 
+(* type point =
   {
     x:float;
     y:float;
@@ -44,10 +44,11 @@ external ml_shape_render: Matrix.t -> Render.prg -> ?alpha:float -> shape_data -
 external ml_shape_set_points: shape_data -> array point -> unit = "ml_shape_set_points";
 
 class c ?(layers = [ layer () ]) ?bounds points =
-  let bounds = 
+  let () = match points with [ [||] -> failwith "no-point shapes not permited" | _ -> () ] in
+  let bounds =
     match bounds with
     [ Some b -> b
-    | None -> 
+    | None ->
       (* найти самые крайние точки *)
       let ar = [| max_float; ~-.max_float; max_float; ~-.max_float |] in
       (
@@ -80,10 +81,10 @@ class c ?(layers = [ layer () ]) ?bounds points =
     method setColor _ = assert False;
 
     method boundsInSpace: !'space. ?withMask:bool -> (option (<asDisplayObject: DisplayObject.c; .. > as 'space)) -> Rectangle.t = fun ?(withMask = False) targetCoordinateSpace ->
-      let bounds =  
+      let bounds =
         match targetCoordinateSpace with
         [ Some ts when ts#asDisplayObject = self#asDisplayObject -> bounds
-        | _ -> 
+        | _ ->
           let transformationMatrix = self#transformationMatrixToSpace targetCoordinateSpace in
           Matrix.transformRectangle transformationMatrix bounds
         ]
@@ -121,4 +122,3 @@ value circle color alpha radius =
     let diametr = radius *. 2. in
     new c ~layers:[ layer ~drawMethod:`Triangle_fan ~alpha ~color () ] ~bounds:(Rectangle.create 0. 0. diametr diametr) verticies;
   );
-
