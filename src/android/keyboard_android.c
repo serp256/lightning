@@ -25,7 +25,7 @@ value ml_keyboard(value visible, value size, value inittxt, value onhide, value 
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "showKeyboard", "(ZIILjava/lang/String;)V");
 
-	int cvisible = visible == Val_int(0) ? 1 : Bool_val(Field(visible, 0));
+	int cvisible = visible == Val_int(0) ? 0 : Bool_val(Field(visible, 0));
 	int cw = -1;
 	int ch = -1;
 	const char* cinittxt = inittxt == Val_int(0) ? "" : String_val(Field(inittxt, 0));
