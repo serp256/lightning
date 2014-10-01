@@ -19,7 +19,7 @@
     		android:layout_width="470dp"
     		android:layout_height="wrap_content"
     		android:imeOptions="actionDone"
-            android:inputType="text|textImeMultiLine|textNoSuggestions"/>
+            android:inputType="text|textImeMultiLine"/>
         <Button
             android:id="@+id/editor_ok_bt"
             android:layout_width="wrap_content"
