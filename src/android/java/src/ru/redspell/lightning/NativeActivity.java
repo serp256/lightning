@@ -73,6 +73,7 @@ public class NativeActivity extends android.app.NativeActivity {
 	public void setKeyboardText(String text) {
 		if (editText != null) {
 			editText.setText(text);
+			editText.setSelection(text.length());
 		}
 	}
 
