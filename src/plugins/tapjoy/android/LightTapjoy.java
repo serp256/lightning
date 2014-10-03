@@ -2,12 +2,18 @@ package ru.redspell.lightning.plugins;
 
 import ru.redspell.lightning.Lightning;
 import com.tapjoy.TapjoyConnect;
+import com.tapjoy.TapjoyConnectFlag;
+import com.tapjoy.TapjoyLog;
+import java.util.Hashtable;
 
 public class LightTapjoy {
 	public static void init(final String appId, final String secKey) {
 		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
+/*				Hashtable<String,Object> connectFlags = new Hashtable<String,Object>();
+				connectFlags.put(TapjoyConnectFlag.ENABLE_LOGGING, "true");*/
+				TapjoyLog.enableLogging(true);
 				TapjoyConnect.requestTapjoyConnect(Lightning.activity, appId, secKey);
 			}
 		});

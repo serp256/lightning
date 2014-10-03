@@ -14,6 +14,7 @@
 #include "mobile_res.h"
 #include "main_android.h"
 #include "lightning_android.h"
+#include "keyboard_android.h"
 #include "render_stub.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
@@ -306,7 +307,35 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 #undef GET_TOUCH_PARAMS
 
         CAMLreturn(1);
-    }
+    }/* else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY) {
+        int action = AKeyEvent_getAction(event);
+        uint8_t handled = 0;
+
+        LOGI("AINPUT_EVENT_TYPE_KEY, action %d", action);
+
+        switch (action) {
+          case AKEY_STATE_VIRTUAL:
+          case AKEY_STATE_UP: {
+              int key_code = AKeyEvent_getKeyCode(event);
+              switch (key_code) {
+                case AKEYCODE_BACK:
+                  LOGI("AKEYCODE_BACK");
+                  if (keyboard_is_visible()) {
+                    keyboard_hide();
+                    handled = 1;
+                  }
+                  break;
+
+                default:
+                  LOGI("key_code %d", key_code);
+              }
+
+              break;
+            }
+        }
+
+        CAMLreturn(handled);
+    }*/
 
     CAMLreturn(0);
 }
