@@ -203,9 +203,14 @@ static void process_input(struct android_app* app, struct android_poll_source* s
     int processed = 0;
     while (AInputQueue_getEvent(app->inputQueue, &event) >= 0) {
         LOGV("New input event: type=%d\n", AInputEvent_getType(event));
-        if (AInputQueue_preDispatchEvent(app->inputQueue, event)) {
+
+        uint8_t skip_predispatch = AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY && AKeyEvent_getKeyCode(event) == AKEYCODE_BACK;
+
+        if (!skip_predispatch && AInputQueue_preDispatchEvent(app->inputQueue, event)) {
+            LOGV("predispatched");
             continue;
         }
+
         int32_t handled = 0;
         if (app->onInputEvent != NULL) handled = app->onInputEvent(app, event);
         AInputQueue_finishEvent(app->inputQueue, event, handled);

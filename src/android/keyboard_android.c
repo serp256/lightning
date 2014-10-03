@@ -14,33 +14,26 @@ value *onchage_callback = NULL;
 value *onhide_callback = NULL;
 // static int kbrdVisible = 0;
 
-value ml_keyboard(value visible, value size, value inittxt, value onhide, value onchange) {
-	PRINT_DEBUG("ml_keyboard");
+uint8_t keyboard_is_visible() {
+	GET_LIGHT_KEYBOARD;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "visible", "()Z");
+	return (*ML_ENV)->CallStaticBooleanMethod(ML_ENV, cls, mid);
+}
 
-	// if (kbrdVisible) return;
-	// kbrdVisible = 1;
-
+value ml_keyboard(value visible, value size, value init_text, value onhide, value onchange) {
+	if (keyboard_is_visible()) return Val_unit;
 	GET_LIGHT_KEYBOARD;
 
-	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "showKeyboard", "(ZIILjava/lang/String;)V");
+	const char* cinit_text = init_text == Val_int(0) ? "" : String_val(Field(init_text, 0));
+	jstring jinit_text = (*ML_ENV)->NewStringUTF(ML_ENV, cinit_text);
 
-	int cvisible = visible == Val_int(0) ? 0 : Bool_val(Field(visible, 0));
-	int cw = -1;
-	int ch = -1;
-	const char* cinittxt = inittxt == Val_int(0) ? "" : String_val(Field(inittxt, 0));
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "show", "(Ljava/lang/String;)V");
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid, jinit_text);
 
 	CALLBACK(onhide, onhide_callback);
 	CALLBACK(onchange, onchage_callback);
-
-	if (Val_int(0) != size) {
-		cw = Int_val(Field(Field(size, 0), 0));
-		ch = Int_val(Field(Field(size, 0), 1));
-	}
-
-	jstring jinittxt = (*ML_ENV)->NewStringUTF(ML_ENV, cinittxt);
-	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid, cvisible, cw, ch, jinittxt);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jinittxt);
 
 	return Val_unit;
 }
@@ -51,19 +44,18 @@ value ml_keyboard_byte(value* argv, int argc) {
 }
 
 value ml_hidekeyboard() {
-	PRINT_DEBUG("ml_hidekeyboard %d");
-
-	// if (!kbrdVisible) return;
-	// kbrdVisible = 0;
-
+	if (!keyboard_is_visible()) return Val_unit;
 	GET_LIGHT_KEYBOARD;
 
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "hideKeyboard", "()V");
-
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "hide", "()V");
 	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid);
 
 	return Val_unit;
+}
+
+void keyboard_hide() {
+	ml_hidekeyboard();
 }
 
 value ml_copy(value txt) {

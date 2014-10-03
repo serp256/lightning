@@ -94,30 +94,17 @@ jclass engine_find_class_with_env(JNIEnv *env, const char *ccls_name) {
 			(*env)->ExceptionDescribe(env);
 		}
 
-    PRINT_DEBUG("1 %d", (*env)->ExceptionCheck(env));
-
-
     khiter_t k = kh_get(jclasses, classes, ccls_name);
     if (k != kh_end(classes)) return kh_val(classes, k);
-
-    PRINT_DEBUG("2 %d", (*env)->ExceptionCheck(env));
 
     jstring jcls_name = (*env)->NewStringUTF(env, ccls_name);
     jclass cls = FIND_CLASS(env, jcls_name);
     (*env)->DeleteLocalRef(env, jcls_name);
 
-    PRINT_DEBUG("3 %d", (*env)->ExceptionCheck(env));
-
     int ret;
-		PRINT_DEBUG("4 %d", (*env)->ExceptionCheck(env));
     k = kh_put(jclasses, classes, ccls_name, &ret);
-		PRINT_DEBUG("5 %d", (*env)->ExceptionCheck(env));
     kh_val(classes, k) = (*env)->NewGlobalRef(env, cls);
-		PRINT_DEBUG("6 %d", (*env)->ExceptionCheck(env));
     (*env)->DeleteLocalRef(env, cls);
-		PRINT_DEBUG("7 %d", (*env)->ExceptionCheck(env));
-
-    PRINT_DEBUG("done");
 
     return kh_val(classes, k);
 }
