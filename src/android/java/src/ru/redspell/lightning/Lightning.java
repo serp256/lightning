@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.net.Uri;
 import android.os.Vibrator;
+import android.os.Build;
 import android.util.DisplayMetrics;
 import android.view.Display;
 
@@ -231,13 +232,28 @@ public class Lightning {
     }
 
     public static boolean isTablet() {
+				if (Build.MODEL.contentEquals("HTC One X")) {
+					return false;
+				}
+
         Display display = activity.getWindowManager().getDefaultDisplay();
         DisplayMetrics displayMetrics = new DisplayMetrics();
         display.getMetrics(displayMetrics);
 
+/*			Log.d("LIGHTNING", "Build.MANUFACTURER " + Build.MANUFACTURER);
+				Log.d("LIGHTNING", "Build.MODEL " + Build.MODEL);
+				Log.d("LIGHTNING", "displayMetrics.widthPixels " + displayMetrics.widthPixels);
+				Log.d("LIGHTNING", "displayMetrics.heightPixels " + displayMetrics.heightPixels);
+				Log.d("LIGHTNING", "displayMetrics.xdpi " + displayMetrics.xdpi);
+				Log.d("LIGHTNING", "displayMetrics.ydpi " + displayMetrics.ydpi);*/
+
         float width = displayMetrics.widthPixels / displayMetrics.xdpi;
         float height = displayMetrics.heightPixels / displayMetrics.ydpi;
+
+/*				Log.d("LIGHTNING", "width " + width);
+				Log.d("LIGHTNING", "height " + height);*/
         double screenDiagonal = Math.sqrt(width * width + height * height);
+/*				Log.d("LIGHTNING", "screenDiagonal " + screenDiagonal);*/
 
         return (screenDiagonal >= 6);
     }
