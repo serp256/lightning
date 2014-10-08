@@ -1,0 +1,36 @@
+#!/bin/bash
+
+if [ $1 == "pc" ]
+then
+cd extlib-1.5.3
+make clean
+make
+sudo make uninstall
+sudo make install
+cd ../ojson
+make clean
+make
+sudo make uninstall
+sudo make install
+cd ../xmlm-1.0.2
+make clean
+make
+sudo make uninstall
+sudo make install
+else
+cd extlib-1.5.3
+make clean
+make $1
+sudo make $1-uninstall
+sudo make $1-install
+cd ../ojson
+make clean
+make $1
+sudo make $1-uninstall
+sudo make $1-install
+cd ../xmlm-1.0.2
+make clean
+make $1
+sudo make $1-uninstall
+sudo make $1-install
+fi

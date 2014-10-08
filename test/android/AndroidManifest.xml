@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="ru.redspell.lighttest"
-        android:versionCode="5"
+        android:versionCode="6"
         android:versionName="5.0">
 
-    <application android:label="Lightning Native" android:icon="@drawable/icon" android:debuggable="true">
+    <application android:label="Lightning Native" android:icon="@drawable/icon">
         <activity android:name="ru.redspell.lightning.NativeActivity"
                 android:screenOrientation="portrait"
                 android:label="Lightning Native"
@@ -19,10 +19,27 @@
 
         <activity android:name="com.vk.sdk.VKOpenAuthActivity" />
         <activity android:name="com.facebook.LoginActivity" />
-        <activity android:name="com.tapjoy.TJCOffersWebView" android:configChanges="keyboardHidden|orientation" />
-        <activity android:name="com.tapjoy.TapjoyFullScreenAdWebView" android:configChanges="keyboardHidden|orientation" />
-        <activity android:name="com.tapjoy.TapjoyDailyRewardAdWebView" android:configChanges="keyboardHidden|orientation" />
-        <activity android:name="com.tapjoy.TapjoyVideoView" android:configChanges="keyboardHidden|orientation" />
+
+        <activity
+            android:name="com.tapjoy.TJCOffersWebView"
+            android:configChanges="orientation|keyboardHidden|screenSize" />
+        <activity
+            android:name="com.tapjoy.TapjoyFullScreenAdWebView"
+            android:configChanges="orientation|keyboardHidden|screenSize" />
+        <activity
+            android:name="com.tapjoy.TapjoyVideoView"
+            android:configChanges="orientation|keyboardHidden|screenSize" />
+        <activity
+            android:name="com.tapjoy.TJAdUnitView"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
+            android:hardwareAccelerated="true" />
+        <activity
+            android:name="com.tapjoy.mraid.view.ActionHandler"
+            android:configChanges="orientation|keyboardHidden|screenSize" />
+        <activity
+            android:name="com.tapjoy.mraid.view.Browser"
+            android:configChanges="orientation|keyboardHidden|screenSize" />
 
         <service android:name="ru.redspell.lightning.expansions.DownloadService"/>
         <receiver android:name="ru.redspell.lightning.expansions.AlarmReceiver"/>

@@ -31,13 +31,24 @@
 }
 */
 
--(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+/*-(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 	NSLog(@"shouldAutorotateToInterfaceOrientation from nano delegate");
-	return ((interfaceOrientation == UIInterfaceOrientationLandscapeLeft) || (interfaceOrientation == UIInterfaceOrientationLandscapeRight));
+	return ((interfaceOrientation == UIInterfaceOrientationPortrait) || (interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown));
 }
 
 -(NSUInteger)supportedInterfaceOrientations {
 	NSLog(@"supportedInterfaceOrientations from nano delegate");
+	return UIInterfaceOrientationMaskPortrait;
+}*/
+
+
+-(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+	NSLog(@"shouldAutorotateToInterfaceOrientation from light test delegate");
+	return ((interfaceOrientation == UIInterfaceOrientationLandscapeLeft) || (interfaceOrientation == UIInterfaceOrientationLandscapeRight));
+}
+
+-(NSUInteger)supportedInterfaceOrientations {
+	NSLog(@"supportedInterfaceOrientations from light test delegate");
   return UIInterfaceOrientationMaskLandscape;
 }
 

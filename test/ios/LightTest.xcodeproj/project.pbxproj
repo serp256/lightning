@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2164ABDF18C9DEA50043BFDD /* ApplifierImpact.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2164ABDE18C9DEA50043BFDD /* ApplifierImpact.bundle */; };
+		21B0E2A119E4386D004CB6F9 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 21B0E2A019E4386D004CB6F9 /* Images.xcassets */; };
 		5106D8F717295F6700D03E1A /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F517295F6700D03E1A /* assets */; };
 		5106D8F817295F6700D03E1A /* index in Resources */ = {isa = PBXBuildFile; fileRef = 5106D8F617295F6700D03E1A /* index */; };
 		5181418216F6F61A009D7846 /* LightTestBin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5181418116F6F61A009D7846 /* LightTestBin */; };
@@ -38,13 +39,13 @@
 
 /* Begin PBXFileReference section */
 		2164ABDE18C9DEA50043BFDD /* ApplifierImpact.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = ApplifierImpact.bundle; path = ../../src/plugins/sponsorpay/ios/networks/applifier/ApplifierImpact.bundle; sourceTree = "<group>"; };
+		21B0E2A019E4386D004CB6F9 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		5106D8F517295F6700D03E1A /* assets */ = {isa = PBXFileReference; lastKnownFileType = text; name = assets; path = LightTest/assets; sourceTree = "<group>"; };
 		5106D8F617295F6700D03E1A /* index */ = {isa = PBXFileReference; lastKnownFileType = text; name = index; path = LightTest/index; sourceTree = "<group>"; };
 		513A2814173937B000EE18A3 /* TapjoyResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = TapjoyResources.bundle; path = ../../src/plugins/tapjoy/ios/TapjoyResources.bundle; sourceTree = "<group>"; };
 		5181418116F6F61A009D7846 /* LightTestBin */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = LightTestBin; sourceTree = "<group>"; };
 		5181418416F6F699009D7846 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
 		5181418616F6F6C2009D7846 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
-		5181418716F6F6C2009D7846 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
 		5181418816F6F6C2009D7846 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		5181419016F6F919009D7846 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Resources; path = ../Resources; sourceTree = "<group>"; };
 		519334B41793F07800ACAAD7 /* render_stub.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = render_stub.c; path = ../../../src/render_stub.c; sourceTree = "<group>"; };
@@ -66,7 +67,6 @@
 				5106D8F617295F6700D03E1A /* index */,
 				5181419016F6F919009D7846 /* Resources */,
 				5181418616F6F6C2009D7846 /* Default-568h@2x.png */,
-				5181418716F6F6C2009D7846 /* Default.png */,
 				5181418816F6F6C2009D7846 /* Default@2x.png */,
 				5181418116F6F61A009D7846 /* LightTestBin */,
 				51ABA23516F6F4A100FC8928 /* LightTest */,
@@ -98,6 +98,7 @@
 			children = (
 				519334B51793F09600ACAAD7 /* renderbuffer_stub.c */,
 				519334B41793F07800ACAAD7 /* render_stub.c */,
+				21B0E2A019E4386D004CB6F9 /* Images.xcassets */,
 				51ABA23616F6F4A100FC8928 /* Supporting Files */,
 			);
 			path = LightTest;
@@ -187,6 +188,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2164ABDF18C9DEA50043BFDD /* ApplifierImpact.bundle in Resources */,
+				21B0E2A119E4386D004CB6F9 /* Images.xcassets in Resources */,
 				5106D8F717295F6700D03E1A /* assets in Resources */,
 				5106D8F817295F6700D03E1A /* index in Resources */,
 			);
@@ -313,6 +315,8 @@
 		51ABA24A16F6F4A100FC8928 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -321,7 +325,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "c3296119-8498-47d0-af39-0648dd3f98da";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "bca2e93c-3798-4f4a-907a-8ed215aae3f3";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -329,6 +334,8 @@
 		51ABA24B16F6F4A100FC8928 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -337,6 +344,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
