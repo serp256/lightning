@@ -144,6 +144,7 @@ value start_load wrappers r =
 external cancel_ns_connection: connection -> unit = "ml_URLConnection_cancel";
 value cancel_load connection =
 (
+  debug "cancel_load";
   cancel_ns_connection connection;
   Hashtbl.remove loaders connection;
 );
@@ -438,36 +439,42 @@ class loader ?request () =
     );
 
     method load r =
-      match state with
-      [ Complete ->
-        let wrapper =
-          {
-            onResponse = self#onResponse;
-            onData = self#onData;
-            onComplete = self#onComplete;
-            onError = self#onError
-          }
-        in
-        (
-          httpCode := 0;
-          contentType := "";
-          bytesTotal := 0L;
-          bytesLoaded := 0L;
-          Buffer.clear data;
-          state := Loading (start_load wrapper r);
-        )
-      | Loading _ -> raise Loading_in_progress
-      ];
+      (
+        debug "LOAD";
+        match state with
+        [ Complete ->
+          let wrapper =
+            {
+              onResponse = self#onResponse;
+              onData = self#onData;
+              onComplete = self#onComplete;
+              onError = self#onError
+            }
+          in
+          (
+            httpCode := 0;
+            contentType := "";
+            bytesTotal := 0L;
+            bytesLoaded := 0L;
+            Buffer.clear data;
+            state := Loading (start_load wrapper r);
+          )
+        | Loading _ -> raise Loading_in_progress
+        ];
+      );
 
     method cancel () =
-      match state with
-      [ Loading conn ->
-        (
-          cancel_load conn;
-          state := Complete;
-        )
-      | _ -> ()
-      ];
+      (
+        debug "cancel";
+        match state with
+        [ Loading conn ->
+          (
+            cancel_load conn;
+            state := Complete;
+          )
+        | _ -> ()
+        ];
+      );
 
     initializer
       match request with
