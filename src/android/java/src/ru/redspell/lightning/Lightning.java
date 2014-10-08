@@ -232,14 +232,17 @@ public class Lightning {
     }
 
     public static boolean isTablet() {
-				if (Build.MODEL.contentEquals("HTC One X")) {
+			String screen = activity.getString(ru.redspell.lightning.R.string.screen);
+			return (screen.contentEquals("large") || screen.contentEquals("xlarge"));
+
+/*				if (Build.MODEL.contentEquals("HTC One X")) {
 					return false;
 				}
 
         Display display = activity.getWindowManager().getDefaultDisplay();
         DisplayMetrics displayMetrics = new DisplayMetrics();
         display.getMetrics(displayMetrics);
-
+*/
 /*			Log.d("LIGHTNING", "Build.MANUFACTURER " + Build.MANUFACTURER);
 				Log.d("LIGHTNING", "Build.MODEL " + Build.MODEL);
 				Log.d("LIGHTNING", "displayMetrics.widthPixels " + displayMetrics.widthPixels);
@@ -247,15 +250,15 @@ public class Lightning {
 				Log.d("LIGHTNING", "displayMetrics.xdpi " + displayMetrics.xdpi);
 				Log.d("LIGHTNING", "displayMetrics.ydpi " + displayMetrics.ydpi);*/
 
-        float width = displayMetrics.widthPixels / displayMetrics.xdpi;
+/*        float width = displayMetrics.widthPixels / displayMetrics.xdpi;
         float height = displayMetrics.heightPixels / displayMetrics.ydpi;
-
+*/
 /*				Log.d("LIGHTNING", "width " + width);
 				Log.d("LIGHTNING", "height " + height);*/
-        double screenDiagonal = Math.sqrt(width * width + height * height);
+/*        double screenDiagonal = Math.sqrt(width * width + height * height);*/
 /*				Log.d("LIGHTNING", "screenDiagonal " + screenDiagonal);*/
 
-        return (screenDiagonal >= 6);
+/*        return (screenDiagonal >= 6);*/
     }
 
     public static String platform() {

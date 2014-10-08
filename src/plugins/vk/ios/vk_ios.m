@@ -9,8 +9,10 @@ static LightVkDelegate* delegate; //delegate declared as static, cause VKSdk cla
 int authorized = 0;
 
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess, value vforce) {
+	NSLog(@"ml_vk_authorize call");
 	if (authorized && vforce == Val_false) {
 		value *success = &vsuccess;
+		NSLog(@"ml_vk_authorize 1 success");
 		RUN_CALLBACK(success, Val_unit);
 
 		return Val_unit;
@@ -18,6 +20,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 
 	CAMLparam4(vappid, vpermissions, vfail, vsuccess);
 
+	NSLog(@"1");
 	[[NSNotificationCenter defaultCenter] addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
 		NSDictionary* data = [notif userInfo];
 		NSURL* url = [data objectForKey:APP_URL_DATA];
@@ -26,12 +29,15 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 		[VKSdk processOpenURL:url fromApplication:fromApp];
 	}];
 
+	NSLog(@"2");
 	delegate = [[LightVkDelegate alloc] initWithSuccess:vsuccess andFail:vfail andAuthFlag:(&authorized)];
 	[VKSdk initializeWithDelegate:delegate andAppId:[NSString stringWithUTF8String:String_val(vappid)]];
 
+	NSLog(@"3");
 	VKAccessToken *token = [VKAccessToken tokenFromDefaults:@"lightning_nativevk_token"];
 
 	if (token == nil || token.isExpired == YES || vforce == Val_true) {
+		NSLog(@"4");
 		value perms = vpermissions;
 		NSMutableArray* mpermissions = [NSMutableArray arrayWithCapacity:0];
 
@@ -40,11 +46,11 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 			perms = Field(perms, 1);
 		}
 
+		NSLog(@"5");
 		[VKSdk authorize:mpermissions];
 	} else {
+		NSLog(@"6");
 		[VKSdk setAccessToken:token];
-		value *success = &vsuccess;
-		RUN_CALLBACK(success, Val_unit);
 	}
 
 	CAMLreturn(Val_unit);

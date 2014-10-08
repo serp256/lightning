@@ -8,13 +8,15 @@
 #import <caml/mlvalues.h>
 #import "LightActivityIndicator.h"
 
-@protocol OrientationDelegate 
+#define SYSTEM_VERSION_LESS_THAN(v) ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
+
+@protocol OrientationDelegate
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
 - (BOOL)shouldAutorotate;
 - (NSUInteger)supportedInterfaceOrientations;
 @end
 
-@protocol RemoteNotificationsRegisterDelegate 
+@protocol RemoteNotificationsRegisterDelegate
 -(void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
 -(void)didFailToRegisterForRemoteNotificationsWithError:(NSError *)error;
 @end
@@ -24,7 +26,7 @@
 	id<RemoteNotificationsRegisterDelegate> _rnDelegate;
 	LightActivityIndicatorView*	activityIndicator;
 @public
-	// Payments need refactoring for deprecated api. 
+	// Payments need refactoring for deprecated api.
 	// Лучше будет переписать их через Callback механизм, так как их не может быть много
 	value payment_success_cb;
 	value payment_error_cb;
@@ -53,7 +55,7 @@
 
 @end
 
-/* при модальном показе LightViewController паузит себя, однако он не знает, когда показываемый им контроллер 
+/* при модальном показе LightViewController паузит себя, однако он не знает, когда показываемый им контроллер
 // дисмиссится, соответственно не может продолжить работу.
 // контроллеры, которые мы показыавем поверх должны наследоваться от этого контроллера.
 @interface LightViewCompatibleController : UIViewController

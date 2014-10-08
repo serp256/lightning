@@ -113,7 +113,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	NSString *keyArray[5] = {@"date",@"device",@"vers",@"exception",@"data"};
 	NSString *valArray[5] = {[NSString stringWithFormat:@"%f",now],[NSString stringWithFormat:@"%@(%@)",dev.model,dev.systemVersion],appVer,exception,backtrace};
 	/*
-	NSString *report = 
+	NSString *report =
 		[NSString stringWithFormat:@"\n------------------------------------------------------\ndate: %@\ndevice: %@(%@)\napplication: %@(%@)\nexception:\n\t%s\n%@", now, dev.model, dev.systemVersion, appName, appVer, exn, backtrace];
 	if ([exnInf length]) {
 		report = [report stringByAppendingFormat:@"exception info:\n%@\n", exnInf];
@@ -185,17 +185,19 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 
 #pragma mark - View lifecycle
 - (void)loadView {
-	//NSLog(@"loadView");
 	UIInterfaceOrientation orient = self.interfaceOrientation;
 	CGRect rect = [UIScreen mainScreen].applicationFrame;
 	switch (orient) {
 		case UIInterfaceOrientationLandscapeLeft:
-		case UIInterfaceOrientationLandscapeRight: {
-			float tmp = rect.size.width;
-			rect.size.width = rect.size.height;
-			rect.size.height = tmp;
+		case UIInterfaceOrientationLandscapeRight:
+			if(SYSTEM_VERSION_LESS_THAN(@"8.0")) {
+				float tmp = rect.size.width;
+				rect.size.width = rect.size.height;
+				rect.size.height = tmp;
+			}
+			
 			break;
-	  }
+
 		default: break;
 	};
 	LightView * lightView = [[LightView alloc] initWithFrame:rect];
@@ -239,7 +241,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 }
 
 
--(void)showAchievements { 
+-(void)showAchievements {
 	GKAchievementViewController *achievements = [[GKAchievementViewController alloc] init];
 	if (achievements != nil){
 		achievements.achievementDelegate = self;
@@ -280,7 +282,7 @@ static value *ml_url_data = NULL;
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
 	//NSLog(@"did revieve data");
 	//caml_acquire_runtime_system();
-	if (ml_url_data == NULL) 
+	if (ml_url_data == NULL)
 		ml_url_data = caml_named_value("url_data");
 	int size = data.length;
 	value mldata = caml_alloc_string(size); memcpy(String_val(mldata),data.bytes,size);
@@ -328,7 +330,7 @@ static value *ml_url_complete = NULL;
 		[activityIndicator dismissWithClickedButtonIndex:-1 animated:YES];
 		[activityIndicator release];
 	}
-	
+
 	activityIndicator = [indicator retain];
     [activityIndicator show];
 }
@@ -442,9 +444,9 @@ static value *ml_url_complete = NULL;
 							value ml_product_id = 0, ml_error_msg = 0;
 							//NSLog(@"PAYMENT ERORR FOR: '%@'",transaction.payment.productIdentifier);
 							Begin_roots2(ml_product_id,ml_error_msg);
-							ml_product_id = caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]); 
-							if (e.length > 0) 
-								ml_error_msg =  caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]); 
+							ml_product_id = caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]);
+							if (e.length > 0)
+								ml_error_msg =  caml_copy_string([e cStringUsingEncoding:NSUTF8StringEncoding]);
 							else ml_error_msg = caml_alloc_string(0);
 							caml_callback3(payment_error_cb, ml_product_id,ml_error_msg,Val_bool(transaction.error.code == SKErrorPaymentCancelled));
 							End_roots();
@@ -462,7 +464,7 @@ static value *ml_url_complete = NULL;
 								[transaction retain]; // Обязательно из ocaml надо вызвать commit_transaction!!!
 								//caml_acquire_runtime_system();
 								caml_callback3(
-									payment_success_cb, 
+									payment_success_cb,
 									caml_copy_string([transaction.payment.productIdentifier cStringUsingEncoding:NSUTF8StringEncoding]), // product id
 									(value)transaction,
 									Val_bool(restored));
@@ -501,7 +503,7 @@ static value *ml_url_complete = NULL;
 - (void)dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion {
 	NSLog(@"dismissViewControllerAnimated");
 	[super dismissViewControllerAnimated: flag completion:completion];
-	[self becomeActive];	
+	[self becomeActive];
 }
 
 + (void)setSupportEmail:(NSString*)email {
@@ -560,7 +562,7 @@ static value *ml_url_complete = NULL;
 - (void)hideKeyboard
 {
 	//NSLog(@"hideKeyboard");
-	if (kbTextField != NULL) 
+	if (kbTextField != NULL)
 	{
 		//NSLog(@"Not null");
 		caml_remove_global_root(&keyboardCallbackReturn);
@@ -587,7 +589,7 @@ static value *ml_url_complete = NULL;
 		//NSLog(@"stage [%f; %f]", rect.size.width, rect.size.height);
 		kbTextField = [[UITextField alloc] initWithFrame:CGRectMake((rect.size.width - w) / 2., ((rect.size.height / 2.) - h) / 2.  , Int_val(Field(size,0)), Int_val(Field(size,1)))];
 	};
-//	[[UIApplication sharedApplication].keyWindow addSubview:kbTextField]; 
+//	[[UIApplication sharedApplication].keyWindow addSubview:kbTextField];
 	[self.view addSubview:kbTextField ];
 //	kbTextField.transform = CGAffineTransformConcat(kbTextField.transform, CGAffineTransformMakeRotation(M_PI * 90 / 180.0));
 
@@ -611,15 +613,15 @@ static value *ml_url_complete = NULL;
 
 	// Setting the font.
 	[kbTextField setFont:[UIFont fontWithName:@"Times New Roman" size:34]];
-	 
+
 	// Setting the text alignment
 	[kbTextField setTextAlignment:UITextAlignmentCenter];
 	[kbTextField setBorderStyle:UITextBorderStyleRoundedRect];
 
 	[kbTextField endEditing:YES];
-	[kbTextField becomeFirstResponder]; 
+	[kbTextField becomeFirstResponder];
 //	[self changeTextFieldOrientation:self.interfaceOrientation];
-	
+
 	if (keyboardCallbackUpdate != 0) caml_callback(keyboardCallbackUpdate, caml_copy_string( String_val(initString) ));
 }
 
@@ -632,8 +634,6 @@ static value *ml_url_complete = NULL;
 //  [super dismissModalViewControllerAnimated: animated];
   [[LightViewController sharedInstance] dismissModalViewControllerAnimated: animated];
   [[LightViewController sharedInstance] becomeActive];
-}  
+}
 @end
 */
-
-

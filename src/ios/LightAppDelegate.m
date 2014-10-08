@@ -27,12 +27,12 @@ void set_referrer(char *type,NSString *nid) {
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 	[application setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
-	//CGRect frame = [UIScreen mainScreen].applicationFrame;
-	//NSLog(@"window size: %f:%f:%f:%f",frame.origin.x,frame.origin.y,frame.size.width,frame.size.height);
+	CGRect frame = [UIScreen mainScreen].applicationFrame;
+	NSLog(@"window size: %f:%f:%f:%f",frame.origin.x,frame.origin.y,frame.size.width,frame.size.height);
 	self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].applicationFrame];
 	lightViewController = [LightViewController sharedInstance];
 	lightViewController.orientationDelegate = self;
-	//[self.window addSubview:lightViewController.view];    
+	//[self.window addSubview:lightViewController.view];
 	self.window.rootViewController = lightViewController;
 	// For local notifications
 	UILocalNotification *ln = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
@@ -53,6 +53,41 @@ void set_referrer(char *type,NSString *nid) {
 	return YES;
 }
 
+#ifdef __IPHONE_8_0
+
+- (BOOL)checkNotificationType:(UIUserNotificationType)type
+{
+  UIUserNotificationSettings *currentSettings = [[UIApplication sharedApplication] currentUserNotificationSettings];
+
+  return (currentSettings.types & type);
+}
+
+#endif
+
+- (void)setApplicationBadgeNumber:(NSInteger)badgeNumber
+{
+  UIApplication *application = [UIApplication sharedApplication];
+
+#ifdef __IPHONE_8_0
+  if(SYSTEM_VERSION_LESS_THAN(@"8.0"))
+  {
+    application.applicationIconBadgeNumber = badgeNumber;
+  }
+  else
+  {
+    if ([self checkNotificationType:UIUserNotificationTypeBadge])
+    {
+      NSLog(@"badge number changed to %d", badgeNumber);
+      application.applicationIconBadgeNumber = badgeNumber;
+    }
+    else
+      NSLog(@"access denied for UIUserNotificationTypeBadge");
+  }
+
+#else
+  application.applicationIconBadgeNumber = badgeNumber;
+#endif
+}
 
 
 - (void)applicationWillResignActive:(UIApplication *)application        {
@@ -63,7 +98,8 @@ void set_referrer(char *type,NSString *nid) {
 - (void)applicationDidBecomeActive:(UIApplication *)application         {
 	NSLog(@"become active");
 
-  	application.applicationIconBadgeNumber = 0;
+  	/*application.applicationIconBadgeNumber = 0;*/
+		[self setApplicationBadgeNumber:0];
   	[[NSNotificationCenter defaultCenter] postNotificationName:APP_BECOME_ACTIVE_NOTIFICATION object:self];
 	[lightViewController becomeActive];
 }
@@ -94,12 +130,12 @@ void set_referrer(char *type,NSString *nid) {
     caml_remove_global_root(&(lightViewController->remote_notification_request_success_cb));
     lightViewController->remote_notification_request_success_cb = Val_int(1);
   }
-  
+
     if (Is_block(lightViewController->remote_notification_request_error_cb)) {
     caml_remove_global_root(&(lightViewController->remote_notification_request_error_cb));
     lightViewController->remote_notification_request_error_cb = Val_int(1);
   }
-  
+
 }
 */
 
@@ -137,12 +173,12 @@ void set_referrer(char *type,NSString *nid) {
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
 	[url retain];
 	NSDictionary* data = [NSDictionary dictionaryWithObject:url forKey:APP_URL_DATA];
-	
+
     [[NSNotificationCenter defaultCenter] postNotificationName:APP_OPENURL object:self userInfo:data];
     return YES;
 }
 
-    
+
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
 	[url retain];
 	[sourceApplication retain];
@@ -176,16 +212,16 @@ void set_referrer(char *type,NSString *nid) {
 	NSLog(@"delegate application supportedInterfaceOrienationsForWindow");
 	//return UIInterfaceOrientationMaskPortrait;
 	return UIInterfaceOrientationMaskAll;
-}     
+}
 
 -(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-  NSLog(@"shouldAutorotateToInterfaceOrientation from nano delegate");
+  NSLog(@"shouldAutorotateToInterfaceOrientation from light app delegate");
 	return (interfaceOrientation == UIInterfaceOrientationPortrait || interfaceOrientation == UIInterfaceOrientationMaskPortraitUpsideDown);
 }
 
 - (NSUInteger)supportedInterfaceOrientations {
-	NSLog(@"delegate supportedInterfaceOrientations");
-  return (UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskAllButUpsideDown);
+	NSLog(@"supportedInterfaceOrientations from light app delegate");
+  return UIInterfaceOrientationMaskPortrait;
 }
 
 - (void)dealloc {
@@ -195,4 +231,3 @@ void set_referrer(char *type,NSString *nid) {
 }
 
 @end
-
