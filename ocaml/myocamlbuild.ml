@@ -29,38 +29,31 @@ let native_only_rules () = (* native only compilation *)
   print_endline "native only compilation";
   clear_rules ();
   rule "ocaml: mli -> cmi"
-    ~tags:["ocaml"]
     ~prod:"%.cmi"
     ~deps:["%.mli"; "%.mli.depends"]
     (Ocaml_compiler.byte_compile_ocaml_interf "%.mli" "%.cmi");
   rule "ocaml: ml & cmi -> cmo"
-    ~tags:["ocaml"; "byte"]
     ~prod:"%.cmo"
     ~deps:["%.mli"(* This one is inserted to force this rule to be skiped when
     a .ml is provided without a .mli *); "%.ml"; "%.ml.depends"; "%.cmi"]
     (Ocaml_compiler.byte_compile_ocaml_implem "%.ml" "%.cmo");
   rule "ocaml: ml & cmi -> cmx & o"
-    ~tags:["ocaml"; "native"]
     ~prods:["%.cmx"; "%.o"]
     ~deps:["%.mli"; "%.ml"; "%.ml.depends"; "%.cmi"]
     (Ocaml_compiler.native_compile_ocaml_implem "%.ml");
   rule "ocaml: ml -> cmx & o & cmi"
-    ~tags:["ocaml";"native"]
     ~prods:["%.cmx"; "%.o"; "%.cmi"]
     ~deps:["%.ml"; "%.ml.depends"]
     (Ocaml_compiler.native_compile_ocaml_implem "%.ml");
   rule "ocaml: cmx* & o* -> native"
-    ~tags:["ocaml"; "native"; "program"]
     ~prod:"%.native"
     ~deps:["%.cmx"; "%.o"]
     (Ocaml_compiler.native_link "%.cmx" "%.native");
   rule "ocaml: mllib & cmo* -> cma"
-    ~tags:["ocaml"; "byte"; "library"]
     ~prod:"%.cma"
     ~dep:"%.mllib"
     (Ocaml_compiler.byte_library_link_mllib "%.mllib" "%.cma");
   rule "ocaml: ml -> cmo & cmi"
-    ~tags:["ocaml"]
     ~prods:["%.cmo"; "%.cmi"]
     ~deps:["%.ml"; "%.ml.depends"]
     (Ocaml_compiler.byte_compile_ocaml_implem "%.ml" "%.cmo");
@@ -126,7 +119,6 @@ let lightning_dispatch =
             flag ["ocaml"; "native"; "link"; "file:Farm.so" ] (S[(A"-ccopt"); (A("-L " ^ andndkpath ^ "/platforms/" ^ andplatform ^ "/arch-arm/usr/lib/"))]);
             *)
             rule "ocaml: cmx* & o* -> so" 
-              ~tags:["ocaml"; "native"; "program"]
               ~prod:"%.so"
               ~deps:["%.cmx"; "%.o"]
               (Ocaml_compiler.native_link "%.cmx" "%.so");
