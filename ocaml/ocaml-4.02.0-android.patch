@@ -1,6 +1,6 @@
 diff -urN ocaml-4.02.0/Makefile ocaml-4.02.0-android/Makefile
 --- ocaml-4.02.0/Makefile	2014-08-06 15:58:44.000000000 +0400
-+++ ocaml-4.02.0-android/Makefile	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/Makefile	2014-10-08 13:03:28.000000000 +0400
 @@ -15,18 +15,18 @@
  include config/Makefile
  include stdlib/StdlibModules
@@ -110,7 +110,7 @@ diff -urN ocaml-4.02.0/Makefile ocaml-4.02.0-android/Makefile
  	done
 diff -urN ocaml-4.02.0/asmcomp/cmmgen.ml ocaml-4.02.0-android/asmcomp/cmmgen.ml
 --- ocaml-4.02.0/asmcomp/cmmgen.ml	2014-08-18 22:26:49.000000000 +0400
-+++ ocaml-4.02.0-android/asmcomp/cmmgen.ml	2014-10-07 15:43:46.000000000 +0400
++++ ocaml-4.02.0-android/asmcomp/cmmgen.ml	2014-10-08 13:03:28.000000000 +0400
 @@ -211,14 +211,14 @@
  
  (* Unsigned comparison between native integers. *)
@@ -208,7 +208,7 @@ diff -urN ocaml-4.02.0/asmcomp/cmmgen.ml ocaml-4.02.0-android/asmcomp/cmmgen.ml
            sub_int c1 t)
 diff -urN ocaml-4.02.0/asmcomp/liveness.ml ocaml-4.02.0-android/asmcomp/liveness.ml
 --- ocaml-4.02.0/asmcomp/liveness.ml	2014-05-16 18:52:07.000000000 +0400
-+++ ocaml-4.02.0-android/asmcomp/liveness.ml	2014-10-07 15:40:48.000000000 +0400
++++ ocaml-4.02.0-android/asmcomp/liveness.ml	2014-10-08 13:03:28.000000000 +0400
 @@ -54,7 +54,8 @@
          let across =
            match op with
@@ -221,7 +221,7 @@ diff -urN ocaml-4.02.0/asmcomp/liveness.ml ocaml-4.02.0-android/asmcomp/liveness
                   Hence, everything that must be live at the beginning of
 diff -urN ocaml-4.02.0/asmcomp/spill.ml ocaml-4.02.0-android/asmcomp/spill.ml
 --- ocaml-4.02.0/asmcomp/spill.ml	2014-08-18 22:26:49.000000000 +0400
-+++ ocaml-4.02.0-android/asmcomp/spill.ml	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/asmcomp/spill.ml	2014-10-08 13:03:28.000000000 +0400
 @@ -296,7 +296,8 @@
        let before =
          match i.desc with
@@ -234,7 +234,7 @@ diff -urN ocaml-4.02.0/asmcomp/spill.ml ocaml-4.02.0-android/asmcomp/spill.ml
              before1 in
 diff -urN ocaml-4.02.0/asmrun/backtrace.c ocaml-4.02.0-android/asmrun/backtrace.c
 --- ocaml-4.02.0/asmrun/backtrace.c	2014-05-10 23:19:53.000000000 +0400
-+++ ocaml-4.02.0-android/asmrun/backtrace.c	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/asmrun/backtrace.c	2014-10-08 13:03:28.000000000 +0400
 @@ -257,18 +257,19 @@
       (!li->loc_valid && li->loc_is_raise)
     extract_location_info above guarantees that when li->loc_valid is
@@ -351,7 +351,7 @@ diff -urN ocaml-4.02.0/asmrun/backtrace.c ocaml-4.02.0-android/asmrun/backtrace.
  }
 diff -urN ocaml-4.02.0/byterun/Makefile.common ocaml-4.02.0-android/byterun/Makefile.common
 --- ocaml-4.02.0/byterun/Makefile.common	2014-07-22 00:34:38.000000000 +0400
-+++ ocaml-4.02.0-android/byterun/Makefile.common	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/byterun/Makefile.common	2014-10-08 13:03:28.000000000 +0400
 @@ -67,6 +67,13 @@
  	cp ld.conf $(INSTALL_LIBDIR)/ld.conf
  .PHONY: install
@@ -368,7 +368,7 @@ diff -urN ocaml-4.02.0/byterun/Makefile.common ocaml-4.02.0-android/byterun/Make
  install-noruntimed:
 diff -urN ocaml-4.02.0/byterun/backtrace.c ocaml-4.02.0-android/byterun/backtrace.c
 --- ocaml-4.02.0/byterun/backtrace.c	2014-05-30 13:53:52.000000000 +0400
-+++ ocaml-4.02.0-android/byterun/backtrace.c	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/byterun/backtrace.c	2014-10-08 13:03:28.000000000 +0400
 @@ -420,6 +420,11 @@
    }
  }
@@ -383,7 +383,7 @@ diff -urN ocaml-4.02.0/byterun/backtrace.c ocaml-4.02.0-android/byterun/backtrac
  CAMLprim value caml_convert_raw_backtrace_slot(value backtrace_slot) {
 diff -urN ocaml-4.02.0/byterun/backtrace.h ocaml-4.02.0-android/byterun/backtrace.h
 --- ocaml-4.02.0/byterun/backtrace.h	2013-11-13 17:55:13.000000000 +0400
-+++ ocaml-4.02.0-android/byterun/backtrace.h	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/byterun/backtrace.h	2014-10-08 13:03:28.000000000 +0400
 @@ -27,5 +27,6 @@
  extern void caml_stash_backtrace(value exn, code_t pc, value * sp, int reraise);
  #endif
@@ -393,7 +393,7 @@ diff -urN ocaml-4.02.0/byterun/backtrace.h ocaml-4.02.0-android/byterun/backtrac
  #endif /* CAML_BACKTRACE_H */
 diff -urN ocaml-4.02.0/byterun/fail.h ocaml-4.02.0-android/byterun/fail.h
 --- ocaml-4.02.0/byterun/fail.h	2013-11-13 17:55:13.000000000 +0400
-+++ ocaml-4.02.0-android/byterun/fail.h	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/byterun/fail.h	2014-10-08 13:03:28.000000000 +0400
 @@ -57,12 +57,16 @@
  /* </private> */
  
@@ -418,7 +418,7 @@ diff -urN ocaml-4.02.0/byterun/fail.h ocaml-4.02.0-android/byterun/fail.h
  CAMLextern void caml_raise_with_string (value tag, char const * msg) Noreturn;
 diff -urN ocaml-4.02.0/byterun/printexc.c ocaml-4.02.0-android/byterun/printexc.c
 --- ocaml-4.02.0/byterun/printexc.c	2014-05-21 19:08:11.000000000 +0400
-+++ ocaml-4.02.0-android/byterun/printexc.c	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/byterun/printexc.c	2014-10-08 13:03:28.000000000 +0400
 @@ -22,7 +22,9 @@
  #include "fail.h"
  #include "misc.h"
@@ -489,7 +489,7 @@ diff -urN ocaml-4.02.0/byterun/printexc.c ocaml-4.02.0-android/byterun/printexc.
 + }
 diff -urN ocaml-4.02.0/config/Makefile ocaml-4.02.0-android/config/Makefile
 --- ocaml-4.02.0/config/Makefile	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.02.0-android/config/Makefile	2014-10-07 16:08:18.000000000 +0400
++++ ocaml-4.02.0-android/config/Makefile	2014-10-08 13:03:28.000000000 +0400
 @@ -0,0 +1,79 @@
 +# generated by ./configure 
 +PREFIX=/usr/local/ocaml/android
@@ -572,7 +572,7 @@ diff -urN ocaml-4.02.0/config/Makefile ocaml-4.02.0-android/config/Makefile
 +UNIXLIB=unix
 diff -urN ocaml-4.02.0/config/m.h ocaml-4.02.0-android/config/m.h
 --- ocaml-4.02.0/config/m.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.02.0-android/config/m.h	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/config/m.h	2014-10-08 13:03:28.000000000 +0400
 @@ -0,0 +1,16 @@
 +#ifndef __PIC__
 +#  define ARCH_CODE32
@@ -592,7 +592,7 @@ diff -urN ocaml-4.02.0/config/m.h ocaml-4.02.0-android/config/m.h
 +#define ASM_CFI_SUPPORTED
 diff -urN ocaml-4.02.0/config/s.h ocaml-4.02.0-android/config/s.h
 --- ocaml-4.02.0/config/s.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.02.0-android/config/s.h	2014-10-07 15:35:34.000000000 +0400
++++ ocaml-4.02.0-android/config/s.h	2014-10-08 13:03:28.000000000 +0400
 @@ -0,0 +1,51 @@
 +#define OCAML_OS_TYPE "Unix"
 +#define OCAML_STDLIB_DIR "/usr/local/ocaml/android/lib"
@@ -647,7 +647,7 @@ diff -urN ocaml-4.02.0/config/s.h ocaml-4.02.0-android/config/s.h
 +#undef HAS_LIBBFD
 diff -urN ocaml-4.02.0/otherlibs/Makefile ocaml-4.02.0-android/otherlibs/Makefile
 --- ocaml-4.02.0/otherlibs/Makefile	2014-04-12 14:17:02.000000000 +0400
-+++ ocaml-4.02.0-android/otherlibs/Makefile	2014-10-07 16:52:37.000000000 +0400
++++ ocaml-4.02.0-android/otherlibs/Makefile	2014-10-08 13:03:28.000000000 +0400
 @@ -13,8 +13,8 @@
  
  # Common Makefile for otherlibs on the Unix ports
@@ -661,7 +661,7 @@ diff -urN ocaml-4.02.0/otherlibs/Makefile ocaml-4.02.0-android/otherlibs/Makefil
  
 diff -urN ocaml-4.02.0/otherlibs/Makefile.shared ocaml-4.02.0-android/otherlibs/Makefile.shared
 --- ocaml-4.02.0/otherlibs/Makefile.shared	2014-04-29 15:56:17.000000000 +0400
-+++ ocaml-4.02.0-android/otherlibs/Makefile.shared	2014-10-07 15:35:35.000000000 +0400
++++ ocaml-4.02.0-android/otherlibs/Makefile.shared	2014-10-08 13:03:28.000000000 +0400
 @@ -16,12 +16,14 @@
  ROOTDIR=../..
  include $(ROOTDIR)/config/Makefile
@@ -703,7 +703,7 @@ diff -urN ocaml-4.02.0/otherlibs/Makefile.shared ocaml-4.02.0-android/otherlibs/
  	rm -f *.cm*
 diff -urN ocaml-4.02.0/otherlibs/dynlink/Makefile ocaml-4.02.0-android/otherlibs/dynlink/Makefile
 --- ocaml-4.02.0/otherlibs/dynlink/Makefile	2014-04-29 15:56:17.000000000 +0400
-+++ ocaml-4.02.0-android/otherlibs/dynlink/Makefile	2014-10-07 17:08:16.000000000 +0400
++++ ocaml-4.02.0-android/otherlibs/dynlink/Makefile	2014-10-08 13:03:28.000000000 +0400
 @@ -15,10 +15,11 @@
  
  include ../../config/Makefile
@@ -770,7 +770,7 @@ diff -urN ocaml-4.02.0/otherlibs/dynlink/Makefile ocaml-4.02.0-android/otherlibs
  
 diff -urN ocaml-4.02.0/otherlibs/systhreads/Makefile ocaml-4.02.0-android/otherlibs/systhreads/Makefile
 --- ocaml-4.02.0/otherlibs/systhreads/Makefile	2014-04-29 15:56:17.000000000 +0400
-+++ ocaml-4.02.0-android/otherlibs/systhreads/Makefile	2014-10-07 15:35:35.000000000 +0400
++++ ocaml-4.02.0-android/otherlibs/systhreads/Makefile	2014-10-08 13:03:28.000000000 +0400
 @@ -13,12 +13,13 @@
  
  include ../../config/Makefile
@@ -824,7 +824,7 @@ diff -urN ocaml-4.02.0/otherlibs/systhreads/Makefile ocaml-4.02.0-android/otherl
  
 diff -urN ocaml-4.02.0/otherlibs/systhreads/st_posix.h ocaml-4.02.0-android/otherlibs/systhreads/st_posix.h
 --- ocaml-4.02.0/otherlibs/systhreads/st_posix.h	2012-10-15 21:50:56.000000000 +0400
-+++ ocaml-4.02.0-android/otherlibs/systhreads/st_posix.h	2014-10-07 15:35:35.000000000 +0400
++++ ocaml-4.02.0-android/otherlibs/systhreads/st_posix.h	2014-10-08 13:03:28.000000000 +0400
 @@ -77,12 +77,12 @@
  {
    pthread_exit(NULL);
@@ -880,7 +880,7 @@ diff -urN ocaml-4.02.0/otherlibs/systhreads/st_posix.h ocaml-4.02.0-android/othe
  static void st_decode_sigset(value vset, sigset_t * set)
 diff -urN ocaml-4.02.0/otherlibs/threads/pervasives.ml ocaml-4.02.0-android/otherlibs/threads/pervasives.ml
 --- ocaml-4.02.0/otherlibs/threads/pervasives.ml	2014-05-27 10:10:47.000000000 +0400
-+++ ocaml-4.02.0-android/otherlibs/threads/pervasives.ml	2014-10-07 15:35:35.000000000 +0400
++++ ocaml-4.02.0-android/otherlibs/threads/pervasives.ml	2014-10-08 13:03:28.000000000 +0400
 @@ -109,34 +109,34 @@
  external ( ~-. ) : float -> float = "%negfloat"
  external ( ~+. ) : float -> float = "%identity"
@@ -940,10 +940,9 @@ diff -urN ocaml-4.02.0/otherlibs/threads/pervasives.ml ocaml-4.02.0-android/othe
  external frexp : float -> float * int = "caml_frexp_float"
  external ldexp : float -> int -> float = "caml_ldexp_float"
  external modf : float -> float * float = "caml_modf_float"
-Binary files ocaml-4.02.0/stdlib/.camlinternalOO.ml.swp and ocaml-4.02.0-android/stdlib/.camlinternalOO.ml.swp differ
 diff -urN ocaml-4.02.0/stdlib/Makefile ocaml-4.02.0-android/stdlib/Makefile
 --- ocaml-4.02.0/stdlib/Makefile	2014-04-12 14:17:02.000000000 +0400
-+++ ocaml-4.02.0-android/stdlib/Makefile	2014-10-07 15:35:35.000000000 +0400
++++ ocaml-4.02.0-android/stdlib/Makefile	2014-10-08 13:03:28.000000000 +0400
 @@ -13,9 +13,7 @@
  
  include Makefile.shared
@@ -966,7 +965,7 @@ diff -urN ocaml-4.02.0/stdlib/Makefile ocaml-4.02.0-android/stdlib/Makefile
  installopt-noprof:
 diff -urN ocaml-4.02.0/stdlib/Makefile.shared ocaml-4.02.0-android/stdlib/Makefile.shared
 --- ocaml-4.02.0/stdlib/Makefile.shared	2014-05-27 10:10:47.000000000 +0400
-+++ ocaml-4.02.0-android/stdlib/Makefile.shared	2014-10-07 15:35:35.000000000 +0400
++++ ocaml-4.02.0-android/stdlib/Makefile.shared	2014-10-08 13:03:28.000000000 +0400
 @@ -12,14 +12,14 @@
  #########################################################################
  
@@ -1011,7 +1010,7 @@ diff -urN ocaml-4.02.0/stdlib/Makefile.shared ocaml-4.02.0-android/stdlib/Makefi
  $(OBJS:.cmo=.p.cmx) std_exit.p.cmx: pervasives.cmi
 diff -urN ocaml-4.02.0/stdlib/camlinternalOO.ml ocaml-4.02.0-android/stdlib/camlinternalOO.ml
 --- ocaml-4.02.0/stdlib/camlinternalOO.ml	2014-08-18 22:26:49.000000000 +0400
-+++ ocaml-4.02.0-android/stdlib/camlinternalOO.ml	2014-10-07 15:35:35.000000000 +0400
++++ ocaml-4.02.0-android/stdlib/camlinternalOO.ml	2014-10-08 13:03:28.000000000 +0400
 @@ -69,16 +69,13 @@
  let public_method_label s : tag =
    let accu = ref 0 in
@@ -1038,8 +1037,21 @@ diff -urN ocaml-4.02.0/stdlib/camlinternalOO.ml ocaml-4.02.0-android/stdlib/caml
    Map.Make(struct type t = string let compare (x:t) y = compare x y end)
 diff -urN ocaml-4.02.0/stdlib/pervasives.ml ocaml-4.02.0-android/stdlib/pervasives.ml
 --- ocaml-4.02.0/stdlib/pervasives.ml	2014-08-05 19:33:26.000000000 +0400
-+++ ocaml-4.02.0-android/stdlib/pervasives.ml	2014-10-07 15:35:35.000000000 +0400
-@@ -109,30 +109,31 @@
++++ ocaml-4.02.0-android/stdlib/pervasives.ml	2014-10-09 17:18:45.000000000 +0400
+@@ -97,8 +97,10 @@
+ external ( lsr ) : int -> int -> int = "%lsrint"
+ external ( asr ) : int -> int -> int = "%asrint"
+ 
+-let max_int = (-1) lsr 1
+-let min_int = max_int + 1
++let min_int = 1 lsl 30
++let max_int = min_int - 1
++(*let max_int = (-1) lsr 1
++let min_int = max_int + 1*)
+ 
+ (* Floating-point operations *)
+ 
+@@ -109,30 +111,31 @@
  external ( *. ) : float -> float -> float = "%mulfloat"
  external ( /. ) : float -> float -> float = "%divfloat"
  external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
@@ -1094,7 +1106,7 @@ diff -urN ocaml-4.02.0/stdlib/pervasives.ml ocaml-4.02.0-android/stdlib/pervasiv
  external modf : float -> float * float = "caml_modf_float"
 diff -urN ocaml-4.02.0/stdlib/pervasives.mli ocaml-4.02.0-android/stdlib/pervasives.mli
 --- ocaml-4.02.0/stdlib/pervasives.mli	2014-08-18 22:26:49.000000000 +0400
-+++ ocaml-4.02.0-android/stdlib/pervasives.mli	2014-10-07 15:35:35.000000000 +0400
++++ ocaml-4.02.0-android/stdlib/pervasives.mli	2014-10-08 13:03:28.000000000 +0400
 @@ -318,82 +318,82 @@
  external ( /. ) : float -> float -> float = "%divfloat"
  (** Floating-point division. *)
@@ -1217,7 +1229,7 @@ diff -urN ocaml-4.02.0/stdlib/pervasives.mli ocaml-4.02.0-android/stdlib/pervasi
     is the quotient [a /. b] rounded towards zero to an integer. *)
 diff -urN ocaml-4.02.0/tools/Makefile.shared ocaml-4.02.0-android/tools/Makefile.shared
 --- ocaml-4.02.0/tools/Makefile.shared	2014-08-07 12:52:02.000000000 +0400
-+++ ocaml-4.02.0-android/tools/Makefile.shared	2014-10-07 16:48:40.000000000 +0400
++++ ocaml-4.02.0-android/tools/Makefile.shared	2014-10-08 13:03:28.000000000 +0400
 @@ -12,13 +12,13 @@
  
  include ../config/Makefile
@@ -1267,4 +1279,3 @@ diff -urN ocaml-4.02.0/tools/Makefile.shared ocaml-4.02.0-android/tools/Makefile
  beforedepend:: ocamlmklibconfig.ml
  
 Binary files ocaml-4.02.0/tools/cvt_emit.bak and ocaml-4.02.0-android/tools/cvt_emit.bak differ
-Binary files ocaml-4.02.0/tools/ocamldep.bak and ocaml-4.02.0-android/tools/ocamldep.bak differ

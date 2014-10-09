@@ -1,6 +1,6 @@
 diff -urN ocaml-4.02.0/Makefile ocaml-4.02.0-ios/Makefile
 --- ocaml-4.02.0/Makefile	2014-08-06 15:58:44.000000000 +0400
-+++ ocaml-4.02.0-ios/Makefile	2014-09-26 18:03:15.000000000 +0400
++++ ocaml-4.02.0-ios/Makefile	2014-10-08 12:58:32.000000000 +0400
 @@ -15,18 +15,18 @@
  include config/Makefile
  include stdlib/StdlibModules
@@ -110,7 +110,7 @@ diff -urN ocaml-4.02.0/Makefile ocaml-4.02.0-ios/Makefile
  	done
 diff -urN ocaml-4.02.0/asmcomp/arm/arch.ml ocaml-4.02.0-ios/asmcomp/arm/arch.ml
 --- ocaml-4.02.0/asmcomp/arm/arch.ml	2014-08-21 14:06:19.000000000 +0400
-+++ ocaml-4.02.0-ios/asmcomp/arm/arch.ml	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/asmcomp/arm/arch.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -246,6 +246,36 @@
     and rotated right by 0 ... 30 bits.
     In Thumb/Thumb-2 mode we utilize 26 ... 30. *)
@@ -150,7 +150,7 @@ diff -urN ocaml-4.02.0/asmcomp/arm/arch.ml ocaml-4.02.0-ios/asmcomp/arm/arch.ml
    let s = ref 0 in
 diff -urN ocaml-4.02.0/asmcomp/arm/emit.mlp ocaml-4.02.0-ios/asmcomp/arm/emit.mlp
 --- ocaml-4.02.0/asmcomp/arm/emit.mlp	2014-04-26 14:40:22.000000000 +0400
-+++ ocaml-4.02.0-ios/asmcomp/arm/emit.mlp	2014-09-26 18:29:52.000000000 +0400
++++ ocaml-4.02.0-ios/asmcomp/arm/emit.mlp	2014-10-08 12:58:32.000000000 +0400
 @@ -29,25 +29,20 @@
  (* Output a label *)
  
@@ -522,7 +522,7 @@ diff -urN ocaml-4.02.0/asmcomp/arm/emit.mlp ocaml-4.02.0-ios/asmcomp/arm/emit.ml
 +
 diff -urN ocaml-4.02.0/asmcomp/arm/selection.ml ocaml-4.02.0-ios/asmcomp/arm/selection.ml
 --- ocaml-4.02.0/asmcomp/arm/selection.ml	2013-11-19 11:01:54.000000000 +0400
-+++ ocaml-4.02.0-ios/asmcomp/arm/selection.ml	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/asmcomp/arm/selection.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -188,10 +188,10 @@
        (Iintop Imulh, args)
    (* Turn integer division/modulus into runtime ABI calls *)
@@ -538,7 +538,7 @@ diff -urN ocaml-4.02.0/asmcomp/arm/selection.ml ocaml-4.02.0-ios/asmcomp/arm/sel
        (Ispecific(Ibswap 16), args)
 diff -urN ocaml-4.02.0/asmcomp/cmmgen.ml ocaml-4.02.0-ios/asmcomp/cmmgen.ml
 --- ocaml-4.02.0/asmcomp/cmmgen.ml	2014-08-18 22:26:49.000000000 +0400
-+++ ocaml-4.02.0-ios/asmcomp/cmmgen.ml	2014-10-07 11:42:38.000000000 +0400
++++ ocaml-4.02.0-ios/asmcomp/cmmgen.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -211,14 +211,14 @@
  
  (* Unsigned comparison between native integers. *)
@@ -636,7 +636,7 @@ diff -urN ocaml-4.02.0/asmcomp/cmmgen.ml ocaml-4.02.0-ios/asmcomp/cmmgen.ml
            sub_int c1 t)
 diff -urN ocaml-4.02.0/asmcomp/liveness.ml ocaml-4.02.0-ios/asmcomp/liveness.ml
 --- ocaml-4.02.0/asmcomp/liveness.ml	2014-05-16 18:52:07.000000000 +0400
-+++ ocaml-4.02.0-ios/asmcomp/liveness.ml	2014-09-26 18:11:19.000000000 +0400
++++ ocaml-4.02.0-ios/asmcomp/liveness.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -54,7 +54,8 @@
          let across =
            match op with
@@ -649,7 +649,7 @@ diff -urN ocaml-4.02.0/asmcomp/liveness.ml ocaml-4.02.0-ios/asmcomp/liveness.ml
                   Hence, everything that must be live at the beginning of
 diff -urN ocaml-4.02.0/asmcomp/spill.ml ocaml-4.02.0-ios/asmcomp/spill.ml
 --- ocaml-4.02.0/asmcomp/spill.ml	2014-08-18 22:26:49.000000000 +0400
-+++ ocaml-4.02.0-ios/asmcomp/spill.ml	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/asmcomp/spill.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -296,7 +296,8 @@
        let before =
          match i.desc with
@@ -662,7 +662,7 @@ diff -urN ocaml-4.02.0/asmcomp/spill.ml ocaml-4.02.0-ios/asmcomp/spill.ml
              before1 in
 diff -urN ocaml-4.02.0/asmrun/arm.S ocaml-4.02.0-ios/asmrun/arm.S
 --- ocaml-4.02.0/asmrun/arm.S	2014-08-21 14:06:19.000000000 +0400
-+++ ocaml-4.02.0-ios/asmrun/arm.S	2014-10-07 13:16:39.000000000 +0400
++++ ocaml-4.02.0-ios/asmrun/arm.S	2014-10-08 12:58:32.000000000 +0400
 @@ -15,46 +15,14 @@
  /* Asm part of the runtime system, ARM processor */
  /* Must be preprocessed by cpp */
@@ -1477,7 +1477,7 @@ diff -urN ocaml-4.02.0/asmrun/arm.S ocaml-4.02.0-ios/asmrun/arm.S
 +         .align  2
 diff -urN ocaml-4.02.0/asmrun/backtrace.c ocaml-4.02.0-ios/asmrun/backtrace.c
 --- ocaml-4.02.0/asmrun/backtrace.c	2014-05-10 23:19:53.000000000 +0400
-+++ ocaml-4.02.0-ios/asmrun/backtrace.c	2014-10-01 12:51:29.000000000 +0400
++++ ocaml-4.02.0-ios/asmrun/backtrace.c	2014-10-08 12:58:32.000000000 +0400
 @@ -257,18 +257,19 @@
       (!li->loc_valid && li->loc_is_raise)
     extract_location_info above guarantees that when li->loc_valid is
@@ -1594,7 +1594,7 @@ diff -urN ocaml-4.02.0/asmrun/backtrace.c ocaml-4.02.0-ios/asmrun/backtrace.c
  }
 diff -urN ocaml-4.02.0/byterun/Makefile.common ocaml-4.02.0-ios/byterun/Makefile.common
 --- ocaml-4.02.0/byterun/Makefile.common	2014-07-22 00:34:38.000000000 +0400
-+++ ocaml-4.02.0-ios/byterun/Makefile.common	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/byterun/Makefile.common	2014-10-08 12:58:32.000000000 +0400
 @@ -67,6 +67,13 @@
  	cp ld.conf $(INSTALL_LIBDIR)/ld.conf
  .PHONY: install
@@ -1611,7 +1611,7 @@ diff -urN ocaml-4.02.0/byterun/Makefile.common ocaml-4.02.0-ios/byterun/Makefile
  install-noruntimed:
 diff -urN ocaml-4.02.0/byterun/backtrace.c ocaml-4.02.0-ios/byterun/backtrace.c
 --- ocaml-4.02.0/byterun/backtrace.c	2014-05-30 13:53:52.000000000 +0400
-+++ ocaml-4.02.0-ios/byterun/backtrace.c	2014-10-01 12:41:53.000000000 +0400
++++ ocaml-4.02.0-ios/byterun/backtrace.c	2014-10-08 12:58:32.000000000 +0400
 @@ -420,6 +420,11 @@
    }
  }
@@ -1626,7 +1626,7 @@ diff -urN ocaml-4.02.0/byterun/backtrace.c ocaml-4.02.0-ios/byterun/backtrace.c
  CAMLprim value caml_convert_raw_backtrace_slot(value backtrace_slot) {
 diff -urN ocaml-4.02.0/byterun/backtrace.h ocaml-4.02.0-ios/byterun/backtrace.h
 --- ocaml-4.02.0/byterun/backtrace.h	2013-11-13 17:55:13.000000000 +0400
-+++ ocaml-4.02.0-ios/byterun/backtrace.h	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/byterun/backtrace.h	2014-10-08 12:58:32.000000000 +0400
 @@ -27,5 +27,6 @@
  extern void caml_stash_backtrace(value exn, code_t pc, value * sp, int reraise);
  #endif
@@ -1636,7 +1636,7 @@ diff -urN ocaml-4.02.0/byterun/backtrace.h ocaml-4.02.0-ios/byterun/backtrace.h
  #endif /* CAML_BACKTRACE_H */
 diff -urN ocaml-4.02.0/byterun/fail.h ocaml-4.02.0-ios/byterun/fail.h
 --- ocaml-4.02.0/byterun/fail.h	2013-11-13 17:55:13.000000000 +0400
-+++ ocaml-4.02.0-ios/byterun/fail.h	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/byterun/fail.h	2014-10-08 12:58:32.000000000 +0400
 @@ -57,12 +57,16 @@
  /* </private> */
  
@@ -1661,7 +1661,7 @@ diff -urN ocaml-4.02.0/byterun/fail.h ocaml-4.02.0-ios/byterun/fail.h
  CAMLextern void caml_raise_with_string (value tag, char const * msg) Noreturn;
 diff -urN ocaml-4.02.0/byterun/printexc.c ocaml-4.02.0-ios/byterun/printexc.c
 --- ocaml-4.02.0/byterun/printexc.c	2014-05-21 19:08:11.000000000 +0400
-+++ ocaml-4.02.0-ios/byterun/printexc.c	2014-09-26 18:05:10.000000000 +0400
++++ ocaml-4.02.0-ios/byterun/printexc.c	2014-10-08 12:58:32.000000000 +0400
 @@ -22,7 +22,9 @@
  #include "fail.h"
  #include "misc.h"
@@ -1732,7 +1732,7 @@ diff -urN ocaml-4.02.0/byterun/printexc.c ocaml-4.02.0-ios/byterun/printexc.c
 + }
 diff -urN ocaml-4.02.0/config/Makefile ocaml-4.02.0-ios/config/Makefile
 --- ocaml-4.02.0/config/Makefile	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.02.0-ios/config/Makefile	2014-10-01 16:43:31.000000000 +0400
++++ ocaml-4.02.0-ios/config/Makefile	2014-10-08 12:58:32.000000000 +0400
 @@ -0,0 +1,76 @@
 +PREFIX=/usr/local/ocaml/ios
 +PLATFORM=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
@@ -1812,7 +1812,7 @@ diff -urN ocaml-4.02.0/config/Makefile ocaml-4.02.0-ios/config/Makefile
 +UNIXLIB=unix
 diff -urN ocaml-4.02.0/config/m.h ocaml-4.02.0-ios/config/m.h
 --- ocaml-4.02.0/config/m.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.02.0-ios/config/m.h	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/config/m.h	2014-10-08 12:58:32.000000000 +0400
 @@ -0,0 +1,16 @@
 +#ifndef __PIC__
 +#  define ARCH_CODE32
@@ -1832,7 +1832,7 @@ diff -urN ocaml-4.02.0/config/m.h ocaml-4.02.0-ios/config/m.h
 +#define ASM_CFI_SUPPORTED
 diff -urN ocaml-4.02.0/config/s.h ocaml-4.02.0-ios/config/s.h
 --- ocaml-4.02.0/config/s.h	1970-01-01 03:00:00.000000000 +0300
-+++ ocaml-4.02.0-ios/config/s.h	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/config/s.h	2014-10-08 12:58:32.000000000 +0400
 @@ -0,0 +1,51 @@
 +#define OCAML_OS_TYPE "Unix"
 +#define OCAML_STDLIB_DIR "/usr/local/ocaml/ios/4.00/lib"
@@ -1887,7 +1887,7 @@ diff -urN ocaml-4.02.0/config/s.h ocaml-4.02.0-ios/config/s.h
 +#undef HAS_LIBBFD
 diff -urN ocaml-4.02.0/driver/optmain.ml ocaml-4.02.0-ios/driver/optmain.ml
 --- ocaml-4.02.0/driver/optmain.ml	2014-08-28 20:24:52.000000000 +0400
-+++ ocaml-4.02.0-ios/driver/optmain.ml	2014-09-26 18:03:14.000000000 +0400
++++ ocaml-4.02.0-ios/driver/optmain.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -45,11 +45,17 @@
      ccobjs := name :: !ccobjs
    else if Filename.check_suffix name ".c" then begin
@@ -1911,7 +1911,7 @@ diff -urN ocaml-4.02.0/driver/optmain.ml ocaml-4.02.0-ios/driver/optmain.ml
  
 diff -urN ocaml-4.02.0/otherlibs/Makefile ocaml-4.02.0-ios/otherlibs/Makefile
 --- ocaml-4.02.0/otherlibs/Makefile	2014-04-12 14:17:02.000000000 +0400
-+++ ocaml-4.02.0-ios/otherlibs/Makefile	2014-09-26 18:40:31.000000000 +0400
++++ ocaml-4.02.0-ios/otherlibs/Makefile	2014-10-08 12:58:32.000000000 +0400
 @@ -13,8 +13,8 @@
  
  # Common Makefile for otherlibs on the Unix ports
@@ -1925,7 +1925,7 @@ diff -urN ocaml-4.02.0/otherlibs/Makefile ocaml-4.02.0-ios/otherlibs/Makefile
  
 diff -urN ocaml-4.02.0/otherlibs/Makefile.shared ocaml-4.02.0-ios/otherlibs/Makefile.shared
 --- ocaml-4.02.0/otherlibs/Makefile.shared	2014-04-29 15:56:17.000000000 +0400
-+++ ocaml-4.02.0-ios/otherlibs/Makefile.shared	2014-09-26 18:03:15.000000000 +0400
++++ ocaml-4.02.0-ios/otherlibs/Makefile.shared	2014-10-08 12:58:32.000000000 +0400
 @@ -16,12 +16,14 @@
  ROOTDIR=../..
  include $(ROOTDIR)/config/Makefile
@@ -1967,7 +1967,7 @@ diff -urN ocaml-4.02.0/otherlibs/Makefile.shared ocaml-4.02.0-ios/otherlibs/Make
  	rm -f *.cm*
 diff -urN ocaml-4.02.0/otherlibs/dynlink/Makefile ocaml-4.02.0-ios/otherlibs/dynlink/Makefile
 --- ocaml-4.02.0/otherlibs/dynlink/Makefile	2014-04-29 15:56:17.000000000 +0400
-+++ ocaml-4.02.0-ios/otherlibs/dynlink/Makefile	2014-10-07 17:08:47.000000000 +0400
++++ ocaml-4.02.0-ios/otherlibs/dynlink/Makefile	2014-10-08 12:58:32.000000000 +0400
 @@ -15,10 +15,11 @@
  
  include ../../config/Makefile
@@ -2034,7 +2034,7 @@ diff -urN ocaml-4.02.0/otherlibs/dynlink/Makefile ocaml-4.02.0-ios/otherlibs/dyn
  
 diff -urN ocaml-4.02.0/otherlibs/systhreads/Makefile ocaml-4.02.0-ios/otherlibs/systhreads/Makefile
 --- ocaml-4.02.0/otherlibs/systhreads/Makefile	2014-04-29 15:56:17.000000000 +0400
-+++ ocaml-4.02.0-ios/otherlibs/systhreads/Makefile	2014-09-29 12:22:34.000000000 +0400
++++ ocaml-4.02.0-ios/otherlibs/systhreads/Makefile	2014-10-08 12:58:32.000000000 +0400
 @@ -13,12 +13,13 @@
  
  include ../../config/Makefile
@@ -2088,7 +2088,7 @@ diff -urN ocaml-4.02.0/otherlibs/systhreads/Makefile ocaml-4.02.0-ios/otherlibs/
  
 diff -urN ocaml-4.02.0/otherlibs/threads/pervasives.ml ocaml-4.02.0-ios/otherlibs/threads/pervasives.ml
 --- ocaml-4.02.0/otherlibs/threads/pervasives.ml	2014-05-27 10:10:47.000000000 +0400
-+++ ocaml-4.02.0-ios/otherlibs/threads/pervasives.ml	2014-09-26 18:03:15.000000000 +0400
++++ ocaml-4.02.0-ios/otherlibs/threads/pervasives.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -109,34 +109,34 @@
  external ( ~-. ) : float -> float = "%negfloat"
  external ( ~+. ) : float -> float = "%identity"
@@ -2150,7 +2150,7 @@ diff -urN ocaml-4.02.0/otherlibs/threads/pervasives.ml ocaml-4.02.0-ios/otherlib
  external modf : float -> float * float = "caml_modf_float"
 diff -urN ocaml-4.02.0/stdlib/Makefile ocaml-4.02.0-ios/stdlib/Makefile
 --- ocaml-4.02.0/stdlib/Makefile	2014-04-12 14:17:02.000000000 +0400
-+++ ocaml-4.02.0-ios/stdlib/Makefile	2014-09-26 18:03:15.000000000 +0400
++++ ocaml-4.02.0-ios/stdlib/Makefile	2014-10-08 12:58:32.000000000 +0400
 @@ -13,9 +13,7 @@
  
  include Makefile.shared
@@ -2173,7 +2173,7 @@ diff -urN ocaml-4.02.0/stdlib/Makefile ocaml-4.02.0-ios/stdlib/Makefile
  installopt-noprof:
 diff -urN ocaml-4.02.0/stdlib/Makefile.shared ocaml-4.02.0-ios/stdlib/Makefile.shared
 --- ocaml-4.02.0/stdlib/Makefile.shared	2014-05-27 10:10:47.000000000 +0400
-+++ ocaml-4.02.0-ios/stdlib/Makefile.shared	2014-09-29 13:17:13.000000000 +0400
++++ ocaml-4.02.0-ios/stdlib/Makefile.shared	2014-10-08 12:58:32.000000000 +0400
 @@ -12,14 +12,14 @@
  #########################################################################
  
@@ -2218,7 +2218,7 @@ diff -urN ocaml-4.02.0/stdlib/Makefile.shared ocaml-4.02.0-ios/stdlib/Makefile.s
  $(OBJS:.cmo=.p.cmx) std_exit.p.cmx: pervasives.cmi
 diff -urN ocaml-4.02.0/stdlib/camlinternalOO.ml ocaml-4.02.0-ios/stdlib/camlinternalOO.ml
 --- ocaml-4.02.0/stdlib/camlinternalOO.ml	2014-08-18 22:26:49.000000000 +0400
-+++ ocaml-4.02.0-ios/stdlib/camlinternalOO.ml	2014-09-26 18:03:15.000000000 +0400
++++ ocaml-4.02.0-ios/stdlib/camlinternalOO.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -68,17 +68,14 @@
  
  let public_method_label s : tag =
@@ -2246,7 +2246,7 @@ diff -urN ocaml-4.02.0/stdlib/camlinternalOO.ml ocaml-4.02.0-ios/stdlib/camlinte
    Map.Make(struct type t = string let compare (x:t) y = compare x y end)
 diff -urN ocaml-4.02.0/stdlib/hashtbl.ml ocaml-4.02.0-ios/stdlib/hashtbl.ml
 --- ocaml-4.02.0/stdlib/hashtbl.ml	2013-03-10 02:38:52.000000000 +0400
-+++ ocaml-4.02.0-ios/stdlib/hashtbl.ml	2014-10-07 13:20:25.000000000 +0400
++++ ocaml-4.02.0-ios/stdlib/hashtbl.ml	2014-10-08 12:58:32.000000000 +0400
 @@ -132,7 +132,8 @@
        if compare key k = 0 then d else find_rec key rest
  
@@ -2259,7 +2259,18 @@ diff -urN ocaml-4.02.0/stdlib/hashtbl.ml ocaml-4.02.0-ios/stdlib/hashtbl.ml
        if compare key k1 = 0 then d1 else
 diff -urN ocaml-4.02.0/stdlib/pervasives.ml ocaml-4.02.0-ios/stdlib/pervasives.ml
 --- ocaml-4.02.0/stdlib/pervasives.ml	2014-08-05 19:33:26.000000000 +0400
-+++ ocaml-4.02.0-ios/stdlib/pervasives.ml	2014-10-06 15:32:42.000000000 +0400
++++ ocaml-4.02.0-ios/stdlib/pervasives.ml	2014-10-09 17:26:53.000000000 +0400
+@@ -97,8 +97,8 @@
+ external ( lsr ) : int -> int -> int = "%lsrint"
+ external ( asr ) : int -> int -> int = "%asrint"
+ 
+-let max_int = (-1) lsr 1
+-let min_int = max_int + 1
++let min_int = 1 lsl 30
++let max_int = min_int - 1
+ 
+ (* Floating-point operations *)
+ 
 @@ -109,30 +109,31 @@
  external ( *. ) : float -> float -> float = "%mulfloat"
  external ( /. ) : float -> float -> float = "%divfloat"
@@ -2315,7 +2326,7 @@ diff -urN ocaml-4.02.0/stdlib/pervasives.ml ocaml-4.02.0-ios/stdlib/pervasives.m
  external modf : float -> float * float = "caml_modf_float"
 diff -urN ocaml-4.02.0/stdlib/pervasives.mli ocaml-4.02.0-ios/stdlib/pervasives.mli
 --- ocaml-4.02.0/stdlib/pervasives.mli	2014-08-18 22:26:49.000000000 +0400
-+++ ocaml-4.02.0-ios/stdlib/pervasives.mli	2014-09-29 12:09:34.000000000 +0400
++++ ocaml-4.02.0-ios/stdlib/pervasives.mli	2014-10-08 12:58:32.000000000 +0400
 @@ -318,82 +318,82 @@
  external ( /. ) : float -> float -> float = "%divfloat"
  (** Floating-point division. *)
@@ -2438,7 +2449,7 @@ diff -urN ocaml-4.02.0/stdlib/pervasives.mli ocaml-4.02.0-ios/stdlib/pervasives.
     is the quotient [a /. b] rounded towards zero to an integer. *)
 diff -urN ocaml-4.02.0/tools/Makefile.shared ocaml-4.02.0-ios/tools/Makefile.shared
 --- ocaml-4.02.0/tools/Makefile.shared	2014-08-07 12:52:02.000000000 +0400
-+++ ocaml-4.02.0-ios/tools/Makefile.shared	2014-09-26 18:03:16.000000000 +0400
++++ ocaml-4.02.0-ios/tools/Makefile.shared	2014-10-08 12:58:32.000000000 +0400
 @@ -12,13 +12,13 @@
  
  include ../config/Makefile
