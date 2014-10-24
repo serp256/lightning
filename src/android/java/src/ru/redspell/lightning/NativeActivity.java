@@ -18,9 +18,7 @@ public class NativeActivity extends android.app.NativeActivity {
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
 	public static NativeActivity instance = null;
 
-	public FrameLayout viewGrp = null;
 	public boolean isRunning = false;
-	private EditText editText = null;
 
 	public NativeActivity() {
 		super();
@@ -39,9 +37,7 @@ public class NativeActivity extends android.app.NativeActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		editText = new EditText(this);
-		viewGrp = new FrameLayout(this);
-		addContentView(viewGrp, new android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+		/*editText = new EditText(this);*/
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
 		while (iter.hasNext()) {
@@ -56,45 +52,42 @@ public class NativeActivity extends android.app.NativeActivity {
 				if (isRunning) {
 					android.graphics.Rect rect = new android.graphics.Rect();
 					view.getWindowVisibleDisplayFrame(rect);
-					Log.d("LIGHTNING", "RECT " + rect.toString());
+					/*Log.d("LIGHTNING", "RECT " + rect.toString());*/
 					float displayHeight = (float)(rect.bottom - rect.top);
 					float height = (float)view.getHeight();
 
-					Log.d("LIGHTNING", "height " + height);
+/*					Log.d("LIGHTNING", "height " + height);
 					Log.d("LIGHTNING", "displayHeight " + displayHeight);
-					Log.d("LIGHTNING", "height / displayHeight " + (displayHeight / height));
+					Log.d("LIGHTNING", "height / displayHeight " + (displayHeight / height));*/
 					Keyboard.setVisible((displayHeight / height) < 0.8);
 				}
 			}
 		});
 	}
 
-	public String keyboardText() {
-		return editText == null ? "" : editText.getText().toString();
-	}
-
-	public void setKeyboardText(String text) {
-		if (editText != null) {
-			editText.setText(text);
-			editText.setSelection(text.length());
-		}
-	}
-
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		if (Keyboard.visible()) {
 			if (event.getAction() == KeyEvent.ACTION_UP) {
+				Log.d("LIGHTNING", "event.getKeyCode() " + event.getKeyCode());
 
 				switch (event.getKeyCode()) {
 					case KeyEvent.KEYCODE_BACK:
 					case KeyEvent.KEYCODE_ENTER:
 						Keyboard.hide();
 						return true;
+
+					/** this call is for some devices like huawei, motorola, asus transformer etc which skip backspace press for unknown reasons
+						* but with this call backspace press is handled correctly
+						*/
+
+/*					case KeyEvent.KEYCODE_DEL:
+
+						return true;*/
 				}
 			}
 
-			editText.dispatchKeyEvent(event);
-			Keyboard.onChange(keyboardText());
+			Keyboard.textEdit.dispatchKeyEvent(event);
 		}
 
 		return super.dispatchKeyEvent(event);

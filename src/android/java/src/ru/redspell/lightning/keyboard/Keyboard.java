@@ -1,5 +1,9 @@
 package ru.redspell.lightning.keyboard;
 
+import android.text.InputType;
+import android.view.inputmethod.EditorInfo;
+import android.widget.FrameLayout;
+import android.widget.EditText;
 import android.view.WindowManager;
 import ru.redspell.lightning.Lightning;
 import android.view.inputmethod.InputMethodManager;
@@ -11,6 +15,7 @@ import android.util.Log;
 
 public class Keyboard {
 	public static boolean visible = false;
+	public static EditText textEdit = null;
 
 	private static InputMethodManager inputMethodManager = null;
 
@@ -22,13 +27,57 @@ public class Keyboard {
 		return inputMethodManager;
 	}
 
-	public static void show(String initText) {
-		Lightning.activity.setKeyboardText(initText);
-		inputMethodManager().showSoftInput(Lightning.activity.getWindow().getDecorView(), InputMethodManager.SHOW_FORCED);
+	public static void show(final String initText) {
+		Log.d("LIGHTNING", "show keyboard");
+
+		Lightning.activity.runOnUiThread(new Runnable(){
+		    @Override
+		    public void run() {
+					if (textEdit == null) {
+						textEdit = new EditText(Lightning.activity);
+						textEdit.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+						textEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+						textEdit.setSingleLine(true);
+						FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+						textEdit.setLayoutParams(layoutParams);
+						Lightning.activity.addContentView(textEdit, layoutParams);
+						textEdit.requestFocus();
+						textEdit.addTextChangedListener(new android.text.TextWatcher() {
+							@Override
+							public void afterTextChanged(android.text.Editable s) {
+								//Log.d("LIGHTNING", "afterTextChanged");
+							}
+
+							@Override
+							public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+								//Log.d("LIGHTNING", "beforeTextChanged");
+							}
+
+							@Override
+							public void onTextChanged(CharSequence s, int start, int before, int count) {
+								//Log.d("LIGHTNING", "onTextChanged");
+								onChange(textEdit.getText().toString());
+							}
+						});
+					}
+
+					textEdit.setText(initText);
+					textEdit.setSelection(initText.length());
+					inputMethodManager().showSoftInput(textEdit, 0);
+			}
+		});
+
+		Log.d("LIGHTNING", "done");
+
+
+/*		Lightning.activity.setKeyboardText(initText);
+		inputMethodManager().showSoftInput(Lightning.activity.getWindow().getDecorView(), InputMethodManager.SHOW_FORCED);*/
 	}
 
 	public static void hide() {
-		inputMethodManager().hideSoftInputFromWindow(Lightning.activity.getWindow().getDecorView().getWindowToken(), 0);
+		if (textEdit != null) {
+			inputMethodManager().hideSoftInputFromWindow(textEdit.getWindowToken(), 0);
+		}
 	}
 
 	public static boolean visible() {
@@ -42,8 +91,8 @@ public class Keyboard {
 	public static void setVisible(boolean visible) {
 		if (Keyboard.visible != visible) {
 			if (Keyboard.visible) {
-				onHide(Lightning.activity.keyboardText());
-				Lightning.activity.setKeyboardText("");
+				onHide(textEdit.getText().toString());
+				textEdit.setText("");
 			}
 			Keyboard.visible = visible;
 		}
