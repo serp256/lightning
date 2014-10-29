@@ -41,7 +41,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 		GoogleApiClient.Builder builder = new GoogleApiClient.Builder(Lightning.activity,this,this);
 		builder.addApi(Games.API);
 		builder.addScope(Games.SCOPE_GAMES);
-		builder.setViewForPopups(Lightning.activity.viewGrp);
+		/*builder.setViewForPopups(Lightning.activity.viewGrp);*/
 		mGamesClient = builder.build ();
 		// Log.d("LIGHTNING", "ACCOUNT " + Games.getCurrentAccountName(mGamesClient));
 		listener = l;

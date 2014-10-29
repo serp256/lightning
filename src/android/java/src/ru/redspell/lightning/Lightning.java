@@ -167,17 +167,6 @@ public class Lightning {
         });
     }
 
-    private static String supportEmail = "mail@redspell.ru";
-    private static ArrayList<String> additionalExceptionInfo = new ArrayList<String>();
-
-    public static void setSupportEmail(String mail) {
-        supportEmail = mail;
-    }
-
-    public static void addExceptionInfo(String d) {
-				additionalExceptionInfo.add(d);
-    }
-
     public static void openURL(String url){
         activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }
@@ -317,9 +306,20 @@ public class Lightning {
         return meminfo == null ? 0 : (new Long(meminfo)).longValue() * 1024;
     }
 
+		public static String appVer() {
+			int ver;
+			try {
+				ver = Lightning.activity.getPackageManager().getPackageInfo(Lightning.activity.getPackageName(), 0).versionCode;
+			} catch(PackageManager.NameNotFoundException e) {
+				ver = 1;
+			};
+
+			return (new Integer(ver)).toString();
+		}
+
 		public static boolean silentExceptions = true;
 
-		public static void uncaughtException(String exn,String[] bt) {
+/*		public static void uncaughtException(String exn,String[] bt) {
 			Log.d("LIGHTNING", "silentExceptions " + silentExceptions);
 
 			if (silentExceptions) {
@@ -328,7 +328,7 @@ public class Lightning {
 				uncaughtExceptionByMail(exn, bt);
 			}
 		}
-
+*/
 		private static void flushErrLog() {
 			Log.d("LIGHTNING", "flushErrLog");
 
@@ -349,11 +349,12 @@ public class Lightning {
 					Lightning.activity.deleteFile("error_log");
 				}
 			} catch (Exception e) {
-
+				Log.d("LIGHTNING", "java exception when flushing error_log");
+				e.printStackTrace();
 			}
 		}
 
-		public static void uncaughtExceptionSilent(String exn, String[] bt) {
+/*		public static void uncaughtExceptionSilent(String exn, String[] bt) {
 			long now = System.currentTimeMillis() / 1000L;
 			String dev = android.os.Build.MODEL;
 			int ver;
@@ -405,15 +406,44 @@ public class Lightning {
 			} catch (Exception e) {
 
 			}
+		}*/
+		public static void silentUncaughtException(String exceptionJson) {
+			Log.d("LIGHTNING", "silentUncaughtException call " + exceptionJson);
+			try {
+				FileOutputStream errLogStream = Lightning.activity.openFileOutput("error_log", Context.MODE_APPEND);
+				byte[] bytes = exceptionJson.getBytes();
+				errLogStream.write(bytes, 0, bytes.length);
+				flushErrLog();
+			} catch (Exception e) {
+				Log.d("LIGHTNING", "java exception when writing ocaml exception data in error_log");
+				e.printStackTrace();
+			}
 		}
 
-		public static void uncaughtExceptionByMail(String exn, String[] bt) {
+		public static String[] uncaughtExceptionByMailSubjectAndBody() {
+			Context c = activity;
+			ApplicationInfo ai = c.getApplicationInfo ();
+			String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android, " + activity.getString(ru.redspell.lightning.R.string.screen) + ", " + activity.getString(ru.redspell.lightning.R.string.density) + ")";
+			int vers;
+			try { vers = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode; } catch (PackageManager.NameNotFoundException e) {vers = 1;};
+
+			Resources res = c.getResources ();
+			String[] retval = {
+				res.getString(ru.redspell.lightning.R.string.exception_email_subject) + " \"" + label + "\" v" + vers,
+				String.format(res.getString(ru.redspell.lightning.R.string.exception_email_body),android.os.Build.MODEL,android.os.Build.VERSION.RELEASE,label,vers)
+			};
+
+			return retval;
+		}
+
+/*		public static void uncaughtExceptionByMail(String exn, String[] bt) {
 				Context c = activity;
 				ApplicationInfo ai = c.getApplicationInfo ();
 				String label = ai.loadLabel(c.getPackageManager ()).toString() + "(android, " + activity.getString(ru.redspell.lightning.R.string.screen) + ", " + activity.getString(ru.redspell.lightning.R.string.density) + ")";
 				int vers;
 				try { vers = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode; } catch (PackageManager.NameNotFoundException e) {vers = 1;};
 				StringBuffer uri = new StringBuffer("mailto:" + supportEmail);
+
 				Resources res = c.getResources ();
 				uri.append("?subject="+ Uri.encode(res.getString(ru.redspell.lightning.R.string.exception_email_subject) + " \"" + label + "\" v" + vers));
 				String t = String.format(res.getString(ru.redspell.lightning.R.string.exception_email_body),android.os.Build.MODEL,android.os.Build.VERSION.RELEASE,label,vers);
@@ -438,10 +468,9 @@ public class Lightning {
 				Intent sendIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(uri.toString ()));
 				sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				c.startActivity(sendIntent);
-		}
+		}*/
 
     static {
-        // System.loadLibrary("test");
         try {
             NativeActivity activity = NativeActivity.instance;
 
@@ -465,6 +494,8 @@ public class Lightning {
 
             Log.d("LIGHTNING", "--------------------------------");
         } catch (Exception e) {
+					Log.d("LIGHTNING", "-------------------EXCEPTION-------------------");
+					e.printStackTrace();
         }
     }
 }

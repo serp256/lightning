@@ -42,8 +42,6 @@ void lightning_init() {
     lightning_cls = engine_find_class("ru/redspell/lightning/Lightning");
     jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "init", "()V");
     (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
-
-    uncaught_exception_callback = &lightning_uncaught_exception;
 }
 
 char *lightning_get_locale() {

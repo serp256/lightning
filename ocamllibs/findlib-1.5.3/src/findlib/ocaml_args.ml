@@ -1661,6 +1661,10 @@ let ocamldep_spec = Some [
   false,
   " Output one line per file, regardless of the length";
 
+  "-open",
+  true,
+  "<module>  Opens the module <module> before typing";
+
   "-pp",
   true,
   "<cmd>  Pipe sources through preprocessor <cmd>";
@@ -1688,189 +1692,273 @@ let ocamldep_spec = Some [
 ];;
 
 let ocamldoc_spec = Some [
-  "-version",
+  "-absname",
   false,
-  "\tPrint version and exit";
-
-  "-vnum",
-  false,
-  "\tPrint version and exit";
-
-  "-v",
-  false,
-  "\t\tverbose mode";
+  " Show absolute filenames in error messages";
 
   "-I",
   true,
-  "<dir>\tAdd <dir> to the list of include directories";
-
-  "-pp",
-  true,
-  "<command>\tPipe sources through preprocessor <command>";
-
-  "-ppx",
-  true,
-  "<command>\n\t\tPipe abstract syntax tree through preprocessor <command>";
+  "<dir>  Add <dir> to the list of include directories";
 
   "-impl",
   true,
-  "<file>\tConsider <file> as a .ml file";
+  "<file>  Compile <file> as a .ml file";
 
   "-intf",
   true,
-  "<file>\tConsider <file> as a .mli file";
+  "<file>  Compile <file> as a .mli file";
 
-  "-text",
+  "-intf-suffix",
   true,
-  "<file>\tConsider <file> as a .txt file";
+  "<string>  Suffix for interface files (default: .mli)";
 
-  "-rectypes",
+  "-intf_suffix",
+  true,
+  "<string>  (deprecated) same as -intf-suffix";
+
+  "-labels",
   false,
-  "\tAllow arbitrary recursive types";
+  " Use commuting label mode";
+
+  "-modern",
+  false,
+  " (deprecated) same as -labels";
+
+  "-no-alias-deps",
+  false,
+  " Do not record dependencies for module aliases";
+
+  "-no-app-funct",
+  false,
+  " Deactivate applicative functors";
+
+  "-noassert",
+  false,
+  " Do not compile assertion checks";
 
   "-nolabels",
   false,
-  "\tIgnore non-optional labels in types";
+  " Ignore non-optional labels in types";
+
+  "-nostdlib",
+  false,
+  " Do not add default directory to the list of include directories";
+
+  "-open",
+  true,
+  "<module>  Opens the module <module> before typing";
+
+  "-pp",
+  true,
+  "<command>  Pipe sources through preprocessor <command>";
+
+  "-ppx",
+  true,
+  "<command>  Pipe abstract syntax trees through preprocessor <command>";
+
+  "-principal",
+  false,
+  " Check principality of type inference";
+
+  "-rectypes",
+  false,
+  " Allow arbitrary recursive types";
+
+  "-safe-string",
+  false,
+  " Make strings immutable";
+
+  "-short-paths",
+  false,
+  " Shorten paths in types";
+
+  "-strict-sequence",
+  false,
+  " Left-hand part of a sequence must have type unit";
+
+  "-strict-formats",
+  false,
+  " Reject invalid formats accepted by legacy implementations\n     (Warning: Invalid formats may behave differently from\n      previous OCaml versions, and will become always-rejected\n      in future OCaml versions. You should use this flag\n      to detect and fix invalid formats.)";
+
+  "-thread",
+  false,
+  " Generate code that supports the system threads library";
+
+  "-unsafe-string",
+  false,
+  " Make strings mutable (default)";
+
+  "-v",
+  false,
+  " Print compiler version and location of standard library and exit";
+
+  "-verbose",
+  false,
+  " Print calls to external commands";
+
+  "-version",
+  false,
+  " Print version and exit";
+
+  "-vmthread",
+  false,
+  " Generate code that supports the threads library with VM-level\n     scheduling";
+
+  "-vnum",
+  false,
+  " Print version number and exit";
+
+  "-w",
+  true,
+  "<list>  Enable or disable warnings according to <list>:\n        +<spec>   enable warnings in <spec>\n        -<spec>   disable warnings in <spec>\n        @<spec>   enable warnings in <spec> and treat them as errors\n     <spec> can be:\n        <num>             a single warning number\n        <num1>..<num2>    a range of consecutive warning numbers\n        <letter>          a predefined set\n     default setting is \"+a-4-6-7-9-27-29-32..39-41..42-44-45-48\"";
+
+  "-",
+  true,
+  "<file>  Treat <file> as a file name (even if it starts with `-')";
+
+  "-text",
+  true,
+  "<file> Consider <file> as a .txt file";
 
   "-warn-error",
   false,
-  "\tTreat ocamldoc warnings as errors";
+  " Treat ocamldoc warnings as errors";
 
   "-hide-warnings",
   false,
-  "\n\t\tdo not print ocamldoc warnings";
+  " do not print ocamldoc warnings";
 
   "-o",
   true,
-  "<file>\tSet the output file name, used by texi, latex and dot generators\n\t\t(default is ocamldoc.out)\n\t\tor the prefix of index files for the HTML generator\n\t\t(default is index)";
+  "<file> Set the output file name, used by texi, latex and dot generators\n\t\t(default is ocamldoc.out)\n\t\tor the prefix of index files for the HTML generator\n\t\t(default is index)";
 
   "-d",
   true,
-  "<dir>\tGenerate files in directory <dir>, rather than in current\n\t\tdirectory (for man and HTML generators)";
+  "<dir> Generate files in directory <dir>, rather than in current\n\t\tdirectory (for man and HTML generators)";
 
   "-sort",
   false,
-  "\tSort the list of top modules before generating the documentation";
+  " Sort the list of top modules before generating the documentation";
 
   "-no-stop",
   false,
-  "\tDo not stop at (**/**) comments";
+  " Do not stop at (**/**) comments";
 
   "-no-custom-tags",
   false,
-  "\n\t\tDo not allow custom @-tags";
+  " Do not allow custom @-tags";
 
   "-stars",
   false,
-  "\tRemove beginning blanks of comment lines, until the first '*'";
+  " Remove beginning blanks of comment lines, until the first '*'";
 
   "-inv-merge-ml-mli",
   false,
-  "\n\t\tInverse implementations and interfaces when merging";
+  " Inverse implementations and interfaces when merging";
 
   "-no-module-constraint-filter",
   false,
-  "\n\t\tDo not filter module elements using module type constraints";
+  "Do not filter module elements using module type constraints";
 
   "-keep-code",
   false,
-  "\tAlways keep code when available\n";
+  " Always keep code when available\n";
 
   "-dump",
   true,
-  "<file>\tDump collected information into <file>";
+  "<file> Dump collected information into <file>";
 
   "-load",
   true,
-  "<file>\tLoad information from <file> ; may be used several times\n";
+  "<file> Load information from <file> ; may be used several times\n";
 
   "-t",
   true,
-  "<title>\tUse <title> as title for the generated documentation";
+  "<title> Use <title> as title for the generated documentation";
 
   "-intro",
   true,
-  "<file>\tUse content of <file> as ocamldoc text to use as introduction\n\t\t(HTML, LaTeX and TeXinfo only)";
+  "<file> Use content of <file> as ocamldoc text to use as introduction\n\t\t(HTML, LaTeX and TeXinfo only)";
 
   "-hide",
   true,
-  "<M1,M2.M3,...>\n\t\tHide the given complete module names in generated doc";
+  "<M1,M2.M3,...> Hide the given complete module names in generated doc";
 
   "-m",
   true,
-  "<options>\tspecify merge options between .mli and .ml\n\t\t<options> can be one or more of the following characters:\n\t\td  merge description\n\t\ta  merge @author\n\t\tv  merge @version\n\t\tl  merge @see\n\t\ts  merge @since\n\t\tb  merge @before\n\t\to  merge @deprecated\n\t\tp  merge @param\n\t\te  merge @raise\n\t\tr  merge @return\n\t\tc  merge custom @-tags\n\t\tA  merge all\n\n *** choosing a generator ***\n";
+  "<options> specify merge options between .mli and .ml\n\t\t<options> can be one or more of the following characters:\n\t\td  merge description\n\t\ta  merge @author\n\t\tv  merge @version\n\t\tl  merge @see\n\t\ts  merge @since\n\t\tb  merge @before\n\t\to  merge @deprecated\n\t\tp  merge @param\n\t\te  merge @raise\n\t\tr  merge @return\n\t\tc  merge custom @-tags\n\t\tA  merge all\n\n *** choosing a generator ***\n";
 
   "-html",
   false,
-  "\tGenerate HTML documentation";
+  " Generate HTML documentation";
 
   "-latex",
   false,
-  "\tGenerate LaTeX documentation";
+  " Generate LaTeX documentation";
 
   "-texi",
   false,
-  "\tGenerate TeXinfo documentation";
+  " Generate TeXinfo documentation";
 
   "-man",
   false,
-  "\t\tGenerate man pages";
+  " Generate man pages";
 
   "-dot",
   false,
-  "\t\tGenerate dot code of top modules dependencies";
+  " Generate dot code of top modules dependencies";
 
   "-customdir",
   false,
-  "\tDisplay custom generators standard directory and exit";
+  "Display custom generators standard directory and exit";
 
   "-i",
   true,
-  "<dir>\tAdd the given directory to the search path for custom\n\t\tgenerators";
+  "<dir> Add the given directory to the search path for custom\n\t\tgenerators";
 
   "-g",
   true,
-  "<file.cm[o|a|xs]>\n\t\tLoad file defining a new documentation generator\n\n *** HTML options ***\n";
+  "<file.cm[o|a|xs]> Load file defining a new documentation generator\n\n *** HTML options ***\n";
 
   "-all-params",
   false,
-  "\tDisplay the complete list of parameters for functions and\n\t\tmethods (HTML only)";
+  " Display the complete list of parameters for functions and\n\t\tmethods (HTML only)";
 
   "-css-style",
   true,
-  "<file>\n\t\tUse content of <file> as CSS style definition (HTML only)";
+  "<file> Use content of <file> as CSS style definition (HTML only)";
 
   "-index-only",
   false,
-  "\tGenerate index files only (HTML only)";
+  " Generate index files only (HTML only)";
 
   "-colorize-code",
   false,
-  "\n\t\tColorize code even in documentation pages (HTML only)";
+  " Colorize code even in documentation pages (HTML only)";
 
   "-short-functors",
   false,
-  "\n\t\tUse short form to display functor types (HTML only)";
+  " Use short form to display functor types (HTML only)";
 
   "-charset",
   true,
-  "<s>\n\t\tAdd information about character encoding being s\n\t\t(default is iso-8859-1)\n\n *** LaTeX options ***\n";
+  "<s> Add information about character encoding being s\n\t\t(default is iso-8859-1)\n\n *** LaTeX options ***\n";
 
   "-noheader",
   false,
-  "\tSuppress header in generated documentation\n\t\t(LaTeX and TeXinfo only)";
+  " Suppress header in generated documentation\n\t\t(LaTeX and TeXinfo only)";
 
   "-notrailer",
   false,
-  "\tSuppress trailer in generated documentation\n\t\t(LaTeX and TeXinfo only)";
+  " Suppress trailer in generated documentation\n\t\t(LaTeX and TeXinfo only)";
 
   "-sepfiles",
   false,
-  "\tGenerate one file per toplevel module (LaTeX only)";
+  " Generate one file per toplevel module (LaTeX only)";
 
   "-latextitle",
   false,
-  "n,style\n\t\tAssociate {n } to the given sectionning style\n\t\t(e.g. 'section') in the latex output (LaTeX only)\n\t\tDefault sectionning is:\n\t\t 1 -> section\n\t\t 2 -> subsection\n\t\t 3 -> subsubsection\n\t\t 4 -> paragraph\n\t\t 5 -> subparagraph";
+  "n,style Associate {n } to the given sectionning style\n\t\t(e.g. 'section') in the latex output (LaTeX only)\n\t\tDefault sectionning is:\n\t\t 1 -> section\n\t\t 2 -> subsection\n\t\t 3 -> subsubsection\n\t\t 4 -> paragraph\n\t\t 5 -> subparagraph";
 
   "-latex-value-prefix",
   true,
@@ -1910,51 +1998,51 @@ let ocamldoc_spec = Some [
 
   "-notoc",
   false,
-  "\tDo not generate table of contents (LaTeX only)\n\n *** texinfo options ***\n";
+  " Do not generate table of contents (LaTeX only)\n\n *** texinfo options ***\n";
 
   "-noindex",
   false,
-  "\tDo not build index for Info files (TeXinfo only)";
+  " Do not build index for Info files (TeXinfo only)";
 
   "-esc8",
   false,
-  "\tEscape accentuated characters in Info files (TeXinfo only)";
+  " Escape accentuated characters in Info files (TeXinfo only)";
 
   "-info-section",
   false,
-  "Specify section of Info directory (TeXinfo only)";
+  " Specify section of Info directory (TeXinfo only)";
 
   "-info-entry",
   false,
-  "\tSpecify Info directory entry (TeXinfo only)\n\n *** dot options ***\n";
+  " Specify Info directory entry (TeXinfo only)\n\n *** dot options ***\n";
 
   "-dot-colors",
   true,
-  "<c1,c2,...,cn>\n\t\tUse colors c1,c1,...,cn in the dot output\n\t\t(default list is darkturquoise,darkgoldenrod2,cyan,green,\n\t\tmagenta,yellow,burlywood1,aquamarine,floralwhite,lightpink,\n\t\tlightblue,mediumturquoise,salmon,slategray3)";
+  " <c1,c2,...,cn>\n\t\tUse colors c1,c1,...,cn in the dot output\n\t\t(default list is darkturquoise,darkgoldenrod2,cyan,green,\n\t\tmagenta,yellow,burlywood1,aquamarine,floralwhite,lightpink,\n\t\tlightblue,mediumturquoise,salmon,slategray3)";
 
   "-dot-include-all",
   false,
-  "\n\t\tInclude all modules in the dot output, not only the\n\t\tmodules given on the command line";
+  " Include all modules in the dot output, not only the\n\t\tmodules given on the command line";
 
   "-dot-types",
   false,
-  "\tGenerate dependency graph for types instead of modules";
+  " Generate dependency graph for types instead of modules";
 
   "-dot-reduce",
   false,
-  "\tPerform a transitive reduction on the selected dependency graph\n\t\tbefore the dot output\n\n *** man pages options ***\n";
+  " Perform a transitive reduction on the selected dependency graph\n\t\tbefore the dot output\n\n *** man pages options ***\n";
 
   "-man-mini",
   false,
-  "\tGenerate man pages only for modules, module types, classes\n\t\tand class types (man only)";
+  " Generate man pages only for modules, module types, classes\n\t\tand class types (man only)";
 
   "-man-suffix",
   true,
-  "<suffix>\n\t\tUse <suffix> for man page files (default is 3o) (man only)\n";
+  "<suffix> Use <suffix> for man page files (default is 3o) (man only)\n";
 
   "-man-section",
   true,
-  "<section>\n\t\tUse <section> in man page files (default is 3) (man only)\n";
+  "<section> Use <section> in man page files (default is 3) (man only)\n";
 
 ];;
 

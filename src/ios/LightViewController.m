@@ -63,7 +63,7 @@ void flushErrlog() {
 	}
 }
 
-void mlMailUncaughtException(const char* exn, int bc, char** bv) {
+/*void mlMailUncaughtException(const char* exn, int bc, char** bv) {
         NSBundle *bundle = [NSBundle mainBundle];
         NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
   subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
@@ -81,9 +81,9 @@ void mlMailUncaughtException(const char* exn, int bc, char** bv) {
         NSString *email = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@", supportEmail, subj, body];
   email = [email stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
   [[UIApplication sharedApplication] openURL:[NSURL URLWithString:email]];
-}
+}*/
 
-static void mlUncaughtException(const char* exn, int bc, char** bv) {
+/*static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	NSBundle *bundle = [NSBundle mainBundle];
 	NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
 	UIDevice *dev = [UIDevice currentDevice];
@@ -112,13 +112,11 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 
 	NSString *keyArray[5] = {@"date",@"device",@"vers",@"exception",@"data"};
 	NSString *valArray[5] = {[NSString stringWithFormat:@"%f",now],[NSString stringWithFormat:@"%@(%@)",dev.model,dev.systemVersion],appVer,exception,backtrace};
-	/*
-	NSString *report =
-		[NSString stringWithFormat:@"\n------------------------------------------------------\ndate: %@\ndevice: %@(%@)\napplication: %@(%@)\nexception:\n\t%s\n%@", now, dev.model, dev.systemVersion, appName, appVer, exn, backtrace];
-	if ([exnInf length]) {
-		report = [report stringByAppendingFormat:@"exception info:\n%@\n", exnInf];
-	}
-	*/
+	//NSString *report =
+		//[NSString stringWithFormat:@"\n------------------------------------------------------\ndate: %@\ndevice: %@(%@)\napplication: %@(%@)\nexception:\n\t%s\n%@", now, dev.model, dev.systemVersion, appName, appVer, exn, backtrace];
+	//if ([exnInf length]) {
+		//report = [report stringByAppendingFormat:@"exception info:\n%@\n", exnInf];
+	//}
 
 	NSDictionary *dict = [NSDictionary dictionaryWithObjects:valArray forKeys:keyArray count:5];
 	NSFileManager *fmngr = [NSFileManager defaultManager];
@@ -137,6 +135,23 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	}
 
 	flushErrlog();
+}*/
+
+void silentUncaughtException(char *exceptionJson) {
+	NSFileManager *fmngr = [NSFileManager defaultManager];
+	NSString *errlog = errlogPath();
+
+	NSData *data = [NSData dataWithBytes:exceptionJson length:strlen(exceptionJson)];
+	if ([fmngr fileExistsAtPath:errlog] == NO) {
+		[fmngr createFileAtPath:errlog contents:data attributes:nil];
+	} else {
+		NSFileHandle *f = [NSFileHandle fileHandleForWritingAtPath:errlog];
+		[f seekToEndOfFile];
+		[f writeData:data];
+		[f closeFile];
+	}
+
+	flushErrlog();
 }
 
 +alloc {
@@ -144,7 +159,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 	if (instance != NULL) return NULL; // raise exception
 	//NSLog(@"INIT Light view controller");
 	char *argv[] = {"ios",NULL};
-	uncaught_exception_callback = &mlUncaughtException;
+	/*uncaught_exception_callback = &mlUncaughtException;*/
 	caml_startup(argv);
 	//caml_release_runtime_system();
 	instance = [super alloc];
@@ -195,7 +210,7 @@ static void mlUncaughtException(const char* exn, int bc, char** bv) {
 				rect.size.width = rect.size.height;
 				rect.size.height = tmp;
 			}
-			
+
 			break;
 
 		default: break;

@@ -587,7 +587,27 @@ value ml_alert(value mes) {
 	CAMLreturn(Val_unit);
 }
 
-value ml_debugErrReporting(value unit) {
-	uncaught_exception_callback = &mlMailUncaughtException;
-	return Val_unit;
+value ml_silentUncaughtExceptionHandler(value vexn_json) {
+    silentUncaughtException(String_val(vexn_json));
+    return Val_unit;
+}
+
+value ml_uncaughtExceptionByMailSubjectAndBody() {
+  CAMLparam0();
+  CAMLlocal1(vres);
+
+
+  NSBundle *bundle = [NSBundle mainBundle];
+  NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
+  subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
+  UIDevice *dev = [UIDevice currentDevice];
+  NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+  NSString *body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
+  body = [NSString stringWithFormat:body, dev.model, dev.systemVersion, appVersion];
+
+  vres = caml_alloc_tuple(2);
+  Store_field(vres, 0, caml_copy_string([subj UTF8String]));
+  Store_field(vres, 1, caml_copy_string([body UTF8String]));
+
+  CAMLreturn(vres);
 }

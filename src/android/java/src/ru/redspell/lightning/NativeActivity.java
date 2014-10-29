@@ -35,6 +35,8 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		Log.d("LIGHTNING", "onCreate call");
+		Lightning.locale();
 		super.onCreate(savedInstanceState);
 
 		/*editText = new EditText(this);*/

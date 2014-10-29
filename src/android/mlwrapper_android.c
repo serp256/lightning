@@ -92,32 +92,6 @@ value ml_openURL(value vurl) {
 	return Val_unit;
 }
 
-value ml_addExceptionInfo (value vinf){
-	jstring jinf;
-
-	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "addExceptionInfo", "(Ljava/lang/String;)V");
-
-	VAL_TO_JSTRING(vinf, jinf);
-	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid, jinf);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jinf);
-
-	return Val_unit;
-}
-
-value ml_setSupportEmail(value vmail) {
-	jstring jmail;
-
-	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "setSupportEmail", "(Ljava/lang/String;)V");
-
-	VAL_TO_JSTRING(vmail, jmail);
-	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid, jmail);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jmail);
-
-	return Val_unit;
-}
-
 char *get_locale() {
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getLocale", "()Ljava/lang/String;");
@@ -315,8 +289,32 @@ value ml_str_to_upper(value vsrc) {
 	CAMLreturn(vdst);
 }
 
-value ml_debugErrReporting() {
-		jfieldID fid = (*ML_ENV)->GetStaticFieldID(ML_ENV, lightning_cls, "silentExceptions", "Z");
-		(*ML_ENV)->SetStaticBooleanField(ML_ENV, lightning_cls, fid, JNI_FALSE);
-		return Val_unit;
+value ml_silentUncaughtExceptionHandler(value vexn_json) {
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "silentUncaughtException", "(Ljava/lang/String;)V");
+
+	jstring jexn_json;
+	VAL_TO_JSTRING(vexn_json, jexn_json);
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid, jexn_json);
+
+	return Val_unit;
+}
+
+value ml_uncaughtExceptionByMailSubjectAndBody(value unit) {
+	CAMLparam0();
+	CAMLlocal3(vsubject, vbody, vres);
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "uncaughtExceptionByMailSubjectAndBody", "()[Ljava/lang/String;");
+
+	jobjectArray jsubject_and_body = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	jstring jsubject = (*ML_ENV)->GetObjectArrayElement(ML_ENV, jsubject_and_body, 0);
+	jstring jbody = (*ML_ENV)->GetObjectArrayElement(ML_ENV, jsubject_and_body, 1);
+	JSTRING_TO_VAL(jsubject, vsubject);
+	JSTRING_TO_VAL(jbody, vbody);
+	vres = caml_alloc_tuple(2);
+	Store_field(vres, 0, vsubject);
+	Store_field(vres, 1, vbody);
+
+	CAMLreturn(vres);
 }

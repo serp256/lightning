@@ -95,8 +95,12 @@ ENDPLATFORM;
 external setMaxGC: int64 -> unit = "ml_setMaxGC";
 
 IFPLATFORM(ios android)
-external addExceptionInfo: string -> unit = "ml_addExceptionInfo";
-external setSupportEmail: string -> unit = "ml_setSupportEmail";
+
+value exceptionInfo = ref [];
+value supportEmail = ref "mail@redspell.ru";
+
+value addExceptionInfo info = exceptionInfo.val := !exceptionInfo @ [ info ];
+value setSupportEmail email = supportEmail.val := email;
 ELSE
 value addExceptionInfo (_:string) = ();
 value setSupportEmail (_:string) = ();
@@ -197,8 +201,56 @@ value clearNativeEventListener () = ();
 value setNativeEventListener l = ();
 ENDPLATFORM;
 
-IFPLATFORM(pc)
-value debugErrReporting () = ();
+IFPLATFORM(ios android)
+external uncaughtExceptionByMailSubjectAndBody: unit -> (string * string) = "ml_uncaughtExceptionByMailSubjectAndBody";
+
+value uncaughtExceptionHandler exn rawBacktrace =
+  let (subject, body) = uncaughtExceptionByMailSubjectAndBody () in
+  let body =
+    body
+      ^ "\n------------------\n"
+      ^ (Printexc.to_string exn) ^ "\n"
+      ^ (Printexc.raw_backtrace_to_string rawBacktrace) ^ "\n"
+      ^ (String.concat "" (List.map (fun exceptionInfo -> exceptionInfo ^ "\n") !exceptionInfo))
+      ^ "\n------------------\n"
+  in
+  let url =
+    "mailto:" ^ !supportEmail
+      ^ "?subject=" ^ (UrlEncoding.encode subject)
+      ^ "&body=" ^ (UrlEncoding.encode body)
+  in
+    openURL url;
+
+external silentUncaughtExceptionHandler: string -> unit = "ml_silentUncaughtExceptionHandler";
+
+value silentUncaughtExceptionHandler exn rawBacktrace =
+  let date = Int64.to_string (Int64.of_float (Unix.time ())) in
+  let device = Hardware.hwmodel () in
+  let ver = LightCommon.getVersion () in
+  let exn = Printexc.to_string exn in
+  let backtraceStr = Printexc.raw_backtrace_to_string rawBacktrace in
+  let exceptionInfo =
+    match !exceptionInfo with
+    [ [] -> ""
+    | exceptionInfo ->
+      let exceptionInfo = String.concat "" (List.map (fun exceptionInfo -> "\t" ^ exceptionInfo ^ "\n") exceptionInfo) in
+        "\nexception info:" ^ exceptionInfo
+    ]
+  in
+  let json =
+    Ojson.to_string (Ojson.Build.assoc
+                      [
+                        ("date", Ojson.Build.string date);
+                        ("device", Ojson.Build.string device);
+                        ("vers", Ojson.Build.string ver);
+                        ("exception", Ojson.Build.string exn);
+                        ("data", Ojson.Build.string (backtraceStr ^ exceptionInfo));
+                      ])
+  in
+    silentUncaughtExceptionHandler json;
+
+Printexc.set_uncaught_exception_handler silentUncaughtExceptionHandler;
+value debugErrReporting () = Printexc.set_uncaught_exception_handler uncaughtExceptionHandler;
 ELSE
-external debugErrReporting: unit -> unit = "ml_debugErrReporting";
+value debugErrReporting () = ();
 ENDPLATFORM;
