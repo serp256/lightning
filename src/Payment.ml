@@ -1,15 +1,11 @@
 module Transaction = struct
 
 IFDEF ANDROID THEN
-  type t = {
-    id:string;
-    receipt:string;
-    signature:string;
-  };
+  type t;
 
-  value get_id tr = tr.id;
-  value get_receipt tr = tr.receipt;
-  value get_signature tr = tr.signature;
+  external get_id: t -> string = "openiab_token";
+  external get_receipt: t -> string = "openiab_orig_json";
+  external get_signature: t -> string = "openiab_signature";
 ELSE
   IFDEF IOS THEN
     type t;

@@ -12,7 +12,9 @@
 #define APTOIDE "cm.aptoide.pt"
 
 static jclass openiab_cls = 0;
+static jclass purchase_cls = 0;
 #define FIND_OPENIAB_CLASS if (!openiab_cls) openiab_cls = engine_find_class("ru/redspell/lightning/payments/openiab/Openiab")
+#define FIND_PURCHASE_CLASS if (!purchase_cls) purchase_cls = engine_find_class("org/onepf/oms/appstore/googleUtils/Purchase")
 
 value openiab_init(value vskus, value vmarket_type) {
 	int skus_num = 0;
@@ -97,6 +99,43 @@ value openiab_inventory(value unit) {
 
 	return Val_unit;
 }
+
+value openiab_orig_json(value vpurchase) {
+	FIND_PURCHASE_CLASS;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, purchase_cls, "getOriginalJson", "()Ljava/lang/String;");
+
+	jstring jorig_json = (*ML_ENV)->CallObjectMethod(ML_ENV, (jobject)vpurchase, mid);
+	value vorig_json;
+	JSTRING_TO_VAL(jorig_json, vorig_json);
+
+	return vorig_json;
+}
+
+value openiab_token(value vpurchase) {
+	FIND_PURCHASE_CLASS;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, purchase_cls, "getToken", "()Ljava/lang/String;");
+
+	jstring jtoken = (*ML_ENV)->CallObjectMethod(ML_ENV, (jobject)vpurchase, mid);
+	value vtoken;
+	JSTRING_TO_VAL(jtoken, vtoken);
+
+	return vtoken;
+}
+
+value openiab_signature(value vpurchase) {
+	FIND_PURCHASE_CLASS;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, purchase_cls, "getSignature", "()Ljava/lang/String;");
+
+	jstring jsignature = (*ML_ENV)->CallObjectMethod(ML_ENV, (jobject)vpurchase, mid);
+	value vsignature;
+	JSTRING_TO_VAL(jsignature, vsignature);
+
+	return vsignature;
+}
+
 
 typedef struct {
 	jstring sku;
