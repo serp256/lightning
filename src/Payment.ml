@@ -1,5 +1,5 @@
 module Transaction = struct
-  
+
 IFDEF ANDROID THEN
   type t = {
     id:string;
@@ -15,17 +15,17 @@ ELSE
     type t;
 
     external get_id : t -> string = "ml_payment_get_transaction_id";
-    external get_receipt : t -> string = "ml_payment_get_transaction_receipt"; 
+    external get_receipt : t -> string = "ml_payment_get_transaction_receipt";
     value get_signature (tr:t) = "";
   ELSE
     type t = unit;
-    
+
     value get_id (tr:t) = "";
     value get_receipt (tr:t) = "";
     value get_signature (tr:t) = "";
-  ENDIF;    
+  ENDIF;
 ENDIF;
-  
+
 end;
 
 module Product =
@@ -49,14 +49,14 @@ module Product =
         value price sku = match get sku with [ Some p -> Some (price p) | _ -> None ];
       ELSE
         value price = get;
-      ENDIF;      
+      ENDIF;
     ENDIF;
   end;
 
 
 (* TODO: доделать передачу receipt *)
 value initialized = ref False;
-type marketType = [= `Google of (option string) | `Amazon ];
+type marketType = [= `Google | `Amazon | `Yandex ];
 
 
 IFDEF IOS THEN
@@ -73,19 +73,18 @@ ELSE
 
 IFDEF ANDROID THEN
 
-external ml_init : ?skus:list string -> marketType -> unit = "ml_paymentsInit";
-external ml_purchase : string -> unit = "ml_paymentsPurchase";
-external _ml_commit_transaction : string -> unit = "ml_paymentsCommitTransaction";
-external ml_restorePurchases: unit -> unit = "ml_restorePurchases";
+external ml_init : ?skus:list string -> marketType -> unit = "openiab_init";
+external ml_purchase : string -> unit = "openiab_purchase";
+external ml_commit_transaction : Transaction.t -> unit = "openiab_comsume";
+external ml_restorePurchases: unit -> unit = "openiab_inventory";
 
-value ml_commit_transaction t = _ml_commit_transaction (Transaction.get_id t);
 value restoreCompletedPurchases () = ();
 value restorePurchases = ml_restorePurchases;
 
 Callback.register "register_product" Product.register;
 ELSE
 
-type callbacks = 
+type callbacks =
   {
     on_success: (string -> Transaction.t -> bool -> unit);
     on_error: (string -> string -> bool -> unit);
@@ -109,14 +108,14 @@ value restoreCompletedPurchases () = ();
 ENDIF;
 ENDIF;
 
-(* 
+(*
   инитим.
-  Передаем два колбэка. 
+  Передаем два колбэка.
   Первый - success, принимает product_id и флаг, показывающий, что транзацкция была восстановлена
   Второй - error, принимает product_id, строку ошибки и флаг, показывающий, что юзер отменил транзакцию.
 *)
 
-value init ?(marketType = `Google None) ?skus success_cb error_cb = (
+value init ?(marketType = `Google) ?skus success_cb error_cb = (
   IFDEF ANDROID THEN
   (
     Callback.register "camlPaymentsSuccess" success_cb;
@@ -132,29 +131,24 @@ value init ?(marketType = `Google None) ?skus success_cb error_cb = (
 
 
 (*
-  совершаем покупку 
+  совершаем покупку
 *)
 
-value purchase product_id = 
-  match !initialized with 
+value purchase product_id =
+  match !initialized with
   [ False -> failwith "Payment not initialized. Call init first"
   | True  -> ml_purchase product_id
   ];
 
 
-value commit_transaction tr = 
-  match !initialized with 
+value commit_transaction tr =
+  match !initialized with
   [ False -> failwith "Payment not initialized. Call init first"
-  | True  ->
-    IFDEF AMAZON THEN
-      ()
-    ELSE
-      ml_commit_transaction tr
-    ENDIF
-  ];  
+  | True  -> ml_commit_transaction tr
+  ];
 
 IFDEF ANDROID THEN
-value commit_transaction_by_id = _ml_commit_transaction;
+value commit_transaction_by_id _ = assert False;
 ELSE
 value commit_transaction_by_id _ = failwith "cannot commit transaction by id";
 ENDIF;

@@ -1,16 +1,23 @@
 #include "lightning_android.h"
 #include "engine_android.h"
-#include <caml/alloc.h>
 
-static jclass payments_cls = NULL;
-static jobject payments = NULL;
+//same as OpenIabHelper class constants
+#define GOOGLE "com.google.play"
+#define AMAZON "com.amazon.apps"
+#define SAMSUNG "com.samsung.apps"
+#define YANDEX "com.yandex.store"
+#define NOKIA "com.nokia.nstore"
+#define APPLAND "Appland"
+#define SLIDEME "SlideME"
+#define APTOIDE "cm.aptoide.pt"
 
-value ml_paymentsInit(value vskus, value vmarket_type) {
-	CAMLparam2(vskus, vmarket_type);
-	CAMLlocal1(vsku);
+static jclass openiab_cls = 0;
+#define FIND_OPENIAB_CLASS if (!openiab_cls) openiab_cls = engine_find_class("ru/redspell/lightning/payments/openiab/Openiab")
 
+value openiab_init(value vskus, value vmarket_type) {
 	int skus_num = 0;
 	char* cskus[255];
+	value vsku;
 
 	if (Is_block(vskus)) {
 		vsku = Field(vskus, 0);
@@ -31,193 +38,152 @@ value ml_paymentsInit(value vskus, value vmarket_type) {
 		(*ML_ENV)->DeleteLocalRef(ML_ENV, jsku);
 	}
 
-	if (Is_long(vmarket_type) && vmarket_type == caml_hash_variant("Amazon")) {
-		payments_cls = engine_find_class("ru/redspell/lightning/payments/amazon/Payments");
-		jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "<init>", "(Landroid/content/Context;)V");
-		// jobject _payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, jkey);
-		// payments = (*ML_ENV)->NewGlobalRef(ML_ENV, _payments);
-		// (*ML_ENV)->DeleteLocalRef(ML_ENV, _payments)
-	} else if (Is_block(vmarket_type) && Field(vmarket_type, 0) == caml_hash_variant("Google")) {
-		jstring jkey;
-		value vkey = Field(vmarket_type, 1);
+	char *cmarket_type = "";
 
-		if (vkey == Val_int(0)) {
-			jkey = NULL;
-		} else {
-			char* ckey = String_val(Field(vkey, 0));
-			jkey = (*ML_ENV)->NewStringUTF(ML_ENV, ckey);
-		}
-
-		payments_cls = engine_find_class("ru/redspell/lightning/payments/google/Payments");
-		jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "<init>", "(Ljava/lang/String;)V");
-		jobject _payments = (*ML_ENV)->NewObject(ML_ENV, payments_cls, mid, jkey);
-		payments = (*ML_ENV)->NewGlobalRef(ML_ENV, _payments);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, _payments);
-
-		if (jkey != NULL) (*ML_ENV)->DeleteLocalRef(ML_ENV, jkey);
-	} else {
-		caml_failwith("something wrong with marketType, permited only '`Amazon' or '`Google of (option string)'");
+	if (vmarket_type == caml_hash_variant("Google")) {
+		cmarket_type = GOOGLE;
+	} else if (vmarket_type == caml_hash_variant("Amazon")) {
+		cmarket_type = AMAZON;
+	} else if (vmarket_type == caml_hash_variant("Yandex")) {
+		cmarket_type = YANDEX;
 	}
 
-	jmethodID mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "init", "([Ljava/lang/String;)V");
-	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid, jskus);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jskus);
+	jstring jmarket_type = (*ML_ENV)->NewStringUTF(ML_ENV, cmarket_type);
 
-	CAMLreturn(Val_unit);
+	FIND_OPENIAB_CLASS;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, openiab_cls, "init", "([Ljava/lang/String;Ljava/lang/String;)V");
+
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, openiab_cls, mid, jskus, jmarket_type);
+
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, str_cls);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jskus);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jmarket_type);
+
+	return Val_unit;
 }
 
-value ml_paymentsPurchase(value vsku) {
+value openiab_purchase(value vsku) {
+	FIND_OPENIAB_CLASS;
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "purchase", "(Ljava/lang/String;)V");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, openiab_cls, "purchase", "(Ljava/lang/String;)V");
 
-	jstring jsku = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vsku));
-	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid, jsku);
+	jstring jsku;
+	VAL_TO_JSTRING(vsku, jsku);
+
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, openiab_cls, mid, jsku);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jsku);
 
 	return Val_unit;
 }
 
-value ml_paymentsCommitTransaction(value vtoken) {
+value openiab_comsume(value vtransaction) {
+	FIND_OPENIAB_CLASS;
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "consumePurchase", "(Ljava/lang/String;)V");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, openiab_cls, "consume", "(Lorg/onepf/oms/appstore/googleUtils/Purchase;)V");
 
-	jstring jtoken = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vtoken));
-	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid, jtoken);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtoken);
+	jobject jtransaction = (jobject)vtransaction;
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, openiab_cls, mid, jtransaction);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, jtransaction);
 
 	return Val_unit;
 }
 
-value ml_restorePurchases() {
+value openiab_inventory(value unit) {
+	FIND_OPENIAB_CLASS;
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "restorePurchases", "()V");
-
-	(*ML_ENV)->CallVoidMethod(ML_ENV, payments, mid);
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, openiab_cls, "inventory", "()V");
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, openiab_cls, mid);
 
 	return Val_unit;
 }
 
 typedef struct {
 	jstring sku;
-	jstring tid;
-	jstring receipt;
-	jstring sig;
-	jboolean restored;
-} success_t;
+	jobject purchase;
+	value restored;
+} openiab_success_t;
 
 typedef struct {
 	jstring sku;
 	jstring reason;
-} fail_t;
+} openiab_fail_t;
 
-void reg_skus(void *data) {
+typedef struct {
+	jstring sku;
+	jstring price;
+} openiab_register_t;
+
+void openiab_success(void *d) {
+	CAMLparam0();
+	CAMLlocal2(callback, vsku);
+
+	openiab_success_t *data = (openiab_success_t*)d;
+	callback = *caml_named_value("camlPaymentsSuccess");
+	JSTRING_TO_VAL(data->sku, vsku);
+	caml_callback3(callback, vsku, (value)data->purchase, data->restored);
+
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, data->sku);
+	free(data);
+
+	CAMLreturn0;
+}
+
+void openiab_fail(void *d) {
+	CAMLparam0();
+	CAMLlocal3(callback, vsku, vreason);
+
+	openiab_fail_t *data = (openiab_fail_t*)d;
+	callback = *caml_named_value("camlPaymentsFail");
+	JSTRING_TO_VAL(data->reason, vreason);
+	JSTRING_TO_VAL(data->sku, vsku);
+	caml_callback3(callback, vsku, vreason, Val_false);
+
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, data->reason);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, data->sku);
+	free(data);
+
+	CAMLreturn0;
+}
+
+void openiab_register(void *d) {
 	CAMLparam0();
 	CAMLlocal3(callback, vsku, vprice);
 
-	jobjectArray jskus = (jobjectArray)data;
-	jsize len = (*ML_ENV)->GetArrayLength(ML_ENV, jskus);
-	int i = 0;
+	openiab_register_t *data = (openiab_register_t*)d;
 	callback = *caml_named_value("register_product");
+	JSTRING_TO_VAL(data->price, vprice);
+	JSTRING_TO_VAL(data->sku, vsku);
+	caml_callback2(callback, vsku, vprice);
 
-	while (i < len) {
-		jstring jsku = (*ML_ENV)->GetObjectArrayElement(ML_ENV, jskus, i);
-		jstring jprice = (*ML_ENV)->GetObjectArrayElement(ML_ENV, jskus, i + 1);
-		const char* csku = (*ML_ENV)->GetStringUTFChars(ML_ENV, jsku, JNI_FALSE);
-		const char* cprice = (*ML_ENV)->GetStringUTFChars(ML_ENV, jprice, JNI_FALSE);
-
-		vsku = caml_copy_string(csku);
-		vprice = caml_copy_string(cprice);
-		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jsku, csku);
-		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jprice, cprice);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, jsku);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, jprice);
-
-		caml_callback2(callback, vsku, vprice);
-
-		i += 2;
-	}
-
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, jskus);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, data->price);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, data->sku);
+	free(data);
 
 	CAMLreturn0;
 }
 
-void payments_success(void *data) {
-	CAMLparam0();
-	CAMLlocal5(vsku, vtid, vreceipt, vsig, tr);
-	CAMLlocal1(callback);
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_openiab_Openiab_purchaseSuccess(JNIEnv *env, jclass this, jstring jsku, jobject jpurchase, jboolean jrestored) {
+	openiab_success_t *data = (openiab_success_t*)malloc(sizeof(openiab_success_t));
+	data->purchase = (*env)->NewGlobalRef(env, jpurchase);
+	data->sku = (*env)->NewGlobalRef(env, jsku);
+	data->restored = jrestored == JNI_TRUE ? Val_true : Val_false;
 
-	success_t *s = (success_t*)data;
-	JSTRING_TO_VAL(s->sku, vsku);
-	JSTRING_TO_VAL(s->tid, vtid);
-	JSTRING_TO_VAL(s->receipt, vreceipt);
-	JSTRING_TO_VAL(s->sig, vsig);
-
-	tr = caml_alloc_tuple(3);
-	Store_field(tr, 0, vtid);
-	Store_field(tr, 1, vreceipt);
-	Store_field(tr, 2, vsig);
-
-	callback = *caml_named_value("camlPaymentsSuccess");
-	caml_callback3(callback, vsku, tr, s->restored == JNI_TRUE ? Val_true : Val_false);
-
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->sku);
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->tid);
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->receipt);
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, s->sig);
-	free(s);
-
-	CAMLreturn0;
+	RUN_ON_ML_THREAD(&openiab_success, (void*)data);
 }
 
-void payments_fail(void *data) {
-	PRINT_DEBUG("payments_fail");
-	CAMLparam0();
-	CAMLlocal3(vsku, vreason, callback);
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_openiab_Openiab_purchaseFail(JNIEnv *env, jclass this, jstring jsku, jstring jreason) {
+	openiab_fail_t *data = (openiab_fail_t*)malloc(sizeof(openiab_fail_t));
+	data->reason = (*env)->NewGlobalRef(env, jreason);
+	data->sku = (*env)->NewGlobalRef(env, jsku);
 
-	PRINT_DEBUG("1");
-	fail_t *f = (fail_t*)data;
-	PRINT_DEBUG("2");
-	JSTRING_TO_VAL(f->sku, vsku);
-	PRINT_DEBUG("3");
-	JSTRING_TO_VAL(f->reason, vreason);
-	PRINT_DEBUG("4");
-
-	callback = *caml_named_value("camlPaymentsFail");
-	caml_callback3(callback, vsku, vreason, Val_false);
-	PRINT_DEBUG("5");
-
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, f->sku);
-	PRINT_DEBUG("6");
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, f->reason);
-	PRINT_DEBUG("7");
-	free(f);
-	PRINT_DEBUG("8");
-
-	CAMLreturn0;
+	RUN_ON_ML_THREAD(&openiab_fail, (void*)data);
 }
 
-JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_success(JNIEnv *env, jobject this, jstring sku, jstring tid, jstring receipt, jstring sig, jboolean restored) {
-	success_t *s = (success_t*)malloc(sizeof(success_t));
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_openiab_Openiab_purchaseRegister(JNIEnv *env, jclass this, jstring jsku, jstring jprice) {
+	openiab_register_t *data = (openiab_register_t*)malloc(sizeof(openiab_register_t));
+	data->price = (*env)->NewGlobalRef(env, jprice);
+	data->sku = (*env)->NewGlobalRef(env, jsku);
 
-	s->sku = (*env)->NewGlobalRef(env, sku);
-	s->tid = (*env)->NewGlobalRef(env, tid);
-	s->receipt = (*env)->NewGlobalRef(env, receipt);
-	s->sig = (*env)->NewGlobalRef(env, sig);
-	s->restored = restored;
-
-	RUN_ON_ML_THREAD(&payments_success, (void*)s);
-}
-
-JNIEXPORT void Java_ru_redspell_lightning_payments_PaymentsCallbacks_fail(JNIEnv *env, jobject this, jstring sku, jstring reason) {
-	fail_t *f = (fail_t*)malloc(sizeof(fail_t));
-
-	f->sku = (*env)->NewGlobalRef(env, sku);
-	f->reason = (*env)->NewGlobalRef(env, reason);
-
-	RUN_ON_ML_THREAD(&payments_fail, (void*)f);
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_google_Payments_00024SkuDetailsTask_nativeOnPostExecute(JNIEnv *env, jobject this, jobjectArray jskus) {
-	RUN_ON_ML_THREAD(&reg_skus, (void*)(*env)->NewGlobalRef(env, jskus));
+	RUN_ON_ML_THREAD(&openiab_register, (void*)data);
 }

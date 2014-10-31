@@ -1,6 +1,6 @@
 include ../Makefile.common
 
-CFLAGS += -I .
+CFLAGS += -I . -g
 
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
@@ -10,7 +10,7 @@ MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o 
 
 light_common.o: light_common.h
 texture_common.o: texture_common.h light_common.h
-texture_async_loader.o: light_common.h texture_common.h 
+texture_async_loader.o: light_common.h texture_common.h
 render_stub.o: light_common.h texture_common.h render_stub.h
 filters_stub.o: light_common.h texture_common.h render_stub.h
 ios/texture_ios.o: texture_common.h
@@ -18,7 +18,7 @@ sdl/texture_sdl.o: texture_common.h
 glut/texture_glut.o: texture_common.h
 android/texture_android.o: texture_common.h
 
-MLOBJSFLAGS = 
+MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
@@ -33,7 +33,7 @@ KAZMATH = $(patsubst %,kazmath/%,$(KAZMATHOBJS))
 MLPPOPT = syntax/pa_platform.cmo
 
 SYNTAX = syntax/pa_prop.cmo syntax/pa_platform.cmo
-$(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend,camlp4.macro -syntax camlp4r 
+$(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.extend,camlp4.macro -syntax camlp4r
 
 
 
@@ -75,7 +75,7 @@ ifeq ($(PLATFORM),IOS)
 	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
 		MOBJS += net_curl.o sdl/sdl_stub.o sdl/sdl_image_stub.o sdl/texture_sdl.o
-		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml 
+		BMLSOURCES = sdl/sdl.ml sdl/sdl_image.ml
 		AMLSOURCES = sdl/sdl_run.ml
 		MLOBJSFLAGS = -I sdl
 		#MLCOMPFLAGS += -package curl,threads -thread
@@ -130,14 +130,14 @@ MLOBJSB = $(MLSOURCES:.ml=.cmo)
 $(MLOBJS) $(MLOBJSB) doc: MLFLAGS += -package xmlm  $(MLOBJSFLAGS)
 $(MLOBJS) $(MLOBJSB) MLDepend.$(PLATFORM): syntax/pa_platform.cmo
 include debug.conf
-	
+
 
 lightning.cma: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MOBJS) $(MLOBJSB)
-	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MLOBJSB) $(LIBFLAGS) 
+	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) $(MLCONTAINERSOBJSB) $(MLUTILSOBJSB) $(MLOBJSB) $(LIBFLAGS)
 
 lightning.cmxa: MLDepend.$(PLATFORM) $(KAZMATH) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MOBJS) $(MLOBJS)
-	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS) 
-	
+	$(OCAMLMKLIB) -verbose -o lightning $(KAZMATH) $(MOBJS) $(MLCONTAINERSOBJS) $(MLUTILSOBJS) $(MLOBJS) $(LIBFLAGS)
+
 remote-notifications.cma:
 	make -C plugins/remote-notifications remote-notifications.cma
 
@@ -254,7 +254,7 @@ doc:
 .DEFAULT_GOAL := debug
 
 .PHONY : clean
-clean: 
+clean:
 	rm -f *.o rendertex/*.o *.cm[iox] *.a *.cmxa *.so *.cmo ios/*.o glut/*.cmx glut.*.cmo glut/*.o glut/*.cmi sdl/*.cmx sdl/*.cmo sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi utils/*.cmi utils/*.cmx utils/*.cmo utils/*.a kazmath/*.o kazmath/GL/*.o android/*.o pc/*.o
 	$(MAKE) -C plugins/chartboost clean
 	$(MAKE) -C social clean

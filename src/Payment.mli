@@ -1,10 +1,10 @@
 module Product:
   sig
     type t;
-    value price: string -> option string; 
+    value price: string -> option string;
   end;
 
-module Transaction : 
+module Transaction :
   sig
     type t;
     value get_id : t -> string;
@@ -12,7 +12,7 @@ module Transaction :
     value get_signature : t -> string;
   end;
 
-type marketType = [= `Google of (option string) | `Amazon ];
+type marketType = [= `Google | `Amazon | `Yandex ];
 
 value init: ?marketType:marketType -> ?skus:(list string) -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit;
 value purchase: string -> unit;

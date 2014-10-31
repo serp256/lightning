@@ -8,9 +8,9 @@ include Makefile.in
 
 TARGET ?= example
 
-res:	
+res:
 	resmkr -concat -i Resources -o android/assets/assets
-	#resmkr -concat -i Resources -o android-expansion 
+	#resmkr -concat -i Resources -o android-expansion
 	resmkr -merge -o android/assets/index android/assets/assets
 	rm android/assets/assets.index
 
@@ -52,7 +52,7 @@ $(TARGET).so: $(CFILES) $(MLXFILES) $(TARGET).cmx
 	-output-obj
 
 clean::
-	rm -f LightTest/*.o LighTest/*.so 
+	rm -f LightTest/*.o LighTest/*.so
 
 
 .DEFAULT_GOAL = so
