@@ -521,6 +521,24 @@ value deviceToSize = fun
     ]
   ];
 
+type compression = [ Pvr | Dxt | Atc | Etc | Etc2 ];
+IFPLATFORM(pc)
+value compression () = Etc;
+ELSE
+  IFPLATFORM(ios)
+    value compression () = Pvr;
+  ELSE
+    external compression: unit -> compression = "ml_compression";
+  ENDPLATFORM;
+ENDPLATFORM;
+
+value compressionToStr = fun
+  [ Pvr -> "Pvr"
+  | Dxt -> "Dxt"
+  | Atc -> "Atc"
+  | Etc -> "Etc"
+  | Etc2 -> "Etc2"
+  ];
 
 IFPLATFORM(pc)
 value storagePath () = "Storage";

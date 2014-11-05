@@ -56,6 +56,10 @@ value deviceToStr: device -> string;
 value strToDevice: string -> device;
 value deviceToSize: device -> (int * int);
 
+type compression = [ Pvr | Dxt | Atc | Etc | Etc2 ];
+value compression: unit -> compression;
+value compressionToStr: compression -> string;
+
 (* value androidScreen: unit -> option (androidScreen * androidDensity); *)
 value androidScreenToString: androidScreen -> string;
 value androidDensityToString: androidDensity -> string;

@@ -318,3 +318,26 @@ value ml_uncaughtExceptionByMailSubjectAndBody(value unit) {
 
 	CAMLreturn(vres);
 }
+
+value ml_compression(value unit) {
+	value res;
+
+  const char *ext = (char*)glGetString(GL_EXTENSIONS);
+	const char *ver = (char*)glGetString(GL_VERSION);
+
+ 	if (strstr(ver, "OpenGL ES 3.")) {
+		res = Val_int(4);
+  } else {
+		if (strstr(ext, "GL_EXT_texture_compression_s3tc")) {
+			res = Val_int(1);
+		} else if (strstr(ext, "GL_IMG_texture_compression_pvrtc")) {
+			res = Val_int(0);
+		} else if (strstr(ext, "GL_AMD_compressed_ATC_texture") || strstr(ext, "GL_ATI_texture_compression_atitc")) {
+			res = Val_int(2);
+		} else if (strstr(ext, "GL_OES_compressed_ETC1_RGB8_texture")) {
+			res = Val_int(3);
+		};
+  }
+
+	return res;
+}
