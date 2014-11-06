@@ -146,9 +146,11 @@ public class Openiab {
 
     OpenIabHelper.Options.Builder builder = new OpenIabHelper.Options.Builder()
         .addPreferredStoreName(prefStores)
-        .setVerifyMode(OpenIabHelper.Options.VERIFY_SKIP);
+        /*.setVerifyMode(OpenIabHelper.Options.VERIFY_SKIP);*/
+        .addStoreKey(OpenIabHelper.NAME_YANDEX, "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Ktx/LPWTaZJeHsIp/UCBok0Ji1vdUVd0VP2vrl+Mb8B1z8E1uNUpotuZRiQyAnvJjyZTMQxKbPJMwFQy5Tuxlr1TTXqy/8ZuSOy+dzhwuYqJ0soK5rNY1INu1pvVWbr3IEQ7npq6JKGc5sR0hYtOyIv2Ftzj3fCzwp7tcjEKBLKTFHPKGEiWpfOLF1KYOAhIOgAJ47vrif0sI4UDunwU45ZVBRz5OQu55xxNLgZVoVs9L8j+i52Qg0vrVoJNJ97WNPs5WLxKFzBncA1K7tS1GdToxDMU3ruUu7nydpjtXyjKthMUunRVu2UNFCs1WrcCmuOWiNSoXuxDd2ww5kiNwIDAQAB")
+        .setVerifyMode(OpenIabHelper.Options.VERIFY_EVERYTHING);
     OpenIabHelper.Options opts = opts = builder.build();
-    //OpenIabHelper.enableDebugLogging(true);
+    /*OpenIabHelper.enableDebugLogging(true);*/
 
     helper = new OpenIabHelper(NativeActivity.instance, opts);
     helper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
