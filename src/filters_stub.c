@@ -36,7 +36,7 @@ static void drawRenderbuffer(renderbuffer_t *drb,renderbuffer_t *srb,int clear) 
 }
 
 ///////////
-/// Filter common 
+/// Filter common
 //////
 
 static void filter_finalize(value fltr) {
@@ -91,7 +91,7 @@ value ml_glow2_make(value orb,value glow) {
 	glUniform3f(prg->uniforms[0],c.r,c.g,c.b);
 	glUniform1i(prg->uniforms[1],rb->width);
 	glUniform1i(prg->uniforms[2],rb->height);
-	double strength = Double_val(Field(glow,2)); 
+	double strength = Double_val(Field(glow,2));
 	/*double sk = strength > 1. ? 1. : strength;
 	fprintf(stderr,"sk: %f, %f\n", sk, sk/ 8.);
 	glUniform1f(prg->uniforms[3],sk / 8.);
@@ -124,7 +124,7 @@ value ml_glow2_make(value orb,value glow) {
 		rb->fbid = rb2.fbid;
 		// fstate.framebuffer = rb->fbid;
 	} else delete_renderbuffer(&rb2);*/
-		
+
 	glUseProgram(0);
 	currentShaderProgram = 0;
 	// set_framebuffer_state(&fstate);
@@ -235,7 +235,7 @@ void draw_glow_level(GLuint w, GLuint h, GLuint* prev_glow_lev_tex, clipping* cl
 	xyu += 10;*/
 
 	if (mag < 0) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);	
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 	}
 }
 
@@ -283,11 +283,11 @@ value ml_glow_make(value orb, value glow) {
 	GLuint glow_texh;
 	GLuint prev_glow_lev_tex = rb->tid;
 
-	GLuint backtobuf_tid = 0; // texture from which we draw back into renderbuffer after sequential minifying/magnifying 
+	GLuint backtobuf_tid = 0; // texture from which we draw back into renderbuffer after sequential minifying/magnifying
 	clipping *clp = &rbclp;
 	clipping clps[gsize];
 
-	for (i = 0; i < gsize; i++) {		
+	for (i = 0; i < gsize; i++) {
 		glow_w /= 2;
 		glow_h /= 2;
 
@@ -326,7 +326,7 @@ value ml_glow_make(value orb, value glow) {
 	glUniform1f(fglowPrg->uniforms[0], Double_val(Field(glow,2)));
 	glBindTexture(GL_TEXTURE_2D, backtobuf_tid);
 
-	framebuf_pop(); //this call pops our renderbuffer this unusual viewport 
+	framebuf_pop(); //this call pops our renderbuffer this unusual viewport
 	PRINT_DEBUG("final clipping %f %f %f %f", clps->x, clps->y, clps->w, clps->h);
 	glow_make_draw(clps, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -382,7 +382,7 @@ static void strokeFilter(sprogram* sp, void* data) {
 
 value ml_filter_stroke(value vcolor) {
 	GLfloat* data = malloc(sizeof(GLfloat) * 4);
-	int color = Int_val(vcolor);
+	int color = Int32_val(vcolor);
 
 	*data = (GLfloat)COLOR_PART_RED(color) / 255.;
 	*(data + 1) = (GLfloat)COLOR_PART_GREEN(color) / 255.;
