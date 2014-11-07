@@ -49,14 +49,14 @@ public class LightFacebook {
                             publishPerms = null;
                             extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
                             connectSuccess();
-                            
+
                             break;
 
                         case EXTRA_PERMS_NOT_REQUESTED:
                             requestReadPerms();
                             break;
                     }
-                    
+
                     break;
 
                 case OPENED_TOKEN_UPDATED:
@@ -74,7 +74,7 @@ public class LightFacebook {
                             publishPerms = null;
                             extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
                             connectSuccess();
-                            
+
                             break;
                     }
 
@@ -180,7 +180,7 @@ public class LightFacebook {
 
         @Override
         public native void run();
-    }    
+    }
 
     private static class CamlNamedValueRunnable implements Runnable {
         protected String name;
@@ -233,21 +233,24 @@ public class LightFacebook {
     }
 
     private static Session openActiveSession(final Activity activity, boolean allowLoginUI, final Session.StatusCallback callback) {
-        final Session session = new Session.Builder(activity)
-            .setApplicationId(appId)
-            .build();
+        try {
+          final Session session = new Session.Builder(activity)
+              .setApplicationId(appId)
+              .build();
 
-        if (SessionState.CREATED_TOKEN_LOADED.equals(session.getState()) || allowLoginUI) {
-            Session.setActiveSession(session);
+          if (SessionState.CREATED_TOKEN_LOADED.equals(session.getState()) || allowLoginUI) {
+              Session.setActiveSession(session);
 
-            Lightning.activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    session.openForRead(new Session.OpenRequest(activity).setCallback(callback));
-                }
-            });
-            
-            return session;
+              Lightning.activity.runOnUiThread(new Runnable() {
+                  @Override
+                  public void run() {
+                      session.openForRead(new Session.OpenRequest(activity).setCallback(callback));
+                  }
+              });
+
+              return session;
+          }
+        } catch (Exception e) {
         }
 
         return null;
@@ -311,7 +314,7 @@ public class LightFacebook {
 
                     connectSuccess();
                 }
-            }            
+            }
         };*/
 
     private static final int EXTRA_PERMS_NOT_REQUESTED = 0;
@@ -363,7 +366,7 @@ public class LightFacebook {
 
     private static String[] PUBLISH_PERMISSIONS_ARR = {
         "publish_actions",
-        "publish_actions", 
+        "publish_actions",
         "ads_management",
         "create_event",
         "rsvp_event",
@@ -397,7 +400,7 @@ public class LightFacebook {
 
 	public static void disconnect () {
 		Log.d("LIGHTNING", "disconnect call");
-        
+
 		if (session != null) {
 			Log.d("LIGHTNING", "closeAndClear");
 			session.closeAndClearTokenInformation ();
@@ -462,13 +465,13 @@ public class LightFacebook {
 								Log.d("LIGHTNING","error: " + error + ", message: " + error.getMessage ());
 								(new CamlCallbackWithStringParamRunnable(failCallback, msg != null ? msg : error.toString())).run();
                             }
-                            
+
                             (new ReleaseCamlCallbacksRunnable(successCallback, failCallback)).run();
                         }
                     });
-                
+
                 if (recipient != null) {
-                    bldr.setTo(recipient);                    
+                    bldr.setTo(recipient);
                 }
 
                 bldr.build().show();
@@ -556,7 +559,7 @@ public class LightFacebook {
                         }
                     }
                 });
-                
+
                 req.getParameters().putString("message", text);
                 req.executeAsync();
             }
@@ -595,7 +598,7 @@ public class LightFacebook {
             if (text != null) bldr.setName(text);
             if (link != null) bldr.setLink(link);
             if (picUrl != null) bldr.setPicture(picUrl);
-                
+
             if (bldr.canPresent()) {
                 com.facebook.widget.FacebookDialog.Callback callback = new com.facebook.widget.FacebookDialog.Callback() {
                     public void onComplete(com.facebook.widget.FacebookDialog.PendingCall pendingCall, Bundle data) {
@@ -615,12 +618,12 @@ public class LightFacebook {
                 } else {
                     helper.callback = callback;
                 }
-                
+
                 helper.trackPendingDialogCall(bldr.build().present());
             } else {
                 (new CamlCallbackWithStringParamRunnable(fail, "cannot present share dialog")).run();
                 (new ReleaseCamlCallbacksRunnable(success, fail)).run();
-            }                     
+            }
         } catch (java.lang.Exception e) {
             (new CamlCallbackWithStringParamRunnable(fail, e.toString())).run();
             (new ReleaseCamlCallbacksRunnable(success, fail)).run();
