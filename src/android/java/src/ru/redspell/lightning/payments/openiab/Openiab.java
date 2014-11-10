@@ -28,6 +28,7 @@ public class Openiab {
   private static OpenIabHelper helper = null;
   private static Queue<Runnable> pendingQueue = new LinkedList<Runnable>();
   private static boolean setupDone = false;
+  private static boolean setupFailed = false;
 
   public static native void purchaseSuccess(String sku, Purchase purchase, boolean restored);
   public static native void purchaseFail(String sku, String reason);
@@ -141,6 +142,7 @@ public class Openiab {
   public static void init(final String[] skus, String marketType) {
     if (helper != null) return;
 
+    setupFailed = false;
     ArrayList<String> prefStores = new ArrayList<String>(1);
     prefStores.add(marketType);
 
@@ -150,13 +152,14 @@ public class Openiab {
         .addStoreKey(OpenIabHelper.NAME_YANDEX, "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Ktx/LPWTaZJeHsIp/UCBok0Ji1vdUVd0VP2vrl+Mb8B1z8E1uNUpotuZRiQyAnvJjyZTMQxKbPJMwFQy5Tuxlr1TTXqy/8ZuSOy+dzhwuYqJ0soK5rNY1INu1pvVWbr3IEQ7npq6JKGc5sR0hYtOyIv2Ftzj3fCzwp7tcjEKBLKTFHPKGEiWpfOLF1KYOAhIOgAJ47vrif0sI4UDunwU45ZVBRz5OQu55xxNLgZVoVs9L8j+i52Qg0vrVoJNJ97WNPs5WLxKFzBncA1K7tS1GdToxDMU3ruUu7nydpjtXyjKthMUunRVu2UNFCs1WrcCmuOWiNSoXuxDd2ww5kiNwIDAQAB")
         .setVerifyMode(OpenIabHelper.Options.VERIFY_EVERYTHING);
     OpenIabHelper.Options opts = opts = builder.build();
-    /*OpenIabHelper.enableDebugLogging(true);*/
+    OpenIabHelper.enableDebugLogging(true);
 
     helper = new OpenIabHelper(NativeActivity.instance, opts);
     helper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
                 public void onIabSetupFinished(IabResult result) {
                     if (!result.isSuccess()) {
                         failPendings();
+                        setupFailed = true;
                         return;
                     }
 
@@ -181,9 +184,14 @@ public class Openiab {
 
   private static void request(Runnable request) {
     if (setupDone) {
-      request.run();
+        request.run();
+    } else if (setupFailed) {
+        if (request instanceof PurchaseCommand) {
+          PurchaseCommand purchase = (PurchaseCommand)request;
+          purchaseFail(purchase.getSku(), "purchase failed cause setup failed");
+        }
     } else {
-      pendingQueue.add(request);
+        pendingQueue.add(request);
     }
   }
 
