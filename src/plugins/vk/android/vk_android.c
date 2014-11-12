@@ -148,7 +148,6 @@ void vkandroid_fail(void *data) {
 	RUN_CALLBACK(fail->fail, caml_copy_string(fail->reason));
 	FREE_CALLBACK(fail->fail);
 	FREE_CALLBACK(fail->success);
-	PRINT_DEBUG("fail->reason %d", fail->reason);
 	free(fail->reason);
 	free(fail);
 }
@@ -170,10 +169,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024Fail_nati
 typedef struct {
 	value *success;
 	value *fail;
-	jobjectArray ids;
-	jobjectArray names;
-	jintArray genders;
-	jobjectArray photos;
+	jobjectArray friends;
 } vkandroid_friends_success_t;
 
 void vkandroid_friends_success(void *data) {
@@ -186,23 +182,43 @@ void vkandroid_friends_success(void *data) {
 	CAMLlocal2(retval, head);
 	retval = Val_int(0);
 
-	PRINT_DEBUG("1");
-
-	int cnt = (*ML_ENV)->GetArrayLength(ML_ENV, friends_success->genders);
+	int cnt = (*ML_ENV)->GetArrayLength(ML_ENV, friends_success->friends);
 	int i;
-	jint* cgenders = (*ML_ENV)->GetIntArrayElements(ML_ENV, friends_success->genders, JNI_FALSE);
+
+	static jfieldID id_fid = 0;
+	static jfieldID name_fid = 0;
+	static jfieldID photo_fid = 0;
+	static jfieldID gender_fid = 0;
+	static jfieldID online_fid = 0;
+	static jfieldID lastseen_fid = 0;
+
+	if (!id_fid) {
+		jclass cls = engine_find_class("ru/redspell/lightning/plugins/LightVk$Friend");
+
+		id_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "id", "Ljava/lang/String;");
+		name_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "name", "Ljava/lang/String;");
+		photo_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "photo", "Ljava/lang/String;");
+		gender_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "gender", "I");
+		online_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "online", "Z");
+		lastseen_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "lastSeen", "I");
+	}
 
 	for (i = 0; i < cnt; i++) {
-		jstring jid = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->ids, i);
-		jstring jname = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->names, i);
-		jstring jphoto = (jstring)(*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->photos, i);
+		jobject jfriend = (*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->friends, i);
+
+		jstring jid = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, id_fid);
+		jstring jname = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, name_fid);
+		jstring jphoto = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, photo_fid);
+		jint jgender = (*ML_ENV)->GetIntField(ML_ENV, jfriend, gender_fid);
+		jboolean jonline = (*ML_ENV)->GetBooleanField(ML_ENV, jfriend, online_fid);
+		jint jlast_seen = (*ML_ENV)->GetIntField(ML_ENV, jfriend, lastseen_fid);
 		const char* cid = (*ML_ENV)->GetStringUTFChars(ML_ENV, jid, JNI_FALSE);
 		const char* cname = (*ML_ENV)->GetStringUTFChars(ML_ENV, jname, JNI_FALSE);
 		const char* cphoto = (*ML_ENV)->GetStringUTFChars(ML_ENV, jphoto, JNI_FALSE);
 
 		head = caml_alloc_tuple(2);
-		value args[4] = { caml_copy_string(cid), caml_copy_string(cname), Val_int(cgenders[i]), caml_copy_string(cphoto) };
-		Store_field(head, 0, caml_callbackN(*create_friend, 4, args));
+		value args[6] = { caml_copy_string(cid), caml_copy_string(cname), Val_int(jgender), caml_copy_string(cphoto), jonline == JNI_TRUE ? Val_true : Val_false, caml_copy_double((double)jlast_seen) };
+		Store_field(head, 0, caml_callbackN(*create_friend, 6, args));
 		Store_field(head, 1, retval);
 
 		retval = head;
@@ -213,36 +229,26 @@ void vkandroid_friends_success(void *data) {
 		(*ML_ENV)->DeleteLocalRef(ML_ENV, jid);
 		(*ML_ENV)->DeleteLocalRef(ML_ENV, jname);
 		(*ML_ENV)->DeleteLocalRef(ML_ENV, jphoto);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jfriend);
 	}
 
-	PRINT_DEBUG("2");
-
-	(*ML_ENV)->ReleaseIntArrayElements(ML_ENV, friends_success->genders, cgenders, 0);
 	RUN_CALLBACK(friends_success->success, retval);
 	FREE_CALLBACK(friends_success->success);
 	FREE_CALLBACK(friends_success->fail);
 
-	PRINT_DEBUG("3");
-
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->ids);
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->names);
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->genders);
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->photos);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->friends);
 	free(friends_success);
 
 	CAMLreturn0;
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSuccess_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jobjectArray jids, jobjectArray jnames, jintArray jgenders, jobjectArray jphotos) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSuccess_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jobjectArray jfriends) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightVk_00024FriendsSuccess_nativeRun");
 
 	vkandroid_friends_success_t *friends_success = (vkandroid_friends_success_t*)malloc(sizeof(vkandroid_friends_success_t));
 	friends_success->success = (value*)jsuccess;
 	friends_success->fail = (value*)jfail;
-	friends_success->ids = (*env)->NewGlobalRef(env, jids);
-	friends_success->names = (*env)->NewGlobalRef(env, jnames);
-	friends_success->genders = (*env)->NewGlobalRef(env, jgenders);
-	friends_success->photos = (*env)->NewGlobalRef(env, jphotos);
+	friends_success->friends = (*env)->NewGlobalRef(env, jfriends);
 
 	RUN_ON_ML_THREAD(&vkandroid_friends_success, (void*)friends_success);
 }

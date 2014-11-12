@@ -7,6 +7,8 @@ module User:
 		value name: t -> string;
     value gender: t -> gender;
 		value photo: t -> string;
+		value online: t -> bool;
+		value lastSeen: t -> float;
 		value toString: t -> string;
 	end;
 

@@ -1,7 +1,7 @@
 include ../../../Makefile.common
 
 CFLAGS += -I .
-CFLAGS += -DLDEBUG
+CFLAGS += -DLDEBUG -g
 
 MLFLAGS += -package redspell.syntax.debug
 

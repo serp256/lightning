@@ -8,14 +8,18 @@ module User =
 				name: string;
 				gender: gender;
 				photo: string;
+				online: bool;
+				lastSeen: float;
 			};
 
-		value create id name gender photo = { id; name; gender = match gender with [ 1 -> `female | 2 -> `male | _ -> `none ]; photo };
+		value create id name gender photo online lastSeen = { id; name; gender = match gender with [ 1 -> `female | 2 -> `male | _ -> `none ]; photo; online; lastSeen };
 		value id t = t.id;
 		value name t = t.name;
 		value gender t = t.gender;
 		value photo t = t.photo;
-		value toString t = Printf.sprintf "%s (id %s, gender %s, photo %s)" t.name t.id (match t.gender with [ `male -> "male" | `female -> "female" | `none -> "not specified"]) t.photo;
+		value online t = t.online;
+		value lastSeen t = t.lastSeen;
+		value toString t = Printf.sprintf "%s (id %s, gender %s, photo %s, online %B, lastSeen %f)" t.name t.id (match t.gender with [ `male -> "male" | `female -> "female" | `none -> "not specified"]) t.photo t.online t.lastSeen;
 	end;
 
 type t = unit;

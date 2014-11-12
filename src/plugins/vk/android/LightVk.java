@@ -56,24 +56,36 @@ public class LightVk {
 		}
 	}
 
-	private static class FriendsSuccess extends Callback {
-		private String[] ids;
-		private String[] names;
-		private int[] genders;
-		private String[] photos;
+	private static class Friend {
+		private String id;
+		private String name;
+		private int gender;
+		private String photo;
+		private boolean online;
+		private int lastSeen;
 
-		public FriendsSuccess(int success, int fail, String[] ids, String[] names, int[] genders, String[] photos) {
+		public Friend(String id, String name, int gender, String photo, boolean online, int lastSeen) {
+			this.id = id;
+			this.name = name;
+			this.gender = gender;
+			this.photo = photo;
+			this.online = online;
+			this.lastSeen = lastSeen;
+		}
+	}
+
+	private static class FriendsSuccess extends Callback {
+		private Friend[] friends;
+
+		public FriendsSuccess(int success, int fail, Friend[] friends) {
 			super(success, fail);
-			this.ids = ids;
-			this.names = names;
-			this.genders = genders;
-			this.photos = photos;
+			this.friends = friends;
 		}
 
-		public native void nativeRun(int success, int fail, String[] ids, String[] names, int[] genders, String[] photos);
+		public native void nativeRun(int success, int fail, Friend[] friends);
 
 		public void run() {
-			nativeRun(success, fail, ids, names, genders, photos);
+			nativeRun(success, fail, friends);
 		}
 	}
 
@@ -204,21 +216,18 @@ public class LightVk {
 					}
 
 					int cnt = items.length();
-					String ids[] = new String[cnt];
-					String names[] = new String[cnt];
-					int genders[] = new int[cnt];
-					String photos[] = new String[cnt];
+					Friend[] friends = new Friend[cnt];
+					Log.d("LIGHTNING", "items " + items);
 
 					for (int i = 0; i < cnt; i++) {
 						JSONObject item = items.getJSONObject(i);
-						ids[i] = item.getString("id");
-						names[i] = item.getString("last_name") + " " + item.getString("first_name");
-						genders[i] = item.getInt("sex");
-						photos[i] = item.getString("photo_max");
+
+						friends[i] = new Friend(item.getString("id"), item.getString("last_name") + " " + item.getString("first_name"), item.getInt("sex"),
+													item.getString("photo_max"), item.getInt("online") == 1, item.has("last_seen") ? item.getJSONObject("last_seen").getInt("time") : 0);
 					}
 
 					Log.d("LIGHTNING", "call success cnt " + cnt);
-					(new FriendsSuccess(success, fail, ids, names, genders, photos)).run();
+					(new FriendsSuccess(success, fail, friends)).run();
 				} catch (org.json.JSONException e) {
 					Log.d("LIGHTNING", "Friends onComplete Fail");
 					(new Fail(success, fail, "wrong format of response on friends request")).run();
@@ -239,10 +248,10 @@ public class LightVk {
 	}
 
 	public static void friends(int success, int fail) {
-		usersRequests(new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max")), success, fail);
+		usersRequests(new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen")), success, fail);
 	}
 
 	public static void users(String ids, int success, int fail) {
-		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max", VKApiConst.USER_IDS, ids)), success, fail);
+		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen", VKApiConst.USER_IDS, ids)), success, fail);
 	}
 }

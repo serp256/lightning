@@ -114,6 +114,14 @@ void vk_users_request(VKRequest *req, value vfail, value vsuccess) {
 					NSString* mlname = [mitem objectForKey:@"last_name"];
 					NSNumber* mgender = [mitem objectForKey:@"sex"];
 					NSString* mphoto = [mitem objectForKey:@"photo_max"];
+					NSNumber* online = [mitem objectForKey:@"online"];
+					NSDictionary* lastSeen = [mitem objectForKey:@"last_seen"];
+					double lastSeenTime = 0;
+
+					if (lastSeen != nil) {
+						NSNumber *_lastSeenTime = [lastSeen objectForKey:@"time"];
+						lastSeenTime = [_lastSeenTime doubleValue];
+					}
 
 					if (!(mid && mfname && mlname && mgender)) {
 						err = 1;
@@ -123,8 +131,9 @@ void vk_users_request(VKRequest *req, value vfail, value vsuccess) {
 					NSString* mname = [NSString stringWithFormat:@"%@ %@", mlname, mfname];
 
 					head = caml_alloc_tuple(2);
-					value args[4] = { caml_copy_string([[mid stringValue] UTF8String]), caml_copy_string([mname UTF8String]), Val_int([mgender intValue]), caml_copy_string([mphoto UTF8String]) };
-					Store_field(head, 0, caml_callbackN(*create_user, 4, args));
+					value args[6] = { caml_copy_string([[mid stringValue] UTF8String]), caml_copy_string([mname UTF8String]), Val_int([mgender intValue]),
+										caml_copy_string([mphoto UTF8String]), [online intValue] == 1 ? Val_true : Val_false, caml_copy_double(lastSeenTime)};
+					Store_field(head, 0, caml_callbackN(*create_user, 6, args));
 					Store_field(head, 1, vitems);
 
 					vitems = head;
@@ -155,12 +164,12 @@ void vk_users_request(VKRequest *req, value vfail, value vsuccess) {
 }
 
 value ml_vk_friends(value vfail, value vsuccess, value vt) {
-	vk_users_request([[VKApi friends] get:[NSDictionary dictionaryWithObject:@"sex,photo_max" forKey:VK_API_FIELDS]], vfail, vsuccess);
+	vk_users_request([[VKApi friends] get:[NSDictionary dictionaryWithObject:@"sex,photo_max,last_seen" forKey:VK_API_FIELDS]], vfail, vsuccess);
 	return Val_unit;
 }
 
 value ml_vk_users(value vfail, value vsuccess, value vids) {
 	NSString *mids = [NSString stringWithUTF8String:String_val(vids)];
-	vk_users_request([[VKApi users] get:[NSDictionary dictionaryWithObjectsAndKeys:@"sex,photo_max", VK_API_FIELDS, mids, VK_API_USER_IDS, nil ]], vfail, vsuccess);
+	vk_users_request([[VKApi users] get:[NSDictionary dictionaryWithObjectsAndKeys:@"sex,photo_max,last_seen", VK_API_FIELDS, mids, VK_API_USER_IDS, nil ]], vfail, vsuccess);
 	return Val_unit;
 }
