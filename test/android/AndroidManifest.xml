@@ -6,7 +6,7 @@
 
     <application android:label="Lightning Native" android:icon="@drawable/icon">
         <activity android:name="ru.redspell.lightning.NativeActivity"
-                android:screenOrientation="portrait"
+                android:screenOrientation="landscape"
                 android:label="Lightning Native"
                 android:configChanges="orientation|keyboardHidden"
                 android:launchMode="singleTask">

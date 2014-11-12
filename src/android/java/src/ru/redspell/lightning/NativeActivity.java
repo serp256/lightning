@@ -70,8 +70,8 @@ public class NativeActivity extends android.app.NativeActivity {
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		if (Keyboard.visible()) {
-			if (event.getAction() == KeyEvent.ACTION_UP) {
-				Log.d("LIGHTNING", "event.getKeyCode() " + event.getKeyCode());
+			if (event.getAction() == KeyEvent.ACTION_DOWN) {
+				Log.d("LIGHTNING", "event.getKeyCode() " + event.getKeyCode() + " " + KeyEvent.KEYCODE_DEL);
 
 				switch (event.getKeyCode()) {
 					case KeyEvent.KEYCODE_BACK:
@@ -79,17 +79,16 @@ public class NativeActivity extends android.app.NativeActivity {
 						Keyboard.hide();
 						return true;
 
-					/** this call is for some devices like huawei, motorola, asus transformer etc which skip backspace press for unknown reasons
-						* but with this call backspace press is handled correctly
-						*/
-
-/*					case KeyEvent.KEYCODE_DEL:
-
-						return true;*/
+					case KeyEvent.KEYCODE_DEL:
+						/** this call is for some devices like huawei, motorola, asus transformer etc which skip backspace press for unknown reasons
+							* but with this call backspace press is handled correctly
+							*/
+						Log.d("LIGHTNING", "Keyboard.textEdit.dispatchKeyEvent");
+						Keyboard.textEdit.dispatchKeyEvent(event);
+						return true;
 				}
 			}
 
-			Keyboard.textEdit.dispatchKeyEvent(event);
 		}
 
 		return super.dispatchKeyEvent(event);
