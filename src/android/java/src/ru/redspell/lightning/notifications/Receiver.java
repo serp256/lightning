@@ -14,6 +14,13 @@ import java.util.List;
 import ru.redspell.lightning.utils.Log;
 
 public class Receiver extends BroadcastReceiver {
+    /* When application not running and receiver fired, using of Lightning.activity.isRunning cause static section of Lightning class to run,
+     * where activity does not exists, exception thrown and loading of library is failed. When user touch notification and application starts,
+     * static section of Lightning class not run and library with native methods still not loaded. It cause to unsatisfied methods exceptions.
+     * Therefore Receiver uses its own flag to determine is app running or not. 
+     */
+    public static boolean appRunning = false;
+
     public void onReceive(Context context, android.content.Intent intent) {
         String action = intent.getAction();
 
@@ -29,7 +36,7 @@ public class Receiver extends BroadcastReceiver {
 
         Notifications.unlogNotification(context, nid, intntExtras.getDouble(Notifications.NOTIFICATION_FIREDATE), message);
 
-        if (ru.redspell.lightning.Lightning.activity != null && ru.redspell.lightning.Lightning.activity.isRunning) return;
+        if (appRunning) return;
 
         if (message != null) {
             Notifications.showNotification(context, nid, title, message);

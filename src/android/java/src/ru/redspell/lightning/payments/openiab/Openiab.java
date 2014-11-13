@@ -95,14 +95,19 @@ public class Openiab {
 
       IabHelper.QueryInventoryFinishedListener listener = new IabHelper.QueryInventoryFinishedListener() {
         public void onQueryInventoryFinished(IabResult result, Inventory inventory) {
+            Log.d("LIGHTNING", "onQueryInventoryFinished " + result.isSuccess());
           if (result.isSuccess()) {
             if (detailsForSkus != null) {
               for (int i = 0; i < detailsForSkus.length; i++) {
+                  Log.d("LIGHTNING", "detailsForSkus[i] " + detailsForSkus[i]);
                 SkuDetails details = inventory.getSkuDetails(detailsForSkus[i]);
+                  Log.d("LIGHTNING", "details " + details);
                 if (details == null) continue;
                 String price = details.getPrice();
+                  Log.d("LIGHTNING", "price " + price);
                 if (price == null) continue;
 
+                Log.d("LIGHTNING", "purchaseRegister");
                 Openiab.purchaseRegister(detailsForSkus[i], price);
               }
             } else if (forOwnedPurchases) {
@@ -140,7 +145,10 @@ public class Openiab {
   }
 
   public static void init(final String[] skus, String marketType) {
+      Log.d("LIGHTNING", "init call");
     if (helper != null) return;
+
+    Log.d("LIGHTNING", "continue");
 
     setupFailed = false;
     ArrayList<String> prefStores = new ArrayList<String>(1);
@@ -157,6 +165,7 @@ public class Openiab {
     helper = new OpenIabHelper(NativeActivity.instance, opts);
     helper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
                 public void onIabSetupFinished(IabResult result) {
+                    Log.d("LIGHTNING", "onIabSetupFinished");
                     if (!result.isSuccess()) {
                         failPendings();
                         setupFailed = true;

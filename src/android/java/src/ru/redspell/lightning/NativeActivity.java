@@ -13,6 +13,7 @@ import java.util.Iterator;
 import ru.redspell.lightning.IUiLifecycleHelper;
 import ru.redspell.lightning.utils.Log;
 import ru.redspell.lightning.keyboard.Keyboard;
+import ru.redspell.lightning.notifications.Receiver;
 
 public class NativeActivity extends android.app.NativeActivity {
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
@@ -96,6 +97,7 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onResume() {
+		Receiver.appRunning = true;
 		isRunning = true;
 		super.onResume();
 
@@ -131,6 +133,7 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onPause() {
+		Receiver.appRunning = false;
 		isRunning = false;
 		super.onPause();
 

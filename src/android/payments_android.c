@@ -220,6 +220,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_openiab_Openiab_purch
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_openiab_Openiab_purchaseRegister(JNIEnv *env, jclass this, jstring jsku, jstring jprice) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_payments_openiab_Openiab_purchaseRegister call");
 	openiab_register_t *data = (openiab_register_t*)malloc(sizeof(openiab_register_t));
 	data->price = (*env)->NewGlobalRef(env, jprice);
 	data->sku = (*env)->NewGlobalRef(env, jsku);

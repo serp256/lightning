@@ -494,8 +494,8 @@ public class Lightning {
 
             Log.d("LIGHTNING", "--------------------------------");
         } catch (Exception e) {
-					Log.d("LIGHTNING", "-------------------EXCEPTION-------------------");
-					e.printStackTrace();
+			Log.d("LIGHTNING", "-------------------EXCEPTION-------------------");
+			e.printStackTrace();
         }
     }
 }
