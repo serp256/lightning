@@ -206,14 +206,17 @@ external uncaughtExceptionByMailSubjectAndBody: unit -> (string * string) = "ml_
 
 value uncaughtExceptionHandler exn rawBacktrace =
   let (subject, body) = uncaughtExceptionByMailSubjectAndBody () in
+  let exn = Printexc.to_string exn in
+  let backtraceStr = Printexc.raw_backtrace_to_string rawBacktrace in
   let body =
     body
       ^ "\n------------------\n"
-      ^ (Printexc.to_string exn) ^ "\n"
-      ^ (Printexc.raw_backtrace_to_string rawBacktrace) ^ "\n"
+      ^ exn ^ "\n"
+      ^ backtraceStr ^ "\n"
       ^ (String.concat "" (List.map (fun exceptionInfo -> exceptionInfo ^ "\n") !exceptionInfo))
       ^ "\n------------------\n"
   in
+  let () = Debug.d "Ocaml exception:\n%s\n%s" exn backtraceStr in
   let url =
     "mailto:" ^ !supportEmail
       ^ "?subject=" ^ (UrlEncoding.encode subject)
@@ -229,6 +232,7 @@ value silentUncaughtExceptionHandler exn rawBacktrace =
   let ver = LightCommon.getVersion () in
   let exn = Printexc.to_string exn in
   let backtraceStr = Printexc.raw_backtrace_to_string rawBacktrace in
+  let () = Debug.d "Ocaml exception:\n%s\n%s" exn backtraceStr in
   let exceptionInfo =
     match !exceptionInfo with
     [ [] -> ""
