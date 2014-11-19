@@ -89,9 +89,11 @@ public class Keyboard {
 	public native static void onChange(String text);
 
 	public static void setVisible(boolean visible) {
+		Log.d("LIGHTNING", "setVisible " + Keyboard.visible + " " + visible);
 		if (Keyboard.visible != visible) {
 			if (Keyboard.visible) {
 				onHide(textEdit.getText().toString());
+				Lightning.activity.onWindowFocusChanged(true);
 				textEdit.setText("");
 			}
 			Keyboard.visible = visible;

@@ -50,18 +50,18 @@ public class NativeActivity extends android.app.NativeActivity {
 
 		/* ugly workaround for determine is keyboard visible or not */
 		final View view = getWindow().getDecorView();
-		getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+		view.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
 			public void onGlobalLayout() {
 				if (isRunning) {
 					android.graphics.Rect rect = new android.graphics.Rect();
 					view.getWindowVisibleDisplayFrame(rect);
-					/*Log.d("LIGHTNING", "RECT " + rect.toString());*/
+					Log.d("LIGHTNING", "RECT " + rect.toString());
 					float displayHeight = (float)(rect.bottom - rect.top);
 					float height = (float)view.getHeight();
 
-/*					Log.d("LIGHTNING", "height " + height);
+					Log.d("LIGHTNING", "height " + height);
 					Log.d("LIGHTNING", "displayHeight " + displayHeight);
-					Log.d("LIGHTNING", "height / displayHeight " + (displayHeight / height));*/
+					Log.d("LIGHTNING", "height / displayHeight " + (displayHeight / height));
 					Keyboard.setVisible((displayHeight / height) < 0.8);
 				}
 			}
@@ -102,6 +102,13 @@ public class NativeActivity extends android.app.NativeActivity {
 		Receiver.appRunning = true;
 		isRunning = true;
 		super.onResume();
+
+/*		android.app.ActionBar actionBar = getActionBar();
+		actionBar.hide();*/
+
+		View decorView = getWindow().getDecorView();
+		int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+		decorView.setSystemUiVisibility(uiOptions);
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
 		while (iter.hasNext()) {
@@ -190,6 +197,22 @@ public class NativeActivity extends android.app.NativeActivity {
 	@Override
 	public void onBackPressed() {
 		Lightning.onBackPressed();
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		Log.d("LIGHTNING", "onWindowFocusChanged");
+	    super.onWindowFocusChanged(hasFocus);
+
+	    if (hasFocus && android.os.Build.VERSION.SDK_INT > 18) {
+	        getWindow().getDecorView().setSystemUiVisibility(
+	                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+	                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+	                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+	                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+	                | View.SYSTEM_UI_FLAG_FULLSCREEN
+	                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		}
 	}
 
 	private class NativeRunnable implements Runnable {
