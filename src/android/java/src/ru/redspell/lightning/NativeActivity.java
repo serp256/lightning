@@ -88,8 +88,10 @@ public class NativeActivity extends android.app.NativeActivity {
 						Keyboard.textEdit.dispatchKeyEvent(event);
 						return true;
 				}
-			}
 
+				Keyboard.textEdit.dispatchKeyEvent(event);
+				return true;
+			}
 		}
 
 		return super.dispatchKeyEvent(event);

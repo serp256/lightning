@@ -41,7 +41,6 @@ public class Keyboard {
 						FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
 						textEdit.setLayoutParams(layoutParams);
 						Lightning.activity.addContentView(textEdit, layoutParams);
-						textEdit.requestFocus();
 						textEdit.addTextChangedListener(new android.text.TextWatcher() {
 							@Override
 							public void afterTextChanged(android.text.Editable s) {
@@ -61,6 +60,7 @@ public class Keyboard {
 						});
 					}
 
+					textEdit.requestFocus();
 					textEdit.setText(initText);
 					textEdit.setSelection(initText.length());
 					inputMethodManager().showSoftInput(textEdit, 0);
