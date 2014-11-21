@@ -54,7 +54,7 @@ typedef struct {
 	соотвественно при обработка запросов canceled уже взведен и в очереди будут два фейковых calcel-респонза, соотвественно
 	будет попытка освободить уже освобожденный реквест в net_run
 
-	соотвественно нужен ещё флажок 
+	соотвественно нужен ещё флажок
 */
 
 
@@ -106,7 +106,7 @@ typedef struct {
 	CURLM *curlm;
 	thqueue_url_ldr_req_t *req_queue;
 	thqueue_url_ldr_resp_t *resp_queue;
-	int net_running; 
+	int net_running;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 	pthread_t worker;
@@ -120,7 +120,11 @@ static response_el* get_header(request_t *r) {
 	p->ev = RHEADER;
 	response_header *h = &p->content.header;
 	curl_easy_getinfo(r->handle,CURLINFO_RESPONSE_CODE,&h->http_code);
-	curl_easy_getinfo(r->handle,CURLINFO_CONTENT_LENGTH_DOWNLOAD,&h->content_length);
+
+	double content_length;
+	curl_easy_getinfo(r->handle,CURLINFO_CONTENT_LENGTH_DOWNLOAD,&content_length);
+	h->content_length = (int64_t)content_length;
+
 	char *content_type;
 	curl_easy_getinfo(r->handle,CURLINFO_CONTENT_TYPE,&content_type);
 	if (content_type != NULL) {
@@ -311,7 +315,7 @@ int net_running() {
 static void init() {
 
 	initCurl();
-	
+
 	runtime = (runtime_t*)malloc(sizeof(runtime_t));
 	runtime->curlm = curl_multi_init();
 	runtime->req_queue = thqueue_url_ldr_req_create();
@@ -385,7 +389,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 }
 
 value ml_URLConnection_cancel(value r) {
-	PRINT_DEBUG("ml_URLConnection_cancel call");	
+	PRINT_DEBUG("ml_URLConnection_cancel call");
 	request_t* req = (request_t*)r;
 	req->canceled = 1;
 	thqueue_url_ldr_req_push(runtime->req_queue, req);
@@ -415,8 +419,6 @@ value ml_URLConnection_cancel(value r) {
 #define CAML_NAMED_VALUE(name) static value* ml_ ## name = NULL; if (ml_ ## name == NULL) ml_ ## name = caml_named_value(#name);
 
 void net_run () {
-	PRINT_DEBUG("net run");
-
 	if (!runtime) return;
 
 	response_t* resp;
@@ -448,7 +450,7 @@ void net_run () {
 
 					free(hdr->content_type);
 
-					break;					
+					break;
 				}
 
 
@@ -459,12 +461,12 @@ void net_run () {
 					if (!req->canceled) {
 						value vdata = caml_alloc_string(ev->content.data.len);
 						memcpy(String_val(vdata), ev->content.data.data, ev->content.data.len);
-						caml_callback2(*ml_url_data,(value)req, vdata);						
+						caml_callback2(*ml_url_data,(value)req, vdata);
 					}
 
 					free(ev->content.data.data);
 
-					break;					
+					break;
 				}
 
 				case RCOMPLETE: {
@@ -472,12 +474,12 @@ void net_run () {
 					CAML_NAMED_VALUE(url_complete)
 
 					if (!req->canceled) {
-						caml_callback(*ml_url_complete,(value)req);	
+						caml_callback(*ml_url_complete,(value)req);
 					}
 
 					free_req = 1;
 
-					break;					
+					break;
 				}
 
 				case RERROR: {
@@ -485,12 +487,12 @@ void net_run () {
 					CAML_NAMED_VALUE(url_failed)
 
 					if (!req->canceled) {
-						caml_callback3(*ml_url_failed,(value)req,Val_int(ev->content.data.len), caml_copy_string(ev->content.data.data));	
+						caml_callback3(*ml_url_failed,(value)req,Val_int(ev->content.data.len), caml_copy_string(ev->content.data.data));
 					}
 
 					free_req = 1;
 
-					break;					
+					break;
 				}
 
 				case RCANCELED: {
