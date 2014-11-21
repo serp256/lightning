@@ -93,6 +93,7 @@ public class Keyboard {
 		if (Keyboard.visible != visible) {
 			if (Keyboard.visible) {
 				onHide(textEdit.getText().toString());
+				Lightning.activity.onWindowFocusChanged(true);
 				textEdit.setText("");
 			}
 			Keyboard.visible = visible;
