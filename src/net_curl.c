@@ -62,7 +62,7 @@ typedef struct {
 
 typedef struct {
 	long http_code;
-	uint64_t content_length;
+	int64_t content_length;
 	char *content_type;
 } response_header;
 
@@ -443,7 +443,7 @@ void net_run () {
 						value args[4];
 						args[0] = (value)req;
 						args[1] = Val_int(hdr->http_code);
-						args[2] = caml_copy_int64((uint64_t)hdr->content_length);
+						args[2] = caml_copy_int64(hdr->content_length);
 						args[3] = caml_copy_string(hdr->content_type ? hdr->content_type : "unknown");
 						caml_callbackN(*ml_url_response,4,args);
 					}
