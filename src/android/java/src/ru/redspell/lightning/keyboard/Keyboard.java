@@ -89,6 +89,7 @@ public class Keyboard {
 	public native static void onChange(String text);
 
 	public static void setVisible(boolean visible) {
+		if (textEdit == null) return;
 		if (Keyboard.visible != visible) {
 			if (Keyboard.visible) {
 				onHide(textEdit.getText().toString());
