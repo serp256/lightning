@@ -45,7 +45,7 @@ void bq_player_free(void *d) {
 
 typedef struct {
     bq_player_t *plr;
-    uint8_t run_callback;    
+    uint8_t run_callback;
 } bq_player_callback_t;
 
 void bq_player_callback(void *d) {
@@ -53,7 +53,6 @@ void bq_player_callback(void *d) {
 
     bq_player_callback_t *data = (bq_player_callback_t*)d;
     if (data->run_callback) caml_callback(data->plr->callback, Val_unit);
-    caml_remove_generational_global_root(&data->plr->callback);
     RUN_ON_UI_THREAD(&bq_player_free, data->plr);
     free(data);
 }
@@ -84,6 +83,7 @@ bq_player_t *make_bq_player(SLuint32 sample_rate, SLuint16 bits_per_sample) {
     PRINT_DEBUG("make_bq_player %d", gettid());
 
     bq_player_t *bq_plr = (bq_player_t*)malloc(sizeof(bq_player_t));
+    caml_register_global_root(&bq_plr->callback);
     memset(bq_plr, 0, sizeof(bq_player_t));
 
     PRINT_DEBUG("bits_per_sample %x %x", bits_per_sample, SL_PCMSAMPLEFORMAT_FIXED_8);
@@ -207,7 +207,7 @@ value ml_alsoundLoad(value vpath) {
     SOUND_ASSERT(sizeof(caf_header_t) == (bytes_read = read(r.fd, &caf_hdr, sizeof(caf_header_t))), "cannot read caf header");
     total_bytes_read += bytes_read;
     SOUND_ASSERT(caf_hdr.file_type == CAF_FILETYPE, "given file is not caf");
-    
+
     int64_t chunk_size;
     uint8_t desc_read = 0;
     uint8_t data_read = 0;
@@ -268,7 +268,7 @@ value ml_alsoundSetVolume(value player, value vol) {
     SLresult result = (*bq_plr->bqPlayerVolume)->SetVolumeLevel(bq_plr->bqPlayerVolume, ATTENUATION(vol));
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "alsound set volume");
 
-    CAMLreturn(Val_unit);   
+    CAMLreturn(Val_unit);
 }
 
 value ml_alsoundSetLoop(value player, value loop) {
@@ -276,7 +276,7 @@ value ml_alsoundSetLoop(value player, value loop) {
 
     bq_player_t *bq_plr = (bq_player_t*)player;
     bq_plr->looped = loop == Val_true;
-    
+
     CAMLreturn(Val_unit);
 }
 
@@ -319,7 +319,7 @@ value ml_alsoundStop(value player) {
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "alsound stop");
     run_bq_player_callback(bq_plr, 0);
 
-    CAMLreturn(Val_unit);   
+    CAMLreturn(Val_unit);
 }
 
 
@@ -336,21 +336,31 @@ typedef struct {
     value callback;
 } fd_player_t;
 
+void run_avplayer_callback(void *data) {
+    PRINT_DEBUG("run_avplayer_callback %d", gettid());
+
+    fd_player_t *fd_plr = (fd_player_t*)data;
+    caml_callback(fd_plr->callback, Val_unit);
+}
+
 void fdPlayerCallback(SLPlayItf caller, void *context, SLuint32 event) {
-    PRINT_DEBUG("fdPlayerCallback CALL");
+    PRINT_DEBUG("fdPlayerCallback CALL %d", gettid());
 
     fd_player_t *fd_plr = (fd_player_t*)context;
     SOUND_ASSERT(caller == fd_plr->fdPlayerPlay, "avsound strange caller");
     SOUND_ASSERT(event == SL_PLAYEVENT_HEADATEND, "avsound unexpected event");
 
-    caml_callback(fd_plr->callback, Val_unit);
-    caml_remove_generational_global_root(&fd_plr->callback);
+    SLresult result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_STOPPED);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound stop");
+
+    RUN_ON_ML_THREAD(&run_avplayer_callback, context);
 }
 
 value ml_avsound_create_player(value vpath) {
     CAMLparam1(vpath);
 
     fd_player_t *fd_plr = (fd_player_t*)malloc(sizeof(fd_player_t));
+    caml_register_global_root(&fd_plr->callback);
     memset(fd_plr, 0, sizeof(fd_player_t));
 
     resource r;
@@ -386,6 +396,12 @@ value ml_avsound_create_player(value vpath) {
     result = (*fd_plr->fdPlayerObject)->GetInterface(fd_plr->fdPlayerObject, SL_IID_VOLUME, &fd_plr->fdPlayerVolume);
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound create player get volume interface");
 
+    result = (*fd_plr->fdPlayerPlay)->SetCallbackEventsMask(fd_plr->fdPlayerPlay, SL_PLAYEVENT_HEADATEND);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound set callback mask");
+
+    result = (*fd_plr->fdPlayerPlay)->RegisterCallback(fd_plr->fdPlayerPlay, fdPlayerCallback, fd_plr);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound register callback");
+
     CAMLreturn((value)fd_plr);
 }
 
@@ -410,34 +426,29 @@ value ml_avsound_set_volume(value player, value vol) {
 }
 
 value ml_avsound_play(value player, value callback) {
-    PRINT_DEBUG("ml_avsound_play call");
+    PRINT_DEBUG("ml_avsound_play call %d", gettid());
 
     CAMLparam2(player, callback);
 
     fd_player_t *fd_plr = (fd_player_t*)player;
     fd_plr->callback = callback;
-    caml_register_generational_global_root(&fd_plr->callback);
 
-    SLresult result = (*fd_plr->fdPlayerPlay)->SetCallbackEventsMask(fd_plr->fdPlayerPlay, SL_PLAYEVENT_HEADATEND);
-    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound set callback mask");
-
-    result = (*fd_plr->fdPlayerPlay)->RegisterCallback(fd_plr->fdPlayerPlay, fdPlayerCallback, fd_plr);
-    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound register callback");
-
-    result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_PLAYING);
-    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound play");    
+    SLresult result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_PLAYING);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound play");
 
     CAMLreturn(Val_unit);
 }
 
 value ml_avsound_stop(value player) {
+    PRINT_DEBUG("ml_avsound_stop");
+
     CAMLparam1(player);
 
     fd_player_t *fd_plr = (fd_player_t*)player;
     SLresult result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_STOPPED);
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound stop");
 
-    CAMLreturn(Val_unit);   
+    CAMLreturn(Val_unit);
 }
 
 value ml_avsound_pause(value player) {
@@ -447,14 +458,17 @@ value ml_avsound_pause(value player) {
     SLresult result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_PAUSED);
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound pause");
 
-    CAMLreturn(Val_unit);   
+    CAMLreturn(Val_unit);
 }
 
 value ml_avsound_release(value player) {
+    PRINT_DEBUG("ml_avsound_release");
+
     CAMLparam1(player);
 
     fd_player_t *fd_plr = (fd_player_t*)player;
     (*fd_plr->fdPlayerObject)->Destroy(fd_plr->fdPlayerObject);
+    caml_remove_global_root(&fd_plr->callback);
     free(fd_plr);
 
     CAMLreturn(Val_unit);
