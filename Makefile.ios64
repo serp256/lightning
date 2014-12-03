@@ -1,0 +1,4 @@
+
+include config.ios64
+META=META.ios64
+include Makefile.in

@@ -17,7 +17,7 @@ value rendertex_create(value vcolor, value valpha, value vkind, value vwidth, va
 	GLuint tex_size = renderbuf_shared_tex_size();
 	uint8_t dedicated = (w > tex_size / 2) || (h > tex_size / 2);
 	PRINT_DEBUG("dedicated %d, w %d, h %d", dedicated, w, h);
-	
+
 	if (Is_block(vkind)) {
 		if (Tag_val(vkind) == 0) {
 			dedicated = 1;
@@ -27,7 +27,7 @@ value rendertex_create(value vcolor, value valpha, value vkind, value vwidth, va
 				case 1: filter = GL_LINEAR; break;
 				default: break;
 			}
-		}		
+		}
 	}
 
 	// dedicated = 1;

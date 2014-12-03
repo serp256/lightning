@@ -84,8 +84,8 @@ uint8_t renderbuf_save_current(value path) {
 	glReadPixels((GLint)vp[0], (GLint)vp[1], (GLsizei)vp[2], (GLsizei)vp[3], GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	uint8_t retval = save_png_image(path, pixels, (unsigned int)vp[2], (unsigned int)vp[3]);
 
-	return retval;	
-} 
+	return retval;
+}
 
 uint8_t renderbuf_save(renderbuffer_t *renderbuf, value path, uint8_t whole) {
 	viewport vp = whole
@@ -119,12 +119,15 @@ void framebuf_get_id(GLuint *fbid, GLuint *tid, GLuint w, GLuint h, GLuint filte
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, *fbid);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tid, 0);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) caml_failwith("framebuffer status error");	
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	PRINT_DEBUG("status %d", status);
+	if (status != GL_FRAMEBUFFER_COMPLETE) caml_failwith("framebuffer status error");
 }
 
 void framebuf_return_id(GLuint fbid, GLuint tid) {

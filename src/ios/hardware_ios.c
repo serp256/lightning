@@ -1,6 +1,7 @@
 #include <sys/sysctl.h>
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
+#include <caml/alloc.h>
 
 
 value ml_platform() {

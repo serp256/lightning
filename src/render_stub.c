@@ -68,14 +68,14 @@ void setupOrthographicRendering(GLfloat left, GLfloat right, GLfloat bottom, GLf
 
 
   glEnable(GL_BLEND);
-  
+
 	glViewport(left, top, (GLsizei)(right), (GLsizei)(bottom));
-      
+
 	setDefaultGLBlend();
 	glClearColor(1.0,1.0,1.0,1.0);
 	kmGLMatrixMode(KM_GL_PROJECTION);
 	kmGLLoadIdentity();
-      
+
 	kmMat4 orthoMatrix;
 	kmMat4OrthographicProjection(&orthoMatrix, left, right, bottom, top, -1024, 1024 );
 	kmGLMultMatrix( &orthoMatrix );
@@ -206,10 +206,10 @@ value ml_compile_shader(value stype,value shader_src) {
 	const char *sh_src = String_val(shader_src);
 	glShaderSource(shader, 1, &sh_src, NULL);
 	glCompileShader(shader);
-   
+
 	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
- 
+
   if( ! status ) {
 		char msg[1024];
 		char *log = shaderLog(shader);
@@ -250,7 +250,7 @@ void render_clear_cached_values () {
 	vertexAttribTexCoords = 0;
 }
 
-void lgGLEnableVertexAttribs( unsigned int flags ) {   
+void lgGLEnableVertexAttribs( unsigned int flags ) {
 
   // Position
   char enablePosition = flags & lgVertexAttribFlag_Position;
@@ -264,34 +264,34 @@ void lgGLEnableVertexAttribs( unsigned int flags ) {
 			//printf("disable vertex attrib array\n");
       glDisableVertexAttribArray( lgVertexAttrib_Position );
 		}
-  
+
     vertexAttribPosition = enablePosition;
-  } 
-    
+  }
+
   // Color
   char enableColor = flags & lgVertexAttribFlag_Color;
-  
+
   if( enableColor != vertexAttribColor ) {
     if( enableColor )
       glEnableVertexAttribArray( lgVertexAttrib_Color );
     else
       glDisableVertexAttribArray( lgVertexAttrib_Color );
-    
+
     vertexAttribColor = enableColor;
   }
 
   // Tex Coords
   char enableTexCoords = flags & lgVertexAttribFlag_TexCoords;
-  
+
   if( enableTexCoords != vertexAttribTexCoords ) {
-    if( enableTexCoords ) 
+    if( enableTexCoords )
       glEnableVertexAttribArray( lgVertexAttrib_TexCoords );
     else
       glDisableVertexAttribArray( lgVertexAttrib_TexCoords );
-    
+
     vertexAttribTexCoords = enableTexCoords;
   }
-} 
+}
 
 
 /*static int texture_enabled = 1;
@@ -353,9 +353,9 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 	CAMLlocal2(prg,res);
 	GLuint program =  glCreateProgram();
 	PRINT_DEBUG("create program %d\n",program);
-	glAttachShader(program, *GLUINT(vShader)); 
+	glAttachShader(program, *GLUINT(vShader));
 	checkGLErrors("attach shader 1");
-	glAttachShader(program, *GLUINT(fShader)); 
+	glAttachShader(program, *GLUINT(fShader));
 	checkGLErrors("attach shader 2");
 	// bind attributes
 	value lst = attributes;
@@ -415,17 +415,17 @@ value ml_program_create(value vShader,value fShader,value attributes,value unifo
 		for (idx = 0; idx < uniformsLen; idx++) {
 			value el = Field(uniforms,idx);
 			loc = glGetUniformLocation(program, String_val(Field(el,0)));
-			checkGLErrors("get uiform location"); 
+			checkGLErrors("get uiform location");
 			PRINT_DEBUG("uniform: '%s' = %d\n",String_val(Field(el,0)),loc);
 			sp->uniforms[idx] = loc;
 			value u = Field(el,1);
 			if (Is_block(u)) {
 				value v = Field(u,0);
 				switch Tag_val(u) {
-					case 0: 
-						glUniform1i(loc,Long_val(v)); 
+					case 0:
+						glUniform1i(loc,Long_val(v));
 						break;
-					case 1: 
+					case 1:
 						PRINT_DEBUG("this is 2i");
 						glUniform2i(loc,Long_val(Field(v,0)),Long_val(Field(v,1)));
 						break;
@@ -536,7 +536,7 @@ static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,c
 				c = Int32_val(Field(qcolor,2));
 				*bl = COLOR_FROM_INT32(c,alpha);
 				c = Int32_val(Field(qcolor,3));
-				*br = COLOR_FROM_INT32(c,alpha);				
+				*br = COLOR_FROM_INT32(c,alpha);
 			}
 		}
 	};
@@ -544,20 +544,20 @@ static inline void extract_color(value color,GLfloat alpha,int pma,color4B *tl,c
 
 
 ////////////////////////////////////
-/////// QUADS 
+/////// QUADS
 //! a Point with a vertex point, and color 4B
-typedef struct 
-{ 
+typedef struct
+{
   //! vertices (2F)
   vertex2F    v;
-  //! colors (4B)   
+  //! colors (4B)
   color4B   c;
 } lgQVertex;
 
 #define QVertexSize sizeof(lgQVertex)
 
 //! 4 ccV3F_C4F_T2F
-typedef struct 
+typedef struct
 {
   //! top left
   lgQVertex tl;
@@ -592,7 +592,7 @@ struct custom_operations quad_ops = {
 
 value ml_quad_create(value width,value height,value color,value alpha) {
 	CAMLparam4(width,height,color,alpha);
-	value res = caml_alloc_custom(&quad_ops,sizeof(lgQuad),0,1); // 
+	value res = caml_alloc_custom(&quad_ops,sizeof(lgQuad),0,1); //
 	lgQuad *q = QUAD(res);
   extract_color(color,Double_val(alpha),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
 	//printf("quad color: [%hhu,%hhu,%hhu]\n",q->tl.c.r,q->tl.c.g,q->tl.c.b);
@@ -603,7 +603,7 @@ value ml_quad_create(value width,value height,value color,value alpha) {
 	CAMLreturn(res);
 }
 
-value ml_quad_points(value quad) { 
+value ml_quad_points(value quad) {
 	CAMLparam1(quad);
 	CAMLlocal4(p1,p2,p3,p4);
 	lgQuad *q = QUAD(quad);
@@ -660,7 +660,7 @@ value ml_quad_set_alpha(value quad,value alpha) {
 }
 
 ////////////////////
-///// IMAGES 
+///// IMAGES
 ///////////////////
 
 
@@ -717,11 +717,11 @@ value ml_quad_render(value matrix, value program, value alpha, value quad) {
   int diff = offsetof( lgQVertex, v);
   glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, QVertexSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
-  
+
   // color
   diff = offsetof( lgQVertex, c);
   glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, QVertexSize, (void*)(offset + diff));
-  
+
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	checkGLErrors("draw quad arrays");
 
@@ -833,7 +833,7 @@ void print_image(lgImage *img) {
 value ml_image_create(value textureInfo,value color,value oalpha) {
 	CAMLparam3(textureInfo,color,oalpha);
 	PRINT_DEBUG("create image");
-	value res = caml_alloc_custom(&image_ops,sizeof(lgImage),0,1); // 
+	value res = caml_alloc_custom(&image_ops,sizeof(lgImage),0,1); //
 	lgImage *img = IMAGE(res);
 	lgTexQuad *tq = &(img->quad);
 	extract_color(color,Double_val(oalpha),1.,&tq->tl.c,&tq->tr.c,&tq->bl.c,&tq->br.c);
@@ -993,9 +993,7 @@ value ml_image_flip_tex_y(value image) {
 }
 
 value ml_image_render(value matrix, value program, value alpha, value blend, value image) {
-	//fprintf(stderr,"render image\n");
-
-	// PRINT_DEBUG("RENDER IMAGE");
+	PRINT_DEBUG("RENDER IMAGE");
 	lgImage *img = IMAGE(image);
 	checkGLErrors("start image render");
 
@@ -1037,13 +1035,18 @@ value ml_image_render(value matrix, value program, value alpha, value blend, val
 	//print_image(tq);
 
 	long offset = (long)(&(img->quad));
+/*	PRINT_DEBUG("RENDER IMAGE (%f,%f),(%f,%f),(%f,%f),(%f,%f)",
+		img->quad.tl.v.x, img->quad.tl.v.y,
+		img->quad.tr.v.x, img->quad.tr.v.y,
+		img->quad.br.v.x, img->quad.br.v.y,
+		img->quad.bl.v.x, img->quad.bl.v.y);*/
 
   // vertex
   int diff = offsetof( lgTexVertex, v);
 	//glEnableVertexAttribArray(lgVertexAttrib_Position);
   glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, TexVertexSize, (void*) (offset + diff));
 	checkGLErrors("bind vertex pointer");
-  
+
   // color
   diff = offsetof( lgTexVertex, c);
 	//glEnableVertexAttribArray(lgVertexAttrib_Color);
@@ -1053,7 +1056,7 @@ value ml_image_render(value matrix, value program, value alpha, value blend, val
   diff = offsetof( lgTexVertex, tex);
 	//glEnableVertexAttribArray(lgVertexAttrib_TexCoords);
   glVertexAttribPointer(lgVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, TexVertexSize, (void*)(offset + diff));
-  
+
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	checkGLErrors("draw arrays image");
 	kmGLPopMatrix();
@@ -1130,7 +1133,7 @@ static void atlas_finalize(value atlas) {
 	backGLBuffers(atl->buffersVBO);
 #ifdef HAS_VAO
     glDeleteVertexArrays(1, &atl->vaoname);
-#endif    
+#endif
 	//caml_stat_free(atl);
 }
 
@@ -1144,7 +1147,7 @@ struct custom_operations atlas_ops = {
 };
 
 /// ATLAS
-value ml_atlas_init(value textureInfo) { 
+value ml_atlas_init(value textureInfo) {
 	CAMLparam1(textureInfo);
 	value result = caml_alloc_custom(&atlas_ops,sizeof(atlas_t),0,1);
 
@@ -1175,15 +1178,15 @@ value ml_atlas_init(value textureInfo) {
   // vertices
   glEnableVertexAttribArray(lgVertexAttrib_Position);
   glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, TexVertexSize, (GLvoid*) offsetof( lgTexVertex, v));
- 
+
   // colors
 	glEnableVertexAttribArray(lgVertexAttrib_Color);
   glVertexAttribPointer(lgVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, TexVertexSize, (GLvoid*) offsetof( lgTexVertex, c));
- 
+
   // tex coords
 	glEnableVertexAttribArray(lgVertexAttrib_TexCoords);
   glVertexAttribPointer(lgVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, TexVertexSize, (GLvoid*) offsetof( lgTexVertex, tex));
- 
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,atl->buffersVBO[1]);
 
   glBindVertexArray(0);
@@ -1195,7 +1198,7 @@ value ml_atlas_init(value textureInfo) {
 	CAMLreturn(result);
 }
 
-// TODO: finalizlie this static arrays 
+// TODO: finalizlie this static arrays
 static GLushort *atlas_indices = NULL;
 static int atlas_indices_len = 0;
 
@@ -1328,7 +1331,7 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 							q->tr.c = q->bl.c = q->br.c = q->tl.c;
 						} else {
 							qclr = Field(clr,1);
-							
+
 							color4B* vclr = &q->tl.c;
 							ic = Int32_val(Field(qclr,0));
 							COLOR_FROM_INT32_PMA(vclr, ic,alpha);
@@ -1422,11 +1425,11 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 		glBufferData(GL_ARRAY_BUFFER, sizeof(lgTexQuad) * len, atlas_quads, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		atl->n_of_quads = len;
-		
+
 		//fprintf(stderr,"atals end quads\n");
 
 	};
-	
+
 
 #ifndef HAS_VAO
 	glBindBuffer(GL_ARRAY_BUFFER,atl->buffersVBO[0]);
@@ -1444,7 +1447,7 @@ value ml_atlas_render(value atlas, value matrix,value program, value alpha, valu
 	glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)(atl->n_of_quads * 6),GL_UNSIGNED_SHORT,0);
 
 	glBindBuffer(GL_ARRAY_BUFFER,0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 #else
 	glBindVertexArray(atl->vaoname);
 	checkGLErrors("before render atlas");
@@ -1608,7 +1611,7 @@ value ml_shape_create (value mlpoints, value mllayers) {
 		layer->color[1] = (GLfloat)clr_cmpnnt / 255.;
 
 		clr_cmpnnt = COLOR_PART_BLUE(color);
-		layer->color[2] = (GLfloat)clr_cmpnnt / 255.;		
+		layer->color[2] = (GLfloat)clr_cmpnnt / 255.;
 
 		layer->alpha = Double_val(Field(_mllayer, 2));
 		layer->line_width = Double_val(Field(_mllayer, 3));
@@ -1649,7 +1652,7 @@ value ml_shape_render(value matrix,value program,value alpha, value mlshape) {
 
 		glDrawArrays(layer.method, 0, shape->len);
 	}
-  	
+
 	checkGLErrors("draw shape arrays");
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 
@@ -1699,7 +1702,7 @@ value ml_render_grid(value matrix, value alpha, value vGrid, value vTexId, value
 	GLint texId  = ((struct tex*)Data_custom_val(vTexId)) -> tid;
 	sprogram *sp = SPROGRAM(Field(Field(program,0),0));
 	lgGLUseProgram(sp->program);
-	
+
 	kmGLPushMatrix();
 	applyTransformMatrix(matrix);
 	checkGLErrors("image render use program");
@@ -1709,7 +1712,7 @@ value ml_render_grid(value matrix, value alpha, value vGrid, value vTexId, value
 	glUniform1f(sp->std_uniforms[lgUniformAlpha],(GLfloat) (Double_val(alpha)));
 	lgGLEnableVertexAttribs(lgVertexAttribFlag_PosTexColor);
 	checkGLErrors("render image: uniforms and attribs");
-	
+
 	int pma = -1;
 	lgGLBindTexture(texId,pma);
 	/* типа inline */
@@ -1719,7 +1722,7 @@ value ml_render_grid(value matrix, value alpha, value vGrid, value vTexId, value
 	glBindBuffer(GL_ARRAY_BUFFER, ars -> bufferVert);
 	glVertexAttribPointer(lgVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	// TEXTURE COORD
-	glBindBuffer(GL_ARRAY_BUFFER, ars -> bufferTex);	
+	glBindBuffer(GL_ARRAY_BUFFER, ars -> bufferTex);
 	glVertexAttribPointer(lgVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	// COLORS
 	glBindBuffer(GL_ARRAY_BUFFER, ars -> bufferCol);

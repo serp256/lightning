@@ -25,10 +25,11 @@ MLDEPFLAGS =
 byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma social_byte
 native: MLDEPFLAGS += -native
 native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa social_native
+#native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa facebook.cmxa twitter.cmxa whatsapp.cmxa appsflyer.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
 
-KAZMATHOBJS = utility.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o neon_matrix_impl.o GL/mat4stack.o GL/matrix.o
+KAZMATHOBJS = utility.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o GL/mat4stack.o GL/matrix.o
 KAZMATH = $(patsubst %,kazmath/%,$(KAZMATHOBJS))
 MLPPOPT = syntax/pa_platform.cmo
 
@@ -255,7 +256,7 @@ doc:
 
 .PHONY : clean
 clean:
-	rm -f *.o rendertex/*.o *.cm[iox] *.a *.cmxa *.so *.cmo ios/*.o glut/*.cmx glut.*.cmo glut/*.o glut/*.cmi sdl/*.cmx sdl/*.cmo sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi utils/*.cmi utils/*.cmx utils/*.cmo utils/*.a kazmath/*.o kazmath/GL/*.o android/*.o pc/*.o
+	rm -f *.o rendertex/*.o *.cm[iox] *.a *.cmxa *.so *.cmo ios/*.o glut/*.cmx glut.*.cmo glut/*.o glut/*.cmi sdl/*.cmx sdl/*.cmo sdl/*.o sdl/*.cmi containers/*.cmi containers/*.cmx containers/*.cmo containers/*.o $(gl)/*.o $(gl)/*.cmx $(gl)/*.cmi *.html *.css MLDepend.* syntax/*.cmo syntax/*.cmi utils/*.cmi utils/*.cmx utils/*.cmo utils/*.a kazmath/*.o kazmath/GL/*.o android/*.o pc/*.o plugins/common/*/*.o
 	$(MAKE) -C plugins/chartboost clean
 	$(MAKE) -C social clean
 	$(MAKE) -C plugins/tapjoy clean

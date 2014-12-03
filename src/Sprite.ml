@@ -3,7 +3,7 @@ open LightCommon;
 module D = DisplayObject;
 
 type cache_valid = [ CInvalid | CEmpty | CValid ];
-type imageCache = 
+type imageCache =
   {
     c_tex: mutable option RenderTexture.c;
     c_img: mutable option Render.Image.t;
@@ -16,7 +16,7 @@ type imageCache =
 
 class c =
   object(self)
-    inherit D.container as super; 
+    inherit D.container as super;
     method ccast: [= `Sprite of c] = `Sprite (self :> c);
 
     value mutable imageCache = None;
@@ -30,9 +30,9 @@ class c =
 
     (*
     method setCacheAsImage = fun
-      [ True -> 
+      [ True ->
         match imageCache with
-        [ None -> 
+        [ None ->
           (
             let bounds = self#bounds in
 (*             let tex = Texture.rendered bounds.Rectangle.width bounds.Rectangle.height in *)
@@ -48,9 +48,9 @@ class c =
         ]
       | False ->
           match imageCache with
-          [ Some ({tex = Some tex; force; _ } as c) -> 
+          [ Some ({tex = Some tex; force; _ } as c) ->
             match filters = [] with
-            [ True -> 
+            [ True ->
               (
                 tex#release ();
                 imageCache := None;
@@ -65,7 +65,7 @@ class c =
 
     method filters = filters;
 
-    method! boundsChanged () = 
+    method! boundsChanged () =
     (
 (*         debug "%s bounds changed" self#name; *)
       match imageCache with
@@ -75,18 +75,18 @@ class c =
       super#boundsChanged();
     );
 
-    method private _updateImageCache () = 
+    method private _updateImageCache () =
       match imageCache with
-      [ Some ({c_img; c_tex; glow; valid = CInvalid;  _} as c) -> 
+      [ Some ({c_img; c_tex; glow; valid = CInvalid;  _} as c) ->
          let () = debug:prerender "update cacheImage %s" self#name in
          let bounds = self#boundsInSpace (Some self) in
          if bounds.Rectangle.width = 0. || bounds.Rectangle.height = 0.
          then c.valid := CEmpty
-         else 
+         else
          (
            let draw_texture width height f = (*{{{*)
-             match (c_img,c_tex) with 
-             [ (Some img, Some tex) -> 
+             match (c_img,c_tex) with
+             [ (Some img, Some tex) ->
                let () = debug "get_tex [%f:%f] [%f:%f]" w h tex#width tex#height in
                (
                  match tex#draw ~clear:(0,0.) ~width ~height f with
@@ -94,7 +94,7 @@ class c =
                  | False -> ()
                  ]
                )
-             | (None,None) -> 
+             | (None,None) ->
                  let tex = RenderTexture.draw width height f in
                  let img = Render.Image.create tex#renderInfo ~color:`NoColor ~alpha:1. in
                  (
@@ -131,7 +131,7 @@ class c =
                  let rw = bounds.Rectangle.width +. (float gs)
                  and rh = bounds.Rectangle.height +. (float gs) in
                  let m = Matrix.create ~translate:{Point.x = (float hgs) -. bounds.Rectangle.x; y = (float hgs) -. bounds.Rectangle.y} () in
-                 let ctex = 
+                 let ctex =
                    let alpha' = alpha in
                    (
                      self#setAlpha 1.;
@@ -140,7 +140,7 @@ class c =
                          Render.push_matrix m;
                          (* Render.clear 0 0.; *)
                          proftimer:icache "render %f" with (super#render' ~transform:False None);
-                         Render.restore_matrix ();                         
+                         Render.restore_matrix ();
                        )
                      end in
                      (
@@ -169,13 +169,13 @@ class c =
                  c.c_mat := Matrix.create ~translate:{Point.x =  (bounds.Rectangle.x -. (float hgs)); y = (bounds.Rectangle.y -. (float hgs))} ();
                )
            ];
-           c.valid := CValid; 
+           c.valid := CValid;
          )
     | Some _ -> ()
 (* 		assert False (* FIXME: иногда срабатывает этот ассерт *) *)
     | _ -> ()
     ];
-    
+
     method private updateImageCache () = proftimer:icache "updateImageCache %f" with self#_updateImageCache();
 
     method setFilters fltrs =
@@ -187,7 +187,7 @@ class c =
         [ [] ->
           match imageCache with
           [ None -> ()
-          | Some {c_tex;force=False;_} -> 
+          | Some {c_tex;force=False;_} ->
             (
               match c_tex with
               [ Some tex -> tex#release()
@@ -195,15 +195,15 @@ class c =
               ];
               imageCache := None
             )
-          | Some c -> 
+          | Some c ->
             (
               c.c_prg := GLPrograms.Image.Normal.create ();
               if c.glow <> None
               then
               (
                 c.glow := None;
-                if c.valid = CValid 
-                then 
+                if c.valid = CValid
+                then
                   (
                     c.valid := CInvalid;
                     let () = debug:filters "add pre 0" in self#addPrerender self#updateImageCache
@@ -213,7 +213,7 @@ class c =
               else ()
             )
           ]
-        | _ -> 
+        | _ ->
             let glow = ref None in
             let prg =
               List.fold_left begin fun c -> fun
@@ -227,12 +227,12 @@ class c =
                 ]
               end `simple fltrs
             in
-            let c_prg = 
+            let c_prg =
               let module Prg=  GLPrograms.Image in
-              match prg with [ `simple -> Prg.Normal.create () | `cmatrix m -> Prg.ColorMatrix.create m ] 
+              match prg with [ `simple -> Prg.Normal.create () | `cmatrix m -> Prg.ColorMatrix.create m ]
             in
             match imageCache with
-            [ None -> 
+            [ None ->
               (
                 let bounds = self#bounds in
                 imageCache := Some begin
@@ -245,7 +245,7 @@ class c =
                   )
                 end
               )
-            | Some c -> 
+            | Some c ->
               (
                 c.c_prg := c_prg;
                 if c.glow <> !glow
@@ -260,13 +260,13 @@ class c =
         ];
       );
 
-    method! private render' ?alpha:(alpha') ~transform rect = 
+    method! private render' ?alpha:(alpha') ~transform rect =
       match imageCache with
       [ Some {c_img=Some img; c_mat; c_prg; valid=CValid;_} ->
         (
           (*
           if transform then Render.push_matrix self#transformationMatrix else ();
-          let alpha = 
+          let alpha =
             if alpha < 1.
             then Some (match alpha' with [ Some a -> a *. alpha | None -> alpha ])
             else alpha'
@@ -274,7 +274,7 @@ class c =
           ic#render ?alpha rect;
           if transform then Render.restore_matrix () else ();
           *)
-          let alpha = 
+          let alpha =
             if alpha < 1.
             then Some (match alpha' with [ Some a -> a *. alpha | None -> alpha ])
             else alpha'
@@ -289,4 +289,3 @@ class c =
 
 
 value create () = new c;
-

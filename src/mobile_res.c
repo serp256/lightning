@@ -65,12 +65,9 @@ char* read_res_index(FILE* index, int offset_inc, int force_location) {
 		PRINT_DEBUG("fname: %s; original offset: %d; size: %d; location %d, fname == %d, xyu == %d\n", fname, offset, size, location, fname == "etc/tree_alpha.cmprs", "xyu" == "xyu");
 
 		if (strstr(fname, "etc/") && strstr(fname, "_alpha")) {
-			const char *qwe = "etc/tree_alpha.cmprs";
-			PRINT_DEBUG("LEN %d %d", strlen(fname), strlen(qwe));
-
 			int i = 0;
 			for (i = 0; i < strlen(fname); i++) {
-				PRINT_DEBUG("%c %c %d", fname[i], qwe[i], fname[i] == qwe[i]);
+				PRINT_DEBUG("%c %c", fname[i], qwe[i]);
 			}
 		}
 
@@ -84,7 +81,7 @@ char* read_res_index(FILE* index, int offset_inc, int force_location) {
 
 		// ret == 0 means that some value is already binded to key; to prevent memleaks need to free previous value
 		if (ret == 0) {
-			free(kh_val(res_indx, k));			
+			free(kh_val(res_indx, k));
 		}
 
 		kh_val(res_indx, k) = pair;
@@ -113,7 +110,7 @@ int get_offset_size_pair(const char* path, offset_size_pair_t** pair) {
 
 	do {
 		PRINT_DEBUG("trying localized path %s", local_path);
-		k = kh_get(res_index, res_indx, local_path);		
+		k = kh_get(res_index, res_indx, local_path);
 		if (k != kh_end(res_indx)) break;
 
 		PRINT_DEBUG("trying original path %s", path);
@@ -124,7 +121,7 @@ int get_offset_size_pair(const char* path, offset_size_pair_t** pair) {
 		return 1;
 	} while(0);
 
-	offset_size_pair_t* val = kh_val(res_indx, k);	
+	offset_size_pair_t* val = kh_val(res_indx, k);
 	*pair = val;
 	PRINT_DEBUG("%s entry found in index, offset %d, size %d, location %d", path, val->offset, val->size, val->location);
 	free(local_path);

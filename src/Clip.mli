@@ -1,18 +1,18 @@
 
 type frameID = [= `num of int | `label of string ];
-type direction = 
+type direction =
   [= `forward
   | `backward
   ];
 
-type cFrame 'keyframe = 
+type cFrame 'keyframe =
   [ KeyFrame of (option string * 'keyframe)
   | Frame of int
   ];
 
 exception Frame_not_found;
 
-class type virtual c = 
+class type virtual c =
   object
     inherit DisplayObject.c;
     method ccast: [= `Clip of c ];

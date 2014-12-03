@@ -21,6 +21,14 @@ static int allocated_textures = 0;
 #endif
 
 
+#ifdef ANDROID
+#include "android/texture_android.h"
+#define get_locale lightning_get_locale
+#elif IOS
+#import "ios/texture_ios.h"
+#else
+#endif
+
 
 
 GLuint boundTextureID = 0;
@@ -1053,7 +1061,7 @@ textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int
 		strcpy(insertTo, "_alpha");
 		strcpy(insertTo + 6, ext);
 
-		int r = load_image_info(fname, NULL, use_pvr, alphaTexInfo, suffix);
+		int r = load_image_info(fname, NULL, use_pvr, alphaTexInfo);
 		if (r) {
 			if (suffix) {
 				size_t suf_len = strlen(suffix);
@@ -1064,7 +1072,7 @@ textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int
 				strcpy(insertTo + suf_len, "_alpha");
 				strcpy(insertTo + suf_len + 6, ext);
 
-				r = load_image_info(fname, NULL, use_pvr, alphaTexInfo, suffix);
+				r = load_image_info(fname, NULL, use_pvr, alphaTexInfo);
 
 				if (r) {
 					free(alphaTexInfo);

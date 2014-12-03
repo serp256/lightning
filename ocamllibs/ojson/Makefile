@@ -3,6 +3,11 @@ OCAMLFIND = ocamlfind
 
 default: byte native
 
+ios64 ios64-install ios64-uninstall: OCAMLFIND = ocamlfind -toolchain ios64 
+ios64: native
+ios64-install: install
+ios64-uninstall: uninstall
+
 ios ios-install ios-uninstall: OCAMLFIND = ocamlfind -toolchain ios
 ios: native
 ios-install: install

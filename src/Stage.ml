@@ -27,14 +27,14 @@ module D = DisplayObject;
 class type tween = object method process: float -> bool; end;
 value tweens : Queue.t  tween = Queue.create ();
 value addTween tween = Queue.push (tween :> tween) tweens;
-value removeTween tween = 
+value removeTween tween =
   let tween = (tween :> tween) in
   let tmpqueue = Queue.create () in
   (
     while not (Queue.is_empty tweens) do
       let t = Queue.pop tweens in
       match t = tween with
-      [ False -> Queue.push t  tmpqueue 
+      [ False -> Queue.push t  tmpqueue
       | True -> ()
       ]
     done;
@@ -57,7 +57,7 @@ value instance () = match !_instance with [ Some s -> s | None -> failwith "Stag
 value backgroundTime = ref 0.;
 
 value onBackground = ref None;
-value on_background () = 
+value on_background () =
   (
     backgroundTime.val := Unix.gettimeofday ();
 
@@ -75,7 +75,7 @@ value on_background () =
 Callback.register "on_background" on_background;
 
 value onForeground = ref None;
-value on_foreground () = 
+value on_foreground () =
 (
   debug "ENTER TO FOREGROUND";
   match !onForeground with
@@ -92,13 +92,13 @@ class virtual base =
     value mutable prerender_locked = None;
     value prerender_objects = RefList.empty ();
 
-    method! stageAddPrerenderObj o = 
+    method! stageAddPrerenderObj o =
       let () = debug:prerender "add_prerender: %s" o#name in
       match prerender_locked with
       [ Some waits -> RefList.push waits o
       | None -> RefList.push prerender_objects o
       ];
-      
+
     method! stageRunPrerender () =
       proftimer(0.005):prof "prerender %f" with
         match RefList.is_empty prerender_objects with
@@ -114,7 +114,7 @@ class virtual base =
               let sorted_objects = RefList.empty () in
               (
                 proftimer:pprerender "SORT OBJECTS %F" with
-                (RefList.iter (fun o -> 
+                (RefList.iter (fun o ->
                   match o#z with
                   [ Some z -> RefList.add_sort ~cmp sorted_objects (z,o)
                   | None -> o#prerender False
@@ -131,7 +131,7 @@ class virtual base =
 
     value mutable onEnterFrameObjects = SetD.empty;
 
-    method! stageDispatchEnterFrame seconds = 
+    method! stageDispatchEnterFrame seconds =
       let () = debug:stageenterframe "stageDispatchEnterFrame call %f" seconds in
       let enterFrameEvent = Ev.create DisplayObject.ev_ENTER_FRAME ~data:(Ev.data_of_float seconds) () in
         SetD.iter (fun obj ->
@@ -170,7 +170,7 @@ class virtual c (_width:float) (_height:float) =
     method frameRate = 60;
     value mutable width = _width;
     value mutable height = _height;
-    initializer 
+    initializer
     (
       setupOrthographicRendering 0. width height 0.;
       _screenSize.val := (width,height);
@@ -199,7 +199,7 @@ class virtual c (_width:float) (_height:float) =
       self#stageResized ();
     );
 
-    method resize w h = 
+    method resize w h =
     (
       width := w;
       height := h;
@@ -207,7 +207,7 @@ class virtual c (_width:float) (_height:float) =
       _screenSize.val := (w,h);
     );
 
-    method onUnload () = 
+    method onUnload () =
       let ev = Ev.create ev_UNLOAD () in
       let () = debug:unload "UNLOAD" in
       self#dispatchEvent ev;
@@ -217,34 +217,34 @@ class virtual c (_width:float) (_height:float) =
       let () = debug "process touches" in
       proftimer(0.005) "processTouches %F" with
       match touchable with
-      [ True -> 
+      [ True ->
         let () = debug:touches "process touches %d\n%!" (List.length touches) in
         let now = Unix.gettimeofday() in
         let cTouches = ref currentTouches in
-        let processedTouches = 
+        let processedTouches =
           List.map begin fun nt ->
             let () = nt.n_timestamp := now in
             try
-              let ((target,touch),cts) = 
-                try 
-                  MList.pop_if (fun (target,eTouch) -> eTouch.n_tid = nt.n_tid) !cTouches 
-                with [ Not_found -> raise Touch_not_found ] 
-              in 
+              let ((target,touch),cts) =
+                try
+                  MList.pop_if (fun (target,eTouch) -> eTouch.n_tid = nt.n_tid) !cTouches
+                with [ Not_found -> raise Touch_not_found ]
+              in
               (
                 cTouches.val := cts;
-                nt.n_previousGlobalX := touch.n_globalX; 
-                nt.n_previousGlobalY := touch.n_globalY; 
+                nt.n_previousGlobalX := touch.n_globalX;
+                nt.n_previousGlobalY := touch.n_globalY;
                 match target#stage with
-                [ None -> 
+                [ None ->
                   match self#hitTestPoint {Point.x=nt.n_globalX;y=nt.n_globalY} True with
                   [ Some target -> (target,nt)
                   | None -> assert False (* FIXME: it's impossible case, but ... *)
                   ]
-                | Some _ -> (target,nt) 
+                | Some _ -> (target,nt)
                 ]
               )
-            with 
-            [  Touch_not_found -> 
+            with
+            [  Touch_not_found ->
               match self#hitTestPoint {Point.x= nt.n_globalX;y = nt.n_globalY} True with
               [ Some target -> (target,nt)
               | None -> assert False
@@ -259,21 +259,21 @@ class virtual c (_width:float) (_height:float) =
           let () = debug:touches
               List.iter begin fun (target,touch) ->
                 debug:touches "touch: %ld %f [%f:%f], [%F:%F], %d, %s, [ %s ]\n%!" touch.n_tid
-                  touch.n_timestamp touch.n_globalX touch.n_globalY 
+                  touch.n_timestamp touch.n_globalX touch.n_globalY
                   touch.n_previousGlobalX touch.n_previousGlobalY
                   touch.n_tapCount (string_of_touchPhase touch.n_phase)
                   target#name
               end (processedTouches @ otherTouches)
           in
-          (* группируем их по таргетам и вперед - incorrect *) 
+          (* группируем их по таргетам и вперед - incorrect *)
           let fireTouches = List.fold_left (fun res (target,touch) -> MList.add_assoc target (Touch.t_of_n touch) res) [] processedTouches in
-          let fireTouches = 
-            List.fold_left begin fun res (target,touch) -> 
+          let fireTouches =
+            List.fold_left begin fun res (target,touch) ->
               try
                 let touches = List.assoc target res in
                 MList.replace_assoc target (touches @ [ Touch.t_of_n touch ]) res
               with [ Not_found -> res ]
-            end fireTouches otherTouches 
+            end fireTouches otherTouches
           in
           let event = Ev.create ~bubbles:True ev_TOUCH () in
           List.iter begin fun ((target:D.c),touches) ->
@@ -287,7 +287,7 @@ class virtual c (_width:float) (_height:float) =
       ];(*}}}*)
 
 
-    method cancelAllTouches () = 
+    method cancelAllTouches () =
       match currentTouches with
       [ [] -> ()
       | touches ->
@@ -364,19 +364,19 @@ class virtual c (_width:float) (_height:float) =
           self#stageDispatchEnterFrame seconds;
         );
 
-    method traceFPS (show:(int -> #DisplayObject.c)) = 
+    method traceFPS (show:(int -> #DisplayObject.c)) =
       let f =
         object
           value mutable frames = 0;
           value mutable time = 0.;
-          method process dt = 
+          method process dt =
             let osecs = int_of_float time in
             (
               time := time +. dt;
               let seconds = (int_of_float time) - osecs in
               match seconds with
               [ 0 ->  frames := frames + 1
-              | _ -> 
+              | _ ->
                 (
                   fpsTrace := Some (show (frames / seconds));
                   frames := 1;
@@ -391,7 +391,7 @@ class virtual c (_width:float) (_height:float) =
     method traceSharedTexNum (show:(int -> #DisplayObject.c)) =
       let f =
         object
-          method process dt = 
+          method process dt =
             let () = debug:stn "!!!!pizdalalalallaal" in
             (* let dobj = show (RenderTexture.sharedTexsNum ()) in *)
             let dobj = show 0 in
@@ -405,7 +405,7 @@ class virtual c (_width:float) (_height:float) =
         addTween f;
 
     (* used by outdated android version, ios and pc versions uses renderStage method *)
-(*     method run seconds = 
+(*     method run seconds =
     (
       proftimer:steam "advence %f" (self#advanceTime seconds);
       proftimer:steam "prerender %f" (D.prerender ());
@@ -419,7 +419,7 @@ class virtual c (_width:float) (_height:float) =
   method! hitTestPoint localPoint isTouch =
     (*
     match isTouch && (not touchable) with
-    [ True -> None 
+    [ True -> None
     | False ->
         *)
         match super#hitTestPoint localPoint isTouch with
@@ -427,7 +427,7 @@ class virtual c (_width:float) (_height:float) =
           (*
             let bounds = Rectangle.create pos.Point.x pos.Point.y width height in
             match Rectangle.containsPoint bounds localPoint with
-            [ True -> 
+            [ True ->
             | False -> None
             ]
           *)
@@ -445,7 +445,7 @@ class virtual c (_width:float) (_height:float) =
 (*   method dispatchBackgroundEv () = self#dispatchEvent (Ev.create ev_BACKGROUND ());
   method dispatchForegroundEv () = self#dispatchEvent (Ev.create ev_FOREGROUND ()); *)
 
-  
+
 
   method dispatchBackgroundEv = on_background;
 
@@ -466,5 +466,5 @@ class virtual c (_width:float) (_height:float) =
     (
       Timers.init 0.;
     );
-  
+
 end;

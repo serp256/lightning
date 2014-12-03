@@ -118,7 +118,7 @@
 /* Begin PBXLegacyTarget section */
 		5181417A16F6F5B8009D7846 /* LightTestBin */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "-C .. ios";
+			buildArgumentsString = "-C .. -f Makefile.test ios";
 			buildConfigurationList = 5181417B16F6F5B8009D7846 /* Build configuration list for PBXLegacyTarget "LightTestBin" */;
 			buildPhases = (
 			);
@@ -219,7 +219,7 @@
 		5181417C16F6F5B8009D7846 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = armv7;
+				Architectures = "Standard Architectures (including 64-bit).";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				DEBUGGING_SYMBOLS = YES;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -239,7 +239,7 @@
 		5181417D16F6F5B8009D7846 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = armv7;
+				Architectures = "Standard Architectures (including 64-bit).";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

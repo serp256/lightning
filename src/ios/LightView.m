@@ -11,6 +11,7 @@
 #import "motion.h"
 #import "mobile_res.h"
 #import "LightViewController.h"
+#import <kazmath/GL/matrix.h>
 
 // --- private interface ---------------------------------------------------------------------------
 
@@ -82,6 +83,7 @@
         kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
 
     mContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+		kmGLSetCurrentContext((void*)mContext);
     if (!mContext || ![EAGLContext setCurrentContext:mContext]) NSLog(@"Could not create render context");
 
     glGenFramebuffers(1, &mFramebuffer);

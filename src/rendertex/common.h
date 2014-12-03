@@ -17,14 +17,14 @@
 	\
 	value vclipping = Field(renderinf, 3); \
 	vclipping = Is_block(vclipping) ? Field(vclipping, 0) : 0; \
-	PRINT_DEBUG("vclipping %d", vclipping); \
+	PRINT_DEBUG("vclipping %ld", vclipping); \
 	renderbuf.clp = vclipping ? (clipping){ Double_field(vclipping, 0), Double_field(vclipping, 1), Double_field(vclipping, 2), Double_field(vclipping, 3) } : (clipping){ 0., 0., 1., 1. }; \
 	renderbuf.vp = (viewport) { Int_val(Field(renderinf, 5)), Int_val(Field(renderinf, 6)), renderbuf.width, renderbuf.height }; \
 }
 
 enum {
 	FRAMEBUF_APPLY_SKIP = 0, //do not apply buffer nor viewport, just push record in stack
-	FRAMEBUF_APPLY_BUF = 1, //bind framebuffer id only 
+	FRAMEBUF_APPLY_BUF = 1, //bind framebuffer id only
 	FRAMEBUF_APPLY_VIEWPORT = 1 << 2, //set viewport only
 	FRAMEBUF_APPLY_ALL = FRAMEBUF_APPLY_BUF | FRAMEBUF_APPLY_VIEWPORT //both framebuffer binding and viewport setting
 };

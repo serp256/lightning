@@ -22,6 +22,15 @@ extern value caml_gc_compaction(value v);
 #include <caml/threads.h>
 #endif
 
+
+#ifdef ANDROID
+#include "android/lightning_android.h"
+#define get_locale lightning_get_locale
+#elif IOS
+#import "ios/common_ios.h"
+#else
+#endif
+
 mlstage *mlstage_create(float width,float height) {
 	const char *ext = (char*)glGetString(GL_EXTENSIONS);
 	const char *ver = (char*)glGetString(GL_VERSION);
@@ -215,3 +224,4 @@ value ml_reg_extra_resources(value vfname) {
 
 	CAMLreturn(Val_unit);
 }
+

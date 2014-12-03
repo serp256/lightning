@@ -1,0 +1,1971 @@
+diff -urN ocaml-4.02.1-clean/Makefile ocaml-4.02.1-ios64/Makefile
+--- ocaml-4.02.1-clean/Makefile	2014-09-24 05:12:13.000000000 +0400
++++ ocaml-4.02.1-ios64/Makefile	2014-11-17 13:59:51.000000000 +0300
+@@ -15,18 +15,18 @@
+ include config/Makefile
+ include stdlib/StdlibModules
+ 
+-CAMLC=boot/ocamlrun boot/ocamlc -nostdlib -I boot
+-CAMLOPT=boot/ocamlrun ./ocamlopt -nostdlib -I stdlib -I otherlibs/dynlink
++CAMLC=ocamlc.opt -I boot
++CAMLOPT=ocamlopt.opt
+ COMPFLAGS=-strict-sequence -w +33..39+48 -warn-error A -bin-annot \
+           -safe-string $(INCLUDES)
+ LINKFLAGS=
+ 
+-CAMLYACC=boot/ocamlyacc
++CAMLYACC=ocamlyacc
+ YACCFLAGS=-v
+-CAMLLEX=boot/ocamlrun boot/ocamllex
+-CAMLDEP=boot/ocamlrun tools/ocamldep
++CAMLLEX=ocamllex.opt
++CAMLDEP=ocamldep.opt
+ DEPFLAGS=$(INCLUDES)
+-CAMLRUN=byterun/ocamlrun
++CAMLRUN=ocamlrun
+ SHELL=/bin/sh
+ MKDIR=mkdir -p
+ 
+@@ -113,14 +113,7 @@
+ 
+ PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
+ 
+-# For users who don't read the INSTALL file
+-defaultentry:
+-	@echo "Please refer to the installation instructions in file INSTALL."
+-	@echo "If you've just unpacked the distribution, something like"
+-	@echo "	./configure"
+-	@echo "	make world.opt"
+-	@echo "	make install"
+-	@echo "should work.  But see the file INSTALL for more details."
++defaultentry: runtime runtimeopt ocamlopt.opt libraryopt otherlibrariesopt 
+ 
+ # Recompile the system using the bootstrap compiler
+ all:
+@@ -307,6 +300,37 @@
+ 	  else $(MKDIR) $(INSTALL_STUBLIBDIR); fi
+ 	if test -d $(INSTALL_COMPLIBDIR); then : ; \
+ 	  else $(MKDIR) $(INSTALL_COMPLIBDIR); fi
++	cp VERSION $(INSTALL_LIBDIR)/
++	cd byterun; $(MAKE) installopt
++	cd asmrun; $(MAKE) install
++	cp ocamlopt.opt $(INSTALL_BINDIR)/ocamlopt.opt$(EXE)
++	ln -fs $(INSTALL_BINDIR)/ocamlopt.opt $(BINDIR)/ocamlopt
++	cd stdlib; $(MAKE) installopt
++	for i in $(OTHERLIBRARIES); do \
++	  (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; \
++	done
++	cp asmcomp/*.cmi $(INSTALL_COMPLIBDIR)
++	cp compilerlibs/ocamlcommon.cmxa compilerlibs/ocamlcommon.a \
++           compilerlibs/ocamloptcomp.cmxa compilerlibs/ocamloptcomp.a \
++           $(OPTSTART:.cmo=.cmx) $(OPTSTART:.cmo=.o) \
++           $(INSTALL_COMPLIBDIR)
++	cd $(INSTALL_COMPLIBDIR) && $(RANLIB) ocamlcommon.a ocamloptcomp.a
++	cd ocamldoc; $(MAKE) installopt
++	for i in $(OTHERLIBRARIES); \
++	  do (cd otherlibs/$$i; $(MAKE) installopt) || exit $$?; done
++	cp tools/ocamlmklib $(INSTALL_BINDIR)
++	cp config/Makefile $(INSTALL_LIBDIR)/Makefile.config
++
++
++installall:
++	if test -d $(INSTALL_BINDIR); then : ; \
++	  else $(INSTALL_MKDIR) $(BINDIR); fi
++	if test -d $(INSTALL_LIBDIR); then : ; \
++	  else $(INSTALL_MKDIR) $(LIBDIR); fi
++	if test -d $(INSTALL_STUBLIBDIR); then : ; \
++	  else $(INSTALL_MKDIR) $(STUBLIBDIR); fi
++	if test -d $(INSTALL_COMPLIBDIR); then : ; \
++	  else $(INSTALL_MKDIR) $(COMPLIBDIR); fi
+ 	if test -d $(INSTALL_MANDIR)/man$(MANEXT); then : ; \
+ 	  else $(MKDIR) $(INSTALL_MANDIR)/man$(MANEXT); fi
+ 	cp VERSION $(INSTALL_LIBDIR)/
+@@ -629,7 +653,7 @@
+ 
+ tools/cvt_emit: tools/cvt_emit.mll
+ 	cd tools; \
+-	$(MAKE) CAMLC="../$(CAMLRUN) ../boot/ocamlc -I ../stdlib" cvt_emit
++	$(MAKE) CAMLC="ocamlc" cvt_emit
+ 
+ # The "expunge" utility
+ 
+@@ -717,6 +741,9 @@
+ ocamltoolsopt: ocamlopt
+ 	cd tools; $(MAKE) opt
+ 
++ocamlmklib:
++	cd tools; $(MAKE) ocamlmklib
++
+ ocamltoolsopt.opt: ocamlc.opt ocamlyacc ocamllex asmcomp/cmx_format.cmi \
+                    asmcomp/printclambda.cmx
+ 	cd tools; $(MAKE) opt.opt
+@@ -754,7 +781,7 @@
+ 	  (cd otherlibs/$$i; $(MAKE) RUNTIME=$(RUNTIME) all) || exit $$?; \
+ 	done
+ 
+-otherlibrariesopt:
++otherlibrariesopt: ocamlmklib
+ 	for i in $(OTHERLIBRARIES); do \
+ 	  (cd otherlibs/$$i; $(MAKE) allopt) || exit $$?; \
+ 	done
+diff -urN ocaml-4.02.1-clean/asmcomp/amd64/emit.mlp ocaml-4.02.1-ios64/asmcomp/amd64/emit.mlp
+--- ocaml-4.02.1-clean/asmcomp/amd64/emit.mlp	2014-04-26 14:40:22.000000000 +0400
++++ ocaml-4.02.1-ios64/asmcomp/amd64/emit.mlp	2014-11-17 14:22:37.000000000 +0300
+@@ -81,10 +81,10 @@
+ (* Output a label *)
+ 
+ let emit_label lbl =
+-  emit_string ".L"; emit_int lbl
++  emit_string "L"; emit_int lbl
+ 
+ let emit_data_label lbl =
+-  emit_string ".Ld"; emit_int lbl
++  emit_string "Ld"; emit_int lbl
+ 
+ (* Output a .align directive. *)
+ 
+diff -urN ocaml-4.02.1-clean/asmcomp/arm/selection.ml ocaml-4.02.1-ios64/asmcomp/arm/selection.ml
+--- ocaml-4.02.1-clean/asmcomp/arm/selection.ml	2014-10-09 13:33:36.000000000 +0400
++++ ocaml-4.02.1-ios64/asmcomp/arm/selection.ml	2014-11-17 13:58:54.000000000 +0300
+@@ -192,10 +192,10 @@
+       (Iintop Imulh, args)
+   (* Turn integer division/modulus into runtime ABI calls *)
+   | (Cdivi, args) ->
+-      (Iextcall("__aeabi_idiv", false), args)
++      (Iextcall("__divsi3", false), args)
+   | (Cmodi, args) ->
+       (* See above for fix up of return register *)
+-      (Iextcall("__aeabi_idivmod", false), args)
++      (Iextcall("__modsi3", false), args)
+   (* Recognize 16-bit bswap instruction (ARMv6T2 because we need movt) *)
+   | (Cextcall("caml_bswap16_direct", _, _, _), args) when !arch >= ARMv6T2 ->
+       (Ispecific(Ibswap 16), args)
+diff -urN ocaml-4.02.1-clean/asmcomp/arm64/emit.mlp ocaml-4.02.1-ios64/asmcomp/arm64/emit.mlp
+--- ocaml-4.02.1-clean/asmcomp/arm64/emit.mlp	2014-06-04 19:14:16.000000000 +0400
++++ ocaml-4.02.1-ios64/asmcomp/arm64/emit.mlp	2014-12-03 09:50:22.000000000 +0300
+@@ -39,15 +39,17 @@
+ (* Output a label *)
+ 
+ let emit_label lbl =
+-  emit_string ".L"; emit_int lbl
++  (*emit_string ".L"; emit_int lbl*)
++  emit_string "L"; emit_int lbl
+ 
+ let emit_data_label lbl =
+-  emit_string ".Ld"; emit_int lbl
++  (*emit_string ".Ld"; emit_int lbl*)
++  emit_string "Ld"; emit_int lbl
+ 
+ (* Symbols *)
+ 
+ let emit_symbol s =
+-  Emitaux.emit_symbol '$' s
++  emit_string "_"; Emitaux.emit_symbol '$' s
+ 
+ (* Output a pseudo-register *)
+ 
+@@ -103,6 +105,11 @@
+ 
+ (* Output an addressing mode *)
+ 
++let emit_offset ofs =
++  if ofs > 0 then `+{emit_int ofs}`
++  else if ofs < 0 then `-{emit_int (-ofs)}`
++  else ()
++
+ let emit_symbol_offset s ofs =
+   emit_symbol s;
+   if ofs > 0 then `+{emit_int ofs}`
+@@ -114,8 +121,7 @@
+   | Iindexed ofs ->
+       `[{emit_reg r}, #{emit_int ofs}]`
+   | Ibased(s, ofs) ->
+-      `[{emit_reg r}, #:lo12:{emit_symbol_offset s ofs}]`
+-
++      `[{emit_reg r}, {emit_symbol s}@PAGEOFF{emit_offset ofs}]`
+ (* Record live pointers at call points *)
+ 
+ let record_frame_label live dbg =
+@@ -235,10 +241,10 @@
+    "a normalized binary floating point encoding with 1 sign bit, 4
+     bits of fraction and a 3-bit exponent" *)
+ 
+-let is_immediate_float bits =
+-  let exp = (Int64.(to_int (shift_right_logical bits 52)) land 0x7FF) - 1023 in
++let is_immediate_float bits = false
++  (*let exp = (Int64.(to_int (shift_right_logical bits 52)) land 0x7FF) - 1023 in
+   let mant = Int64.logand bits 0xF_FFFF_FFFF_FFFFL in
+-  exp >= -3 && exp <= 4 && Int64.logand mant 0xF_0000_0000_0000L = mant
++  exp >= -3 && exp <= 4 && Int64.logand mant 0xF_0000_0000_0000L = mant*)
+ 
+ (* Adjust sp (up or down) by the given byte amount *)
+ 
+@@ -295,11 +301,11 @@
+ 
+ let emit_load_symbol_addr dst s =
+   if (not !Clflags.dlcode) || Compilenv.symbol_in_current_unit s then begin
+-    `	adrp	{emit_reg dst}, {emit_symbol s}\n`;
+-    `	add	{emit_reg dst}, {emit_reg dst}, #:lo12:{emit_symbol s}\n`
++    `	adrp	{emit_reg dst}, {emit_symbol s}@PAGE\n`;
++    `	add	{emit_reg dst}, {emit_reg dst}, {emit_symbol s}@PAGEOFF\n`
+   end else begin
+-    `	adrp	{emit_reg dst}, :got:{emit_symbol s}\n`;
+-    `	ldr	{emit_reg dst}, [{emit_reg dst}, #:got_lo12:{emit_symbol s}]\n`
++    `	adrp	{emit_reg dst}, {emit_symbol s}@GOTPAGE\n`;
++    `	ldr	{emit_reg dst}, [{emit_reg dst}, {emit_symbol s}@GOTPAGEOFF]\n`
+   end
+ 
+ (* Output the assembly code for an instruction *)
+@@ -329,12 +335,14 @@
+         let b = Int64.bits_of_float f in
+         if b = 0L then
+           `	fmov	{emit_reg i.res.(0)}, xzr\n`
+-        else if is_immediate_float b then
+-          `	fmov	{emit_reg i.res.(0)}, #{emit_printf "0x%Lx" b}\n`
++        else if is_immediate_float b then begin
++					` ;fmov0\n`;
++          `	fmov	{emit_reg i.res.(0)}, #{emit_printf "0x%Lx" b}\n`;
++				end
+         else begin
+           let lbl = float_literal b in
+-          `	adrp	{emit_reg reg_tmp1}, {emit_label lbl}\n`;
+-          `	ldr	{emit_reg i.res.(0)}, [{emit_reg reg_tmp1}, #:lo12:{emit_label lbl}]\n`
++          `	adrp	{emit_reg reg_tmp1}, {emit_label lbl}@PAGE\n`;
++          `	ldr	{emit_reg i.res.(0)}, [{emit_reg reg_tmp1}, {emit_label lbl}@PAGEOFF]\n`
+         end
+     | Lop(Iconst_symbol s) ->
+         emit_load_symbol_addr i.res.(0) s
+@@ -367,7 +375,7 @@
+           match addr with
+           | Iindexed ofs -> i.arg.(0)
+           | Ibased(s, ofs) ->
+-              `	adrp	{emit_reg reg_tmp1}, {emit_symbol_offset s ofs}\n`;
++							` adrp {emit_reg reg_tmp1}, {emit_symbol s}@PAGE{emit_offset ofs}\n`;
+               reg_tmp1 in
+         begin match size with
+         | Byte_unsigned ->
+@@ -394,7 +402,7 @@
+           match addr with
+           | Iindexed ofs -> i.arg.(1)
+           | Ibased(s, ofs) ->
+-              `	adrp	{emit_reg reg_tmp1}, {emit_symbol_offset s ofs}\n`;
++							` adrp {emit_reg reg_tmp1}, {emit_symbol s}@PAGE{emit_offset ofs}\n`;
+               reg_tmp1 in
+         begin match size with
+         | Byte_unsigned | Byte_signed ->
+@@ -416,6 +424,7 @@
+           let lbl_call_gc = new_label() in
+           `{emit_label lbl_redo}:`;
+           `	sub	{emit_reg reg_alloc_ptr}, {emit_reg reg_alloc_ptr}, #{emit_int n}\n`;
++					`;cmp0\n`;
+           `	cmp	{emit_reg reg_alloc_ptr}, {emit_reg reg_alloc_limit}\n`;
+           `	add	{emit_reg i.res.(0)}, {emit_reg reg_alloc_ptr}, #8\n`;
+           `	b.lo	{emit_label lbl_call_gc}\n`;
+@@ -434,21 +443,31 @@
+           `{emit_label lbl_frame}:	add	{emit_reg i.res.(0)}, {emit_reg reg_alloc_ptr}, #8\n`
+         end
+     | Lop(Iintop(Icomp cmp)) ->
++					`;cmp1\n`;
+         `	cmp	{emit_reg i.arg.(0)}, {emit_reg i.arg.(1)}\n`;
+         `	cset	{emit_reg i.res.(0)}, {emit_string (name_for_comparison cmp)}\n`
+     | Lop(Iintop_imm(Icomp cmp, n)) ->
+-        `	cmp	{emit_reg i.arg.(0)}, #{emit_int n}\n`;
++					`;cmp2\n`;
++				if n < 0
++				then
++					let n = -n in
++						`	cmn	{emit_reg i.arg.(0)}, #{emit_int n}\n`
++				else
++					`	cmp	{emit_reg i.arg.(0)}, #{emit_int n}\n`;
+         `	cset	{emit_reg i.res.(0)}, {emit_string (name_for_comparison cmp)}\n`
+     | Lop(Iintop Icheckbound) ->
+         let lbl = bound_error_label i.dbg in
++					`;cmp3\n`;
+         `	cmp	{emit_reg i.arg.(0)}, {emit_reg i.arg.(1)}\n`;
+         `	b.ls	{emit_label lbl}\n`
+     | Lop(Iintop_imm(Icheckbound, n)) ->
+         let lbl = bound_error_label i.dbg in
++					`;cmp4\n`;
+         `	cmp	{emit_reg i.arg.(0)}, #{emit_int n}\n`;
+         `	b.ls	{emit_label lbl}\n`
+     | Lop(Ispecific(Ishiftcheckbound shift)) ->
+         let lbl = bound_error_label i.dbg in
++					`;cmp5\n`;
+         `	cmp	{emit_reg i.arg.(1)}, {emit_reg i.arg.(0)}, lsr #{emit_int shift}\n`;
+         `	b.cs	{emit_label lbl}\n`
+     | Lop(Iintop Imod) ->
+@@ -529,11 +548,18 @@
+         | Ifalsetest ->
+             `	cbz	{emit_reg i.arg.(0)}, {emit_label lbl}\n`
+         | Iinttest cmp ->
++					`;cmp6\n`;
+             `	cmp	{emit_reg i.arg.(0)}, {emit_reg i.arg.(1)}\n`;
+             let comp = name_for_comparison cmp in
+             `	b.{emit_string comp}	{emit_label lbl}\n`
+         | Iinttest_imm(cmp, n) ->
+-            `	cmp	{emit_reg i.arg.(0)}, #{emit_int n}\n`;
++					`;cmp7\n`;
++						if n < 0
++						then
++							let n = -n in
++								`	cmn	{emit_reg i.arg.(0)}, #{emit_int n}\n`
++						else
++							`	cmp	{emit_reg i.arg.(0)}, #{emit_int n}\n`;
+             let comp = name_for_comparison cmp in
+             `	b.{emit_string comp}	{emit_label lbl}\n`
+         | Ifloattest(cmp, neg) ->
+@@ -556,6 +582,7 @@
+             `	tbz	{emit_reg i.arg.(0)}, #0, {emit_label lbl}\n`
+         end
+     | Lcondbranch3(lbl0, lbl1, lbl2) ->
++					`;cmp8\n`;
+         `	cmp	{emit_reg i.arg.(0)}, #1\n`;
+         begin match lbl0 with
+           None -> ()
+@@ -596,7 +623,7 @@
+         `{emit_label lblnext}:\n`
+     | Lpushtrap ->
+         stack_offset := !stack_offset + 16;
+-        `	str	{emit_reg reg_trap_ptr}, [sp, -16]!\n`;
++        `	str	{emit_reg reg_trap_ptr}, [sp, #-16]!\n`;
+         `	str	{emit_reg reg_tmp1}, [sp, #8]\n`;
+         cfi_adjust_cfa_offset 16;
+         `	mov	{emit_reg reg_trap_ptr}, sp\n`
+@@ -646,7 +673,7 @@
+   `	.text\n`;
+   `	.align	3\n`;
+   `	.globl	{emit_symbol fundecl.fun_name}\n`;
+-  `	.type	{emit_symbol fundecl.fun_name}, %function\n`;
++  (*`	.type	{emit_symbol fundecl.fun_name}, %function\n`;*)
+   `{emit_symbol fundecl.fun_name}:\n`;
+   emit_debug_info fundecl.fun_dbg;
+   cfi_startproc();
+@@ -661,8 +688,8 @@
+   List.iter emit_call_gc !call_gc_sites;
+   List.iter emit_call_bound_error !bound_error_sites;
+   cfi_endproc();
+-  `	.type	{emit_symbol fundecl.fun_name}, %function\n`;
+-  `	.size	{emit_symbol fundecl.fun_name}, .-{emit_symbol fundecl.fun_name}\n`;
++  (*`	.type	{emit_symbol fundecl.fun_name}, %function\n`;*)
++  (*`	.size	{emit_symbol fundecl.fun_name}, .-{emit_symbol fundecl.fun_name}\n`;*)
+   emit_literals()
+ 
+ (* Emission of data *)
+@@ -716,7 +743,7 @@
+   `{emit_symbol lbl}:\n`;
+   emit_frames
+     { efa_label = (fun lbl ->
+-                       `	.type	{emit_label lbl}, %function\n`;
++                       (*`	.type	{emit_label lbl}, %function\n`;*)
+                        `	.quad	{emit_label lbl}\n`);
+       efa_16 = (fun n -> `	.short	{emit_int n}\n`);
+       efa_32 = (fun n -> `	.long	{emit_int32 n}\n`);
+@@ -726,8 +753,8 @@
+                            `	.long	{emit_label lbl} - . + {emit_int32 ofs}\n`);
+       efa_def_label = (fun lbl -> `{emit_label lbl}:\n`);
+       efa_string = (fun s -> emit_string_directive "	.asciz	" s) };
+-  `	.type	{emit_symbol lbl}, %object\n`;
+-  `	.size	{emit_symbol lbl}, .-{emit_symbol lbl}\n`;
++  (*`	.type	{emit_symbol lbl}, %object\n`;*)
++  (*`	.size	{emit_symbol lbl}, .-{emit_symbol lbl}\n`;*)
+   begin match Config.system with
+   | "linux" ->
+       (* Mark stack as non-executable *)
+diff -urN ocaml-4.02.1-clean/asmcomp/cmmgen.ml ocaml-4.02.1-ios64/asmcomp/cmmgen.ml
+--- ocaml-4.02.1-clean/asmcomp/cmmgen.ml	2014-08-18 22:26:49.000000000 +0400
++++ ocaml-4.02.1-ios64/asmcomp/cmmgen.ml	2014-11-24 17:26:23.000000000 +0300
+@@ -478,18 +478,22 @@
+ let set_field ptr n newval =
+   Cop(Cstore Word, [field_address ptr n; newval])
+ 
++(*let header ptr =
++  Cop(Cload Word, [Cop(Cadda, [ptr; Cconst_int(-size_int)])])*)
++
+ let header ptr =
+-  Cop(Cload Word, [Cop(Cadda, [ptr; Cconst_int(-size_int)])])
++  Cop(Cload Word, [Cop(Csuba, [ptr; Cconst_int(size_int)])])
+ 
+ let tag_offset =
+-  if big_endian then -1 else -size_int
++  if big_endian then 1 else size_int
+ 
+ let get_tag ptr =
+   if Proc.word_addressed then           (* If byte loads are slow *)
+     Cop(Cand, [header ptr; Cconst_int 255])
+   else                                  (* If byte loads are efficient *)
+     Cop(Cload Byte_unsigned,
+-        [Cop(Cadda, [ptr; Cconst_int(tag_offset)])])
++        (*[Cop(Cadda, [ptr; Cconst_int(tag_offset)])])*)
++        [Cop(Csuba, [ptr; Cconst_int(tag_offset)])])
+ 
+ let get_size ptr =
+   Cop(Clsr, [header ptr; Cconst_int 10])
+diff -urN ocaml-4.02.1-clean/asmcomp/liveness.ml ocaml-4.02.1-ios64/asmcomp/liveness.ml
+--- ocaml-4.02.1-clean/asmcomp/liveness.ml	2014-05-16 18:52:07.000000000 +0400
++++ ocaml-4.02.1-ios64/asmcomp/liveness.ml	2014-11-17 13:58:54.000000000 +0300
+@@ -54,7 +54,8 @@
+         let across =
+           match op with
+           | Icall_ind | Icall_imm _ | Iextcall _
+-          | Iintop Icheckbound | Iintop_imm(Icheckbound, _) ->
++          | Iintop Icheckbound | Iintop_imm(Icheckbound, _)
++					| Ispecific(Arch.Ishiftcheckbound _) ->
+               (* The function call may raise an exception, branching to the
+                  nearest enclosing try ... with. Similarly for bounds checks.
+                  Hence, everything that must be live at the beginning of
+diff -urN ocaml-4.02.1-clean/asmcomp/spill.ml ocaml-4.02.1-ios64/asmcomp/spill.ml
+--- ocaml-4.02.1-clean/asmcomp/spill.ml	2014-08-18 22:26:49.000000000 +0400
++++ ocaml-4.02.1-ios64/asmcomp/spill.ml	2014-11-17 13:58:54.000000000 +0300
+@@ -296,7 +296,8 @@
+       let before =
+         match i.desc with
+           Iop Icall_ind | Iop(Icall_imm _) | Iop(Iextcall _)
+-        | Iop(Iintop Icheckbound) | Iop(Iintop_imm(Icheckbound, _)) ->
++        | Iop(Iintop Icheckbound) | Iop(Iintop_imm(Icheckbound, _))
++        | Iop(Ispecific(Arch.Ishiftcheckbound _)) ->
+             Reg.Set.union before1 !spill_at_raise
+         | _ ->
+             before1 in
+diff -urN ocaml-4.02.1-clean/asmrun/arm64.S ocaml-4.02.1-ios64/asmrun/arm64.S
+--- ocaml-4.02.1-clean/asmrun/arm64.S	2014-08-09 02:10:40.000000000 +0400
++++ ocaml-4.02.1-ios64/asmrun/arm64.S	2014-11-25 12:40:11.000000000 +0300
+@@ -41,35 +41,25 @@
+ 
+ /* Macros to load and store global variables.  Destroy TMP2 */
+ 
+-#if defined(__PIC__)
+-
+-#define ADDRGLOBAL(reg,symb) \
+-        adrp    TMP2, :got:symb; \
+-        ldr     reg, [TMP2, #:got_lo12:symb]
+-
+-#define LOADGLOBAL(reg,symb) \
+-        ADDRGLOBAL(TMP2,symb); \
+-        ldr     reg, [TMP2]
+-
+-#define STOREGLOBAL(reg,symb) \
+-        ADDRGLOBAL(TMP2,symb); \
+-        str     reg, [TMP2]
+-
+-#else
+-
+-#define ADDRGLOBAL(reg,symb) \
+-        adrp    reg, symb; \
+-        add     reg, reg, #:lo12:symb
+-
+-#define LOADGLOBAL(reg,symb) \
+-        adrp    TMP2, symb; \
+-        ldr     reg, [TMP2, #:lo12:symb]
+-
+-#define STOREGLOBAL(reg,symb) \
+-        adrp    TMP2, symb; \
+-        str     reg, [TMP2, #:lo12:symb]
+-
+-#endif
++.macro  .type
++.endm
++.macro  .size
++.endm
++
++.macro ADDRGLOBAL reg,symb
++adrp    TMP2, \symb@GOTPAGE
++ldr     \reg, [TMP2, \symb@GOTPAGEOFF]
++.endm
++
++.macro LOADGLOBAL reg,symb
++ADDRGLOBAL TMP2,\symb
++ldr     \reg, [TMP2]
++.endm
++
++.macro STOREGLOBAL reg,symb
++ADDRGLOBAL TMP2,\symb
++str     \reg, [TMP2]
++.endm
+ 
+ /* Allocation functions and GC interface */
+ 
+@@ -77,346 +67,346 @@
+ caml_system__code_begin:
+ 
+         .align  2
+-        .globl  caml_call_gc
+-caml_call_gc:
++        .globl  _caml_call_gc
++_caml_call_gc:
+         CFI_STARTPROC
+         PROFILE
+     /* Record return address */
+-        STOREGLOBAL(x30, caml_last_return_address)
++        STOREGLOBAL x30,_caml_last_return_address
+     /* Record lowest stack address */
+         mov     TMP, sp
+-        STOREGLOBAL(TMP, caml_bottom_of_stack)
+-.Lcaml_call_gc:
++        STOREGLOBAL TMP,_caml_bottom_of_stack
++Lcaml_call_gc:
+     /* Set up stack space, saving return address and frame pointer */
+     /* (2 regs RA/GP, 24 allocatable int regs, 24 caller-save float regs) * 8 */
+-        stp     x29, x30, [sp, -400]!
++        stp     x29, x30, [sp, #-400]!
+         CFI_ADJUST(400)
+         add     x29, sp, #0
+     /* Save allocatable integer registers on the stack, in the order
+        given in proc.ml */
+-        stp     x0, x1, [sp, 16]
+-        stp     x2, x3, [sp, 32]
+-        stp     x4, x5, [sp, 48]
+-        stp     x6, x7, [sp, 64]
+-        stp     x8, x9, [sp, 80]
+-        stp     x10, x11, [sp, 96]
+-        stp     x12, x13, [sp, 112]
+-        stp     x14, x15, [sp, 128]
+-        stp     x19, x20, [sp, 144]
+-        stp     x21, x22, [sp, 160]
+-        stp     x23, x24, [sp, 176]
+-        str     x25, [sp, 192]
++        stp     x0, x1, [sp, #16]
++        stp     x2, x3, [sp, #32]
++        stp     x4, x5, [sp, #48]
++        stp     x6, x7, [sp, #64]
++        stp     x8, x9, [sp, #80]
++        stp     x10, x11, [sp, #96]
++        stp     x12, x13, [sp, #112]
++        stp     x14, x15, [sp, #128]
++        stp     x19, x20, [sp, #144]
++        stp     x21, x22, [sp, #160]
++        stp     x23, x24, [sp, #176]
++        str     x25, [sp, #192]
+      /* Save caller-save floating-point registers on the stack
+-        (callee-saves are preserved by caml_garbage_collection) */
+-        stp     d0, d1, [sp, 208]
+-        stp     d2, d3, [sp, 224]
+-        stp     d4, d5, [sp, 240]
+-        stp     d6, d7, [sp, 256]
+-        stp     d16, d17, [sp, 272]
+-        stp     d18, d19, [sp, 288]
+-        stp     d20, d21, [sp, 304]
+-        stp     d22, d23, [sp, 320]
+-        stp     d24, d25, [sp, 336]
+-        stp     d26, d27, [sp, 352]
+-        stp     d28, d29, [sp, 368]
+-        stp     d30, d31, [sp, 384]
+-    /* Store pointer to saved integer registers in caml_gc_regs */
++        (callee-saves are preserved by _caml_garbage_collection) */
++        stp     d0, d1, [sp, #208]
++        stp     d2, d3, [sp, #224]
++        stp     d4, d5, [sp, #240]
++        stp     d6, d7, [sp, #256]
++        stp     d16, d17, [sp, #272]
++        stp     d18, d19, [sp, #288]
++        stp     d20, d21, [sp, #304]
++        stp     d22, d23, [sp, #320]
++        stp     d24, d25, [sp, #336]
++        stp     d26, d27, [sp, #352]
++        stp     d28, d29, [sp, #368]
++        stp     d30, d31, [sp, #384]
++    /* Store pointer to saved integer registers in _caml_gc_regs */
+         add     TMP, sp, #16
+-        STOREGLOBAL(TMP, caml_gc_regs)
++        STOREGLOBAL TMP,_caml_gc_regs
+     /* Save current allocation pointer for debugging purposes */
+-        STOREGLOBAL(ALLOC_PTR, caml_young_ptr)
++        STOREGLOBAL ALLOC_PTR,_caml_young_ptr
+     /* Save trap pointer in case an exception is raised during GC */
+-        STOREGLOBAL(TRAP_PTR, caml_exception_pointer)
++        STOREGLOBAL TRAP_PTR,_caml_exception_pointer
+     /* Call the garbage collector */
+-        bl      caml_garbage_collection
++        bl      _caml_garbage_collection
+     /* Restore registers */
+-        ldp     x0, x1, [sp, 16]
+-        ldp     x2, x3, [sp, 32]
+-        ldp     x4, x5, [sp, 48]
+-        ldp     x6, x7, [sp, 64]
+-        ldp     x8, x9, [sp, 80]
+-        ldp     x10, x11, [sp, 96]
+-        ldp     x12, x13, [sp, 112]
+-        ldp     x14, x15, [sp, 128]
+-        ldp     x19, x20, [sp, 144]
+-        ldp     x21, x22, [sp, 160]
+-        ldp     x23, x24, [sp, 176]
+-        ldr     x25, [sp, 192]
+-        ldp     d0, d1, [sp, 208]
+-        ldp     d2, d3, [sp, 224]
+-        ldp     d4, d5, [sp, 240]
+-        ldp     d6, d7, [sp, 256]
+-        ldp     d16, d17, [sp, 272]
+-        ldp     d18, d19, [sp, 288]
+-        ldp     d20, d21, [sp, 304]
+-        ldp     d22, d23, [sp, 320]
+-        ldp     d24, d25, [sp, 336]
+-        ldp     d26, d27, [sp, 352]
+-        ldp     d28, d29, [sp, 368]
+-        ldp     d30, d31, [sp, 384]
++        ldp     x0, x1, [sp, #16]
++        ldp     x2, x3, [sp, #32]
++        ldp     x4, x5, [sp, #48]
++        ldp     x6, x7, [sp, #64]
++        ldp     x8, x9, [sp, #80]
++        ldp     x10, x11, [sp, #96]
++        ldp     x12, x13, [sp, #112]
++        ldp     x14, x15, [sp, #128]
++        ldp     x19, x20, [sp, #144]
++        ldp     x21, x22, [sp, #160]
++        ldp     x23, x24, [sp, #176]
++        ldr     x25, [sp, #192]
++        ldp     d0, d1, [sp, #208]
++        ldp     d2, d3, [sp, #224]
++        ldp     d4, d5, [sp, #240]
++        ldp     d6, d7, [sp, #256]
++        ldp     d16, d17, [sp, #272]
++        ldp     d18, d19, [sp, #288]
++        ldp     d20, d21, [sp, #304]
++        ldp     d22, d23, [sp, #320]
++        ldp     d24, d25, [sp, #336]
++        ldp     d26, d27, [sp, #352]
++        ldp     d28, d29, [sp, #368]
++        ldp     d30, d31, [sp, #384]
+     /* Reload new allocation pointer and allocation limit */
+-        LOADGLOBAL(ALLOC_PTR, caml_young_ptr)
+-        LOADGLOBAL(ALLOC_LIMIT, caml_young_limit)
++        LOADGLOBAL ALLOC_PTR,_caml_young_ptr
++        LOADGLOBAL ALLOC_LIMIT,_caml_young_limit
+     /* Free stack space and return to caller */
+         ldp     x29, x30, [sp], 400
+         ret
+         CFI_ENDPROC
+-        .type   caml_call_gc, %function
+-        .size   caml_call_gc, .-caml_call_gc
++        .type   _caml_call_gc, %function
++        .size   _caml_call_gc, .-_caml_call_gc
+ 
+         .align  2
+-        .globl  caml_alloc1
+-caml_alloc1:
++        .globl  _caml_alloc1
++_caml_alloc1:
+         CFI_STARTPROC
+         PROFILE
+ 1:      sub     ALLOC_PTR, ALLOC_PTR, #16
+         cmp     ALLOC_PTR, ALLOC_LIMIT
+         b.lo    2f
+         ret
+-2:      stp     x29, x30, [sp, -16]!
++2:      stp     x29, x30, [sp, #-16]!
+         CFI_ADJUST(16)
+     /* Record the lowest address of the caller's stack frame.  This is the address
+        immediately above the pair of words (x29 and x30) we just pushed.  Those must
+-       not be included since otherwise the distance from [caml_bottom_of_stack] to the
++       not be included since otherwise the distance from [_caml_bottom_of_stack] to the
+        highest address in the caller's stack frame won't match the frame size contained
+        in the relevant frame descriptor. */
+         add     x29, sp, #16
+-        STOREGLOBAL(x29, caml_bottom_of_stack)
++        STOREGLOBAL x29,_caml_bottom_of_stack
+         add     x29, sp, #0
+     /* Record return address */
+-        STOREGLOBAL(x30, caml_last_return_address)
++        STOREGLOBAL x30,_caml_last_return_address
+     /* Call GC */
+-        bl      .Lcaml_call_gc
++        bl      Lcaml_call_gc
+     /* Restore return address */
+         ldp     x29, x30, [sp], 16
+         CFI_ADJUST(-16)
+     /* Try again */
+         b       1b
+         CFI_ENDPROC
+-        .type   caml_alloc1, %function
+-        .size   caml_alloc1, .-caml_alloc1
++        .type   _caml_alloc1, %function
++        .size   _caml_alloc1, .-caml_alloc1
+ 
+         .align  2
+-        .globl  caml_alloc2
+-caml_alloc2:
++        .globl  _caml_alloc2
++_caml_alloc2:
+         CFI_STARTPROC
+         PROFILE
+ 1:      sub     ALLOC_PTR, ALLOC_PTR, #24
+         cmp     ALLOC_PTR, ALLOC_LIMIT
+         b.lo    2f
+         ret
+-2:      stp     x29, x30, [sp, -16]!
++2:      stp     x29, x30, [sp, #-16]!
+         CFI_ADJUST(16)
+     /* Record the lowest address of the caller's stack frame.  See comment above. */
+         add     x29, sp, #16
+-        STOREGLOBAL(x29, caml_bottom_of_stack)
++        STOREGLOBAL x29,_caml_bottom_of_stack
+         add     x29, sp, #0
+     /* Record return address */
+-        STOREGLOBAL(x30, caml_last_return_address)
++        STOREGLOBAL x30,_caml_last_return_address
+     /* Call GC */
+-        bl      .Lcaml_call_gc
++        bl      Lcaml_call_gc
+     /* Restore return address */
+         ldp     x29, x30, [sp], 16
+         CFI_ADJUST(-16)
+     /* Try again */
+         b       1b
+         CFI_ENDPROC
+-        .type   caml_alloc2, %function
+-        .size   caml_alloc2, .-caml_alloc2
++        .type   _caml_alloc2, %function
++        .size   _caml_alloc2, .-caml_alloc2
+ 
+         .align  2
+-        .globl  caml_alloc3
+-caml_alloc3:
++        .globl  _caml_alloc3
++_caml_alloc3:
+         CFI_STARTPROC
+         PROFILE
+ 1:      sub     ALLOC_PTR, ALLOC_PTR, #32
+         cmp     ALLOC_PTR, ALLOC_LIMIT
+         b.lo    2f
+         ret
+-2:      stp     x29, x30, [sp, -16]!
++2:      stp     x29, x30, [sp, #-16]!
+         CFI_ADJUST(16)
+     /* Record the lowest address of the caller's stack frame.  See comment above. */
+         add     x29, sp, #16
+-        STOREGLOBAL(x29, caml_bottom_of_stack)
++        STOREGLOBAL x29,_caml_bottom_of_stack
+         add     x29, sp, #0
+     /* Record return address */
+-        STOREGLOBAL(x30, caml_last_return_address)
++        STOREGLOBAL x30,_caml_last_return_address
+     /* Call GC */
+-        bl      .Lcaml_call_gc
++        bl      Lcaml_call_gc
+     /* Restore return address */
+         ldp     x29, x30, [sp], 16
+         CFI_ADJUST(-16)
+     /* Try again */
+         b       1b
+         CFI_ENDPROC
+-        .type   caml_alloc2, %function
+-        .size   caml_alloc2, .-caml_alloc2
++        .type   _caml_alloc2, %function
++        .size   _caml_alloc2, .-caml_alloc2
+ 
+         .align  2
+-        .globl  caml_allocN
+-caml_allocN:
++        .globl  _caml_allocN
++_caml_allocN:
+         CFI_STARTPROC
+         PROFILE
+ 1:      sub     ALLOC_PTR, ALLOC_PTR, ARG
+         cmp     ALLOC_PTR, ALLOC_LIMIT
+         b.lo    2f
+         ret
+-2:      stp     x29, x30, [sp, -16]!
++2:      stp     x29, x30, [sp, #-16]!
+         CFI_ADJUST(16)
+     /* Record the lowest address of the caller's stack frame.  See comment above. */
+         add     x29, sp, #16
+-        STOREGLOBAL(x29, caml_bottom_of_stack)
++        STOREGLOBAL x29,_caml_bottom_of_stack
+         add     x29, sp, #0
+     /* Record return address */
+-        STOREGLOBAL(x30, caml_last_return_address)
++        STOREGLOBAL x30,_caml_last_return_address
+     /* Call GC.  This preserves ARG */
+-        bl      .Lcaml_call_gc
++        bl      Lcaml_call_gc
+     /* Restore return address */
+         ldp     x29, x30, [sp], 16
+         CFI_ADJUST(-16)
+     /* Try again */
+         b       1b
+         CFI_ENDPROC
+-        .type   caml_allocN, %function
+-        .size   caml_allocN, .-caml_allocN
++        .type   _caml_allocN, %function
++        .size   _caml_allocN, .-caml_allocN
+ 
+ /* Call a C function from OCaml */
+ /* Function to call is in ARG */
+ 
+         .align  2
+-        .globl  caml_c_call
+-caml_c_call:
++        .globl  _caml_c_call
++_caml_c_call:
+         CFI_STARTPROC
+         PROFILE
+     /* Preserve return address in callee-save register x19 */
+         mov     x19, x30
+     /* Record lowest stack address and return address */
+-        STOREGLOBAL(x30, caml_last_return_address)
++        STOREGLOBAL x30,_caml_last_return_address
+         add     TMP, sp, #0
+-        STOREGLOBAL(TMP, caml_bottom_of_stack)
++        STOREGLOBAL TMP,_caml_bottom_of_stack
+     /* Make the exception handler alloc ptr available to the C code */
+-        STOREGLOBAL(ALLOC_PTR, caml_young_ptr)
+-        STOREGLOBAL(TRAP_PTR, caml_exception_pointer)
++        STOREGLOBAL ALLOC_PTR,_caml_young_ptr
++        STOREGLOBAL TRAP_PTR,_caml_exception_pointer
+     /* Call the function */
+         blr     ARG
+     /* Reload alloc ptr and alloc limit */
+-        LOADGLOBAL(ALLOC_PTR, caml_young_ptr)
+-        LOADGLOBAL(ALLOC_LIMIT, caml_young_limit)
++        LOADGLOBAL ALLOC_PTR,_caml_young_ptr
++        LOADGLOBAL ALLOC_LIMIT,_caml_young_limit
+     /* Return */
+         ret     x19
+         CFI_ENDPROC
+-        .type   caml_c_call, %function
+-        .size   caml_c_call, .-caml_c_call
++        .type   _caml_c_call, %function
++        .size   _caml_c_call, .-caml_c_call
+ 
+ /* Start the OCaml program */
+ 
+         .align  2
+-        .globl  caml_start_program
+-caml_start_program:
++        .globl  _caml_start_program
++_caml_start_program:
+         CFI_STARTPROC
+         PROFILE
+-        ADDRGLOBAL(ARG, caml_program)
++        ADDRGLOBAL ARG,_caml_program
+ 
+ /* Code shared with caml_callback* */
+ /* Address of OCaml code to call is in ARG */
+ /* Arguments to the OCaml code are in x0...x7 */
+ 
+-.Ljump_to_caml:
++Ljump_to_caml:
+     /* Set up stack frame and save callee-save registers */
+-        stp     x29, x30, [sp, -160]!
++        stp     x29, x30, [sp, #-160]!
+         CFI_ADJUST(160)
+         add     x29, sp, #0
+-        stp     x19, x20, [sp, 16]
+-        stp     x21, x22, [sp, 32]
+-        stp     x23, x24, [sp, 48]
+-        stp     x25, x26, [sp, 64]
+-        stp     x27, x28, [sp, 80]
+-        stp     d8, d9, [sp, 96]
+-        stp     d10, d11, [sp, 112]
+-        stp     d12, d13, [sp, 128]
+-        stp     d14, d15, [sp, 144]
++        stp     x19, x20, [sp, #16]
++        stp     x21, x22, [sp, #32]
++        stp     x23, x24, [sp, #48]
++        stp     x25, x26, [sp, #64]
++        stp     x27, x28, [sp, #80]
++        stp     d8, d9, [sp, #96]
++        stp     d10, d11, [sp, #112]
++        stp     d12, d13, [sp, #128]
++        stp     d14, d15, [sp, #144]
+     /* Setup a callback link on the stack */
+-        LOADGLOBAL(x8, caml_bottom_of_stack)
+-        LOADGLOBAL(x9, caml_last_return_address)
+-        LOADGLOBAL(x10, caml_gc_regs)
+-        stp     x8, x9, [sp, -32]!     /* 16-byte alignment */
++        LOADGLOBAL x8,_caml_bottom_of_stack
++        LOADGLOBAL x9,_caml_last_return_address
++        LOADGLOBAL x10,_caml_gc_regs
++        stp     x8, x9, [sp, #-32]!     /* 16-byte alignment */
+         CFI_ADJUST(32)
+-        str     x10, [sp, 16]
++        str     x10, [sp, #16]
+     /* Setup a trap frame to catch exceptions escaping the OCaml code */
+-        LOADGLOBAL(x8, caml_exception_pointer)
+-        adr     x9, .Ltrap_handler
+-        stp     x8, x9, [sp, -16]!
++        LOADGLOBAL x8,_caml_exception_pointer
++        adr     x9, Ltrap_handler
++        stp     x8, x9, [sp, #-16]!
+         CFI_ADJUST(16)
+         add     TRAP_PTR, sp, #0
+     /* Reload allocation pointers */
+-        LOADGLOBAL(ALLOC_PTR, caml_young_ptr)
+-        LOADGLOBAL(ALLOC_LIMIT, caml_young_limit)
++        LOADGLOBAL ALLOC_PTR,_caml_young_ptr
++        LOADGLOBAL ALLOC_LIMIT,_caml_young_limit
+     /* Call the OCaml code */
+         blr     ARG
+-.Lcaml_retaddr:
+-    /* Pop the trap frame, restoring caml_exception_pointer */
++Lcaml_retaddr:
++    /* Pop the trap frame, restoring _caml_exception_pointer */
+         ldr     x8, [sp], 16
+         CFI_ADJUST(-16)
+-        STOREGLOBAL(x8, caml_exception_pointer)
++        STOREGLOBAL x8,_caml_exception_pointer
+     /* Pop the callback link, restoring the global variables */
+-.Lreturn_result:
+-        ldr     x10, [sp, 16]
++Lreturn_result:
++        ldr     x10, [sp, #16]
+         ldp     x8, x9, [sp], 32
+         CFI_ADJUST(-32)
+-        STOREGLOBAL(x8, caml_bottom_of_stack)
+-        STOREGLOBAL(x9, caml_last_return_address)
+-        STOREGLOBAL(x10, caml_gc_regs)
++        STOREGLOBAL x8,_caml_bottom_of_stack
++        STOREGLOBAL x9,_caml_last_return_address
++        STOREGLOBAL x10,_caml_gc_regs
+     /* Update allocation pointer */
+-        STOREGLOBAL(ALLOC_PTR, caml_young_ptr)
++        STOREGLOBAL ALLOC_PTR,_caml_young_ptr
+     /* Reload callee-save registers and return address */
+-        ldp     x19, x20, [sp, 16]
+-        ldp     x21, x22, [sp, 32]
+-        ldp     x23, x24, [sp, 48]
+-        ldp     x25, x26, [sp, 64]
+-        ldp     x27, x28, [sp, 80]
+-        ldp     d8, d9, [sp, 96]
+-        ldp     d10, d11, [sp, 112]
+-        ldp     d12, d13, [sp, 128]
+-        ldp     d14, d15, [sp, 144]
++        ldp     x19, x20, [sp, #16]
++        ldp     x21, x22, [sp, #32]
++        ldp     x23, x24, [sp, #48]
++        ldp     x25, x26, [sp, #64]
++        ldp     x27, x28, [sp, #80]
++        ldp     d8, d9, [sp, #96]
++        ldp     d10, d11, [sp, #112]
++        ldp     d12, d13, [sp, #128]
++        ldp     d14, d15, [sp, #144]
+         ldp     x29, x30, [sp], 160
+         CFI_ADJUST(-160)
+     /* Return to C caller */
+         ret
+         CFI_ENDPROC
+-        .type   .Lcaml_retaddr, %function
+-        .size   .Lcaml_retaddr, .-.Lcaml_retaddr
+-        .type   caml_start_program, %function
+-        .size   caml_start_program, .-caml_start_program
++        .type   Lcaml_retaddr, %function
++        .size   Lcaml_retaddr, .-.Lcaml_retaddr
++        .type   _caml_start_program, %function
++        .size   _caml_start_program, .-caml_start_program
+ 
+ /* The trap handler */
+ 
+         .align  2
+-.Ltrap_handler:
++Ltrap_handler:
+         CFI_STARTPROC
+     /* Save exception pointer */
+-        STOREGLOBAL(TRAP_PTR, caml_exception_pointer)
++        STOREGLOBAL TRAP_PTR,_caml_exception_pointer
+     /* Encode exception bucket as an exception result */
+         orr     x0, x0, #2
+     /* Return it */
+-        b       .Lreturn_result
++        b       Lreturn_result
+         CFI_ENDPROC
+-        .type   .Ltrap_handler, %function
+-        .size   .Ltrap_handler, .-.Ltrap_handler
++        .type   Ltrap_handler, %function
++        .size   Ltrap_handler, .-.Ltrap_handler
+ 
+ /* Raise an exception from OCaml */
+ 
+         .align  2
+-        .globl  caml_raise_exn
+-caml_raise_exn:
++        .globl  _caml_raise_exn
++_caml_raise_exn:
+         CFI_STARTPROC
+         PROFILE
+     /* Test if backtrace is active */
+-        LOADGLOBAL(TMP, caml_backtrace_active)
++        LOADGLOBAL TMP,_caml_backtrace_active
+         cbnz     TMP, 2f
+ 1:  /* Cut stack at current trap handler */
+         mov     sp, TRAP_PTR
+     /* Pop previous handler and jump to it */
+-        ldr     TMP, [sp, 8]
++        ldr     TMP, [sp, #8]
+         ldr     TRAP_PTR, [sp], 16
+         br      TMP
+ 2:  /* Preserve exception bucket in callee-save register x19 */
+@@ -426,54 +416,54 @@
+         mov     x1, x30        /* arg2: pc of raise */
+         add     x2, sp, #0     /* arg3: sp of raise */
+         mov     x3, TRAP_PTR   /* arg4: sp of handler */
+-        bl      caml_stash_backtrace
++        bl      _caml_stash_backtrace
+     /* Restore exception bucket and raise */
+         mov     x0, x19
+         b       1b
+         CFI_ENDPROC
+-        .type   caml_raise_exn, %function
+-        .size   caml_raise_exn, .-caml_raise_exn
++        .type   _caml_raise_exn, %function
++        .size   _caml_raise_exn, .-caml_raise_exn
+ 
+ /* Raise an exception from C */
+ 
+         .align  2
+-        .globl  caml_raise_exception
+-caml_raise_exception:
++        .globl  _caml_raise_exception
++_caml_raise_exception:
+         CFI_STARTPROC
+         PROFILE
+     /* Reload trap ptr, alloc ptr and alloc limit */
+-        LOADGLOBAL(TRAP_PTR, caml_exception_pointer)
+-        LOADGLOBAL(ALLOC_PTR, caml_young_ptr)
+-        LOADGLOBAL(ALLOC_LIMIT, caml_young_limit)
++        LOADGLOBAL TRAP_PTR,_caml_exception_pointer
++        LOADGLOBAL ALLOC_PTR,_caml_young_ptr
++        LOADGLOBAL ALLOC_LIMIT,_caml_young_limit
+     /* Test if backtrace is active */
+-        LOADGLOBAL(TMP, caml_backtrace_active)
++        LOADGLOBAL TMP,_caml_backtrace_active
+         cbnz    TMP, 2f
+ 1:  /* Cut stack at current trap handler */
+         mov     sp, TRAP_PTR
+     /* Pop previous handler and jump to it */
+-        ldr     TMP, [sp, 8]
++        ldr     TMP, [sp, #8]
+         ldr     TRAP_PTR, [sp], 16
+         br      TMP
+ 2:  /* Preserve exception bucket in callee-save register x19 */
+         mov     x19, x0
+     /* Stash the backtrace */
+                                /* arg1: exn bucket, already in x0 */
+-        LOADGLOBAL(x1, caml_last_return_address)   /* arg2: pc of raise */
+-        LOADGLOBAL(x2, caml_bottom_of_stack)       /* arg3: sp of raise */
++        LOADGLOBAL x1,_caml_last_return_address   /* arg2: pc of raise,*/
++        LOADGLOBAL x2,_caml_bottom_of_stack       /* arg3: sp of raise,*/
+         mov     x3, TRAP_PTR   /* arg4: sp of handler */
+-        bl      caml_stash_backtrace
++        bl      _caml_stash_backtrace
+     /* Restore exception bucket and raise */
+         mov     x0, x19
+         b       1b
+         CFI_ENDPROC
+-        .type   caml_raise_exception, %function
+-        .size   caml_raise_exception, .-caml_raise_exception
++        .type   _caml_raise_exception, %function
++        .size   _caml_raise_exception, .-caml_raise_exception
+ 
+ /* Callback from C to OCaml */
+ 
+         .align  2
+-        .globl  caml_callback_exn
+-caml_callback_exn:
++        .globl  _caml_callback_exn
++_caml_callback_exn:
+         CFI_STARTPROC
+         PROFILE
+     /* Initial shuffling of arguments (x0 = closure, x1 = first arg) */
+@@ -481,14 +471,14 @@
+         mov     x0, x1          /* x0 = first arg */
+         mov     x1, TMP         /* x1 = closure environment */
+         ldr     ARG, [TMP]      /* code pointer */
+-        b       .Ljump_to_caml
++        b       Ljump_to_caml
+         CFI_ENDPROC
+-        .type   caml_callback_exn, %function
+-        .size   caml_callback_exn, .-caml_callback_exn
++        .type   _caml_callback_exn, %function
++        .size   _caml_callback_exn, .-caml_callback_exn
+ 
+         .align  2
+-        .globl  caml_callback2_exn
+-caml_callback2_exn:
++        .globl  _caml_callback2_exn
++_caml_callback2_exn:
+         CFI_STARTPROC
+         PROFILE
+     /* Initial shuffling of arguments (x0 = closure, x1 = arg1, x2 = arg2) */
+@@ -496,15 +486,15 @@
+         mov     x0, x1          /* x0 = first arg */
+         mov     x1, x2          /* x1 = second arg */
+         mov     x2, TMP         /* x2 = closure environment */
+-        ADDRGLOBAL(ARG, caml_apply2)
+-        b       .Ljump_to_caml
++        ADDRGLOBAL ARG,_caml_apply2
++        b       Ljump_to_caml
+         CFI_ENDPROC
+-        .type   caml_callback2_exn, %function
+-        .size   caml_callback2_exn, .-caml_callback2_exn
++        .type   _caml_callback2_exn, %function
++        .size   _caml_callback2_exn, .-caml_callback2_exn
+ 
+         .align  2
+-        .globl  caml_callback3_exn
+-caml_callback3_exn:
++        .globl  _caml_callback3_exn
++_caml_callback3_exn:
+         CFI_STARTPROC
+         PROFILE
+     /* Initial shuffling of arguments */
+@@ -514,24 +504,24 @@
+         mov     x1, x2          /* x1 = second arg */
+         mov     x2, x3          /* x2 = third arg */
+         mov     x3, TMP         /* x3 = closure environment */
+-        ADDRGLOBAL(ARG, caml_apply3)
+-        b       .Ljump_to_caml
++        ADDRGLOBAL ARG,_caml_apply3
++        b       Ljump_to_caml
+         CFI_ENDPROC
+-        .type   caml_callback3_exn, %function
+-        .size   caml_callback3_exn, .-caml_callback3_exn
++        .type   _caml_callback3_exn, %function
++        .size   _caml_callback3_exn, .-caml_callback3_exn
+ 
+         .align  2
+-        .globl  caml_ml_array_bound_error
+-caml_ml_array_bound_error:
++        .globl  _caml_ml_array_bound_error
++_caml_ml_array_bound_error:
+         CFI_STARTPROC
+         PROFILE
+     /* Load address of [caml_array_bound_error] in ARG */
+-        ADDRGLOBAL(ARG, caml_array_bound_error)
++        ADDRGLOBAL ARG,_caml_array_bound_error
+     /* Call that function */
+-        b       caml_c_call
++        b       _caml_c_call
+         CFI_ENDPROC
+-        .type   caml_ml_array_bound_error, %function
+-        .size   caml_ml_array_bound_error, .-caml_ml_array_bound_error
++        .type   _caml_ml_array_bound_error, %function
++        .size   _caml_ml_array_bound_error, .-caml_ml_array_bound_error
+ 
+         .globl  caml_system__code_end
+ caml_system__code_end:
+@@ -540,12 +530,12 @@
+ 
+         .data
+         .align  3
+-        .globl  caml_system__frametable
+-caml_system__frametable:
++        .globl  _caml_system__frametable
++_caml_system__frametable:
+         .quad   1               /* one descriptor */
+-        .quad   .Lcaml_retaddr  /* return address into callback */
++        .quad   Lcaml_retaddr  /* return address into callback */
+         .short  -1              /* negative frame size => use callback link */
+         .short  0               /* no roots */
+         .align  3
+-        .type   caml_system__frametable, %object
+-        .size   caml_system__frametable, .-caml_system__frametable
++        .type   _caml_system__frametable, %object
++        .size   _caml_system__frametable, .-caml_system__frametable
+diff -urN ocaml-4.02.1-clean/byterun/Makefile.common ocaml-4.02.1-ios64/byterun/Makefile.common
+--- ocaml-4.02.1-clean/byterun/Makefile.common	2014-07-22 00:34:38.000000000 +0400
++++ ocaml-4.02.1-ios64/byterun/Makefile.common	2014-11-17 13:58:54.000000000 +0300
+@@ -67,6 +67,13 @@
+ 	cp ld.conf $(INSTALL_LIBDIR)/ld.conf
+ .PHONY: install
+ 
++installopt:
++	if test -d $(LIBDIR)/caml; then : ; else mkdir $(LIBDIR)/caml; fi
++	for i in $(PUBLIC_INCLUDES); do \
++		sed -f ../tools/cleanup-header $$i > $(LIBDIR)/caml/$$i; \
++  done
++.PHONY: installopt
++
+ install:: install-$(RUNTIMED)
+ 
+ install-noruntimed:
+diff -urN ocaml-4.02.1-clean/config/Makefile ocaml-4.02.1-ios64/config/Makefile
+--- ocaml-4.02.1-clean/config/Makefile	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.02.1-ios64/config/Makefile	2014-11-25 18:21:06.000000000 +0300
+@@ -0,0 +1,76 @@
++PREFIX=/usr/local/ocaml/ios64
++PLATFORM=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
++SDK=$(PLATFORM)/SDKs/iPhoneOS8.1.sdk
++BINDIR=$(PREFIX)/bin
++LIBDIR=$(PREFIX)/lib
++STUBLIBDIR=$(LIBDIR)/stublibs
++MANDIR=$(PREFIX)/man
++MANEXT=1
++RANLIB=$(PLATFORM)/usr/bin/ranlib
++RANLIBCMD=$(RANLIB)
++ARCMD=$(PLATFORM)/usr/bin/ar
++SHARPBANGSCRIPTS=true
++BNG_ARCH=generic
++BNG_ASM_LEVEL=0
++PTHREAD_LINK=-cclib -pthread
++LIBBFD_LINK=-lbfd -ldl -liberty -lz
++BYTECC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch arm64 -isysroot $(SDK) -miphoneos-version-min=7.0 -fmessage-length=0 -std=gnu99 -fpascal-strings -Os -fstrict-aliasing -fvisibility=hidden
++#
++BYTECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -g
++BYTECCLINKOPTS= -Wl
++BYTECCLIBS= -lpthread
++BYTECCRPATH=-Wl,-rpath,
++EXE=
++SUPPORTS_SHARED_LIBRARIES=false
++#SHAREDCCCOMPOPTS=-fPIC
++MKSHAREDLIBRPATH=-Wl,-rpath,
++NATDYNLINKOPTS=-Wl
++SYSLIB=-l$(1)
++#ml let syslib x = "-l"^x;;
++
++### How to build a static library
++MKLIB=$(ARCMD) rc $(1) $(2); $(RANLIB) $(1)
++#ml let mklib out files opts = Printf.sprintf "ar rc %s %s %s; ranlib %s" out opts files out;;
++ARCH=arm64
++MODEL=arm64
++SYSTEM=linux_eabihf
++NATIVECC=$(BYTECC)
++NATIVECCCOMPOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__ -g
++# -gdwarf-2 -fexceptions
++NATIVECCPROFOPTS=-Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__ARM_EABI__
++NATIVECCLINKOPTS=
++NATIVECCRPATH=-Wl,-rpath,
++NATIVECCLIBS= -lm  -ldl
++ASM=$(NATIVECC) -D__ARM_EABI__ -c
++ASPP=$(ASM)
++ASPPPROFFLAGS=-DPROFILING
++PROFILING=noprof
++DYNLINKOPTS= -ldl
++OTHERLIBRARIES=unix str num dynlink bigarray threads systhreads
++DEBUGGER=ocamldebugger
++CC_PROFILE=-pg
++SYSTHREAD_SUPPORT=false
++PARTIALLD=ld -r
++PACKLD=$(PARTIALLD) $(NATIVECCLINKOPTS) -o\ 
++DLLCCCOMPOPTS=
++IFLEXDIR=
++O=o
++A=a
++SO=so
++EXT_OBJ=.o
++EXT_ASM=.s
++EXT_LIB=.a
++EXT_DLL=.so
++EXTRALIBS=
++CCOMPTYPE=cc
++TOOLCHAIN=cc
++NATDYNLINK=false
++CMXS=cmxa
++MKEXE=$(NATIVECC) -miphoneos-version-min=7.0 -dead_strip -fobjc-link-runtime
++MKDLL=$(MKEXE)  -bundle -flat_namespace -undefined suppress
++MKMAINDLL=$(MKDLL)
++RUNTIMED=noruntimed
++ASM_CFI_SUPPORTED=true
++WITH_FRAME_POINTERS=false
++UNIX_OR_WIN32=unix
++UNIXLIB=unix
+diff -urN ocaml-4.02.1-clean/config/m.h ocaml-4.02.1-ios64/config/m.h
+--- ocaml-4.02.1-clean/config/m.h	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.02.1-ios64/config/m.h	2014-11-25 18:25:00.000000000 +0300
+@@ -0,0 +1,16 @@
++#ifndef __PIC__
++#  define ARCH_CODE32
++#endif
++#define ARCH_SIXTYFOUR
++#define SIZEOF_INT 4
++#define SIZEOF_LONG 8
++#define SIZEOF_PTR 8
++#define SIZEOF_SHORT 2
++#define ARCH_INT64_TYPE long long
++#define ARCH_UINT64_TYPE unsigned long long
++#define ARCH_INT64_PRINTF_FORMAT "ll"
++#undef ARCH_BIG_ENDIAN
++#undef ARCH_ALIGN_DOUBLE
++#undef ARCH_ALIGN_INT64
++#undef NONSTANDARD_DIV_MOD
++#define ASM_CFI_SUPPORTED
+diff -urN ocaml-4.02.1-clean/config/s.h ocaml-4.02.1-ios64/config/s.h
+--- ocaml-4.02.1-clean/config/s.h	1970-01-01 03:00:00.000000000 +0300
++++ ocaml-4.02.1-ios64/config/s.h	2014-11-17 13:58:54.000000000 +0300
+@@ -0,0 +1,51 @@
++#define OCAML_OS_TYPE "Unix"
++#define OCAML_STDLIB_DIR "/usr/local/ocaml/ios/4.00/lib"
++#define POSIX_SIGNALS
++#define HAS_C99_FLOAT_OPS
++#define HAS_GETRUSAGE
++#define HAS_TIMES
++#undef HAS_TERMCAP
++#define HAS_SOCKETS
++#define HAS_SOCKLEN_T
++#define HAS_INET_ATON
++#define HAS_IPV6
++#define HAS_UNISTD
++#define HAS_OFF_T
++#define HAS_DIRENT
++#define HAS_REWINDDIR
++#define HAS_LOCKF
++#define HAS_MKFIFO
++#define HAS_GETCWD
++#define HAS_GETWD
++#define HAS_GETPRIORITY
++#define HAS_UTIME
++#define HAS_UTIMES
++#define HAS_DUP2
++#define HAS_FCHMOD
++#define HAS_TRUNCATE
++#define HAS_SYS_SELECT_H
++#define HAS_SELECT
++#define HAS_SYMLINK
++#define HAS_WAITPID
++#define HAS_WAIT4
++#define HAS_GETGROUPS
++#define HAS_SETGROUPS
++#define HAS_INITGROUPS
++#define HAS_TERMIOS
++#define HAS_ASYNC_IO
++#define HAS_SETITIMER
++#define HAS_GETHOSTNAME
++#define HAS_UNAME
++#define HAS_GETTIMEOFDAY
++#define HAS_MKTIME
++#define HAS_SETSID
++#define HAS_PUTENV
++#define HAS_LOCALE
++#undef SUPPORT_DYNAMIC_LINKING
++#define HAS_MMAP
++#define HAS_PWRITE
++#undef HAS_GETHOSTBYNAME_R
++#undef HAS_GETHOSTBYADDR_R
++#undef HAS_STACK_OVERFLOW_DETECTION
++#define HAS_SIGWAIT
++#undef HAS_LIBBFD
+diff -urN ocaml-4.02.1-clean/driver/optmain.ml ocaml-4.02.1-ios64/driver/optmain.ml
+--- ocaml-4.02.1-clean/driver/optmain.ml	2014-08-28 20:24:52.000000000 +0400
++++ ocaml-4.02.1-ios64/driver/optmain.ml	2014-11-17 13:58:54.000000000 +0300
+@@ -45,11 +45,17 @@
+     ccobjs := name :: !ccobjs
+   else if Filename.check_suffix name ".c" then begin
+     Optcompile.c_file name;
+-    ccobjs := (Filename.chop_suffix (Filename.basename name) ".c" ^ ext_obj)
++     ccobjs := (Filename.chop_suffix (Filename.basename name) ".c" ^ ext_obj)
++               :: !ccobjs
++   end
++  else if Filename.check_suffix name ".m" then begin
++    Optcompile.c_file name;
++    ccobjs := (Filename.chop_suffix (Filename.basename name) ".m" ^ ext_obj)
+               :: !ccobjs
+   end
+-  else
+-    raise(Arg.Bad("don't know what to do with " ^ name))
++   else
++     raise(Arg.Bad("don't know what to do with " ^ name))
++
+ 
+ let usage = "Usage: ocamlopt <options> <files>\nOptions are:"
+ 
+diff -urN ocaml-4.02.1-clean/otherlibs/Makefile ocaml-4.02.1-ios64/otherlibs/Makefile
+--- ocaml-4.02.1-clean/otherlibs/Makefile	2014-04-12 14:17:02.000000000 +0400
++++ ocaml-4.02.1-ios64/otherlibs/Makefile	2014-11-17 14:00:19.000000000 +0300
+@@ -13,8 +13,8 @@
+ 
+ # Common Makefile for otherlibs on the Unix ports
+ 
+-CAMLC=$(ROOTDIR)/boot/ocamlrun $(ROOTDIR)/ocamlc -nostdlib -I $(ROOTDIR)/stdlib
+-CAMLOPT=$(ROOTDIR)/boot/ocamlrun $(ROOTDIR)/ocamlopt -nostdlib \
++CAMLC=ocamlc.opt -nostdlib -I $(ROOTDIR)/stdlib
++CAMLOPT=$(ROOTDIR)/ocamlopt.opt -nostdlib \
+         -I $(ROOTDIR)/stdlib
+ CFLAGS=-I$(ROOTDIR)/byterun -O $(SHAREDCCCOMPOPTS) $(EXTRACFLAGS)
+ 
+diff -urN ocaml-4.02.1-clean/otherlibs/Makefile.shared ocaml-4.02.1-ios64/otherlibs/Makefile.shared
+--- ocaml-4.02.1-clean/otherlibs/Makefile.shared	2014-04-29 15:56:17.000000000 +0400
++++ ocaml-4.02.1-ios64/otherlibs/Makefile.shared	2014-11-24 15:19:40.000000000 +0300
+@@ -16,12 +16,14 @@
+ ROOTDIR=../..
+ include $(ROOTDIR)/config/Makefile
+ 
+-# Compilation options
++ # Compilation options
+ CC=$(BYTECC)
+-CAMLRUN=$(ROOTDIR)/boot/ocamlrun
+-COMPFLAGS=-w +33..39 -warn-error A -bin-annot -g -safe-string $(EXTRACAMLFLAGS)
++CAMLRUN=ocamlrun
++COMPFLAGS=-w +33..39 -warn-error A -g $(EXTRACAMLFLAGS)
+ MKLIB=$(CAMLRUN) $(ROOTDIR)/tools/ocamlmklib
+ 
++
++
+ # Variables to be defined by individual libraries:
+ #LIBNAME=
+ #CLIBNAME=
+@@ -65,12 +67,16 @@
+ 	cp lib$(CLIBNAME).$(A) $(INSTALL_LIBDIR)/
+ 	cd $(INSTALL_LIBDIR); $(RANLIB) lib$(CLIBNAME).$(A)
+ 	cp $(LIBNAME).cma $(CMIFILES) $(CMIFILES:.cmi=.mli) $(INSTALL_LIBDIR)/
+-	if test -n "$(HEADERS)"; then cp $(HEADERS) $(INSTALL_LIBDIR)/caml/; fi
++	if test -n "$(HEADERS)"; then cp $(HEADERS) $(LIBDIR)/caml/; fi
+ 
+ installopt:
+-	cp $(CAMLOBJS_NAT) $(LIBNAME).cmxa $(LIBNAME).$(A) $(INSTALL_LIBDIR)/
+-	cd $(INSTALL_LIBDIR); $(RANLIB) $(LIBNAME).a
+-	if test -f $(LIBNAME).cmxs; then cp $(LIBNAME).cmxs $(INSTALL_LIBDIR)/; fi
++	cp lib$(CLIBNAME).$(A) $(LIBDIR)/
++	cd $(LIBDIR); $(RANLIB) lib$(CLIBNAME).$(A)
++	cp $(CAMLOBJS_NAT) $(LIBNAME).cmxa $(LIBNAME).$(A) $(LIBDIR)/
++	cd $(LIBDIR); $(RANLIB) $(LIBNAME).a
++	cp $(CMIFILES) $(CMIFILES:.cmi=.mli) $(LIBDIR)/
++	if test -f $(LIBNAME).cmxs; then cp $(LIBNAME).cmxs $(LIBDIR)/; fi
++	if test -n "$(HEADERS)"; then cp $(HEADERS) $(LIBDIR)/caml/; fi
+ 
+ partialclean:
+ 	rm -f *.cm*
+diff -urN ocaml-4.02.1-clean/otherlibs/dynlink/Makefile ocaml-4.02.1-ios64/otherlibs/dynlink/Makefile
+--- ocaml-4.02.1-clean/otherlibs/dynlink/Makefile	2014-04-29 15:56:17.000000000 +0400
++++ ocaml-4.02.1-ios64/otherlibs/dynlink/Makefile	2014-11-17 14:00:32.000000000 +0300
+@@ -15,10 +15,11 @@
+ 
+ include ../../config/Makefile
+ 
+-ROOTDIR   = ../..
+-OCAMLRUN  = $(ROOTDIR)/boot/ocamlrun
+-OCAMLC    = $(OCAMLRUN) $(ROOTDIR)/ocamlc -nostdlib -I $(ROOTDIR)/stdlib
+-OCAMLOPT  = $(OCAMLRUN) $(ROOTDIR)/ocamlopt -nostdlib -I $(ROOTDIR)/stdlib
++CAMLC=ocamlc.opt
++CAMLOPT=../../ocamlopt.opt
++INCLUDES=-I ../../utils -I ../../typing -I ../../bytecomp -I ../../asmcomp
++COMPFLAGS=-w +33..39 -warn-error A -I ../../stdlib $(INCLUDES)
++
+ 
+ INCLUDES=-I ../../utils -I ../../typing -I ../../bytecomp -I ../../asmcomp
+ COMPFLAGS=-w +33..39 -warn-error A -bin-annot -safe-string \
+@@ -51,25 +52,25 @@
+ allopt: dynlink.cmxa
+ 
+ dynlink.cma: $(OBJS)
+-	$(OCAMLC) $(COMPFLAGS) -ccopt "$(NATDYNLINKOPTS)" -a -o dynlink.cma \
++	$(CAMLC) $(COMPFLAGS) -ccopt "$(NATDYNLINKOPTS)" -a -o dynlink.cma \
+ 	         $(OBJS)
+ 
+ dynlink.cmxa: $(NATOBJS)
+-	$(OCAMLOPT) $(COMPFLAGS) -ccopt "$(NATDYNLINKOPTS)" -a -o dynlink.cmxa \
++	$(CAMLOPT) $(COMPFLAGS) -ccopt "$(NATDYNLINKOPTS)" -a -o dynlink.cmxa \
+ 	           $(NATOBJS)
+ 
+ dynlinkaux.cmo: $(COMPILEROBJS)
+-	$(OCAMLC) $(COMPFLAGS) -pack -o dynlinkaux.cmo $(COMPILEROBJS)
++	$(CAMLC) $(COMPFLAGS) -pack -o dynlinkaux.cmo $(COMPILEROBJS)
+ 
+ dynlinkaux.cmi: dynlinkaux.cmo
+ 
+ dynlink.cmx: dynlink.cmi natdynlink.ml
+ 	cp natdynlink.ml  dynlink.mlopt
+-	$(OCAMLOPT) -c $(COMPFLAGS) -impl dynlink.mlopt
++	$(CAMLOPT) -c $(COMPFLAGS) -impl dynlink.mlopt
+ 	rm -f dynlink.mlopt
+ 
+ extract_crc: dynlink.cma extract_crc.cmo
+-	$(OCAMLC) $(COMPFLAGS) -o extract_crc dynlink.cma extract_crc.cmo
++	$(CAMLC) $(COMPFLAGS) -o extract_crc dynlink.cma extract_crc.cmo
+ 
+ INSTALL_LIBDIR=$(DESTDIR)$(LIBDIR)
+ 
+@@ -92,13 +93,13 @@
+ .SUFFIXES: .ml .mli .cmo .cmi .cmx
+ 
+ .mli.cmi:
+-	$(OCAMLC) -c $(COMPFLAGS) $<
++	$(CAMLC) -c $(COMPFLAGS) $<
+ 
+ .ml.cmo:
+-	$(OCAMLC) -c $(COMPFLAGS) $<
++	$(CAMLC) -c $(COMPFLAGS) $<
+ 
+ .ml.cmx:
+-	$(OCAMLOPT) -c $(COMPFLAGS) $<
++	$(CAMLOPT) -c $(COMPFLAGS) $<
+ 
+ depend:
+ 
+diff -urN ocaml-4.02.1-clean/otherlibs/systhreads/Makefile ocaml-4.02.1-ios64/otherlibs/systhreads/Makefile
+--- ocaml-4.02.1-clean/otherlibs/systhreads/Makefile	2014-10-03 16:25:00.000000000 +0400
++++ ocaml-4.02.1-ios64/otherlibs/systhreads/Makefile	2014-11-17 14:00:51.000000000 +0300
+@@ -13,12 +13,13 @@
+ 
+ include ../../config/Makefile
+ 
+-ROOTDIR=../..
+-CAMLC=$(ROOTDIR)/boot/ocamlrun $(ROOTDIR)/ocamlc -nostdlib \
+-      -I $(ROOTDIR)/stdlib -I $(ROOTDIR)/otherlibs/unix
+-CAMLOPT=$(ROOTDIR)/boot/ocamlrun $(ROOTDIR)/ocamlopt -nostdlib \
+-        -I $(ROOTDIR)/stdlib -I $(ROOTDIR)/otherlibs/unix
+-MKLIB=../../boot/ocamlrun ../../tools/ocamlmklib
++CAMLC=ocamlc.opt -I ../unix
++CAMLOPT=../../ocamlopt.opt -I ../unix -nostdlib -I ../../stdlib
++MKLIB=../../tools/ocamlmklib
++COMPFLAGS=-w +33..39 -warn-error A -g
++
++BYTECODE_C_OBJS=st_stubs_b.o
++
+ COMPFLAGS=-w +33..39 -warn-error A -g -bin-annot -safe-string
+ 
+ BYTECODE_C_OBJS=st_stubs_b.o
+@@ -64,7 +65,6 @@
+ # modular to me this way. -- Alain
+ 
+ 
+-$(THREAD_OBJS:.cmo=.cmx): ../../ocamlopt
+ 
+ partialclean:
+ 	rm -f *.cm*
+@@ -86,13 +86,17 @@
+ 	rm -f $(INSTALL_LIBDIR)/threads/stdlib.cma
+ 	cp thread.mli mutex.mli condition.mli event.mli threadUnix.mli \
+ 	   $(INSTALL_LIBDIR)
+-	cp threads.h $(INSTALL_LIBDIR)/caml/threads.h
++	cp threads.h $(LIBDIR)/caml/threads.h
+ 
+ installopt:
+-	cp libthreadsnat.a $(INSTALL_LIBDIR)/libthreadsnat.a
+-	cd $(INSTALL_LIBDIR); $(RANLIB) libthreadsnat.a
+-	cp $(THREAD_OBJS:.cmo=.cmx) threads.cmxa threads.a $(INSTALL_LIBDIR)/threads
+-	cd $(INSTALL_LIBDIR)/threads; $(RANLIB) threads.a
++	if test -d $(LIBDIR)/threads; then :; else mkdir $(LIBDIR)/threads; fi
++	cp $(THREAD_OBJS:.cmo=.cmi) $(LIBDIR)/threads
++	cp thread.mli mutex.mli condition.mli event.mli threadUnix.mli $(LIBDIR)
++	cp threads.h $(LIBDIR)/caml/threads.h
++	cp libthreadsnat.a $(LIBDIR)/libthreadsnat.a
++	cd $(LIBDIR); $(RANLIB) libthreadsnat.a
++	cp $(THREAD_OBJS:.cmo=.cmx) threads.cmxa threads.a $(LIBDIR)/threads
++
+ 
+ .SUFFIXES: .ml .mli .cmo .cmi .cmx
+ 
+diff -urN ocaml-4.02.1-clean/otherlibs/threads/pervasives.ml ocaml-4.02.1-ios64/otherlibs/threads/pervasives.ml
+--- ocaml-4.02.1-clean/otherlibs/threads/pervasives.ml	2014-05-27 10:10:47.000000000 +0400
++++ ocaml-4.02.1-ios64/otherlibs/threads/pervasives.ml	2014-11-17 13:58:54.000000000 +0300
+@@ -109,34 +109,34 @@
+ external ( ~-. ) : float -> float = "%negfloat"
+ external ( ~+. ) : float -> float = "%identity"
+ external ( +. ) : float -> float -> float = "%addfloat"
+-external ( -. ) : float -> float -> float = "%subfloat"
++external (-.) : float -> float -> float = "%subfloat"
+ external ( *. ) : float -> float -> float = "%mulfloat"
+-external ( /. ) : float -> float -> float = "%divfloat"
+-external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
+-external exp : float -> float = "caml_exp_float" "exp" "float"
+-external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
+-external acos : float -> float = "caml_acos_float" "acos" "float"
+-external asin : float -> float = "caml_asin_float" "asin" "float"
+-external atan : float -> float = "caml_atan_float" "atan" "float"
+-external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
++external (/.) : float -> float -> float = "%divfloat"
++external ( ** ) : float -> float -> float = "caml_power_float" (* "pow" "float" *)
++external exp : float -> float = "caml_exp_float" (* "exp" "float" *)
++external expm1 : float -> float = "caml_expm1_float" (* "caml_expm1" "float" *)
++external acos : float -> float = "caml_acos_float" (* "acos" "float" *)
++external asin : float -> float = "caml_asin_float" (* "asin" "float" *)
++external atan : float -> float = "caml_atan_float" (* "atan" "float" *)
++external atan2 : float -> float -> float = "caml_atan2_float" (* "atan2" "float" *)
+ external hypot : float -> float -> float
+-               = "caml_hypot_float" "caml_hypot" "float"
+-external cos : float -> float = "caml_cos_float" "cos" "float"
+-external cosh : float -> float = "caml_cosh_float" "cosh" "float"
+-external log : float -> float = "caml_log_float" "log" "float"
+-external log10 : float -> float = "caml_log10_float" "log10" "float"
+-external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
+-external sin : float -> float = "caml_sin_float" "sin" "float"
+-external sinh : float -> float = "caml_sinh_float" "sinh" "float"
+-external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
+-external tan : float -> float = "caml_tan_float" "tan" "float"
+-external tanh : float -> float = "caml_tanh_float" "tanh" "float"
+-external ceil : float -> float = "caml_ceil_float" "ceil" "float"
+-external floor : float -> float = "caml_floor_float" "floor" "float"
++   = "caml_hypot_float" (* "caml_hypot" "float" *)
++external cos : float -> float = "caml_cos_float" (* "cos" "float" *)
++external cosh : float -> float = "caml_cosh_float" (* "cosh" "float" *)
++external log : float -> float = "caml_log_float" (* "log" "float" *)
++external log10 : float -> float = "caml_log10_float" (* "log10" "float" *)
++external log1p : float -> float = "caml_log1p_float" (* "caml_log1p" "float" *)
++external sin : float -> float = "caml_sin_float" (* "sin" "float" *)
++external sinh : float -> float = "caml_sinh_float" (* "sinh" "float" *)
++external sqrt : float -> float = "caml_sqrt_float" (* "sqrt" "float" *)
++external tan : float -> float = "caml_tan_float" (* "tan" "float" *)
++external tanh : float -> float = "caml_tanh_float" (* "tanh" "float" *)
++external ceil : float -> float = "caml_ceil_float" (* "ceil" "float" *)
++external floor : float -> float = "caml_floor_float" (* "floor" "float" *)
+ external abs_float : float -> float = "%absfloat"
+ external copysign : float -> float -> float
+-                  = "caml_copysign_float" "caml_copysign" "float"
+-external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
++   = "caml_copysign_float" (* "caml_copysign" "float" *)
++external mod_float : float -> float -> float = "caml_fmod_float" (* "fmod" "float" *)
+ external frexp : float -> float * int = "caml_frexp_float"
+ external ldexp : float -> int -> float = "caml_ldexp_float"
+ external modf : float -> float * float = "caml_modf_float"
+diff -urN ocaml-4.02.1-clean/stdlib/Makefile ocaml-4.02.1-ios64/stdlib/Makefile
+--- ocaml-4.02.1-clean/stdlib/Makefile	2014-04-12 14:17:02.000000000 +0400
++++ ocaml-4.02.1-ios64/stdlib/Makefile	2014-11-17 13:58:54.000000000 +0300
+@@ -13,9 +13,7 @@
+ 
+ include Makefile.shared
+ 
+-allopt:
+-	$(MAKE) stdlib.cmxa std_exit.cmx
+-	$(MAKE) allopt-$(PROFILING)
++allopt: stdlib.cmxa std_exit.cmx camlheader camlheader_ur allopt-$(PROFILING)
+ 
+ allopt-noprof:
+ 
+@@ -25,7 +23,7 @@
+ installopt: installopt-default installopt-$(PROFILING)
+ 
+ installopt-default:
+-	cp stdlib.cmxa stdlib.a std_exit.o *.cmx $(INSTALL_LIBDIR)
++	cp stdlib.cmxa stdlib.a std_exit.o *.cmx *.cmi *.mli *.ml camlheader camlheader_ur $(LIBDIR)
+ 	cd $(INSTALL_LIBDIR); $(RANLIB) stdlib.a
+ 
+ installopt-noprof:
+diff -urN ocaml-4.02.1-clean/stdlib/Makefile.shared ocaml-4.02.1-ios64/stdlib/Makefile.shared
+--- ocaml-4.02.1-clean/stdlib/Makefile.shared	2014-05-27 10:10:47.000000000 +0400
++++ ocaml-4.02.1-ios64/stdlib/Makefile.shared	2014-11-17 14:01:06.000000000 +0300
+@@ -12,14 +12,14 @@
+ #########################################################################
+ 
+ include ../config/Makefile
+-RUNTIME=../boot/ocamlrun
+-COMPILER=../ocamlc
+-CAMLC=$(RUNTIME) $(COMPILER)
+-COMPFLAGS=-strict-sequence -w +33..39 -g -warn-error A -bin-annot -nostdlib \
+-          -safe-string
+-OPTCOMPILER=../ocamlopt
+-CAMLOPT=$(RUNTIME) $(OPTCOMPILER)
+-CAMLDEP=../boot/ocamlrun ../tools/ocamldep
++RUNTIME=ocamlrun
++CAMLC=ocamlc.opt
++COMPFLAGS=-strict-sequence -w +33..39 -g -warn-error A -nostdlib
++CAMLOPT=../ocamlopt.opt
++OPTCOMPFLAGS=-warn-error A -nostdlib -g
++CAMLDEP=ocamldep.opt
++
++
+ 
+ OBJS=camlinternalFormatBasics.cmo pervasives.cmo $(OTHERS)
+ OTHERS=array.cmo list.cmo char.cmo bytes.cmo string.cmo sys.cmo \
+@@ -79,7 +79,7 @@
+ 	$(CAMLOPT) $(COMPFLAGS) `./Compflags $@` -c $<
+ 
+ .ml.p.cmx:
+-	$(CAMLOPT) $(COMPFLAGS) `./Compflags $@` -p -c -o $*.p.cmx $<
++	$(CAMLOPT) $(OPTCOMPFLAGS) `./Compflags $@` -p -c -o $*.p.cmx $<
+ 
+ # Dependencies on the compiler
+ $(OBJS) std_exit.cmo: $(COMPILER)
+@@ -88,7 +88,8 @@
+ $(OBJS:.cmo=.p.cmx) std_exit.p.cmx: $(OPTCOMPILER)
+ 
+ # Dependencies on Pervasives (not tracked by ocamldep)
+-$(OTHERS) std_exit.cmo: pervasives.cmi
++$(OBJS) std_exit.cmo: pervasives.cmi
++
+ $(OTHERS:.cmo=.cmi) std_exit.cmi: pervasives.cmi
+ $(OBJS:.cmo=.cmx) std_exit.cmx: pervasives.cmi
+ $(OBJS:.cmo=.p.cmx) std_exit.p.cmx: pervasives.cmi
+diff -urN ocaml-4.02.1-clean/stdlib/hashtbl.ml ocaml-4.02.1-ios64/stdlib/hashtbl.ml
+--- ocaml-4.02.1-clean/stdlib/hashtbl.ml	2013-03-10 02:38:52.000000000 +0400
++++ ocaml-4.02.1-ios64/stdlib/hashtbl.ml	2014-11-17 13:58:54.000000000 +0300
+@@ -132,7 +132,8 @@
+       if compare key k = 0 then d else find_rec key rest
+ 
+ let find h key =
+-  match h.data.(key_index h key) with
++  let i = key_index h key in
++  match h.data.(i) with
+   | Empty -> raise Not_found
+   | Cons(k1, d1, rest1) ->
+       if compare key k1 = 0 then d1 else
+diff -urN ocaml-4.02.1-clean/stdlib/pervasives.ml ocaml-4.02.1-ios64/stdlib/pervasives.ml
+--- ocaml-4.02.1-clean/stdlib/pervasives.ml	2014-08-05 19:33:26.000000000 +0400
++++ ocaml-4.02.1-ios64/stdlib/pervasives.ml	2014-11-17 13:58:54.000000000 +0300
+@@ -109,30 +109,31 @@
+ external ( *. ) : float -> float -> float = "%mulfloat"
+ external ( /. ) : float -> float -> float = "%divfloat"
+ external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
+-external exp : float -> float = "caml_exp_float" "exp" "float"
+-external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
+-external acos : float -> float = "caml_acos_float" "acos" "float"
+-external asin : float -> float = "caml_asin_float" "asin" "float"
+-external atan : float -> float = "caml_atan_float" "atan" "float"
+-external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
++external ( ** ) : float -> float -> float = "caml_power_float" (* "pow" "float" *)
++external exp : float -> float = "caml_exp_float" (* "exp" "float" *)
++external expm1 : float -> float = "caml_expm1_float" (* "caml_expm1" "float" *)
++external acos : float -> float = "caml_acos_float" (* "acos" "float" *)
++external asin : float -> float = "caml_asin_float" (* "asin" "float" *)
++external atan : float -> float = "caml_atan_float" (* "atan" "float" *)
++external atan2 : float -> float -> float = "caml_atan2_float" (* "atan2" "float" *)
+ external hypot : float -> float -> float
+-               = "caml_hypot_float" "caml_hypot" "float"
+-external cos : float -> float = "caml_cos_float" "cos" "float"
+-external cosh : float -> float = "caml_cosh_float" "cosh" "float"
+-external log : float -> float = "caml_log_float" "log" "float"
+-external log10 : float -> float = "caml_log10_float" "log10" "float"
+-external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
+-external sin : float -> float = "caml_sin_float" "sin" "float"
+-external sinh : float -> float = "caml_sinh_float" "sinh" "float"
+-external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
+-external tan : float -> float = "caml_tan_float" "tan" "float"
+-external tanh : float -> float = "caml_tanh_float" "tanh" "float"
+-external ceil : float -> float = "caml_ceil_float" "ceil" "float"
+-external floor : float -> float = "caml_floor_float" "floor" "float"
++               = "caml_hypot_float" (* "caml_hypot" "float" *)
++external cos : float -> float = "caml_cos_float" (* "cos" "float" *)
++external cosh : float -> float = "caml_cosh_float" (* "cosh" "float" *)
++external log : float -> float = "caml_log_float" (* "log" "float" *)
++external log10 : float -> float = "caml_log10_float" (* "log10" "float" *)
++external log1p : float -> float = "caml_log1p_float" (* "caml_log1p" "float" *)
++external sin : float -> float = "caml_sin_float" (* "sin" "float" *)
++external sinh : float -> float = "caml_sinh_float" (* "sinh" "float" *)
++external sqrt : float -> float = "caml_sqrt_float" (* "sqrt" "float" *)
++external tan : float -> float = "caml_tan_float" (* "tan" "float" *)
++external tanh : float -> float = "caml_tanh_float" (* "tanh" "float" *)
++external ceil : float -> float = "caml_ceil_float" (* "ceil" "float" *)
++external floor : float -> float = "caml_floor_float" (* "floor" "float" *)
+ external abs_float : float -> float = "%absfloat"
+ external copysign : float -> float -> float
+-                  = "caml_copysign_float" "caml_copysign" "float"
+-external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
++                  = "caml_copysign_float" (* "caml_copysign" "float" *)
++external mod_float : float -> float -> float = "caml_fmod_float" (* "fmod" "float" *)
+ external frexp : float -> float * int = "caml_frexp_float"
+ external ldexp : float -> int -> float = "caml_ldexp_float"
+ external modf : float -> float * float = "caml_modf_float"
+diff -urN ocaml-4.02.1-clean/stdlib/pervasives.mli ocaml-4.02.1-ios64/stdlib/pervasives.mli
+--- ocaml-4.02.1-clean/stdlib/pervasives.mli	2014-09-14 23:41:26.000000000 +0400
++++ ocaml-4.02.1-ios64/stdlib/pervasives.mli	2014-11-17 13:58:54.000000000 +0300
+@@ -318,82 +318,82 @@
+ external ( /. ) : float -> float -> float = "%divfloat"
+ (** Floating-point division. *)
+ 
+-external ( ** ) : float -> float -> float = "caml_power_float" "pow" "float"
++external ( ** ) : float -> float -> float = "caml_power_float" (*"pow" "float"*)
+ (** Exponentiation. *)
+ 
+-external sqrt : float -> float = "caml_sqrt_float" "sqrt" "float"
++external sqrt : float -> float = "caml_sqrt_float" (*"sqrt" "float"*)
+ (** Square root. *)
+ 
+-external exp : float -> float = "caml_exp_float" "exp" "float"
++external exp : float -> float = "caml_exp_float" (*"exp" "float"*)
+ (** Exponential. *)
+ 
+-external log : float -> float = "caml_log_float" "log" "float"
++external log : float -> float = "caml_log_float" (*"log" "float"*)
+ (** Natural logarithm. *)
+ 
+-external log10 : float -> float = "caml_log10_float" "log10" "float"
++external log10 : float -> float = "caml_log10_float" (*"log10" "float"*)
+ (** Base 10 logarithm. *)
+ 
+-external expm1 : float -> float = "caml_expm1_float" "caml_expm1" "float"
++external expm1 : float -> float = "caml_expm1_float" (*"caml_expm1" "float"*)
+ (** [expm1 x] computes [exp x -. 1.0], giving numerically-accurate results
+     even if [x] is close to [0.0].
+     @since 3.12.0
+ *)
+ 
+-external log1p : float -> float = "caml_log1p_float" "caml_log1p" "float"
++external log1p : float -> float = "caml_log1p_float" (*"caml_log1p" "float"*)
+ (** [log1p x] computes [log(1.0 +. x)] (natural logarithm),
+     giving numerically-accurate results even if [x] is close to [0.0].
+     @since 3.12.0
+ *)
+ 
+-external cos : float -> float = "caml_cos_float" "cos" "float"
++external cos : float -> float = "caml_cos_float" (*"cos" "float"*)
+ (** Cosine.  Argument is in radians. *)
+ 
+-external sin : float -> float = "caml_sin_float" "sin" "float"
++external sin : float -> float = "caml_sin_float" (*"sin" "float"*)
+ (** Sine.  Argument is in radians. *)
+ 
+-external tan : float -> float = "caml_tan_float" "tan" "float"
++external tan : float -> float = "caml_tan_float" (*"tan" "float"*)
+ (** Tangent.  Argument is in radians. *)
+ 
+-external acos : float -> float = "caml_acos_float" "acos" "float"
++external acos : float -> float = "caml_acos_float" (*"acos" "float"*)
+ (** Arc cosine.  The argument must fall within the range [[-1.0, 1.0]].
+     Result is in radians and is between [0.0] and [pi]. *)
+ 
+-external asin : float -> float = "caml_asin_float" "asin" "float"
++external asin : float -> float = "caml_asin_float" (*"asin" "float"*)
+ (** Arc sine.  The argument must fall within the range [[-1.0, 1.0]].
+     Result is in radians and is between [-pi/2] and [pi/2]. *)
+ 
+-external atan : float -> float = "caml_atan_float" "atan" "float"
++external atan : float -> float = "caml_atan_float" (*"atan" "float"*)
+ (** Arc tangent.
+     Result is in radians and is between [-pi/2] and [pi/2]. *)
+ 
+-external atan2 : float -> float -> float = "caml_atan2_float" "atan2" "float"
++external atan2 : float -> float -> float = "caml_atan2_float" (*"atan2" "float"*)
+ (** [atan2 y x] returns the arc tangent of [y /. x].  The signs of [x]
+     and [y] are used to determine the quadrant of the result.
+     Result is in radians and is between [-pi] and [pi]. *)
+ 
+ external hypot : float -> float -> float
+-               = "caml_hypot_float" "caml_hypot" "float"
++               = "caml_hypot_float" (*"caml_hypot" "float"*)
+ (** [hypot x y] returns [sqrt(x *. x + y *. y)], that is, the length
+   of the hypotenuse of a right-angled triangle with sides of length
+   [x] and [y], or, equivalently, the distance of the point [(x,y)]
+   to origin.
+   @since 4.00.0  *)
+ 
+-external cosh : float -> float = "caml_cosh_float" "cosh" "float"
++external cosh : float -> float = "caml_cosh_float" (*"cosh" "float"*)
+ (** Hyperbolic cosine.  Argument is in radians. *)
+ 
+-external sinh : float -> float = "caml_sinh_float" "sinh" "float"
++external sinh : float -> float = "caml_sinh_float" (*"sinh" "float"*)
+ (** Hyperbolic sine.  Argument is in radians. *)
+ 
+-external tanh : float -> float = "caml_tanh_float" "tanh" "float"
++external tanh : float -> float = "caml_tanh_float" (*"tanh" "float"*)
+ (** Hyperbolic tangent.  Argument is in radians. *)
+ 
+-external ceil : float -> float = "caml_ceil_float" "ceil" "float"
++external ceil : float -> float = "caml_ceil_float" (*"ceil" "float"*)
+ (** Round above to an integer value.
+     [ceil f] returns the least integer value greater than or equal to [f].
+     The result is returned as a float. *)
+ 
+-external floor : float -> float = "caml_floor_float" "floor" "float"
++external floor : float -> float = "caml_floor_float" (*"floor" "float"*)
+ (** Round below to an integer value.
+     [floor f] returns the greatest integer value less than or
+     equal to [f].
+@@ -403,14 +403,14 @@
+ (** [abs_float f] returns the absolute value of [f]. *)
+ 
+ external copysign : float -> float -> float
+-                  = "caml_copysign_float" "caml_copysign" "float"
++                  = "caml_copysign_float" (*"caml_copysign" "float"*)
+ (** [copysign x y] returns a float whose absolute value is that of [x]
+   and whose sign is that of [y].  If [x] is [nan], returns [nan].
+   If [y] is [nan], returns either [x] or [-. x], but it is not
+   specified which.
+   @since 4.00.0  *)
+ 
+-external mod_float : float -> float -> float = "caml_fmod_float" "fmod" "float"
++external mod_float : float -> float -> float = "caml_fmod_float" (*"fmod" "float"*)
+ (** [mod_float a b] returns the remainder of [a] with respect to
+    [b].  The returned value is [a -. n *. b], where [n]
+    is the quotient [a /. b] rounded towards zero to an integer. *)
+diff -urN ocaml-4.02.1-clean/testsuite/makefiles/Makefile.common ocaml-4.02.1-ios64/testsuite/makefiles/Makefile.common
+--- ocaml-4.02.1-clean/testsuite/makefiles/Makefile.common	2013-12-03 18:42:23.000000000 +0400
++++ ocaml-4.02.1-ios64/testsuite/makefiles/Makefile.common	2014-12-02 11:11:07.000000000 +0300
+@@ -43,7 +43,7 @@
+ 
+ include $(TOPDIR)/config/Makefile
+ 
+-OCAMLRUN=$(TOPDIR)/boot/ocamlrun$(EXE)
++OCAMLRUN=ocamlrun$(EXE)
+ 
+ OCFLAGS=-nostdlib -I $(OTOPDIR)/stdlib $(COMPFLAGS)
+ OCOPTFLAGS=
+@@ -56,7 +56,7 @@
+ 
+ OCAML=$(OCAMLRUN) $(OTOPDIR)/ocaml $(OCFLAGS) \
+       -init $(OTOPDIR)/testsuite/lib/empty
+-OCAMLC=$(OCAMLRUN) $(OTOPDIR)/ocamlc $(CUSTOM) $(OCFLAGS)
++OCAMLC=$(OCAMLRUN) ocamlc $(CUSTOM) $(OCFLAGS)
+ OCAMLOPT=$(OCAMLRUN) $(OTOPDIR)/ocamlopt $(OCFLAGS)
+ OCAMLDOC=$(OCAMLRUN) $(OTOPDIR)/ocamldoc/ocamldoc
+ OCAMLLEX=$(OCAMLRUN) $(OTOPDIR)/lex/ocamllex
+diff -urN ocaml-4.02.1-clean/testsuite/tests/asmcomp/arm64.S ocaml-4.02.1-ios64/testsuite/tests/asmcomp/arm64.S
+--- ocaml-4.02.1-clean/testsuite/tests/asmcomp/arm64.S	2014-04-12 14:17:02.000000000 +0400
++++ ocaml-4.02.1-ios64/testsuite/tests/asmcomp/arm64.S	2014-12-02 11:00:06.000000000 +0300
+@@ -14,17 +14,17 @@
+         .align  2
+ call_gen_code:
+     /* Set up stack frame and save callee-save registers */
+-        stp     x29, x30, [sp, -160]!
++        stp     x29, x30, [sp, #-160]!
+         add     x29, sp, #0
+-        stp     x19, x20, [sp, 16]
+-        stp     x21, x22, [sp, 32]
+-        stp     x23, x24, [sp, 48]
+-        stp     x25, x26, [sp, 64]
+-        stp     x27, x28, [sp, 80]
+-        stp     d8, d9, [sp, 96]
+-        stp     d10, d11, [sp, 112]
+-        stp     d12, d13, [sp, 128]
+-        stp     d14, d15, [sp, 144]
++        stp     x19, x20, [sp, #16]
++        stp     x21, x22, [sp, #32]
++        stp     x23, x24, [sp, #48]
++        stp     x25, x26, [sp, #64]
++        stp     x27, x28, [sp, #80]
++        stp     d8, d9, [sp, #96]
++        stp     d10, d11, [sp, #112]
++        stp     d12, d13, [sp, #128]
++        stp     d14, d15, [sp, #144]
+     /* Shuffle arguments */
+         mov     x8, x0
+         mov     x0, x1
+@@ -34,16 +34,16 @@
+     /* Call generated asm */
+         blr     x8
+     /* Reload callee-save registers and return address */
+-        ldp     x19, x20, [sp, 16]
+-        ldp     x21, x22, [sp, 32]
+-        ldp     x23, x24, [sp, 48]
+-        ldp     x25, x26, [sp, 64]
+-        ldp     x27, x28, [sp, 80]
+-        ldp     d8, d9, [sp, 96]
+-        ldp     d10, d11, [sp, 112]
+-        ldp     d12, d13, [sp, 128]
+-        ldp     d14, d15, [sp, 144]
+-        ldp     x29, x30, [sp], 160
++        ldp     x19, x20, [sp, #16]
++        ldp     x21, x22, [sp, #32]
++        ldp     x23, x24, [sp, #48]
++        ldp     x25, x26, [sp, #64]
++        ldp     x27, x28, [sp, #80]
++        ldp     d8, d9, [sp, #96]
++        ldp     d10, d11, [sp, #112]
++        ldp     d12, d13, [sp, #128]
++        ldp     d14, d15, [sp, #144]
++        ldp     x29, x30, [sp], #160
+         ret
+ 
+         .globl  caml_c_call
+diff -urN ocaml-4.02.1-clean/testsuite/tests/backtrace/Makefile ocaml-4.02.1-ios64/testsuite/tests/backtrace/Makefile
+--- ocaml-4.02.1-clean/testsuite/tests/backtrace/Makefile	2014-09-11 15:03:14.000000000 +0400
++++ ocaml-4.02.1-ios64/testsuite/tests/backtrace/Makefile	2014-12-02 11:16:47.000000000 +0300
+@@ -19,7 +19,6 @@
+ OTHERFILESNOINLINING=backtraces_and_finalizers.ml
+ 
+ default:
+-	$(MAKE) byte
+ 	@if $(BYTECODE_ONLY); then : ; else $(MAKE) native; fi
+ 
+ .PHONY: byte
+diff -urN ocaml-4.02.1-clean/tools/Makefile.shared ocaml-4.02.1-ios64/tools/Makefile.shared
+--- ocaml-4.02.1-clean/tools/Makefile.shared	2014-08-07 12:52:02.000000000 +0400
++++ ocaml-4.02.1-ios64/tools/Makefile.shared	2014-11-17 14:01:18.000000000 +0300
+@@ -12,13 +12,13 @@
+ 
+ include ../config/Makefile
+ 
+-CAMLRUN=../boot/ocamlrun
+-CAMLC=$(CAMLRUN) ../boot/ocamlc -nostdlib -I ../boot
+-CAMLOPT=$(CAMLRUN) ../ocamlopt -nostdlib -I ../stdlib
+-CAMLLEX=$(CAMLRUN) ../boot/ocamllex
++CAMLRUN=ocamlrun
++CAMLC=ocamlc.opt -strict-sequence -I ../boot
++CAMLOPT=ocamlopt.opt
++CAMLLEX=ocamllex
+ INCLUDES=-I ../utils -I ../parsing -I ../typing -I ../bytecomp -I ../asmcomp \
+-	 -I ../driver -I ../toplevel
+-COMPFLAGS= -strict-sequence -w +27+32..39 -warn-error A -safe-string $(INCLUDES)
++ 	 -I ../driver
++COMPFLAGS= -w +32..39 -warn-error A $(INCLUDES)
+ LINKFLAGS=$(INCLUDES)
+ 
+ all: ocamldep ocamlprof ocamlcp ocamloptp ocamlmktop ocamlmklib dumpobj \
+Binary files ocaml-4.02.1-clean/tools/cvt_emit.bak and ocaml-4.02.1-ios64/tools/cvt_emit.bak differ

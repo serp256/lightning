@@ -14,7 +14,7 @@ external rendertex_release: renderInfo -> unit = "rendertex_release";
 
 module Renderers = Weak.Make(struct type t = renderer; value equal r1 r2 = r1 = r2; value hash = Hashtbl.hash; end);
 
-class virtual base renderInfo = 
+class virtual base renderInfo =
   object(self)
     method renderInfo = renderInfo;
     method kind = renderInfo.kind;
@@ -31,14 +31,14 @@ class virtual base renderInfo =
 
     method subTexture region =
       let scale = !scale in
-      let clipping = 
+      let clipping =
         let tw = renderInfo.rwidth /. scale
         and th = renderInfo.rheight /. scale in
-        Rectangle.create 
-          (region.Rectangle.x /. tw) 
-          (region.Rectangle.y /. th) 
-          (region.Rectangle.width /. tw) 
-          (region.Rectangle.height /. th) 
+        Rectangle.create
+          (region.Rectangle.x /. tw)
+          (region.Rectangle.y /. th)
+          (region.Rectangle.width /. tw)
+          (region.Rectangle.height /. th)
       in
         Texture.createSubtex region clipping scale (self :> c);
 
@@ -75,7 +75,7 @@ class shared renderInfo =
         (
           Renderers.iter (fun r -> r#onTextureEvent resized (self :> Texture.c)) renderers;
           resized;
-        ); 
+        );
   end;
 
 class dedicated renderInfo =
@@ -99,15 +99,16 @@ class type c =
     method draw: ?clear:(int*float) -> ?width:float -> ?height:float -> (framebuffer -> unit) -> bool;
     method texture: Texture.c;
     method save: string -> bool;
-    method data: unit -> data; 
-  end;  
+    method data: unit -> data;
+  end;
 
 type kind = [ Shared | Dedicated of Texture.filter ];
 
 external rendertexCreate: ?color:int -> ?alpha:float -> kind -> float -> float -> (framebuffer -> unit) -> (renderInfo * bool) = "rendertex_create_byte" "rendertex_create";
 
 value draw ?(kind=Shared) ?color ?alpha width height f =
-  let () = debug:draw "draw %f %f" width height in
+  (*let () = assert False in*)
+  let () = debug:draw "draw %f | %f" width height in
   let (renderInfo, dedicated) = rendertexCreate ?color ?alpha kind width height f in
     if dedicated
     then new dedicated renderInfo

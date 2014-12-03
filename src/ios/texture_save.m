@@ -2,6 +2,7 @@
 #import "texture_save.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <caml/memory.h>
 
 
 int save_png_image(value name, char* buffer, unsigned int width, unsigned int height) {

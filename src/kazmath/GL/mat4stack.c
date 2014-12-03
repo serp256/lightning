@@ -23,20 +23,20 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
 #include <memory.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define INITIAL_SIZE 30
 #define INCREMENT 50
 
-#include "kazmath/GL/mat4stack.h"
+#include "mat4stack.h"
 
 void km_mat4_stack_initialize(km_mat4_stack* stack) {
-	stack->stack = (kmMat4*) malloc(sizeof(kmMat4) * INITIAL_SIZE); //allocate the memory
-	stack->capacity = INITIAL_SIZE; //Set the capacity to 10
-	stack->top = NULL; //Set the top to NULL
+	stack->stack = (kmMat4*) malloc(sizeof(kmMat4) * INITIAL_SIZE); /*allocate the memory*/
+	stack->capacity = INITIAL_SIZE; /*Set the capacity to 10*/
+	stack->top = NULL; /*Set the top to NULL*/
 	stack->item_count = 0;
 };
 

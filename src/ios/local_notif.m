@@ -53,7 +53,7 @@ static int nidToIndex(value nid) {
         NSString *val = [notif.userInfo objectForKey:ID_KEY];
         *stop = (val != nil) && ([val compare:nsNid] == NSOrderedSame);
         return *stop;
-    }];    
+    }];
 }
 
 /*
@@ -80,4 +80,5 @@ value ml_notifFireDate(value nid) {
 
 value ml_lnCancelAll(value p) {
 	[[UIApplication sharedApplication] cancelAllLocalNotifications];
+    return Val_unit;
 }

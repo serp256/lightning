@@ -77,7 +77,6 @@ void set_referrer(char *type,NSString *nid) {
   {
     if ([self checkNotificationType:UIUserNotificationTypeBadge])
     {
-      NSLog(@"badge number changed to %d", badgeNumber);
       application.applicationIconBadgeNumber = badgeNumber;
     }
     else

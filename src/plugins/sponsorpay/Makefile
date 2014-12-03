@@ -73,4 +73,4 @@ endif
 
 .PHONY : clean
 clean:
-	rm -f *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/spwrapper_ios.o ios/VideoDelegate.o ios/sdk/*.o android/spwrapper_android.o
+	rm -f *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/spwrapper_ios.o ios/VideoDelegate.o ios/sdk/*.o ios/adapters/*/*.o android/spwrapper_android.o

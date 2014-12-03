@@ -15,6 +15,7 @@
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
 #import "mlwrapper.h"
+#import "render_stub.h"
 #import <caml/mlvalues.h>
 #import <caml/memory.h>
 

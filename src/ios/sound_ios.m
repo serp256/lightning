@@ -41,7 +41,7 @@ extern uintnat caml_dependent_size;
 
 static void raise_error(char* message, char* fname, uint code) {
 	char buf[256];
-	if (fname) 
+	if (fname)
 		sprintf(buf,"%s '%s' [%x]", message,fname,code);
 	else
 		sprintf(buf,"%s [%x]", message,code);
@@ -57,7 +57,7 @@ void interruptionCallback (void *inUserData, UInt32 interruptionState) {
 				*/
 }
 
-// SESSION 
+// SESSION
 static ALCdevice  *device  = NULL;
 static ALCcontext *context = NULL;
 
@@ -94,7 +94,7 @@ value ml_sound_init(value mlSessionCategory,value unit) {
 }
 
 
-// ALSOUND 
+// ALSOUND
 
 value ml_al_setMasterVolume(value mlVolume) {
 	alListenerf(AL_GAIN, Double_val(mlVolume));
@@ -129,7 +129,7 @@ struct custom_operations albuffer_ops = {
 /*NSString* pathForResource(NSString *path) {
 	NSString *fullPath = NULL;
 	if ([path isAbsolutePath]) {
-			fullPath = path; 
+			fullPath = path;
 	} else {
 		fullPath = [[NSBundle mainBundle] pathForResource:path ofType:nil];
 	}
@@ -188,7 +188,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 
 	OSStatus result = noErr;
 
-	if ([path isAbsolutePath]) {	
+	if ([path isAbsolutePath]) {
 		result = AudioFileOpenURL((CFURLRef) [NSURL fileURLWithPath:path], kAudioFileReadPermission, 0, &fileID);
 	} else {
 		resource* res = (resource*)malloc(sizeof(resource));
@@ -199,7 +199,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 
 		result = AudioFileOpenWithCallbacks((void*)res, MyAudioFile_ReadProc, MyAudioFile_WriteProc, MyAudioFile_GetSizeProc, MyAudioFile_SetSizeProc, 0, &fileID);
 	}
-	
+
 	if (result != noErr) raise_error("could not read audio file",String_val(mlpath),result);
 
 	AudioStreamBasicDescription fileFormat;
@@ -283,7 +283,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	caml_stat_free(soundBuffer);
 	errorCode = alGetError();
 	if (errorCode != AL_NO_ERROR) raise_error("Could not fill OpenAL buffer",String_val(mlpath),errorCode);
-	
+
 	caml_alloc_dependent_memory(soundSize);
 	total_sound_mem += soundSize;
 	LOGMEM("alloc",soundSize);
@@ -298,7 +298,7 @@ CAMLprim value ml_albuffer_create(value mlpath) {
 	PRINT_DEBUG("CREATED new albuffer: %d - %f",bufferID,soundDuration);
 	CAMLreturn(mlres);
 }
-    
+
 
 /*
 #define ALSOURCEID(v) ((uint*)Data_custom_val(v))
@@ -367,8 +367,8 @@ value ml_alsource_stop(value mlAlSourceID) {
 }
 
 value ml_alsource_setLoop(value mlAlSourceID,value loop) {
-	//alSourcei(*ALSOURCEID(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
-	alSourcei(Int32_val(mlAlSourceID), AL_LOOPING, Int_val(loop)); 
+	//alSourcei(*ALSOURCEID(mlAlSourceID), AL_LOOPING, Int_val(loop));
+	alSourcei(Int32_val(mlAlSourceID), AL_LOOPING, Int_val(loop));
 	return Val_unit;
 }
 
@@ -376,7 +376,7 @@ value ml_alsource_state(value mlAlSourceID) {
 	ALint state;
 	//alGetSourcei(*ALSOURCEID(mlAlSourceID), AL_SOURCE_STATE, &state);
 	alGetSourcei(Int32_val(mlAlSourceID), AL_SOURCE_STATE, &state);
-	int res;
+	int res = 0;
 	switch (state) {
 		case AL_PLAYING: res = 1; break;
 		case AL_PAUSED: res = 2; break;
@@ -434,12 +434,12 @@ value ml_alsource_delete(value mlAlSourceID) {
 				caml_failwith("can't find sound");
 			}
 
-			NSError *error = nil;                                                                                                                                                              
+			NSError *error = nil;
 			_player  = [[AVAudioPlayer alloc] initWithContentsOfURL:sndurl error:&error];
 			if (_player == nil) {
 				[self release];
 				caml_failwith("can't create player");
-			};			
+			};
 		} else {
 			resource res;
 			const char* c_fname = [fname cStringUsingEncoding:NSASCIIStringEncoding];
@@ -491,12 +491,12 @@ value ml_alsource_delete(value mlAlSourceID) {
 
 -(void)stop {
   [_player stop];
-  _player.currentTime = 0;  
+  _player.currentTime = 0;
 }
 
 
--(BOOL)isPlaying {                                                                                                                                                                                      
-  return _player.playing;                                                                                                                                                            
+-(BOOL)isPlaying {
+  return _player.playing;
 }
 
 
@@ -517,7 +517,7 @@ value ml_alsource_delete(value mlAlSourceID) {
 
 #pragma mark AVAudioPlayerDelegate
 
-- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {    
+- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag {
 	if (_sound_stopped_handler) {
 		//caml_acquire_runtime_system();
 		caml_callback(_sound_stopped_handler, Val_unit);
@@ -551,7 +551,7 @@ value ml_alsource_delete(value mlAlSourceID) {
 static void avplayer_finalize(value oplayer) {
 	PRINT_DEBUG("av player finalize");
 	AVSoundPlayerController *player = *AVPLAYER(oplayer);
-  [player release]; 
+  [player release];
 }
 
 struct custom_operations avplayer_ops = {
@@ -567,9 +567,9 @@ struct custom_operations avplayer_ops = {
 CAMLprim value ml_avsound_create_player(value fname) {
   CAMLparam1(fname);
 	PRINT_DEBUG("create player");
-  NSString * filename = [NSString stringWithCString:String_val(fname) encoding:NSASCIIStringEncoding]; 
+  NSString * filename = [NSString stringWithCString:String_val(fname) encoding:NSASCIIStringEncoding];
   AVSoundPlayerController *playerController = [[AVSoundPlayerController alloc] initWithFilename:filename];
-  
+
   if (playerController == nil) {
     raise_error("Error initializing LightningAVSoundPlayerController", NULL, 404);
   }
@@ -586,7 +586,7 @@ CAMLprim value ml_avsound_create_player(value fname) {
 void ml_avsound_release(value playerController) {
   CAMLparam1(playerController);
 	PRINT_DEBUG("avsound release");
-  [(AVSoundPlayerController *)playerController release]; 
+  [(AVSoundPlayerController *)playerController release];
   CAMLreturn0;
 }
 */
@@ -619,7 +619,7 @@ value ml_avsound_stop(value playerController) {
 }
 
 
-/* 
+/*
  * Set volume
  */
 value ml_avsound_set_volume(value playerController, value volume) {
@@ -627,7 +627,7 @@ value ml_avsound_set_volume(value playerController, value volume) {
 	return Val_unit;
 }
 
-/* 
+/*
  * Get volume
  */
 CAMLprim value ml_avsound_get_volume(value playerController) {
@@ -650,4 +650,3 @@ value ml_avsound_set_loop(value playerController, value loop) {
 CAMLprim value ml_avsound_is_playing(value playerController) {
 	return Val_bool([*AVPLAYER(playerController) isPlaying]);
 }
-
