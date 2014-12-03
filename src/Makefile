@@ -29,7 +29,7 @@ native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartbo
 syntax: syntax/pa_prop.cmo
 
 
-KAZMATHOBJS = utility.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o GL/mat4stack.o GL/matrix.o
+KAZMATHOBJS = utility.o ray3.o vec2.o vec4.o vec3.o mat3.o quaternion.o mat4.o GL/mat4stack.o GL/matrix.o
 KAZMATH = $(patsubst %,kazmath/%,$(KAZMATHOBJS))
 MLPPOPT = syntax/pa_platform.cmo
 

@@ -16,6 +16,7 @@
 #include "lightning_android.h"
 #include "keyboard_android.h"
 #include "render_stub.h"
+#include <kazmath/GL/matrix.h>
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
@@ -418,6 +419,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
 void android_main(struct android_app* state) {
     app_dummy();
 
+		kmGLSetCurrentContext(state);
     touch_track = kh_init_tt();
 
     state->userData = &engine;
