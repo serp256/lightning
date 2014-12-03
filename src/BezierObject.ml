@@ -95,8 +95,8 @@ class c pts s q t =
 	object(self)
 		inherit(DisplayObject.c) as super;
 		value mutable points			: form = pts;
-		value mutable step				: float = 0.1;
-		value mutable qty				: int = 10;
+		value mutable step				: float = s(*0.1*);
+		value mutable qty				: int = q(*10*);
 		value mutable arrays 			: lazy_t t = lazy (makeArrays (*correctForm pts*)pts s q (t#renderInfo.Texture.rwidth,t#renderInfo.Texture.rheight) (getClp t));
 		value mutable setVertexArray	: lazy_t unit = lazy ();
 		method arrays = Lazy.force arrays;
