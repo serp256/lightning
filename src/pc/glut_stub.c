@@ -11,11 +11,16 @@
 #include <caml/callback.h>
 #include <caml/threads.h>
 #include "render_stub.h"
+#include <kazmath/GL/matrix.h>
 
 void ml_glutInit() { // FIXME: argc argv надо по идее 
 	char *argv[] = {"glut",NULL};
 	int argc = 1;
 	glutInit(&argc,argv);
+		/** kazmath do not use gl context as gl context, it is casted to void* and used as identifier to set of matrix stacks. we have no need for per context matrix sets.
+		  * therefore doesn't matter what pass to this function.
+		  */ 
+	kmGLSetCurrentContext(1);
 }
 
 void ml_glutInitWindowSize(value width,value height) {

@@ -418,7 +418,9 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
 
 void android_main(struct android_app* state) {
     app_dummy();
-
+		/** kazmath do not use gl context as gl context, it is casted to void* and used as identifier to set of matrix stacks. we have no need for per context matrix sets.
+		  * therefore doesn't matter what pass to this function.
+		  */ 
 		kmGLSetCurrentContext(state);
     touch_track = kh_init_tt();
 
