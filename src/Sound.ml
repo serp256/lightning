@@ -2,7 +2,7 @@ value ev_SOUND_COMPLETE = Ev.gen_id "SOUND_COMPLETE";
 
 exception Audio_error of string;
 
-type category = 
+type category =
   [ AmbientSound
   | SoloAmbientSound
   | MediaPlayback
@@ -50,7 +50,7 @@ external al_setMasterVolume: float -> unit = "ml_al_setMasterVolume";
 
 value setMasterVolume = al_setMasterVolume;
 
-value load path = 
+value load path =
   match ExtString.String.ends_with path ".caf" with
   [ True    -> ALSound (albuffer_create path)
   | False   -> AVSound path
@@ -70,7 +70,7 @@ external alsource_state: alsource -> sound_state = "ml_alsource_state" "noalloc"
 
 
 (* ALSound *)
-class al_channel snd = 
+class al_channel snd =
   let sourceID = alsource_create snd.albuffer in
   let finalize _ = (debug "finalize al_channel"; alsource_delete sourceID) in
   object(self)
@@ -81,26 +81,26 @@ class al_channel snd =
     value mutable startMoment = 0.;
     value mutable pauseMoment = 0.;
     value mutable timer_id = None;
-    
+
     method private asEventTarget = (self :> channel);
-    
-    method play () = 
+
+    method play () =
     (
       debug "play sound for IOS";
       alsource_play sourceID;
       timer_id := Some (Timers.start (* sound.duration *)10. self#finished);
     );
 
-    method private finished () = 
+    method private finished () =
       let () = debug "sound finished" in
-      if loop then 
-        timer_id := Some (Timers.start sound.duration self#finished) 
+      if loop then
+        timer_id := Some (Timers.start sound.duration self#finished)
       else (
         timer_id := None;
         self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
       );
 
-    method pause () = 
+    method pause () =
       match timer_id with
       [ Some tid ->
         (
@@ -111,7 +111,7 @@ class al_channel snd =
       | None -> ()
       ];
 
-    method stop () = 
+    method stop () =
       let () = debug "stop sound" in
       match timer_id with
       [ Some tid ->
@@ -124,13 +124,13 @@ class al_channel snd =
       ];
     method setVolume v = alsource_setVolume sourceID v;
     method volume = alsource_getVolume sourceID;
-    method setLoop v = 
+    method setLoop v =
     (
       loop := v;
       alsource_setLoop sourceID v;
     );
-    
-    method state = alsource_state sourceID;  
+
+    method state = alsource_state sourceID;
   end;
 
 
@@ -148,7 +148,7 @@ external avsound_is_playing : avplayer -> bool = "ml_avsound_is_playing";
 
 
 (* AVSound *)
-class av_channel snd = 
+class av_channel snd =
   let player = avsound_create_player snd in
   object(self)
 
@@ -158,47 +158,47 @@ class av_channel snd =
 
     method private asEventTarget = (self :> channel);
     method private onSoundComplete () = self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
-    method play () = 
+    method play () =
     (
       debug "play avsound";
       paused := False;
-      avsound_play player self#onSoundComplete;  
+      avsound_play player self#onSoundComplete;
     );
 
     method private isPlaying () = avsound_is_playing player;
-    
-    method pause () = 
+
+    method pause () =
     (
       debug "pause avsound";
       paused := True;
       avsound_pause player;
     );
-    
-    method stop () = 
+
+    method stop () =
     (
       debug "stop avsound";
       paused := False;
       avsound_stop player;
     );
-    
-    method setVolume (v:float) = 
+
+    method setVolume (v:float) =
     (
       debug "setVolume avsound";
       avsound_set_volume player v;
     );
-    
-    method volume = 
+
+    method volume =
     (
       debug "volume avsound";
       avsound_get_volume player;
     );
-    
-    method setLoop loop  = 
+
+    method setLoop loop  =
     (
       debug "set loop avsound";
       avsound_set_loop player loop;
     );
-    
+
     method state = match (paused, self#isPlaying ()) with
     [ (_, True)         -> SoundPlaying
     | (True, False)     -> SoundPaused
@@ -208,10 +208,10 @@ class av_channel snd =
 
 
 
-value createChannel snd = 
-  match snd with 
+value createChannel snd =
+  match snd with
   [ ALSound als -> new al_channel als
-  | AVSound avs -> new av_channel avs 
+  | AVSound avs -> new av_channel avs
   ];
 
 
@@ -249,7 +249,7 @@ ELSE
       else
         AVSound (avsound_create_player path);
 
-  class av_channel plr =    
+  class av_channel plr =
     object(self)
       inherit EventDispatcher.simple [ channel ];
 
@@ -272,15 +272,15 @@ ELSE
         self#dispatchEvent (Ev.create ev_SOUND_COMPLETE ());
       );
 
-      method play () = 
+      method play () =
       (
         isPlaying := True;
         paused := False;
         completed := False;
         avsound_play player self#onSoundComplete;
       );
-      
-      method pause () = 
+
+      method pause () =
         if isPlaying then
         (
           paused := True;
@@ -290,8 +290,8 @@ ELSE
           avsound_pause player;
         )
         else ();
-      
-      method stop () = 
+
+      method stop () =
         if paused || isPlaying then
         (
           paused := False;
@@ -301,17 +301,17 @@ ELSE
           avsound_stop player;
         )
         else ();
-      
+
       method setVolume v =
-      (        
+      (
         volume := v;
         avsound_setVolume player (int_of_float (volume *. 100.));
       );
-      
+
       method volume = volume;
-      
+
       method setLoop loop  = avsound_setLoop player loop;
-      
+
       method state = match (paused, isPlaying) with
       [ (_, True)         -> SoundPlaying
       | (True, False)     -> SoundPaused
@@ -319,7 +319,7 @@ ELSE
       ];
     end;
 
-    class al_channel snd = 
+    class al_channel snd =
       object(self)
         inherit EventDispatcher.simple [ channel ];
 
@@ -328,10 +328,10 @@ ELSE
         value mutable volume = 1.;
         value mutable loop = False;
         value mutable state = SoundInitial;
-        
+
         method private asEventTarget = (self :> channel);
-        
-        method play () = 
+
+        method play () =
         (
 						debug "play\n%!";
           stream := Some (alsoundPlay sound (int_of_float (volume *. 100.)) loop self#finished);
@@ -345,7 +345,7 @@ ELSE
           state := SoundStoped;
 				);
 
-        method pause () = 
+        method pause () =
           match stream with
           [ Some stream ->
             (
@@ -355,7 +355,7 @@ ELSE
           | _ -> ()
           ];
 
-        method stop () = 
+        method stop () =
           match stream with
           [ Some strm ->
             (
@@ -375,10 +375,10 @@ ELSE
           | _ -> ()
           ];
         );
-          
+
         method volume = volume;
 
-        method setLoop v = 
+        method setLoop v =
         (
           loop := v;
 
@@ -387,16 +387,16 @@ ELSE
           | _ -> ()
           ];
         );
-        
+
         method state = state;
-      end;    
+      end;
 
     (* value createChannel snd = new al_channel snd; *)
     (* value createChannel snd = new av_channel snd; *)
-    value createChannel snd = 
-      match snd with 
+    value createChannel snd =
+      match snd with
       [ ALSound als -> new al_channel als
-      | AVSound avs -> new av_channel avs 
+      | AVSound avs -> new av_channel avs
       ];
   ELSE
     (* Sdl version here *)
@@ -405,7 +405,7 @@ ELSE
     value setMasterVolume (_p:float) = ();
     type sound = int;
     value load (path:string) = 0;
-    class ch snd = 
+    class ch snd =
       object(self)
         inherit EventDispatcher.simple [ channel ];
         method private asEventTarget = (self :> channel);
