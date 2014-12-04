@@ -5,6 +5,8 @@
 #import <caml/alloc.h>
 #import "mlwrapper_ios.h"
 
+BOOL addSkipBackupAttributeToItemAtURL(NSURL* url);
+
 @interface LightDownloaderDelegate : NSObject <NSURLConnectionDataDelegate> {
 	value *success;
 	value *error;

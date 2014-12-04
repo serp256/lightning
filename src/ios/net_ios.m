@@ -60,6 +60,7 @@ value ml_DownloadFile(value compress, value vurl, value vpath, value verr, value
 		[fileManager createFileAtPath:tmpFilename contents:[NSData data] attributes:nil];
 	}
 
+	addSkipBackupAttributeToItemAtURL([NSURL fileURLWithPath:tmpFilename isDirectory:NO]);
 	NSFileHandle *tmpFile = [NSFileHandle fileHandleForWritingAtPath:tmpFilename];
 
 	if (tmpFile == nil) {
@@ -95,5 +96,5 @@ value ml_DownloadFile(value compress, value vurl, value vpath, value verr, value
 
 value ml_DownloadFile_byte(value *argv, int n) {
 	//return rendertex_draw(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
-	return(Val_unit); 
+	return(Val_unit);
 }

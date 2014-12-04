@@ -1,5 +1,25 @@
 #import "LightDownloaderDelegate.h"
 
+BOOL addSkipBackupAttributeToItemAtURL(NSURL* url) {
+	NSLog(@"addSkipBackupAttributeToItemAtURL call %@", url);
+	NSLog(@"url path %@", [url path]);
+
+	if (![[NSFileManager defaultManager] fileExistsAtPath: [url path]]) {
+		NSLog(@"file not exists");
+		return NO;
+	}
+
+	NSError *error = nil;
+	BOOL success = [url setResourceValue: [NSNumber numberWithBool: YES] forKey: NSURLIsExcludedFromBackupKey error: &error];
+
+	if(!success){
+		NSLog(@"Error excluding %@ from backup %@", [url lastPathComponent], error);
+	}
+
+	NSLog(@"work done");
+	return success;
+}
+
 @implementation LightDownloaderDelegate
 
 - (id)initWithSuccess: (value) sccss error: (value) err progress: (value) prgrss filename: (NSString*) fname tmpFilename: (NSString*) tmpFname tmpFile: (NSFileHandle*) tmpF {
@@ -24,8 +44,9 @@
 	if ([fileManager fileExistsAtPath:filename]) {
 		[fileManager removeItemAtPath:filename error:nil];
 	}
-	
+
 	if ([fileManager moveItemAtPath:tmpFilename toPath:filename error:&err]) {
+		addSkipBackupAttributeToItemAtURL([NSURL fileURLWithPath:filename isDirectory:NO]);
 		RUN_CALLBACK(success, Val_unit);
 	} else if (error && err) {
 		RUN_CALLBACK2(error, Val_int([err code]), caml_copy_string([[err localizedDescription] UTF8String]));
@@ -44,7 +65,7 @@
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-	NSLog(@"connection didReceiveResponse %lld", [response expectedContentLength]);
+	NSLog(@"connection %ld didReceiveResponse %lld", [response statusCode], [response expectedContentLength]);
 	expectedLen = [response expectedContentLength];
 	loadedLen = 0;
 	resumeFrom = [tmpFile offsetInFile];
