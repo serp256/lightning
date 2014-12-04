@@ -97,7 +97,7 @@ let lightning_dispatch =
         | false -> ());
         mlxml_rule ();
         (match !gtoolchain with
-        | Some "ios" | Some "ios64" 
+        | Some "ios" | Some "ios64" ->
             rule "ocaml obj-c stubs: m -> o"
             ~prod:"%.o"
             ~dep:"%.m"
