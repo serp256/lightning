@@ -31,6 +31,7 @@ value friends ?fail ~success t = ();
 value users ?fail ~success ~ids t = ();
 value token _ = "";
 value uid _ = "";
+value logout _ = ();
 ELSE
 Callback.register "create_user" User.create;
 

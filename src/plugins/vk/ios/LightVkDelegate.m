@@ -37,7 +37,6 @@
 - (void)vkSdkReceivedNewToken:(VKAccessToken *)newToken {
 	NSLog(@"vkSdkReceivedNewToken call");
 	*authorized = 1;
-	[newToken saveTokenToDefaults:@"lightning_nativevk_token"];
 	RUN_CALLBACK(success, Val_unit);
 }
 
@@ -47,12 +46,17 @@
 
 - (void)vkSdkRenewedToken:(VKAccessToken *)newToken {
 	NSLog(@"vkSdkRenewedToken");
-	[newToken saveTokenToDefaults:@"lightning_nativevk_token"];
+	*authorized = 1;
+	RUN_CALLBACK(success, Val_unit);
 }
 
 - (void)dealloc {
 	FREE_CALLBACK(success);
 	FREE_CALLBACK(fail);
+}
+
+- (BOOL)vkSdkAuthorizationAllowFallbackToSafari {
+	return NO;
 }
 
 @end
