@@ -116,19 +116,18 @@ public class LightVk {
 
 		public void onReceiveNewToken(VKAccessToken newToken) {
 			Log.d("LIGHTNING", "onReceiveNewToken " + newToken.accessToken);
-			newToken.saveTokenToSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 			authorized = true;
 			(new AuthSuccess(success, fail)).run();
 		}
 
 		public void onAcceptUserToken(VKAccessToken token) {
-			token.saveTokenToSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 			Log.d("LIGHTNING", "onAcceptUserToken");
 		}
 
 		public void onRenewAccessToken(VKAccessToken token) {
-			token.saveTokenToSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 			Log.d("LIGHTNING", "onRenewAccessToken");
+			authorized = true;
+			(new AuthSuccess(success, fail)).run();
 		}
 	}
 
@@ -154,6 +153,7 @@ public class LightVk {
 	}
 
 	private static boolean helperAdded = false;
+	private static boolean sdkListenerAdded = false;
 
 	public static void authorize(String appid, String[] permissions, int success, int fail, boolean force) {
 		Log.d("LIGHTNING", "!!!authorized " + authorized + " force " + force);
@@ -177,16 +177,19 @@ public class LightVk {
 		}
 
 		VKSdk.initialize(new VKSdkListener(success, fail), appid);
-		VKAccessToken token = VKAccessToken.tokenFromSharedPreferences(Lightning.activity, "lightning_nativevk_token");
 
-		// Log.d("LIGHTNING", "token " + (token == null ? "null" : token.accessToken));
+		if (force) {
+			VKSdk.logout();
+		}
 
-		if (token == null || token.isExpired() || force) {
+		boolean wakedUp = VKSdk.wakeUpSession();
+
+		if (!wakedUp) {
 			Log.d("LIGHTNING", "no token or it is expied");
 			VKSdk.authorize(permissions, false, false);
 		} else {
 			Log.d("LIGHTNING", "has token");
-			VKSdk.setAccessToken(token, false);
+			(new AuthSuccess(success, fail)).run();
 		}
 	}
 
