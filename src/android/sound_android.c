@@ -52,7 +52,12 @@ void bq_player_callback(void *d) {
     PRINT_DEBUG("bq_player_callback %d", gettid());
 
     bq_player_callback_t *data = (bq_player_callback_t*)d;
-    if (data->run_callback) caml_callback(data->plr->callback, Val_unit);
+
+    caml_remove_generational_global_root(&data->plr->callback);
+    if (data->run_callback) {
+        caml_callback(data->plr->callback, Val_unit);
+    }
+
     RUN_ON_UI_THREAD(&bq_player_free, data->plr);
     free(data);
 }
@@ -83,7 +88,7 @@ bq_player_t *make_bq_player(SLuint32 sample_rate, SLuint16 bits_per_sample) {
     PRINT_DEBUG("make_bq_player %d", gettid());
 
     bq_player_t *bq_plr = (bq_player_t*)malloc(sizeof(bq_player_t));
-    caml_register_global_root(&bq_plr->callback);
+		bq_plr->callback = 0;
     memset(bq_plr, 0, sizeof(bq_player_t));
 
     PRINT_DEBUG("bits_per_sample %x %x", bits_per_sample, SL_PCMSAMPLEFORMAT_FIXED_8);
@@ -288,8 +293,14 @@ value ml_alsoundPlay(value sound, value vol, value loop, value callback) {
     bq_player_t *bq_plr = make_bq_player(alsnd->sample_rate, alsnd->bits_per_sample);
     bq_plr->in_usage = 1;
     bq_plr->looped = loop == Val_true;
-    bq_plr->callback = callback;
-    caml_register_generational_global_root(&bq_plr->callback);
+		
+		if (!bq_plr->callback) {
+			bq_plr->callback = callback;
+			caml_register_generational_global_root(&bq_plr->callback);
+		} else {
+			caml_modify_generational_global_root(&bq_plr->callback, callback);
+		}
+
     ml_alsoundSetVolume((value)bq_plr, vol);
 
     SLresult result = (*bq_plr->bqPlayerPlay)->SetPlayState(bq_plr->bqPlayerPlay, SL_PLAYSTATE_PLAYING);
@@ -360,25 +371,32 @@ value ml_avsound_create_player(value vpath) {
     CAMLparam1(vpath);
 
     fd_player_t *fd_plr = (fd_player_t*)malloc(sizeof(fd_player_t));
-    caml_register_global_root(&fd_plr->callback);
+		fd_plr->callback = 0;
     memset(fd_plr, 0, sizeof(fd_player_t));
 
     resource r;
     SOUND_ASSERT(getResourceFd(String_val(vpath), &r), "cannot load sound");
 
+
+		PRINT_DEBUG("CHPNT1");
+
     SLDataLocator_AndroidFD loc_fd = {SL_DATALOCATOR_ANDROIDFD, r.fd, r.offset, r.length};
     SLDataFormat_MIME format_mime = {SL_DATAFORMAT_MIME, NULL, SL_CONTAINERTYPE_UNSPECIFIED};
     SLDataSource audioSrc = {&loc_fd, &format_mime};
+		PRINT_DEBUG("CHPNT1");
 
     // configure audio sink
     SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
     SLDataSink audioSnk = {&loc_outmix, NULL};
 
+		PRINT_DEBUG("CHPNT1");
     // create audio player
     const SLInterfaceID ids[2] = {SL_IID_SEEK, SL_IID_VOLUME};
     const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
     SLresult result = (*engineEngine)->CreateAudioPlayer(engineEngine, &fd_plr->fdPlayerObject, &audioSrc, &audioSnk, 2, ids, req);
+		PRINT_DEBUG("CHPNT1");
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound create player");
+		PRINT_DEBUG("CHPNT1");
 
     // realize the player
     result = (*fd_plr->fdPlayerObject)->Realize(fd_plr->fdPlayerObject, SL_BOOLEAN_FALSE);
@@ -387,6 +405,7 @@ value ml_avsound_create_player(value vpath) {
     // get the play interface
     result = (*fd_plr->fdPlayerObject)->GetInterface(fd_plr->fdPlayerObject, SL_IID_PLAY, &fd_plr->fdPlayerPlay);
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound create player get play interface");
+		PRINT_DEBUG("CHPNT1");
 
     // get the seek interface
     result = (*fd_plr->fdPlayerObject)->GetInterface(fd_plr->fdPlayerObject, SL_IID_SEEK, &fd_plr->fdPlayerSeek);
@@ -401,6 +420,7 @@ value ml_avsound_create_player(value vpath) {
 
     result = (*fd_plr->fdPlayerPlay)->RegisterCallback(fd_plr->fdPlayerPlay, fdPlayerCallback, fd_plr);
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound register callback");
+		PRINT_DEBUG("CHPNT1");
 
     CAMLreturn((value)fd_plr);
 }
@@ -431,7 +451,13 @@ value ml_avsound_play(value player, value callback) {
     CAMLparam2(player, callback);
 
     fd_player_t *fd_plr = (fd_player_t*)player;
-    fd_plr->callback = callback;
+
+		if (!fd_plr->callback) {
+			fd_plr->callback = callback;
+			caml_register_generational_global_root(&fd_plr->callback);
+		} else {
+			caml_modify_generational_global_root(&fd_plr->callback, callback);
+		}
 
     SLresult result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_PLAYING);
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound play");
@@ -467,8 +493,8 @@ value ml_avsound_release(value player) {
     CAMLparam1(player);
 
     fd_player_t *fd_plr = (fd_player_t*)player;
+		caml_remove_generational_global_root(&fd_plr->callback);
     (*fd_plr->fdPlayerObject)->Destroy(fd_plr->fdPlayerObject);
-    caml_remove_global_root(&fd_plr->callback);
     free(fd_plr);
 
     CAMLreturn(Val_unit);
