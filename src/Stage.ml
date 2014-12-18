@@ -468,3 +468,11 @@ class virtual c (_width:float) (_height:float) =
     );
 
 end;
+
+IFPLATFORM(pc)
+value setBackgroundDelayedCallback ~callback ~delay () = ();
+value resetBackgroundDelayedCallback () = ();
+ELSE
+external setBackgroundDelayedCallback: ~callback:(unit -> unit) -> ~delay:int -> unit -> unit = "ml_setBackgroundDelayedCallback";
+external resetBackgroundDelayedCallback: unit -> unit = "ml_resetBackgroundDelayedCallback";
+ENDPLATFORM;

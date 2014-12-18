@@ -25,6 +25,11 @@
 	id<OrientationDelegate> _orientationDelegate;
 	id<RemoteNotificationsRegisterDelegate> _rnDelegate;
 	LightActivityIndicatorView*	activityIndicator;
+
+	value *bgDelayedCallback;
+	NSTimer *bgDelayedCallbackTimer;
+	NSTimeInterval bgCallbackDelay;
+	UIBackgroundTaskIdentifier bgTaskId;
 @public
 	// Payments need refactoring for deprecated api.
 	// Лучше будет переписать их через Callback механизм, так как их не может быть много
@@ -47,6 +52,9 @@
 -(void)hideActivityIndicator;
 +(void)setSupportEmail:(NSString*)email;
 - (void)showKeyboard:(value)visible size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString;
+- (void)setBackgroundCallback:(value)callback withDelay:(long) delay;
+- (void)resetBackgroundDelayedCallback;
+- (void)runBackgroudDelayerCallback;
 
 -(void)hideKeyboard;
 

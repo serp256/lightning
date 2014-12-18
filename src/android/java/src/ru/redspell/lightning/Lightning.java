@@ -123,6 +123,13 @@ public class Lightning {
 		return retval;
 	}
 
+	public static void setBackgroundCallbackDelay(long delay) {
+		NativeActivity.instance.setBackgroundCallbackDelay(delay);
+	}
+
+	public static void resetBackgroundCallbackDelay() {
+		NativeActivity.instance.resetBackgroundCallbackDelay();
+	}
 
     public static String locale() {
     	ru.redspell.lightning.utils.Log.d("LIGHTNING", "locale");

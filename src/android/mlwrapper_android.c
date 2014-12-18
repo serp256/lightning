@@ -1,5 +1,6 @@
 #include "lightning_android.h"
 #include "engine_android.h"
+#include <caml/memory.h>
 
 value android_debug_output(value mtag, value mname, value mline, value msg) {
 	char *tag;
@@ -340,4 +341,53 @@ value ml_compression(value unit) {
   }
 
 	return res;
+}
+
+static value *bg_delayed_callback = NULL;
+
+value ml_setBackgroundDelayedCallback(value callback, value vdelay, value unit) {
+	if (bg_delayed_callback) {
+		caml_modify_generational_global_root(bg_delayed_callback, callback);
+	} else {
+		bg_delayed_callback = (value*)malloc(sizeof(value));
+		*bg_delayed_callback = callback;
+		caml_register_generational_global_root(bg_delayed_callback);
+	}
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "setBackgroundCallbackDelay", "(J)V");
+
+	long ldelay = Long_val(vdelay);
+	if (ldelay <= 0) {
+		caml_failwith("negative background callback delay restricted");
+	}
+
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid, (jlong)ldelay);
+
+	return Val_unit;
+}
+
+value ml_resetBackgroundDelayedCallback(value unit) {
+	if (bg_delayed_callback) {
+		caml_remove_generational_global_root(bg_delayed_callback);
+		free(bg_delayed_callback);
+	}
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "resetBackgroundCallbackDelay", "()V");
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
+
+	return Val_unit;
+}
+
+void run_bg_delayed_callback(void *data) {
+	PRINT_DEBUG("run_bg_delayed_callback");
+	if (bg_delayed_callback) {
+		caml_callback(*bg_delayed_callback, Val_unit);
+	}
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_NativeActivity_00024TimerTask_run(JNIEnv *env, jclass this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_NativeActivity_00024TimerTask_run");
+	RUN_ON_ML_THREAD(&run_bg_delayed_callback, NULL);
 }

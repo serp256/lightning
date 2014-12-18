@@ -9,6 +9,7 @@ import android.widget.EditText;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Iterator;
+import java.util.Timer;
 
 import ru.redspell.lightning.IUiLifecycleHelper;
 import ru.redspell.lightning.utils.Log;
@@ -18,6 +19,8 @@ import ru.redspell.lightning.notifications.Receiver;
 public class NativeActivity extends android.app.NativeActivity {
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
 	public static NativeActivity instance = null;
+	private static Timer backgroundCallbackTimer = null;
+	private static long backgroundCallbackDelay = -1;
 
 	public boolean isRunning = false;
 
@@ -118,6 +121,11 @@ public class NativeActivity extends android.app.NativeActivity {
 			IUiLifecycleHelper h = iter.next();
 			h.onResume();
 		}
+
+		if (backgroundCallbackTimer != null) {
+			backgroundCallbackTimer.cancel();
+			backgroundCallbackTimer = null;
+		}
 	}
 
 	@Override
@@ -143,6 +151,10 @@ public class NativeActivity extends android.app.NativeActivity {
 		}
 	}
 
+	private static class TimerTask extends java.util.TimerTask {
+		public native void run();
+	}
+
 	@Override
 	protected void onPause() {
 		Receiver.appRunning = false;
@@ -153,6 +165,11 @@ public class NativeActivity extends android.app.NativeActivity {
 		while (iter.hasNext()) {
 			IUiLifecycleHelper h = iter.next();
 			h.onPause();
+		}
+
+		if (backgroundCallbackDelay > 0) {
+			backgroundCallbackTimer = new Timer();
+			backgroundCallbackTimer.schedule(new TimerTask(), backgroundCallbackDelay);
 		}
 	}
 
@@ -235,5 +252,18 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	public void runOnUiThread(int runnable) {
 		runOnUiThread(new NativeRunnable(runnable));
+	}
+
+	public static void setBackgroundCallbackDelay(long delay) {
+		backgroundCallbackDelay = delay;
+	}
+
+	public static void resetBackgroundCallbackDelay() {
+		backgroundCallbackDelay = -1;
+
+		if (backgroundCallbackTimer != null) {
+			backgroundCallbackTimer.cancel();
+			backgroundCallbackTimer = null;
+		}
 	}
 }

@@ -62,3 +62,5 @@ class virtual c: [ float ] -> [ float ] ->
   end;
 
 value instance: unit -> c;
+value setBackgroundDelayedCallback:  ~callback:(unit -> unit) -> ~delay:int -> unit -> unit;
+value resetBackgroundDelayedCallback: unit -> unit;

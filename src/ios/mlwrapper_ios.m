@@ -611,3 +611,13 @@ value ml_uncaughtExceptionByMailSubjectAndBody() {
 
   CAMLreturn(vres);
 }
+
+value ml_setBackgroundDelayedCallback(value callback, value delay, value unit) {
+    [[LightViewController sharedInstance] setBackgroundCallback:callback withDelay:Long_val(delay)];
+    return Val_unit;
+}
+
+value ml_resetBackgroundDelayedCallback(value unit) {
+    [[LightViewController sharedInstance] resetBackgroundDelayedCallback];
+    return Val_unit;
+}

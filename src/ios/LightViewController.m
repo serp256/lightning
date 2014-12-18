@@ -176,6 +176,9 @@ void silentUncaughtException(char *exceptionJson) {
 
 
 -(id)init {
+	bgDelayedCallback = nil;
+	bgCallbackDelay = -1;
+
   self = [super init];
   if (self != nil) {
 		payment_success_cb = 0;
@@ -229,10 +232,22 @@ void silentUncaughtException(char *exceptionJson) {
 }
 
 -(void)background {
+	NSLog(@"background call %f", bgCallbackDelay);
+	if (bgCallbackDelay > 0) {
+		bgTaskId = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:nil];
+		bgDelayedCallbackTimer = [NSTimer scheduledTimerWithTimeInterval:bgCallbackDelay target:self selector:@selector(runBackgroudDelayerCallback) userInfo:nil repeats:NO];
+	}
+
 	[(LightView *)(self.view) background];
 }
 
 -(void)foreground {
+	if (bgDelayedCallbackTimer != nil) {
+		[bgDelayedCallbackTimer invalidate];
+		bgDelayedCallbackTimer = nil;
+		[[UIApplication sharedApplication] bgDelayedCallbackTimer:bgTaskId];
+	}
+
 	[(LightView *)(self.view) foreground];
 }
 
@@ -638,6 +653,42 @@ static value *ml_url_complete = NULL;
 //	[self changeTextFieldOrientation:self.interfaceOrientation];
 
 	if (keyboardCallbackUpdate != 0) caml_callback(keyboardCallbackUpdate, caml_copy_string( String_val(initString) ));
+}
+
+- (void)setBackgroundCallback:(value)callback withDelay:(long) delay {
+	if (delay <= 0) {
+		caml_failwith("negative background callback delay restricted");
+	}
+
+	if (bgDelayedCallback) {
+		caml_modify_generational_global_root(bgDelayedCallback, callback);
+	} else {
+		bgDelayedCallback = (value*)malloc(sizeof(value));
+		*bgDelayedCallback = callback;
+		caml_register_generational_global_root(bgDelayedCallback);
+	}
+
+	bgCallbackDelay = (NSTimeInterval)delay / 1000.;
+}
+
+- (void)resetBackgroundDelayedCallback {
+	if (bgDelayedCallbackTimer != nil) {
+		[[UIApplication sharedApplication] endBackgroundTask:bgTaskId];
+		[bgDelayedCallbackTimer invalidate];
+		bgDelayedCallbackTimer = nil;
+		bgCallbackDelay = -1;
+	}
+}
+
+- (void)runBackgroudDelayerCallback {
+	NSLog(@"runBackgroudDelayerCallback");
+	if (bgDelayedCallback) {
+		caml_callback(*bgDelayedCallback, Val_unit);
+	}
+
+	[[UIApplication sharedApplication] endBackgroundTask:bgTaskId];
+	[bgDelayedCallbackTimer invalidate];
+	bgDelayedCallbackTimer = nil;
 }
 
 @end
