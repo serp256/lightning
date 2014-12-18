@@ -37,6 +37,18 @@ public class NativeActivity extends android.app.NativeActivity {
 		uiLfcclHlprs.remove(helper);
 	}
 
+	private void setImmersiveMode() {
+		if (android.os.Build.VERSION.SDK_INT > 18) {
+			getWindow().getDecorView().setSystemUiVisibility(
+			View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+			| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+			| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+			| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+			| View.SYSTEM_UI_FLAG_FULLSCREEN
+			| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		}
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.d("LIGHTNING", "onCreate call");
@@ -66,6 +78,15 @@ public class NativeActivity extends android.app.NativeActivity {
 					Log.d("LIGHTNING", "displayHeight " + displayHeight);
 					Log.d("LIGHTNING", "height / displayHeight " + (displayHeight / height));
 					Keyboard.setVisible((displayHeight / height) < 0.8);
+				}
+			}
+		});
+
+		view.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+			@Override
+			public void onSystemUiVisibilityChange(int visibility) {
+				if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+					setImmersiveMode();
 				}
 			}
 		});
@@ -106,15 +127,7 @@ public class NativeActivity extends android.app.NativeActivity {
 		isRunning = true;
 		super.onResume();
 
-		if (android.os.Build.VERSION.SDK_INT > 18) {
-			getWindow().getDecorView().setSystemUiVisibility(
-					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-					| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_FULLSCREEN
-					| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-		}
+		setImmersiveMode();
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
 		while (iter.hasNext()) {
@@ -224,14 +237,8 @@ public class NativeActivity extends android.app.NativeActivity {
 		Log.d("LIGHTNING", "onWindowFocusChanged");
 	    super.onWindowFocusChanged(hasFocus);
 
-	    if (hasFocus && android.os.Build.VERSION.SDK_INT > 18) {
-	        getWindow().getDecorView().setSystemUiVisibility(
-	                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-	                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-	                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-	                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-	                | View.SYSTEM_UI_FLAG_FULLSCREEN
-	                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+	    if (hasFocus) {
+			setImmersiveMode();
 		}
 	}
 
