@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <android/window.h>
 
 jclass lightning_cls;
 
@@ -204,4 +205,14 @@ int getResourceFd(const char *path, resource *res) {
     }
 
     return 0;
+}
+
+value ml_enableAwake(value unit) {
+    ANativeActivity_setWindowFlags(NATIVE_ACTIVITY, AWINDOW_FLAG_KEEP_SCREEN_ON, 0);
+    return Val_unit;
+}
+
+value ml_disableAwake(value unit) {
+    ANativeActivity_setWindowFlags(NATIVE_ACTIVITY, 0, AWINDOW_FLAG_KEEP_SCREEN_ON);
+    return Val_unit;
 }

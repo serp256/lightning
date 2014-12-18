@@ -258,3 +258,11 @@ value debugErrReporting () = Printexc.set_uncaught_exception_handler uncaughtExc
 ELSE
 value debugErrReporting () = ();
 ENDPLATFORM;
+
+IFPLATFORM(android)
+external enableAwake: unit -> unit = "ml_enableAwake";
+external disableAwake: unit -> unit = "ml_disableAwake";
+ELSE
+value enableAwake () = ();
+value disableAwake () = ();
+ENDPLATFORM;

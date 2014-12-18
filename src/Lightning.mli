@@ -45,3 +45,6 @@ value fireLightningEvent: string -> unit;
 value setNativeEventListener: (string -> unit) -> unit;
 value clearNativeEventListener: unit -> unit;
 value debugErrReporting: unit -> unit;
+
+value enableAwake: unit -> unit;
+value disableAwake: unit -> unit;
