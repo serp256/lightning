@@ -621,3 +621,14 @@ value ml_resetBackgroundDelayedCallback(value unit) {
     [[LightViewController sharedInstance] resetBackgroundDelayedCallback];
     return Val_unit;
 }
+
+
+value ml_enableAwake(value unit) {
+    [UIApplication sharedApplication].idleTimerDisabled = YES;
+    return Val_unit;
+}
+
+value ml_disableAwake(value unit) {
+    [UIApplication sharedApplication].idleTimerDisabled = NO;
+    return Val_unit;
+}

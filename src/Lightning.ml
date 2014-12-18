@@ -259,10 +259,10 @@ ELSE
 value debugErrReporting () = ();
 ENDPLATFORM;
 
-IFPLATFORM(android)
-external enableAwake: unit -> unit = "ml_enableAwake";
-external disableAwake: unit -> unit = "ml_disableAwake";
-ELSE
+IFPLATFORM(pc)
 value enableAwake () = ();
 value disableAwake () = ();
+ELSE
+external enableAwake: unit -> unit = "ml_enableAwake";
+external disableAwake: unit -> unit = "ml_disableAwake";
 ENDPLATFORM;

@@ -1,6 +1,7 @@
 #include "lightning_android.h"
 #include "engine_android.h"
 #include <caml/memory.h>
+#include <android/window.h>
 
 value android_debug_output(value mtag, value mname, value mline, value msg) {
 	char *tag;
@@ -390,4 +391,14 @@ void run_bg_delayed_callback(void *data) {
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_NativeActivity_00024TimerTask_run(JNIEnv *env, jclass this) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_NativeActivity_00024TimerTask_run");
 	RUN_ON_ML_THREAD(&run_bg_delayed_callback, NULL);
+}
+
+value ml_enableAwake(value unit) {
+	ANativeActivity_setWindowFlags(NATIVE_ACTIVITY, AWINDOW_FLAG_KEEP_SCREEN_ON, 0);
+	return Val_unit;
+}
+
+value ml_disableAwake(value unit) {
+	ANativeActivity_setWindowFlags(NATIVE_ACTIVITY, 0, AWINDOW_FLAG_KEEP_SCREEN_ON);
+	return Val_unit;
 }
