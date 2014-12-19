@@ -560,11 +560,9 @@ static value *ml_url_complete = NULL;
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
-	NSLog(@"textField shouldChangeCharactersInRange %@ keyboardFilter %@", string, keyboardFilter);
-
 	if (keyboardFilter != nil && [string length] > 0) {
 		string = [string stringByReplacingOccurrencesOfString:keyboardFilter withString:@"" options:NSRegularExpressionSearch range:NSMakeRange(0, [string length])];
-		
+
 		if ([string length] == 0) {
 			return NO;
 		}
