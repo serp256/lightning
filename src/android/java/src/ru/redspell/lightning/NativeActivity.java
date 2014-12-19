@@ -70,13 +70,13 @@ public class NativeActivity extends android.app.NativeActivity {
 				if (isRunning) {
 					android.graphics.Rect rect = new android.graphics.Rect();
 					view.getWindowVisibleDisplayFrame(rect);
-					Log.d("LIGHTNING", "RECT " + rect.toString());
+					/*Log.d("LIGHTNING", "RECT " + rect.toString());*/
 					float displayHeight = (float)(rect.bottom - rect.top);
 					float height = (float)view.getHeight();
 
-					Log.d("LIGHTNING", "height " + height);
+/*					Log.d("LIGHTNING", "height " + height);
 					Log.d("LIGHTNING", "displayHeight " + displayHeight);
-					Log.d("LIGHTNING", "height / displayHeight " + (displayHeight / height));
+					Log.d("LIGHTNING", "height / displayHeight " + (displayHeight / height));*/
 					Keyboard.setVisible((displayHeight / height) < 0.8);
 				}
 			}

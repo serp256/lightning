@@ -28,6 +28,7 @@ static LightViewController *instance = NULL;
 static NSString *supportEmail = @"nanofarm@redspell.ru";
 UITextField* kbTextField = NULL;
 value keyboardCallbackUpdate, keyboardCallbackReturn;
+NSString *keyboardFilter;
 
 static NSMutableArray *exceptionInfo = nil;
 
@@ -245,7 +246,7 @@ void silentUncaughtException(char *exceptionJson) {
 	if (bgDelayedCallbackTimer != nil) {
 		[bgDelayedCallbackTimer invalidate];
 		bgDelayedCallbackTimer = nil;
-		[[UIApplication sharedApplication] bgDelayedCallbackTimer:bgTaskId];
+		[[UIApplication sharedApplication] endBackgroundTask:bgTaskId];
 	}
 
 	[(LightView *)(self.view) foreground];
@@ -559,6 +560,16 @@ static value *ml_url_complete = NULL;
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
+	NSLog(@"textField shouldChangeCharactersInRange %@ keyboardFilter %@", string, keyboardFilter);
+
+	if (keyboardFilter != nil) {
+		string = [string stringByReplacingOccurrencesOfString:keyboardFilter withString:@"" options:NSRegularExpressionSearch range:NSMakeRange(0, [string length])];
+	}
+
+	if ([string length] == 0) {
+		return NO;
+	}
+
 	NSString * st ;
 	if (range.location == 0 && range.length > 0) st = @""; else
 	if (range.length > 0 && [kbTextField.text length] > 0)
@@ -602,12 +613,24 @@ static value *ml_url_complete = NULL;
 		[kbTextField resignFirstResponder];
 		[kbTextField removeFromSuperview];
 		kbTextField = NULL;
+
+		if (keyboardFilter) {
+			[keyboardFilter release];
+		}
 		//NSLog(@"kbTextField is NUll");
 	}
 }
 
-- (void)showKeyboard:(value)visible size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString {
+- (void)showKeyboard:(value)visible size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString filter:(value)filter {
 	//NSLog(@"showKeyboard %b; size:[%d; %d]; cb_ret: %d cb_upd : %d", (Bool_val (visible)), (Int_val(Field(size,0))),  (Int_val(Field(size,1))),  keyboardCallbackReturn, keyboardCallbackUpdate);
+	if (Is_block(filter)) {
+		keyboardFilter = [[NSString alloc] initWithFormat:@"[^%s]", String_val(Field(filter, 0))];
+	} else {
+		keyboardFilter = nil;
+	}
+
+	NSLog(@"keyboardFilter %@", keyboardFilter);
+
 	[self hideKeyboard];
 	if (keyboardCallbackReturn != 0) caml_remove_global_root(&keyboardCallbackReturn);
 	if (keyboardCallbackUpdate != 0) caml_remove_global_root(&keyboardCallbackUpdate);

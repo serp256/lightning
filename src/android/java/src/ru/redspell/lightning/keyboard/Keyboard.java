@@ -12,6 +12,8 @@ import android.content.Context;
 import android.os.ResultReceiver;
 import android.os.Bundle;
 import android.util.Log;
+import android.text.InputFilter;
+import android.text.Spanned;
 
 public class Keyboard {
 	public static boolean visible = false;
@@ -27,7 +29,7 @@ public class Keyboard {
 		return inputMethodManager;
 	}
 
-	public static void show(final String initText) {
+	public static void show(final String initText, final String filter) {
 		Log.d("LIGHTNING", "show keyboard");
 
 		Lightning.activity.runOnUiThread(new Runnable(){
@@ -38,6 +40,20 @@ public class Keyboard {
 						textEdit.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
 						textEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 						textEdit.setSingleLine(true);
+
+						if (filter != null) {
+							InputFilter[] filters = {
+								new InputFilter() {
+									@Override
+									public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+										return source.toString().replaceAll("[^" + filter + "]", "");
+									}
+								}
+							};
+
+							textEdit.setFilters(filters);
+						}
+
 						FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
 						textEdit.setLayoutParams(layoutParams);
 						Lightning.activity.addContentView(textEdit, layoutParams);
@@ -60,9 +76,10 @@ public class Keyboard {
 						});
 					}
 
+					String _initText = initText == null ? "" : initText;
 					textEdit.requestFocus();
-					textEdit.setText(initText);
-					textEdit.setSelection(initText.length());
+					textEdit.setText(_initText);
+					textEdit.setSelection(_initText.length());
 					inputMethodManager().showSoftInput(textEdit, 0);
 			}
 		});
