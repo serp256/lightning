@@ -600,7 +600,7 @@ static value *ml_url_complete = NULL;
 
 - (void)hideKeyboard
 {
-	//NSLog(@"hideKeyboard");
+	NSLog(@"hideKeyboard");
 	if (kbTextField != NULL)
 	{
 		//NSLog(@"Not null");
@@ -614,6 +614,7 @@ static value *ml_url_complete = NULL;
 
 		if (keyboardFilter) {
 			[keyboardFilter release];
+			keyboardFilter = nil;
 		}
 		//NSLog(@"kbTextField is NUll");
 	}
