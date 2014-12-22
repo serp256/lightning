@@ -341,6 +341,8 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     CAMLreturn(0);
 }
 
+static uint8_t foreground_called_on_resume = 1;
+
 static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) {
     PRINT_DEBUG("engine_handle_cmd %d", cmd);
     engine_t engine = (engine_t)app->userData;
@@ -355,6 +357,10 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
         case APP_CMD_INIT_WINDOW:
             if (engine->app->window != NULL) {
                 engine_init_display(engine);
+                if (!foreground_called_on_resume) {
+                    if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
+                    caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
+                }
                 engine_draw_frame(engine);
             }
             break;
@@ -398,6 +404,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             }
 
         case APP_CMD_PAUSE:
+            foreground_called_on_resume = 0;
             if (engine->stage) {
                 if (!bg_handler) bg_handler = caml_hash_variant("dispatchBackgroundEv");
                 caml_callback2(caml_get_public_method(engine->stage->stage, bg_handler), engine->stage->stage, Val_unit);
@@ -406,7 +413,8 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             break;
 
         case APP_CMD_RESUME:
-            if (engine->stage) {
+            if (engine->surface != EGL_NO_SURFACE && engine->stage) {
+                foreground_called_on_resume = 1;
                 if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
                 caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
             }
@@ -420,7 +428,7 @@ void android_main(struct android_app* state) {
     app_dummy();
 		/** kazmath do not use gl context as gl context, it is casted to void* and used as identifier to set of matrix stacks. we have no need for per context matrix sets.
 		  * therefore doesn't matter what pass to this function.
-		  */ 
+		  */
 		kmGLSetCurrentContext(state);
     touch_track = kh_init_tt();
 
