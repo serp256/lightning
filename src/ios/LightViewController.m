@@ -171,7 +171,9 @@ void silentUncaughtException(char *exceptionJson) {
 +(NSString *)version {
 	//NSLog(@"VERSION");
 	NSBundle *bundle = [NSBundle mainBundle];
-	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+	NSLog(@"!!!version %@", bundle);
+	/*NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];*/
+	NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleShortVersionString"];
 	return appVersion;
 }
 
