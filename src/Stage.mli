@@ -8,6 +8,7 @@ open Motion;
 class type tween = object method process: float -> bool; end;
 value addTween: #tween -> unit;
 value removeTween: #tween -> unit;
+value clear_tweens: unit -> unit;
 
 value screenSize: unit -> (float * float);
 
