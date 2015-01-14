@@ -167,12 +167,12 @@ void vk_users_request(VKRequest *req, value vfail, value vsuccess) {
 }
 
 value ml_vk_friends(value vfail, value vsuccess, value vt) {
-	vk_users_request([[VKApi friends] get:[NSDictionary dictionaryWithObject:@"sex,photo_max,last_seen" forKey:VK_API_FIELDS]], vfail, vsuccess);
+	vk_users_request([[VKApi friends] get:[NSDictionary dictionaryWithObject:@"sex,photo_max,last_seen,online" forKey:VK_API_FIELDS]], vfail, vsuccess);
 	return Val_unit;
 }
 
 value ml_vk_users(value vfail, value vsuccess, value vids) {
 	NSString *mids = [NSString stringWithUTF8String:String_val(vids)];
-	vk_users_request([[VKApi users] get:[NSDictionary dictionaryWithObjectsAndKeys:@"sex,photo_max,last_seen", VK_API_FIELDS, mids, VK_API_USER_IDS, nil ]], vfail, vsuccess);
+	vk_users_request([[VKApi users] get:[NSDictionary dictionaryWithObjectsAndKeys:@"sex,photo_max,last_seen,online,online_mobile,online_app", VK_API_FIELDS, mids, VK_API_USER_IDS, nil ]], vfail, vsuccess);
 	return Val_unit;
 }

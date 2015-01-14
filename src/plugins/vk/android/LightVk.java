@@ -251,10 +251,10 @@ public class LightVk {
 	}
 
 	public static void friends(int success, int fail) {
-		usersRequests(new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen")), success, fail);
+		usersRequests(new VKRequest("friends.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen,online")), success, fail);
 	}
 
 	public static void users(String ids, int success, int fail) {
-		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen", VKApiConst.USER_IDS, ids)), success, fail);
+		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen,online_app,online_mobile", VKApiConst.USER_IDS, ids)), success, fail);
 	}
 }
