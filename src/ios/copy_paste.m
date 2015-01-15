@@ -47,6 +47,11 @@ value ml_hidekeyboard ()
 	return Val_unit;
 }
 
+value ml_cleankeyboard ()
+{
+	[[LightViewController sharedInstance] cleanKeyboard];
+	return Val_unit;
+}
 
 /*
 value ml_keyboard_get ()

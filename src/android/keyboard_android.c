@@ -64,6 +64,15 @@ void keyboard_hide() {
 	ml_hidekeyboard();
 }
 
+value ml_cleankeyboard() {
+	GET_LIGHT_KEYBOARD;
+
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "clean", "()V");
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid);
+
+	return Val_unit;
+}
 value ml_copy(value txt) {
 	GET_LIGHT_KEYBOARD;
 
@@ -100,7 +109,7 @@ void keyboard_onchange(void *data) {
 		caml_callback(*onchage_callback, vtext);
 	}
 
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtext);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, jtext);
 	CAMLreturn0;
 }
 
@@ -124,7 +133,7 @@ void keyboard_onhide(void *data) {
 		onchage_callback = NULL;
 	}
 
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jtext);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, jtext);
 	CAMLreturn0;
 }
 

@@ -57,6 +57,7 @@
 - (void)runBackgroudDelayerCallback;
 
 -(void)hideKeyboard;
+-(void)cleanKeyboard;
 
 @property (nonatomic,retain) id<OrientationDelegate> orientationDelegate;
 @property (retain) id<RemoteNotificationsRegisterDelegate> rnDelegate;

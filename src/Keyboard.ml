@@ -9,9 +9,11 @@ value paste f = f "not supported on pc";
 value copy _ = ();
 value show ?filter ?visible ?size ?inittxt ?onhide ?onchange () = ();
 value hide () = ();
+value clean () = ();
 ELSE
 external paste: (string -> unit) -> unit = "ml_paste";
 external copy: string -> unit = "ml_copy";
+external clean: unit -> unit = "ml_cleankeyboard";
 
 module Filter =
   struct

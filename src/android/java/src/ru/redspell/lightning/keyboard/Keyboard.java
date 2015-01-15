@@ -97,6 +97,11 @@ public class Keyboard {
 		}
 	}
 
+	public static void clean() {
+		if (textEdit != null) {
+			textEdit.setText ("");
+		}
+	}
 	public static boolean visible() {
 		return visible;
 	}

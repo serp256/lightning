@@ -622,6 +622,14 @@ static value *ml_url_complete = NULL;
 	}
 }
 
+- (void)cleanKeyboard
+{
+	if (kbTextField)
+	{
+		kbTextField.text = @"";
+	}
+
+}
 - (void)showKeyboard:(value)visible size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString filter:(value)filter {
 	//NSLog(@"showKeyboard %b; size:[%d; %d]; cb_ret: %d cb_upd : %d", (Bool_val (visible)), (Int_val(Field(size,0))),  (Int_val(Field(size,1))),  keyboardCallbackReturn, keyboardCallbackUpdate);
 	if (Is_block(filter)) {
