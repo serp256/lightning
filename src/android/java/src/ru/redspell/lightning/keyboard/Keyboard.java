@@ -98,9 +98,13 @@ public class Keyboard {
 	}
 
 	public static void clean() {
-		if (textEdit != null) {
-			textEdit.setText ("");
-		}
+      Lightning.activity.runOnUiThread(new Runnable() {
+	      public void run() {
+					if (textEdit != null) {
+						textEdit.setText ("");
+					}
+	      }
+      });
 	}
 	public static boolean visible() {
 		return visible;
