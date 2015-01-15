@@ -48,6 +48,8 @@ value openiab_init(value vskus, value vmarket_type) {
 		cmarket_type = AMAZON;
 	} else if (vmarket_type == caml_hash_variant("Yandex")) {
 		cmarket_type = YANDEX;
+	}  else if (vmarket_type == caml_hash_variant("Samsung")) {
+		cmarket_type = SAMSUNG;
 	}
 
 	jstring jmarket_type = (*ML_ENV)->NewStringUTF(ML_ENV, cmarket_type);
@@ -134,6 +136,15 @@ value openiab_signature(value vpurchase) {
 	JSTRING_TO_VAL(jsignature, vsignature);
 
 	return vsignature;
+}
+
+value openiab_developmentMode(value unit) {
+	FIND_OPENIAB_CLASS;
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, openiab_cls, "developmentMode", "()V");
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, openiab_cls, mid);
+
+	return Val_unit;
 }
 
 

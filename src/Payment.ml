@@ -52,7 +52,7 @@ module Product =
 
 (* TODO: доделать передачу receipt *)
 value initialized = ref False;
-type marketType = [= `Google | `Amazon | `Yandex ];
+type marketType = [= `Google | `Amazon | `Yandex | `Samsung ];
 
 
 IFDEF IOS THEN
@@ -63,6 +63,7 @@ external ml_purchase : Product.t -> unit = "ml_payment_purchase";
 value ml_purchase sku = match Product.get sku with [ Some p -> ml_purchase p | _ -> ml_purchase_deprecated sku ];
 value restorePurchases () = ();
 external restoreCompletedPurchases: unit -> unit = "ml_payment_restore_completed_transactions";
+value developmentMode () = ();
 
 Callback.register "register_product" Product.register;
 ELSE
@@ -73,6 +74,7 @@ external ml_init : ?skus:list string -> marketType -> unit = "openiab_init";
 external ml_purchase : string -> unit = "openiab_purchase";
 external ml_commit_transaction : Transaction.t -> unit = "openiab_comsume";
 external ml_restorePurchases: unit -> unit = "openiab_inventory";
+external developmentMode: unit -> unit = "openiab_developmentMode";
 
 value restoreCompletedPurchases () = ();
 value restorePurchases = ml_restorePurchases;
@@ -100,6 +102,7 @@ value ml_commit_transaction (tr:Transaction.t) = ();
 
 value restorePurchases () = ();
 value restoreCompletedPurchases () = ();
+value developmentMode () = ();
 
 ENDIF;
 ENDIF;
