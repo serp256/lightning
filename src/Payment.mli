@@ -12,7 +12,7 @@ module Transaction :
     value get_signature : t -> string;
   end;
 
-type marketType = [= `Google | `Amazon | `Yandex ];
+type marketType = [= `Google | `Amazon | `Yandex | `Samsung ];
 
 value init: ?marketType:marketType -> ?skus:(list string) -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit;
 value purchase: string -> unit;
@@ -20,3 +20,4 @@ value commit_transaction: Transaction.t -> unit;
 value commit_transaction_by_id: string -> unit;
 value restorePurchases: unit -> unit;
 value restoreCompletedPurchases: unit -> unit;
+value developmentMode: unit -> unit;

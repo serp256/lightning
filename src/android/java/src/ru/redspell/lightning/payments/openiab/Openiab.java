@@ -42,11 +42,14 @@ public class Openiab {
     }
 
     public void run() {
+      Log.d("LIGHTNING", "Purchase command with sku " + sku);
+
       if (helper == null) return;
 
       String payload = "";
       IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
         public void onIabPurchaseFinished(IabResult result, Purchase purchase) {
+            Log.d("LIGHTNING", "onIabPurchaseFinished CALL");
           if (result.isSuccess()) {
             Openiab.purchaseSuccess(sku, purchase, false);
           } else {
@@ -144,8 +147,13 @@ public class Openiab {
     }
   }
 
-  public static void init(final String[] skus, String marketType) {
-      Log.d("LIGHTNING", "init call");
+  public static void developmentMode() {
+      org.onepf.oms.appstore.SamsungApps.isSamsungTestMode = true;
+  }
+
+  public static void init(final String[] skus, String marketType) throws Exception {
+
+      Log.d("LIGHTNING", "init call " + marketType + " isSamsungTestMode " + org.onepf.oms.appstore.SamsungApps.isSamsungTestMode);
     if (helper != null) return;
 
     Log.d("LIGHTNING", "continue");
@@ -154,35 +162,35 @@ public class Openiab {
     ArrayList<String> prefStores = new ArrayList<String>(1);
     prefStores.add(marketType);
 
+    //to be able use samsung store at least one sku mapping needed. it is absolutely fake needed only to workaround openiab strange behaviour
+    OpenIabHelper.mapSku("ru.redspell.lightning.fameSamsungPurchase", OpenIabHelper.NAME_SAMSUNG, "100000104912/ru.redspell.lightning.fameSamsungPurchase");
     OpenIabHelper.Options.Builder builder = new OpenIabHelper.Options.Builder()
         .addPreferredStoreName(prefStores)
         .setVerifyMode(OpenIabHelper.Options.VERIFY_SKIP);
-/*        .addStoreKey(OpenIabHelper.NAME_YANDEX, "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Ktx/LPWTaZJeHsIp/UCBok0Ji1vdUVd0VP2vrl+Mb8B1z8E1uNUpotuZRiQyAnvJjyZTMQxKbPJMwFQy5Tuxlr1TTXqy/8ZuSOy+dzhwuYqJ0soK5rNY1INu1pvVWbr3IEQ7npq6JKGc5sR0hYtOyIv2Ftzj3fCzwp7tcjEKBLKTFHPKGEiWpfOLF1KYOAhIOgAJ47vrif0sI4UDunwU45ZVBRz5OQu55xxNLgZVoVs9L8j+i52Qg0vrVoJNJ97WNPs5WLxKFzBncA1K7tS1GdToxDMU3ruUu7nydpjtXyjKthMUunRVu2UNFCs1WrcCmuOWiNSoXuxDd2ww5kiNwIDAQAB")
-        .setVerifyMode(OpenIabHelper.Options.VERIFY_EVERYTHING);*/
     OpenIabHelper.Options opts = opts = builder.build();
     OpenIabHelper.enableDebugLogging(true);
 
     helper = new OpenIabHelper(NativeActivity.instance, opts);
+    NativeActivity.instance.addUiLifecycleHelper(new IUiLifecycleHelper() {
+        public void onCreate(Bundle savedInstanceState) {}
+        public void onResume() {}
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            Log.d("LIGHTNING", "openiab onActivityResult " + requestCode + " resultCode " + resultCode + " data " + data);
+            helper.handleActivityResult(requestCode, resultCode, data);
+        }
+        public void onSaveInstanceState(Bundle outState) {}
+        public void onPause() {}
+        public void onStop() {}
+        public void onDestroy() {}
+    });
+
     helper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
                 public void onIabSetupFinished(IabResult result) {
-                    Log.d("LIGHTNING", "onIabSetupFinished");
                     if (!result.isSuccess()) {
                         failPendings();
                         setupFailed = true;
                         return;
                     }
-
-                    NativeActivity.instance.addUiLifecycleHelper(new IUiLifecycleHelper() {
-                      public void onCreate(Bundle savedInstanceState) {}
-                      public void onResume() {}
-                      public void onActivityResult(int requestCode, int resultCode, Intent data) {
-                        helper.handleActivityResult(requestCode, resultCode, data);
-                      }
-                      public void onSaveInstanceState(Bundle outState) {}
-                      public void onPause() {}
-                      public void onStop() {}
-                      public void onDestroy() {}
-                    });
 
                     setupDone = true;
                     runPending();
