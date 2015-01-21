@@ -82,14 +82,16 @@ public class NativeActivity extends android.app.NativeActivity {
 			}
 		});
 
-		view.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
-			@Override
-			public void onSystemUiVisibilityChange(int visibility) {
-				if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-					setImmersiveMode();
+		if (android.os.Build.VERSION.SDK_INT > 10) {
+			view.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+				@Override
+				public void onSystemUiVisibilityChange(int visibility) {
+					if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+						setImmersiveMode();
+					}
 				}
-			}
-		});
+			});
+		}
 	}
 
 	@Override
