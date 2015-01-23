@@ -14,6 +14,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.text.InputFilter;
 import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.Spannable;
+import android.text.Spanned;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Editable;
+import java.util.Arrays;
+import java.lang.Character;
 
 public class Keyboard {
 	public static boolean visible = false;
@@ -38,15 +46,20 @@ public class Keyboard {
 					if (textEdit == null) {
 						textEdit = new EditText(Lightning.activity);
 						textEdit.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
-						textEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+						//InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD is for fixing bug with filters: not affected by filter source, each time unchaged
+						textEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 						textEdit.setSingleLine(true);
+						//textEdit.setCursorVisible(false);
 
 						if (filter != null) {
 							InputFilter[] filters = {
 								new InputFilter() {
 									@Override
 									public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
-										return source.toString().replaceAll("[^" + filter + "]", "");
+/*										Log.d("LIGHTNING", "filter " + source.getClass().getName());
+										Log.d("LIGHTNING", "source(" + start + " " + end + "): " + source + "; dest(" + + dstart + " " + dend + "): " + dest);
+*/
+										return source.subSequence(start, end).toString().replaceAll("[^" + filter + "]", "");
 									}
 								}
 							};
@@ -60,7 +73,7 @@ public class Keyboard {
 						textEdit.addTextChangedListener(new android.text.TextWatcher() {
 							@Override
 							public void afterTextChanged(android.text.Editable s) {
-								//Log.d("LIGHTNING", "afterTextChanged");
+//								Log.d("LIGHTNING", "afterTextChanged " + s);
 							}
 
 							@Override
@@ -70,7 +83,7 @@ public class Keyboard {
 
 							@Override
 							public void onTextChanged(CharSequence s, int start, int before, int count) {
-								//Log.d("LIGHTNING", "onTextChanged");
+								Log.d("LIGHTNING", "onTextChanged " + textEdit.getText().toString());
 								onChange(textEdit.getText().toString());
 							}
 						});
