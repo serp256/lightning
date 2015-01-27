@@ -15,6 +15,7 @@
 #include "main_android.h"
 #include "lightning_android.h"
 #include "keyboard_android.h"
+#include "sound_android.h"
 #include "render_stub.h"
 #include <kazmath/GL/matrix.h>
 
@@ -358,6 +359,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             if (engine->app->window != NULL) {
                 engine_init_display(engine);
                 if (!foreground_called_on_resume) {
+                    sound_android_onforeground();
                     if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
                     caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
                 }
@@ -406,6 +408,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
         case APP_CMD_PAUSE:
             foreground_called_on_resume = 0;
             if (engine->stage) {
+                sound_android_onbackground();
                 if (!bg_handler) bg_handler = caml_hash_variant("dispatchBackgroundEv");
                 caml_callback2(caml_get_public_method(engine->stage->stage, bg_handler), engine->stage->stage, Val_unit);
             }
@@ -415,6 +418,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
         case APP_CMD_RESUME:
             if (engine->surface != EGL_NO_SURFACE && engine->stage) {
                 foreground_called_on_resume = 1;
+                sound_android_onforeground();
                 if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
                 caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
             }

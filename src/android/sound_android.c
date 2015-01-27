@@ -293,7 +293,7 @@ value ml_alsoundPlay(value sound, value vol, value loop, value callback) {
     bq_player_t *bq_plr = make_bq_player(alsnd->sample_rate, alsnd->bits_per_sample);
     bq_plr->in_usage = 1;
     bq_plr->looped = loop == Val_true;
-		
+
 		if (!bq_plr->callback) {
 			bq_plr->callback = callback;
 			caml_register_generational_global_root(&bq_plr->callback);
@@ -333,19 +333,18 @@ value ml_alsoundStop(value player) {
     CAMLreturn(Val_unit);
 }
 
-
-
-
-
-
-
-typedef struct {
+typedef struct fd_player {
     SLObjectItf fdPlayerObject;
     SLPlayItf fdPlayerPlay;
     SLSeekItf fdPlayerSeek;
     SLVolumeItf fdPlayerVolume;
     value callback;
+    struct fd_player* next;
+    struct fd_player* prev;
+    uint8_t resume_onforeground;
 } fd_player_t;
+
+fd_player_t *head = NULL;
 
 void run_avplayer_callback(void *data) {
     PRINT_DEBUG("run_avplayer_callback %d", gettid());
@@ -371,8 +370,19 @@ value ml_avsound_create_player(value vpath) {
     CAMLparam1(vpath);
 
     fd_player_t *fd_plr = (fd_player_t*)malloc(sizeof(fd_player_t));
-		fd_plr->callback = 0;
+	fd_plr->callback = 0;
     memset(fd_plr, 0, sizeof(fd_player_t));
+
+    if (!head) {
+        head = fd_plr;
+        head->next = head;
+        head->prev = head;
+    } else {
+        fd_plr->prev = head->prev;
+        fd_plr->next = head;
+        head->prev->next = fd_plr;
+        head->prev = fd_plr;
+    }
 
     resource r;
     SOUND_ASSERT(getResourceFd(String_val(vpath), &r), "cannot load sound");
@@ -493,9 +503,61 @@ value ml_avsound_release(value player) {
     CAMLparam1(player);
 
     fd_player_t *fd_plr = (fd_player_t*)player;
-		caml_remove_generational_global_root(&fd_plr->callback);
+	caml_remove_generational_global_root(&fd_plr->callback);
     (*fd_plr->fdPlayerObject)->Destroy(fd_plr->fdPlayerObject);
+
+    if (fd_plr->next == fd_plr) {
+        head = NULL;
+    } else {
+        fd_plr->prev->next = fd_plr->next;
+        fd_plr->next->prev = fd_plr->prev;
+
+        if (fd_plr == head) {
+            head = fd_plr->next;
+        }
+    }
+
     free(fd_plr);
 
     CAMLreturn(Val_unit);
+}
+
+void sound_android_onbackground() {
+    if (!head) return;
+
+    fd_player_t *plr = head;
+    SLuint32 state;
+    SLresult res;
+
+    do {
+        res = (*plr->fdPlayerPlay)->GetPlayState(plr->fdPlayerPlay, &state);
+        SOUND_ASSERT(SL_RESULT_SUCCESS == res, "sound_android_onbackground");
+
+        if (state == SL_PLAYSTATE_PLAYING) {
+            plr->resume_onforeground = 1;
+
+            res = (*plr->fdPlayerPlay)->SetPlayState(plr->fdPlayerPlay, SL_PLAYSTATE_PAUSED);
+            SOUND_ASSERT(SL_RESULT_SUCCESS == res, "sound_android_onbackground");
+        } else {
+            plr->resume_onforeground = 0;
+        }
+
+        plr = plr->next;
+    } while (plr != head);
+}
+
+void sound_android_onforeground() {
+    if (!head) return;
+
+    fd_player_t *plr = head;
+    SLresult res;
+
+    do {
+        if (plr->resume_onforeground) {
+            res = (*plr->fdPlayerPlay)->SetPlayState(plr->fdPlayerPlay, SL_PLAYSTATE_PLAYING);
+            SOUND_ASSERT(SL_RESULT_SUCCESS == res, "sound_android_onforeground");
+        }
+
+        plr = plr->next;
+    } while (plr != head);
 }
