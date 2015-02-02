@@ -34,7 +34,14 @@
 
 value ml_rnInit(value rntype,value sender_id_unused) {
 	[LightViewController sharedInstance].rnDelegate = [[[RNDelegate alloc] init] autorelease];
-  [[UIApplication sharedApplication] registerForRemoteNotificationTypes:Int_val(rntype)];
+	UIApplication *app = [UIApplication sharedApplication];
+
+	if ([app respondsToSelector:@selector(registerUserNotificationSettings)]) {
+		[app registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:Int_val(rntype) categories:nil]];
+	} else {
+		[app registerForRemoteNotificationTypes:Int_val(rntype)];
+	}
+
   return Val_unit;  
 }
 
