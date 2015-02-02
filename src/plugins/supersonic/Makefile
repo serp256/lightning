@@ -15,7 +15,7 @@ endif
 ifeq ($(PLATFORM),IOS)
 CFLAGS += -I ./ios -I../../ios
 COBJS  += ios/supersonic_ios.o
-LIBFLAGS += -lsupersonic-sdk
+LIBFLAGS += -framework CoreTelephony -framework AdSupport -lsupersonic-sdk
 endif
 
 ifeq ($(PLATFORM),PC)

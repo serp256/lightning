@@ -17,13 +17,13 @@
 	value *ml_success = caml_named_value("remote_notifications_success");
 
   value token = caml_alloc_string([deviceToken length]);
-  memcpy(String_val(token), (const char *)[deviceToken bytes], [deviceToken length]);  
+  memcpy(String_val(token), (const char *)[deviceToken bytes], [deviceToken length]);
 	caml_callback(*ml_success,token);
 }
 
 -(void)didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
 	PRINT_DEBUG("ml_rn_error");
-	NSString *errdesc = [error localizedDescription];                                                                                                                                                     
+	NSString *errdesc = [error localizedDescription];
 	value err = caml_copy_string([errdesc cStringUsingEncoding:NSUTF8StringEncoding]);
 	value *ml_fail = caml_named_value("remote_notifications_error");
 	caml_callback(*ml_fail,err);
@@ -36,12 +36,13 @@ value ml_rnInit(value rntype,value sender_id_unused) {
 	[LightViewController sharedInstance].rnDelegate = [[[RNDelegate alloc] init] autorelease];
 	UIApplication *app = [UIApplication sharedApplication];
 
-	if ([app respondsToSelector:@selector(registerUserNotificationSettings)]) {
+	NSLog(@"??????????????????????????ml_rnInit %d", [app respondsToSelector:@selector(registerUserNotificationSettings:)]);
+
+	if ([app respondsToSelector:@selector(registerUserNotificationSettings:)]) {
 		[app registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:Int_val(rntype) categories:nil]];
 	} else {
 		[app registerForRemoteNotificationTypes:Int_val(rntype)];
 	}
 
-  return Val_unit;  
+  return Val_unit;
 }
-
