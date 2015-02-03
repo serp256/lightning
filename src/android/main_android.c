@@ -117,7 +117,7 @@ static int engine_init_display(engine_t engine) {
 static double last_draw_time = 0.;
 
 static void engine_draw_frame(engine_t engine) {
-    PRINT_DEBUG("engine_draw_frame");
+    //PRINT_DEBUG("engine_draw_frame");
     CAMLparam0();
 
     struct timeval now;
@@ -152,7 +152,7 @@ static void engine_term_display(engine_t engine) {
         }
     }
 
-    PRINT_DEBUG("engine_term_display reseting animating flag");
+    //PRINT_DEBUG("engine_term_display reseting animating flag");
     engine->animating = 0;
     engine->surface = EGL_NO_SURFACE;
 }
@@ -167,7 +167,7 @@ KHASH_MAP_INIT_INT(tt, touch_track_t*);
 kh_tt_t* touch_track = NULL;
 
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
-    PRINT_DEBUG("engine_handle_input");
+    //PRINT_DEBUG("engine_handle_input");
 
     CAMLparam0();
     CAMLlocal5(vtouches, vtouch, vtmp, vtx, vty);
@@ -175,10 +175,10 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     vtouches = Val_int(0);
     // engine_t engine = (engine_t)app->userData;
 
-    PRINT_DEBUG("AInputEvent_getType(event) %d, AINPUT_EVENT_TYPE_MOTION %d", AInputEvent_getType(event), AINPUT_EVENT_TYPE_MOTION);
+    //PRINT_DEBUG("AInputEvent_getType(event) %d, AINPUT_EVENT_TYPE_MOTION %d", AInputEvent_getType(event), AINPUT_EVENT_TYPE_MOTION);
 
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-        PRINT_DEBUG("engine.touches_disabled %d", engine.touches_disabled);
+        //PRINT_DEBUG("engine.touches_disabled %d", engine.touches_disabled);
 
         if (engine.touches_disabled) {
             mlstage_cancelAllTouches(engine.stage);
@@ -296,7 +296,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
                 break;
         }
 
-        PRINT_DEBUG("process touches %d", process_touches);
+        //PRINT_DEBUG("process touches %d", process_touches);
 
         if (process_touches) {
             mlstage_processTouches(engine.stage, vtouches);
@@ -345,7 +345,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 static uint8_t foreground_called_on_resume = 1;
 
 static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) {
-    PRINT_DEBUG("engine_handle_cmd %d", cmd);
+    //PRINT_DEBUG("engine_handle_cmd %d", cmd);
     engine_t engine = (engine_t)app->userData;
     static value bg_handler = 0, fg_handler = 0;
 
@@ -382,7 +382,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
                 ASensorEventQueue_disableSensor(engine->sensorEventQueue,
                         engine->accelerometerSensor);
             }
-            PRINT_DEBUG("APP_CMD_LOST_FOCUS reseting animating flag");
+            //PRINT_DEBUG("APP_CMD_LOST_FOCUS reseting animating flag");
             engine->animating = 0;
             engine_draw_frame(engine);
             break;
@@ -406,6 +406,8 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             }
 
         case APP_CMD_PAUSE:
+            PRINT_DEBUG("APP_CMD_PAUSE");
+
             foreground_called_on_resume = 0;
             if (engine->stage) {
                 sound_android_onbackground();
@@ -416,6 +418,8 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             break;
 
         case APP_CMD_RESUME:
+            PRINT_DEBUG("APP_CMD_RESUME");
+
             if (engine->surface != EGL_NO_SURFACE && engine->stage) {
                 foreground_called_on_resume = 1;
                 sound_android_onforeground();
@@ -475,10 +479,10 @@ void android_main(struct android_app* state) {
         int events;
         struct android_poll_source* source;
 
-        PRINT_DEBUG("ALooper_pollAll engine.animating %d", engine.animating);
+        //PRINT_DEBUG("ALooper_pollAll engine.animating %d", engine.animating);
         while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
                 (void**)&source)) >= 0) {
-            PRINT_DEBUG("inside poll all while");
+            //PRINT_DEBUG("inside poll all while");
 
             if (source != NULL) {
                 source->process(state, source);
@@ -490,10 +494,13 @@ void android_main(struct android_app* state) {
             }
         }
 
-        PRINT_DEBUG("engine.animating %d", engine.animating);
+        //PRINT_DEBUG("engine.animating %d", engine.animating);
         if (engine.animating) {
             engine_draw_frame(&engine);
         }
+
+        //this is for galaxy note II: without sleep main java thread never
+        usleep(150);
     }
 
     kh_destroy(tt, touch_track);
