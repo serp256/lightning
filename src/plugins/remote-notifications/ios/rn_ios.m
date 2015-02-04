@@ -38,7 +38,10 @@ value ml_rnInit(value rntype,value sender_id_unused) {
 
 	NSLog(@"??????????????????????????ml_rnInit %d", [app respondsToSelector:@selector(registerUserNotificationSettings:)]);
 
-	if ([app respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+	if ([app respondsToSelector:@selector(registerForRemoteNotifications)]) {
+		NSLog(@"registerForRemoteNotifications");
+
+		[app registerForRemoteNotifications];
 		[app registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:Int_val(rntype) categories:nil]];
 	} else {
 		[app registerForRemoteNotificationTypes:Int_val(rntype)];

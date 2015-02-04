@@ -154,6 +154,8 @@ void set_referrer(char *type,NSString *nid) {
 }
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+	NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken");
+
 	if (lightViewController && lightViewController.rnDelegate) {
 		[lightViewController.rnDelegate didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
 		lightViewController.rnDelegate = nil;
@@ -162,6 +164,8 @@ void set_referrer(char *type,NSString *nid) {
 
 
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+	NSLog(@"didFailToRegisterForRemoteNotificationsWithError");
+
 	if (lightViewController && lightViewController.rnDelegate) {
 		[lightViewController.rnDelegate didFailToRegisterForRemoteNotificationsWithError:error];
 		lightViewController.rnDelegate = nil;
