@@ -223,6 +223,7 @@ public class LightVk {
 					Log.d("LIGHTNING", "items " + items);
 
 					for (int i = 0; i < cnt; i++) {
+						Log.d("LIGHTNING", "item " + i  );
 						JSONObject item = items.getJSONObject(i);
 
 						friends[i] = new Friend(item.getString("id"), item.getString("last_name") + " " + item.getString("first_name"), item.getInt("sex"),
@@ -255,6 +256,6 @@ public class LightVk {
 	}
 
 	public static void users(String ids, int success, int fail) {
-		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen,online_app,online_mobile", VKApiConst.USER_IDS, ids)), success, fail);
+		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen,online_app,online_mobile,online", VKApiConst.USER_IDS, ids)), success, fail);
 	}
 }
