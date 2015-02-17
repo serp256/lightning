@@ -257,6 +257,6 @@ public class LightVk {
 	}
 
 	public static void users(String ids, int success, int fail) {
-		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen,online_app,online_mobile", VKApiConst.USER_IDS, ids)), success, fail);
+		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen,online,online_app,online_mobile", VKApiConst.USER_IDS, ids)), success, fail);
 	}
 }
