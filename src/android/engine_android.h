@@ -80,3 +80,5 @@ jclass engine_find_class_with_env(JNIEnv *, const char *);
 jclass engine_find_class(const char *); /* use this functions rather than FIND_CLASS macro */
 
 #endif
+
+char* engine_handle_java_expcetion();

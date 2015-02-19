@@ -2,6 +2,8 @@
 #include "khash.h"
 
 struct engine engine;
+static jmethodID getExnMessageMid;
+
 
 void engine_init(struct android_app* app) {
 	memset(&engine, 0, sizeof(engine));
@@ -34,6 +36,9 @@ void engine_init(struct android_app* app) {
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, japk_path);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, cls);
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, ldr);
+
+	jclass exception_cls = engine_find_class("java/lang/Exception");
+	getExnMessageMid = (*ML_ENV)->GetMethodID(ML_ENV, exception_cls, "getMessage", "()Ljava/lang/String;");
 }
 
 void engine_release() {
@@ -111,4 +116,19 @@ jclass engine_find_class_with_env(JNIEnv *env, const char *ccls_name) {
 
 jclass engine_find_class(const char *ccls_name) {
     return engine_find_class_with_env(ML_ENV, ccls_name);
+}
+
+char* engine_handle_java_expcetion() {
+	jthrowable jexception = (*ML_ENV)->ExceptionOccurred(ML_ENV);
+	char* retval = NULL;
+
+	if (jexception) {
+		(*ML_ENV)->ExceptionClear(ML_ENV);
+		jstring jmessage = (*ML_ENV)->CallObjectMethod(ML_ENV, jexception, getExnMessageMid);
+		const char* cmessage = (*ML_ENV)->GetStringUTFChars(ML_ENV, jmessage, NULL);
+		retval = (char*)malloc(strlen(cmessage) + 1);
+		strcpy(retval, cmessage);
+	}
+
+	return retval;
 }
