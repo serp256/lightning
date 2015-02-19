@@ -55,16 +55,16 @@ public class Payments {
         getInstance().init(skus, marketType);
     }
 
-    public static void getOriginalJson(Object purchase) throws Exception {
-        getInstance().getOriginalJson(purchase);
+    public static String getOriginalJson(Object purchase) throws Exception {
+        return getInstance().getOriginalJson(purchase);
     }
 
-    public static void getToken(Object purchase) throws Exception {
-        getInstance().getToken(purchase);
+    public static String getToken(Object purchase) throws Exception {
+        return getInstance().getToken(purchase);
     }
 
-    public static void getSignature(Object purchase) throws Exception {
-        getInstance().getSignature(purchase);
+    public static String getSignature(Object purchase) throws Exception {
+        return getInstance().getSignature(purchase);
     }
 
     public static native void purchaseSuccess(String sku, Object purchase, boolean restored);

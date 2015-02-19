@@ -118,9 +118,12 @@ value openiab_inventory(value unit) {
 value openiab_orig_json(value vpurchase) {
 	FIND_PAYMENTS_CLASS;
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "getOriginalJson", "(Ljava/lang/Object;)Ljava/lang/String;");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, payments_cls, "getOriginalJson", "(Ljava/lang/Object;)Ljava/lang/String;");
 
-	jstring jorig_json = (*ML_ENV)->CallObjectMethod(ML_ENV, (jobject)vpurchase, mid);
+	jstring jorig_json = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, payments_cls, mid, (jobject)vpurchase);
+	char* java_exn_message = engine_handle_java_expcetion();
+	if (java_exn_message) caml_failwith(java_exn_message);
+
 	value vorig_json;
 	JSTRING_TO_VAL(jorig_json, vorig_json);
 
@@ -130,9 +133,12 @@ value openiab_orig_json(value vpurchase) {
 value openiab_token(value vpurchase) {
 	FIND_PAYMENTS_CLASS;
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "getToken", "(Ljava/lang/Object;)Ljava/lang/String;");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, payments_cls, "getToken", "(Ljava/lang/Object;)Ljava/lang/String;");
 
-	jstring jtoken = (*ML_ENV)->CallObjectMethod(ML_ENV, (jobject)vpurchase, mid);
+	jstring jtoken = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, payments_cls, mid, (jobject)vpurchase);
+	char* java_exn_message = engine_handle_java_expcetion();
+	if (java_exn_message) caml_failwith(java_exn_message);
+
 	value vtoken;
 	JSTRING_TO_VAL(jtoken, vtoken);
 
@@ -142,9 +148,12 @@ value openiab_token(value vpurchase) {
 value openiab_signature(value vpurchase) {
 	FIND_PAYMENTS_CLASS;
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetMethodID(ML_ENV, payments_cls, "getSignature", "(Ljava/lang/Object;)Ljava/lang/String;");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, payments_cls, "getSignature", "(Ljava/lang/Object;)Ljava/lang/String;");
 
-	jstring jsignature = (*ML_ENV)->CallObjectMethod(ML_ENV, (jobject)vpurchase, mid);
+	jstring jsignature = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, payments_cls, mid, (jobject)vpurchase);
+	char* java_exn_message = engine_handle_java_expcetion();
+	if (java_exn_message) caml_failwith(java_exn_message);
+
 	value vsignature;
 	JSTRING_TO_VAL(jsignature, vsignature);
 

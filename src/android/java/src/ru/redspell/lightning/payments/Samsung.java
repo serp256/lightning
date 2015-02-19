@@ -102,11 +102,13 @@ public class Samsung implements Payments.IPayments {
     }
 
     public String getOriginalJson(Object purchase) {
-        return "";
+        Log.d("LIGHTNING", "getOriginalJson call");
+
+        return ((PurchaseVo)purchase).getJsonString();
     }
 
     public String getToken(Object purchase) {
-        return "";
+        return ((PurchaseVo)purchase).getJsonString();
     }
 
     public String getSignature(Object purchase) {
