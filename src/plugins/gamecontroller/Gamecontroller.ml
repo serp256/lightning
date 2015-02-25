@@ -24,7 +24,6 @@ module Handler = struct
     value queue () = Lazy.force queue;
 
     value runCallback arg =
-      let () = debug "run callback %s" (GroupP.cnameBase ^ ConcreteP.cname) in
       try
         let callback = Queue.top (queue ()) in
           callback arg
@@ -42,7 +41,9 @@ module Handler = struct
 end;
 
 module Keys = struct
-  module Params = struct type callbackArg = unit; value cnameBase = "Gamecontroller.Keys."; end;
+  type phase = [= `up | `down ];
+
+  module Params = struct type callbackArg = phase; value cnameBase = "Gamecontroller.Keys."; end;
   module Handler = Handler.Make(Params);
 
   module Back = Handler(struct value cname = "Back"; end);
@@ -61,12 +62,16 @@ module Keys = struct
 end;
 
 module Joysticks = struct
+  type joystick = [= `none | `left | `right ];
+
   module Params = struct type callbackArg = (float * float); value cnameBase = "Gamecontroller.Joysticks."; end;
   module Handler = Handler.Make(Params);
 
   module Left = Handler(struct value cname = "Left"; end);
   module Right = Handler(struct value cname = "Right"; end);
   module Navigation = Handler(struct value cname = "Navigation"; end);
+
+  external bindToTouches: ?incFactor:float -> ?position:(float * float) -> ~joystick:joystick -> unit -> unit = "gamecontroller_bind_to_touches";
 end;
 
 module Triggers = struct

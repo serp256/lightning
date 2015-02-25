@@ -10,7 +10,8 @@ module Handler: sig
 end;
 
 module Keys: sig
-  module Params: sig type callbackArg = unit; end;
+  type phase = [= `up | `down ];
+  module Params: sig type callbackArg = phase; end;
 
   module Back: Handler.S with type callback = Params.callbackArg -> bool;
   module Menu: Handler.S with type callback = Params.callbackArg -> bool;
@@ -28,11 +29,15 @@ module Keys: sig
 end;
 
 module Joysticks: sig
+  type joystick = [= `none | `left | `right ];
+
   module Params: sig type callbackArg = (float * float); end;
 
   module Left: Handler.S with type callback = Params.callbackArg -> bool;
   module Right: Handler.S with type callback = Params.callbackArg -> bool;
   module Navigation: Handler.S with type callback = Params.callbackArg -> bool;
+
+  value bindToTouches: ?incFactor:float -> ?position:(float * float) -> ~joystick:joystick -> unit -> unit;
 end;
 
 module Triggers: sig

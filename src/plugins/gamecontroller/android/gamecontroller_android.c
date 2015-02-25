@@ -1,25 +1,82 @@
 #include "engine_android.h"
+#include "lightning_android.h"
 #include <android/keycodes.h>
 #include <stdio.h>
+#include <math.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
 
-void gamecontroller_fpshandler() {
-    PRINT_DEBUG("gamecontroller_fpshandler");
+#define KEY_PHASE_DOWN 0x0
+#define KEY_PHASE_UP 0x1
+
+#define JOYSTICK_NONE 0x0
+#define JOYSTICK_LEFT 0x1
+#define JOYSTICK_RIGHT 0x2
+
+#define FIX_JOYSTICK_AXIS(axis) if (fabs(axis) < 0.01) axis = 0;
+
+typedef struct {
+    float x, y;
+    float inc_factor;
+    float xinc, yinc;
+    uint8_t joystick;
+    dllist_engine_fpshandler_t *fps_handler;
+} touches_joystick_t;
+
+touches_joystick_t touches_joystick;
+static value key_phase_up;
+static value key_phase_down;
+
+void gamecontroller_firetouch(uint8_t phase) {
+    CAMLparam0();
+    CAMLlocal4(touches, touch, tx, ty);
+
+    tx = caml_copy_double(touches_joystick.x);
+    ty = caml_copy_double(touches_joystick.y);
+
+    touch = caml_alloc_tuple(8);
+    Store_field(touch, 0, caml_copy_int32(touches_joystick.joystick));
+    Store_field(touch, 1, caml_copy_double(0.));
+    Store_field(touch, 2, tx);
+    Store_field(touch, 3, ty);
+    Store_field(touch, 4, tx);
+    Store_field(touch, 5, ty);
+    Store_field(touch, 6, Val_int(1));
+    Store_field(touch, 7, Val_int(phase));
+
+    touches = caml_alloc_small(2, 0);
+    Store_field(touches, 0, touch);
+    Store_field(touches, 1, Val_none);
+
+    mlstage_processTouches(engine.stage, touches);
+
+    CAMLreturn0;
 }
 
-#define KEY_CALLBACK(key) static value *key##_callback = NULL; \
-if (!key##_callback) { \
-    const char *pattern = "Gamecontroller.Keys.%s"; \
-    char func_name[strlen(pattern) - 2 + strlen(#key)]; \
-    sprintf(func_name, pattern, #key); \
-    key##_callback = caml_named_value(func_name); \
-    caml_register_generational_global_root(key##_callback); \
+void gamecontroller_fpshandler() {
+    touches_joystick.x += touches_joystick.inc_factor * touches_joystick.xinc;
+    touches_joystick.y += touches_joystick.inc_factor * touches_joystick.yinc;
+    gamecontroller_firetouch(1);
+}
+
+#define KEY_CALLBACK(key, phase) static value *key##_callback = NULL; \
+static uint8_t key##_phase = KEY_PHASE_UP; \
+if (key##_phase != phase) { \
+    if (!key##_callback) { \
+        const char *pattern = "Gamecontroller.Keys.%s"; \
+        char func_name[strlen(pattern) - 2 + strlen(#key)]; \
+        sprintf(func_name, pattern, #key); \
+        key##_callback = caml_named_value(func_name); \
+        caml_register_generational_global_root(key##_callback); \
+    } \
+    key##_phase = phase; \
+    handled = caml_callback(*key##_callback, key##_phase == KEY_PHASE_UP ? key_phase_up : key_phase_down) == Val_true; \
 } \
-handled = caml_callback(*key##_callback, Val_unit) == Val_true;
 
 #define CHECK_JOYSTICK(short, full, axis_x, axis_y) float short##_x = AMotionEvent_getAxisValue(event, axis_x, ptr_indx), \
     short##_y = AMotionEvent_getAxisValue(event, axis_y, ptr_indx); \
+    FIX_JOYSTICK_AXIS(short##_x); \
+    FIX_JOYSTICK_AXIS(short##_y); \
     static value *short##_callback = NULL; \
     if (short##_x != short##_val.x || short##_y != short##_val.y) { \
         if (!short##_callback) { \
@@ -34,7 +91,6 @@ handled = caml_callback(*key##_callback, Val_unit) == Val_true;
         Store_field(arg, 1, caml_copy_double(short##_y)); \
         callback_res = caml_callback(*short##_callback, arg) == Val_true; \
         handled = handled || callback_res; \
-        PRINT_DEBUG("done call %d", (int)short##_callback); \
         short##_val.x = short##_x; \
         short##_val.y = short##_y; \
     }
@@ -65,72 +121,72 @@ uint8_t gamecontroller_inputhandler(AInputEvent *event) {
 
     uint8_t handled = 0;
 
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY && AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_UP) {
-        handled = 1;
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY) {
+        value phase = AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN ? KEY_PHASE_DOWN : KEY_PHASE_UP;
 
         switch (AKeyEvent_getKeyCode(event)) {
             case AKEYCODE_BACK: {
-                KEY_CALLBACK(Back);
+                KEY_CALLBACK(Back, phase);
                 break;
             }
 
             case AKEYCODE_MENU: {
-                KEY_CALLBACK(Menu);
+                KEY_CALLBACK(Menu, phase);
                 break;
             }
 
             case AKEYCODE_BUTTON_A: {
-                KEY_CALLBACK(A);
+                KEY_CALLBACK(A, phase);
                 break;
             }
 
             case AKEYCODE_BUTTON_B: {
-                KEY_CALLBACK(B);
+                KEY_CALLBACK(B, phase);
                 break;
             }
 
             case AKEYCODE_BUTTON_X: {
-                KEY_CALLBACK(X);
+                KEY_CALLBACK(X, phase);
                 break;
             }
 
             case AKEYCODE_BUTTON_Y: {
-                KEY_CALLBACK(Y);
+                KEY_CALLBACK(Y, phase);
                 break;
             }
 
             case AKEYCODE_BUTTON_THUMBL: {
-                KEY_CALLBACK(LeftStick);
+                KEY_CALLBACK(LeftStick, phase);
                 break;
             }
 
             case AKEYCODE_BUTTON_THUMBR: {
-                KEY_CALLBACK(RightStick);
+                KEY_CALLBACK(RightStick, phase);
                 break;
             }
 
             case AKEYCODE_MEDIA_PLAY_PAUSE: {
-               KEY_CALLBACK(PlayPause);
+               KEY_CALLBACK(PlayPause, phase);
                break;
             }
 
             case AKEYCODE_MEDIA_REWIND: {
-                KEY_CALLBACK(Rewind);
+                KEY_CALLBACK(Rewind, phase);
                 break;
             }
 
             case AKEYCODE_MEDIA_FAST_FORWARD: {
-                KEY_CALLBACK(FastForward);
+                KEY_CALLBACK(FastForward, phase);
                 break;
             }
 
             case AKEYCODE_BUTTON_L1: {
-                KEY_CALLBACK(LeftShoulder);
+                KEY_CALLBACK(LeftShoulder, phase);
                 break;
             }
 
             case AKEYCODE_BUTTON_R1: {
-                KEY_CALLBACK(RightShoulder);
+                KEY_CALLBACK(RightShoulder, phase);
                 break;
             }
 
@@ -146,46 +202,28 @@ uint8_t gamecontroller_inputhandler(AInputEvent *event) {
         action &= AMOTION_EVENT_ACTION_MASK;
 
         if (action == AMOTION_EVENT_ACTION_MOVE) {
-            //PRINT_DEBUG("----------------");
-
             CHECK_JOYSTICK(nav, Navigation, AMOTION_EVENT_AXIS_HAT_X, AMOTION_EVENT_AXIS_HAT_Y);
-            CHECK_JOYSTICK(lstick, Left, AMOTION_EVENT_AXIS_X, AMOTION_EVENT_AXIS_Y);
-            CHECK_JOYSTICK(rstick, Right, AMOTION_EVENT_AXIS_Z, AMOTION_EVENT_AXIS_RZ);
+
+            if (touches_joystick.joystick == JOYSTICK_LEFT && touches_joystick.fps_handler) {
+                touches_joystick.xinc = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, ptr_indx);
+                touches_joystick.yinc = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, ptr_indx);
+                FIX_JOYSTICK_AXIS(touches_joystick.xinc);
+                FIX_JOYSTICK_AXIS(touches_joystick.yinc);
+            } else {
+                CHECK_JOYSTICK(lstick, Left, AMOTION_EVENT_AXIS_X, AMOTION_EVENT_AXIS_Y);
+            }
+
+            if (touches_joystick.joystick == JOYSTICK_RIGHT && touches_joystick.fps_handler) {
+                touches_joystick.xinc = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Z, ptr_indx);
+                touches_joystick.yinc = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RZ, ptr_indx);
+                FIX_JOYSTICK_AXIS(touches_joystick.xinc);
+                FIX_JOYSTICK_AXIS(touches_joystick.yinc);
+            } else {
+                CHECK_JOYSTICK(rstick, Right, AMOTION_EVENT_AXIS_Z, AMOTION_EVENT_AXIS_RZ);
+            }
+
             CHECK_TRIGGER(ltrigger, Left, AMOTION_EVENT_AXIS_BRAKE);
             CHECK_TRIGGER(rtrigger, Right, AMOTION_EVENT_AXIS_GAS);
-
-
-
-
-
-            // PRINT_DEBUG("____________________________");
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_TILT %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_TILT, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_DISTANCE %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_DISTANCE, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_BRAKE %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_BRAKE, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_GAS %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_GAS, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_WHEEL %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_WHEEL, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_RUDDER %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RUDDER, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_THROTTLE %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_THROTTLE, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_RTRIGGER %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RTRIGGER, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_LTRIGGER %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_LTRIGGER, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_HAT_Y %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_HAT_X %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_RZ %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RZ, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_RY %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RY, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_RX %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RX, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_Z %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Z, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_HSCROLL %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HSCROLL, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_VSCROLL %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_VSCROLL, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_ORIENTATION %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_ORIENTATION, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_TOOL_MINOR %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_TOOL_MINOR, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_TOOL_MAJOR %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_TOOL_MAJOR, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_TOUCH_MINOR %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_TOUCH_MINOR, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_TOUCH_MAJOR %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_TOUCH_MAJOR, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_SIZE %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_SIZE, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_PRESSURE %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_PRESSURE, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_Y %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, ptr_indx));
-            // PRINT_DEBUG("AMOTION_EVENT_AXIS_X %f", AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, ptr_indx));
-
         }
     }
 
@@ -193,5 +231,41 @@ uint8_t gamecontroller_inputhandler(AInputEvent *event) {
 }
 
 void gamecontroller_init() {
+    touches_joystick.joystick = JOYSTICK_NONE;
+    key_phase_up = hash_variant("up");
+    key_phase_down = hash_variant("down");
     dllist_engine_inputhandler_add(&engine.input_handlers, gamecontroller_inputhandler);
+}
+
+value gamecontroller_bind_to_touches(value vinc_factor, value vpos, value vjoystick) {
+    CAMLparam2(vpos, vjoystick);
+
+    if (vjoystick == caml_hash_variant("none") && touches_joystick.joystick != JOYSTICK_NONE) {
+        gamecontroller_firetouch(3);
+        dllist_engine_fpshandler_remove(&engine.fps_handlers, touches_joystick.fps_handler);
+        touches_joystick.fps_handler = NULL;
+        touches_joystick.joystick = JOYSTICK_NONE;
+    } else {
+        if (vjoystick == caml_hash_variant("left")) touches_joystick.joystick = JOYSTICK_LEFT;
+        if (vjoystick == caml_hash_variant("right")) touches_joystick.joystick = JOYSTICK_RIGHT;
+
+        if (vpos == Val_none) {
+            touches_joystick.x = 0;
+            touches_joystick.y = 0;
+        } else {
+            touches_joystick.x = Double_val(Field(Field(vpos, 0), 0));
+            touches_joystick.y = Double_val(Field(Field(vpos, 0), 1));
+        }
+
+        touches_joystick.xinc = 0;
+        touches_joystick.yinc = 0;
+        touches_joystick.inc_factor = Is_block(vinc_factor) ? Double_val(Field(vinc_factor, 0)) : 1;
+
+        if (!touches_joystick.fps_handler) {
+            gamecontroller_firetouch(0);
+            touches_joystick.fps_handler = dllist_engine_fpshandler_add(&engine.fps_handlers, gamecontroller_fpshandler);
+        }
+    }
+
+    CAMLreturn(Val_unit);
 }
