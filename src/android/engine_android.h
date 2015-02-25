@@ -8,6 +8,7 @@
 #include <jni.h>
 #include "android_native_app_glue.h"
 #include "mlwrapper.h"
+#include "dllist.h"
 
 #define RUN_ON_ML_THREAD(func, data) engine_runonmlthread(func, data)
 #define RUN_ON_UI_THREAD(func, data) engine_runonuithread(func, data)
@@ -17,6 +18,12 @@ struct saved_state {
     int32_t x;
     int32_t y;
 };
+
+typedef uint8_t (*engine_inputhandler)(AInputEvent *event);
+typedef void (*engine_fpshandler)(void);
+
+DLLIST_DEF(engine_inputhandler);
+DLLIST_DEF(engine_fpshandler);
 
 struct engine {
     struct android_app* app;
@@ -44,6 +51,9 @@ struct engine {
     void *data; // pointer to any user data. for example, for transfering custom data from main thread to ml thread
     uint8_t touches_disabled;
     pid_t mlthread_id;
+
+    dllist_engine_inputhandler_t *input_handlers;
+    dllist_engine_fpshandler_t *fps_handlers;
 };
 
 typedef void (*engine_runnablefunc_t)(void *data);

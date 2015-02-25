@@ -10,7 +10,6 @@ void engine_init(struct android_app* app) {
     engine.app = app;
 	engine.mlthread_id = gettid();
 
-
 	(*VM)->AttachCurrentThread(VM, &ML_ENV, NULL);
 	jclass cls = (*ML_ENV)->GetObjectClass(ML_ENV, JAVA_ACTIVITY);
 	engine.activity_class = (*ML_ENV)->NewGlobalRef(ML_ENV, cls);
@@ -132,3 +131,6 @@ char* engine_handle_java_expcetion() {
 
 	return retval;
 }
+
+DLLIST_IMPL(engine_inputhandler);
+DLLIST_IMPL(engine_fpshandler);

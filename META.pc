@@ -3,6 +3,11 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm ojson redspell.debug"
 
+package "gamecontroller" (
+  description="Game controller support"
+  archive(byte) = "gamecontroller.cma"
+  archive(native) = "gamecontroller.cmxa"
+)
 package "remote-notifications" (
   description="Remote Notifications"
   archive(byte) = "remote-notifications.cma"

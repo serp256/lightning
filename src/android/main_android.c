@@ -177,9 +177,17 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 
     //PRINT_DEBUG("AInputEvent_getType(event) %d, AINPUT_EVENT_TYPE_MOTION %d", AInputEvent_getType(event), AINPUT_EVENT_TYPE_MOTION);
 
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-        //PRINT_DEBUG("engine.touches_disabled %d", engine.touches_disabled);
+    if (engine.input_handlers) {
+        dllist_engine_inputhandler_t *el = engine.input_handlers;
 
+        do {
+            if ((*el->data)(event)) CAMLreturn(1);
+            el = el->next;
+        } while (el != engine.input_handlers);
+    }
+
+
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
         if (engine.touches_disabled) {
             mlstage_cancelAllTouches(engine.stage);
             CAMLreturn(1);
@@ -244,6 +252,8 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
                 touch_track_t* touch;
 
                 for (ptr_indx = 0; ptr_indx < ptr_cnt; ptr_indx++) {
+                    AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, ptr_indx);
+
                     GET_TOUCH_PARAMS;
                     GET_TRACK(tid, touch);
 
@@ -492,6 +502,15 @@ void android_main(struct android_app* state) {
                 engine_term_display(&engine);
                 return;
             }
+        }
+
+        if (engine.fps_handlers) {
+            dllist_engine_fpshandler_t *el = engine.fps_handlers;
+
+            do {
+                (*el->data)();
+                el = el->next;
+            } while (el != engine.fps_handlers);
         }
 
         //PRINT_DEBUG("engine.animating %d", engine.animating);

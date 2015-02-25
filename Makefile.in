@@ -10,16 +10,16 @@ lib::
 debug::
 	$(MAKE) -C src debug
 
-%.cmo: 
+%.cmo:
 	$(MAKE) -C src $@
 
 
-INSTALL_OPTS = 
+INSTALL_OPTS =
 
 BYTE_FILES = src/lightning.cma src/dlllightning.so src/liblightning.a
 NATIVE_FILES = src/lightning.cmxa src/lightning.a src/liblightning.a
 SYNTAX_FILES = src/syntax/pa_prop.cmo src/syntax/pa_platform.cmo
-INSTALL_FILES = 
+INSTALL_FILES =
 
 ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(BYTE_FILES)
@@ -39,12 +39,13 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/whatsapp/*.cma src/plugins/whatsapp/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/appsflyer/*.cma src/plugins/appsflyer/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/vk/*.cma src/plugins/vk/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/gamecontroller/*.cma src/plugins/gamecontroller/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
 ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(NATIVE_FILES)
-	INSTALL_FILES += $(wildcard src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o src/social/oauth/*.a) 
+	INSTALL_FILES += $(wildcard src/social/oauth/*.cmxa src/social/*.cmx src/social/*.o src/social/oauth/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/remote-notifications/*.cmxa src/plugins/remote-notifications/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/facebook/*.cmxa src/plugins/facebook/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/flurry/*.cmxa src/plugins/flurry/*.a)
@@ -59,6 +60,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/instagram/*.cmxa src/plugins/instagram/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/whatsapp/*.cmxa src/plugins/whatsapp/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/vk/*.cmxa src/plugins/vk/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/gamecontroller/*.cmxa src/plugins/gamecontroller/*.a)
 endif
 
 ifeq ($(PLATFORM),IOS)
@@ -98,14 +100,15 @@ endif
 	                                                          src/plugins/whatsapp/*.cmi src/plugins/whatsapp/*.mli \
 	                                                          src/plugins/appsflyer/*.cmi src/plugins/appsflyer/*.mli \
 	                                                          src/plugins/vk/*.cmi src/plugins/vk/*.mli \
-	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS) 
+	                                                          src/plugins/gamecontroller/*.cmi src/plugins/gamecontroller/*.mli \
+	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS)
 
 uninstall:
 	sudo $(OCAMLFIND) remove lightning
 
 reinstall: uninstall install
 
-.PHONY: install uninstall reinstall 
+.PHONY: install uninstall reinstall
 
 doc:
 	$(MAKE) -C src doc

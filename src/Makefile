@@ -22,9 +22,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma social_byte
+byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa social_native
+native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa gamecontroller.cmxa social_native
 #native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa facebook.cmxa twitter.cmxa whatsapp.cmxa appsflyer.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
@@ -239,6 +239,13 @@ NativeVk.cmxa:
 appsflyer.cmxa:
 	make -C plugins/appsflyer appsflyer.cmxa
 
+gamecontroller.cma:
+	make -C plugins/gamecontroller gamecontroller.cma
+
+gamecontroller.cmxa:
+	make -C plugins/gamecontroller gamecontroller.cmxa
+
+
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
@@ -272,5 +279,6 @@ clean:
 	$(MAKE) -C plugins/appsflyer clean
 	$(MAKE) -C plugins/remote-notifications clean
 	$(MAKE) -C plugins/vk clean
+	$(MAKE) -C plugins/gamecontroller clean
 
 -include MLDepend.$(PLATFORM)
