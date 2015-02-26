@@ -96,6 +96,7 @@ public class Samsung implements Payments.IPayments {
     }
 
     public void consume(Object purchase) {
+        Log.d("LIGHTNING", "samsung consume call");
     }
 
     public void inventory() {

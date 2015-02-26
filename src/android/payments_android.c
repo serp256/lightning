@@ -55,7 +55,9 @@ value openiab_init(value vskus, value vmarket_type) {
 
 	jstring jmarket_type = (*ML_ENV)->NewStringUTF(ML_ENV, cmarket_type);
 
+	PRINT_DEBUG("payments_cls before %d", payments_cls);
 	FIND_PAYMENTS_CLASS;
+	PRINT_DEBUG("payments_cls after %d", payments_cls);
 	static jmethodID mid = 0;
 	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, payments_cls, "init", "([Ljava/lang/String;Ljava/lang/String;)V");
 
@@ -92,7 +94,8 @@ value openiab_purchase(value vsku) {
 value openiab_comsume(value vtransaction) {
 	FIND_PAYMENTS_CLASS;
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, payments_cls, "consume", "(Lorg/onepf/oms/appstore/googleUtils/Purchase;)V");
+	// if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, payments_cls, "consume", "(Lorg/onepf/oms/appstore/googleUtils/Purchase;)V");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, payments_cls, "consume", "(Ljava/lang/Object;)V");
 
 	jobject jtransaction = (jobject)vtransaction;
 	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, payments_cls, mid, jtransaction);

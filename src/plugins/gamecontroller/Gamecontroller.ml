@@ -1,4 +1,8 @@
+IFPLATFORM(android)
 external init: unit -> unit = "gamecontroller_init";
+ELSE
+value init () = ();
+ENDPLATFORM;
 
 module Handler = struct
   module type GroupParam = sig
@@ -71,7 +75,11 @@ module Joysticks = struct
   module Right = Handler(struct value cname = "Right"; end);
   module Navigation = Handler(struct value cname = "Navigation"; end);
 
+  IFPLATFORM(android)
   external bindToTouches: ?incFactor:float -> ?position:(float * float) -> ~joystick:joystick -> unit -> unit = "gamecontroller_bind_to_touches";
+  ELSE
+  value bindToTouches ?incFactor ?position ~joystick () = ();
+  ENDPLATFORM;
 end;
 
 module Triggers = struct
