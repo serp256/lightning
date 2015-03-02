@@ -13,8 +13,6 @@ MLOBJSN = $(MLSOURCES:.ml=.cmx)
 MLOBJS = $(MLSOURCES:.ml=.cmo)
 IFACES = $(MLSOURCES:.ml=.cmi)
 
-MLFLAGS += -I ..
-
 MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 
 ifeq ($(PLATFORM),IOS)
@@ -42,6 +40,7 @@ gamecontroller.cma: $(IFACES) $(MLOBJS)
 	$(OCAMLC) -a -o gamecontroller.cma $(MLOBJS)
 
 else
+
 gamecontroller.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 	$(OCAMLMKLIB) -verbose -o gamecontroller $(COBJS) $(MLOBJSN) $(LIBFLAGS)
 
