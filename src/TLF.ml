@@ -143,8 +143,12 @@ value parse_float inp p =
   with [ Failure "float_of_string" -> parse_error inp "bad float: %s" p ];
 value parse_int inp p = 
   try
-    int_of_string p
-  with [ Failure "float_of_string" -> parse_error inp "bad int: %s" p ];
+    try 
+      let (_, c) = ExtString.String.split p "#" in
+      int_of_string ("0x" ^ c)
+    with
+      [ _ -> int_of_string p ] 
+  with [ Failure "int_of_string" -> parse_error inp "bad int: %s" p ];
 
 value parse_span_attribute inp:  Xmlm.attribute -> span_attribute =
 (
