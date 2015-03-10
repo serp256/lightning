@@ -583,6 +583,7 @@ value lineRollback ascender descender line =
 );
 
 DEFINE CHAR_SPACE = 32;
+DEFINE CHAR_THIN_SPACE = 0x2009;
 DEFINE CHAR_NEWLINE = 10;
 
 
@@ -631,6 +632,13 @@ value create ?width ?height ?border ?dest (html:main) =
            then
            (
              line.currentX := line.currentX +. font.space;
+             text_whitespace.val := Some (index,DynArray.length line.lchars);
+             add_char line (UTF8.next text index)
+           )
+           else if code = CHAR_THIN_SPACE 
+           then
+           (
+             line.currentX := line.currentX +. font.space/.2.;
              text_whitespace.val := Some (index,DynArray.length line.lchars);
              add_char line (UTF8.next text index)
            )
