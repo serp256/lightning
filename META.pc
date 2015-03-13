@@ -3,6 +3,12 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm ojson redspell.debug"
 
+package "odnoklassniki" (
+  description="Game controller support"
+  archive(byte) = "odnoklassniki.cma"
+  archive(native) = "odnoklassniki.cmxa"
+)
+
 package "gamecontroller" (
   description="Game controller support"
   archive(byte) = "gamecontroller.cma"

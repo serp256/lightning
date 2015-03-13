@@ -22,9 +22,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma social_byte
+byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma odnoklassniki.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa gamecontroller.cmxa social_native
+native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa odnoklassniki.cmxa gamecontroller.cmxa social_native
 #native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa facebook.cmxa twitter.cmxa whatsapp.cmxa appsflyer.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
@@ -245,6 +245,11 @@ gamecontroller.cma:
 gamecontroller.cmxa:
 	make -C plugins/gamecontroller gamecontroller.cmxa
 
+odnoklassniki.cma:
+	make -C plugins/odnoklassniki odnoklassniki.cma
+
+odnoklassniki.cmxa:
+	make -C plugins/odnoklassniki odnoklassniki.cmxa
 
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
@@ -280,5 +285,6 @@ clean:
 	$(MAKE) -C plugins/remote-notifications clean
 	$(MAKE) -C plugins/vk clean
 	$(MAKE) -C plugins/gamecontroller clean
+	$(MAKE) -C plugins/odnoklassniki clean
 
 -include MLDepend.$(PLATFORM)
