@@ -82,6 +82,7 @@ class LightOdnoklassniki {
 
 				new GetFriendsTask().execute(new Void[0]);
 */
+				new GetFriendsTask().execute(new Void[0]);
 
 			}
 
@@ -118,7 +119,13 @@ class LightOdnoklassniki {
   protected static final class GetFriendsTask extends AsyncTask<Void, Void, String> {
 
     @Override
+    protected void onPreExecute() {
+        Log.d("LIGHTNING", "Get user friends pre execute");
+      }
+    }
+    @Override
     protected String doInBackground(final Void... params) {
+			Log.d("LIGHTNING", "do in background");
       try {
         return LightOdnoklassniki.ok.request("friends.get", null, "get");
       } catch (Exception exc) {
