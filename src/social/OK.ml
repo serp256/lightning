@@ -57,7 +57,7 @@ end;
 
 value auth_endpoint = "http://www.odnoklassniki.ru/oauth/authorize";
 value token_endpoint = "http://api.odnoklassniki.ru/oauth/token.do"; 
-value close_button = {OAuth.cb_insets = (60,10,10,10); OAuth.cb_image = None};
+value close_button = {OAuth.cb_insets = (0,0,10,10); OAuth.cb_image = None};
 
 module Make(P:Param) = struct
 

@@ -17,6 +17,7 @@ value string_of_permission = fun
   | Events      -> "events"
   ];
   
+value close_button = {OAuth.cb_insets = (0,0,10,10); OAuth.cb_image = None};
   
 (* В Моем мире привелегии передаются через пробел *)
 value scope_of_perms perms = 
@@ -179,7 +180,7 @@ value call_method ?delegate meth params =
           ] 
       | OAuth.Error e  ->  call_delegate_error (OAuthError e)
       ]
-    in OAuth.authorization_grant ~client_id:P.appid ~auth_endpoint ~gtype:OAuth.Implicit ~redirect_uri ~params callback
+    in OAuth.authorization_grant ~close_button ~client_id:P.appid ~auth_endpoint ~gtype:OAuth.Implicit ~redirect_uri ~params callback
   in
 
   (* функция рефреша токена. если не получилось зарефрешить - поднимаем авторизацию *)
