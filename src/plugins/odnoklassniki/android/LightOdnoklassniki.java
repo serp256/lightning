@@ -104,8 +104,9 @@ class LightOdnoklassniki {
 			@Override
 			public void onSuccess(final String accessToken) {
 				Log.d ("LIGHTNING", "odnoklassniki_auth_success");
-				(new AuthSuccess(success, fail)).run();
-				//friends (success, fail);
+			//	(new AuthSuccess(success, fail)).run();
+
+				friends (success, fail);
 
 			}
 
@@ -173,8 +174,8 @@ class LightOdnoklassniki {
       return null;
     }
     @Override
-    protected void onPostExecute(final String result) {
-      if (result != null) {
+    protected void onPostExecute(final String result) { 
+			if (result != null) {
         Log.d("LIGHTNING", "Get user friends result " + result);
 				LightOdnoklassniki.users (success, fail, result);
       }
@@ -212,22 +213,35 @@ class LightOdnoklassniki {
       }
     @Override
     protected String doInBackground(final UsersRequest... urequest) {
-			params.put("fields", "uid, first_name, last_name, gender, online, last_online, pic190x190");
-			params.put("uids", urequest[0].uids);
-			success = urequest[0].success;
-			fail = urequest[0].fail;
-      try {
-				return LightOdnoklassniki.ok.request("users.getInfo", params, "get");
-      } catch (Exception exc) {
-        Log.d("LIGHTNING", "Failed to get users");
-				(new Fail (success, fail, "Failed to get users")).run();
-      }
+			try {
+				JSONArray uids = new JSONArray (urequest[0].uids);
+				String str = new String ();
+				str=uids.getString (0);
+				for(int i = 1; i < uids.length(); i++){
+					str+="," + uids.getString (i);
+				}
+				params.put("uids", str);
+				params.put("fields", "uid, first_name, last_name, gender, online, last_online, pic190x190");
+				success = urequest[0].success;
+				fail = urequest[0].fail;
+				try {
+					return LightOdnoklassniki.ok.request("users.getInfo", params, "get");
+				} catch (Exception exc) {
+					Log.d("LIGHTNING", "Failed to get users");
+					(new Fail (success, fail, "Failed to get users")).run();
+				}
+		  }
+			catch (org.json.JSONException e) {
+				Log.d("LIGHTNING", "wrong or empty json format");
+				(new FriendsSuccess(success, fail, new Friend[0])).run();
+			};
+
       return null;
     }
     @Override
     protected void onPostExecute(final String result) {
       if (result != null) {
-        Log.d("LIGHTNING", "Get user friends result " + result);
+        Log.d("LIGHTNING", "Get users result " + result);
 
 				try {
 
@@ -252,9 +266,6 @@ class LightOdnoklassniki {
           Log.d("LIGHTNING", "Friends onComplete Fail");
           (new Fail(success, fail, "wrong format of result on friends request")).run();
         }
-
-
-
       }
     }
  }
