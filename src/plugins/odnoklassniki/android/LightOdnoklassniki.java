@@ -5,6 +5,10 @@ import ru.ok.android.sdk.OkTokenRequestListener;
 import ru.ok.android.sdk.util.OkScope;
 import ru.redspell.lightning.Lightning;
 import android.os.AsyncTask;
+import java.util.Map;
+import java.util.HashMap;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 class LightOdnoklassniki {
 	public static Odnoklassniki ok;
@@ -21,7 +25,6 @@ class LightOdnoklassniki {
 		}
 	}
 
-/*
 	private static class AuthSuccess extends Callback {
 		public AuthSuccess(int success, int fail) {
 			super(success, fail);
@@ -33,7 +36,36 @@ class LightOdnoklassniki {
 			nativeRun(success, fail);
 		}
 	}
-*/
+
+	private static class Fail extends Callback {
+			private String reason;
+
+			public Fail(int success, int fail, String reason) {
+				super(success, fail);
+				this.reason = reason;
+			}
+
+			public native void nativeRun(int fail, String reason, int success);
+
+			public void run() {
+				nativeRun(fail, reason, success);
+			}
+	}
+
+
+	private static class FriendsSuccess extends Callback {
+		private Friend[] friends;
+		public FriendsSuccess(int success, int fail, Friend[] friends) {
+			super(success, fail);
+			this.friends = friends;
+		}
+
+		public native void nativeRun(int success, int fail, Friend[] friends);
+
+		public void run() {
+			nativeRun(success, fail, friends);
+		}
+	}
   private static class Friend {
     private String id;
     private String name;
@@ -58,7 +90,6 @@ class LightOdnoklassniki {
     public void run() {
       nativeRun(success, fail, friends);
     }
-  }
 */
 	public static void init (String appId, String appSecret, String appKey) {
 		Log.d ("LIGHTNING", "odnoklassniki_init: "+appId +" " + appSecret + " " + appKey);
@@ -72,73 +103,159 @@ class LightOdnoklassniki {
 		ok.setTokenRequestListener(new OkTokenRequestListener() {
 			@Override
 			public void onSuccess(final String accessToken) {
-				/*Toast.makeText(mContext, "Recieved token : " + accessToken, Toast.LENGTH_SHORT).show();
-				showForm();
-				*/
-
 				Log.d ("LIGHTNING", "odnoklassniki_auth_success");
-/*
 				(new AuthSuccess(success, fail)).run();
-
-				new GetFriendsTask().execute(new Void[0]);
-*/
-				new GetFriendsTask().execute(new Void[0]);
+				//friends (success, fail);
 
 			}
 
 		@Override
 			public void onCancel() {
-				/*
-				Toast.makeText(mContext, "Authorization was canceled", Toast.LENGTH_SHORT).show();
-				*/
 				Log.d ("LIGHTNING", "odnoklassniki_auth_cancel");
-/*
-				(new AuthSuccess(success, fail)).run();
-*/
+				(new Fail (success, fail, "Authorization was cancelled")).run();
 			}
 
 		@Override
 			public void onError() {
 				Log.d ("LIGHTNING", "odnoklassniki_auth_error");
-				/*
-				(new AuthSuccess(success, fail)).run();
-				Toast.makeText(mContext, "Error getting token", Toast.LENGTH_SHORT).show();
-				*/
+				(new Fail (success, fail, "Authorization error")).run();
 			}
 		});
 
 		if (ok.hasAccessToken()) {
 				Log.d ("LIGHTNING", "odnoklassniki_auth_has_token");
+				ok.refreshToken (Lightning.activity);
+
+				/*
+				Lightning.activity.runOnUiThread (new Runnable () {
+					@Override
+					public void run () {
+						Log.d ("LIGHTNING", "irun");
+						new GetFriendsTask().execute(new Void[0]);
+					}
+				}
+				);
+				Log.d ("LIGHTNING", "iafter ui threaad");
+				*/
 		}
 		else
 		{
-				ok.requestAuthorization(Lightning.activity, false, OkScope.VALUABLE_ACCESS);
+			ok.requestAuthorization(Lightning.activity, false, OkScope.VALUABLE_ACCESS);
 		}
 	}
 
-  protected static final class GetFriendsTask extends AsyncTask<Void, Void, String> {
+	public static void friends (final int success, final int fail) {
+		new GetFriendsTask().execute(new FriendsRequest (success, fail));
+	}
+	public static void users (final int success, final int fail, final String uids) {
+		new GetUsersInfoTask().execute (new UsersRequest (success, fail, uids));
+	}
+	protected static final class GetFriendsTask extends AsyncTask<FriendsRequest, Void, String> {
+		static int success;
+		static int fail;
 
     @Override
     protected void onPreExecute() {
         Log.d("LIGHTNING", "Get user friends pre execute");
       }
-    }
     @Override
-    protected String doInBackground(final Void... params) {
-			Log.d("LIGHTNING", "do in background");
+    protected String doInBackground(final FriendsRequest... frequest) {
+			success = frequest[0].success;
+			fail = frequest[0].fail;
+
       try {
-        return LightOdnoklassniki.ok.request("friends.get", null, "get");
+				return LightOdnoklassniki.ok.request("friends.get", null, "get");
       } catch (Exception exc) {
         Log.d("LIGHTNING", "Failed to get friends");
+				(new Fail (success, fail, "Failed to get friends")).run();
+
       }
       return null;
     }
-
     @Override
     protected void onPostExecute(final String result) {
       if (result != null) {
-        Log.d("LIGHTNING", "Get user friends result");
+        Log.d("LIGHTNING", "Get user friends result " + result);
+				LightOdnoklassniki.users (success, fail, result);
       }
     }
-  }
+ }
+
+ public static class FriendsRequest  {
+	 public int success;
+	 public int fail;
+
+	 public FriendsRequest (int success, int fail) {
+		 this.success = success;
+		 this.fail = fail;
+	 }
+ }
+
+ protected static class UsersRequest extends FriendsRequest {
+	 public String uids;
+
+	 public UsersRequest (int success, int fail, String uids) {
+		 super (success, fail);
+		 this.uids = uids;
+	 }
+
+ }
+ protected static final class GetUsersInfoTask extends AsyncTask<UsersRequest, Void, String> {
+	 private static Map params = new HashMap<String,String>() ;
+	 static int success;
+	 static int fail;
+	 
+
+    @Override
+    protected void onPreExecute() {
+        Log.d("LIGHTNING", "Get users info pre execute");
+      }
+    @Override
+    protected String doInBackground(final UsersRequest... urequest) {
+			params.put("fields", "uid, first_name, last_name, gender, online, last_online, pic190x190");
+			params.put("uids", urequest[0].uids);
+			success = urequest[0].success;
+			fail = urequest[0].fail;
+      try {
+				return LightOdnoklassniki.ok.request("users.getInfo", params, "get");
+      } catch (Exception exc) {
+        Log.d("LIGHTNING", "Failed to get users");
+				(new Fail (success, fail, "Failed to get users")).run();
+      }
+      return null;
+    }
+    @Override
+    protected void onPostExecute(final String result) {
+      if (result != null) {
+        Log.d("LIGHTNING", "Get user friends result " + result);
+
+				try {
+
+          JSONArray items = new JSONArray (result);
+
+          int cnt = items.length();
+          Friend[] friends = new Friend[cnt];
+          Log.d("LIGHTNING", "items " + items);
+
+          for (int i = 0; i < cnt; i++) {
+            Log.d("LIGHTNING", "item " + i  );
+            JSONObject item = items.getJSONObject(i);
+            Log.d("LIGHTNING", "item " + item  );
+
+            friends[i] = new Friend(item.getString("uid"), item.getString("last_name") + " " + item.getString("first_name"), item.getString("gender")=="female" ? 1 :item.getString("gender")=="male" ? 2 : 0,
+                          item.getString("pic190x190"), item.has("online") ? item.getInt("online") == 1 : false, item.has("last_online") ? item.getInt("last_online") : 0);
+          }
+
+          Log.d("LIGHTNING", "call success cnt " + cnt);
+          (new FriendsSuccess(success, fail, friends)).run();
+        } catch (org.json.JSONException e) {
+          Log.d("LIGHTNING", "Friends onComplete Fail");
+          (new Fail(success, fail, "wrong format of result on friends request")).run();
+        }
+
+
+
+      }
+    }
+ }
 }
