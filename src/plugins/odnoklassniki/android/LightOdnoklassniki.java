@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.HashMap;
 import org.json.JSONObject;
 import org.json.JSONArray;
+import java.sql.Timestamp;
 
 class LightOdnoklassniki {
 	public static Odnoklassniki ok;
@@ -84,16 +85,8 @@ class LightOdnoklassniki {
     }
   }
 
-/*
-    public native void nativeRun(int success, int fail, Friend[] friends);
-
-    public void run() {
-      nativeRun(success, fail, friends);
-    }
-*/
 	public static void init (String appId, String appSecret, String appKey) {
 		Log.d ("LIGHTNING", "odnoklassniki_init: "+appId +" " + appSecret + " " + appKey);
-		
 		ok = Odnoklassniki.createInstance(Lightning.activity, appId, appSecret, appKey);
 	}
 
@@ -104,10 +97,7 @@ class LightOdnoklassniki {
 			@Override
 			public void onSuccess(final String accessToken) {
 				Log.d ("LIGHTNING", "odnoklassniki_auth_success");
-			//	(new AuthSuccess(success, fail)).run();
-
-				friends (success, fail);
-
+				(new AuthSuccess(success, fail)).run();
 			}
 
 		@Override
@@ -250,14 +240,21 @@ class LightOdnoklassniki {
           int cnt = items.length();
           Friend[] friends = new Friend[cnt];
           Log.d("LIGHTNING", "items " + items);
+          Log.d("LIGHTNING", "cnt " + cnt);
 
           for (int i = 0; i < cnt; i++) {
             Log.d("LIGHTNING", "item " + i  );
             JSONObject item = items.getJSONObject(i);
-            Log.d("LIGHTNING", "item " + item  );
 
-            friends[i] = new Friend(item.getString("uid"), item.getString("last_name") + " " + item.getString("first_name"), item.getString("gender")=="female" ? 1 :item.getString("gender")=="male" ? 2 : 0,
-                          item.getString("pic190x190"), item.has("online") ? item.getInt("online") == 1 : false, item.has("last_online") ? item.getInt("last_online") : 0);
+						int last_online = 0;
+						try {
+							last_online = (int)(Timestamp.valueOf (item.getString("last_online"))).getTime ();
+						}
+						catch (IllegalArgumentException exc) {
+						};
+            friends[i] = new Friend(item.getString("uid"), item.getString("last_name") + " " + item.getString("first_name"), item.getString("gender").equals("female") ? 1 :item.getString("gender").equals("male") ? 2 : 0,
+                          item.getString("pic190x190"), item.has("online") ? true :false, item.has("last_online") ? last_online : 0);
+
           }
 
           Log.d("LIGHTNING", "call success cnt " + cnt);
