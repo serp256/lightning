@@ -19,8 +19,8 @@ MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS  += -DIOS -Iios -I../../ -I../../ios -I../common
-COBJS   +=  ios/odnoklassniki_ios.o
+CFLAGS  += -DIOS -fobjc-arc -Iios -I../../ -I../../ios -I../common -I ios/sdk/OKSdk/OKSdk -I ios/sdk/OKSdk/OKSdk/Friends -I ios/sdk/OKSdk/OKSdk/Utils -I ios/sdk/OKSdk/OKSdk/UI
+COBJS   +=  ios/odnoklassniki_ios.o ios/LightOkDelegate.o ios/odnoklassniki_ios.o ios/sdk/OKSdk/OKSdk/Friends/OKFriends.o ios/sdk/OKSdk/OKSdk/Odnoklassniki.o ios/sdk/OKSdk/OKSdk/OKRequest.o ios/sdk/OKSdk/OKSdk/OKSession.o ios/sdk/OKSdk/OKSdk/OKTokenCache.o ios/sdk/OKSdk/OKSdk/UI/OKAuthorizeController.o ios/sdk/OKSdk/OKSdk/UI/OKMediaTopicPostViewController.o ios/sdk/OKSdk/OKSdk/Utils/NSString+OKUtils.o
 
 else
 ifeq ($(PLATFORM),ANDROID)
@@ -52,4 +52,4 @@ endif
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/odnoklassniki_ios.o android/odnoklassniki_android.o
+	rm -f *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/*.o android/odnoklassniki_android.o ios/sdk/OKSdk/OKSdk/*.o ios/sdk/OKSdk/OKSdk/*/*.o
