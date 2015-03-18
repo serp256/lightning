@@ -7,11 +7,12 @@
 @implementation LightOkDelegate
 
 - (id)init {
+	self = [super init];
 	return self;
 }
 
-- (id)authorizeWithSuccess:(value)s andFail:(value)f {
-	NSLog(@"authorizeWithSuccess");
+- (void)authorizeWithSuccess:(value)s andFail:(value)f {
+	NSLog(@"okAuthorizeWithSuccess");
 	REG_CALLBACK(s, success);
 	REG_OPT_CALLBACK(f, fail);
 }
@@ -55,6 +56,7 @@
 }
 
 - (void)dealloc {
+	NSLog(@"ok delegate dealloc");
 	FREE_CALLBACK(success);
 	FREE_CALLBACK(fail);
 }

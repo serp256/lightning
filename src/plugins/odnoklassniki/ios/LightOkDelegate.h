@@ -6,8 +6,7 @@
 {
 	value *success;
 	value *fail;
-	int *authorized;
 }
 - (id)init;
-- (id)authorizeWithSuccess:(value)s andFail:(value)f;
+- (void)authorizeWithSuccess:(value)s andFail:(value)f;
 @end
