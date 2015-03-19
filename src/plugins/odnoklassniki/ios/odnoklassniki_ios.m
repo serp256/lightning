@@ -30,13 +30,13 @@ value ok_init (value vappid, value vappsecret, value vappkey) {
 
 				[OKSession.activeSession handleOpenURL:url];
 			}];
+
+			NSLog(@"ok_create delegate");
+			delegate = [[LightOkDelegate alloc] init];
+			api = [[Odnoklassniki alloc] initWithAppId:cappid appSecret:cappsecret appKey:cappkey delegate:delegate];
 		}
 
-		NSLog(@"ok_create delegate");
 
-	delegate = [[LightOkDelegate alloc] init];
-
-	api = [[Odnoklassniki alloc] initWithAppId:cappid appSecret:cappsecret appKey:cappkey delegate:delegate];
 
   CAMLreturn(Val_unit);
 }
