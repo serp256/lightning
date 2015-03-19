@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 
 class LightOdnoklassniki {
 	public static Odnoklassniki ok;
+	public static String uid;
 
   private static abstract class Callback implements Runnable {
 		protected int success;
@@ -97,7 +98,7 @@ class LightOdnoklassniki {
 			@Override
 			public void onSuccess(final String accessToken) {
 				Log.d ("LIGHTNING", "odnoklassniki_auth_success");
-				(new AuthSuccess(success, fail)).run();
+				new GetCurrentUserTask().execute(new FriendsRequest (success, fail));
 			}
 
 		@Override
@@ -139,8 +140,58 @@ class LightOdnoklassniki {
 		new GetFriendsTask().execute(new FriendsRequest (success, fail));
 	}
 	public static void users (final int success, final int fail, final String uids) {
-		new GetUsersInfoTask().execute (new UsersRequest (success, fail, uids));
+		if (!uids.isEmpty ()) { 
+			new GetUsersInfoTask().execute (new UsersRequest (success, fail, uids));
+		}
+		else {
+			Log.d("LIGHTNING","users list is empty");
+			(new FriendsSuccess(success, fail, new Friend[0])).run();
+		}
 	}
+
+	public static String token () {
+		return ok.getCurrentAccessToken ();
+	}
+
+	public static String uid () {
+		return uid; 
+	}
+
+  protected static final class GetCurrentUserTask extends AsyncTask<FriendsRequest, Void, String> {
+		static int success;
+		static int fail;
+
+    @Override
+    protected String doInBackground(final FriendsRequest... frequest) {
+			success = frequest[0].success;
+			fail = frequest[0].fail;
+      try {
+        return LightOdnoklassniki.ok.request("users.getCurrentUser", null, "get");
+      } catch (Exception exc) {
+        Log.e("Odnoklassniki", "Failed to get current user info", exc);
+				(new Fail (success, fail, "Failed to get currrent user info")).run();
+      }
+      return null;
+    }
+
+    @Override
+    protected void onPostExecute(final String result) {
+      if (result != null) {
+        Log.d("LIGHTNING", "Get user info result " + result);
+
+				try {
+					JSONObject item =new  JSONObject(result);
+					uid = item.getString("uid");
+					(new AuthSuccess(success, fail)).run();
+				}
+				catch (org.json.JSONException e) {
+					Log.d("LIGHTNING", "wrong or empty json format");
+					(new Fail(success, fail, "Failed on parse user json")).run();
+				};
+      }
+    }
+  }
+
 	protected static final class GetFriendsTask extends AsyncTask<FriendsRequest, Void, String> {
 		static int success;
 		static int fail;
@@ -248,7 +299,7 @@ class LightOdnoklassniki {
 
 						int last_online = 0;
 						try {
-							last_online = (int)(Timestamp.valueOf (item.getString("last_online"))).getTime ();
+							last_online = (int)((Timestamp.valueOf (item.getString("last_online"))).getTime ()/ 1000);
 						}
 						catch (IllegalArgumentException exc) {
 						};

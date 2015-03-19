@@ -72,7 +72,37 @@ value ok_users (value vfail, value vsuccess, value vids) {
 	(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail, jids);
 	CAMLreturn(Val_unit); 
 }
+value ok_token (value unit) {
+  CAMLparam0();
+  CAMLlocal1(vtoken);
 
+  GET_ENV;
+  GET_CLS;
+
+  STATIC_MID(cls, token, "()Ljava/lang/String;");
+  jstring jtoken = (*env)->CallStaticObjectMethod(env, cls, mid);
+  const char* ctoken = (*env)->GetStringUTFChars(env, jtoken, JNI_FALSE);
+  vtoken = caml_copy_string(ctoken);
+  (*env)->ReleaseStringUTFChars(env, jtoken, ctoken);
+
+  CAMLreturn(vtoken);
+}
+
+value ok_uid (value unit){
+  CAMLparam0();
+  CAMLlocal1(vuid);
+
+  GET_ENV;
+  GET_CLS;
+
+  STATIC_MID(cls, uid, "()Ljava/lang/String;");
+  jstring juid= (*env)->CallStaticObjectMethod(env, cls, mid);
+  const char* cuid= (*env)->GetStringUTFChars(env, juid, JNI_FALSE);
+  vuid= caml_copy_string(cuid);
+  (*env)->ReleaseStringUTFChars(env, juid, cuid);
+
+  CAMLreturn(vuid);
+}
 
 
 void okandroid_auth_success(void *d) {
