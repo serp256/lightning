@@ -3,6 +3,7 @@
 #import <caml/memory.h>
 #import <caml/alloc.h>
 #import "LightViewController.h"
+#import "odnoklassniki_ios.h"
 
 @implementation LightOkDelegate
 
@@ -28,7 +29,9 @@
 
 - (void)okDidLogin {
 	NSLog(@"okDidLogin");
-	RUN_CALLBACK(success, Val_unit);
+	get_current_user (fail,success);
+
+	//RUN_CALLBACK(success, Val_unit);
 }
 
 - (void)okDidNotLogin:(BOOL)canceled {

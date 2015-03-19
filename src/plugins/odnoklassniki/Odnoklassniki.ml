@@ -32,31 +32,22 @@ module User =
 type fail = string -> unit;
 
 IFDEF PC THEN
-  value init _ _ _ = ();
+  value init ~appId ~appSecret ~appKey = ();
   value authorize ?fail ~success () = ();
   value friends ?fail ~success () = ();
   value users ?fail ~success ~ids () = ();
+  value token _ = "";
+  value uid _ = "";
 ELSE
   Callback.register "create_user" User.create;
 
-  external init: string -> string -> string -> unit = "ok_init"; 
+  external init: ~appId:string -> ~appSecret:string -> ~appKey:string -> unit = "ok_init"; 
   external authorize: ?fail:fail -> ~success:(unit -> unit) -> unit -> unit = "ok_authorize"; 
   external friends: ?fail:fail -> ~success:(list User.t-> unit) -> unit -> unit = "ok_friends"; 
   external users: option fail -> (list User.t -> unit) -> string -> unit = "ok_users";
   value users ?fail ~success ~ids t =
       let ids = String.concat "," ids in
           users fail success ids;
-(*
-Callback.register "create_user" User.create;
-
-external authorize: ~appid:string -> ~permissions:list string -> ?fail:fail -> ~success:(t -> unit) -> ~force:bool -> unit -> unit = "ml_vk_authorize_byte" "ml_vk_authorize";
-value authorize ~appid ~permissions ?fail ~success ?(force = False) = authorize ~appid ~permissions ?fail ~success ~force;
-external friends: ?fail:fail -> ~success:(list User.t -> unit) -> t -> unit = "ml_vk_friends";
-external users: option fail -> (list User.t -> unit) -> string -> unit = "ml_vk_users";
-value users ?fail ~success ~ids t =
-  let ids = String.concat "," ids in
-    users fail success ids;
-external token: t -> string = "ml_vk_token";
-external uid: t -> string = "ml_vk_uid";
-*)
+  external token: unit -> string = "ok_token";
+  external uid: unit -> string = "ok_uid";
 ENDIF;

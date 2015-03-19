@@ -9,6 +9,7 @@ LightOkDelegate* delegate;
 static Odnoklassniki* api; 
 int authorized = 0;
 int subscribed = 0;
+NSString* uid; 
 
 value ok_init (value vappid, value vappsecret, value vappkey) {
   NSLog(@"ok_init call");
@@ -36,7 +37,27 @@ value ok_init (value vappid, value vappsecret, value vappkey) {
 	delegate = [[LightOkDelegate alloc] init];
 
 	api = [[Odnoklassniki alloc] initWithAppId:cappid appSecret:cappsecret appKey:cappkey delegate:delegate];
+
   CAMLreturn(Val_unit);
+}
+
+
+void get_current_user (value* fail,  value* success) {
+  NSLog(@"get current user call");
+    OKRequest *newRequest = [Odnoklassniki requestWithMethodName:@"users.getCurrentUser" params:nil];
+    [newRequest executeWithCompletionBlock:^(NSDictionary *data) {
+			NSLog(@"iuser %@", data);
+        if (![data isKindOfClass:[NSDictionary class]]) {
+						RUN_CALLBACK(fail, caml_copy_string("fail when try to get currrent user"));
+            return;
+        }
+
+				uid  = [data objectForKey:@"uid"];
+				RUN_CALLBACK(success, Val_unit);
+    } errorBlock:^(NSError *error) {
+        NSLog(@"%@", [error localizedDescription]);
+				RUN_CALLBACK(fail, caml_copy_string("fail when try to get currrent user"));
+    }];
 }
 
 value ok_authorize (value vfail, value vsuccess) {
@@ -177,9 +198,10 @@ value ok_users(value vfail, value vsuccess, value vids) {
 	value *fail, *success;
 	REG_CALLBACK(vsuccess, success);
 	REG_OPT_CALLBACK(vfail, fail);
+
 	if ([mids length] == 0) {
 		RUN_CALLBACK(success, Val_int(0))
-			FREE_CALLBACK(fail);
+		FREE_CALLBACK(fail);
 		FREE_CALLBACK(success);
 	}
 	else 
@@ -187,4 +209,12 @@ value ok_users(value vfail, value vsuccess, value vids) {
 		users_request(mids, fail, success);
 	}
 	CAMLreturn(Val_unit);
+}
+
+value ok_token (value unit) {
+	return(caml_copy_string([api.session.accessToken UTF8String]));
+}
+
+value ok_uid (value unit){
+	return(caml_copy_string([uid UTF8String]));
 }
