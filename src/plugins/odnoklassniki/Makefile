@@ -35,6 +35,8 @@ endif
 
 ifeq ($(PLATFORM),PC)
 	
+MLPPOPT += -DPC
+
 odnoklassniki.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o odnoklassniki.cmxa $(MLOBJSN)
 
