@@ -56,7 +56,12 @@ public class Payments {
     }
 
     public static String getOriginalJson(Object purchase) throws Exception {
-        return getInstance().getOriginalJson(purchase);
+        try {
+            return getInstance().getOriginalJson(purchase);
+        } catch (Exception e) {
+            ru.redspell.lightning.utils.Log.d("LIGHTNING", "exception " + e.toString());
+            return "";
+        }
     }
 
     public static String getToken(Object purchase) throws Exception {
