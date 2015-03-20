@@ -252,8 +252,6 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
                 touch_track_t* touch;
 
                 for (ptr_indx = 0; ptr_indx < ptr_cnt; ptr_indx++) {
-                    AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, ptr_indx);
-
                     GET_TOUCH_PARAMS;
                     GET_TRACK(tid, touch);
 
