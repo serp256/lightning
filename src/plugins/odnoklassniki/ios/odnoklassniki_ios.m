@@ -5,10 +5,10 @@
 #import "mlwrapper_ios.h"
 #import "Odnoklassniki.h"
 
-LightOkDelegate* delegate;
+static LightOkDelegate* delegate;
 static Odnoklassniki* api; 
-int authorized = 0;
-int subscribed = 0;
+static int authorized = 0;
+static int subscribed = 0;
 NSString* uid; 
 
 value ok_init (value vappid, value vappsecret, value vappkey) {
@@ -23,7 +23,8 @@ value ok_init (value vappid, value vappsecret, value vappkey) {
 	if (!subscribed) {
 		NSLog(@"ok_subscribe");
 			subscribed = 1;
-			[[NSNotificationCenter defaultCenter] addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
+			[[NSNotificationCenter defaultCenter] addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification* notif) {
+				NSLog(@"OK NOTIFICATION BLOCK");
 				NSDictionary* data = [notif userInfo];
 				NSURL* url = [data objectForKey:APP_URL_DATA];
 
@@ -59,19 +60,41 @@ void get_current_user (value* fail,  value* success) {
 				RUN_CALLBACK(fail, caml_copy_string("fail when try to get currrent user"));
     }];
 }
+void reauthorize (value unit){
+  NSLog(@"reauthorize");
+		if (api.isSessionValid) {
+			NSLog(@"ok_Logged in");
+		} else {
+			NSLog (@"ok_not logged in");
+		}
+	[api authorizeWithPermissions:@[@"VALUABLE ACCESS"]];
+}
 
-value ok_authorize (value vfail, value vsuccess) {
+value ok_authorize (value vfail, value vsuccess, value vforce) {
   NSLog(@"ok_authorize call");
 	CAMLparam2 (vsuccess, vfail);
 
-	[delegate authorizeWithSuccess:vsuccess andFail: vfail];
+	[delegate authorizeWithSuccess:vsuccess andFail: vfail andAuthFl:&authorized];
 
-	if (api.isSessionValid) {
-		NSLog(@"ok_Logged in");
-		[api refreshToken];
-	} else {
-		NSLog (@"ok_not logged in");
-		[api authorizeWithPermissions:@[@"VALUABLE ACCESS"]];
+	if (vforce == Val_true && authorized==1) {
+		NSLog(@"ok_authorize force logout");
+		NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+    for (NSHTTPCookie *cookie in cookies) {
+        if (NSNotFound != [cookie.domain rangeOfString:@"ok.ru"].location) {
+            [[NSHTTPCookieStorage sharedHTTPCookieStorage]
+                                  deleteCookie:cookie];
+        }
+    }
+		[api logout];
+	}
+	else {
+		if (api.isSessionValid) {
+			NSLog(@"ok_Logged in");
+			[api refreshToken];
+		} else {
+			NSLog (@"ok_not logged in");
+			[api authorizeWithPermissions:@[@"VALUABLE ACCESS"]];
+		}
 	}
   CAMLreturn(Val_unit);
 }

@@ -15,7 +15,7 @@ module User:
 type fail = string -> unit;
 
 value init: ~appId:string -> ~appSecret:string -> ~appKey:string -> unit;
-value authorize: ?fail:fail -> ~success:(unit -> unit) -> unit -> unit;
+value authorize: ?fail:fail -> ~success:(unit -> unit) -> ?force: bool -> unit -> unit;
 value friends: ?fail:fail -> ~success:(list User.t -> unit) -> unit -> unit;
 value users: ?fail:fail -> ~success:(list User.t -> unit)-> ~ids:list string -> unit -> unit;
 value token: unit -> string;

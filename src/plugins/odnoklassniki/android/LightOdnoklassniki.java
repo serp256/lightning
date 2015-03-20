@@ -91,7 +91,7 @@ class LightOdnoklassniki {
 		ok = Odnoklassniki.createInstance(Lightning.activity, appId, appSecret, appKey);
 	}
 
-	public static void authorize (final int success, final int fail) {
+	public static void authorize (final int success, final int fail, final boolean force) {
 		Log.d ("LIGHTNING", "odnoklassniki_authorize");
 		
 		ok.setTokenRequestListener(new OkTokenRequestListener() {
@@ -113,6 +113,12 @@ class LightOdnoklassniki {
 				(new Fail (success, fail, "Authorization error")).run();
 			}
 		});
+
+			Log.d ("LIGHTNING", "force" + force);
+		if (force) {
+			Log.d ("LIGHTNING", "force: clear tokens");
+			ok.clearTokens (Lightning.activity);
+		}
 
 		if (ok.hasAccessToken()) {
 				Log.d ("LIGHTNING", "odnoklassniki_auth_has_token");

@@ -6,8 +6,8 @@
 #import "VKApiConst.h"
 
 static LightVkDelegate* delegate; //delegate declared as static, cause VKSdk class stores delegate as weak propety and auto ref counting clean given delegate, if it declared as local variable in ml_vk_authorize
-int authorized = 0;
-int subscribed = 0;
+static int authorized = 0;
+static int subscribed = 0;
 
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess, value vforce) {
 	NSLog(@"ml_vk_authorize call");
@@ -21,9 +21,11 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 
 	CAMLparam4(vappid, vpermissions, vfail, vsuccess);
 
+	NSLog(@"subscribed %d", subscribed);
 	if (!subscribed) {
 		subscribed = 1;
-		[[NSNotificationCenter defaultCenter] addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
+		[[NSNotificationCenter defaultCenter] addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification* notif) {
+			NSLog(@"vk notification block");
 			NSDictionary* data = [notif userInfo];
 			NSURL* url = [data objectForKey:APP_URL_DATA];
 			NSString* fromApp = [data objectForKey:APP_SOURCEAPP_DATA];

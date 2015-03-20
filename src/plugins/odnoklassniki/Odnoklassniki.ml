@@ -33,7 +33,7 @@ type fail = string -> unit;
 
 IFDEF PC THEN
   value init ~appId ~appSecret ~appKey = ();
-  value authorize ?fail ~success () = ();
+  value authorize ?fail ~success ?force () = ();
   value friends ?fail ~success () = ();
   value users ?fail ~success ~ids () = ();
   value token _ = "";
@@ -42,7 +42,8 @@ ELSE
   Callback.register "create_user" User.create;
 
   external init: ~appId:string -> ~appSecret:string -> ~appKey:string -> unit = "ok_init"; 
-  external authorize: ?fail:fail -> ~success:(unit -> unit) -> unit -> unit = "ok_authorize"; 
+  external authorize: ?fail:fail -> ~success:(unit -> unit) -> ~force:bool -> unit -> unit = "ok_authorize"; 
+  value authorize ?fail ~success ?(force = False) = authorize ?fail ~success ~force;
   external friends: ?fail:fail -> ~success:(list User.t-> unit) -> unit -> unit = "ok_friends"; 
   external users: option fail -> (list User.t -> unit) -> string -> unit = "ok_users";
   value users ?fail ~success ~ids t =

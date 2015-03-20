@@ -23,7 +23,7 @@ value ok_init (value vappid, value vappsecret, value vappkey) {
 	CAMLreturn(Val_unit);
 }
 
-value ok_authorize (value vfail, value vsuccess) {
+value ok_authorize (value vfail, value vsuccess, value vforce) {
 	CAMLparam2 (vfail,vsuccess);
 
 	value *success, *fail;
@@ -34,8 +34,8 @@ value ok_authorize (value vfail, value vsuccess) {
 	REG_CALLBACK(vsuccess, success);
 	REG_OPT_CALLBACK(vfail, fail);
 
-	STATIC_MID(cls, authorize, "(II)V");
-	(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail);
+	STATIC_MID(cls, authorize, "(IIZ)V");
+	(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail, vforce==Val_true ? JNI_TRUE: JNI_FALSE);
 	CAMLreturn(Val_unit);
 }
 
