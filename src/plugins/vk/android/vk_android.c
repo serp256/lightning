@@ -118,6 +118,16 @@ value ml_vk_uid(value t) {
 	CAMLreturn(vuid);
 }
 
+value ml_vk_logout (value unit) {
+	CAMLparam0();
+  GET_ENV;
+  GET_CLS;
+
+  STATIC_MID(cls, logout, "()V");
+	(*env)->CallStaticObjectMethod(env, cls, mid);
+	CAMLreturn(Val_unit);
+}
+
 void vkandroid_auth_success(void *d) {
 	value **data = (value**)d;
 	PRINT_DEBUG("vkandroid_auth_success");

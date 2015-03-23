@@ -163,6 +163,11 @@ class LightOdnoklassniki {
 		return uid; 
 	}
 
+	public static void logout () {
+		Log.d ("LIGHTNING", "OK: logout");
+		ok.clearTokens (Lightning.activity);
+	}
+
   protected static final class GetCurrentUserTask extends AsyncTask<FriendsRequest, Void, String> {
 		static int success;
 		static int fail;

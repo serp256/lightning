@@ -20,4 +20,5 @@ value friends: ?fail:fail -> ~success:(list User.t -> unit) -> unit -> unit;
 value users: ?fail:fail -> ~success:(list User.t -> unit)-> ~ids:list string -> unit -> unit;
 value token: unit -> string;
 value uid: unit -> string;
+value logout: unit -> unit;
 

@@ -44,4 +44,5 @@ value users ?fail ~success ~ids t =
 		users fail success ids;
 external token: t -> string = "ml_vk_token";
 external uid: t -> string = "ml_vk_uid";
+external logout: unit -> unit= "ml_vk_logout";
 ENDIF;

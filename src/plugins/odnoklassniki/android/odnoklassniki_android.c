@@ -104,6 +104,16 @@ value ok_uid (value unit){
   CAMLreturn(vuid);
 }
 
+value ok_logout (value unit) {
+  CAMLparam0();
+	PRINT_DEBUG("ml OK: logout");
+  GET_ENV;
+  GET_CLS;
+
+  STATIC_MID(cls, logout, "()V");
+	(*env)->CallStaticObjectMethod(env, cls, mid);
+	CAMLreturn(Val_unit);
+}
 
 void okandroid_auth_success(void *d) {
 	value **data = (value**)d;

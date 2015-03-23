@@ -9,6 +9,14 @@ static LightVkDelegate* delegate; //delegate declared as static, cause VKSdk cla
 static int authorized = 0;
 static int subscribed = 0;
 
+value ml_vk_logout (value unit) {
+	NSLog(@"ml_vk_logout call");
+	if (authorized == 1) {
+		NSLog(@"vk force logout");
+		[VKSdk forceLogout];
+	}
+}
+
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess, value vforce) {
 	NSLog(@"ml_vk_authorize call");
 	if (authorized && vforce == Val_false) {

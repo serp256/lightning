@@ -38,6 +38,7 @@ IFDEF PC THEN
   value users ?fail ~success ~ids () = ();
   value token _ = "";
   value uid _ = "";
+  value logout _ = ();
 ELSE
   Callback.register "create_user" User.create;
 
@@ -51,4 +52,5 @@ ELSE
           users fail success ids;
   external token: unit -> string = "ok_token";
   external uid: unit -> string = "ok_uid";
+  external logout: unit -> unit = "ok_logout";
 ENDIF;

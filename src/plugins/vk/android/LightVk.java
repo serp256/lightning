@@ -201,6 +201,11 @@ public class LightVk {
 		return VKSdk.getAccessToken().userId;
 	}
 
+	public static void logout() {
+		Log.d("LIGHTNING", "vk logout");
+		VKSdk.logout();
+	}
+
 	private static void usersRequests(VKRequest request, final int success, final int fail) {
 		Log.d("LIGHTNING", "usersRequests CALL");
 		request.executeWithListener(new VKRequestListener() {

@@ -65,7 +65,7 @@
 - (void)okDidLogout {
 	NSLog(@"okDidLogout");
 	*authorized = 0;
-	reauthorize (Val_unit);
+	//reauthorize (Val_unit);
 }
 
 - (void)dealloc {

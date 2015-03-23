@@ -69,13 +69,27 @@ void reauthorize (value unit){
 		}
 	[api authorizeWithPermissions:@[@"VALUABLE ACCESS"]];
 }
+value ok_logout (value unit) {
+  NSLog(@"logout");
+	if (authorized==1) {
+		NSLog(@"ok_authorize force logout");
+		NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+    for (NSHTTPCookie *cookie in cookies) {
+        if (NSNotFound != [cookie.domain rangeOfString:@"ok.ru"].location) {
+            [[NSHTTPCookieStorage sharedHTTPCookieStorage]
+                                  deleteCookie:cookie];
+        }
+    }
+		[api logout];
+	}
+}
 
 value ok_authorize (value vfail, value vsuccess, value vforce) {
   NSLog(@"ok_authorize call");
 	CAMLparam2 (vsuccess, vfail);
 
 	[delegate authorizeWithSuccess:vsuccess andFail: vfail andAuthFl:&authorized];
-
+	/*
 	if (vforce == Val_true && authorized==1) {
 		NSLog(@"ok_authorize force logout");
 		NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
@@ -87,7 +101,9 @@ value ok_authorize (value vfail, value vsuccess, value vforce) {
     }
 		[api logout];
 	}
+
 	else {
+	*/
 		if (api.isSessionValid) {
 			NSLog(@"ok_Logged in");
 			[api refreshToken];
@@ -95,7 +111,7 @@ value ok_authorize (value vfail, value vsuccess, value vforce) {
 			NSLog (@"ok_not logged in");
 			[api authorizeWithPermissions:@[@"VALUABLE ACCESS"]];
 		}
-	}
+	//}
   CAMLreturn(Val_unit);
 }
 
