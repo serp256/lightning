@@ -144,6 +144,9 @@ static void engine_draw_frame(engine_t engine) {
  * Tear down the EGL context currently associated with the display.
  */
 static void engine_term_display(engine_t engine) {
+		PRINT_DEBUG("engine_term_display");
+
+
     if (engine->surface != EGL_NO_SURFACE) {
         eglMakeCurrent(engine->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
@@ -152,7 +155,7 @@ static void engine_term_display(engine_t engine) {
         }
     }
 
-    //PRINT_DEBUG("engine_term_display reseting animating flag");
+    PRINT_DEBUG("engine_term_display reseting animating flag");
     engine->animating = 0;
     engine->surface = EGL_NO_SURFACE;
 }
@@ -375,6 +378,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             }
             break;
         case APP_CMD_TERM_WINDOW:
+            PRINT_DEBUG("APP_CMD_TERM_WINDOW");
             engine_term_display(engine);
             break;
         case APP_CMD_GAINED_FOCUS:
@@ -390,9 +394,9 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
                 ASensorEventQueue_disableSensor(engine->sensorEventQueue,
                         engine->accelerometerSensor);
             }
-            //PRINT_DEBUG("APP_CMD_LOST_FOCUS reseting animating flag");
+            PRINT_DEBUG("APP_CMD_LOST_FOCUS reseting animating flag");
             engine->animating = 0;
-            engine_draw_frame(engine);
+            //engine_draw_frame(engine);
             break;
 
         case ENGINE_CMD_RUN_ON_ML_THREAD:
