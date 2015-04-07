@@ -8,6 +8,11 @@
 #import <caml/fail.h>
 #import <UIKit/UIDevice.h>
 #import "common_ios.h"
+#import <FBSDKCoreKit.h>
+#import <FBSDKLoginKit.h>
+
+static FBSDKLoginManager *loginManager;
+static FBSDKApplicationDelegate *delegate;
 
 @interface LightFBDialogDelegate : NSObject <FBWebDialogsDelegate>
 {
@@ -170,42 +175,70 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 value ml_fbInit(value appId) {
     //[FBSettings setLoggingBehavior:[NSSet setWithObjects:FBLoggingBehaviorFBRequests, FBLoggingBehaviorFBURLConnections, FBLoggingBehaviorAccessTokens, FBLoggingBehaviorSessionStateTransitions, FBLoggingBehaviorDeveloperErrors, nil]];
 
-    [FBSettings setDefaultAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
+    [FBSDKSettings setAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
+
+		loginManager = [[FBSDKLoginManager alloc] init];
+		delegate = [FBSDKApplicationDelegate sharedInstance];
+
     NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
 
     [notifCntr addObserverForName:APP_OPENURL object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        if ([FBSettings defaultAppID]) {
+        NSLog(@"handling application open url");
+
+				NSDictionary* data = [notif userInfo];
+				NSURL* url = [data objectForKey:APP_URL_DATA];
+				UIApplication* app= [data objectForKey:@"APP"];
+
+				[delegate application:app openURL:url sourceApplication:APP_SOURCEAPP_DATA annotation:nil];
+			/*
+        if ([FBSDKSettings appID]) {
             [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
         }
+				*/
     }];
 
     [notifCntr addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        if ([FBSettings defaultAppID]) {
+        NSLog(@"handling application open url source");
+				NSDictionary* data = [notif userInfo];
+				NSURL* url = [data objectForKey:APP_URL_DATA];
+				UIApplication* app= [data objectForKey:@"APP"];
+
+				[delegate application:app openURL:url sourceApplication:APP_SOURCEAPP_DATA annotation:nil];
+			/*
+        if ([FBSDKSettings appID]) {
             [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
         }
+				*/
     }];
 
     [notifCntr addObserverForName:APP_BECOME_ACTIVE_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        //NSLog(@"handling application become active");
-        if ([FBSettings defaultAppID]) {
+        NSLog(@"handling application become active");
+				NSDictionary* data = [notif userInfo];
+				NSURL* url = [data objectForKey:APP_URL_DATA];
+				UIApplication* app= [data objectForKey:@"APP"];
+
+				[delegate application:app openURL:url sourceApplication:APP_SOURCEAPP_DATA annotation:nil];
+				/*
+        if ([FBSDKSettings appID]) {
             [[FBSession activeSession] handleDidBecomeActive];
         }
+				*/
     }];    
 		return Val_unit;
 }
 
 value ml_fbConnect(value permissions) {
-    //NSLog(@"ml_fbConnect");
+    NSLog(@"ml_fbConnect");
 
     if (permissions != Val_int(0)) {        
-        //NSLog(@"parsing permission list");
+        NSLog(@"parsing permission list");
         NSArray* publish_permissions = [NSArray arrayWithObjects:@"publish_actions", @"ads_management", @"create_event", @"rsvp_event", @"manage_friendlists", @"manage_notifications", @"manage_pages", nil];
         value perms = Field(permissions, 0);
 
         while (Is_block(perms)) {
             NSString* nsperm = [NSString stringWithCString:(String_val(Field(perms, 0))) encoding:NSASCIIStringEncoding];
 
-            //NSLog(@"permission %@", nsperm);
+            NSLog(@"permission %@", nsperm);
 
             if ([publish_permissions indexOfObject:nsperm] != NSNotFound) {
                 if (!publishPermissions) publishPermissions = [[NSMutableArray alloc] init];
@@ -219,6 +252,28 @@ value ml_fbConnect(value permissions) {
         }
     }
 
+   if ([FBSDKAccessToken currentAccessToken]) {
+		 NSLog(@"already authorized");
+	 }
+	 else {
+		 NSLog(@"authorize");
+		[loginManager logInWithReadPermissions:@[@"public_profile"] handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+			NSLog(@"result %@", result);
+			if (error) {
+				// Process error
+				NSLog(@"error %@", error);
+			} else if (result.isCancelled) {
+				// Handle cancellations
+				NSLog(@"cancelled %@", result.token);
+				[FBSDKAccessToken setCurrentAccessToken:result.token];
+			} else {
+				// If you ask for multiple permissions at once, you
+				// should check if specific permissions missing
+				NSLog(@"FB login success");
+			}
+		}];
+	 }
+		/*
     if (!fbSession) {
         [FBSession openActiveSessionWithReadPermissions:nil
             allowLoginUI:YES
@@ -227,17 +282,27 @@ value ml_fbConnect(value permissions) {
             }
         ];
     }
+		*/
 		return Val_unit;
 }
 
+
 value ml_fbDisconnect(value connect) {
+	NSLog(@"ml_fbConnect");
+	if (loginManager) {
+		NSLog(@"logout");
+		[loginManager logOut];
+	}
 	//NSLog(@"ml_fbDisconnect");
+	/*
 	if (fbSession) {
 		[fbSession closeAndClearTokenInformation];
 		//[fbSession close];
 		[FBSession setActiveSession:nil];
 		fbSession = nil;
 	}
+	*/
+
 	return Val_unit;
 }
 
@@ -538,3 +603,9 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
 
     CAMLreturn(Val_unit);
 }
+
+/*
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+   return [[FBSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
+}
+*/
