@@ -10,9 +10,10 @@
 #import "common_ios.h"
 #import <FBSDKCoreKit.h>
 #import <FBSDKLoginKit.h>
+#import <FBSDKShareKit.h>
 
+#import "mlwrapper_ios.h"
 static FBSDKLoginManager *loginManager;
-static FBSDKApplicationDelegate *delegate;
 
 @interface LightFBDialogDelegate : NSObject <FBWebDialogsDelegate>
 {
@@ -175,21 +176,36 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 value ml_fbInit(value appId) {
     //[FBSettings setLoggingBehavior:[NSSet setWithObjects:FBLoggingBehaviorFBRequests, FBLoggingBehaviorFBURLConnections, FBLoggingBehaviorAccessTokens, FBLoggingBehaviorSessionStateTransitions, FBLoggingBehaviorDeveloperErrors, nil]];
 
+	NSLog(@"ml_fbInit");
     [FBSDKSettings setAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
 
 		loginManager = [[FBSDKLoginManager alloc] init];
-		delegate = [FBSDKApplicationDelegate sharedInstance];
 
     NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
 
+		/*
     [notifCntr addObserverForName:APP_OPENURL object:nil queue:nil usingBlock:^(NSNotification* notif) {
         NSLog(@"handling application open url");
 
 				NSDictionary* data = [notif userInfo];
 				NSURL* url = [data objectForKey:APP_URL_DATA];
 				UIApplication* app= [data objectForKey:@"APP"];
+				NSString* sourceApp = [data objectForKey:APP_SOURCEAPP_DATA];
 
-				[delegate application:app openURL:url sourceApplication:APP_SOURCEAPP_DATA annotation:nil];
+				[delegate application:app openURL:url sourceApplication:sourceApp annotation:nil];
+        /*if ([FBSDKSettings appID]) {
+            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
+        }*/
+  //  }];
+	//  */
+
+    [notifCntr addObserverForName:@"APP_DID_FINISH_LAUNCHING" object:nil queue:nil usingBlock:^(NSNotification* notif) {
+        NSLog(@"iapp did finish launching");
+				NSDictionary* data = [notif userInfo];
+				UIApplication* app= [data objectForKey:@"APP"];
+				NSDictionary* launchOptions = [data objectForKey:@"LAUNCH_OPTIONS"];
+
+				[[FBSDKApplicationDelegate sharedInstance] application:app didFinishLaunchingWithOptions:launchOptions];
 			/*
         if ([FBSDKSettings appID]) {
             [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
@@ -202,8 +218,11 @@ value ml_fbInit(value appId) {
 				NSDictionary* data = [notif userInfo];
 				NSURL* url = [data objectForKey:APP_URL_DATA];
 				UIApplication* app= [data objectForKey:@"APP"];
+				NSString* sourceApp = [data objectForKey:APP_SOURCEAPP_DATA];
 
-				[delegate application:app openURL:url sourceApplication:APP_SOURCEAPP_DATA annotation:nil];
+        NSLog(@"token %@", ([FBSDKAccessToken currentAccessToken]));
+
+				[[FBSDKApplicationDelegate sharedInstance] application:app openURL:url sourceApplication:sourceApp annotation:nil];
 			/*
         if ([FBSDKSettings appID]) {
             [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
@@ -212,12 +231,8 @@ value ml_fbInit(value appId) {
     }];
 
     [notifCntr addObserverForName:APP_BECOME_ACTIVE_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        NSLog(@"handling application become active");
-				NSDictionary* data = [notif userInfo];
-				NSURL* url = [data objectForKey:APP_URL_DATA];
-				UIApplication* app= [data objectForKey:@"APP"];
-
-				[delegate application:app openURL:url sourceApplication:APP_SOURCEAPP_DATA annotation:nil];
+        NSLog(@"----------handling application become active");
+				[FBSDKAppEvents activateApp];
 				/*
         if ([FBSDKSettings appID]) {
             [[FBSession activeSession] handleDidBecomeActive];
@@ -227,9 +242,10 @@ value ml_fbInit(value appId) {
 		return Val_unit;
 }
 
-value ml_fbConnect(value permissions) {
-    NSLog(@"ml_fbConnect");
+//void fbConnect (FBSession* session, FBSessionState state, NSError* error);
 
+value parsePermissions(value permissions) {
+    NSLog(@"parsePermissions");
     if (permissions != Val_int(0)) {        
         NSLog(@"parsing permission list");
         NSArray* publish_permissions = [NSArray arrayWithObjects:@"publish_actions", @"ads_management", @"create_event", @"rsvp_event", @"manage_friendlists", @"manage_notifications", @"manage_pages", nil];
@@ -251,117 +267,183 @@ value ml_fbConnect(value permissions) {
             perms = Field(perms, 1);
         }
     }
+}
+
+void fbLoginWithPublishPermissions () {
+		[loginManager logInWithPublishPermissions:publishPermissions handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+			NSLog(@"result %@", result);
+			if (error) {
+				NSLog(@"error %@", error);
+				fbError (error);
+			} else if (result.isCancelled) {
+				// Handle cancellations
+				NSLog(@"fb auth cancelled");
+				caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
+			} else {
+				NSLog(@"FB login success");
+				if (publishPermissions) {
+					for (NSString *nsperm in publishPermissions)
+					{
+						NSLog(@"check permission granted %@", nsperm);
+						if (![result.grantedPermissions containsObject:nsperm]) {
+							caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("User didn't grant permissions"));
+							// Do work
+					  }
+					}
+				}
+
+				[publishPermissions removeAllObjects];
+				[publishPermissions release];
+				publishPermissions = nil;
+				caml_callback(*caml_named_value("fb_success"), Val_unit);            
+			}
+		}];
+}
+void fbLoginWithReadPermissions () {
+		[loginManager logInWithReadPermissions:readPermissions handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+			NSLog(@"result %@", result);
+			if (error) {
+				NSLog(@"error %@", error);
+				fbError (error);
+			} else if (result.isCancelled) {
+				// Handle cancellations
+				NSLog(@"fb auth cancelled");
+				caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
+			} else {
+				NSLog(@"FB login success");
+				if (readPermissions) {
+					for (NSString *nsperm in readPermissions)
+					{
+						NSLog(@"check permission granted %@", nsperm);
+						if (![result.grantedPermissions containsObject:nsperm]) {
+							caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("User didn't grant permissions"));
+							// Do work
+					  }
+					}
+				}
+
+				[readPermissions removeAllObjects];
+				[readPermissions release];
+				readPermissions = nil;
+				fbLoginWithPublishPermissions ();
+			}
+		}];
+}
+
+void checkPermissions (void) {
+	NSLog(@"check permissions %@, %@", readPermissions, publishPermissions);
+	if ([FBSDKAccessToken currentAccessToken]) {
+
+				if (readPermissions) {
+					for (NSString *nsperm in readPermissions)
+					{
+						NSLog(@"check permission granted %@", nsperm);
+						if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
+							fbLoginWithReadPermissions ();
+							break;
+					  }
+					}
+				}
+				else {
+				if (publishPermissions) {
+					for (NSString *nsperm in readPermissions)
+					{
+						NSLog(@"check permission granted %@", nsperm);
+						if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
+							fbLoginWithPublishPermissions ();
+							break;
+					  }
+					}
+				}
+				else
+					caml_callback(*caml_named_value("fb_success"), Val_unit);            
+				}
+
+	}
+	else {
+		caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("Can't check permissions cause not authorized"));
+	}
+}
+void fbConnect (void (^handler) (void)) {
+	NSLog (@"good");
+}
+value ml_fbConnect(value permissions) {
+    NSLog(@"ml_fbConnect");
+
+		parsePermissions (permissions);
 
    if ([FBSDKAccessToken currentAccessToken]) {
 		 NSLog(@"already authorized");
+		 checkPermissions ();
 	 }
 	 else {
 		 NSLog(@"authorize");
-		[loginManager logInWithReadPermissions:@[@"public_profile"] handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+		 
+		[loginManager logInWithReadPermissions:readPermissions handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
 			NSLog(@"result %@", result);
 			if (error) {
-				// Process error
 				NSLog(@"error %@", error);
+				fbError (error);
 			} else if (result.isCancelled) {
-				// Handle cancellations
-				NSLog(@"cancelled %@", result.token);
-				[FBSDKAccessToken setCurrentAccessToken:result.token];
+				NSLog(@"fb auth cancelled");
+				caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
 			} else {
-				// If you ask for multiple permissions at once, you
-				// should check if specific permissions missing
 				NSLog(@"FB login success");
+				checkPermissions ();
 			}
 		}];
 	 }
-		/*
-    if (!fbSession) {
-        [FBSession openActiveSessionWithReadPermissions:nil
-            allowLoginUI:YES
-            completionHandler:^(FBSession* session, FBSessionState state, NSError* error) {
-                sessionStateChanged(session, state, error);
-            }
-        ];
-    }
-		*/
-		return Val_unit;
+	 return Val_unit;
 }
 
 
 value ml_fbDisconnect(value connect) {
-	NSLog(@"ml_fbConnect");
+	NSLog(@"ml_fbDisConnect");
 	if (loginManager) {
 		NSLog(@"logout");
 		[loginManager logOut];
 	}
-	//NSLog(@"ml_fbDisconnect");
-	/*
-	if (fbSession) {
-		[fbSession closeAndClearTokenInformation];
-		//[fbSession close];
-		[FBSession setActiveSession:nil];
-		fbSession = nil;
-	}
-	*/
-
 	return Val_unit;
 }
 
-value ml_fbLoggedIn() {
-    if (!fbSession) {
-        if ([FBSession openActiveSessionWithAllowLoginUI:NO] && [FBSession activeSession].isOpen) {
-            fbSession = [FBSession activeSession];
-        }        
-    }
+value ml_fbLoggedIn (value unit) {
 
-    value retval;
-
-    if (fbSession) {
-        retval = caml_alloc(1, 0);
-        Store_field(retval, 0, Val_unit);
-    } else {
-        retval = Val_int(0);
-    }
-
-    return retval;
+   if ([FBSDKAccessToken currentAccessToken]) {
+		 return (Val_bool (1));
+	 }
+	 else {
+		 return (Val_bool (0));
+	 }
 }
 
-value ml_fbAccessToken(value connect) {
-    FBSESSION_CHECK;
-    return caml_copy_string([fbSession.accessTokenData.accessToken cStringUsingEncoding:NSASCIIStringEncoding]);
+value ml_fbAccessToken(value unit) {
+   if ([FBSDKAccessToken currentAccessToken]) {
+    return caml_copy_string([[[FBSDKAccessToken currentAccessToken] tokenString] cStringUsingEncoding:NSASCIIStringEncoding]);
+	 }
+	 else
+		 return caml_copy_string("");
 }
+void appRequest (NSString* nstitle, NSString* nsmessage, NSDictionary* nsparams, value* successAppRequest, value* failAppRequest) {
+			//"http://cs543109.vk.me/v543109554/73bf/q1qfvxmppFE.jpg"
+			//
+			FBSDKGameRequestContent *content = [[FBSDKGameRequestContent alloc] init];
+			content.actionType = @"send";
+			content.message= nsmessage;
+			content.title= nstitle;
+			content.to= [NSArray arrayWithObject:[nsparams objectForKey:@"to"]];
 
-value ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
-//		CAMLparam5(connect, title, message, recipient, data);
-	//	CAMLxparam2(successCallback,failCallback);
-    FBSESSION_CHECK;
+			[FBSDKGameRequestDialog showWithContent:content delegate:nil];
 
-    NSString* nstitle = [NSString stringWithCString:String_val(title) encoding:NSUTF8StringEncoding];
-    NSString* nsmessage = [NSString stringWithCString:String_val(message) encoding:NSUTF8StringEncoding];
-		//NSLog(@"title=%@; message=%@",nstitle, nsmessage);
-
-    value* _successCallbackRequest;
-    value* _failCallbackRequest;
-
-    REGISTER_CALLBACK(successCallback, _successCallbackRequest);
-    REGISTER_CALLBACK(failCallback, _failCallbackRequest);
-
-    //NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:nstitle, @"title", nsmessage, @"message", nil];
-		NSMutableDictionary *params = [NSMutableDictionary dictionaryWithCapacity:2];
-
-    if (Is_block(recipient)) {
-        NSString* nsrecipient = [NSString stringWithCString:String_val(Field(recipient, 0)) encoding:NSUTF8StringEncoding];
-        [params setObject:nsrecipient forKey:@"to"];
-    }
-
-    if (Is_block(data)) {
-//				NSLog (@"data str: %@",String_val(Field(data, 0) ));
-        NSString* nsdata = [NSString stringWithCString:String_val(Field(data, 0)) encoding:NSUTF8StringEncoding];
-        [params setObject:nsdata forKey:@"data"];
-    }
-
-    //LightFBDialogDelegate* delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
-		//[FBWebDialogs presentDialogModallyWithSession:nil dialog:@"apprequests" parameters:params handler:nil delegate:delegate];
-		[[LightViewController sharedInstance] resignActive];
+	/*
+			FBSDKShareLinkContent *content = [[FBSDKShareLinkContent alloc] init];
+			content.contentURL = [NSURL URLWithString:nsmessage];
+			[FBSDKShareDialog showFromViewController:[LightViewController sharedInstance] withContent:content delegate:nil];
+			*/
+				RUN_CALLBACK(failAppRequest, caml_copy_string ("FB Authorization cancelled"));
+				FREE_CALLBACK(successAppRequest);
+				FREE_CALLBACK(failAppRequest);        
+	/*
+		//[[LightViewController sharedInstance] resignActive];
 		FBWebDialogHandler handler = ^(FBWebDialogResult result, NSURL *resultURL, NSError *error) {
 				switch (result) {
 					case FBWebDialogResultDialogCompleted:
@@ -414,38 +496,110 @@ value ml_fbApprequest(value title, value message, value recipient, value data, v
 		if (!cache) cache = [[FBFrictionlessRecipientCache alloc] init];
 		[FBWebDialogs presentRequestsDialogModallyWithSession:nil message:nsmessage title:nstitle parameters:params handler:handler friendCache:cache];
 
-		return Val_unit;
-		//[delegate release];
-		//if (!delegate) delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
-    //delegate = [[LightFBDialogDelegate alloc] initWithSuccessCallbackRequest:_successCallbackRequest andFailCallback:_failCallbackRequest];
-    //[[LightViewController sharedInstance] resignActive];
-    //[fb dialog:@"apprequests" andParams:params andDelegate:delegate];
-		/*if (_successCallbackRequest) {
-			NSLog(@"success callback is init");
-		} else {
-			NSLog(@"success callback is NOT init");
-		}*/
+		*/
+}
+
+value ml_fbApprequest(value vtitle, value vmessage, value vrecipient, value vdata, value vsuccess, value vfail) {
+
+		//CAMLparam5(vtitle, vmessage, vrecipient, vsuccess, vfail);
+		//CAMLparam1(vdata);
+		CAMLlocal2(_params,param);
+
+		value *failAppRequest, *successAppRequest;
+		REG_OPT_CALLBACK(vsuccess, successAppRequest);
+		REG_OPT_CALLBACK(vfail, failAppRequest);
+
+    NSString* nstitle = [NSString stringWithCString:String_val(vtitle) encoding:NSUTF8StringEncoding];
+    NSString* nsmessage = [NSString stringWithCString:String_val(vmessage) encoding:NSUTF8StringEncoding];
+
+
+		NSMutableDictionary *nsparams = [NSMutableDictionary dictionaryWithCapacity:2];
+
+    if (Is_block(vrecipient)) {
+        NSString* nsrecipient = [NSString stringWithCString:String_val(Field(vrecipient, 0)) encoding:NSUTF8StringEncoding];
+        [nsparams setObject:nsrecipient forKey:@"to"];
+    }
+
+    if (Is_block(vdata)) {
+        NSString* nsdata = [NSString stringWithCString:String_val(Field(vdata, 0)) encoding:NSUTF8StringEncoding];
+        [nsparams setObject:nsdata forKey:@"data"];
+    }
+		NSLog(@"app request to: %@ message: %@ data: %@", nstitle, nsmessage, nsparams);
+
+   if ([FBSDKAccessToken currentAccessToken]) {
+		 NSLog(@"already authorized");
+		 appRequest (nstitle, nsmessage, nsparams, successAppRequest, failAppRequest);
+	 }
+	 else {
+		[loginManager logInWithReadPermissions:nil handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+			NSLog(@"result %@", result);
+			if (error) {
+				NSLog(@"error %@", error);
+				RUN_CALLBACK(failAppRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
+				FREE_CALLBACK(successAppRequest);
+				FREE_CALLBACK(failAppRequest);        
+			} else if (result.isCancelled) {
+				// Handle cancellations
+				NSLog(@"fb auth cancelled");
+				RUN_CALLBACK(failAppRequest, caml_copy_string ("FB Authorization cancelled"));
+				FREE_CALLBACK(successAppRequest);
+				FREE_CALLBACK(failAppRequest);        
+			} else {
+				NSLog(@"FB login success");
+				appRequest (nstitle, nsmessage, nsparams, successAppRequest, failAppRequest);
+			}
+		}];
+	 }
+	 return Val_unit;
+
 }
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-value ml_fbGraphrequest(value path, value params, value successCallback, value failCallback, value http_method) {
-    FBSESSION_CHECK;
+void graphRequest (NSString* nspath, NSDictionary* nsparams, value* successGraphRequest, value* failGraphRequest, NSString* reqMethod) {
+		FBSDKGraphRequest *request = 
+			[[[FBSDKGraphRequest alloc] initWithGraphPath:nspath parameters:nsparams HTTPMethod:reqMethod] startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
+				CAMLparam0();
+				CAMLlocal1(mljs);
+        NSLog(@"completionHandler err %@ result %@", error, result);
 
-    NSString* nspath = [NSString stringWithCString:String_val(path) encoding:NSASCIIStringEncoding];
+        if (error) {
+					RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
+        } else {
+            if (successGraphRequest) {
+							NSError *jerr = nil;
+							NSData *json = [NSJSONSerialization dataWithJSONObject:result options:0 error:&jerr];
+							if (!jerr) {
+								value mljs = caml_alloc_string(json.length);
+								[json getBytes:String_val(mljs) length:json.length];
+								RUN_CALLBACK(successGraphRequest, mljs);
+							} else {
+								RUN_CALLBACK(failGraphRequest, caml_copy_string ([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+							}
+            }
+        }
+				FREE_CALLBACK(successGraphRequest);
+				FREE_CALLBACK(failGraphRequest);        
+
+				CAMLreturn0;
+    }];
+
+}
+value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail, value vhttp_method) {
+		CAMLparam5(vpath, vparams, vfail, vsuccess, vhttp_method);
+		CAMLlocal2(_params,param);
+
+		value *failGraphRequest, *successGraphRequest;
+		REG_OPT_CALLBACK(vsuccess, successGraphRequest);
+		REG_OPT_CALLBACK(vfail, failGraphRequest);
+
+    NSString* nspath = [NSString stringWithCString:String_val(vpath) encoding:NSASCIIStringEncoding];
     NSDictionary* nsparams = [NSMutableDictionary dictionary];
+    NSLog(@"graph request %@", nspath);
 
-    static value get_variant = 0;
-    if (!get_variant) get_variant = caml_hash_variant("get");
+    if (vparams != Val_int(0)) {
 
-    NSString* reqMethod = get_variant == http_method ? @"GET" : @"POST";
-
-    //NSLog(@"graph request %@", nspath);
-
-    if (params != Val_int(0)) {
-        // reqMethod = @"POST";
-
-        value _params = Field(params, 0);
+        value _params = Field(vparams, 0);
         value param;
 
         while (Is_block(_params)) {
@@ -457,62 +611,36 @@ value ml_fbGraphrequest(value path, value params, value successCallback, value f
         }
     }
 
-    value* _successCallbackGraphApi;
-    value* _failCallbackGraphApi;
-				
-    REGISTER_CALLBACK(successCallback, _successCallbackGraphApi);
-		if (_successCallbackGraphApi) {
-			//NSLog(@"success callback is init in graphApi");
-		} else {
-			//NSLog(@"success callback is NOT init in graph");
-		}
-    REGISTER_CALLBACK(failCallback, _failCallbackGraphApi);
+    static value get_variant = 0;
+    if (!get_variant) get_variant = caml_hash_variant("get");
 
-    // fbGraphrequest(nspath, nsparams, _successCallbackGraphApi, _failCallbackGraphApi);
-    [FBRequestConnection startWithGraphPath:nspath parameters:nsparams HTTPMethod:reqMethod completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
-        //NSLog(@"completionHandler");
+    NSString* reqMethod = get_variant == vhttp_method ? @"GET" : @"POST";
 
-        if (error) {
-            if (_failCallbackGraphApi) {
-                caml_callback(*_failCallbackGraphApi, caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
-            }
-        } else {
-            if (_successCallbackGraphApi) {
-							NSError *jerr = nil;
-							NSData *json = [NSJSONSerialization dataWithJSONObject:result options:0 error:&jerr];
-							if (!jerr) {
-								value mljs = caml_alloc_string(json.length);
-								[json getBytes:String_val(mljs) length:json.length];
-								caml_callback(*_successCallbackGraphApi,mljs);
-							} else if (_failCallbackGraphApi) {
-								caml_callback(*_failCallbackGraphApi,caml_copy_string([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
-							}
-                //FBSBJSON* json = [[FBSBJSON alloc] init];
-                //NSError* err = nil;
-                //NSString* jsonResult = [json stringWithObject:result error:&err];
-
-							/*
-                NSLog(@"jsonResult %@", jsonResult);
-
-                if (err) {
-                    if (_failCallbackGraphApi) {
-                        caml_callback(*_failCallbackGraphApi, caml_copy_string([[err localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
-                    }
-                } else {
-                    caml_callback2(*caml_named_value("fb_graphrequestSuccess"), caml_copy_string([jsonResult cStringUsingEncoding:NSUTF8StringEncoding]), *_successCallbackGraphApi);
-                }
-
-                [json release];
-								*/
-            }
-        }
-
-	    //NSLog(@"FREE SUCESSCALLBACK IN GRAPH API");
-			FREE_CALLBACK(_successCallbackGraphApi);
-			FREE_CALLBACK(_failCallbackGraphApi);        
-    }];
-
-		return Val_unit;
+   if ([FBSDKAccessToken currentAccessToken]) {
+		 NSLog(@"already authorized");
+		 graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod);
+	 }
+	 else {
+		[loginManager logInWithReadPermissions:nil handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+			NSLog(@"result %@", result);
+			if (error) {
+				NSLog(@"error %@", error);
+				RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
+				FREE_CALLBACK(successGraphRequest);
+				FREE_CALLBACK(failGraphRequest);        
+			} else if (result.isCancelled) {
+				// Handle cancellations
+				NSLog(@"fb auth cancelled");
+				RUN_CALLBACK(failGraphRequest, caml_copy_string ("FB Authorization cancelled"));
+				FREE_CALLBACK(successGraphRequest);
+				FREE_CALLBACK(failGraphRequest);        
+			} else {
+				NSLog(@"FB login success");
+				graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod);
+			}
+		}];
+	 }
+	 return Val_unit;
 }
 
 value ml_fb_share_pic_using_native_app(value v_fname, value v_text) {

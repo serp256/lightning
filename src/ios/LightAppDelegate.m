@@ -36,6 +36,12 @@ void set_referrer(char *type,NSString *nid) {
 	self.window.rootViewController = lightViewController;
 	// For local notifications
 	UILocalNotification *ln = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+
+	[application retain];
+	[launchOptions retain];
+	NSDictionary* data = [NSDictionary dictionaryWithObjectsAndKeys: launchOptions, @"LAUNCH_OPTIONS", application, @"APP", nil];
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"APP_DID_FINISH_LAUNCHING" object:self userInfo:data];
+
 	if (ln) {
 		NSString *nid = [ln.userInfo objectForKey:@"id"];
 		NSLog(@"didReceiveLocalNotification: %@",nid);
