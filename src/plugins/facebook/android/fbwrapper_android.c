@@ -1,6 +1,11 @@
 #include "fbwrapper_android.h"
+#include <caml/callback.h>
 
 #define GET_LIGHTFACEBOOK if (!lightFacebookCls) lightFacebookCls = engine_find_class("com/facebook/LightFacebook");
+
+static jclass cls = NULL;
+
+#define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightFacebook);
 
 #define FB_ANDROID_FREE_CALLBACK(callback) if (callback) {                                     \
     caml_remove_generational_global_root(callback);                                 \
@@ -17,24 +22,88 @@
 
 static jclass lightFacebookCls = NULL;
 
-void ml_fbInit(value appId) {
-    PRINT_DEBUG("ml_fbInit");
-    GET_LIGHTFACEBOOK;
-    jstring jappId = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(appId));
-    jmethodID mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightFacebookCls, "init", "(Ljava/lang/String;)V");
-    (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightFacebookCls, mid, jappId);
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, jappId);
+void ml_fbInit(value vappId) {
+	CAMLparam1 (vappId);
+
+	PRINT_DEBUG("ml_fbInit");
+	GET_ENV;
+	GET_CLS;
+
+
+	STATIC_MID(cls, init, "(Ljava/lang/String;)V");
+	jstring jappId = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vappId));
+	(*env)->CallStaticVoidMethod(env, cls, mid, jappId);
+
+	CAMLreturn0;
 }
 
-void ml_fbConnect(value perms) {
-    PRINT_DEBUG("ml_fbConnect");
-    
-    GET_LIGHTFACEBOOK;
+void ml_fbConnect(value vperms) {
+	CAMLparam1(vperms);
+	CAMLlocal2(v_perms, vperm);
+	PRINT_DEBUG("ml_fbConnect");
+
+	GET_ENV;
+	GET_CLS;
+
 
     PRINT_DEBUG("chckpnt1");
 
-    static jmethodID mid;
-    if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightFacebookCls, "connect", "([Ljava/lang/String;)V");
+    jstring jperms[256];
+    int perms_num = 0;
+
+    if (vperms != Val_int(0)) {
+        PRINT_DEBUG("chckpnt2.1");
+
+        value v_perms = Field(vperms, 0);
+        value vperm;
+
+        PRINT_DEBUG("chckpnt2.2");
+
+        while (Is_block(v_perms)) {
+            vperm = Field(v_perms, 0);
+            PRINT_DEBUG("perms %s", String_val(vperm));
+
+						jstring jperm;
+						VAL_TO_JSTRING(vperm, jperm);
+            jperms[perms_num++] = jperm;
+
+            v_perms = Field(v_perms, 1);
+        }
+    }
+
+    PRINT_DEBUG("chckpnt3");
+
+    jclass stringCls = (*env)->FindClass(env, "java/lang/String");
+    jobjectArray j_perms_array = (*env)->NewObjectArray(env, perms_num, stringCls, NULL);
+    (*env)->DeleteLocalRef(env, stringCls);
+
+    PRINT_DEBUG("chckpnt4");
+    
+    int i;
+
+    for (i = 0; i < perms_num; i++) {
+        PRINT_DEBUG("4.1");
+        PRINT_DEBUG("%d %d", i, perms_num);
+
+        (*env)->SetObjectArrayElement(env, j_perms_array, i, jperms[i]);
+        PRINT_DEBUG("4.2");
+        (*env)->DeleteLocalRef(env, jperms[i]);
+        PRINT_DEBUG("4.3");
+    }
+
+    PRINT_DEBUG("chckpnt5");
+
+		STATIC_MID(cls, connect, "([Ljava/lang/String;)V");
+    PRINT_DEBUG("chckpnt6");
+		(*env)->CallStaticVoidMethod(env, cls, mid, j_perms_array);
+    (*env)->DeleteLocalRef(env, j_perms_array);
+    PRINT_DEBUG("chckpnt7");
+		CAMLreturn(Val_unit);
+
+	/*
+    
+
+    PRINT_DEBUG("chckpnt1");
 
     PRINT_DEBUG("chckpnt2");
     
@@ -84,56 +153,53 @@ void ml_fbConnect(value perms) {
     (*ML_ENV)->DeleteLocalRef(ML_ENV, j_perms);
 
     PRINT_DEBUG("chckpnt6");
+*/
 }
 
 value ml_fbLoggedIn() {
     PRINT_DEBUG("ml_fbLoggedIn");
 
-    GET_LIGHTFACEBOOK;
+		GET_ENV;
+		GET_CLS;
 
-    static jmethodID mid;
-    if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightFacebookCls, "loggedIn", "()Z");
+		STATIC_MID(cls, loggedIn, "()Z");
 
-    value retval;
-
-    if ((*ML_ENV)->CallStaticBooleanMethod(ML_ENV, lightFacebookCls, mid)) {
-        retval = caml_alloc(1, 0);
-        Store_field(retval, 0, Val_unit);
-    } else {
-        retval = Val_int(0);
-    }
-
-    return retval;
+		if ((*env)->CallStaticBooleanMethod(env,cls,mid)) {
+			return (Val_bool(1));
+		}
+		else {
+			return (Val_bool(0));
+		}
 }
 
-value ml_fbDisconnect(value connect) {
-    PRINT_DEBUG("ml_fbDisconnect");
+value ml_fbDisconnect(value unit) {
+	PRINT_DEBUG("ml_fbDisconnect");
 
-    GET_LIGHTFACEBOOK;
+	GET_ENV;
+	GET_CLS;
 
-    static jmethodID mid;
-    if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightFacebookCls, "disconnect", "()V");
-    (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightFacebookCls, mid);
-
-    return Val_unit;
+	STATIC_MID(cls, disconnect, "()V");
+	(*env)->CallStaticVoidMethod(env, cls, mid);
 }
 
-value ml_fbAccessToken(value connect) {
-    PRINT_DEBUG("ml_fbAccessToken");
+value ml_fbAccessToken(value unit) {
+	CAMLparam0();
+	CAMLlocal1(vtoken);
 
-    GET_LIGHTFACEBOOK;
+	PRINT_DEBUG("ml_fbAccessToken");
+	GET_ENV;
+	GET_CLS;
 
-    static jmethodID mid;
-    if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightFacebookCls, "accessToken", "()Ljava/lang/String;");
+	STATIC_MID(cls, accessToken, "()Ljava/lang/String;");
 
-    jstring jaccessToken = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightFacebookCls, mid);
-    if (!jaccessToken) caml_failwith("no active facebook session");
+	PRINT_DEBUG("call");
+	jstring jtoken = (*env)->CallStaticObjectMethod(env, cls, mid);
+	PRINT_DEBUG("after call");
+	const char* ctoken = (*env)->GetStringUTFChars(env, jtoken, JNI_FALSE);
+	vtoken = caml_copy_string(ctoken);
+	(*env)->ReleaseStringUTFChars(env, jtoken, ctoken);
 
-    const char* caccessToken = (*ML_ENV)->GetStringUTFChars(ML_ENV, jaccessToken, JNI_FALSE);
-    value vaccessToken = caml_copy_string(caccessToken);
-    (*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jaccessToken, caccessToken);
-
-    return vaccessToken;
+	CAMLreturn(vtoken);
 }
 
 void ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
