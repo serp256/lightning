@@ -76,7 +76,7 @@ class LightFacebook {
 		extraPermsState = READ_PERMS_REQUESTED;
 		LoginManager.getInstance().logInWithReadPermissions(Lightning.activity, readPerms);
 	}
-	private static void checkPermissions () {
+	private static void checkPermissions (final Runnable success, final Runnable fail) {
         Log.d("LIGHTNING", "checkPermissions state " + extraPermsState );
 				if (AccessToken.getCurrentAccessToken () != null) {
 
@@ -107,10 +107,12 @@ class LightFacebook {
 												}
 												if (readPermissionsChecked) {
 													Log.d("LIGHTNING", "check2");
+													/*
 													if (readPerms !=null) {
 														readPerms.clear();
 														readPerms = null;
 													}
+													*/
 													if (publishPerms != null && publishPerms.size() > 0) {
 														for(int i=0; i < publishPerms.size (); i++){
 															if (!grantedPermissions.contains(publishPerms.get(i))) {
@@ -123,15 +125,24 @@ class LightFacebook {
 													if (publishPermissionsChecked) {
 														Log.d("LIGHTNING", "check3");
 														extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
+															/*
 														if (publishPerms != null) {
 															publishPerms.clear();
 															publishPerms = null;
 														}
-														connectSuccess ();
+															*/
+														if (success == null) {
+															connectSuccess ();
+														}
+														else {
+															Lightning.activity.runOnUiThread(success);
+														}
 													}
 							          }
 												else {
+													/*
 													if (readPerms != null) {
+
 														readPerms.clear();
 														readPerms = null;
 													}
@@ -139,8 +150,14 @@ class LightFacebook {
 														publishPerms.clear();
 														publishPerms = null;
 													}
+													*/
 													extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
-													fbError("Permissions check failed");
+													if (fail== null) {
+														fbError("Permissions check failed");
+													}
+													else {
+														Lightning.activity.runOnUiThread(fail);
+													}
 												}
 
 												break;
@@ -155,19 +172,28 @@ class LightFacebook {
 														}
 													}
 												}
+												/*
 												if (publishPerms != null) {
 													publishPerms.clear();
 													publishPerms = null;
 												}
+												*/
 												extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
 												if (publishPermissionsChecked) {
-
-													Log.d("LIGHTNING", "check5");
+													if (success == null) {
 													connectSuccess ();
+													}
+													else {
+														Lightning.activity.runOnUiThread(success);
+													}
 												}
 												else {
-													Log.d("LIGHTNING", "check6");
-													fbError("Permissions check failed");
+													if (fail== null) {
+														fbError("Permissions check failed");
+													}
+													else {
+														Lightning.activity.runOnUiThread(fail);
+													}
 												}
 
 												break;
@@ -184,7 +210,7 @@ class LightFacebook {
 												}
 												if (readPermissionsChecked) {
 													extraPermsState = READ_PERMS_REQUESTED;
-													checkPermissions ();
+													checkPermissions (success, fail);
 							          }
 												break;
 								}
@@ -200,17 +226,33 @@ class LightFacebook {
 						}
 						else
 							if (readPerms == null && publishPerms == null) {
-								Log.d("LIGHTNING", "check6");
+								if (success == null) {
 								connectSuccess ();
+								}
+								else {
+									Lightning.activity.runOnUiThread(success);
+								}
+
 							}
 							else {
-								fbError("Permissions check failed");
+								if (fail== null) {
+									fbError("Permissions check failed");
+								}
+								else {
+									Lightning.activity.runOnUiThread(fail);
+								}
 							}
 
 				}
 				else 
-					fbError("Can't check permissions cause not authorized");
+					if (fail== null) {
+						fbError("Can't check permissions cause not authorized");
+					}
+					else {
+						Lightning.activity.runOnUiThread(fail);
+					}
 	}
+
 	private static class CamlCallback implements Runnable {
 			protected String name;
 
@@ -280,6 +322,22 @@ class LightFacebook {
 		(new CamlParamCallback("fb_fail", mes)).run();
 	}
 
+	private static void parsePermissions (String[] perms) {
+
+		for (int i = 0; i < perms.length; i++) {
+				String perm = perms[i];
+				Log.d("LIGHTNING", "additional permission " + perm);
+
+				if (PUBLISH_PERMISSIONS.contains(perm)) {
+						if (publishPerms == null) publishPerms = new ArrayList();
+						publishPerms.add(perm);
+				} else {
+						if (readPerms == null) readPerms = new ArrayList();
+						readPerms.add(perm);
+				}
+		}
+	}
+
 	public static void connect(String[] perms) {
 		Log.d("LIGHTNING", "connect call");
 
@@ -291,7 +349,7 @@ class LightFacebook {
                 public void onSuccess(LoginResult loginResult) {
 									Log.d("LIGHTNING", "onSuccess");
 									Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
-									checkPermissions ();
+									checkPermissions (null, null);
                 }
 
                 @Override
@@ -309,31 +367,11 @@ class LightFacebook {
                 }
     });
 
-		for (int i = 0; i < perms.length; i++) {
-				String perm = perms[i];
-				Log.d("LIGHTNING", "additional permission " + perm);
+		parsePermissions (perms);
 
-				if (PUBLISH_PERMISSIONS.contains(perm)) {
-						if (publishPerms == null) publishPerms = new ArrayList();
-						publishPerms.add(perm);
-				} else {
-						if (readPerms == null) readPerms = new ArrayList();
-						readPerms.add(perm);
-				}
-		}
-
-		/*
-		tracker =  new AccessTokenTracker() {
-			@Override
-				protected void onCurrentAccessTokenChanged( AccessToken oldAccessToken, AccessToken currentAccessToken) {
-
-								Log.d("LIGHTNING", "onCurrentAccessTokenChanged old was null " + (oldAccessToken==null) + "new is " + (currentAccessToken.getToken()));
-						}
-		};
-		*/
 		if (loggedIn ()) {
 			Log.d("LIGHTNING", "already authorized");
-			checkPermissions ();
+			checkPermissions (null, null);
 		}
 		else {
 			Log.d("LIGHTNING", "try authorize");
@@ -341,6 +379,51 @@ class LightFacebook {
 		}
 	}
 
+	private static void reconnect (final Runnable success,final Runnable fail) {
+		Log.d("LIGHTNING", "reconnect call");
+
+		if (callbackManager == null) {
+		callbackManager = CallbackManager.Factory.create();
+		}
+
+    LoginManager.getInstance().registerCallback(callbackManager,
+            new FacebookCallback<LoginResult>() {
+                @Override
+                public void onSuccess(LoginResult loginResult) {
+									Log.d("LIGHTNING", "reconnect onSuccess");
+									checkPermissions (success, fail);
+                }
+
+                @Override
+                public void onCancel() {
+									Log.d("LIGHTNING", "reconnect onCancel");
+									Lightning.activity.runOnUiThread(fail);
+                }
+
+                @Override
+                public void onError(FacebookException exception) {
+									Log.d("LIGHTNING", "reconnect onError");
+									Lightning.activity.runOnUiThread(fail);
+                }
+    });
+
+		//permissions?
+		//
+		//
+		/*
+			if (AccessToken.getCurrentAccessToken () != null) {
+					Log.d ("LIGHTNING", "token");
+				if (AccessToken.getCurrentAccessToken ().getPermissions() != null) {
+					Log.d ("LIGHTNING", "permissions");
+					Set perms= AccessToken.getCurrentAccessToken ().getPermissions();
+					Object[] array = perms.toArray(new Object[perms.size()]);
+					String [] p = Arrays.copyOf(array, array.length, String[].class);
+					parsePermissions (p);
+				}
+			}
+			*/
+		LoginManager.getInstance().logInWithReadPermissions(Lightning.activity, readPerms);
+	}
 	public static void disconnect () {
 		Log.d("LIGHTNING", "disconnect call ");
 		(LoginManager.getInstance ()).logOut();
@@ -359,8 +442,6 @@ class LightFacebook {
 	}
 
 	public static boolean graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback, final int httpMethod) {
-		if (!loggedIn()) return false;
-
 			Lightning.activity.runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -374,7 +455,56 @@ class LightFacebook {
 
 											if (error != null) {
 													Log.d("LIGHTNING", "error: " + error);
-													(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
+													if (error.getRequestStatusCode() == 400) {
+														//token is not valid; should reauth
+														Runnable graphRequestRunnable = new Runnable() {
+																@Override
+																public void run() {
+
+																	new GraphRequest(AccessToken.getCurrentAccessToken (), path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.GraphRequest.Callback () {
+																				@Override
+																				public void onCompleted(GraphResponse response) {
+																						Log.d("LIGHTNING", "graphrequest onCompleted");
+
+																						FacebookRequestError error = response.getError();
+
+																						if (error != null) {
+																								Log.d("LIGHTNING", "error: " + error);
+																								(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
+																						} else {
+																								String json = null;
+
+																								if (response.getJSONObject() != null) {
+																										json = response.getJSONObject().toString();
+																								} else if (response.getJSONArray() != null) {
+																										json = response.getJSONArray().toString();
+																								}
+
+																								Log.d("LIGHTNING", "json " + json);
+
+																								if (json == null) {
+																									(new CamlParamCallbackInt(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
+																								} else {
+																									(new CamlParamCallbackInt(successCallback, json)).run();
+																								}
+
+																								(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+																						}
+																				}
+
+																}).executeAsync ();
+																}};
+														 Runnable failRunnable = new Runnable() {
+															 @Override
+																 public void run () {
+																	 (new CamlParamCallbackInt(failCallback, "fail graphrequest cause reconnect error")).run();
+																 }
+														 };
+														reconnect (graphRequestRunnable, failRunnable);
+													}
+													else {
+														(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
+													}
 											} else {
 													String json = null;
 
