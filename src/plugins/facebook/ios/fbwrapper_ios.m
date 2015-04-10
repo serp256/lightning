@@ -174,30 +174,14 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 }
 
 value ml_fbInit(value appId) {
-    //[FBSettings setLoggingBehavior:[NSSet setWithObjects:FBLoggingBehaviorFBRequests, FBLoggingBehaviorFBURLConnections, FBLoggingBehaviorAccessTokens, FBLoggingBehaviorSessionStateTransitions, FBLoggingBehaviorDeveloperErrors, nil]];
-
 	NSLog(@"ml_fbInit");
     [FBSDKSettings setAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
+		FBSDKAccessToken *cachedToken = [[FBSDKSettings accessTokenCache] fetchAccessToken];
+		[FBSDKAccessToken setCurrentAccessToken:cachedToken];
 
 		loginManager = [[FBSDKLoginManager alloc] init];
 
     NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
-
-		/*
-    [notifCntr addObserverForName:APP_OPENURL object:nil queue:nil usingBlock:^(NSNotification* notif) {
-        NSLog(@"handling application open url");
-
-				NSDictionary* data = [notif userInfo];
-				NSURL* url = [data objectForKey:APP_URL_DATA];
-				UIApplication* app= [data objectForKey:@"APP"];
-				NSString* sourceApp = [data objectForKey:APP_SOURCEAPP_DATA];
-
-				[delegate application:app openURL:url sourceApplication:sourceApp annotation:nil];
-        /*if ([FBSDKSettings appID]) {
-            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
-        }*/
-  //  }];
-	//  */
 
     [notifCntr addObserverForName:@"APP_DID_FINISH_LAUNCHING" object:nil queue:nil usingBlock:^(NSNotification* notif) {
         NSLog(@"iapp did finish launching");
@@ -206,11 +190,6 @@ value ml_fbInit(value appId) {
 				NSDictionary* launchOptions = [data objectForKey:@"LAUNCH_OPTIONS"];
 
 				[[FBSDKApplicationDelegate sharedInstance] application:app didFinishLaunchingWithOptions:launchOptions];
-			/*
-        if ([FBSDKSettings appID]) {
-            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
-        }
-				*/
     }];
 
     [notifCntr addObserverForName:APP_OPENURL_SOURCEAPP object:nil queue:nil usingBlock:^(NSNotification* notif) {
@@ -223,21 +202,11 @@ value ml_fbInit(value appId) {
         NSLog(@"token %@", ([FBSDKAccessToken currentAccessToken]));
 
 				[[FBSDKApplicationDelegate sharedInstance] application:app openURL:url sourceApplication:sourceApp annotation:nil];
-			/*
-        if ([FBSDKSettings appID]) {
-            [[FBSession activeSession] handleOpenURL:[[notif userInfo] objectForKey:APP_URL_DATA]];
-        }
-				*/
     }];
 
     [notifCntr addObserverForName:APP_BECOME_ACTIVE_NOTIFICATION object:nil queue:nil usingBlock:^(NSNotification* notif) {
         NSLog(@"----------handling application become active");
 				[FBSDKAppEvents activateApp];
-				/*
-        if ([FBSDKSettings appID]) {
-            [[FBSession activeSession] handleDidBecomeActive];
-        }
-				*/
     }];    
 		return Val_unit;
 }
