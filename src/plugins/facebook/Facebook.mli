@@ -3,7 +3,7 @@ type httpMethod = [= `get | `post ];
 
 value init: ~appId:string -> unit -> unit;
 
-value connect: ?permissions:(list string) -> ~successCallback:(connect -> unit) -> ~failCallback:(string -> unit) -> unit -> unit;
+value connect: ?permissions:(list string) -> ~successCallback:(unit -> unit) -> ~failCallback:(string -> unit) -> unit -> unit;
 value loggedIn: unit -> bool;
 
 value accessToken: unit -> string;

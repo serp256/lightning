@@ -329,41 +329,51 @@ void fbLoginWithReadPermissions () {
 			}
 		}];
 }
+void checkPublishPermissions (void) {
+		bool publishPermissionsChecked = YES;
+		if (publishPermissions) {
+			for (NSString *nsperm in readPermissions)
+			{
+				NSLog(@"check permission granted %@", nsperm);
+				if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
+					publishPermissionsChecked = NO;
+					fbLoginWithPublishPermissions ();
+					break;
+				}
+			}
+		}
+		if (publishPermissionsChecked) { 
+			caml_callback(*caml_named_value("fb_success"), Val_unit);            
+		}
+}
 
 void checkPermissions (void) {
 	NSLog(@"check permissions %@, %@", readPermissions, publishPermissions);
 	if ([FBSDKAccessToken currentAccessToken]) {
-
+		bool readPermissionsChecked = YES;
 				if (readPermissions) {
 					for (NSString *nsperm in readPermissions)
 					{
 						NSLog(@"check permission granted %@", nsperm);
 						if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
 							fbLoginWithReadPermissions ();
+							readPermissionsChecked= NO;
 							break;
 					  }
+					}
+					if (readPermissionsChecked) {
+						checkPublishPermissions ()
 					}
 				}
 				else {
-				if (publishPermissions) {
-					for (NSString *nsperm in readPermissions)
-					{
-						NSLog(@"check permission granted %@", nsperm);
-						if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
-							fbLoginWithPublishPermissions ();
-							break;
-					  }
-					}
-				}
-				else
-					caml_callback(*caml_named_value("fb_success"), Val_unit);            
-				}
-
+						checkPublishPermissions ()
+			}
 	}
 	else {
 		caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("Can't check permissions cause not authorized"));
 	}
 }
+
 void fbConnect (void (^handler) (void)) {
 	NSLog (@"good");
 }

@@ -22,7 +22,7 @@ static jclass cls = NULL;
 
 static jclass lightFacebookCls = NULL;
 
-void ml_fbInit(value vappId) {
+value ml_fbInit(value vappId) {
 	CAMLparam1 (vappId);
 
 	PRINT_DEBUG("ml_fbInit");
@@ -31,13 +31,13 @@ void ml_fbInit(value vappId) {
 
 
 	STATIC_MID(cls, init, "(Ljava/lang/String;)V");
-	jstring jappId = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vappId));
+	jstring jappId = (*env)->NewStringUTF(env, String_val(vappId));
 	(*env)->CallStaticVoidMethod(env, cls, mid, jappId);
 
-	CAMLreturn0;
+	CAMLreturn(Val_unit);
 }
 
-void ml_fbConnect(value vperms) {
+value ml_fbConnect(value vperms) {
 	CAMLparam1(vperms);
 	CAMLlocal2(v_perms, vperm);
 	PRINT_DEBUG("ml_fbConnect");
@@ -98,65 +98,12 @@ void ml_fbConnect(value vperms) {
 		(*env)->CallStaticVoidMethod(env, cls, mid, j_perms_array);
     (*env)->DeleteLocalRef(env, j_perms_array);
     PRINT_DEBUG("chckpnt7");
+
 		CAMLreturn(Val_unit);
-
-	/*
-    
-
-    PRINT_DEBUG("chckpnt1");
-
-    PRINT_DEBUG("chckpnt2");
-    
-    jstring c_perms[256];
-    int perms_num = 0;
-
-    if (perms != Val_int(0)) {
-        PRINT_DEBUG("chckpnt2.1");
-
-        value _perms = Field(perms, 0);
-        value perm;
-
-        PRINT_DEBUG("chckpnt2.2");
-
-        while (Is_block(_perms)) {
-            perm = Field(_perms, 0);
-            PRINT_DEBUG("perms %s", String_val(perm));
-            jstring j_perm = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(perm));
-            c_perms[perms_num++] = j_perm;
-
-            _perms = Field(_perms, 1);
-        }
-    }
-
-    PRINT_DEBUG("chckpnt3");
-
-    jclass stringCls = (*ML_ENV)->FindClass(ML_ENV, "java/lang/String");
-    jobjectArray j_perms = (*ML_ENV)->NewObjectArray(ML_ENV, perms_num, stringCls, NULL);
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, stringCls);
-
-    PRINT_DEBUG("chckpnt4");
-    
-    int i;
-
-    for (i = 0; i < perms_num; i++) {
-        PRINT_DEBUG("4.1");
-
-        (*ML_ENV)->SetObjectArrayElement(ML_ENV, j_perms, i, c_perms[i]);
-        PRINT_DEBUG("4.2");
-        (*ML_ENV)->DeleteLocalRef(ML_ENV, c_perms[i]);
-        PRINT_DEBUG("4.3");
-    }
-
-    PRINT_DEBUG("chckpnt5");
-
-    (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightFacebookCls, mid, j_perms);
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, j_perms);
-
-    PRINT_DEBUG("chckpnt6");
-*/
 }
 
 value ml_fbLoggedIn() {
+	CAMLparam0();
     PRINT_DEBUG("ml_fbLoggedIn");
 
 		GET_ENV;
@@ -170,6 +117,7 @@ value ml_fbLoggedIn() {
 		else {
 			return (Val_bool(0));
 		}
+		CAMLreturn (Val_unit);
 }
 
 value ml_fbDisconnect(value unit) {
@@ -202,6 +150,79 @@ value ml_fbAccessToken(value unit) {
 	CAMLreturn(vtoken);
 }
 
+value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail, value vhttp_method) {
+	CAMLparam5(vpath, vparams, vsuccess, vfail, vhttp_method);
+    PRINT_DEBUG("ml_fbGraphrequest");
+
+    value* success;
+    value* fail;
+
+    REGISTER_CALLBACK(vsuccess, success);
+    REGISTER_CALLBACK(vfail, fail);
+
+		GET_ENV;
+    GET_CLS;
+
+    static jclass bndlCls;
+    static jmethodID bndlCid;
+    static jmethodID bndlPutStrMid;
+
+    PRINT_DEBUG("checkpoint1");
+
+    if (!bndlCls) {
+        jclass bcls = (*env)->FindClass(env, "android/os/Bundle");
+        bndlCls = (*env)->NewGlobalRef(env, bcls);
+        (*env)->DeleteLocalRef(env, bcls);
+
+        bndlCid = (*env)->GetMethodID(env, bndlCls, "<init>", "()V");
+        bndlPutStrMid = (*env)->GetMethodID(env, bndlCls, "putString", "(Ljava/lang/String;Ljava/lang/String;)V");
+    }
+
+    PRINT_DEBUG("checkpoint2");
+
+    jstring jpath = (*env)->NewStringUTF(env, String_val(vpath));
+    jobject jparams = (*env)->NewObject(env, bndlCls, bndlCid);
+    jstring key;
+    jstring val;
+
+    PRINT_DEBUG("checkpoint3");
+
+		CAMLlocal2(_params,param);
+    if (vparams != Val_int(0)) {
+				value _params = Field(vparams, 0);
+				value param;
+
+        while (Is_block(_params)) {
+            param = Field(_params, 0);
+
+            key = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(Field(param, 0)));
+            val = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(Field(param, 1)));
+            (*ML_ENV)->CallVoidMethod(ML_ENV, jparams, bndlPutStrMid, key, val);
+
+            (*ML_ENV)->DeleteLocalRef(ML_ENV, key);
+            (*ML_ENV)->DeleteLocalRef(ML_ENV, val);
+
+            _params = Field(_params, 1);
+        }
+    }
+
+    PRINT_DEBUG("checkpoint4");
+
+		STATIC_MID(cls, graphrequest, "(Ljava/lang/String;Landroid/os/Bundle;III)Z");
+
+    static value get_variant = 0;
+    if (!get_variant) get_variant = caml_hash_variant("get");
+
+    jboolean allRight = (*env)->CallStaticBooleanMethod(env, cls, mid, jpath, jparams, (int)success, (int)fail, vhttp_method == get_variant ? 0 : 1);
+
+    PRINT_DEBUG("checkpoint5");
+
+    (*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
+    (*ML_ENV)->DeleteLocalRef(ML_ENV, jparams);
+
+    if (!allRight) caml_failwith("no active facebook session");
+		CAMLreturn(Val_unit);
+}
 void ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
     value* _successCallback;
     value* _failCallback;
@@ -230,82 +251,13 @@ void ml_fbApprequest(value title, value message, value recipient, value data, va
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-void ml_fbGraphrequest(value path, value params, value successCallback, value failCallback, value http_method) {
-    PRINT_DEBUG("ml_fbGraphrequest");
-
-    value* _successCallback;
-    value* _failCallback;
-
-    REGISTER_CALLBACK(successCallback, _successCallback);
-    REGISTER_CALLBACK(failCallback, _failCallback);
-
-    GET_LIGHTFACEBOOK;
-
-    static jclass bndlCls;
-    static jmethodID bndlCid;
-    static jmethodID bndlPutStrMid;
-
-    PRINT_DEBUG("checkpoint1");
-
-    if (!bndlCls) {
-        jclass cls = (*ML_ENV)->FindClass(ML_ENV, "android/os/Bundle");
-        bndlCls = (*ML_ENV)->NewGlobalRef(ML_ENV, cls);
-        (*ML_ENV)->DeleteLocalRef(ML_ENV, cls);
-
-        bndlCid = (*ML_ENV)->GetMethodID(ML_ENV, bndlCls, "<init>", "()V");
-        bndlPutStrMid = (*ML_ENV)->GetMethodID(ML_ENV, bndlCls, "putString", "(Ljava/lang/String;Ljava/lang/String;)V");
-    }
-
-    PRINT_DEBUG("checkpoint2");
-
-    jstring jpath = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(path));
-    jobject jparams = (*ML_ENV)->NewObject(ML_ENV, bndlCls, bndlCid);
-    jstring key;
-    jstring val;
-
-    PRINT_DEBUG("checkpoint3");
-
-    if (params != Val_int(0)) {
-        value _params = Field(params, 0);
-        value param;
-
-        while (Is_block(_params)) {
-            param = Field(_params, 0);
-
-            key = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(Field(param, 0)));
-            val = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(Field(param, 1)));
-            (*ML_ENV)->CallVoidMethod(ML_ENV, jparams, bndlPutStrMid, key, val);
-
-            (*ML_ENV)->DeleteLocalRef(ML_ENV, key);
-            (*ML_ENV)->DeleteLocalRef(ML_ENV, val);
-
-            _params = Field(_params, 1);
-        }
-    }
-
-    PRINT_DEBUG("checkpoint4");
-
-    static jmethodID mid;
-    if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightFacebookCls, "graphrequest", "(Ljava/lang/String;Landroid/os/Bundle;III)Z");
-
-    static value get_variant = 0;
-    if (!get_variant) get_variant = caml_hash_variant("get");
-
-    jboolean allRight = (*ML_ENV)->CallStaticBooleanMethod(ML_ENV, lightFacebookCls, mid, jpath, jparams, (int)_successCallback, (int)_failCallback, http_method == get_variant ? 0 : 1);
-
-    PRINT_DEBUG("checkpoint5");
-
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, jparams);
-
-    if (!allRight) caml_failwith("no active facebook session");
-}
-
 void fbandroid_callback(void *data) {
     caml_callback(*((value*)data), Val_unit);   
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackRunnable_run(JNIEnv *env, jobject this) {
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024CamlCallbackInt_run(JNIEnv *env, jobject this) {
+    PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightFacebook_00024CamlCallbackInt_run");
     static jfieldID callbackFid;
 
     if (!callbackFid) {
@@ -335,8 +287,8 @@ void fbandroid_callback_with_str(void *d) {
     free(data);
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlCallbackWithStringParamRunnable_run(JNIEnv *env, jobject this) {
-    PRINT_DEBUG("Java_com_facebook_LightFacebook_00024CamlCallbackWithStringParamRunnable_run");
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024CamlParamCallbackInt_run(JNIEnv *env, jobject this) {
+    PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightFacebook_00024CamlParamCallbackInt_run");
 
     static jfieldID callbackFid;
     static jfieldID paramFid;
@@ -368,7 +320,8 @@ void fbandroid_named(void *data) {
     (*ML_ENV)->DeleteGlobalRef(ML_ENV, jname);
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024CamlCallback_run(JNIEnv *env, jobject this) {
+    PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightFacebook_00024CamlCallback_run");
     static jfieldID nameFid;
 
     if (!nameFid) {
@@ -398,7 +351,8 @@ void fbandroid_named_with_str(void *d) {
     free(data);    
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithStringParamRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024CamlParamCallback_run(JNIEnv *env, jobject this) {
+    PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightFacebook_00024CamlParamCallback_run");
     static jfieldID nameFid;
     static jfieldID paramFid;
 
@@ -409,17 +363,20 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithSt
         (*env)->DeleteLocalRef(env, selfCls);
     }
 
+		PRINT_DEBUG("chp1");
     jstring jname = (*env)->GetObjectField(env, this, nameFid);
     jstring jparam = (*env)->GetObjectField(env, this, paramFid);
+		PRINT_DEBUG("chp2");
     jstring *data = (jstring*)malloc(sizeof(jstring) * 2);
     data[0] = (*env)->NewGlobalRef(env, jname);
     data[1] = (*env)->NewGlobalRef(env, jparam);
+		PRINT_DEBUG("chp3");
     RUN_ON_ML_THREAD(&fbandroid_named_with_str, (void*)data);
 
+		PRINT_DEBUG("chp4");
     (*env)->DeleteLocalRef(env, jparam);
     (*env)->DeleteLocalRef(ML_ENV, jname);
 }
-
 typedef struct {
     value *callbck;
     jobjectArray arr;
@@ -539,7 +496,8 @@ void fbandroid_release_callbacks(void *d) {
     free(data);
 }
 
-JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024ReleaseCamlCallbacksRunnable_run(JNIEnv *env, jobject this) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024ReleaseCamlCallbacks_run(JNIEnv *env, jobject this) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightFacebook_00024ReleaseCamlCallbacks_run");
     static jfieldID successCbFid;
     static jfieldID failCbFid;
 
