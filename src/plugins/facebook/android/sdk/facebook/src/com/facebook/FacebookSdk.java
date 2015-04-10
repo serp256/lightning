@@ -170,6 +170,19 @@ public final class FacebookSdk {
 
         cacheDir = FacebookSdk.applicationContext.getCacheDir();
 
+        sdkInitialized = true;
+				try {
+						AccessTokenManager.getInstance().loadCurrentAccessToken();
+						ProfileManager.getInstance().loadCurrentProfile();
+						if (AccessToken.getCurrentAccessToken() != null &&
+										Profile.getCurrentProfile() == null) {
+								// Access token and profile went out of sync due to a network or caching
+								// issue, retry
+								Profile.fetchProfileForCurrentAccessToken();
+						}
+				}
+				catch (Exception exc) {}
+				/*
         FutureTask<Void> accessTokenLoadFutureTask =
                 new FutureTask<Void>(new Callable<Void>() {
                     @Override
@@ -186,8 +199,8 @@ public final class FacebookSdk {
                     }
                 });
         getExecutor().execute(accessTokenLoadFutureTask);
+				*/
 
-        sdkInitialized = true;
     }
 
     /**

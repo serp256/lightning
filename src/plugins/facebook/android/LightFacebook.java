@@ -14,6 +14,7 @@ import java.lang.Runnable;
 
 class LightFacebook {
 	public static CallbackManager callbackManager;
+	public static AccessTokenTracker tracker; 
 
 	public static void init (String appId) {
 		Log.d("LIGHTNING", "init call" + FacebookSdk.isInitialized ());
@@ -22,11 +23,14 @@ class LightFacebook {
 			FacebookSdk.sdkInitialize(Lightning.activity);
 			Log.d("LIGHTNING", "init call" + FacebookSdk.isInitialized ());
 		}
+		
+
 		Log.d ("LIGHTNING", "facebook_init: "+appId + "get app id: " + (FacebookSdk.getApplicationId()));
 		Log.d("LIGHTNING", "init call" + FacebookSdk.isInitialized ());
 
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 				public void onCreate(Bundle savedInstanceState) {}
+
 				public void onResume() {}
 
 				public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -286,17 +290,20 @@ class LightFacebook {
                 @Override
                 public void onSuccess(LoginResult loginResult) {
 									Log.d("LIGHTNING", "onSuccess");
+									Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
 									checkPermissions ();
                 }
 
                 @Override
                 public void onCancel() {
 									Log.d("LIGHTNING", "onCancel");
+									Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
 									fbError("FB Authorization cancelled");
                 }
 
                 @Override
                 public void onError(FacebookException exception) {
+									Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
 									Log.d("LIGHTNING", "onError");
 									fbError(exception.getMessage ());
                 }
@@ -315,6 +322,15 @@ class LightFacebook {
 				}
 		}
 
+		/*
+		tracker =  new AccessTokenTracker() {
+			@Override
+				protected void onCurrentAccessTokenChanged( AccessToken oldAccessToken, AccessToken currentAccessToken) {
+
+								Log.d("LIGHTNING", "onCurrentAccessTokenChanged old was null " + (oldAccessToken==null) + "new is " + (currentAccessToken.getToken()));
+						}
+		};
+		*/
 		if (loggedIn ()) {
 			Log.d("LIGHTNING", "already authorized");
 			checkPermissions ();
@@ -332,6 +348,7 @@ class LightFacebook {
 
 	public static boolean loggedIn() {
 			Log.d("LIGHTNING", "loggedIn call " + FacebookSdk.isInitialized ());
+			Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
 
 			return (AccessToken.getCurrentAccessToken () != null);
 	}

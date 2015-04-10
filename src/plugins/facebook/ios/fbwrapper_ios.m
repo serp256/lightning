@@ -362,11 +362,11 @@ void checkPermissions (void) {
 					  }
 					}
 					if (readPermissionsChecked) {
-						checkPublishPermissions ()
+						checkPublishPermissions ();
 					}
 				}
 				else {
-						checkPublishPermissions ()
+						checkPublishPermissions ();
 			}
 	}
 	else {
