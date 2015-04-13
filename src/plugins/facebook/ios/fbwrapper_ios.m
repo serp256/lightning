@@ -13,6 +13,7 @@
 #import <FBSDKShareKit.h>
 
 #import "mlwrapper_ios.h"
+#import "fbwrapper_ios.h"
 static FBSDKLoginManager *loginManager;
 
 @interface LightFBDialogDelegate : NSObject <FBWebDialogsDelegate>
@@ -43,12 +44,16 @@ static FBSDKLoginManager *loginManager;
 
 static FBSession* fbSession = nil;
 
+
 void fbError(NSError* error) {
 	caml_callback(*caml_named_value("fb_fail"), caml_copy_string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
 }
 
 NSMutableArray* readPermissions = nil;
 NSMutableArray* publishPermissions = nil;
+
+
+int extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
 
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error);
 
@@ -173,6 +178,8 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
     }    
 }
 
+typedef void (^successBlockT) (void);
+
 value ml_fbInit(value appId) {
 	NSLog(@"ml_fbInit");
     [FBSDKSettings setAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
@@ -213,8 +220,24 @@ value ml_fbInit(value appId) {
 
 //void fbConnect (FBSession* session, FBSessionState state, NSError* error);
 
+void resetPermissions () {
+		extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
+		if (readPermissions) {
+			[readPermissions removeAllObjects];
+			[readPermissions release];
+			readPermissions = nil;
+		}
+		if (publishPermissions) {
+			[publishPermissions removeAllObjects];
+			[publishPermissions release];
+			publishPermissions = nil;
+		}
+}
 value parsePermissions(value permissions) {
     NSLog(@"parsePermissions");
+
+		resetPermissions ();
+
     if (permissions != Val_int(0)) {        
         NSLog(@"parsing permission list");
         NSArray* publish_permissions = [NSArray arrayWithObjects:@"publish_actions", @"ads_management", @"create_event", @"rsvp_event", @"manage_friendlists", @"manage_notifications", @"manage_pages", nil];
@@ -237,115 +260,125 @@ value parsePermissions(value permissions) {
         }
     }
 }
-
-void fbLoginWithPublishPermissions () {
-		[loginManager logInWithPublishPermissions:publishPermissions handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
-			NSLog(@"result %@", result);
-			if (error) {
-				NSLog(@"error %@", error);
-				fbError (error);
-			} else if (result.isCancelled) {
-				// Handle cancellations
-				NSLog(@"fb auth cancelled");
-				caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
-			} else {
-				NSLog(@"FB login success");
-				if (publishPermissions) {
-					for (NSString *nsperm in publishPermissions)
-					{
-						NSLog(@"check permission granted %@", nsperm);
-						if (![result.grantedPermissions containsObject:nsperm]) {
-							caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("User didn't grant permissions"));
-							// Do work
-					  }
-					}
-				}
-
-				[publishPermissions removeAllObjects];
-				[publishPermissions release];
-				publishPermissions = nil;
-				caml_callback(*caml_named_value("fb_success"), Val_unit);            
-			}
-		}];
-}
-void fbLoginWithReadPermissions () {
-		[loginManager logInWithReadPermissions:readPermissions handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
-			NSLog(@"result %@", result);
-			if (error) {
-				NSLog(@"error %@", error);
-				fbError (error);
-			} else if (result.isCancelled) {
-				// Handle cancellations
-				NSLog(@"fb auth cancelled");
-				caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
-			} else {
-				NSLog(@"FB login success");
-				if (readPermissions) {
-					for (NSString *nsperm in readPermissions)
-					{
-						NSLog(@"check permission granted %@", nsperm);
-						if (![result.grantedPermissions containsObject:nsperm]) {
-							caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("User didn't grant permissions"));
-							// Do work
-					  }
-					}
-				}
-
-				[readPermissions removeAllObjects];
-				[readPermissions release];
-				readPermissions = nil;
-				fbLoginWithPublishPermissions ();
-			}
-		}];
-}
-void checkPublishPermissions (void) {
-		bool publishPermissionsChecked = YES;
-		if (publishPermissions) {
-			for (NSString *nsperm in readPermissions)
-			{
-				NSLog(@"check permission granted %@", nsperm);
-				if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
-					publishPermissionsChecked = NO;
-					fbLoginWithPublishPermissions ();
-					break;
-				}
-			}
-		}
-		if (publishPermissionsChecked) { 
-			caml_callback(*caml_named_value("fb_success"), Val_unit);            
-		}
-}
-
-void checkPermissions (void) {
-	NSLog(@"check permissions %@, %@", readPermissions, publishPermissions);
+void checkPermissions () {
+	NSLog(@"check permissions; state %@, %@, %d", readPermissions, publishPermissions, extraPermsState);
 	if ([FBSDKAccessToken currentAccessToken]) {
-		bool readPermissionsChecked = YES;
-				if (readPermissions) {
-					for (NSString *nsperm in readPermissions)
-					{
-						NSLog(@"check permission granted %@", nsperm);
-						if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
-							fbLoginWithReadPermissions ();
-							readPermissionsChecked= NO;
-							break;
-					  }
+    switch (extraPermsState) {
+				case EXTRA_PERMS_NOT_REQUESTED: {
+						bool readPermissionsChecked = YES;
+								if (readPermissions) {
+									for (NSString *nsperm in readPermissions)
+									{
+										NSLog(@"check permission granted %@", nsperm);
+										if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
+											FBSDKLoginManagerRequestTokenHandler handler = ^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+															NSLog(@"result %@", result);
+															if (error) {
+																NSLog(@"error %@", error);
+																resetPermissions ();
+																fbError (error);
+															} else if (result.isCancelled) {
+																resetPermissions ();
+																caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
+															} else {
+																NSLog(@"FB login success");
+																extraPermsState = READ_PERMS_REQUESTED;
+																checkPermissions ();
+															}};
+
+											[loginManager logInWithReadPermissions:readPermissions handler:handler];
+											readPermissionsChecked= NO;
+											break;
+										}
+									}
+								}
+								if (readPermissionsChecked) {
+									extraPermsState = READ_PERMS_REQUESTED;
+									checkPermissions ();
+								}
+								break;
+						}
+			case READ_PERMS_REQUESTED: {
+						bool readPermissionsChecked = YES;
+								if (readPermissions) {
+									for (NSString *nsperm in readPermissions)
+									{
+										NSLog(@"2 check permission granted %@", nsperm);
+										if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
+											readPermissionsChecked= NO;
+											break;
+										}
+									}
+								}
+								if (readPermissionsChecked) {
+									extraPermsState = PUBLISH_PERMS_REQUESTED;
+									bool publishPermissionsChecked = YES;
+											if (publishPermissions) {
+												for (NSString *nsperm in publishPermissions)
+												{
+													NSLog(@"check permission granted %@", nsperm);
+													if (![[FBSDKAccessToken currentAccessToken] hasGranted:nsperm]) {
+														FBSDKLoginManagerRequestTokenHandler handler = ^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+																		NSLog(@"result %@", result);
+																		if (error) {
+																			NSLog(@"error %@", error);
+																				resetPermissions ();
+																				fbError (error);
+																		} else if (result.isCancelled) {
+																				resetPermissions ();
+																				caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
+																		} else {
+																			NSLog(@"FB login success");
+																			extraPermsState = PUBLISH_PERMS_REQUESTED;
+																			checkPermissions ();
+																		}
+														};
+
+														[loginManager logInWithPublishPermissions:publishPermissions handler:handler];
+
+														publishPermissionsChecked= NO;
+														break;
+													}
+												}
+											}
+											if (publishPermissionsChecked) {
+												resetPermissions ();
+												caml_callback(*caml_named_value("fb_success"), Val_unit);
+											}
+								}
+								else {
+									resetPermissions ();
+									caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB check read permissions failed"));
+								}
+						 break;
+					 }
+			case PUBLISH_PERMS_REQUESTED: {
+					bool publishPermissionsChecked = YES;
+							if (publishPermissions) {
+								for (NSString *nsperm in publishPermissions)
+								{
+									NSLog(@"check permission granted %@", nsperm);
+									publishPermissionsChecked = NO; 
+									break;
+								}
+							}
+							resetPermissions ();
+							if (publishPermissionsChecked) {
+								caml_callback(*caml_named_value("fb_success"), Val_unit);
+							}
+							else {
+								caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization failed"));
+							}
+						break;
 					}
-					if (readPermissionsChecked) {
-						checkPublishPermissions ();
-					}
-				}
-				else {
-						checkPublishPermissions ();
-			}
+		}
 	}
 	else {
-		caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("Can't check permissions cause not authorized"));
+		resetPermissions ();
+		caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization failed"));
 	}
 }
 
-void fbConnect (void (^handler) (void)) {
-	NSLog (@"good");
-}
 value ml_fbConnect(value permissions) {
     NSLog(@"ml_fbConnect");
 
@@ -374,7 +407,6 @@ value ml_fbConnect(value permissions) {
 	 }
 	 return Val_unit;
 }
-
 
 value ml_fbDisconnect(value connect) {
 	NSLog(@"ml_fbDisConnect");
@@ -535,15 +567,55 @@ value ml_fbApprequest(value vtitle, value vmessage, value vrecipient, value vdat
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
+void (^_graphRequest) (FBSDKGraphRequest*, value*, value*) = ^(FBSDKGraphRequest* request, value* successGraphRequest, value* failGraphRequest) {
+			[request startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
+				CAMLparam0();
+				CAMLlocal1(mljs);
+				NSLog(@"completionHandler err %@ result %@", error, result);
+
+				if (error) {
+					RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
+				} else {
+						if (successGraphRequest) {
+							NSError *jerr = nil;
+							NSData *json = [NSJSONSerialization dataWithJSONObject:result options:0 error:&jerr];
+							if (!jerr) {
+								value mljs = caml_alloc_string(json.length);
+								[json getBytes:String_val(mljs) length:json.length];
+								RUN_CALLBACK(successGraphRequest, mljs);
+							} else {
+								RUN_CALLBACK(failGraphRequest, caml_copy_string ([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+							}
+						}
+				}
+
+				FREE_CALLBACK(successGraphRequest);
+				FREE_CALLBACK(failGraphRequest);        
+				CAMLreturn0;
+		}];
+};
+
 void graphRequest (NSString* nspath, NSDictionary* nsparams, value* successGraphRequest, value* failGraphRequest, NSString* reqMethod) {
-		FBSDKGraphRequest *request = 
 			[[[FBSDKGraphRequest alloc] initWithGraphPath:nspath parameters:nsparams HTTPMethod:reqMethod] startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
 				CAMLparam0();
 				CAMLlocal1(mljs);
         NSLog(@"completionHandler err %@ result %@", error, result);
 
         if (error) {
-					RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
+					/*
+					if (error.code == 400) {
+								FBSDKGraphRequest *rerequest = [[FBSDKGraphRequest alloc] initWithGraphPath:nspath parameters:nsparams HTTPMethod:reqMethod];
+								successBlockT block = ^ {
+									_graphRequest (rerequest, successGraphRequest, failGraphRequest);
+								};
+								reconnect (failGraphRequest, successGraphRequest, block);
+					}
+					else {
+					}
+					*/
+						RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
+						FREE_CALLBACK(successGraphRequest);
+						FREE_CALLBACK(failGraphRequest);        
         } else {
             if (successGraphRequest) {
 							NSError *jerr = nil;
@@ -556,14 +628,14 @@ void graphRequest (NSString* nspath, NSDictionary* nsparams, value* successGraph
 								RUN_CALLBACK(failGraphRequest, caml_copy_string ([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
 							}
             }
+					FREE_CALLBACK(successGraphRequest);
+					FREE_CALLBACK(failGraphRequest);        
         }
-				FREE_CALLBACK(successGraphRequest);
-				FREE_CALLBACK(failGraphRequest);        
 
 				CAMLreturn0;
     }];
-
 }
+
 value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail, value vhttp_method) {
 		CAMLparam5(vpath, vparams, vfail, vsuccess, vhttp_method);
 		CAMLlocal2(_params,param);
@@ -595,6 +667,9 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 
     NSString* reqMethod = get_variant == vhttp_method ? @"GET" : @"POST";
 
+		graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod);
+
+		/*
    if ([FBSDKAccessToken currentAccessToken]) {
 		 NSLog(@"already authorized");
 		 graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod);
@@ -619,6 +694,7 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 			}
 		}];
 	 }
+	 */
 	 return Val_unit;
 }
 

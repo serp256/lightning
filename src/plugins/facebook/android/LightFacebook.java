@@ -323,6 +323,14 @@ class LightFacebook {
 	}
 
 	private static void parsePermissions (String[] perms) {
+		if (readPerms !=null) {
+			readPerms.clear();
+			readPerms = null;
+		}
+		if (publishPerms != null) {
+			publishPerms.clear();
+			publishPerms = null;
+		}
 
 		for (int i = 0; i < perms.length; i++) {
 				String perm = perms[i];
@@ -406,24 +414,9 @@ class LightFacebook {
 									Lightning.activity.runOnUiThread(fail);
                 }
     });
-
-		//permissions?
-		//
-		//
-		/*
-			if (AccessToken.getCurrentAccessToken () != null) {
-					Log.d ("LIGHTNING", "token");
-				if (AccessToken.getCurrentAccessToken ().getPermissions() != null) {
-					Log.d ("LIGHTNING", "permissions");
-					Set perms= AccessToken.getCurrentAccessToken ().getPermissions();
-					Object[] array = perms.toArray(new Object[perms.size()]);
-					String [] p = Arrays.copyOf(array, array.length, String[].class);
-					parsePermissions (p);
-				}
-			}
-			*/
 		LoginManager.getInstance().logInWithReadPermissions(Lightning.activity, readPerms);
 	}
+
 	public static void disconnect () {
 		Log.d("LIGHTNING", "disconnect call ");
 		(LoginManager.getInstance ()).logOut();

@@ -10,26 +10,32 @@ value disconnect = ();
 value loggedIn () = None;
 
 value accessToken () = "";
+(*
 value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback () = ();
+*)
 value graphrequest ~path ?params ?successCallback ?failCallback ?httpMethod () = ();
 
 (* value sharePicUsingNativeApp ~fname:string ~text:string () = False; *)
+(*
 value sharePic ?success ?fail ~fname ~text connect = ();
 
 value share ?text ?link ?picUrl ?success ?fail () = match fail with [ Some fail -> fail "this method not supported on pc and ios" | _ -> () ];
+*)
 ELSE
 
+(*
 external sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit = "ml_fb_share_pic";
+*)
 
+(*
 IFDEF ANDROID THEN
 external share: ?text:string -> ?link:string -> ?picUrl:string -> ?success:(unit -> unit) -> ?fail:(string -> unit) -> unit -> unit = "ml_fb_share_byte" "ml_fb_share";
 ELSE
 value share ?text ?link ?picUrl ?success ?fail () = match fail with [ Some fail -> fail "this method not supported on pc and ios" | _ -> () ];
 ENDIF;
+*)
 
 
-
-type status = [ NotConnected | Connecting | Connected ];
 
 external _init: string -> unit = "ml_fbInit";
 
@@ -38,17 +44,16 @@ external loggedIn: unit -> bool  = "ml_fbLoggedIn";
 external disconnect: unit -> unit = "ml_fbDisconnect";
 
 external accessToken: unit-> string = "ml_fbAccessToken";
+(*
 external _apprequest: string -> string -> option string -> option string -> option (list string -> unit) -> option (string -> unit) -> unit = "ml_fbApprequest_byte" "ml_fbApprequest";
+*)
 external _graphrequest: string -> option (list (string * string)) -> option (string -> unit) -> option (string -> unit) -> httpMethod -> unit = "ml_fbGraphrequest";
 
-value status = ref NotConnected;
 value _successCallback = ref None;
 value _failCallback = ref None;
 
 value success () =
 (
-	status.val := Connected;
-
 	match !_successCallback with
 	[ Some successCallback ->
 		(
@@ -61,8 +66,6 @@ value success () =
 
 value fail description =
 (
-	status.val := NotConnected;
-
 	match !_failCallback with
 	[ Some failCallback ->
 		(
@@ -73,11 +76,9 @@ value fail description =
 	];
 );
 
-value sessionClosed () = status.val := NotConnected;
 
 Callback.register "fb_success" success;
 Callback.register "fb_fail" fail;
-Callback.register "fb_sessionClosed" sessionClosed;
 
 value init ~appId () = _init appId;
 
@@ -88,23 +89,8 @@ value connect ?permissions ~successCallback ~failCallback () =
 
 			_connect permissions ();
     );		
-  (*
-	match !status with
-	[ Connected -> successCallback ()
-	| Connecting -> ()
-        (*failwith "facebook connecting alredy in progress"*)
-	| NotConnected ->
-		(
-			_successCallback.val := Some successCallback;
-			_failCallback.val := Some failCallback;
-
-			status.val := Connecting;
-			_connect permissions ();
-		)		
-	];
-  *)
-
-value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback () = _apprequest title message recipient data successCallback failCallback;
+(*value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback () = _apprequest title message recipient data successCallback failCallback;
+ * *)
 value graphrequestSuccess json callback = callback json;
 value graphrequest ~path ?params ?successCallback ?failCallback ?(httpMethod = `get) () = _graphrequest path params successCallback failCallback httpMethod;
 
