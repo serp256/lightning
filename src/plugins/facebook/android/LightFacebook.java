@@ -474,7 +474,6 @@ class LightFacebook {
 					}
 			});
 
-			return true;
 	}
 
 }

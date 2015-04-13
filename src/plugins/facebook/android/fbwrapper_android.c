@@ -208,19 +208,18 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 
     PRINT_DEBUG("checkpoint4");
 
-		STATIC_MID(cls, graphrequest, "(Ljava/lang/String;Landroid/os/Bundle;III)Z");
+		STATIC_MID(cls, graphrequest, "(Ljava/lang/String;Landroid/os/Bundle;III)V");
 
     static value get_variant = 0;
     if (!get_variant) get_variant = caml_hash_variant("get");
 
-    jboolean allRight = (*env)->CallStaticBooleanMethod(env, cls, mid, jpath, jparams, (int)success, (int)fail, vhttp_method == get_variant ? 0 : 1);
+    (*env)->CallStaticVoidMethod(env, cls, mid, jpath, jparams, (int)success, (int)fail, vhttp_method == get_variant ? 0 : 1);
 
     PRINT_DEBUG("checkpoint5");
 
     (*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
     (*ML_ENV)->DeleteLocalRef(ML_ENV, jparams);
 
-    if (!allRight) caml_failwith("no active facebook session");
 		CAMLreturn(Val_unit);
 }
 void ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
