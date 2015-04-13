@@ -14,19 +14,13 @@ import java.lang.Runnable;
 
 class LightFacebook {
 	public static CallbackManager callbackManager;
-	public static AccessTokenTracker tracker; 
 
 	public static void init (String appId) {
-		Log.d("LIGHTNING", "init call" + FacebookSdk.isInitialized ());
 		if (!FacebookSdk.isInitialized ()) {
-			Log.d("LIGHTNING", "init call" + FacebookSdk.isInitialized ());
 			FacebookSdk.sdkInitialize(Lightning.activity);
-			Log.d("LIGHTNING", "init call" + FacebookSdk.isInitialized ());
 		}
 		
-
 		Log.d ("LIGHTNING", "facebook_init: "+appId + "get app id: " + (FacebookSdk.getApplicationId()));
-		Log.d("LIGHTNING", "init call" + FacebookSdk.isInitialized ());
 
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 				public void onCreate(Bundle savedInstanceState) {}
@@ -71,11 +65,13 @@ class LightFacebook {
 		extraPermsState = PUBLISH_PERMS_REQUESTED;
 		LoginManager.getInstance().logInWithPublishPermissions(Lightning.activity, publishPerms);
 	}
+
 	private static void fbLoginWithReadPermissions () {
 		Log.d("LIGHTNING", "fbLoginWithReadPermissions");
 		extraPermsState = READ_PERMS_REQUESTED;
 		LoginManager.getInstance().logInWithReadPermissions(Lightning.activity, readPerms);
 	}
+
 	private static void checkPermissions (final Runnable success, final Runnable fail) {
         Log.d("LIGHTNING", "checkPermissions state " + extraPermsState );
 				if (AccessToken.getCurrentAccessToken () != null) {
@@ -87,32 +83,20 @@ class LightFacebook {
 
 						if (accessToken.getPermissions () != null) {
 							Set grantedPermissions = accessToken.getPermissions ();
-							Object[] arr = grantedPermissions.toArray ();
-												for(int i=0; i < arr.length; i++){
-													Log.d("LIGHTNING", "granted "+ arr[i]);
-												}
-
 
 								switch (extraPermsState) {
 										case READ_PERMS_REQUESTED:
 												if (readPerms != null && readPerms.size() > 0) {
-
 													Log.d("LIGHTNING", "check1");
-												for(int i=0; i < readPerms.size (); i++){
-													if (!grantedPermissions.contains(readPerms.get(i))) {
-														readPermissionsChecked = false;
-														break;
+													for(int i=0; i < readPerms.size (); i++){
+														if (!grantedPermissions.contains(readPerms.get(i))) {
+															readPermissionsChecked = false;
+															break;
+														}
 													}
-												}
 												}
 												if (readPermissionsChecked) {
 													Log.d("LIGHTNING", "check2");
-													/*
-													if (readPerms !=null) {
-														readPerms.clear();
-														readPerms = null;
-													}
-													*/
 													if (publishPerms != null && publishPerms.size() > 0) {
 														for(int i=0; i < publishPerms.size (); i++){
 															if (!grantedPermissions.contains(publishPerms.get(i))) {
@@ -125,12 +109,6 @@ class LightFacebook {
 													if (publishPermissionsChecked) {
 														Log.d("LIGHTNING", "check3");
 														extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
-															/*
-														if (publishPerms != null) {
-															publishPerms.clear();
-															publishPerms = null;
-														}
-															*/
 														if (success == null) {
 															connectSuccess ();
 														}
@@ -140,17 +118,6 @@ class LightFacebook {
 													}
 							          }
 												else {
-													/*
-													if (readPerms != null) {
-
-														readPerms.clear();
-														readPerms = null;
-													}
-													if (publishPerms != null) {
-														publishPerms.clear();
-														publishPerms = null;
-													}
-													*/
 													extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
 													if (fail== null) {
 														fbError("Permissions check failed");
@@ -159,7 +126,6 @@ class LightFacebook {
 														Lightning.activity.runOnUiThread(fail);
 													}
 												}
-
 												break;
 
 										case PUBLISH_PERMS_REQUESTED:
@@ -172,16 +138,10 @@ class LightFacebook {
 														}
 													}
 												}
-												/*
-												if (publishPerms != null) {
-													publishPerms.clear();
-													publishPerms = null;
-												}
-												*/
 												extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
 												if (publishPermissionsChecked) {
 													if (success == null) {
-													connectSuccess ();
+														connectSuccess ();
 													}
 													else {
 														Lightning.activity.runOnUiThread(success);
@@ -195,18 +155,17 @@ class LightFacebook {
 														Lightning.activity.runOnUiThread(fail);
 													}
 												}
-
 												break;
 
 										case EXTRA_PERMS_NOT_REQUESTED:
 												if (readPerms != null && readPerms.size() > 0) {
-												for(int i=0; i < readPerms.size (); i++){
-													 if (!grantedPermissions.contains(readPerms.get(i))) {
-														readPermissionsChecked = false;
-														fbLoginWithReadPermissions ();
-														break;
+													for(int i=0; i < readPerms.size (); i++){
+														 if (!grantedPermissions.contains(readPerms.get(i))) {
+															readPermissionsChecked = false;
+															fbLoginWithReadPermissions ();
+															break;
+														}
 													}
-												}
 												}
 												if (readPermissionsChecked) {
 													extraPermsState = READ_PERMS_REQUESTED;
@@ -214,20 +173,12 @@ class LightFacebook {
 							          }
 												break;
 								}
-
-
-
-
-
-
-
-
-
 						}
 						else
+							//empty granted permissions
 							if (readPerms == null && publishPerms == null) {
 								if (success == null) {
-								connectSuccess ();
+									connectSuccess ();
 								}
 								else {
 									Lightning.activity.runOnUiThread(success);
@@ -236,17 +187,17 @@ class LightFacebook {
 							}
 							else {
 								if (fail== null) {
-									fbError("Permissions check failed");
+									fbError("Permissions check failed: no granted permissions");
 								}
 								else {
 									Lightning.activity.runOnUiThread(fail);
 								}
 							}
-
 				}
 				else 
-					if (fail== null) {
-						fbError("Can't check permissions cause not authorized");
+					//no token
+					if (fail == null) {
+						fbError("Permissions check failed: not authorized");
 					}
 					else {
 						Lightning.activity.runOnUiThread(fail);
@@ -356,20 +307,17 @@ class LightFacebook {
                 @Override
                 public void onSuccess(LoginResult loginResult) {
 									Log.d("LIGHTNING", "onSuccess");
-									Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
 									checkPermissions (null, null);
                 }
 
                 @Override
                 public void onCancel() {
 									Log.d("LIGHTNING", "onCancel");
-									Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
 									fbError("FB Authorization cancelled");
                 }
 
                 @Override
                 public void onError(FacebookException exception) {
-									Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
 									Log.d("LIGHTNING", "onError");
 									fbError(exception.getMessage ());
                 }
@@ -391,7 +339,7 @@ class LightFacebook {
 		Log.d("LIGHTNING", "reconnect call");
 
 		if (callbackManager == null) {
-		callbackManager = CallbackManager.Factory.create();
+			callbackManager = CallbackManager.Factory.create();
 		}
 
     LoginManager.getInstance().registerCallback(callbackManager,
@@ -414,6 +362,7 @@ class LightFacebook {
 									Lightning.activity.runOnUiThread(fail);
                 }
     });
+
 		LoginManager.getInstance().logInWithReadPermissions(Lightning.activity, readPerms);
 	}
 
@@ -423,18 +372,16 @@ class LightFacebook {
 	}
 
 	public static boolean loggedIn() {
-			Log.d("LIGHTNING", "loggedIn call " + FacebookSdk.isInitialized ());
-			Log.d("LIGHTNING", "loggedIn " + (AccessToken.getCurrentAccessToken () != null));
-
-			return (AccessToken.getCurrentAccessToken () != null);
+		Log.d("LIGHTNING", "loggedIn call");
+		return (AccessToken.getCurrentAccessToken () != null);
 	}
 
 	public static String accessToken() {
-		Log.d("LIGHTNING", "accessToken call " + FacebookSdk.isInitialized ());
+		Log.d("LIGHTNING", "accessToken call");
 		return (AccessToken.getCurrentAccessToken ()) != null ? AccessToken.getCurrentAccessToken ().getToken () : "";
 	}
 
-	public static boolean graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback, final int httpMethod) {
+	public static void graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback, final int httpMethod) {
 			Lightning.activity.runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -464,6 +411,7 @@ class LightFacebook {
 																						if (error != null) {
 																								Log.d("LIGHTNING", "error: " + error);
 																								(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
+																								(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
 																						} else {
 																								String json = null;
 
@@ -486,13 +434,16 @@ class LightFacebook {
 																				}
 
 																}).executeAsync ();
-																}};
-														 Runnable failRunnable = new Runnable() {
-															 @Override
-																 public void run () {
-																	 (new CamlParamCallbackInt(failCallback, "fail graphrequest cause reconnect error")).run();
-																 }
-														 };
+																}
+														};
+													  Runnable failRunnable = new Runnable() {
+															@Override
+																public void run () {
+																	(new CamlParamCallbackInt(failCallback, "fail graphrequest cause reconnect error")).run();
+																	(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+																}
+													  };
+
 														reconnect (graphRequestRunnable, failRunnable);
 													}
 													else {
