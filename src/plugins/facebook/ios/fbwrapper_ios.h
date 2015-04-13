@@ -13,8 +13,9 @@ value ml_fbAccessToken(value connect);
 value ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback);
 void ml_fbApprequest_byte(value * argv, int argn);
 value ml_fbGraphrequest(value path, value params, value successCallback, value failCallback, value http_method);
-value ml_fb_share_pic_using_native_app(value v_fname, value v_text);
-value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text);
+
+value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, value v_fail, value unit);
+value ml_fb_share_byte(value * argv, int argn);
 
 static const int EXTRA_PERMS_NOT_REQUESTED = 0;
 static const int READ_PERMS_REQUESTED = 1;

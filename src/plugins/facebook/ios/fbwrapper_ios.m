@@ -791,9 +791,11 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 	 return Val_unit;
 }
 
+/*
 value ml_fb_share_pic_using_native_app(value v_fname, value v_text) {
     return Val_false;
 }
+*/
 
 void fb_upload_photo_req(UIImage* img, NSString* text, value* success, value* fail) {
     NSLog(@"fb_upload_photo_req call");
@@ -880,6 +882,23 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
     CAMLreturn(Val_unit);
 }
 
+value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, value v_fail, value unit) {
+    CAMLparam5(v_text, v_link, v_picUrl, v_success, v_fail);
+
+    NSString* ctext = [NSString stringWithUTF8String:String_val(v_text)];
+		NSURL* curl = [NSURL URLWithString:[NSString stringWithUTF8String:String_val(v_link)]];
+		NSURL* cpicUrl =[NSURL URLWithString:[NSString stringWithUTF8String:String_val(v_picUrl)]];
+
+		FBSDKShareLinkContent *content = [[FBSDKShareLinkContent alloc] init];
+		content.contentURL = curl;
+		content.imageURL = cpicUrl;
+		content.contentTitle = ctext;
+		[FBSDKShareDialog shareFromViewController:[LightViewController sharedInstance] withContent:content delegate:nil];
+		CAMLreturn(Val_unit);
+}
+value ml_fb_share_byte(value* argv, int argn) {
+    return ml_fb_share(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+}
 /*
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
    return [[FBSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
