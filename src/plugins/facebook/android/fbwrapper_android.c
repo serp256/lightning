@@ -514,7 +514,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024Rel
 
     RUN_ON_ML_THREAD(&fbandroid_release_callbacks, (void*)data);
 }
-
+/*
 value ml_fb_share_pic_using_native_app(value v_fname, value v_text) {
     GET_LIGHTFACEBOOK;
 
@@ -559,10 +559,13 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
 
     CAMLreturn(Val_unit);
 }
+*/
 
 value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, value v_fail, value unit) {
     CAMLparam5(v_text, v_link, v_picUrl, v_success, v_fail);
-    GET_LIGHTFACEBOOK;
+
+    GET_ENV;
+    GET_CLS;
 
     value* success;
     value* fail;
@@ -574,13 +577,12 @@ value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, v
     OPTVAL_TO_JSTRING(v_text, j_text);    
     OPTVAL_TO_JSTRING(v_picUrl, j_picUrl);
 
-    static jmethodID mid = 0;
-    if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightFacebookCls, "share", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V");
-    (*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightFacebookCls, mid, j_text, j_link, j_picUrl, (jint)success, (jint)fail);
+		STATIC_MID(cls, share, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V");
+		(*env)->CallStaticVoidMethod(env, cls, mid, j_text, j_link, j_picUrl, (jint)success, (jint) fail);
 
-    if (j_text) (*ML_ENV)->DeleteLocalRef(ML_ENV, j_text);
-    if (j_link) (*ML_ENV)->DeleteLocalRef(ML_ENV, j_link);
-    if (j_picUrl) (*ML_ENV)->DeleteLocalRef(ML_ENV, j_picUrl);
+    if (j_text) (*env)->DeleteLocalRef(env, j_text);
+    if (j_link) (*env)->DeleteLocalRef(env, j_link);
+    if (j_picUrl) (*env)->DeleteLocalRef(env, j_picUrl);
 
     CAMLreturn(Val_unit);
 }

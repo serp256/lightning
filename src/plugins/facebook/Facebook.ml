@@ -15,6 +15,7 @@ value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback
 *)
 value graphrequest ~path ?params ?successCallback ?failCallback ?httpMethod () = ();
 
+value share ?text ?link ?picUrl ?success ?fail () = match fail with [ Some fail -> fail "this method not supported on pc and ios" | _ -> () ];
 (* value sharePicUsingNativeApp ~fname:string ~text:string () = False; *)
 (*
 value sharePic ?success ?fail ~fname ~text connect = ();
@@ -36,6 +37,7 @@ ENDIF;
 *)
 
 
+external share: ?text:string -> ?link:string -> ?picUrl:string -> ?success:(unit -> unit) -> ?fail:(string -> unit) -> unit -> unit = "ml_fb_share_byte" "ml_fb_share";
 
 external _init: string -> unit = "ml_fbInit";
 

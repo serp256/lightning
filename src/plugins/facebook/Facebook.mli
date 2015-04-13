@@ -13,6 +13,7 @@ value apprequest: ~title:string -> ~message:string -> ?recipient:string -> ?data
 value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?successCallback:(string -> unit) -> ?failCallback:(string -> unit) -> ?httpMethod:httpMethod -> unit -> unit;
 value disconnect: unit -> unit;
 
+value share: ?text:string -> ?link:string -> ?picUrl:string -> ?success:(unit -> unit) -> ?fail:(string -> unit) -> unit -> unit; 
 (*
 value sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit;
 value share: ?text:string -> ?link:string -> ?picUrl:string -> ?success:(unit -> unit) -> ?fail:(string -> unit) -> unit -> unit; (* This functions uses share dialog, integrated into Facebook app (Facebook app must be installed). No need to call "connect", "init" function call with app id is enough. *)

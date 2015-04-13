@@ -5,12 +5,16 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import com.facebook.*;
 import com.facebook.login.*;
+import com.facebook.share.*;
+import com.facebook.share.model.*;
+import com.facebook.share.widget.*;
 import java.util.Arrays;
 import android.content.Intent;
 import android.os.Bundle;
 import java.util.ArrayList;
 import java.util.Set;
 import java.lang.Runnable;
+import android.net.Uri;
 
 class LightFacebook {
 	public static CallbackManager callbackManager;
@@ -474,6 +478,44 @@ class LightFacebook {
 					}
 			});
 
+	}
+
+	public static void share(String text, String link, String picUrl, final int success, final int fail) {
+		ShareLinkContent.Builder builder = new ShareLinkContent.Builder();
+		builder.setContentTitle (text);
+		builder.setImageUrl (Uri.parse(picUrl));
+		builder.setContentUrl(Uri.parse (link));
+		ShareLinkContent content = builder.build();
+		ShareDialog shareDialog;
+		shareDialog = new ShareDialog(Lightning.activity);
+		if (callbackManager == null) {
+			callbackManager = CallbackManager.Factory.create();
+		}
+		shareDialog.registerCallback(callbackManager, 
+            new FacebookCallback<Sharer.Result>() {
+                @Override
+                public void onSuccess(Sharer.Result result) {
+									Log.d("LIGHTNING", "share onSuccess");
+									(new CamlCallbackInt(success)).run();
+									(new ReleaseCamlCallbacks(success, fail)).run();
+                }
+
+                @Override
+                public void onCancel() {
+									Log.d("LIGHTNING", "share nCancel");
+									(new CamlParamCallbackInt(fail, "share cancel")).run();
+									(new ReleaseCamlCallbacks(success, fail)).run();
+                }
+
+                @Override
+                public void onError(FacebookException exception) {
+									Log.d("LIGHTNING", "share onError " + exception.toString ());
+									(new CamlParamCallbackInt(fail, exception.toString())).run ();
+									(new ReleaseCamlCallbacks(success, fail)).run();
+                }
+		});
+
+		ShareDialog.show(Lightning.activity,content);
 	}
 
 }
