@@ -1,4 +1,5 @@
 #import "LightAppDelegate.h"
+#import "LightFacebookDelegate.h"
 #import "LightViewController.h"
 #import "FacebookSDK/FacebookSDK.h"
 #import <caml/mlvalues.h>
@@ -885,17 +886,19 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
 value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, value v_fail, value unit) {
     CAMLparam5(v_text, v_link, v_picUrl, v_success, v_fail);
 
-    NSString* ctext = [NSString stringWithUTF8String:String_val(v_text)];
-		NSURL* curl = [NSURL URLWithString:[NSString stringWithUTF8String:String_val(v_link)]];
-		NSURL* cpicUrl =[NSURL URLWithString:[NSString stringWithUTF8String:String_val(v_picUrl)]];
+		NSString* nstext = Is_block (v_text) ? [NSString stringWithCString:String_val(Field(v_text,0)) encoding:NSASCIIStringEncoding]: nil;
+		NSURL* nsurl = Is_block (v_link) ? [NSString stringWithCString:String_val(Field(v_link,0)) encoding:NSASCIIStringEncoding]: nil;
+		NSURL* nspicUrl = Is_block (v_picUrl) ? [NSString stringWithCString:String_val(Field(v_picUrl,0)) encoding:NSASCIIStringEncoding]: nil;
 
 		FBSDKShareLinkContent *content = [[FBSDKShareLinkContent alloc] init];
-		content.contentURL = curl;
-		content.imageURL = cpicUrl;
-		content.contentTitle = ctext;
-		[FBSDKShareDialog shareFromViewController:[LightViewController sharedInstance] withContent:content delegate:nil];
+		content.contentURL = nsurl;
+		content.imageURL = nspicUrl;
+		content.contentTitle = nstext;
+		[FBSDKShareDialog showFromViewController:[LightViewController sharedInstance] withContent:content delegate:[[LightFacebookDelegate alloc] initWithSuccess:v_success andFail:v_fail] ];
+
 		CAMLreturn(Val_unit);
 }
+
 value ml_fb_share_byte(value* argv, int argn) {
     return ml_fb_share(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }
