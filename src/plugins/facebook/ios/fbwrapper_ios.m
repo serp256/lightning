@@ -180,6 +180,7 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
 }
 
 typedef void (^successBlockT) (void);
+typedef void (^graphResponseHandler) (value*, value*, id);
 
 value ml_fbInit(value appId) {
 	NSLog(@"ml_fbInit");
@@ -659,75 +660,133 @@ value ml_fbApprequest(value vtitle, value vmessage, value vrecipient, value vdat
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
 
-void (^_graphRequest) (NSString*, NSDictionary*, NSString*, value*, value*) = ^(NSString* nspath, NSDictionary* nsparams, NSString* reqMethod, value* successGraphRequest, value* failGraphRequest) {
-		NSLog(@"^^graph token %@", ([[FBSDKAccessToken currentAccessToken] tokenString]));
-		FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc] initWithGraphPath:nspath parameters:nsparams HTTPMethod:reqMethod];
-			[request startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
-				CAMLparam0();
-				CAMLlocal1(mljs);
-				NSLog(@"^^^completionHandler err %@ result %@", error, result);
+/*
+@interface LightDelegate: NSObject <FBSDKGraphRequestConnectionDelegate> { 
+	NSArray* res;
+	graphResponseHandler h;
+	value* success;
+	value* fail;
+}
+- (id)init:(NSArray*) results handler:(graphResponseHandler) handler success:(value*) s fail:(value*) f;
+- (void)requestConnectionDidFinishLoading:(FBSDKGraphRequestConnection *)connection;
+- (void)requestConnection:(FBSDKGraphRequestConnection *)connection
+         didFailWithError:(NSError *)error;
+- (void)requestConnection:(FBSDKGraphRequestConnection *)connection
+          didSendBodyData:(NSInteger)bytesWritten
+        totalBytesWritten:(NSInteger)totalBytesWritten
+totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite;
+@end
+@implementation LightDelegate 
+- (id) init:(NSArray*) results handler:(graphResponseHandler) handler success:(value*) s fail:(value*) f{
+	self = [super init];
+	res = results;
+	h = handler;
+	success = s;
+	fail = f;
+	return self;
+}
+- (void)requestConnectionDidFinishLoading:(FBSDKGraphRequestConnection *)connection {
+	NSLog (@"DID finish");
+	//h (success,fail,res);
 
-				if (error) {
-					RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
-				} else {
-						if (successGraphRequest) {
-							NSError *jerr = nil;
-							NSData *json = [NSJSONSerialization dataWithJSONObject:result options:0 error:&jerr];
-							if (!jerr) {
-								value mljs = caml_alloc_string(json.length);
-								[json getBytes:String_val(mljs) length:json.length];
-								RUN_CALLBACK(successGraphRequest, mljs);
-							} else {
-								RUN_CALLBACK(failGraphRequest, caml_copy_string ([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
-							}
+}
+- (void)requestConnection:(FBSDKGraphRequestConnection *)connection
+         didFailWithError:(NSError *)error {}
+- (void)requestConnection:(FBSDKGraphRequestConnection *)connection
+          didSendBodyData:(NSInteger)bytesWritten
+        totalBytesWritten:(NSInteger)totalBytesWritten
+totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite {}
+
+@end
+
+*/
+void (^_graphRequest) (NSArray*, NSDictionary*, NSString*, value*, value*, graphResponseHandler) = ^(NSArray* nspaths, NSDictionary* nsparams, NSString* reqMethod, value* successGraphRequest, value* failGraphRequest, graphResponseHandler handler) {
+	FBSDKGraphRequestConnection *connection = [[FBSDKGraphRequestConnection alloc] init];
+	NSMutableArray* results = [[NSMutableArray alloc] init];
+	//connection.delegate = [[LightDelegate alloc] init:results handler:handler success:successGraphRequest fail:failGraphRequest];
+	__block int answersCount  = 0;
+	__block NSError* err;
+	void (^completionHandlerBlock)(FBSDKGraphRequestConnection*, id, NSError*)= ^(FBSDKGraphRequestConnection *connection, id result, NSError *error){
+        if (error) {
+					NSLog(@"ERROR %@ %@", error, [error.userInfo valueForKey:FBSDKGraphRequestErrorGraphErrorCode]);
+					//user cancel native reauth window
+					if ([[error.userInfo valueForKey:FBSDKGraphRequestErrorGraphErrorCode] intValue] == 2500) {
+						[connection cancel];
+						RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
+						FREE_CALLBACK(successGraphRequest);
+						FREE_CALLBACK(failGraphRequest);        
 						}
-				}
-
-				FREE_CALLBACK(successGraphRequest);
-				FREE_CALLBACK(failGraphRequest);        
-				CAMLreturn0;
-		}];
+					else {
+						answersCount += 1;
+						err = error;
+						if (answersCount == nspaths.count && handler) { 
+							handler (successGraphRequest, failGraphRequest, results);
+						}
+					}
+        } else {
+					answersCount += 1;
+					NSLog (@"result %@ %d", result, answersCount);
+					[results addObject:result];
+					if (answersCount == nspaths.count && handler) { 
+						handler (successGraphRequest, failGraphRequest, results);
+					}
+        }
+	};
+	for (id path in nspaths) {
+		NSLog(@"path %@", path);
+		FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc] initWithGraphPath:path parameters:nsparams];
+		[connection addRequest:request completionHandler:completionHandlerBlock];
+	}
+	[connection start];
 };
 
-void graphRequest (NSString* nspath, NSDictionary* nsparams, value* successGraphRequest, value* failGraphRequest, NSString* reqMethod) {
-		NSLog(@"graph token %@", ([[FBSDKAccessToken currentAccessToken] tokenString]));
-			[[[FBSDKGraphRequest alloc] initWithGraphPath:nspath parameters:nsparams HTTPMethod:reqMethod] startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
-				CAMLparam0();
-				CAMLlocal1(mljs);
-        NSLog(@"!!!!completionHandler err %@ result %@", error, result);
-
+void graphRequest (NSArray* nspaths, NSDictionary* nsparams, value* successGraphRequest, value* failGraphRequest, NSString* reqMethod, graphResponseHandler handler) {
+	FBSDKGraphRequestConnection *connection = [[FBSDKGraphRequestConnection alloc] init];
+	NSMutableArray* results = [[NSMutableArray alloc] init];
+	//connection.delegate = [[LightDelegate alloc] init:results handler:handler success:successGraphRequest fail:failGraphRequest];
+	__block int answersCount  = 0;
+	__block NSError* err;
+	void (^completionHandlerBlock)(FBSDKGraphRequestConnection*, id, NSError*)= ^(FBSDKGraphRequestConnection *connection, id result, NSError *error){
         if (error) {
-					NSLog(@"ERROR %@", [error.userInfo valueForKey:FBSDKGraphRequestErrorGraphErrorCode]);
-					//FBSDKGraphRequestErrorGraphErrorCode
-					if ([[error.userInfo valueForKey:FBSDKGraphRequestErrorGraphErrorCode] intValue] == 2500) {
+					NSLog(@"ERROR %@ %@", error, [error.userInfo valueForKey:FBSDKGraphRequestErrorGraphErrorCode]);
+					//user cancel native reauth window
+					int errCode = [[error.userInfo valueForKey:FBSDKGraphRequestErrorGraphErrorCode] intValue];
+					if (errCode == 104 || errCode == 2500) {
+						[connection cancel];
 									successBlockT block = ^ {
-										_graphRequest (nspath, nsparams, reqMethod, successGraphRequest, failGraphRequest);
+										_graphRequest (nspaths, nsparams, reqMethod, successGraphRequest, failGraphRequest, handler);
 									};
 									reconnect (failGraphRequest, successGraphRequest, block);
 						}
 					else {
-						RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
-						FREE_CALLBACK(successGraphRequest);
-						FREE_CALLBACK(failGraphRequest);        
+						answersCount += 1;
+						err = error;
+						if (answersCount == nspaths.count && handler) { 
+							if (results.count > 0) {
+								handler (successGraphRequest, failGraphRequest, results);
+							}
+							else {
+								RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
+								FREE_CALLBACK(successGraphRequest);
+								FREE_CALLBACK(failGraphRequest);        
+							}
+						}
 					}
         } else {
-            if (successGraphRequest) {
-							NSError *jerr = nil;
-							NSData *json = [NSJSONSerialization dataWithJSONObject:result options:0 error:&jerr];
-							if (!jerr) {
-								value mljs = caml_alloc_string(json.length);
-								[json getBytes:String_val(mljs) length:json.length];
-								RUN_CALLBACK(successGraphRequest, mljs);
-							} else {
-								RUN_CALLBACK(failGraphRequest, caml_copy_string ([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
-							}
-            }
-					FREE_CALLBACK(successGraphRequest);
-					FREE_CALLBACK(failGraphRequest);        
+					answersCount += 1;
+					NSLog (@"result %@ %d", result, answersCount);
+					[results addObject:result];
+					if (answersCount == nspaths.count && handler) { 
+						handler (successGraphRequest, failGraphRequest, results);
+					}
         }
-
-				CAMLreturn0;
-    }];
+	};
+	for (id path in nspaths) {
+		NSLog(@"path %@", path);
+		FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc] initWithGraphPath:path parameters:nsparams];
+		[connection addRequest:request completionHandler:completionHandlerBlock];
+	}
+	[connection start];
 }
 
 value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail, value vhttp_method) {
@@ -761,35 +820,24 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 
     NSString* reqMethod = get_variant == vhttp_method ? @"GET" : @"POST";
 
-		graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod);
-
-		/*
-   if ([FBSDKAccessToken currentAccessToken]) {
-		 NSLog(@"already authorized");
-		 graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod);
-	 }
-	 else {
-		[loginManager logInWithReadPermissions:nil handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
-			NSLog(@"result %@", result);
-			if (error) {
-				NSLog(@"error %@", error);
-				RUN_CALLBACK(failGraphRequest, caml_copy_string ([[error localizedDescription] UTF8String]));
-				FREE_CALLBACK(successGraphRequest);
-				FREE_CALLBACK(failGraphRequest);        
-			} else if (result.isCancelled) {
-				// Handle cancellations
-				NSLog(@"fb auth cancelled");
-				RUN_CALLBACK(failGraphRequest, caml_copy_string ("FB Authorization cancelled"));
-				FREE_CALLBACK(successGraphRequest);
-				FREE_CALLBACK(failGraphRequest);        
+		graphResponseHandler handler = ^ (value* success, value* fail, id result) {
+			CAMLparam0();
+			CAMLlocal1(mljs);
+			NSError *jerr = nil;
+			NSData *json = [NSJSONSerialization dataWithJSONObject:result options:0 error:&jerr];
+			if (!jerr) {
+				value mljs = caml_alloc_string(json.length);
+				[json getBytes:String_val(mljs) length:json.length];
+				RUN_CALLBACK(success, mljs);
 			} else {
-				NSLog(@"FB login success");
-				graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod);
+				RUN_CALLBACK(fail, caml_copy_string ([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
 			}
-		}];
-	 }
-	 */
-	 return Val_unit;
+			CAMLreturn0;
+		};
+
+		graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod, handler);
+
+		CAMLreturn(Val_unit);
 }
 
 /*
@@ -902,8 +950,140 @@ value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, v
 value ml_fb_share_byte(value* argv, int argn) {
     return ml_fb_share(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }
-/*
-- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
-   return [[FBSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
+
+value ml_fbUid (value unit) {
+	return [FBSDKProfile	currentProfile]? (caml_copy_string([[FBSDKProfile	currentProfile].userID UTF8String])) : caml_copy_string("");
 }
-*/
+
+static value *create_user = NULL;
+
+graphResponseHandler handler = ^ (value* success, value* fail, id result) {
+	CAMLparam0();
+	CAMLlocal2(vitems, head);
+	NSLog(@"result %@", result);
+	if([result isKindOfClass:[NSArray class]] ) {
+		NSArray *friendsInfo;
+		NSArray *res = (NSArray *) result;
+
+	if(res.count == 1 ) {
+
+		@try {
+			NSError *jerr = nil;
+			NSData *nsdata= [NSJSONSerialization dataWithJSONObject:res[0] options:0 error:&jerr];
+			if (!jerr) {
+				NSDictionary *nsdict= [NSJSONSerialization JSONObjectWithData:nsdata options:0 error:&jerr];
+				if (!jerr) {
+					NSLog (@"1");
+					friendsInfo = [nsdict objectForKey:@"data"];
+				}
+				else {
+					RUN_CALLBACK(fail, caml_copy_string ([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+				}
+				}		
+			else {
+				RUN_CALLBACK(fail, caml_copy_string ([[jerr localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+			} 
+		}
+	
+		@catch (NSException *exc) {
+				NSLog (@"2");
+				friendsInfo = res;
+			}
+
+  }
+	else { 
+		friendsInfo = res;
+	}
+	if (friendsInfo == nil) {
+		friendsInfo = res;
+	}
+
+
+
+
+				NSLog (@"loop %@", friendsInfo);
+			int err = 0;
+
+			do {
+				if (friendsInfo== nil) {
+					err = 1;
+					break;
+				}
+
+				vitems = Val_int(0);
+
+				for (id item in friendsInfo) {
+					NSDictionary* mitem = item;
+
+					NSLog(@"mitem %@", mitem);
+
+					NSString* mid = [mitem objectForKey:@"id"];
+					NSString* mname = [mitem objectForKey:@"name"];
+					NSString* mgender = [mitem objectForKey:@"gender"];
+					NSDictionary* mpic = [mitem objectForKey:@"picture"];
+					NSDictionary* mpicData = [mpic objectForKey:@"data"];
+					NSString* mphoto = [mpicData objectForKey:@"url"];
+					double lastSeenTime = 0;
+
+					if (!(mid && mname )) {
+						err = 1;
+						break;
+					}
+
+					head = caml_alloc_tuple(2);
+					value args[6] = { caml_copy_string([mid UTF8String]), caml_copy_string([mname UTF8String]), Val_int( [mgender isEqualToString:@"female"] ? 1: [mgender isEqualToString:@"male"] ? 2: 0),
+										caml_copy_string([mphoto UTF8String]), Val_false, caml_copy_double(lastSeenTime)};
+					Store_field(head, 0, caml_callbackN(*create_user, 6, args));
+					Store_field(head, 1, vitems);
+
+					vitems = head;
+				}
+			} while(NO);
+
+			if (!err) {
+				RUN_CALLBACK(success, vitems)
+			} else {
+				RUN_CALLBACK(fail, caml_copy_string("wrong format of response on friends request"));
+			}
+
+	}
+	else {
+				RUN_CALLBACK(fail, caml_copy_string("wrong format of response on friends request"));
+	}
+	FREE_CALLBACK(success);
+	FREE_CALLBACK(fail);        
+	CAMLreturn0;
+};
+
+value ml_fbFriends(value vfail, value vsuccess) {
+	CAMLparam2(vfail, vsuccess);
+
+	value *fail, *success;
+	REG_CALLBACK(vsuccess, success);
+	REG_OPT_CALLBACK(vfail, fail);
+
+	if (!create_user) create_user = caml_named_value("create_user");
+
+	NSDictionary* params= [NSDictionary dictionaryWithObjectsAndKeys: @"gender,id,name,picture", @"fields", nil];
+	graphRequest ([NSArray arrayWithObjects:@"me/friends",nil], params, success, fail, @"GET", handler);
+
+  CAMLreturn(Val_unit);
+}
+
+value ml_fbUsers(value vfail, value vsuccess, value vids) {
+	CAMLparam2(vfail, vsuccess);
+
+	value *fail, *success;
+	REG_CALLBACK(vsuccess, success);
+	REG_OPT_CALLBACK(vfail, fail);
+
+	if (!create_user) create_user = caml_named_value("create_user");
+
+	NSDictionary* params= [NSDictionary dictionaryWithObjectsAndKeys: @"gender,id,name,picture", @"fields", nil];
+	NSString *nsids = [NSString stringWithUTF8String:String_val(vids)];
+	NSArray *nspaths= [nsids componentsSeparatedByString: @","];
+	NSLog (@"paths %@", nspaths);
+	graphRequest (nspaths, params, success, fail, @"GET", handler);
+
+  CAMLreturn(Val_unit);
+}
