@@ -1,0 +1,12 @@
+language: objective-c
+before_install:
+  - brew update
+  - brew reinstall xctool
+  - gem install cocoapods --pre --quiet
+  - pod setup --silent
+  - pod repo update --silent
+script:
+  - pod lib lint Bolts.podspec
+  - pod lib lint --use-libraries Bolts.podspec
+  - xctool -project Bolts.xcodeproj -sdk iphonesimulator -scheme Bolts -configuration Debug test
+  - xctool -project Bolts.xcodeproj -sdk macosx -scheme MacBolts test
