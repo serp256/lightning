@@ -7,3 +7,6 @@
 [submodule "src/plugins/odnoklassniki/ios/sdk"]
 	path = src/plugins/odnoklassniki/ios/sdk
 	url = https://github.com/apiok/ok-ios-sdk.git
+[submodule "src/plugins/facebook/ios/sdk"]
+	path = src/plugins/facebook/ios/sdk
+	url = git://github.com/facebook/facebook-ios-sdk.git
