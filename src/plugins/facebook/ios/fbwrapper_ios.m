@@ -835,7 +835,7 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 			CAMLreturn0;
 		};
 
-		graphRequest (nspath, nsparams, successGraphRequest, failGraphRequest, reqMethod, handler);
+		graphRequest ([NSArray arrayWithObjects:nspath,nil], nsparams, successGraphRequest, failGraphRequest, reqMethod, handler);
 
 		CAMLreturn(Val_unit);
 }
@@ -1065,7 +1065,7 @@ value ml_fbFriends(value vfail, value vsuccess) {
 	if (!create_user) create_user = caml_named_value("create_user");
 
 	NSDictionary* params= [NSDictionary dictionaryWithObjectsAndKeys: @"gender,id,name,picture", @"fields", nil];
-	graphRequest ([NSArray arrayWithObjects:@"me/friends",nil], params, success, fail, @"GET", handler);
+	graphRequest ([NSArray arrayWithObjects:@"me/taggable_friends",nil], params, success, fail, @"GET", handler);
 
   CAMLreturn(Val_unit);
 }

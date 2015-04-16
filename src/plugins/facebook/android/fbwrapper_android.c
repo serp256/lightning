@@ -1,24 +1,16 @@
 #include "fbwrapper_android.h"
 #include <caml/callback.h>
 
-#define GET_LIGHTFACEBOOK if (!lightFacebookCls) lightFacebookCls = engine_find_class("com/facebook/LightFacebook");
+//#GET_LIGHTFACEBOOK if (!lightFacebookCls) lightFacebookCls = engine_find_class("com/facebook/LightFacebook");
 
 static jclass cls = NULL;
 
 #define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightFacebook);
-
 #define FB_ANDROID_FREE_CALLBACK(callback) if (callback) {                                     \
     caml_remove_generational_global_root(callback);                                 \
     free(callback);                                                                 \
-}                                                                                   \
+}
 
-#define REGISTER_CALLBACK(callback, pointer) if (callback != Val_int(0)) {  \
-    pointer = (value*)malloc(sizeof(value));                                \
-    *pointer = Field(callback, 0);                                          \
-    caml_register_generational_global_root(pointer);                        \
-} else {                                                                    \
-    pointer = NULL;                                                         \
-}                                                                           \
 
 static jclass lightFacebookCls = NULL;
 
@@ -121,6 +113,7 @@ value ml_fbLoggedIn() {
 }
 
 value ml_fbDisconnect(value unit) {
+	CAMLparam0();
 	PRINT_DEBUG("ml_fbDisconnect");
 
 	GET_ENV;
@@ -128,6 +121,7 @@ value ml_fbDisconnect(value unit) {
 
 	STATIC_MID(cls, disconnect, "()V");
 	(*env)->CallStaticVoidMethod(env, cls, mid);
+	CAMLreturn (Val_unit);
 }
 
 value ml_fbAccessToken(value unit) {
@@ -150,6 +144,24 @@ value ml_fbAccessToken(value unit) {
 	CAMLreturn(vtoken);
 }
 
+value ml_fbUid (value unit) {
+	CAMLparam0();
+	CAMLlocal1(vuid);
+
+	PRINT_DEBUG("ml_fbUid");
+	GET_ENV;
+	GET_CLS;
+
+	STATIC_MID(cls, uid, "()Ljava/lang/String;");
+
+	jstring juid = (*env)->CallStaticObjectMethod(env, cls, mid);
+	const char* cuid= (*env)->GetStringUTFChars(env, juid, JNI_FALSE);
+	vuid= caml_copy_string(cuid);
+	(*env)->ReleaseStringUTFChars(env, juid, cuid);
+
+	CAMLreturn(vuid);
+}
+
 value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail, value vhttp_method) {
 	CAMLparam5(vpath, vparams, vsuccess, vfail, vhttp_method);
     PRINT_DEBUG("ml_fbGraphrequest");
@@ -157,8 +169,8 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
     value* success;
     value* fail;
 
-    REGISTER_CALLBACK(vsuccess, success);
-    REGISTER_CALLBACK(vfail, fail);
+    REG_CALLBACK(vsuccess, success);
+    REG_OPT_CALLBACK(vfail, fail);
 
 		GET_ENV;
     GET_CLS;
@@ -213,7 +225,7 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
     static value get_variant = 0;
     if (!get_variant) get_variant = caml_hash_variant("get");
 
-    (*env)->CallStaticVoidMethod(env, cls, mid, jpath, jparams, (int)success, (int)fail, vhttp_method == get_variant ? 0 : 1);
+    (*env)->CallStaticVoidMethod(env, cls, mid, jpath, jparams, (jint)success, (jint)fail, vhttp_method == get_variant ? 0 : 1);
 
     PRINT_DEBUG("checkpoint5");
 
@@ -222,12 +234,13 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 
 		CAMLreturn(Val_unit);
 }
+/*
 void ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
     value* _successCallback;
     value* _failCallback;
 
-    REGISTER_CALLBACK(successCallback, _successCallback);
-    REGISTER_CALLBACK(failCallback, _failCallback);
+    REG_OPT_CALLBACK(successCallback, _successCallback);
+    REG_OPT_CALLBACK(failCallback, _failCallback);
 
     GET_LIGHTFACEBOOK;
 
@@ -249,6 +262,7 @@ void ml_fbApprequest(value title, value message, value recipient, value data, va
 }
 
 void ml_fbApprequest_byte(value * argv, int argn) {}
+*/
 
 void fbandroid_callback(void *data) {
     caml_callback(*((value*)data), Val_unit);   
@@ -280,7 +294,7 @@ void fbandroid_callback_with_str(void *d) {
 
     value vparam;
     JSTRING_TO_VAL(data->str, vparam);
-    caml_callback(*data->callbck, vparam);
+    RUN_CALLBACK(data->callbck, vparam);
 
     (*ML_ENV)->DeleteGlobalRef(ML_ENV, data->str);
     free(data);
@@ -489,8 +503,11 @@ JNIEXPORT void JNICALL Java_com_facebook_LightFacebook_00024CamlNamedValueWithSt
 }
 
 void fbandroid_release_callbacks(void *d) {
+		PRINT_DEBUG("3");
     value **data = (value**)d;
+PRINT_DEBUG ("free %d", data[0]);
     FB_ANDROID_FREE_CALLBACK(data[0]);
+PRINT_DEBUG ("free %d", data[0]);
     FB_ANDROID_FREE_CALLBACK(data[1]);
     free(data);
 }
@@ -507,11 +524,13 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024Rel
         (*env)->DeleteLocalRef(env, selfCls);        
     }
 
+		PRINT_DEBUG("1");
     value **data = (value**)malloc(sizeof(value*));
 
     data[0] = (value*)(*env)->GetIntField(env, this, successCbFid);
     data[1] = (value*)(*env)->GetIntField(env, this, failCbFid);
 
+		PRINT_DEBUG("2");
     RUN_ON_ML_THREAD(&fbandroid_release_callbacks, (void*)data);
 }
 /*
@@ -571,8 +590,8 @@ value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, v
     value* fail;
 
     jstring j_link, j_text, j_picUrl;
-    REGISTER_CALLBACK(v_success, success);
-    REGISTER_CALLBACK(v_fail, fail);
+    REG_OPT_CALLBACK(v_success, success);
+    REG_OPT_CALLBACK(v_fail, fail);
     OPTVAL_TO_JSTRING(v_link, j_link);
     OPTVAL_TO_JSTRING(v_text, j_text);    
     OPTVAL_TO_JSTRING(v_picUrl, j_picUrl);
@@ -589,4 +608,238 @@ value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, v
 
 value ml_fb_share_byte(value* argv, int argn) {
     return ml_fb_share(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+}
+
+value ml_fbFriends (value vfail, value vsuccess) {
+	CAMLparam2(vsuccess, vfail);
+    PRINT_DEBUG("ml_fbFriends");
+
+    value* success;
+    value* fail;
+
+    REG_CALLBACK(vsuccess, success);
+    REG_OPT_CALLBACK(vfail, fail);
+
+		GET_ENV;
+    GET_CLS;
+
+		STATIC_MID(cls, friends, "(II)V");
+
+    (*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail);
+
+		CAMLreturn(Val_unit);
+}
+
+
+value ml_fbUsers (value vfail, value vsuccess, value vids) {
+	CAMLparam3(vfail, vsuccess, vids);
+	CAMLlocal2(retval,head);
+    PRINT_DEBUG("ml_fbUsers");
+
+    value* fail;
+    value* success;
+		retval = Val_int(0);
+
+    REG_CALLBACK(vfail, fail);
+    REG_CALLBACK(vsuccess, success);
+
+		GET_ENV;
+    GET_CLS;
+
+		jstring jids;
+		VAL_TO_JSTRING(vids, jids);
+		STATIC_MID(cls, users, "(IILjava/lang/String;)V");
+		(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail, jids);
+		(*env)->DeleteLocalRef(env, jids);
+		CAMLreturn(Val_unit);
+}
+/*
+typedef struct {
+	value *success;
+	value *fail;
+	jobjectArray friends;
+} friends_success_t;
+
+void fbandroid_friends_success (void *data) {
+	CAMLparam0();
+	CAMLlocal2(retval, head);
+
+	PRINT_DEBUG("friends_success");
+	GET_ENV;
+
+	friends_success_t *friends_success = (friends_success_t*)data;
+	PRINT_DEBUG("1");
+
+	static value* create_friend = NULL;
+	if (!create_friend) create_friend = caml_named_value("create_user");
+
+	PRINT_DEBUG("2");
+	retval = Val_int(0);
+
+	int cnt = (*env)->GetArrayLength(env, friends_success->friends);
+	PRINT_DEBUG("cnt %d", cnt);
+	int i;
+
+	static jfieldID id_fid = 0;
+	static jfieldID name_fid = 0;
+	static jfieldID photo_fid = 0;
+	static jfieldID gender_fid = 0;
+	static jfieldID online_fid = 0;
+	static jfieldID lastseen_fid = 0;
+
+	if (!id_fid) {
+		PRINT_DEBUG("4");
+		jclass cls = engine_find_class("ru/redspell/lightning/plugins/LightFacebook$Friend");
+
+		id_fid = (*env)->GetFieldID(env, cls, "id", "Ljava/lang/String;");
+		name_fid = (*env)->GetFieldID(env, cls, "name", "Ljava/lang/String;");
+		photo_fid = (*env)->GetFieldID(env, cls, "photo", "Ljava/lang/String;");
+		gender_fid = (*env)->GetFieldID(env, cls, "gender", "I");
+		online_fid = (*env)->GetFieldID(env, cls, "online", "Z");
+		lastseen_fid = (*env)->GetFieldID(env, cls, "lastSeen", "I");
+	}
+
+	for (i = 0; i < cnt; i++) {
+		jobject jfriend = (*env)->GetObjectArrayElement(env, friends_success->friends, i);
+
+		jstring jid = (jstring)(*env)->GetObjectField(env, jfriend, id_fid);
+		jstring jname = (jstring)(*env)->GetObjectField(env, jfriend, name_fid);
+		jstring jphoto = (jstring)(*env)->GetObjectField(env, jfriend, photo_fid);
+		jint jgender = (*env)->GetIntField(env, jfriend, gender_fid);
+		jboolean jonline = (*env)->GetBooleanField(env, jfriend, online_fid);
+		jint jlast_seen = (*env)->GetIntField(env, jfriend, lastseen_fid);
+		const char* cid = (*env)->GetStringUTFChars(env, jid, JNI_FALSE);
+		const char* cname = (*env)->GetStringUTFChars(env, jname, JNI_FALSE);
+		const char* cphoto = (*env)->GetStringUTFChars(env, jphoto, JNI_FALSE);
+
+		head = caml_alloc_tuple(2);
+		value args[6] = { caml_copy_string(cid), caml_copy_string(cname), Val_int(jgender), caml_copy_string(cphoto), Val_false, caml_copy_double((double)jlast_seen) };
+		Store_field(head, 0, caml_callbackN(*create_friend, 6, args));
+		Store_field(head, 1, retval);
+
+		retval = head;
+
+		(*env)->ReleaseStringUTFChars(env, jid, cid);
+		(*env)->ReleaseStringUTFChars(env, jname, cname);
+		(*env)->ReleaseStringUTFChars(env, jphoto, cphoto);
+		(*env)->DeleteLocalRef(env, jid);
+		(*env)->DeleteLocalRef(env, jname);
+		(*env)->DeleteLocalRef(env, jphoto);
+		(*env)->DeleteLocalRef(env, jfriend);
+	}
+
+	PRINT_DEBUG("5");
+	RUN_CALLBACK(friends_success->success, retval);
+	PRINT_DEBUG("5.1");
+	FREE_CALLBACK(friends_success->success);
+	PRINT_DEBUG("5.2");
+	FREE_CALLBACK(friends_success->fail);
+
+	PRINT_DEBUG("6");
+	(*env)->DeleteGlobalRef(env, friends_success->friends);
+	PRINT_DEBUG("7");
+	free(friends_success);
+
+	CAMLreturn0;
+}
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024FriendsCallback_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jobjectArray jfriends) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightFacebook_00024FriendsCallback_nativeRun");
+	friends_success_t *friends_success = (friends_success_t*)malloc(sizeof(friends_success_t));
+	friends_success->success = (value*)jsuccess;
+	friends_success->fail = (value*)jfail;
+	friends_success->friends = (*env)->NewGlobalRef(env, jfriends);
+
+	RUN_ON_ML_THREAD(&fbandroid_friends_success, (void*)friends_success);
+}
+
+*/
+
+typedef struct {
+	value *success;
+	value *fail;
+	jobjectArray friends;
+} fbandroid_friends_success_t;
+
+void fbandroid_friends_success(void *data) {
+	CAMLparam0();
+	CAMLlocal2(retval, head);
+	fbandroid_friends_success_t *friends_success = (fbandroid_friends_success_t*)data;
+
+	PRINT_DEBUG ("fbandroid_friends_success");
+	static value* fb_create_friend = NULL;
+	if (!fb_create_friend) fb_create_friend = caml_named_value("fb_create_user");
+
+	retval = Val_int(0);
+
+	int cnt = (*ML_ENV)->GetArrayLength(ML_ENV, friends_success->friends);
+	int i;
+
+	static jfieldID id_fid = 0;
+	static jfieldID name_fid = 0;
+	static jfieldID photo_fid = 0;
+	static jfieldID gender_fid = 0;
+	static jfieldID online_fid = 0;
+	static jfieldID lastseen_fid = 0;
+
+	if (!id_fid) {
+		jclass cls = engine_find_class("ru/redspell/lightning/plugins/LightFacebook$Friend");
+
+		id_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "id", "Ljava/lang/String;");
+		name_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "name", "Ljava/lang/String;");
+		photo_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "photo", "Ljava/lang/String;");
+		gender_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "gender", "I");
+		online_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "online", "Z");
+		lastseen_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "lastSeen", "I");
+	}
+
+	for (i = 0; i < cnt; i++) {
+		jobject jfriend = (*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->friends, i);
+
+		jstring jid = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, id_fid);
+		jstring jname = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, name_fid);
+		jstring jphoto = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, photo_fid);
+		jint jgender = (*ML_ENV)->GetIntField(ML_ENV, jfriend, gender_fid);
+		jboolean jonline = (*ML_ENV)->GetBooleanField(ML_ENV, jfriend, online_fid);
+		jint jlast_seen = (*ML_ENV)->GetIntField(ML_ENV, jfriend, lastseen_fid);
+		const char* cid = (*ML_ENV)->GetStringUTFChars(ML_ENV, jid, JNI_FALSE);
+		const char* cname = (*ML_ENV)->GetStringUTFChars(ML_ENV, jname, JNI_FALSE);
+		const char* cphoto = (*ML_ENV)->GetStringUTFChars(ML_ENV, jphoto, JNI_FALSE);
+
+		head = caml_alloc_tuple(2);
+		value args[6] = { caml_copy_string(cid), caml_copy_string(cname), Val_int(jgender), caml_copy_string(cphoto), jonline == JNI_TRUE ? Val_true : Val_false, caml_copy_double((double)jlast_seen) };
+		Store_field(head, 0, caml_callbackN(*fb_create_friend, 6, args));
+		Store_field(head, 1, retval);
+
+		retval = head;
+
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jid, cid);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jname, cname);
+		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jphoto, cphoto);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jid);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jname);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jphoto);
+		(*ML_ENV)->DeleteLocalRef(ML_ENV, jfriend);
+	}
+
+	PRINT_DEBUG ("success call");
+	RUN_CALLBACK(friends_success->success, retval);
+	PRINT_DEBUG ("after success call");
+	FREE_CALLBACK(friends_success->success);
+	FREE_CALLBACK(friends_success->fail);
+
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->friends);
+	free(friends_success);
+
+	CAMLreturn0;
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024FriendsCallback_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jobjectArray jfriends) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightOdnoklassniki_00024FriendsSuccess_nativeRun");
+
+	fbandroid_friends_success_t *friends_success = (fbandroid_friends_success_t*)malloc(sizeof(fbandroid_friends_success_t));
+	friends_success->success = (value*)jsuccess;
+	friends_success->fail = (value*)jfail;
+	friends_success->friends = (*env)->NewGlobalRef(env, jfriends);
+
+	RUN_ON_ML_THREAD(&fbandroid_friends_success, (void*)friends_success);
 }

@@ -13,7 +13,7 @@ module User =
         lastSeen: float;
       };
 
-    value create id name gender photo online lastSeen = { id; name; gender = match gender with [ 1 -> `female | 2 -> `male | _ -> `none ]; photo; online; lastSeen };
+    value create id name gender photo online lastSeen= { id; name; gender = match gender with [ 1 -> `female | 2 -> `male | _ -> `none ]; photo; online; lastSeen };
     value id t = t.id;
     value name t = t.name;
     value gender t = t.gender;
@@ -95,7 +95,7 @@ value fail description =
 
 Callback.register "fb_success" success;
 Callback.register "fb_fail" fail;
-Callback.register "create_user" User.create;
+Callback.register "fb_create_user" User.create;
 
 value init ~appId () = _init appId;
 
@@ -112,8 +112,8 @@ value graphrequestSuccess json callback = callback json;
 value graphrequest ~path ?params ?success ?fail ?(httpMethod = `get) () = _graphrequest path params success fail httpMethod;
 
 external friends: ?fail:(string -> unit) -> ~success:(list User.t-> unit) -> unit -> unit = "ml_fbFriends"; 
-external users: option (string -> unit) -> (list User.t -> unit) -> string -> unit = "ml_fbUsers";
+external _users: option (string -> unit) -> (list User.t -> unit) -> string -> unit = "ml_fbUsers";
 value users ?fail ~success ~ids t =
     let ids = String.concat "," ids in
-        users fail success ids;
+        _users fail success ids;
 ENDIF;

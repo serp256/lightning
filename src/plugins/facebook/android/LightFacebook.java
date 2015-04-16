@@ -8,13 +8,14 @@ import com.facebook.login.*;
 import com.facebook.share.*;
 import com.facebook.share.model.*;
 import com.facebook.share.widget.*;
-import java.util.Arrays;
+import java.util.List;
 import android.content.Intent;
 import android.os.Bundle;
 import java.util.ArrayList;
 import java.util.Set;
 import java.lang.Runnable;
 import android.net.Uri;
+import org.json.JSONException;
 
 class LightFacebook {
 	public static CallbackManager callbackManager;
@@ -43,6 +44,24 @@ class LightFacebook {
 		});
 	}
 
+  private static class Friend {
+    private String id;
+    private String name;
+    private int gender;
+    private String photo;
+    private boolean online;
+    private int lastSeen;
+
+    public Friend(String id, String name, int gender, String photo, boolean online, int lastSeen) {
+      this.id = id;
+      this.name = name;
+      this.gender = gender;
+      this.photo = photo;
+      this.online = online;
+      this.lastSeen = lastSeen;
+    }
+  }
+
 	private static ArrayList readPerms = null;
 	private static ArrayList publishPerms = null;
 
@@ -51,6 +70,10 @@ class LightFacebook {
 	private static final int PUBLISH_PERMS_REQUESTED = 2;
 
 	private static int extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
+
+	private static final int COMMON_GRAPHREQUEST= 0;
+	private static final int FRIENDS_GRAPHREQUEST = 1;
+	private static final int USERS_GRAPHREQUEST = 2;
 
 	private static String[] PUBLISH_PERMISSIONS_ARR = {
 			"publish_actions",
@@ -254,6 +277,23 @@ class LightFacebook {
 			public native void run();
 	}
 
+	private static class FriendsCallback implements Runnable {
+		  protected Friend[] friends;
+			protected int success;
+			protected int fail;
+
+			public FriendsCallback (int success, int fail, Friend[] friends) {
+					this.friends = friends;
+					this.success= success;
+					this.fail= fail;
+			}
+
+			public native void nativeRun(int success, int fail, Friend[] friends);
+
+			public void run() {
+				nativeRun(success, fail, friends);
+			}
+	}
 	private static class ReleaseCamlCallbacks implements Runnable {
 			protected int successCallback;
 			protected int failCallback;
@@ -385,96 +425,137 @@ class LightFacebook {
 		return (AccessToken.getCurrentAccessToken ()) != null ? AccessToken.getCurrentAccessToken ().getToken () : "";
 	}
 
-	public static void graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback, final int httpMethod) {
+	public static String uid () {
+		Log.d("LIGHTNING", "accessToken call");
+		return (Profile.getCurrentProfile ()) != null ? Profile.getCurrentProfile ().getId () : "";
+	}
+
+	private static void _graphrequest(final String[] paths, final Bundle params, final int successCallback, final int failCallback, final int httpMethod, final int handlerType) {
 			Lightning.activity.runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
+						List<GraphRequest> requests = new ArrayList<GraphRequest>();
+						final List<GraphResponse> results = new ArrayList<GraphResponse>();
+						final GraphRequestBatch batch;
+						for (final String path: paths) {
+							Log.d("LIGHTNING", "p" + path);
+							requests.add (
+								new GraphRequest(AccessToken.getCurrentAccessToken (), path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.GraphRequest.Callback () {
+											@Override
+											public void onCompleted(GraphResponse response) {
+													Log.d("LIGHTNING", "graphrequest onCompleted" + response);
 
-						new GraphRequest(AccessToken.getCurrentAccessToken (), path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.GraphRequest.Callback () {
-									@Override
-									public void onCompleted(GraphResponse response) {
-											Log.d("LIGHTNING", "graphrequest onCompleted");
+													FacebookRequestError error = response.getError();
 
-											FacebookRequestError error = response.getError();
+													if (error != null) {
+															Log.d("LIGHTNING", "error: " + error);
+															if (error.getRequestStatusCode() == 400) {
+																//token is not valid; should reauth
+																Runnable graphRequestRunnable = new Runnable() {
+																		@Override
+																		public void run() {
 
-											if (error != null) {
-													Log.d("LIGHTNING", "error: " + error);
-													if (error.getRequestStatusCode() == 400) {
-														//token is not valid; should reauth
-														Runnable graphRequestRunnable = new Runnable() {
-																@Override
-																public void run() {
+																			new GraphRequest(AccessToken.getCurrentAccessToken (), path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.GraphRequest.Callback () {
+																						@Override
+																						public void onCompleted(GraphResponse response) {
+																								Log.d("LIGHTNING", "graphrequest onCompleted");
 
-																	new GraphRequest(AccessToken.getCurrentAccessToken (), path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.GraphRequest.Callback () {
-																				@Override
-																				public void onCompleted(GraphResponse response) {
-																						Log.d("LIGHTNING", "graphrequest onCompleted");
+																								FacebookRequestError error = response.getError();
 
-																						FacebookRequestError error = response.getError();
-
-																						if (error != null) {
-																								Log.d("LIGHTNING", "error: " + error);
-																								(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
-																								(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
-																						} else {
-																								String json = null;
-
-																								if (response.getJSONObject() != null) {
-																										json = response.getJSONObject().toString();
-																								} else if (response.getJSONArray() != null) {
-																										json = response.getJSONArray().toString();
-																								}
-
-																								Log.d("LIGHTNING", "json " + json);
-
-																								if (json == null) {
-																									(new CamlParamCallbackInt(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
+																								if (error != null) {
+																										Log.d("LIGHTNING", "error: " + error);
+																										(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
+																										(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
 																								} else {
-																									(new CamlParamCallbackInt(successCallback, json)).run();
+																									/*TODO:
+																									switch (handlerType) {
+																										case COMMON_GRAPHREQUEST: {
+																															(new GraphResponseHandler (response, successCallback, failCallback)).run ();
+																															break;
+																										}
+																										case FRIENDS_GRAPHREQUEST: {
+																															(new GraphResponseFriendsHandler (response, successCallback, failCallback)).run ();
+																															break;
+																										}
+																										case USERS_GRAPHREQUEST: {
+																															(new GraphResponseUsersHandler (response, successCallback, failCallback)).run ();
+																															break;
+																										}
+																									}
+																									*/
 																								}
-
-																								(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
 																						}
-																				}
 
-																}).executeAsync ();
-																}
-														};
-													  Runnable failRunnable = new Runnable() {
-															@Override
-																public void run () {
-																	(new CamlParamCallbackInt(failCallback, "fail graphrequest cause reconnect error")).run();
-																	(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
-																}
-													  };
+																		}).executeAsync ();
+																		}
+																};
+																Runnable failRunnable = new Runnable() {
+																	@Override
+																		public void run () {
+																			(new CamlParamCallbackInt(failCallback, "fail graphrequest cause reconnect error")).run();
+																			(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+																		}
+																};
 
-														reconnect (graphRequestRunnable, failRunnable);
-													}
-													else {
-														(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
-													}
-											} else {
-													String json = null;
-
-													if (response.getJSONObject() != null) {
-															json = response.getJSONObject().toString();
-													} else if (response.getJSONArray() != null) {
-															json = response.getJSONArray().toString();
-													}
-
-													Log.d("LIGHTNING", "json " + json);
-
-													if (json == null) {
-														(new CamlParamCallbackInt(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
+																reconnect (graphRequestRunnable, failRunnable);
+															}
+															else {
+																Log.d ("LIGHTNING", "Unresolvable ERROR");
+																/*
+																batch.clear ();
+																(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
+																(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+																*/
+															}
 													} else {
-														(new CamlParamCallbackInt(successCallback, json)).run();
+														results.add (response);
+														/*
+																switch (handlerType) {
+																	case COMMON_GRAPHREQUEST: {
+																						(new GraphResponseHandler (response,successCallback, failCallback)).run ();
+																						break;
+																	}
+																	case FRIENDS_GRAPHREQUEST: {
+																						(new GraphResponseFriendsHandler (response,successCallback, failCallback)).run ();
+																						break;
+																	}
+																	case USERS_GRAPHREQUEST: {
+																						(new GraphResponseUsersHandler (response,successCallback, failCallback)).run ();
+																						break;
+																	}
+																}
+																*/
 													}
+											}
 
-													(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+								}
+			));
+
+						}
+						batch = new GraphRequestBatch (requests);
+						batch.addCallback(new GraphRequestBatch.Callback() {
+							    @Override
+							    public void onBatchCompleted(GraphRequestBatch graphRequests) {
+										        // Application code for when the batch finishes
+											Log.d("LIGHTNING", "batch onCompleted");
+											switch (handlerType) {
+												case COMMON_GRAPHREQUEST: {
+																	(new GraphResponseHandler (results,successCallback, failCallback)).run ();
+																	break;
+												}
+												case FRIENDS_GRAPHREQUEST: {
+																	(new GraphResponseFriendsHandler (results,successCallback, failCallback)).run ();
+																	break;
+												}
+												case USERS_GRAPHREQUEST: {
+																	(new GraphResponseFriendsHandler (results,successCallback, failCallback)).run ();
+																	break;
+												}
 											}
 									}
+						});
+						batch.executeAsync();
 
-						}).executeAsync ();
 					}
 			});
 
@@ -518,5 +599,168 @@ class LightFacebook {
 		ShareDialog.show(Lightning.activity,content);
 	}
 
+	public static void graphrequest(final String path, final Bundle params, final int successCallback, final int failCallback, final int httpMethod) {
+		String[] paths = {path}; 
+		_graphrequest(paths,params,successCallback,failCallback,httpMethod, COMMON_GRAPHREQUEST);
+	}
+
+	public static void friends (final int success, final int fail) {
+		String[] paths = {"me/friends"}; 
+		Bundle params = new Bundle ();
+		params.putString ("fields","gender,id,name,picture"); 
+		_graphrequest(paths,params,success,fail,0, FRIENDS_GRAPHREQUEST);
+	}
+
+	public static void users (final int success, final int fail, final String uids) {
+		String[] paths = uids.split (",");
+		for (String p:paths) {
+			Log.d ("path "+ p);
+		}
+		Bundle params = new Bundle ();
+		params.putString ("fields","gender,id,name,picture"); 
+
+		_graphrequest(paths,params,success,fail,0, USERS_GRAPHREQUEST);
+	}
+
+	private static class GraphResponseHandler implements Runnable {
+			protected List<GraphResponse> responses;
+			protected int successCallback;
+			protected int failCallback;
+
+			public GraphResponseHandler (List<GraphResponse> responses, int success, int fail) {
+					this.responses = responses;
+					this.successCallback = success;
+					this.failCallback = fail;
+			}
+
+			@Override
+			public void run() {
+				String json = null;
+
+				GraphResponse response = responses.get(0);
+				if (response.getJSONObject() != null) {
+						json = response.getJSONObject().toString();
+				} else if (response.getJSONArray() != null) {
+						json = response.getJSONArray().toString();
+				}
+
+				Log.d("LIGHTNING", "json " + json);
+
+				if (json == null) {
+					(new CamlParamCallbackInt(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
+				} else {
+					(new CamlParamCallbackInt(successCallback, json)).run();
+				}
+
+				(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+			}
+	}
+
+	private static class GraphResponseFriendsHandler extends GraphResponseHandler {
+
+			public GraphResponseFriendsHandler (List<GraphResponse> responses, int success, int fail) {
+				super(responses,success,fail);
+			}
+
+			@Override
+			public void run() {
+				JSONArray jsonArray = null;
+				for (GraphResponse r:responses) {
+				Log.d("LIGHTNING", "response" + r);
+				}
+				if (responses.size() ==1) {
+
+					GraphResponse response = responses.get(0);
+					if (response.getJSONObject() != null) {
+						try {
+							if (response.getJSONObject().getJSONArray("data") != null) {
+								jsonArray = response.getJSONObject().getJSONArray("data");
+							}
+							else {
+								Log.d("LIGHTNING", "no array");
+								for (GraphResponse r:responses) {
+									if (r.getJSONObject() != null) {
+										jsonArray.put(r.getJSONObject());
+									}
+								}}
+						}
+						catch (JSONException exc) {
+						}
+					} else if (response.getJSONArray() != null) {
+							jsonArray = response.getJSONArray();
+					}
+				}
+				else {
+					jsonArray = new JSONArray();
+					for (GraphResponse r:responses) {
+						if (r.getJSONObject() != null) {
+							jsonArray.put(r.getJSONObject());
+						}
+					}
+				}
+
+				Log.d("LIGHTNING", "json " + jsonArray.toString());
+
+
+				if (jsonArray == null) {
+					(new CamlParamCallbackInt(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
+					(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+				} else {
+
+					try {
+						int cnt = jsonArray.length();
+						Friend[] friends = new Friend[cnt];
+						Log.d("LIGHTNING", "json " + jsonArray.toString());
+						Log.d("LIGHTNING", "cnt " + cnt);
+
+						for (int i = 0; i < cnt; i++) {
+							JSONObject item = jsonArray.getJSONObject(i);
+							Log.d("LIGHTNING", "item " + i +": " + item  );
+							JSONObject pic = (item.getJSONObject ("picture")).getJSONObject ("data");
+
+							friends[i] = new Friend(item.getString("id"), item.getString("name"), item.optString("gender").equals("female") ? 1 :item.optString("gender").equals("male") ? 2 : 0,
+														pic.getString("url"), false, 0);
+
+						}
+						(new FriendsCallback (successCallback, failCallback, friends)).run();
+					} catch (org.json.JSONException e) {
+						Log.d("LIGHTNING", "Friends onComplete Fail");
+						(new CamlParamCallbackInt(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
+						(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+					}
+				}
+
+			}
+	}
+
+	/*
+	private static class GraphResponseUsersHandler extends GraphResponseHandler {
+
+			public GraphResponseUsersHandler (List responses, int success, int fail) {
+				super(response,success,fail);
+			}
+
+			@Override
+			public void run() {
+				String json = null;
+
+				if (response.getJSONObject() != null) {
+						json = response.getJSONObject().toString();
+				} else if (response.getJSONArray() != null) {
+						json = response.getJSONArray().toString();
+				}
+
+				Log.d("LIGHTNING", "json " + json);
+
+				if (json == null) {
+					(new CamlParamCallbackInt(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
+				} else {
+					(new CamlParamCallbackInt(successCallback, json)).run();
+				}
+
+				(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+			}
+	}
+	*/
 }
 

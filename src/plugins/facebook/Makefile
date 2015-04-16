@@ -3,7 +3,7 @@ include ../../../Makefile.common
 CFLAGS += -I . 
 CFLAGS += -DLDEBUG
 
-MLFLAGS += -package ojson,extlib 
+MLFLAGS += -package ojson,extlib,redspell.syntax.debug
 
 MLSOURCES = Facebook.ml
 MLOBJSN = $(MLSOURCES:.ml=.cmx)
