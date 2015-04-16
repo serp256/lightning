@@ -169,7 +169,7 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
     value* success;
     value* fail;
 
-    REG_CALLBACK(vsuccess, success);
+    REG_OPT_CALLBACK(vsuccess, success);
     REG_OPT_CALLBACK(vfail, fail);
 
 		GET_ENV;
