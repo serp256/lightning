@@ -201,7 +201,10 @@ object(self)
         ]
       in
       self#applyFrame cf frame
-    with [ Same_frame -> () ];
+    with 
+      [ Same_frame -> () 
+      | Invalid_argument err -> failwith (Printf.sprintf "Invalid_argument %s for %s "  err self#name)
+      ];
     currentFrameID := cf;
   );
 
