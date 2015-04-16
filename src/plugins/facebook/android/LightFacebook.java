@@ -16,6 +16,7 @@ import java.util.Set;
 import java.lang.Runnable;
 import android.net.Uri;
 import org.json.JSONException;
+import com.facebook.internal.Utility;
 
 class LightFacebook {
 	public static CallbackManager callbackManager;
@@ -25,7 +26,7 @@ class LightFacebook {
 			FacebookSdk.sdkInitialize(Lightning.activity);
 		}
 		
-		Log.d ("LIGHTNING", "facebook_init: "+appId + "get app id: " + (FacebookSdk.getApplicationId()));
+		Log.d ("LIGHTNING", "facebook_init: "+appId + " get app id: " + (FacebookSdk.getApplicationId()) + " profile is " + ((Profile.getCurrentProfile ()) != null) + " token is " + ((AccessToken.getCurrentAccessToken ()) != null)) ;
 
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 				public void onCreate(Bundle savedInstanceState) {}
@@ -309,7 +310,60 @@ class LightFacebook {
 
 	private static void connectSuccess() {
 		Log.d("LIGHTNING", "connect success");
-		(new CamlCallback("fb_success")).run();
+
+		if (AccessToken.getCurrentAccessToken () != null) {
+			// need profile information right now
+			if (Profile.getCurrentProfile () != null) {
+			Lightning.activity.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						Log.d("LIGHTNING", "run ");
+						GraphRequest.Callback graphCallback = new GraphRequest.Callback() {
+										@Override
+										public void onCompleted(GraphResponse response) {
+												if (response.getError() != null) {
+														LoginManager.getInstance().logInWithReadPermissions(Lightning.activity, readPerms);
+												} else {
+													JSONObject userInfo = response.getJSONObject();
+
+																String id = userInfo.optString("id");
+																if (id == null) {
+																	Log.d("LIGHTNING", "no id");
+																}
+																String link = userInfo.optString("link");
+																Profile profile = new Profile(
+																				id,
+																				userInfo.optString("first_name"),
+																				userInfo.optString("middle_name"),
+																				userInfo.optString("last_name"),
+																				userInfo.optString("name"),
+																				link != null ? Uri.parse(link) : null
+																);
+																Profile.setCurrentProfile(profile);
+																(new CamlCallback("fb_success")).run();
+												}
+										}
+								};
+
+						Bundle parameters = new Bundle();
+						parameters.putString("fields", "id,name,first_name,middle_name,last_name,link");
+						parameters.putString("access_token", AccessToken.getCurrentAccessToken ().getToken ());
+							GraphRequest graphRequest = new GraphRequest(
+									null,
+									"me",
+									parameters,
+									HttpMethod.GET,
+									null);
+
+						graphRequest.setCallback(graphCallback);
+						graphRequest.executeAsync();
+					}
+			});
+			}
+		}
+		else {
+			(new CamlParamCallback("fb_fail", "empty access token")).run();
+		}
 	}
 
 	private static void fbError(String mes) {

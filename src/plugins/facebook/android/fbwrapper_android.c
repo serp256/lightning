@@ -355,6 +355,7 @@ void fbandroid_named_with_str(void *d) {
 
     const char* cname = (*ML_ENV)->GetStringUTFChars(ML_ENV, jname, JNI_FALSE);
     const char* cparam = (*ML_ENV)->GetStringUTFChars(ML_ENV, jparam, JNI_FALSE);
+		PRINT_DEBUG ("fbandroid_named_with_str %s %s", cname, cparam); 
     caml_callback(*caml_named_value(cname), caml_copy_string(cparam));
 
     (*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jparam, cparam);
