@@ -125,8 +125,6 @@ static inline void requestReadPermissions() {
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error) {
     switch (state) {
         case FBSessionStateOpen: {
-            NSLog(@"FBSessionStateOpen %d", [session.permissions count]);
-
             if (IOS6) {
                 /* io6 doesn't call this function each time session change its state; insted it calls blocks which given in requestNewPublishPermissions and requestNewReadPermissions calls */
                 requestReadPermissions();
@@ -185,8 +183,16 @@ typedef void (^graphResponseHandler) (value*, value*, id);
 value ml_fbInit(value appId) {
 	NSLog(@"ml_fbInit");
     [FBSDKSettings setAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
+		[FBSDKProfile enableUpdatesOnAccessTokenChange:YES];
+
+		/*
 		FBSDKAccessToken *cachedToken = [[FBSDKSettings accessTokenCache] fetchAccessToken];
 		[FBSDKAccessToken setCurrentAccessToken:cachedToken];
+		FBSDKProfile *cachedProfile = [FBSDKProfile fetchCachedProfile];
+		NSLog(@"ml_fbToken %@", cachedToken);
+		NSLog(@"ml_fbProfile %@", cachedProfile);
+		[FBSDKProfile setCurrentProfile:cachedProfile];
+		*/
 
 		loginManager = [[FBSDKLoginManager alloc] init];
 
@@ -220,8 +226,6 @@ value ml_fbInit(value appId) {
 		return Val_unit;
 }
 
-//void fbConnect (FBSession* session, FBSessionState state, NSError* error);
-
 void resetPermissions () {
 		extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
 		/*
@@ -237,7 +241,7 @@ void resetPermissions () {
 		}
 		*/
 }
-value parsePermissions(value permissions) {
+void parsePermissions(value permissions) {
     NSLog(@"parsePermissions");
 
 		extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
@@ -276,6 +280,33 @@ value parsePermissions(value permissions) {
         }
     }
 }
+void getProfile (void) {
+	if (![FBSDKProfile	currentProfile]) {
+		NSString *graphPath = @"me?fields=id,first_name,middle_name,last_name,name,link";
+		FBSDKGraphRequest *request = [[FBSDKGraphRequest alloc] initWithGraphPath:graphPath parameters:nil ];
+    [request startWithCompletionHandler:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
+      FBSDKProfile *profile = nil;
+      if (!error) {
+        profile = [[FBSDKProfile alloc] initWithUserID:result[@"id"]
+                                             firstName:result[@"first_name"]
+                                            middleName:result[@"middle_name"]
+                                              lastName:result[@"last_name"]
+                                                  name:result[@"name"]
+                                               linkURL:[NSURL URLWithString:result[@"link"]]
+                                           refreshDate:[NSDate date]];
+       [FBSDKProfile setCurrentProfile:profile];
+			 caml_callback(*caml_named_value("fb_success"), Val_unit);
+      }
+			else {
+				caml_callback(*caml_named_value("fb_fail"), caml_copy_string ([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+			}
+    }];
+	}
+	else {
+		caml_callback(*caml_named_value("fb_success"), Val_unit);
+	}
+}
+
 void checkPermissions (value *fail, value *success, successBlockT successCallback) {
 	CAMLparam0();
 	NSLog(@"check permissions; state %@, %@, %d", readPermissions, publishPermissions, extraPermsState);
@@ -296,7 +327,8 @@ void checkPermissions (value *fail, value *success, successBlockT successCallbac
 			successCallback ();
 		}
 		else {
-			caml_callback(*caml_named_value("fb_success"), Val_unit);
+			getProfile();
+			//caml_callback(*caml_named_value("fb_success"), Val_unit);
 		}
 	};
 	if ([FBSDKAccessToken currentAccessToken]) {
@@ -312,16 +344,8 @@ void checkPermissions (value *fail, value *success, successBlockT successCallbac
 															NSLog(@"result %@", result);
 															if (error) {
 																NSLog(@"error %@", error);
-																failBlock ([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]);
-																/*
-																resetPermissions ();
-																fbError (error);
-																*/
+																failBlock ((char*)[[error localizedDescription] UTF8String]);
 															} else if (result.isCancelled) {
-																/*
-																resetPermissions ();
-																caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
-																*/
 																failBlock ("FB Authorization cancelled");
 															} else {
 																NSLog(@"FB login success");
@@ -365,16 +389,8 @@ void checkPermissions (value *fail, value *success, successBlockT successCallbac
 																		NSLog(@"result %@", result);
 																		if (error) {
 																			NSLog(@"error %@", error);
-																			failBlock ([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]);
-																			/*
-																				resetPermissions ();
-																				fbError (error);
-																				*/
+																			failBlock ((char*)[[error localizedDescription] UTF8String]);
 																		} else if (result.isCancelled) {
-																			/*
-																				resetPermissions ();
-																				caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
-																				*/
 																			failBlock ("FB Authorization cancelled");
 																		} else {
 																			NSLog(@"FB login success");
@@ -391,18 +407,10 @@ void checkPermissions (value *fail, value *success, successBlockT successCallbac
 												}
 											}
 											if (publishPermissionsChecked) {
-												/*
-												resetPermissions ();
-												caml_callback(*caml_named_value("fb_success"), Val_unit);
-												*/
 												successBlock ();
 											}
 								}
 								else {
-									/*
-									resetPermissions ();
-									caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB check read permissions failed"));
-									*/
 									failBlock ("FB check read permissions failed");
 								}
 						 break;
@@ -420,15 +428,8 @@ void checkPermissions (value *fail, value *success, successBlockT successCallbac
 							resetPermissions ();
 							if (publishPermissionsChecked) {
 								successBlock ();
-								/*
-								caml_callback(*caml_named_value("fb_success"), Val_unit);
-								*/
 							}
 							else {
-								/*
-								caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization failed"));
-								*/
-
 								failBlock ("FB Authorization failed");
 							}
 						break;
@@ -436,10 +437,6 @@ void checkPermissions (value *fail, value *success, successBlockT successCallbac
 		}
 	}
 	else {
-		/*
-		resetPermissions ();
-		caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization failed"));
-		*/
 		failBlock ("FB Authorization failed");
 	}
 	CAMLreturn0;
@@ -463,9 +460,6 @@ void reconnect (value* failGraphRequest, value* successGraphRequest, successBloc
 				FREE_CALLBACK(successGraphRequest);
 				FREE_CALLBACK(failGraphRequest);        
 			} else {
-				NSLog(@"token1 %@", ([[FBSDKAccessToken currentAccessToken] tokenString]));
-				FBSDKAccessToken *cachedToken = [[FBSDKSettings accessTokenCache] fetchAccessToken];
-				NSLog(@"token2 %@", ([cachedToken tokenString]));
 				checkPermissions (failGraphRequest,successGraphRequest,successBlock);
 			}
 		}];
@@ -530,14 +524,6 @@ value ml_fbAccessToken(value unit) {
 void appRequest (NSString* nstitle, NSString* nsmessage, NSDictionary* nsparams, value* successAppRequest, value* failAppRequest) {
 			//"http://cs543109.vk.me/v543109554/73bf/q1qfvxmppFE.jpg"
 			//
-			FBSDKGameRequestContent *content = [[FBSDKGameRequestContent alloc] init];
-			content.actionType = @"send";
-			content.message= nsmessage;
-			content.title= nstitle;
-			content.to= [NSArray arrayWithObject:[nsparams objectForKey:@"to"]];
-
-			[FBSDKGameRequestDialog showWithContent:content delegate:nil];
-
 	/*
 			FBSDKShareLinkContent *content = [[FBSDKShareLinkContent alloc] init];
 			content.contentURL = [NSURL URLWithString:nsmessage];
@@ -725,7 +711,6 @@ void (^_graphRequest) (NSArray*, NSDictionary*, NSString*, value*, value*, graph
 					}
         } else {
 					answersCount += 1;
-					NSLog (@"result %@ %d", result, answersCount);
 					[results addObject:result];
 					if (answersCount == nspaths.count && handler) { 
 						handler (successGraphRequest, failGraphRequest, results);
@@ -935,8 +920,8 @@ value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, v
     CAMLparam5(v_text, v_link, v_picUrl, v_success, v_fail);
 
 		NSString* nstext = Is_block (v_text) ? [NSString stringWithCString:String_val(Field(v_text,0)) encoding:NSASCIIStringEncoding]: nil;
-		NSURL* nsurl = Is_block (v_link) ? [NSString stringWithCString:String_val(Field(v_link,0)) encoding:NSASCIIStringEncoding]: nil;
-		NSURL* nspicUrl = Is_block (v_picUrl) ? [NSString stringWithCString:String_val(Field(v_picUrl,0)) encoding:NSASCIIStringEncoding]: nil;
+		NSURL* nsurl = Is_block (v_link) ? [NSURL URLWithString:[NSString stringWithCString:String_val(Field(v_link,0)) encoding:NSASCIIStringEncoding]]: nil;
+		NSURL* nspicUrl = Is_block (v_picUrl) ? [NSURL URLWithString:[NSString stringWithCString:String_val(Field(v_picUrl,0)) encoding:NSASCIIStringEncoding]]: nil;
 
 		FBSDKShareLinkContent *content = [[FBSDKShareLinkContent alloc] init];
 		content.contentURL = nsurl;
@@ -960,7 +945,6 @@ static value *create_user = NULL;
 graphResponseHandler handler = ^ (value* success, value* fail, id result) {
 	CAMLparam0();
 	CAMLlocal2(vitems, head);
-	NSLog(@"result %@", result);
 	if([result isKindOfClass:[NSArray class]] ) {
 		NSArray *friendsInfo;
 		NSArray *res = (NSArray *) result;
@@ -1001,7 +985,7 @@ graphResponseHandler handler = ^ (value* success, value* fail, id result) {
 
 
 
-				NSLog (@"loop %@", friendsInfo);
+	NSLog (@"loop %@", friendsInfo);
 			int err = 0;
 
 			do {
@@ -1014,8 +998,6 @@ graphResponseHandler handler = ^ (value* success, value* fail, id result) {
 
 				for (id item in friendsInfo) {
 					NSDictionary* mitem = item;
-
-					NSLog(@"mitem %@", mitem);
 
 					NSString* mid = [mitem objectForKey:@"id"];
 					NSString* mname = [mitem objectForKey:@"name"];
@@ -1065,7 +1047,7 @@ value ml_fbFriends(value vfail, value vsuccess) {
 	if (!create_user) create_user = caml_named_value("create_user");
 
 	NSDictionary* params= [NSDictionary dictionaryWithObjectsAndKeys: @"gender,id,name,picture", @"fields", nil];
-	graphRequest ([NSArray arrayWithObjects:@"me/taggable_friends",nil], params, success, fail, @"GET", handler);
+	graphRequest ([NSArray arrayWithObjects:@"me/friends",nil], params, success, fail, @"GET", handler);
 
   CAMLreturn(Val_unit);
 }

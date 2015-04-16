@@ -317,7 +317,7 @@ class LightFacebook {
 			Lightning.activity.runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
-						Log.d("LIGHTNING", "run ");
+						Log.d("LIGHTNING", "profile request");
 						GraphRequest.Callback graphCallback = new GraphRequest.Callback() {
 										@Override
 										public void onCompleted(GraphResponse response) {
