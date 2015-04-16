@@ -503,6 +503,7 @@ class LightFacebook {
 
 													if (error != null) {
 															Log.d("LIGHTNING", "error: " + error);
+															/*
 															if (error.getRequestStatusCode() == 400) {
 																//token is not valid; should reauth
 																Runnable graphRequestRunnable = new Runnable() {
@@ -521,22 +522,6 @@ class LightFacebook {
 																										(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
 																										(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
 																								} else {
-																									/*TODO:
-																									switch (handlerType) {
-																										case COMMON_GRAPHREQUEST: {
-																															(new GraphResponseHandler (response, successCallback, failCallback)).run ();
-																															break;
-																										}
-																										case FRIENDS_GRAPHREQUEST: {
-																															(new GraphResponseFriendsHandler (response, successCallback, failCallback)).run ();
-																															break;
-																										}
-																										case USERS_GRAPHREQUEST: {
-																															(new GraphResponseUsersHandler (response, successCallback, failCallback)).run ();
-																															break;
-																										}
-																									}
-																									*/
 																								}
 																						}
 
@@ -555,30 +540,10 @@ class LightFacebook {
 															}
 															else {
 																Log.d ("LIGHTNING", "Unresolvable ERROR");
-																/*
-																batch.clear ();
-																(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
-																(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
-																*/
+															*/
 															}
 													} else {
 														results.add (response);
-														/*
-																switch (handlerType) {
-																	case COMMON_GRAPHREQUEST: {
-																						(new GraphResponseHandler (response,successCallback, failCallback)).run ();
-																						break;
-																	}
-																	case FRIENDS_GRAPHREQUEST: {
-																						(new GraphResponseFriendsHandler (response,successCallback, failCallback)).run ();
-																						break;
-																	}
-																	case USERS_GRAPHREQUEST: {
-																						(new GraphResponseUsersHandler (response,successCallback, failCallback)).run ();
-																						break;
-																	}
-																}
-																*/
 													}
 											}
 
@@ -590,8 +555,13 @@ class LightFacebook {
 						batch.addCallback(new GraphRequestBatch.Callback() {
 							    @Override
 							    public void onBatchCompleted(GraphRequestBatch graphRequests) {
-										        // Application code for when the batch finishes
+										// Application code for when the batch finishes
 											Log.d("LIGHTNING", "batch onCompleted");
+											if (results.isEmpty()) {
+												(new CamlParamCallbackInt(failCallback, "fail graphrequest")).run();
+												(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
+											}
+											else {
 											switch (handlerType) {
 												case COMMON_GRAPHREQUEST: {
 																	(new GraphResponseHandler (results,successCallback, failCallback)).run ();
@@ -606,6 +576,7 @@ class LightFacebook {
 																	break;
 												}
 											}
+									   }
 									}
 						});
 						batch.executeAsync();
