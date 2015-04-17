@@ -6,6 +6,8 @@ import android.app.DownloadManager;
 import android.os.Environment;
 import android.database.Cursor;
 import android.content.Context;
+import android.app.NotificationManager;
+	import android.support.v4.app.NotificationCompat;
 
 public class LightDownloadService {
  //public static void download (final String initText, final String filter) {
@@ -15,16 +17,23 @@ public class LightDownloadService {
 
 	 request.setDescription("TestReq");
 	 request.setTitle("DownloadTest");
-	 request.allowScanningByMediaScanner();
+	 //request.allowScanningByMediaScanner();
 	 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
 	 request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "testFileName");
+	 //request.setDestinationUri(path);
 
 	 final DownloadManager manager = (DownloadManager) Lightning.activity.getSystemService(Context.DOWNLOAD_SERVICE);
 
 	 final long downloadId = manager.enqueue(request);
+	final 	NotificationManager mNotifyManager =
+						(NotificationManager) Lightning.activity.getSystemService(Context.NOTIFICATION_SERVICE);
+	final 	NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(Lightning.activity);
+		mBuilder.setContentTitle("Pizda Download")
+				.setContentText("Download in progress");
 
 
-
+		final int id  = 1;
+		mNotifyManager.notify(id, mBuilder.build());
 	  Lightning.activity.runOnUiThread(new Runnable() {
 
             @Override
@@ -39,9 +48,11 @@ public class LightDownloadService {
 
                     Cursor cursor = manager.query(q);
                     cursor.moveToFirst();
-                    int bytes_downloaded = cursor.getInt(cursor
+                    final int bytes_downloaded = cursor.getInt(cursor
                             .getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-                    int bytes_total = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                    final int bytes_total = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+
+										final String uri =cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_URI));
 
                     if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
                         downloading = false;
@@ -54,8 +65,13 @@ public class LightDownloadService {
                         @Override
                         public void run() {
 
-                            Log.d ("LIGHTNING","progress:"+ dl_progress);
+                            Log.d ("LIGHTNING","progressof :"+ uri + " :" + dl_progress);
 
+																		// Sets the progress indicator to a max value, the
+																		// current completion percentage, and "determinate"
+																		// state
+																		//mBuilder.setProgress(bytes_total, bytes_downloaded, false);
+																		// Displays the progress bar for the first time.
                         }
                     });
 
