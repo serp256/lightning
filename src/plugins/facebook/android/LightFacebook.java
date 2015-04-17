@@ -540,8 +540,8 @@ class LightFacebook {
 															}
 															else {
 																Log.d ("LIGHTNING", "Unresolvable ERROR");
-															*/
 															}
+															*/
 													} else {
 														results.add (response);
 													}
