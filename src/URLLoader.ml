@@ -488,7 +488,15 @@ class loader ?request () =
 
 IFDEF PC THEN
 value download ?compress ~url ~path ?ecallback ?progress callback = ();
+value download_in_background ?compress ~url ~path ?ecallback ?progress callback = ();
 ELSE
 external download: bool -> string -> string -> option (int -> string -> unit) -> option (~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile_byte" "ml_DownloadFile";
 value download ?(compress = True) ~url ~path ?ecallback ?progress success = download compress url path ecallback progress success;
+
+IFDEF ANDROID THEN
+external download_in_background: bool -> string -> string -> option (int -> string -> unit) -> option (~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadService_byte" "ml_DownloadService";
+value download_in_background ?(compress = True) ~url ~path ?ecallback ?progress success = download_in_background compress url path ecallback progress success;
+ELSE
+value download_in_background ?compress ~url ~path ?ecallback ?progress callback = ();
+END;
 END;
