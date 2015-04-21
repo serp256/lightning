@@ -203,7 +203,7 @@ object(self)
       self#applyFrame cf frame
     with 
       [ Same_frame -> () 
-      | Invalid_argument err -> failwith (Printf.sprintf "Invalid_argument %s for %s "  err self#name)
+      | Invalid_argument err -> failwith (Printf.sprintf "Invalid_argument %s for %s; cf : %d; count_frames : %d "  err self#name cf (Array.length frames) )
       ];
     currentFrameID := cf;
   );
