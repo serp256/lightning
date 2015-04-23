@@ -490,18 +490,18 @@ class loader ?request () =
 IFDEF PC THEN
 value download ?compress ~url ~path ?ecallback ?progress callback = ();
 value download_native ?compress ~url ~path ?ecallback ?totalCallback ?progress callback = ();
-value download_native_init _  _ = ();
+value download_native_init ~success ?progress ~fail = ();
 ELSE
 external download: bool -> string -> string -> option (int -> string -> unit) -> option (~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadFile_byte" "ml_DownloadFile";
 value download ?(compress = True) ~url ~path ?ecallback ?progress success = download compress url path ecallback progress success;
 
 IFDEF ANDROID THEN
-external download_native: bool -> string -> string -> option (int -> string -> unit) -> option (~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadService_byte" "ml_DownloadService";
+external download_native: bool -> string -> string -> option (int -> string -> unit) -> option (~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) -> unit = "ml_DownloadNative_byte" "ml_DownloadNative";
 value download_native ?(compress = True) ~url ~path ?ecallback ?progress success = download_native compress url path ecallback progress success;
 external download_native_init: ~success:(unit -> unit) -> option (~progress:float -> ~total:float -> unit -> unit) -> ~fail:(string->unit) -> unit = "ml_DownloadServiceInit";
 value download_native_init ~success ?progress ~fail = download_native_init ~success progress ~fail;
 ELSE
 value download_native = download;
-value download_native_init _ _ = ();
+value download_native_init ~success ?progress ~fail = ();
 END;
 END;

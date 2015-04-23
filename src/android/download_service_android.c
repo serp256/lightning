@@ -30,10 +30,11 @@ value ml_DownloadServiceInit(value vsuccess, value vprogress, value vfail) {
 	CAMLreturn(Val_unit);
 }
 
-value ml_DownloadService(value vcompress, value vurl, value vpath, value verrCb, value vprgrssCb, value vcb) {
+value ml_DownloadNative(value vcompress, value vurl, value vpath, value verrCb, value vprgrssCb, value vcb) {
 	CAMLparam5(vurl, vpath, verrCb, vprgrssCb, vcb);
+	CAMLxparam1(vcompress);
 
-	PRINT_DEBUG("START DOWNLOAD FILE WITH SERVICE");
+	PRINT_DEBUG("----START DOWNLOAD FILE WITH SERVICE %d", Bool_val(vcompress) );
 
 	value* success;
 	value* fail;
@@ -47,16 +48,17 @@ value ml_DownloadService(value vcompress, value vurl, value vpath, value verrCb,
 	GET_CLS;
 
 
-	STATIC_MID(servCls, download, "(Ljava/lang/String;Ljava/lang/String;III)V");
+	STATIC_MID(servCls, download, "(ZLjava/lang/String;Ljava/lang/String;III)V");
 	jstring jurl = (*env)->NewStringUTF(env, String_val(vurl));
 	jstring jpath= (*env)->NewStringUTF(env, String_val(vpath));
-	(*env)->CallStaticVoidMethod(env, servCls, mid, jurl, jpath, (jint)success, (jint)fail, (jint)progress);
+	jboolean compress = Bool_val(vcompress) == 0 ? JNI_FALSE: JNI_TRUE;
+	(*env)->CallStaticVoidMethod(env, servCls, mid, compress, jurl, jpath, (jint)success, (jint)fail, (jint)progress);
 
 	CAMLreturn(Val_unit);
 }
 
-value ml_DownloadService_byte(value *argv, int n) {
-	return ml_DownloadService(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+value ml_DownloadNative_byte(value *argv, int n) {
+	return ml_DownloadNative(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }
 
 void download_success (void *d) {

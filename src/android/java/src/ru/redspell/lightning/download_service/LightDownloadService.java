@@ -20,6 +20,12 @@ import android.content.IntentFilter;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Hashtable;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 public class LightDownloadService {
 
 	public static boolean appRunning = false;
@@ -40,12 +46,14 @@ public class LightDownloadService {
 	private static int successDownload;
 	private static int failDownload;
 	private static int progressDownload;
+	private static boolean compress;
 
 	private static long old_bytes_downloaded = 0;
 	private static long old_bytes_total = 0;
 	private static long bytes_downloaded = 0;
 	private static long bytes_total = 0;
 
+	private static Timer timer; 
 	private static void close () {
 		callbacksHash = null;
 
@@ -56,19 +64,105 @@ public class LightDownloadService {
 			public void onReceive(Context context, Intent intent) {
 				String action = intent.getAction();
 				Log.d ("LIGHTNING","RECEIVE " + action );
+				timer.cancel ();
 				checkDownloadStatus (context, intent);
 			}
 	};
 
+	private static void unzip(String zipFile) {
+		if(zipFile.contains(".")) {
+			//String filename = zipFile.substring(0, zipFile.lastIndexOf('.')) 
+			String outputFolder = new File(zipFile).getParent();
+			Log.d ("LIGHTNING","unzip to" + outputFolder + " " + zipFile);
+			 
+					 try{
+						 FileInputStream fis = new FileInputStream(zipFile); 
+						 ZipInputStream zin = new    ZipInputStream(new BufferedInputStream(fis));
+						 ZipEntry entry;
+							Log.d ("LIGHTNING", "entry ");
+						 while((entry = zin.getNextEntry()) != null) {
+							int BUFFER = 2048;
+							Log.d ("LIGHTNING", "entry " + (outputFolder + File.separator +entry.getName()));
+							FileOutputStream fos = new FileOutputStream(outputFolder + File.separator +entry.getName());
+							BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
+							int count;
+							byte data[] = new byte[BUFFER];
+							while ((count = zin.read(data, 0, BUFFER)) != -1) {
+								Log.d ("LIGHTNING", "count " + count);
+								   //System.out.write(x);
+									    dest.write(data, 0, count);
+									 }
+								Log.d ("LIGHTNING", "__count " + count);
+							dest.flush();
+							dest.close();
+
+						 }
+							zin.close();
+							fis.close();
+							/*
+						//get the zip file content
+						ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)));
+						//get the zipped file list entry
+						ZipEntry ze = zis.getNextEntry();
+			 
+						while(ze!=null){
+
+
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							             byte[] buffer = new byte[1024];
+													              int count;
+
+			 
+							 String fileName = ze.getName();
+								 File newFile = new File(outputFolder + File.separator + fileName);
+			 
+								 Log.d ("LIGHTNING","read entry" + fileName);
+									//create all non exists folders
+									//else you will hit FileNotFoundException for compressed folder
+									new File(newFile.getParent()).mkdirs();
+			 
+									FileOutputStream fout = new FileOutputStream(newFile);             
+									while((count = zis.read(buffer)) != -1) 
+									{
+										baos.write(buffer, 0, count);
+										byte[] bytes = baos.toByteArray();
+										fout.write(bytes);             
+										baos.reset();
+									}
+
+			 
+			 
+									fout.close();   
+									ze = zis.getNextEntry();
+						}
+			 
+							zis.closeEntry();
+						zis.close();
+			 
+						Log.d ("LIGHTNING","UNZIP DONE " + zipFile + " to " + outputFolder);
+						*/
+					}catch(IOException ex){
+						Log.d ("LIGHTNING","UNZIP Failed " + ex.toString());
+					}
+		}
+	}
+
 	private static void downloadFail (long id, String reason) {
+		if (appRunning) {
+			(new DownloadFail(successDownload, failDownload, progressDownload, reason)).run ();
+		}
+		/*
 		if (callbacksHash != null) {
 			DownloadCallbacks obj = callbacksHash.get(id);
 			if (obj != null) {
 			 (new DownloadFail(obj.success,obj.fail,obj.progress, reason)).run ();
 			}
 		}
+		*/
 	}
+
 	private static void downloadSuccess (long id) {
+		/*
 		if (callbacksHash != null) {
 			DownloadCallbacks obj = callbacksHash.get(id);
 			if (obj != null) {
@@ -77,9 +171,18 @@ public class LightDownloadService {
 			 (new DownloadSuccess(obj.success,obj.fail,obj.progress)).run ();
 			}
 		}
+		*/
+
+
+		if (appRunning) {
+//		 final DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+					 (new DownloadSuccess(successDownload, failDownload, progressDownload)).run ();
+				 }
 	}
+	
 
 	private static void checkFinishAll (boolean isSuccess, String reason){
+		/*
 		if (appRunning) {
 //		 final DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
 				 if (isSuccess) {
@@ -91,6 +194,7 @@ public class LightDownloadService {
 					 close();
 				 }
 		}
+		*/
 	}
 
 	private static void checkDownloadStatus (Context context, Intent intent){
@@ -98,8 +202,9 @@ public class LightDownloadService {
 	 long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID,0);
 	 Log.d ("LIGHTNING","downloadId: " + id + " appRunning " + appRunning + " needpush " + needPush);
 
-
 		 boolean stillDownloading = false;
+
+/*		 boolean stillDownloading = false;
 				DownloadManager.Query query2 = new DownloadManager.Query();
 				query2.setFilterByStatus(
 						DownloadManager.STATUS_PAUSED|
@@ -112,6 +217,7 @@ public class LightDownloadService {
 						break;
 				}
 				cur.close();
+				*/
 
 
 
@@ -124,6 +230,7 @@ public class LightDownloadService {
 		int status = cursor.getInt(columnIndex);
 		int columnReason = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
 		int reason = cursor.getInt(columnReason);
+		final String fname =cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME));
 		Log.d ("LIGHTNING", "COMPLETE of: " + cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME)));
 	 
 		switch(status){
@@ -226,6 +333,9 @@ public class LightDownloadService {
 
 		 //if (appRunning) {
 			 downloadSuccess(id);
+			 if (compress==true) {
+				 unzip (fname);
+			 }
 			 if (!stillDownloading) {
 			 checkFinishAll(true,null);
 			 }
@@ -330,9 +440,9 @@ public class LightDownloadService {
 			}, delay, period);
  }
 
- public static void download (String url, String path, int successCb, int failCb, final int progressCb) {
-
-		Log.d ("LIGHTNING", "Java download: " + url + "  "+path + "cb: " + successCb);
+ public static void download (boolean isCompress, String url, String path, int successCb, int failCb, final int progressCb) {
+	 Log.d ("LIGHTNING", "Java download: " + url + "compress  " + isCompress);
+	 compress = isCompress;
 	 final DownloadManager manager = (DownloadManager) Lightning.activity.getSystemService(Context.DOWNLOAD_SERVICE);
 		boolean isDownloading = false;
 		long downloadId = -1;
@@ -376,7 +486,57 @@ public class LightDownloadService {
 		 request.setDestinationInExternalFilesDir(Lightning.activity,null,f.getName());
 
 		 final long id = manager.enqueue(request);
-		 callbacksHash.put(id, new DownloadCallbacks(successCb, failCb, progressCb));
+
+			 successDownload = successCb;
+			 failDownload = failCb;
+			 progressDownload = progressCb;
+
+				int delay = 3000; // delay for 1 sec. 
+				int period = 1000; // repeat every 10 sec. 
+				timer = new Timer(); 
+				timer.scheduleAtFixedRate(new TimerTask() { 
+					public void run() { 
+						Log.d ("LIGHTNING","run timer");
+
+
+									DownloadManager.Query q = new DownloadManager.Query();
+									q.setFilterById(id);
+
+									Cursor cursor = manager.query(q);
+									cursor.moveToFirst ();
+										final long bytes_downloaded = cursor.getLong(cursor .getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+										final long bytes_total = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+
+									cursor.close();
+									if (appRunning) {
+						Log.d ("LIGHTNING","progress");
+										(new DownloadProgress(progressCb,(double)bytes_downloaded, (double) bytes_total)).run();
+									}
+									else {
+										timer.cancel ();
+									}
+								if (bytes_downloaded == bytes_total) {
+									timer.cancel ();
+								}
+						} 
+					}, delay, period);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		 //callbacksHash.put(id, new DownloadCallbacks(successCb, failCb, progressCb));
 		 Log.d ("LIGHTNING","download id:" + id);
 
 		 /*
@@ -452,15 +612,13 @@ public class LightDownloadService {
 		}
 		else {
 			//(new FreeCallbacks (successCb,  failCb, progressCb)).run ();
-			if (downloadId != -1) {
-				callbacksHash.put(downloadId, new DownloadCallbacks(successCb, failCb, progressCb));
-			}
-			else {
+		//	if (downloadId != -1) {
+			//	callbacksHash.put(downloadId, new DownloadCallbacks(successCb, failCb, progressCb));
+		//	}
+		//	else {
 				//FREE CALLBACKS
-			}
+		//	}
 		}
-
-			Log.d ("LIGHTNING", "-----hash:  " + callbacksHash.toString());
 
  }
 
