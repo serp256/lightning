@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.security.MessageDigest;
 public class LightDownloadService {
 
 	public static boolean appRunning = false;
@@ -225,13 +226,98 @@ public class LightDownloadService {
 	 }
 }
 
+private static boolean checkMD5 (String md5, File file) { 
+	try {
+		FileInputStream is = new FileInputStream(file.getPath());
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		md.reset();
+		int byteArraySize = 2048;
+		byte[] bytes = new byte[byteArraySize];
+		int numBytes;
+		while ((numBytes = is.read(bytes)) != -1) {
+			md.update(bytes, 0, numBytes);
+		}
+		byte[] hash = md.digest();
+		StringBuffer hexString = new StringBuffer();
+		for (int i = 0; i < hash.length; i++) {
+			if ((0xff & hash[i]) < 0x10) {
+				hexString.append("0"
+						+ Integer.toHexString((0xFF & hash[i])));
+			} else {
+				hexString.append(Integer.toHexString(0xFF & hash[i]));
+			}
+		}
+		String result = hexString.toString();
+		Log.d ("LIGHTNING", md5 + " = " + result);
+		return (md5.equals (result));
+	}
+	catch (java.lang.Exception exc) {
+		Log.d ("LIGHTNING",exc.toString());
+		return false;
+	}
+}
 
+	private static void setProgressTimer (final long id) {
+			int delay = 1000; 
+			int period = 1000; 
+			if (timer != null) {
+				timer.cancel ();
+			}
+			Log.d("LIGHTNING","downloadid " + id);
+			final DownloadManager manager = (DownloadManager) Lightning.activity.getSystemService(Context.DOWNLOAD_SERVICE);
+			timer = new Timer(); 
+			timer.scheduleAtFixedRate(new TimerTask() { 
+				public void run() { 
+					DownloadManager.Query q = new DownloadManager.Query();
+					q.setFilterById(id);
+
+					Cursor cursor = manager.query(q);
+					cursor.moveToFirst ();
+						final long bytes_downloaded = cursor.getLong(cursor .getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+						final long bytes_total = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+
+					cursor.close();
+					if (appRunning) {
+						(new DownloadProgress(progressDownload,(double)bytes_downloaded, (double) bytes_total)).run();
+					}
+					else {
+						if (timer != null) {
+							timer.cancel ();
+						};
+					}
+					if (bytes_downloaded == bytes_total) {
+						if (timer != null) {
+							timer.cancel ();
+						};
+					}
+				} 
+			}, delay, period);
+	}
+private static void enqueueRequest (String url, String path) {
+	 final DownloadManager manager = (DownloadManager) Lightning.activity.getSystemService(Context.DOWNLOAD_SERVICE);
+	 Log.d("LIGHTNING","start download");
+	 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+
+	 File f = new File (path);
+	 request.setVisibleInDownloadsUi(false);
+	 Context context = Lightning.activity.getApplicationContext ();
+	 request.setTitle(context.getPackageManager().getApplicationLabel(context.getApplicationInfo()));
+	 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+	 request.setDestinationInExternalFilesDir(Lightning.activity,null,f.getName());
+
+	 long downloadId = manager.enqueue(request);
+	 setProgressTimer(downloadId);
+
+}
  public static void download (boolean isCompress, String url, String path, int successCb, int failCb, final int progressCb) {
 	 Log.d ("LIGHTNING", "Java download: " + url + " with compress: " + isCompress);
 	 compress = isCompress;
 	 final DownloadManager manager = (DownloadManager) Lightning.activity.getSystemService(Context.DOWNLOAD_SERVICE);
 		boolean isDownloading = false;
 		long downloadId = -1;
+			 successDownload = successCb;
+			 failDownload = failCb;
+			 progressDownload = progressCb;
 		DownloadManager.Query query = new DownloadManager.Query();
 		query.setFilterByStatus(
 				DownloadManager.STATUS_PAUSED|
@@ -254,62 +340,22 @@ public class LightDownloadService {
 		File folder1 = new File(path);
 		Log.d ("LIGHTNING", "FILE EXISTS: " + folder1.exists());
 		if (folder1.exists() && !isDownloading) {
-			folder1.delete ();
+
+			String md5 = "8491981a2935d4e5e508c4208726975a";
+			if (!checkMD5 (md5,folder1)) {
+				Log.d ("LIGHTNING","should delete"); 
+				folder1.delete ();
+				enqueueRequest(url,path);
+			}
+			else {
+				unzipAndSuccess(folder1.getPath());
+		  }
 		}
+		else 
+			if (!isDownloading) {
+				enqueueRequest(url,path);
+			}
 
-		if (!isDownloading) {
-		 Log.d("LIGHTNING","start download");
-		 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-
-		 File f = new File (path);
-		 //request.setDescription(f.getName());
-		 request.setVisibleInDownloadsUi(false);
-		 Context context = Lightning.activity.getApplicationContext ();
-		 request.setTitle(context.getPackageManager().getApplicationLabel(context.getApplicationInfo()));
-		 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
-		 request.setDestinationInExternalFilesDir(Lightning.activity,null,f.getName());
-
-		 downloadId = manager.enqueue(request);
-
-		}
-			 successDownload = successCb;
-			 failDownload = failCb;
-			 progressDownload = progressCb;
-
-				int delay = 1000; 
-				int period = 1000; 
-				if (timer != null) {
-					timer.cancel ();
-				}
-				Log.d("LIGHTNING","downloadid " + downloadId);
-				final long id = downloadId;
-				timer = new Timer(); 
-				timer.scheduleAtFixedRate(new TimerTask() { 
-					public void run() { 
-						DownloadManager.Query q = new DownloadManager.Query();
-						q.setFilterById(id);
-
-						Cursor cursor = manager.query(q);
-						cursor.moveToFirst ();
-							final long bytes_downloaded = cursor.getLong(cursor .getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-							final long bytes_total = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-
-						cursor.close();
-						if (appRunning) {
-							(new DownloadProgress(progressCb,(double)bytes_downloaded, (double) bytes_total)).run();
-						}
-						else {
-							if (timer != null) {
-								timer.cancel ();
-							};
-						}
-						if (bytes_downloaded == bytes_total) {
-							if (timer != null) {
-								timer.cancel ();
-							};
-						}
-					} 
-				}, delay, period);
  }
 
   private static abstract class Callback implements Runnable {
