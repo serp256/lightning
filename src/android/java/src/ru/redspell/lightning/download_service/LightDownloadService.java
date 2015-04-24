@@ -309,7 +309,7 @@ private static void enqueueRequest (String url, String path) {
 	 setProgressTimer(downloadId);
 
 }
- public static void download (boolean isCompress, String url, String path, int successCb, int failCb, final int progressCb) {
+ public static void download (boolean isCompress, String md5, String url, String path, int successCb, int failCb, final int progressCb) {
 	 Log.d ("LIGHTNING", "Java download: " + url + " with compress: " + isCompress);
 	 compress = isCompress;
 	 final DownloadManager manager = (DownloadManager) Lightning.activity.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -341,7 +341,7 @@ private static void enqueueRequest (String url, String path) {
 		Log.d ("LIGHTNING", "FILE EXISTS: " + folder1.exists());
 		if (folder1.exists() && !isDownloading) {
 
-			String md5 = "8491981a2935d4e5e508c4208726975a";
+			//String md5 = "8491981a2935d4e5e508c4208726975a";
 			if (!checkMD5 (md5,folder1)) {
 				Log.d ("LIGHTNING","should delete"); 
 				folder1.delete ();
