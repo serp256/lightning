@@ -7,9 +7,9 @@ static jclass servCls = NULL;
 #define STATIC_MID(cls, name, sig) static jmethodID mid = 0; if (!mid) mid = (*env)->GetStaticMethodID(env, cls, #name, sig);
 #define GET_CLS if (!servCls) servCls = engine_find_class("ru/redspell/lightning/download_service/LightDownloadService");
 
-value ml_DownloadNative(value vcompress, value vurl, value vpath, value verrCb, value vprgrssCb, value vcb) {
+value ml_DownloadNative(value vcompress, value vmd5, value vurl, value vpath, value verrCb, value vprgrssCb, value vcb) {
 	CAMLparam5(vurl, vpath, verrCb, vprgrssCb, vcb);
-	CAMLxparam1(vcompress);
+	CAMLxparam2(vcompress,vmd5);
 
 	PRINT_DEBUG("ml_DownloadNative");
 
@@ -25,17 +25,18 @@ value ml_DownloadNative(value vcompress, value vurl, value vpath, value verrCb, 
 	GET_CLS;
 
 
-	STATIC_MID(servCls, download, "(ZLjava/lang/String;Ljava/lang/String;III)V");
+	STATIC_MID(servCls, download, "(ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;III)V");
 	jstring jurl = (*env)->NewStringUTF(env, String_val(vurl));
 	jstring jpath= (*env)->NewStringUTF(env, String_val(vpath));
+	jstring jmd5= (*env)->NewStringUTF(env, String_val(vmd5));
 	jboolean compress = Bool_val(vcompress) == 0 ? JNI_FALSE: JNI_TRUE;
-	(*env)->CallStaticVoidMethod(env, servCls, mid, compress, jurl, jpath, (jint)success, (jint)fail, (jint)progress);
+	(*env)->CallStaticVoidMethod(env, servCls, mid, compress, jmd5, jurl, jpath, (jint)success, (jint)fail, (jint)progress);
 
 	CAMLreturn(Val_unit);
 }
 
 value ml_DownloadNative_byte(value *argv, int n) {
-	return ml_DownloadNative(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+	return ml_DownloadNative(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]);
 }
 
 typedef struct {
