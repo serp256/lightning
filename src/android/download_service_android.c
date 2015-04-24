@@ -7,34 +7,11 @@ static jclass servCls = NULL;
 #define STATIC_MID(cls, name, sig) static jmethodID mid = 0; if (!mid) mid = (*env)->GetStaticMethodID(env, cls, #name, sig);
 #define GET_CLS if (!servCls) servCls = engine_find_class("ru/redspell/lightning/download_service/LightDownloadService");
 
-value ml_DownloadServiceInit(value vsuccess, value vprogress, value vfail) {
-	CAMLparam3(vsuccess, vprogress, vfail);
-
-	PRINT_DEBUG("ml_DownloadServiceInit");
-
-	value* success;
-	value* fail;
-	value* progress;
-
-	REG_CALLBACK(vsuccess, success);
-	REG_CALLBACK(vfail, fail);
-	REG_OPT_CALLBACK(vprogress, progress);
-
-	GET_ENV;
-	GET_CLS;
-
-
-	STATIC_MID(servCls, init, "(III)V");
-	(*env)->CallStaticVoidMethod(env, servCls, mid, (jint)success, (jint)fail, (jint) progress);
-
-	CAMLreturn(Val_unit);
-}
-
 value ml_DownloadNative(value vcompress, value vurl, value vpath, value verrCb, value vprgrssCb, value vcb) {
 	CAMLparam5(vurl, vpath, verrCb, vprgrssCb, vcb);
 	CAMLxparam1(vcompress);
 
-	PRINT_DEBUG("----START DOWNLOAD FILE WITH SERVICE %d", Bool_val(vcompress) );
+	PRINT_DEBUG("ml_DownloadNative");
 
 	value* success;
 	value* fail;
@@ -61,28 +38,56 @@ value ml_DownloadNative_byte(value *argv, int n) {
 	return ml_DownloadNative(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }
 
+typedef struct {
+	value *success;
+	value *fail;
+	value *progress;
+	jobjectArray files;
+} download_success_t;
+
 void download_success (void *d) {
-	value **data = (value**)d;
-	PRINT_DEBUG("download_success");
-	RUN_CALLBACK(data[0], Val_unit);
-	PRINT_DEBUG("1");
-	FREE_CALLBACK(data[0]);
-	PRINT_DEBUG("2");
-	FREE_CALLBACK(data[1]);
-	FREE_CALLBACK(data[2]);
-	PRINT_DEBUG("3");
+	CAMLparam0();
+	CAMLlocal2(retval, head);
+
+	GET_ENV;
+	retval = Val_int(0);
+
+	download_success_t *data = (download_success_t*)d;
+
+	int cnt = (*env)->GetArrayLength(env, data->files);
+	int i;
+	for (i = 0; i < cnt; i++) {
+		jstring jfile = (*env)->GetObjectArrayElement(env, data->files, i);
+		const char* cfile = (*env)->GetStringUTFChars(env, jfile, JNI_FALSE);
+
+		head = caml_alloc_tuple(2);
+		Store_field(head, 0, caml_copy_string(cfile));
+		Store_field(head, 1, retval);
+
+		retval = head;
+
+		(*env)->ReleaseStringUTFChars(env, jfile, cfile);
+		(*env)->DeleteLocalRef(env, jfile);
+	}
+
+	RUN_CALLBACK(data->success, retval);
+	FREE_CALLBACK(data->fail);
+	FREE_CALLBACK(data->success);
+	FREE_CALLBACK(data->progress);
+	(*env)->DeleteGlobalRef(env,data->files); 
 	free(data);
+	CAMLreturn0;
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadSuccess_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jint jprogress) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadSuccess_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jint jprogress, jobjectArray jfiles) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadSuccess_nativeRun");
-	value **data = (value**)malloc(sizeof(value*)*3);
-	data[0] = (value*)jsuccess;
-	data[1] = (value*)jfail;
-	data[2] = (value*)jprogress;
+	download_success_t *data = (download_success_t*)malloc(sizeof(download_success_t));
+	data->success  = (value*)jsuccess;
+	data->fail     = (value*)jfail;
+	data->progress = (value*)jprogress;
+	data->files    = (*env)->NewGlobalRef(env, jfiles);
 	RUN_ON_ML_THREAD(&download_success, (void*)data);
 }
-
 
 
 typedef struct {
@@ -94,7 +99,7 @@ typedef struct {
 
 void download_fail(void *data) {
 	download_fail_t *fail = (download_fail_t*)data;
-	RUN_CALLBACK(fail->fail, caml_copy_string(fail->reason));
+	RUN_CALLBACK2(fail->fail, Val_int(0), caml_copy_string(fail->reason));
 	FREE_CALLBACK(fail->fail);
 	FREE_CALLBACK(fail->success);
 	FREE_CALLBACK(fail->progress);
@@ -125,14 +130,12 @@ typedef struct {
 } download_progress_t;
 
 void download_progress (void *data) {
-//	PRINT_DEBUG("download_progrss");
 	download_progress_t *progress_data= (download_progress_t*)data;
 	RUN_CALLBACK3(progress_data->callback, caml_copy_double(progress_data->progress), caml_copy_double(progress_data->total), Val_unit);
 	free(progress_data);
 }
 
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadProgress_nativeRun(JNIEnv *env, jobject this, jint jcallback, jdouble jprogress, jdouble jtotal) {
-//	PRINT_DEBUG("Java_ru_redspell_lightning_download_service_LightDownloadService_00024DownloadProgress_nativeRun");
 	download_progress_t *data= (download_progress_t*)malloc(sizeof(download_progress_t));
 
 	data->callback= (value*)jcallback;
@@ -141,59 +144,3 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloa
 
 	RUN_ON_ML_THREAD(&download_progress, data);
 }
-
-
-/*
-void download_finish_success (void *d) {
-	value **data = (value**)d;
-	PRINT_DEBUG("download_finish_success");
-	RUN_CALLBACK(data[0], Val_unit);
-	FREE_CALLBACK(data[0]);
-	FREE_CALLBACK(data[1]);
-	FREE_CALLBACK(data[2]);
-	free(data);
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadFinishSuccess_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jint jprogress) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadFinishSuccess_nativeRun");
-	value **data = (value**)malloc(sizeof(value*)*3);
-	data[0] = (value*)jsuccess;
-	data[1] = (value*)jfail;
-	data[2] = (value*)jprogress;
-	RUN_ON_ML_THREAD(&download_finish_success, (void*)data);
-}
-
-typedef struct {
-	value *success;
-	value *fail;
-	value *progress;
-	char *reason;
-} download_finish_fail_t;
-
-void download_finish_fail(void *data) {
-	download_finish_fail_t *fail = (download_finish_fail_t*)data;
-	RUN_CALLBACK(fail->fail, caml_copy_string(fail->reason));
-	FREE_CALLBACK(fail->fail);
-	FREE_CALLBACK(fail->success);
-	FREE_CALLBACK(fail->progress);
-	free(fail->reason);
-	free(fail);
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadFinishFail_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jint jprogress, jstring jreason) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadFinishFail_nativeRun");
-	const char* creason = (*env)->GetStringUTFChars(env, jreason, JNI_FALSE);
-	PRINT_DEBUG("creason '%s'", creason);
-	download_finish_fail_t *fail = (download_finish_fail_t*)malloc(sizeof(download_finish_fail_t));
-
-	fail->fail = (value*)jfail;
-	fail->success = (value*)jsuccess;
-	fail->progress= (value*)jprogress;
-	fail->reason = (char*)malloc(strlen(creason) + 1);
-	strcpy(fail->reason, creason);
-
-	(*env)->ReleaseStringUTFChars(env, jreason, creason);
-	RUN_ON_ML_THREAD(&download_finish_fail, fail);
-}
-
-*/
