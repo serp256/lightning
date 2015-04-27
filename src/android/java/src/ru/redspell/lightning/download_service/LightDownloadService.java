@@ -355,6 +355,9 @@ private static void enqueueRequest (String url, String path) {
 			if (!isDownloading) {
 				enqueueRequest(url,path);
 			}
+			else {
+				setProgressTimer(downloadId);
+			}
 
  }
 
