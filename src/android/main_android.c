@@ -120,6 +120,7 @@ static void engine_draw_frame(engine_t engine) {
     PRINT_DEBUG("--->>>engine_draw_frame");
     CAMLparam0();
 
+		/*
     struct timeval now;
     if (!gettimeofday(&now, NULL)) {
         double _now = (double)now.tv_sec + (double)now.tv_usec / 1000000.;
@@ -138,7 +139,26 @@ static void engine_draw_frame(engine_t engine) {
             eglSwapBuffers(engine->display, engine->surface);
         }
     }
+		*/
 
+    struct timespec now;
+    if (!clock_gettime(CLOCK_MONOTONIC, &now)) {
+        double _now = (double)now.tv_sec + (double)now.tv_nsec / 1000000000.;
+        double diff = last_draw_time == 0. ? 0. : _now - last_draw_time;
+        last_draw_time = _now;
+
+        net_run();
+        mlstage_advanceTime(engine->stage, diff);
+        mlstage_preRender(engine->stage);
+				checkGLErrors("GL_FRAMEBUFFER before");
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				checkGLErrors("GL_FRAMEBUFFER after");
+        restore_default_viewport();
+
+        if (mlstage_render(engine->stage)) {
+            eglSwapBuffers(engine->display, engine->surface);
+        }
+    }
     PRINT_DEBUG("<<<---engine_draw_frame");
     CAMLreturn0;
 }
