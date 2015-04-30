@@ -124,7 +124,7 @@ static void engine_draw_frame(engine_t engine) {
     struct timeval now;
     if (!gettimeofday(&now, NULL)) {
         double _now = (double)now.tv_sec + (double)now.tv_usec / 1000000.;
-        double diff = last_draw_time == 0. ? 0. : _now > last_draw_time ? _now - last_draw_time : 0. ;
+        double diff = last_draw_time == 0. ? 0. : _now - last_draw_time;
         last_draw_time = _now;
 
         net_run();
