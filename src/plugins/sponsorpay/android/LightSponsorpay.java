@@ -1,6 +1,6 @@
 package ru.redspell.lightning.plugins;
 
-import ru.redspell.lightning.LightActivity;
+import ru.redspell.lightning.Lightning;
 import com.sponsorpay.sdk.android.SponsorPay;
 import com.sponsorpay.sdk.android.publisher.SponsorPayPublisher;
 
@@ -14,20 +14,20 @@ public class LightSponsorpay {
 		userId = _userId;
 		securityToken = _securityToken;
 
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				SponsorPay.start(appId, userId, securityToken, LightActivity.instance.getApplicationContext());
+				SponsorPay.start(appId, userId, securityToken, Lightning.activity.getApplicationContext());
 			}
 		});
 		
 	}
 
 	public static void showOfferts() {
-		LightActivity.instance.runOnUiThread(new Runnable() {
+		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				LightActivity.instance.startActivityForResult(SponsorPayPublisher.getIntentForOfferWallActivity(LightActivity.instance, false), 0xff);
+				Lightning.activity.startActivityForResult(SponsorPayPublisher.getIntentForOfferWallActivity(Lightning.activity, false), 0xff);
 			}
 		});
 	}
