@@ -13,6 +13,7 @@
 *.native
 local.properties
 myconfig.ios
+myconfig.ios64
 myconfig.macos
 gen
 bin
