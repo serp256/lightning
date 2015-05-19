@@ -117,7 +117,7 @@ static int engine_init_display(engine_t engine) {
 static double last_draw_time = 0.;
 
 static void engine_draw_frame(engine_t engine) {
-    PRINT_DEBUG("--->>>engine_draw_frame");
+    //PRINT_DEBUG("--->>>engine_draw_frame");
     CAMLparam0();
 
     struct timeval now;
@@ -139,7 +139,7 @@ static void engine_draw_frame(engine_t engine) {
         }
     }
 
-    PRINT_DEBUG("<<<---engine_draw_frame");
+    //PRINT_DEBUG("<<<---engine_draw_frame");
     CAMLreturn0;
 }
 
@@ -357,6 +357,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 }
 
 static uint8_t foreground_called_on_resume = 1;
+static unsigned short hasFocus = 0;
 
 static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) {
     //PRINT_DEBUG("engine_handle_cmd %d", cmd);
@@ -385,6 +386,8 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             engine_term_display(engine);
             break;
         case APP_CMD_GAINED_FOCUS:
+            PRINT_DEBUG("APP_CMD_GAINED_FOCUS");
+						hasFocus = 1;
             if (engine->accelerometerSensor != NULL) {
                 ASensorEventQueue_enableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
                 ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->accelerometerSensor, (1000L/60)*1000);
@@ -393,6 +396,8 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             //engine_draw_frame(engine);
             break;
         case APP_CMD_LOST_FOCUS:
+            PRINT_DEBUG("APP_CMD_LOST_FOCUS");
+						hasFocus = 0;
             if (engine->accelerometerSensor != NULL) {
                 ASensorEventQueue_disableSensor(engine->sensorEventQueue,
                         engine->accelerometerSensor);
@@ -446,6 +451,9 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             PRINT_DEBUG("APP_CMD_RESUME");
 
             if (engine->surface != EGL_NO_SURFACE && engine->stage) {
+
+								if (hasFocus=1) { engine->animating = 1; }
+
                 foreground_called_on_resume = 1;
                 sound_android_onforeground();
                 if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
@@ -504,10 +512,10 @@ void android_main(struct android_app* state) {
         int events;
         struct android_poll_source* source;
 
-        PRINT_DEBUG("----->ALooper_pollAll engine.animating %d", engine.animating);
+        //PRINT_DEBUG("----->ALooper_pollAll engine.animating %d", engine.animating);
         while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
                 (void**)&source)) >= 0) {
-            PRINT_DEBUG("inside poll all while");
+            //PRINT_DEBUG("inside poll all while");
 
             if (source != NULL) {
                 source->process(state, source);
