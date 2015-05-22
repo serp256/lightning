@@ -22,6 +22,7 @@ class LightFacebook {
 	public static CallbackManager callbackManager;
 
 	public static void init (String appId) {
+		callbackManager = CallbackManager.Factory.create();
 		if (!FacebookSdk.isInitialized ()) {
 			FacebookSdk.sdkInitialize(Lightning.activity);
 		}
@@ -398,7 +399,6 @@ class LightFacebook {
 	public static void connect(String[] perms) {
 		Log.d("LIGHTNING", "connect call");
 
-		callbackManager = CallbackManager.Factory.create();
 
     LoginManager.getInstance().registerCallback(callbackManager,
             new FacebookCallback<LoginResult>() {

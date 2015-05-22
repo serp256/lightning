@@ -156,11 +156,14 @@ class LightOdnoklassniki {
 	}
 
 	public static String token () {
-		return ok.getCurrentAccessToken ();
+		Log.d ("LIGHTNING","token is null" + (ok.getCurrentAccessToken()==null));
+
+		return (ok.getCurrentAccessToken () == null ? "" : ok.getCurrentAccessToken ());
 	}
 
 	public static String uid () {
-		return uid; 
+		Log.d ("LIGHTNING","uid is null" + (uid==null));
+		return (uid == null ? "" : uid);
 	}
 
 	public static void logout () {

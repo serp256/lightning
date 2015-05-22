@@ -201,7 +201,10 @@ object(self)
         ]
       in
       self#applyFrame cf frame
-    with [ Same_frame -> () ];
+    with 
+      [ Same_frame -> () 
+      | Invalid_argument err -> failwith (Printf.sprintf "Invalid_argument %s for %s; cf : %d; count_frames : %d "  err self#name cf (Array.length frames) )
+      ];
     currentFrameID := cf;
   );
 
@@ -212,6 +215,7 @@ object(self)
     else
       match Ev.float_of_data event.Ev.data with
       [ Some dt ->
+        let old_elapsedTime = elapsedTime in
         (
 					debug:setframe "dt %f" dt;
           elapsedTime := elapsedTime +. dt;
@@ -254,6 +258,10 @@ object(self)
                 ]
               in
               (
+                match currentFrame < 0 with
+                [ True -> failwith (Printf.sprintf "currentFrame < 0 ; for %s; cf : %d; count_frames : %d; currentFrameID : %d; n : %d; direction : %s; sframe : %d; endFrame: %d; elapsedTime : %f; frameTime : %f; old_elapsedTime : %f; dt : %f  " self#name currentFrame (Array.length frames) currentFrameID n (if playDirection = `forward then "forward" else "backward") startFrame endFrame elapsedTime frameTime old_elapsedTime dt )
+                | _ -> ()
+                ];
                 self#setCurrentFrame currentFrame;
                 match changeHandler with
                 [ Some ch -> ch ()
