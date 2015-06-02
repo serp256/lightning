@@ -3,9 +3,9 @@
 
 //#GET_LIGHTFACEBOOK if (!lightFacebookCls) lightFacebookCls = engine_find_class("com/facebook/LightFacebook");
 
-static jclass cls = NULL;
+static jclass fb_cls = NULL;
 
-#define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightFacebook);
+#define GET_CLS GET_PLUGIN_CLASS(fb_cls,ru/redspell/lightning/plugins/LightFacebook);
 #define FB_ANDROID_FREE_CALLBACK(callback) if (callback) {                                     \
     caml_remove_generational_global_root(callback);                                 \
     free(callback);                                                                 \
@@ -22,10 +22,10 @@ value ml_fbInit(value vappId) {
 	GET_CLS;
 
 
-	STATIC_MID(cls, init, "(Ljava/lang/String;)V");
+	STATIC_MID(fb_cls, init, "(Ljava/lang/String;)V");
 	jstring jappId = (*env)->NewStringUTF(env, String_val(vappId));
-	(*env)->CallStaticVoidMethod(env, cls, mid, jappId);
-
+	(*env)->CallStaticVoidMethod(env, fb_cls, mid, jappId);
+	(*env)->DeleteLocalRef(env, jappId);
 	CAMLreturn(Val_unit);
 }
 
@@ -85,9 +85,9 @@ value ml_fbConnect(value vperms) {
 
     PRINT_DEBUG("chckpnt5");
 
-		STATIC_MID(cls, connect, "([Ljava/lang/String;)V");
+		STATIC_MID(fb_cls, connect, "([Ljava/lang/String;)V");
     PRINT_DEBUG("chckpnt6");
-		(*env)->CallStaticVoidMethod(env, cls, mid, j_perms_array);
+		(*env)->CallStaticVoidMethod(env, fb_cls, mid, j_perms_array);
     (*env)->DeleteLocalRef(env, j_perms_array);
     PRINT_DEBUG("chckpnt7");
 
@@ -101,9 +101,9 @@ value ml_fbLoggedIn() {
 		GET_ENV;
 		GET_CLS;
 
-		STATIC_MID(cls, loggedIn, "()Z");
+		STATIC_MID(fb_cls, loggedIn, "()Z");
 
-		if ((*env)->CallStaticBooleanMethod(env,cls,mid)) {
+		if ((*env)->CallStaticBooleanMethod(env,fb_cls,mid)) {
 			return (Val_bool(1));
 		}
 		else {
@@ -119,8 +119,8 @@ value ml_fbDisconnect(value unit) {
 	GET_ENV;
 	GET_CLS;
 
-	STATIC_MID(cls, disconnect, "()V");
-	(*env)->CallStaticVoidMethod(env, cls, mid);
+	STATIC_MID(fb_cls, disconnect, "()V");
+	(*env)->CallStaticVoidMethod(env, fb_cls, mid);
 	CAMLreturn (Val_unit);
 }
 
@@ -132,10 +132,10 @@ value ml_fbAccessToken(value unit) {
 	GET_ENV;
 	GET_CLS;
 
-	STATIC_MID(cls, accessToken, "()Ljava/lang/String;");
+	STATIC_MID(fb_cls, accessToken, "()Ljava/lang/String;");
 
 	PRINT_DEBUG("call");
-	jstring jtoken = (*env)->CallStaticObjectMethod(env, cls, mid);
+	jstring jtoken = (*env)->CallStaticObjectMethod(env, fb_cls, mid);
 	PRINT_DEBUG("after call");
 	const char* ctoken = (*env)->GetStringUTFChars(env, jtoken, JNI_FALSE);
 	vtoken = caml_copy_string(ctoken);
@@ -152,9 +152,9 @@ value ml_fbUid (value unit) {
 	GET_ENV;
 	GET_CLS;
 
-	STATIC_MID(cls, uid, "()Ljava/lang/String;");
+	STATIC_MID(fb_cls, uid, "()Ljava/lang/String;");
 
-	jstring juid = (*env)->CallStaticObjectMethod(env, cls, mid);
+	jstring juid = (*env)->CallStaticObjectMethod(env, fb_cls, mid);
 	const char* cuid= (*env)->GetStringUTFChars(env, juid, JNI_FALSE);
 	vuid= caml_copy_string(cuid);
 	(*env)->ReleaseStringUTFChars(env, juid, cuid);
@@ -220,12 +220,12 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 
     PRINT_DEBUG("checkpoint4");
 
-		STATIC_MID(cls, graphrequest, "(Ljava/lang/String;Landroid/os/Bundle;III)V");
+		STATIC_MID(fb_cls, graphrequest, "(Ljava/lang/String;Landroid/os/Bundle;III)V");
 
     static value get_variant = 0;
     if (!get_variant) get_variant = caml_hash_variant("get");
 
-    (*env)->CallStaticVoidMethod(env, cls, mid, jpath, jparams, (jint)success, (jint)fail, vhttp_method == get_variant ? 0 : 1);
+    (*env)->CallStaticVoidMethod(env, fb_cls, mid, jpath, jparams, (jint)success, (jint)fail, vhttp_method == get_variant ? 0 : 1);
 
     PRINT_DEBUG("checkpoint5");
 
@@ -597,8 +597,8 @@ value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, v
     OPTVAL_TO_JSTRING(v_text, j_text);    
     OPTVAL_TO_JSTRING(v_picUrl, j_picUrl);
 
-		STATIC_MID(cls, share, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V");
-		(*env)->CallStaticVoidMethod(env, cls, mid, j_text, j_link, j_picUrl, (jint)success, (jint) fail);
+		STATIC_MID(fb_cls, share, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V");
+		(*env)->CallStaticVoidMethod(env, fb_cls, mid, j_text, j_link, j_picUrl, (jint)success, (jint) fail);
 
     if (j_text) (*env)->DeleteLocalRef(env, j_text);
     if (j_link) (*env)->DeleteLocalRef(env, j_link);
@@ -624,9 +624,9 @@ value ml_fbFriends (value vfail, value vsuccess) {
 		GET_ENV;
     GET_CLS;
 
-		STATIC_MID(cls, friends, "(II)V");
+		STATIC_MID(fb_cls, friends, "(II)V");
 
-    (*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail);
+    (*env)->CallStaticVoidMethod(env, fb_cls, mid, (jint)success, (jint)fail);
 
 		CAMLreturn(Val_unit);
 }
@@ -649,8 +649,8 @@ value ml_fbUsers (value vfail, value vsuccess, value vids) {
 
 		jstring jids;
 		VAL_TO_JSTRING(vids, jids);
-		STATIC_MID(cls, users, "(IILjava/lang/String;)V");
-		(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail, jids);
+		STATIC_MID(fb_cls, users, "(IILjava/lang/String;)V");
+		(*env)->CallStaticVoidMethod(env, fb_cls, mid, (jint)success, (jint)fail, jids);
 		(*env)->DeleteLocalRef(env, jids);
 		CAMLreturn(Val_unit);
 }
@@ -783,14 +783,14 @@ void fbandroid_friends_success(void *data) {
 	static jfieldID lastseen_fid = 0;
 
 	if (!id_fid) {
-		jclass cls = engine_find_class("ru/redspell/lightning/plugins/LightFacebook$Friend");
+		jclass fb_cls = engine_find_class("ru/redspell/lightning/plugins/LightFacebook$Friend");
 
-		id_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "id", "Ljava/lang/String;");
-		name_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "name", "Ljava/lang/String;");
-		photo_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "photo", "Ljava/lang/String;");
-		gender_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "gender", "I");
-		online_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "online", "Z");
-		lastseen_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "lastSeen", "I");
+		id_fid = (*ML_ENV)->GetFieldID(ML_ENV, fb_cls, "id", "Ljava/lang/String;");
+		name_fid = (*ML_ENV)->GetFieldID(ML_ENV, fb_cls, "name", "Ljava/lang/String;");
+		photo_fid = (*ML_ENV)->GetFieldID(ML_ENV, fb_cls, "photo", "Ljava/lang/String;");
+		gender_fid = (*ML_ENV)->GetFieldID(ML_ENV, fb_cls, "gender", "I");
+		online_fid = (*ML_ENV)->GetFieldID(ML_ENV, fb_cls, "online", "Z");
+		lastseen_fid = (*ML_ENV)->GetFieldID(ML_ENV, fb_cls, "lastSeen", "I");
 	}
 
 	for (i = 0; i < cnt; i++) {
