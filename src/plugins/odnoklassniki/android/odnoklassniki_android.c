@@ -20,6 +20,14 @@ value ok_init (value vappid, value vappsecret, value vappkey) {
 
 	STATIC_MID(cls, init, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
 	(*env)->CallStaticVoidMethod(env, cls, mid, jappid, jappsecret, jappkey);
+	(*env)->DeleteLocalRef(env, jappid);
+	(*env)->DeleteLocalRef(env, jappsecret);
+	(*env)->DeleteLocalRef(env, jappkey);
+	/*
+	(*env)->ReleaseStringUTFChars(env, cappid, jappid);
+	(*env)->ReleaseStringUTFChars(env, cappsecret, jappsecret);
+	(*env)->ReleaseStringUTFChars(env, cappkey, jappkey);
+	*/
 	CAMLreturn(Val_unit);
 }
 
