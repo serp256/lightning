@@ -443,6 +443,10 @@ public class Lightning {
 			return retval;
 		}
 
+		public static void enableLog (boolean isOn) {
+			ru.redspell.lightning.utils.Log.enabled = isOn;
+		}
+
 /*		public static void uncaughtExceptionByMail(String exn, String[] bt) {
 				Context c = activity;
 				ApplicationInfo ai = c.getApplicationInfo ();

@@ -85,6 +85,11 @@ package "facebook" (
 	archive(native) = "facebook.cmxa"
 )
 
+package "supersonic" (
+  description="Supersonic Ads"
+  archive(byte) = "supersonic.cma"
+  archive(native) = "supersonic.cmxa"
+)
 package "native_vk" (
   description="Vk native SDK support"
   archive(byte) = "NativeVk.cma"

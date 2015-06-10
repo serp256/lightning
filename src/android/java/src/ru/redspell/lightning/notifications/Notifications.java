@@ -28,7 +28,7 @@ public class Notifications {
 	public static final String NOTIFICATION_ID = "id";
 
 	public static final String NOTIFICATIONS_SHARED_PREF = "notifications";
-
+	public static final String CUSTOM_ACTION = "ru.redspell.lightning.notifications.Notifications.custom_action";
 	public static boolean groupNotifications = false;
 
 	// data required for cancel intent throught filterIntent

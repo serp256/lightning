@@ -48,3 +48,5 @@ value debugErrReporting: unit -> unit;
 
 value enableAwake: unit -> unit;
 value disableAwake: unit -> unit;
+
+value enableJavaLog : bool -> unit;
