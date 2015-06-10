@@ -403,11 +403,10 @@ value ml_disableAwake(value unit) {
 	return Val_unit;
 }
 
-value ml_enableLog (value venable) {
-	CAMLparam1(venable);
-	PRINT_DEBUG("ml_enableLog");
+value ml_disableLog (value unit) {
+	PRINT_DEBUG("ml_disableLog");
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "enableLog", "(Z)V");
-	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid,venable ==Val_true ? JNI_TRUE: JNI_FALSE);
-	CAMLreturn(Val_unit);
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "disableLog", "()V");
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
+	return Val_unit;
 }

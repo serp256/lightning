@@ -268,7 +268,7 @@ external disableAwake: unit -> unit = "ml_disableAwake";
 ENDPLATFORM;
 
 IFPLATFORM(android)
-external enableJavaLog : bool -> unit = "ml_enableLog";
+external disableJavaLog: unit -> unit = "ml_disableLog";
 ELSE
-value enableJavaLog _ = ();
+value disableJavaLog () = ();
 ENDPLATFORM;
