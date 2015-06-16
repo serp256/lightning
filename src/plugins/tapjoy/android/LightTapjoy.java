@@ -2,12 +2,15 @@ package ru.redspell.lightning.plugins;
 
 import ru.redspell.lightning.Lightning;
 import com.tapjoy.TapjoyConnect;
+import ru.redspell.lightning.utils.Log;
+import com.tapjoy.TapjoyConstants;
 import com.tapjoy.TapjoyConnectFlag;
 import com.tapjoy.TapjoyLog;
 import java.util.Hashtable;
 
 public class LightTapjoy {
 	public static void init(final String appId, final String secKey) {
+		Log.d ("LIGHTNING", "Tapjoy version:" + TapjoyConstants.TJC_LIBRARY_VERSION_NUMBER);
 		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {

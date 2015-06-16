@@ -40,13 +40,11 @@ value loggedIn () = False;
 
 value accessToken () = "";
 value uid () = "";
-(*
 value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback () = ();
-*)
 value graphrequest ~path ?params ?success ?fail?httpMethod () = ();
 
 value share ?text ?link ?picUrl ?success ?fail () = match fail with [ Some fail -> fail "this method not supported on pc and ios" | _ -> () ];
-value friends ?fail ~success () = ();
+value friends ?invitable ?fail ~success () = ();
 value users ?fail ~success ~ids () = ();
 ELSE
 
@@ -60,9 +58,10 @@ external loggedIn: unit -> bool  = "ml_fbLoggedIn";
 external logout: unit -> unit = "ml_fbDisconnect";
 
 external accessToken: unit-> string = "ml_fbAccessToken";
-(*
+
 external _apprequest: string -> string -> option string -> option string -> option (list string -> unit) -> option (string -> unit) -> unit = "ml_fbApprequest_byte" "ml_fbApprequest";
-*)
+value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback () = _apprequest title message recipient data successCallback failCallback;
+
 external _graphrequest: string -> option (list (string * string)) -> option (string -> unit) -> option (string -> unit) -> httpMethod -> unit = "ml_fbGraphrequest";
 
 value _successCallback = ref None;
@@ -106,12 +105,11 @@ value authorize ?permissions ~success ~fail ?(force=False) () =
 
 			_authorize permissions ~force ();
     );		
-(*value apprequest ~title ~message ?recipient ?data ?successCallback ?failCallback () = _apprequest title message recipient data successCallback failCallback;
- * *)
 value graphrequestSuccess json callback = callback json;
 value graphrequest ~path ?params ?success ?fail ?(httpMethod = `get) () = _graphrequest path params success fail httpMethod;
 
-external friends: ?fail:(string -> unit) -> ~success:(list User.t-> unit) -> unit -> unit = "ml_fbFriends"; 
+external _friends: ~invitable:bool -> ?fail:(string -> unit) -> ~success:(list User.t-> unit) -> unit -> unit = "ml_fbFriends"; 
+value friends ?(invitable=False) ?fail ~success () = _friends ~invitable ?fail ~success ();
 external _users: option (string -> unit) -> (list User.t -> unit) -> string -> unit = "ml_fbUsers";
 value users ?fail ~success ~ids t =
     let ids = String.concat "," ids in

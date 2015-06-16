@@ -10,8 +10,8 @@ value ml_fbConnect();
 value ml_fbLoggedIn();
 
 value ml_fbAccessToken(value connect);
-value ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback);
-void ml_fbApprequest_byte(value * argv, int argn);
+value ml_fbApprequest(value vtitle, value vmessage, value vrecipient, value vdata, value vsuccess, value vfail);
+value ml_fbApprequest_byte(value * argv, int argn);
 value ml_fbGraphrequest(value path, value params, value successCallback, value failCallback, value http_method);
 
 value ml_fb_share(value v_text, value v_link, value v_picUrl, value v_success, value v_fail, value unit);

@@ -503,45 +503,6 @@ class LightFacebook {
 
 													if (error != null) {
 															Log.d("LIGHTNING", "error: " + error);
-															/*
-															if (error.getRequestStatusCode() == 400) {
-																//token is not valid; should reauth
-																Runnable graphRequestRunnable = new Runnable() {
-																		@Override
-																		public void run() {
-
-																			new GraphRequest(AccessToken.getCurrentAccessToken (), path, params, httpMethod == 0 ? com.facebook.HttpMethod.GET : com.facebook.HttpMethod.POST, new com.facebook.GraphRequest.Callback () {
-																						@Override
-																						public void onCompleted(GraphResponse response) {
-																								Log.d("LIGHTNING", "graphrequest onCompleted");
-
-																								FacebookRequestError error = response.getError();
-
-																								if (error != null) {
-																										Log.d("LIGHTNING", "error: " + error);
-																										(new CamlParamCallbackInt(failCallback, error.getErrorMessage())).run();
-																										(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
-																								} else {
-																								}
-																						}
-
-																		}).executeAsync ();
-																		}
-																};
-																Runnable failRunnable = new Runnable() {
-																	@Override
-																		public void run () {
-																			(new CamlParamCallbackInt(failCallback, "fail graphrequest cause reconnect error")).run();
-																			(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
-																		}
-																};
-
-																reconnect (graphRequestRunnable, failRunnable);
-															}
-															else {
-																Log.d ("LIGHTNING", "Unresolvable ERROR");
-															}
-															*/
 													} else {
 														results.add (response);
 													}
@@ -629,12 +590,29 @@ class LightFacebook {
 		_graphrequest(paths,params,successCallback,failCallback,httpMethod, COMMON_GRAPHREQUEST);
 	}
 
-	public static void friends (final int success, final int fail) {
-		String[] paths = {"me/friends"}; 
+	public static void friends (final boolean invitable, final int success, final int fail) {
+		String[] paths;
+		paths =  invitable ? (new String [] {"me/invitable_friends"}) : (new String [] {"me/friends"});
+		for (String p:paths) {
+			Log.d ("LIGHTNING","path "+ p);
+		}
 		Bundle params = new Bundle ();
 		params.putString ("fields","gender,id,name,picture"); 
 		_graphrequest(paths,params,success,fail,0, FRIENDS_GRAPHREQUEST);
 	}
+	/*
+	public static void invite (final int success, final int fail, final String id) {
+		//String[] paths = uids.split (",");
+		String[] paths = {"me/invitable_friends"}; 
+		for (String p:paths) {
+			Log.d ("path "+ p);
+		}
+		Bundle params = new Bundle ();
+		params.putString ("fields","gender,id,name,picture"); 
+
+		_graphrequest(paths,params,success,fail,0, USERS_GRAPHREQUEST);
+	}
+	*/
 
 	public static void users (final int success, final int fail, final String uids) {
 		String[] paths = uids.split (",");
@@ -758,34 +736,44 @@ class LightFacebook {
 			}
 	}
 
-	/*
-	private static class GraphResponseUsersHandler extends GraphResponseHandler {
+	public static void apprequest(final String title, final String message, final String recipient, final String data, final int successCallback, final int failCallback) {
+		final GameRequestDialog gameRequestDialog = new GameRequestDialog(Lightning.activity);
+		gameRequestDialog.registerCallback(
+				callbackManager,
+				new FacebookCallback<GameRequestDialog.Result>() {
+				@Override
+					public void onCancel() {
+						Log.d("LIGHTNING", "Canceled");
+					}
 
-			public GraphResponseUsersHandler (List responses, int success, int fail) {
-				super(response,success,fail);
-			}
+				@Override
+					public void onError(FacebookException error) {
+						Log.d("LIGHTNING", String.format("Error: %s", error.toString()));
+					}
 
-			@Override
-			public void run() {
-				String json = null;
+				@Override
+					public void onSuccess(GameRequestDialog.Result result) {
+						Log.d("LIGHTNING", "Success!" + result);
+					}
+			});
 
-				if (response.getJSONObject() != null) {
-						json = response.getJSONObject().toString();
-				} else if (response.getJSONArray() != null) {
-						json = response.getJSONArray().toString();
-				}
+			Lightning.activity.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						GameRequestContent.Builder bldr = new GameRequestContent.Builder()
+															.setTitle(title)
+															.setMessage(message);
+							if (recipient != null) {
+								bldr.setTo(recipient);
+							}
+							if (data != null) {
+								bldr.setData(data);
+							}
+							GameRequestContent newGameRequestContent = bldr.build();
 
-				Log.d("LIGHTNING", "json " + json);
-
-				if (json == null) {
-					(new CamlParamCallbackInt(failCallback, "something wrong with graphrequest response (not json object, not json objects list)")).run();
-				} else {
-					(new CamlParamCallbackInt(successCallback, json)).run();
-				}
-
-				(new ReleaseCamlCallbacks(successCallback, failCallback)).run();
-			}
+							gameRequestDialog.show(Lightning.activity, newGameRequestContent);
+					}
+			});
 	}
-	*/
 }
 
