@@ -314,7 +314,7 @@ class LightFacebook {
 
 		if (AccessToken.getCurrentAccessToken () != null) {
 			// need profile information right now
-			if (Profile.getCurrentProfile () != null) {
+			if (Profile.getCurrentProfile () == null) {
 			Lightning.activity.runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -360,6 +360,9 @@ class LightFacebook {
 						graphRequest.executeAsync();
 					}
 			});
+			}
+			else {
+				(new CamlCallback("fb_success")).run();
 			}
 		}
 		else {
