@@ -264,4 +264,32 @@ public class LightVk {
 	public static void users(String ids, int success, int fail) {
 		usersRequests(new VKRequest("users.get", VKParameters.from(VKApiConst.FIELDS, "sex,photo_max,last_seen,online,online_app,online_mobile", VKApiConst.USER_IDS, ids)), success, fail);
 	}
+
+
+	private static void appRequests (VKRequest request, final int success, final int fail) {
+		Log.d("LIGHTNING", "appRequests CALL");
+		/*
+		request.executeWithListener(new VKRequestListener() {
+			@Override
+			public void onComplete(VKResponse response) {
+					Log.d("LIGHTNING", "response " + response.json.toString());
+			}
+
+			@Override
+			public void onError(VKError error) {
+				Log.d("LIGHTNING", "appRequest onError " + error.apiError.errorMessage + ": " + error.apiError.errorReason);
+			}
+
+			@Override
+			public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
+				Log.d("LIGHTNING", "appRequest attemptFailed");
+			}
+		});
+		*/
+	}
+	public static void apprequest (int success, int fail, String uid) {
+		/*
+		appRequests(new VKRequest("apps.sendRequest", VKParameters.from("text","test app request", "type", "request","name","app_req_name","key","app_req_key",VKApiConst.USER_ID, uid)), success, fail);
+		*/
+	}
 }

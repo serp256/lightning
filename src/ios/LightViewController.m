@@ -582,7 +582,7 @@ static value *ml_url_complete = NULL;
 	else
 		st = [kbTextField.text stringByAppendingString:string];
 
-	caml_callback(keyboardCallbackUpdate, caml_copy_string( [st UTF8String] ));
+	if (keyboardCallbackUpdate != 0) caml_callback(keyboardCallbackUpdate, caml_copy_string( [st UTF8String] ));
 	return YES;
 }
 

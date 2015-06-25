@@ -32,6 +32,9 @@ value users ?fail ~success ~ids t = ();
 value token _ = "";
 value uid _ = "";
 value logout _ = ();
+(*
+value apprequest ?fail ~success ?request_type ~text ~user_id = ();
+*)
 ELSE
 Callback.register "create_user" User.create;
 
@@ -45,4 +48,8 @@ value users ?fail ~success ~ids t =
 external token: t -> string = "ml_vk_token";
 external uid: t -> string = "ml_vk_uid";
 external logout: unit -> unit= "ml_vk_logout";
+(*
+external _apprequest:?fail:fail -> ~success:(string -> unit) -> ~user_id:string -> unit = "ml_vk_apprequest";
+value apprequest ?fail ~success ?request_type ~text ~user_id = _apprequest ?fail ~success ~user_id;
+*)
 ENDIF;

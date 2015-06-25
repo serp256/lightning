@@ -234,35 +234,41 @@ value ml_fbGraphrequest(value vpath, value vparams, value vsuccess, value vfail,
 
 		CAMLreturn(Val_unit);
 }
-/*
-void ml_fbApprequest(value title, value message, value recipient, value data, value successCallback, value failCallback) {
-    value* _successCallback;
-    value* _failCallback;
 
-    REG_OPT_CALLBACK(successCallback, _successCallback);
-    REG_OPT_CALLBACK(failCallback, _failCallback);
+value ml_fbApprequest(value vtitle, value vmessage, value vrecipient, value vdata, value vsuccess, value vfail) {
+	CAMLparam5(vtitle,  vmessage,  vrecipient,  vdata,  vsuccess);
+	CAMLxparam1(vfail);
+    PRINT_DEBUG("ml_fbApprequest");
 
-    GET_LIGHTFACEBOOK;
+    value* success;
+    value* fail;
 
-    jstring jtitle = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(title));
-    jstring jmessage = (*ML_ENV)->NewStringUTF(ML_ENV, String_val(message));
-    jstring jrecipient = Is_block(recipient) ? (*ML_ENV)->NewStringUTF(ML_ENV, String_val(Field(recipient, 0))) : NULL;
-		jstring jdata = Is_block(data) ? (*ML_ENV)->NewStringUTF(ML_ENV,String_val(Field(data,0))) : NULL;
+    REG_OPT_CALLBACK(vsuccess, success);
+    REG_OPT_CALLBACK(vfail, fail);
 
-    static jmethodID mid;
-    if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightFacebookCls, "apprequest", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)Z");
+		GET_ENV;
+		GET_CLS;
 
-    jboolean allRight = (*ML_ENV)->CallStaticBooleanMethod(ML_ENV, lightFacebookCls, mid, jtitle, jmessage, jrecipient, jdata, (int)_successCallback, (int)_failCallback);
+    jstring jtitle = (*env)->NewStringUTF(env, String_val(vtitle));
+    jstring jmessage = (*env)->NewStringUTF(env, String_val(vmessage));
+    jstring jrecipient = Is_block(vrecipient) ? (*env)->NewStringUTF(env, String_val(Field(vrecipient, 0))) : NULL;
+		jstring jdata = Is_block(vdata) ? (*env)->NewStringUTF(env,String_val(Field(vdata,0))) : NULL;
 
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, jtitle);
-    (*ML_ENV)->DeleteLocalRef(ML_ENV, jmessage);
-    if (jrecipient) (*ML_ENV)->DeleteLocalRef(ML_ENV, jrecipient);
+		STATIC_MID(fb_cls, apprequest,"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V");
 
-    if (!allRight) caml_failwith("no active facebook session");
+    (*env)->CallStaticVoidMethod(env, fb_cls, mid, jtitle, jmessage, jrecipient, jdata, (jint)success, (jint)fail);
+
+    (*env)->DeleteLocalRef(env, jtitle);
+    (*env)->DeleteLocalRef(env, jmessage);
+    if (jrecipient) (*env)->DeleteLocalRef(env, jrecipient);
+    if (jdata) (*env)->DeleteLocalRef(env, jdata);
+
+		CAMLreturn(Val_unit);
 }
 
-void ml_fbApprequest_byte(value * argv, int argn) {}
-*/
+value ml_fbApprequest_byte(value* argv, int argn) {
+    return ml_fbApprequest (argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+}
 
 void fbandroid_callback(void *data) {
     caml_callback(*((value*)data), Val_unit);   
@@ -611,8 +617,8 @@ value ml_fb_share_byte(value* argv, int argn) {
     return ml_fb_share(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }
 
-value ml_fbFriends (value vfail, value vsuccess) {
-	CAMLparam2(vsuccess, vfail);
+value ml_fbFriends (value vinvitable, value vfail, value vsuccess) {
+	CAMLparam3(vinvitable, vsuccess, vfail);
     PRINT_DEBUG("ml_fbFriends");
 
     value* success;
@@ -624,9 +630,9 @@ value ml_fbFriends (value vfail, value vsuccess) {
 		GET_ENV;
     GET_CLS;
 
-		STATIC_MID(fb_cls, friends, "(II)V");
+		STATIC_MID(fb_cls, friends, "(ZII)V");
 
-    (*env)->CallStaticVoidMethod(env, fb_cls, mid, (jint)success, (jint)fail);
+    (*env)->CallStaticVoidMethod(env, fb_cls, mid, vinvitable == Val_true ? JNI_TRUE: JNI_FALSE, (jint)success, (jint)fail);
 
 		CAMLreturn(Val_unit);
 }

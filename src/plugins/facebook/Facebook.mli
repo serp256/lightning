@@ -21,14 +21,15 @@ value loggedIn: unit -> bool;
 
 value accessToken: unit -> string;
 value uid: unit -> string;
-(*
+
+(*callbacks not implemented yet*)
 value apprequest: ~title:string -> ~message:string -> ?recipient:string -> ?data:string -> ?successCallback:(list string -> unit) -> ?failCallback:(string -> unit) -> unit -> unit; (* list string in success callback -- user ids, which received request *)
-*)
+
 value graphrequest: ~path:string -> ?params:(list (string * string)) -> ?success:(string -> unit) -> ?fail:(string -> unit) -> ?httpMethod:httpMethod -> unit -> unit;
 value logout: unit -> unit;
 
 value share: ?text:string -> ?link:string -> ?picUrl:string -> ?success:(unit -> unit) -> ?fail:(string -> unit) -> unit -> unit; 
-value friends: ?fail:(string -> unit) -> ~success:(list User.t -> unit) -> unit -> unit;
+value friends: ?invitable:bool -> ?fail:(string -> unit) -> ~success:(list User.t -> unit) -> unit -> unit;
 value users: ?fail:(string -> unit) -> ~success:(list User.t -> unit)-> ~ids:list string -> unit -> unit;
 (*
 value sharePic: ?success:(unit -> unit) -> ?fail:(string -> unit) -> ~fname:string -> ~text:string -> connect -> unit;

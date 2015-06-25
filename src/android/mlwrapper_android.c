@@ -402,3 +402,11 @@ value ml_disableAwake(value unit) {
 	ANativeActivity_setWindowFlags(NATIVE_ACTIVITY, 0, AWINDOW_FLAG_KEEP_SCREEN_ON);
 	return Val_unit;
 }
+
+value ml_disableLog (value unit) {
+	PRINT_DEBUG("ml_disableLog");
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "disableLog", "()V");
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
+	return Val_unit;
+}

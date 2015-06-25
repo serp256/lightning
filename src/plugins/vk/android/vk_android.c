@@ -9,6 +9,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 	CAMLparam4(vappid, vpermissions, vfail, vsuccess);
 	CAMLlocal1(head);
 
+	PRINT_DEBUG ("ml_vk_authorize");
 	value *success, *fail;
 
 	GET_ENV;
@@ -48,6 +49,7 @@ value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsucc
 }
 
 value ml_vk_authorize_byte(value *argv, int n) {
+	PRINT_DEBUG ("ml_vk_authorize_byte");
 	return ml_vk_authorize(argv[0], argv[1], argv[2], argv[3], argv[4]);
 }
 
@@ -128,6 +130,27 @@ value ml_vk_logout (value unit) {
 	CAMLreturn(Val_unit);
 }
 
+
+value ml_vk_apprequest(value vfail, value vsuccess, value vuid) {
+	CAMLparam3(vfail, vsuccess, vuid);
+
+	value *success, *fail;
+
+	GET_ENV;
+	GET_CLS;
+	STATIC_MID(cls, apprequest, "(IILjava/lang/String;)V");
+	REG_CALLBACK(vsuccess, success);
+	REG_OPT_CALLBACK(vfail, fail);
+
+
+	jstring juid;
+	VAL_TO_JSTRING(vuid, juid);
+	(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail, juid);
+	(*env)->DeleteLocalRef(env, juid);
+
+	CAMLreturn(Val_unit);
+}
+
 void vkandroid_auth_success(void *d) {
 	value **data = (value**)d;
 	PRINT_DEBUG("vkandroid_auth_success");
@@ -183,13 +206,16 @@ typedef struct {
 } vkandroid_friends_success_t;
 
 void vkandroid_friends_success(void *data) {
+	CAMLparam0();
+	CAMLlocal2(retval, head);
+	PRINT_DEBUG ("vkandroid_friends_success");
 	vkandroid_friends_success_t *friends_success = (vkandroid_friends_success_t*)data;
 
 	static value* create_friend = NULL;
+	PRINT_DEBUG ("1");
 	if (!create_friend) create_friend = caml_named_value("create_user");
+	PRINT_DEBUG ("2");
 
-	CAMLparam0();
-	CAMLlocal2(retval, head);
 	retval = Val_int(0);
 
 	int cnt = (*ML_ENV)->GetArrayLength(ML_ENV, friends_success->friends);
@@ -242,12 +268,16 @@ void vkandroid_friends_success(void *data) {
 		(*ML_ENV)->DeleteLocalRef(ML_ENV, jfriend);
 	}
 
+	PRINT_DEBUG ("run succ");
 	RUN_CALLBACK(friends_success->success, retval);
 	FREE_CALLBACK(friends_success->success);
 	FREE_CALLBACK(friends_success->fail);
+	PRINT_DEBUG ("freed");
 
 	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->friends);
+	PRINT_DEBUG ("del fr");
 	free(friends_success);
+	PRINT_DEBUG ("free struct");
 
 	CAMLreturn0;
 }
