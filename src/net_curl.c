@@ -177,22 +177,29 @@ static void *run_worker(void *param) {
 	int rc; /* select() return code */
 	while (1) {
 
+		PRINT_DEBUG("while 1:1");
 		while (1) {
+			PRINT_DEBUG("while 1:2");
 			request_t *req = thqueue_url_ldr_req_pop(runtime->req_queue);
 			PRINT_DEBUG("req %d", req);
 			if (req != NULL) {
 				PRINT_DEBUG("req->canceled %d", req->canceled);
 
+				PRINT_DEBUG ("1 net_running %d", runtime->net_running);
 				if (!req->canceled) {
+					PRINT_DEBUG("add req");
 					curl_multi_add_handle(runtime->curlm, req->handle);
 					req->resp_queue = runtime->resp_queue;
 					runtime->net_running++;
+					PRINT_DEBUG ("2 net_running %d", runtime->net_running);
 				} else {
-					PRINT_DEBUG("req->complete %d; req->canceled %d", req->complete, req->canceled);
+					PRINT_DEBUG("req->complete %d; req->canceled %d; req->canceled_resp_puched %d", req->complete, req->canceled, req->canceled_resp_pushed);
 					if (!req->complete && !req->canceled_resp_pushed) {
 						req->canceled_resp_pushed = 1;
 						curl_multi_remove_handle(runtime->curlm, req->handle);
 						runtime->net_running--;
+						runtime->net_running =(runtime->net_running < 0) ? 0 : runtime->net_running;
+						PRINT_DEBUG ("3 net_running %d", runtime->net_running);
 
 						response_el *ev = (response_el*)malloc(sizeof(response_el));
 						ev->ev = RCANCELED;
@@ -204,13 +211,19 @@ static void *run_worker(void *param) {
 						thqueue_url_ldr_resp_push(runtime->resp_queue, resp);
 					}
 				}
-			} else break;
+			} else 
+			{
+				PRINT_DEBUG ("req=null, break");
+				break;
+			}
 		};
 
 		if (runtime->net_running <= 0) {
-			pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
+				PRINT_DEBUG ("net_running %d", runtime->net_running);
+				pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
 		}
 		else {
+				PRINT_DEBUG ("net_running %d", runtime->net_running);
 			fd_set fdread;
 		    fd_set fdwrite;
 		    fd_set fdexcep;
@@ -313,6 +326,7 @@ int net_running() {
 }
 
 static void init() {
+	PRINT_DEBUG ("init");
 
 	initCurl();
 
@@ -328,13 +342,17 @@ static void init() {
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
 	pthread_create(&runtime->worker, &attr, &run_worker, (void*)runtime);
+	PRINT_DEBUG ("init completed");
 }
 
 
 CAMLprim value ml_URLConnection(value url, value method, value headers, value data) {
+	PRINT_DEBUG("ml_URLConnection");
 	PRINT_DEBUG("%s", curl_version());
 
 	if (runtime == NULL) init ();
+
+	runtime->net_running =(runtime->net_running < 0) ? 0 : runtime->net_running;
 
 	request_t *r = (request_t*)caml_stat_alloc(sizeof(request_t));
 	r->canceled = 0;
@@ -383,6 +401,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	curl_easy_setopt(r->handle,CURLOPT_PRIVATE,(void*)r);
 	curl_easy_setopt(r->handle,CURLOPT_SSL_VERIFYPEER,0);
 	thqueue_url_ldr_req_push(runtime->req_queue,r);
+	PRINT_DEBUG("pthread_cond_signal");
 	pthread_cond_signal(&runtime->cond);
 	PRINT_DEBUG("created new curl request: %lu",(long)r);
 	return (value)r;
@@ -391,6 +410,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 value ml_URLConnection_cancel(value r) {
 	PRINT_DEBUG("ml_URLConnection_cancel call");
 	request_t* req = (request_t*)r;
+	PRINT_DEBUG("cancel req %d", req);
 	req->canceled = 1;
 	thqueue_url_ldr_req_push(runtime->req_queue, req);
 /*	PRINT_DEBUG("ml_URLConnection_cancel call %d %d", runtime->net_running, r);
