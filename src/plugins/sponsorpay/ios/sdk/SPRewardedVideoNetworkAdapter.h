@@ -8,8 +8,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-#define SPTPNTimeoutInterval ((NSTimeInterval)4.5)
-
 @protocol SPRewardedVideoNetworkAdapter;
 @class SPBaseNetwork;
 
@@ -17,7 +15,7 @@
  * Defines the interface of a delegate object through which a class implementing
  * the SPVideoNetworkAdapter protocol will communicate back with the SponsorPay SDK.
  */
-@protocol SPRewardedVideoNetworkAdapterDelegate <NSObject>
+@protocol SPRewardedVideoNetworkAdapterDelegate<NSObject>
 
 @required
 
@@ -68,7 +66,7 @@
 /**
  * Defines the interface required by a video network SDK wrapper.
  */
-@protocol SPRewardedVideoNetworkAdapter <NSObject>
+@protocol SPRewardedVideoNetworkAdapter<NSObject>
 
 /**
  * Delegate implementing the SPVideoNetworkAdapterDelegate protocol that will get notified of

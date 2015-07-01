@@ -5,7 +5,7 @@
 //  Copyright (c) 2011 SponsorPay. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "SPVirtualCurrencyConnectionDelegate.h"
 
 @class SPVirtualCurrencyServerConnector;
 
@@ -20,40 +20,6 @@ typedef void (^SPVCSDeltaOfCoinsRequestCompletionBlock)(double deltaOfCoins,
                                                         NSString *latestTransactionId,
                                                         BOOL *removeAfterExecuting);
 
-typedef enum {
-    NO_ERROR,
-    ERROR_NO_INTERNET_CONNECTION,
-    ERROR_INVALID_RESPONSE,
-    ERROR_INVALID_RESPONSE_SIGNATURE,
-    SERVER_RETURNED_ERROR,
-    ERROR_OTHER
-} SPVirtualCurrencyRequestErrorType;
-
-/** Defines selectors that a delegate of SPVirtualCurrencyServerConnector can implement for being notified of answers to requests and triggered errors.
- */
-@protocol SPVirtualCurrencyConnectionDelegate <NSObject>
-@required
-
-/** Sent when SPVirtualCurrencyServerConnector receives an answer from the server for the amount of coins newly earned by the user.
- @param connector SPVirtualCurrencyServerConnector instance of SPVirtualCurrencyServerConnector that sent this message.
- @param deltaOfCoins Amount of coins earned by the user.
- @param transactionId Transaction ID of the last known operation involving your virtual currency for this user.
- */
-- (void)virtualCurrencyConnector:(SPVirtualCurrencyServerConnector *)connector
-  didReceiveDeltaOfCoinsResponse:(double)deltaOfCoins
-             latestTransactionId:(NSString *)transactionId;
-
-/** Sent when SPVirtualCurrencyServerConnector detects an error condition.
- @param connector SPVirtualCurrencyServerConnector instance of SPVirtualCurrencyServerConnector that sent this message.
- @param error Type of the triggered error. @see SPVirtualCurrencyRequestErrorType
- @param errorCode if this is an error received from the back-end, error code as reported by the server.
- @param errorMessage if this is an error received from the back-end, error message as reported by the server.
- */
-- (void)virtualCurrencyConnector:(SPVirtualCurrencyServerConnector *)connector
-                 failedWithError:(SPVirtualCurrencyRequestErrorType)error
-                       errorCode:(NSString *)errorCode
-                    errorMessage:(NSString *)errorMessage;
-@end
 
 /**
  The SPVirtualCurrencyServerConnector class provides functionality to query SponsorPay's Virtual Currency Servers to obtain the number of virtual coins the user has earned.
@@ -64,33 +30,21 @@ typedef enum {
  
  Answers to the requests are asynchronously reported to your registered delegate through the selectors defined in the SPVirtualCurrencyConnectionDelegate protocol.
  */
-@interface SPVirtualCurrencyServerConnector : NSObject <NSURLConnectionDelegate, NSURLConnectionDataDelegate>
-
-/** @name Authenticating the request and the signature */
-
-/** The token to access your account on SponsorPay's virtual currency server.
- This token is used to sign requests to and verify responses from the SponsorPay currency server.
- */
-@property (strong) NSString *secretToken;
-
-/** Signature of the last response received from the server
- This is used in combination with secretToken to validate the authenticity of the response.
- */
-@property (strong) NSString *responseSignature;
+@interface SPVirtualCurrencyServerConnector : NSObject<NSURLConnectionDelegate, NSURLConnectionDataDelegate>
 
 /** @name Obtaining the last transaction ID */
 
 /** Latest transaction ID for your user and app IDs, as reported by the server.
  This is used to keep track of new transactions between invocations to fetchDeltaOfCoins.
  */
-@property (strong, nonatomic) NSString *latestTransactionId;
+@property (nonatomic, copy) NSString *latestTransactionId;
 
 /** @name Being notified asyncronously of server responses and errors */
 
 /** Delegate to be notified of answers to requests and error conditions.
  Answers to the requests are asynchronously reported to your registered delegate through the selectors defined in the SPVirtualCurrencyConnectionDelegate protocol.
 */
-@property (unsafe_unretained) id<SPVirtualCurrencyConnectionDelegate> delegate;
+@property (weak) id<SPVirtualCurrencyConnectionDelegate> delegate;
 
 /** Adds a completion handler that will be run when a successful answer to fetchDeltaOfCoins is received.
   
@@ -108,13 +62,17 @@ typedef enum {
  */
 - (void)fetchDeltaOfCoins;
 
-/** @name - **/
+/** Fetches the amount of a given currency earned since the last time this method was invoked for the current user ID / app ID combination.
 
-+ (NSString *)descriptionForErrorType:(SPVirtualCurrencyRequestErrorType) errorType;
+ This involves a network call which will be performed in the background. When the answer from the server is received, your registered delegate will be notified.
+
+ @param currencyId The currency id that will be fetched. A nil currency fetches the default currency
+ */
+
+- (void)fetchDeltaOfCoinsWithCurrencyId:(NSString *)currencyId;
 
 @end
 
 FOUNDATION_EXPORT NSString *const SPVCSPayoffReceivedNotification;
 FOUNDATION_EXPORT NSString *const SPVCSPayoffAmountKey;
-FOUNDATION_EXPORT NSString *const SPVCSTransactionIdKey;
-
+FOUNDATION_EXPORT NSString *const SPVCSCurrencyName;

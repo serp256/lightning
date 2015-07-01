@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-typedef enum {
+typedef NS_ENUM(NSInteger, SPTPNValidationResult) {
     SPTPNValidationNoVideoAvailable,
     SPTPNValidationNoSdkIntegrated,
     SPTPNValidationTimeout,
@@ -16,11 +16,11 @@ typedef enum {
     SPTPNValidationDiskError,
     SPTPNValidationError,
     SPTPNValidationSuccess
-} SPTPNValidationResult;
+};
 
 NSString *SPTPNValidationResultToString(SPTPNValidationResult validationResult);
 
-typedef enum {
+typedef NS_ENUM(NSInteger, SPTPNVideoEvent) {
     SPTPNVideoEventStarted,
     SPTPNVideoEventAborted,
     SPTPNVideoEventFinished,
@@ -29,7 +29,7 @@ typedef enum {
     SPTPNVideoEventTimeout,
     SPTPNVideoEventNoSdk,
     SPTPNVideoEventError
-} SPTPNVideoEvent;
+};
 
 NSString *SPTPNVideoEventToString(SPTPNVideoEvent event);
 

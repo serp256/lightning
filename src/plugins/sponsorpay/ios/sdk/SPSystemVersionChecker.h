@@ -1,9 +1,9 @@
 //
 //  SPSystemVersionChecker.h
-//  SponsorPay iOS SDK
+//  SponsorPayTestApp
 //
-//  Created by David Davila on 6/11/13.
-// Copyright 2011-2013 SponsorPay. All rights reserved.
+//  Created by tito on 04/09/14.
+//  Copyright (c) 2014 SponsorPay. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -14,4 +14,5 @@
 + (BOOL)runningOniOS6OrNewer;
 + (BOOL)runningOniOS7OrNewer;
 + (BOOL)checkForiOSVersion:(NSString *)versionString;
+
 @end

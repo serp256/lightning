@@ -5,12 +5,13 @@
 //  Copyright (c) 2014 SponsorPay. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "SPInterstitialNetworkAdapter.h"
-#import "SPTPNVideoAdapter.h"
+#import "SPTPNMediationTypes.h"
 
-typedef NS_OPTIONS(NSUInteger, SPNetworkSupport)
-{
+
+@protocol SPTPNVideoAdapter;
+
+typedef NS_OPTIONS(NSUInteger, SPNetworkSupport) {
     SPNetworkSupportNone,
     SPNetworkSupportRewardedVideo,
     SPNetworkSupportInterstitial

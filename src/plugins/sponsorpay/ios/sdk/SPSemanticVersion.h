@@ -13,9 +13,9 @@
  */
 @interface SPSemanticVersion : NSObject
 
-@property (assign, nonatomic, readonly) NSInteger major;
-@property (assign, nonatomic, readonly) NSInteger minor;
-@property (assign, nonatomic, readonly) NSInteger patch;
+@property (nonatomic, assign, readonly) NSInteger major;
+@property (nonatomic, assign, readonly) NSInteger minor;
+@property (nonatomic, assign, readonly) NSInteger patch;
 
 + (instancetype)versionWithMajor:(NSInteger)major minor:(NSInteger)minor patch:(NSInteger)patch;
 

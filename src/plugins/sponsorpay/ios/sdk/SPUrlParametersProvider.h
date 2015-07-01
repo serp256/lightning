@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol SPURLParametersProvider <NSObject>
+@protocol SPURLParametersProvider<NSObject>
 
 @required
 - (NSDictionary *)dictionaryWithKeyValueParameters;
