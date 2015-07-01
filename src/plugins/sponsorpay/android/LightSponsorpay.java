@@ -16,7 +16,10 @@ public class LightSponsorpay {
 	private static String appId;
 	private static String userId;
 	private static String securityToken;
-	private static int callback;
+	private static int request_callback;
+	private static int show_callback;
+
+	private static Intent mIntent;
 
 	public static void init(String _appId, String _userId, String _securityToken,final boolean enableLog) {
 		appId = _appId;
@@ -37,7 +40,7 @@ public class LightSponsorpay {
 									Log.d ("LIGHTNING","engagement result:" + engagementResult);
 									boolean completeFlag = (engagementResult.equals(com.sponsorpay.publisher.mbe.SPBrandEngageClient.SP_REQUEST_STATUS_PARAMETER_FINISHED_VALUE));
 									Log.d ("LIGHTNING","flag:" + completeFlag);
-									(new CamlParamCallbackInt(callback,completeFlag)).run();
+									(new CamlParamCallbackInt(show_callback,completeFlag)).run();
 								}
 						}
 
@@ -76,7 +79,7 @@ public class LightSponsorpay {
 
 	public static void requestVideos (int cb) {
 		Log.d ("LIGHTNING","SponsorPay requestVideos");
-		callback = cb;
+		request_callback = cb;
 		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
@@ -86,26 +89,46 @@ public class LightSponsorpay {
 		});
   }
 
+	public static void showVideos (int cb) {
+		Log.d ("LIGHTNING","SponsorPay requestVideos");
+		show_callback = cb;
+		Lightning.activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if (mIntent != null) {
+					Lightning.activity.startActivityForResult(mIntent, 290615);
+					mIntent = null;
+				}
+				else
+				{
+					Log.d ("LIGHTNING","no_videos");
+					(new CamlParamCallbackInt(show_callback,false)).run();
+				}
+			}
+		});
+  }
+
 	/* LISTENER */
 	private static class LightSPBERequestListener implements SPBrandEngageRequestListener {
-		private Intent mIntent;
 		@Override
 			public void onSPBrandEngageOffersAvailable(Intent spBrandEngageActivity) {
-						Log.d("LIGHTNING", "SPBrandEngage - intent available");
+						Log.d("LIGHTNING", "SPBrandEngage - intent available cb");
 								mIntent = spBrandEngageActivity;
-								Lightning.activity.startActivityForResult(mIntent, 290615);
+								(new CamlParamCallbackInt(request_callback,true)).run();
 			}
 
 		@Override
 			public void onSPBrandEngageOffersNotAvailable() {
 						Log.d("LIGHTNING", "SPBrandEngage - no offers for the moment");
 								mIntent = null;
+								(new CamlParamCallbackInt(request_callback,false)).run();
 			}
 
 		@Override
 			public void onSPBrandEngageError(String errorMessage) {
 						Log.d("LIGHTNING", "SPBrandEngage - an error occurred:\n" + errorMessage);
 								mIntent = null;
+								(new CamlParamCallbackInt(request_callback,false)).run();
 			}
 	}
 

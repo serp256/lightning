@@ -48,6 +48,20 @@ void ml_request_video(value vcallback) {
 	CAMLreturn0;
 }
 
+void ml_show_video(value vcallback) {
+	CAMLparam1(vcallback);
+	PRINT_DEBUG ("sp_ml_show_video");
+
+	value *callback;
+	REG_CALLBACK(vcallback,callback);
+
+	GET_ENV;
+	GET_CLS;
+
+	jmethodID mid = (*env)->GetStaticMethodID(env, sponsorpayCls, "showVideos", "(I)V");
+	(*env)->CallStaticVoidMethod(env, sponsorpayCls, mid,(jint)callback);
+	CAMLreturn0;
+}
 
 typedef struct {
     value *callbck;
