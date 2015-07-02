@@ -96,11 +96,12 @@ typedef struct {
 	value *fail;
 	value *progress;
 	char *reason;
+	value *code;
 } download_fail_t;
 
 void download_fail(void *data) {
 	download_fail_t *fail = (download_fail_t*)data;
-	RUN_CALLBACK2(fail->fail, Val_int(0), caml_copy_string(fail->reason));
+	RUN_CALLBACK2(fail->fail, fail->code, caml_copy_string(fail->reason));
 	FREE_CALLBACK(fail->fail);
 	FREE_CALLBACK(fail->success);
 	FREE_CALLBACK(fail->progress);
@@ -108,7 +109,7 @@ void download_fail(void *data) {
 	free(fail);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadFail_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jint jprogress, jstring jreason) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloadService_00024DownloadFail_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jint jprogress, jint jcode, jstring jreason) {
 	const char* creason = (*env)->GetStringUTFChars(env, jreason, JNI_FALSE);
 	PRINT_DEBUG("creason '%s'", creason);
 	download_fail_t *fail = (download_fail_t*)malloc(sizeof(download_fail_t));
@@ -118,6 +119,7 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_download_1service_LightDownloa
 	fail->progress= (value*)jprogress;
 	fail->reason = (char*)malloc(strlen(creason) + 1);
 	strcpy(fail->reason, creason);
+	fail->code =(value*)(Val_int (jcode));
 
 	(*env)->ReleaseStringUTFChars(env, jreason, creason);
 	RUN_ON_ML_THREAD(&download_fail, fail);

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.security.MessageDigest;
+
 public class LightDownloadService {
 
 	public static boolean appRunning = false;
@@ -37,6 +38,7 @@ public class LightDownloadService {
 	private static int failDownload;
 	private static int progressDownload;
 	private static boolean compress=true;
+	private static String saved_path = "";
 
 	private static Timer timer; 
 
@@ -89,7 +91,7 @@ public class LightDownloadService {
 				 downloadSuccess(files);
 			} catch (IOException ex){
 				Log.d ("LIGHTNING","UNZIP Failed " + ex.toString());
-				downloadFail ("Fail when unzipping:" + ex.toString());
+				downloadFail (DownloadManager.ERROR_INSUFFICIENT_SPACE, ex.getLocalizedMessage());
 			}
 		}
 		else {
@@ -99,9 +101,9 @@ public class LightDownloadService {
 		}
 	}
 
-	private static void downloadFail (String reason) {
+	private static void downloadFail (int code, String reason) {
 		if (appRunning) {
-			(new DownloadFail(successDownload, failDownload, progressDownload, reason)).run ();
+			(new DownloadFail(successDownload, failDownload, progressDownload, code, reason)).run ();
 		}
 	}
 
@@ -122,10 +124,23 @@ public class LightDownloadService {
 	 String downloadResult = "Download...";
 	 if(cursor.moveToFirst()){
 		int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+		Log.d ("LIGHTNING", "columnIndex " + columnIndex); 
 		int status = cursor.getInt(columnIndex);
+		Log.d ("LIGHTNING", "columnStatus " + status); 
 		int columnReason = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+		Log.d ("LIGHTNING", "columnReson " + columnReason); 
 		int reason = cursor.getInt(columnReason);
-		final String fname =cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME));
+		Log.d ("LIGHTNING", "reason " + reason); 
+		Log.d ("LIGHTNING", "nameIndex " + DownloadManager.COLUMN_LOCAL_FILENAME + " " +cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME));
+		String fname;
+			try {
+				fname = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME));
+			} catch (Exception exc) {
+				String uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+				Log.d ("LIGHTNING", "path" + Uri.parse(uri).getPath());
+				fname = Uri.parse(uri).getPath();
+			}
+		Log.d ("LIGHTNING", "fname" + fname); 
 	 
 		switch(status){
 		case DownloadManager.STATUS_FAILED:
@@ -160,8 +175,8 @@ public class LightDownloadService {
 			break;
 		 }
 
-		 Log.d ("LIGHTNING", "FAILED: " + failedReason);
-		 downloadFail (failedReason);
+		 Log.d ("LIGHTNING", "FAILED: " + reason + " " + failedReason);
+		 downloadFail (reason,failedReason);
 		 downloadResult = "Download failed";
 		 break;
 		case DownloadManager.STATUS_PAUSED:
@@ -183,18 +198,18 @@ public class LightDownloadService {
 		 }
 		
 		 Log.d ("LIGHTNING", "PAUSED: " + pausedReason);
-		 downloadFail (pausedReason);
+		 downloadFail (reason, pausedReason);
 		 downloadResult = "Download failed";
 		 break;
 		case DownloadManager.STATUS_PENDING:
 		 Log.d ("LIGHTNING", "PENDING: " );
-		 downloadFail ("Pending");
+		 downloadFail (reason,"Pending");
 		 downloadResult = "Download failed";
 		 break;
 		case DownloadManager.STATUS_RUNNING:
 		 Log.d ("LIGHTNING", "RUNNING: " );
 		 downloadResult = "Download failed";
-		 downloadFail ( "Still running");
+		 downloadFail (reason, "Still running");
 		 break;
 		case DownloadManager.STATUS_SUCCESSFUL:
 		 Log.d ("LIGHTNING", "SUCCESSFUL: " );
@@ -295,23 +310,40 @@ private static boolean checkMD5 (String md5, File file) {
 	}
 private static void enqueueRequest (String url, String path) {
 	 final DownloadManager manager = (DownloadManager) Lightning.activity.getSystemService(Context.DOWNLOAD_SERVICE);
-	 Log.d("LIGHTNING","start download");
+	 Log.d("LIGHTNING","start download:");
 	 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
 
+	 Log.d("LIGHTNING","1");
 	 File f = new File (path);
+	 Log.d("LIGHTNING","2");
 	 request.setVisibleInDownloadsUi(false);
+	 Log.d("LIGHTNING","3");
 	 Context context = Lightning.activity.getApplicationContext ();
+	 Log.d("LIGHTNING","4");
 	 request.setTitle(context.getPackageManager().getApplicationLabel(context.getApplicationInfo()));
-	 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+	 Log.d("LIGHTNING","4.1");
+
+	 int sdkVersion = Integer.parseInt(android.os.Build.VERSION.SDK);
+	 if (sdkVersion >= 11) {
+		 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+				Log.d("LIGHTNING","method invoked");
+	 } else {
+		 Log.d("LIGHTNING","API level: " + sdkVersion);
+	 }
+	 //request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+	 Log.d("LIGHTNING","4.2");
 	 request.setDestinationInExternalFilesDir(Lightning.activity,null,f.getName());
 
+	 Log.d("LIGHTNING","5");
 	 long downloadId = manager.enqueue(request);
+	 Log.d("LIGHTNING","6");
 	 setProgressTimer(downloadId);
 
 }
  public static void download (boolean isCompress, String md5, String url, String path, int successCb, int failCb, final int progressCb) {
 	 Log.d ("LIGHTNING", "Java download: " + url + " with compress: " + isCompress);
 	 compress = isCompress;
+	 saved_path = path;
 	 final DownloadManager manager = (DownloadManager) Lightning.activity.getSystemService(Context.DOWNLOAD_SERVICE);
 		boolean isDownloading = false;
 		long downloadId = -1;
@@ -391,16 +423,18 @@ private static void enqueueRequest (String url, String path) {
 
 	private static class DownloadFail extends Callback {
 			private String reason;
+			private int code;
 
-			public DownloadFail(int success, int fail, int progress, String reason) {
+			public DownloadFail(int success, int fail, int progress, int code, String reason) {
 				super(success, fail, progress);
 				this.reason = reason;
+				this.code = code;
 			}
 
-			public native void nativeRun(int success, int fail, int progress, String reason);
+			public native void nativeRun(int success, int fail, int progress, int code, String reason);
 
 			public void run() {
-				nativeRun(success, fail, progress, reason);
+				nativeRun(success, fail, progress, code, reason);
 			}
 	}
 
