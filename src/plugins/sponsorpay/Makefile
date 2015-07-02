@@ -21,28 +21,24 @@ ifeq ($(PLATFORM),IOS)
 
 CFLAGS  += -DIOS \
 	-fobjc-arc \
-	-I../.. -I../../ios -Iios -Iios/sdk -Iios/include -Iios/networks/applovin/headers \
-	-Fios/networks/applifier
-COBJS   += ios/sdk/NSDictionary+SPSerialization.o ios/sdk/NSString+SPURLEncoding.o ios/sdk/NSURL+SPDescription.o ios/sdk/NSURL+SPParametersParsing.o ios/sdk/SPActionIdValidator.o ios/sdk/SPAdvertisementViewController.o \
-	ios/sdk/SPAdvertiserManager.o ios/sdk/SPAppIdValidator.o ios/sdk/SPAppleAdvertiserIDProvider.o ios/sdk/SPBaseNetwork.o ios/sdk/SPBrandEngageClient.o ios/sdk/SPBrandEngageViewController.o ios/sdk/SPBrandEngageWebView.o \
-	ios/sdk/SPBufferedLogger.o ios/sdk/SPCallbackSendingOperation.o ios/sdk/SPCloseButton.o ios/sdk/SPConstants.o ios/sdk/SPCountdownView.o ios/sdk/SPCredentials.o ios/sdk/SPCredentialsManager.o \
-	ios/sdk/SPHostAppBundleParametersProvider.o ios/sdk/SPInterstitialClient.o ios/sdk/SPInterstitialEvent.o ios/sdk/SPInterstitialEventHub.o ios/sdk/SPInterstitialOffer.o ios/sdk/SPInterstitialResponse.o \
-	ios/sdk/SPJailbreakStatusProvider.o ios/sdk/SPLoadingIndicator.o ios/sdk/SPLocaleParametersProvider.o ios/sdk/SPLogger.o ios/sdk/SPMacAddressProvider.o ios/sdk/SPMD5MacAddressProvider.o ios/sdk/SPMediationCoordinator.o \
-	ios/sdk/SPMicroBrowserViewController.o ios/sdk/SPNetworkOperation.o ios/sdk/SPNetworkParametersProvider.o ios/sdk/SPOfferWallViewController.o ios/sdk/SponsorPaySDK.o ios/sdk/SPPersistence.o ios/sdk/SPRandomID.o \
-	ios/sdk/SPReachability.o ios/sdk/SPResourceLoader.o ios/sdk/SPSchemeParser.o ios/sdk/SPScreenMetricsProvider.o ios/sdk/SPSDKFeaturesProvider.o ios/sdk/SPSDKVersionProvider.o ios/sdk/SPSemanticVersion.o \
-	ios/sdk/SPSHA1MacAddressProvider.o ios/sdk/SPSignature.o ios/sdk/SPSystemLogger.o ios/sdk/SPSystemParametersProvider.o ios/sdk/SPSystemVersionChecker.o ios/sdk/SPTargetedNotificationFilter.o ios/sdk/SPToast.o \
-	ios/sdk/SPTPNGenericAdapter.o ios/sdk/SPTPNManager.o ios/sdk/SPTPNMediationTypes.o ios/sdk/SPURLGenerator.o ios/sdk/SPVideoPlayerViewController.o ios/sdk/SPVirtualCurrencyServerConnector.o \
-	ios/adapters/Applifier/SPApplifierNetwork.o ios/adapters/Applifier/SPApplifierRewardedVideoAdapter.o \
-	ios/adapters/AppLovin/SPAppLovinInterstitialAdapter.o ios/adapters/AppLovin/SPAppLovinNetwork.o ios/adapters/AppLovin/SPAppLovinRewardedVideoAdapter.o \
-	ios/spwrapper_ios.o ios/VideoDelegate.o
-LIBFLAGS += -lAppLovinSdk \
-	-framework Foundation \
-	-framework ApplifierImpact \
+	-I../.. -I../../ios -Iios -Iios/sdk -Iios/include -Iios/adapters -Iios/adapters/applifier
+COBJS += ios/spwrapper_ios.o ios/VideoDelegate.o
+
+LIBFLAGS +=  -lSponsorPaySDK \
+  -framework Fyber_UnityAds_1.4.4_r1 \
+  -framework Foundation \
 	-framework StoreKit \
 	-framework AdSupport \
 	-framework MediaPlayer \
-	-framework CoreMedia
-
+	-framework CoreMedia \
+	-framework CoreGraphics \
+	-framework CoreLocation \
+	-framework CFNetwork \
+	-framework CoreTelephony \
+	-framework QuartzCore \
+	-framework AVFoundation \
+	-framework SystemConfiguration
+	
 else
 ifeq ($(PLATFORM),ANDROID)
 

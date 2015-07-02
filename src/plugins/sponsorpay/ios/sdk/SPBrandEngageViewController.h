@@ -7,16 +7,15 @@
 
 #import <UIKit/UIKit.h>
 
-#define kSPDelayForFadingWebViewIn (NSTimeInterval)1.5
-#define kSPDurationForFadeWebViewInAnimation (NSTimeInterval)1.0
-
-@class SPBrandEngageWebView;
+@class SPWebView;
+@protocol SPBrandEngageWebViewDelegate;
 
 @interface SPBrandEngageViewController : UIViewController
 
-@property (assign, nonatomic) BOOL lockToLandscape;
+@property (nonatomic, weak) id<SPBrandEngageWebViewDelegate> brandEngageDelegate;
 
-- (id)initWithWebView:(SPBrandEngageWebView *)webView;
+- (id)initWithWebView:(SPWebView *)webView;
+
 
 - (void)fadeWebViewIn;
 
@@ -25,5 +24,8 @@
                    showAlert:(BOOL)showAlert
                 alertMessage:(NSString *)alertMessage
              clickThroughURL:(NSURL *)clickThroughURL;
+
+- (void)showCloseButton;
+- (void)hideCloseButton;
 
 @end

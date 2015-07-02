@@ -16,6 +16,12 @@ value ml_af_set_key(value appid, value key) {
 
 
 value ml_af_set_user_id(value uid) {
+	PRINT_DEBUG("ml_af_set_user_id");
+	jclass afCls = engine_find_class("com/appsflyer/AppsFlyerLib");
+	jmethodID jSetKeyM = (*env)->GetStaticMethodID(env,afCls,"setAppUserId","(Ljava/lang/String;)V");
+	jstring juid = (*env)->NewStringUTF(env, String_val(uid));
+	(*env)->CallStaticVoidMethod(env,afCls,jSetKeyM,juid);
+	(*env)->DeleteLocalRef(env,juid);
 	return Val_unit;
 }
 

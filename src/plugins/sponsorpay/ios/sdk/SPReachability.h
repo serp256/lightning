@@ -48,42 +48,51 @@
 
 #import <Foundation/Foundation.h>
 #import <SystemConfiguration/SystemConfiguration.h>
+#import <CFNetwork/CFNetwork.h>
 #import <netinet/in.h>
 
-typedef enum {
-	SPNotReachable = 0,
-	SPReachableViaWiFi,
-	SPReachableViaWWAN
-} SPNetworkStatus;
-#define kSPReachabilityChangedNotification @"kSPNetworkReachabilityChangedNotification"
+typedef NS_ENUM(NSInteger, SPNetworkStatus) {
+    SPNetworkStatusNotReachable,
+    SPNetworkStatusReachableViaWiFi,
+    SPNetworkStatusReachableViaWWAN
+};
 
-@interface SPReachability: NSObject
-{
-	BOOL localWiFiRef;
-	SCNetworkReachabilityRef reachabilityRef;
-}
+//
+// TODO remove for 7.0.0 - keep SPNotReachable for backward compatibility with Adapters 2.0.
+typedef NS_ENUM(NSInteger, SPNetworkStatus20) {
+    SPNotReachable
+};
 
-//reachabilityWithHostName- Use to check the reachability of a particular host name. 
-+ (SPReachability*) reachabilityWithHostName: (NSString*) hostName;
 
-//reachabilityWithAddress- Use to check the reachability of a particular IP address. 
-+ (SPReachability*) reachabilityWithAddress: (const struct sockaddr_in*) hostAddress;
+extern NSString *const SPReachabilityChangedNotification;
 
-//reachabilityForInternetConnection- checks whether the default route is available.  
+@interface SPReachability : NSObject
+
+@property (nonatomic, assign) BOOL localWiFiRef;
+@property (nonatomic, assign) SCNetworkReachabilityRef reachabilityRef;
+
+//isSystemProxyEnabled - use to check if system proxy is enabled in system preferences
++ (BOOL)isSystemProxyEnabled;
+
+//reachabilityWithHostName- Use to check the reachability of a particular host name.
++ (SPReachability *)reachabilityWithHostName:(NSString *)hostName;
+
+//reachabilityWithAddress- Use to check the reachability of a particular IP address.
++ (SPReachability *)reachabilityWithAddress:(const struct sockaddr_in *)hostAddress;
+
+//reachabilityForInternetConnection- checks whether the default route is available.
 //  Should be used by applications that do not connect to a particular host
-+ (SPReachability*) reachabilityForInternetConnection;
++ (SPReachability *)reachabilityForInternetConnection;
 
 //reachabilityForLocalWiFi- checks whether a local wifi connection is available.
-+ (SPReachability*) reachabilityForLocalWiFi;
++ (SPReachability *)reachabilityForLocalWiFi;
 
 //Start listening for reachability notifications on the current run loop
-- (BOOL) startNotifier;
-- (void) stopNotifier;
+- (BOOL)startNotifier;
+- (void)stopNotifier;
 
-- (SPNetworkStatus) currentReachabilityStatus;
+- (SPNetworkStatus)currentReachabilityStatus;
 //WWAN may be available, but not active until a connection has been established.
 //WiFi may require a connection for VPN on Demand.
-- (BOOL) connectionRequired;
+- (BOOL)connectionRequired;
 @end
-
-

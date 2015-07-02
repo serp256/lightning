@@ -14,13 +14,13 @@
 /**
  * Defines the interface required by an interstitial network SDK wrapper.
  */
-@protocol SPInterstitialNetworkAdapter <NSObject>
+@protocol SPInterstitialNetworkAdapter<NSObject>
 
 /**
  * Arbitrary offer data that can be written and read by the SponsorPay SDK to keep track of context.
  * This property needs to be synthesized in the adapter implementation.
  */
-@property (strong, nonatomic) NSDictionary *offerData;
+@property (nonatomic, strong) NSDictionary *offerData;
 
 /**
  * Returns the name of the interstitial-providing network wrapped by this adapter.
@@ -57,20 +57,20 @@
 @end
 
 /** Defines the reasons by which an interstitial ad can be dismissed. */
-typedef enum {
+typedef NS_ENUM(NSInteger, SPInterstitialDismissReason) {
     /** The interstitial was dismissed for an unknown reason. */
-    SPInterstitialDismissReasonUnknown = 0,
+    SPInterstitialDismissReasonUnknown,
     /** The interstitial was closed because the user clicked on the ad. */
-    SPInterstitialDismissReasonUserClickedOnAd = 1,
+    SPInterstitialDismissReasonUserClickedOnAd,
     /** The interstitial was explicitly closed by the user. */
-    SPInterstitialDismissReasonUserClosedAd = 2,
-} SPInterstitialDismissReason;
+    SPInterstitialDismissReasonUserClosedAd
+};
 
 /**
  * Protocol that delegates wishing to be notified of interstitial availability
  * and lifecycle must conform to.
  */
-@protocol SPInterstitialNetworkAdapterDelegate <NSObject>
+@protocol SPInterstitialNetworkAdapterDelegate<NSObject>
 
 /**
  * Informs the delegate that an interstitial ad is being displayed.
@@ -83,7 +83,7 @@ typedef enum {
  * Informs the delegate that the third party adapter closed the interstitial.
  *
  * @param adapter The interstitial adapter that is sending this message.
- * @param SPInterstitialDismissReason The reason by which the interstitial was dismissed. @see SPInterstitialDismissReason
+ * @param dismissReason The reason by which the interstitial was dismissed. @see SPInterstitialDismissReason
  */
 - (void)adapter:(id<SPInterstitialNetworkAdapter>)adapter didDismissInterstitialWithReason:(SPInterstitialDismissReason)dismissReason;
 
@@ -93,7 +93,6 @@ typedef enum {
  * @param adapter The interstitial adapter that is sending this message.
  * @param error An object enclosing the cause of the error.
  */
-- (void)adapter:(id<SPInterstitialNetworkAdapter>)adapter
-    didFailWithError:(NSError *)error;
+- (void)adapter:(id<SPInterstitialNetworkAdapter>)adapter didFailWithError:(NSError *)error;
 
 @end

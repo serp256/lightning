@@ -8,9 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol SPLogAppender <NSObject>
+@protocol SPLogAppender<NSObject>
 
-+ (id<SPLogAppender>) logger;
++ (id<SPLogAppender>)logger;
 - (void)logFormat:(NSString *)format arguments:(va_list)arguments;
 
 @end

@@ -6,9 +6,8 @@
 //  Copyright (c) 2014 SponsorPay. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "SPLogAppender.h"
 
-@interface SPSystemLogger : NSObject <SPLogAppender>
+@interface SPSystemLogger : NSObject<SPLogAppender>
 
 @end

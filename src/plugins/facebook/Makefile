@@ -3,7 +3,7 @@ include ../../../Makefile.common
 CFLAGS += -I . 
 CFLAGS += -DLDEBUG
 
-MLFLAGS += -package ojson,extlib 
+MLFLAGS += -package ojson,extlib,redspell.syntax.debug
 
 MLSOURCES = Facebook.ml
 MLOBJSN = $(MLSOURCES:.ml=.cmx)
@@ -11,8 +11,8 @@ MLOBJS = $(MLSOURCES:.ml=.cmo)
 IFACES = $(MLSOURCES:.ml=.cmi)
 
 ifeq ($(PLATFORM),IOS)
-CFLAGS  += -DDEBUG -DIOS -Fios -I../.. -I../../ios
-MOBJS   += ios/fbwrapper_ios.o
+CFLAGS  += -DDEBUG -DIOS -Fios  -I../.. -I../../ios -I ios/sdk/FBSDKCoreKit -I ios/sdk/FBSDKCoreKit/FBSDKCoreKit -I ios/sdk/FBSDKLoginKit -I ios/sdk/FBSDKLoginKit/FBSDKLoginKit -I ios/sdk/FBSDKShareKit/FBSDKShareKit
+MOBJS   += ios/fbwrapper_ios.o ios/LightFacebookDelegate.o 
             
 MLPPOPT += -DIOS
 LIBFLAGS = -cclib '-framework\ Foundation' \
@@ -23,7 +23,10 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-weak_framework\ Social' \
 		   -cclib '-weak_framework\ AdSupport' \
 		   -cclib '-framework\ Security' \
-		   -cclib '-framework\ FacebookSDK'
+		   -cclib '-framework\ FacebookSDK' \
+		   -cclib '-framework\ FBSDKCoreKit' \
+		   -cclib '-framework\ FBSDKLoginKit' \
+		   -cclib '-framework\ FBSDKShareKit' \
 
 
 else

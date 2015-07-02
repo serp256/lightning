@@ -1,25 +1,18 @@
-type network = [= `applifier of string | `applovin of string ];
 
 IFPLATFORM(android ios)
 
-external start: ~appId:string -> ?userId:string -> ?securityToken:string -> ?networks:list network -> unit -> unit = "ml_sponsorPay_start";
+external _start: ~appId:string -> ?userId:string -> ?securityToken:string -> ~logging: bool -> unit -> unit = "ml_sponsorPay_start";
+value start ~appId ?userId ?securityToken ?(logging = False) () = _start ~appId ?userId ?securityToken ~logging ();
 external showOffers: unit -> unit = "ml_sponsorPay_showOffers";
-
-ELSE
-
-value start ~appId ?userId ?securityToken ?networks () = ();
-value showOffers () = ();
-
-ENDPLATFORM;
-
-IFPLATFORM(ios)
-
 external requestVideo: ~callback:(bool -> unit) -> unit -> unit = "ml_request_video";
-external showVideo: ~callback:(unit -> unit) -> unit -> unit = "ml_show_video";
+external showVideo: ~callback:(bool -> unit) -> unit -> unit = "ml_show_video";
 
 ELSE
 
+value start ~appId ?userId ?securityToken ?logging () = ();
+value showOffers () = ();
 value requestVideo ~callback () = ();
 value showVideo ~callback () = ();
 
 ENDPLATFORM;
+

@@ -36,6 +36,12 @@ void set_referrer(char *type,NSString *nid) {
 	self.window.rootViewController = lightViewController;
 	// For local notifications
 	UILocalNotification *ln = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+
+	[application retain];
+	[launchOptions retain];
+	NSDictionary* data = [NSDictionary dictionaryWithObjectsAndKeys: launchOptions, @"LAUNCH_OPTIONS", application, @"APP", nil];
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"APP_DID_FINISH_LAUNCHING" object:self userInfo:data];
+
 	if (ln) {
 		NSString *nid = [ln.userInfo objectForKey:@"id"];
 		NSLog(@"didReceiveLocalNotification: %@",nid);
@@ -185,7 +191,8 @@ void set_referrer(char *type,NSString *nid) {
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
 	[url retain];
 	[sourceApplication retain];
-	NSDictionary* data = [NSDictionary dictionaryWithObjectsAndKeys: url, APP_URL_DATA, sourceApplication, APP_SOURCEAPP_DATA, nil];
+	[application retain];
+	NSDictionary* data = [NSDictionary dictionaryWithObjectsAndKeys: url, APP_URL_DATA, sourceApplication, APP_SOURCEAPP_DATA, application, @"APP", nil];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:APP_OPENURL_SOURCEAPP object:self userInfo:data];
     return YES;

@@ -150,7 +150,7 @@ value register binpath =
             )
       ]
     in
-    Array.of_list (List.rev (loop (IO.read_ui16 bininp) []))
+    Array.of_list ((loop (IO.read_ui16 bininp) []))
   in
     (
       let face = IO.read_string bininp in

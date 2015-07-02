@@ -40,3 +40,8 @@ value download:
   ?compress:bool -> ~url:string -> ~path:string ->
   ?ecallback:(int -> string -> unit) -> ?progress:(~progress:float -> ~total:float -> unit -> unit) -> (unit -> unit) ->
   unit;
+
+value download_native:
+  ?compress:bool -> ?md5:string -> ~url:string -> ~path:string ->
+  ?ecallback:(int -> string -> unit) -> ?progress:(~progress:float -> ~total:float -> unit -> unit) ->  (list string-> unit) ->
+  unit;

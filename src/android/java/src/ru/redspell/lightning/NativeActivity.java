@@ -15,6 +15,7 @@ import ru.redspell.lightning.IUiLifecycleHelper;
 import ru.redspell.lightning.utils.Log;
 import ru.redspell.lightning.keyboard.Keyboard;
 import ru.redspell.lightning.notifications.Receiver;
+import ru.redspell.lightning.download_service.LightDownloadService;
 
 public class NativeActivity extends android.app.NativeActivity {
 	private static CopyOnWriteArrayList<IUiLifecycleHelper> uiLfcclHlprs = new CopyOnWriteArrayList();
@@ -125,7 +126,10 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onResume() {
+		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onResume");
 		Receiver.appRunning = true;
+		LightDownloadService.appRunning = true;
+		LightDownloadService.needPush = false;
 		isRunning = true;
 		super.onResume();
 
@@ -172,7 +176,9 @@ public class NativeActivity extends android.app.NativeActivity {
 
 	@Override
 	protected void onPause() {
+		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onPause");
 		Receiver.appRunning = false;
+		LightDownloadService.needPush = true;
 		isRunning = false;
 		super.onPause();
 
@@ -191,6 +197,8 @@ public class NativeActivity extends android.app.NativeActivity {
 	@Override
 	protected void onStop() {
 		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onStop");
+		LightDownloadService.appRunning = true;
+		LightDownloadService.needPush = true;
 		super.onStop();
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
@@ -203,6 +211,8 @@ public class NativeActivity extends android.app.NativeActivity {
 	@Override
 	protected void onDestroy() {
 		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onDestroy");
+		LightDownloadService.appRunning = false;
+		LightDownloadService.needPush = true;
 		super.onDestroy();
 
 		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();

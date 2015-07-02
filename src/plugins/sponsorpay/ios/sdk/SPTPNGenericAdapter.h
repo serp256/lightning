@@ -10,7 +10,7 @@
 #import "SPTPNVideoAdapter.h"
 #import "SPRewardedVideoNetworkAdapter.h"
 
-@interface SPTPNGenericAdapter : NSObject <SPTPNVideoAdapter, SPRewardedVideoNetworkAdapterDelegate>
+@interface SPTPNGenericAdapter : NSObject<SPTPNVideoAdapter, SPRewardedVideoNetworkAdapterDelegate>
 
 - (id)initWithVideoNetworkAdapter:(id<SPRewardedVideoNetworkAdapter>)adapter;
 

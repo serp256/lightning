@@ -8,27 +8,21 @@
 
 #import <Foundation/Foundation.h>
 
+#import "SPLogLevel.h"
+
 @protocol SPLogAppender;
 
-typedef NS_ENUM(NSUInteger, SPLogLevel)
-{
-    SPLogLevelVerbose = 0,
-    SPLogLevelDebug   = 10,
-    SPLogLevelInfo    = 20,
-    SPLogLevelWarn    = 30,
-    SPLogLevelError   = 40,
-    SPLogLevelFatal   = 50,
-    SPLogLevelOff     = 60
-};
+#define LogInvocation NSLog(@"%s", __PRETTY_FUNCTION__)
 
 #define SPLogVerbose(...) _SPLogVerbose(__VA_ARGS__)
 #define SPLogDebug(...) _SPLogDebug(__VA_ARGS__)
 #define SPLogInfo(...) _SPLogInfo(__VA_ARGS__)
 #define SPLogWarn(...) _SPLogWarn(__VA_ARGS__)
 #define SPLogError(...) _SPLogError(__VA_ARGS__)
+#define SPLogFatal(...) _SPLogFatal(__VA_ARGS__)
 
 void SPLogSetLevel(SPLogLevel level);
-void _SPLogTrace(NSString *format, ...);
+void _SPLogVerbose(NSString *format, ...);
 void _SPLogDebug(NSString *format, ...);
 void _SPLogInfo(NSString *format, ...);
 void _SPLogWarn(NSString *format, ...);
@@ -40,6 +34,10 @@ void _SPLogFatal(NSString *format, ...);
 + (instancetype)sharedInstance;
 
 + (void)addLogger:(id<SPLogAppender>)logger;
++ (void)removeLogger:(id<SPLogAppender>)logger;
++ (void)removeAllLoggers;
+
++ (void)checkDynamicLogLevel;
 
 - (void)logFormat:(NSString *)format arguments:(va_list)arguments;
 
