@@ -23,9 +23,15 @@ public class GcmBroadcastReceiver extends BroadcastReceiver {
 			String messageType = gcm.getMessageType(intent);
 			 if (!extras.isEmpty() && GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
 				 Log.d("Extras: '" + extras.toString() + "'");
-				 String mid = extras.getString("id");
-				 String msg = extras.getString("msg");
-				 sendNotification(context,mid,null,msg,extras);
+				 String from = extras.getString("from");
+				 if (from.equals("google.com/iid")) {
+					 Log.d("Maybe should obtain tokens again");
+				 }
+				 else {
+					 String mid = extras.getString("id");
+					 String msg = extras.getString("msg");
+					 sendNotification(context,mid,null,msg,extras);
+				 }
 			 } else Log.d("Does not have extras or incorrect type");
 			setResultCode(Activity.RESULT_OK);
     }
@@ -40,9 +46,10 @@ public class GcmBroadcastReceiver extends BroadcastReceiver {
 		}
 
 		private void sendNotification(Context context,String id, String title, String message, Bundle extras) {
-			Log.d("sendNotification");
+			Log.d("sendNotification " + id);
 
 			Intent startIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+			Log.d("OK");
 			startIntent.putExtra("remoteNotification",id);
 
 			PendingIntent pNotifIntnt = PendingIntent.getActivity(context, 0, startIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -83,6 +90,7 @@ public class GcmBroadcastReceiver extends BroadcastReceiver {
 			}
 
 			NotificationManagerCompat notifMngr = NotificationManagerCompat.from(context);
+			Log.d ("notify " + id.hashCode() + " " + (notifBldr == null? "null" : "not null"));
 			notifMngr.notify(id.hashCode(), notifBldr.build());
 		}
 }
