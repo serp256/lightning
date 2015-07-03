@@ -121,14 +121,16 @@ public class LightSponsorpay {
 			public void onSPBrandEngageOffersNotAvailable() {
 						Log.d("LIGHTNING", "SPBrandEngage - no offers for the moment");
 								mIntent = null;
-								(new CamlParamCallbackInt(request_callback,false)).run();
+								if (request_callback != -1) {(new CamlParamCallbackInt(request_callback,false)).run();}
+								request_callback = -1;
 			}
 
 		@Override
 			public void onSPBrandEngageError(String errorMessage) {
 						Log.d("LIGHTNING", "SPBrandEngage - an error occurred:\n" + errorMessage);
 								mIntent = null;
-								(new CamlParamCallbackInt(request_callback,false)).run();
+								if (request_callback != -1) {(new CamlParamCallbackInt(request_callback,false)).run();}
+								request_callback = -1;
 			}
 	}
 
