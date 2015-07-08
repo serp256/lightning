@@ -9,5 +9,6 @@
 
 - (void)setRequestCallback:(value)c;
 - (void)setShowCallback:(value)c;
+- (void)runShowCallback;
 
 @end

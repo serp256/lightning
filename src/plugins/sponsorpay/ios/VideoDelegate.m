@@ -10,8 +10,16 @@
 	FREE_CALLBACK(_requestCallback);
 }
 
+- (void)runShowCallback {
+	if (_showCallback != 0) {
+			RUN_CALLBACK(_showCallback, Val_false);
+			FREE_CALLBACK(_showCallback);
+			_showCallback = 0;
+	}
+}
+
 - (void)brandEngageClient:(SPBrandEngageClient *)brandEngageClient didChangeStatus:(SPBrandEngageClientStatus)newStatus {
-	NSLog(@"brandEngageClient didChangeStatus %d", newStatus);
+	NSLog(@"brandEngageClient didChangeStatus %ld", newStatus);
 
 	switch (newStatus) {
 		case STARTED:
@@ -28,8 +36,7 @@
 			break;
 
 		case ERROR:
-			RUN_CALLBACK(_showCallback, Val_false);
-			FREE_CALLBACK(_showCallback);
+			[self runShowCallback];
 			break;
 	}
 }
