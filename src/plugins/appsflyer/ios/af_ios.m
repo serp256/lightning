@@ -5,7 +5,7 @@
 
 value ml_af_set_key(value appid, value devkey) {
 	if (!Is_block(appid)) caml_failwith("appsflyer application id should be provided on ios");
-
+	//[AppsFlyerTracker sharedTracker].isDebug = true;
 	[AppsFlyerTracker sharedTracker].appsFlyerDevKey = [NSString stringWithUTF8String:String_val(devkey)];
 	[AppsFlyerTracker sharedTracker].appleAppID = [NSString stringWithUTF8String:String_val(Field(appid, 0))];
 

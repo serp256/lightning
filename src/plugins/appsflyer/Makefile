@@ -24,6 +24,7 @@ COBJS   += ios/af_ios.o
 MLPPOPT += -DIOS
 
 LIBFLAGS += -cclib '-weak_framework\ AdSupport' \
+						-cclib '-framework\ iAd' \
 						-cclib -lAppsFlyerLib
 
 else
