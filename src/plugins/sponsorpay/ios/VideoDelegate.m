@@ -31,8 +31,7 @@
 			break;
 
 		case CLOSE_ABORTED:
-			RUN_CALLBACK(_showCallback, Val_false);
-			FREE_CALLBACK(_showCallback);
+			[self runShowCallback];
 			break;
 
 		case ERROR:
