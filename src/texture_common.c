@@ -438,6 +438,15 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
 #else 
 						return 0;
 #endif
+        case LTextureFormatPvrtcRGB4:
+#if (defined IOS || defined ANDROID)
+            p->compressed = 1;
+            p->bitsPerPixel = 4;
+            p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
+            break;
+#else 
+						return 0;
+#endif
 
         case LTextureFormatPvrtc2RGBA2:
 #if (defined IOS || defined ANDROID)
@@ -1041,13 +1050,13 @@ CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 }
 */
 
-textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr) {
-	PRINT_DEBUG("LTextureFormatETC1 %d", LTextureFormatETC1);
+textureInfo* loadCmprsAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr) {
+	PRINT_DEBUG("loadCmprsAlphaTex");
 	PRINT_DEBUG("(tInfo.format & 0xFFFF) %d", (tInfo->format & 0xFFFF));
 
 	textureInfo* alphaTexInfo = NULL;
 
-	if ((tInfo->format & 0xFFFF) == LTextureFormatETC1) {
+	if (((tInfo->format & 0xFFFF) == LTextureFormatETC1)|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGB4)|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGB2) || ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGBA4)) {
 		alphaTexInfo = (textureInfo*)malloc(sizeof(textureInfo));
 
 		char* ext = strrchr(_fname, '.');

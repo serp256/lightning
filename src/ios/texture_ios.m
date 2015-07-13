@@ -97,6 +97,7 @@ void drawImage(CGContextRef context, void* data) {
 
 int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	//float scale = [image respondsToSelector:@selector(scale)] ? [image scale] : 1.0f;
+	PRINT_DEBUG ("loadImageFile");
 	float scale = 1.0f;
 	float width = image.size.width;
 	float height = image.size.height;
@@ -423,7 +424,7 @@ int load_image_info(char *cpath,char *suffix, int use_pvr,textureInfo *tInfo) {
 
 CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value filter, value use_pvr) { // if old texture exists when replace
 	CAMLparam2(opath,osuffix);
-	CAMLlocal1(mlTex);
+	CAMLlocal2(mlTex, mlAlphaTex);
 	//NSLog(@"ml_loade image: %s\n",String_val(opath));
 	NSString *path = [NSString stringWithCString:String_val(opath) encoding:NSUTF8StringEncoding];
 	checkGLErrors("start load image");
@@ -444,6 +445,22 @@ CAMLprim value ml_loadImage(value oldTexture, value opath, value osuffix, value 
 	checkGLErrors("after load texture");
 
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
+	PRINT_DEBUG ("tex->fprmat %d, %d", (&tInfo)->format,(&tInfo)->format>> 16);
+
+	textureInfo* alphaTexInfo = loadCmprsAlphaTex(&tInfo, String_val(opath), suffix, Bool_val(use_pvr));
+
+	if (alphaTexInfo) {
+		PRINT_DEBUG ("true");
+		value alphaTexId = createGLTexture(1, alphaTexInfo, filter);
+		ML_TEXTURE_INFO(mlAlphaTex, alphaTexId, alphaTexInfo);
+
+		value block = caml_alloc(1, 1);
+		Store_field(block, 0, mlAlphaTex);
+		Store_field(mlTex, 0, block);
+
+		free(alphaTexInfo->imgData);
+		free(alphaTexInfo);
+	}
 
 	CAMLreturn(mlTex);
 }
