@@ -1056,7 +1056,12 @@ textureInfo* loadCmprsAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, i
 
 	textureInfo* alphaTexInfo = NULL;
 
-	if (((tInfo->format & 0xFFFF) == LTextureFormatETC1)|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGB4)|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGB2) || ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGBA4)) {
+	if (
+			   ((tInfo->format & 0xFFFF) == LTextureFormatETC1)
+			|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGB4)
+			|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGB2) 
+			|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGBA4 
+		  || ((tInfo->format & 0xFFFF) == LTextureFormatETC2RGB))) {
 		alphaTexInfo = (textureInfo*)malloc(sizeof(textureInfo));
 
 		char* ext = strrchr(_fname, '.');
