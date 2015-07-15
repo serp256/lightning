@@ -265,6 +265,11 @@ unsigned long nextDBE(unsigned long x) {
 }
 
 
+// next divisible by four
+unsigned long nextDBF(unsigned long x) {
+	return x + (x % 4 == 0 ? 0 : (4 - x % 4));
+}
+
 int nextPowerOfTwo(int number) {
 	int result = 1;
 	while (result < number) result *= 2;
@@ -705,8 +710,8 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 
         for (level=0; level<= tInfo->numMipmaps; ++level)
         {                    
-        	PRINT_DEBUG("level %d gl format %x w %d h %d", level, params.glTexFormat, levelWidth, levelHeight);
-			int size = MAX(32, levelWidth * levelHeight * params.bitsPerPixel / 8);
+        	PRINT_DEBUG("level %d gl format %x w %d h %d ndbfw %d ndbfh %d", level, params.glTexFormat, levelWidth, levelHeight, (nextDBF (levelWidth)), (nextDBF (levelHeight)) );
+			int size = MAX(32, (nextDBF (levelWidth)) * (nextDBF (levelHeight)) * params.bitsPerPixel / 8);
             glCompressedTexImage2D(GL_TEXTURE_2D, level, params.glTexFormat, levelWidth, levelHeight, 0, size, levelData);
             checkGLErrors("8");
             levelData += size;
