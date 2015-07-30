@@ -274,6 +274,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 
         switch (action) {
             case AMOTION_EVENT_ACTION_MOVE: {
+            	PRINT_DEBUG("AMOTION_EVENT_ACTION_MOVE");
                 size_t ptr_cnt = AMotionEvent_getPointerCount(event);
                 touch_track_t* touch;
 
@@ -303,8 +304,12 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 
             case AMOTION_EVENT_ACTION_DOWN:
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
+            	PRINT_DEBUG("AMOTION_EVENT_ACTION_POINTER_DOWN");
                 process_touches = 1;
-                if (action == AMOTION_EVENT_ACTION_DOWN) ptr_indx = 0;
+                if (action == AMOTION_EVENT_ACTION_DOWN) {
+                	PRINT_DEBUG("AMOTION_EVENT_ACTION_DOWN");
+                	ptr_indx = 0;
+                }
 
                 GET_TOUCH_PARAMS;
                 KEEP_TRACK(tid, tx, ty);
@@ -315,8 +320,12 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 
             case AMOTION_EVENT_ACTION_UP:
             case AMOTION_EVENT_ACTION_POINTER_UP:
+            	PRINT_DEBUG("AMOTION_EVENT_ACTION_POINTER_UP");
                 process_touches = 1;
-                if (action == AMOTION_EVENT_ACTION_UP) ptr_indx = 0;
+                if (action == AMOTION_EVENT_ACTION_UP) {
+                	PRINT_DEBUG("AMOTION_EVENT_ACTION_UP");
+                	ptr_indx = 0;
+                }
 
                 GET_TOUCH_PARAMS;
                 LOSE_TRACK(tid);

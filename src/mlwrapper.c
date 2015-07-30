@@ -164,6 +164,7 @@ static value processTouches_method = NIL;
 void mlstage_processTouches(mlstage *mlstage, value touches) {
 	PRINT_DEBUG("mlstage_processTouches");
 	if (processTouches_method == NIL) processTouches_method = caml_hash_variant("processTouches");
+	PRINT_DEBUG("processTouches_method: mlstage->stage = %d; processTouches_method = %d", mlstage->stage, processTouches_method);
 	caml_callback2(caml_get_public_method(mlstage->stage,processTouches_method),mlstage->stage,touches);
 }
 
