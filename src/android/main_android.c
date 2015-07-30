@@ -195,6 +195,10 @@ kh_tt_t* touch_track = NULL;
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
     //PRINT_DEBUG("engine_handle_input");
 
+    if (!engine.stage) {
+        return 0;
+    }
+
     CAMLparam0();
     CAMLlocal5(vtouches, vtouch, vtmp, vtx, vty);
 
