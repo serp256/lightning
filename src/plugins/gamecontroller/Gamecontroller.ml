@@ -65,6 +65,25 @@ module Keys = struct
   module RightShoulder = Handler(struct value cname = "RightShoulder"; end);
 end;
 
+type phase = [= `up | `down ];
+type key_type= [= `dpad_up | `dpad_down | `dpad_left | `dpad_right | `dpad_center];
+module Params = struct type callbackArg = (key_type * phase); value cnameBase = "Gamecontroller.Dpad"; end;
+module H = Handler.Make(Params);
+module Dpad = H(struct value cname = ""; end);
+(*
+module Dpad = struct
+  type phase = [= `up | `down ];
+
+  module Params = struct type callbackArg = (key_type * phase); value cnameBase = "Gamecontroller.Dpad"; end;
+  module Handler = Handler.Make(Params);
+  module Up = Handler(struct value cname = "Up"; end);
+  module Down = Handler(struct value cname = "Down"; end);
+  module Right = Handler(struct value cname = "Right"; end);
+  module Left = Handler(struct value cname = "Left"; end);
+  module Center = Handler(struct value cname = "Center"; end);
+end;
+*)
+
 module Joysticks = struct
   type joystick = [= `none | `left | `right ];
 
