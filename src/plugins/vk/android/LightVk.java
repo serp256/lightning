@@ -15,8 +15,12 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import android.content.Intent;
 import ru.redspell.lightning.utils.Log;
+import com.vk.sdk.VKAccessTokenTracker;
+import com.vk.sdk.VKCallback;
 
 public class LightVk {
+	public static VKAccessTokenTracker vkAccessTokenTracker;
+
 	private static abstract class Callback implements Runnable {
 		protected int success;
 		protected int fail;
@@ -91,6 +95,7 @@ public class LightVk {
 
 	private static boolean authorized = false;
 
+/*
 	private static class VKSdkListener extends com.vk.sdk.VKSdkListener {
 		private int success;
 		private int fail;
@@ -131,6 +136,8 @@ public class LightVk {
 		}
 	}
 
+*/
+	/*
 	private static class UiLifecycleHelper implements ru.redspell.lightning.IUiLifecycleHelper {
 		public void onCreate(Bundle savedInstanceState) {};
 
@@ -151,42 +158,103 @@ public class LightVk {
 			VKUIHelper.onDestroy(Lightning.activity);
 		};
 	}
+	*/
 
 	private static boolean helperAdded = false;
 	private static boolean sdkListenerAdded = false;
+	private static int success;
+	private static int fail;
 
-	public static void authorize(String appid, String[] permissions, int success, int fail, boolean force) {
-		Log.d("LIGHTNING", "!!!authorized " + authorized + " force " + force);
-
-		if (authorized && !force) {
-			(new AuthSuccess(success, fail)).run();
-			return;
-		}
-
+	public static void init (String appId) {
+		Log.d("LIGHTNING", "sdk initialize");
+		VKSdk.initialize(Lightning.activity.getApplicationContext());
+  }
+	public static void authorize(String appid, String[] permissions, final int s, final int f, boolean force) {
 		Log.d("LIGHTNING", "helperAdded " + helperAdded);
+		success = s;
+		fail = f;
 		if (!helperAdded) {
 			helperAdded =true;
+
+			vkAccessTokenTracker = new VKAccessTokenTracker() { 
+        @Override 
+        public void onVKAccessTokenChanged(VKAccessToken oldToken, VKAccessToken newToken) { 
+							Log.d("LIGHTNING", "onVKAccessTokenChanged ");
+            if (newToken == null) { 
+							Log.d("LIGHTNING", "onVKAccessTokenChanged: token is null");
+								authorized = false;
+							//	VKSdk.login(Lightning.activity, permissions);
+                // VKAccessToken is invalid 
+            } 
+        } 
+      };
+
+			vkAccessTokenTracker.startTracking(); 
 			Log.d("LIGHTNING", "adding lifecycle helper");
-			Lightning.activity.addUiLifecycleHelper(new UiLifecycleHelper());
+
+			Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
+					public void onCreate(Bundle savedInstanceState) {}
+
+					public void onResume() {}
+
+					public void onActivityResult(int requestCode, int resultCode, Intent data) {
+						 Log.d("LIGHTNING", "vkSdk onActivityResult " + requestCode + " " + resultCode + " " + data);
+
+						 if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() { 
+										@Override 
+										public void onResult(VKAccessToken res) { 
+											Log.d("LIGHTNING", "vkSdk success" );
+												// Пользователь успешно авторизовался 
+											authorized = true;
+											(new AuthSuccess(success, fail)).run();
+										} 
+										@Override 
+										public void onError(VKError error) { 
+												// Произошла ошибка авторизации (например, пользователь запретил авторизацию) 
+											Log.d("LIGHTNING", "vkSdk fail" );
+											authorized = false;
+											String message = (error.errorMessage == null) ? "cancelled": (error.errorMessage + ": " + error.errorReason);
+											(new Fail(success, fail, message)).run();
+										} 
+								})) { 
+											Log.d("LIGHTNING", "_________" );
+										//Lightning.activity.onActivityResult(requestCode, resultCode, data); 
+								} 
+					}
+
+					public void onSaveInstanceState(Bundle outState) {}
+					public void onPause() {}
+					public void onStop() {}
+					public void onDestroy() {}
+			});
+
 			/*
 			cause vk authorization is called after first LightActivity onResume call,
 			LightVk lifecycle helper misses this call and didn't save activity instance for internal purposes
 			to make VKSdk work correctly we need to emulate this call
 			*/
+			/*
 			VKUIHelper.onResume(Lightning.activity);
+			*/
+		}
+		Log.d("LIGHTNING", "!!!authorized " + authorized + " force " + force);
+
+		if (authorized && !force && (VKSdk.isLoggedIn()) ) {
+			(new AuthSuccess(success, fail)).run();
+			return;
 		}
 
-		VKSdk.initialize(new VKSdkListener(success, fail), appid);
-
-		if (force) {
+		if (force && VKSdk.isLoggedIn()) {
 			VKSdk.logout();
 		}
 
-		boolean wakedUp = VKSdk.wakeUpSession();
+			Log.d("LIGHTNING", "before wake up " );
+		boolean wakedUp = VKSdk.wakeUpSession(Lightning.activity.getApplicationContext());
 
+			Log.d("LIGHTNING", "wake up " + wakedUp);
 		if (!wakedUp) {
 			Log.d("LIGHTNING", "no token or it is expied");
-			VKSdk.authorize(permissions, false, false);
+			VKSdk.login(Lightning.activity, permissions);
 		} else {
 			Log.d("LIGHTNING", "has token");
 			(new AuthSuccess(success, fail)).run();
@@ -268,7 +336,6 @@ public class LightVk {
 
 	private static void appRequests (VKRequest request, final int success, final int fail) {
 		Log.d("LIGHTNING", "appRequests CALL");
-		/*
 		request.executeWithListener(new VKRequestListener() {
 			@Override
 			public void onComplete(VKResponse response) {
@@ -285,11 +352,8 @@ public class LightVk {
 				Log.d("LIGHTNING", "appRequest attemptFailed");
 			}
 		});
-		*/
 	}
-	public static void apprequest (int success, int fail, String uid) {
-		/*
-		appRequests(new VKRequest("apps.sendRequest", VKParameters.from("text","test app request", "type", "request","name","app_req_name","key","app_req_key",VKApiConst.USER_ID, uid)), success, fail);
-		*/
+	public static void apprequest (final int success, final int fail, final String uid) {
+		appRequests(new VKRequest("apps.sendRequest", VKParameters.from("text","test app request", "type", "invite","name","app_req_name","key","1", VKApiConst.USER_ID, uid)), success, fail);
 	}
 }

@@ -17,6 +17,10 @@ value ml_vk_logout (value unit) {
 	}
 }
 
+value ml_vk_init (value appId) {
+	NSLog(@"ml_vk_init");
+}
+
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess, value vforce) {
 	NSLog(@"ml_vk_authorize call");
 	if (authorized && vforce == Val_false) {
@@ -184,5 +188,19 @@ value ml_vk_friends(value vfail, value vsuccess, value vt) {
 value ml_vk_users(value vfail, value vsuccess, value vids) {
 	NSString *mids = [NSString stringWithUTF8String:String_val(vids)];
 	vk_users_request([[VKApi users] get:[NSDictionary dictionaryWithObjectsAndKeys:@"sex,photo_max,last_seen,online,online_mobile,online_app", VK_API_FIELDS, mids, VK_API_USER_IDS, nil ]], vfail, vsuccess);
+	return Val_unit;
+}
+
+value ml_vk_apprequest (value vfail, value vsuccess, value vid) {
+	PRINT_DEBUG ("ml_vk_apprequest");
+	vk_users_request(
+			 [VKRequest requestWithMethod:@"apps.sendRequest" andParameters:@{
+					 @"text" : @"test app request", 
+						@"type": @"invite",
+						@"name": @"app_req_name",
+						 @"key": @"1",
+						VK_API_USER_ID: [NSString stringWithUTF8String:String_val(vid)]
+						}
+				andHttpMethod:@"GET"], vfail, vsuccess);
 	return Val_unit;
 }

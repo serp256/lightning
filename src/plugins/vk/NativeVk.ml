@@ -26,17 +26,20 @@ type t = unit;
 type fail = string -> unit;
 
 IFDEF PC THEN
+
+value init ~appId () = ();
 value authorize ~appid ~permissions ?fail ~success ?force () = ();
 value friends ?fail ~success t = ();
 value users ?fail ~success ~ids t = ();
 value token _ = "";
 value uid _ = "";
 value logout _ = ();
-(*
-value apprequest ?fail ~success ?request_type ~text ~user_id = ();
-*)
+value apprequest ?fail ~success ?request_type ~text ~user_id () = ();
 ELSE
 Callback.register "create_user" User.create;
+
+external _init: string -> unit = "ml_vk_init";
+value init ~appId () = _init appId;
 
 external authorize: ~appid:string -> ~permissions:list string -> ?fail:fail -> ~success:(t -> unit) -> ~force:bool -> unit -> unit = "ml_vk_authorize_byte" "ml_vk_authorize";
 value authorize ~appid ~permissions ?fail ~success ?(force = False) = authorize ~appid ~permissions ?fail ~success ~force;
@@ -48,8 +51,8 @@ value users ?fail ~success ~ids t =
 external token: t -> string = "ml_vk_token";
 external uid: t -> string = "ml_vk_uid";
 external logout: unit -> unit= "ml_vk_logout";
-(*
+
+(*not available for apps not in mobile catalog*)
 external _apprequest:?fail:fail -> ~success:(string -> unit) -> ~user_id:string -> unit = "ml_vk_apprequest";
-value apprequest ?fail ~success ?request_type ~text ~user_id = _apprequest ?fail ~success ~user_id;
-*)
+value apprequest ?fail ~success ?request_type ~text ~user_id () = _apprequest ?fail ~success ~user_id;
 ENDIF;

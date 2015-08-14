@@ -5,6 +5,21 @@ static jclass cls = NULL;
 
 #define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightVk);
 
+value ml_vk_init(value vappId) {
+	CAMLparam1 (vappId);
+
+	PRINT_DEBUG("ml_vk_init");
+	GET_ENV;
+	GET_CLS;
+
+
+	STATIC_MID(cls, init, "(Ljava/lang/String;)V");
+	jstring jappId = (*env)->NewStringUTF(env, String_val(vappId));
+	(*env)->CallStaticVoidMethod(env, cls, mid, jappId);
+	(*env)->DeleteLocalRef(env, jappId);
+	CAMLreturn(Val_unit);
+}
+
 value ml_vk_authorize(value vappid, value vpermissions, value vfail, value vsuccess, value vforce) {
 	CAMLparam4(vappid, vpermissions, vfail, vsuccess);
 	CAMLlocal1(head);

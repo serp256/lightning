@@ -227,6 +227,7 @@ void silentUncaughtException(char *exceptionJson) {
 }
 
 -(void)resignActive {
+	[self hideActivityIndicator];
 	[(LightView *)(self.view) stop];
 }
 

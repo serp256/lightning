@@ -44,14 +44,14 @@ void set_referrer(char *type,NSString *nid) {
 
 	if (ln) {
 		NSString *nid = [ln.userInfo objectForKey:@"id"];
-		NSLog(@"didReceiveLocalNotification: %@",nid);
+		//NSLog(@"didReceiveLocalNotification: %@",nid);
 		if (nid) set_referrer("local",nid);
 	} else {
 		// For remote notifications
 		NSDictionary *rn = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
 		if (rn) {
 			NSString *nid = [rn objectForKey:@"id"];
-			NSLog(@"didReceiveRemoteNotification: %@",nid);
+			//NSLog(@"didReceiveRemoteNotification: %@",nid);
 			if (nid) set_referrer("remote",nid);
 		};
 	};
@@ -85,8 +85,8 @@ void set_referrer(char *type,NSString *nid) {
     {
       application.applicationIconBadgeNumber = badgeNumber;
     }
-    else
-      NSLog(@"access denied for UIUserNotificationTypeBadge");
+    //else
+      //NSLog(@"access denied for UIUserNotificationTypeBadge");
   }
 
 #else
@@ -155,12 +155,12 @@ void set_referrer(char *type,NSString *nid) {
 	// This is local notification
 	// Get the user data
 	NSString *nid = [notification.userInfo objectForKey:@"id"];
-	NSLog(@"didReceiveLocalNotification: %@",nid);
+	//NSLog(@"didReceiveLocalNotification: %@",nid);
 	if (nid) set_referrer("local",nid);
 }
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
-	NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken");
+	//NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken");
 
 	if (lightViewController && lightViewController.rnDelegate) {
 		[lightViewController.rnDelegate didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
@@ -170,7 +170,7 @@ void set_referrer(char *type,NSString *nid) {
 
 
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
-	NSLog(@"didFailToRegisterForRemoteNotificationsWithError");
+	//NSLog(@"didFailToRegisterForRemoteNotificationsWithError");
 
 	if (lightViewController && lightViewController.rnDelegate) {
 		[lightViewController.rnDelegate didFailToRegisterForRemoteNotificationsWithError:error];
@@ -199,7 +199,7 @@ void set_referrer(char *type,NSString *nid) {
 }
 
 -(BOOL)shouldAutorotate {
-	NSLog(@"delegate shouldAutorotate");
+	//NSLog(@"delegate shouldAutorotate");
 	return YES;
 }
 
@@ -219,18 +219,18 @@ void set_referrer(char *type,NSString *nid) {
 
 -(NSUInteger)application:(UIApplication*)application supportedInterfaceOrientationsForWindow:(UIWindow*)window
 {
-	NSLog(@"delegate application supportedInterfaceOrienationsForWindow");
+	//NSLog(@"delegate application supportedInterfaceOrienationsForWindow");
 	//return UIInterfaceOrientationMaskPortrait;
 	return UIInterfaceOrientationMaskAll;
 }
 
 -(BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-  NSLog(@"shouldAutorotateToInterfaceOrientation from light app delegate");
+  //NSLog(@"shouldAutorotateToInterfaceOrientation from light app delegate");
 	return (interfaceOrientation == UIInterfaceOrientationPortrait || interfaceOrientation == UIInterfaceOrientationMaskPortraitUpsideDown);
 }
 
 - (NSUInteger)supportedInterfaceOrientations {
-	NSLog(@"supportedInterfaceOrientations from light app delegate");
+	//NSLog(@"supportedInterfaceOrientations from light app delegate");
   return UIInterfaceOrientationMaskPortrait;
 }
 

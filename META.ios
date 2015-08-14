@@ -111,6 +111,7 @@ package "native_vk" (
   description="Vk native SDK support"
   archive(byte) = "NativeVk.cma"
   archive(native) = "NativeVk.cmxa"
+	linkopts = "-ccopt '-F%lightning_path%/src/plugins/vk/ios/sdk'"
 )
 
 package "social" (
