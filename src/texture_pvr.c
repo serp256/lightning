@@ -462,7 +462,6 @@ int loadCompressedFile(gzFile gzf, textureInfo *tInfo) {
 	PRINT_DEBUG("loadCompressedFile max tex size %d", size);
 
 	uint32_t magin_num;
-	PRINT_DEBUG ("magic_num %d str %s", magin_num, str_of_fourcc (magin_num));
 
 	if (gzread(gzf, &magin_num, 4) < 4) {
 		ERROR("cannot determine compressed texture container type");

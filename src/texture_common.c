@@ -326,7 +326,7 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 };
 
 int loadAlphaPtr(gzFile fptr,textureInfo *tInfo, int with_lum) {
-	PRINT_DEBUG("loadAlphaPtr %d", fptr);
+	//PRINT_DEBUG("loadAlphaPtr %d", fptr);
 	if (!fptr) { return 2;};
 	unsigned int size;
 	gzread(fptr,&size,sizeof(size));
@@ -710,7 +710,7 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 
         for (level=0; level<= tInfo->numMipmaps; ++level)
         {                    
-        	PRINT_DEBUG("level %d gl format %x w %d h %d ndbfw %d ndbfh %d", level, params.glTexFormat, levelWidth, levelHeight, (nextDBF (levelWidth)), (nextDBF (levelHeight)) );
+        	//PRINT_DEBUG("level %d gl format %x w %d h %d ndbfw %d ndbfh %d", level, params.glTexFormat, levelWidth, levelHeight, (nextDBF (levelWidth)), (nextDBF (levelHeight)) );
 			int size = MAX(32, (nextDBF (levelWidth)) * (nextDBF (levelHeight)) * params.bitsPerPixel / 8);
             glCompressedTexImage2D(GL_TEXTURE_2D, level, params.glTexFormat, levelWidth, levelHeight, 0, size, levelData);
             checkGLErrors("8");
