@@ -35,6 +35,12 @@ void set_referrer(char *type,NSString *nid) {
 	//[self.window addSubview:lightViewController.view];
 	self.window.rootViewController = lightViewController;
 	// For local notifications
+	if ([application respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+			UIUserNotificationType types = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
+			[application registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:types categories: nil]];
+	} else {
+	}
+
 	UILocalNotification *ln = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
 
 	[application retain];
