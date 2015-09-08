@@ -21,8 +21,8 @@ ifeq ($(PLATFORM),IOS)
 
 MLPPOPT += -DIOS
 
-CFLAGS  += -fmodules -fobjc-arc -DIOS -Iios -I../../ -I../../ios -I../common -I ios/sdk -I ios/sdk/sdk/Source -I ios/sdk/sdk/Source/Core -I ios/sdk/sdk/Source/Utils -I ios/sdk/sdk/Source/API -I ios/sdk/sdk/Source/API/methods -I ios/sdk/sdk/Source/Image \
-					 -I ios/sdk/sdk/Source/API/models -I ios/sdk/sdk/Source/Views
+CFLAGS  += -fmodules -fobjc-arc -DIOS -Iios -I../../ -I../../ios -I../common -I ios/sdk -I ios/sdk/library/Source -I ios/sdk/library/Source/Core -I ios/sdk/library/Source/Utils -I ios/sdk/library/Source/API -I ios/sdk/library/Source/API/methods -I ios/sdk/library/Source/Image \
+					 -I ios/sdk/library/Source/API/models -I ios/sdk/library/Source/Views
 COBJS   +=  ios/vk_ios.o ios/LightVkDelegate.o 
 # ios/sdk/sdk/sdk/models/VKApiObject.o ios/sdk/sdk/sdk/models/VKApiObjectArray.o ios/sdk/sdk/sdk/models/VKAudio.o ios/sdk/sdk/sdk/models/VKCounters.o \
 #	ios/sdk/sdk/sdk/models/VKGroup.o ios/sdk/sdk/sdk/models/VKLikes.o ios/sdk/sdk/sdk/models/VKPhoto.o ios/sdk/sdk/sdk/models/VKPhotoSize.o \
