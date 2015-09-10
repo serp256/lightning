@@ -6,6 +6,7 @@ static jclass cls = NULL;
 #define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightVk);
 
 value ml_vk_init(value unit) {
+	CAMLparam0();
 	PRINT_DEBUG("ml_vk_init");
 	GET_ENV;
 	GET_CLS;
