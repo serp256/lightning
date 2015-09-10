@@ -306,7 +306,7 @@ value ml_loadImage(value oldTextureID,value opath,value osuffix,value filter,val
 	ML_TEXTURE_INFO(mlTex,textureID,(&tInfo));
 	free(tInfo.imgData);
 
-	textureInfo* alphaTexInfo = loadEtcAlphaTex(&tInfo, String_val(opath), suffix, Bool_val(use_pvr));
+	textureInfo* alphaTexInfo = loadCmprsAlphaTex(&tInfo, String_val(opath), suffix, Bool_val(use_pvr));
 
 	if (alphaTexInfo) {
 		value alphaTexId = createGLTexture(1, alphaTexInfo, filter);

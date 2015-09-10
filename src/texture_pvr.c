@@ -161,6 +161,8 @@ int loadPvrFile3(gzFile gzf, textureInfo *tInfo) {
 	tInfo->numMipmaps = header.u32MIPMapCount - 1;
 	tInfo->generateMipmaps = 0;
 	tInfo->premultipliedAlpha = header.u32Flags & PVRTEX3_PREMULTIPLIED;
+
+	PRINT_DEBUG (" metadata size %d", header.u32MetaDataSize);
 	PRINT_DEBUG("width: %d, height: %d, pma: %d",tInfo->width,tInfo->height,tInfo->premultipliedAlpha);
 	union PVR3PixelType pt = (union PVR3PixelType)(header.u64PixelFormat);
 	int bpp = 0;
@@ -243,7 +245,9 @@ int loadPvrFile3(gzFile gzf, textureInfo *tInfo) {
 
 	if (header.u32MetaDataSize > 0) {
 		PRINT_DEBUG("move on metaSize");
-		gzseek(gzf, header.u32MetaDataSize, SEEK_CUR);
+		//gzseek(..,SEEK_CUR) acts like (..,SEEK_SET). maybe bug
+		//gzseek(gzf,header.u32MetaDataSize, SEEK_CUR);
+		gzseek(gzf,bytes_to_read + 4 + header.u32MetaDataSize, SEEK_SET);
 	}
 
 	PRINT_DEBUG("after skiping meta");
@@ -458,6 +462,7 @@ int loadCompressedFile(gzFile gzf, textureInfo *tInfo) {
 	PRINT_DEBUG("loadCompressedFile max tex size %d", size);
 
 	uint32_t magin_num;
+
 	if (gzread(gzf, &magin_num, 4) < 4) {
 		ERROR("cannot determine compressed texture container type");
 		return 1;

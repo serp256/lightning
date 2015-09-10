@@ -265,6 +265,11 @@ unsigned long nextDBE(unsigned long x) {
 }
 
 
+// next divisible by four
+unsigned long nextDBF(unsigned long x) {
+	return x + (x % 4 == 0 ? 0 : (4 - x % 4));
+}
+
 int nextPowerOfTwo(int number) {
 	int result = 1;
 	while (result < number) result *= 2;
@@ -321,7 +326,7 @@ int loadPlxFile(const char *path,textureInfo *tInfo) {
 };
 
 int loadAlphaPtr(gzFile fptr,textureInfo *tInfo, int with_lum) {
-	PRINT_DEBUG("loadAlphaPtr %d", fptr);
+	//PRINT_DEBUG("loadAlphaPtr %d", fptr);
 	if (!fptr) { return 2;};
 	unsigned int size;
 	gzread(fptr,&size,sizeof(size));
@@ -434,6 +439,15 @@ static inline int textureParams(textureInfo *tInfo,texParams *p) {
             p->compressed = 1;
             p->bitsPerPixel = 4;
             p->glTexFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG;
+            break;
+#else 
+						return 0;
+#endif
+        case LTextureFormatPvrtcRGB4:
+#if (defined IOS || defined ANDROID)
+            p->compressed = 1;
+            p->bitsPerPixel = 4;
+            p->glTexFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG;
             break;
 #else 
 						return 0;
@@ -696,8 +710,8 @@ value createGLTexture(value oldTextureID, textureInfo *tInfo, value filter) {
 
         for (level=0; level<= tInfo->numMipmaps; ++level)
         {                    
-        	PRINT_DEBUG("level %d gl format %x w %d h %d", level, params.glTexFormat, levelWidth, levelHeight);
-			int size = MAX(32, levelWidth * levelHeight * params.bitsPerPixel / 8);
+        	//PRINT_DEBUG("level %d gl format %x w %d h %d ndbfw %d ndbfh %d", level, params.glTexFormat, levelWidth, levelHeight, (nextDBF (levelWidth)), (nextDBF (levelHeight)) );
+			int size = MAX(32, (nextDBF (levelWidth)) * (nextDBF (levelHeight)) * params.bitsPerPixel / 8);
             glCompressedTexImage2D(GL_TEXTURE_2D, level, params.glTexFormat, levelWidth, levelHeight, 0, size, levelData);
             checkGLErrors("8");
             levelData += size;
@@ -1041,13 +1055,18 @@ CAMLprim value ml_loadTexture(value mlTexInfo, value imgData) {
 }
 */
 
-textureInfo* loadEtcAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr) {
-	PRINT_DEBUG("LTextureFormatETC1 %d", LTextureFormatETC1);
+textureInfo* loadCmprsAlphaTex(textureInfo* tInfo, char* _fname, char* suffix, int use_pvr) {
+	PRINT_DEBUG("loadCmprsAlphaTex");
 	PRINT_DEBUG("(tInfo.format & 0xFFFF) %d", (tInfo->format & 0xFFFF));
 
 	textureInfo* alphaTexInfo = NULL;
 
-	if ((tInfo->format & 0xFFFF) == LTextureFormatETC1) {
+	if (
+			   ((tInfo->format & 0xFFFF) == LTextureFormatETC1)
+			|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGB4)
+			|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGB2) 
+			|| ((tInfo->format & 0xFFFF) == LTextureFormatPvrtcRGBA4 
+		  || ((tInfo->format & 0xFFFF) == LTextureFormatETC2RGB))) {
 		alphaTexInfo = (textureInfo*)malloc(sizeof(textureInfo));
 
 		char* ext = strrchr(_fname, '.');

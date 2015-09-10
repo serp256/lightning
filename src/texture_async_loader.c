@@ -77,7 +77,7 @@ static void *run_worker(void *param) {
 			PRINT_DEBUG("ok");
 
 			if (!r) {
-				resp->alphaTexInfo = loadEtcAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);	
+				resp->alphaTexInfo = loadCmprsAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);	
 			}
 			
 			PRINT_DEBUG("free suffix");

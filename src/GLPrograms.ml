@@ -200,7 +200,7 @@ module ImageAlpha = struct (*{{{*)
   end; *)
 end;(*}}}*)
 
-module ImageEtcWithAlpha = struct (*{{{*)
+module ImageCmprsWithAlpha = struct (*{{{*)
 
   module Normal = struct
     value id = gen_id ();
@@ -269,6 +269,6 @@ value select_by_texture = fun
   [ Texture.Simple _ -> (module Image:Programs)
   | Texture.Alpha -> (module ImageAlpha:Programs)
   | Texture.Pallete _ -> (module ImagePallete:Programs)
-  | Texture.EtcWithAlpha _ -> (module ImageEtcWithAlpha:Programs)
+  | Texture.CmprsWithAlpha _ -> (module ImageCmprsWithAlpha:Programs)
   | Texture.LuminanceAlpha -> (module TlfAtlas:Programs)
   ];

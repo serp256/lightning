@@ -45,7 +45,7 @@ type textureFormat =
   | TextureLuminance
   | TextureLuminanceAlpha  
   | TextureFormatPallete of int
-  | TextureFormatETC1WithAlpha of textureInfo
+  | TextureFormatCmprsWithAlpha of textureInfo
   | TextureFormatETC2RGB
   | TextureFormatETC2RGBA
   ]
@@ -61,7 +61,7 @@ and textureInfo =
     textureID: textureID;
   };
 
-type kind = [ Simple of bool | Alpha | LuminanceAlpha | Pallete of textureInfo | EtcWithAlpha of textureInfo ];
+type kind = [ Simple of bool | Alpha | LuminanceAlpha | Pallete of textureInfo | CmprsWithAlpha of textureInfo ];
 type renderInfo =
   {
     rtextureID: textureID;
@@ -302,7 +302,7 @@ class s textureInfo =
         Pallete pallete
     | TextureFormatAlpha -> Alpha
     | TextureLuminanceAlpha -> LuminanceAlpha
-    | TextureFormatETC1WithAlpha alphaTexInfo -> EtcWithAlpha alphaTexInfo
+    | TextureFormatCmprsWithAlpha alphaTexInfo -> CmprsWithAlpha alphaTexInfo
     | _ -> Simple textureInfo.pma
     ]
   in
