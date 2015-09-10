@@ -165,7 +165,7 @@ public class LightVk {
 	private static int success;
 	private static int fail;
 
-	public static void init (String appId) {
+	public static void init () {
 		Log.d("LIGHTNING", "sdk initialize");
 		VKSdk.initialize(Lightning.activity.getApplicationContext());
   }
