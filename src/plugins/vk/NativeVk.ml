@@ -27,7 +27,7 @@ type fail = string -> unit;
 
 IFDEF PC THEN
 
-value init ~appId () = ();
+value init () = ();
 value authorize ~appid ~permissions ?fail ~success ?force () = ();
 value friends ?fail ~success t = ();
 value users ?fail ~success ~ids t = ();
@@ -38,8 +38,7 @@ value apprequest ?fail ~success ?request_type ~text ~user_id () = ();
 ELSE
 Callback.register "create_user" User.create;
 
-external _init: string -> unit = "ml_vk_init";
-value init ~appId () = _init appId;
+value init () = "ml_vk_init";
 
 external authorize: ~appid:string -> ~permissions:list string -> ?fail:fail -> ~success:(t -> unit) -> ~force:bool -> unit -> unit = "ml_vk_authorize_byte" "ml_vk_authorize";
 value authorize ~appid ~permissions ?fail ~success ?(force = False) = authorize ~appid ~permissions ?fail ~success ~force;

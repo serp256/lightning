@@ -17,7 +17,7 @@ value ml_vk_logout (value unit) {
 	}
 }
 
-value ml_vk_init (value appId) {
+value ml_vk_init (value unit) {
 	NSLog(@"ml_vk_init");
 }
 
