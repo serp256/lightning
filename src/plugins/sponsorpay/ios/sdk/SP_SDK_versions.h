@@ -8,5 +8,5 @@
 
 static const NSInteger SPSDKReleaseVersionNumberMajor = 7;
 static const NSInteger SPSDKReleaseVersionNumberMinor = 2;
-static const NSInteger SPSDKReleaseVersionNumberPatch = 2;
+static const NSInteger SPSDKReleaseVersionNumberPatch = 6;
 

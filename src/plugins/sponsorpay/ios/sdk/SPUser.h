@@ -332,7 +332,7 @@
 /**
  *  Returns the user values in dictionary with current location.
  *
- *  @param completionBlock The block to be excecuted on the completion of request. This block has no return value and takes 1 argument: the dictionary containing all set up values for current user including latest location. Location however is included ONLY if the user's app has `Core Location` service enabled or the location was not set manually by calling `-setLocation:`, otherwise the location is not included in returned dictionary.
+ *  @param completionBlock The block to be executed on the completion of request. This block has no return value and takes 1 argument: the dictionary containing all set up values for current user including latest location. Location however is included ONLY if the user's app has `Core Location` service enabled or the location was not set manually by calling `-setLocation:`, otherwise the location is not included in returned dictionary.
  *
  *  @note Setting manually location by calling `-setLocation:` overrides automatic location parameters.
  *

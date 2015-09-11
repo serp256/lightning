@@ -40,6 +40,7 @@ FOUNDATION_EXPORT NSString *const SPRequestValidate;
 FOUNDATION_EXPORT NSString *const SPRequestPlay;
 FOUNDATION_EXPORT NSString *const SPRequestStartStatus;
 FOUNDATION_EXPORT NSString *const SPRequestShowOfferwall;
+FOUNDATION_EXPORT NSString *const SPRequestUserData;
 
 FOUNDATION_EXPORT NSString *const SPRequestInstallAppId;
 FOUNDATION_EXPORT NSString *const SPRequestInstallUserId;

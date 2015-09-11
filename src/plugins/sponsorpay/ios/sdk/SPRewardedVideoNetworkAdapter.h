@@ -48,7 +48,7 @@
 - (void)adapterVideoDidClose:(id<SPRewardedVideoNetworkAdapter>)adapter;
 
 /**
- * Tells the delegate that an error occured while the wrapped SDK was checking for
+ * Tells the delegate that an error occurred while the wrapped SDK was checking for
  * available videos or attempting to play a video.
  */
 - (void)adapter:(id<SPRewardedVideoNetworkAdapter>)adapter didFailWithError:(NSError *)error;

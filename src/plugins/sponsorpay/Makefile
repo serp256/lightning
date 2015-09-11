@@ -25,7 +25,7 @@ CFLAGS  += -DIOS \
 COBJS += ios/spwrapper_ios.o ios/VideoDelegate.o
 
 LIBFLAGS +=  -lSponsorPaySDK \
-  -framework Fyber_UnityAds_1.4.4_r1 \
+  -framework Fyber_UnityAds_1.4.5_r1 \
   -framework Foundation \
 	-framework StoreKit \
 	-framework AdSupport \

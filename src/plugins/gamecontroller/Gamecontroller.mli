@@ -28,6 +28,25 @@ module Keys: sig
   module RightShoulder: Handler.S with type callback = Params.callbackArg -> bool;
 end;
 
+
+type phase = [= `up | `down ];
+type key_type= [= `dpad_up | `dpad_down | `dpad_left | `dpad_right | `dpad_center];
+
+module Params: sig type callbackArg = (key_type * phase); end;
+module Dpad: Handler.S with type callback = Params.callbackArg -> bool; 
+(*
+module Dpad: sig
+  type phase = [= `up | `down ];
+  module Params: sig type callbackArg = phase; end;
+
+  module Up: Handler.S with type callback = Params.callbackArg -> bool;
+  module Down: Handler.S with type callback = Params.callbackArg -> bool;
+  module Right: Handler.S with type callback = Params.callbackArg -> bool;
+  module Left: Handler.S with type callback = Params.callbackArg -> bool;
+  module Center: Handler.S with type callback = Params.callbackArg -> bool;
+end;
+*)
+
 module Joysticks: sig
   type joystick = [= `none | `left | `right ];
 

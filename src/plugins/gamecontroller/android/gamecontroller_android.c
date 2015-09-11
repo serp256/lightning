@@ -27,6 +27,12 @@ touches_joystick_t touches_joystick;
 static value key_phase_up;
 static value key_phase_down;
 
+static value dpad_up;
+static value dpad_center;
+static value dpad_left;
+static value dpad_right;
+static value dpad_down;
+
 void gamecontroller_firetouch(uint8_t phase) {
     CAMLparam0();
     CAMLlocal4(touches, touch, tx, ty);
@@ -71,6 +77,20 @@ if (key##_phase != phase) { \
     } \
     key##_phase = phase; \
     handled = caml_callback(*key##_callback, key##_phase == KEY_PHASE_UP ? key_phase_up : key_phase_down) == Val_true; \
+} \
+
+#define DPAD_CALLBACK(key, phase) static value *dpad##_callback = NULL; \
+static uint8_t dpad##_phase = KEY_PHASE_UP; \
+if (dpad##_phase != phase) { \
+    if (!dpad##_callback) { \
+        dpad##_callback = caml_named_value("Gamecontroller.Dpad"); \
+        caml_register_generational_global_root(dpad##_callback); \
+    } \
+    dpad##_phase = phase; \
+		arg = caml_alloc_tuple(2); \
+		Store_field(arg, 0, key); \
+		Store_field(arg, 1, dpad##_phase == KEY_PHASE_UP ? key_phase_up : key_phase_down); \
+    handled = caml_callback(*dpad##_callback, arg ) == Val_true; \
 } \
 
 #define CHECK_JOYSTICK(short, full, axis_x, axis_y) float short##_x = AMotionEvent_getAxisValue(event, axis_x, ptr_indx), \
@@ -189,7 +209,30 @@ uint8_t gamecontroller_inputhandler(AInputEvent *event) {
                 KEY_CALLBACK(RightShoulder, phase);
                 break;
             }
+						case AKEYCODE_DPAD_UP:{
+                DPAD_CALLBACK(dpad_up, phase);
+                break;
+            }
 
+						case AKEYCODE_DPAD_DOWN:{
+                DPAD_CALLBACK(dpad_down, phase);
+                break;
+            }
+
+						case AKEYCODE_DPAD_LEFT:{
+                DPAD_CALLBACK(dpad_left, phase);
+                break;
+            }
+
+						case AKEYCODE_DPAD_CENTER:{
+                DPAD_CALLBACK(dpad_center, phase);
+                break;
+            }
+
+            case AKEYCODE_DPAD_RIGHT:{
+                DPAD_CALLBACK(dpad_right, phase);
+                break;
+            }
             default:
                 handled = 0;
         }
@@ -234,6 +277,11 @@ void gamecontroller_init() {
     touches_joystick.joystick = JOYSTICK_NONE;
     key_phase_up = hash_variant("up");
     key_phase_down = hash_variant("down");
+    dpad_up = hash_variant("dpad_up");
+    dpad_down = hash_variant("dpad_down");
+    dpad_left = hash_variant("dpad_left");
+    dpad_right = hash_variant("dpad_right");
+    dpad_center = hash_variant("dpad_center");
     dllist_engine_inputhandler_add(&engine.input_handlers, gamecontroller_inputhandler);
 }
 
