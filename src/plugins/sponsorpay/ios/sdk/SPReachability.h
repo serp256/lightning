@@ -49,7 +49,6 @@
 #import <Foundation/Foundation.h>
 #import <SystemConfiguration/SystemConfiguration.h>
 #import <CFNetwork/CFNetwork.h>
-#import <netinet/in.h>
 
 typedef NS_ENUM(NSInteger, SPNetworkStatus) {
     SPNetworkStatusNotReachable,
@@ -77,15 +76,11 @@ extern NSString *const SPReachabilityChangedNotification;
 //reachabilityWithHostName- Use to check the reachability of a particular host name.
 + (SPReachability *)reachabilityWithHostName:(NSString *)hostName;
 
-//reachabilityWithAddress- Use to check the reachability of a particular IP address.
-+ (SPReachability *)reachabilityWithAddress:(const struct sockaddr_in *)hostAddress;
 
 //reachabilityForInternetConnection- checks whether the default route is available.
 //  Should be used by applications that do not connect to a particular host
 + (SPReachability *)reachabilityForInternetConnection;
 
-//reachabilityForLocalWiFi- checks whether a local wifi connection is available.
-+ (SPReachability *)reachabilityForLocalWiFi;
 
 //Start listening for reachability notifications on the current run loop
 - (BOOL)startNotifier;
