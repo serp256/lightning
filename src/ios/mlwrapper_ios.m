@@ -391,7 +391,9 @@ value ml_malinfo(value p) {
 
 char* get_locale() {
   NSString *identifier = [[NSLocale preferredLanguages] objectAtIndex:0];
-  const char* locale = [identifier cStringUsingEncoding:NSASCIIStringEncoding];
+	NSArray *langLocaleArray = [identifier componentsSeparatedByString:@"-"];
+	NSString *nsLocale = [langLocaleArray objectAtIndex:0];
+  const char* locale = [nsLocale cStringUsingEncoding:NSASCIIStringEncoding];
   char* retval = (char*)malloc(strlen(locale) + 1);
   strcpy(retval, locale);
 
