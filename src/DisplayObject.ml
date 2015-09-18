@@ -269,6 +269,14 @@ class virtual _c [ 'parent ] = (*{{{*)
         ]
       | False -> ()
       ];
+      let pr () = 
+        (
+          try
+            pr ()
+          with
+          [ exn -> failwith (Printf.sprintf "%s : %s" self#name (Printexc.to_string exn)) ]
+        )
+      in
       Queue.push pr prerenders;
     );
 
