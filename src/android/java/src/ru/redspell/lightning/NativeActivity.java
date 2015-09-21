@@ -6,6 +6,7 @@ import android.widget.FrameLayout;
 import android.view.View;
 import android.view.KeyEvent;
 import android.widget.EditText;
+import android.app.UiModeManager;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Iterator;
@@ -64,6 +65,7 @@ public class NativeActivity extends android.app.NativeActivity {
 			h.onCreate(savedInstanceState);
 		}
 
+
 		/* ugly workaround for determine is keyboard visible or not */
 		final View view = getWindow().getDecorView();
 		view.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
@@ -78,7 +80,15 @@ public class NativeActivity extends android.app.NativeActivity {
 /*					Log.d("LIGHTNING", "height " + height);
 					Log.d("LIGHTNING", "displayHeight " + displayHeight);
 					Log.d("LIGHTNING", "height / displayHeight " + (displayHeight / height));*/
-					Keyboard.setVisible((displayHeight / height) < 0.8);
+					UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+					if (uiModeManager.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION) {
+								Log.d("LIGHTNING", "Running on a TV Device");
+								Keyboard.setVisible(true);
+					} else {
+								Log.d("LIGHTNING", "Running on a non-TV Device");
+								Keyboard.setVisible((displayHeight / height) < 0.8);
+					}
+		// Log.d("LIGHTNING", "!height / displayHeight " + (displayHeight / height));
 				}
 			}
 		});
@@ -96,7 +106,13 @@ public class NativeActivity extends android.app.NativeActivity {
 	}
 
 	@Override
+	public boolean dispatchGenericMotionEvent(android.view.MotionEvent event) {
+			Log.d("LIGHTNING", "dispatcMotionEvent");
+		return super.dispatchGenericMotionEvent(event);
+	}
+	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
+			Log.d("LIGHTNING", "dispatchKeyEvent");
 		if (Keyboard.visible()) {
 			if (event.getAction() == KeyEvent.ACTION_DOWN) {
 				Log.d("LIGHTNING", "event.getKeyCode() " + event.getKeyCode() + " " + KeyEvent.KEYCODE_DEL);

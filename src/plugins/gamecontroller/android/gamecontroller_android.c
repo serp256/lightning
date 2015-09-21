@@ -1,5 +1,6 @@
 #include "engine_android.h"
 #include "lightning_android.h"
+#include "main_android.h"
 #include <android/keycodes.h>
 #include <stdio.h>
 #include <math.h>
@@ -141,9 +142,14 @@ uint8_t gamecontroller_inputhandler(AInputEvent *event) {
 
     uint8_t handled = 0;
 
+		if (keyboard_is_visible () == 1) {
+			handled = HANDLED_NOT_HANDLED;
+		}
+		else
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY) {
         value phase = AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN ? KEY_PHASE_DOWN : KEY_PHASE_UP;
 
+			PRINT_DEBUG ("key event");
         switch (AKeyEvent_getKeyCode(event)) {
             case AKEYCODE_BACK: {
                 KEY_CALLBACK(Back, phase);
@@ -237,6 +243,13 @@ uint8_t gamecontroller_inputhandler(AInputEvent *event) {
                 handled = 0;
         }
     } else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+			PRINT_DEBUG ("motion event %d", (keyboard_is_visible()));
+
+
+			if (keyboard_is_visible () == 1) {
+				handled = HANDLED_NOT_HANDLED;
+			}
+			else {
         static joystick_val_t nav_val = { 0, 0 }, lstick_val = { 0, 0 }, rstick_val = { 0, 0 };
         static float ltrigger_val = 0, rtrigger_val = 0;
 
@@ -268,12 +281,15 @@ uint8_t gamecontroller_inputhandler(AInputEvent *event) {
             CHECK_TRIGGER(ltrigger, Left, AMOTION_EVENT_AXIS_BRAKE);
             CHECK_TRIGGER(rtrigger, Right, AMOTION_EVENT_AXIS_GAS);
         }
+			}
     }
 
+		PRINT_DEBUG ("is handled %d", handled);
     CAMLreturn(handled);
 }
 
 void gamecontroller_init() {
+	PRINT_DEBUG("gamecontroller_init");
     touches_joystick.joystick = JOYSTICK_NONE;
     key_phase_up = hash_variant("up");
     key_phase_down = hash_variant("down");
@@ -283,6 +299,7 @@ void gamecontroller_init() {
     dpad_right = hash_variant("dpad_right");
     dpad_center = hash_variant("dpad_center");
     dllist_engine_inputhandler_add(&engine.input_handlers, gamecontroller_inputhandler);
+
 }
 
 value gamecontroller_bind_to_touches(value vinc_factor, value vpos, value vjoystick) {
