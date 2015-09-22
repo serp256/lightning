@@ -13,7 +13,6 @@
 
   mraidview.canProcessBridgeCalls = false;
 
-
   /****************************************************/
   /********** PROPERTIES OF THE MRAID BRIDGE **********/
   /****************************************************/
@@ -49,17 +48,11 @@
   /** The set of listeners for MRAID Native Bridge Events */
   var listeners = {};
 
-
   /** A Queue of Calls to the Native SDK that still need execution */
   var nativeCallQueue = [];
 
   /** Identifies if a native call is currently in progress */
   var nativeCallInFlight = false;
-
-  /** timer for identifying iframes */
-  var timer;
-  var totalTime;
-
 
 
   /**********************************************/
@@ -82,7 +75,6 @@
     return "OK";
   };
 
-
   /**
    * Called by the Objective-C SDK when an asset has been removed from the
    * cache at the request of the creative.
@@ -99,7 +91,6 @@
 
     return "OK";
   };
-
 
   /**
    * Called by the Objective-C SDK when an asset has been automatically
@@ -118,7 +109,6 @@
     return "OK";
   };
 
-
   /**
    * Called by the Objective-C SDK when various state properties have changed.
    *
@@ -134,7 +124,6 @@
 
     return "OK";
   };
-
 
   /**
    * Called by the Objective-C SDK when an error has occured.
@@ -152,7 +141,6 @@
     return "OK";
   };
 
-
   /**
    * Called by the Objective-C SDK when the user shakes the device.
    *
@@ -168,7 +156,6 @@
 
     return "OK";
   };
-
 
   /**
    * nativeCallComplete notifies the abstraction layer that a native call has
@@ -194,19 +181,13 @@
     return "OK";
   };
 
-
-  /**
-   *
-   */
   mraidview.showAlert = function(message) {
     alert(message);
   };
 
-
   /*********************************************/
   /********** INTERNALLY USED METHODS **********/
   /*********************************************/
-
 
   /**
    *
@@ -246,8 +227,8 @@
     }
 
     // add call to queue
-	if (!mraidview.canProcessBridgeCalls) {
-		return;
+    if (!mraidview.canProcessBridgeCalls) {
+      return;
     } else if (nativeCallInFlight) {
       // call pending, queue up request
       nativeCallQueue.push(bridgeCall);
@@ -257,8 +238,6 @@
       window.location = bridgeCall;
     }
   };
-
-
 
   /***************************************************************************/
   /********** LEVEL 0 (not part of spec, but required by public API **********/
@@ -270,7 +249,6 @@
   mraidview.activate = function(event) {
     this.executeNativeCall("service", "name", event, "enabled", "Y");
   };
-
 
   /**
    *
@@ -295,14 +273,12 @@
     handlers.push(listener);
   };
 
-
   /**
    *
    */
   mraidview.deactivate = function(event) {
     this.executeNativeCall("service", "name", event, "enabled", "N");
   };
-
 
   /**
    *
@@ -314,8 +290,6 @@
     }
   };
 
-
-
   /*****************************/
   /********** LEVEL 1 **********/
   /*****************************/
@@ -326,7 +300,6 @@
   mraidview.close = function() {
     this.executeNativeCall("close");
   };
-
 
   /**
    *
@@ -367,7 +340,6 @@
         cmd += ", 'useCustomClose', '" + "N" + "'";
       }
 
-
       cmd += " );";
       eval(cmd);
     } catch (e) {
@@ -375,16 +347,12 @@
     }
   };
 
-
   /**
    *
    */
   mraidview.hide = function() {
     this.executeNativeCall("hide");
   };
-
-
-
 
   /**
    *
@@ -401,10 +369,10 @@
 		if(mraid.getPlacementType() == "interstitial" || mraid.getState() == "expanded")
 			document.getElementById('button').style.visibility = boolean ? 'hidden' : 'visible';
   };
+
   /**
    *
    */
-
   mraidview.open = function(URL, controls) {
     // the navigation parameter is an array, break it into its parts
     var back = false;
@@ -441,10 +409,8 @@
       }
     }
 
-
     this.executeNativeCall("open", "url", URL, "back", (back ? "Y" : "N"), "forward", (forward ? "Y" : "N"), "refresh", (refresh ? "Y" : "N"));
   };
-
 
   /**
    *
@@ -464,7 +430,6 @@
     }
     this.executeNativeCall("resize", "w", resizeProperties.width, "h", resizeProperties.height, "customClosePosition", resizeProperties.customClosePosition, "offsetX", resizeProperties.offsetX, "offsetY", resizeProperties.offsetY, "allowOffscreen", resizeProperties.allowOffscreen);
   };
-
 
   mraidview.getExpandProperties = function() {
     return expandProperties;
@@ -501,13 +466,13 @@
 
     this.executeNativeCall.apply(this, args);
   };
+
   /**
    *
    */
   mraidview.show = function() {
     this.executeNativeCall("show");
   };
-
 
   /**
    *
@@ -564,7 +529,6 @@
     eval(cmd);
   };
 
-
   /**
    *
    */
@@ -616,7 +580,6 @@
         }
       }
 
-
       if ((typeof properties.startStyle != "undefined") && (properties.startStyle != null)) {
         cmd += ", 'startStyle', '" + properties.startStyle + "'";
       } else {
@@ -628,16 +591,12 @@
       } else {
         cmd += ", 'stopStyle', 'normal'";
       }
-
     }
 
     cmd += " );";
 
     eval(cmd);
-
   };
-
-
 
   /*****************************/
   /********** LEVEL 2 **********/
@@ -662,8 +621,6 @@
    *
    */
   mraidview.createCalendarEvent = function(eventEntry) {
-
-
     var id = eventEntry.id;
     var body = eventEntry.description;
     var location = eventEntry.location;
@@ -697,7 +654,6 @@
     this.executeNativeCall("calendar", "id", id, "title", title, "location", location, "body", body, "date", dateString, "end", endDateString, "status", status, "transparency", transparency, "recurrence", recurrence, "reminder", reminder);
   };
 
-
   /**
    *
    */
@@ -705,14 +661,12 @@
     this.executeNativeCall("phone", "number", phoneNumber);
   };
 
-
   /**
    *
    */
   mraidview.sendMail = function(recipient, subject, body) {
     this.executeNativeCall("email", "to", recipient, "subject", subject, "body", body, "html", "N");
   };
-
 
   /**
    *
@@ -726,8 +680,6 @@
    */
   mraidview.setShakeProperties = function(properties) {};
 
-
-
   /*****************************/
   /********** LEVEL 3 **********/
   /*****************************/
@@ -739,14 +691,12 @@
     this.executeNativeCall("addasset", "uri", url, "alias", alias);
   };
 
-
   /**
    *
    */
   mraidview.request = function(URI, display) {
     this.executeNativeCall("request", "uri", uri, "display", display);
   };
-
 
   /**
    *
@@ -755,7 +705,6 @@
     this.executeNativeCall("removeasset", "alias", alias);
   };
 })();
-
 
 /**
  *
@@ -775,9 +724,9 @@ mraidview.storePicture = function(URL) {
 (function() {
   var mraid = window.mraid = {};
 
-  // CONSTANTS ///////////////////////////////////////////////////////////////
+  // CONSTANTS
   var STATES = mraid.STATES = {
-    UNKNOWN: 'unknown',
+    LOADING: 'loading',
     DEFAULT: 'default',
     RESIZED: 'resized',
     EXPANDED: 'expanded',
@@ -841,12 +790,12 @@ mraidview.storePicture = function(URL) {
     UNKNOWN: 'unknown'
   };
 
-  // PRIVATE PROPERTIES (sdk controlled) //////////////////////////////////////////////////////
+  // PRIVATE PROPERTIES (sdk controlled)
   var MRAID_VERSION = "2.0";
 
   var customClose = false;
 
-  var state = STATES.UNKNOWN;
+  var state = STATES.LOADING;
 
   var placementType = '';
 
@@ -918,7 +867,7 @@ mraidview.storePicture = function(URL) {
 
   var viewable = false;
 
-  // PRIVATE PROPERTIES (internal) //////////////////////////////////////////////////////
+  // PRIVATE PROPERTIES (internal)
   var intervalID = null;
   var readyTimeout = 10000;
   var readyDuration = 0;
@@ -968,9 +917,8 @@ mraidview.storePicture = function(URL) {
 
   var changeHandlers = {
     state: function(val) {
-      if (state == STATES.UNKNOWN) {
+      if (state == STATES.LOADING) {
         mraidview.canProcessBridgeCalls = true;
-        window.mraid.signalReady();
         broadcastEvent(EVENTS.INFO, 'controller initialized, attempting callback');
       }
       broadcastEvent(EVENTS.INFO, 'setting state to ' + stringify(val));
@@ -1055,50 +1003,51 @@ mraidview.storePicture = function(URL) {
       cacheRemaining = val;
     },
     viewable: function(val) {
-      broadcastEvent(EVENTS.VIEWABLECHANGE, 'setting viewable to ' + stringify(val));
+      broadcastEvent(EVENTS.INFO, 'setting viewable to ' + stringify(val));
       viewable = val;
+      broadcastEvent(EVENTS.VIEWABLECHANGE, viewable);
     }
   };
 
   var listeners = {};
 
   var EventListeners = function(event) {
-      this.event = event;
-      this.count = 0;
-      var listeners = {};
+    this.event = event;
+    this.count = 0;
+    var listeners = {};
 
-      this.add = function(func) {
-        var id = String(func);
-        if (!listeners[id]) {
-          listeners[id] = func;
-          this.count++;
-          if (this.count == 1) mraidview.activate(event);
-        }
-      };
-      this.remove = function(func) {
-        var id = String(func);
-        if (listeners[id]) {
-          listeners[id] = null;
-          delete listeners[id];
-          this.count--;
-          if (this.count == 0) mraidview.deactivate(event);
-          return true;
-        } else {
-          return false;
-        }
-      };
-      this.removeAll = function() {
-        for (var id in listeners) this.remove(listeners[id]);
-      };
-      this.broadcast = function(args) {
-        for (var id in listeners) listeners[id].apply({}, args);
-      };
-      this.toString = function() {
-        var out = [event, ':'];
-        for (var id in listeners) out.push('|', id, '|');
-        return out.join('');
-      };
-      };
+    this.add = function(func) {
+      var id = String(func);
+      if (!listeners[id]) {
+        listeners[id] = func;
+        this.count++;
+        if (this.count == 1) mraidview.activate(event);
+      }
+    };
+    this.remove = function(func) {
+      var id = String(func);
+      if (listeners[id]) {
+        listeners[id] = null;
+        delete listeners[id];
+        this.count--;
+        if (this.count == 0) mraidview.deactivate(event);
+        return true;
+      } else {
+        return false;
+      }
+    };
+    this.removeAll = function() {
+      for (var id in listeners) this.remove(listeners[id]);
+    };
+    this.broadcast = function(args) {
+      for (var id in listeners) listeners[id].apply({}, args);
+    };
+    this.toString = function() {
+      var out = [event, ':'];
+      for (var id in listeners) out.push('|', id, '|');
+      return out.join('');
+    };
+  };
 
   // PRIVATE METHODS ////////////////////////////////////////////////////////////
   mraidview.addEventListener('change', function(properties) {
@@ -1138,71 +1087,69 @@ mraidview.storePicture = function(URL) {
   });
 
   var clone = function(obj) {
-      var f = function() {};
-      f.prototype = obj;
-      return new f();
-      };
+    var f = function() {};
+    f.prototype = obj;
+    return new f();
+  };
 
   var stringify = function(obj) {
-      if (typeof obj == 'object') {
-        if (obj.push) {
-          var out = [];
-          for (var p in obj) {
-            out.push(obj[p]);
-          }
-          return '[' + out.join(',') + ']';
-        } else {
-          var out = [];
-          for (var p in obj) {
-            out.push('\'' + p + '\':' + obj[p]);
-          }
-          return '{' + out.join(',') + '}';
+    if (typeof obj == 'object') {
+      if (obj.push) {
+        var out = [];
+        for (var p in obj) {
+          out.push(obj[p]);
         }
+        return '[' + out.join(',') + ']';
       } else {
-        return String(obj);
+        var out = [];
+        for (var p in obj) {
+          out.push('\'' + p + '\':' + obj[p]);
+        }
+        return '{' + out.join(',') + '}';
       }
-      };
+    } else {
+      return String(obj);
+    }
+  };
 
   var valid = function(obj, validators, action, full) {
-      if (full) {
-        if (obj === undefined) {
-          broadcastEvent(EVENTS.ERROR, 'Required object missing.', action);
-          return false;
-        } else {
-          for (var i in validators) {
-            if (obj[i] === undefined) {
-              broadcastEvent(EVENTS.ERROR, 'Object missing required property ' + i, action);
-              return false;
-            }
+    if (full) {
+      if (obj === undefined) {
+        broadcastEvent(EVENTS.ERROR, 'Required object missing.', action);
+        return false;
+      } else {
+        for (var i in validators) {
+          if (obj[i] === undefined) {
+            broadcastEvent(EVENTS.ERROR, 'Object missing required property ' + i, action);
+            return false;
           }
         }
       }
-      for (var i in obj) {
-        if (!validators[i]) {
-          broadcastEvent(EVENTS.ERROR, 'Invalid property specified - ' + i + '.', action);
-          return false;
-        } else if (!validators[i](obj[i])) {
-          broadcastEvent(EVENTS.ERROR, 'Value of property ' + i + ' is not valid type.', action);
-          return false;
-        }
+    }
+    for (var i in obj) {
+      if (!validators[i]) {
+        broadcastEvent(EVENTS.ERROR, 'Invalid property specified - ' + i + '.', action);
+        return false;
+      } else if (!validators[i](obj[i])) {
+        broadcastEvent(EVENTS.ERROR, 'Value of property ' + i + ' is not valid type.', action);
+        return false;
       }
-      return true;
-      };
+    }
+    return true;
+  };
 
   var contains = function(value, array) {
-      for (var i in array) if (array[i] == value) return true;
-      return false;
-      };
+    for (var i in array) if (array[i] == value) return true;
+    return false;
+  };
 
   var broadcastEvent = function() {
-      var args = new Array(arguments.length);
-      for (var i = 0; i < arguments.length; i++) args[i] = arguments[i];
-      var event = args.shift();
-      if (listeners[event]) listeners[event].broadcast(args);
-      }
-      
-      
-      
+    var args = new Array(arguments.length);
+    for (var i = 0; i < arguments.length; i++) args[i] = arguments[i];
+    var event = args.shift();
+    if (listeners[event]) listeners[event].broadcast(args);
+  }
+
   insertCss = function() {
     var script = document.createElement('style');
     script.type = 'text/css';
@@ -1227,13 +1174,7 @@ mraidview.storePicture = function(URL) {
 		mraidview.useCustomClose(customClose);
   }
 
-
-  // LEVEL 1 ////////////////////////////////////////////////////////////////////
-
-  mraid.signalReady = function() {
-    broadcastEvent(EVENTS.READY);
-  };
-
+  // MRAID LEVEL 1
   mraid.addEventListener = function(event, listener) {
     if (!event || !listener) {
       broadcastEvent(EVENTS.ERROR, 'Both event and listener are required.', 'addEventListener');
@@ -1249,7 +1190,12 @@ mraidview.storePicture = function(URL) {
     mraidview.close();
   };
 
-  //private method
+  mraid.expand = function(URL) {
+    var dimensions = getDimensions();
+    mraid.expandvalidator(dimensions, URL);
+  };
+
+  // private helper method
   getDimensions = function() {
     var mraidwidth = mraid.getExpandProperties().width;
     var mraidheight = mraid.getExpandProperties().height;
@@ -1265,35 +1211,12 @@ mraidview.storePicture = function(URL) {
     };
   };
 
-  mraid.expand = function(URL) {
-
-    var dimensions = getDimensions();
-    mraid.expandvalidator(dimensions, URL);
-  };
-
-  //private method
+  // private helper method
   mraid.expandvalidator = function(dimensions, URL) {
     broadcastEvent(EVENTS.INFO, 'expanding to ' + stringify(dimensions));
     if (valid(dimensions, dimensionValidators, 'expand', true)) {
       mraidview.expand(dimensions, URL);
     }
-  };
-
-  mraid.getDefaultPosition = function() {
-    return clone(defaultPosition);
-  };
-
-  mraid.getCurrentPosition = function() {
-    return clone(currentPosition);
-  }
-
-  mraid.getPlacementType = function() {
-    return placementType;
-  };
-
-  mraid.useCustomClose = function(boolean) {
-    customClose = boolean;
-    mraidview.useCustomClose(boolean);
   };
 
   mraid.getExpandProperties = function() {
@@ -1311,33 +1234,20 @@ mraidview.storePicture = function(URL) {
     };
   };
 
-  mraid.getResizeProperties = function() {
-    return clone(mraidview.getResizeProperties());
-  };
-
-
-  mraid.getMaxSize = function() {
-    return clone(maxSize);
-  };
-
-  mraid.getSize = function() {
-    return clone(size);
-  };
-
-  mraid.getVersion = function() {
-    return MRAID_VERSION;
+  mraid.getPlacementType = function() {
+    return placementType;
   };
 
   mraid.getState = function() {
     return state;
   };
 
-  mraid.hide = function() {
-    if (state == STATES.HIDDEN) {
-      broadcastEvent(EVENTS.ERROR, 'Ad is currently hidden.', 'hide');
-    } else {
-      mraidview.hide();
-    }
+  mraid.getVersion = function() {
+    return MRAID_VERSION;
+  };
+
+  mraid.isViewable = function() {
+    return viewable;
   };
 
   mraid.open = function(URL, controls) {
@@ -1347,16 +1257,6 @@ mraidview.storePicture = function(URL) {
       mraidview.open(URL, controls);
     }
   };
-
-
-  mraid.openMap = function(POI, fullscreen) {
-    if (!POI) {
-      broadcastEvent(EVENTS.ERROR, 'POI is required.', 'openMap');
-    } else {
-      mraidview.openMap(POI, fullscreen);
-    }
-  };
-
 
   mraid.removeEventListener = function(event, listener) {
     if (!event) {
@@ -1376,7 +1276,6 @@ mraidview.storePicture = function(URL) {
     }
   };
 
-
   mraid.resize = function() {
     var width = mraid.getResizeProperties().width;
     var height = mraid.getResizeProperties().height;
@@ -1391,24 +1290,46 @@ mraidview.storePicture = function(URL) {
     }
   };
 
-
-  //private method
-  ormmaSetExpandProperties = function(properties) {
-    if (valid(properties, expandPropertyValidators, 'setExpandProperties')) {
-      mraidview.setExpandProperties(properties);
-    }
-  };
-
   mraid.setExpandProperties = function(properties) {
     mraidview.setExpandProperties(properties);
   };
 
-  mraid.setResizeProperties = function(properties) {
-    mraidview.setResizeProperties(properties);
+  mraid.useCustomClose = function(boolean) {
+    customClose = boolean;
+    mraidview.useCustomClose(boolean);
   };
 
-  mraid.setOrientationProperties = function(properties) {
-    mraidview.setOrientationProperties(properties);
+  // MRIAD LEVEL 1 extension for ORMMA LEVEL 1 standards
+  mraid.signalReady = function() {
+    broadcastEvent(EVENTS.READY);
+  };
+
+  mraid.getCurrentPosition = function() {
+    return clone(currentPosition);
+  }
+
+  mraid.getDefaultPosition = function() {
+    return clone(defaultPosition);
+  };
+
+  mraid.getSize = function() {
+    return clone(size);
+  };
+
+  mraid.hide = function() {
+    if (state == STATES.HIDDEN) {
+      broadcastEvent(EVENTS.ERROR, 'Ad is currently hidden.', 'hide');
+    } else {
+      mraidview.hide();
+    }
+  };
+
+  mraid.openMap = function(POI, fullscreen) {
+    if (!POI) {
+      broadcastEvent(EVENTS.ERROR, 'POI is required.', 'openMap');
+    } else {
+      mraidview.openMap(POI, fullscreen);
+    }
   };
 
   mraid.show = function() {
@@ -1429,6 +1350,18 @@ mraidview.storePicture = function(URL) {
     }
   };
 
+  // MRAID LEVEL 2 MRAID that is in ORMMA LEVEL 1
+  mraid.getMaxSize = function() {
+    return clone(maxSize);
+  };
+
+  mraid.getResizeProperties = function() {
+    return clone(mraidview.getResizeProperties());
+  };
+
+  mraid.setResizeProperties = function(properties) {
+    mraidview.setResizeProperties(properties);
+  };
 
   mraid.playVideo = function(URL, properties) {
     if (properties == null) {
@@ -1449,8 +1382,40 @@ mraidview.storePicture = function(URL) {
     }
   };
 
+  // MRAID LEVEL 2
+  mraid.setOrientationProperties = function(properties) {
+    mraidview.setOrientationProperties(properties);
+  };
 
-  // LEVEL 2 ////////////////////////////////////////////////////////////////////
+  mraid.getOrientationProperties = function() {
+    return mraidview.getOrientationProperties();
+  };
+
+  mraid.createCalendarEvent = function(eventEntry) {
+    mraidview.createCalendarEvent(eventEntry);
+  };
+
+  mraid.getScreenSize = function() {
+    if (!supports[FEATURES.SCREEN]) {
+      broadcastEvent(EVENTS.ERROR, 'Method not supported by this client.', 'getScreenSize');
+    } else {
+      return (null == screenSize) ? null : clone(screenSize);
+    }
+  };
+
+  mraid.storePicture = function(URL) {
+    mraidview.storePicture(URL);
+  };
+
+  mraid.supports = function(feature) {
+    if (supports[feature]) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  // MRIAD level 2 extension for ormma level 2 standards ///////////////////////////////////////////
   mraid.createEvent = function(date, title, body) {
     title = trim(title);
     body = trim(body);
@@ -1467,11 +1432,6 @@ mraidview.storePicture = function(URL) {
     }
   };
 
-
-  mraid.createCalendarEvent = function(eventEntry) {
-    mraidview.createCalendarEvent(eventEntry);
-  };
-
   mraid.getHeading = function() {
     if (!supports[FEATURES.HEADING]) {
       broadcastEvent(EVENTS.ERROR, 'Method not supported by this client.', 'getHeading');
@@ -1485,7 +1445,6 @@ mraidview.storePicture = function(URL) {
     }
     return keyboardState;
   }
-
 
   mraid.getLocation = function() {
     if (!supports[FEATURES.LOCATION]) {
@@ -1506,14 +1465,6 @@ mraidview.storePicture = function(URL) {
       broadcastEvent(EVENTS.ERROR, 'Method not supported by this client.', 'getOrientation');
     }
     return orientation;
-  };
-
-  mraid.getScreenSize = function() {
-    if (!supports[FEATURES.SCREEN]) {
-      broadcastEvent(EVENTS.ERROR, 'Method not supported by this client.', 'getScreenSize');
-    } else {
-      return (null == screenSize) ? null : clone(screenSize);
-    }
   };
 
   mraid.getShakeProperties = function() {
@@ -1562,7 +1513,6 @@ mraidview.storePicture = function(URL) {
     }
   };
 
-
   mraid.setShakeProperties = function(properties) {
     if (!supports[FEATURES.SHAKE]) {
       broadcastEvent(EVENTS.ERROR, 'Method not supported by this client.', 'setShakeProperties');
@@ -1571,19 +1521,7 @@ mraidview.storePicture = function(URL) {
     }
   };
 
-  mraid.storePicture = function(URL) {
-    mraidview.storePicture(URL);
-  };
-
-  mraid.supports = function(feature) {
-    if (supports[feature]) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  // LEVEL 3 ////////////////////////////////////////////////////////////////////
+  // Ormma LEVEL 3 ////////////////////////////////////////////////////////////////////
   mraid.addAsset = function(URL, alias) {
     if (!URL || !alias || typeof URL != 'string' || typeof alias != 'string') {
       broadcastEvent(EVENTS.ERROR, 'URL and alias are required.', 'addAsset');
@@ -1646,12 +1584,7 @@ mraidview.storePicture = function(URL) {
       broadcastEvent(EVENTS.ASSETREMOVED, alias);
     }
   };
-
-  mraid.isViewable = function() {
-    return viewable;
-  };
 })();
-
 
 // ORMMA api
 (function() {
@@ -1679,6 +1612,7 @@ mraidview.storePicture = function(URL) {
   ormma.getViewable = function() {
     return mraid.getViewable();
   }
+
   ormma.getDefaultPosition = function() {
     return mraid.getDefaultPosition();
   };
@@ -1732,6 +1666,13 @@ mraidview.storePicture = function(URL) {
     ormmaSetExpandProperties(properties);
   };
 
+  // private method
+  ormmaSetExpandProperties = function(properties) {
+    if (valid(properties, expandPropertyValidators, 'setExpandProperties')) {
+      mraidview.setExpandProperties(properties);
+    }
+  };
+
   ormma.show = function() {
     mraid.show();
   };
@@ -1745,12 +1686,8 @@ mraidview.storePicture = function(URL) {
     mraid.playVideo(URL, properties);
   };
 
-
-
-
   // LEVEL 2 ////////////////////////////////////////////////////////////////////
   ormma.createEvent = function(date, title, body) {
-
     mraid.createEvent(date, title, body);
   };
 
@@ -1781,7 +1718,6 @@ mraidview.storePicture = function(URL) {
   ormma.getPlacementType = function() {
     return mraid.getPlacementType();
   };
-
 
   ormma.getShakeProperties = function() {
     return mraid.getScreenSize();
@@ -1848,12 +1784,11 @@ mraidview.storePicture = function(URL) {
     return mraid.isViewable();
   };
 
-
   var clone = function(obj) {
-      var f = function() {};
-      f.prototype = obj;
-      return new f();
-      };
+    var f = function() {};
+    f.prototype = obj;
+    return new f();
+  };
 
   console.log = function(log) {
     mraidview.executeNativeCall("log", "log", log);
