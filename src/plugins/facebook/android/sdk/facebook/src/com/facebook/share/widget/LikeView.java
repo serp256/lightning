@@ -444,19 +444,19 @@ public class LikeView extends FrameLayout {
         }
 
         objectId = Utility.coerceValueIfNullOrEmpty(
-                a.getString(R.styleable.com_facebook_like_view_object_id), null);
+                a.getString(R.styleable.com_facebook_like_view_com_facebook_object_id), null);
         objectType = ObjectType.fromInt(
-                a.getInt(R.styleable.com_facebook_like_view_object_type,
+                a.getInt(R.styleable.com_facebook_like_view_com_facebook_object_type,
                         ObjectType.DEFAULT.getValue()));
         likeViewStyle = Style.fromInt(
-                a.getInt(R.styleable.com_facebook_like_view_style,
+                a.getInt(R.styleable.com_facebook_like_view_com_facebook_style,
                         Style.DEFAULT.getValue()));
         if (likeViewStyle == null) {
             throw new IllegalArgumentException("Unsupported value for LikeView 'style'");
         }
 
         auxiliaryViewPosition = AuxiliaryViewPosition.fromInt(
-                a.getInt(R.styleable.com_facebook_like_view_auxiliary_view_position,
+                a.getInt(R.styleable.com_facebook_like_view_com_facebook_auxiliary_view_position,
                         AuxiliaryViewPosition.DEFAULT.getValue()));
         if (auxiliaryViewPosition == null) {
             throw new IllegalArgumentException(
@@ -464,7 +464,7 @@ public class LikeView extends FrameLayout {
         }
 
         horizontalAlignment = HorizontalAlignment.fromInt(
-                a.getInt(R.styleable.com_facebook_like_view_horizontal_alignment,
+                a.getInt(R.styleable.com_facebook_like_view_com_facebook_horizontal_alignment,
                         HorizontalAlignment.DEFAULT.getValue()));
         if (horizontalAlignment == null) {
             throw new IllegalArgumentException(
@@ -472,7 +472,7 @@ public class LikeView extends FrameLayout {
         }
 
         foregroundColor = a.getColor(
-                R.styleable.com_facebook_like_view_foreground_color, NO_FOREGROUND_COLOR);
+                R.styleable.com_facebook_like_view_com_facebook_foreground_color, NO_FOREGROUND_COLOR);
 
         a.recycle();
     }
@@ -554,15 +554,7 @@ public class LikeView extends FrameLayout {
         if (likeActionController != null) {
             Activity activity = null;
             if (parentFragment == null) {
-                Context context = getContext();
-                if (context instanceof Activity) {
-                    activity = (Activity) context;
-                } else if (context instanceof ContextWrapper) {
-                    Context baseContext = ((ContextWrapper) context).getBaseContext();
-                    if (baseContext instanceof Activity) {
-                        activity = (Activity) baseContext;
-                    }
-                }
+                activity = getActivity();
             }
 
             likeActionController.toggleLike(
@@ -570,6 +562,18 @@ public class LikeView extends FrameLayout {
                     parentFragment,
                     getAnalyticsParameters());
         }
+    }
+
+    private Activity getActivity() {
+        Context context = getContext();
+        while (!(context instanceof Activity) && context instanceof ContextWrapper) {
+            context = ((ContextWrapper) context).getBaseContext();
+        }
+
+        if (context instanceof Activity) {
+            return (Activity) context;
+        }
+        throw new FacebookException("Unable to get Activity.");
     }
 
     private Bundle getAnalyticsParameters() {
@@ -602,10 +606,12 @@ public class LikeView extends FrameLayout {
         }
 
         creationCallback = new LikeActionControllerCreationCallback();
-        LikeActionController.getControllerForObjectId(
-                newObjectId,
-                newObjectType,
-                creationCallback);
+        if (!isInEditMode()) {
+            LikeActionController.getControllerForObjectId(
+                    newObjectId,
+                    newObjectType,
+                    creationCallback);
+        }
     }
 
     private void associateWithLikeActionController(LikeActionController likeActionController) {

@@ -20,17 +20,16 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.facebook.samples.rps"
+          package="com.example.rps"
           android:versionCode="1"
           android:versionName="1.0">
-    <uses-sdk android:minSdkVersion="9"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <application android:label="@string/app_name"
                  android:icon="@drawable/icon"
                  android:theme="@android:style/Theme.NoTitleBar"
             >
-        <activity android:name="MainActivity"
+        <activity android:name="com.example.rps.MainActivity"
                   android:label="@string/app_name"
                   android:screenOrientation="portrait"
                   android:windowSoftInputMode="adjustResize">

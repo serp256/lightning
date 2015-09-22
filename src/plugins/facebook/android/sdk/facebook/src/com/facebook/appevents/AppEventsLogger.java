@@ -37,6 +37,7 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.LoggingBehavior;
+import com.facebook.internal.AppEventsLoggerUtility;
 import com.facebook.internal.AttributionIdentifiers;
 import com.facebook.internal.Logger;
 import com.facebook.internal.Utility;
@@ -176,7 +177,7 @@ public class AppEventsLogger {
             "_fbSourceApplicationHasBeenSet";
 
     // Instance member variables
-    private final Context context;
+    private final String contextName;
     private final AccessTokenAppIdPair accessTokenAppId;
 
     private static Map<AccessTokenAppIdPair, SessionEventsState> stateMap =
@@ -495,7 +496,7 @@ public class AppEventsLogger {
      *                   given app should have no more than ~300 distinct event names.
      * @param parameters A Bundle of parameters to log with the event.  Insights will allow looking
      *                   at the logs of these events via different parameter values.  You can log on
-     *                   the order of 10 parameters with each distinct eventName.  It's advisable to
+     *                   the order of 25 parameters with each distinct eventName.  It's advisable to
      *                   limit the number of unique values provided for each parameter in the
      *                   thousands.  As an example, don't attempt to provide a unique
      *                   parameter value for each unique user in your app.  You won't get meaningful
@@ -520,7 +521,7 @@ public class AppEventsLogger {
      *                   determined, etc.
      * @param parameters A Bundle of parameters to log with the event.  Insights will allow looking
      *                   at the logs of these events via different parameter values.  You can log on
-     *                   the order of 10 parameters with each distinct eventName.  It's advisable to
+     *                   the order of 25 parameters with each distinct eventName.  It's advisable to
      *                   limit the number of unique values provided for each parameter in the
      *                   thousands.  As an example, don't attempt to provide a unique
      *                   parameter value for each unique user in your app.  You won't get meaningful
@@ -553,7 +554,7 @@ public class AppEventsLogger {
      *                       12.34567 becomes 12.346).
      * @param currency       Currency used to specify the amount.
      * @param parameters     Arbitrary additional information for describing this event. This should
-     *                       have no more than 10 entries, and keys should be mostly consistent from
+     *                       have no more than 24 entries, and keys should be mostly consistent from
      *                       one purchase event to the next.
      */
     public void logPurchase(BigDecimal purchaseAmount, Currency currency, Bundle parameters) {
@@ -649,7 +650,7 @@ public class AppEventsLogger {
      */
     private AppEventsLogger(Context context, String applicationId, AccessToken accessToken) {
         Validate.notNull(context, "context");
-        this.context = context;
+        this.contextName = Utility.getActivityName(context);
 
         if (accessToken == null) {
             accessToken = AccessToken.getCurrentAccessToken();
@@ -731,12 +732,12 @@ public class AppEventsLogger {
             Bundle parameters,
             boolean isImplicitlyLogged) {
         AppEvent event = new AppEvent(
-                this.context,
+                this.contextName,
                 eventName,
                 valueToSum,
                 parameters,
                 isImplicitlyLogged);
-        logEvent(context, event, accessTokenAppId);
+        logEvent(applicationContext, event, accessTokenAppId);
     }
 
     private static void logEvent(final Context context,
@@ -1235,31 +1236,21 @@ public class AppEventsLogger {
 
         private void populateRequest(GraphRequest request, int numSkipped, JSONArray events,
                                      boolean limitEventUsage) {
-            JSONObject publishParams = new JSONObject();
+            JSONObject publishParams = null;
             try {
-                publishParams.put("event", "CUSTOM_APP_EVENTS");
+                publishParams = AppEventsLoggerUtility.getJSONObjectForGraphAPICall(
+                        AppEventsLoggerUtility.GraphAPIActivityType.CUSTOM_APP_EVENTS,
+                        attributionIdentifiers,
+                        anonymousAppDeviceGUID,
+                        limitEventUsage,
+                        applicationContext);
 
                 if (numSkippedEventsDueToFullBuffer > 0) {
                     publishParams.put("num_skipped_events", numSkipped);
                 }
-
-                Utility.setAppEventAttributionParameters(publishParams, attributionIdentifiers,
-                        anonymousAppDeviceGUID, limitEventUsage);
-
-                // The code to get all the Extended info is safe but just in case we can wrap the
-                // whole call in its own try/catch block since some of the things it does might
-                // cause unexpected exceptions on rooted/funky devices:
-                try {
-                    Utility.setAppEventExtendedDeviceInfoParameters(
-                            publishParams,
-                            applicationContext);
-                } catch (Exception e) {
-                    // Swallow
-                }
-
-                publishParams.put("application_package_name", packageName);
             } catch (JSONException e) {
                 // Swallow
+                publishParams = new JSONObject();
             }
             request.setGraphObject(publishParams);
 
@@ -1299,7 +1290,7 @@ public class AppEventsLogger {
         private String name;
 
         public AppEvent(
-                Context context,
+                String contextName,
                 String eventName,
                 Double valueToSum,
                 Bundle parameters,
@@ -1314,7 +1305,7 @@ public class AppEventsLogger {
 
                 jsonObject.put("_eventName", eventName);
                 jsonObject.put("_logTime", System.currentTimeMillis() / 1000);
-                jsonObject.put("_ui", Utility.getActivityName(context));
+                jsonObject.put("_ui", contextName);
 
                 if (valueToSum != null) {
                     jsonObject.put("_valueToSum", valueToSum.doubleValue());

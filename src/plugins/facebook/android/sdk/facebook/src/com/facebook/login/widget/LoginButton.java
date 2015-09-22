@@ -29,10 +29,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import com.facebook.*;
-import com.facebook.R;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.internal.AnalyticsEvents;
 import com.facebook.internal.CallbackManagerImpl;
@@ -54,8 +52,6 @@ import java.util.List;
  * This control requires the app ID to be specified in the AndroidManifest.xml.
  */
 public class LoginButton extends FacebookButtonBase {
-    private static final int DEFAULT_REQUEST_CODE =
-            CallbackManagerImpl.RequestCodeOffset.Login.toRequestCode();
 
     // ***
     // Keep all the enum values in sync with attrs.xml
@@ -64,7 +60,7 @@ public class LoginButton extends FacebookButtonBase {
     /**
      * The display modes for the login button tool tip.
      */
-    public static enum ToolTipMode {
+    public enum ToolTipMode {
         /**
          * Default display mode. A server query will determine if the tool tip should be displayed
          * and, if so, what the string shown to the user should be.
@@ -95,7 +91,7 @@ public class LoginButton extends FacebookButtonBase {
 
         private String stringValue;
         private int intValue;
-        private ToolTipMode(String stringValue, int value) {
+        ToolTipMode(String stringValue, int value) {
             this.stringValue = stringValue;
             this.intValue = value;
         }
@@ -128,7 +124,7 @@ public class LoginButton extends FacebookButtonBase {
         private DefaultAudience defaultAudience = DefaultAudience.FRIENDS;
         private List<String> permissions = Collections.<String>emptyList();
         private LoginAuthorizationType authorizationType = null;
-        private LoginBehavior loginBehavior = LoginBehavior.SSO_WITH_FALLBACK;
+        private LoginBehavior loginBehavior = LoginBehavior.NATIVE_WITH_FALLBACK;
 
         public void setDefaultAudience(DefaultAudience defaultAudience) {
             this.defaultAudience = defaultAudience;
@@ -144,10 +140,8 @@ public class LoginButton extends FacebookButtonBase {
                 throw new UnsupportedOperationException("Cannot call setReadPermissions after " +
                         "setPublishPermissions has been called.");
             }
-            if (validatePermissions(permissions, LoginAuthorizationType.READ)) {
-                this.permissions = permissions;
-                authorizationType = LoginAuthorizationType.READ;
-            }
+            this.permissions = permissions;
+            authorizationType = LoginAuthorizationType.READ;
         }
 
         public void setPublishPermissions(List<String> permissions) {
@@ -156,29 +150,12 @@ public class LoginButton extends FacebookButtonBase {
                 throw new UnsupportedOperationException("Cannot call setPublishPermissions after " +
                         "setReadPermissions has been called.");
             }
-            if (validatePermissions(permissions, LoginAuthorizationType.PUBLISH)) {
-                this.permissions = permissions;
-                authorizationType = LoginAuthorizationType.PUBLISH;
+            if (Utility.isNullOrEmpty(permissions)) {
+                throw new IllegalArgumentException(
+                        "Permissions for publish actions cannot be null or empty.");
             }
-        }
-
-        private boolean validatePermissions(List<String> permissions,
-                                            LoginAuthorizationType authType) {
-
-            if (LoginAuthorizationType.PUBLISH.equals(authType)) {
-                if (Utility.isNullOrEmpty(permissions)) {
-                    throw new IllegalArgumentException(
-                            "Permissions for publish actions cannot be null or empty.");
-                }
-            }
-            AccessToken accessToken = AccessToken.getCurrentAccessToken();
-            if (accessToken != null) {
-                if (!Utility.isSubset(permissions, accessToken.getPermissions())) {
-                    Log.e(TAG, "Cannot set additional permissions with existing AccessToken.");
-                    return false;
-                }
-            }
-            return true;
+            this.permissions = permissions;
+            authorizationType = LoginAuthorizationType.PUBLISH;
         }
 
         List<String> getPermissions() {
@@ -211,7 +188,7 @@ public class LoginButton extends FacebookButtonBase {
                 0,
                 0,
                 AnalyticsEvents.EVENT_LOGIN_BUTTON_CREATE,
-                DEFAULT_REQUEST_CODE);
+                AnalyticsEvents.EVENT_LOGIN_BUTTON_DID_TAP);
     }
 
     /**
@@ -226,7 +203,7 @@ public class LoginButton extends FacebookButtonBase {
                 0,
                 0,
                 AnalyticsEvents.EVENT_LOGIN_BUTTON_CREATE,
-                DEFAULT_REQUEST_CODE);
+                AnalyticsEvents.EVENT_LOGIN_BUTTON_DID_TAP);
     }
 
     /**
@@ -241,7 +218,7 @@ public class LoginButton extends FacebookButtonBase {
                 defStyle,
                 0,
                 AnalyticsEvents.EVENT_LOGIN_BUTTON_CREATE,
-                DEFAULT_REQUEST_CODE);
+                AnalyticsEvents.EVENT_LOGIN_BUTTON_DID_TAP);
     }
 
     /**
@@ -371,7 +348,7 @@ public class LoginButton extends FacebookButtonBase {
 
     /**
      * Sets the login behavior during authorization. If null is specified, the default
-     * ({@link com.facebook.login.LoginBehavior LoginBehavior.SSO_WITH_FALLBACK}
+     * ({@link com.facebook.login.LoginBehavior LoginBehavior.NATIVE_WITH_FALLBACK}
      * will be used.
      *
      * @param loginBehavior The {@link com.facebook.login.LoginBehavior LoginBehavior} that
@@ -384,7 +361,7 @@ public class LoginButton extends FacebookButtonBase {
 
     /**
      * Gets the login behavior during authorization. If null is returned, the default
-     * ({@link com.facebook.login.LoginBehavior LoginBehavior.SSO_WITH_FALLBACK}
+     * ({@link com.facebook.login.LoginBehavior LoginBehavior.NATIVE_WITH_FALLBACK}
      * will be used.
      *
      * @return loginBehavior The {@link com.facebook.login.LoginBehavior LoginBehavior} that
@@ -466,23 +443,6 @@ public class LoginButton extends FacebookButtonBase {
             final CallbackManager callbackManager,
             final FacebookCallback<LoginResult> callback) {
         getLoginManager().registerCallback(callbackManager, callback);
-    }
-
-    /**
-     * Registers a login callback to the given callback manager.
-     *
-     * @param callbackManager The callback manager that will encapsulate the callback.
-     * @param callback        The login callback that will be called on login completion.
-     * @param requestCode     The request code to use, this should be outside of the range of those
-     *                        reserved for the Facebook SDK
-     *                        {@link com.facebook.FacebookSdk#isFacebookRequestCode(int)}.
-     */
-    public void registerCallback(
-            final CallbackManager callbackManager,
-            final FacebookCallback<LoginResult> callback,
-            final int requestCode) {
-        setRequestCode(requestCode);
-        registerCallback(callbackManager, callback);
     }
 
     @Override
@@ -628,11 +588,11 @@ public class LoginButton extends FacebookButtonBase {
                 defStyleAttr,
                 defStyleRes);
         try {
-            confirmLogout = a.getBoolean(R.styleable.com_facebook_login_view_confirm_logout, true);
-            loginText = a.getString(R.styleable.com_facebook_login_view_login_text);
-            logoutText = a.getString(R.styleable.com_facebook_login_view_logout_text);
+            confirmLogout = a.getBoolean(R.styleable.com_facebook_login_view_com_facebook_confirm_logout, true);
+            loginText = a.getString(R.styleable.com_facebook_login_view_com_facebook_login_text);
+            logoutText = a.getString(R.styleable.com_facebook_login_view_com_facebook_logout_text);
             toolTipMode = ToolTipMode.fromInt(a.getInt(
-                    R.styleable.com_facebook_login_view_tooltip_mode,
+                    R.styleable.com_facebook_login_view_com_facebook_tooltip_mode,
                     ToolTipMode.DEFAULT.getValue()));
         } finally {
             a.recycle();
@@ -681,7 +641,7 @@ public class LoginButton extends FacebookButtonBase {
 
     private void setButtonText() {
         final Resources resources = getResources();
-        if (AccessToken.getCurrentAccessToken() != null) {
+        if (!isInEditMode() && AccessToken.getCurrentAccessToken() != null) {
             setText((logoutText != null) ?
                     logoutText :
                     resources.getString(R.string.com_facebook_loginview_log_out_button));
@@ -706,10 +666,17 @@ public class LoginButton extends FacebookButtonBase {
         }
     }
 
+    @Override
+    protected int getDefaultRequestCode() {
+        return CallbackManagerImpl.RequestCodeOffset.Login.toRequestCode();
+    }
+
     private class LoginClickListener implements OnClickListener {
 
         @Override
         public void onClick(View v) {
+            callExternalOnClickListener(v);
+
             Context context = getContext();
 
             AccessToken accessToken = AccessToken.getCurrentAccessToken();
@@ -780,8 +747,6 @@ public class LoginButton extends FacebookButtonBase {
             parameters.putInt("logging_in", (accessToken != null) ? 0 : 1);
 
             logger.logSdkEvent(loginLogoutEventName, null, parameters);
-
-            callExternalOnClickListener(v);
         }
     }
 
