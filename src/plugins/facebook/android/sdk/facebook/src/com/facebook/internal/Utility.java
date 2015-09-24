@@ -24,11 +24,20 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcel;
+import android.os.StatFs;
+import android.provider.OpenableColumns;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 
@@ -56,6 +65,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 /**
  * com.facebook.internal is solely for the use of other packages within the Facebook SDK for
@@ -78,7 +88,7 @@ public final class Utility {
     private static final String APP_SETTING_DIALOG_CONFIGS = "android_dialog_configs";
     private static final String APP_SETTING_ANDROID_SDK_ERROR_CATEGORIES =
             "android_sdk_error_categories";
-    private static final String EXTRA_APP_EVENTS_INFO_FORMAT_VERSION = "a1";
+    private static final String EXTRA_APP_EVENTS_INFO_FORMAT_VERSION = "a2";
     private static final String DIALOG_CONFIG_DIALOG_NAME_FEATURE_NAME_SEPARATOR = "\\|";
     private static final String DIALOG_CONFIG_NAME_KEY = "name";
     private static final String DIALOG_CONFIG_VERSIONS_KEY = "versions";
@@ -99,10 +109,25 @@ public final class Utility {
     // specify.
     public static final int DEFAULT_STREAM_BUFFER_SIZE = 8192;
 
+    // Refresh extended device info every 30 minutes
+    private static final int REFRESH_TIME_FOR_EXTENDED_DEVICE_INFO_MILLIS = 30 * 60 * 1000;
+
+    private static final String noCarrierConstant = "NoCarrier";
+
+    private static final int GINGERBREAD_MR1 = 10;
+
     private static Map<String, FetchedAppSettings> fetchedAppSettings =
             new ConcurrentHashMap<String, FetchedAppSettings>();
 
     private static AtomicBoolean loadingSettings = new AtomicBoolean(false);
+
+    private static int numCPUCores = 0;
+
+    private static long timestampOfLastCheck = -1;
+    private static long totalExternalStorageGB = -1;
+    private static long availableExternalStorageGB = -1;
+    private static String deviceTimezone = "";
+    private static String carrierName = noCarrierConstant;
 
     public static class FetchedAppSettings {
         private boolean supportsImplicitLogging;
@@ -752,13 +777,27 @@ public final class Utility {
         FacebookSdk.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
+                // See if we had a cached copy and use that immediately.
+                SharedPreferences sharedPrefs = context.getSharedPreferences(
+                        APP_SETTINGS_PREFS_STORE,
+                        Context.MODE_PRIVATE);
+                String settingsJSONString = sharedPrefs.getString(settingsKey, null);
+                if (!isNullOrEmpty(settingsJSONString)) {
+                    JSONObject settingsJSON = null;
+                    try {
+                        settingsJSON = new JSONObject(settingsJSONString);
+                    } catch (JSONException je) {
+                        logd(LOG_TAG, je);
+                    }
+                    if (settingsJSON != null) {
+                        parseAppSettingsFromJSON(applicationId, settingsJSON);
+                    }
+                }
+
                 JSONObject resultJSON = getAppSettingsQueryResponse(applicationId);
                 if (resultJSON != null) {
                     parseAppSettingsFromJSON(applicationId, resultJSON);
 
-                    SharedPreferences sharedPrefs = context.getSharedPreferences(
-                            APP_SETTINGS_PREFS_STORE,
-                            Context.MODE_PRIVATE);
                     sharedPrefs.edit()
                             .putString(settingsKey, resultJSON.toString())
                             .apply();
@@ -767,23 +806,6 @@ public final class Utility {
                 loadingSettings.set(false);
             }
         });
-
-        // Also see if we had a cached copy and use that immediately.
-        SharedPreferences sharedPrefs = context.getSharedPreferences(
-                APP_SETTINGS_PREFS_STORE,
-                Context.MODE_PRIVATE);
-        String settingsJSONString = sharedPrefs.getString(settingsKey, null);
-        if (!isNullOrEmpty(settingsJSONString)) {
-            JSONObject settingsJSON = null;
-            try {
-                settingsJSON = new JSONObject(settingsJSONString);
-            } catch (JSONException je) {
-                logd(LOG_TAG, je);
-            }
-            if (settingsJSON != null) {
-                parseAppSettingsFromJSON(applicationId, settingsJSON);
-            }
-        }
     }
 
     // This call only gets the app settings if they're already fetched
@@ -942,6 +964,15 @@ public final class Utility {
         return result;
     }
 
+    public static Set<String> jsonArrayToSet(JSONArray jsonArray) throws JSONException {
+        Set<String> result = new HashSet<>();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            result.add(jsonArray.getString(i));
+        }
+
+        return result;
+    }
+
     public static void setAppEventAttributionParameters(
             JSONObject params,
             AttributionIdentifiers attributionIdentifiers,
@@ -957,6 +988,11 @@ public final class Utility {
             params.put("advertiser_tracking_enabled", !attributionIdentifiers.isTrackingLimited());
         }
 
+        if (attributionIdentifiers != null &&
+                attributionIdentifiers.getAndroidInstallerPackage() != null) {
+            params.put("installer_package", attributionIdentifiers.getAndroidInstallerPackage());
+        }
+
         params.put("anon_id", anonymousAppDeviceGUID);
         params.put("application_tracking_enabled", !limitEventUsage);
     }
@@ -967,6 +1003,8 @@ public final class Utility {
     ) throws JSONException {
         JSONArray extraInfoArray = new JSONArray();
         extraInfoArray.put(EXTRA_APP_EVENTS_INFO_FORMAT_VERSION);
+
+        Utility.refreshPeriodicExtendedDeviceInfo(appContext);
 
         // Application Manifest info:
         String pkgName = appContext.getPackageName();
@@ -985,6 +1023,53 @@ public final class Utility {
         extraInfoArray.put(pkgName);
         extraInfoArray.put(versionCode);
         extraInfoArray.put(versionName);
+
+        // OS/Device info
+        extraInfoArray.put(Build.VERSION.RELEASE);
+        extraInfoArray.put(Build.MODEL);
+
+        // Locale
+        Locale locale = null;
+        try {
+            locale = appContext.getResources().getConfiguration().locale;
+        } catch (Exception e) {
+            locale = Locale.getDefault();
+        }
+        extraInfoArray.put(locale.getLanguage() + "_" + locale.getCountry());
+
+        // Time zone
+        extraInfoArray.put(deviceTimezone);
+
+        // Carrier
+        extraInfoArray.put(carrierName);
+
+        // Screen dimensions
+        int width = 0;
+        int height = 0;
+        double density = 0;
+        try {
+            WindowManager wm = (WindowManager) appContext.getSystemService(Context.WINDOW_SERVICE);
+            if (wm != null) {
+                Display display = wm.getDefaultDisplay();
+                DisplayMetrics displayMetrics = new DisplayMetrics();
+                display.getMetrics(displayMetrics);
+                width = displayMetrics.widthPixels;
+                height = displayMetrics.heightPixels;
+                density = displayMetrics.density;
+            }
+        } catch (Exception e) {
+            // Swallow
+        }
+        extraInfoArray.put(width);
+        extraInfoArray.put(height);
+        extraInfoArray.put(String.format("%.2f", density));
+
+        // CPU Cores
+        extraInfoArray.put(refreshBestGuessNumberOfCPUCores());
+
+        // External Storage
+        extraInfoArray.put(totalExternalStorageGB);
+        extraInfoArray.put(availableExternalStorageGB);
 
         params.put("extinfo", extraInfoArray.toString());
     }
@@ -1087,6 +1172,24 @@ public final class Utility {
 
     public static boolean isFileUri(final Uri uri) {
         return (uri != null) && ("file".equalsIgnoreCase(uri.getScheme()));
+    }
+
+    public static long getContentSize(final Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            cursor = FacebookSdk
+                    .getApplicationContext()
+                    .getContentResolver()
+                    .query(contentUri, null, null, null, null);
+            int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+
+            cursor.moveToFirst();
+            return cursor.getLong(sizeIndex);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     public static Date getBundleLongAsDate(Bundle bundle, String key, Date dateBase) {
@@ -1207,5 +1310,115 @@ public final class Utility {
                 null);
         return graphRequest;
     }
-}
 
+    /**
+     * Return our best guess at the available number of cores. Will always return at least 1.
+     * @return The minimum number of CPU cores
+     */
+    private static int refreshBestGuessNumberOfCPUCores() {
+        // If we have calculated this before, return that value
+        if (numCPUCores > 0) {
+            return numCPUCores;
+        }
+
+        // Enumerate all available CPU files and try to count the number of CPU cores.
+        try {
+            int res = 0;
+            File cpuDir = new File("/sys/devices/system/cpu/");
+            File[] cpuFiles = cpuDir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String fileName) {
+                    return Pattern.matches("cpu[0-9]+", fileName);
+                }
+            });
+
+            numCPUCores = cpuFiles.length;
+        } catch (Exception e) {
+        }
+
+        // If enumerating and counting the CPU cores fails, use the runtime. Fallback to 1 if
+        // that returns bogus values.
+        if (numCPUCores <= 0) {
+            numCPUCores = Math.max(Runtime.getRuntime().availableProcessors(), 1);
+        }
+        return numCPUCores;
+    }
+
+    private static void refreshPeriodicExtendedDeviceInfo(Context appContext) {
+        if (timestampOfLastCheck == -1 ||
+                (System.currentTimeMillis() - timestampOfLastCheck) >=
+                        Utility.REFRESH_TIME_FOR_EXTENDED_DEVICE_INFO_MILLIS) {
+            timestampOfLastCheck = System.currentTimeMillis();
+            Utility.refreshTimezone();
+            Utility.refreshCarrierName(appContext);
+            Utility.refreshTotalExternalStorage();
+            Utility.refreshAvailableExternalStorage();
+        }
+    }
+
+    private static void refreshTimezone() {
+        try {
+            TimeZone tz = TimeZone.getDefault();
+            deviceTimezone = tz.getDisplayName(tz.inDaylightTime(new Date()), TimeZone.SHORT);
+        } catch (Exception e) {
+        }
+    }
+
+    /**
+     * Get and cache the carrier name since this won't change during the lifetime of the app.
+     * @return The carrier name
+     */
+    private static void refreshCarrierName(Context appContext) {
+        if (carrierName.equals(noCarrierConstant)) {
+            try {
+                TelephonyManager telephonyManager =
+                        ((TelephonyManager) appContext.getSystemService(Context.TELEPHONY_SERVICE));
+                carrierName = telephonyManager.getNetworkOperatorName();
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    /**
+     * @return whether there is external storage:
+     */
+    private static boolean externalStorageExists() {
+        return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
+    }
+
+    // getAvailableBlocks/getBlockSize deprecated but required pre-API v18
+    @SuppressWarnings("deprecation")
+    private static void refreshAvailableExternalStorage() {
+        try {
+            if (externalStorageExists()) {
+                File path = Environment.getExternalStorageDirectory();
+                StatFs stat = new StatFs(path.getPath());
+                availableExternalStorageGB =
+                        (long)stat.getAvailableBlocks() * (long)stat.getBlockSize();
+            }
+            availableExternalStorageGB =
+                    Utility.convertBytesToGB(availableExternalStorageGB);
+        } catch (Exception e) {
+            // Swallow
+        }
+    }
+
+    // getAvailableBlocks/getBlockSize deprecated but required pre-API v18
+    @SuppressWarnings("deprecation")
+    private static void refreshTotalExternalStorage() {
+        try {
+            if (externalStorageExists()) {
+                File path = Environment.getExternalStorageDirectory();
+                StatFs stat = new StatFs(path.getPath());
+                totalExternalStorageGB = (long)stat.getBlockCount() * (long)stat.getBlockSize();
+            }
+            totalExternalStorageGB = Utility.convertBytesToGB(totalExternalStorageGB);
+        } catch (Exception e) {
+            // Swallow
+        }
+    }
+
+    private static long convertBytesToGB(double bytes) {
+        return Math.round(bytes / (1024.0 * 1024.0 * 1024.0));
+    }
+}

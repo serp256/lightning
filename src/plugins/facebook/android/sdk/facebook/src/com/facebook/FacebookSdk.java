@@ -20,22 +20,22 @@
 
 package com.facebook;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
 
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.internal.AppEventsLoggerUtility;
+import com.facebook.internal.LockOnGetVariable;
 import com.facebook.internal.BoltsMeasurementEventListener;
 import com.facebook.internal.AttributionIdentifiers;
+import com.facebook.internal.NativeProtocol;
 import com.facebook.internal.Utility;
 import com.facebook.internal.Validate;
 
@@ -43,12 +43,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,12 +65,13 @@ public final class FacebookSdk {
     private static volatile String applicationId;
     private static volatile String applicationName;
     private static volatile String appClientToken;
+    private static volatile int webDialogTheme;
     private static final String FACEBOOK_COM = "facebook.com";
     private static volatile String facebookDomain = FACEBOOK_COM;
     private static AtomicLong onProgressThreshold = new AtomicLong(65536);
     private static volatile boolean isDebugEnabled = BuildConfig.DEBUG;
     private static boolean isLegacyTokenUpgradeSupported = false;
-    private static File cacheDir;
+    private static LockOnGetVariable<File> cacheDir;
     private static Context applicationContext;
     private static final int DEFAULT_CORE_POOL_SIZE = 5;
     private static final int DEFAULT_MAXIMUM_POOL_SIZE = 128;
@@ -80,14 +81,8 @@ public final class FacebookSdk {
 
     private static final int MAX_REQUEST_CODE_RANGE = 100;
 
-    private static final Uri ATTRIBUTION_ID_CONTENT_URI =
-            Uri.parse("content://com.facebook.katana.provider.AttributionIdProvider");
-    private static final String ATTRIBUTION_ID_COLUMN_NAME = "aid";
-
     private static final String ATTRIBUTION_PREFERENCES = "com.facebook.sdk.attributionTracking";
     private static final String PUBLISH_ACTIVITY_PATH = "%s/activities";
-    private static final String MOBILE_INSTALL_EVENT = "MOBILE_APP_INSTALL";
-    private static final String ANALYTICS_EVENT = "event";
 
     private static final BlockingQueue<Runnable> DEFAULT_WORK_QUEUE =
             new LinkedBlockingQueue<Runnable>(10);
@@ -122,6 +117,11 @@ public final class FacebookSdk {
      */
     public static final String CLIENT_TOKEN_PROPERTY = "com.facebook.sdk.ClientToken";
 
+    /**
+     * The key for the web dialog theme in the Android manifest.
+     */
+    public static final String WEB_DIALOG_THEME = "com.facebook.sdk.WebDialogTheme";
+
     private static Boolean sdkInitialized = false;
 
     /**
@@ -136,6 +136,24 @@ public final class FacebookSdk {
     public static synchronized void sdkInitialize(
             Context applicationContext,
             int callbackRequestCodeOffset) {
+        sdkInitialize(applicationContext, callbackRequestCodeOffset, null);
+    }
+
+    /**
+     * This function initializes the Facebook SDK, the behavior of Facebook SDK functions are
+     * undetermined if this function is not called. It should be called as early as possible.
+     * @param applicationContext The application context
+     * @param callbackRequestCodeOffset The request code offset that Facebook activities will be
+     *                                  called with. Please do not use the range between the
+     *                                  value you set and another 100 entries after it in your
+     *                                  other requests.
+     * @param callback A callback called when initialize finishes. This will be called even if the
+     *                 sdk is already initialized.
+     */
+    public static synchronized void sdkInitialize(
+            Context applicationContext,
+            int callbackRequestCodeOffset,
+            final InitializeCallback callback) {
         if (sdkInitialized && callbackRequestCodeOffset != FacebookSdk.callbackRequestCodeOffset) {
             throw new FacebookException(CALLBACK_OFFSET_CHANGED_AFTER_INIT);
         }
@@ -146,18 +164,38 @@ public final class FacebookSdk {
         sdkInitialize(applicationContext);
     }
 
-
     /**
      * This function initializes the Facebook SDK, the behavior of Facebook SDK functions are
      * undetermined if this function is not called. It should be called as early as possible.
      * @param applicationContext The application context
      */
     public static synchronized void sdkInitialize(Context applicationContext) {
-        if (sdkInitialized == true) {
-          return;
+        FacebookSdk.sdkInitialize(applicationContext, null);
+    }
+
+    /**
+     * This function initializes the Facebook SDK, the behavior of Facebook SDK functions are
+     * undetermined if this function is not called. It should be called as early as possible.
+     * @param applicationContext The application context
+     * @param callback A callback called when initialize finishes. This will be called even if the
+     *                 sdk is already initialized.
+     */
+    public static synchronized void sdkInitialize(
+            Context applicationContext,
+            final InitializeCallback callback) {
+        if (sdkInitialized) {
+            if (callback != null) {
+                callback.onInitialized();
+            }
+            return;
         }
 
         Validate.notNull(applicationContext, "applicationContext");
+
+        // Don't throw for these validations here, just log an error. We'll throw when we actually
+        // need them
+        Validate.hasFacebookActivity(applicationContext, false);
+        Validate.hasInternetPermissions(applicationContext, false);
 
         FacebookSdk.applicationContext = applicationContext.getApplicationContext();
 
@@ -165,24 +203,19 @@ public final class FacebookSdk {
         FacebookSdk.loadDefaultsFromMetadata(FacebookSdk.applicationContext);
         // Load app settings from network so that dialog configs are available
         Utility.loadAppSettingsAsync(FacebookSdk.applicationContext, applicationId);
+        // Fetch available protocol versions from the apps on the device
+        NativeProtocol.updateAllAvailableProtocolVersionsAsync();
 
         BoltsMeasurementEventListener.getInstance(FacebookSdk.applicationContext);
 
-        cacheDir = FacebookSdk.applicationContext.getCacheDir();
+        cacheDir = new LockOnGetVariable<File>(
+                new Callable<File>() {
+                    @Override
+                    public File call() throws Exception {
+                        return FacebookSdk.applicationContext.getCacheDir();
+                    }
+                });
 
-        sdkInitialized = true;
-				try {
-						AccessTokenManager.getInstance().loadCurrentAccessToken();
-						ProfileManager.getInstance().loadCurrentProfile();
-						if (AccessToken.getCurrentAccessToken() != null &&
-										Profile.getCurrentProfile() == null) {
-								// Access token and profile went out of sync due to a network or caching
-								// issue, retry
-								Profile.fetchProfileForCurrentAccessToken();
-						}
-				}
-				catch (Exception exc) {}
-				/*
         FutureTask<Void> accessTokenLoadFutureTask =
                 new FutureTask<Void>(new Callable<Void>() {
                     @Override
@@ -195,12 +228,16 @@ public final class FacebookSdk {
                             // issue, retry
                             Profile.fetchProfileForCurrentAccessToken();
                         }
+
+                        if (callback != null) {
+                            callback.onInitialized();
+                        }
                         return null;
                     }
                 });
         getExecutor().execute(accessTokenLoadFutureTask);
-				*/
 
+        sdkInitialized = true;
     }
 
     /**
@@ -334,13 +371,7 @@ public final class FacebookSdk {
     public static Executor getExecutor() {
         synchronized (LOCK) {
             if (FacebookSdk.executor == null) {
-                Executor executor = getAsyncTaskExecutor();
-                if (executor == null) {
-                    executor = new ThreadPoolExecutor(
-                            DEFAULT_CORE_POOL_SIZE, DEFAULT_MAXIMUM_POOL_SIZE, DEFAULT_KEEP_ALIVE,
-                            TimeUnit.SECONDS, DEFAULT_WORK_QUEUE, DEFAULT_THREAD_FACTORY);
-                }
-                FacebookSdk.executor = executor;
+                FacebookSdk.executor = AsyncTask.THREAD_POOL_EXECUTOR;
             }
         }
         return FacebookSdk.executor;
@@ -393,32 +424,6 @@ public final class FacebookSdk {
         return applicationContext;
     }
 
-    private static Executor getAsyncTaskExecutor() {
-        Field executorField = null;
-        try {
-            executorField = AsyncTask.class.getField("THREAD_POOL_EXECUTOR");
-        } catch (NoSuchFieldException e) {
-            return null;
-        }
-
-        Object executorObject = null;
-        try {
-            executorObject = executorField.get(null);
-        } catch (IllegalAccessException e) {
-            return null;
-        }
-
-        if (executorObject == null) {
-            return null;
-        }
-
-        if (!(executorObject instanceof Executor)) {
-            return null;
-        }
-
-        return (Executor) executorObject;
-    }
-
     /**
      * This method is public in order to be used by app events, please don't use directly.
      * @param context       The application context.
@@ -450,15 +455,14 @@ public final class FacebookSdk {
             long lastPing = preferences.getLong(pingKey, 0);
             String lastResponseJSON = preferences.getString(jsonKey, null);
 
-            JSONObject publishParams = new JSONObject();
+            JSONObject publishParams;
             try {
-                publishParams.put(ANALYTICS_EVENT, MOBILE_INSTALL_EVENT);
-
-                Utility.setAppEventAttributionParameters(publishParams,
+                publishParams = AppEventsLoggerUtility.getJSONObjectForGraphAPICall(
+                        AppEventsLoggerUtility.GraphAPIActivityType.MOBILE_INSTALL_EVENT,
                         identifiers,
                         AppEventsLogger.getAnonymousAppDeviceGUID(context),
-                        getLimitEventAndDataUsage(context));
-                publishParams.put("application_package_name", context.getPackageName());
+                        getLimitEventAndDataUsage(context),
+                        context);
             } catch (JSONException e) {
                 throw new FacebookException("An error occurred while publishing install.", e);
             }
@@ -511,38 +515,11 @@ public final class FacebookSdk {
     }
 
     /**
-     * Returns the current attribution id from the facebook app.
-     *
-     * @return null if the facebook app is not present on the phone.
-     */
-    public static String getAttributionId(ContentResolver contentResolver) {
-        Validate.sdkInitialized();
-        Cursor c = null;
-        try {
-            String [] projection = {ATTRIBUTION_ID_COLUMN_NAME};
-            c = contentResolver.query(ATTRIBUTION_ID_CONTENT_URI, projection, null, null, null);
-            if (c == null || !c.moveToFirst()) {
-                return null;
-            }
-            String attributionId = c.getString(c.getColumnIndex(ATTRIBUTION_ID_COLUMN_NAME));
-            return attributionId;
-        } catch (Exception e) {
-            Log.d(TAG, "Caught unexpected exception in getAttributionId(): " + e.toString());
-            return null;
-        } finally {
-            if (c != null) {
-                c.close();
-            }
-        }
-    }
-
-    /**
      * Returns the current version of the Facebook SDK for Android as a string.
      *
      * @return the current version of the SDK
      */
     public static String getSdkVersion() {
-        Validate.sdkInitialized();
         return FacebookSdkVersion.BUILD;
     }
 
@@ -614,13 +591,31 @@ public final class FacebookSdk {
         }
 
         if (applicationId == null) {
-            applicationId = ai.metaData.getString(APPLICATION_ID_PROPERTY);
+            Object appId = ai.metaData.get(APPLICATION_ID_PROPERTY);
+            if (appId instanceof String) {
+                String appIdString = (String) appId;
+                if (appIdString.toLowerCase(Locale.ROOT).startsWith("fb")) {
+                    applicationId = appIdString.substring(2);
+                } else {
+                    applicationId = appIdString;
+                }
+            } else if (appId instanceof Integer) {
+                throw new FacebookException(
+                        "App Ids cannot be directly placed in the manifest." +
+                        "They must be prefixed by 'fb' or be placed in the string resource file.");
+            }
         }
+
         if (applicationName == null) {
             applicationName = ai.metaData.getString(APPLICATION_NAME_PROPERTY);
         }
+
         if (appClientToken == null) {
             appClientToken = ai.metaData.getString(CLIENT_TOKEN_PROPERTY);
+        }
+
+        if (webDialogTheme == 0) {
+            setWebDialogTheme(ai.metaData.getInt(WEB_DIALOG_THEME));
         }
     }
 
@@ -720,6 +715,23 @@ public final class FacebookSdk {
     }
 
     /**
+     * Gets the theme used by {@link com.facebook.internal.WebDialog}
+     * @return the theme
+     */
+    public static int getWebDialogTheme() {
+        Validate.sdkInitialized();
+        return webDialogTheme;
+    }
+
+    /**
+     * Sets the theme used by {@link com.facebook.internal.WebDialog}
+     * @param theme A theme to use
+     */
+    public static void setWebDialogTheme(int theme) {
+        webDialogTheme = theme;
+    }
+
+    /**
      * Gets the cache directory to use for caching responses, etc. The default will be the value
      * returned by Context.getCacheDir() when the SDK was initialized, but it can be overridden.
      *
@@ -727,7 +739,7 @@ public final class FacebookSdk {
      */
     public static File getCacheDir() {
         Validate.sdkInitialized();
-        return cacheDir;
+        return cacheDir.getValue();
     }
 
     /**
@@ -735,7 +747,7 @@ public final class FacebookSdk {
      * @param cacheDir the cache directory
      */
     public static void setCacheDir(File cacheDir) {
-        FacebookSdk.cacheDir = cacheDir;
+        FacebookSdk.cacheDir = new LockOnGetVariable<File>(cacheDir);
     }
 
     /**
@@ -761,5 +773,15 @@ public final class FacebookSdk {
     public static boolean isFacebookRequestCode(int requestCode) {
         return requestCode >= callbackRequestCodeOffset
                 && requestCode < callbackRequestCodeOffset + MAX_REQUEST_CODE_RANGE;
+    }
+
+    /**
+     * Callback passed to the sdkInitialize function.
+     */
+    public interface InitializeCallback {
+        /**
+         * Called when the sdk has been initialized.
+         */
+        void onInitialized();
     }
 }

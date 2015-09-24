@@ -2,12 +2,12 @@
 //  AppsFlyerTracker.h
 //  AppsFlyerLib
 //
-//  AppsFlyer iOS SDK v2.5.3.15
-//  08-Mar-2015
+//  AppsFlyer iOS SDK v3.3.0
+//  10-Sep-2015
 //  Copyright (c) 2013 AppsFlyer Ltd. All rights reserved.
 //
 //  Please read AppsFlyer's iOS SDK documentation before integrating this library in your app:
-//  http://support.appsflyer.com/entries/25458906-iOS-SDK-Integration-Guide-v2-5-3-x-New-API-
+//  https://support.appsflyer.com/attachments/token/wdWOAqKTlLu64zmbmXmU791p5/?name=AF-iOS-Integration-Guide-v3.3.0.pdf
 //
 
 #import <Foundation/Foundation.h>
@@ -34,6 +34,7 @@
 #define AFEventReEngage                 @"af_re_engage"
 #define AFEventUpdate                   @"af_update"
 #define AFEventOpenedFromPushNotification @"af_opened_from_push_notification"
+#define AFEventLocation                 @"af_location_coordinates"
 
 // In app event parameter names
 #define AFEventParamLevel                  @"af_level"
@@ -105,6 +106,8 @@ typedef enum  {
     NSArray *userEmails;
 }
 
++(AppsFlyerTracker*) sharedTracker;
+
 /* In case you use your own user ID in your app, you can set this property to that ID. */
 @property (nonatomic, strong, setter=setCustomerUserID:) NSString *customerUserID;
 
@@ -122,7 +125,7 @@ typedef enum  {
 
 
 /* AppsFlyer's SDK send the data to AppsFlyer's servers over HTTPS. You can set the isHTTPS property to NO in order to use regular HTTP. */
-@property BOOL isHTTPS;
+//@property BOOL isHTTPS;
 
 /* 
  * AppsFLyer SDK collect Apple's advertisingIdentifier if the AdSupport framework included in the SDK.
@@ -172,8 +175,6 @@ typedef enum  {
 -(void) setUserEmails:(NSArray *) userEmails withCryptType:(EmailCryptType) type;
 
 
-+(AppsFlyerTracker*) sharedTracker;
-
 /* Track application launch*/
 - (void) trackAppLaunch;
 
@@ -194,18 +195,24 @@ typedef enum  {
  * To track in app purchases you can call this method from the completeTransaction: method on 
  * your SKPaymentTransactionObserver.
  */
-- (void) validateAndTrackInAppPurchase:(NSString *)eventNameIfSuucceed
-                     eventNameIfFailed:(NSString *)failedEventName
-                             withValue:(NSString *)value
-                           withProduct:(NSString *)productIdentifier
-                                 price:(NSDecimalNumber *)price
-                                 currency:(NSString *)currency
+- (void) validateAndTrackInAppPurchase:(NSString *)productIdentifier
+                                 price:(NSString *)price
+                              currency:(NSString *)currency
+                         transactionId:(NSString *) tranactionId
+                  additionalParameters:(NSDictionary *)params
                                success:(void (^)(NSDictionary *response))successBlock
                                failure:(void (^)(NSError *error, id reponse)) failedBlock;
 
-/* 
+
+/*
+* To Track location for geo-fencing.
+*/
+
+-(void) trackLocation:(double) longitude latitude:(double) latitude;
+/*
  * This method returns AppsFLyer's internal user ID (unique for your app)
  */
+
 - (NSString *) getAppsFlyerUID;
 
 /* 
@@ -223,6 +230,13 @@ typedef enum  {
  * In case you want to track deep linking, call this method from your delegate's openURL method with refferer.
  */
 - (void) handleOpenURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication withAnnotaion:(id) annotation;
+
+/* 
+ * For Universal links iOS 9
+ */
+
+-(void) continueUserActivity:(NSUserActivity *) userActivity restorationHandler:(void (^)(NSArray *))restorationHandler;
+-(void) didUpdateUserActivity:(NSUserActivity *)userActivity;
 
 
 @end

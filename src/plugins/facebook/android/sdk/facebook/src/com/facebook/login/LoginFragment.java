@@ -21,6 +21,7 @@
 package com.facebook.login;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -31,7 +32,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.facebook.R;
-import com.facebook.internal.CallbackManagerImpl;
 
 /**
  * This Fragment is a necessary part of the overall Facebook login process
@@ -42,12 +42,12 @@ import com.facebook.internal.CallbackManagerImpl;
 
 public class LoginFragment extends Fragment {
     static final String RESULT_KEY = "com.facebook.LoginFragment:Result";
+    static final String EXTRA_REQUEST = "request";
 
-    private static final String TAG = "LoginActivityFragment";
+    private static final String TAG = "LoginFragment";
     private static final String NULL_CALLING_PKG_ERROR_MSG =
-            "Cannot call LoginActivity with a null calling package. " +
+            "Cannot call LoginFragment with a null calling package. " +
                     "This can occur if the launchMode of the caller is singleInstance.";
-    private static final String EXTRA_REQUEST = "request";
     private static final String SAVED_LOGIN_CLIENT = "loginClient";
 
     private String callingPackage;
@@ -65,16 +65,23 @@ public class LoginFragment extends Fragment {
             loginClient = new LoginClient(this);
         }
 
-        callingPackage = getActivity().getCallingActivity().getPackageName();
-        request = (LoginClient.Request)
-                getActivity().getIntent().getParcelableExtra(EXTRA_REQUEST);
-
         loginClient.setOnCompletedListener(new LoginClient.OnCompletedListener() {
             @Override
             public void onCompleted(LoginClient.Result outcome) {
                 onLoginClientCompleted(outcome);
             }
         });
+
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        initializeCallingPackage(activity);
+        if (activity.getIntent() != null) {
+            request = (LoginClient.Request)
+                    activity.getIntent().getParcelableExtra(EXTRA_REQUEST);
+        }
     }
 
     @Override
@@ -90,18 +97,18 @@ public class LoginFragment extends Fragment {
 
         loginClient.setBackgroundProcessingListener(
                 new LoginClient.BackgroundProcessingListener() {
-            @Override
-            public void onBackgroundProcessingStarted() {
-                view.findViewById(
-                        R.id.com_facebook_login_activity_progress_bar).setVisibility(View.VISIBLE);
-            }
+                    @Override
+                    public void onBackgroundProcessingStarted() {
+                        view.findViewById(R.id.com_facebook_login_activity_progress_bar)
+                                .setVisibility(View.VISIBLE);
+                    }
 
-            @Override
-            public void onBackgroundProcessingStopped() {
-                view.findViewById(
-                        R.id.com_facebook_login_activity_progress_bar).setVisibility(View.GONE);
-            }
-        });
+                    @Override
+                    public void onBackgroundProcessingStopped() {
+                        view.findViewById(R.id.com_facebook_login_activity_progress_bar)
+                                .setVisibility(View.GONE);
+                    }
+                });
 
         return view;
     }
@@ -117,9 +124,12 @@ public class LoginFragment extends Fragment {
 
         Intent resultIntent = new Intent();
         resultIntent.putExtras(bundle);
-        getActivity().setResult(resultCode, resultIntent);
 
-        getActivity().finish();
+        // The activity might be detached we will send a cancel result in onDetach
+        if (isAdded()) {
+            getActivity().setResult(resultCode, resultIntent);
+            getActivity().finish();
+        }
     }
 
     @Override
@@ -159,9 +169,11 @@ public class LoginFragment extends Fragment {
         outState.putParcelable(SAVED_LOGIN_CLIENT, loginClient);
     }
 
-    static Bundle populateIntentExtras(LoginClient.Request request) {
-        Bundle extras = new Bundle();
-        extras.putParcelable(EXTRA_REQUEST, request);
-        return extras;
+    private void initializeCallingPackage(final Activity activity) {
+        ComponentName componentName = activity.getCallingActivity();
+        if (componentName == null) {
+            return;
+        }
+        callingPackage = componentName.getPackageName();
     }
 }

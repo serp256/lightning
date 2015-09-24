@@ -59,7 +59,17 @@
 void ml_tapjoy_init(value appid, value skey) {
     CAMLparam2(appid, skey);
 		[Tapjoy enableLogging:YES];
-    [Tapjoy requestTapjoyConnect: STR_CAML2OBJC(appid) secretKey: STR_CAML2OBJC(skey)];
+    //[Tapjoy requestTapjoyConnect: STR_CAML2OBJC(appid) secretKey: STR_CAML2OBJC(skey)];
+		NSLog (@"key: %@",STR_CAML2OBJC(appid));
+  //  [Tapjoy connect: STR_CAML2OBJC(appid)];;
+
+
+
+  // NOTE: This is the only step required if you're an advertiser.
+  // NOTE: This must be replaced by your App ID. It is retrieved from the Tapjoy website, in your account.
+  [Tapjoy connect:STR_CAML2OBJC(appid)
+             options:@{ TJC_OPTION_ENABLE_LOGGING : @(YES) }];
+
     CAMLreturn0;    
 }
 

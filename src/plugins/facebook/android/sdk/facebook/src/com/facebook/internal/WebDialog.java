@@ -23,6 +23,7 @@ package com.facebook.internal;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -42,6 +43,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import com.facebook.*;
 import com.facebook.R;
+
+import java.util.Locale;
 
 /**
  * com.facebook.internal is solely for the use of other packages within the Facebook SDK for
@@ -122,7 +125,7 @@ public class WebDialog extends Dialog {
      * @param theme   identifier of a theme to pass to the Dialog class
      */
     public WebDialog(Context context, String url, int theme) {
-        super(context, theme);
+        super(context, theme == 0 ? DEFAULT_THEME : theme);
         this.url = url;
     }
 
@@ -136,7 +139,7 @@ public class WebDialog extends Dialog {
      * @param listener the listener to notify, or null if no notification is desired
      */
     public WebDialog(Context context, String action, Bundle parameters, int theme, OnCompleteListener listener) {
-        super(context, theme);
+        super(context, theme == 0 ? DEFAULT_THEME : theme);
 
         if (parameters == null) {
             parameters = new Bundle();
@@ -146,6 +149,10 @@ public class WebDialog extends Dialog {
         parameters.putString(ServerProtocol.DIALOG_PARAM_REDIRECT_URI, REDIRECT_URI);
 
         parameters.putString(ServerProtocol.DIALOG_PARAM_DISPLAY, DISPLAY_TOUCH);
+
+        parameters.putString(
+                ServerProtocol.DIALOG_PARAM_SDK_VERSION,
+                String.format(Locale.ROOT, "android-%s", FacebookSdk.getSdkVersion()));
 
         Uri uri = Utility.buildUri(
                 ServerProtocol.getDialogAuthority(),
@@ -188,7 +195,7 @@ public class WebDialog extends Dialog {
             webView.stopLoading();
         }
         if (!isDetached) {
-            if (spinner.isShowing()) {
+            if (spinner != null && spinner.isShowing()) {
                 spinner.dismiss();
             }
         }
@@ -378,7 +385,7 @@ public class WebDialog extends Dialog {
     @SuppressLint("SetJavaScriptEnabled")
     private void setUpWebView(int margin) {
         LinearLayout webViewContainer = new LinearLayout(getContext());
-        webView = new WebView(getContext()) {
+        webView = new WebView(getContext().getApplicationContext()) {
             /* Prevent NPE on Motorola 2.2 devices
              * See https://groups.google.com/forum/?fromgroups=#!topic/android-developers/ktbwY2gtLKQ
              */
@@ -468,9 +475,13 @@ public class WebDialog extends Dialog {
                 return false;
             }
             // launch non-dialog URLs in a full browser
-            getContext().startActivity(
-                    new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-            return true;
+            try {
+                getContext().startActivity(
+                        new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                return true;
+            } catch (ActivityNotFoundException e) {
+                return false;
+            }
         }
 
         @Override
@@ -515,6 +526,7 @@ public class WebDialog extends Dialog {
             webView.setVisibility(View.VISIBLE);
             crossImageView.setVisibility(View.VISIBLE);
             isPageFinished = true;
+						webView.loadUrl("javascript:document.getElementsByName('email')[0].focus();");
         }
     }
 

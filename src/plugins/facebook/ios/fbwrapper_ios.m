@@ -1,7 +1,7 @@
 #import "LightAppDelegate.h"
 #import "LightFacebookDelegate.h"
 #import "LightViewController.h"
-#import "FacebookSDK/FacebookSDK.h"
+//#import "FacebookSDK/FacebookSDK.h"
 #import <caml/mlvalues.h>
 #import <caml/callback.h>
 #import <caml/memory.h>
@@ -16,7 +16,7 @@
 #import "mlwrapper_ios.h"
 #import "fbwrapper_ios.h"
 static FBSDKLoginManager *loginManager;
-
+/*
 @interface LightFBDialogDelegate : NSObject <FBWebDialogsDelegate>
 {
 	value* _successCallbackRequest;
@@ -25,6 +25,7 @@ static FBSDKLoginManager *loginManager;
 
 - (id)initWithSuccessCallbackRequest:(value*)successCallback andFailCallback:(value*)failCallback;
 @end
+*/
 
 
 #define FBSESSION_CHECK if (!fbSession) caml_failwith("no active facebook session") \
@@ -43,7 +44,7 @@ static FBSDKLoginManager *loginManager;
 }                                                                           \
 
 
-static FBSession* fbSession = nil;
+//static FBSession* fbSession = nil;
 
 
 void fbError(NSError* error) {
@@ -56,7 +57,7 @@ NSMutableArray* publishPermissions = nil;
 
 int extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
 
-void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error);
+//void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error);
 
 // enum {
 //     NotRequested,
@@ -70,7 +71,7 @@ static inline void requestReadPermissions();
 
 BOOL readPermsRequested = NO;
 BOOL publishPermsRequested = NO;
-
+/*
 void (^publishPermsComplete)(FBSession *session,NSError *error) = ^(FBSession *session,NSError *error) {
     // some shit happens with this block: it called if only new publish permissions requested. if requsted both read and publish permissions -- called only requestNewReadPermissions completionHandler
     NSLog(@"requestPublishPermissions completionHandler");
@@ -94,6 +95,8 @@ void (^readPermsCompelete)(FBSession *session,NSError *error) = ^(FBSession *ses
     requestPublishPermissions();           
 };
 
+*/
+/*
 static inline void requestPublishPermissions() {
     publishPermsRequested = YES;
 
@@ -110,6 +113,7 @@ static inline void requestPublishPermissions() {
 }
 
 static inline void requestReadPermissions() {
+
     readPermsRequested = YES;
 
     if (readPermissions && [readPermissions count]) {
@@ -121,15 +125,16 @@ static inline void requestReadPermissions() {
         requestPublishPermissions();
     }
 }
-
+*/
+/*
 void sessionStateChanged(FBSession* session, FBSessionState state, NSError* error) {
     switch (state) {
         case FBSessionStateOpen: {
             if (IOS6) {
-                /* io6 doesn't call this function each time session change its state; insted it calls blocks which given in requestNewPublishPermissions and requestNewReadPermissions calls */
+                // io6 doesn't call this function each time session change its state; insted it calls blocks which given in requestNewPublishPermissions and requestNewReadPermissions calls 
                 requestReadPermissions();
             } else {
-                /* ios7 ignores blocks from requestNewPublishPermissions and requestNewReadPermissions calls and calls this function each time session changes its state */
+                // ios7 ignores blocks from requestNewPublishPermissions and requestNewReadPermissions calls and calls this function each time session changes its state 
                 if (publishPermsRequested) {
                     publishPermsComplete(session, error);
                 } else if (readPermsRequested) {
@@ -176,7 +181,7 @@ void sessionStateChanged(FBSession* session, FBSessionState state, NSError* erro
             break;
     }    
 }
-
+*/
 typedef void (^successBlockT) (void);
 typedef void (^graphResponseHandler) (value*, value*, id);
 
@@ -184,6 +189,7 @@ value ml_fbInit(value appId) {
 	NSLog(@"ml_fbInit");
     [FBSDKSettings setAppID:[NSString stringWithCString:String_val(appId) encoding:NSASCIIStringEncoding]];
 		[FBSDKProfile enableUpdatesOnAccessTokenChange:YES];
+		NSLog( @"running FB sdk version: %@", [FBSDKSettings sdkVersion] );
 
 		/*
 		FBSDKAccessToken *cachedToken = [[FBSDKSettings accessTokenCache] fetchAccessToken];
@@ -844,8 +850,9 @@ value ml_fb_share_pic_using_native_app(value v_fname, value v_text) {
 */
 
 void fb_upload_photo_req(UIImage* img, NSString* text, value* success, value* fail) {
-    NSLog(@"fb_upload_photo_req call");
+	NSLog(@"fb_upload_photo_req: not implemented yet");
 
+		/*
     FBRequest* req = [FBRequest requestForUploadPhoto:img];
     [req.parameters setValue:text forKey:@"message"];
     [req startWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
@@ -862,17 +869,20 @@ void fb_upload_photo_req(UIImage* img, NSString* text, value* success, value* fa
         FREE_CALLBACK(success);
         FREE_CALLBACK(fail);
     }];
+		*/
 }
 
 value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text) {
     CAMLparam4(v_fname, v_text, v_success, v_fail);
 
+		NSLog(@"fb_share_pic: not implemented yet");
     value* success;
     value* fail;
 
     REGISTER_CALLBACK(v_success, success);
     REGISTER_CALLBACK(v_fail, fail);
 
+		/*
     // NSString* path = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:String_val(v_fname)] ofType:nil];
     NSString* path = [NSString stringWithUTF8String:String_val(v_fname)];
     __block UIImage* img = [UIImage imageWithContentsOfFile:path];
@@ -909,8 +919,6 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
                 // if (fail) caml_callback(*fail, caml_copy_string([[error localizedDescription] UTF8String]));
             }
 
-/*            FREE_CALLBACK(success);
-            FREE_CALLBACK(fail);*/
 						
 			handlerCalled = YES;
         }];
@@ -921,10 +929,11 @@ value ml_fb_share_pic(value v_success, value v_fail, value v_fname, value v_text
         fb_upload_photo_req(img, text, success, fail);
         // if (fail) caml_callback(*fail, caml_copy_string("cannot display dialog"));
 
-/*        FREE_CALLBACK(success);
-        FREE_CALLBACK(fail);*/
     }
 
+		*/
+            FREE_CALLBACK(success);
+            FREE_CALLBACK(fail);
     CAMLreturn(Val_unit);
 }
 

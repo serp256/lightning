@@ -74,6 +74,7 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-lsqlite3' \
 		   -cclib '-lxml2' \
 		   -cclib '-lz' \
+			 -cclib '-lc++' \
 		   -cclib '-framework\ MapKit' \
 		   -cclib '-framework\ MediaPlayer' \
 		   -cclib '-framework\ MessageUI' \

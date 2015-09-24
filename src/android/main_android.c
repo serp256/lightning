@@ -36,6 +36,8 @@ extern struct engine engine;
 #define NEEDED_STENCIL 0
 #define CONFIGS_NUM 50
 
+
+
 static int engine_init_display(engine_t engine) {
     const EGLint attribs[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -193,8 +195,7 @@ KHASH_MAP_INIT_INT(tt, touch_track_t*);
 kh_tt_t* touch_track = NULL;
 
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
-    //PRINT_DEBUG("engine_handle_input");
-
+    PRINT_DEBUG("engine_handle_input");
     if (!engine.stage) {
         return 0;
     }
@@ -205,13 +206,15 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     vtouches = Val_int(0);
     // engine_t engine = (engine_t)app->userData;
 
-    //PRINT_DEBUG("AInputEvent_getType(event) %d, AINPUT_EVENT_TYPE_MOTION %d", AInputEvent_getType(event), AINPUT_EVENT_TYPE_MOTION);
+    PRINT_DEBUG("AInputEvent_getType(event) %d, AINPUT_EVENT_TYPE_MOTION %d", AInputEvent_getType(event), AINPUT_EVENT_TYPE_MOTION);
 
     if (engine.input_handlers) {
         dllist_engine_inputhandler_t *el = engine.input_handlers;
 
         do {
-            if ((*el->data)(event)) CAMLreturn(1);
+					//hack for android tv keyboard controller movement
+					int handled = (*el->data)(event);
+            if (handled) CAMLreturn(handled%2);
             el = el->next;
         } while (el != engine.input_handlers);
     }
@@ -356,7 +359,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 #undef GET_TOUCH_PARAMS
 
         CAMLreturn(1);
-    }/* else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY) {
+    } else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY) {
         int action = AKeyEvent_getAction(event);
         uint8_t handled = 0;
 
@@ -384,16 +387,17 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
         }
 
         CAMLreturn(handled);
-    }*/
+    }
 
     CAMLreturn(0);
+		
 }
 
 static uint8_t foreground_called_on_resume = 1;
 static unsigned short hasFocus = 0;
 
 static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) {
-    //PRINT_DEBUG("engine_handle_cmd %d", cmd);
+    PRINT_DEBUG("engine_handle_cmd %d", cmd);
     engine_t engine = (engine_t)app->userData;
     static value bg_handler = 0, fg_handler = 0;
 

@@ -26,9 +26,6 @@ package com.facebook.share.internal;
  * unsupported, and they may be modified or removed without warning at any time.
  */
 public class ShareConstants {
-
-    public static final int MIN_API_VERSION_FOR_WEB_FALLBACK_DIALOGS = 14;
-
     public static final String WEB_DIALOG_PARAM_DATA = "data";
     public static final String WEB_DIALOG_PARAM_MESSAGE = "message";
     public static final String WEB_DIALOG_PARAM_TO = "to";
@@ -52,6 +49,7 @@ public class ShareConstants {
 
     public static final String WEB_DIALOG_RESULT_PARAM_POST_ID = "post_id";
     public static final String WEB_DIALOG_RESULT_PARAM_REQUEST_ID = "request";
+    public static final String WEB_DIALOG_RESULT_PARAM_TO_ARRAY_MEMBER = "to[%d]";
 
     // Extras supported for ACTION_FEED_DIALOG:
     public static final String LEGACY_PLACE_TAG = "com.facebook.platform.extra.PLACE";
@@ -115,4 +113,14 @@ public class ShareConstants {
     public static final String RESULT_POST_ID = "postId";
 
     public static final int MAXIMUM_PHOTO_COUNT = 6;
+    static final String MY_VIDEOS = "me/videos";
+
+    // Feed Dialog
+    public static final String FEED_TO_PARAM = "to";
+    public static final String FEED_LINK_PARAM = "link";
+    public static final String FEED_PICTURE_PARAM = "picture";
+    public static final String FEED_SOURCE_PARAM = "source";
+    public static final String FEED_NAME_PARAM = "name";
+    public static final String FEED_CAPTION_PARAM = "caption";
+    public static final String FEED_DESCRIPTION_PARAM = "description";
 }

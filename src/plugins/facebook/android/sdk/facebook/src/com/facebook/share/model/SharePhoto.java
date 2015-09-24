@@ -33,21 +33,26 @@ import java.util.List;
  *
  * Use {@link SharePhoto.Builder} to build instances
  */
-public final class SharePhoto implements ShareModel {
+public final class SharePhoto extends ShareMedia {
     private final Bitmap bitmap;
     private final Uri imageUrl;
     private final boolean userGenerated;
+    private final String caption;
 
     private SharePhoto(final Builder builder) {
+        super(builder);
         this.bitmap = builder.bitmap;
         this.imageUrl = builder.imageUrl;
         this.userGenerated = builder.userGenerated;
+        this.caption = builder.caption;
     }
 
     SharePhoto(final Parcel in) {
+        super(in);
         this.bitmap = in.readParcelable(Bitmap.class.getClassLoader());
         this.imageUrl = in.readParcelable(Uri.class.getClassLoader());
         this.userGenerated = (in.readByte() != 0);
+        this.caption = in.readString();
     }
 
     /**
@@ -78,14 +83,25 @@ public final class SharePhoto implements ShareModel {
         return this.userGenerated;
     }
 
+    /**
+     * Gets the user generated caption. Note that the 'caption' must come from the user, as
+     * pre-filled content is forbidden by the Platform Policies (2.3).
+     * @return The user generated caption.
+     */
+    public String getCaption() {
+        return this.caption;
+    }
+
     public int describeContents() {
         return 0;
     }
 
     public void writeToParcel(final Parcel out, final int flags) {
+        super.writeToParcel(out, flags);
         out.writeParcelable(this.bitmap, 0);
         out.writeParcelable(this.imageUrl, 0);
         out.writeByte((byte)(this.userGenerated ? 1 : 0));
+        out.writeString(caption);
     }
 
     @SuppressWarnings("unused")
@@ -100,12 +116,13 @@ public final class SharePhoto implements ShareModel {
     };
 
     /**
-     * Builder for the {@link com.facebook.share.model.SharePhoto} interface.
+     * Builder for the {@link com.facebook.share.model.SharePhoto} class.
      */
-    public static final class Builder implements ShareModelBuilder<SharePhoto, Builder> {
+    public static final class Builder extends ShareMedia.Builder<SharePhoto, Builder> {
         private Bitmap bitmap;
         private Uri imageUrl;
         private boolean userGenerated;
+        private String caption;
 
         /**
          * Sets the bitmap representation of the photo.
@@ -139,6 +156,18 @@ public final class SharePhoto implements ShareModel {
             return this;
         }
 
+        /**
+         * Sets the user generated caption for the photo. Note that the 'caption' must come from
+         * the user, as pre-filled content is forbidden by the Platform Policies (2.3).
+         *
+         * @param caption {@link java.lang.String} of a {@link com.facebook.share.model.SharePhoto}
+         * @return The builder.
+         */
+        public Builder setCaption(@Nullable final String caption) {
+            this.caption = caption;
+            return this;
+        }
+
         // Accessor that is present only for ShareVideoContent(Parcel) to use
         Uri getImageUrl() {
             return imageUrl;
@@ -159,10 +188,11 @@ public final class SharePhoto implements ShareModel {
             if (model == null) {
                 return this;
             }
-            return this
+            return super.readFrom(model)
                     .setBitmap(model.getBitmap())
                     .setImageUrl(model.getImageUrl())
                     .setUserGenerated(model.getUserGenerated())
+                    .setCaption(model.getCaption())
                     ;
         }
 

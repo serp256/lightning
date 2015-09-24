@@ -23,10 +23,11 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-weak_framework\ Social' \
 		   -cclib '-weak_framework\ AdSupport' \
 		   -cclib '-framework\ Security' \
-		   -cclib '-framework\ FacebookSDK' \
 		   -cclib '-framework\ FBSDKCoreKit' \
 		   -cclib '-framework\ FBSDKLoginKit' \
 		   -cclib '-framework\ FBSDKShareKit' \
+		   -cclib '-framework\ FBSDKMessengerShareKit' \
+		   -cclib '-framework\ FBAudienceNetwork' \
 
 
 else
