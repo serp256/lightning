@@ -19,6 +19,7 @@ LIBFLAGS = -cclib '-framework\ Foundation' \
 		   -cclib '-framework\ UIKit' \
 		   -cclib '-framework\ QuartzCore' \
 		   -cclib '-framework\ CoreGraphics' \
+		   -cclib '-framework\ CoreMedia' \
 		   -cclib '-weak_framework\ Accounts' \
 		   -cclib '-weak_framework\ Social' \
 		   -cclib '-weak_framework\ AdSupport' \
