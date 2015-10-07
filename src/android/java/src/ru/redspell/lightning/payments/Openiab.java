@@ -150,15 +150,18 @@ public class Openiab implements Payments.IPayments {
          if (helper != null) return;
 
          Log.d("LIGHTNING", "continue");
+				 Logger.setLoggable(true);
 
          setupFailed = false;
          ArrayList<String> prefStores = new ArrayList<String>(1);
          prefStores.add(marketType);
+				 String[] prefStoresArr = prefStores.toArray (new String[prefStores.size()]);
 
          //to be able use samsung store at least one sku mapping needed. it is absolutely fake needed only to workaround openiab strange behaviour
          OpenIabHelper.mapSku("ru.redspell.lightning.fameSamsungPurchase", OpenIabHelper.NAME_SAMSUNG, "100000104912/ru.redspell.lightning.fameSamsungPurchase");
          OpenIabHelper.Options.Builder builder = new OpenIabHelper.Options.Builder()
-             .addPreferredStoreName(prefStores)
+             .addPreferredStoreName(prefStoresArr)
+						 .setStoreSearchStrategy(OpenIabHelper.Options.SEARCH_STRATEGY_INSTALLER_THEN_BEST_FIT)
              .setVerifyMode(OpenIabHelper.Options.VERIFY_SKIP);
          OpenIabHelper.Options opts = opts = builder.build();
          OpenIabHelper.enableDebugLogging(true);
