@@ -1,2 +1,3 @@
 source.dir=java
 sdk.dir=/Users/pushkin/Distr/android/sdk
+android.library.reference.1=../../../../../../../android/java
