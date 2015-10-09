@@ -431,14 +431,14 @@ public class Odnoklassniki {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             clearCookies();
         } else {
-				*/
             clearCookiesOld();
-						/*
         }
 				*/
+            clearCookiesOld();
     }
 
-    /*@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+		/*
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void clearCookies() {
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.removeAllCookies(null);
