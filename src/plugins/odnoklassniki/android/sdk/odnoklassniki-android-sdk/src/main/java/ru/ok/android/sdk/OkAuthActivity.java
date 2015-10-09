@@ -18,7 +18,7 @@ import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
-
+import ru.redspell.lightning.utils.Log;
 import java.net.URLEncoder;
 
 public class OkAuthActivity extends Activity {
@@ -44,6 +44,8 @@ public class OkAuthActivity extends Activity {
         mAppId = bundle.getString(Shared.PARAM_CLIENT_ID);
         mAppKey = bundle.getString(Shared.PARAM_APP_KEY);
         mRedirectUri = bundle.getString(Shared.PARAM_REDIRECT_URI);
+				Log.d ("LIGHTNING", "Auth: " + mAppId + " " + mAppKey + " " + mRedirectUri);
+
         if (mRedirectUri == null) {
             mRedirectUri = DEFAULT_REDIRECT_URI;
         }
@@ -79,11 +81,14 @@ public class OkAuthActivity extends Activity {
 
     private void auth(boolean oauthOnly) {
         if (hasAppInfo()) {
+					Log.d ("LIGHTNING", "hasAppInfo");
             if (oauthOnly || !trySsoAuthorization()) {
+							Log.d ("LIGHTNING", "loadUrl " + (buildOAuthUrl()));
                 mWebView.loadUrl(buildOAuthUrl());
             }
         } else {
             // If missing any extras required for auth
+					Log.d ("LIGHTNING", "missing someth");
             onFail(getString(R.string.no_application_data));
         }
     }

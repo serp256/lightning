@@ -1,13 +1,14 @@
 package ru.redspell.lightning.plugins;
 import ru.redspell.lightning.utils.Log;
 import ru.ok.android.sdk.Odnoklassniki;
-import ru.ok.android.sdk.OkTokenRequestListener;
+import ru.ok.android.sdk.OkListener;
 import ru.ok.android.sdk.util.OkScope;
 import ru.redspell.lightning.Lightning;
 import android.os.AsyncTask;
 import java.util.Map;
 import java.util.HashMap;
 import org.json.JSONObject;
+import org.json.JSONException;
 import org.json.JSONArray;
 import java.sql.Timestamp;
 
@@ -88,59 +89,68 @@ class LightOdnoklassniki {
 
 	public static void init (String appId, String appSecret, String appKey) {
 		Log.d ("LIGHTNING", "odnoklassniki_init: "+appId +" " + appSecret + " " + appKey);
-		ok = Odnoklassniki.createInstance(Lightning.activity, appId, appSecret, appKey);
+		ok = Odnoklassniki.createInstance(Lightning.activity, appId, appSecret, appKey );
 	}
 
+ private static String okToken = null;
 	public static void authorize (final int success, final int fail, final boolean force) {
 		Log.d ("LIGHTNING", "odnoklassniki_authorize");
 		
-		ok.setTokenRequestListener(new OkTokenRequestListener() {
-			@Override
-			public void onSuccess(final String accessToken) {
-				Log.d ("LIGHTNING", "odnoklassniki_auth_success");
-				new GetCurrentUserTask().execute(new FriendsRequest (success, fail));
-			}
-
-		@Override
-			public void onCancel() {
-				Log.d ("LIGHTNING", "odnoklassniki_auth_cancel");
-				(new Fail (success, fail, "Authorization was cancelled")).run();
-			}
-
-		@Override
-			public void onError() {
-				Log.d ("LIGHTNING", "odnoklassniki_auth_error");
-				(new Fail (success, fail, "Authorization error")).run();
-			}
-		});
-
-			Log.d ("LIGHTNING", "force" + force);
-		if (force) {
+		Log.d ("LIGHTNING", "force" + force);
+		if (!force) {
 			Log.d ("LIGHTNING", "force: clear tokens");
-			ok.clearTokens (Lightning.activity);
+			ok.clearTokens ();
 		}
 
-		if (ok.hasAccessToken()) {
-				Log.d ("LIGHTNING", "odnoklassniki_auth_has_token");
-				ok.refreshToken (Lightning.activity);
 
-				/*
-				Lightning.activity.runOnUiThread (new Runnable () {
-					@Override
-					public void run () {
-						Log.d ("LIGHTNING", "irun");
-						new GetFriendsTask().execute(new Void[0]);
-					}
-				}
-				);
-				Log.d ("LIGHTNING", "iafter ui threaad");
-				*/
+		ok.checkValidTokens (new OkListener() {
+													@Override
+													public void onSuccess(final JSONObject json) {
+																try {
+
+																	Log.d ("LIGHTNING", "access_token: " + (json.getString("access_token")));
+																	okToken = json.getString("access_token");
+																	Log.d ("LIGHTNING", "odnoklassniki_auth_success1");
+																	new GetCurrentUserTask().execute(new FriendsRequest (success, fail));
+																} catch (JSONException e) {
+																	Log.d ("LIGHTNING", "odnoklassniki_auth_error1");
+																	(new Fail (success, fail, e.toString ())).run();
+																	Log.d ("LIGHTNING", "error: " + e.toString ());
+																}
+
+													}
+
+													@Override
+													public void onError(String error) {
+														Log.d ("LIGHTNING", "no token");
+														ok.setOkListener ( new OkListener() {
+														@Override
+														public void onSuccess(final JSONObject json) {
+																try {
+
+																	Log.d ("LIGHTNING", "access_token: " + (json.getString("access_token")));
+																	okToken = json.getString("access_token");
+																	Log.d ("LIGHTNING", "odnoklassniki_auth_success2");
+																	new GetCurrentUserTask().execute(new FriendsRequest (success, fail));
+																} catch (JSONException e) {
+																	Log.d ("LIGHTNING", "error: " + e.toString ());
+																	Log.d ("LIGHTNING", "odnoklassniki_auth_error2");
+																	(new Fail (success, fail, e.toString ())).run();
+																}
+
+														}
+
+														@Override
+														public void onError(String error) {
+															Log.d ("LIGHTNING", "odnoklassniki_auth_error3:" + error );
+															(new Fail (success, fail, error)).run();
+														}
+														});
+													 ok.requestAuthorization(Lightning.activity, false,OkScope.VALUABLE_ACCESS);
+
 		}
-		else
-		{
-			ok.requestAuthorization(Lightning.activity, false, OkScope.VALUABLE_ACCESS);
-		}
-	}
+	});
+}
 
 	public static void friends (final int success, final int fail) {
 		new GetFriendsTask().execute(new FriendsRequest (success, fail));
@@ -155,10 +165,13 @@ class LightOdnoklassniki {
 		}
 	}
 
+  public static String getOkToken () {
+		return okToken;
+  }
 	public static String token () {
-		Log.d ("LIGHTNING","token is null" + (ok.getCurrentAccessToken()==null));
+		Log.d ("LIGHTNING","token is null" + (getOkToken()==null));
 
-		return (ok.getCurrentAccessToken () == null ? "" : ok.getCurrentAccessToken ());
+		return (getOkToken () == null ? "" : getOkToken ());
 	}
 
 	public static String uid () {
@@ -168,7 +181,7 @@ class LightOdnoklassniki {
 
 	public static void logout () {
 		Log.d ("LIGHTNING", "OK: logout");
-		ok.clearTokens (Lightning.activity);
+		ok.clearTokens ();
 	}
 
   protected static final class GetCurrentUserTask extends AsyncTask<FriendsRequest, Void, String> {
