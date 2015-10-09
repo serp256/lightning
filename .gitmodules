@@ -10,6 +10,3 @@
 [submodule "src/plugins/facebook/ios/sdk"]
 	path = src/plugins/facebook/ios/sdk
 	url = git://github.com/facebook/facebook-ios-sdk.git
-[submodule "src/plugins/odnoklassniki/android/sdk"]
-	path = src/plugins/odnoklassniki/android/sdk
-	url = https://github.com/apiok/ok-android-sdk.git
