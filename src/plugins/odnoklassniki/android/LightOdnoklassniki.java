@@ -97,7 +97,7 @@ class LightOdnoklassniki {
 		Log.d ("LIGHTNING", "odnoklassniki_authorize");
 		
 		Log.d ("LIGHTNING", "force" + force);
-		if (!force) {
+		if (force) {
 			Log.d ("LIGHTNING", "force: clear tokens");
 			ok.clearTokens ();
 		}
