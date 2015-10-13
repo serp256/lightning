@@ -222,7 +222,7 @@ ELSE
     type alsound;
     type alplayer;
 
-    type sound = [ ALSound of alsound | AVSound of avplayer ];
+    type sound = [ ALSound of alsound | AVSound of string ];
 
     external init : unit -> unit = "ml_alsoundInit";
 
@@ -247,22 +247,20 @@ ELSE
       if ExtString.String.ends_with path ".caf" then
         ALSound (alsoundLoad path)
       else
-        AVSound (avsound_create_player path);
+        AVSound path;
 
-  class av_channel plr =
+  class av_channel snd =
+    let player = avsound_create_player snd in
+    let finalize _ = (debug "finalize av_channel"; avsound_release player) in
     object(self)
       inherit EventDispatcher.simple [ channel ];
 
-      value player = plr;
       value mutable isPlaying = False;
       value mutable paused = False;
       value mutable completed = False;
       value mutable volume = 1.;
 
-      initializer
-        (
-          Gc.finalise (fun _ -> avsound_release player) self;
-        );
+      initializer Gc.finalise finalize self;
 
       method private asEventTarget = (self :> channel);
 

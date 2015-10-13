@@ -1,0 +1,2 @@
+CFLAGS += -DRELEASE -DTEXTURE_LOAD
+Sound.cmx :  DEBUGS += default
