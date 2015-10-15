@@ -481,6 +481,10 @@ value ml_avsound_stop(value player) {
     CAMLparam1(player);
 
     fd_player_t *fd_plr = (fd_player_t*)player;
+		if (fd_plr->callback) {
+			caml_remove_generational_global_root(&fd_plr->callback);
+			fd_plr->callback = 0;
+		}
     SLresult result = (*fd_plr->fdPlayerPlay)->SetPlayState(fd_plr->fdPlayerPlay, SL_PLAYSTATE_STOPPED);
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "avsound stop");
 
@@ -503,7 +507,7 @@ value ml_avsound_release(value player) {
     CAMLparam1(player);
 
     fd_player_t *fd_plr = (fd_player_t*)player;
-	caml_remove_generational_global_root(&fd_plr->callback);
+		caml_remove_generational_global_root(&fd_plr->callback);
     (*fd_plr->fdPlayerObject)->Destroy(fd_plr->fdPlayerObject);
 
     if (fd_plr->next == fd_plr) {

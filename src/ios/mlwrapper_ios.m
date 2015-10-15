@@ -603,7 +603,7 @@ value ml_uncaughtExceptionByMailSubjectAndBody() {
   NSString *subj = [bundle localizedStringForKey:@"exception_email_subject" value:@"Error report '%@'" table:nil];
   subj = [NSString stringWithFormat:subj, [bundle objectForInfoDictionaryKey: @"CFBundleDisplayName"]];
   UIDevice *dev = [UIDevice currentDevice];
-  NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleVersion"];
+  NSString *appVersion = [bundle objectForInfoDictionaryKey: @"CFBundleShortVersionString"];
   NSString *body = [bundle localizedStringForKey:@"exception_email_body" value:@"" table:nil];
   body = [NSString stringWithFormat:body, dev.model, dev.systemVersion, appVersion];
 

@@ -492,6 +492,10 @@ value ml_alsource_delete(value mlAlSourceID) {
 -(void)stop {
   [_player stop];
   _player.currentTime = 0;
+	if (_sound_stopped_handler) {
+		caml_remove_generational_global_root(&_sound_stopped_handler);
+		_sound_stopped_handler = 0;
+	}
 }
 
 
