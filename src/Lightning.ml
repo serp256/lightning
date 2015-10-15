@@ -97,12 +97,15 @@ external setMaxGC: int64 -> unit = "ml_setMaxGC";
 IFPLATFORM(ios android)
 
 value exceptionInfo = ref [];
+value exceptionErrCode = ref "";
 value supportEmail = ref "mail@redspell.ru";
 
 value addExceptionInfo info = exceptionInfo.val := !exceptionInfo @ [ info ];
+value setExceptionErrorCode (str: string) = exceptionErrCode.val := str;
 value setSupportEmail email = supportEmail.val := email;
 ELSE
 value addExceptionInfo (_:string) = ();
+value setExceptionErrorCode (_: string) = ();
 value setSupportEmail (_:string) = ();
 ENDPLATFORM;
 
@@ -243,13 +246,16 @@ value silentUncaughtExceptionHandler exn rawBacktrace =
   in
   let json =
     Ojson.to_string (Ojson.Build.assoc
-                      [
-                        ("date", Ojson.Build.string date);
-                        ("device", Ojson.Build.string device);
-                        ("vers", Ojson.Build.string ver);
-                        ("exception", Ojson.Build.string exn);
-                        ("data", Ojson.Build.string (backtraceStr ^ exceptionInfo));
-                      ])
+                        (
+                          [
+                            ("date", Ojson.Build.string date);
+                            ("device", Ojson.Build.string device);
+                            ("vers", Ojson.Build.string ver);
+                            ("exception", Ojson.Build.string exn);
+                            ("data", Ojson.Build.string (backtraceStr ^ exceptionInfo));
+                          ] @ (if !exceptionErrCode = "" then [] else [("errorCode", Ojson.Build.string !exceptionErrCode)])
+                        )
+                    )
   in
     silentUncaughtExceptionHandler json;
 

@@ -26,6 +26,7 @@ value getLocale: unit -> string;
 value getVersion: unit -> string;
 
 value addExceptionInfo: string -> unit;
+value setExceptionErrorCode : string -> unit;
 value setSupportEmail: string -> unit;
 (*value getMACID: unit -> string;*)
 value getUDID: unit -> string;
