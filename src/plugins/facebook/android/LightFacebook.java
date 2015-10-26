@@ -21,14 +21,16 @@ import com.facebook.internal.Utility;
 class LightFacebook {
 	public static CallbackManager callbackManager;
 
-	public static void init (String appId) {
+	public static void init () {
 		callbackManager = CallbackManager.Factory.create();
-		if (!FacebookSdk.isInitialized ()) {
-			FacebookSdk.sdkInitialize(Lightning.activity);
-		}
+		Log.d ("LIGHTNING", "facebook_init");
+			Lightning.activity.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						FacebookSdk.sdkInitialize(Lightning.activity.getApplicationContext ());
+					}
+			});
 		
-		Log.d ("LIGHTNING", "facebook_init: "+appId + " get app id: " + (FacebookSdk.getApplicationId()) + " profile is " + ((Profile.getCurrentProfile ()) != null) + " token is " + ((AccessToken.getCurrentAccessToken ()) != null)) ;
-
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 				public void onCreate(Bundle savedInstanceState) {}
 

@@ -1,4 +1,4 @@
-#include "fbwrapper_android.h"
+#include "plugin_common.h"
 #include <caml/callback.h>
 
 //#GET_LIGHTFACEBOOK if (!lightFacebookCls) lightFacebookCls = engine_find_class("com/facebook/LightFacebook");
@@ -6,26 +6,23 @@
 static jclass fb_cls = NULL;
 
 #define GET_CLS GET_PLUGIN_CLASS(fb_cls,ru/redspell/lightning/plugins/LightFacebook);
+
 #define FB_ANDROID_FREE_CALLBACK(callback) if (callback) {                                     \
     caml_remove_generational_global_root(callback);                                 \
     free(callback);                                                                 \
 }
 
 
-static jclass lightFacebookCls = NULL;
-
 value ml_fbInit(value vappId) {
-	CAMLparam1 (vappId);
+	CAMLparam0 ();
 
 	PRINT_DEBUG("ml_fbInit");
 	GET_ENV;
 	GET_CLS;
 
 
-	STATIC_MID(fb_cls, init, "(Ljava/lang/String;)V");
-	jstring jappId = (*env)->NewStringUTF(env, String_val(vappId));
-	(*env)->CallStaticVoidMethod(env, fb_cls, mid, jappId);
-	(*env)->DeleteLocalRef(env, jappId);
+	STATIC_MID(fb_cls, init, "()V");
+	(*env)->CallStaticVoidMethod(env, fb_cls, mid);
 	CAMLreturn(Val_unit);
 }
 

@@ -17,14 +17,17 @@ public class GooglePlayServices {
             int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(Lightning.activity);
 
             if (resultCode != ConnectionResult.SUCCESS) {
+
+							if (resultCode != ConnectionResult.SERVICE_MISSING) {
                 if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
                     GooglePlayServicesUtil.getErrorDialog(resultCode, Lightning.activity, PLAY_SERVICES_RESOLUTION_REQUEST).show();
                 };
-
-                available = false;
+							}
+							available = false;
             }
-
-            available = true;
+						else {
+							available = true;
+						}
         }
 
         return available;
