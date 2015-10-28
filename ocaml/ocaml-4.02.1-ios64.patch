@@ -1184,7 +1184,7 @@ diff -urN ocaml-4.02.1-clean/config/Makefile ocaml-4.02.1-ios64/config/Makefile
 +PREFIX=/usr/local/ocaml/ios64
 +PLATFORM=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
 +SDKTOOLCHAINS=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain
-+SDK=$(PLATFORM)/SDKs/iPhoneOS9.0.sdk
++SDK=$(PLATFORM)/SDKs/iPhoneOS9.1.sdk
 +BINDIR=$(PREFIX)/bin
 +LIBDIR=$(PREFIX)/lib
 +STUBLIBDIR=$(LIBDIR)/stublibs
