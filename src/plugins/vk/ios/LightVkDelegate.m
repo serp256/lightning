@@ -15,6 +15,10 @@
 	return self;
 }
 
+- (BOOL)vkSdkIsBasicAuthorization {
+	return YES;
+}
+
 - (void)vkSdkNeedCaptchaEnter:(VKError *)captchaError {
 	NSLog(@"vkSdkNeedCaptchaEnter");
 }
@@ -56,7 +60,7 @@
 }
 
 - (BOOL)vkSdkAuthorizationAllowFallbackToSafari {
-	return NO;
+	return YES;
 }
 
 @end
