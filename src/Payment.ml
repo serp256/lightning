@@ -26,9 +26,12 @@ end;
 
 module Product =
   struct
+    type info = {
+      currency: string;
+      amount: float;
+    };
     IFDEF PC THEN
       type t;
-      type info;
 
       value price sku = None;
       value details sku = None;
@@ -39,10 +42,6 @@ module Product =
         type t = string;
       ENDIF;
 
-      type info = {
-        currency: string;
-        amount: float;
-      };
 
       value prods = Hashtbl.create 10;
       value register sku prod = Hashtbl.add prods sku prod;
