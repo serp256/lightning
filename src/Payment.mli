@@ -1,7 +1,12 @@
 module Product:
   sig
     type t;
+    type info = {
+      currency: string;
+      amount: float;
+    };
     value price: string -> option string;
+    value details: string -> option info;
   end;
 
 module Transaction :

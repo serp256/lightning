@@ -50,7 +50,7 @@ void set_referrer(char *type,NSString *nid) {
 
 	if (ln) {
 		NSString *nid = [ln.userInfo objectForKey:@"id"];
-		//NSLog(@"didReceiveLocalNotification: %@",nid);
+		NSLog(@"didReceiveLocalNotification: %@",nid);
 		if (nid) set_referrer("local",nid);
 	} else {
 		// For remote notifications
@@ -161,7 +161,7 @@ void set_referrer(char *type,NSString *nid) {
 	// This is local notification
 	// Get the user data
 	NSString *nid = [notification.userInfo objectForKey:@"id"];
-	//NSLog(@"didReceiveLocalNotification: %@",nid);
+	NSLog(@"didReceiveLocalNotification: %@",nid);
 	if (nid) set_referrer("local",nid);
 }
 

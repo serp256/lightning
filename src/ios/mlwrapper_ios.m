@@ -297,7 +297,26 @@ void ml_payment_init(value vskus, value success_cb, value error_cb) {
 value ml_product_price(value vprod) {
 	CAMLparam1(vprod);
 	SKProduct* prod = (SKProduct*)vprod;
+	NSLog(@"ml_product_price %@ %@", [ prod price], [prod priceLocale] );
 	CAMLreturn(caml_copy_string([[NSString stringWithFormat:@"%@ %@", prod.price, [[prod priceLocale] objectForKey:NSLocaleCurrencyCode]] UTF8String]));
+}
+
+static value *create_details = NULL;
+
+value ml_product_details(value vprod) {
+	CAMLparam1(vprod);
+	SKProduct* prod = (SKProduct*)vprod;
+	NSLog(@"ml_product_price %@ %@", [ prod price], [prod priceLocale] );
+
+
+	double amount = [[prod price] doubleValue];
+	NSString *mcurrency = [[[prod priceLocale] objectForKey:NSLocaleCurrencyCode] UTF8String];
+	value args[2] = { caml_copy_string(mcurrency),  caml_copy_double (amount)};
+
+	if (!create_details) create_details= caml_named_value("create_product_details");
+
+	CAMLreturn(caml_callbackN(*create_details, 2, args));
+
 }
 
 void purchase(value prod, int by_sku) {

@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
+import org.json.JSONObject;
+import org.json.JSONException;
 
 public class Openiab implements Payments.IPayments {
   final int RC_REQUEST = 10001;
@@ -30,6 +32,7 @@ public class Openiab implements Payments.IPayments {
   private boolean setupDone = false;
   private boolean setupFailed = false;
 
+	
   private class PurchaseCommand implements Runnable {
     private String sku;
 
@@ -45,7 +48,6 @@ public class Openiab implements Payments.IPayments {
       String payload = "";
       IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
         public void onIabPurchaseFinished(IabResult result, Purchase purchase) {
-            Log.d("LIGHTNING", "onIabPurchaseFinished CALL");
           if (result.isSuccess()) {
             Payments.purchaseSuccess(sku, purchase, false);
           } else {
@@ -98,16 +100,21 @@ public class Openiab implements Payments.IPayments {
           if (result.isSuccess()) {
             if (detailsForSkus != null) {
               for (int i = 0; i < detailsForSkus.length; i++) {
-                  Log.d("LIGHTNING", "detailsForSkus[i] " + detailsForSkus[i]);
                 SkuDetails details = inventory.getSkuDetails(detailsForSkus[i]);
-                  Log.d("LIGHTNING", "details " + details);
                 if (details == null) continue;
                 String price = details.getPrice();
-                  Log.d("LIGHTNING", "price " + price);
                 if (price == null) continue;
 
                 Log.d("LIGHTNING", "purchaseRegister");
                 Payments.purchaseRegister(detailsForSkus[i], price);
+
+								try {
+									JSONObject json = new JSONObject (details.getJson());
+									int amount = json.getInt ("price_amount_micros");
+									String currency = json.getString ("price_currency_code");
+									Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (currency, amount));
+								}
+								catch (JSONException exc) {}
               }
             } else if (forOwnedPurchases) {
               Iterator<Purchase> iter = inventory.getAllPurchases().iterator();

@@ -28,23 +28,42 @@ module Product =
   struct
     IFDEF PC THEN
       type t;
+      type info;
+
       value price sku = None;
+      value details sku = None;
     ELSE
       IFDEF IOS THEN
         type t;
       ELSE
         type t = string;
+
+        value details = Hashtbl.create 10;
+        value registerDetails sku i = Hashtbl.add details sku i;
+        value getDetails sku = try Some (Hashtbl.find details sku) with [ Not_found -> None ];
       ENDIF;
+
+      type info = {
+        currency: string;
+        amount: float;
+      };
 
       value prods = Hashtbl.create 10;
       value register sku prod = Hashtbl.add prods sku prod;
       value get sku = try Some (Hashtbl.find prods sku) with [ Not_found -> None ];
 
+
       IFDEF IOS THEN
         external price: t -> string = "ml_product_price";
         value price sku = match get sku with [ Some p -> Some (price p) | _ -> None ];
+
+        external details: t -> info = "ml_product_details";
+        value details sku = match get sku with [ Some p -> Some (details p) | _ -> None ];
+        value createDetails currency amount = {currency; amount};
       ELSE
         value price = get;
+        value details = getDetails; 
+        value createDetails currency amountMicros = {currency; amount=(float amountMicros)/.1000000.};
       ENDIF;
     ENDIF;
   end;
@@ -66,6 +85,7 @@ external restoreCompletedPurchases: unit -> unit = "ml_payment_restore_completed
 
 
 Callback.register "register_product" Product.register;
+Callback.register "create_product_details" Product.createDetails;
 ELSE
 
 IFDEF ANDROID THEN
@@ -80,6 +100,8 @@ value restoreCompletedPurchases () = ();
 value restorePurchases = ml_restorePurchases;
 
 Callback.register "register_product" Product.register;
+Callback.register "register_product_details" Product.registerDetails;
+Callback.register "create_product_details" Product.createDetails;
 ELSE
 
 type callbacks =

@@ -21,6 +21,16 @@ public class Payments {
         return instance;
     }
 
+		protected static class LightDetails {
+			private String currency;
+			private int amount;
+
+			public LightDetails(String currency, int amount) {
+				this.currency = currency;
+				this.amount = amount;
+			}
+		}
+
     public static void purchase(String sku) throws Exception {
         getInstance().purchase(sku);
     }
@@ -75,4 +85,5 @@ public class Payments {
     public static native void purchaseSuccess(String sku, Object purchase, boolean restored);
     public static native void purchaseFail(String sku, String reason);
     public static native void purchaseRegister(String sku, String price);
+    public static native void purchaseDetailsRegister(String sku, LightDetails details);
 }

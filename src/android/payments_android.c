@@ -206,6 +206,11 @@ typedef struct {
 	jstring price;
 } openiab_register_t;
 
+typedef struct {
+	jstring sku;
+	jobject details;
+} openiab_register_details_t;
+
 void openiab_success(void *d) {
 	CAMLparam0();
 	CAMLlocal3(callback, vsku, vtransaction);
@@ -259,6 +264,47 @@ void openiab_register(void *d) {
 	CAMLreturn0;
 }
 
+void openiab_register_details(void *d) {
+	CAMLparam0();
+	CAMLlocal3(callback, vsku, vdetails);
+
+	PRINT_DEBUG ("openiab_register_details");
+	openiab_register_details_t *data = (openiab_register_details_t*)d;
+	callback = *caml_named_value("register_product_details");
+	JSTRING_TO_VAL(data->sku, vsku);
+
+	static value* create_details = NULL;
+	if (!create_details) create_details= caml_named_value("create_product_details");
+
+
+	static jfieldID currency_fid = 0;
+	static jfieldID amount_fid = 0;
+
+ 	if (!currency_fid) {
+		jclass details_cls = engine_find_class("ru/redspell/lightning/payments/Payments$LightDetails");
+
+		currency_fid = (*ML_ENV)->GetFieldID(ML_ENV, details_cls, "currency", "Ljava/lang/String;");
+		amount_fid = (*ML_ENV)->GetFieldID(ML_ENV, details_cls, "amount", "I");
+	}
+
+	jstring jcurrency = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, data->details, currency_fid);
+	const char* ccurrency= (*ML_ENV)->GetStringUTFChars(ML_ENV, jcurrency, JNI_FALSE);
+	jint jamount = (jint)(*ML_ENV)->GetIntField(ML_ENV, data->details, amount_fid);
+
+	value args[2] = { caml_copy_string(ccurrency), Val_int(jamount)};
+	caml_callback2(callback, vsku, caml_callbackN(*create_details, 2, args));
+
+	(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jcurrency, ccurrency);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jcurrency);
+
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, data->details);
+	(*ML_ENV)->DeleteGlobalRef(ML_ENV, data->sku);
+
+	free(data);
+
+	CAMLreturn0;
+}
+
 JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_Payments_purchaseSuccess(JNIEnv *env, jclass this, jstring jsku, jobject jpurchase, jboolean jrestored) {
 	openiab_success_t *data = (openiab_success_t*)malloc(sizeof(openiab_success_t));
 	data->purchase = (*env)->NewGlobalRef(env, jpurchase);
@@ -283,4 +329,13 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_Payments_purchaseRegi
 	data->sku = (*env)->NewGlobalRef(env, jsku);
 
 	RUN_ON_ML_THREAD(&openiab_register, (void*)data);
+}
+
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_payments_Payments_purchaseDetailsRegister(JNIEnv *env, jclass this, jstring jsku, jobject jdetails) {
+	PRINT_DEBUG("Java_ru_redspell_lightning_payments_openiab_Openiab_purchaseDetailsRegister call");
+	openiab_register_details_t *data = (openiab_register_details_t*)malloc(sizeof(openiab_register_details_t));
+	data->details= (*env)->NewGlobalRef(env, jdetails);
+	data->sku = (*env)->NewGlobalRef(env, jsku);
+
+	RUN_ON_ML_THREAD(&openiab_register_details, (void*)data);
 }
