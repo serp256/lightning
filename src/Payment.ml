@@ -37,10 +37,6 @@ module Product =
         type t;
       ELSE
         type t = string;
-
-        value details = Hashtbl.create 10;
-        value registerDetails sku i = Hashtbl.add details sku i;
-        value getDetails sku = try Some (Hashtbl.find details sku) with [ Not_found -> None ];
       ENDIF;
 
       type info = {
@@ -52,6 +48,8 @@ module Product =
       value register sku prod = Hashtbl.add prods sku prod;
       value get sku = try Some (Hashtbl.find prods sku) with [ Not_found -> None ];
 
+      value details = Hashtbl.create 10;
+      value registerDetails sku i = Hashtbl.add details sku i;
 
       IFDEF IOS THEN
         external price: t -> string = "ml_product_price";
@@ -62,8 +60,8 @@ module Product =
         value createDetails currency amount = {currency; amount};
       ELSE
         value price = get;
-        value details = getDetails; 
-        value createDetails currency amountMicros = {currency; amount=(float amountMicros)/.1000000.};
+        value details sku = try Some (Hashtbl.find details sku) with [ Not_found -> None ];
+        value createDetails currency amount=  {currency; amount};
       ENDIF;
     ENDIF;
   end;

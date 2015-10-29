@@ -23,9 +23,9 @@ public class Payments {
 
 		protected static class LightDetails {
 			private String currency;
-			private int amount;
+			private double amount;
 
-			public LightDetails(String currency, int amount) {
+			public LightDetails(String currency, double amount) {
 				this.currency = currency;
 				this.amount = amount;
 			}

@@ -284,14 +284,14 @@ void openiab_register_details(void *d) {
 		jclass details_cls = engine_find_class("ru/redspell/lightning/payments/Payments$LightDetails");
 
 		currency_fid = (*ML_ENV)->GetFieldID(ML_ENV, details_cls, "currency", "Ljava/lang/String;");
-		amount_fid = (*ML_ENV)->GetFieldID(ML_ENV, details_cls, "amount", "I");
+		amount_fid = (*ML_ENV)->GetFieldID(ML_ENV, details_cls, "amount", "D");
 	}
 
 	jstring jcurrency = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, data->details, currency_fid);
 	const char* ccurrency= (*ML_ENV)->GetStringUTFChars(ML_ENV, jcurrency, JNI_FALSE);
-	jint jamount = (jint)(*ML_ENV)->GetIntField(ML_ENV, data->details, amount_fid);
+	jdouble jamount = (*ML_ENV)->GetDoubleField(ML_ENV, data->details, amount_fid);
 
-	value args[2] = { caml_copy_string(ccurrency), Val_int(jamount)};
+	value args[2] = { caml_copy_string(ccurrency),caml_copy_double((double)jamount)};
 	caml_callback2(callback, vsku, caml_callbackN(*create_details, 2, args));
 
 	(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jcurrency, ccurrency);

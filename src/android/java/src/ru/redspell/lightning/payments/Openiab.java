@@ -108,13 +108,34 @@ public class Openiab implements Payments.IPayments {
                 Log.d("LIGHTNING", "purchaseRegister");
                 Payments.purchaseRegister(detailsForSkus[i], price);
 
-								try {
-									JSONObject json = new JSONObject (details.getJson());
-									int amount = json.getInt ("price_amount_micros");
-									String currency = json.getString ("price_currency_code");
-									Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (currency, amount));
+                Log.d("LIGHTNING", "details " + details);
+
+								String rawJson = details.getJson ();
+								if (rawJson == null) {
+									String dollar = "$";
+									if (price.startsWith(dollar)) {
+										try {
+											double d_amount = Double.parseDouble (price.substring(1));
+											Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (dollar, d_amount));
+										}
+										catch (java.lang.RuntimeException exc) {
+											Log.d("LIGHTNING", "JSON exc" + (exc.toString ()));
+									  }
+									}
 								}
-								catch (JSONException exc) {}
+								else {
+									try {
+										JSONObject json = new JSONObject (details.getJson());
+										Log.d("LIGHTNING", "JSON " + json);
+										long amount = json.getLong ("price_amount_micros");
+										String currency = json.getString ("price_currency_code");
+										double d_amount = amount / 1000000;
+										Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (currency, d_amount));
+									}
+									catch (JSONException exc) {
+										Log.d("LIGHTNING", "JSON exc" + (exc.toString ()));
+									}
+								}
               }
             } else if (forOwnedPurchases) {
               Iterator<Purchase> iter = inventory.getAllPurchases().iterator();
