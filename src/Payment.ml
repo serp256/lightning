@@ -26,9 +26,12 @@ end;
 
 module Product =
   struct
+    type info = {
+      currency: string;
+      amount: float;
+    };
     IFDEF PC THEN
       type t;
-      type info;
 
       value price sku = None;
       value details sku = None;
@@ -43,10 +46,6 @@ module Product =
         value getDetails sku = try Some (Hashtbl.find details sku) with [ Not_found -> None ];
       ENDIF;
 
-      type info = {
-        currency: string;
-        amount: float;
-      };
 
       value prods = Hashtbl.create 10;
       value register sku prod = Hashtbl.add prods sku prod;
