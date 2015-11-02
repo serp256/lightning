@@ -21,14 +21,14 @@ ifeq ($(PLATFORM),IOS)
 
 CFLAGS  += -DIOS \
 	-fobjc-arc \
-	-I../.. -I../../ios -Iios -Iios/sdk -Iios/include -Iios/adapters -Iios/adapters/applifier
+	-I../.. -I../../ios -Iios -Iios/sdk -Iios/include -Iios/adapters -Fios/adapters/applifier
 COBJS += ios/spwrapper_ios.o ios/VideoDelegate.o
 
-LIBFLAGS +=  -lSponsorPaySDK \
-  -framework Fyber_UnityAds_1.4.5_r1 \
+LIBFLAGS +=  -lFyberSDK \
+  -framework UnityAds \
   -framework Foundation \
-	-framework StoreKit \
-	-framework AdSupport \
+	-cclib '-weak_framework\ AdSupport' \
+	-cclib '-weak_framework\ StoreKit' \
 	-framework MediaPlayer \
 	-framework CoreMedia \
 	-framework CoreGraphics \

@@ -71,7 +71,7 @@ ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/chartboost/ios/libchartboost-sdk.a
 	INSTALL_FILES += src/plugins/flurry/ios/libflurry-sdk.a
 	INSTALL_FILES += src/plugins/supersonic/ios/libsupersonic-sdk.a
-	INSTALL_FILES += src/plugins/sponsorpay/ios/sdk/libSponsorPaySDK.a
+	INSTALL_FILES += src/plugins/sponsorpay/ios/sdk/libFyberSDK.a
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))
