@@ -4,8 +4,8 @@ static jclass sponsorpayCls = NULL;
 
 #define GET_CLS GET_PLUGIN_CLASS(sponsorpayCls,ru/redspell/lightning/plugins/LightSponsorpay);
 
-void ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, value v_log) {
-	CAMLparam4(v_appId, v_userId, v_securityToken, v_log);
+void ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, value v_test) {
+	CAMLparam4(v_appId, v_userId, v_securityToken, v_test);
 	GET_ENV;
 	GET_CLS;
 
@@ -16,7 +16,7 @@ void ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, v
 	jstring j_securityToken = (*env)->NewStringUTF(env, Is_block(v_securityToken) ? String_val(Field(v_securityToken, 0)) : "");
 
 	jmethodID mid = (*env)->GetStaticMethodID(env, sponsorpayCls, "init", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V");
-	(*env)->CallStaticVoidMethod(env, sponsorpayCls, mid, j_appId, j_userId, j_securityToken, v_log == Val_true? JNI_TRUE: JNI_FALSE);
+	(*env)->CallStaticVoidMethod(env, sponsorpayCls, mid, j_appId, j_userId, j_securityToken, v_test == Val_true? JNI_TRUE: JNI_FALSE);
 
 	(*env)->DeleteLocalRef(env, j_appId);
 	(*env)->DeleteLocalRef(env, j_userId);
@@ -37,14 +37,14 @@ void ml_request_video(value vcallback) {
 	CAMLparam1(vcallback);
 	PRINT_DEBUG ("sp_ml_request_video");
 
-	value *callback;
-	REG_CALLBACK(vcallback,callback);
+	value *req_callback;
+	REG_CALLBACK(vcallback,req_callback);
 
 	GET_ENV;
 	GET_CLS;
 
 	jmethodID mid = (*env)->GetStaticMethodID(env, sponsorpayCls, "requestVideos", "(I)V");
-	(*env)->CallStaticVoidMethod(env, sponsorpayCls, mid,(jint)callback);
+	(*env)->CallStaticVoidMethod(env, sponsorpayCls, mid,(jint)req_callback);
 	CAMLreturn0;
 }
 

@@ -7,8 +7,8 @@
 #import "mlwrapper.h"
 #import <UnityAds/UnityAds.h>
 
-value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, value v_logging) {
-	CAMLparam4(v_appId, v_userId, v_securityToken, v_logging);
+value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, value v_test) {
+	CAMLparam4(v_appId, v_userId, v_securityToken, v_test);
 
 	NSString* m_appId = [NSString stringWithCString:String_val(v_appId) encoding:NSASCIIStringEncoding];
 	NSString* m_userId = Is_block(v_userId) ? [NSString stringWithCString:String_val(Field(v_userId, 0)) encoding:NSASCIIStringEncoding] : nil;
@@ -20,13 +20,13 @@ value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, 
 																										userId:m_userId
 																						 securityToken:m_securityToken];
 
-	if (Bool_val(v_logging)) {
+	if (Bool_val(v_test)) {
 		NSLog (@"UnityAds TEST MODE");
 		[[UnityAds sharedInstance] setTestMode:YES];
 		[[UnityAds sharedInstance] setDebugMode:YES];
 	}
 	[FyberSDK startWithOptions:options];
-  [FyberSDK setLoggingLevel:Bool_val(v_logging) ? 10 : 0];
+  [FyberSDK setLoggingLevel:Bool_val(v_test) ? 10 : 0];
 
 	CAMLreturn(Val_unit);
 }

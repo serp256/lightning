@@ -1,0 +1,92 @@
+import com.jfrog.bintray.gradle.BintrayUploadTask
+
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.1"
+
+    defaultConfig {
+        minSdkVersion 10
+        targetSdkVersion 23
+        useJack = true
+        versionCode 1
+        versionName "1"
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            res.srcDirs = ['res']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:23.0.1'
+    compile files { packUnityAdsJar }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = project.name
+            groupId = project.group
+            version = project(':fyber-mediation-unityads').version
+            artifact "${buildDir}/outputs/aar/${project.name}-release.aar"
+        }
+    }
+}
+
+task extractUnityAdsJar(type: Copy) {
+    from zipTree('libs/unity-ads.jar')
+    into "${buildDir}/extractedJar"
+}
+
+task packUnityAdsJar(type: Jar, dependsOn: extractUnityAdsJar) {
+    from("${buildDir}/extractedJar/") {
+        exclude '**/BuildConfig.class'
+    }
+
+    archiveName = 'unityads-1.5.2.jar'
+}
+
+task moveUnityAdsArtifacts(type: Copy) {
+    File file = file("${buildDir}/outputs/aar/${project.name}-release.aar")
+    from(file) {
+        rename file.name, project.name + '-' + project(':fyber-mediation-unityads').version + '.aar'
+        into 'SDK7'
+    }
+
+    from(file) {
+        rename file.name, project.name + '-' + project(':fyber-mediation-unityads').version + '.aar'
+        into 'SDK8'
+    }
+
+    into project(':fyber-mediation-unityads').buildDir.absolutePath + '/fyber-bundle'
+}
+
+task bintrayMavenUpload(type: BintrayUploadTask, dependsOn: publishToMavenLocal) {
+    apiUrl = BintrayUploadTask.API_URL_DEFAULT
+    user = bintrayUser
+    apiKey = bintrayKey
+    publications = ['maven']
+    userOrg = 'fyber'
+    repoName = 'maven'
+    packageName = project(':fyber-mediation-unityads').name
+    packageLabels = ['fyber', 'android', 'bundle']
+    versionName = project(':fyber-mediation-unityads').version
+    versionVcsTag = project(':fyber-mediation-unityads').version
+    signVersion = true
+    gpgPassphrase = bintrayPass
+}
