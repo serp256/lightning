@@ -54,45 +54,49 @@ public class LightDownloadService {
 			}
 	};
 
-	private static void unzipAndSuccess(String zipFile) {
+	private static void unzipAndSuccess(final String zipFile) {
 		if (compress) {
-			File zip = new File (zipFile);
-			String outputFolder = zip.getParent();
-			List<String> filesList = new ArrayList<String> ();
+			new Thread (new Runnable() {
+				public void run (){
+					 try {
+						File zip = new File (zipFile);
+						String outputFolder = zip.getParent();
+						List<String> filesList = new ArrayList<String> ();
 
-			Log.d ("LIGHTNING","unzip to" + outputFolder + " " + zipFile);
-	 
-			 try {
-				 FileInputStream fis = new FileInputStream(zipFile); 
-				 ZipInputStream zin  = new ZipInputStream(new BufferedInputStream(fis));
-				 ZipEntry entry;
+						Log.d ("LIGHTNING","unzip to" + outputFolder + " " + zipFile);
+				 
+							 FileInputStream fis = new FileInputStream(zipFile); 
+							 ZipInputStream zin  = new ZipInputStream(new BufferedInputStream(fis));
+							 ZipEntry entry;
 
-				 while((entry = zin.getNextEntry()) != null) {
-					 int BUFFER = 4096;
-					 filesList.add (entry.getName());
-					 FileOutputStream fos = new FileOutputStream(outputFolder + File.separator + entry.getName());
-					 BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
-					 int count;
-					 byte data[] = new byte[BUFFER];
-					 while ((count = zin.read(data, 0, BUFFER)) != -1) {
-						 dest.write(data, 0, count);
-					 }
-					 dest.close();
-					 zin.closeEntry ();
+							 while((entry = zin.getNextEntry()) != null) {
+							 int BUFFER = 4096;
+							 filesList.add (entry.getName());
+							 FileOutputStream fos = new FileOutputStream(outputFolder + File.separator + entry.getName());
+							 BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
+							 int count;
+							 byte data[] = new byte[BUFFER];
+							 while ((count = zin.read(data, 0, BUFFER)) != -1) {
+								 dest.write(data, 0, count);
+							 }
+							 dest.close();
+							 zin.closeEntry ();
+						 }
+
+						 zin.close();
+						 fis.close();
+
+						 String[] files = new String[filesList.size()];
+						 files = filesList.toArray(files);
+
+						 zip.delete ();
+						 downloadSuccess(files);
+					} catch (IOException ex){
+						Log.d ("LIGHTNING","UNZIP Failed " + ex.toString());
+						downloadFail (DownloadManager.ERROR_INSUFFICIENT_SPACE, ex.getLocalizedMessage());
+					}
 				 }
-
-				 zin.close();
-				 fis.close();
-
-				 String[] files = new String[filesList.size()];
-				 files = filesList.toArray(files);
-
-				 zip.delete ();
-				 downloadSuccess(files);
-			} catch (IOException ex){
-				Log.d ("LIGHTNING","UNZIP Failed " + ex.toString());
-				downloadFail (DownloadManager.ERROR_INSUFFICIENT_SPACE, ex.getLocalizedMessage());
-			}
+			}).start ();
 		}
 		else {
 			File f = new File(zipFile);
@@ -453,7 +457,7 @@ private static void enqueueRequest (String url, String path) {
 		public native void nativeRun(int callback, double progress, double total);
 
 		public void run() {
-			//Log.d ("LIGHTNING","Download progress " + progress + " " +total);
+			Log.d ("LIGHTNING","Download progress " + progress + " " +total);
 			nativeRun(callback, progress, total);
 		}
 	}
