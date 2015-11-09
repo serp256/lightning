@@ -166,9 +166,16 @@ public class LightVk {
 	private static int fail;
 
 	public static void init () {
-		Log.d("LIGHTNING", "sdk initialize");
-		VKSdk.initialize(Lightning.activity.getApplicationContext());
-  }
+		Lightning.activity.runOnUiThread(new Runnable() {
+			          @Override
+			          public void run() {
+									Log.d("LIGHTNING", "run sdk initialize");
+									VKSdk.initialize(Lightning.activity.getApplicationContext());
+									Log.d("LIGHTNING", "sdk initialized");
+								}
+		});
+	}
+
 	public static void authorize(String appid, String[] permissions, final int s, final int f, boolean force) {
 		Log.d("LIGHTNING", "helperAdded " + helperAdded);
 		success = s;
