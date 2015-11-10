@@ -81,6 +81,7 @@ public class LightSponsorpay {
 
 		      FyberLogger.enableLogging(enableLog);
 					UnityAds.setDebugMode(enableLog);
+					UnityAds.setTestMode(enableLog);
 
 				} catch (java.lang.RuntimeException exc) {
 					Log.d ("LIGHTNING",exc.getLocalizedMessage());
@@ -114,8 +115,10 @@ public class LightSponsorpay {
 					@Override
 					public void onRequestError(RequestError requestError) {
 								Log.d("LIGHTNING", "Something went wrong with the request: " + requestError.getDescription());
+								/*
 								if (request_callback != -1) {(new CamlParamCallbackInt(request_callback,false)).run();}
 								request_callback = -1;
+								*/
 					}
 
 					@Override
