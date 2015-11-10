@@ -399,22 +399,27 @@ static unsigned short hasFocus = 0;
 static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) {
     PRINT_DEBUG("engine_handle_cmd %d", cmd);
     engine_t engine = (engine_t)app->userData;
-    static value bg_handler = 0, fg_handler = 0;
+    static value bg_handler = 0, fg_handler = 0, force_render = 0;
 
     switch (cmd) {
         case APP_CMD_SAVE_STATE:
+					PRINT_DEBUG("APP_CMD_SAVE_STATE");
             engine->app->savedState = malloc(sizeof(struct saved_state));
             *((struct saved_state*)engine->app->savedState) = engine->state;
             engine->app->savedStateSize = sizeof(struct saved_state);
             break;
         case APP_CMD_INIT_WINDOW:
+            PRINT_DEBUG("APP_CMD_INIT_WINDOW");
             if (engine->app->window != NULL) {
+								PRINT_DEBUG("engine->app->window not null");
                 engine_init_display(engine);
                 if (!foreground_called_on_resume) {
+									PRINT_DEBUG("dispatchForeground");
                     sound_android_onforeground();
                     if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
                     caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
                 }
+								PRINT_DEBUG("draw frame");
                 engine_draw_frame(engine);
             }
             break;
@@ -430,6 +435,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
                 ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->accelerometerSensor, (1000L/60)*1000);
             }
             engine->animating = 1;
+
             //engine_draw_frame(engine);
             break;
         case APP_CMD_LOST_FOCUS:
@@ -446,6 +452,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
 
         case ENGINE_CMD_RUN_ON_ML_THREAD:
             {
+							PRINT_DEBUG("ENGINE_CMD_RUN_ON_ML_THREAD");
                 engine_runnable_t *runnable = (engine_runnable_t*)data;
 
                 (*runnable->func)(runnable->data);
@@ -481,6 +488,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
 
 
             PRINT_DEBUG("<<<--APP_CMD_PAUSE");
+						PRINT_DEBUG("APP_CMD_PAUSE w %lu, h %lu \n", (ANativeWindow_getWidth (engine->app->window)),(ANativeWindow_getHeight (engine->app->window)));
 
             break;
 
@@ -488,14 +496,30 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
             PRINT_DEBUG("APP_CMD_RESUME");
 
             if (engine->surface != EGL_NO_SURFACE && engine->stage) {
+							PRINT_DEBUG("engine->surface != EGL_NO_SURFACE && engine->stage, %d", hasFocus);
 
-								if (hasFocus=1) { engine->animating = 1; }
+								if (hasFocus=1) { engine->animating = 1;}
 
                 foreground_called_on_resume = 1;
                 sound_android_onforeground();
+
+
                 if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
                 caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
+
+								PRINT_DEBUG("APP_CMD_RESUME w %lu, h %lu \n", (ANativeWindow_getWidth (engine->app->window)),(ANativeWindow_getHeight (engine->app->window)));
             }
+
+            break;
+
+        case APP_CMD_CONFIG_CHANGED:
+					PRINT_DEBUG("APP_CMD_CONFIG_CHANGED w %lu, h %lu \n", (ANativeWindow_getWidth (engine->app->window)),(ANativeWindow_getHeight (engine->app->window)));
+					PRINT_DEBUG("engine  animating flag, %d", engine->animating);
+					if (!force_render) {
+						force_render = caml_hash_variant("forceRenderStage");
+					}
+					caml_callback2(caml_get_public_method(engine->stage->stage, force_render), engine->stage->stage, Val_unit);
+
 
             break;
 

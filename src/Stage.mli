@@ -57,6 +57,8 @@ class virtual c: [ float ] -> [ float ] ->
     method dispatchBackPressedEv : unit -> bool;
     method dispatchBackgroundEv : unit -> unit;
     method dispatchForegroundEv : unit -> unit;
+    method forceStageRender: ?reason:string -> unit -> unit;
+    method forceRenderStage: unit -> unit;
     method traceFPS: (int -> DisplayObject.c) -> unit;
     method traceSharedTexNum: (int -> DisplayObject.c) -> unit;
     method _stageResized: float -> float -> unit;

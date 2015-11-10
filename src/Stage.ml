@@ -306,9 +306,17 @@ class virtual c (_width:float) (_height:float) =
     value mutable fpsTrace : option DisplayObject.c = None;
     value mutable sharedTexNum: option DisplayObject.c = None;
 
+    method forceRenderStage  () =
+      (
+        debug "forceStageRender";
+        if renderNeeded = 0
+        then renderNeeded := 1
+        else ();
+      );
     method! forceStageRender ?reason () =
       (
         debug:forcerendereason "forceStageRender call, reason %s" (match reason with [ Some r -> r | _ -> "_" ]);
+        debug "forceStageRender call, reason %s" (match reason with [ Some r -> r | _ -> "_" ]);
         if renderNeeded = 0
         then renderNeeded := 1
         else ();
@@ -451,6 +459,7 @@ class virtual c (_width:float) (_height:float) =
 
   method dispatchForegroundEv () =
     (
+      debug "dispatchForegroundEv";
       self#forceStageRender ~reason:"foreground" ();
       renderNeeded := 10;
       on_foreground ();
