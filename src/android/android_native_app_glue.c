@@ -153,6 +153,13 @@ void android_app_pre_exec_cmd(struct android_app* android_app, int8_t cmd) {
             LOGV("APP_CMD_DESTROY\n");
             android_app->destroyRequested = 1;
             break;
+        case APP_CMD_WINDOW_RESIZED:
+            LOGV("APP_CMD_WINDOW_RESIZED\n");
+            break;
+        case APP_CMD_WINDOW_REDRAW_NEEDED:
+            LOGV("APP_CMD_WINDOW_REDRAW_NEEDED\n");
+            break;
+
     }
 }
 
@@ -474,6 +481,18 @@ static void onInputQueueDestroyed(ANativeActivity* activity, AInputQueue* queue)
     android_app_set_input((struct android_app*)activity->instance, NULL);
 }
 
+static void onNativeWindowResized (ANativeActivity* activity, ANativeWindow* window) {
+    LOGV("NativeWindowResized: %p -- %p\n", activity, window);
+    struct android_app* android_app = (struct android_app*)activity->instance;
+    android_app_write_cmd(android_app, APP_CMD_WINDOW_RESIZED);
+}
+
+static void onNativeWindowRedrawNeeded (ANativeActivity* activity, ANativeWindow* window) {
+    LOGV("NativeWindowRedrawNeeded: %p -- %p\n", activity, window);
+    struct android_app* android_app = (struct android_app*)activity->instance;
+    android_app_write_cmd(android_app, APP_CMD_WINDOW_REDRAW_NEEDED);
+}
+
 void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
     LOGV("Creating: %p, tid %d\n", activity, gettid());
 
@@ -490,6 +509,9 @@ void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_
     activity->callbacks->onNativeWindowDestroyed = onNativeWindowDestroyed;
     activity->callbacks->onInputQueueCreated = onInputQueueCreated;
     activity->callbacks->onInputQueueDestroyed = onInputQueueDestroyed;
+
+    activity->callbacks->onNativeWindowResized = onNativeWindowResized;
+    activity->callbacks->onNativeWindowRedrawNeeded = onNativeWindowRedrawNeeded;
 
     activity->instance = android_app_create(activity, savedState, savedStateSize);
 }

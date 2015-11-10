@@ -306,19 +306,12 @@ class virtual c (_width:float) (_height:float) =
     value mutable fpsTrace : option DisplayObject.c = None;
     value mutable sharedTexNum: option DisplayObject.c = None;
 
-    method forceRenderStage  () =
-      (
-        debug "forceStageRender";
-        if renderNeeded = 0
-        then renderNeeded := 1
-        else ();
-      );
-    method! forceStageRender ?reason () =
+    method! forceStageRender ?(frames=1) ?reason () =
       (
         debug:forcerendereason "forceStageRender call, reason %s" (match reason with [ Some r -> r | _ -> "_" ]);
-        debug "forceStageRender call, reason %s" (match reason with [ Some r -> r | _ -> "_" ]);
+        debug "forceStageRender call, reason %s, frames %d" (match reason with [ Some r -> r | _ -> "_" ]) frames;
         if renderNeeded = 0
-        then renderNeeded := 1
+        then renderNeeded := frames
         else ();
       );
 

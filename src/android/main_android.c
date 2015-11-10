@@ -488,16 +488,12 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
 
 
             PRINT_DEBUG("<<<--APP_CMD_PAUSE");
-						PRINT_DEBUG("APP_CMD_PAUSE w %lu, h %lu \n", (ANativeWindow_getWidth (engine->app->window)),(ANativeWindow_getHeight (engine->app->window)));
-
             break;
 
         case APP_CMD_RESUME:
             PRINT_DEBUG("APP_CMD_RESUME");
 
             if (engine->surface != EGL_NO_SURFACE && engine->stage) {
-							PRINT_DEBUG("engine->surface != EGL_NO_SURFACE && engine->stage, %d", hasFocus);
-
 								if (hasFocus=1) { engine->animating = 1;}
 
                 foreground_called_on_resume = 1;
@@ -506,22 +502,35 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd, void *data) 
 
                 if (!fg_handler) fg_handler = caml_hash_variant("dispatchForegroundEv");
                 caml_callback2(caml_get_public_method(engine->stage->stage, fg_handler), engine->stage->stage, Val_unit);
-
-								PRINT_DEBUG("APP_CMD_RESUME w %lu, h %lu \n", (ANativeWindow_getWidth (engine->app->window)),(ANativeWindow_getHeight (engine->app->window)));
             }
 
             break;
 
         case APP_CMD_CONFIG_CHANGED:
-					PRINT_DEBUG("APP_CMD_CONFIG_CHANGED w %lu, h %lu \n", (ANativeWindow_getWidth (engine->app->window)),(ANativeWindow_getHeight (engine->app->window)));
-					PRINT_DEBUG("engine  animating flag, %d", engine->animating);
+					PRINT_DEBUG("APP_CMD_CONFIG_CHANGED");
+					break;
+
+        case APP_CMD_WINDOW_RESIZED:
+					PRINT_DEBUG("APP_CMD_WINDOW_RESIZED");
+					break;
+
+        case APP_CMD_WINDOW_REDRAW_NEEDED:
+					PRINT_DEBUG("APP_CMD_WINDOW_REDRAW_NEEDED w %i, h %i \n", (ANativeWindow_getWidth (engine->app->window)),(ANativeWindow_getHeight (engine->app->window)));
+
 					if (!force_render) {
-						force_render = caml_hash_variant("forceRenderStage");
+						force_render = caml_hash_variant("forceStageRender");
 					}
-					caml_callback2(caml_get_public_method(engine->stage->stage, force_render), engine->stage->stage, Val_unit);
 
-
-            break;
+					value frames = caml_alloc_tuple(1);
+					Store_field(frames, 0, Val_int(2));
+					value args[4];
+					args[0] = engine->stage->stage;
+					args[1] = frames;
+					args[2] = Val_int(0);
+					args[3] = Val_unit;
+					
+					caml_callbackN(caml_get_public_method(engine->stage->stage, force_render), 4, args);
+					break;
 
     }
 }

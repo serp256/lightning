@@ -37,7 +37,7 @@ class virtual _c [ 'parent ] :
         stageAddEnterFrameObj: dispObj -> unit; stageRmEnterFrameObj: dispObj -> unit; stageAddPrerenderObj: prerenderObj -> unit; stageRunPrerender: unit -> unit; asDisplayObject: _c _;
         removeChild': _c _ -> unit; getChildIndex': _c _ -> int; z: option int; dispatchEvent': Ev.t -> _c _ -> unit; dispatchEventGlobal: Ev.t -> unit; name: string;
         transformationMatrixToSpace: !'space. option (<asDisplayObject: _c _; ..> as 'space) -> Matrix.t; stage: option 'parent; boundsChanged: unit -> unit;
-        forceStageRender: ?reason:string -> unit -> unit; height: float;
+        forceStageRender: ?frames:int -> ?reason:string -> unit -> unit; height: float;
         .. 
       >;
 
@@ -134,7 +134,7 @@ class virtual _c [ 'parent ] :
 
     value mutable stage: option 'parent;
     method stage: option 'parent;
-    method forceStageRender: ?reason:string -> unit -> unit;
+    method forceStageRender: ?frames:int -> ?reason:string -> unit -> unit;
   end;
 
 

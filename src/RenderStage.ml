@@ -4,7 +4,7 @@ class c () =
 
 		value mutable rendertex:option RenderTexture.c = None;
 
-    method! forceStageRender ?reason () = ();
+    method! forceStageRender ?frames ?reason () = ();
 
 		method texture () =
 			(
