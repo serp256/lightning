@@ -39,7 +39,7 @@
     NSLog(@"Did receive offer");
     
     didReceiveOffers = YES;
-		RUN_CALLBACK(_requestCallback, didReceiveOffers ? Val_true : Val_false);
+		RUN_CALLBACK(_requestCallback, Val_true);
 		FREE_CALLBACK(_requestCallback);
 
 }
@@ -49,10 +49,8 @@
     NSLog(@"Did not receive any offer %@", [error localizedDescription]);
     
     didReceiveOffers = NO;
-		value *temp_callback = _requestCallback;
-		RUN_CALLBACK(_requestCallback, didReceiveOffers ? Val_true : Val_false);
-		NSLog (@"Free request cb");
-		FREE_CALLBACK(temp_callback);
+		RUN_CALLBACK(_requestCallback, Val_false);
+		FREE_CALLBACK(_requestCallback);
     
 }
 
