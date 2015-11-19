@@ -21,7 +21,9 @@ value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, 
 																						 securityToken:m_securityToken];
 
 	[FyberSDK startWithOptions:options];
-  [FyberSDK setLoggingLevel:Bool_val(v_test) ? 10 : 0];
+	int loggingLevel = Bool_val(v_test) ? 10 : 0;
+	NSLog (@"Fyber logging level %d", loggingLevel);
+  [FyberSDK setLoggingLevel:loggingLevel];
 
 	if (Bool_val(v_test)) {
 		NSLog (@"UnityAds TEST MODE");

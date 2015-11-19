@@ -12,7 +12,7 @@ MLPPOPT += ../../syntax/pa_platform.cmo
 
 ifeq ($(PLATFORM),ANDROID)
 
-CFLAGS += -DANDROID -I../../ -I../../android -I./android 
+CFLAGS += -DANDROID -I../../ -I../../android -I./android -I ../common
 COBJS  += android/af_android.o
 MLPPOPT += -DANDROID
 
