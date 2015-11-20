@@ -19,7 +19,7 @@ MLPPOPT += -DANDROID
 else
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS  += -DIOS -Fios 
+CFLAGS  += -DIOS -Fios -I../.. -I../../ios 
 COBJS   += ios/af_ios.o
 MLPPOPT += -DIOS
 
