@@ -65,8 +65,11 @@ value openiab_init(value vskus, value vmarket_type) {
 
 	char* java_exn_message = engine_handle_java_expcetion();
 
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, str_cls);
+	PRINT_DEBUG ("1");
+//	(*ML_ENV)->DeleteLocalRef(ML_ENV, str_cls);
+	PRINT_DEBUG ("2");
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jskus);
+	PRINT_DEBUG ("3");
 	(*ML_ENV)->DeleteLocalRef(ML_ENV, jmarket_type);
 
 	if (java_exn_message) caml_failwith(java_exn_message);
