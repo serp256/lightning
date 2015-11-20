@@ -19,7 +19,7 @@ value setUserId: string -> unit = fun _ -> ();
 value setCurrencyCode: string -> unit = fun _ -> ();
 value sendTracking: unit -> unit = fun () -> ();
 value getUID: unit -> string = fun () -> "";
-value trackPurchase: ~sku: string -> ~currency:string -> ~revenue:float -> unit -> unit = fun _ _ _ _ -> ();
+value trackPurchase: ~sku: string -> ~currency:string -> ~revenue:float -> unit -> unit = fun ~sku ~currency ~revenue () -> ();
 value trackLevel: int -> unit = fun _ -> ();
 value trackTapjoyEvent: unit -> unit = fun _ -> ();
 ENDPLATFORM;
