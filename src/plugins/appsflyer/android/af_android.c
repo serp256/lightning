@@ -66,7 +66,6 @@ value ml_af_get_uid(value unit) {
 
 	jobject jcontext = JAVA_ACTIVITY;
 	jstring jUID = (*env)->CallStaticObjectMethod(env,cls,mid,jcontext);
-	(*env)->DeleteLocalRef(env,jcontext);
 
 	const char *cuid = (*env)->GetStringUTFChars(env,jUID,JNI_FALSE);
 	value res = caml_copy_string(cuid);
