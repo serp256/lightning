@@ -1,4 +1,12 @@
 #import "GameAnalytics.h" 
+
+#import <caml/mlvalues.h>
+#import <caml/callback.h>
+#import <caml/memory.h>
+#import <caml/alloc.h>
+#import <caml/fail.h>
+#import "common_ios.h"
+#import "mlwrapper_ios.h"
 NSArray* readArrayFromValue (value v) {
 
     if (v != Val_int(0)) {        
@@ -20,9 +28,10 @@ NSArray* readArrayFromValue (value v) {
     }
 		return nil;
 }
-value ml_ga_init (value vkey, value vsecret, value vversion, value vcurrencies, value vitemtypes, value vdimensions) {
-	CAMLparam5(vversion, vcurrencies);
-	CAMLxparam2(vitemtypes, vdiensions);
+value ml_ga_init (value vkey, value vsecret, value vversion, value vdebug, value vcurrencies, value vitemtypes, value vdimensions) {
+	CAMLparam5(vkey,vsecret,vversion, vdebug, vcurrencies);
+	CAMLxparam2(vitemtypes, vdimensions);
+	/*
 
 	NSString* nsversion = Is_block(vversion) ? [NSString stringWithCString:String_val(Field(vversion, 0)) encoding:NSASCIIStringEncoding] :
 																							[NSString stringWithFormat:@"%@ %@", @"ios", [LightViewController version]];
@@ -32,6 +41,8 @@ value ml_ga_init (value vkey, value vsecret, value vversion, value vcurrencies, 
 	if (nscurrencies) {
 		[GameAnalytics configureAvailableResourceCurrencies:nscurrencies];
 	}
+	*/
+
 	/*
 	[GameAnalytics configureAvailableResourceItemTypes:@[@"boost", @"lives"]];
 	// Set available custom dimensions
@@ -40,10 +51,12 @@ value ml_ga_init (value vkey, value vsecret, value vversion, value vcurrencies, 
   [GameAnalytics configureAvailableCustomDimensions03:@[@"horde", @"alliance"]];
 	*/
 
+	/*
 	NSString* nskey = [NSString stringWithCString:String_val(vkey) encoding:NSUTF8StringEncoding];
 	NSString* nssecret = [NSString stringWithCString:String_val(vsecret) encoding:NSUTF8StringEncoding];
 	[GameAnalytics initializeWithGameKey:nskey  gameSecret:nssecret];
 
+	*/
 
 	CAMLreturn(Val_unit);
 }

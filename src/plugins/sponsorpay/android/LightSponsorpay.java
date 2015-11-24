@@ -45,7 +45,7 @@ public class LightSponsorpay {
 		userId = _userId;
 		securityToken = _securityToken;
 
-		Log.d ("LIGHTNING","SponsorPay init");
+		Log.d ("LIGHTNING","SponsorPay init, enableLog: " + enableLog);
 
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 						public void onCreate(Bundle savedInstanceState) {}

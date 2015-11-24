@@ -9,7 +9,6 @@
 </target>
 
 <target name="-compile" depends="-pre-build, -build-setup, -code-gen, -pre-compile">
-	<echo level="info">XYU</echo>
 		<do-only-if-manifest-hasCode elseText="hasCode = false. Skipping...">
 				<!-- merge the project's own classpath and the tested project's classpath -->
 				<path id="project.javac.classpath">
