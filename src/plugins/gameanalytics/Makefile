@@ -1,7 +1,7 @@
 include ../../../Makefile.common
 
 CFLAGS += -I . 
-# CFLAGS += -DLDEBUG
+CFLAGS += -DLDEBUG
 
 MLFLAGS += -package redspell.syntax.debug
 
@@ -19,13 +19,13 @@ MLPPOPT += ../../syntax/pa_platform.cmo -enable-debug default
 
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS  += -DIOS -Iios -I../../ -I../../ios -I../common
+CFLAGS  += -DIOS -Iios -I../../ -I../../ios -I../common -Iios/sdk
 COBJS   +=  ios/gameanalytics_ios.o
 
 else
 ifeq ($(PLATFORM),ANDROID)
 
-CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android -I../common
+CFLAGS  += -DANDROID -Iandroid -I../../ -I../../android -I../common -Iandroid/sdk
 COBJS   +=  android/gameanalytics_android.o
 
 
@@ -47,6 +47,7 @@ gameanalytics.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 
 gameanalytics.cma: $(IFACES) $(COBJS) $(MLOBJS) 
 	$(OCAMLMKLIB) -verbose -o gameanalytics $(COBJS) $(MLOBJS) $(LIBFLAGS) 
+
 endif
 
 
