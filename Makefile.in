@@ -41,6 +41,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/vk/*.cma src/plugins/vk/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/gamecontroller/*.cma src/plugins/gamecontroller/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/odnoklassniki/*.cma src/plugins/odnoklassniki/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/gameanalytics/*.cma src/plugins/gameanalytics/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
@@ -63,6 +64,7 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/vk/*.cmxa src/plugins/vk/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/gamecontroller/*.cmxa src/plugins/gamecontroller/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/odnoklassniki/*.cmxa src/plugins/odnoklassniki/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/gameanalytics/*.cmxa src/plugins/gameanalytics/*.a)
 endif
 
 ifeq ($(PLATFORM),IOS)
@@ -104,6 +106,7 @@ endif
 	                                                          src/plugins/vk/*.cmi src/plugins/vk/*.mli \
 	                                                          src/plugins/gamecontroller/*.cmi src/plugins/gamecontroller/*.mli \
 	                                                          src/plugins/odnoklassniki/*.cmi src/plugins/odnoklassniki/*.mli \
+	                                                          src/plugins/gameanalytics/*.cmi src/plugins/gameanalytics/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS)
 
 uninstall:

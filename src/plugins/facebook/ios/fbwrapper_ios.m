@@ -191,15 +191,6 @@ value ml_fbInit(value appId) {
 		[FBSDKProfile enableUpdatesOnAccessTokenChange:YES];
 		NSLog( @"running FB sdk version: %@", [FBSDKSettings sdkVersion] );
 
-		/*
-		FBSDKAccessToken *cachedToken = [[FBSDKSettings accessTokenCache] fetchAccessToken];
-		[FBSDKAccessToken setCurrentAccessToken:cachedToken];
-		FBSDKProfile *cachedProfile = [FBSDKProfile fetchCachedProfile];
-		NSLog(@"ml_fbToken %@", cachedToken);
-		NSLog(@"ml_fbProfile %@", cachedProfile);
-		[FBSDKProfile setCurrentProfile:cachedProfile];
-		*/
-
 		loginManager = [[FBSDKLoginManager alloc] init];
 
     NSNotificationCenter* notifCntr = [NSNotificationCenter defaultCenter];
@@ -234,19 +225,8 @@ value ml_fbInit(value appId) {
 
 void resetPermissions () {
 		extraPermsState = EXTRA_PERMS_NOT_REQUESTED;
-		/*
-		if (readPermissions) {
-			[readPermissions removeAllObjects];
-			[readPermissions release];
-			readPermissions = nil;
-		}
-		if (publishPermissions) {
-			[publishPermissions removeAllObjects];
-			[publishPermissions release];
-			publishPermissions = nil;
-		}
-		*/
 }
+
 void parsePermissions(value permissions) {
     NSLog(@"parsePermissions");
 
@@ -352,7 +332,9 @@ void checkPermissions (value *fail, value *success, successBlockT successCallbac
 																NSLog(@"error %@", error);
 																failBlock ((char*)[[error localizedDescription] UTF8String]);
 															} else if (result.isCancelled) {
+																NSLog(@"cancel");
 																failBlock ("FB Authorization cancelled");
+																[[LightViewController sharedInstance] becomeActive];
 															} else {
 																NSLog(@"FB login success");
 																extraPermsState = READ_PERMS_REQUESTED;
@@ -463,6 +445,7 @@ void reconnect (value* failGraphRequest, value* successGraphRequest, successBloc
 			} else if (result.isCancelled) {
 				NSLog(@"fb auth cancelled");
 				RUN_CALLBACK(failGraphRequest, caml_copy_string ("Fail reconnect: cancel"));
+				[[LightViewController sharedInstance] becomeActive];
 				FREE_CALLBACK(successGraphRequest);
 				FREE_CALLBACK(failGraphRequest);        
 			} else {
@@ -492,6 +475,7 @@ value ml_fbConnect(value permissions) {
 			} else if (result.isCancelled) {
 				NSLog(@"fb auth cancelled");
 				caml_callback (*caml_named_value("fb_fail"), caml_copy_string ("FB Authorization cancelled"));
+				[[LightViewController sharedInstance] becomeActive];
 			} else {
 				NSLog(@"FB login success");
 				checkPermissions (nil,nil,nil);
@@ -649,6 +633,7 @@ value ml_fbApprequest(value vtitle, value vmessage, value vrecipient, value vdat
 				// Handle cancellations
 				NSLog(@"fb auth cancelled");
 				RUN_CALLBACK(fail, caml_copy_string ("FB Authorization cancelled"));
+				[[LightViewController sharedInstance] becomeActive];
 				FREE_CALLBACK(success);
 				FREE_CALLBACK(fail);        
 			} else {

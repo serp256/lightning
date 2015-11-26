@@ -20,22 +20,19 @@ value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, 
 																										userId:m_userId
 																						 securityToken:m_securityToken];
 
+	[FyberSDK startWithOptions:options];
+	int loggingLevel = Bool_val(v_test) ? 10 : 0;
+	NSLog (@"Fyber logging level %d", loggingLevel);
+  [FyberSDK setLoggingLevel:loggingLevel];
+
 	if (Bool_val(v_test)) {
 		NSLog (@"UnityAds TEST MODE");
 		[[UnityAds sharedInstance] setTestMode:YES];
 		[[UnityAds sharedInstance] setDebugMode:YES];
 	}
-	[FyberSDK startWithOptions:options];
-  [FyberSDK setLoggingLevel:Bool_val(v_test) ? 10 : 0];
 
 	CAMLreturn(Val_unit);
 }
-
- 
-/*
-void offerWallViewControllerIMP(id self, SEL _cmd, SPOfferWallViewController* controller, NSInteger status) {
-}
-*/
 
 
 FYBRewardedVideoController* rewardedVideoController;
@@ -51,30 +48,6 @@ VideoDelegate* delegate = nil;
 	}
 
 void ml_sponsorPay_showOffers() {
-	/*
-	static int protoAdded = 0;
-	if (!protoAdded) {
-		Class cls = [LightViewController class];
-		SEL sel = @selector(offerWallViewController:isFinishedWithStatus:);
-
-		class_addMethod(cls, sel, (IMP)offerWallViewControllerIMP, "v@:@l");
-		class_addProtocol(cls, @protocol(SPOfferWallViewControllerDelegate));
-
-		protoAdded = 1;
-	}
-
-	if (class_conformsToProtocol([LightViewController class], objc_getProtocol("SPOfferWallViewControllerDelegate"))) {
-		[SponsorPaySDK showOfferWallWithParentViewController:[LightViewController sharedInstance]];
-	}
-	*/
-	/*
-	NSLog(@"ml_sponsorPay_showOffers");
-	INIT_DELEGATE;
-	SPOfferWallViewController *offerWallVC = [SponsorPaySDK offerWallViewController];
-	offerWallVC.delegate = delegate;
-	offerWallVC.shouldFinishOnRedirect = YES;
-	[offerWallVC showOfferWallWithParentViewController:[LightViewController sharedInstance]];
-	*/
 }
 
 
@@ -88,41 +61,18 @@ value ml_request_video(value callback) {
 
 	[delegate setRequestCallback:callback];
 	[rewardedVideoController requestVideo];
-	/*
-	NSLog(@"canRequestOffers %d", [engageClient canRequestOffers]);
-	if ([engageClient canRequestOffers]) {
-		[delegate setRequestCallback:callback];
-		[engageClient requestOffers];
-	} else {
-		value *ptr = &callback;
-		RUN_CALLBACK(ptr, Val_false);
-	}
 
-	*/
 	CAMLreturn(Val_unit);
 }
 
 value ml_show_video(value callback) {
 	CAMLparam1(callback);
+	NSLog(@"ml_show_video call!!");
 	INIT_DELEGATE;
 	INIT_CONTROLLER;
 
 	[delegate setShowCallback:callback];
 	[[FyberSDK rewardedVideoController] presentRewardedVideoFromViewController:[LightViewController sharedInstance]];
-/*
-
-	NSLog(@"canStartOffers %d", [engageClient canStartOffers]);
-
-	
-	if ([engageClient canStartOffers]) {
-		[delegate setShowCallback:callback];
-		[engageClient startWithParentViewController:[LightViewController sharedInstance]];
-	} else {
-		value *ptr = &callback;
-		RUN_CALLBACK(ptr, Val_false);
-	}
-*/
-
 	CAMLreturn(Val_unit);
 }
 

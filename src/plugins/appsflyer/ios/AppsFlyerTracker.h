@@ -2,8 +2,8 @@
 //  AppsFlyerTracker.h
 //  AppsFlyerLib
 //
-//  AppsFlyer iOS SDK v3.3.0
-//  10-Sep-2015
+//  AppsFlyer iOS SDK v3.3.3
+//  06-Oct-2015
 //  Copyright (c) 2013 AppsFlyer Ltd. All rights reserved.
 //
 //  Please read AppsFlyer's iOS SDK documentation before integrating this library in your app:
@@ -45,7 +45,7 @@
 #define AFEventParamContentId              @"af_content_id"
 #define AFEventParamContentList            @"ad_content_list"
 #define AFEventParamCurrency               @"af_currency"
-#define AFEventParamQuantity               @"af_quantity" //quantity
+#define AFEventParamQuantity               @"af_quantity"
 #define AFEventParamRegistrationMethod     @"af_registration_method"
 #define AFEventParamPaymentInfoAvailable   @"af_payment_info_available"
 #define AFEventParamMaxRatingValue         @"af_max_rating_value"
@@ -85,7 +85,6 @@ typedef enum  {
 
 /*
  * This delegate should be use if you want to use AppsFlyer conversion data. See AppsFlyer iOS
- * Tracking SDK documentation for more details http://support.appsflyer.com/entries/25458906-iOS-SDK-Integration-Guide-v2-5-3-x-New-API-
  */
 @protocol AppsFlyerTrackerDelegate <NSObject>
 
@@ -201,7 +200,7 @@ typedef enum  {
                          transactionId:(NSString *) tranactionId
                   additionalParameters:(NSDictionary *)params
                                success:(void (^)(NSDictionary *response))successBlock
-                               failure:(void (^)(NSError *error, id reponse)) failedBlock;
+                               failure:(void (^)(NSError *error, id reponse)) failedBlock NS_AVAILABLE(10_7, 7_0);
 
 
 /*
@@ -235,8 +234,8 @@ typedef enum  {
  * For Universal links iOS 9
  */
 
--(void) continueUserActivity:(NSUserActivity *) userActivity restorationHandler:(void (^)(NSArray *))restorationHandler;
--(void) didUpdateUserActivity:(NSUserActivity *)userActivity;
+-(void) continueUserActivity:(NSUserActivity *) userActivity restorationHandler:(void (^)(NSArray *))restorationHandler NS_AVAILABLE_IOS(9_0);
+-(void) didUpdateUserActivity:(NSUserActivity *)userActivity NS_AVAILABLE_IOS(9_0);
 
 
 @end

@@ -372,6 +372,7 @@ value ml_resetBackgroundDelayedCallback(value unit) {
 	if (bg_delayed_callback) {
 		caml_remove_generational_global_root(bg_delayed_callback);
 		free(bg_delayed_callback);
+		bg_delayed_callback = NULL;
 	}
 
 	static jmethodID mid = 0;

@@ -12,14 +12,14 @@ MLPPOPT += ../../syntax/pa_platform.cmo
 
 ifeq ($(PLATFORM),ANDROID)
 
-CFLAGS += -DANDROID -I../../ -I../../android -I./android 
+CFLAGS += -DANDROID -I../../ -I../../android -I./android -I ../common
 COBJS  += android/af_android.o
 MLPPOPT += -DANDROID
 
 else
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS  += -DIOS -Fios 
+CFLAGS  += -DIOS -Fios -I../.. -I../../ios 
 COBJS   += ios/af_ios.o
 MLPPOPT += -DIOS
 

@@ -2,16 +2,10 @@
 #import "LightViewController.h"
 #import "mlwrapper.h"
 #import <caml/memory.h>
+#import <caml/alloc.h>
 
 @implementation VideoDelegate
 
-/*
-- (void)brandEngageClient:(SPBrandEngageClient *)brandEngageClient didReceiveOffers:(BOOL)areOffersAvailable {
-	RUN_CALLBACK(_requestCallback, areOffersAvailable ? Val_true : Val_false);
-	FREE_CALLBACK(_requestCallback);
-}
-
-*/
 - (void)runShowFailCallback {
 	if (_showCallback != 0) {
 			RUN_CALLBACK(_showCallback, Val_false);
@@ -20,29 +14,6 @@
 	}
 }
 
-/*
-- (void)brandEngageClient:(SPBrandEngageClient *)brandEngageClient didChangeStatus:(SPBrandEngageClientStatus)newStatus {
-	NSLog(@"brandEngageClient didChangeStatus %ld", newStatus);
-
-	switch (newStatus) {
-		case STARTED:
-			break;
-
-		case CLOSE_FINISHED:
-			RUN_CALLBACK(_showCallback, Val_true);
-			FREE_CALLBACK(_showCallback);
-			break;
-
-		case CLOSE_ABORTED:
-			[self runShowCallback];
-			break;
-
-		case ERROR:
-			[self runShowCallback];
-			break;
-	}
-}
-*/
 - (void)setRequestCallback:(value)c {
 	NSLog(@"set req cb");
 	REG_CALLBACK(c, _requestCallback);
@@ -54,6 +25,7 @@
 }
 
 - (id)init {
+	NSLog (@"VideoDelegate init");
 	_requestCallback = 0;
 	_showCallback = 0;
 
@@ -67,7 +39,7 @@
     NSLog(@"Did receive offer");
     
     didReceiveOffers = YES;
-		RUN_CALLBACK(_requestCallback, didReceiveOffers ? Val_true : Val_false);
+		RUN_CALLBACK(_requestCallback, Val_true);
 		FREE_CALLBACK(_requestCallback);
 
 }
@@ -77,7 +49,7 @@
     NSLog(@"Did not receive any offer %@", [error localizedDescription]);
     
     didReceiveOffers = NO;
-		RUN_CALLBACK(_requestCallback, didReceiveOffers ? Val_true : Val_false);
+		RUN_CALLBACK(_requestCallback, Val_false);
 		FREE_CALLBACK(_requestCallback);
     
 }
@@ -120,15 +92,6 @@
 }
 
 
-
-/*
-- (void)offerWallViewController:(SPOfferWallViewController *)offerWallVC isFinishedWithStatus:(int)status {
-	NSLog(@"offerWall status %d", status);
-	if (status == SPONSORPAY_ERR_NETWORK) {
-		NSLog(@"SPONSORPAY_ERR_NETWORK");
-	}
- }
-*/
 - (void)virtualCurrencyClient:(FYBVirtualCurrencyClient *)client didReceiveResponse:(FYBVirtualCurrencyResponse *)response
 {
     NSLog(@"Received %@ %@", @(response.deltaOfCoins), response.currencyName);

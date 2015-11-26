@@ -637,7 +637,10 @@ value ml_quad_color(value quad) {
 
 value ml_quad_set_color(value quad,value color) {
 	lgQuad *q = QUAD(quad);
-	extract_color(color,((double)q->bl.c.a / 255.),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
+	GLubyte max_alpha_top = (GLubyte) (q->tl.c.a > q->tr.c.a ? q->tl.c.a : q->tr.c.a );
+	GLubyte max_alpha_bottom = (GLubyte) (q->bl.c.a > q->br.c.a ? q->bl.c.a : q->br.c.a );
+	GLubyte alpha = max_alpha_top > max_alpha_bottom ? max_alpha_top:max_alpha_bottom;
+	extract_color(color,((double)alpha / 255.),0,&q->tl.c,&q->tr.c,&q->bl.c,&q->br.c);
 	return Val_unit;
 }
 
