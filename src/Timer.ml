@@ -63,7 +63,14 @@ value create ?(repeatCount=0) delay name = (*{{{*)
       );
 
       method private start' () = 
-        running := Some (Timers.start _delay self#fire);
+        (
+          debug "start : %s; _delay : %f" self#name _delay;
+          let id = Timers.start _delay self#fire in
+            (
+              debug "timer_id : %d" id;
+              running := Some id;
+            );
+        );
 
       method start () = 
         match running with
@@ -75,14 +82,17 @@ value create ?(repeatCount=0) delay name = (*{{{*)
         ];
 
       method private stop' id = 
-        match running with
-        [ None -> ()
-        | Some id -> 
-            (
-              Timers.stop id;
-              running := None;
-            )
-        ];
+        (
+          debug "start : %s" self#name;
+          match running with
+          [ None -> ()
+          | Some id -> 
+              (
+                Timers.stop id;
+                running := None;
+              )
+          ];
+        );
 
       method stop () = 
         match running with
