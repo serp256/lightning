@@ -22,6 +22,12 @@ ifeq ($(PLATFORM),IOS)
 CFLAGS  += -DIOS -Iios -I../../ -I../../ios -I../common -Iios/sdk
 COBJS   +=  ios/gameanalytics_ios.o
 
+LIBFLAGS = -cclib '-weak_framework\ AdSupport' \
+		   -cclib '-framework\ SystemConfiguration' \
+		   -cclib '-lsqlite3' \
+		   -cclib '-lz' \
+			 -lGameAnalyticsSDK
+
 else
 ifeq ($(PLATFORM),ANDROID)
 

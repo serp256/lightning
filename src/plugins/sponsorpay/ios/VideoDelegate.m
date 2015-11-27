@@ -3,6 +3,7 @@
 #import "mlwrapper.h"
 #import <caml/memory.h>
 #import <caml/alloc.h>
+#import "mlwrapper_ios.h"
 
 @implementation VideoDelegate
 

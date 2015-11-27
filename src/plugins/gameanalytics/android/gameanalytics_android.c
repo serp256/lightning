@@ -1,5 +1,3 @@
-#define RESOURCE_CHECK(transaction) if (*((jobject*)Data_custom_val(transaction)) == NULL) caml_invalid_argument("given transaction already comsumed, cannot comsume again or access its fields");
-
 #include "lightning_android.h"
 #include "engine_android.h"
 #include "plugin_common.h"

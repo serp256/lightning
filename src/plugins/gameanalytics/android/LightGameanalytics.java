@@ -15,7 +15,7 @@ public class LightGameanalytics {
 				if (debugMode) {
 					Log.d ("LIGHTNING", "GameAnalytics debugMode: " + debugMode);
 					GameAnalytics.setEnabledInfoLog(debugMode);
-					GameAnalytics.setEnabledVerboseLog(true);
+					GameAnalytics.setEnabledVerboseLog(debugMode);
 				}
 				GameAnalytics.configureBuild(version);
 

@@ -7,6 +7,8 @@
 #import "mlwrapper.h"
 #import <UnityAds/UnityAds.h>
 
+#import "mlwrapper_ios.h"
+
 value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, value v_test) {
 	CAMLparam4(v_appId, v_userId, v_securityToken, v_test);
 
