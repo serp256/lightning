@@ -675,7 +675,7 @@ value create ?width ?height ?border ?dest (html:main) =
                      ]
                    | Some (idx,numAddedChars) ->
                      (
-                       debug "text has whitespace %d:%d" num numAddedChars;
+                       debug "text has whitespace %d:%d" idx numAddedChars;
                        let cnt_chars_in_line = DynArray.length line.lchars in
                        DynArray.delete_range line.lchars numAddedChars (cnt_chars_in_line - numAddedChars);
                        add_line line (UTF8.next text idx)
@@ -700,7 +700,7 @@ value create ?width ?height ?border ?dest (html:main) =
         (
           match !text_whitespace with
           [ Some (widx,ws) -> 
-            let () = debug "set line_whitespace: %d, %d" ws num in
+            let () = debug "set line_whitespace: %d, %d" ws widx in
             line_whitespace.val := Some ( 
               ws , line.ascender, line.descender, 
               if widx < eidx (* Скипнуть пробел в конце???? *)
