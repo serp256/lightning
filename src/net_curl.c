@@ -362,6 +362,7 @@ CAMLprim value ml_URLConnection(value url, value method, value headers, value da
 	r->url = strdup(String_val(url));
 	PRINT_DEBUG("curl req: [%s]",r->url);
 	curl_easy_setopt(r->handle,CURLOPT_URL,r->url);
+	curl_easy_setopt(r->handle, CURLOPT_ACCEPT_ENCODING, "");
 	static value ml_POST = 0;
 	if (ml_POST == 0) ml_POST = caml_hash_variant("POST");
 	if (method == ml_POST) {PRINT_DEBUG("this is POST"); curl_easy_setopt(r->handle,CURLOPT_POST,1);} else PRINT_DEBUG("GET!!!!");
