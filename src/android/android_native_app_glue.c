@@ -203,6 +203,8 @@ static void android_app_destroy(struct android_app* android_app) {
     pthread_cond_broadcast(&android_app->cond);
     pthread_mutex_unlock(&android_app->mutex);
     // Can't touch android_app object after this.
+		// when change system language with app in background: activity is creating in the old process that causes segfault. So exit process manually
+		exit(0);
 }
 
 static void process_input(struct android_app* app, struct android_poll_source* source) {
