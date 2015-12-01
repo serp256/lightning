@@ -116,7 +116,7 @@ public class Openiab implements Payments.IPayments {
 									if (price.startsWith(dollar)) {
 										try {
 											double d_amount = Double.parseDouble (price.substring(1));
-											Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (dollar, d_amount));
+											Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails ("USD", d_amount));
 										}
 										catch (java.lang.RuntimeException exc) {
 											Log.d("LIGHTNING", "JSON exc" + (exc.toString ()));
