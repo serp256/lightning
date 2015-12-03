@@ -57,10 +57,27 @@ module Product =
         external details: t -> info = "ml_product_details";
         value details sku = match get sku with [ Some p -> Some (details p) | _ -> None ];
         value createDetails currency amount = {currency; amount};
+
       ELSE
-        value price = get;
+
+      (* value price = get; *)
         value details sku = try Some (Hashtbl.find details sku) with [ Not_found -> None ];
         value createDetails currency amount=  {currency; amount};
+
+        (* cause Google Play sends now RUB as ₽ *)
+        value price sku = 
+          match details sku with 
+          [ Some d -> 
+            let amount_str = 
+              let amount = d.amount in
+              if ceil(amount) = amount 
+              then Printf.sprintf "%d" (int_of_float amount)
+              else 
+                Printf.sprintf "%.2f" d.amount
+            in
+            Some (Printf.sprintf "%s %s" amount_str d.currency)
+          | _ -> None 
+          ];
       ENDIF;
     ENDIF;
   end;

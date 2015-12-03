@@ -129,7 +129,8 @@ public class Openiab implements Payments.IPayments {
 										Log.d("LIGHTNING", "JSON " + json);
 										long amount = json.getLong ("price_amount_micros");
 										String currency = json.getString ("price_currency_code");
-										double d_amount = amount / 1000000;
+										double d_amount = amount / 1000000.;
+										Log.d("LIGHTNING", "java amount " + amount + " " + d_amount);
 										Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (currency, d_amount));
 									}
 									catch (JSONException exc) {
