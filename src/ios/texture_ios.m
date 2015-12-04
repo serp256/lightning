@@ -126,7 +126,8 @@ int loadImageFile(UIImage *image, textureInfo *tInfo) {
 	tInfo->premultipliedAlpha = YES;
 
 	size_t dataLen = legalWidth * legalHeight * bytesPerPixel;
-	void *imageData = malloc(dataLen);
+	//void *imageData = malloc(dataLen);
+	void *imageData = calloc(dataLen,sizeof(GLubyte));
 	CGContextRef context = CGBitmapContextCreate(imageData, legalWidth, legalHeight, 8, bytesPerPixel * legalWidth, cgColorSpace, bitmapInfo);
 	CGColorSpaceRelease(cgColorSpace);
     
