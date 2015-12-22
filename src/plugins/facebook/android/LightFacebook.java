@@ -55,6 +55,7 @@ class LightFacebook {
 
 				public void onStop() {}
 				public void onDestroy() {}
+				public void onStart() {}
 		});
 	}
 

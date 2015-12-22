@@ -225,6 +225,19 @@ public class NativeActivity extends android.app.NativeActivity {
 	}
 
 	@Override
+	protected void onStart() {
+		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onStart");
+		super.onStart();
+
+		Iterator<IUiLifecycleHelper> iter = uiLfcclHlprs.iterator();
+		while (iter.hasNext()) {
+			IUiLifecycleHelper h = iter.next();
+			h.onStart();
+		}
+	}
+
+
+	@Override
 	protected void onDestroy() {
 		ru.redspell.lightning.utils.Log.d("LIGHTNING", "native activity onDestroy");
 		LightDownloadService.appRunning = false;

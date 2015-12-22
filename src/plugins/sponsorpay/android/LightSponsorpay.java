@@ -50,6 +50,8 @@ public class LightSponsorpay {
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 						public void onCreate(Bundle savedInstanceState) {}
 
+						public void onStart () {}
+
 						public void onResume() {}
 
 						public void onActivityResult(int requestCode, int resultCode, Intent data) {
