@@ -22,9 +22,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma odnoklassniki.cma gameanalytics.cma social_byte
+byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma odnoklassniki.cma gameanalytics.cma xsolla.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa odnoklassniki.cmxa gameanalytics.cmxa gamecontroller.cmxa social_native
+native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa odnoklassniki.cmxa gameanalytics.cmxa xsolla.cmxa gamecontroller.cmxa social_native
 #native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa facebook.cmxa twitter.cmxa whatsapp.cmxa appsflyer.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
@@ -257,6 +257,12 @@ gameanalytics.cma:
 gameanalytics.cmxa:
 	make -C plugins/gameanalytics gameanalytics.cmxa
 
+xsolla.cma:
+	make -C plugins/xsolla xsolla.cma
+
+xsolla.cmxa:
+	make -C plugins/xsolla xsolla.cmxa
+
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
@@ -293,5 +299,6 @@ clean:
 	$(MAKE) -C plugins/gamecontroller clean
 	$(MAKE) -C plugins/odnoklassniki clean
 	$(MAKE) -C plugins/gameanalytics clean
+	$(MAKE) -C plugins/xsolla clean
 
 -include MLDepend.$(PLATFORM)
