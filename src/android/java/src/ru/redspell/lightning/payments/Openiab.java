@@ -207,6 +207,7 @@ public class Openiab implements Payments.IPayments {
              public void onPause() {}
              public void onStop() {}
              public void onDestroy() {}
+						 public void onStart() {}
          });
 
          helper.startSetup(new IabHelper.OnIabSetupFinishedListener() {

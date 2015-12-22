@@ -233,6 +233,7 @@ public class LightVk {
 					public void onPause() {}
 					public void onStop() {}
 					public void onDestroy() {}
+					public void onStart(){}
 			});
 
 			/*

@@ -134,6 +134,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 					@Override public void onDestroy() {};
 					@Override public void onStop() {};
 					@Override public void onPause() {};
+					@Override public void onStart() {};
 					@Override public void onResume() {};
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
@@ -229,6 +230,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 					@Override public void onDestroy() {};
 					@Override public void onStop() {};
 					@Override public void onPause() {};
+					@Override public void onStart() {};
 					@Override public void onResume() {};
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
@@ -258,6 +260,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 					@Override public void onDestroy() {};
 					@Override public void onStop() {};
 					@Override public void onPause() {};
+					@Override public void onStart() {};
 					@Override public void onResume() {};
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
