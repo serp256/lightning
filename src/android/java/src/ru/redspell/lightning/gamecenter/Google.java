@@ -2,7 +2,6 @@ package ru.redspell.lightning.gamecenter;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
-import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.ConnectionResult;
 import android.content.IntentSender;
 import android.os.Bundle;
