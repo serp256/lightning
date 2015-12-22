@@ -76,10 +76,12 @@ public class LightSponsorpay {
 			@Override
 			public void run() {
 				try {
-					Fyber.with(appId, Lightning.activity)
+
+					Fyber.Settings settings = Fyber.with(appId, Lightning.activity)
 			        .withUserId(userId)
 			        .withSecurityToken(securityToken)
 			        .start();  
+					settings.notifyUserOnCompletion(false);
 
 		      FyberLogger.enableLogging(enableLog);
 					UnityAds.setDebugMode(enableLog);
