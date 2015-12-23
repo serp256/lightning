@@ -7,7 +7,14 @@ public class LightXsolla{
 		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				(new LightXsollaDialog(Lightning.activity, token, redirectUrl, s, f, isSandbox)).show();
+				LightXsollaDialog dialog = new LightXsollaDialog(Lightning.activity, token, redirectUrl, s, f, isSandbox);
+				dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						dialog.cancel();
+					}
+				});
+				dialog.show ();
 			}
 		});
 	}

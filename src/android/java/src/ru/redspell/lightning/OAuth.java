@@ -1,11 +1,19 @@
 package ru.redspell.lightning;
+import android.content.DialogInterface;
 
 public class OAuth {
 	public static void dialog(final String url) {
 		Lightning.activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				(new OAuthDialog(Lightning.activity, url, null)).show();
+				OAuthDialog dialog = new OAuthDialog(Lightning.activity, url, null);
+				dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						dialog.cancel();
+					}
+				});
+				dialog.show ();
 			}
 		});
 	}

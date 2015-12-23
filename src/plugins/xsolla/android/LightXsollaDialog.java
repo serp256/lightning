@@ -102,6 +102,8 @@ public class LightXsollaDialog extends Dialog {
         if (redirectUrl != null) {
             mRedirectUrl = redirectUrl;
 				}
+
+				this.setCanceledOnTouchOutside(false);
     }
 
     @Override
@@ -174,6 +176,13 @@ public class LightXsollaDialog extends Dialog {
     public void onDetachedFromWindow() {
         // mWebView.removeAllViews();
         mWebView.destroy();
+    }
+
+    @Override
+    public void cancel () {
+        Log.d("LIGHTNING", "cancel call");
+				this.close ();
+
     }
 
     @Override
