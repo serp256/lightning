@@ -1,6 +1,7 @@
 
 package ru.redspell.lightning.plugins;
 import ru.redspell.lightning.Lightning;
+import android.content.DialogInterface;
 
 public class LightXsolla{
 	public static void purchase (final int s, final int f, final String token, final String redirectUrl, final boolean isSandbox) {
