@@ -25,6 +25,7 @@ value registerXML: string -> unit;
 value exists: ?style:string -> string -> bool;
 value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
+value registerDynamic: string -> unit;
 (*
 module type Creator = sig
   module Sprite: Sprite.S;

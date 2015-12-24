@@ -200,6 +200,7 @@ value register binpath =
                   let ts = pages.(0)#scale in
                   { chars; texture = pages.(0); scale=1.; ascender = ascender *. ts; descender = descender *. ts; space = space *. ts; lineHeight = lineHeight *. ts } 
                 in
+                let () = debug "size %d ascender %f descender %f height %f space %f" size ascender descender lineHeight space in
                 let res = MapInt.add size bf res in
                 parse_chars (n-1) res
               )
@@ -282,3 +283,32 @@ value registerXML xmlpath =
   | _ -> XmlParser.error "Font not found"
   ];
 
+module Freetype = struct
+  type dynamic_font= 
+    {
+      face: string;
+      style: string;
+      scale: float;
+      ascender: float;
+      descender: float;
+      lineHeight: float;
+      space:float;
+    };
+  external init: unit -> unit = "ml_freetype_init"; 
+  external getFont: string-> dynamic_font = "ml_freetype_getFont"; 
+end;
+
+value registerDynamic ttfpath =
+  let open Freetype in
+    let ttfpath = "Resources/"^ttfpath in 
+    let info = Freetype.getFont ttfpath in
+    let face = info.face in
+    let style = info.style in
+    let scale = info.scale in
+      let size = 18 in
+      let res = MapInt.empty in
+      let bf = { chars=Hashtbl.create 0; texture=Texture.zero; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight } 
+      in
+      let () = debug "size %d ascender %f descender %f height %f space %f %f" size info.ascender info.descender info.lineHeight info.space scale in
+      let sizes= MapInt.add size bf res in
+      Hashtbl.replace fonts (face,style) sizes;

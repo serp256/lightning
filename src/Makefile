@@ -6,7 +6,7 @@ CFLAGS += -I . -g
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 #MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o renderbuffer_stub.o filters_stub.o render_stub.o
-MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o rects-bin.o rendertex/common.o rendertex/shared.o rendertex/dedicated.o rendertex/stubs.o filters_stub.o render_stub.o
+MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o rects-bin.o rendertex/common.o rendertex/shared.o rendertex/dedicated.o rendertex/stubs.o filters_stub.o render_stub.o 
 
 light_common.o: light_common.h
 texture_common.o: texture_common.h light_common.h
@@ -62,16 +62,16 @@ ifeq ($(PLATFORM),IOS)
 		LIBFLAGS = -cclib -landroid -cclib -lOpenSLES -cclib -lEGL -cclib -llog -cclib -lz -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else
 	ifeq ($(PLATFORM),PC)
-		MOBJS += net_curl.o pc/glut_stub.o texture_load.o texture_save.o pc/texture_pc.o
+		MOBJS += net_curl.o pc/glut_stub.o texture_load.o texture_save.o pc/texture_pc.o freetype_osx.o
 		BMLSOURCES = pc/glut.ml
 		AMLSOURCES = pc/pc_run.ml
 		MLOBJSFLAGS = -I pc
 		ifeq ($(OS),macos)
-			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -framework Cocoa  -framework OpenGL -framework GLUT
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS})  -framework Cocoa  -framework OpenGL -framework GLUT
 		else
 			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lGL' -cclib '-lglut'
 		endif
-		LIBFLAGS += -lcurl -lpng -ljpeg
+		LIBFLAGS += -lcurl -lpng -ljpeg -lfreetype
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
