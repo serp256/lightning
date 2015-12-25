@@ -20,6 +20,7 @@ type t =
     lineHeight: float;
     space:float;
     texture: Texture.c;
+    isDynamic: bool;
   };
 
 module MapInt = Map.Make (struct type t = int; value compare (k1:int) k2 = compare k1 k2; end);
@@ -198,7 +199,7 @@ value register binpath =
                 loop (IO.read_ui16 bininp);
                 let bf = 
                   let ts = pages.(0)#scale in
-                  { chars; texture = pages.(0); scale=1.; ascender = ascender *. ts; descender = descender *. ts; space = space *. ts; lineHeight = lineHeight *. ts } 
+                  { chars; texture = pages.(0); scale=1.; ascender = ascender *. ts; descender = descender *. ts; space = space *. ts; lineHeight = lineHeight *. ts; isDynamic=False} 
                 in
                 let () = debug "size %d ascender %f descender %f height %f space %f" size ascender descender lineHeight space in
                 let res = MapInt.add size bf res in
@@ -266,7 +267,7 @@ value registerXML xmlpath =
             in
             (
               loop ();
-              let bf = { chars; texture = pages.(0); scale=1.; ascender =  floats ascender; descender = floats descender; space = floats space; lineHeight = floats lineHeight; } in
+              let bf = { chars; texture = pages.(0); scale=1.; ascender =  floats ascender; descender = floats descender; space = floats space; lineHeight = floats lineHeight; isDynamic=False} in
               let res = MapInt.add (XmlParser.ints size) bf res in
               parse_chars res
             )
@@ -294,8 +295,16 @@ module Freetype = struct
       lineHeight: float;
       space:float;
     };
-  external init: unit -> unit = "ml_freetype_init"; 
+  type bc = 
+    {
+      charID:int;
+      xOffset:float;
+      yOffset:float;
+      xAdvance: float;
+    };
   external getFont: string-> dynamic_font = "ml_freetype_getFont"; 
+  external getChar: int -> bc = "ml_freetype_getChar"; 
+  external getTLF: string -> Texture.textureInfo = "ml_freetype_getTLF"; 
 end;
 
 value registerDynamic ttfpath =
@@ -307,8 +316,29 @@ value registerDynamic ttfpath =
     let scale = info.scale in
       let size = 18 in
       let res = MapInt.empty in
-      let bf = { chars=Hashtbl.create 0; texture=Texture.zero; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight } 
-      in
-      let () = debug "size %d ascender %f descender %f height %f space %f %f" size info.ascender info.descender info.lineHeight info.space scale in
+      let bf = { chars=Hashtbl.create 0; texture=Texture.zero; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight; isDynamic = True} in
+      let () = debug "(%s;%s) size %d ascender %f descender %f height %f space %f %f" face style size info.ascender info.descender info.lineHeight info.space scale in
       let sizes= MapInt.add size bf res in
       Hashtbl.replace fonts (face,style) sizes;
+
+value _getChar code = 
+  let open Freetype in
+  (
+    let bc = Freetype.getChar code in
+    let () = debug "char: %d %f %f %f" bc.charID bc.xOffset bc.yOffset bc.xAdvance in
+    bc |> ignore;
+  );
+value getChar isDynamic chars code = 
+  match isDynamic with 
+  [False -> try Some (Hashtbl.find chars code) with [ Not_found -> None ]
+  | _ -> (_getChar code;None)
+  ];
+
+value tlf text = 
+(
+if False then
+(Image.load("tree2.alpha"))#asDisplayObject
+else
+(Image.create (Texture.make (Freetype.getTLF text)))#asDisplayObject;
+);
+

@@ -17,6 +17,7 @@ type t =
     lineHeight: float;
     space:float;
     texture: Texture.c;
+    isDynamic: bool;
   };
 
 (* value register: string -> unit; *)
@@ -26,6 +27,8 @@ value exists: ?style:string -> string -> bool;
 value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
 value registerDynamic: string -> unit;
+value getChar: bool -> Hashtbl.t int bc -> int -> option bc;
+value tlf: string -> DisplayObject.c;
 (*
 module type Creator = sig
   module Sprite: Sprite.S;
