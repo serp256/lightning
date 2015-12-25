@@ -176,7 +176,9 @@ value ml_freetype_getTLF(value vtext) {
 	unsigned int totalWidth = 0; 
 	unsigned int totalHeight = 0;
 	unsigned char* ret = malloc(textureSize*textureSize);
+	memset(ret,0,textureSize*textureSize);
 	int dataLen = 0;
+	int posX = 0;
 	while (text!=NULL && *text != '\0') {
 
 		PRINT_DEBUG("%c", *text);
@@ -222,20 +224,26 @@ value ml_freetype_getTLF(value vtext) {
     
 		PRINT_DEBUG ("w, h %d %d", w, h);
 		PRINT_DEBUG ("buffer %d, dta %d", bufferSize, dataLen);
-		//renderCharAt(ret,totalWidth, 0, buffer, w,h);
-		memcpy(ret+dataLen,buffer,w*h);
+		renderCharAt(ret,posX, 0, buffer, w,h);
+		//memcpy(ret+dataLen,buffer,w*h);
+		posX += w;
 		dataLen += bufferSize;
 
 		totalWidth += w;
+		totalHeight = h;
 		++text;
 		
 	}
 	PRINT_DEBUG("loaded PNG image: %d:%d",totalWidth,totalHeight);
 
+	/*
 	unsigned char* bret = malloc(dataLen);
 	memcpy(bret,ret,dataLen);
+	*/
 	textureInfo *tInfo= (textureInfo*)malloc(sizeof(textureInfo));
 
+	totalWidth = textureSize;
+	totalHeight = textureSize;
 	tInfo->format = LTextureFormatAlpha;
 	tInfo->width = totalWidth;
 	tInfo->realWidth = totalWidth;
@@ -246,7 +254,7 @@ value ml_freetype_getTLF(value vtext) {
 	tInfo->premultipliedAlpha = 1;
 	tInfo->scale = 1.;
 	tInfo->dataLen = dataLen;
-	tInfo->imgData = bret;
+	tInfo->imgData = ret;
 
 	PRINT_DEBUG ("ok");
 	CAMLlocal2(mlTex, textureID);
