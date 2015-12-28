@@ -294,17 +294,43 @@ module Freetype = struct
       descender: float;
       lineHeight: float;
       space:float;
+      texInfo: Texture.textureInfo;
     };
   type bc = 
     {
       charID:int;
+      x: float;
+      y: float;
+      width: float;
+      height: float;
       xOffset:float;
       yOffset:float;
       xAdvance: float;
     };
   external getFont: string-> dynamic_font = "ml_freetype_getFont"; 
-  external getChar: int -> bc = "ml_freetype_getChar"; 
-  external getTLF: string -> Texture.textureInfo = "ml_freetype_getTLF"; 
+  external _getChar: int -> option bc = "ml_freetype_getChar"; 
+
+ 
+  value createBc bf bc =
+        let atlasNode =
+          let region = Rectangle.create bc.x bc.y bc.width bc.height in
+          AtlasNode.create bf.texture region () in
+        {charID=bc.charID; xOffset=bc.xOffset; yOffset = bc.yOffset; xAdvance = bc.xAdvance; atlasNode};
+
+  value getChar (face,style,size) code =
+    let bc = _getChar code in
+    match bc with
+    [Some bc -> 
+        let sizes = Hashtbl.find fonts (face, style) in
+        let (fsize,bf) = MapInt.choose sizes in
+        let bchar = createBc bf bc in
+        (
+          debug "add %d, size %d" bchar.charID size;
+          Hashtbl.add bf.chars bchar.charID bchar;
+          Some bchar
+        )
+    | _ -> None
+    ];
 end;
 
 value registerDynamic ttfpath =
@@ -316,29 +342,18 @@ value registerDynamic ttfpath =
     let scale = info.scale in
       let size = 18 in
       let res = MapInt.empty in
-      let bf = { chars=Hashtbl.create 0; texture=Texture.zero; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight; isDynamic = True} in
+      let bf = { chars=Hashtbl.create 0; texture=Texture.make info.texInfo; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight; isDynamic = True} in
       let () = debug "(%s;%s) size %d ascender %f descender %f height %f space %f %f" face style size info.ascender info.descender info.lineHeight info.space scale in
       let sizes= MapInt.add size bf res in
       Hashtbl.replace fonts (face,style) sizes;
 
-value _getChar code = 
-  let open Freetype in
-  (
-    let bc = Freetype.getChar code in
-    let () = debug "char: %d %f %f %f" bc.charID bc.xOffset bc.yOffset bc.xAdvance in
-    bc |> ignore;
-  );
-value getChar isDynamic chars code = 
-  match isDynamic with 
-  [False -> try Some (Hashtbl.find chars code) with [ Not_found -> None ]
-  | _ -> (_getChar code;None)
+value getChar isDynamic info chars code = 
+  try 
+    Some (Hashtbl.find chars code) 
+  with [ Not_found -> 
+    match isDynamic with
+    [True -> Freetype.getChar info code
+    |False -> None 
+    ]
   ];
-
-value tlf text = 
-(
-if False then
-(Image.load("tree2.alpha"))#asDisplayObject
-else
-(Image.create (Texture.make (Freetype.getTLF text)))#asDisplayObject;
-);
 

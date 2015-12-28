@@ -611,7 +611,24 @@ value create ?width ?height ?border ?dest (html:main) =
       let () = debug "draw text: %s [%d:%d]" text sidx eidx in
       let color = getAttr (fun [ `color n -> Some n | _ -> None]) 0 attributes in
       let alpha = getAttr (fun [ `alpha a -> Some a | _ -> None]) 1. attributes in
+        let fontFamily =
+          match getFontFamily attributes with
+          [ Some fn -> fn
+          | None -> !default_font_family
+          ]
+        and fontStyle = 
+          match getFontStyle attributes with
+          [ Some s-> s
+          | _ -> "regular"
+          ]
+        and fontSize = 
+          match getFontSize attributes with
+          [ Some size -> size 
+          | _ -> !default_font_size
+          ]
+        in
       let font = getFont attributes in
+
       let () = debug "font scale: %f" font.BitmapFont.scale in
       let text_whitespace = ref None in
       let yoffset = ref 0. in
@@ -647,7 +664,7 @@ value create ?width ?height ?border ?dest (html:main) =
              add_char line (UTF8.next text index)
            )
            else
-             match try Some (Hashtbl.find font.chars code) with [ Not_found -> None ] with
+             match BitmapFont.getChar font.isDynamic (fontFamily, fontStyle, fontSize) font.chars code with
              [ Some bchar ->
                let bchar = 
                  if font.scale <> 1. 
@@ -754,6 +771,7 @@ value create ?width ?height ?border ?dest (html:main) =
         and iheight = match getAttrOpt (fun [ `height h -> Some h | _ -> None ])  attrs with [ Some h -> (image#setHeight h; h) | None -> image#height] *)
         and paddingLeft = getAttr (fun [ `paddingLeft pl -> Some pl | _ -> None]) 0. attrs in
         let () = debug "paddingLeft: %f" paddingLeft in
+
         let font = getFont attributes in
         let line = 
           if Stack.is_empty lines 

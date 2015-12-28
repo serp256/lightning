@@ -27,8 +27,8 @@ value exists: ?style:string -> string -> bool;
 value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
 value registerDynamic: string -> unit;
-value getChar: bool -> Hashtbl.t int bc -> int -> option bc;
-value tlf: string -> DisplayObject.c;
+value getChar: bool -> (string * string * int) -> Hashtbl.t int bc -> int -> option bc;
+
 (*
 module type Creator = sig
   module Sprite: Sprite.S;
