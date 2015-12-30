@@ -80,6 +80,7 @@ ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/supersonic/ios/libsupersonic-sdk.a
 	INSTALL_FILES += src/plugins/sponsorpay/ios/sdk/libFyberSDK.a
 	INSTALL_FILES += src/plugins/gameanalytics/ios/sdk/libGameAnalyticsSDK.a
+	INSTALL_FILES += src/freetype/ios/*.a
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))

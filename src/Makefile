@@ -50,7 +50,8 @@ ifeq ($(PLATFORM),IOS)
 						 -cclib '-framework\ OpenAL' \
 						 -cclib '-framework\ GameKit' \
 						 -cclib '-framework\ StoreKit' \
-						 -cclib '-framework\ CoreMotion'
+						 -cclib '-framework\ CoreMotion'\
+						 -cclib '-lfreetype'
 						 #-cclib '-framework\ FacebookSDK'
 	#CFLAGS += -Fsocial/facebook/ios/FacebookSDK
 	else
@@ -85,7 +86,7 @@ ifeq ($(PLATFORM),IOS)
 			#LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-framework\ Cocoa'  -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
 			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -framework Cocoa  -lSDL_image -lSDLmain -framework OpenGL
 		else
-			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL' 
 		endif
 		LIBFLAGS += -lcurl
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
