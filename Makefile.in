@@ -69,6 +69,9 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/xsolla/*.cmxa src/plugins/xsolla/*.a)
 endif
 
+ifeq ($(PLATFORM),ANDROID)
+	INSTALL_FILES += src/freetype/android/*.a
+endif
 ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/appflood/ios/libappflood-sdk.a
 	INSTALL_FILES += src/plugins/appsflyer/ios/libAppsFlyerLib.a

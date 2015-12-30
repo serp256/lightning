@@ -294,7 +294,7 @@ module Freetype = struct
       descender: float;
       lineHeight: float;
       space:float;
-      texInfo: Texture.textureInfo;
+      texInfo: option Texture.textureInfo;
     };
   type bc = 
     {
@@ -307,9 +307,11 @@ module Freetype = struct
       yOffset:float;
       xAdvance: float;
     };
-  external getFont: string-> dynamic_font = "ml_freetype_getFont"; 
-  external _getChar: int -> option bc = "ml_freetype_getChar"; 
+  external getFont: string-> int -> dynamic_font = "ml_freetype_getFont"; 
+  external _getChar: int -> int-> option bc = "ml_freetype_getChar"; 
+  external complete: unit -> unit = "ml_freetype_bindTexture";
 
+  value needCompletion = ref False;
  
   value createBc bf bc =
         let atlasNode =
@@ -318,34 +320,47 @@ module Freetype = struct
         {charID=bc.charID; xOffset=bc.xOffset; yOffset = bc.yOffset; xAdvance = bc.xAdvance; atlasNode};
 
   value getChar (face,style,size) code =
-    let bc = _getChar code in
+    let bc = _getChar code size in
     match bc with
     [Some bc -> 
+      (
         let sizes = Hashtbl.find fonts (face, style) in
-        let (fsize,bf) = MapInt.choose sizes in
-        let bchar = createBc bf bc in
-        (
-          debug "add %d, size %d" bchar.charID size;
-          Hashtbl.add bf.chars bchar.charID bchar;
-          Some bchar
-        )
-    | _ -> None
+        try
+          let bf = MapInt.find size sizes in
+          let bchar = createBc bf bc in
+          (
+            debug "add %d, size %d" bchar.charID size;
+            Hashtbl.add bf.chars bchar.charID bchar;
+            needCompletion.val := True;
+            Some bchar
+          )
+        with [_ ->let ()= debug "b" in  None]
+      )
+    | _ -> let () = debug "11" in
+    None
     ];
 end;
 
-value registerDynamic ttfpath =
+value registerDynamic (sizes:list int) ttfpath =
   let open Freetype in
-    let ttfpath = "Resources/"^ttfpath in 
-    let info = Freetype.getFont ttfpath in
-    let face = info.face in
-    let style = info.style in
-    let scale = info.scale in
-      let size = 18 in
-      let res = MapInt.empty in
-      let bf = { chars=Hashtbl.create 0; texture=Texture.make info.texInfo; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight; isDynamic = True} in
-      let () = debug "(%s;%s) size %d ascender %f descender %f height %f space %f %f" face style size info.ascender info.descender info.lineHeight info.space scale in
-      let sizes= MapInt.add size bf res in
-      Hashtbl.replace fonts (face,style) sizes;
+    let (face,style,sizesMap,_) =
+      List.fold_left (fun (face,style,res, texInfo) size ->
+      let info = Freetype.getFont ttfpath size in
+      let face = info.face in
+      let style = info.style in
+      let scale = info.scale in
+      let texture= 
+        match texInfo with 
+        [None -> 
+          match info.texInfo with [Some t -> Texture.make t| None -> Texture.zero] 
+        | Some t -> t] in
+        let bf = { chars=Hashtbl.create 0; texture; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight; isDynamic = True} in
+        let () = debug "(%s;%s) size %d ascender %f descender %f height %f space %f %f" face style size info.ascender info.descender info.lineHeight info.space scale in
+        let sizes= MapInt.add size bf res in
+        (face,style,sizes, Some texture);
+      ) ("","",MapInt.empty,None) sizes in
+    Hashtbl.replace fonts (face,style) sizesMap;
+
 
 value getChar isDynamic info chars code = 
   try 
@@ -357,3 +372,22 @@ value getChar isDynamic info chars code =
     ]
   ];
 
+value show size =
+  (
+    let tex = 
+      let sizes = Hashtbl.find fonts ("Comic Sans MS","Bold")in
+      let bf = MapInt.find size sizes in
+      bf.texture in
+    Image.create tex;
+  );
+
+value dynamicFontComplete () = 
+  let () = debug "complete need %b" (!Freetype.needCompletion) in
+  match !Freetype.needCompletion with
+  [True -> 
+    ( 
+      Freetype.complete (); 
+      Freetype.needCompletion.val := False;
+    )
+  |False -> ()
+  ];

@@ -26,9 +26,10 @@ value registerXML: string -> unit;
 value exists: ?style:string -> string -> bool;
 value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
-value registerDynamic: string -> unit;
+value registerDynamic: list int -> string  -> unit;
 value getChar: bool -> (string * string * int) -> Hashtbl.t int bc -> int -> option bc;
-
+value show: int -> Image.c;
+value dynamicFontComplete: unit -> unit;
 (*
 module type Creator = sig
   module Sprite: Sprite.S;
