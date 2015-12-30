@@ -119,6 +119,7 @@ textureInfo *tInfo;
 value ml_freetype_getFont(value ttf, value vsize) { 
 	CAMLparam2(ttf, vsize);
 
+	PRINT_DEBUG("get FT Font");
 	if (initFreeType()) PRINT_DEBUG ("error on freetype init");
 	adjustForExtend = _letterEdgeExtend / 2;
 
@@ -147,11 +148,26 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		int64_t i = fread(buf,sizeof(unsigned char), r.length,fp);
 		PRINT_DEBUG("ipizda %lld", i);
 		*/
+		char* fname = String_val(ttf);
 		unsigned char* buf;
 		long fsize;
+		if (*fname == '/') {
+			//absolute path
+			PRINT_DEBUG ("absilute path %s", fname);
+			FILE *f = fopen(fname, "rb");
+
+			fseek(f,0,SEEK_END);
+			fsize = ftell(f);
+			fseek(f,0,SEEK_SET);
+			buf = malloc(fsize);
+			memset(buf,0, sizeof(buf));
+			fread(buf, fsize,1,f);
+			error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
+			fclose(f);
+		} else {
 #if (defined IOS || defined ANDROID)
 	resource r;
-	if (getResourceFd(String_val(ttf),&r)) {
+	if (getResourceFd(fname,&r)) {
 		buf = malloc(r.length);
 		memset(buf,0, sizeof(buf));
 		int64_t i = read(r.fd, buf, r.length);
@@ -161,7 +177,6 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	}
 
 #else
-		char* fname = String_val(ttf);
 		char* dir = "Resources/";
 		PRINT_DEBUG ("fdir %s", dir);
 		PRINT_DEBUG ("fname %s", fname);
@@ -186,6 +201,7 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
 		fclose(f);
 #endif
+		}
 
 	//error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
 
@@ -194,6 +210,10 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
 		caml_failwith(caml_copy_string(getErrorMessage (error)));
 	}
+
+
+	PRINT_DEBUG ("%s: %s", face->family_name,face->style_name);
+
   error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	if ( error )
 	{
@@ -290,7 +310,7 @@ value ml_freetype_getChar(value vtext, value vsize) {
 
 	//float startY = _currentPageOrigY;
 
-		PRINT_DEBUG("%c", code);
+		PRINT_DEBUG(" %c: %x", code, code);
 
 		error =(FT_Load_Char(face, code, FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT));
 
