@@ -115,6 +115,22 @@ value ml_getLocale () {
 	return vlocale;
 }
 
+value ml_getSystemFontPath (value vlocale) {
+	CAMLparam1(vlocale);
+	CAMLlocal1(vpath);
+	static jmethodID mid = 0;
+
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getSystemFontPath", "(Ljava/lang/String;)Ljava/lang/String;");
+
+	jstring jlocale= (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vlocale));
+	jstring jpath = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid, jlocale);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jlocale);
+	JSTRING_TO_VAL(jpath, vpath);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
+
+	CAMLreturn(vpath);
+}
+
 value ml_getInternalStoragePath() {
 	CAMLparam0();
 	CAMLlocal1(vpath);

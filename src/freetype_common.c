@@ -12,6 +12,7 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_TRUETYPE_TABLES_H
 
 #ifdef ANDROID
 #include "android/lightning_android.h"
@@ -58,7 +59,7 @@ const char* getErrorMessage(FT_Error err) {
 
 void print_error(FT_Error error) {
 	if (error) {
-			//PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
+			PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
 	}
 }
 int texID = 0;
@@ -92,7 +93,7 @@ void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,
 }
 
 FT_Library _FTlibrary;
-FT_Face face;
+FT_Face face, face_cjk, face_latin;
 int _FTInitialized = 1;
 
 int dpi = 72;
@@ -105,6 +106,15 @@ int adjustForExtend;
 unsigned char* _currentPageData;
 int _currentPageDataSize;
 
+void initTextureData () {
+		_currentPageData= malloc(_currentPageDataSize);
+		memset(_currentPageData,0,_currentPageDataSize);
+		_currLineHeight = 0;
+		_currentPage = 0;
+		_currentPageOrigX = 0;
+		_currentPageOrigY = 0;
+}
+
 int initFreeType() {
     if (_FTInitialized)
     {
@@ -113,47 +123,31 @@ int initFreeType() {
         _FTInitialized = 0;
     }
 
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE,&textureSize);
+		PRINT_DEBUG("tex size %i", textureSize);
+		
+
+		adjustForExtend = _letterEdgeExtend / 2;
+		_currentPageDataSize = textureSize * textureSize;
+		initTextureData ();
     return  _FTInitialized;
 }
+
 textureInfo *tInfo;
+
 value ml_freetype_getFont(value ttf, value vsize) { 
 	CAMLparam2(ttf, vsize);
 
 	PRINT_DEBUG("get FT Font");
 	if (initFreeType()) PRINT_DEBUG ("error on freetype init");
-	adjustForExtend = _letterEdgeExtend / 2;
-
-	_currentPageDataSize = textureSize * textureSize;
-	_currentPageData= malloc(_currentPageDataSize);
-	memset(_currentPageData,0,_currentPageDataSize);
-
-	//int error = FT_New_Face(_FTlibrary, String_val(ttf), 0, &face);
 
 	FT_Error error;
-	/*
-	if (getResourceFd(String_val(ttf),&r)) {
-		PRINT_DEBUG("getResourceFd return true");
-		PRINT_DEBUG("%lld", r.length);
-
-		FILE *fp = fdopen(r.fd, "rb");
-
-		fseek(fp,0,SEEK_END);
-		fseek(fp,0,SEEK_SET);
-		unsigned char* buf = malloc(r.length);
-		if (read(r.fd, buf, r.length) != r.length)  {
-			PRINT_DEBUG("fail read");
-		}
-		*/
-		/*
-		int64_t i = fread(buf,sizeof(unsigned char), r.length,fp);
-		PRINT_DEBUG("ipizda %lld", i);
-		*/
 		char* fname = String_val(ttf);
 		unsigned char* buf;
 		long fsize;
 		if (*fname == '/') {
 			//absolute path
-			PRINT_DEBUG ("absilute path %s", fname);
+			PRINT_DEBUG ("absolute path %s", fname);
 			FILE *f = fopen(fname, "rb");
 
 			fseek(f,0,SEEK_END);
@@ -172,7 +166,7 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		memset(buf,0, sizeof(buf));
 		int64_t i = read(r.fd, buf, r.length);
 		int e = errno;
-		PRINT_DEBUG("fread %lld %s", i, strerror(e));
+	//	PRINT_DEBUG("fread %lld %s", i, strerror(e));
 		error = ( (FT_New_Memory_Face(_FTlibrary, buf, r.length, 0, &face )));
 	}
 
@@ -202,6 +196,24 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		fclose(f);
 #endif
 		}
+		TT_OS2*  os2;                                     
+
+
+		os2 =                                                    
+			(TT_OS2*)FT_Get_Sfnt_Table( face, FT_SFNT_OS2);   
+		PRINT_DEBUG("%x",((os2->ulUnicodeRange1)));
+		PRINT_DEBUG ("%s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(0)))?"true":"false");
+		PRINT_DEBUG ("%s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(1)))?"true":"false");
+		PRINT_DEBUG ("%s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(2)))?"true":"false");
+		PRINT_DEBUG ("cyrrilic %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(9)))?"true":"false");
+
+		PRINT_DEBUG ("arabic %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(13)))?"true":"false");
+
+		PRINT_DEBUG ("cjk %s %s", face->family_name, ((os2->ulUnicodeRange2) & (1<<(27)))?"true":"false");
+		PRINT_DEBUG ("range2 %x", (os2->ulUnicodeRange2));
+		PRINT_DEBUG ("randge3: %x", (os2->ulUnicodeRange3));
+		PRINT_DEBUG ("range4: %x", (os2->ulUnicodeRange4));
+
 
 	//error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
 
@@ -278,53 +290,63 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		Store_field(mlFont,7,Val_int(0));
 	}
 	
+	if (face_cjk == NULL) {
+		face_cjk = face;
+		PRINT_DEBUG ("1 %d", face_cjk==face? 0 : 1);
+	} else {
+		if (strcmp(face_cjk->family_name, face->family_name) != 0) { 
+		face_latin = face;
+		}
+		else {PRINT_DEBUG("same family");}
+		PRINT_DEBUG ("2 %d", face_latin==face? 0 : 1);
+	}
 
 	CAMLreturn(mlFont);
 }
 
 value ml_freetype_getChar(value vtext, value vsize) {
+	PRINT_DEBUG("ml_freetype_getChar");
 	CAMLparam2(vtext,vsize);
 	CAMLlocal2(mlChar,mlCharOpt);
 
 	int code = Int_val(vtext);
+	PRINT_DEBUG("code %c %x", code, code);
 
 	fontSize = Int_val(vsize);
 	int fontSizePoints = (int)(64.f * fontSize);
 
 	FT_Error error;
+	PRINT_DEBUG("1");
+
+
+	fontLetterDefinition tempDef;
+
+	if (face_cjk==NULL) {
+		caml_failwith("no face initialized");
+	}
+
+
+	unsigned int glyph_index = 	FT_Get_Char_Index(face_cjk, code);
+	PRINT_DEBUG ("index %u", glyph_index);
+	 if (glyph_index) {
+		 face = face_cjk;
+	 }
+	 else {
+		 glyph_index = FT_Get_Char_Index(face_latin, code);
+		 PRINT_DEBUG("no char");
+		 face = face_latin;
+	 }
 	FT_Size_Metrics size_info = face->size->metrics;
+	PRINT_DEBUG("2");
 	if (face->size->metrics.x_ppem != fontSizePoints) {
 		error= (FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
 		print_error(error);
 	}
 
-
-	if (face==NULL) {
-		caml_failwith("no face initialized");
-	}
-
-
-	fontLetterDefinition tempDef;
 	int _fontAscender = face->size->metrics.ascender >> 6;
 	int _lineHeight = face->size->metrics.height >> 6;
-
-	//float startY = _currentPageOrigY;
-
-		PRINT_DEBUG(" %c: %x", code, code);
-
-		error =(FT_Load_Char(face, code, FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT));
-
-		if (face->glyph->format == FT_GLYPH_FORMAT_BITMAP) {
-			PRINT_DEBUG("is bitmap");
-		}
-		else {
-			PRINT_DEBUG("not bitmap");
-			error = FT_Render_Glyph( face->glyph, FT_RENDER_MODE_NORMAL);
-			print_error (error);
-		}
-
-		print_error(error);
-
+	 error = FT_Load_Glyph(face,glyph_index, FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT);
+	 print_error(error);
 		
 		unsigned char* buffer = face->glyph->bitmap.buffer;
 
@@ -350,7 +372,12 @@ value ml_freetype_getChar(value vtext, value vsize) {
 			_currentPageOrigY += _currLineHeight;
 			_currLineHeight = 0;
 			_currentPageOrigX = 0;
+			if (_currentPageOrigY + _lineHeight >= textureSize){
+				PRINT_DEBUG ("No more space in texture");
+			}
+
 		}
+		
 		renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, w, h);
 
 		tempDef.x = _currentPageOrigX;
@@ -375,7 +402,6 @@ value ml_freetype_getChar(value vtext, value vsize) {
 		}
 
 		if (tempDef.validDefinition==0) {
-			PRINT_DEBUG ("create char");
 			mlChar = caml_alloc_tuple(8);
 
 			Store_field(mlChar,0, Val_int(code));
@@ -408,5 +434,6 @@ value ml_freetype_bindTexture(value unit) {
 	PRINT_DEBUG("FT bindTexture");
 			glBindTexture(GL_TEXTURE_2D, texID);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, textureSize, textureSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _currentPageData);
+			initTextureData();
 	CAMLreturn(Val_unit);
 }

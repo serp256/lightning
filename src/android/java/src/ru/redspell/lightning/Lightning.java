@@ -265,6 +265,58 @@ public class Lightning {
         return android.os.Build.MODEL;
     }
 
+		
+		private static String getSystemFontName (String locale) {
+			int version = android.os.Build.VERSION.SDK_INT;
+			Log.d ("LIGHTNING", "locale " + locale + " version "  + version );
+			if (locale.equals("zh")) {
+				if (version >= 21) {
+					//return "NotoSansSC-Regular.otf";
+					return "NotoNaskhArabic-Regular.ttf";
+				}
+				else {
+					return "DroidSansFallback.ttf";
+				}
+			}
+			else {
+				if (version >=14) {
+					return "Roboto-Regular.ttf";
+				}
+				else {
+					return "DroidSans.ttf";
+				}
+			}
+		}
+		
+		
+		public static String getSystemFontPath (String lcl) {
+			Log.d ("LIGHTNING","getSystemFontPath " + lcl);
+			String[] fontdirs = { "/system/fonts", "/system/font", "/data/fonts" };
+ 
+			Log.d ("LIGHTNING","getSystemFontName" + lcl);
+				String fontName = getSystemFontName(lcl);
+
+        for ( String fontdir : fontdirs ) {
+            File dir = new File( fontdir );
+ 
+            if (!dir.exists())
+                continue;
+ 
+            File[] files = dir.listFiles();
+ 
+            if (files == null)
+                continue;
+ 
+            for ( File file : files ) {
+							if (file.getName().equals(fontName)) {
+								Log.d ("LIGHTNING","font:" + file.getName());
+								return (file.getAbsolutePath ());
+							}
+            }
+        }
+				return "";
+		}
+
     private static ProgressDialog progressDialog;
 
     public static void showNativeWait(final String message) {

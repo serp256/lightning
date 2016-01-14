@@ -309,10 +309,38 @@ module Freetype = struct
     };
   external getFont: string-> int -> dynamic_font = "ml_freetype_getFont"; 
   external _getChar: int -> int-> option bc = "ml_freetype_getChar"; 
-  external complete: unit -> unit = "ml_freetype_bindTexture";
+  external _complete: unit -> unit = "ml_freetype_bindTexture";
 
-  value needCompletion = ref False;
  
+  class c =
+    object(self)
+      value mutable texture = Texture.zero;
+      method setTex tx = texture := tx;
+      method texture = texture;
+      value mutable needCompletion = False;
+      method setNeedCompletion flag = needCompletion := flag;
+      method needCompletion = needCompletion;
+      value mutable fonts : list ((string*string) * (list int))= [];
+      method fonts = fonts;
+      method addFont (face,style) sizes = fonts := [((face,style),sizes):: fonts];
+    end;
+
+  value _instance = Lazy.from_fun (fun () -> new c);
+  value instance () : c = Lazy.force _instance;
+
+  value complete () =
+    (
+      _complete();
+      List.iter (fun ((name,style), sizes) ->
+        List.iter (fun size ->
+          let font = get ~style ~size name in
+          Hashtbl.clear font.chars;
+        ) sizes;
+      ) (instance())#fonts;
+      (instance())#setNeedCompletion False;
+    );
+  value needCompletion () = (instance())#needCompletion;
+
   value createBc bf bc =
         let atlasNode =
           let region = Rectangle.create bc.x bc.y bc.width bc.height in
@@ -331,7 +359,7 @@ module Freetype = struct
           (
             debug "add %d, size %d" bchar.charID size;
             Hashtbl.add bf.chars bchar.charID bchar;
-            needCompletion.val := True;
+            (instance())#setNeedCompletion True;
             Some bchar
           )
         with [_ ->let ()= debug "b" in  None]
@@ -339,6 +367,7 @@ module Freetype = struct
     | _ -> let () = debug "11" in
     None
     ];
+  value saveFontInfo (face,style) sizes = (instance())#addFont (face,style) sizes;
 end;
 
 value registerDynamic (sizes:list int) ttfpath =
@@ -350,16 +379,26 @@ value registerDynamic (sizes:list int) ttfpath =
       let style = info.style in
       let scale = info.scale in
       let texture= 
-        match texInfo with 
-        [None -> 
-          match info.texInfo with [Some t -> Texture.make t| None -> Texture.zero] 
-        | Some t -> t] in
+        match info.texInfo with 
+        [ Some t -> 
+          let tx = Texture.make t in
+          (
+            (Freetype.instance())#setTex tx;
+            tx
+          )
+        | None -> (Freetype.instance())#texture 
+        ] in
         let bf = { chars=Hashtbl.create 0; texture; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight; isDynamic = True} in
         let () = debug "(%s;%s) size %d ascender %f descender %f height %f space %f %f" face style size info.ascender info.descender info.lineHeight info.space scale in
         let sizes= MapInt.add size bf res in
         (face,style,sizes, Some texture);
       ) ("","",MapInt.empty,None) sizes in
-    Hashtbl.replace fonts (face,style) sizesMap;
+    (
+
+      Hashtbl.replace fonts (face,style) sizesMap;
+      Freetype.saveFontInfo (face,style) sizes;
+      (face,style);
+    );
 
 
 value getChar isDynamic info chars code = 
@@ -375,19 +414,23 @@ value getChar isDynamic info chars code =
 value show size =
   (
     let tex = 
-      let sizes = Hashtbl.find fonts ("Comic Sans MS","Bold")in
+      let sizes = Hashtbl.find fonts ("Noto Sans SC","Regular")in
       let bf = MapInt.find size sizes in
       bf.texture in
     Image.create tex;
   );
 
 value dynamicFontComplete () = 
-  let () = debug "complete need %b" (!Freetype.needCompletion) in
-  match !Freetype.needCompletion with
+  match Freetype.needCompletion () with
   [True -> 
     ( 
       Freetype.complete (); 
-      Freetype.needCompletion.val := False;
     )
   |False -> ()
   ];
+
+IFPLATFORM(ios android)
+  external getSystemFontPath: string -> string = "ml_getSystemFontPath";
+ELSE 
+  value getSystemFontPath _ = "";
+ENDPLATFORM;
