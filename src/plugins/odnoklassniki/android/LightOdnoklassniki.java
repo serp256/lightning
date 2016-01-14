@@ -160,7 +160,6 @@ class LightOdnoklassniki {
 			new GetUsersInfoTask().execute (new UsersRequest (success, fail, uids));
 		}
 		else {
-			Log.d("LIGHTNING","users list is empty");
 			(new FriendsSuccess(success, fail, new Friend[0])).run();
 		}
 	}
@@ -196,7 +195,7 @@ class LightOdnoklassniki {
         return LightOdnoklassniki.ok.request("users.getCurrentUser", null, "get");
       } catch (Exception exc) {
         Log.e("Odnoklassniki", "Failed to get current user info", exc);
-				(new Fail (success, fail, "Failed to get currrent user info")).run();
+		//		(new Fail (success, fail, "Failed to get currrent user info")).run();
       }
       return null;
     }
@@ -212,10 +211,12 @@ class LightOdnoklassniki {
 					(new AuthSuccess(success, fail)).run();
 				}
 				catch (org.json.JSONException e) {
-					Log.d("LIGHTNING", "wrong or empty json format");
 					(new Fail(success, fail, "Failed on parse user json")).run();
 				};
       }
+			else {
+				(new Fail (success, fail, "Failed to get currrent user info")).run();
+			}
     }
   }
 
@@ -244,7 +245,7 @@ class LightOdnoklassniki {
     @Override
     protected void onPostExecute(final String result) { 
 			if (result != null) {
-        Log.d("LIGHTNING", "Get user friends result " + result);
+        //Log.d("LIGHTNING", "Get user friends result " + result);
 				LightOdnoklassniki.users (success, fail, result);
       }
     }
@@ -273,6 +274,7 @@ class LightOdnoklassniki {
 	 private static Map params = new HashMap<String,String>() ;
 	 static int success;
 	 static int fail;
+	 static boolean error = false;
 	 
 
     @Override
@@ -281,6 +283,8 @@ class LightOdnoklassniki {
       }
     @Override
     protected String doInBackground(final UsersRequest... urequest) {
+			success = urequest[0].success;
+			fail = urequest[0].fail;
 			try {
 				JSONArray uids = new JSONArray (urequest[0].uids);
 				String str = new String ();
@@ -290,18 +294,17 @@ class LightOdnoklassniki {
 				}
 				params.put("uids", str);
 				params.put("fields", "uid, first_name, last_name, gender, online, last_online, pic190x190");
-				success = urequest[0].success;
-				fail = urequest[0].fail;
 				try {
 					return LightOdnoklassniki.ok.request("users.getInfo", params, "get");
 				} catch (Exception exc) {
 					Log.d("LIGHTNING", "Failed to get users");
-					(new Fail (success, fail, "Failed to get users")).run();
+					error = true;
+					//(new Fail (success, fail, "Failed to get users")).run();
 				}
 		  }
 			catch (org.json.JSONException e) {
 				Log.d("LIGHTNING", "wrong or empty json format");
-				(new FriendsSuccess(success, fail, new Friend[0])).run();
+				//(new FriendsSuccess(success, fail, new Friend[0])).run();
 			};
 
       return null;
@@ -342,6 +345,13 @@ class LightOdnoklassniki {
           (new Fail(success, fail, "wrong format of result on friends request")).run();
         }
       }
+			else if (error) {
+
+					(new Fail (success, fail, "Failed to get users")).run();
+			}
+			else {
+				(new FriendsSuccess(success, fail, new Friend[0])).run();
+			}
     }
  }
 }
