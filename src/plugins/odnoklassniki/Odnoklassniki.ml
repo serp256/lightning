@@ -48,7 +48,7 @@ ELSE
   external friends: ?fail:fail -> ~success:(list User.t-> unit) -> unit -> unit = "ok_friends"; 
   external users: option fail -> (list User.t -> unit) -> string -> unit = "ok_users";
   value users ?fail ~success ~ids t =
-      let ids = String.concat "," ids in
+    let ids = "[" ^ (String.concat "," ids) ^ "]"  in
           users fail success ids;
   external token: unit -> string = "ok_token";
   external uid: unit -> string = "ok_uid";
