@@ -156,7 +156,7 @@ class LightOdnoklassniki {
 		new GetFriendsTask().execute(new FriendsRequest (success, fail));
 	}
 	public static void users (final int success, final int fail, final String uids) {
-		if (!uids.isEmpty ()) { 
+		if (!uids.isEmpty () && !(uids.equals("[]"))) { 
 			new GetUsersInfoTask().execute (new UsersRequest (success, fail, uids));
 		}
 		else {
