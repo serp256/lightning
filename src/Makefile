@@ -22,9 +22,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma odnoklassniki.cma gameanalytics.cma xsolla.cma social_byte
+byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma odnoklassniki.cma gameanalytics.cma xsolla.cma qq.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa odnoklassniki.cmxa gameanalytics.cmxa xsolla.cmxa gamecontroller.cmxa social_native
+native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa odnoklassniki.cmxa gameanalytics.cmxa xsolla.cmxa qq.cmxa gamecontroller.cmxa social_native
 #native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa facebook.cmxa twitter.cmxa whatsapp.cmxa appsflyer.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
@@ -39,7 +39,7 @@ $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.exten
 
 
 ifeq ($(PLATFORM),IOS)
-	MOBJS += mlwrapper.o ios/OpenUDID.o ios/mlwrapper_ios.o mobile_res.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightDownloaderDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/texture_save.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o ios/copy_paste.o
+	MOBJS += mlwrapper.o ios/OpenUDID.o ios/mlwrapper_ios.o mobile_res.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightDownloaderDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/texture_save.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o ios/copy_paste.o ios/CGFontToFontData.o
 	LIBFLAGS = -ccopt '-ObjC' -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
 						 -cclib '-framework\ QuartzCore' \
@@ -264,6 +264,12 @@ xsolla.cma:
 xsolla.cmxa:
 	make -C plugins/xsolla xsolla.cmxa
 
+qq.cma:
+	make -C plugins/qq qq.cma
+
+qq.cmxa:
+	make -C plugins/qq qq.cmxa
+
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
@@ -301,5 +307,6 @@ clean:
 	$(MAKE) -C plugins/odnoklassniki clean
 	$(MAKE) -C plugins/gameanalytics clean
 	$(MAKE) -C plugins/xsolla clean
+	$(MAKE) -C plugins/qq clean
 
 -include MLDepend.$(PLATFORM)

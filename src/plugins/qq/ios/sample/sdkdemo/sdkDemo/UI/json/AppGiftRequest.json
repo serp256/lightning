@@ -1,0 +1,98 @@
+{
+    "grouped": true,
+    "title": "请求&礼物",
+    "key": "AppGiftRequest",
+    "controllerName": "TQDAppGiftRequestController",
+    "sections": [
+                 {
+                 "elements": [
+                              {
+                              "type": "QTextElement",
+                              "text": "IOS SDK中增加请求&礼物前台API，支持发送请求和应用礼物，为应用拉活跃提供新能力。"
+                              }
+                              ]
+                 },
+                 {
+                 "elements": [
+                              {
+                              "type":"QSegmentedElement",
+                              "key": "typeSegmentedElement",
+                              "items":["请求", "礼物"],
+                              "values":["request", "freegift"],
+                              "selected":0
+                              }
+                              ]
+                 },
+                 {
+                 "elements": [
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "ASCIICapable",
+                              "title": "source",
+                              "placeholder": "透传参数",
+                              "bind": "textValue:binding_source"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "ASCIICapable",
+                              "title": "receiver",
+                              "placeholder": "填入接收者的OpenID，最多10个，逗号分隔",
+                              "bind": "textValue:binding_receiver"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "Default",
+                              "title": "title",
+                              "placeholder": "填入礼物/请求名称",
+                              "bind": "textValue:binding_title"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "Default",
+                              "title": "msg",
+                              "placeholder": "填入礼物赠言/请求话语",
+                              "bind": "textValue:binding_msg"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "URL",
+                              "title": "img",
+                              "placeholder": "填入礼物/请求的配图URL",
+                              "bind": "textValue:binding_img"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "ASCIICapable",
+                              "title": "exclude",
+                              "placeholder": "好友选择场景中希望排除的好友",
+                              "bind": "textValue:binding_exclude"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "ASCIICapable",
+                              "key": "QEntryElement_specified",
+                              "title": "specified",
+                              "placeholder": "好友选择场景中希望包含的好友",
+                              "bind": "textValue:binding_specified"
+                              },
+                              {
+                              "type": "QBooleanElement",
+                              "key": "QBooleanElement_only",
+                              "boolValue": false,
+                              "title": "only",
+                              "bind": "boolValue:binding_only"
+                              }
+                              ]
+                 },
+                 {
+                 "elements": [
+                              {
+                              "type": "QButtonElement",
+                              "key": "button",
+                              "title": "请求/赠送礼物",
+                              "controllerAction": "onSendRequest:"
+                              }
+                              ]
+                 }
+                 ]
+}

@@ -1,0 +1,51 @@
+{
+    "grouped": true,
+    "title": "应用邀请",
+    "key": "AppInvitation",
+    "controllerName": "TQDAppInvitationController",
+    "sections": [
+                 {
+                 "elements": [
+                              {
+                              "type": "QTextElement",
+                              "text": "IOS SDK中增加邀请前台API，为应用拉新提供新能力。"
+                              }
+                              ]
+                 },
+                 {
+                 "elements": [
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "ASCIICapable",
+                              "title": "source",
+                              "placeholder": "透传参数",
+                              "bind": "textValue:binding_source"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "URL",
+                              "title": "picurl",
+                              "placeholder": "填入图标URL否则使用默认图标",
+                              "bind": "textValue:binding_picurl"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "Default",
+                              "title": "desc",
+                              "placeholder": "填入应用描述否则使用默认描述",
+                              "bind": "textValue:binding_desc"
+                              }
+                              ]
+                 },
+                 {
+                 "elements": [
+                              {
+                              "type": "QButtonElement",
+                              "key": "button",
+                              "title": "发送邀请",
+                              "controllerAction": "onSendAppInvitation:"
+                              }
+                              ]
+                 }
+                 ]
+}

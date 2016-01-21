@@ -3,6 +3,12 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm ojson redspell.debug"
 
+package "qq" (
+  description="Tencent QQ"
+  archive(byte) = "QQ.cma"
+  archive(native) = "QQ.cmxa"
+)
+
 package "xsolla" (
   description="Xsolla"
   archive(byte) = "Xsolla.cma"
