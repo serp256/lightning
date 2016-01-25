@@ -27,10 +27,10 @@ value exists: ?style:string -> string -> bool;
 value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
 value registerDynamic: list int -> string  -> (string * string);
-value getChar: bool -> (string * string * int) -> Hashtbl.t int bc -> int -> option bc;
-value show: int -> Image.c;
+value registerSystemFont: list int -> (string * string);
+value getBitmapChar: (string * string * int) -> int -> option (bc * float * float * float);
 value dynamicFontComplete: unit -> unit;
-value getSystemFontPath: string -> string;
+value getSystemFonts: unit -> string;
 (*
 module type Creator = sig
   module Sprite: Sprite.S;

@@ -502,9 +502,11 @@ value lineMinY line =
 
 value adjustToLine ?ascender ?descender ?height line = 
 (
+  debug "adjust to line";
   let res = 
     match ascender with
     [ Some asc ->
+      let () = debug "ascender %f: line asc %f" asc line.ascender in
       match compare line.ascender asc with
       [ 0 -> 0.
       | -1 -> (* надо увеличить отступ сверху *)
@@ -664,12 +666,22 @@ value create ?width ?height ?border ?dest (html:main) =
              add_char line (UTF8.next text index)
            )
            else
-             match BitmapFont.getChar font.isDynamic (fontFamily, fontStyle, fontSize) font.chars code with
-             [ Some bchar ->
-               let bchar = 
+
+               let bchar =
+                  try 
+                    Some (Hashtbl.find font.chars code, font.ascender, font.descender, font.lineHeight)
+                  with [ Not_found -> 
+                    match font.isDynamic with
+                    [ True -> BitmapFont.getBitmapChar (fontFamily, fontStyle, fontSize) code
+                    | False -> None
+                    ]
+                  ] in
+             match bchar with
+             [ Some (bchar, asc, desc, lheight) ->
+               let (bchar, asc, desc, lheight) = 
                  if font.scale <> 1. 
-                 then {(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale} 
-                 else bchar 
+                 then ({(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale}, asc *. font.scale, desc *. font.scale, lheight *. font.scale)
+                 else (bchar, asc ,desc, lheight)
                in
                let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
                match width with
@@ -700,6 +712,10 @@ value create ?width ?height ?border ?dest (html:main) =
                    ]
                | _ ->
                  (
+                   yoffset.val := line.ascender -. asc;
+                   debug "YOFFSET %f" !yoffset;
+                   line.descender := max line.descender desc;
+                   line.lineHeight := max line.lineHeight lheight;
                    let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:(`Color color) ~alpha:alpha bchar.atlasNode in
                    addToLine bchar.xAdvance (Char b) line;
                    add_char line (UTF8.next text index)
@@ -735,12 +751,15 @@ value create ?width ?height ?border ?dest (html:main) =
       in
       let line = 
         if Stack.is_empty lines 
-        then createLine ~indent:(getTextIndent attributes) font lines
+        then let () = debug "create l" in createLine ~indent:(getTextIndent attributes) font lines
         else if (Stack.top lines).closed 
-        then createLine font lines
+        then 
+          let () = debug "create l without indent" in 
+          createLine font lines
         else 
           let line = Stack.top lines in
           (
+            debug "TOP LLINE";
             yoffset.val := adjustToLine ~ascender:font.BitmapFont.ascender ~descender:font.BitmapFont.descender ~height:font.BitmapFont.lineHeight line;
             line
           )

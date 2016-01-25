@@ -19,12 +19,14 @@
 #define get_locale lightning_get_locale
 #elif IOS
 #import "ios/common_ios.h"
+#import "ios/CGFontToFontData.h"
 #else
 #endif
 
 #include "light_common.h"
 #include "texture_common.h"
 
+//https://www.microsoft.com/typography/otspec/os2.htm
 typedef struct {
 	char *family;
 	char *style;
@@ -63,7 +65,7 @@ void print_error(FT_Error error) {
 	}
 }
 int texID = 0;
-int fontSize = 18;
+//int fontSize = 18;
 int textureSize= 2048;
 void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,long bitmapWidth,long bitmapHeight)
 {
@@ -93,7 +95,7 @@ void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,
 }
 
 FT_Library _FTlibrary;
-FT_Face face, face_cjk, face_latin;
+FT_Face face;
 int _FTInitialized = 1;
 
 int dpi = 72;
@@ -106,8 +108,16 @@ int adjustForExtend;
 unsigned char* _currentPageData;
 int _currentPageDataSize;
 
+unsigned char* buf;
+char* current_face_name;
+
+
 void initTextureData () {
+		free(_currentPageData);
 		_currentPageData= malloc(_currentPageDataSize);
+		if (!_currentPageData) {
+			caml_failwith(caml_copy_string("Freetype: not enough memory"));
+		}
 		memset(_currentPageData,0,_currentPageDataSize);
 		_currLineHeight = 0;
 		_currentPage = 0;
@@ -121,45 +131,56 @@ int initFreeType() {
         if (FT_Init_FreeType( &_FTlibrary ))
             return 1;
         _FTInitialized = 0;
+
+				glGetIntegerv(GL_MAX_TEXTURE_SIZE,&textureSize);
+				adjustForExtend = _letterEdgeExtend / 2;
+				_currentPageDataSize = textureSize * textureSize;
+				initTextureData ();
     }
 
-		glGetIntegerv(GL_MAX_TEXTURE_SIZE,&textureSize);
-		PRINT_DEBUG("tex size %i", textureSize);
-		
-
-		adjustForExtend = _letterEdgeExtend / 2;
-		_currentPageDataSize = textureSize * textureSize;
-		initTextureData ();
     return  _FTInitialized;
 }
 
-textureInfo *tInfo;
-
-value ml_freetype_getFont(value ttf, value vsize) { 
-	CAMLparam2(ttf, vsize);
-
-	PRINT_DEBUG("get FT Font");
-	if (initFreeType()) PRINT_DEBUG ("error on freetype init");
-
+void loadFace(char* fname, int fontSize) {
 	FT_Error error;
-		char* fname = String_val(ttf);
-		unsigned char* buf;
-		long fsize;
-		if (*fname == '/') {
-			//absolute path
-			PRINT_DEBUG ("absolute path %s", fname);
-			FILE *f = fopen(fname, "rb");
+	PRINT_DEBUG("loadFace %s %d", fname, fontSize);
 
-			fseek(f,0,SEEK_END);
-			fsize = ftell(f);
-			fseek(f,0,SEEK_SET);
-			buf = malloc(fsize);
-			memset(buf,0, sizeof(buf));
-			fread(buf, fsize,1,f);
-			error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
-			fclose(f);
-		} else {
-#if (defined IOS || defined ANDROID)
+	 if (face) {
+		free(buf);
+		FT_Done_Face(face);
+	 }
+	PRINT_DEBUG("loadFace: done face");
+
+	long fsize;
+
+	if (*fname == '/') {
+		//absolute path
+		PRINT_DEBUG ("absolute path");
+		FILE *f = fopen(fname, "rb");
+
+		fseek(f,0,SEEK_END);
+		fsize = ftell(f);
+		fseek(f,0,SEEK_SET);
+		buf = malloc(fsize);
+		memset(buf,0, sizeof(buf));
+		fread(buf, fsize,1,f);
+		error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
+		fclose(f);
+	} else {
+
+#if (defined IOS )
+	CGFontRef cgf = CGFontCreateWithFontName((CFStringRef)@"Helvetica-Bold");
+
+	NSData* data = fontDataForCGFont (cgf);
+	PRINT_DEBUG(" len %i", [data length]);
+	int length = [data length];
+	buf = malloc(length);
+	buf = [data bytes];
+
+	error = ( (FT_New_Memory_Face(_FTlibrary, buf, length, 0, &face )));
+
+#else
+#if (defined ANDROID)
 	resource r;
 	if (getResourceFd(fname,&r)) {
 		buf = malloc(r.length);
@@ -169,7 +190,6 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	//	PRINT_DEBUG("fread %lld %s", i, strerror(e));
 		error = ( (FT_New_Memory_Face(_FTlibrary, buf, r.length, 0, &face )));
 	}
-
 #else
 		char* dir = "Resources/";
 		PRINT_DEBUG ("fdir %s", dir);
@@ -195,24 +215,8 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
 		fclose(f);
 #endif
+#endif
 		}
-		TT_OS2*  os2;                                     
-
-
-		os2 =                                                    
-			(TT_OS2*)FT_Get_Sfnt_Table( face, FT_SFNT_OS2);   
-		PRINT_DEBUG("%x",((os2->ulUnicodeRange1)));
-		PRINT_DEBUG ("%s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(0)))?"true":"false");
-		PRINT_DEBUG ("%s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(1)))?"true":"false");
-		PRINT_DEBUG ("%s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(2)))?"true":"false");
-		PRINT_DEBUG ("cyrrilic %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(9)))?"true":"false");
-
-		PRINT_DEBUG ("arabic %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(13)))?"true":"false");
-
-		PRINT_DEBUG ("cjk %s %s", face->family_name, ((os2->ulUnicodeRange2) & (1<<(27)))?"true":"false");
-		PRINT_DEBUG ("range2 %x", (os2->ulUnicodeRange2));
-		PRINT_DEBUG ("randge3: %x", (os2->ulUnicodeRange3));
-		PRINT_DEBUG ("range4: %x", (os2->ulUnicodeRange4));
 
 
 	//error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
@@ -226,6 +230,8 @@ value ml_freetype_getFont(value ttf, value vsize) {
 
 	PRINT_DEBUG ("%s: %s", face->family_name,face->style_name);
 
+	current_face_name = fname;
+
   error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	if ( error )
 	{
@@ -233,15 +239,61 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	}
 
 	// set the requested font size
-	fontSize = Int_val(vsize);
 	int fontSizePoints = (int)(64.f * fontSize);
 	error= (FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
 		if ( error )
 		{
 			PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
 		}
+}
+void getFontCharmap (char* fname) {
+	TT_OS2*  os2;                                     
+	os2 =                                                    
+		(TT_OS2*)FT_Get_Sfnt_Table( face, FT_SFNT_OS2);   
+	PRINT_DEBUG ("0 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(0)))?"true":"false");
+	PRINT_DEBUG ("1 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(1)))?"true":"false");
+	PRINT_DEBUG ("2 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(2)))?"true":"false");
+	PRINT_DEBUG ("cyrrilic %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(9)))?"true":"false");
+
+	PRINT_DEBUG ("arabic %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(13)))?"true":"false");
+
+	PRINT_DEBUG ("cjk %s %s", face->family_name, ((os2->ulUnicodeRange2) & (1<<(27)))?"true":"false");
+	PRINT_DEBUG("range1 %lu",((os2->ulUnicodeRange1)));
+	PRINT_DEBUG ("range2 %lu", (os2->ulUnicodeRange2));
+	PRINT_DEBUG ("randge3: %lu", (os2->ulUnicodeRange3));
+	PRINT_DEBUG ("range4: %lu", (os2->ulUnicodeRange4));
+
+	static value* add_font = NULL;
+	if (!add_font) add_font = caml_named_value("add_font_ranges");
+
+	value args[5] = { caml_copy_string(fname), caml_copy_int64(os2->ulUnicodeRange1), caml_copy_int64(os2->ulUnicodeRange2), caml_copy_int64(os2->ulUnicodeRange3), caml_copy_int64(os2->ulUnicodeRange4)};
+	caml_callbackN(*add_font, 5, args);
+}
+
+textureInfo *tInfo;
+
+value ml_freetype_getFont(value ttf, value vsize) { 
+	CAMLparam2(ttf, vsize);
+
+	if (initFreeType()) PRINT_DEBUG ("error on freetype init");
+
+	char* fname = String_val(ttf);
+	int fontSize = Int_val(vsize);
+
+	PRINT_DEBUG("get FT Font [%s]: %d", fname, fontSize);
+	loadFace (fname, fontSize);
+
+
+	if (!face) {
+		caml_failwith(caml_copy_string("Freetype face font is null"));
+	}
+
+	current_face_name = fname;
+	getFontCharmap(fname);
 
 	FT_Size_Metrics size_info = face->size->metrics;
+
+	FT_Error error;
 
 	error = FT_Load_Glyph(face,FT_Get_Char_Index(face, ' '), FT_LOAD_DEFAULT);
 	if ( error )
@@ -261,7 +313,6 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	
 
 
-	PRINT_DEBUG ("ok");
 	if (texID == 0) {
 		tInfo= (textureInfo*)malloc(sizeof(textureInfo));
 
@@ -278,66 +329,70 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		tInfo->imgData = _currentPageData;
 
 		textureID = createGLTexture(1,tInfo,1);
-		PRINT_DEBUG("+++++++++++++++tid %d", TEXTURE_ID(textureID));
 		texID = TEXTURE_ID(textureID);
 		mlTexOpt = caml_alloc(1, 0);
 		ML_TEXTURE_INFO(mlTex,textureID,(tInfo));
-		PRINT_DEBUG("Field(mlTex,0) %d", Int_val(Field(mlTex,0)));
 		Store_field( mlTexOpt, 0, mlTex);
 		Store_field(mlFont,7,mlTexOpt);
 	}
 	else {
 		Store_field(mlFont,7,Val_int(0));
 	}
-	
-	if (face_cjk == NULL) {
-		face_cjk = face;
-		PRINT_DEBUG ("1 %d", face_cjk==face? 0 : 1);
-	} else {
-		if (strcmp(face_cjk->family_name, face->family_name) != 0) { 
-		face_latin = face;
-		}
-		else {PRINT_DEBUG("same family");}
-		PRINT_DEBUG ("2 %d", face_latin==face? 0 : 1);
-	}
 
 	CAMLreturn(mlFont);
 }
+value ml_freetype_checkChar (value vtext, value vface, value vsize) {
+	PRINT_DEBUG("ml_freetype_checkChar");
+	CAMLparam3(vtext,vface,vsize);
 
-value ml_freetype_getChar(value vtext, value vsize) {
+	int code = Int_val(vtext);
+	int fontSize = Int_val(vsize);
+
+	FT_Error error;
+
+	char* cface = String_val(vface);
+
+	PRINT_DEBUG("check face [%s], current [%s]", cface, current_face_name);
+
+
+	if (current_face_name && strlen(cface) > 0 && strcmp(current_face_name, cface) != 0) { 
+		loadFace (cface, fontSize);
+	}
+
+	unsigned int glyph_index = 	FT_Get_Char_Index(face, code);
+	if (glyph_index == 0 ) {
+		PRINT_DEBUG("not found char %d in %s", code, face->family_name);
+		CAMLreturn(caml_copy_string(""));
+	} else {
+		PRINT_DEBUG("found char %d in %s", code, face->family_name);
+		CAMLreturn(caml_copy_string(face->family_name));
+	}
+}
+
+value ml_freetype_getChar(value vtext, value vface, value vsize) {
 	PRINT_DEBUG("ml_freetype_getChar");
-	CAMLparam2(vtext,vsize);
+	CAMLparam3(vtext,vface,vsize);
 	CAMLlocal2(mlChar,mlCharOpt);
 
 	int code = Int_val(vtext);
-	PRINT_DEBUG("code %c %x", code, code);
 
-	fontSize = Int_val(vsize);
+	int fontSize = Int_val(vsize);
 	int fontSizePoints = (int)(64.f * fontSize);
 
 	FT_Error error;
 	PRINT_DEBUG("1");
 
 
-	fontLetterDefinition tempDef;
+	char* cface = String_val(vface);
 
-	if (face_cjk==NULL) {
-		caml_failwith("no face initialized");
+	if (current_face_name && strlen(cface) > 0 && strcmp(current_face_name, cface) != 0) { 
+		loadFace (cface, fontSize);
 	}
 
+	fontLetterDefinition tempDef;
 
-	unsigned int glyph_index = 	FT_Get_Char_Index(face_cjk, code);
-	PRINT_DEBUG ("index %u", glyph_index);
-	 if (glyph_index) {
-		 face = face_cjk;
-	 }
-	 else {
-		 glyph_index = FT_Get_Char_Index(face_latin, code);
-		 PRINT_DEBUG("no char");
-		 face = face_latin;
-	 }
+	unsigned int glyph_index = 	FT_Get_Char_Index(face, code);
 	FT_Size_Metrics size_info = face->size->metrics;
-	PRINT_DEBUG("2");
 	if (face->size->metrics.x_ppem != fontSizePoints) {
 		error= (FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
 		print_error(error);
@@ -432,8 +487,8 @@ value ml_freetype_bindTexture(value unit) {
 	CAMLparam0();
 
 	PRINT_DEBUG("FT bindTexture");
-			glBindTexture(GL_TEXTURE_2D, texID);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, textureSize, textureSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _currentPageData);
-			initTextureData();
+	glBindTexture(GL_TEXTURE_2D, texID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, textureSize, textureSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _currentPageData);
+	initTextureData();
 	CAMLreturn(Val_unit);
 }

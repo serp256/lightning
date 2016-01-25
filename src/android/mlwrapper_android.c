@@ -115,20 +115,35 @@ value ml_getLocale () {
 	return vlocale;
 }
 
-value ml_getSystemFontPath (value vlocale) {
-	CAMLparam1(vlocale);
-	CAMLlocal1(vpath);
+value ml_getSystemDefaultFont () {
+	CAMLparam0();
+	CAMLlocal1(vfont);
 	static jmethodID mid = 0;
 
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getSystemFontPath", "(Ljava/lang/String;)Ljava/lang/String;");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getSystemDefaultFont", "()Ljava/lang/String;");
 
-	jstring jlocale= (*ML_ENV)->NewStringUTF(ML_ENV, String_val(vlocale));
-	jstring jpath = (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid, jlocale);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jlocale);
-	JSTRING_TO_VAL(jpath, vpath);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jpath);
 
-	CAMLreturn(vpath);
+	jstring jfont= (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	const char *clocale = (*ML_ENV)->GetStringUTFChars(ML_ENV, jfont, JNI_FALSE);
+	PRINT_DEBUG("systemFont %s", clocale);
+	JSTRING_TO_VAL(jfont, vfont);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jfont);
+
+	CAMLreturn(vfont);
+}
+
+value ml_getSystemFonts () {
+	CAMLparam0();
+	CAMLlocal1(vfonts);
+	static jmethodID mid = 0;
+
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getSystemFonts", "()Ljava/lang/String;");
+
+	jstring jfonts= (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	JSTRING_TO_VAL(jfonts, vfonts);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jfonts);
+
+	CAMLreturn(vfonts);
 }
 
 value ml_getInternalStoragePath() {
