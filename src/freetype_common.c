@@ -385,6 +385,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 	char* cface = String_val(vface);
 
+	PRINT_DEBUG ("cur %s, load %s", current_face_name, cface);
 	if (current_face_name && strlen(cface) > 0 && strcmp(current_face_name, cface) != 0) { 
 		loadFace (cface, fontSize);
 	}
@@ -392,6 +393,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 	fontLetterDefinition tempDef;
 
 	unsigned int glyph_index = 	FT_Get_Char_Index(face, code);
+	PRINT_DEBUG ("gluph index %d", glyph_index);
 	FT_Size_Metrics size_info = face->size->metrics;
 	if (face->size->metrics.x_ppem != fontSizePoints) {
 		error= (FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
@@ -405,9 +407,11 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 		
 		unsigned char* buffer = face->glyph->bitmap.buffer;
 
-		int w = face->glyph->bitmap.width;
-		int h = face->glyph->bitmap.rows;
+		unsigned int w = face->glyph->bitmap.width;
+		unsigned int h = face->glyph->bitmap.rows;
 		 
+		tempDef.xAdvance = face->glyph->metrics.horiAdvance >> 6;
+		PRINT_DEBUG ("w %d h %d, %d", w, h, tempDef.xAdvance); 
 		if (buffer && w > 0 && h > 0) {
 			FT_Glyph_Metrics metrics = face->glyph->metrics;
 			tempDef.validDefinition = 0;
@@ -417,34 +421,35 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 			tempDef.offsetY = _fontAscender -(metrics.horiBearingY >> 6) - adjustForExtend;
 			tempDef.xAdvance = face->glyph->metrics.horiAdvance >> 6;
 
-		if (h > _currLineHeight)
-		{
-			_currLineHeight = h + _letterEdgeExtend + 1;
-		}
-
-		if (_currentPageOrigX + tempDef.width > textureSize)
-		{
-			_currentPageOrigY += _currLineHeight;
-			_currLineHeight = 0;
-			_currentPageOrigX = 0;
-			if (_currentPageOrigY + _lineHeight >= textureSize){
-				PRINT_DEBUG ("No more space in texture");
+			if (h > _currLineHeight)
+			{
+				_currLineHeight = h + _letterEdgeExtend + 1;
 			}
 
-		}
-		
-		renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, w, h);
+			if (_currentPageOrigX + tempDef.width > textureSize)
+			{
+				_currentPageOrigY += _currLineHeight;
+				_currLineHeight = 0;
+				_currentPageOrigX = 0;
+				if (_currentPageOrigY + _lineHeight >= textureSize){
+					PRINT_DEBUG ("No more space in texture");
+				}
 
-		tempDef.x = _currentPageOrigX;
-		tempDef.y = _currentPageOrigY;
-		tempDef.textureID = _currentPage;
-		_currentPageOrigX += tempDef.width + 1;
+			}
+		
+			renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, w, h);
+
+			tempDef.x = _currentPageOrigX;
+			tempDef.y = _currentPageOrigY;
+			tempDef.textureID = _currentPage;
+			_currentPageOrigX += tempDef.width + 1;
 		}
 		else{
-			if (tempDef.xAdvance)
+			if (tempDef.xAdvance && tempDef.xAdvance > 0)
 				tempDef.validDefinition = 0;
-			else
+			else {
 				tempDef.validDefinition = 1;
+			}
 
 			tempDef.width = 0;
 			tempDef.height = 0;
@@ -457,7 +462,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 		}
 
 		if (tempDef.validDefinition==0) {
-			mlChar = caml_alloc_tuple(8);
+			mlChar = caml_alloc_tuple(9);
 
 			Store_field(mlChar,0, Val_int(code));
 			Store_field(mlChar,1,caml_copy_double(tempDef.x));
@@ -467,6 +472,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 			Store_field(mlChar,5,caml_copy_double(tempDef.offsetX));
 			Store_field(mlChar,6,caml_copy_double(tempDef.offsetY));
 			Store_field(mlChar,7,caml_copy_double(tempDef.xAdvance));
+			Store_field(mlChar,8,caml_copy_string(face->family_name));
 
 			/*
 			glBindTexture(GL_TEXTURE_2D, texID);

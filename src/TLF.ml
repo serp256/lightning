@@ -447,7 +447,6 @@ class tlfSprite () =
   end;
 
 value createLine ?(indent=0.) font lines =  
-  let () = debug "create new line" in
 (*   let line = {container = Sprite.create (); lineHeight = match font with [ Some fnt -> fnt.BitmapFont.lineHeight | None -> 0. ]; baseLine = 0.; currentX = 0.; closed = False} in *)
   let line = 
     {
@@ -502,7 +501,6 @@ value lineMinY line =
 
 value adjustToLine ?ascender ?descender ?height line = 
 (
-  debug "adjust to line";
   let res = 
     match ascender with
     [ Some asc ->
@@ -713,7 +711,6 @@ value create ?width ?height ?border ?dest (html:main) =
                | _ ->
                  (
                    yoffset.val := line.ascender -. asc;
-                   debug "YOFFSET %f" !yoffset;
                    line.descender := max line.descender desc;
                    line.lineHeight := max line.lineHeight lheight;
                    let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:(`Color color) ~alpha:alpha bchar.atlasNode in
@@ -751,15 +748,13 @@ value create ?width ?height ?border ?dest (html:main) =
       in
       let line = 
         if Stack.is_empty lines 
-        then let () = debug "create l" in createLine ~indent:(getTextIndent attributes) font lines
+        then createLine ~indent:(getTextIndent attributes) font lines
         else if (Stack.top lines).closed 
         then 
-          let () = debug "create l without indent" in 
           createLine font lines
         else 
           let line = Stack.top lines in
           (
-            debug "TOP LLINE";
             yoffset.val := adjustToLine ~ascender:font.BitmapFont.ascender ~descender:font.BitmapFont.descender ~height:font.BitmapFont.lineHeight line;
             line
           )

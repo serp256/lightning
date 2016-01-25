@@ -491,6 +491,9 @@ module UnicodeRanges = struct
       );
   );
 
+  value getDefaultLatin () =
+    let (_,lst) = List.hd bit_ranges in
+    List.hd (getFaces (List.hd lst));
 end;
 
 module Freetype = struct
@@ -515,6 +518,7 @@ module Freetype = struct
       xOffset:float;
       yOffset:float;
       xAdvance: float;
+      face: string;
     };
   external getFont: string-> int -> dynamic_font = "ml_freetype_getFont"; 
   external checkChar: int -> string -> int-> string = "ml_freetype_checkChar"; 
@@ -533,6 +537,9 @@ module Freetype = struct
       value mutable fonts : list ((string*string) * (list int))= [];
       method fonts = fonts;
       method addFont (face,style) sizes = fonts := [((face,style),sizes):: fonts];
+      value mutable defaultTTF = "";
+      method setDefaultTTF path = defaultTTF := path;
+      method defaultTTF = defaultTTF;
     end;
 
   value _instance = Lazy.from_fun (fun () -> new c);
@@ -586,17 +593,17 @@ module Freetype = struct
     with [Not_found -> findCharFace code];
 
   value getBitmapChar (def_face,style,size) code =
-    let (path,face) =
+    let path =
       let rec getFaceRec paths =
         match paths with
         [[ttfpath::tl] ->
           let () =debug "check [%s]" ttfpath in
           let face_family = checkChar code ttfpath size in
           let () =debug "face family [%s]" face_family in
-          if  face_family <> "" then (ttfpath,face_family)
+          if  face_family <> "" then ttfpath
           else getFaceRec tl 
         | [] ->
-            ("",def_face)
+            (instance())#defaultTTF
         ] in
       getFaceRec (getCharFace code)
     in
@@ -605,12 +612,11 @@ module Freetype = struct
     [Some bc -> 
       (
         try
-          let sizes = Hashtbl.find fonts (face, style) in
+          let sizes = Hashtbl.find fonts (bc.face, style) in
           let bf = MapInt.find size sizes in
           let bchar = createBc bf bc in
           (
             debug "add %d, size %d" bchar.charID size;
-            debug "!!!!!!!!!+++++++++++ %s: ascender: %f; descender: %f lineHeigh  %f" face bf.ascender bf.descender bf.lineHeight;
             Hashtbl.add bf.chars bchar.charID bchar;
             (instance())#setNeedCompletion True;
             Some (bchar, bf.ascender, bf.descender, bf.lineHeight)
@@ -712,8 +718,16 @@ value registerSystemFont (sizes: list int) =
                     (face,style,flag)
                   )
               ) ("","",False) systemFonts in
-            if foundDefault then registerDynamic sizes default
-            else (face,style)
+            (
+              if foundDefault then (
+                (Freetype.instance())#setDefaultTTF default;
+              )
+              else (
+                (Freetype.instance())#setDefaultTTF (UnicodeRanges.getDefaultLatin());
+              );
+              if foundDefault then registerDynamic sizes default
+              else (face,style)
+            )
           )
         )
       | _ -> ("","")
