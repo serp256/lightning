@@ -116,7 +116,7 @@ public class Openiab implements Payments.IPayments {
 									if (price.startsWith(dollar)) {
 										try {
 											double d_amount = Double.parseDouble (price.substring(1));
-											Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (dollar, d_amount));
+											Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails ("USD", d_amount));
 										}
 										catch (java.lang.RuntimeException exc) {
 											Log.d("LIGHTNING", "JSON exc" + (exc.toString ()));
@@ -129,7 +129,8 @@ public class Openiab implements Payments.IPayments {
 										Log.d("LIGHTNING", "JSON " + json);
 										long amount = json.getLong ("price_amount_micros");
 										String currency = json.getString ("price_currency_code");
-										double d_amount = amount / 1000000;
+										double d_amount = amount / 1000000.;
+										Log.d("LIGHTNING", "java amount " + amount + " " + d_amount);
 										Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (currency, d_amount));
 									}
 									catch (JSONException exc) {
@@ -206,6 +207,7 @@ public class Openiab implements Payments.IPayments {
              public void onPause() {}
              public void onStop() {}
              public void onDestroy() {}
+						 public void onStart() {}
          });
 
          helper.startSetup(new IabHelper.OnIabSetupFinishedListener() {

@@ -8,6 +8,7 @@ import com.facebook.login.*;
 import com.facebook.share.*;
 import com.facebook.share.model.*;
 import com.facebook.share.widget.*;
+import com.facebook.appevents.AppEventsLogger;
 import java.util.List;
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,13 +29,17 @@ class LightFacebook {
 					@Override
 					public void run() {
 						FacebookSdk.sdkInitialize(Lightning.activity.getApplicationContext ());
+						Log.d ("LIGHTNING", "facebook sdk version: " + (FacebookSdk.getSdkVersion ()));
 					}
 			});
 		
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 				public void onCreate(Bundle savedInstanceState) {}
 
-				public void onResume() {}
+				public void onResume() {
+					Log.d("LIGHTNING", "facebook activateApp");
+					AppEventsLogger.activateApp(Lightning.activity);
+				}
 
 				public void onActivityResult(int requestCode, int resultCode, Intent data) {
 						Log.d("LIGHTNING", "facebook onActivityResult");
@@ -42,9 +47,15 @@ class LightFacebook {
 				}
 
 				public void onSaveInstanceState(Bundle outState) {}
-				public void onPause() {}
+
+				public void onPause() {
+					Log.d("LIGHTNING", "facebook deactivateApp");
+					AppEventsLogger.deactivateApp(Lightning.activity);
+		    }
+
 				public void onStop() {}
 				public void onDestroy() {}
+				public void onStart() {}
 		});
 	}
 

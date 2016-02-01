@@ -105,11 +105,15 @@ bq_player_t *make_bq_player(SLuint32 sample_rate, SLuint16 bits_per_sample) {
     const SLInterfaceID plr_ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
     const SLboolean plr_req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
     SLresult result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bq_plr->bqPlayerObject, &audioSrc, &audioSnk, 2, plr_ids, plr_req);
+		PRINT_DEBUG ("CreateAudioPlayer result 0x%.8X", result); 
     SOUND_ASSERT(SL_RESULT_SUCCESS == result, "buffer queue player create");
 
     // realize the player
     result = (*bq_plr->bqPlayerObject)->Realize(bq_plr->bqPlayerObject, SL_BOOLEAN_FALSE);
-    SOUND_ASSERT(SL_RESULT_SUCCESS == result, "buffer queue player realize");
+		PRINT_DEBUG ("RealizeAudioPlayer result 0x%.8X", result); 
+		char str[80];
+		sprintf(str, "buffer queue player realize 0x%.8X", result);
+    SOUND_ASSERT(SL_RESULT_SUCCESS == result, str);
 
     // get the play interface
     result = (*bq_plr->bqPlayerObject)->GetInterface(bq_plr->bqPlayerObject, SL_IID_PLAY, &bq_plr->bqPlayerPlay);

@@ -2,7 +2,6 @@ package ru.redspell.lightning.gamecenter;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
-import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.ConnectionResult;
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -134,6 +133,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 					@Override public void onDestroy() {};
 					@Override public void onStop() {};
 					@Override public void onPause() {};
+					@Override public void onStart() {};
 					@Override public void onResume() {};
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
@@ -229,6 +229,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 					@Override public void onDestroy() {};
 					@Override public void onStop() {};
 					@Override public void onPause() {};
+					@Override public void onStart() {};
 					@Override public void onResume() {};
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};
@@ -258,6 +259,7 @@ public class Google implements GameCenter, GoogleApiClient.ConnectionCallbacks, 
 					@Override public void onDestroy() {};
 					@Override public void onStop() {};
 					@Override public void onPause() {};
+					@Override public void onStart() {};
 					@Override public void onResume() {};
 					@Override public void onCreate(Bundle b) {};
 					@Override public void onSaveInstanceState(Bundle b) {};

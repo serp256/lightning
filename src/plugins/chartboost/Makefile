@@ -16,13 +16,25 @@ endif
 
 ifeq ($(PLATFORM),IOS)
 
-CFLAGS += -I ./ios
-COBJS += ios/chartboost_ios.o
-LIBFLAGS += -lchartboost-sdk
+chartboost.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o chartboost.cmxa $(MLOBJSN)
+
+chartboost.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o chartboost.cma $(MLOBJS)
 
 endif
 
 ifeq ($(PLATFORM),PC)
+
+chartboost.cmxa: $(IFACES) $(MLOBJSN)
+	$(OCAMLOPT) -a -o chartboost.cmxa $(MLOBJSN)
+
+chartboost.cma: $(IFACES) $(MLOBJS)
+	$(OCAMLC) -a -o chartboost.cma $(MLOBJS)
+
+else
+
+ifeq ($(PLATFORM),IOS)
 
 chartboost.cmxa: $(IFACES) $(MLOBJSN)
 	$(OCAMLOPT) -a -o chartboost.cmxa $(MLOBJSN)
@@ -38,6 +50,7 @@ chartboost.cmxa: $(IFACES) $(COBJS) $(MLOBJSN)
 chartboost.cma: $(IFACES) $(MOBJS) $(CLOBJS)
 		$(OCAMLMKLIB) -verbose -o chartboost $(MOBJS) $(MLOBJS) $(LIBFLAGS) 
 
+endif
 endif
 
 clean: 

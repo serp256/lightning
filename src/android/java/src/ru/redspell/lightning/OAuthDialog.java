@@ -89,6 +89,8 @@ public class OAuthDialog extends Dialog {
             catch (MalformedURLException e) {}
             catch (java.io.UnsupportedEncodingException e) {}            
         }
+
+				this.setCanceledOnTouchOutside(false);
     }
 
     @Override
@@ -161,6 +163,13 @@ public class OAuthDialog extends Dialog {
     public void onDetachedFromWindow() {
         // mWebView.removeAllViews();
         mWebView.destroy();
+    }
+
+    @Override
+    public void cancel () {
+        Log.d("LIGHTNING", "cancel call");
+				this.close ();
+
     }
 
     @Override

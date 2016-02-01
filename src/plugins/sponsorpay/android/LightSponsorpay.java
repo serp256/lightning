@@ -50,6 +50,8 @@ public class LightSponsorpay {
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 						public void onCreate(Bundle savedInstanceState) {}
 
+						public void onStart () {}
+
 						public void onResume() {}
 
 						public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -74,10 +76,12 @@ public class LightSponsorpay {
 			@Override
 			public void run() {
 				try {
-					Fyber.with(appId, Lightning.activity)
+
+					Fyber.Settings settings = Fyber.with(appId, Lightning.activity)
 			        .withUserId(userId)
 			        .withSecurityToken(securityToken)
 			        .start();  
+					settings.notifyUserOnCompletion(false);
 
 		      FyberLogger.enableLogging(enableLog);
 					UnityAds.setDebugMode(enableLog);

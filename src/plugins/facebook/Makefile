@@ -1,7 +1,7 @@
 include ../../../Makefile.common
 
 CFLAGS += -I . 
-CFLAGS += -DLDEBUG
+#CFLAGS += -DLDEBUG
 
 MLFLAGS += -package ojson,extlib,redspell.syntax.debug
 
@@ -38,7 +38,7 @@ MLPPOPT += -DANDROID
 MOBJS += android/fbwrapper_android.o
 
 
-android/fbwrapper_android.o: CFLAGS += -DLDEBUG
+#android/fbwrapper_android.o: CFLAGS += -DLDEBUG
 
 endif
 endif

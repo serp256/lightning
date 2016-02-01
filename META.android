@@ -3,6 +3,12 @@ archive(byte)="lightning.cma"
 archive(native)="lightning.cmxa"
 requires="bigarray extlib xmlm ojson redspell.debug"
 
+package "xsolla" (
+  description="Xsolla"
+  archive(byte) = "Xsolla.cma"
+  archive(native) = "Xsolla.cmxa"
+)
+
 package "gameanalytics" (
   description="GameAnalytics"
   archive(byte) = "Gameanalytics.cma"
