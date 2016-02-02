@@ -78,6 +78,7 @@ void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,
 		long y;
 		int x;
 
+		PRINT_DEBUG("render %d %d; %d %d", posX, posY,bitmapHeight,bitmapWidth);
 		if(_outlineSize > 0) {
 				unsigned char tempChar;
 				for (y = 0; y < bitmapHeight; ++y)
@@ -667,8 +668,6 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 	fontLetterDefinition tempDef;
 
 	unsigned int glyph_index = 	FT_Get_Char_Index(face, code);
-	PRINT_DEBUG ("gluph index %d", glyph_index);
-	FT_Size_Metrics size_info = face->size->metrics;
 	if (face->size->metrics.x_ppem != fontSizePoints) {
 		error= (FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
 		print_error(error);
@@ -695,6 +694,14 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 			tempDef.offsetY = _fontAscender -(metrics.horiBearingY >> 6) - adjustForExtend;
 			tempDef.xAdvance = face->glyph->metrics.horiAdvance >> 6;
 
+			/*
+        auto& metrics = _fontRef->glyph->metrics;
+        outRect.origin.x = metrics.horiBearingX >> 6;
+        outRect.origin.y = -(metrics.horiBearingY >> 6);
+        outRect.size.width = (metrics.width >> 6);
+        outRect.size.height = (metrics.height >> 6);
+				*/
+
 			if (h > _currLineHeight)
 			{
 				_currLineHeight = h + _letterEdgeExtend + 1;
@@ -711,7 +718,153 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 			}
 		
-			renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, w, h);
+			if (outline>0) {
+				PRINT_DEBUG("otline render");
+
+            unsigned char* copyBitmap = malloc(w*h);
+            memset(copyBitmap,0,w*h);
+            memcpy(copyBitmap,buffer,w*h);
+
+            FT_BBox bbox;
+            unsigned char* outlineBitmap;
+
+							if (FT_Load_Char(face, code, FT_LOAD_NO_BITMAP) == 0)
+							{
+									if (face->glyph->format == FT_GLYPH_FORMAT_OUTLINE)
+									{
+											FT_Glyph glyph;
+											if (FT_Get_Glyph(face->glyph, &glyph) == 0)
+											{
+													FT_Glyph_StrokeBorder(&glyph, stroker, 0, 1);
+													if (glyph->format == FT_GLYPH_FORMAT_OUTLINE)
+													{
+															FT_Outline* outline = &(((FT_OutlineGlyph)glyph)->outline);
+															FT_Glyph_Get_CBox(glyph,FT_GLYPH_BBOX_GRIDFIT,&bbox);
+															long width = (bbox.xMax - bbox.xMin)>>6;
+															long rows = (bbox.yMax - bbox.yMin)>>6;
+
+															FT_Bitmap bmp;
+															bmp.buffer = malloc(width * rows);
+															memset(bmp.buffer, 0, width * rows);
+															bmp.width = (int)width;
+															bmp.rows = (int)rows;
+															bmp.pitch = (int)width;
+															bmp.pixel_mode = FT_PIXEL_MODE_GRAY;
+															bmp.num_grays = 256;
+
+															FT_Raster_Params params;
+															memset(&params, 0, sizeof (params));
+															params.source = outline;
+															params.target = &bmp;
+															params.flags = FT_RASTER_FLAG_AA;
+															FT_Outline_Translate(outline,-bbox.xMin,-bbox.yMin);
+															FT_Outline_Render(_FTlibrary, outline, &params);
+
+															outlineBitmap  = bmp.buffer;
+													}
+													FT_Done_Glyph(glyph);
+											}
+									}
+							}
+
+						/*
+            if(outlineBitmap == nullptr)
+            {
+                ret = nullptr;
+                delete [] copyBitmap;
+                break;
+            }
+						*/
+
+
+
+							int outWidth = w;
+							int outHeight = h;
+            long glyphMinX = (metrics.horiBearingX >> 6);
+            long glyphMaxX =  (metrics.horiBearingX >> 6) + outWidth;
+            long glyphMinY = -outHeight + (metrics.horiBearingY >> 6) ;
+            long glyphMaxY = (metrics.horiBearingY >> 6);
+
+
+
+            long outlineMinX = bbox.xMin >> 6;
+            long outlineMaxX = bbox.xMax >> 6;
+            long outlineMinY = bbox.yMin >> 6;
+            long outlineMaxY = bbox.yMax >> 6;
+            long outlineWidth = outlineMaxX - outlineMinX;
+            long outlineHeight = outlineMaxY - outlineMinY;
+
+            long blendImageMinX = MIN(outlineMinX, glyphMinX);
+            long blendImageMaxY = MAX(outlineMaxY, glyphMaxY);
+            long blendWidth = MAX(outlineMaxX, glyphMaxX) - blendImageMinX;
+            long blendHeight = blendImageMaxY - (MIN(outlineMinY, glyphMinY));
+						/*
+            outRect.origin.x = blendImageMinX;
+            outRect.origin.y = -blendImageMaxY + _outlineSize;
+						*/
+
+            long index, index2;
+            unsigned char* blendImage = malloc(blendWidth * blendHeight * 2);
+            memset(blendImage, 0, blendWidth * blendHeight * 2);
+
+						long px = outlineMinX - blendImageMinX;
+						long py = blendImageMaxY - outlineMaxY;
+						int x;
+            for (x = 0; x < outlineWidth; ++x)
+            {
+							int y; 
+                for (y = 0; y < outlineHeight; ++y)
+                {
+                    index = px + x + ((py + y) * blendWidth);
+                    index2 = x + (y * outlineWidth);
+                    blendImage[2 * index] = outlineBitmap[index2];
+                }
+            }
+            outWidth  = blendWidth;
+            outHeight = blendHeight;
+            px = glyphMinX - blendImageMinX;
+            py = blendImageMaxY - glyphMaxY;
+            for ( x = 0; x < w; ++x)
+            {
+							int y;
+                for (y = 0; y < h; ++y)
+                {
+                    index = px + x + ((y + py) * blendWidth);
+                    index2 = x + (y * w);
+                    blendImage[2 * index + 1] = copyBitmap[index2];
+                }
+            }
+				//free(outlineBitmap);
+				//free(copyBitmap);
+/*
+            px = glyphMinX - blendImageMinX;
+            py = blendImageMaxY - glyphMaxY;
+            for (int x = 0; x < outWidth; ++x)
+            {
+                for (int y = 0; y < outHeight; ++y)
+                {
+                    index = px + x + ((y + py) * blendWidth);
+                    index2 = x + (y * outWidth);
+                    blendImage[2 * index + 1] = copyBitmap[index2];
+                }
+            }
+
+            outRect.size.width  =  blendWidth;
+            outRect.size.height =  blendHeight;
+						*/
+
+						/*
+            delete [] outlineBitmap;
+            delete [] copyBitmap;
+            ret = blendImage;
+						*/
+
+						PRINT_DEBUG("Render");
+				renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, blendImage, outWidth, outHeight);
+			}
+			else {
+				renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, w, h);
+			}
 
 			tempDef.x = _currentPageOrigX;
 			tempDef.y = _currentPageOrigY;
