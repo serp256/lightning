@@ -524,6 +524,7 @@ module Freetype = struct
   external checkChar: int -> string -> int-> string = "ml_freetype_checkChar"; 
   external _getChar: int -> string -> int-> option bc = "ml_freetype_getChar"; 
   external _complete: unit -> unit = "ml_freetype_bindTexture";
+  external setStroke: int -> unit = "ml_freetype_setStroke";
 
  
   class c =
@@ -547,7 +548,9 @@ module Freetype = struct
 
   value complete () =
     (
+      debug "complete";
       _complete();
+
       List.iter (fun ((name,style), sizes) ->
         List.iter (fun size ->
           let font = get ~style ~size name in
@@ -592,7 +595,9 @@ module Freetype = struct
       [Hashtbl.find charFaceHash code]
     with [Not_found -> findCharFace code];
 
+value tex = ref Texture.zero;
   value getBitmapChar (def_face,style,size) code =
+    let () = debug "getBitmapChar %s" (UTF8.init 1 (fun i -> UChar.chr code)) in
     let path =
       let rec getFaceRec paths =
         match paths with
@@ -612,16 +617,18 @@ module Freetype = struct
     [Some bc -> 
       (
         try
-          let sizes = Hashtbl.find fonts (bc.face, style) in
+          let () = debug "face %s" bc.face in
+          let sizes = Hashtbl.find fonts (bc.face, "Regular") in
           let bf = MapInt.find size sizes in
           let bchar = createBc bf bc in
           (
+            tex.val := bf.texture;
             debug "add %d, size %d" bchar.charID size;
             Hashtbl.add bf.chars bchar.charID bchar;
             (instance())#setNeedCompletion True;
             Some (bchar, bf.ascender, bf.descender, bf.lineHeight)
           )
-        with [_ ->let ()= debug "b" in  None]
+        with [excp ->let ()= debug "%s" (Printexc.to_string excp) in  None]
       )
     | _ -> None
     ];
@@ -667,25 +674,28 @@ value registerDynamic (sizes:list int) ttfpath =
 
 
 
-  (*
-value show size =
+  value lumalInfo = ref None;
+value show () =
   (
-    let tex = 
-      let sizes = Hashtbl.find fonts ("Noto Sans SC","Regular")in
-      let bf = MapInt.find size sizes in
-      bf.texture in
-    Image.create tex;
+    Image.create !Freetype.tex;
+    (*
+    match !lumalInfo with 
+    [Some i -> Image.create(Texture.make i)
+    | _ -> failwith "non"
+    ];
+    *)
   );
-  *)
 
 value dynamicFontComplete () = 
-  match Freetype.needCompletion () with
-  [True -> 
-    ( 
-      Freetype.complete (); 
-    )
-  |False -> ()
-  ];
+  (
+    match Freetype.needCompletion () with
+    [True -> 
+      ( 
+        Freetype.complete (); 
+      )
+    |False -> ()
+    ];
+  );
 
 IFPLATFORM(android)
   external getSystemFonts: unit -> string = "ml_getSystemFonts";
@@ -694,9 +704,13 @@ ELSE
   value getSystemFonts () = "";
   value getSystemDefaultFont () = "";
 ENDPLATFORM;
-
-value registerSystemFont (sizes: list int) = 
+(*
+  external lumal: unit -> Texture.textureInfo = "ml_lumal";
+  *)
+value registerSystemFont ?(stroke=0) (sizes: list int) = 
   (
+    Freetype.setStroke stroke;
+
     try
       let systemFonts = ExtLib.String.nsplit (getSystemFonts()) ";" in
       match systemFonts with
