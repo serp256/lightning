@@ -64,13 +64,13 @@ const char* getErrorMessage(FT_Error err) {
 
 void print_error(FT_Error error) {
 	if (error) {
-			PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
+			PRINT_DEBUG("FT error: %s", getErrorMessage (error));
 	}
 }
 int texID = 0;
 //int fontSize = 18;
 int textureSize= 2048;
-int _outlineSize = 0;
+int outline = 0;
 void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,long bitmapWidth,long bitmapHeight)
 {
     int iX = posX;
@@ -78,9 +78,9 @@ void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,
 		long y;
 		int x;
 
-		PRINT_DEBUG("render %d %d; %d %d", posX, posY,bitmapHeight,bitmapWidth);
-		if(_outlineSize > 0) {
+		if(outline > 0) {
 				unsigned char tempChar;
+				PRINT_DEBUG("copy");
 				for (y = 0; y < bitmapHeight; ++y)
 				{
 						long bitmap_y = y * bitmapWidth;
@@ -98,7 +98,9 @@ void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,
 						iX  = posX;
 						iY += 1;
 				}
+				PRINT_DEBUG("free");
 				free(bitmap);
+				PRINT_DEBUG("freeed");
 		}
 		else {
 			for (y = 0; y < bitmapHeight; ++y)
@@ -126,7 +128,6 @@ FT_Face face;
 int _FTInitialized = 1;
 FT_Stroker stroker;
 
-int outline = 0;
 int dpi = 72;
 int _currLineHeight = 0;
 int _currentPage = 0;
@@ -143,7 +144,7 @@ char* current_face_name;
 value ml_freetype_setStroke(value vstroke) {
 	CAMLparam1(vstroke);
 	outline = Int_val(vstroke);
-	CAMLreturn0;
+	CAMLreturn(Val_unit);
 }
 
 void initTextureData () {
@@ -153,7 +154,7 @@ void initTextureData () {
 		_currentPageData= malloc(_currentPageDataSize);
 		PRINT_DEBUG("1");
 		if (!_currentPageData) {
-				caml_failwith(caml_copy_string("Freetype: not enough memory"));
+				caml_failwith("Freetype: not enough memory");
 		}
 		memset(_currentPageData,0,_currentPageDataSize);
 		_currLineHeight = 0;
@@ -191,10 +192,9 @@ void loadFace(char* fname, int fontSize) {
 	PRINT_DEBUG("loadFace: done face");
 
 	if (outline > 0) {
-		_outlineSize = outline;
 		FT_Stroker_New(_FTlibrary, &stroker);
 		FT_Stroker_Set(stroker,
-				(int)(_outlineSize * 64),
+				(int)(outline * 64),
 				FT_STROKER_LINECAP_ROUND,
 				FT_STROKER_LINEJOIN_ROUND,
 				0);
@@ -211,7 +211,7 @@ void loadFace(char* fname, int fontSize) {
 		fsize = ftell(f);
 		fseek(f,0,SEEK_SET);
 		buf = malloc(fsize);
-		memset(buf,0, sizeof(buf));
+		memset(buf,0, fsize);
 		fread(buf, fsize,1,f);
 		error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
 		fclose(f);
@@ -233,10 +233,10 @@ void loadFace(char* fname, int fontSize) {
 	resource r;
 	if (getResourceFd(fname,&r)) {
 		buf = malloc(r.length);
-		memset(buf,0, sizeof(buf));
+		memset(buf,0, r.length);
 		int64_t i = read(r.fd, buf, r.length);
 		int e = errno;
-	//	PRINT_DEBUG("fread %lld %s", i, strerror(e));
+		PRINT_DEBUG("fread %lld %s", i, strerror(e));
 		error = ( (FT_New_Memory_Face(_FTlibrary, buf, r.length, 0, &face )));
 	}
 #else
@@ -272,8 +272,8 @@ void loadFace(char* fname, int fontSize) {
 
 	if ( error )
 	{
-		PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
-		caml_failwith(caml_copy_string(getErrorMessage (error)));
+		PRINT_DEBUG("FT error: %s", getErrorMessage (error));
+		caml_failwith(getErrorMessage (error));
 	}
 
 
@@ -284,7 +284,7 @@ void loadFace(char* fname, int fontSize) {
   error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	if ( error )
 	{
-		PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
+		PRINT_DEBUG("FT error: %s", getErrorMessage (error));
 	}
 
 	// set the requested font size
@@ -292,7 +292,7 @@ void loadFace(char* fname, int fontSize) {
 	error= (FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
 		if ( error )
 		{
-			PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
+			PRINT_DEBUG("FT error: %s", getErrorMessage (error));
 		}
 }
 void getFontCharmap (char* fname) {
@@ -334,7 +334,7 @@ value ml_freetype_getFont(value ttf, value vsize) {
 
 
 	if (!face) {
-		caml_failwith(caml_copy_string("Freetype face font is null"));
+		caml_failwith("Freetype face font is null");
 	}
 
 	current_face_name = fname;
@@ -347,7 +347,7 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	error = FT_Load_Glyph(face,FT_Get_Char_Index(face, ' '), FT_LOAD_DEFAULT);
 	if ( error )
 	{
-		PRINT_DEBUG("FT error: %s", caml_copy_string(getErrorMessage (error)));
+		PRINT_DEBUG("FT error: %s", getErrorMessage (error));
 	}
 	
 	CAMLlocal4(mlFont,mlTex,textureID, mlTexOpt);
@@ -397,11 +397,9 @@ value ml_freetype_checkChar (value vtext, value vface, value vsize) {
 	int code = Int_val(vtext);
 	int fontSize = Int_val(vsize);
 
-	FT_Error error;
-
 	char* cface = String_val(vface);
 
-	PRINT_DEBUG("check face [%s], current [%s]", cface, current_face_name);
+	//PRINT_DEBUG("check face [%s], current [%s]", cface, current_face_name);
 
 
 	if (current_face_name && strlen(cface) > 0 && strcmp(current_face_name, cface) != 0) { 
@@ -410,10 +408,10 @@ value ml_freetype_checkChar (value vtext, value vface, value vsize) {
 
 	unsigned int glyph_index = 	FT_Get_Char_Index(face, code);
 	if (glyph_index == 0 ) {
-		PRINT_DEBUG("not found char %d in %s", code, face->family_name);
+	//	PRINT_DEBUG("not found char %d in %s", code, face->family_name);
 		CAMLreturn(caml_copy_string(""));
 	} else {
-		PRINT_DEBUG("found char %d in %s", code, face->family_name);
+	//	PRINT_DEBUG("found char %d in %s", code, face->family_name);
 		CAMLreturn(caml_copy_string(face->family_name));
 	}
 }
@@ -432,217 +430,10 @@ value ml_freetype_bindTexture(value unit) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, textureSize, textureSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _currentPageData);
 	}
 	PRINT_DEBUG("end");
-	initTextureData();
+	//initTextureData();
 	CAMLreturn(Val_unit);
 }
 
-
-///////////////////////////
-typedef struct {
-  int w;
-  int h;
-  unsigned char* buf;
-  int bearingx;
-  int bearingy;
-  int minx;
-  int miny;
-} stroke_t;
-
-typedef struct {
-  int x;
-  int y;
-  int len;
-  int val;
-} span_t;
-
-typedef struct {
-  int len;
-  int size;
-  int minx;
-  int miny;
-  int maxx;
-  int maxy;
-  span_t* items;
-} spans_t;
-
-spans_t* spans_create() {
-  spans_t* retval = (spans_t*)malloc(sizeof(spans_t));
-  retval->len = 0;
-  retval->size = 10;
-  retval->minx = 10000000;
-  retval->miny = 10000000;
-  retval->maxx = -10000000;
-  retval->maxy = -10000000;
-  retval->items = (span_t*)malloc(sizeof(span_t) * retval->size);
-
-  return retval;
-}
-
-void spans_add(spans_t* spans, int x, int y, int len, int val) {
-  if (spans->len == spans->size) {
-    spans->size += 10;
-    spans->items = (span_t*)realloc(spans->items, sizeof(span_t) * spans->size);
-  }
-
-  span_t* span = spans->items + spans->len;
-  span->x = x;
-  span->y = y;
-  span->len = len;
-  span->val = val;
-
-  spans->minx = spans->minx > x ? x : spans->minx;
-  spans->miny = spans->miny > y ? y : spans->miny;
-  spans->maxx = spans->maxx < x + len - 1 ? x + len - 1 : spans->maxx;
-  spans->maxy = spans->maxy < y ? y : spans->maxy;
-  spans->len++;
-}
-
-void spans_free(spans_t* spans) {
-  free(spans->items);
-  free(spans);
-}
-
-void spans_to_stroke(stroke_t* stroke, spans_t* strk_spans, spans_t* glph_spans) {
-  int i, j, y;
-  span_t* span;
-
-  for (i = 0; i < strk_spans->len; i++) {
-    span = strk_spans->items + i;
-    y = span->y - stroke->miny;
-
-    for (j = span->x - stroke->minx; j < span->x - stroke->minx + span->len; j++) {
-      *(stroke->buf + 2 * (stroke->w * y + j) + 1) = span->val;
-    }
-  }
-
-  for (i = 0; i < glph_spans->len; i++) {
-    span = glph_spans->items + i;
-    y = span->y - stroke->miny;
-
-    for (j = span->x - stroke->minx; j < span->x - stroke->minx + span->len; j++) {
-      *(stroke->buf + 2 * (stroke->w * y + j)) = span->val;
-    }
-  }
-}
-
-
-void render(const int y,
-               const int count,
-               const FT_Span * const spans,
-               void * const user)
-{
-  spans_t* spns = (spans_t*)user;
-
-	int i;
-  for (i = 0; i < count; ++i) {
-    spans_add(spns, spans[i].x, y, spans[i].len, spans[i].coverage);
-  }  
-}
-stroke_t* stroke_render (int code) {
-  FT_Glyph glyph;
-
-	unsigned int glyph_index = 	FT_Get_Char_Index(face, code);
-	/*
-	//int _fontAscender = face->size->metrics.ascender >> 6;
-	//int _lineHeight = face->size->metrics.height >> 6;
-	error = FT_Load_Glyph(face,glyph_index, FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT);
-	print_error(error);
-		
-	unsigned char* buffer = face->glyph->bitmap.buffer;
-
-	unsigned int w = face->glyph->bitmap.width;
-	unsigned int h = face->glyph->bitmap.rows;
-	unsigned int outWidth = w; 
-	unsigned int outHeight = h; 
-
-	*/
-
-  if( FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT ) ){
-    failwith("FT_Load_Glyph");
-  }
-  if (FT_Get_Glyph(face->glyph, &glyph) != 0) {
-    failwith("FT_Get_Glyph");
-  }
-
-  FT_Glyph_StrokeBorder(&glyph, stroker, 0, 0);
-
-  if (glyph->format != FT_GLYPH_FORMAT_OUTLINE) {
-    failwith("glyph format is not FT_GLYPH_FORMAT_OUTLINE");
-  }
-
-  FT_Outline* outline = &(((FT_OutlineGlyph)glyph)->outline);
-
-  FT_BBox stroke_box;
-  FT_Outline_Get_CBox(outline, &stroke_box);
-
-  spans_t* stroke_spans = spans_create();
-  spans_t* glyph_spans = spans_create();
-
-  FT_Raster_Params params;
-  params.flags = FT_RASTER_FLAG_AA | FT_RASTER_FLAG_DIRECT;
-  params.gray_spans = render;
-  params.user = (void*)stroke_spans;
-
-  if (FT_Outline_Render(_FTlibrary, outline, &params) != 0) {
-    failwith("FT_Outline_Render");
-  }
-
-  if (face->glyph->format != FT_GLYPH_FORMAT_OUTLINE) {
-    failwith("glyph format is not FT_GLYPH_FORMAT_OUTLINE"); 
-  }
-
-  outline = &face->glyph->outline;
-  FT_BBox glyph_box;
-  FT_Outline_Get_CBox(outline, &glyph_box);
-  params.user = glyph_spans;
-
-  if (FT_Outline_Render(_FTlibrary, outline, &params) != 0) {
-    failwith("FT_Outline_Render");
-  }
-
-  int minx = MIN(stroke_spans->minx, glyph_spans->minx);
-  int miny = MIN(stroke_spans->miny, glyph_spans->miny);
-  int maxx = MAX(stroke_spans->maxx, glyph_spans->maxx);
-  int maxy = MAX(stroke_spans->maxy, glyph_spans->maxy);
-
-  int stroke_w = maxx - minx + 1;
-  int stroke_h = maxy - miny + 1;
-
-
-	//unsigned char* buf = malloc(2 * stroke_w * stroke_h);
- // memset(buf, 0, 2 * stroke_w * stroke_h);
-
-  //vstroke = caml_alloc_custom(&stroket_ops, sizeof(stroke_t), 2 * stroke_w * stroke_h, 10485760);
-
-	/*
-  stroke_t* stroke = (stroke_t*)Data_custom_val(vstroke);
-	*/
-	stroke_t* stroke = malloc(sizeof(stroke_t));
-  stroke->w = stroke_w;
-  stroke->h = stroke_h;
-  stroke->minx = minx;
-  stroke->miny = miny;  
-  stroke->buf = (unsigned char*)malloc(2 * stroke_w * stroke_h);
-  memset(stroke->buf, 0, 2 * stroke_w * stroke_h);
-
-  stroke->bearingx = glyph_spans->minx - stroke_spans->minx;
-  stroke->bearingy = stroke_spans->maxy - glyph_spans->maxy;
-
-  spans_to_stroke(stroke, stroke_spans, glyph_spans);
-  spans_free(stroke_spans);
-  spans_free(glyph_spans);
-
-  FT_Done_Glyph(glyph);
-  FT_Stroker_Done(stroker);
-	return (stroke);
-
-}
-
-
-unsigned char stroke_get_pixel(stroke_t* stroke, int x, int y, int glyph) {
-  //int retval = *(stroke->buf + 2 * (Int_val(vy) * stroke->w + Int_val(vx)) + (vglyph == Val_true ? 0 : 1));
-	return *(stroke->buf + 2 * (y * stroke->w + x) + glyph);
-}
 
 value ml_freetype_getChar(value vtext, value vface, value vsize) {
 	PRINT_DEBUG("ml_freetype_getChar");
@@ -675,195 +466,187 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 	int _fontAscender = face->size->metrics.ascender >> 6;
 	int _lineHeight = face->size->metrics.height >> 6;
+	PRINT_DEBUG("index %d",glyph_index);
 	 error = FT_Load_Glyph(face,glyph_index, FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT);
 	 print_error(error);
 		
 		unsigned char* buffer = face->glyph->bitmap.buffer;
 
-		unsigned int w = face->glyph->bitmap.width;
-		unsigned int h = face->glyph->bitmap.rows;
-		 
-		tempDef.xAdvance = face->glyph->metrics.horiAdvance >> 6;
+		unsigned int outWidth = face->glyph->bitmap.width;
+		unsigned int outHeight = face->glyph->bitmap.rows;
+
+
+		FT_Glyph_Metrics metrics = face->glyph->metrics;
+		unsigned int outRectOriginX= metrics.horiBearingX >> 6;
+		unsigned int outRectOriginY= -(metrics.horiBearingY >> 6);
+		unsigned int outRectWidth= (metrics.width >> 6);
+		unsigned int outRectHeight = (metrics.height >> 6);
+
+		tempDef.validDefinition = 1;
+
+		/*
 		PRINT_DEBUG ("w %d h %d, %d", w, h, tempDef.xAdvance); 
-		if (buffer && w > 0 && h > 0) {
-			FT_Glyph_Metrics metrics = face->glyph->metrics;
-			tempDef.validDefinition = 0;
-			tempDef.width = (metrics.width >> 6) + _letterEdgeExtend;
-			tempDef.height = (metrics.height >> 6) + _letterEdgeExtend;
-			tempDef.offsetX = (metrics.horiBearingX >> 6) + adjustForExtend;
-			tempDef.offsetY = _fontAscender -(metrics.horiBearingY >> 6) - adjustForExtend;
+		*/
+
+		if (buffer && outWidth > 0 && outHeight > 0) {
+			PRINT_DEBUG("buffer: %u %u", outWidth, outHeight);
+
 			tempDef.xAdvance = face->glyph->metrics.horiAdvance >> 6;
 
-			/*
-        auto& metrics = _fontRef->glyph->metrics;
-        outRect.origin.x = metrics.horiBearingX >> 6;
-        outRect.origin.y = -(metrics.horiBearingY >> 6);
-        outRect.size.width = (metrics.width >> 6);
-        outRect.size.height = (metrics.height >> 6);
-				*/
+			tempDef.validDefinition = 0;
+		
+			if (outline > 0) {
+				int bsize = outWidth * outHeight;
+				PRINT_DEBUG ("copy");
+				unsigned char* copyBitmap = malloc(bsize);
+				memset(copyBitmap, 0, bsize);
+				memcpy(copyBitmap, buffer, bsize);
+				PRINT_DEBUG ("copied");
 
-			if (h > _currLineHeight)
-			{
-				_currLineHeight = h + _letterEdgeExtend + 1;
-			}
+				FT_BBox bbox;
+				unsigned char* outlineBitmap;
 
-			if (_currentPageOrigX + tempDef.width > textureSize)
-			{
-				_currentPageOrigY += _currLineHeight;
-				_currLineHeight = 0;
-				_currentPageOrigX = 0;
-				if (_currentPageOrigY + _lineHeight >= textureSize){
-					PRINT_DEBUG ("No more space in texture");
+				if (FT_Load_Char(face, code, FT_LOAD_NO_BITMAP) == 0) {
+					if (face->glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
+						FT_Glyph glyph;
+						if (FT_Get_Glyph(face->glyph, &glyph) == 0) {
+
+							PRINT_DEBUG("stroke");
+							error = FT_Glyph_StrokeBorder(&glyph, stroker, 0, 1);
+							print_error(error);
+
+							if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
+								FT_Outline* outline = &(((FT_OutlineGlyph)glyph)->outline);
+								FT_Glyph_Get_CBox(glyph,FT_GLYPH_BBOX_GRIDFIT,&bbox);
+								long width = (bbox.xMax - bbox.xMin)>>6;
+								long rows = (bbox.yMax - bbox.yMin)>>6;
+
+								FT_Bitmap bmp;
+							PRINT_DEBUG("bitmap");
+								bmp.buffer = malloc(width * rows);
+								memset(bmp.buffer, 0, width * rows);
+								bmp.width = (int)width;
+								bmp.rows = (int)rows;
+								bmp.pitch = (int)width;
+								bmp.pixel_mode = FT_PIXEL_MODE_GRAY;
+								bmp.num_grays = 256;
+
+								FT_Raster_Params params;
+								memset(&params, 0, sizeof (params));
+								params.source = outline;
+								params.target = &bmp;
+								params.flags = FT_RASTER_FLAG_AA;
+								FT_Outline_Translate(outline,-bbox.xMin,-bbox.yMin);
+								FT_Outline_Render(_FTlibrary, outline, &params);
+
+								outlineBitmap  = bmp.buffer;
+							}
+							FT_Done_Glyph(glyph);
+						}
+					}
 				}
 
-			}
-		
-			if (outline>0) {
-				PRINT_DEBUG("otline render");
+				if (outlineBitmap) {
+					PRINT_DEBUG("outlineBitmap");
+					
 
-            unsigned char* copyBitmap = malloc(w*h);
-            memset(copyBitmap,0,w*h);
-            memcpy(copyBitmap,buffer,w*h);
-
-            FT_BBox bbox;
-            unsigned char* outlineBitmap;
-
-							if (FT_Load_Char(face, code, FT_LOAD_NO_BITMAP) == 0)
-							{
-									if (face->glyph->format == FT_GLYPH_FORMAT_OUTLINE)
-									{
-											FT_Glyph glyph;
-											if (FT_Get_Glyph(face->glyph, &glyph) == 0)
-											{
-													FT_Glyph_StrokeBorder(&glyph, stroker, 0, 1);
-													if (glyph->format == FT_GLYPH_FORMAT_OUTLINE)
-													{
-															FT_Outline* outline = &(((FT_OutlineGlyph)glyph)->outline);
-															FT_Glyph_Get_CBox(glyph,FT_GLYPH_BBOX_GRIDFIT,&bbox);
-															long width = (bbox.xMax - bbox.xMin)>>6;
-															long rows = (bbox.yMax - bbox.yMin)>>6;
-
-															FT_Bitmap bmp;
-															bmp.buffer = malloc(width * rows);
-															memset(bmp.buffer, 0, width * rows);
-															bmp.width = (int)width;
-															bmp.rows = (int)rows;
-															bmp.pitch = (int)width;
-															bmp.pixel_mode = FT_PIXEL_MODE_GRAY;
-															bmp.num_grays = 256;
-
-															FT_Raster_Params params;
-															memset(&params, 0, sizeof (params));
-															params.source = outline;
-															params.target = &bmp;
-															params.flags = FT_RASTER_FLAG_AA;
-															FT_Outline_Translate(outline,-bbox.xMin,-bbox.yMin);
-															FT_Outline_Render(_FTlibrary, outline, &params);
-
-															outlineBitmap  = bmp.buffer;
-													}
-													FT_Done_Glyph(glyph);
-											}
-									}
-							}
-
-						/*
-            if(outlineBitmap == nullptr)
-            {
-                ret = nullptr;
-                delete [] copyBitmap;
-                break;
-            }
-						*/
+					long glyphMinX = (metrics.horiBearingX >> 6);
+					long glyphMaxX =  (metrics.horiBearingX >> 6) + outWidth;
+					long glyphMinY = -outHeight + (metrics.horiBearingY >> 6) ;
+					long glyphMaxY = (metrics.horiBearingY >> 6);
 
 
+					long outlineMinX = bbox.xMin >> 6;
+					long outlineMaxX = bbox.xMax >> 6;
+					long outlineMinY = bbox.yMin >> 6;
+					long outlineMaxY = bbox.yMax >> 6;
+					long outlineWidth = outlineMaxX - outlineMinX;
+					long outlineHeight = outlineMaxY - outlineMinY;
 
-							int outWidth = w;
-							int outHeight = h;
-            long glyphMinX = (metrics.horiBearingX >> 6);
-            long glyphMaxX =  (metrics.horiBearingX >> 6) + outWidth;
-            long glyphMinY = -outHeight + (metrics.horiBearingY >> 6) ;
-            long glyphMaxY = (metrics.horiBearingY >> 6);
+					long blendImageMinX = MIN(outlineMinX, glyphMinX);
+					long blendImageMaxY = MAX(outlineMaxY, glyphMaxY);
+					long blendWidth = MAX(outlineMaxX, glyphMaxX) - blendImageMinX;
+					long blendHeight = blendImageMaxY - (MIN(outlineMinY, glyphMinY));
 
+					long index, index2;
+					unsigned char* blendImage = malloc(blendWidth * blendHeight * 2);
+					PRINT_DEBUG("blend");
+					memset(blendImage, 0, blendWidth * blendHeight * 2);
+					PRINT_DEBUG("blend copied");
 
+					long px = outlineMinX - blendImageMinX;
+					long py = blendImageMaxY - outlineMaxY;
+					int x;
+					for (x = 0; x < outlineWidth; ++x) {
+						int y; 
+						for (y = 0; y < outlineHeight; ++y) {
+							index = px + x + ((py + y) * blendWidth);
+							index2 = x + (y * outlineWidth);
+							blendImage[2 * index] = outlineBitmap[index2];
+						}
+					}
+					px = glyphMinX - blendImageMinX;
+					py = blendImageMaxY - glyphMaxY;
+					for ( x = 0; x < outWidth; ++x) {
+						int y;
+						for (y = 0; y < outHeight; ++y) {
+							index = px + x + ((y + py) * blendWidth);
+							index2 = x + (y * outWidth);
+							blendImage[2 * index + 1] = copyBitmap[index2];
+						}
+					}
+				PRINT_DEBUG("free");
+				free(outlineBitmap);
+				free(copyBitmap);
+				PRINT_DEBUG("freeed");
 
-            long outlineMinX = bbox.xMin >> 6;
-            long outlineMaxX = bbox.xMax >> 6;
-            long outlineMinY = bbox.yMin >> 6;
-            long outlineMaxY = bbox.yMax >> 6;
-            long outlineWidth = outlineMaxX - outlineMinX;
-            long outlineHeight = outlineMaxY - outlineMinY;
-
-            long blendImageMinX = MIN(outlineMinX, glyphMinX);
-            long blendImageMaxY = MAX(outlineMaxY, glyphMaxY);
-            long blendWidth = MAX(outlineMaxX, glyphMaxX) - blendImageMinX;
-            long blendHeight = blendImageMaxY - (MIN(outlineMinY, glyphMinY));
-						/*
-            outRect.origin.x = blendImageMinX;
-            outRect.origin.y = -blendImageMaxY + _outlineSize;
-						*/
-
-            long index, index2;
-            unsigned char* blendImage = malloc(blendWidth * blendHeight * 2);
-            memset(blendImage, 0, blendWidth * blendHeight * 2);
-
-						long px = outlineMinX - blendImageMinX;
-						long py = blendImageMaxY - outlineMaxY;
-						int x;
-            for (x = 0; x < outlineWidth; ++x)
-            {
-							int y; 
-                for (y = 0; y < outlineHeight; ++y)
-                {
-                    index = px + x + ((py + y) * blendWidth);
-                    index2 = x + (y * outlineWidth);
-                    blendImage[2 * index] = outlineBitmap[index2];
-                }
-            }
-            outWidth  = blendWidth;
-            outHeight = blendHeight;
-            px = glyphMinX - blendImageMinX;
-            py = blendImageMaxY - glyphMaxY;
-            for ( x = 0; x < w; ++x)
-            {
-							int y;
-                for (y = 0; y < h; ++y)
-                {
-                    index = px + x + ((y + py) * blendWidth);
-                    index2 = x + (y * w);
-                    blendImage[2 * index + 1] = copyBitmap[index2];
-                }
-            }
-				//free(outlineBitmap);
-				//free(copyBitmap);
-/*
-            px = glyphMinX - blendImageMinX;
-            py = blendImageMaxY - glyphMaxY;
-            for (int x = 0; x < outWidth; ++x)
-            {
-                for (int y = 0; y < outHeight; ++y)
-                {
-                    index = px + x + ((y + py) * blendWidth);
-                    index2 = x + (y * outWidth);
-                    blendImage[2 * index + 1] = copyBitmap[index2];
-                }
-            }
-
-            outRect.size.width  =  blendWidth;
-            outRect.size.height =  blendHeight;
-						*/
-
-						/*
-            delete [] outlineBitmap;
-            delete [] copyBitmap;
-            ret = blendImage;
-						*/
-
-						PRINT_DEBUG("Render");
-				renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, blendImage, outWidth, outHeight);
+					outWidth  = blendWidth;
+					outHeight = blendHeight;
+					tempDef.validDefinition = 0;
+					tempDef.width = outWidth;
+					tempDef.height = outHeight;
+					tempDef.offsetX = blendImageMinX;
+					tempDef.offsetY =  - blendImageMaxY + outline;
+					buffer = blendImage;
+					PRINT_DEBUG("ok");
+				}
+				else {
+					buffer = NULL;
+				}
 			}
 			else {
-				renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, w, h);
+				tempDef.validDefinition = 0;
+				tempDef.width = (metrics.width >> 6);
+				tempDef.height = (metrics.height >> 6);
+				tempDef.offsetX = (metrics.horiBearingX >> 6);
+				tempDef.offsetY = -(metrics.horiBearingY >> 6);
+			}
+
+
+			tempDef.width += _letterEdgeExtend;
+			tempDef.height += _letterEdgeExtend;
+			tempDef.offsetX += adjustForExtend;
+			tempDef.offsetY = _fontAscender + tempDef.offsetY - adjustForExtend;
+
+			if (buffer) {
+				if (outHeight > _currLineHeight) {
+					_currLineHeight = outHeight + _letterEdgeExtend + 1;
+				}
+
+				if (_currentPageOrigX + tempDef.width > textureSize) {
+					_currentPageOrigY += _currLineHeight;
+					_currLineHeight = 0;
+					_currentPageOrigX = 0;
+					if (_currentPageOrigY + _lineHeight >= textureSize){
+						PRINT_DEBUG ("No more space in texture");
+					}
+				}
+				PRINT_DEBUG("render %u %u", outWidth, outHeight);
+				tempDef.validDefinition = 0;
+				renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, outWidth, outHeight);
+			}
+			else {
+				tempDef.validDefinition = 1;
 			}
 
 			tempDef.x = _currentPageOrigX;
@@ -872,9 +655,8 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 			_currentPageOrigX += tempDef.width + 1;
 		}
 		else{
-			if (tempDef.xAdvance && tempDef.xAdvance > 0)
-				tempDef.validDefinition = 0;
-			else {
+
+			if (!(tempDef.xAdvance && tempDef.xAdvance > 0)) {
 				tempDef.validDefinition = 1;
 			}
 
@@ -891,6 +673,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 		if (tempDef.validDefinition==0) {
 			mlChar = caml_alloc_tuple(9);
 
+			PRINT_DEBUG("Ret char");
 			Store_field(mlChar,0, Val_int(code));
 			Store_field(mlChar,1,caml_copy_double(tempDef.x));
 			Store_field(mlChar,2,caml_copy_double(tempDef.y));
@@ -901,10 +684,6 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 			Store_field(mlChar,7,caml_copy_double(tempDef.xAdvance));
 			Store_field(mlChar,8,caml_copy_string(face->family_name));
 
-			/*
-			glBindTexture(GL_TEXTURE_2D, texID);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, textureSize, textureSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _currentPageData);
-			*/
 
 			mlCharOpt = caml_alloc(1, 0);
 			Store_field( mlCharOpt, 0, mlChar );

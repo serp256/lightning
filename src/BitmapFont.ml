@@ -527,6 +527,7 @@ module Freetype = struct
   external setStroke: int -> unit = "ml_freetype_setStroke";
 
  
+  value default_style = "Regular";
   class c =
     object(self)
       value mutable texture = Texture.zero;
@@ -546,17 +547,22 @@ module Freetype = struct
   value _instance = Lazy.from_fun (fun () -> new c);
   value instance () : c = Lazy.force _instance;
 
+  value charFaceHash = Hashtbl.create 10;
+
   value complete () =
     (
       debug "complete";
       _complete();
 
+      (*
       List.iter (fun ((name,style), sizes) ->
         List.iter (fun size ->
           let font = get ~style ~size name in
           Hashtbl.clear font.chars;
         ) sizes;
       ) (instance())#fonts;
+      Hashtbl.clear charFaceHash;
+      *)
       (instance())#setNeedCompletion False;
     );
   value needCompletion () = (instance())#needCompletion;
@@ -567,7 +573,6 @@ module Freetype = struct
           AtlasNode.create bf.texture region () in
         {charID=bc.charID; xOffset=bc.xOffset; yOffset = bc.yOffset; xAdvance = bc.xAdvance; atlasNode};
 
-  value charFaceHash = Hashtbl.create 10;
 
   value addCharFace code face = 
     Hashtbl.add charFaceHash code face;
@@ -575,7 +580,7 @@ module Freetype = struct
   exception FoundRange of (int * int);
 
   value chooseFace faces = List.hd faces;
-  value findCharFace code =
+  value getCharTTF code =
     let () = debug "getCharFace %d" code in
       let ranges = UnicodeRanges.getRanges () in
       try
@@ -592,10 +597,11 @@ module Freetype = struct
 
   value getCharFace code = 
     try
-      [Hashtbl.find charFaceHash code]
-    with [Not_found -> findCharFace code];
+      Some (Hashtbl.find charFaceHash code)
+    with [Not_found -> None];
 
-value tex = ref Texture.zero;
+  value tex = ref Texture.zero;
+
   value getBitmapChar (def_face,style,size) code =
     let () = debug "getBitmapChar %s" (UTF8.init 1 (fun i -> UChar.chr code)) in
     let path =
@@ -608,9 +614,10 @@ value tex = ref Texture.zero;
           if  face_family <> "" then ttfpath
           else getFaceRec tl 
         | [] ->
+          let () =debug "defaultttf" in
             (instance())#defaultTTF
         ] in
-      getFaceRec (getCharFace code)
+      getFaceRec (getCharTTF code)
     in
     let bc = _getChar code path size in
     match bc with
@@ -618,10 +625,15 @@ value tex = ref Texture.zero;
       (
         try
           let () = debug "face %s" bc.face in
-          let sizes = Hashtbl.find fonts (bc.face, "Regular") in
+          let sizes = Hashtbl.find fonts (bc.face, default_style) in
+          (*
+          let () = debug "face %s" bc.face in
+          let sizes = Hashtbl.find fonts (def_face, style) in
+          *)
           let bf = MapInt.find size sizes in
           let bchar = createBc bf bc in
           (
+            addCharFace code bc.face;
             tex.val := bf.texture;
             debug "add %d, size %d" bchar.charID size;
             Hashtbl.add bf.chars bchar.charID bchar;
@@ -638,7 +650,22 @@ value tex = ref Texture.zero;
   Callback.register "add_font_ranges" UnicodeRanges.parseFace;
 end;
 
-value getBitmapChar = Freetype.getBitmapChar;
+value getBitmapChar (face,style,size) code = 
+  match Freetype.getCharFace code with
+  [Some face -> 
+          let sizes = Hashtbl.find fonts (face, Freetype.default_style) in
+          (*
+          let () = debug "face %s" bc.face in
+          let sizes = Hashtbl.find fonts (def_face, style) in
+          *)
+          let bf = MapInt.find size sizes in
+          (
+            Some (Hashtbl.find bf.chars code, bf.ascender, bf.descender, bf.lineHeight)
+          )
+  | None -> Freetype.getBitmapChar (face,style,size) code
+  ];
+
+
 
 value registerDynamic (sizes:list int) ttfpath =
   let open Freetype in
