@@ -658,10 +658,12 @@ value getBitmapChar (face,style,size) code =
           let () = debug "face %s" bc.face in
           let sizes = Hashtbl.find fonts (def_face, style) in
           *)
-          let bf = MapInt.find size sizes in
-          (
-            Some (Hashtbl.find bf.chars code, bf.ascender, bf.descender, bf.lineHeight)
-          )
+          try
+            let bf = MapInt.find size sizes in
+            (
+              Some (Hashtbl.find bf.chars code, bf.ascender, bf.descender, bf.lineHeight)
+            )
+          with [_ -> None]
   | None -> Freetype.getBitmapChar (face,style,size) code
   ];
 
