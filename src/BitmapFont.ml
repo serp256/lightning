@@ -202,7 +202,6 @@ value register binpath =
                   let ts = pages.(0)#scale in
                   { chars; texture = pages.(0); scale=1.; ascender = ascender *. ts; descender = descender *. ts; space = space *. ts; lineHeight = lineHeight *. ts; isDynamic=False} 
                 in
-                let () = debug "size %d ascender %f descender %f height %f space %f" size ascender descender lineHeight space in
                 let res = MapInt.add size bf res in
                 parse_chars (n-1) res
               )
@@ -525,6 +524,7 @@ module Freetype = struct
   external _getChar: int -> string -> int-> option bc = "ml_freetype_getChar"; 
   external _complete: unit -> unit = "ml_freetype_bindTexture";
   external setStroke: int -> unit = "ml_freetype_setStroke";
+  external setScale: float -> unit = "ml_freetype_setScale";
 
  
   value default_style = "Regular";
@@ -736,9 +736,10 @@ ENDPLATFORM;
 (*
   external lumal: unit -> Texture.textureInfo = "ml_lumal";
   *)
-value registerSystemFont ?(stroke=0) (sizes: list int) = 
+value registerSystemFont ?(scale=1.) ?(stroke=0) (sizes: list int) = 
   (
     Freetype.setStroke stroke;
+    Freetype.setScale scale;
 
     try
       let systemFonts = ExtLib.String.nsplit (getSystemFonts()) ";" in

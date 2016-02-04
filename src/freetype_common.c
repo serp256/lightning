@@ -70,7 +70,7 @@ void print_error(FT_Error error) {
 int texID = 0;
 //int fontSize = 18;
 int textureSize= 2048;
-int outline = 0;
+double outline = 0;
 void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,long bitmapWidth,long bitmapHeight)
 {
     int iX = posX;
@@ -140,12 +140,21 @@ int _currentPageDataSize;
 
 unsigned char* buf;
 char* current_face_name;
+double scale = 1.;
 
 value ml_freetype_setStroke(value vstroke) {
 	CAMLparam1(vstroke);
-	outline = Int_val(vstroke);
+	outline = (double) (Int_val(vstroke) / 100.0);
+	PRINT_DEBUG("outline %f", outline);
 	CAMLreturn(Val_unit);
 }
+
+value ml_freetype_setScale(value vscale) {
+	CAMLparam1(vscale);
+	scale = Double_val(vscale);
+	CAMLreturn(Val_unit);
+}
+
 
 void initTextureData () {
 		PRINT_DEBUG("1");
@@ -181,20 +190,23 @@ int initFreeType() {
     return  _FTInitialized;
 }
 
-void loadFace(char* fname, int fontSize) {
+void loadFace(char* fname, int fSize) {
 	FT_Error error;
-	PRINT_DEBUG("loadFace %s %d", fname, fontSize);
+	PRINT_DEBUG("loadFace %s %d", fname, fSize);
 
+	double dfsize = (double)(scale * fSize);
+	int fontSize =  (int)(dfsize + 0.45);
 	 if (face) {
 		free(buf);
 		FT_Done_Face(face);
 	 }
 	PRINT_DEBUG("loadFace: done face");
 
+	double outlineSize = (double)(dfsize * outline);
 	if (outline > 0) {
 		FT_Stroker_New(_FTlibrary, &stroker);
 		FT_Stroker_Set(stroker,
-				(int)(outline * 64),
+				(int)(outlineSize * 64),
 				FT_STROKER_LINECAP_ROUND,
 				FT_STROKER_LINEJOIN_ROUND,
 				0);
@@ -297,8 +309,8 @@ void loadFace(char* fname, int fontSize) {
 }
 void getFontCharmap (char* fname) {
 	TT_OS2*  os2;                                     
-	os2 =                                                    
-		(TT_OS2*)FT_Get_Sfnt_Table( face, FT_SFNT_OS2);   
+	os2 = (TT_OS2*)FT_Get_Sfnt_Table( face, FT_SFNT_OS2);   
+	/*
 	PRINT_DEBUG ("0 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(0)))?"true":"false");
 	PRINT_DEBUG ("1 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(1)))?"true":"false");
 	PRINT_DEBUG ("2 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(2)))?"true":"false");
@@ -311,6 +323,7 @@ void getFontCharmap (char* fname) {
 	PRINT_DEBUG ("range2 %lu", (os2->ulUnicodeRange2));
 	PRINT_DEBUG ("randge3: %lu", (os2->ulUnicodeRange3));
 	PRINT_DEBUG ("range4: %lu", (os2->ulUnicodeRange4));
+	*/
 
 	static value* add_font = NULL;
 	if (!add_font) add_font = caml_named_value("add_font_ranges");
@@ -381,6 +394,8 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		texID = TEXTURE_ID(textureID);
 		mlTexOpt = caml_alloc(1, 0);
 		ML_TEXTURE_INFO(mlTex,textureID,(tInfo));
+
+
 		Store_field( mlTexOpt, 0, mlTex);
 		Store_field(mlFont,7,mlTexOpt);
 	}
@@ -442,7 +457,8 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 	int code = Int_val(vtext);
 
-	int fontSize = Int_val(vsize);
+	double dfsize = (double)(scale * Int_val(vsize));
+	int fontSize =  (int)(dfsize + 0.45);
 	int fontSizePoints = (int)(64.f * fontSize);
 
 	FT_Error error;
