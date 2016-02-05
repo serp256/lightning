@@ -636,3 +636,23 @@ value strCapitalize str =
   let fst = String.sub str 0 fstCharPos in
   let rest = String.sub str fstCharPos (String.length str - fstCharPos) in
     (strToUpper fst) ^ rest;
+
+IFPLATFORM(ios)
+external systemVersion: unit -> string = "ml_systemVersion";
+ELSE
+  IFPLATFORM(android)
+  value systemVersion () = Hardware.platform ();
+  ELSE
+  value systemVersion () = "MAC_OS_X";
+  ENDPLATFORM;
+ENDPLATFORM;
+
+IFPLATFORM(ios)
+external model: unit -> string = "ml_model";
+ELSE
+  IFPLATFORM(android)
+  value model () = Hardware.hwmodel();
+  ELSE
+  value model () = "iMAC";
+  ENDPLATFORM;
+ENDPLATFORM;
