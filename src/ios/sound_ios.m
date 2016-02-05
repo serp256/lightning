@@ -118,9 +118,6 @@ value ml_sound_init(value mlSessionCategory,value unit) {
 	*/
 
 	NSError* error;
-	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
-	[[AVAudioSession sharedInstance] setActive:YES error:&error];
-	if (!error) raise_error("Could not activate audio session", NULL, (uint)([error code]));
 
 	// Init OpenAL
 	alGetError(); // reset any errors
@@ -133,6 +130,11 @@ value ml_sound_init(value mlSessionCategory,value unit) {
 
 	BOOL success = alcMakeContextCurrent(context);
 	if (!success) raise_error("Could not set current OpenAL context",NULL,0);
+
+	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+	[[AVAudioSession sharedInstance] setActive:YES error:&error];
+	if (!error) raise_error("Could not activate audio session", NULL, (uint)([error code]));
+
 	return Val_unit;
 }
 

@@ -653,3 +653,12 @@ value ml_disableAwake(value unit) {
     [UIApplication sharedApplication].idleTimerDisabled = NO;
     return Val_unit;
 }
+
+value ml_systemVersion(value unit) {
+	CAMLparam0();
+	CAMLreturn(caml_copy_string([[[UIDevice currentDevice] systemVersion] UTF8String]));
+}
+value ml_model (value unit) {
+	CAMLparam0();
+	CAMLreturn(caml_copy_string([[[UIDevice currentDevice] model] UTF8String]));
+}

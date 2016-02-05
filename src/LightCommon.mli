@@ -100,3 +100,6 @@ value regExtraResources: ~fname:string -> unit -> unit;
 value strToLower: string -> string;
 value strToUpper: string -> string;
 value strCapitalize: string -> string;
+
+value systemVersion: unit -> string;
+value model: unit -> string;
