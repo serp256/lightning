@@ -48,7 +48,6 @@ typedef struct {
 	float offsetX;
 	float offsetY;
 	int textureID;
-	int validDefinition;
 	int xAdvance;
 } fontLetterDefinition;
 
@@ -69,7 +68,8 @@ void print_error(FT_Error error) {
 }
 int texID = 0;
 //int fontSize = 18;
-int textureSize= 2048;
+int textureSize= 0;
+int textureIsOver = 0;
 double outline = 0;
 void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,long bitmapWidth,long bitmapHeight)
 {
@@ -155,10 +155,17 @@ value ml_freetype_setScale(value vscale) {
 	CAMLreturn(Val_unit);
 }
 
+value ml_freetype_setTextureSize(value vsize) {
+	CAMLparam1(vsize);
+	textureSize = Int_val(vsize);
+	CAMLreturn(Val_unit);
+}
+
 
 void initTextureData () {
 		PRINT_DEBUG("1");
 		free(_currentPageData);
+		textureIsOver = 0;
 		PRINT_DEBUG("1 %i",_currentPageDataSize);
 		_currentPageData= malloc(_currentPageDataSize);
 		PRINT_DEBUG("1");
@@ -180,7 +187,11 @@ int initFreeType() {
             return 1;
         _FTInitialized = 0;
 
-				glGetIntegerv(GL_MAX_TEXTURE_SIZE,&textureSize);
+				if (textureSize==0) {
+					glGetIntegerv(GL_MAX_TEXTURE_SIZE,&textureSize);
+				}
+				PRINT_DEBUG("textureSize %d", textureSize);
+
 				adjustForExtend = _letterEdgeExtend / 2;
 				_currentPageDataSize = textureSize * textureSize;//textureSize * textureSize;
 				_currentPageDataSize = outline > 0 ?  _currentPageDataSize* 2 : _currentPageDataSize; 
@@ -409,6 +420,9 @@ value ml_freetype_checkChar (value vtext, value vface, value vsize) {
 	PRINT_DEBUG("ml_freetype_checkChar");
 	CAMLparam3(vtext,vface,vsize);
 
+	if (textureIsOver == 1) {
+		CAMLreturn(caml_copy_string(face->family_name));
+	}
 	int code = Int_val(vtext);
 	int fontSize = Int_val(vsize);
 
@@ -455,15 +469,19 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 	CAMLparam3(vtext,vface,vsize);
 	CAMLlocal2(mlChar,mlCharOpt);
 
+	if (textureIsOver == 1) {
+		PRINT_DEBUG ("No more space");
+		CAMLreturn(Val_int(0));
+	}
 	int code = Int_val(vtext);
+	int invalidChar = 0;
 
 	double dfsize = (double)(scale * Int_val(vsize));
 	int fontSize =  (int)(dfsize + 0.45);
 	int fontSizePoints = (int)(64.f * fontSize);
+	double outlineSize = (double)(dfsize * outline);
 
 	FT_Error error;
-	PRINT_DEBUG("1");
-
 
 	char* cface = String_val(vface);
 
@@ -493,24 +511,12 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 
 		FT_Glyph_Metrics metrics = face->glyph->metrics;
-		unsigned int outRectOriginX= metrics.horiBearingX >> 6;
-		unsigned int outRectOriginY= -(metrics.horiBearingY >> 6);
-		unsigned int outRectWidth= (metrics.width >> 6);
-		unsigned int outRectHeight = (metrics.height >> 6);
-
-		tempDef.validDefinition = 1;
-
-		/*
-		PRINT_DEBUG ("w %d h %d, %d", w, h, tempDef.xAdvance); 
-		*/
 
 		if (buffer && outWidth > 0 && outHeight > 0) {
 			PRINT_DEBUG("buffer: %u %u", outWidth, outHeight);
 
 			tempDef.xAdvance = face->glyph->metrics.horiAdvance >> 6;
 
-			tempDef.validDefinition = 0;
-		
 			if (outline > 0) {
 				int bsize = outWidth * outHeight;
 				PRINT_DEBUG ("copy");
@@ -579,10 +585,10 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 					long outlineWidth = outlineMaxX - outlineMinX;
 					long outlineHeight = outlineMaxY - outlineMinY;
 
-					long blendImageMinX = MIN(outlineMinX, glyphMinX);
-					long blendImageMaxY = MAX(outlineMaxY, glyphMaxY);
-					long blendWidth = MAX(outlineMaxX, glyphMaxX) - blendImageMinX;
-					long blendHeight = blendImageMaxY - (MIN(outlineMinY, glyphMinY));
+					long blendImageMinX = (long)(MIN(outlineMinX, glyphMinX));
+					long blendImageMaxY = (long)(MAX(outlineMaxY, glyphMaxY));
+					long blendWidth = (long)(MAX(outlineMaxX, glyphMaxX)) - (blendImageMinX);
+					long blendHeight = blendImageMaxY - (long)(MIN(outlineMinY, glyphMinY));
 
 					long index, index2;
 					unsigned char* blendImage = malloc(blendWidth * blendHeight * 2);
@@ -618,11 +624,10 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 					outWidth  = blendWidth;
 					outHeight = blendHeight;
-					tempDef.validDefinition = 0;
 					tempDef.width = outWidth;
 					tempDef.height = outHeight;
 					tempDef.offsetX = blendImageMinX;
-					tempDef.offsetY =  - blendImageMaxY + outline;
+					tempDef.offsetY =  - blendImageMaxY + outlineSize;
 					buffer = blendImage;
 					PRINT_DEBUG("ok");
 				}
@@ -631,7 +636,6 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 				}
 			}
 			else {
-				tempDef.validDefinition = 0;
 				tempDef.width = (metrics.width >> 6);
 				tempDef.height = (metrics.height >> 6);
 				tempDef.offsetX = (metrics.horiBearingX >> 6);
@@ -646,23 +650,31 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 			if (buffer) {
 				if (outHeight > _currLineHeight) {
-					_currLineHeight = outHeight + _letterEdgeExtend + 1;
+					_currLineHeight = outHeight + _letterEdgeExtend + 1 + outlineSize;
 				}
 
 				if (_currentPageOrigX + tempDef.width > textureSize) {
 					_currentPageOrigY += _currLineHeight;
 					_currLineHeight = 0;
 					_currentPageOrigX = 0;
-					if (_currentPageOrigY + _lineHeight >= textureSize){
+				}
+				if (_currentPageOrigY + _lineHeight >= textureSize){
+					PRINT_DEBUG ("No space in texture for char");
+					invalidChar = 1;
+
+					if (_currentPageOrigY + 12 >= textureSize){
 						PRINT_DEBUG ("No more space in texture");
+						textureIsOver = 1;
 					}
 				}
-				PRINT_DEBUG("render %u %u", outWidth, outHeight);
-				tempDef.validDefinition = 0;
-				renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, outWidth, outHeight);
+
+				if (invalidChar == 0) {
+					PRINT_DEBUG("render %u %u", outWidth, outHeight);
+					renderCharAt(_currentPageData, _currentPageOrigX + adjustForExtend, _currentPageOrigY + adjustForExtend, buffer, outWidth, outHeight);
+				}
 			}
 			else {
-				tempDef.validDefinition = 1;
+				invalidChar = 1;
 			}
 
 			tempDef.x = _currentPageOrigX;
@@ -673,7 +685,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 		else{
 
 			if (!(tempDef.xAdvance && tempDef.xAdvance > 0)) {
-				tempDef.validDefinition = 1;
+				invalidChar = 1;
 			}
 
 			tempDef.width = 0;
@@ -686,7 +698,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 			_currentPageOrigX += 1;
 		}
 
-		if (tempDef.validDefinition==0) {
+		if (invalidChar==0) {
 			mlChar = caml_alloc_tuple(9);
 
 			PRINT_DEBUG("Ret char");

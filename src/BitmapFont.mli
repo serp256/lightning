@@ -27,7 +27,7 @@ value exists: ?style:string -> string -> bool;
 value get: ?applyScale:bool -> ?style:string -> ?size:int -> string -> t;
 
 value registerDynamic: list int -> string  -> (string * string);
-value registerSystemFont: ?scale:float -> ?stroke:int -> list int -> (string * string);
+value registerSystemFont: ?textureSize:int -> ?scale:float -> ?stroke:int -> list int -> (string * string);
 value getBitmapChar: (string * string * int) -> int -> option (bc * float * float * float);
 value dynamicFontComplete: unit -> unit;
 value getSystemFonts: unit -> string;

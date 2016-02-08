@@ -525,6 +525,7 @@ module Freetype = struct
   external _complete: unit -> unit = "ml_freetype_bindTexture";
   external setStroke: int -> unit = "ml_freetype_setStroke";
   external setScale: float -> unit = "ml_freetype_setScale";
+  external setTextureSize: int -> unit = "ml_freetype_setTextureSize";
 
  
   value default_style = "Regular";
@@ -603,7 +604,7 @@ module Freetype = struct
   value tex = ref Texture.zero;
 
   value getBitmapChar (def_face,style,size) code =
-    let () = debug "getBitmapChar %s" (UTF8.init 1 (fun i -> UChar.chr code)) in
+    let () = Debug.d "getBitmapChar %s" (UTF8.init 1 (fun i -> UChar.chr code)) in
     let path =
       let rec getFaceRec paths =
         match paths with
@@ -642,7 +643,11 @@ module Freetype = struct
           )
         with [excp ->let ()= debug "%s" (Printexc.to_string excp) in  None]
       )
-    | _ -> None
+    | _ -> 
+        (
+          addCharFace code "default";
+          None;
+        )
     ];
 
   value saveFontInfo (face,style) sizes = (instance())#addFont (face,style) sizes;
@@ -653,6 +658,7 @@ end;
 value getBitmapChar (face,style,size) code = 
   match Freetype.getCharFace code with
   [Some face -> 
+    try
           let sizes = Hashtbl.find fonts (face, Freetype.default_style) in
           (*
           let () = debug "face %s" bc.face in
@@ -664,6 +670,7 @@ value getBitmapChar (face,style,size) code =
               Some (Hashtbl.find bf.chars code, bf.ascender, bf.descender, bf.lineHeight)
             )
           with [_ -> None]
+        with [Not_found -> None]
   | None -> Freetype.getBitmapChar (face,style,size) code
   ];
 
@@ -736,10 +743,14 @@ ENDPLATFORM;
 (*
   external lumal: unit -> Texture.textureInfo = "ml_lumal";
   *)
-value registerSystemFont ?(scale=1.) ?(stroke=0) (sizes: list int) = 
+value registerSystemFont ?textureSize ?(scale=1.) ?(stroke=0) (sizes: list int) = 
   (
     Freetype.setStroke stroke;
     Freetype.setScale scale;
+    match textureSize with 
+    [Some s -> Freetype.setTextureSize s
+    | _ -> ()
+    ];
 
     try
       let systemFonts = ExtLib.String.nsplit (getSystemFonts()) ";" in
