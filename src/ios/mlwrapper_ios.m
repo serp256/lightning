@@ -663,23 +663,46 @@ value ml_model (value unit) {
 	CAMLreturn(caml_copy_string([[[UIDevice currentDevice] model] UTF8String]));
 }
 
+/*
 value ml_getSystemFontPath(value unit) {
    // [UIApplication sharedApplication].idleTimerDisabled = NO;
 	NSArray *familyNames = [[NSArray alloc] initWithArray:[UIFont familyNames]];
-	  NSArray *fontNames;
-		  NSInteger indFamily, indFont;
-			  for (indFamily=0; indFamily<[familyNames count]; ++indFamily)
-					  {
-							      NSLog(@"Family name: %@", [familyNames objectAtIndex:indFamily]);
-										      fontNames = [[NSArray alloc] initWithArray:
-														          [UIFont fontNamesForFamilyName:
-																			          [familyNames objectAtIndex:indFamily]]];
-													      for (indFont=0; indFont<[fontNames count]; ++indFont)
-																	      {
-																					          NSLog(@"    Font name: %@", [fontNames objectAtIndex:indFont]);
-																										      }
-																      [fontNames release];
-																			  }
-				  [familyNames release];
-    return "System/Font";
+	NSArray *fontNames;
+	NSInteger indFamily, indFont;
+	for (indFamily=0; indFamily<[familyNames count]; ++indFamily)
+	{
+		NSLog(@"Family name: %@", [familyNames objectAtIndex:indFamily]);
+		fontNames = [[NSArray alloc] initWithArray:
+								[UIFont fontNamesForFamilyName:
+										[familyNames objectAtIndex:indFamily]]];
+		for (indFont=0; indFont<[fontNames count]; ++indFont)
+		{
+			NSLog(@"    Font name: %@", [fontNames objectAtIndex:indFont]);
+		}
+		[fontNames release];
+	}
+	[familyNames release];
+  return "System/Font";
+}
+*/
+value ml_getSystemDefaultFont () {
+	CAMLparam0();
+	CAMLreturn(caml_copy_string("HelveticaNeue"));
+}
+
+value ml_getSystemFonts () {
+	CAMLparam0();
+	CAMLreturn(caml_copy_string("HelveticaNeue"));
+	/*
+	CAMLlocal1(vfonts);
+	static jmethodID mid = 0;
+
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getSystemFonts", "()Ljava/lang/String;");
+
+	jstring jfonts= (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
+	JSTRING_TO_VAL(jfonts, vfonts);
+	(*ML_ENV)->DeleteLocalRef(ML_ENV, jfonts);
+
+	CAMLreturn(vfonts);
+	*/
 }

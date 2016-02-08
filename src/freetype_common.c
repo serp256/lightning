@@ -10,6 +10,24 @@
 #include <caml/callback.h>
 
 
+/*
+#import <UIKit/UIKit.h>
+#import <UIKit/UIKit.h>
+#import <QuartzCore/QuartzCore.h>
+#import <caml/memory.h>
+#import <caml/mlvalues.h>
+#import <caml/alloc.h>
+#import <caml/threads.h>
+
+#import "light_common.h"
+#import "mlwrapper_ios.h"
+#import "LightViewController.h"
+*/
+
+
+
+
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_STROKER_H
@@ -21,6 +39,7 @@
 #elif IOS
 #import "ios/common_ios.h"
 #import "ios/CGFontToFontData.h"
+#import <UIKit/UIKit.h> 
 #else
 #endif
 
@@ -70,7 +89,7 @@ int texID = 0;
 //int fontSize = 18;
 int textureSize= 0;
 int textureIsOver = 0;
-double outline = 0;
+double _outline;
 void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,long bitmapWidth,long bitmapHeight)
 {
     int iX = posX;
@@ -78,7 +97,7 @@ void renderCharAt(unsigned char *dest,int posX, int posY, unsigned char* bitmap,
 		long y;
 		int x;
 
-		if(outline > 0) {
+		if(_outline > 0) {
 				unsigned char tempChar;
 				PRINT_DEBUG("copy");
 				for (y = 0; y < bitmapHeight; ++y)
@@ -144,8 +163,8 @@ double scale = 1.;
 
 value ml_freetype_setStroke(value vstroke) {
 	CAMLparam1(vstroke);
-	outline = (double) (Int_val(vstroke) / 100.0);
-	PRINT_DEBUG("outline %f", outline);
+	_outline = (double) (Int_val(vstroke) / 100.0);
+	PRINT_DEBUG("outline %f", _outline);
 	CAMLreturn(Val_unit);
 }
 
@@ -194,7 +213,7 @@ int initFreeType() {
 
 				adjustForExtend = _letterEdgeExtend / 2;
 				_currentPageDataSize = textureSize * textureSize;//textureSize * textureSize;
-				_currentPageDataSize = outline > 0 ?  _currentPageDataSize* 2 : _currentPageDataSize; 
+				_currentPageDataSize = _outline > 0 ?  _currentPageDataSize* 2 : _currentPageDataSize; 
 				initTextureData ();
     }
 
@@ -208,13 +227,13 @@ void loadFace(char* fname, int fSize) {
 	double dfsize = (double)(scale * fSize);
 	int fontSize =  (int)(dfsize + 0.45);
 	 if (face) {
-		free(buf);
 		FT_Done_Face(face);
+		free(buf);
 	 }
 	PRINT_DEBUG("loadFace: done face");
 
-	double outlineSize = (double)(dfsize * outline);
-	if (outline > 0) {
+	double outlineSize = (double)(dfsize * _outline);
+	if (_outline > 0) {
 		FT_Stroker_New(_FTlibrary, &stroker);
 		FT_Stroker_Set(stroker,
 				(int)(outlineSize * 64),
@@ -241,14 +260,19 @@ void loadFace(char* fname, int fSize) {
 	} else {
 
 #if (defined IOS )
-	CGFontRef cgf = CGFontCreateWithFontName((CFStringRef)@"Helvetica-Bold");
 
-	NSData* data = fontDataForCGFont (cgf);
-	PRINT_DEBUG(" len %i", [data length]);
+  NSString *fontName= [NSString stringWithCString:fname encoding:NSUTF8StringEncoding];
+	CGFontRef cgf = CGFontCreateWithFontName((CFStringRef)fontName);
+
+	NSData* data =(NSData*) fontDataForCGFont (cgf);
+	PRINT_DEBUG(" len %s %i", fname, [data length]);
 	int length = [data length];
 	buf = malloc(length);
-	buf = [data bytes];
+	memset(buf,0,length);
+	memcpy(buf,[data bytes],length);
 
+
+	fname = [fontName UTF8String];
 	error = ( (FT_New_Memory_Face(_FTlibrary, buf, length, 0, &face )));
 
 #else
@@ -360,11 +384,22 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	if (!face) {
 		caml_failwith("Freetype face font is null");
 	}
+	PRINT_DEBUG("FACE %p", face);
 
-	current_face_name = fname;
-	getFontCharmap(fname);
+	//current_face_name = fname;
+	getFontCharmap(current_face_name);
+
+
+
+
+
+
+
+
 
 	FT_Size_Metrics size_info = face->size->metrics;
+
+	PRINT_DEBUG("FACE %p", face);
 
 	FT_Error error;
 
@@ -389,7 +424,7 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	if (texID == 0) {
 		tInfo= (textureInfo*)malloc(sizeof(textureInfo));
 
-		tInfo->format = outline > 0 ?  LTextureLuminanceAlpha :LTextureFormatAlpha;
+		tInfo->format = _outline > 0 ?  LTextureLuminanceAlpha :LTextureFormatAlpha;
 		tInfo->width = textureSize;
 		tInfo->realWidth = textureSize;
 		tInfo->height = textureSize;
@@ -417,9 +452,10 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	CAMLreturn(mlFont);
 }
 value ml_freetype_checkChar (value vtext, value vface, value vsize) {
-	PRINT_DEBUG("ml_freetype_checkChar");
 	CAMLparam3(vtext,vface,vsize);
+	PRINT_DEBUG("ml_freetype_checkChar %p %s", face, face->family_name);
 
+	
 	if (textureIsOver == 1) {
 		CAMLreturn(caml_copy_string(face->family_name));
 	}
@@ -428,7 +464,7 @@ value ml_freetype_checkChar (value vtext, value vface, value vsize) {
 
 	char* cface = String_val(vface);
 
-	//PRINT_DEBUG("check face [%s], current [%s]", cface, current_face_name);
+	PRINT_DEBUG("check face [%s], current [%s]", cface, current_face_name);
 
 
 	if (current_face_name && strlen(cface) > 0 && strcmp(current_face_name, cface) != 0) { 
@@ -437,10 +473,10 @@ value ml_freetype_checkChar (value vtext, value vface, value vsize) {
 
 	unsigned int glyph_index = 	FT_Get_Char_Index(face, code);
 	if (glyph_index == 0 ) {
-	//	PRINT_DEBUG("not found char %d in %s", code, face->family_name);
+		PRINT_DEBUG("not found char %d in %s", code, face->family_name);
 		CAMLreturn(caml_copy_string(""));
 	} else {
-	//	PRINT_DEBUG("found char %d in %s", code, face->family_name);
+		PRINT_DEBUG("found char %d in %s", code, face->family_name);
 		CAMLreturn(caml_copy_string(face->family_name));
 	}
 }
@@ -451,7 +487,7 @@ value ml_freetype_bindTexture(value unit) {
 	PRINT_DEBUG("FT bindTexture");
 	glBindTexture(GL_TEXTURE_2D, texID);
 
-	if (outline>0) {
+	if (_outline > 0) {
 		PRINT_DEBUG("outline");
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, textureSize, textureSize, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, _currentPageData);
 	}
@@ -479,7 +515,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 	double dfsize = (double)(scale * Int_val(vsize));
 	int fontSize =  (int)(dfsize + 0.45);
 	int fontSizePoints = (int)(64.f * fontSize);
-	double outlineSize = (double)(dfsize * outline);
+	double outlineSize = (double)(dfsize * _outline);
 
 	FT_Error error;
 
@@ -517,7 +553,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 			tempDef.xAdvance = face->glyph->metrics.horiAdvance >> 6;
 
-			if (outline > 0) {
+			if (_outline > 0) {
 				int bsize = outWidth * outHeight;
 				PRINT_DEBUG ("copy");
 				unsigned char* copyBitmap = malloc(bsize);
@@ -526,7 +562,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 				PRINT_DEBUG ("copied");
 
 				FT_BBox bbox;
-				unsigned char* outlineBitmap;
+				unsigned char* outlineBitmap = NULL;
 
 				if (FT_Load_Char(face, code, FT_LOAD_NO_BITMAP) == 0) {
 					if (face->glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
@@ -538,7 +574,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 							print_error(error);
 
 							if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
-								FT_Outline* outline = &(((FT_OutlineGlyph)glyph)->outline);
+								FT_Outline* ft_outline = &(((FT_OutlineGlyph)glyph)->outline);
 								FT_Glyph_Get_CBox(glyph,FT_GLYPH_BBOX_GRIDFIT,&bbox);
 								long width = (bbox.xMax - bbox.xMin)>>6;
 								long rows = (bbox.yMax - bbox.yMin)>>6;
@@ -555,11 +591,11 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 								FT_Raster_Params params;
 								memset(&params, 0, sizeof (params));
-								params.source = outline;
+								params.source = ft_outline;
 								params.target = &bmp;
 								params.flags = FT_RASTER_FLAG_AA;
-								FT_Outline_Translate(outline,-bbox.xMin,-bbox.yMin);
-								FT_Outline_Render(_FTlibrary, outline, &params);
+								FT_Outline_Translate(ft_outline,-bbox.xMin,-bbox.yMin);
+								FT_Outline_Render(_FTlibrary, ft_outline, &params);
 
 								outlineBitmap  = bmp.buffer;
 							}

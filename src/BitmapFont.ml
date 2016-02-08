@@ -733,7 +733,7 @@ value dynamicFontComplete () =
     ];
   );
 
-IFPLATFORM(android)
+IFPLATFORM(android ios)
   external getSystemFonts: unit -> string = "ml_getSystemFonts";
   external getSystemDefaultFont: unit -> string = "ml_getSystemDefaultFont";
 ELSE 
