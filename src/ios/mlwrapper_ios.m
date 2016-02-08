@@ -654,6 +654,15 @@ value ml_disableAwake(value unit) {
     return Val_unit;
 }
 
+value ml_systemVersion(value unit) {
+	CAMLparam0();
+	CAMLreturn(caml_copy_string([[[UIDevice currentDevice] systemVersion] UTF8String]));
+}
+value ml_model (value unit) {
+	CAMLparam0();
+	CAMLreturn(caml_copy_string([[[UIDevice currentDevice] model] UTF8String]));
+}
+
 value ml_getSystemFontPath(value unit) {
    // [UIApplication sharedApplication].idleTimerDisabled = NO;
 	NSArray *familyNames = [[NSArray alloc] initWithArray:[UIFont familyNames]];

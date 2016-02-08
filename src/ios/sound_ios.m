@@ -2,6 +2,7 @@
 #import <Foundation/Foundation.h>
 #include <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVAudioPlayer.h>
+#import <AVFoundation/AVAudioSession.h>
 
 #import <OpenAL/al.h>
 #import <OpenAL/alc.h>
@@ -61,6 +62,8 @@ void interruptionCallback (void *inUserData, UInt32 interruptionState) {
 static ALCdevice  *device  = NULL;
 static ALCcontext *context = NULL;
 
+/* DEPRECATED
+ *
 value ml_sound_init(value mlSessionCategory,value unit) {
 	if (device) return Val_unit;
 	OSStatus result;
@@ -92,7 +95,48 @@ value ml_sound_init(value mlSessionCategory,value unit) {
 	if (!success) raise_error("Could not set current OpenAL context",NULL,0);
 	return Val_unit;
 }
+*/
 
+value ml_sound_init(value mlSessionCategory,value unit) {
+	if (device) return Val_unit;
+	/*
+	OSStatus result;
+	result = AudioSessionInitialize(NULL, NULL, interruptionCallback, NULL);
+	if (result != kAudioSessionNoError) raise_error("Could not initialize audio",NULL,result);
+  UInt32 sessionCategory;
+	switch (Int_val(mlSessionCategory)) {
+		case 0: sessionCategory = 'ambi'; break;
+		case 1: sessionCategory = 'solo'; break;
+		case 2: sessionCategory = 'medi'; break;
+		case 3: sessionCategory = 'reca'; break;
+		case 4: sessionCategory = 'plar'; break;
+		case 5: sessionCategory = 'proc'; break;
+	};
+	AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(sessionCategory), &sessionCategory);
+	result = AudioSessionSetActive(YES);
+	if (result != kAudioSessionNoError) raise_error("Could not activate audio session",NULL,result);
+	*/
+
+	NSError* error;
+
+	// Init OpenAL
+	alGetError(); // reset any errors
+
+	device = alcOpenDevice(NULL);
+	if (!device) raise_error("Could not open default OpenAL device",NULL,0);
+
+	context = alcCreateContext(device, 0);
+	if (!context) raise_error("Could not create OpenAL context for default device",NULL,0);
+
+	BOOL success = alcMakeContextCurrent(context);
+	if (!success) raise_error("Could not set current OpenAL context",NULL,0);
+
+	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+	[[AVAudioSession sharedInstance] setActive:YES error:&error];
+	if (!error) raise_error("Could not activate audio session", NULL, (uint)([error code]));
+
+	return Val_unit;
+}
 
 // ALSOUND
 
