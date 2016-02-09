@@ -602,6 +602,38 @@ module Freetype = struct
 
   value tex = ref Texture.zero;
 
+  value getBc code path size =
+    (
+      let bc = _getChar code path size in
+      match bc with
+      [Some bc -> 
+        (
+          try
+            let () = debug "face %s" bc.face in
+            let sizes = Hashtbl.find fonts (bc.face, default_style) in
+            (*
+            let () = debug "face %s" bc.face in
+            let sizes = Hashtbl.find fonts (def_face, style) in
+            *)
+            let bf = MapInt.find size sizes in
+            let bchar = createBc bf bc in
+            (
+              addCharFace code (bc.face, path);
+              tex.val := bf.texture;
+              debug "add %d, size %d" bchar.charID size;
+              Hashtbl.add bf.chars bchar.charID bchar;
+              (instance())#setNeedCompletion True;
+              Some (bchar, bf.ascender, bf.descender, bf.lineHeight)
+            )
+          with [excp ->let ()= debug "%s" (Printexc.to_string excp) in  None]
+        )
+      | _ -> 
+          (
+            addCharFace code ("default","default");
+            None;
+          )
+      ];
+    );
   value getBitmapChar (def_face,style,size) code =
     let () = Debug.d "getBitmapChar %s" (UTF8.init 1 (fun i -> UChar.chr code)) in
     let path =
@@ -621,35 +653,7 @@ module Freetype = struct
       let () = Debug.d "ttf %s" (String.concat "," ttfs) in
       getFaceRec ttfs
     in
-    let bc = _getChar code path size in
-    match bc with
-    [Some bc -> 
-      (
-        try
-          let () = debug "face %s" bc.face in
-          let sizes = Hashtbl.find fonts (bc.face, default_style) in
-          (*
-          let () = debug "face %s" bc.face in
-          let sizes = Hashtbl.find fonts (def_face, style) in
-          *)
-          let bf = MapInt.find size sizes in
-          let bchar = createBc bf bc in
-          (
-            addCharFace code bc.face;
-            tex.val := bf.texture;
-            debug "add %d, size %d" bchar.charID size;
-            Hashtbl.add bf.chars bchar.charID bchar;
-            (instance())#setNeedCompletion True;
-            Some (bchar, bf.ascender, bf.descender, bf.lineHeight)
-          )
-        with [excp ->let ()= debug "%s" (Printexc.to_string excp) in  None]
-      )
-    | _ -> 
-        (
-          addCharFace code "default";
-          None;
-        )
-    ];
+    getBc code path size;
 
   value saveFontInfo (face,style) sizes = (instance())#addFont (face,style) sizes;
 
@@ -658,8 +662,9 @@ end;
 
 value getBitmapChar (face,style,size) code = 
   match Freetype.getCharFace code with
-  [Some face -> 
+  [Some (face,path) -> 
     try
+      debug "has face %s" face;
           let sizes = Hashtbl.find fonts (face, Freetype.default_style) in
           (*
           let () = debug "face %s" bc.face in
@@ -668,10 +673,12 @@ value getBitmapChar (face,style,size) code =
           try
             let bf = MapInt.find size sizes in
             (
-              Some (Hashtbl.find bf.chars code, bf.ascender, bf.descender, bf.lineHeight)
+              try
+                Some (Hashtbl.find bf.chars code, bf.ascender, bf.descender, bf.lineHeight)
+              with [Not_found -> Freetype.getBc code path size]
             )
-          with [_ -> None]
-        with [Not_found -> None]
+          with [_ -> let () = debug ("no size:%d" size) in None]
+        with [Not_found -> let () = debug ("no font %s" face) in None]
   | None -> Freetype.getBitmapChar (face,style,size) code
   ];
 

@@ -218,15 +218,7 @@ void loadFace(char* fname, int fSize) {
 	 }
 	PRINT_DEBUG("loadFace: done face");
 
-	double outlineSize = (double)(dfsize * _outline);
-	if (_outline > 0) {
-		FT_Stroker_New(_FTlibrary, &stroker);
-		FT_Stroker_Set(stroker,
-				(int)(outlineSize * 64),
-				FT_STROKER_LINECAP_ROUND,
-				FT_STROKER_LINEJOIN_ROUND,
-				0);
-	}
+	PRINT_DEBUG ("after stroker");
 
 	long fsize;
 
@@ -519,6 +511,15 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 			tempDef.xAdvance = face->glyph->metrics.horiAdvance >> 6;
 
 			if (_outline > 0) {
+				FT_Stroker_New(_FTlibrary, &stroker);
+				FT_Stroker_Set(stroker,
+						(int)(outlineSize * 64),
+						FT_STROKER_LINECAP_ROUND,
+						FT_STROKER_LINEJOIN_ROUND,
+						0);
+
+
+
 				int bsize = outWidth * outHeight;
 				PRINT_DEBUG ("copy");
 				unsigned char* copyBitmap = malloc(bsize);
