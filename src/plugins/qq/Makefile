@@ -57,4 +57,4 @@ endif
 
 .PHONY : clean
 clean: 
-	rm -f *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/qq_ios.o android/qq_android.o
+	rm -f *.o *.cm[ioxa] *.a *.cmxa *.so *.cmo ios/*.o android/qq_android.o

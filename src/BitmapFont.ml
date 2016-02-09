@@ -580,7 +580,6 @@ module Freetype = struct
   
   exception FoundRange of (int * int);
 
-  value chooseFace faces = List.hd faces;
   value getCharTTF code =
     let () = debug "getCharFace %d" code in
       let ranges = UnicodeRanges.getRanges () in
@@ -618,7 +617,9 @@ module Freetype = struct
           let () =debug "defaultttf" in
             (instance())#defaultTTF
         ] in
-      getFaceRec (getCharTTF code)
+      let ttfs = getCharTTF code in
+      let () = Debug.d "ttf %s" (String.concat "," ttfs) in
+      getFaceRec ttfs
     in
     let bc = _getChar code path size in
     match bc with
@@ -684,7 +685,7 @@ value registerDynamic (sizes:list int) ttfpath =
         let  () = debug  "getFont [%s]" ttfpath in
         Freetype.getFont ttfpath size in
       let face = info.face in
-      let style = info.style in
+      let style = (*info.style*) Freetype.default_style in
       let scale = info.scale in
       let texture= 
         match info.texInfo with 
@@ -758,6 +759,11 @@ value registerSystemFont ?textureSize ?(scale=1.) ?(stroke=0) (sizes: list int) 
       [ [hd::tl] ->
         (
           let default = getSystemDefaultFont () in
+          let () = Debug.d "fonts count %d" (List.length systemFonts) in
+          (*
+          let (systemFonts,_) = ExtLib.List.split_nth 30 systemFonts in
+          let () = Debug.d "fonts count %d" (List.length systemFonts) in
+          *)
           let found = ref False in
           (
             debug "System fonts count: %d" (List.length systemFonts);

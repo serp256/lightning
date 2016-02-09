@@ -10,24 +10,6 @@
 #include <caml/callback.h>
 
 
-/*
-#import <UIKit/UIKit.h>
-#import <UIKit/UIKit.h>
-#import <QuartzCore/QuartzCore.h>
-#import <caml/memory.h>
-#import <caml/mlvalues.h>
-#import <caml/alloc.h>
-#import <caml/threads.h>
-
-#import "light_common.h"
-#import "mlwrapper_ios.h"
-#import "LightViewController.h"
-*/
-
-
-
-
-
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_STROKER_H
@@ -177,6 +159,7 @@ value ml_freetype_setScale(value vscale) {
 value ml_freetype_setTextureSize(value vsize) {
 	CAMLparam1(vsize);
 	textureSize = Int_val(vsize);
+	
 	CAMLreturn(Val_unit);
 }
 
@@ -206,9 +189,12 @@ int initFreeType() {
             return 1;
         _FTInitialized = 0;
 
-				if (textureSize==0) {
-					glGetIntegerv(GL_MAX_TEXTURE_SIZE,&textureSize);
+				int maxTextureSize;
+				glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxTextureSize);
+				if ((textureSize==0) || (textureSize > maxTextureSize )) {
+					textureSize = maxTextureSize;
 				}
+
 				PRINT_DEBUG("textureSize %d", textureSize);
 
 				adjustForExtend = _letterEdgeExtend / 2;
@@ -343,28 +329,17 @@ void loadFace(char* fname, int fSize) {
 		}
 }
 void getFontCharmap (char* fname) {
+	PRINT_DEBUG("getFontCharmap");
 	TT_OS2*  os2;                                     
 	os2 = (TT_OS2*)FT_Get_Sfnt_Table( face, FT_SFNT_OS2);   
-	/*
-	PRINT_DEBUG ("0 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(0)))?"true":"false");
-	PRINT_DEBUG ("1 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(1)))?"true":"false");
-	PRINT_DEBUG ("2 %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(2)))?"true":"false");
-	PRINT_DEBUG ("cyrrilic %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(9)))?"true":"false");
 
-	PRINT_DEBUG ("arabic %s %s", face->family_name, ((os2->ulUnicodeRange1) & (1<<(13)))?"true":"false");
+	if (os2) {
+		static value* add_font = NULL;
+		if (!add_font) add_font = caml_named_value("add_font_ranges");
 
-	PRINT_DEBUG ("cjk %s %s", face->family_name, ((os2->ulUnicodeRange2) & (1<<(27)))?"true":"false");
-	PRINT_DEBUG("range1 %lu",((os2->ulUnicodeRange1)));
-	PRINT_DEBUG ("range2 %lu", (os2->ulUnicodeRange2));
-	PRINT_DEBUG ("randge3: %lu", (os2->ulUnicodeRange3));
-	PRINT_DEBUG ("range4: %lu", (os2->ulUnicodeRange4));
-	*/
-
-	static value* add_font = NULL;
-	if (!add_font) add_font = caml_named_value("add_font_ranges");
-
-	value args[5] = { caml_copy_string(fname), caml_copy_int64(os2->ulUnicodeRange1), caml_copy_int64(os2->ulUnicodeRange2), caml_copy_int64(os2->ulUnicodeRange3), caml_copy_int64(os2->ulUnicodeRange4)};
-	caml_callbackN(*add_font, 5, args);
+		value args[5] = { caml_copy_string(fname), caml_copy_int64(os2->ulUnicodeRange1), caml_copy_int64(os2->ulUnicodeRange2), caml_copy_int64(os2->ulUnicodeRange3), caml_copy_int64(os2->ulUnicodeRange4)};
+		caml_callbackN(*add_font, 5, args);
+	}
 }
 
 textureInfo *tInfo;
@@ -379,27 +354,17 @@ value ml_freetype_getFont(value ttf, value vsize) {
 
 	PRINT_DEBUG("get FT Font [%s]: %d", fname, fontSize);
 	loadFace (fname, fontSize);
+	PRINT_DEBUG("font loaded");
 
 
 	if (!face) {
 		caml_failwith("Freetype face font is null");
 	}
-	PRINT_DEBUG("FACE %p", face);
 
 	//current_face_name = fname;
 	getFontCharmap(current_face_name);
 
-
-
-
-
-
-
-
-
 	FT_Size_Metrics size_info = face->size->metrics;
-
-	PRINT_DEBUG("FACE %p", face);
 
 	FT_Error error;
 

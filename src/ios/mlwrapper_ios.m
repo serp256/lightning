@@ -692,17 +692,50 @@ value ml_getSystemDefaultFont () {
 
 value ml_getSystemFonts () {
 	CAMLparam0();
-	CAMLreturn(caml_copy_string("HelveticaNeue"));
-	/*
-	CAMLlocal1(vfonts);
-	static jmethodID mid = 0;
 
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "getSystemFonts", "()Ljava/lang/String;");
 
-	jstring jfonts= (*ML_ENV)->CallStaticObjectMethod(ML_ENV, lightning_cls, mid);
-	JSTRING_TO_VAL(jfonts, vfonts);
-	(*ML_ENV)->DeleteLocalRef(ML_ENV, jfonts);
+	NSArray *fontFamilyNames = [UIFont familyNames];
+	NSArray *excludeFilters = @[@"Bold", @"Italic", @"Thin", @"Condensed", @"Light", @"Black", @"Oblique", @"Medium"];
+	NSArray *excludeFamilies = @[@"Courier", @"TimesNewRoman", @"Avenir", @"Snell Roundhand", @"Verdana", @"Georgia", @"Emoji", @"Marker Felt", @"Trebuchet", @"Zapfino", @"American Typewriter", @"Bodoni", @"Iowan", @"Cochin"];
 
-	CAMLreturn(vfonts);
-	*/
+	NSString *regular = @"Regular";
+	NSMutableArray *result = [[NSMutableArray alloc] init];
+
+	for (NSString *familyName in fontFamilyNames) {
+		NSLog(@"check family %@" , familyName);
+		bool isSuitable = true;
+		for (NSString *excludeFamily in excludeFamilies) {
+			if ([familyName rangeOfString:excludeFamily options:NSCaseInsensitiveSearch].location != NSNotFound) {
+				isSuitable = false;
+				break;
+			}
+		}
+		if (isSuitable) {
+
+		NSArray *fontNames = [UIFont fontNamesForFamilyName:familyName];
+		for (NSString *name in fontNames) {
+			NSLog(@"name %@" , name);
+			if ([name rangeOfString:regular options:NSCaseInsensitiveSearch].location != NSNotFound) {
+						[result addObject:name];
+			} else {
+				bool isRegular = true;
+				for (NSString *excludeFilter in excludeFilters) {
+					//NSLog(@"check %@ in %@", excludeFilter, name);
+					if ([name rangeOfString:excludeFilter options:NSCaseInsensitiveSearch].location != NSNotFound) {
+						isRegular = false;
+						break;
+					}
+			  }
+				
+				if (isRegular) {
+					[result addObject:name];
+				}
+			}
+		}
+		}
+	}
+
+	NSString *resString = [result componentsJoinedByString:@";"];
+	NSLog(@"RESULT: %@", resString);
+	CAMLreturn(caml_copy_string([resString UTF8String]));
 }
