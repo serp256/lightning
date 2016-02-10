@@ -62,7 +62,7 @@ ifeq ($(PLATFORM),IOS)
 		LIBFLAGS = -cclib -landroid -cclib -lOpenSLES -cclib -lEGL -cclib -llog -cclib -lz -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
 	else
 	ifeq ($(PLATFORM),PC)
-		MOBJS += net_curl.o pc/glut_stub.o texture_load.o texture_save.o pc/texture_pc.o
+		MOBJS += net_curl.o pc/glut_stub.o pc/mlwrapper_pc.o texture_load.o texture_save.o pc/texture_pc.o
 		BMLSOURCES = pc/glut.ml
 		AMLSOURCES = pc/pc_run.ml
 		MLOBJSFLAGS = -I pc

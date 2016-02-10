@@ -662,3 +662,12 @@ value ml_model (value unit) {
 	CAMLparam0();
 	CAMLreturn(caml_copy_string([[[UIDevice currentDevice] model] UTF8String]));
 }
+value ml_deviceLocalTime (value unit) {
+	CAMLparam0();
+
+	NSDate* now = [NSDate date];
+	int secondsFromGMT = [[NSTimeZone systemTimeZone] secondsFromGMT];
+	double time = [[now dateByAddingTimeInterval:secondsFromGMT] timeIntervalSince1970];
+
+	CAMLreturn(caml_copy_double(time));
+}

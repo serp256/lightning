@@ -103,3 +103,5 @@ value strCapitalize: string -> string;
 
 value systemVersion: unit -> string;
 value model: unit -> string;
+
+value deviceLocalTime: unit -> float;

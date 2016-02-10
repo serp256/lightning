@@ -447,6 +447,13 @@ public class Lightning {
 			ru.redspell.lightning.utils.Log.enabled = false;
 		}
 
+		public static float deviceTime () {
+			java.util.Calendar calendar = java.util.Calendar.getInstance();
+			java.util.TimeZone tz =java.util.TimeZone.getDefault();
+			long now =calendar.getTimeInMillis() / 1000L;
+			return ((float)(now+(tz.getOffset(now)/ 1000L)));
+		}
+
 /*		public static void uncaughtExceptionByMail(String exn, String[] bt) {
 				Context c = activity;
 				ApplicationInfo ai = c.getApplicationInfo ();

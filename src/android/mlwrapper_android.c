@@ -411,3 +411,11 @@ value ml_disableLog (value unit) {
 	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, lightning_cls, mid);
 	return Val_unit;
 }
+
+value ml_deviceLocalTime (value unit) {
+	CAMLparam0();
+	static jmethodID mid = 0;
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, lightning_cls, "deviceTime", "()F");
+	jfloat jtime =	(jfloat)(*ML_ENV)->CallStaticFloatMethod(ML_ENV, lightning_cls, mid);
+	CAMLreturn(caml_copy_double(jtime));
+}
