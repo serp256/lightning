@@ -519,7 +519,7 @@ module Freetype = struct
       xAdvance: float;
       face: string;
     };
-  external getFont: string-> int -> dynamic_font = "ml_freetype_getFont"; 
+  external getFont: string-> int -> option dynamic_font = "ml_freetype_getFont"; 
   external checkChar: int -> string -> int-> string = "ml_freetype_checkChar"; 
   external _getChar: int -> string -> int-> option bc = "ml_freetype_getChar"; 
   external _complete: unit -> unit = "ml_freetype_bindTexture";
@@ -688,29 +688,31 @@ value registerDynamic (sizes:list int) ttfpath =
   let open Freetype in
     let (face,style,sizesMap,_) =
       List.fold_left (fun (face,style,res, texInfo) size ->
-      let info = 
-        let  () = debug  "getFont [%s]" ttfpath in
-        Freetype.getFont ttfpath size in
-      let face = info.face in
-      let style = (*info.style*) Freetype.default_style in
-      let scale = info.scale in
-      let texture= 
-        match info.texInfo with 
-        [ Some t -> 
-          let tx = Texture.make t in
-          (
-            (Freetype.instance())#setTex tx;
-            tx
-          )
-        | None -> (Freetype.instance())#texture 
-        ] in
-        let bf = { chars=Hashtbl.create 0; texture; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight; isDynamic = True} in
-        let () = debug "(%s;%s) size %d ascender %f descender %f height %f space %f %f" face style size info.ascender info.descender info.lineHeight info.space scale in
-        let sizes= MapInt.add size bf res in
-        (face,style,sizes, Some texture);
+        let info = Freetype.getFont ttfpath size in
+        match info with
+        [Some info ->
+          let face = info.face in
+          let style = (*info.style*) Freetype.default_style in
+          let scale = info.scale in
+          let texture= 
+            match info.texInfo with 
+            [ Some t -> 
+              let tx = Texture.make t in
+              (
+                (Freetype.instance())#setTex tx;
+                tx
+              )
+            | None -> (Freetype.instance())#texture 
+            ] in
+            let bf = { chars=Hashtbl.create 0; texture; scale; ascender = info.ascender; descender = info.descender; space = info.space ; lineHeight = info.lineHeight; isDynamic = True} in
+            let () = debug "(%s;%s) size %d ascender %f descender %f height %f space %f %f" face style size info.ascender info.descender info.lineHeight info.space scale in
+            let sizes= MapInt.add size bf res in
+            (face, style, sizes, Some texture)
+        | _ ->
+            (face, style, res, texInfo)
+        ]
       ) ("","",MapInt.empty,None) sizes in
     (
-
       Hashtbl.replace fonts (face,style) sizesMap;
       Freetype.saveFontInfo (face,style) sizes;
       (face,style);

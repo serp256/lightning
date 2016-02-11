@@ -206,12 +206,13 @@ int initFreeType() {
     return  _FTInitialized;
 }
 
-void loadFace(char* fname, int fSize) {
+int loadFace(char* fname, int fSize) {
 	FT_Error error;
 	PRINT_DEBUG("loadFace %s %d", fname, fSize);
 
 	PRINT_DEBUG("check face [%s], current [%s]", fname, current_face_name);
 	if (!current_face_name || (current_face_name && strlen(fname) > 0 && strcmp(current_face_name, fname) != 0)) { 
+
 		 if (face) {
 			FT_Done_Face(face);
 			PRINT_DEBUG("free %p", buf);
@@ -289,21 +290,23 @@ void loadFace(char* fname, int fSize) {
 			}
 
 		if ( error ) {
-			caml_failwith(getErrorMessage (error));
+			print_error(error);
+			PRINT_DEBUG("not loaded");
+			return 1;
 		}
-
-
-		PRINT_DEBUG ("%s: %s", face->family_name,face->style_name);
-
-		current_face_name = fname;
-
-		print_error(FT_Select_Charmap(face, FT_ENCODING_UNICODE));
+		else {
+			PRINT_DEBUG ("%s: %s", face->family_name,face->style_name);
+			current_face_name = fname;
+			print_error(FT_Select_Charmap(face, FT_ENCODING_UNICODE));
+		}
   }
 
 	double dfsize = (double)(scale * fSize);
 	int fontSize =  (int)(dfsize + 0.45);
 	int fontSizePoints = (int)(64.f * fontSize);
 	print_error(FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
+	PRINT_DEBUG("font loaded");
+	return 0;
 }
 void getFontCharmap (char* fname) {
 	PRINT_DEBUG("getFontCharmap");
@@ -330,67 +333,74 @@ value ml_freetype_getFont(value ttf, value vsize) {
 	int fontSize = Int_val(vsize);
 
 	PRINT_DEBUG("get FT Font [%s]: %d", fname, fontSize);
-	loadFace (fname, fontSize);
-	PRINT_DEBUG("font loaded");
+	if (loadFace (fname, fontSize) == 0) {
+		PRINT_DEBUG("font loaded");
 
 
-	if (!face) {
-		caml_failwith("Freetype face font is null");
-	}
+		if (!face) {
+			caml_failwith("Freetype face font is null");
+		}
 
-	getFontCharmap(current_face_name);
+		getFontCharmap(current_face_name);
 
-	FT_Size_Metrics size_info = face->size->metrics;
+		FT_Size_Metrics size_info = face->size->metrics;
 
-	FT_Error error;
+		FT_Error error;
 
-	error = FT_Load_Glyph(face,FT_Get_Char_Index(face, ' '), FT_LOAD_DEFAULT);
-	if ( error )
-	{
-		PRINT_DEBUG("FT error: %s", getErrorMessage (error));
-	}
-	
-	CAMLlocal4(mlFont,mlTex,textureID, mlTexOpt);
-	mlFont = caml_alloc_tuple(8);
-	Store_field(mlFont,0,caml_copy_string(face->family_name));
-	Store_field(mlFont,1,caml_copy_string(face->style_name));
-	Store_field(mlFont,2,caml_copy_double(1.));
-	Store_field(mlFont,3,caml_copy_double(size_info.ascender>>6));
-	Store_field(mlFont,4,caml_copy_double(- (size_info.descender>>6)));
-	Store_field(mlFont,5,caml_copy_double(size_info.height>>6));
-	Store_field(mlFont,6,caml_copy_double(face->glyph->metrics.horiAdvance>>6));
-	
-
-
-	if (texID == 0) {
-		tInfo= (textureInfo*)malloc(sizeof(textureInfo));
-
-		tInfo->format = _outline > 0 ?  LTextureLuminanceAlpha :LTextureFormatAlpha;
-		tInfo->width = textureSize;
-		tInfo->realWidth = textureSize;
-		tInfo->height = textureSize;
-		tInfo->realHeight =  textureSize;
-		tInfo->numMipmaps = 0;
-		tInfo->generateMipmaps = 0;
-		tInfo->premultipliedAlpha = 1;
-		tInfo->scale = 1.;
-		tInfo->dataLen = _currentPageDataSize;
-		tInfo->imgData = _currentPageData;
-
-		textureID = createGLTexture(1,tInfo,1);
-		texID = TEXTURE_ID(textureID);
-		mlTexOpt = caml_alloc(1, 0);
-		ML_TEXTURE_INFO(mlTex,textureID,(tInfo));
+		error = FT_Load_Glyph(face,FT_Get_Char_Index(face, ' '), FT_LOAD_DEFAULT);
+		if ( error )
+		{
+			PRINT_DEBUG("FT error: %s", getErrorMessage (error));
+		}
+		
+		CAMLlocal5(mlFont,mlTex,textureID, mlTexOpt, mlFontOpt);
+		mlFont = caml_alloc_tuple(8);
+		Store_field(mlFont,0,caml_copy_string(face->family_name));
+		Store_field(mlFont,1,caml_copy_string(face->style_name));
+		Store_field(mlFont,2,caml_copy_double(1.));
+		Store_field(mlFont,3,caml_copy_double(size_info.ascender>>6));
+		Store_field(mlFont,4,caml_copy_double(- (size_info.descender>>6)));
+		Store_field(mlFont,5,caml_copy_double(size_info.height>>6));
+		Store_field(mlFont,6,caml_copy_double(face->glyph->metrics.horiAdvance>>6));
+		
 
 
-		Store_field( mlTexOpt, 0, mlTex);
-		Store_field(mlFont,7,mlTexOpt);
+		if (texID == 0) {
+			tInfo= (textureInfo*)malloc(sizeof(textureInfo));
+
+			tInfo->format = _outline > 0 ?  LTextureLuminanceAlpha :LTextureFormatAlpha;
+			tInfo->width = textureSize;
+			tInfo->realWidth = textureSize;
+			tInfo->height = textureSize;
+			tInfo->realHeight =  textureSize;
+			tInfo->numMipmaps = 0;
+			tInfo->generateMipmaps = 0;
+			tInfo->premultipliedAlpha = 1;
+			tInfo->scale = 1.;
+			tInfo->dataLen = _currentPageDataSize;
+			tInfo->imgData = _currentPageData;
+
+			textureID = createGLTexture(1,tInfo,1);
+			texID = TEXTURE_ID(textureID);
+			mlTexOpt = caml_alloc(1, 0);
+			ML_TEXTURE_INFO(mlTex,textureID,(tInfo));
+
+
+			Store_field( mlTexOpt, 0, mlTex);
+			Store_field(mlFont,7,mlTexOpt);
+		}
+		else {
+			Store_field(mlFont,7,Val_int(0));
+		}
+
+		mlFontOpt = caml_alloc(1, 0);
+		Store_field( mlFontOpt, 0, mlFont);
+		CAMLreturn(mlFontOpt);
 	}
 	else {
-		Store_field(mlFont,7,Val_int(0));
+		CAMLreturn (Val_int(0));
 	}
 
-	CAMLreturn(mlFont);
 }
 value ml_freetype_checkChar (value vtext, value vface, value vsize) {
 	CAMLparam3(vtext,vface,vsize);
@@ -457,10 +467,7 @@ value ml_freetype_getChar(value vtext, value vface, value vsize) {
 
 	char* cface = String_val(vface);
 
-	PRINT_DEBUG ("cur %s, load %s", current_face_name, cface);
-	if (current_face_name && strlen(cface) > 0 && strcmp(current_face_name, cface) != 0) { 
-		loadFace (cface, fontSize);
-	}
+	loadFace (cface, fontSize);
 
 	fontLetterDefinition tempDef;
 
