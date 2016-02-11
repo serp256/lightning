@@ -19,7 +19,7 @@
 #include "android/lightning_android.h"
 #define get_locale lightning_get_locale
 #elif IOS
-#import "ios/common_ios.h"
+//#import "ios/common_ios.h"
 #import "ios/CGFontToFontData.h"
 #import <UIKit/UIKit.h> 
 #else
@@ -210,115 +210,100 @@ void loadFace(char* fname, int fSize) {
 	FT_Error error;
 	PRINT_DEBUG("loadFace %s %d", fname, fSize);
 
-	double dfsize = (double)(scale * fSize);
-	int fontSize =  (int)(dfsize + 0.45);
-	 if (face) {
-		FT_Done_Face(face);
-		free(buf);
-	 }
-	PRINT_DEBUG("loadFace: done face");
+	PRINT_DEBUG("check face [%s], current [%s]", fname, current_face_name);
+	if (!current_face_name || (current_face_name && strlen(fname) > 0 && strcmp(current_face_name, fname) != 0)) { 
+		 if (face) {
+			FT_Done_Face(face);
+			PRINT_DEBUG("free %p", buf);
+			free(buf);
+		 }
+		PRINT_DEBUG("loadFace: done face");
 
-	PRINT_DEBUG ("after stroker");
+		long fsize;
 
-	long fsize;
+		if (*fname == '/') {
+			//absolute path
+			PRINT_DEBUG ("absolute path");
+			FILE *f = fopen(fname, "rb");
 
-	if (*fname == '/') {
-		//absolute path
-		PRINT_DEBUG ("absolute path");
-		FILE *f = fopen(fname, "rb");
-
-		fseek(f,0,SEEK_END);
-		fsize = ftell(f);
-		fseek(f,0,SEEK_SET);
-		buf = malloc(fsize);
-		memset(buf,0, fsize);
-		fread(buf, fsize,1,f);
-		error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
-		fclose(f);
-	} else {
+			fseek(f,0,SEEK_END);
+			fsize = ftell(f);
+			fseek(f,0,SEEK_SET);
+			buf = malloc(fsize);
+			memset(buf,0, fsize);
+			fread(buf, fsize,1,f);
+			error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
+			fclose(f);
+		} else {
 
 #if (defined IOS )
 
-  NSString *fontName= [NSString stringWithCString:fname encoding:NSUTF8StringEncoding];
-	CGFontRef cgf = CGFontCreateWithFontName((CFStringRef)fontName);
+		NSString *fontName= [NSString stringWithCString:fname encoding:NSUTF8StringEncoding];
+		CGFontRef cgf = CGFontCreateWithFontName((CFStringRef)fontName);
 
-	NSData* data =(NSData*) fontDataForCGFont (cgf);
-	PRINT_DEBUG(" len %s %i", fname, [data length]);
-	int length = [data length];
-	buf = malloc(length);
-	memset(buf,0,length);
-	memcpy(buf,[data bytes],length);
+		NSData *data=(NSData*)fontDataForCGFont (cgf);
+		CGFontRelease (cgf);
 
-
-	fname = [fontName UTF8String];
-	error = ( (FT_New_Memory_Face(_FTlibrary, buf, length, 0, &face )));
+		buf = [data bytes];
+		PRINT_DEBUG("buf %p", buf);
+		fname = [fontName UTF8String];
+		error = ( (FT_New_Memory_Face(_FTlibrary, buf, [data length], 0, &face )));
 
 #else
 #if (defined ANDROID)
-	resource r;
-	if (getResourceFd(fname,&r)) {
-		buf = malloc(r.length);
-		memset(buf,0, r.length);
-		int64_t i = read(r.fd, buf, r.length);
-		int e = errno;
-		PRINT_DEBUG("fread %lld %s", i, strerror(e));
-		error = ( (FT_New_Memory_Face(_FTlibrary, buf, r.length, 0, &face )));
-	}
+		resource r;
+		if (getResourceFd(fname,&r)) {
+			buf = malloc(r.length);
+			memset(buf,0, r.length);
+			int64_t i = read(r.fd, buf, r.length);
+			int e = errno;
+			PRINT_DEBUG("fread %lld %s", i, strerror(e));
+			error = ( (FT_New_Memory_Face(_FTlibrary, buf, r.length, 0, &face )));
+		}
 #else
-		char* dir = "Resources/";
-		PRINT_DEBUG ("fdir %s", dir);
-		PRINT_DEBUG ("fname %s", fname);
+			char* dir = "Resources/";
+			PRINT_DEBUG ("fdir %s", dir);
+			PRINT_DEBUG ("fname %s", fname);
 
-		size_t len1 = strlen(fname);
-		size_t len2 = strlen(dir);
-		char *result = malloc(len1+len2+1);
+			size_t len1 = strlen(fname);
+			size_t len2 = strlen(dir);
+			char *result = malloc(len1+len2+1);
 
-		memcpy(result, dir, len2);
-		memcpy(result+len2, fname, len1+1);
-		PRINT_DEBUG ("fpath %s", result);
+			memcpy(result, dir, len2);
+			memcpy(result+len2, fname, len1+1);
+			PRINT_DEBUG ("fpath %s", result);
 
 
-		FILE *f = fopen(result, "rb");
+			FILE *f = fopen(result, "rb");
 
-		fseek(f,0,SEEK_END);
-	  fsize = ftell(f);
-		fseek(f,0,SEEK_SET);
-		buf = malloc(fsize);
-		memset(buf,0, sizeof(buf));
-		fread(buf, fsize,1,f);
-		error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
-		fclose(f);
+			fseek(f,0,SEEK_END);
+			fsize = ftell(f);
+			fseek(f,0,SEEK_SET);
+			buf = malloc(fsize);
+			memset(buf,0, sizeof(buf));
+			fread(buf, fsize,1,f);
+			error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
+			fclose(f);
 #endif
 #endif
+			}
+
+		if ( error ) {
+			caml_failwith(getErrorMessage (error));
 		}
 
 
-	//error = ( (FT_New_Memory_Face(_FTlibrary, buf, fsize, 0, &face )));
+		PRINT_DEBUG ("%s: %s", face->family_name,face->style_name);
 
-	if ( error )
-	{
-		PRINT_DEBUG("FT error: %s", getErrorMessage (error));
-		caml_failwith(getErrorMessage (error));
-	}
+		current_face_name = fname;
 
+		print_error(FT_Select_Charmap(face, FT_ENCODING_UNICODE));
+  }
 
-	PRINT_DEBUG ("%s: %s", face->family_name,face->style_name);
-
-	current_face_name = fname;
-
-  error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-	if ( error )
-	{
-		PRINT_DEBUG("FT error: %s", getErrorMessage (error));
-	}
-
-	// set the requested font size
+	double dfsize = (double)(scale * fSize);
+	int fontSize =  (int)(dfsize + 0.45);
 	int fontSizePoints = (int)(64.f * fontSize);
-	error= (FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
-		if ( error )
-		{
-			PRINT_DEBUG("FT error: %s", getErrorMessage (error));
-		}
+	print_error(FT_Set_Char_Size(face, fontSizePoints, fontSizePoints, dpi, dpi));
 }
 void getFontCharmap (char* fname) {
 	PRINT_DEBUG("getFontCharmap");
@@ -353,7 +338,6 @@ value ml_freetype_getFont(value ttf, value vsize) {
 		caml_failwith("Freetype face font is null");
 	}
 
-	//current_face_name = fname;
 	getFontCharmap(current_face_name);
 
 	FT_Size_Metrics size_info = face->size->metrics;
@@ -421,12 +405,7 @@ value ml_freetype_checkChar (value vtext, value vface, value vsize) {
 
 	char* cface = String_val(vface);
 
-	PRINT_DEBUG("check face [%s], current [%s]", cface, current_face_name);
-
-
-	if (current_face_name && strlen(cface) > 0 && strcmp(current_face_name, cface) != 0) { 
-		loadFace (cface, fontSize);
-	}
+	loadFace (cface, fontSize);
 
 	unsigned int glyph_index = 	FT_Get_Char_Index(face, code);
 	if (glyph_index == 0 ) {

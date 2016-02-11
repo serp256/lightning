@@ -702,7 +702,7 @@ value ml_getSystemFonts () {
 	NSMutableArray *result = [[NSMutableArray alloc] init];
 
 	for (NSString *familyName in fontFamilyNames) {
-		NSLog(@"check family %@" , familyName);
+		//NSLog(@"check family %@" , familyName);
 		bool isSuitable = true;
 		for (NSString *excludeFamily in excludeFamilies) {
 			if ([familyName rangeOfString:excludeFamily options:NSCaseInsensitiveSearch].location != NSNotFound) {
@@ -714,7 +714,7 @@ value ml_getSystemFonts () {
 
 		NSArray *fontNames = [UIFont fontNamesForFamilyName:familyName];
 		for (NSString *name in fontNames) {
-			NSLog(@"name %@" , name);
+			//NSLog(@"name %@" , name);
 			if ([name rangeOfString:regular options:NSCaseInsensitiveSearch].location != NSNotFound) {
 						[result addObject:name];
 			} else {
@@ -736,6 +736,6 @@ value ml_getSystemFonts () {
 	}
 
 	NSString *resString = [result componentsJoinedByString:@";"];
-	NSLog(@"RESULT: %@", resString);
+	[result release];
 	CAMLreturn(caml_copy_string([resString UTF8String]));
 }

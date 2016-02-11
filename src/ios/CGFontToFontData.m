@@ -133,7 +133,7 @@ NSData* fontDataForCGFont (CGFontRef cgFont) {
     free(tableSizes);
     NSData *fontData = [NSData dataWithBytesNoCopy:stream
                                                 length:totalSize
-                                          freeWhenDone:YES];
+                                          freeWhenDone:NO];
     return fontData;
 		
 }

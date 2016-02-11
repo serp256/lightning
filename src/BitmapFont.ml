@@ -635,7 +635,7 @@ module Freetype = struct
       ];
     );
   value getBitmapChar (def_face,style,size) code =
-    let () = Debug.d "getBitmapChar %s" (UTF8.init 1 (fun i -> UChar.chr code)) in
+    let () = debug "getBitmapChar %s" (UTF8.init 1 (fun i -> UChar.chr code)) in
     let path =
       let rec getFaceRec paths =
         match paths with
@@ -650,7 +650,7 @@ module Freetype = struct
             (instance())#defaultTTF
         ] in
       let ttfs = getCharTTF code in
-      let () = Debug.d "ttf %s" (String.concat "," ttfs) in
+      let () = debug "ttfs %s" (String.concat "," ttfs) in
       getFaceRec ttfs
     in
     getBc code path size;
@@ -766,11 +766,6 @@ value registerSystemFont ?textureSize ?(scale=1.) ?(stroke=0) (sizes: list int) 
       [ [hd::tl] ->
         (
           let default = getSystemDefaultFont () in
-          let () = Debug.d "fonts count %d" (List.length systemFonts) in
-          (*
-          let (systemFonts,_) = ExtLib.List.split_nth 30 systemFonts in
-          let () = Debug.d "fonts count %d" (List.length systemFonts) in
-          *)
           let found = ref False in
           (
             debug "System fonts count: %d" (List.length systemFonts);
