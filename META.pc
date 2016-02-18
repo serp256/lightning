@@ -108,6 +108,12 @@ package "native_vk" (
   archive(native) = "NativeVk.cmxa"
 )
 
+package "chartboost" (
+  description="Charboost Analytics"
+  archive(byte) = "chartboost.cma"
+  archive(native) = "chartboost.cmxa"
+)
+
 package "social" (
 
   archive(bytes) = "SNTypes.cmi"
