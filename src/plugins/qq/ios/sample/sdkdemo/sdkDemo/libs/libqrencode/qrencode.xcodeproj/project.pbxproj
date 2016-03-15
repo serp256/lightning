@@ -1,0 +1,327 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		156922DE16E1EED6003E3E84 /* bitstream.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922D016E1EED6003E3E84 /* bitstream.c */; };
+		156922DF16E1EED6003E3E84 /* mask.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922D216E1EED6003E3E84 /* mask.c */; };
+		156922E016E1EED6003E3E84 /* qrencode.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922D416E1EED6003E3E84 /* qrencode.c */; };
+		156922E116E1EED6003E3E84 /* qrinput.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922D616E1EED6003E3E84 /* qrinput.c */; };
+		156922E216E1EED6003E3E84 /* qrspec.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922D816E1EED6003E3E84 /* qrspec.c */; };
+		156922E316E1EED6003E3E84 /* rscode.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922DA16E1EED6003E3E84 /* rscode.c */; };
+		156922E416E1EED6003E3E84 /* split.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922DC16E1EED6003E3E84 /* split.c */; };
+		156922E716E1F049003E3E84 /* mqrspec.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922E516E1F049003E3E84 /* mqrspec.c */; };
+		156922EA16E1F072003E3E84 /* mmask.c in Sources */ = {isa = PBXBuildFile; fileRef = 156922E816E1F072003E3E84 /* mmask.c */; };
+		15A85F9216E375B60022A9BB /* TCQRCodeGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 15A85F9116E375B60022A9BB /* TCQRCodeGenerator.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		156922B216E1EDA7003E3E84 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/${PRODUCT_NAME}";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		156922B416E1EDA7003E3E84 /* libqrencode.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libqrencode.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		156922D016E1EED6003E3E84 /* bitstream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bitstream.c; sourceTree = "<group>"; };
+		156922D116E1EED6003E3E84 /* bitstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bitstream.h; sourceTree = "<group>"; };
+		156922D216E1EED6003E3E84 /* mask.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mask.c; sourceTree = "<group>"; };
+		156922D316E1EED6003E3E84 /* mask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mask.h; sourceTree = "<group>"; };
+		156922D416E1EED6003E3E84 /* qrencode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = qrencode.c; sourceTree = "<group>"; };
+		156922D516E1EED6003E3E84 /* qrencode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qrencode.h; sourceTree = "<group>"; };
+		156922D616E1EED6003E3E84 /* qrinput.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = qrinput.c; sourceTree = "<group>"; };
+		156922D716E1EED6003E3E84 /* qrinput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qrinput.h; sourceTree = "<group>"; };
+		156922D816E1EED6003E3E84 /* qrspec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = qrspec.c; sourceTree = "<group>"; };
+		156922D916E1EED6003E3E84 /* qrspec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qrspec.h; sourceTree = "<group>"; };
+		156922DA16E1EED6003E3E84 /* rscode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rscode.c; sourceTree = "<group>"; };
+		156922DB16E1EED6003E3E84 /* rscode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rscode.h; sourceTree = "<group>"; };
+		156922DC16E1EED6003E3E84 /* split.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = split.c; sourceTree = "<group>"; };
+		156922DD16E1EED6003E3E84 /* split.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = split.h; sourceTree = "<group>"; };
+		156922E516E1F049003E3E84 /* mqrspec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mqrspec.c; sourceTree = "<group>"; };
+		156922E616E1F049003E3E84 /* mqrspec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mqrspec.h; sourceTree = "<group>"; };
+		156922E816E1F072003E3E84 /* mmask.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mmask.c; sourceTree = "<group>"; };
+		156922E916E1F072003E3E84 /* mmask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mmask.h; sourceTree = "<group>"; };
+		156922EB16E1F2DB003E3E84 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
+		15A85F9016E375B60022A9BB /* TCQRCodeGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCQRCodeGenerator.h; sourceTree = "<group>"; };
+		15A85F9116E375B60022A9BB /* TCQRCodeGenerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCQRCodeGenerator.m; sourceTree = "<group>"; };
+		15A85FAB16E3770B0022A9BB /* qrencode_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qrencode_Prefix.pch; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		156922B116E1EDA7003E3E84 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		156922A916E1EDA7003E3E84 = {
+			isa = PBXGroup;
+			children = (
+				15A85FAA16E376FA0022A9BB /* Other Sources */,
+				15A85F8F16E375B60022A9BB /* objc */,
+				156922CF16E1EED6003E3E84 /* src */,
+				156922B516E1EDA7003E3E84 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		156922B516E1EDA7003E3E84 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				156922B416E1EDA7003E3E84 /* libqrencode.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		156922CF16E1EED6003E3E84 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				156922EB16E1F2DB003E3E84 /* config.h */,
+				156922E816E1F072003E3E84 /* mmask.c */,
+				156922E916E1F072003E3E84 /* mmask.h */,
+				156922E516E1F049003E3E84 /* mqrspec.c */,
+				156922E616E1F049003E3E84 /* mqrspec.h */,
+				156922D016E1EED6003E3E84 /* bitstream.c */,
+				156922D116E1EED6003E3E84 /* bitstream.h */,
+				156922D216E1EED6003E3E84 /* mask.c */,
+				156922D316E1EED6003E3E84 /* mask.h */,
+				156922D416E1EED6003E3E84 /* qrencode.c */,
+				156922D516E1EED6003E3E84 /* qrencode.h */,
+				156922D616E1EED6003E3E84 /* qrinput.c */,
+				156922D716E1EED6003E3E84 /* qrinput.h */,
+				156922D816E1EED6003E3E84 /* qrspec.c */,
+				156922D916E1EED6003E3E84 /* qrspec.h */,
+				156922DA16E1EED6003E3E84 /* rscode.c */,
+				156922DB16E1EED6003E3E84 /* rscode.h */,
+				156922DC16E1EED6003E3E84 /* split.c */,
+				156922DD16E1EED6003E3E84 /* split.h */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		15A85F8F16E375B60022A9BB /* objc */ = {
+			isa = PBXGroup;
+			children = (
+				15A85F9016E375B60022A9BB /* TCQRCodeGenerator.h */,
+				15A85F9116E375B60022A9BB /* TCQRCodeGenerator.m */,
+			);
+			path = objc;
+			sourceTree = "<group>";
+		};
+		15A85FAA16E376FA0022A9BB /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				15A85FAB16E3770B0022A9BB /* qrencode_Prefix.pch */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		156922B316E1EDA7003E3E84 /* qrencode */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 156922C216E1EDA7003E3E84 /* Build configuration list for PBXNativeTarget "qrencode" */;
+			buildPhases = (
+				156922B016E1EDA7003E3E84 /* Sources */,
+				156922B116E1EDA7003E3E84 /* Frameworks */,
+				156922B216E1EDA7003E3E84 /* CopyFiles */,
+				15B6503516EEFCCF004C1EF8 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = qrencode;
+			productName = qrencode;
+			productReference = 156922B416E1EDA7003E3E84 /* libqrencode.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		156922AB16E1EDA7003E3E84 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0450;
+				ORGANIZATIONNAME = libqrencode;
+			};
+			buildConfigurationList = 156922AE16E1EDA7003E3E84 /* Build configuration list for PBXProject "qrencode" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 156922A916E1EDA7003E3E84;
+			productRefGroup = 156922B516E1EDA7003E3E84 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				156922B316E1EDA7003E3E84 /* qrencode */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		15B6503516EEFCCF004C1EF8 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\nif [[0]];then\n\nset -e\nset -u\n\nTX_PRODUCTS_DIR=\"${SRCROOT}/../../output\"\n\nif [[ \"${BUILT_PRODUCTS_DIR}\" != \"${TX_PRODUCTS_DIR}\" ]];then\nrm -rf \"${TX_PRODUCTS_DIR}/${EXECUTABLE_NAME}\"\ncp -Rf \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_NAME}\" \"${TX_PRODUCTS_DIR}\"\nfi\n\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		156922B016E1EDA7003E3E84 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				156922DE16E1EED6003E3E84 /* bitstream.c in Sources */,
+				156922DF16E1EED6003E3E84 /* mask.c in Sources */,
+				156922E016E1EED6003E3E84 /* qrencode.c in Sources */,
+				156922E116E1EED6003E3E84 /* qrinput.c in Sources */,
+				156922E216E1EED6003E3E84 /* qrspec.c in Sources */,
+				156922E316E1EED6003E3E84 /* rscode.c in Sources */,
+				156922E416E1EED6003E3E84 /* split.c in Sources */,
+				156922E716E1F049003E3E84 /* mqrspec.c in Sources */,
+				156922EA16E1F072003E3E84 /* mmask.c in Sources */,
+				15A85F9216E375B60022A9BB /* TCQRCodeGenerator.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		156922C016E1EDA7003E3E84 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = iphoneos;
+				VALID_ARCHS = "arm64 armv7 armv7s x86_64 i386";
+			};
+			name = Debug;
+		};
+		156922C116E1EDA7003E3E84 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+				VALID_ARCHS = "arm64 armv7 armv7s x86_64 i386";
+			};
+			name = Release;
+		};
+		156922C316E1EDA7003E3E84 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				DSTROOT = /tmp/qrencode.dst;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = qrencode_Prefix.pch;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "-DHAVE_CONFIG_H=1";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				VALID_ARCHS = "armv7 armv7s i386 arm64 x86_64";
+			};
+			name = Debug;
+		};
+		156922C416E1EDA7003E3E84 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				DSTROOT = /tmp/qrencode.dst;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = qrencode_Prefix.pch;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				OTHER_CFLAGS = "-DHAVE_CONFIG_H=1";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				VALID_ARCHS = "armv7 armv7s i386 arm64 x86_64";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		156922AE16E1EDA7003E3E84 /* Build configuration list for PBXProject "qrencode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				156922C016E1EDA7003E3E84 /* Debug */,
+				156922C116E1EDA7003E3E84 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		156922C216E1EDA7003E3E84 /* Build configuration list for PBXNativeTarget "qrencode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				156922C316E1EDA7003E3E84 /* Debug */,
+				156922C416E1EDA7003E3E84 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 156922AB16E1EDA7003E3E84 /* Project object */;
+}

@@ -1,0 +1,48 @@
+//
+// Prefix header for all source files of the 'sdkDemo' target in the 'sdkDemo' project
+//
+
+#import <Availability.h>
+
+#ifndef __IPHONE_4_0
+#warning "This project uses features only available in iOS SDK 4.0 and later."
+#endif
+
+#ifdef __OBJC__
+    #import <UIKit/UIKit.h>
+    #import <Foundation/Foundation.h>
+    #import "libs/QuickDialog/quickdialog/QuickDialog.h"
+#endif
+
+#define __TencentApiSdk_For_TencentApp_ 0
+
+#define __Project_ARC__ 1
+
+#ifndef __has_feature
+    #define __has_feature(x) 0 //Compatibility with non-clang compilers.
+#endif  // __has_feature
+
+
+
+#if __has_feature(objc_arc)
+    #define __AUTORELEASE(x)   (x)
+    #define __RELEASE(x)       (x) = nil;
+    #define __RETAIN(x)        (x)
+    #define __SUPER_DEALLOC    ;
+#else
+    #define __RETAIN(x)      [(x) retain];
+    #define __AUTORELEASE(x) [(x) autorelease];
+
+    #define __RELEASE(x) \
+            if(nil != (x)) \
+            {\
+                [(x) release];\
+                (x) = nil;\
+            }
+    #define __SUPER_DEALLOC    [super dealloc];
+#endif 
+
+
+#define __TencentDemoAppid_  @"222222"
+
+#define PreDefM_APPID @"222222"

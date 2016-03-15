@@ -43,6 +43,7 @@ ifneq (,$(findstring byte,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/odnoklassniki/*.cma src/plugins/odnoklassniki/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/gameanalytics/*.cma src/plugins/gameanalytics/*.so)
 	INSTALL_FILES += $(wildcard src/plugins/xsolla/*.cma src/plugins/xsolla/*.so)
+	INSTALL_FILES += $(wildcard src/plugins/qq/*.cma src/plugins/qq/*.so)
 endif
 
 #INSTALL_FILES += $(wildcard src/plugins/mopub/*.cmxa src/plugins/mopub/*.a)
@@ -67,8 +68,12 @@ ifneq (,$(findstring native,$(LIB)))
 	INSTALL_FILES += $(wildcard src/plugins/odnoklassniki/*.cmxa src/plugins/odnoklassniki/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/gameanalytics/*.cmxa src/plugins/gameanalytics/*.a)
 	INSTALL_FILES += $(wildcard src/plugins/xsolla/*.cmxa src/plugins/xsolla/*.a)
+	INSTALL_FILES += $(wildcard src/plugins/qq/*.cmxa src/plugins/qq/*.a)
 endif
 
+ifeq ($(PLATFORM),ANDROID)
+	INSTALL_FILES += src/freetype/android/*.a
+endif
 ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/appflood/ios/libappflood-sdk.a
 	INSTALL_FILES += src/plugins/appsflyer/ios/libAppsFlyerLib.a
@@ -77,6 +82,7 @@ ifeq ($(PLATFORM),IOS)
 	INSTALL_FILES += src/plugins/supersonic/ios/libsupersonic-sdk.a
 	INSTALL_FILES += src/plugins/sponsorpay/ios/sdk/libFyberSDK.a
 	INSTALL_FILES += src/plugins/gameanalytics/ios/sdk/libGameAnalyticsSDK.a
+	INSTALL_FILES += src/freetype/ios/*.a
 endif
 
 ifneq (,$(findstring syntax,$(LIB)))
@@ -111,6 +117,7 @@ endif
 	                                                          src/plugins/odnoklassniki/*.cmi src/plugins/odnoklassniki/*.mli \
 	                                                          src/plugins/gameanalytics/*.cmi src/plugins/gameanalytics/*.mli \
 	                                                          src/plugins/xsolla/*.cmi src/plugins/xsolla/*.mli \
+	                                                          src/plugins/qq/*.cmi src/plugins/qq/*.mli \
 	                                                          src/social/*.cmi src/social/*.mli $(INSTALL_OPTS)
 
 uninstall:

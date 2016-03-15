@@ -1,0 +1,69 @@
+{
+    "grouped": true,
+    "title": "挑战&炫耀",
+    "key": "AppChallenge",
+    "controllerName": "TQDAppChallengeController",
+    "sections": [
+                 {
+                 "elements": [
+                              {
+                              "type": "QTextElement",
+                              "text": "IOS SDK中增加挑战&炫耀前台API，支持发送1V1的挑战或炫耀，为应用拉活跃提供新能力。"
+                              }
+                              ]
+                 },
+                 {
+                 "elements": [
+                              {
+                              "type":"QSegmentedElement",
+                              "key": "typeSegmentedElement",
+                              "items":["挑战", "炫耀"],
+                              "values":["pk", "brag"],
+                              "selected":0
+                              }
+                              ]
+                 },
+                 {
+                 "elements": [
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "ASCIICapable",
+                              "title": "source",
+                              "placeholder": "透传参数",
+                              "bind": "textValue:binding_source"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "ASCIICapable",
+                              "title": "receiver",
+                              "placeholder": "填入目标用户的openid",
+                              "bind": "textValue:binding_receiver"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "URL",
+                              "title": "img",
+                              "placeholder": "填入炫耀/挑战场景图的URL",
+                              "bind": "textValue:binding_img"
+                              },
+                              {
+                              "type": "QEntryElement",
+                              "keyboardType": "Default",
+                              "title": "msg",
+                              "placeholder": "填入炫耀/挑战中的描述文字",
+                              "bind": "textValue:binding_msg"
+                              }
+                              ]
+                 },
+                 {
+                 "elements": [
+                              {
+                              "type": "QButtonElement",
+                              "key": "button",
+                              "title": "发送挑战/炫耀",
+                              "controllerAction": "onSendChallenge:"
+                              }
+                              ]
+                 }
+                 ]
+}

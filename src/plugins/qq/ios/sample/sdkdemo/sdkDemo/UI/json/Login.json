@@ -1,0 +1,49 @@
+{
+    "grouped": true,
+    "title": "登陆",
+    "key": "Login",
+    "controllerName": "TQDLoginController",
+    "sections": [
+                 {
+                 "elements": [
+                              {
+                              "type": "QButtonElement",
+                              "key": "loginButton",
+                              "title": "登陆",
+                              "controllerAction": "onLogin:"
+                              },
+                              {
+                              "type": "QButtonElement",
+                              "key": "logoutButton",
+                              "title": "退出登陆",
+                              "controllerAction": "onLogout:"
+                              },
+                              {
+                              "type": "QButtonElement",
+                              "key": "DAUButton",
+                              "title": "DAU统计",
+                              "controllerAction": "onDAU:"
+                              }
+                              ]
+                 },
+                 {
+                 "key" : "permission_switchs_section",
+                 "elements": [
+                              {"type":"QBooleanElement", "title":"add_topic", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"add_one_blog", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"add_album", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"upload_pic", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"list_album", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"add_share", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"check_page_fans", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"get_repost_list", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"get_info", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"get_other_info", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"get_vip_info", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"get_vip_rich_info", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"get_user_info", "boolValue":1},
+                              {"type":"QBooleanElement", "title":"get_simple_userinfo", "boolValue":1}
+                              ]
+                 }
+                 ]
+}

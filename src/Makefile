@@ -6,7 +6,7 @@ CFLAGS += -I . -g
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
 #MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o renderbuffer_stub.o filters_stub.o render_stub.o
-MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o rects-bin.o rendertex/common.o rendertex/shared.o rendertex/dedicated.o rendertex/stubs.o filters_stub.o render_stub.o
+MOBJS = bezier.o inline_shaders.o light_common.o texture_common.o texture_pvr.o texture_async_loader.o rects-bin.o rendertex/common.o rendertex/shared.o rendertex/dedicated.o rendertex/stubs.o filters_stub.o render_stub.o freetype_common.o
 
 light_common.o: light_common.h
 texture_common.o: texture_common.h light_common.h
@@ -22,9 +22,9 @@ MLOBJSFLAGS =
 MLFLAGS +=  -package ojson,extlib,redspell.syntax.debug -I containers -I utils
 MLDEPFLAGS =
 
-byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma odnoklassniki.cma gameanalytics.cma xsolla.cma social_byte
+byte: lightning.cma remote-notifications.cma tapjoy.cma mobileapptracking.cma flurry.cma sponsorpay.cma facebook.cma chartboost.cma appflood.cma supersonic.cma twitter.cma instagram.cma whatsapp.cma appsflyer.cma NativeVk.cma gamecontroller.cma odnoklassniki.cma gameanalytics.cma xsolla.cma qq.cma social_byte
 native: MLDEPFLAGS += -native
-native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa odnoklassniki.cmxa gameanalytics.cmxa xsolla.cmxa gamecontroller.cmxa social_native
+native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa sponsorpay.cmxa facebook.cmxa twitter.cmxa instagram.cmxa whatsapp.cmxa appsflyer.cmxa NativeVk.cmxa odnoklassniki.cmxa gameanalytics.cmxa xsolla.cmxa qq.cmxa gamecontroller.cmxa social_native
 #native: lightning.cmxa remote-notifications.cmxa tapjoy.cmxa flurry.cmxa chartboost.cmxa appflood.cmxa mobileapptracking.cmxa supersonic.cmxa facebook.cmxa twitter.cmxa whatsapp.cmxa appsflyer.cmxa social_native
 syntax: syntax/pa_prop.cmo
 
@@ -39,7 +39,7 @@ $(SYNTAX): MLFLAGS = -package camlp4,camlp4.lib,camlp4.quotations.r,camlp4.exten
 
 
 ifeq ($(PLATFORM),IOS)
-	MOBJS += mlwrapper.o ios/OpenUDID.o ios/mlwrapper_ios.o mobile_res.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightDownloaderDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/texture_save.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o ios/copy_paste.o
+	MOBJS += mlwrapper.o ios/OpenUDID.o ios/mlwrapper_ios.o mobile_res.o ios/LightActivityIndicator.o ios/LightView.o ios/LightViewController.o ios/LightAppDelegate.o ios/LightDownloaderDelegate.o ios/LightImageLoader.o ios/common_ios.o ios/texture_ios.o ios/texture_save.o ios/sound_ios.o ios/gamecenter_ios.o ios/net_ios.o ios/local_notif.o ios/motion.o ios/hardware_ios.o ios/copy_paste.o ios/CGFontToFontData.o
 	LIBFLAGS = -ccopt '-ObjC' -cclib '-framework\ Foundation' \
 						 -cclib '-framework\ UIKit' \
 						 -cclib '-framework\ QuartzCore' \
@@ -50,7 +50,8 @@ ifeq ($(PLATFORM),IOS)
 						 -cclib '-framework\ OpenAL' \
 						 -cclib '-framework\ GameKit' \
 						 -cclib '-framework\ StoreKit' \
-						 -cclib '-framework\ CoreMotion'
+						 -cclib '-framework\ CoreMotion'\
+						 -cclib '-lfreetype'
 						 #-cclib '-framework\ FacebookSDK'
 	#CFLAGS += -Fsocial/facebook/ios/FacebookSDK
 	else
@@ -59,7 +60,7 @@ ifeq ($(PLATFORM),IOS)
 		MLCOPTS += -D__ANDROID__
 		MOBJS += mlwrapper.o mobile_res.o net_curl.o texture_load.o texture_save.o android/android_native_app_glue.o android/engine_android.o android/lightning_android.o android/expansions_android.o android/payments_android.o android/gamecenter_android.o android/sound_android.o android/curl_imgloader_android.o android/curl_filedownloader_android.o android/notifications_android.o android/keyboard_android.o android/mlwrapper_android.o  android/main_android.o android/vibration_android.o android/texture_android.o android/download_service_android.o
 		GLPARAM = -D__ANDROID__
-		LIBFLAGS = -cclib -landroid -cclib -lOpenSLES -cclib -lEGL -cclib -llog -cclib -lz -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto'
+		LIBFLAGS = -cclib -landroid -cclib -lOpenSLES -cclib -lEGL -cclib -llog -cclib -lz -cclib '-lGLESv2' -cclib '-llog' -cclib '-lz' -cclib '-lpng' -cclib '-ljpeg' -cclib '-lcurl' -cclib '-lssl' -cclib '-lcrypto' -cclib '-lfreetype'
 	else
 	ifeq ($(PLATFORM),PC)
 		MOBJS += net_curl.o pc/glut_stub.o pc/mlwrapper_pc.o texture_load.o texture_save.o pc/texture_pc.o
@@ -67,11 +68,11 @@ ifeq ($(PLATFORM),IOS)
 		AMLSOURCES = pc/pc_run.ml
 		MLOBJSFLAGS = -I pc
 		ifeq ($(OS),macos)
-			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -framework Cocoa  -framework OpenGL -framework GLUT
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS})  -framework Cocoa  -framework OpenGL -framework GLUT
 		else
 			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lGL' -cclib '-lglut'
 		endif
-		LIBFLAGS += -lcurl -lpng -ljpeg
+		LIBFLAGS += -lcurl -lpng -ljpeg -lfreetype
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
 	else
 		CFLAGS += $(shell ${SDLCONFIG} --cflags)
@@ -85,7 +86,7 @@ ifeq ($(PLATFORM),IOS)
 			#LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-framework\ Cocoa'  -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-framework\ OpenGL'
 			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -framework Cocoa  -lSDL_image -lSDLmain -framework OpenGL
 		else
-			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL'
+			LIBFLAGS = $(patsubst %,-ccopt %,${SDLFLAGS}) -cclib '-lSDL_image' -cclib '-lSDLmain' -cclib '-lGL' 
 		endif
 		LIBFLAGS += -lcurl
 		GLPARAM = -DGL_GLEXT_PROTOTYPES -fPIC
@@ -263,6 +264,12 @@ xsolla.cma:
 xsolla.cmxa:
 	make -C plugins/xsolla xsolla.cmxa
 
+qq.cma:
+	make -C plugins/qq qq.cma
+
+qq.cmxa:
+	make -C plugins/qq qq.cmxa
+
 MLDepend.$(PLATFORM):
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers $(MLCONTAINERS:.ml=.mli) $(MLCONTAINERS) > MLDepend.$(PLATFORM)
 	$(OCAMLFIND) ocamldep $(MLDEPFLAGS) $(MLFLAGS)  -I containers -I utils $(MLUTILS:.ml=.mli) $(MLUTILS) >> MLDepend.$(PLATFORM)
@@ -300,5 +307,6 @@ clean:
 	$(MAKE) -C plugins/odnoklassniki clean
 	$(MAKE) -C plugins/gameanalytics clean
 	$(MAKE) -C plugins/xsolla clean
+	$(MAKE) -C plugins/qq clean
 
 -include MLDepend.$(PLATFORM)

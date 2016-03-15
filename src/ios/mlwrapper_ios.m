@@ -671,3 +671,80 @@ value ml_deviceLocalTime (value unit) {
 
 	CAMLreturn(caml_copy_double(time));
 }
+
+/*
+value ml_getSystemFontPath(value unit) {
+   // [UIApplication sharedApplication].idleTimerDisabled = NO;
+	NSArray *familyNames = [[NSArray alloc] initWithArray:[UIFont familyNames]];
+	NSArray *fontNames;
+	NSInteger indFamily, indFont;
+	for (indFamily=0; indFamily<[familyNames count]; ++indFamily)
+	{
+		NSLog(@"Family name: %@", [familyNames objectAtIndex:indFamily]);
+		fontNames = [[NSArray alloc] initWithArray:
+								[UIFont fontNamesForFamilyName:
+										[familyNames objectAtIndex:indFamily]]];
+		for (indFont=0; indFont<[fontNames count]; ++indFont)
+		{
+			NSLog(@"    Font name: %@", [fontNames objectAtIndex:indFont]);
+		}
+		[fontNames release];
+	}
+	[familyNames release];
+  return "System/Font";
+}
+*/
+value ml_getSystemDefaultFont () {
+	CAMLparam0();
+	CAMLreturn(caml_copy_string("HelveticaNeue"));
+}
+
+value ml_getSystemFonts () {
+	CAMLparam0();
+
+
+	NSArray *fontFamilyNames = [UIFont familyNames];
+	NSArray *excludeFilters = @[@"Bold", @"Italic", @"Thin", @"Condensed", @"Light", @"Black", @"Oblique", @"Medium"];
+	NSArray *excludeFamilies = @[@"Courier", @"TimesNewRoman", @"Avenir", @"Snell Roundhand", @"Verdana", @"Georgia", @"Emoji", @"Marker Felt", @"Trebuchet", @"Zapfino", @"American Typewriter", @"Bodoni", @"Iowan", @"Cochin"];
+
+	NSString *regular = @"Regular";
+	NSMutableArray *result = [[NSMutableArray alloc] init];
+
+	for (NSString *familyName in fontFamilyNames) {
+		//NSLog(@"check family %@" , familyName);
+		bool isSuitable = true;
+		for (NSString *excludeFamily in excludeFamilies) {
+			if ([familyName rangeOfString:excludeFamily options:NSCaseInsensitiveSearch].location != NSNotFound) {
+				isSuitable = false;
+				break;
+			}
+		}
+		if (isSuitable) {
+
+		NSArray *fontNames = [UIFont fontNamesForFamilyName:familyName];
+		for (NSString *name in fontNames) {
+			//NSLog(@"name %@" , name);
+			if ([name rangeOfString:regular options:NSCaseInsensitiveSearch].location != NSNotFound) {
+						[result addObject:name];
+			} else {
+				bool isRegular = true;
+				for (NSString *excludeFilter in excludeFilters) {
+					//NSLog(@"check %@ in %@", excludeFilter, name);
+					if ([name rangeOfString:excludeFilter options:NSCaseInsensitiveSearch].location != NSNotFound) {
+						isRegular = false;
+						break;
+					}
+			  }
+				
+				if (isRegular) {
+					[result addObject:name];
+				}
+			}
+		}
+		}
+	}
+
+	NSString *resString = [result componentsJoinedByString:@";"];
+	[result release];
+	CAMLreturn(caml_copy_string([resString UTF8String]));
+}

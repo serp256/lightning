@@ -18,6 +18,7 @@ import android.view.Display;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Locale;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.json.JSONObject;
@@ -264,6 +265,88 @@ public class Lightning {
     public static String hwmodel() {
         return android.os.Build.MODEL;
     }
+
+		
+		
+		
+		public static String getSystemDefaultFont () {
+			int version = android.os.Build.VERSION.SDK_INT;
+				if (version >=14) {
+					return "/system/fonts/Roboto-Regular.ttf";
+				}
+				else {
+					return "/system/fonts/DroidSans.ttf";
+				}
+		}
+		
+		
+		private static String getSystemFont (String locale) {
+			int version = android.os.Build.VERSION.SDK_INT;
+			Log.d ("LIGHTNING", "locale " + locale + " version "  + version );
+			if (locale.equals("zh")) {
+				if (version >= 21) {
+					return "NotoSansSC-Regular.otf";
+					//return "NotoNaskhArabic-Regular.ttf";
+				}
+				else {
+					return "DroidSansFallback.ttf";
+				}
+			}
+			else {
+				if (version >=14) {
+					return "Roboto-Regular.ttf";
+				}
+				else {
+					return "DroidSans.ttf";
+				}
+			}
+		}
+		
+		public static String getSystemFonts () {
+			String[] fontdirs = { "/system/fonts"};
+			String[] filters= { "bold", "thin", "italic", "black", "clock", "condensed"};
+			String regular = "regular";
+			List<String> tempList = new ArrayList<String>();
+ 
+			boolean isRegular;
+
+			for ( String fontdir : fontdirs ) {
+					File dir = new File( fontdir );
+
+					if (!dir.exists())
+							continue;
+
+					File[] files = dir.listFiles();
+
+					if (files == null)
+							continue;
+
+					for ( File file : files ) {
+						String filename = file.getName().toLowerCase();
+						isRegular = true;
+
+						if (!filename.contains(regular)) {
+							for ( String filter: filters) {
+								if (filename.contains(filter)) {
+									isRegular = false;
+									break;
+								}
+							}
+						}
+
+						if (isRegular) {
+							tempList.add(file.getAbsolutePath ());
+						}
+					}
+			}
+			String ret = "";
+
+			for (String fontPath: tempList) {
+				ret += fontPath + ";";
+			}
+			Log.d("LIGHTNING", "fonts:\n" + ret);
+			return ret;
+		}
 
     private static ProgressDialog progressDialog;
 

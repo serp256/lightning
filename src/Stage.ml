@@ -323,6 +323,7 @@ class virtual c (_width:float) (_height:float) =
         let () = debug:forcerendereason "stage render" in
         proftimer(0.015):prof "renderStage %f" with
           (
+            BitmapFont.dynamicFontComplete();
             renderNeeded := renderNeeded - 1;
             Render.clear bgColor 1.;
             super#render None;
