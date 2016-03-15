@@ -8,7 +8,7 @@ MLFLAGS += -package redspell.syntax.debug
 %.o: %.c
 	$(OCAMLOPT) -I . -verbose -g  $(if $(CFLAGS),$(patsubst %,-ccopt %,$(CFLAGS))) -ccopt '-fPIC' -ccopt '-o $@' -c $<
 
-MLSOURCES = QQ.ml
+MLSOURCES = Qq.ml
 MLOBJSN = $(MLSOURCES:.ml=.cmx)
 MLOBJS = $(MLSOURCES:.ml=.cmo)
 IFACES = $(MLSOURCES:.ml=.cmi)

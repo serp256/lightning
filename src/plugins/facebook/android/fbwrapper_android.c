@@ -391,8 +391,8 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightFacebook_00024Cam
     RUN_ON_ML_THREAD(&fbandroid_named_with_str, (void*)data);
 
 		PRINT_DEBUG("chp4");
-    (*env)->DeleteLocalRef(env, jparam);
-    (*env)->DeleteLocalRef(ML_ENV, jname);
+    //(*env)->DeleteLocalRef(env, jparam);
+    //(*env)->DeleteLocalRef(ML_ENV, jname);
 }
 typedef struct {
     value *callbck;
