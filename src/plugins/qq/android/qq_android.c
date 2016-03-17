@@ -3,7 +3,7 @@
 
 static jclass cls = NULL;
 
-#define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightQQ);
+#define GET_CLS GET_PLUGIN_CLASS(cls,ru/redspell/lightning/plugins/LightQq);
 
 value ml_qq_init (value vappid, value vuid, value vtoken, value vexpires) {
 	CAMLparam4(vappid, vuid, vtoken, vexpires);
@@ -15,9 +15,9 @@ value ml_qq_init (value vappid, value vuid, value vtoken, value vexpires) {
 	STATIC_MID(cls, init, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
 
 	JString_val(jappid, vappid);
-	JString_val(juid, vuid);
-	JString_val(jtoken, vtoken);
-	JString_val(jexpires, vexpires);
+	JString_optval(juid, vuid);
+	JString_optval(jtoken, vtoken);
+	JString_optval(jexpires, vexpires);
 
 	(*env)->CallStaticVoidMethod(env, cls, mid, jappid, juid, jtoken, jexpires);
 	(*env)->DeleteLocalRef(env, jappid);
@@ -85,28 +85,41 @@ value ml_qq_logout (value unit) {
   GET_CLS;
 
   STATIC_MID(cls, logout, "()V");
-	(*env)->CallStaticObjectMethod(env, cls, mid);
+	(*env)->CallStaticVoidMethod(env, cls, mid);
 	CAMLreturn(Val_unit);
 }
 
-value ml_qq_friends(value vfail, value vsuccess) {
-	CAMLparam2(vfail, vsuccess);
+value ml_qq_invite (value unit) {
+	CAMLparam0();
+  GET_ENV;
+  GET_CLS;
 
-	value *success, *fail;
-	REG_CALLBACK(vsuccess, success);
-	REG_OPT_CALLBACK(vfail, fail);
+  STATIC_MID(cls, invite, "()V");
+	PRINT_DEBUG("try invite");
+	(*env)->CallStaticVoidMethod(env, cls, mid);
+	PRINT_DEBUG("after invite");
+	CAMLreturn(Val_unit);
+}
+
+value ml_qq_share (value title, value summary, value url, value imageUrl) {
+	CAMLparam4(title, summary, url, imageUrl);
 
 	GET_ENV;
 	GET_CLS;
+	STATIC_MID(cls, share, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
 
-	STATIC_MID(cls, friends, "(II)V");
-	(*env)->CallStaticVoidMethod(env, cls, mid, (jint)success, (jint)fail);
+	JString_val(jtitle, title);
+	JString_val(jsummary, summary);
+	JString_val(jurl, url);
+	JString_val(jimageUrl, imageUrl);
 
-	CAMLreturn(Val_unit);
+	(*env)->CallStaticVoidMethod(env, cls, mid, jtitle, jsummary, jurl, jimageUrl);
+	(*env)->DeleteLocalRef(env, jtitle);
+	(*env)->DeleteLocalRef(env, jsummary);
+	(*env)->DeleteLocalRef(env, jurl);
+	(*env)->DeleteLocalRef(env, jimageUrl);
+
 }
-
-
-
 void qqandroid_auth_success(void *d) {
 	PRINT_DEBUG("qqandroid_auth_success");
 	value **data = (value**)d;
@@ -116,7 +129,7 @@ void qqandroid_auth_success(void *d) {
 	free(data);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightQQ_00024AuthSuccess_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightQq_00024AuthSuccess_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail) {
 	PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightQQ_00024AuthSuccess_nativeRun");
 	value **data = (value**)malloc(sizeof(value*));
 	data[0] = (value*)jsuccess;
@@ -139,7 +152,7 @@ void qqandroid_fail(void *data) {
 	free(fail);
 }
 
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightQQ_00024Fail_nativeRun(JNIEnv *env, jobject this, jint jfail, jstring jreason, jint jsuccess) {
+JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightQq_00024Fail_nativeRun(JNIEnv *env, jobject this, jint jfail, jstring jreason, jint jsuccess) {
 	const char* creason = (*env)->GetStringUTFChars(env, jreason, JNI_FALSE);
 	PRINT_DEBUG("creason '%s'", creason);
 	qqandroid_fail_t *fail = (qqandroid_fail_t*)malloc(sizeof(qqandroid_fail_t));
@@ -153,97 +166,3 @@ JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightQQ_00024Fail_nati
 	RUN_ON_ML_THREAD(&qqandroid_fail, fail);
 }
 
-
-typedef struct {
-	value *success;
-	value *fail;
-	jobjectArray friends;
-} qqandroid_friends_success_t;
-
-void qqandroid_friends_success(void *data) {
-	CAMLparam0();
-	CAMLlocal2(retval, head);
-	PRINT_DEBUG ("qqandroid_friends_success");
-	qqandroid_friends_success_t *friends_success = (qqandroid_friends_success_t*)data;
-
-	static value* create_friend = NULL;
-	PRINT_DEBUG ("1");
-	if (!create_friend) create_friend = caml_named_value("qq_create_user");
-	PRINT_DEBUG ("2");
-
-	retval = Val_int(0);
-
-	int cnt = (*ML_ENV)->GetArrayLength(ML_ENV, friends_success->friends);
-	int i;
-
-	static jfieldID id_fid = 0;
-	static jfieldID name_fid = 0;
-	static jfieldID photo_fid = 0;
-	static jfieldID gender_fid = 0;
-	static jfieldID online_fid = 0;
-	static jfieldID lastseen_fid = 0;
-
-	if (!id_fid) {
-		jclass cls = engine_find_class("ru/redspell/lightning/plugins/LightQQ$Friend");
-
-		id_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "id", "Ljava/lang/String;");
-		name_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "name", "Ljava/lang/String;");
-		photo_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "photo", "Ljava/lang/String;");
-		gender_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "gender", "I");
-		online_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "online", "Z");
-		lastseen_fid = (*ML_ENV)->GetFieldID(ML_ENV, cls, "lastSeen", "I");
-	}
-
-	for (i = 0; i < cnt; i++) {
-		jobject jfriend = (*ML_ENV)->GetObjectArrayElement(ML_ENV, friends_success->friends, i);
-
-		jstring jid = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, id_fid);
-		jstring jname = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, name_fid);
-		jstring jphoto = (jstring)(*ML_ENV)->GetObjectField(ML_ENV, jfriend, photo_fid);
-		jint jgender = (*ML_ENV)->GetIntField(ML_ENV, jfriend, gender_fid);
-		jboolean jonline = (*ML_ENV)->GetBooleanField(ML_ENV, jfriend, online_fid);
-		jint jlast_seen = (*ML_ENV)->GetIntField(ML_ENV, jfriend, lastseen_fid);
-		const char* cid = (*ML_ENV)->GetStringUTFChars(ML_ENV, jid, JNI_FALSE);
-		const char* cname = (*ML_ENV)->GetStringUTFChars(ML_ENV, jname, JNI_FALSE);
-		const char* cphoto = (*ML_ENV)->GetStringUTFChars(ML_ENV, jphoto, JNI_FALSE);
-
-		head = caml_alloc_tuple(2);
-		value args[6] = { caml_copy_string(cid), caml_copy_string(cname), Val_int(jgender), caml_copy_string(cphoto), jonline == JNI_TRUE ? Val_true : Val_false, caml_copy_double((double)jlast_seen) };
-		Store_field(head, 0, caml_callbackN(*create_friend, 6, args));
-		Store_field(head, 1, retval);
-
-		retval = head;
-
-		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jid, cid);
-		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jname, cname);
-		(*ML_ENV)->ReleaseStringUTFChars(ML_ENV, jphoto, cphoto);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, jid);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, jname);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, jphoto);
-		(*ML_ENV)->DeleteLocalRef(ML_ENV, jfriend);
-	}
-
-	PRINT_DEBUG ("run succ");
-	RUN_CALLBACK(friends_success->success, retval);
-	FREE_CALLBACK(friends_success->success);
-	FREE_CALLBACK(friends_success->fail);
-	PRINT_DEBUG ("freed");
-
-	(*ML_ENV)->DeleteGlobalRef(ML_ENV, friends_success->friends);
-	PRINT_DEBUG ("del fr");
-	free(friends_success);
-	PRINT_DEBUG ("free struct");
-
-	CAMLreturn0;
-}
-
-JNIEXPORT void JNICALL Java_ru_redspell_lightning_plugins_LightQQ_00024FriendsSuccess_nativeRun(JNIEnv *env, jobject this, jint jsuccess, jint jfail, jobjectArray jfriends) {
-	PRINT_DEBUG("Java_ru_redspell_lightning_plugins_LightQQ_00024FriendsSuccess_nativeRun");
-
-	qqandroid_friends_success_t *friends_success = (qqandroid_friends_success_t*)malloc(sizeof(qqandroid_friends_success_t));
-	friends_success->success = (value*)jsuccess;
-	friends_success->fail = (value*)jfail;
-	friends_success->friends = (*env)->NewGlobalRef(env, jfriends);
-
-	RUN_ON_ML_THREAD(&qqandroid_friends_success, (void*)friends_success);
-}

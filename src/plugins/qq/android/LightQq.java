@@ -6,6 +6,7 @@ import com.tencent.connect.common.Constants;
 import com.tencent.tauth.IUiListener;
 import com.tencent.tauth.UiError;
 import com.tencent.tauth.Tencent;
+import com.tencent.connect.share.QzoneShare;
 import com.tencent.open.SocialConstants;
 
 import android.content.Intent;
@@ -16,9 +17,12 @@ import java.io.IOException;
 import java.net.*;
 import org.apache.http.conn.*;
 import android.view.View;
-class LightQQ {
+import java.util.ArrayList;
+
+class LightQq {
 	public static Tencent mTencent;
 	private static boolean helperAdded = false;
+	private static String app_id;
 	private static int success;
 	private static int fail;
 
@@ -147,6 +151,8 @@ class LightQQ {
 	};
 
 	public static void init (final String appId, final String uid, final String token, final String expires) {
+		app_id = appId;
+		Log.d("LIGHTNING", "uid = " + (uid == null? "null":uid));
 		if (!helperAdded) {
 			helperAdded  = true;
 			Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
@@ -196,13 +202,11 @@ class LightQQ {
 			helperAdded  = true;
 			Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 					public void onCreate(Bundle savedInstanceState) {
-							Log.d ("LIGHTNING", "QQ: PIZDA");
 			}
 
 					public void onResume() { }
 
 					public void onActivityResult(int requestCode, int resultCode, Intent data) {
-							Log.d ("LIGHTNING", "QQ!!!!!!!!!!: onActivityResult");
 						 if (requestCode == Constants.REQUEST_LOGIN ||
 							 requestCode == Constants.REQUEST_APPBAR) {
 							 Tencent.onActivityResultData(requestCode,resultCode,data,loginListener);
@@ -265,8 +269,8 @@ class LightQQ {
 		mTencent.logout(Lightning.activity);
 	}
 
-	public static void invite(int success, int fail) {
-     if (mTencent != null && mTencent.isReady()) {
+	public static void invite() {
+			 /*
 			 Log.d ("LIGHTNING","send invite");
 			final Bundle params = new Bundle();
 
@@ -284,7 +288,48 @@ class LightQQ {
 		else {
 			Log.d ("LIGHTNING","cant send invite");
 		}
+		*/
+			 /*
+			 final Bundle params = new Bundle();
+		 params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_APP);
+		 params.putString(QQShare.SHARE_TO_QQ_TITLE, "title");
+		 params.putString(QQShare.SHARE_TO_QQ_SUMMARY,  "summary");
+		 params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, "http://imgcache.qq.com/qzone/space_item/pre/0/66768.gif");
+		 params.putString(QQShare.SHARE_TO_QQ_APP_NAME, ("tencent"+app_id));
+		 mTencent.shareToQQ(Lightning.activity, params, new BaseUiListener());
+		 */
+
+			final Bundle params = new Bundle();
+
+			ArrayList<String> images = new ArrayList<String> ();
+			 params.putInt(QzoneShare.SHARE_TO_QZONE_KEY_TYPE, QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT );
+		 params.putString(QzoneShare.SHARE_TO_QQ_TITLE, "loser");//必填
+		 params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY, "I completed the level 1 with 0 scores!");//选填
+		 params.putString(QzoneShare.SHARE_TO_QQ_TARGET_URL, "http://android.myapp.com/myapp/detail.htm?apkName=com.tencent.tmgp.redspell.shuzidahai");//必填
+
+		 images.add("http://imgcache.qq.com/qzone/space_item/pre/0/66768.gif");
+		 params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, images);
+
+		 Log.d ("LIGHTNING","send invite");
+		 mTencent.shareToQzone(Lightning.activity, params, new BaseUiListener());
+
+ }
+
+public static void share(String title, String summary, String url, String imageUrl) {
+     if (mTencent != null && mTencent.isReady()) {
+
+			final Bundle params = new Bundle();
+
+			ArrayList<String> images = new ArrayList<String> ();
+			images.add(imageUrl);
+			 params.putInt(QzoneShare.SHARE_TO_QZONE_KEY_TYPE, QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT );
+			 params.putString(QzoneShare.SHARE_TO_QQ_TITLE, title);
+			 params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY, summary);
+			 params.putString(QzoneShare.SHARE_TO_QQ_TARGET_URL, url);
+			 params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, images);
+			 mTencent.shareToQzone(Lightning.activity, params, new BaseUiListener());
 
 	}
+}
 
 }

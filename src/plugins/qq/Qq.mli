@@ -14,14 +14,11 @@ module User:
 
 type fail = string -> unit;
 
-value init: ~appid:string -> ~uid:string -> ~token: string -> ~expires: string -> unit -> unit;
+value init: ~appid:string -> ?uid:string -> ?token: string -> ?expires: string -> unit -> unit;
 value authorize: ?fail:fail -> ~success:(unit -> unit) -> ?force:bool -> unit -> unit;
 value token: unit -> string;
 value uid: unit -> string;
 value logout: unit -> unit;
+value share: ~title:string -> ~summary:string -> ~url: string -> ~imageUrl: string -> unit -> unit;
 
-value friends: ?fail:fail -> ~success:(list User.t -> unit) -> unit -> unit;
-value users: ?fail:fail -> ~success:(list User.t -> unit)-> ~ids:list string -> unit -> unit;
-
-value apprequest:?fail:fail -> ~success:(string-> unit) -> ?request_type: string -> ~text: string -> ~user_id:string -> unit -> unit;
 

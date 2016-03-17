@@ -26,32 +26,24 @@ type t = unit;
 type fail = string -> unit;
 
 IFDEF PC THEN
-value init ~appid ~uid ~token ~expires () = ();
+value init ~appid ?uid ?token ?expires () = ();
 value authorize ?fail ~success ?force () = ();
-value friends ?fail ~success t = ();
-value users ?fail ~success ~ids t = ();
 value token _ = "";
 value uid _ = "";
 value logout _ = ();
-value apprequest ?fail ~success ?request_type ~text ~user_id () = ();
+value share ~title ~summary ~url ~imageUrl () = ();
 ELSE
 Callback.register "qq_create_user" User.create;
 
-external init: ~appid:string -> ~uid:string -> ~token: string -> ~expires: string -> unit -> unit = "ml_qq_init";
+external init: ~appid:string -> ~uid:option string -> ~token: option string -> ~expires: option string -> unit -> unit = "ml_qq_init";
+value init ~appid ?uid ?token ?expires () = init ~appid ~uid ~token ~expires ();
 external authorize: ?fail:fail -> ~success:(unit -> unit) -> ~force:bool -> unit -> unit = "ml_qq_authorize";
 value authorize ?fail ~success ?(force = False) = authorize ?fail ~success ~force;
+
+external share: ~title:string -> ~summary: string -> ~url: string ->  ~imageUrl: string -> unit -> unit = "ml_qq_share";
 
 external token: unit -> string = "ml_qq_token";
 external uid: unit -> string = "ml_qq_uid";
 external logout: unit -> unit= "ml_qq_logout";
 
-external friends: ?fail:fail -> ~success:(list User.t -> unit) -> unit -> unit = "ml_qq_friends";
-external users: option fail -> (list User.t -> unit) -> string -> unit = "ml_vk_users";
-value users ?fail ~success ~ids t =
-	let ids = String.concat "," ids in
-		users fail success ids;
-
-(*not available for apps not in mobile catalog*)
-external _apprequest:?fail:fail -> ~success:(string -> unit) -> ~user_id:string -> unit = "ml_vk_apprequest";
-value apprequest ?fail ~success ?request_type ~text ~user_id () = _apprequest ?fail ~success ~user_id;
 ENDIF;
