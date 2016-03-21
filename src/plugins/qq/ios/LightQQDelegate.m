@@ -6,11 +6,14 @@
 #import "LightViewController.h"
 
 @implementation LightQQDelegate
-- (id)initWithSuccess:(value)s andFail:(value)f {
+- (id)init {
 	self = [super init];
-	REG_CALLBACK(s, success);
-	REG_OPT_CALLBACK(f, fail);
 	return self;
+}
+
+- (id)initWithSuccess:(value)s andFail:(value)f {
+	REG_CALLBACK(s, success);
+	REG_CALLBACK(f, fail);
 }
 
 - (void)tencentDidLogin

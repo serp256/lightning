@@ -255,6 +255,16 @@ class LightQq {
 		}
 	}
 
+	public static String expires() {
+		if (mTencent != null) {
+			Log.d("LIGHTNING", "expires " + mTencent.getExpiresIn());
+			return Long.toString(mTencent.getExpiresIn());
+		}
+		else {
+			return "";
+		}
+	}
+
 	public static String uid() {
 		if (mTencent != null) {
 			return mTencent.getOpenId();

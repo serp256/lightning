@@ -30,20 +30,26 @@ value init ~appid ?uid ?token ?expires () = ();
 value authorize ?fail ~success ?force () = ();
 value token _ = "";
 value uid _ = "";
+value expires _ = "";
 value logout _ = ();
 value share ~title ~summary ~url ~imageUrl () = ();
 ELSE
 Callback.register "qq_create_user" User.create;
 
-external init: ~appid:string -> ~uid:option string -> ~token: option string -> ~expires: option string -> unit -> unit = "ml_qq_init";
-value init ~appid ?uid ?token ?expires () = init ~appid ~uid ~token ~expires ();
-external authorize: ?fail:fail -> ~success:(unit -> unit) -> ~force:bool -> unit -> unit = "ml_qq_authorize";
-value authorize ?fail ~success ?(force = False) = authorize ?fail ~success ~force;
+value appId = ref "";
 
+external init: ~appid:string -> ~uid:option string -> ~token: option string -> ~expires:option string -> unit -> unit = "ml_qq_init";
+value init ~appid ?uid ?token ?expires () = init ~appid ~uid ~token ~expires ();
 external share: ~title:string -> ~summary: string -> ~url: string ->  ~imageUrl: string -> unit -> unit = "ml_qq_share";
+
 
 external token: unit -> string = "ml_qq_token";
 external uid: unit -> string = "ml_qq_uid";
+external expires : unit -> string = "ml_qq_expires";
+
+external authorize: ?fail:fail -> ~success:(unit -> unit) -> ~force:bool -> unit -> unit = "ml_qq_authorize";
+value authorize ?fail ~success ?(force = False) = authorize ?fail ~success ~force;
+
 external logout: unit -> unit= "ml_qq_logout";
 
 ENDIF;

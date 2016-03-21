@@ -18,6 +18,7 @@ value init: ~appid:string -> ?uid:string -> ?token: string -> ?expires: string -
 value authorize: ?fail:fail -> ~success:(unit -> unit) -> ?force:bool -> unit -> unit;
 value token: unit -> string;
 value uid: unit -> string;
+value expires: unit -> string;
 value logout: unit -> unit;
 value share: ~title:string -> ~summary:string -> ~url: string -> ~imageUrl: string -> unit -> unit;
 

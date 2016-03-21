@@ -63,6 +63,23 @@ value ml_qq_token(value unit) {
 	CAMLreturn(vtoken);
 }
 
+
+value ml_qq_expires (value unit) {
+	CAMLparam0();
+	CAMLlocal1(vexpires);
+
+	GET_ENV;
+	GET_CLS;
+
+	STATIC_MID(cls, expires, "()Ljava/lang/String;");
+	jstring jexpires = (*env)->CallStaticObjectMethod(env, cls, mid);
+	const char* cexpires = (*env)->GetStringUTFChars(env, jexpires, JNI_FALSE);
+	vexpires = caml_copy_string(cexpires);
+	(*env)->ReleaseStringUTFChars(env, jexpires, cexpires);
+
+	CAMLreturn(vexpires);
+}
+
 value ml_qq_uid(value unit) {
 	CAMLparam0();
 	CAMLlocal1(vuid);

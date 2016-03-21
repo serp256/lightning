@@ -17,6 +17,8 @@
 	value *fail;
 }
 
+- (id)init;
+
 - (id)initWithSuccess:(value)s andFail:(value)f;
 
 - (void)tencentDidLogin;
