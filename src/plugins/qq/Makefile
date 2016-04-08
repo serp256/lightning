@@ -39,12 +39,13 @@ endif
 
 
 ifeq ($(PLATFORM),PC)
+MLPPOPT += -DPC
 	
 qq.cmxa: $(IFACES) $(MLOBJSN)
-	$(OCAMLOPT) -a -o qq.cmxa $(MLOBJSN)
+	$(OCAMLOPT) -a -o Qq.cmxa $(MLOBJSN)
 
 qq.cma: $(IFACES) $(MLOBJS)
-	$(OCAMLC) -a -o qq.cma $(MLOBJS)
+	$(OCAMLC) -a -o Qq.cma $(MLOBJS)
 
 else
 qq.cmxa: $(IFACES) $(COBJS) $(MLOBJSN) 
