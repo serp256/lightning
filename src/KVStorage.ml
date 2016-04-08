@@ -65,7 +65,7 @@ value get_storage () =
       let (s:Hashtbl.t string string) =
         try
           Marshal.from_channel (open_in_bin storage_file)
-        with [ End_of_file -> Hashtbl.create 0 ]
+        with [ _ -> Hashtbl.create 0 ]
       in
       (
         storage.val := Some s;
