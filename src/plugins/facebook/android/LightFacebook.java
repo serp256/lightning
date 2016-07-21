@@ -23,6 +23,7 @@ class LightFacebook {
 	public static CallbackManager callbackManager;
 
 	public static void init () {
+		if (!FacebookSdk.isInitialized()) {
 		callbackManager = CallbackManager.Factory.create();
 		Log.d ("LIGHTNING", "facebook_init");
 			Lightning.activity.runOnUiThread(new Runnable() {
@@ -57,6 +58,7 @@ class LightFacebook {
 				public void onDestroy() {}
 				public void onStart() {}
 		});
+		}
 	}
 
   private static class Friend {
@@ -412,10 +414,7 @@ class LightFacebook {
 		}
 	}
 
-	public static void connect(String[] perms) {
-		Log.d("LIGHTNING", "connect call");
-
-
+	static void doConnect (String[] perms) {
     LoginManager.getInstance().registerCallback(callbackManager,
             new FacebookCallback<LoginResult>() {
                 @Override
@@ -447,6 +446,19 @@ class LightFacebook {
 			Log.d("LIGHTNING", "try authorize");
 			LoginManager.getInstance().logInWithReadPermissions(Lightning.activity, readPerms);
 		}
+	}
+
+	public static void connect(String[] perms) {
+		Log.d("LIGHTNING", "connect call");
+		
+		if (FacebookSdk.isInitialized()) {
+			Log.d("LIGHTNING", "fb is initialized");
+		} else {
+			Log.d("LIGHTNING", "fb is not initialized yet");
+			init();
+		}
+		doConnect(perms);
+
 	}
 
 	private static void reconnect (final Runnable success,final Runnable fail) {
