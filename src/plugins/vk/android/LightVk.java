@@ -164,6 +164,7 @@ public class LightVk {
 	private static boolean sdkListenerAdded = false;
 	private static int success;
 	private static int fail;
+	private static boolean isRun = false;
 
 	public static void init () {
 		Lightning.activity.runOnUiThread(new Runnable() {
@@ -284,6 +285,8 @@ public class LightVk {
 
 	private static void usersRequests(VKRequest request, final int success, final int fail) {
 		Log.d("LIGHTNING", "usersRequests CALL");
+		if (isRun == false) {
+		isRun = true;
 		request.executeWithListener(new VKRequestListener() {
 			@Override
 			public void onComplete(VKResponse response) {
@@ -313,9 +316,12 @@ public class LightVk {
 					}
 
 					Log.d("LIGHTNING", "call success cnt " + cnt);
+					
+					isRun = false;
 					(new FriendsSuccess(success, fail, friends)).run();
 				} catch (org.json.JSONException e) {
 					Log.d("LIGHTNING", "Friends onComplete Fail");
+					isRun = false;
 					(new Fail(success, fail, "wrong format of response on friends request")).run();
 				}
 			}
@@ -323,6 +329,7 @@ public class LightVk {
 			@Override
 			public void onError(VKError error) {
 				Log.d("LIGHTNING", "Friends onError");
+				isRun = false;
 				(new Fail(success, fail, error.errorMessage + ": " + error.errorReason)).run();
 			}
 
@@ -331,6 +338,11 @@ public class LightVk {
 				Log.d("LIGHTNING", "Friends attemptFailed");
 			}
 		});
+		}
+		else {
+				Log.d("LIGHTNING", "PIZDA");
+				(new Fail(success, fail, "request already in process")).run();
+		}
 	}
 
 	public static void friends(int success, int fail) {
