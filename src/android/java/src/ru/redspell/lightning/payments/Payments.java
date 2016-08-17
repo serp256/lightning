@@ -49,6 +49,7 @@ public class Payments {
         }
 
         do {
+					/*
             if (marketType.contentEquals("com.samsung.apps")) {
                 instance = new Samsung(false);
                 break;
@@ -58,6 +59,7 @@ public class Payments {
                 instance = new Samsung(true);
                 break;
             }
+						*/
 
             instance = new Openiab();
         } while(false);
