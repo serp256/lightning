@@ -22,6 +22,8 @@ import android.text.SpannableStringBuilder;
 import android.text.Editable;
 import java.util.Arrays;
 import java.lang.Character;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Keyboard {
 	public static boolean visible = false;
@@ -37,12 +39,13 @@ public class Keyboard {
 		return inputMethodManager;
 	}
 
-	public static void show(final String initText, final String filter) {
+	public static void show(final String initText, final String filter, final int max_count_symbols) {
 		Log.d("LIGHTNING", "show keyboard");
 
 		Lightning.activity.runOnUiThread(new Runnable(){
 		    @Override
 		    public void run() {
+					Log.d("LIGHTNING", "run");
 					if (textEdit == null) {
 						textEdit = new EditText(Lightning.activity);
 						textEdit.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
@@ -51,21 +54,21 @@ public class Keyboard {
 						textEdit.setSingleLine(true);
 						//textEdit.setCursorVisible(false);
 
+						/*
 						if (filter != null) {
 							InputFilter[] filters = {
 								new InputFilter() {
 									@Override
 									public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
-/*										Log.d("LIGHTNING", "filter " + source.getClass().getName());
-										Log.d("LIGHTNING", "source(" + start + " " + end + "): " + source + "; dest(" + + dstart + " " + dend + "): " + dest);
-*/
 										return source.subSequence(start, end).toString().replaceAll("[^" + filter + "]", "");
 									}
-								}
+								},
+								new InputFilter.LengthFilter(15)
 							};
 
 							textEdit.setFilters(filters);
 						}
+					*/
 
 						FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
 						textEdit.setLayoutParams(layoutParams);
@@ -88,6 +91,22 @@ public class Keyboard {
 							}
 						});
 					}
+					List<InputFilter> filters= new ArrayList<InputFilter>();
+
+					if (filter != null) {
+						filters.add
+							(new InputFilter() {
+								@Override
+								public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+									return source.subSequence(start, end).toString().replaceAll("[^" + filter + "]", "");
+								}
+							});
+					}
+					if (max_count_symbols > 0) {
+						filters.add (new InputFilter.LengthFilter(max_count_symbols));
+					}
+					int cnt_filters = filters.size ();
+					textEdit.setFilters(filters.toArray(new InputFilter[cnt_filters]));
 
 					String _initText = initText == null ? "" : initText;
 					textEdit.requestFocus();

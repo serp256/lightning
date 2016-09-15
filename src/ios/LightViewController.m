@@ -29,6 +29,7 @@ static NSString *supportEmail = @"nanofarm@redspell.ru";
 UITextField* kbTextField = NULL;
 value keyboardCallbackUpdate, keyboardCallbackReturn;
 NSString *keyboardFilter;
+int maxCountSymbols = 0;
 
 static NSMutableArray *exceptionInfo = nil;
 
@@ -571,6 +572,7 @@ static value *ml_url_complete = NULL;
 		}
 	}
 
+
 	NSString * st ;
 	if (range.location == 0 && range.length > 0) st = @""; else
 	if (range.length > 0 && [kbTextField.text length] > 0)
@@ -582,6 +584,10 @@ static value *ml_url_complete = NULL;
 	}
 	else
 		st = [kbTextField.text stringByAppendingString:string];
+
+	if (maxCountSymbols > 0 && [st length] > maxCountSymbols) {
+		return NO;
+	}
 
 	if (keyboardCallbackUpdate != 0) caml_callback(keyboardCallbackUpdate, caml_copy_string( [st UTF8String] ));
 	return YES;
@@ -631,13 +637,14 @@ static value *ml_url_complete = NULL;
 	}
 
 }
-- (void)showKeyboard:(value)visible size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString filter:(value)filter {
+- (void)showKeyboard:(value)visible maxCnt:(value)maxCnt size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString filter:(value)filter {
 	//NSLog(@"showKeyboard %b; size:[%d; %d]; cb_ret: %d cb_upd : %d", (Bool_val (visible)), (Int_val(Field(size,0))),  (Int_val(Field(size,1))),  keyboardCallbackReturn, keyboardCallbackUpdate);
 	if (Is_block(filter)) {
 		keyboardFilter = [[NSString alloc] initWithFormat:@"[^%s]", String_val(Field(filter, 0))];
 	} else {
 		keyboardFilter = nil;
-	}
+	};
+	maxCountSymbols = Int_val(maxCnt);
 
 	NSLog(@"keyboardFilter %@", keyboardFilter);
 

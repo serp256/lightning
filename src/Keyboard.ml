@@ -7,7 +7,7 @@ module Filter =
 
 value paste f = f "not supported on pc";
 value copy _ = ();
-value show ?filter ?visible ?size ?inittxt ?onhide ?onchange () = ();
+value show ?filter ?max_count_symbols ?visible ?size ?inittxt ?onhide ?onchange () = ();
 value hide () = ();
 value clean () = ();
 ELSE
@@ -30,11 +30,12 @@ module Filter =
 
 
 IFDEF ANDROID THEN
-external show: ?filter:Filter.t -> ?visible:bool -> ?size:(int * int) -> ?inittxt:string -> ?onhide:(string -> unit) -> ?onchange:(string -> unit) -> unit -> unit = "ml_keyboard_byte" "ml_keyboard";
+external keyboard : option Filter.t -> int -> option bool -> option (int * int) -> option string -> ?onhide:(string -> unit) -> ?onchange:(string -> unit) -> unit = "ml_keyboard_byte"  "ml_keyboard";
+value show ?filter ?(max_count_symbols=0) ?visible ?size ?inittxt ?onhide ?onchange () = keyboard filter max_count_symbols visible size inittxt ?onhide ?onchange;
 external hide: unit -> unit = "ml_hidekeyboard";
 ELSE
-external keyboard : option Filter.t -> bool -> (int * int) -> string -> ?onhide:(string -> unit) -> ?onchange:(string -> unit) -> unit = "ml_keyboard_byte"  "ml_keyboard";
-value show ?filter ?(visible=True) ?(size=(400,50)) ?(inittxt="") ?onhide ?onchange () = keyboard filter visible size inittxt ?onhide ?onchange;
+external keyboard : option Filter.t -> int -> bool -> (int * int) -> string -> ?onhide:(string -> unit) -> ?onchange:(string -> unit) -> unit = "ml_keyboard_byte"  "ml_keyboard";
+value show ?filter ?(max_count_symbols=0) ?(visible=True) ?(size=(400,50)) ?(inittxt="") ?onhide ?onchange () = keyboard filter max_count_symbols visible size inittxt ?onhide ?onchange;
 external hide : unit -> unit = "ml_hidekeyboard";
 ENDIF;
 

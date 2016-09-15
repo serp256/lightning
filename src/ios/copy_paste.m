@@ -30,16 +30,16 @@ value ml_copy (value st)
 	CAMLreturn(Val_unit);
 }
 
-value ml_keyboard (value filter, value visible, value size, value initString, value returnCallback, value updateCallback)
+value ml_keyboard (value filter, value maxCnt, value visible, value size, value initString, value returnCallback, value updateCallback)
 {
 	CAMLparam4(size, initString, updateCallback, returnCallback);
  	NSLog (@"initString %@", [NSString stringWithCString:String_val(initString) encoding:NSASCIIStringEncoding] );
-	[[LightViewController sharedInstance] showKeyboard:visible size:size updateCallback:updateCallback returnCallback:returnCallback initString:initString filter:filter];
+	[[LightViewController sharedInstance] showKeyboard:visible maxCnt:maxCnt size:size updateCallback:updateCallback returnCallback:returnCallback initString:initString filter:filter];
 	CAMLreturn(Val_unit);
 }
 
 value ml_keyboard_byte(value* argv, int argc) {
-	return ml_keyboard(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+	return ml_keyboard(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]);
 }
 value ml_hidekeyboard ()
 {

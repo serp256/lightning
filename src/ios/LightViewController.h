@@ -51,7 +51,7 @@
 -(void)showActivityIndicator:(LightActivityIndicatorView *)indicator;
 -(void)hideActivityIndicator;
 +(void)setSupportEmail:(NSString*)email;
-- (void)showKeyboard:(value)visible size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString;
+- (void)showKeyboard:(value)visible maxCnt:(value)maxCnt size:(value)size  updateCallback:(value)updateCallback returnCallback:(value)returnCallback initString:(value)initString;
 - (void)setBackgroundCallback:(value)callback withDelay:(long) delay;
 - (void)resetBackgroundDelayedCallback;
 - (void)runBackgroudDelayerCallback;

@@ -21,7 +21,7 @@ uint8_t keyboard_is_visible() {
 	return (*ML_ENV)->CallStaticBooleanMethod(ML_ENV, cls, mid);
 }
 
-value ml_keyboard(value vfilter, value visible, value size, value vinit_text, value onhide, value onchange) {
+value ml_keyboard(value vfilter, value max_count_symbols, value visible, value size, value vinit_text, value onhide, value onchange) {
 	PRINT_DEBUG("ml_keyboard");
 	if (keyboard_is_visible()) return Val_unit;
 	GET_LIGHT_KEYBOARD;
@@ -33,10 +33,11 @@ value ml_keyboard(value vfilter, value visible, value size, value vinit_text, va
 	OPTVAL_TO_JSTRING(vinit_text, jinit_text);
 	OPTVAL_TO_JSTRING(vfilter, jfilter);
 
+	int max_cnt = Int_val(max_count_symbols);
 	static jmethodID mid = 0;
-	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "show", "(Ljava/lang/String;Ljava/lang/String;)V");
+	if (!mid) mid = (*ML_ENV)->GetStaticMethodID(ML_ENV, cls, "show", "(Ljava/lang/String;Ljava/lang/String;I)V");
 	PRINT_DEBUG("ml_keyboard show mid %d", mid);
-	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid, jinit_text, jfilter);
+	(*ML_ENV)->CallStaticVoidMethod(ML_ENV, cls, mid, jinit_text, jfilter, max_cnt);
 
 	CALLBACK(onhide, onhide_callback);
 	CALLBACK(onchange, onchage_callback);
@@ -46,7 +47,7 @@ value ml_keyboard(value vfilter, value visible, value size, value vinit_text, va
 
 value ml_keyboard_byte(value* argv, int argc) {
 	PRINT_DEBUG("ml_keyboard_byte");
-	return ml_keyboard(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+	return ml_keyboard(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]);
 }
 
 value ml_hidekeyboard() {
