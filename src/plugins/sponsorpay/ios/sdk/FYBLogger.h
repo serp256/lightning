@@ -1,6 +1,6 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
@@ -10,7 +10,7 @@
 
 @protocol FYBLogAppender;
 
-#define LogInvocation NSLog(@"%s", __PRETTY_FUNCTION__)
+#define LogInvocation FYBLogDebug(@"%s", __PRETTY_FUNCTION__)
 
 #define FYBLogDebug(...) _FYBLogDebug(__VA_ARGS__)
 #define FYBLogInfo(...) _FYBLogInfo(__VA_ARGS__)

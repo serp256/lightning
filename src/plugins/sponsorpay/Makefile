@@ -26,6 +26,7 @@ COBJS += ios/spwrapper_ios.o ios/VideoDelegate.o
 
 LIBFLAGS +=  -lFyberSDK \
   -framework UnityAds \
+  -framework Fyber_UnityAds \
   -framework Foundation \
 	-cclib '-weak_framework\ AdSupport' \
 	-cclib '-weak_framework\ StoreKit' \

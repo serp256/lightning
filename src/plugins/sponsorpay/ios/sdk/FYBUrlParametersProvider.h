@@ -1,6 +1,6 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 

@@ -1,13 +1,11 @@
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
 //
-// FYBVirtualCurrencyResponse.h
-//  FyberSDK
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 /**
  *  FYBVirtualCurrencyResponse is the object that is received when requesting the delta of coins to the Virtual Currency Server

@@ -1,59 +1,77 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
-#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-#import "FYBInterstitialControllerDismissReason.h"
-#import "FYBInterstitialNetworkAdapterDelegate.h"
-
 @class FYBBaseNetwork;
+@class FYBInterstitialOffer;
+
+@protocol FYBInterstitialNetworkAdapterDelegate;
 
 /**
  * Defines the interface required by an interstitial network SDK wrapper
  */
 @protocol FYBInterstitialNetworkAdapter<NSObject>
 
-/**
- * Arbitrary offer data that can be written and read by the Fyber SDK to keep track of context
- * This property needs to be synthesized in the adapter implementation
- */
 @property (nonatomic, strong) NSDictionary *offerData;
 
 /**
- * Returns the name of the interstitial-providing network wrapped by this adapter
+ *  Name of the network which the interstitial adapter belongs to
+ *
+ *  @return the name of the network (e.g. AdMob)
  */
 - (NSString *)networkName;
 
+
 /**
- * Sets the delegate to be notified of interstitial availability and lifecycle
+ *  Sets the network which the interstitial adapter belongs to
+ *
+ *  @param The network
+ */
+- (void)setNetwork:(FYBBaseNetwork *)network;
+
+/**
+ *  Sets the delegate to be notified of interstitial availability and lifecycle
+ *
+ *  @param delegate An object conform to the FYBInterstitialNetworkAdapterDelegate protocol
+ *
+ *  @see FYBInterstitialNetworkAdapterDelegate
  */
 - (void)setDelegate:(id<FYBInterstitialNetworkAdapterDelegate>)delegate;
 
+
+#pragma mark - Start
+
 /**
- * Starts the interstitial adapter with its corresponding credentials and starts the
- * interstitial caching process if available
+ *  Starts the interstitial adapter with its corresponding credentials and starts the interstitial caching process if available
+ *
+ *  @param dict Dictionary of settings and credentials
+ *
+ *  @return YES if the adapter started, otherwise NO
  */
 - (BOOL)startAdapterWithDict:(NSDictionary *)dict;
 
-/**
- * Checks whether the provider has any interstitial ads available
- */
-- (BOOL)canShowInterstitial;
+
+#pragma mark - Request
 
 /**
- * Instructs the interstitial provider to show the interstitial. An interstitial
- * ad must be available for this call to succeed
+ *  Requests an interstitial
  *
- * @param viewController If the provider supports showing the interstitial as a child
- * of an existing view controller, the passed viewController will be used as the parent
- * view controller. Otherwise the passed view controller will be ignored
+ *  @param offer Description of the offer to request (e.g. placement_id, creative_type)
  */
-- (void)presentInterstitialFromViewController:(UIViewController *)viewController;
+- (void)requestInterstitial:(FYBInterstitialOffer *)offer;
 
-- (void)setNetwork:(FYBBaseNetwork *)network;
+
+#pragma mark - Show
+
+/**
+ *  Presents an interstitial
+ *
+ *  @param offer Description of the offer to present (e.g. placement_id, creative_type)
+ */
+- (void)presentInterstitial:(FYBInterstitialOffer *)offer viewController:(UIViewController *)viewController;
 
 @end

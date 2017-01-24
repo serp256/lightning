@@ -1,6 +1,6 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
@@ -19,7 +19,7 @@
 /**
  *  The ID of your user
  *
- *  @discussion If you don't keep track of user IDs you can use the constructor +[FYBSDKOptions optionsWithAppId:securityToken] in order
+ *  @discussion If you don't keep track of user IDs you can use the constructor +[FYBSDKOptions optionsWithAppId:securityToken:] in order
  *              for the Fyber SDK to generate one automatically
  */
 @property (nonatomic, copy) NSString *userId;

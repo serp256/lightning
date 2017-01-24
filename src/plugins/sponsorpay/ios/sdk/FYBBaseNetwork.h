@@ -1,22 +1,23 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
 #import "FYBInterstitialNetworkAdapter.h"
 #import "FYBTPNMediationTypes.h"
 #import "FYBPrecachingNetworkAdapter.h"
-
+#import "FYBBannerNetworkAdapter.h"
 
 @protocol FYBTPNVideoAdapter;
 @class FYBAdapterOptions;
 
 
 typedef NS_OPTIONS(NSUInteger, FYBNetworkSupport) {
-    FYBNetworkSupportNone,
-    FYBNetworkSupportRewardedVideo,
-    FYBNetworkSupportInterstitial
+    FYBNetworkSupportNone = 0,
+    FYBNetworkSupportRewardedVideo = 1 << 0,
+    FYBNetworkSupportInterstitial = 1 << 1,
+    FYBNetworkSupportBanner = 1 << 2
 };
 
 
@@ -34,6 +35,9 @@ typedef NS_OPTIONS(NSUInteger, FYBNetworkSupport) {
 
 /** The interstitial adapter to be used to access a network */
 @property (nonatomic, strong, readonly) id<FYBInterstitialNetworkAdapter> interstitialAdapter;
+
+/** The banner adapter to be used to access a network */
+@property (nonatomic, strong, readonly) id<FYBBannerNetworkAdapter> bannerAdapter;
 
 /** The name of the network */
 @property (nonatomic, copy, readonly) NSString *name;
@@ -53,5 +57,6 @@ typedef NS_OPTIONS(NSUInteger, FYBNetworkSupport) {
 - (BOOL)startWithOptions:(FYBAdapterOptions *)options;
 - (void)startInterstitialAdapter:(NSDictionary *)data;
 - (void)startRewardedVideoAdapter:(NSDictionary *)data;
+- (void)startBannerAdapter:(NSDictionary *)data;
 
 @end

@@ -1,6 +1,6 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
@@ -25,8 +25,7 @@
  *
  *  @warning This property is not evaluated if the key FYBOFWShowCloseOnLoad is set in the Info file
  */
-@property (nonatomic, assign) BOOL showCloseButtonOnLoad;
-
+@property (nonatomic, assign) BOOL showCloseButtonOnLoad __attribute__((deprecated("This property is deprecated in SDK 8.3.1")));
 
 /**
  *  Presents the Offer Wall view controller on top of the passed view controller
@@ -57,5 +56,10 @@
                          animated:(BOOL)animated
                        completion:(void (^)(void))completion
                           dismiss:(void (^)(NSError *error))dismiss;
+
+/**
+ *  Please use [FyberSDK offerWallViewController] instead
+ */
+- (instancetype)init __attribute__((unavailable("not available, use [FyberSDK offerWallViewController] instead")));
 
 @end

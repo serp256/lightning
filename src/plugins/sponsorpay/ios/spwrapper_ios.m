@@ -5,7 +5,7 @@
 #import <caml/memory.h>
 #import "VideoDelegate.h"
 #import "mlwrapper.h"
-#import <UnityAds/UnityAds.h>
+// #import <Fyber_UnityAds/UnityAds.h>
 
 #import "mlwrapper_ios.h"
 
@@ -25,13 +25,14 @@ value ml_sponsorPay_start(value v_appId, value v_userId, value v_securityToken, 
 	[FyberSDK startWithOptions:options];
 	int loggingLevel = Bool_val(v_test) ? 10 : 0;
 	NSLog (@"Fyber logging level %d", loggingLevel);
-  [FyberSDK setLoggingLevel:loggingLevel];
+  	[FyberSDK setLoggingLevel:loggingLevel];
 
-	if (Bool_val(v_test)) {
-		NSLog (@"UnityAds TEST MODE");
-		[[UnityAds sharedInstance] setTestMode:YES];
-		[[UnityAds sharedInstance] setDebugMode:YES];
-	}
+ //  	 NSLog ("@UnityAds version %@", [UnityAds getVersion]);
+	//  if (Bool_val(v_test)) {
+	// 	NSLog (@"UnityAds TEST MODE");
+	// 	// [UnityAds setTestMode:YES];
+	// 	[UnityAds setDebugMode:YES];
+	// }
 
 	CAMLreturn(Val_unit);
 }

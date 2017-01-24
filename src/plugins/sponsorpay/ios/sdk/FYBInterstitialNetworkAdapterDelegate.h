@@ -1,13 +1,10 @@
 //
-//  FYBInterstitialNetworkAdapterDelegate.h
-//  FyberSDK
 //
-//  Copyright (c) 2015 Fyber. All rights reserved.
+//  Copyright (c) 2016 Fyber. All rights reserved.
+//
 //
 
-#import <Foundation/Foundation.h>
-#import "FYBInterstitialNetworkAdapter.h"
-
+#import "FYBInterstitialControllerDismissReason.h"
 
 @protocol FYBInterstitialNetworkAdapter;
 
@@ -60,6 +57,5 @@
  *  @param error   The error that occurred while trying to show the interstitial
  */
 - (void)adapter:(id<FYBInterstitialNetworkAdapter>)adapter didFailToPresentInterstitialWithError:(NSError *)error;
-
 
 @end

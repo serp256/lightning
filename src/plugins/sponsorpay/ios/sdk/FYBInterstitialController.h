@@ -1,12 +1,12 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
-#import "FYBInterstitialNetworkAdapter.h"
 #import "FYBInterstitialControllerDelegate.h"
 #import "FYBInterstitialControllerState.h"
 #import "FYBRequestParameters.h"
@@ -42,7 +42,7 @@
 - (void)requestInterstitial;
 
 /**
- *  Same as -requestVideo but accepts a FYBRequestParameters object as parameter. Through this object you can add custom parameters to the request
+ *  Same as -requestInterstitial but accepts a FYBRequestParameters object as parameter. Through this object you can add custom parameters to the request
  *  and also specify a placementId
  *
  *  @param parameters A configured instance of FYBRequestParameters
@@ -59,5 +59,11 @@
  *  @param viewController The view controller where the controller is presented
  */
 - (void)presentInterstitialFromViewController:(UIViewController *)viewController;
+
+
+/**
+ *  Please use [FyberSDK interstitialController] instead
+ */
+- (instancetype)init __attribute__((unavailable("not available, use [FyberSDK interstitialController] instead")));
 
 @end

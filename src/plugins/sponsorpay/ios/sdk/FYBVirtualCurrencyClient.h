@@ -1,6 +1,6 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
@@ -43,5 +43,10 @@
  *  @see FYBRequestParameters
  */
 - (void)requestDeltaOfCoinsWithParameters:(FYBRequestParameters *)parameters;
+
+/**
+ *  Please use [FyberSDK virtualCurrencyClient] instead
+ */
+- (instancetype)init __attribute__((unavailable("not available, use [FyberSDK virtualCurrencyClient] instead")));
 
 @end

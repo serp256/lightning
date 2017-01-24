@@ -1,11 +1,10 @@
 //
 //
-// Copyright (c) 2015 Fyber. All rights reserved.
+// Copyright (c) 2016 Fyber. All rights reserved.
 //
 //
 
 #import <UIKit/UIKit.h>
-#import <Foundation/Foundation.h>
 
 #import "FYBRewardedVideoControllerDelegate.h"
 #import "FYBVirtualCurrencyClientDelegate.h"
@@ -81,5 +80,10 @@
  *  @param viewController The view controller on top of which the controller is presented
  */
 - (void)presentRewardedVideoFromViewController:(UIViewController *)viewController;
+
+/**
+ *  Please use [FyberSDK rewardedVideoController] instead
+ */
+- (instancetype)init __attribute__((unavailable("not available, use [FyberSDK rewardedVideoController] instead")));
 
 @end
