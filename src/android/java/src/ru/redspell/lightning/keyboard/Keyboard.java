@@ -50,7 +50,8 @@ public class Keyboard {
 						textEdit = new EditText(Lightning.activity);
 						textEdit.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
 						//InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD is for fixing bug with filters: not affected by filter source, each time unchaged
-						textEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+					//	textEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+						textEdit.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_FILTER );
 						textEdit.setSingleLine(true);
 						//textEdit.setCursorVisible(false);
 
