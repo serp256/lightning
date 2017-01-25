@@ -8,29 +8,13 @@ import android.os.Bundle;
 
 import com.fyber.ads.videos.RewardedVideoActivity;
 
+import com.fyber.requesters.*;
 import com.fyber.*;
 import com.fyber.ads.*;
-//import com.sponsorpay.publisher.SponsorPayPublisher;
-//import com.sponsorpay.publisher.mbe.SPBrandEngageRequestListener;
-//import com.sponsorpay.publisher.mbe.SPBrandEngageClient;
-import com.fyber.ads.AdFormat;
-import com.fyber.exceptions.IdException;
-import com.fyber.reporters.InstallReporter;
-import com.fyber.reporters.RewardedActionReporter;
-import com.fyber.requesters.RequestCallback;
-import com.fyber.requesters.RequestError;
-import com.fyber.requesters.RewardedVideoRequester;
-import com.fyber.requesters.VirtualCurrencyCallback;
-import com.fyber.requesters.VirtualCurrencyRequester;
+import com.fyber.annotations.FyberSDK;
 import com.fyber.utils.FyberLogger;
 
-import org.androidannotations.annotations.*;
-import org.androidannotations.annotations.res.*;
-import com.fyber.annotations.FyberSDK;
-import com.fyber.mediation.*;
-import com.unity3d.ads.android.*;
-
-  @FyberSDK
+@FyberSDK
 public class LightSponsorpay {
 	private static String appId;
 	private static String userId;
@@ -46,6 +30,7 @@ public class LightSponsorpay {
 		securityToken = _securityToken;
 
 		Log.d ("LIGHTNING","SponsorPay init, enableLog: " + enableLog);
+		Log.d("LIGHTNING", "Fyber version: " + Fyber.RELEASE_VERSION_STRING);
 
 		Lightning.activity.addUiLifecycleHelper(new ru.redspell.lightning.IUiLifecycleHelper() {
 						public void onCreate(Bundle savedInstanceState) {}
@@ -83,9 +68,9 @@ public class LightSponsorpay {
 			        .start();  
 					settings.notifyUserOnCompletion(false);
 
-		      FyberLogger.enableLogging(enableLog);
-					UnityAds.setDebugMode(enableLog);
-					UnityAds.setTestMode(enableLog);
+		      		FyberLogger.enableLogging(enableLog);
+					//UnityAds.setDebugMode(enableLog);
+					//UnityAds.setTestMode(enableLog);
 
 				} catch (java.lang.RuntimeException exc) {
 					Log.d ("LIGHTNING",exc.getLocalizedMessage());
