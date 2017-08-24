@@ -17,7 +17,7 @@ module Transaction :
     value get_signature : t -> string;
   end;
 
-type marketType = [= `Google | `Amazon | `Yandex | `Samsung | `SamsungDev ];
+type marketType = [= `Google | `Amazon | `Yandex | `Samsung | `SamsungDev | `Bazaar ];
 
 value init: ?marketType:marketType -> ?skus:(list string) -> (string -> Transaction.t -> bool -> unit) -> (string -> string -> bool -> unit) -> unit;
 value purchase: string -> unit;
