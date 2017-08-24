@@ -57,8 +57,6 @@ type div_attribute =
 type div_attributes = list div_attribute;
 
 
-(* type attribute = [= div_attribute | p_attribute | span_attribute ]; *)
-
 type main = 
   [= `div of (div_attributes * (list main))
   | `p of (p_attributes * simple_elements)
@@ -82,17 +80,6 @@ value img ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?valign img : si
   let attrs = AEXPAND (valign,`valign) in
   `img (attrs,img#asDisplayObject);
 
-(*
-value teximg ?width ?height ?paddingLeft ?paddingTop ?paddingRight ?paddingLeft ?valign tex : simple_element = 
-  let attrs = [] in
-  let attrs = AEXPAND (width,`width) in
-  let attrs = AEXPAND (height,`height) in
-  let attrs = AEXPAND (paddingLeft,`paddingLeft) in
-  let attrs = AEXPAND (paddingTop,`paddingTop) in
-  let attrs = AEXPAND (paddingRight,`paddingRight) in
-  let attrs = AEXPAND (valign,`valign) in
-  `teximg (attrs,tex);
-*)
 
 DEFINE FONT_WEIGHT =
   match fontWeight with
@@ -131,16 +118,18 @@ value getAttrOpt(*: ('a -> option 'b) -> list 'a -> option 'b*) = fun f attrs ->
 
 
 exception Parse_error of (string*string);
-(* exception Unknown_attribute (string*string); *)
 
 value parse_error inp fmt = 
   let (line,column) = Xmlm.pos inp in
   Printf.kprintf (fun s -> raise (Parse_error (Printf.sprintf "%d:%d" line column) s)) fmt;
 
+
 value parse_float inp p = 
   try
     float_of_string p
   with [ Failure "float_of_string" -> parse_error inp "bad float: %s" p ];
+  
+  
 value parse_int inp p = 
   try
     try 
@@ -149,6 +138,8 @@ value parse_int inp p =
     with
       [ _ -> int_of_string p ] 
   with [ Failure "int_of_string" -> parse_error inp "bad int: %s" p ];
+
+
 
 value parse_span_attribute inp:  Xmlm.attribute -> span_attribute =
 (
@@ -223,6 +214,8 @@ value parse_simple_elements inp imgLoader =
       | _ -> parse_error inp "DTD?"
       ];
 
+
+
 value parse_simples ?(imgLoader:option (string -> DisplayObject.c)) text : simple_elements = 
   let imgLoader = match imgLoader with [ Some f -> f | None -> fun s -> ((Image.load s) :> DisplayObject.c) ] in
   let inp = Xmlm.make_input (`String (0,"<simples>"^text^"</simples>")) in
@@ -234,6 +227,8 @@ value parse_simples ?(imgLoader:option (string -> DisplayObject.c)) text : simpl
     ]
   | _ -> parse_error inp "Dtd"
   ];
+
+
 
 
 value parse ?(imgLoader:option (string -> DisplayObject.c)) xml : main = 
@@ -384,22 +379,15 @@ value subtractSize (sx,sy) (sx',sy') =
 value getFontFamily =
   let f: !'p. ([> `fontFamily of string] as 'p) -> option string = fun [ `fontFamily fn -> Some fn | _ -> None ] in
   getAttrOpt f;
+
 value getFontStyle = getAttrOpt (fun [ `fontWeight fw -> Some fw | _ -> None ]);
+
 value getFontSize = getAttrOpt (fun [ `fontSize fn -> Some fn | _ -> None ]);
 
-(*
-value getFontOpt attributes = 
-   match getFontFamily attributes with
-   [ Some fn ->
-     match getFontSize attributes with
-     [ Some size -> Some (BitmapFont.get ~applyScale:True ~size fn)
-     | None -> None
-     ]
-   | None -> None
-   ];
-*)
+
 
 value getTextIndent attributes = getAttr (fun [ `textIndent v -> Some v | _ -> None]) 0. attributes;
+
 value getFont attributes =
   let fontFamily =
     match getFontFamily attributes with
@@ -417,10 +405,10 @@ value getFont attributes =
 
 
 
-type line_element = [ Img of D.c | Char of AtlasNode.t ];
+type line_element = [ Img of D.c | Char of (int * BitmapFont.bc * AtlasNode.t) | WhiteSpace of float ];
 type line = 
   {
-    lchars: DynArray.t line_element;
+    lchars: mutable DynArray.t line_element;
     lx: mutable float; 
     ly: mutable float;
     lineHeight: mutable float;
@@ -446,8 +434,8 @@ class tlfSprite () =
         );
   end;
 
+
 value createLine ?(indent=0.) font lines =  
-(*   let line = {container = Sprite.create (); lineHeight = match font with [ Some fnt -> fnt.BitmapFont.lineHeight | None -> 0. ]; baseLine = 0.; currentX = 0.; closed = False} in *)
   let line = 
     {
       lchars = DynArray.create (); 
@@ -464,40 +452,61 @@ value createLine ?(indent=0.) font lines =
     line;
   );
 
+
+
+value imagesAndCharsFilter c = 
+  match c with 
+  [ Char _ | Img _ -> True 
+  | _ -> False 
+  ];
+
+
 value lineWidth line = 
   if DynArray.empty line.lchars
   then 0.
   else
+    
+    let lchars = DynArray.copy line.lchars in 
+    let () = DynArray.filter imagesAndCharsFilter lchars in
     let (lx,lw) = 
-      match DynArray.last line.lchars with
+      match DynArray.last lchars with
       [ Img i -> (i#x,i#width)
-      | Char c -> (AtlasNode.x c,AtlasNode.width c)
+      | Char (_, _, c) -> (AtlasNode.x c, AtlasNode.width c)
+      | _ -> failwith "Can't be here"
       ]
     and fx = 
-      match DynArray.get line.lchars 0 with
+      match DynArray.get lchars 0 with
       [ Img i -> i#x
-      | Char c -> AtlasNode.x c
+      | Char (_, _, c) -> AtlasNode.x c
+      | _ -> failwith "Can't be here"      
       ]
     in
     lx +. lw -. fx;
+
+
 
 value lineMinY line = 
   if DynArray.empty line.lchars
   then 0.
   else
+
+    let lchars = DynArray.copy line.lchars in 
+    let () = DynArray.filter imagesAndCharsFilter lchars in    
     let minY = ref line.lineHeight in
     (
-      for i = 0 to DynArray.length line.lchars - 1 do
+      for i = 0 to DynArray.length lchars - 1 do
         let y = 
-          match DynArray.get line.lchars i with
+          match DynArray.get lchars i with
           [ Img i -> i#y
-          | Char c -> AtlasNode.y c
+          | Char (_, _, c) -> AtlasNode.y c
+          | _ -> failwith "Can't be here"
           ]
         in
         if !minY > y then minY.val := y else ()
       done;
       !minY;
     );
+
 
 value adjustToLine ?ascender ?descender ?height line = 
 (
@@ -509,13 +518,16 @@ value adjustToLine ?ascender ?descender ?height line =
       [ 0 -> 0.
       | -1 -> (* надо увеличить отступ сверху *)
         (
+          let lchars = DynArray.copy line.lchars in 
+          let () = DynArray.filter imagesAndCharsFilter lchars in    
           let diff = asc -. line.ascender in
           (
             DynArray.iteri begin fun i -> fun
               [ Img img -> img#setY (img#y +. diff)
-              | Char c -> DynArray.set line.lchars i (Char (AtlasNode.setY ((AtlasNode.y c) +. diff) c))
+              | Char (code, bmc, c) -> DynArray.set lchars i (Char (code, bmc, (AtlasNode.setY ((AtlasNode.y c) +. diff) c)))
+              | _ -> failwith "I'd better do this shit usign polymorphic variants"
               ]
-            end line.lchars;
+            end lchars;
           );
           line.ascender := asc;
           0.
@@ -549,6 +561,8 @@ value addToLine width element line =
 (
     DynArray.add line.lchars element;
     line.currentX := width +. line.currentX;
+    
+    
     (*
     match compare line.baseLine baseLine with
     [ 0 -> DynArray.add line.lchars element
@@ -557,7 +571,7 @@ value addToLine width element line =
       (
         DynArray.iteri begin fun i -> fun
           [ Img img -> img#setY (img#y +. diff)
-          | Char c -> DynArray.set line.lchars i (Char (AtlasNode.setY ((AtlasNode.y c) +. diff) c))
+          | Char (code, bmc,c) -> DynArray.set line.lchars i (Char (code, bmc, (AtlasNode.setY ((AtlasNode.y c) +. diff) c)))
           ]
         end line.lchars;
         line.baseLine := baseLine;
@@ -570,12 +584,16 @@ value addToLine width element line =
             img#setY (img#y +. (line.baseLine -. baseLine));
             DynArray.add line.lchars i;
           )
-        | Char c -> DynArray.add line.lchars (Char (AtlasNode.setY ((AtlasNode.y c) +. (line.baseLine -. baseLine)) c))
+        | Char (code, bmc, c) -> DynArray.add line.lchars (Char (code, bmc, (AtlasNode.setY ((AtlasNode.y c) +. (line.baseLine -. baseLine)) c)))
         ]
     ];
     line.currentX := width +. line.currentX;
     *)
 ); (* здесь же надо позырить что предыдущий базелайн такой-же и перехуячить там все нахуй *)
+
+
+
+
 
 value lineRollback ascender descender line = 
 (
@@ -586,6 +604,78 @@ value lineRollback ascender descender line =
   line.lineHeight := ascender +. descender;
 );
 
+
+(* Сперва переставляем символы в нужном порядке, а затем пересчитываем координаты *)
+value convert_line_to_farsi line = 
+
+  let initialX = 
+    try 
+      let ix = ref 0. in 
+      let _ = DynArray.index_of (fun item -> match item with [ Char (_, _, c) -> (ix.val := (AtlasNode.x c); True ) | _ -> False ]) line.lchars 
+      in  ix.val
+    with [ Not_found -> 0.]
+  in
+  
+  
+  let rec process_line res tmp items = 
+    match items with
+    [ [] -> List.rev (List.append res (List.rev tmp))
+    
+    | [ item :: tail ] ->   
+          
+        let (res', tmp') = 
+          match item with 
+          [ Char (code, _, _)  -> 
+
+              if (Farsi.isFarsi (UChar.uchar_of_int code)) then
+                (List.append (List.append res (List.rev tmp)) [item]  ,[])
+              else 
+                (res, (List.append tmp [item]))
+
+          | WhiteSpace _ -> (res, (List.append tmp [item]))
+
+          | _   ->  (res, tmp)
+          ]    
+        in process_line res' tmp' tail    
+    ]
+  in 
+  
+  let reordered = process_line [] [] (DynArray.to_list line.lchars) in
+
+
+  (* *)
+  let rec update_positions x items res = 
+
+    match items with 
+    [ [] -> res
+
+    | [item :: tail ] -> 
+        match item with 
+        [ Char (code, bminfo, anode) -> 
+            
+            let anode' = AtlasNode.setX (bminfo.xOffset +. x) anode in 
+            let char'  = Char (code, bminfo, anode')             
+            in update_positions (x +. bminfo.xAdvance) tail [ char' :: res ]
+        
+        | WhiteSpace space -> update_positions (x +. space ) tail res
+
+        | _ -> update_positions x tail res
+        ]        
+    ]
+  in   
+  
+  let updated = update_positions initialX reordered [] in
+   (
+    line.lchars := DynArray.of_list updated;
+    line
+  );
+  
+
+
+
+  
+
+
 DEFINE CHAR_SPACE = 32;
 DEFINE CHAR_THIN_SPACE = 0x2009;
 DEFINE CHAR_NEWLINE = 10;
@@ -593,13 +683,19 @@ DEFINE CHAR_NEWLINE = 10;
 
   (*}}}*)
 
+
 (* width, height вытащить наверно в html тоже *)
-value create ?width ?height ?border ?dest (html:main) = 
+value create ?width ?height ?border ?dest ?farsi (html:main) = 
+  
   let () = debug 
     let opt = fun [ Some f -> string_of_float f | None -> "NONE" ] in
     Debug.d "create %s:%s" (opt width) (opt height) 
   in
+
+
+
   let make_lines width attributes lines (elements:list simple_element) =
+
     let line_whitespace = ref None in
     let createLine ?indent font lines =  
       (
@@ -607,31 +703,38 @@ value create ?width ?height ?border ?dest (html:main) =
         createLine ?indent font lines;
       )
     in
+    
+    
+    (* START: draw text  *)
     let rec draw_text attributes text sidx eidx elements next = 
+
       let () = debug "draw text: %s [%d:%d]" text sidx eidx in
       let color = getAttr (fun [ `color n -> Some n | _ -> None]) 0 attributes in
       let alpha = getAttr (fun [ `alpha a -> Some a | _ -> None]) 1. attributes in
-        let fontFamily =
+      let fontFamily =
           match getFontFamily attributes with
           [ Some fn -> fn
           | None -> !default_font_family
           ]
-        and fontStyle = 
+      and fontStyle = 
           match getFontStyle attributes with
           [ Some s-> s
           | _ -> "regular"
           ]
-        and fontSize = 
+      and fontSize = 
           match getFontSize attributes with
           [ Some size -> size 
           | _ -> !default_font_size
           ]
-        in
+      in
       let font = getFont attributes in
 
       let () = debug "font scale: %f" font.BitmapFont.scale in
+
       let text_whitespace = ref None in
       let yoffset = ref 0. in
+
+
       let rec add_line currentLine index = 
         let () = debug "add line" in
         let () = currentLine.closed := True in
@@ -641,88 +744,115 @@ value create ?width ?height ?border ?dest (html:main) =
           text_whitespace.val := None;
           add_char nextLine index
         )
+
+
+
+      (* Add char WHERE??? *)
       and add_char line index = 
         if index <= eidx 
         then
-          let code = UChar.code (UTF8.look text index) in
+          let code = match farsi with 
+            [ Some t when t -> Farsi.remap_char_at_index text index
+            | _ -> UTF8.look text index
+            ]
+          in 
+          let code = UChar.uint_code code in 
+          
           let open BitmapFont in
           if code = CHAR_NEWLINE 
           then
             add_line line (UTF8.next text index)
-           else if code = CHAR_SPACE 
-           then
+          else if code = CHAR_SPACE 
+          then
            (
-             line.currentX := line.currentX +. font.space;
+             
+             (* line.currentX := line.currentX +. font.space; *)
+             addToLine font.space (WhiteSpace font.space) line;
+
+             
              text_whitespace.val := Some (index,DynArray.length line.lchars);
              add_char line (UTF8.next text index)
            )
            else if code = CHAR_THIN_SPACE 
            then
            (
-             line.currentX := line.currentX +. font.space/.2.;
+             
+             (* line.currentX := line.currentX +. font.space/.2.; *)
+
+             addToLine (font.space /. 2.) (WhiteSpace (font.space /. 2.)) line;
+             
              text_whitespace.val := Some (index,DynArray.length line.lchars);
              add_char line (UTF8.next text index)
            )
            else
 
-               let bchar =
-                  try 
-                    Some (Hashtbl.find font.chars code, font.ascender, font.descender, font.lineHeight)
-                  with [ Not_found -> 
-                    match font.isDynamic with
-                    [ True -> BitmapFont.getBitmapChar (fontFamily, fontStyle, fontSize) code
-                    | False -> None
+            let bchar =
+                try 
+                  Some (Hashtbl.find font.chars code, font.ascender, font.descender, font.lineHeight)
+                with [ Not_found -> 
+                  match font.isDynamic with
+                  [ True -> BitmapFont.getBitmapChar (fontFamily, fontStyle, fontSize) code
+                  | False -> None
+                  ]
+                ] 
+            in
+            
+            match bchar with
+            (* first match of bchar *)
+            [ Some (bchar, asc, desc, lheight) ->
+                
+                let (bchar, asc, desc, lheight) = 
+                  if font.scale <> 1. 
+                  then ({(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale}, asc *. font.scale, desc *. font.scale, lheight *. font.scale)
+                  else (bchar, asc ,desc, lheight)
+                in
+                
+                let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
+                match width with
+                [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width && bchar.BitmapFont.xAdvance <= width ->
+                    
+                    let () = debug "can't add this char" in
+                    match !text_whitespace with
+                    [ None -> 
+                         match !line_whitespace with
+                         [ None -> 
+                            let () = debug "has no whitespaces on this line" in
+                            add_line line index 
+                         | Some len ascender descender elements ->
+                            (
+                              debug "line has whitespace";
+                              DynArray.delete_range line.lchars len ((DynArray.length line.lchars) - len);
+                              lineRollback ascender descender line;
+                              line.closed := True;
+                              loop elements
+                            )
+                         ]
+                    | Some (idx, numAddedChars) ->
+                      (
+                         debug "text has whitespace %d:%d" idx numAddedChars;
+                         let cnt_chars_in_line = DynArray.length line.lchars in
+                         DynArray.delete_range line.lchars numAddedChars (cnt_chars_in_line - numAddedChars);
+                         add_line line (UTF8.next text idx)
+                      )
                     ]
-                  ] in
-             match bchar with
-             [ Some (bchar, asc, desc, lheight) ->
-               let (bchar, asc, desc, lheight) = 
-                 if font.scale <> 1. 
-                 then ({(bchar) with xOffset = bchar.xOffset *. font.scale; yOffset = bchar.yOffset *. font.scale; xAdvance = bchar.xAdvance *. font.scale}, asc *. font.scale, desc *. font.scale, lheight *. font.scale)
-                 else (bchar, asc ,desc, lheight)
-               in
-               let () = debug "put char with code: %d, current_x: %f, xAdvance: %f, width: %f" code line.currentX bchar.BitmapFont.xAdvance (Option.default 0. width) in
-               match width with
-               [ Some width when line.currentX +. bchar.BitmapFont.xAdvance > width && bchar.BitmapFont.xAdvance <= width ->
-                   let () = debug "can't add this char" in
-                   match !text_whitespace with
-                   [ None -> 
-                     match !line_whitespace with
-                     [ None -> 
-                       let () = debug "has no whitespaces on this line" in
-                       add_line line index 
-                     | Some len ascender descender elements ->
-                       (
-                         debug "line has whitespace";
-                         DynArray.delete_range line.lchars len ((DynArray.length line.lchars) - len);
-                         lineRollback ascender descender line;
-                         line.closed := True;
-                         loop elements
-                       )
-                     ]
-                   | Some (idx,numAddedChars) ->
-                     (
-                       debug "text has whitespace %d:%d" idx numAddedChars;
-                       let cnt_chars_in_line = DynArray.length line.lchars in
-                       DynArray.delete_range line.lchars numAddedChars (cnt_chars_in_line - numAddedChars);
-                       add_line line (UTF8.next text idx)
-                     )
-                   ]
-               | _ ->
-                 (
-                   yoffset.val := line.ascender -. asc;
-                   line.descender := max line.descender desc;
-                   line.lineHeight := max line.lineHeight lheight;
-                   let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:(`Color color) ~alpha:alpha bchar.atlasNode in
-                   addToLine bchar.xAdvance (Char b) line;
-                   add_char line (UTF8.next text index)
-                 )
-               ]
+                
+                | _ ->
+                   (
+                      yoffset.val := line.ascender -. asc;
+                      line.descender := max line.descender desc;
+                      line.lineHeight := max line.lineHeight lheight;
+                      let b = AtlasNode.update ~scale:font.scale ~pos:{Point.x = line.currentX +. bchar.xOffset; y = !yoffset +. bchar.yOffset} ~color:(`Color color) ~alpha:alpha bchar.atlasNode in
+                      addToLine bchar.xAdvance (Char (code, bchar, b)) line;
+                      add_char line (UTF8.next text index)
+                   )
+                ] (* match width *)
+            
+             (* second match of bchar *)   
              | None -> 
                (
                  Debug.w "char %d not found\n%!" code;
-                 line.currentX := line.currentX +. font.space;
-    (*                          lastWhiteSpace.val := DynArray.length line.lchars; *)
+                 (* line.currentX := line.currentX +. font.space; *)
+                 addToLine font.space (WhiteSpace font.space) line;
                  add_char line (UTF8.next text index)
                )
              ]
@@ -746,6 +876,7 @@ value create ?width ?height ?border ?dest (html:main) =
           loop [ (attributes,elements) :: next ]
         )
       in
+      
       let line = 
         if Stack.is_empty lines 
         then createLine ~indent:(getTextIndent attributes) font lines
@@ -760,12 +891,12 @@ value create ?width ?height ?border ?dest (html:main) =
           )
       in
       add_char line sidx
+
     and loop = fun
       [ [] -> () 
       | [ (_,[]) :: next ] -> loop next 
       | [ (attributes, [ `img attrs image :: elements ]) :: next ] ->
         let () = debug "attrs empty %B" (attrs = []) in
-(*           let () = List.iter (fun attr -> match attr with [ `paddingLeft pl -> debug "paddingLeft: %f" pl | _ -> debug "some attr "]) attrs in *)
         let () = debug "process img: lines: %d" (Stack.length lines) in
         let (iwidth, iheight) =
           let (w, h) =
@@ -875,7 +1006,10 @@ value create ?width ?height ?border ?dest (html:main) =
       ]
     in
     loop [(attributes,elements)] 
-  in
+  in (* END ID make_lines *)
+  
+  
+  
   let rec process ((width,height) as size) attributes = fun
     [ `div attrs elements -> (* не доделано нихуя вообще нахуй *)
         let div = RefList.empty () in
@@ -911,7 +1045,6 @@ value create ?width ?height ?border ?dest (html:main) =
         (
           let max_width = 
             let lines = Stack.create () in
-(*             let f = make_lines width attribs lines in *)
             let () = make_lines width attribs lines elements in
             match width with
             [ Some w -> 
@@ -938,8 +1071,17 @@ value create ?width ?height ?border ?dest (html:main) =
               )
             ]
           in
+          
           let halign = getAttr (fun [ `halign p -> Some p | _ -> None ]) `left attribs in
+          let halign = match farsi with
+          [ Some f when f -> match halign with [`left -> `right | `right -> `left | _ -> halign ]
+          | _   ->  halign
+          ] 
+          in
+          
+          
           let () = debug "align p: by %s - %f" (match halign with [ `left -> "left" | `right -> "right" | `center -> "center" ]) max_width in
+          
           let lines = 
             if RefList.is_empty qlines
             then []
@@ -977,10 +1119,24 @@ value create ?width ?height ?border ?dest (html:main) =
       )
     ]
   in
+
   let no_zero = fun [ Some x when  x <= 0. -> (Debug.w "w or h not correct"; None) | x ->  x ] in
+
   let ((width,height),lines) = process (no_zero width,no_zero height) [] html in
+
   let _container = ref (match dest with [ Some s -> Some (s :> Sprite.c) | None -> None  ]) in
+
   let container () = match !_container with [ Some c -> c | None -> let c = new tlfSprite () in (_container.val := Some c; c) ] in
+  
+  
+  (* FARSI *)
+  let lines = match farsi with
+  [ Some b when b -> List.map convert_line_to_farsi lines 
+  | _ -> lines
+  ]
+  
+  in
+  
   let atlases : Hashtbl.t Texture.c Atlas.tlf = Hashtbl.create 1 in
   (
     List.iter begin fun line ->
@@ -993,7 +1149,7 @@ value create ?width ?height ?border ?dest (html:main) =
             i#setPosPoint pos;
             (container())#addChild i
           )
-        | Char c ->
+        | Char (_, _, c) ->
           let atex = AtlasNode.texture c in
           let atlas = 
             try
@@ -1001,11 +1157,6 @@ value create ?width ?height ?border ?dest (html:main) =
             with [ Not_found -> 
               let (atl : Atlas.tlf) = Atlas.tlf atex in
               (
-(*                 match stroke with
-                [ Some c -> atl#setStrokeColor c
-                | _ -> ()
-                ];
- *)
                 Hashtbl.add atlases atex atl;
                 atl
               )
@@ -1014,9 +1165,14 @@ value create ?width ?height ?border ?dest (html:main) =
           let pos = Point.addPoint (AtlasNode.pos c) {Point.x = line.lx; y = line.ly} in
           let () = debug "add char to [%f:%f]" pos.Point.x pos.Point.y in
           atlas#addChild (AtlasNode.setPosPoint pos c)
+        
+        | _ -> ()
+        
         ]
       done
+      
     end lines;
+    
     let res = 
       match !_container with
       [ None ->
@@ -1038,24 +1194,7 @@ value create ?width ?height ?border ?dest (html:main) =
             c#asDisplayObject
           )
       ]
-    in
-    ((width,height),res)
-  );
-    (*
-    match border with
-    [ Some bcolor ->
-      let shape = Shape.create () in
-      let g = shape#graphics in
-      (
-        Graphics.lineStyle g 1. bcolor 1.;
-        let width = match width with [ Some w -> w | None -> container#width ]
-        and height = match height with [ Some h -> h | None -> container#height ]
-        in (
-          Graphics.beginFill g bcolor 1.;
-          Graphics.drawRect g 0. 0. width height;
-          result#addChild shape;
-        );
-      )
-    | None -> ()
-    ];
-    *)
+    in   
+    ((width,height), res)
+    
+  ); (* let atlases and create *)

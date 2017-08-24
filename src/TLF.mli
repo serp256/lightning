@@ -66,4 +66,4 @@ value p: ?fontWeight:string -> ?fontFamily:string -> ?fontSize:int -> ?color:int
 value parse_simples: ?imgLoader:(string -> DisplayObject.c) -> string -> simple_elements;
 value parse: ?imgLoader:(string -> DisplayObject.c) -> string -> main;
 value to_string: main -> string;
-value create: ?width:float -> ?height:float -> ?border:int -> ?dest:#Sprite.c -> main -> ( (float*float) * DisplayObject.c);
+value create: ?width:float -> ?height:float -> ?border:int -> ?dest:#Sprite.c -> ?farsi:bool -> main -> ( (float*float) * DisplayObject.c);
