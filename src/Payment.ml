@@ -85,7 +85,7 @@ module Product =
 
 (* TODO: доделать передачу receipt *)
 value initialized = ref False;
-type marketType = [= `Google | `Amazon | `Yandex | `Samsung | `SamsungDev ];
+type marketType = [= `Google | `Amazon | `Yandex | `Samsung | `SamsungDev | `Bazaar ];
 
 
 IFDEF IOS THEN
@@ -116,6 +116,7 @@ value restorePurchases = ml_restorePurchases;
 Callback.register "register_product" Product.register;
 Callback.register "register_product_details" Product.registerDetails;
 Callback.register "create_product_details" Product.createDetails;
+
 ELSE
 
 type callbacks =

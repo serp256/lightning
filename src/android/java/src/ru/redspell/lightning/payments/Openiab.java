@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import org.json.JSONException;
 
 public class Openiab implements Payments.IPayments {
+
   final int RC_REQUEST = 10001;
   private OpenIabHelper helper = null;
   private Queue<Runnable> pendingQueue = new LinkedList<Runnable>();
@@ -175,7 +176,9 @@ public class Openiab implements Payments.IPayments {
   public void init(String[] _skus, String marketType) {
      try {
          final String[] skus = _skus;
+
          Log.d("LIGHTNING", "init call " + marketType + " isSamsungTestMode " + org.onepf.oms.appstore.SamsungApps.isSamsungTestMode);
+         
          if (helper != null) return;
 
          Log.d("LIGHTNING", "continue");
@@ -184,18 +187,28 @@ public class Openiab implements Payments.IPayments {
          setupFailed = false;
          ArrayList<String> prefStores = new ArrayList<String>(1);
          prefStores.add(marketType);
-				 String[] prefStoresArr = prefStores.toArray (new String[prefStores.size()]);
+         
+		 String[] prefStoresArr = prefStores.toArray (new String[prefStores.size()]);
 
          //to be able use samsung store at least one sku mapping needed. it is absolutely fake needed only to workaround openiab strange behaviour
          OpenIabHelper.mapSku("ru.redspell.lightning.fameSamsungPurchase", OpenIabHelper.NAME_SAMSUNG, "100000104912/ru.redspell.lightning.fameSamsungPurchase");
+
          OpenIabHelper.Options.Builder builder = new OpenIabHelper.Options.Builder()
              .addPreferredStoreName(prefStoresArr)
-						 .setStoreSearchStrategy(OpenIabHelper.Options.SEARCH_STRATEGY_INSTALLER_THEN_BEST_FIT)
+    		 .setStoreSearchStrategy(OpenIabHelper.Options.SEARCH_STRATEGY_INSTALLER_THEN_BEST_FIT)
              .setVerifyMode(OpenIabHelper.Options.VERIFY_SKIP);
+        
+         if (marketType == ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore.NAME_BAZAAR) {
+             builder.addAvailableStoreNames(ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore.NAME_BAZAAR)
+                    .addAvailableStores(new ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore(NativeActivity.instance, null))
+         }
+
          OpenIabHelper.Options opts = opts = builder.build();
+
          OpenIabHelper.enableDebugLogging(true);
 
          helper = new OpenIabHelper(NativeActivity.instance, opts);
+
          NativeActivity.instance.addUiLifecycleHelper(new IUiLifecycleHelper() {
              public void onCreate(Bundle savedInstanceState) {}
              public void onResume() {}
@@ -207,7 +220,7 @@ public class Openiab implements Payments.IPayments {
              public void onPause() {}
              public void onStop() {}
              public void onDestroy() {}
-						 public void onStart() {}
+			 public void onStart() {}
          });
 
          helper.startSetup(new IabHelper.OnIabSetupFinishedListener() {

@@ -12,6 +12,7 @@
 #define APPLAND "Appland"
 #define SLIDEME "SlideME"
 #define APTOIDE "cm.aptoide.pt"
+#define BAZAAR "com.farsitel.bazaar"
 
 static jclass payments_cls = 0;
 #define FIND_PAYMENTS_CLASS if (!payments_cls) payments_cls = engine_find_class("ru/redspell/lightning/payments/Payments")
@@ -52,6 +53,8 @@ value openiab_init(value vskus, value vmarket_type) {
 		cmarket_type = SAMSUNG;
 	} else if (vmarket_type == caml_hash_variant("SamsungDev")) {
 		cmarket_type = SAMSUNG_DEV;
+	} else if (vmarket_type == caml_hash_variant("Bazaar")) {
+	    cmarket_type = BAZAAR;
 	}
 
 	jstring jmarket_type = (*ML_ENV)->NewStringUTF(ML_ENV, cmarket_type);
