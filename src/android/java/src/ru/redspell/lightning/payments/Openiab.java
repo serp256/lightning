@@ -198,13 +198,12 @@ public class Openiab implements Payments.IPayments {
     		 .setStoreSearchStrategy(OpenIabHelper.Options.SEARCH_STRATEGY_INSTALLER_THEN_BEST_FIT)
              .setVerifyMode(OpenIabHelper.Options.VERIFY_SKIP);
         
-         if (marketType == ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore.NAME_BAZAAR) {
+         if (marketType.equals(ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore.NAME_BAZAAR)) {
              builder.addAvailableStoreNames(ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore.NAME_BAZAAR)
-                    .addAvailableStores(new ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore(NativeActivity.instance, null))
+            .addAvailableStores(new ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore(NativeActivity.instance, null))
          }
 
          OpenIabHelper.Options opts = opts = builder.build();
-
          OpenIabHelper.enableDebugLogging(true);
 
          helper = new OpenIabHelper(NativeActivity.instance, opts);
