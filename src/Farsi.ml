@@ -198,7 +198,6 @@ value boolStorage =
 
 (* В зависимости от того, где стоит буква (в начале, в конце или посередине) используется ее разное начертание. Возвращаем UTF8 представление  *)
 value convert_char prev curr next = 
-  
   let pr = 
     try 
       List.nth (List.assoc (UChar.int_of_uchar prev) boolStorage) 0
@@ -215,7 +214,6 @@ value convert_char prev curr next =
     UChar.uchar_of_int (List.nth (List.assoc (UChar.int_of_uchar curr) charStorage) idx)
   with [ Not_found -> curr ];
 
-
 (* 
   Не знаю точно, но кажется у некоторых букв есть различные формы написания в зависимости от того, где стоит эта буква  
   Здесь мы выбираем корректный символ.
@@ -227,14 +225,11 @@ value remap_char_at_index text index =
   in convert_char prev curr next;
 
 
+
 (* *)
 value isFarsi c = 
   let i = UChar.int_of_uchar c 
-(* Russian for debug *)
-(*  in i >= 0x0400 && i < 0x04ff;  *)
-(* Real farsi for release *)
   in  ((i >= 1536 && i <= 1791) || (i >= 65136 && i <= 65279));
-
 
 
 (* Convert a UTF8 Line to Farsi *)

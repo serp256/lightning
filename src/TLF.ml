@@ -632,14 +632,16 @@ value convert_line_to_farsi line =
               else 
                 (res, (List.append tmp [item]))
 
-          | WhiteSpace _ -> (res, (List.append tmp [item]))
+          | WhiteSpace _ -> 
+                (res, (List.append tmp [item]))
 
-          | _   ->  (res, tmp)
+          | Img _   ->  
+                (List.append (List.append res (List.rev tmp)) [item]  ,[])              
           ]    
+          
         in process_line res' tmp' tail    
     ]
-  in 
-  
+  in   
   let reordered = process_line [] [] (DynArray.to_list line.lchars) in
 
 
@@ -659,7 +661,9 @@ value convert_line_to_farsi line =
         
         | WhiteSpace space -> update_positions (x +. space ) tail res
 
-        | _ -> update_positions x tail res
+        | Img i -> 
+              let () = i#setX x in
+              update_positions (x +. i#width) tail [ item :: res ]
         ]        
     ]
   in   
@@ -939,7 +943,15 @@ value create ?width ?height ?border ?dest ?farsi (html:main) =
               ]
         in
         (
-          image#setX (line.currentX +. paddingLeft);
+        
+          if (paddingLeft > 0.) then
+            let _ = addToLine paddingLeft (WhiteSpace paddingLeft) in ()
+          else 
+            ();
+          
+          (* image#setX (line.currentX +. paddingLeft); *)
+          image#setX line.currentX;
+          
           let paddingRight = getAttr (fun [ `paddingRight pl -> Some pl | _ -> None]) 0. attrs in
           let eWidth = paddingLeft +. iwidth +. paddingRight in
           let paddingTop = getAttr (fun [ `paddingTop pt -> Some pt | _ -> None]) 0. attrs in
@@ -950,19 +962,25 @@ value create ?width ?height ?border ?dest ?farsi (html:main) =
               let dh = (iheight -. textHeight) /. 2. in
               let y = adjustToLine ~ascender:(line.ascender +. dh) ~descender:(line.descender +. dh) line in
               image#setY (y +. paddingTop);
-              addToLine eWidth (Img image) line;
+              (* addToLine eWidth (Img image) line; *)
+              addToLine iwidth (Img image) line;
+              addToLine paddingRight (WhiteSpace paddingRight) line;
             )
           | `aboveBaseLine -> 
             (
               let y = adjustToLine ~ascender:iheight line in
               image#setY (y +. paddingTop);
-              addToLine eWidth (Img image) line;
+(*              addToLine eWidth (Img image) line; *)
+              addToLine iwidth (Img image) line;
+              addToLine paddingRight (WhiteSpace paddingRight) line;              
             )
           | `underBaseLine -> 
             (
               let y = adjustToLine ~descender:iheight line in
               image#setY (y +. paddingTop);
-              addToLine eWidth (Img image) line
+(*              addToLine eWidth (Img image) line *)
+              addToLine iwidth (Img image) line;
+              addToLine paddingRight (WhiteSpace paddingRight) line;              
             )
           | `centerBaseLine -> 
             let () = debug "place image by text center" in
@@ -970,7 +988,9 @@ value create ?width ?height ?border ?dest ?farsi (html:main) =
             let y = adjustToLine ~ascender:h2 ~descender:h2 line in
             (
               image#setY (y +. paddingTop);
-              addToLine eWidth (Img image) line
+(*              addToLine eWidth (Img image) line *)
+              addToLine iwidth (Img image) line;
+              addToLine paddingRight (WhiteSpace paddingRight) line;              
             )
           ];
           loop [ (attributes,elements) :: next ]
