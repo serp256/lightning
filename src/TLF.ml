@@ -462,12 +462,12 @@ value imagesAndCharsFilter c =
 
 
 value lineWidth line = 
-  if DynArray.empty line.lchars
+  let lchars = DynArray.copy line.lchars in 
+  let () = DynArray.filter imagesAndCharsFilter lchars in
+  if DynArray.empty lchars
   then 0.
   else
     
-    let lchars = DynArray.copy line.lchars in 
-    let () = DynArray.filter imagesAndCharsFilter lchars in
     let (lx,lw) = 
       match DynArray.last lchars with
       [ Img i -> (i#x,i#width)
