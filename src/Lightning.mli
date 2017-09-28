@@ -51,3 +51,4 @@ value enableAwake: unit -> unit;
 value disableAwake: unit -> unit;
 
 value disableJavaLog: unit -> unit;
+value sendException : string -> string -> unit;

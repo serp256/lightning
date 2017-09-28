@@ -227,7 +227,7 @@ value uncaughtExceptionHandler exn rawBacktrace =
   in
     openURL url;
 
-external silentUncaughtExceptionHandler: string -> unit = "ml_silentUncaughtExceptionHandler";
+external silentUncaughtExceptionHandlerSend: string -> unit = "ml_silentUncaughtExceptionHandler";
 
 value silentUncaughtExceptionHandler exn rawBacktrace =
   let date = Int64.to_string (Int64.of_float (Unix.time ())) in
@@ -257,12 +257,42 @@ value silentUncaughtExceptionHandler exn rawBacktrace =
                         )
                     )
   in
-    silentUncaughtExceptionHandler json;
+    silentUncaughtExceptionHandlerSend json;
+
+value sendException title text = 
+(
+  let date = Int64.to_string (Int64.of_float (Unix.time ())) in
+  let device = Hardware.hwmodel () in
+  let ver = LightCommon.getVersion () in
+  let exceptionInfo =
+    match !exceptionInfo with
+    [ [] -> ""
+    | exceptionInfo ->
+      let exceptionInfo = String.concat "" (List.map (fun exceptionInfo -> "\t" ^ exceptionInfo ^ "\n") exceptionInfo) in
+        "\nexception info:" ^ exceptionInfo
+    ]
+  in
+  let json =
+    Ojson.to_string (Ojson.Build.assoc
+                        (
+                          [
+                            ("date", Ojson.Build.string date);
+                            ("device", Ojson.Build.string device);
+                            ("vers", Ojson.Build.string ver);
+                            ("exception", Ojson.Build.string title);
+                            ("data", Ojson.Build.string (text ^ exceptionInfo));
+                          ] 
+                        )
+                    )
+  in
+    silentUncaughtExceptionHandlerSend json;
+);
 
 Printexc.set_uncaught_exception_handler silentUncaughtExceptionHandler;
 value debugErrReporting () = Printexc.set_uncaught_exception_handler uncaughtExceptionHandler;
 ELSE
 value debugErrReporting () = ();
+value sendException _ _ = ();
 ENDPLATFORM;
 
 IFPLATFORM(pc)
