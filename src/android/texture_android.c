@@ -155,6 +155,7 @@ int load_image_info(char *fname,char *suffix,int use_pvr,textureInfo *tInfo) {
 		int diff = elen < 4 ? 4 - elen : 0;
 		path = malloc(flen + diff + slen + 1 + 10); // why +10? because. we should have reserved bytes to replace 3-symbol extension with much longer such as .cmprs, for example
 		memcpy(path,fname,bflen);
+        path[bflen] = 0;
 		if (slen != 0) memcpy(path + bflen,suffix,slen);
 
 		int with_lum = !strcasecmp(ext,".lumal");

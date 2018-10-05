@@ -16,6 +16,8 @@
 #include "ios/texture_ios.h"
 #elif ANDROID
 #include "android/texture_android.h"
+#include "engine_android.h"
+#include "lightning_android.h"
 #else
 #include "sdl/texture_sdl.h"
 #endif
@@ -54,9 +56,11 @@ static void *run_worker(void *param) {
 		request_t *req = thqueue_requests_pop(runtime->req_queue);
 		if (req == NULL) pthread_cond_wait(&(runtime->cond),&(runtime->mutex));
 		else {
+            /*
 			PRINT_DEBUG("texture run worker %s", req->path);
 
 			textureInfo *tInfo = (textureInfo*)malloc(sizeof(textureInfo));
+
 			int r = load_image_info(req->path,req->suffix,req->use_pvr,tInfo);
 			if (r) {
 				free(tInfo);
@@ -83,6 +87,7 @@ static void *run_worker(void *param) {
 			PRINT_DEBUG("free suffix");
 			if (req->suffix != NULL) free(req->suffix); free(req);
 			thqueue_responses_push(runtime->resp_queue,resp);
+            */
 			PRINT_DEBUG("response pushed");
 		}
 	}
@@ -121,10 +126,41 @@ value ml_texture_async_loader_push(value oruntime,value opath,value osuffix,valu
 	req->suffix = suffix;
 	req->filter = filter;
 	req->use_pvr = Bool_val(use_pvr);
-	thqueue_requests_push(runtime->req_queue,req);
+
+    //перенес определение информации из run_worker (который сейчас по факту ничего не делает) так как нельзя вызывать методы из явы вне главного потока
+			textureInfo *tInfo = (textureInfo*)malloc(sizeof(textureInfo));
+
+			int r = load_image_info(req->path,req->suffix,req->use_pvr,tInfo);
+			if (r) {
+				free(tInfo);
+				if (r == 2) ERROR("ASYNC LOADER. Can't find %s\n",req->path);
+				else ERROR("Can't load image %s\n",req->path);
+				tInfo = NULL;
+			}
+
+			PRINT_DEBUG("create response");
+
+			response_t *resp = malloc(sizeof(response_t));
+			resp->path = req->path; 
+			resp->with_suffix = (req->suffix != NULL);
+			resp->filter = req->filter;
+			resp->tInfo = tInfo;
+			resp->alphaTexInfo = NULL;
+
+			PRINT_DEBUG("ok");
+
+			if (!r) {
+				resp->alphaTexInfo = loadCmprsAlphaTex(tInfo, req->path, req->suffix, req->use_pvr);	
+			}
+			
+			PRINT_DEBUG("free suffix");
+			if (req->suffix != NULL) free(req->suffix); free(req);
+
+			thqueue_responses_push(runtime->resp_queue,resp);
+
+	//thqueue_requests_push(runtime->req_queue,req);
 	pthread_cond_signal(&runtime->cond);
 
-	PRINT_DEBUG("ml_texture_async_loader_push %s", req->path);
 	return Val_unit;
 }
 

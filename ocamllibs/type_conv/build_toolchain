@@ -1,0 +1,14 @@
+#!/bin/sh
+
+toolchain=$1
+
+if [ -z "$toolchain" ]; then 
+	echo "!!! specify toolchain"
+	exit 1
+fi
+
+make clean
+export OCAMLFIND_CONF="/usr/local/ocaml/$1/etc/findlib.conf"
+./configure --override native_dynlink false --override is_native false
+./setup.exe -build
+sudo -E ./setup.exe -install

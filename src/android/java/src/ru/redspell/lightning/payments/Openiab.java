@@ -22,8 +22,11 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import org.json.JSONObject;
 import org.json.JSONException;
+
 
 public class Openiab implements Payments.IPayments {
 
@@ -32,6 +35,7 @@ public class Openiab implements Payments.IPayments {
   private Queue<Runnable> pendingQueue = new LinkedList<Runnable>();
   private boolean setupDone = false;
   private boolean setupFailed = false;
+  private ISKULightDetailsExtractor skuDetailsExtractor = null;
 
 	
   private class PurchaseCommand implements Runnable {
@@ -92,59 +96,78 @@ public class Openiab implements Payments.IPayments {
       forOwnedPurchases = true;
     }
 
+    /*
+     *
+     */
     public void run() {
-      if (helper == null) return;
 
+      if (helper == null) {
+        return;
+      }
+      
+      
       IabHelper.QueryInventoryFinishedListener listener = new IabHelper.QueryInventoryFinishedListener() {
+
         public void onQueryInventoryFinished(IabResult result, Inventory inventory) {
-            Log.d("LIGHTNING", "onQueryInventoryFinished " + result.isSuccess());
-          if (result.isSuccess()) {
-            if (detailsForSkus != null) {
-              for (int i = 0; i < detailsForSkus.length; i++) {
-                SkuDetails details = inventory.getSkuDetails(detailsForSkus[i]);
-                if (details == null) continue;
-                String price = details.getPrice();
-                if (price == null) continue;
+          
+          Log.d("LIGHTNING", "onQueryInventoryFinished " + result.isSuccess());
+          
+          if (!result.isSuccess()) {
+            return;
+          }
 
-                Log.d("LIGHTNING", "purchaseRegister");
-                Payments.purchaseRegister(detailsForSkus[i], price);
+          if (detailsForSkus != null) {
 
-                Log.d("LIGHTNING", "details " + details);
+            for (int i = 0; i < detailsForSkus.length; i++) {
 
-								String rawJson = details.getJson ();
-								if (rawJson == null) {
-									String dollar = "$";
-									if (price.startsWith(dollar)) {
-										try {
-											double d_amount = Double.parseDouble (price.substring(1));
-											Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails ("USD", d_amount));
-										}
-										catch (java.lang.RuntimeException exc) {
-											Log.d("LIGHTNING", "JSON exc" + (exc.toString ()));
-									  }
-									}
-								}
-								else {
-									try {
-										JSONObject json = new JSONObject (details.getJson());
-										Log.d("LIGHTNING", "JSON " + json);
-										long amount = json.getLong ("price_amount_micros");
-										String currency = json.getString ("price_currency_code");
-										double d_amount = amount / 1000000.;
-										Log.d("LIGHTNING", "java amount " + amount + " " + d_amount);
-										Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails (currency, d_amount));
-									}
-									catch (JSONException exc) {
-										Log.d("LIGHTNING", "JSON exc" + (exc.toString ()));
-									}
-								}
+              SkuDetails details = inventory.getSkuDetails(detailsForSkus[i]);
+              if (details == null) {
+                 continue;
               }
-            } else if (forOwnedPurchases) {
-              Iterator<Purchase> iter = inventory.getAllPurchases().iterator();
-              while (iter.hasNext()) {
-                Purchase purchase = iter.next();
-                Payments.purchaseSuccess(purchase.getSku(), purchase, true);
+              
+              String price = details.getPrice();
+              if (price == null) {
+                continue;
               }
+
+              Payments.purchaseRegister(detailsForSkus[i], price);
+              
+              String rawJson = details.getJson();              
+              
+              if (rawJson == null) {
+        	    String dollar = "$";
+        		if (price.startsWith(dollar)) {
+        		    try {
+      		          double d_amount = Double.parseDouble (price.substring(1));
+          	          Payments.purchaseDetailsRegister(detailsForSkus[i], new Payments.LightDetails ("USD", d_amount));
+          	        } catch (java.lang.RuntimeException exc) {
+          	          Log.d("LIGHTNING", "JSON exc" + (exc.toString ()));
+          	        }
+	          	}
+      		    continue;
+          	  }
+	            
+	          //   
+	          try 
+              {
+                Payments.LightDetails pld = skuDetailsExtractor.parse(rawJson);
+                if (pld != null) {
+  	    	      Payments.purchaseDetailsRegister(detailsForSkus[i], pld);
+  	    	    }
+              } catch (JSONException exc) {
+				  Log.d("LIGHTNING", "[1] JSON exc" + (exc.toString ()));
+			  } catch (java.lang.RuntimeException exc) {
+          	      Log.d("LIGHTNING", "[2] JSON exc" + (exc.toString ()));
+          	  }              
+
+				
+            }
+              
+          } else if (forOwnedPurchases) {
+            Iterator<Purchase> iter = inventory.getAllPurchases().iterator();
+            while (iter.hasNext()) {
+              Purchase purchase = iter.next();
+              Payments.purchaseSuccess(purchase.getSku(), purchase, true);
             }
           }
         }
@@ -173,9 +196,157 @@ public class Openiab implements Payments.IPayments {
     }
   }
 
+
+  // -------- Парсилка JSON, в котором SKU ---------------- //
+  // -------- Просто в базаре по-другому цена присылается - //
+  private interface ISKULightDetailsExtractor {
+    public Payments.LightDetails parse(String rawJSON)  throws JSONException;
+  }
+
+  /*
+   *
+   */
+  private class DefaultSKULightDetailsExtractor implements ISKULightDetailsExtractor {
+  
+    public Payments.LightDetails parse(String rawJson) throws JSONException {
+      JSONObject json = new JSONObject (rawJson);
+      long amount = json.getLong ("price_amount_micros");
+	  String currency = json.getString ("price_currency_code");
+	  double d_amount = amount / 1000000.;
+	  Log.d("LIGHTNING", "java amount " + amount + " " + d_amount);
+	  return new Payments.LightDetails (currency, d_amount);
+    }
+    
+  }
+
+
+
+
+  
+  /*
+   * В кафе базар в JSON цена приходит с указанием валюты и в зависимости от выбраной в самом базаре локали может 
+   * быть представлена как фарсишными символами, так и не очень :)
+   *
+   * Могут быть 4 варианта. Два для нулевой цены, и два для ненулевой
+   * Нулевая цена для английского языка: 'Zero Rials'
+   * Ненулевая цена для английского языка: '10,000 Rials' - десять тысяч!
+   * Нулевая цена для фарси: "صفر ری" - такая вот загогулина панимаишь
+   * Ненулевая цена для фарси (14 тысяч, тоже есть делимитер): "۱۴٬۰۰۰ ری";
+   * Но это еще не весь пиздец. Парни из ирана просят сконвертить итоговую цены в другую местную валюту, томаны
+   * 10,000 IRR = 1000 Toman = 1,000 تومان
+   *
+   * Поэтому при выводе цен для иранской фермы независимо от локали и от версии приложения надо ставить флаг, что рисуем фарси!
+   *
+   */
+  private class CafeBazaarSKULightDetailsExtractor implements ISKULightDetailsExtractor {
+
+    private class NotFarsiNumericSymbolException extends Exception {
+      
+      public char symbol;
+      
+      public NotFarsiNumericSymbolException(char s) {
+        this.symbol = s;
+      }
+    }
+
+    //
+    //
+    //
+    private int convertFarsiNumericSymbol(char sym) throws NotFarsiNumericSymbolException {
+      char[] persianChars = {'۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'};
+      for (int i = 0; i < persianChars.length; i++) {
+        if (sym == persianChars[i]) {
+          return i;
+        }
+      }
+      throw new NotFarsiNumericSymbolException(sym);
+    }
+
+
+    //
+    //
+    //
+    private boolean isFarsiPrice(String price) { 
+      return price.indexOf("ials") == -1; //  Если нет rials или Rials, то считаем, что фарси
+    }
+
+    //
+    //
+    //
+    private int parseFarsiBazaarPrice(String price) {
+
+      int number = 0;
+      int power  = 0;
+      
+      for (int i = price.length() - 1; i >= 0; i--) {
+        
+        char sym = price.charAt(i);
+
+        if (sym == '٬') {    // это фарсишный делимитер, запятая
+          continue;
+        }
+        
+        try {
+          int num = convertFarsiNumericSymbol(sym);
+          number += Math.pow(10, power) * num;
+          power++;
+        } catch (NotFarsiNumericSymbolException exn) {
+          return 0;
+        }    
+      }
+    
+      return number;
+    }
+    
+
+    //
+    //
+    //    
+    private int parseEnglishBazaarPrice(String price) {
+      if (price.equalsIgnoreCase("zero")) {
+        return 0;
+      }      
+      return Integer.parseInt(price.replaceAll(",", ""));
+    }
+
+
+
+
+    //
+    //
+    //
+    public Payments.LightDetails parse(String rawJson) throws JSONException {
+
+      long amountRials = 0;
+      long amountTomans = 0;
+            
+      JSONObject json = new JSONObject (rawJson);
+      String currencyTomans = "تومان";
+      String price = json.getString ("price");	
+      String[] pair = price.split(" ");
+
+      if (isFarsiPrice(price)) {
+
+        amountRials = parseFarsiBazaarPrice(pair[0]);
+      } else {
+        amountRials = parseEnglishBazaarPrice(pair[0]);
+      }
+        
+      amountTomans = amountRials / 10;
+      return new Payments.LightDetails (currencyTomans, amountTomans);
+    }
+  }  
+
+
+
+  /*
+   *
+   */
   public void init(String[] _skus, String marketType) {
      try {
          final String[] skus = _skus;
+
+
 
          Log.d("LIGHTNING", "init call " + marketType + " isSamsungTestMode " + org.onepf.oms.appstore.SamsungApps.isSamsungTestMode);
          
@@ -199,14 +370,21 @@ public class Openiab implements Payments.IPayments {
              .setVerifyMode(OpenIabHelper.Options.VERIFY_SKIP);
         
          if (marketType.equals(ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore.NAME_BAZAAR)) {
+            
              builder.addAvailableStoreNames(ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore.NAME_BAZAAR)
-            .addAvailableStores(new ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore(NativeActivity.instance, null))
+            .addAvailableStores(new ru.redspell.lightning.payments.openiab.appstore.BazaarAppStore(NativeActivity.instance, null));
+  
+            skuDetailsExtractor = new CafeBazaarSKULightDetailsExtractor();
+            
+         } else {
+            skuDetailsExtractor = new DefaultSKULightDetailsExtractor();            
          }
 
          OpenIabHelper.Options opts = opts = builder.build();
          OpenIabHelper.enableDebugLogging(true);
 
          helper = new OpenIabHelper(NativeActivity.instance, opts);
+         
 
          NativeActivity.instance.addUiLifecycleHelper(new IUiLifecycleHelper() {
              public void onCreate(Bundle savedInstanceState) {}

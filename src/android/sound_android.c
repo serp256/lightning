@@ -53,10 +53,10 @@ void bq_player_callback(void *d) {
 
     bq_player_callback_t *data = (bq_player_callback_t*)d;
 
-    caml_remove_generational_global_root(&data->plr->callback);
     if (data->run_callback) {
         caml_callback(data->plr->callback, Val_unit);
     }
+    caml_remove_generational_global_root(&data->plr->callback);
 
     RUN_ON_UI_THREAD(&bq_player_free, data->plr);
     free(data);

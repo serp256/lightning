@@ -11,7 +11,8 @@ MLOBJS = $(MLSOURCES:.ml=.cmo)
 IFACES = $(MLSOURCES:.ml=.cmi)
 
 ifeq ($(PLATFORM),IOS)
-CFLAGS  += -DDEBUG -DIOS -Fios  -I../.. -I../../ios -I ios/sdk/FBSDKCoreKit -I ios/sdk/FBSDKCoreKit/FBSDKCoreKit -I ios/sdk/FBSDKLoginKit -I ios/sdk/FBSDKLoginKit/FBSDKLoginKit -I ios/sdk/FBSDKShareKit/FBSDKShareKit
+CFLAGS  += -DDEBUG -DIOS -Fios  -I../..  -I../../ios -I ios/sdk/FBSDKCoreKit -I ios/sdk/FBSDKCoreKit/FBSDKCoreKit -I ios/sdk/FBSDKLoginKit -I ios/sdk/FBSDKLoginKit/FBSDKLoginKit -I ios/sdk/FBSDKShareKit -I ios/sdk/FBSDKShareKit/FBSDKShareKit
+
 MOBJS   += ios/fbwrapper_ios.o ios/LightFacebookDelegate.o 
             
 MLPPOPT += -DIOS

@@ -142,6 +142,7 @@ static void* loader_thread(void* params) {
 	curl_easy_setopt(curl_hndlr, CURLOPT_ERRORBUFFER, curl_err);
 	curl_easy_setopt(curl_hndlr, CURLOPT_WRITEFUNCTION, curl_wfunc);
 	curl_easy_setopt(curl_hndlr, CURLOPT_FOLLOWLOCATION, 1);
+	curl_easy_setopt(curl_hndlr, CURLOPT_SSL_VERIFYPEER, 0);
 
 	JNIEnv *env;
 	(*VM)->AttachCurrentThread(VM, &env, NULL);

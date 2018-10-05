@@ -1,0 +1,32 @@
+OASISFormat:      0.3
+OCamlVersion:     >= 4.00.0
+FindlibVersion:   >= 1.3.2
+Name:             type_conv
+Version:          109.41.00
+Synopsis:         type_conv - support library for preprocessor type conversions
+Authors:          Jane Street Capital LLC <opensource@janestreet.com>
+Copyrights:       (C) 2005-2013 Jane Street Capital LLC <opensource@janestreet.com>
+Maintainers:      Jane Street Capital LLC <opensource@janestreet.com>
+License:          Apache-2.0
+LicenseFile:      LICENSE.txt
+Homepage:         https://github.com/janestreet/type_conv
+Plugins:          StdFiles (0.3), DevFiles (0.3), META (0.3)
+XStdFilesAUTHORS: false
+XStdFilesREADME:  false
+BuildTools:       ocamlbuild, camlp4o
+
+Library pa_type_conv
+  Path:               lib
+  FindlibName:        type_conv
+  Modules:            Pa_type_conv
+  BuildDepends:       camlp4.quotations, camlp4.extend
+  XMETAType:          syntax
+  XMETARequires:      camlp4
+  XMETADescription:   Syntax extension for type_conv
+
+Document "type_conv"
+  Title:                API reference for Type_conv
+  Type:                 ocamlbuild (0.3)
+  BuildTools+:          ocamldoc
+  XOCamlbuildPath:      lib
+  XOCamlbuildLibraries: type_conv
